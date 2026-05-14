@@ -27,14 +27,58 @@ The work is organized in **two volumes**:
 
 ## Volume II — Civilization Infrastructure (2030 → 2050+)
 
+### Main volume
+
 | # | Document | Purpose |
 |---|---|---|
 | — | [`CIVICOS_VOL_II_CIVILIZATION_INFRASTRUCTURE.md`](./CIVICOS_VOL_II_CIVILIZATION_INFRASTRUCTURE.md) | 13-part post-2030 transformation: invariants, era-by-era capabilities, AI maturity, infrastructure, interaction, institutions, economic OS, module re-imagination, civilizational risks, migration |
-| 09 | [`docs/09_MODULE_EVOLUTION_TIMELINE.md`](./docs/09_MODULE_EVOLUTION_TIMELINE.md) | Per-module evolution 2030 → 2050+, with autonomy/governance/forbidden lines per module |
-| 10 | [`docs/10_AI_MATURITY_AND_SAFETY.md`](./docs/10_AI_MATURITY_AND_SAFETY.md) | Charter mechanics, evaluation ladders, kill-switch architecture, Algorithmic Ombudsman, Sovereign Trust Officer, periodic civilizational stand-downs |
-| 11 | [`docs/11_INFRASTRUCTURE_EVOLUTION.md`](./docs/11_INFRASTRUCTURE_EVOLUTION.md) | Substrate evolution: sovereign cloud → continental mesh → planetary mesh; quantum, satellite, energy, cryptographic agility |
+
+### Architecture & evolution
+
+| # | Document | Purpose |
+|---|---|---|
+| 09 | [`docs/09_MODULE_EVOLUTION_TIMELINE.md`](./docs/09_MODULE_EVOLUTION_TIMELINE.md) | Per-module evolution 2030 → 2050+ with autonomy/governance/forbidden lines |
+| 10 | [`docs/10_AI_MATURITY_AND_SAFETY.md`](./docs/10_AI_MATURITY_AND_SAFETY.md) | Charter mechanics, evaluation ladders, kill-switch architecture, civilizational stand-downs |
+| 11 | [`docs/11_INFRASTRUCTURE_EVOLUTION.md`](./docs/11_INFRASTRUCTURE_EVOLUTION.md) | Substrate evolution: sovereign cloud → continental mesh → planetary mesh; quantum, satellite, energy |
 | 12 | [`docs/12_INTERACTION_EVOLUTION.md`](./docs/12_INTERACTION_EVOLUTION.md) | Dashboards → ambient → spatial → post-screen civic computing; inclusion floor; right to a human |
-| 16 | [`docs/16_CIVILIZATIONAL_RISK_REGISTER.md`](./docs/16_CIVILIZATIONAL_RISK_REGISTER.md) | Sovereignty / rights / power / truth / resilience / civilization / future risk catalog with tripwires and accountable officers |
+
+### Institutions, economy, planetary
+
+| # | Document | Purpose |
+|---|---|---|
+| 13 | [`docs/13_INSTITUTIONAL_REENGINEERING.md`](./docs/13_INSTITUTIONAL_REENGINEERING.md) | Cabinet evolution, constitutional officers, parliament, judiciary, public service across eras |
+| 14 | [`docs/14_ECONOMIC_OS_EVOLUTION.md`](./docs/14_ECONOMIC_OS_EVOLUTION.md) | National Economic OS by decade with weights registry, distributional impact, multidimensional welfare |
+| 15 | [`docs/15_PLANETARY_PROTOCOLS.md`](./docs/15_PLANETARY_PROTOCOLS.md) | Sovereign-respecting planetary protocols for climate, health, cyber, AI safety, refugees, finance |
+
+### Risks, wallet, AI lifecycle, standards, sustainability
+
+| # | Document | Purpose |
+|---|---|---|
+| 16 | [`docs/16_CIVILIZATIONAL_RISK_REGISTER.md`](./docs/16_CIVILIZATIONAL_RISK_REGISTER.md) | Sovereignty / rights / power / truth / resilience / civilization / future risk catalog |
+| 17 | [`docs/17_CIVIC_WALLET_EVOLUTION.md`](./docs/17_CIVIC_WALLET_EVOLUTION.md) | Civic Wallet across eras: 2030 mobile + USSD → 2050+ presence-based civic computing |
+| 18 | [`docs/18_SOVEREIGN_LLM_LIFECYCLE.md`](./docs/18_SOVEREIGN_LLM_LIFECYCLE.md) | Sourcing, training, evaluation, deployment, federated training, frontier partnerships |
+| 19 | [`docs/19_OPEN_STANDARDS_AND_CONTRIBUTION.md`](./docs/19_OPEN_STANDARDS_AND_CONTRIBUTION.md) | Standards governance, open kernel pledge, Foundation, fork pledge, contribution policy |
+| 20 | [`docs/20_SUSTAINABILITY_SUNSET_EXIT.md`](./docs/20_SUSTAINABILITY_SUNSET_EXIT.md) | Operational/financial/environmental/talent sustainability; sunset; sovereign exit playbook |
+
+### Governance, dignity, security, multilingual, lessons, law
+
+| # | Document | Purpose |
+|---|---|---|
+| 21 | [`docs/21_ANTICORRUPTION_PLAYBOOK.md`](./docs/21_ANTICORRUPTION_PLAYBOOK.md) | Cross-cutting anti-corruption mechanisms: procurement, payments, welfare, land, tax, hiring, insider abuse, whistleblower infra |
+| 22 | [`docs/22_DIGNITY_AND_RIGHTS_OPERATIONALIZATION.md`](./docs/22_DIGNITY_AND_RIGHTS_OPERATIONALIZATION.md) | Universal Service Standard, right to a human, vulnerability protections, plain language, dignity in error |
+| 23 | [`docs/23_NATIONAL_DIGITAL_TWIN.md`](./docs/23_NATIONAL_DIGITAL_TWIN.md) | Multi-resolution, multi-domain twin with privacy floors and forbidden uses |
+| 24 | [`docs/24_SECURITY_AND_RIGHTS_BALANCE.md`](./docs/24_SECURITY_AND_RIGHTS_BALANCE.md) | Lawful intercept module mechanics, watch list discipline, civil liberties safeguards, vendor coercion resistance |
+| 25 | [`docs/25_MULTILINGUAL_AND_CULTURAL.md`](./docs/25_MULTILINGUAL_AND_CULTURAL.md) | Tier 1/2/3 language coverage, voice/IVR, cultural concepts (calendars, names, kinship, customary practice) |
+| 26 | [`docs/26_FAILURE_CASE_STUDIES.md`](./docs/26_FAILURE_CASE_STUDIES.md) | 20 cautionary patterns from real-world digital government failures with CivicOS preventions |
+| 27 | [`docs/27_CONSTITUTIONAL_INTEGRATION.md`](./docs/27_CONSTITUTIONAL_INTEGRATION.md) | Constitutional anchors, organic statutes, sectoral statutes, treaty integration, judicial implementation |
+
+### Operational guides
+
+| # | Document | Purpose |
+|---|---|---|
+| 28 | [`docs/28_OFFICERS_FIELD_GUIDE.md`](./docs/28_OFFICERS_FIELD_GUIDE.md) | Day-in-the-life of public officers across eras; disciplines; protections; the officer's compact |
+| 29 | [`docs/29_CITIZENS_FIELD_GUIDE.md`](./docs/29_CITIZENS_FIELD_GUIDE.md) | Plain-language guide to citizen rights, recourse, what to expect, what to look out for |
+| 30 | [`docs/30_CRISIS_AND_EMERGENCY_OPERATIONS.md`](./docs/30_CRISIS_AND_EMERGENCY_OPERATIONS.md) | Pre-positioned playbooks, anticipatory action, emergency authorities, civil liberties safeguards |
 
 ---
 
@@ -53,11 +97,18 @@ The work is organized in **two volumes**:
 ### Volume II (run a civilization for 30+ years)
 
 - **Heads of state / future-generations commissioners:** Vol II Parts 0, 5, 9, 12, 13.
-- **AI authority / safety leads:** Vol II Part 6 + Companion 10 + Companion 16.
+- **AI authority / safety leads:** Vol II Part 6 + Companion 10 + Companion 16 + Companion 18.
 - **Chief architect / infra lead:** Vol II Parts 5, 7, 11 + Companion 11.
-- **UX / inclusion leads:** Vol II Part 8 + Companion 12.
+- **UX / inclusion leads:** Vol II Part 8 + Companion 12 + Companion 17 + Companion 22 + Companion 25.
 - **Module owners planning multi-decade roadmap:** Vol II Part 11 + Companion 09.
-- **Auditor general / algorithmic ombudsman / sovereign trust officer:** Companion 10 + Companion 16.
+- **Auditor general / algorithmic ombudsman / sovereign trust officer:** Companion 10 + Companion 16 + Companion 21 + Companion 24.
+- **Treasury / central bank:** Companion 14.
+- **Foreign ministry / multilateral:** Companion 15.
+- **Constitutional reform team:** Companion 27 + Companion 13.
+- **Sustainability / exit planners:** Companion 20.
+- **Public service leadership:** Companion 28.
+- **Civil society / journalists / citizens:** Companion 29 + Companion 26.
+- **Emergency planners:** Companion 30 + Companion 24.
 
 ---
 
@@ -77,16 +128,43 @@ These do not weaken with capability gain. They strengthen.
 
 ---
 
+## The forbidden list (across all eras)
+
+Capabilities CivicOS will never build. From Companions 16 §12, 21 §17, 24 §2, 30 §16:
+
+- Mass surveillance of lawful private life.
+- Predictive policing of individuals.
+- Algorithmic determinism in justice.
+- Automated lethal force or coercion.
+- Constitutional override by computation.
+- Election outcome optimization.
+- Citizen-scoring systems.
+- Foreign data demands honored without local court order.
+- Vendor coercion mechanisms.
+- Hidden capability deployment.
+- Persuasive optimization of civic surfaces.
+- AI authorship of binding statutes.
+- AI in determinative judicial roles.
+- AI principals (AI is always an agent).
+- Cross-border individual tracking.
+- Commercial use of children's data.
+- Use of CivicOS in coup operations against constitutional government.
+- Use of CivicOS for ethnic, religious, or other categorical persecution.
+- Use of CivicOS to suppress journalism or civil society.
+
+This list grows; it does not shrink.
+
+---
+
 ## Status
 
-Living blueprint on the `claude/sovereign-systems-architecture-q4CcR` branch.
+Living blueprint on the `claude/sovereign-systems-architecture-q4CcR` branch. 32 documents, ~30,000 lines.
 
-Volume II companions planned but not yet authored:
+Companions still planned but not yet authored:
 
-- 13 — Institutional re-engineering across eras (constitutional officers, cabinet evolution)
-- 14 — National Economic OS by decade (full mechanism specification)
-- 15 — Planetary protocols for 2045+ (sovereign interoperability, sovereign exit)
-- 17 — Civic Wallet evolution spec (2030 → 2050+ ambient civic environment)
-- 18 — Sovereign LLM lifecycle and federated training across treaty consortia
-- 19 — Open standards and contribution policy
-- 20 — Long-term sustainability, sunsetting, and exit playbook
+- 31 — Civic Robotics Governance (becomes essential by 2045)
+- 32 — Brain-adjacent Interface Ethics (becomes essential by 2050+)
+- 33 — Inter-platform Protocols (when CivicOS meets non-CivicOS systems)
+- 34 — Markets, Industry, and Public-Private Coordination
+- 35 — Public Knowledge Commons and Scientific Infrastructure
+- 36 — Indigenous and Self-Determined Communities
