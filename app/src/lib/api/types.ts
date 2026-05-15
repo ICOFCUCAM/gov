@@ -244,3 +244,63 @@ export interface ApiError {
   error: string;
   detail?: string;
 }
+
+// ── Interoperability & federation ─────────────────────────────────────
+export type IntegrationKind = 'integration' | 'extension';
+export type IntegrationStatus = 'pending' | 'approved' | 'suspended' | 'revoked';
+
+export interface IntegrationClient {
+  id: string;
+  kind: IntegrationKind;
+  name: string;
+  ownerOrg: string;
+  scopes: string[];
+  status: IntegrationStatus;
+  rateLimitRpm: number;
+  createdAt: ISODate;
+  approvedBy?: string;
+}
+
+export interface IntegrationRegistered {
+  id: string;
+  status: IntegrationStatus;
+  apiKey: string; // shown once
+  note: string;
+}
+
+export type FederationStatus = 'proposed' | 'approved' | 'revoked';
+
+export interface FederationGrant {
+  id: string;
+  fromTenant: string;
+  toTenant: string;
+  scopes: string[];
+  status: FederationStatus;
+  reason: string;
+  createdAt: ISODate;
+  approvedBy?: string;
+  expiresAt?: ISODate;
+}
+
+export type WebhookStatus = 'active' | 'paused' | 'disabled';
+
+export interface WebhookSubscription {
+  id: string;
+  topic: string;
+  url: string;
+  status: WebhookStatus;
+  failures: number;
+  createdAt: ISODate;
+}
+
+export interface WebhookCreated {
+  id: string;
+  topic: string;
+  signingSecret: string; // shown once
+  note: string;
+}
+
+export interface FederationCheck {
+  allowed: boolean;
+  reason: string;
+}

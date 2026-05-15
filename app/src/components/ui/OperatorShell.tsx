@@ -27,6 +27,7 @@ const NAV: Record<OperatorRole, NavItem[]> = {
   ],
   admin: [
     { href: '/ops', label: 'Operations centre' },
+    { href: '/integrations', label: 'Interoperability' },
     { href: '/admin/onboarding', label: 'Onboarding' },
   ],
 };

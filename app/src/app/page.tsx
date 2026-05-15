@@ -92,6 +92,8 @@ export default function HomePage() {
           <Link href="/ops"><Button variant="secondary">Operations centre →</Button></Link>
           <Link href="/control"><Button variant="secondary">Ministry operations →</Button></Link>
           <Link href="/audit"><Button variant="secondary">Auditor oversight →</Button></Link>
+          <Link href="/integrations"><Button variant="secondary">Interoperability →</Button></Link>
+          <Link href="/developers"><Button variant="secondary">Developer guide →</Button></Link>
         </div>
       </section>
 

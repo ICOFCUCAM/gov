@@ -18,6 +18,13 @@ import type {
   OpsOverview,
   PaymentReceipt,
   Permit,
+  IntegrationClient,
+  IntegrationKind,
+  IntegrationRegistered,
+  FederationGrant,
+  FederationCheck,
+  WebhookSubscription,
+  WebhookCreated,
   SignatureRequest,
   SignatureResult,
   VerifyResult,
@@ -82,6 +89,52 @@ export const api = {
           method: 'POST',
           body: JSON.stringify({ by, note }),
         }),
+    },
+  },
+  interop: {
+    integrations: {
+      list: () => req<{ integrations: IntegrationClient[] }>('/api/integrations'),
+      register: (body: {
+        kind: IntegrationKind;
+        name: string;
+        ownerOrg: string;
+        contact: string;
+        scopes: string[];
+      }) =>
+        req<IntegrationRegistered>('/api/integrations', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        }),
+      approve: (id: string) =>
+        req<{ integration: IntegrationClient }>(`/api/integrations/${id}/approve`, { method: 'POST', body: '{}' }),
+      revoke: (id: string) =>
+        req<{ integration: IntegrationClient }>(`/api/integrations/${id}/revoke`, { method: 'POST', body: '{}' }),
+    },
+    federation: {
+      grants: () => req<{ grants: FederationGrant[] }>('/api/federation/grants'),
+      propose: (body: { toTenant: string; scopes: string[]; reason: string; expiresAt?: string }) =>
+        req<{ grant: FederationGrant }>('/api/federation/propose', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        }),
+      approve: (id: string) =>
+        req<{ grant: FederationGrant }>(`/api/federation/grants/${id}/approve`, { method: 'POST', body: '{}' }),
+      revoke: (id: string) =>
+        req<{ grant: FederationGrant }>(`/api/federation/grants/${id}/revoke`, { method: 'POST', body: '{}' }),
+      check: (to: string, scope: string) =>
+        req<FederationCheck>(
+          `/api/federation/check?to=${encodeURIComponent(to)}&scope=${encodeURIComponent(scope)}`,
+        ),
+    },
+    webhooks: {
+      list: () => req<{ webhooks: WebhookSubscription[] }>('/api/webhooks'),
+      subscribe: (body: { topic: string; url: string }) =>
+        req<WebhookCreated>('/api/webhooks', {
+          method: 'POST',
+          body: JSON.stringify(body),
+        }),
+      pause: (id: string) =>
+        req<{ webhook: WebhookSubscription }>(`/api/webhooks/${id}/pause`, { method: 'POST', body: '{}' }),
     },
   },
   payments: {

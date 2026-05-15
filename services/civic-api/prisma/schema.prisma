@@ -59,6 +59,10 @@ model Tenant {
   outbox       OutboxEvent[]
   roleBindings RoleBinding[]
   incidents    Incident[]
+  integrations IntegrationClient[]
+  webhooks     WebhookSubscription[]
+  grantsOut    FederationGrant[]     @relation("GrantFrom")
+  grantsIn     FederationGrant[]     @relation("GrantTo")
 
   @@index([kind, status])
 }
@@ -371,4 +375,90 @@ model Incident {
 
   @@index([tenantId, status])
   @@index([tenantId, severity])
+}
+
+/// Registered external system or sovereign-approved extension. Authenticates
+/// via a hashed API key, is permission-scoped, and starts PENDING until a
+/// ministry operator approves it (institutional coordination, human-governed).
+enum IntegrationKind {
+  INTEGRATION // external system calling the API
+  EXTENSION // ministry/municipality module extending a domain
+}
+
+enum IntegrationStatus {
+  PENDING
+  APPROVED
+  SUSPENDED
+  REVOKED
+}
+
+model IntegrationClient {
+  id           String            @id @default(cuid())
+  tenantId     String
+  tenant       Tenant            @relation(fields: [tenantId], references: [id])
+  kind         IntegrationKind
+  name         String
+  ownerOrg     String
+  contact      String
+  keyHash      String // sha-256 of the issued API key; raw key shown once
+  scopes       String[] // e.g. ["permit:read","payment:read"]
+  status       IntegrationStatus @default(PENDING)
+  rateLimitRpm Int               @default(120)
+  approvedBy   String?
+  createdAt    DateTime          @default(now())
+  approvedAt   DateTime?
+
+  @@unique([tenantId, name])
+  @@index([keyHash])
+  @@index([tenantId, status])
+}
+
+/// Controlled cross-tenant access. DEFAULT DENY: a tenant may only read or
+/// act on another tenant's resources where an APPROVED, unexpired grant with
+/// the required scope exists. Federation is never implicit.
+enum FederationStatus {
+  PROPOSED
+  APPROVED
+  REVOKED
+}
+
+model FederationGrant {
+  id           String           @id @default(cuid())
+  fromTenantId String
+  fromTenant   Tenant           @relation("GrantFrom", fields: [fromTenantId], references: [id])
+  toTenantId   String
+  toTenant     Tenant           @relation("GrantTo", fields: [toTenantId], references: [id])
+  scopes       String[] // narrow capability codes the grant permits
+  status       FederationStatus @default(PROPOSED)
+  reason       String
+  approvedBy   String?
+  expiresAt    DateTime?
+  createdAt    DateTime         @default(now())
+  approvedAt   DateTime?
+
+  @@unique([fromTenantId, toTenantId])
+  @@index([toTenantId, status])
+}
+
+/// Webhook subscription. Tenant-scoped, topic-filtered. Deliveries are HMAC
+/// signed; consumers verify signature + timestamp (replay protection).
+enum WebhookStatus {
+  ACTIVE
+  PAUSED
+  DISABLED
+}
+
+model WebhookSubscription {
+  id         String        @id @default(cuid())
+  tenantId   String
+  tenant     Tenant        @relation(fields: [tenantId], references: [id])
+  topic      String // e.g. "civicos.permit.decided" or "*"
+  url        String
+  secretHash String // sha-256 of the signing secret
+  status     WebhookStatus @default(ACTIVE)
+  failures   Int           @default(0)
+  createdAt  DateTime      @default(now())
+
+  @@index([tenantId, status])
+  @@index([topic])
 }

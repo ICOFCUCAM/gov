@@ -30,6 +30,13 @@ import type {
   SignatureRequest,
   SignatureResult,
   TenantHealth,
+  IntegrationClient,
+  IntegrationKind,
+  IntegrationRegistered,
+  FederationGrant,
+  WebhookSubscription,
+  WebhookCreated,
+  FederationCheck,
   VerifyResult,
 } from '@/lib/api/types';
 
@@ -121,7 +128,43 @@ function seed() {
     'Tana Delta': 22,
   };
 
-  return { permits, bills, receipts, notifications, audit, incidents, tenantSync };
+  const integrations: IntegrationClient[] = [
+    {
+      id: 'IC-7001',
+      kind: 'integration',
+      name: 'County GIS connector',
+      ownerOrg: 'Kiambu Lands Office',
+      scopes: ['permit:read'],
+      status: 'approved',
+      rateLimitRpm: 120,
+      createdAt: days(-20),
+      approvedBy: 'L. Mwakio',
+    },
+  ];
+  const grants: FederationGrant[] = [
+    {
+      id: 'FG-3001',
+      fromTenant: 'kiambu',
+      toTenant: 'min-health',
+      scopes: ['permit:read'],
+      status: 'approved',
+      reason: 'Health ministry oversight of food-handling permits',
+      createdAt: days(-15),
+      approvedBy: 'STO',
+    },
+  ];
+  const webhooks: WebhookSubscription[] = [
+    {
+      id: 'WH-9001',
+      topic: 'civicos.permit.decided',
+      url: 'https://lands.kiambu.go.ke/hooks/permits',
+      status: 'active',
+      failures: 0,
+      createdAt: days(-10),
+    },
+  ];
+
+  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks };
 }
 
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
@@ -547,3 +590,174 @@ export const resolveIncident = (id: string, by: string, note?: string) =>
   mutateIncident(id, by, 'resolved', note);
 export const escalateIncident = (id: string, by: string, note?: string) =>
   mutateIncident(id, by, 'escalated', note);
+
+// ── Interoperability & federation (mirrors the backend contract) ──────
+const HOME_TENANT = 'kiambu';
+
+export function listIntegrations(): IntegrationClient[] {
+  return [...db.integrations].sort(
+    (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
+  );
+}
+
+export function registerIntegration(input: {
+  kind: IntegrationKind;
+  name: string;
+  ownerOrg: string;
+  contact: string;
+  scopes: string[];
+}): IntegrationRegistered | { error: string } {
+  if (db.integrations.some(i => i.name === input.name)) {
+    return { error: 'Name already registered' };
+  }
+  const rawKey = `civ_${Math.random().toString(36).slice(2)}${Math.random()
+    .toString(36)
+    .slice(2)}`;
+  const client: IntegrationClient = {
+    id: uid('IC'),
+    kind: input.kind,
+    name: input.name,
+    ownerOrg: input.ownerOrg,
+    scopes: input.scopes,
+    status: 'pending',
+    rateLimitRpm: 120,
+    createdAt: new Date().toISOString(),
+  };
+  db.integrations.unshift(client);
+  appendAudit('operator', 'integration.register', `Integration:${client.id}`, 'ok', input.name);
+  return {
+    id: client.id,
+    status: client.status,
+    apiKey: rawKey,
+    note: 'Store this key now — it is not recoverable. PENDING until a ministry operator approves it.',
+  };
+}
+
+export function setIntegrationStatus(
+  id: string,
+  status: 'approved' | 'suspended' | 'revoked',
+  by: string,
+): IntegrationClient | { error: string } {
+  const c = db.integrations.find(i => i.id === id);
+  if (!c) return { error: 'Integration not found' };
+  c.status = status;
+  if (status === 'approved') c.approvedBy = by;
+  appendAudit(by, `integration.${status}`, `Integration:${id}`, 'ok');
+  return c;
+}
+
+export function listGrants(): FederationGrant[] {
+  return [...db.grants].sort(
+    (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
+  );
+}
+
+export function proposeGrant(input: {
+  toTenant: string;
+  scopes: string[];
+  reason: string;
+  expiresAt?: string;
+}): FederationGrant | { error: string } {
+  if (input.toTenant === HOME_TENANT) {
+    return { error: 'A tenant cannot federate with itself' };
+  }
+  const existing = db.grants.find(
+    g => g.fromTenant === HOME_TENANT && g.toTenant === input.toTenant,
+  );
+  if (existing) {
+    existing.scopes = input.scopes;
+    existing.reason = input.reason;
+    existing.status = 'proposed';
+    existing.expiresAt = input.expiresAt;
+    appendAudit('operator', 'federation.propose', `Grant:${existing.id}`, 'ok');
+    return existing;
+  }
+  const grant: FederationGrant = {
+    id: uid('FG'),
+    fromTenant: HOME_TENANT,
+    toTenant: input.toTenant,
+    scopes: input.scopes,
+    status: 'proposed',
+    reason: input.reason,
+    createdAt: new Date().toISOString(),
+    expiresAt: input.expiresAt,
+  };
+  db.grants.unshift(grant);
+  appendAudit('operator', 'federation.propose', `Grant:${grant.id}`, 'ok');
+  return grant;
+}
+
+export function setGrantStatus(
+  id: string,
+  status: 'approved' | 'revoked',
+  by: string,
+): FederationGrant | { error: string } {
+  const g = db.grants.find(x => x.id === id);
+  if (!g) return { error: 'Grant not found' };
+  g.status = status;
+  if (status === 'approved') g.approvedBy = by;
+  appendAudit(by, `federation.${status}`, `Grant:${id}`, 'ok');
+  return g;
+}
+
+// The default-deny enforcement primitive. Fail closed.
+export function federationCheck(
+  toTenant: string,
+  scope: string,
+): FederationCheck {
+  if (toTenant === HOME_TENANT) return { allowed: true, reason: 'same-tenant' };
+  const g = db.grants.find(
+    x => x.fromTenant === HOME_TENANT && x.toTenant === toTenant,
+  );
+  if (!g) return { allowed: false, reason: 'no grant (default deny)' };
+  if (g.status !== 'approved') return { allowed: false, reason: `grant is ${g.status}` };
+  if (g.expiresAt && new Date(g.expiresAt).getTime() < Date.now()) {
+    return { allowed: false, reason: 'grant expired' };
+  }
+  if (!g.scopes.includes(scope)) {
+    return { allowed: false, reason: `scope '${scope}' not granted` };
+  }
+  return { allowed: true, reason: 'granted' };
+}
+
+export function listWebhooks(): WebhookSubscription[] {
+  return [...db.webhooks].sort(
+    (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
+  );
+}
+
+export function subscribeWebhook(input: {
+  topic: string;
+  url: string;
+}): WebhookCreated {
+  const secret = `whsec_${Math.random().toString(36).slice(2)}${Math.random()
+    .toString(36)
+    .slice(2)}`;
+  const sub: WebhookSubscription = {
+    id: uid('WH'),
+    topic: input.topic,
+    url: input.url,
+    status: 'active',
+    failures: 0,
+    createdAt: new Date().toISOString(),
+  };
+  db.webhooks.unshift(sub);
+  appendAudit('operator', 'webhook.subscribe', `Webhook:${sub.id}`, 'ok', input.topic);
+  return {
+    id: sub.id,
+    topic: sub.topic,
+    signingSecret: secret,
+    note: 'Store this secret now. Verify HMAC-SHA256 of `${timestamp}.${body}`; reject timestamps older than 300s.',
+  };
+}
+
+export function setWebhookStatus(
+  id: string,
+  status: 'active' | 'paused' | 'disabled',
+): WebhookSubscription | { error: string } {
+  const w = db.webhooks.find(x => x.id === id);
+  if (!w) return { error: 'Subscription not found' };
+  w.status = status;
+  appendAudit('operator', `webhook.${status}`, `Webhook:${id}`, 'ok');
+  return w;
+}

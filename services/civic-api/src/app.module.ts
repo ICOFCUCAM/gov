@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_FILTER, APP_INTERCEPTOR } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
 import { PrismaModule } from './prisma/prisma.module';
 import { EventsModule } from './events/events.module';
 import { HealthModule } from './modules/health/health.module';
@@ -11,8 +11,11 @@ import { PaymentsModule } from './modules/payments/payments.module';
 import { AuditModule } from './modules/audit/audit.module';
 import { MetricsModule } from './modules/metrics/metrics.module';
 import { OpsModule } from './modules/ops/ops.module';
+import { InteropModule } from './modules/interop/interop.module';
 import { AuditInterceptor } from './common/audit.interceptor';
 import { MetricsInterceptor } from './common/metrics';
+import { VersionHeaderInterceptor } from './common/versioning';
+import { RateLimitGuard } from './common/rate-limit.guard';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 
 @Module({
@@ -28,9 +31,12 @@ import { HttpExceptionFilter } from './common/http-exception.filter';
     AuditModule,
     MetricsModule,
     OpsModule,
+    InteropModule,
   ],
   providers: [
+    { provide: APP_GUARD, useClass: RateLimitGuard },
     { provide: APP_INTERCEPTOR, useClass: MetricsInterceptor },
+    { provide: APP_INTERCEPTOR, useClass: VersionHeaderInterceptor },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
   ],
