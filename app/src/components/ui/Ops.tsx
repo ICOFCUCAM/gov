@@ -63,9 +63,12 @@ export function MetricStat({
           ? 'text-alert'
           : 'text-ink';
   return (
-    <div className="rounded-md border border-line bg-surface p-4">
-      <div className="text-sm text-ink-muted">{label}</div>
-      <div className={cn('mt-1 font-serif text-3xl', color)}>{value}</div>
+    <div
+      className="rounded-[3px] border border-line bg-surface px-3 py-2"
+      style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}
+    >
+      <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{label}</div>
+      <div className={cn('font-mono text-2xl tabular-nums', color)}>{value}</div>
     </div>
   );
 }
