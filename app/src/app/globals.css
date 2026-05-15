@@ -8,11 +8,41 @@
 @layer base {
   :root {
     --tap: 44px;
+    /* Light institutional palette (citizen / public / admin surfaces) */
+    --c-bg: 247 245 241;
+    --c-surface: 255 255 255;
+    --c-surface-2: 241 238 232;
+    --c-ink: 26 29 35;
+    --c-ink-soft: 71 80 97;
+    --c-ink-muted: 108 117 136;
+    --c-line: 217 212 200;
+    --c-line-soft: 236 232 222;
+    --c-link: 31 95 173;
+    --c-link-hover: 19 63 120;
   }
+
+  /* Sovereign command environment — dark graphite / deep navy / steel.
+     Scoped: only the National Shell subtree carries .sov, so citizen,
+     public and admin experiences keep the light institutional palette. */
+  .sov {
+    --c-bg: 9 12 17;
+    --c-surface: 17 21 28;
+    --c-surface-2: 26 32 42;
+    --c-ink: 226 231 238;
+    --c-ink-soft: 160 170 184;
+    --c-ink-muted: 124 134 149;
+    --c-line: 42 50 62;
+    --c-line-soft: 30 37 47;
+    --c-link: 124 172 232;
+    --c-link-hover: 168 200 244;
+    color: rgb(var(--c-ink));
+    background-color: rgb(var(--c-bg));
+  }
+
   html {
     font-family: theme('fontFamily.sans');
-    color: theme('colors.ink');
-    background: theme('colors.bg');
+    color: rgb(var(--c-ink));
+    background: rgb(var(--c-bg));
     -webkit-font-smoothing: antialiased;
     text-rendering: optimizeLegibility;
   }

@@ -10,6 +10,7 @@ import { resolveIdentity, shellStrings } from '@/lib/sovereign-identity';
 import type {
   CabinetOverview,
   NationalSnapshot,
+  NationalCoordination,
   SovereignProfile,
 } from '@/lib/api/types';
 
@@ -22,18 +23,25 @@ const STATE_FORM_LABEL: Record<string, string> = {
   parliamentary: 'Parliamentary state',
 };
 
+const TONE_HEX: Record<string, string> = {
+  alert: '#e26e66',
+  warn: '#d6aa46',
+  ok: '#5fc88c',
+  neutral: '#7a8492',
+};
+
 interface NavItem {
   href: string;
   label: string;
 }
 
 /**
- * National Shell — the sovereign operating environment. A persistent command
- * rail + command bar + workspace pane. Institution workspaces are dynamic
- * (from the configured ministries), so the same shell serves a republic, a
- * federation, a monarchy, or a city-state without code changes. Global-state
- * neutral by construction: all state language comes from the sovereign
- * profile, never hardcoded.
+ * National Shell — a full-screen, persistent sovereign command environment.
+ * Fixed command rail · global command header · active alert strip ·
+ * scrollable operational canvas · persistent live event ticker. Dark
+ * sovereign palette is scoped via `.sov`, so citizen/public/admin surfaces
+ * keep the light institutional theme. Global-state neutral: all state
+ * language comes from the sovereign profile, never hardcoded.
  */
 export function AppShell({
   active,
@@ -45,25 +53,37 @@ export function AppShell({
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [cab, setCab] = React.useState<CabinetOverview | null>(null);
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
+  const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [q, setQ] = React.useState('');
+  const [now, setNow] = React.useState(() => Date.now());
+
+  const load = React.useCallback(async () => {
+    try {
+      const [s, c, n, co] = await Promise.all([
+        api.sovereign.get(),
+        api.cabinet.overview(),
+        api.cabinet.national(),
+        api.cabinet.coordination().catch(() => null),
+      ]);
+      setSov(s.sovereign);
+      setCab(c);
+      setNat(n);
+      setCoord(co);
+    } catch {
+      /* shell still renders; rail degrades to core workspaces */
+    }
+  }, []);
 
   React.useEffect(() => {
-    void (async () => {
-      try {
-        const [s, c, n] = await Promise.all([
-          api.sovereign.get(),
-          api.cabinet.overview(),
-          api.cabinet.national(),
-        ]);
-        setSov(s.sovereign);
-        setCab(c);
-        setNat(n);
-      } catch {
-        /* shell still renders; rail degrades to core workspaces */
-      }
-    })();
-  }, []);
+    void load();
+    const poll = setInterval(() => void load(), 20_000);
+    const tick = setInterval(() => setNow(Date.now()), 1000);
+    return () => {
+      clearInterval(poll);
+      clearInterval(tick);
+    };
+  }, [load]);
 
   const stateGroup: NavItem[] = [
     { href: '/gov', label: 'Cabinet' },
@@ -82,7 +102,18 @@ export function AppShell({
 
   const alerts = cab?.totals.activeIncidents ?? 0;
   const identity = sov ? resolveIdentity(sov) : null;
+  const accent = identity?.accent ?? '#1f5fad';
   const t = shellStrings(sov?.locale ?? 'en');
+  const clock = new Date(now);
+
+  const ticker =
+    coord?.timeline.slice(0, 12) ??
+    nat?.crossMinistryIncidents.slice(0, 8).map(c => ({
+      tone: 'alert' as const,
+      title: `${c.ministry}: ${c.label}`,
+      detail: c.authority,
+    })) ??
+    [];
 
   function railLink(it: NavItem) {
     const on = active === it.href;
@@ -92,10 +123,10 @@ export function AppShell({
         href={it.href}
         aria-current={on ? 'page' : undefined}
         className={cn(
-          'block truncate rounded-sm px-3 py-1.5 text-sm no-underline',
+          'block truncate border-l-2 px-3 py-1.5 text-sm no-underline',
           on
-            ? 'bg-[#1f2630] text-white font-medium'
-            : 'text-[#c7cdd6] hover:bg-[#1a2029]',
+            ? 'border-l-[color:var(--accent)] bg-surface-2 font-medium text-ink'
+            : 'border-transparent text-ink-muted hover:bg-surface-2/60 hover:text-ink',
         )}
       >
         {it.label}
@@ -105,9 +136,9 @@ export function AppShell({
 
   return (
     <div
-      className="min-h-screen bg-bg text-ink"
+      className="sov flex h-screen flex-col overflow-hidden font-sans"
       dir={identity?.dir ?? 'ltr'}
-      style={identity ? ({ ['--accent' as string]: identity.accent }) : undefined}
+      style={{ ['--accent' as string]: accent }}
     >
       <a
         href="#workspace"
@@ -116,44 +147,48 @@ export function AppShell({
         Skip to workspace
       </a>
       <OfflineBanner />
-      <div className="flex">
-        {/* Command rail */}
+
+      <div className="flex min-h-0 flex-1">
+        {/* Persistent command rail */}
         <nav
           aria-label="Sovereign navigation"
-          className="hidden w-60 shrink-0 flex-col bg-[#0f141b] px-3 py-4 md:flex md:min-h-screen"
+          className="hidden w-60 shrink-0 flex-col border-r border-line bg-bg md:flex"
         >
-          <Link href="/gov" className="flex items-center gap-2.5 px-2 text-white no-underline">
+          <Link
+            href="/gov"
+            className="flex items-center gap-2.5 border-b border-line px-3 py-3 no-underline"
+          >
             <span
               aria-hidden
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-sm text-xs font-bold tracking-tight text-white ring-1 ring-white/20"
-              style={{ backgroundColor: identity?.accent ?? '#1f2630' }}
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-sm text-xs font-bold tracking-tight text-white ring-1 ring-white/15"
+              style={{ backgroundColor: accent }}
             >
               {identity ? identity.seal : 'SS'}
             </span>
             <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold tracking-tight">
+              <span className="block truncate text-sm font-semibold tracking-tight text-ink">
                 {sov ? sov.stateName : 'Sovereign State'}
               </span>
-              <span className="block truncate text-[11px] text-[#8b95a3]">
+              <span className="block truncate text-[11px] text-ink-muted">
                 {identity?.motto || 'CivicOS · sovereign operations'}
               </span>
             </span>
           </Link>
-          <div className="mt-5 space-y-5 overflow-y-auto">
+          <div className="flex-1 space-y-5 overflow-y-auto py-4">
             <div>
-              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-[#6c7682]">
+              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
                 {t.state}
               </div>
               {stateGroup.map(railLink)}
             </div>
             <div>
-              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-[#6c7682]">
+              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
                 {t.institutions}
               </div>
               {institutions.length === 0 ? (
                 <Link
                   href="/ministries"
-                  className="block px-3 py-1.5 text-sm text-[#8b95a3] no-underline hover:text-white"
+                  className="block px-3 py-1.5 text-sm text-ink-muted no-underline hover:text-ink"
                 >
                   {t.compose}
                 </Link>
@@ -162,26 +197,30 @@ export function AppShell({
               )}
             </div>
             <div>
-              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-[#6c7682]">
+              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
                 {t.platform}
               </div>
               {platformGroup.map(railLink)}
             </div>
           </div>
-          <div className="mt-auto px-3 pt-4 text-[10px] text-[#5b636e]">
+          <div className="border-t border-line px-3 py-3 text-[10px] uppercase tracking-widest text-ink-muted">
             Humans govern · AI assists
           </div>
         </nav>
 
-        {/* Workspace */}
+        {/* Workspace column */}
         <div className="flex min-w-0 flex-1 flex-col">
-          <header className="flex items-center justify-between gap-4 border-b border-line bg-surface px-4 py-2">
+          {/* Global command header */}
+          <header className="flex shrink-0 items-center justify-between gap-4 border-b border-line bg-surface px-4 py-2">
             <div className="flex min-w-0 items-center gap-3">
-              <span className="hidden rounded-sm border border-[#9aa1ab] px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest text-ink-soft sm:inline">
+              <span
+                className="hidden rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-soft sm:inline"
+                style={{ borderColor: 'rgb(var(--c-line))' }}
+              >
                 {nat ? nat.classification : 'OFFICIAL'}
               </span>
               <div className="min-w-0">
-                <div className="truncate text-sm font-semibold">
+                <div className="truncate text-sm font-semibold text-ink">
                   {sov ? sov.stateName : 'Sovereign State'}
                 </div>
                 <div className="truncate text-xs text-ink-muted">
@@ -191,14 +230,16 @@ export function AppShell({
               </div>
             </div>
             <div className="flex items-center gap-3">
-              {/* Global institution search */}
+              <span className="hidden font-mono text-xs tabular-nums text-ink-muted lg:inline">
+                {clock.toLocaleTimeString()}
+              </span>
               <div className="relative hidden md:block">
                 <input
                   value={q}
                   onChange={e => setQ(e.target.value)}
                   placeholder={t.search}
                   aria-label={t.search}
-                  className="w-48 rounded-sm border border-line bg-surface px-2 py-1 text-sm"
+                  className="w-48 rounded-sm border border-line bg-bg px-2 py-1 text-sm text-ink placeholder:text-ink-muted"
                 />
                 {q && institutions.filter(i => i.label.toLowerCase().includes(q.toLowerCase())).length > 0 ? (
                   <div className="absolute right-0 z-40 mt-1 w-64 rounded-sm border border-line bg-surface shadow-xl">
@@ -210,7 +251,7 @@ export function AppShell({
                           key={i.href}
                           href={i.href}
                           onClick={() => setQ('')}
-                          className="block px-3 py-1.5 text-sm no-underline text-ink hover:bg-surface-2"
+                          className="block px-3 py-1.5 text-sm text-ink no-underline hover:bg-surface-2"
                         >
                           {i.label}
                         </Link>
@@ -218,15 +259,16 @@ export function AppShell({
                   </div>
                 ) : null}
               </div>
-              {/* Notification centre */}
               <div className="relative">
                 <button
                   type="button"
                   aria-expanded={notifOpen}
                   onClick={() => setNotifOpen(o => !o)}
                   className={cn(
-                    'rounded-full px-2 py-0.5 text-xs',
-                    alerts > 0 ? 'bg-[#f7e3e1] text-alert' : 'bg-surface-2 text-ink-soft',
+                    'rounded-sm border px-2 py-0.5 text-xs',
+                    alerts > 0
+                      ? 'border-alert/60 bg-alert/15 text-alert'
+                      : 'border-line bg-surface-2 text-ink-soft',
                   )}
                   title="Active institutional incidents"
                 >
@@ -248,7 +290,7 @@ export function AppShell({
                             <Link
                               href={`/gov/ministry/${c.ministryId}`}
                               onClick={() => setNotifOpen(false)}
-                              className="no-underline text-ink"
+                              className="text-ink no-underline"
                             >
                               <span className="font-medium">{c.label}</span>
                               <div className="text-xs text-ink-muted">
@@ -264,15 +306,61 @@ export function AppShell({
                   </div>
                 ) : null}
               </div>
-              <span className="hidden rounded-full bg-surface-2 px-2 py-0.5 text-xs text-ink-soft sm:inline">
+              <span className="hidden rounded-sm border border-line bg-surface-2 px-2 py-0.5 text-xs text-ink-soft sm:inline">
                 {nat ? nat.environment : 'Production'} · {sov?.currency ?? 'USD'}
               </span>
               <AccessibilityMenu />
             </div>
           </header>
-          <main id="workspace" className="min-w-0 flex-1 p-4 lg:p-6">
+
+          {/* Active alert strip */}
+          {alerts > 0 && nat && nat.crossMinistryIncidents.length > 0 ? (
+            <div className="flex shrink-0 items-center gap-3 overflow-hidden border-b border-alert/40 bg-alert/10 px-4 py-1 text-xs">
+              <span className="shrink-0 font-semibold uppercase tracking-widest text-alert">
+                ⚠ {alerts} active
+              </span>
+              <div className="flex min-w-0 flex-1 gap-6 overflow-hidden">
+                {nat.crossMinistryIncidents.slice(0, 4).map((c, i) => (
+                  <Link
+                    key={i}
+                    href={`/gov/ministry/${c.ministryId}`}
+                    className="truncate text-ink-soft no-underline hover:text-ink"
+                  >
+                    <span className="font-medium">{c.ministry}</span>: {c.label} ·{' '}
+                    {c.severity.toUpperCase()}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ) : null}
+
+          {/* Operational canvas (only this scrolls) */}
+          <main id="workspace" className="min-w-0 flex-1 overflow-y-auto bg-bg p-4 lg:p-6">
             {children}
           </main>
+
+          {/* Persistent live event ticker */}
+          <div className="flex shrink-0 items-center gap-3 border-t border-line bg-surface px-4 py-1.5">
+            <span className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
+              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[#5fc88c]" />
+              {coord ? `Live · T${coord.tick}` : 'Live'}
+            </span>
+            <div className="flex min-w-0 flex-1 items-center gap-6 overflow-hidden">
+              {ticker.length === 0 ? (
+                <span className="text-xs text-ink-muted">National operations nominal — no recent events.</span>
+              ) : (
+                ticker.map((ev, i) => (
+                  <span key={i} className="flex shrink-0 items-center gap-1.5 text-xs text-ink-soft">
+                    <span
+                      className="inline-block h-1.5 w-1.5 rounded-full"
+                      style={{ backgroundColor: TONE_HEX[ev.tone] ?? TONE_HEX.neutral }}
+                    />
+                    <span className="truncate">{ev.title}</span>
+                  </span>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>

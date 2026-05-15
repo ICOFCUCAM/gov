@@ -5,20 +5,20 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // Surface
-        bg: '#f7f5f1',
-        surface: '#ffffff',
-        'surface-2': '#f1eee8',
-        // Ink
-        ink: '#1a1d23',
-        'ink-soft': '#475061',
-        'ink-muted': '#6c7588',
-        // Lines
-        line: '#d9d4c8',
-        'line-soft': '#ece8de',
-        // Link
-        link: '#1f5fad',
-        'link-hover': '#133f78',
+        // Semantic tokens — CSS-variable driven so a scoped sovereign
+        // theme (.sov) can repaint the whole command environment without
+        // touching components. Light defaults in :root; dark sovereign
+        // palette overrides under .sov.
+        bg: 'rgb(var(--c-bg) / <alpha-value>)',
+        surface: 'rgb(var(--c-surface) / <alpha-value>)',
+        'surface-2': 'rgb(var(--c-surface-2) / <alpha-value>)',
+        ink: 'rgb(var(--c-ink) / <alpha-value>)',
+        'ink-soft': 'rgb(var(--c-ink-soft) / <alpha-value>)',
+        'ink-muted': 'rgb(var(--c-ink-muted) / <alpha-value>)',
+        line: 'rgb(var(--c-line) / <alpha-value>)',
+        'line-soft': 'rgb(var(--c-line-soft) / <alpha-value>)',
+        link: 'rgb(var(--c-link) / <alpha-value>)',
+        'link-hover': 'rgb(var(--c-link-hover) / <alpha-value>)',
         // Decision Class palette
         'class-a': '#4a6b8a',
         'class-b': '#2d6a4f',
