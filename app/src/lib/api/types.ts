@@ -488,3 +488,42 @@ export interface MinistryFieldOps {
   ministry: { id: string; name: string; archetype: ArchetypeKey };
   units: FieldUnitStatus[];
 }
+
+// ── Sovereign profile (global-state neutrality) ──────────────────────
+export type StateForm =
+  | 'republic'
+  | 'federation'
+  | 'monarchy'
+  | 'city-state'
+  | 'union'
+  | 'parliamentary';
+
+export interface SovereignProfile {
+  stateName: string;
+  stateForm: StateForm;
+  executiveTitle: string;   // President / Prime Minister / Chancellor / Emir …
+  legislatureName: string;  // National Assembly / Bundestag / Federal Council …
+  currency: string;         // ISO 4217
+  regionNoun: string;       // region / province / state / emirate / canton …
+  locale: string;
+}
+
+export interface CabinetOverview {
+  sovereign: SovereignProfile;
+  generatedAt: ISODate;
+  institutions: {
+    id: string;
+    name: string;
+    archetype: ArchetypeKey;
+    status: MinistryStatus;
+    openQueue: number;
+    activeIncidents: number;
+  }[];
+  totals: {
+    institutions: number;
+    activeMinistries: number;
+    activeIncidents: number;
+    queuesBreaching: number;
+    auditIntact: boolean;
+  };
+}

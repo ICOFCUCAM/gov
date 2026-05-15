@@ -81,6 +81,20 @@ export default function HomePage() {
       </section>
 
       <section className="space-y-3">
+        <h2 className="text-2xl font-semibold">National Shell</h2>
+        <p className="text-ink-muted max-w-2xl">
+          The sovereign operating environment — a command rail, workspace
+          switching, and whole-of-government command. Global-state neutral:
+          configurable for a republic, federation, monarchy, city-state, or
+          union. Institution workspaces mount inside one ecosystem, not
+          isolated pages.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/gov"><Button>Enter the National Shell →</Button></Link>
+        </div>
+      </section>
+
+      <section className="space-y-3">
         <h2 className="text-2xl font-semibold">Operational roles</h2>
         <p className="text-ink-muted max-w-2xl">
           Each role gets a purpose-built, uncluttered workspace. The officer

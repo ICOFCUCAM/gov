@@ -19,3 +19,4 @@ export { AccessibilityMenu } from './AccessibilityMenu';
 export { WorkflowBar, type WorkflowAction } from './WorkflowBar';
 export { HealthTile, MetricStat, ThresholdBar, SeverityBadge } from './Ops';
 export { Section, DataTable, StatusText, Delta, type Column } from './DataSystem';
+export { AppShell } from './AppShell';

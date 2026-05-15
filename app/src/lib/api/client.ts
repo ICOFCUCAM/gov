@@ -42,6 +42,8 @@ import type {
   MinistryIncidents,
   MinistryIncident,
   MinistryFieldOps,
+  SovereignProfile,
+  CabinetOverview,
   MinistryQueue,
   QueueItem,
   QueueAction,
@@ -65,6 +67,17 @@ async function req<T>(input: string, init?: RequestInit): Promise<T> {
 }
 
 export const api = {
+  sovereign: {
+    get: () => req<{ sovereign: SovereignProfile }>('/api/sovereign'),
+    update: (patch: Partial<SovereignProfile>) =>
+      req<{ sovereign: SovereignProfile }>('/api/sovereign', {
+        method: 'PUT',
+        body: JSON.stringify(patch),
+      }),
+  },
+  cabinet: {
+    overview: () => req<CabinetOverview>('/api/cabinet'),
+  },
   permits: {
     list: () => req<{ permits: Permit[] }>('/api/permits'),
     get: (id: string) => req<{ permit: Permit }>(`/api/permits/${id}`),

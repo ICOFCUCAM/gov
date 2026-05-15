@@ -71,6 +71,8 @@ import type {
   MinistryIncidents,
   FieldUnitStatus,
   MinistryFieldOps,
+  SovereignProfile,
+  CabinetOverview,
   VerifyResult,
 } from '@/lib/api/types';
 import { specFor } from '@/lib/ops-catalog';
@@ -222,8 +224,18 @@ function seed() {
   const ministries: Ministry[] = [];
   const ministryQueues: Record<string, QueueItem[]> = {};
   const ministryIncidents: Record<string, MinistryIncident[]> = {};
+  // Global-state-neutral defaults — works for any state form; configurable.
+  const sovereign: SovereignProfile = {
+    stateName: 'Sovereign State',
+    stateForm: 'republic',
+    executiveTitle: 'Head of Government',
+    legislatureName: 'National Assembly',
+    currency: 'USD',
+    regionNoun: 'region',
+    locale: 'en',
+  };
 
-  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents };
+  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign };
 }
 
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
@@ -1470,5 +1482,54 @@ export function fieldOpsFor(id: string): MinistryFieldOps | { error: string } {
   return {
     ministry: { id: m.id, name: m.name, archetype: m.archetype },
     units,
+  };
+}
+
+// ── Sovereign profile + cabinet (global-state neutrality) ────────────
+export function getSovereign(): SovereignProfile {
+  return db.sovereign;
+}
+
+const STATE_FORMS = ['republic', 'federation', 'monarchy', 'city-state', 'union', 'parliamentary'];
+
+export function setSovereign(
+  patch: Partial<SovereignProfile>,
+  by: string,
+): SovereignProfile | { error: string } {
+  if (patch.stateForm && !STATE_FORMS.includes(patch.stateForm)) {
+    return { error: 'Unknown state form' };
+  }
+  db.sovereign = { ...db.sovereign, ...patch };
+  appendAudit(by, 'sovereign.configure', 'Sovereign:profile', 'ok',
+    patch.stateForm ?? patch.stateName);
+  return db.sovereign;
+}
+
+export function cabinetOverview(): CabinetOverview {
+  const ministries = db.ministries.filter(m => m.status !== 'merged');
+  const institutions = ministries.map(m => {
+    const q = db.ministryQueues[m.id] ?? [];
+    const inc = db.ministryIncidents[m.id] ?? [];
+    return {
+      id: m.id,
+      name: m.name,
+      archetype: m.archetype,
+      status: m.status,
+      openQueue: q.filter(x => x.state !== 'cleared').length,
+      activeIncidents: inc.filter(x => x.active).length,
+    };
+  });
+  const audit = verifyAuditChain();
+  return {
+    sovereign: db.sovereign,
+    generatedAt: new Date().toISOString(),
+    institutions,
+    totals: {
+      institutions: ministries.length,
+      activeMinistries: ministries.filter(m => m.status === 'active').length,
+      activeIncidents: institutions.reduce((s, i) => s + i.activeIncidents, 0),
+      queuesBreaching: institutions.filter(i => i.openQueue > 6).length,
+      auditIntact: audit.ok,
+    },
   };
 }
