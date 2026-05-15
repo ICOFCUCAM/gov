@@ -234,6 +234,25 @@ export function NationalCoordination() {
         </Panel>
       </div>
 
+      {/* Operational command strip */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+        {[
+          { l: 'Readiness posture', v: label, t: level },
+          { l: 'Operational tempo', v: `${Math.round(40 + seed(`nctempo:${epoch}`) * 55)} ops/min`, t: 'ok' },
+          { l: 'Active escalations', v: `${regs.filter(r => r.p >= 78).length} crit · ${regs.filter(r => r.p >= 58 && r.p < 78).length} watch`, t: regs.some(r => r.p >= 78) ? 'alert' : 'warn' },
+          { l: 'Cascade exposures', v: `${cascade}`, t: cascade > 6 ? 'warn' : 'ok' },
+          { l: 'Coordination', v: 'OPERATIONAL', t: 'ok' },
+        ].map(s => (
+          <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
+              {s.l === 'Readiness posture' || s.l === 'Coordination' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
+              {s.v}
+            </span>
+          </div>
+        ))}
+      </div>
+
       <p className="text-[10px] text-ink-muted">
         Coordination intelligence is read-only and advisory. The platform surfaces dependency and tempo; humans hold escalation, mitigation and decision authority. No forecasting, no autonomous action.
       </p>

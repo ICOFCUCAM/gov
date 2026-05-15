@@ -105,12 +105,6 @@ export function OpsCenter() {
     { l: 'Operations posture', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', spark: sp('op', 24, 40, 70), sub: 'all systems nominal' },
     { l: 'Cross-system latency', v: `${120 + Math.round(seed(`xl:${Math.floor(now / 15000)}`) * 90)}ms`, t: 'ok', spark: sp('xl', 22, 40, 80), sub: 'p95 mesh' },
   ];
-  const telemetry = [
-    { l: 'System health', v: '98.7%', t: 'ok' }, { l: 'Operational load', v: '42%', t: 'warn' },
-    { l: 'Active workflows', v: '236', t: 'ok' }, { l: 'Throughput 24h', v: '1.45M', t: 'ok' },
-    { l: 'Error rate', v: '0.02%', t: 'ok' }, { l: 'Sync status', v: 'In sync', t: 'ok' },
-    { l: 'Audit consistency', v: auditOk ? 'Intact' : 'Review', t: auditOk ? 'ok' : 'alert' }, { l: 'Command posture', v: 'Stable', t: 'ok' },
-  ];
   const qTotal = queues.reduce((a, q) => a + q.depth, 0);
   const donut = queues.slice(0, 4).map((q, i) => ({ label: q.name, value: q.depth, tone: ['ok', 'warn', 'alert', 'neutral'][i] ?? 'neutral' }));
 
@@ -272,13 +266,21 @@ export function OpsCenter() {
         </P>
       </div>
 
-      {/* Row 6 — system telemetry (8) */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-8">
-        {telemetry.map(m => (
-          <div key={m.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-            <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
-            <div className="font-mono text-sm tabular-nums" style={{ color: TONE[m.t] }}>{m.v}</div>
-            <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={sp(`tl:${m.l}`, 16)} tone={m.t} /></div>
+      {/* Operational command strip */}
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+        {[
+          { l: 'Readiness posture', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok' },
+          { l: 'Operational tempo', v: `${Math.round(40 + seed(`opstempo:${Math.floor(now / 15000)}`) * 55)} ops/min`, t: 'ok' },
+          { l: 'Open incidents', v: `${openInc} · ${openInc ? '1 crit' : 'nominal'}`, t: openInc ? 'alert' : 'ok' },
+          { l: 'Queue throughput', v: `${(1.2 + seed(`tput:${Math.floor(now / 15000)}`) * 0.6).toFixed(2)}M / 24h`, t: 'ok' },
+          { l: 'Audit consistency', v: auditOk ? 'INTACT' : 'REVIEW', t: auditOk ? 'ok' : 'alert' },
+        ].map(s => (
+          <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
+              {s.l === 'Readiness posture' || s.l === 'Audit consistency' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
+              {s.v}
+            </span>
           </div>
         ))}
       </div>
