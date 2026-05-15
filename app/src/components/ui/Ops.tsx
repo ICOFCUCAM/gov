@@ -26,19 +26,22 @@ export function HealthTile({
   detail?: string;
 }) {
   return (
-    <div className="rounded-md border border-line bg-surface p-4">
+    <div
+      className="rounded-[3px] border border-line bg-surface px-3 py-2"
+      style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}
+    >
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm text-ink-muted">{label}</span>
-        <span className="flex items-center gap-1.5 text-xs">
-          <span className={cn('h-2 w-2 rounded-full', statusDot[status])} aria-hidden />
+        <span className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{label}</span>
+        <span className="flex items-center gap-1 text-[10px] text-ink-soft">
+          <span className={cn('h-1.5 w-1.5 rounded-full', statusDot[status])} aria-hidden />
           {statusWord[status]}
         </span>
       </div>
       {metric ? (
-        <div className="mt-1 font-serif text-2xl">{metric}</div>
+        <div className="font-mono text-lg tabular-nums text-ink">{metric}</div>
       ) : null}
       {detail ? (
-        <div className="mt-1 text-sm text-ink-muted">{detail}</div>
+        <div className="truncate text-[10px] text-ink-muted">{detail}</div>
       ) : null}
     </div>
   );
