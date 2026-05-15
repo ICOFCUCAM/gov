@@ -8,7 +8,7 @@ import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { identityFor } from '@/lib/archetype-profiles';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import {
-  TONE, ACCENT, PALETTE, seed, toneFor, rel, Panel, Spark, LiveValue, NationalMap, TerritoryHeat, waveSeries,
+  TONE, ACCENT, PALETTE, seed, toneFor, rel, Panel, Spark, LiveValue, NationalMap, TerritoryHeat, waveSeries, domainStress,
 } from '@/components/features/SituationRoom';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey,
@@ -64,26 +64,7 @@ function riskState(v: number): RiskState {
   return v >= 78 ? 'critical' : v >= 58 ? 'elevated' : v >= 40 ? 'watch' : 'stable';
 }
 
-// Archetype behavioural fingerprint — each institution carries a distinct
-// domain stress signature so the matrix reads as differentiated
-// institutions, not uniform noise. Keys map DOMAINS index → bias.
-const ARCH_BIAS: Partial<Record<string, number[]>> = {
-  //          Ops  Fisc Infra Civil Sec  Logi Env
-  ENERGY:   [  8,   2,  20,    4,   6,   8,  10],
-  TRANSPORT:[ 10,  -2,  16,    2,   2,  18,   4],
-  HEALTH:   [ 14,   6,   4,   12,   2,  10,   2],
-  FINANCE:  [  2,  20,  -4,    6,   4,  -2,  -4],
-  INTERIOR: [  6,   0,   2,   16,  22,   4,   2],
-  EDUCATION:[  4,   6,   2,    8,  -2,   2,   0],
-  AGRICULTURE:[6,   4,   6,    6,   0,  10,  18],
-  ENVIRONMENT:[4,  -2,   8,    4,   2,   4,  22],
-  TRADE:    [  6,  12,   2,    2,   4,  14,   2],
-  GENERIC:  [  4,   2,   4,    4,   4,   4,   4],
-};
-function archBias(arch: string, domainIdx: number): number {
-  const row = ARCH_BIAS[arch] ?? ARCH_BIAS.GENERIC!;
-  return row[domainIdx] ?? 4;
-}
+const DOMAIN_KEYS = ['ops', 'fisc', 'infra', 'civil', 'sec', 'logi', 'env'];
 
 // Sovereign institutional fallback so the executive brain is never empty
 // (live institutions override when composed).
@@ -378,9 +359,7 @@ export function CabinetIntelligence() {
                           </Link>
                         </td>
                         {DOMAINS.map((d, di) => {
-                          const v = Math.max(4, Math.min(99, Math.round(
-                            m.pressure * 0.34 + archBias(m.archetype, di) + (seed(`rk:${m.ministryId}:${d}`) - 0.5) * 20 + Math.sin(ts / 30 + seed(`ph:${m.ministryId}:${d}`) * 6.28) * 9,
-                          )));
+                          const v = domainStress(m.archetype, DOMAIN_KEYS[di] ?? 'ops', m.pressure, ts, m.ministryId);
                           const st = riskState(v);
                           return (
                             <td key={d} className="px-1 py-1.5 text-center">
