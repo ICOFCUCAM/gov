@@ -10,6 +10,8 @@ import { Section, DataTable, StatusText, type Column } from '@/components/ui/Dat
 import { api } from '@/lib/api/client';
 import type {
   CabinetOverview,
+  NationalSnapshot,
+  SovereignPreset,
   SovereignProfile,
   StateForm,
 } from '@/lib/api/types';
@@ -27,15 +29,34 @@ type Inst = CabinetOverview['institutions'][number];
 
 export function Cabinet() {
   const [ov, setOv] = React.useState<CabinetOverview | null>(null);
+  const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
+  const [presets, setPresets] = React.useState<SovereignPreset[]>([]);
   const [editing, setEditing] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
 
   const load = React.useCallback(async () => {
-    setOv(await api.cabinet.overview());
+    const [o, n, p] = await Promise.all([
+      api.cabinet.overview(),
+      api.cabinet.national(),
+      api.sovereign.presets(),
+    ]);
+    setOv(o);
+    setNat(n);
+    setPresets(p.presets);
   }, []);
   React.useEffect(() => {
     void load();
   }, [load]);
+
+  async function applyPreset(key: string) {
+    setBusy(true);
+    try {
+      await api.sovereign.applyPreset(key);
+      await load();
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function saveProfile(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -135,6 +156,71 @@ export function Cabinet() {
             </div>
           </form>
         </Card>
+      ) : null}
+
+      <Section title="Sovereign profile presets" meta="one-click global-state neutrality">
+        <div className="flex flex-wrap gap-2">
+          {presets.map(p => (
+            <Button
+              key={p.key}
+              variant={s.stateForm === p.profile.stateForm ? 'primary' : 'secondary'}
+              disabled={busy}
+              onClick={() => applyPreset(p.key)}
+            >
+              {p.label}
+            </Button>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-ink-muted">
+          Applies a country-shaped profile (terminology, executive title,
+          legislature, currency, sub-national noun). The platform serves a
+          republic, federation, monarchy, emirate, city-state, or union
+          identically.
+        </p>
+      </Section>
+
+      {nat ? (
+        <Section
+          title="National indicators"
+          meta={`${nat.classification} · ${nat.environment}`}
+        >
+          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+            {nat.indicators.map(ind => (
+              <MetricStat
+                key={ind.label}
+                label={ind.label}
+                value={`${ind.value}${ind.unit}`}
+                tone="neutral"
+              />
+            ))}
+          </div>
+        </Section>
+      ) : null}
+
+      {nat && nat.crossMinistryIncidents.length > 0 ? (
+        <Section
+          title="Cross-ministry incidents"
+          meta={`${nat.crossMinistryIncidents.length} active`}
+        >
+          <DataTable
+            columns={[
+              { key: 'm', header: 'Ministry', render: (c: NationalSnapshot['crossMinistryIncidents'][number]) => (
+                  <Link href={`/gov/ministry/${c.ministryId}`} className="font-medium text-link underline underline-offset-2">
+                    {c.ministry}
+                  </Link>
+                ) },
+              { key: 'l', header: 'Incident', render: c => c.label },
+              { key: 's', header: 'Severity', render: c => (
+                  <StatusText tone={c.severity === 'sev1' || c.severity === 'sev2' ? 'alert' : 'warn'}>
+                    {c.severity.toUpperCase()}
+                  </StatusText>
+                ) },
+              { key: 'a', header: 'Current authority', render: c => c.authority },
+            ]}
+            rows={nat.crossMinistryIncidents.map((c, i) => ({ ...c, id: String(i) }))}
+            rowKey={(_c, i) => String(i)}
+          />
+        </Section>
       ) : null}
 
       <Section title="Whole-of-government posture" meta={`generated ${new Date(ov.generatedAt).toLocaleString()}`}>

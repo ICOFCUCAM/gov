@@ -44,6 +44,8 @@ import type {
   MinistryFieldOps,
   MinistrySeries,
   SovereignProfile,
+  SovereignPreset,
+  NationalSnapshot,
   CabinetOverview,
   MinistryQueue,
   QueueItem,
@@ -75,9 +77,16 @@ export const api = {
         method: 'PUT',
         body: JSON.stringify(patch),
       }),
+    presets: () => req<{ presets: SovereignPreset[] }>('/api/sovereign/presets'),
+    applyPreset: (key: string) =>
+      req<{ sovereign: SovereignProfile }>('/api/sovereign/preset', {
+        method: 'POST',
+        body: JSON.stringify({ key }),
+      }),
   },
   cabinet: {
     overview: () => req<CabinetOverview>('/api/cabinet'),
+    national: () => req<NationalSnapshot>('/api/national'),
   },
   permits: {
     list: () => req<{ permits: Permit[] }>('/api/permits'),

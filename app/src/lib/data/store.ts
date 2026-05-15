@@ -75,6 +75,10 @@ import type {
   CabinetOverview,
   AnalyticSeries,
   MinistrySeries,
+  SovereignPreset,
+  NationalSnapshot,
+  CrossMinistryIncident,
+  NationalIndicator,
   VerifyResult,
 } from '@/lib/api/types';
 import { specFor } from '@/lib/ops-catalog';
@@ -1563,5 +1567,112 @@ export function seriesFor(id: string): MinistrySeries | { error: string } {
   return {
     ministry: { id: m.id, name: m.name, archetype: m.archetype },
     series,
+  };
+}
+
+// ── Multi-country sovereign presets (global-state neutrality) ─────────
+export const SOVEREIGN_PRESETS: SovereignPreset[] = [
+  { key: 'parliamentary-republic', label: 'Parliamentary republic',
+    profile: { stateName: 'Republic', stateForm: 'parliamentary', executiveTitle: 'Prime Minister', legislatureName: 'Parliament', currency: 'USD', regionNoun: 'county', locale: 'en' } },
+  { key: 'presidential-republic', label: 'Presidential republic',
+    profile: { stateName: 'Republic', stateForm: 'republic', executiveTitle: 'President', legislatureName: 'National Assembly', currency: 'USD', regionNoun: 'region', locale: 'en' } },
+  { key: 'federation', label: 'Federation',
+    profile: { stateName: 'Federal Republic', stateForm: 'federation', executiveTitle: 'Chancellor', legislatureName: 'Federal Assembly', currency: 'EUR', regionNoun: 'state', locale: 'en' } },
+  { key: 'constitutional-monarchy', label: 'Constitutional monarchy',
+    profile: { stateName: 'Kingdom', stateForm: 'monarchy', executiveTitle: 'Prime Minister', legislatureName: 'Council of State', currency: 'GBP', regionNoun: 'province', locale: 'en' } },
+  { key: 'emirate', label: 'Emirate / Gulf state',
+    profile: { stateName: 'Emirate', stateForm: 'monarchy', executiveTitle: 'Prime Minister', legislatureName: 'Federal National Council', currency: 'AED', regionNoun: 'emirate', locale: 'ar' } },
+  { key: 'city-state', label: 'City-state',
+    profile: { stateName: 'City-State', stateForm: 'city-state', executiveTitle: 'Prime Minister', legislatureName: 'Parliament', currency: 'SGD', regionNoun: 'district', locale: 'en' } },
+  { key: 'union', label: 'Supranational union',
+    profile: { stateName: 'Union', stateForm: 'union', executiveTitle: 'High Representative', legislatureName: 'Union Council', currency: 'EUR', regionNoun: 'member state', locale: 'en' } },
+];
+
+export function listSovereignPresets(): SovereignPreset[] {
+  return SOVEREIGN_PRESETS;
+}
+
+export function applySovereignPreset(
+  key: string,
+  by: string,
+): SovereignProfile | { error: string } {
+  const preset = SOVEREIGN_PRESETS.find(p => p.key === key);
+  if (!preset) return { error: 'Unknown preset' };
+  db.sovereign = { ...preset.profile };
+  appendAudit(by, 'sovereign.preset', `Sovereign:${key}`, 'ok', preset.label);
+  return db.sovereign;
+}
+
+// ── National executive snapshot (cross-ministry, realistic) ───────────
+function ensureIncidentsSeeded(): void {
+  for (const m of db.ministries) {
+    if (m.status === 'merged') continue;
+    if (!db.ministryIncidents[m.id]) {
+      db.ministryIncidents[m.id] = seedIncidents(m.id, m.archetype);
+    }
+    if (!db.ministryQueues[m.id]) {
+      db.ministryQueues[m.id] = seedQueue(m.id);
+    }
+  }
+}
+
+export function nationalSnapshot(): NationalSnapshot {
+  ensureIncidentsSeeded();
+  const ministries = db.ministries.filter(m => m.status !== 'merged');
+  const active = ministries.filter(m => m.status === 'active');
+
+  // Realistic national figures, deterministic per configured state.
+  const seedKey = db.sovereign.stateName;
+  const popM = seededInt(`nat:${seedKey}:pop`, 8, 210);          // 8–210 M
+  const regionsN = seededInt(`nat:${seedKey}:reg`, 6, 36);
+  const fiscalIdx = seededInt(`nat:${seedKey}:fis`, 78, 118);    // budget exec index
+  const svcAvail = seededInt(`nat:${seedKey}:svc`, 92, 100);
+
+  const indicators: NationalIndicator[] = [
+    { label: 'Population', value: String(popM), unit: 'M' },
+    { label: db.sovereign.regionNoun + 's', value: String(regionsN), unit: '' },
+    { label: 'Fiscal execution index', value: String(fiscalIdx), unit: '' },
+    { label: 'Service availability', value: String(svcAvail), unit: '%' },
+    { label: 'Institutions', value: String(ministries.length), unit: '' },
+  ];
+
+  const crossMinistryIncidents: CrossMinistryIncident[] = [];
+  for (const m of active) {
+    const list = db.ministryIncidents[m.id] ?? [];
+    const chain = profileFor(m.archetype).escalation;
+    for (const inc of list) {
+      if (inc.active) {
+        crossMinistryIncidents.push({
+          ministryId: m.id,
+          ministry: m.name,
+          archetype: m.archetype,
+          label: inc.label,
+          severity: inc.severity,
+          authority: chain[inc.tierIndex] ?? '—',
+        });
+      }
+    }
+  }
+  crossMinistryIncidents.sort((a, b) => a.severity.localeCompare(b.severity));
+
+  const queuesBreaching = active.filter(
+    m => (db.ministryQueues[m.id] ?? []).filter(x => x.state !== 'cleared').length > 6,
+  ).length;
+  const audit = verifyAuditChain();
+
+  return {
+    sovereign: db.sovereign,
+    generatedAt: new Date().toISOString(),
+    classification: 'OFFICIAL',
+    environment: 'Production',
+    indicators,
+    crossMinistryIncidents,
+    totals: {
+      institutions: ministries.length,
+      activeMinistries: active.length,
+      activeIncidents: crossMinistryIncidents.length,
+      queuesBreaching,
+      auditIntact: audit.ok,
+    },
   };
 }

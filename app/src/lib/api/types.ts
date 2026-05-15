@@ -542,3 +542,38 @@ export interface MinistrySeries {
   ministry: { id: string; name: string; archetype: ArchetypeKey };
   series: AnalyticSeries[];
 }
+
+// ── Sovereign presets + national executive snapshot ──────────────────
+export interface SovereignPreset {
+  key: string;
+  label: string;
+  profile: SovereignProfile;
+}
+export interface NationalIndicator {
+  label: string;
+  value: string;
+  unit: string;
+}
+export interface CrossMinistryIncident {
+  ministryId: string;
+  ministry: string;
+  archetype: ArchetypeKey;
+  label: string;
+  severity: IncidentSeverity;
+  authority: string; // current escalation tier name
+}
+export interface NationalSnapshot {
+  sovereign: SovereignProfile;
+  generatedAt: ISODate;
+  classification: string; // e.g. "OFFICIAL"
+  environment: string;    // e.g. "Production"
+  indicators: NationalIndicator[];
+  crossMinistryIncidents: CrossMinistryIncident[];
+  totals: {
+    institutions: number;
+    activeMinistries: number;
+    activeIncidents: number;
+    queuesBreaching: number;
+    auditIntact: boolean;
+  };
+}
