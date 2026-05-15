@@ -469,30 +469,73 @@ export function CabinetIntelligence() {
             </Panel>
           </div>
 
-          {/* ROW 4 — micro executive telemetry grid (18 panels · 4 columns) */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-            {([
-              ['National KPI index', 60, 92, true], ['Fiscal execution', 70, 96, true], ['Geopolitical pressure', 20, 70, false],
-              ['Border pressure', 15, 64, false], ['Commodity exposure', 25, 72, false], ['Treasury execution', 72, 98, true],
-              ['Public satisfaction', 58, 84, true], ['Infrastructure tempo', 55, 90, true], ['Civil unrest signals', 8, 55, false],
-              ['Operational readiness', 70, 97, true], ['Diplomatic engagement', 50, 88, true], ['Regional escalation', 18, 66, false],
-              ['Economic exposure', 22, 68, false], ['Security advisory', 12, 60, false], ['Resource allocation', 60, 93, true],
-              ['Cabinet activity', 55, 90, true], ['Strategic reserves', 64, 95, true], ['Public service stability', 66, 96, true],
-            ] as const).map(([l, lo, hi, good]) => {
-              const v = lo + Math.round(seed(`mp:${l}:${epoch}`) * (hi - lo));
-              const d = Math.round((seed(`md:${l}:${epoch}`) - 0.45) * 12);
-              const tn = (good ? v < 40 : v > 60) ? 'alert' : (good ? v < 60 : v > 45) ? 'warn' : 'ok';
-              return (
-                <div key={l} className="rounded-[3px] border border-line bg-surface px-2.5 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-                  <div className="truncate text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{l}</div>
-                  <div className="flex items-baseline gap-1.5">
-                    <span className="font-mono text-base tabular-nums" style={{ color: TONE[tn] }}>{v}{good ? '%' : ''}</span>
-                    <span className="ml-auto text-[9px]" style={{ color: d >= 0 ? TONE.ok : TONE.alert }}>{d >= 0 ? '▲' : '▼'} {Math.abs(d)}</span>
+          {/* ROW A — heterogeneous executive micro-panel band (4 columns) */}
+          <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
+            <Panel title="National KPI trends" meta="strategic indicators" bodyClass="!p-1.5">
+              <div className="grid grid-cols-1 gap-1">
+                {kpiTrends.map(k => {
+                  const up = k.d >= 0;
+                  const tn = k.pct ? (k.v < 0 ? 'alert' : 'ok') : k.v >= 70 ? 'ok' : k.v >= 50 ? 'warn' : 'alert';
+                  return (
+                    <div key={k.l} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{k.l}</div>
+                        <div className="font-mono text-[13px] leading-none tabular-nums" style={{ color: TONE[tn] }}>{k.v}{k.pct ? '%' : ''}</div>
+                      </div>
+                      <div className="h-5 w-16 shrink-0 opacity-80"><Spark pts={Array.from({ length: 12 }).map((_, i) => 35 + seed(`kpi:${k.l}:${i}:${epoch}`) * 55)} tone={tn} /></div>
+                      <span className="w-9 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: up ? TONE.ok : TONE.alert }}>{up ? '▲' : '▼'}{Math.abs(k.d)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
+
+            <Panel title="Fiscal overview" meta="treasury position" bodyClass="!p-1.5">
+              <div className="grid grid-cols-2 gap-1">
+                {fiscal.map(f => (
+                  <div key={f.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                    <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{f.l}</div>
+                    <div className="font-mono text-[13px] leading-tight tabular-nums" style={{ color: TONE[f.t] }}>{f.v}</div>
+                    <div className="mt-0.5 opacity-70"><Spark pts={Array.from({ length: 10 }).map((_, i) => 35 + seed(`fis:${f.l}:${i}:${epoch}`) * 55)} tone={f.t} /></div>
+                    <div className="text-[9px] tabular-nums" style={{ color: f.d.startsWith('-') ? TONE.alert : TONE.ok }}>{f.d}</div>
                   </div>
-                  <div className="opacity-80"><Spark pts={Array.from({ length: 14 }).map((_, i) => 35 + seed(`ms:${l}:${i}:${epoch}`) * 55)} tone={tn} /></div>
+                ))}
+              </div>
+            </Panel>
+
+            <Panel title="Geopolitical monitor" meta="external pressure" bodyClass="!p-1.5">
+              <div className="grid grid-cols-1 gap-1">
+                {geo.map(g => (
+                  <div key={g.l} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{g.l}</span>
+                    <span className="shrink-0 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[g.t]} 18%, transparent)`, color: TONE[g.t] }}>{g.s}</span>
+                  </div>
+                ))}
+                <div className="mt-0.5 flex items-center justify-between border-t border-line-soft px-1 pt-1.5 text-[9px] text-ink-muted">
+                  <span>Posture</span><span className="font-mono" style={{ color: nationalRisk >= 60 ? TONE.alert : TONE.ok }}>{nationalRisk >= 60 ? 'Heightened' : 'Nominal'}</span>
                 </div>
-              );
-            })}
+              </div>
+            </Panel>
+
+            <Panel title="Quick actions" meta="executive command" bodyClass="!p-1.5">
+              <div className="grid grid-cols-2 gap-1">
+                {quick.map((q, i) => {
+                  const danger = i === 0;
+                  const glyph = ['⛨', '◆', '⚠', '⇄', '▤', '§'][i] ?? '◆';
+                  const cls = 'focus-ring group flex items-center gap-1.5 rounded-[3px] border px-2 py-1.5 text-left text-[10px] font-medium transition-all';
+                  const st = { borderColor: danger ? RED : 'rgb(var(--c-line))', color: danger ? RED : 'rgb(var(--c-ink-soft))' };
+                  const inner = (
+                    <>
+                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] text-[11px] transition-colors group-hover:text-white" style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: danger ? RED : ACCENT }}>{glyph}</span>
+                      <span className="min-w-0 truncate">{q.l}</span>
+                    </>
+                  );
+                  return q.href
+                    ? <Link key={q.l} href={q.href} className={`${cls} no-underline hover:bg-surface-2/60`} style={st}>{inner}</Link>
+                    : <button key={q.l} onClick={q.a} className={cls} style={{ ...st, backgroundColor: `color-mix(in srgb, ${RED} 8%, transparent)` }}>{inner}</button>;
+                })}
+              </div>
+            </Panel>
           </div>
 
           {/* Row 5 — executive posture strip */}
