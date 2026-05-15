@@ -127,6 +127,12 @@ export function OpsCenter() {
         <Link href="/audit" className="focus-ring rounded-[3px] border border-line px-3 py-1.5 text-[11px] text-ink-soft no-underline hover:border-link/40 hover:text-ink">View runbook →</Link>
       </div>
 
+      {!auditOk ? (
+        <div className="rounded-[3px] border px-3 py-2 text-[11px]" style={{ borderColor: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 12%, transparent)`, color: TONE.alert }}>
+          <strong>Audit integrity alert.</strong> The audit chain did not verify — a sev1-class condition. Investigate before trusting downstream reports. <Link href="/audit" className="underline">Open Oversight →</Link>
+        </div>
+      ) : null}
+
       {/* Row 1 — overview (6) */}
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {overview.map(o => <Tile key={o.l} {...o} />)}
@@ -233,11 +239,30 @@ export function OpsCenter() {
                     const r = (c as { real?: Incident }).real;
                     if (!r) return null;
                     return (
-                    <div className="mt-1.5 flex gap-1.5">
-                      {r.status === 'open' ? <Button variant="secondary" onClick={() => act(c.id, 'ack')} disabled={busy === c.id + 'ack'}>Acknowledge</Button> : null}
-                      <Button variant="secondary" onClick={() => act(c.id, 'escalate')} disabled={busy === c.id + 'escalate'}>Escalate</Button>
-                      <Button variant="secondary" onClick={() => act(c.id, 'resolve')} disabled={busy === c.id + 'resolve'}>Resolve</Button>
-                    </div>
+                    <>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[9px] text-ink-muted">
+                        <span className="rounded-[2px] px-1 py-0.5 font-semibold" style={{ backgroundColor: `color-mix(in srgb, ${TONE[r.status === 'open' ? 'alert' : r.status === 'acknowledged' ? 'warn' : 'ok']} 16%, transparent)`, color: TONE[r.status === 'open' ? 'alert' : r.status === 'acknowledged' ? 'warn' : 'ok'] }}>{r.status}</span>
+                        {r.owner ? <span>owner {r.owner}</span> : null}
+                        <span>opened {new Date(r.openedAt).toLocaleString()}</span>
+                      </div>
+                      {r.status !== 'resolved' ? (
+                        <div className="mt-1.5 flex gap-1.5">
+                          {r.status === 'open' ? <Button variant="secondary" onClick={() => act(c.id, 'ack')} disabled={busy === c.id + 'ack'}>Acknowledge</Button> : null}
+                          <Button variant="secondary" onClick={() => act(c.id, 'escalate')} disabled={busy === c.id + 'escalate'}>Escalate</Button>
+                          <Button variant="secondary" onClick={() => act(c.id, 'resolve')} disabled={busy === c.id + 'resolve'}>Resolve</Button>
+                        </div>
+                      ) : null}
+                      {r.events?.length ? (
+                        <details className="mt-1.5">
+                          <summary className="cursor-pointer text-[9px] text-ink-muted">Timeline ({r.events.length})</summary>
+                          <ol className="mt-1 space-y-0.5 text-[9px]">
+                            {r.events.map((e, k) => (
+                              <li key={k} className="text-ink-soft"><span className="text-ink-muted">{new Date(e.at).toLocaleString()}</span> — {e.by} {e.action}{e.note ? `: ${e.note}` : ''}</li>
+                            ))}
+                          </ol>
+                        </details>
+                      ) : null}
+                    </>
                     );
                   })()}
                 </div>
