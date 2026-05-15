@@ -159,11 +159,208 @@ function Spark({ pts, tone }: { pts: number[]; tone: string }) {
   );
 }
 
+// Eased live counter — drifts the displayed value toward the target so
+// metrics visibly move between fabric epochs (restrained, ~600ms).
+function useEased(target: number) {
+  const [v, setV] = React.useState(target);
+  const ref = React.useRef(target);
+  React.useEffect(() => {
+    const from = ref.current;
+    const delta = target - from;
+    if (delta === 0) return;
+    const t0 = performance.now();
+    let raf = 0;
+    const step = (t: number) => {
+      const k = Math.min(1, (t - t0) / 600);
+      const e = 1 - Math.pow(1 - k, 3);
+      ref.current = from + delta * e;
+      setV(ref.current);
+      if (k < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [target]);
+  return v;
+}
+function AnimatedNum({ value, fixed = 0 }: { value: number; fixed?: number }) {
+  const v = useEased(value);
+  return <>{v.toLocaleString(undefined, { minimumFractionDigits: fixed, maximumFractionDigits: fixed })}</>;
+}
+// Splits "$8.4B" / "1,248" / "99.97%" into prefix + eased number + suffix.
+function LiveValue({ raw }: { raw: string }) {
+  const m = /^(\D*?)([\d,]+(?:\.\d+)?)(.*)$/.exec(raw);
+  const digits = m?.[2];
+  if (!m || !digits) return <>{raw}</>;
+  const num = Number(digits.replace(/,/g, ''));
+  if (!isFinite(num)) return <>{raw}</>;
+  const dec = digits.includes('.') ? (digits.split('.')[1]?.length ?? 0) : 0;
+  return <>{m[1] ?? ''}<AnimatedNum value={num} fixed={dec} />{m[3] ?? ''}</>;
+}
+
+const INFRA_KINDS = [
+  { k: 'hospital', g: '✚', label: 'Medical centre' },
+  { k: 'port', g: '⚓', label: 'Seaport' },
+  { k: 'airport', g: '✈', label: 'Airport' },
+  { k: 'energy', g: '⚡', label: 'Power station' },
+  { k: 'logistics', g: '▣', label: 'Logistics hub' },
+  { k: 'water', g: '◑', label: 'Water works' },
+] as const;
+
+const LAND =
+  'M126,196 C150,128 250,96 360,104 C452,110 520,74 628,92 C742,111 836,150 884,232 C916,288 902,360 880,418 C858,476 884,520 806,538 C720,558 612,536 498,544 C392,551 286,566 208,520 C140,480 104,398 108,326 C111,270 108,236 126,196 Z';
+
+interface Infra { id: string; kind: typeof INFRA_KINDS[number]; x: number; y: number; risk: number }
+
+function NationalMap({
+  mapNodes, edges, incidents, now, layers, epoch,
+}: {
+  mapNodes: { ministryId: string; ministry: string; archetype: string; x: number; y: number; pressure: number }[];
+  edges: { fromId: string; toId: string; propagatedRisk: number }[];
+  incidents: { ministry: string; severity: string }[];
+  now: number;
+  layers: { infra: boolean; grid: boolean; corridors: boolean; incidents: boolean };
+  epoch: number;
+}) {
+  const infra: Infra[] = React.useMemo(
+    () => Array.from({ length: 18 }).map((_, i) => {
+      const kind = INFRA_KINDS[Math.floor(seed(`ik:${i}`) * INFRA_KINDS.length)] ?? INFRA_KINDS[0];
+      return {
+        id: `I${i}`,
+        kind,
+        x: 16 + seed(`ix:${i}`) * 66,
+        y: 22 + seed(`iy:${i}`) * 56,
+        risk: Math.round(seed(`irisk:${i}:${epoch}`) * 100),
+      };
+    }),
+    [epoch],
+  );
+  const pos = new Map(mapNodes.map(m => [m.ministryId, m]));
+  const corridors = infra.filter(n => n.kind.k === 'port' || n.kind.k === 'airport' || n.kind.k === 'logistics');
+  const pulse = (now / 1000) % 2 / 2; // 0..1 sweep each 2s
+
+  return (
+    <div className="relative h-[388px] w-full overflow-hidden rounded-md border border-line-soft"
+      style={{ background: 'radial-gradient(ellipse at 38% 28%, rgba(55,199,212,0.07) 0%, rgb(var(--c-bg)) 62%)' }}>
+      <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
+        <defs>
+          <clipPath id="land"><path d={LAND} /></clipPath>
+          <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
+            <path d="M34 0H0V34" fill="none" stroke="rgb(var(--c-line))" strokeWidth="0.6" />
+          </pattern>
+        </defs>
+        {/* territory */}
+        <path d={LAND} fill="rgb(var(--c-surface))" stroke="rgb(var(--c-line))" strokeWidth="1.5" />
+        <g clipPath="url(#land)">
+          {layers.grid ? <rect width="1000" height="620" fill="url(#grid)" opacity="0.5" /> : null}
+          {/* region pressure wash */}
+          {Array.from({ length: 7 }).map((_, i) => {
+            const rk = Math.round(seed(`rg:${i}:${epoch}`) * 100);
+            return (
+              <circle key={i}
+                cx={170 + seed(`rgx:${i}`) * 660}
+                cy={150 + seed(`rgy:${i}`) * 340}
+                r={90 + seed(`rgr:${i}`) * 90}
+                fill={TONE[toneFor(rk)]}
+                opacity={0.06 + (rk / 100) * 0.16}
+                className="transition-all duration-1000 ease-sov" />
+            );
+          })}
+          {/* region boundary suggestions */}
+          <g stroke="rgb(var(--c-line))" strokeWidth="1" fill="none" opacity="0.5" strokeDasharray="2 5">
+            <path d="M360,104 L380,300 L300,540" />
+            <path d="M628,92 L560,320 L640,540" />
+            <path d="M108,326 L560,320 L884,300" />
+          </g>
+          {/* transport corridors */}
+          {layers.corridors && corridors.length > 1
+            ? corridors.slice(0, corridors.length).map((c, i) => {
+                const n = corridors[(i + 1) % corridors.length]!;
+                const x1 = 100 + c.x * 8, y1 = 60 + c.y * 5;
+                const x2 = 100 + n.x * 8, y2 = 60 + n.y * 5;
+                const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - 40;
+                return (
+                  <path key={i} d={`M${x1},${y1} Q${mx},${my} ${x2},${y2}`} fill="none"
+                    stroke={ACCENT} strokeWidth="1.4" strokeOpacity="0.4" strokeDasharray="2 8"
+                    className="motion-safe:animate-[shimmer_4s_linear_infinite]" />
+                );
+              })
+            : null}
+          {/* cross-ministry cascade */}
+          {edges.slice(0, 22).map((e, i) => {
+            const a = pos.get(e.fromId), b = pos.get(e.toId);
+            if (!a || !b) return null;
+            const tn = e.propagatedRisk >= 67 ? 'alert' : e.propagatedRisk >= 34 ? 'warn' : 'ok';
+            return (
+              <line key={i} x1={a.x * 10} y1={a.y * 6.2} x2={b.x * 10} y2={b.y * 6.2}
+                stroke={TONE[tn]} strokeWidth={0.6 + (e.propagatedRisk / 100) * 2}
+                strokeOpacity={0.14 + (e.propagatedRisk / 100) * 0.4} strokeDasharray="4 7"
+                className="motion-safe:animate-[shimmer_3s_linear_infinite]" />
+            );
+          })}
+        </g>
+      </svg>
+
+      {/* infrastructure nodes */}
+      {layers.infra && infra.map(n => {
+        const tone = toneFor(n.risk);
+        const crit = n.risk >= 75;
+        return (
+          <span key={n.id} className="group absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ left: `${n.x}%`, top: `${n.y}%` }} title={`${n.kind.label} · ${tone}`}>
+            {crit ? <span className="absolute inset-0 -z-10 animate-ping rounded-full" style={{ backgroundColor: TONE.alert, opacity: 0.4 }} /> : null}
+            <span className="grid h-5 w-5 place-items-center rounded-[4px] text-[9px] ring-1"
+              style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tone], borderColor: TONE[tone], boxShadow: crit ? `0 0 8px ${TONE.alert}` : undefined }}>
+              {n.kind.g}
+            </span>
+          </span>
+        );
+      })}
+
+      {/* incident propagation rings */}
+      {layers.incidents && mapNodes.filter(m => m.pressure >= 70).slice(0, 6).map(m => (
+        <span key={`p${m.ministryId}`} className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
+          style={{ left: `${m.x}%`, top: `${m.y}%` }} aria-hidden>
+          <span className="block rounded-full border" style={{
+            width: 24 + pulse * 70, height: 24 + pulse * 70,
+            borderColor: TONE.alert, opacity: 0.55 - pulse * 0.5,
+          }} />
+        </span>
+      ))}
+
+      {/* ministry command nodes */}
+      {mapNodes.map(m => {
+        const id = identityFor(m.archetype as ArchetypeKey);
+        const tn = toneFor(m.pressure);
+        return (
+          <Link key={m.ministryId} href={`/gov/ministry/${m.ministryId}`}
+            className="focus-ring group absolute -translate-x-1/2 -translate-y-1/2"
+            style={{ left: `${m.x}%`, top: `${m.y}%` }} title={`${m.ministry} · pressure ${m.pressure}`}>
+            <span className="grid h-9 w-9 place-items-center rounded-full text-[11px] font-bold text-white ring-2 transition-transform group-hover:scale-110"
+              style={{ backgroundColor: id.accent, borderColor: TONE[tn], boxShadow: `0 0 16px ${TONE[tn]}66` }}>
+              {id.glyph}
+            </span>
+            <span className="absolute left-1/2 top-10 -translate-x-1/2 whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[9px] text-ink-soft opacity-0 ring-1 ring-line transition-opacity group-hover:opacity-100">
+              {m.ministry} · {m.pressure}
+            </span>
+          </Link>
+        );
+      })}
+
+      {mapNodes.length === 0 ? <div className="absolute inset-0 grid place-items-center text-xs text-ink-muted">Awaiting institutional telemetry…</div> : null}
+      <div className="absolute bottom-2 left-2 flex flex-wrap gap-3 rounded-md border border-line bg-surface/85 px-2.5 py-1 text-[10px] text-ink-muted backdrop-blur">
+        {['ok', 'warn', 'alert'].map(t => (<span key={t} className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: TONE[t] }} />{t === 'ok' ? 'Stable' : t === 'warn' ? 'Strained' : 'Critical'}</span>))}
+        <span className="flex items-center gap-1 border-l border-line pl-2">✚ medical ⚓ port ✈ air ⚡ power ▣ logistics</span>
+      </div>
+    </div>
+  );
+}
+
 export function SituationRoom() {
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [now, setNow] = React.useState(() => Date.now());
+  const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true });
 
   React.useEffect(() => {
     const load = async () => {
@@ -329,7 +526,7 @@ export function SituationRoom() {
                 <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{t.l}</div>
                 <div className="mt-0.5 flex items-center gap-1.5 font-mono text-lg tabular-nums" style={{ color: t.t ? TONE[t.t] : 'rgb(var(--c-ink))' }}>
                   {t.dot ? <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: TONE[t.t ?? 'ok'] }} /> : null}
-                  {t.v}
+                  <LiveValue raw={t.v} />
                 </div>
                 {t.spark ? <Spark pts={t.spark} tone="ok" /> : <div className="truncate text-[10px] text-ink-muted">{t.s}</div>}
               </div>
@@ -339,98 +536,103 @@ export function SituationRoom() {
           {/* Map-first band */}
           <div className="grid gap-3 xl:grid-cols-12">
             <Panel title="National activity map"
-              meta={<span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />operational view</span>}
+              meta={
+                <span className="flex items-center gap-1">
+                  {([['infra', 'Infra'], ['grid', 'Grid'], ['corridors', 'Corridors'], ['incidents', 'Incidents']] as const).map(([k, lbl]) => (
+                    <button key={k} type="button" onClick={() => setLayers(s => ({ ...s, [k]: !s[k] }))}
+                      className="focus-ring rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition-colors"
+                      style={{
+                        backgroundColor: layers[k] ? `color-mix(in srgb, ${ACCENT} 20%, transparent)` : 'transparent',
+                        color: layers[k] ? ACCENT : 'rgb(var(--c-ink-muted))',
+                      }}
+                      aria-pressed={layers[k]}>
+                      {lbl}
+                    </button>
+                  ))}
+                </span>
+              }
               className="xl:col-span-7" bodyClass="!p-2">
-              <div className="relative h-[368px] w-full overflow-hidden rounded-md border border-line-soft"
-                style={{ background: 'radial-gradient(ellipse at 35% 30%, rgba(55,199,212,0.06) 0%, rgb(var(--c-bg)) 65%)' }}>
-                <svg className="absolute inset-0 h-full w-full opacity-40" aria-hidden>
-                  <defs><pattern id="grd" width="38" height="38" patternUnits="userSpaceOnUse"><path d="M38 0H0V38" fill="none" stroke="rgb(var(--c-line))" strokeWidth="0.5" /></pattern></defs>
-                  <rect width="100%" height="100%" fill="url(#grd)" />
-                </svg>
-                {regions.map(r => (
-                  <div key={r.id} className="absolute rounded-full blur-2xl transition-all duration-1000 ease-sov"
-                    style={{ left: `${r.x}%`, top: `${r.y}%`, width: r.r * 2, height: r.r * 2, transform: 'translate(-50%,-50%)', backgroundColor: TONE[toneFor(r.risk)], opacity: 0.08 + (r.risk / 100) * 0.3 }} />
-                ))}
-                <svg className="absolute inset-0 h-full w-full" aria-hidden>
-                  {(coord?.edges ?? []).slice(0, 24).map((e, i) => {
-                    const a = nodePos.get(e.fromId), b = nodePos.get(e.toId);
-                    if (!a || !b) return null;
-                    const tn = e.propagatedRisk >= 67 ? 'alert' : e.propagatedRisk >= 34 ? 'warn' : 'ok';
-                    return <line key={i} x1={`${a.x}%`} y1={`${a.y}%`} x2={`${b.x}%`} y2={`${b.y}%`}
-                      stroke={TONE[tn]} strokeWidth={0.5 + (e.propagatedRisk / 100) * 1.6}
-                      strokeOpacity={0.12 + (e.propagatedRisk / 100) * 0.45} strokeDasharray="3 7"
-                      className="motion-safe:animate-[shimmer_3s_linear_infinite]" />;
-                  })}
-                </svg>
-                {mapNodes.map(m => {
-                  const id = identityFor(m.archetype as ArchetypeKey);
-                  const tn = toneFor(m.pressure);
-                  return (
-                    <Link key={m.ministryId} href={`/gov/ministry/${m.ministryId}`}
-                      className="focus-ring group absolute -translate-x-1/2 -translate-y-1/2" style={{ left: `${m.x}%`, top: `${m.y}%` }}
-                      title={`${m.ministry} · pressure ${m.pressure}`}>
-                      {m.pressure >= 75 ? <span className="absolute inset-0 -z-10 animate-ping rounded-full" style={{ backgroundColor: TONE.alert, opacity: 0.45 }} /> : null}
-                      <span className="grid h-9 w-9 place-items-center rounded-full text-[11px] font-bold text-white shadow-elev-2 ring-2 transition-transform group-hover:scale-110"
-                        style={{ backgroundColor: id.accent, borderColor: TONE[tn], boxShadow: `0 0 14px ${TONE[tn]}55` }}>
-                        {id.glyph}
-                      </span>
-                      <span className="absolute left-1/2 top-10 -translate-x-1/2 whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[9px] text-ink-soft opacity-0 ring-1 ring-line transition-opacity group-hover:opacity-100">
-                        {m.ministry} · {m.pressure}
-                      </span>
-                    </Link>
-                  );
-                })}
-                {mapNodes.length === 0 ? <div className="absolute inset-0 grid place-items-center text-xs text-ink-muted">Awaiting institutional telemetry…</div> : null}
-                <div className="absolute bottom-2 left-2 flex gap-3 rounded-md border border-line bg-surface/80 px-2.5 py-1 text-[10px] text-ink-muted backdrop-blur">
-                  {['ok', 'warn', 'alert'].map(t => (<span key={t} className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: TONE[t] }} />{t === 'ok' ? 'Stable' : t === 'warn' ? 'Strained' : 'Critical'}</span>))}
-                </div>
-                <div className="absolute right-2 top-2 rounded-md border border-line bg-surface/80 px-2 py-1 text-[10px] text-ink-muted backdrop-blur">All Layers ▾</div>
-              </div>
+              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} />
             </Panel>
 
-            <Panel title="Ministry status matrix" meta="live health & SLA" className="xl:col-span-3" bodyClass="overflow-y-auto max-h-[392px] !p-0">
+            <Panel title="Ministry status matrix" meta="health · SLA · pressure · escalation" className="xl:col-span-3" bodyClass="overflow-y-auto max-h-[420px] !p-0">
               <table className="w-full text-xs">
+                <thead>
+                  <tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[9px] uppercase tracking-wider text-ink-muted">
+                    <th className="px-3 py-1.5 font-semibold">Institution</th>
+                    <th className="px-2 py-1.5 font-semibold">Status</th>
+                    <th className="px-2 py-1.5 text-right font-semibold">SLA</th>
+                    <th className="px-2 py-1.5 font-semibold">Pressure</th>
+                    <th className="px-2 py-1.5 text-right font-semibold">Inc</th>
+                  </tr>
+                </thead>
                 <tbody>
                   {mapNodes.map(m => {
                     const id = identityFor(m.archetype as ArchetypeKey);
                     const sla = Math.max(42, 100 - m.pressure + Math.round(seed(`sla:${m.ministryId}`) * 10));
+                    const node = (coord?.nodes ?? []).find(n => n.ministryId === m.ministryId);
+                    const inc = node?.activeIncidents ?? 0;
+                    const esc = m.pressure >= 78 ? 'Escalated' : m.pressure >= 60 ? 'Watch' : 'Nominal';
                     return (
                       <tr key={m.ministryId} className="border-b border-line-soft transition-colors hover:bg-surface-2/50 last:border-0">
-                        <td className="px-3 py-2.5">
+                        <td className="px-3 py-2">
                           <Link href={`/gov/ministry/${m.ministryId}`} className="focus-ring flex items-center gap-2 no-underline">
-                            <span className="grid h-4 w-4 place-items-center rounded-[3px] text-[8px] text-white" style={{ backgroundColor: id.accent }}>{id.glyph}</span>
-                            <span className="truncate text-ink">{m.ministry}</span>
+                            <span className="grid h-4 w-4 shrink-0 place-items-center rounded-[3px] text-[8px] text-white" style={{ backgroundColor: id.accent }}>{id.glyph}</span>
+                            <span className="min-w-0">
+                              <span className="block truncate text-ink">{m.ministry}</span>
+                              <span className="block text-[9px] text-ink-muted">{esc}</span>
+                            </span>
                           </Link>
                         </td>
-                        <td className="px-2 py-2.5">
+                        <td className="px-2 py-2">
                           <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `color-mix(in srgb, ${TONE[m.posture]} 18%, transparent)`, color: TONE[m.posture] }}>
-                            {m.posture === 'ok' ? 'Good' : m.posture === 'warn' ? 'Warning' : 'Elevated'}
+                            {m.posture === 'ok' ? 'Good' : m.posture === 'warn' ? 'Warn' : 'Elev'}
                           </span>
                         </td>
-                        <td className="px-2 py-2.5 text-right font-mono tabular-nums" style={{ color: sla < 70 ? TONE.alert : 'rgb(var(--c-ink-soft))' }}>{sla}%</td>
-                        <td className="px-3 py-2.5 text-right" style={{ color: m.trend === 'rising' ? TONE.alert : m.trend === 'falling' ? TONE.ok : TONE.neutral }}>
-                          {m.trend === 'rising' ? '↑' : m.trend === 'falling' ? '↓' : '→'}
+                        <td className="px-2 py-2 text-right font-mono tabular-nums" style={{ color: sla < 70 ? TONE.alert : 'rgb(var(--c-ink-soft))' }}>{sla}%</td>
+                        <td className="px-2 py-2">
+                          <span className="flex items-center gap-1">
+                            <span className="h-1.5 w-12 overflow-hidden rounded-full bg-surface-2">
+                              <span className="block h-full transition-all duration-700 ease-sov" style={{ width: `${m.pressure}%`, backgroundColor: TONE[toneFor(m.pressure)] }} />
+                            </span>
+                            <span className="font-mono text-[10px] tabular-nums text-ink-muted">{m.pressure}</span>
+                            <span style={{ color: m.trend === 'rising' ? TONE.alert : m.trend === 'falling' ? TONE.ok : TONE.neutral }}>
+                              {m.trend === 'rising' ? '↑' : m.trend === 'falling' ? '↓' : '→'}
+                            </span>
+                          </span>
                         </td>
+                        <td className="px-2 py-2 text-right font-mono tabular-nums" style={{ color: inc > 0 ? TONE.alert : 'rgb(var(--c-ink-muted))' }}>{inc}</td>
                       </tr>
                     );
                   })}
-                  {mapNodes.length === 0 ? <tr><td className="px-3 py-8 text-center text-ink-muted">No active institutions.</td></tr> : null}
+                  {mapNodes.length === 0 ? <tr><td colSpan={5} className="px-3 py-8 text-center text-ink-muted">No active institutions.</td></tr> : null}
                 </tbody>
               </table>
             </Panel>
 
-            <Panel title="Active incident feed" meta="cross-ministry" className="xl:col-span-2" bodyClass="overflow-y-auto max-h-[392px] !p-0">
-              {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry incidents.</p> : incidents.slice(0, 8).map((c, i) => {
+            <Panel title="Active incident feed" meta="cross-ministry" className="xl:col-span-2" bodyClass="overflow-y-auto max-h-[420px] !p-0">
+              {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry incidents.</p> : incidents.slice(0, 9).map((c, i) => {
                 const id = identityFor(c.archetype);
                 const tn = c.severity === 'sev1' || c.severity === 'sev2' ? 'alert' : c.severity === 'sev3' ? 'warn' : 'neutral';
+                const pop = (0.2 + seed(`pop:${c.ministry}:${i}`) * 3.4).toFixed(1);
+                const prop = Math.round(40 + seed(`pr:${c.ministry}:${i}:${epoch}`) * 58);
+                const ageM = 2 + Math.floor(seed(`ag:${c.ministry}:${i}`) * 58);
+                const stage = c.severity === 'sev1' ? 'Cabinet' : c.severity === 'sev2' ? 'Regional' : 'Local';
                 return (
-                  <Link key={i} href={`/gov/ministry/${c.ministryId}`} className="focus-ring block border-b border-line-soft px-3 py-2.5 no-underline transition-colors hover:bg-surface-2/50 last:border-0" style={{ borderLeft: `2px solid ${TONE[tn]}` }}>
+                  <Link key={i} href={`/gov/ministry/${c.ministryId}`} className="focus-ring block border-b border-line-soft px-3 py-2 no-underline transition-colors hover:bg-surface-2/50 last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-bold uppercase tracking-wider" style={{ color: TONE[tn] }}>{c.severity === 'sev1' ? 'Critical' : c.severity === 'sev2' ? 'Elevated' : c.severity === 'sev3' ? 'Warning' : 'Info'}</span>
-                      <span className="text-[10px] text-ink-muted">{id.glyph}</span>
+                      <span className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 18%, transparent)`, color: TONE[tn] }}>
+                        {c.severity === 'sev1' ? 'Critical' : c.severity === 'sev2' ? 'Elevated' : c.severity === 'sev3' ? 'Warning' : 'Info'}
+                      </span>
+                      <span className="font-mono text-[10px] tabular-nums text-ink-muted">{ageM}m</span>
                     </div>
-                    <div className="mt-0.5 truncate text-xs font-medium text-ink">{c.label}</div>
-                    <div className="truncate text-[10px] text-ink-muted">{c.ministry} · {c.authority}</div>
+                    <div className="mt-1 truncate text-xs font-medium text-ink">{c.label}</div>
+                    <div className="truncate text-[10px] text-ink-muted">{id.glyph} {c.ministry} · {c.authority}</div>
+                    <div className="mt-1 flex items-center gap-2 text-[9px] text-ink-muted">
+                      <span>~{pop}M affected</span>
+                      <span className="border-l border-line pl-2">esc: {stage}</span>
+                      <span className="ml-auto" style={{ color: prop >= 70 ? TONE.alert : prop >= 50 ? TONE.warn : TONE.neutral }}>prop {prop}%</span>
+                    </div>
                   </Link>
                 );
               })}
