@@ -184,7 +184,7 @@ export function MinistriesConsole() {
                 </Card>
 
                 <Card tight>
-                  <h3 className="font-semibold">Departments</h3>
+                  <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Departments</h3>
                   <ul className="mt-2 space-y-1">
                     {current.departments.map(d => (
                       <li key={d.id} className="flex items-center justify-between text-sm">

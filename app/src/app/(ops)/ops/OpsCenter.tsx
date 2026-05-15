@@ -101,7 +101,7 @@ export function OpsCenter() {
 
       {/* Services */}
       <section aria-label="Service health">
-        <h2 className="mb-2 text-lg font-semibold">Service health</h2>
+        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Service health</h2>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {ov.services.map(svc => (
             <HealthTile
@@ -117,7 +117,7 @@ export function OpsCenter() {
 
       {/* Queues */}
       <section aria-label="Queue intelligence">
-        <h2 className="mb-2 text-lg font-semibold">Queue intelligence</h2>
+        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Queue intelligence</h2>
         <div className="space-y-2">
           {ov.queues.map(q => (
             <Card tight key={q.name}>
@@ -162,7 +162,7 @@ export function OpsCenter() {
 
       {/* Municipality health */}
       <section aria-label="Municipality health">
-        <h2 className="mb-2 text-lg font-semibold">Municipality health</h2>
+        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Municipality health</h2>
         <div className="overflow-x-auto rounded-md border border-line">
           <table className="w-full text-sm">
             <thead className="bg-surface-2 text-left">
@@ -213,7 +213,7 @@ export function OpsCenter() {
 
       {/* Incidents */}
       <section aria-label="Incidents">
-        <h2 className="mb-2 text-lg font-semibold">Incidents</h2>
+        <h2 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Incidents</h2>
         {incidents.length === 0 ? (
           <EmptyState title="No incidents" hint="The ecosystem is calm." />
         ) : (

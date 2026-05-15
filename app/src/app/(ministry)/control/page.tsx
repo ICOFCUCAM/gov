@@ -93,7 +93,7 @@ export default function MinistryControlPage({
 
                     {activeAlerts.length > 0 ? (
                       <Card tight>
-                        <h3 className="font-semibold">Operational alerts</h3>
+                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Operational alerts</h3>
                         <ul className="mt-2 space-y-2">
                           {activeAlerts.map(({ m, a }, i) => (
                             <li key={i} className="flex items-start gap-2 text-sm">
@@ -109,7 +109,7 @@ export default function MinistryControlPage({
                     ) : null}
 
                     <section aria-label="Module operations" className="space-y-3" data-bw-hide-empty>
-                      <h3 className="font-semibold">Operational dashboards</h3>
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Operational dashboards</h3>
                       {ops.modules.map(mod => (
                         <Card tight key={mod.module}>
                           <div className="flex items-baseline justify-between gap-2">
@@ -158,14 +158,14 @@ export default function MinistryControlPage({
 
               <div className="grid gap-4 md:grid-cols-2">
                 <Card tight>
-                  <h3 className="font-semibold">Departments</h3>
+                  <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Departments</h3>
                   <ul className="mt-2 space-y-1 text-sm">
                     {selected.departments.map(d => <li key={d.id}>{d.name}</li>)}
                     {selected.departments.length === 0 ? <li className="text-ink-muted">None configured.</li> : null}
                   </ul>
                 </Card>
                 <Card tight>
-                  <h3 className="font-semibold">Active operational modules</h3>
+                  <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Active operational modules</h3>
                   <div className="mt-2 flex flex-wrap gap-1">
                     {selected.modules.filter(m => m.enabled).map(m => (
                       <Pill key={m.moduleKey} tone="ok">{m.moduleKey}</Pill>
