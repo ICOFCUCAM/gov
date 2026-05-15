@@ -34,6 +34,9 @@ import type {
   BackupKind,
   ConfigBundle,
   ConfigDrift,
+  Archetype,
+  ArchetypeKey,
+  Ministry,
   SignatureRequest,
   SignatureResult,
   VerifyResult,
@@ -185,6 +188,25 @@ export const api = {
         req<{ config: ConfigBundle }>(`/api/platform/config/${id}/apply`, { method: 'POST', body: '{}' }),
       drift: () => req<ConfigDrift>('/api/platform/config/drift'),
     },
+  },
+  org: {
+    archetypes: () => req<{ archetypes: Archetype[] }>('/api/org/archetypes'),
+    ministries: () => req<{ ministries: Ministry[] }>('/api/org/ministries'),
+    get: (id: string) => req<{ ministry: Ministry }>(`/api/org/ministries/${id}`),
+    create: (body: { archetype: ArchetypeKey; name: string; slug: string }) =>
+      req<{ ministry: Ministry }>('/api/org/ministries', { method: 'POST', body: JSON.stringify(body) }),
+    rename: (id: string, name: string) =>
+      req<{ ministry: Ministry }>(`/api/org/ministries/${id}/rename`, { method: 'POST', body: JSON.stringify({ name }) }),
+    deactivate: (id: string) =>
+      req<{ ministry: Ministry }>(`/api/org/ministries/${id}/deactivate`, { method: 'POST', body: '{}' }),
+    merge: (id: string, targetId: string) =>
+      req<{ ministry: Ministry }>(`/api/org/ministries/${id}/merge`, { method: 'POST', body: JSON.stringify({ targetId }) }),
+    addDepartment: (id: string, name: string) =>
+      req<{ ministry: Ministry }>(`/api/org/ministries/${id}/departments`, { method: 'POST', body: JSON.stringify({ name }) }),
+    removeDepartment: (id: string, deptId: string) =>
+      req<{ ministry: Ministry }>(`/api/org/ministries/${id}/departments/${deptId}`, { method: 'DELETE' }),
+    setModule: (id: string, moduleKey: string, enabled: boolean) =>
+      req<{ ministry: Ministry }>(`/api/org/ministries/${id}/modules`, { method: 'POST', body: JSON.stringify({ moduleKey, enabled }) }),
   },
   payments: {
     list: () => req<{ bills: Bill[]; receipts: PaymentReceipt[] }>('/api/payments'),

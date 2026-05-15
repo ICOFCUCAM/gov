@@ -365,3 +365,35 @@ export interface ConfigBundle {
   createdAt: ISODate;
 }
 export interface ConfigDrift { drift: boolean; reason: string; }
+
+// ── Institutional framework (dynamic multi-ministry) ──────────────────
+export type ArchetypeKey =
+  | 'HEALTH' | 'EDUCATION' | 'FINANCE' | 'AGRICULTURE' | 'ENERGY'
+  | 'TRANSPORT' | 'JUSTICE' | 'ENVIRONMENT' | 'INTERIOR' | 'LABOR'
+  | 'TRADE' | 'GENERIC';
+
+export interface Archetype {
+  key: ArchetypeKey;
+  title: string;
+  summary: string;
+  defaultDepartments: string[];
+  defaultModules: string[];
+  domainEntities: string[];
+}
+
+export type MinistryStatus = 'active' | 'merged' | 'deactivated';
+
+export interface Department { id: string; name: string; }
+export interface ModuleActivation { moduleKey: string; enabled: boolean; }
+
+export interface Ministry {
+  id: string;
+  slug: string;
+  name: string;
+  archetype: ArchetypeKey;
+  status: MinistryStatus;
+  mergedIntoId?: string;
+  createdAt: ISODate;
+  departments: Department[];
+  modules: ModuleActivation[];
+}

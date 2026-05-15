@@ -49,6 +49,10 @@ import type {
   BackupKind,
   ConfigBundle,
   ConfigDrift,
+  Archetype,
+  ArchetypeKey,
+  Ministry,
+  MinistryStatus,
   VerifyResult,
 } from '@/lib/api/types';
 
@@ -195,7 +199,9 @@ function seed() {
     { id: 'CFG-1', scope: 'global', version: 1, contentHash: hash('cfg-v1'), signedBy: 'STO', state: 'applied', createdAt: days(-20) },
   ];
 
-  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs };
+  const ministries: Ministry[] = [];
+
+  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries };
 }
 
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
@@ -1026,4 +1032,118 @@ export function configDrift(): ConfigDrift {
     return { drift: true, reason: `applied v${applied.version} != signed v${signed.version}` };
   }
   return { drift: false, reason: 'in sync' };
+}
+
+// ── Institutional framework (mirrors backend archetypes) ──────────────
+const ARCHETYPES: Record<ArchetypeKey, Archetype> = {
+  HEALTH: { key: 'HEALTH', title: 'Ministry of Health', summary: 'Public health, facilities, licensing, outbreak response.', defaultDepartments: ['Public Health', 'Facilities & Licensing', 'Pharmaceuticals', 'Emergency Response'], defaultModules: ['facilities', 'licensing', 'outbreak-monitoring', 'pharma-supply', 'vaccination', 'ambulance-coordination'], domainEntities: ['Hospital', 'Clinic', 'Practitioner', 'Outbreak', 'PharmaBatch', 'VaccinationRecord'] },
+  EDUCATION: { key: 'EDUCATION', title: 'Ministry of Education', summary: 'Schools, learners, examinations, curriculum, scholarships.', defaultDepartments: ['Basic Education', 'Examinations', 'Curriculum', 'Scholarships'], defaultModules: ['schools', 'enrolment', 'examinations', 'curriculum', 'scholarships', 'performance-analytics'], domainEntities: ['School', 'Learner', 'Teacher', 'Exam', 'Curriculum', 'Scholarship'] },
+  FINANCE: { key: 'FINANCE', title: 'Ministry of Finance / Treasury', summary: 'Treasury, taxation, budget, procurement, public expenditure.', defaultDepartments: ['Treasury', 'Revenue', 'Budget', 'Procurement'], defaultModules: ['treasury', 'taxation', 'budget', 'procurement', 'grants', 'expenditure'], domainEntities: ['Account', 'TaxFiling', 'BudgetLine', 'Tender', 'Grant', 'Disbursement'] },
+  AGRICULTURE: { key: 'AGRICULTURE', title: 'Ministry of Agriculture', summary: 'Extension, subsidies, irrigation, market access.', defaultDepartments: ['Extension Services', 'Subsidies', 'Irrigation', 'Markets'], defaultModules: ['farmer-registry', 'subsidies', 'extension', 'market-access', 'climate-advisory'], domainEntities: ['Farmer', 'Subsidy', 'IrrigationScheme', 'MarketPrice', 'ExtensionVisit'] },
+  ENERGY: { key: 'ENERGY', title: 'Ministry of Energy', summary: 'Generation, grid, licensing, rural electrification.', defaultDepartments: ['Generation', 'Grid', 'Licensing', 'Electrification'], defaultModules: ['grid-monitoring', 'licensing', 'electrification', 'tariffs'], domainEntities: ['PowerPlant', 'GridSegment', 'Licence', 'ElectrificationProject', 'Tariff'] },
+  TRANSPORT: { key: 'TRANSPORT', title: 'Ministry of Transport', summary: 'Roads, vehicles, licensing, public transit, safety.', defaultDepartments: ['Roads', 'Vehicle Registration', 'Licensing', 'Public Transit'], defaultModules: ['vehicle-registry', 'driver-licensing', 'roads', 'transit', 'road-safety'], domainEntities: ['Vehicle', 'DriverLicence', 'RoadSegment', 'TransitRoute', 'Inspection'] },
+  JUSTICE: { key: 'JUSTICE', title: 'Ministry of Justice', summary: 'Courts coordination, legal aid, registries, corrections.', defaultDepartments: ['Legal Aid', 'Registries', 'Corrections', 'Court Liaison'], defaultModules: ['legal-aid', 'registries', 'case-coordination', 'corrections'], domainEntities: ['Case', 'LegalAidGrant', 'Registry', 'Facility'] },
+  ENVIRONMENT: { key: 'ENVIRONMENT', title: 'Ministry of Environment', summary: 'Monitoring, permits, conservation, climate adaptation.', defaultDepartments: ['Monitoring', 'Permits', 'Conservation', 'Climate'], defaultModules: ['environmental-monitoring', 'permits', 'conservation', 'climate-adaptation'], domainEntities: ['MonitoringStation', 'EnvPermit', 'ProtectedArea', 'EmissionRecord'] },
+  INTERIOR: { key: 'INTERIOR', title: 'Ministry of Interior', summary: 'Civil registry, identity, internal coordination.', defaultDepartments: ['Civil Registry', 'Identity', 'Coordination'], defaultModules: ['civil-registry', 'identity', 'permits'], domainEntities: ['CivilRecord', 'IdentityCredential', 'Permit'] },
+  LABOR: { key: 'LABOR', title: 'Ministry of Labor', summary: 'Employment, inspections, social insurance, disputes.', defaultDepartments: ['Employment', 'Inspections', 'Social Insurance'], defaultModules: ['employment-registry', 'inspections', 'social-insurance', 'disputes'], domainEntities: ['Employer', 'Worker', 'Inspection', 'InsuranceClaim', 'Dispute'] },
+  TRADE: { key: 'TRADE', title: 'Ministry of Trade & Industry', summary: 'Business registration, licensing, standards, exports.', defaultDepartments: ['Business Registration', 'Standards', 'Exports'], defaultModules: ['business-registry', 'licensing', 'standards', 'export-facilitation'], domainEntities: ['Business', 'Licence', 'Standard', 'ExportPermit'] },
+  GENERIC: { key: 'GENERIC', title: 'Generic Ministry / Agency / Commission', summary: 'A blank institutional foundation to compose from scratch.', defaultDepartments: ['Administration'], defaultModules: ['documents', 'notifications'], domainEntities: ['Record'] },
+};
+
+export function listArchetypes(): Archetype[] {
+  return Object.values(ARCHETYPES);
+}
+export function listMinistries(): Ministry[] {
+  return [...db.ministries].sort(
+    (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
+  );
+}
+export function getMinistry(id: string): Ministry | undefined {
+  return db.ministries.find(m => m.id === id);
+}
+export function createMinistry(input: {
+  archetype: ArchetypeKey;
+  name: string;
+  slug: string;
+}): Ministry | { error: string } {
+  const bp = ARCHETYPES[input.archetype];
+  if (!bp) return { error: 'Unknown archetype' };
+  if (!/^[a-z0-9-]+$/.test(input.slug)) {
+    return { error: 'slug must be lowercase letters, digits, hyphens' };
+  }
+  if (db.ministries.some(m => m.slug === input.slug)) {
+    return { error: 'slug already used' };
+  }
+  const m: Ministry = {
+    id: uid('MIN'),
+    slug: input.slug,
+    name: input.name,
+    archetype: input.archetype,
+    status: 'active',
+    createdAt: new Date().toISOString(),
+    departments: bp.defaultDepartments.map(name => ({ id: uid('DEP'), name })),
+    modules: bp.defaultModules.map(moduleKey => ({ moduleKey, enabled: true })),
+  };
+  db.ministries.unshift(m);
+  appendAudit('operator', 'ministry.create', `Ministry:${m.id}`, 'ok', `${input.archetype}/${input.slug}`);
+  return m;
+}
+export function renameMinistry(id: string, name: string): Ministry | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  m.name = name;
+  appendAudit('operator', 'ministry.rename', `Ministry:${id}`, 'ok', name);
+  return m;
+}
+export function deactivateMinistry(id: string): Ministry | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  m.status = 'deactivated';
+  appendAudit('operator', 'ministry.deactivate', `Ministry:${id}`, 'ok');
+  return m;
+}
+export function mergeMinistry(sourceId: string, targetId: string): Ministry | { error: string } {
+  if (sourceId === targetId) return { error: 'Cannot merge into itself' };
+  const src = getMinistry(sourceId);
+  const tgt = getMinistry(targetId);
+  if (!src || !tgt) return { error: 'Ministry not found' };
+  if (src.status !== 'active' || tgt.status !== 'active') {
+    return { error: 'Both ministries must be active' };
+  }
+  for (const d of src.departments) {
+    if (!tgt.departments.some(x => x.name === d.name)) tgt.departments.push(d);
+  }
+  for (const mod of src.modules) {
+    if (!tgt.modules.some(x => x.moduleKey === mod.moduleKey)) tgt.modules.push(mod);
+  }
+  src.status = 'merged';
+  src.mergedIntoId = targetId;
+  src.departments = [];
+  src.modules = [];
+  appendAudit('operator', 'ministry.merge', `Ministry:${sourceId}`, 'ok', `-> ${targetId}`);
+  return tgt;
+}
+export function addDepartment(ministryId: string, name: string): Ministry | { error: string } {
+  const m = getMinistry(ministryId);
+  if (!m) return { error: 'Ministry not found' };
+  if (m.departments.some(d => d.name === name)) return { error: 'Department exists' };
+  m.departments.push({ id: uid('DEP'), name });
+  appendAudit('operator', 'department.add', `Ministry:${ministryId}`, 'ok', name);
+  return m;
+}
+export function removeDepartment(ministryId: string, deptId: string): Ministry | { error: string } {
+  const m = getMinistry(ministryId);
+  if (!m) return { error: 'Ministry not found' };
+  m.departments = m.departments.filter(d => d.id !== deptId);
+  appendAudit('operator', 'department.remove', `Ministry:${ministryId}`, 'ok', deptId);
+  return m;
+}
+export function setModule(ministryId: string, moduleKey: string, enabled: boolean): Ministry | { error: string } {
+  const m = getMinistry(ministryId);
+  if (!m) return { error: 'Ministry not found' };
+  const existing = m.modules.find(x => x.moduleKey === moduleKey);
+  if (existing) existing.enabled = enabled;
+  else m.modules.push({ moduleKey, enabled });
+  appendAudit('operator', 'module.set', `Ministry:${ministryId}`, 'ok', `${moduleKey}=${enabled}`);
+  return m;
 }

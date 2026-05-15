@@ -1,141 +1,123 @@
+import Link from 'next/link';
+import { OperatorShell } from '@/components/ui/OperatorShell';
 import { Card } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
-import { charters } from '@/lib/charters/registry';
+import { Plain } from '@/components/ui/Plain';
+import { EmptyState } from '@/components/ui/EmptyState';
+import { listMinistries } from '@/lib/data/store';
 
-export default function MinistryControlPage() {
+export const dynamic = 'force-dynamic';
+
+// Service health is CONFIG-DRIVEN, not a hardcoded single ministry. It
+// renders whatever institutions exist in the tenant: each ministry's name,
+// departments, and enabled modules come from the institutional framework.
+export default function MinistryControlPage({
+  searchParams,
+}: {
+  searchParams: { ministry?: string };
+}) {
+  const ministries = listMinistries().filter(m => m.status !== 'merged');
+  const selected =
+    ministries.find(m => m.slug === searchParams.ministry) ??
+    ministries.find(m => m.status === 'active') ??
+    ministries[0] ??
+    null;
+
   return (
-    <main className="min-h-screen bg-bg">
-      <header className="px-6 py-4 border-b border-line bg-surface">
-        <div className="max-w-6xl mx-auto flex justify-between items-center gap-4 flex-wrap">
-          <div>
-            <strong>Ministry of Social Protection</strong>
-            <span className="text-ink-muted">
-              {' '}· Director General L. Mwakio · Tuesday 14 May 2026 · Daily standup at 09:30
-            </span>
-          </div>
-          <nav className="flex gap-3 text-sm">
-            <a href="#" className="underline underline-offset-2">Programs</a>
-            <a href="#" className="underline underline-offset-2">Cabinet view</a>
-            <a href="#" className="underline underline-offset-2">My day</a>
-          </nav>
+    <OperatorShell role="ministry" who="Service health · ministry operations" active="/control">
+      <h1 className="mb-1 text-2xl font-semibold">Service health</h1>
+      <p className="mb-4 text-ink-muted">
+        Operational view per institution. The structure below is composed from
+        the institutional framework, not hardcoded.
+      </p>
+
+      {ministries.length === 0 ? (
+        <EmptyState
+          title="No institutions configured"
+          hint="Compose a ministry, agency, or commission from an archetype first."
+          action={<Link href="/ministries" className="text-link underline underline-offset-2">Go to Institutions →</Link>}
+        />
+      ) : (
+        <div className="space-y-4">
+          <Card tight>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-sm text-ink-muted">Institution:</span>
+              {ministries.map(m => (
+                <Link
+                  key={m.id}
+                  href={`/control?ministry=${m.slug}`}
+                  className={
+                    'rounded-sm border px-3 py-1 text-sm no-underline ' +
+                    (selected && m.id === selected.id
+                      ? 'border-ink bg-ink text-surface'
+                      : 'border-line text-ink hover:bg-surface-2')
+                  }
+                >
+                  {m.name}
+                </Link>
+              ))}
+            </div>
+          </Card>
+
+          {selected ? (
+            <>
+              <Card tight>
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <h2 className="text-xl font-semibold">{selected.name}</h2>
+                  <Pill tone={selected.status === 'active' ? 'ok' : 'warn'}>{selected.status}</Pill>
+                </div>
+                <p className="mt-1 text-sm text-ink-muted">
+                  Archetype {selected.archetype} · {selected.departments.length} departments ·{' '}
+                  {selected.modules.filter(m => m.enabled).length} active modules
+                </p>
+              </Card>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <Card tight>
+                  <h3 className="font-semibold">Departments</h3>
+                  <ul className="mt-2 space-y-1 text-sm">
+                    {selected.departments.map(d => <li key={d.id}>{d.name}</li>)}
+                    {selected.departments.length === 0 ? <li className="text-ink-muted">None configured.</li> : null}
+                  </ul>
+                </Card>
+                <Card tight>
+                  <h3 className="font-semibold">Active operational modules</h3>
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {selected.modules.filter(m => m.enabled).map(m => (
+                      <Pill key={m.moduleKey} tone="ok">{m.moduleKey}</Pill>
+                    ))}
+                    {selected.modules.filter(m => m.enabled).length === 0 ? (
+                      <span className="text-sm text-ink-muted">No modules enabled.</span>
+                    ) : null}
+                  </div>
+                  {selected.modules.some(m => !m.enabled) ? (
+                    <div className="mt-3">
+                      <div className="text-sm text-ink-muted">Disabled:</div>
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {selected.modules.filter(m => !m.enabled).map(m => (
+                          <Pill key={m.moduleKey}>{m.moduleKey}</Pill>
+                        ))}
+                      </div>
+                    </div>
+                  ) : null}
+                </Card>
+              </div>
+
+              <Plain>
+                Shared sovereign core is inherited by every institution:
+                identity, audit, RBAC, observability, workflows, notifications,
+                interoperability, documents, payments. Configure structure in{' '}
+                <Link href="/ministries" className="text-link underline underline-offset-2">Institutions</Link>.
+              </Plain>
+
+              <p className="text-sm text-ink-muted">
+                What this view never shows: individual citizen records, officer
+                click data, political affiliations. Per Companions 156 and 158.
+              </p>
+            </>
+          ) : null}
         </div>
-      </header>
-
-      <div className="max-w-6xl mx-auto px-6 py-6 space-y-4">
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <Card>
-            <h3 className="text-lg font-semibold mt-0">Today's service</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Citizens served (rolling 7d): <strong>~98,400</strong></li>
-              <li>Median time to decision: <strong>2.3 days</strong></li>
-              <li>Contestation rate (Class B): <strong>1.4%</strong></li>
-              <li>Contestation reversal rate: <strong>6.1%</strong></li>
-              <li>Disbursements yesterday: <strong>KES 412M</strong> — all reconciled to Audit Vault</li>
-            </ul>
-          </Card>
-
-          <Card>
-            <h3 className="text-lg font-semibold mt-0">Equity stratification (last 30 days)</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>By language: <Pill tone="ok">nominal</Pill> across 11 languages</li>
-              <li>By district: <Pill tone="warn">2 amber</Pill></li>
-              <li className="text-ink-muted ml-4">→ Tana Delta (▼9%) — investigation open</li>
-              <li className="text-ink-muted ml-4">→ Garbatulla (▼7%) — root cause: data freshness</li>
-              <li>By age band 65+: <Pill tone="warn">amber (▼12%)</Pill> — root cause analysis in flight</li>
-            </ul>
-          </Card>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <Card>
-            <h3 className="text-lg font-semibold mt-0">Open programs</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Child grant — steady</li>
-              <li>Drought supplement — active</li>
-              <li>Pension uplift Q3 — pilot</li>
-              <li>Emergency disbursement (Tana NCCC) — sunset 21 May</li>
-              <li>Disability accommodation review</li>
-              <li>School-feeding alignment</li>
-            </ul>
-          </Card>
-
-          <Card>
-            <h3 className="text-lg font-semibold mt-0">Constitutional officer findings (live)</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              <li><strong>Algorithmic Ombudsman:</strong> CH-014 tripwire fire — automation halted, manual review</li>
-              <li><strong>Auditor General:</strong> spot-check scheduled 15 May</li>
-              <li><strong>Inspector General:</strong> 1 anonymous complaint about an agent — routine</li>
-              <li><strong>People's Editor:</strong> revised plain-language template — awaiting deploy</li>
-              <li><strong>Future Generations:</strong> 30-year review of child welfare in progress</li>
-            </ul>
-          </Card>
-        </div>
-
-        <div className="grid md:grid-cols-2 gap-4">
-          <Card>
-            <h3 className="text-lg font-semibold mt-0">Officer wellbeing (aggregate)</h3>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Pace within ceiling: <strong>96%</strong></li>
-              <li>Voluntary wellbeing pulse participation: <strong>78%</strong> · sentiment nominal</li>
-              <li>4 officers above ceiling for 3+ days — <Pill tone="warn">⚐ supervisor action needed</Pill></li>
-              <li>Rotation health: <Pill tone="ok">green</Pill></li>
-            </ul>
-            <p className="text-sm text-ink-muted mt-2">No individual officer data is drillable from this panel.</p>
-          </Card>
-
-          <Card>
-            <h3 className="text-lg font-semibold mt-0">Civil society engagement</h3>
-            <p>Active standing-access partners: <strong>12</strong></p>
-            <ul className="list-disc pl-5 space-y-1">
-              <li>Disability Alliance — stratification by disability category <Pill>fulfillable</Pill></li>
-              <li>Kenya Red Cross — emergency disbursement audit access <Pill>fulfillable</Pill></li>
-              <li>Children's Rights Coalition — school-feeding review <Pill tone="warn">needs Education alignment</Pill></li>
-            </ul>
-            <p className="text-sm text-ink-muted mt-2">Next partnership meeting: 22 May.</p>
-          </Card>
-        </div>
-
-        <Card>
-          <h3 className="text-lg font-semibold mt-0">AI charters in your ministry</h3>
-          <ul className="list-disc pl-5 space-y-1">
-            {charters.map(c => {
-              const tone =
-                c.status === 'halted' ? 'alert' :
-                c.status === 'amber'  ? 'warn'  :
-                c.status === 'green'  ? 'ok'    : 'neutral';
-              const label =
-                c.status === 'halted' ? 'HALTED (tripwire fire)' :
-                c.status.toUpperCase();
-              return (
-                <li key={c.id}>
-                  <strong>{c.id} — {c.title}</strong>{' '}
-                  (Class {c.decisionClass}) — <Pill tone={tone as 'alert'|'warn'|'ok'|'neutral'}>{label}</Pill>
-                </li>
-              );
-            })}
-          </ul>
-          <p className="text-sm text-ink-muted mt-2">Renewals due Q3: 2 · Replacement drill scheduled 30 May (CH-017).</p>
-        </Card>
-
-        <Card>
-          <h3 className="text-lg font-semibold mt-0">Citizen voice (aggregated, plain language)</h3>
-          <ul className="list-disc pl-5 space-y-1">
-            <li>"It came on time this month, thank you." — Citizen, Mombasa</li>
-            <li>"Why is it less than last month?" — Citizen, Garissa (5 similar today)</li>
-            <li>"The Pokomo-language reminder helped my mother." — Citizen, Tana</li>
-          </ul>
-          <p className="text-sm text-ink-muted mt-2">
-            Sample of 12 citizen comments today. <a href="#" className="text-link underline">Open civic voice</a>.
-          </p>
-        </Card>
-
-        <p className="text-sm text-ink-muted text-center pt-2">
-          What this room cannot show: individual citizen records · individual officer click data ·
-          citizen political affiliations · officer political affiliations · any per-individual surveillance.
-          Per Companion 156 and Companion 158.
-        </p>
-      </div>
-    </main>
+      )}
+    </OperatorShell>
   );
 }

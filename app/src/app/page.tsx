@@ -93,6 +93,7 @@ export default function HomePage() {
           <Link href="/control"><Button variant="secondary">Ministry operations →</Button></Link>
           <Link href="/audit"><Button variant="secondary">Auditor oversight →</Button></Link>
           <Link href="/integrations"><Button variant="secondary">Interoperability →</Button></Link>
+          <Link href="/ministries"><Button variant="secondary">Institutions →</Button></Link>
           <Link href="/platform"><Button variant="secondary">Platform operations →</Button></Link>
           <Link href="/developers"><Button variant="secondary">Developer guide →</Button></Link>
         </div>

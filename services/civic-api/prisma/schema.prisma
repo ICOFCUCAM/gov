@@ -67,6 +67,7 @@ model Tenant {
   backups      BackupRecord[]
   configs      ConfigBundle[]
   lifecycle    TenantLifecycleEvent[]
+  ministries   Ministry[]
 
   @@index([kind, status])
 }
@@ -611,4 +612,71 @@ model TenantLifecycleEvent {
   at        DateTime @default(now())
 
   @@index([tenantId, at])
+}
+
+// ── Institutional framework (dynamic multi-ministry) ──────────────────
+// Ministries are DATA, not code. A government instantiates a ministry from
+// an archetype blueprint, then freely renames/merges/deactivates and
+// configures departments + module activations — no platform rewrite.
+
+enum MinistryArchetype {
+  HEALTH
+  EDUCATION
+  FINANCE
+  AGRICULTURE
+  ENERGY
+  TRANSPORT
+  JUSTICE
+  ENVIRONMENT
+  INTERIOR
+  LABOR
+  TRADE
+  GENERIC
+}
+
+enum MinistryStatus {
+  ACTIVE
+  MERGED
+  DEACTIVATED
+}
+
+model Ministry {
+  id           String             @id @default(cuid())
+  tenantId     String
+  tenant       Tenant             @relation(fields: [tenantId], references: [id])
+  slug         String
+  name         String
+  archetype    MinistryArchetype
+  status       MinistryStatus     @default(ACTIVE)
+  mergedIntoId String? // when MERGED, points at the surviving ministry
+  createdAt    DateTime           @default(now())
+  departments  Department[]
+  modules      ModuleActivation[]
+
+  @@unique([tenantId, slug])
+  @@index([tenantId, status])
+}
+
+model Department {
+  id         String   @id @default(cuid())
+  ministryId String
+  ministry   Ministry @relation(fields: [ministryId], references: [id])
+  name       String
+  createdAt  DateTime @default(now())
+
+  @@unique([ministryId, name])
+}
+
+/// Which operational modules a ministry has switched on, with per-ministry
+/// config overrides. Activation is policy-driven composition, not branching.
+model ModuleActivation {
+  id         String   @id @default(cuid())
+  ministryId String
+  ministry   Ministry @relation(fields: [ministryId], references: [id])
+  moduleKey  String // e.g. "hospitals", "licensing", "budget"
+  enabled    Boolean  @default(true)
+  config     Json     @default("{}")
+
+  @@unique([ministryId, moduleKey])
+  @@index([ministryId, enabled])
 }

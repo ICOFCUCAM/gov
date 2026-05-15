@@ -13,6 +13,7 @@ import { MetricsModule } from './modules/metrics/metrics.module';
 import { OpsModule } from './modules/ops/ops.module';
 import { InteropModule } from './modules/interop/interop.module';
 import { PlatformOpsModule } from './modules/platform-ops/platform-ops.module';
+import { OrgModule } from './modules/org/org.module';
 import { AuditInterceptor } from './common/audit.interceptor';
 import { MetricsInterceptor } from './common/metrics';
 import { VersionHeaderInterceptor } from './common/versioning';
@@ -34,6 +35,7 @@ import { HttpExceptionFilter } from './common/http-exception.filter';
     OpsModule,
     InteropModule,
     PlatformOpsModule,
+    OrgModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: RateLimitGuard },
