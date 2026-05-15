@@ -79,6 +79,11 @@ import type {
   NationalSnapshot,
   CrossMinistryIncident,
   NationalIndicator,
+  NationalCoordination,
+  CoordinationNode,
+  CoordinationEdge,
+  OpsTimelineEvent,
+  CoordinationPinned,
   VerifyResult,
 } from '@/lib/api/types';
 import { specFor } from '@/lib/ops-catalog';
@@ -1616,6 +1621,188 @@ function ensureIncidentsSeeded(): void {
       db.ministryQueues[m.id] = seedQueue(m.id);
     }
   }
+}
+
+// Cross-ministry dependency model — which institutions an institution
+// supplies or underwrites. Directed: from → to ("from" supports "to").
+const COORDINATION_DEPS: Partial<Record<ArchetypeKey, { to: ArchetypeKey; relation: string }[]>> = {
+  FINANCE: [
+    { to: 'HEALTH', relation: 'funds' }, { to: 'EDUCATION', relation: 'funds' },
+    { to: 'ENERGY', relation: 'funds' }, { to: 'TRANSPORT', relation: 'funds' },
+    { to: 'INTERIOR', relation: 'funds' }, { to: 'JUSTICE', relation: 'funds' },
+  ],
+  ENERGY: [
+    { to: 'HEALTH', relation: 'supplies' }, { to: 'TRANSPORT', relation: 'supplies' },
+    { to: 'INTERIOR', relation: 'supplies' }, { to: 'EDUCATION', relation: 'supplies' },
+    { to: 'ENVIRONMENT', relation: 'supplies' },
+  ],
+  TRANSPORT: [
+    { to: 'HEALTH', relation: 'moves' }, { to: 'AGRICULTURE', relation: 'moves' },
+    { to: 'TRADE', relation: 'moves' }, { to: 'INTERIOR', relation: 'moves' },
+  ],
+  INTERIOR: [
+    { to: 'JUSTICE', relation: 'secures' }, { to: 'HEALTH', relation: 'secures' },
+    { to: 'TRANSPORT', relation: 'secures' }, { to: 'ENERGY', relation: 'secures' },
+  ],
+  JUSTICE: [{ to: 'INTERIOR', relation: 'adjudicates' }, { to: 'LABOR', relation: 'adjudicates' }],
+  LABOR: [{ to: 'HEALTH', relation: 'staffs' }, { to: 'EDUCATION', relation: 'staffs' }],
+  ENVIRONMENT: [{ to: 'ENERGY', relation: 'regulates' }, { to: 'AGRICULTURE', relation: 'regulates' }],
+  TRADE: [{ to: 'AGRICULTURE', relation: 'enables' }, { to: 'FINANCE', relation: 'enables' }],
+  AGRICULTURE: [{ to: 'HEALTH', relation: 'feeds' }],
+};
+const SEV_WEIGHT: Record<IncidentSeverity, number> = { sev1: 100, sev2: 78, sev3: 50, sev4: 28 };
+const RELATION_COUPLING: Record<string, number> = {
+  funds: 0.9, supplies: 0.8, secures: 0.7, moves: 0.6, staffs: 0.55,
+  regulates: 0.5, feeds: 0.5, enables: 0.5, adjudicates: 0.5,
+};
+
+function toneForRisk(r: number): OpsTone {
+  return r >= 67 ? 'alert' : r >= 34 ? 'warn' : 'ok';
+}
+
+export function nationalCoordination(): NationalCoordination {
+  ensureIncidentsSeeded();
+  const active = db.ministries.filter(m => m.status === 'active');
+  const byArch = new Map<ArchetypeKey, typeof active[number]>();
+  for (const m of active) if (!byArch.has(m.archetype)) byArch.set(m.archetype, m);
+
+  const nodes: CoordinationNode[] = active.map(m => {
+    const incs = (db.ministryIncidents[m.id] ?? []).filter(i => i.active);
+    const queue = (db.ministryQueues[m.id] ?? []).filter(x => x.state !== 'cleared');
+    const slaBreaching = queue.length > 6;
+    let risk = incs.reduce((mx, i) => Math.max(mx, SEV_WEIGHT[i.severity]), 0);
+    if (slaBreaching) risk = Math.min(100, risk + 15 + Math.min(20, (queue.length - 6) * 3));
+    else risk = Math.min(100, risk + Math.min(12, queue.length * 2));
+    const sevRank: IncidentSeverity[] = ['sev1', 'sev2', 'sev3', 'sev4'];
+    const topSeverity =
+      incs.length === 0
+        ? null
+        : sevRank.find(s => incs.some(i => i.severity === s)) ?? null;
+    return {
+      ministryId: m.id,
+      ministry: m.name,
+      archetype: m.archetype,
+      riskScore: risk,
+      posture: toneForRisk(risk),
+      activeIncidents: incs.length,
+      topSeverity,
+      queueDepth: queue.length,
+      slaBreaching,
+    };
+  });
+  const nodeById = new Map(nodes.map(n => [n.ministryId, n]));
+
+  const edges: CoordinationEdge[] = [];
+  for (const m of active) {
+    for (const dep of COORDINATION_DEPS[m.archetype] ?? []) {
+      const target = byArch.get(dep.to);
+      if (!target || target.id === m.id) continue;
+      const from = nodeById.get(m.id);
+      if (!from) continue;
+      const coupling = RELATION_COUPLING[dep.relation] ?? 0.5;
+      edges.push({
+        fromId: m.id,
+        toId: target.id,
+        from: m.name,
+        to: target.name,
+        relation: dep.relation,
+        propagatedRisk: Math.round(from.riskScore * coupling),
+      });
+    }
+  }
+
+  const timeline: OpsTimelineEvent[] = [];
+  const now = Date.now();
+  for (const e of [...db.audit].slice(-16)) {
+    const a = e.action.toLowerCase();
+    const tone: OpsTone =
+      e.outcome === 'error' || e.outcome === 'denied'
+        ? 'alert'
+        : a.includes('escalate')
+          ? 'warn'
+          : a.startsWith('sovereign')
+            ? 'neutral'
+            : 'ok';
+    timeline.push({
+      at: e.at,
+      kind: a.startsWith('sovereign') ? 'sovereign' : a.includes('escalate') ? 'escalation' : 'audit',
+      tone,
+      title: `${e.actor} · ${e.action}`,
+      detail: `${e.resource}${e.detail ? ` — ${e.detail}` : ''}`,
+    });
+  }
+  for (const m of active) {
+    for (const inc of (db.ministryIncidents[m.id] ?? []).filter(i => i.active)) {
+      const offsetMin = seededInt(`tl:${m.id}:${inc.key}`, 6, 2160);
+      timeline.push({
+        at: new Date(now - offsetMin * 60_000).toISOString(),
+        ministryId: m.id,
+        ministry: m.name,
+        kind: 'incident',
+        tone: inc.severity === 'sev1' || inc.severity === 'sev2' ? 'alert' : inc.severity === 'sev3' ? 'warn' : 'neutral',
+        title: `${m.name}: ${inc.label}`,
+        detail: `${inc.severity.toUpperCase()} — ${inc.detail}`,
+      });
+    }
+    const n = nodeById.get(m.id);
+    if (n?.slaBreaching) {
+      timeline.push({
+        at: new Date(now - seededInt(`tl:sla:${m.id}`, 12, 600) * 60_000).toISOString(),
+        ministryId: m.id,
+        ministry: m.name,
+        kind: 'sla',
+        tone: 'warn',
+        title: `${m.name}: approvals queue breaching SLA`,
+        detail: `${n.queueDepth} items beyond service threshold`,
+      });
+    }
+  }
+  timeline.sort((a, b) => (a.at < b.at ? 1 : -1));
+
+  const pinnedIncidents: CoordinationPinned[] = [];
+  for (const m of active) {
+    const chain = profileFor(m.archetype).escalation;
+    for (const inc of (db.ministryIncidents[m.id] ?? []).filter(i => i.active)) {
+      if (inc.severity !== 'sev1' && inc.severity !== 'sev2') continue;
+      const affects = (COORDINATION_DEPS[m.archetype] ?? [])
+        .map(d => byArch.get(d.to))
+        .filter((x): x is typeof active[number] => !!x && x.id !== m.id)
+        .map(x => x.name);
+      pinnedIncidents.push({
+        ministryId: m.id,
+        ministry: m.name,
+        label: inc.label,
+        severity: inc.severity,
+        authority: chain[inc.tierIndex] ?? '—',
+        affects,
+      });
+    }
+  }
+  pinnedIncidents.sort((a, b) => a.severity.localeCompare(b.severity));
+
+  const avgNode = nodes.length
+    ? Math.round(nodes.reduce((s, n) => s + n.riskScore, 0) / nodes.length)
+    : 0;
+  const maxEdge = edges.reduce((mx, e) => Math.max(mx, e.propagatedRisk), 0);
+  const nationalRisk = Math.round(0.65 * avgNode + 0.35 * maxEdge);
+  const cascadeRisks = edges.filter(e => e.propagatedRisk >= 50).length;
+  const level = toneForRisk(nationalRisk);
+
+  return {
+    sovereign: db.sovereign,
+    generatedAt: new Date().toISOString(),
+    posture: {
+      level,
+      label: level === 'alert' ? 'CRITICAL' : level === 'warn' ? 'STRAINED' : 'STABLE',
+      nationalRisk,
+      coordinatingMinistries: nodes.length,
+      cascadeRisks,
+    },
+    nodes,
+    edges,
+    timeline: timeline.slice(0, 28),
+    pinnedIncidents,
+  };
 }
 
 export function nationalSnapshot(): NationalSnapshot {

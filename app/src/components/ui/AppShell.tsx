@@ -67,6 +67,7 @@ export function AppShell({
 
   const stateGroup: NavItem[] = [
     { href: '/gov', label: 'Cabinet' },
+    { href: '/gov/coordination', label: 'National coordination' },
     { href: '/ops', label: 'Operations centre' },
     { href: '/audit', label: 'Oversight' },
   ];

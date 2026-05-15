@@ -46,6 +46,7 @@ import type {
   SovereignProfile,
   SovereignPreset,
   NationalSnapshot,
+  NationalCoordination,
   CabinetOverview,
   MinistryQueue,
   QueueItem,
@@ -87,6 +88,7 @@ export const api = {
   cabinet: {
     overview: () => req<CabinetOverview>('/api/cabinet'),
     national: () => req<NationalSnapshot>('/api/national'),
+    coordination: () => req<NationalCoordination>('/api/national/coordination'),
   },
   permits: {
     list: () => req<{ permits: Permit[] }>('/api/permits'),

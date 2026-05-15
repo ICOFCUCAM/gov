@@ -546,6 +546,63 @@ export interface CabinetOverview {
   };
 }
 
+// ── National coordination intelligence (Phase 2A) ────────────────────
+// Read-only coordination fabric: surfaces cross-ministry dependency,
+// cascade risk and a national operations timeline so humans coordinate.
+// No autonomous action, no forecasting — derived from current real
+// operational state only.
+export interface CoordinationNode {
+  ministryId: string;
+  ministry: string;
+  archetype: ArchetypeKey;
+  riskScore: number;            // 0..100 composite from live ops data
+  posture: OpsTone;
+  activeIncidents: number;
+  topSeverity: IncidentSeverity | null;
+  queueDepth: number;
+  slaBreaching: boolean;
+}
+export interface CoordinationEdge {
+  fromId: string;
+  toId: string;
+  from: string;
+  to: string;
+  relation: string;             // supplies / funds / secures / staffs …
+  propagatedRisk: number;       // 0..100 risk transmitted along dependency
+}
+export interface OpsTimelineEvent {
+  at: ISODate;
+  ministryId?: string;
+  ministry?: string;
+  kind: 'incident' | 'escalation' | 'sla' | 'sovereign' | 'audit';
+  tone: OpsTone;
+  title: string;
+  detail?: string;
+}
+export interface CoordinationPinned {
+  ministryId: string;
+  ministry: string;
+  label: string;
+  severity: IncidentSeverity;
+  authority: string;
+  affects: string[];            // dependent ministries in scope
+}
+export interface NationalCoordination {
+  sovereign: SovereignProfile;
+  generatedAt: ISODate;
+  posture: {
+    level: OpsTone;
+    label: string;              // STABLE | STRAINED | CRITICAL
+    nationalRisk: number;       // 0..100
+    coordinatingMinistries: number;
+    cascadeRisks: number;       // dependency edges over threshold
+  };
+  nodes: CoordinationNode[];
+  edges: CoordinationEdge[];
+  timeline: OpsTimelineEvent[];
+  pinnedIncidents: CoordinationPinned[];
+}
+
 // ── Command visualisation series ─────────────────────────────────────
 export interface AnalyticSeries {
   key: string;
