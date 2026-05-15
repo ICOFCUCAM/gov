@@ -1,0 +1,40 @@
+{
+  "name": "civic-api",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CivicOS sovereign operational backend. Multi-tenant, event-driven, append-only audit. Swappable for sovereign datastore.",
+  "scripts": {
+    "build": "nest build",
+    "start": "node dist/main.js",
+    "start:dev": "nest start --watch",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:format": "prisma format",
+    "prisma:validate": "prisma validate"
+  },
+  "dependencies": {
+    "@nestjs/common": "10.4.4",
+    "@nestjs/config": "3.2.3",
+    "@nestjs/core": "10.4.4",
+    "@nestjs/platform-express": "10.4.4",
+    "@nestjs/swagger": "7.4.2",
+    "@nestjs/terminus": "10.2.3",
+    "@prisma/client": "5.20.0",
+    "helmet": "7.1.0",
+    "reflect-metadata": "0.2.2",
+    "rxjs": "7.8.1",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "10.4.5",
+    "@nestjs/schematics": "10.1.4",
+    "@types/express": "4.17.21",
+    "@types/node": "20.14.10",
+    "prisma": "5.20.0",
+    "typescript": "5.5.4"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

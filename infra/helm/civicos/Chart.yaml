@@ -1,0 +1,9 @@
+apiVersion: v2
+name: civicos
+description: CivicOS sovereign operational platform — API + app, sovereign-portable.
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+maintainers:
+  - name: CivicOS Foundation
+keywords: [sovereign, dpi, government, multi-tenant]

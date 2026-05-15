@@ -1,0 +1,340 @@
+// CivicOS — sovereign operational data model.
+// Multi-tenant by Tenant (municipality | ministry | agency | region).
+// Append-only audit + immutable receipts + transactional outbox for events.
+//
+// Engineering notes:
+// - Every tenant-scoped row carries tenantId; row-level isolation is enforced
+//   in the application layer (TenantContext) and SHOULD additionally be
+//   enforced by Postgres RLS in production (policy stubs in migrations).
+// - Receipts and AuditEvents are append-only: no update/delete in code paths.
+// - Outbox pattern decouples write transactions from event publication.
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Tenant = an isolated sovereign customer unit.
+enum TenantKind {
+  MUNICIPALITY
+  MINISTRY
+  AGENCY
+  REGION
+  NATIONAL
+}
+
+enum TenantStatus {
+  PROVISIONING
+  ACTIVE
+  SUSPENDED
+  DECOMMISSIONED
+}
+
+model Tenant {
+  id            String       @id @default(cuid())
+  slug          String       @unique // e.g. "kiambu", "min-health"
+  name          String
+  kind          TenantKind
+  status        TenantStatus @default(PROVISIONING)
+  country       String
+  parentId      String? // federation: a ministry/region can parent municipalities
+  parent        Tenant?      @relation("TenantHierarchy", fields: [parentId], references: [id])
+  children      Tenant[]     @relation("TenantHierarchy")
+  officialLangs String[] // BCP-47 codes
+  settings      Json         @default("{}")
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  users        User[]
+  citizens     Citizen[]
+  permits      Permit[]
+  bills        Bill[]
+  receipts     Receipt[]
+  documents    DocumentRef[]
+  auditEvents  AuditEvent[]
+  outbox       OutboxEvent[]
+  roleBindings RoleBinding[]
+
+  @@index([kind, status])
+}
+
+/// Operators (officers, admins). Authenticated via OIDC; subject stored.
+model User {
+  id           String        @id @default(cuid())
+  tenantId     String
+  tenant       Tenant        @relation(fields: [tenantId], references: [id])
+  oidcSubject  String // sub claim from sovereign IdP
+  displayName  String
+  email        String?
+  active       Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  roleBindings RoleBinding[]
+  signatures   Signature[]
+
+  @@unique([tenantId, oidcSubject])
+  @@index([tenantId, active])
+}
+
+/// RBAC: roles are scoped to a tenant; permissions are coarse capability codes.
+model Role {
+  id          String        @id @default(cuid())
+  key         String // e.g. "officer.permits", "tenant.admin", "auditor"
+  name        String
+  permissions String[] // e.g. ["permit:read","permit:decide","payment:read"]
+  bindings    RoleBinding[]
+
+  @@unique([key])
+}
+
+model RoleBinding {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  roleId    String
+  role      Role     @relation(fields: [roleId], references: [id])
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, userId, roleId])
+  @@index([tenantId, userId])
+}
+
+/// Citizen handle — NOT a global ID. Per-tenant principal record.
+/// Cross-tenant identity is federated via verifiable credentials, never a
+/// shared global key (Companion 03 / 140).
+model Citizen {
+  id              String   @id @default(cuid())
+  tenantId        String
+  tenant          Tenant   @relation(fields: [tenantId], references: [id])
+  displayName     String
+  preferredLocale String   @default("en")
+  // Pseudonymous per-RP identifier material is stored hashed, never raw PII keys.
+  subjectHash     String
+  createdAt       DateTime @default(now())
+
+  permits  Permit[]
+  bills    Bill[]
+  receipts Receipt[]
+
+  @@unique([tenantId, subjectHash])
+  @@index([tenantId])
+}
+
+enum PermitType {
+  BUILDING
+  BUSINESS
+  MARKET_STALL
+  EVENT
+  VEHICLE
+  FOOD_HANDLING
+}
+
+enum PermitStatus {
+  DRAFT
+  SUBMITTED
+  IN_REVIEW
+  NEEDS_INFO
+  APPROVED
+  DECLINED
+}
+
+model Permit {
+  id            String             @id @default(cuid())
+  tenantId      String
+  tenant        Tenant             @relation(fields: [tenantId], references: [id])
+  citizenId     String
+  citizen       Citizen            @relation(fields: [citizenId], references: [id])
+  type          PermitType
+  title         String
+  status        PermitStatus       @default(SUBMITTED)
+  fields        Json               @default("{}")
+  decidedById   String? // User.id of the deciding officer (named accountability)
+  aiClass       String? // A|B|C|D|E — advisory class of any AI involvement
+  submittedAt   DateTime           @default(now())
+  decisionDueAt DateTime?
+  updatedAt     DateTime           @updatedAt
+  timeline      PermitTransition[]
+
+  @@index([tenantId, status])
+  @@index([tenantId, citizenId])
+}
+
+/// Append-only state-transition log for a permit (event-sourced timeline).
+model PermitTransition {
+  id          String       @id @default(cuid())
+  permitId    String
+  permit      Permit       @relation(fields: [permitId], references: [id])
+  status      PermitStatus
+  note        String?
+  officerName String?
+  at          DateTime     @default(now())
+
+  @@index([permitId, at])
+}
+
+enum BillKind {
+  WATER
+  WASTE
+  PROPERTY_TAX
+  PERMIT_FEE
+  TRANSIT
+}
+
+enum BillStatus {
+  DUE
+  PAID
+  OVERDUE
+}
+
+model Bill {
+  id          String     @id @default(cuid())
+  tenantId    String
+  tenant      Tenant     @relation(fields: [tenantId], references: [id])
+  citizenId   String
+  citizen     Citizen    @relation(fields: [citizenId], references: [id])
+  kind        BillKind
+  description String
+  amountMinor Int
+  currency    String     @default("KES")
+  dueDate     DateTime
+  status      BillStatus @default(DUE)
+  createdAt   DateTime   @default(now())
+  receipts    Receipt[]
+
+  @@index([tenantId, status])
+}
+
+/// Immutable payment/decision receipt. Hash-chained per tenant for
+/// tamper-evidence (prevHash -> hash). Never updated or deleted.
+model Receipt {
+  id          String   @id @default(cuid())
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id])
+  citizenId   String?
+  citizen     Citizen? @relation(fields: [citizenId], references: [id])
+  billId      String?
+  bill        Bill?    @relation(fields: [billId], references: [id])
+  kind        String // "payment" | "decision" | "signature"
+  payload     Json
+  amountMinor Int?
+  currency    String?
+  rail        String? // payment rail e.g. ISO20022, M-Pesa
+  prevHash    String?
+  hash        String
+  seq         Int // monotonically increasing per tenant
+  createdAt   DateTime @default(now())
+
+  @@unique([tenantId, seq])
+  @@index([tenantId, kind])
+}
+
+/// Reference to an object-store artifact (never the bytes in the DB).
+model DocumentRef {
+  id          String      @id @default(cuid())
+  tenantId    String
+  tenant      Tenant      @relation(fields: [tenantId], references: [id])
+  bucket      String
+  objectKey   String
+  contentHash String // sha-256 of the artifact
+  mimeType    String
+  createdAt   DateTime    @default(now())
+  signatures  Signature[]
+
+  @@unique([tenantId, objectKey])
+}
+
+/// Non-repudiable digital signature over a document or decision.
+model Signature {
+  id           String      @id @default(cuid())
+  documentId   String
+  document     DocumentRef @relation(fields: [documentId], references: [id])
+  signerId     String
+  signer       User        @relation(fields: [signerId], references: [id])
+  signerName   String
+  algorithm    String      @default("ed25519")
+  signatureB64 String
+  hash         String
+  signedAt     DateTime    @default(now())
+
+  @@index([documentId])
+}
+
+/// Append-only audit trail. Every state-changing operation writes one row.
+/// Constitutional-officer oversight reads from here (Companion 06 / 28).
+model AuditEvent {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  actorType String // "user" | "system" | "agent"
+  actorId   String?
+  action    String // e.g. "permit.decide", "payment.execute"
+  resource  String // e.g. "Permit:abc123"
+  outcome   String // "ok" | "denied" | "error"
+  metadata  Json     @default("{}")
+  ip        String?
+  prevHash  String?
+  hash      String
+  seq       Int
+  createdAt DateTime @default(now())
+
+  @@unique([tenantId, seq])
+  @@index([tenantId, action])
+  @@index([tenantId, createdAt])
+}
+
+/// Transactional outbox: events are written in the same DB transaction as
+/// the state change, then a relay publishes them to NATS/Kafka and marks
+/// them dispatched. Guarantees at-least-once delivery without 2PC.
+enum OutboxStatus {
+  PENDING
+  DISPATCHED
+  FAILED
+}
+
+model OutboxEvent {
+  id           String       @id @default(cuid())
+  tenantId     String
+  tenant       Tenant       @relation(fields: [tenantId], references: [id])
+  topic        String // e.g. "civicos.permit.submitted"
+  partitionKey String // usually tenantId or aggregate id
+  payload      Json
+  status       OutboxStatus @default(PENDING)
+  attempts     Int          @default(0)
+  createdAt    DateTime     @default(now())
+  dispatchedAt DateTime?
+
+  @@index([status, createdAt])
+  @@index([tenantId])
+}
+
+/// Offline sync: device-originated mutations queued at the edge (USSD/agent/
+/// kiosk) and reconciled with last-writer + server-authority rules.
+enum SyncState {
+  QUEUED
+  APPLIED
+  REJECTED
+  CONFLICT
+}
+
+model SyncMutation {
+  id          String    @id @default(cuid())
+  tenantId    String
+  deviceId    String
+  clientMutId String // idempotency key generated at the edge
+  entity      String // "permit" | "payment-intent" | ...
+  op          String // "create" | "update"
+  payload     Json
+  baseVersion Int? // optimistic concurrency token the client saw
+  state       SyncState @default(QUEUED)
+  reason      String?
+  receivedAt  DateTime  @default(now())
+  resolvedAt  DateTime?
+
+  @@unique([tenantId, deviceId, clientMutId])
+  @@index([tenantId, state])
+}

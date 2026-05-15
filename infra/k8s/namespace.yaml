@@ -1,0 +1,11 @@
+# Raw k8s entrypoint for clusters not using Helm directly.
+# Primary deployment path is the Helm chart (infra/helm/civicos);
+# this namespace + label is all that must exist before `helm install`.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: civicos
+  labels:
+    app.kubernetes.io/part-of: civicos
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted

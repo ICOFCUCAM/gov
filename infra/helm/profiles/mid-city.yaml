@@ -1,0 +1,10 @@
+# Mid-sized city (50k–1M). Dedicated Postgres (HA), moderate autoscale.
+# Operator: small digital team. Go-live target: ~30 days.
+api:
+  replicas: 4
+  autoscaling: { enabled: true, minReplicas: 4, maxReplicas: 16, targetCPUUtilizationPercentage: 70 }
+app:
+  replicas: 2
+pdb:
+  enabled: true
+  minAvailable: 3

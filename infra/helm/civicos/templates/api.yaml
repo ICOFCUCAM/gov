@@ -1,0 +1,87 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: civicos-api
+  labels:
+    app.kubernetes.io/name: civic-api
+    {{- include "civicos.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.api.replicas }}
+  selector:
+    matchLabels: { app.kubernetes.io/name: civic-api }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: civic-api }
+    spec:
+      securityContext:
+        {{- toYaml .Values.security.podSecurityContext | nindent 8 }}
+      containers:
+        - name: api
+          image: {{ include "civicos.image" (dict "registry" .Values.global.imageRegistry "repo" .Values.api.image "tag" .Values.api.tag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          ports: [{ containerPort: 4000 }]
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.postgres.existingSecret }}
+                  key: {{ .Values.postgres.secretKey }}
+            - name: NATS_URL
+              value: {{ .Values.nats.url | quote }}
+            {{- range $k, $v := .Values.api.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
+          resources: {{- toYaml .Values.api.resources | nindent 12 }}
+          readinessProbe:
+            httpGet: { path: /api/health/ready, port: 4000 }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /api/health/live, port: 4000 }
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: civicos-api
+spec:
+  selector: { app.kubernetes.io/name: civic-api }
+  ports: [{ port: 4000, targetPort: 4000 }]
+{{- if .Values.api.autoscaling.enabled }}
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: civicos-api
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: civicos-api
+  minReplicas: {{ .Values.api.autoscaling.minReplicas }}
+  maxReplicas: {{ .Values.api.autoscaling.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ .Values.api.autoscaling.targetCPUUtilizationPercentage }}
+{{- end }}
+{{- if .Values.pdb.enabled }}
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: civicos-api
+spec:
+  minAvailable: {{ .Values.pdb.minAvailable }}
+  selector:
+    matchLabels: { app.kubernetes.io/name: civic-api }
+{{- end }}

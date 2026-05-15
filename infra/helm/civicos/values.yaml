@@ -1,0 +1,58 @@
+# CivicOS Helm values. Override per environment (small muni / city / ministry
+# / national) via -f values-<profile>.yaml. See infra/helm/profiles/.
+
+global:
+  imageRegistry: registry.sovereign.local
+  imagePullPolicy: IfNotPresent
+
+api:
+  image: civicos/civic-api
+  tag: "0.1.0"
+  replicas: 3
+  resources:
+    requests: { cpu: "250m", memory: "256Mi" }
+    limits: { cpu: "1", memory: "512Mi" }
+  env:
+    CIVIC_DEV_AUTH: "0"
+    OUTBOX_POLL_MS: "2000"
+  autoscaling:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 70
+
+app:
+  image: civicos/civic-app
+  tag: "0.1.0"
+  replicas: 2
+  resources:
+    requests: { cpu: "100m", memory: "192Mi" }
+    limits: { cpu: "500m", memory: "384Mi" }
+
+postgres:
+  # In production, point at the sovereign managed Postgres (HA, PITR).
+  # The chart does NOT run the database; it consumes a connection secret.
+  existingSecret: civicos-db
+  secretKey: DATABASE_URL
+
+nats:
+  url: nats://nats.civicos.svc:4222
+
+ingress:
+  enabled: true
+  className: nginx
+  host: civicos.example.gov
+  tls:
+    enabled: true
+    secretName: civicos-tls
+
+security:
+  networkPolicy: true
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+    seccompProfile: { type: RuntimeDefault }
+
+pdb:
+  enabled: true
+  minAvailable: 2

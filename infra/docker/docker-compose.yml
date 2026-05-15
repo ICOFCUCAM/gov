@@ -1,0 +1,70 @@
+# CivicOS — local sovereign stack.
+# Brings up Postgres, NATS, Redis, the API, and the Next.js app.
+# Mirrors the production topology at small scale (single-node).
+#
+#   docker compose -f infra/docker/docker-compose.yml up --build
+#
+# Production replaces this with the Helm chart (infra/helm/civicos).
+
+name: civicos
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: civic
+      POSTGRES_PASSWORD: civic
+      POSTGRES_DB: civicos
+    ports: ['5432:5432']
+    volumes: ['pgdata:/var/lib/postgresql/data']
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U civic -d civicos']
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  nats:
+    image: nats:2.10-alpine
+    command: ['-js'] # JetStream for durable event streams
+    ports: ['4222:4222']
+    healthcheck:
+      test: ['CMD', 'sh', '-c', 'wget -qO- http://localhost:8222/ || true']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ['redis-server', '--save', '', '--appendonly', 'no']
+    ports: ['6379:6379']
+
+  api:
+    build:
+      context: ../../services/civic-api
+      dockerfile: Dockerfile
+    environment:
+      PORT: '4000'
+      DATABASE_URL: postgresql://civic:civic@postgres:5432/civicos?schema=public
+      NATS_URL: nats://nats:4222
+      CIVIC_CORS_ORIGINS: http://localhost:3000
+      CIVIC_DEV_AUTH: '1'
+    command: >
+      sh -c "pnpm prisma migrate deploy && node dist/main.js"
+    ports: ['4000:4000']
+    depends_on:
+      postgres: { condition: service_healthy }
+      nats: { condition: service_started }
+
+  app:
+    build:
+      context: ../../app
+      dockerfile: Dockerfile
+    environment:
+      NEXT_TELEMETRY_DISABLED: '1'
+      CIVIC_API_URL: http://api:4000/api
+    ports: ['3000:3000']
+    depends_on:
+      api: { condition: service_started }
+
+volumes:
+  pgdata:

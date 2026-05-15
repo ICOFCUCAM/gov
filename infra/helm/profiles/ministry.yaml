@@ -1,0 +1,11 @@
+# Ministry tenant. Cross-municipality parent in the tenant hierarchy.
+# Larger event throughput; NATS JetStream durable streams. Constitutional
+# officer read replicas. Operator: ministry IT + Foundation support.
+api:
+  replicas: 6
+  autoscaling: { enabled: true, minReplicas: 6, maxReplicas: 30, targetCPUUtilizationPercentage: 65 }
+app:
+  replicas: 3
+pdb:
+  enabled: true
+  minAvailable: 4

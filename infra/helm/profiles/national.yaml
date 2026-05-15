@@ -1,0 +1,11 @@
+# National deployment. Multi-region active-active, regional Postgres with
+# async replication, NATS supercluster, per-region ingress + GeoDNS.
+# Operator: sovereign cloud team + Foundation. Manual-fallback drilled.
+api:
+  replicas: 12
+  autoscaling: { enabled: true, minReplicas: 12, maxReplicas: 80, targetCPUUtilizationPercentage: 60 }
+app:
+  replicas: 6
+pdb:
+  enabled: true
+  minAvailable: 8
