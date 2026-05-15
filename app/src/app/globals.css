@@ -107,6 +107,30 @@
     background-image: none !important;
     backdrop-filter: none !important;
   }
+
+  /* Sovereign command-environment scrollbars — thin, token-coloured,
+     unobtrusive. Scoped to .sov so light surfaces keep native bars. */
+  .sov * {
+    scrollbar-width: thin;
+    scrollbar-color: rgb(var(--c-line)) transparent;
+  }
+  .sov *::-webkit-scrollbar {
+    width: 9px;
+    height: 9px;
+  }
+  .sov *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .sov *::-webkit-scrollbar-thumb {
+    background-color: rgb(var(--c-line));
+    border-radius: 6px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+  }
+  .sov *::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(var(--c-ink-muted));
+    background-clip: content-box;
+  }
 }
 
 @layer base {

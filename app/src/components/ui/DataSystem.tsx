@@ -80,7 +80,7 @@ export function DataTable<T extends { id?: string }>({
           {rows.map((row, i) => (
             <tr
               key={rowKey(row, i)}
-              className="border-t border-line-soft even:bg-surface-2/40"
+              className="border-t border-line-soft transition-colors duration-150 even:bg-surface-2/40 hover:bg-surface-2/70"
             >
               {columns.map(c => (
                 <td
@@ -378,8 +378,8 @@ export function EnterpriseTable<T extends { id?: string }>({
                   <React.Fragment key={k}>
                     <tr
                       className={cn(
-                        'border-t border-line-soft even:bg-surface-2/40',
-                        selected.has(k) && 'bg-link/10 even:bg-link/10',
+                        'border-t border-line-soft transition-colors duration-150 even:bg-surface-2/40 hover:bg-surface-2/70',
+                        selected.has(k) && 'bg-link/10 even:bg-link/10 hover:bg-link/15',
                       )}
                     >
                       {bulk ? (

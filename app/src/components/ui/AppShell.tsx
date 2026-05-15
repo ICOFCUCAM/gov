@@ -299,7 +299,7 @@ export function AppShell({
                   onChange={e => setQ(e.target.value)}
                   placeholder={t.search}
                   aria-label={t.search}
-                  className="w-48 rounded-sm border border-line bg-bg px-2 py-1 text-sm text-ink placeholder:text-ink-muted"
+                  className="focus-ring w-48 rounded-sm border border-line bg-bg px-2 py-1 text-sm text-ink transition-colors duration-150 placeholder:text-ink-muted hover:border-ink/40"
                 />
                 {q && institutions.filter(i => i.label.toLowerCase().includes(q.toLowerCase())).length > 0 ? (
                   <div className="absolute right-0 z-40 mt-1 w-64 rounded-sm border border-line bg-surface shadow-xl">
@@ -325,10 +325,10 @@ export function AppShell({
                   aria-expanded={notifOpen}
                   onClick={() => setNotifOpen(o => !o)}
                   className={cn(
-                    'rounded-sm border px-2 py-0.5 text-xs',
+                    'focus-ring rounded-sm border px-2 py-0.5 text-xs transition-colors duration-150',
                     alerts > 0
-                      ? 'border-alert/60 bg-alert/15 text-alert'
-                      : 'border-line bg-surface-2 text-ink-soft',
+                      ? 'border-alert/60 bg-alert/15 text-alert hover:bg-alert/20'
+                      : 'border-line bg-surface-2 text-ink-soft hover:text-ink',
                   )}
                   title="Active institutional incidents"
                 >
