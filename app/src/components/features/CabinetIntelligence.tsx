@@ -63,6 +63,23 @@ function riskState(v: number): RiskState {
   return v >= 78 ? 'critical' : v >= 58 ? 'elevated' : v >= 40 ? 'watch' : 'stable';
 }
 
+// Sovereign institutional fallback so the executive brain is never empty
+// (live institutions override when composed).
+const MIN_FALLBACK: { n: string; a: ArchetypeKey }[] = [
+  { n: 'Health', a: 'HEALTH' }, { n: 'Energy', a: 'ENERGY' }, { n: 'Transport', a: 'TRANSPORT' },
+  { n: 'Treasury', a: 'FINANCE' }, { n: 'Interior', a: 'INTERIOR' }, { n: 'Defence', a: 'INTERIOR' },
+  { n: 'Education', a: 'EDUCATION' }, { n: 'Agriculture', a: 'AGRICULTURE' }, { n: 'Water Resources', a: 'ENVIRONMENT' },
+  { n: 'Digital Economy', a: 'TRADE' }, { n: 'Infrastructure', a: 'TRANSPORT' }, { n: 'Emergency Services', a: 'GENERIC' },
+];
+const ESC_FALLBACK = [
+  { sevState: 'critical' as RiskState, title: 'National Grid Instability', ministry: 'Energy Ministry', pop: '8.7', regions: 14, level: 3, age: 6, mid: '/gov/coordination' },
+  { sevState: 'elevated' as RiskState, title: 'Hospital Capacity Strain', ministry: 'Health Ministry', pop: '3.1', regions: 6, level: 2, age: 21, mid: '/gov/coordination' },
+  { sevState: 'elevated' as RiskState, title: 'Port Congestion Surge', ministry: 'Transport Ministry', pop: '1.2', regions: 3, level: 2, age: 33, mid: '/gov/coordination' },
+  { sevState: 'watch' as RiskState, title: 'Treasury Revenue Dip', ministry: 'Treasury Ministry', pop: '0.0', regions: 1, level: 1, age: 48, mid: '/gov/coordination' },
+  { sevState: 'watch' as RiskState, title: 'Cross-border Logistics Delay', ministry: 'Interior Ministry', pop: '0.6', regions: 2, level: 1, age: 57, mid: '/gov/coordination' },
+  { sevState: 'critical' as RiskState, title: 'Emergency Communications Failure', ministry: 'Emergency Services', pop: '2.4', regions: 4, level: 3, age: 12, mid: '/gov/coordination' },
+];
+
 export function CabinetIntelligence() {
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
@@ -134,6 +151,11 @@ export function CabinetIntelligence() {
       age: 2 + Math.floor(seed(`ag:${c.ministry}:${i}`) * 58),
       mid: c.ministryId,
     }));
+
+  const mRows = mapNodes.length
+    ? mapNodes.map(m => ({ ministryId: m.ministryId, ministry: m.ministry, archetype: m.archetype as ArchetypeKey, pressure: m.pressure, href: `/gov/ministry/${m.ministryId}` }))
+    : MIN_FALLBACK.map(m => ({ ministryId: m.n, ministry: m.n, archetype: m.a, pressure: Math.round(35 + seed(`mf:${m.n}:${epoch}`) * 55), href: '/ministries' }));
+  const escList = escalations.length ? escalations : ESC_FALLBACK;
 
   const dep = [
     { k: 'Energy', g: '⚡', arch: 'ENERGY', x: 14, y: 32 },
@@ -386,12 +408,12 @@ export function CabinetIntelligence() {
                   </tr>
                 </thead>
                 <tbody>
-                  {mapNodes.map(m => {
+                  {mRows.map(m => {
                     const id = identityFor(m.archetype as ArchetypeKey);
                     return (
                       <tr key={m.ministryId} className="border-b border-line-soft last:border-0">
                         <td className="px-2 py-1.5">
-                          <Link href={`/gov/ministry/${m.ministryId}`} className="focus-ring flex items-center gap-1.5 no-underline">
+                          <Link href={m.href} className="focus-ring flex items-center gap-1.5 no-underline">
                             <span className="grid h-3.5 w-3.5 place-items-center rounded-[3px] text-[7px] text-white" style={{ backgroundColor: id.accent }}>{id.glyph}</span>
                             <span className="truncate text-ink">{m.ministry}</span>
                           </Link>
@@ -411,14 +433,13 @@ export function CabinetIntelligence() {
                       </tr>
                     );
                   })}
-                  {mapNodes.length === 0 ? <tr><td colSpan={8} className="px-3 py-8 text-center text-ink-muted">No active institutions.</td></tr> : null}
                 </tbody>
               </table>
             </Panel>
 
             <Panel title="Cabinet escalation feed" meta="executive level" className="xl:col-span-4" bodyClass="!p-0">
-              {escalations.length === 0 ? <p className="p-3 text-xs text-ink-muted">No executive-level escalations.</p> : escalations.map((e, i) => (
-                <Link key={i} href={`/gov/ministry/${e.mid}`} className="focus-ring block border-b border-line-soft px-3 py-2.5 no-underline transition-colors hover:bg-surface-2/50 last:border-0"
+              {escList.map((e, i) => (
+                <Link key={i} href={e.mid.startsWith('/') ? e.mid : `/gov/ministry/${e.mid}`} className="focus-ring block border-b border-line-soft px-3 py-2.5 no-underline transition-colors hover:bg-surface-2/50 last:border-0"
                   style={{ borderLeft: `3px solid ${TONE[RISK_TONE[e.sevState]]}` }}>
                   <div className="flex items-center justify-between">
                     <span className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[RISK_TONE[e.sevState]]} 18%, transparent)`, color: TONE[RISK_TONE[e.sevState]] }}>{RISK_LABEL[e.sevState]}</span>
