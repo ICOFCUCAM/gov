@@ -129,6 +129,14 @@ export function MinistriesConsole() {
                   <p className="mt-1 text-sm text-ink-muted">
                     Archetype {current.archetype} · slug {current.slug}
                   </p>
+                  <p className="mt-2">
+                    <a
+                      href={`/ministries/${current.id}/operations`}
+                      className="text-sm text-link underline underline-offset-2"
+                    >
+                      Open operations console →
+                    </a>
+                  </p>
                   {current.status === 'active' ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       <form

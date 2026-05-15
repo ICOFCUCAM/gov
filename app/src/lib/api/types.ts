@@ -417,3 +417,48 @@ export interface MinistryOperations {
   generatedAt: ISODate;
   modules: ModuleOps[];
 }
+
+// ── Deep operational console (regions, actionable queues) ────────────
+export interface RegionStat {
+  region: string;
+  facilitiesOperationalPct: number;
+  capacityPct: number;
+  openCases: number;
+  slaBreaches: number;
+  status: OpsTone;
+}
+export interface MinistryRegions {
+  ministry: { id: string; name: string; archetype: ArchetypeKey };
+  generatedAt: ISODate;
+  regions: RegionStat[];
+}
+
+export type QueuePriority = 'routine' | 'elevated' | 'urgent';
+export type QueueItemState = 'open' | 'assigned' | 'escalated' | 'cleared';
+export type QueueAction = 'assign' | 'escalate' | 'clear';
+
+export interface QueueItem {
+  id: string;
+  ref: string;
+  subject: string;
+  region: string;
+  ageHours: number;
+  priority: QueuePriority;
+  state: QueueItemState;
+  assignee?: string;
+  note?: string;
+}
+export interface MinistryQueue {
+  ministry: { id: string; name: string; archetype: ArchetypeKey };
+  queueKey: string;
+  title: string;
+  slaHours: number;
+  items: QueueItem[];
+}
+
+export interface AnalyticDelta {
+  label: string;
+  value: string;
+  delta: number; // signed % vs prior period
+  goodWhenUp: boolean;
+}

@@ -38,6 +38,11 @@ import type {
   ArchetypeKey,
   Ministry,
   MinistryOperations,
+  MinistryRegions,
+  MinistryQueue,
+  QueueItem,
+  QueueAction,
+  AnalyticDelta,
   SignatureRequest,
   SignatureResult,
   VerifyResult,
@@ -195,6 +200,14 @@ export const api = {
     ministries: () => req<{ ministries: Ministry[] }>('/api/org/ministries'),
     get: (id: string) => req<{ ministry: Ministry }>(`/api/org/ministries/${id}`),
     operations: (id: string) => req<MinistryOperations>(`/api/org/ministries/${id}/operations`),
+    regions: (id: string) => req<MinistryRegions>(`/api/org/ministries/${id}/regions`),
+    analytics: (id: string) => req<{ analytics: AnalyticDelta[] }>(`/api/org/ministries/${id}/analytics`),
+    queue: (id: string) => req<MinistryQueue>(`/api/org/ministries/${id}/queue`),
+    actOnQueueItem: (id: string, itemId: string, action: QueueAction, note?: string) =>
+      req<{ item: QueueItem }>(`/api/org/ministries/${id}/queue/${itemId}/act`, {
+        method: 'POST',
+        body: JSON.stringify({ action, note }),
+      }),
     create: (body: { archetype: ArchetypeKey; name: string; slug: string }) =>
       req<{ ministry: Ministry }>('/api/org/ministries', { method: 'POST', body: JSON.stringify(body) }),
     rename: (id: string, name: string) =>

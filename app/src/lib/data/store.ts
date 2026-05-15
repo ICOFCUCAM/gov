@@ -59,6 +59,14 @@ import type {
   QueueValue,
   AlertValue,
   OpsTone,
+  RegionStat,
+  MinistryRegions,
+  QueueItem,
+  QueuePriority,
+  QueueItemState,
+  QueueAction,
+  MinistryQueue,
+  AnalyticDelta,
   VerifyResult,
 } from '@/lib/api/types';
 import { specFor } from '@/lib/ops-catalog';
@@ -207,8 +215,9 @@ function seed() {
   ];
 
   const ministries: Ministry[] = [];
+  const ministryQueues: Record<string, QueueItem[]> = {};
 
-  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries };
+  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues };
 }
 
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
@@ -1229,4 +1238,139 @@ export function ministryOperations(id: string): MinistryOperations | { error: st
     generatedAt: new Date().toISOString(),
     modules,
   };
+}
+
+// ── Deep operational console (regions, queues, analytics) ─────────────
+const REGIONS = ['Central', 'Coast', 'Eastern', 'Nairobi', 'Rift Valley', 'Western'];
+
+export function regionsFor(id: string): MinistryRegions | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  const openPermits = db.permits.filter(p =>
+    ['submitted', 'in-review', 'needs-info'].includes(p.status),
+  ).length;
+  const regions: RegionStat[] = REGIONS.map((region, i) => {
+    const facil = seededInt(`${id}:${region}:facil`, 78, 99);
+    const cap = seededInt(`${id}:${region}:cap`, 45, 95);
+    const sla = seededInt(`${id}:${region}:sla`, 0, 6);
+    // Spread real open permits across regions deterministically.
+    const openCases =
+      seededInt(`${id}:${region}:open`, 4, 60) + (i === 0 ? openPermits : 0);
+    const status: OpsTone =
+      facil < 85 || sla > 3 ? 'alert' : facil < 92 || sla > 1 ? 'warn' : 'ok';
+    return {
+      region,
+      facilitiesOperationalPct: facil,
+      capacityPct: cap,
+      openCases,
+      slaBreaches: sla,
+      status,
+    };
+  });
+  return {
+    ministry: { id: m.id, name: m.name, archetype: m.archetype },
+    generatedAt: new Date().toISOString(),
+    regions,
+  };
+}
+
+export function analyticsFor(id: string): AnalyticDelta[] | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  const mk = (label: string, key: string, base: [number, number], unit: string, goodUp: boolean): AnalyticDelta => {
+    const v = seededInt(`${id}:an:${key}`, base[0], base[1]);
+    const d = seededInt(`${id}:an:${key}:d`, -120, 140) / 10; // -12.0 .. +14.0 %
+    return { label, value: `${v}${unit}`, delta: d, goodWhenUp: goodUp };
+  };
+  return [
+    mk('Service throughput', 'tp', [60, 98], '%', true),
+    mk('Median decision time', 'mdt', [2, 12], 'd', false),
+    mk('Citizen contestation rate', 'ccr', [1, 6], '%', false),
+    mk('Backlog', 'bk', [40, 320], '', false),
+  ];
+}
+
+const PRIORITIES: QueuePriority[] = ['routine', 'elevated', 'urgent'];
+
+function seedQueue(id: string): QueueItem[] {
+  const m = getMinistry(id);
+  const count = 9;
+  const items: QueueItem[] = [];
+  // Health: lead with real open permits as licensing items.
+  if (m?.archetype === 'HEALTH') {
+    db.permits
+      .filter(p => ['submitted', 'in-review', 'needs-info'].includes(p.status))
+      .forEach(p => {
+        items.push({
+          id: `Q-${p.id}`,
+          ref: p.id,
+          subject: p.title,
+          region: 'Nairobi',
+          ageHours: Math.max(1, Math.round((Date.now() - new Date(p.submittedAt ?? Date.now()).getTime()) / 3_600_000)),
+          priority: 'elevated',
+          state: 'open',
+        });
+      });
+  }
+  for (let i = items.length; i < count; i++) {
+    const pr = PRIORITIES[seededInt(`${id}:q:${i}:pr`, 0, 2)]!;
+    items.push({
+      id: `Q-${id.slice(-4)}-${i}`,
+      ref: `APP-${seededInt(`${id}:q:${i}:r`, 1000, 9999)}`,
+      subject:
+        m?.archetype === 'FINANCE'
+          ? 'Procurement evaluation'
+          : m?.archetype === 'EDUCATION'
+            ? 'School maintenance request'
+            : 'Service application',
+      region: REGIONS[seededInt(`${id}:q:${i}:rg`, 0, REGIONS.length - 1)]!,
+      ageHours: seededInt(`${id}:q:${i}:a`, 2, 360),
+      priority: pr,
+      state: 'open',
+    });
+  }
+  return items;
+}
+
+export function queueFor(id: string): MinistryQueue | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  if (!db.ministryQueues[id]) db.ministryQueues[id] = seedQueue(id);
+  const title =
+    m.archetype === 'HEALTH'
+      ? 'Licensing & approvals'
+      : m.archetype === 'FINANCE'
+        ? 'Procurement & approvals'
+        : 'Approvals queue';
+  return {
+    ministry: { id: m.id, name: m.name, archetype: m.archetype },
+    queueKey: 'approvals',
+    title,
+    slaHours: 288,
+    items: db.ministryQueues[id]!,
+  };
+}
+
+export function actOnQueueItem(
+  id: string,
+  itemId: string,
+  action: QueueAction,
+  by: string,
+  note?: string,
+): QueueItem | { error: string } {
+  const q = db.ministryQueues[id];
+  if (!q) return { error: 'Queue not found' };
+  const item = q.find(x => x.id === itemId);
+  if (!item) return { error: 'Item not found' };
+  if (item.state === 'cleared') return { error: 'Item already cleared' };
+  const nextState: Record<QueueAction, QueueItemState> = {
+    assign: 'assigned',
+    escalate: 'escalated',
+    clear: 'cleared',
+  };
+  item.state = nextState[action];
+  if (action === 'assign') item.assignee = by;
+  if (note) item.note = note;
+  appendAudit(by, `queue.${action}`, `QueueItem:${itemId}`, 'ok', item.ref);
+  return item;
 }
