@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <title>Civic Wallet — Civic Assistant</title>
+  <link rel="stylesheet" href="../shared/civicos.css">
+</head>
+<body>
+  <main class="container" style="padding:24px 0;">
+    <div class="phone" role="region" aria-label="Civic Assistant">
+      <header>
+        <a href="index.html" class="btn-ghost">← Home</a>
+        <strong>Civic Assistant</strong>
+        <span></span>
+      </header>
+
+      <main class="stack">
+
+        <div class="copilot" data-class="A" role="status" aria-live="polite">
+          <div class="copilot-header">
+            <span class="class-banner class-a">Class A — Information only</span>
+          </div>
+          <p class="muted" style="margin:0">
+            I help you find information. I will not draft binding decisions here.
+            For decisions, return to the case panel or talk to a human officer.
+          </p>
+        </div>
+
+        <section class="stack-sm" aria-label="Conversation">
+
+          <div class="card card-tight" style="background:var(--c-surface-2)">
+            <small class="muted">Amina, 14:32</small>
+            <p style="margin:4px 0 0">How do I transfer my child to a school in another county?</p>
+          </div>
+
+          <div class="card card-tight">
+            <small class="muted">Civic Assistant, 14:32</small>
+            <p style="margin:4px 0 0">To transfer a child between counties:</p>
+            <ol>
+              <li>You'll need the child's current enrollment record.</li>
+              <li>You apply to the new school directly, or through your wallet.</li>
+              <li>The Ministry of Education confirms within 10 working days.</li>
+            </ol>
+            <p>Would you like to:</p>
+            <div class="btn-row">
+              <a href="#" class="btn">Start a transfer</a>
+              <a href="#" class="btn btn-secondary">Find schools nearby</a>
+              <a href="#" class="btn btn-secondary">👤 Talk to a human officer</a>
+            </div>
+            <div class="plain" style="margin-top:12px;font-size:14px">
+              <strong>Sources I used:</strong><br>
+              • Education Act §12<br>
+              • Ministry of Education guidance, v.4
+            </div>
+          </div>
+
+        </section>
+
+        <form class="row" style="margin-top:12px" onsubmit="event.preventDefault(); alert('Prototype — message captured.');">
+          <input type="text" placeholder="Type your question…" aria-label="Type your question" style="flex:1;min-height:44px;padding:8px 12px;border:1px solid var(--c-line);border-radius:8px;background:var(--c-surface);">
+          <button class="btn" type="submit">Send</button>
+        </form>
+        <div class="btn-row">
+          <button class="btn btn-secondary" type="button">🎙 Voice</button>
+          <button class="btn btn-secondary" type="button">👤 Talk to human</button>
+        </div>
+
+      </main>
+
+      <footer>
+        <nav class="tabbar" aria-label="Wallet navigation">
+          <a href="index.html">Home</a>
+          <a href="services.html">Services</a>
+          <a href="#">Inbox</a>
+          <a href="records.html">Records</a>
+          <a href="assistant.html" aria-current="page">Assistant</a>
+        </nav>
+      </footer>
+    </div>
+  </main>
+  <script src="../shared/civicos.js"></script>
+</body>
+</html>

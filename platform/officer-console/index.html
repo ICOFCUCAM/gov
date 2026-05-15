@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Officer Console — K. Otieno</title>
+  <link rel="stylesheet" href="../shared/civicos.css">
+</head>
+<body>
+  <header style="padding:12px 24px;border-bottom:1px solid var(--c-line);background:var(--c-surface);display:flex;align-items:center;justify-content:space-between;gap:16px;">
+    <div>
+      <strong>CivicOS Officer Console</strong>
+      <span class="muted"> · K. Otieno · Social Protection, Nairobi · ⏱ 09:14 EAT</span>
+    </div>
+    <div class="row">
+      <a class="btn-ghost" href="#">Queue 12</a>
+      <a class="btn-ghost" href="#">Today's work</a>
+      <a class="btn-ghost" href="#">Knowledge</a>
+      <a class="btn-ghost" href="#">My day</a>
+      <a class="btn-ghost" href="#">🔔 2</a>
+      <a class="btn-ghost" href="#">Help</a>
+    </div>
+  </header>
+
+  <main class="console">
+
+    <!-- Queue -->
+    <aside class="card" aria-label="Queue">
+      <h3 style="margin-top:0">Queue</h3>
+      <div class="stack-sm">
+        <a href="#" class="card card-tight" style="display:block;text-decoration:none;color:inherit;border-color:var(--c-class-b)">
+          <strong>C-7842 · Amina H. Mwangi</strong>
+          <div class="muted">Child grant renewal</div>
+          <span class="pill pill-ok">⚑ verified</span>
+          <span class="pill">✓ AI draft</span>
+        </a>
+        <a href="#" class="card card-tight" style="display:block;text-decoration:none;color:inherit">
+          <strong>C-7843 · J. Wambui</strong>
+          <div class="muted">Address change</div>
+          <span class="pill">standard</span>
+        </a>
+        <a href="#" class="card card-tight" style="display:block;text-decoration:none;color:inherit">
+          <strong>C-7844 · M. Kibet</strong>
+          <div class="muted">Drought supplement</div>
+          <span class="pill pill-warn">⚠ flagged for review</span>
+        </a>
+        <a href="#" class="card card-tight" style="display:block;text-decoration:none;color:inherit">
+          <strong>C-7845 · Anonymous</strong>
+          <div class="muted">Complaint about an agent</div>
+        </a>
+        <p class="muted">… 8 more</p>
+      </div>
+      <hr class="divider">
+      <div class="muted" style="font-size:14px">
+        <div>Load: 12 cases</div>
+        <div>Today's pace: <span class="pill pill-ok">on track</span></div>
+        <div>Next break: <strong>11:00</strong> (protected)</div>
+      </div>
+    </aside>
+
+    <!-- Case context -->
+    <section aria-label="Case in focus">
+      <div class="card">
+        <div class="row between">
+          <div>
+            <h2 style="margin-bottom:4px">Case C-7842 — Amina Hassan Mwangi</h2>
+            <div class="muted">Child grant renewal · Submitted 14 May 09:02 · SLA 17 May</div>
+          </div>
+          <div class="btn-row">
+            <a class="btn btn-secondary" href="#">Show full record</a>
+            <a class="btn btn-secondary" href="#">Citizen contact</a>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <h3>Citizen context (only what's needed for this decision)</h3>
+        <ul>
+          <li>Mother of two children, both registered</li>
+          <li>Household income band 3 (last verified 14 mo ago — see how)</li>
+          <li>In drought-eligible region</li>
+          <li>One previous renewal, on time</li>
+        </ul>
+        <p class="muted">No political, religious, or other protected attributes shown. Profile-style dossiers are not available.</p>
+      </div>
+    </section>
+
+    <!-- Copilot + decision -->
+    <section aria-label="Copilot and decision" class="stack">
+
+      <div class="copilot" data-class="B">
+        <div class="copilot-header">
+          <span class="class-banner class-b">Class B — Advisory</span>
+          <button class="btn-ghost" title="Flag this AI behavior">⚐ Flag this AI</button>
+        </div>
+
+        <h4 style="margin-top:0">Eligibility summary</h4>
+        <ul>
+          <li>Children verified (2) — civil registry link</li>
+          <li>Income band confirmed — last verification 14 mo ago, slightly over the 12 mo policy refresh window. <em>I'd recommend re-verifying at next cycle.</em></li>
+          <li>Drought supplement applies — Decree DRC-2026-04 (link)</li>
+        </ul>
+
+        <h4>Draft decision</h4>
+        <p>
+          <strong>APPROVE renewal at base rate + drought supplement (KES 2,400/month).</strong>
+          Re-verification recommended at next cycle.
+        </p>
+
+        <h4>Where I'm uncertain</h4>
+        <p class="plain">
+          Income band verification is 14 months old, slightly past the 12 mo policy window.
+          Two defensible paths: approve and flag for next cycle, or pause for fresh verification.
+        </p>
+
+        <div class="btn-row" style="margin-top:8px">
+          <button class="btn">Use this draft</button>
+          <button class="btn btn-secondary">Edit</button>
+          <button class="btn btn-secondary">Reject</button>
+          <button class="btn btn-secondary">Ask Copilot</button>
+          <button class="btn-ghost">See sources</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Your decision</h3>
+        <div class="radio-row">
+          <label><input type="radio" name="decision" checked> Approve renewal at base + drought (default from draft)</label>
+          <label><input type="radio" name="decision"> Approve at base only</label>
+          <label><input type="radio" name="decision"> Request income re-verification first</label>
+          <label><input type="radio" name="decision"> Decline</label>
+          <label><input type="radio" name="decision"> Refer to specialist</label>
+        </div>
+
+        <div class="field" style="margin-top:16px">
+          <label for="notes-citizen">Notes for the citizen (will be on receipt)</label>
+          <textarea id="notes-citizen" placeholder="In plain language…"></textarea>
+        </div>
+        <div class="field">
+          <label for="notes-internal">Internal notes (not on receipt)</label>
+          <textarea id="notes-internal" placeholder="For audit and team handover"></textarea>
+        </div>
+
+        <div class="btn-row">
+          <button class="btn" onclick="openSign()">I sign this decision (K. Otieno)</button>
+          <button class="btn btn-secondary">Save and return later</button>
+          <button class="btn btn-secondary">Ask supervisor</button>
+          <button class="btn btn-secondary">Refer to specialist</button>
+        </div>
+      </div>
+
+    </section>
+  </main>
+
+  <!-- Signature ceremony -->
+  <dialog id="sign-dialog" style="border:1px solid var(--c-line);border-radius:14px;padding:24px;max-width:480px;width:100%;">
+    <h2>Sign decision</h2>
+    <p>You are about to sign:</p>
+    <div class="plain">
+      Case <strong>C-7842</strong> — Amina Hassan Mwangi<br>
+      <strong>APPROVE</strong> child grant renewal<br>
+      Base rate + drought supplement (KES 2,400/month)
+    </div>
+    <p class="muted" style="margin-top:12px">
+      AI involvement: <strong>Class B (advisory)</strong>. Your name will appear on this decision as the deciding officer.
+    </p>
+
+    <h3>Confirm with token + biometric</h3>
+    <div class="btn-row">
+      <button class="btn btn-secondary">👤 Look at the camera</button>
+      <button class="btn btn-secondary">🔑 Tap your security key</button>
+    </div>
+    <p class="help">
+      This will issue Amina a receipt in her wallet, disburse via CivicPay tonight,
+      log this decision to the Audit Vault, and make this decision contestable for 30 days.
+    </p>
+
+    <div class="btn-row" style="margin-top:16px">
+      <button class="btn" onclick="finishSign()">Sign</button>
+      <button class="btn btn-secondary" onclick="document.getElementById('sign-dialog').close()">Cancel</button>
+    </div>
+  </dialog>
+
+  <script src="../shared/civicos.js"></script>
+  <script>
+    function openSign() { document.getElementById('sign-dialog').showModal(); }
+    function finishSign() {
+      CivicOS.signDecision({ decisionId: 'C-7842', officerName: 'K. Otieno', summary: 'APPROVE child grant renewal' });
+      document.getElementById('sign-dialog').close();
+      alert('Decision signed and recorded to the Audit Vault. Citizen receipt issued.');
+    }
+  </script>
+</body>
+</html>

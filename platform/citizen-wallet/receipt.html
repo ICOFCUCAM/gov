@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <title>Receipt R-3F9A2 — Child grant</title>
+  <link rel="stylesheet" href="../shared/civicos.css">
+</head>
+<body>
+  <main class="container" style="padding:24px 0;">
+
+    <div class="phone" role="region" aria-label="Receipt detail">
+      <header>
+        <a href="index.html" class="btn-ghost" aria-label="Back">← Home</a>
+        <span class="receipt-id">R-3F9A2</span>
+      </header>
+
+      <main class="stack">
+
+        <section class="receipt">
+          <h2 style="margin:0 0 6px">Child grant — April 2026</h2>
+          <div class="receipt-amount">2,400 KES</div>
+          <div class="muted">deposited to your wallet — M-Pesa ending 4421</div>
+          <div class="muted" data-date="2026-05-14">14 May 2026, 09:14</div>
+        </section>
+
+        <section>
+          <h3>What happened</h3>
+          <p>
+            The Ministry of Social Protection approved your monthly child grant.
+            Eligibility was verified by <strong>Officer K. Otieno (ID 4423)</strong> on 12 May 2026.
+          </p>
+        </section>
+
+        <section>
+          <h3>Why this amount</h3>
+          <ul>
+            <li>Base grant: 2,000 KES</li>
+            <li>Drought supplement: 400 KES</li>
+            <li><strong>Total: 2,400 KES</strong></li>
+          </ul>
+        </section>
+
+        <section>
+          <h3>Was AI involved?</h3>
+          <div class="copilot" data-class="B">
+            <div class="copilot-header">
+              <span class="class-banner class-b">Class B — Advisory</span>
+            </div>
+            <p>
+              An AI Copilot helped Officer Otieno by drafting an eligibility summary
+              from your civil registry record and the drought decree.
+              <strong>The officer signed the decision.</strong>
+            </p>
+            <p class="muted" style="margin-bottom:0">
+              The AI did not decide. The officer did.
+              <a href="#how-ai-here">How AI is used here</a>.
+            </p>
+          </div>
+        </section>
+
+        <section>
+          <h3>If something's wrong</h3>
+          <div class="btn-row">
+            <button class="btn" onclick="CivicOS.openContestation('R-3F9A2')">Question this decision</button>
+            <a href="#" class="btn btn-secondary">Talk to an agent</a>
+            <a href="#" class="btn btn-secondary">Submit a complaint</a>
+          </div>
+          <p class="help" style="margin-top:8px">
+            If you contest, your payment continues while we review. You will not be punished for contesting.
+          </p>
+        </section>
+
+        <section>
+          <h3>Proof</h3>
+          <div class="plain">
+            This receipt is signed and permanent. Hash: <code style="font-family:var(--f-mono);font-size:12px">3F9A2…b41c</code>.
+            <a href="#">Verify signature</a>.
+          </div>
+        </section>
+
+      </main>
+
+      <footer>
+        <nav class="tabbar" aria-label="Wallet navigation">
+          <a href="index.html">Home</a>
+          <a href="services.html">Services</a>
+          <a href="#">Inbox</a>
+          <a href="records.html">Records</a>
+          <a href="assistant.html">Assistant</a>
+        </nav>
+      </footer>
+    </div>
+  </main>
+
+  <!-- Contestation dialog -->
+  <dialog id="contest-dialog" style="border:1px solid var(--c-line);border-radius:14px;padding:24px;max-width:480px;width:100%;">
+    <form id="contest-form" method="dialog" onsubmit="CivicOS.submitContestation(this); return false;">
+      <h2>Question this decision</h2>
+      <p class="muted">Receipt R-3F9A2 — Child grant</p>
+
+      <fieldset style="border:0;padding:0;margin:0 0 16px">
+        <legend><strong>What do you want to do?</strong></legend>
+        <div class="radio-row">
+          <label><input type="radio" name="action" value="question" required> Ask a question</label>
+          <label><input type="radio" name="action" value="contest" required> Contest the decision</label>
+          <label><input type="radio" name="action" value="complaint" required> Submit a complaint</label>
+        </div>
+      </fieldset>
+
+      <fieldset style="border:0;padding:0;margin:0 0 16px">
+        <legend><strong>Why?</strong></legend>
+        <div class="radio-row">
+          <label><input type="radio" name="reason" value="amount" required> The amount is wrong</label>
+          <label><input type="radio" name="reason" value="unclear" required> I'm not sure why this was decided</label>
+          <label><input type="radio" name="reason" value="disagree" required> I disagree with the decision</label>
+        </div>
+      </fieldset>
+
+      <div class="field">
+        <label for="note">Anything you want to tell us? (optional)</label>
+        <textarea id="note" name="note" placeholder="In your own words…"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn" type="submit">Submit</button>
+        <button class="btn btn-secondary" type="button" onclick="document.getElementById('contest-dialog').close()">Cancel</button>
+      </div>
+    </form>
+
+    <div id="contest-confirmation" class="hide" style="margin-top:16px;">
+      <hr class="divider">
+      <h3 style="margin-top:0">Submitted</h3>
+      <p>Case <strong data-slot="case"></strong> opened for receipt <strong data-slot="receipt"></strong>.</p>
+      <p>Reason: <em data-slot="reason"></em></p>
+      <div class="plain">
+        Your payment continues while we review. We'll let you know within 5 working days.
+      </div>
+      <div class="btn-row" style="margin-top:12px">
+        <a href="index.html" class="btn">Back to home</a>
+        <button class="btn btn-secondary" onclick="document.getElementById('contest-dialog').close()">Close</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="../shared/civicos.js"></script>
+</body>
+</html>

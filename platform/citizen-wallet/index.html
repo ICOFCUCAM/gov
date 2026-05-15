@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">
+  <title>Civic Wallet — Home</title>
+  <link rel="stylesheet" href="../shared/civicos.css">
+  <meta name="theme-color" content="#f7f5f1">
+  <!-- No tracking. No analytics. No third-party scripts. -->
+</head>
+<body>
+  <main class="container" style="padding:24px 0;">
+
+    <p class="muted" style="text-align:center;max-width:600px;margin:0 auto 16px;">
+      <strong>Civic Wallet</strong> — prototype. Open <a href="receipt.html">a receipt</a>,
+      <a href="services.html">services</a>, <a href="records.html">records</a>,
+      <a href="assistant.html">the Civic Assistant</a>, or <a href="contest.html">contest a decision</a>.
+    </p>
+
+    <div class="phone" role="region" aria-label="Civic Wallet">
+      <header>
+        <div>
+          <strong>Civic Wallet</strong>
+          <div class="muted" style="font-size:12px">Amina H. Mwangi</div>
+        </div>
+        <div class="row" style="gap:8px">
+          <button class="btn-ghost" aria-label="Notifications">🔔 <span class="pill pill-warn">3</span></button>
+          <a href="#" class="btn-ghost" aria-label="Settings">☰</a>
+        </div>
+      </header>
+
+      <main class="stack">
+        <section aria-labelledby="greet">
+          <h2 id="greet" style="margin-bottom:2px">Good morning, Amina.</h2>
+          <div class="muted" data-date="2026-05-14">Tuesday, 14 May 2026</div>
+        </section>
+
+        <section aria-labelledby="needs">
+          <h3 id="needs">You need to</h3>
+          <div class="stack-sm">
+            <a class="card card-tight" href="#" style="display:block;text-decoration:none;color:inherit;">
+              <strong>Confirm your address</strong>
+              <div class="muted">for the school transfer — about 2 minutes</div>
+            </a>
+            <a class="card card-tight" href="#" style="display:block;text-decoration:none;color:inherit;">
+              <strong>Review your tax draft</strong>
+              <div class="muted">due in 12 days</div>
+            </a>
+          </div>
+        </section>
+
+        <hr class="divider">
+
+        <section aria-labelledby="receipts">
+          <h3 id="receipts">Receipts</h3>
+          <div class="stack-sm">
+
+            <a href="receipt.html" class="receipt" style="display:block;text-decoration:none;color:inherit;">
+              <div class="receipt-head">
+                <div>
+                  <div><strong>Child grant deposited</strong></div>
+                  <div class="muted">Today, 09:14 — 2,400 KES → M-Pesa</div>
+                </div>
+                <div class="receipt-id">R-3F9A2</div>
+              </div>
+              <div class="row" style="gap:8px;margin-top:6px">
+                <span class="pill pill-ok"><span class="dot dot-ok"></span>Approved by K. Otieno</span>
+                <span class="pill">AI: Class B</span>
+              </div>
+            </a>
+
+            <a href="#" class="receipt" style="display:block;text-decoration:none;color:inherit;">
+              <div class="receipt-head">
+                <div>
+                  <div><strong>Health record updated</strong></div>
+                  <div class="muted">Yesterday, 16:02 — vaccination (pneumococcal)</div>
+                </div>
+                <div class="receipt-id">R-3F862</div>
+              </div>
+              <div class="row" style="gap:8px;margin-top:6px">
+                <span class="pill">By Dr. K. Mwangi</span>
+              </div>
+            </a>
+
+            <a href="#" class="receipt" style="display:block;text-decoration:none;color:inherit;">
+              <div class="receipt-head">
+                <div>
+                  <div><strong>Tax draft 2026 ready for review</strong></div>
+                  <div class="muted">10 May, 12:48 — no signature needed yet</div>
+                </div>
+                <div class="receipt-id">R-3F511</div>
+              </div>
+              <div class="row" style="gap:8px;margin-top:6px">
+                <span class="pill">Drafted automatically</span>
+                <span class="pill">AI: Class C (rule-based)</span>
+              </div>
+            </a>
+
+          </div>
+          <p style="margin-top:12px"><a href="#">Show all receipts →</a></p>
+        </section>
+
+        <hr class="divider">
+
+        <section aria-labelledby="privacy-note">
+          <h3 id="privacy-note" class="sr-only">Privacy</h3>
+          <div class="plain">
+            <strong>Today, 3 people looked at your records.</strong>
+            All for the medical visit you booked.
+            <a href="records.html#access-log">See who and why</a>.
+          </div>
+        </section>
+
+      </main>
+
+      <footer>
+        <nav class="tabbar" aria-label="Wallet navigation">
+          <a href="index.html" aria-current="page">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-7 9 7v9a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2v-9z"/></svg>
+            Home
+          </a>
+          <a href="services.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            Services
+          </a>
+          <a href="#">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v12H5l-1 4V4z"/></svg>
+            Inbox
+          </a>
+          <a href="records.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h12l4 4v12H4z"/><path d="M14 4v6h6"/></svg>
+            Records
+          </a>
+          <a href="assistant.html">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M9 10h.01M15 10h.01M9 15c1 1 5 1 6 0"/></svg>
+            Assistant
+          </a>
+        </nav>
+      </footer>
+    </div>
+  </main>
+
+  <script src="../shared/civicos.js"></script>
+</body>
+</html>

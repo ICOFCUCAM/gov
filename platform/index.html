@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="en" dir="ltr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CivicOS — Platform Prototypes</title>
+  <link rel="stylesheet" href="shared/civicos.css">
+</head>
+<body>
+  <header style="padding:32px 24px;border-bottom:1px solid var(--c-line);background:var(--c-surface);">
+    <div class="container">
+      <h1 style="margin-bottom:8px">CivicOS — Platform Prototypes</h1>
+      <p class="muted" style="max-width:720px">
+        Deployable static prototypes of the four primary surfaces: citizen wallet, officer console,
+        ministry control, and the NCCC operations wall. No build step, no tracking, no third-party
+        scripts. Doctrine alignment per <a href="../docs/158_HUMAN_LED_GOVERNANCE_ARCHITECTURAL_CORRECTION.md">Companion 158</a>:
+        humans govern, institutions govern, constitutions govern, AI assists.
+      </p>
+    </div>
+  </header>
+
+  <main class="container" style="padding:32px 0">
+
+    <div class="grid-2">
+
+      <article class="card">
+        <h2 style="margin-top:0">Civic Wallet</h2>
+        <p>Citizen-facing surface. Smartphone-shaped frame at desktop, full-screen on mobile. Companion 152.</p>
+        <ul>
+          <li>Home (receipts, pending, alerts)</li>
+          <li>Receipt detail with named officer, AI Class, contestation</li>
+          <li>Services catalog (life situations)</li>
+          <li>Records (with "who has looked at my records?")</li>
+          <li>Civic Assistant (Class A — info only, with sources)</li>
+          <li>Contestation flow (three-step)</li>
+        </ul>
+        <div class="btn-row">
+          <a class="btn" href="citizen-wallet/index.html">Open the wallet</a>
+          <a class="btn btn-secondary" href="citizen-wallet/receipt.html">See a receipt</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2 style="margin-top:0">Officer Console</h2>
+        <p>Civil servant workspace with the AI Copilot panel. Companion 153.</p>
+        <ul>
+          <li>Three-pane: queue, case context, Copilot + decision</li>
+          <li>Decision Class banner (A/B/C/D) persistent</li>
+          <li>"Where I'm uncertain" surfaced by the Copilot</li>
+          <li>Signature ceremony (token + biometric)</li>
+          <li>Anti-burnout: load, pace, protected breaks visible</li>
+        </ul>
+        <div class="btn-row">
+          <a class="btn" href="officer-console/index.html">Open the console</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2 style="margin-top:0">Ministry Control</h2>
+        <p>Director General's daily control room. Companion 156.</p>
+        <ul>
+          <li>Service outcomes, equity stratification, contestation</li>
+          <li>Constitutional officer findings live</li>
+          <li>Civil society engagement</li>
+          <li>AI charters status (including halts)</li>
+          <li>Officer wellbeing aggregate (no individual drill)</li>
+        </ul>
+        <div class="btn-row">
+          <a class="btn" href="ministry-control/index.html">Open the control room</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <h2 style="margin-top:0">NCCC Wall</h2>
+        <p>National Command and Coordination Center operations wall. Companion 142, 154.</p>
+        <ul>
+          <li>Common Operating Picture (map, timeline, indicators, comms)</li>
+          <li>AI scenario panel labeled Class C/D</li>
+          <li>Deliberation table (each authority signs own remit)</li>
+          <li>Invariant watch live</li>
+          <li>Sunset clock</li>
+        </ul>
+        <div class="btn-row">
+          <a class="btn" href="nccc/index.html">Open the wall</a>
+        </div>
+      </article>
+
+    </div>
+
+    <hr class="divider">
+
+    <section>
+      <h2>What's not in these prototypes (by design)</h2>
+      <ul>
+        <li>No tracking, no analytics, no third-party scripts.</li>
+        <li>No engagement gamification, streaks, badges, leaderboards.</li>
+        <li>No urgency-manufacturing visuals beyond signal value.</li>
+        <li>No citizen-individual surveillance views.</li>
+        <li>No officer-individual click tracking.</li>
+        <li>No autonomous AI decisions. AI is Class A/B/C/D advisory; humans sign every binding decision.</li>
+        <li>No dark patterns. No buried opt-outs. No pre-checked consents.</li>
+      </ul>
+    </section>
+
+    <section style="margin-top:24px">
+      <h2>How to deploy</h2>
+      <p>These are static files. Serve them with any HTTP server:</p>
+      <pre style="background:var(--c-surface);border:1px solid var(--c-line);border-radius:8px;padding:12px;overflow:auto"><code>cd platform
+python3 -m http.server 8080
+# then open http://localhost:8080/</code></pre>
+      <p>
+        Or upload to any static host. The prototypes use no build pipeline and have no runtime dependencies.
+      </p>
+    </section>
+
+  </main>
+
+  <footer style="padding:32px 24px;border-top:1px solid var(--c-line);text-align:center;color:var(--c-ink-muted);font-size:14px">
+    CivicOS — prototype. Built per Companions 152–158 in
+    <a href="../docs/">/docs</a>. Permissively licensable per Companion 14.
+  </footer>
+  <script src="shared/civicos.js"></script>
+</body>
+</html>
