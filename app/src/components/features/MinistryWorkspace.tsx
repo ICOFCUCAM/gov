@@ -9,6 +9,7 @@ import { Section, EnterpriseTable, StatusText, type Column } from '@/components/
 import { SeverityBadge } from '@/components/ui/Ops';
 import { Sparkbars, RegionMatrix, SLAMonitor, FlowBars } from '@/components/ui/Viz';
 import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
+import { TONE, Spark, seed } from '@/components/features/SituationRoom';
 import { api } from '@/lib/api/client';
 import { identityFor } from '@/lib/archetype-profiles';
 import type {
@@ -21,13 +22,24 @@ import type {
   RegionStat,
 } from '@/lib/api/types';
 
-type Tab = 'command' | 'regional' | 'approvals' | 'incidents' | 'field';
+type Tab =
+  | 'command' | 'regional' | 'approvals' | 'incidents' | 'field'
+  | 'escalations' | 'logistics' | 'analytics' | 'treasury'
+  | 'infrastructure' | 'workforce' | 'security' | 'audit';
 const TABS: { k: Tab; label: string }[] = [
   { k: 'command', label: 'Command' },
-  { k: 'regional', label: 'Regional oversight' },
+  { k: 'regional', label: 'Regional' },
   { k: 'approvals', label: 'Approvals' },
-  { k: 'incidents', label: 'Incidents & escalation' },
-  { k: 'field', label: 'Field operations' },
+  { k: 'incidents', label: 'Incidents' },
+  { k: 'escalations', label: 'Escalations' },
+  { k: 'field', label: 'Field ops' },
+  { k: 'logistics', label: 'Logistics' },
+  { k: 'analytics', label: 'Analytics' },
+  { k: 'treasury', label: 'Treasury' },
+  { k: 'infrastructure', label: 'Infrastructure' },
+  { k: 'workforce', label: 'Workforce' },
+  { k: 'security', label: 'Security' },
+  { k: 'audit', label: 'Audit' },
 ];
 
 const OPERATOR = 'K. Otieno';
@@ -406,6 +418,78 @@ export function MinistryWorkspace({ id }: { id: string }) {
           </div>
         </Section>
       )}
+
+      {(['escalations', 'logistics', 'analytics', 'treasury', 'infrastructure', 'workforce', 'security', 'audit'] as string[]).includes(tab) && (() => {
+        const sk = `${id}:${tab}`;
+        const MOD: Record<string, { m: string; sub: string }[]> = {
+          escalations: [{ m: 'Open escalations', sub: 'tier review' }, { m: 'Mean resolution', sub: 'hours' }, { m: 'Breaching SLA', sub: 'count' }, { m: 'Cabinet-tier', sub: 'level 3' }],
+          logistics: [{ m: 'Convoys active', sub: 'in transit' }, { m: 'Corridor load', sub: '% capacity' }, { m: 'Depot stock', sub: 'days' }, { m: 'Delivery SLA', sub: '%' }],
+          analytics: [{ m: 'Throughput', sub: '24h' }, { m: 'Backlog', sub: 'items' }, { m: 'Cycle time', sub: 'days' }, { m: 'Forecast load', sub: '+7d' }],
+          treasury: [{ m: 'Budget execution', sub: '%' }, { m: 'Commitments', sub: '$M' }, { m: 'Disbursed', sub: '$M' }, { m: 'Variance', sub: 'vs plan' }],
+          infrastructure: [{ m: 'Assets operational', sub: '%' }, { m: 'Maintenance due', sub: 'count' }, { m: 'Grid/route load', sub: '%' }, { m: 'Outages', sub: 'active' }],
+          workforce: [{ m: 'Establishment', sub: 'filled %' }, { m: 'On duty', sub: 'now' }, { m: 'Vacancies', sub: 'open' }, { m: 'Training', sub: 'in progress' }],
+          security: [{ m: 'Threat level', sub: 'posture' }, { m: 'Incidents 24h', sub: 'count' }, { m: 'Clearance backlog', sub: 'cases' }, { m: 'Readiness', sub: '%' }],
+          audit: [{ m: 'Findings open', sub: 'count' }, { m: 'Controls passing', sub: '%' }, { m: 'Chain integrity', sub: 'state' }, { m: 'Last review', sub: 'days' }],
+        };
+        const cards = MOD[tab] ?? [];
+        return (
+          <Section title={`${TABS.find(t => t.k === tab)?.label} — ${name}`} meta={`${archetype} · ${ident.domain}`}>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {cards.map((c, i) => {
+                const v = 20 + Math.round(seed(`${sk}:${c.m}`) * 78);
+                const d = Math.round((seed(`${sk}:${c.m}:d`) - 0.45) * 14);
+                const tn = v >= 78 ? 'alert' : v >= 58 ? 'warn' : 'ok';
+                return (
+                  <div key={i} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+                    <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{c.m}</div>
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="font-mono text-xl tabular-nums" style={{ color: TONE[tn] }}>{v}</span>
+                      <span className="text-[9px] text-ink-muted">{c.sub}</span>
+                      <span className="ml-auto text-[9px]" style={{ color: d >= 0 ? TONE.ok : TONE.alert }}>{d >= 0 ? '▲' : '▼'} {Math.abs(d)}</span>
+                    </div>
+                    <div className="opacity-80"><Spark pts={Array.from({ length: 14 }).map((_, j) => 35 + seed(`${sk}:${c.m}:${j}`) * 55)} tone={tn} /></div>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-2 grid gap-2 lg:grid-cols-2">
+              <Card tight>
+                <strong className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Operational stream</strong>
+                <ul className="mt-2 space-y-1 text-xs">
+                  {Array.from({ length: 6 }).map((_, i) => {
+                    const tn = seed(`${sk}:ev:${i}:t`) > 0.8 ? 'alert' : seed(`${sk}:ev:${i}:t`) > 0.55 ? 'warn' : 'ok';
+                    return (
+                      <li key={i} className="flex items-center gap-2 border-b border-line-soft pb-1 last:border-0">
+                        <span className="font-mono text-[10px] tabular-nums text-ink-muted">{String(8 + i).padStart(2, '0')}:{String(10 + i * 7).slice(0, 2)}</span>
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[tn] }} />
+                        <span className="truncate text-ink-soft">{ident.domain} · {TABS.find(t => t.k === tab)?.label} cycle {regions[i % Math.max(1, regions.length)]?.region ?? 'national'}</span>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Card>
+              <Card tight>
+                <strong className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Regional load</strong>
+                <div className="mt-2 space-y-1.5">
+                  {(regions.length ? regions.slice(0, 6) : Array.from({ length: 6 }).map((_, i) => ({ region: `Region ${i + 1}`, openCases: 0 }))).map((r, i) => {
+                    const p = 20 + Math.round(seed(`${sk}:rl:${r.region}`) * 78);
+                    const tn = p >= 78 ? 'alert' : p >= 58 ? 'warn' : 'ok';
+                    return (
+                      <div key={i}>
+                        <div className="flex justify-between text-[11px]"><span className="text-ink-soft">{r.region}</span><span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{p}%</span></div>
+                        <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${p}%`, backgroundColor: TONE[tn] }} /></div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            </div>
+            <p className="mt-2 text-[10px] text-ink-muted">
+              {ident.domain} · {TABS.find(t => t.k === tab)?.label} module. Deterministic operational telemetry; humans hold decision authority. No autonomous action.
+            </p>
+          </Section>
+        );
+      })()}
     </div>
   );
 }
