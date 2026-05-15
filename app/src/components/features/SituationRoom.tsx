@@ -255,8 +255,9 @@ export function TerritoryHeat({ epoch, height = 150, focus }: { epoch: number; h
   );
 }
 
+type LayerKey = 'infra' | 'grid' | 'corridors' | 'incidents';
 export function NationalMap({
-  mapNodes, edges, incidents, now, layers, epoch, height, focus,
+  mapNodes, edges, incidents, now, layers, epoch, height, focus, onToggleLayer,
 }: {
   mapNodes: { ministryId: string; ministry: string; archetype: string; x: number; y: number; pressure: number }[];
   edges: { fromId: string; toId: string; propagatedRisk: number }[];
@@ -266,7 +267,9 @@ export function NationalMap({
   epoch: number;
   height?: number;
   focus?: string;
+  onToggleLayer?: (k: LayerKey) => void;
 }) {
+  const [layerOpen, setLayerOpen] = React.useState(false);
   const infra: Infra[] = React.useMemo(
     () => Array.from({ length: 18 }).map((_, i) => {
       const kind = INFRA_KINDS[Math.floor(seed(`ik:${i}`) * INFRA_KINDS.length)] ?? INFRA_KINDS[0];
@@ -415,10 +418,24 @@ export function NationalMap({
       {mapNodes.length === 0 ? <div className="absolute inset-0 grid place-items-center text-xs text-ink-muted">Awaiting institutional telemetry…</div> : null}
 
       {/* map controls — top-right */}
-      <div className="absolute right-2 top-2 flex items-center gap-1.5">
-        <span className="flex items-center gap-1 rounded-[3px] border border-line bg-surface/85 px-2 py-1 text-[10px] text-ink-soft backdrop-blur">
-          <span style={{ color: ACCENT }}>⧉</span> All Layers <span className="text-ink-muted">▾</span>
-        </span>
+      <div className="absolute right-2 top-2 z-20 flex items-start gap-1.5">
+        <div className="relative">
+          <button type="button" onClick={() => onToggleLayer && setLayerOpen(o => !o)} aria-expanded={layerOpen}
+            className="focus-ring flex items-center gap-1 rounded-[3px] border border-line bg-surface/85 px-2 py-1 text-[10px] text-ink-soft backdrop-blur transition-colors hover:text-ink">
+            <span style={{ color: ACCENT }}>⧉</span> All Layers <span className="text-ink-muted">{layerOpen ? '▴' : '▾'}</span>
+          </button>
+          {layerOpen && onToggleLayer ? (
+            <div className="absolute right-0 mt-1 w-40 overflow-hidden rounded-[3px] border border-line bg-surface shadow-elev-3">
+              {([['infra', 'Infrastructure'], ['grid', 'Grid'], ['corridors', 'Corridors'], ['incidents', 'Incidents']] as const).map(([k, l]) => (
+                <button key={k} type="button" onClick={() => onToggleLayer(k)}
+                  className="focus-ring flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[11px] text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink">
+                  <span>{l}</span>
+                  <span className="h-2.5 w-4 rounded-full" style={{ backgroundColor: layers[k] ? ACCENT : 'rgb(var(--c-line))' }} />
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
         <button type="button" onClick={fullscreen} aria-label="Toggle fullscreen"
           className="focus-ring grid h-7 w-7 place-items-center rounded-[3px] border border-line bg-surface/85 text-[11px] text-ink-soft backdrop-blur transition-colors hover:text-ink">⛶</button>
       </div>
@@ -710,7 +727,7 @@ export function SituationRoom() {
                 </span>
               }
               className="xl:col-span-6" bodyClass="!p-2">
-              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} height={460} />
+              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} height={460} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
             </Panel>
 
             <Panel title="Ministry status matrix" meta="cross-domain risk" className="xl:col-span-4" bodyClass="!p-0">

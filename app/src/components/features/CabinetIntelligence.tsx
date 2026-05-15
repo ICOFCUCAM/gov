@@ -332,7 +332,7 @@ export function CabinetIntelligence() {
           {/* DOMINANT: strategic map + executive narrative (asymmetric hero) */}
           <div className="grid gap-2 xl:grid-cols-12">
             <Panel title="National strategic map" meta="live operational command view" className="xl:col-span-8" bodyClass="!p-2">
-              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} height={560} />
+              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} height={560} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
             </Panel>
 
             <div className="flex flex-col gap-2 xl:col-span-4">
