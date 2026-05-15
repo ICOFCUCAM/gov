@@ -55,8 +55,27 @@ export function PlatformConsole() {
     catch (e) { setErr(e instanceof Error ? e.message : 'Action failed'); }
   }
 
+  const stable = [...releases].reverse().find(r => r.channel === 'stable');
+  const hasDrift = drift?.drift ?? false;
+  const plat = [
+    { l: 'Releases', v: String(releases.length), c: 'rgb(var(--c-ink))' },
+    { l: 'Stable', v: stable?.version ?? '—', c: 'rgb(var(--c-ok))' },
+    { l: 'Deployments', v: String(deployments.length), c: 'rgb(var(--c-ink))' },
+    { l: 'Backups', v: String(backups.length), c: backups.length ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' },
+    { l: 'Config drift', v: hasDrift ? 'DETECTED' : 'NONE', c: hasDrift ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
+    { l: 'Posture', v: hasDrift ? 'REVIEW' : 'STABLE', c: hasDrift ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' },
+  ];
+
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-6">
+        {plat.map(s => (
+          <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="font-mono font-semibold tabular-nums" style={{ color: s.c }}>{s.v}</span>
+          </div>
+        ))}
+      </div>
       <div className="flex flex-wrap gap-2">
         {(['releases', 'deployments', 'lifecycle', 'backups', 'config'] as Tab[]).map(t => (
           <Button key={t} variant={tab === t ? 'primary' : 'secondary'} onClick={() => setTab(t)}>

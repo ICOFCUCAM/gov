@@ -35,9 +35,28 @@ export function MinistriesConsole() {
 
   const active = ministries.filter(m => m.status === 'active');
   const current = ministries.find(m => m.id === selected) ?? null;
+  const deptCount = ministries.reduce((a, m) => a + (m.departments?.length ?? 0), 0);
+  const moduleCount = ministries.reduce((a, m) => a + (m.modules?.filter(x => x.enabled).length ?? 0), 0);
+  const reg = [
+    { l: 'Institutions', v: String(ministries.length), c: 'rgb(var(--c-ink))' },
+    { l: 'Active', v: String(active.length), c: 'rgb(var(--c-ok))' },
+    { l: 'Archetypes', v: String(archetypes.length), c: 'rgb(var(--c-ink))' },
+    { l: 'Departments', v: String(deptCount), c: 'rgb(var(--c-ink))' },
+    { l: 'Modules enabled', v: String(moduleCount), c: 'rgb(var(--c-ok))' },
+    { l: 'Registry', v: ministries.length ? 'COMPOSED' : 'EMPTY', c: ministries.length ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' },
+  ];
 
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-6">
+        {reg.map(s => (
+          <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="font-mono font-semibold tabular-nums" style={{ color: s.c }}>{s.v}</span>
+          </div>
+        ))}
+      </div>
+
       <Plain>
         Ministries are <strong>data, not code</strong>. Instantiate one from a
         sovereign archetype blueprint, then rename, merge, deactivate, add or
