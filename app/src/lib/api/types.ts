@@ -1,0 +1,159 @@
+// CivicOS — Phase 1 API contract types.
+// These types are the contract between UI and backend. The backend
+// implementation is swappable (mock adapter now; sovereign datastore later).
+
+export type ISODate = string;
+
+export interface Citizen {
+  id: string;               // per-session handle, not a global ID (Companion 03)
+  displayName: string;
+  preferredLocale: 'en' | 'sw' | 'ar' | 'fr' | 'yo';
+  municipality: string;
+}
+
+export interface Session {
+  authenticated: boolean;
+  citizen?: Citizen;
+  method?: 'agent' | 'office' | 'biometric' | 'demo';
+}
+
+// ── Permits ───────────────────────────────────────────────────────────
+export type PermitType =
+  | 'building'
+  | 'business'
+  | 'market-stall'
+  | 'event'
+  | 'vehicle'
+  | 'food-handling';
+
+export type PermitStatus =
+  | 'draft'
+  | 'submitted'
+  | 'in-review'
+  | 'needs-info'
+  | 'approved'
+  | 'declined';
+
+export interface PermitTimelineEntry {
+  status: PermitStatus;
+  at: ISODate;
+  note?: string;
+  officerName?: string;
+}
+
+export interface Permit {
+  id: string;
+  type: PermitType;
+  title: string;
+  applicantName: string;
+  municipality: string;
+  status: PermitStatus;
+  submittedAt?: ISODate;
+  decisionDue?: ISODate;
+  officerName?: string;
+  aiClass?: 'A' | 'B' | 'C' | 'D' | 'E';
+  fields: Record<string, string>;
+  timeline: PermitTimelineEntry[];
+  contestable: boolean;
+}
+
+export interface CreatePermitInput {
+  type: PermitType;
+  title: string;
+  applicantName: string;
+  municipality: string;
+  fields: Record<string, string>;
+}
+
+// ── Payments ──────────────────────────────────────────────────────────
+export type BillKind = 'water' | 'waste' | 'property-tax' | 'permit-fee' | 'transit';
+
+export interface Bill {
+  id: string;
+  kind: BillKind;
+  description: string;
+  amountMinor: number;       // minor units (e.g., cents)
+  currency: string;
+  dueDate: ISODate;
+  status: 'due' | 'paid' | 'overdue';
+}
+
+export interface PaymentReceipt {
+  id: string;
+  billId: string;
+  amountMinor: number;
+  currency: string;
+  rail: string;              // e.g., M-Pesa, ISO 20022 credit transfer
+  paidAt: ISODate;
+  hash: string;
+}
+
+// ── Notifications ─────────────────────────────────────────────────────
+export interface Notification {
+  id: string;
+  from: string;              // ministry / office / assistant
+  subject: string;
+  body: string;
+  at: ISODate;
+  read: boolean;
+  channel: 'wallet' | 'sms' | 'ussd' | 'ivr';
+  aiClass?: 'A' | 'B' | 'C' | 'D' | 'E';
+}
+
+// ── Document verification ─────────────────────────────────────────────
+export interface VerifyResult {
+  valid: boolean;
+  subject?: string;
+  issuer?: string;
+  credentialType?: string;
+  issuedAt?: ISODate;
+  revoked?: boolean;
+  reason?: string;           // when invalid
+}
+
+// ── Digital signatures ────────────────────────────────────────────────
+export interface SignatureRequest {
+  documentId: string;
+  documentTitle: string;
+  signerName: string;
+}
+
+export interface SignatureResult {
+  id: string;
+  documentId: string;
+  signerName: string;
+  signedAt: ISODate;
+  hash: string;
+  nonRepudiation: true;
+}
+
+// ── Municipal onboarding ──────────────────────────────────────────────
+export interface MunicipalityOnboardingInput {
+  name: string;
+  country: string;
+  adminContact: string;
+  population: number;
+  officialLanguages: string[];
+  inclusionFloor: {
+    ussd: boolean;
+    ivr: boolean;
+    agentNetwork: boolean;
+    walkIn: boolean;
+  };
+  modules: PermitType[] | string[];
+  constitutionalOfficerSignoff: boolean;
+}
+
+export interface MunicipalityOnboardingResult {
+  id: string;
+  name: string;
+  status: 'provisioned' | 'blocked';
+  checks: { label: string; passed: boolean; detail?: string }[];
+  goLiveEstimateDays: number;
+}
+
+// Generic envelope
+export interface ApiError {
+  error: string;
+  detail?: string;
+}

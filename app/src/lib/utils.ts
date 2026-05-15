@@ -26,6 +26,10 @@ export function formatDate(
   }
 }
 
+export function formatMinor(amountMinor: number, currency: string = 'KES', locale: string = 'en'): string {
+  return formatAmount(amountMinor / 100, currency, locale);
+}
+
 export function formatAmount(amount: number, currency: string = 'KES', locale: string = 'en'): string {
   try {
     return new Intl.NumberFormat(locale, {

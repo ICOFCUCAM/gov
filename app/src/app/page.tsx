@@ -64,6 +64,22 @@ export default function HomePage() {
         </Card>
       </section>
 
+      <section className="space-y-3">
+        <h2 className="text-2xl font-semibold">Phase 1 — Foundational public platform</h2>
+        <p className="text-ink-muted max-w-2xl">
+          Per Companion 159, the platform ships phase by phase. Phase 1 is live
+          in the codebase: identity, permits, payments, documents, signatures,
+          notifications, and municipal onboarding — all on a typed API.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/login"><Button variant="secondary">Sign-in flow →</Button></Link>
+          <Link href="/wallet/permits"><Button variant="secondary">Permits →</Button></Link>
+          <Link href="/wallet/payments"><Button variant="secondary">Payments →</Button></Link>
+          <Link href="/wallet/documents"><Button variant="secondary">Verify a document →</Button></Link>
+          <Link href="/admin/onboarding"><Button variant="secondary">Municipal onboarding →</Button></Link>
+        </div>
+      </section>
+
       <footer className="text-center text-sm text-ink-muted pt-8 border-t border-line">
         No tracking. No analytics. No third-party scripts.
         Sovereign-portable.

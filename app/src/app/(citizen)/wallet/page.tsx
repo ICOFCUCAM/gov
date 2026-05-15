@@ -81,6 +81,28 @@ export default function WalletHomePage() {
           </div>
         </section>
 
+        <section aria-labelledby="do">
+          <h3 id="do" className="text-lg font-semibold mb-2">Do something</h3>
+          <div className="grid grid-cols-3 gap-2">
+            {[
+              { href: '/wallet/permits', label: 'Permits' },
+              { href: '/wallet/payments', label: 'Pay a bill' },
+              { href: '/wallet/identity', label: 'Identity' },
+              { href: '/wallet/documents', label: 'Verify a doc' },
+              { href: '/wallet/sign', label: 'Sign' },
+              { href: '/wallet/inbox', label: 'Inbox' },
+            ].map(a => (
+              <Link
+                key={a.href}
+                href={a.href}
+                className="p-3 border border-line rounded-md bg-surface text-center text-sm no-underline text-ink hover:bg-surface-2"
+              >
+                {a.label}
+              </Link>
+            ))}
+          </div>
+        </section>
+
         <hr className="border-line" />
 
         <section aria-labelledby="receipts">
