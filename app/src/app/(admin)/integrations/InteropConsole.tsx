@@ -114,8 +114,27 @@ export function InteropConsole() {
     }
   }
 
+  const pendingInts = ints.filter(i => i.status === 'pending').length;
+  const hookFailures = hooks.reduce((a, h) => a + (h.failures ?? 0), 0);
+  const io = [
+    { l: 'Clients', v: String(ints.length), c: 'rgb(var(--c-ink))' },
+    { l: 'Pending approval', v: String(pendingInts), c: pendingInts ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' },
+    { l: 'Federation grants', v: String(grants.length), c: 'rgb(var(--c-ink))' },
+    { l: 'Webhooks', v: String(hooks.length), c: 'rgb(var(--c-ink))' },
+    { l: 'Delivery failures', v: String(hookFailures), c: hookFailures ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
+    { l: 'Posture', v: pendingInts || hookFailures ? 'ATTENTION' : 'NOMINAL', c: pendingInts || hookFailures ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' },
+  ];
+
   return (
     <div className="space-y-4">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-6">
+        {io.map(s => (
+          <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="font-mono font-semibold tabular-nums" style={{ color: s.c }}>{s.v}</span>
+          </div>
+        ))}
+      </div>
       <div className="flex gap-2">
         {(['integrations', 'federation', 'webhooks'] as const).map(t => (
           <Button
