@@ -26,6 +26,7 @@ interface Entry {
 }
 
 const SOVEREIGN: Entry[] = [
+  { href: '/gov/situation-room', glyph: '◎', label: 'National Situation Room', desc: 'Flagship real-time command & coordination' },
   { href: '/gov', glyph: '◆', label: 'National Shell', desc: 'Whole-of-government command environment' },
   { href: '/gov/coordination', glyph: '⟁', label: 'National Coordination', desc: 'Dependency · cascade · live tempo' },
   { href: '/ops', glyph: '⊞', label: 'Operations Centre', desc: 'Cross-institution operational state' },
