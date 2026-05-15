@@ -313,7 +313,7 @@ export function CabinetIntelligence() {
           {/* DOMINANT: strategic map + executive narrative (asymmetric hero) */}
           <div className="grid gap-3 xl:grid-cols-12">
             <Panel title="National strategic map" meta="live operational command view" className="xl:col-span-8" bodyClass="!p-2">
-              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} height={560} />
+              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} height={560} focus={sov?.stateName} />
             </Panel>
 
             <div className="flex flex-col gap-3 xl:col-span-4">
@@ -489,7 +489,7 @@ export function CabinetIntelligence() {
             </Panel>
 
             <Panel title="National heatmap" meta="ministry stress by region" bodyClass="!p-2">
-              <TerritoryHeat epoch={epoch} height={150} />
+              <TerritoryHeat epoch={epoch} height={150} focus={sov?.stateName} />
               <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
                 <span>Low</span>
                 <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />

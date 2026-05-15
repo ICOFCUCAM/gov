@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
+import { WorldMap } from '@/components/ui/WorldMap';
 import { identityFor } from '@/lib/archetype-profiles';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type {
@@ -228,9 +229,6 @@ const INFRA_KINDS = [
 
 // Global-state-neutral province partition (real territorial polygons,
 // shared edges form the national silhouette). viewBox 1000×620.
-// Organic national landmass (bezier coastline — no straight polygon edges).
-const LAND =
-  'M150,250 C150,168 232,120 332,116 C420,112 472,150 560,140 C660,128 720,90 802,120 C882,150 916,232 900,312 C886,384 912,442 850,488 C786,532 690,512 600,520 C500,528 430,560 340,540 C250,520 190,494 168,420 C150,360 150,322 150,250 Z';
 const PROV: { n: string; cx: number; cy: number; r: number; cap?: boolean }[] = [
   { n: 'Northern Province', cx: 320, cy: 196, r: 150 },
   { n: 'Highland Region', cx: 545, cy: 188, r: 150 },
@@ -242,33 +240,22 @@ const PROV: { n: string; cx: number; cy: number; r: number; cap?: boolean }[] = 
 
 interface Infra { id: string; kind: typeof INFRA_KINDS[number]; x: number; y: number; risk: number }
 
-// Geographic territory heat — organic landmass washed by region risk.
-// Used by the heatmap panel so it reads as a map, not a box grid.
-export function TerritoryHeat({ epoch, height = 150 }: { epoch: number; height?: number }) {
+// Geographic territory heat — real Natural-Earth basemap washed by
+// per-country risk (world by default, zooms to the sovereign nation).
+export function TerritoryHeat({ epoch, height = 150, focus }: { epoch: number; height?: number; focus?: string }) {
+  const riskOf = React.useCallback(
+    (name: string) => Math.round(seed(`geo:${name}:${epoch}`) * 100),
+    [epoch],
+  );
   return (
-    <div className="relative w-full overflow-hidden rounded-sm" style={{ height }}>
-      <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid meet" className="absolute inset-0 h-full w-full">
-        <defs><clipPath id="th"><path d={LAND} /></clipPath></defs>
-        <path d={LAND} fill="rgb(var(--c-surface-2))" stroke="rgb(var(--c-line))" strokeWidth="2" />
-        <g clipPath="url(#th)">
-          {PROV.map((p, i) => {
-            const rk = Math.round(seed(`prov:${i}:${epoch}`) * 100);
-            const c = TONE[toneFor(rk)];
-            return [70, 46, 26].map((rr, j) => (
-              <circle key={`${p.n}${j}`} cx={p.cx} cy={p.cy} r={p.r * (rr / 70)}
-                fill={c} opacity={0.05 + j * 0.07 + (rk / 100) * 0.12}
-                className="transition-all duration-1000 ease-sov" />
-            ));
-          })}
-        </g>
-        <path d={LAND} fill="none" stroke="rgb(var(--c-line))" strokeWidth="2" />
-      </svg>
+    <div className="relative w-full overflow-hidden rounded-sm border border-line-soft" style={{ height }}>
+      <WorldMap focus={focus} riskOf={riskOf} />
     </div>
   );
 }
 
 export function NationalMap({
-  mapNodes, edges, incidents, now, layers, epoch, height = 388,
+  mapNodes, edges, incidents, now, layers, epoch, height = 388, focus,
 }: {
   mapNodes: { ministryId: string; ministry: string; archetype: string; x: number; y: number; pressure: number }[];
   edges: { fromId: string; toId: string; propagatedRisk: number }[];
@@ -277,6 +264,7 @@ export function NationalMap({
   layers: { infra: boolean; grid: boolean; corridors: boolean; incidents: boolean };
   epoch: number;
   height?: number;
+  focus?: string;
 }) {
   const infra: Infra[] = React.useMemo(
     () => Array.from({ length: 18 }).map((_, i) => {
@@ -298,21 +286,15 @@ export function NationalMap({
   return (
     <div className="relative w-full overflow-hidden rounded-md border border-line-soft"
       style={{ height, background: 'radial-gradient(ellipse at 42% 26%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 60%)' }}>
+      <WorldMap focus={focus} />
       <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
         <defs>
-          <clipPath id="terr"><path d={LAND} /></clipPath>
           <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
             <path d="M32 0H0V32" fill="none" stroke="rgb(var(--c-line))" strokeWidth="0.5" />
           </pattern>
-          <radialGradient id="sea" cx="50%" cy="40%" r="75%">
-            <stop offset="0%" stopColor="rgb(var(--c-surface-2))" />
-            <stop offset="100%" stopColor="rgb(var(--c-bg))" />
-          </radialGradient>
         </defs>
 
-        <path d={LAND} fill="url(#sea)" stroke="rgb(var(--c-line))" strokeWidth="2.5" />
-
-        <g clipPath="url(#terr)">
+        <g>
           {layers.grid ? <rect width="1000" height="620" fill="url(#grid)" opacity="0.4" /> : null}
 
           {/* organic region risk blooms */}
@@ -358,8 +340,6 @@ export function NationalMap({
               strokeWidth="1.4" strokeOpacity={0.5 - pulse * 0.45} />
           )) : null}
         </g>
-
-        <path d={LAND} fill="none" stroke="rgb(var(--c-line))" strokeWidth="2.5" />
 
         {provRisk.map(({ p, risk }) => {
           const tn = toneFor(risk);
@@ -706,7 +686,7 @@ export function SituationRoom() {
                 </span>
               }
               className="xl:col-span-6" bodyClass="!p-2">
-              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} />
+              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} />
             </Panel>
 
             <Panel title="Ministry status matrix" meta="cross-domain risk" className="xl:col-span-4" bodyClass="overflow-auto max-h-[420px] !p-0">
@@ -878,7 +858,7 @@ export function SituationRoom() {
               {(coord?.timeline ?? []).length === 0 ? <p className="p-3 text-xs text-ink-muted">Awaiting operational events…</p> : null}
             </Panel>
             <Panel title="Regional risk heatmap" meta="exposure by region" bodyClass="!p-2">
-              <TerritoryHeat epoch={epoch} height={150} />
+              <TerritoryHeat epoch={epoch} height={150} focus={sov?.stateName} />
               <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
                 <span>Low</span>
                 <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
