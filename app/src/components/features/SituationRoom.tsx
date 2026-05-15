@@ -772,7 +772,7 @@ export function SituationRoom() {
           </div>
 
           {/* Dependency intelligence + strategic forecast */}
-          <div className="grid min-h-0 flex-1 gap-2 lg:grid-cols-2">
+          <div className="grid min-h-0 flex-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
             <Panel title="National dependency graph" meta="systemic impact propagation" bodyClass="!pb-2 overflow-hidden">
               {(() => {
                 const dep = [
@@ -814,29 +814,6 @@ export function SituationRoom() {
                 <span className="flex items-center gap-1"><span className="h-px w-4" style={{ backgroundColor: TONE.alert }} />Critical path</span>
               </div>
             </Panel>
-            <Panel title="Strategic forecast · 72h" meta="advisory simulation">
-              <ul className="space-y-2 text-xs">
-                {[
-                  { l: 'Energy reserve threshold', v: `In ${10 + Math.round(seed(`f1:${epoch}`) * 40)}h`, t: pressOf('ENERGY') >= 60 ? 'alert' : 'warn' },
-                  { l: 'Hospital capacity stress', v: `+${8 + Math.round(seed(`f2:${epoch}`) * 18)}%`, t: pressOf('HEALTH') >= 55 ? 'alert' : 'warn' },
-                  { l: 'Logistics disruption probability', v: pressOf('TRANSPORT') >= 60 ? 'High' : 'Moderate', t: pressOf('TRANSPORT') >= 60 ? 'alert' : 'warn' },
-                  { l: 'Treasury stress forecast', v: 'Intervention within 48h', t: 'warn' },
-                  { l: 'Infrastructure degradation', v: `${4 + Math.round(seed(`f5:${epoch}`) * 9)}% / wk`, t: 'neutral' },
-                  { l: 'Civil unrest probability', v: nationalRisk >= 60 ? 'Elevated' : 'Low–Moderate', t: nationalRisk >= 60 ? 'alert' : 'ok' },
-                ].map(f => (
-                  <li key={f.l} className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[f.t] }} /><span className="text-ink-soft">{f.l}</span></span>
-                    <span className="font-mono text-[11px] tabular-nums" style={{ color: TONE[f.t] }}>{f.v}</span>
-                  </li>
-                ))}
-              </ul>
-              <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory projection only — no autonomous action. Executive decides.</p>
-            </Panel>
-          </div>
-
-          {/* Strategic visualisation band — six operational analytics */}
-          <div className="grid min-h-0 flex-1 gap-2 md:grid-cols-3 xl:grid-cols-6">
-            <Panel title="Incident severity distribution" meta="by classification"><Donut segs={donut} /></Panel>
             <Panel title="Operational timeline" meta="live tempo" bodyClass="overflow-y-auto !p-0">
               {(coord?.timeline ?? []).slice(0, 9).map((e, i) => {
                 const phase = e.tone === 'alert' ? 'Containment' : e.tone === 'warn' ? 'Assessment' : 'Coordination';
@@ -857,6 +834,24 @@ export function SituationRoom() {
               })}
               {(coord?.timeline ?? []).length === 0 ? <p className="p-3 text-xs text-ink-muted">Awaiting operational events…</p> : null}
             </Panel>
+            <Panel title="Strategic forecast · 72h" meta="advisory simulation">
+              <ul className="space-y-2 text-xs">
+                {[
+                  { l: 'Energy reserve threshold', v: `In ${10 + Math.round(seed(`f1:${epoch}`) * 40)}h`, t: pressOf('ENERGY') >= 60 ? 'alert' : 'warn' },
+                  { l: 'Hospital capacity stress', v: `+${8 + Math.round(seed(`f2:${epoch}`) * 18)}%`, t: pressOf('HEALTH') >= 55 ? 'alert' : 'warn' },
+                  { l: 'Logistics disruption probability', v: pressOf('TRANSPORT') >= 60 ? 'High' : 'Moderate', t: pressOf('TRANSPORT') >= 60 ? 'alert' : 'warn' },
+                  { l: 'Treasury stress forecast', v: 'Intervention within 48h', t: 'warn' },
+                  { l: 'Infrastructure degradation', v: `${4 + Math.round(seed(`f5:${epoch}`) * 9)}% / wk`, t: 'neutral' },
+                  { l: 'Civil unrest probability', v: nationalRisk >= 60 ? 'Elevated' : 'Low–Moderate', t: nationalRisk >= 60 ? 'alert' : 'ok' },
+                ].map(f => (
+                  <li key={f.l} className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[f.t] }} /><span className="text-ink-soft">{f.l}</span></span>
+                    <span className="font-mono text-[11px] tabular-nums" style={{ color: TONE[f.t] }}>{f.v}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory projection only — no autonomous action. Executive decides.</p>
+            </Panel>
             <Panel title="Regional risk heatmap" meta="exposure by region" bodyClass="!p-2">
               <TerritoryHeat epoch={epoch} height={150} focus={sov?.stateName} />
               <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
@@ -865,6 +860,11 @@ export function SituationRoom() {
                 <span>Critical</span>
               </div>
             </Panel>
+          </div>
+
+          {/* Operational analytics band */}
+          <div className="grid min-h-0 flex-1 gap-2 md:grid-cols-2 xl:grid-cols-4">
+            <Panel title="Incident severity distribution" meta="by classification"><Donut segs={donut} /></Panel>
             <Panel title="Treasury flow monitor" meta="24h revenue · expenditure">
               <div className="space-y-2">
                 <div>
