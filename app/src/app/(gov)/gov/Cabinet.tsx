@@ -10,6 +10,7 @@ import { Section, DataTable, EnterpriseTable, StatusText, type Column } from '@/
 import { api } from '@/lib/api/client';
 import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
 import { resolveIdentity } from '@/lib/sovereign-identity';
+import { identityFor } from '@/lib/archetype-profiles';
 import type {
   CabinetOverview,
   NationalCoordination,
@@ -96,11 +97,23 @@ export function Cabinet() {
   const ident = resolveIdentity(s);
 
   const cols: Column<Inst>[] = [
-    { key: 'n', header: 'Institution', filter: i => i.name, sort: (a, b) => a.name.localeCompare(b.name), render: i => (
-        <Link href={`/gov/ministry/${i.id}`} className="font-medium text-link underline underline-offset-2">
-          {i.name}
-        </Link>
-      ) },
+    { key: 'n', header: 'Institution', filter: i => i.name, sort: (a, b) => a.name.localeCompare(b.name), render: i => {
+        const id = identityFor(i.archetype);
+        return (
+          <span className="flex items-center gap-2">
+            <span
+              aria-hidden
+              className="grid h-6 w-6 shrink-0 place-items-center rounded-sm text-xs text-white"
+              style={{ backgroundColor: id.accent }}
+            >
+              {id.glyph}
+            </span>
+            <Link href={`/gov/ministry/${i.id}`} className="focus-ring font-medium text-link underline underline-offset-2">
+              {i.name}
+            </Link>
+          </span>
+        );
+      } },
     { key: 'a', header: 'Archetype', filter: i => i.archetype, sort: (a, b) => a.archetype.localeCompare(b.archetype), render: i => <span className="text-ink-muted">{i.archetype}</span> },
     { key: 'st', header: 'Status', filter: i => i.status, sort: (a, b) => a.status.localeCompare(b.status), render: i => (
         <StatusText tone={i.status === 'active' ? 'ok' : 'warn'}>{i.status}</StatusText>

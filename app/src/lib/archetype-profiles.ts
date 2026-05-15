@@ -297,3 +297,32 @@ export const ARCHETYPE_PROFILES: Record<ArchetypeKey, ArchetypeProfile> = {
 export function profileFor(archetype: ArchetypeKey): ArchetypeProfile {
   return ARCHETYPE_PROFILES[archetype] ?? ARCHETYPE_PROFILES.GENERIC;
 }
+
+/**
+ * Per-archetype operational identity — each ministry reads as its own
+ * command environment (Treasury ≠ Health ≠ Transport), not a recoloured
+ * generic page. Accents are mid-tones tuned to remain legible on the
+ * dark sovereign palette.
+ */
+export interface ArchetypeIdentity {
+  accent: string;
+  glyph: string;
+  domain: string;
+}
+export const ARCHETYPE_IDENTITY: Record<ArchetypeKey, ArchetypeIdentity> = {
+  HEALTH: { accent: '#2f9e7d', glyph: '✚', domain: 'National healthcare operations & licensing' },
+  EDUCATION: { accent: '#4f7fd4', glyph: '✎', domain: 'National education administration' },
+  FINANCE: { accent: '#c9a13b', glyph: '§', domain: 'Sovereign fiscal command & treasury control' },
+  AGRICULTURE: { accent: '#6fae4a', glyph: '❧', domain: 'Agriculture & national food security' },
+  ENERGY: { accent: '#d4894a', glyph: '⚡', domain: 'Grid & energy infrastructure command' },
+  TRANSPORT: { accent: '#4f93d4', glyph: '⇄', domain: 'Logistics & corridor coordination' },
+  JUSTICE: { accent: '#8f6fc4', glyph: '⚖', domain: 'Justice administration & registries' },
+  ENVIRONMENT: { accent: '#3fae8a', glyph: '❂', domain: 'Environmental monitoring & enforcement' },
+  INTERIOR: { accent: '#c4564f', glyph: '◈', domain: 'National security administration' },
+  LABOR: { accent: '#4f9ab0', glyph: '⚒', domain: 'Labour & workforce administration' },
+  TRADE: { accent: '#3f9ab0', glyph: '⛴', domain: 'Trade & commerce facilitation' },
+  GENERIC: { accent: '#6a7689', glyph: '▣', domain: 'Institutional operating environment' },
+};
+export function identityFor(archetype: ArchetypeKey): ArchetypeIdentity {
+  return ARCHETYPE_IDENTITY[archetype] ?? ARCHETYPE_IDENTITY.GENERIC;
+}

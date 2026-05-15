@@ -10,8 +10,10 @@ import { SeverityBadge } from '@/components/ui/Ops';
 import { Sparkbars, RegionMatrix, SLAMonitor, FlowBars } from '@/components/ui/Viz';
 import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
 import { api } from '@/lib/api/client';
+import { identityFor } from '@/lib/archetype-profiles';
 import type {
   AnalyticSeries,
+  ArchetypeKey,
   FieldUnitStatus,
   MinistryIncident,
   MinistryQueue,
@@ -150,13 +152,33 @@ export function MinistryWorkspace({ id }: { id: string }) {
 
   if (!name && !err) return <WorkspaceSkeleton label="Loading institution workspace" />;
 
+  const ident = identityFor((archetype || 'GENERIC') as ArchetypeKey);
+
   return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <Link href="/gov" className="text-sm text-link underline underline-offset-2">← Cabinet</Link>
-          <h1 className="mt-1 text-2xl font-semibold">{name || 'Institution workspace'}</h1>
-          <p className="text-sm text-ink-muted">{archetype} · institutional operating environment</p>
+    <div className="space-y-5" style={{ ['--accent' as string]: ident.accent }}>
+      <div
+        className="-mx-4 -mt-4 mb-1 h-1 lg:-mx-6 lg:-mt-6"
+        style={{ backgroundColor: ident.accent }}
+        aria-hidden
+      />
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <span
+            aria-hidden
+            className="mt-1 grid h-12 w-12 shrink-0 place-items-center rounded-md text-2xl text-white shadow-elev-1"
+            style={{ backgroundColor: ident.accent }}
+          >
+            {ident.glyph}
+          </span>
+          <div>
+            <Link href="/gov" className="focus-ring text-sm text-link underline underline-offset-2">← Cabinet</Link>
+            <h1 className="mt-1 text-2xl font-semibold tracking-tight">{name || 'Institution workspace'}</h1>
+            <p className="text-sm text-ink-muted">
+              <span className="font-medium text-ink-soft">{ident.domain}</span>
+              <span className="mx-1.5 text-line">·</span>
+              <span className="text-[11px] uppercase tracking-[0.16em]">{archetype}</span>
+            </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {activeAlerts.length > 0 ? <Pill tone="alert">{activeAlerts.length} active incident{activeAlerts.length === 1 ? '' : 's'}</Pill> : <Pill tone="ok">no active incidents</Pill>}
@@ -172,10 +194,11 @@ export function MinistryWorkspace({ id }: { id: string }) {
             role="tab"
             aria-selected={tab === t.k}
             onClick={() => setTab(t.k)}
+            style={tab === t.k ? { borderColor: ident.accent, color: 'rgb(var(--c-ink))' } : undefined}
             className={
-              'border-b-2 px-3 py-2 text-sm ' +
+              'focus-ring border-b-2 px-3 py-2 text-sm transition-colors duration-150 ease-sov ' +
               (tab === t.k
-                ? 'border-ink font-semibold text-ink'
+                ? 'font-semibold'
                 : 'border-transparent text-ink-soft hover:text-ink')
             }
           >
