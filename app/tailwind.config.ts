@@ -25,10 +25,11 @@ const config: Config = {
         'class-c': '#b08400',
         'class-d': '#8a3a36',
         'class-e': '#5c3a8a',
-        // Status (paired with text/icon, never color-only)
-        ok: '#2d6a4f',
-        warn: '#b08400',
-        alert: '#8a3a36',
+        // Status (paired with text/icon, never color-only) — tokenised
+        // so they stay legible on the dark sovereign palette.
+        ok: 'rgb(var(--c-ok) / <alpha-value>)',
+        warn: 'rgb(var(--c-warn) / <alpha-value>)',
+        alert: 'rgb(var(--c-alert) / <alpha-value>)',
         // NCCC wall (dark)
         'wall-bg': '#0d1117',
         'wall-panel': '#161b22',
@@ -47,6 +48,39 @@ const config: Config = {
         sm: '8px',
         md: '14px',
         lg: '22px',
+      },
+      boxShadow: {
+        // Elevation system — restrained, reads on light + dark sovereign.
+        'elev-1': '0 1px 2px rgb(0 0 0 / 0.06), 0 1px 1px rgb(0 0 0 / 0.04)',
+        'elev-2': '0 4px 12px -2px rgb(0 0 0 / 0.10), 0 2px 4px -2px rgb(0 0 0 / 0.06)',
+        'elev-3': '0 12px 28px -6px rgb(0 0 0 / 0.16), 0 6px 12px -6px rgb(0 0 0 / 0.10)',
+        focus: '0 0 0 3px rgb(var(--c-link) / 0.45)',
+      },
+      transitionTimingFunction: {
+        // Premium easing — calm, confident, never bouncy.
+        sov: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      },
+      transitionDuration: {
+        DEFAULT: '180ms',
+      },
+      keyframes: {
+        'fade-in': {
+          '0%': { opacity: '0' },
+          '100%': { opacity: '1' },
+        },
+        rise: {
+          '0%': { opacity: '0', transform: 'translateY(6px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 220ms cubic-bezier(0.22,1,0.36,1) both',
+        rise: 'rise 260ms cubic-bezier(0.22,1,0.36,1) both',
+        shimmer: 'shimmer 1.6s linear infinite',
       },
       minHeight: {
         tap: '44px',

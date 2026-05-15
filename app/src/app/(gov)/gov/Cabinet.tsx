@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { MetricStat } from '@/components/ui/Ops';
 import { Section, DataTable, EnterpriseTable, StatusText, type Column } from '@/components/ui/DataSystem';
 import { api } from '@/lib/api/client';
+import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type {
   CabinetOverview,
@@ -89,7 +90,7 @@ export function Cabinet() {
     }
   }
 
-  if (!ov) return <p className="text-ink-muted">Loading sovereign overview…</p>;
+  if (!ov) return <WorkspaceSkeleton label="Loading sovereign overview" />;
   const s = ov.sovereign;
   const t = ov.totals;
   const ident = resolveIdentity(s);

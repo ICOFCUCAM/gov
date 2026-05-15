@@ -19,6 +19,9 @@
     --c-line-soft: 236 232 222;
     --c-link: 31 95 173;
     --c-link-hover: 19 63 120;
+    --c-ok: 45 106 79;
+    --c-warn: 176 132 0;
+    --c-alert: 138 58 54;
   }
 
   /* Sovereign command environment — dark graphite / deep navy / steel.
@@ -35,6 +38,9 @@
     --c-line-soft: 30 37 47;
     --c-link: 124 172 232;
     --c-link-hover: 168 200 244;
+    --c-ok: 95 200 140;
+    --c-warn: 214 170 70;
+    --c-alert: 226 110 102;
     color: rgb(var(--c-ink));
     background-color: rgb(var(--c-bg));
   }
@@ -69,6 +75,37 @@
   /* Wallet phone shell — frame on desktop, full on mobile */
   .phone {
     @apply w-full sm:w-[390px] sm:mx-auto bg-surface rounded-lg sm:rounded-md border border-line overflow-hidden grid grid-rows-[auto_1fr_auto] min-h-[100vh] sm:min-h-[844px] sm:my-8 sm:shadow-2xl;
+  }
+
+  /* Consistent, premium focus affordance across interactive elements. */
+  .focus-ring {
+    @apply outline-none focus-visible:ring-2 focus-visible:ring-link/55 focus-visible:ring-offset-1 focus-visible:ring-offset-bg;
+  }
+
+  /* Sovereign glass — layered command surface with depth + blur. */
+  .glass {
+    background-color: rgb(var(--c-surface) / 0.72);
+    backdrop-filter: saturate(140%) blur(10px);
+    -webkit-backdrop-filter: saturate(140%) blur(10px);
+    @apply border border-line;
+  }
+
+  /* Loading skeleton — token-aware shimmer, light + dark parity. */
+  .skeleton {
+    @apply rounded-sm bg-surface-2;
+    background-image: linear-gradient(
+      90deg,
+      rgb(var(--c-surface-2)) 0%,
+      rgb(var(--c-line) / 0.55) 50%,
+      rgb(var(--c-surface-2)) 100%
+    );
+    background-size: 200% 100%;
+    @apply animate-shimmer;
+  }
+  html[data-bw='1'] .skeleton,
+  html[data-bw='1'] .glass {
+    background-image: none !important;
+    backdrop-filter: none !important;
   }
 }
 

@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
 import { Section, EnterpriseTable, StatusText, type Column } from '@/components/ui/DataSystem';
 import { RegionMatrix } from '@/components/ui/Viz';
+import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
 import { api } from '@/lib/api/client';
 import type {
   NationalCoordination as NC,
@@ -85,7 +86,7 @@ export function NationalCoordination() {
   }, [load]);
 
   if (err && !d) return <p className="text-sm text-alert" role="alert">{err}</p>;
-  if (!d) return <p className="text-ink-muted">Assembling national coordination fabric…</p>;
+  if (!d) return <WorkspaceSkeleton label="Assembling national coordination fabric" />;
 
   const p = d.posture;
   const clock = new Date(now);

@@ -58,7 +58,7 @@ export function MetricStat({
     tone === 'ok'
       ? 'text-ok'
       : tone === 'warn'
-        ? 'text-[#6a4d00]'
+        ? 'text-warn'
         : tone === 'alert'
           ? 'text-alert'
           : 'text-ink';
@@ -97,10 +97,10 @@ export function ThresholdBar({
 }
 
 const sevTone: Record<IncidentSeverity, string> = {
-  sev1: 'bg-[#f7e3e1] text-alert',
-  sev2: 'bg-[#f7e3e1] text-alert',
-  sev3: 'bg-[#fbf2dd] text-[#6a4d00]',
-  sev4: 'bg-surface-2 text-ink-soft',
+  sev1: 'bg-alert/15 text-alert ring-1 ring-alert/30',
+  sev2: 'bg-alert/15 text-alert ring-1 ring-alert/30',
+  sev3: 'bg-warn/15 text-warn ring-1 ring-warn/30',
+  sev4: 'bg-surface-2 text-ink-soft ring-1 ring-line',
 };
 
 export function SeverityBadge({ severity }: { severity: IncidentSeverity }) {

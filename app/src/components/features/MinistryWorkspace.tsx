@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Section, EnterpriseTable, StatusText, type Column } from '@/components/ui/DataSystem';
 import { SeverityBadge } from '@/components/ui/Ops';
 import { Sparkbars, RegionMatrix, SLAMonitor, FlowBars } from '@/components/ui/Viz';
+import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
 import { api } from '@/lib/api/client';
 import type {
   AnalyticSeries,
@@ -146,6 +147,8 @@ export function MinistryWorkspace({ id }: { id: string }) {
         </div>
       ) },
   ];
+
+  if (!name && !err) return <WorkspaceSkeleton label="Loading institution workspace" />;
 
   return (
     <div className="space-y-5">
