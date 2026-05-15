@@ -207,25 +207,23 @@ const INFRA_KINDS = [
   { k: 'water', g: '◑', label: 'Water works' },
 ] as const;
 
-const LAND =
-  'M126,196 C150,128 250,96 360,104 C452,110 520,74 628,92 C742,111 836,150 884,232 C916,288 902,360 880,418 C858,476 884,520 806,538 C720,558 612,536 498,544 C392,551 286,566 208,520 C140,480 104,398 108,326 C111,270 108,236 126,196 Z';
 
-// Global-state-neutral provinces (directional/generic — no real nation).
-const PROVINCES = [
-  { n: 'Capital District', x: 46, y: 44 },
-  { n: 'Northern Province', x: 34, y: 18 },
-  { n: 'Eastern Region', x: 74, y: 26 },
-  { n: 'Western Region', x: 20, y: 40 },
-  { n: 'Southern Province', x: 44, y: 78 },
-  { n: 'Coastal Region', x: 78, y: 66 },
-  { n: 'Highland Region', x: 60, y: 20 },
-  { n: 'Central Province', x: 58, y: 56 },
-] as const;
+// Global-state-neutral province partition (real territorial polygons,
+// shared edges form the national silhouette). viewBox 1000×620.
+const PROV: { n: string; pts: string; cx: number; cy: number; cap?: boolean }[] = [
+  { n: 'Northern Province', pts: '140,168 372,118 388,300 150,332', cx: 250, cy: 225 },
+  { n: 'Highland Region', pts: '372,118 612,108 612,300 388,300', cx: 496, cy: 208 },
+  { n: 'Eastern Region', pts: '612,108 828,140 902,300 804,322 612,300', cx: 728, cy: 218 },
+  { n: 'Western Region', pts: '150,332 388,300 430,500 190,470', cx: 290, cy: 400 },
+  { n: 'Capital District', pts: '388,300 612,300 648,520 430,500', cx: 520, cy: 405, cap: true },
+  { n: 'Coastal Region', pts: '612,300 804,322 826,498 648,520', cx: 722, cy: 410 },
+];
+const TERRITORY = '140,168 372,118 612,108 828,140 902,300 804,322 826,498 648,520 430,500 190,470 150,332';
 
 interface Infra { id: string; kind: typeof INFRA_KINDS[number]; x: number; y: number; risk: number }
 
 export function NationalMap({
-  mapNodes, edges, incidents, now, layers, epoch,
+  mapNodes, edges, incidents, now, layers, epoch, height = 388,
 }: {
   mapNodes: { ministryId: string; ministry: string; archetype: string; x: number; y: number; pressure: number }[];
   edges: { fromId: string; toId: string; propagatedRisk: number }[];
@@ -233,6 +231,7 @@ export function NationalMap({
   now: number;
   layers: { infra: boolean; grid: boolean; corridors: boolean; incidents: boolean };
   epoch: number;
+  height?: number;
 }) {
   const infra: Infra[] = React.useMemo(
     () => Array.from({ length: 18 }).map((_, i) => {
@@ -248,56 +247,53 @@ export function NationalMap({
     [epoch],
   );
   const pos = new Map(mapNodes.map(m => [m.ministryId, m]));
-  const corridors = infra.filter(n => n.kind.k === 'port' || n.kind.k === 'airport' || n.kind.k === 'logistics');
   const pulse = (now / 1000) % 2 / 2; // 0..1 sweep each 2s
 
+  const provRisk = PROV.map((p, i) => ({ p, risk: Math.round(seed(`prov:${i}:${epoch}`) * 100) }));
+
   return (
-    <div className="relative h-[388px] w-full overflow-hidden rounded-md border border-line-soft"
-      style={{ background: 'radial-gradient(ellipse at 38% 28%, rgba(55,199,212,0.07) 0%, rgb(var(--c-bg)) 62%)' }}>
+    <div className="relative w-full overflow-hidden rounded-md border border-line-soft"
+      style={{ height, background: 'radial-gradient(ellipse at 42% 26%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 60%)' }}>
       <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
         <defs>
-          <clipPath id="land"><path d={LAND} /></clipPath>
-          <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
-            <path d="M34 0H0V34" fill="none" stroke="rgb(var(--c-line))" strokeWidth="0.6" />
+          <clipPath id="terr"><polygon points={TERRITORY} /></clipPath>
+          <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+            <path d="M32 0H0V32" fill="none" stroke="rgb(var(--c-line))" strokeWidth="0.5" />
           </pattern>
+          <radialGradient id="sea" cx="50%" cy="40%" r="75%">
+            <stop offset="0%" stopColor="rgb(var(--c-surface-2))" />
+            <stop offset="100%" stopColor="rgb(var(--c-bg))" />
+          </radialGradient>
         </defs>
-        {/* territory */}
-        <path d={LAND} fill="rgb(var(--c-surface))" stroke="rgb(var(--c-line))" strokeWidth="1.5" />
-        <g clipPath="url(#land)">
-          {layers.grid ? <rect width="1000" height="620" fill="url(#grid)" opacity="0.5" /> : null}
-          {/* region pressure wash */}
-          {Array.from({ length: 7 }).map((_, i) => {
-            const rk = Math.round(seed(`rg:${i}:${epoch}`) * 100);
+
+        {/* national silhouette */}
+        <polygon points={TERRITORY} fill="url(#sea)" stroke="rgb(var(--c-line))" strokeWidth="2" />
+
+        {/* province polygons (real partition, risk-tinted) */}
+        {provRisk.map(({ p, risk }) => {
+          const tn = toneFor(risk);
+          return (
+            <polygon key={p.n} points={p.pts}
+              fill={TONE[tn]} fillOpacity={0.10 + (risk / 100) * 0.34}
+              stroke="rgb(var(--c-line))" strokeWidth="1.4"
+              className="transition-all duration-1000 ease-sov" />
+          );
+        })}
+
+        <g clipPath="url(#terr)">
+          {layers.grid ? <rect width="1000" height="620" fill="url(#grid)" opacity="0.45" /> : null}
+
+          {/* energy / logistics corridors (province spine) */}
+          {layers.corridors ? PROV.slice(0, -1).map((p, i) => {
+            const n = PROV[i + 1]!;
+            const mx = (p.cx + n.cx) / 2, my = (p.cy + n.cy) / 2 - 36;
             return (
-              <circle key={i}
-                cx={170 + seed(`rgx:${i}`) * 660}
-                cy={150 + seed(`rgy:${i}`) * 340}
-                r={90 + seed(`rgr:${i}`) * 90}
-                fill={TONE[toneFor(rk)]}
-                opacity={0.06 + (rk / 100) * 0.16}
-                className="transition-all duration-1000 ease-sov" />
+              <path key={p.n} d={`M${p.cx},${p.cy} Q${mx},${my} ${n.cx},${n.cy}`} fill="none"
+                stroke={ACCENT} strokeWidth="1.6" strokeOpacity="0.4" strokeDasharray="2 9"
+                className="motion-safe:animate-[shimmer_4s_linear_infinite]" />
             );
-          })}
-          {/* region boundary suggestions */}
-          <g stroke="rgb(var(--c-line))" strokeWidth="1" fill="none" opacity="0.5" strokeDasharray="2 5">
-            <path d="M360,104 L380,300 L300,540" />
-            <path d="M628,92 L560,320 L640,540" />
-            <path d="M108,326 L560,320 L884,300" />
-          </g>
-          {/* transport corridors */}
-          {layers.corridors && corridors.length > 1
-            ? corridors.slice(0, corridors.length).map((c, i) => {
-                const n = corridors[(i + 1) % corridors.length]!;
-                const x1 = 100 + c.x * 8, y1 = 60 + c.y * 5;
-                const x2 = 100 + n.x * 8, y2 = 60 + n.y * 5;
-                const mx = (x1 + x2) / 2, my = (y1 + y2) / 2 - 40;
-                return (
-                  <path key={i} d={`M${x1},${y1} Q${mx},${my} ${x2},${y2}`} fill="none"
-                    stroke={ACCENT} strokeWidth="1.4" strokeOpacity="0.4" strokeDasharray="2 8"
-                    className="motion-safe:animate-[shimmer_4s_linear_infinite]" />
-                );
-              })
-            : null}
+          }) : null}
+
           {/* cross-ministry cascade */}
           {edges.slice(0, 22).map((e, i) => {
             const a = pos.get(e.fromId), b = pos.get(e.toId);
@@ -310,25 +306,32 @@ export function NationalMap({
                 className="motion-safe:animate-[shimmer_3s_linear_infinite]" />
             );
           })}
-        </g>
-      </svg>
 
-      {/* named provinces — geopolitical cognition */}
-      {PROVINCES.map((p, i) => {
-        const risk = Math.round(seed(`prov:${i}:${epoch}`) * 100);
-        const tn = toneFor(risk);
-        return (
-          <span key={p.n} className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-center"
-            style={{ left: `${p.x}%`, top: `${p.y}%` }}>
-            <span className="inline-flex items-center gap-1 rounded-sm border bg-surface/55 px-1.5 py-0.5 text-[9px] backdrop-blur"
-              style={{ borderColor: TONE[tn], color: 'rgb(var(--c-ink-soft))' }}>
-              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[tn] }} />
-              {p.n}
-              <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{risk}</span>
-            </span>
-          </span>
-        );
-      })}
+          {/* incident bloom on stressed ministries */}
+          {layers.incidents ? mapNodes.filter(m => m.pressure >= 70).slice(0, 6).map(m => (
+            <circle key={`bl${m.ministryId}`} cx={m.x * 10} cy={m.y * 6.2}
+              r={26 + pulse * 64} fill="none" stroke={TONE.alert}
+              strokeWidth="1.4" strokeOpacity={0.5 - pulse * 0.45} />
+          )) : null}
+        </g>
+
+        {/* province labels */}
+        {provRisk.map(({ p, risk }) => {
+          const tn = toneFor(risk);
+          return (
+            <g key={`l${p.n}`}>
+              <text x={p.cx} y={p.cy - 4} textAnchor="middle"
+                className="fill-[rgb(var(--c-ink-soft))]" style={{ fontSize: 13, fontWeight: 600 }}>
+                {p.cap ? '★ ' : ''}{p.n}
+              </text>
+              <text x={p.cx} y={p.cy + 13} textAnchor="middle"
+                style={{ fontSize: 12, fontWeight: 700, fill: TONE[tn] }}>
+                {risk} · {tn === 'ok' ? 'STABLE' : tn === 'warn' ? 'ELEVATED' : tn === 'alert' ? 'CRITICAL' : 'WATCH'}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
 
       {/* infrastructure nodes */}
       {layers.infra && infra.map(n => {
