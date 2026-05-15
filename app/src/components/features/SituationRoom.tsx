@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
+import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { identityFor } from '@/lib/archetype-profiles';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type {
@@ -444,6 +445,18 @@ export function SituationRoom() {
   const autoWar = critCount >= 1 || posture?.level === 'alert' || incidents.length >= 6;
   const war = warManual ?? autoWar;
 
+  const cmdItems: CommandItem[] = [
+    { id: 's-sr', group: 'Surfaces', label: 'Situation Room', href: '/gov/situation-room' },
+    { id: 's-cab', group: 'Surfaces', label: 'Cabinet Intelligence', href: '/gov' },
+    { id: 's-coord', group: 'Surfaces', label: 'National Coordination', href: '/gov/coordination' },
+    { id: 's-ops', group: 'Surfaces', label: 'Operations Centre', href: '/ops' },
+    { id: 's-aud', group: 'Surfaces', label: 'Oversight & Audit', href: '/audit' },
+    { id: 's-min', group: 'Surfaces', label: 'Institutions Admin', href: '/ministries' },
+    { id: 's-cfg', group: 'Surfaces', label: 'Sovereign Configuration', href: '/gov/configuration' },
+    ...mapNodes.map(m => ({ id: `m-${m.ministryId}`, group: 'Ministries', label: m.ministry, hint: `pressure ${m.pressure}`, href: `/gov/ministry/${m.ministryId}` })),
+    ...incidents.slice(0, 12).map((c, i) => ({ id: `i-${i}`, group: 'Incident jump', label: c.label, hint: c.ministry, href: `/gov/ministry/${c.ministryId}` })),
+  ];
+
   // Executive operational instruments — value · drift · trajectory · spark.
   const mkInstr = (l: string, val: number, unit: string, goodHigh: boolean, sk: string) => {
     const prev = Math.round(val + (seed(`prev:${sk}:${epoch}`) - 0.5) * 14);
@@ -474,6 +487,7 @@ export function SituationRoom() {
   return (
     <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]"
       style={{ ...PALETTE, ...(war ? { ['--accent' as string]: TONE.alert } : {}) }}>
+      <CommandPalette items={cmdItems} accent={war ? TONE.alert : ACCENT} />
       {war ? (
         <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-1.5 text-xs"
           style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, borderBottom: `1px solid ${TONE.alert}` }}>
@@ -505,9 +519,12 @@ export function SituationRoom() {
           <div className="text-[10px] uppercase tracking-[0.18em] text-ink-muted">Real-time command &amp; coordination</div>
         </div>
         <div className="ml-auto flex items-center gap-3">
-          <span className="hidden items-center gap-1.5 rounded-sm border border-line bg-bg px-2 py-1 text-xs text-ink-muted lg:flex">
+          <button type="button"
+            onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true }); window.dispatchEvent(e); }}
+            className="focus-ring hidden items-center gap-1.5 rounded-sm border border-line bg-bg px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink lg:flex">
             <span style={{ color: ACCENT }}>⌕</span> Global search
-          </span>
+            <kbd className="ml-1 rounded border border-line px-1 text-[9px] text-ink-muted">⌘K</kbd>
+          </button>
           <span className="hidden items-center gap-1 rounded-sm border border-line px-2 py-1 text-[10px] text-ink-muted lg:flex">
             <span style={{ color: TONE.alert }}>⚑</span> {incidents.length} esc
             <span className="mx-1 text-line">·</span>

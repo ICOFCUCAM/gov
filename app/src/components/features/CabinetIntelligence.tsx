@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
+import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { identityFor } from '@/lib/archetype-profiles';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import {
@@ -179,9 +180,22 @@ export function CabinetIntelligence() {
     'Cabinet coordination recommended',
   ];
 
+  const cmdItems: CommandItem[] = [
+    { id: 's-cab', group: 'Surfaces', label: 'Cabinet Intelligence', href: '/gov' },
+    { id: 's-sr', group: 'Surfaces', label: 'Situation Room', href: '/gov/situation-room' },
+    { id: 's-coord', group: 'Surfaces', label: 'National Coordination', href: '/gov/coordination' },
+    { id: 's-ops', group: 'Surfaces', label: 'Operations Centre', href: '/ops' },
+    { id: 's-aud', group: 'Surfaces', label: 'Oversight & Audit', href: '/audit' },
+    { id: 's-min', group: 'Surfaces', label: 'Institutions Admin', href: '/ministries' },
+    { id: 's-cfg', group: 'Surfaces', label: 'Sovereign Configuration', href: '/gov/configuration' },
+    ...mapNodes.map(m => ({ id: `m-${m.ministryId}`, group: 'Ministries', label: m.ministry, hint: `pressure ${m.pressure}`, href: `/gov/ministry/${m.ministryId}` })),
+    ...incidents.slice(0, 12).map((c, i) => ({ id: `i-${i}`, group: 'Incident jump', label: c.label, hint: c.ministry, href: `/gov/ministry/${c.ministryId}` })),
+  ];
+
   return (
     <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]"
       style={{ ...PALETTE, ...(war ? ({ ['--accent' as string]: RED }) : {}) }}>
+      <CommandPalette items={cmdItems} accent={war ? RED : ACCENT} />
       {war ? (
         <div className="flex shrink-0 items-center justify-between gap-3 bg-[color:var(--accent)]/15 px-4 py-1.5 text-xs"
           style={{ borderBottom: `1px solid ${RED}` }}>
@@ -209,9 +223,12 @@ export function CabinetIntelligence() {
           <div className="text-[10px] uppercase tracking-[0.16em] text-ink-muted">National executive command &amp; strategic coordination</div>
         </div>
         <div className="ml-auto flex items-center gap-3">
-          <span className="hidden items-center gap-1.5 rounded-sm border border-line bg-bg px-2 py-1 text-xs text-ink-muted lg:flex">
+          <button type="button"
+            onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true }); window.dispatchEvent(e); }}
+            className="focus-ring hidden items-center gap-1.5 rounded-sm border border-line bg-bg px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink lg:flex">
             <span style={{ color: ACCENT }}>⌕</span> Search across government
-          </span>
+            <kbd className="ml-1 rounded border border-line px-1 text-[9px] text-ink-muted">⌘K</kbd>
+          </button>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
           <span className="flex items-center gap-2 border-l border-line pl-3">
             <span className="text-right leading-tight">
