@@ -77,6 +77,27 @@
     @apply w-full sm:w-[390px] sm:mx-auto bg-surface rounded-lg sm:rounded-md border border-line overflow-hidden grid grid-rows-[auto_1fr_auto] min-h-[100vh] sm:min-h-[844px] sm:my-8 sm:shadow-2xl;
   }
 
+  /* Sovereign typography scale — institutional rules, one source of
+     truth. Tabular numerals everywhere figures are compared. */
+  .t-display {
+    @apply text-2xl font-semibold tracking-tight lg:text-3xl;
+  }
+  .t-h1 {
+    @apply text-xl font-semibold tracking-tight;
+  }
+  .t-h2 {
+    @apply text-base font-semibold tracking-tight;
+  }
+  .t-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.18em] text-ink-soft;
+  }
+  .t-meta {
+    @apply text-xs text-ink-muted;
+  }
+  .t-num {
+    @apply font-mono tabular-nums;
+  }
+
   /* Consistent, premium focus affordance across interactive elements. */
   .focus-ring {
     @apply outline-none focus-visible:ring-2 focus-visible:ring-link/55 focus-visible:ring-offset-1 focus-visible:ring-offset-bg;

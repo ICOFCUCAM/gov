@@ -22,10 +22,8 @@ export function Section({
   return (
     <section className="animate-fade-in space-y-3" aria-label={title}>
       <div className="flex items-end justify-between gap-3 border-b border-line pb-1.5">
-        <h2 className="text-base font-semibold uppercase tracking-[0.08em] text-ink-soft">
-          {title}
-        </h2>
-        {meta ? <div className="text-xs text-ink-muted">{meta}</div> : null}
+        <h2 className="t-label text-xs">{title}</h2>
+        {meta ? <div className="t-meta">{meta}</div> : null}
       </div>
       {children}
     </section>

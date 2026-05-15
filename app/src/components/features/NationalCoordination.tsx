@@ -124,7 +124,7 @@ export function NationalCoordination() {
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-baseline gap-3">
             <Link href="/gov" className="focus-ring text-xs text-ink-muted underline underline-offset-2">← Cabinet</Link>
-            <h1 className="text-xl font-semibold tracking-tight">National Coordination Intelligence</h1>
+            <h1 className="t-h1">National Coordination Intelligence</h1>
             <span className="flex items-center gap-1.5 text-xs text-ink-muted">
               <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-ok" />
               LIVE · {clock.toLocaleTimeString()} · updated {rel(new Date(fetchedAt).toISOString(), now)}

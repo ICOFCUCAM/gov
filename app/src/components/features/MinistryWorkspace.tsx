@@ -172,7 +172,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
           </span>
           <div>
             <Link href="/gov" className="focus-ring text-sm text-link underline underline-offset-2">← Cabinet</Link>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight">{name || 'Institution workspace'}</h1>
+            <h1 className="t-display mt-1">{name || 'Institution workspace'}</h1>
             <p className="text-sm text-ink-muted">
               <span className="font-medium text-ink-soft">{ident.domain}</span>
               <span className="mx-1.5 text-line">·</span>
