@@ -13,3 +13,7 @@ export { PermitStatusBadge, BillStatusBadge } from './StatusBadge';
 export { Timeline } from './Timeline';
 export { TextField, SelectField, CheckRow } from './Field';
 export { EmptyState } from './EmptyState';
+export { OperatorShell, type OperatorRole } from './OperatorShell';
+export { OfflineBanner } from './OfflineBanner';
+export { AccessibilityMenu } from './AccessibilityMenu';
+export { WorkflowBar, type WorkflowAction } from './WorkflowBar';

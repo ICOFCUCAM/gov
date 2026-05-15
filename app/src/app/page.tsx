@@ -80,6 +80,20 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="space-y-3">
+        <h2 className="text-2xl font-semibold">Operational roles</h2>
+        <p className="text-ink-muted max-w-2xl">
+          Each role gets a purpose-built, uncluttered workspace. The officer
+          queue is a real review→decide loop wired to the API; the auditor
+          view is read-only and tamper-evident.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          <Link href="/console"><Button variant="secondary">Officer queue →</Button></Link>
+          <Link href="/control"><Button variant="secondary">Ministry operations →</Button></Link>
+          <Link href="/audit"><Button variant="secondary">Auditor oversight →</Button></Link>
+        </div>
+      </section>
+
       <footer className="text-center text-sm text-ink-muted pt-8 border-t border-line">
         No tracking. No analytics. No third-party scripts.
         Sovereign-portable.

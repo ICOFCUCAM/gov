@@ -6,8 +6,10 @@
 'use client';
 
 import type {
+  AuditEntry,
   Bill,
   CreatePermitInput,
+  DecidePermitInput,
   MunicipalityOnboardingInput,
   MunicipalityOnboardingResult,
   Notification,
@@ -37,6 +39,16 @@ export const api = {
     get: (id: string) => req<{ permit: Permit }>(`/api/permits/${id}`),
     create: (body: CreatePermitInput) =>
       req<{ permit: Permit }>('/api/permits', { method: 'POST', body: JSON.stringify(body) }),
+    decide: (id: string, body: DecidePermitInput) =>
+      req<{ permit: Permit }>(`/api/permits/${id}/decide`, {
+        method: 'POST',
+        body: JSON.stringify(body),
+      }),
+  },
+  audit: {
+    list: () => req<{ events: AuditEntry[] }>('/api/audit'),
+    verify: () =>
+      req<{ ok: boolean; checked: number; brokenAtSeq?: number }>('/api/audit/verify'),
   },
   payments: {
     list: () => req<{ bills: Bill[]; receipts: PaymentReceipt[] }>('/api/payments'),

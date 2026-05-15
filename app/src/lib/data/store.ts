@@ -10,14 +10,17 @@
 // durable sovereign datastore.
 
 import type {
+  AuditEntry,
   Bill,
   Citizen,
   CreatePermitInput,
+  DecidePermitInput,
   MunicipalityOnboardingInput,
   MunicipalityOnboardingResult,
   Notification,
   PaymentReceipt,
   Permit,
+  PermitStatus,
   Session,
   SignatureRequest,
   SignatureResult,
@@ -86,7 +89,36 @@ function seed() {
     { id: 'NT-7003', from: 'Civic Assistant', subject: 'Pension eligibility', body: 'Here is the information you asked for about pension eligibility.', at: days(-7), read: true, channel: 'wallet', aiClass: 'A' },
   ];
 
-  return { permits, bills, receipts, notifications };
+  const audit: AuditEntry[] = [];
+
+  return { permits, bills, receipts, notifications, audit };
+}
+
+// Append a hash-chained audit row (tamper-evident, mirrors the backend).
+function appendAudit(
+  actor: string,
+  action: string,
+  resource: string,
+  outcome: string,
+  detail?: string,
+): AuditEntry {
+  const prev = db.audit[db.audit.length - 1];
+  const seq = (prev?.seq ?? 0) + 1;
+  const prevHash = prev?.hash ?? null;
+  const entry: AuditEntry = {
+    id: uid('AU'),
+    at: new Date().toISOString(),
+    actor,
+    action,
+    resource,
+    outcome,
+    detail,
+    seq,
+    prevHash,
+    hash: hash(`${prevHash ?? 'GENESIS'}|${action}|${resource}|${outcome}|${seq}`),
+  };
+  db.audit.push(entry);
+  return entry;
 }
 
 const db = (g.__civicos ??= seed());
@@ -121,7 +153,75 @@ export function createPermit(input: CreatePermitInput): Permit {
     contestable: true,
   };
   db.permits.unshift(permit);
+  appendAudit('citizen', 'permit.create', `Permit:${permit.id}`, 'ok', permit.title);
   return permit;
+}
+
+// Officer decision workflow. Valid transitions only; every decision is
+// named to the officer, appended to the timeline, and audited.
+const NEXT_STATUS: Record<string, PermitStatus> = {
+  approve: 'approved',
+  decline: 'declined',
+  'request-info': 'needs-info',
+  escalate: 'in-review',
+};
+
+export function decidePermit(
+  id: string,
+  input: DecidePermitInput,
+): Permit | { error: string } {
+  const permit = db.permits.find(p => p.id === id);
+  if (!permit) return { error: 'Permit not found' };
+  if (permit.status === 'approved' || permit.status === 'declined') {
+    return { error: 'Permit already decided' };
+  }
+  const next = NEXT_STATUS[input.decision];
+  if (!next) return { error: 'Unknown decision' };
+
+  const now = new Date().toISOString();
+  permit.status = next;
+  permit.officerName = input.officerName;
+  if (input.aiClass) permit.aiClass = input.aiClass;
+  permit.timeline.push({
+    status: next,
+    at: now,
+    officerName: input.officerName,
+    note:
+      input.decision === 'escalate'
+        ? `Escalated for senior review${input.note ? `: ${input.note}` : ''}`
+        : input.note,
+  });
+  appendAudit(
+    input.officerName,
+    `permit.${input.decision}`,
+    `Permit:${id}`,
+    'ok',
+    input.note,
+  );
+  return permit;
+}
+
+// ── Audit ─────────────────────────────────────────────────────────────
+export function listAudit(): AuditEntry[] {
+  return [...db.audit].reverse();
+}
+
+export function verifyAuditChain(): {
+  ok: boolean;
+  checked: number;
+  brokenAtSeq?: number;
+} {
+  let prevHash: string | null = null;
+  for (const e of db.audit) {
+    const expected = hash(
+      `${prevHash ?? 'GENESIS'}|${e.action}|${e.resource}|${e.outcome}|${e.seq}`,
+    );
+    if (expected !== e.hash || (e.prevHash ?? null) !== (prevHash ?? null)) {
+      return { ok: false, checked: db.audit.length, brokenAtSeq: e.seq };
+    }
+    prevHash = e.hash;
+  }
+  return { ok: true, checked: db.audit.length };
 }
 
 // ── Payments ──────────────────────────────────────────────────────────
@@ -148,6 +248,7 @@ export function payBill(billId: string, rail: string): PaymentReceipt | { error:
     hash: hash(billId + Date.now()),
   };
   db.receipts.unshift(receipt);
+  appendAudit('citizen', 'payment.execute', `Bill:${billId}`, 'ok', `${bill.currency} ${bill.amountMinor / 100}`);
   return receipt;
 }
 

@@ -57,6 +57,28 @@ export interface Permit {
   contestable: boolean;
 }
 
+export type PermitDecision = 'approve' | 'decline' | 'request-info' | 'escalate';
+
+export interface DecidePermitInput {
+  decision: PermitDecision;
+  officerName: string;
+  note?: string;
+  aiClass?: 'A' | 'B' | 'C' | 'D' | 'E';
+}
+
+export interface AuditEntry {
+  id: string;
+  at: ISODate;
+  actor: string; // officer name / system
+  action: string; // e.g. "permit.decide"
+  resource: string; // e.g. "Permit:PM-4F21"
+  outcome: string; // "ok" | "denied" | "error"
+  detail?: string;
+  seq: number;
+  prevHash: string | null;
+  hash: string;
+}
+
 export interface CreatePermitInput {
   type: PermitType;
   title: string;

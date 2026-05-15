@@ -42,6 +42,31 @@
   }
 }
 
+@layer base {
+  /* Accessibility: user-controlled text scale (AccessibilityMenu). */
+  html[data-text-scale="sm"] { font-size: 15px; }
+  html[data-text-scale="md"] { font-size: 16px; }
+  html[data-text-scale="lg"] { font-size: 18px; }
+  html[data-text-scale="xl"] { font-size: 20px; }
+
+  /* High-contrast mode: stronger ink/lines, no subtle greys. */
+  html[data-contrast="1"] {
+    --tw-prose: initial;
+  }
+  html[data-contrast="1"] body { background: #ffffff; color: #000000; }
+  html[data-contrast="1"] .text-ink-muted,
+  html[data-contrast="1"] .text-ink-soft { color: #1a1a1a !important; }
+  html[data-contrast="1"] .border-line { border-color: #000000 !important; }
+
+  /* Respect reduced-motion. */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
 @layer utilities {
   /* RTL-aware mirror for select icons */
   [dir="rtl"] .swap-on-rtl {
