@@ -111,6 +111,7 @@ export function AppShell({
     .map(i => ({ href: `/gov/ministry/${i.id}`, label: i.name }));
   const platformGroup: NavItem[] = [
     { href: '/ministries', label: 'Institutions admin' },
+    { href: '/gov/configuration', label: 'Sovereign configuration' },
     { href: '/platform', label: 'Platform operations' },
     { href: '/integrations', label: 'Interoperability' },
   ];

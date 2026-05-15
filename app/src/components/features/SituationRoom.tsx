@@ -12,16 +12,16 @@ import type {
   ArchetypeKey,
 } from '@/lib/api/types';
 
-const TONE: Record<string, string> = {
+export const TONE: Record<string, string> = {
   alert: '#f1707a',
   warn: '#e0b341',
   ok: '#34d39c',
   neutral: '#6b7a90',
 };
-const ACCENT = '#37c7d4';
+export const ACCENT = '#37c7d4';
 
 // Deep-navy situation-room palette (overrides the .sov tokens locally).
-const PALETTE = {
+export const PALETTE = {
   '--c-bg': '7 12 20',
   '--c-surface': '12 18 30',
   '--c-surface-2': '19 27 43',
@@ -35,7 +35,7 @@ const PALETTE = {
   '--accent': ACCENT,
 } as React.CSSProperties;
 
-function seed(key: string): number {
+export function seed(key: string): number {
   let h = 2166136261;
   for (let i = 0; i < key.length; i++) {
     h ^= key.charCodeAt(i);
@@ -43,8 +43,8 @@ function seed(key: string): number {
   }
   return ((h >>> 0) % 1000) / 1000;
 }
-const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
-function rel(at: string, now: number): string {
+export const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
+export function rel(at: string, now: number): string {
   const s = Math.max(0, Math.round((now - new Date(at).getTime()) / 1000));
   if (s < 60) return `${s}s`;
   const m = Math.round(s / 60);
@@ -69,7 +69,7 @@ const RAIL: { i: string; l: string; href: string; key: string }[] = [
   { i: '⚙', l: 'Settings', href: '/platform', key: 'set' },
 ];
 
-function Panel({
+export function Panel({
   title, meta, className = '', bodyClass = '', children,
 }: {
   title: string; meta?: React.ReactNode; className?: string; bodyClass?: string; children: React.ReactNode;
@@ -85,7 +85,7 @@ function Panel({
   );
 }
 
-function Donut({ segs }: { segs: { label: string; value: number; tone: string }[] }) {
+export function Donut({ segs }: { segs: { label: string; value: number; tone: string }[] }) {
   const total = segs.reduce((s, x) => s + x.value, 0) || 1;
   const R = 40, C = 2 * Math.PI * R;
   let off = 0;
@@ -125,7 +125,7 @@ function Donut({ segs }: { segs: { label: string; value: number; tone: string }[
   );
 }
 
-function Ring({ pct, label }: { pct: number; label: string }) {
+export function Ring({ pct, label }: { pct: number; label: string }) {
   const R = 38, C = 2 * Math.PI * R;
   const tone = pct >= 99 ? 'ok' : pct >= 95 ? 'warn' : 'alert';
   return (
@@ -143,7 +143,7 @@ function Ring({ pct, label }: { pct: number; label: string }) {
   );
 }
 
-function Spark({ pts, tone }: { pts: number[]; tone: string }) {
+export function Spark({ pts, tone }: { pts: number[]; tone: string }) {
   const max = Math.max(...pts), min = Math.min(...pts);
   const line = pts.map((p, i) => {
     const x = (i / (pts.length - 1)) * 100;
@@ -161,7 +161,7 @@ function Spark({ pts, tone }: { pts: number[]; tone: string }) {
 
 // Eased live counter — drifts the displayed value toward the target so
 // metrics visibly move between fabric epochs (restrained, ~600ms).
-function useEased(target: number) {
+export function useEased(target: number) {
   const [v, setV] = React.useState(target);
   const ref = React.useRef(target);
   React.useEffect(() => {
@@ -187,7 +187,7 @@ function AnimatedNum({ value, fixed = 0 }: { value: number; fixed?: number }) {
   return <>{v.toLocaleString(undefined, { minimumFractionDigits: fixed, maximumFractionDigits: fixed })}</>;
 }
 // Splits "$8.4B" / "1,248" / "99.97%" into prefix + eased number + suffix.
-function LiveValue({ raw }: { raw: string }) {
+export function LiveValue({ raw }: { raw: string }) {
   const m = /^(\D*?)([\d,]+(?:\.\d+)?)(.*)$/.exec(raw);
   const digits = m?.[2];
   if (!m || !digits) return <>{raw}</>;
@@ -211,7 +211,7 @@ const LAND =
 
 interface Infra { id: string; kind: typeof INFRA_KINDS[number]; x: number; y: number; risk: number }
 
-function NationalMap({
+export function NationalMap({
   mapNodes, edges, incidents, now, layers, epoch,
 }: {
   mapNodes: { ministryId: string; ministry: string; archetype: string; x: number; y: number; pressure: number }[];
