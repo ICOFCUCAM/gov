@@ -52,22 +52,39 @@ export function rel(at: string, now: number): string {
   return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`;
 }
 
-const RAIL: { i: string; l: string; href: string; key: string }[] = [
-  { i: '◎', l: 'Situation Room', href: '/gov/situation-room', key: 'sr' },
-  { i: '◆', l: 'Cabinet Intelligence', href: '/gov', key: 'cab' },
-  { i: '▦', l: 'Ministries', href: '/ministries', key: 'min' },
-  { i: '⚠', l: 'Incidents', href: '/gov/coordination', key: 'inc' },
-  { i: '⊞', l: 'Operations Centre', href: '/ops', key: 'ops' },
-  { i: '◉', l: 'Regional Overview', href: '/gov/coordination', key: 'reg' },
-  { i: '⟁', l: 'Analytics & Intelligence', href: '/gov/coordination', key: 'an' },
-  { i: '§', l: 'Treasury Command', href: '/gov', key: 'tr' },
-  { i: '⚡', l: 'Infrastructure', href: '/gov', key: 'inf' },
-  { i: '◈', l: 'Security & Interior', href: '/gov', key: 'sec' },
-  { i: '⛑', l: 'Emergency Response', href: '/gov/coordination', key: 'er' },
-  { i: '⛓', l: 'Audit & Oversight', href: '/audit', key: 'aud' },
-  { i: '▤', l: 'Documents & Records', href: '/wallet/documents', key: 'doc' },
-  { i: '⇄', l: 'Communications', href: '/integrations', key: 'com' },
-  { i: '⚙', l: 'Settings', href: '/platform', key: 'set' },
+const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] = [
+  { g: 'Sovereign Command', items: [
+    { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room', on: true },
+    { i: '◆', l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov' },
+    { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination' },
+  ]},
+  { g: 'Intelligence', items: [
+    { i: '◔', l: 'Analytics & AI', s: 'Strategic foresight', href: '/gov/coordination' },
+    { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/coordination' },
+  ]},
+  { g: 'Operations', items: [
+    { i: '⊞', l: 'Operations Centre', s: 'Cross-institution state', href: '/ops' },
+    { i: '▦', l: 'Ministries', s: 'Institutional registry', href: '/ministries' },
+  ]},
+  { g: 'Security', items: [
+    { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov' },
+    { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov' },
+  ]},
+  { g: 'Infrastructure', items: [
+    { i: '⚡', l: 'Infrastructure', s: 'Grid · corridors', href: '/gov' },
+    { i: '⇄', l: 'Interoperability', s: 'Federation · clients', href: '/integrations' },
+  ]},
+  { g: 'Emergency Response', items: [
+    { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination', href: '/gov/coordination' },
+  ]},
+  { g: 'Governance', items: [
+    { i: '▥', l: 'Policy Monitor', s: 'Constitutional watch', href: '/gov' },
+    { i: '▤', l: 'Documents & Records', s: 'Tamper-evident', href: '/wallet/documents' },
+  ]},
+  { g: 'Oversight', items: [
+    { i: '⛓', l: 'Audit & Oversight', s: 'Integrity assurance', href: '/audit' },
+    { i: '⚙', l: 'Platform', s: 'System operations', href: '/platform' },
+  ]},
 ];
 
 export function Panel({
@@ -76,12 +93,13 @@ export function Panel({
   title: string; meta?: React.ReactNode; className?: string; bodyClass?: string; children: React.ReactNode;
 }) {
   return (
-    <section className={`flex min-h-0 flex-col rounded-lg border border-line bg-surface ${className}`}>
-      <div className="flex items-center justify-between gap-2 px-3.5 pt-3">
-        <h2 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">{title}</h2>
-        {meta ? <span className="text-[11px] text-ink-muted">{meta}</span> : null}
+    <section className={`flex min-h-0 flex-col rounded-md border border-line bg-surface ${className}`}>
+      <div className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-1.5"
+        style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.08)' }}>
+        <h2 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}</h2>
+        {meta ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
       </div>
-      <div className={`min-h-0 flex-1 p-3.5 ${bodyClass}`}>{children}</div>
+      <div className={`min-h-0 flex-1 p-2.5 ${bodyClass}`}>{children}</div>
     </section>
   );
 }
@@ -588,48 +606,56 @@ export function SituationRoom() {
       <div className="flex min-h-0 flex-1">
         {/* Icon command rail */}
         <nav aria-label="Situation Room navigation" className="hidden w-[212px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
-          <ul className="flex-1 overflow-y-auto py-3">
-            {RAIL.map(r => {
-              const on = r.key === 'sr';
-              return (
-                <li key={r.key}>
-                  <Link href={r.href}
-                    className={`focus-ring flex items-center gap-3 border-l-2 px-4 py-2 text-[13px] no-underline transition-colors duration-150 ${
-                      on ? 'bg-surface-2 font-medium text-ink' : 'border-transparent text-ink-muted hover:bg-surface-2/50 hover:text-ink'
+          <div className="flex-1 overflow-y-auto py-1">
+            {RAIL.map(grp => (
+              <div key={grp.g} className="mb-0.5">
+                <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
+                {grp.items.map(it => (
+                  <Link key={it.l} href={it.href}
+                    className={`focus-ring flex items-center gap-2 border-l-2 px-3 py-1 no-underline transition-colors duration-150 ${
+                      it.on ? 'bg-surface-2 font-medium' : 'border-transparent text-ink-muted hover:bg-surface-2/50 hover:text-ink'
                     }`}
-                    style={on ? { borderLeftColor: ACCENT, color: ACCENT } : undefined}>
-                    <span aria-hidden className="w-4 text-center text-sm" style={on ? { color: ACCENT } : undefined}>{r.i}</span>
-                    <span className="truncate">{r.l}</span>
+                    style={it.on ? { borderLeftColor: ACCENT } : undefined}>
+                    <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-[4px] bg-surface-2 text-[10px] ring-1 ring-line"
+                      style={it.on ? { color: ACCENT } : { color: 'rgb(var(--c-ink-soft))' }}>{it.i}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[11.5px]" style={it.on ? { color: ACCENT } : undefined}>{it.l}</span>
+                      <span className="block truncate text-[8.5px] text-ink-muted">{it.s}</span>
+                    </span>
                   </Link>
-                </li>
-              );
-            })}
-          </ul>
-          <div className="space-y-2 border-t border-line px-4 py-3 text-[10px]">
-            <div><div className="uppercase tracking-widest text-ink-muted">System status</div><div style={{ color: TONE.ok }}>All systems operational</div></div>
-            <div><div className="uppercase tracking-widest text-ink-muted">Environment</div><div className="text-ink-soft">{nat?.environment ?? 'Production'}</div></div>
-            <div><div className="uppercase tracking-widest text-ink-muted">Version</div><div className="text-ink-soft">CivicOS v2.1.0</div></div>
-            <div className="pt-1 text-ink-muted">© 2025 CivicOS</div>
+                ))}
+              </div>
+            ))}
+          </div>
+          <button onClick={() => setWarManual(w => (w === true ? null : true))}
+            className="focus-ring mx-2 mb-1 mt-1 flex items-center gap-2 rounded border px-2.5 py-1.5 text-left text-[11px]"
+            style={{ borderColor: war ? TONE.alert : 'rgb(var(--c-line))', backgroundColor: war ? `color-mix(in srgb, ${TONE.alert} 12%, transparent)` : 'transparent' }}>
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.alert }} />
+            <span><span className="block font-semibold uppercase tracking-widest" style={{ color: TONE.alert }}>Command Mode</span><span className="block text-ink-muted">{war ? 'War Room — active' : 'War Room'}</span></span>
+          </button>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 border-t border-line px-3 py-2 text-[9px]">
+            <div className="text-ink-muted">System</div><div className="text-right" style={{ color: TONE.ok }}>Operational</div>
+            <div className="text-ink-muted">Environment</div><div className="text-right text-ink-soft">{nat?.environment ?? 'Production'}</div>
+            <div className="text-ink-muted">Version</div><div className="text-right text-ink-soft">v2.1.0</div>
+            <div className="text-ink-muted">Channel</div><div className="text-right" style={{ color: TONE.ok }}>Encrypted</div>
           </div>
         </nav>
 
         {/* Operational canvas */}
-        <main className="min-w-0 flex-1 space-y-3 overflow-y-auto bg-bg p-3">
-          {/* Executive operational instruments */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10">
+        <main className="min-w-0 flex-1 space-y-2 overflow-y-auto p-2.5"
+          style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.022) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
+          {/* Row 1 — executive telemetry (10) */}
+          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 xl:grid-cols-10">
             {instruments.map(t => (
-              <div key={t.l} className="rounded-lg border border-line bg-surface px-3 py-2">
-                <div className="truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</div>
-                <div className="mt-0.5 flex items-center gap-1.5 font-mono text-lg tabular-nums" style={{ color: t.t ? TONE[t.t] : 'rgb(var(--c-ink))' }}>
-                  {t.dot ? <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: TONE[t.t ?? 'ok'] }} /> : null}
+              <div key={t.l} className="rounded-md border border-line bg-surface px-2 py-1.5"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</div>
+                <div className="flex items-center gap-1 font-mono text-[15px] leading-tight tabular-nums" style={{ color: t.t ? TONE[t.t] : 'rgb(var(--c-ink))' }}>
+                  {t.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[t.t ?? 'ok'] }} /> : null}
                   <LiveValue raw={t.v} />
-                  <span className="ml-auto text-xs" style={{ color: t.d > 1 ? TONE.ok : t.d < -1 ? TONE.alert : TONE.neutral }}>{t.traj}</span>
+                  <span className="ml-auto text-[10px]" style={{ color: t.d > 0 ? TONE.ok : t.d < 0 ? TONE.alert : TONE.neutral }}>{t.traj}{t.d ? Math.abs(t.d) : ''}</span>
                 </div>
-                <Spark pts={t.spark} tone={t.t ?? 'ok'} />
-                <div className="flex items-center justify-between text-[9px] text-ink-muted">
-                  <span>prev window</span>
-                  <span style={{ color: t.d > 0 ? TONE.ok : t.d < 0 ? TONE.alert : TONE.neutral }}>{t.d > 0 ? '+' : ''}{t.d}</span>
-                </div>
+                <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={t.spark} tone={t.t ?? 'ok'} /></div>
               </div>
             ))}
           </div>
@@ -930,6 +956,25 @@ export function SituationRoom() {
               </ul>
               <Link href="/gov" className="focus-ring mt-3 inline-block text-[11px] text-link underline underline-offset-2">Open Cabinet →</Link>
             </Panel>
+          </div>
+
+          {/* Row 5 — persistent command status strip */}
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line text-[10px] md:grid-cols-5">
+            {[
+              { l: 'Readiness posture', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
+              { l: 'Operational tempo', v: `T${tickN} · ${Math.round(40 + seed(`tempo:${epoch}`) * 50)}/min`, t: 'ok' },
+              { l: 'Active incidents', v: `${incidents.length} · ${sev('sev1')} crit`, t: incidents.length ? 'alert' : 'ok' },
+              { l: 'Population impacted', v: `${(0.4 + seed(`pi:${epoch}`) * 9).toFixed(1)}M`, t: 'warn' },
+              { l: 'War Room', v: war ? 'ENGAGED' : 'Standby', t: war ? 'alert' : 'neutral' },
+            ].map(s => (
+              <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+                <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+                <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
+                  {s.l === 'War Room' || s.l === 'Readiness posture' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
+                  {s.v}
+                </span>
+              </div>
+            ))}
           </div>
         </main>
       </div>
