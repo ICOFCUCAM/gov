@@ -105,7 +105,7 @@ export function NationalCoordination() {
     { key: 'rel', header: 'Relation', filter: e => e.relation, sort: (a, b) => a.relation.localeCompare(b.relation), render: e => <span className="text-ink-muted">{e.relation}</span> },
     { key: 't', header: 'Dependent', filter: e => e.to, sort: (a, b) => a.to.localeCompare(b.to), render: e => e.to },
     { key: 'pr', header: 'Cascade risk', align: 'right', sort: (a, b) => a.propagatedRisk - b.propagatedRisk, render: e => {
-        const c = e.propagatedRisk >= 67 ? '#b22e28' : e.propagatedRisk >= 34 ? '#9a6e00' : '#227c4d';
+        const c = e.propagatedRisk >= 67 ? TONE_HEX.alert : e.propagatedRisk >= 34 ? TONE_HEX.warn : TONE_HEX.ok;
         return (
           <span className="inline-flex w-28 items-center gap-2">
             <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
@@ -120,36 +120,42 @@ export function NationalCoordination() {
   return (
     <div className="space-y-5">
       {/* National posture command bar */}
-      <div className="rounded-sm border border-line bg-[#0f141b] p-4 text-white">
+      <div className="rounded-md border border-line bg-surface p-4 text-ink shadow-elev-2">
         <div className="flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-baseline gap-3">
-            <Link href="/gov" className="text-xs text-[#8b95a3] underline underline-offset-2">← Cabinet</Link>
+            <Link href="/gov" className="focus-ring text-xs text-ink-muted underline underline-offset-2">← Cabinet</Link>
             <h1 className="text-xl font-semibold tracking-tight">National Coordination Intelligence</h1>
-            <span className="flex items-center gap-1.5 text-xs text-[#8b95a3]">
-              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[#3fbf7f]" />
+            <span className="flex items-center gap-1.5 text-xs text-ink-muted">
+              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-ok" />
               LIVE · {clock.toLocaleTimeString()} · updated {rel(new Date(fetchedAt).toISOString(), now)}
             </span>
           </div>
           <span
             className="rounded-sm px-3 py-1 text-sm font-semibold tracking-widest"
             style={{
-              backgroundColor: p.level === 'alert' ? '#3a1f1f' : p.level === 'warn' ? '#3a2f1a' : '#1d3a2c',
-              color: p.level === 'alert' ? '#f3b4b0' : p.level === 'warn' ? '#e6cd95' : '#9fe0c0',
+              backgroundColor: `color-mix(in srgb, ${TONE_HEX[p.level]} 16%, transparent)`,
+              color: TONE_HEX[p.level],
             }}
           >
             {p.label}
           </span>
         </div>
-        <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="mt-4 grid grid-cols-2 gap-px overflow-hidden rounded-sm border border-line bg-line sm:grid-cols-4">
           {[
-            { l: 'National risk index', v: `${p.nationalRisk}`, sub: '/ 100' },
+            { l: 'National risk index', v: `${p.nationalRisk}`, sub: '/ 100', tone: p.level },
             { l: 'Coordinating institutions', v: `${p.coordinatingMinistries}`, sub: 'active' },
-            { l: 'Cascade exposures', v: `${p.cascadeRisks}`, sub: 'dependencies ≥ 50' },
-            { l: 'Pinned incidents', v: `${d.pinnedIncidents.length}`, sub: 'sev1 / sev2' },
+            { l: 'Cascade exposures', v: `${p.cascadeRisks}`, sub: 'dependencies ≥ 50', tone: p.cascadeRisks > 0 ? 'warn' : 'ok' },
+            { l: 'Pinned incidents', v: `${d.pinnedIncidents.length}`, sub: 'sev1 / sev2', tone: d.pinnedIncidents.length > 0 ? 'alert' : 'ok' },
           ].map(s => (
-            <div key={s.l}>
-              <div className="text-[10px] uppercase tracking-widest text-[#6c7682]">{s.l}</div>
-              <div className="font-serif text-3xl tabular-nums">{s.v}<span className="ml-1 text-xs text-[#6c7682]">{s.sub}</span></div>
+            <div key={s.l} className="bg-surface px-4 py-2">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{s.l}</div>
+              <div
+                className="font-mono text-2xl tabular-nums"
+                style={{ color: s.tone ? TONE_HEX[s.tone] : undefined }}
+              >
+                {s.v}
+                <span className="ml-1 text-xs text-ink-muted">{s.sub}</span>
+              </div>
             </div>
           ))}
         </div>
@@ -182,7 +188,7 @@ export function NationalCoordination() {
                     <span className="w-8 shrink-0 text-right tabular-nums" style={{ color: tone === 'alert' ? TONE_HEX.alert : undefined }}>{f.pressure}</span>
                     <span
                       className="w-4 shrink-0 text-center text-[10px]"
-                      style={{ color: f.trend === 'rising' ? TONE_HEX.alert : f.trend === 'falling' ? TONE_HEX.ok : '#5a636e' }}
+                      style={{ color: f.trend === 'rising' ? TONE_HEX.alert : f.trend === 'falling' ? TONE_HEX.ok : TONE_HEX.neutral }}
                       title={f.trend}
                     >
                       {arrow}
@@ -248,7 +254,7 @@ export function NationalCoordination() {
                 <button
                   type="button"
                   onClick={() => setScrubTick(null)}
-                  className={`rounded-xs px-2 py-0.5 text-[10px] font-semibold tracking-wide ${isLive ? 'bg-[#1d3a2c] text-[#9fe0c0]' : 'bg-surface-2 text-ink-soft'}`}
+                  className={`focus-ring rounded-xs px-2 py-0.5 text-[10px] font-semibold tracking-wide transition-colors ${isLive ? 'bg-ok/15 text-ok ring-1 ring-ok/30' : 'bg-surface-2 text-ink-soft hover:text-ink'}`}
                 >
                   {isLive ? '● LIVE' : 'GO LIVE'}
                 </button>

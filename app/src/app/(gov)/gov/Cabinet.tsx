@@ -29,6 +29,12 @@ const FORMS: { v: StateForm; preset: Partial<SovereignProfile> }[] = [
   { v: 'parliamentary', preset: { executiveTitle: 'Prime Minister', legislatureName: 'Parliament', regionNoun: 'county' } },
 ];
 
+const TONE_HEX: Record<string, string> = {
+  alert: 'rgb(var(--c-alert))',
+  warn: 'rgb(var(--c-warn))',
+  ok: 'rgb(var(--c-ok))',
+};
+
 type Inst = CabinetOverview['institutions'][number];
 
 export function Cabinet() {
@@ -209,8 +215,8 @@ export function Cabinet() {
             <span
               className="rounded-sm px-2 py-0.5 text-xs font-semibold tracking-widest"
               style={{
-                backgroundColor: coord.posture.level === 'alert' ? '#f7e3e1' : coord.posture.level === 'warn' ? '#fbf2dd' : '#dceee4',
-                color: coord.posture.level === 'alert' ? '#b22e28' : coord.posture.level === 'warn' ? '#6a4d00' : '#227c4d',
+                backgroundColor: `color-mix(in srgb, ${TONE_HEX[coord.posture.level] ?? TONE_HEX.ok} 16%, transparent)`,
+                color: TONE_HEX[coord.posture.level] ?? TONE_HEX.ok,
               }}
             >
               {coord.posture.label} · risk {coord.posture.nationalRisk}
@@ -230,7 +236,7 @@ export function Cabinet() {
                     <span className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
                       <span
                         className="block h-full"
-                        style={{ width: `${f.pressure}%`, backgroundColor: tone === 'alert' ? '#b22e28' : tone === 'warn' ? '#9a6e00' : '#227c4d' }}
+                        style={{ width: `${f.pressure}%`, backgroundColor: TONE_HEX[tone] }}
                       />
                     </span>
                     <span className="w-8 text-right tabular-nums">{f.pressure}</span>
@@ -254,7 +260,7 @@ export function Cabinet() {
                     <li key={i} className="flex gap-2">
                       <span
                         className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full"
-                        style={{ backgroundColor: c.tone === 'alert' ? '#b22e28' : c.tone === 'warn' ? '#9a6e00' : '#227c4d' }}
+                        style={{ backgroundColor: TONE_HEX[c.tone] ?? TONE_HEX.ok }}
                       />
                       <span><strong>{c.title}</strong> <span className="text-ink-muted">— {c.detail}</span></span>
                     </li>
