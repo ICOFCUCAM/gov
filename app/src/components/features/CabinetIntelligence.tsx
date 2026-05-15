@@ -15,35 +15,42 @@ import type {
 
 const RED = '#f1707a';
 
-const RAIL: { g: string; items: { i: string; l: string; href: string; on?: boolean; red?: boolean }[] }[] = [
-  { g: '', items: [{ i: '◆', l: 'National Shell', href: '/gov' }] },
+const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] = [
   { g: 'Executive', items: [
-    { i: '◆', l: 'Cabinet Intelligence', href: '/gov', on: true },
-    { i: '◎', l: 'Situation Room', href: '/gov/situation-room' },
-    { i: '⟁', l: 'National Coordination', href: '/gov/coordination' },
-    { i: '◔', l: 'Strategic Foresight', href: '/gov/coordination' },
-    { i: '▤', l: 'Executive Briefings', href: '/gov' },
+    { i: '◆', l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', on: true },
+    { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room' },
+    { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination' },
+    { i: '◔', l: 'Strategic Foresight', s: 'Advisory simulation', href: '/gov/coordination' },
   ]},
   { g: 'Institutions', items: [
-    { i: '▦', l: 'Ministries', href: '/ministries' },
-    { i: '◫', l: 'Independent Agencies', href: '/ministries' },
-    { i: '▣', l: 'State Enterprises', href: '/ministries' },
+    { i: '▦', l: 'Ministries', s: 'Institutional registry', href: '/ministries' },
+    { i: '◫', l: 'Independent Agencies', s: 'Statutory bodies', href: '/ministries' },
+    { i: '▣', l: 'State Enterprises', s: 'Public corporations', href: '/ministries' },
   ]},
   { g: 'Operations', items: [
-    { i: '⚠', l: 'Incidents', href: '/gov/coordination' },
-    { i: '⊞', l: 'Operations Centre', href: '/ops' },
-    { i: '⛑', l: 'Emergency Response', href: '/gov/coordination' },
-    { i: '◉', l: 'Regional Overview', href: '/gov/coordination' },
+    { i: '⚠', l: 'Incidents', s: 'Active escalations', href: '/gov/coordination' },
+    { i: '⊞', l: 'Operations Centre', s: 'Cross-institution', href: '/ops' },
+    { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination', href: '/gov/coordination' },
   ]},
   { g: 'Intelligence', items: [
-    { i: '⟁', l: 'Analytics & AI', href: '/gov/coordination' },
-    { i: '◈', l: 'National Security', href: '/gov' },
-    { i: '◷', l: 'Geopolitical Monitor', href: '/gov' },
+    { i: '⟁', l: 'Analytics & AI', s: 'Strategic foresight', href: '/gov/coordination' },
+    { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/coordination' },
+  ]},
+  { g: 'National Security', items: [
+    { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov' },
+    { i: '◷', l: 'Geopolitical Monitor', s: 'External pressure', href: '/gov' },
+  ]},
+  { g: 'Treasury', items: [
+    { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov' },
+    { i: '⚡', l: 'Infrastructure', s: 'Grid · corridors', href: '/gov' },
   ]},
   { g: 'Governance', items: [
-    { i: '§', l: 'Constitutional Watch', href: '/audit' },
-    { i: '⛓', l: 'Audit & Oversight', href: '/audit' },
-    { i: '▥', l: 'Policy Monitor', href: '/gov' },
+    { i: '▥', l: 'Constitutional Watch', s: 'Policy monitor', href: '/audit' },
+    { i: '▤', l: 'Executive Briefings', s: 'Daily intelligence', href: '/gov' },
+  ]},
+  { g: 'Oversight', items: [
+    { i: '⛓', l: 'Audit & Oversight', s: 'Integrity assurance', href: '/audit' },
+    { i: '⚙', l: 'Platform', s: 'System operations', href: '/platform' },
   ]},
 ];
 
@@ -107,6 +114,9 @@ export function CabinetIntelligence() {
     { l: 'Energy stability', v: `${Math.max(1, 100 - pressOf('ENERGY'))}%`, sub: pressOf('ENERGY') >= 60 ? 'Stressed' : 'Stable', t: toneFor(pressOf('ENERGY')), spark: 'en' },
     { l: 'Healthcare capacity', v: `${Math.max(1, 100 - pressOf('HEALTH'))}%`, sub: pressOf('HEALTH') >= 55 ? 'Stressed' : 'Stable', t: toneFor(pressOf('HEALTH')), spark: 'hc' },
     { l: 'Civil stability', v: `${Math.max(1, 100 - Math.round(nationalRisk * 0.9))}%`, sub: 'Stable', t: toneFor(nationalRisk), spark: 'cs' },
+    { l: 'Infrastructure readiness', v: `${Math.max(1, 100 - pressOf('TRANSPORT'))}%`, sub: pressOf('TRANSPORT') >= 60 ? 'Strained' : 'Stable', t: toneFor(pressOf('TRANSPORT')), spark: 'ir' },
+    { l: 'Security readiness', v: `${Math.max(1, 100 - pressOf('INTERIOR'))}%`, sub: pressOf('INTERIOR') >= 60 ? 'Heightened' : 'Nominal', t: toneFor(pressOf('INTERIOR')), spark: 'sc' },
+    { l: 'Constitutional integrity', v: nat?.totals.auditIntact === false ? '71%' : `${96 + Math.round(seed(`ci:${epoch}`) * 3)}%`, sub: nat?.totals.auditIntact === false ? 'Review' : 'Intact', t: nat?.totals.auditIntact === false ? 'alert' : 'ok', spark: 'ci' },
   ];
   const sparkPts = (k: string) => Array.from({ length: 16 }).map((_, i) => 40 + seed(`sp:${k}:${i}:${epoch}`) * 55);
 
@@ -242,54 +252,61 @@ export function CabinetIntelligence() {
 
       <div className="flex min-h-0 flex-1">
         {/* Command rail */}
-        <nav aria-label="Cabinet navigation" className="hidden w-[208px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
-          <div className="flex-1 overflow-y-auto py-2">
+        <nav aria-label="Cabinet navigation" className="hidden w-[212px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
+          <div className="flex-1 overflow-y-auto py-1">
             {RAIL.map((grp, gi) => (
-              <div key={gi} className="mb-1">
-                {grp.g ? <div className="px-4 pb-1 pt-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div> : null}
+              <div key={gi} className="mb-0.5">
+                <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
                 {grp.items.map(it => (
                   <Link key={it.l} href={it.href}
-                    className={`focus-ring flex items-center gap-3 border-l-2 px-4 py-1.5 text-[12.5px] no-underline transition-colors duration-150 ${
+                    className={`focus-ring flex items-center gap-2 border-l-2 px-3 py-1 no-underline transition-colors duration-150 ${
                       it.on ? 'bg-surface-2 font-medium' : 'border-transparent text-ink-muted hover:bg-surface-2/50 hover:text-ink'
                     }`}
-                    style={it.on ? { borderLeftColor: ACCENT, color: ACCENT } : undefined}>
-                    <span aria-hidden className="w-3.5 text-center text-[13px]" style={it.on ? { color: ACCENT } : undefined}>{it.i}</span>
-                    <span className="truncate">{it.l}</span>
+                    style={it.on ? { borderLeftColor: ACCENT } : undefined}>
+                    <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-[4px] bg-surface-2 text-[10px] ring-1 ring-line"
+                      style={it.on ? { color: ACCENT } : { color: 'rgb(var(--c-ink-soft))' }}>{it.i}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[11.5px]" style={it.on ? { color: ACCENT } : undefined}>{it.l}</span>
+                      <span className="block truncate text-[8.5px] text-ink-muted">{it.s}</span>
+                    </span>
                   </Link>
                 ))}
               </div>
             ))}
           </div>
           <button onClick={() => setWar(w => !w)}
-            className="focus-ring m-3 flex items-center gap-2 rounded-md border px-3 py-2 text-left text-xs transition-colors"
+            className="focus-ring mx-2 mb-1 mt-1 flex items-center gap-2 rounded border px-2.5 py-1.5 text-left text-[11px] transition-colors"
             style={{ borderColor: war ? RED : 'rgb(var(--c-line))', backgroundColor: war ? `color-mix(in srgb, ${RED} 14%, transparent)` : 'transparent' }}>
-            <span className="h-2 w-2 rounded-full" style={{ backgroundColor: RED }} />
-            <span><span className="block font-semibold uppercase tracking-widest" style={{ color: RED }}>Command mode</span><span className="block text-ink-muted">{war ? 'War Room — active' : 'War Room'}</span></span>
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: RED }} />
+            <span><span className="block font-semibold uppercase tracking-widest" style={{ color: RED }}>Command Mode</span><span className="block text-ink-muted">{war ? 'War Room — active' : 'War Room'}</span></span>
           </button>
-          <div className="border-t border-line px-4 py-3 text-[10px]">
-            <div className="uppercase tracking-widest text-ink-muted">User</div>
-            <div className="text-ink-soft">{sov?.executiveTitle ?? 'Head of Government'}</div>
-            <div className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /><span style={{ color: TONE.ok }}>Online</span></div>
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 border-t border-line px-3 py-2 text-[9px]">
+            <div className="text-ink-muted">Executive</div><div className="truncate text-right text-ink-soft">{sov?.executiveTitle ?? 'Head of Govt'}</div>
+            <div className="text-ink-muted">State</div><div className="text-right" style={{ color: TONE.ok }}>Online</div>
+            <div className="text-ink-muted">Channel</div><div className="text-right" style={{ color: TONE.ok }}>Encrypted</div>
+            <div className="text-ink-muted">Version</div><div className="text-right text-ink-soft">v2.1.0</div>
           </div>
         </nav>
 
         {/* Canvas */}
-        <main className="min-w-0 flex-1 space-y-3 overflow-y-auto bg-bg p-3">
-          {/* Executive instrument strip */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-8">
+        <main className="min-w-0 flex-1 space-y-2 overflow-y-auto p-2.5"
+          style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.022) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
+          {/* Row 1 — executive telemetry (11) */}
+          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11">
             {instr.map(t => (
-              <div key={t.l} className="rounded-lg border border-line bg-surface px-3 py-2.5">
-                <div className="text-[9px] font-semibold uppercase tracking-[0.13em] text-ink-muted">{t.l}</div>
-                <div className="mt-0.5 font-mono text-xl tabular-nums" style={{ color: t.t ? TONE[t.t] : 'rgb(var(--c-ink))' }}><LiveValue raw={t.v} /></div>
-                <Spark pts={sparkPts(t.spark)} tone={t.t ?? 'ok'} />
-                <div className="truncate text-[10px] text-ink-muted">{t.sub}</div>
+              <div key={t.l} className="rounded-md border border-line bg-surface px-2 py-1.5"
+                style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</div>
+                <div className="font-mono text-[15px] leading-tight tabular-nums" style={{ color: t.t ? TONE[t.t] : 'rgb(var(--c-ink))' }}><LiveValue raw={t.v} /></div>
+                <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={sparkPts(t.spark)} tone={t.t ?? 'ok'} /></div>
+                <div className="truncate text-[8px] text-ink-muted">{t.sub}</div>
               </div>
             ))}
-            <div className="rounded-lg border border-line bg-surface px-3 py-2.5">
-              <div className="text-[9px] font-semibold uppercase tracking-[0.13em] text-ink-muted">Classification</div>
-              <div className="mt-0.5 text-sm font-bold tracking-widest" style={{ color: ACCENT }}>OFFICIAL</div>
-              <div className="mt-1 font-mono text-[11px] tabular-nums text-ink-soft">{new Date(now).toLocaleDateString()} {new Date(now).toLocaleTimeString()}</div>
-              <div className="mt-1 text-[10px] text-ink-muted">ENV · <span style={{ color: TONE.ok }}>{nat?.environment ?? 'PRODUCTION'}</span></div>
+            <div className="rounded-md border border-line bg-surface px-2 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+              <div className="text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">Classification</div>
+              <div className="text-[13px] font-bold tracking-widest" style={{ color: ACCENT }}>OFFICIAL</div>
+              <div className="font-mono text-[9px] tabular-nums text-ink-soft">{new Date(now).toLocaleTimeString()}</div>
+              <div className="truncate text-[8px] text-ink-muted">ENV · <span style={{ color: TONE.ok }}>{nat?.environment ?? 'PROD'}</span></div>
             </div>
           </div>
 
@@ -529,6 +546,25 @@ export function CabinetIntelligence() {
                 ))}
               </div>
             </Panel>
+          </div>
+
+          {/* Row 5 — executive posture strip */}
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line text-[10px] md:grid-cols-5">
+            {[
+              { l: 'Readiness posture', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
+              { l: 'Operational tempo', v: `${Math.round(40 + seed(`tempo:${epoch}`) * 55)} ops/min`, t: 'ok' },
+              { l: 'Active escalations', v: `${escalations.length} · ${escalations.filter(e => e.sevState === 'critical').length} crit`, t: escalations.length ? 'alert' : 'ok' },
+              { l: 'Population impacted', v: `${(0.4 + seed(`pi:${epoch}`) * 9).toFixed(1)}M`, t: 'warn' },
+              { l: 'War Room', v: war ? 'ENGAGED' : 'Standby', t: war ? 'alert' : 'neutral' },
+            ].map(s => (
+              <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+                <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+                <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
+                  {s.l === 'War Room' || s.l === 'Readiness posture' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
+                  {s.v}
+                </span>
+              </div>
+            ))}
           </div>
         </main>
       </div>
