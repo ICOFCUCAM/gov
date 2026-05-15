@@ -18,7 +18,7 @@ export function WallPanel({
   return (
     <section
       className={cn(
-        'bg-wall-panel border border-wall-line rounded-md p-4 text-wall-ink',
+        'bg-wall-panel border border-wall-line rounded-[3px] p-4 text-wall-ink',
         spanClass,
         className,
       )}

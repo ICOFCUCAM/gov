@@ -1,60 +1,109 @@
+'use client';
+
+import * as React from 'react';
 import { WallPanel } from '@/components/ui/WallPanel';
 import { Pill } from '@/components/ui/Pill';
 import { ClassBanner } from '@/components/ui/ClassBanner';
+import { TONE, Spark, seed, TerritoryHeat } from '@/components/features/SituationRoom';
+
+const ACTIVATION = Date.UTC(2026, 4, 13, 8, 31);
+const SUNSET = Date.UTC(2026, 4, 21, 17, 0);
+
+function dur(ms: number) {
+  const s = Math.max(0, Math.floor(ms / 1000));
+  const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+  return `${d}d ${h}h ${m}m`;
+}
 
 export default function NcccWallPage() {
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  const epoch = Math.floor(now / 8000);
+  const sp = (k: string, lo = 30, hi = 85) => Array.from({ length: 16 }).map((_, i) => lo + seed(`w:${k}:${i}:${epoch}`) * (hi - lo));
+
+  const indicators = [
+    { l: 'Hospital beds available', v: `${62 + Math.round(seed(`hb:${epoch}`) * 10)}%`, t: 'ok', k: 'hb' },
+    { l: 'Power coverage on grid', v: `${85 + Math.round(seed(`pc:${epoch}`) * 9)}%`, t: 'ok', k: 'pc' },
+    { l: 'Water pressure · zone A', v: `▼ ${10 + Math.round(seed(`wp:${epoch}`) * 6)}%`, t: 'warn', k: 'wp' },
+    { l: 'Telecom load', v: seed(`tl:${epoch}`) > 0.85 ? 'Elevated' : 'Nominal', t: seed(`tl:${epoch}`) > 0.85 ? 'warn' : 'ok', k: 'tl' },
+    { l: 'Refugee flow · 24h', v: `+${440 + Math.round(seed(`rf:${epoch}`) * 120)}`, t: 'warn', k: 'rf' },
+    { l: 'Evacuation throughput', v: `${(1.1 + seed(`ev:${epoch}`) * 0.8).toFixed(1)}k/h`, t: 'ok', k: 'ev' },
+  ];
+  const scenarioCount = 44 + Math.round(seed(`sc:${epoch}`) * 7);
+
+  const options = [
+    { o: 'A — Pre-position 4 convoys to Kilifi', r: '+14% ±6%', c: '12', d: '0', n: '—' },
+    { o: 'B — Evacuate vulnerable zone', r: '+22% ±9%', c: '24', d: '~3,200', n: 'Kibarani route disadvantages 2 communities — equity overlay attached' },
+    { o: 'C — Both, sequential', r: '+28% ±10%', c: '34', d: '~3,200', n: '—' },
+  ];
+
   return (
     <div className="bg-wall-bg text-wall-ink min-h-screen">
       <header className="px-6 py-3 border-b border-wall-line flex justify-between items-center gap-4 flex-wrap">
-        <div>
-          <strong className="text-warn">🟠 EMERGENCY</strong>
-          <span className="text-wall-muted"> · National Flood Operations Center · Activation since 13 May 08:31 · Sunset 21 May 17:00</span>
+        <div className="flex items-center gap-3">
+          <strong className="flex items-center gap-2 text-warn">
+            <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: TONE.warn }} />EMERGENCY
+          </strong>
+          <span className="text-wall-muted">· National Flood Operations Center · Activation +{dur(now - ACTIVATION)} · Sunset in {dur(SUNSET - now)}</span>
         </div>
-        <div className="text-wall-muted">Constitutional officers present: STO · Algorithmic Ombudsman · People's Editor</div>
+        <div className="flex items-center gap-3 text-wall-muted">
+          <span className="font-mono tabular-nums">{new Date(now).toLocaleTimeString()}</span>
+          <span>Constitutional officers: STO · Algorithmic Ombudsman · People&apos;s Editor</span>
+        </div>
       </header>
 
       <main className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
 
-        <WallPanel title="Map">
-          <div className="aspect-square bg-wall-bg border border-dashed border-wall-line rounded flex items-center justify-center text-wall-muted text-center text-sm p-4">
-            Tana River basin · live
-            <br />
-            <span className="text-xs">topography · infrastructure · hazard · resources</span>
+        <WallPanel title="Operational map" className="lg:col-span-2">
+          <div className="overflow-hidden rounded-[3px] border border-wall-line">
+            <TerritoryHeat epoch={epoch} height={220} focus="Kenya" />
           </div>
           <p className="text-wall-muted text-sm mt-2">
-            Aggregation floor: 1km grid · DP-ε disclosed · no citizen-individual layer
+            Tana River basin · live · 1km aggregation grid · DP-ε disclosed · no citizen-individual layer
           </p>
         </WallPanel>
 
-        <WallPanel title="Timeline">
-          <ul className="text-sm space-y-1 list-disc pl-5">
-            <li>08:14 — alert issued</li>
-            <li>08:31 — NCCC activated</li>
-            <li>09:05 — health desk online</li>
-            <li>09:22 — first discharge confirmed</li>
-            <li>09:34 — civil society briefed</li>
-          </ul>
-          <p className="text-wall-muted text-sm mt-2">Sunset clock: 7 days remaining · renewal requires Parliament confirmation</p>
+        <WallPanel title="Live indicators" className="lg:col-span-2">
+          <div className="grid grid-cols-2 gap-2">
+            {indicators.map(ind => (
+              <div key={ind.l} className="rounded-[3px] border border-wall-line p-2">
+                <div className="text-xs text-wall-muted">{ind.l}</div>
+                <div className="flex items-baseline gap-2">
+                  <span className="font-mono text-lg tabular-nums" style={{ color: TONE[ind.t] }}>{ind.v}</span>
+                </div>
+                <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={sp(ind.k)} tone={ind.t} /></div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-2 text-sm"><strong>Tripwires:</strong> <Pill tone="warn">1 amber (water pressure)</Pill></p>
         </WallPanel>
 
-        <WallPanel title="Indicators">
-          <ul className="text-sm space-y-1 list-disc pl-5">
-            <li>Hospital beds: <strong>67% available</strong></li>
-            <li>Power coverage: <strong>89% on grid</strong></li>
-            <li>Water in zone A: <Pill tone="warn">▼ 12% pressure</Pill></li>
-            <li>Telecom load: nominal</li>
-            <li>Refugee flow: +480 in 24h</li>
-            <li>Hospitals: <Pill tone="ok">ALL OPERATIONAL</Pill></li>
+        <WallPanel title="Timeline" className="lg:col-span-2">
+          <ul className="text-sm space-y-1">
+            {[
+              ['08:14', 'Alert issued', 'warn'], ['08:31', 'NCCC activated', 'alert'],
+              ['09:05', 'Health desk online', 'ok'], ['09:22', 'First discharge confirmed', 'ok'],
+              ['09:34', 'Civil society briefed', 'ok'], [new Date(now).toLocaleTimeString().slice(0, 5), 'Convoy staging update', 'ok'],
+            ].map(([t, e, tn], i) => (
+              <li key={i} className="flex items-center gap-2">
+                <span className="font-mono text-xs text-wall-muted tabular-nums">{t}</span>
+                <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[tn as string] }} />
+                <span>{e}</span>
+              </li>
+            ))}
           </ul>
-          <p className="mt-2"><strong>Tripwires:</strong> <Pill tone="warn">1 amber (water pressure)</Pill></p>
+          <p className="text-wall-muted text-sm mt-2">Sunset clock: {dur(SUNSET - now)} remaining · renewal requires Parliament confirmation</p>
         </WallPanel>
 
-        <WallPanel title="Comms ticker">
+        <WallPanel title="Comms ticker" className="lg:col-span-2">
           <div className="text-sm space-y-2">
-            <p><strong>Public:</strong> "Flood advisory in force; see safety pages."</p>
-            <p><strong>Inter-gov:</strong> "Mwanza region confirms 200 evacuees received."</p>
-            <p><strong>Cross-sovereign:</strong> "Tanzania border coordination active."</p>
-            <p><strong>Misinformation:</strong> "False video re. bridge collapse — debunked."</p>
+            <p><strong>Public:</strong> &ldquo;Flood advisory in force; see safety pages.&rdquo;</p>
+            <p><strong>Inter-gov:</strong> &ldquo;Mwanza region confirms 200 evacuees received.&rdquo;</p>
+            <p><strong>Cross-sovereign:</strong> &ldquo;Tanzania border coordination active.&rdquo;</p>
+            <p><strong>Misinformation:</strong> &ldquo;False video re. bridge collapse — debunked.&rdquo;</p>
           </div>
         </WallPanel>
 
@@ -64,7 +113,8 @@ export default function NcccWallPage() {
             <ClassBanner decisionClass="D" />
           </div>
           <p>
-            Currently modeling: <strong>cyclone landfall +6h shift</strong> — surfacing 47 cascading indicators.{' '}
+            Currently modeling: <strong>cyclone landfall +6h shift</strong> — surfacing{' '}
+            <span className="font-mono tabular-nums" style={{ color: TONE.warn }}>{scenarioCount}</span> cascading indicators.{' '}
             <em>Officer approval required to base any decision on these scenarios.</em>{' '}
             AI does not decide. Humans sign per remit.
           </p>
@@ -87,44 +137,28 @@ export default function NcccWallPage() {
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td className="py-1 pr-3">A — Pre-position 4 convoys to Kilifi</td>
-                  <td className="py-1 pr-3">+14% ±6%</td>
-                  <td className="py-1 pr-3">12</td>
-                  <td className="py-1 pr-3">0</td>
-                  <td className="py-1">—</td>
-                </tr>
-                <tr>
-                  <td className="py-1 pr-3">B — Evacuate vulnerable zone</td>
-                  <td className="py-1 pr-3">+22% ±9%</td>
-                  <td className="py-1 pr-3">24</td>
-                  <td className="py-1 pr-3">~3,200</td>
-                  <td className="py-1">Kibarani route disadvantages 2 communities — equity overlay attached</td>
-                </tr>
-                <tr>
-                  <td className="py-1 pr-3">C — Both, sequential</td>
-                  <td className="py-1 pr-3">+28% ±10%</td>
-                  <td className="py-1 pr-3">34</td>
-                  <td className="py-1 pr-3">~3,200</td>
-                  <td className="py-1">—</td>
-                </tr>
+                {options.map(op => (
+                  <tr key={op.o} className="border-t border-wall-line">
+                    <td className="py-1 pr-3">{op.o}</td>
+                    <td className="py-1 pr-3 font-mono tabular-nums" style={{ color: TONE.ok }}>{op.r}</td>
+                    <td className="py-1 pr-3 font-mono tabular-nums">{op.c}</td>
+                    <td className="py-1 pr-3 font-mono tabular-nums">{op.d}</td>
+                    <td className="py-1">{op.n}</td>
+                  </tr>
+                ))}
               </tbody>
             </table>
           </div>
           <p className="text-wall-muted text-sm mt-2">
-            Each authority signs their own remit individually. There is no joint "approve" button.
+            Each authority signs their own remit individually. There is no joint &ldquo;approve&rdquo; button.
           </p>
         </WallPanel>
 
         <WallPanel span="full" title="Invariant watch (live)">
-          <div className="flex gap-3 flex-wrap">
-            <Pill tone="ok">✓ Sovereignty of principal</Pill>
-            <Pill tone="ok">✓ Contestability</Pill>
-            <Pill tone="ok">✓ Auditability</Pill>
-            <Pill tone="ok">✓ Replaceability / exit</Pill>
-            <Pill tone="ok">✓ Constitutional supremacy</Pill>
-            <Pill tone="ok">✓ Inclusion floor</Pill>
-            <Pill tone="ok">✓ No superintelligent unilateralism</Pill>
+          <div className="flex gap-2 flex-wrap">
+            {['Sovereignty of principal', 'Contestability', 'Auditability', 'Replaceability / exit', 'Constitutional supremacy', 'Inclusion floor', 'No superintelligent unilateralism'].map(inv => (
+              <Pill key={inv} tone="ok">✓ {inv}</Pill>
+            ))}
           </div>
           <p className="text-wall-muted text-sm mt-2">
             Not on this wall: citizen-individual map layers · predictive citizen-behavior visualization · surveillance feeds.

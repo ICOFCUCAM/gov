@@ -48,7 +48,7 @@ export default function MinistryControlPage({
                   key={m.id}
                   href={`/control?ministry=${m.slug}`}
                   className={
-                    'rounded-sm border px-3 py-1 text-sm no-underline ' +
+                    'rounded-[3px] border px-3 py-1 text-sm no-underline ' +
                     (selected && m.id === selected.id
                       ? 'border-ink bg-ink text-surface'
                       : 'border-line text-ink hover:bg-surface-2')
@@ -84,12 +84,27 @@ export default function MinistryControlPage({
                 ).length;
                 return (
                   <div className="space-y-4">
-                    <section className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+                    <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                       <MetricStat label="Active modules" value={String(ops.modules.length)} tone="neutral" />
                       <MetricStat label="Queues breaching SLA" value={String(breaching)} tone={breaching === 0 ? 'ok' : 'alert'} />
                       <MetricStat label="Active alerts" value={String(activeAlerts.length)} tone={activeAlerts.length === 0 ? 'ok' : 'warn'} />
                       <MetricStat label="Departments" value={String(selected.departments.length)} tone="neutral" />
                     </section>
+
+                    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+                      {[
+                        { l: 'Service posture', v: breaching === 0 && activeAlerts.length === 0 ? 'NOMINAL' : breaching ? 'STRAINED' : 'WATCH', c: breaching ? 'rgb(var(--c-alert))' : activeAlerts.length ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' },
+                        { l: 'Modules online', v: `${ops.modules.length} active`, c: 'rgb(var(--c-ok))' },
+                        { l: 'SLA breaches', v: `${breaching}`, c: breaching ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
+                        { l: 'Open alerts', v: `${activeAlerts.length}`, c: activeAlerts.length ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' },
+                        { l: 'Sovereign core', v: 'INHERITED', c: 'rgb(var(--c-ok))' },
+                      ].map(s => (
+                        <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+                          <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+                          <span className="font-mono font-semibold tabular-nums" style={{ color: s.c }}>{s.v}</span>
+                        </div>
+                      ))}
+                    </div>
 
                     {activeAlerts.length > 0 ? (
                       <Card tight>
@@ -119,10 +134,10 @@ export default function MinistryControlPage({
                           {mod.kpis.length > 0 ? (
                             <div className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-3">
                               {mod.kpis.map(k => (
-                                <div key={k.label} className="rounded-sm border border-line p-2">
+                                <div key={k.label} className="rounded-[3px] border border-line p-2">
                                   <div className="text-xs text-ink-muted">{k.label}</div>
                                   <div className="flex items-baseline gap-2">
-                                    <span className="font-serif text-lg">{k.value}</span>
+                                    <span className="font-mono text-lg tabular-nums">{k.value}</span>
                                     <Pill tone={k.tone}>{k.tone}</Pill>
                                   </div>
                                   {k.target ? (
