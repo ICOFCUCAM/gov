@@ -9,7 +9,10 @@ import { IdentityModule } from './modules/identity/identity.module';
 import { PermitsModule } from './modules/permits/permits.module';
 import { PaymentsModule } from './modules/payments/payments.module';
 import { AuditModule } from './modules/audit/audit.module';
+import { MetricsModule } from './modules/metrics/metrics.module';
+import { OpsModule } from './modules/ops/ops.module';
 import { AuditInterceptor } from './common/audit.interceptor';
+import { MetricsInterceptor } from './common/metrics';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 
 @Module({
@@ -23,8 +26,11 @@ import { HttpExceptionFilter } from './common/http-exception.filter';
     PermitsModule,
     PaymentsModule,
     AuditModule,
+    MetricsModule,
+    OpsModule,
   ],
   providers: [
+    { provide: APP_INTERCEPTOR, useClass: MetricsInterceptor },
     { provide: APP_INTERCEPTOR, useClass: AuditInterceptor },
     { provide: APP_FILTER, useClass: HttpExceptionFilter },
   ],

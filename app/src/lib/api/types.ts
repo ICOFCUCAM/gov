@@ -87,6 +87,71 @@ export interface CreatePermitInput {
   fields: Record<string, string>;
 }
 
+// ── Operational intelligence ──────────────────────────────────────────
+export type HealthStatus = 'ok' | 'degraded' | 'down';
+
+export interface ServiceHealth {
+  name: string;
+  status: HealthStatus;
+  latencyMs: number; // p95
+  detail: string;
+}
+
+export interface QueueHealth {
+  name: string;
+  depth: number;
+  oldestAgeHours: number;
+  slaHours: number;
+  breaching: boolean;
+}
+
+export interface TenantHealth {
+  municipality: string;
+  status: HealthStatus;
+  openPermits: number;
+  slaBreaches: number;
+  overdueBills: number;
+  lastSyncMinutes: number; // minutes since last edge sync
+}
+
+export type IncidentSeverity = 'sev1' | 'sev2' | 'sev3' | 'sev4';
+export type IncidentStatus = 'open' | 'acknowledged' | 'resolved';
+
+export interface IncidentEvent {
+  at: ISODate;
+  by: string;
+  action: string; // opened | acknowledged | escalated | resolved | note
+  note?: string;
+}
+
+export interface Incident {
+  id: string;
+  severity: IncidentSeverity;
+  title: string;
+  scope: string; // service or municipality
+  status: IncidentStatus;
+  openedAt: ISODate;
+  acknowledgedAt?: ISODate;
+  resolvedAt?: ISODate;
+  owner?: string;
+  events: IncidentEvent[];
+}
+
+export interface OpsOverview {
+  generatedAt: ISODate;
+  summary: {
+    servicesOk: number;
+    servicesTotal: number;
+    queuesBreaching: number;
+    openIncidents: number;
+    slaCompliancePct: number;
+    auditIntact: boolean;
+  };
+  services: ServiceHealth[];
+  queues: QueueHealth[];
+  tenants: TenantHealth[];
+}
+
 // ── Payments ──────────────────────────────────────────────────────────
 export type BillKind = 'water' | 'waste' | 'property-tax' | 'permit-fee' | 'transit';
 

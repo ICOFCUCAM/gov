@@ -17,3 +17,4 @@ export { OperatorShell, type OperatorRole } from './OperatorShell';
 export { OfflineBanner } from './OfflineBanner';
 export { AccessibilityMenu } from './AccessibilityMenu';
 export { WorkflowBar, type WorkflowAction } from './WorkflowBar';
+export { HealthTile, MetricStat, ThresholdBar, SeverityBadge } from './Ops';

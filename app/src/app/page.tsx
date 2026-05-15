@@ -89,6 +89,7 @@ export default function HomePage() {
         </p>
         <div className="flex flex-wrap gap-3">
           <Link href="/console"><Button variant="secondary">Officer queue →</Button></Link>
+          <Link href="/ops"><Button variant="secondary">Operations centre →</Button></Link>
           <Link href="/control"><Button variant="secondary">Ministry operations →</Button></Link>
           <Link href="/audit"><Button variant="secondary">Auditor oversight →</Button></Link>
         </div>

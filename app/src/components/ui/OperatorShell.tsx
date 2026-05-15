@@ -17,11 +17,18 @@ const NAV: Record<OperatorRole, NavItem[]> = {
     { href: '/console?view=all', label: 'All cases' },
   ],
   ministry: [
-    { href: '/control', label: 'Operations' },
+    { href: '/ops', label: 'Operations centre' },
+    { href: '/control', label: 'Service health' },
     { href: '/audit', label: 'Oversight' },
   ],
-  auditor: [{ href: '/audit', label: 'Audit trail' }],
-  admin: [{ href: '/admin/onboarding', label: 'Onboarding' }],
+  auditor: [
+    { href: '/audit', label: 'Audit trail' },
+    { href: '/ops', label: 'Operations centre' },
+  ],
+  admin: [
+    { href: '/ops', label: 'Operations centre' },
+    { href: '/admin/onboarding', label: 'Onboarding' },
+  ],
 };
 
 const ROLE_LABEL: Record<OperatorRole, string> = {

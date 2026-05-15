@@ -58,6 +58,7 @@ model Tenant {
   auditEvents  AuditEvent[]
   outbox       OutboxEvent[]
   roleBindings RoleBinding[]
+  incidents    Incident[]
 
   @@index([kind, status])
 }
@@ -337,4 +338,37 @@ model SyncMutation {
 
   @@unique([tenantId, deviceId, clientMutId])
   @@index([tenantId, state])
+}
+
+/// Operational incident. Tenant-scoped (or platform-wide with a sentinel
+/// tenant). Severity escalates sev4 -> sev1. Append-only event log.
+enum IncidentSeverity {
+  SEV1
+  SEV2
+  SEV3
+  SEV4
+}
+
+enum IncidentStatus {
+  OPEN
+  ACKNOWLEDGED
+  RESOLVED
+}
+
+model Incident {
+  id             String           @id @default(cuid())
+  tenantId       String
+  tenant         Tenant           @relation(fields: [tenantId], references: [id])
+  severity       IncidentSeverity
+  title          String
+  scope          String // service or municipality
+  status         IncidentStatus   @default(OPEN)
+  owner          String?
+  openedAt       DateTime         @default(now())
+  acknowledgedAt DateTime?
+  resolvedAt     DateTime?
+  events         Json             @default("[]") // append-only [{at,by,action,note}]
+
+  @@index([tenantId, status])
+  @@index([tenantId, severity])
 }
