@@ -361,6 +361,7 @@ export function SituationRoom() {
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [now, setNow] = React.useState(() => Date.now());
   const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true });
+  const [warManual, setWarManual] = React.useState<boolean | null>(null);
 
   React.useEffect(() => {
     const load = async () => {
@@ -440,20 +441,59 @@ export function SituationRoom() {
     .slice(-3)
     .reverse();
 
-  const strip = [
-    { l: 'National status', v: posture?.label ?? 'STABLE', s: 'fabric posture', t: posture?.level ?? 'ok', dot: true },
-    { l: 'Active incidents', v: String(incidents.length), s: `${sev('sev1')} critical · ${sev('sev2')} elevated`, t: incidents.length ? 'alert' : 'ok' },
-    { l: 'Ministry health', v: `${mhealth}%`, s: 'operational', spark: mhPts, t: 'ok' },
-    { l: 'Regions at risk', v: String(regions.filter(r => r.risk >= 70).length), s: 'elevated monitoring', t: 'warn' },
-    { l: 'Pending approvals', v: pending.toLocaleString(), s: 'across institutions' },
-    { l: 'Total population', v: `${indV('population')}M`, s: 'national register' },
-    { l: 'Economic indicator', v: `${(2 + seed(`gdp:${epoch}`) * 2).toFixed(2)}%`, s: 'GDP growth QoQ', t: 'ok' },
-    { l: 'Treasury balance', v: `$${revenue}B`, s: 'available liquidity' },
-    { l: 'System integrity', v: `${integ.toFixed(2)}%`, s: totals?.auditIntact === false ? 'review' : 'operational', t: integ >= 99 ? 'ok' : 'warn' },
+  const nationalRisk = posture?.nationalRisk ?? 42;
+  const pressOf = (arch: string) => {
+    const n = nodes.find(x => x.archetype === arch);
+    return n ? (fabricById.get(n.ministryId)?.pressure ?? n.riskScore) : 28 + Math.round(seed(`syn:${arch}:${epoch}`) * 48);
+  };
+  const critCount = sev('sev1');
+  const autoWar = critCount >= 1 || posture?.level === 'alert' || incidents.length >= 6;
+  const war = warManual ?? autoWar;
+
+  // Executive operational instruments — value · drift · trajectory · spark.
+  const mkInstr = (l: string, val: number, unit: string, goodHigh: boolean, sk: string) => {
+    const prev = Math.round(val + (seed(`prev:${sk}:${epoch}`) - 0.5) * 14);
+    const d = val - prev;
+    const sevV = goodHigh ? 100 - val : val;
+    return {
+      l, v: `${val}${unit}`,
+      t: toneFor(sevV) as string,
+      d, traj: d > 1 ? '↗' : d < -1 ? '↘' : '→',
+      spark: Array.from({ length: 16 }).map((_, i) => 35 + seed(`is:${sk}:${i}:${epoch}`) * 60),
+      dot: false,
+    };
+  };
+  const stabilityIdx = Math.max(1, 100 - nationalRisk);
+  const instruments = [
+    mkInstr('National Stability Index', stabilityIdx, '', true, 'stab'),
+    { l: 'Institutional Pressure', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok', d: 0, traj: '→', spark: mhPts, dot: true },
+    mkInstr('Economic Resilience', 55 + Math.round(seed(`er:${epoch}`) * 24), '%', true, 'er'),
+    { l: 'Treasury Liquidity', v: `$${revenue}B`, t: 'ok', d: 1, traj: '↗', spark: revPts, dot: false },
+    mkInstr('Energy Stability', Math.max(1, 100 - pressOf('ENERGY')), '%', true, 'en'),
+    mkInstr('Healthcare Capacity', Math.max(1, 100 - pressOf('HEALTH')), '%', true, 'hc'),
+    mkInstr('Civil Stability', Math.max(1, 100 - Math.round(nationalRisk * 0.9)), '%', true, 'cs'),
+    mkInstr('Infrastructure Integrity', Math.max(1, 100 - pressOf('TRANSPORT')), '%', true, 'ii'),
+    mkInstr('Security Readiness', Math.max(1, 100 - pressOf('INTERIOR')), '%', true, 'sr'),
+    mkInstr('Constitutional Integrity', totals?.auditIntact === false ? 71 : 96 + Math.round(seed(`ci:${epoch}`) * 3), '%', true, 'ci'),
   ];
 
   return (
-    <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]" style={PALETTE}>
+    <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]"
+      style={{ ...PALETTE, ...(war ? { ['--accent' as string]: TONE.alert } : {}) }}>
+      {war ? (
+        <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-1.5 text-xs"
+          style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, borderBottom: `1px solid ${TONE.alert}` }}>
+          <span className="flex items-center gap-2 font-semibold uppercase tracking-[0.22em]" style={{ color: TONE.alert }}>
+            <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
+            War Room · National crisis coordination · {critCount} critical · {incidents.length} active
+          </span>
+          <button onClick={() => setWarManual(w => (w === false ? null : false))}
+            className="focus-ring rounded border px-2 py-0.5 text-[10px] uppercase tracking-widest"
+            style={{ borderColor: TONE.alert, color: TONE.alert }}>
+            {autoWar ? 'Acknowledge' : 'Stand down'}
+          </button>
+        </div>
+      ) : null}
       {/* Command top bar */}
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
         <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
@@ -474,10 +514,23 @@ export function SituationRoom() {
           <span className="hidden items-center gap-1.5 rounded-sm border border-line bg-bg px-2 py-1 text-xs text-ink-muted lg:flex">
             <span style={{ color: ACCENT }}>⌕</span> Global search
           </span>
+          <span className="hidden items-center gap-1 rounded-sm border border-line px-2 py-1 text-[10px] text-ink-muted lg:flex">
+            <span style={{ color: TONE.alert }}>⚑</span> {incidents.length} esc
+            <span className="mx-1 text-line">·</span>
+            <span style={{ color: ACCENT }}>✉</span> {3 + (epoch % 4)} briefs
+            <span className="mx-1 text-line">·</span>
+            <span style={{ color: TONE.ok }}>$</span> {revenue}B
+          </span>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
+          <button onClick={() => setWarManual(w => (w === true ? null : true))}
+            className="focus-ring rounded-sm border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors"
+            style={{ borderColor: war ? TONE.alert : 'rgb(var(--c-line))', color: war ? TONE.alert : 'rgb(var(--c-ink-muted))', backgroundColor: war ? `color-mix(in srgb, ${TONE.alert} 14%, transparent)` : 'transparent' }}
+            title="Toggle War Room posture">
+            ⚑ War Room
+          </button>
           <span className="flex items-center gap-1.5 rounded-sm border border-line px-2 py-1">
-            <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft">Live · T{tickN}</span>
+            <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: war ? TONE.alert : TONE.ok }} />
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft">{war ? 'CRISIS' : 'Live'} · T{tickN}</span>
           </span>
           <span className="flex items-center gap-2 border-l border-line pl-3">
             <span className="text-right leading-tight">
@@ -519,16 +572,21 @@ export function SituationRoom() {
 
         {/* Operational canvas */}
         <main className="min-w-0 flex-1 space-y-3 overflow-y-auto bg-bg p-3">
-          {/* Status strip */}
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-9">
-            {strip.map(t => (
-              <div key={t.l} className="rounded-lg border border-line bg-surface px-3 py-2.5">
-                <div className="text-[9px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{t.l}</div>
+          {/* Executive operational instruments */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-10">
+            {instruments.map(t => (
+              <div key={t.l} className="rounded-lg border border-line bg-surface px-3 py-2">
+                <div className="truncate text-[9px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</div>
                 <div className="mt-0.5 flex items-center gap-1.5 font-mono text-lg tabular-nums" style={{ color: t.t ? TONE[t.t] : 'rgb(var(--c-ink))' }}>
                   {t.dot ? <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: TONE[t.t ?? 'ok'] }} /> : null}
                   <LiveValue raw={t.v} />
+                  <span className="ml-auto text-xs" style={{ color: t.d > 1 ? TONE.ok : t.d < -1 ? TONE.alert : TONE.neutral }}>{t.traj}</span>
                 </div>
-                {t.spark ? <Spark pts={t.spark} tone="ok" /> : <div className="truncate text-[10px] text-ink-muted">{t.s}</div>}
+                <Spark pts={t.spark} tone={t.t ?? 'ok'} />
+                <div className="flex items-center justify-between text-[9px] text-ink-muted">
+                  <span>prev window</span>
+                  <span style={{ color: t.d > 0 ? TONE.ok : t.d < 0 ? TONE.alert : TONE.neutral }}>{t.d > 0 ? '+' : ''}{t.d}</span>
+                </div>
               </div>
             ))}
           </div>
@@ -551,61 +609,47 @@ export function SituationRoom() {
                   ))}
                 </span>
               }
-              className="xl:col-span-7" bodyClass="!p-2">
+              className="xl:col-span-6" bodyClass="!p-2">
               <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} />
             </Panel>
 
-            <Panel title="Ministry status matrix" meta="health · SLA · pressure · escalation" className="xl:col-span-3" bodyClass="overflow-y-auto max-h-[420px] !p-0">
-              <table className="w-full text-xs">
+            <Panel title="Ministry status matrix" meta="cross-domain risk" className="xl:col-span-4" bodyClass="overflow-auto max-h-[420px] !p-0">
+              <table className="w-full text-[11px]">
                 <thead>
-                  <tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[9px] uppercase tracking-wider text-ink-muted">
-                    <th className="px-3 py-1.5 font-semibold">Institution</th>
-                    <th className="px-2 py-1.5 font-semibold">Status</th>
-                    <th className="px-2 py-1.5 text-right font-semibold">SLA</th>
-                    <th className="px-2 py-1.5 font-semibold">Pressure</th>
-                    <th className="px-2 py-1.5 text-right font-semibold">Inc</th>
+                  <tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8px] uppercase tracking-wide text-ink-muted">
+                    <th className="px-2 py-1.5">Ministry</th>
+                    {['Ops', 'Fisc', 'Infra', 'Civil', 'Sec', 'Logi', 'SLA', 'Esc', 'Work', 'Emrg'].map(d => (
+                      <th key={d} className="px-1 py-1.5 text-center">{d}</th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody>
                   {mapNodes.map(m => {
                     const id = identityFor(m.archetype as ArchetypeKey);
-                    const sla = Math.max(42, 100 - m.pressure + Math.round(seed(`sla:${m.ministryId}`) * 10));
-                    const node = (coord?.nodes ?? []).find(n => n.ministryId === m.ministryId);
-                    const inc = node?.activeIncidents ?? 0;
-                    const esc = m.pressure >= 78 ? 'Escalated' : m.pressure >= 60 ? 'Watch' : 'Nominal';
+                    const cell = (dom: string) => {
+                      const v = Math.round(m.pressure * 0.5 + seed(`d:${m.ministryId}:${dom}:${epoch}`) * 58);
+                      const st = v >= 78 ? 'alert' : v >= 58 ? 'warn' : v >= 40 ? 'neutral' : 'ok';
+                      const lbl = st === 'alert' ? 'CRIT' : st === 'warn' ? 'ELEV' : st === 'neutral' ? 'WTCH' : 'STBL';
+                      return (
+                        <td key={dom} className="px-1 py-1.5 text-center">
+                          <span className="inline-block w-full rounded px-1 py-0.5 text-[8.5px] font-semibold"
+                            style={{ backgroundColor: `color-mix(in srgb, ${TONE[st]} 16%, transparent)`, color: TONE[st] }}>{lbl}</span>
+                        </td>
+                      );
+                    };
                     return (
                       <tr key={m.ministryId} className="border-b border-line-soft transition-colors hover:bg-surface-2/50 last:border-0">
-                        <td className="px-3 py-2">
-                          <Link href={`/gov/ministry/${m.ministryId}`} className="focus-ring flex items-center gap-2 no-underline">
-                            <span className="grid h-4 w-4 shrink-0 place-items-center rounded-[3px] text-[8px] text-white" style={{ backgroundColor: id.accent }}>{id.glyph}</span>
-                            <span className="min-w-0">
-                              <span className="block truncate text-ink">{m.ministry}</span>
-                              <span className="block text-[9px] text-ink-muted">{esc}</span>
-                            </span>
+                        <td className="px-2 py-1.5">
+                          <Link href={`/gov/ministry/${m.ministryId}`} className="focus-ring flex items-center gap-1.5 no-underline">
+                            <span className="grid h-3.5 w-3.5 shrink-0 place-items-center rounded-[3px] text-[7px] text-white" style={{ backgroundColor: id.accent }}>{id.glyph}</span>
+                            <span className="truncate text-ink">{m.ministry}</span>
                           </Link>
                         </td>
-                        <td className="px-2 py-2">
-                          <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `color-mix(in srgb, ${TONE[m.posture]} 18%, transparent)`, color: TONE[m.posture] }}>
-                            {m.posture === 'ok' ? 'Good' : m.posture === 'warn' ? 'Warn' : 'Elev'}
-                          </span>
-                        </td>
-                        <td className="px-2 py-2 text-right font-mono tabular-nums" style={{ color: sla < 70 ? TONE.alert : 'rgb(var(--c-ink-soft))' }}>{sla}%</td>
-                        <td className="px-2 py-2">
-                          <span className="flex items-center gap-1">
-                            <span className="h-1.5 w-12 overflow-hidden rounded-full bg-surface-2">
-                              <span className="block h-full transition-all duration-700 ease-sov" style={{ width: `${m.pressure}%`, backgroundColor: TONE[toneFor(m.pressure)] }} />
-                            </span>
-                            <span className="font-mono text-[10px] tabular-nums text-ink-muted">{m.pressure}</span>
-                            <span style={{ color: m.trend === 'rising' ? TONE.alert : m.trend === 'falling' ? TONE.ok : TONE.neutral }}>
-                              {m.trend === 'rising' ? '↑' : m.trend === 'falling' ? '↓' : '→'}
-                            </span>
-                          </span>
-                        </td>
-                        <td className="px-2 py-2 text-right font-mono tabular-nums" style={{ color: inc > 0 ? TONE.alert : 'rgb(var(--c-ink-muted))' }}>{inc}</td>
+                        {['Ops', 'Fisc', 'Infra', 'Civil', 'Sec', 'Logi', 'SLA', 'Esc', 'Work', 'Emrg'].map(cell)}
                       </tr>
                     );
                   })}
-                  {mapNodes.length === 0 ? <tr><td colSpan={5} className="px-3 py-8 text-center text-ink-muted">No active institutions.</td></tr> : null}
+                  {mapNodes.length === 0 ? <tr><td colSpan={11} className="px-3 py-8 text-center text-ink-muted">No active institutions.</td></tr> : null}
                 </tbody>
               </table>
             </Panel>
@@ -636,6 +680,69 @@ export function SituationRoom() {
                   </Link>
                 );
               })}
+            </Panel>
+          </div>
+
+          {/* Dependency intelligence + strategic forecast */}
+          <div className="grid gap-3 lg:grid-cols-2">
+            <Panel title="National dependency graph" meta="systemic impact propagation" bodyClass="!pb-2">
+              {(() => {
+                const dep = [
+                  { k: 'Energy', g: '⚡', a: 'ENERGY', x: 14, y: 30 },
+                  { k: 'Transport', g: '⇄', a: 'TRANSPORT', x: 42, y: 18 },
+                  { k: 'Healthcare', g: '✚', a: 'HEALTH', x: 80, y: 30 },
+                  { k: 'Treasury', g: '§', a: 'FINANCE', x: 40, y: 76 },
+                  { k: 'Civil Stability', g: '◈', a: 'INTERIOR', x: 78, y: 78 },
+                ].map(d => ({ ...d, p: pressOf(d.a) }));
+                const links: [number, number][] = [[0, 1], [1, 2], [0, 2], [2, 3], [1, 3], [3, 4], [2, 4]];
+                return (
+                  <div className="relative h-[188px] w-full">
+                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="absolute inset-0 h-full w-full">
+                      {links.map(([a, b], i) => {
+                        const A = dep[a], B = dep[b];
+                        if (!A || !B) return null;
+                        const t = Math.max(A.p, B.p);
+                        const tn = t >= 67 ? 'alert' : t >= 40 ? 'warn' : 'ok';
+                        return <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke={TONE[tn]} strokeWidth="0.7"
+                          strokeOpacity={0.3 + (t / 100) * 0.5} strokeDasharray={t >= 67 ? '0' : '2 3'}
+                          className={t >= 67 ? 'motion-safe:animate-[shimmer_2s_linear_infinite]' : ''} vectorEffect="non-scaling-stroke" />;
+                      })}
+                    </svg>
+                    {dep.map(d => {
+                      const tn = toneFor(d.p);
+                      return (
+                        <span key={d.k} className="absolute -translate-x-1/2 -translate-y-1/2 text-center" style={{ left: `${d.x}%`, top: `${d.y}%` }}>
+                          <span className="grid h-9 w-9 place-items-center rounded-full text-sm ring-2" style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tn], borderColor: TONE[tn], boxShadow: d.p >= 67 ? `0 0 10px ${TONE.alert}` : undefined }}>{d.g}</span>
+                          <span className="mt-0.5 block text-[9px] text-ink-muted">{d.k}</span>
+                        </span>
+                      );
+                    })}
+                  </div>
+                );
+              })()}
+              <div className="flex gap-3 text-[10px] text-ink-muted">
+                <span className="flex items-center gap-1"><span className="h-px w-4" style={{ backgroundColor: TONE.ok }} />Direct</span>
+                <span className="flex items-center gap-1"><span className="h-px w-4 border-t border-dashed" style={{ borderColor: TONE.warn }} />Indirect</span>
+                <span className="flex items-center gap-1"><span className="h-px w-4" style={{ backgroundColor: TONE.alert }} />Critical path</span>
+              </div>
+            </Panel>
+            <Panel title="Strategic forecast · 72h" meta="advisory simulation">
+              <ul className="space-y-2 text-xs">
+                {[
+                  { l: 'Energy reserve threshold', v: `In ${10 + Math.round(seed(`f1:${epoch}`) * 40)}h`, t: pressOf('ENERGY') >= 60 ? 'alert' : 'warn' },
+                  { l: 'Hospital capacity stress', v: `+${8 + Math.round(seed(`f2:${epoch}`) * 18)}%`, t: pressOf('HEALTH') >= 55 ? 'alert' : 'warn' },
+                  { l: 'Logistics disruption probability', v: pressOf('TRANSPORT') >= 60 ? 'High' : 'Moderate', t: pressOf('TRANSPORT') >= 60 ? 'alert' : 'warn' },
+                  { l: 'Treasury stress forecast', v: 'Intervention within 48h', t: 'warn' },
+                  { l: 'Infrastructure degradation', v: `${4 + Math.round(seed(`f5:${epoch}`) * 9)}% / wk`, t: 'neutral' },
+                  { l: 'Civil unrest probability', v: nationalRisk >= 60 ? 'Elevated' : 'Low–Moderate', t: nationalRisk >= 60 ? 'alert' : 'ok' },
+                ].map(f => (
+                  <li key={f.l} className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[f.t] }} /><span className="text-ink-soft">{f.l}</span></span>
+                    <span className="font-mono text-[11px] tabular-nums" style={{ color: TONE[f.t] }}>{f.v}</span>
+                  </li>
+                ))}
+              </ul>
+              <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory projection only — no autonomous action. Executive decides.</p>
             </Panel>
           </div>
 
