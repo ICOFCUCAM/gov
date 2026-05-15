@@ -1,0 +1,63 @@
+// العربية — skeleton; RTL.
+import type { Messages } from './en';
+
+export const ar: Messages = {
+  common: {
+    home: 'الرئيسية',
+    services: 'الخدمات',
+    inbox: 'البريد',
+    records: 'السجلات',
+    assistant: 'المساعد',
+    back: 'رجوع',
+    cancel: 'إلغاء',
+    submit: 'إرسال',
+    save: 'حفظ',
+    close: 'إغلاق',
+    next: 'التالي',
+    learnMore: 'اعرف المزيد',
+    talkToAgent: 'تحدث إلى وكيل',
+    talkToHuman: 'تحدث إلى موظف',
+  },
+  wallet: {
+    greeting: 'صباح الخير، {name}.',
+    needsTo: 'تحتاج إلى',
+    receipts: 'الإيصالات',
+    showAllReceipts: 'عرض كل الإيصالات',
+    accessHint: 'اليوم، اطلع {count} أشخاص على سجلاتك. جميعهم لزيارتك الطبية.',
+    seeWhoAndWhy: 'انظر من ولماذا',
+  },
+  receipt: {
+    title: 'إيصال',
+    whatHappened: 'ماذا حدث',
+    whyThisAmount: 'لماذا هذا المبلغ',
+    wasAIInvolved: 'هل شارك الذكاء الاصطناعي؟',
+    ifSomethingWrong: 'إذا كان هناك خطأ',
+    questionThis: 'اطعن في هذا القرار',
+    submitComplaint: 'قدم شكوى',
+    proof: 'إثبات',
+    verifySignature: 'تحقق من التوقيع',
+    continuationGuarantee: 'إذا طعنت، يستمر دفعك أثناء المراجعة. لن تُعاقب على الطعن.',
+  },
+  contest: {
+    headline: 'اطعن في هذا القرار',
+    pickWhat: 'ماذا تريد أن تفعل؟',
+    optionAsk: 'اطرح سؤالًا',
+    optionContest: 'اطعن في القرار',
+    optionComplaint: 'قدم شكوى',
+    pickWhy: 'لماذا؟',
+    reasonAmount: 'المبلغ خاطئ',
+    reasonUnclear: 'لست متأكدًا من سبب هذا القرار',
+    reasonDisagree: 'لا أتفق مع القرار',
+    noteLabel: 'هل تريد إخبارنا بشيء؟ (اختياري)',
+    submitted: 'تم الإرسال',
+    caseOpened: 'تم فتح القضية {caseId} للإيصال {receiptId}.',
+    paymentContinues: 'يستمر دفعك أثناء المراجعة. سنرد خلال 5 أيام عمل.',
+  },
+  assistant: {
+    classANotice: 'أساعدك في إيجاد المعلومات. لن أصدر قرارات ملزمة هنا. للقرارات، عد إلى لوحة الحالة أو تحدث إلى موظف.',
+    sources: 'المصادر التي استخدمتها',
+  },
+  doctrine: {
+    fourSentences: 'البشر يحكمون. المؤسسات تحكم. الدساتير تحكم. الذكاء الاصطناعي يساعد.',
+  },
+};

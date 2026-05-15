@@ -1,0 +1,63 @@
+// Yorùbá — skeleton; community-validated terminology recommended (Companion 148 §17).
+import type { Messages } from './en';
+
+export const yo: Messages = {
+  common: {
+    home: 'Ilé',
+    services: 'Iṣẹ́',
+    inbox: 'Àpótí Ìfìránṣẹ́',
+    records: 'Àkọsílẹ̀',
+    assistant: 'Olùrànlọ́wọ́',
+    back: 'Padà',
+    cancel: 'Fagilé',
+    submit: 'Fọwọ́sí',
+    save: 'Tọ́jú',
+    close: 'Tì',
+    next: 'Tẹ̀síwájú',
+    learnMore: 'Kọ́ síwájú síi',
+    talkToAgent: 'Bá aṣojú sọ̀rọ̀',
+    talkToHuman: 'Bá òṣìṣẹ́ ìjọba sọ̀rọ̀',
+  },
+  wallet: {
+    greeting: 'E kàárọ̀, {name}.',
+    needsTo: 'O ní láti',
+    receipts: 'Ìwé ẹ̀rí',
+    showAllReceipts: 'Fi gbogbo ìwé ẹ̀rí hàn',
+    accessHint: 'Lónìí, ènìyàn {count} wo àkọsílẹ̀ rẹ. Gbogbo wọn fún ìbẹ̀wò ìṣègùn rẹ.',
+    seeWhoAndWhy: 'Wo ta àti ìdí',
+  },
+  receipt: {
+    title: 'Ìwé ẹ̀rí',
+    whatHappened: 'Ohun tó ṣẹlẹ̀',
+    whyThisAmount: 'Ìdí iye yìí',
+    wasAIInvolved: 'Ṣé AI wà nínú rẹ̀?',
+    ifSomethingWrong: 'Tí àìṣedéédéé bá wà',
+    questionThis: 'Fi ìpinnu yìí ṣe ìbéèrè',
+    submitComplaint: 'Fọwọ́sí ẹjọ́',
+    proof: 'Ẹ̀rí',
+    verifySignature: 'Jẹ́rìí sí ibuwọlu',
+    continuationGuarantee: 'Tí o bá fi ìpinnu ṣe ìbéèrè, owó rẹ máa ń tẹ̀síwájú nígbà tí à ń ṣe àyẹ̀wò. A kò ní jiyà rẹ.',
+  },
+  contest: {
+    headline: 'Fi ìpinnu yìí ṣe ìbéèrè',
+    pickWhat: 'Kí lo fẹ́ ṣe?',
+    optionAsk: 'Bi ìbéèrè',
+    optionContest: 'Fi ìpinnu ṣe ìbéèrè',
+    optionComplaint: 'Fọwọ́sí ẹjọ́',
+    pickWhy: 'Ìdí kíni?',
+    reasonAmount: 'Iye náà kò tọ́',
+    reasonUnclear: 'N kò rí ìdí ìpinnu yìí',
+    reasonDisagree: 'N kò gba pẹ̀lú ìpinnu náà',
+    noteLabel: 'Ǹjẹ́ ohun tí o fẹ́ sọ fún wa? (yàn-tàbí-kì)',
+    submitted: 'Ti fọwọ́sí',
+    caseOpened: 'Ọ̀rọ̀ {caseId} ti ṣí fún ìwé ẹ̀rí {receiptId}.',
+    paymentContinues: 'Owó rẹ máa ń tẹ̀síwájú. A ó dáhùn nínú ọjọ́ iṣẹ́ 5.',
+  },
+  assistant: {
+    classANotice: 'Mo ń ràn ọ́ lọ́wọ́ láti rí ìwífún. N kò ní ṣe àdéhùn ìpinnu níbi. Fún àwọn ìpinnu, padà sí pánẹ́ẹ̀lì ọ̀rọ̀ tàbí bá òṣìṣẹ́ ìjọba sọ̀rọ̀.',
+    sources: 'Àwọn orísun tí mo lò',
+  },
+  doctrine: {
+    fourSentences: 'Ènìyàn ń ṣe ìjọba. Àwọn àjọ ń ṣe ìjọba. Òfin orílẹ̀-èdè ń ṣe ìjọba. AI ń ràn án lọ́wọ́.',
+  },
+};

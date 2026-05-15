@@ -1,0 +1,63 @@
+// Français — skeleton.
+import type { Messages } from './en';
+
+export const fr: Messages = {
+  common: {
+    home: 'Accueil',
+    services: 'Services',
+    inbox: 'Boîte',
+    records: 'Dossiers',
+    assistant: 'Assistant',
+    back: 'Retour',
+    cancel: 'Annuler',
+    submit: 'Envoyer',
+    save: 'Enregistrer',
+    close: 'Fermer',
+    next: 'Suivant',
+    learnMore: 'En savoir plus',
+    talkToAgent: 'Parler à un agent',
+    talkToHuman: 'Parler à un agent public',
+  },
+  wallet: {
+    greeting: 'Bonjour, {name}.',
+    needsTo: 'Vous devez',
+    receipts: 'Reçus',
+    showAllReceipts: 'Voir tous les reçus',
+    accessHint: 'Aujourd\'hui, {count} personnes ont consulté vos dossiers. Toutes pour votre visite médicale.',
+    seeWhoAndWhy: 'Voir qui et pourquoi',
+  },
+  receipt: {
+    title: 'Reçu',
+    whatHappened: 'Ce qui s\'est passé',
+    whyThisAmount: 'Pourquoi ce montant',
+    wasAIInvolved: 'L\'IA est-elle intervenue ?',
+    ifSomethingWrong: 'Si quelque chose ne va pas',
+    questionThis: 'Contester cette décision',
+    submitComplaint: 'Déposer une plainte',
+    proof: 'Preuve',
+    verifySignature: 'Vérifier la signature',
+    continuationGuarantee: 'Si vous contestez, votre paiement continue pendant l\'examen. Vous ne serez pas pénalisé pour avoir contesté.',
+  },
+  contest: {
+    headline: 'Contester cette décision',
+    pickWhat: 'Que voulez-vous faire ?',
+    optionAsk: 'Poser une question',
+    optionContest: 'Contester la décision',
+    optionComplaint: 'Déposer une plainte',
+    pickWhy: 'Pourquoi ?',
+    reasonAmount: 'Le montant est incorrect',
+    reasonUnclear: 'Je ne comprends pas cette décision',
+    reasonDisagree: 'Je suis en désaccord avec la décision',
+    noteLabel: 'Quelque chose à nous dire ? (facultatif)',
+    submitted: 'Envoyé',
+    caseOpened: 'Dossier {caseId} ouvert pour le reçu {receiptId}.',
+    paymentContinues: 'Votre paiement continue pendant l\'examen. Nous reviendrons vers vous sous 5 jours ouvrés.',
+  },
+  assistant: {
+    classANotice: 'Je vous aide à trouver des informations. Je ne rédige pas de décisions contraignantes ici. Pour les décisions, revenez au panneau de cas ou parlez à un agent public.',
+    sources: 'Sources utilisées',
+  },
+  doctrine: {
+    fourSentences: 'Les humains gouvernent. Les institutions gouvernent. Les constitutions gouvernent. L\'IA assiste.',
+  },
+};

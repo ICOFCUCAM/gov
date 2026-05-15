@@ -1,0 +1,50 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* CivicOS — global styles
+   Doctrine: plain, calm, accessible, no tracking. */
+
+@layer base {
+  :root {
+    --tap: 44px;
+  }
+  html {
+    font-family: theme('fontFamily.sans');
+    color: theme('colors.ink');
+    background: theme('colors.bg');
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    @apply text-base leading-normal;
+  }
+  :focus-visible {
+    outline: 3px solid #ffbf47;
+    outline-offset: 2px;
+    border-radius: 2px;
+  }
+  /* Print: receipts and decisions print cleanly */
+  @media print {
+    body { background: white; }
+    [data-print-hide] { display: none !important; }
+  }
+}
+
+@layer components {
+  /* Plain-language callout */
+  .plain {
+    @apply bg-surface-2 border-l-4 border-line py-3 px-4 rounded-r-md;
+  }
+  /* Wallet phone shell — frame on desktop, full on mobile */
+  .phone {
+    @apply w-full sm:w-[390px] sm:mx-auto bg-surface rounded-lg sm:rounded-md border border-line overflow-hidden grid grid-rows-[auto_1fr_auto] min-h-[100vh] sm:min-h-[844px] sm:my-8 sm:shadow-2xl;
+  }
+}
+
+@layer utilities {
+  /* RTL-aware mirror for select icons */
+  [dir="rtl"] .swap-on-rtl {
+    transform: scaleX(-1);
+  }
+}
