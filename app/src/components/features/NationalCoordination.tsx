@@ -7,7 +7,12 @@ import { Pill } from '@/components/ui/Pill';
 import { Section, EnterpriseTable, StatusText, type Column } from '@/components/ui/DataSystem';
 import { RegionMatrix } from '@/components/ui/Viz';
 import { api } from '@/lib/api/client';
-import type { NationalCoordination as NC, CoordinationEdge, OpsTimelineEvent } from '@/lib/api/types';
+import type {
+  NationalCoordination as NC,
+  CoordinationEdge,
+  OpsTimelineEvent,
+  ChronologyEvent,
+} from '@/lib/api/types';
 
 const REFRESH_MS = 15_000;
 
@@ -29,6 +34,21 @@ const KIND_LABEL: Record<OpsTimelineEvent['kind'], string> = {
   audit: 'AUDIT',
 };
 
+const CHRON_LABEL: Record<ChronologyEvent['kind'], string> = {
+  incident: 'INCIDENT',
+  recovery: 'RECOVERY',
+  propagation: 'PROPAGATION',
+  degradation: 'DEGRADATION',
+  escalation: 'ESCALATION',
+};
+
+const TONE_HEX: Record<string, string> = {
+  alert: '#b22e28',
+  warn: '#9a6e00',
+  ok: '#227c4d',
+  neutral: '#5a636e',
+};
+
 /**
  * National Coordination Intelligence (Phase 2A) — a read-only command
  * surface that makes cross-ministry dependency, cascade risk and the
@@ -41,6 +61,7 @@ export function NationalCoordination() {
   const [err, setErr] = React.useState<string | null>(null);
   const [now, setNow] = React.useState(() => Date.now());
   const [fetchedAt, setFetchedAt] = React.useState(0);
+  const [scrubTick, setScrubTick] = React.useState<number | null>(null); // null ⇒ follow live
 
   const load = React.useCallback(async () => {
     try {
@@ -68,6 +89,15 @@ export function NationalCoordination() {
 
   const p = d.posture;
   const clock = new Date(now);
+
+  const minTick = d.chronology.length ? d.chronology[0]!.tick : d.tick;
+  const isLive = scrubTick === null || scrubTick >= d.tick;
+  const effTick = isLive ? d.tick : Math.max(minTick, scrubTick!);
+  const replayFeed = d.chronology
+    .filter(c => c.tick <= effTick)
+    .slice(-60)
+    .reverse();
+  const scrubAt = new Date(d.generatedAt).getTime() - (d.tick - effTick) * d.tickMs;
 
   const edgeCols: Column<CoordinationEdge & { id: string }>[] = [
     { key: 'f', header: 'Source', filter: e => e.from, sort: (a, b) => a.from.localeCompare(b.from), render: e => <strong>{e.from}</strong> },
@@ -137,6 +167,35 @@ export function NationalCoordination() {
             />
           </Section>
 
+          <Section title="Live institutional pressure" meta={`fabric tick ${d.tick} · ${Math.round(d.tickMs / 1000)}s cadence`}>
+            <div className="space-y-1.5">
+              {d.fabric.map(f => {
+                const tone = f.pressure >= 78 ? 'alert' : f.pressure >= 60 ? 'warn' : 'ok';
+                const arrow = f.trend === 'rising' ? '▲' : f.trend === 'falling' ? '▼' : '■';
+                return (
+                  <div key={f.ministryId} className="flex items-center gap-3 text-sm">
+                    <span className="w-44 shrink-0 truncate">{f.ministry}</span>
+                    <span className="relative h-2.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+                      <span className="block h-full" style={{ width: `${f.pressure}%`, backgroundColor: TONE_HEX[tone] }} />
+                    </span>
+                    <span className="w-8 shrink-0 text-right tabular-nums" style={{ color: tone === 'alert' ? TONE_HEX.alert : undefined }}>{f.pressure}</span>
+                    <span
+                      className="w-4 shrink-0 text-center text-[10px]"
+                      style={{ color: f.trend === 'rising' ? TONE_HEX.alert : f.trend === 'falling' ? TONE_HEX.ok : '#5a636e' }}
+                      title={f.trend}
+                    >
+                      {arrow}
+                    </span>
+                    <span className="hidden w-56 shrink-0 truncate text-xs text-ink-muted lg:block" title={f.drivers.join(' · ')}>
+                      {f.drivers.join(' · ')}
+                    </span>
+                  </div>
+                );
+              })}
+              {d.fabric.length === 0 ? <p className="text-sm text-ink-muted">No active institutions in the fabric.</p> : null}
+            </div>
+          </Section>
+
           <Section title="Cross-ministry dependency engine" meta={`${d.edges.length} dependencies · ${p.cascadeRisks} elevated`}>
             <EnterpriseTable
               columns={edgeCols}
@@ -181,26 +240,78 @@ export function NationalCoordination() {
 
         {/* Side inspector: live tempo + pinned */}
         <div className="space-y-5">
-          <Section title="National operations timeline" meta="live tempo">
-            <div className="max-h-[28rem] space-y-0 overflow-y-auto rounded-sm border border-line">
-              {d.timeline.length === 0 ? (
-                <p className="p-4 text-sm text-ink-muted">No recorded operational activity.</p>
+          <Section
+            title="National operations timeline"
+            meta={
+              <span className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setScrubTick(null)}
+                  className={`rounded-xs px-2 py-0.5 text-[10px] font-semibold tracking-wide ${isLive ? 'bg-[#1d3a2c] text-[#9fe0c0]' : 'bg-surface-2 text-ink-soft'}`}
+                >
+                  {isLive ? '● LIVE' : 'GO LIVE'}
+                </button>
+                {!isLive ? (
+                  <span className="font-mono text-[10px] text-ink-muted">
+                    REPLAY T-{d.tick - effTick} · {new Date(scrubAt).toLocaleTimeString()}
+                  </span>
+                ) : null}
+              </span>
+            }
+          >
+            <div className="mb-2 flex items-center gap-2">
+              <span className="font-mono text-[10px] text-ink-muted">scrub</span>
+              <input
+                type="range"
+                min={minTick}
+                max={d.tick}
+                value={effTick}
+                onChange={e => {
+                  const v = Number(e.target.value);
+                  setScrubTick(v >= d.tick ? null : v);
+                }}
+                aria-label="Scrub national operations timeline"
+                className="h-1 flex-1 cursor-pointer"
+              />
+              <span className="font-mono text-[10px] text-ink-muted tabular-nums">
+                T{effTick}/{d.tick}
+              </span>
+            </div>
+            <div className="max-h-[24rem] space-y-0 overflow-y-auto rounded-sm border border-line">
+              {isLive ? (
+                d.timeline.length === 0 ? (
+                  <p className="p-4 text-sm text-ink-muted">No recorded operational activity.</p>
+                ) : (
+                  d.timeline.map((ev, i) => (
+                    <div key={i} className="flex gap-3 border-b border-line-soft px-3 py-2 last:border-b-0">
+                      <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: TONE_HEX[ev.tone] }} aria-hidden />
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="truncate text-sm font-medium">{ev.title}</span>
+                          <span className="shrink-0 font-mono text-[10px] text-ink-muted">{rel(ev.at, now)}</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs text-ink-muted">
+                          <span className="rounded-xs bg-surface-2 px-1 py-0.5 text-[10px] font-semibold tracking-wide">{KIND_LABEL[ev.kind]}</span>
+                          <span className="truncate">{ev.detail}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )
+              ) : replayFeed.length === 0 ? (
+                <p className="p-4 text-sm text-ink-muted">No chronology before this point.</p>
               ) : (
-                d.timeline.map((ev, i) => (
+                replayFeed.map((c, i) => (
                   <div key={i} className="flex gap-3 border-b border-line-soft px-3 py-2 last:border-b-0">
-                    <span
-                      className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full"
-                      style={{ backgroundColor: ev.tone === 'alert' ? '#b22e28' : ev.tone === 'warn' ? '#9a6e00' : ev.tone === 'ok' ? '#227c4d' : '#5a636e' }}
-                      aria-hidden
-                    />
+                    <span className="mt-1 inline-block h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: TONE_HEX[c.tone] }} aria-hidden />
                     <div className="min-w-0 flex-1">
                       <div className="flex items-baseline justify-between gap-2">
-                        <span className="truncate text-sm font-medium">{ev.title}</span>
-                        <span className="shrink-0 font-mono text-[10px] text-ink-muted">{rel(ev.at, now)}</span>
+                        <span className="truncate text-sm font-medium">{c.title}</span>
+                        <span className="shrink-0 font-mono text-[10px] text-ink-muted">T{c.tick}</span>
                       </div>
                       <div className="flex items-center gap-2 text-xs text-ink-muted">
-                        <span className="rounded-xs bg-surface-2 px-1 py-0.5 text-[10px] font-semibold tracking-wide">{KIND_LABEL[ev.kind]}</span>
-                        <span className="truncate">{ev.detail}</span>
+                        <span className="rounded-xs bg-surface-2 px-1 py-0.5 text-[10px] font-semibold tracking-wide">{CHRON_LABEL[c.kind]}</span>
+                        <span className="truncate">{c.detail}</span>
                       </div>
                     </div>
                   </div>

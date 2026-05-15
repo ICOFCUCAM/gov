@@ -587,9 +587,32 @@ export interface CoordinationPinned {
   authority: string;
   affects: string[];            // dependent ministries in scope
 }
+// Live sovereign data fabric — a deterministic, time-stepped operational
+// pressure model. Pure function of (sovereign, institution, tick) plus
+// dependency propagation, so it is replayable and instance-stable.
+export interface FabricPressure {
+  ministryId: string;
+  ministry: string;
+  archetype: ArchetypeKey;
+  pressure: number;             // 0..100 living composite
+  trend: 'rising' | 'falling' | 'steady';
+  drivers: string[];            // human-readable pressure sources
+}
+export interface ChronologyEvent {
+  tick: number;
+  at: ISODate;
+  ministryId?: string;
+  ministry?: string;
+  kind: 'incident' | 'recovery' | 'propagation' | 'degradation' | 'escalation';
+  tone: OpsTone;
+  title: string;
+  detail: string;
+}
 export interface NationalCoordination {
   sovereign: SovereignProfile;
   generatedAt: ISODate;
+  tick: number;
+  tickMs: number;
   posture: {
     level: OpsTone;
     label: string;              // STABLE | STRAINED | CRITICAL
@@ -599,6 +622,8 @@ export interface NationalCoordination {
   };
   nodes: CoordinationNode[];
   edges: CoordinationEdge[];
+  fabric: FabricPressure[];
+  chronology: ChronologyEvent[];
   timeline: OpsTimelineEvent[];
   pinnedIncidents: CoordinationPinned[];
 }

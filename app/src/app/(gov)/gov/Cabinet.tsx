@@ -11,6 +11,7 @@ import { api } from '@/lib/api/client';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type {
   CabinetOverview,
+  NationalCoordination,
   NationalSnapshot,
   SovereignPreset,
   SovereignProfile,
@@ -32,21 +33,26 @@ export function Cabinet() {
   const [ov, setOv] = React.useState<CabinetOverview | null>(null);
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [presets, setPresets] = React.useState<SovereignPreset[]>([]);
+  const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [editing, setEditing] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
 
   const load = React.useCallback(async () => {
-    const [o, n, p] = await Promise.all([
+    const [o, n, p, c] = await Promise.all([
       api.cabinet.overview(),
       api.cabinet.national(),
       api.sovereign.presets(),
+      api.cabinet.coordination().catch(() => null),
     ]);
     setOv(o);
     setNat(n);
     setPresets(p.presets);
+    setCoord(c);
   }, []);
   React.useEffect(() => {
     void load();
+    const poll = setInterval(() => void load(), 20_000);
+    return () => clearInterval(poll);
   }, [load]);
 
   async function applyPreset(key: string) {
@@ -180,6 +186,75 @@ export function Cabinet() {
             </div>
           </form>
         </Card>
+      ) : null}
+
+      {coord ? (
+        <Section
+          title="Executive briefing & strategic alerts"
+          meta={
+            <span
+              className="rounded-sm px-2 py-0.5 text-xs font-semibold tracking-widest"
+              style={{
+                backgroundColor: coord.posture.level === 'alert' ? '#f7e3e1' : coord.posture.level === 'warn' ? '#fbf2dd' : '#dceee4',
+                color: coord.posture.level === 'alert' ? '#b22e28' : coord.posture.level === 'warn' ? '#6a4d00' : '#227c4d',
+              }}
+            >
+              {coord.posture.label} · risk {coord.posture.nationalRisk}
+            </span>
+          }
+        >
+          <div className="grid gap-4 lg:grid-cols-2">
+            <div>
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Institutions under pressure
+              </div>
+              {coord.fabric.slice(0, 5).map(f => {
+                const tone = f.pressure >= 78 ? 'alert' : f.pressure >= 60 ? 'warn' : 'ok';
+                return (
+                  <div key={f.ministryId} className="flex items-center gap-2 py-0.5 text-sm">
+                    <span className="w-40 shrink-0 truncate">{f.ministry}</span>
+                    <span className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
+                      <span
+                        className="block h-full"
+                        style={{ width: `${f.pressure}%`, backgroundColor: tone === 'alert' ? '#b22e28' : tone === 'warn' ? '#9a6e00' : '#227c4d' }}
+                      />
+                    </span>
+                    <span className="w-8 text-right tabular-nums">{f.pressure}</span>
+                    <span className="w-3 text-center text-[10px] text-ink-muted">
+                      {f.trend === 'rising' ? '▲' : f.trend === 'falling' ? '▼' : '■'}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            <div>
+              <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-ink-soft">
+                Strategic alerts
+              </div>
+              <ul className="space-y-1 text-sm">
+                {coord.chronology
+                  .filter(c => c.kind === 'propagation' || c.kind === 'escalation' || c.kind === 'incident')
+                  .slice(-6)
+                  .reverse()
+                  .map((c, i) => (
+                    <li key={i} className="flex gap-2">
+                      <span
+                        className="mt-1.5 inline-block h-1.5 w-1.5 shrink-0 rounded-full"
+                        style={{ backgroundColor: c.tone === 'alert' ? '#b22e28' : c.tone === 'warn' ? '#9a6e00' : '#227c4d' }}
+                      />
+                      <span><strong>{c.title}</strong> <span className="text-ink-muted">— {c.detail}</span></span>
+                    </li>
+                  ))}
+                {coord.chronology.length === 0 ? (
+                  <li className="text-ink-muted">No strategic alerts in the current window.</li>
+                ) : null}
+              </ul>
+              <Link href="/gov/coordination" className="mt-2 inline-block text-xs text-link underline underline-offset-2">
+                Open National Coordination Intelligence →
+              </Link>
+            </div>
+          </div>
+        </Section>
       ) : null}
 
       <Section title="Sovereign profile presets" meta="one-click global-state neutrality">

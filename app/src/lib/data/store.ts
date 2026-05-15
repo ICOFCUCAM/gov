@@ -84,6 +84,8 @@ import type {
   CoordinationEdge,
   OpsTimelineEvent,
   CoordinationPinned,
+  FabricPressure,
+  ChronologyEvent,
   VerifyResult,
 } from '@/lib/api/types';
 import { specFor } from '@/lib/ops-catalog';
@@ -248,7 +250,7 @@ function seed() {
     motto: 'Humans govern · the platform serves',
   };
 
-  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign };
+  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
 }
 
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
@@ -1660,8 +1662,152 @@ function toneForRisk(r: number): OpsTone {
   return r >= 67 ? 'alert' : r >= 34 ? 'warn' : 'ok';
 }
 
+// ── Live sovereign data fabric (pure, time-stepped, replayable) ───────
+const FABRIC_TICK_MS = 15_000;
+const FABRIC_WINDOW = 160;
+const P_INCIDENT = 78;   // pressure ≥ → emergent incident
+const P_RECOVER = 68;    // hysteresis floor for recovery
+const P_DEGRADE = 60;    // service degradation threshold
+
+function fabricTick(): number {
+  return Math.floor((Date.now() - db.fabricStartedAt) / FABRIC_TICK_MS);
+}
+function unit(seed: string): number {
+  return seededInt(seed, 0, 1000) / 1000;
+}
+
+interface FabricCell { base: number; pressure: number; sources: string[] }
+
+// Pure: the entire national pressure field at a given tick.
+function pressuresAt(tick: number): Map<string, FabricCell> {
+  const st = db.sovereign.stateName;
+  const active = db.ministries.filter(m => m.status === 'active');
+  const base = new Map<string, number>();
+  for (const m of active) {
+    const phase = unit(`fab:${st}:${m.id}:ph`) * Math.PI * 2;
+    const amp = seededInt(`fab:${m.id}:amp`, 16, 40);
+    const mid = seededInt(`fab:${st}:${m.id}:mid`, 26, 56);
+    const slow = Math.sin(phase + tick / 6.5);
+    const fast = Math.sin(phase * 1.7 + tick / 2.3);
+    let p = mid + amp * 0.7 * slow + amp * 0.3 * fast;
+    if (unit(`fab:${m.id}:${Math.floor(tick / 8)}:shock`) > 0.9) p += 28;
+    base.set(m.id, Math.max(0, Math.min(100, Math.round(p))));
+  }
+  const cells = new Map<string, FabricCell>();
+  for (const m of active) {
+    cells.set(m.id, { base: base.get(m.id) ?? 0, pressure: base.get(m.id) ?? 0, sources: [] });
+  }
+  const byArch = new Map<ArchetypeKey, string>();
+  for (const m of active) if (!byArch.has(m.archetype)) byArch.set(m.archetype, m.id);
+  for (const m of active) {
+    for (const dep of COORDINATION_DEPS[m.archetype] ?? []) {
+      const toId = byArch.get(dep.to);
+      if (!toId || toId === m.id) continue;
+      const srcP = base.get(m.id) ?? 0;
+      const coupling = RELATION_COUPLING[dep.relation] ?? 0.5;
+      const contrib = Math.max(0, srcP - 55) * coupling * 0.6;
+      if (contrib < 1) continue;
+      const cell = cells.get(toId)!;
+      cell.pressure = Math.min(100, Math.round(cell.pressure + contrib));
+      if (contrib >= 8) cell.sources.push(m.name);
+    }
+  }
+  return cells;
+}
+
+function driversFor(m: { id: string; name: string }, cell: FabricCell): string[] {
+  const d: string[] = [];
+  if (cell.base >= P_DEGRADE) d.push('internal operational load');
+  for (const s of cell.sources) d.push(`${s} instability`);
+  const realInc = (db.ministryIncidents[m.id] ?? []).filter(i => i.active).length;
+  if (realInc > 0) d.push(`${realInc} active incident${realInc === 1 ? '' : 's'}`);
+  const q = (db.ministryQueues[m.id] ?? []).filter(x => x.state !== 'cleared').length;
+  if (q > 6) d.push('approvals queue surge');
+  return d.length ? d : ['nominal'];
+}
+
+function fabricChronology(tickNow: number): ChronologyEvent[] {
+  const active = db.ministries.filter(m => m.status === 'active');
+  const nameById = new Map(active.map(m => [m.id, m.name]));
+  const archById = new Map(active.map(m => [m.id, m.archetype]));
+  const out: ChronologyEvent[] = [];
+  const from = Math.max(1, tickNow - FABRIC_WINDOW);
+  const atOf = (t: number) =>
+    new Date(db.fabricStartedAt + t * FABRIC_TICK_MS).toISOString();
+  for (let t = from; t <= tickNow; t++) {
+    const prev = pressuresAt(t - 1);
+    const cur = pressuresAt(t);
+    for (const m of active) {
+      const pc = prev.get(m.id)?.pressure ?? 0;
+      const cc = cur.get(m.id)?.pressure ?? 0;
+      if (pc < P_INCIDENT && cc >= P_INCIDENT) {
+        out.push({
+          tick: t, at: atOf(t), ministryId: m.id, ministry: m.name,
+          kind: 'incident', tone: cc >= 90 ? 'alert' : 'warn',
+          title: `${m.name}: operational incident emerging`,
+          detail: `Composite pressure ${cc}/100 crossed the incident threshold`,
+        });
+      } else if (pc >= P_INCIDENT && cc < P_RECOVER) {
+        out.push({
+          tick: t, at: atOf(t), ministryId: m.id, ministry: m.name,
+          kind: 'recovery', tone: 'ok',
+          title: `${m.name}: pressure recovering`,
+          detail: `Composite pressure eased to ${cc}/100`,
+        });
+      } else if (pc < P_DEGRADE && cc >= P_DEGRADE && cc < P_INCIDENT) {
+        out.push({
+          tick: t, at: atOf(t), ministryId: m.id, ministry: m.name,
+          kind: 'degradation', tone: 'warn',
+          title: `${m.name}: service degradation`,
+          detail: `Pressure rising — ${cc}/100`,
+        });
+      }
+      // sustained → escalation
+      if (cc >= P_INCIDENT) {
+        const run = [t - 1, t - 2, t - 3].every(
+          k => (pressuresAt(k).get(m.id)?.pressure ?? 0) >= P_INCIDENT,
+        );
+        const justSustained =
+          (pressuresAt(t - 4).get(m.id)?.pressure ?? 0) < P_INCIDENT;
+        if (run && justSustained) {
+          const arch = archById.get(m.id);
+          const chain = arch ? profileFor(arch).escalation : [];
+          out.push({
+            tick: t, at: atOf(t), ministryId: m.id, ministry: m.name,
+            kind: 'escalation', tone: 'alert',
+            title: `${m.name}: sustained pressure — escalated`,
+            detail: `Authority: ${chain[chain.length - 1] ?? 'institutional command'}`,
+          });
+        }
+      }
+    }
+    // propagation: a stressed source visibly pressuring a dependent
+    for (const m of active) {
+      if ((cur.get(m.id)?.pressure ?? 0) < P_INCIDENT) continue;
+      for (const dep of COORDINATION_DEPS[m.archetype] ?? []) {
+        const toId = [...nameById.keys()].find(
+          id => archById.get(id) === dep.to && id !== m.id,
+        );
+        if (!toId) continue;
+        const tc = cur.get(toId)!;
+        if (tc.sources.includes(m.name) && tc.pressure - tc.base >= 12) {
+          out.push({
+            tick: t, at: atOf(t), ministryId: toId, ministry: nameById.get(toId),
+            kind: 'propagation', tone: tc.pressure >= P_INCIDENT ? 'alert' : 'warn',
+            title: `${m.name} → ${nameById.get(toId)}: ${dep.relation} dependency strained`,
+            detail: `Disruption at ${m.name} is pressuring ${nameById.get(toId)} (+${tc.pressure - tc.base})`,
+          });
+          break;
+        }
+      }
+    }
+  }
+  return out;
+}
+
 export function nationalCoordination(): NationalCoordination {
   ensureIncidentsSeeded();
+  const tick = fabricTick();
   const active = db.ministries.filter(m => m.status === 'active');
   const byArch = new Map<ArchetypeKey, typeof active[number]>();
   for (const m of active) if (!byArch.has(m.archetype)) byArch.set(m.archetype, m);
@@ -1691,6 +1837,32 @@ export function nationalCoordination(): NationalCoordination {
     };
   });
   const nodeById = new Map(nodes.map(n => [n.ministryId, n]));
+
+  // Live fabric: blend the time-stepped pressure field into node risk so
+  // the national picture visibly moves and propagates between ticks.
+  const curCells = pressuresAt(tick);
+  const prevCells = pressuresAt(tick - 1);
+  const fabric: FabricPressure[] = [];
+  for (const m of active) {
+    const cell = curCells.get(m.id);
+    if (!cell) continue;
+    const prevP = prevCells.get(m.id)?.pressure ?? cell.pressure;
+    const delta = cell.pressure - prevP;
+    const node = nodeById.get(m.id);
+    if (node) {
+      node.riskScore = Math.max(node.riskScore, cell.pressure);
+      node.posture = toneForRisk(node.riskScore);
+    }
+    fabric.push({
+      ministryId: m.id,
+      ministry: m.name,
+      archetype: m.archetype,
+      pressure: cell.pressure,
+      trend: delta >= 4 ? 'rising' : delta <= -4 ? 'falling' : 'steady',
+      drivers: driversFor(m, cell),
+    });
+  }
+  fabric.sort((a, b) => b.pressure - a.pressure);
 
   const edges: CoordinationEdge[] = [];
   for (const m of active) {
@@ -1757,6 +1929,22 @@ export function nationalCoordination(): NationalCoordination {
       });
     }
   }
+  const chronology = fabricChronology(tick);
+  const tlKind: Record<ChronologyEvent['kind'], OpsTimelineEvent['kind']> = {
+    incident: 'incident', escalation: 'escalation', recovery: 'audit',
+    propagation: 'incident', degradation: 'sla',
+  };
+  for (const c of chronology.slice(-24)) {
+    timeline.push({
+      at: c.at,
+      ministryId: c.ministryId,
+      ministry: c.ministry,
+      kind: tlKind[c.kind],
+      tone: c.tone,
+      title: c.title,
+      detail: c.detail,
+    });
+  }
   timeline.sort((a, b) => (a.at < b.at ? 1 : -1));
 
   const pinnedIncidents: CoordinationPinned[] = [];
@@ -1791,6 +1979,8 @@ export function nationalCoordination(): NationalCoordination {
   return {
     sovereign: db.sovereign,
     generatedAt: new Date().toISOString(),
+    tick,
+    tickMs: FABRIC_TICK_MS,
     posture: {
       level,
       label: level === 'alert' ? 'CRITICAL' : level === 'warn' ? 'STRAINED' : 'STABLE',
@@ -1800,6 +1990,8 @@ export function nationalCoordination(): NationalCoordination {
     },
     nodes,
     edges,
+    fabric,
+    chronology,
     timeline: timeline.slice(0, 28),
     pinnedIncidents,
   };
