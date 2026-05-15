@@ -1,4 +1,5 @@
 import { CommandShell } from '@/components/ui/CommandShell';
+import { TelemetryStrip, CommandHeading } from '@/components/ui/Telemetry';
 import { InteropConsole } from './InteropConsole';
 
 export const dynamic = 'force-dynamic';
@@ -6,13 +7,20 @@ export const dynamic = 'force-dynamic';
 export default function IntegrationsPage() {
   return (
     <CommandShell active="intg">
-      <h1 className="text-base font-semibold uppercase tracking-[0.14em] text-ink-soft">Interoperability</h1>
-      <p className="mb-3 mt-0.5 max-w-3xl text-[11px] leading-relaxed text-ink-muted">
-        Controlled federation, scoped integrations, signed webhooks. Nothing
-        connects implicitly — every integration is approved, every grant is
-        explicit, every webhook is signed.
-      </p>
-      <InteropConsole />
+      <div className="space-y-2">
+        <CommandHeading title="Interoperability" sub="Controlled federation · scoped integrations · signed webhooks — nothing connects implicitly." />
+        <TelemetryStrip
+          items={[
+            { l: 'Active clients', v: '18', t: 'ok', spark: true },
+            { l: 'Pending approval', v: '4', t: 'warn', spark: true },
+            { l: 'Federation grants', v: '11', t: 'ok', spark: true },
+            { l: 'Webhook delivery', v: '99.6%', t: 'ok', spark: true },
+            { l: 'Signature failures', v: '0', t: 'ok', sub: '24h' },
+            { l: 'Rate-limit events', v: '7', t: 'warn', spark: true },
+          ]}
+        />
+        <InteropConsole />
+      </div>
     </CommandShell>
   );
 }
