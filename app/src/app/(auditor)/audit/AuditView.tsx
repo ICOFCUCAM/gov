@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
-import { TONE, Panel, Spark, seed } from '@/components/features/SituationRoom';
+import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/SituationRoom';
 import { api } from '@/lib/api/client';
 import type { AuditEntry } from '@/lib/api/types';
 
@@ -42,11 +42,12 @@ export function AuditView() {
   }, [load]);
 
   const epoch = Math.floor(now / 15000);
+  const ts = now / 4000;
   const intact = verify?.ok ?? true;
   const tone = intact ? 'ok' : 'alert';
   const evs = events ?? [];
   const denied = evs.filter(e => e.outcome !== 'ok').length;
-  const sp = (k: string, lo = 35, hi = 90) => Array.from({ length: 16 }).map((_, i) => lo + seed(`au:${k}:${i}:${epoch}`) * (hi - lo));
+  const sp = (k: string, lo = 35, hi = 90) => waveSeries(`au:${k}`, ts, 16, lo, hi);
 
   const tele = [
     { l: 'Chain integrity', v: verify ? (intact ? 'INTACT' : 'BROKEN') : '—', sub: intact ? 'tamper-evident' : 'investigate', t: tone, spark: sp('ci', intact ? 80 : 10, intact ? 99 : 40) },

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { WallPanel } from '@/components/ui/WallPanel';
 import { Pill } from '@/components/ui/Pill';
 import { ClassBanner } from '@/components/ui/ClassBanner';
-import { TONE, Spark, seed, TerritoryHeat } from '@/components/features/SituationRoom';
+import { TONE, Spark, seed, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
 
 const ACTIVATION = Date.UTC(2026, 4, 13, 8, 31);
 const SUNSET = Date.UTC(2026, 4, 21, 17, 0);
@@ -22,7 +22,8 @@ export default function NcccWallPage() {
     return () => clearInterval(t);
   }, []);
   const epoch = Math.floor(now / 8000);
-  const sp = (k: string, lo = 30, hi = 85) => Array.from({ length: 16 }).map((_, i) => lo + seed(`w:${k}:${i}:${epoch}`) * (hi - lo));
+  const ts = now / 4000;
+  const sp = (k: string, lo = 30, hi = 85) => waveSeries(`w:${k}`, ts, 16, lo, hi);
 
   const indicators = [
     { l: 'Hospital beds available', v: `${62 + Math.round(seed(`hb:${epoch}`) * 10)}%`, t: 'ok', k: 'hb' },

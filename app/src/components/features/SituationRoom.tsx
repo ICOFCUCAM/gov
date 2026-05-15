@@ -47,6 +47,26 @@ export function seed(key: string): number {
   return ((h >>> 0) % 1000) / 1000;
 }
 export const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
+
+/**
+ * Temporally-coherent sovereign telemetry. Unlike raw seed() noise, this
+ * produces a believable operational series: a slow seeded baseline, two
+ * out-of-phase oscillations (operational shift + diurnal cadence) and a
+ * small bounded jitter. Sampling the same key at successive `t` yields a
+ * smooth trending curve — charts breathe instead of flickering.
+ */
+export function wave(key: string, t: number, lo = 35, hi = 90): number {
+  const a = seed(key), b = seed(key + ':φ'), c = seed(key + ':ψ');
+  const span = hi - lo;
+  const base = lo + span * (0.35 + a * 0.4);
+  const slow = Math.sin(t / (40 + a * 60) + b * 6.28) * span * 0.18;
+  const fast = Math.sin(t / (9 + c * 7) + c * 6.28) * span * 0.09;
+  const jitter = (seed(`${key}:${Math.floor(t)}`) - 0.5) * span * 0.06;
+  return Math.max(lo, Math.min(hi, base + slow + fast + jitter));
+}
+export function waveSeries(key: string, t: number, n = 16, lo = 35, hi = 90): number[] {
+  return Array.from({ length: n }).map((_, i) => wave(key, t - (n - 1 - i), lo, hi));
+}
 export function rel(at: string, now: number): string {
   const s = Math.max(0, Math.round((now - new Date(at).getTime()) / 1000));
   if (s < 60) return `${s}s`;
@@ -516,9 +536,10 @@ export function SituationRoom() {
     { label: 'Informational', value: sev('sev4'), tone: 'neutral' },
   ];
   const finance = nodes.find(n => n.archetype === 'FINANCE');
-  const revPts = Array.from({ length: 18 }).map((_, i) => 80 + seed(`rev:${i}:${epoch}`) * 50);
-  const expPts = Array.from({ length: 18 }).map((_, i) => 70 + seed(`exp:${i}:${epoch}`) * 40);
-  const mhPts = Array.from({ length: 14 }).map((_, i) => 70 + seed(`mh:${i}:${epoch}`) * 28);
+  const ts = now / 4000;
+  const revPts = waveSeries('sr:rev', ts, 18, 80, 130);
+  const expPts = waveSeries('sr:exp', ts, 18, 70, 110);
+  const mhPts = waveSeries('sr:mh', ts, 14, 70, 98);
   const revenue = (110 + seed(`rv:${epoch}`) * 30).toFixed(1);
   const expenditure = (90 + seed(`ex:${epoch}`) * 20).toFixed(1);
   const integ = 96 + seed(`int:${epoch}`) * 3.9;
@@ -568,7 +589,7 @@ export function SituationRoom() {
       l, v: `${val}${unit}`,
       t: toneFor(sevV) as string,
       d, traj: d > 1 ? '↗' : d < -1 ? '↘' : '→',
-      spark: Array.from({ length: 16 }).map((_, i) => 35 + seed(`is:${sk}:${i}:${epoch}`) * 60),
+      spark: waveSeries(`is:${sk}`, ts, 16, 35, 95),
       dot: false,
     };
   };

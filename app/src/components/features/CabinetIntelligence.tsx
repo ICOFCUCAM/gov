@@ -8,7 +8,7 @@ import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { identityFor } from '@/lib/archetype-profiles';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import {
-  TONE, ACCENT, PALETTE, seed, toneFor, rel, Panel, Spark, LiveValue, NationalMap, TerritoryHeat,
+  TONE, ACCENT, PALETTE, seed, toneFor, rel, Panel, Spark, LiveValue, NationalMap, TerritoryHeat, waveSeries,
 } from '@/components/features/SituationRoom';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey,
@@ -136,7 +136,8 @@ export function CabinetIntelligence() {
     { l: 'Security readiness', v: `${Math.max(1, 100 - pressOf('INTERIOR'))}%`, sub: pressOf('INTERIOR') >= 60 ? 'Heightened' : 'Nominal', t: toneFor(pressOf('INTERIOR')), spark: 'sc' },
     { l: 'Constitutional integrity', v: nat?.totals.auditIntact === false ? '71%' : `${96 + Math.round(seed(`ci:${epoch}`) * 3)}%`, sub: nat?.totals.auditIntact === false ? 'Review' : 'Intact', t: nat?.totals.auditIntact === false ? 'alert' : 'ok', spark: 'ci' },
   ];
-  const sparkPts = (k: string) => Array.from({ length: 16 }).map((_, i) => 40 + seed(`sp:${k}:${i}:${epoch}`) * 55);
+  const ts = now / 4000;
+  const sparkPts = (k: string) => waveSeries(`sp:${k}`, ts, 16, 38, 95);
 
   const escalations = [...incidents]
     .sort((a, b) => a.severity.localeCompare(b.severity))
@@ -482,7 +483,7 @@ export function CabinetIntelligence() {
                         <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{k.l}</div>
                         <div className="font-mono text-[13px] leading-none tabular-nums" style={{ color: TONE[tn] }}>{k.v}{k.pct ? '%' : ''}</div>
                       </div>
-                      <div className="h-5 w-16 shrink-0 opacity-80"><Spark pts={Array.from({ length: 12 }).map((_, i) => 35 + seed(`kpi:${k.l}:${i}:${epoch}`) * 55)} tone={tn} /></div>
+                      <div className="h-5 w-16 shrink-0 opacity-80"><Spark pts={waveSeries(`kpi:${k.l}`, ts, 12, 35, 92)} tone={tn} /></div>
                       <span className="w-9 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: up ? TONE.ok : TONE.alert }}>{up ? '▲' : '▼'}{Math.abs(k.d)}</span>
                     </div>
                   );
@@ -496,7 +497,7 @@ export function CabinetIntelligence() {
                   <div key={f.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
                     <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{f.l}</div>
                     <div className="font-mono text-[13px] leading-tight tabular-nums" style={{ color: TONE[f.t] }}>{f.v}</div>
-                    <div className="mt-0.5 opacity-70"><Spark pts={Array.from({ length: 10 }).map((_, i) => 35 + seed(`fis:${f.l}:${i}:${epoch}`) * 55)} tone={f.t} /></div>
+                    <div className="mt-0.5 opacity-70"><Spark pts={waveSeries(`fis:${f.l}`, ts, 10, 35, 92)} tone={f.t} /></div>
                     <div className="text-[9px] tabular-nums" style={{ color: f.d.startsWith('-') ? TONE.alert : TONE.ok }}>{f.d}</div>
                   </div>
                 ))}

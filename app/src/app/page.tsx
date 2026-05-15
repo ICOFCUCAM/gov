@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { resolveIdentity } from '@/lib/sovereign-identity';
-import { TONE, ACCENT, PALETTE, seed, Spark } from '@/components/features/SituationRoom';
+import { TONE, ACCENT, PALETTE, seed, Spark, waveSeries } from '@/components/features/SituationRoom';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination } from '@/lib/api/types';
@@ -139,8 +139,8 @@ export default function SovereignCommandCenter() {
   ];
   const integ = ['Health', 'Treasury', 'Transport', 'Security', 'Energy', 'Emergency Comms', 'National Registry']
     .map((s, i) => ({ s, p: (98 + seed(`ig:${i}:${epoch}`) * 1.9) }));
-  const rev = Array.from({ length: 20 }).map((_, i) => 70 + seed(`rv:${i}:${epoch}`) * 50);
-  const exp = Array.from({ length: 20 }).map((_, i) => 60 + seed(`ex:${i}:${epoch}`) * 40);
+  const rev = waveSeries('home:rev', now / 4000, 20, 70, 120);
+  const exp = waveSeries('home:exp', now / 4000, 20, 60, 100);
 
   const cmd: CommandItem[] = [
     ...RAIL.flatMap(g => g.items.map(it => ({ id: it.href + it.l, group: g.g, label: it.l, hint: it.s, href: it.href }))),
@@ -239,7 +239,7 @@ export default function SovereignCommandCenter() {
                 <div className="text-[9px] uppercase tracking-[0.16em] text-ink-muted">Readiness status</div>
                 <div className="font-semibold" style={{ color: TONE[readiness === 'CRITICAL' ? 'alert' : readiness === 'ELEVATED' ? 'warn' : 'ok'] }}>{readiness}</div>
               </div>
-              <div className="hidden w-40 sm:block"><Spark pts={Array.from({ length: 22 }).map((_, i) => 40 + seed(`pst:${i}:${epoch}`) * 50)} tone="ok" /></div>
+              <div className="hidden w-40 sm:block"><Spark pts={waveSeries('home:pst', now / 4000, 22, 40, 90)} tone="ok" /></div>
             </div>
           </div>
 
