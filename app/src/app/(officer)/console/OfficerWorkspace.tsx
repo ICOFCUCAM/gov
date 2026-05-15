@@ -43,6 +43,18 @@ export function OfficerWorkspace() {
   );
   const selected = (permits ?? []).find(p => p.id === selectedId) ?? null;
 
+  const all = permits ?? [];
+  const openCount = all.filter(p => OPEN_STATES.has(p.status)).length;
+  const slaRisk = all.filter(p => OPEN_STATES.has(p.status) && p.decisionDue && new Date(p.decisionDue).getTime() - Date.now() < 3 * 86400_000).length;
+  const decidedToday = all.filter(p => (p.status === 'approved' || p.status === 'declined') && (p.timeline?.[p.timeline.length - 1] ? new Date(p.timeline[p.timeline.length - 1]!.at).toDateString() === new Date().toDateString() : false)).length;
+  const stats = [
+    { l: 'Open queue', v: String(openCount), c: openCount ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' },
+    { l: 'SLA at risk', v: String(slaRisk), c: slaRisk ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
+    { l: 'Decided today', v: String(decidedToday), c: 'rgb(var(--c-ok))' },
+    { l: 'Total caseload', v: String(all.length), c: 'rgb(var(--c-ink))' },
+    { l: 'Desk posture', v: slaRisk ? 'PRIORITISE' : openCount ? 'ACTIVE' : 'CLEAR', c: slaRisk ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
+  ];
+
   async function decide(decision: PermitDecision, note?: string) {
     if (!selected) return;
     setBusy(true);
@@ -84,11 +96,20 @@ export function OfficerWorkspace() {
         <div
           role="status"
           aria-live="polite"
-          className="mb-4 rounded-sm border border-ok bg-[#e7f1ec] px-4 py-2 text-sm text-ok"
+          className="mb-4 rounded-[3px] border border-ok bg-[#e7f1ec] px-4 py-2 text-sm text-ok"
         >
           {toast}
         </div>
       ) : null}
+
+      <div className="mb-3 grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+        {stats.map(s => (
+          <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="font-mono font-semibold tabular-nums" style={{ color: s.c }}>{s.v}</span>
+          </div>
+        ))}
+      </div>
 
       <div className="mb-4 flex items-center gap-2">
         <span className="text-sm text-ink-muted">Show:</span>
@@ -118,7 +139,7 @@ export function OfficerWorkspace() {
                 onClick={() => setSelectedId(p.id)}
                 aria-current={p.id === selectedId ? 'true' : undefined}
                 className={
-                  'block w-full rounded-md border p-3 text-left ' +
+                  'block w-full rounded-[3px] border p-3 text-left ' +
                   (p.id === selectedId
                     ? 'border-ink bg-surface'
                     : 'border-line bg-surface hover:bg-surface-2')

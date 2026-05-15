@@ -177,7 +177,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
         <div className="flex items-start gap-3">
           <span
             aria-hidden
-            className="mt-1 grid h-12 w-12 shrink-0 place-items-center rounded-md text-2xl text-white shadow-elev-1"
+            className="mt-1 grid h-12 w-12 shrink-0 place-items-center rounded-[3px] text-2xl text-white shadow-elev-1"
             style={{ backgroundColor: ident.accent }}
           >
             {ident.glyph}

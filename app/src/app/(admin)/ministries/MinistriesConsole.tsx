@@ -96,7 +96,7 @@ export function MinistriesConsole() {
                 onClick={() => setSelected(m.id)}
                 aria-current={m.id === selected ? 'true' : undefined}
                 className={
-                  'block w-full rounded-md border p-3 text-left ' +
+                  'block w-full rounded-[3px] border p-3 text-left ' +
                   (m.id === selected
                     ? 'border-ink bg-surface'
                     : 'border-line bg-surface hover:bg-surface-2')
