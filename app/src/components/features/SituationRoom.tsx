@@ -100,7 +100,7 @@ export function Panel({
         <h2 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}</h2>
         {meta ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
       </div>
-      <div className={`min-h-0 flex-1 p-2.5 ${bodyClass}`}>{children}</div>
+      <div className={`min-h-0 flex-1 overflow-auto p-2.5 ${bodyClass}`}>{children}</div>
     </section>
   );
 }
@@ -255,7 +255,7 @@ export function TerritoryHeat({ epoch, height = 150, focus }: { epoch: number; h
 }
 
 export function NationalMap({
-  mapNodes, edges, incidents, now, layers, epoch, height = 388, focus,
+  mapNodes, edges, incidents, now, layers, epoch, height, focus,
 }: {
   mapNodes: { ministryId: string; ministry: string; archetype: string; x: number; y: number; pressure: number }[];
   edges: { fromId: string; toId: string; propagatedRisk: number }[];
@@ -284,8 +284,8 @@ export function NationalMap({
   const provRisk = PROV.map((p, i) => ({ p, risk: Math.round(seed(`prov:${i}:${epoch}`) * 100) }));
 
   return (
-    <div className="relative w-full overflow-hidden rounded-md border border-line-soft"
-      style={{ height, background: 'radial-gradient(ellipse at 42% 26%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 60%)' }}>
+    <div className={`relative w-full overflow-hidden rounded-md border border-line-soft ${height ? '' : 'h-full'}`}
+      style={{ ...(height ? { height } : {}), background: 'radial-gradient(ellipse at 42% 26%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 60%)' }}>
       <WorldMap focus={focus} />
       <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
         <defs>
@@ -649,10 +649,10 @@ export function SituationRoom() {
         </nav>
 
         {/* Operational canvas */}
-        <main className="min-w-0 flex-1 space-y-2 overflow-y-auto p-2.5"
+        <main className="flex min-w-0 flex-1 flex-col gap-2 overflow-hidden p-2"
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.022) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
           {/* Row 1 — executive telemetry (10) */}
-          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 xl:grid-cols-10">
+          <div className="grid shrink-0 grid-cols-3 gap-1.5 sm:grid-cols-5 xl:grid-cols-10">
             {instruments.map(t => (
               <div key={t.l} className="rounded-md border border-line bg-surface px-2 py-1.5"
                 style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
@@ -668,7 +668,7 @@ export function SituationRoom() {
           </div>
 
           {/* Map-first band */}
-          <div className="grid gap-3 xl:grid-cols-12">
+          <div className="grid min-h-0 flex-[2.3] gap-2 xl:grid-cols-12">
             <Panel title="National activity map"
               meta={
                 <span className="flex items-center gap-1">
@@ -689,7 +689,7 @@ export function SituationRoom() {
               <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} />
             </Panel>
 
-            <Panel title="Ministry status matrix" meta="cross-domain risk" className="xl:col-span-4" bodyClass="overflow-auto max-h-[420px] !p-0">
+            <Panel title="Ministry status matrix" meta="cross-domain risk" className="xl:col-span-4" bodyClass="overflow-auto !p-0">
               <table className="w-full text-[11px]">
                 <thead>
                   <tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8px] uppercase tracking-wide text-ink-muted">
@@ -730,7 +730,7 @@ export function SituationRoom() {
               </table>
             </Panel>
 
-            <Panel title="Cabinet escalation stream" meta="executive level" className="xl:col-span-2" bodyClass="overflow-y-auto max-h-[420px] !p-0">
+            <Panel title="Cabinet escalation stream" meta="executive level" className="xl:col-span-2" bodyClass="overflow-y-auto !p-0">
               {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry escalations.</p> : incidents.slice(0, 9).map((c, i) => {
                 const id = identityFor(c.archetype);
                 const tn = c.severity === 'sev1' || c.severity === 'sev2' ? 'alert' : c.severity === 'sev3' ? 'warn' : 'neutral';
@@ -772,8 +772,8 @@ export function SituationRoom() {
           </div>
 
           {/* Dependency intelligence + strategic forecast */}
-          <div className="grid gap-3 lg:grid-cols-2">
-            <Panel title="National dependency graph" meta="systemic impact propagation" bodyClass="!pb-2">
+          <div className="grid min-h-0 flex-1 gap-2 lg:grid-cols-2">
+            <Panel title="National dependency graph" meta="systemic impact propagation" bodyClass="!pb-2 overflow-hidden">
               {(() => {
                 const dep = [
                   { k: 'Energy', g: '⚡', a: 'ENERGY', x: 14, y: 30 },
@@ -835,9 +835,9 @@ export function SituationRoom() {
           </div>
 
           {/* Strategic visualisation band — six operational analytics */}
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-6">
+          <div className="grid min-h-0 flex-1 gap-2 md:grid-cols-3 xl:grid-cols-6">
             <Panel title="Incident severity distribution" meta="by classification"><Donut segs={donut} /></Panel>
-            <Panel title="Operational timeline" meta="live tempo" bodyClass="overflow-y-auto max-h-[196px] !p-0">
+            <Panel title="Operational timeline" meta="live tempo" bodyClass="overflow-y-auto !p-0">
               {(coord?.timeline ?? []).slice(0, 9).map((e, i) => {
                 const phase = e.tone === 'alert' ? 'Containment' : e.tone === 'warn' ? 'Assessment' : 'Coordination';
                 const res = e.tone === 'alert' ? 'Open' : e.tone === 'warn' ? 'In progress' : 'Monitored';
@@ -901,8 +901,8 @@ export function SituationRoom() {
           </div>
 
           {/* Executive band */}
-          <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
-            <Panel title="System integration fabric" meta="cross-government" bodyClass="overflow-y-auto max-h-[280px]">
+          <div className="grid min-h-0 flex-1 gap-2 lg:grid-cols-2 xl:grid-cols-4">
+            <Panel title="System integration fabric" meta="cross-government" bodyClass="overflow-y-auto">
               <div className="mb-2 flex items-center gap-3">
                 <Ring pct={integ} label="integrated" />
                 <div className="text-[10px] text-ink-muted">
@@ -929,7 +929,7 @@ export function SituationRoom() {
                 </tbody>
               </table>
             </Panel>
-            <Panel title="National KPI snapshot" meta="macro-state intelligence" bodyClass="overflow-y-auto max-h-[280px]">
+            <Panel title="National KPI snapshot" meta="macro-state intelligence" bodyClass="overflow-y-auto">
               <ul className="space-y-1.5 text-xs">
                 {[
                   { l: 'Inflation', v: `${(2 + seed(`m1:${epoch}`) * 4).toFixed(1)}%`, d: seed(`d1:${epoch}`) - 0.55, intp: 'within target band' },
@@ -983,7 +983,7 @@ export function SituationRoom() {
           </div>
 
           {/* Row 5 — persistent command status strip */}
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line text-[10px] md:grid-cols-5">
+          <div className="grid shrink-0 grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line text-[10px] md:grid-cols-5">
             {[
               { l: 'Readiness posture', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
               { l: 'Operational tempo', v: `T${tickN} · ${Math.round(40 + seed(`tempo:${epoch}`) * 50)}/min`, t: 'ok' },
