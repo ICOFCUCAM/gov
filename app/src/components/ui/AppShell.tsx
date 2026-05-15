@@ -55,8 +55,22 @@ export function AppShell({
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [notifOpen, setNotifOpen] = React.useState(false);
+  const [navOpen, setNavOpen] = React.useState(false);
   const [q, setQ] = React.useState('');
   const [now, setNow] = React.useState(() => Date.now());
+
+  // Mobile command drawer: close on route change + Escape.
+  React.useEffect(() => {
+    setNavOpen(false);
+  }, [active]);
+  React.useEffect(() => {
+    if (!navOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setNavOpen(false);
+    };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [navOpen]);
 
   const load = React.useCallback(async () => {
     try {
@@ -122,8 +136,9 @@ export function AppShell({
         key={it.href}
         href={it.href}
         aria-current={on ? 'page' : undefined}
+        onClick={() => setNavOpen(false)}
         className={cn(
-          'block truncate border-l-2 px-3 py-1.5 text-sm no-underline',
+          'focus-ring block truncate border-l-2 px-3 py-2.5 text-sm no-underline transition-colors duration-150 ease-sov md:py-1.5',
           on
             ? 'border-l-[color:var(--accent)] bg-surface-2 font-medium text-ink'
             : 'border-transparent text-ink-muted hover:bg-surface-2/60 hover:text-ink',
@@ -134,9 +149,68 @@ export function AppShell({
     );
   }
 
+  const railBody = (
+    <>
+      <Link
+        href="/gov"
+        onClick={() => setNavOpen(false)}
+        className="focus-ring flex items-center gap-2.5 border-b border-line px-3 py-3 no-underline"
+      >
+        <span
+          aria-hidden
+          className="grid h-9 w-9 shrink-0 place-items-center rounded-sm text-xs font-bold tracking-tight text-white ring-1 ring-white/15"
+          style={{ backgroundColor: accent }}
+        >
+          {identity ? identity.seal : 'SS'}
+        </span>
+        <span className="min-w-0">
+          <span className="block truncate text-sm font-semibold tracking-tight text-ink">
+            {sov ? sov.stateName : 'Sovereign State'}
+          </span>
+          <span className="block truncate text-[11px] text-ink-muted">
+            {identity?.motto || 'CivicOS · sovereign operations'}
+          </span>
+        </span>
+      </Link>
+      <div className="flex-1 space-y-5 overflow-y-auto py-4">
+        <div>
+          <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
+            {t.state}
+          </div>
+          {stateGroup.map(railLink)}
+        </div>
+        <div>
+          <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
+            {t.institutions}
+          </div>
+          {institutions.length === 0 ? (
+            <Link
+              href="/ministries"
+              onClick={() => setNavOpen(false)}
+              className="focus-ring block px-3 py-2.5 text-sm text-ink-muted no-underline hover:text-ink md:py-1.5"
+            >
+              {t.compose}
+            </Link>
+          ) : (
+            institutions.map(railLink)
+          )}
+        </div>
+        <div>
+          <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
+            {t.platform}
+          </div>
+          {platformGroup.map(railLink)}
+        </div>
+      </div>
+      <div className="border-t border-line px-3 py-3 text-[10px] uppercase tracking-widest text-ink-muted">
+        Humans govern · AI assists
+      </div>
+    </>
+  );
+
   return (
     <div
-      className="sov flex h-screen flex-col overflow-hidden font-sans"
+      className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]"
       dir={identity?.dir ?? 'ltr'}
       style={{ ['--accent' as string]: accent }}
     >
@@ -148,64 +222,39 @@ export function AppShell({
       </a>
       <OfflineBanner />
 
+      {/* Mobile command drawer */}
+      <div
+        className={cn(
+          'fixed inset-0 z-50 md:hidden',
+          navOpen ? 'pointer-events-auto' : 'pointer-events-none',
+        )}
+        aria-hidden={!navOpen}
+      >
+        <div
+          onClick={() => setNavOpen(false)}
+          className={cn(
+            'absolute inset-0 bg-black/60 transition-opacity duration-200 ease-sov',
+            navOpen ? 'opacity-100' : 'opacity-0',
+          )}
+        />
+        <nav
+          aria-label="Sovereign navigation"
+          className={cn(
+            'absolute inset-y-0 start-0 flex w-72 max-w-[82%] flex-col border-e border-line bg-bg shadow-elev-3 transition-transform duration-300 ease-sov',
+            navOpen ? 'translate-x-0' : '-translate-x-full rtl:translate-x-full',
+          )}
+        >
+          {railBody}
+        </nav>
+      </div>
+
       <div className="flex min-h-0 flex-1">
         {/* Persistent command rail */}
         <nav
           aria-label="Sovereign navigation"
           className="hidden w-60 shrink-0 flex-col border-r border-line bg-bg md:flex"
         >
-          <Link
-            href="/gov"
-            className="flex items-center gap-2.5 border-b border-line px-3 py-3 no-underline"
-          >
-            <span
-              aria-hidden
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-sm text-xs font-bold tracking-tight text-white ring-1 ring-white/15"
-              style={{ backgroundColor: accent }}
-            >
-              {identity ? identity.seal : 'SS'}
-            </span>
-            <span className="min-w-0">
-              <span className="block truncate text-sm font-semibold tracking-tight text-ink">
-                {sov ? sov.stateName : 'Sovereign State'}
-              </span>
-              <span className="block truncate text-[11px] text-ink-muted">
-                {identity?.motto || 'CivicOS · sovereign operations'}
-              </span>
-            </span>
-          </Link>
-          <div className="flex-1 space-y-5 overflow-y-auto py-4">
-            <div>
-              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
-                {t.state}
-              </div>
-              {stateGroup.map(railLink)}
-            </div>
-            <div>
-              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
-                {t.institutions}
-              </div>
-              {institutions.length === 0 ? (
-                <Link
-                  href="/ministries"
-                  className="block px-3 py-1.5 text-sm text-ink-muted no-underline hover:text-ink"
-                >
-                  {t.compose}
-                </Link>
-              ) : (
-                institutions.map(railLink)
-              )}
-            </div>
-            <div>
-              <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
-                {t.platform}
-              </div>
-              {platformGroup.map(railLink)}
-            </div>
-          </div>
-          <div className="border-t border-line px-3 py-3 text-[10px] uppercase tracking-widest text-ink-muted">
-            Humans govern · AI assists
-          </div>
+          {railBody}
         </nav>
 
         {/* Workspace column */}
@@ -213,6 +262,17 @@ export function AppShell({
           {/* Global command header */}
           <header className="flex shrink-0 items-center justify-between gap-4 border-b border-line bg-surface px-4 py-2">
             <div className="flex min-w-0 items-center gap-3">
+              <button
+                type="button"
+                onClick={() => setNavOpen(true)}
+                aria-label="Open navigation"
+                aria-expanded={navOpen}
+                className="focus-ring -ml-1 grid h-9 w-9 shrink-0 place-items-center rounded-sm text-ink-soft hover:bg-surface-2 md:hidden"
+              >
+                <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden fill="none">
+                  <path d="M2 4h14M2 9h14M2 14h14" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+                </svg>
+              </button>
               <span
                 className="hidden rounded-sm border px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-soft sm:inline"
                 style={{ borderColor: 'rgb(var(--c-line))' }}
