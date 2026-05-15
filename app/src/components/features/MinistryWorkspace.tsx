@@ -7,7 +7,7 @@ import { Pill } from '@/components/ui/Pill';
 import { Button } from '@/components/ui/Button';
 import { Section, EnterpriseTable, StatusText, type Column } from '@/components/ui/DataSystem';
 import { SeverityBadge } from '@/components/ui/Ops';
-import { Sparkbars, HeatStrip } from '@/components/ui/Viz';
+import { Sparkbars, RegionMatrix, SLAMonitor, FlowBars } from '@/components/ui/Viz';
 import { api } from '@/lib/api/client';
 import type {
   AnalyticSeries,
@@ -120,6 +120,8 @@ export function MinistryWorkspace({ id }: { id: string }) {
 
   const activeAlerts = incidents.filter(i => i.active);
   const openQueue = queue?.items.filter(i => i.state !== 'cleared').length ?? 0;
+  const maxCases = regions.reduce((m, r) => Math.max(m, r.openCases), 0);
+  const totalCases = regions.reduce((s, r) => s + r.openCases, 0);
 
   const regionCols: Column<RegionStat & { id?: string }>[] = [
     { key: 'r', header: 'Region', render: r => <strong>{r.region}</strong>, filter: r => r.region, sort: (a, b) => a.region.localeCompare(b.region) },
@@ -198,15 +200,39 @@ export function MinistryWorkspace({ id }: { id: string }) {
               ))}
             </div>
           </Section>
-          <Section title="Regional posture">
-            <HeatStrip
+          <Section title="Regional posture" meta="tile shade ∝ open caseload">
+            <RegionMatrix
               cells={regions.map(r => ({
                 label: r.region,
                 tone: r.status,
+                intensity: maxCases ? (r.openCases / maxCases) * 100 : 0,
                 value: `${r.facilitiesOperationalPct}%`,
               }))}
+              onSelect={() => setTab('regional')}
             />
           </Section>
+          <div className="grid gap-5 lg:grid-cols-2">
+            <Section title="SLA compliance" meta="target 95%">
+              <SLAMonitor
+                rows={regions.map(r => ({
+                  label: r.region,
+                  compliancePct: Math.round(
+                    100 * (1 - r.slaBreaches / (r.openCases + r.slaBreaches || 1)),
+                  ),
+                  target: 95,
+                }))}
+              />
+            </Section>
+            <Section title="Caseload concentration" meta={`${totalCases} ${labels.cases.toLowerCase()}`}>
+              <FlowBars
+                segments={regions.map(r => ({
+                  label: r.region,
+                  value: r.openCases,
+                  tone: r.status,
+                }))}
+              />
+            </Section>
+          </div>
           {activeAlerts.length > 0 ? (
             <Section title="Active incidents">
               <div className="space-y-2">
