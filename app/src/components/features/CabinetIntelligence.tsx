@@ -87,6 +87,7 @@ export function CabinetIntelligence() {
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [now, setNow] = React.useState(() => Date.now());
   const [war, setWar] = React.useState(false);
+  const [openEsc, setOpenEsc] = React.useState<number | null>(0);
   const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true });
 
   React.useEffect(() => {
@@ -374,19 +375,52 @@ export function CabinetIntelligence() {
               </table>
             </Panel>
 
-            <Panel title="Cabinet escalation feed" meta="executive" className="xl:col-span-2" bodyClass="!p-0">
-              {escList.map((e, i) => (
-                <Link key={i} href={e.mid.startsWith('/') ? e.mid : `/gov/ministry/${e.mid}`} className="focus-ring block border-b border-line-soft px-3 py-2.5 no-underline transition-colors hover:bg-surface-2/50 last:border-0"
-                  style={{ borderLeft: `3px solid ${TONE[RISK_TONE[e.sevState]]}` }}>
-                  <div className="flex items-center justify-between">
-                    <span className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[RISK_TONE[e.sevState]]} 18%, transparent)`, color: TONE[RISK_TONE[e.sevState]] }}>{RISK_LABEL[e.sevState]}</span>
-                    <span className="font-mono text-[10px] tabular-nums text-ink-muted">{e.age}m</span>
+            <Panel title="Cabinet escalation feed" meta={`${escList.length} active`} className="xl:col-span-2" bodyClass="!p-0">
+              {escList.map((e, i) => {
+                const open = openEsc === i;
+                const tn = TONE[RISK_TONE[e.sevState]];
+                const owner = ['Dep. Chief of Staff', 'National Security Adviser', 'Cabinet Secretary', 'Crisis Coordinator', 'Principal Secretary'][Math.floor(seed(`own:${e.title}`) * 5)];
+                const chron = [
+                  { t: `${e.age}m`, l: 'Signal detected', c: TONE.neutral },
+                  { t: `${Math.max(1, e.age - 2)}m`, l: `${e.ministry} acknowledged`, c: TONE.ok },
+                  { t: `${Math.max(1, Math.round(e.age * 0.6))}m`, l: `Escalated to Cabinet L${e.level}`, c: TONE.warn },
+                  { t: `${Math.max(1, Math.round(e.age * 0.3))}m`, l: `${owner} assigned`, c: tn },
+                ];
+                const action = e.sevState === 'critical' ? 'Convene Cabinet · activate War Room' : e.sevState === 'elevated' ? 'Pre-position reserves · regional coordination' : 'Ministry-level containment · monitor';
+                return (
+                  <div key={i} className="border-b border-line-soft last:border-0" style={{ borderLeft: `3px solid ${tn}` }}>
+                    <button onClick={() => setOpenEsc(open ? null : i)}
+                      className="focus-ring block w-full px-3 py-2.5 text-left transition-colors hover:bg-surface-2/50">
+                      <div className="flex items-center justify-between">
+                        <span className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${tn} 18%, transparent)`, color: tn }}>{RISK_LABEL[e.sevState]}</span>
+                        <span className="flex items-center gap-1.5 font-mono text-[10px] tabular-nums text-ink-muted">{e.age}m<span className="transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'none' }}>›</span></span>
+                      </div>
+                      <div className="mt-1 truncate text-xs font-medium text-ink">{e.title}</div>
+                      <div className="truncate text-[10px] text-ink-muted">{e.ministry} · affecting {e.pop}M · {e.regions} regions</div>
+                    </button>
+                    {open ? (
+                      <div className="px-3 pb-2.5 pt-0.5">
+                        <div className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                          <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Chronology</div>
+                          {chron.map((c, k) => (
+                            <div key={k} className="flex items-center gap-2 py-0.5 text-[10px]">
+                              <span className="w-8 shrink-0 font-mono tabular-nums text-ink-muted">{c.t}</span>
+                              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: c.c }} />
+                              <span className="truncate text-ink-soft">{c.l}</span>
+                            </div>
+                          ))}
+                          <div className="mt-1.5 flex items-center justify-between border-t border-line-soft pt-1.5 text-[10px]">
+                            <span className="text-ink-muted">Owner</span><span className="text-ink-soft">{owner}</span>
+                          </div>
+                          <div className="mt-1 text-[10px]" style={{ color: TONE.warn }}>Recommended: {action}</div>
+                          <Link href={e.mid.startsWith('/') ? e.mid : `/gov/ministry/${e.mid}`}
+                            className="focus-ring mt-1.5 inline-block text-[10px] text-link underline underline-offset-2">Open ministry workspace →</Link>
+                        </div>
+                      </div>
+                    ) : null}
                   </div>
-                  <div className="mt-1 truncate text-xs font-medium text-ink">{e.title}</div>
-                  <div className="truncate text-[10px] text-ink-muted">{e.ministry} · affecting {e.pop}M · {e.regions} regions</div>
-                  <div className="mt-0.5 text-[10px]" style={{ color: TONE.warn }}>Escalated to Cabinet Level {e.level}</div>
-                </Link>
-              ))}
+                );
+              })}
               <Link href="/gov/coordination" className="focus-ring block px-3 py-2 text-center text-[11px] text-link underline underline-offset-2">View all escalations →</Link>
             </Panel>
           </div>
