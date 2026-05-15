@@ -425,12 +425,6 @@ export function SituationRoom() {
   const indV = (l: string) => nat?.indicators.find(x => x.label.toLowerCase().includes(l))?.value ?? '—';
   const mhealth = nodes.length ? Math.round((nodes.filter(n => n.posture === 'ok').length / nodes.length) * 100) : 100;
 
-  const kpis = [
-    { l: 'Unemployment rate', v: `${(4 + seed(`ku:${epoch}`) * 5).toFixed(1)}%`, d: seed(`du:${epoch}`) - 0.5 },
-    { l: 'Inflation rate', v: `${(2 + seed(`ki:${epoch}`) * 4).toFixed(1)}%`, d: seed(`di:${epoch}`) - 0.5 },
-    { l: 'Food security index', v: `${(78 + seed(`kf:${epoch}`) * 14).toFixed(1)}`, d: seed(`df:${epoch}`) - 0.4 },
-    { l: 'Public satisfaction', v: `${(66 + seed(`kp:${epoch}`) * 16).toFixed(1)}%`, d: seed(`dp:${epoch}`) - 0.4 },
-  ];
   const cal = [
     { t: 'Cabinet economic review', m: 11 },
     { t: 'National security briefing', m: 101 },
@@ -654,29 +648,41 @@ export function SituationRoom() {
               </table>
             </Panel>
 
-            <Panel title="Active incident feed" meta="cross-ministry" className="xl:col-span-2" bodyClass="overflow-y-auto max-h-[420px] !p-0">
-              {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry incidents.</p> : incidents.slice(0, 9).map((c, i) => {
+            <Panel title="Cabinet escalation stream" meta="executive level" className="xl:col-span-2" bodyClass="overflow-y-auto max-h-[420px] !p-0">
+              {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry escalations.</p> : incidents.slice(0, 9).map((c, i) => {
                 const id = identityFor(c.archetype);
                 const tn = c.severity === 'sev1' || c.severity === 'sev2' ? 'alert' : c.severity === 'sev3' ? 'warn' : 'neutral';
-                const pop = (0.2 + seed(`pop:${c.ministry}:${i}`) * 3.4).toFixed(1);
+                const pop = (0.2 + seed(`pop:${c.ministry}:${i}`) * 7.8).toFixed(1);
                 const prop = Math.round(40 + seed(`pr:${c.ministry}:${i}:${epoch}`) * 58);
                 const ageM = 2 + Math.floor(seed(`ag:${c.ministry}:${i}`) * 58);
-                const stage = c.severity === 'sev1' ? 'Cabinet' : c.severity === 'sev2' ? 'Regional' : 'Local';
+                const lvl = c.severity === 'sev1' ? 3 : c.severity === 'sev2' ? 2 : 1;
+                const regionsN = 1 + Math.floor(seed(`rgn:${c.ministry}:${i}`) * 13);
+                const ack = seed(`ack:${c.ministry}:${i}:${epoch}`) > 0.45;
+                const treas = c.severity === 'sev1' ? 'Reserve intervention' : c.severity === 'sev2' ? 'Contingency draw' : 'Within budget';
+                const owner = c.authority;
+                const eta = lvl === 3 ? `${1 + (epoch % 4)}h` : lvl === 2 ? `${4 + (epoch % 6)}h` : `${12 + (epoch % 12)}h`;
+                const linked = (coord?.edges ?? []).filter(e => e.fromId === c.ministryId || e.toId === c.ministryId).length;
+                const rec = c.severity === 'sev1' ? 'Convene Cabinet · activate War Room' : c.severity === 'sev2' ? 'Regional coordination · pre-position reserves' : 'Ministry-level containment';
                 return (
                   <Link key={i} href={`/gov/ministry/${c.ministryId}`} className="focus-ring block border-b border-line-soft px-3 py-2 no-underline transition-colors hover:bg-surface-2/50 last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
                     <div className="flex items-center justify-between">
                       <span className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 18%, transparent)`, color: TONE[tn] }}>
-                        {c.severity === 'sev1' ? 'Critical' : c.severity === 'sev2' ? 'Elevated' : c.severity === 'sev3' ? 'Warning' : 'Info'}
+                        {c.severity === 'sev1' ? 'Critical' : c.severity === 'sev2' ? 'Elevated' : c.severity === 'sev3' ? 'Warning' : 'Info'} · L{lvl}
                       </span>
-                      <span className="font-mono text-[10px] tabular-nums text-ink-muted">{ageM}m</span>
+                      <span className="flex items-center gap-1.5 font-mono text-[10px] tabular-nums text-ink-muted">
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: ack ? TONE.ok : TONE.warn }} title={ack ? 'Acknowledged' : 'Unacknowledged'} />
+                        {ageM}m
+                      </span>
                     </div>
                     <div className="mt-1 truncate text-xs font-medium text-ink">{c.label}</div>
-                    <div className="truncate text-[10px] text-ink-muted">{id.glyph} {c.ministry} · {c.authority}</div>
-                    <div className="mt-1 flex items-center gap-2 text-[9px] text-ink-muted">
-                      <span>~{pop}M affected</span>
-                      <span className="border-l border-line pl-2">esc: {stage}</span>
-                      <span className="ml-auto" style={{ color: prop >= 70 ? TONE.alert : prop >= 50 ? TONE.warn : TONE.neutral }}>prop {prop}%</span>
+                    <div className="truncate text-[10px] text-ink-muted">{id.glyph} {c.ministry} · owner {owner}</div>
+                    <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-ink-muted">
+                      <span>~{pop}M · {regionsN} regions</span>
+                      <span className="text-right" style={{ color: prop >= 70 ? TONE.alert : prop >= 50 ? TONE.warn : TONE.neutral }}>propagation {prop}%</span>
+                      <span>treasury: {treas}</span>
+                      <span className="text-right">ETA {eta} · {linked} linked</span>
                     </div>
+                    <div className="mt-1 truncate text-[9px]" style={{ color: TONE.warn }}>▸ {rec}</div>
                   </Link>
                 );
               })}
@@ -787,24 +793,50 @@ export function SituationRoom() {
 
           {/* Executive band */}
           <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
-            <Panel title="System integration status" meta="cross-ministry fabric">
-              <div className="flex items-center gap-4">
+            <Panel title="System integration fabric" meta="cross-government" bodyClass="overflow-y-auto max-h-[280px]">
+              <div className="mb-2 flex items-center gap-3">
                 <Ring pct={integ} label="integrated" />
-                <ul className="space-y-1 text-xs">
-                  {['Health', 'Treasury', 'Transport', 'Security', 'Energy'].map(s => {
-                    const node = nodes.find(n => n.ministry.toLowerCase().includes(s.toLowerCase()));
-                    const on = !node || node.posture !== 'alert';
-                    return <li key={s} className="flex items-center gap-2"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: on ? TONE.ok : TONE.alert }} /><span className="text-ink-soft">{s} System</span><span className="ml-auto text-[10px]" style={{ color: on ? TONE.ok : TONE.alert }}>{on ? 'Online' : 'Degraded'}</span></li>;
-                  })}
-                </ul>
+                <div className="text-[10px] text-ink-muted">
+                  <div className="font-mono text-lg tabular-nums" style={{ color: TONE.ok }}>{(9 - Math.round(seed(`deg:${epoch}`) * 1.6))}/9</div>
+                  systems nominal
+                </div>
               </div>
+              <table className="w-full text-[10px]">
+                <tbody>
+                  {['Health', 'Treasury', 'Security', 'Transport', 'Energy', 'National Registry', 'Emergency Comms', 'Border Systems', 'Intelligence'].map((s, i) => {
+                    const node = nodes.find(n => n.ministry.toLowerCase().includes(s.toLowerCase()));
+                    const deg = (node?.posture === 'alert') || seed(`sys:${i}:${epoch}`) > 0.88;
+                    const up = (deg ? 95 + seed(`u:${i}:${epoch}`) * 4 : 99 + seed(`u:${i}:${epoch}`) * 0.99);
+                    const lat = Math.round((deg ? 80 : 12) + seed(`lt:${i}:${epoch}`) * (deg ? 220 : 40));
+                    return (
+                      <tr key={s} className="border-b border-line-soft last:border-0">
+                        <td className="py-1"><span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: deg ? TONE.alert : TONE.ok }} /><span className="text-ink-soft">{s}</span></span></td>
+                        <td className="py-1 text-right font-mono tabular-nums text-ink-muted">{up.toFixed(2)}%</td>
+                        <td className="py-1 text-right font-mono tabular-nums" style={{ color: lat > 150 ? TONE.alert : lat > 60 ? TONE.warn : 'rgb(var(--c-ink-soft))' }}>{lat}ms</td>
+                        <td className="py-1 text-right text-[9px]" style={{ color: deg ? TONE.alert : TONE.ok }}>{deg ? 'Degraded' : 'Synced'}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </Panel>
-            <Panel title="National KPI snapshot" meta="key indicators">
-              <ul className="space-y-2 text-xs">
-                {kpis.map(k => (
-                  <li key={k.l} className="flex items-center justify-between">
-                    <span className="text-ink-soft">{k.l}</span>
-                    <span className="flex items-center gap-2"><span className="font-mono tabular-nums text-ink">{k.v}</span><span className="text-[10px]" style={{ color: k.d >= 0 ? TONE.ok : TONE.alert }}>{k.d >= 0 ? '▲' : '▼'} {Math.abs(k.d * 4).toFixed(1)}%</span></span>
+            <Panel title="National KPI snapshot" meta="macro-state intelligence" bodyClass="overflow-y-auto max-h-[280px]">
+              <ul className="space-y-1.5 text-xs">
+                {[
+                  { l: 'Inflation', v: `${(2 + seed(`m1:${epoch}`) * 4).toFixed(1)}%`, d: seed(`d1:${epoch}`) - 0.55, intp: 'within target band' },
+                  { l: 'Unemployment', v: `${(4 + seed(`m2:${epoch}`) * 5).toFixed(1)}%`, d: seed(`d2:${epoch}`) - 0.5, intp: 'labour market stable' },
+                  { l: 'Public satisfaction', v: `${(64 + seed(`m3:${epoch}`) * 18).toFixed(0)}%`, d: seed(`d3:${epoch}`) - 0.45, intp: 'civil sentiment steady' },
+                  { l: 'Healthcare response', v: `${(8 + seed(`m4:${epoch}`) * 10).toFixed(0)}m`, d: 0.5 - seed(`d4:${epoch}`), intp: 'within SLA' },
+                  { l: 'Education continuity', v: `${(90 + seed(`m5:${epoch}`) * 9).toFixed(0)}%`, d: seed(`d5:${epoch}`) - 0.4, intp: 'nominal' },
+                  { l: 'Fuel reserve', v: `${(18 + seed(`m6:${epoch}`) * 20).toFixed(0)}d`, d: 0.5 - seed(`d6:${epoch}`), intp: pressOf('ENERGY') >= 60 ? 'monitor closely' : 'adequate' },
+                  { l: 'Energy availability', v: `${Math.max(1, 100 - pressOf('ENERGY'))}%`, d: 0.5 - seed(`d7:${epoch}`), intp: pressOf('ENERGY') >= 60 ? 'stressed' : 'stable' },
+                  { l: 'Food security', v: `${(78 + seed(`m8:${epoch}`) * 14).toFixed(0)}`, d: seed(`d8:${epoch}`) - 0.4, intp: 'secure' },
+                  { l: 'Logistics continuity', v: `${Math.max(1, 100 - pressOf('TRANSPORT'))}%`, d: 0.5 - seed(`d9:${epoch}`), intp: pressOf('TRANSPORT') >= 60 ? 'congested' : 'flowing' },
+                  { l: 'Emergency readiness', v: `${(82 + seed(`m10:${epoch}`) * 14).toFixed(0)}%`, d: seed(`d10:${epoch}`) - 0.4, intp: 'ready' },
+                ].map(k => (
+                  <li key={k.l} className="flex items-center justify-between gap-2">
+                    <span className="min-w-0"><span className="block text-ink-soft">{k.l}</span><span className="block text-[9px] text-ink-muted">{k.intp}</span></span>
+                    <span className="flex items-center gap-2 text-right"><span className="font-mono tabular-nums text-ink">{k.v}</span><span className="w-7 text-[10px]" style={{ color: k.d >= 0 ? TONE.ok : TONE.alert }}>{k.d >= 0 ? '▲' : '▼'}{Math.abs(k.d * 4).toFixed(1)}</span></span>
                   </li>
                 ))}
               </ul>
