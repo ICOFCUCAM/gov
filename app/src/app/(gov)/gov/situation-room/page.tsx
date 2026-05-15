@@ -1,12 +1,8 @@
-import { AppShell } from '@/components/ui/AppShell';
 import { SituationRoom } from '@/components/features/SituationRoom';
 
 export const dynamic = 'force-dynamic';
 
+// Flagship surface — renders its own full-screen command chrome, no AppShell.
 export default function SituationRoomPage() {
-  return (
-    <AppShell active="/gov/situation-room">
-      <SituationRoom />
-    </AppShell>
-  );
+  return <SituationRoom />;
 }
