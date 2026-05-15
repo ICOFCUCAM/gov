@@ -24,10 +24,10 @@ const STATE_FORM_LABEL: Record<string, string> = {
 };
 
 const TONE_HEX: Record<string, string> = {
-  alert: '#e26e66',
-  warn: '#d6aa46',
-  ok: '#5fc88c',
-  neutral: '#7a8492',
+  alert: 'rgb(var(--c-alert))',
+  warn: 'rgb(var(--c-warn))',
+  ok: 'rgb(var(--c-ok))',
+  neutral: 'rgb(var(--c-ink-muted))',
 };
 
 interface NavItem {
@@ -402,7 +402,7 @@ export function AppShell({
           {/* Persistent live event ticker */}
           <div className="flex shrink-0 items-center gap-3 border-t border-line bg-surface px-4 py-1.5">
             <span className="flex shrink-0 items-center gap-1.5 text-[10px] font-semibold uppercase tracking-widest text-ink-muted">
-              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-[#5fc88c]" />
+              <span className="inline-block h-2 w-2 animate-pulse rounded-full bg-ok" />
               {coord ? `Live · T${coord.tick}` : 'Live'}
             </span>
             <div className="flex min-w-0 flex-1 items-center gap-6 overflow-hidden">

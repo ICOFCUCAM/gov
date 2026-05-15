@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { EmptyState } from '@/components/ui/EmptyState';
 import type { OpsTone } from '@/lib/api/types';
 
 /**
@@ -54,11 +55,7 @@ export function DataTable<T extends { id?: string }>({
   rowKey: (row: T, i: number) => string;
 }) {
   if (rows.length === 0) {
-    return (
-      <div className="rounded-sm border border-dashed border-line p-6 text-center text-sm text-ink-muted">
-        {empty}
-      </div>
-    );
+    return <EmptyState title={empty} glyph="▤" />;
   }
   return (
     <div className="max-h-[70vh] overflow-auto rounded-sm border border-line">
@@ -314,9 +311,15 @@ export function EnterpriseTable<T extends { id?: string }>({
         </div>
       )}
       {keyed.length === 0 ? (
-        <div className="rounded-sm border border-dashed border-line p-6 text-center text-sm text-ink-muted">
-          {q ? 'No records match the filter.' : empty}
-        </div>
+        q ? (
+          <EmptyState
+            glyph="⌕"
+            title="No records match the filter"
+            hint={`Nothing matches “${q}”. Adjust or clear the filter to see all records.`}
+          />
+        ) : (
+          <EmptyState title={empty} glyph="▤" />
+        )
       ) : (
         <div className="max-h-[70vh] overflow-auto rounded-sm border border-line">
           <table className="w-full border-collapse text-sm tabular-nums">

@@ -44,10 +44,10 @@ const CHRON_LABEL: Record<ChronologyEvent['kind'], string> = {
 };
 
 const TONE_HEX: Record<string, string> = {
-  alert: '#b22e28',
-  warn: '#9a6e00',
-  ok: '#227c4d',
-  neutral: '#5a636e',
+  alert: 'rgb(var(--c-alert))',
+  warn: 'rgb(var(--c-warn))',
+  ok: 'rgb(var(--c-ok))',
+  neutral: 'rgb(var(--c-ink-muted))',
 };
 
 /**
