@@ -1,14 +1,14 @@
-import { AppShell } from '@/components/ui/AppShell';
+import { CommandShell } from '@/components/ui/CommandShell';
 import { MinistryWorkspace } from '@/components/features/MinistryWorkspace';
 
 export const dynamic = 'force-dynamic';
 
-// Institution workspace mounted inside the National Shell — its own
-// internal navigation, command surface, and archetype-specialised tabs.
+// Institution workspace — its own internal navigation and archetype-
+// specialised tabs, mounted in the unified sovereign command chrome.
 export default function MinistryWorkspacePage({ params }: { params: { id: string } }) {
   return (
-    <AppShell active={`/gov/ministry/${params.id}`}>
+    <CommandShell active="min">
       <MinistryWorkspace id={params.id} />
-    </AppShell>
+    </CommandShell>
   );
 }

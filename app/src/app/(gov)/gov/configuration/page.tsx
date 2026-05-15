@@ -1,15 +1,15 @@
-import { AppShell } from '@/components/ui/AppShell';
+import { CommandShell } from '@/components/ui/CommandShell';
 import { Cabinet } from '../Cabinet';
 
 export const dynamic = 'force-dynamic';
 
 // Sovereign configuration & administration (profile, presets, identity,
-// national indicators, institutions register) — preserved from the
-// original Cabinet, now distinct from the executive intelligence surface.
+// national indicators, institutions register) — integrated into the
+// unified sovereign command chrome.
 export default function CabinetConfigurationPage() {
   return (
-    <AppShell active="/gov/configuration">
+    <CommandShell active="cfg">
       <Cabinet />
-    </AppShell>
+    </CommandShell>
   );
 }

@@ -1,12 +1,12 @@
-import { AppShell } from '@/components/ui/AppShell';
+import { CommandShell } from '@/components/ui/CommandShell';
 import { NationalCoordination } from '@/components/features/NationalCoordination';
 
 export const dynamic = 'force-dynamic';
 
 export default function NationalCoordinationPage() {
   return (
-    <AppShell active="/gov/coordination">
+    <CommandShell active="coord">
       <NationalCoordination />
-    </AppShell>
+    </CommandShell>
   );
 }
