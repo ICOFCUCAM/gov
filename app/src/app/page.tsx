@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import { TONE, ACCENT, PALETTE, seed, Spark } from '@/components/features/SituationRoom';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
+import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination } from '@/lib/api/types';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] = [
@@ -178,9 +179,8 @@ export default function SovereignCommandCenter() {
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}<span className="ml-1 text-[9px] text-ink-muted">UTC+3</span></span>
           <span className="hidden items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-[10px] text-ink-soft sm:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Secure Comms</span>
           <span className="relative grid h-7 w-7 place-items-center rounded-sm text-ink-soft" title="Notifications">⌁<span className="absolute -right-0.5 -top-0.5 grid h-3.5 w-3.5 place-items-center rounded-full text-[8px] text-white" style={{ backgroundColor: TONE.alert }}>{incidents.length || 7}</span></span>
-          <span className="flex items-center gap-2 border-l border-line pl-3">
-            <span className="text-right leading-tight"><span className="block text-xs font-medium text-ink">{sov?.executiveTitle ?? 'Head of Government'}</span><span className="block text-[10px] text-ink-muted">National Executive</span></span>
-            <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full bg-surface-2 text-xs text-ink-soft ring-1 ring-line">◷</span>
+          <span className="border-l border-line pl-3">
+            <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="National Executive" accent={ACCENT} />
           </span>
         </div>
       </header>

@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
+import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { identityFor } from '@/lib/archetype-profiles';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import {
@@ -262,12 +263,8 @@ export function CabinetIntelligence() {
             <kbd className="ml-1 rounded border border-line px-1 text-[9px] text-ink-muted">⌘K</kbd>
           </button>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
-          <span className="flex items-center gap-2 border-l border-line pl-3">
-            <span className="text-right leading-tight">
-              <span className="block text-xs font-medium text-ink">{sov?.executiveTitle ?? 'Head of Government'}</span>
-              <span className="block text-[10px] text-ink-muted">Leader of the Nation</span>
-            </span>
-            <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full bg-surface-2 text-xs text-ink-soft ring-1 ring-line">◷</span>
+          <span className="border-l border-line pl-3">
+            <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="Leader of the Nation" accent={war ? RED : ACCENT} />
           </span>
         </div>
       </header>
@@ -454,8 +451,8 @@ export function CabinetIntelligence() {
             </Panel>
           </div>
 
-          {/* Dependency · timeline · forecast · heatmap */}
-          <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
+          {/* Dependency · timeline · forecast · heatmap (5 cols, heatmap wider) */}
+          <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-5">
             <Panel title="National dependency graph" meta="systemic impact propagation">
               <div className="relative h-[200px] w-full">
                 <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
@@ -509,8 +506,8 @@ export function CabinetIntelligence() {
               <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory projection only — no autonomous action. Cabinet decides.</p>
             </Panel>
 
-            <Panel title="National heatmap" meta="ministry stress by region" bodyClass="!p-2">
-              <TerritoryHeat epoch={epoch} height={150} focus={sov?.stateName} />
+            <Panel title="National heatmap" meta="ministry stress by region" className="xl:col-span-2" bodyClass="!p-2">
+              <TerritoryHeat epoch={epoch} height={196} focus={sov?.stateName} />
               <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
                 <span>Low</span>
                 <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
@@ -519,9 +516,9 @@ export function CabinetIntelligence() {
             </Panel>
           </div>
 
-          {/* KPI trends · fiscal · geopolitical · quick actions · briefing */}
-          <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-5">
-            <Panel title="National KPI trends" meta="7-day" className="xl:col-span-2">
+          {/* KPI trends · fiscal · geopolitical · quick actions (4 cols) */}
+          <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
+            <Panel title="National KPI trends" meta="7-day">
               <div className="grid grid-cols-5 gap-2">
                 {kpiTrends.map(k => (
                   <div key={k.l}>

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { WorldMap } from '@/components/ui/WorldMap';
+import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { identityFor } from '@/lib/archetype-profiles';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type {
@@ -600,12 +601,8 @@ export function SituationRoom() {
             <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: war ? TONE.alert : TONE.ok }} />
             <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft">{war ? 'CRISIS' : 'Live'} · T{tickN}</span>
           </span>
-          <span className="flex items-center gap-2 border-l border-line pl-3">
-            <span className="text-right leading-tight">
-              <span className="block text-xs font-medium text-ink">{sov?.executiveTitle ?? 'Executive Office'}</span>
-              <span className="block text-[10px] text-ink-muted">{sov ? 'Head of Government' : '—'}</span>
-            </span>
-            <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full bg-surface-2 text-xs text-ink-soft ring-1 ring-line">◷</span>
+          <span className="border-l border-line pl-3">
+            <ExecutiveMenu title={sov?.executiveTitle ?? 'Executive Office'} sub="Head of Government" accent={war ? TONE.alert : ACCENT} />
           </span>
         </div>
       </header>
