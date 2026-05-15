@@ -527,3 +527,18 @@ export interface CabinetOverview {
     auditIntact: boolean;
   };
 }
+
+// ── Command visualisation series ─────────────────────────────────────
+export interface AnalyticSeries {
+  key: string;
+  label: string;
+  unit: string;
+  points: number[];      // ~12 period points (oldest → newest)
+  current: number;
+  mean: number;
+  goodWhenUp: boolean;
+}
+export interface MinistrySeries {
+  ministry: { id: string; name: string; archetype: ArchetypeKey };
+  series: AnalyticSeries[];
+}

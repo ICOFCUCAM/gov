@@ -73,6 +73,8 @@ import type {
   MinistryFieldOps,
   SovereignProfile,
   CabinetOverview,
+  AnalyticSeries,
+  MinistrySeries,
   VerifyResult,
 } from '@/lib/api/types';
 import { specFor } from '@/lib/ops-catalog';
@@ -1531,5 +1533,35 @@ export function cabinetOverview(): CabinetOverview {
       queuesBreaching: institutions.filter(i => i.openQueue > 6).length,
       auditIntact: audit.ok,
     },
+  };
+}
+
+// ── Command visualisation series (deterministic period trend) ─────────
+export function seriesFor(id: string): MinistrySeries | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  const prof = profileFor(m.archetype);
+  const series: AnalyticSeries[] = prof.kpis.map(k => {
+    const lo = k.range[0];
+    const hi = k.range[1];
+    const points: number[] = [];
+    for (let t = 0; t < 12; t++) {
+      points.push(seededInt(`${id}:ser:${k.key}:${t}`, lo, hi));
+    }
+    const current = points[points.length - 1]!;
+    const mean = Math.round(points.reduce((a, b) => a + b, 0) / points.length);
+    return {
+      key: k.key,
+      label: k.label,
+      unit: k.unit,
+      points,
+      current,
+      mean,
+      goodWhenUp: k.goodWhenUp,
+    };
+  });
+  return {
+    ministry: { id: m.id, name: m.name, archetype: m.archetype },
+    series,
   };
 }

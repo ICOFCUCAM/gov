@@ -42,6 +42,7 @@ import type {
   MinistryIncidents,
   MinistryIncident,
   MinistryFieldOps,
+  MinistrySeries,
   SovereignProfile,
   CabinetOverview,
   MinistryQueue,
@@ -225,6 +226,7 @@ export const api = {
     resolveIncident: (id: string, key: string) =>
       req<{ incident: MinistryIncident }>(`/api/org/ministries/${id}/incidents/${key}/resolve`, { method: 'POST', body: '{}' }),
     field: (id: string) => req<MinistryFieldOps>(`/api/org/ministries/${id}/field`),
+    series: (id: string) => req<MinistrySeries>(`/api/org/ministries/${id}/series`),
     actOnQueueItem: (id: string, itemId: string, action: QueueAction, note?: string) =>
       req<{ item: QueueItem }>(`/api/org/ministries/${id}/queue/${itemId}/act`, {
         method: 'POST',
