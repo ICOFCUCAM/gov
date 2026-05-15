@@ -61,10 +61,10 @@ export function DataTable<T extends { id?: string }>({
     );
   }
   return (
-    <div className="overflow-x-auto rounded-sm border border-line">
+    <div className="max-h-[70vh] overflow-auto rounded-sm border border-line">
       <table className="w-full border-collapse text-sm tabular-nums">
         <thead>
-          <tr className="bg-surface-2 text-left">
+          <tr className="sticky top-0 z-10 bg-surface-2 text-left shadow-[0_1px_0_rgb(var(--c-line))]">
             {columns.map(c => (
               <th
                 key={c.key}
@@ -318,10 +318,10 @@ export function EnterpriseTable<T extends { id?: string }>({
           {q ? 'No records match the filter.' : empty}
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-sm border border-line">
+        <div className="max-h-[70vh] overflow-auto rounded-sm border border-line">
           <table className="w-full border-collapse text-sm tabular-nums">
             <thead>
-              <tr className="bg-surface-2 text-left">
+              <tr className="sticky top-0 z-10 bg-surface-2 text-left shadow-[0_1px_0_rgb(var(--c-line))]">
                 {bulk ? (
                   <th scope="col" className="w-9 px-3 py-2">
                     <input
