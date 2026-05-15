@@ -94,7 +94,7 @@ export function Panel({
   title: string; meta?: React.ReactNode; className?: string; bodyClass?: string; children: React.ReactNode;
 }) {
   return (
-    <section className={`flex min-h-0 flex-col rounded-md border border-line bg-surface ${className}`}>
+    <section className={`flex min-h-0 flex-col rounded-[3px] border border-line bg-surface ${className}`}>
       <div className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-1.5"
         style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.08)' }}>
         <h2 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}</h2>
@@ -284,7 +284,7 @@ export function NationalMap({
   const provRisk = PROV.map((p, i) => ({ p, risk: Math.round(seed(`prov:${i}:${epoch}`) * 100) }));
 
   return (
-    <div className={`relative w-full overflow-hidden rounded-md border border-line-soft ${height ? '' : 'h-full'}`}
+    <div className={`relative w-full overflow-hidden rounded-[3px] border border-line-soft ${height ? '' : 'h-full'}`}
       style={{ ...(height ? { height } : {}), background: 'radial-gradient(ellipse at 42% 26%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 60%)' }}>
       <WorldMap focus={focus} />
       <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
@@ -405,7 +405,7 @@ export function NationalMap({
       })}
 
       {mapNodes.length === 0 ? <div className="absolute inset-0 grid place-items-center text-xs text-ink-muted">Awaiting institutional telemetry…</div> : null}
-      <div className="absolute bottom-2 left-2 flex flex-wrap gap-3 rounded-md border border-line bg-surface/85 px-2.5 py-1 text-[10px] text-ink-muted backdrop-blur">
+      <div className="absolute bottom-2 left-2 flex flex-wrap gap-3 rounded-[3px] border border-line bg-surface/85 px-2.5 py-1 text-[10px] text-ink-muted backdrop-blur">
         {['ok', 'warn', 'alert'].map(t => (<span key={t} className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: TONE[t] }} />{t === 'ok' ? 'Stable' : t === 'warn' ? 'Strained' : 'Critical'}</span>))}
         <span className="flex items-center gap-1 border-l border-line pl-2">✚ medical ⚓ port ✈ air ⚡ power ▣ logistics</span>
       </div>
@@ -654,7 +654,7 @@ export function SituationRoom() {
           {/* Row 1 — executive telemetry (10) */}
           <div className="grid shrink-0 grid-cols-3 gap-1.5 sm:grid-cols-5 xl:grid-cols-10">
             {instruments.map(t => (
-              <div key={t.l} className="rounded-md border border-line bg-surface px-2 py-1.5"
+              <div key={t.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5"
                 style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
                 <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</div>
                 <div className="flex items-center gap-1 font-mono text-[15px] leading-tight tabular-nums" style={{ color: t.t ? TONE[t.t] : 'rgb(var(--c-ink))' }}>
@@ -983,7 +983,7 @@ export function SituationRoom() {
           </div>
 
           {/* Row 5 — persistent command status strip */}
-          <div className="grid shrink-0 grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line text-[10px] md:grid-cols-5">
+          <div className="grid shrink-0 grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
             {[
               { l: 'Readiness posture', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
               { l: 'Operational tempo', v: `T${tickN} · ${Math.round(40 + seed(`tempo:${epoch}`) * 50)}/min`, t: 'ok' },

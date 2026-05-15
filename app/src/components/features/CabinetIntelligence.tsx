@@ -294,7 +294,7 @@ export function CabinetIntelligence() {
           {/* Row 1 — executive telemetry (11) */}
           <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11">
             {instr.map(t => (
-              <div key={t.l} className="rounded-md border border-line bg-surface px-2 py-1.5"
+              <div key={t.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5"
                 style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
                 <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</div>
                 <div className="font-mono text-[15px] leading-tight tabular-nums" style={{ color: t.t ? TONE[t.t] : 'rgb(var(--c-ink))' }}><LiveValue raw={t.v} /></div>
@@ -302,7 +302,7 @@ export function CabinetIntelligence() {
                 <div className="truncate text-[8px] text-ink-muted">{t.sub}</div>
               </div>
             ))}
-            <div className="rounded-md border border-line bg-surface px-2 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+            <div className="rounded-[3px] border border-line bg-surface px-2 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
               <div className="text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">Classification</div>
               <div className="text-[13px] font-bold tracking-widest" style={{ color: ACCENT }}>OFFICIAL</div>
               <div className="font-mono text-[9px] tabular-nums text-ink-soft">{new Date(now).toLocaleTimeString()}</div>
@@ -322,7 +322,7 @@ export function CabinetIntelligence() {
                 const st = top?.sevState ?? 'stable';
                 const c = TONE[RISK_TONE[st]] ?? TONE.ok;
                 return (
-                  <div className="rounded-lg border bg-surface p-4"
+                  <div className="rounded-[3px] border bg-surface p-4"
                     style={{ borderColor: c, boxShadow: st === 'critical' ? `0 0 22px ${c}33` : undefined }}>
                     <div className="flex items-center justify-between">
                       <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em]"
@@ -544,7 +544,7 @@ export function CabinetIntelligence() {
           </div>
 
           {/* Row 5 — executive posture strip */}
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line text-[10px] md:grid-cols-5">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
             {[
               { l: 'Readiness posture', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
               { l: 'Operational tempo', v: `${Math.round(40 + seed(`tempo:${epoch}`) * 55)} ops/min`, t: 'ok' },

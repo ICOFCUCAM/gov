@@ -77,7 +77,7 @@ export function CommandPalette({ items, accent = '#37c7d4' }: { items: CommandIt
       aria-label="Command palette"
     >
       <div
-        className="sov w-full max-w-xl overflow-hidden rounded-lg border border-line bg-surface shadow-elev-3"
+        className="sov w-full max-w-xl overflow-hidden rounded-[3px] border border-line bg-surface shadow-elev-3"
         onClick={e => e.stopPropagation()}
       >
         <input

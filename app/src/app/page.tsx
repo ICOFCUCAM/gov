@@ -204,7 +204,7 @@ export default function SovereignCommandCenter() {
               </div>
             ))}
           </div>
-          <Link href="/gov" className="focus-ring m-3 flex items-center gap-2 rounded-md border px-3 py-2 text-left text-xs no-underline" style={{ borderColor: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 12%, transparent)` }}>
+          <Link href="/gov" className="focus-ring m-3 flex items-center gap-2 rounded-[3px] border px-3 py-2 text-left text-xs no-underline" style={{ borderColor: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 12%, transparent)` }}>
             <span className="h-2 w-2 rounded-full" style={{ backgroundColor: TONE.alert }} />
             <span><span className="block font-semibold uppercase tracking-widest" style={{ color: TONE.alert }}>Command Mode</span><span className="block text-ink-muted">War Room</span></span>
           </Link>
@@ -229,7 +229,7 @@ export default function SovereignCommandCenter() {
 
           {/* Posture + readiness */}
           <div className="grid gap-3 lg:grid-cols-[1fr_auto]">
-            <div className="flex items-center gap-5 rounded-lg border border-line bg-surface px-4 py-3">
+            <div className="flex items-center gap-5 rounded-[3px] border border-line bg-surface px-4 py-3">
               <div className="flex items-center gap-2.5">
                 <span className="grid h-9 w-9 place-items-center rounded-sm" style={{ backgroundColor: `color-mix(in srgb, ${TONE[posture?.level ?? 'ok']} 18%, transparent)`, color: TONE[posture?.level ?? 'ok'] }}>⛨</span>
                 <div><div className="text-[9px] uppercase tracking-[0.16em] text-ink-muted">Executive posture</div><div className="text-lg font-semibold" style={{ color: TONE[posture?.level ?? 'ok'] }}>{riskLabel}</div></div>
@@ -247,7 +247,7 @@ export default function SovereignCommandCenter() {
           <Section label="Sovereign Command Surfaces">
             <div className="grid grid-cols-2 gap-2.5 md:grid-cols-3 xl:grid-cols-5">
               {surfaces.map(c => (
-                <Link key={c.l} href={c.href} className="focus-ring group flex flex-col rounded-lg border border-line bg-surface p-3 no-underline transition-all duration-200 hover:-translate-y-0.5 hover:border-link/40 hover:shadow-elev-2">
+                <Link key={c.l} href={c.href} className="focus-ring group flex flex-col rounded-[3px] border border-line bg-surface p-3 no-underline transition-all duration-200 hover:-translate-y-0.5 hover:border-link/40 hover:shadow-elev-2">
                   <div className="flex items-start justify-between">
                     <span className="text-[13px] font-semibold text-ink">{c.l}</span>
                     {c.badge ? <span className="rounded px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[c.tone]} 18%, transparent)`, color: TONE[c.tone] }}>{c.badge}</span> : null}
@@ -263,7 +263,7 @@ export default function SovereignCommandCenter() {
           <Section label="Institutional Administration">
             <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
               {instAdmin.map(c => (
-                <Link key={c.l} href={c.href} className="focus-ring group flex items-center justify-between rounded-lg border border-line bg-surface px-3 py-2.5 no-underline transition-colors hover:border-link/40">
+                <Link key={c.l} href={c.href} className="focus-ring group flex items-center justify-between rounded-[3px] border border-line bg-surface px-3 py-2.5 no-underline transition-colors hover:border-link/40">
                   <span className="min-w-0"><span className="block text-[13px] font-semibold text-ink">{c.l}</span><span className="block truncate text-[10px] text-ink-muted">{c.s}</span><span className="text-[11px]" style={{ color: ACCENT }}>{c.cta} →</span></span>
                 </Link>
               ))}
@@ -273,7 +273,7 @@ export default function SovereignCommandCenter() {
           <Section label="Public Service Surfaces">
             <div className="grid grid-cols-2 gap-2.5 xl:grid-cols-4">
               {pubSvc.map(c => (
-                <Link key={c.l} href={c.href} className="focus-ring group flex items-center justify-between rounded-lg border border-line bg-surface px-3 py-2.5 no-underline transition-colors hover:border-link/40">
+                <Link key={c.l} href={c.href} className="focus-ring group flex items-center justify-between rounded-[3px] border border-line bg-surface px-3 py-2.5 no-underline transition-colors hover:border-link/40">
                   <span className="min-w-0"><span className="block text-[13px] font-semibold text-ink">{c.l}</span><span className="block truncate text-[10px] text-ink-muted">{c.s}</span><span className="text-[11px]" style={{ color: ACCENT }}>{c.cta} →</span></span>
                   <span className="ml-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE.ok }} />
                 </Link>
@@ -284,7 +284,7 @@ export default function SovereignCommandCenter() {
           <Section label="Phase 1 — Foundational Services">
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
               {phase1.map(c => (
-                <Link key={c.l} href={c.href} className="focus-ring flex items-center gap-2.5 rounded-lg border border-line bg-surface px-3 py-2.5 no-underline transition-colors hover:border-link/40">
+                <Link key={c.l} href={c.href} className="focus-ring flex items-center gap-2.5 rounded-[3px] border border-line bg-surface px-3 py-2.5 no-underline transition-colors hover:border-link/40">
                   <span aria-hidden className="grid h-7 w-7 shrink-0 place-items-center rounded-[5px] bg-surface-2 text-[11px] text-ink-soft ring-1 ring-line">{c.i}</span>
                   <span className="min-w-0"><span className="block text-[12px] font-medium text-ink">{c.l}</span><span className="block truncate text-[9px] text-ink-muted">{c.s}</span></span>
                 </Link>
@@ -293,7 +293,7 @@ export default function SovereignCommandCenter() {
           </Section>
 
           {/* Bottom status strip */}
-          <div className="flex flex-wrap items-center gap-x-8 gap-y-1 rounded-lg border border-line bg-surface px-4 py-2 text-[10px]">
+          <div className="flex flex-wrap items-center gap-x-8 gap-y-1 rounded-[3px] border border-line bg-surface px-4 py-2 text-[10px]">
             {[
               { l: 'Classification', v: 'OFFICIAL', t: ACCENT },
               { l: 'National readiness', v: readiness, t: TONE[readiness === 'CRITICAL' ? 'alert' : readiness === 'ELEVATED' ? 'warn' : 'ok'] },
@@ -380,7 +380,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
 }
 function Panel({ label, meta, children }: { label: string; meta?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <section className="rounded-lg border border-line bg-surface">
+    <section className="rounded-[3px] border border-line bg-surface">
       <div className="flex items-center justify-between gap-2 border-b border-line px-3 py-2">
         <h3 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{label}</h3>
         {meta ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
