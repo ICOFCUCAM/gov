@@ -8,10 +8,10 @@ import { Plain } from '@/components/ui/Plain';
 import { EmptyState } from '@/components/ui/EmptyState';
 import {
   HealthTile,
-  MetricStat,
   ThresholdBar,
   SeverityBadge,
 } from '@/components/ui/Ops';
+import { TONE as OTONE } from '@/components/features/SituationRoom';
 import { api } from '@/lib/api/client';
 import type { Incident, OpsOverview } from '@/lib/api/types';
 
@@ -64,31 +64,19 @@ export function OpsCenter() {
 
   return (
     <div className="space-y-3">
-      {/* Headline — calm, four numbers, no noise */}
-      <section
-        aria-label="Summary"
-        className="grid grid-cols-2 gap-3 lg:grid-cols-4"
-      >
-        <MetricStat
-          label="Services healthy"
-          value={`${s.servicesOk}/${s.servicesTotal}`}
-          tone={s.servicesOk === s.servicesTotal ? 'ok' : 'warn'}
-        />
-        <MetricStat
-          label="SLA compliance"
-          value={`${s.slaCompliancePct}%`}
-          tone={s.slaCompliancePct >= 95 ? 'ok' : s.slaCompliancePct >= 80 ? 'warn' : 'alert'}
-        />
-        <MetricStat
-          label="Queues breaching"
-          value={String(s.queuesBreaching)}
-          tone={s.queuesBreaching === 0 ? 'ok' : 'alert'}
-        />
-        <MetricStat
-          label="Open incidents"
-          value={String(s.openIncidents)}
-          tone={s.openIncidents === 0 ? 'ok' : 'warn'}
-        />
+      {/* Telemetry strip */}
+      <section aria-label="Summary" className="grid grid-cols-2 gap-2 lg:grid-cols-4">
+        {[
+          { l: 'Services healthy', v: `${s.servicesOk}/${s.servicesTotal}`, t: s.servicesOk === s.servicesTotal ? 'ok' : 'warn' },
+          { l: 'SLA compliance', v: `${s.slaCompliancePct}%`, t: s.slaCompliancePct >= 95 ? 'ok' : s.slaCompliancePct >= 80 ? 'warn' : 'alert' },
+          { l: 'Queues breaching', v: String(s.queuesBreaching), t: s.queuesBreaching === 0 ? 'ok' : 'alert' },
+          { l: 'Open incidents', v: String(s.openIncidents), t: s.openIncidents === 0 ? 'ok' : 'warn' },
+        ].map(m => (
+          <div key={m.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+            <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
+            <div className="font-mono text-2xl tabular-nums" style={{ color: OTONE[m.t] }}>{m.v}</div>
+          </div>
+        ))}
       </section>
 
       {!s.auditIntact ? (
