@@ -289,10 +289,10 @@ export function CabinetIntelligence() {
         </nav>
 
         {/* Canvas */}
-        <main className="min-w-0 flex-1 space-y-2 overflow-y-auto p-2.5"
+        <main className="flex min-w-0 flex-1 flex-col gap-2 overflow-hidden p-2"
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.022) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
           {/* Row 1 — executive telemetry (11) */}
-          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11">
+          <div className="grid shrink-0 grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11">
             {instr.map(t => (
               <div key={t.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5"
                 style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
@@ -311,12 +311,12 @@ export function CabinetIntelligence() {
           </div>
 
           {/* DOMINANT: strategic map + executive narrative (asymmetric hero) */}
-          <div className="grid gap-3 xl:grid-cols-12">
+          <div className="grid min-h-0 flex-[2.2] gap-2 xl:grid-cols-12">
             <Panel title="National strategic map" meta="live operational command view" className="xl:col-span-8" bodyClass="!p-2">
-              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} height={560} focus={sov?.stateName} />
+              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} />
             </Panel>
 
-            <div className="flex flex-col gap-3 xl:col-span-4">
+            <div className="flex min-h-0 flex-col gap-2 overflow-hidden xl:col-span-4">
               {(() => {
                 const top = escalations[0];
                 const st = top?.sevState ?? 'stable';
@@ -376,8 +376,8 @@ export function CabinetIntelligence() {
           </div>
 
           {/* Secondary band: matrix + escalation stream */}
-          <div className="grid gap-3 xl:grid-cols-12">
-            <Panel title="Ministry risk matrix" meta="live risk by domain" className="xl:col-span-8" bodyClass="overflow-auto max-h-[420px] !p-0">
+          <div className="grid min-h-0 flex-1 gap-2 xl:grid-cols-12">
+            <Panel title="Ministry risk matrix" meta="live risk by domain" className="xl:col-span-8" bodyClass="overflow-auto !p-0">
               <table className="w-full text-[11px]">
                 <thead>
                   <tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8.5px] uppercase tracking-wider text-ink-muted">
@@ -416,7 +416,7 @@ export function CabinetIntelligence() {
               </table>
             </Panel>
 
-            <Panel title="Cabinet escalation feed" meta="executive level" className="xl:col-span-4" bodyClass="overflow-y-auto max-h-[420px] !p-0">
+            <Panel title="Cabinet escalation feed" meta="executive level" className="xl:col-span-4" bodyClass="overflow-y-auto !p-0">
               {escalations.length === 0 ? <p className="p-3 text-xs text-ink-muted">No executive-level escalations.</p> : escalations.map((e, i) => (
                 <Link key={i} href={`/gov/ministry/${e.mid}`} className="focus-ring block border-b border-line-soft px-3 py-2.5 no-underline transition-colors hover:bg-surface-2/50 last:border-0"
                   style={{ borderLeft: `3px solid ${TONE[RISK_TONE[e.sevState]]}` }}>
@@ -434,7 +434,7 @@ export function CabinetIntelligence() {
           </div>
 
           {/* Dependency · timeline · forecast · heatmap */}
-          <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
+          <div className="grid min-h-0 flex-1 gap-2 lg:grid-cols-2 xl:grid-cols-4">
             <Panel title="National dependency graph" meta="systemic impact propagation">
               <div className="relative h-[200px] w-full">
                 <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
@@ -465,7 +465,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Operational timeline" meta="escalation chronology" bodyClass="overflow-y-auto max-h-[208px] !p-0">
+            <Panel title="Operational timeline" meta="escalation chronology" bodyClass="overflow-y-auto !p-0">
               {(coord?.timeline ?? []).slice(0, 9).map((e, i) => (
                 <div key={i} className="flex items-start gap-2 border-b border-line-soft px-3 py-1.5 text-xs last:border-0">
                   <span className="font-mono text-[10px] tabular-nums text-ink-muted">{rel(e.at, now)}</span>
@@ -499,7 +499,7 @@ export function CabinetIntelligence() {
           </div>
 
           {/* KPI trends · fiscal · geopolitical · quick actions · briefing */}
-          <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-5">
+          <div className="grid min-h-0 flex-1 gap-2 lg:grid-cols-2 xl:grid-cols-5">
             <Panel title="National KPI trends" meta="7-day" className="xl:col-span-2">
               <div className="grid grid-cols-5 gap-2">
                 {kpiTrends.map(k => (
@@ -544,7 +544,7 @@ export function CabinetIntelligence() {
           </div>
 
           {/* Row 5 — executive posture strip */}
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+          <div className="grid shrink-0 grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
             {[
               { l: 'Readiness posture', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
               { l: 'Operational tempo', v: `${Math.round(40 + seed(`tempo:${epoch}`) * 55)} ops/min`, t: 'ok' },
