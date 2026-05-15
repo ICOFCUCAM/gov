@@ -7,7 +7,7 @@ import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette
 import { identityFor } from '@/lib/archetype-profiles';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import {
-  TONE, ACCENT, PALETTE, seed, toneFor, rel, Panel, Spark, LiveValue, NationalMap,
+  TONE, ACCENT, PALETTE, seed, toneFor, rel, Panel, Spark, LiveValue, NationalMap, TerritoryHeat,
 } from '@/components/features/SituationRoom';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey,
@@ -488,14 +488,9 @@ export function CabinetIntelligence() {
               <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory projection only — no autonomous action. Cabinet decides.</p>
             </Panel>
 
-            <Panel title="National heatmap" meta="ministry stress by region">
-              <div className="grid grid-cols-9 gap-1">
-                {Array.from({ length: 45 }).map((_, i) => {
-                  const rk = Math.round(seed(`hm:${i}:${epoch}`) * 100);
-                  return <div key={i} className="aspect-square rounded-[2px] transition-colors duration-700" style={{ backgroundColor: TONE[toneFor(rk)], opacity: 0.25 + (rk / 100) * 0.65 }} title={`Region ${i + 1} · ${rk}`} />;
-                })}
-              </div>
-              <div className="mt-2 flex items-center justify-between text-[10px] text-ink-muted">
+            <Panel title="National heatmap" meta="ministry stress by region" bodyClass="!p-2">
+              <TerritoryHeat epoch={epoch} height={150} />
+              <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
                 <span>Low</span>
                 <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
                 <span>Critical</span>
