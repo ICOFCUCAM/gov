@@ -58,6 +58,16 @@
   html[data-contrast="1"] .text-ink-soft { color: #1a1a1a !important; }
   html[data-contrast="1"] .border-line { border-color: #000000 !important; }
 
+  /* Low-bandwidth mode: strip shadows, gradients, decorative weight. The
+     operational picture stays fully legible — only heavy visuals go. */
+  html[data-bw="1"] * {
+    box-shadow: none !important;
+    background-image: none !important;
+    transition: none !important;
+  }
+  html[data-bw="1"] .shadow-2xl,
+  html[data-bw="1"] .shadow-xl { box-shadow: none !important; }
+
   /* Respect reduced-motion. */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {

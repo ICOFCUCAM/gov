@@ -15,16 +15,21 @@ export function AccessibilityMenu() {
   const [scale, setScale] = React.useState<Scale>('md');
   const [contrast, setContrast] = React.useState(false);
 
+  const [lowBw, setLowBw] = React.useState(false);
+
   React.useEffect(() => {
     const s = (localStorage.getItem('civic:textScale') as Scale) || 'md';
     const c = localStorage.getItem('civic:contrast') === '1';
+    const b = localStorage.getItem('civic:lowbw') === '1';
     setScale(s);
     setContrast(c);
+    setLowBw(b);
     document.documentElement.dataset.textScale = s;
     document.documentElement.dataset.contrast = c ? '1' : '0';
+    document.documentElement.dataset.bw = b ? '1' : '0';
   }, []);
 
-  function apply(next: { scale?: Scale; contrast?: boolean }) {
+  function apply(next: { scale?: Scale; contrast?: boolean; lowBw?: boolean }) {
     if (next.scale) {
       setScale(next.scale);
       localStorage.setItem('civic:textScale', next.scale);
@@ -34,6 +39,11 @@ export function AccessibilityMenu() {
       setContrast(next.contrast);
       localStorage.setItem('civic:contrast', next.contrast ? '1' : '0');
       document.documentElement.dataset.contrast = next.contrast ? '1' : '0';
+    }
+    if (typeof next.lowBw === 'boolean') {
+      setLowBw(next.lowBw);
+      localStorage.setItem('civic:lowbw', next.lowBw ? '1' : '0');
+      document.documentElement.dataset.bw = next.lowBw ? '1' : '0';
     }
   }
 
@@ -83,9 +93,18 @@ export function AccessibilityMenu() {
             />
             <span className="text-sm">High contrast</span>
           </label>
+          <label className="mt-2 flex min-h-tap items-center gap-2">
+            <input
+              type="checkbox"
+              checked={lowBw}
+              onChange={e => apply({ lowBw: e.target.checked })}
+            />
+            <span className="text-sm">Low-bandwidth mode</span>
+          </label>
           <p className="mt-3 text-xs text-ink-muted">
-            Saved on this device. Voice, USSD, and walk-in remain available
-            for every service.
+            Saved on this device. Low-bandwidth strips shadows and heavy
+            visuals. Voice, USSD, and walk-in remain available for every
+            service.
           </p>
         </div>
       ) : null}

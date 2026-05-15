@@ -18,6 +18,7 @@ import {
 } from '../../common/permissions.guard';
 import type { AuthenticatedRequest } from '../../common/request-context';
 import { OrgService } from './org.service';
+import { OperationsService } from './operations.service';
 
 const ArchetypeEnum = z.enum([
   'HEALTH', 'EDUCATION', 'FINANCE', 'AGRICULTURE', 'ENERGY', 'TRANSPORT',
@@ -46,7 +47,10 @@ function parse<T>(s: z.ZodSchema<T>, b: unknown): T {
 @UseGuards(AuthGuard, PermissionsGuard)
 @Controller('org')
 export class OrgController {
-  constructor(private readonly org: OrgService) {}
+  constructor(
+    private readonly org: OrgService,
+    private readonly opsSvc: OperationsService,
+  ) {}
 
   @Get('archetypes')
   @RequirePermissions('org:read')
@@ -64,6 +68,12 @@ export class OrgController {
   @RequirePermissions('org:read')
   get(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
     return this.org.get(req.principal!.tenantId, id);
+  }
+
+  @Get('ministries/:id/operations')
+  @RequirePermissions('org:read')
+  operations(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    return this.opsSvc.forMinistry(req.principal!.tenantId, id);
   }
 
   @Post('ministries')

@@ -37,6 +37,7 @@ import type {
   Archetype,
   ArchetypeKey,
   Ministry,
+  MinistryOperations,
   SignatureRequest,
   SignatureResult,
   VerifyResult,
@@ -193,6 +194,7 @@ export const api = {
     archetypes: () => req<{ archetypes: Archetype[] }>('/api/org/archetypes'),
     ministries: () => req<{ ministries: Ministry[] }>('/api/org/ministries'),
     get: (id: string) => req<{ ministry: Ministry }>(`/api/org/ministries/${id}`),
+    operations: (id: string) => req<MinistryOperations>(`/api/org/ministries/${id}/operations`),
     create: (body: { archetype: ArchetypeKey; name: string; slug: string }) =>
       req<{ ministry: Ministry }>('/api/org/ministries', { method: 'POST', body: JSON.stringify(body) }),
     rename: (id: string, name: string) =>

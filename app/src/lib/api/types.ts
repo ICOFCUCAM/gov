@@ -397,3 +397,23 @@ export interface Ministry {
   departments: Department[];
   modules: ModuleActivation[];
 }
+
+// ── Module operations (archetype-driven operational dashboards) ───────
+export type OpsTone = 'ok' | 'warn' | 'alert' | 'neutral';
+export interface KpiValue { label: string; value: string; tone: OpsTone; target?: string; }
+export interface QueueValue {
+  label: string; depth: number; oldestAgeHours: number;
+  slaHours: number; breaching: boolean;
+}
+export interface AlertValue {
+  label: string; severity: IncidentSeverity; active: boolean; detail: string;
+}
+export interface ModuleOps {
+  module: string; title: string;
+  kpis: KpiValue[]; queues: QueueValue[]; alerts: AlertValue[];
+}
+export interface MinistryOperations {
+  ministry: { id: string; name: string; archetype: ArchetypeKey; status: MinistryStatus };
+  generatedAt: ISODate;
+  modules: ModuleOps[];
+}

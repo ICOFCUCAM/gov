@@ -53,8 +53,15 @@ import type {
   ArchetypeKey,
   Ministry,
   MinistryStatus,
+  MinistryOperations,
+  ModuleOps,
+  KpiValue,
+  QueueValue,
+  AlertValue,
+  OpsTone,
   VerifyResult,
 } from '@/lib/api/types';
+import { specFor } from '@/lib/ops-catalog';
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -1146,4 +1153,80 @@ export function setModule(ministryId: string, moduleKey: string, enabled: boolea
   else m.modules.push({ moduleKey, enabled });
   appendAudit('operator', 'module.set', `Ministry:${ministryId}`, 'ok', `${moduleKey}=${enabled}`);
   return m;
+}
+
+// ── Module operations (archetype-driven dashboards) ───────────────────
+// Deterministic seeded value so a ministry's operational picture is stable
+// across reads; derived from real platform data where it exists.
+function seededInt(seed: string, min: number, max: number): number {
+  let h = 2166136261;
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  const r = ((h >>> 0) % 1000) / 1000;
+  return Math.round(min + r * (max - min));
+}
+
+export function ministryOperations(id: string): MinistryOperations | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+
+  // Real-data hooks: where a module maps onto existing platform data, use it.
+  const openPermits = db.permits.filter(p =>
+    ['submitted', 'in-review', 'needs-info'].includes(p.status),
+  ).length;
+
+  const modules: ModuleOps[] = m.modules
+    .filter(mod => mod.enabled)
+    .map(mod => {
+      const spec = specFor(mod.moduleKey);
+      const kpis: KpiValue[] = spec.kpis.map(k => {
+        const raw = seededInt(`${id}:${mod.moduleKey}:${k.key}`, k.range[0], k.range[1]);
+        const good =
+          k.direction === 'higher-better' ? raw >= k.target : raw <= k.target;
+        const near =
+          k.direction === 'higher-better'
+            ? raw >= k.target * 0.9
+            : raw <= k.target * 1.15;
+        const tone: OpsTone = good ? 'ok' : near ? 'warn' : 'alert';
+        return {
+          label: k.label,
+          value: `${raw}${k.unit ?? ''}`,
+          tone,
+          target: `${k.target}${k.unit ?? ''}`,
+        };
+      });
+      const queues: QueueValue[] = spec.queues.map(q => {
+        let depth = seededInt(`${id}:${mod.moduleKey}:${q.key}:d`, q.range[0], q.range[1]);
+        // Health licensing queue reflects real open permits.
+        if (mod.moduleKey === 'licensing' && m.archetype === 'HEALTH') {
+          depth = openPermits;
+        }
+        const oldest = seededInt(`${id}:${mod.moduleKey}:${q.key}:o`, 1, Math.round(q.slaHours * 1.2));
+        return {
+          label: q.label,
+          depth,
+          oldestAgeHours: oldest,
+          slaHours: q.slaHours,
+          breaching: oldest > q.slaHours,
+        };
+      });
+      const alerts: AlertValue[] = spec.alerts.map(a => {
+        const roll = seededInt(`${id}:${mod.moduleKey}:${a.key}`, 0, 100) / 100;
+        return {
+          label: a.label,
+          severity: a.severity,
+          active: roll < a.likelihood,
+          detail: a.detail,
+        };
+      });
+      return { module: mod.moduleKey, title: spec.title, kpis, queues, alerts };
+    });
+
+  return {
+    ministry: { id: m.id, name: m.name, archetype: m.archetype, status: m.status },
+    generatedAt: new Date().toISOString(),
+    modules,
+  };
 }
