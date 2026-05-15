@@ -1,15 +1,11 @@
-import { OperatorShell } from '@/components/ui/OperatorShell';
+import { CommandShell } from '@/components/ui/CommandShell';
 import { AuditView } from './AuditView';
 
 export const dynamic = 'force-dynamic';
 
 export default function AuditPage() {
   return (
-    <OperatorShell
-      role="auditor"
-      who="Algorithmic Ombudsman's office (read-only)"
-      active="/audit"
-    >
+    <CommandShell active="aud">
       <h1 className="mb-1 text-2xl font-semibold">Audit trail</h1>
       <p className="mb-4 text-ink-muted">
         Read-only oversight. Every state-changing action is recorded and
@@ -17,6 +13,6 @@ export default function AuditPage() {
         ledger of what was done, by whom, to which resource.
       </p>
       <AuditView />
-    </OperatorShell>
+    </CommandShell>
   );
 }

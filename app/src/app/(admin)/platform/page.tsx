@@ -1,15 +1,11 @@
-import { OperatorShell } from '@/components/ui/OperatorShell';
+import { CommandShell } from '@/components/ui/CommandShell';
 import { PlatformConsole } from './PlatformConsole';
 
 export const dynamic = 'force-dynamic';
 
 export default function PlatformPage() {
   return (
-    <OperatorShell
-      role="admin"
-      who="Platform operations · sovereign environment team"
-      active="/platform"
-    >
+    <CommandShell active="plat">
       <h1 className="mb-1 text-2xl font-semibold">Platform operations</h1>
       <p className="mb-4 text-ink-muted">
         Releases, deployments, tenant lifecycle, backups, and signed
@@ -17,6 +13,6 @@ export default function PlatformPage() {
         humans approve, the platform records.
       </p>
       <PlatformConsole />
-    </OperatorShell>
+    </CommandShell>
   );
 }

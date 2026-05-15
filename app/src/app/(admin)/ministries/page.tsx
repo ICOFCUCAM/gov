@@ -1,15 +1,11 @@
-import { OperatorShell } from '@/components/ui/OperatorShell';
+import { CommandShell } from '@/components/ui/CommandShell';
 import { MinistriesConsole } from './MinistriesConsole';
 
 export const dynamic = 'force-dynamic';
 
 export default function MinistriesPage() {
   return (
-    <OperatorShell
-      role="admin"
-      who="Institutional composition · sovereign org admin"
-      active="/ministries"
-    >
+    <CommandShell active="min">
       <h1 className="mb-1 text-2xl font-semibold">Institutions</h1>
       <p className="mb-4 text-ink-muted">
         A configurable organisational operating system: create ministries,
@@ -17,6 +13,6 @@ export default function MinistriesPage() {
         deactivate, and compose modules — without rewriting platform code.
       </p>
       <MinistriesConsole />
-    </OperatorShell>
+    </CommandShell>
   );
 }

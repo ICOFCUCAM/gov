@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { OperatorShell } from '@/components/ui/OperatorShell';
+import { CommandShell } from '@/components/ui/CommandShell';
 import { Card } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
 import { Plain } from '@/components/ui/Plain';
@@ -25,7 +25,7 @@ export default function MinistryControlPage({
     null;
 
   return (
-    <OperatorShell role="ministry" who="Service health · ministry operations" active="/control">
+    <CommandShell active="ctl">
       <h1 className="mb-1 text-2xl font-semibold">Service health</h1>
       <p className="mb-4 text-ink-muted">
         Operational view per institution. The structure below is composed from
@@ -202,6 +202,6 @@ export default function MinistryControlPage({
           ) : null}
         </div>
       )}
-    </OperatorShell>
+    </CommandShell>
   );
 }
