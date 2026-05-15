@@ -63,7 +63,10 @@ export function OperatorShell({
 }: OperatorShellProps) {
   const nav = NAV[role];
   return (
-    <div className="min-h-screen bg-bg text-ink">
+    <div
+      className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]"
+      style={{ ['--accent' as string]: '#1f5fad' }}
+    >
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-sm focus:bg-ink focus:px-3 focus:py-2 focus:text-surface"
@@ -71,36 +74,49 @@ export function OperatorShell({
         Skip to content
       </a>
       <OfflineBanner />
-      <header className="flex items-center justify-between gap-4 border-b border-line bg-surface px-4 py-2">
+      <header className="flex shrink-0 items-center justify-between gap-4 border-b border-line bg-surface px-4 py-2">
         <div className="flex items-center gap-3">
-          <Link href="/" className="font-semibold no-underline text-ink">
-            CivicOS
+          <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
+            <span
+              aria-hidden
+              className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-[11px] font-bold tracking-tight text-white ring-1 ring-white/15"
+              style={{ backgroundColor: 'var(--accent)' }}
+            >
+              CO
+            </span>
+            <span className="text-sm font-semibold tracking-[0.16em] text-ink">CIVICOS</span>
           </Link>
-          <span className="rounded-full bg-surface-2 px-2 py-0.5 text-xs font-medium text-ink-soft">
+          <span className="rounded-sm border border-line bg-surface-2 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">
             {ROLE_LABEL[role]}
+          </span>
+          <span className="hidden rounded-sm border border-line px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-ink-soft sm:inline">
+            OFFICIAL
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-ink-muted sm:inline">{who}</span>
+          <span className="hidden font-mono text-xs text-ink-muted sm:inline">{who}</span>
           <AccessibilityMenu />
         </div>
       </header>
-      <div className="mx-auto flex max-w-[1400px] gap-0">
+      <div className="flex min-h-0 flex-1">
         <nav
           aria-label="Operator navigation"
-          className="hidden w-52 shrink-0 border-r border-line p-3 md:block"
+          className="hidden w-56 shrink-0 flex-col border-r border-line bg-bg md:flex"
         >
-          <ul className="space-y-1">
+          <div className="px-3 pb-1 pt-4 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">
+            {ROLE_LABEL[role]}
+          </div>
+          <ul className="flex-1 overflow-y-auto">
             {nav.map(item => (
               <li key={item.href}>
                 <Link
                   href={item.href}
                   aria-current={active === item.href ? 'page' : undefined}
                   className={cn(
-                    'block rounded-sm px-3 py-2 text-sm no-underline',
+                    'focus-ring block truncate border-l-2 px-3 py-2.5 text-sm no-underline transition-colors duration-150 ease-sov md:py-2',
                     active === item.href
-                      ? 'bg-surface-2 font-semibold text-ink'
-                      : 'text-ink-soft hover:bg-surface-2',
+                      ? 'border-l-[color:var(--accent)] bg-surface-2 font-semibold text-ink'
+                      : 'border-transparent text-ink-muted hover:bg-surface-2/60 hover:text-ink',
                   )}
                 >
                   {item.label}
@@ -108,8 +124,11 @@ export function OperatorShell({
               </li>
             ))}
           </ul>
+          <div className="border-t border-line px-3 py-3 text-[10px] uppercase tracking-widest text-ink-muted">
+            Humans govern · AI assists
+          </div>
         </nav>
-        <main id="main" className="min-w-0 flex-1 p-4">
+        <main id="main" className="min-w-0 flex-1 overflow-y-auto bg-bg p-4 lg:p-6">
           {toolbar ? (
             <div className="mb-4 flex flex-wrap items-center gap-2">
               {toolbar}
