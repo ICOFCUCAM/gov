@@ -429,6 +429,7 @@ export interface RegionStat {
 }
 export interface MinistryRegions {
   ministry: { id: string; name: string; archetype: ArchetypeKey };
+  labels: { unit: string; capacity: string; cases: string };
   generatedAt: ISODate;
   regions: RegionStat[];
 }
@@ -461,4 +462,29 @@ export interface AnalyticDelta {
   value: string;
   delta: number; // signed % vs prior period
   goodWhenUp: boolean;
+}
+
+// ── Archetype-specialised operational surfaces ───────────────────────
+export interface MinistryIncident {
+  key: string;
+  label: string;
+  severity: IncidentSeverity;
+  detail: string;
+  active: boolean;
+  tierIndex: number; // position in the escalation chain
+}
+export interface MinistryIncidents {
+  ministry: { id: string; name: string; archetype: ArchetypeKey };
+  escalation: string[];
+  incidents: MinistryIncident[];
+}
+export interface FieldUnitStatus {
+  unit: string;
+  label: string;
+  counts: { state: string; n: number }[];
+  total: number;
+}
+export interface MinistryFieldOps {
+  ministry: { id: string; name: string; archetype: ArchetypeKey };
+  units: FieldUnitStatus[];
 }

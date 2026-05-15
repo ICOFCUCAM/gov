@@ -13,10 +13,13 @@ import {
   type Column,
 } from '@/components/ui/DataSystem';
 import { api } from '@/lib/api/client';
+import { SeverityBadge } from '@/components/ui/Ops';
 import type {
   AnalyticDelta,
   MinistryQueue,
   MinistryRegions,
+  MinistryIncident,
+  FieldUnitStatus,
   QueueItem,
   RegionStat,
 } from '@/lib/api/types';
@@ -27,23 +30,33 @@ export function OperationsConsole({ id }: { id: string }) {
   const [name, setName] = React.useState('');
   const [archetype, setArchetype] = React.useState('');
   const [regions, setRegions] = React.useState<RegionStat[]>([]);
+  const [labels, setLabels] = React.useState({ unit: 'Operational', capacity: 'Capacity', cases: 'Open cases' });
   const [analytics, setAnalytics] = React.useState<AnalyticDelta[]>([]);
   const [queue, setQueue] = React.useState<MinistryQueue | null>(null);
+  const [incidents, setIncidents] = React.useState<MinistryIncident[]>([]);
+  const [escChain, setEscChain] = React.useState<string[]>([]);
+  const [field, setField] = React.useState<FieldUnitStatus[]>([]);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     try {
-      const [r, a, q] = await Promise.all([
+      const [r, a, q, inc, f] = await Promise.all([
         api.org.regions(id),
         api.org.analytics(id),
         api.org.queue(id),
+        api.org.incidents(id),
+        api.org.field(id),
       ]);
       setName((r as MinistryRegions).ministry.name);
       setArchetype((r as MinistryRegions).ministry.archetype);
       setRegions((r as MinistryRegions).regions);
+      setLabels((r as MinistryRegions).labels);
       setAnalytics(a.analytics);
       setQueue(q);
+      setIncidents(inc.incidents);
+      setEscChain(inc.escalation);
+      setField(f.units);
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Could not load console');
     }
@@ -70,11 +83,36 @@ export function OperationsConsole({ id }: { id: string }) {
     }
   }
 
+  async function escalate(key: string) {
+    setBusy(key + 'esc');
+    setErr(null);
+    try {
+      const { incident } = await api.org.escalateIncident(id, key);
+      setIncidents(prev => prev.map(x => (x.key === incident.key ? incident : x)));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Escalation failed');
+    } finally {
+      setBusy(null);
+    }
+  }
+  async function resolveInc(key: string) {
+    setBusy(key + 'res');
+    setErr(null);
+    try {
+      const { incident } = await api.org.resolveIncident(id, key);
+      setIncidents(prev => prev.map(x => (x.key === incident.key ? incident : x)));
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Resolve failed');
+    } finally {
+      setBusy(null);
+    }
+  }
+
   const regionCols: Column<RegionStat & { id?: string }>[] = [
     { key: 'r', header: 'Region', render: r => <strong>{r.region}</strong> },
-    { key: 'f', header: 'Facilities op.', align: 'right', render: r => `${r.facilitiesOperationalPct}%` },
-    { key: 'c', header: 'Capacity', align: 'right', render: r => `${r.capacityPct}%` },
-    { key: 'o', header: 'Open cases', align: 'right', render: r => r.openCases },
+    { key: 'f', header: labels.unit, align: 'right', render: r => `${r.facilitiesOperationalPct}%` },
+    { key: 'c', header: labels.capacity, align: 'right', render: r => `${r.capacityPct}%` },
+    { key: 'o', header: labels.cases, align: 'right', render: r => r.openCases },
     { key: 's', header: 'SLA breaches', align: 'right', render: r =>
         r.slaBreaches > 0 ? <StatusText tone="alert">{r.slaBreaches}</StatusText> : '0' },
     { key: 'st', header: 'Status', render: r => (
@@ -168,6 +206,80 @@ export function OperationsConsole({ id }: { id: string }) {
           rows={regions}
           rowKey={r => r.region}
         />
+      </Section>
+
+      <Section
+        title="Incidents & escalation"
+        meta={escChain.length ? `chain: ${escChain.join(' → ')}` : undefined}
+      >
+        {incidents.length === 0 ? (
+          <p className="text-sm text-ink-muted">No incident types configured.</p>
+        ) : (
+          <div className="space-y-2">
+            {incidents.map(inc => (
+              <Card tight key={inc.key}>
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div className="flex items-start gap-2">
+                    <SeverityBadge severity={inc.severity} />
+                    <div>
+                      <strong>{inc.label}</strong>
+                      <div className="text-sm text-ink-muted">{inc.detail}</div>
+                    </div>
+                  </div>
+                  <Pill tone={inc.active ? 'alert' : 'ok'}>
+                    {inc.active ? 'ACTIVE' : 'clear'}
+                  </Pill>
+                </div>
+                {inc.active ? (
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <span className="text-xs text-ink-muted">
+                      Current authority:{' '}
+                      <strong>{escChain[inc.tierIndex] ?? '—'}</strong>
+                      {inc.tierIndex < escChain.length - 1
+                        ? ` · next: ${escChain[inc.tierIndex + 1]}`
+                        : ' · top of chain'}
+                    </span>
+                    <Button
+                      variant="secondary"
+                      disabled={busy === inc.key + 'esc' || inc.tierIndex >= escChain.length - 1}
+                      onClick={() => escalate(inc.key)}
+                    >
+                      Escalate
+                    </Button>
+                    <Button
+                      variant="secondary"
+                      disabled={busy === inc.key + 'res'}
+                      onClick={() => resolveInc(inc.key)}
+                    >
+                      Resolve
+                    </Button>
+                  </div>
+                ) : null}
+              </Card>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section title="Field operations" meta={`${field.length} unit types`}>
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {field.map(u => (
+            <Card tight key={u.unit}>
+              <div className="flex items-baseline justify-between gap-2">
+                <strong>{u.label}</strong>
+                <span className="text-sm text-ink-muted">{u.total} total</span>
+              </div>
+              <div className="mt-2 space-y-1 text-sm">
+                {u.counts.map(c => (
+                  <div key={c.state} className="flex justify-between">
+                    <span className="capitalize text-ink-muted">{c.state}</span>
+                    <span className="tabular-nums">{c.n}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          ))}
+        </div>
       </Section>
 
       <Section

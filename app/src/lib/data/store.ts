@@ -67,9 +67,14 @@ import type {
   QueueAction,
   MinistryQueue,
   AnalyticDelta,
+  MinistryIncident,
+  MinistryIncidents,
+  FieldUnitStatus,
+  MinistryFieldOps,
   VerifyResult,
 } from '@/lib/api/types';
 import { specFor } from '@/lib/ops-catalog';
+import { profileFor } from '@/lib/archetype-profiles';
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -216,8 +221,9 @@ function seed() {
 
   const ministries: Ministry[] = [];
   const ministryQueues: Record<string, QueueItem[]> = {};
+  const ministryIncidents: Record<string, MinistryIncident[]> = {};
 
-  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues };
+  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents };
 }
 
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
@@ -1267,8 +1273,14 @@ export function regionsFor(id: string): MinistryRegions | { error: string } {
       status,
     };
   });
+  const prof = profileFor(m.archetype);
   return {
     ministry: { id: m.id, name: m.name, archetype: m.archetype },
+    labels: {
+      unit: prof.regionUnitLabel,
+      capacity: prof.capacityLabel,
+      cases: prof.caseLabel,
+    },
     generatedAt: new Date().toISOString(),
     regions,
   };
@@ -1277,17 +1289,18 @@ export function regionsFor(id: string): MinistryRegions | { error: string } {
 export function analyticsFor(id: string): AnalyticDelta[] | { error: string } {
   const m = getMinistry(id);
   if (!m) return { error: 'Ministry not found' };
-  const mk = (label: string, key: string, base: [number, number], unit: string, goodUp: boolean): AnalyticDelta => {
-    const v = seededInt(`${id}:an:${key}`, base[0], base[1]);
-    const d = seededInt(`${id}:an:${key}:d`, -120, 140) / 10; // -12.0 .. +14.0 %
-    return { label, value: `${v}${unit}`, delta: d, goodWhenUp: goodUp };
-  };
-  return [
-    mk('Service throughput', 'tp', [60, 98], '%', true),
-    mk('Median decision time', 'mdt', [2, 12], 'd', false),
-    mk('Citizen contestation rate', 'ccr', [1, 6], '%', false),
-    mk('Backlog', 'bk', [40, 320], '', false),
-  ];
+  // Archetype-specialised KPIs (Health ≠ Finance ≠ Transport …).
+  const profile = profileFor(m.archetype);
+  return profile.kpis.map(k => {
+    const v = seededInt(`${id}:an:${k.key}`, k.range[0], k.range[1]);
+    const d = seededInt(`${id}:an:${k.key}:d`, -120, 140) / 10;
+    return {
+      label: k.label,
+      value: `${v}${k.unit}`,
+      delta: d,
+      goodWhenUp: k.goodWhenUp,
+    };
+  });
 }
 
 const PRIORITIES: QueuePriority[] = ['routine', 'elevated', 'urgent'];
@@ -1317,12 +1330,7 @@ function seedQueue(id: string): QueueItem[] {
     items.push({
       id: `Q-${id.slice(-4)}-${i}`,
       ref: `APP-${seededInt(`${id}:q:${i}:r`, 1000, 9999)}`,
-      subject:
-        m?.archetype === 'FINANCE'
-          ? 'Procurement evaluation'
-          : m?.archetype === 'EDUCATION'
-            ? 'School maintenance request'
-            : 'Service application',
+      subject: m ? profileFor(m.archetype).queueSubject : 'Service application',
       region: REGIONS[seededInt(`${id}:q:${i}:rg`, 0, REGIONS.length - 1)]!,
       ageHours: seededInt(`${id}:q:${i}:a`, 2, 360),
       priority: pr,
@@ -1336,12 +1344,7 @@ export function queueFor(id: string): MinistryQueue | { error: string } {
   const m = getMinistry(id);
   if (!m) return { error: 'Ministry not found' };
   if (!db.ministryQueues[id]) db.ministryQueues[id] = seedQueue(id);
-  const title =
-    m.archetype === 'HEALTH'
-      ? 'Licensing & approvals'
-      : m.archetype === 'FINANCE'
-        ? 'Procurement & approvals'
-        : 'Approvals queue';
+  const title = profileFor(m.archetype).queueTitle;
   return {
     ministry: { id: m.id, name: m.name, archetype: m.archetype },
     queueKey: 'approvals',
@@ -1373,4 +1376,99 @@ export function actOnQueueItem(
   if (note) item.note = note;
   appendAudit(by, `queue.${action}`, `QueueItem:${itemId}`, 'ok', item.ref);
   return item;
+}
+
+// ── Archetype-specialised: incidents + escalation, field operations ───
+function seedIncidents(id: string, archetype: ArchetypeKey): MinistryIncident[] {
+  const prof = profileFor(archetype);
+  return prof.incidentTypes.map(t => {
+    const roll = seededInt(`${id}:inc:${t.key}`, 0, 100) / 100;
+    return {
+      key: t.key,
+      label: t.label,
+      severity: t.severity,
+      detail: t.detail,
+      active: roll < t.likelihood,
+      tierIndex: 0,
+    };
+  });
+}
+
+export function incidentsFor(id: string): MinistryIncidents | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  if (!db.ministryIncidents[id]) {
+    db.ministryIncidents[id] = seedIncidents(id, m.archetype);
+  }
+  return {
+    ministry: { id: m.id, name: m.name, archetype: m.archetype },
+    escalation: profileFor(m.archetype).escalation,
+    incidents: db.ministryIncidents[id]!,
+  };
+}
+
+export function escalateMinistryIncident(
+  id: string,
+  key: string,
+  by: string,
+): MinistryIncident | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  if (!db.ministryIncidents[id]) {
+    db.ministryIncidents[id] = seedIncidents(id, m.archetype);
+  }
+  const chain = profileFor(m.archetype).escalation;
+  const inc = db.ministryIncidents[id]!.find(x => x.key === key);
+  if (!inc) return { error: 'Incident not found' };
+  if (!inc.active) return { error: 'Incident is not active' };
+  if (inc.tierIndex >= chain.length - 1) {
+    return { error: 'Already at top of escalation chain' };
+  }
+  inc.tierIndex += 1;
+  appendAudit(
+    by,
+    'ministry-incident.escalate',
+    `Ministry:${id}/${key}`,
+    'ok',
+    `-> ${chain[inc.tierIndex]}`,
+  );
+  return inc;
+}
+
+export function resolveMinistryIncident(
+  id: string,
+  key: string,
+  by: string,
+): MinistryIncident | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  const list = db.ministryIncidents[id];
+  const inc = list?.find(x => x.key === key);
+  if (!inc) return { error: 'Incident not found' };
+  inc.active = false;
+  inc.tierIndex = 0;
+  appendAudit(by, 'ministry-incident.resolve', `Ministry:${id}/${key}`, 'ok');
+  return inc;
+}
+
+export function fieldOpsFor(id: string): MinistryFieldOps | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  const prof = profileFor(m.archetype);
+  const units: FieldUnitStatus[] = prof.fieldUnits.map(u => {
+    const counts = u.states.map(state => ({
+      state,
+      n: seededInt(`${id}:fld:${u.key}:${state}`, 0, 24),
+    }));
+    return {
+      unit: u.key,
+      label: u.label,
+      counts,
+      total: counts.reduce((s, c) => s + c.n, 0),
+    };
+  });
+  return {
+    ministry: { id: m.id, name: m.name, archetype: m.archetype },
+    units,
+  };
 }
