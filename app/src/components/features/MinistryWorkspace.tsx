@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
 import { Button } from '@/components/ui/Button';
-import { Section, DataTable, StatusText, type Column } from '@/components/ui/DataSystem';
+import { Section, EnterpriseTable, StatusText, type Column } from '@/components/ui/DataSystem';
 import { SeverityBadge } from '@/components/ui/Ops';
 import { Sparkbars, HeatStrip } from '@/components/ui/Viz';
 import { api } from '@/lib/api/client';
@@ -88,6 +88,20 @@ export function MinistryWorkspace({ id }: { id: string }) {
       setBusy(null);
     }
   }
+  async function queueActMany(items: QueueItem[], action: 'assign' | 'escalate' | 'clear') {
+    setErr(null);
+    try {
+      const updated = await Promise.all(
+        items.map(it => api.org.actOnQueueItem(id, it.id, action).then(r => r.item)),
+      );
+      const byId = new Map(updated.map(u => [u.id, u]));
+      setQueue(prev =>
+        prev ? { ...prev, items: prev.items.map(x => byId.get(x.id) ?? x) } : prev,
+      );
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : 'Bulk action failed');
+    }
+  }
   async function incAct(key: string, kind: 'escalate' | 'resolve') {
     setBusy(key + kind);
     setErr(null);
@@ -108,20 +122,20 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const openQueue = queue?.items.filter(i => i.state !== 'cleared').length ?? 0;
 
   const regionCols: Column<RegionStat & { id?: string }>[] = [
-    { key: 'r', header: 'Region', render: r => <strong>{r.region}</strong> },
-    { key: 'f', header: labels.unit, align: 'right', render: r => `${r.facilitiesOperationalPct}%` },
-    { key: 'c', header: labels.capacity, align: 'right', render: r => `${r.capacityPct}%` },
-    { key: 'o', header: labels.cases, align: 'right', render: r => r.openCases },
-    { key: 's', header: 'SLA breaches', align: 'right', render: r => (r.slaBreaches > 0 ? <StatusText tone="alert">{r.slaBreaches}</StatusText> : '0') },
-    { key: 'st', header: 'Status', render: r => <StatusText tone={r.status}>{r.status.toUpperCase()}</StatusText> },
+    { key: 'r', header: 'Region', render: r => <strong>{r.region}</strong>, filter: r => r.region, sort: (a, b) => a.region.localeCompare(b.region) },
+    { key: 'f', header: labels.unit, align: 'right', render: r => `${r.facilitiesOperationalPct}%`, sort: (a, b) => a.facilitiesOperationalPct - b.facilitiesOperationalPct },
+    { key: 'c', header: labels.capacity, align: 'right', render: r => `${r.capacityPct}%`, sort: (a, b) => a.capacityPct - b.capacityPct },
+    { key: 'o', header: labels.cases, align: 'right', render: r => r.openCases, sort: (a, b) => a.openCases - b.openCases },
+    { key: 's', header: 'SLA breaches', align: 'right', render: r => (r.slaBreaches > 0 ? <StatusText tone="alert">{r.slaBreaches}</StatusText> : '0'), sort: (a, b) => a.slaBreaches - b.slaBreaches },
+    { key: 'st', header: 'Status', render: r => <StatusText tone={r.status}>{r.status.toUpperCase()}</StatusText>, filter: r => r.status, sort: (a, b) => a.status.localeCompare(b.status) },
   ];
   const queueCols: Column<QueueItem>[] = [
-    { key: 'ref', header: 'Ref', render: i => <span className="font-mono text-xs">{i.ref}</span> },
-    { key: 'sub', header: 'Subject', render: i => i.subject },
-    { key: 'rg', header: 'Region', render: i => i.region },
-    { key: 'age', header: 'Age', align: 'right', render: i => (queue && i.ageHours > queue.slaHours ? <StatusText tone="alert">{i.ageHours}h</StatusText> : `${i.ageHours}h`) },
-    { key: 'pr', header: 'Priority', render: i => <Pill tone={i.priority === 'urgent' ? 'alert' : i.priority === 'elevated' ? 'warn' : 'neutral'}>{i.priority}</Pill> },
-    { key: 'st', header: 'State', render: i => <Pill tone={i.state === 'escalated' ? 'alert' : i.state === 'assigned' ? 'warn' : 'neutral'}>{i.state}{i.assignee ? ` · ${i.assignee}` : ''}</Pill> },
+    { key: 'ref', header: 'Ref', render: i => <span className="font-mono text-xs">{i.ref}</span>, filter: i => i.ref, sort: (a, b) => a.ref.localeCompare(b.ref) },
+    { key: 'sub', header: 'Subject', render: i => i.subject, filter: i => i.subject, sort: (a, b) => a.subject.localeCompare(b.subject) },
+    { key: 'rg', header: 'Region', render: i => i.region, filter: i => i.region, sort: (a, b) => a.region.localeCompare(b.region) },
+    { key: 'age', header: 'Age', align: 'right', render: i => (queue && i.ageHours > queue.slaHours ? <StatusText tone="alert">{i.ageHours}h</StatusText> : `${i.ageHours}h`), sort: (a, b) => a.ageHours - b.ageHours },
+    { key: 'pr', header: 'Priority', render: i => <Pill tone={i.priority === 'urgent' ? 'alert' : i.priority === 'elevated' ? 'warn' : 'neutral'}>{i.priority}</Pill>, filter: i => i.priority, sort: (a, b) => a.priority.localeCompare(b.priority) },
+    { key: 'st', header: 'State', render: i => <Pill tone={i.state === 'escalated' ? 'alert' : i.state === 'assigned' ? 'warn' : 'neutral'}>{i.state}{i.assignee ? ` · ${i.assignee}` : ''}</Pill>, filter: i => `${i.state} ${i.assignee ?? ''}`, sort: (a, b) => a.state.localeCompare(b.state) },
     { key: 'act', header: 'Action', render: i => (
         <div className="flex gap-1.5">
           {i.state === 'open' ? <button className="rounded-xs border border-line px-2 py-0.5 text-xs hover:bg-surface-2" disabled={busy === i.id + 'assign'} onClick={() => queueAct(i.id, 'assign')}>Assign me</button> : null}
@@ -218,7 +232,26 @@ export function MinistryWorkspace({ id }: { id: string }) {
 
       {tab === 'regional' && (
         <Section title="Regional oversight" meta={`${regions.length} ${labels.unit.toLowerCase()}`}>
-          <DataTable columns={regionCols} rows={regions} rowKey={r => r.region} />
+          <EnterpriseTable
+            columns={regionCols}
+            rows={regions}
+            rowKey={r => r.region}
+            search
+            searchPlaceholder="Filter regions…"
+            initialSort={{ key: 's', dir: 'desc' }}
+            expand={r => (
+              <div className="grid gap-x-8 gap-y-1 text-sm sm:grid-cols-2">
+                <div className="flex justify-between"><span className="text-ink-muted">{labels.unit} operational</span><span className="tabular-nums">{r.facilitiesOperationalPct}%</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">{labels.capacity}</span><span className="tabular-nums">{r.capacityPct}%</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">{labels.cases}</span><span className="tabular-nums">{r.openCases}</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">SLA breaches</span><span className="tabular-nums">{r.slaBreaches}</span></div>
+                <div className="sm:col-span-2 mt-1 text-xs text-ink-muted">
+                  Posture <strong className="uppercase">{r.status}</strong>. Drill-through to the institution&rsquo;s
+                  regional command and field operations for {r.region}.
+                </div>
+              </div>
+            )}
+          />
         </Section>
       )}
 
@@ -227,10 +260,41 @@ export function MinistryWorkspace({ id }: { id: string }) {
           title={queue?.title ?? 'Approvals'}
           meta={`${openQueue} open · SLA ${queue ? Math.round(queue.slaHours / 24) : '—'}d`}
         >
-          <DataTable columns={queueCols} rows={queue?.items ?? []} rowKey={i => i.id} empty="Queue clear." />
+          <EnterpriseTable
+            columns={queueCols}
+            rows={queue?.items ?? []}
+            rowKey={i => i.id}
+            empty="Queue clear."
+            search
+            searchPlaceholder="Filter by ref, subject, region…"
+            initialSort={{ key: 'age', dir: 'desc' }}
+            bulk={[
+              { label: 'Assign to me', run: items => queueActMany(items.filter(i => i.state === 'open'), 'assign') },
+              { label: 'Escalate', run: items => queueActMany(items, 'escalate') },
+              { label: 'Clear', tone: 'alert', run: items => queueActMany(items, 'clear') },
+            ]}
+            expand={i => (
+              <div className="space-y-2 text-sm">
+                <div className="grid gap-x-8 gap-y-1 sm:grid-cols-2">
+                  <div className="flex justify-between"><span className="text-ink-muted">Reference</span><span className="font-mono text-xs">{i.ref}</span></div>
+                  <div className="flex justify-between"><span className="text-ink-muted">Region</span><span>{i.region}</span></div>
+                  <div className="flex justify-between"><span className="text-ink-muted">Age</span><span className="tabular-nums">{i.ageHours}h{queue && i.ageHours > queue.slaHours ? ` · ${i.ageHours - queue.slaHours}h over SLA` : ''}</span></div>
+                  <div className="flex justify-between"><span className="text-ink-muted">Priority</span><span className="capitalize">{i.priority}</span></div>
+                  <div className="flex justify-between"><span className="text-ink-muted">State</span><span className="capitalize">{i.state}{i.assignee ? ` · ${i.assignee}` : ''}</span></div>
+                  <div className="flex justify-between"><span className="text-ink-muted">SLA target</span><span className="tabular-nums">{queue ? Math.round(queue.slaHours / 24) : '—'}d</span></div>
+                </div>
+                <div className="text-xs text-ink-muted">
+                  {i.subject}. Disposition is recorded to the tamper-evident audit
+                  chain against operator <strong>{OPERATOR}</strong> — escalation
+                  follows this institution&rsquo;s authority chain.
+                </div>
+              </div>
+            )}
+          />
           <p className="mt-2 text-xs text-ink-muted">
             Operator <strong>{OPERATOR}</strong>. Every action named and
-            audited. Humans assign, escalate, clear — no autonomous action.
+            audited — single or bulk. Humans assign, escalate, clear — no
+            autonomous action.
           </p>
         </Section>
       )}

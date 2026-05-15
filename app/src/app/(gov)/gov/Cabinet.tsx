@@ -6,7 +6,7 @@ import { Card } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
 import { Button } from '@/components/ui/Button';
 import { MetricStat } from '@/components/ui/Ops';
-import { Section, DataTable, StatusText, type Column } from '@/components/ui/DataSystem';
+import { Section, EnterpriseTable, StatusText, type Column } from '@/components/ui/DataSystem';
 import { api } from '@/lib/api/client';
 import type {
   CabinetOverview,
@@ -83,17 +83,17 @@ export function Cabinet() {
   const t = ov.totals;
 
   const cols: Column<Inst>[] = [
-    { key: 'n', header: 'Institution', render: i => (
+    { key: 'n', header: 'Institution', filter: i => i.name, sort: (a, b) => a.name.localeCompare(b.name), render: i => (
         <Link href={`/gov/ministry/${i.id}`} className="font-medium text-link underline underline-offset-2">
           {i.name}
         </Link>
       ) },
-    { key: 'a', header: 'Archetype', render: i => <span className="text-ink-muted">{i.archetype}</span> },
-    { key: 'st', header: 'Status', render: i => (
+    { key: 'a', header: 'Archetype', filter: i => i.archetype, sort: (a, b) => a.archetype.localeCompare(b.archetype), render: i => <span className="text-ink-muted">{i.archetype}</span> },
+    { key: 'st', header: 'Status', filter: i => i.status, sort: (a, b) => a.status.localeCompare(b.status), render: i => (
         <StatusText tone={i.status === 'active' ? 'ok' : 'warn'}>{i.status}</StatusText>
       ) },
-    { key: 'q', header: 'Open queue', align: 'right', render: i => i.openQueue },
-    { key: 'inc', header: 'Active incidents', align: 'right', render: i =>
+    { key: 'q', header: 'Open queue', align: 'right', sort: (a, b) => a.openQueue - b.openQueue, render: i => i.openQueue },
+    { key: 'inc', header: 'Active incidents', align: 'right', sort: (a, b) => a.activeIncidents - b.activeIncidents, render: i =>
         i.activeIncidents > 0 ? <StatusText tone="alert">{i.activeIncidents}</StatusText> : '0' },
     { key: 'go', header: '', align: 'right', render: i => (
         <Link href={`/gov/ministry/${i.id}`} className="text-xs text-link underline underline-offset-2">
@@ -202,23 +202,26 @@ export function Cabinet() {
           title="Cross-ministry incidents"
           meta={`${nat.crossMinistryIncidents.length} active`}
         >
-          <DataTable
+          <EnterpriseTable
             columns={[
-              { key: 'm', header: 'Ministry', render: (c: NationalSnapshot['crossMinistryIncidents'][number]) => (
+              { key: 'm', header: 'Ministry', filter: c => c.ministry, sort: (a, b) => a.ministry.localeCompare(b.ministry), render: (c: NationalSnapshot['crossMinistryIncidents'][number]) => (
                   <Link href={`/gov/ministry/${c.ministryId}`} className="font-medium text-link underline underline-offset-2">
                     {c.ministry}
                   </Link>
                 ) },
-              { key: 'l', header: 'Incident', render: c => c.label },
-              { key: 's', header: 'Severity', render: c => (
+              { key: 'l', header: 'Incident', filter: c => c.label, sort: (a, b) => a.label.localeCompare(b.label), render: c => c.label },
+              { key: 's', header: 'Severity', filter: c => c.severity, sort: (a, b) => a.severity.localeCompare(b.severity), render: c => (
                   <StatusText tone={c.severity === 'sev1' || c.severity === 'sev2' ? 'alert' : 'warn'}>
                     {c.severity.toUpperCase()}
                   </StatusText>
                 ) },
-              { key: 'a', header: 'Current authority', render: c => c.authority },
+              { key: 'a', header: 'Current authority', filter: c => c.authority, sort: (a, b) => a.authority.localeCompare(b.authority), render: c => c.authority },
             ]}
             rows={nat.crossMinistryIncidents.map((c, i) => ({ ...c, id: String(i) }))}
             rowKey={(_c, i) => String(i)}
+            search
+            searchPlaceholder="Filter cross-ministry incidents…"
+            initialSort={{ key: 's', dir: 'asc' }}
           />
         </Section>
       ) : null}
@@ -234,11 +237,27 @@ export function Cabinet() {
       </Section>
 
       <Section title="Institutions" meta={`${ov.institutions.length} composed`}>
-        <DataTable
+        <EnterpriseTable
           columns={cols}
           rows={ov.institutions}
           rowKey={i => i.id}
+          search
+          searchPlaceholder="Filter institutions…"
+          initialSort={{ key: 'inc', dir: 'desc' }}
           empty="No institutions composed yet. Use Institutions admin to provision from an archetype."
+          expand={i => (
+            <div className="space-y-2 text-sm">
+              <div className="grid gap-x-8 gap-y-1 sm:grid-cols-3">
+                <div className="flex justify-between"><span className="text-ink-muted">Archetype</span><span>{i.archetype}</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">Status</span><span className="capitalize">{i.status}</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">Open queue</span><span className="tabular-nums">{i.openQueue}</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">Active incidents</span><span className="tabular-nums">{i.activeIncidents}</span></div>
+              </div>
+              <Link href={`/gov/ministry/${i.id}`} className="inline-block text-xs text-link underline underline-offset-2">
+                Open {i.name} workspace — regional oversight, approvals, incidents, field operations →
+              </Link>
+            </div>
+          )}
         />
       </Section>
 
