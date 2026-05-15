@@ -329,74 +329,13 @@ export function CabinetIntelligence() {
             </div>
           </div>
 
-          {/* DOMINANT: strategic map + executive narrative (asymmetric hero) */}
+          {/* ROW 2 — primary command surface (map 58% · matrix 25% · escalation 17%) */}
           <div className="grid gap-2 xl:grid-cols-12">
-            <Panel title="National strategic map" meta="live operational command view" className="xl:col-span-8" bodyClass="!p-2">
-              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} height={560} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
+            <Panel title="National strategic map" meta="live operational command view" className="xl:col-span-7" bodyClass="!p-2">
+              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} height={372} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
             </Panel>
 
-            <div className="flex flex-col gap-2 xl:col-span-4">
-              {(() => {
-                const top = escalations[0];
-                const st = top?.sevState ?? 'stable';
-                const c = TONE[RISK_TONE[st]] ?? TONE.ok;
-                return (
-                  <div className="rounded-[3px] border bg-surface p-4"
-                    style={{ borderColor: c, boxShadow: st === 'critical' ? `0 0 22px ${c}33` : undefined }}>
-                    <div className="flex items-center justify-between">
-                      <span className="rounded px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.2em]"
-                        style={{ backgroundColor: `color-mix(in srgb, ${c} 20%, transparent)`, color: c }}>
-                        {top ? RISK_LABEL[st] : 'NOMINAL'} {top ? `· LEVEL ${top.level}` : ''}
-                      </span>
-                      <span className="flex items-center gap-1.5 text-[10px] text-ink-muted">
-                        <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: c }} />
-                        {top ? `${top.age}m` : 'stable'}
-                      </span>
-                    </div>
-                    {top ? (
-                      <>
-                        <div className="mt-2 text-lg font-semibold leading-tight text-ink">{top.title}</div>
-                        <div className="text-xs text-ink-muted">{top.ministry} · {top.regions} regions · ~{top.pop}M affected</div>
-                        <div className="mt-3 space-y-1 text-[11px]">
-                          <div className="flex justify-between"><span className="text-ink-muted">Treasury</span><span style={{ color: c }}>Reserve intervention recommended</span></div>
-                          <div className="flex justify-between"><span className="text-ink-muted">Projected impact</span><span className="text-ink-soft">Hospital disruption ≤ {top.level === 3 ? 18 : 36}h</span></div>
-                          <div className="flex justify-between"><span className="text-ink-muted">Posture</span><span style={{ color: c }}>{st === 'critical' ? 'Convene Cabinet · War Room' : 'Regional coordination'}</span></div>
-                        </div>
-                        <div className="mt-3 flex gap-2">
-                          <Link href={`/gov/ministry/${top.mid}`} className="focus-ring flex-1 rounded-sm border px-3 py-1.5 text-center text-xs no-underline" style={{ borderColor: c, color: c }}>Open command →</Link>
-                          <button onClick={() => setWar(true)} className="focus-ring rounded-sm border px-3 py-1.5 text-xs" style={{ borderColor: RED, color: RED }}>⚑ War Room</button>
-                        </div>
-                      </>
-                    ) : (
-                      <div className="mt-2 text-sm text-ink-soft">No executive-level escalation. National posture <span style={{ color: TONE[posture?.level ?? 'ok'] }}>{posture?.label ?? 'STABLE'}</span>.</div>
-                    )}
-                  </div>
-                );
-              })()}
-
-              <Panel title="Morning executive brief" meta="classified · daily" className="flex-1" bodyClass="">
-                <div className="mb-2 flex items-center gap-2 border-b border-line pb-2 font-mono text-[10px] uppercase tracking-[0.16em] text-ink-muted">
-                  <span style={{ color: ACCENT }}>◆</span> SOVEREIGN INTELLIGENCE SUMMARY
-                  <span className="ml-auto">{new Date(now).toLocaleDateString()}</span>
-                </div>
-                <ul className="space-y-2 text-xs leading-relaxed">
-                  {brief.map((b, i) => (
-                    <li key={i} className="flex gap-2">
-                      <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: ACCENT }} />
-                      <span className="text-ink-soft">{b}</span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-3 border-t border-line pt-2 text-[10px] text-ink-muted">
-                  Recommended executive attention: <span style={{ color: TONE.warn }}>{escalations[0]?.ministry ?? 'none'}</span> · Cabinet readiness <span style={{ color: TONE.ok }}>OPERATIONAL</span>
-                </div>
-              </Panel>
-            </div>
-          </div>
-
-          {/* Secondary band: matrix + escalation stream */}
-          <div className="grid gap-2 xl:grid-cols-12">
-            <Panel title="Ministry risk matrix" meta="live risk by domain" className="xl:col-span-8" bodyClass="!p-0">
+            <Panel title="Ministry risk matrix" meta={`${mRows.length} institutions`} className="xl:col-span-3" bodyClass="!p-0">
               <table className="w-full text-[11px]">
                 <thead>
                   <tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8.5px] uppercase tracking-wider text-ink-muted">
@@ -434,7 +373,7 @@ export function CabinetIntelligence() {
               </table>
             </Panel>
 
-            <Panel title="Cabinet escalation feed" meta="executive level" className="xl:col-span-4" bodyClass="!p-0">
+            <Panel title="Cabinet escalation feed" meta="executive" className="xl:col-span-2" bodyClass="!p-0">
               {escList.map((e, i) => (
                 <Link key={i} href={e.mid.startsWith('/') ? e.mid : `/gov/ministry/${e.mid}`} className="focus-ring block border-b border-line-soft px-3 py-2.5 no-underline transition-colors hover:bg-surface-2/50 last:border-0"
                   style={{ borderLeft: `3px solid ${TONE[RISK_TONE[e.sevState]]}` }}>
@@ -451,9 +390,9 @@ export function CabinetIntelligence() {
             </Panel>
           </div>
 
-          {/* Dependency · timeline · forecast · heatmap (5 cols, heatmap wider) */}
-          <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-5">
-            <Panel title="National dependency graph" meta="systemic impact propagation">
+          {/* ROW 3 — 5 containers: dependency · timeline · forecast · heatmap(wider) · brief(taller) */}
+          <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-12">
+            <Panel title="National dependency graph" meta="systemic impact propagation" className="xl:col-span-3">
               <div className="relative h-[200px] w-full">
                 <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
                   {depLinks.map(([a, b], i) => {
@@ -483,7 +422,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Operational timeline" meta="escalation chronology" bodyClass="!p-0">
+            <Panel title="Operational timeline" meta="chronology" className="xl:col-span-2" bodyClass="!p-0">
               {(coord?.timeline ?? []).slice(0, 9).map((e, i) => (
                 <div key={i} className="flex items-start gap-2 border-b border-line-soft px-3 py-1.5 text-xs last:border-0">
                   <span className="font-mono text-[10px] tabular-nums text-ink-muted">{rel(e.at, now)}</span>
@@ -494,7 +433,7 @@ export function CabinetIntelligence() {
               {(coord?.timeline ?? []).length === 0 ? <p className="p-3 text-xs text-ink-muted">Awaiting events…</p> : null}
             </Panel>
 
-            <Panel title="Strategic forecast · 72h" meta="advisory simulation">
+            <Panel title="Strategic forecast · 72h" meta="advisory" className="xl:col-span-2">
               <ul className="space-y-2 text-xs">
                 {forecast.map(f => (
                   <li key={f.l} className="flex items-center justify-between gap-2">
@@ -506,59 +445,54 @@ export function CabinetIntelligence() {
               <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory projection only — no autonomous action. Cabinet decides.</p>
             </Panel>
 
-            <Panel title="National heatmap" meta="ministry stress by region" className="xl:col-span-2" bodyClass="!p-2">
-              <TerritoryHeat epoch={epoch} height={196} focus={sov?.stateName} />
+            <Panel title="National heatmap" meta="ministry stress · region" className="xl:col-span-3" bodyClass="!p-2">
+              <TerritoryHeat epoch={epoch} height={210} focus={sov?.stateName} />
               <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
                 <span>Low</span>
                 <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
                 <span>Critical</span>
               </div>
             </Panel>
+
+            <Panel title="Morning executive brief" meta="classified" className="xl:col-span-2" bodyClass="">
+              <div className="mb-1.5 flex items-center gap-2 border-b border-line pb-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-ink-muted">
+                <span style={{ color: ACCENT }}>◆</span> INTEL SUMMARY<span className="ml-auto">{new Date(now).toLocaleDateString()}</span>
+              </div>
+              <ul className="space-y-1.5 text-[11px] leading-relaxed">
+                {brief.map((b, i) => (
+                  <li key={i} className="flex gap-1.5"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: ACCENT }} /><span className="text-ink-soft">{b}</span></li>
+                ))}
+              </ul>
+              <div className="mt-2 border-t border-line pt-1.5 text-[9px] text-ink-muted">
+                Attention: <span style={{ color: TONE.warn }}>{escList[0]?.ministry ?? 'none'}</span> · Cabinet <span style={{ color: TONE.ok }}>OPERATIONAL</span>
+              </div>
+            </Panel>
           </div>
 
-          {/* KPI trends · fiscal · geopolitical · quick actions (4 cols) */}
-          <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
-            <Panel title="National KPI trends" meta="7-day">
-              <div className="grid grid-cols-5 gap-2">
-                {kpiTrends.map(k => (
-                  <div key={k.l}>
-                    <div className="truncate text-[9px] uppercase tracking-wide text-ink-muted">{k.l}</div>
-                    <div className="font-mono text-sm tabular-nums text-ink">{k.pct ? `${k.v}%` : k.v}</div>
-                    <div className="text-[9px]" style={{ color: k.d >= 0 ? TONE.ok : TONE.alert }}>{k.d >= 0 ? '▲' : '▼'} {Math.abs(k.d)}</div>
-                    <Spark pts={Array.from({ length: 10 }).map((_, i) => 40 + seed(`kt:${k.l}:${i}:${epoch}`) * 50)} tone={k.d >= 0 ? 'ok' : 'alert'} />
+          {/* ROW 4 — micro executive telemetry grid (18 panels · 4 columns) */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+            {([
+              ['National KPI index', 60, 92, true], ['Fiscal execution', 70, 96, true], ['Geopolitical pressure', 20, 70, false],
+              ['Border pressure', 15, 64, false], ['Commodity exposure', 25, 72, false], ['Treasury execution', 72, 98, true],
+              ['Public satisfaction', 58, 84, true], ['Infrastructure tempo', 55, 90, true], ['Civil unrest signals', 8, 55, false],
+              ['Operational readiness', 70, 97, true], ['Diplomatic engagement', 50, 88, true], ['Regional escalation', 18, 66, false],
+              ['Economic exposure', 22, 68, false], ['Security advisory', 12, 60, false], ['Resource allocation', 60, 93, true],
+              ['Cabinet activity', 55, 90, true], ['Strategic reserves', 64, 95, true], ['Public service stability', 66, 96, true],
+            ] as const).map(([l, lo, hi, good]) => {
+              const v = lo + Math.round(seed(`mp:${l}:${epoch}`) * (hi - lo));
+              const d = Math.round((seed(`md:${l}:${epoch}`) - 0.45) * 12);
+              const tn = (good ? v < 40 : v > 60) ? 'alert' : (good ? v < 60 : v > 45) ? 'warn' : 'ok';
+              return (
+                <div key={l} className="rounded-[3px] border border-line bg-surface px-2.5 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+                  <div className="truncate text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{l}</div>
+                  <div className="flex items-baseline gap-1.5">
+                    <span className="font-mono text-base tabular-nums" style={{ color: TONE[tn] }}>{v}{good ? '%' : ''}</span>
+                    <span className="ml-auto text-[9px]" style={{ color: d >= 0 ? TONE.ok : TONE.alert }}>{d >= 0 ? '▲' : '▼'} {Math.abs(d)}</span>
                   </div>
-                ))}
-              </div>
-            </Panel>
-            <Panel title="Fiscal overview" meta="budget execution">
-              <ul className="space-y-1.5 text-xs">
-                {fiscal.map(f => (
-                  <li key={f.l} className="flex items-center justify-between">
-                    <span className="text-ink-soft">{f.l}</span>
-                    <span className="flex items-center gap-2"><span className="font-mono tabular-nums text-ink">{f.v}</span><span className="text-[10px]" style={{ color: TONE[f.t] }}>{f.d}</span></span>
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-            <Panel title="Geopolitical monitor" meta="regional & global">
-              <ul className="space-y-2 text-xs">
-                {geo.map(g => (
-                  <li key={g.l} className="flex items-center justify-between">
-                    <span className="text-ink-soft">{g.l}</span>
-                    <span className="rounded px-1.5 py-0.5 text-[10px] font-semibold" style={{ backgroundColor: `color-mix(in srgb, ${TONE[g.t]} 16%, transparent)`, color: TONE[g.t] }}>{g.s}</span>
-                  </li>
-                ))}
-              </ul>
-            </Panel>
-            <Panel title="Quick actions" meta="executive shortcuts">
-              <div className="grid grid-cols-1 gap-1.5">
-                {quick.map(q => q.href ? (
-                  <Link key={q.l} href={q.href} className="focus-ring flex items-center justify-between rounded-sm border border-line bg-bg px-3 py-1.5 text-xs text-ink-soft no-underline transition-colors hover:border-link/40 hover:text-ink"><span>{q.l}</span><span className="text-ink-muted">→</span></Link>
-                ) : (
-                  <button key={q.l} onClick={q.a} className="focus-ring flex items-center justify-between rounded-sm border px-3 py-1.5 text-xs no-underline transition-colors" style={{ borderColor: RED, color: RED }}><span>{q.l}</span><span>⚑</span></button>
-                ))}
-              </div>
-            </Panel>
+                  <div className="opacity-80"><Spark pts={Array.from({ length: 14 }).map((_, i) => 35 + seed(`ms:${l}:${i}:${epoch}`) * 55)} tone={tn} /></div>
+                </div>
+              );
+            })}
           </div>
 
           {/* Row 5 — executive posture strip */}
