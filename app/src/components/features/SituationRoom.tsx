@@ -210,6 +210,18 @@ const INFRA_KINDS = [
 const LAND =
   'M126,196 C150,128 250,96 360,104 C452,110 520,74 628,92 C742,111 836,150 884,232 C916,288 902,360 880,418 C858,476 884,520 806,538 C720,558 612,536 498,544 C392,551 286,566 208,520 C140,480 104,398 108,326 C111,270 108,236 126,196 Z';
 
+// Global-state-neutral provinces (directional/generic — no real nation).
+const PROVINCES = [
+  { n: 'Capital District', x: 46, y: 44 },
+  { n: 'Northern Province', x: 34, y: 18 },
+  { n: 'Eastern Region', x: 74, y: 26 },
+  { n: 'Western Region', x: 20, y: 40 },
+  { n: 'Southern Province', x: 44, y: 78 },
+  { n: 'Coastal Region', x: 78, y: 66 },
+  { n: 'Highland Region', x: 60, y: 20 },
+  { n: 'Central Province', x: 58, y: 56 },
+] as const;
+
 interface Infra { id: string; kind: typeof INFRA_KINDS[number]; x: number; y: number; risk: number }
 
 export function NationalMap({
@@ -300,6 +312,23 @@ export function NationalMap({
           })}
         </g>
       </svg>
+
+      {/* named provinces — geopolitical cognition */}
+      {PROVINCES.map((p, i) => {
+        const risk = Math.round(seed(`prov:${i}:${epoch}`) * 100);
+        const tn = toneFor(risk);
+        return (
+          <span key={p.n} className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-center"
+            style={{ left: `${p.x}%`, top: `${p.y}%` }}>
+            <span className="inline-flex items-center gap-1 rounded-sm border bg-surface/55 px-1.5 py-0.5 text-[9px] backdrop-blur"
+              style={{ borderColor: TONE[tn], color: 'rgb(var(--c-ink-soft))' }}>
+              <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[tn] }} />
+              {p.n}
+              <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{risk}</span>
+            </span>
+          </span>
+        );
+      })}
 
       {/* infrastructure nodes */}
       {layers.infra && infra.map(n => {
@@ -773,13 +802,23 @@ export function SituationRoom() {
           <div className="grid gap-3 lg:grid-cols-2 xl:grid-cols-4">
             <Panel title="Incident severity distribution" meta="by classification"><Donut segs={donut} /></Panel>
             <Panel title="Operational timeline" meta="live tempo" bodyClass="overflow-y-auto max-h-[196px] !p-0">
-              {(coord?.timeline ?? []).slice(0, 9).map((e, i) => (
-                <div key={i} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 text-xs last:border-0">
-                  <span className="font-mono text-[10px] tabular-nums text-ink-muted">{rel(e.at, now)}</span>
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE[e.tone] ?? TONE.neutral }} />
-                  <span className="truncate text-ink-soft">{e.title}</span>
-                </div>
-              ))}
+              {(coord?.timeline ?? []).slice(0, 9).map((e, i) => {
+                const phase = e.tone === 'alert' ? 'Containment' : e.tone === 'warn' ? 'Assessment' : 'Coordination';
+                const res = e.tone === 'alert' ? 'Open' : e.tone === 'warn' ? 'In progress' : 'Monitored';
+                return (
+                  <div key={i} className="border-b border-line-soft px-3 py-1.5 text-xs last:border-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono text-[10px] tabular-nums text-ink-muted">{rel(e.at, now)}</span>
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE[e.tone] ?? TONE.neutral }} />
+                      <span className="truncate text-ink-soft">{e.title}</span>
+                    </div>
+                    <div className="ml-[42px] flex items-center gap-2 text-[9px] text-ink-muted">
+                      <span style={{ color: TONE[e.tone] ?? TONE.neutral }}>{phase}</span>
+                      <span className="border-l border-line pl-2">{res}</span>
+                    </div>
+                  </div>
+                );
+              })}
               {(coord?.timeline ?? []).length === 0 ? <p className="p-3 text-xs text-ink-muted">Awaiting operational events…</p> : null}
             </Panel>
             <Panel title="Regional risk heatmap" meta="exposure by region">
@@ -861,12 +900,24 @@ export function SituationRoom() {
             <Panel title="Top operational alerts" meta="high impact">
               {alerts.length === 0 ? <p className="text-xs text-ink-muted">No high-impact alerts in the current window.</p> : (
                 <ul className="space-y-2 text-xs">
-                  {alerts.map((a, i) => (
-                    <li key={i} className="flex items-start gap-2">
-                      <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE[a.tone] ?? TONE.warn }} />
-                      <span><span className="font-medium text-ink">{a.title}</span><span className="block text-[10px] text-ink-muted">{a.detail}</span></span>
-                    </li>
-                  ))}
+                  {alerts.map((a, i) => {
+                    const owner = a.tone === 'alert' ? 'Cabinet Office' : 'Duty Coordinator';
+                    const eta = a.tone === 'alert' ? `${1 + (epoch % 3)}h` : `${4 + (epoch % 8)}h`;
+                    const path = a.tone === 'alert' ? 'Ministry → Regional → Cabinet' : 'Ministry → Regional';
+                    return (
+                      <li key={i} className="border-b border-line-soft pb-2 last:border-0 last:pb-0">
+                        <div className="flex items-start gap-2">
+                          <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE[a.tone] ?? TONE.warn }} />
+                          <span className="min-w-0"><span className="block font-medium text-ink">{a.title}</span><span className="block truncate text-[10px] text-ink-muted">{a.detail}</span></span>
+                        </div>
+                        <div className="ml-[14px] mt-1 grid grid-cols-2 gap-x-2 text-[9px] text-ink-muted">
+                          <span>owner: {owner}</span>
+                          <span className="text-right">ETA {eta}</span>
+                          <span className="col-span-2" style={{ color: TONE[a.tone] ?? TONE.warn }}>↗ {path}</span>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </Panel>
