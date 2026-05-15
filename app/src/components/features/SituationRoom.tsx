@@ -283,9 +283,16 @@ export function NationalMap({
   const pos = new Map(mapNodes.map(m => [m.ministryId, m]));
   const pulse = (now / 1000) % 2 / 2;
   const provRisk = PROV.map((p, i) => ({ p, risk: Math.round(seed(`prov:${i}:${epoch}`) * 100) }));
+  const rootRef = React.useRef<HTMLDivElement>(null);
+  const fullscreen = () => {
+    const el = rootRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else void el.requestFullscreen?.();
+  };
 
   return (
-    <div className={`relative w-full overflow-hidden rounded-[3px] border border-line-soft ${height ? '' : 'h-full'}`}
+    <div ref={rootRef} className={`relative w-full overflow-hidden rounded-[3px] border border-line-soft ${height ? '' : 'h-full'}`}
       style={{ ...(height ? { height } : {}), background: 'radial-gradient(ellipse at 42% 26%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 60%)' }}>
       <WorldMap focus={focus} />
       <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
@@ -406,8 +413,28 @@ export function NationalMap({
       })}
 
       {mapNodes.length === 0 ? <div className="absolute inset-0 grid place-items-center text-xs text-ink-muted">Awaiting institutional telemetry…</div> : null}
+
+      {/* map controls — top-right */}
+      <div className="absolute right-2 top-2 flex items-center gap-1.5">
+        <span className="flex items-center gap-1 rounded-[3px] border border-line bg-surface/85 px-2 py-1 text-[10px] text-ink-soft backdrop-blur">
+          <span style={{ color: ACCENT }}>⧉</span> All Layers <span className="text-ink-muted">▾</span>
+        </span>
+        <button type="button" onClick={fullscreen} aria-label="Toggle fullscreen"
+          className="focus-ring grid h-7 w-7 place-items-center rounded-[3px] border border-line bg-surface/85 text-[11px] text-ink-soft backdrop-blur transition-colors hover:text-ink">⛶</button>
+      </div>
+
+      {/* map controls — left zoom/layer stack */}
+      <div className="absolute left-2 top-2 flex flex-col gap-1">
+        {[
+          { i: '▤', t: 'Layers' }, { i: '◳', t: 'Overlays' }, { i: '+', t: 'Zoom in' }, { i: '−', t: 'Zoom out' },
+        ].map(b => (
+          <span key={b.t} title={b.t}
+            className="grid h-7 w-7 place-items-center rounded-[3px] border border-line bg-surface/85 text-[12px] text-ink-soft backdrop-blur">{b.i}</span>
+        ))}
+      </div>
+
       <div className="absolute bottom-2 left-2 flex flex-wrap gap-3 rounded-[3px] border border-line bg-surface/85 px-2.5 py-1 text-[10px] text-ink-muted backdrop-blur">
-        {['ok', 'warn', 'alert'].map(t => (<span key={t} className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: TONE[t] }} />{t === 'ok' ? 'Stable' : t === 'warn' ? 'Strained' : 'Critical'}</span>))}
+        {(['ok', 'neutral', 'warn', 'alert'] as const).map(t => (<span key={t} className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: TONE[t] }} />{t === 'ok' ? 'Stable' : t === 'neutral' ? 'Watch' : t === 'warn' ? 'Elevated' : 'Critical'}</span>))}
         <span className="flex items-center gap-1 border-l border-line pl-2">✚ medical ⚓ port ✈ air ⚡ power ▣ logistics</span>
       </div>
     </div>
