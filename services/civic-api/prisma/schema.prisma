@@ -61,8 +61,12 @@ model Tenant {
   incidents    Incident[]
   integrations IntegrationClient[]
   webhooks     WebhookSubscription[]
-  grantsOut    FederationGrant[]     @relation("GrantFrom")
-  grantsIn     FederationGrant[]     @relation("GrantTo")
+  grantsOut    FederationGrant[]      @relation("GrantFrom")
+  grantsIn     FederationGrant[]      @relation("GrantTo")
+  deployments  Deployment[]
+  backups      BackupRecord[]
+  configs      ConfigBundle[]
+  lifecycle    TenantLifecycleEvent[]
 
   @@index([kind, status])
 }
@@ -461,4 +465,150 @@ model WebhookSubscription {
 
   @@index([tenantId, status])
   @@index([topic])
+}
+
+// ── Platform operations & lifecycle ───────────────────────────────────
+
+/// A built artifact promoted through channels. Promotion to STABLE needs
+/// an operator approval gate. Schema migrations are declared so a
+/// deployment can verify migration discipline before rollout.
+enum ReleaseChannel {
+  DEV
+  STAGING
+  STABLE
+}
+
+enum ReleaseStatus {
+  DRAFT
+  AVAILABLE
+  DEPRECATED
+}
+
+model Release {
+  id              String         @id @default(cuid())
+  version         String // semver, e.g. 1.4.0
+  channel         ReleaseChannel @default(DEV)
+  status          ReleaseStatus  @default(DRAFT)
+  notes           String
+  schemaMigration String? // migration id this release requires, if any
+  approvedBy      String? // required to reach STABLE
+  createdAt       DateTime       @default(now())
+  approvedAt      DateTime?
+  deployments     Deployment[]
+
+  @@unique([version, channel])
+  @@index([channel, status])
+}
+
+/// Explicit deployment state machine with verification gates.
+/// PENDING -> PRECHECK -> ROLLOUT -> VERIFY -> COMPLETED
+/// any active state -> ROLLED_BACK (operator-initiated or failed gate)
+enum DeployStrategy {
+  ROLLING
+  CANARY
+  BLUE_GREEN
+}
+
+enum DeployState {
+  PENDING
+  PRECHECK
+  ROLLOUT
+  VERIFY
+  COMPLETED
+  ROLLED_BACK
+}
+
+model Deployment {
+  id          String         @id @default(cuid())
+  tenantId    String
+  tenant      Tenant         @relation(fields: [tenantId], references: [id])
+  releaseId   String
+  release     Release        @relation(fields: [releaseId], references: [id])
+  strategy    DeployStrategy @default(ROLLING)
+  state       DeployState    @default(PENDING)
+  gates       Json           @default("[]") // [{at,gate,result,by,note}]
+  startedAt   DateTime       @default(now())
+  completedAt DateTime?
+
+  @@index([tenantId, state])
+  @@index([releaseId])
+}
+
+/// Tenant-aware backup metadata. Bytes live in the sovereign object store;
+/// only the encrypted-snapshot reference + integrity hash are recorded.
+enum BackupKind {
+  FULL
+  INCREMENTAL
+}
+
+enum BackupStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  RESTORING
+}
+
+model BackupRecord {
+  id          String       @id @default(cuid())
+  tenantId    String
+  tenant      Tenant       @relation(fields: [tenantId], references: [id])
+  kind        BackupKind
+  status      BackupStatus @default(PENDING)
+  location    String // sovereign object-store key
+  encrypted   Boolean      @default(true)
+  sizeBytes   BigInt?
+  contentHash String?
+  createdAt   DateTime     @default(now())
+  completedAt DateTime?
+
+  @@index([tenantId, status])
+  @@index([tenantId, createdAt])
+}
+
+/// Signed configuration/policy bundle. Centrally published, tenant-scoped
+/// overrides allowed. Drift = applied hash != desired hash.
+enum ConfigScope {
+  GLOBAL
+  TENANT
+}
+
+enum ConfigStatus {
+  DRAFT
+  SIGNED
+  APPLIED
+  SUPERSEDED
+}
+
+model ConfigBundle {
+  id          String       @id @default(cuid())
+  tenantId    String? // null = GLOBAL
+  tenant      Tenant?      @relation(fields: [tenantId], references: [id])
+  scope       ConfigScope
+  version     Int
+  payload     Json
+  contentHash String
+  signature   String? // signer attestation over contentHash
+  signedBy    String?
+  status      ConfigStatus @default(DRAFT)
+  createdAt   DateTime     @default(now())
+  appliedAt   DateTime?
+
+  @@unique([scope, tenantId, version])
+  @@index([status])
+}
+
+/// Append-only tenant lifecycle ledger. Transitions are guarded; the
+/// reason and actor are recorded for audit continuity across the
+/// tenant's whole life (provision -> ... -> archive -> recover).
+model TenantLifecycleEvent {
+  id        String   @id @default(cuid())
+  tenantId  String
+  tenant    Tenant   @relation(fields: [tenantId], references: [id])
+  fromState String
+  toState   String
+  reason    String
+  actor     String
+  at        DateTime @default(now())
+
+  @@index([tenantId, at])
 }

@@ -25,6 +25,15 @@ import type {
   FederationCheck,
   WebhookSubscription,
   WebhookCreated,
+  Release,
+  Deployment,
+  DeployStrategy,
+  TenantLifecycle,
+  TenantState,
+  BackupRecord,
+  BackupKind,
+  ConfigBundle,
+  ConfigDrift,
   SignatureRequest,
   SignatureResult,
   VerifyResult,
@@ -135,6 +144,46 @@ export const api = {
         }),
       pause: (id: string) =>
         req<{ webhook: WebhookSubscription }>(`/api/webhooks/${id}/pause`, { method: 'POST', body: '{}' }),
+    },
+  },
+  platform: {
+    releases: {
+      list: () => req<{ releases: Release[] }>('/api/platform/releases'),
+      create: (body: { version: string; notes: string; schemaMigration?: string }) =>
+        req<{ release: Release }>('/api/platform/releases', { method: 'POST', body: JSON.stringify(body) }),
+      promote: (id: string) =>
+        req<{ release: Release }>(`/api/platform/releases/${id}/promote`, { method: 'POST', body: '{}' }),
+    },
+    deployments: {
+      list: () => req<{ deployments: Deployment[] }>('/api/platform/deployments'),
+      start: (releaseId: string, strategy: DeployStrategy) =>
+        req<{ deployment: Deployment }>('/api/platform/deployments', { method: 'POST', body: JSON.stringify({ releaseId, strategy }) }),
+      advance: (id: string, gateResult: 'pass' | 'fail', note?: string) =>
+        req<{ deployment: Deployment }>(`/api/platform/deployments/${id}/advance`, { method: 'POST', body: JSON.stringify({ gateResult, note }) }),
+      rollback: (id: string, note: string) =>
+        req<{ deployment: Deployment }>(`/api/platform/deployments/${id}/rollback`, { method: 'POST', body: JSON.stringify({ note }) }),
+    },
+    lifecycle: {
+      get: () => req<{ lifecycle: TenantLifecycle }>('/api/platform/lifecycle'),
+      transition: (to: TenantState, reason: string) =>
+        req<{ lifecycle: TenantLifecycle }>('/api/platform/lifecycle/transition', { method: 'POST', body: JSON.stringify({ to, reason }) }),
+    },
+    backups: {
+      list: () => req<{ backups: BackupRecord[] }>('/api/platform/backups'),
+      create: (kind: BackupKind) =>
+        req<{ backup: BackupRecord }>('/api/platform/backups', { method: 'POST', body: JSON.stringify({ kind }) }),
+      restore: (id: string) =>
+        req<{ backup: BackupRecord }>(`/api/platform/backups/${id}/restore`, { method: 'POST', body: '{}' }),
+    },
+    config: {
+      list: () => req<{ configs: ConfigBundle[] }>('/api/platform/config'),
+      publish: (payload: Record<string, unknown>) =>
+        req<{ config: ConfigBundle }>('/api/platform/config', { method: 'POST', body: JSON.stringify({ payload }) }),
+      sign: (id: string) =>
+        req<{ config: ConfigBundle }>(`/api/platform/config/${id}/sign`, { method: 'POST', body: '{}' }),
+      apply: (id: string) =>
+        req<{ config: ConfigBundle }>(`/api/platform/config/${id}/apply`, { method: 'POST', body: '{}' }),
+      drift: () => req<ConfigDrift>('/api/platform/config/drift'),
     },
   },
   payments: {

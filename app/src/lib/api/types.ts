@@ -304,3 +304,64 @@ export interface FederationCheck {
   allowed: boolean;
   reason: string;
 }
+
+// ── Platform operations & lifecycle ───────────────────────────────────
+export type ReleaseChannel = 'dev' | 'staging' | 'stable';
+export interface Release {
+  id: string;
+  version: string;
+  channel: ReleaseChannel;
+  notes: string;
+  schemaMigration?: string;
+  approvedBy?: string;
+  createdAt: ISODate;
+}
+
+export type DeployStrategy = 'rolling' | 'canary' | 'blue-green';
+export type DeployState =
+  | 'pending' | 'precheck' | 'rollout' | 'verify' | 'completed' | 'rolled-back';
+export interface DeployGate {
+  at: ISODate; gate: string; result: 'pass' | 'fail'; by: string; note?: string;
+}
+export interface Deployment {
+  id: string;
+  releaseId: string;
+  releaseVersion: string;
+  strategy: DeployStrategy;
+  state: DeployState;
+  gates: DeployGate[];
+  startedAt: ISODate;
+  completedAt?: ISODate;
+}
+
+export type TenantState =
+  | 'provisioning' | 'active' | 'suspended' | 'decommissioned';
+export interface TenantLifecycle {
+  tenant: string;
+  state: TenantState;
+  events: { at: ISODate; from: string; to: string; reason: string; actor: string }[];
+}
+
+export type BackupKind = 'full' | 'incremental';
+export type BackupState = 'pending' | 'completed' | 'failed' | 'restoring';
+export interface BackupRecord {
+  id: string;
+  kind: BackupKind;
+  state: BackupState;
+  location: string;
+  encrypted: boolean;
+  sizeBytes?: number;
+  createdAt: ISODate;
+}
+
+export type ConfigState = 'draft' | 'signed' | 'applied' | 'superseded';
+export interface ConfigBundle {
+  id: string;
+  scope: 'global' | 'tenant';
+  version: number;
+  contentHash: string;
+  signedBy?: string;
+  state: ConfigState;
+  createdAt: ISODate;
+}
+export interface ConfigDrift { drift: boolean; reason: string; }
