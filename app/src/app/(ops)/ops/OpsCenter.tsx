@@ -63,7 +63,7 @@ export function OpsCenter() {
   const s = ov.summary;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* Headline — calm, four numbers, no noise */}
       <section
         aria-label="Summary"
