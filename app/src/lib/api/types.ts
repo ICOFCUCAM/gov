@@ -506,6 +506,24 @@ export interface SovereignProfile {
   currency: string;         // ISO 4217
   regionNoun: string;       // region / province / state / emirate / canton …
   locale: string;
+  seal?: string;            // short insignia monogram (e.g. national initials)
+  accent?: string;          // sovereign theme accent (hex)
+  motto?: string;           // formal national style / motto
+}
+
+export interface ProtocolOffice {
+  rank: number;
+  office: string;   // e.g. "Head of State"
+  holder: string;   // title that fills it for this sovereign
+}
+export interface SovereignIdentity {
+  stateName: string;
+  seal: string;
+  accent: string;
+  motto: string;
+  locale: string;
+  dir: 'ltr' | 'rtl';
+  protocol: ProtocolOffice[];
 }
 
 export interface CabinetOverview {

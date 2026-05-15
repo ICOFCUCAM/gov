@@ -239,6 +239,8 @@ function seed() {
     currency: 'USD',
     regionNoun: 'region',
     locale: 'en',
+    accent: '#1f2630',
+    motto: 'Humans govern · the platform serves',
   };
 
   return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign };
@@ -1573,19 +1575,19 @@ export function seriesFor(id: string): MinistrySeries | { error: string } {
 // ── Multi-country sovereign presets (global-state neutrality) ─────────
 export const SOVEREIGN_PRESETS: SovereignPreset[] = [
   { key: 'parliamentary-republic', label: 'Parliamentary republic',
-    profile: { stateName: 'Republic', stateForm: 'parliamentary', executiveTitle: 'Prime Minister', legislatureName: 'Parliament', currency: 'USD', regionNoun: 'county', locale: 'en' } },
+    profile: { stateName: 'Republic', stateForm: 'parliamentary', executiveTitle: 'Prime Minister', legislatureName: 'Parliament', currency: 'USD', regionNoun: 'county', locale: 'en', accent: '#1f3a5f', motto: 'Through Parliament, the people govern' } },
   { key: 'presidential-republic', label: 'Presidential republic',
-    profile: { stateName: 'Republic', stateForm: 'republic', executiveTitle: 'President', legislatureName: 'National Assembly', currency: 'USD', regionNoun: 'region', locale: 'en' } },
+    profile: { stateName: 'Republic', stateForm: 'republic', executiveTitle: 'President', legislatureName: 'National Assembly', currency: 'USD', regionNoun: 'region', locale: 'en', accent: '#1f2630', motto: 'Liberty · Order · Service' } },
   { key: 'federation', label: 'Federation',
-    profile: { stateName: 'Federal Republic', stateForm: 'federation', executiveTitle: 'Chancellor', legislatureName: 'Federal Assembly', currency: 'EUR', regionNoun: 'state', locale: 'en' } },
+    profile: { stateName: 'Federal Republic', stateForm: 'federation', executiveTitle: 'Chancellor', legislatureName: 'Federal Assembly', currency: 'EUR', regionNoun: 'state', locale: 'en', accent: '#23303a', motto: 'Unity of the states' } },
   { key: 'constitutional-monarchy', label: 'Constitutional monarchy',
-    profile: { stateName: 'Kingdom', stateForm: 'monarchy', executiveTitle: 'Prime Minister', legislatureName: 'Council of State', currency: 'GBP', regionNoun: 'province', locale: 'en' } },
+    profile: { stateName: 'Kingdom', stateForm: 'monarchy', executiveTitle: 'Prime Minister', legislatureName: 'Council of State', currency: 'GBP', regionNoun: 'province', locale: 'en', accent: '#3a2342', motto: 'Crown and Constitution' } },
   { key: 'emirate', label: 'Emirate / Gulf state',
-    profile: { stateName: 'Emirate', stateForm: 'monarchy', executiveTitle: 'Prime Minister', legislatureName: 'Federal National Council', currency: 'AED', regionNoun: 'emirate', locale: 'ar' } },
+    profile: { stateName: 'Emirate', stateForm: 'monarchy', executiveTitle: 'Prime Minister', legislatureName: 'Federal National Council', currency: 'AED', regionNoun: 'emirate', locale: 'ar', accent: '#1d3b34', motto: 'الله · الوطن · القيادة' } },
   { key: 'city-state', label: 'City-state',
-    profile: { stateName: 'City-State', stateForm: 'city-state', executiveTitle: 'Prime Minister', legislatureName: 'Parliament', currency: 'SGD', regionNoun: 'district', locale: 'en' } },
+    profile: { stateName: 'City-State', stateForm: 'city-state', executiveTitle: 'Prime Minister', legislatureName: 'Parliament', currency: 'SGD', regionNoun: 'district', locale: 'en', accent: '#1f3a3a', motto: 'One city, one nation' } },
   { key: 'union', label: 'Supranational union',
-    profile: { stateName: 'Union', stateForm: 'union', executiveTitle: 'High Representative', legislatureName: 'Union Council', currency: 'EUR', regionNoun: 'member state', locale: 'en' } },
+    profile: { stateName: 'Union', stateForm: 'union', executiveTitle: 'High Representative', legislatureName: 'Union Council', currency: 'EUR', regionNoun: 'member state', locale: 'en', accent: '#1b3a5b', motto: 'United in diversity' } },
 ];
 
 export function listSovereignPresets(): SovereignPreset[] {

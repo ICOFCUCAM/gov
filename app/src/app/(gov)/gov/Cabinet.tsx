@@ -6,8 +6,9 @@ import { Card } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
 import { Button } from '@/components/ui/Button';
 import { MetricStat } from '@/components/ui/Ops';
-import { Section, EnterpriseTable, StatusText, type Column } from '@/components/ui/DataSystem';
+import { Section, DataTable, EnterpriseTable, StatusText, type Column } from '@/components/ui/DataSystem';
 import { api } from '@/lib/api/client';
+import { resolveIdentity } from '@/lib/sovereign-identity';
 import type {
   CabinetOverview,
   NationalSnapshot,
@@ -70,6 +71,10 @@ export function Cabinet() {
         legislatureName: String(f.get('legislatureName')),
         currency: String(f.get('currency')),
         regionNoun: String(f.get('regionNoun')),
+        locale: String(f.get('locale')),
+        seal: String(f.get('seal')),
+        accent: String(f.get('accent')),
+        motto: String(f.get('motto')),
       });
       setEditing(false);
       await load();
@@ -81,6 +86,7 @@ export function Cabinet() {
   if (!ov) return <p className="text-ink-muted">Loading sovereign overview…</p>;
   const s = ov.sovereign;
   const t = ov.totals;
+  const ident = resolveIdentity(s);
 
   const cols: Column<Inst>[] = [
     { key: 'n', header: 'Institution', filter: i => i.name, sort: (a, b) => a.name.localeCompare(b.name), render: i => (
@@ -151,6 +157,24 @@ export function Cabinet() {
               <input name="regionNoun" defaultValue={s.regionNoun} required
                 className="mt-1 min-h-tap w-full rounded-sm border border-line bg-surface p-2" />
             </label>
+            <label className="text-sm">Locale
+              <input name="locale" defaultValue={s.locale} required
+                placeholder="en · fr · ar"
+                className="mt-1 min-h-tap w-full rounded-sm border border-line bg-surface p-2" />
+            </label>
+            <label className="text-sm">Insignia (monogram)
+              <input name="seal" defaultValue={s.seal ?? ''}
+                placeholder="auto from state name"
+                className="mt-1 min-h-tap w-full rounded-sm border border-line bg-surface p-2" />
+            </label>
+            <label className="text-sm">Theme accent
+              <input name="accent" type="color" defaultValue={s.accent ?? '#1f2630'}
+                className="mt-1 min-h-tap w-full rounded-sm border border-line bg-surface p-1" />
+            </label>
+            <label className="text-sm">Formal style / motto
+              <input name="motto" defaultValue={s.motto ?? ''}
+                className="mt-1 min-h-tap w-full rounded-sm border border-line bg-surface p-2" />
+            </label>
             <div className="sm:col-span-2">
               <Button type="submit" disabled={busy}>{busy ? 'Saving…' : 'Save profile'}</Button>
             </div>
@@ -176,6 +200,43 @@ export function Cabinet() {
           legislature, currency, sub-national noun). The platform serves a
           republic, federation, monarchy, emirate, city-state, or union
           identically.
+        </p>
+      </Section>
+
+      <Section title="Sovereign identity & order of precedence" meta={`${ident.locale} · ${ident.dir.toUpperCase()}`}>
+        <div className="grid gap-4 lg:grid-cols-[auto,1fr]">
+          <div className="flex items-center gap-3">
+            <span
+              aria-hidden
+              className="grid h-14 w-14 place-items-center rounded-sm text-base font-bold text-white ring-1 ring-black/10"
+              style={{ backgroundColor: ident.accent }}
+            >
+              {ident.seal}
+            </span>
+            <div className="text-sm">
+              <div className="font-semibold">{ident.stateName}</div>
+              <div className="text-ink-muted">{ident.motto || '— no formal style set —'}</div>
+              <div className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
+                <span className="inline-block h-3 w-3 rounded-[2px] ring-1 ring-black/10" style={{ backgroundColor: ident.accent }} />
+                {ident.accent}
+              </div>
+            </div>
+          </div>
+          <DataTable
+            columns={[
+              { key: 'r', header: 'Precedence', align: 'right', render: (o: typeof ident.protocol[number]) => o.rank },
+              { key: 'o', header: 'Office', render: o => <strong>{o.office}</strong> },
+              { key: 'h', header: 'Held by', render: o => <span className="text-ink-muted">{o.holder}</span> },
+            ]}
+            rows={ident.protocol.map(o => ({ ...o, id: String(o.rank) }))}
+            rowKey={o => String(o.rank)}
+          />
+        </div>
+        <p className="mt-2 text-xs text-ink-muted">
+          Constitutional order of precedence, resolved from the sovereign
+          profile. The platform renders insignia, formal style, locale and
+          writing direction without code changes — neutral across republics,
+          federations, monarchies, emirates, city-states and unions.
         </p>
       </Section>
 

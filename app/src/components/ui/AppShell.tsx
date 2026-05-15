@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils';
 import { AccessibilityMenu } from './AccessibilityMenu';
 import { OfflineBanner } from './OfflineBanner';
 import { api } from '@/lib/api/client';
+import { resolveIdentity, shellStrings } from '@/lib/sovereign-identity';
 import type {
   CabinetOverview,
   NationalSnapshot,
@@ -79,6 +80,8 @@ export function AppShell({
   ];
 
   const alerts = cab?.totals.activeIncidents ?? 0;
+  const identity = sov ? resolveIdentity(sov) : null;
+  const t = shellStrings(sov?.locale ?? 'en');
 
   function railLink(it: NavItem) {
     const on = active === it.href;
@@ -100,7 +103,11 @@ export function AppShell({
   }
 
   return (
-    <div className="min-h-screen bg-bg text-ink">
+    <div
+      className="min-h-screen bg-bg text-ink"
+      dir={identity?.dir ?? 'ltr'}
+      style={identity ? ({ ['--accent' as string]: identity.accent }) : undefined}
+    >
       <a
         href="#workspace"
         className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:m-2 focus:rounded-sm focus:bg-ink focus:px-3 focus:py-2 focus:text-surface"
@@ -114,29 +121,40 @@ export function AppShell({
           aria-label="Sovereign navigation"
           className="hidden w-60 shrink-0 flex-col bg-[#0f141b] px-3 py-4 md:flex md:min-h-screen"
         >
-          <Link href="/gov" className="px-2 text-white no-underline">
-            <div className="text-sm font-semibold tracking-tight">CivicOS</div>
-            <div className="truncate text-xs text-[#8b95a3]">
-              {sov ? sov.stateName : 'Sovereign State'}
-            </div>
+          <Link href="/gov" className="flex items-center gap-2.5 px-2 text-white no-underline">
+            <span
+              aria-hidden
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-sm text-xs font-bold tracking-tight text-white ring-1 ring-white/20"
+              style={{ backgroundColor: identity?.accent ?? '#1f2630' }}
+            >
+              {identity ? identity.seal : 'SS'}
+            </span>
+            <span className="min-w-0">
+              <span className="block truncate text-sm font-semibold tracking-tight">
+                {sov ? sov.stateName : 'Sovereign State'}
+              </span>
+              <span className="block truncate text-[11px] text-[#8b95a3]">
+                {identity?.motto || 'CivicOS · sovereign operations'}
+              </span>
+            </span>
           </Link>
           <div className="mt-5 space-y-5 overflow-y-auto">
             <div>
               <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-[#6c7682]">
-                State
+                {t.state}
               </div>
               {stateGroup.map(railLink)}
             </div>
             <div>
               <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-[#6c7682]">
-                Institutions
+                {t.institutions}
               </div>
               {institutions.length === 0 ? (
                 <Link
                   href="/ministries"
                   className="block px-3 py-1.5 text-sm text-[#8b95a3] no-underline hover:text-white"
                 >
-                  + Compose an institution
+                  {t.compose}
                 </Link>
               ) : (
                 institutions.map(railLink)
@@ -144,7 +162,7 @@ export function AppShell({
             </div>
             <div>
               <div className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-[#6c7682]">
-                Platform
+                {t.platform}
               </div>
               {platformGroup.map(railLink)}
             </div>
@@ -177,8 +195,8 @@ export function AppShell({
                 <input
                   value={q}
                   onChange={e => setQ(e.target.value)}
-                  placeholder="Search institutions…"
-                  aria-label="Search institutions"
+                  placeholder={t.search}
+                  aria-label={t.search}
                   className="w-48 rounded-sm border border-line bg-surface px-2 py-1 text-sm"
                 />
                 {q && institutions.filter(i => i.label.toLowerCase().includes(q.toLowerCase())).length > 0 ? (
@@ -211,7 +229,7 @@ export function AppShell({
                   )}
                   title="Active institutional incidents"
                 >
-                  {alerts} active incident{alerts === 1 ? '' : 's'}
+                  {t.activeIncidents(alerts)}
                 </button>
                 {notifOpen ? (
                   <div
