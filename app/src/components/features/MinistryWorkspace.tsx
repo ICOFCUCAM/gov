@@ -16,6 +16,7 @@ import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemOpPct } from '@/lib/institution/operational-catalog';
 import { ministryFabric } from '@/lib/institution/ministry-fabric';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
+import { serviceReadings } from '@/lib/gov/ministry-services';
 import { nationalRegions } from '@/lib/gov/regions';
 import { buildCascade } from '@/lib/institution/cascade';
 import type { Ministry } from '@/lib/api/types';
@@ -382,6 +383,17 @@ export function MinistryWorkspace({ id }: { id: string }) {
                   ))}
                 </div>
                 <p className="mt-1.5 text-[10px] text-ink-soft">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {op.aiAdvisory}</p>
+              </Section>
+              <Section title="Service operations" meta="archetype signature · live">
+                <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
+                  {serviceReadings(id, (archetype || 'GENERIC') as ArchetypeKey, now / 4000).map(r => (
+                    <div key={r.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+                      <div className="truncate text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{r.l}</div>
+                      <div className="font-mono text-[13px] leading-none tabular-nums" style={{ color: TONE[r.tone] }}>{r.value}{r.unit}</div>
+                      <div className="-mb-0.5 mt-0.5 h-3 overflow-hidden opacity-70"><Spark pts={waveSeries(`svcr:${id}:${r.l}`, now / 4000, 12, 35, 92)} tone={r.tone} /></div>
+                    </div>
+                  ))}
+                </div>
               </Section>
               <Section title="Institutional ecosystem" meta={`${fab.layers.length} layers · 3 tiers · ${fab.dependencies.length} dependencies`}>
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
