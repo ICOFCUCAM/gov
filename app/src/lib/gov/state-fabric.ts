@@ -13,6 +13,11 @@ import { educationInstability } from '@/lib/gov/education-systems';
 import { transportInstability } from '@/lib/gov/transport-systems';
 import { energyInstability } from '@/lib/gov/energy-systems';
 import { interiorInstability } from '@/lib/gov/interior-systems';
+import { agricultureInstability } from '@/lib/gov/agriculture-systems';
+import { justiceInstability } from '@/lib/gov/justice-systems';
+import { environmentInstability } from '@/lib/gov/environment-systems';
+import { tradeInstability } from '@/lib/gov/trade-systems';
+import { laborInstability } from '@/lib/gov/labor-systems';
 import { legislativeState } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
 import { seed } from '@/lib/telemetry';
@@ -112,6 +117,8 @@ export function stateFabric(mins: Ministry[], t: number): StateFabric {
   const sectorFn: Partial<Record<string, (id: string, t: number) => number>> = {
     HEALTH: healthInstability, FINANCE: treasuryInstability, EDUCATION: educationInstability,
     TRANSPORT: transportInstability, ENERGY: energyInstability, INTERIOR: interiorInstability,
+    AGRICULTURE: agricultureInstability, JUSTICE: justiceInstability,
+    ENVIRONMENT: environmentInstability, TRADE: tradeInstability, LABOR: laborInstability,
   };
   const sectors: SectorInstability[] = active.map(m => {
     const fn = sectorFn[m.archetype];
