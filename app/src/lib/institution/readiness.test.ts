@@ -40,7 +40,7 @@ describe('scoreInstitution', () => {
       modules: [{ moduleKey: 'approvals', enabled: true }],
     }));
     expect(['composed', 'validated']).toContain(r.lifecycle);
-    expect(r.dimensions).toHaveLength(11);
+    expect(r.dimensions).toHaveLength(12);
   });
 
   it('total is bounded 0..100 and dimensions clamped', () => {

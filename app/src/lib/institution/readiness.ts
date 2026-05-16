@@ -8,6 +8,7 @@ import { ARCHETYPE_PROFILES } from '@/lib/archetype-profiles';
 import { specFor } from '@/lib/institution/archetype-spec';
 import { subsystemHealth } from '@/lib/institution/operational-catalog';
 import { ministryFabric } from '@/lib/institution/ministry-fabric';
+import { instantiateInstitution } from '@/lib/institution/blueprint';
 
 export type Lifecycle =
   | 'draft' | 'composed' | 'validated' | 'operational'
@@ -45,6 +46,9 @@ export function scoreInstitution(m: Ministry, ctx?: { cascadeStress?: number }):
   const known = !!profile && m.archetype !== 'GENERIC';
   const ssHealth = subsystemHealth(m.id, m.archetype);
   const fab = ministryFabric({ id: m.id, archetype: m.archetype });
+  // Deterministic ecosystem snapshot from the blueprint factory: how much
+  // of the archetype's generated system topology is actually instantiated.
+  const eco = instantiateInstitution({ id: m.id, kind: m.archetype, activated: isActive }, 0);
 
   const dims: ReadinessDimension[] = [
     { key: 'governance', label: 'Governance structure',
@@ -72,6 +76,12 @@ export function scoreInstitution(m: Ministry, ctx?: { cascadeStress?: number }):
         : depts > 0 || mods > 0 ? 40 : 0,
       detail: isActive ? `${fab.layersProvisioned}/6 layers · ${fab.tiers.length} command tiers`
         : 'ecosystem not composed' },
+    { key: 'ecosystem', label: 'Institutional ecosystem',
+      score: isActive ? clamp((eco.stats.operational / Math.max(1, eco.stats.systems)) * 100)
+        : depts > 0 ? 35 : 0,
+      detail: isActive
+        ? `${eco.stats.operational}/${eco.stats.systems} systems instantiated · ${eco.stats.groups} groups`
+        : `${eco.stats.systems} systems blueprinted · awaiting activation` },
     { key: 'emergency', label: 'Emergency readiness',
       score: known ? clamp((profile.incidentTypes.length / 3) * 100) : 45,
       detail: known ? `${profile.incidentTypes.length} incident classes` : 'generic' },
