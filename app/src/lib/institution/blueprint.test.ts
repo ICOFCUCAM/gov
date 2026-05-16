@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  blueprintFor, instantiateInstitution, instantiateMinistry, type InstitutionKind,
+  blueprintFor, instantiateInstitution, instantiateMinistry, systemReadout,
+  type InstitutionKind,
 } from './blueprint';
 import type { Ministry } from '@/lib/api/types';
 
@@ -57,6 +58,23 @@ describe('institutional blueprint factory', () => {
       for (const s of g.systems) {
         expect(s.uptime).toBeGreaterThanOrEqual(0);
         expect(s.uptime).toBeLessThanOrEqual(100);
+      }
+    }
+  });
+
+  it('every instantiated system has a kind-appropriate, deterministic readout', () => {
+    const eco = instantiateInstitution({ id: 'MIN-7', kind: 'HEALTH', activated: true }, 40);
+    for (const g of eco.groups) {
+      for (const s of g.systems) {
+        const a = systemReadout('MIN-7', g.key, s, 40);
+        const b = systemReadout('MIN-7', g.key, s, 40);
+        expect(a).toEqual(b);
+        expect(a.length).toBeGreaterThan(0);
+        for (const m of a) {
+          expect(m.label.length).toBeGreaterThan(0);
+          expect(m.value.length).toBeGreaterThan(0);
+          expect(['ok', 'warn', 'alert']).toContain(m.tone);
+        }
       }
     }
   });

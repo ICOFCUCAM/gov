@@ -467,6 +467,42 @@ export function instantiateMinistry(m: Pick<Ministry, 'id' | 'archetype' | 'stat
   return instantiateInstitution({ id: m.id, kind: m.archetype, activated: m.status === 'active' }, t);
 }
 
+// ── Per-system operational readout ─────────────────────────────────────
+// Every instantiated system is an operating unit, not a label. Its live
+// readout is kind-appropriate (a command centre reports posture &
+// directives; a network reports nodes & coverage; a citizen system reports
+// requests & SLA; a registry reports records & integrity; …). Pure.
+export interface SystemMetric { label: string; value: string; tone: 'ok' | 'warn' | 'alert' }
+
+const KIND_METRICS: Record<SystemKind, { label: string; lo: number; hi: number; unit: string; good: 'high' | 'low' }[]> = {
+  command:    [{ label: 'Directives active', lo: 0, hi: 14, unit: '', good: 'low' }, { label: 'Posture', lo: 60, hi: 99, unit: '%', good: 'high' }, { label: 'Decision latency', lo: 2, hi: 30, unit: 'm', good: 'low' }],
+  network:    [{ label: 'Nodes online', lo: 78, hi: 100, unit: '%', good: 'high' }, { label: 'Coverage', lo: 60, hi: 99, unit: '%', good: 'high' }, { label: 'Faults', lo: 0, hi: 24, unit: '', good: 'low' }],
+  registry:   [{ label: 'Records', lo: 40, hi: 99, unit: 'k', good: 'high' }, { label: 'Integrity', lo: 92, hi: 100, unit: '%', good: 'high' }, { label: 'Sync lag', lo: 0, hi: 40, unit: 'm', good: 'low' }],
+  workflow:   [{ label: 'In progress', lo: 10, hi: 90, unit: '', good: 'low' }, { label: 'SLA met', lo: 70, hi: 99, unit: '%', good: 'high' }, { label: 'Throughput', lo: 30, hi: 96, unit: '/h', good: 'high' }],
+  citizen:    [{ label: 'Open requests', lo: 20, hi: 95, unit: '', good: 'low' }, { label: 'SLA met', lo: 68, hi: 99, unit: '%', good: 'high' }, { label: 'Satisfaction', lo: 55, hi: 96, unit: '%', good: 'high' }],
+  personnel:  [{ label: 'Staffed', lo: 62, hi: 99, unit: '%', good: 'high' }, { label: 'Active sessions', lo: 20, hi: 96, unit: '', good: 'high' }, { label: 'Vacancies', lo: 0, hi: 30, unit: '%', good: 'low' }],
+  intelligence: [{ label: 'Signals/h', lo: 20, hi: 96, unit: '', good: 'high' }, { label: 'Confidence', lo: 60, hi: 97, unit: '%', good: 'high' }, { label: 'Open alerts', lo: 0, hi: 18, unit: '', good: 'low' }],
+  analytics:  [{ label: 'Pipelines', lo: 70, hi: 100, unit: '%', good: 'high' }, { label: 'Freshness', lo: 60, hi: 99, unit: '%', good: 'high' }, { label: 'Failures', lo: 0, hi: 12, unit: '', good: 'low' }],
+  finance:    [{ label: 'Throughput', lo: 40, hi: 98, unit: '%', good: 'high' }, { label: 'Exceptions', lo: 0, hi: 22, unit: '', good: 'low' }, { label: 'Reconciled', lo: 85, hi: 100, unit: '%', good: 'high' }],
+  regulatory: [{ label: 'Compliance', lo: 70, hi: 99, unit: '%', good: 'high' }, { label: 'Pending', lo: 0, hi: 60, unit: '', good: 'low' }, { label: 'Breaches', lo: 0, hi: 14, unit: '', good: 'low' }],
+  emergency:  [{ label: 'Response time', lo: 4, hi: 28, unit: 'm', good: 'low' }, { label: 'Units ready', lo: 55, hi: 98, unit: '%', good: 'high' }, { label: 'Active calls', lo: 0, hi: 40, unit: '', good: 'low' }],
+  logistics:  [{ label: 'Stock cover', lo: 30, hi: 96, unit: 'd', good: 'high' }, { label: 'In transit', lo: 20, hi: 96, unit: '', good: 'high' }, { label: 'Disruptions', lo: 0, hi: 16, unit: '', good: 'low' }],
+  audit:      [{ label: 'Chain intact', lo: 99, hi: 100, unit: '%', good: 'high' }, { label: 'Findings', lo: 0, hi: 20, unit: '', good: 'low' }, { label: 'Coverage', lo: 70, hi: 100, unit: '%', good: 'high' }],
+  interop:    [{ label: 'Contracts live', lo: 70, hi: 100, unit: '%', good: 'high' }, { label: 'Latency', lo: 20, hi: 400, unit: 'ms', good: 'low' }, { label: 'Failures', lo: 0, hi: 14, unit: '', good: 'low' }],
+  field:      [{ label: 'Units deployed', lo: 40, hi: 96, unit: '%', good: 'high' }, { label: 'Telemetry', lo: 70, hi: 99, unit: '%', good: 'high' }, { label: 'Offline', lo: 0, hi: 22, unit: '', good: 'low' }],
+};
+
+export function systemReadout(instId: string, groupKey: string, sys: BlueprintSystem, t: number): SystemMetric[] {
+  return KIND_METRICS[sys.kind].map(spec => {
+    const v = Math.round(wave(`sysm:${instId}:${groupKey}:${sys.name}:${spec.label}`, t, spec.lo, spec.hi));
+    const span = spec.hi - spec.lo || 1;
+    const pct = ((v - spec.lo) / span) * 100;
+    const score = spec.good === 'high' ? pct : 100 - pct;
+    const tone: 'ok' | 'warn' | 'alert' = score >= 60 ? 'ok' : score >= 35 ? 'warn' : 'alert';
+    return { label: spec.label, value: `${v}${spec.unit}`, tone };
+  });
+}
+
 const KIND_LABEL: Partial<Record<SystemKind, string>> = {
   command: 'Command', network: 'Network', registry: 'Registry', workflow: 'Workflow',
   citizen: 'Citizen', personnel: 'Personnel', intelligence: 'Intelligence',
