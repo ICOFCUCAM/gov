@@ -7,7 +7,9 @@ import { api } from '@/lib/api/client';
 import { TONE, ACCENT, seed, Spark, Donut, TerritoryHeat, waveSeries } from '@/components/features/SituationRoom';
 import { nationalRegions } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
-import type { Incident, OpsOverview } from '@/lib/api/types';
+import { serviceReadings } from '@/lib/gov/ministry-services';
+import { deployableInstitutions } from '@/lib/institution/readiness';
+import type { Incident, OpsOverview, Ministry } from '@/lib/api/types';
 
 const ME = 'W. Chebet (ops)';
 const sp = (k: string, n = 20, lo = 30, hi = 80) =>
@@ -65,12 +67,18 @@ export function OpsCenter() {
   const [incidents, setIncidents] = React.useState<Incident[] | null>(null);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [openChron, setOpenChron] = React.useState<number | null>(0);
+  const [mins, setMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(() => Date.now());
 
   const load = React.useCallback(async () => {
-    const [o, i] = await Promise.all([api.ops.overview().catch(() => null), api.ops.incidents.list().catch(() => null)]);
+    const [o, i, m] = await Promise.all([
+      api.ops.overview().catch(() => null),
+      api.ops.incidents.list().catch(() => null),
+      api.org.ministries().catch(() => null),
+    ]);
     if (o) setOv(o);
     if (i) setIncidents(i.incidents);
+    if (m) setMins(m.ministries);
   }, []);
   React.useEffect(() => {
     void load();
@@ -110,6 +118,19 @@ export function OpsCenter() {
   ];
   const qTotal = queues.reduce((a, q) => a + q.depth, 0);
   const donut = queues.slice(0, 4).map((q, i) => ({ label: q.name, value: q.depth, tone: ['ok', 'warn', 'alert', 'neutral'][i] ?? 'neutral' }));
+
+  const ts = now / 4000;
+  const svcInst = deployableInstitutions(mins).map(({ ministry: m }) => {
+    const rs = serviceReadings(m.id, m.archetype, ts);
+    const alert = rs.filter(r => r.tone === 'alert').length;
+    const warn = rs.filter(r => r.tone === 'warn').length;
+    const idx = rs.length ? Math.round(((rs.length - alert - warn) * 100 + warn * 45) / rs.length) : 100;
+    return { id: m.id, name: m.name, archetype: m.archetype, alert, warn, idx, rs };
+  }).sort((a, b) => a.idx - b.idx);
+  const worstKpis = svcInst
+    .flatMap(s => s.rs.filter(r => r.tone === 'alert').map(r => ({ inst: s.name, l: r.l, value: r.value, unit: r.unit })))
+    .slice(0, 8);
+  const svcMean = svcInst.length ? Math.round(svcInst.reduce((a, s) => a + s.idx, 0) / svcInst.length) : 100;
 
   return (
     <div className="space-y-2">
@@ -364,6 +385,43 @@ export function OpsCenter() {
           );
         })}
       </div>
+
+      {svcInst.length > 0 ? (
+        <P title="Institutional service operations" meta={`${svcMean}% mean signature health · ${svcInst.filter(s => s.alert).length} degraded`}>
+          <div className="grid gap-2 lg:grid-cols-2">
+            <div className="space-y-1">
+              {svcInst.map(s => {
+                const tn = s.alert ? 'alert' : s.warn ? 'warn' : 'ok';
+                return (
+                  <Link key={s.id} href={`/control?ministry=${s.id}`} className="focus-ring flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 no-underline transition-colors hover:bg-surface-2/70">
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-ink">{s.name}</span>
+                    <span className="shrink-0 text-[9px] uppercase tracking-wider text-ink-muted">{s.archetype}</span>
+                    <div className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${s.idx}%`, backgroundColor: TONE[tn] }} /></div>
+                    <span className="w-14 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE[tn] }}>{s.idx}%{s.alert ? ` ·${s.alert}!` : ''}</span>
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="rounded-[3px] border border-line-soft bg-surface-2/30 p-2">
+              <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Most-degraded service KPIs · system-wide</div>
+              {worstKpis.length === 0 ? (
+                <p className="text-[10px] text-ink-muted">No critical service KPIs. All institutional signatures within tolerance.</p>
+              ) : (
+                <div className="space-y-1">
+                  {worstKpis.map((k, i) => (
+                    <div key={i} className="flex items-center gap-2 text-[10px]">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE.alert }} />
+                      <span className="min-w-0 flex-1 truncate text-ink-soft">{k.l}</span>
+                      <span className="shrink-0 truncate text-[8.5px] text-ink-muted">{k.inst}</span>
+                      <span className="w-12 shrink-0 text-right font-mono tabular-nums" style={{ color: TONE.alert }}>{k.value}{k.unit}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </P>
+      ) : null}
 
       <P title="Infrastructure network pressure" meta="national digital twin">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
