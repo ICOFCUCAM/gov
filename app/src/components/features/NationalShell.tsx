@@ -355,6 +355,36 @@ export function NationalShell() {
         )}
       </P>
 
+      {(() => {
+        const finOp = fp.institutions.find(i => i.archetype === 'FINANCE')?.operational ?? 100;
+        const intOp = fp.institutions.find(i => i.archetype === 'INTERIOR')?.operational ?? 100;
+        const rows = [
+          { src: 'Judiciary', effect: 'Constitutional integrity', v: Math.max(0, 100 - (jud.totalBacklog > 900 ? 45 : jud.totalBacklog > 500 ? 25 : 8) - (100 - jud.meanClearance) * 0.4) },
+          { src: 'Legislature', effect: 'Fiscal authorization', v: Math.max(0, 100 - (!leg.quorum ? 35 : 0) - leg.blocked * 8) },
+          { src: 'Treasury', effect: 'National liquidity', v: finOp },
+          { src: 'Police', effect: 'Civil stability', v: intOp },
+        ].map(r => ({ ...r, v: Math.round(r.v) }));
+        return (
+          <P title="Institutional → national propagation" meta="RULE · national intelligence derived from institutional operations">
+            <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
+              {rows.map(r => {
+                const tn = r.v >= 70 ? 'ok' : r.v >= 50 ? 'warn' : 'alert';
+                return (
+                  <div key={r.src} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[10px] font-semibold text-ink">{r.src}</span>
+                      <span className="font-mono text-[12px] tabular-nums" style={{ color: TONE[tn] }}>{r.v}</span>
+                    </div>
+                    <div className="mt-0.5 mb-1 h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${r.v}%`, backgroundColor: TONE[tn] }} /></div>
+                    <div className="text-[8.5px] text-ink-muted">→ {r.effect}</div>
+                  </div>
+                );
+              })}
+            </div>
+          </P>
+        );
+      })()}
+
       <P title="Constitutional continuity" meta="legislature & judiciary as running institutions">
         <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px]">
           <span className="rounded-[3px] px-1.5 py-0.5 font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[constContinuity.t]} 16%, transparent)`, color: TONE[constContinuity.t] }}>
