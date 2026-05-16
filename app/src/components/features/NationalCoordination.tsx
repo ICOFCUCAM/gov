@@ -7,6 +7,7 @@ import { TONE, ACCENT, seed, Spark, Panel, TerritoryHeat, waveSeries, domainStre
 import { buildCascade } from '@/lib/institution/cascade';
 import { cascadeEscalations } from '@/lib/institution/cascade-escalation';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
+import { networkPressure } from '@/lib/gov/infrastructure';
 import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
@@ -313,6 +314,22 @@ export function NationalCoordination() {
           );
         })}
       </div>
+
+      <Panel title="Infrastructure network pressure" meta="national digital twin">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
+            const p = networkPressure(k, now / 4000);
+            const tn = p >= 78 ? 'alert' : p >= 62 ? 'warn' : 'ok';
+            return (
+              <div key={k} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{k}</div>
+                <div className="font-mono text-sm tabular-nums" style={{ color: TONE[tn] }}>{p}%</div>
+                <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${p}%`, backgroundColor: TONE[tn] }} /></div>
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
 
       <Panel title="Regional command posture" meta="national → regional tier">
         {(() => {
