@@ -49,6 +49,7 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
       : 'GENERIC';
   const [tab, setTab] = React.useState(tabs[0]!);
   const [selCase, setSelCase] = React.useState<string | null>(null);
+  const [selBill, setSelBill] = React.useState<string | null>(null);
   React.useEffect(() => { setTab(tabs[0]!); /* reset when engine changes */ }, [engine]); // eslint-disable-line
 
   const tele = (() => {
@@ -189,23 +190,51 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
             <div className="grid gap-2 xl:grid-cols-3">
               <Panel title="Bill lifecycle ledger" meta="live state machine · draft → published" className="xl:col-span-2" bodyClass="!p-0">
                 <div className="max-h-[360px] overflow-y-auto">
-                  {ls.bills.map(b => (
-                    <div key={b.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0">
-                      <span className="w-12 shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{b.id}</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[11px] text-ink">{b.title}</span>
-                        <span className="block truncate text-[8.5px] text-ink-muted">{b.sponsor} · {b.chamber} · {b.priority} · {b.ageDays}d</span>
-                      </span>
-                      <span className="w-28 shrink-0">
-                        <span className="mb-0.5 block text-right text-[9px] font-semibold" style={{ color: stageTone(b) }}>
-                          {b.stage}{b.blocked ? ' · blocked' : ''}
-                        </span>
-                        <span className="block h-1 overflow-hidden rounded-full bg-surface-2">
-                          <span className="block h-full" style={{ width: `${b.progressPct}%`, backgroundColor: stageTone(b) }} />
-                        </span>
-                      </span>
-                    </div>
-                  ))}
+                  {ls.bills.map(b => {
+                    const open = selBill === b.id;
+                    return (
+                      <div key={b.id} className="border-b border-line-soft last:border-0">
+                        <button onClick={() => setSelBill(open ? null : b.id)} className="focus-ring flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-surface-2/50">
+                          <span className="w-12 shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{b.id}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[11px] text-ink">{b.title}</span>
+                            <span className="block truncate text-[8.5px] text-ink-muted">{b.sponsor} · {b.chamber} · {b.priority} · {b.ageDays}d</span>
+                          </span>
+                          <span className="w-28 shrink-0">
+                            <span className="mb-0.5 block text-right text-[9px] font-semibold" style={{ color: stageTone(b) }}>
+                              {b.stage}{b.blocked ? ' · blocked' : ''}
+                            </span>
+                            <span className="block h-1 overflow-hidden rounded-full bg-surface-2">
+                              <span className="block h-full" style={{ width: `${b.progressPct}%`, backgroundColor: stageTone(b) }} />
+                            </span>
+                          </span>
+                        </button>
+                        {open ? (
+                          <div className="bg-surface-2/40 px-3 py-2">
+                            <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Bill file · {b.id}</div>
+                            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                              {[
+                                ['Sponsor', b.sponsor],
+                                ['Chamber', b.chamber],
+                                ['Priority', b.priority],
+                                ['Stage', b.stage],
+                                ['Clauses', `${8 + Math.round(seed(`bcl:${b.id}`) * 60)}`],
+                                ['Amendments', `${Math.round(seed(`bam:${b.id}`) * 22)}`],
+                                ['Committee', ['Finance', 'Justice', 'Public Accounts', 'Defence', 'Health'][Math.floor(seed(`bcm:${b.id}`) * 5)]!],
+                                ['Last division', b.stage === 'Division' || b.stage === 'Assent' || b.stage === 'Published' ? `${180 + Math.round(seed(`bdv:${b.id}`) * 140)} ayes` : 'pending'],
+                              ].map(([l, v]) => (
+                                <div key={l} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-1">
+                                  <div className="truncate text-[7.5px] uppercase tracking-wider text-ink-muted">{l}</div>
+                                  <div className="truncate font-mono text-[10px] text-ink-soft">{v}</div>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="mt-1 text-[8.5px] text-ink-muted">Drive this bill through the legislative runtime below — drafting → committee → division → assent.</p>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               </Panel>
 
