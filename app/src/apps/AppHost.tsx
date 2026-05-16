@@ -12,6 +12,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { policeOps, emergencyOps, immigrationOps, customsOps } from '@/lib/gov/agency-systems';
 import { aiAdvisory } from '@/shared/ai/advisory';
+import { ROLES, type SovereignRole } from '@/shared/permissions/rbac';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -36,6 +37,7 @@ export function AppHost({ domain }: { domain: string }) {
 
   const app = findApp(domain);
   const [navKey, setNavKey] = React.useState<string | null>(null);
+  const [role, setRole] = React.useState<SovereignRole>('commander');
   const active = navKey ?? app?.nav[0]?.key ?? null;
 
   if (!app) {
@@ -64,7 +66,14 @@ export function AppHost({ domain }: { domain: string }) {
           style={{ borderColor: app.activated ? TONE.ok : TONE.warn, color: app.activated ? TONE.ok : TONE.warn }}>
           {app.activated ? 'operational' : 'provisioned · inactive'}
         </span>
-        <span className="ml-auto font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
+        <label className="ml-auto flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
+          Role
+          <select value={role} onChange={e => setRole(e.target.value as SovereignRole)}
+            className="rounded-[3px] border border-line bg-surface px-1.5 py-0.5 text-[10px] text-ink-soft">
+            {ROLES.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+        </label>
+        <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
         <Link href="/gov/shell" className="text-[10px] text-link underline underline-offset-2">Sovereign platform →</Link>
       </header>
 
@@ -87,7 +96,7 @@ export function AppHost({ domain }: { domain: string }) {
           ) : app.kind === 'branch' ? (
             <BranchWorkspace branchKey={app.archetypeOrBranch} />
           ) : (
-            <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} />
+            <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} role={role} />
           )}
         </main>
       </div>
@@ -104,7 +113,7 @@ function Stat({ l, v, t }: { l: string; v: string; t?: string }) {
   );
 }
 
-function AgencyApp({ appId, label, archetype, navKey, now }: { appId: string; label: string; archetype: ArchetypeKey; navKey: string; now: number }) {
+function AgencyApp({ appId, label, archetype, navKey, now, role }: { appId: string; label: string; archetype: ArchetypeKey; navKey: string; now: number; role: SovereignRole }) {
   const ts = now / 4000;
   const kind: WorkKind =
     /incident|command|dispatch|emergency|recovery|enforcement/i.test(navKey) ? 'incident'
@@ -188,7 +197,7 @@ function AgencyApp({ appId, label, archetype, navKey, now }: { appId: string; la
           ))}
         </ul>
       </div>
-      <RuntimeQueue scope={`${appId}:${navKey}`} kind={kind} title={`${label} · ${navKey} runtime — executable workflow`} by="Duty Officer" />
+      <RuntimeQueue scope={`${appId}:${navKey}`} kind={kind} title={`${label} · ${navKey} runtime — executable workflow`} by="Duty Officer" role={role} />
     </div>
   );
 }
