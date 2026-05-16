@@ -21,6 +21,7 @@ import { stateFabric } from '@/lib/gov/state-fabric';
 import { nationalRuntime } from '@/lib/gov/national-runtime';
 import { subscribe as auditSubscribe, auditStats, version as auditVersion } from '@/services/audit-ledger';
 import { federationPosture, sovereignExecutionIndex } from '@/services/federation-aggregate';
+import { deployableRoots } from '@/apps/deployment';
 import { interoperabilityFabric } from '@/services/interoperability-fabric';
 import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
@@ -610,6 +611,21 @@ export function NationalShell() {
           </P>
         );
       })()}
+
+      <P title="Deployable federation topology" meta="federation management · institution = deployment boundary">
+        <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+          {deployableRoots().map(r => (
+            <Link key={r.root} href={`/app/${r.domain}`} className="focus-ring flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 no-underline transition-colors hover:bg-surface-2/70">
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[11px] text-ink">{r.label}</span>
+                <span className="block truncate font-mono text-[8.5px] lowercase text-ink-muted">apps/{r.root} · {r.domain}.gov · {r.subsystems.length} subsystems</span>
+              </span>
+              <span className="shrink-0 rounded-[3px] px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 16%, transparent)`, color: TONE.ok }}>{r.kind}</span>
+            </Link>
+          ))}
+        </div>
+        <p className="mt-1.5 text-[9px] text-ink-muted">Each is an independently deployable sovereign root; subsystems live inside the institution, never as separate deployments. The platform root is the nervous system only.</p>
+      </P>
 
       <P title="Sovereign event bus" meta={`${busAgg.total} federation events · institutions emit, the platform consumes`}>
         {busEvents.length === 0 ? (
