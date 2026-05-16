@@ -119,9 +119,9 @@ export const LIFECYCLE_LABEL: Record<Lifecycle, string> = {
 };
 
 /** Institutions the sovereign command layer should surface dynamically. */
-export function deployableInstitutions(list: Ministry[]) {
+export function deployableInstitutions(list: Ministry[], cascadeById?: Map<string, number>) {
   return list
     .filter(m => m.status === 'active')
-    .map(m => ({ ministry: m, readiness: scoreInstitution(m) }))
+    .map(m => ({ ministry: m, readiness: scoreInstitution(m, { cascadeStress: cascadeById?.get(m.id) }) }))
     .sort((a, b) => b.readiness.total - a.readiness.total);
 }

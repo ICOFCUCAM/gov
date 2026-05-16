@@ -10,6 +10,7 @@ import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { deployableInstitutions, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemHealth } from '@/lib/institution/operational-catalog';
+import { buildCascade } from '@/lib/institution/cascade';
 import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
 import { constitutionFor } from '@/lib/gov/constitution';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
@@ -304,7 +305,9 @@ export default function SovereignCommandCenter() {
 
           <Section label="Activated Institutions · Deployment Directory">
             {(() => {
-              const dir = deployableInstitutions(mins);
+              const casc = buildCascade(mins, (mid) => Math.round(waveSeries(`nh:${mid}`, now / 4000, 1, 58, 99).at(-1)!));
+              const cascById = new Map(casc.map(c => [c.id, c.totalStress]));
+              const dir = deployableInstitutions(mins, cascById);
               if (dir.length === 0) {
                 return (
                   <div className="rounded-[3px] border border-line bg-surface px-3 py-4 text-center text-[11px] text-ink-muted">
