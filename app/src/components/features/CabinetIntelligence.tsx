@@ -92,7 +92,7 @@ export function CabinetIntelligence() {
   const [now, setNow] = React.useState(() => Date.now());
   const [war, setWar] = React.useState(false);
   const [openEsc, setOpenEsc] = React.useState<number | null>(0);
-  const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true });
+  const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true });
 
   React.useEffect(() => {
     const load = async () => {

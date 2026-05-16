@@ -303,7 +303,7 @@ export function TerritoryHeat({ epoch, height = 150, focus, tactical = true }: {
   );
 }
 
-type LayerKey = 'infra' | 'grid' | 'corridors' | 'incidents';
+type LayerKey = 'infra' | 'grid' | 'corridors' | 'incidents' | 'environment';
 export function NationalMap({
   mapNodes, edges, incidents, now, layers, epoch, height, focus, onToggleLayer,
 }: {
@@ -311,7 +311,7 @@ export function NationalMap({
   edges: { fromId: string; toId: string; propagatedRisk: number }[];
   incidents: { ministry: string; severity: string }[];
   now: number;
-  layers: { infra: boolean; grid: boolean; corridors: boolean; incidents: boolean };
+  layers: { infra: boolean; grid: boolean; corridors: boolean; incidents: boolean; environment?: boolean };
   epoch: number;
   height?: number;
   focus?: string;
@@ -423,7 +423,8 @@ export function NationalMap({
         {/* always-on faint operational graticule + terrain wash */}
         <rect width="1000" height="620" fill="url(#grid)" opacity={layers.grid ? 0.5 : 0.16} />
         <rect width="1000" height="620" fill="url(#terrain)" opacity="0.10" />
-        {/* topographic relief — highland mass + coastal lowland */}
+        {/* topographic relief + population — environment stratum */}
+        {layers.environment !== false ? (
         <g style={{ pointerEvents: 'none' }}>
           {[
             { cx: 360, cy: 210, r: 230, o: 0.05 }, { cx: 360, cy: 210, r: 150, o: 0.05 }, { cx: 360, cy: 210, r: 80, o: 0.06 },
@@ -441,6 +442,7 @@ export function NationalMap({
             return <circle key={`pd${i}`} cx={cx} cy={cy} r={0.6 + dens * 1.1} fill="rgb(var(--c-ink-soft))" opacity={0.05 + dens * 0.16} />;
           })}
         </g>
+        ) : null}
 
         <g>
           {/* province pressure diffusion zones */}
@@ -533,6 +535,7 @@ export function NationalMap({
           }) : null}
 
           {/* environment overlay — drifting weather front */}
+          {layers.environment !== false ? (
           <g style={{ pointerEvents: 'none' }}>
             <ellipse cx="0" cy="240" rx="180" ry="150" fill="rgb(var(--c-line))" fillOpacity="0.05" stroke="rgb(var(--c-line))" strokeOpacity="0.12" strokeWidth="1">
               <animate attributeName="cx" values="-120;1120" dur="48s" repeatCount="indefinite" />
@@ -541,6 +544,7 @@ export function NationalMap({
               <animate attributeName="cx" values="-120;1120" dur="48s" repeatCount="indefinite" />
             </ellipse>
           </g>
+          ) : null}
 
           {/* national airspace overlay — high-altitude corridors */}
           {[
@@ -713,7 +717,7 @@ export function NationalMap({
           </button>
           {layerOpen && onToggleLayer ? (
             <div className="absolute right-0 mt-1 w-40 overflow-hidden rounded-[3px] border border-line bg-surface shadow-elev-3">
-              {([['infra', 'Infrastructure'], ['grid', 'Grid'], ['corridors', 'Corridors'], ['incidents', 'Incidents']] as const).map(([k, l]) => (
+              {([['infra', 'Infrastructure'], ['grid', 'Grid'], ['corridors', 'Corridors'], ['incidents', 'Incidents'], ['environment', 'Environment']] as const).map(([k, l]) => (
                 <button key={k} type="button" onClick={() => onToggleLayer(k)}
                   className="focus-ring flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[11px] text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink">
                   <span>{l}</span>
@@ -807,7 +811,7 @@ export function SituationRoom() {
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [now, setNow] = React.useState(() => Date.now());
-  const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true });
+  const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true });
   const [warManual, setWarManual] = React.useState<boolean | null>(null);
 
   React.useEffect(() => {
