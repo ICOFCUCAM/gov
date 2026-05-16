@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client';
 import { TONE, ACCENT, seed, Spark, Panel, TerritoryHeat, waveSeries, domainStress } from '@/components/features/SituationRoom';
 import { buildCascade } from '@/lib/institution/cascade';
 import { cascadeEscalations } from '@/lib/institution/cascade-escalation';
+import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
@@ -312,6 +313,34 @@ export function NationalCoordination() {
           );
         })}
       </div>
+
+      <Panel title="Regional command posture" meta="national → regional tier">
+        {(() => {
+          const rs = nationalRegions(now / 4000); const rr = regionRollup(rs);
+          const rt = rr.posture === 'critical' ? 'alert' : rr.posture === 'elevated' ? 'warn' : rr.posture === 'watch' ? 'neutral' : 'ok';
+          return (
+            <>
+              <div className="mb-1.5 flex items-center gap-2 text-[10px]">
+                <span className="rounded-[3px] px-1.5 py-0.5 font-bold uppercase" style={{ backgroundColor: `color-mix(in srgb, ${TONE[rt]} 16%, transparent)`, color: TONE[rt] }}>{rr.posture}</span>
+                <span className="text-ink-muted">{rr.meanReadiness}% mean · {rr.critical} critical · {rr.population}M</span>
+                <Link href="/gov/regional" className="ml-auto text-[10px] text-link underline underline-offset-2">Regional Command →</Link>
+              </div>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+                {rs.map(r => {
+                  const tn = r.posture === 'critical' ? 'alert' : r.posture === 'elevated' ? 'warn' : r.posture === 'watch' ? 'neutral' : 'ok';
+                  return (
+                    <div key={r.name} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                      <div className="truncate text-[9px] font-semibold text-ink">{r.capital ? '★ ' : ''}{r.name}</div>
+                      <div className="font-mono text-sm tabular-nums" style={{ color: TONE[tn] }}>{r.readiness}%</div>
+                      <div className="truncate text-[8px] text-ink-muted">{r.incidents} inc · dep {r.capital ? 'hub' : `${r.capitalDependency}%`}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
+          );
+        })()}
+      </Panel>
 
       {/* Operational command strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
