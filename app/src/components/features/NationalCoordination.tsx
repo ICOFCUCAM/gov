@@ -9,6 +9,7 @@ import { cascadeEscalations } from '@/lib/institution/cascade-escalation';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { scenarioSweep } from '@/lib/gov/simulation';
+import { buildOperationalChain } from '@/lib/gov/operational-chain';
 import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
@@ -383,6 +384,39 @@ export function NationalCoordination() {
                 <Link href="/gov/simulation" className="text-link underline underline-offset-2">Full simulation →</Link>
               </div>
             </div>
+          );
+        })()}
+      </Panel>
+
+      <Panel title="Operational chain — live state behaviour under stress" meta="worst-stressed origin · propagated consequence" bodyClass="!p-1.5">
+        {(() => {
+          const chain = buildOperationalChain(mins, null, now / 4000);
+          if (!chain) return <p className="text-[11px] text-ink-muted">No active institutional fabric to simulate.</p>;
+          const ct = chain.containment === 'critical' ? TONE.alert : chain.containment === 'spreading' ? TONE.warn : TONE.ok;
+          return (
+            <>
+              <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px]">
+                <span className="rounded-[3px] px-1.5 py-0.5 font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${ct} 16%, transparent)`, color: ct }}>
+                  {chain.containment}
+                </span>
+                <span className="text-ink-soft">Origin · <strong>{chain.origin.name}</strong> — {chain.trigger}</span>
+                <span className="text-ink-muted">{chain.totalAffected} institutions · treasury {chain.treasuryImpactPct}% · {chain.citizenServicesDown} citizen systems · recovery T+{chain.recoveryMins}m</span>
+                <Link href="/gov/simulation" className="ml-auto text-[10px] text-link underline underline-offset-2">Simulation →</Link>
+              </div>
+              <div className="grid gap-1 sm:grid-cols-3 xl:grid-cols-6">
+                {chain.stages.map((s, i) => {
+                  const stc = s.tone === 'alert' ? TONE.alert : s.tone === 'warn' ? TONE.warn : TONE.ok;
+                  return (
+                    <div key={s.key} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2" style={{ borderTop: `2px solid ${stc}` }}>
+                      <div className="text-[8px] font-semibold uppercase tracking-wider text-ink-muted">{i + 1} · T+{s.tPlusMin}m</div>
+                      <div className="truncate text-[10px] font-semibold text-ink">{s.label}</div>
+                      <div className="font-mono text-[12px] tabular-nums" style={{ color: stc }}>{s.severity}</div>
+                      <div className="line-clamp-2 text-[8.5px] text-ink-muted">{s.note}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           );
         })()}
       </Panel>
