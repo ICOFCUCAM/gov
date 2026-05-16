@@ -149,6 +149,16 @@ export function MinistriesConsole() {
                     );
                   })()}
                 </div>
+                {(() => {
+                  const eco = instantiateMinistry(m, now / 4000);
+                  return (
+                    <div className="mt-1 text-[10px] text-ink-muted">
+                      {eco.activated
+                        ? `${eco.stats.groups} groups · ${eco.stats.systems} systems · ${eco.stats.operational} operational${eco.stats.degraded ? ` · ${eco.stats.degraded} degraded` : ''}`
+                        : `${eco.stats.systems} systems blueprinted · awaiting activation`}
+                    </div>
+                  );
+                })()}
               </button>
             ))}
           </div>
