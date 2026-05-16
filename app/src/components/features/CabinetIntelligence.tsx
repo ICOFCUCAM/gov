@@ -213,14 +213,42 @@ export function CabinetIntelligence() {
     { l: 'Executive Directive', href: '/audit' },
   ];
 
-  const brief = [
-    `National stability: ${stability < 70 ? 'Elevated' : 'Stable'}`,
-    `${escalations.filter(e => e.sevState === 'critical').length} critical · ${escalations.filter(e => e.sevState === 'elevated').length} elevated escalations`,
-    pressOf('ENERGY') >= 60 ? 'Energy sector requires immediate attention' : 'Energy sector within tolerance',
-    `Healthcare capacity at ${Math.max(1, 100 - pressOf('HEALTH'))}%`,
-    'Treasury liquidity adequate for 28 days',
-    nationalRisk >= 60 ? 'Security posture: heightened' : 'No major security threats',
-    'Cabinet coordination recommended',
+  const memo = [
+    {
+      t: 'National stability', lvl: stability < 60 ? 'CRITICAL' : stability < 70 ? 'ELEVATED' : 'ROUTINE',
+      body: `Composite stability index ${stability}/100; ${escalations.filter(e => e.sevState === 'critical').length} critical escalations active.`,
+      conf: 84 + Math.round(seed(`mc:stab:${epoch}`) * 12), inst: 'Cabinet Office',
+      econ: stability < 70 ? '−0.4% GDP risk' : 'neutral', con: 'within emergency-power thresholds',
+      rec: stability < 70 ? 'Convene cabinet coordination cell' : 'Sustain monitoring',
+    },
+    {
+      t: 'Energy sector', lvl: pressOf('ENERGY') >= 60 ? 'CRITICAL' : 'ROUTINE',
+      body: `Grid pressure ${pressOf('ENERGY')}; reserve margin ${Math.max(1, 100 - pressOf('ENERGY'))}%.`,
+      conf: 78 + Math.round(seed(`mc:en:${epoch}`) * 16), inst: 'Energy Ministry',
+      econ: pressOf('ENERGY') >= 60 ? 'tariff & subsidy exposure' : 'stable', con: 'no constitutional implication',
+      rec: pressOf('ENERGY') >= 60 ? 'Authorise reserve drawdown · pre-position crews' : 'Maintain posture',
+    },
+    {
+      t: 'Healthcare capacity', lvl: pressOf('HEALTH') >= 55 ? 'ELEVATED' : 'ROUTINE',
+      body: `System capacity ${Math.max(1, 100 - pressOf('HEALTH'))}%; surge tolerance ${pressOf('HEALTH') >= 55 ? 'limited' : 'adequate'}.`,
+      conf: 80 + Math.round(seed(`mc:hc:${epoch}`) * 14), inst: 'Health Ministry',
+      econ: 'contingency draw possible', con: 'rights-of-access obligations engaged',
+      rec: pressOf('HEALTH') >= 55 ? 'Activate regional health command' : 'Routine reporting',
+    },
+    {
+      t: 'Security posture', lvl: nationalRisk >= 60 ? 'ELEVATED' : 'ROUTINE',
+      body: `National risk ${nationalRisk}; ${nationalRisk >= 60 ? 'heightened internal posture' : 'no major threats'}.`,
+      conf: 76 + Math.round(seed(`mc:sec:${epoch}`) * 18), inst: 'Interior Ministry',
+      econ: 'low direct', con: nationalRisk >= 60 ? 'emergency posture pre-authorisation review' : 'compliant',
+      rec: nationalRisk >= 60 ? 'Brief National Security Council' : 'Standard watch',
+    },
+    {
+      t: 'Treasury liquidity', lvl: 'ROUTINE',
+      body: `Liquidity adequate ~28 days; deficit trajectory monitored.`,
+      conf: 88 + Math.round(seed(`mc:tr:${epoch}`) * 9), inst: 'Treasury',
+      econ: 'appropriation on track', con: 'requires legislative appropriation',
+      rec: 'No action — review at quarter gate',
+    },
   ];
 
   const cmdItems: CommandItem[] = [
@@ -552,13 +580,31 @@ export function CabinetIntelligence() {
               <div className="mb-1.5 flex items-center gap-2 border-b border-line pb-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-ink-muted">
                 <span style={{ color: ACCENT }}>◆</span> INTEL SUMMARY<span className="ml-auto">{new Date(now).toLocaleDateString()}</span>
               </div>
-              <ul className="space-y-1.5 text-[11px] leading-relaxed">
-                {brief.map((b, i) => (
-                  <li key={i} className="flex gap-1.5"><span className="mt-1.5 h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: ACCENT }} /><span className="text-ink-soft">{b}</span></li>
-                ))}
-              </ul>
+              <div className="space-y-1.5">
+                {memo.map((m, i) => {
+                  const lt = m.lvl === 'CRITICAL' ? TONE.alert : m.lvl === 'ELEVATED' ? TONE.warn : TONE.neutral;
+                  const mins = new Date(now - (i * 7 + 3) * 60000);
+                  return (
+                    <div key={i} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5" style={{ borderLeft: `3px solid ${lt}` }}>
+                      <div className="flex items-center gap-1.5 text-[9px]">
+                        <span className="font-mono tabular-nums text-ink-muted">{mins.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="rounded-[2px] px-1 py-0.5 font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${lt} 18%, transparent)`, color: lt }}>{m.lvl}</span>
+                        <span className="font-semibold text-ink">{m.t}</span>
+                        <span className="ml-auto font-mono tabular-nums text-ink-muted">conf {m.conf}%</span>
+                      </div>
+                      <div className="mt-0.5 text-[10px] leading-snug text-ink-soft">{m.body}</div>
+                      <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[8.5px] text-ink-muted">
+                        <span>↳ {m.inst}</span>
+                        <span>Treasury: {m.econ}</span>
+                        <span className="col-span-2">Constitutional: {m.con}</span>
+                        <span className="col-span-2" style={{ color: TONE.warn }}>▸ Recommended: {m.rec}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
               <div className="mt-2 border-t border-line pt-1.5 text-[9px] text-ink-muted">
-                Attention: <span style={{ color: TONE.warn }}>{escList[0]?.ministry ?? 'none'}</span> · Cabinet <span style={{ color: TONE.ok }}>OPERATIONAL</span>
+                Source: fused institutional telemetry · Classification OFFICIAL · Cabinet <span style={{ color: TONE.ok }}>OPERATIONAL</span>
               </div>
             </Panel>
           </div>
