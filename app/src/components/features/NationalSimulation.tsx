@@ -7,9 +7,9 @@ import { identityFor } from '@/lib/archetype-profiles';
 import { SCENARIOS, simulate, scenarioSweep, type ScenarioKey } from '@/lib/gov/simulation';
 import type { ArchetypeKey } from '@/lib/api/types';
 
-export function NationalSimulation() {
+export function NationalSimulation({ initial = 'baseline' }: { initial?: ScenarioKey }) {
   const [now, setNow] = React.useState(() => Date.now());
-  const [key, setKey] = React.useState<ScenarioKey>('baseline');
+  const [key, setKey] = React.useState<ScenarioKey>(initial);
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);

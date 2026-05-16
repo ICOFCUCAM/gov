@@ -13,6 +13,7 @@ import {
 import { buildCascade } from '@/lib/institution/cascade';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
+import { scenarioSweep } from '@/lib/gov/simulation';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
 } from '@/lib/api/types';
@@ -212,6 +213,9 @@ export function CabinetIntelligence() {
     { l: 'Diplomatic engagements', s: 'Active', t: 'ok', idx: 70 + Math.round(seed(`g4:${epoch}`) * 22), inst: 'Foreign Affairs', rec: 'Maintain bilateral track' },
     { l: 'Trade-corridor risk', s: nationalRisk >= 60 ? 'Elevated' : 'Low', t: nationalRisk >= 60 ? 'warn' : 'ok', idx: 30 + Math.round(seed(`g5:${epoch}`) * 30), inst: 'Trade', rec: 'Diversify routes' },
   ];
+
+  const sweep = scenarioSweep(ts);
+  const topThreats = sweep.slice(0, 4);
 
   const memo = [
     {
@@ -630,6 +634,37 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
           </div>
+
+          {/* Strategic threat board — simulation sweep feeding the executive picture */}
+          <Panel title="Strategic threat board" meta="scenario sweep · composite national risk · advisory" bodyClass="!p-1.5">
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+              {topThreats.map(r => {
+                const tn = r.band === 'severe' || r.band === 'high' ? 'alert' : r.band === 'elevated' ? 'warn' : 'ok';
+                return (
+                  <Link key={r.key} href={`/gov/simulation?s=${r.key}`} className="focus-ring flex flex-col rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 no-underline transition-colors hover:bg-surface-2/70">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 truncate text-[10px] font-semibold text-ink">{r.label}</span>
+                      <span className="shrink-0 rounded-[3px] px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 18%, transparent)`, color: TONE[tn] }}>{r.band}</span>
+                    </div>
+                    <span className="truncate text-[8.5px] text-ink-muted">{r.vector}</span>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <span className="font-mono text-[15px] leading-none tabular-nums" style={{ color: TONE[tn] }}>{r.composite}</span>
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${r.composite}%`, backgroundColor: TONE[tn] }} /></div>
+                    </div>
+                    <div className="mt-1 flex items-center justify-between text-[8px] text-ink-muted">
+                      <span style={{ color: TONE.alert }}>Δrdy {r.readinessDelta}</span>
+                      <span>unrest {r.civilUnrestProb}%</span>
+                      <span>casc {r.cascadeNodes}</span>
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
+            <div className="mt-1 flex items-center justify-between border-t border-line-soft px-1 pt-1 text-[9px] text-ink-muted">
+              <span>Lead vector · <span className="text-ink-soft">{sweep[0]?.label}</span></span>
+              <Link href="/gov/simulation" className="text-link underline underline-offset-2">National Simulation →</Link>
+            </div>
+          </Panel>
 
           {/* ROW A — heterogeneous executive micro-panel band (4 columns) */}
           <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
