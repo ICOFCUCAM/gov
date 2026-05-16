@@ -38,11 +38,11 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/regional' },
   ]},
   { g: 'National Security', items: [
-    { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov/coordination' },
-    { i: '◷', l: 'Geopolitical Monitor', s: 'External pressure', href: '/gov/coordination' },
+    { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov/security' },
+    { i: '◷', l: 'Geopolitical Monitor', s: 'External pressure', href: '/gov/geopolitical' },
   ]},
   { g: 'Treasury', items: [
-    { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov' },
+    { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury' },
     { i: '⚡', l: 'Infrastructure', s: 'Grid · corridors', href: '/gov/situation-room' },
   ]},
   { g: 'Governance', items: [

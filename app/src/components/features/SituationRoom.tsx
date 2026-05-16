@@ -116,8 +116,8 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '▦', l: 'Ministries', s: 'Institutional registry', href: '/ministries' },
   ]},
   { g: 'Security', items: [
-    { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov' },
-    { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov' },
+    { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov/security' },
+    { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury' },
   ]},
   { g: 'Infrastructure', items: [
     { i: '⚡', l: 'Infrastructure', s: 'Grid · corridors', href: '/gov' },

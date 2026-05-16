@@ -18,6 +18,11 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution state', href: '/ops', key: 'ops' },
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity', href: '/audit', key: 'aud' },
   ]},
+  { g: 'Strategic Domains', items: [
+    { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury', key: 'trs' },
+    { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov/security', key: 'sec' },
+    { i: '◷', l: 'Geopolitical Monitor', s: 'External pressure', href: '/gov/geopolitical', key: 'geo' },
+  ]},
   { g: 'Institutional Admin', items: [
     { i: '▦', l: 'Institutions Admin', s: 'Compose ministries', href: '/ministries', key: 'min' },
     { i: '⚙', l: 'Sovereign Configuration', s: 'Profile · presets · identity', href: '/gov/configuration', key: 'cfg' },
