@@ -8,6 +8,7 @@ import { identityFor } from '@/lib/archetype-profiles';
 import { buildNationalFabric } from '@/lib/institution/national-fabric';
 import { buildCascade } from '@/lib/institution/cascade';
 import { cascadeEscalations } from '@/lib/institution/cascade-escalation';
+import { nationalResilience } from '@/lib/gov/national-resilience';
 import type { Ministry } from '@/lib/api/types';
 
 const DIR_TONE = { mutual: 'link', provides: 'ok', consumes: 'warn' } as const;
@@ -32,6 +33,18 @@ export function NationalFabricView() {
   const meanHealth = f.edges.length
     ? Math.round(f.edges.reduce((a, e) => a + linkHealth(e.id), 0) / f.edges.length) : 100;
   const strained = f.edges.filter(e => linkHealth(e.id) < 72).length;
+
+  const resilience = nationalResilience(mins, ts);
+  const cascPillar = resilience.pillars.find(p => p.key === 'casc');
+  const degree = new Map<string, number>();
+  for (const e of f.edges) {
+    degree.set(e.fromId, (degree.get(e.fromId) ?? 0) + 1);
+    degree.set(e.toId, (degree.get(e.toId) ?? 0) + 1);
+  }
+  const erosion = [...cascade]
+    .map(c => ({ ...c, dependents: degree.get(c.id) ?? 0, weight: c.totalStress * (1 + (degree.get(c.id) ?? 0) * 0.2) }))
+    .sort((a, b) => b.weight - a.weight)
+    .slice(0, 6);
 
   const tele = [
     { l: 'Institutions meshed', v: String(f.stats.institutions), t: 'ok', k: 'in' },
@@ -59,10 +72,16 @@ export function NationalFabricView() {
           </span>
           <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
         </div>
-        <span className="rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
-          style={{ borderColor: strained ? TONE.warn : TONE.ok, color: strained ? TONE.warn : TONE.ok, backgroundColor: `color-mix(in srgb, ${strained ? TONE.warn : TONE.ok} 12%, transparent)` }}>
-          Whole-of-government · {strained ? `${strained} strained links` : 'cohesive'}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
+            style={{ borderColor: TONE[resilience.tone], color: TONE[resilience.tone], backgroundColor: `color-mix(in srgb, ${TONE[resilience.tone]} 12%, transparent)` }}>
+            Resilience {resilience.index} · cascade {cascPillar?.score ?? '—'}
+          </span>
+          <span className="rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
+            style={{ borderColor: strained ? TONE.warn : TONE.ok, color: strained ? TONE.warn : TONE.ok, backgroundColor: `color-mix(in srgb, ${strained ? TONE.warn : TONE.ok} 12%, transparent)` }}>
+            Whole-of-government · {strained ? `${strained} strained links` : 'cohesive'}
+          </span>
+        </div>
       </div>
 
       <p className="text-[11px] text-ink-muted">
@@ -140,6 +159,28 @@ export function NationalFabricView() {
           <p className="mt-1.5 text-[9px] text-ink-muted">High inbound dependency = single-point-of-failure risk; degradation cascades to dependents.</p>
         </Panel>
       </div>
+
+      <Panel title="Resilience erosion · cascade pillar" meta={`pillar ${cascPillar?.score ?? '—'} · stress × dependency weighting`} bodyClass="!p-1.5">
+        {erosion.length === 0 ? (
+          <p className="text-[11px] text-ink-muted">No active institutions in the mesh.</p>
+        ) : (
+          <div className="space-y-1">
+            {erosion.map(c => {
+              const tn = c.posture === 'critical' ? 'alert' : c.posture === 'strained' ? 'warn' : c.posture === 'watch' ? 'neutral' : 'ok';
+              const pct = Math.min(100, Math.round(c.weight));
+              return (
+                <div key={c.id} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[11px]">
+                  <span className="w-40 shrink-0 truncate text-ink-soft">{c.name.replace(/ Ministry| \(capability\)/, '')}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${pct}%`, backgroundColor: TONE[tn] }} /></div>
+                  <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE[tn] }}>{c.totalStress}</span>
+                  <span className="w-14 shrink-0 text-right font-mono text-[9px] tabular-nums text-ink-muted">{c.dependents} dep</span>
+                </div>
+              );
+            })}
+            <p className="px-1 pt-0.5 text-[9px] text-ink-muted">Erosion weight = cascade stress amplified by mesh degree. Reducing these institutions&rsquo; stress lifts the national cascade-integrity pillar most.</p>
+          </div>
+        )}
+      </Panel>
 
       <Panel title="Cascade propagation" meta="upstream degradation flowing to dependents" bodyClass="!p-0">
         <div className="max-h-[300px] overflow-y-auto">
