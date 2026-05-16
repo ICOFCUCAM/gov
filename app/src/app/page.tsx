@@ -9,6 +9,7 @@ import { WorldMap } from '@/components/ui/WorldMap';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { deployableInstitutions, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
+import { subsystemsFor, subsystemHealth } from '@/lib/institution/operational-catalog';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] = [
@@ -282,7 +283,29 @@ export default function SovereignCommandCenter() {
                   </div>
                 );
               }
+              const deployable = dir.filter(d => d.readiness.deployable).length;
+              const meanReady = Math.round(dir.reduce((a, d) => a + d.readiness.total, 0) / dir.length);
+              const subsClasses = dir.reduce((a, d) => a + subsystemsFor(d.ministry.archetype).length, 0);
+              const meanSsHealth = Math.round(dir.reduce((a, d) => a + subsystemHealth(d.ministry.id, d.ministry.archetype), 0) / dir.length);
+              const crisisCapable = dir.filter(d => d.readiness.lifecycle === 'crisis-capable').length;
+              const roll = [
+                { l: 'Active institutions', v: String(dir.length), c: 'rgb(var(--c-ink))' },
+                { l: 'Deployable', v: `${deployable}/${dir.length}`, c: deployable === dir.length ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' },
+                { l: 'Mean readiness', v: `${meanReady}%`, c: meanReady >= 70 ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' },
+                { l: 'Subsystem classes', v: String(subsClasses), c: 'rgb(var(--c-ink))' },
+                { l: 'Mean subsystem health', v: `${meanSsHealth}%`, c: meanSsHealth >= 85 ? 'rgb(var(--c-ok))' : meanSsHealth >= 70 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))' },
+                { l: 'Crisis-capable', v: String(crisisCapable), c: 'rgb(var(--c-ok))' },
+              ];
               return (
+                <div className="space-y-2.5">
+                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-6">
+                  {roll.map(s => (
+                    <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+                      <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+                      <span className="font-mono font-semibold tabular-nums" style={{ color: s.c }}>{s.v}</span>
+                    </div>
+                  ))}
+                </div>
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
                   {dir.map(({ ministry: m, readiness: r }) => {
                     const tn = r.deployable ? TONE.ok : TONE.warn;
@@ -316,6 +339,7 @@ export default function SovereignCommandCenter() {
                       </Link>
                     );
                   })}
+                </div>
                 </div>
               );
             })()}
