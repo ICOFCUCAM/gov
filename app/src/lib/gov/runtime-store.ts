@@ -13,6 +13,7 @@ import {
   type WorkItem, type WorkKind, type ActionKey,
 } from '@/lib/gov/runtime-workflow';
 import { appendAudit } from '@/services/audit-ledger';
+import { publish as busPublish } from '@/services/event-bus';
 
 export interface LedgerEntry {
   at: number;
@@ -70,6 +71,7 @@ export function actOnItem(scope: string, itemId: string, action: ActionKey, by: 
   ledger.unshift({ at: last.at, scope, itemId, kind: after.kind, from: last.from, to: last.to, action: last.action, by: last.by });
   if (ledger.length > 200) ledger.length = 200;
   appendAudit(scope, by, action, itemId, `${last.from} → ${last.to}`);
+  busPublish('runtime.transition', scope, { itemId, action, from: last.from, to: last.to, by, closed: after.closed });
   emit();
 }
 
@@ -159,4 +161,19 @@ export function scopeSummaries(): ScopeSummary[] {
     total: items.length,
     transitions: txByScope.get(scope) ?? 0,
   })).sort((a, b) => b.open - a.open);
+}
+
+// Operational causality: how much operator execution has improved (or
+// degraded) an institution. Positive disposition (advance/approve/resolve/
+// assign) lifts; reject/return weigh down. Bounded so a single institution
+// cannot dominate national posture but execution is genuinely consequential.
+export function executionDelta(instId: string): number {
+  let v = 0;
+  for (const e of ledger) {
+    if (!e.scope.startsWith(instId)) continue;
+    if (e.action === 'resolve' || e.action === 'approve') v += 2.4;
+    else if (e.action === 'advance' || e.action === 'assign') v += 1.2;
+    else if (e.action === 'reject' || e.action === 'return') v -= 2.6;
+  }
+  return Math.round(Math.max(-15, Math.min(15, v)));
 }

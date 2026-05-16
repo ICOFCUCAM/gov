@@ -26,7 +26,7 @@ import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, activatedApps, version as orchVersion } from '@/services/orchestration-engine';
 import { subscribeBus, version as busVersion, eventLog, eventStats } from '@/services/event-bus';
-import { subscribe as rtSubscribe, runtimeStats, scopeSummaries, version as rtVersion } from '@/lib/gov/runtime-store';
+import { subscribe as rtSubscribe, runtimeStats, scopeSummaries, executionDelta, version as rtVersion } from '@/lib/gov/runtime-store';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -124,7 +124,7 @@ export function NationalShell() {
   const leadTone = !lead ? 'ok' : lead.band === 'severe' || lead.band === 'high' ? 'alert' : lead.band === 'elevated' ? 'warn' : 'ok';
   const stress = lead ? resilienceUnderShock(mins, ts, lead.key) : null;
   const ne = nationalEcosystem(mins, ts);
-  const fp = federationPosture(mins, ts);
+  const fp = federationPosture(mins, ts, executionDelta);
   const iof = interoperabilityFabric(mins, ts);
   const sei = sovereignExecutionIndex({
     federationOperational: fp.institutions.length ? fp.meanOperational : 100,

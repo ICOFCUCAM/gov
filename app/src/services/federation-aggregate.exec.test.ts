@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { sovereignExecutionIndex } from './federation-aggregate';
+import { sovereignExecutionIndex, federationPosture } from './federation-aggregate';
 import { publish, version, eventLog, eventStats } from './event-bus';
 
 describe('sovereign execution index', () => {
@@ -25,5 +25,19 @@ describe('event bus', () => {
     expect(eventLog(5)[0]!.type).toBe('institution.metric');
     expect(eventLog(5, 'institution.metric')[0]!.source).toBe('ministry-health');
     expect(eventStats().total).toBeGreaterThan(0);
+  });
+});
+
+describe('operational causality (exec injection)', () => {
+  it('operator execution raises an institution\'s emergent operational posture', () => {
+    const mk = (id: string, a: 'HEALTH') => ({ id, name: id, slug: id, archetype: a, status: 'active' as const, createdAt: '2026-01-01T00:00:00Z', departments: [], modules: [] });
+    const mins = [mk('H', 'HEALTH')];
+    const base = federationPosture(mins as never, 50);
+    const lifted = federationPosture(mins as never, 50, () => 15);
+    const dropped = federationPosture(mins as never, 50, () => -15);
+    expect(lifted.institutions[0]!.operational).toBeGreaterThanOrEqual(base.institutions[0]!.operational);
+    expect(dropped.institutions[0]!.operational).toBeLessThanOrEqual(base.institutions[0]!.operational);
+    expect(lifted.institutions[0]!.operational).toBeLessThanOrEqual(100);
+    expect(dropped.institutions[0]!.operational).toBeGreaterThanOrEqual(0);
   });
 });

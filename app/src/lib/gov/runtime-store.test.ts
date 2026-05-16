@@ -77,3 +77,24 @@ describe('runtime store', () => {
     expect(chain.intact).toBe(true);
   });
 });
+
+describe('operational causality', () => {
+  it('executionDelta is bounded and rewards positive disposition; transitions emit on the bus', async () => {
+    const { getScope, actOnItem, executionDelta } = await import('./runtime-store');
+    const { actionsFor } = await import('./runtime-workflow');
+    const { eventLog } = await import('@/services/event-bus');
+    const inst = 'MIN-CAUSAL';
+    const s = `${inst}:command`;
+    expect(executionDelta(inst)).toBe(0);
+    for (let r = 0; r < 4; r++) {
+      const items = getScope(s, 'incident', 8);
+      const tgt = items.find(i => actionsFor(i.kind, i.stage).length > 0);
+      if (!tgt) break;
+      actOnItem(s, tgt.id, actionsFor(tgt.kind, tgt.stage)[0]!, 'Officer (commander)');
+    }
+    const d = executionDelta(inst);
+    expect(d).toBeGreaterThan(0);
+    expect(d).toBeLessThanOrEqual(15);
+    expect(eventLog(20).some(e => e.type === 'runtime.transition' && e.source === s)).toBe(true);
+  });
+});

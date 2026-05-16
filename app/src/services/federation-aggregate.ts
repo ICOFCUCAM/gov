@@ -67,12 +67,21 @@ export function sovereignExecutionIndex(input: {
   return { index, band, drivers };
 }
 
-export function federationPosture(mins: Ministry[], t: number): FederationPosture {
+// `exec` injects operational causality: real operator execution per
+// institution (from the runtime store) shifts its operational posture, so
+// national intelligence is emergent from what operators actually do. Pure
+// by default (exec → 0) to keep the engine deterministic & testable.
+export function federationPosture(
+  mins: Ministry[],
+  t: number,
+  exec?: (instId: string) => number,
+): FederationPosture {
   const active = mins.filter(m => m.status === 'active');
   const institutions: InstitutionPosture[] = active.map((m): InstitutionPosture => {
     const fn = FN[m.archetype];
     const instability = fn ? fn(m.id, t) : 40;
-    const operational = Math.max(0, 100 - instability);
+    const delta = exec ? exec(m.id) : 0;
+    const operational = Math.max(0, Math.min(100, 100 - instability + delta));
     const tone: 'ok' | 'warn' | 'alert' = operational >= 70 ? 'ok' : operational >= 50 ? 'warn' : 'alert';
     return { id: m.id, name: m.name, archetype: m.archetype, instability, operational, tone };
   }).sort((a, b) => a.operational - b.operational);
