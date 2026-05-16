@@ -20,6 +20,7 @@ import { energyOps } from '@/lib/gov/energy-systems';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { justiceOps } from '@/lib/gov/justice-systems';
+import { environmentOps } from '@/lib/gov/environment-systems';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
@@ -57,6 +58,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const isInterior = m.archetype === 'INTERIOR';
   const isAgri = m.archetype === 'AGRICULTURE';
   const isJustice = m.archetype === 'JUSTICE';
+  const isEnv = m.archetype === 'ENVIRONMENT';
 
   const header = (
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -777,6 +779,45 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'legalaid' ? 'case' : grp.key === 'registries' ? 'permit' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (isEnv) {
+    const o = environmentOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Air quality index" v={`${o.airQualityIndex}`} t={o.airQualityIndex >= 150 ? 'alert' : o.airQualityIndex >= 100 ? 'warn' : 'ok'} />
+          <Stat l="Water quality" v={`${o.waterQualityPct}%`} t={o.waterQualityPct >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Monitoring online" v={`${o.monitoringOnline}/${o.monitoringTotal}`} t={o.monitoringOnline < o.monitoringTotal * 0.85 ? 'warn' : 'ok'} />
+          <Stat l="Emissions vs target" v={`${o.emissionsVsTargetPct}%`} t={o.emissionsVsTargetPct > 110 ? 'alert' : o.emissionsVsTargetPct > 100 ? 'warn' : 'ok'} />
+          <Stat l="Protected-area integrity" v={`${o.protectedAreaIntegrityPct}%`} t={o.protectedAreaIntegrityPct >= 75 ? 'ok' : 'warn'} />
+          <Stat l="Compliance" v={`${o.compliancePct}%`} t={o.compliancePct >= 80 ? 'ok' : 'warn'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-2">
+          <Panel title="Environmental hazards" meta="regional risk" bodyClass="!p-0">
+            {o.hazards.map(h => {
+              const ht = h.level === 'severe' ? TONE.alert : h.level === 'moderate' ? TONE.warn : TONE.ok;
+              return (
+                <div key={h.region} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${ht}` }}>
+                  <span className="w-28 shrink-0 truncate text-[11px] text-ink">{h.region}</span>
+                  <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{h.kind}</span>
+                  <span className="shrink-0 text-[8.5px] uppercase tracking-wider" style={{ color: ht }}>{h.level}</span>
+                </div>
+              );
+            })}
+          </Panel>
+          <Panel title="Permits & compliance" meta="regulatory throughput" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Permits pending" v={o.permitsPending.toLocaleString()} t={o.permitsPending > 1800 ? 'warn' : 'ok'} />
+              <Stat l="Compliance" v={`${o.compliancePct}%`} t={o.compliancePct >= 80 ? 'ok' : 'warn'} />
+            </div>
+            <p className="mt-2 text-[9px] text-ink-muted">Severe hazards propagate to health, agriculture and logistics via the state fabric.</p>
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'permit' || grp.key === 'citizen' ? 'permit' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
       </div>
     );
   }
