@@ -8,6 +8,7 @@ import { constitutionFor } from '@/lib/gov/constitution';
 import { instantiateInstitution, systemKindLabel, type InstitutionKind } from '@/lib/institution/blueprint';
 import { legislativeState, committeeInquiries, BILL_STAGES } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
+import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import {
   branchFor, branchReadiness, separationIntegrity,
   legislativePipeline, chambersFor, committees, legislativeCalendar,
@@ -252,6 +253,7 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
                 </div>
               ))}
             </Panel>
+            <RuntimeQueue scope={`leg:${b.key}`} kind="bill" title="Bill runtime — drafting → committee → division → assent" by="Clerk" />
           </div>
         );
       })()}
@@ -416,6 +418,7 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
                 })}
               </div>
             </Panel>
+            <RuntimeQueue scope={`jud:${b.key}`} kind="judicial" title="Case runtime — filing → hearing → judgment → appeal" by="Registrar" />
           </div>
         );
       })()}

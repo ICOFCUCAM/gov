@@ -14,6 +14,8 @@ import {
   citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
+import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
@@ -169,6 +171,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             ))}
           </Panel>
         </div>
+        <RuntimeQueue scope={`${id}:enc`} kind="encounter" title="Clinical encounter runtime — execute the care pathway" by="Attending" />
       </div>
     );
   }
@@ -599,6 +602,17 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </div>
         </Panel>
       </div>
+
+      {(() => {
+        const k: WorkKind =
+          grp.key === 'regulatory' ? 'permit'
+            : grp.key === 'procurement' ? 'procurement'
+              : grp.key === 'command' ? 'incident'
+                : grp.key === 'citizen' ? 'approval'
+                  : grp.key === 'audit' ? 'case'
+                    : 'case';
+        return <RuntimeQueue scope={`${id}:${grp.key}`} kind={k} title={`${grp.name} runtime — executable workflow`} />;
+      })()}
 
       <p className="text-[10px] text-ink-muted">
         {grp.name}: {grp.systems.length} systems ({grp.systems.map(s => systemKindLabel(s.kind)).filter((v, i, a) => a.indexOf(v) === i).join(' · ')}). Generated from the {m.archetype} archetype — a sovereign operational environment, not a page. Groups: {blueprintFor(m.archetype).map(g => g.name).join(' · ')}.
