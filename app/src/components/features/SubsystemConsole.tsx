@@ -15,6 +15,7 @@ import {
 } from '@/lib/gov/treasury-systems';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { schoolNetwork, examOps, teacherOps, studentServices } from '@/lib/gov/education-systems';
+import { transportOps } from '@/lib/gov/transport-systems';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
@@ -47,6 +48,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const isHealth = m.archetype === 'HEALTH';
   const isFinance = m.archetype === 'FINANCE';
   const isEdu = m.archetype === 'EDUCATION';
+  const isTransport = m.archetype === 'TRANSPORT';
 
   const header = (
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -554,6 +556,49 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'exams' ? 'case' : grp.key === 'student' ? 'approval' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (isTransport) {
+    const o = transportOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Network availability" v={`${o.networkAvailabilityPct}%`} t={o.networkAvailabilityPct >= 85 ? 'ok' : o.networkAvailabilityPct >= 68 ? 'warn' : 'alert'} />
+          <Stat l="Safety index" v={`${o.safetyIndex}`} t={o.safetyIndex >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Fleet available" v={`${o.fleet.available}/${o.fleet.vehicles}`} t={o.fleet.available < o.fleet.vehicles * 0.6 ? 'alert' : 'ok'} />
+          <Stat l="Maint. backlog" v={`${o.fleet.maintenanceBacklog}`} t={o.fleet.maintenanceBacklog > 200 ? 'alert' : 'warn'} />
+          <Stat l="Vehicles registered" v={`${o.registry.vehiclesM}M`} t="ok" />
+          <Stat l="Registry backlog" v={o.registry.backlog.toLocaleString()} t={o.registry.backlog > 3000 ? 'warn' : 'ok'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-2">
+          <Panel title="Modal operations" meta="aviation · maritime · rail · road" bodyClass="!p-2">
+            <div className="space-y-1">
+              {o.modes.map(md => (
+                <div key={md.mode} className="flex items-center gap-2 text-[10px]">
+                  <span className="w-16 shrink-0 text-ink-soft">{md.mode}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${md.throughputPct}%`, backgroundColor: tc(md.tone) }} /></div>
+                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(md.tone) }}>{md.throughputPct}</span>
+                  <span className="w-16 shrink-0 text-right text-[8px] text-ink-muted">{md.delaysMin}m · {md.incidents}i</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+          <Panel title="Corridor flow" meta="logistics load · throughput" bodyClass="!p-2">
+            <div className="space-y-1">
+              {o.corridors.map(c => (
+                <div key={c.corridor} className="flex items-center gap-2 text-[10px]">
+                  <span className="w-28 shrink-0 truncate text-ink-soft">{c.corridor}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${c.loadPct}%`, backgroundColor: tc(c.tone) }} /></div>
+                  <span className="w-12 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(c.tone) }}>{c.throughputKt}kt</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'citizen' ? 'permit' : grp.key === 'logistics' ? 'procurement' : 'case'} title={`${grp.name} runtime — executable workflow`} />
       </div>
     );
   }
