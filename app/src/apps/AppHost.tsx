@@ -29,6 +29,7 @@ import { citizenWallet, officerConsole } from '@/lib/gov/citizen-systems';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { interoperabilityFabric } from '@/services/interoperability-fabric';
 import { federationPosture } from '@/services/federation-aggregate';
+import { PosturePill } from '@/apps/_shared/AppKit';
 import { ROLES, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
 import { evaluateConstitution, type AppKind } from '@/services/constitutional-engine';
 import { escalationState } from '@/shared/sovereignty/escalation';
@@ -134,8 +135,8 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
               <>
                 <div className="mb-2 rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid rgb(var(--c-${vt}))` }}>
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${vt}))` }}>
-                      Constitutional posture · {verdict.posture}
+                    <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${vt}))` }}>
+                      Constitutional posture <PosturePill label={verdict.posture} tone={vt as 'ok' | 'warn' | 'alert'} />
                     </span>
                     {verdict.withheld.length ? (
                       <span className="text-[9px] text-ink-muted">withholding: {verdict.withheld.join(', ')}</span>

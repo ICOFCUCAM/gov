@@ -50,3 +50,12 @@ export function Panel({ title, meta, children }: { title: string; meta?: string;
     </section>
   );
 }
+
+export function PosturePill({ label, tone }: { label: string; tone: 'ok' | 'warn' | 'alert' }) {
+  return (
+    <span className="rounded-[3px] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.14em]"
+      style={{ backgroundColor: `color-mix(in srgb, ${ac(tone)} 16%, transparent)`, color: ac(tone) }}>
+      {label}
+    </span>
+  );
+}
