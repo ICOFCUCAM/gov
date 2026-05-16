@@ -380,6 +380,8 @@ export function NationalMap({
   ];
   const [tactical, setTactical] = React.useState(true);
   const [heat, setHeat] = React.useState(false);
+  const critCount = incidents.filter(i => i.severity === 'sev1' || i.severity === 'sev2').length;
+  const flowDur = critCount >= 3 ? '0.6s' : critCount >= 1 ? '0.95s' : '1.4s';
   const rootRef = React.useRef<HTMLDivElement>(null);
   const fullscreen = () => {
     const el = rootRef.current;
@@ -483,7 +485,7 @@ export function NationalMap({
               <g key={`c${i}`}>
                 <path d={`M${a.cx},${a.cy} Q${mx},${my} ${b.cx},${b.cy}`} fill="none" stroke={col} strokeWidth="3.4" strokeOpacity="0.10" />
                 <path d={`M${a.cx},${a.cy} Q${mx},${my} ${b.cx},${b.cy}`} fill="none" stroke={col} strokeWidth="1.5"
-                  strokeOpacity="0.6" strokeDasharray="2 8" strokeLinecap="round" className="motion-safe:animate-dash-flow" />
+                  strokeOpacity="0.6" strokeDasharray="2 8" strokeLinecap="round" className="motion-safe:animate-dash-flow" style={{ animationDuration: flowDur }} />
               </g>
             );
           }) : null}
@@ -506,7 +508,7 @@ export function NationalMap({
               <line key={i} x1={a.x * 10} y1={a.y * 6.2} x2={b.x * 10} y2={b.y * 6.2}
                 stroke={TONE[tn]} strokeWidth={0.6 + (e.propagatedRisk / 100) * 2.2}
                 strokeOpacity={0.16 + (e.propagatedRisk / 100) * 0.42} strokeDasharray="3 7"
-                className="motion-safe:animate-dash-flow" />
+                className="motion-safe:animate-dash-flow" style={{ animationDuration: flowDur }} />
             );
           })}
 
@@ -640,6 +642,14 @@ export function NationalMap({
             style={{ borderColor: b.on ? ACCENT : 'rgb(var(--c-line))', color: b.on ? ACCENT : 'rgb(var(--c-ink-soft))' }}>{b.i}</button>
         ))}
       </div>
+
+      {critCount >= 1 ? (
+        <div className="absolute left-1/2 top-2 z-20 -translate-x-1/2 rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] backdrop-blur"
+          style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, rgb(var(--c-surface)))` }}>
+          <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full align-middle" style={{ backgroundColor: TONE.alert }} />
+          Theatre tempo · {critCount >= 3 ? 'SURGE' : 'ELEVATED'} · {critCount} active
+        </div>
+      ) : null}
 
       {/* regional pressure ladder — live per-province telemetry */}
       <div className="absolute right-2 top-12 z-20 w-[148px] rounded-[3px] border border-line bg-surface/85 p-2 backdrop-blur">
