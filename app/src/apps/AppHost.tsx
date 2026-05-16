@@ -27,6 +27,7 @@ import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { policeOps, emergencyOps, immigrationOps, customsOps } from '@/lib/gov/agency-systems';
 import { citizenWallet, officerConsole } from '@/lib/gov/citizen-systems';
 import { aiAdvisory } from '@/shared/ai/advisory';
+import { interoperabilityFabric } from '@/services/interoperability-fabric';
 import { ROLES, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
 import { evaluateConstitution, type AppKind } from '@/services/constitutional-engine';
 import { escalationState } from '@/shared/sovereignty/escalation';
@@ -212,6 +213,26 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                 ) : (
                   <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 )}
+                {(() => {
+                  const iof = interoperabilityFabric(mins, now / 4000);
+                  const mine = iof.edges.filter(e => e.from === app.instanceId || e.to === app.instanceId
+                    || e.fromName.toLowerCase().includes(app.domain) || e.toName.toLowerCase().includes(app.domain)).slice(0, 6);
+                  if (mine.length === 0) return null;
+                  return (
+                    <div className="mt-2 rounded-[3px] border border-line bg-surface p-2">
+                      <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">Interoperability contracts · {app.domain}.gov</div>
+                      <div className="space-y-0.5">
+                        {mine.map((e, i) => (
+                          <div key={i} className="flex items-center gap-2 text-[10px]">
+                            <span className="min-w-0 flex-1 truncate text-ink-soft">{e.fromName} → {e.toName}</span>
+                            <span className="shrink-0 truncate text-[8.5px] text-ink-muted">{e.relation}</span>
+                            <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: `rgb(var(--c-${e.tone}))` }}>{e.health}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <AuditPanel scope={auditScope} chainIntact={chain.intact} brokenAt={chain.brokenAt} />
               </>
             );
