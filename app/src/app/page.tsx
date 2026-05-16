@@ -18,7 +18,7 @@ import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] = [
   { g: 'Sovereign Command', items: [
     { i: '◎', l: 'National Situation Room', s: 'Real-time command & coordination', href: '/gov/situation-room', live: true },
-    { i: '◆', l: 'National Shell', s: 'Whole-of-government environment', href: '/gov' },
+    { i: '◆', l: 'National Shell', s: 'Whole-of-government environment', href: '/gov/shell' },
     { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade · live tempo', href: '/gov/coordination', live: true },
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution operational state', href: '/ops' },
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity · assurance', href: '/audit' },
@@ -121,7 +121,7 @@ export default function SovereignCommandCenter() {
 
   const surfaces = [
     { l: 'National Situation Room', s: 'Flagship real-time command & coordination', href: '/gov/situation-room', cta: 'Enter Situation Room', mini: 'map' as const, badge: 'LIVE', tone: 'alert' },
-    { l: 'National Shell', s: 'Whole-of-government command environment', href: '/gov', cta: 'Enter National Shell', mini: 'shield' as const, badge: 'Core', tone: 'ok' },
+    { l: 'National Shell', s: 'Whole-of-government command environment', href: '/gov/shell', cta: 'Enter National Shell', mini: 'shield' as const, badge: 'Core', tone: 'ok' },
     { l: 'National Coordination', s: 'Dependency · cascade · live tempo', href: '/gov/coordination', cta: 'Enter Coordination', mini: 'net' as const, badge: 'LIVE', tone: 'warn' },
     { l: 'Operations Centre', s: 'Cross-institution operational state', href: '/ops', cta: 'Enter Operations Centre', mini: 'graph' as const, badge: '', tone: 'ok' },
     { l: 'Oversight', s: 'Read-only, tamper-evident audit chain', href: '/audit', cta: 'Enter Oversight', mini: 'ring' as const, badge: 'Audit', tone: 'ok' },
