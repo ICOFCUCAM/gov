@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client';
 import { TONE, Panel, Spark, waveSeries } from '@/components/features/SituationRoom';
 import { identityFor } from '@/lib/archetype-profiles';
 import { buildNationalFabric } from '@/lib/institution/national-fabric';
+import { buildCascade } from '@/lib/institution/cascade';
 import type { Ministry } from '@/lib/api/types';
 
 const DIR_TONE = { mutual: 'link', provides: 'ok', consumes: 'warn' } as const;
@@ -20,6 +21,11 @@ export function NationalFabricView() {
   }, []);
   const ts = now / 4000;
   const f = buildNationalFabric(mins);
+  // Live node health drifts; cascade propagates degradation along edges.
+  const liveHealth = (id: string) => Math.round(waveSeries(`nh:${id}`, ts, 1, 58, 99).at(-1)!);
+  const cascade = buildCascade(mins, liveHealth);
+  const cascadeById = new Map(cascade.map(c => [c.id, c]));
+  const POS_TONE: Record<string, string> = { stable: 'ok', watch: 'neutral', strained: 'warn', critical: 'alert' };
   const linkHealth = (id: string) => Math.round(waveSeries(`nf:${id}`, ts, 1, 52, 99).at(-1)!);
   const meanHealth = f.edges.length
     ? Math.round(f.edges.reduce((a, e) => a + linkHealth(e.id), 0) / f.edges.length) : 100;
@@ -31,7 +37,7 @@ export function NationalFabricView() {
     { l: 'Mean link health', v: `${meanHealth}%`, t: meanHealth >= 85 ? 'ok' : meanHealth >= 70 ? 'warn' : 'alert', k: 'mh' },
     { l: 'Strained links', v: String(strained), t: strained ? 'warn' : 'ok', k: 'st' },
     { l: 'Mutual / Provides / Consumes', v: `${f.stats.mutual}/${f.stats.provides}/${f.stats.consumes}`, t: 'ok', k: 'mp' },
-    { l: 'Cascade exposure', v: `${f.stats.meanWeight}%`, t: f.stats.meanWeight >= 75 ? 'alert' : f.stats.meanWeight >= 60 ? 'warn' : 'ok', k: 'cx' },
+    { l: 'Cascade-critical', v: String(cascade.filter(c => c.posture === 'critical' || c.posture === 'strained').length), t: cascade.some(c => c.posture === 'critical') ? 'alert' : cascade.some(c => c.posture === 'strained') ? 'warn' : 'ok', k: 'cx' },
   ];
 
   // circular mesh layout
@@ -91,11 +97,13 @@ export function NationalFabricView() {
               {f.nodes.map(n => {
                 const p = pos.get(n.id)!;
                 const id = identityFor(n.archetype);
+                const cn = cascadeById.get(n.id);
+                const ring = cn ? TONE[POS_TONE[cn.posture]!] : 'rgba(255,255,255,0.15)';
                 return (
                   <span key={n.id} className="absolute -translate-x-1/2 -translate-y-1/2 text-center" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
-                    <span className="grid h-7 w-7 place-items-center rounded-full text-[11px] text-white ring-1 ring-white/15"
-                      style={{ backgroundColor: n.external ? 'rgb(var(--c-surface-2))' : id.accent, color: n.external ? TONE.warn : '#fff' }}
-                      title={`${n.name}${n.external ? ' · external capability' : ''}`}>{id.glyph}</span>
+                    <span className="grid h-7 w-7 place-items-center rounded-full text-[11px] text-white"
+                      style={{ backgroundColor: n.external ? 'rgb(var(--c-surface-2))' : id.accent, color: n.external ? TONE.warn : '#fff', boxShadow: `0 0 0 2px ${ring}` }}
+                      title={`${n.name}${n.external ? ' · external capability' : cn ? ` · ${cn.posture} (stress ${cn.totalStress})` : ''}`}>{id.glyph}</span>
                     <span className="mt-0.5 block max-w-[80px] truncate text-[8px] text-ink-muted">{n.name.replace(/ Ministry| \(capability\)/, '')}</span>
                   </span>
                 );
@@ -130,6 +138,32 @@ export function NationalFabricView() {
           <p className="mt-1.5 text-[9px] text-ink-muted">High inbound dependency = single-point-of-failure risk; degradation cascades to dependents.</p>
         </Panel>
       </div>
+
+      <Panel title="Cascade propagation" meta="upstream degradation flowing to dependents" bodyClass="!p-0">
+        <div className="max-h-[300px] overflow-y-auto">
+          <table className="w-full text-[11px]">
+            <thead><tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8.5px] uppercase tracking-wider text-ink-muted">
+              <th className="px-3 py-1.5">Institution</th><th className="px-2 py-1.5 text-right">Base stress</th><th className="px-2 py-1.5 text-right">Inherited</th><th className="px-2 py-1.5 text-right">Total</th><th className="px-2 py-1.5">Posture</th><th className="px-3 py-1.5">Top cascade contributors</th>
+            </tr></thead>
+            <tbody>
+              {cascade.map(c => {
+                const tn = POS_TONE[c.posture]!;
+                return (
+                  <tr key={c.id} className="border-b border-line-soft last:border-0">
+                    <td className="px-3 py-1.5 text-ink">{c.name.replace(/ Ministry/, '')}</td>
+                    <td className="px-2 py-1.5 text-right font-mono tabular-nums text-ink-muted">{c.baseStress}</td>
+                    <td className="px-2 py-1.5 text-right font-mono tabular-nums" style={{ color: c.inheritedStress >= 20 ? TONE.warn : 'rgb(var(--c-ink-muted))' }}>+{c.inheritedStress}</td>
+                    <td className="px-2 py-1.5 text-right font-mono tabular-nums" style={{ color: TONE[tn] }}>{c.totalStress}</td>
+                    <td className="px-2 py-1.5"><span className="rounded-[2px] px-1.5 py-0.5 text-[9px] font-semibold uppercase" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 16%, transparent)`, color: TONE[tn] }}>{c.posture}</span></td>
+                    <td className="px-3 py-1.5 text-[10px] text-ink-muted">{c.contributors.length ? c.contributors.map(x => `${x.name.replace(/ Ministry/, '')} (+${x.amount})`).join(' · ') : '—'}</td>
+                  </tr>
+                );
+              })}
+              {cascade.length === 0 ? <tr><td colSpan={6} className="px-3 py-8 text-center text-ink-muted">No active institutions — no cascade surface.</td></tr> : null}
+            </tbody>
+          </table>
+        </div>
+      </Panel>
 
       <Panel title="Dependency ledger" meta="live link health" bodyClass="!p-0">
         <div className="max-h-[320px] overflow-y-auto">
