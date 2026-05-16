@@ -6,6 +6,7 @@ import { Plain } from '@/components/ui/Plain';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MetricStat, ThresholdBar, SeverityBadge } from '@/components/ui/Ops';
 import { TerritoryHeat, TONE } from '@/components/features/SituationRoom';
+import { serviceReadings } from '@/lib/gov/ministry-services';
 import { listMinistries, ministryOperations } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
@@ -118,6 +119,18 @@ export default function MinistryControlPage({
                         <span>Nominal</span>
                         <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
                         <span>Saturated</span>
+                      </div>
+                    </Card>
+
+                    <Card tight>
+                      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Service operations · {selected.archetype}</h3>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-6">
+                        {serviceReadings(selected.id, selected.archetype, (selected.id.charCodeAt(1) || 5) % 60).map(r => (
+                          <div key={r.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5">
+                            <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{r.l}</div>
+                            <div className="font-mono text-base tabular-nums" style={{ color: `rgb(var(--c-${r.tone}))` }}>{r.value}{r.unit}</div>
+                          </div>
+                        ))}
                       </div>
                     </Card>
 
