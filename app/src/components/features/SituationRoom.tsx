@@ -350,6 +350,8 @@ export function NationalMap({
     { l: 'Signal integrity', v: `${(98 + wave('mo:si', ts, 0, 1.8) / 1).toFixed(1)}%`, t: 'ok' },
     { l: 'Active corridors', v: `${CORRIDORS.length}`, t: 'ok' },
   ];
+  const [tactical, setTactical] = React.useState(true);
+  const [heat, setHeat] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
   const fullscreen = () => {
     const el = rootRef.current;
@@ -364,10 +366,25 @@ export function NationalMap({
       <WorldMap focus={focus} />
 
       {/* radar sweep — slow strategic scan over the capital */}
-      <div aria-hidden className="pointer-events-none absolute" style={{ left: '52%', top: '50%', width: '120%', height: '120%', transform: 'translate(-50%,-50%)' }}>
-        <div className="h-full w-full animate-radar rounded-full opacity-[0.07]"
-          style={{ background: `conic-gradient(from 0deg, transparent 0deg, ${ACCENT} 26deg, transparent 60deg, transparent 360deg)` }} />
-      </div>
+      {tactical ? (
+        <div aria-hidden className="pointer-events-none absolute" style={{ left: '52%', top: '50%', width: '120%', height: '120%', transform: 'translate(-50%,-50%)' }}>
+          <div className="h-full w-full animate-radar rounded-full opacity-[0.08]"
+            style={{ background: `conic-gradient(from 0deg, transparent 0deg, ${ACCENT} 24deg, transparent 56deg, transparent 360deg)` }} />
+        </div>
+      ) : null}
+
+      {/* classified tactical framing — corner brackets + coordinate crosshair */}
+      {tactical ? (
+        <div aria-hidden className="pointer-events-none absolute inset-0 z-[1]">
+          {[['left-2 top-8 border-l border-t', ''], ['right-2 top-8 border-r border-t', ''], ['bottom-12 left-2 border-b border-l', ''], ['bottom-12 right-2 border-b border-r', '']].map(([c], i) => (
+            <span key={i} className={`absolute h-4 w-4 ${c}`} style={{ borderColor: ACCENT, opacity: 0.4 }} />
+          ))}
+          <span className="absolute font-mono text-[8px] tracking-[0.2em]" style={{ left: '0.75rem', top: '2.2rem', color: ACCENT, opacity: 0.45 }}>SECTOR · LIVE</span>
+          <span className="absolute font-mono text-[8px] tracking-[0.2em]" style={{ right: '0.75rem', bottom: '3.4rem', color: ACCENT, opacity: 0.45 }}>GRID 1:25k</span>
+          <span className="absolute left-1/2 top-1/2 h-px w-10 -translate-x-1/2 -translate-y-1/2" style={{ backgroundColor: ACCENT, opacity: 0.18 }} />
+          <span className="absolute left-1/2 top-1/2 h-10 w-px -translate-x-1/2 -translate-y-1/2" style={{ backgroundColor: ACCENT, opacity: 0.18 }} />
+        </div>
+      ) : null}
 
       <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
         <defs>
@@ -381,13 +398,16 @@ export function NationalMap({
             <stop offset="60%" stopColor="rgb(var(--c-bg))" stopOpacity="0" />
             <stop offset="100%" stopColor="rgb(var(--c-bg))" stopOpacity="0.66" />
           </radialGradient>
-          {provRisk.map(({ p }, i) => (
-            <radialGradient key={i} id={`pz${i}`} cx="50%" cy="50%" r="50%">
-              <stop offset="0%" stopColor={TONE[toneFor(provRisk[i]!.risk)]} stopOpacity="0.30" />
-              <stop offset="55%" stopColor={TONE[toneFor(provRisk[i]!.risk)]} stopOpacity="0.12" />
-              <stop offset="100%" stopColor={TONE[toneFor(provRisk[i]!.risk)]} stopOpacity="0" />
-            </radialGradient>
-          ))}
+          {provRisk.map(({ p }, i) => {
+            const k = heat ? 1.8 : 1;
+            return (
+              <radialGradient key={i} id={`pz${i}`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={TONE[toneFor(provRisk[i]!.risk)]} stopOpacity={String(0.30 * k)} />
+                <stop offset="55%" stopColor={TONE[toneFor(provRisk[i]!.risk)]} stopOpacity={String(0.12 * k)} />
+                <stop offset="100%" stopColor={TONE[toneFor(provRisk[i]!.risk)]} stopOpacity="0" />
+              </radialGradient>
+            );
+          })}
         </defs>
 
         {/* always-on faint operational graticule + terrain wash */}
@@ -550,13 +570,17 @@ export function NationalMap({
           className="focus-ring grid h-7 w-7 place-items-center rounded-[3px] border border-line bg-surface/85 text-[11px] text-ink-soft backdrop-blur transition-colors hover:text-ink">⛶</button>
       </div>
 
-      {/* map controls — left zoom/layer stack */}
-      <div className="absolute left-2 top-2 flex flex-col gap-1">
-        {[
-          { i: '▤', t: 'Layers' }, { i: '◳', t: 'Overlays' }, { i: '+', t: 'Zoom in' }, { i: '−', t: 'Zoom out' },
-        ].map(b => (
-          <span key={b.t} title={b.t}
-            className="grid h-7 w-7 place-items-center rounded-[3px] border border-line bg-surface/85 text-[12px] text-ink-soft backdrop-blur">{b.i}</span>
+      {/* map controls — left tactical stack (functional) */}
+      <div className="absolute left-2 top-2 z-20 flex flex-col gap-1">
+        {([
+          { i: '◎', t: 'Tactical framing', on: tactical, act: () => setTactical(v => !v) },
+          { i: '✸', t: 'Heat intensity', on: heat, act: () => setHeat(v => !v) },
+          { i: '▦', t: 'Grid overlay', on: layers.grid, act: () => onToggleLayer?.('grid') },
+          { i: '⚠', t: 'Incident diffusion', on: layers.incidents, act: () => onToggleLayer?.('incidents') },
+        ]).map(b => (
+          <button key={b.t} title={b.t} type="button" onClick={b.act}
+            className="focus-ring grid h-7 w-7 place-items-center rounded-[3px] border bg-surface/85 text-[12px] backdrop-blur transition-colors"
+            style={{ borderColor: b.on ? ACCENT : 'rgb(var(--c-line))', color: b.on ? ACCENT : 'rgb(var(--c-ink-soft))' }}>{b.i}</button>
         ))}
       </div>
 
