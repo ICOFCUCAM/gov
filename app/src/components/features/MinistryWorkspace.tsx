@@ -143,6 +143,25 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const maxCases = regions.reduce((m, r) => Math.max(m, r.openCases), 0);
   const totalCases = regions.reduce((s, r) => s + r.openCases, 0);
 
+  // Institutional posture engine: lifecycle + live operating mode.
+  const readiness = inst ? scoreInstitution(inst) : null;
+  const crisis = activeAlerts.some(a => /1|crit/i.test(String(a.severity)));
+  const mode: 'CRISIS' | 'ESCALATION' | 'EXECUTIVE' =
+    crisis ? 'CRISIS' : activeAlerts.length > 0 ? 'ESCALATION' : 'EXECUTIVE';
+  const modeTone = mode === 'CRISIS' ? 'rgb(var(--c-alert))'
+    : mode === 'ESCALATION' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))';
+  const provisional = !!inst && (inst.status !== 'active' || (readiness ? !readiness.deployable : false));
+
+  // Crisis auto-routes the operator to the incident surface once, without
+  // fighting subsequent manual navigation.
+  const autoRouted = React.useRef(false);
+  React.useEffect(() => {
+    if (crisis && !autoRouted.current) {
+      autoRouted.current = true;
+      setTab('incidents');
+    }
+  }, [crisis]);
+
   const regionCols: Column<RegionStat & { id?: string }>[] = [
     { key: 'r', header: 'Region', render: r => <strong>{r.region}</strong>, filter: r => r.region, sort: (a, b) => a.region.localeCompare(b.region) },
     { key: 'f', header: labels.unit, align: 'right', render: r => `${r.facilitiesOperationalPct}%`, sort: (a, b) => a.facilitiesOperationalPct - b.facilitiesOperationalPct },
@@ -203,29 +222,84 @@ export function MinistryWorkspace({ id }: { id: string }) {
         </div>
       </div>
 
+      {provisional ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-[3px] border px-3 py-1.5 text-[11px]"
+          style={{ borderColor: 'rgb(var(--c-warn))', backgroundColor: 'color-mix(in srgb, rgb(var(--c-warn)) 12%, transparent)', color: 'rgb(var(--c-warn))' }}>
+          <span className="flex items-center gap-2 font-semibold uppercase tracking-[0.16em]">
+            <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'rgb(var(--c-warn))' }} />
+            Provisional institution · activation gate not passed{readiness ? ` · ${readiness.total}% ready` : ''}
+          </span>
+          <Link href="/ministries" className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest no-underline" style={{ borderColor: 'rgb(var(--c-warn))' }}>Resolve in Institutions Admin →</Link>
+        </div>
+      ) : null}
+
+      {crisis ? (
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-[3px] border px-3 py-1.5 text-[11px]"
+          style={{ borderColor: 'rgb(var(--c-alert))', backgroundColor: 'color-mix(in srgb, rgb(var(--c-alert)) 14%, transparent)', color: 'rgb(var(--c-alert))' }}>
+          <span className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]">
+            <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: 'rgb(var(--c-alert))' }} />
+            Crisis posture engaged · {activeAlerts.length} active incident{activeAlerts.length === 1 ? '' : 's'} · institution operating under escalation authority
+          </span>
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+        {[
+          { l: 'Lifecycle', v: readiness ? LIFECYCLE_LABEL[readiness.lifecycle] : (inst?.status ?? '—'), c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))', dot: true },
+          { l: 'Readiness', v: readiness ? `${readiness.total}%` : '—', c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))' },
+          { l: 'Posture mode', v: mode, c: modeTone, dot: true },
+          { l: 'Active incidents', v: String(activeAlerts.length), c: activeAlerts.length ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
+          { l: 'Queue', v: `${openQueue} open`, c: openQueue > 6 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink))' },
+        ].map(s => (
+          <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: s.c }}>
+              {s.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: s.c }} /> : null}
+              {s.v}
+            </span>
+          </div>
+        ))}
+      </div>
+
       {(() => {
-        const r = inst ? scoreInstitution(inst) : null;
-        const crisis = activeAlerts.some(a => /1|crit/i.test(String(a.severity)));
-        const mode = crisis ? 'CRISIS' : activeAlerts.length > 0 ? 'ESCALATION' : 'EXECUTIVE';
-        const modeTone = mode === 'CRISIS' ? 'rgb(var(--c-alert))' : mode === 'ESCALATION' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))';
-        const rc = !r ? 'rgb(var(--c-ink-muted))' : r.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))';
+        const navBtn = (label: string, onClick: () => void, danger?: boolean) => (
+          <button key={label} onClick={onClick}
+            className="focus-ring rounded-[3px] border px-2.5 py-1 text-[11px] font-medium transition-colors"
+            style={{ borderColor: danger ? 'rgb(var(--c-alert))' : 'rgb(var(--c-line))', color: danger ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ink-soft))' }}>
+            {label}
+          </button>
+        );
+        const linkBtn = (label: string, href: string, danger?: boolean) => (
+          <Link key={label} href={href}
+            className="focus-ring rounded-[3px] border px-2.5 py-1 text-[11px] font-medium no-underline transition-colors"
+            style={{ borderColor: danger ? 'rgb(var(--c-alert))' : 'rgb(var(--c-line))', color: danger ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ink-soft))' }}>
+            {label}
+          </Link>
+        );
+        const actions =
+          mode === 'CRISIS' ? [
+            navBtn('Open incident command', () => setTab('incidents'), true),
+            navBtn('Escalations', () => setTab('escalations'), true),
+            linkBtn('Convene War Room', '/gov/situation-room', true),
+            linkBtn('Notify Cabinet', '/gov/coordination', true),
+          ] : mode === 'ESCALATION' ? [
+            navBtn('Review escalations', () => setTab('escalations')),
+            navBtn('Prioritise queue', () => setTab('approvals')),
+            linkBtn('National coordination', '/gov/coordination'),
+            linkBtn('Notify oversight', '/audit'),
+          ] : [
+            navBtn('Command surface', () => setTab('command')),
+            navBtn('Strategic analytics', () => setTab('analytics')),
+            navBtn('Regional posture', () => setTab('regional')),
+            linkBtn('Executive brief', '/gov'),
+          ];
         return (
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
-            {[
-              { l: 'Lifecycle', v: r ? LIFECYCLE_LABEL[r.lifecycle] : (inst?.status ?? '—'), c: rc, dot: true },
-              { l: 'Readiness', v: r ? `${r.total}%` : '—', c: rc },
-              { l: 'Posture mode', v: mode, c: modeTone, dot: true },
-              { l: 'Active incidents', v: String(activeAlerts.length), c: activeAlerts.length ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
-              { l: 'Queue', v: `${openQueue} open`, c: openQueue > 6 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink))' },
-            ].map(s => (
-              <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-                <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
-                <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: s.c }}>
-                  {s.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: s.c }} /> : null}
-                  {s.v}
-                </span>
-              </div>
-            ))}
+          <div className="flex flex-wrap items-center gap-2 rounded-[3px] border border-line bg-surface px-3 py-2">
+            <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: modeTone }}>
+              {mode === 'CRISIS' ? 'Crisis directives' : mode === 'ESCALATION' ? 'Escalation directives' : 'Executive directives'}
+            </span>
+            <span className="text-[10px] text-ink-muted">·</span>
+            {actions}
           </div>
         );
       })()}
@@ -246,7 +320,12 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 : 'border-transparent text-ink-soft hover:text-ink')
             }
           >
-            {t.label}
+            <span className="inline-flex items-center gap-1">
+              {t.label}
+              {crisis && (t.k === 'incidents' || t.k === 'escalations')
+                ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: 'rgb(var(--c-alert))' }} />
+                : null}
+            </span>
           </button>
         ))}
       </div>
