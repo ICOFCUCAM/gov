@@ -31,7 +31,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
   { g: 'Operations', items: [
     { i: '⚠', l: 'Incidents', s: 'Active escalations', href: '/gov/coordination' },
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution', href: '/ops' },
-    { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination', href: '/gov/coordination' },
+    { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination wall', href: '/wall' },
   ]},
   { g: 'Intelligence', items: [
     { i: '⟁', l: 'Analytics & AI', s: 'Strategic foresight', href: '/gov/coordination' },

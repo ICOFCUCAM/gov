@@ -1,7 +1,6 @@
-import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { Plain } from '@/components/ui/Plain';
+import { SignInButton } from './SignInButton';
 
 export default function LoginPage() {
   return (
@@ -21,9 +20,7 @@ export default function LoginPage() {
             An authorised agent in your community verifies you in person.
             Recommended if you have no smartphone.
           </p>
-          <Link href="/wallet">
-            <Button variant="secondary">Continue with an agent</Button>
-          </Link>
+          <SignInButton label="Continue with an agent" />
         </Card>
 
         <Card tight>
@@ -31,9 +28,7 @@ export default function LoginPage() {
           <p className="text-sm text-ink-muted mb-3">
             Any government office can verify you and activate your wallet.
           </p>
-          <Link href="/wallet">
-            <Button variant="secondary">Continue at an office</Button>
-          </Link>
+          <SignInButton label="Continue at an office" />
         </Card>
 
         <Card tight>
@@ -42,9 +37,7 @@ export default function LoginPage() {
             Use your security token and biometric. Your biometric never leaves
             your device.
           </p>
-          <Link href="/wallet">
-            <Button>Verify and continue</Button>
-          </Link>
+          <SignInButton label="Verify and continue" primary />
         </Card>
       </div>
 

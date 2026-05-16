@@ -180,11 +180,13 @@
   html[data-bw="1"] .shadow-2xl,
   html[data-bw="1"] .shadow-xl { box-shadow: none !important; }
 
-  /* Respect reduced-motion. */
+  /* Respect reduced-motion: fully halt decorative loops (radar, scanline,
+     diffuse, pulse, breathe, shimmer, dash-flow) rather than fast-flicker. */
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
-      animation-duration: 0.001ms !important;
+      animation: none !important;
       transition-duration: 0.001ms !important;
+      scroll-behavior: auto !important;
     }
   }
 }

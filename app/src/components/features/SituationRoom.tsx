@@ -124,7 +124,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⇄', l: 'Interoperability', s: 'Federation · clients', href: '/integrations' },
   ]},
   { g: 'Emergency Response', items: [
-    { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination', href: '/gov/coordination' },
+    { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination wall', href: '/wall' },
   ]},
   { g: 'Governance', items: [
     { i: '▥', l: 'Policy Monitor', s: 'Constitutional watch', href: '/gov' },
