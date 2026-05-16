@@ -10,6 +10,7 @@ import { SubsystemConsole } from '@/components/features/SubsystemConsole';
 import { BranchWorkspace } from '@/components/features/BranchWorkspace';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
+import { policeOps, emergencyOps, immigrationOps, customsOps } from '@/lib/gov/agency-systems';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -85,7 +86,7 @@ export function AppHost({ domain }: { domain: string }) {
           ) : app.kind === 'branch' ? (
             <BranchWorkspace branchKey={app.archetypeOrBranch} />
           ) : (
-            <AgencyApp app={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} />
+            <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} />
           )}
         </main>
       </div>
@@ -93,32 +94,82 @@ export function AppHost({ domain }: { domain: string }) {
   );
 }
 
-function AgencyApp({ app, label, archetype, navKey, now }: { app: string; label: string; archetype: ArchetypeKey; navKey: string; now: number }) {
+function Stat({ l, v, t }: { l: string; v: string; t?: string }) {
+  return (
+    <div className="rounded-[3px] border border-line bg-surface px-3 py-2">
+      <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{l}</div>
+      <div className="font-mono text-[15px] tabular-nums" style={{ color: t ? `rgb(var(--c-${t}))` : 'rgb(var(--c-ink))' }}>{v}</div>
+    </div>
+  );
+}
+
+function AgencyApp({ appId, label, archetype, navKey, now }: { appId: string; label: string; archetype: ArchetypeKey; navKey: string; now: number }) {
   const ts = now / 4000;
-  const ao = archetypeOperations(app, archetype === ('GENERIC' as ArchetypeKey) ? 'INTERIOR' : archetype, ts);
   const kind: WorkKind =
-    /incident|command|dispatch|emergency|recovery/i.test(navKey) ? 'incident'
-      : /permit|visa|clearance|registry/i.test(navKey) ? 'permit'
+    /incident|command|dispatch|emergency|recovery|enforcement/i.test(navKey) ? 'incident'
+      : /permit|visa|clearance|registry|identity/i.test(navKey) ? 'permit'
         : /payment|revenue|tariff/i.test(navKey) ? 'procurement'
           : 'case';
+
+  let stats: { l: string; v: string; t?: string }[] = [];
+  if (appId === 'police-command') {
+    const o = policeOps(appId, ts);
+    stats = [
+      { l: 'Active incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : 'warn' },
+      { l: 'Units deployed', v: `${o.unitsDeployed}/${o.unitsTotal}`, t: 'ok' },
+      { l: 'Mean response', v: `${o.meanResponseMin}m`, t: o.meanResponseMin >= 18 ? 'alert' : o.meanResponseMin >= 12 ? 'warn' : 'ok' },
+      { l: 'Clearance rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : 'warn' },
+      { l: 'Open investigations', v: o.openInvestigations.toLocaleString(), t: 'warn' },
+      { l: 'Custody occupancy', v: `${o.custodyOccupancyPct}%`, t: o.custodyOccupancyPct >= 110 ? 'alert' : o.custodyOccupancyPct >= 95 ? 'warn' : 'ok' },
+    ];
+  } else if (appId === 'emergency-response') {
+    const o = emergencyOps(appId, ts);
+    stats = [
+      { l: 'Active crises', v: `${o.activeCrises}`, t: o.activeCrises >= 4 ? 'alert' : o.activeCrises ? 'warn' : 'ok' },
+      { l: 'Severity', v: o.severity, t: o.severity === 'national' || o.severity === 'major' ? 'alert' : o.severity === 'elevated' ? 'warn' : 'ok' },
+      { l: 'Responders available', v: `${o.respondersAvailable}/${o.responders}`, t: 'ok' },
+      { l: 'Mean mobilise', v: `${o.meanMobiliseMin}m`, t: o.meanMobiliseMin >= 25 ? 'alert' : 'warn' },
+      { l: 'Shelters open', v: `${o.sheltersOpen}`, t: o.sheltersOpen ? 'warn' : 'ok' },
+      { l: 'Resource cover', v: `${o.resourceCoverPct}%`, t: o.resourceCoverPct >= 70 ? 'ok' : 'warn' },
+    ];
+  } else if (appId === 'immigration') {
+    const o = immigrationOps(appId, ts);
+    stats = [
+      { l: 'Borders open', v: `${o.bordersOpen}/${o.bordersTotal}`, t: o.bordersOpen < o.bordersTotal ? 'warn' : 'ok' },
+      { l: 'Crossings today', v: o.crossingsToday.toLocaleString(), t: 'ok' },
+      { l: 'Visa backlog', v: o.visaBacklog.toLocaleString(), t: o.visaBacklog > 5000 ? 'alert' : 'warn' },
+      { l: 'Visa SLA met', v: `${o.visaSlaMetPct}%`, t: o.visaSlaMetPct >= 80 ? 'ok' : 'warn' },
+      { l: 'Residents', v: `${o.residentsRegisteredM}M`, t: 'ok' },
+      { l: 'Flagged entries', v: `${o.flaggedEntries}`, t: o.flaggedEntries > 90 ? 'alert' : 'warn' },
+    ];
+  } else if (appId === 'customs') {
+    const o = customsOps(appId, ts);
+    stats = [
+      { l: 'Declarations today', v: o.declarationsToday.toLocaleString(), t: 'ok' },
+      { l: 'Clearance median', v: `${o.clearanceMedianHrs}h`, t: o.clearanceMedianHrs >= 36 ? 'alert' : o.clearanceMedianHrs >= 18 ? 'warn' : 'ok' },
+      { l: 'Revenue index', v: `${o.revenueIdx}`, t: o.revenueIdx >= 70 ? 'ok' : 'warn' },
+      { l: 'Inspection rate', v: `${o.inspectionRatePct}%`, t: 'ok' },
+      { l: 'Seizures', v: `${o.seizures}`, t: o.seizures > 20 ? 'alert' : 'warn' },
+      { l: 'Corridors open', v: `${o.corridorsOpen}/${o.corridorsTotal}`, t: o.corridorsOpen < o.corridorsTotal ? 'warn' : 'ok' },
+    ];
+  } else {
+    const ao = archetypeOperations(appId, archetype === ('GENERIC' as ArchetypeKey) ? 'INTERIOR' : archetype, ts);
+    stats = [
+      { l: 'Posture', v: ao.command.posture, t: ao.command.postureTone },
+      { l: 'Readiness', v: `${ao.command.readiness}%`, t: ao.command.readiness >= 70 ? 'ok' : 'warn' },
+      { l: 'Mean operational', v: `${ao.meanOperational}%`, t: ao.meanOperational >= 78 ? 'ok' : 'warn' },
+      { l: 'Open requests', v: ao.citizen.openRequests.toLocaleString(), t: 'ok' },
+      { l: 'Escalation', v: `L${ao.command.escalationTier}`, t: ao.command.escalationTier >= 2 ? 'alert' : 'ok' },
+      { l: 'Staffed', v: `${ao.personnel.staffedPct}%`, t: ao.personnel.staffedPct >= 80 ? 'ok' : 'warn' },
+    ];
+  }
+
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-        {[
-          { l: 'Posture', v: ao.command.posture, t: ao.command.postureTone },
-          { l: 'Readiness', v: `${ao.command.readiness}%`, t: ao.command.readiness >= 70 ? 'ok' : 'warn' },
-          { l: 'Mean operational', v: `${ao.meanOperational}%`, t: ao.meanOperational >= 78 ? 'ok' : 'warn' },
-          { l: 'Open requests', v: ao.citizen.openRequests.toLocaleString(), t: 'ok' },
-          { l: 'Escalation', v: `L${ao.command.escalationTier}`, t: ao.command.escalationTier >= 2 ? 'alert' : 'ok' },
-          { l: 'Staffed', v: `${ao.personnel.staffedPct}%`, t: ao.personnel.staffedPct >= 80 ? 'ok' : 'warn' },
-        ].map(s => (
-          <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2">
-            <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
-            <div className="font-mono text-[15px] tabular-nums" style={{ color: `rgb(var(--c-${s.t}))` }}>{s.v}</div>
-          </div>
-        ))}
+        {stats.map(s => <Stat key={s.l} {...s} />)}
       </div>
-      <RuntimeQueue scope={`${app}:${navKey}`} kind={kind} title={`${label} · ${navKey} runtime — executable workflow`} by="Duty Officer" />
+      <RuntimeQueue scope={`${appId}:${navKey}`} kind={kind} title={`${label} · ${navKey} runtime — executable workflow`} by="Duty Officer" />
     </div>
   );
 }
