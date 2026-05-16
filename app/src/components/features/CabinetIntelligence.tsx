@@ -181,11 +181,11 @@ export function CabinetIntelligence() {
   const depLinks: [number, number][] = [[0, 1], [1, 2], [0, 2], [2, 3], [1, 3], [3, 4], [2, 4]];
 
   const forecast = [
-    { l: 'Energy reserve threshold', v: `In ${10 + Math.round(seed(`f1:${epoch}`) * 40)} hours`, t: pressOf('ENERGY') >= 60 ? 'alert' : 'warn' },
-    { l: 'Hospital capacity stress', v: `+${8 + Math.round(seed(`f2:${epoch}`) * 18)}%`, t: pressOf('HEALTH') >= 55 ? 'alert' : 'warn' },
-    { l: 'Logistics delay impact', v: pressOf('TRANSPORT') >= 60 ? 'High' : 'Moderate', t: pressOf('TRANSPORT') >= 60 ? 'alert' : 'warn' },
-    { l: 'Treasury intervention need', v: 'Within 48 hours', t: 'warn' },
-    { l: 'Civil unrest probability', v: nationalRisk >= 60 ? 'Elevated' : 'Low–Moderate', t: nationalRisk >= 60 ? 'alert' : 'ok' },
+    { l: 'Energy reserve threshold', v: `In ${10 + Math.round(seed(`f1:${epoch}`) * 40)} hours`, t: pressOf('ENERGY') >= 60 ? 'alert' : 'warn', c: 78 + Math.round(seed(`fc1:${epoch}`) * 16) },
+    { l: 'Hospital capacity stress', v: `+${8 + Math.round(seed(`f2:${epoch}`) * 18)}%`, t: pressOf('HEALTH') >= 55 ? 'alert' : 'warn', c: 72 + Math.round(seed(`fc2:${epoch}`) * 20) },
+    { l: 'Logistics delay impact', v: pressOf('TRANSPORT') >= 60 ? 'High' : 'Moderate', t: pressOf('TRANSPORT') >= 60 ? 'alert' : 'warn', c: 70 + Math.round(seed(`fc3:${epoch}`) * 22) },
+    { l: 'Treasury intervention need', v: 'Within 48 hours', t: 'warn', c: 66 + Math.round(seed(`fc4:${epoch}`) * 24) },
+    { l: 'Civil unrest probability', v: nationalRisk >= 60 ? 'Elevated' : 'Low–Moderate', t: nationalRisk >= 60 ? 'alert' : 'ok', c: 74 + Math.round(seed(`fc5:${epoch}`) * 18) },
   ];
 
   const kpiTrends = [
@@ -566,15 +566,21 @@ export function CabinetIntelligence() {
             </Panel>
 
             <Panel title="Strategic forecast · 72h" meta="advisory" className="xl:col-span-2">
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-1.5 text-xs">
                 {forecast.map(f => (
-                  <li key={f.l} className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[f.t] }} /><span className="text-ink-soft">{f.l}</span></span>
-                    <span className="font-mono text-[11px] tabular-nums" style={{ color: TONE[f.t] }}>{f.v}</span>
+                  <li key={f.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[f.t] }} /><span className="text-ink-soft">{f.l}</span></span>
+                      <span className="font-mono text-[11px] tabular-nums" style={{ color: TONE[f.t] }}>{f.v}</span>
+                    </div>
+                    <div className="mt-0.5 flex items-center gap-1.5">
+                      <div className="h-1 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${f.c}%`, backgroundColor: TONE[f.t] }} /></div>
+                      <span className="font-mono text-[8px] tabular-nums text-ink-muted">conf {f.c}%</span>
+                    </div>
                   </li>
                 ))}
               </ul>
-              <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory projection only — no autonomous action. Cabinet decides.</p>
+              <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory probabilistic projection · confidence-scored · no autonomous action. Cabinet decides.</p>
             </Panel>
 
             <Panel title="National heatmap" meta="ministry stress · region" className="xl:col-span-3" bodyClass="!p-2">
