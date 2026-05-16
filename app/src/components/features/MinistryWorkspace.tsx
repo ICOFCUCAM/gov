@@ -15,6 +15,7 @@ import { identityFor } from '@/lib/archetype-profiles';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemOpPct } from '@/lib/institution/operational-catalog';
 import { ministryFabric } from '@/lib/institution/ministry-fabric';
+import { buildCascade } from '@/lib/institution/cascade';
 import type { Ministry } from '@/lib/api/types';
 import type {
   AnalyticSeries,
@@ -68,6 +69,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const [busy, setBusy] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
   const [inst, setInst] = React.useState<Ministry | null>(null);
+  const [allMins, setAllMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(() => Date.now());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -85,6 +87,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
         api.org.ministries().then(x => x.ministries).catch(() => [] as Ministry[]),
       ]);
       setInst(mins.find(m => m.id === id) ?? null);
+      setAllMins(mins);
       setName(r.ministry.name);
       setArchetype(r.ministry.archetype);
       setRegions(r.regions);
@@ -150,11 +153,19 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const maxCases = regions.reduce((m, r) => Math.max(m, r.openCases), 0);
   const totalCases = regions.reduce((s, r) => s + r.openCases, 0);
 
-  // Institutional posture engine: lifecycle + live operating mode.
+  // Institutional posture engine: lifecycle + live operating mode +
+  // cross-ministry cascade (degradation upstream escalates this posture).
   const readiness = inst ? scoreInstitution(inst) : null;
-  const crisis = activeAlerts.some(a => /1|crit/i.test(String(a.severity)));
+  const cascadeSelf = React.useMemo(() => {
+    if (!allMins.length) return null;
+    const liveHealth = (mid: string) => Math.round(waveSeries(`nh:${mid}`, now / 4000, 1, 58, 99).at(-1)!);
+    return buildCascade(allMins, liveHealth).find(c => c.id === id) ?? null;
+  }, [allMins, id, now]);
+  const cascadeCrit = cascadeSelf?.posture === 'critical';
+  const cascadeStrain = cascadeSelf?.posture === 'strained';
+  const crisis = activeAlerts.some(a => /1|crit/i.test(String(a.severity))) || cascadeCrit;
   const mode: 'CRISIS' | 'ESCALATION' | 'EXECUTIVE' =
-    crisis ? 'CRISIS' : activeAlerts.length > 0 ? 'ESCALATION' : 'EXECUTIVE';
+    crisis ? 'CRISIS' : activeAlerts.length > 0 || cascadeStrain ? 'ESCALATION' : 'EXECUTIVE';
   const modeTone = mode === 'CRISIS' ? 'rgb(var(--c-alert))'
     : mode === 'ESCALATION' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))';
   const provisional = !!inst && (inst.status !== 'active' || (readiness ? !readiness.deployable : false));
@@ -245,16 +256,17 @@ export function MinistryWorkspace({ id }: { id: string }) {
           style={{ borderColor: 'rgb(var(--c-alert))', backgroundColor: 'color-mix(in srgb, rgb(var(--c-alert)) 14%, transparent)', color: 'rgb(var(--c-alert))' }}>
           <span className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]">
             <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: 'rgb(var(--c-alert))' }} />
-            Crisis posture engaged · {activeAlerts.length} active incident{activeAlerts.length === 1 ? '' : 's'} · institution operating under escalation authority
+            Crisis posture engaged · {activeAlerts.length} active incident{activeAlerts.length === 1 ? '' : 's'}{cascadeCrit ? ` · cross-ministry cascade (+${cascadeSelf?.inheritedStress} inherited)` : ''} · institution operating under escalation authority
           </span>
         </div>
       ) : null}
 
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-6">
         {[
           { l: 'Lifecycle', v: readiness ? LIFECYCLE_LABEL[readiness.lifecycle] : (inst?.status ?? '—'), c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))', dot: true },
           { l: 'Readiness', v: readiness ? `${readiness.total}%` : '—', c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))' },
           { l: 'Posture mode', v: mode, c: modeTone, dot: true },
+          { l: 'Cascade stress', v: cascadeSelf ? `${cascadeSelf.totalStress}${cascadeSelf.inheritedStress ? ` (+${cascadeSelf.inheritedStress})` : ''}` : '—', c: cascadeCrit ? 'rgb(var(--c-alert))' : cascadeStrain ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))', dot: cascadeCrit || cascadeStrain },
           { l: 'Active incidents', v: String(activeAlerts.length), c: activeAlerts.length ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
           { l: 'Queue', v: `${openQueue} open`, c: openQueue > 6 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink))' },
         ].map(s => (
