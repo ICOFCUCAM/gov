@@ -99,6 +99,21 @@ export function OnboardingWizard() {
 
   return (
     <form onSubmit={onSubmit}>
+      <div className="mb-4 grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-6">
+        {[
+          { l: 'Tenant model', v: 'ISOLATED', c: 'rgb(var(--c-ok))' },
+          { l: 'Provisioning', v: 'PHASE 1', c: 'rgb(var(--c-ink))' },
+          { l: 'Inclusion floor', v: 'ENFORCED', c: 'rgb(var(--c-ok))' },
+          { l: 'Sovereign core', v: 'INHERITED', c: 'rgb(var(--c-ok))' },
+          { l: 'Governance', v: 'NAMED', c: 'rgb(var(--c-ok))' },
+          { l: 'Status', v: 'READY', c: 'rgb(var(--c-ok))' },
+        ].map(m => (
+          <div key={m.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.14em] text-ink-muted">{m.l}</span>
+            <span className="font-mono font-semibold tabular-nums" style={{ color: m.c }}>{m.v}</span>
+          </div>
+        ))}
+      </div>
       <Card>
         <h2 className="text-lg font-semibold mb-3">Municipality details</h2>
         <TextField label="Municipality name" name="name" required placeholder="e.g. Kiambu" />
