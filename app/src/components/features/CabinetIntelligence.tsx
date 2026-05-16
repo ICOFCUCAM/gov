@@ -16,6 +16,7 @@ import { ministryOpState } from '@/lib/gov/ministry-ops';
 import { ministryDependencies } from '@/lib/institution/ministry-fabric';
 import { buildOperationalChain } from '@/lib/gov/operational-chain';
 import { scenarioSweep, mitigationPlaybook, prioritisedThreats } from '@/lib/gov/simulation';
+import { stateFabric } from '@/lib/gov/state-fabric';
 import { nationalResilience } from '@/lib/gov/national-resilience';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
@@ -756,6 +757,43 @@ export function CabinetIntelligence() {
               <Link href="/gov/simulation" className="text-link underline underline-offset-2">National Simulation →</Link>
             </div>
           </Panel>
+
+          {/* State fabric — cross-system propagation feeding the executive picture */}
+          {(() => {
+            const sf = stateFabric(mins, ts);
+            const ctn = sf.contagion === 'systemic' ? TONE.alert : sf.contagion === 'coupled-stress' ? TONE.warn : TONE.ok;
+            return (
+              <Panel title="Interconnected state fabric" meta={`cross-system propagation · ${sf.contagion} · systemic ${sf.systemicStress}`} bodyClass="!p-1.5">
+                <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
+                  {sf.domains.map(d => {
+                    const dt = d.tone === 'alert' ? TONE.alert : d.tone === 'warn' ? TONE.warn : TONE.ok;
+                    return (
+                      <div key={d.domain} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-semibold text-ink">{d.label}</span>
+                          <span className="font-mono text-[12px] tabular-nums" style={{ color: dt }}>{d.instability}</span>
+                        </div>
+                        <div className="my-1 h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${d.instability}%`, backgroundColor: dt }} /></div>
+                        <div className="space-y-0.5">
+                          {d.effects.slice(0, 3).map((e, i) => (
+                            <div key={i} className="flex items-center gap-1.5 text-[8.5px]">
+                              <span className="h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: e.magnitude >= 65 ? TONE.alert : e.magnitude >= 40 ? TONE.warn : TONE.ok }} />
+                              <span className="min-w-0 flex-1 truncate text-ink-muted">{e.target}</span>
+                              <span className="shrink-0 font-mono tabular-nums text-ink-soft">{e.magnitude}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="mt-1 flex items-center justify-between border-t border-line-soft px-1 pt-1 text-[9px] text-ink-muted">
+                  <span>Worst coupled source · <span style={{ color: ctn }}>{sf.worst}</span> — instability propagates whole-of-government</span>
+                  <Link href="/gov/shell" className="text-link underline underline-offset-2">State fabric →</Link>
+                </div>
+              </Panel>
+            );
+          })()}
 
           {/* ROW A — heterogeneous executive micro-panel band (4 columns) */}
           <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
