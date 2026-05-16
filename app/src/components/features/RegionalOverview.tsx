@@ -2,57 +2,42 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { TONE, Panel, Spark, seed, toneFor, waveSeries, domainStress, TerritoryHeat } from '@/components/features/SituationRoom';
+import { TONE, Panel, Spark, seed, toneFor, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
+import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 
-const REGIONS = [
-  { n: 'Northern Province', arch: 'AGRICULTURE', cap: false },
-  { n: 'Highland Region', arch: 'ENERGY', cap: false },
-  { n: 'Eastern Region', arch: 'INTERIOR', cap: false },
-  { n: 'Capital District', arch: 'FINANCE', cap: true },
-  { n: 'Western Region', arch: 'TRANSPORT', cap: false },
-  { n: 'Coastal Region', arch: 'TRADE', cap: false },
-];
-const DOMS = [
-  ['ops', 'Ops'], ['infra', 'Infra'], ['civil', 'Civil'], ['sec', 'Security'], ['logi', 'Logistics'], ['emrg', 'Emergency'],
-] as const;
+const POS_TONE: Record<string, string> = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' };
 
 export function RegionalOverview() {
   const [now, setNow] = React.useState(() => Date.now());
+  const [open, setOpen] = React.useState<string | null>('Capital District');
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
   const ts = now / 4000;
 
-  const rows = REGIONS.map(r => {
-    const ds = (k: string) => domainStress(r.arch, k, 55, ts, r.n);
-    const composite = Math.round((ds('ops') + ds('sec') + ds('infra') + ds('civil')) / 4);
-    return { ...r, composite, ds };
-  });
-  const natRisk = Math.round(rows.reduce((a, r) => a + r.composite, 0) / rows.length);
-  const crit = rows.filter(r => r.composite >= 78).length;
-  const elev = rows.filter(r => r.composite >= 58 && r.composite < 78).length;
+  const regions = nationalRegions(ts);
+  const roll = regionRollup(regions);
+  const crit = roll.critical;
 
   const tele = [
-    { l: 'National posture', v: natRisk >= 70 ? 'STRAINED' : natRisk >= 45 ? 'WATCH' : 'STABLE', sub: `${natRisk}/100`, t: toneFor(natRisk), k: 'np' },
-    { l: 'Regions critical', v: String(crit), sub: `${elev} elevated`, t: crit ? 'alert' : elev ? 'warn' : 'ok', k: 'rc' },
-    { l: 'Mean readiness', v: `${Math.max(1, 100 - natRisk)}%`, sub: 'provincial', t: 'ok', k: 'mr' },
+    { l: 'Regional posture', v: roll.posture.toUpperCase(), sub: `${roll.meanReadiness}% mean readiness`, t: POS_TONE[roll.posture]!, k: 'np' },
+    { l: 'Regions critical', v: String(roll.critical), sub: `${roll.elevated} elevated`, t: roll.critical ? 'alert' : roll.elevated ? 'warn' : 'ok', k: 'rc' },
+    { l: 'Population', v: `${roll.population}M`, sub: 'under regional command', t: 'ok', k: 'po' },
+    { l: 'Infrastructure', v: `${roll.meanInfra}%`, sub: 'mean coverage', t: roll.meanInfra >= 80 ? 'ok' : 'warn', k: 'in' },
+    { l: 'Incident load', v: String(roll.totalIncidents), sub: 'active · all regions', t: roll.totalIncidents > 12 ? 'alert' : roll.totalIncidents ? 'warn' : 'ok', k: 'il' },
     { l: 'Coordination tempo', v: `${Math.round(waveSeries('ro:ct', ts, 1, 40, 90).at(-1)!)}/min`, sub: 'inter-region', t: 'ok', k: 'ct' },
-    { l: 'Escalation cadence', v: `${Math.round(waveSeries('ro:ec', ts, 1, 2, 12).at(-1)!)}/h`, sub: '24h', t: 'warn', k: 'ec' },
-    { l: 'Field deployments', v: String(28 + Math.round(seed(`fd:${Math.floor(ts)}`) * 22)), sub: 'active units', t: 'ok', k: 'fd' },
   ];
 
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Regional Overview</h1>
+          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Regional Command</h1>
           <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE
           </span>
-          <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }} title="Telemetry on this surface is advisory-simulated, not a live national feed">
-            Advisory · Simulated
-          </span>
+          <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>Advisory · Simulated</span>
           <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()} · updated {Math.round((now % 60000) / 1000)}s ago</span>
         </div>
         {crit >= 1 ? (
@@ -63,11 +48,12 @@ export function RegionalOverview() {
           </span>
         ) : null}
       </div>
+
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {tele.map(m => (
           <div key={m.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
             <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
-            <div className="font-mono text-lg leading-tight tabular-nums" style={{ color: TONE[m.t] }}>{m.v}</div>
+            <div className="truncate font-mono text-lg leading-tight tabular-nums" style={{ color: TONE[m.t] }}>{m.v}</div>
             <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={waveSeries(`ro:${m.k}`, ts, 16, 35, 92)} tone={m.t} /></div>
             <div className="truncate text-[8px] text-ink-muted">{m.sub}</div>
           </div>
@@ -80,14 +66,13 @@ export function RegionalOverview() {
           <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-4">
             {[
               ['Provinces synced', 'psy', 80, 100, '%'], ['Field deployment', 'pfd', 22, 58, ''],
-              ['Escalation rate', 'per', 0, 9, '/h'], ['Coordination tempo', 'pct', 40, 92, '/m'],
+              ['Escalation rate', 'per', 0, 9, '/h'], ['Coordination', 'pct', 40, 92, '/m'],
             ].map(([l, k, lo, hi, u]) => {
               const L = l as string, K = k as string, LO = lo as number, HI = hi as number;
               const v = Math.round(waveSeries(`rth:${K}`, ts, 1, LO, HI).at(-1)!);
               const low = K === 'per';
               const pct = ((v - LO) / (HI - LO)) * 100;
-              const sc = low ? 100 - pct : pct;
-              const t = sc >= 60 ? 'ok' : sc >= 35 ? 'warn' : 'alert';
+              const t = (low ? 100 - pct : pct) >= 60 ? 'ok' : (low ? 100 - pct : pct) >= 35 ? 'warn' : 'alert';
               return (
                 <div key={K} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
                   <div className="truncate text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{L}</div>
@@ -99,48 +84,70 @@ export function RegionalOverview() {
           </div>
         </Panel>
 
-        <Panel title="Provincial posture matrix" meta={`${rows.length} regions`} className="xl:col-span-5" bodyClass="!p-0">
-          <table className="w-full text-[11px]">
-            <thead>
-              <tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8.5px] uppercase tracking-wider text-ink-muted">
-                <th className="px-2 py-1.5">Region</th>
-                {DOMS.map(([, l]) => <th key={l} className="px-1 py-1.5 text-center">{l}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map(r => (
-                <tr key={r.n} className="border-b border-line-soft last:border-0">
-                  <td className="px-2 py-1.5"><span className="truncate text-ink">{r.cap ? '★ ' : ''}{r.n}</span></td>
-                  {DOMS.map(([k]) => {
-                    const v = r.ds(k);
-                    const st = v >= 78 ? 'alert' : v >= 58 ? 'warn' : v >= 40 ? 'neutral' : 'ok';
-                    const lbl = st === 'alert' ? 'Critical' : st === 'warn' ? 'Elevated' : st === 'neutral' ? 'Watch' : 'Stable';
-                    return (
-                      <td key={k} className="px-1 py-1.5 text-center">
-                        <span className="inline-block rounded px-1 py-0.5 text-[9px] font-semibold" style={{ backgroundColor: `color-mix(in srgb, ${TONE[st]} 16%, transparent)`, color: TONE[st] }}>{lbl}</span>
-                      </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <Panel title="Regional command grid" meta={`${regions.length} regions · expand for detail`} className="xl:col-span-5" bodyClass="!p-0">
+          {regions.map(r => {
+            const o = open === r.name;
+            const tn = POS_TONE[r.posture]!;
+            return (
+              <div key={r.name} className="border-b border-line-soft last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
+                <button onClick={() => setOpen(o ? null : r.name)} className="focus-ring flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-2/50">
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-[12px] font-medium text-ink">{r.capital ? '★ ' : ''}{r.name}</span>
+                    <span className="block truncate text-[9px] text-ink-muted">{r.archetype} · {r.populationM}M · {r.incidents} incidents</span>
+                  </span>
+                  <span className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[9px] font-bold uppercase" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 16%, transparent)`, color: TONE[tn] }}>{r.posture}</span>
+                  <span className="w-9 shrink-0 text-right font-mono text-[11px] tabular-nums" style={{ color: TONE[tn] }}>{r.readiness}%</span>
+                  <span className="text-ink-muted transition-transform" style={{ transform: o ? 'rotate(90deg)' : 'none' }}>›</span>
+                </button>
+                {o ? (
+                  <div className="grid gap-2 px-3 pb-2.5 sm:grid-cols-2">
+                    <div className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                      <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Infrastructure coverage</div>
+                      {r.infra.map(inf => {
+                        const it = inf.coverage >= 85 ? 'ok' : inf.coverage >= 65 ? 'warn' : 'alert';
+                        return (
+                          <div key={inf.l} className="mb-1 last:mb-0">
+                            <div className="flex items-center justify-between text-[9px]"><span className="text-ink-soft">{inf.l}</span><span className="font-mono tabular-nums" style={{ color: TONE[it] }}>{inf.coverage}%</span></div>
+                            <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full rounded-full" style={{ width: `${inf.coverage}%`, backgroundColor: TONE[it] }} /></div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    <div className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                      <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Domain stress</div>
+                      <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
+                        {r.domains.map(d => {
+                          const dt = d.v >= 78 ? 'alert' : d.v >= 58 ? 'warn' : d.v >= 40 ? 'neutral' : 'ok';
+                          return (<React.Fragment key={d.k}><span className="uppercase text-ink-muted">{d.k}</span><span className="text-right font-mono tabular-nums" style={{ color: TONE[dt] }}>{d.v}</span></React.Fragment>);
+                        })}
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between border-t border-line-soft pt-1 text-[9px]">
+                        <span className="text-ink-muted">Capital dependency</span>
+                        <span className="font-mono tabular-nums" style={{ color: r.capitalDependency >= 70 ? TONE.warn : 'rgb(var(--c-ink-soft))' }}>{r.capital ? 'sovereign hub' : `${r.capitalDependency}%`}</span>
+                      </div>
+                      <Link href="/gov/coordination" className="focus-ring mt-1.5 inline-block text-[10px] text-link underline underline-offset-2">Coordinate region →</Link>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </Panel>
       </div>
 
       <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
         <Panel title="Regional readiness ladder" meta="composite" bodyClass="!p-1.5">
           <div className="space-y-1">
-            {rows.map(r => {
-              const tn = toneFor(r.composite);
+            {[...regions].sort((a, b) => a.readiness - b.readiness).map(r => {
+              const tn = POS_TONE[r.posture]!;
               return (
-                <div key={r.n} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                <div key={r.name} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="truncate text-ink-soft">{r.cap ? '★ ' : ''}{r.n}</span>
-                    <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{Math.max(1, 100 - r.composite)}%</span>
+                    <span className="truncate text-ink-soft">{r.capital ? '★ ' : ''}{r.name}</span>
+                    <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{r.readiness}%</span>
                   </div>
                   <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-surface-2">
-                    <div className="h-full rounded-full transition-all duration-1000 ease-sov" style={{ width: `${Math.max(1, 100 - r.composite)}%`, backgroundColor: TONE[tn] }} />
+                    <div className="h-full rounded-full transition-all duration-1000 ease-sov" style={{ width: `${r.readiness}%`, backgroundColor: TONE[tn] }} />
                   </div>
                 </div>
               );
@@ -148,31 +155,29 @@ export function RegionalOverview() {
           </div>
         </Panel>
 
-        <Panel title="Inter-region dependencies" meta="coordination" bodyClass="!p-1.5">
-          <div className="grid grid-cols-1 gap-1">
-            {([
-              ['Highland → Capital', 'Energy transfer', 'ok'],
-              ['Coastal → Eastern', 'Logistics corridor', 'warn'],
-              ['Northern → Capital', 'Food supply', 'ok'],
-              ['Western → Capital', 'Transport mesh', 'warn'],
-              ['Eastern → Coastal', 'Security relay', 'alert'],
-            ] as [string, string, string][]).map(([l, s, t]) => (
-              <div key={l} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
-                <span className="min-w-0"><span className="block truncate text-[11px] text-ink">{l}</span><span className="block truncate text-[9px] text-ink-muted">{s}</span></span>
-                <span className="shrink-0 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase" style={{ backgroundColor: `color-mix(in srgb, ${TONE[t]} 18%, transparent)`, color: TONE[t] }}>{t === 'ok' ? 'Nominal' : t === 'warn' ? 'Strained' : 'Critical'}</span>
-              </div>
-            ))}
+        <Panel title="Capital-dependency map" meta="centralisation risk" bodyClass="!p-1.5">
+          <div className="space-y-1">
+            {regions.filter(r => !r.capital).map(r => {
+              const tn = r.capitalDependency >= 70 ? 'alert' : r.capitalDependency >= 50 ? 'warn' : 'ok';
+              return (
+                <div key={r.name} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{r.name} → Capital</span>
+                  <span className="font-mono text-[10px] tabular-nums" style={{ color: TONE[tn] }}>{r.capitalDependency}%</span>
+                </div>
+              );
+            })}
+            <p className="mt-1 text-[9px] text-ink-muted">High dependency = a Capital disruption cascades to that region.</p>
           </div>
         </Panel>
 
         <Panel title="Escalation cadence" meta="by region · 24h" bodyClass="!p-1.5">
           <div className="space-y-1">
-            {rows.map(r => {
-              const n = Math.round(seed(`esc:${r.n}:${Math.floor(ts / 6)}`) * (r.composite >= 70 ? 9 : 4));
+            {regions.map(r => {
+              const n = r.incidents;
               const tn = n >= 6 ? 'alert' : n >= 3 ? 'warn' : 'ok';
               return (
-                <div key={r.n} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[10px]">
-                  <span className="truncate text-ink-soft">{r.n}</span>
+                <div key={r.name} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[10px]">
+                  <span className="truncate text-ink-soft">{r.name}</span>
                   <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{n} esc</span>
                 </div>
               );
@@ -187,7 +192,7 @@ export function RegionalOverview() {
               { l: 'Regional brief', g: '▤', h: '/gov' },
               { l: 'Resource shift', g: '⇄', h: '/ops' },
               { l: 'Escalate region', g: '⚠', h: '/gov/coordination' },
-              { l: 'Sync provinces', g: '◉', h: '/gov/coordination' },
+              { l: 'Sync provinces', g: '◉', h: '/gov/fabric' },
               { l: 'Situation Room', g: '◎', h: '/gov/situation-room' },
             ].map((q, i) => (
               <Link key={q.l} href={q.h} className="focus-ring group flex items-center gap-1.5 rounded-[3px] border border-line px-2 py-1.5 text-[10px] font-medium text-ink-soft no-underline transition-all hover:bg-surface-2/60">
@@ -199,7 +204,6 @@ export function RegionalOverview() {
         </Panel>
       </div>
 
-      {/* Lower micro-grid ecosystem — per-region operational band */}
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         {[
           ['Field units', 'fu', 18, 56], ['Relief tempo', 'rt', 30, 88], ['Road status', 'rs', 55, 96],
@@ -229,10 +233,10 @@ export function RegionalOverview() {
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {[
-          { l: 'Regional posture', v: natRisk >= 70 ? 'STRAINED' : natRisk >= 45 ? 'WATCH' : 'STABLE', t: toneFor(natRisk) },
-          { l: 'Coordination tempo', v: `${Math.round(waveSeries('ro:ct2', ts, 1, 40, 90).at(-1)!)} ops/min`, t: 'ok' },
-          { l: 'Critical regions', v: `${crit} · ${elev} elevated`, t: crit ? 'alert' : 'warn' },
-          { l: 'Field deployments', v: `${28 + Math.round(seed(`fd2:${Math.floor(ts)}`) * 22)} active`, t: 'ok' },
+          { l: 'Regional posture', v: roll.posture.toUpperCase(), t: POS_TONE[roll.posture]! },
+          { l: 'Mean readiness', v: `${roll.meanReadiness}%`, t: roll.meanReadiness >= 60 ? 'ok' : 'warn' },
+          { l: 'Critical regions', v: `${roll.critical} · ${roll.elevated} elevated`, t: roll.critical ? 'alert' : 'warn' },
+          { l: 'Population', v: `${roll.population}M`, t: 'ok' },
           { l: 'Provinces synced', v: 'ALL', t: 'ok' },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
@@ -246,7 +250,7 @@ export function RegionalOverview() {
       </div>
 
       <p className="text-[10px] text-ink-muted">
-        Provincial posture is advisory and read-only — composite from operational, security, infrastructure and civil signals. Regional coordinators hold deployment and escalation authority.
+        Regional command is read-only and advisory. Composite posture is derived from operational, security, infrastructure and civil signals per region; capital-dependency models centralisation cascade risk. Regional coordinators hold deployment and escalation authority.
       </p>
     </div>
   );
