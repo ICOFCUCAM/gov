@@ -19,6 +19,7 @@ import { transportOps } from '@/lib/gov/transport-systems';
 import { energyOps } from '@/lib/gov/energy-systems';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
+import { justiceOps } from '@/lib/gov/justice-systems';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
@@ -55,6 +56,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const isEnergy = m.archetype === 'ENERGY';
   const isInterior = m.archetype === 'INTERIOR';
   const isAgri = m.archetype === 'AGRICULTURE';
+  const isJustice = m.archetype === 'JUSTICE';
 
   const header = (
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -728,6 +730,53 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'farmer' ? 'approval' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (isJustice) {
+    const o = justiceOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Access to justice" v={`${o.accessToJusticeIndex}`} t={o.accessToJusticeIndex >= 75 ? 'ok' : o.accessToJusticeIndex >= 55 ? 'warn' : 'alert'} />
+          <Stat l="Legal-aid represented" v={`${o.legalAid.representedPct}%`} t={o.legalAid.representedPct >= 75 ? 'ok' : 'warn'} />
+          <Stat l="Prison occupancy" v={`${o.corrections.occupancyPct}%`} t={o.corrections.occupancyPct >= 110 ? 'alert' : o.corrections.occupancyPct >= 95 ? 'warn' : 'ok'} />
+          <Stat l="Registry integrity" v={`${o.registries.integrityPct}%`} t={o.registries.integrityPct >= 98 ? 'ok' : 'warn'} />
+          <Stat l="Court-liaison SLA" v={`${o.courtLiaison.slaMetPct}%`} t={o.courtLiaison.slaMetPct >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Transfers pending" v={`${o.courtLiaison.transfersPending}`} t={o.courtLiaison.transfersPending > 500 ? 'warn' : 'ok'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-3">
+          <Panel title="Legal aid" meta="access to representation" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Centres" v={`${o.legalAid.centres}`} t="ok" />
+              <Stat l="Open matters" v={o.legalAid.openMatters.toLocaleString()} t="ok" />
+              <Stat l="Backlog" v={o.legalAid.backlog.toLocaleString()} t={o.legalAid.backlog > 4000 ? 'alert' : 'warn'} />
+              <Stat l="Represented" v={`${o.legalAid.representedPct}%`} t={o.legalAid.representedPct >= 75 ? 'ok' : 'warn'} />
+            </div>
+          </Panel>
+          <Panel title="Public registries" meta="records · verification" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Records" v={`${o.registries.recordsM}M`} t="ok" />
+              <Stat l="Verifications/hr" v={o.registries.verificationsPerHr.toLocaleString()} t="ok" />
+              <Stat l="Backlog" v={o.registries.backlog.toLocaleString()} t={o.registries.backlog > 2500 ? 'warn' : 'ok'} />
+              <Stat l="Integrity" v={`${o.registries.integrityPct}%`} t={o.registries.integrityPct >= 98 ? 'ok' : 'warn'} />
+            </div>
+          </Panel>
+          <Panel title="Corrections" meta="custodial system" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Facilities" v={`${o.corrections.facilities}`} t="ok" />
+              <Stat l="Population" v={o.corrections.population.toLocaleString()} t="ok" />
+              <Stat l="Capacity" v={o.corrections.capacity.toLocaleString()} t="ok" />
+              <Stat l="Rehab active" v={o.corrections.rehabActive.toLocaleString()} t="ok" />
+            </div>
+            <div className="mt-1 text-[9px]" style={{ color: o.corrections.occupancyPct >= 110 ? TONE.alert : o.corrections.occupancyPct >= 95 ? TONE.warn : TONE.ok }}>
+              {o.corrections.occupancyPct >= 110 ? 'OVERCROWDED — divert / decongest' : o.corrections.occupancyPct >= 95 ? 'Near capacity' : 'Within capacity'}
+            </div>
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'legalaid' ? 'case' : grp.key === 'registries' ? 'permit' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
       </div>
     );
   }
