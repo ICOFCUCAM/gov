@@ -8,6 +8,7 @@ import { buildCascade } from '@/lib/institution/cascade';
 import { cascadeEscalations } from '@/lib/institution/cascade-escalation';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
+import { scenarioSweep } from '@/lib/gov/simulation';
 import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
@@ -355,6 +356,33 @@ export function NationalCoordination() {
                 })}
               </div>
             </>
+          );
+        })()}
+      </Panel>
+
+      <Panel title="Scenario stress test" meta="cascade response under shock · advisory what-if">
+        {(() => {
+          const sweep = scenarioSweep(now / 4000);
+          return (
+            <div className="space-y-1">
+              {sweep.map(r => {
+                const tn = r.band === 'severe' || r.band === 'high' ? 'alert' : r.band === 'elevated' ? 'warn' : 'ok';
+                return (
+                  <Link key={r.key} href={`/gov/simulation?s=${r.key}`} className="focus-ring flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[11px] no-underline transition-colors hover:bg-surface-2/70">
+                    <span className="w-6 shrink-0 text-center font-mono text-[10px] tabular-nums text-ink-muted">{r.composite}</span>
+                    <span className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${r.composite}%`, backgroundColor: TONE[tn] }} /></span>
+                    <span className="min-w-0 flex-1 truncate text-ink">{r.label}</span>
+                    <span className="hidden shrink-0 truncate text-[9px] text-ink-muted sm:block sm:w-44">{r.vector}</span>
+                    <span className="w-14 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE.alert }}>{r.cascadeNodes} casc</span>
+                    <span className="w-16 shrink-0 text-right text-[8px] font-bold uppercase tracking-wider" style={{ color: TONE[tn] }}>{r.band}</span>
+                  </Link>
+                );
+              })}
+              <div className="flex items-center justify-between px-1 pt-0.5 text-[9px] text-ink-muted">
+                <span>Lead vector · <span className="text-ink-soft">{sweep[0]?.label}</span> ({sweep[0]?.cascadeNodes} institutions cascaded)</span>
+                <Link href="/gov/simulation" className="text-link underline underline-offset-2">Full simulation →</Link>
+              </div>
+            </div>
           );
         })()}
       </Panel>
