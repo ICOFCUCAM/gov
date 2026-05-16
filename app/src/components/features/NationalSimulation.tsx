@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel, Spark, waveSeries } from '@/components/features/SituationRoom';
 import { identityFor } from '@/lib/archetype-profiles';
-import { SCENARIOS, simulate, type ScenarioKey } from '@/lib/gov/simulation';
+import { SCENARIOS, simulate, scenarioSweep, type ScenarioKey } from '@/lib/gov/simulation';
 import type { ArchetypeKey } from '@/lib/api/types';
 
 export function NationalSimulation() {
@@ -18,6 +18,7 @@ export function NationalSimulation() {
   const s = simulate(key, ts);
   const baseM = new Map(simulate('baseline', ts).ministryImpact.map(m => [m.archetype, m.stress]));
   const active = key !== 'baseline';
+  const sweep = scenarioSweep(ts);
 
   const tele = [
     { l: 'Scenario', v: s.scenario.label.split(' (')[0], t: active ? 'warn' : 'ok' },
@@ -65,6 +66,31 @@ export function NationalSimulation() {
               </button>
             );
           })}
+        </div>
+      </Panel>
+
+      <Panel title="National threat board" meta="all vectors ranked · composite risk" bodyClass="!p-1.5">
+        <div className="space-y-1">
+          {sweep.map(r => {
+            const tn = r.band === 'severe' ? 'alert' : r.band === 'high' ? 'alert' : r.band === 'elevated' ? 'warn' : 'ok';
+            const on = r.key === key;
+            return (
+              <button key={r.key} onClick={() => setKey(r.key)}
+                className="focus-ring flex w-full items-center gap-2 rounded-[3px] border px-2 py-1.5 text-left text-[11px] transition-colors"
+                style={{ borderColor: on ? TONE.link : 'rgb(var(--c-line-soft))', backgroundColor: on ? `color-mix(in srgb, ${TONE.link} 10%, transparent)` : 'color-mix(in srgb, rgb(var(--c-surface-2)) 40%, transparent)' }}>
+                <span className="w-5 shrink-0 text-center font-mono text-[10px] tabular-nums text-ink-muted">{r.composite}</span>
+                <span className="h-1.5 w-14 shrink-0 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${r.composite}%`, backgroundColor: TONE[tn] }} /></span>
+                <span className="min-w-0 flex-1 truncate text-ink">{r.label}</span>
+                <span className="hidden shrink-0 truncate text-[9px] text-ink-muted sm:block sm:w-40">{r.vector}</span>
+                <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE.alert }}>{r.readinessDelta}</span>
+                <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: r.civilUnrestProb >= 60 ? TONE.alert : TONE.warn }}>{r.civilUnrestProb}%</span>
+                <span className="w-10 shrink-0 text-right text-[8px] font-bold uppercase tracking-wider" style={{ color: TONE[tn] }}>{r.band}</span>
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-1 flex gap-3 px-2 text-[8px] uppercase tracking-wider text-ink-muted">
+          <span className="ml-auto w-10 text-right">Δready</span><span className="w-10 text-right">unrest</span><span className="w-10 text-right">band</span>
         </div>
       </Panel>
 

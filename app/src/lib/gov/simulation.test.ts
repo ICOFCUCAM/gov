@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { simulate, scenarioFor, SCENARIOS } from './simulation';
+import { simulate, scenarioFor, scenarioSweep, SCENARIOS } from './simulation';
 
 describe('sovereign state simulation engine', () => {
   it('baseline applies no shock', () => {
@@ -32,6 +32,21 @@ describe('sovereign state simulation engine', () => {
       }
       expect(s.recommendation.length).toBeGreaterThan(0);
     }
+  });
+
+  it('scenarioSweep ranks every non-baseline vector by bounded composite risk', () => {
+    const sweep = scenarioSweep(50);
+    expect(sweep.length).toBe(SCENARIOS.length - 1);
+    expect(sweep.some(s => s.key === 'baseline')).toBe(false);
+    for (let i = 1; i < sweep.length; i++) {
+      expect(sweep[i - 1]!.composite).toBeGreaterThanOrEqual(sweep[i]!.composite);
+    }
+    for (const r of sweep) {
+      expect(r.composite).toBeGreaterThanOrEqual(0);
+      expect(r.composite).toBeLessThanOrEqual(100);
+      expect(['severe', 'high', 'elevated', 'contained']).toContain(r.band);
+    }
+    expect(scenarioSweep(50)).toEqual(sweep);
   });
 
   it('scenarioFor falls back to baseline', () => {

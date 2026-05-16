@@ -95,3 +95,39 @@ export function simulate(key: ScenarioKey, t: number): SimImpact {
     cascadeNodes, ministryImpact, regionImpact, timeline, recommendation,
   };
 }
+
+export interface ScenarioRisk {
+  key: ScenarioKey;
+  label: string;
+  vector: string;
+  severity: number;
+  /** 0-100 composite national risk index */
+  composite: number;
+  readinessDelta: number;
+  civilUnrestProb: number;
+  constitutionalStress: number;
+  cascadeNodes: number;
+  band: 'severe' | 'high' | 'elevated' | 'contained';
+}
+
+// Whole-of-government threat board: runs every scenario and ranks them by a
+// composite national-risk index (readiness loss, unrest, constitutional
+// stress, cascade breadth). Drives the simulation surface's threat ranking.
+export function scenarioSweep(t: number): ScenarioRisk[] {
+  return SCENARIOS.filter(s => s.key !== 'baseline').map(s => {
+    const im = simulate(s.key, t);
+    const composite = Math.round(Math.min(100,
+      Math.abs(im.nationalReadinessDelta) * 1.4 +
+      im.civilUnrestProb * 0.3 +
+      im.constitutionalStress * 0.3 +
+      im.cascadeNodes * 4,
+    ));
+    const band: ScenarioRisk['band'] =
+      composite >= 75 ? 'severe' : composite >= 58 ? 'high' : composite >= 40 ? 'elevated' : 'contained';
+    return {
+      key: s.key, label: s.label, vector: s.vector, severity: s.severity, composite,
+      readinessDelta: im.nationalReadinessDelta, civilUnrestProb: im.civilUnrestProb,
+      constitutionalStress: im.constitutionalStress, cascadeNodes: im.cascadeNodes, band,
+    };
+  }).sort((a, b) => b.composite - a.composite);
+}
