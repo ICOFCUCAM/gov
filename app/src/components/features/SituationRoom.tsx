@@ -458,6 +458,24 @@ export function NationalMap({
             );
           })}
 
+          {/* designated emergency evacuation routes */}
+          {[
+            'M520,356 Q700,300 880,232',
+            'M300,196 Q420,360 286,404',
+            'M742,432 Q620,500 360,540',
+          ].map((d, i) => (
+            <g key={`evac${i}`}>
+              <path d={d} fill="none" stroke={TONE.warn} strokeWidth="2.4" strokeOpacity="0.12" />
+              <path d={d} fill="none" stroke={TONE.warn} strokeWidth="1" strokeOpacity="0.45"
+                strokeDasharray="5 4" className="motion-safe:animate-dash-flow" style={{ animationDuration: '1.4s' }} />
+              <g style={{ filter: `drop-shadow(0 0 2px ${TONE.warn})` }}>
+                <circle r="1.5" fill={TONE.warn}>
+                  <animateMotion dur={`${8 + i * 2}s`} repeatCount="indefinite" path={d} />
+                </circle>
+              </g>
+            </g>
+          ))}
+
           {/* regional readiness intensity rings */}
           {provRisk.map(({ p, risk }) => {
             const ready = Math.max(1, 100 - risk);
