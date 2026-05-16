@@ -13,7 +13,7 @@ import {
 import { buildCascade } from '@/lib/institution/cascade';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
-import { scenarioSweep } from '@/lib/gov/simulation';
+import { scenarioSweep, mitigationPlaybook } from '@/lib/gov/simulation';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
 } from '@/lib/api/types';
@@ -215,7 +215,7 @@ export function CabinetIntelligence() {
   ];
 
   const sweep = scenarioSweep(ts);
-  const topThreats = sweep.slice(0, 4);
+  const topThreats = sweep.slice(0, 4).map(r => ({ ...r, pb: mitigationPlaybook(r.key, ts) }));
 
   const memo = [
     {
@@ -653,8 +653,9 @@ export function CabinetIntelligence() {
                     </div>
                     <div className="mt-1 flex items-center justify-between text-[8px] text-ink-muted">
                       <span style={{ color: TONE.alert }}>Δrdy {r.readinessDelta}</span>
-                      <span>unrest {r.civilUnrestProb}%</span>
                       <span>casc {r.cascadeNodes}</span>
+                      <span>resid <span style={{ color: r.pb.residualRisk >= 50 ? TONE.alert : TONE.warn }}>{r.pb.residualRisk}</span></span>
+                      <span style={{ color: r.pb.effectiveness >= 60 ? TONE.ok : TONE.warn }}>resp {r.pb.effectiveness}%</span>
                     </div>
                   </Link>
                 );

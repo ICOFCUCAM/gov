@@ -12,6 +12,7 @@ import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { serviceReadings } from '@/lib/gov/ministry-services';
+import { scenarioSweep } from '@/lib/gov/simulation';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -88,6 +89,10 @@ export function NationalShell() {
   const svcDegraded = svcHealth.filter(s => s.alert > 0).length;
   const svcMean = svcHealth.length ? Math.round(svcHealth.reduce((a, s) => a + s.idx, 0) / svcHealth.length) : 100;
 
+  const sweep = scenarioSweep(ts);
+  const lead = sweep[0];
+  const leadTone = !lead ? 'ok' : lead.band === 'severe' || lead.band === 'high' ? 'alert' : lead.band === 'elevated' ? 'warn' : 'ok';
+
   const regions = nationalRegions(ts);
   const rRoll = regionRollup(regions);
   const rTone = rRoll.posture === 'critical' ? 'alert' : rRoll.posture === 'elevated' ? 'warn' : rRoll.posture === 'watch' ? 'neutral' : 'ok';
@@ -95,7 +100,7 @@ export function NationalShell() {
   const estates = [
     { l: 'Constitutional Architecture', s: model.label, href: '/gov/branches', v: `${model.branches.length} branches`, t: sep.intact ? 'ok' : 'alert' },
     { l: 'Regional Command', s: `${regions.length} regions · ${rRoll.population}M`, href: '/gov/regional', v: `${rRoll.meanReadiness}% ready`, t: rTone },
-    { l: 'National Simulation', s: 'Scenario · cascade what-if', href: '/gov/simulation', v: '10 vectors', t: 'ok' },
+    { l: 'National Simulation', s: lead ? `Lead · ${lead.label}` : 'Scenario · cascade what-if', href: lead ? `/gov/simulation?s=${lead.key}` : '/gov/simulation', v: lead ? `${lead.composite} risk` : '10 vectors', t: leadTone },
     { l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', v: posture.l, t: posture.t },
     { l: 'Situation Room', s: 'Real-time operations', href: '/gov/situation-room', v: `${incidents.length} incidents`, t: incidents.length ? 'warn' : 'ok' },
     { l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination', v: `${cascCrit + cascStrain} cascade`, t: cascCrit ? 'alert' : cascStrain ? 'warn' : 'ok' },
