@@ -346,19 +346,36 @@ export function MinistryWorkspace({ id }: { id: string }) {
             return (
               <Section title="Institutional ecosystem" meta={`${fab.layers.length} layers · 3 tiers · ${fab.dependencies.length} dependencies`}>
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  {fab.layers.map(l => (
-                    <div key={l.key} className="rounded-[3px] border border-line bg-surface px-2.5 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
-                      <div className="mb-1 flex items-center justify-between">
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">{l.name}</span>
-                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} />
+                  {fab.layers.map(l => {
+                    const ets = now / 4000;
+                    const mods = l.modules.map(mod => ({
+                      mod, v: Math.round(waveSeries(`lyr:${id}:${l.key}:${mod}`, ets, 1, 58, 99).at(-1)!),
+                    }));
+                    const health = Math.round(mods.reduce((a, x) => a + x.v, 0) / mods.length);
+                    const lt = health >= 90 ? 'ok' : health >= 75 ? 'warn' : 'alert';
+                    return (
+                      <div key={l.key} className="rounded-[3px] border border-line bg-surface px-2.5 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+                        <div className="mb-1 flex items-center justify-between">
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">{l.name}</span>
+                          <span className="flex items-center gap-1 font-mono text-[10px] tabular-nums" style={{ color: TONE[lt] }}>
+                            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[lt] }} />{health}%
+                          </span>
+                        </div>
+                        <div className="space-y-0.5">
+                          {mods.map(({ mod, v }) => {
+                            const mt = v >= 90 ? 'ok' : v >= 75 ? 'warn' : 'alert';
+                            return (
+                              <div key={mod} className="flex items-center gap-1.5 text-[9px]">
+                                <span className="h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: TONE[mt] }} />
+                                <span className="min-w-0 flex-1 truncate text-ink-soft">{mod}</span>
+                                <span className="shrink-0 font-mono tabular-nums" style={{ color: TONE[mt] }}>{v}%</span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                      <div className="flex flex-wrap gap-1">
-                        {l.modules.map(mod => (
-                          <span key={mod} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-1.5 py-0.5 text-[9px] text-ink-soft">{mod}</span>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
                 <div className="mt-2 grid gap-2 lg:grid-cols-2">
                   <div className="rounded-[3px] border border-line bg-surface p-2">
