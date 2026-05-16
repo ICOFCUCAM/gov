@@ -8,7 +8,7 @@ import { TONE, ACCENT, PALETTE, seed, Spark, waveSeries } from '@/components/fea
 import { WorldMap } from '@/components/ui/WorldMap';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
-import type { SovereignProfile, NationalSnapshot, NationalCoordination } from '@/lib/api/types';
+import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] = [
   { g: 'Sovereign Command', items: [
@@ -75,18 +75,20 @@ function Mini({ kind, tone, focus }: { kind: 'map' | 'graph' | 'net' | 'ring' | 
 
 export default function SovereignCommandCenter() {
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
+  const [mins, setMins] = React.useState<Ministry[]>([]);
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [now, setNow] = React.useState(() => Date.now());
 
   React.useEffect(() => {
     const load = async () => {
-      const [s, n, c] = await Promise.all([
+      const [s, n, c, m] = await Promise.all([
         api.sovereign.get().then(r => r.sovereign).catch(() => null),
         api.cabinet.national().catch(() => null),
         api.cabinet.coordination().catch(() => null),
+        api.org.ministries().then(r => r.ministries).catch(() => [] as Ministry[]),
       ]);
-      setSov(s); setNat(n); setCoord(c);
+      setSov(s); setNat(n); setCoord(c); setMins(m);
     };
     void load();
     const poll = setInterval(() => void load(), 12_000);
@@ -266,6 +268,50 @@ export default function SovereignCommandCenter() {
                 </Link>
               ))}
             </div>
+          </Section>
+
+          <Section label="Activated Institutions · Deployment Directory">
+            {(() => {
+              const active = mins.filter(m => m.status === 'active');
+              if (active.length === 0) {
+                return (
+                  <div className="rounded-[3px] border border-line bg-surface px-3 py-4 text-center text-[11px] text-ink-muted">
+                    No institutions activated yet. Compose one from a sovereign archetype in{' '}
+                    <Link href="/ministries" className="text-link underline underline-offset-2">Institutions Admin</Link> — activated institutions are listed here for deployment.
+                  </div>
+                );
+              }
+              return (
+                <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
+                  {active.map(m => {
+                    const depts = m.departments?.length ?? 0;
+                    const mods = m.modules?.filter(x => x.enabled).length ?? 0;
+                    const ready = depts > 0 && mods > 0;
+                    const tn = ready ? TONE.ok : TONE.warn;
+                    return (
+                      <Link key={m.id} href={`/gov/ministry/${m.id}`}
+                        className="focus-ring group flex flex-col rounded-[3px] border border-line bg-surface p-3 no-underline transition-all duration-200 hover:-translate-y-0.5 hover:border-link/40 hover:shadow-elev-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <span className="min-w-0 truncate text-[13px] font-semibold text-ink">{m.name}</span>
+                          <span className="shrink-0 rounded-[3px] px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${tn} 18%, transparent)`, color: tn }}>
+                            {ready ? 'Deployable' : 'Incomplete'}
+                          </span>
+                        </div>
+                        <span className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-ink-muted">{m.archetype}</span>
+                        <div className="mt-2 flex-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
+                          <span className="text-ink-muted">Departments</span><span className="text-right font-mono tabular-nums" style={{ color: depts ? TONE.ok : TONE.warn }}>{depts}</span>
+                          <span className="text-ink-muted">Modules</span><span className="text-right font-mono tabular-nums" style={{ color: mods ? TONE.ok : TONE.warn }}>{mods}</span>
+                          <span className="text-ink-muted">Core</span><span className="text-right" style={{ color: TONE.ok }}>Inherited</span>
+                        </div>
+                        <span className="mt-2 flex items-center justify-between border-t border-line pt-2 text-[11px]" style={{ color: ACCENT }}>
+                          Enter workspace<span className="transition-transform group-hover:translate-x-0.5">→</span>
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </Section>
 
           <Section label="Institutional Administration">

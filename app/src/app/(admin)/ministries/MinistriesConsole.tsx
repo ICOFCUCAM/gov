@@ -130,6 +130,15 @@ export function MinistriesConsole() {
                     {m.status}
                   </Pill>
                   <span className="text-xs text-ink-muted">{m.archetype}</span>
+                  {(() => {
+                    const ok = (m.departments?.length ?? 0) > 0 && (m.modules?.filter(x => x.enabled).length ?? 0) > 0;
+                    return (
+                      <span className="ml-auto rounded-[3px] px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider"
+                        style={{ backgroundColor: `color-mix(in srgb, ${ok ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))'} 18%, transparent)`, color: ok ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' }}>
+                        {ok ? 'Deployable' : 'Incomplete'}
+                      </span>
+                    );
+                  })()}
                 </div>
               </button>
             ))}
@@ -148,6 +157,40 @@ export function MinistriesConsole() {
                   <p className="mt-1 text-sm text-ink-muted">
                     Archetype {current.archetype} · slug {current.slug}
                   </p>
+                  {(() => {
+                    const depts = current.departments?.length ?? 0;
+                    const mods = current.modules?.filter(x => x.enabled).length ?? 0;
+                    const checks = [
+                      { l: 'Departments configured', ok: depts > 0, v: String(depts) },
+                      { l: 'Operational modules enabled', ok: mods > 0, v: String(mods) },
+                      { l: 'Status active', ok: current.status === 'active', v: current.status },
+                      { l: 'Sovereign core inherited', ok: true, v: 'yes' },
+                    ];
+                    const ready = checks.every(c => c.ok);
+                    return (
+                      <div className="mt-3 rounded-[3px] border border-line p-2.5">
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Deployment readiness</span>
+                          <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                            style={{ backgroundColor: `color-mix(in srgb, ${ready ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))'} 18%, transparent)`, color: ready ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' }}>
+                            {ready ? 'Deployable' : 'Incomplete'}
+                          </span>
+                        </div>
+                        <ul className="space-y-1 text-[11px]">
+                          {checks.map(c => (
+                            <li key={c.l} className="flex items-center justify-between gap-2">
+                              <span className="flex items-center gap-1.5">
+                                <span style={{ color: c.ok ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' }}>{c.ok ? '✓' : '○'}</span>
+                                <span className="text-ink-soft">{c.l}</span>
+                              </span>
+                              <span className="font-mono tabular-nums text-ink-muted">{c.v}</span>
+                            </li>
+                          ))}
+                        </ul>
+                        {!ready ? <p className="mt-1.5 text-[10px] text-ink-muted">Activated institutions appear in the root deployment directory; completing the above makes this one deployable.</p> : null}
+                      </div>
+                    );
+                  })()}
                   <p className="mt-2">
                     <a
                       href={`/ministries/${current.id}/operations`}
