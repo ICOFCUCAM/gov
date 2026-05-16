@@ -73,7 +73,27 @@ export function RegionalOverview() {
 
       <div className="grid gap-2 xl:grid-cols-12">
         <Panel title="Regional theatre" meta="provincial posture · live" className="xl:col-span-7" bodyClass="!p-2">
-          <TerritoryHeat epoch={Math.floor(ts) % 60} height={360} />
+          <TerritoryHeat epoch={Math.floor(ts) % 60} height={330} />
+          <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-4">
+            {[
+              ['Provinces synced', 'psy', 80, 100, '%'], ['Field deployment', 'pfd', 22, 58, ''],
+              ['Escalation rate', 'per', 0, 9, '/h'], ['Coordination tempo', 'pct', 40, 92, '/m'],
+            ].map(([l, k, lo, hi, u]) => {
+              const L = l as string, K = k as string, LO = lo as number, HI = hi as number;
+              const v = Math.round(waveSeries(`rth:${K}`, ts, 1, LO, HI).at(-1)!);
+              const low = K === 'per';
+              const pct = ((v - LO) / (HI - LO)) * 100;
+              const sc = low ? 100 - pct : pct;
+              const t = sc >= 60 ? 'ok' : sc >= 35 ? 'warn' : 'alert';
+              return (
+                <div key={K} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                  <div className="truncate text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{L}</div>
+                  <div className="font-mono text-[13px] leading-tight tabular-nums" style={{ color: TONE[t] }}>{v}{u as string}</div>
+                  <div className="-mb-0.5 h-3 overflow-hidden opacity-70"><Spark pts={waveSeries(`rths:${K}`, ts, 12, 35, 92)} tone={t} /></div>
+                </div>
+              );
+            })}
+          </div>
         </Panel>
 
         <Panel title="Provincial posture matrix" meta={`${rows.length} regions`} className="xl:col-span-5" bodyClass="!p-0">
