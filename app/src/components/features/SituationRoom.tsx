@@ -533,16 +533,24 @@ export function NationalMap({
         );
       })}
 
-      {/* incident propagation rings */}
-      {layers.incidents && mapNodes.filter(m => m.pressure >= 70).slice(0, 6).map(m => (
-        <span key={`p${m.ministryId}`} className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2"
-          style={{ left: `${m.x}%`, top: `${m.y}%` }} aria-hidden>
-          <span className="block rounded-full border" style={{
-            width: 24 + pulse * 70, height: 24 + pulse * 70,
-            borderColor: TONE.alert, opacity: 0.55 - pulse * 0.5,
-          }} />
-        </span>
-      ))}
+      {/* labelled active incident markers (from live cross-ministry feed) */}
+      {layers.incidents && incidents.slice(0, 7).map((inc, i) => {
+        const host = mapNodes.find(m => m.ministry === inc.ministry) ?? mapNodes[i % Math.max(1, mapNodes.length)];
+        const x = host ? host.x : 18 + seed(`ipx:${i}`) * 64;
+        const y = host ? host.y : 20 + seed(`ipy:${i}`) * 56;
+        const sv = inc.severity;
+        const tn = sv === 'sev1' ? 'alert' : sv === 'sev2' ? 'alert' : sv === 'sev3' ? 'warn' : 'neutral';
+        const lbl = sv === 'sev1' ? 'CRITICAL' : sv === 'sev2' ? 'ELEVATED' : sv === 'sev3' ? 'WARNING' : 'WATCH';
+        return (
+          <span key={`inc${i}`} className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2"
+            style={{ left: `${x + 2.5}%`, top: `${y - 3}%` }} aria-hidden>
+            <span className="flex items-center gap-1 whitespace-nowrap rounded-[3px] border px-1 py-px text-[8px] font-bold uppercase tracking-wider backdrop-blur"
+              style={{ borderColor: TONE[tn], color: TONE[tn], backgroundColor: `color-mix(in srgb, ${TONE[tn]} 16%, rgb(var(--c-surface)))` }}>
+              <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[tn] }} />{lbl} · {inc.ministry}
+            </span>
+          </span>
+        );
+      })}
 
       {/* ministry command nodes */}
       {mapNodes.map(m => {
