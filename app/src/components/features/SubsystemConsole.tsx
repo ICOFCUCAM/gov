@@ -21,6 +21,7 @@ import { interiorOps } from '@/lib/gov/interior-systems';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { justiceOps } from '@/lib/gov/justice-systems';
 import { environmentOps } from '@/lib/gov/environment-systems';
+import { tradeOps } from '@/lib/gov/trade-systems';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
@@ -59,6 +60,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const isAgri = m.archetype === 'AGRICULTURE';
   const isJustice = m.archetype === 'JUSTICE';
   const isEnv = m.archetype === 'ENVIRONMENT';
+  const isTrade = m.archetype === 'TRADE';
 
   const header = (
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -818,6 +820,46 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'permit' || grp.key === 'citizen' ? 'permit' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (isTrade) {
+    const o = tradeOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Trade balance" v={`${o.tradeBalanceIdx}`} t={o.tradeBalanceIdx >= 70 ? 'ok' : o.tradeBalanceIdx >= 50 ? 'warn' : 'alert'} />
+          <Stat l="Export corridors" v={`${o.exports.corridorsOpen}/${o.exports.corridorsTotal}`} t={o.exports.corridorsOpen < o.exports.corridorsTotal ? 'warn' : 'ok'} />
+          <Stat l="Export clearance" v={`${o.exports.clearanceDays}d`} t={o.exports.clearanceDays >= 10 ? 'alert' : o.exports.clearanceDays >= 5 ? 'warn' : 'ok'} />
+          <Stat l="Businesses active" v={`${o.businessRegistry.activeM}M`} t="ok" />
+          <Stat l="Registration median" v={`${o.businessRegistry.medianDays}d`} t={o.businessRegistry.medianDays >= 14 ? 'warn' : 'ok'} />
+          <Stat l="Standards conformity" v={`${o.standards.conformityPct}%`} t={o.standards.conformityPct >= 85 ? 'ok' : 'warn'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-3">
+          <Panel title="Business registry" meta="enterprise lifecycle" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="New today" v={o.businessRegistry.newToday.toLocaleString()} t="ok" />
+              <Stat l="Backlog" v={o.businessRegistry.backlog.toLocaleString()} t={o.businessRegistry.backlog > 2500 ? 'warn' : 'ok'} />
+            </div>
+          </Panel>
+          <Panel title="Standards & metrology" meta="conformity assurance" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Labs" v={`${o.standards.labs}`} t="ok" />
+              <Stat l="Certs pending" v={o.standards.certificationsPending.toLocaleString()} t={o.standards.certificationsPending > 1200 ? 'warn' : 'ok'} />
+            </div>
+          </Panel>
+          <Panel title="Industrial development" meta="parks · investment" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Parks" v={`${o.industrialParks.parks}`} t="ok" />
+              <Stat l="Occupancy" v={`${o.industrialParks.occupancyPct}%`} t={o.industrialParks.occupancyPct >= 70 ? 'ok' : 'warn'} />
+              <Stat l="Investment idx" v={`${o.industrialParks.investmentIdx}`} t={o.industrialParks.investmentIdx >= 65 ? 'ok' : 'warn'} />
+              <Stat l="Licences pending" v={o.licensing.pending.toLocaleString()} t={o.licensing.pending > 2000 ? 'warn' : 'ok'} />
+            </div>
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'registry' || grp.key === 'licensing' || grp.key === 'citizen' ? 'permit' : grp.key === 'export' ? 'procurement' : 'case'} title={`${grp.name} runtime — executable workflow`} />
       </div>
     );
   }
