@@ -15,6 +15,8 @@ import { serviceReadings } from '@/lib/gov/ministry-services';
 import { scenarioSweep } from '@/lib/gov/simulation';
 import { nationalResilience, resilienceUnderShock } from '@/lib/gov/national-resilience';
 import { nationalEcosystem } from '@/lib/institution/blueprint';
+import { legislativeState } from '@/lib/gov/legislative-engine';
+import { judicialState } from '@/lib/gov/judicial-engine';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -97,6 +99,12 @@ export function NationalShell() {
   const leadTone = !lead ? 'ok' : lead.band === 'severe' || lead.band === 'high' ? 'alert' : lead.band === 'elevated' ? 'warn' : 'ok';
   const stress = lead ? resilienceUnderShock(mins, ts, lead.key) : null;
   const ne = nationalEcosystem(mins, ts);
+  const leg = legislativeState(ts, model.legislature.chambers.map(c => c.name).slice(0, 2));
+  const jud = judicialState(ts);
+  const constContinuity =
+    !leg.quorum || jud.meanClearance < 60 ? { l: 'STRAINED', t: 'alert' as const }
+      : leg.blocked >= 4 || jud.totalBacklog > 900 ? { l: 'WATCH', t: 'warn' as const }
+        : { l: 'STABLE', t: 'ok' as const };
 
   const regions = nationalRegions(ts);
   const rRoll = regionRollup(regions);
@@ -235,6 +243,55 @@ export function NationalShell() {
         ) : (
           <p className="text-[10px] text-ink-muted">All instantiated systems within tolerance across {ne.institutions} institutions.</p>
         )}
+      </P>
+
+      <P title="Constitutional continuity" meta="legislature & judiciary as running institutions">
+        <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px]">
+          <span className="rounded-[3px] px-1.5 py-0.5 font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[constContinuity.t]} 16%, transparent)`, color: TONE[constContinuity.t] }}>
+            {constContinuity.l}
+          </span>
+          <span className="text-ink-muted">Branches propagate into whole-of-government posture</span>
+        </div>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <Link href="/gov/branch/legislature" className="focus-ring rounded-[3px] border border-line-soft bg-surface-2/40 p-2 no-underline transition-colors hover:bg-surface-2/70">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-ink">Legislature</span>
+              <span className="font-mono text-[10px] tabular-nums" style={{ color: leg.quorum ? TONE.ok : TONE.alert }}>{leg.quorum ? 'QUORUM' : 'AT RISK'}</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1 text-[9px]">
+              {[
+                ['Bills', `${leg.bills.length}`, 'rgb(var(--c-ink))'],
+                ['In session', `${leg.inSession}`, TONE.ok],
+                ['Blocked', `${leg.blocked}`, leg.blocked ? TONE.alert : TONE.ok],
+                ['Attend', `${leg.attendancePct}%`, leg.attendancePct >= 60 ? TONE.ok : TONE.warn],
+              ].map(([l, v, c]) => (
+                <div key={l} className="rounded-[3px] border border-line-soft bg-surface px-1 py-0.5">
+                  <div className="truncate text-[7px] uppercase tracking-wider text-ink-muted">{l}</div>
+                  <div className="font-mono tabular-nums" style={{ color: c as string }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </Link>
+          <Link href="/gov/branch/judiciary" className="focus-ring rounded-[3px] border border-line-soft bg-surface-2/40 p-2 no-underline transition-colors hover:bg-surface-2/70">
+            <div className="mb-1 flex items-center justify-between">
+              <span className="text-[11px] font-semibold text-ink">Judiciary</span>
+              <span className="font-mono text-[10px] tabular-nums" style={{ color: jud.meanClearance >= 75 ? TONE.ok : jud.meanClearance >= 60 ? TONE.warn : TONE.alert }}>{jud.meanClearance}% clearance</span>
+            </div>
+            <div className="grid grid-cols-4 gap-1 text-[9px]">
+              {[
+                ['Open', `${jud.openCases}`, 'rgb(var(--c-ink))'],
+                ['Appeals', `${jud.appeals}`, TONE.warn],
+                ['Const.', `${jud.constitutionalMatters}`, jud.constitutionalMatters ? TONE.warn : TONE.ok],
+                ['Backlog', `${jud.totalBacklog}`, jud.totalBacklog > 900 ? TONE.alert : jud.totalBacklog > 500 ? TONE.warn : TONE.ok],
+              ].map(([l, v, c]) => (
+                <div key={l} className="rounded-[3px] border border-line-soft bg-surface px-1 py-0.5">
+                  <div className="truncate text-[7px] uppercase tracking-wider text-ink-muted">{l}</div>
+                  <div className="font-mono tabular-nums" style={{ color: c as string }}>{v}</div>
+                </div>
+              ))}
+            </div>
+          </Link>
+        </div>
       </P>
 
       <P title="State estates" meta="whole-of-government launchpad">
