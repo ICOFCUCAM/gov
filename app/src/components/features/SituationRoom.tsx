@@ -39,6 +39,10 @@ export const PALETTE = {
 } as React.CSSProperties;
 
 import { seed, toneFor, wave, waveSeries, domainStress } from '@/lib/telemetry';
+import { nationalAssets, nationalNetworks, networkPressure, NET_TONE } from '@/lib/gov/infrastructure';
+
+const NATL_ASSETS = nationalAssets();
+const NATL_NETWORKS = nationalNetworks();
 export { seed, toneFor, wave, waveSeries, domainStress };
 export function rel(at: string, now: number): string {
   const s = Math.max(0, Math.round((now - new Date(at).getTime()) / 1000));
@@ -524,6 +528,31 @@ export function NationalMap({
               </g>
             );
           }) : null}
+
+          {/* national infrastructure topology — digital-twin substrate */}
+          {layers.infra ? (
+            <g>
+              {NATL_NETWORKS.map(s => {
+                const col = NET_TONE[s.kind];
+                const press = networkPressure(s.kind, ts);
+                return (
+                  <g key={s.id}>
+                    <path d={s.d} fill="none" stroke={col} strokeWidth={s.kind === 'road' ? 1.1 : 0.7}
+                      strokeOpacity={s.kind === 'road' ? 0.22 : 0.3} strokeDasharray={s.kind === 'rail' ? '4 3' : s.kind === 'pipeline' ? '1 4' : undefined} />
+                    {press >= 62 ? (
+                      <path d={s.d} fill="none" stroke={press >= 78 ? TONE.alert : TONE.warn} strokeWidth="1.1"
+                        strokeOpacity="0.5" strokeDasharray="2 7" className="motion-safe:animate-dash-flow" style={{ animationDuration: '1s' }} />
+                    ) : null}
+                  </g>
+                );
+              })}
+              {NATL_ASSETS.map(a => {
+                const tone = a.tier === 1 ? ACCENT : a.tier === 2 ? 'rgb(var(--c-ink-soft))' : 'rgb(var(--c-line))';
+                return <circle key={a.id} cx={a.x} cy={a.y} r={a.tier === 1 ? 2.1 : a.tier === 2 ? 1.4 : 0.9}
+                  fill={tone} fillOpacity={a.tier === 1 ? 0.85 : a.tier === 2 ? 0.5 : 0.32} />;
+              })}
+            </g>
+          ) : null}
 
           {/* operational fabric — infra tethered to nearest province */}
           {layers.infra ? infra.map(n => {
