@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, healthInstability, patientServices,
+  nationalHealthcareCapacity,
 } from './health-systems';
 
 describe('health systems engine', () => {
@@ -61,6 +62,18 @@ describe('health systems engine', () => {
     expect(p.appointments.length).toBeGreaterThan(0);
     expect(p.vaccination.every(v => ['up-to-date', 'due', 'overdue'].includes(v.status))).toBe(true);
     expect(p.alerts.every(a => ['info', 'advisory', 'urgent'].includes(a.level))).toBe(true);
+  });
+
+  it('nationalHealthcareCapacity is emergent, bounded & deterministic', () => {
+    const empty = nationalHealthcareCapacity([], 50);
+    expect(empty.hospitals).toBe(0);
+    expect(empty.capacityIndex).toBe(100);
+    const a = nationalHealthcareCapacity(['MOH-1', 'MOH-2'], 50);
+    expect(a).toEqual(nationalHealthcareCapacity(['MOH-1', 'MOH-2'], 50));
+    expect(a.hospitals).toBe(2);
+    expect(a.capacityIndex).toBeGreaterThanOrEqual(0);
+    expect(a.capacityIndex).toBeLessThanOrEqual(100);
+    expect(['ok', 'warn', 'alert']).toContain(a.tone);
   });
 
   it('healthInstability is a bounded 0-100 propagation signal', () => {

@@ -248,6 +248,50 @@ export function diseaseIntel(instId: string, t: number): DiseaseIntel {
   };
 }
 
+export interface NationalHealthcareCapacity {
+  hospitals: number;          // active HEALTH institutions in scope
+  bedOccupancyPct: number;
+  icuOccupancyPct: number;
+  ambulanceAvailablePct: number;
+  doctorAvailabilityPct: number;
+  capacityIndex: number;      // 0-100 (higher = more headroom)
+  tone: 'ok' | 'warn' | 'alert';
+}
+// Rule 3: national healthcare capacity is EMERGENT — it derives from the
+// actual hospital/ICU/ambulance/doctor state of every active HEALTH
+// institution, never a hardcoded number. Pure & deterministic.
+export function nationalHealthcareCapacity(
+  healthInstitutionIds: string[],
+  t: number,
+): NationalHealthcareCapacity {
+  if (healthInstitutionIds.length === 0) {
+    return { hospitals: 0, bedOccupancyPct: 0, icuOccupancyPct: 0, ambulanceAvailablePct: 100, doctorAvailabilityPct: 100, capacityIndex: 100, tone: 'ok' };
+  }
+  let bed = 0, icu = 0, ambAvail = 0, docAvail = 0;
+  for (const id of healthInstitutionIds) {
+    const h = hospitalOps(id, t);
+    const roster = doctorRoster(id, t);
+    bed += h.beds.occupancyPct;
+    icu += h.icu.occupancyPct;
+    ambAvail += Math.round((h.ambulances.available / Math.max(1, h.ambulances.fleet)) * 100);
+    docAvail += Math.round((roster.filter(d => d.status === 'available').length / Math.max(1, roster.length)) * 100);
+  }
+  const n = healthInstitutionIds.length;
+  const bedOccupancyPct = Math.round(bed / n);
+  const icuOccupancyPct = Math.round(icu / n);
+  const ambulanceAvailablePct = Math.round(ambAvail / n);
+  const doctorAvailabilityPct = Math.round(docAvail / n);
+  const capacityIndex = Math.round(Math.max(0, Math.min(100,
+    (100 - bedOccupancyPct) * 0.3 + (100 - icuOccupancyPct) * 0.35 +
+    ambulanceAvailablePct * 0.2 + doctorAvailabilityPct * 0.15,
+  )));
+  return {
+    hospitals: n, bedOccupancyPct, icuOccupancyPct, ambulanceAvailablePct, doctorAvailabilityPct,
+    capacityIndex,
+    tone: capacityIndex >= 55 ? 'ok' : capacityIndex >= 35 ? 'warn' : 'alert',
+  };
+}
+
 /** 0-100 national healthcare instability — drives cross-system propagation. */
 export function healthInstability(instId: string, t: number): number {
   const h = hospitalOps(instId, t);
