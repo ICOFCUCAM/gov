@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/SituationRoom';
 import { constitutionFor } from '@/lib/gov/constitution';
+import { instantiateInstitution, systemKindLabel, type InstitutionKind } from '@/lib/institution/blueprint';
 import {
   branchFor, branchReadiness, separationIntegrity,
   legislativePipeline, chambersFor, committees, legislativeCalendar,
@@ -32,12 +33,17 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
       .reduce<{ a: string[] }>((x, l) => ({ a: [...x.a, l] }), { a: [] }).a as unknown as Record<string, string[]>
       : {} as Record<string, string[]>;
   void tabsByEngine;
-  const tabs =
+  const tabs = ['Ecosystem', ...(
     engine === 'legislative' ? ['Chambers', 'Committees', 'Bill pipeline', 'Calendar', 'Oversight inquiries']
       : engine === 'judicial' ? ['Court hierarchy', 'Docket', 'Constitutional review', 'Registries', 'Justice analytics']
       : engine === 'audit' ? ['Controls', 'Bodies', 'Authority']
       : engine === 'electoral' ? ['Electoral cycle', 'Bodies', 'Authority']
-      : ['Bodies', 'Authority chain', 'Constitutional posture'];
+      : ['Bodies', 'Authority chain', 'Constitutional posture'])];
+
+  const instKind: InstitutionKind =
+    b.key === 'legislature' ? 'LEGISLATURE'
+      : b.key === 'judiciary' ? 'JUDICIARY'
+      : 'GENERIC';
   const [tab, setTab] = React.useState(tabs[0]!);
   React.useEffect(() => { setTab(tabs[0]!); /* reset when engine changes */ }, [engine]); // eslint-disable-line
 
@@ -111,6 +117,47 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
           </button>
         ))}
       </div>
+
+      {tab === 'Ecosystem' && (() => {
+        const eco = instantiateInstitution({ id: `branch:${b.key}`, kind: instKind, activated: true }, ts);
+        return (
+          <div className="space-y-2">
+            <Panel title="Institutional ecosystem" meta={`${b.name} · instantiated from constitutional archetype`} bodyClass="!p-1.5">
+              <p className="mb-2 text-[11px] text-ink-muted">
+                The {b.name} is generated from the same institutional model as ministries —
+                {' '}{eco.stats.groups} system groups · {eco.stats.systems} systems ·
+                {' '}{eco.stats.operational} operational · {eco.stats.degraded} degraded ·
+                {' '}{eco.stats.meanHealth}% mean health. A constituted branch is a running
+                institution, not a static page.
+              </p>
+              <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                {eco.groups.map(g => (
+                  <div key={g.key} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-semibold text-ink">{g.name}</span>
+                      <span className="font-mono text-[10px] tabular-nums" style={{ color: TONE[g.tone] }}>{g.health}%</span>
+                    </div>
+                    <div className="mb-1 text-[9px] text-ink-muted">{g.purpose}</div>
+                    <ul className="space-y-0.5">
+                      {g.systems.map(s => {
+                        const st = s.status === 'operational' ? TONE.ok : s.status === 'degraded' ? TONE.alert : 'rgb(var(--c-ink-muted))';
+                        return (
+                          <li key={s.name} className="flex items-center gap-1.5 text-[10px]">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: st }} />
+                            <span className="min-w-0 flex-1 truncate text-ink-soft">{s.name}</span>
+                            <span className="shrink-0 text-[8px] uppercase tracking-wider text-ink-muted">{systemKindLabel(s.kind)}</span>
+                            <span className="w-9 shrink-0 text-right font-mono text-[9px] tabular-nums" style={{ color: st }}>{s.uptime}%</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </Panel>
+          </div>
+        );
+      })()}
 
       {tab === 'Chambers' && (
         <div className="grid gap-2 md:grid-cols-2">
