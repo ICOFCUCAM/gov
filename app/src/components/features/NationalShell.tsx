@@ -414,11 +414,17 @@ export function NationalShell() {
           <div className="space-y-1">
             {cascade.slice(0, 6).map(c => {
               const tn = c.posture === 'critical' ? 'alert' : c.posture === 'strained' ? 'warn' : c.posture === 'watch' ? 'neutral' : 'ok';
-              return (
-                <div key={c.id} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[11px]">
+              const linkable = !c.id.startsWith('ext:');
+              const body = (
+                <>
                   <span className="truncate text-ink-soft">{c.name.replace(/ Ministry| \(capability\)/, '')}</span>
                   <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{c.totalStress}{c.inheritedStress ? ` (+${c.inheritedStress})` : ''}</span>
-                </div>
+                </>
+              );
+              return linkable ? (
+                <Link key={c.id} href={`/ministries/${c.id}/operations`} className="focus-ring flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[11px] no-underline transition-colors hover:bg-surface-2/70">{body}</Link>
+              ) : (
+                <div key={c.id} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[11px]">{body}</div>
               );
             })}
           </div>
