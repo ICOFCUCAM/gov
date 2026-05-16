@@ -14,6 +14,7 @@ import { api } from '@/lib/api/client';
 import { identityFor } from '@/lib/archetype-profiles';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemOpPct } from '@/lib/institution/operational-catalog';
+import { ministryFabric } from '@/lib/institution/ministry-fabric';
 import type { Ministry } from '@/lib/api/types';
 import type {
   AnalyticSeries,
@@ -335,6 +336,55 @@ export function MinistryWorkspace({ id }: { id: string }) {
 
       {tab === 'command' && (
         <div className="space-y-5">
+          {(() => {
+            const fab = ministryFabric({ id, archetype: (archetype || 'GENERIC') as ArchetypeKey });
+            return (
+              <Section title="Institutional ecosystem" meta={`${fab.layers.length} layers · 3 tiers · ${fab.dependencies.length} dependencies`}>
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                  {fab.layers.map(l => (
+                    <div key={l.key} className="rounded-[3px] border border-line bg-surface px-2.5 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+                      <div className="mb-1 flex items-center justify-between">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">{l.name}</span>
+                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} />
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {l.modules.map(mod => (
+                          <span key={mod} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-1.5 py-0.5 text-[9px] text-ink-soft">{mod}</span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="mt-2 grid gap-2 lg:grid-cols-2">
+                  <div className="rounded-[3px] border border-line bg-surface p-2">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Command tiers</div>
+                    {fab.tiers.map(t => (
+                      <div key={t.tier} className="flex items-center justify-between gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
+                        <span className="text-ink">{t.tier}</span>
+                        <span className="min-w-0 flex-1 truncate px-2 text-[10px] text-ink-muted">{t.scope}</span>
+                        <span className="font-mono tabular-nums text-ink-soft">{t.units.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="rounded-[3px] border border-line bg-surface p-2">
+                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Cross-ministry dependencies</div>
+                    {fab.dependencies.map((d, i) => {
+                      const di = identityFor(d.archetype);
+                      const c = d.direction === 'mutual' ? TONE.link : d.direction === 'provides' ? TONE.ok : TONE.warn;
+                      return (
+                        <div key={i} className="flex items-center gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
+                          <span className="grid h-4 w-4 shrink-0 place-items-center rounded-[3px] text-[8px] text-white" style={{ backgroundColor: di.accent }}>{di.glyph}</span>
+                          <span className="w-20 shrink-0 truncate text-ink-soft">{d.archetype}</span>
+                          <span className="min-w-0 flex-1 truncate text-[10px] text-ink-muted">{d.relation}</span>
+                          <span className="shrink-0 text-[8px] font-bold uppercase tracking-wider" style={{ color: c }}>{d.direction}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              </Section>
+            );
+          })()}
           <Section title="Command indicators" meta="last 12 periods">
             <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
               {series.map(s => (
