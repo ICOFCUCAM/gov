@@ -496,6 +496,22 @@ export function NationalMap({
               stroke="rgb(var(--c-line))" strokeWidth="0.5" strokeOpacity="0.22" />;
           }) : null}
 
+          {/* national airspace overlay — high-altitude corridors */}
+          {[
+            ['M60,150 Q500,40 950,200', '7s'],
+            ['M40,470 Q520,560 960,420', '9s'],
+            ['M120,560 Q480,180 900,90', '11s'],
+          ].map(([d, dur], i) => (
+            <g key={`air${i}`}>
+              <path d={d as string} fill="none" stroke={TONE.link} strokeOpacity="0.16" strokeWidth="0.8" strokeDasharray="1 6" />
+              <g style={{ filter: `drop-shadow(0 0 2px ${TONE.link})` }}>
+                <circle r="1.4" fill={TONE.link}>
+                  <animateMotion dur={dur as string} repeatCount="indefinite" path={d as string} rotate="auto" />
+                </circle>
+              </g>
+            </g>
+          ))}
+
           {/* dependency / cascade edges */}
           {edges.slice(0, 26).map((e, i) => {
             const a = pos.get(e.fromId), b = pos.get(e.toId);
