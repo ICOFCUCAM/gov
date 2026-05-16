@@ -146,6 +146,27 @@ export function AppHost({ domain }: { domain: string }) {
                     ))}
                   </div>
                 </div>
+                {(() => {
+                  const adv = aiAdvisory(app.label, [
+                    { label: 'Operational stress', value: stress, adverse: true },
+                    { label: 'Audit integrity', value: chain.intact ? 8 : 92, adverse: true },
+                    { label: 'Constitutional posture', value: verdict.posture === 'breach' ? 92 : verdict.posture === 'under-review' ? 56 : 14, adverse: true },
+                  ]);
+                  const at = adv.severity === 'critical' || adv.severity === 'priority' ? 'alert' : adv.severity === 'advisory' ? 'warn' : 'ok';
+                  return (
+                    <div className="mb-2 rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid rgb(var(--c-${at}))` }}>
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${at}))` }}>AI advisory · {adv.severity}</span>
+                        <span className="font-mono text-[9px] tabular-nums text-ink-muted">confidence {adv.confidence}%</span>
+                      </div>
+                      <div className="mt-0.5 text-[11px] text-ink">{adv.headline}</div>
+                      <div className="text-[9px] text-ink-muted">{adv.rationale}</div>
+                      <ul className="mt-0.5 flex flex-wrap gap-x-4">
+                        {adv.recommended.map((r, i) => <li key={i} className="text-[9px] text-ink-soft">▸ {r}</li>)}
+                      </ul>
+                    </div>
+                  );
+                })()}
                 {!app.activated ? (
                   <p className="text-[12px] text-ink-muted">This sovereign application is provisioned but not activated. Activate the institution from the platform to bring its operational systems online.</p>
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'HEALTH' ? (
