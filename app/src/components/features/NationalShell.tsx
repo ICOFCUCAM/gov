@@ -18,6 +18,7 @@ import { nationalEcosystem } from '@/lib/institution/blueprint';
 import { legislativeState } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
 import { stateFabric } from '@/lib/gov/state-fabric';
+import { nationalRuntime } from '@/lib/gov/national-runtime';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -325,6 +326,42 @@ export function NationalShell() {
                   </ul>
                 </div>
               ))}
+            </div>
+          </P>
+        );
+      })()}
+
+      {(() => {
+        const rt = nationalRuntime(mins, ts);
+        const pt = rt.posture === 'overloaded' ? 'alert' : rt.posture === 'strained' ? 'warn' : 'ok';
+        return (
+          <P title="National operations runtime" meta={`work backlog · ${rt.posture} · ${rt.throughputPerHr}/h throughput`}>
+            <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+              {[
+                { l: 'Open work items', v: rt.totalOpen.toLocaleString(), t: 'ok' as const },
+                { l: 'Urgent', v: `${rt.totalUrgent}`, t: rt.totalUrgent > 80 ? 'alert' as const : 'warn' as const },
+                { l: 'SLA breaching', v: `${rt.totalBreaching}`, t: rt.totalBreaching > 80 ? 'alert' as const : 'warn' as const },
+                { l: 'Throughput/hr', v: `${rt.throughputPerHr}`, t: 'ok' as const },
+                { l: 'Mean load', v: `${rt.meanLoad}`, t: pt },
+                { l: 'Posture', v: rt.posture, t: pt },
+              ].map(s => (
+                <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+                  <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
+                  <div className="font-mono text-[15px] tabular-nums" style={{ color: TONE[s.t] }}>{s.v}</div>
+                </div>
+              ))}
+            </div>
+            <div className="grid gap-1 sm:grid-cols-2 xl:grid-cols-3">
+              {rt.institutions.slice(0, 9).map(i => {
+                const it = i.load >= 65 ? 'alert' : i.load >= 42 ? 'warn' : 'ok';
+                return (
+                  <Link key={i.id} href={`/ministries/${i.id}/operations`} className="focus-ring flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 no-underline transition-colors hover:bg-surface-2/70">
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-ink">{i.name}</span>
+                    <span className="shrink-0 text-[8.5px] text-ink-muted">{i.open} open · {i.urgent}!</span>
+                    <span className="w-9 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE[it] }}>{i.load}</span>
+                  </Link>
+                );
+              })}
             </div>
           </P>
         );
