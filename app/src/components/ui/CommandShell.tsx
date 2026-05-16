@@ -20,6 +20,10 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity', href: '/audit', key: 'aud' },
     { i: '⚖', l: 'Branches of Government', s: 'Separation of powers', href: '/gov/branches', key: 'branches' },
   ]},
+  { g: 'Constitutional Branches', items: [
+    { i: '▤', l: 'Legislature', s: 'Chambers · bills · committees', href: '/gov/legislature', key: 'legislature' },
+    { i: '⚖', l: 'Judiciary', s: 'Courts · docket · review', href: '/gov/judiciary', key: 'judiciary' },
+  ]},
   { g: 'Strategic Domains', items: [
     { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury', key: 'trs' },
     { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov/security', key: 'sec' },

@@ -10,6 +10,7 @@ import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { deployableInstitutions, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemHealth } from '@/lib/institution/operational-catalog';
+import { BRANCHES, branchReadiness, separationIntegrity } from '@/lib/gov/branches';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] = [
@@ -270,6 +271,34 @@ export default function SovereignCommandCenter() {
                 </Link>
               ))}
             </div>
+          </Section>
+
+          <Section label="Constitutional Posture · Separation of Powers">
+            {(() => {
+              const t = now / 4000;
+              const sep = separationIntegrity(t);
+              const cells = BRANCHES.map(b => {
+                const r = branchReadiness(b.key, t);
+                return { l: b.name, v: `${r.total}% · ${r.posture}`, c: r.total >= 85 ? 'rgb(var(--c-ok))' : r.total >= 65 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))', href: b.key === 'legislature' ? '/gov/legislature' : b.key === 'judiciary' ? '/gov/judiciary' : b.key === 'oversight' ? '/audit' : '/gov' };
+              });
+              return (
+                <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-5">
+                  {cells.map(s => (
+                    <Link key={s.l} href={s.href} className="focus-ring flex items-center justify-between gap-2 bg-surface px-3 py-1.5 no-underline transition-colors hover:bg-surface-2/50">
+                      <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+                      <span className="font-mono font-semibold tabular-nums" style={{ color: s.c }}>{s.v}</span>
+                    </Link>
+                  ))}
+                  <div className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+                    <span className="uppercase tracking-[0.14em] text-ink-muted">Separation</span>
+                    <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: sep.intact ? 'rgb(var(--c-ok))' : 'rgb(var(--c-alert))' }}>
+                      <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: sep.intact ? 'rgb(var(--c-ok))' : 'rgb(var(--c-alert))' }} />
+                      {sep.intact ? 'INTACT' : 'STRAINED'}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
           </Section>
 
           <Section label="Activated Institutions · Deployment Directory">
