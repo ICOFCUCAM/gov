@@ -641,6 +641,27 @@ export function NationalMap({
         ))}
       </div>
 
+      {/* regional pressure ladder — live per-province telemetry */}
+      <div className="absolute right-2 top-12 z-20 w-[148px] rounded-[3px] border border-line bg-surface/85 p-2 backdrop-blur">
+        <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Regional pressure</div>
+        <div className="space-y-1">
+          {provRisk.map(({ p, risk }) => {
+            const tn = toneFor(risk);
+            return (
+              <div key={p.n}>
+                <div className="flex items-center justify-between text-[9px]">
+                  <span className="truncate text-ink-soft">{p.cap ? '★ ' : ''}{p.n.replace(' Region', '').replace(' Province', '').replace(' District', '')}</span>
+                  <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{risk}</span>
+                </div>
+                <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-surface-2">
+                  <div className="h-full rounded-full transition-all duration-1000 ease-sov" style={{ width: `${risk}%`, backgroundColor: TONE[tn] }} />
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="absolute bottom-12 left-2 flex flex-wrap gap-3 rounded-[3px] border border-line bg-surface/85 px-2.5 py-1 text-[10px] text-ink-muted backdrop-blur">
         {(['ok', 'neutral', 'warn', 'alert'] as const).map(t => (<span key={t} className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: TONE[t] }} />{t === 'ok' ? 'Stable' : t === 'neutral' ? 'Watch' : t === 'warn' ? 'Elevated' : 'Critical'}</span>))}
         <span className="flex items-center gap-2 border-l border-line pl-2">
