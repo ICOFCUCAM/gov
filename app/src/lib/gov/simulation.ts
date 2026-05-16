@@ -208,3 +208,21 @@ export function mitigationPlaybook(key: ScenarioKey, t: number): MitigationPlayb
   const effectiveness = gross ? Math.round((removed / gross) * 100) : 0;
   return { scenario: sc, phases, grossRisk: gross, residualRisk, effectiveness };
 }
+
+export interface PrioritisedThreat extends ScenarioRisk {
+  residualRisk: number;
+  effectiveness: number;
+  /** residual risk weighted by how poorly the doctrine contains it */
+  priority: number;
+}
+
+// Decision board: ranks scenarios not by raw severity but by what survives
+// the best available response — residual risk amplified when doctrine is
+// weak. This is what the cabinet should actually plan against. Pure.
+export function prioritisedThreats(t: number): PrioritisedThreat[] {
+  return scenarioSweep(t).map(r => {
+    const pb = mitigationPlaybook(r.key, t);
+    const priority = Math.round(pb.residualRisk * (1 + (100 - pb.effectiveness) / 100));
+    return { ...r, residualRisk: pb.residualRisk, effectiveness: pb.effectiveness, priority };
+  }).sort((a, b) => b.priority - a.priority);
+}

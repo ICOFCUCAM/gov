@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { simulate, scenarioFor, scenarioSweep, mitigationPlaybook, SCENARIOS } from './simulation';
+import { simulate, scenarioFor, scenarioSweep, mitigationPlaybook, prioritisedThreats, SCENARIOS } from './simulation';
 
 describe('sovereign state simulation engine', () => {
   it('baseline applies no shock', () => {
@@ -64,6 +64,21 @@ describe('sovereign state simulation engine', () => {
     const a = mitigationPlaybook('energy-outage', 70);
     expect(a).toEqual(mitigationPlaybook('energy-outage', 70));
     expect(a.grossRisk).toBeGreaterThan(0);
+  });
+
+  it('prioritisedThreats ranks by residual-weighted priority, deterministic & bounded', () => {
+    const p = prioritisedThreats(50);
+    expect(p.length).toBe(SCENARIOS.length - 1);
+    for (let i = 1; i < p.length; i++) {
+      expect(p[i - 1]!.priority).toBeGreaterThanOrEqual(p[i]!.priority);
+    }
+    for (const r of p) {
+      expect(r.priority).toBeGreaterThanOrEqual(0);
+      expect(r.residualRisk).toBeLessThanOrEqual(r.composite);
+      expect(r.effectiveness).toBeGreaterThanOrEqual(0);
+      expect(r.effectiveness).toBeLessThanOrEqual(100);
+    }
+    expect(prioritisedThreats(50)).toEqual(p);
   });
 
   it('scenarioFor falls back to baseline', () => {

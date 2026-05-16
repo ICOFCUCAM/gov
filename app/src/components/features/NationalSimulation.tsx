@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel, Spark, waveSeries } from '@/components/features/SituationRoom';
 import { identityFor } from '@/lib/archetype-profiles';
-import { SCENARIOS, simulate, scenarioSweep, mitigationPlaybook, type ScenarioKey } from '@/lib/gov/simulation';
+import { SCENARIOS, simulate, scenarioSweep, mitigationPlaybook, prioritisedThreats, type ScenarioKey } from '@/lib/gov/simulation';
 import type { ArchetypeKey } from '@/lib/api/types';
 
 export function NationalSimulation({ initial = 'baseline' }: { initial?: ScenarioKey }) {
@@ -20,6 +20,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
   const active = key !== 'baseline';
   const sweep = scenarioSweep(ts);
   const pb = mitigationPlaybook(key, ts);
+  const prio = prioritisedThreats(ts);
 
   const tele = [
     { l: 'Scenario', v: s.scenario.label.split(' (')[0], t: active ? 'warn' : 'ok' },
@@ -93,6 +94,28 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
         <div className="mt-1 flex gap-3 px-2 text-[8px] uppercase tracking-wider text-ink-muted">
           <span className="ml-auto w-10 text-right">Δready</span><span className="w-10 text-right">unrest</span><span className="w-10 text-right">band</span>
         </div>
+      </Panel>
+
+      <Panel title="Cabinet decision board" meta="ranked by residual risk after best response — what to plan against" bodyClass="!p-1.5">
+        <div className="space-y-1">
+          {prio.map((r, i) => {
+            const tn = r.priority >= 55 ? 'alert' : r.priority >= 35 ? 'warn' : 'ok';
+            const on = r.key === key;
+            return (
+              <button key={r.key} onClick={() => setKey(r.key)}
+                className="focus-ring flex w-full items-center gap-2 rounded-[3px] border px-2 py-1.5 text-left text-[11px] transition-colors"
+                style={{ borderColor: on ? TONE.link : 'rgb(var(--c-line-soft))', backgroundColor: on ? `color-mix(in srgb, ${TONE.link} 10%, transparent)` : 'color-mix(in srgb, rgb(var(--c-surface-2)) 40%, transparent)' }}>
+                <span className="w-4 shrink-0 text-center font-mono text-[9px] tabular-nums text-ink-muted">{i + 1}</span>
+                <span className="min-w-0 flex-1 truncate text-ink">{r.label}</span>
+                <span className="hidden shrink-0 text-[8.5px] text-ink-muted sm:block sm:w-20">gross {r.composite}</span>
+                <span className="w-16 shrink-0 text-right font-mono text-[10px] tabular-nums text-ink-muted">resp {r.effectiveness}%</span>
+                <span className="w-16 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: r.residualRisk >= 45 ? TONE.alert : TONE.warn }}>resid {r.residualRisk}</span>
+                <span className="w-14 shrink-0 text-right font-mono text-[11px] font-bold tabular-nums" style={{ color: TONE[tn] }}>{r.priority}</span>
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-1 px-1 text-[9px] text-ink-muted">Priority = residual risk amplified where response doctrine is weak. A contained scenario with strong doctrine ranks below a milder one we cannot respond to.</p>
       </Panel>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
