@@ -18,6 +18,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '◈', l: 'National Shell', s: 'Whole-of-government orchestration', href: '/gov/shell', key: 'shell' },
     { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination', key: 'coord' },
     { i: '⬡', l: 'Interoperability Fabric', s: 'Whole-of-government mesh', href: '/gov/fabric', key: 'fabric' },
+    { i: '◔', l: 'National Simulation', s: 'Scenario · cascade what-if', href: '/gov/simulation', key: 'sim' },
     { i: '◉', l: 'Regional Command', s: 'Provincial posture · readiness', href: '/gov/regional', key: 'reg' },
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution state', href: '/ops', key: 'ops' },
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity', href: '/audit', key: 'aud' },
