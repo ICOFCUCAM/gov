@@ -482,6 +482,22 @@ export function NationalMap({
             </g>
           ))}
 
+          {/* sector influence zones — dominant archetype illumination */}
+          {provRisk.map(({ p }, i) => {
+            const arch = (['AGRICULTURE', 'ENERGY', 'INTERIOR', 'FINANCE', 'TRANSPORT', 'TRADE'] as const)[i % 6]!;
+            const col = identityFor(arch).accent;
+            return (
+              <radialGradient key={`inf${i}`} id={`infz${i}`} cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor={col} stopOpacity="0.10" />
+                <stop offset="70%" stopColor={col} stopOpacity="0.04" />
+                <stop offset="100%" stopColor={col} stopOpacity="0" />
+              </radialGradient>
+            );
+          })}
+          {provRisk.map(({ p }, i) => (
+            <circle key={`infc${i}`} cx={p.cx} cy={p.cy} r={p.r * 0.92} fill={`url(#infz${i})`} />
+          ))}
+
           {/* regional readiness intensity rings */}
           {provRisk.map(({ p, risk }) => {
             const ready = Math.max(1, 100 - risk);
