@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import { TONE, ACCENT, PALETTE, seed, Spark, waveSeries } from '@/components/features/SituationRoom';
+import { WorldMap } from '@/components/ui/WorldMap';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination } from '@/lib/api/types';
@@ -38,13 +39,20 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
   ]},
 ];
 
-function Mini({ kind, tone }: { kind: 'map' | 'graph' | 'net' | 'ring' | 'shield'; tone: string }) {
+function Mini({ kind, tone, focus }: { kind: 'map' | 'graph' | 'net' | 'ring' | 'shield'; tone: string; focus?: string }) {
   if (kind === 'graph') return <Spark pts={Array.from({ length: 18 }).map((_, i) => 30 + seed(`mn:${kind}:${i}`) * 60)} tone={tone} />;
   if (kind === 'map') return (
-    <svg viewBox="0 0 120 44" className="h-11 w-full">
-      <polygon points="10,30 30,10 60,8 92,14 110,26 96,40 60,42 26,40" fill={TONE[tone]} fillOpacity="0.12" stroke={TONE[tone]} strokeOpacity="0.4" strokeWidth="0.8" />
-      {[[34, 22], [58, 18], [82, 26], [50, 32]].map(([x, y], i) => <circle key={i} cx={x} cy={y} r="2.4" fill={TONE[i === 0 ? 'alert' : 'ok']} />)}
-    </svg>
+    <div className="relative h-11 w-full overflow-hidden rounded-[3px] border border-line-soft"
+      style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 75%)' }}>
+      <WorldMap focus={focus} />
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        {[[34, 40], [58, 30], [78, 52], [50, 64]].map(([x, y], i) => (
+          <span key={i} className="absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
+            style={{ left: `${x}%`, top: `${y}%`, backgroundColor: TONE[i === 0 ? 'alert' : 'ok'], boxShadow: `0 0 5px ${TONE[i === 0 ? 'alert' : 'ok']}` }} />
+        ))}
+        <span className="absolute right-1 top-1 rounded-[2px] px-1 text-[7px] font-bold tracking-widest" style={{ color: ACCENT }}>LIVE</span>
+      </div>
+    </div>
   );
   if (kind === 'net') return (
     <svg viewBox="0 0 120 44" className="h-11 w-full">
@@ -253,7 +261,7 @@ export default function SovereignCommandCenter() {
                     {c.badge ? <span className="rounded px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[c.tone]} 18%, transparent)`, color: TONE[c.tone] }}>{c.badge}</span> : null}
                   </div>
                   <span className="mt-0.5 text-[10px] leading-snug text-ink-muted">{c.s}</span>
-                  <div className="my-2 flex-1"><Mini kind={c.mini} tone={c.tone} /></div>
+                  <div className="my-2 flex-1"><Mini kind={c.mini} tone={c.tone} focus={sov?.stateName} /></div>
                   <span className="flex items-center justify-between border-t border-line pt-2 text-[11px]" style={{ color: ACCENT }}>{c.cta}<span className="transition-transform group-hover:translate-x-0.5">→</span></span>
                 </Link>
               ))}
