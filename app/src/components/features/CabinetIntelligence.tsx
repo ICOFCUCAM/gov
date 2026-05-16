@@ -14,6 +14,7 @@ import { buildCascade } from '@/lib/institution/cascade';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
 import { scenarioSweep, mitigationPlaybook, prioritisedThreats } from '@/lib/gov/simulation';
+import { nationalResilience } from '@/lib/gov/national-resilience';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
 } from '@/lib/api/types';
@@ -218,6 +219,7 @@ export function CabinetIntelligence() {
   const topThreats = sweep.slice(0, 4).map(r => ({ ...r, pb: mitigationPlaybook(r.key, ts) }));
   const prio = prioritisedThreats(ts);
   const leadPrio = prio[0];
+  const resilience = nationalResilience(mins, ts);
 
   const memo = [
     {
@@ -317,6 +319,13 @@ export function CabinetIntelligence() {
             <span style={{ color: ACCENT }}>⌕</span> Search across government
             <kbd className="ml-1 rounded border border-line px-1 text-[9px] text-ink-muted">⌘K</kbd>
           </button>
+          <Link href="/gov/shell" title={`National Resilience · ${resilience.band}${resilience.weakest ? ` · weakest ${resilience.weakest.label}` : ''}`}
+            className="focus-ring hidden items-center gap-1.5 rounded-sm border px-2 py-1 text-xs no-underline transition-colors sm:flex"
+            style={{ borderColor: TONE[resilience.tone], color: TONE[resilience.tone], backgroundColor: `color-mix(in srgb, ${TONE[resilience.tone]} 10%, transparent)` }}>
+            <span className="text-[9px] font-bold uppercase tracking-[0.14em]">Resilience</span>
+            <span className="font-mono tabular-nums">{resilience.index}</span>
+            <span className="text-[9px] font-bold uppercase tracking-[0.14em]">{resilience.band}</span>
+          </Link>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
           <span className="border-l border-line pl-3">
             <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="Leader of the Nation" accent={war ? RED : ACCENT} />
