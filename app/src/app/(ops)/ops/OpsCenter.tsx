@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api/client';
 import { TONE, ACCENT, seed, Spark, Donut, TerritoryHeat, waveSeries } from '@/components/features/SituationRoom';
+import { nationalRegions } from '@/lib/gov/regions';
 import type { Incident, OpsOverview } from '@/lib/api/types';
 
 const ME = 'W. Chebet (ops)';
@@ -195,25 +196,18 @@ export function OpsCenter() {
             <span>Saturated</span>
           </div>
         </P>
-        <P title="Corridor & region status" meta="live">
+        <P title="Regional operational status" meta="shared regional command model">
           <div className="space-y-1.5">
-            {[
-              { l: 'Northern logistics corridor', k: 'nlc', lo: 35, hi: 78 },
-              { l: 'Capital service mesh', k: 'csm', lo: 55, hi: 92 },
-              { l: 'Coastal port throughput', k: 'cpt', lo: 40, hi: 88 },
-              { l: 'Eastern relief routes', k: 'err', lo: 30, hi: 70 },
-              { l: 'Cross-border sync', k: 'cbs', lo: 60, hi: 96 },
-            ].map(r => {
-              const v = Math.round(r.lo + seed(`cr:${r.k}:${Math.floor(now / 12000)}`) * (r.hi - r.lo));
-              const t = v >= 85 ? 'ok' : v >= 60 ? 'warn' : 'alert';
+            {nationalRegions(now / 4000).map(r => {
+              const t = r.posture === 'critical' ? 'alert' : r.posture === 'elevated' ? 'warn' : r.posture === 'watch' ? 'neutral' : 'ok';
               return (
-                <div key={r.k}>
+                <div key={r.name}>
                   <div className="flex items-center justify-between text-[10px]">
-                    <span className="truncate text-ink-soft">{r.l}</span>
-                    <span className="font-mono tabular-nums" style={{ color: TONE[t] }}>{v}%</span>
+                    <span className="truncate text-ink-soft">{r.capital ? '★ ' : ''}{r.name}</span>
+                    <span className="font-mono tabular-nums" style={{ color: TONE[t] }}>{r.readiness}%{r.incidents ? ` · ${r.incidents} inc` : ''}</span>
                   </div>
                   <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-surface-2">
-                    <div className="h-full rounded-full transition-all duration-1000 ease-sov" style={{ width: `${v}%`, backgroundColor: TONE[t] }} />
+                    <div className="h-full rounded-full transition-all duration-1000 ease-sov" style={{ width: `${r.readiness}%`, backgroundColor: TONE[t] }} />
                   </div>
                 </div>
               );
