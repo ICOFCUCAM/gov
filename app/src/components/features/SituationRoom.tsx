@@ -514,6 +514,16 @@ export function NationalMap({
               stroke="rgb(var(--c-line))" strokeWidth="0.5" strokeOpacity="0.22" />;
           }) : null}
 
+          {/* environment overlay — drifting weather front */}
+          <g style={{ pointerEvents: 'none' }}>
+            <ellipse cx="0" cy="240" rx="180" ry="150" fill="rgb(var(--c-line))" fillOpacity="0.05" stroke="rgb(var(--c-line))" strokeOpacity="0.12" strokeWidth="1">
+              <animate attributeName="cx" values="-120;1120" dur="48s" repeatCount="indefinite" />
+            </ellipse>
+            <ellipse cx="0" cy="240" rx="100" ry="80" fill="none" stroke={TONE.link} strokeOpacity="0.14" strokeWidth="1" strokeDasharray="3 5">
+              <animate attributeName="cx" values="-120;1120" dur="48s" repeatCount="indefinite" />
+            </ellipse>
+          </g>
+
           {/* national airspace overlay — high-altitude corridors */}
           {[
             ['M60,150 Q500,40 950,200', '7s'],
