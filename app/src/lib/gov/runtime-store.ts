@@ -12,6 +12,7 @@ import {
   seedWorkItems, applyAction, workflowFor,
   type WorkItem, type WorkKind, type ActionKey,
 } from '@/lib/gov/runtime-workflow';
+import { appendAudit } from '@/services/audit-ledger';
 
 export interface LedgerEntry {
   at: number;
@@ -63,6 +64,7 @@ export function actOnItem(scope: string, itemId: string, action: ActionKey, by: 
   const last = after.history.at(-1)!;
   ledger.unshift({ at: last.at, scope, itemId, kind: after.kind, from: last.from, to: last.to, action: last.action, by: last.by });
   if (ledger.length > 200) ledger.length = 200;
+  appendAudit(scope, by, action, itemId, `${last.from} → ${last.to}`);
   emit();
 }
 
@@ -76,6 +78,7 @@ export function annotateItem(scope: string, itemId: string, note: string, by: st
   const next = items.slice();
   next[idx] = { ...it, meta: { ...it.meta, notes } };
   scopes.set(scope, next);
+  appendAudit(scope, by, 'annotate', itemId, note.trim());
   emit();
 }
 
@@ -110,6 +113,7 @@ export function injectItem(scope: string, kind: WorkKind, title: string, by: str
   scopes.set(scope, [item, ...items]);
   ledger.unshift({ at: Date.now(), scope, itemId: item.id, kind, from: '—', to: wf.stages[0]!, action: 'assign', by });
   if (ledger.length > 200) ledger.length = 200;
+  appendAudit(scope, by, 'inject', item.id, title);
   emit();
 }
 
