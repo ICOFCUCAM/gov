@@ -74,6 +74,14 @@ export function CommandShell({
   const posture = coord?.posture;
   const t = nat?.totals;
   const incidents = nat?.crossMinistryIncidents ?? [];
+  const crit = incidents.filter(i => i.severity === 'sev1' || i.severity === 'sev2').length;
+  const level = posture?.level ?? 'ok';
+  const emergency = level === 'alert' || crit >= 4;
+  const accent = emergency ? TONE.alert : ACCENT;
+  const railCount: Record<string, number> = {
+    sr: incidents.length, coord: incidents.length, ops: t?.queuesBreaching ?? 0,
+    cab: crit, sec: Math.round((incidents.length || 0) * 0.6), aud: t?.auditIntact === false ? 1 : 0,
+  };
 
   const tele = [
     { l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true },
@@ -86,11 +94,21 @@ export function CommandShell({
   const cmd: CommandItem[] = RAIL.flatMap(g => g.items.map(it => ({ id: it.href + it.l, group: g.g, label: it.l, hint: it.s, href: it.href })));
 
   return (
-    <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]" style={PALETTE}>
-      <CommandPalette items={cmd} accent={ACCENT} />
+    <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]" style={{ ...PALETTE, ...(emergency ? { ['--accent' as string]: TONE.alert } : {}) }}>
+      <CommandPalette items={cmd} accent={accent} />
+      {emergency ? (
+        <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-1 text-[10px]"
+          style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, borderBottom: `1px solid ${TONE.alert}` }}>
+          <span className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]" style={{ color: TONE.alert }}>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
+            Elevated national posture · {crit} critical · cabinet coordination advised
+          </span>
+          <Link href="/gov/coordination" className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest" style={{ borderColor: TONE.alert, color: TONE.alert }}>Coordinate →</Link>
+        </div>
+      ) : null}
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
         <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
-          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-[3px] text-sm font-bold text-white ring-1 ring-white/15" style={{ backgroundColor: ACCENT }}>
+          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-[3px] text-sm font-bold text-white ring-1 ring-white/15" style={{ backgroundColor: accent }}>
             {identity ? identity.seal : 'CO'}
           </span>
           <span className="leading-tight">
@@ -112,10 +130,19 @@ export function CommandShell({
           ))}
         </div>
         <div className="ml-auto flex items-center gap-3">
+          <span className="hidden items-center gap-1.5 rounded-[3px] border px-2 py-1 text-[10px] sm:flex"
+            style={{ borderColor: emergency ? TONE.alert : 'rgb(var(--c-line))', color: emergency ? TONE.alert : 'rgb(var(--c-ink-soft))' }}>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[level] }} />
+            {posture?.label ?? 'STABLE'}
+          </span>
+          <span className="relative grid h-7 w-7 place-items-center rounded-[3px] border border-line text-[12px] text-ink-soft" title={`${incidents.length} active incidents`}>
+            ⌁
+            {incidents.length ? <span className="absolute -right-1 -top-1 grid h-3.5 min-w-[14px] place-items-center rounded-full px-0.5 text-[8px] font-bold text-white" style={{ backgroundColor: TONE.alert }}>{incidents.length}</span> : null}
+          </span>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
-          <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-[10px] text-ink-soft sm:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Secure Comms</span>
+          <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-[10px] text-ink-soft sm:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Encrypted</span>
           <span className="border-l border-line pl-3">
-            <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="National Executive" accent={ACCENT} />
+            <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="National Executive" accent={accent} />
           </span>
         </div>
       </header>
@@ -128,29 +155,45 @@ export function CommandShell({
                 <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
                 {grp.items.map(it => {
                   const on = it.key === active;
+                  const n = railCount[it.key] ?? 0;
                   return (
                     <Link key={it.l} href={it.href}
                       className={`focus-ring flex items-center gap-2 border-l-2 px-3 py-1 no-underline transition-colors duration-150 ${
                         on ? 'bg-surface-2 font-medium' : 'border-transparent text-ink-muted hover:bg-surface-2/50 hover:text-ink'
                       }`}
-                      style={on ? { borderLeftColor: ACCENT } : undefined}>
-                      <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[10px] ring-1 ring-line"
-                        style={on ? { color: ACCENT } : { color: 'rgb(var(--c-ink-soft))' }}>{it.i}</span>
+                      style={on ? { borderLeftColor: accent } : undefined}>
+                      <span aria-hidden className="relative grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[10px] ring-1 ring-line"
+                        style={on ? { color: accent } : { color: 'rgb(var(--c-ink-soft))' }}>
+                        {it.i}
+                        {n > 0 ? <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: n >= 4 ? TONE.alert : TONE.warn }} /> : null}
+                      </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[11.5px]" style={on ? { color: ACCENT } : undefined}>{it.l}</span>
+                        <span className="flex items-center gap-1 truncate text-[11.5px]" style={on ? { color: accent } : undefined}>
+                          {it.l}
+                          {on ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: accent }} /> : null}
+                        </span>
                         <span className="block truncate text-[8.5px] text-ink-muted">{it.s}</span>
                       </span>
+                      {n > 0 ? <span className="shrink-0 rounded-[3px] px-1 text-[8px] font-bold tabular-nums" style={{ backgroundColor: `color-mix(in srgb, ${n >= 4 ? TONE.alert : TONE.warn} 20%, transparent)`, color: n >= 4 ? TONE.alert : TONE.warn }}>{n}</span> : null}
                     </Link>
                   );
                 })}
               </div>
             ))}
           </div>
-          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 border-t border-line px-3 py-2 text-[9px]">
-            <div className="text-ink-muted">System</div><div className="text-right" style={{ color: TONE.ok }}>Operational</div>
-            <div className="text-ink-muted">Environment</div><div className="truncate text-right text-ink-soft">{nat?.environment ?? 'Production'}</div>
-            <div className="text-ink-muted">Version</div><div className="text-right text-ink-soft">v2.1.0</div>
-            <div className="text-ink-muted">Channel</div><div className="text-right" style={{ color: TONE.ok }}>Encrypted</div>
+          <div className="border-t border-line px-3 py-2">
+            <div className="mb-1.5 flex items-end gap-0.5" aria-hidden title="Operational pulse">
+              {Array.from({ length: 24 }).map((_, i) => (
+                <span key={i} className="flex-1 animate-breathe rounded-sm"
+                  style={{ height: `${4 + ((Math.sin(i * 1.7 + Math.floor(now / 1000)) + 1) / 2) * 12}px`, backgroundColor: TONE[level], animationDelay: `${i * 70}ms`, opacity: 0.55 }} />
+              ))}
+            </div>
+            <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
+              <div className="text-ink-muted">Posture</div><div className="truncate text-right font-mono" style={{ color: TONE[level] }}>{posture?.label ?? 'STABLE'}</div>
+              <div className="text-ink-muted">Incidents</div><div className="text-right font-mono" style={{ color: incidents.length ? TONE.alert : TONE.ok }}>{incidents.length}</div>
+              <div className="text-ink-muted">Environment</div><div className="truncate text-right text-ink-soft">{nat?.environment ?? 'Production'}</div>
+              <div className="text-ink-muted">Channel</div><div className="text-right" style={{ color: TONE.ok }}>Encrypted</div>
+            </div>
           </div>
         </nav>
         <main className="min-w-0 flex-1 overflow-y-auto p-3"
