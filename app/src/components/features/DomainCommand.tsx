@@ -3,6 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel, Spark, seed, toneFor, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
+import { serviceReadings } from '@/lib/gov/ministry-services';
 
 export type DomainKey = 'treasury' | 'security' | 'geopolitical';
 
@@ -393,6 +394,23 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         </Panel>
       </div>
+
+      {(() => {
+        const arch = domain === 'treasury' ? 'FINANCE' : domain === 'security' ? 'INTERIOR' : 'GENERIC';
+        return (
+          <Panel title="Service operations" meta={`${arch.toLowerCase()} signature · live`} bodyClass="!p-1.5">
+            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-6">
+              {serviceReadings(domain, arch, ts).map(r => (
+                <div key={r.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                  <div className="truncate text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{r.l}</div>
+                  <div className="font-mono text-[13px] leading-none tabular-nums" style={{ color: TONE[r.tone] }}>{r.value}{r.unit}</div>
+                  <div className="-mb-0.5 mt-0.5 h-3 overflow-hidden opacity-70"><Spark pts={waveSeries(`${domain}:svc:${r.l}`, ts, 12, 35, 92)} tone={r.tone} /></div>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        );
+      })()}
 
       {/* Lower micro-grid ecosystem — Bloomberg-density operational band */}
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
