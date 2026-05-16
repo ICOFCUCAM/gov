@@ -7,6 +7,7 @@ import { identityFor } from '@/lib/archetype-profiles';
 import { projectRegions } from '@/lib/gov/regions';
 import { SCENARIOS, simulate, scenarioSweep, mitigationPlaybook, prioritisedThreats, type ScenarioKey } from '@/lib/gov/simulation';
 import { resilienceUnderShock } from '@/lib/gov/national-resilience';
+import { federationPosture } from '@/services/federation-aggregate';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { api } from '@/lib/api/client';
 import type { ArchetypeKey, Ministry } from '@/lib/api/types';
@@ -29,6 +30,11 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
   const prio = prioritisedThreats(ts);
   const regionProj = projectRegions(key, ts).sort((a, b) => a.readinessDelta - b.readinessDelta);
   const stress = resilienceUnderShock(mins, ts, key);
+  // RULE 2/3: the simulation is layered on the REAL institutional baseline —
+  // the scenario shock degrades from where institutions actually operate.
+  const fp = federationPosture(mins, ts);
+  const baseline = fp.institutions.length ? fp.meanOperational : 100;
+  const projectedOperational = Math.max(0, Math.round(baseline - (s.nationalReadinessDelta < 0 ? -s.nationalReadinessDelta : 0) * (baseline / 100)));
 
   const tele = [
     { l: 'Scenario', v: s.scenario.label.split(' (')[0], t: active ? 'warn' : 'ok' },
@@ -135,6 +141,23 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
           </div>
         ))}
       </div>
+
+      <Panel title="Institutional baseline" meta={`RULE 2/3 · simulation layered on ${fp.institutions.length} institutions' real operating state`} bodyClass="!p-2">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+          <div className="flex items-baseline gap-2">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Institutional baseline</span>
+            <span className="font-mono text-[22px] leading-none tabular-nums text-ink">{baseline}</span>
+          </div>
+          <span className="text-ink-muted">→</span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Projected under {s.scenario.label}</span>
+            <span className="font-mono text-[22px] leading-none tabular-nums" style={{ color: projectedOperational >= 70 ? TONE.ok : projectedOperational >= 50 ? TONE.warn : TONE.alert }}>{projectedOperational}</span>
+          </div>
+          <span className="text-[10px] text-ink-muted">
+            {fp.institutions.length ? 'The shock degrades from where institutions actually operate — not a synthetic 100.' : 'No active institutions: baseline undefined until institutions operate.'}
+          </span>
+        </div>
+      </Panel>
 
       {active ? (
         <Panel title="National resilience under this scenario" meta="composite headroom consumed" bodyClass="!p-2">
