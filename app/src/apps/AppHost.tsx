@@ -11,6 +11,7 @@ import { BranchWorkspace } from '@/components/features/BranchWorkspace';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { policeOps, emergencyOps, immigrationOps, customsOps } from '@/lib/gov/agency-systems';
+import { aiAdvisory } from '@/shared/ai/advisory';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -164,10 +165,28 @@ function AgencyApp({ appId, label, archetype, navKey, now }: { appId: string; la
     ];
   }
 
+  const adv = aiAdvisory(label, stats.map(s => ({
+    label: s.l, value: s.t === 'alert' ? 80 : s.t === 'warn' ? 55 : 20, adverse: s.t === 'alert' || s.t === 'warn',
+  })));
+  const advTone = adv.severity === 'critical' ? 'alert' : adv.severity === 'priority' ? 'alert' : adv.severity === 'advisory' ? 'warn' : 'ok';
+
   return (
     <div className="space-y-2">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {stats.map(s => <Stat key={s.l} {...s} />)}
+      </div>
+      <div className="rounded-[3px] border border-line bg-surface p-2.5" style={{ borderLeft: `3px solid rgb(var(--c-${advTone}))` }}>
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${advTone}))` }}>AI advisory · {adv.severity}</span>
+          <span className="font-mono text-[9px] tabular-nums text-ink-muted">confidence {adv.confidence}%</span>
+        </div>
+        <div className="mt-0.5 text-[11px] text-ink">{adv.headline}</div>
+        <div className="text-[9px] text-ink-muted">{adv.rationale}</div>
+        <ul className="mt-1 space-y-0.5">
+          {adv.recommended.map((r, i) => (
+            <li key={i} className="flex gap-1.5 text-[10px] text-ink-soft"><span style={{ color: `rgb(var(--c-${advTone}))` }}>▸</span>{r}</li>
+          ))}
+        </ul>
       </div>
       <RuntimeQueue scope={`${appId}:${navKey}`} kind={kind} title={`${label} · ${navKey} runtime — executable workflow`} by="Duty Officer" />
     </div>
