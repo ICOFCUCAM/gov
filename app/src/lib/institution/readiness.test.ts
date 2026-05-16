@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { scoreInstitution, deployableInstitutions, READINESS_THRESHOLD } from './readiness';
+import { specFor } from './archetype-spec';
 import type { Ministry } from '@/lib/api/types';
 
 const base = (over: Partial<Ministry>): Ministry => ({
@@ -49,6 +50,39 @@ describe('scoreInstitution', () => {
       expect(d.score).toBeGreaterThanOrEqual(0);
       expect(d.score).toBeLessThanOrEqual(100);
     }
+  });
+});
+
+describe('archetype spec', () => {
+  it('declares stricter governance for HEALTH than GENERIC', () => {
+    expect(specFor('HEALTH').requiredDepartments).toBeGreaterThan(specFor('GENERIC').requiredDepartments);
+    expect(specFor('HEALTH').requiredModules).toBeGreaterThan(specFor('GENERIC').requiredModules);
+  });
+  it('every archetype ships the standard surfaces + capabilities', () => {
+    const s = specFor('FINANCE');
+    expect(s.surfaces).toContain('command-room');
+    expect(s.surfaces).toContain('crisis-wall');
+    expect(s.capabilities).toContain('audit-chain');
+  });
+});
+
+describe('readiness scores against the archetype spec', () => {
+  it('HEALTH at full required structure scores governance/operational 100', () => {
+    const spec = specFor('HEALTH');
+    const r = scoreInstitution(base({
+      status: 'active',
+      departments: Array.from({ length: spec.requiredDepartments }).map((_, i) => ({ id: `d${i}`, name: 'x' })),
+      modules: Array.from({ length: spec.requiredModules }).map((_, i) => ({ moduleKey: `m${i}`, enabled: true })),
+    }));
+    const gov = r.dimensions.find(d => d.key === 'governance')!;
+    const ops = r.dimensions.find(d => d.key === 'operational')!;
+    expect(gov.score).toBe(100);
+    expect(ops.score).toBe(100);
+  });
+  it('partial structure scores proportionally below 100', () => {
+    const r = scoreInstitution(base({ status: 'active', departments: [{ id: 'd', name: 'x' }], modules: [{ moduleKey: 'm', enabled: true }] }));
+    const gov = r.dimensions.find(d => d.key === 'governance')!;
+    expect(gov.score).toBeLessThan(100);
   });
 });
 

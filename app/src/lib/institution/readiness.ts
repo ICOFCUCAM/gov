@@ -5,6 +5,7 @@
 
 import type { Ministry } from '@/lib/api/types';
 import { ARCHETYPE_PROFILES } from '@/lib/archetype-profiles';
+import { specFor } from '@/lib/institution/archetype-spec';
 
 export type Lifecycle =
   | 'draft' | 'composed' | 'validated' | 'operational'
@@ -34,6 +35,7 @@ const CRITICAL = ['governance', 'operational', 'deployment'];
 
 export function scoreInstitution(m: Ministry): InstitutionReadiness {
   const profile = ARCHETYPE_PROFILES[m.archetype];
+  const spec = specFor(m.archetype);
   const depts = m.departments?.length ?? 0;
   const mods = m.modules?.filter(x => x.enabled).length ?? 0;
   const totalMods = m.modules?.length ?? 0;
@@ -42,9 +44,11 @@ export function scoreInstitution(m: Ministry): InstitutionReadiness {
 
   const dims: ReadinessDimension[] = [
     { key: 'governance', label: 'Governance structure',
-      score: clamp((depts / 3) * 100), detail: `${depts} departments` },
+      score: clamp((depts / spec.requiredDepartments) * 100),
+      detail: `${depts}/${spec.requiredDepartments} departments` },
     { key: 'operational', label: 'Operational modules',
-      score: clamp((mods / 6) * 100), detail: `${mods}/${totalMods || 6} enabled` },
+      score: clamp((mods / spec.requiredModules) * 100),
+      detail: `${mods}/${spec.requiredModules} required enabled` },
     { key: 'telemetry', label: 'Telemetry & KPIs',
       score: known ? clamp((profile.kpis.length / 4) * 100) : 55,
       detail: known ? `${profile.kpis.length} KPI contracts` : 'generic schema' },
