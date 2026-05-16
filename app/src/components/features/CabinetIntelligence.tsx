@@ -522,9 +522,14 @@ export function CabinetIntelligence() {
                     if (!A || !B) return null;
                     const t = Math.max(A.p, B.p);
                     const tn = t >= 67 ? 'alert' : t >= 40 ? 'warn' : 'ok';
-                    return <line key={i} x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke={TONE[tn]} strokeWidth="0.7"
-                      strokeOpacity={0.3 + (t / 100) * 0.5} strokeDasharray={t >= 67 ? '0' : '2 3'}
-                      className={t >= 67 ? 'motion-safe:animate-[shimmer_2s_linear_infinite]' : ''} vectorEffect="non-scaling-stroke" />;
+                    return (
+                      <g key={i}>
+                        <line x1={A.x} y1={A.y} x2={B.x} y2={B.y} stroke={TONE[tn]} strokeWidth={0.6 + (t / 100) * 1.2}
+                          strokeOpacity={0.25 + (t / 100) * 0.5} strokeDasharray="2 3"
+                          className="motion-safe:animate-dash-flow" style={{ animationDuration: t >= 67 ? '0.6s' : '1.4s' }} vectorEffect="non-scaling-stroke" />
+                        <text x={(A.x + B.x) / 2} y={(A.y + B.y) / 2} textAnchor="middle" style={{ fontSize: 3.4, fill: TONE[tn] }}>{t}</text>
+                      </g>
+                    );
                   })}
                 </svg>
                 {dep.map(d => {
@@ -533,6 +538,7 @@ export function CabinetIntelligence() {
                     <span key={d.k} className="absolute -translate-x-1/2 -translate-y-1/2 text-center" style={{ left: `${d.x}%`, top: `${d.y}%` }}>
                       <span className="grid h-9 w-9 place-items-center rounded-full text-sm text-white ring-2" style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tn], borderColor: TONE[tn], boxShadow: d.p >= 67 ? `0 0 10px ${TONE.alert}` : undefined }}>{d.g}</span>
                       <span className="mt-0.5 block text-[9px] text-ink-muted">{d.k}</span>
+                      <span className="block font-mono text-[9px] tabular-nums" style={{ color: TONE[tn] }}>{d.p}</span>
                     </span>
                   );
                 })}
