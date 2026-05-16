@@ -477,9 +477,12 @@ export function CabinetIntelligence() {
                                 </div>
                               ))}
                             </div>
-                            <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px]">
+                            <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[10px]">
                               <span className="text-ink-soft">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {op.aiAdvisory}</span>
-                              <Link href={m.href} className="focus-ring shrink-0 text-link underline underline-offset-2">Open workspace →</Link>
+                              <span className="flex shrink-0 gap-3">
+                                <Link href={m.href} className="focus-ring text-link underline underline-offset-2">Open workspace →</Link>
+                                <Link href={`/ministries/${m.ministryId}/operations`} className="focus-ring text-link underline underline-offset-2">Subsystem runtime →</Link>
+                              </span>
                             </div>
                             {(() => {
                               const deps = ministryDependencies(m.archetype as ArchetypeKey);
