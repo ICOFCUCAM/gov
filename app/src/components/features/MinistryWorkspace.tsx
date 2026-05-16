@@ -13,7 +13,7 @@ import { TONE, Spark, seed, TerritoryHeat } from '@/components/features/Situatio
 import { api } from '@/lib/api/client';
 import { identityFor } from '@/lib/archetype-profiles';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
-import { subsystemsFor } from '@/lib/institution/operational-catalog';
+import { subsystemsFor, subsystemOpPct } from '@/lib/institution/operational-catalog';
 import type { Ministry } from '@/lib/api/types';
 import type {
   AnalyticSeries,
@@ -585,7 +585,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
                   {subsystemsFor(archetype as ArchetypeKey).map(ss => {
                     const total = Math.max(1, Math.round(ss.scale * (0.85 + seed(`${id}:ss:${ss.name}:n`) * 0.3)));
-                    const opPct = 62 + Math.round(seed(`${sk}:ss:${ss.name}:op`) * 37);
+                    const opPct = subsystemOpPct(id, ss.name);
                     const degraded = Math.round(total * (1 - opPct / 100));
                     const tn = opPct >= 90 ? 'ok' : opPct >= 75 ? 'warn' : 'alert';
                     return (

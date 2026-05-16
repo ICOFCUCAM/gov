@@ -6,6 +6,7 @@
 import type { Ministry } from '@/lib/api/types';
 import { ARCHETYPE_PROFILES } from '@/lib/archetype-profiles';
 import { specFor } from '@/lib/institution/archetype-spec';
+import { subsystemHealth } from '@/lib/institution/operational-catalog';
 
 export type Lifecycle =
   | 'draft' | 'composed' | 'validated' | 'operational'
@@ -41,6 +42,7 @@ export function scoreInstitution(m: Ministry): InstitutionReadiness {
   const totalMods = m.modules?.length ?? 0;
   const isActive = m.status === 'active';
   const known = !!profile && m.archetype !== 'GENERIC';
+  const ssHealth = subsystemHealth(m.id, m.archetype);
 
   const dims: ReadinessDimension[] = [
     { key: 'governance', label: 'Governance structure',
@@ -55,11 +57,11 @@ export function scoreInstitution(m: Ministry): InstitutionReadiness {
     { key: 'staffing', label: 'Field staffing',
       score: known ? clamp((profile.fieldUnits.length / 3) * 100) : 50,
       detail: known ? `${profile.fieldUnits.length} field unit classes` : 'baseline' },
-    { key: 'infrastructure', label: 'Surface & infra fabric',
-      score: isActive ? clamp(60 + (mods / spec.requiredModules) * 40)
+    { key: 'infrastructure', label: 'Subsystem operational health',
+      score: isActive ? clamp(ssHealth * 0.7 + (mods / spec.requiredModules) * 30)
         : depts > 0 || mods > 0 ? 45 : 0,
-      detail: isActive ? `${spec.surfaces.length} surfaces · ${spec.capabilities.length} capabilities provisioned`
-        : 'surfaces not provisioned (inactive)' },
+      detail: isActive ? `${ssHealth}% mean across institutional subsystems`
+        : 'subsystems not provisioned (inactive)' },
     { key: 'interoperability', label: 'Interoperability',
       score: isActive ? 100 : 60, detail: 'sovereign core inherited' },
     { key: 'emergency', label: 'Emergency readiness',

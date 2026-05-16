@@ -6,6 +6,7 @@
 // rather than a generic dashboard.
 
 import type { ArchetypeKey } from '@/lib/api/types';
+import { seed } from '@/lib/telemetry';
 
 export interface Subsystem {
   /** institutional component name */
@@ -119,4 +120,17 @@ export function subsystemsFor(archetype: ArchetypeKey): Subsystem[] {
 /** Total declared institutional components for an archetype. */
 export function subsystemCount(archetype: ArchetypeKey): number {
   return subsystemsFor(archetype).length;
+}
+
+/** Deterministic operational % for one subsystem (stable per institution). */
+export function subsystemOpPct(instId: string, name: string): number {
+  return 62 + Math.round(seed(`ssh:${instId}:${name}`) * 37);
+}
+
+/** Mean institutional subsystem health (0-100), drives readiness. */
+export function subsystemHealth(instId: string, archetype: ArchetypeKey): number {
+  const subs = subsystemsFor(archetype);
+  if (!subs.length) return 100;
+  const sum = subs.reduce((a, s) => a + subsystemOpPct(instId, s.name), 0);
+  return Math.round(sum / subs.length);
 }
