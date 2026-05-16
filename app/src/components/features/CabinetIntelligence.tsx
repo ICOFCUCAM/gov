@@ -200,12 +200,17 @@ export function CabinetIntelligence() {
     { l: 'Expenditure', v: `$${(100 + seed(`fe:${epoch}`) * 16).toFixed(1)}B`, d: '+3.1%', t: 'warn' },
     { l: 'Deficit', v: `-$${(1 + seed(`fd:${epoch}`) * 5).toFixed(1)}B`, d: '-12.4%', t: 'alert' },
     { l: 'Debt to GDP', v: `${(38 + seed(`fg:${epoch}`) * 12).toFixed(1)}%`, d: '-0.6%', t: 'neutral' },
+    { l: 'Primary balance', v: `${(seed(`fp:${epoch}`) * 2 - 1).toFixed(1)}%`, d: '+0.3%', t: 'warn' },
+    { l: 'Reserve runway', v: `${24 + Math.round(seed(`fv:${epoch}`) * 16)}d`, d: '−2d', t: 'warn' },
+    { l: 'Debt service', v: `$${(2 + seed(`fs:${epoch}`) * 3).toFixed(1)}B`, d: '+1.1%', t: 'warn' },
+    { l: 'FX reserves', v: `$${(30 + seed(`fx:${epoch}`) * 18).toFixed(1)}B`, d: '+0.4%', t: 'ok' },
   ];
   const geo = [
-    { l: 'Border tension — North', s: 'Medium', t: 'warn' },
-    { l: 'Maritime activity', s: 'Low', t: 'ok' },
-    { l: 'Global market impact', s: 'Moderate', t: 'warn' },
-    { l: 'Diplomatic engagements', s: 'Active', t: 'ok' },
+    { l: 'Border tension — North', s: 'Medium', t: 'warn', idx: 52 + Math.round(seed(`g1:${epoch}`) * 20), inst: 'Interior', rec: 'Sustain frontier patrols' },
+    { l: 'Maritime activity', s: 'Low', t: 'ok', idx: 20 + Math.round(seed(`g2:${epoch}`) * 18), inst: 'Transport', rec: 'Routine EEZ patrol' },
+    { l: 'Global market impact', s: 'Moderate', t: 'warn', idx: 48 + Math.round(seed(`g3:${epoch}`) * 22), inst: 'Treasury', rec: 'Hedge commodity exposure' },
+    { l: 'Diplomatic engagements', s: 'Active', t: 'ok', idx: 70 + Math.round(seed(`g4:${epoch}`) * 22), inst: 'Foreign Affairs', rec: 'Maintain bilateral track' },
+    { l: 'Trade-corridor risk', s: nationalRisk >= 60 ? 'Elevated' : 'Low', t: nationalRisk >= 60 ? 'warn' : 'ok', idx: 30 + Math.round(seed(`g5:${epoch}`) * 30), inst: 'Trade', rec: 'Diversify routes' },
   ];
 
   const memo = [
@@ -641,13 +646,19 @@ export function CabinetIntelligence() {
             <Panel title="Geopolitical monitor" meta="external pressure" className="min-h-[188px]" bodyClass="!p-1.5">
               <div className="grid grid-cols-1 gap-1">
                 {geo.map(g => (
-                  <div key={g.l} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
-                    <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{g.l}</span>
-                    <span className="shrink-0 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[g.t]} 18%, transparent)`, color: TONE[g.t] }}>{g.s}</span>
+                  <div key={g.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{g.l}</span>
+                      <span className="font-mono text-[10px] tabular-nums" style={{ color: TONE[g.t] }}>{g.idx}</span>
+                      <span className="shrink-0 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[g.t]} 18%, transparent)`, color: TONE[g.t] }}>{g.s}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[8.5px] text-ink-muted">
+                      <span>↳ {g.inst}</span><span style={{ color: TONE.warn }}>▸ {g.rec}</span>
+                    </div>
                   </div>
                 ))}
                 <div className="mt-0.5 flex items-center justify-between border-t border-line-soft px-1 pt-1.5 text-[9px] text-ink-muted">
-                  <span>Posture</span><span className="font-mono" style={{ color: nationalRisk >= 60 ? TONE.alert : TONE.ok }}>{nationalRisk >= 60 ? 'Heightened' : 'Nominal'}</span>
+                  <span>External posture</span><span className="font-mono" style={{ color: nationalRisk >= 60 ? TONE.alert : TONE.ok }}>{nationalRisk >= 60 ? 'Heightened' : 'Nominal'}</span>
                 </div>
               </div>
             </Panel>
