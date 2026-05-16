@@ -17,6 +17,7 @@ import { nationalResilience, resilienceUnderShock } from '@/lib/gov/national-res
 import { nationalEcosystem } from '@/lib/institution/blueprint';
 import { legislativeState } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
+import { stateFabric } from '@/lib/gov/state-fabric';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -293,6 +294,41 @@ export function NationalShell() {
           </Link>
         </div>
       </P>
+
+      {(() => {
+        const sf = stateFabric(mins, ts);
+        const ctn = sf.contagion === 'systemic' ? 'alert' : sf.contagion === 'coupled-stress' ? 'warn' : 'ok';
+        return (
+          <P title="Cross-system propagation" meta={`state fabric · ${sf.contagion} · systemic ${sf.systemicStress}`}>
+            <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px]">
+              <span className="rounded-[3px] px-1.5 py-0.5 font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[ctn]} 16%, transparent)`, color: TONE[ctn] }}>
+                {sf.contagion}
+              </span>
+              <span className="text-ink-muted">No institution is an island — instability propagates across coupled domains. Worst source · <strong className="text-ink-soft">{sf.worst}</strong></span>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+              {sf.domains.map(d => (
+                <div key={d.domain} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-semibold capitalize text-ink">{d.label}</span>
+                    <span className="font-mono text-[12px] tabular-nums" style={{ color: TONE[d.tone] }}>{d.instability}</span>
+                  </div>
+                  <div className="mt-1 mb-1 h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${d.instability}%`, backgroundColor: TONE[d.tone] }} /></div>
+                  <ul className="space-y-0.5">
+                    {d.effects.map((e, i) => (
+                      <li key={i} className="flex items-center gap-1.5 text-[9px]">
+                        <span className="h-1 w-1 shrink-0 rounded-full" style={{ backgroundColor: e.magnitude >= 65 ? TONE.alert : e.magnitude >= 40 ? TONE.warn : TONE.ok }} />
+                        <span className="min-w-0 flex-1 truncate text-ink-soft">{e.target}</span>
+                        <span className="shrink-0 font-mono tabular-nums text-ink-muted">{e.magnitude}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </P>
+        );
+      })()}
 
       <P title="State estates" meta="whole-of-government launchpad">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
