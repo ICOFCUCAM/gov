@@ -7,6 +7,7 @@ import { TONE, Panel, Spark, waveSeries } from '@/components/features/SituationR
 import { identityFor } from '@/lib/archetype-profiles';
 import { buildNationalFabric } from '@/lib/institution/national-fabric';
 import { buildCascade } from '@/lib/institution/cascade';
+import { cascadeEscalations } from '@/lib/institution/cascade-escalation';
 import type { Ministry } from '@/lib/api/types';
 
 const DIR_TONE = { mutual: 'link', provides: 'ok', consumes: 'warn' } as const;
@@ -14,6 +15,7 @@ const DIR_TONE = { mutual: 'link', provides: 'ok', consumes: 'warn' } as const;
 export function NationalFabricView() {
   const [now, setNow] = React.useState(() => Date.now());
   const [mins, setMins] = React.useState<Ministry[]>([]);
+  const [ack, setAck] = React.useState<Record<string, boolean>>({});
   React.useEffect(() => {
     api.org.ministries().then(r => setMins(r.ministries)).catch(() => {});
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -163,6 +165,28 @@ export function NationalFabricView() {
             </tbody>
           </table>
         </div>
+      </Panel>
+
+      <Panel title="Cascade escalations" meta="actionable · coordination required" bodyClass="!p-0">
+        {(() => {
+          const esc = cascadeEscalations(cascade);
+          if (!esc.length) return <p className="p-3 text-[11px] text-ink-muted">No cascade escalations — propagation within tolerance.</p>;
+          return esc.map(e => {
+            const tn = e.severity === 'critical' ? TONE.alert : TONE.warn;
+            const done = ack[e.id];
+            return (
+              <div key={e.id} className="flex flex-wrap items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tn}`, opacity: done ? 0.55 : 1 }}>
+                <span className="rounded-[2px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${tn} 18%, transparent)`, color: tn }}>{e.severity}</span>
+                <span className="text-[11px] font-medium text-ink">{e.institution}</span>
+                <span className="font-mono text-[10px] tabular-nums text-ink-muted">stress {e.totalStress} · +{e.inheritedStress} via {e.driver}</span>
+                <span className="min-w-0 flex-1 truncate text-[10px] text-ink-soft">▸ {e.recommendation}</span>
+                <span className="font-mono text-[9px] tabular-nums text-ink-muted">{e.ageMin}m</span>
+                <Link href={e.route} className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider no-underline" style={{ borderColor: tn, color: tn }}>Coordinate →</Link>
+                <button onClick={() => setAck(a => ({ ...a, [e.id]: !a[e.id] }))} className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-ink-soft">{done ? 'Acked' : 'Acknowledge'}</button>
+              </div>
+            );
+          });
+        })()}
       </Panel>
 
       <Panel title="Cascade event timeline" meta="propagation chronology" bodyClass="!p-0">
