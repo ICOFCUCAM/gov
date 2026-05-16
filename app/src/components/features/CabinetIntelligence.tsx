@@ -13,7 +13,7 @@ import {
 import { buildCascade } from '@/lib/institution/cascade';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
-import { scenarioSweep, mitigationPlaybook } from '@/lib/gov/simulation';
+import { scenarioSweep, mitigationPlaybook, prioritisedThreats } from '@/lib/gov/simulation';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
 } from '@/lib/api/types';
@@ -216,6 +216,8 @@ export function CabinetIntelligence() {
 
   const sweep = scenarioSweep(ts);
   const topThreats = sweep.slice(0, 4).map(r => ({ ...r, pb: mitigationPlaybook(r.key, ts) }));
+  const prio = prioritisedThreats(ts);
+  const leadPrio = prio[0];
 
   const memo = [
     {
@@ -252,6 +254,17 @@ export function CabinetIntelligence() {
       conf: 88 + Math.round(seed(`mc:tr:${epoch}`) * 9), inst: 'Treasury',
       econ: 'appropriation on track', con: 'requires legislative appropriation',
       rec: 'No action — review at quarter gate',
+    },
+    {
+      t: 'Strategic threat outlook',
+      lvl: !leadPrio ? 'ROUTINE' : leadPrio.priority >= 55 ? 'CRITICAL' : leadPrio.priority >= 35 ? 'ELEVATED' : 'ROUTINE',
+      body: leadPrio
+        ? `Lead planning vector: ${leadPrio.label}. Gross risk ${leadPrio.composite}; doctrine neutralises ${leadPrio.effectiveness}%, residual ${leadPrio.residualRisk} (priority ${leadPrio.priority}).`
+        : 'No active scenario vectors above containment.',
+      conf: 82 + Math.round(seed(`mc:thr:${epoch}`) * 12), inst: 'Cabinet Office · Simulation',
+      econ: leadPrio && leadPrio.priority >= 45 ? 'contingency reserve exposure' : 'no material exposure',
+      con: leadPrio && leadPrio.constitutionalStress >= 60 ? 'emergency-power review may be engaged' : 'no constitutional implication',
+      rec: leadPrio && leadPrio.priority >= 35 ? `Pre-stage ${leadPrio.label} contain-phase doctrine` : 'Sustain scenario monitoring',
     },
   ];
 
