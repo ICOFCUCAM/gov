@@ -55,8 +55,11 @@ export function scoreInstitution(m: Ministry): InstitutionReadiness {
     { key: 'staffing', label: 'Field staffing',
       score: known ? clamp((profile.fieldUnits.length / 3) * 100) : 50,
       detail: known ? `${profile.fieldUnits.length} field unit classes` : 'baseline' },
-    { key: 'infrastructure', label: 'Infrastructure tracking',
-      score: clamp(40 + mods * 10), detail: mods ? 'module-backed' : 'unprovisioned' },
+    { key: 'infrastructure', label: 'Surface & infra fabric',
+      score: isActive ? clamp(60 + (mods / spec.requiredModules) * 40)
+        : depts > 0 || mods > 0 ? 45 : 0,
+      detail: isActive ? `${spec.surfaces.length} surfaces · ${spec.capabilities.length} capabilities provisioned`
+        : 'surfaces not provisioned (inactive)' },
     { key: 'interoperability', label: 'Interoperability',
       score: isActive ? 100 : 60, detail: 'sovereign core inherited' },
     { key: 'emergency', label: 'Emergency readiness',
