@@ -9,6 +9,9 @@ import { buildCascade } from '@/lib/institution/cascade';
 import { regionRollup, nationalRegions, projectRegions } from '@/lib/gov/regions';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { prioritisedThreats, scenarioFor, type ScenarioKey } from '@/lib/gov/simulation';
+import { buildOperationalChain } from '@/lib/gov/operational-chain';
+import { legislativeState } from '@/lib/gov/legislative-engine';
+import { judicialState } from '@/lib/gov/judicial-engine';
 import { waveSeries } from '@/lib/telemetry';
 import type { Ministry } from '@/lib/api/types';
 
@@ -68,12 +71,33 @@ export function nationalResilience(mins: Ministry[], t: number): NationalResilie
   const leadPriority = prio[0]?.priority ?? 0;
   const pThreat = Math.round(Math.max(0, Math.min(100, 100 - leadPriority)));
 
+  // Operational continuity — cross-system propagation: the live operational
+  // chain (institutions failing into each other) plus constitutional
+  // continuity (legislature able to legislate, judiciary clearing cases).
+  const chain = buildOperationalChain(mins, null, t);
+  const leg = legislativeState(t);
+  const jud = judicialState(t);
+  let pCont = 100;
+  if (chain) {
+    pCont -= chain.containment === 'critical' ? 40 : chain.containment === 'spreading' ? 22 : 8;
+    pCont -= Math.min(20, chain.totalAffected * 3);
+  }
+  if (!leg.quorum) pCont -= 22;
+  pCont -= Math.min(16, leg.blocked * 4);
+  if (jud.meanClearance < 60) pCont -= 18;
+  if (jud.totalBacklog > 900) pCont -= 14;
+  pCont = Math.round(Math.max(0, Math.min(100, pCont)));
+  const contDetail = chain
+    ? `chain ${chain.containment} · ${chain.totalAffected} affected · leg ${leg.quorum ? 'quorum' : 'at-risk'} · jud ${jud.meanClearance}%`
+    : `leg ${leg.quorum ? 'quorum' : 'at-risk'} · jud ${jud.meanClearance}% clearance`;
+
   const pillars: ResiliencePillar[] = [
-    { key: 'inst', label: 'Institutional readiness', score: pInst, weight: 0.26, tone: toneOf(pInst), detail: `${dir.length} active · ${Math.round(deployRatio * 100)}% deployable` },
-    { key: 'svc', label: 'Service-signature health', score: pSvc, weight: 0.22, tone: toneOf(pSvc), detail: `mean across ${dir.length || 0} institutions` },
-    { key: 'casc', label: 'Cascade integrity', score: pCascade, weight: 0.2, tone: toneOf(pCascade), detail: `${critNodes} critical nodes` },
-    { key: 'reg', label: 'Regional posture', score: pRegion, weight: 0.16, tone: toneOf(pRegion), detail: `${roll.meanReadiness}% mean · ${roll.critical} critical` },
-    { key: 'thr', label: 'Threat preparedness', score: pThreat, weight: 0.16, tone: toneOf(pThreat), detail: prio[0] ? `lead · ${prio[0].label}` : 'no active vectors' },
+    { key: 'inst', label: 'Institutional readiness', score: pInst, weight: 0.24, tone: toneOf(pInst), detail: `${dir.length} active · ${Math.round(deployRatio * 100)}% deployable` },
+    { key: 'svc', label: 'Service-signature health', score: pSvc, weight: 0.18, tone: toneOf(pSvc), detail: `mean across ${dir.length || 0} institutions` },
+    { key: 'casc', label: 'Cascade integrity', score: pCascade, weight: 0.18, tone: toneOf(pCascade), detail: `${critNodes} critical nodes` },
+    { key: 'reg', label: 'Regional posture', score: pRegion, weight: 0.14, tone: toneOf(pRegion), detail: `${roll.meanReadiness}% mean · ${roll.critical} critical` },
+    { key: 'thr', label: 'Threat preparedness', score: pThreat, weight: 0.14, tone: toneOf(pThreat), detail: prio[0] ? `lead · ${prio[0].label}` : 'no active vectors' },
+    { key: 'cont', label: 'Operational continuity', score: pCont, weight: 0.12, tone: toneOf(pCont), detail: contDetail },
   ];
 
   const index = Math.round(pillars.reduce((a, p) => a + p.score * p.weight, 0));
@@ -112,6 +136,7 @@ export function resilienceUnderShock(mins: Ministry[], t: number, key: ScenarioK
     if (p.key === 'svc') return { ...p, score: Math.round(Math.max(0, p.score - sc.severity * 0.4)) };
     if (p.key === 'inst') return { ...p, score: Math.round(Math.max(0, p.score - sc.severity * 0.25)) };
     if (p.key === 'thr') return { ...p, score: Math.round(Math.max(0, 100 - sc.severity)) };
+    if (p.key === 'cont') return { ...p, score: Math.round(Math.max(0, p.score - sc.severity * 0.5)) };
     return p;
   });
   const projected = Math.round(shocked.reduce((a, p) => a + p.score * p.weight, 0));

@@ -16,7 +16,7 @@ describe('national resilience index', () => {
     expect(a.index).toBeGreaterThanOrEqual(0);
     expect(a.index).toBeLessThanOrEqual(100);
     expect(['robust', 'sound', 'fragile', 'brittle']).toContain(a.band);
-    expect(a.pillars.length).toBe(5);
+    expect(a.pillars.length).toBe(6);
     for (const p of a.pillars) {
       expect(p.score).toBeGreaterThanOrEqual(0);
       expect(p.score).toBeLessThanOrEqual(100);
