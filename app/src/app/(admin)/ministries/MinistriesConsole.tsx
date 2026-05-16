@@ -9,6 +9,7 @@ import { TextField } from '@/components/ui/Field';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { api } from '@/lib/api/client';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
+import { instantiateMinistry, systemKindLabel } from '@/lib/institution/blueprint';
 import type { Archetype, ArchetypeKey, Ministry } from '@/lib/api/types';
 
 export function MinistriesConsole() {
@@ -16,6 +17,12 @@ export function MinistriesConsole() {
   const [ministries, setMinistries] = React.useState<Ministry[]>([]);
   const [selected, setSelected] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
+  const [now, setNow] = React.useState(() => Date.now());
+
+  React.useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 2000);
+    return () => clearInterval(t);
+  }, []);
 
   const load = React.useCallback(async () => {
     const [a, m] = await Promise.all([
@@ -271,6 +278,61 @@ export function MinistriesConsole() {
                     </div>
                   ) : null}
                 </Card>
+
+                {(() => {
+                  const eco = instantiateMinistry(current, now / 4000);
+                  const tone = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
+                  return (
+                    <Card tight>
+                      <div className="flex flex-wrap items-baseline justify-between gap-2">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
+                          Generated institutional ecosystem
+                        </h3>
+                        <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
+                          style={{ backgroundColor: `color-mix(in srgb, ${eco.activated ? tone('ok') : tone('warn')} 18%, transparent)`, color: eco.activated ? tone('ok') : tone('warn') }}>
+                          {eco.activated ? 'Instantiated' : 'Blueprinted · awaiting activation'}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-[11px] text-ink-muted">
+                        Instantiated from the <strong>{current.archetype}</strong> archetype:
+                        {' '}{eco.stats.groups} system groups · {eco.stats.systems} operational systems.
+                        {eco.activated
+                          ? ` ${eco.stats.operational} operational · ${eco.stats.degraded} degraded · ${eco.stats.meanHealth}% mean health.`
+                          : ' Activation provisions every system below — the ministry becomes a running institution, not an empty container.'}
+                      </p>
+                      <div className="mt-2 grid gap-2 lg:grid-cols-2">
+                        {eco.groups.map(g => (
+                          <div key={g.key} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-[11px] font-semibold text-ink">{g.name}</span>
+                              <span className="font-mono text-[10px] tabular-nums" style={{ color: tone(g.tone) }}>
+                                {eco.activated ? `${g.health}%` : '— '}
+                              </span>
+                            </div>
+                            <div className="text-[9px] text-ink-muted">{g.purpose}</div>
+                            <ul className="mt-1.5 space-y-0.5">
+                              {g.systems.map(s => {
+                                const st = s.status === 'operational' ? tone('ok') : s.status === 'degraded' ? tone('alert') : 'rgb(var(--c-ink-muted))';
+                                return (
+                                  <li key={s.name} className="flex items-center gap-1.5 text-[10px]">
+                                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: st }} />
+                                    <span className="min-w-0 flex-1 truncate text-ink-soft">{s.name}</span>
+                                    <span className="shrink-0 text-[8px] uppercase tracking-wider text-ink-muted">{systemKindLabel(s.kind)}</span>
+                                    {s.status !== 'provisioning' ? (
+                                      <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: st }}>{s.uptime}%</span>
+                                    ) : (
+                                      <span className="w-8 shrink-0 text-right text-[8px] uppercase text-ink-muted">prov</span>
+                                    )}
+                                  </li>
+                                );
+                              })}
+                            </ul>
+                          </div>
+                        ))}
+                      </div>
+                    </Card>
+                  );
+                })()}
 
                 <Card tight>
                   <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Departments</h3>
