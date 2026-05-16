@@ -83,6 +83,7 @@ export function NationalShell() {
   const estates = [
     { l: 'Constitutional Architecture', s: model.label, href: '/gov/branches', v: `${model.branches.length} branches`, t: sep.intact ? 'ok' : 'alert' },
     { l: 'Regional Command', s: `${regions.length} regions · ${rRoll.population}M`, href: '/gov/regional', v: `${rRoll.meanReadiness}% ready`, t: rTone },
+    { l: 'National Simulation', s: 'Scenario · cascade what-if', href: '/gov/simulation', v: '10 vectors', t: 'ok' },
     { l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', v: posture.l, t: posture.t },
     { l: 'Situation Room', s: 'Real-time operations', href: '/gov/situation-room', v: `${incidents.length} incidents`, t: incidents.length ? 'warn' : 'ok' },
     { l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination', v: `${cascCrit + cascStrain} cascade`, t: cascCrit ? 'alert' : cascStrain ? 'warn' : 'ok' },
