@@ -25,6 +25,7 @@ import { interoperabilityFabric } from '@/services/interoperability-fabric';
 import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, activatedApps, version as orchVersion } from '@/services/orchestration-engine';
+import { subscribeBus, version as busVersion, eventLog, eventStats } from '@/services/event-bus';
 import { subscribe as rtSubscribe, runtimeStats, version as rtVersion } from '@/lib/gov/runtime-store';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
@@ -74,6 +75,9 @@ export function NationalShell() {
   useFederationSync(mins);
   React.useSyncExternalStore(orchSubscribe, orchVersion, orchVersion);
   const fedApps = activatedApps();
+  React.useSyncExternalStore(subscribeBus, busVersion, busVersion);
+  const busEvents = eventLog(8);
+  const busAgg = eventStats();
   const healthCap = nationalHealthcareCapacity(
     mins.filter(m => m.archetype === 'HEALTH' && m.status === 'active').map(m => m.id), ts,
   );
@@ -512,6 +516,22 @@ export function NationalShell() {
           </P>
         );
       })()}
+
+      <P title="Sovereign event bus" meta={`${busAgg.total} federation events · institutions emit, the platform consumes`}>
+        {busEvents.length === 0 ? (
+          <p className="text-[11px] text-ink-muted">No federation events yet. Activating institutions and entering their applications emits registration & metric events here.</p>
+        ) : (
+          <div className="space-y-1">
+            {busEvents.map((e, i) => (
+              <div key={i} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[10px]">
+                <span className="w-16 shrink-0 font-mono tabular-nums text-ink-muted">{new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                <span className="w-36 shrink-0 truncate font-mono text-ink-soft">{e.type}</span>
+                <span className="min-w-0 flex-1 truncate text-ink-muted">{e.source}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </P>
 
       <P title="State estates" meta="whole-of-government launchpad">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">

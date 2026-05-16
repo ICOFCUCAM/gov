@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client';
 import { TONE } from '@/components/features/SituationRoom';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, findApp, version as orchVersion } from '@/services/orchestration-engine';
+import { publish as busPublish } from '@/services/event-bus';
 import { SubsystemConsole } from '@/components/features/SubsystemConsole';
 import { MinistryHealthApp } from '@/apps/ministry-health/MinistryHealthApp';
 import { TreasuryApp } from '@/apps/treasury/TreasuryApp';
@@ -52,6 +53,9 @@ export function AppHost({ domain }: { domain: string }) {
   React.useSyncExternalStore(orchSubscribe, orchVersion, orchVersion);
 
   const app = findApp(domain);
+  React.useEffect(() => {
+    if (app?.activated) busPublish('institution.metric', app.id, { domain: app.domain, kind: app.kind });
+  }, [app?.id, app?.activated]);
   const [navKey, setNavKey] = React.useState<string | null>(null);
   const [role, setRole] = React.useState<SovereignRole>('commander');
   const active = navKey ?? app?.nav[0]?.key ?? null;

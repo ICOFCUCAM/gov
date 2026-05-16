@@ -26,11 +26,21 @@ type Handler = (e: SovereignEvent) => void;
 
 const handlers = new Map<SovereignEventType | '*', Set<Handler>>();
 const log: SovereignEvent[] = [];
+let _version = 0;
+const verListeners = new Set<() => void>();
+/** Stable snapshot for useSyncExternalStore — changes only on publish. */
+export function version(): number { return _version; }
+export function subscribeBus(l: () => void): () => void {
+  verListeners.add(l);
+  return () => verListeners.delete(l);
+}
 
 export function publish<P>(type: SovereignEventType, source: string, payload: P): void {
   const e: SovereignEvent<P> = { type, source, at: Date.now(), payload };
   log.unshift(e as SovereignEvent);
   if (log.length > 500) log.length = 500;
+  _version++;
+  for (const l of verListeners) l();
   for (const h of handlers.get(type) ?? []) h(e as SovereignEvent);
   for (const h of handlers.get('*') ?? []) h(e as SovereignEvent);
 }
