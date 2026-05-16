@@ -1296,6 +1296,21 @@ export function SituationRoom() {
 
           {/* Operational analytics band */}
           <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+            <Panel title="Infrastructure network pressure" meta="digital twin" bodyClass="!p-1.5">
+              <div className="grid grid-cols-2 gap-1">
+                {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
+                  const p = networkPressure(k, now / 4000);
+                  const tn = p >= 78 ? 'alert' : p >= 62 ? 'warn' : 'ok';
+                  return (
+                    <div key={k} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                      <div className="truncate text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{k}</div>
+                      <div className="font-mono text-[13px] tabular-nums" style={{ color: TONE[tn] }}>{p}%</div>
+                      <div className="-mb-0.5 h-3 overflow-hidden opacity-70"><Spark pts={waveSeries(`srnp:${k}`, now / 4000, 12, 30, 88)} tone={tn} /></div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
             <Panel title="Incident severity distribution" meta="by classification"><Donut segs={donut} /></Panel>
             <Panel title="Treasury flow monitor" meta="24h revenue · expenditure">
               <div className="space-y-2">
