@@ -7,7 +7,7 @@ import { TONE } from '@/components/features/SituationRoom';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, findApp, version as orchVersion } from '@/services/orchestration-engine';
 import { publish as busPublish } from '@/services/event-bus';
-import { SubsystemConsole } from '@/components/features/SubsystemConsole';
+import { SectorInstitutionApp } from '@/apps/sector/SectorInstitutionApp';
 import { MinistryHealthApp } from '@/apps/ministry-health/MinistryHealthApp';
 import { TreasuryApp } from '@/apps/treasury/TreasuryApp';
 import { JudiciaryApp } from '@/apps/judiciary/JudiciaryApp';
@@ -196,7 +196,7 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'ENERGY' ? (
                   <MinistryEnergyApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : app.kind === 'ministry' && app.instanceId ? (
-                  <SubsystemConsole id={app.instanceId} group={active ?? 'command'} />
+                  <SectorInstitutionApp instanceId={app.instanceId} archetype={app.archetypeOrBranch as ArchetypeKey} label={app.label} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : app.kind === 'branch' && app.archetypeOrBranch === 'judiciary' ? (
                   <JudiciaryApp instanceId={`jud:${app.archetypeOrBranch}`} domain={active ?? 'constitutional'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : app.kind === 'branch' && app.archetypeOrBranch === 'legislature' ? (
