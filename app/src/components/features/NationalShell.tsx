@@ -10,6 +10,7 @@ import { buildNationalFabric } from '@/lib/institution/national-fabric';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
+import { networkPressure } from '@/lib/gov/infrastructure';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -183,6 +184,22 @@ export function NationalShell() {
           </div>
         </P>
       </div>
+
+      <P title="National infrastructure pressure" meta="digital-twin networks">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
+            const p = networkPressure(k, ts);
+            const tn = p >= 78 ? 'alert' : p >= 62 ? 'warn' : 'ok';
+            return (
+              <div key={k} className="rounded-[3px] border border-line bg-surface px-2.5 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{k}</div>
+                <div className="font-mono text-base tabular-nums" style={{ color: TONE[tn] }}>{p}%</div>
+                <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${p}%`, backgroundColor: TONE[tn] }} /></div>
+              </div>
+            );
+          })}
+        </div>
+      </P>
 
       <p className="text-[10px] text-ink-muted">Read-only orchestration. The National Shell binds the estates; humans govern through the constituted branches and command surfaces.</p>
     </div>
