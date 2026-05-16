@@ -276,6 +276,20 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
                 <Spark pts={waveSeries(`${domain}:pr:${p.k}`, ts, 18, p.lo, p.hi)} tone={p.t ?? 'ok'} />
               </div>
             ))}
+            {domain === 'treasury' ? (
+              <div className="mt-1 border-t border-line-soft pt-1.5">
+                <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Allocation flow</div>
+                {[['Health', 22], ['Energy', 18], ['Defence/Interior', 16], ['Education', 14], ['Infrastructure', 17], ['Debt service', 13]].map(([l, base]) => {
+                  const v = (base as number) + Math.round(w(`alloc:${l}`, -3, 3));
+                  return (
+                    <div key={l as string} className="mb-0.5">
+                      <div className="flex items-center justify-between text-[9px]"><span className="text-ink-soft">{l}</span><span className="font-mono tabular-nums text-ink-muted">{v}%</span></div>
+                      <div className="h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${v * 3.5}%`, backgroundColor: TONE.link }} /></div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
         </Panel>
         <Panel title={cfg.feedTitle} meta={`${cfg.feed.length} active`} className="xl:col-span-2" bodyClass="!p-0">
