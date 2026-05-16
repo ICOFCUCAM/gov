@@ -327,6 +327,18 @@ export function NationalShell() {
                 </div>
               ))}
             </div>
+            {sf.sectors.length ? (
+              <div className="mt-2 border-t border-line-soft pt-2">
+                <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Sector instability · all line ministries</div>
+                <div className="flex flex-wrap gap-1">
+                  {sf.sectors.map(s => (
+                    <span key={s.archetype} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-0.5 text-[9px]" style={{ color: TONE[s.tone] }}>
+                      {s.archetype} {s.instability}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </P>
         );
       })()}

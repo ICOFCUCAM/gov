@@ -787,6 +787,13 @@ export function CabinetIntelligence() {
                     );
                   })}
                 </div>
+                {sf.sectors.length ? (
+                  <div className="mt-1.5 flex flex-wrap gap-1 border-t border-line-soft pt-1.5">
+                    {sf.sectors.map(s => (
+                      <span key={s.archetype} className="rounded-[3px] border border-line-soft px-1.5 py-0.5 text-[8.5px]" style={{ color: TONE[s.tone] }}>{s.archetype} {s.instability}</span>
+                    ))}
+                  </div>
+                ) : null}
                 <div className="mt-1 flex items-center justify-between border-t border-line-soft px-1 pt-1 text-[9px] text-ink-muted">
                   <span>Worst coupled source · <span style={{ color: ctn }}>{sf.worst}</span> — instability propagates whole-of-government</span>
                   <Link href="/gov/shell" className="text-link underline underline-offset-2">State fabric →</Link>
