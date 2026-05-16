@@ -22,6 +22,7 @@ import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { justiceOps } from '@/lib/gov/justice-systems';
 import { environmentOps } from '@/lib/gov/environment-systems';
 import { tradeOps } from '@/lib/gov/trade-systems';
+import { laborOps } from '@/lib/gov/labor-systems';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
@@ -61,6 +62,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const isJustice = m.archetype === 'JUSTICE';
   const isEnv = m.archetype === 'ENVIRONMENT';
   const isTrade = m.archetype === 'TRADE';
+  const isLabor = m.archetype === 'LABOR';
 
   const header = (
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -860,6 +862,48 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'registry' || grp.key === 'licensing' || grp.key === 'citizen' ? 'permit' : grp.key === 'export' ? 'procurement' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (isLabor) {
+    const o = laborOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Unemployment" v={`${o.unemploymentPct}%`} t={o.unemploymentPct >= 16 ? 'alert' : o.unemploymentPct >= 9 ? 'warn' : 'ok'} />
+          <Stat l="Jobseekers" v={`${o.jobseekersM}M`} t="ok" />
+          <Stat l="Placements today" v={o.placementsToday.toLocaleString()} t="ok" />
+          <Stat l="Vacancies" v={o.vacancies.toLocaleString()} t="ok" />
+          <Stat l="Inspection compliance" v={`${o.inspection.compliancePct}%`} t={o.inspection.compliancePct >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Insurance payout on-time" v={`${o.socialInsurance.payoutOnTimePct}%`} t={o.socialInsurance.payoutOnTimePct >= 90 ? 'ok' : 'warn'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-3">
+          <Panel title="Workplace inspection" meta="safety & compliance" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Units active" v={`${o.inspection.unitsActive}`} t="ok" />
+              <Stat l="Open cases" v={o.inspection.openCases.toLocaleString()} t={o.inspection.openCases > 1500 ? 'warn' : 'ok'} />
+            </div>
+          </Panel>
+          <Panel title="Social insurance" meta="contributory funds" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Funds" v={`$${o.socialInsurance.fundsBn}B`} t="ok" />
+              <Stat l="Contributors" v={`${o.socialInsurance.contributorsM}M`} t="ok" />
+              <Stat l="Claims pending" v={o.socialInsurance.claimsPending.toLocaleString()} t={o.socialInsurance.claimsPending > 6000 ? 'alert' : 'warn'} />
+              <Stat l="Payout on-time" v={`${o.socialInsurance.payoutOnTimePct}%`} t={o.socialInsurance.payoutOnTimePct >= 90 ? 'ok' : 'warn'} />
+            </div>
+          </Panel>
+          <Panel title="Dispute resolution & skills" meta="tribunals · training" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Tribunals" v={`${o.disputes.tribunals}`} t="ok" />
+              <Stat l="Open disputes" v={o.disputes.openDisputes.toLocaleString()} t={o.disputes.openDisputes > 3000 ? 'warn' : 'ok'} />
+              <Stat l="Median resolution" v={`${o.disputes.medianDays}d`} t={o.disputes.medianDays >= 90 ? 'alert' : o.disputes.medianDays >= 45 ? 'warn' : 'ok'} />
+              <Stat l="Skills training" v={o.skillsTrainingActive.toLocaleString()} t="ok" />
+            </div>
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'disputes' ? 'case' : grp.key === 'insurance' ? 'approval' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
       </div>
     );
   }
