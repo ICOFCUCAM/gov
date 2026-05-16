@@ -580,6 +580,20 @@ export function NationalMap({
           );
         })}
 
+        {/* national strategic assets */}
+        {([
+          { x: 520, y: 356, g: '★', l: 'National Command HQ' },
+          { x: 300, y: 196, g: '⛨', l: 'Strategic Reserve' },
+          { x: 770, y: 232, g: '◬', l: 'Comms Relay' },
+          { x: 286, y: 404, g: '⚑', l: 'Forward Base' },
+        ]).map(s => (
+          <g key={s.l} style={{ pointerEvents: 'none' }}>
+            <circle cx={s.x} cy={s.y} r="9" fill="none" stroke={ACCENT} strokeOpacity="0.5" strokeWidth="1"
+              className="origin-center animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+            <text x={s.x} y={s.y + 4} textAnchor="middle" style={{ fontSize: 12, fill: ACCENT }}>{s.g}</text>
+          </g>
+        ))}
+
         <rect width="1000" height="620" fill="url(#vignette)" style={{ pointerEvents: 'none' }} />
       </svg>
 
