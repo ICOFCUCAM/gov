@@ -22,6 +22,7 @@ import { nationalRuntime } from '@/lib/gov/national-runtime';
 import { subscribe as auditSubscribe, auditStats, version as auditVersion } from '@/services/audit-ledger';
 import { federationPosture, sovereignExecutionIndex } from '@/services/federation-aggregate';
 import { deployableRoots } from '@/apps/deployment';
+import { chainSummary } from '@/services/execution-chains';
 import { interoperabilityFabric } from '@/services/interoperability-fabric';
 import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
@@ -355,6 +356,36 @@ export function NationalShell() {
           <p className="text-[10px] text-ink-muted">All instantiated systems within tolerance across {ne.institutions} institutions.</p>
         )}
       </P>
+
+      {(() => {
+        const cs = chainSummary({
+          treasuryOperational: fp.institutions.find(i => i.archetype === 'FINANCE')?.operational ?? 100,
+          legislativeQuorum: leg.quorum,
+          legislativeBlocked: leg.blocked,
+          judicialClearancePct: jud.meanClearance,
+          judicialBacklog: jud.totalBacklog,
+          policeOperational: fp.institutions.find(i => i.archetype === 'INTERIOR')?.operational ?? 100,
+          healthOperational: fp.institutions.find(i => i.archetype === 'HEALTH')?.operational ?? 100,
+        });
+        const ctn = cs.constraints >= 3 ? 'alert' : cs.constraints ? 'warn' : 'ok';
+        return (
+          <P title="Cross-institution execution chains" meta={`operational causality · ${cs.constraints} constraints · drag ${cs.systemicDrag}`}>
+            <div className="space-y-1">
+              {cs.effects.map((e, i) => {
+                const et = e.severity === 'constraint' ? 'alert' : e.severity === 'watch' ? 'warn' : 'ok';
+                return (
+                  <div key={i} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[10px]">
+                    <span className="w-44 shrink-0 truncate text-ink-soft">{e.source} → {e.target}</span>
+                    <span className="min-w-0 flex-1 truncate text-ink-muted">{e.effect}</span>
+                    <span className="w-10 shrink-0 text-right font-mono tabular-nums" style={{ color: TONE[et] }}>{e.delta > 0 ? `+${e.delta}` : e.delta}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <p className="mt-1 text-[9px] text-ink-muted">Institutional operational state propagates as concrete execution constraints on coupled institutions — no synthetic dependency values.</p>
+          </P>
+        );
+      })()}
 
       {(() => {
         const finOp = fp.institutions.find(i => i.archetype === 'FINANCE')?.operational ?? 100;
