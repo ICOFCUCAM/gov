@@ -544,15 +544,25 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Operational timeline" meta="chronology" className="xl:col-span-2" bodyClass="!p-0">
-              {(coord?.timeline ?? []).slice(0, 9).map((e, i) => (
-                <div key={i} className="flex items-start gap-2 border-b border-line-soft px-3 py-1.5 text-xs last:border-0">
-                  <span className="font-mono text-[10px] tabular-nums text-ink-muted">{rel(e.at, now)}</span>
-                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE[e.tone] ?? TONE.neutral }} />
-                  <span className="min-w-0"><span className="block truncate text-ink-soft">{e.title}</span></span>
-                </div>
-              ))}
-              {(coord?.timeline ?? []).length === 0 ? <p className="p-3 text-xs text-ink-muted">Awaiting events…</p> : null}
+            <Panel title="Operational timeline" meta="live event chronology" className="xl:col-span-2" bodyClass="!p-0">
+              {(() => {
+                const real = (coord?.timeline ?? []).slice(0, 6).map(e => ({
+                  rel: rel(e.at, now), tone: TONE[e.tone] ?? TONE.neutral, tag: 'OPS', title: e.title, src: 'coordination',
+                }));
+                const synth = escList.slice(0, 4).map(e => ({
+                  rel: `${e.age}m`, tone: TONE[RISK_TONE[e.sevState]], tag: e.sevState === 'critical' ? 'SEV1' : e.sevState === 'elevated' ? 'SEV2' : 'WATCH',
+                  title: e.title, src: e.ministry,
+                }));
+                const events = [...synth, ...real].slice(0, 9);
+                if (!events.length) return <p className="p-3 text-xs text-ink-muted">Awaiting events…</p>;
+                return events.map((e, i) => (
+                  <div key={i} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 text-xs last:border-0">
+                    <span className="w-9 shrink-0 font-mono text-[10px] tabular-nums text-ink-muted">{e.rel}</span>
+                    <span className="shrink-0 rounded-[2px] px-1 py-0.5 text-[8px] font-bold tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${e.tone} 18%, transparent)`, color: e.tone }}>{e.tag}</span>
+                    <span className="min-w-0 flex-1"><span className="block truncate text-ink-soft">{e.title}</span><span className="block truncate text-[9px] text-ink-muted">{e.src}</span></span>
+                  </div>
+                ));
+              })()}
             </Panel>
 
             <Panel title="Strategic forecast · 72h" meta="advisory" className="xl:col-span-2">
