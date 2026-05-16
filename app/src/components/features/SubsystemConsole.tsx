@@ -7,7 +7,7 @@ import { TONE, Panel, Spark, waveSeries } from '@/components/features/SituationR
 import { instantiateMinistry, systemKindLabel, blueprintFor } from '@/lib/institution/blueprint';
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
-  workloadIntelligence, hospitalOps, diseaseIntel,
+  workloadIntelligence, hospitalOps, diseaseIntel, patientServices,
 } from '@/lib/gov/health-systems';
 import type { Ministry } from '@/lib/api/types';
 
@@ -159,6 +159,97 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
                   <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: r.urgency === 'emergency' ? TONE.alert : r.urgency === 'urgent' ? TONE.warn : TONE.ok }}>{r.urgency}</span>
                 </div>
                 <div className="truncate text-[8.5px] text-ink-muted">{r.reason} · from {r.from} · {r.ageHrs}h</div>
+              </div>
+            ))}
+          </Panel>
+        </div>
+      </div>
+    );
+  }
+
+  if (isHealth && (group === 'patient' || group === 'pharma' || group === 'finance' || group === 'regulatory')) {
+    const ps = patientServices(id, ts);
+    const rx = prescriptions(id, ts);
+    const labs = labRequests(id, ts);
+    const refs = referrals(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Citizens enrolled" v={`${ps.registeredM}M`} t="ok" />
+          <Stat l="Portal uptime" v={`${ps.portalUptime}%`} t={ps.portalUptime >= 99 ? 'ok' : 'warn'} />
+          <Stat l="Appointments today" v={ps.appointmentsToday.toLocaleString()} t="ok" />
+          <Stat l="Insurance coverage" v={`${ps.insuranceCoverage}%`} t={ps.insuranceCoverage >= 75 ? 'ok' : 'warn'} />
+          <Stat l="Claims pending" v={ps.claimsPending.toLocaleString()} t={ps.claimsPending > 3000 ? 'alert' : 'warn'} />
+          <Stat l="Treatment adherence" v={`${ps.treatmentTracking.adherencePct}%`} t={ps.treatmentTracking.adherencePct >= 80 ? 'ok' : 'warn'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-3">
+          <Panel title="Patient portal — appointments" meta="citizen-facing scheduling" bodyClass="!p-0">
+            {ps.appointments.map(a => (
+              <div key={a.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <span className="w-12 shrink-0 font-mono tabular-nums text-ink-muted">{a.when}</span>
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{a.clinic}</span>
+                <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: a.status === 'completed' ? TONE.ok : a.status === 'in-queue' ? TONE.warn : 'rgb(var(--c-ink-muted))' }}>{a.status}</span>
+              </div>
+            ))}
+          </Panel>
+          <Panel title="Vaccination records" meta="immunisation registry" bodyClass="!p-2">
+            <div className="space-y-1">
+              {ps.vaccination.map(v => {
+                const vt = v.status === 'overdue' ? 'alert' : v.status === 'due' ? 'warn' : 'ok';
+                return (
+                  <div key={v.vaccine} className="flex items-center gap-2 text-[10px]">
+                    <span className="min-w-0 flex-1 truncate text-ink-soft">{v.vaccine}</span>
+                    <span className="shrink-0 text-ink-muted">{v.doses}d</span>
+                    <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: tc(vt) }}>{v.status}</span>
+                  </div>
+                );
+              })}
+            </div>
+            <div className="mt-2 text-[9px] text-ink-muted">Linked to disease-intelligence vaccination analytics &amp; pharmaceutical demand.</div>
+          </Panel>
+          <Panel title="Health alerts & treatment tracking" meta="citizen health continuity" bodyClass="!p-2">
+            <div className="space-y-1">
+              {ps.alerts.map((al, i) => (
+                <div key={i} className="flex items-start gap-1.5 text-[10px]">
+                  <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: al.level === 'urgent' ? TONE.alert : al.level === 'advisory' ? TONE.warn : TONE.ok }} />
+                  <span className="min-w-0"><span className="block text-ink">{al.label}</span><span className="block truncate text-[8.5px] text-ink-muted">{al.detail}</span></span>
+                </div>
+              ))}
+            </div>
+            <div className="mt-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[10px]">
+              <span className="text-ink-soft">Active treatment plans</span>
+              <span className="ml-2 font-mono tabular-nums" style={{ color: TONE.ok }}>{ps.treatmentTracking.active.toLocaleString()}</span>
+              <span className="ml-2 text-ink-muted">adherence {ps.treatmentTracking.adherencePct}%</span>
+            </div>
+          </Panel>
+        </div>
+        <div className="grid gap-2 xl:grid-cols-3">
+          <Panel title="Prescriptions" meta="issuance · dispensing" bodyClass="!p-0">
+            {rx.map(p => (
+              <div key={p.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{p.drug}</span>
+                <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: p.status === 'flagged' ? TONE.alert : p.status === 'dispensed' ? TONE.ok : TONE.warn }}>{p.status}</span>
+              </div>
+            ))}
+          </Panel>
+          <Panel title="Laboratory results" meta="diagnostics return" bodyClass="!p-0">
+            {labs.map(l => (
+              <div key={l.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{l.test}</span>
+                <span className="shrink-0 text-[8px] uppercase text-ink-muted">{l.priority}</span>
+                <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: l.status === 'resulted' ? TONE.ok : TONE.warn }}>{l.status}</span>
+              </div>
+            ))}
+          </Panel>
+          <Panel title="Referrals & specialist routing" meta="continuity of care" bodyClass="!p-0">
+            {refs.map(r => (
+              <div key={r.id} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="truncate text-ink">{r.to}</span>
+                  <span className="shrink-0 text-[8px] uppercase tracking-wider" style={{ color: r.urgency === 'emergency' ? TONE.alert : r.urgency === 'urgent' ? TONE.warn : TONE.ok }}>{r.urgency}</span>
+                </div>
+                <div className="truncate text-[8.5px] text-ink-muted">{r.reason} · from {r.from}</div>
               </div>
             ))}
           </Panel>

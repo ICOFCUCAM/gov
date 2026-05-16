@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
-  workloadIntelligence, hospitalOps, diseaseIntel, healthInstability,
+  workloadIntelligence, hospitalOps, diseaseIntel, healthInstability, patientServices,
 } from './health-systems';
 
 describe('health systems engine', () => {
@@ -50,6 +50,17 @@ describe('health systems engine', () => {
     expect(d.outbreaks.length).toBe(6);
     for (let i = 1; i < d.outbreaks.length; i++) expect(d.outbreaks[i - 1]!.rt).toBeGreaterThanOrEqual(d.outbreaks[i]!.rt);
     expect(d.forecast.length).toBe(4);
+  });
+
+  it('patient services is deterministic and coherent', () => {
+    const p = patientServices('MOH', 70);
+    expect(p).toEqual(patientServices('MOH', 70));
+    expect(p.portalUptime).toBeLessThanOrEqual(100);
+    expect(p.insuranceCoverage).toBeGreaterThanOrEqual(0);
+    expect(p.insuranceCoverage).toBeLessThanOrEqual(100);
+    expect(p.appointments.length).toBeGreaterThan(0);
+    expect(p.vaccination.every(v => ['up-to-date', 'due', 'overdue'].includes(v.status))).toBe(true);
+    expect(p.alerts.every(a => ['info', 'advisory', 'urgent'].includes(a.level))).toBe(true);
   });
 
   it('healthInstability is a bounded 0-100 propagation signal', () => {

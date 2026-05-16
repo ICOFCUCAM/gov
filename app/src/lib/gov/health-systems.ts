@@ -126,6 +126,56 @@ export function workloadIntelligence(roster: Doctor[]): { specialties: Specialty
   };
 }
 
+// ── Patient / citizen healthcare infrastructure ────────────────────────
+export interface Appointment { id: string; clinic: string; when: string; status: 'scheduled' | 'confirmed' | 'in-queue' | 'completed' }
+export interface VaccinationRecord { vaccine: string; doses: number; status: 'up-to-date' | 'due' | 'overdue' }
+export interface HealthAlert { label: string; level: 'info' | 'advisory' | 'urgent'; detail: string }
+export interface PatientServices {
+  registeredM: number;          // millions enrolled in the citizen portal
+  portalUptime: number;
+  appointmentsToday: number;
+  appointments: Appointment[];
+  vaccination: VaccinationRecord[];
+  insuranceCoverage: number;    // % population covered
+  claimsPending: number;
+  treatmentTracking: { active: number; adherencePct: number };
+  alerts: HealthAlert[];
+}
+const CLINICS = ['Central Polyclinic', 'Northern District Hospital', 'Coastal Health Centre', 'Highland Clinic', 'Eastern Referral'];
+const VACCINES = ['Routine childhood', 'Influenza (seasonal)', 'Measles (MR)', 'HPV', 'COVID booster'];
+export function patientServices(instId: string, t: number): PatientServices {
+  const appointments: Appointment[] = Array.from({ length: 8 }, (_, i) => {
+    const phase = Math.floor((t / 6 + seed(`ap:o:${instId}:${i}`) * 4)) % 4;
+    return {
+      id: `AP-${300 + i}`,
+      clinic: CLINICS[i % CLINICS.length]!,
+      when: `${1 + Math.round(seed(`ap:w:${instId}:${i}`) * 13)}:${seed(`ap:m:${instId}:${i}`) > 0.5 ? '30' : '00'}`,
+      status: (['scheduled', 'confirmed', 'in-queue', 'completed'] as const)[phase]!,
+    };
+  });
+  const vaccination: VaccinationRecord[] = VACCINES.map((vaccine, i) => {
+    const s = seed(`vx:${instId}:${i}`);
+    return { vaccine, doses: 1 + Math.round(seed(`vxd:${instId}:${i}`) * 3), status: s > 0.78 ? 'overdue' : s > 0.5 ? 'due' : 'up-to-date' };
+  });
+  const insuranceCoverage = Math.round(wave(`ins:${instId}`, t, 48, 92));
+  const alerts: HealthAlert[] = [
+    { label: 'Seasonal influenza advisory', level: 'advisory', detail: 'Elevated transmission — vaccination recommended for at-risk groups' },
+    { label: 'Prescription ready for collection', level: 'info', detail: 'Pharmacy dispensing queue normal' },
+    ...(seed(`ha:${instId}:${Math.floor(t / 12)}`) > 0.7 ? [{ label: 'Outbreak containment notice', level: 'urgent' as const, detail: 'Localised cluster — follow regional health directives' }] : []),
+  ];
+  return {
+    registeredM: Math.round(wave(`pp:reg:${instId}`, t, 18, 42) * 10) / 10,
+    portalUptime: Math.round(wave(`pp:up:${instId}`, t, 96, 100) * 100) / 100,
+    appointmentsToday: Math.round(wave(`pp:ap:${instId}`, t, 1200, 9800)),
+    appointments,
+    vaccination,
+    insuranceCoverage,
+    claimsPending: Math.round(wave(`pp:cl:${instId}`, t, 200, 4200)),
+    treatmentTracking: { active: Math.round(wave(`pp:tt:${instId}`, t, 800, 7400)), adherencePct: Math.round(wave(`pp:ad:${instId}`, t, 62, 94)) },
+    alerts,
+  };
+}
+
 // ── Hospital operational command ───────────────────────────────────────
 export interface HospitalOps {
   beds: { total: number; occupied: number; occupancyPct: number };
