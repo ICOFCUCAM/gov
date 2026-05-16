@@ -16,6 +16,7 @@ export function NationalSimulation() {
   }, []);
   const ts = now / 4000;
   const s = simulate(key, ts);
+  const baseM = new Map(simulate('baseline', ts).ministryImpact.map(m => [m.archetype, m.stress]));
   const active = key !== 'baseline';
 
   const tele = [
@@ -89,6 +90,7 @@ export function NationalSimulation() {
                   <span className="w-20 shrink-0 truncate text-[10px] text-ink-soft">{m.archetype}</span>
                   <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${m.stress}%`, backgroundColor: TONE[tn] }} /></div>
                   <span className="w-7 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE[tn] }}>{m.stress}</span>
+                  {(() => { const d = m.stress - (baseM.get(m.archetype) ?? m.stress); return <span className="w-9 shrink-0 text-right font-mono text-[9px] tabular-nums" style={{ color: d > 0 ? TONE.alert : TONE.ink ?? 'rgb(var(--c-ink-muted))' }}>{d > 0 ? `+${d}` : d || '—'}</span>; })()}
                 </div>
               );
             })}
