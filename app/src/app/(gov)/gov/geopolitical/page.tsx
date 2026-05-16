@@ -2,6 +2,8 @@ import { CommandShell } from '@/components/ui/CommandShell';
 import { DomainCommand } from '@/components/features/DomainCommand';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Geopolitical Monitor' };
+
 
 export default function GeopoliticalMonitorPage() {
   return (

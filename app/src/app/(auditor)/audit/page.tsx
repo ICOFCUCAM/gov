@@ -2,6 +2,8 @@ import { CommandShell } from '@/components/ui/CommandShell';
 import { AuditView } from './AuditView';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Oversight & Audit' };
+
 
 export default function AuditPage() {
   return (

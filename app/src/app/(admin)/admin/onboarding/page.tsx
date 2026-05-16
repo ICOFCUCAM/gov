@@ -1,4 +1,6 @@
 import { OnboardingWizard } from './OnboardingWizard';
+export const metadata = { title: 'Municipal Onboarding' };
+
 
 export default function MunicipalOnboardingPage() {
   return (

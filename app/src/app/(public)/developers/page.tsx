@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Plain } from '@/components/ui/Plain';
+export const metadata = { title: 'Developer Guide' };
+
 
 export default function DevelopersPage() {
   return (

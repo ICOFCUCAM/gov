@@ -1,6 +1,8 @@
 import { Card } from '@/components/ui/Card';
 import { Plain } from '@/components/ui/Plain';
 import { SignInButton } from './SignInButton';
+export const metadata = { title: 'Sign in' };
+
 
 export default function LoginPage() {
   return (

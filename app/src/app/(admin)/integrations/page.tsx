@@ -3,6 +3,8 @@ import { CommandHeading } from '@/components/ui/Telemetry';
 import { InteropConsole } from './InteropConsole';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Interoperability' };
+
 
 export default function IntegrationsPage() {
   return (

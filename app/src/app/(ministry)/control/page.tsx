@@ -9,6 +9,8 @@ import { TerritoryHeat, TONE } from '@/components/features/SituationRoom';
 import { listMinistries, ministryOperations } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Ministry Control' };
+
 
 // Service health is CONFIG-DRIVEN, not a hardcoded single ministry. It
 // renders whatever institutions exist in the tenant: each ministry's name,

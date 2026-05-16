@@ -3,6 +3,8 @@ import { CommandHeading } from '@/components/ui/Telemetry';
 import { MinistriesConsole } from './MinistriesConsole';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Institutions Admin' };
+
 
 export default function MinistriesPage() {
   return (

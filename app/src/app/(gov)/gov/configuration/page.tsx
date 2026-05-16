@@ -2,6 +2,8 @@ import { CommandShell } from '@/components/ui/CommandShell';
 import { Cabinet } from '../Cabinet';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Sovereign Configuration' };
+
 
 // Sovereign configuration & administration (profile, presets, identity,
 // national indicators, institutions register) — integrated into the

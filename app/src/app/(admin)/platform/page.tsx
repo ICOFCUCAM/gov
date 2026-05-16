@@ -3,6 +3,8 @@ import { CommandHeading } from '@/components/ui/Telemetry';
 import { PlatformConsole } from './PlatformConsole';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Platform Operations' };
+
 
 export default function PlatformPage() {
   return (

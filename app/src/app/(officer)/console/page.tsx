@@ -2,6 +2,8 @@ import { CommandShell } from '@/components/ui/CommandShell';
 import { OfficerWorkspace } from './OfficerWorkspace';
 
 export const dynamic = 'force-dynamic';
+export const metadata = { title: 'Officer Console' };
+
 
 export default function ConsolePage() {
   return (
