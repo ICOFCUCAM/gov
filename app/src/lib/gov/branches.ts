@@ -1,61 +1,23 @@
-// Separation-of-powers model. The four branches of the sovereign state
-// as first-class governed structures (mirrors the institution factory:
-// composition + deterministic operational telemetry + integrity).
-// Pure; no React/DOM.
+// Constitutional process engines. Government TOPOLOGY is not defined
+// here — it is resolved from the Constitution Engine per sovereign
+// form. This module supplies the deterministic operational engines
+// (legislative pipeline, judicial docket, separation integrity,
+// readiness) that any constitutional branch runs. Pure; no React/DOM.
 
 import { seed, wave } from '@/lib/telemetry';
+import type { StateForm } from '@/lib/api/types';
+import { constitutionFor, type BranchDef, type BranchKey } from '@/lib/gov/constitution';
 
-export type BranchKey = 'legislature' | 'judiciary' | 'executive' | 'oversight';
+export type { BranchKey, BranchDef } from '@/lib/gov/constitution';
+export type Branch = BranchDef;
 
-export interface BranchBody { name: string; role: string }
-export interface Branch {
-  key: BranchKey;
-  name: string;
-  mandate: string;
-  bodies: BranchBody[];
+/** Branches resolved from the configured constitutional form. */
+export function branchesFor(form: StateForm): BranchDef[] {
+  return constitutionFor(form).branches;
 }
-
-export const BRANCHES: Branch[] = [
-  {
-    key: 'legislature', name: 'Legislature', mandate: 'Law-making · appropriation · oversight of the executive',
-    bodies: [
-      { name: 'Lower House', role: 'Primary chamber · bills & budget' },
-      { name: 'Senate (Upper House)', role: 'Review chamber · territorial representation' },
-      { name: 'Standing Committees', role: 'Scrutiny · inquiry · confirmation' },
-      { name: 'Budget Office', role: 'Independent fiscal analysis' },
-    ],
-  },
-  {
-    key: 'judiciary', name: 'Judiciary', mandate: 'Constitutional review · adjudication · rule of law',
-    bodies: [
-      { name: 'Constitutional Court', role: 'Constitutionality · separation-of-powers' },
-      { name: 'Supreme Court', role: 'Final appellate authority' },
-      { name: 'Courts of Appeal', role: 'Appellate review' },
-      { name: 'Trial Courts', role: 'First-instance adjudication' },
-    ],
-  },
-  {
-    key: 'executive', name: 'Executive', mandate: 'Administration · enforcement · national operations',
-    bodies: [
-      { name: 'Head of Government', role: 'Executive authority' },
-      { name: 'Cabinet', role: 'Collective decision · coordination' },
-      { name: 'Ministries', role: 'Institutional delivery' },
-      { name: 'Independent Agencies', role: 'Statutory administration' },
-    ],
-  },
-  {
-    key: 'oversight', name: 'Oversight', mandate: 'Audit · integrity · constitutional safeguards',
-    bodies: [
-      { name: 'Auditor-General', role: 'Public-finance assurance' },
-      { name: 'Ombudsman', role: 'Maladministration redress' },
-      { name: 'Inspectorate', role: 'Anti-corruption enforcement' },
-      { name: 'Electoral Commission', role: 'Mandate integrity' },
-    ],
-  },
-];
-
-export function branchFor(key: BranchKey): Branch {
-  return BRANCHES.find(b => b.key === key) ?? BRANCHES[2]!;
+export function branchFor(form: StateForm, key: string): BranchDef {
+  const bs = constitutionFor(form).branches;
+  return bs.find(b => b.key === key) ?? bs.find(b => b.key === 'executive') ?? bs[0]!;
 }
 
 // Deterministic legislative pipeline (bills moving through stages).
@@ -79,11 +41,8 @@ export function judicialDocket(t: number) {
 }
 
 // ── Legislature operating environment ────────────────────────────────
-export function chambers(t: number) {
-  return [
-    { name: 'National Assembly', seats: 350, role: 'Primary chamber' },
-    { name: 'Senate', seats: 68, role: 'Territorial review chamber' },
-  ].map(c => {
+export function chambersFor(form: StateForm, t: number) {
+  return constitutionFor(form).legislature.chambers.map(c => {
     const present = Math.round(c.seats * (0.55 + seed(`quorum:${c.name}`) * 0.4));
     const quorum = Math.ceil(c.seats / 2);
     return {
@@ -113,17 +72,15 @@ export function legislativeCalendar(t: number) {
 }
 
 // ── Judiciary operating ecosystem ────────────────────────────────────
-export function courtHierarchy(t: number) {
-  return [
-    { name: 'Constitutional Court', tier: 'Apex', benches: 9 },
-    { name: 'Supreme Court', tier: 'Apex', benches: 21 },
-    { name: 'Courts of Appeal', tier: 'Appellate', benches: 64 },
-    { name: 'High Courts', tier: 'Superior', benches: 140 },
-    { name: 'Regional / Trial Courts', tier: 'First instance', benches: 920 },
-  ].map(c => {
-    const load = 40 + Math.round(wave(`court:${c.name}`, t, 0, 55));
-    return { ...c, load, backlog: Math.round(c.benches * seed(`bk:${c.name}`) * 6),
-      clearance: 70 + Math.round(seed(`clr:${c.name}`) * 28) };
+export function courtHierarchyFor(form: StateForm, t: number) {
+  const c0 = constitutionFor(form);
+  return c0.judicialTiers.map((name, i) => {
+    const benches = [9, 21, 64, 140, 920][i] ?? Math.max(6, 60 - i * 8);
+    const tier = name === c0.judicialApex ? 'Apex' : i <= 1 ? 'Superior' : i === c0.judicialTiers.length - 1 ? 'First instance' : 'Appellate';
+    const load = 40 + Math.round(wave(`court:${name}`, t, 0, 55));
+    return { name, tier, benches, load,
+      backlog: Math.round(benches * seed(`bk:${name}`) * 6),
+      clearance: 70 + Math.round(seed(`clr:${name}`) * 28) };
   });
 }
 export function constitutionalReview(t: number) {

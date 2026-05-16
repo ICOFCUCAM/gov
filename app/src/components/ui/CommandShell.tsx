@@ -8,6 +8,7 @@ import { TONE, ACCENT, PALETTE } from '@/components/features/SituationRoom';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { deployableInstitutions } from '@/lib/institution/readiness';
+import { constitutionFor } from '@/lib/gov/constitution';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; key: string }[] }[] = [
@@ -19,10 +20,6 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution state', href: '/ops', key: 'ops' },
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity', href: '/audit', key: 'aud' },
     { i: '⚖', l: 'Branches of Government', s: 'Separation of powers', href: '/gov/branches', key: 'branches' },
-  ]},
-  { g: 'Constitutional Branches', items: [
-    { i: '▤', l: 'Legislature', s: 'Chambers · bills · committees', href: '/gov/legislature', key: 'legislature' },
-    { i: '⚖', l: 'Judiciary', s: 'Courts · docket · review', href: '/gov/judiciary', key: 'judiciary' },
   ]},
   { g: 'Strategic Domains', items: [
     { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury', key: 'trs' },
@@ -196,6 +193,24 @@ export function CommandShell({
                 })}
               </div>
             ))}
+            {(() => {
+              const cm = constitutionFor(sov?.stateForm ?? 'republic');
+              return (
+                <div className="mb-0.5">
+                  <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Constitutional Branches · {cm.label}</div>
+                  {cm.branches.map(br => (
+                    <Link key={br.key} href={`/gov/branch/${br.key}`}
+                      className="focus-ring flex items-center gap-2 border-l-2 border-transparent px-3 py-1 text-ink-muted no-underline transition-colors duration-150 hover:bg-surface-2/50 hover:text-ink">
+                      <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[10px] ring-1 ring-line">⚖</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[11.5px]">{br.name}</span>
+                        <span className="block truncate text-[8.5px] text-ink-muted">{br.mandate.split(' · ')[0]}</span>
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              );
+            })()}
             {(() => {
               const dir = deployableInstitutions(mins);
               if (dir.length === 0) return null;

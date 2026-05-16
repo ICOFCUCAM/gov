@@ -10,7 +10,8 @@ import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { deployableInstitutions, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemHealth } from '@/lib/institution/operational-catalog';
-import { BRANCHES, branchReadiness, separationIntegrity } from '@/lib/gov/branches';
+import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
+import { constitutionFor } from '@/lib/gov/constitution';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] = [
@@ -277,9 +278,9 @@ export default function SovereignCommandCenter() {
             {(() => {
               const t = now / 4000;
               const sep = separationIntegrity(t);
-              const cells = BRANCHES.map(b => {
+              const cells = constitutionFor(sov?.stateForm ?? 'republic').branches.map(b => {
                 const r = branchReadiness(b.key, t);
-                return { l: b.name, v: `${r.total}% · ${r.posture}`, c: r.total >= 85 ? 'rgb(var(--c-ok))' : r.total >= 65 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))', href: b.key === 'legislature' ? '/gov/legislature' : b.key === 'judiciary' ? '/gov/judiciary' : b.key === 'oversight' ? '/audit' : '/gov' };
+                return { l: b.name, v: `${r.total}% · ${r.posture}`, c: r.total >= 85 ? 'rgb(var(--c-ok))' : r.total >= 65 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))', href: `/gov/branch/${b.key}` };
               });
               return (
                 <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-5">

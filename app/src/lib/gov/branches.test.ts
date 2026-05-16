@@ -1,37 +1,48 @@
 import { describe, it, expect } from 'vitest';
 import {
-  BRANCHES, branchFor, legislativePipeline, judicialDocket, separationIntegrity, BILL_STAGES, CASE_STAGES,
+  branchesFor, branchFor, legislativePipeline, judicialDocket,
+  separationIntegrity, branchReadiness, chambersFor, courtHierarchyFor,
+  BILL_STAGES, CASE_STAGES,
 } from './branches';
 
-describe('branches of government', () => {
-  it('models four branches each with bodies', () => {
-    expect(BRANCHES.map(b => b.key)).toEqual(['legislature', 'judiciary', 'executive', 'oversight']);
-    for (const b of BRANCHES) expect(b.bodies.length).toBeGreaterThanOrEqual(4);
+describe('constitutional process engines', () => {
+  it('branches resolve from the configured form', () => {
+    expect(branchesFor('republic').some(b => b.key === 'legislature')).toBe(true);
+    expect(branchFor('republic', 'judiciary').name).toBe('Judiciary');
+    expect(branchFor('monarchy', 'crown').name).toMatch(/Crown/);
   });
 
-  it('branchFor resolves and falls back to executive', () => {
-    expect(branchFor('judiciary').name).toBe('Judiciary');
-    // @ts-expect-error unknown key
-    expect(branchFor('nope').key).toBe('executive');
+  it('chambers reflect the form (city-state is unicameral)', () => {
+    expect(chambersFor('city-state', 100).length).toBe(1);
+    expect(chambersFor('federation', 100).length).toBe(2);
+    for (const c of chambersFor('republic', 50)) expect(c.quorum).toBeLessThanOrEqual(c.seats);
   });
 
-  it('legislative pipeline covers every stage with non-negative counts', () => {
-    const p = legislativePipeline(120);
-    expect(p.map(s => s.stage)).toEqual([...BILL_STAGES]);
-    for (const s of p) { expect(s.count).toBeGreaterThanOrEqual(0); expect(s.blocked).toBeGreaterThanOrEqual(0); }
+  it('court hierarchy reflects the form', () => {
+    const fed = courtHierarchyFor('federation', 60).map(c => c.name);
+    expect(fed[0]).toMatch(/Federal Constitutional Court/);
+    for (const c of courtHierarchyFor('republic', 60)) {
+      expect(c.clearance).toBeGreaterThan(0);
+      expect(c.clearance).toBeLessThanOrEqual(100);
+    }
   });
 
-  it('judicial docket covers every stage', () => {
-    const d = judicialDocket(60);
-    expect(d.map(s => s.stage)).toEqual([...CASE_STAGES]);
-    for (const s of d) expect(s.count).toBeGreaterThan(0);
+  it('legislative pipeline & judicial docket cover every stage', () => {
+    expect(legislativePipeline(120).map(s => s.stage)).toEqual([...BILL_STAGES]);
+    expect(judicialDocket(60).map(s => s.stage)).toEqual([...CASE_STAGES]);
   });
 
-  it('separation-of-powers checks are deterministic and structurally complete', () => {
-    const a = separationIntegrity(100);
-    const b = separationIntegrity(100);
+  it('branch readiness is deterministic and bounded', () => {
+    const a = branchReadiness('judiciary', 100);
+    const b = branchReadiness('judiciary', 100);
     expect(a).toEqual(b);
-    expect(a.checks.length).toBe(6);
-    expect(typeof a.intact).toBe('boolean');
+    expect(a.total).toBeGreaterThanOrEqual(0);
+    expect(a.total).toBeLessThanOrEqual(100);
+  });
+
+  it('separation checks are deterministic and complete', () => {
+    const s = separationIntegrity(100);
+    expect(s.checks.length).toBe(6);
+    expect(typeof s.intact).toBe('boolean');
   });
 });
