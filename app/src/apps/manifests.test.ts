@@ -25,4 +25,16 @@ describe('federated app manifests', () => {
       expect(Array.isArray(a.nav)).toBe(true);
     }
   });
+
+  it('every ministry archetype yields a unique sovereign domain', () => {
+    const archetypes = ['HEALTH', 'EDUCATION', 'TRANSPORT', 'ENERGY', 'FINANCE', 'AGRICULTURE', 'JUSTICE', 'ENVIRONMENT', 'INTERIOR', 'LABOR', 'TRADE', 'GENERIC'] as const;
+    const domains = archetypes.map(a => ministryAppManifest({ id: `MIN-${a}`, name: a, archetype: a }).domain);
+    expect(new Set(domains).size).toBe(domains.length);
+    for (const a of archetypes) {
+      const mf = ministryAppManifest({ id: `MIN-${a}`, name: a, archetype: a });
+      expect(mf.kind).toBe('ministry');
+      expect(mf.instanceId).toBe(`MIN-${a}`);
+      expect(mf.nav.length).toBeGreaterThan(0);
+    }
+  });
 });
