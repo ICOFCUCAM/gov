@@ -10,8 +10,9 @@ import { resolveIdentity } from '@/lib/sovereign-identity';
 import {
   TONE, ACCENT, PALETTE, seed, toneFor, rel, Panel, Spark, LiveValue, NationalMap, TerritoryHeat, waveSeries, domainStress,
 } from '@/components/features/SituationRoom';
+import { buildCascade } from '@/lib/institution/cascade';
 import type {
-  NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey,
+  NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
 } from '@/lib/api/types';
 
 const RED = '#f1707a';
@@ -87,6 +88,7 @@ export function CabinetIntelligence() {
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
+  const [mins, setMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(() => Date.now());
   const [war, setWar] = React.useState(false);
   const [openEsc, setOpenEsc] = React.useState<number | null>(0);
@@ -94,12 +96,13 @@ export function CabinetIntelligence() {
 
   React.useEffect(() => {
     const load = async () => {
-      const [n, c, s] = await Promise.all([
+      const [n, c, s, mm] = await Promise.all([
         api.cabinet.national().catch(() => null),
         api.cabinet.coordination().catch(() => null),
         api.sovereign.get().then(r => r.sovereign).catch(() => null),
+        api.org.ministries().then(r => r.ministries).catch(() => []),
       ]);
-      setNat(n); setCoord(c); setSov(s);
+      setNat(n); setCoord(c); setSov(s); setMins(mm);
     };
     void load();
     const poll = setInterval(() => void load(), 10_000);
@@ -589,14 +592,19 @@ export function CabinetIntelligence() {
           </div>
 
           {/* Row 5 — executive posture strip */}
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
-            {[
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-6">
+            {(() => {
+              const casc = buildCascade(mins, (mid) => Math.round(waveSeries(`nh:${mid}`, now / 4000, 1, 58, 99).at(-1)!));
+              const cc = casc.filter(c => c.posture === 'critical').length;
+              const cs = casc.filter(c => c.posture === 'strained').length;
+              return [
               { l: 'Readiness posture', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
               { l: 'Operational tempo', v: `${Math.round(40 + seed(`tempo:${epoch}`) * 55)} ops/min`, t: 'ok' },
               { l: 'Active escalations', v: `${escalations.length} · ${escalations.filter(e => e.sevState === 'critical').length} crit`, t: escalations.length ? 'alert' : 'ok' },
+              { l: 'Cascade exposure', v: cc ? `${cc} crit · ${cs} strained` : cs ? `${cs} strained` : 'Contained', t: cc ? 'alert' : cs ? 'warn' : 'ok' },
               { l: 'Population impacted', v: `${(0.4 + seed(`pi:${epoch}`) * 9).toFixed(1)}M`, t: 'warn' },
               { l: 'War Room', v: war ? 'ENGAGED' : 'Standby', t: war ? 'alert' : 'neutral' },
-            ].map(s => (
+            ]; })().map(s => (
               <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
                 <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
                 <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
