@@ -9,7 +9,8 @@
 // remain when you return, and the Operations Ledger sees them all.
 
 import {
-  seedWorkItems, applyAction, type WorkItem, type WorkKind, type ActionKey,
+  seedWorkItems, applyAction, workflowFor,
+  type WorkItem, type WorkKind, type ActionKey,
 } from '@/lib/gov/runtime-workflow';
 
 export interface LedgerEntry {
@@ -86,6 +87,29 @@ export function reassignItem(scope: string, itemId: string, assignee: string): v
   const next = items.slice();
   next[idx] = { ...items[idx]!, assignee };
   scopes.set(scope, next);
+  emit();
+}
+
+let injCount = 0;
+/** Inject an operator-originated work item (e.g. an executive directive). */
+export function injectItem(scope: string, kind: WorkKind, title: string, by: string): void {
+  const wf = workflowFor(kind);
+  const items = scopes.get(scope) ?? [];
+  const item: WorkItem = {
+    id: `${kind.slice(0, 2).toUpperCase()}-D${900 + injCount++}`,
+    title,
+    kind,
+    stage: wf.stages[0]!,
+    priority: 'priority',
+    assignee: by,
+    ageHrs: 0,
+    meta: { origin: 'directive' },
+    history: [],
+    closed: false,
+  };
+  scopes.set(scope, [item, ...items]);
+  ledger.unshift({ at: Date.now(), scope, itemId: item.id, kind, from: '—', to: wf.stages[0]!, action: 'assign', by });
+  if (ledger.length > 200) ledger.length = 200;
   emit();
 }
 

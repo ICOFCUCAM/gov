@@ -17,6 +17,8 @@ import { ministryDependencies } from '@/lib/institution/ministry-fabric';
 import { buildOperationalChain } from '@/lib/gov/operational-chain';
 import { scenarioSweep, mitigationPlaybook, prioritisedThreats } from '@/lib/gov/simulation';
 import { stateFabric } from '@/lib/gov/state-fabric';
+import { injectItem } from '@/lib/gov/runtime-store';
+import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { nationalResilience } from '@/lib/gov/national-resilience';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
@@ -102,7 +104,11 @@ export function CabinetIntelligence() {
   const [openMin, setOpenMin] = React.useState<string | null>(null);
   const [directives, setDirectives] = React.useState<{ l: string; at: number }[]>([]);
   const [natAlert, setNatAlert] = React.useState(false);
-  const issue = (l: string, fx?: () => void) => { setDirectives(d => [{ l, at: Date.now() }, ...d].slice(0, 6)); fx?.(); };
+  const issue = (l: string, fx?: () => void) => {
+    setDirectives(d => [{ l, at: Date.now() }, ...d].slice(0, 6));
+    injectItem('cabinet:directives', 'case', l, 'Cabinet Office');
+    fx?.();
+  };
   const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true });
 
   React.useEffect(() => {
@@ -899,6 +905,8 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
           </div>
+
+          <RuntimeQueue scope="cabinet:directives" kind="case" title="Executive directive runtime — issued directives become tracked, executable work" by="Cabinet Office" n={6} />
 
           {/* Row 5 — executive posture strip */}
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-4 xl:grid-cols-7">
