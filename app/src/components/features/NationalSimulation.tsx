@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel, Spark, waveSeries } from '@/components/features/SituationRoom';
 import { identityFor } from '@/lib/archetype-profiles';
+import { projectRegions } from '@/lib/gov/regions';
 import { SCENARIOS, simulate, scenarioSweep, mitigationPlaybook, prioritisedThreats, type ScenarioKey } from '@/lib/gov/simulation';
 import type { ArchetypeKey } from '@/lib/api/types';
 
@@ -21,6 +22,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
   const sweep = scenarioSweep(ts);
   const pb = mitigationPlaybook(key, ts);
   const prio = prioritisedThreats(ts);
+  const regionProj = projectRegions(key, ts).sort((a, b) => a.readinessDelta - b.readinessDelta);
 
   const tele = [
     { l: 'Scenario', v: s.scenario.label.split(' (')[0], t: active ? 'warn' : 'ok' },
@@ -147,14 +149,16 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
           </div>
         </Panel>
 
-        <Panel title="Regional impact" meta="readiness delta" bodyClass="!p-1.5">
+        <Panel title="Regional impact" meta="projected readiness · posture" bodyClass="!p-1.5">
           <div className="space-y-1">
-            {s.regionImpact.map(r => {
-              const tn = r.readinessDelta <= -25 ? 'alert' : r.readinessDelta < 0 ? 'warn' : 'ok';
+            {regionProj.map(r => {
+              const tn = r.projectedPosture === 'critical' ? 'alert' : r.projectedPosture === 'elevated' ? 'warn' : r.projectedPosture === 'watch' ? 'neutral' : 'ok';
               return (
-                <div key={r.region} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[11px]">
-                  <span className="truncate text-ink-soft">{r.region}</span>
-                  <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{r.readinessDelta}</span>
+                <div key={r.name} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[11px]">
+                  <span className="w-24 shrink-0 truncate text-ink-soft">{r.capital ? '★ ' : ''}{r.name}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${r.readiness}%`, backgroundColor: TONE[tn] }} /></div>
+                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: TONE[tn] }}>{r.readiness}</span>
+                  <span className="w-9 shrink-0 text-right font-mono text-[9px] tabular-nums" style={{ color: r.readinessDelta < 0 ? TONE.alert : 'rgb(var(--c-ink-muted))' }}>{r.readinessDelta < 0 ? r.readinessDelta : '—'}</span>
                 </div>
               );
             })}
