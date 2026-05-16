@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client';
 import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/SituationRoom';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { instantiateInstitution, systemKindLabel, type InstitutionKind } from '@/lib/institution/blueprint';
+import { legislativeState, committeeInquiries, BILL_STAGES } from '@/lib/gov/legislative-engine';
 import {
   branchFor, branchReadiness, separationIntegrity,
   legislativePipeline, chambersFor, committees, legislativeCalendar,
@@ -34,7 +35,7 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
       : {} as Record<string, string[]>;
   void tabsByEngine;
   const tabs = ['Ecosystem', ...(
-    engine === 'legislative' ? ['Chambers', 'Committees', 'Bill pipeline', 'Calendar', 'Oversight inquiries']
+    engine === 'legislative' ? ['Live legislature', 'Chambers', 'Committees', 'Bill pipeline', 'Calendar', 'Oversight inquiries']
       : engine === 'judicial' ? ['Court hierarchy', 'Docket', 'Constitutional review', 'Registries', 'Justice analytics']
       : engine === 'audit' ? ['Controls', 'Bodies', 'Authority']
       : engine === 'electoral' ? ['Electoral cycle', 'Bodies', 'Authority']
@@ -154,6 +155,101 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
                   </div>
                 ))}
               </div>
+            </Panel>
+          </div>
+        );
+      })()}
+
+      {tab === 'Live legislature' && (() => {
+        const ls = legislativeState(ts, model.legislature.chambers.map(c => c.name).slice(0, 2));
+        const inq = committeeInquiries(ts);
+        const stageTone = (b: typeof ls.bills[number]) =>
+          b.stage === 'Withdrawn' ? 'rgb(var(--c-ink-muted))' : b.blocked ? TONE.alert : b.stage === 'Published' ? TONE.ok : TONE.warn;
+        return (
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+              {[
+                { l: 'Bills tracked', v: `${ls.bills.length}`, t: 'ok' as const },
+                { l: 'In session', v: `${ls.inSession}`, t: 'ok' as const },
+                { l: 'Blocked', v: `${ls.blocked}`, t: ls.blocked ? 'alert' as const : 'ok' as const },
+                { l: 'Published YTD', v: `${ls.publishedYtd}`, t: 'ok' as const },
+                { l: 'Attendance', v: `${ls.attendancePct}%`, t: ls.attendancePct >= 60 ? 'ok' as const : 'warn' as const },
+                { l: 'Quorum', v: ls.quorum ? 'HELD' : 'AT RISK', t: ls.quorum ? 'ok' as const : 'alert' as const },
+              ].map(s => (
+                <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2">
+                  <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
+                  <div className="font-mono text-[14px] tabular-nums" style={{ color: TONE[s.t] }}>{s.v}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-2 xl:grid-cols-3">
+              <Panel title="Bill lifecycle ledger" meta="live state machine · draft → published" className="xl:col-span-2" bodyClass="!p-0">
+                <div className="max-h-[360px] overflow-y-auto">
+                  {ls.bills.map(b => (
+                    <div key={b.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0">
+                      <span className="w-12 shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{b.id}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[11px] text-ink">{b.title}</span>
+                        <span className="block truncate text-[8.5px] text-ink-muted">{b.sponsor} · {b.chamber} · {b.priority} · {b.ageDays}d</span>
+                      </span>
+                      <span className="w-28 shrink-0">
+                        <span className="mb-0.5 block text-right text-[9px] font-semibold" style={{ color: stageTone(b) }}>
+                          {b.stage}{b.blocked ? ' · blocked' : ''}
+                        </span>
+                        <span className="block h-1 overflow-hidden rounded-full bg-surface-2">
+                          <span className="block h-full" style={{ width: `${b.progressPct}%`, backgroundColor: stageTone(b) }} />
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+
+              <div className="space-y-2">
+                <Panel title="Floor division" meta={ls.division ? 'live vote' : 'no bill on the floor'} bodyClass="!p-2">
+                  {ls.division ? (
+                    <div>
+                      <div className="mb-1 truncate text-[11px] text-ink">{ls.division.billTitle}</div>
+                      <div className="flex h-3 overflow-hidden rounded-[3px]">
+                        <span style={{ width: `${(ls.division.ayes / ls.division.total) * 100}%`, backgroundColor: TONE.ok }} />
+                        <span style={{ width: `${(ls.division.noes / ls.division.total) * 100}%`, backgroundColor: TONE.alert }} />
+                        <span style={{ width: `${(ls.division.abstain / ls.division.total) * 100}%`, backgroundColor: 'rgb(var(--c-line))' }} />
+                      </div>
+                      <div className="mt-1 flex justify-between text-[10px]">
+                        <span style={{ color: TONE.ok }}>Ayes {ls.division.ayes}</span>
+                        <span style={{ color: TONE.alert }}>Noes {ls.division.noes}</span>
+                        <span className="text-ink-muted">Abst {ls.division.abstain}</span>
+                      </div>
+                      <div className="mt-1 text-[10px] font-bold uppercase tracking-wider" style={{ color: ls.division.carried ? TONE.ok : TONE.alert }}>
+                        {ls.division.carried ? 'Carried' : 'Not carried'} · threshold {ls.division.threshold}
+                      </div>
+                    </div>
+                  ) : <p className="text-[10px] text-ink-muted">No bill at division stage this sitting.</p>}
+                </Panel>
+                <Panel title="Political composition" meta="seats by bloc" bodyClass="!p-2">
+                  <div className="space-y-1">
+                    {ls.parties.map(p => (
+                      <div key={p.party} className="flex items-center gap-2 text-[10px]">
+                        <span className="min-w-0 flex-1 truncate text-ink-soft">{p.party}</span>
+                        <span className="text-[8px] uppercase text-ink-muted">{p.bloc}</span>
+                        <span className="w-8 shrink-0 text-right font-mono tabular-nums text-ink">{p.seats}</span>
+                      </div>
+                    ))}
+                  </div>
+                </Panel>
+              </div>
+            </div>
+
+            <Panel title="Oversight inquiries" meta="committee investigations · live" bodyClass="!p-0">
+              {inq.map((q, i) => (
+                <div key={i} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[11px]">
+                  <span className="w-44 shrink-0 truncate text-ink">{q.committee}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{q.subject}</span>
+                  <span className="shrink-0 text-[9px] uppercase tracking-wider" style={{ color: q.status === 'reported' ? TONE.ok : TONE.warn }}>{q.status}</span>
+                  <span className="w-20 shrink-0 text-right font-mono text-[9px] tabular-nums text-ink-muted">{q.witnessesHeard}w · {q.daysActive}d</span>
+                </div>
+              ))}
             </Panel>
           </div>
         );
