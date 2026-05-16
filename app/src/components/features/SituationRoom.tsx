@@ -454,11 +454,19 @@ export function NationalMap({
             const mx = (a.cx + b.cx) / 2 + (seed(`cm:${i}`) - 0.5) * 60;
             const my = (a.cy + b.cy) / 2 - 30 - seed(`cn:${i}`) * 40;
             const col = CORR_TONE[c.kind];
+            const d = `M${a.cx},${a.cy} Q${mx},${my} ${b.cx},${b.cy}`;
+            const dur = `${(2.6 + seed(`cd:${i}`) * 2.4).toFixed(1)}s`;
             return (
               <g key={`c${i}`}>
-                <path d={`M${a.cx},${a.cy} Q${mx},${my} ${b.cx},${b.cy}`} fill="none" stroke={col} strokeWidth="3.4" strokeOpacity="0.10" />
-                <path d={`M${a.cx},${a.cy} Q${mx},${my} ${b.cx},${b.cy}`} fill="none" stroke={col} strokeWidth="1.5"
-                  strokeOpacity="0.6" strokeDasharray="2 8" strokeLinecap="round" className="motion-safe:animate-dash-flow" style={{ animationDuration: flowDur }} />
+                <path d={d} fill="none" stroke={col} strokeWidth="3.6" strokeOpacity="0.10" />
+                <path d={d} fill="none" stroke={col} strokeWidth="1.4"
+                  strokeOpacity="0.55" strokeDasharray="2 8" strokeLinecap="round" className="motion-safe:animate-dash-flow" style={{ animationDuration: flowDur }} />
+                {/* directional logistics flow packets */}
+                {[0, 0.5].map((off, k) => (
+                  <circle key={k} r={c.kind === 'energy' ? 1.7 : 1.3} fill={col} opacity="0.85">
+                    <animateMotion dur={dur} begin={`${off * parseFloat(dur)}s`} repeatCount="indefinite" path={d} />
+                  </circle>
+                ))}
               </g>
             );
           }) : null}
