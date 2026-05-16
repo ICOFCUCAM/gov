@@ -272,6 +272,10 @@ const INFRA_KINDS = [
   { k: 'energy', g: '⚡', label: 'Power station' },
   { k: 'logistics', g: '▣', label: 'Logistics hub' },
   { k: 'water', g: '◑', label: 'Water works' },
+  { k: 'border', g: '⛓', label: 'Border checkpoint' },
+  { k: 'comms', g: '◬', label: 'Comms tower' },
+  { k: 'command', g: '◈', label: 'Command facility' },
+  { k: 'emergency', g: '⛑', label: 'Emergency hub' },
 ] as const;
 
 
@@ -453,6 +457,15 @@ export function NationalMap({
             );
           }) : null}
 
+          {/* operational fabric — infra tethered to nearest province */}
+          {layers.infra ? infra.map(n => {
+            const nx = n.x * 10, ny = n.y * 6.2;
+            let best = PROV[0]!, bd = Infinity;
+            for (const pv of PROV) { const d = (pv.cx - nx) ** 2 + (pv.cy - ny) ** 2; if (d < bd) { bd = d; best = pv; } }
+            return <line key={`fb${n.id}`} x1={nx} y1={ny} x2={best.cx} y2={best.cy}
+              stroke="rgb(var(--c-line))" strokeWidth="0.5" strokeOpacity="0.22" />;
+          }) : null}
+
           {/* dependency / cascade edges */}
           {edges.slice(0, 26).map((e, i) => {
             const a = pos.get(e.fromId), b = pos.get(e.toId);
@@ -504,13 +517,18 @@ export function NationalMap({
         const tone = toneFor(n.risk);
         const crit = n.risk >= 75;
         return (
-          <span key={n.id} className="group absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${n.x}%`, top: `${n.y}%` }} title={`${n.kind.label} · ${tone}`}>
+          <span key={n.id} className="group absolute z-10 -translate-x-1/2 -translate-y-1/2"
+            style={{ left: `${n.x}%`, top: `${n.y}%` }} title={`${n.kind.label} · risk ${n.risk} · ${tone}`}>
             {crit ? <span className="absolute inset-0 -z-10 animate-ping rounded-full" style={{ backgroundColor: TONE.alert, opacity: 0.4 }} /> : null}
             <span className="grid h-5 w-5 place-items-center rounded-[4px] text-[9px] ring-1"
               style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tone], borderColor: TONE[tone], boxShadow: crit ? `0 0 8px ${TONE.alert}` : undefined }}>
               {n.kind.g}
             </span>
+            {crit ? (
+              <span className="absolute left-1/2 top-5 -translate-x-1/2 whitespace-nowrap rounded bg-surface/90 px-1 py-px text-[8px] font-semibold uppercase tracking-wide ring-1 ring-line" style={{ color: TONE.alert }}>{n.kind.label}</span>
+            ) : (
+              <span className="absolute left-1/2 top-5 -translate-x-1/2 whitespace-nowrap rounded bg-surface px-1 py-px text-[8px] text-ink-soft opacity-0 ring-1 ring-line transition-opacity group-hover:opacity-100">{n.kind.label} · {n.risk}</span>
+            )}
           </span>
         );
       })}
