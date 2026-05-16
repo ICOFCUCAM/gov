@@ -10,6 +10,7 @@ import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { deployableInstitutions } from '@/lib/institution/readiness';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { nationalResilience } from '@/lib/gov/national-resilience';
+import { subscribe as rtSubscribe, runtimeStats } from '@/lib/gov/runtime-store';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; key: string }[] }[] = [
@@ -95,10 +96,12 @@ export function CommandShell({
   };
 
   const resilience = nationalResilience(mins, now / 4000);
+  const liveRt = React.useSyncExternalStore(rtSubscribe, runtimeStats, runtimeStats);
 
   const tele = [
     { l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true },
     { l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone },
+    { l: 'Runtime', v: `${liveRt.open} open · ${liveRt.transitions} tx`, t: 'ok' },
     { l: 'Institutions', v: String(t?.institutions ?? 0) },
     { l: 'Active incidents', v: String(incidents.length), t: incidents.length ? 'alert' : 'ok' },
     { l: 'Queues breaching', v: String(t?.queuesBreaching ?? 0), t: (t?.queuesBreaching ?? 0) > 0 ? 'warn' : 'ok' },
