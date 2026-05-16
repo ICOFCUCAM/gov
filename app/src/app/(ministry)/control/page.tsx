@@ -5,6 +5,7 @@ import { Pill } from '@/components/ui/Pill';
 import { Plain } from '@/components/ui/Plain';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MetricStat, ThresholdBar, SeverityBadge } from '@/components/ui/Ops';
+import { TerritoryHeat, TONE } from '@/components/features/SituationRoom';
 import { listMinistries, ministryOperations } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
@@ -105,6 +106,18 @@ export default function MinistryControlPage({
                         </div>
                       ))}
                     </div>
+
+                    <Card tight>
+                      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Service deployment theatre</h3>
+                      <div className="overflow-hidden rounded-[3px] border border-line-soft">
+                        <TerritoryHeat epoch={(selected.id.charCodeAt(0) || 9) % 50} height={240} />
+                      </div>
+                      <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
+                        <span>Nominal</span>
+                        <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
+                        <span>Saturated</span>
+                      </div>
+                    </Card>
 
                     {activeAlerts.length > 0 ? (
                       <Card tight>
