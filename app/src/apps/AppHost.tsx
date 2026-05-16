@@ -13,7 +13,9 @@ import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { policeOps, emergencyOps, immigrationOps, customsOps } from '@/lib/gov/agency-systems';
 import { citizenWallet, officerConsole } from '@/lib/gov/citizen-systems';
 import { aiAdvisory } from '@/shared/ai/advisory';
-import { ROLES, type SovereignRole } from '@/shared/permissions/rbac';
+import { ROLES, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
+import { evaluateConstitution, type AppKind } from '@/services/constitutional-engine';
+import { wave } from '@/lib/telemetry';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -90,15 +92,45 @@ export function AppHost({ domain }: { domain: string }) {
         </nav>
 
         <main className="min-h-0 flex-1 overflow-y-auto p-3">
-          {!app.activated ? (
-            <p className="text-[12px] text-ink-muted">This sovereign application is provisioned but not activated. Activate the institution from the platform to bring its operational systems online.</p>
-          ) : app.kind === 'ministry' && app.instanceId ? (
-            <SubsystemConsole id={app.instanceId} group={active ?? 'command'} />
-          ) : app.kind === 'branch' ? (
-            <BranchWorkspace branchKey={app.archetypeOrBranch} />
-          ) : (
-            <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} role={role} />
-          )}
+          {(() => {
+            const stress = Math.round(wave(`con:${app.domain}`, now / 4000, 18, 96));
+            const verdict = evaluateConstitution({
+              kind: app.kind as AppKind, domain: app.domain, stress,
+              emergencyAsserted: stress >= 88, emergencyAgeHrs: stress >= 88 ? Math.round(stress) : 0,
+              auditIntact: true,
+            });
+            const vt = verdict.posture === 'breach' ? 'alert' : verdict.posture === 'under-review' ? 'warn' : 'ok';
+            return (
+              <>
+                <div className="mb-2 rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid rgb(var(--c-${vt}))` }}>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${vt}))` }}>
+                      Constitutional posture · {verdict.posture}
+                    </span>
+                    {verdict.withheld.length ? (
+                      <span className="text-[9px] text-ink-muted">withholding: {verdict.withheld.join(', ')}</span>
+                    ) : <span className="text-[9px] text-ink-muted">all capabilities constitutionally available</span>}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
+                    {verdict.checks.map(c => (
+                      <span key={c.rule} className="text-[8.5px]" style={{ color: c.status === 'breach' ? 'rgb(var(--c-alert))' : c.status === 'watch' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink-muted))' }}>
+                        {c.rule}: {c.status}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+                {!app.activated ? (
+                  <p className="text-[12px] text-ink-muted">This sovereign application is provisioned but not activated. Activate the institution from the platform to bring its operational systems online.</p>
+                ) : app.kind === 'ministry' && app.instanceId ? (
+                  <SubsystemConsole id={app.instanceId} group={active ?? 'command'} />
+                ) : app.kind === 'branch' ? (
+                  <BranchWorkspace branchKey={app.archetypeOrBranch} />
+                ) : (
+                  <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                )}
+              </>
+            );
+          })()}
         </main>
       </div>
     </div>
@@ -114,7 +146,7 @@ function Stat({ l, v, t }: { l: string; v: string; t?: string }) {
   );
 }
 
-function AgencyApp({ appId, label, archetype, navKey, now, role }: { appId: string; label: string; archetype: ArchetypeKey; navKey: string; now: number; role: SovereignRole }) {
+function AgencyApp({ appId, label, archetype, navKey, now, role, withheld = [] }: { appId: string; label: string; archetype: ArchetypeKey; navKey: string; now: number; role: SovereignRole; withheld?: Capability[] }) {
   const ts = now / 4000;
   const kind: WorkKind =
     /incident|command|dispatch|emergency|recovery|enforcement/i.test(navKey) ? 'incident'
@@ -218,7 +250,7 @@ function AgencyApp({ appId, label, archetype, navKey, now, role }: { appId: stri
           ))}
         </ul>
       </div>
-      <RuntimeQueue scope={`${appId}:${navKey}`} kind={kind} title={`${label} · ${navKey} runtime — executable workflow`} by="Duty Officer" role={role} />
+      <RuntimeQueue scope={`${appId}:${navKey}`} kind={kind} title={`${label} · ${navKey} runtime — executable workflow`} by="Duty Officer" role={role} withheld={withheld} />
     </div>
   );
 }

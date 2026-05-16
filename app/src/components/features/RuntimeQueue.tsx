@@ -7,7 +7,7 @@ import {
   type WorkKind, type WorkItem, type ActionKey,
 } from '@/lib/gov/runtime-workflow';
 import { subscribe, getScope, actOnItem, annotateItem, reassignItem } from '@/lib/gov/runtime-store';
-import { checkAction, type SovereignRole } from '@/shared/permissions/rbac';
+import { checkAction, capabilityForAction, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
 
 const ASSIGNEES = ['K. Otieno', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Kamau'];
 
@@ -30,8 +30,8 @@ const prTone = (p: WorkItem['priority']) => (p === 'urgent' ? TONE.alert : p ===
  * transition and audit trail. Surfaces become an operating system.
  */
 export function RuntimeQueue({
-  scope, kind, title, by = 'Operator', n = 14, role = 'commander',
-}: { scope: string; kind: WorkKind; title: string; by?: string; n?: number; role?: SovereignRole }) {
+  scope, kind, title, by = 'Operator', n = 14, role = 'commander', withheld = [],
+}: { scope: string; kind: WorkKind; title: string; by?: string; n?: number; role?: SovereignRole; withheld?: Capability[] }) {
   const items = React.useSyncExternalStore(
     subscribe,
     () => getScope(scope, kind, n),
@@ -44,7 +44,9 @@ export function RuntimeQueue({
 
   const [note, setNote] = React.useState('');
   const [denied, setDenied] = React.useState<string | null>(null);
+  const blocked = (action: ActionKey) => withheld.includes(capabilityForAction(action));
   const act = (id: string, action: ActionKey) => {
+    if (blocked(action)) { setDenied(`Denied — constitution withholds '${capabilityForAction(action)}' (compliance posture)`); return; }
     const chk = checkAction(role, action);
     if (!chk.allowed) { setDenied(`Denied — ${chk.reason}`); return; }
     setDenied(null);
@@ -121,10 +123,10 @@ export function RuntimeQueue({
                 {actionsFor(current.kind, current.stage).length === 0 ? (
                   <span className="text-[9px] text-ink-muted">Terminal state — no further actions.</span>
                 ) : actionsFor(current.kind, current.stage).map(a => {
-                  const allowed = checkAction(role, a).allowed;
+                  const allowed = checkAction(role, a).allowed && !blocked(a);
                   return (
                     <button key={a} onClick={() => act(current.id, a)} disabled={!allowed}
-                      title={allowed ? undefined : `Role '${role}' not authorised`}
+                      title={allowed ? undefined : blocked(a) ? 'Withheld by constitutional posture' : `Role '${role}' not authorised`}
                       className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-surface-2/60"
                       style={{ borderColor: ACTION_TONE[a], color: ACTION_TONE[a] }}>
                       {ACTION_LABEL[a]} →
