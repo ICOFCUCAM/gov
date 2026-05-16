@@ -440,6 +440,22 @@ export function NationalMap({
             );
           })}
 
+          {/* regional readiness intensity rings */}
+          {provRisk.map(({ p, risk }) => {
+            const ready = Math.max(1, 100 - risk);
+            const rr = p.r * 0.46;
+            const circ = 2 * Math.PI * rr;
+            const tn = ready >= 65 ? 'ok' : ready >= 45 ? 'warn' : 'alert';
+            return (
+              <g key={`rr${p.n}`} transform={`rotate(-90 ${p.cx} ${p.cy})`}>
+                <circle cx={p.cx} cy={p.cy} r={rr} fill="none" stroke="rgb(var(--c-line))" strokeOpacity="0.25" strokeWidth="1.4" />
+                <circle cx={p.cx} cy={p.cy} r={rr} fill="none" stroke={TONE[tn]} strokeWidth="1.6"
+                  strokeLinecap="round" strokeDasharray={`${(ready / 100) * circ} ${circ}`}
+                  className="transition-all duration-1000 ease-sov" style={{ filter: `drop-shadow(0 0 2px ${TONE[tn]})` }} />
+              </g>
+            );
+          })}
+
           {/* curved internal territorial boundaries */}
           <g stroke="rgb(var(--c-line))" strokeWidth="1.1" fill="none" strokeOpacity="0.5" strokeDasharray="3 6">
             <path d="M430,120 Q470,300 360,540" />
