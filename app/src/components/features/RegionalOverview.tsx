@@ -9,9 +9,9 @@ import { SCENARIOS, type ScenarioKey } from '@/lib/gov/simulation';
 
 const POS_TONE: Record<string, string> = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' };
 
-export function RegionalOverview() {
+export function RegionalOverview({ initialRegion }: { initialRegion?: string } = {}) {
   const [now, setNow] = React.useState(() => Date.now());
-  const [open, setOpen] = React.useState<string | null>('Capital District');
+  const [open, setOpen] = React.useState<string | null>(initialRegion ?? 'Capital District');
   const [scn, setScn] = React.useState<ScenarioKey>('baseline');
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);

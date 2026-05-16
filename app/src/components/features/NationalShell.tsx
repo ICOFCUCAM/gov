@@ -433,10 +433,11 @@ export function NationalShell() {
             {[...regions].sort((a, b) => a.readiness - b.readiness).map(r => {
               const tn = r.posture === 'critical' ? 'alert' : r.posture === 'elevated' ? 'warn' : r.posture === 'watch' ? 'neutral' : 'ok';
               return (
-                <div key={r.name} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[11px]">
+                <Link key={r.name} href={`/gov/regional?region=${encodeURIComponent(r.name)}`}
+                  className="focus-ring flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[11px] no-underline transition-colors hover:bg-surface-2/70">
                   <span className="truncate text-ink-soft">{r.capital ? '★ ' : ''}{r.name}</span>
                   <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{r.readiness}%{r.incidents ? ` · ${r.incidents} inc` : ''}</span>
-                </div>
+                </Link>
               );
             })}
           </div>

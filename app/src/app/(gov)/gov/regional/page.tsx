@@ -5,10 +5,10 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Regional Overview' };
 
 
-export default function RegionalOverviewPage() {
+export default function RegionalOverviewPage({ searchParams }: { searchParams: { region?: string } }) {
   return (
     <CommandShell active="reg">
-      <RegionalOverview />
+      <RegionalOverview initialRegion={searchParams.region} />
     </CommandShell>
   );
 }
