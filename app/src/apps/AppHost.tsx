@@ -16,6 +16,7 @@ import { aiAdvisory } from '@/shared/ai/advisory';
 import { ROLES, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
 import { evaluateConstitution, type AppKind } from '@/services/constitutional-engine';
 import { escalationState } from '@/shared/sovereignty/escalation';
+import { subscribe as auditSubscribe, auditTrail, verifyChain } from '@/services/audit-ledger';
 import { wave } from '@/lib/telemetry';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -95,10 +96,15 @@ export function AppHost({ domain }: { domain: string }) {
         <main className="min-h-0 flex-1 overflow-y-auto p-3">
           {(() => {
             const stress = Math.round(wave(`con:${app.domain}`, now / 4000, 18, 96));
+            const auditScope =
+              app.kind === 'ministry' && app.instanceId ? `${app.instanceId}:${active ?? 'command'}`
+                : app.kind === 'branch' ? `${app.archetypeOrBranch === 'legislature' ? 'leg' : 'jud'}:${app.archetypeOrBranch}`
+                  : `${app.id}:${active ?? 'command'}`;
+            const chain = verifyChain(auditScope);
             const verdict = evaluateConstitution({
               kind: app.kind as AppKind, domain: app.domain, stress,
               emergencyAsserted: stress >= 88, emergencyAgeHrs: stress >= 88 ? Math.round(stress) : 0,
-              auditIntact: true,
+              auditIntact: chain.intact,
             });
             const vt = verdict.posture === 'breach' ? 'alert' : verdict.posture === 'under-review' ? 'warn' : 'ok';
             return (
@@ -138,6 +144,7 @@ export function AppHost({ domain }: { domain: string }) {
                 ) : (
                   <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 )}
+                <AuditPanel scope={auditScope} chainIntact={chain.intact} brokenAt={chain.brokenAt} />
               </>
             );
           })()}
@@ -261,6 +268,36 @@ function AgencyApp({ appId, label, archetype, navKey, now, role, withheld = [] }
         </ul>
       </div>
       <RuntimeQueue scope={`${appId}:${navKey}`} kind={kind} title={`${label} · ${navKey} runtime — executable workflow`} by="Duty Officer" role={role} withheld={withheld} />
+    </div>
+  );
+}
+
+function AuditPanel({ scope, chainIntact, brokenAt }: { scope: string; chainIntact: boolean; brokenAt: number | null }) {
+  const trail = React.useSyncExternalStore(auditSubscribe, () => auditTrail(scope, 12), () => auditTrail(scope, 12));
+  return (
+    <div className="mt-2 rounded-[3px] border border-line bg-surface p-2">
+      <div className="flex items-center justify-between gap-2">
+        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">Sovereign audit chain · {scope}</span>
+        <span className="rounded-[3px] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider"
+          style={{ backgroundColor: `color-mix(in srgb, rgb(var(--c-${chainIntact ? 'ok' : 'alert'})) 16%, transparent)`, color: `rgb(var(--c-${chainIntact ? 'ok' : 'alert'}))` }}>
+          {chainIntact ? 'intact' : `broken @${brokenAt}`}
+        </span>
+      </div>
+      {trail.length === 0 ? (
+        <p className="mt-1 text-[9px] text-ink-muted">No audited actions in this scope yet — drive the runtime to generate a tamper-evident trail.</p>
+      ) : (
+        <div className="mt-1 space-y-0.5">
+          {trail.map(e => (
+            <div key={e.seq} className="flex items-center gap-2 text-[9px]">
+              <span className="w-8 shrink-0 font-mono tabular-nums text-ink-muted">#{e.seq}</span>
+              <span className="w-16 shrink-0 font-mono tabular-nums text-ink-muted">{new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+              <span className="min-w-0 flex-1 truncate text-ink-soft">{e.action} · {e.subject} · {e.detail}</span>
+              <span className="w-20 shrink-0 truncate text-right text-ink-muted">{e.actor}</span>
+              <span className="w-16 shrink-0 text-right font-mono text-[8px] text-ink-muted">{e.hash}</span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
