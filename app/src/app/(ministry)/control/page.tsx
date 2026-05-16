@@ -7,6 +7,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { MetricStat, ThresholdBar, SeverityBadge } from '@/components/ui/Ops';
 import { TerritoryHeat, TONE } from '@/components/features/SituationRoom';
 import { serviceReadings } from '@/lib/gov/ministry-services';
+import { instantiateMinistry, systemKindLabel } from '@/lib/institution/blueprint';
 import { listMinistries, ministryOperations } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
@@ -133,6 +134,46 @@ export default function MinistryControlPage({
                         ))}
                       </div>
                     </Card>
+
+                    {(() => {
+                      const eco = instantiateMinistry(selected, (selected.id.charCodeAt(2) || 4) % 60);
+                      return (
+                        <Card tight>
+                          <div className="mb-2 flex flex-wrap items-baseline justify-between gap-2">
+                            <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
+                              Institutional ecosystem · {selected.archetype}
+                            </h3>
+                            <span className="text-[10px] text-ink-muted">
+                              {eco.stats.groups} groups · {eco.stats.systems} systems · {eco.stats.operational} operational · {eco.stats.meanHealth}% mean
+                            </span>
+                          </div>
+                          <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                            {eco.groups.map(g => (
+                              <div key={g.key} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                                <div className="flex items-center justify-between gap-2">
+                                  <span className="text-[11px] font-semibold text-ink">{g.name}</span>
+                                  <span className="font-mono text-[10px] tabular-nums" style={{ color: `rgb(var(--c-${g.tone}))` }}>{g.health}%</span>
+                                </div>
+                                <div className="mb-1 text-[9px] text-ink-muted">{g.purpose}</div>
+                                <ul className="space-y-0.5">
+                                  {g.systems.map(s => {
+                                    const c = s.status === 'operational' ? 'rgb(var(--c-ok))' : s.status === 'degraded' ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ink-muted))';
+                                    return (
+                                      <li key={s.name} className="flex items-center gap-1.5 text-[10px]">
+                                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: c }} />
+                                        <span className="min-w-0 flex-1 truncate text-ink-soft">{s.name}</span>
+                                        <span className="shrink-0 text-[8px] uppercase tracking-wider text-ink-muted">{systemKindLabel(s.kind)}</span>
+                                        <span className="w-9 shrink-0 text-right font-mono text-[9px] tabular-nums" style={{ color: c }}>{s.uptime}%</span>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        </Card>
+                      );
+                    })()}
 
                     {activeAlerts.length > 0 ? (
                       <Card tight>
