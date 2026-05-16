@@ -544,6 +544,20 @@ export function NationalMap({
               <circle cx={m.x * 10} cy={m.y * 6.2} r={20 + pulse * 40} fill={TONE.alert} opacity={0.12 - pulse * 0.1} />
             </g>
           )) : null}
+
+          {/* cascading-failure spread — critical nodes propagate to provinces */}
+          {layers.incidents ? mapNodes.filter(m => m.pressure >= 80).slice(0, 3).flatMap(m => {
+            const nx = m.x * 10, ny = m.y * 6.2;
+            return [...PROV]
+              .sort((a, b) => ((a.cx - nx) ** 2 + (a.cy - ny) ** 2) - ((b.cx - nx) ** 2 + (b.cy - ny) ** 2))
+              .slice(0, 2)
+              .map((pv, k) => (
+                <path key={`spread${m.ministryId}${k}`}
+                  d={`M${nx},${ny} Q${(nx + pv.cx) / 2},${(ny + pv.cy) / 2 - 40} ${pv.cx},${pv.cy}`}
+                  fill="none" stroke={TONE.alert} strokeWidth="1.2" strokeOpacity="0.5"
+                  strokeDasharray="2 5" className="motion-safe:animate-dash-flow" style={{ animationDuration: '0.7s' }} />
+              ));
+          }) : null}
         </g>
 
         {provRisk.map(({ p, risk }) => {
