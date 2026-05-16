@@ -14,6 +14,7 @@ import { networkPressure } from '@/lib/gov/infrastructure';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { scenarioSweep } from '@/lib/gov/simulation';
 import { nationalResilience, resilienceUnderShock } from '@/lib/gov/national-resilience';
+import { nationalEcosystem } from '@/lib/institution/blueprint';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -95,6 +96,7 @@ export function NationalShell() {
   const lead = sweep[0];
   const leadTone = !lead ? 'ok' : lead.band === 'severe' || lead.band === 'high' ? 'alert' : lead.band === 'elevated' ? 'warn' : 'ok';
   const stress = lead ? resilienceUnderShock(mins, ts, lead.key) : null;
+  const ne = nationalEcosystem(mins, ts);
 
   const regions = nationalRegions(ts);
   const rRoll = regionRollup(regions);
@@ -199,6 +201,41 @@ export function NationalShell() {
           </div>
         ))}
       </div>
+
+      <P title="National institutional footprint" meta="every active institution, instantiated from its archetype">
+        <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {[
+            { l: 'Institutions', v: String(ne.institutions), t: 'ok' as const },
+            { l: 'System groups', v: String(ne.groups), t: 'ok' as const },
+            { l: 'Operational systems', v: String(ne.operational), t: 'ok' as const },
+            { l: 'Degraded systems', v: String(ne.degraded), t: ne.degraded ? 'alert' as const : 'ok' as const },
+            { l: 'Total systems', v: String(ne.systems), t: 'ok' as const },
+            { l: 'Mean system health', v: `${ne.meanHealth}%`, t: ne.meanHealth >= 80 ? 'ok' as const : ne.meanHealth >= 65 ? 'warn' as const : 'alert' as const },
+          ].map(s => (
+            <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+              <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
+              <div className="font-mono text-[15px] tabular-nums" style={{ color: TONE[s.t] }}>{s.v}</div>
+            </div>
+          ))}
+        </div>
+        {ne.weakest.length ? (
+          <div>
+            <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Most-degraded systems · government-wide</div>
+            <div className="grid gap-1 sm:grid-cols-2">
+              {ne.weakest.map((w, i) => (
+                <div key={i} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[10px]">
+                  <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE.alert }} />
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{w.system}</span>
+                  <span className="shrink-0 truncate text-[8.5px] text-ink-muted">{w.institution} · {w.group}</span>
+                  <span className="w-9 shrink-0 text-right font-mono tabular-nums" style={{ color: TONE.alert }}>{w.uptime}%</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-[10px] text-ink-muted">All instantiated systems within tolerance across {ne.institutions} institutions.</p>
+        )}
+      </P>
 
       <P title="State estates" meta="whole-of-government launchpad">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">

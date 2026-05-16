@@ -467,6 +467,49 @@ export function instantiateMinistry(m: Pick<Ministry, 'id' | 'archetype' | 'stat
   return instantiateInstitution({ id: m.id, kind: m.archetype, activated: m.status === 'active' }, t);
 }
 
+export interface NationalEcosystem {
+  institutions: number;
+  groups: number;
+  systems: number;
+  operational: number;
+  degraded: number;
+  meanHealth: number;
+  /** most-degraded systems government-wide */
+  weakest: { institution: string; group: string; system: string; uptime: number }[];
+}
+
+// The whole-of-government institutional footprint: every active ministry's
+// generated ecosystem aggregated. The state is not pages — it is N
+// instantiated institutions running K operational systems. Pure.
+export function nationalEcosystem(
+  mins: { id: string; name: string; archetype: ArchetypeKey; status: string }[],
+  t: number,
+): NationalEcosystem {
+  const active = mins.filter(m => m.status === 'active');
+  let groups = 0, systems = 0, operational = 0, degraded = 0, healthSum = 0, healthN = 0;
+  const weak: { institution: string; group: string; system: string; uptime: number }[] = [];
+  for (const m of active) {
+    const eco = instantiateInstitution({ id: m.id, kind: m.archetype, activated: true }, t);
+    groups += eco.stats.groups;
+    systems += eco.stats.systems;
+    operational += eco.stats.operational;
+    degraded += eco.stats.degraded;
+    for (const g of eco.groups) {
+      for (const s of g.systems) {
+        if (s.status === 'provisioning') continue;
+        healthSum += s.uptime; healthN += 1;
+        if (s.status === 'degraded') weak.push({ institution: m.name, group: g.name, system: s.name, uptime: s.uptime });
+      }
+    }
+  }
+  weak.sort((a, b) => a.uptime - b.uptime);
+  return {
+    institutions: active.length, groups, systems, operational, degraded,
+    meanHealth: healthN ? Math.round(healthSum / healthN) : 0,
+    weakest: weak.slice(0, 8),
+  };
+}
+
 // ── Per-system operational readout ─────────────────────────────────────
 // Every instantiated system is an operating unit, not a label. Its live
 // readout is kind-appropriate (a command centre reports posture &

@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   blueprintFor, instantiateInstitution, instantiateMinistry, systemReadout,
-  type InstitutionKind,
+  nationalEcosystem, type InstitutionKind,
 } from './blueprint';
 import type { Ministry } from '@/lib/api/types';
 
@@ -77,6 +77,22 @@ describe('institutional blueprint factory', () => {
         }
       }
     }
+  });
+
+  it('nationalEcosystem aggregates only active institutions, deterministically', () => {
+    const mins = [
+      { id: 'A', name: 'Health', archetype: 'HEALTH' as const, status: 'active' },
+      { id: 'B', name: 'Finance', archetype: 'FINANCE' as const, status: 'active' },
+      { id: 'C', name: 'Draft', archetype: 'TRADE' as const, status: 'deactivated' },
+    ];
+    const ne = nationalEcosystem(mins, 25);
+    expect(ne).toEqual(nationalEcosystem(mins, 25));
+    expect(ne.institutions).toBe(2);
+    expect(ne.systems).toBeGreaterThan(0);
+    expect(ne.operational + ne.degraded).toBe(ne.systems);
+    expect(ne.meanHealth).toBeGreaterThanOrEqual(0);
+    expect(ne.meanHealth).toBeLessThanOrEqual(100);
+    expect(ne.weakest.length).toBeLessThanOrEqual(8);
   });
 
   it('instantiateMinistry maps ministry status to activation', () => {
