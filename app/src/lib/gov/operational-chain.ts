@@ -12,6 +12,7 @@ import { seed, wave } from '@/lib/telemetry';
 import { buildNationalFabric } from '@/lib/institution/national-fabric';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
 import { blueprintFor } from '@/lib/institution/blueprint';
+import { stateFabric } from '@/lib/gov/state-fabric';
 
 export type ChainStageKey =
   | 'trigger' | 'dependency' | 'escalation' | 'treasury' | 'citizen' | 'recovery';
@@ -83,10 +84,21 @@ export function buildOperationalChain(
     const s = Math.round(Math.min(100, (100 - op.readiness) * 0.6 + op.publicPressure * 0.25 + op.budgetPressure * 0.15));
     return { m, s };
   });
-  const origin = (originId && withStress.find(x => x.m.id === originId)) ||
+  // No explicit origin → the state fabric's worst coupled domain drives
+  // the chain (cross-system propagation), else most operationally stressed.
+  const sf = stateFabric(mins, t);
+  const domainArch: Record<string, ArchetypeKey> = { healthcare: 'HEALTH', treasury: 'FINANCE' };
+  const sfArch = domainArch[sf.worst];
+  const sfOrigin = sfArch ? withStress.find(x => x.m.archetype === sfArch) : undefined;
+  const origin =
+    (originId && withStress.find(x => x.m.id === originId)) ||
+    sfOrigin ||
     [...withStress].sort((a, b) => b.s - a.s)[0]!;
   const oId = origin.m.id;
-  const oSev = Math.max(45, origin.s); // a chain implies a real shock
+  // Severity reflects the coupled-domain instability when the fabric chose
+  // the origin — the shock is as deep as the worst domain's stress.
+  const sfDomain = sf.domains.find(d => domainArch[d.domain] === origin.m.archetype);
+  const oSev = Math.max(45, origin.s, sfOrigin && sfDomain ? sfDomain.instability : 0);
 
   // Adjacency from the real dependency fabric (who depends on whom).
   const out = new Map<string, { to: string; w: number }[]>();

@@ -8,7 +8,7 @@
 
 import type { Ministry } from '@/lib/api/types';
 import { healthInstability } from '@/lib/gov/health-systems';
-import { ministryOpState } from '@/lib/gov/ministry-ops';
+import { treasuryInstability } from '@/lib/gov/treasury-systems';
 import { legislativeState } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
 import { seed } from '@/lib/telemetry';
@@ -48,10 +48,8 @@ export function stateFabric(mins: Ministry[], t: number): StateFabric {
   // Healthcare instability — from the deep health engine (or seeded baseline).
   const hInst = healthM ? healthInstability(healthM.id, t) : Math.round(28 + seed(`sf:h:${t | 0}`) * 22);
 
-  // Treasury instability — fiscal/budget pressure from op-state (or baseline).
-  const tInst = finM
-    ? (() => { const op = ministryOpState(finM.id, 'FINANCE', 60, t); return Math.round(Math.min(100, op.budgetPressure * 0.6 + (100 - op.slaCompliance) * 0.4)); })()
-    : Math.round(30 + seed(`sf:t:${t | 0}`) * 25);
+  // Treasury instability — from the deep treasury engine (or baseline).
+  const tInst = finM ? treasuryInstability(finM.id, t) : Math.round(30 + seed(`sf:t:${t | 0}`) * 25);
 
   // Legislative blockage — quorum + blocked bills.
   const leg = legislativeState(t);

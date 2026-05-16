@@ -9,6 +9,10 @@ import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, patientServices,
 } from '@/lib/gov/health-systems';
+import {
+  fiscalCommand, revenueOps, budgetOps, procurementOps, bankingRails,
+  citizenFinance, fiscalAssurance,
+} from '@/lib/gov/treasury-systems';
 import type { Ministry } from '@/lib/api/types';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
@@ -37,6 +41,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const eco = instantiateMinistry(m, ts);
   const grp = eco.groups.find(g => g.key === group) ?? eco.groups[0]!;
   const isHealth = m.archetype === 'HEALTH';
+  const isFinance = m.archetype === 'FINANCE';
 
   const header = (
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -357,7 +362,137 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
-  // ── Generic deep environment (non-HEALTH or other groups) ────────────
+  // ── TREASURY operational worlds ──────────────────────────────────────
+  if (isFinance && (group === 'command' || group === 'rails')) {
+    const fc = fiscalCommand(id, ts);
+    const br = bankingRails(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Liquidity runway" v={`${fc.liquidityDays}d`} t={fc.liquidityDays >= 30 ? 'ok' : fc.liquidityDays >= 14 ? 'warn' : 'alert'} />
+          <Stat l="Debt / GDP" v={`${fc.debtToGdp}%`} t={fc.debtToGdp >= 65 ? 'alert' : fc.debtToGdp >= 50 ? 'warn' : 'ok'} />
+          <Stat l="Primary balance" v={`${fc.primaryBalancePct}%`} t={fc.primaryBalancePct < 0 ? 'warn' : 'ok'} />
+          <Stat l="FX reserves" v={`$${fc.fxReservesBn}B`} t={fc.fxReservesBn >= 30 ? 'ok' : 'warn'} />
+          <Stat l="Macro stability" v={`${fc.macroStability}`} t={fc.tone} />
+          <Stat l="TSA balance" v={`$${br.tsaBalanceBn}B`} t={br.tsaBalanceBn >= 12 ? 'ok' : 'warn'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-2">
+          <Panel title="Banking rails" meta="disbursement · settlement · reconciliation" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Channels online" v={`${br.channelsOnline}/${br.channelsTotal}`} t={br.channelsOnline === br.channelsTotal ? 'ok' : 'alert'} />
+              <Stat l="Settlement latency" v={`${br.settlementLatencyMin}m`} t={br.settlementLatencyMin >= 25 ? 'alert' : br.settlementLatencyMin >= 12 ? 'warn' : 'ok'} />
+              <Stat l="Reconciled" v={`${br.reconciledPct}%`} t={br.reconciledPct >= 98 ? 'ok' : 'warn'} />
+              <Stat l="Failed settlements" v={`${br.failedSettlements}`} t={br.failedSettlements ? 'alert' : 'ok'} />
+            </div>
+            <div className="mt-2 h-7 overflow-hidden opacity-80"><Spark pts={waveSeries(`trz:rails:${id}`, ts, 24, 30, 92)} tone={br.failedSettlements ? 'alert' : 'ok'} /></div>
+          </Panel>
+          <Panel title="Fiscal stability monitor" meta="macro posture" bodyClass="!p-2">
+            <div className="mb-1 flex justify-between text-[10px]"><span className="text-ink-soft">Macro stability</span><span className="font-mono tabular-nums" style={{ color: tc(fc.tone) }}>{fc.macroStability}</span></div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${fc.macroStability}%`, backgroundColor: tc(fc.tone) }} /></div>
+            <p className="mt-2 text-[9px] text-ink-muted">Treasury instability propagates to procurement, healthcare, infrastructure, education and transport readiness via the state fabric.</p>
+            <div className="mt-2 h-7 overflow-hidden opacity-80"><Spark pts={waveSeries(`trz:macro:${id}`, ts, 24, 35, 92)} tone={fc.tone} /></div>
+          </Panel>
+        </div>
+      </div>
+    );
+  }
+
+  if (isFinance && (group === 'revenue' || group === 'budget')) {
+    const rv = revenueOps(id, ts);
+    const bg = budgetOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Collection rate" v={`${rv.collectionRatePct}%`} t={rv.collectionRatePct >= 85 ? 'ok' : rv.collectionRatePct >= 72 ? 'warn' : 'alert'} />
+          <Stat l="Customs throughput" v={`${rv.customsThroughputPct}%`} t={rv.customsThroughputPct >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Taxpayers" v={`${rv.taxpayersM}M`} t="ok" />
+          <Stat l="Arrears" v={`$${rv.arrearsBn}B`} t={rv.arrearsBn >= 24 ? 'alert' : 'warn'} />
+          <Stat l="Budget execution" v={`${bg.executionPct}%`} t={bg.executionPct >= 80 ? 'ok' : bg.executionPct >= 60 ? 'warn' : 'alert'} />
+          <Stat l="Blocked allocations" v={`${bg.blockedAllocations}`} t={bg.blockedAllocations ? 'alert' : 'ok'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-2">
+          <Panel title="Revenue streams" meta="taxation · customs · collection" bodyClass="!p-2">
+            <div className="space-y-1">
+              {rv.byStream.map(s => (
+                <div key={s.stream} className="flex items-center gap-2 text-[10px]">
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{s.stream}</span>
+                  <div className="h-1.5 w-20 shrink-0 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${s.pct}%`, backgroundColor: tc(s.tone) }} /></div>
+                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(s.tone) }}>{s.pct}</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+          <Panel title="Budget execution by ministry" meta="appropriation → spend" bodyClass="!p-2">
+            <div className="space-y-1">
+              {bg.byMinistry.map(b => (
+                <div key={b.ministry} className="flex items-center gap-2 text-[10px]">
+                  <span className="w-20 shrink-0 truncate text-ink-soft">{b.ministry}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${b.execPct}%`, backgroundColor: tc(b.tone) }} /></div>
+                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(b.tone) }}>{b.execPct}</span>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-[9px] text-ink-muted">{bg.virements} virements processed · legislative blockage freezes appropriation.</p>
+          </Panel>
+        </div>
+      </div>
+    );
+  }
+
+  if (isFinance && (group === 'procurement' || group === 'citizen' || group === 'audit')) {
+    const pc = procurementOps(id, ts);
+    const cf = citizenFinance(id, ts);
+    const fa = fiscalAssurance(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Active tenders" v={`${pc.activeTenders}`} t="ok" />
+          <Stat l="Procurement integrity" v={`${pc.integrityPct}%`} t={pc.integrityPct >= 90 ? 'ok' : 'warn'} />
+          <Stat l="Disbursement latency" v={`${pc.disbursementLatencyDays}d`} t={pc.disbursementLatencyDays >= 28 ? 'alert' : pc.disbursementLatencyDays >= 14 ? 'warn' : 'ok'} />
+          <Stat l="Flagged contracts" v={`${pc.flaggedContracts}`} t={pc.flaggedContracts ? 'alert' : 'ok'} />
+          <Stat l="Citizen payments/day" v={`${cf.paymentsTodayM}M`} t="ok" />
+          <Stat l="Audit chain" v={`${fa.chainIntactPct}%`} t={fa.chainIntactPct >= 99.5 ? 'ok' : 'warn'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-3">
+          <Panel title="Procurement pipeline" meta="solicitation → disbursement" bodyClass="!p-2">
+            <div className="space-y-1">
+              {pc.pipeline.map(s => (
+                <div key={s.stage} className="flex items-center gap-2 text-[10px]">
+                  <span className="w-24 shrink-0 truncate text-ink-soft">{s.stage}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${Math.min(100, s.count)}%`, backgroundColor: TONE.warn }} /></div>
+                  <span className="w-8 shrink-0 text-right font-mono tabular-nums text-ink-muted">{s.count}</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+          <Panel title="Citizen finance" meta="taxpayer portal · payments" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Portal uptime" v={`${cf.portalUptime}%`} t={cf.portalUptime >= 99 ? 'ok' : 'warn'} />
+              <Stat l="Refunds pending" v={cf.refundsPending.toLocaleString()} t={cf.refundsPending > 3000 ? 'alert' : 'warn'} />
+              <Stat l="Satisfaction" v={`${cf.satisfactionPct}%`} t={cf.satisfactionPct >= 75 ? 'ok' : 'warn'} />
+              <Stat l="Payments/day" v={`${cf.paymentsTodayM}M`} t="ok" />
+            </div>
+          </Panel>
+          <Panel title="Fiscal assurance" meta="anti-fraud · regional risk" bodyClass="!p-2">
+            <div className="mb-1 text-[10px] text-ink-soft">Open findings <span className="font-mono" style={{ color: TONE.warn }}>{fa.openFindings}</span> · fraud signals <span className="font-mono" style={{ color: fa.fraudSignals ? TONE.alert : TONE.ok }}>{fa.fraudSignals}</span></div>
+            <div className="space-y-0.5">
+              {fa.regionalRisk.map(r => (
+                <div key={r.region} className="flex items-center gap-2 text-[10px]">
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.region}</span>
+                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(r.tone) }}>{r.risk}</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        </div>
+      </div>
+    );
+  }
+
+  // ── Generic deep environment (other archetypes / groups) ─────────────
   return (
     <div className="space-y-2">
       {header}
