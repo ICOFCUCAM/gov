@@ -595,8 +595,12 @@ export function CabinetIntelligence() {
                             <span className="text-ink-muted">Owner</span><span className="text-ink-soft">{owner}</span>
                           </div>
                           <div className="mt-1 text-[10px]" style={{ color: TONE.warn }}>Recommended: {action}</div>
-                          <Link href={e.mid.startsWith('/') ? e.mid : `/gov/ministry/${e.mid}`}
-                            className="focus-ring mt-1.5 inline-block text-[10px] text-link underline underline-offset-2">Open ministry workspace →</Link>
+                          <div className="mt-1.5 flex flex-wrap gap-3">
+                            <Link href={e.mid.startsWith('/') ? e.mid : `/gov/ministry/${e.mid}`}
+                              className="focus-ring inline-block text-[10px] text-link underline underline-offset-2">Open ministry workspace →</Link>
+                            <Link href="/gov/coordination"
+                              className="focus-ring inline-block text-[10px] text-link underline underline-offset-2">Drive incident runtime →</Link>
+                          </div>
                         </div>
                       </div>
                     ) : null}
