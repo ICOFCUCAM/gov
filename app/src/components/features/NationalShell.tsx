@@ -167,6 +167,29 @@ export function NationalShell() {
         </div>
       </div>
 
+      <P title="Resilience stress matrix" meta="index drawdown under the top vectors">
+        <div className="grid gap-1.5 sm:grid-cols-3">
+          {sweep.slice(0, 3).map(r => {
+            const st = resilienceUnderShock(mins, ts, r.key);
+            return (
+              <Link key={r.key} href={`/gov/simulation?s=${r.key}`} className="focus-ring flex flex-col rounded-[3px] border border-line-soft bg-surface-2/40 p-2 no-underline transition-colors hover:bg-surface-2/70">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="min-w-0 truncate text-[11px] font-semibold text-ink">{r.label}</span>
+                  <span className="shrink-0 text-[8px] font-bold uppercase tracking-wider" style={{ color: TONE[st.tone] }}>{st.band}</span>
+                </div>
+                <div className="mt-1 flex items-baseline gap-1.5">
+                  <span className="font-mono text-[12px] tabular-nums text-ink-muted">{st.baseline}</span>
+                  <span className="text-[10px] text-ink-muted">→</span>
+                  <span className="font-mono text-[18px] leading-none tabular-nums" style={{ color: TONE[st.tone] }}>{st.projected}</span>
+                  <span className="ml-auto font-mono text-[11px] tabular-nums" style={{ color: st.drawdown > 0 ? TONE.alert : TONE.ok }}>−{st.drawdown}</span>
+                </div>
+                <div className="mt-1 h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${st.projected}%`, backgroundColor: TONE[st.tone] }} /></div>
+              </Link>
+            );
+          })}
+        </div>
+      </P>
+
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {tele.map(m => (
           <div key={m.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
