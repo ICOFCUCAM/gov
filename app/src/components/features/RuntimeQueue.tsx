@@ -8,6 +8,7 @@ import {
 } from '@/lib/gov/runtime-workflow';
 import { subscribe, getScope, actOnItem, annotateItem, reassignItem, version as rtVersion } from '@/lib/gov/runtime-store';
 import { checkAction, capabilityForAction, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
+import { nextBestAction } from '@/shared/ai/next-action';
 
 const ASSIGNEES = ['K. Otieno', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Kamau'];
 
@@ -133,6 +134,21 @@ export function RuntimeQueue({
                 <span className="ml-auto text-[8px] uppercase tracking-wider text-ink-muted">role · {role}</span>
               </div>
               {denied ? <div className="text-[9px]" style={{ color: ACTION_TONE.reject }}>{denied}</div> : null}
+              {(() => {
+                const rec = nextBestAction(current);
+                if (!rec.action) return null;
+                return (
+                  <div className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                    <span className="text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: rec.urgent ? ACTION_TONE.escalate : ACTION_TONE.advance }}>AI</span>
+                    <span className="min-w-0 flex-1 truncate text-[9px] text-ink-soft">{rec.rationale} <span className="text-ink-muted">({rec.confidence}%)</span></span>
+                    <button onClick={() => act(current.id, rec.action!)}
+                      className="focus-ring shrink-0 rounded-[3px] border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider"
+                      style={{ borderColor: ACTION_TONE[rec.action], color: ACTION_TONE[rec.action] }}>
+                      Execute {ACTION_LABEL[rec.action]}
+                    </button>
+                  </div>
+                );
+              })()}
               <div>
                 <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Audit trail</div>
                 {current.history.length === 0 ? (
