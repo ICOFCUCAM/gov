@@ -165,6 +165,33 @@ export function NationalFabricView() {
         </div>
       </Panel>
 
+      <Panel title="Cascade event timeline" meta="propagation chronology" bodyClass="!p-0">
+        {(() => {
+          const events = cascade
+            .filter(c => c.contributors.length && c.totalStress >= 30)
+            .flatMap(c => c.contributors.slice(0, 2).map(ct => ({
+              t: 2 + Math.round(waveSeries(`ce:${c.id}:${ct.name}`, ts, 1, 1, 58).at(-1)!),
+              sev: c.posture, target: c.name, src: ct.name, via: ct.via, amt: ct.amount,
+            })))
+            .sort((a, b) => a.t - b.t)
+            .slice(0, 10);
+          if (!events.length) return <p className="p-3 text-[11px] text-ink-muted">No active cascade propagation — national fabric stable.</p>;
+          return events.map((e, i) => {
+            const tn = e.sev === 'critical' ? TONE.alert : e.sev === 'strained' ? TONE.warn : TONE.neutral;
+            return (
+              <div key={i} className="flex items-center gap-3 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tn}` }}>
+                <span className="font-mono text-[10px] tabular-nums text-ink-muted">{e.t}m</span>
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: tn }} />
+                <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">
+                  <span className="text-ink">{e.src.replace(/ Ministry| \(capability\)/, '')}</span> degradation propagated <span className="font-mono" style={{ color: tn }}>+{e.amt}</span> stress to <span className="text-ink">{e.target.replace(/ Ministry/, '')}</span> via {e.via}
+                </span>
+                <span className="shrink-0 text-[8px] font-bold uppercase tracking-wider" style={{ color: tn }}>{e.sev}</span>
+              </div>
+            );
+          });
+        })()}
+      </Panel>
+
       <Panel title="Dependency ledger" meta="live link health" bodyClass="!p-0">
         <div className="max-h-[320px] overflow-y-auto">
           <table className="w-full text-[11px]">
