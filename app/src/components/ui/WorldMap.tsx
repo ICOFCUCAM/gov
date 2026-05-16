@@ -31,22 +31,33 @@ export function WorldMap({
   );
   return (
     <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className={`absolute inset-0 h-full w-full ${className}`}>
+      <defs>
+        <pattern id="ocean" width="22" height="22" patternUnits="userSpaceOnUse">
+          <circle cx="2" cy="2" r="0.7" fill="rgb(var(--c-line))" fillOpacity="0.4" />
+        </pattern>
+        <filter id="landglow" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="3" result="b" />
+          <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+        </filter>
+      </defs>
       <rect width="1000" height="620" fill="rgb(var(--c-bg))" />
+      <rect width="1000" height="620" fill="url(#ocean)" />
       {paths.map(p => {
         let fill = 'rgb(var(--c-surface-2))';
-        let op = 0.55;
+        let op = 0.62;
         let stroke = 'rgb(var(--c-line))';
         if (focusFeat) {
-          if (p.focused) { fill = accent; op = 0.16; stroke = accent; }
-          else { fill = 'rgb(var(--c-surface-2))'; op = 0.3; }
+          if (p.focused) { fill = accent; op = 0.2; stroke = accent; }
+          else { fill = 'rgb(var(--c-surface-2))'; op = 0.34; }
         } else if (riskOf) {
           const r = riskOf(p.name);
           if (r != null) { fill = TONE[toneFor(r)] ?? fill; op = 0.16 + (r / 100) * 0.5; }
-          else { op = 0.35; }
+          else { op = 0.4; }
         }
         return (
           <path key={p.name} d={p.d} fill={fill} fillOpacity={op}
-            stroke={stroke} strokeWidth={p.focused ? 1.4 : 0.5} strokeOpacity={0.5}
+            stroke={stroke} strokeWidth={p.focused ? 1.6 : 0.5} strokeOpacity={p.focused ? 0.9 : 0.5}
+            filter={p.focused ? 'url(#landglow)' : undefined}
             className="transition-all duration-1000 ease-sov" />
         );
       })}
