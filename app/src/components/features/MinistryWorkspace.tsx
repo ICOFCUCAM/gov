@@ -15,6 +15,7 @@ import { identityFor } from '@/lib/archetype-profiles';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemOpPct } from '@/lib/institution/operational-catalog';
 import { ministryFabric } from '@/lib/institution/ministry-fabric';
+import { nationalRegions } from '@/lib/gov/regions';
 import { buildCascade } from '@/lib/institution/cascade';
 import type { Ministry } from '@/lib/api/types';
 import type {
@@ -500,6 +501,21 @@ export function MinistryWorkspace({ id }: { id: string }) {
               <span>Stable</span>
               <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
               <span>Critical</span>
+            </div>
+          </Section>
+          <Section title="National regional posture" meta="shared regional command model">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+              {nationalRegions(now / 4000).map(r => {
+                const tn = r.posture === 'critical' ? 'alert' : r.posture === 'elevated' ? 'warn' : r.posture === 'watch' ? 'neutral' : 'ok';
+                return (
+                  <div key={r.name} className="rounded-[3px] border border-line bg-surface px-2.5 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+                    <div className="truncate text-[9px] font-semibold text-ink">{r.capital ? '★ ' : ''}{r.name}</div>
+                    <div className="font-mono text-base tabular-nums" style={{ color: TONE[tn] }}>{r.readiness}%</div>
+                    <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${r.readiness}%`, backgroundColor: TONE[tn] }} /></div>
+                    <div className="mt-0.5 truncate text-[8px] text-ink-muted">{r.incidents} inc · dep {r.capital ? 'hub' : `${r.capitalDependency}%`}</div>
+                  </div>
+                );
+              })}
             </div>
           </Section>
           <Section title="Regional oversight" meta={`${regions.length} ${labels.unit.toLowerCase()}`}>
