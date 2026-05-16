@@ -151,7 +151,7 @@ export default function MinistryControlPage({
                             {eco.groups.map(g => (
                               <div key={g.key} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
                                 <div className="flex items-center justify-between gap-2">
-                                  <span className="text-[11px] font-semibold text-ink">{g.name}</span>
+                                  <a href={`/ministries/${selected.id}/system/${g.key}`} className="text-[11px] font-semibold text-link no-underline hover:underline">{g.name} →</a>
                                   <span className="font-mono text-[10px] tabular-nums" style={{ color: `rgb(var(--c-${g.tone}))` }}>{g.health}%</span>
                                 </div>
                                 <div className="mb-1 text-[9px] text-ink-muted">{g.purpose}</div>
