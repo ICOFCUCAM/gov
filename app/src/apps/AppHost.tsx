@@ -43,7 +43,7 @@ import type { WorkKind } from '@/lib/gov/runtime-workflow';
  * its own routing. The platform core is NOT mounted here — this is a
  * sovereign deployable application surface.
  */
-export function AppHost({ domain }: { domain: string }) {
+export function AppHost({ domain, initialKey }: { domain: string; initialKey?: string }) {
   const [mins, setMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(() => Date.now());
   React.useEffect(() => {
@@ -58,7 +58,11 @@ export function AppHost({ domain }: { domain: string }) {
   React.useEffect(() => {
     if (app?.activated) busPublish('institution.metric', app.id, { domain: app.domain, kind: app.kind });
   }, [app?.id, app?.activated]);
-  const [navKey, setNavKey] = React.useState<string | null>(null);
+  const [navKey, setNavKey] = React.useState<string | null>(initialKey ?? null);
+  const selectNav = React.useCallback((k: string) => {
+    setNavKey(k);
+    if (typeof window !== 'undefined') window.history.replaceState(null, '', `/app/${domain}/${k}`);
+  }, [domain]);
   const [role, setRole] = React.useState<SovereignRole>('commander');
   const active = navKey ?? app?.nav[0]?.key ?? null;
 
@@ -103,7 +107,7 @@ export function AppHost({ domain }: { domain: string }) {
         <nav aria-label={`${app.label} navigation`} className="hidden w-[200px] shrink-0 flex-col border-r border-line bg-bg py-1 lg:flex">
           <div className="px-3 pb-1 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{app.label}</div>
           {app.nav.map(s => (
-            <button key={s.key} onClick={() => setNavKey(s.key)}
+            <button key={s.key} onClick={() => selectNav(s.key)}
               className={'focus-ring border-l-2 px-3 py-1.5 text-left text-[11px] transition-colors ' + (active === s.key ? 'border-link bg-surface-2 font-medium text-ink' : 'border-transparent text-ink-muted hover:bg-surface-2/50 hover:text-ink')}>
               {s.label}
             </button>
