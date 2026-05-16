@@ -523,22 +523,37 @@ export function NationalShell() {
         const meta = fed
           ? `${fed.stats.activated}/${fed.stats.registered} sovereign applications · server-authoritative federation`
           : `${fedApps.length} sovereign applications · orchestration registry`;
+        const opByArch = new Map(fp.institutions.map(i => [i.archetype, i]));
+        const DOMAIN_ARCH: Record<string, string> = {
+          health: 'HEALTH', treasury: 'FINANCE', education: 'EDUCATION', transport: 'TRANSPORT',
+          energy: 'ENERGY', agriculture: 'AGRICULTURE', justice: 'JUSTICE', environment: 'ENVIRONMENT',
+          interior: 'INTERIOR', labour: 'LABOR', trade: 'TRADE',
+        };
         return (
-          <P title="Federated institutions" meta={meta}>
+          <P title="Federated institutions" meta={`${meta} · live posture emergent from operations`}>
             {apps.length === 0 ? (
               <p className="text-[11px] text-ink-muted">No institutional applications activated. Provision and activate an institution — its sovereign application registers and appears here automatically.</p>
             ) : (
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
-                {apps.map(a => (
-                  <Link key={`${a.id}:${a.instanceId ?? ''}`} href={`/app/${a.domain}`} className="focus-ring group flex flex-col rounded-[3px] border border-line bg-bg p-2.5 no-underline transition-all hover:-translate-y-0.5 hover:border-link/40">
-                    <div className="flex items-start justify-between gap-2">
-                      <span className="text-[12px] font-semibold text-ink">{a.label}</span>
-                      <span className="shrink-0 rounded-[3px] px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>{a.kind}</span>
-                    </div>
-                    <span className="mt-0.5 font-mono text-[9px] lowercase tracking-wide text-ink-muted">{a.domain}.gov · {a.navCount} systems</span>
-                    <span className="mt-2 flex items-center justify-between border-t border-line pt-1.5 text-[10px] text-link">Enter application<span className="transition-transform group-hover:translate-x-0.5">→</span></span>
-                  </Link>
-                ))}
+                {apps.map(a => {
+                  const op = opByArch.get((DOMAIN_ARCH[a.domain] ?? '') as never);
+                  return (
+                    <Link key={`${a.id}:${a.instanceId ?? ''}`} href={`/app/${a.domain}`} className="focus-ring group flex flex-col rounded-[3px] border border-line bg-bg p-2.5 no-underline transition-all hover:-translate-y-0.5 hover:border-link/40">
+                      <div className="flex items-start justify-between gap-2">
+                        <span className="text-[12px] font-semibold text-ink">{a.label}</span>
+                        <span className="shrink-0 rounded-[3px] px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>{a.kind}</span>
+                      </div>
+                      <span className="mt-0.5 font-mono text-[9px] lowercase tracking-wide text-ink-muted">{a.domain}.gov · {a.navCount} systems</span>
+                      {op ? (
+                        <span className="mt-1 flex items-center gap-1.5">
+                          <span className="h-1 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${op.operational}%`, backgroundColor: TONE[op.tone] }} /></span>
+                          <span className="font-mono text-[9px] tabular-nums" style={{ color: TONE[op.tone] }}>{op.operational}</span>
+                        </span>
+                      ) : null}
+                      <span className="mt-2 flex items-center justify-between border-t border-line pt-1.5 text-[10px] text-link">Enter application<span className="transition-transform group-hover:translate-x-0.5">→</span></span>
+                    </Link>
+                  );
+                })}
               </div>
             )}
           </P>
