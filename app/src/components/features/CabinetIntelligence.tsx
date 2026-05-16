@@ -13,6 +13,8 @@ import {
 import { buildCascade } from '@/lib/institution/cascade';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
+import { ministryDependencies } from '@/lib/institution/ministry-fabric';
+import { buildOperationalChain } from '@/lib/gov/operational-chain';
 import { scenarioSweep, mitigationPlaybook, prioritisedThreats } from '@/lib/gov/simulation';
 import { nationalResilience } from '@/lib/gov/national-resilience';
 import type {
@@ -478,6 +480,72 @@ export function CabinetIntelligence() {
                               <span className="text-ink-soft">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {op.aiAdvisory}</span>
                               <Link href={m.href} className="focus-ring shrink-0 text-link underline underline-offset-2">Open workspace →</Link>
                             </div>
+                            {(() => {
+                              const deps = ministryDependencies(m.archetype as ArchetypeKey);
+                              const chain = buildOperationalChain(mins, m.ministryId, ts);
+                              return (
+                                <div className="mt-2 grid gap-2 lg:grid-cols-2">
+                                  <div className="rounded-[3px] border border-line-soft bg-surface px-2 py-1.5">
+                                    <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Live dependencies</div>
+                                    <div className="space-y-0.5">
+                                      {deps.slice(0, 5).map((d, i) => {
+                                        const lh = Math.round(waveSeries(`iod:${m.ministryId}:${d.archetype}`, ts, 1, 55, 99).at(-1)!);
+                                        const lt = lh >= 80 ? TONE.ok : lh >= 65 ? TONE.warn : TONE.alert;
+                                        return (
+                                          <div key={i} className="flex items-center gap-1.5 text-[10px]">
+                                            <span className="w-16 shrink-0 truncate font-mono text-ink-soft">{d.archetype}</span>
+                                            <span className="shrink-0 text-[8px] uppercase text-ink-muted">{d.direction}</span>
+                                            <span className="min-w-0 flex-1 truncate text-ink-muted">{d.relation}</span>
+                                            <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: lt }}>{lh}%</span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                  <div className="rounded-[3px] border border-line-soft bg-surface px-2 py-1.5">
+                                    <div className="mb-1 flex items-center justify-between text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
+                                      <span>If this institution fails</span>
+                                      {chain ? (
+                                        <span className="rounded-[3px] px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider"
+                                          style={{ backgroundColor: `color-mix(in srgb, ${chain.containment === 'critical' ? TONE.alert : chain.containment === 'spreading' ? TONE.warn : TONE.ok} 18%, transparent)`, color: chain.containment === 'critical' ? TONE.alert : chain.containment === 'spreading' ? TONE.warn : TONE.ok }}>
+                                          {chain.containment}
+                                        </span>
+                                      ) : null}
+                                    </div>
+                                    {chain ? (
+                                      <>
+                                        <div className="grid grid-cols-4 gap-1 text-[9px]">
+                                          {[
+                                            ['Affected', `${chain.totalAffected}`, chain.totalAffected >= 4 ? TONE.alert : TONE.warn],
+                                            ['Treasury', `${chain.treasuryImpactPct}%`, TONE.alert],
+                                            ['Citizen sys', `${chain.citizenServicesDown}`, chain.citizenServicesDown ? TONE.warn : TONE.ok],
+                                            ['Recovery', `${chain.recoveryMins}m`, TONE.neutral],
+                                          ].map(([l, v, c]) => (
+                                            <div key={l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-1 py-0.5">
+                                              <div className="truncate text-[7px] uppercase tracking-wider text-ink-muted">{l}</div>
+                                              <div className="font-mono tabular-nums" style={{ color: c }}>{v}</div>
+                                            </div>
+                                          ))}
+                                        </div>
+                                        <div className="mt-1 flex flex-wrap gap-1">
+                                          {[
+                                            { l: `Isolate & contain ${m.ministry}`, g: '⛒' },
+                                            { l: `Convene cabinet cell · ${m.archetype}`, g: '◆' },
+                                            { l: 'Authorise contingency reserve draw', g: '⇄' },
+                                          ].map(a => (
+                                            <button key={a.l} onClick={() => issue(a.l)}
+                                              className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] transition-colors hover:bg-surface-2/60"
+                                              style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-soft))' }}>
+                                              <span className="mr-1" style={{ color: ACCENT }}>{a.g}</span>{a.l}
+                                            </button>
+                                          ))}
+                                        </div>
+                                      </>
+                                    ) : <p className="text-[9px] text-ink-muted">No active fabric to propagate.</p>}
+                                  </div>
+                                </div>
+                              );
+                            })()}
                           </td></tr>
                         );
                       })() : null}
