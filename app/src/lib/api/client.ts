@@ -226,6 +226,7 @@ export const api = {
   org: {
     archetypes: () => req<{ archetypes: Archetype[] }>('/api/org/archetypes'),
     ministries: () => req<{ ministries: Ministry[] }>('/api/org/ministries'),
+    federation: () => req<{ apps: { id: string; label: string; domain: string; kind: string; activated: boolean; navCount: number }[]; stats: { registered: number; activated: number } }>('/api/org/federation'),
     get: (id: string) => req<{ ministry: Ministry }>(`/api/org/ministries/${id}`),
     operations: (id: string) => req<MinistryOperations>(`/api/org/ministries/${id}/operations`),
     regions: (id: string) => req<MinistryRegions>(`/api/org/ministries/${id}/regions`),
