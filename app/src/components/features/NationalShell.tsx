@@ -21,6 +21,7 @@ import { stateFabric } from '@/lib/gov/state-fabric';
 import { nationalRuntime } from '@/lib/gov/national-runtime';
 import { subscribe as auditSubscribe, auditStats, version as auditVersion } from '@/services/audit-ledger';
 import { federationPosture } from '@/services/federation-aggregate';
+import { interoperabilityFabric } from '@/services/interoperability-fabric';
 import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, activatedApps, version as orchVersion } from '@/services/orchestration-engine';
@@ -120,6 +121,7 @@ export function NationalShell() {
   const stress = lead ? resilienceUnderShock(mins, ts, lead.key) : null;
   const ne = nationalEcosystem(mins, ts);
   const fp = federationPosture(mins, ts);
+  const iof = interoperabilityFabric(mins, ts);
   const leg = legislativeState(ts, model.legislature.chambers.map(c => c.name).slice(0, 2));
   const jud = judicialState(ts);
   const constContinuity =
@@ -251,6 +253,33 @@ export function NationalShell() {
                     <span className="min-w-0 flex-1 truncate text-[11px] text-ink">{i.name}</span>
                     <span className="shrink-0 text-[8px] uppercase tracking-wider text-ink-muted">{i.archetype}</span>
                     <span className="w-8 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE[i.tone] }}>{i.operational}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </P>
+        );
+      })()}
+
+      {(() => {
+        const itn = iof.posture === 'fragmented' ? 'alert' : iof.posture === 'strained' ? 'warn' : 'ok';
+        return (
+          <P title="Emergent interoperability fabric" meta={`RULE 2 · ${iof.edges.length} contracts from active federation · ${iof.meanHealth}% mean health`}>
+            <div className="mb-2 flex flex-wrap items-center gap-3">
+              <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[itn]} 16%, transparent)`, color: TONE[itn] }}>{iof.posture}</span>
+              <span className="text-[10px] text-ink-muted">{iof.nodes} institutions · {iof.stressedLinks} stressed links — dependency health derived from real operational posture, not fabricated</span>
+            </div>
+            {iof.edges.length === 0 ? (
+              <p className="text-[11px] text-ink-muted">No inter-institution contracts — provision more institutions to form the interoperability mesh.</p>
+            ) : (
+              <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+                {iof.edges.slice(0, 9).map((e, i) => (
+                  <Link key={i} href={`/ministries/${e.from}/operations`} className="focus-ring rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 no-underline transition-colors hover:bg-surface-2/70">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 truncate text-[10px] text-ink">{e.fromName} <span className="text-ink-muted">→</span> {e.toName}</span>
+                      <span className="shrink-0 font-mono text-[10px] tabular-nums" style={{ color: TONE[e.tone] }}>{e.health}</span>
+                    </div>
+                    <div className="truncate text-[8.5px] text-ink-muted">{e.relation} · {e.direction}</div>
                   </Link>
                 ))}
               </div>
