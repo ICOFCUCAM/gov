@@ -115,6 +115,13 @@ export function OpsCenter() {
           <div className="flex items-center gap-2">
             <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Operations Centre</h1>
             <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}><span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE</span>
+            <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()} · updated {Math.round((now % 60000) / 1000)}s ago</span>
+            {openInc >= 1 ? (
+              <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, transparent)` }}>
+                <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
+                {openInc >= 3 ? 'Incident surge' : 'Active incidents'} · {openInc}
+              </span>
+            ) : null}
           </div>
           <p className="text-[11px] text-ink-muted">What is happening, where the bottlenecks are, what needs intervention. Calm by design — signals, not noise.</p>
         </div>
