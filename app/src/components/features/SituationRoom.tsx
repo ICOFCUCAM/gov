@@ -39,7 +39,7 @@ export const PALETTE = {
 } as React.CSSProperties;
 
 import { seed, toneFor, wave, waveSeries, domainStress } from '@/lib/telemetry';
-import { nationalAssets, nationalNetworks, networkPressure, NET_TONE } from '@/lib/gov/infrastructure';
+import { nationalAssets, nationalNetworks, networkPressure, NET_TONE, ASSET_GLYPH } from '@/lib/gov/infrastructure';
 
 const NATL_ASSETS = nationalAssets();
 const NATL_NETWORKS = nationalNetworks();
@@ -547,9 +547,17 @@ export function NationalMap({
                 );
               })}
               {NATL_ASSETS.map(a => {
-                const tone = a.tier === 1 ? ACCENT : a.tier === 2 ? 'rgb(var(--c-ink-soft))' : 'rgb(var(--c-line))';
-                return <circle key={a.id} cx={a.x} cy={a.y} r={a.tier === 1 ? 2.1 : a.tier === 2 ? 1.4 : 0.9}
-                  fill={tone} fillOpacity={a.tier === 1 ? 0.85 : a.tier === 2 ? 0.5 : 0.32} />;
+                if (a.tier === 1) {
+                  return (
+                    <g key={a.id}>
+                      <circle cx={a.x} cy={a.y} r="6" fill="none" stroke={ACCENT} strokeOpacity="0.35" strokeWidth="0.6" />
+                      <text x={a.x} y={a.y + 2.6} textAnchor="middle" style={{ fontSize: 6.5, fill: ACCENT, opacity: 0.9 }}>{ASSET_GLYPH[a.kind]}</text>
+                    </g>
+                  );
+                }
+                const tone = a.tier === 2 ? 'rgb(var(--c-ink-soft))' : 'rgb(var(--c-line))';
+                return <circle key={a.id} cx={a.x} cy={a.y} r={a.tier === 2 ? 1.4 : 0.9}
+                  fill={tone} fillOpacity={a.tier === 2 ? 0.5 : 0.32} />;
               })}
             </g>
           ) : null}
