@@ -9,7 +9,7 @@ import { Section, EnterpriseTable, StatusText, type Column } from '@/components/
 import { SeverityBadge } from '@/components/ui/Ops';
 import { Sparkbars, RegionMatrix, SLAMonitor, FlowBars } from '@/components/ui/Viz';
 import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
-import { TONE, Spark, seed } from '@/components/features/SituationRoom';
+import { TONE, Spark, seed, TerritoryHeat } from '@/components/features/SituationRoom';
 import { api } from '@/lib/api/client';
 import { identityFor } from '@/lib/archetype-profiles';
 import type {
@@ -295,7 +295,18 @@ export function MinistryWorkspace({ id }: { id: string }) {
       )}
 
       {tab === 'regional' && (
-        <Section title="Regional oversight" meta={`${regions.length} ${labels.unit.toLowerCase()}`}>
+        <div className="space-y-3">
+          <Section title="Regional theatre" meta="institutional deployment · pressure">
+            <div className="overflow-hidden rounded-[3px] border border-line-soft">
+              <TerritoryHeat epoch={(id.charCodeAt(0) || 7) % 50} height={230} />
+            </div>
+            <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
+              <span>Stable</span>
+              <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
+              <span>Critical</span>
+            </div>
+          </Section>
+          <Section title="Regional oversight" meta={`${regions.length} ${labels.unit.toLowerCase()}`}>
           <EnterpriseTable
             columns={regionCols}
             rows={regions}
@@ -317,6 +328,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
             )}
           />
         </Section>
+        </div>
       )}
 
       {tab === 'approvals' && (
