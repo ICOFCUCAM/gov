@@ -525,6 +525,17 @@ export function NationalMap({
             );
           })}
 
+          {/* maritime EEZ / coastal patrol zone */}
+          <g>
+            <path d="M860,90 Q930,300 850,560 L1000,560 L1000,90 Z" fill="#5fb0d9" fillOpacity="0.05" stroke="#5fb0d9" strokeOpacity="0.22" strokeWidth="0.8" strokeDasharray="4 5" />
+            <text x="930" y="320" textAnchor="middle" className="fill-[#5fb0d9]" style={{ fontSize: 9, letterSpacing: 1, opacity: 0.5 }}>EEZ</text>
+            <g style={{ filter: 'drop-shadow(0 0 2px #5fb0d9)' }}>
+              <circle r="1.6" fill="#5fb0d9">
+                <animateMotion dur="13s" repeatCount="indefinite" path="M880,120 Q940,300 870,540 Q940,300 880,120" />
+              </circle>
+            </g>
+          </g>
+
           {/* incident diffusion shock rings */}
           {layers.incidents ? mapNodes.filter(m => m.pressure >= 68).slice(0, 8).map(m => (
             <g key={`bl${m.ministryId}`}>
