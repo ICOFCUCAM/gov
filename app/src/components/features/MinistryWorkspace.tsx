@@ -13,6 +13,7 @@ import { TONE, Spark, seed, TerritoryHeat } from '@/components/features/Situatio
 import { api } from '@/lib/api/client';
 import { identityFor } from '@/lib/archetype-profiles';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
+import { subsystemsFor } from '@/lib/institution/operational-catalog';
 import type { Ministry } from '@/lib/api/types';
 import type {
   AnalyticSeries,
@@ -575,6 +576,39 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 );
               })}
             </div>
+            <div className="mt-2">
+              <Card tight>
+                <div className="flex items-center justify-between gap-2">
+                  <strong className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Institutional subsystems</strong>
+                  <span className="text-[10px] text-ink-muted">{subsystemsFor(archetype as ArchetypeKey).length} component classes · national deployment</span>
+                </div>
+                <div className="mt-2 grid grid-cols-2 gap-2 md:grid-cols-3 xl:grid-cols-4">
+                  {subsystemsFor(archetype as ArchetypeKey).map(ss => {
+                    const total = Math.max(1, Math.round(ss.scale * (0.85 + seed(`${id}:ss:${ss.name}:n`) * 0.3)));
+                    const opPct = 62 + Math.round(seed(`${sk}:ss:${ss.name}:op`) * 37);
+                    const degraded = Math.round(total * (1 - opPct / 100));
+                    const tn = opPct >= 90 ? 'ok' : opPct >= 75 ? 'warn' : 'alert';
+                    return (
+                      <div key={ss.name} className="rounded-[3px] border border-line bg-surface px-2.5 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+                        <div className="truncate text-[10px] font-medium text-ink">{ss.name}</div>
+                        <div className="mt-0.5 flex items-baseline justify-between">
+                          <span className="font-mono text-base tabular-nums text-ink">{total.toLocaleString()}</span>
+                          <span className="text-[8px] uppercase tracking-wider text-ink-muted">{ss.unit}</span>
+                        </div>
+                        <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-2">
+                          <span className="block h-full rounded-full" style={{ width: `${opPct}%`, backgroundColor: TONE[tn] }} />
+                        </div>
+                        <div className="mt-1 flex items-center justify-between text-[9px]">
+                          <span style={{ color: TONE[tn] }}>{opPct}% operational</span>
+                          <span className="text-ink-muted">{degraded ? `${degraded} degraded` : 'all nominal'}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </Card>
+            </div>
+
             <div className="mt-2 grid gap-2 lg:grid-cols-2">
               <Card tight>
                 <strong className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Operational stream</strong>
