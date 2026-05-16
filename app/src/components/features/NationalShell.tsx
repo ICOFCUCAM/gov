@@ -9,6 +9,7 @@ import { buildCascade } from '@/lib/institution/cascade';
 import { buildNationalFabric } from '@/lib/institution/national-fabric';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
+import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -74,8 +75,13 @@ export function NationalShell() {
     { l: 'Separation', v: sep.intact ? 'INTACT' : 'STRAINED', t: sep.intact ? 'ok' : 'alert', k: 'sp' },
   ];
 
+  const regions = nationalRegions(ts);
+  const rRoll = regionRollup(regions);
+  const rTone = rRoll.posture === 'critical' ? 'alert' : rRoll.posture === 'elevated' ? 'warn' : rRoll.posture === 'watch' ? 'neutral' : 'ok';
+
   const estates = [
     { l: 'Constitutional Architecture', s: model.label, href: '/gov/branches', v: `${model.branches.length} branches`, t: sep.intact ? 'ok' : 'alert' },
+    { l: 'Regional Command', s: `${regions.length} regions · ${rRoll.population}M`, href: '/gov/regional', v: `${rRoll.meanReadiness}% ready`, t: rTone },
     { l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', v: posture.l, t: posture.t },
     { l: 'Situation Room', s: 'Real-time operations', href: '/gov/situation-room', v: `${incidents.length} incidents`, t: incidents.length ? 'warn' : 'ok' },
     { l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination', v: `${cascCrit + cascStrain} cascade`, t: cascCrit ? 'alert' : cascStrain ? 'warn' : 'ok' },
@@ -129,7 +135,7 @@ export function NationalShell() {
         </div>
       </P>
 
-      <div className="grid gap-2 xl:grid-cols-2">
+      <div className="grid gap-2 xl:grid-cols-3">
         <P title="Institutions" meta={`${dir.length} active · ${deployable} deployable`}>
           <div className="space-y-1">
             {dir.length === 0 ? <p className="text-[11px] text-ink-muted">No activated institutions. <Link href="/ministries" className="text-link underline">Compose →</Link></p> : dir.slice(0, 7).map(({ ministry: m, readiness: r }) => (
@@ -153,6 +159,24 @@ export function NationalShell() {
                 <div key={c.id} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[11px]">
                   <span className="truncate text-ink-soft">{c.name.replace(/ Ministry| \(capability\)/, '')}</span>
                   <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{c.totalStress}{c.inheritedStress ? ` (+${c.inheritedStress})` : ''}</span>
+                </div>
+              );
+            })}
+          </div>
+        </P>
+        <P title="Regional posture" meta={`${rRoll.critical} critical · ${rRoll.elevated} elevated`}>
+          <div className="mb-1.5 flex items-center gap-2 text-[10px]">
+            <span className="rounded-[3px] px-1.5 py-0.5 font-bold uppercase" style={{ backgroundColor: `color-mix(in srgb, ${TONE[rTone]} 16%, transparent)`, color: TONE[rTone] }}>{rRoll.posture}</span>
+            <span className="text-ink-muted">{rRoll.meanReadiness}% mean readiness</span>
+            <Link href="/gov/regional" className="ml-auto text-[10px] text-link underline underline-offset-2">Regional Command →</Link>
+          </div>
+          <div className="space-y-1">
+            {[...regions].sort((a, b) => a.readiness - b.readiness).map(r => {
+              const tn = r.posture === 'critical' ? 'alert' : r.posture === 'elevated' ? 'warn' : r.posture === 'watch' ? 'neutral' : 'ok';
+              return (
+                <div key={r.name} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[11px]">
+                  <span className="truncate text-ink-soft">{r.capital ? '★ ' : ''}{r.name}</span>
+                  <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{r.readiness}%{r.incidents ? ` · ${r.incidents} inc` : ''}</span>
                 </div>
               );
             })}
