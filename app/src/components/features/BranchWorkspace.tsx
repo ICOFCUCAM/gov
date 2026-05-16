@@ -7,6 +7,7 @@ import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/Situ
 import { constitutionFor } from '@/lib/gov/constitution';
 import { instantiateInstitution, systemKindLabel, type InstitutionKind } from '@/lib/institution/blueprint';
 import { legislativeState, committeeInquiries, BILL_STAGES } from '@/lib/gov/legislative-engine';
+import { judicialState } from '@/lib/gov/judicial-engine';
 import {
   branchFor, branchReadiness, separationIntegrity,
   legislativePipeline, chambersFor, committees, legislativeCalendar,
@@ -36,7 +37,7 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
   void tabsByEngine;
   const tabs = ['Ecosystem', ...(
     engine === 'legislative' ? ['Live legislature', 'Chambers', 'Committees', 'Bill pipeline', 'Calendar', 'Oversight inquiries']
-      : engine === 'judicial' ? ['Court hierarchy', 'Docket', 'Constitutional review', 'Registries', 'Justice analytics']
+      : engine === 'judicial' ? ['Live judiciary', 'Court hierarchy', 'Docket', 'Constitutional review', 'Registries', 'Justice analytics']
       : engine === 'audit' ? ['Controls', 'Bodies', 'Authority']
       : engine === 'electoral' ? ['Electoral cycle', 'Bodies', 'Authority']
       : ['Bodies', 'Authority chain', 'Constitutional posture'])];
@@ -323,6 +324,101 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
           </div>
         </Panel>
       )}
+
+      {tab === 'Live judiciary' && (() => {
+        const js = judicialState(ts);
+        const sigTone = (l: 'info' | 'watch' | 'risk') => l === 'risk' ? TONE.alert : l === 'watch' ? TONE.warn : TONE.ok;
+        const stTone = (c: typeof js.cases[number]) => c.stage === 'Closed' ? TONE.ok : c.backlogged ? TONE.alert : TONE.warn;
+        return (
+          <div className="space-y-2">
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+              {[
+                { l: 'Open cases', v: `${js.openCases}`, t: 'ok' as const },
+                { l: 'Appeals', v: `${js.appeals}`, t: 'warn' as const },
+                { l: 'Constitutional', v: `${js.constitutionalMatters}`, t: js.constitutionalMatters ? 'warn' as const : 'ok' as const },
+                { l: 'Mean clearance', v: `${js.meanClearance}%`, t: js.meanClearance >= 80 ? 'ok' as const : js.meanClearance >= 65 ? 'warn' as const : 'alert' as const },
+                { l: 'Total backlog', v: `${js.totalBacklog}`, t: js.totalBacklog > 900 ? 'alert' as const : js.totalBacklog > 500 ? 'warn' as const : 'ok' as const },
+                { l: 'Tiers', v: `${js.tiers.length}`, t: 'ok' as const },
+              ].map(s => (
+                <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2">
+                  <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
+                  <div className="font-mono text-[14px] tabular-nums" style={{ color: TONE[s.t] }}>{s.v}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-2 xl:grid-cols-3">
+              <Panel title="Case pipeline" meta="live · filed → closed" className="xl:col-span-2" bodyClass="!p-0">
+                <div className="max-h-[340px] overflow-y-auto">
+                  {js.cases.map(c => (
+                    <div key={c.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0">
+                      <span className="w-14 shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{c.id}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[11px] text-ink">{c.matter}</span>
+                        <span className="block truncate text-[8.5px] text-ink-muted">{c.type} · {c.court} · {c.ageDays}d</span>
+                      </span>
+                      <span className="w-28 shrink-0">
+                        <span className="mb-0.5 block text-right text-[9px] font-semibold" style={{ color: stTone(c) }}>
+                          {c.stage}{c.backlogged ? ' · backlog' : ''}
+                        </span>
+                        <span className="block h-1 overflow-hidden rounded-full bg-surface-2">
+                          <span className="block h-full" style={{ width: `${c.progressPct}%`, backgroundColor: stTone(c) }} />
+                        </span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </Panel>
+              <div className="space-y-2">
+                <Panel title="Court hierarchy · backlog propagation" meta="inflow → clearance → carried up" bodyClass="!p-2">
+                  <div className="space-y-1">
+                    {js.tiers.map(tr => (
+                      <div key={tr.tier} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                        <div className="flex items-center justify-between text-[10px]">
+                          <span className="text-ink-soft">{tr.tier}</span>
+                          <span className="font-mono tabular-nums" style={{ color: TONE[tr.tone] }}>{tr.clearancePct}%</span>
+                        </div>
+                        <div className="flex justify-between text-[8.5px] text-ink-muted">
+                          <span>in {tr.inflow} · clr {tr.cleared}</span>
+                          <span>backlog {tr.backlog}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </Panel>
+                <Panel title="Judicial intelligence" meta="signals" bodyClass="!p-2">
+                  <div className="space-y-1">
+                    {js.signals.map((s, i) => (
+                      <div key={i} className="flex items-start gap-1.5 text-[10px]">
+                        <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: sigTone(s.level) }} />
+                        <span className="min-w-0">
+                          <span className="block text-ink" style={{ color: sigTone(s.level) }}>{s.label}</span>
+                          <span className="block truncate text-[8.5px] text-ink-muted">{s.detail}</span>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </Panel>
+              </div>
+            </div>
+
+            <Panel title="Regional court analytics" meta="load · clearance · backlog" bodyClass="!p-1.5">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+                {js.regional.map(r => {
+                  const rt = r.clearancePct >= 80 ? TONE.ok : r.clearancePct >= 65 ? TONE.warn : TONE.alert;
+                  return (
+                    <div key={r.region} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                      <div className="truncate text-[9px] font-semibold text-ink">{r.region}</div>
+                      <div className="font-mono text-[13px] tabular-nums" style={{ color: rt }}>{r.clearancePct}%</div>
+                      <div className="text-[8px] text-ink-muted">load {r.load} · bk {r.backlog}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            </Panel>
+          </div>
+        );
+      })()}
 
       {tab === 'Court hierarchy' && (
         <Panel title="Court hierarchy" meta="tier · load · clearance" bodyClass="!p-0">
