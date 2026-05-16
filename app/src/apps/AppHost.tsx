@@ -28,6 +28,7 @@ import { policeOps, emergencyOps, immigrationOps, customsOps } from '@/lib/gov/a
 import { citizenWallet, officerConsole } from '@/lib/gov/citizen-systems';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { interoperabilityFabric } from '@/services/interoperability-fabric';
+import { federationPosture } from '@/services/federation-aggregate';
 import { ROLES, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
 import { evaluateConstitution, type AppKind } from '@/services/constitutional-engine';
 import { escalationState } from '@/shared/sovereignty/escalation';
@@ -141,8 +142,11 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                     ) : <span className="text-[9px] text-ink-muted">all capabilities constitutionally available</span>}
                     {(() => {
                       const es = escalationState(app.kind as AppKind, stress);
+                      const archMap: Record<string, string> = { health: 'HEALTH', treasury: 'FINANCE', education: 'EDUCATION', transport: 'TRANSPORT', energy: 'ENERGY' };
+                      const mineOp = federationPosture(mins, now / 4000).institutions.find(i => i.archetype === archMap[app.domain]);
                       return (
                         <span className="ml-auto text-[9px] text-ink-muted">
+                          {mineOp ? <>national contribution · <span style={{ color: `rgb(var(--c-${mineOp.tone}))` }}>{mineOp.operational}</span> · </> : null}
                           escalation tier · <span className="text-ink-soft">{es.current}</span>
                           {es.next ? ` → next: ${es.next.tier} (${es.next.authority})` : ' · apex'}
                         </span>
