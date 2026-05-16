@@ -59,4 +59,21 @@ describe('runtime store', () => {
       expect(getLedger(99).length).toBe(before);
     }
   });
+
+  it('scopeSummaries reflects scopes and a transition writes a verifiable audit chain', async () => {
+    const { scopeSummaries } = await import('./runtime-store');
+    const { verifyChain } = await import('@/services/audit-ledger');
+    const { actionsFor } = await import('./runtime-workflow');
+    const s = 't5:command';
+    const its = getScope(s, 'incident', 6);
+    const target = its.find(i => actionsFor(i.kind, i.stage).length > 0)!;
+    actOnItem(s, target.id, actionsFor(target.kind, target.stage)[0]!, 'Duty (commander)');
+    const sum = scopeSummaries().find(x => x.scope === s)!;
+    expect(sum).toBeTruthy();
+    expect(sum.total).toBe(6);
+    expect(sum.transitions).toBeGreaterThanOrEqual(1);
+    const chain = verifyChain(s);
+    expect(chain.entries).toBeGreaterThanOrEqual(1);
+    expect(chain.intact).toBe(true);
+  });
 });
