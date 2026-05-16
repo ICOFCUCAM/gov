@@ -6,7 +6,7 @@ import {
   actionsFor, queueStats, workflowFor,
   type WorkKind, type WorkItem, type ActionKey,
 } from '@/lib/gov/runtime-workflow';
-import { subscribe, getScope, actOnItem, annotateItem, reassignItem } from '@/lib/gov/runtime-store';
+import { subscribe, getScope, actOnItem, annotateItem, reassignItem, version as rtVersion } from '@/lib/gov/runtime-store';
 import { checkAction, capabilityForAction, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
 
 const ASSIGNEES = ['K. Otieno', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Kamau'];
@@ -32,11 +32,8 @@ const prTone = (p: WorkItem['priority']) => (p === 'urgent' ? TONE.alert : p ===
 export function RuntimeQueue({
   scope, kind, title, by = 'Operator', n = 14, role = 'commander', withheld = [],
 }: { scope: string; kind: WorkKind; title: string; by?: string; n?: number; role?: SovereignRole; withheld?: Capability[] }) {
-  const items = React.useSyncExternalStore(
-    subscribe,
-    () => getScope(scope, kind, n),
-    () => getScope(scope, kind, n),
-  );
+  React.useSyncExternalStore(subscribe, rtVersion, rtVersion);
+  const items = getScope(scope, kind, n);
   const [sel, setSel] = React.useState<string | null>(null);
   const [filter, setFilter] = React.useState<string>('open');
   const wf = workflowFor(kind);

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { TONE } from '@/components/features/SituationRoom';
 import { useFederationSync } from '@/apps/useFederationSync';
-import { subscribe as orchSubscribe, findApp, activatedApps } from '@/services/orchestration-engine';
+import { subscribe as orchSubscribe, findApp, version as orchVersion } from '@/services/orchestration-engine';
 import { SubsystemConsole } from '@/components/features/SubsystemConsole';
 import { BranchWorkspace } from '@/components/features/BranchWorkspace';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
@@ -16,7 +16,7 @@ import { aiAdvisory } from '@/shared/ai/advisory';
 import { ROLES, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
 import { evaluateConstitution, type AppKind } from '@/services/constitutional-engine';
 import { escalationState } from '@/shared/sovereignty/escalation';
-import { subscribe as auditSubscribe, auditTrail, verifyChain } from '@/services/audit-ledger';
+import { subscribe as auditSubscribe, auditTrail, verifyChain, version as auditVersion } from '@/services/audit-ledger';
 import { wave } from '@/lib/telemetry';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -38,7 +38,7 @@ export function AppHost({ domain }: { domain: string }) {
     return () => clearInterval(t);
   }, []);
   useFederationSync(mins);
-  React.useSyncExternalStore(orchSubscribe, () => activatedApps().length, () => 0);
+  React.useSyncExternalStore(orchSubscribe, orchVersion, orchVersion);
 
   const app = findApp(domain);
   const [navKey, setNavKey] = React.useState<string | null>(null);
@@ -273,7 +273,8 @@ function AgencyApp({ appId, label, archetype, navKey, now, role, withheld = [] }
 }
 
 function AuditPanel({ scope, chainIntact, brokenAt }: { scope: string; chainIntact: boolean; brokenAt: number | null }) {
-  const trail = React.useSyncExternalStore(auditSubscribe, () => auditTrail(scope, 12), () => auditTrail(scope, 12));
+  React.useSyncExternalStore(auditSubscribe, auditVersion, auditVersion);
+  const trail = auditTrail(scope, 12);
   return (
     <div className="mt-2 rounded-[3px] border border-line bg-surface p-2">
       <div className="flex items-center justify-between gap-2">

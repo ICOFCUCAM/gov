@@ -10,9 +10,9 @@ import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { deployableInstitutions } from '@/lib/institution/readiness';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { nationalResilience } from '@/lib/gov/national-resilience';
-import { subscribe as rtSubscribe, runtimeStats } from '@/lib/gov/runtime-store';
+import { subscribe as rtSubscribe, runtimeStats, version as rtVersion } from '@/lib/gov/runtime-store';
 import { useFederationSync } from '@/apps/useFederationSync';
-import { subscribe as orchSubscribe, orchestrationStats } from '@/services/orchestration-engine';
+import { subscribe as orchSubscribe, orchestrationStats, version as orchVersion } from '@/services/orchestration-engine';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; key: string }[] }[] = [
@@ -98,9 +98,11 @@ export function CommandShell({
   };
 
   const resilience = nationalResilience(mins, now / 4000);
-  const liveRt = React.useSyncExternalStore(rtSubscribe, runtimeStats, runtimeStats);
+  React.useSyncExternalStore(rtSubscribe, rtVersion, rtVersion);
+  const liveRt = runtimeStats();
   useFederationSync(mins);
-  const fedStats = React.useSyncExternalStore(orchSubscribe, orchestrationStats, orchestrationStats);
+  React.useSyncExternalStore(orchSubscribe, orchVersion, orchVersion);
+  const fedStats = orchestrationStats();
 
   const tele = [
     { l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true },

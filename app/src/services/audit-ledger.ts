@@ -21,7 +21,10 @@ export interface AuditEntry {
 type Listener = () => void;
 const chains = new Map<string, AuditEntry[]>();
 const listeners = new Set<Listener>();
-const emit = () => { for (const l of listeners) l(); };
+let _version = 0;
+/** Stable snapshot for useSyncExternalStore — changes only on mutation. */
+export function version(): number { return _version; }
+const emit = () => { _version++; for (const l of listeners) l(); };
 
 export function subscribe(l: Listener): () => void {
   listeners.add(l);

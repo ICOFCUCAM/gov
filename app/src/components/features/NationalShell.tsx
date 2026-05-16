@@ -19,12 +19,12 @@ import { legislativeState } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
 import { stateFabric } from '@/lib/gov/state-fabric';
 import { nationalRuntime } from '@/lib/gov/national-runtime';
-import { subscribe as auditSubscribe, auditStats } from '@/services/audit-ledger';
+import { subscribe as auditSubscribe, auditStats, version as auditVersion } from '@/services/audit-ledger';
 import { federationPosture } from '@/services/federation-aggregate';
 import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
-import { subscribe as orchSubscribe, activatedApps } from '@/services/orchestration-engine';
-import { subscribe as rtSubscribe, runtimeStats } from '@/lib/gov/runtime-store';
+import { subscribe as orchSubscribe, activatedApps, version as orchVersion } from '@/services/orchestration-engine';
+import { subscribe as rtSubscribe, runtimeStats, version as rtVersion } from '@/lib/gov/runtime-store';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -66,10 +66,13 @@ export function NationalShell() {
   }, []);
 
   const ts = now / 4000;
-  const liveRt = React.useSyncExternalStore(rtSubscribe, runtimeStats, runtimeStats);
-  const audit = React.useSyncExternalStore(auditSubscribe, auditStats, auditStats);
+  React.useSyncExternalStore(rtSubscribe, rtVersion, rtVersion);
+  const liveRt = runtimeStats();
+  React.useSyncExternalStore(auditSubscribe, auditVersion, auditVersion);
+  const audit = auditStats();
   useFederationSync(mins);
-  const fedApps = React.useSyncExternalStore(orchSubscribe, activatedApps, activatedApps);
+  React.useSyncExternalStore(orchSubscribe, orchVersion, orchVersion);
+  const fedApps = activatedApps();
   const healthCap = nationalHealthcareCapacity(
     mins.filter(m => m.archetype === 'HEALTH' && m.status === 'active').map(m => m.id), ts,
   );

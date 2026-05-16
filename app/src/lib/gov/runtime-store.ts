@@ -31,7 +31,12 @@ const scopes = new Map<string, WorkItem[]>();
 const ledger: LedgerEntry[] = [];
 const listeners = new Set<Listener>();
 
+let _version = 0;
+/** Stable snapshot for useSyncExternalStore — changes only on mutation. */
+export function version(): number { return _version; }
+
 function emit() {
+  _version++;
   for (const l of listeners) l();
 }
 

@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { subscribe, getLedger, runtimeStats } from '@/lib/gov/runtime-store';
+import { subscribe, getLedger, runtimeStats, version as rtVersion } from '@/lib/gov/runtime-store';
 
 const actTone = (a: string) =>
   a === 'approve' || a === 'resolve' ? TONE.ok : a === 'reject' ? TONE.alert : a === 'escalate' ? TONE.warn : TONE.link;
@@ -34,8 +34,9 @@ function scopeHref(scope: string): string {
  * not just displaying: each entry is a real action an operator drove.
  */
 export function OperationsLedger() {
-  const ledger = React.useSyncExternalStore(subscribe, () => getLedger(80), () => getLedger(80));
-  const stats = React.useSyncExternalStore(subscribe, runtimeStats, runtimeStats);
+  React.useSyncExternalStore(subscribe, rtVersion, rtVersion);
+  const ledger = getLedger(80);
+  const stats = runtimeStats();
   const [now, setNow] = React.useState(() => Date.now());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
