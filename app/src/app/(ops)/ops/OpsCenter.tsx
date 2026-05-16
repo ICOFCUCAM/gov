@@ -9,6 +9,7 @@ import { nationalRegions } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { deployableInstitutions } from '@/lib/institution/readiness';
+import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { Incident, OpsOverview, Ministry } from '@/lib/api/types';
 
 const ME = 'W. Chebet (ops)';
@@ -438,6 +439,8 @@ export function OpsCenter() {
           })}
         </div>
       </P>
+
+      <RuntimeQueue scope="ops:incident" kind="incident" title="Cross-institution incident runtime — acknowledge → contain → recover" by="Ops Duty Officer" n={16} />
 
       {/* Operational command strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
