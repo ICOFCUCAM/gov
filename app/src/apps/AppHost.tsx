@@ -19,6 +19,8 @@ import { EmergencyResponseApp } from '@/apps/emergency-response/EmergencyRespons
 import { MinistryEducationApp } from '@/apps/ministry-education/MinistryEducationApp';
 import { MinistryTransportApp } from '@/apps/ministry-transport/MinistryTransportApp';
 import { MinistryEnergyApp } from '@/apps/ministry-energy/MinistryEnergyApp';
+import { CitizenWalletApp } from '@/apps/citizen-wallet/CitizenWalletApp';
+import { OfficerConsoleApp } from '@/apps/officer-console/OfficerConsoleApp';
 import { BranchWorkspace } from '@/components/features/BranchWorkspace';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
@@ -199,6 +201,10 @@ export function AppHost({ domain }: { domain: string }) {
                   <CustomsApp appId={app.id} domain={active ?? 'clearance'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : app.id === 'emergency-response' ? (
                   <EmergencyResponseApp appId={app.id} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                ) : app.id === 'citizen-wallet' ? (
+                  <CitizenWalletApp appId={app.id} domain={active ?? 'identity'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                ) : app.id === 'officer-console' ? (
+                  <OfficerConsoleApp appId={app.id} domain={active ?? 'queue'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : (
                   <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 )}
