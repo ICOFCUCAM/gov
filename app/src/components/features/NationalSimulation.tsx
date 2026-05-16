@@ -7,6 +7,7 @@ import { identityFor } from '@/lib/archetype-profiles';
 import { projectRegions } from '@/lib/gov/regions';
 import { SCENARIOS, simulate, scenarioSweep, mitigationPlaybook, prioritisedThreats, type ScenarioKey } from '@/lib/gov/simulation';
 import { resilienceUnderShock } from '@/lib/gov/national-resilience';
+import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { api } from '@/lib/api/client';
 import type { ArchetypeKey, Ministry } from '@/lib/api/types';
 
@@ -253,8 +254,10 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
         </div>
       </Panel>
 
+      <RuntimeQueue scope={`sim:${key}`} kind="incident" title={`Scenario response runtime — ${key} · acknowledge → contain → recover`} by="Cabinet Coordinator" n={12} />
+
       <p className="text-[10px] text-ink-muted">
-        Deterministic advisory projection — no autonomous action. The simulation surfaces propagated consequence; the constituted branches decide and execute.
+        Deterministic advisory projection — the simulation surfaces propagated consequence; the response runtime above is the executable chain the constituted branches drive.
       </p>
     </div>
   );
