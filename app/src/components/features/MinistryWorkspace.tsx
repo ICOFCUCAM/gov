@@ -15,6 +15,7 @@ import { identityFor } from '@/lib/archetype-profiles';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemOpPct } from '@/lib/institution/operational-catalog';
 import { ministryFabric } from '@/lib/institution/ministry-fabric';
+import { ministryOpState } from '@/lib/gov/ministry-ops';
 import { nationalRegions } from '@/lib/gov/regions';
 import { buildCascade } from '@/lib/institution/cascade';
 import type { Ministry } from '@/lib/api/types';
@@ -356,7 +357,32 @@ export function MinistryWorkspace({ id }: { id: string }) {
         <div className="space-y-5">
           {(() => {
             const fab = ministryFabric({ id, archetype: (archetype || 'GENERIC') as ArchetypeKey });
+            const op = ministryOpState(id, (archetype || 'GENERIC') as ArchetypeKey, 100 - (readiness?.total ?? 60), now / 4000);
+            const ct = op.constitutional === 'compliant' ? TONE.ok : op.constitutional === 'review' ? TONE.warn : TONE.alert;
+            const cells: [string, string, string | undefined][] = [
+              ['Readiness', `${op.readiness}%`, op.readiness >= 60 ? TONE.ok : TONE.warn],
+              ['SLA', `${op.slaCompliance}%`, op.slaCompliance >= 90 ? TONE.ok : TONE.warn],
+              ['Staffing', `${op.staffingFilled}%`, op.staffingFilled >= 80 ? TONE.ok : TONE.warn],
+              ['Budget pressure', `${op.budgetPressure}`, op.budgetPressure >= 70 ? TONE.alert : op.budgetPressure >= 50 ? TONE.warn : TONE.ok],
+              ['Logistics', `${op.logisticsHealth}%`, op.logisticsHealth >= 80 ? TONE.ok : TONE.warn],
+              ['Public pressure', `${op.publicPressure}`, op.publicPressure >= 60 ? TONE.alert : TONE.neutral],
+              ['Corruption risk', `${op.corruptionRisk}`, op.corruptionRisk >= 50 ? TONE.alert : op.corruptionRisk >= 30 ? TONE.warn : TONE.ok],
+              ['Escalation', `L${op.escalationTier}`, op.escalationTier >= 2 ? TONE.alert : op.escalationTier === 1 ? TONE.warn : TONE.ok],
+              ['Constitutional', op.constitutional, ct],
+            ];
             return (
+              <>
+              <Section title="Operational state" meta="institution model">
+                <div className="grid grid-cols-3 gap-1 sm:grid-cols-5 xl:grid-cols-9">
+                  {cells.map(([l, v, c]) => (
+                    <div key={l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+                      <div className="truncate text-[7.5px] uppercase tracking-wider text-ink-muted">{l}</div>
+                      <div className="font-mono text-[13px] tabular-nums" style={{ color: c }}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                <p className="mt-1.5 text-[10px] text-ink-soft">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {op.aiAdvisory}</p>
+              </Section>
               <Section title="Institutional ecosystem" meta={`${fab.layers.length} layers · 3 tiers · ${fab.dependencies.length} dependencies`}>
                 <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   {fab.layers.map(l => {
@@ -418,6 +444,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                   </div>
                 </div>
               </Section>
+              </>
             );
           })()}
           <Section title="Command indicators" meta="last 12 periods">
