@@ -17,6 +17,7 @@ import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { schoolNetwork, examOps, teacherOps, studentServices } from '@/lib/gov/education-systems';
 import { transportOps } from '@/lib/gov/transport-systems';
 import { energyOps } from '@/lib/gov/energy-systems';
+import { interiorOps } from '@/lib/gov/interior-systems';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
@@ -51,6 +52,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const isEdu = m.archetype === 'EDUCATION';
   const isTransport = m.archetype === 'TRANSPORT';
   const isEnergy = m.archetype === 'ENERGY';
+  const isInterior = m.archetype === 'INTERIOR';
 
   const header = (
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -641,6 +643,47 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'access' ? 'permit' : grp.key === 'fuel' ? 'procurement' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (isInterior) {
+    const o = interiorOps(id, ts);
+    const lt = o.internalThreatLevel === 'high' ? 'alert' : o.internalThreatLevel === 'elevated' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Identity enrolled" v={`${o.identity.enrolledM}M`} t="ok" />
+          <Stat l="ID issuance backlog" v={o.identity.issuanceBacklog.toLocaleString()} t={o.identity.issuanceBacklog > 5000 ? 'alert' : 'warn'} />
+          <Stat l="Border posts open" v={`${o.border.open}/${o.border.posts}`} t={o.border.open < o.border.posts ? 'warn' : 'ok'} />
+          <Stat l="Flagged entries" v={`${o.border.flaggedEntries}`} t={o.border.flaggedEntries > 80 ? 'alert' : 'warn'} />
+          <Stat l="Public order" v={`${o.coordination.publicOrderIndex}`} t={lt} />
+          <Stat l="Threat level" v={o.internalThreatLevel} t={lt} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-3">
+          <Panel title="Civil identity systems" meta="enrolment · verification" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Verifications/hr" v={o.identity.verificationsPerHr.toLocaleString()} t="ok" />
+              <Stat l="Uptime" v={`${o.identity.uptimePct}%`} t={o.identity.uptimePct >= 99 ? 'ok' : 'warn'} />
+            </div>
+          </Panel>
+          <Panel title="Border control" meta="crossings · clearance" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Crossings today" v={o.border.crossingsToday.toLocaleString()} t="ok" />
+              <Stat l="Mean clearance" v={`${o.border.meanClearanceMin}m`} t={o.border.meanClearanceMin >= 30 ? 'warn' : 'ok'} />
+            </div>
+          </Panel>
+          <Panel title="Internal coordination & licensing" meta="cells · permits" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Coordination cells" v={`${o.coordination.cellsActive}`} t="ok" />
+              <Stat l="Joint ops" v={`${o.coordination.jointOpsActive}`} t={o.coordination.jointOpsActive ? 'warn' : 'ok'} />
+              <Stat l="Licences pending" v={o.licensing.pending.toLocaleString()} t={o.licensing.pending > 3000 ? 'warn' : 'ok'} />
+              <Stat l="SLA met" v={`${o.licensing.slaMetPct}%`} t={o.licensing.slaMetPct >= 80 ? 'ok' : 'warn'} />
+            </div>
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'identity' || grp.key === 'licensing' || grp.key === 'citizen' ? 'permit' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
       </div>
     );
   }
