@@ -7,6 +7,7 @@ import { TONE } from '@/components/features/SituationRoom';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, findApp, version as orchVersion } from '@/services/orchestration-engine';
 import { SubsystemConsole } from '@/components/features/SubsystemConsole';
+import { MinistryHealthApp } from '@/apps/ministry-health/MinistryHealthApp';
 import { BranchWorkspace } from '@/components/features/BranchWorkspace';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
@@ -137,6 +138,8 @@ export function AppHost({ domain }: { domain: string }) {
                 </div>
                 {!app.activated ? (
                   <p className="text-[12px] text-ink-muted">This sovereign application is provisioned but not activated. Activate the institution from the platform to bring its operational systems online.</p>
+                ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'HEALTH' ? (
+                  <MinistryHealthApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : app.kind === 'ministry' && app.instanceId ? (
                   <SubsystemConsole id={app.instanceId} group={active ?? 'command'} />
                 ) : app.kind === 'branch' ? (
