@@ -42,6 +42,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const [m, setM] = React.useState<Ministry | null>(null);
   const [now, setNow] = React.useState(() => Date.now());
   const [selDoc, setSelDoc] = React.useState<string | null>(null);
+  const [selRow, setSelRow] = React.useState<string | null>(null);
   React.useEffect(() => {
     api.org.get(id).then(r => setM(r.ministry)).catch(() => {});
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -472,13 +473,31 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
           <Panel title="Budget execution by ministry" meta="appropriation → spend" bodyClass="!p-2">
             <div className="space-y-1">
-              {bg.byMinistry.map(b => (
-                <div key={b.ministry} className="flex items-center gap-2 text-[10px]">
-                  <span className="w-20 shrink-0 truncate text-ink-soft">{b.ministry}</span>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${b.execPct}%`, backgroundColor: tc(b.tone) }} /></div>
-                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(b.tone) }}>{b.execPct}</span>
-                </div>
-              ))}
+              {bg.byMinistry.map(b => {
+                const open = selRow === b.ministry;
+                return (
+                  <div key={b.ministry}>
+                    <button onClick={() => setSelRow(open ? null : b.ministry)} className="focus-ring flex w-full items-center gap-2 text-left text-[10px]">
+                      <span className="w-20 shrink-0 truncate text-ink-soft">{open ? '▾ ' : '▸ '}{b.ministry}</span>
+                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${b.execPct}%`, backgroundColor: tc(b.tone) }} /></div>
+                      <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(b.tone) }}>{b.execPct}</span>
+                    </button>
+                    {open ? (
+                      <div className="mt-0.5 mb-1 grid grid-cols-3 gap-1">
+                        {['Recurrent', 'Development', 'Personnel'].map((k, ki) => {
+                          const v = Math.round(waveSeries(`bgalloc:${id}:${b.ministry}:${k}`, ts, 6, 40, 99).at(-1)!);
+                          return (
+                            <div key={k} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-1">
+                              <div className="truncate text-[7px] uppercase tracking-wider text-ink-muted">{k}</div>
+                              <div className="font-mono text-[10px] tabular-nums" style={{ color: tc(v >= 80 ? 'ok' : v >= 60 ? 'warn' : 'alert') }}>{v}% · ${(2 + ki + (v % 9)).toFixed(1)}B</div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : null}
+                  </div>
+                );
+              })}
             </div>
             <p className="mt-2 text-[9px] text-ink-muted">{bg.virements} virements processed · legislative blockage freezes appropriation.</p>
           </Panel>
