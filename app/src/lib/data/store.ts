@@ -91,6 +91,7 @@ import type {
 import { specFor } from '@/lib/ops-catalog';
 import { profileFor } from '@/lib/archetype-profiles';
 import { scoreInstitution } from '@/lib/institution/readiness';
+import { blueprintFor } from '@/lib/institution/blueprint';
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -1124,6 +1125,11 @@ export function createMinistry(input: {
   if (db.ministries.some(m => m.slug === input.slug)) {
     return { error: 'slug already used' };
   }
+  // Provisioning instantiates the institution from its archetype blueprint:
+  // every operating group of the generated ecosystem becomes a department,
+  // so the institution is a real structure, not a thin container.
+  const groups = blueprintFor(input.archetype).map(g => g.name);
+  const deptNames = groups.length ? groups : bp.defaultDepartments;
   const m: Ministry = {
     id: uid('MIN'),
     slug: input.slug,
@@ -1131,7 +1137,7 @@ export function createMinistry(input: {
     archetype: input.archetype,
     status: 'active',
     createdAt: new Date().toISOString(),
-    departments: bp.defaultDepartments.map(name => ({ id: uid('DEP'), name })),
+    departments: deptNames.map(name => ({ id: uid('DEP'), name })),
     modules: bp.defaultModules.map(moduleKey => ({ moduleKey, enabled: true })),
   };
   db.ministries.unshift(m);
