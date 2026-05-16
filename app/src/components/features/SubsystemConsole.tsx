@@ -16,6 +16,7 @@ import {
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { schoolNetwork, examOps, teacherOps, studentServices } from '@/lib/gov/education-systems';
 import { transportOps } from '@/lib/gov/transport-systems';
+import { energyOps } from '@/lib/gov/energy-systems';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
@@ -49,6 +50,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const isFinance = m.archetype === 'FINANCE';
   const isEdu = m.archetype === 'EDUCATION';
   const isTransport = m.archetype === 'TRANSPORT';
+  const isEnergy = m.archetype === 'ENERGY';
 
   const header = (
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -599,6 +601,46 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'citizen' ? 'permit' : grp.key === 'logistics' ? 'procurement' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (isEnergy) {
+    const o = energyOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Grid frequency" v={`${o.gridFrequencyHz}Hz`} t={Math.abs(o.gridFrequencyHz - 50) <= 0.2 ? 'ok' : Math.abs(o.gridFrequencyHz - 50) <= 0.4 ? 'warn' : 'alert'} />
+          <Stat l="Reserve margin" v={`${o.reserveMarginPct}%`} t={o.reserveMarginPct >= 12 ? 'ok' : o.reserveMarginPct >= 6 ? 'warn' : 'alert'} />
+          <Stat l="Demand / supply" v={`${o.demandGw}/${o.supplyGw}GW`} t={o.supplyGw >= o.demandGw ? 'ok' : 'alert'} />
+          <Stat l="Electrification" v={`${o.electrificationPct}%`} t={o.electrificationPct >= 85 ? 'ok' : 'warn'} />
+          <Stat l="Outage min/day" v={`${o.outageMinutesPerDay}`} t={o.outageMinutesPerDay >= 60 ? 'alert' : o.outageMinutesPerDay >= 20 ? 'warn' : 'ok'} />
+          <Stat l="Load shedding" v={o.loadShedding ? 'ACTIVE' : 'NONE'} t={o.loadShedding ? 'alert' : 'ok'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-2">
+          <Panel title="Generation mix" meta="source output" bodyClass="!p-2">
+            <div className="space-y-1">
+              {o.generation.map(g => (
+                <div key={g.source} className="flex items-center gap-2 text-[10px]">
+                  <span className="w-16 shrink-0 text-ink-soft">{g.source}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${g.outputPct}%`, backgroundColor: tc(g.tone) }} /></div>
+                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(g.tone) }}>{g.outputPct}</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+          <Panel title="Grid & reserves" meta="substations · fuel" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Substations online" v={`${o.substations.online}/${o.substations.total}`} t={o.substations.faults > 10 ? 'alert' : o.substations.faults ? 'warn' : 'ok'} />
+              <Stat l="Faults" v={`${o.substations.faults}`} t={o.substations.faults ? 'warn' : 'ok'} />
+              <Stat l="Fuel reserve" v={`${o.fuelReserveDays}d`} t={o.fuelReserveDays >= 30 ? 'ok' : o.fuelReserveDays >= 14 ? 'warn' : 'alert'} />
+              <Stat l="Reserve margin" v={`${o.reserveMarginPct}%`} t={o.reserveMarginPct >= 12 ? 'ok' : 'warn'} />
+            </div>
+            <div className="mt-2 h-7 overflow-hidden opacity-80"><Spark pts={waveSeries(`egp:${id}`, ts, 24, 30, 92)} tone={o.loadShedding ? 'alert' : 'ok'} /></div>
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'access' ? 'permit' : grp.key === 'fuel' ? 'procurement' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
       </div>
     );
   }
