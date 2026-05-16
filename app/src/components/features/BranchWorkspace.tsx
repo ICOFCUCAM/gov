@@ -48,6 +48,7 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
       : b.key === 'judiciary' ? 'JUDICIARY'
       : 'GENERIC';
   const [tab, setTab] = React.useState(tabs[0]!);
+  const [selCase, setSelCase] = React.useState<string | null>(null);
   React.useEffect(() => { setTab(tabs[0]!); /* reset when engine changes */ }, [engine]); // eslint-disable-line
 
   const tele = (() => {
@@ -352,23 +353,51 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
             <div className="grid gap-2 xl:grid-cols-3">
               <Panel title="Case pipeline" meta="live · filed → closed" className="xl:col-span-2" bodyClass="!p-0">
                 <div className="max-h-[340px] overflow-y-auto">
-                  {js.cases.map(c => (
-                    <div key={c.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0">
-                      <span className="w-14 shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{c.id}</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[11px] text-ink">{c.matter}</span>
-                        <span className="block truncate text-[8.5px] text-ink-muted">{c.type} · {c.court} · {c.ageDays}d</span>
-                      </span>
-                      <span className="w-28 shrink-0">
-                        <span className="mb-0.5 block text-right text-[9px] font-semibold" style={{ color: stTone(c) }}>
-                          {c.stage}{c.backlogged ? ' · backlog' : ''}
-                        </span>
-                        <span className="block h-1 overflow-hidden rounded-full bg-surface-2">
-                          <span className="block h-full" style={{ width: `${c.progressPct}%`, backgroundColor: stTone(c) }} />
-                        </span>
-                      </span>
-                    </div>
-                  ))}
+                  {js.cases.map(c => {
+                    const open = selCase === c.id;
+                    return (
+                      <div key={c.id} className="border-b border-line-soft last:border-0">
+                        <button onClick={() => setSelCase(open ? null : c.id)} className="focus-ring flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-surface-2/50">
+                          <span className="w-14 shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{c.id}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-[11px] text-ink">{c.matter}</span>
+                            <span className="block truncate text-[8.5px] text-ink-muted">{c.type} · {c.court} · {c.ageDays}d</span>
+                          </span>
+                          <span className="w-28 shrink-0">
+                            <span className="mb-0.5 block text-right text-[9px] font-semibold" style={{ color: stTone(c) }}>
+                              {c.stage}{c.backlogged ? ' · backlog' : ''}
+                            </span>
+                            <span className="block h-1 overflow-hidden rounded-full bg-surface-2">
+                              <span className="block h-full" style={{ width: `${c.progressPct}%`, backgroundColor: stTone(c) }} />
+                            </span>
+                          </span>
+                        </button>
+                        {open ? (
+                          <div className="bg-surface-2/40 px-3 py-2">
+                            <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Case file · {c.id}</div>
+                            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
+                              {[
+                                ['Type', c.type],
+                                ['Court', c.court],
+                                ['Stage', c.stage],
+                                ['Age', `${c.ageDays}d`],
+                                ['Evidence items', `${3 + Math.round(seed(`jev:${c.id}`) * 24)}`],
+                                ['Hearings held', `${Math.round(seed(`jhh:${c.id}`) * 8)}`],
+                                ['Next hearing', `T+${1 + Math.round(seed(`jnh:${c.id}`) * 30)}d`],
+                                ['Bench', ['Single judge', 'Three-judge', 'Full bench'][Math.floor(seed(`jb:${c.id}`) * 3)]!],
+                              ].map(([l, v]) => (
+                                <div key={l} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-1">
+                                  <div className="truncate text-[7.5px] uppercase tracking-wider text-ink-muted">{l}</div>
+                                  <div className="truncate font-mono text-[10px] text-ink-soft">{v}</div>
+                                </div>
+                              ))}
+                            </div>
+                            <p className="mt-1 text-[8.5px] text-ink-muted">Drive this case through its lifecycle in the case runtime below — filing → hearing → judgment → appeal.</p>
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
                 </div>
               </Panel>
               <div className="space-y-2">
