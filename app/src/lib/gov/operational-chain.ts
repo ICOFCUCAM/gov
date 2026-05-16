@@ -156,9 +156,13 @@ export function buildOperationalChain(
     .reduce((a, m) => a + Math.round(citizenSystemCount(m.archetype) * (Math.min(100, degr.get(m.id) ?? 0) / 100)), 0);
 
   const totalAffected = degr.size;
-  const recoveryMins = Math.round(45 + oSev * 1.6 + dependents.length * 12 + (financeHit ? 40 : 0));
+  // A more tightly-coupled state (high systemic fabric stress) recovers
+  // slower and escalates containment — cross-system propagation feedback.
+  const coupling = sf.systemicStress;
+  const recoveryMins = Math.round(45 + oSev * 1.6 + dependents.length * 12 + (financeHit ? 40 : 0) + coupling * 0.9);
   const containment: OperationalChain['containment'] =
-    totalAffected >= 6 || oSev >= 80 ? 'critical' : totalAffected >= 3 ? 'spreading' : 'contained';
+    totalAffected >= 6 || oSev >= 80 || coupling >= 60 ? 'critical'
+      : totalAffected >= 3 || coupling >= 40 ? 'spreading' : 'contained';
 
   const trig = FAILURE[origin.m.archetype] ?? FAILURE.GENERIC!;
 
