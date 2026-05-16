@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api/client';
 import { TONE, ACCENT, seed, Spark, Donut, TerritoryHeat, waveSeries } from '@/components/features/SituationRoom';
 import { nationalRegions } from '@/lib/gov/regions';
+import { networkPressure } from '@/lib/gov/infrastructure';
 import type { Incident, OpsOverview } from '@/lib/api/types';
 
 const ME = 'W. Chebet (ops)';
@@ -363,6 +364,22 @@ export function OpsCenter() {
           );
         })}
       </div>
+
+      <P title="Infrastructure network pressure" meta="national digital twin">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
+            const p = networkPressure(k, now / 4000);
+            const tn = p >= 78 ? 'alert' : p >= 62 ? 'warn' : 'ok';
+            return (
+              <div key={k} className="rounded-[3px] border border-line bg-surface px-2.5 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{k}</div>
+                <div className="font-mono text-base tabular-nums" style={{ color: TONE[tn] }}>{p}%</div>
+                <div className="-mb-1 h-5 overflow-hidden opacity-80"><Spark pts={waveSeries(`opnp:${k}`, now / 4000, 16, 30, 88)} tone={tn} /></div>
+              </div>
+            );
+          })}
+        </div>
+      </P>
 
       {/* Operational command strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
