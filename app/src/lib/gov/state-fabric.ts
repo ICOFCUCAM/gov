@@ -9,6 +9,10 @@
 import type { Ministry } from '@/lib/api/types';
 import { healthInstability } from '@/lib/gov/health-systems';
 import { treasuryInstability } from '@/lib/gov/treasury-systems';
+import { educationInstability } from '@/lib/gov/education-systems';
+import { transportInstability } from '@/lib/gov/transport-systems';
+import { energyInstability } from '@/lib/gov/energy-systems';
+import { interiorInstability } from '@/lib/gov/interior-systems';
 import { legislativeState } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
 import { seed } from '@/lib/telemetry';
@@ -27,8 +31,10 @@ export interface DomainPropagation {
   tone: 'ok' | 'warn' | 'alert';
   effects: PropagatedEffect[];
 }
+export interface SectorInstability { archetype: string; instability: number; tone: 'ok' | 'warn' | 'alert' }
 export interface StateFabric {
   domains: DomainPropagation[];
+  sectors: SectorInstability[];  // per active line-ministry sector
   systemicStress: number;       // 0-100 aggregate coupled stress
   worst: DomainKey;
   contagion: 'stable' | 'coupled-stress' | 'systemic';
@@ -101,12 +107,27 @@ export function stateFabric(mins: Ministry[], t: number): StateFabric {
     },
   ];
 
-  const systemicStress = Math.round(domains.reduce((a, d) => a + d.instability, 0) / domains.length);
+  // Per-sector instability across every active line ministry — each sector
+  // contributes to whole-of-government coupled stress.
+  const sectorFn: Partial<Record<string, (id: string, t: number) => number>> = {
+    HEALTH: healthInstability, FINANCE: treasuryInstability, EDUCATION: educationInstability,
+    TRANSPORT: transportInstability, ENERGY: energyInstability, INTERIOR: interiorInstability,
+  };
+  const sectors: SectorInstability[] = active.map(m => {
+    const fn = sectorFn[m.archetype];
+    const instability = fn ? fn(m.id, t) : Math.round(24 + seed(`sf:s:${m.id}:${t | 0}`) * 30);
+    return { archetype: m.archetype, instability, tone: tone(instability) };
+  }).sort((a, b) => b.instability - a.instability);
+
+  const domainMean = domains.reduce((a, d) => a + d.instability, 0) / domains.length;
+  const sectorMean = sectors.length ? sectors.reduce((a, s) => a + s.instability, 0) / sectors.length : 0;
+  const systemicStress = Math.round(domainMean * 0.6 + sectorMean * 0.4);
   const worst = domains.reduce((w, d) => (d.instability > w.instability ? d : w)).domain;
+  const alertCount = domains.filter(d => d.tone === 'alert').length + sectors.filter(s => s.tone === 'alert').length;
   const contagion: StateFabric['contagion'] =
-    systemicStress >= 60 || domains.filter(d => d.tone === 'alert').length >= 2 ? 'systemic'
-      : systemicStress >= 38 || domains.some(d => d.tone === 'alert') ? 'coupled-stress'
+    systemicStress >= 60 || alertCount >= 3 ? 'systemic'
+      : systemicStress >= 38 || alertCount >= 1 ? 'coupled-stress'
         : 'stable';
 
-  return { domains, systemicStress, worst, contagion };
+  return { domains, sectors, systemicStress, worst, contagion };
 }

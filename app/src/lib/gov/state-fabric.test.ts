@@ -25,6 +25,13 @@ describe('interconnected state fabric', () => {
     expect(a.systemicStress).toBeGreaterThanOrEqual(0);
     expect(a.systemicStress).toBeLessThanOrEqual(100);
     expect(['stable', 'coupled-stress', 'systemic']).toContain(a.contagion);
+    expect(a.sectors.length).toBe(3);
+    for (let i = 1; i < a.sectors.length; i++) expect(a.sectors[i - 1]!.instability).toBeGreaterThanOrEqual(a.sectors[i]!.instability);
+    for (const s of a.sectors) {
+      expect(s.instability).toBeGreaterThanOrEqual(0);
+      expect(s.instability).toBeLessThanOrEqual(100);
+      expect(['ok', 'warn', 'alert']).toContain(s.tone);
+    }
   });
 
   it('works with no institutions (seeded baseline) and identifies the worst domain', () => {
