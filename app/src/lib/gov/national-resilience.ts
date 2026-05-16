@@ -12,6 +12,7 @@ import { prioritisedThreats, scenarioFor, type ScenarioKey } from '@/lib/gov/sim
 import { buildOperationalChain } from '@/lib/gov/operational-chain';
 import { legislativeState } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
+import { nationalRuntime } from '@/lib/gov/national-runtime';
 import { waveSeries } from '@/lib/telemetry';
 import type { Ministry } from '@/lib/api/types';
 
@@ -86,10 +87,12 @@ export function nationalResilience(mins: Ministry[], t: number): NationalResilie
   pCont -= Math.min(16, leg.blocked * 4);
   if (jud.meanClearance < 60) pCont -= 18;
   if (jud.totalBacklog > 900) pCont -= 14;
+  const rt = nationalRuntime(mins, t);
+  pCont -= Math.min(18, Math.max(0, (rt.meanLoad - 40) * 0.4));
   pCont = Math.round(Math.max(0, Math.min(100, pCont)));
   const contDetail = chain
-    ? `chain ${chain.containment} · ${chain.totalAffected} affected · leg ${leg.quorum ? 'quorum' : 'at-risk'} · jud ${jud.meanClearance}%`
-    : `leg ${leg.quorum ? 'quorum' : 'at-risk'} · jud ${jud.meanClearance}% clearance`;
+    ? `chain ${chain.containment} · ${chain.totalAffected} affected · runtime ${rt.posture} · jud ${jud.meanClearance}%`
+    : `runtime ${rt.posture} · leg ${leg.quorum ? 'quorum' : 'at-risk'} · jud ${jud.meanClearance}%`;
 
   const pillars: ResiliencePillar[] = [
     { key: 'inst', label: 'Institutional readiness', score: pInst, weight: 0.24, tone: toneOf(pInst), detail: `${dir.length} active · ${Math.round(deployRatio * 100)}% deployable` },
