@@ -15,6 +15,9 @@ import { PoliceCommandApp } from '@/apps/police-command/PoliceCommandApp';
 import { ImmigrationApp } from '@/apps/immigration/ImmigrationApp';
 import { CustomsApp } from '@/apps/customs/CustomsApp';
 import { EmergencyResponseApp } from '@/apps/emergency-response/EmergencyResponseApp';
+import { MinistryEducationApp } from '@/apps/ministry-education/MinistryEducationApp';
+import { MinistryTransportApp } from '@/apps/ministry-transport/MinistryTransportApp';
+import { MinistryEnergyApp } from '@/apps/ministry-energy/MinistryEnergyApp';
 import { BranchWorkspace } from '@/components/features/BranchWorkspace';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
@@ -149,6 +152,12 @@ export function AppHost({ domain }: { domain: string }) {
                   <MinistryHealthApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'FINANCE' ? (
                   <TreasuryApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'EDUCATION' ? (
+                  <MinistryEducationApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'TRANSPORT' ? (
+                  <MinistryTransportApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'ENERGY' ? (
+                  <MinistryEnergyApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : app.kind === 'ministry' && app.instanceId ? (
                   <SubsystemConsole id={app.instanceId} group={active ?? 'command'} />
                 ) : app.kind === 'branch' && app.archetypeOrBranch === 'judiciary' ? (
