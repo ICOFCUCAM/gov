@@ -13,7 +13,7 @@ import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { scenarioSweep } from '@/lib/gov/simulation';
-import { nationalResilience } from '@/lib/gov/national-resilience';
+import { nationalResilience, resilienceUnderShock } from '@/lib/gov/national-resilience';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -94,6 +94,7 @@ export function NationalShell() {
   const sweep = scenarioSweep(ts);
   const lead = sweep[0];
   const leadTone = !lead ? 'ok' : lead.band === 'severe' || lead.band === 'high' ? 'alert' : lead.band === 'elevated' ? 'warn' : 'ok';
+  const stress = lead ? resilienceUnderShock(mins, ts, lead.key) : null;
 
   const regions = nationalRegions(ts);
   const rRoll = regionRollup(regions);
@@ -141,6 +142,15 @@ export function NationalShell() {
                 {resilience.band}{resilience.weakest ? ` · weakest · ${resilience.weakest.label}` : ''}
               </span>
             </div>
+            {stress && stress.drawdown > 0 ? (
+              <div className="ml-2 flex flex-col border-l border-line pl-3">
+                <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Under lead vector</span>
+                <span className="font-mono text-[15px] leading-none tabular-nums" style={{ color: TONE[stress.tone] }}>
+                  {stress.projected}<span className="ml-1 text-[10px]" style={{ color: TONE.alert }}>−{stress.drawdown}</span>
+                </span>
+                <span className="text-[8px] text-ink-muted">{stress.scenarioLabel}</span>
+              </div>
+            ) : null}
           </div>
           <div className="grid flex-1 grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-5">
             {resilience.pillars.map(p => (

@@ -6,9 +6,9 @@
 
 import { deployableInstitutions } from '@/lib/institution/readiness';
 import { buildCascade } from '@/lib/institution/cascade';
-import { regionRollup, nationalRegions } from '@/lib/gov/regions';
+import { regionRollup, nationalRegions, projectRegions } from '@/lib/gov/regions';
 import { serviceReadings } from '@/lib/gov/ministry-services';
-import { prioritisedThreats } from '@/lib/gov/simulation';
+import { prioritisedThreats, scenarioFor, type ScenarioKey } from '@/lib/gov/simulation';
 import { waveSeries } from '@/lib/telemetry';
 import type { Ministry } from '@/lib/api/types';
 
@@ -82,4 +82,43 @@ export function nationalResilience(mins: Ministry[], t: number): NationalResilie
   const weakest = pillars.length ? pillars.reduce((w, p) => (p.score < w.score ? p : w)) : null;
 
   return { index, band, tone: toneOf(index), pillars, weakest };
+}
+
+export interface ResilienceUnderShock {
+  baseline: number;
+  projected: number;     // index if the scenario materialised
+  drawdown: number;      // baseline − projected (resilience headroom consumed)
+  scenarioLabel: string;
+  band: NationalResilience['band'];
+  tone: 'ok' | 'warn' | 'alert';
+}
+
+// Stress test: how far the National Resilience Index falls if a scenario
+// materialises. Degrades the regional pillar via the real projection and
+// the cascade/service pillars proportionally to scenario severity. Pure.
+export function resilienceUnderShock(mins: Ministry[], t: number, key: ScenarioKey): ResilienceUnderShock {
+  const sc = scenarioFor(key);
+  const base = nationalResilience(mins, t);
+  if (sc.key === 'baseline' || sc.severity === 0) {
+    return { baseline: base.index, projected: base.index, drawdown: 0, scenarioLabel: sc.label, band: base.band, tone: base.tone };
+  }
+  const projRoll = regionRollup(projectRegions(key, t));
+
+  const shocked = base.pillars.map(p => {
+    if (p.key === 'reg') {
+      return { ...p, score: Math.round(Math.max(0, Math.min(100, projRoll.meanReadiness - projRoll.critical * 8))) };
+    }
+    if (p.key === 'casc') return { ...p, score: Math.round(Math.max(0, p.score - sc.severity * 0.55)) };
+    if (p.key === 'svc') return { ...p, score: Math.round(Math.max(0, p.score - sc.severity * 0.4)) };
+    if (p.key === 'inst') return { ...p, score: Math.round(Math.max(0, p.score - sc.severity * 0.25)) };
+    if (p.key === 'thr') return { ...p, score: Math.round(Math.max(0, 100 - sc.severity)) };
+    return p;
+  });
+  const projected = Math.round(shocked.reduce((a, p) => a + p.score * p.weight, 0));
+  const projBand: NationalResilience['band'] =
+    projected >= 78 ? 'robust' : projected >= 62 ? 'sound' : projected >= 45 ? 'fragile' : 'brittle';
+  return {
+    baseline: base.index, projected, drawdown: base.index - projected,
+    scenarioLabel: sc.label, band: projBand, tone: toneOf(projected),
+  };
 }

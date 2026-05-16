@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { nationalResilience } from './national-resilience';
+import { nationalResilience, resilienceUnderShock } from './national-resilience';
 import type { Ministry } from '@/lib/api/types';
 
 const MINS: Ministry[] = [
@@ -26,6 +26,19 @@ describe('national resilience index', () => {
     expect(wsum).toBeCloseTo(1, 5);
     expect(a.weakest).not.toBeNull();
     expect(a.pillars.every(p => p.score >= a.weakest!.score)).toBe(true);
+  });
+
+  it('resilienceUnderShock never raises the index and is deterministic', () => {
+    const flat = resilienceUnderShock(MINS, 70, 'baseline');
+    expect(flat.drawdown).toBe(0);
+    expect(flat.projected).toBe(flat.baseline);
+
+    const a = resilienceUnderShock(MINS, 70, 'energy-outage');
+    expect(a).toEqual(resilienceUnderShock(MINS, 70, 'energy-outage'));
+    expect(a.projected).toBeLessThanOrEqual(a.baseline);
+    expect(a.drawdown).toBeGreaterThanOrEqual(0);
+    expect(a.projected).toBeGreaterThanOrEqual(0);
+    expect(['robust', 'sound', 'fragile', 'brittle']).toContain(a.band);
   });
 
   it('handles an empty institutional set without throwing', () => {
