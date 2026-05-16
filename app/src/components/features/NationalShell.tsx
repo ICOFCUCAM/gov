@@ -11,6 +11,7 @@ import { constitutionFor } from '@/lib/gov/constitution';
 import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
+import { serviceReadings } from '@/lib/gov/ministry-services';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -75,6 +76,17 @@ export function NationalShell() {
     { l: 'Branch mean', v: `${branchMean}%`, t: branchMean >= 75 ? 'ok' : 'warn', k: 'br' },
     { l: 'Separation', v: sep.intact ? 'INTACT' : 'STRAINED', t: sep.intact ? 'ok' : 'alert', k: 'sp' },
   ];
+
+  const svcHealth = dir.map(({ ministry: m }) => {
+    const rs = serviceReadings(m.id, m.archetype, ts);
+    const alert = rs.filter(r => r.tone === 'alert').length;
+    const warn = rs.filter(r => r.tone === 'warn').length;
+    const ok = rs.length - alert - warn;
+    const idx = rs.length ? Math.round((ok * 100 + warn * 45) / rs.length) : 100;
+    return { id: m.id, name: m.name, archetype: m.archetype, total: rs.length, alert, warn, idx };
+  }).sort((a, b) => a.idx - b.idx);
+  const svcDegraded = svcHealth.filter(s => s.alert > 0).length;
+  const svcMean = svcHealth.length ? Math.round(svcHealth.reduce((a, s) => a + s.idx, 0) / svcHealth.length) : 100;
 
   const regions = nationalRegions(ts);
   const rRoll = regionRollup(regions);
@@ -185,6 +197,28 @@ export function NationalShell() {
           </div>
         </P>
       </div>
+
+      <P title="Service signature health" meta={`${svcMean}% mean · ${svcDegraded} institutions degraded`}>
+        {svcHealth.length === 0 ? (
+          <p className="text-[11px] text-ink-muted">No activated institutions. <Link href="/ministries" className="text-link underline">Compose →</Link></p>
+        ) : (
+          <div className="grid grid-cols-1 gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+            {svcHealth.map(s => {
+              const tn = s.alert ? 'alert' : s.warn ? 'warn' : 'ok';
+              return (
+                <Link key={s.id} href={`/control?ministry=${s.id}`} className="focus-ring flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 no-underline transition-colors hover:bg-surface-2/70">
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-ink">{s.name}</span>
+                  <span className="shrink-0 text-[9px] uppercase tracking-wider text-ink-muted">{s.archetype}</span>
+                  <div className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${s.idx}%`, backgroundColor: TONE[tn] }} /></div>
+                  <span className="w-16 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE[tn] }}>
+                    {s.idx}%{s.alert ? ` ·${s.alert}!` : s.warn ? ` ·${s.warn}` : ''}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        )}
+      </P>
 
       <P title="National infrastructure pressure" meta="digital-twin networks">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
