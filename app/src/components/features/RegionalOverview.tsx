@@ -44,6 +44,22 @@ export function RegionalOverview() {
 
   return (
     <div className="space-y-2">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Regional Overview</h1>
+          <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE
+          </span>
+          <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()} · updated {Math.round((now % 60000) / 1000)}s ago</span>
+        </div>
+        {crit >= 1 ? (
+          <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
+            style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, transparent)` }}>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
+            {crit >= 2 ? 'Regional surge' : 'Regional alert'} · {crit} critical
+          </span>
+        ) : null}
+      </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {tele.map(m => (
           <div key={m.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>

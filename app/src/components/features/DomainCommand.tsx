@@ -175,18 +175,43 @@ const DOMAIN: Record<DomainKey, Cfg> = {
   },
 };
 
+const TITLES: Record<DomainKey, string> = {
+  treasury: 'Treasury Command',
+  security: 'Security & Interior',
+  geopolitical: 'Geopolitical Monitor',
+};
+
 export function DomainCommand({ domain }: { domain: DomainKey }) {
   const cfg = DOMAIN[domain];
   const [now, setNow] = React.useState(() => Date.now());
+  const [openFeed, setOpenFeed] = React.useState<number | null>(0);
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
   const ts = now / 4000;
   const w = (k: string, lo: number, hi: number) => waveSeries(`${domain}:${k}`, ts, 1, lo, hi).at(-1)!;
+  const crit = cfg.feed.filter(f => f.t === 'alert').length;
 
   return (
     <div className="space-y-2">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{TITLES[domain]}</h1>
+          <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE
+          </span>
+          <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()} · updated {Math.round((now % 60000) / 1000)}s ago</span>
+        </div>
+        {crit >= 1 ? (
+          <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
+            style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, transparent)` }}>
+            <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
+            {crit >= 2 ? 'Domain surge' : 'Domain alert'} · {crit} critical
+          </span>
+        ) : null}
+      </div>
+
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {cfg.tele.map(m => {
           const raw = w(m.k, m.lo, m.hi);
@@ -219,13 +244,45 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
             ))}
           </div>
         </Panel>
-        <Panel title={cfg.feedTitle} meta="executive" className="xl:col-span-2" bodyClass="!p-0">
-          {cfg.feed.map((f, i) => (
-            <div key={i} className="border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${TONE[f.t]}` }}>
-              <div className="truncate text-[11px] font-medium text-ink">{f.l}</div>
-              <div className="truncate text-[9px] text-ink-muted">{f.sub}</div>
-            </div>
-          ))}
+        <Panel title={cfg.feedTitle} meta={`${cfg.feed.length} active`} className="xl:col-span-2" bodyClass="!p-0">
+          {cfg.feed.map((f, i) => {
+            const open = openFeed === i;
+            const age = 4 + Math.round(seed(`${domain}:fa:${i}`) * 52);
+            const owner = ['Domain lead', 'Duty officer', 'Cabinet liaison', 'Watch commander'][Math.floor(seed(`${domain}:fo:${i}`) * 4)];
+            const chron = [
+              { t: `${age}m`, l: 'Signal detected', c: TONE.neutral },
+              { t: `${Math.max(1, Math.round(age * 0.6))}m`, l: 'Assessed & classified', c: TONE[f.t] },
+              { t: `${Math.max(1, Math.round(age * 0.3))}m`, l: `${owner} engaged`, c: TONE.ok },
+            ];
+            return (
+              <div key={i} className="border-b border-line-soft last:border-0" style={{ borderLeft: `3px solid ${TONE[f.t]}` }}>
+                <button onClick={() => setOpenFeed(open ? null : i)}
+                  className="focus-ring block w-full px-3 py-2 text-left transition-colors hover:bg-surface-2/50">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="truncate text-[11px] font-medium text-ink">{f.l}</span>
+                    <span className="shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{age}m<span className="ml-1 inline-block transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'none' }}>›</span></span>
+                  </div>
+                  <div className="truncate text-[9px] text-ink-muted">{f.sub}</div>
+                </button>
+                {open ? (
+                  <div className="px-3 pb-2 pt-0.5">
+                    <div className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                      {chron.map((c, k) => (
+                        <div key={k} className="flex items-center gap-2 py-0.5 text-[10px]">
+                          <span className="w-7 shrink-0 font-mono tabular-nums text-ink-muted">{c.t}</span>
+                          <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: c.c }} />
+                          <span className="truncate text-ink-soft">{c.l}</span>
+                        </div>
+                      ))}
+                      <div className="mt-1 flex items-center justify-between border-t border-line-soft pt-1 text-[9px]">
+                        <span className="text-ink-muted">Owner</span><span className="text-ink-soft">{owner}</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            );
+          })}
         </Panel>
       </div>
 

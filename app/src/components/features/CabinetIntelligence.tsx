@@ -508,7 +508,7 @@ export function CabinetIntelligence() {
 
           {/* ROW A — heterogeneous executive micro-panel band (4 columns) */}
           <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
-            <Panel title="National KPI trends" meta="strategic indicators" bodyClass="!p-1.5">
+            <Panel title="National KPI trends" meta="strategic indicators" className="min-h-[188px]" bodyClass="!p-1.5">
               <div className="grid grid-cols-1 gap-1">
                 {kpiTrends.map(k => {
                   const up = k.d >= 0;
@@ -527,7 +527,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Fiscal overview" meta="treasury position" bodyClass="!p-1.5">
+            <Panel title="Fiscal overview" meta="treasury position" className="min-h-[188px]" bodyClass="!p-1.5">
               <div className="grid grid-cols-2 gap-1">
                 {fiscal.map(f => (
                   <div key={f.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
@@ -540,7 +540,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Geopolitical monitor" meta="external pressure" bodyClass="!p-1.5">
+            <Panel title="Geopolitical monitor" meta="external pressure" className="min-h-[188px]" bodyClass="!p-1.5">
               <div className="grid grid-cols-1 gap-1">
                 {geo.map(g => (
                   <div key={g.l} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
@@ -554,7 +554,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Quick actions" meta="executive command" bodyClass="!p-1.5">
+            <Panel title="Quick actions" meta="executive command" className="min-h-[188px]" bodyClass="!p-1.5">
               <div className="grid grid-cols-2 gap-1">
                 {quick.map((q, i) => {
                   const danger = i === 0;
