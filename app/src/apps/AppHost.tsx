@@ -8,6 +8,10 @@ import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, findApp, version as orchVersion } from '@/services/orchestration-engine';
 import { SubsystemConsole } from '@/components/features/SubsystemConsole';
 import { MinistryHealthApp } from '@/apps/ministry-health/MinistryHealthApp';
+import { TreasuryApp } from '@/apps/treasury/TreasuryApp';
+import { JudiciaryApp } from '@/apps/judiciary/JudiciaryApp';
+import { LegislatureApp } from '@/apps/legislature/LegislatureApp';
+import { PoliceCommandApp } from '@/apps/police-command/PoliceCommandApp';
 import { BranchWorkspace } from '@/components/features/BranchWorkspace';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
@@ -140,10 +144,18 @@ export function AppHost({ domain }: { domain: string }) {
                   <p className="text-[12px] text-ink-muted">This sovereign application is provisioned but not activated. Activate the institution from the platform to bring its operational systems online.</p>
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'HEALTH' ? (
                   <MinistryHealthApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'FINANCE' ? (
+                  <TreasuryApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : app.kind === 'ministry' && app.instanceId ? (
                   <SubsystemConsole id={app.instanceId} group={active ?? 'command'} />
+                ) : app.kind === 'branch' && app.archetypeOrBranch === 'judiciary' ? (
+                  <JudiciaryApp instanceId={`jud:${app.archetypeOrBranch}`} domain={active ?? 'constitutional'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                ) : app.kind === 'branch' && app.archetypeOrBranch === 'legislature' ? (
+                  <LegislatureApp domain={active ?? 'bills'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : app.kind === 'branch' ? (
                   <BranchWorkspace branchKey={app.archetypeOrBranch} />
+                ) : app.id === 'police-command' ? (
+                  <PoliceCommandApp appId={app.id} domain={active ?? 'incident'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : (
                   <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 )}
