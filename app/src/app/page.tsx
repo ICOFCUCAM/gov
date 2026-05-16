@@ -8,6 +8,7 @@ import { TONE, ACCENT, PALETTE, seed, Spark, waveSeries } from '@/components/fea
 import { WorldMap } from '@/components/ui/WorldMap';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
+import { deployableInstitutions, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] = [
@@ -272,8 +273,8 @@ export default function SovereignCommandCenter() {
 
           <Section label="Activated Institutions · Deployment Directory">
             {(() => {
-              const active = mins.filter(m => m.status === 'active');
-              if (active.length === 0) {
+              const dir = deployableInstitutions(mins);
+              if (dir.length === 0) {
                 return (
                   <div className="rounded-[3px] border border-line bg-surface px-3 py-4 text-center text-[11px] text-ink-muted">
                     No institutions activated yet. Compose one from a sovereign archetype in{' '}
@@ -283,25 +284,31 @@ export default function SovereignCommandCenter() {
               }
               return (
                 <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-3 xl:grid-cols-5">
-                  {active.map(m => {
-                    const depts = m.departments?.length ?? 0;
-                    const mods = m.modules?.filter(x => x.enabled).length ?? 0;
-                    const ready = depts > 0 && mods > 0;
-                    const tn = ready ? TONE.ok : TONE.warn;
+                  {dir.map(({ ministry: m, readiness: r }) => {
+                    const tn = r.deployable ? TONE.ok : TONE.warn;
                     return (
                       <Link key={m.id} href={`/gov/ministry/${m.id}`}
                         className="focus-ring group flex flex-col rounded-[3px] border border-line bg-surface p-3 no-underline transition-all duration-200 hover:-translate-y-0.5 hover:border-link/40 hover:shadow-elev-2">
                         <div className="flex items-start justify-between gap-2">
                           <span className="min-w-0 truncate text-[13px] font-semibold text-ink">{m.name}</span>
                           <span className="shrink-0 rounded-[3px] px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${tn} 18%, transparent)`, color: tn }}>
-                            {ready ? 'Deployable' : 'Incomplete'}
+                            {r.deployable ? 'Deployable' : 'Incomplete'}
                           </span>
                         </div>
-                        <span className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-ink-muted">{m.archetype}</span>
-                        <div className="mt-2 flex-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[10px]">
-                          <span className="text-ink-muted">Departments</span><span className="text-right font-mono tabular-nums" style={{ color: depts ? TONE.ok : TONE.warn }}>{depts}</span>
-                          <span className="text-ink-muted">Modules</span><span className="text-right font-mono tabular-nums" style={{ color: mods ? TONE.ok : TONE.warn }}>{mods}</span>
-                          <span className="text-ink-muted">Core</span><span className="text-right" style={{ color: TONE.ok }}>Inherited</span>
+                        <span className="mt-0.5 text-[10px] uppercase tracking-[0.14em] text-ink-muted">{m.archetype} · {LIFECYCLE_LABEL[r.lifecycle]}</span>
+                        <div className="mt-2 flex items-center gap-2">
+                          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+                            <div className="h-full rounded-full transition-all duration-700 ease-sov" style={{ width: `${r.total}%`, backgroundColor: tn }} />
+                          </div>
+                          <span className="font-mono text-[11px] tabular-nums" style={{ color: tn }}>{r.total}%</span>
+                        </div>
+                        <div className="mt-2 flex-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
+                          {r.dimensions.slice(0, 6).map(d => (
+                            <React.Fragment key={d.key}>
+                              <span className="truncate text-ink-muted">{d.label.split(' ')[0]}</span>
+                              <span className="text-right font-mono tabular-nums" style={{ color: d.score >= 70 ? TONE.ok : d.score >= 40 ? TONE.warn : TONE.alert }}>{d.score}</span>
+                            </React.Fragment>
+                          ))}
                         </div>
                         <span className="mt-2 flex items-center justify-between border-t border-line pt-2 text-[11px]" style={{ color: ACCENT }}>
                           Enter workspace<span className="transition-transform group-hover:translate-x-0.5">→</span>

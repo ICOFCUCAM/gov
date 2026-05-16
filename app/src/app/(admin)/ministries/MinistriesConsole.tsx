@@ -8,6 +8,7 @@ import { Plain } from '@/components/ui/Plain';
 import { TextField } from '@/components/ui/Field';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { api } from '@/lib/api/client';
+import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import type { Archetype, ArchetypeKey, Ministry } from '@/lib/api/types';
 
 export function MinistriesConsole() {
@@ -131,11 +132,12 @@ export function MinistriesConsole() {
                   </Pill>
                   <span className="text-xs text-ink-muted">{m.archetype}</span>
                   {(() => {
-                    const ok = (m.departments?.length ?? 0) > 0 && (m.modules?.filter(x => x.enabled).length ?? 0) > 0;
+                    const r = scoreInstitution(m);
+                    const ok = r.deployable;
                     return (
                       <span className="ml-auto rounded-[3px] px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider"
                         style={{ backgroundColor: `color-mix(in srgb, ${ok ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))'} 18%, transparent)`, color: ok ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' }}>
-                        {ok ? 'Deployable' : 'Incomplete'}
+                        {r.total}% · {ok ? 'Deployable' : 'Incomplete'}
                       </span>
                     );
                   })()}
@@ -158,36 +160,43 @@ export function MinistriesConsole() {
                     Archetype {current.archetype} · slug {current.slug}
                   </p>
                   {(() => {
-                    const depts = current.departments?.length ?? 0;
-                    const mods = current.modules?.filter(x => x.enabled).length ?? 0;
-                    const checks = [
-                      { l: 'Departments configured', ok: depts > 0, v: String(depts) },
-                      { l: 'Operational modules enabled', ok: mods > 0, v: String(mods) },
-                      { l: 'Status active', ok: current.status === 'active', v: current.status },
-                      { l: 'Sovereign core inherited', ok: true, v: 'yes' },
-                    ];
-                    const ready = checks.every(c => c.ok);
+                    const r = scoreInstitution(current);
+                    const c = r.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))';
                     return (
                       <div className="mt-3 rounded-[3px] border border-line p-2.5">
-                        <div className="mb-1.5 flex items-center justify-between">
-                          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Deployment readiness</span>
+                        <div className="mb-1.5 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">
+                            Institution readiness · {LIFECYCLE_LABEL[r.lifecycle]}
+                          </span>
                           <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider"
-                            style={{ backgroundColor: `color-mix(in srgb, ${ready ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))'} 18%, transparent)`, color: ready ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' }}>
-                            {ready ? 'Deployable' : 'Incomplete'}
+                            style={{ backgroundColor: `color-mix(in srgb, ${c} 18%, transparent)`, color: c }}>
+                            {r.total}% · {r.deployable ? 'Deployable' : 'Incomplete'}
                           </span>
                         </div>
-                        <ul className="space-y-1 text-[11px]">
-                          {checks.map(c => (
-                            <li key={c.l} className="flex items-center justify-between gap-2">
-                              <span className="flex items-center gap-1.5">
-                                <span style={{ color: c.ok ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' }}>{c.ok ? '✓' : '○'}</span>
-                                <span className="text-ink-soft">{c.l}</span>
-                              </span>
-                              <span className="font-mono tabular-nums text-ink-muted">{c.v}</span>
-                            </li>
-                          ))}
+                        <div className="mb-2 h-1.5 overflow-hidden rounded-full bg-surface-2">
+                          <div className="h-full rounded-full" style={{ width: `${r.total}%`, backgroundColor: c }} />
+                        </div>
+                        <ul className="grid grid-cols-1 gap-1 text-[11px] sm:grid-cols-2">
+                          {r.dimensions.map(d => {
+                            const dc = d.score >= 70 ? 'rgb(var(--c-ok))' : d.score >= 40 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))';
+                            return (
+                              <li key={d.key} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                                <span className="min-w-0">
+                                  <span className="block truncate text-ink-soft">{d.label}</span>
+                                  <span className="block truncate text-[9px] text-ink-muted">{d.detail}</span>
+                                </span>
+                                <span className="shrink-0 font-mono tabular-nums" style={{ color: dc }}>{d.score}</span>
+                              </li>
+                            );
+                          })}
                         </ul>
-                        {!ready ? <p className="mt-1.5 text-[10px] text-ink-muted">Activated institutions appear in the root deployment directory; completing the above makes this one deployable.</p> : null}
+                        {!r.deployable ? (
+                          <p className="mt-1.5 text-[10px]" style={{ color: 'rgb(var(--c-warn))' }}>
+                            Blocking: {r.blocking.join(' · ')}. Activation gate requires ≥70% with governance, operational and deployment provisioned.
+                          </p>
+                        ) : (
+                          <p className="mt-1.5 text-[10px] text-ink-muted">Validated for the national deployment directory.</p>
+                        )}
                       </div>
                     );
                   })()}

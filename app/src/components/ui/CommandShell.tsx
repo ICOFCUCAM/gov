@@ -7,7 +7,8 @@ import { resolveIdentity } from '@/lib/sovereign-identity';
 import { TONE, ACCENT, PALETTE } from '@/components/features/SituationRoom';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
-import type { SovereignProfile, NationalSnapshot, NationalCoordination } from '@/lib/api/types';
+import { deployableInstitutions } from '@/lib/institution/readiness';
+import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; key: string }[] }[] = [
   { g: 'Sovereign Command', items: [
@@ -53,17 +54,19 @@ export function CommandShell({
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
+  const [mins, setMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(() => Date.now());
   const [navOpen, setNavOpen] = React.useState(false);
 
   React.useEffect(() => {
     const load = async () => {
-      const [s, n, c] = await Promise.all([
+      const [s, n, c, m] = await Promise.all([
         api.sovereign.get().then(r => r.sovereign).catch(() => null),
         api.cabinet.national().catch(() => null),
         api.cabinet.coordination().catch(() => null),
+        api.org.ministries().then(r => r.ministries).catch(() => []),
       ]);
-      setSov(s); setNat(n); setCoord(c);
+      setSov(s); setNat(n); setCoord(c); setMins(m);
     };
     void load();
     const poll = setInterval(() => void load(), 15_000);
@@ -188,6 +191,29 @@ export function CommandShell({
                 })}
               </div>
             ))}
+            {(() => {
+              const dir = deployableInstitutions(mins);
+              if (dir.length === 0) return null;
+              return (
+                <div className="mb-0.5">
+                  <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Active Institutions · {dir.length}</div>
+                  {dir.map(({ ministry: m, readiness: r }) => {
+                    const c = r.deployable ? TONE.ok : TONE.warn;
+                    return (
+                      <Link key={m.id} href={`/gov/ministry/${m.id}`}
+                        className="focus-ring flex items-center gap-2 border-l-2 border-transparent px-3 py-1 text-ink-muted no-underline transition-colors duration-150 hover:bg-surface-2/50 hover:text-ink">
+                        <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[10px] ring-1 ring-line" style={{ color: c }}>▣</span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-[11.5px]">{m.name}</span>
+                          <span className="block truncate text-[8.5px] text-ink-muted">{m.archetype} · {r.total}% ready</span>
+                        </span>
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: c }} />
+                      </Link>
+                    );
+                  })}
+                </div>
+              );
+            })()}
           </div>
           <div className="border-t border-line px-3 py-2">
             <div className="mb-1.5 flex items-end gap-0.5" aria-hidden title="Operational pulse">
