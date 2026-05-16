@@ -65,6 +65,30 @@ export function actOnItem(scope: string, itemId: string, action: ActionKey, by: 
   emit();
 }
 
+export function annotateItem(scope: string, itemId: string, note: string, by: string): void {
+  const items = scopes.get(scope);
+  if (!items || !note.trim()) return;
+  const idx = items.findIndex(i => i.id === itemId);
+  if (idx < 0) return;
+  const it = items[idx]!;
+  const notes = it.meta.notes ? `${it.meta.notes}\n${by}: ${note.trim()}` : `${by}: ${note.trim()}`;
+  const next = items.slice();
+  next[idx] = { ...it, meta: { ...it.meta, notes } };
+  scopes.set(scope, next);
+  emit();
+}
+
+export function reassignItem(scope: string, itemId: string, assignee: string): void {
+  const items = scopes.get(scope);
+  if (!items) return;
+  const idx = items.findIndex(i => i.id === itemId);
+  if (idx < 0) return;
+  const next = items.slice();
+  next[idx] = { ...items[idx]!, assignee };
+  scopes.set(scope, next);
+  emit();
+}
+
 export function getLedger(limit = 50): LedgerEntry[] {
   return ledger.slice(0, limit);
 }

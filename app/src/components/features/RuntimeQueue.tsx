@@ -6,7 +6,9 @@ import {
   actionsFor, queueStats, workflowFor,
   type WorkKind, type WorkItem, type ActionKey,
 } from '@/lib/gov/runtime-workflow';
-import { subscribe, getScope, actOnItem } from '@/lib/gov/runtime-store';
+import { subscribe, getScope, actOnItem, annotateItem, reassignItem } from '@/lib/gov/runtime-store';
+
+const ASSIGNEES = ['K. Otieno', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Kamau'];
 
 const ACTION_LABEL: Record<ActionKey, string> = {
   advance: 'Advance', approve: 'Approve', reject: 'Reject', escalate: 'Escalate',
@@ -39,6 +41,7 @@ export function RuntimeQueue({
   const wf = workflowFor(kind);
   const stats = queueStats(items);
 
+  const [note, setNote] = React.useState('');
   const act = (id: string, action: ActionKey) => {
     actOnItem(scope, id, action, by);
   };
@@ -92,7 +95,18 @@ export function RuntimeQueue({
                   <span className="text-[8.5px] uppercase tracking-wider" style={{ color: prTone(current.priority) }}>{current.priority}</span>
                 </div>
                 <div className="text-[12px] font-semibold text-ink">{current.title}</div>
-                <div className="text-[9px] text-ink-muted">{wf.label} · assignee {current.assignee} · age {current.ageHrs}h</div>
+                <div className="flex items-center gap-1.5 text-[9px] text-ink-muted">
+                  {wf.label} · age {current.ageHrs}h · assignee
+                  <select
+                    value={current.assignee}
+                    onChange={e => reassignItem(scope, current.id, e.target.value)}
+                    className="rounded-[3px] border border-line bg-surface px-1 py-0.5 text-[9px] text-ink-soft"
+                  >
+                    {[current.assignee, ...ASSIGNEES.filter(a => a !== current.assignee)].map(a => (
+                      <option key={a} value={a}>{a}</option>
+                    ))}
+                  </select>
+                </div>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-[9px] uppercase tracking-wider text-ink-muted">Stage</span>
@@ -124,6 +138,27 @@ export function RuntimeQueue({
                     ))}
                   </ol>
                 )}
+              </div>
+              <div>
+                <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Case notes</div>
+                {current.meta.notes ? (
+                  <pre className="mb-1 whitespace-pre-wrap rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1 text-[9px] text-ink-soft">{current.meta.notes}</pre>
+                ) : <p className="mb-1 text-[9px] text-ink-muted">No notes recorded.</p>}
+                <div className="flex gap-1">
+                  <input
+                    value={note}
+                    onChange={e => setNote(e.target.value)}
+                    placeholder="Add a case note…"
+                    className="min-w-0 flex-1 rounded-[3px] border border-line bg-surface px-2 py-1 text-[10px] text-ink-soft"
+                  />
+                  <button
+                    onClick={() => { annotateItem(scope, current.id, note, by); setNote(''); }}
+                    className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider"
+                    style={{ borderColor: ACTION_TONE.advance, color: ACTION_TONE.advance }}
+                  >
+                    Record
+                  </button>
+                </div>
               </div>
             </div>
           )}
