@@ -10,6 +10,7 @@ import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { scenarioSweep } from '@/lib/gov/simulation';
 import { buildOperationalChain } from '@/lib/gov/operational-chain';
+import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
@@ -238,6 +239,8 @@ export function NationalCoordination() {
           </Panel>
         </div>
       </div>
+
+      <RuntimeQueue scope="natcoord:incident" kind="incident" title="National incident runtime — acknowledge → contain → recover" by="Duty Coordinator" n={16} />
 
       {/* Lower grid */}
       <div className="grid gap-2 xl:grid-cols-2">
