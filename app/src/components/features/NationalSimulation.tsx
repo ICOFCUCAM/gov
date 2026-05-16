@@ -6,12 +6,16 @@ import { TONE, Panel, Spark, waveSeries } from '@/components/features/SituationR
 import { identityFor } from '@/lib/archetype-profiles';
 import { projectRegions } from '@/lib/gov/regions';
 import { SCENARIOS, simulate, scenarioSweep, mitigationPlaybook, prioritisedThreats, type ScenarioKey } from '@/lib/gov/simulation';
-import type { ArchetypeKey } from '@/lib/api/types';
+import { resilienceUnderShock } from '@/lib/gov/national-resilience';
+import { api } from '@/lib/api/client';
+import type { ArchetypeKey, Ministry } from '@/lib/api/types';
 
 export function NationalSimulation({ initial = 'baseline' }: { initial?: ScenarioKey }) {
   const [now, setNow] = React.useState(() => Date.now());
   const [key, setKey] = React.useState<ScenarioKey>(initial);
+  const [mins, setMins] = React.useState<Ministry[]>([]);
   React.useEffect(() => {
+    api.org.ministries().then(r => setMins(r.ministries)).catch(() => {});
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
@@ -23,6 +27,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
   const pb = mitigationPlaybook(key, ts);
   const prio = prioritisedThreats(ts);
   const regionProj = projectRegions(key, ts).sort((a, b) => a.readinessDelta - b.readinessDelta);
+  const stress = resilienceUnderShock(mins, ts, key);
 
   const tele = [
     { l: 'Scenario', v: s.scenario.label.split(' (')[0], t: active ? 'warn' : 'ok' },
@@ -129,6 +134,33 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
           </div>
         ))}
       </div>
+
+      {active ? (
+        <Panel title="National resilience under this scenario" meta="composite headroom consumed" bodyClass="!p-2">
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+            <div className="flex items-baseline gap-2">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Baseline</span>
+              <span className="font-mono text-[22px] leading-none tabular-nums text-ink">{stress.baseline}</span>
+            </div>
+            <span className="text-ink-muted">→</span>
+            <div className="flex items-baseline gap-2">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Under {stress.scenarioLabel}</span>
+              <span className="font-mono text-[22px] leading-none tabular-nums" style={{ color: TONE[stress.tone] }}>{stress.projected}</span>
+              <span className="text-[10px] font-bold uppercase tracking-[0.14em]" style={{ color: TONE[stress.tone] }}>{stress.band}</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Drawdown</span>
+              <span className="font-mono text-[18px] leading-none tabular-nums" style={{ color: stress.drawdown > 0 ? TONE.alert : TONE.ok }}>−{stress.drawdown}</span>
+            </div>
+            <div className="min-w-[160px] flex-1">
+              <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+                <span className="block h-full" style={{ width: `${stress.projected}%`, backgroundColor: TONE[stress.tone] }} />
+              </div>
+              <div className="mt-1 text-[9px] text-ink-muted">{mins.length ? `${mins.length} institutions in scope` : 'Loading institutional scope…'} · advisory projection</div>
+            </div>
+          </div>
+        </Panel>
+      ) : null}
 
       <div className="grid gap-2 xl:grid-cols-3">
         <Panel title="Ministry impact" meta="propagated stress" bodyClass="!p-1.5">
