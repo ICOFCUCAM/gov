@@ -432,6 +432,14 @@ export function NationalMap({
             <circle key={`relief${i}`} cx={e.cx} cy={e.cy} r={e.r} fill="none" stroke="rgb(var(--c-line))" strokeOpacity={e.o} strokeWidth="1.4" />
           ))}
           <path d="M820,80 Q900,310 800,560" fill="none" stroke="#5fb0d9" strokeOpacity="0.12" strokeWidth="1.2" strokeDasharray="1 4" />
+          {/* population density — denser dots near the capital corridor */}
+          {Array.from({ length: 90 }).map((_, i) => {
+            const a = seed(`pd:${i}`), b = seed(`pd:${i}:y`);
+            const cx = 520 + (a - 0.5) * 520, cy = 360 + (b - 0.5) * 360;
+            const dens = Math.max(0, 1 - Math.hypot(cx - 520, cy - 356) / 420);
+            if (seed(`pd:${i}:k`) > dens + 0.15) return null;
+            return <circle key={`pd${i}`} cx={cx} cy={cy} r={0.6 + dens * 1.1} fill="rgb(var(--c-ink-soft))" opacity={0.05 + dens * 0.16} />;
+          })}
         </g>
 
         <g>
