@@ -18,6 +18,7 @@ import { schoolNetwork, examOps, teacherOps, studentServices } from '@/lib/gov/e
 import { transportOps } from '@/lib/gov/transport-systems';
 import { energyOps } from '@/lib/gov/energy-systems';
 import { interiorOps } from '@/lib/gov/interior-systems';
+import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
@@ -53,6 +54,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const isTransport = m.archetype === 'TRANSPORT';
   const isEnergy = m.archetype === 'ENERGY';
   const isInterior = m.archetype === 'INTERIOR';
+  const isAgri = m.archetype === 'AGRICULTURE';
 
   const header = (
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -684,6 +686,48 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'identity' || grp.key === 'licensing' || grp.key === 'citizen' ? 'permit' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (isAgri) {
+    const o = agricultureOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Food security" v={`${o.foodSecurityIndex}`} t={o.foodSecurityIndex >= 75 ? 'ok' : o.foodSecurityIndex >= 55 ? 'warn' : 'alert'} />
+          <Stat l="Strategic reserve" v={`${o.strategicReserveDays}d`} t={o.strategicReserveDays >= 45 ? 'ok' : o.strategicReserveDays >= 21 ? 'warn' : 'alert'} />
+          <Stat l="Livestock health" v={`${o.livestockHealthPct}%`} t={o.livestockHealthPct >= 85 ? 'ok' : 'warn'} />
+          <Stat l="Irrigation coverage" v={`${o.irrigationCoveragePct}%`} t={o.irrigationCoveragePct >= 60 ? 'ok' : 'warn'} />
+          <Stat l="Pest alerts" v={`${o.pestAlerts}`} t={o.pestAlerts > 8 ? 'alert' : o.pestAlerts ? 'warn' : 'ok'} />
+          <Stat l="Subsidy disbursed" v={`${o.subsidyDisbursementPct}%`} t={o.subsidyDisbursementPct >= 75 ? 'ok' : 'warn'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-2">
+          <Panel title="Crop production" meta="yield index" bodyClass="!p-2">
+            <div className="space-y-1">
+              {o.crops.map(c => (
+                <div key={c.crop} className="flex items-center gap-2 text-[10px]">
+                  <span className="w-20 shrink-0 text-ink-soft">{c.crop}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${c.yieldIdx}%`, backgroundColor: tc(c.tone) }} /></div>
+                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(c.tone) }}>{c.yieldIdx}</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+          <Panel title="Regional production & farmer services" meta="food-supply footprint" bodyClass="!p-2">
+            <div className="mb-2 grid grid-cols-3 gap-1.5">
+              {o.byRegion.map(r => (
+                <div key={r.region} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                  <div className="truncate text-[8px] uppercase tracking-wider text-ink-muted">{r.region}</div>
+                  <div className="font-mono text-[12px] tabular-nums" style={{ color: tc(r.tone) }}>{r.productionIdx}</div>
+                </div>
+              ))}
+            </div>
+            <div className="text-[9px] text-ink-muted">Farmers registered <span className="font-mono text-ink-soft">{o.farmersRegisteredM}M</span> · feeds national food-security & logistics propagation.</div>
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'farmer' ? 'approval' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
       </div>
     );
   }
