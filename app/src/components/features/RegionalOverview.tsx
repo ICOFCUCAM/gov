@@ -176,6 +176,34 @@ export function RegionalOverview() {
         </Panel>
       </div>
 
+      {/* Lower micro-grid ecosystem — per-region operational band */}
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
+        {[
+          ['Field units', 'fu', 18, 56], ['Relief tempo', 'rt', 30, 88], ['Road status', 'rs', 55, 96],
+          ['Comms uptime', 'cu', 80, 99], ['Power coverage', 'pc', 70, 98], ['Water pressure', 'wp', 45, 90],
+          ['Shelter capacity', 'sc', 40, 92], ['Medical readiness', 'mr', 55, 96], ['Evac throughput', 'et', 30, 85],
+          ['Border activity', 'ba', 15, 70], ['Supply buffer', 'sb', 35, 90], ['Patrol coverage', 'pv', 50, 95],
+          ['Incident load', 'il', 0, 14], ['Sync health', 'sy', 80, 99], ['Drift', 'df', 0, 16], ['Cadence', 'cd', 30, 85],
+        ].map(([l, k, lo, hi]) => {
+          const L = l as string, K = k as string, LO = lo as number, HI = hi as number;
+          const v = Math.round(waveSeries(`romg:${K}`, ts, 1, LO, HI).at(-1)!);
+          const pct = ((v - LO) / (HI - LO)) * 100;
+          const low = K === 'il' || K === 'df';
+          const t = (low ? 100 - pct : pct) >= 60 ? 'ok' : (low ? 100 - pct : pct) >= 35 ? 'warn' : 'alert';
+          const d = Math.round((waveSeries(`romgd:${K}`, ts, 1, 0, 1).at(-1)! - 0.45) * 12);
+          return (
+            <div key={K} className="rounded-[3px] border border-line bg-surface px-2 py-1" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+              <div className="truncate text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{L}</div>
+              <div className="flex items-baseline gap-1">
+                <span className="font-mono text-[13px] leading-none tabular-nums" style={{ color: TONE[t] }}>{v}</span>
+                <span className="ml-auto text-[8px]" style={{ color: d >= 0 ? TONE.ok : TONE.alert }}>{d >= 0 ? '▲' : '▼'}{Math.abs(d)}</span>
+              </div>
+              <div className="-mb-0.5 h-3.5 overflow-hidden opacity-70"><Spark pts={waveSeries(`romgs:${K}`, ts, 12, 35, 92)} tone={t} /></div>
+            </div>
+          );
+        })}
+      </div>
+
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {[
           { l: 'Regional posture', v: natRisk >= 70 ? 'STRAINED' : natRisk >= 45 ? 'WATCH' : 'STABLE', t: toneFor(natRisk) },

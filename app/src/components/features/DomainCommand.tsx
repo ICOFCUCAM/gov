@@ -20,6 +20,17 @@ interface Cfg {
   strip: (v: (k: string, lo: number, hi: number) => number) => { l: string; v: string; t: string }[];
 }
 
+const MICRO: { l: string; k: string; lo: number; hi: number; good?: 'high' | 'low'; pct?: boolean }[] = [
+  { l: 'Readiness', k: 'rdy', lo: 60, hi: 97, pct: true }, { l: 'Tempo', k: 'tmp', lo: 35, hi: 90 },
+  { l: 'Throughput', k: 'thp', lo: 40, hi: 95 }, { l: 'Latency', k: 'lat', lo: 8, hi: 40, good: 'low' },
+  { l: 'Coverage', k: 'cov', lo: 70, hi: 99, pct: true }, { l: 'Backlog', k: 'bkl', lo: 2, hi: 30, good: 'low' },
+  { l: 'Escalations', k: 'esc', lo: 0, hi: 12, good: 'low' }, { l: 'Sync health', k: 'syn', lo: 80, hi: 99, pct: true },
+  { l: 'Field units', k: 'fld', lo: 18, hi: 60 }, { l: 'Drift', k: 'drf', lo: 0, hi: 18, good: 'low' },
+  { l: 'Capacity', k: 'cap', lo: 55, hi: 95, pct: true }, { l: 'Variance', k: 'var', lo: 2, hi: 22, good: 'low' },
+  { l: 'Signal', k: 'sig', lo: 75, hi: 99, pct: true }, { l: 'Pressure', k: 'prs', lo: 20, hi: 78, good: 'low' },
+  { l: 'Reserve', k: 'rsv', lo: 40, hi: 92, pct: true }, { l: 'Cadence', k: 'cdn', lo: 30, hi: 85 },
+];
+
 const tone3 = (v: number, good: 'high' | 'low') => {
   const sev = good === 'high' ? 100 - v : v;
   return sev >= 66 ? 'alert' : sev >= 40 ? 'warn' : 'ok';
@@ -344,6 +355,25 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
             ))}
           </div>
         </Panel>
+      </div>
+
+      {/* Lower micro-grid ecosystem — Bloomberg-density operational band */}
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
+        {MICRO.map(m => {
+          const raw = w(`mg:${m.k}`, m.lo, m.hi);
+          const t = tone3(((raw - m.lo) / (m.hi - m.lo)) * 100, m.good ?? 'high');
+          const d = Math.round((w(`mgd:${m.k}`, 0, 1) - 0.45) * 12);
+          return (
+            <div key={m.k} className="rounded-[3px] border border-line bg-surface px-2 py-1" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+              <div className="truncate text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{m.l}</div>
+              <div className="flex items-baseline gap-1">
+                <span className="font-mono text-[13px] leading-none tabular-nums" style={{ color: TONE[t] }}>{m.pct ? `${Math.round(raw)}%` : Math.round(raw)}</span>
+                <span className="ml-auto text-[8px]" style={{ color: d >= 0 ? TONE.ok : TONE.alert }}>{d >= 0 ? '▲' : '▼'}{Math.abs(d)}</span>
+              </div>
+              <div className="-mb-0.5 h-3.5 overflow-hidden opacity-70"><Spark pts={waveSeries(`${domain}:mgs:${m.k}`, ts, 12, 35, 92)} tone={t} /></div>
+            </div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
