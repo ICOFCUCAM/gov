@@ -54,6 +54,7 @@ export function CommandShell({
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [now, setNow] = React.useState(() => Date.now());
+  const [navOpen, setNavOpen] = React.useState(false);
 
   React.useEffect(() => {
     const load = async () => {
@@ -107,6 +108,11 @@ export function CommandShell({
         </div>
       ) : null}
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
+        <button type="button" aria-label="Toggle navigation" aria-expanded={navOpen}
+          onClick={() => setNavOpen(o => !o)}
+          className="focus-ring grid h-9 w-9 shrink-0 place-items-center rounded-[3px] border border-line text-ink-soft lg:hidden">
+          <span className="text-base leading-none">{navOpen ? '✕' : '☰'}</span>
+        </button>
         <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
           <span aria-hidden className="grid h-9 w-9 place-items-center rounded-[3px] text-sm font-bold text-white ring-1 ring-white/15" style={{ backgroundColor: accent }}>
             {identity ? identity.seal : 'CO'}
@@ -148,8 +154,10 @@ export function CommandShell({
       </header>
 
       <div className="flex min-h-0 flex-1">
-        <nav aria-label="Sovereign command" className="hidden w-[212px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
-          <div className="flex-1 overflow-y-auto py-1">
+        {navOpen ? <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setNavOpen(false)} aria-hidden /> : null}
+        <nav aria-label="Sovereign command"
+          className={`${navOpen ? 'flex' : 'hidden'} fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-line bg-bg lg:static lg:z-auto lg:flex lg:w-[212px]`}>
+          <div className="flex-1 overflow-y-auto py-1" onClick={() => setNavOpen(false)}>
             {RAIL.map(grp => (
               <div key={grp.g} className="mb-0.5">
                 <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
