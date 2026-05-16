@@ -241,6 +241,7 @@ export function NationalCoordination() {
       </div>
 
       <RuntimeQueue scope="natcoord:incident" kind="incident" title="National incident runtime — acknowledge → contain → recover" by="Duty Coordinator" n={16} />
+      <div className="text-right"><Link href="/gov/ledger" className="text-[10px] text-link underline underline-offset-2">Operations Ledger →</Link></div>
 
       {/* Lower grid */}
       <div className="grid gap-2 xl:grid-cols-2">
