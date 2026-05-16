@@ -93,6 +93,12 @@ const config: Config = {
           '0%,100%': { opacity: '0.35' },
           '50%': { opacity: '0.85' },
         },
+        scanline: {
+          '0%': { transform: 'translateY(-12%)', opacity: '0' },
+          '12%': { opacity: '0.7' },
+          '88%': { opacity: '0.7' },
+          '100%': { transform: 'translateY(112%)', opacity: '0' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 220ms cubic-bezier(0.22,1,0.36,1) both',
@@ -102,6 +108,7 @@ const config: Config = {
         radar: 'radar 7s linear infinite',
         diffuse: 'diffuse 3.2s ease-out infinite',
         breathe: 'breathe 3.4s ease-in-out infinite',
+        scanline: 'scanline 6.5s linear infinite',
       },
       minHeight: {
         tap: '44px',

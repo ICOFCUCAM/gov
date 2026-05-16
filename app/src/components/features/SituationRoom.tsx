@@ -401,6 +401,13 @@ export function NationalMap({
         </div>
       ) : null}
 
+      {/* tactical scanline — slow live signal sweep */}
+      {tactical ? (
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-full overflow-hidden">
+          <div className="animate-scanline h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}, transparent)`, boxShadow: `0 0 8px ${ACCENT}` }} />
+        </div>
+      ) : null}
+
       {/* classified tactical framing — corner brackets + coordinate crosshair */}
       {tactical ? (
         <div aria-hidden className="pointer-events-none absolute inset-0 z-[1]">
