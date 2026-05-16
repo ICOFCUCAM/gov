@@ -17,6 +17,7 @@ import { subsystemsFor, subsystemOpPct } from '@/lib/institution/operational-cat
 import { ministryFabric } from '@/lib/institution/ministry-fabric';
 import { instantiateMinistry, systemKindLabel, systemReadout } from '@/lib/institution/blueprint';
 import { buildOperationalChain, recoveryWorkflow } from '@/lib/gov/operational-chain';
+import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { nationalRegions } from '@/lib/gov/regions';
@@ -741,6 +742,8 @@ export function MinistryWorkspace({ id }: { id: string }) {
       )}
 
       {tab === 'approvals' && (
+        <div className="space-y-3">
+        <RuntimeQueue scope={`${id}:approvals`} kind="approval" title="Approvals runtime — submit → review → decision" by={OPERATOR} />
         <Section
           title={queue?.title ?? 'Approvals'}
           meta={`${openQueue} open · SLA ${queue ? Math.round(queue.slaHours / 24) : '—'}d`}
@@ -782,11 +785,13 @@ export function MinistryWorkspace({ id }: { id: string }) {
             autonomous action.
           </p>
         </Section>
+        </div>
       )}
 
       {tab === 'incidents' && (
         <Section title="Incidents & escalation" meta={escChain.length ? `chain: ${escChain.join(' → ')}` : undefined}>
           <div className="space-y-2">
+            <RuntimeQueue scope={`${id}:incident`} kind="incident" title="Incident runtime — acknowledge → contain → recover" by={OPERATOR} />
             {incidents.map(inc => (
               <Card tight key={inc.key}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
