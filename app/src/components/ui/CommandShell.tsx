@@ -22,6 +22,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '◔', l: 'National Simulation', s: 'Scenario · cascade what-if', href: '/gov/simulation', key: 'sim' },
     { i: '◉', l: 'Regional Command', s: 'Provincial posture · readiness', href: '/gov/regional', key: 'reg' },
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution state', href: '/ops', key: 'ops' },
+    { i: '❒', l: 'Operations Ledger', s: 'Executed runtime transitions', href: '/gov/ledger', key: 'ledger' },
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity', href: '/audit', key: 'aud' },
     { i: '⚖', l: 'Branches of Government', s: 'Separation of powers', href: '/gov/branches', key: 'branches' },
   ]},
