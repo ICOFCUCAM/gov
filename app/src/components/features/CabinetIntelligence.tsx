@@ -12,6 +12,7 @@ import {
 } from '@/components/features/SituationRoom';
 import { buildCascade } from '@/lib/institution/cascade';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
+import { ministryOpState } from '@/lib/gov/ministry-ops';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
 } from '@/lib/api/types';
@@ -93,6 +94,7 @@ export function CabinetIntelligence() {
   const [now, setNow] = React.useState(() => Date.now());
   const [war, setWar] = React.useState(false);
   const [openEsc, setOpenEsc] = React.useState<number | null>(0);
+  const [openMin, setOpenMin] = React.useState<string | null>(null);
   const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true });
 
   React.useEffect(() => {
@@ -367,13 +369,16 @@ export function CabinetIntelligence() {
                 <tbody>
                   {mRows.map(m => {
                     const id = identityFor(m.archetype as ArchetypeKey);
+                    const o = openMin === m.ministryId;
                     return (
-                      <tr key={m.ministryId} className="border-b border-line-soft last:border-0">
+                      <React.Fragment key={m.ministryId}>
+                      <tr className="border-b border-line-soft last:border-0">
                         <td className="px-2 py-1.5">
-                          <Link href={m.href} className="focus-ring flex items-center gap-1.5 no-underline">
+                          <button onClick={() => setOpenMin(o ? null : m.ministryId)} className="focus-ring flex items-center gap-1.5 text-left">
                             <span className="grid h-3.5 w-3.5 place-items-center rounded-[3px] text-[7px] text-white" style={{ backgroundColor: id.accent }}>{id.glyph}</span>
                             <span className="truncate text-ink">{m.ministry}</span>
-                          </Link>
+                            <span className="text-ink-muted transition-transform" style={{ transform: o ? 'rotate(90deg)' : 'none' }}>›</span>
+                          </button>
                         </td>
                         {DOMAINS.map((d, di) => {
                           const v = domainStress(m.archetype, DOMAIN_KEYS[di] ?? 'ops', m.pressure, ts, m.ministryId);
@@ -388,6 +393,41 @@ export function CabinetIntelligence() {
                           );
                         })}
                       </tr>
+                      {o ? (() => {
+                        const op = ministryOpState(m.ministryId, m.archetype as ArchetypeKey, m.pressure, ts);
+                        const ct = op.constitutional === 'compliant' ? TONE.ok : op.constitutional === 'review' ? TONE.warn : TONE.alert;
+                        const cells: [string, string, string | undefined][] = [
+                          ['Readiness', `${op.readiness}%`, op.readiness >= 60 ? TONE.ok : TONE.warn],
+                          ['SLA', `${op.slaCompliance}%`, op.slaCompliance >= 90 ? TONE.ok : TONE.warn],
+                          ['Staffing', `${op.staffingFilled}%`, op.staffingFilled >= 80 ? TONE.ok : TONE.warn],
+                          ['Budget pressure', `${op.budgetPressure}`, op.budgetPressure >= 70 ? TONE.alert : op.budgetPressure >= 50 ? TONE.warn : TONE.ok],
+                          ['Logistics', `${op.logisticsHealth}%`, op.logisticsHealth >= 80 ? TONE.ok : TONE.warn],
+                          ['Public pressure', `${op.publicPressure}`, op.publicPressure >= 60 ? TONE.alert : TONE.neutral],
+                          ['Infra status', `${op.infrastructureStatus}%`, op.infrastructureStatus >= 80 ? TONE.ok : TONE.warn],
+                          ['Corruption risk', `${op.corruptionRisk}`, op.corruptionRisk >= 50 ? TONE.alert : op.corruptionRisk >= 30 ? TONE.warn : TONE.ok],
+                          ['Regional impact', `${op.regionalImpact}`, TONE.neutral],
+                          ['Live incidents', `${op.liveIncidents}`, op.liveIncidents ? TONE.alert : TONE.ok],
+                          ['Escalation tier', `L${op.escalationTier}`, op.escalationTier >= 2 ? TONE.alert : op.escalationTier === 1 ? TONE.warn : TONE.ok],
+                          ['Constitutional', op.constitutional, ct],
+                        ];
+                        return (
+                          <tr><td colSpan={1 + DOMAINS.length} className="bg-surface-2/40 px-2 py-2">
+                            <div className="grid grid-cols-3 gap-1 sm:grid-cols-4">
+                              {cells.map(([l, v, c]) => (
+                                <div key={l} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-1">
+                                  <div className="truncate text-[7.5px] uppercase tracking-wider text-ink-muted">{l}</div>
+                                  <div className="font-mono text-[12px] tabular-nums" style={{ color: c }}>{v}</div>
+                                </div>
+                              ))}
+                            </div>
+                            <div className="mt-1.5 flex items-center justify-between gap-2 text-[10px]">
+                              <span className="text-ink-soft">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {op.aiAdvisory}</span>
+                              <Link href={m.href} className="focus-ring shrink-0 text-link underline underline-offset-2">Open workspace →</Link>
+                            </div>
+                          </td></tr>
+                        );
+                      })() : null}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
