@@ -11,6 +11,7 @@ import {
   TONE, ACCENT, PALETTE, seed, toneFor, rel, Panel, Spark, LiveValue, NationalMap, TerritoryHeat, waveSeries, domainStress,
 } from '@/components/features/SituationRoom';
 import { buildCascade } from '@/lib/institution/cascade';
+import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
 } from '@/lib/api/types';
@@ -592,16 +593,18 @@ export function CabinetIntelligence() {
           </div>
 
           {/* Row 5 — executive posture strip */}
-          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-6">
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-4 xl:grid-cols-7">
             {(() => {
               const casc = buildCascade(mins, (mid) => Math.round(waveSeries(`nh:${mid}`, now / 4000, 1, 58, 99).at(-1)!));
               const cc = casc.filter(c => c.posture === 'critical').length;
               const cs = casc.filter(c => c.posture === 'strained').length;
+              const rRoll = regionRollup(nationalRegions(now / 4000));
               return [
               { l: 'Readiness posture', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
               { l: 'Operational tempo', v: `${Math.round(40 + seed(`tempo:${epoch}`) * 55)} ops/min`, t: 'ok' },
               { l: 'Active escalations', v: `${escalations.length} · ${escalations.filter(e => e.sevState === 'critical').length} crit`, t: escalations.length ? 'alert' : 'ok' },
               { l: 'Cascade exposure', v: cc ? `${cc} crit · ${cs} strained` : cs ? `${cs} strained` : 'Contained', t: cc ? 'alert' : cs ? 'warn' : 'ok' },
+              { l: 'Regional readiness', v: `${rRoll.meanReadiness}% · ${rRoll.critical} crit`, t: rRoll.critical ? 'alert' : rRoll.meanReadiness >= 60 ? 'ok' : 'warn' },
               { l: 'Population impacted', v: `${(0.4 + seed(`pi:${epoch}`) * 9).toFixed(1)}M`, t: 'warn' },
               { l: 'War Room', v: war ? 'ENGAGED' : 'Standby', t: war ? 'alert' : 'neutral' },
             ]; })().map(s => (
