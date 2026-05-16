@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api/client';
-import { TONE, ACCENT, seed, Spark, Donut, TerritoryHeat } from '@/components/features/SituationRoom';
+import { TONE, ACCENT, seed, Spark, Donut, TerritoryHeat, waveSeries } from '@/components/features/SituationRoom';
 import type { Incident, OpsOverview } from '@/lib/api/types';
 
 const ME = 'W. Chebet (ops)';
@@ -339,6 +339,35 @@ export function OpsCenter() {
             })}
           </div>
         </P>
+      </div>
+
+      {/* Lower micro-grid ecosystem — cross-system operational band */}
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
+        {[
+          ['Service health', 'sh', 90, 99], ['Queue depth', 'qd', 10, 60], ['Throughput', 'tp', 40, 95],
+          ['Error rate', 'er', 0, 6], ['Mesh latency', 'ml', 80, 220], ['Active workflows', 'wf', 120, 280],
+          ['SLA compliance', 'sl', 85, 99], ['Edge sync', 'es', 80, 99], ['Incident load', 'il', 0, 12],
+          ['Retry queue', 'rq', 0, 30], ['Cache hit', 'ch', 70, 98], ['Capacity', 'cp', 50, 95],
+          ['Backpressure', 'bp', 0, 24], ['Sync drift', 'sd', 0, 15], ['Signal', 'sg', 75, 99], ['Tempo', 'tm', 30, 85],
+        ].map(([l, k, lo, hi]) => {
+          const L = l as string, K = k as string, LO = lo as number, HI = hi as number;
+          const v = Math.round(waveSeries(`opmg:${K}`, now / 4000, 1, LO, HI).at(-1)!);
+          const pct = ((v - LO) / (HI - LO)) * 100;
+          const low = ['er', 'ml', 'il', 'rq', 'bp', 'sd', 'qd'].includes(K);
+          const sc = low ? 100 - pct : pct;
+          const t = sc >= 60 ? 'ok' : sc >= 35 ? 'warn' : 'alert';
+          const d = Math.round((waveSeries(`opmgd:${K}`, now / 4000, 1, 0, 1).at(-1)! - 0.45) * 12);
+          return (
+            <div key={K} className="rounded-[3px] border border-line bg-surface px-2 py-1" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+              <div className="truncate text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{L}</div>
+              <div className="flex items-baseline gap-1">
+                <span className="font-mono text-[13px] leading-none tabular-nums" style={{ color: TONE[t] }}>{v}{K === 'ml' ? 'ms' : ''}</span>
+                <span className="ml-auto text-[8px]" style={{ color: d >= 0 ? TONE.ok : TONE.alert }}>{d >= 0 ? '▲' : '▼'}{Math.abs(d)}</span>
+              </div>
+              <div className="-mb-0.5 h-3.5 overflow-hidden opacity-70"><Spark pts={waveSeries(`opmgs:${K}`, now / 4000, 12, 35, 92)} tone={t} /></div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Operational command strip */}

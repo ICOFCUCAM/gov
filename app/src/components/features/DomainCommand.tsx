@@ -240,7 +240,27 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
 
       <div className="grid gap-2 xl:grid-cols-12">
         <Panel title="Operational theatre" meta="domain pressure · live" className="xl:col-span-7" bodyClass="!p-2">
-          <TerritoryHeat epoch={Math.floor(ts) % 60} height={320} />
+          <TerritoryHeat epoch={Math.floor(ts) % 60} height={300} />
+          <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-4">
+            {[
+              ['Sector readiness', 'sect', 60, 96, '%'], ['Corridor flow', 'corr', 40, 92, ''],
+              ['Escalation rate', 'escr', 0, 10, '/h'], ['Command tempo', 'ctmp', 35, 90, '/m'],
+            ].map(([l, k, lo, hi, u]) => {
+              const L = l as string, K = k as string, LO = lo as number, HI = hi as number;
+              const v = Math.round(w(`th:${K}`, LO, HI));
+              const low = K === 'escr';
+              const pct = ((v - LO) / (HI - LO)) * 100;
+              const sc = low ? 100 - pct : pct;
+              const t = sc >= 60 ? 'ok' : sc >= 35 ? 'warn' : 'alert';
+              return (
+                <div key={K} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                  <div className="truncate text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{L}</div>
+                  <div className="font-mono text-[13px] leading-tight tabular-nums" style={{ color: TONE[t] }}>{v}{u as string}</div>
+                  <div className="-mb-0.5 h-3 overflow-hidden opacity-70"><Spark pts={waveSeries(`${domain}:ths:${K}`, ts, 12, 35, 92)} tone={t} /></div>
+                </div>
+              );
+            })}
+          </div>
         </Panel>
         <Panel title={cfg.primaryTitle} meta="advisory" className="xl:col-span-3" bodyClass="!p-2">
           <div className="space-y-2">

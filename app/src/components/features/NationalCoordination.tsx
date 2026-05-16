@@ -264,6 +264,35 @@ export function NationalCoordination() {
         </Panel>
       </div>
 
+      {/* Lower micro-grid ecosystem — national operational band */}
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
+        {[
+          ['Cascade depth', 'cd', 1, 9], ['Mitigation tempo', 'mt', 35, 90], ['Dependency load', 'dl', 30, 85],
+          ['Sync health', 'sh', 80, 99], ['Coordination tempo', 'ct', 40, 95], ['Cross-min latency', 'cl', 8, 40],
+          ['Field deployment', 'fd', 20, 60], ['Escalation rate', 'er', 0, 12], ['Reserve buffer', 'rb', 40, 92],
+          ['Comms integrity', 'ci', 80, 99], ['Logistics flow', 'lf', 35, 90], ['Regional spread', 'rs', 15, 70],
+          ['Containment', 'cn', 50, 95], ['Drift', 'dr', 0, 16], ['Signal', 'sg', 75, 99], ['Cadence', 'ca', 30, 85],
+        ].map(([l, k, lo, hi]) => {
+          const L = l as string, K = k as string, LO = lo as number, HI = hi as number;
+          const v = Math.round(waveSeries(`ncmg:${K}`, now / 4000, 1, LO, HI).at(-1)!);
+          const pct = ((v - LO) / (HI - LO)) * 100;
+          const low = K === 'er' || K === 'dr' || K === 'cl' || K === 'cd' || K === 'rs';
+          const sc = low ? 100 - pct : pct;
+          const t = sc >= 60 ? 'ok' : sc >= 35 ? 'warn' : 'alert';
+          const d = Math.round((waveSeries(`ncmgd:${K}`, now / 4000, 1, 0, 1).at(-1)! - 0.45) * 12);
+          return (
+            <div key={K} className="rounded-[3px] border border-line bg-surface px-2 py-1" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
+              <div className="truncate text-[7.5px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{L}</div>
+              <div className="flex items-baseline gap-1">
+                <span className="font-mono text-[13px] leading-none tabular-nums" style={{ color: TONE[t] }}>{v}</span>
+                <span className="ml-auto text-[8px]" style={{ color: d >= 0 ? TONE.ok : TONE.alert }}>{d >= 0 ? '▲' : '▼'}{Math.abs(d)}</span>
+              </div>
+              <div className="-mb-0.5 h-3.5 overflow-hidden opacity-70"><Spark pts={waveSeries(`ncmgs:${K}`, now / 4000, 12, 35, 92)} tone={t} /></div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Operational command strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {[
