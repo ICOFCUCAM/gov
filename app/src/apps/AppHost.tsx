@@ -11,6 +11,7 @@ import { BranchWorkspace } from '@/components/features/BranchWorkspace';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { policeOps, emergencyOps, immigrationOps, customsOps } from '@/lib/gov/agency-systems';
+import { citizenWallet, officerConsole } from '@/lib/gov/citizen-systems';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { ROLES, type SovereignRole } from '@/shared/permissions/rbac';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
@@ -161,6 +162,26 @@ function AgencyApp({ appId, label, archetype, navKey, now, role }: { appId: stri
       { l: 'Inspection rate', v: `${o.inspectionRatePct}%`, t: 'ok' },
       { l: 'Seizures', v: `${o.seizures}`, t: o.seizures > 20 ? 'alert' : 'warn' },
       { l: 'Corridors open', v: `${o.corridorsOpen}/${o.corridorsTotal}`, t: o.corridorsOpen < o.corridorsTotal ? 'warn' : 'ok' },
+    ];
+  } else if (appId === 'citizen-wallet') {
+    const w = citizenWallet(appId, ts);
+    stats = [
+      { l: 'Citizens enrolled', v: `${w.enrolledM}M`, t: 'ok' },
+      { l: 'Identity verified', v: `${w.identityVerifiedPct}%`, t: w.identityVerifiedPct >= 85 ? 'ok' : 'warn' },
+      { l: 'Active requests', v: w.activeServiceRequests.toLocaleString(), t: 'ok' },
+      { l: 'Payments today', v: `${w.paymentsTodayM}M`, t: 'ok' },
+      { l: 'Applications pending', v: w.applicationsPending.toLocaleString(), t: w.applicationsPending > 18000 ? 'warn' : 'ok' },
+      { l: 'Services uptime', v: `${w.servicesUptimePct}%`, t: w.servicesUptimePct >= 99 ? 'ok' : 'warn' },
+    ];
+  } else if (appId === 'officer-console') {
+    const o = officerConsole(appId, ts);
+    stats = [
+      { l: 'Officers online', v: `${o.officersOnline}`, t: 'ok' },
+      { l: 'Decisions queue', v: o.decisionsQueue.toLocaleString(), t: o.decisionsQueue > 2500 ? 'alert' : o.decisionsQueue > 1200 ? 'warn' : 'ok' },
+      { l: 'Review backlog', v: o.reviewBacklog.toLocaleString(), t: o.reviewBacklog > 3500 ? 'alert' : 'warn' },
+      { l: 'SLA met', v: `${o.slaMetPct}%`, t: o.slaMetPct >= 80 ? 'ok' : 'warn' },
+      { l: 'Dispositions today', v: o.dispositionsToday.toLocaleString(), t: 'ok' },
+      { l: 'Escalations open', v: `${o.escalationsOpen}`, t: o.escalationsOpen > 30 ? 'alert' : o.escalationsOpen ? 'warn' : 'ok' },
     ];
   } else {
     const ao = archetypeOperations(appId, archetype === ('GENERIC' as ArchetypeKey) ? 'INTERIOR' : archetype, ts);
