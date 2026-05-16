@@ -35,9 +35,12 @@ function scopeHref(scope: string): string {
  */
 export function OperationsLedger() {
   React.useSyncExternalStore(subscribe, rtVersion, rtVersion);
-  const ledger = getLedger(80);
+  const allLedger = getLedger(120);
   const stats = runtimeStats();
   const [now, setNow] = React.useState(() => Date.now());
+  const [scopeFilter, setScopeFilter] = React.useState<string>('all');
+  const scopeKeys = Array.from(new Set(allLedger.map(e => e.scope.split(':')[0]!))).sort();
+  const ledger = (scopeFilter === 'all' ? allLedger : allLedger.filter(e => e.scope.split(':')[0] === scopeFilter)).slice(0, 80);
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
@@ -70,7 +73,16 @@ export function OperationsLedger() {
         ))}
       </div>
 
-      <Panel title="Transition ledger" meta={`${ledger.length} most-recent executed actions`} bodyClass="!p-0">
+      <div className="flex flex-wrap gap-1">
+        {['all', ...scopeKeys].map(k => (
+          <button key={k} onClick={() => setScopeFilter(k)}
+            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
+            style={{ borderColor: scopeFilter === k ? TONE.link : 'rgb(var(--c-line))', color: scopeFilter === k ? TONE.link : 'rgb(var(--c-ink-muted))' }}>
+            {k}
+          </button>
+        ))}
+      </div>
+      <Panel title="Transition ledger" meta={`${ledger.length} actions · scope ${scopeFilter}`} bodyClass="!p-0">
         {ledger.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
             No transitions executed yet this session. Drive a workflow in any subsystem runtime,
