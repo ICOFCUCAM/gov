@@ -39,7 +39,7 @@ export default function MinistryControlPage({
           action={<Link href="/ministries" className="text-link underline underline-offset-2">Go to Institutions →</Link>}
         />
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-3">
           <Card tight>
             <div className="flex flex-wrap items-center gap-2">
               <span className="text-sm text-ink-muted">Institution:</span>

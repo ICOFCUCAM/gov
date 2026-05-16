@@ -47,7 +47,7 @@ export function MinistriesConsole() {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-3">
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-6">
         {reg.map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
@@ -87,7 +87,7 @@ export function MinistriesConsole() {
           <select
             name="archetype"
             required
-            className="mb-3 min-h-tap w-full rounded-sm border border-line bg-surface p-3"
+            className="mb-3 min-h-tap w-full rounded-[3px] border border-line bg-surface p-3"
           >
             {archetypes.map(a => (
               <option key={a.key} value={a.key}>
@@ -177,7 +177,7 @@ export function MinistriesConsole() {
                         <label className="mb-1 block text-sm font-medium">Merge into</label>
                         <select
                           id="mergeTarget"
-                          className="min-h-tap rounded-sm border border-line bg-surface p-2"
+                          className="min-h-tap rounded-[3px] border border-line bg-surface p-2"
                           defaultValue=""
                         >
                           <option value="" disabled>choose…</option>
@@ -248,7 +248,7 @@ export function MinistriesConsole() {
                     {current.modules.map(mod => (
                       <label
                         key={mod.moduleKey}
-                        className="flex items-center justify-between gap-2 rounded-sm border border-line p-2 text-sm"
+                        className="flex items-center justify-between gap-2 rounded-[3px] border border-line p-2 text-sm"
                       >
                         <span className="font-mono">{mod.moduleKey}</span>
                         <input

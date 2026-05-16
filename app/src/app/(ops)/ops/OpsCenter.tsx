@@ -62,6 +62,7 @@ export function OpsCenter() {
   const [ov, setOv] = React.useState<OpsOverview | null>(null);
   const [incidents, setIncidents] = React.useState<Incident[] | null>(null);
   const [busy, setBusy] = React.useState<string | null>(null);
+  const [openChron, setOpenChron] = React.useState<number | null>(0);
   const [now, setNow] = React.useState(() => Date.now());
 
   const load = React.useCallback(async () => {
@@ -250,15 +251,45 @@ export function OpsCenter() {
       {/* Row 5 — incident command */}
       <div className="grid gap-2 xl:grid-cols-[1fr_1.1fr]">
         <P title="Incident escalation chronology" meta="live">
-          <div className="space-y-1.5">
-            {liveInc.map((c, i) => (
-              <div key={c.id} className="flex items-center gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
-                <span className="font-mono text-[10px] tabular-nums text-ink-muted">{c.tm}</span>
-                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE[c.sev === 'sev1' ? 'alert' : c.sev === 'sev2' ? 'warn' : 'neutral'] }} />
-                <span className="truncate text-ink-soft">{c.title}</span>
-                <span className="ml-auto font-mono text-[9px] text-ink-muted">{c.id}</span>
-              </div>
-            ))}
+          <div className="space-y-1">
+            {liveInc.map((c, i) => {
+              const tn = c.sev === 'sev1' ? 'alert' : c.sev === 'sev2' ? 'warn' : 'neutral';
+              const open = openChron === i;
+              const age = 5 + Math.round(seed(`oc:${c.id}`) * 48);
+              const owner = ['Duty Officer', 'Ops Coordinator', 'Incident Lead', 'Watch Commander'][Math.floor(seed(`ow:${c.id}`) * 4)];
+              const chron = [
+                { t: `${age}m`, l: 'Detected by monitor', c: TONE.neutral },
+                { t: `${Math.max(1, Math.round(age * 0.6))}m`, l: `Classified ${c.sev.toUpperCase()}`, c: TONE[tn] },
+                { t: `${Math.max(1, Math.round(age * 0.3))}m`, l: `${owner} engaged`, c: TONE.ok },
+              ];
+              return (
+                <div key={c.id} className="border-b border-line-soft last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
+                  <button onClick={() => setOpenChron(open ? null : i)}
+                    className="focus-ring flex w-full items-center gap-2 py-1.5 pl-2 pr-1 text-left text-[11px] transition-colors hover:bg-surface-2/50">
+                    <span className="font-mono text-[10px] tabular-nums text-ink-muted">{c.tm}</span>
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE[tn] }} />
+                    <span className="truncate text-ink-soft">{c.title}</span>
+                    <span className="ml-auto shrink-0 font-mono text-[9px] text-ink-muted">{c.id}<span className="ml-1 inline-block transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'none' }}>›</span></span>
+                  </button>
+                  {open ? (
+                    <div className="px-2 pb-2">
+                      <div className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                        {chron.map((s, k) => (
+                          <div key={k} className="flex items-center gap-2 py-0.5 text-[10px]">
+                            <span className="w-7 shrink-0 font-mono tabular-nums text-ink-muted">{s.t}</span>
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: s.c }} />
+                            <span className="truncate text-ink-soft">{s.l}</span>
+                          </div>
+                        ))}
+                        <div className="mt-1 flex items-center justify-between border-t border-line-soft pt-1 text-[9px]">
+                          <span className="text-ink-muted">Owner</span><span className="text-ink-soft">{owner}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </P>
         <P title="Live incident feed" meta={<Link href="/gov/situation-room" className="text-[10px] text-link underline">View all →</Link>} >

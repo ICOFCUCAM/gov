@@ -135,7 +135,7 @@ export function Cabinet() {
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="t-display">Cabinet</h1>
