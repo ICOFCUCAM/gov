@@ -423,6 +423,16 @@ export function NationalMap({
         {/* always-on faint operational graticule + terrain wash */}
         <rect width="1000" height="620" fill="url(#grid)" opacity={layers.grid ? 0.5 : 0.16} />
         <rect width="1000" height="620" fill="url(#terrain)" opacity="0.10" />
+        {/* topographic relief — highland mass + coastal lowland */}
+        <g style={{ pointerEvents: 'none' }}>
+          {[
+            { cx: 360, cy: 210, r: 230, o: 0.05 }, { cx: 360, cy: 210, r: 150, o: 0.05 }, { cx: 360, cy: 210, r: 80, o: 0.06 },
+            { cx: 560, cy: 360, r: 200, o: 0.04 }, { cx: 560, cy: 360, r: 110, o: 0.05 },
+          ].map((e, i) => (
+            <circle key={`relief${i}`} cx={e.cx} cy={e.cy} r={e.r} fill="none" stroke="rgb(var(--c-line))" strokeOpacity={e.o} strokeWidth="1.4" />
+          ))}
+          <path d="M820,80 Q900,310 800,560" fill="none" stroke="#5fb0d9" strokeOpacity="0.12" strokeWidth="1.2" strokeDasharray="1 4" />
+        </g>
 
         <g>
           {/* province pressure diffusion zones */}
