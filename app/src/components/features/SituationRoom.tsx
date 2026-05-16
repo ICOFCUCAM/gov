@@ -294,7 +294,8 @@ interface Infra { id: string; kind: typeof INFRA_KINDS[number]; x: number; y: nu
 
 // Geographic territory heat — real Natural-Earth basemap washed by
 // per-country risk (world by default, zooms to the sovereign nation).
-export function TerritoryHeat({ epoch, height = 150, focus }: { epoch: number; height?: number; focus?: string }) {
+const TH_CORRIDORS: [number, number][] = [[0, 1], [1, 2], [1, 4], [4, 3], [4, 5], [3, 0], [2, 5]];
+export function TerritoryHeat({ epoch, height = 150, focus, tactical = true }: { epoch: number; height?: number; focus?: string; tactical?: boolean }) {
   const riskOf = React.useCallback(
     (name: string) => Math.round(seed(`geo:${name}:${epoch}`) * 100),
     [epoch],
@@ -304,6 +305,17 @@ export function TerritoryHeat({ epoch, height = 150, focus }: { epoch: number; h
     <div className="relative w-full overflow-hidden rounded-[3px] border border-line-soft"
       style={{ height, background: 'radial-gradient(ellipse at 48% 32%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 70%)' }}>
       <WorldMap focus={focus} riskOf={riskOf} />
+      {tactical ? (
+        <>
+          <div aria-hidden className="pointer-events-none absolute" style={{ left: '52%', top: '50%', width: '120%', height: '120%', transform: 'translate(-50%,-50%)' }}>
+            <div className="h-full w-full animate-radar rounded-full opacity-[0.06]"
+              style={{ background: `conic-gradient(from 0deg, transparent 0deg, ${ACCENT} 22deg, transparent 52deg, transparent 360deg)` }} />
+          </div>
+          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-full overflow-hidden">
+            <div className="animate-scanline h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}, transparent)`, boxShadow: `0 0 6px ${ACCENT}` }} />
+          </div>
+        </>
+      ) : null}
       <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" style={{ pointerEvents: 'none' }}>
         <defs>
           <pattern id="thgrid" width="34" height="34" patternUnits="userSpaceOnUse">
@@ -316,9 +328,24 @@ export function TerritoryHeat({ epoch, height = 150, focus }: { epoch: number; h
         </defs>
         <rect width="1000" height="620" fill="url(#thgrid)" opacity="0.14" />
         {provRisk.map(({ p, risk }) => (
-          <circle key={p.n} cx={p.cx} cy={p.cy} r={p.r * 0.72} fill={TONE[toneFor(risk)]}
-            opacity={0.05 + (risk / 100) * 0.16} className="transition-all duration-1000 ease-sov" />
+          <g key={p.n}>
+            <circle cx={p.cx} cy={p.cy} r={p.r * 0.72} fill={TONE[toneFor(risk)]}
+              opacity={0.05 + (risk / 100) * 0.16} className="transition-all duration-1000 ease-sov" />
+            {risk >= 72 ? (
+              <circle cx={p.cx} cy={p.cy} r={p.r * 0.45} fill="none" stroke={TONE.alert} strokeWidth="1.4"
+                className="origin-center animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+            ) : null}
+          </g>
         ))}
+        {TH_CORRIDORS.map(([a, b], i) => {
+          const A = PROV[a]!, B = PROV[b]!;
+          const mx = (A.cx + B.cx) / 2, my = (A.cy + B.cy) / 2 - 34;
+          return (
+            <path key={i} d={`M${A.cx},${A.cy} Q${mx},${my} ${B.cx},${B.cy}`} fill="none"
+              stroke={ACCENT} strokeWidth="1.3" strokeOpacity="0.4" strokeDasharray="2 8" strokeLinecap="round"
+              className="motion-safe:animate-dash-flow" />
+          );
+        })}
         <rect width="1000" height="620" fill="url(#thvig)" />
       </svg>
       <div aria-hidden className="pointer-events-none absolute inset-0">
