@@ -20,6 +20,7 @@ import { judicialState } from '@/lib/gov/judicial-engine';
 import { stateFabric } from '@/lib/gov/state-fabric';
 import { nationalRuntime } from '@/lib/gov/national-runtime';
 import { subscribe as auditSubscribe, auditStats } from '@/services/audit-ledger';
+import { federationPosture } from '@/services/federation-aggregate';
 import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, activatedApps } from '@/services/orchestration-engine';
@@ -115,6 +116,7 @@ export function NationalShell() {
   const leadTone = !lead ? 'ok' : lead.band === 'severe' || lead.band === 'high' ? 'alert' : lead.band === 'elevated' ? 'warn' : 'ok';
   const stress = lead ? resilienceUnderShock(mins, ts, lead.key) : null;
   const ne = nationalEcosystem(mins, ts);
+  const fp = federationPosture(mins, ts);
   const leg = legislativeState(ts, model.legislature.chambers.map(c => c.name).slice(0, 2));
   const jud = judicialState(ts);
   const constContinuity =
@@ -225,6 +227,34 @@ export function NationalShell() {
           </div>
         ))}
       </div>
+
+      {(() => {
+        const ptn = fp.posture === 'critical' ? 'alert' : fp.posture === 'strained' ? 'warn' : 'ok';
+        return (
+          <P title="Emergent national operational posture" meta={`RULE 3 · derived from ${fp.institutions.length} institutions' own engines — no hardcoded figure`}>
+            <div className="mb-2 flex flex-wrap items-center gap-3">
+              <div className="flex items-baseline gap-2">
+                <span className="font-mono text-[30px] leading-none tabular-nums" style={{ color: TONE[ptn] }}>{fp.meanOperational}</span>
+                <span className="text-[10px] uppercase tracking-[0.16em]" style={{ color: TONE[ptn] }}>{fp.posture}</span>
+              </div>
+              <span className="text-[10px] text-ink-muted">{fp.degraded} degraded · worst · <strong className="text-ink-soft">{fp.worst?.name ?? '—'}</strong></span>
+            </div>
+            {fp.institutions.length === 0 ? (
+              <p className="text-[11px] text-ink-muted">No active institutions — national operational posture is undefined until institutions operate. It is not a fabricated number.</p>
+            ) : (
+              <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-4">
+                {fp.institutions.map(i => (
+                  <Link key={i.id} href={`/ministries/${i.id}/operations`} className="focus-ring flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 no-underline transition-colors hover:bg-surface-2/70">
+                    <span className="min-w-0 flex-1 truncate text-[11px] text-ink">{i.name}</span>
+                    <span className="shrink-0 text-[8px] uppercase tracking-wider text-ink-muted">{i.archetype}</span>
+                    <span className="w-8 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE[i.tone] }}>{i.operational}</span>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </P>
+        );
+      })()}
 
       <P title="National institutional footprint" meta="every active institution, instantiated from its archetype">
         <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
