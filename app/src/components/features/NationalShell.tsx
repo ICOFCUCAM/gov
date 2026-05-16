@@ -26,7 +26,7 @@ import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, activatedApps, version as orchVersion } from '@/services/orchestration-engine';
 import { subscribeBus, version as busVersion, eventLog, eventStats } from '@/services/event-bus';
-import { subscribe as rtSubscribe, runtimeStats, version as rtVersion } from '@/lib/gov/runtime-store';
+import { subscribe as rtSubscribe, runtimeStats, scopeSummaries, version as rtVersion } from '@/lib/gov/runtime-store';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -586,6 +586,27 @@ export function NationalShell() {
                 })}
               </div>
             )}
+          </P>
+        );
+      })()}
+
+      {(() => {
+        const ss = scopeSummaries().slice(0, 10);
+        if (ss.length === 0) return null;
+        return (
+          <P title="Institutional execution" meta="live work scopes — emergent from operational runtimes">
+            <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+              {ss.map(s => {
+                const tn = s.open > 12 ? 'alert' : s.open > 6 ? 'warn' : 'ok';
+                return (
+                  <div key={s.scope} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[10px]">
+                    <span className="min-w-0 flex-1 truncate font-mono text-ink-soft">{s.scope}</span>
+                    <span className="shrink-0 text-ink-muted">{s.transitions} tx</span>
+                    <span className="w-12 shrink-0 text-right font-mono tabular-nums" style={{ color: TONE[tn] }}>{s.open}/{s.total}</span>
+                  </div>
+                );
+              })}
+            </div>
           </P>
         );
       })()}

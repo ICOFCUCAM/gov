@@ -147,3 +147,16 @@ export function runtimeStats(): RuntimeStats {
     closedByOperator: ledger.filter(e => e.action === 'resolve' || e.action === 'approve').length,
   };
 }
+
+export interface ScopeSummary { scope: string; open: number; total: number; transitions: number }
+/** Per-scope execution summary — emergent per-institution workload. */
+export function scopeSummaries(): ScopeSummary[] {
+  const txByScope = new Map<string, number>();
+  for (const e of ledger) txByScope.set(e.scope, (txByScope.get(e.scope) ?? 0) + 1);
+  return [...scopes.entries()].map(([scope, items]) => ({
+    scope,
+    open: items.filter(i => !i.closed).length,
+    total: items.length,
+    transitions: txByScope.get(scope) ?? 0,
+  })).sort((a, b) => b.open - a.open);
+}
