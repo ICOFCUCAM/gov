@@ -149,6 +149,22 @@ export function Cabinet() {
         </Button>
       </div>
 
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-6">
+        {[
+          { l: 'State', v: s.stateName, c: 'rgb(var(--c-ink))' },
+          { l: 'Executive', v: s.executiveTitle, c: 'rgb(var(--c-ink))' },
+          { l: 'Institutions', v: String(t.institutions), c: 'rgb(var(--c-ok))' },
+          { l: 'Presets', v: String(presets.length), c: 'rgb(var(--c-ink))' },
+          { l: 'Identity', v: ident.seal ? 'SEALED' : 'DEFAULT', c: ident.seal ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))' },
+          { l: 'Configuration', v: editing ? 'EDITING' : 'SIGNED', c: editing ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' },
+        ].map(m => (
+          <div key={m.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.14em] text-ink-muted">{m.l}</span>
+            <span className="truncate font-mono font-semibold tabular-nums" style={{ color: m.c }}>{m.v}</span>
+          </div>
+        ))}
+      </div>
+
       {editing ? (
         <Card>
           <h2 className="mb-1 text-lg font-semibold">Sovereign profile</h2>
@@ -416,6 +432,24 @@ export function Cabinet() {
           )}
         />
       </Section>
+
+      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+        {[
+          { l: 'Sovereign profile', v: 'RESOLVED', t: 'rgb(var(--c-ok))' },
+          { l: 'Institutions composed', v: String(ov.institutions.length), t: 'rgb(var(--c-ok))' },
+          { l: 'Presets available', v: String(presets.length), t: 'rgb(var(--c-ink))' },
+          { l: 'Audit integrity', v: t.auditIntact === false ? 'REVIEW' : 'INTACT', t: t.auditIntact === false ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
+          { l: 'Configuration', v: 'GOVERNED', t: 'rgb(var(--c-ok))' },
+        ].map(m => (
+          <div key={m.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.14em] text-ink-muted">{m.l}</span>
+            <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: m.t }}>
+              {m.l === 'Sovereign profile' || m.l === 'Configuration' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: m.t }} /> : null}
+              {m.v}
+            </span>
+          </div>
+        ))}
+      </div>
 
       <p className="text-xs text-ink-muted">
         Sovereign command surface. No individual citizen records, officer
