@@ -872,20 +872,33 @@ export function SituationRoom() {
             {RAIL.map(grp => (
               <div key={grp.g} className="mb-0.5">
                 <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
-                {grp.items.map(it => (
-                  <Link key={it.l} href={it.href}
-                    className={`focus-ring flex items-center gap-2 border-l-2 px-3 py-1 no-underline transition-colors duration-150 ${
-                      it.on ? 'bg-surface-2 font-medium' : 'border-transparent text-ink-muted hover:bg-surface-2/50 hover:text-ink'
-                    }`}
-                    style={it.on ? { borderLeftColor: ACCENT } : undefined}>
-                    <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-[4px] bg-surface-2 text-[10px] ring-1 ring-line"
-                      style={it.on ? { color: ACCENT } : { color: 'rgb(var(--c-ink-soft))' }}>{it.i}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[11.5px]" style={it.on ? { color: ACCENT } : undefined}>{it.l}</span>
-                      <span className="block truncate text-[8.5px] text-ink-muted">{it.s}</span>
-                    </span>
-                  </Link>
-                ))}
+                {grp.items.map(it => {
+                  const navAcc = war ? TONE.alert : ACCENT;
+                  const n = /Incident|Situation Room|Emergency|Coordination/.test(it.l) ? incidents.length
+                    : it.l === 'Cabinet Intelligence' ? critCount
+                    : 0;
+                  return (
+                    <Link key={it.l} href={it.href}
+                      className={`focus-ring flex items-center gap-2 border-l-2 px-3 py-1 no-underline transition-colors duration-150 ${
+                        it.on ? 'bg-surface-2 font-medium' : 'border-transparent text-ink-muted hover:bg-surface-2/50 hover:text-ink'
+                      }`}
+                      style={it.on ? { borderLeftColor: navAcc } : undefined}>
+                      <span aria-hidden className="relative grid h-5 w-5 shrink-0 place-items-center rounded-[4px] bg-surface-2 text-[10px] ring-1 ring-line"
+                        style={it.on ? { color: navAcc } : { color: 'rgb(var(--c-ink-soft))' }}>
+                        {it.i}
+                        {n > 0 ? <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: n >= 4 ? TONE.alert : TONE.warn }} /> : null}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex items-center gap-1 truncate text-[11.5px]" style={it.on ? { color: navAcc } : undefined}>
+                          {it.l}
+                          {it.on ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: navAcc }} /> : null}
+                        </span>
+                        <span className="block truncate text-[8.5px] text-ink-muted">{it.s}</span>
+                      </span>
+                      {n > 0 ? <span className="shrink-0 rounded-[3px] px-1 text-[8px] font-bold tabular-nums" style={{ backgroundColor: `color-mix(in srgb, ${n >= 4 ? TONE.alert : TONE.warn} 20%, transparent)`, color: n >= 4 ? TONE.alert : TONE.warn }}>{n}</span> : null}
+                    </Link>
+                  );
+                })}
               </div>
             ))}
           </div>
