@@ -19,6 +19,8 @@ import { legislativeState } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
 import { stateFabric } from '@/lib/gov/state-fabric';
 import { nationalRuntime } from '@/lib/gov/national-runtime';
+import { useFederationSync } from '@/apps/useFederationSync';
+import { subscribe as orchSubscribe, activatedApps } from '@/services/orchestration-engine';
 import { subscribe as rtSubscribe, runtimeStats } from '@/lib/gov/runtime-store';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
@@ -60,6 +62,8 @@ export function NationalShell() {
 
   const ts = now / 4000;
   const liveRt = React.useSyncExternalStore(rtSubscribe, runtimeStats, runtimeStats);
+  useFederationSync(mins);
+  const fedApps = React.useSyncExternalStore(orchSubscribe, activatedApps, activatedApps);
   const identity = sov ? resolveIdentity(sov) : null;
   const model = constitutionFor(sov?.stateForm ?? 'republic');
   const dir = deployableInstitutions(mins);
@@ -383,6 +387,25 @@ export function NationalShell() {
           </P>
         );
       })()}
+
+      <P title="Federated institutions" meta={`${fedApps.length} sovereign applications · emergent from the orchestration registry`}>
+        {fedApps.length === 0 ? (
+          <p className="text-[11px] text-ink-muted">No institutional applications activated. Provision and activate an institution — its sovereign application registers and appears here automatically.</p>
+        ) : (
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
+            {fedApps.map(a => (
+              <Link key={`${a.id}:${a.instanceId ?? ''}`} href={`/app/${a.domain}`} className="focus-ring group flex flex-col rounded-[3px] border border-line bg-bg p-2.5 no-underline transition-all hover:-translate-y-0.5 hover:border-link/40">
+                <div className="flex items-start justify-between gap-2">
+                  <span className="text-[12px] font-semibold text-ink">{a.label}</span>
+                  <span className="shrink-0 rounded-[3px] px-1 py-0.5 text-[8px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>{a.kind}</span>
+                </div>
+                <span className="mt-0.5 font-mono text-[9px] lowercase tracking-wide text-ink-muted">{a.domain}.gov · {a.nav.length} systems</span>
+                <span className="mt-2 flex items-center justify-between border-t border-line pt-1.5 text-[10px] text-link">Enter application<span className="transition-transform group-hover:translate-x-0.5">→</span></span>
+              </Link>
+            ))}
+          </div>
+        )}
+      </P>
 
       <P title="State estates" meta="whole-of-government launchpad">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
