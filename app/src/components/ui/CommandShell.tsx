@@ -14,6 +14,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room', key: 'sr' },
     { i: '◆', l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', key: 'cab' },
     { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination', key: 'coord' },
+    { i: '◉', l: 'Regional Overview', s: 'Provincial posture · readiness', href: '/gov/regional', key: 'reg' },
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution state', href: '/ops', key: 'ops' },
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity', href: '/audit', key: 'aud' },
   ]},

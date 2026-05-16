@@ -35,7 +35,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
   ]},
   { g: 'Intelligence', items: [
     { i: '⟁', l: 'Analytics & AI', s: 'Strategic foresight', href: '/gov/coordination' },
-    { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/coordination' },
+    { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/regional' },
   ]},
   { g: 'National Security', items: [
     { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov/coordination' },
