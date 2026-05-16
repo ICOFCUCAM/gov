@@ -189,11 +189,11 @@ export function CabinetIntelligence() {
   ];
 
   const kpiTrends = [
-    { l: 'Stability index', v: stability, d: -3 },
-    { l: 'Economic resilience', v: 63, d: 2 },
-    { l: 'Fiscal balance', v: -1.8, d: -0.4, pct: true },
-    { l: 'Service availability', v: 94, d: 1 },
-    { l: 'Public satisfaction', v: 72, d: -2 },
+    { l: 'Stability index', v: stability, d: -3, tgt: 75 },
+    { l: 'Economic resilience', v: 63, d: 2, tgt: 70 },
+    { l: 'Fiscal balance', v: -1.8, d: -0.4, pct: true, tgt: 0 },
+    { l: 'Service availability', v: 94, d: 1, tgt: 95 },
+    { l: 'Public satisfaction', v: 72, d: -2, tgt: 70 },
   ];
   const fiscal = [
     { l: 'Revenue', v: `$${(100 + seed(`fr:${epoch}`) * 22).toFixed(1)}B`, d: '+4.2%', t: 'ok' },
@@ -636,7 +636,11 @@ export function CabinetIntelligence() {
                     <div key={k.l} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
                       <div className="min-w-0 flex-1">
                         <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{k.l}</div>
-                        <div className="font-mono text-[13px] leading-none tabular-nums" style={{ color: TONE[tn] }}>{k.v}{k.pct ? '%' : ''}</div>
+                        <div className="flex items-baseline gap-1">
+                          <span className="font-mono text-[13px] leading-none tabular-nums" style={{ color: TONE[tn] }}>{k.v}{k.pct ? '%' : ''}</span>
+                          <span className="text-[8px] text-ink-muted">/ tgt {k.tgt}{k.pct ? '%' : ''}</span>
+                          <span className="text-[8px] font-bold" style={{ color: k.v >= k.tgt ? TONE.ok : TONE.warn }}>{k.v >= k.tgt ? '✓ on target' : '↗ below'}</span>
+                        </div>
                       </div>
                       <div className="h-5 w-16 shrink-0 opacity-80"><Spark pts={waveSeries(`kpi:${k.l}`, ts, 12, 35, 92)} tone={tn} /></div>
                       <span className="w-9 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: up ? TONE.ok : TONE.alert }}>{up ? '▲' : '▼'}{Math.abs(k.d)}</span>
