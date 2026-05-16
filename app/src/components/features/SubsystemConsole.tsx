@@ -14,6 +14,7 @@ import {
   citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
+import { schoolNetwork, examOps, teacherOps, studentServices } from '@/lib/gov/education-systems';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
@@ -45,6 +46,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const grp = eco.groups.find(g => g.key === group) ?? eco.groups[0]!;
   const isHealth = m.archetype === 'HEALTH';
   const isFinance = m.archetype === 'FINANCE';
+  const isEdu = m.archetype === 'EDUCATION';
 
   const header = (
     <div className="flex flex-wrap items-end justify-between gap-2">
@@ -492,6 +494,66 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
           </Panel>
         </div>
+      </div>
+    );
+  }
+
+  if (isEdu) {
+    const sn = schoolNetwork(id, ts);
+    const ex = examOps(id, ts);
+    const tch = teacherOps(id, ts);
+    const ss = studentServices(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Schools" v={sn.schools.toLocaleString()} t="ok" />
+          <Stat l="Enrolment" v={`${sn.enrolmentM}M`} t="ok" />
+          <Stat l="Pupil:teacher" v={`${sn.pupilTeacherRatio}:1`} t={sn.pupilTeacherRatio >= 45 ? 'alert' : sn.pupilTeacherRatio >= 35 ? 'warn' : 'ok'} />
+          <Stat l="Dropout rate" v={`${sn.dropoutRatePct}%`} t={sn.dropoutRatePct >= 12 ? 'alert' : sn.dropoutRatePct >= 7 ? 'warn' : 'ok'} />
+          <Stat l="Teacher vacancies" v={`${tch.vacanciesPct}%`} t={tch.vacanciesPct >= 15 ? 'alert' : tch.vacanciesPct >= 8 ? 'warn' : 'ok'} />
+          <Stat l="Exam integrity flags" v={`${ex.integrityFlags}`} t={ex.integrityFlags ? 'alert' : 'ok'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-3">
+          <Panel title="School network — regional capacity" meta="infrastructure · enrolment" bodyClass="!p-2">
+            <div className="space-y-1">
+              {sn.byRegion.map(r => (
+                <div key={r.region} className="flex items-center gap-2 text-[10px]">
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.region}</span>
+                  <span className="text-ink-muted">{r.schools.toLocaleString()}</span>
+                  <div className="h-1.5 w-16 shrink-0 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${r.capacityPct}%`, backgroundColor: tc(r.tone) }} /></div>
+                  <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(r.tone) }}>{r.capacityPct}</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+          <Panel title="Examinations pipeline" meta="registration → release" bodyClass="!p-2">
+            <div className="mb-2 grid grid-cols-2 gap-2">
+              <Stat l="Candidates" v={ex.candidates.toLocaleString()} t="ok" />
+              <Stat l="Results pending" v={ex.resultsPending.toLocaleString()} t={ex.resultsPending > 30000 ? 'warn' : 'ok'} />
+            </div>
+            <div className="space-y-1">
+              {ex.pipeline.map(s => (
+                <div key={s.stage} className="flex items-center gap-2 text-[10px]">
+                  <span className="w-24 shrink-0 truncate text-ink-soft">{s.stage}</span>
+                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${Math.min(100, s.count)}%`, backgroundColor: TONE.warn }} /></div>
+                  <span className="w-7 shrink-0 text-right font-mono tabular-nums text-ink-muted">{s.count}</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+          <Panel title="Teacher workforce & learner services" meta="postings · scholarships" bodyClass="!p-2">
+            <div className="grid grid-cols-2 gap-2">
+              <Stat l="Teachers" v={tch.teachers.toLocaleString()} t="ok" />
+              <Stat l="Payroll on-time" v={`${tch.payrollOnTimePct}%`} t={tch.payrollOnTimePct >= 95 ? 'ok' : 'warn'} />
+              <Stat l="Postings pending" v={tch.postingsPending.toLocaleString()} t={tch.postingsPending > 1500 ? 'warn' : 'ok'} />
+              <Stat l="Scholarships" v={ss.scholarshipsActive.toLocaleString()} t="ok" />
+              <Stat l="Learner records" v={`${ss.learnerRecordsM}M`} t="ok" />
+              <Stat l="Portal uptime" v={`${ss.portalUptime}%`} t={ss.portalUptime >= 99 ? 'ok' : 'warn'} />
+            </div>
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'exams' ? 'case' : grp.key === 'student' ? 'approval' : 'case'} title={`${grp.name} runtime — executable workflow`} />
       </div>
     );
   }
