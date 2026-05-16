@@ -9,7 +9,7 @@ import { Section, EnterpriseTable, StatusText, type Column } from '@/components/
 import { SeverityBadge } from '@/components/ui/Ops';
 import { Sparkbars, RegionMatrix, SLAMonitor, FlowBars } from '@/components/ui/Viz';
 import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
-import { TONE, Spark, seed, TerritoryHeat } from '@/components/features/SituationRoom';
+import { TONE, Spark, seed, TerritoryHeat, waveSeries } from '@/components/features/SituationRoom';
 import { api } from '@/lib/api/client';
 import { identityFor } from '@/lib/archetype-profiles';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
@@ -68,6 +68,11 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const [busy, setBusy] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
   const [inst, setInst] = React.useState<Ministry | null>(null);
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => {
+    const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
 
   const load = React.useCallback(async () => {
     try {
@@ -606,12 +611,15 @@ export function MinistryWorkspace({ id }: { id: string }) {
           audit: [{ m: 'Findings open', sub: 'count' }, { m: 'Controls passing', sub: '%' }, { m: 'Chain integrity', sub: 'state' }, { m: 'Last review', sub: 'days' }],
         };
         const cards = MOD[tab] ?? [];
+        const ts = now / 4000;
+        const fab = ministryFabric({ id, archetype: (archetype || 'GENERIC') as ArchetypeKey });
         return (
           <Section title={`${TABS.find(t => t.k === tab)?.label} — ${name}`} meta={`${archetype} · ${ident.domain}`}>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
               {cards.map((c, i) => {
-                const v = 20 + Math.round(seed(`${sk}:${c.m}`) * 78);
-                const d = Math.round((seed(`${sk}:${c.m}:d`) - 0.45) * 14);
+                const v = Math.round(waveSeries(`mw:${sk}:${c.m}`, ts, 1, 20, 98).at(-1)!);
+                const prev = Math.round(waveSeries(`mw:${sk}:${c.m}`, ts - 6, 1, 20, 98).at(-1)!);
+                const d = v - prev;
                 const tn = v >= 78 ? 'alert' : v >= 58 ? 'warn' : 'ok';
                 return (
                   <div key={i} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
@@ -621,10 +629,34 @@ export function MinistryWorkspace({ id }: { id: string }) {
                       <span className="text-[9px] text-ink-muted">{c.sub}</span>
                       <span className="ml-auto text-[9px]" style={{ color: d >= 0 ? TONE.ok : TONE.alert }}>{d >= 0 ? '▲' : '▼'} {Math.abs(d)}</span>
                     </div>
-                    <div className="opacity-80"><Spark pts={Array.from({ length: 14 }).map((_, j) => 35 + seed(`${sk}:${c.m}:${j}`) * 55)} tone={tn} /></div>
+                    <div className="opacity-80"><Spark pts={waveSeries(`mws:${sk}:${c.m}`, ts, 16, 35, 92)} tone={tn} /></div>
                   </div>
                 );
               })}
+            </div>
+
+            <div className="mt-2 rounded-[3px] border border-line bg-surface p-2">
+              <div className="mb-1 flex items-center justify-between">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Live cross-ministry interoperability</span>
+                <span className="text-[9px] text-ink-muted">{fab.dependencies.length} dependencies</span>
+              </div>
+              <div className="grid grid-cols-1 gap-1 sm:grid-cols-2 xl:grid-cols-3">
+                {fab.dependencies.map((dep, di) => {
+                  const link = Math.round(waveSeries(`io:${id}:${dep.archetype}`, ts, 1, 55, 99).at(-1)!);
+                  const dident = identityFor(dep.archetype);
+                  const tn = link >= 90 ? 'ok' : link >= 72 ? 'warn' : 'alert';
+                  return (
+                    <div key={di} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                      <span className="grid h-4 w-4 shrink-0 place-items-center rounded-[3px] text-[8px] text-white" style={{ backgroundColor: dident.accent }}>{dident.glyph}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[10px] text-ink">{dep.archetype} · {dep.direction}</span>
+                        <span className="block truncate text-[9px] text-ink-muted">{dep.relation}</span>
+                      </span>
+                      <span className="shrink-0 font-mono text-[10px] tabular-nums" style={{ color: TONE[tn] }}>{link}%</span>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
             <div className="mt-2">
               <Card tight>

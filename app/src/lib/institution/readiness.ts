@@ -7,6 +7,7 @@ import type { Ministry } from '@/lib/api/types';
 import { ARCHETYPE_PROFILES } from '@/lib/archetype-profiles';
 import { specFor } from '@/lib/institution/archetype-spec';
 import { subsystemHealth } from '@/lib/institution/operational-catalog';
+import { ministryFabric } from '@/lib/institution/ministry-fabric';
 
 export type Lifecycle =
   | 'draft' | 'composed' | 'validated' | 'operational'
@@ -43,6 +44,7 @@ export function scoreInstitution(m: Ministry): InstitutionReadiness {
   const isActive = m.status === 'active';
   const known = !!profile && m.archetype !== 'GENERIC';
   const ssHealth = subsystemHealth(m.id, m.archetype);
+  const fab = ministryFabric({ id: m.id, archetype: m.archetype });
 
   const dims: ReadinessDimension[] = [
     { key: 'governance', label: 'Governance structure',
@@ -63,7 +65,13 @@ export function scoreInstitution(m: Ministry): InstitutionReadiness {
       detail: isActive ? `${ssHealth}% mean across institutional subsystems`
         : 'subsystems not provisioned (inactive)' },
     { key: 'interoperability', label: 'Interoperability',
-      score: isActive ? 100 : 60, detail: 'sovereign core inherited' },
+      score: isActive ? clamp(64 + fab.dependencies.length * 8) : 55,
+      detail: isActive ? `${fab.dependencies.length} cross-ministry dependencies wired` : 'not connected' },
+    { key: 'fabric', label: 'Institutional fabric',
+      score: isActive ? clamp((fab.layersProvisioned / 6) * 70 + (fab.tiers.length / 3) * 30)
+        : depts > 0 || mods > 0 ? 40 : 0,
+      detail: isActive ? `${fab.layersProvisioned}/6 layers · ${fab.tiers.length} command tiers`
+        : 'ecosystem not composed' },
     { key: 'emergency', label: 'Emergency readiness',
       score: known ? clamp((profile.incidentTypes.length / 3) * 100) : 45,
       detail: known ? `${profile.incidentTypes.length} incident classes` : 'generic' },
