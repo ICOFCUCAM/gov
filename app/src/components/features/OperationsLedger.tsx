@@ -8,6 +8,26 @@ import { subscribe, getLedger, runtimeStats } from '@/lib/gov/runtime-store';
 const actTone = (a: string) =>
   a === 'approve' || a === 'resolve' ? TONE.ok : a === 'reject' ? TONE.alert : a === 'escalate' ? TONE.warn : TONE.link;
 
+// Best-effort: map a runtime scope back to the surface that owns it.
+function scopeHref(scope: string): string {
+  if (scope.startsWith('MIN-')) {
+    const id = scope.split(':')[0]!;
+    const grp = scope.split(':')[1];
+    return grp ? `/ministries/${id}/system/${grp}` : `/ministries/${id}/operations`;
+  }
+  if (scope.startsWith('leg:')) return '/gov/branch/legislature';
+  if (scope.startsWith('jud:')) return '/gov/branch/judiciary';
+  if (scope.startsWith('natcoord')) return '/gov/coordination';
+  if (scope.startsWith('ops:')) return '/ops';
+  if (scope.startsWith('sim:')) return '/gov/simulation';
+  if (scope.startsWith('domain:')) {
+    const d = scope.split(':')[1];
+    return d === 'treasury' ? '/gov/treasury' : d === 'security' ? '/gov/security' : '/gov';
+  }
+  if (scope.startsWith('cabinet:')) return '/gov';
+  return '/gov/shell';
+}
+
 /**
  * Operations Ledger — the running record of every executed state
  * transition across the platform's runtime. Proof the state is operating,
@@ -62,7 +82,7 @@ export function OperationsLedger() {
                 <span className="w-16 shrink-0 font-mono tabular-nums text-ink-muted">
                   {new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                 </span>
-                <span className="w-32 shrink-0 truncate font-mono text-ink-muted">{e.scope}</span>
+                <Link href={scopeHref(e.scope)} className="w-32 shrink-0 truncate font-mono text-link no-underline hover:underline">{e.scope}</Link>
                 <span className="w-16 shrink-0 truncate text-ink-soft">{e.itemId}</span>
                 <span className="min-w-0 flex-1 truncate text-ink-soft">{e.from} → {e.to}</span>
                 <span className="w-16 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider" style={{ color: actTone(e.action) }}>{e.action}</span>
