@@ -16,6 +16,7 @@ import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemOpPct } from '@/lib/institution/operational-catalog';
 import { ministryFabric } from '@/lib/institution/ministry-fabric';
 import { instantiateMinistry, systemKindLabel, systemReadout } from '@/lib/institution/blueprint';
+import { buildOperationalChain, recoveryWorkflow } from '@/lib/gov/operational-chain';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { nationalRegions } from '@/lib/gov/regions';
@@ -32,12 +33,13 @@ import type {
 } from '@/lib/api/types';
 
 type Tab =
-  | 'command' | 'ecosystem' | 'regional' | 'approvals' | 'incidents' | 'field'
+  | 'command' | 'ecosystem' | 'continuity' | 'regional' | 'approvals' | 'incidents' | 'field'
   | 'escalations' | 'logistics' | 'analytics' | 'treasury'
   | 'infrastructure' | 'workforce' | 'security' | 'audit';
 const TABS: { k: Tab; label: string }[] = [
   { k: 'command', label: 'Command' },
   { k: 'ecosystem', label: 'Ecosystem' },
+  { k: 'continuity', label: 'Continuity' },
   { k: 'regional', label: 'Regional' },
   { k: 'approvals', label: 'Approvals' },
   { k: 'incidents', label: 'Incidents' },
@@ -611,6 +613,72 @@ export function MinistryWorkspace({ id }: { id: string }) {
                   </div>
                 ))}
               </div>
+            </Section>
+          </div>
+        );
+      })()}
+
+      {tab === 'continuity' && (() => {
+        const chain = buildOperationalChain(allMins.length ? allMins : (inst ? [inst] : []), id, now / 4000);
+        if (!chain) {
+          return <Section title="Operational continuity" meta="state behaviour under stress"><p className="text-[11px] text-ink-muted">No active fabric to simulate. Activate the institution to model continuity.</p></Section>;
+        }
+        const wf = recoveryWorkflow(chain);
+        const ctone = chain.containment === 'critical' ? TONE.alert : chain.containment === 'spreading' ? TONE.warn : TONE.ok;
+        return (
+          <div className="space-y-3">
+            <Section
+              title="Operational continuity — failure chain"
+              meta={`origin · ${chain.origin.name} · ${chain.containment}`}
+            >
+              <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+                {[
+                  { l: 'Trigger severity', v: `${chain.originSeverity}`, c: chain.originSeverity >= 65 ? TONE.alert : TONE.warn },
+                  { l: 'Institutions affected', v: `${chain.totalAffected}`, c: chain.totalAffected >= 4 ? TONE.alert : TONE.warn },
+                  { l: 'Treasury impact', v: `${chain.treasuryImpactPct}%`, c: TONE.alert },
+                  { l: 'Citizen systems down', v: `${chain.citizenServicesDown}`, c: chain.citizenServicesDown ? TONE.warn : TONE.ok },
+                  { l: 'Recovery ETA', v: `${chain.recoveryMins}m`, c: 'rgb(var(--c-ink))' },
+                  { l: 'Containment', v: chain.containment, c: ctone },
+                ].map(s => (
+                  <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2">
+                    <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
+                    <div className="font-mono text-[14px] tabular-nums" style={{ color: s.c }}>{s.v}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="space-y-1.5">
+                {chain.stages.map((st, i) => (
+                  <div key={st.key} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2" style={{ borderLeft: `3px solid ${st.tone === 'alert' ? TONE.alert : st.tone === 'warn' ? TONE.warn : TONE.ok}` }}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-semibold text-ink">{i + 1}. {st.label}</span>
+                      <span className="font-mono text-[10px] tabular-nums text-ink-muted">T+{st.tPlusMin}m · sev {st.severity}</span>
+                    </div>
+                    <div className="text-[10px] text-ink-soft">{st.note}</div>
+                    {st.impacts.length ? (
+                      <div className="mt-1 flex flex-wrap gap-1">
+                        {st.impacts.map(im => (
+                          <span key={im.instId} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-0.5 text-[9px]" style={{ color: im.severity >= 65 ? TONE.alert : im.severity >= 40 ? TONE.warn : TONE.ok }}>
+                            {im.instName} · {im.severity}%
+                          </span>
+                        ))}
+                      </div>
+                    ) : null}
+                  </div>
+                ))}
+              </div>
+            </Section>
+            <Section title="National recovery workflow" meta="advisory · sequenced restoration">
+              <ol className="space-y-1">
+                {wf.map(s => (
+                  <li key={s.order} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[11px]">
+                    <span className="grid h-4 w-4 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[9px] font-bold text-ink-soft">{s.order}</span>
+                    <span className="min-w-0 flex-1 text-ink-soft">{s.action}</span>
+                    <span className="shrink-0 font-mono text-[9px] uppercase tracking-wider text-ink-muted">{s.lead}</span>
+                    <span className="w-12 shrink-0 text-right font-mono text-[10px] tabular-nums text-ink-muted">T+{s.etaMin}m</span>
+                    <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE.ok }}>+{s.restores}</span>
+                  </li>
+                ))}
+              </ol>
             </Section>
           </div>
         );
