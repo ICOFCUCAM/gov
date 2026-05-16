@@ -13,6 +13,7 @@ import { nationalRegions, regionRollup } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { scenarioSweep } from '@/lib/gov/simulation';
+import { nationalResilience } from '@/lib/gov/national-resilience';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -89,6 +90,7 @@ export function NationalShell() {
   const svcDegraded = svcHealth.filter(s => s.alert > 0).length;
   const svcMean = svcHealth.length ? Math.round(svcHealth.reduce((a, s) => a + s.idx, 0) / svcHealth.length) : 100;
 
+  const resilience = nationalResilience(mins, ts);
   const sweep = scenarioSweep(ts);
   const lead = sweep[0];
   const leadTone = !lead ? 'ok' : lead.band === 'severe' || lead.band === 'high' ? 'alert' : lead.band === 'elevated' ? 'warn' : 'ok';
@@ -128,6 +130,32 @@ export function NationalShell() {
       <p className="text-[11px] text-ink-muted">
         The orchestration layer binding the constitution, the institution factory, the interoperability fabric and national posture into one sovereign control surface — distinct from real-time operations (Situation Room) and executive command (Cabinet).
       </p>
+
+      <div className="rounded-[3px] border border-line bg-surface" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 p-3">
+          <div className="flex items-baseline gap-2">
+            <span className="font-mono text-[34px] leading-none tabular-nums" style={{ color: TONE[resilience.tone] }}>{resilience.index}</span>
+            <div className="flex flex-col">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">National Resilience Index</span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: TONE[resilience.tone] }}>
+                {resilience.band}{resilience.weakest ? ` · weakest · ${resilience.weakest.label}` : ''}
+              </span>
+            </div>
+          </div>
+          <div className="grid flex-1 grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-5">
+            {resilience.pillars.map(p => (
+              <div key={p.key} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                <div className="flex items-center justify-between gap-1">
+                  <span className="truncate text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{p.label}</span>
+                  <span className="font-mono text-[11px] tabular-nums" style={{ color: TONE[p.tone] }}>{p.score}</span>
+                </div>
+                <div className="mt-1 h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${p.score}%`, backgroundColor: TONE[p.tone] }} /></div>
+                <div className="mt-0.5 truncate text-[8px] text-ink-muted">{p.detail}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {tele.map(m => (
