@@ -12,6 +12,9 @@ import { TreasuryApp } from '@/apps/treasury/TreasuryApp';
 import { JudiciaryApp } from '@/apps/judiciary/JudiciaryApp';
 import { LegislatureApp } from '@/apps/legislature/LegislatureApp';
 import { PoliceCommandApp } from '@/apps/police-command/PoliceCommandApp';
+import { ImmigrationApp } from '@/apps/immigration/ImmigrationApp';
+import { CustomsApp } from '@/apps/customs/CustomsApp';
+import { EmergencyResponseApp } from '@/apps/emergency-response/EmergencyResponseApp';
 import { BranchWorkspace } from '@/components/features/BranchWorkspace';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
@@ -156,6 +159,12 @@ export function AppHost({ domain }: { domain: string }) {
                   <BranchWorkspace branchKey={app.archetypeOrBranch} />
                 ) : app.id === 'police-command' ? (
                   <PoliceCommandApp appId={app.id} domain={active ?? 'incident'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                ) : app.id === 'immigration' ? (
+                  <ImmigrationApp appId={app.id} domain={active ?? 'border'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                ) : app.id === 'customs' ? (
+                  <CustomsApp appId={app.id} domain={active ?? 'clearance'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                ) : app.id === 'emergency-response' ? (
+                  <EmergencyResponseApp appId={app.id} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 ) : (
                   <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
                 )}
