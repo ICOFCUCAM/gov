@@ -4,6 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel, Spark, seed, toneFor, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
 import { serviceReadings } from '@/lib/gov/ministry-services';
+import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
 export type DomainKey = 'treasury' | 'security' | 'geopolitical';
 
@@ -441,6 +443,16 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         ))}
       </div>
+
+      {(() => {
+        const k: WorkKind = domain === 'treasury' ? 'procurement' : domain === 'security' ? 'incident' : 'case';
+        const title = domain === 'treasury'
+          ? 'Procurement & disbursement runtime — solicitation → award → disbursed'
+          : domain === 'security'
+            ? 'Security incident runtime — acknowledge → contain → recover'
+            : `${domain} runtime — executable workflow`;
+        return <RuntimeQueue scope={`domain:${domain}`} kind={k} title={title} by="Command Officer" />;
+      })()}
 
       <p className="text-[10px] text-ink-muted">{cfg.caption}</p>
     </div>
