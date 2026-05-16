@@ -18,6 +18,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '◉', l: 'Regional Overview', s: 'Provincial posture · readiness', href: '/gov/regional', key: 'reg' },
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution state', href: '/ops', key: 'ops' },
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity', href: '/audit', key: 'aud' },
+    { i: '⚖', l: 'Branches of Government', s: 'Separation of powers', href: '/gov/branches', key: 'branches' },
   ]},
   { g: 'Strategic Domains', items: [
     { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury', key: 'trs' },
