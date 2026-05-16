@@ -299,9 +299,33 @@ export function TerritoryHeat({ epoch, height = 150, focus }: { epoch: number; h
     (name: string) => Math.round(seed(`geo:${name}:${epoch}`) * 100),
     [epoch],
   );
+  const provRisk = PROV.map((p, i) => ({ p, risk: Math.round(seed(`thp:${i}:${epoch}`) * 100) }));
   return (
-    <div className="relative w-full overflow-hidden rounded-sm border border-line-soft" style={{ height }}>
+    <div className="relative w-full overflow-hidden rounded-[3px] border border-line-soft"
+      style={{ height, background: 'radial-gradient(ellipse at 48% 32%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 70%)' }}>
       <WorldMap focus={focus} riskOf={riskOf} />
+      <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" style={{ pointerEvents: 'none' }}>
+        <defs>
+          <pattern id="thgrid" width="34" height="34" patternUnits="userSpaceOnUse">
+            <path d="M34 0H0V34" fill="none" stroke="rgb(var(--c-line))" strokeWidth="0.5" />
+          </pattern>
+          <radialGradient id="thvig" cx="50%" cy="46%" r="62%">
+            <stop offset="62%" stopColor="rgb(var(--c-bg))" stopOpacity="0" />
+            <stop offset="100%" stopColor="rgb(var(--c-bg))" stopOpacity="0.6" />
+          </radialGradient>
+        </defs>
+        <rect width="1000" height="620" fill="url(#thgrid)" opacity="0.14" />
+        {provRisk.map(({ p, risk }) => (
+          <circle key={p.n} cx={p.cx} cy={p.cy} r={p.r * 0.72} fill={TONE[toneFor(risk)]}
+            opacity={0.05 + (risk / 100) * 0.16} className="transition-all duration-1000 ease-sov" />
+        ))}
+        <rect width="1000" height="620" fill="url(#thvig)" />
+      </svg>
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        {['left-1.5 top-1.5 border-l border-t', 'right-1.5 top-1.5 border-r border-t', 'bottom-1.5 left-1.5 border-b border-l', 'bottom-1.5 right-1.5 border-b border-r'].map((c, i) => (
+          <span key={i} className={`absolute h-3 w-3 ${c}`} style={{ borderColor: ACCENT, opacity: 0.35 }} />
+        ))}
+      </div>
     </div>
   );
 }
