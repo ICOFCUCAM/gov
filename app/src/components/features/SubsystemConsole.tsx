@@ -356,6 +356,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             <div className="mt-2 h-7 overflow-hidden opacity-80"><Spark pts={waveSeries(`hosp:mort:${id}`, ts, 24, 20, 70)} tone={h.mortalityIndex >= 16 ? 'alert' : 'warn'} /></div>
           </Panel>
         </div>
+        <RuntimeQueue scope={`${id}:ems`} kind="incident" title="Emergency medical dispatch runtime — acknowledge → contain → recover" by="EMS Controller" n={14} />
       </div>
     );
   }
