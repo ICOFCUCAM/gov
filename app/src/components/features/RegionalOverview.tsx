@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel, Spark, seed, toneFor, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
 import { nationalRegions, regionRollup } from '@/lib/gov/regions';
+import { networkPressure } from '@/lib/gov/infrastructure';
 
 const POS_TONE: Record<string, string> = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' };
 
@@ -230,6 +231,22 @@ export function RegionalOverview() {
           );
         })}
       </div>
+
+      <Panel title="Infrastructure network pressure" meta="national digital twin" bodyClass="!p-1.5">
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
+            const p = networkPressure(k, ts);
+            const tn = p >= 78 ? 'alert' : p >= 62 ? 'warn' : 'ok';
+            return (
+              <div key={k} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{k}</div>
+                <div className="font-mono text-sm tabular-nums" style={{ color: TONE[tn] }}>{p}%</div>
+                <div className="-mb-0.5 h-3 overflow-hidden opacity-70"><Spark pts={waveSeries(`ronp:${k}`, ts, 12, 30, 88)} tone={tn} /></div>
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {[
