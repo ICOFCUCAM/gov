@@ -336,7 +336,7 @@ export function CabinetIntelligence() {
           {/* ROW 2 — primary command surface (map 58% · matrix 25% · escalation 17%) */}
           <div className="grid gap-2 xl:grid-cols-12">
             <Panel title="National strategic map" meta="live operational command view" className="xl:col-span-7" bodyClass="!p-2">
-              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} height={372} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
+              <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
             </Panel>
 
             <Panel title="Ministry risk matrix" meta={`${mRows.length} institutions`} className="xl:col-span-3" bodyClass="!p-0">

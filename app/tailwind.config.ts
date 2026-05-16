@@ -76,11 +76,32 @@ const config: Config = {
           '0%': { backgroundPosition: '-200% 0' },
           '100%': { backgroundPosition: '200% 0' },
         },
+        'dash-flow': {
+          '0%': { strokeDashoffset: '0' },
+          '100%': { strokeDashoffset: '-44' },
+        },
+        radar: {
+          '0%': { transform: 'rotate(0deg)' },
+          '100%': { transform: 'rotate(360deg)' },
+        },
+        diffuse: {
+          '0%': { transform: 'scale(0.55)', opacity: '0.55' },
+          '70%': { opacity: '0.12' },
+          '100%': { transform: 'scale(1.65)', opacity: '0' },
+        },
+        breathe: {
+          '0%,100%': { opacity: '0.35' },
+          '50%': { opacity: '0.85' },
+        },
       },
       animation: {
         'fade-in': 'fade-in 220ms cubic-bezier(0.22,1,0.36,1) both',
         rise: 'rise 260ms cubic-bezier(0.22,1,0.36,1) both',
         shimmer: 'shimmer 1.6s linear infinite',
+        'dash-flow': 'dash-flow 1.2s linear infinite',
+        radar: 'radar 7s linear infinite',
+        diffuse: 'diffuse 3.2s ease-out infinite',
+        breathe: 'breathe 3.4s ease-in-out infinite',
       },
       minHeight: {
         tap: '44px',
