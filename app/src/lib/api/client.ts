@@ -247,6 +247,8 @@ export const api = {
       req<{ ministry: Ministry }>('/api/org/ministries', { method: 'POST', body: JSON.stringify(body) }),
     rename: (id: string, name: string) =>
       req<{ ministry: Ministry }>(`/api/org/ministries/${id}/rename`, { method: 'POST', body: JSON.stringify({ name }) }),
+    activate: (id: string) =>
+      req<{ ministry: Ministry }>(`/api/org/ministries/${id}/activate`, { method: 'POST', body: '{}' }),
     deactivate: (id: string) =>
       req<{ ministry: Ministry }>(`/api/org/ministries/${id}/deactivate`, { method: 'POST', body: '{}' }),
     merge: (id: string, targetId: string) =>

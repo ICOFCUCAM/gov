@@ -90,6 +90,7 @@ import type {
 } from '@/lib/api/types';
 import { specFor } from '@/lib/ops-catalog';
 import { profileFor } from '@/lib/archetype-profiles';
+import { scoreInstitution } from '@/lib/institution/readiness';
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -1142,6 +1143,19 @@ export function renameMinistry(id: string, name: string): Ministry | { error: st
   if (!m) return { error: 'Ministry not found' };
   m.name = name;
   appendAudit('operator', 'ministry.rename', `Ministry:${id}`, 'ok', name);
+  return m;
+}
+export function activateMinistry(id: string): Ministry | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  if (m.status === 'merged') return { error: 'Merged institutions cannot be activated' };
+  const r = scoreInstitution({ ...m, status: 'active' });
+  if (!r.deployable) {
+    appendAudit('operator', 'ministry.activate', `Ministry:${id}`, 'denied', r.blocking.join('; '));
+    return { error: `Activation gate failed (${r.total}% ready): ${r.blocking.join('; ')}` };
+  }
+  m.status = 'active';
+  appendAudit('operator', 'ministry.activate', `Ministry:${id}`, 'ok', `readiness ${r.total}% · ${r.lifecycle}`);
   return m;
 }
 export function deactivateMinistry(id: string): Ministry | { error: string } {

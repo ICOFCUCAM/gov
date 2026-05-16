@@ -208,6 +208,24 @@ export function MinistriesConsole() {
                       Open operations console →
                     </a>
                   </p>
+                  {current.status !== 'active' && current.status !== 'merged' ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button onClick={() => void guard(() => api.org.activate(current.id))}>
+                        Activate institution
+                      </Button>
+                      <span className="text-[11px] text-ink-muted">
+                        Activation runs the readiness gate — it fails if the institution is not deployment-complete.
+                      </span>
+                    </div>
+                  ) : null}
+                  {current.status === 'active' ? (
+                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                      <Button variant="secondary" onClick={() => void guard(() => api.org.deactivate(current.id))}>
+                        Deactivate
+                      </Button>
+                      <span className="text-[11px] text-ink-muted">Removes it from the national deployment directory.</span>
+                    </div>
+                  ) : null}
                   {current.status === 'active' ? (
                     <div className="mt-3 flex flex-wrap gap-2">
                       <form
