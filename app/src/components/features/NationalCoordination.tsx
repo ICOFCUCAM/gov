@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { TONE, ACCENT, seed, Spark, Panel, TerritoryHeat, waveSeries, domainStress } from '@/components/features/SituationRoom';
 import { buildCascade } from '@/lib/institution/cascade';
+import { cascadeEscalations } from '@/lib/institution/cascade-escalation';
 import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
@@ -171,6 +172,19 @@ export function NationalCoordination() {
           </Panel>
 
           <Panel title="Pinned incidents" meta={<Link href="/gov/situation-room" className="text-[10px] text-link underline">View all incidents →</Link>} className="flex-1" bodyClass="overflow-y-auto !p-0">
+            {cascadeEscalations(cascadeNodes).map(e => {
+              const tn = e.severity === 'critical' ? 'alert' : 'warn';
+              return (
+                <Link key={e.id} href={e.route} className="focus-ring block border-b border-line-soft px-3 py-2 no-underline transition-colors hover:bg-surface-2/50" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="rounded-[2px] px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 18%, transparent)`, color: TONE[tn] }}>Cascade · {e.severity}</span>
+                    <span className="font-mono text-[9px] tabular-nums text-ink-muted">{e.ageMin}m</span>
+                  </div>
+                  <div className="mt-0.5 truncate text-[11px] font-medium text-ink">{e.institution} · cross-ministry cascade</div>
+                  <div className="truncate text-[9px] text-ink-muted">stress {e.totalStress} (+{e.inheritedStress}) via {e.driver} · {e.recommendation}</div>
+                </Link>
+              );
+            })}
             {PINNED.map((p, i) => {
               const tn = p.s === 'sev1' ? 'alert' : p.s === 'sev2' ? 'warn' : 'neutral';
               const open = openPin === i;
