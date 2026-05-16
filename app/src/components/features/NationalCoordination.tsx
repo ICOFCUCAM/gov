@@ -36,6 +36,7 @@ export function NationalCoordination() {
   const [now, setNow] = React.useState(() => Date.now());
   const [win, setWin] = React.useState('12H');
   const [scrub, setScrub] = React.useState(72);
+  const [openPin, setOpenPin] = React.useState<number | null>(0);
   const [layerOn, setLayerOn] = React.useState<Record<string, boolean>>({ 'Risk Heat': true });
 
   React.useEffect(() => {
@@ -166,20 +167,47 @@ export function NationalCoordination() {
           <Panel title="Pinned incidents" meta={<Link href="/gov/situation-room" className="text-[10px] text-link underline">View all incidents →</Link>} className="flex-1" bodyClass="overflow-y-auto !p-0">
             {PINNED.map((p, i) => {
               const tn = p.s === 'sev1' ? 'alert' : p.s === 'sev2' ? 'warn' : 'neutral';
+              const open = openPin === i;
+              const age = 6 + Math.round(seed(`pin:${p.t}`) * 50);
+              const owner = ['Crisis Coordinator', 'Duty Officer', 'Regional Lead', 'Cabinet Liaison'][Math.floor(seed(`po:${p.t}`) * 4)];
+              const chron = [
+                { t: `${age}m`, l: 'Signal detected', c: TONE.neutral },
+                { t: `${Math.max(1, Math.round(age * 0.6))}m`, l: `${p.m} acknowledged`, c: TONE[tn] },
+                { t: `${Math.max(1, Math.round(age * 0.3))}m`, l: `${owner} engaged`, c: TONE.ok },
+              ];
               return (
-                <div key={i} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
-                  <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[3px] text-[11px]" style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tn] }}>{p.g}</span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5">
-                      <span className="rounded-[2px] px-1 text-[8px] font-bold tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 20%, transparent)`, color: TONE[tn] }}>{i === 0 ? <span className="animate-pulse">{p.lbl}</span> : p.lbl}</span>
-                      <span className="truncate text-[11px] font-medium text-ink">{p.t}</span>
+                <div key={i} className="border-b border-line-soft last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
+                  <button onClick={() => setOpenPin(open ? null : i)}
+                    className="focus-ring flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-surface-2/50">
+                    <span className="grid h-6 w-6 shrink-0 place-items-center rounded-[3px] text-[11px]" style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tn] }}>{p.g}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className="rounded-[2px] px-1 text-[8px] font-bold tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 20%, transparent)`, color: TONE[tn] }}>{i === 0 ? <span className="animate-pulse">{p.lbl}</span> : p.lbl}</span>
+                        <span className="truncate text-[11px] font-medium text-ink">{p.t}</span>
+                      </div>
+                      <span className="block truncate text-[9px] text-ink-muted">{p.m} · {p.d}</span>
                     </div>
-                    <span className="block truncate text-[9px] text-ink-muted">{p.m} · {p.d}</span>
-                  </div>
-                  <div className="shrink-0 text-right">
-                    <span className="block text-[10px] font-semibold" style={{ color: TONE[tn] }}>Sev {p.s.slice(-1)}</span>
-                    <span className="block font-mono text-[9px] text-ink-muted">{p.tm}</span>
-                  </div>
+                    <div className="shrink-0 text-right">
+                      <span className="block text-[10px] font-semibold" style={{ color: TONE[tn] }}>Sev {p.s.slice(-1)}</span>
+                      <span className="block font-mono text-[9px] text-ink-muted">{p.tm}<span className="ml-1 inline-block transition-transform" style={{ transform: open ? 'rotate(90deg)' : 'none' }}>›</span></span>
+                    </div>
+                  </button>
+                  {open ? (
+                    <div className="px-3 pb-2">
+                      <div className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                        {chron.map((c, k) => (
+                          <div key={k} className="flex items-center gap-2 py-0.5 text-[10px]">
+                            <span className="w-7 shrink-0 font-mono tabular-nums text-ink-muted">{c.t}</span>
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: c.c }} />
+                            <span className="truncate text-ink-soft">{c.l}</span>
+                          </div>
+                        ))}
+                        <div className="mt-1 flex items-center justify-between border-t border-line-soft pt-1 text-[9px]">
+                          <span className="text-ink-muted">Owner</span><span className="text-ink-soft">{owner}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
               );
             })}
