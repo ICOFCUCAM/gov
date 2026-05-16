@@ -3,14 +3,16 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel, Spark, seed, toneFor, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
-import { nationalRegions, regionRollup } from '@/lib/gov/regions';
+import { nationalRegions, regionRollup, projectRegions } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
+import { SCENARIOS, type ScenarioKey } from '@/lib/gov/simulation';
 
 const POS_TONE: Record<string, string> = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' };
 
 export function RegionalOverview() {
   const [now, setNow] = React.useState(() => Date.now());
   const [open, setOpen] = React.useState<string | null>('Capital District');
+  const [scn, setScn] = React.useState<ScenarioKey>('baseline');
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
@@ -20,6 +22,12 @@ export function RegionalOverview() {
   const regions = nationalRegions(ts);
   const roll = regionRollup(regions);
   const crit = roll.critical;
+
+  const proj = projectRegions(scn, ts);
+  const projActive = scn !== 'baseline';
+  const projLabel = SCENARIOS.find(s => s.key === scn)?.label ?? scn;
+  const projWorst = [...proj].sort((a, b) => a.readinessDelta - b.readinessDelta)[0];
+  const projCritical = proj.filter(p => p.projectedPosture === 'critical').length;
 
   const tele = [
     { l: 'Regional posture', v: roll.posture.toUpperCase(), sub: `${roll.meanReadiness}% mean readiness`, t: POS_TONE[roll.posture]!, k: 'np' },
@@ -231,6 +239,47 @@ export function RegionalOverview() {
           );
         })}
       </div>
+
+      <Panel title="Regional scenario projection" meta={projActive ? `${projLabel} · projected readiness` : 'select a shock to project'} bodyClass="!p-1.5">
+        <div className="mb-2 grid grid-cols-2 gap-1 sm:grid-cols-3 xl:grid-cols-5">
+          {SCENARIOS.map(sc => {
+            const on = sc.key === scn;
+            return (
+              <button key={sc.key} onClick={() => setScn(sc.key)}
+                className="focus-ring rounded-[3px] border px-2 py-1 text-left text-[10px] transition-all"
+                style={{ borderColor: on ? TONE.link : 'rgb(var(--c-line))', backgroundColor: on ? `color-mix(in srgb, ${TONE.link} 12%, transparent)` : undefined, color: on ? TONE.link : 'rgb(var(--c-ink-soft))' }}>
+                <span className="block truncate font-semibold">{sc.label}</span>
+              </button>
+            );
+          })}
+        </div>
+        {projActive && projWorst ? (
+          <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px]">
+            <span className="rounded-[3px] px-1.5 py-0.5 font-bold uppercase" style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, color: TONE.alert }}>
+              Worst-hit · {projWorst.name} ({projWorst.readinessDelta})
+            </span>
+            <span className="text-ink-muted">{projCritical} regions projected critical</span>
+            <Link href={`/gov/simulation?s=${scn}`} className="ml-auto text-[10px] text-link underline underline-offset-2">Full simulation →</Link>
+          </div>
+        ) : null}
+        <div className="space-y-1">
+          {proj.map(r => {
+            const tn = r.projectedPosture === 'critical' ? 'alert' : r.projectedPosture === 'elevated' ? 'warn' : r.projectedPosture === 'watch' ? 'neutral' : 'ok';
+            return (
+              <div key={r.name} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[11px]">
+                <span className="w-28 shrink-0 truncate text-ink-soft">{r.capital ? '★ ' : ''}{r.name}</span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+                  <span className="block h-full" style={{ width: `${r.readiness}%`, backgroundColor: TONE[tn] }} />
+                </div>
+                <span className="w-9 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: TONE[tn] }}>{r.readiness}%</span>
+                <span className="w-12 shrink-0 text-right font-mono text-[9px] tabular-nums" style={{ color: r.readinessDelta < 0 ? TONE.alert : 'rgb(var(--c-ink-muted))' }}>
+                  {r.readinessDelta < 0 ? r.readinessDelta : '—'}
+                </span>
+              </div>
+            );
+          })}
+        </div>
+      </Panel>
 
       <Panel title="Infrastructure network pressure" meta="national digital twin" bodyClass="!p-1.5">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">

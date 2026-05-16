@@ -4,6 +4,7 @@
 // incident load, dependency to the capital). Pure; no React/DOM.
 
 import { seed, wave, domainStress } from '@/lib/telemetry';
+import { scenarioFor, type ScenarioKey } from '@/lib/gov/simulation';
 import type { ArchetypeKey } from '@/lib/api/types';
 
 export interface RegionInfra { l: string; coverage: number }
@@ -51,6 +52,37 @@ export function nationalRegions(t: number): RegionModel[] {
       name: r.n, archetype: r.a, capital: r.cap, populationM: r.popM,
       composite, readiness, incidents, posture: postureOf(composite),
       infra, capitalDependency, domains,
+    };
+  });
+}
+
+export interface ProjectedRegion extends RegionModel {
+  baseReadiness: number;
+  readinessDelta: number;     // negative = degradation under shock
+  projectedPosture: RegionModel['posture'];
+}
+
+// Overlays a scenario shock onto the live regional fabric. A region's
+// exposure scales with how strongly the scenario's epicentre archetypes
+// match its dominant character plus its reliance on the capital. Pure &
+// deterministic — advisory regional what-if.
+export function projectRegions(key: ScenarioKey, t: number): ProjectedRegion[] {
+  const sc = scenarioFor(key);
+  const base = nationalRegions(t);
+  if (sc.key === 'baseline' || sc.severity === 0) {
+    return base.map(r => ({ ...r, baseReadiness: r.readiness, readinessDelta: 0, projectedPosture: r.posture }));
+  }
+  return base.map(r => {
+    const archHit = sc.epicentres.includes(r.archetype) ? 1 : 0.32;
+    const depFactor = 1 + (r.capital ? 0.25 : (r.capitalDependency / 100) * 0.4);
+    const exposure = (0.45 + seed(`prx:${key}:${r.name}`) * 0.5) * archHit * depFactor;
+    const drop = Math.min(r.readiness - 1, Math.round(sc.severity * exposure * 0.55));
+    const readiness = Math.max(1, r.readiness - drop);
+    const composite = Math.min(100, 100 - readiness);
+    return {
+      ...r, readiness, composite, posture: postureOf(composite),
+      baseReadiness: base.find(b => b.name === r.name)!.readiness,
+      readinessDelta: -drop, projectedPosture: postureOf(composite),
     };
   });
 }

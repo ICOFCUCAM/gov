@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { nationalRegions, regionRollup } from './regions';
+import { nationalRegions, regionRollup, projectRegions } from './regions';
 
 describe('national regional command model', () => {
   it('models every region with infra, domains and posture', () => {
@@ -32,5 +32,20 @@ describe('national regional command model', () => {
 
   it('readiness is the inverse of composite stress', () => {
     for (const r of nationalRegions(33)) expect(r.readiness).toBe(Math.max(1, 100 - r.composite));
+  });
+
+  it('baseline projection is a no-op; a shock only degrades and stays bounded & deterministic', () => {
+    const flat = projectRegions('baseline', 80);
+    expect(flat.every(r => r.readinessDelta === 0)).toBe(true);
+    expect(flat.every(r => r.readiness === r.baseReadiness)).toBe(true);
+
+    const a = projectRegions('energy-outage', 80);
+    expect(a).toEqual(projectRegions('energy-outage', 80));
+    for (const r of a) {
+      expect(r.readinessDelta).toBeLessThanOrEqual(0);
+      expect(r.readiness).toBeGreaterThanOrEqual(1);
+      expect(r.readiness).toBeLessThanOrEqual(r.baseReadiness);
+      expect(['stable', 'watch', 'elevated', 'critical']).toContain(r.projectedPosture);
+    }
   });
 });
