@@ -698,6 +698,8 @@ export function CabinetIntelligence() {
                   { l: 'Escalation Authorisation', g: '↯' },
                   { l: 'Resource Reallocation', g: '⇄' },
                   { l: 'Constitutional Emergency', g: '▥', d: true },
+                  { l: 'Run Scenario Simulation', g: '◔', fx: () => { window.location.href = '/gov/simulation'; } },
+                  { l: 'Cabinet Coordination', g: '⟁', fx: () => { window.location.href = '/gov/coordination'; } },
                 ] as { l: string; g: string; d?: boolean; fx?: () => void }[]).map(q => (
                   <button key={q.l} onClick={() => issue(q.l, q.fx)}
                     className="focus-ring group flex items-center gap-1.5 rounded-[3px] border px-2 py-1.5 text-left text-[10px] font-medium transition-all hover:bg-surface-2/60"
