@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api/client';
-import { TONE, ACCENT, seed, Spark, Donut } from '@/components/features/SituationRoom';
+import { TONE, ACCENT, seed, Spark, Donut, TerritoryHeat } from '@/components/features/SituationRoom';
 import type { Incident, OpsOverview } from '@/lib/api/types';
 
 const ME = 'W. Chebet (ops)';
@@ -174,6 +174,43 @@ export function OpsCenter() {
         </P>
         <P title="Queue breakdown" meta={`${qTotal} queued`}>
           <Donut segs={donut} />
+        </P>
+      </div>
+
+      {/* Operational theatre — territory parity with command surfaces */}
+      <div className="grid gap-2 xl:grid-cols-[1.6fr_1fr]">
+        <P title="Operational theatre" meta="cross-institution territory">
+          <TerritoryHeat epoch={Math.floor(now / 15000)} height={250} />
+          <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
+            <span>Low load</span>
+            <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
+            <span>Saturated</span>
+          </div>
+        </P>
+        <P title="Corridor & region status" meta="live">
+          <div className="space-y-1.5">
+            {[
+              { l: 'Northern logistics corridor', k: 'nlc', lo: 35, hi: 78 },
+              { l: 'Capital service mesh', k: 'csm', lo: 55, hi: 92 },
+              { l: 'Coastal port throughput', k: 'cpt', lo: 40, hi: 88 },
+              { l: 'Eastern relief routes', k: 'err', lo: 30, hi: 70 },
+              { l: 'Cross-border sync', k: 'cbs', lo: 60, hi: 96 },
+            ].map(r => {
+              const v = Math.round(r.lo + seed(`cr:${r.k}:${Math.floor(now / 12000)}`) * (r.hi - r.lo));
+              const t = v >= 85 ? 'ok' : v >= 60 ? 'warn' : 'alert';
+              return (
+                <div key={r.k}>
+                  <div className="flex items-center justify-between text-[10px]">
+                    <span className="truncate text-ink-soft">{r.l}</span>
+                    <span className="font-mono tabular-nums" style={{ color: TONE[t] }}>{v}%</span>
+                  </div>
+                  <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-surface-2">
+                    <div className="h-full rounded-full transition-all duration-1000 ease-sov" style={{ width: `${v}%`, backgroundColor: TONE[t] }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </P>
       </div>
 
