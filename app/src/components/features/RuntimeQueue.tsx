@@ -7,6 +7,7 @@ import {
   type WorkKind, type WorkItem, type ActionKey,
 } from '@/lib/gov/runtime-workflow';
 import { subscribe, getScope, actOnItem, annotateItem, reassignItem } from '@/lib/gov/runtime-store';
+import { checkAction, type SovereignRole } from '@/shared/permissions/rbac';
 
 const ASSIGNEES = ['K. Otieno', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Kamau'];
 
@@ -29,8 +30,8 @@ const prTone = (p: WorkItem['priority']) => (p === 'urgent' ? TONE.alert : p ===
  * transition and audit trail. Surfaces become an operating system.
  */
 export function RuntimeQueue({
-  scope, kind, title, by = 'Operator', n = 14,
-}: { scope: string; kind: WorkKind; title: string; by?: string; n?: number }) {
+  scope, kind, title, by = 'Operator', n = 14, role = 'commander',
+}: { scope: string; kind: WorkKind; title: string; by?: string; n?: number; role?: SovereignRole }) {
   const items = React.useSyncExternalStore(
     subscribe,
     () => getScope(scope, kind, n),
@@ -42,8 +43,12 @@ export function RuntimeQueue({
   const stats = queueStats(items);
 
   const [note, setNote] = React.useState('');
+  const [denied, setDenied] = React.useState<string | null>(null);
   const act = (id: string, action: ActionKey) => {
-    actOnItem(scope, id, action, by);
+    const chk = checkAction(role, action);
+    if (!chk.allowed) { setDenied(`Denied — ${chk.reason}`); return; }
+    setDenied(null);
+    actOnItem(scope, id, action, `${by} (${role})`);
   };
 
   const shown = items.filter(it =>
@@ -112,17 +117,23 @@ export function RuntimeQueue({
                 <span className="text-[9px] uppercase tracking-wider text-ink-muted">Stage</span>
                 <span className="rounded-[3px] px-1.5 py-0.5 text-[10px] font-bold" style={{ backgroundColor: `color-mix(in srgb, ${current.closed ? TONE.ok : TONE.warn} 16%, transparent)`, color: current.closed ? TONE.ok : TONE.warn }}>{current.stage}</span>
               </div>
-              <div className="flex flex-wrap gap-1">
+              <div className="flex flex-wrap items-center gap-1">
                 {actionsFor(current.kind, current.stage).length === 0 ? (
                   <span className="text-[9px] text-ink-muted">Terminal state — no further actions.</span>
-                ) : actionsFor(current.kind, current.stage).map(a => (
-                  <button key={a} onClick={() => act(current.id, a)}
-                    className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors hover:bg-surface-2/60"
-                    style={{ borderColor: ACTION_TONE[a], color: ACTION_TONE[a] }}>
-                    {ACTION_LABEL[a]} →
-                  </button>
-                ))}
+                ) : actionsFor(current.kind, current.stage).map(a => {
+                  const allowed = checkAction(role, a).allowed;
+                  return (
+                    <button key={a} onClick={() => act(current.id, a)} disabled={!allowed}
+                      title={allowed ? undefined : `Role '${role}' not authorised`}
+                      className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider transition-colors disabled:cursor-not-allowed disabled:opacity-40 enabled:hover:bg-surface-2/60"
+                      style={{ borderColor: ACTION_TONE[a], color: ACTION_TONE[a] }}>
+                      {ACTION_LABEL[a]} →
+                    </button>
+                  );
+                })}
+                <span className="ml-auto text-[8px] uppercase tracking-wider text-ink-muted">role · {role}</span>
               </div>
+              {denied ? <div className="text-[9px]" style={{ color: ACTION_TONE.reject }}>{denied}</div> : null}
               <div>
                 <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Audit trail</div>
                 {current.history.length === 0 ? (
