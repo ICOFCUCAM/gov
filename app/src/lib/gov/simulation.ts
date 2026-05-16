@@ -131,3 +131,80 @@ export function scenarioSweep(t: number): ScenarioRisk[] {
     };
   }).sort((a, b) => b.composite - a.composite);
 }
+
+export interface PlaybookPhase {
+  phase: string;
+  window: string;
+  lead: string;
+  actions: string[];
+  /** composite-risk points this phase removes */
+  reduction: number;
+}
+
+export interface MitigationPlaybook {
+  scenario: Scenario;
+  phases: PlaybookPhase[];
+  /** 0-100 risk before any response */
+  grossRisk: number;
+  /** 0-100 risk after the full playbook executes */
+  residualRisk: number;
+  /** % of national risk neutralised by the response */
+  effectiveness: number;
+}
+
+// Phased response doctrine for a scenario: contain → stabilise → recover,
+// each with a lead institution, concrete actions and the composite-risk
+// reduction it buys. Turns the what-if from consequence into consequence +
+// response efficacy. Pure & deterministic — advisory only.
+export function mitigationPlaybook(key: ScenarioKey, t: number): MitigationPlaybook {
+  const sc = scenarioFor(key);
+  const im = simulate(key, t);
+  const gross = Math.round(Math.min(100,
+    Math.abs(im.nationalReadinessDelta) * 1.4 + im.civilUnrestProb * 0.3 +
+    im.constitutionalStress * 0.3 + im.cascadeNodes * 4));
+  const lead = sc.epicentres[0] ?? 'COORDINATION';
+  const sec = sc.epicentres[1] ?? 'INTERIOR';
+
+  if (sc.key === 'baseline') {
+    return {
+      scenario: sc,
+      phases: [{ phase: 'Steady-state', window: 'Continuous', lead: 'COORDINATION', actions: ['Sustain monitoring tempo', 'Maintain reserve posture'], reduction: 0 }],
+      grossRisk: 0, residualRisk: 0, effectiveness: 0,
+    };
+  }
+
+  const phases: PlaybookPhase[] = [
+    {
+      phase: 'Contain', window: 'T+0 → T+1h', lead,
+      actions: [
+        `Convene cabinet cell · lead ministry ${lead}`,
+        `Isolate ${sc.epicentres[0] ?? 'primary'} sector · halt propagation paths`,
+        im.civilUnrestProb >= 60 ? 'Elevate civil-protection & security posture' : 'Raise security watch level',
+      ],
+      reduction: Math.round(gross * 0.34),
+    },
+    {
+      phase: 'Stabilise', window: 'T+1h → T+12h', lead: sec,
+      actions: [
+        im.cascadeNodes >= 4 ? 'Authorise reserve drawdown · pre-position assets' : 'Pre-position contingency reserves',
+        'Activate mutual-aid between unaffected institutions',
+        im.constitutionalStress >= 60 ? 'Brief Constitutional Court · arm emergency-power sunset clock' : 'Maintain constitutional baseline',
+      ],
+      reduction: Math.round(gross * 0.3),
+    },
+    {
+      phase: 'Recover', window: 'T+12h → T+72h', lead: 'COORDINATION',
+      actions: [
+        'Sequenced service restoration · worst-readiness regions first',
+        'After-action capture · update institutional doctrine',
+        'Stand down emergency posture on threshold recovery',
+      ],
+      reduction: Math.round(gross * 0.18),
+    },
+  ];
+
+  const removed = phases.reduce((a, p) => a + p.reduction, 0);
+  const residualRisk = Math.max(0, gross - removed);
+  const effectiveness = gross ? Math.round((removed / gross) * 100) : 0;
+  return { scenario: sc, phases, grossRisk: gross, residualRisk, effectiveness };
+}

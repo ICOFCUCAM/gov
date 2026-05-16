@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { simulate, scenarioFor, scenarioSweep, SCENARIOS } from './simulation';
+import { simulate, scenarioFor, scenarioSweep, mitigationPlaybook, SCENARIOS } from './simulation';
 
 describe('sovereign state simulation engine', () => {
   it('baseline applies no shock', () => {
@@ -47,6 +47,23 @@ describe('sovereign state simulation engine', () => {
       expect(['severe', 'high', 'elevated', 'contained']).toContain(r.band);
     }
     expect(scenarioSweep(50)).toEqual(sweep);
+  });
+
+  it('mitigationPlaybook reduces gross risk and stays coherent for every scenario', () => {
+    for (const sc of SCENARIOS) {
+      const pb = mitigationPlaybook(sc.key, 50);
+      expect(pb.scenario.key).toBe(sc.key);
+      expect(pb.residualRisk).toBeLessThanOrEqual(pb.grossRisk);
+      expect(pb.residualRisk).toBeGreaterThanOrEqual(0);
+      expect(pb.effectiveness).toBeGreaterThanOrEqual(0);
+      expect(pb.effectiveness).toBeLessThanOrEqual(100);
+      expect(pb.phases.length).toBeGreaterThan(0);
+      for (const ph of pb.phases) expect(ph.actions.length).toBeGreaterThan(0);
+    }
+    expect(mitigationPlaybook('baseline', 50).grossRisk).toBe(0);
+    const a = mitigationPlaybook('energy-outage', 70);
+    expect(a).toEqual(mitigationPlaybook('energy-outage', 70));
+    expect(a.grossRisk).toBeGreaterThan(0);
   });
 
   it('scenarioFor falls back to baseline', () => {

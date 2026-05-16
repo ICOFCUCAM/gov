@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel, Spark, waveSeries } from '@/components/features/SituationRoom';
 import { identityFor } from '@/lib/archetype-profiles';
-import { SCENARIOS, simulate, scenarioSweep, type ScenarioKey } from '@/lib/gov/simulation';
+import { SCENARIOS, simulate, scenarioSweep, mitigationPlaybook, type ScenarioKey } from '@/lib/gov/simulation';
 import type { ArchetypeKey } from '@/lib/api/types';
 
 export function NationalSimulation({ initial = 'baseline' }: { initial?: ScenarioKey }) {
@@ -19,6 +19,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
   const baseM = new Map(simulate('baseline', ts).ministryImpact.map(m => [m.archetype, m.stress]));
   const active = key !== 'baseline';
   const sweep = scenarioSweep(ts);
+  const pb = mitigationPlaybook(key, ts);
 
   const tele = [
     { l: 'Scenario', v: s.scenario.label.split(' (')[0], t: active ? 'warn' : 'ok' },
@@ -150,15 +151,42 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
         </Panel>
       </div>
 
-      <Panel title="Recommended response chain" meta="advisory · cabinet decides" bodyClass="!p-1.5">
-        <ol className="space-y-1">
-          {s.recommendation.map((r, i) => (
-            <li key={i} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 text-[11px]">
-              <span className="grid h-4 w-4 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[9px] font-bold text-ink-soft">{i + 1}</span>
-              <span className="text-ink-soft">{r}</span>
-            </li>
+      <Panel title="Mitigation playbook" meta="phased response doctrine · advisory · cabinet decides" bodyClass="!p-1.5">
+        <div className="mb-2 grid grid-cols-3 gap-2">
+          {([
+            { l: 'Gross risk', v: pb.grossRisk, t: pb.grossRisk >= 75 ? 'alert' : pb.grossRisk >= 50 ? 'warn' : 'ok' },
+            { l: 'Residual after response', v: pb.residualRisk, t: pb.residualRisk >= 50 ? 'alert' : pb.residualRisk >= 30 ? 'warn' : 'ok' },
+            { l: 'Response effectiveness', v: `${pb.effectiveness}%`, t: pb.effectiveness >= 60 ? 'ok' : pb.effectiveness >= 40 ? 'warn' : 'alert' },
+          ] as const).map(m => (
+            <div key={m.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+              <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
+              <div className="font-mono text-[15px] leading-tight tabular-nums" style={{ color: TONE[m.t] }}>{m.v}</div>
+            </div>
           ))}
-        </ol>
+        </div>
+        <div className="grid gap-1.5 sm:grid-cols-3">
+          {pb.phases.map((p, i) => {
+            const pt = i === 0 ? 'alert' : i === 1 ? 'warn' : 'ok';
+            return (
+              <div key={p.phase} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2" style={{ borderLeft: `3px solid ${TONE[pt]}` }}>
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-semibold text-ink">{i + 1}. {p.phase}</span>
+                  <span className="font-mono text-[9px] tabular-nums" style={{ color: TONE.ok }}>−{p.reduction}</span>
+                </div>
+                <div className="mb-1 flex items-center justify-between text-[8.5px] text-ink-muted">
+                  <span>{p.window}</span><span className="uppercase tracking-wider">lead · {p.lead}</span>
+                </div>
+                <ul className="space-y-0.5">
+                  {p.actions.map((a, j) => (
+                    <li key={j} className="flex gap-1.5 text-[10px] text-ink-soft">
+                      <span className="shrink-0" style={{ color: TONE[pt] }}>▸</span><span>{a}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
         <div className="mt-1.5 flex gap-2 text-[10px]">
           <Link href="/gov/coordination" className="focus-ring text-link underline underline-offset-2">Coordinate →</Link>
           <Link href="/gov/situation-room" className="focus-ring text-link underline underline-offset-2">War Room →</Link>
