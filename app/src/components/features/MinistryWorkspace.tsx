@@ -155,12 +155,12 @@ export function MinistryWorkspace({ id }: { id: string }) {
 
   // Institutional posture engine: lifecycle + live operating mode +
   // cross-ministry cascade (degradation upstream escalates this posture).
-  const readiness = inst ? scoreInstitution(inst) : null;
   const cascadeSelf = React.useMemo(() => {
     if (!allMins.length) return null;
     const liveHealth = (mid: string) => Math.round(waveSeries(`nh:${mid}`, now / 4000, 1, 58, 99).at(-1)!);
     return buildCascade(allMins, liveHealth).find(c => c.id === id) ?? null;
   }, [allMins, id, now]);
+  const readiness = inst ? scoreInstitution(inst, { cascadeStress: cascadeSelf?.totalStress }) : null;
   const cascadeCrit = cascadeSelf?.posture === 'critical';
   const cascadeStrain = cascadeSelf?.posture === 'strained';
   const crisis = activeAlerts.some(a => /1|crit/i.test(String(a.severity))) || cascadeCrit;

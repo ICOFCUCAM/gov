@@ -35,7 +35,7 @@ const clamp = (n: number) => Math.max(0, Math.min(100, Math.round(n)));
 export const READINESS_THRESHOLD = 70;
 const CRITICAL = ['governance', 'operational', 'deployment'];
 
-export function scoreInstitution(m: Ministry): InstitutionReadiness {
+export function scoreInstitution(m: Ministry, ctx?: { cascadeStress?: number }): InstitutionReadiness {
   const profile = ARCHETYPE_PROFILES[m.archetype];
   const spec = specFor(m.archetype);
   const depts = m.departments?.length ?? 0;
@@ -80,6 +80,9 @@ export function scoreInstitution(m: Ministry): InstitutionReadiness {
     { key: 'deployment', label: 'Deployment readiness',
       score: isActive && depts > 0 && mods > 0 ? 100 : depts > 0 || mods > 0 ? 45 : 0,
       detail: isActive ? 'activatable' : 'not activated' },
+    { key: 'resilience', label: 'Cascade resilience',
+      score: ctx?.cascadeStress == null ? 90 : clamp(100 - ctx.cascadeStress),
+      detail: ctx?.cascadeStress == null ? 'no propagated stress' : `${ctx.cascadeStress} propagated stress` },
   ];
 
   // Weighted composite — critical dimensions weigh double.

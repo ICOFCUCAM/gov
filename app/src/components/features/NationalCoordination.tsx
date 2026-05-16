@@ -4,7 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { TONE, ACCENT, seed, Spark, Panel, TerritoryHeat, waveSeries, domainStress } from '@/components/features/SituationRoom';
-import type { NationalCoordination as NC } from '@/lib/api/types';
+import { buildCascade } from '@/lib/institution/cascade';
+import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
 
@@ -37,10 +38,14 @@ export function NationalCoordination() {
   const [win, setWin] = React.useState('12H');
   const [scrub, setScrub] = React.useState(72);
   const [openPin, setOpenPin] = React.useState<number | null>(0);
+  const [mins, setMins] = React.useState<Ministry[]>([]);
   const [layerOn, setLayerOn] = React.useState<Record<string, boolean>>({ 'Risk Heat': true });
 
   React.useEffect(() => {
-    const load = () => api.cabinet.coordination().then(setD).catch(() => {});
+    const load = () => {
+      api.cabinet.coordination().then(setD).catch(() => {});
+      api.org.ministries().then(r => setMins(r.ministries)).catch(() => {});
+    };
     void load();
     const poll = setInterval(load, 15_000);
     const tick = setInterval(() => setNow(Date.now()), 1000);
@@ -53,7 +58,8 @@ export function NationalCoordination() {
   const level = posture?.level ?? (risk >= 67 ? 'alert' : risk >= 34 ? 'warn' : 'ok');
   const label = posture?.label ?? (risk >= 67 ? 'CRITICAL' : risk >= 34 ? 'STRAINED' : 'STABLE');
   const insts = d?.nodes.length || 42;
-  const cascade = d?.posture.cascadeRisks || 7;
+  const cascadeNodes = buildCascade(mins, (mid) => Math.round(waveSeries(`nh:${mid}`, now / 4000, 1, 58, 99).at(-1)!));
+  const cascade = cascadeNodes.filter(c => c.posture === 'critical' || c.posture === 'strained').length || (d?.posture.cascadeRisks || 0);
 
   const regs = MINS.map(m => {
     const ds = (k: string) => domainStress(m.a, k, risk + 25, now / 4000, m.n);
