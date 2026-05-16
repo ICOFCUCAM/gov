@@ -20,7 +20,7 @@ import { judicialState } from '@/lib/gov/judicial-engine';
 import { stateFabric } from '@/lib/gov/state-fabric';
 import { nationalRuntime } from '@/lib/gov/national-runtime';
 import { subscribe as auditSubscribe, auditStats, version as auditVersion } from '@/services/audit-ledger';
-import { federationPosture } from '@/services/federation-aggregate';
+import { federationPosture, sovereignExecutionIndex } from '@/services/federation-aggregate';
 import { interoperabilityFabric } from '@/services/interoperability-fabric';
 import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
@@ -126,6 +126,12 @@ export function NationalShell() {
   const ne = nationalEcosystem(mins, ts);
   const fp = federationPosture(mins, ts);
   const iof = interoperabilityFabric(mins, ts);
+  const sei = sovereignExecutionIndex({
+    federationOperational: fp.institutions.length ? fp.meanOperational : 100,
+    resilience: resilience.index,
+    runtimeLoad: liveRt.open > 0 ? Math.min(100, liveRt.open) : 0,
+    auditIntact: audit.intact,
+  });
   const leg = legislativeState(ts, model.legislature.chambers.map(c => c.name).slice(0, 2));
   const jud = judicialState(ts);
   const constContinuity =
@@ -236,6 +242,28 @@ export function NationalShell() {
           </div>
         ))}
       </div>
+
+      {(() => {
+        const st = sei.band === 'degraded' ? 'alert' : sei.band === 'strained' ? 'warn' : 'ok';
+        return (
+          <P title="Sovereign execution index" meta="emergent composite — institutional operations · resilience · runtime · audit">
+            <div className="flex flex-wrap items-center gap-4">
+              <div className="flex items-baseline gap-2">
+                <span className="font-mono text-[32px] leading-none tabular-nums" style={{ color: TONE[st] }}>{sei.index}</span>
+                <span className="text-[10px] uppercase tracking-[0.16em]" style={{ color: TONE[st] }}>{sei.band}</span>
+              </div>
+              <div className="grid flex-1 grid-cols-2 gap-1.5 sm:grid-cols-4">
+                {sei.drivers.map(dvr => (
+                  <div key={dvr.label} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                    <div className="truncate text-[8px] uppercase tracking-wider text-ink-muted">{dvr.label} · w{Math.round(dvr.weight * 100)}%</div>
+                    <div className="font-mono text-[12px] tabular-nums text-ink-soft">{dvr.value}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </P>
+        );
+      })()}
 
       {(() => {
         const ptn = fp.posture === 'critical' ? 'alert' : fp.posture === 'strained' ? 'warn' : 'ok';

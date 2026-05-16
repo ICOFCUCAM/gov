@@ -42,6 +42,31 @@ export interface FederationPosture {
   posture: 'stable' | 'strained' | 'critical';
 }
 
+export interface SovereignExecutionIndex {
+  index: number;            // 0-100 composite of execution health
+  band: 'operational' | 'strained' | 'degraded';
+  drivers: { label: string; value: number; weight: number }[];
+}
+// Emergent sovereign execution index — a single figure that is the
+// weighted blend of real institutional operational posture, resilience
+// and runtime/audit integrity. No synthetic constant.
+export function sovereignExecutionIndex(input: {
+  federationOperational: number;   // 0-100
+  resilience: number;              // 0-100
+  runtimeLoad: number;             // 0-100 (higher = worse)
+  auditIntact: boolean;
+}): SovereignExecutionIndex {
+  const drivers = [
+    { label: 'Institutional operations', value: input.federationOperational, weight: 0.4 },
+    { label: 'National resilience', value: input.resilience, weight: 0.3 },
+    { label: 'Runtime throughput', value: Math.max(0, 100 - input.runtimeLoad), weight: 0.2 },
+    { label: 'Audit integrity', value: input.auditIntact ? 100 : 0, weight: 0.1 },
+  ];
+  const index = Math.round(drivers.reduce((s, d) => s + d.value * d.weight, 0));
+  const band: SovereignExecutionIndex['band'] = index >= 70 ? 'operational' : index >= 50 ? 'strained' : 'degraded';
+  return { index, band, drivers };
+}
+
 export function federationPosture(mins: Ministry[], t: number): FederationPosture {
   const active = mins.filter(m => m.status === 'active');
   const institutions: InstitutionPosture[] = active.map((m): InstitutionPosture => {
