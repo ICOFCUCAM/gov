@@ -15,6 +15,7 @@ import { identityFor } from '@/lib/archetype-profiles';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { subsystemsFor, subsystemOpPct } from '@/lib/institution/operational-catalog';
 import { ministryFabric } from '@/lib/institution/ministry-fabric';
+import { instantiateMinistry, systemKindLabel } from '@/lib/institution/blueprint';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { nationalRegions } from '@/lib/gov/regions';
@@ -31,11 +32,12 @@ import type {
 } from '@/lib/api/types';
 
 type Tab =
-  | 'command' | 'regional' | 'approvals' | 'incidents' | 'field'
+  | 'command' | 'ecosystem' | 'regional' | 'approvals' | 'incidents' | 'field'
   | 'escalations' | 'logistics' | 'analytics' | 'treasury'
   | 'infrastructure' | 'workforce' | 'security' | 'audit';
 const TABS: { k: Tab; label: string }[] = [
   { k: 'command', label: 'Command' },
+  { k: 'ecosystem', label: 'Ecosystem' },
   { k: 'regional', label: 'Regional' },
   { k: 'approvals', label: 'Approvals' },
   { k: 'incidents', label: 'Incidents' },
@@ -529,6 +531,71 @@ export function MinistryWorkspace({ id }: { id: string }) {
           ) : null}
         </div>
       )}
+
+      {tab === 'ecosystem' && inst && (() => {
+        const eco = instantiateMinistry(inst, now / 4000);
+        const tone = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
+        return (
+          <div className="space-y-3">
+            <Section
+              title="Institutional ecosystem"
+              meta={`${archetype} · ${eco.activated ? 'instantiated' : 'blueprinted'}`}
+            >
+              <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+                {[
+                  { l: 'System groups', v: String(eco.stats.groups), c: 'rgb(var(--c-ink))' },
+                  { l: 'Total systems', v: String(eco.stats.systems), c: 'rgb(var(--c-ink))' },
+                  { l: 'Operational', v: String(eco.stats.operational), c: tone('ok') },
+                  { l: 'Degraded', v: String(eco.stats.degraded), c: eco.stats.degraded ? tone('alert') : 'rgb(var(--c-ink-muted))' },
+                  { l: 'Provisioning', v: String(eco.stats.provisioning), c: eco.stats.provisioning ? tone('warn') : 'rgb(var(--c-ink-muted))' },
+                  { l: 'Mean health', v: eco.activated ? `${eco.stats.meanHealth}%` : '—', c: tone(eco.stats.meanHealth >= 80 ? 'ok' : eco.stats.meanHealth >= 65 ? 'warn' : 'alert') },
+                ].map(s => (
+                  <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2">
+                    <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
+                    <div className="font-mono text-[15px] tabular-nums" style={{ color: s.c }}>{s.v}</div>
+                  </div>
+                ))}
+              </div>
+              <p className="mb-2 text-[11px] text-ink-muted">
+                This institution is instantiated from the <strong>{archetype}</strong> sovereign
+                archetype — {eco.stats.groups} operating groups spanning command, network,
+                citizen, personnel, intelligence, registry, regulatory, finance, emergency,
+                logistics and interoperability systems. {eco.activated
+                  ? 'Every system is provisioned and running.'
+                  : 'Activation provisions every system — it is not an empty container.'}
+              </p>
+              <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-3">
+                {eco.groups.map(g => (
+                  <div key={g.key} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-[11px] font-semibold text-ink">{g.name}</span>
+                      <span className="font-mono text-[10px] tabular-nums" style={{ color: tone(g.tone) }}>
+                        {eco.activated ? `${g.health}%` : 'prov'}
+                      </span>
+                    </div>
+                    <div className="mb-1 text-[9px] text-ink-muted">{g.purpose}</div>
+                    <ul className="space-y-0.5">
+                      {g.systems.map(s => {
+                        const st = s.status === 'operational' ? tone('ok') : s.status === 'degraded' ? tone('alert') : 'rgb(var(--c-ink-muted))';
+                        return (
+                          <li key={s.name} className="flex items-center gap-1.5 text-[10px]">
+                            <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: st }} />
+                            <span className="min-w-0 flex-1 truncate text-ink-soft">{s.name}</span>
+                            <span className="shrink-0 text-[8px] uppercase tracking-wider text-ink-muted">{systemKindLabel(s.kind)}</span>
+                            <span className="w-9 shrink-0 text-right font-mono text-[9px] tabular-nums" style={{ color: st }}>
+                              {s.status === 'provisioning' ? '—' : `${s.uptime}%`}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+                ))}
+              </div>
+            </Section>
+          </div>
+        );
+      })()}
 
       {tab === 'regional' && (
         <div className="space-y-3">
