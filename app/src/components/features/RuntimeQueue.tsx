@@ -3,9 +3,10 @@
 import * as React from 'react';
 import { TONE } from '@/components/features/SituationRoom';
 import {
-  seedWorkItems, applyAction, actionsFor, queueStats, workflowFor,
+  actionsFor, queueStats, workflowFor,
   type WorkKind, type WorkItem, type ActionKey,
 } from '@/lib/gov/runtime-workflow';
+import { subscribe, getScope, actOnItem } from '@/lib/gov/runtime-store';
 
 const ACTION_LABEL: Record<ActionKey, string> = {
   advance: 'Advance', approve: 'Approve', reject: 'Reject', escalate: 'Escalate',
@@ -28,14 +29,18 @@ const prTone = (p: WorkItem['priority']) => (p === 'urgent' ? TONE.alert : p ===
 export function RuntimeQueue({
   scope, kind, title, by = 'Operator', n = 14,
 }: { scope: string; kind: WorkKind; title: string; by?: string; n?: number }) {
-  const [items, setItems] = React.useState<WorkItem[]>(() => seedWorkItems(scope, kind, 0, n));
+  const items = React.useSyncExternalStore(
+    subscribe,
+    () => getScope(scope, kind, n),
+    () => getScope(scope, kind, n),
+  );
   const [sel, setSel] = React.useState<string | null>(null);
   const [filter, setFilter] = React.useState<string>('open');
   const wf = workflowFor(kind);
   const stats = queueStats(items);
 
   const act = (id: string, action: ActionKey) => {
-    setItems(prev => prev.map(it => (it.id === id ? applyAction(it, action, by, Date.now()) : it)));
+    actOnItem(scope, id, action, by);
   };
 
   const shown = items.filter(it =>
