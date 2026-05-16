@@ -15,6 +15,7 @@ import { citizenWallet, officerConsole } from '@/lib/gov/citizen-systems';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { ROLES, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
 import { evaluateConstitution, type AppKind } from '@/services/constitutional-engine';
+import { escalationState } from '@/shared/sovereignty/escalation';
 import { wave } from '@/lib/telemetry';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -110,6 +111,15 @@ export function AppHost({ domain }: { domain: string }) {
                     {verdict.withheld.length ? (
                       <span className="text-[9px] text-ink-muted">withholding: {verdict.withheld.join(', ')}</span>
                     ) : <span className="text-[9px] text-ink-muted">all capabilities constitutionally available</span>}
+                    {(() => {
+                      const es = escalationState(app.kind as AppKind, stress);
+                      return (
+                        <span className="ml-auto text-[9px] text-ink-muted">
+                          escalation tier · <span className="text-ink-soft">{es.current}</span>
+                          {es.next ? ` → next: ${es.next.tier} (${es.next.authority})` : ' · apex'}
+                        </span>
+                      );
+                    })()}
                   </div>
                   <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
                     {verdict.checks.map(c => (
