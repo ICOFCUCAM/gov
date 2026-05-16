@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
-import { TONE, ACCENT, seed, Spark, Panel, TerritoryHeat, waveSeries } from '@/components/features/SituationRoom';
+import { TONE, ACCENT, seed, Spark, Panel, TerritoryHeat, waveSeries, domainStress } from '@/components/features/SituationRoom';
 import type { NationalCoordination as NC } from '@/lib/api/types';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
@@ -54,7 +54,10 @@ export function NationalCoordination() {
   const insts = d?.nodes.length || 42;
   const cascade = d?.posture.cascadeRisks || 7;
 
-  const regs = MINS.map(m => ({ ...m, p: Math.round(40 + seed(`co:${m.n}:${epoch}`) * 55) }));
+  const regs = MINS.map(m => {
+    const ds = (k: string) => domainStress(m.a, k, risk + 25, now / 4000, m.n);
+    return { ...m, p: Math.round((ds('ops') + ds('sec') + ds('infra')) / 3) };
+  });
   const sp = (k: string, n = 18, lo = 30, hi = 80) => waveSeries(`s:${k}`, now / 4000, n, lo, hi);
 
   const tele = [
