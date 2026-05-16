@@ -12,6 +12,8 @@ import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
 import { TONE, Spark, seed, TerritoryHeat } from '@/components/features/SituationRoom';
 import { api } from '@/lib/api/client';
 import { identityFor } from '@/lib/archetype-profiles';
+import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
+import type { Ministry } from '@/lib/api/types';
 import type {
   AnalyticSeries,
   ArchetypeKey,
@@ -63,16 +65,19 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const [field, setField] = React.useState<FieldUnitStatus[]>([]);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
+  const [inst, setInst] = React.useState<Ministry | null>(null);
 
   const load = React.useCallback(async () => {
     try {
-      const [r, s, q, inc, f] = await Promise.all([
+      const [r, s, q, inc, f, mins] = await Promise.all([
         api.org.regions(id),
         api.org.series(id),
         api.org.queue(id),
         api.org.incidents(id),
         api.org.field(id),
+        api.org.ministries().then(x => x.ministries).catch(() => [] as Ministry[]),
       ]);
+      setInst(mins.find(m => m.id === id) ?? null);
       setName(r.ministry.name);
       setArchetype(r.ministry.archetype);
       setRegions(r.regions);
@@ -197,6 +202,33 @@ export function MinistryWorkspace({ id }: { id: string }) {
           <Pill tone={openQueue > 6 ? 'warn' : 'neutral'}>{openQueue} in queue</Pill>
         </div>
       </div>
+
+      {(() => {
+        const r = inst ? scoreInstitution(inst) : null;
+        const crisis = activeAlerts.some(a => /1|crit/i.test(String(a.severity)));
+        const mode = crisis ? 'CRISIS' : activeAlerts.length > 0 ? 'ESCALATION' : 'EXECUTIVE';
+        const modeTone = mode === 'CRISIS' ? 'rgb(var(--c-alert))' : mode === 'ESCALATION' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))';
+        const rc = !r ? 'rgb(var(--c-ink-muted))' : r.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))';
+        return (
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
+            {[
+              { l: 'Lifecycle', v: r ? LIFECYCLE_LABEL[r.lifecycle] : (inst?.status ?? '—'), c: rc, dot: true },
+              { l: 'Readiness', v: r ? `${r.total}%` : '—', c: rc },
+              { l: 'Posture mode', v: mode, c: modeTone, dot: true },
+              { l: 'Active incidents', v: String(activeAlerts.length), c: activeAlerts.length ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
+              { l: 'Queue', v: `${openQueue} open`, c: openQueue > 6 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink))' },
+            ].map(s => (
+              <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+                <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+                <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: s.c }}>
+                  {s.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: s.c }} /> : null}
+                  {s.v}
+                </span>
+              </div>
+            ))}
+          </div>
+        );
+      })()}
 
       {/* Internal workspace navigation */}
       <div className="flex flex-wrap gap-1 border-b border-line" role="tablist" aria-label="Workspace sections">
