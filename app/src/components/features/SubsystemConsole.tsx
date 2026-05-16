@@ -41,6 +41,7 @@ function Stat({ l, v, t }: { l: string; v: string; t?: 'ok' | 'warn' | 'alert' }
 export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const [m, setM] = React.useState<Ministry | null>(null);
   const [now, setNow] = React.useState(() => Date.now());
+  const [selDoc, setSelDoc] = React.useState<string | null>(null);
   React.useEffect(() => {
     api.org.get(id).then(r => setM(r.ministry)).catch(() => {});
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -110,18 +111,40 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             <div className="max-h-[320px] overflow-y-auto">
               {roster.map(d => {
                 const wt = d.workload >= 85 ? 'alert' : d.workload >= 70 ? 'warn' : 'ok';
+                const open = selDoc === d.id;
                 return (
-                  <div key={d.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0">
-                    <span className="w-16 shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{d.id}</span>
-                    <span className="min-w-0 flex-1">
-                      <span className="block truncate text-[11px] text-ink">{d.name}</span>
-                      <span className="block truncate text-[8.5px] text-ink-muted">{d.specialty} · {d.region} · {d.patientsToday} today{d.onCall ? ' · on-call' : ''}</span>
-                    </span>
-                    <span className="w-16 shrink-0 text-[8px] uppercase tracking-wider" style={{ color: d.status === 'available' ? TONE.ok : d.status === 'off-duty' ? 'rgb(var(--c-ink-muted))' : TONE.warn }}>{d.status}</span>
-                    <span className="w-24 shrink-0">
-                      <span className="mb-0.5 block text-right font-mono text-[9px] tabular-nums" style={{ color: tc(wt) }}>{d.workload}%</span>
-                      <span className="block h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${d.workload}%`, backgroundColor: tc(wt) }} /></span>
-                    </span>
+                  <div key={d.id} className="border-b border-line-soft last:border-0">
+                    <button onClick={() => setSelDoc(open ? null : d.id)} className="focus-ring flex w-full items-center gap-2 px-3 py-1.5 text-left transition-colors hover:bg-surface-2/50">
+                      <span className="w-16 shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{d.id}</span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-[11px] text-ink">{d.name}</span>
+                        <span className="block truncate text-[8.5px] text-ink-muted">{d.specialty} · {d.region} · {d.patientsToday} today{d.onCall ? ' · on-call' : ''}</span>
+                      </span>
+                      <span className="w-16 shrink-0 text-[8px] uppercase tracking-wider" style={{ color: d.status === 'available' ? TONE.ok : d.status === 'off-duty' ? 'rgb(var(--c-ink-muted))' : TONE.warn }}>{d.status}</span>
+                      <span className="w-24 shrink-0">
+                        <span className="mb-0.5 block text-right font-mono text-[9px] tabular-nums" style={{ color: tc(wt) }}>{d.workload}%</span>
+                        <span className="block h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${d.workload}%`, backgroundColor: tc(wt) }} /></span>
+                      </span>
+                    </button>
+                    {open ? (
+                      <div className="grid grid-cols-2 gap-1.5 bg-surface-2/40 px-3 py-2 sm:grid-cols-4">
+                        {[
+                          ['Caseload today', `${d.patientsToday}`],
+                          ['Workload', `${d.workload}%`],
+                          ['Burnout risk', `${d.burnoutRisk}%`],
+                          ['On-call', d.onCall ? 'Yes' : 'No'],
+                          ['Specialty', d.specialty],
+                          ['Region', d.region],
+                          ['Status', d.status],
+                          ['Shift load', `${Math.round(waveSeries(`docshift:${id}:${d.id}`, ts, 6, 4, 14).at(-1)!)} pending`],
+                        ].map(([l, v]) => (
+                          <div key={l} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-1">
+                            <div className="truncate text-[7.5px] uppercase tracking-wider text-ink-muted">{l}</div>
+                            <div className="truncate font-mono text-[10px] text-ink-soft">{v}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
                 );
               })}
