@@ -581,6 +581,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
                         {eco.activated ? `${g.health}%` : 'prov'}
                       </span>
                     </button>
+                    <Link href={`/ministries/${id}/system/${g.key}`}
+                      className="focus-ring mt-0.5 inline-block text-[9px] text-link underline underline-offset-2">
+                      Open operational environment →
+                    </Link>
                     <div className="mb-1 text-[9px] text-ink-muted">{g.purpose}</div>
                     <ul className="space-y-0.5">
                       {g.systems.map(s => {

@@ -314,7 +314,7 @@ export function MinistriesConsole() {
                         {eco.groups.map(g => (
                           <div key={g.key} className="rounded-[3px] border border-line-soft bg-surface-2/40 p-2">
                             <div className="flex items-center justify-between gap-2">
-                              <span className="text-[11px] font-semibold text-ink">{g.name}</span>
+                              <a href={`/ministries/${current.id}/system/${g.key}`} className="text-[11px] font-semibold text-link no-underline hover:underline">{g.name} →</a>
                               <span className="font-mono text-[10px] tabular-nums" style={{ color: tone(g.tone) }}>
                                 {eco.activated ? `${g.health}%` : '— '}
                               </span>
