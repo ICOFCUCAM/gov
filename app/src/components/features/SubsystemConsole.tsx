@@ -13,6 +13,7 @@ import {
   fiscalCommand, revenueOps, budgetOps, procurementOps, bankingRails,
   citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
+import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import type { Ministry } from '@/lib/api/types';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
@@ -492,29 +493,115 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
-  // ── Generic deep environment (other archetypes / groups) ─────────────
+  // ── Generic deep environment — archetype-aware operating world ───────
+  const ao = archetypeOperations(id, m.archetype, ts);
   return (
     <div className="space-y-2">
       {header}
-      <p className="text-[11px] text-ink-muted">
-        {grp.purpose}. {grp.systems.length} operational systems · {eco.activated ? `${grp.health}% group health` : 'awaiting activation'}.
-      </p>
-      <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-        {grp.systems.map(s => {
-          const st = s.status === 'operational' ? 'ok' : s.status === 'degraded' ? 'alert' : 'warn';
-          return (
-            <Panel key={s.name} title={s.name} meta={systemKindLabel(s.kind)} bodyClass="!p-2">
-              <div className="flex items-center justify-between text-[10px]">
-                <span className="uppercase tracking-wider" style={{ color: tc(st as 'ok' | 'warn' | 'alert') }}>{s.status}</span>
-                <span className="font-mono tabular-nums" style={{ color: tc(st as 'ok' | 'warn' | 'alert') }}>{s.status === 'provisioning' ? '—' : `${s.uptime}%`}</span>
-              </div>
-              <div className="mt-1 h-6 overflow-hidden opacity-80"><Spark pts={waveSeries(`sub:${id}:${grp.key}:${s.name}`, ts, 20, 35, 92)} tone={st as 'ok' | 'warn' | 'alert'} /></div>
-            </Panel>
-          );
-        })}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        <Stat l="Posture" v={ao.command.posture} t={ao.command.postureTone} />
+        <Stat l="Readiness" v={`${ao.command.readiness}%`} t={ao.command.readiness >= 70 ? 'ok' : ao.command.readiness >= 50 ? 'warn' : 'alert'} />
+        <Stat l="Escalation tier" v={`L${ao.command.escalationTier}`} t={ao.command.escalationTier >= 2 ? 'alert' : ao.command.escalationTier === 1 ? 'warn' : 'ok'} />
+        <Stat l="Mean operational" v={`${ao.meanOperational}%`} t={ao.meanOperational >= 78 ? 'ok' : ao.meanOperational >= 55 ? 'warn' : 'alert'} />
+        <Stat l="Open requests" v={ao.citizen.openRequests.toLocaleString()} t="ok" />
+        <Stat l="Budget pressure" v={`${ao.finance.budgetPressure}`} t={ao.finance.budgetPressure >= 65 ? 'alert' : ao.finance.budgetPressure >= 45 ? 'warn' : 'ok'} />
       </div>
+
+      <div className="grid gap-2 xl:grid-cols-3">
+        <Panel title={`${grp.name} — command centre`} meta={grp.purpose} bodyClass="!p-2">
+          <div className="grid grid-cols-2 gap-2">
+            <Stat l="Directives" v={`${ao.command.directives}`} t="ok" />
+            <Stat l="Decision latency" v={`${ao.command.decisionLatencyMin}m`} t={ao.command.decisionLatencyMin >= 24 ? 'warn' : 'ok'} />
+          </div>
+          <div className="mt-1.5 text-[9px] text-ink-muted">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {ao.command.aiAdvisory}</div>
+          <div className="mt-1.5 flex flex-wrap gap-1">
+            {ao.command.chain.map((c, i) => (
+              <span key={c} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-0.5 text-[8.5px] text-ink-soft">{i + 1}. {c}</span>
+            ))}
+          </div>
+        </Panel>
+        <Panel title="Operations centre" meta="live workflow queues" bodyClass="!p-0">
+          {ao.queues.map(q => (
+            <div key={q.label} className="border-b border-line-soft px-3 py-1.5 last:border-0">
+              <div className="flex items-center justify-between text-[10px]">
+                <span className="truncate text-ink-soft">{q.label}</span>
+                <span className="font-mono tabular-nums" style={{ color: q.breaching ? TONE.alert : TONE.ok }}>{q.depth} · {q.oldestHrs}h/{q.slaHrs}h</span>
+              </div>
+              <div className="mt-0.5 h-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${Math.min(100, (q.oldestHrs / q.slaHrs) * 100)}%`, backgroundColor: q.breaching ? TONE.alert : TONE.warn }} /></div>
+            </div>
+          ))}
+        </Panel>
+        <Panel title="Sector KPIs" meta="archetype signature" bodyClass="!p-2">
+          <div className="grid grid-cols-2 gap-1">
+            {ao.kpis.map(k => (
+              <div key={k.label} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
+                <div className="truncate text-[8px] uppercase tracking-wider text-ink-muted">{k.label}</div>
+                <div className="font-mono text-[12px] tabular-nums" style={{ color: tc(k.tone) }}>{k.value}</div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      <div className="grid gap-2 xl:grid-cols-3">
+        <Panel title="Personnel & field units" meta={`${ao.personnel.staffedPct}% staffed`} bodyClass="!p-2">
+          <div className="space-y-1">
+            {ao.personnel.units.map(u => (
+              <div key={u.label} className="flex items-center gap-2 text-[10px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{u.label}</span>
+                <span className="font-mono tabular-nums" style={{ color: tc(u.tone) }}>{u.deployed}/{u.total}</span>
+              </div>
+            ))}
+            <div className="mt-1 text-[9px] text-ink-muted">Vacancies {ao.personnel.vacanciesPct}% · on-duty {ao.personnel.onDuty.toLocaleString()}</div>
+          </div>
+        </Panel>
+        <Panel title="Citizen services & logistics" meta="public continuity" bodyClass="!p-2">
+          <div className="grid grid-cols-2 gap-2">
+            <Stat l="SLA met" v={`${ao.citizen.slaMetPct}%`} t={ao.citizen.slaMetPct >= 85 ? 'ok' : 'warn'} />
+            <Stat l="Satisfaction" v={`${ao.citizen.satisfactionPct}%`} t={ao.citizen.satisfactionPct >= 75 ? 'ok' : 'warn'} />
+            <Stat l="Stock cover" v={`${ao.logistics.stockCoverDays}d`} t={ao.logistics.stockCoverDays >= 30 ? 'ok' : 'warn'} />
+            <Stat l="Disruptions" v={`${ao.logistics.disruptions}`} t={ao.logistics.disruptions ? 'alert' : 'ok'} />
+          </div>
+        </Panel>
+        <Panel title="Operational intelligence" meta="signals" bodyClass="!p-2">
+          <div className="space-y-1">
+            {ao.intelligence.map((s, i) => (
+              <div key={i} className="flex items-start gap-1.5 text-[10px]">
+                <span className="mt-0.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: s.level === 'risk' ? TONE.alert : s.level === 'watch' ? TONE.warn : TONE.ok }} />
+                <span className="min-w-0"><span className="block text-ink">{s.label}</span><span className="block truncate text-[8.5px] text-ink-muted">{s.detail}</span></span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+
+      <div className="grid gap-2 xl:grid-cols-2">
+        <Panel title="Regional operations" meta={`${grp.name} footprint`} bodyClass="!p-1.5">
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
+            {ao.regional.map(r => (
+              <div key={r.region} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                <div className="truncate text-[9px] font-semibold text-ink">{r.region}</div>
+                <div className="font-mono text-[13px] tabular-nums" style={{ color: tc(r.tone) }}>{r.opPct}%</div>
+                <div className="text-[8px] text-ink-muted">load {r.load}</div>
+              </div>
+            ))}
+          </div>
+        </Panel>
+        <Panel title="Subsystem inventory" meta="institutional machinery" bodyClass="!p-0">
+          <div className="max-h-[220px] overflow-y-auto">
+            {ao.inventory.map(s => (
+              <div key={s.name} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{s.name}</span>
+                <span className="shrink-0 font-mono tabular-nums text-ink-muted">{s.count.toLocaleString()} {s.unit}</span>
+                <span className="w-9 shrink-0 text-right font-mono tabular-nums" style={{ color: tc(s.tone) }}>{s.opPct}%</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      </div>
+
       <p className="text-[10px] text-ink-muted">
-        Deep operational environments are generated per archetype. {m.archetype === 'HEALTH' ? '' : `${m.archetype} world consoles instantiate as the archetype expands.`} Blueprint groups: {blueprintFor(m.archetype).map(g => g.name).join(' · ')}.
+        {grp.name}: {grp.systems.length} systems ({grp.systems.map(s => systemKindLabel(s.kind)).filter((v, i, a) => a.indexOf(v) === i).join(' · ')}). Generated from the {m.archetype} archetype — a sovereign operational environment, not a page. Groups: {blueprintFor(m.archetype).map(g => g.name).join(' · ')}.
       </p>
     </div>
   );
