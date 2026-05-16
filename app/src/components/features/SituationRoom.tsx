@@ -778,6 +778,12 @@ export function NationalMap({
           <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: CORR_TONE.air }} />air</span>
           <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: CORR_TONE.maritime }} />maritime</span>
         </span>
+        <span className="flex items-center gap-2 border-l border-line pl-2">
+          <span className="flex items-center gap-1"><span style={{ color: TONE.warn }}>┄</span>evac</span>
+          <span className="flex items-center gap-1"><span style={{ color: TONE.alert }}>↯</span>cascade</span>
+          <span className="flex items-center gap-1"><span style={{ color: ACCENT }}>★</span>strategic asset</span>
+          <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'rgb(var(--c-ink-soft))', opacity: 0.6 }} />population</span>
+        </span>
         <span className="flex items-center gap-1 border-l border-line pl-2">✚ medical ⚓ port ✈ air ⚡ power ▣ logistics ◑ water</span>
       </div>
 
