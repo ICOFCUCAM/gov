@@ -95,6 +95,9 @@ export function CabinetIntelligence() {
   const [war, setWar] = React.useState(false);
   const [openEsc, setOpenEsc] = React.useState<number | null>(0);
   const [openMin, setOpenMin] = React.useState<string | null>(null);
+  const [directives, setDirectives] = React.useState<{ l: string; at: number }[]>([]);
+  const [natAlert, setNatAlert] = React.useState(false);
+  const issue = (l: string, fx?: () => void) => { setDirectives(d => [{ l, at: Date.now() }, ...d].slice(0, 6)); fx?.(); };
   const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true });
 
   React.useEffect(() => {
@@ -203,14 +206,6 @@ export function CabinetIntelligence() {
     { l: 'Maritime activity', s: 'Low', t: 'ok' },
     { l: 'Global market impact', s: 'Moderate', t: 'warn' },
     { l: 'Diplomatic engagements', s: 'Active', t: 'ok' },
-  ];
-  const quick = [
-    { l: 'Emergency War Room', a: () => setWar(true) },
-    { l: 'Cabinet Meeting', href: '/gov/coordination' },
-    { l: 'National Alert', href: '/gov/situation-room' },
-    { l: 'Resource Reallocation', href: '/ops' },
-    { l: 'Intelligence Report', href: '/gov/coordination' },
-    { l: 'Executive Directive', href: '/audit' },
   ];
 
   const memo = [
@@ -657,23 +652,33 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Quick actions" meta="executive command" className="min-h-[188px]" bodyClass="!p-1.5">
+            <Panel title="Executive command" meta="directive authority" className="min-h-[188px]" bodyClass="!p-1.5">
               <div className="grid grid-cols-2 gap-1">
-                {quick.map((q, i) => {
-                  const danger = i === 0;
-                  const glyph = ['⛨', '◆', '⚠', '⇄', '▤', '§'][i] ?? '◆';
-                  const cls = 'focus-ring group flex items-center gap-1.5 rounded-[3px] border px-2 py-1.5 text-left text-[10px] font-medium transition-all';
-                  const st = { borderColor: danger ? RED : 'rgb(var(--c-line))', color: danger ? RED : 'rgb(var(--c-ink-soft))' };
-                  const inner = (
-                    <>
-                      <span className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] text-[11px] transition-colors group-hover:text-white" style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: danger ? RED : ACCENT }}>{glyph}</span>
-                      <span className="min-w-0 truncate">{q.l}</span>
-                    </>
-                  );
-                  return q.href
-                    ? <Link key={q.l} href={q.href} className={`${cls} no-underline hover:bg-surface-2/60`} style={st}>{inner}</Link>
-                    : <button key={q.l} onClick={q.a} className={cls} style={{ ...st, backgroundColor: `color-mix(in srgb, ${RED} 8%, transparent)` }}>{inner}</button>;
-                })}
+                {([
+                  { l: 'Emergency War Room', g: '⛨', d: true, fx: () => setWar(true) },
+                  { l: 'National Alert', g: '⚠', d: true, fx: () => setNatAlert(true) },
+                  { l: 'Cabinet Summons', g: '◆' },
+                  { l: 'Escalation Authorisation', g: '↯' },
+                  { l: 'Resource Reallocation', g: '⇄' },
+                  { l: 'Constitutional Emergency', g: '▥', d: true },
+                ] as { l: string; g: string; d?: boolean; fx?: () => void }[]).map(q => (
+                  <button key={q.l} onClick={() => issue(q.l, q.fx)}
+                    className="focus-ring group flex items-center gap-1.5 rounded-[3px] border px-2 py-1.5 text-left text-[10px] font-medium transition-all hover:bg-surface-2/60"
+                    style={{ borderColor: q.d ? RED : 'rgb(var(--c-line))', color: q.d ? RED : 'rgb(var(--c-ink-soft))', backgroundColor: q.d ? `color-mix(in srgb, ${RED} 8%, transparent)` : undefined }}>
+                    <span className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] text-[11px]" style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: q.d ? RED : ACCENT }}>{q.g}</span>
+                    <span className="min-w-0 truncate">{q.l}</span>
+                  </button>
+                ))}
+              </div>
+              <div className="mt-1.5 border-t border-line pt-1">
+                <div className="mb-0.5 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Directive ledger {natAlert ? <span style={{ color: RED }}>· NATIONAL ALERT ACTIVE</span> : ''}</div>
+                {directives.length === 0 ? <p className="text-[9px] text-ink-muted">No directives issued this session.</p> : directives.map((d, i) => (
+                  <div key={i} className="flex items-center gap-1.5 text-[9px]">
+                    <span className="font-mono tabular-nums text-ink-muted">{new Date(d.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                    <span className="h-1 w-1 rounded-full" style={{ backgroundColor: RED }} />
+                    <span className="truncate text-ink-soft">{d.l} · issued · audit-logged</span>
+                  </div>
+                ))}
               </div>
             </Panel>
           </div>
