@@ -19,6 +19,7 @@ import { legislativeState } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
 import { stateFabric } from '@/lib/gov/state-fabric';
 import { nationalRuntime } from '@/lib/gov/national-runtime';
+import { subscribe as rtSubscribe, runtimeStats } from '@/lib/gov/runtime-store';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -58,6 +59,7 @@ export function NationalShell() {
   }, []);
 
   const ts = now / 4000;
+  const liveRt = React.useSyncExternalStore(rtSubscribe, runtimeStats, runtimeStats);
   const identity = sov ? resolveIdentity(sov) : null;
   const model = constitutionFor(sov?.stateForm ?? 'republic');
   const dir = deployableInstitutions(mins);
@@ -355,7 +357,7 @@ export function NationalShell() {
                 { l: 'SLA breaching', v: `${rt.totalBreaching}`, t: rt.totalBreaching > 80 ? 'alert' as const : 'warn' as const },
                 { l: 'Throughput/hr', v: `${rt.throughputPerHr}`, t: 'ok' as const },
                 { l: 'Mean load', v: `${rt.meanLoad}`, t: pt },
-                { l: 'Posture', v: rt.posture, t: pt },
+                { l: 'Operator transitions', v: `${liveRt.transitions}`, t: 'ok' as const },
               ].map(s => (
                 <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
                   <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
@@ -374,6 +376,9 @@ export function NationalShell() {
                   </Link>
                 );
               })}
+            </div>
+            <div className="mt-1.5 text-right">
+              <Link href="/gov/ledger" className="text-[10px] text-link underline underline-offset-2">Operations Ledger →</Link>
             </div>
           </P>
         );
