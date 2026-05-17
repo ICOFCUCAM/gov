@@ -85,7 +85,7 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
 
   return (
     <div className="flex min-h-screen flex-col bg-bg">
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-line bg-surface px-4">
+      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-line px-4" style={{ background: 'linear-gradient(100deg,#070b12,#0c1622 60%,#0a1420)' }}>
         <span className="grid h-7 w-7 place-items-center rounded-[3px] text-[10px] font-bold text-white" style={{ backgroundColor: app.activated ? 'rgb(var(--c-link))' : 'rgb(var(--c-line))' }}>
           {app.domain.slice(0, 2).toUpperCase()}
         </span>
