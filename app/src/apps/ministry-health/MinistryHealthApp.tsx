@@ -6,7 +6,6 @@
 // drilldown). National dashboards consume this ministry's real operations.
 
 import * as React from 'react';
-import { TONE } from '@/components/features/SituationRoom';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
