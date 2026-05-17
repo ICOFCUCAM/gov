@@ -3,6 +3,7 @@ import {
   pharmaceuticalSupply, laboratoryNetwork, healthFinance,
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
+  patientDeepExecution,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -123,5 +124,26 @@ describe('ministry of health operations engine', () => {
     for (const d of a.inventory) expect(['ok', 'reorder', 'critical', 'stockout']).toContain(d.status);
     for (const o of a.redistribution) expect(['proposed', 'authorised', 'in-transit']).toContain(o.status);
     expect(a.emergencyOrders).toBe(a.redistribution.filter(o => o.status === 'proposed').length);
+  });
+
+  it('patientDeepExecution is a deterministic, bounded citizen-health execution system', () => {
+    const a = patientDeepExecution('MOH', 175);
+    expect(a).toEqual(patientDeepExecution('MOH', 175));
+    expect(a.intake.length).toBe(9);
+    expect(a.rx.length).toBe(5);
+    expect(a.vaccination.length).toBe(5);
+    expect(['steady', 'strained', 'crisis']).toContain(a.posture);
+    expect(a.recordsIntegrityPct).toBeGreaterThanOrEqual(0);
+    expect(a.recordsIntegrityPct).toBeLessThanOrEqual(100);
+    // intake triage-ordered; vaccination worst-coverage first
+    for (let i = 1; i < a.intake.length; i++) {
+      expect(a.intake[i - 1]!.triage).toBeLessThanOrEqual(a.intake[i]!.triage);
+    }
+    for (let i = 1; i < a.vaccination.length; i++) {
+      expect(a.vaccination[i - 1]!.coveragePct).toBeLessThanOrEqual(a.vaccination[i]!.coveragePct);
+    }
+    for (const r of a.intake) expect(['registration', 'triage', 'clinician', 'admitted']).toContain(r.stage);
+    for (const e of a.emergencyStatuses) expect(['critical', 'admitted', 'observation']).toContain(e.status);
+    expect(a.unrouted).toBe(a.intake.filter(r => r.stage === 'registration' || r.stage === 'triage').length);
   });
 });

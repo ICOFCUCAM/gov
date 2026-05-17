@@ -378,6 +378,80 @@ export function hospitalDeepExecution(id: string, t: number): HospitalDeepExecut
   return { regions, icu, theatres, ambulanceZones, nationalBedHeadroomPct, transferRequests, blockedBeds, admissionsPerHr, dischargesPerHr, timeline, posture };
 }
 
+// ── Patient deep execution system ──────────────────────────────────────
+// Citizen-facing health as a true execution system: an intake workflow
+// board, records & prescription integrity, appointment throughput,
+// vaccination-coverage intelligence and emergency citizen status. Pure &
+// deterministic.
+export interface IntakeRow { id: string; channel: 'Walk-in' | 'Referral' | 'Ambulance' | 'Telehealth'; triage: 1 | 2 | 3 | 4 | 5; stage: 'registration' | 'triage' | 'clinician' | 'admitted'; waitMin: number; tone: Tone }
+export interface RxIntegrity { category: string; issued: number; flagged: number; interactionAlerts: number; tone: Tone }
+export interface VaxCoverage { vaccine: string; coveragePct: number; trend: 'rising' | 'stable' | 'falling'; tone: Tone }
+export interface CitizenEmergencyStatus { id: string; citizen: string; status: 'critical' | 'admitted' | 'observation'; facility: string; ageMin: number; tone: Tone }
+export interface PatientDeepExecution {
+  intake: IntakeRow[];
+  unrouted: number;
+  rx: RxIntegrity[];
+  vaccination: VaxCoverage[];
+  emergencyStatuses: CitizenEmergencyStatus[];
+  recordsIntegrityPct: number;
+  appointmentsHonouredPct: number;
+  meanIntakeWaitMin: number;
+  timeline: LabTimelineEvent[];
+  posture: 'steady' | 'strained' | 'crisis';
+}
+export function patientDeepExecution(id: string, t: number): PatientDeepExecution {
+  const intake: IntakeRow[] = Array.from({ length: 9 }, (_, i): IntakeRow => {
+    const triage = (1 + Math.floor(seed(`pe:tg:${id}:${i}`) * 5)) as IntakeRow['triage'];
+    const channel = (['Walk-in', 'Referral', 'Ambulance', 'Telehealth'] as const)[i % 4]!;
+    const stPhase = Math.floor((t / 5 + seed(`pe:st:${id}:${i}`) * 4)) % 4;
+    const stage = (['registration', 'triage', 'clinician', 'admitted'] as const)[stPhase]!;
+    const waitMin = Math.round(wave(`pe:wt:${id}:${i}`, t, 0, 240));
+    const tone: Tone = triage <= 2 && stage !== 'clinician' && stage !== 'admitted' ? 'alert' : waitMin > 140 ? 'warn' : 'ok';
+    return { id: `IN-${600 + i}`, channel, triage, stage, waitMin, tone };
+  }).sort((a, b) => a.triage - b.triage || b.waitMin - a.waitMin);
+  const unrouted = intake.filter(r => r.stage === 'registration' || r.stage === 'triage').length;
+  const rx: RxIntegrity[] = ['Antibiotics', 'Analgesics', 'Chronic-care', 'Controlled', 'Paediatric'].map((category, i): RxIntegrity => {
+    const issued = Math.round(wave(`pe:rx:${id}:${i}`, t, 200, 14000));
+    const flagged = Math.round(wave(`pe:rf:${id}:${i}`, t, 0, 240));
+    const interactionAlerts = Math.round(wave(`pe:ri:${id}:${i}`, t, 0, 90));
+    const tone: Tone = flagged > 150 || interactionAlerts > 60 ? 'alert' : flagged > 60 || interactionAlerts > 25 ? 'warn' : 'ok';
+    return { category, issued, flagged, interactionAlerts, tone };
+  });
+  const vaccination: VaxCoverage[] = ['Routine childhood', 'Measles (MR)', 'Influenza', 'HPV', 'COVID booster'].map((vaccine, i): VaxCoverage => {
+    const coveragePct = Math.round(wave(`pe:vx:${id}:${i}`, t, 38, 97));
+    const tr = wave(`pe:vt:${id}:${i}`, t, 0, 1);
+    const trend: VaxCoverage['trend'] = tr > 0.66 ? 'rising' : tr > 0.33 ? 'stable' : 'falling';
+    const tone: Tone = coveragePct < 60 ? 'alert' : coveragePct < 80 ? 'warn' : 'ok';
+    return { vaccine, coveragePct, trend, tone };
+  }).sort((a, b) => a.coveragePct - b.coveragePct);
+  const nEmg = Math.round(wave(`pe:ne:${id}`, t, 0, 6));
+  const emergencyStatuses: CitizenEmergencyStatus[] = Array.from({ length: nEmg }, (_, i): CitizenEmergencyStatus => {
+    const sv = wave(`pe:es:${id}:${i}`, t, 0, 1);
+    const status: CitizenEmergencyStatus['status'] = sv > 0.7 ? 'critical' : sv > 0.4 ? 'admitted' : 'observation';
+    return {
+      id: `ES-${800 + i}`, citizen: `CZ-${70000 + (i * 137 % 9000)}`,
+      status, facility: ['Central', 'Northern District', 'Coastal', 'Highland', 'Eastern Referral'][i % 5]!,
+      ageMin: Math.round(wave(`pe:ea:${id}:${i}`, t, 1, 180)),
+      tone: status === 'critical' ? 'alert' : status === 'admitted' ? 'warn' : 'ok',
+    };
+  });
+  const recordsIntegrityPct = Math.round(wave(`pe:ri2:${id}`, t, 94, 100) * 100) / 100;
+  const appointmentsHonouredPct = Math.round(wave(`pe:ah:${id}`, t, 58, 96));
+  const meanIntakeWaitMin = Math.round(intake.reduce((s, r) => s + r.waitMin, 0) / intake.length);
+  const acuteUnrouted = intake.filter(r => r.triage <= 2 && (r.stage === 'registration' || r.stage === 'triage')).length;
+  const critEmg = emergencyStatuses.filter(e => e.status === 'critical').length;
+  const posture: PatientDeepExecution['posture'] =
+    acuteUnrouted >= 2 || critEmg >= 3 || recordsIntegrityPct < 96 ? 'crisis'
+      : acuteUnrouted >= 1 || critEmg >= 1 || meanIntakeWaitMin > 90 ? 'strained' : 'steady';
+  const timeline: LabTimelineEvent[] = [
+    { atHrsAgo: 0, kind: 'sync', detail: `${intake.length - unrouted}/${intake.length} intake routed · mean wait ${meanIntakeWaitMin}m`, tone: unrouted ? 'warn' : 'ok' },
+    { atHrsAgo: 1, kind: 'alert', detail: `${critEmg} citizen(s) in critical emergency status`, tone: critEmg ? 'alert' : 'ok' },
+    { atHrsAgo: 2, kind: 'result', detail: `Records integrity ${recordsIntegrityPct}% · appointments honoured ${appointmentsHonouredPct}%`, tone: recordsIntegrityPct < 97 ? 'warn' : 'ok' },
+    { atHrsAgo: 4, kind: 'escalation', detail: `Lowest vaccination coverage · ${vaccination[0]!.vaccine} ${vaccination[0]!.coveragePct}% (${vaccination[0]!.trend})`, tone: vaccination[0]!.tone },
+  ];
+  return { intake, unrouted, rx, vaccination, emergencyStatuses, recordsIntegrityPct, appointmentsHonouredPct, meanIntakeWaitMin, timeline, posture };
+}
+
 // ── Health finance & claims ────────────────────────────────────────────
 export interface HealthFinance {
   insuranceCoveragePct: number;
