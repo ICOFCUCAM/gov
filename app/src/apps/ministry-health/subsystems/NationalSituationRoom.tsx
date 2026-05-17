@@ -9,6 +9,8 @@
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { nationalSituation } from '@/lib/gov/health-operations';
+import { healthGeo } from '@/lib/gov/health-geo';
+import { GeoMap } from '@/apps/_shared/GeoMap';
 import { propagateNationalEvent } from '@/lib/gov/national-propagation';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -20,6 +22,8 @@ export function NationalSituationRoom({ id, now, role, withheld }: {
 }) {
   const ts = now / 4000;
   const ns = nationalSituation(id, ts);
+  const geo = healthGeo(id, ts);
+  const rr = geo.reroute;
   const sev = Math.min(100, Math.round(ns.regions[0]!.composite * (ns.disasterState === 'national-disaster' ? 1 : 0.85)));
   const prop = propagateNationalEvent(
     { trigger: ns.activeOutbreaks >= 1 ? 'outbreak' : ns.nationalIcuLoad >= 90 ? 'capacity-collapse' : 'mass-casualty', severity: sev, originRegion: ns.worstRegion },
@@ -54,6 +58,14 @@ export function NationalSituationRoom({ id, now, role, withheld }: {
       <div className="rounded-[3px] border px-2.5 py-1.5 text-[11px] font-medium" style={{ borderColor: '#1d2a36', color: C(pT), background: '#0b0f14' }}>
         {ns.headline}
       </div>
+
+      <div className="flex items-start gap-2 rounded-[3px] border px-2.5 py-1.5"
+        style={{ borderColor: C(rr.tone), background: '#0b0f14', boxShadow: rr.active ? `0 0 16px color-mix(in srgb, ${C(rr.tone)} 28%, transparent)` : 'none' }}>
+        <span className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.18em]" style={{ color: C(rr.tone) }}>AI ▸</span>
+        <span className="text-[11px] leading-snug" style={{ color: rr.active ? C(rr.tone) : 'rgb(var(--c-ink-soft))' }}>{rr.text}</span>
+      </div>
+
+      <GeoMap geo={geo} metric="pressure" title="National operations map — regional pressure" height={320} />
 
       <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         <Cell label="Bed pressure" v={`${ns.nationalBedPressure}%`} t={ns.nationalBedPressure >= 92 ? 'alert' : ns.nationalBedPressure >= 82 ? 'warn' : 'ok'} />
