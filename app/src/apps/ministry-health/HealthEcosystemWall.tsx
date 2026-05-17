@@ -194,7 +194,7 @@ export function HealthEcosystemWall() {
               <div key={m.l} className="flex flex-col justify-between rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
                 <div className="truncate text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-muted">{m.l}</div>
                 <div className="flex items-end justify-between gap-1">
-                  <span className="font-mono text-[19px] font-bold leading-none tabular-nums" style={{ color: sc(m.t), textShadow: `0 0 10px color-mix(in srgb,${sc(m.t)} 45%,transparent)` }}>{m.v}</span>
+                  <span className="font-mono text-[24px] font-bold leading-none tabular-nums" style={{ color: sc(m.t), textShadow: `0 0 10px color-mix(in srgb,${sc(m.t)} 45%,transparent)` }}>{m.v}</span>
                   <Sparkline points={sp(m.k, m.t === 'alert' ? 50 : 30, m.t === 'alert' ? 95 : 78)} tone={m.t} width={40} height={14} />
                 </div>
                 <div className="truncate text-[6.5px] text-ink-muted">{m.s}</div>

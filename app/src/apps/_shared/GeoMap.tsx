@@ -107,27 +107,42 @@ export function GeoMap({
               <path key={`g${i}`} d={pr.d} fill="none" stroke={accent} strokeWidth="3.5" strokeOpacity="0.2" filter="url(#gms)" />
             ))}
             {view.provs.map((pr, i) => (
-              <path key={`p${i}`} d={pr.d} fill={ac(pr.t)} fillOpacity={0.14 + (pr.v / 100) * 0.52}
-                stroke={`color-mix(in srgb,${accent} 70%,transparent)`} strokeWidth="0.6" strokeOpacity="0.9"
-                className={pr.t === 'alert' ? 'animate-breathe' : undefined} />
+              <path key={`p${i}`} d={pr.d} fill={ac(pr.t)} fillOpacity={0.05 + (pr.v / 100) * 0.2}
+                stroke={`color-mix(in srgb,${accent} 55%,transparent)`} strokeWidth="0.4" strokeOpacity="0.7" />
             ))}
             {view.outlineD && !view.provs.length ? (
-              <path d={view.outlineD} fill={`color-mix(in srgb,${accent} 16%,transparent)`} stroke={accent} strokeWidth="1.1" strokeOpacity="0.92" />
+              <path d={view.outlineD} fill={`color-mix(in srgb,${accent} 10%,transparent)`} stroke={accent} strokeWidth="1.1" strokeOpacity="0.92" />
             ) : null}
+            {/* dense glowing health-node field (benchmark signature) */}
+            {view.provs.filter(p => p.cx != null).flatMap((pr, pi) => {
+              const col = ac(pr.t);
+              const cnt = 3 + Math.round((pr.v / 100) * 9);
+              const spread = Math.min(W, H) * (0.035 + (pr.v / 100) * 0.05);
+              return Array.from({ length: cnt }, (_, j) => {
+                const a = seed(`${iso3}:${pi}:a:${j}`) * 6.283;
+                const dd = (0.15 + 0.85 * seed(`${iso3}:${pi}:d:${j}`)) * spread;
+                const x = (pr.cx as number) + Math.cos(a) * dd;
+                const y = (pr.cy as number) + Math.sin(a) * dd * 0.92;
+                const rr = 0.6 + seed(`${iso3}:${pi}:r:${j}`) * 1.2;
+                return <circle key={`s${pi}-${j}`} cx={x} cy={y} r={rr} fill={col}
+                  fillOpacity={0.45 + seed(`${iso3}:${pi}:o:${j}`) * 0.4}
+                  style={{ filter: `drop-shadow(0 0 ${rr * 1.6}px ${col})` }} />;
+              });
+            })}
             {view.nodes.slice(0, view.nodes.length - 1).map((nd, i) => {
               const nx = view.nodes[i + 1]!;
               const cr = geo.corridors[i % Math.max(1, geo.corridors.length)];
-              return <line key={`c${i}`} x1={nd.x} y1={nd.y} x2={nx.x} y2={nx.y} stroke={ac(cr?.tone ?? 'ok')} strokeWidth="1.1" strokeDasharray="5 5" className="animate-dash-flow" style={{ opacity: 0.5 }} />;
+              return <line key={`c${i}`} x1={nd.x} y1={nd.y} x2={nx.x} y2={nx.y} stroke={ac(cr?.tone ?? 'ok')} strokeWidth="0.8" strokeDasharray="4 4" className="animate-dash-flow" style={{ opacity: 0.45 }} />;
             })}
             {view.nodes.map((nd, i) => {
-              const col = ac(nd.t); const r = 2.6 + (nd.v / 100) * 4.4;
+              const col = ac(nd.t); const r = 2.2 + (nd.v / 100) * 3.6;
               return (
                 <g key={`n${i}`}>
-                  {nd.t === 'alert' ? <circle cx={nd.x} cy={nd.y} r={r + 8} fill="none" stroke={col} strokeWidth="0.9" className="animate-diffuse" style={{ transformOrigin: `${nd.x}px ${nd.y}px` }} /> : null}
-                  <circle cx={nd.x} cy={nd.y} r={r + 3.5} fill={col} fillOpacity="0.14" />
-                  <circle cx={nd.x} cy={nd.y} r={r} fill={col} fillOpacity="0.94" stroke="#03070f" strokeWidth="0.7"
-                    className={nd.t !== 'ok' ? 'animate-breathe' : undefined} style={{ filter: `drop-shadow(0 0 ${r}px ${col})` }} />
-                  {nd.label ? <text x={nd.x} y={nd.y - r - 3} textAnchor="middle" fontSize="6.5" fill="rgb(var(--c-ink-soft))" style={{ fontFamily: 'var(--font-mono,monospace)' }}>{nd.label}</text> : null}
+                  {nd.t === 'alert' ? <circle cx={nd.x} cy={nd.y} r={r + 7} fill="none" stroke={col} strokeWidth="0.8" className="animate-diffuse" style={{ transformOrigin: `${nd.x}px ${nd.y}px` }} /> : null}
+                  <circle cx={nd.x} cy={nd.y} r={r + 3} fill={col} fillOpacity="0.12" />
+                  <circle cx={nd.x} cy={nd.y} r={r} fill={col} fillOpacity="0.97" stroke="#03070f" strokeWidth="0.6"
+                    className={nd.t !== 'ok' ? 'animate-breathe' : undefined} style={{ filter: `drop-shadow(0 0 ${r * 1.4}px ${col})` }} />
+                  {nd.label && nd.v >= 60 ? <text x={nd.x} y={nd.y - r - 2.5} textAnchor="middle" fontSize="6" fill="rgb(var(--c-ink-soft))" style={{ fontFamily: 'var(--font-mono,monospace)' }}>{nd.label}</text> : null}
                 </g>
               );
             })}
