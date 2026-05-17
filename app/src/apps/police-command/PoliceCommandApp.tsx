@@ -29,24 +29,50 @@ export function PoliceCommandApp({ appId, domain, now, role, withheld }: {
   const d = WF[domain] ? domain : 'incident';
   const label = LABEL[d] ?? 'Incident Command';
 
+  type Tone = 'ok' | 'warn' | 'alert';
+  const respT: Tone = o.meanResponseMin >= 18 ? 'alert' : o.meanResponseMin >= 12 ? 'warn' : 'ok';
+  const isInv = d === 'investigations' || d === 'evidence';
+  const isIntel = d === 'intelligence';
+  const fieldDomain = d === 'incident' || d === 'dispatch' || d === 'patrol';
+
+  const items: { l: string; v: string; t?: Tone }[] = isInv ? [
+    { l: 'Open investigations', v: o.openInvestigations.toLocaleString(), t: o.openInvestigations > 4000 ? 'alert' : 'warn' },
+    { l: 'Clearance rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : o.clearanceRatePct >= 55 ? 'warn' : 'alert' },
+    { l: 'Custody occupancy', v: `${o.custodyOccupancyPct}%`, t: o.custodyOccupancyPct >= 110 ? 'alert' : o.custodyOccupancyPct >= 95 ? 'warn' : 'ok' },
+    { l: 'Active incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : 'ok' },
+  ] : isIntel ? [
+    { l: 'Active incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : o.activeIncidents > 40 ? 'warn' : 'ok' },
+    { l: 'Clearance rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : 'warn' },
+    { l: 'Regions tracked', v: `${o.regional.length}`, t: 'ok' },
+  ] : [
+    { l: 'Active incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : o.activeIncidents > 40 ? 'warn' : 'ok' },
+    { l: 'Units deployed', v: `${o.unitsDeployed}/${o.unitsTotal}`, t: 'ok' },
+    { l: 'Mean response', v: `${o.meanResponseMin}m`, t: respT },
+    { l: 'Clearance rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : 'warn' },
+    { l: 'Open investigations', v: o.openInvestigations.toLocaleString(), t: 'warn' },
+    { l: 'Custody occupancy', v: `${o.custodyOccupancyPct}%`, t: o.custodyOccupancyPct >= 110 ? 'alert' : o.custodyOccupancyPct >= 95 ? 'warn' : 'ok' },
+  ];
+
   return (
     <div className="space-y-2">
-      <StatGrid items={[
-        { l: 'Active incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : o.activeIncidents > 40 ? 'warn' : 'ok' },
-        { l: 'Units deployed', v: `${o.unitsDeployed}/${o.unitsTotal}`, t: 'ok' },
-        { l: 'Mean response', v: `${o.meanResponseMin}m`, t: o.meanResponseMin >= 18 ? 'alert' : o.meanResponseMin >= 12 ? 'warn' : 'ok' },
-        { l: 'Clearance rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : 'warn' },
-        { l: 'Open investigations', v: o.openInvestigations.toLocaleString(), t: 'warn' },
-        { l: 'Custody occupancy', v: `${o.custodyOccupancyPct}%`, t: o.custodyOccupancyPct >= 110 ? 'alert' : o.custodyOccupancyPct >= 95 ? 'warn' : 'ok' },
-      ]} />
+      <div className="rounded-[3px] border border-line bg-surface px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
+        {label} subsystem
+      </div>
+      <StatGrid items={items} />
       <Panel title="Regional patrol load" meta="civil-stability footprint → national escalation">
         <Bars rows={o.regional.map(r => ({ label: r.region, pct: r.load, tone: r.tone, tail: `${r.load}` }))} />
       </Panel>
-      <Panel title="Patrol divisions" meta="deployment status">
-        <Bars rows={o.patrols.map(p => ({ label: `${p.label} · ${p.region}`, pct: p.status === 'responding' ? 92 : p.status === 'patrolling' ? 55 : 25, tone: p.tone, tail: p.status }))} />
-      </Panel>
-      <FieldPanel instId={appId} archetype="INTERIOR" now={now} />
-      <RuntimeQueue scope={`${appId}:field`} kind="field" title="Field deployment runtime — stage → task → en-route → on-scene → cleared" by="Field Coordinator" role={role} withheld={withheld} />
+      {!isInv && !isIntel ? (
+        <Panel title="Patrol divisions" meta="deployment status">
+          <Bars rows={o.patrols.map(p => ({ label: `${p.label} · ${p.region}`, pct: p.status === 'responding' ? 92 : p.status === 'patrolling' ? 55 : 25, tone: p.tone, tail: p.status }))} />
+        </Panel>
+      ) : null}
+      {fieldDomain ? (
+        <>
+          <FieldPanel instId={appId} archetype="INTERIOR" now={now} />
+          <RuntimeQueue scope={`${appId}:field`} kind="field" title="Field deployment runtime — stage → task → en-route → on-scene → cleared" by="Field Coordinator" role={role} withheld={withheld} />
+        </>
+      ) : null}
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'incident'} title={`${label} runtime — execute the policing workflow`} by="Watch Commander" role={role} withheld={withheld} />
     </div>
   );
