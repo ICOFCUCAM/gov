@@ -3,7 +3,7 @@ import {
   pharmaceuticalSupply, laboratoryNetwork, healthFinance,
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
-  patientDeepExecution,
+  patientDeepExecution, emergencyIncidentExecution,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -145,5 +145,27 @@ describe('ministry of health operations engine', () => {
     for (const r of a.intake) expect(['registration', 'triage', 'clinician', 'admitted']).toContain(r.stage);
     for (const e of a.emergencyStatuses) expect(['critical', 'admitted', 'observation']).toContain(e.status);
     expect(a.unrouted).toBe(a.intake.filter(r => r.stage === 'registration' || r.stage === 'triage').length);
+  });
+
+  it('emergencyIncidentExecution is a deterministic master/detail incident system', () => {
+    const a = emergencyIncidentExecution('MOH', 145);
+    expect(a).toEqual(emergencyIncidentExecution('MOH', 145));
+    expect(a.incidents.length).toBeGreaterThanOrEqual(6);
+    expect(['steady', 'surge', 'mci']).toContain(a.posture);
+    // severity-ordered (immediate first)
+    for (let i = 1; i < a.incidents.length; i++) {
+      expect(a.incidents[i - 1]!.severity).toBeLessThanOrEqual(a.incidents[i]!.severity);
+    }
+    for (const x of a.incidents) {
+      expect(['Received', 'Dispatched', 'On scene', 'Transporting', 'Cleared']).toContain(x.stage);
+      expect([1, 2, 3]).toContain(x.severity);
+      expect(x.responders.length).toBeGreaterThanOrEqual(1);
+      expect(x.escalation.length).toBe(4);
+      expect(x.escalation.some(e => e.reached)).toBe(true);
+      expect(x.recommended.length).toBeGreaterThan(3);
+      expect(x.timeline.length).toBeGreaterThan(2);
+    }
+    expect(a.immediate).toBe(a.incidents.filter(x => x.severity === 1 && x.stage !== 'Cleared').length);
+    expect(a.unitsCommitted).toBe(a.incidents.reduce((s, x) => s + x.responders.length, 0));
   });
 });

@@ -134,6 +134,98 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── Emergency incident deep execution system ───────────────────────────
+// Pre-hospital command as a true master/detail execution system: a live
+// incident board where every incident carries its own command core —
+// stage machine, assigned responders, hospital routing, escalation
+// matrix, recommended action and an incident timeline. Pure &
+// deterministic.
+export type IncidentStage = 'Received' | 'Dispatched' | 'On scene' | 'Transporting' | 'Cleared';
+const INC_STAGES: IncidentStage[] = ['Received', 'Dispatched', 'On scene', 'Transporting', 'Cleared'];
+const INC_TYPES = ['Cardiac arrest', 'Major trauma / RTA', 'Obstetric emergency', 'Respiratory distress', 'Mass-casualty', 'Stroke', 'Paediatric critical', 'Toxic exposure'];
+export interface IncidentResponder { unit: string; kind: 'ALS ambulance' | 'BLS ambulance' | 'Rapid responder' | 'Air ambulance'; etaMin: number; status: 'assigned' | 'en route' | 'on scene'; tone: Tone }
+export interface IncidentEscalationStep { tier: string; reached: boolean; authority: string }
+export interface EmergencyIncident {
+  id: string;
+  type: string;
+  region: string;
+  severity: 1 | 2 | 3;            // 1 = immediate
+  stage: IncidentStage;
+  ageMin: number;
+  callerReports: number;
+  responders: IncidentResponder[];
+  destinationHospital: string;
+  hospitalAccepting: boolean;
+  rerouted: boolean;
+  escalation: IncidentEscalationStep[];
+  recommended: string;
+  timeline: { atMinAgo: number; detail: string; tone: Tone }[];
+  tone: Tone;
+}
+export interface EmergencyIncidentExecution {
+  incidents: EmergencyIncident[];
+  immediate: number;
+  unitsCommitted: number;
+  meanDispatchMin: number;
+  divertActive: boolean;
+  posture: 'steady' | 'surge' | 'mci';
+}
+export function emergencyIncidentExecution(id: string, t: number): EmergencyIncidentExecution {
+  const base = emergencyMedical(id, t);
+  const n = 6 + Math.round(wave(`ei:n:${id}`, t, 0, 6));
+  const incidents: EmergencyIncident[] = Array.from({ length: n }, (_, i): EmergencyIncident => {
+    const severity = (1 + Math.floor(seed(`ei:sv:${id}:${i}`) * 3)) as 1 | 2 | 3;
+    const stPhase = Math.floor((t / 4 + seed(`ei:sp:${id}:${i}`) * 5)) % 5;
+    const stage = INC_STAGES[stPhase]!;
+    const ageMin = Math.round(wave(`ei:ag:${id}:${i}`, t, 1, 120));
+    const region = REGIONS[i % REGIONS.length]!;
+    const nResp = severity === 1 ? 3 : severity === 2 ? 2 : 1;
+    const responders: IncidentResponder[] = Array.from({ length: nResp }, (_, r): IncidentResponder => {
+      const etaMin = Math.round(wave(`ei:re:${id}:${i}:${r}`, t, 0, 26));
+      const kind = (['ALS ambulance', 'Rapid responder', 'BLS ambulance', 'Air ambulance'] as const)[(i + r) % 4]!;
+      const rs = stage === 'Received' ? 'assigned' : stage === 'Dispatched' ? 'en route' : 'on scene';
+      return { unit: `${kind === 'Air ambulance' ? 'HEMS' : 'EMS'}-${100 + i * 3 + r}`, kind, etaMin, status: rs, tone: etaMin >= 18 ? 'alert' : etaMin >= 10 ? 'warn' : 'ok' };
+    });
+    const hospitalAccepting = seed(`ei:ha:${id}:${i}`) > 0.25 && !(base.hospitalDivert > 2 && severity >= 2);
+    const rerouted = !hospitalAccepting;
+    const escTiers = ['Station', 'Regional EOC', 'National EMS', 'Health Command'];
+    const escIdx = severity === 1 ? (stage === 'Cleared' ? 1 : 3) : severity === 2 ? 2 : 1;
+    const escalation: IncidentEscalationStep[] = escTiers.map((tier, k) => ({
+      tier, reached: k <= escIdx,
+      authority: ['Duty officer', 'Regional controller', 'National EMS director', 'Health Command'][k]!,
+    }));
+    const tone: Tone = severity === 1 && stage !== 'Cleared' ? 'alert' : severity === 2 || ageMin > 60 ? 'warn' : 'ok';
+    const recommended =
+      rerouted ? `Re-route — destination diverting; nearest accepting facility`
+        : stage === 'Received' ? 'Dispatch nearest ALS unit now'
+          : stage === 'On scene' && severity === 1 ? 'Confirm transport decision · pre-alert receiving ED'
+            : stage === 'Transporting' ? 'Pre-alert hospital · maintain handover chain'
+              : 'Hold — incident progressing within protocol';
+    return {
+      id: `INC-${5200 + i}`, type: INC_TYPES[i % INC_TYPES.length]!, region, severity, stage, ageMin,
+      callerReports: 1 + Math.round(seed(`ei:cr:${id}:${i}`) * 6),
+      responders,
+      destinationHospital: ['Central Trauma', 'Northern District', 'Coastal Referral', 'Highland General', 'Eastern Referral'][i % 5]!,
+      hospitalAccepting, rerouted, escalation, recommended,
+      timeline: [
+        { atMinAgo: ageMin, detail: `${base ? 'Call received' : ''} · ${1 + Math.round(seed(`ei:cr:${id}:${i}`) * 6)} caller report(s)`, tone: 'ok' },
+        { atMinAgo: Math.max(0, ageMin - 3), detail: `${responders.length} unit(s) assigned`, tone: 'ok' },
+        { atMinAgo: Math.max(0, ageMin - 9), detail: stage === 'Received' ? 'Awaiting dispatch' : `Stage → ${stage}`, tone: stage === 'Received' && severity === 1 ? 'alert' : 'warn' },
+        { atMinAgo: Math.max(0, ageMin - 14), detail: rerouted ? 'Destination diverting — reroute evaluated' : `Destination ${['Central Trauma', 'Northern District', 'Coastal Referral', 'Highland General', 'Eastern Referral'][i % 5]} accepting`, tone: rerouted ? 'alert' : 'ok' },
+      ],
+      tone,
+    };
+  }).sort((a, b) => a.severity - b.severity || b.ageMin - a.ageMin);
+  const immediate = incidents.filter(x => x.severity === 1 && x.stage !== 'Cleared').length;
+  const unitsCommitted = incidents.reduce((s, x) => s + x.responders.length, 0);
+  const meanDispatchMin = base.meanResponseMin;
+  const divertActive = base.hospitalDivert > 2;
+  const posture: EmergencyIncidentExecution['posture'] =
+    base.disasterPosture === 'major' || immediate >= 3 ? 'mci'
+      : base.disasterPosture === 'elevated' || immediate >= 1 || divertActive ? 'surge' : 'steady';
+  return { incidents, immediate, unitsCommitted, meanDispatchMin, divertActive, posture };
+}
+
 // ── Laboratory deep execution system ───────────────────────────────────
 // The national diagnostic network as a true execution system: specimen
 // lifecycle pipeline, priority-laned testing queues with queue
