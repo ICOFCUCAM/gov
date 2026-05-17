@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ministryAppManifest, STANDING_APPS, BRANCH_APPS } from './manifests';
+import { ministryAppManifest, STANDING_APPS, BRANCH_APPS, AGENCY_APPS } from './manifests';
 
 describe('federated app manifests', () => {
   it('derives ministry app nav from the blueprint factory', () => {
@@ -35,6 +35,18 @@ describe('federated app manifests', () => {
       expect(mf.kind).toBe('ministry');
       expect(mf.instanceId).toBe(`MIN-${a}`);
       expect(mf.nav.length).toBeGreaterThan(0);
+    }
+  });
+
+  // Regression guard for deployable-path subsystem differentiation: each
+  // agency/branch app must keep multiple distinct nav domains so a change
+  // that collapses one back to a single conflated surface fails CI.
+  it('agency & branch apps keep multi-domain navigation', () => {
+    for (const a of [...AGENCY_APPS, ...BRANCH_APPS]) {
+      expect(a.nav.length, `${a.id} must expose >1 subsystem nav`).toBeGreaterThan(1);
+      const keys = a.nav.map(n => n.key);
+      expect(new Set(keys).size).toBe(keys.length); // unique
+      for (const n of keys) expect(n).toMatch(/^[a-z-]+$/);
     }
   });
 });
