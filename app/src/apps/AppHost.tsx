@@ -9,6 +9,7 @@ import { subscribe as orchSubscribe, findApp, version as orchVersion } from '@/s
 import { publish as busPublish } from '@/services/event-bus';
 import { SectorInstitutionApp } from '@/apps/sector/SectorInstitutionApp';
 import { MinistryHealthApp } from '@/apps/ministry-health/MinistryHealthApp';
+import { HealthEcosystemWall } from '@/apps/ministry-health/HealthEcosystemWall';
 import { TreasuryApp } from '@/apps/treasury/TreasuryApp';
 import { JudiciaryApp } from '@/apps/judiciary/JudiciaryApp';
 import { LegislatureApp } from '@/apps/legislature/LegislatureApp';
@@ -69,7 +70,11 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
     if (typeof window !== 'undefined') window.history.replaceState(null, '', `/app/${domain}/${k}`);
   }, [domain]);
   const [role, setRole] = React.useState<SovereignRole>('commander');
-  const active = navKey ?? app?.nav[0]?.key ?? null;
+  const isHealth = app?.kind === 'ministry' && app?.archetypeOrBranch === 'HEALTH';
+  const navItems = app
+    ? (isHealth ? [{ key: 'ecosystem', label: 'Operating Ecosystem' }, ...app.nav] : app.nav)
+    : [];
+  const active = navKey ?? navItems[0]?.key ?? null;
 
   if (!app) {
     return (
@@ -111,7 +116,7 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
       <div className="flex min-h-0 flex-1">
         <nav aria-label={`${app.label} navigation`} className="hidden w-[200px] shrink-0 flex-col border-r border-line bg-bg py-1 lg:flex">
           <div className="px-3 pb-1 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{app.label}</div>
-          {app.nav.map(s => (
+          {navItems.map(s => (
             <button key={s.key} onClick={() => selectNav(s.key)}
               className={'focus-ring border-l-2 px-3 py-1.5 text-left text-[11px] transition-colors ' + (active === s.key ? 'border-link bg-surface-2 font-medium text-ink' : 'border-transparent text-ink-muted hover:bg-surface-2/50 hover:text-ink')}>
               {s.label}
@@ -250,7 +255,9 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                 {!app.activated ? (
                   <p className="text-[12px] text-ink-muted">This sovereign application is provisioned but not activated. Activate the institution from the platform to bring its operational systems online.</p>
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'HEALTH' ? (
-                  <MinistryHealthApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
+                  active === 'ecosystem'
+                    ? <HealthEcosystemWall />
+                    : <MinistryHealthApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'FINANCE' ? (
                   <TreasuryApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'EDUCATION' ? (
