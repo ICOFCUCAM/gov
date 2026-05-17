@@ -4,7 +4,7 @@ import {
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
   patientDeepExecution, emergencyIncidentExecution, diseaseEpidemiology,
-  healthFinanceExecution, healthRegulatoryExecution,
+  healthFinanceExecution, healthRegulatoryExecution, nationalSituation,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -230,5 +230,24 @@ describe('ministry of health operations engine', () => {
     }
     for (const e of a.enforcement) expect(['notice', 'hearing', 'sanctioned']).toContain(e.stage);
     expect(a.criticalBreaches).toBe(a.enforcement.filter(e => e.severity === 'critical').length);
+  });
+
+  it('nationalSituation fuses subsystems into a deterministic command picture', () => {
+    const a = nationalSituation('MOH', 150);
+    expect(a).toEqual(nationalSituation('MOH', 150));
+    expect(a.regions.length).toBe(6);
+    expect(['steady', 'elevated', 'crisis']).toContain(a.posture);
+    expect(['normal', 'watch', 'emergency', 'national-disaster']).toContain(a.disasterState);
+    // composite-ordered (worst region first)
+    for (let i = 1; i < a.regions.length; i++) {
+      expect(a.regions[i - 1]!.composite).toBeGreaterThanOrEqual(a.regions[i]!.composite);
+    }
+    for (const r of a.regions) {
+      expect(r.composite).toBeGreaterThanOrEqual(0);
+      expect(r.composite).toBeLessThanOrEqual(100);
+      expect(['stable', 'elevated', 'critical']).toContain(r.state);
+    }
+    expect(a.worstRegion).toBe(a.regions[0]!.region);
+    expect(a.headline.length).toBeGreaterThan(10);
   });
 });

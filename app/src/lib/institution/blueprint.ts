@@ -74,6 +74,10 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Ambulance telemetry', 'field'), S('Emergency dispatch', 'emergency'),
       S('Disaster medicine', 'emergency'),
     ]),
+    G('situation', 'National Situation Room', 'Whole-of-nation health command picture', [
+      S('National telemetry', 'command'), S('Healthcare grid', 'network'),
+      S('Crisis propagation', 'intelligence'),
+    ]),
   ],
   FINANCE: [
     G('command', 'Fiscal Command', 'Sovereign fiscal authority', [

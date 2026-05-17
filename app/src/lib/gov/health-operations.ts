@@ -134,6 +134,75 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── National Situation Room — whole-of-nation health command picture ───
+// Fuses every deep health subsystem engine into one sovereign command
+// telemetry: regional pressure map, ICU load, emergency/outbreak heat,
+// medicine shortage, mortality and disaster state. Pure & deterministic.
+export interface RegionPressure {
+  region: string;
+  bedPressure: number;       // 0-100
+  icuPressure: number;       // 0-100
+  emergencyLoad: number;     // 0-100
+  outbreakHeat: number;      // 0-100
+  medicineShortage: number;  // 0-100
+  composite: number;         // 0-100 composite instability
+  state: 'stable' | 'elevated' | 'critical';
+  tone: Tone;
+}
+export interface NationalSituation {
+  regions: RegionPressure[];
+  nationalBedPressure: number;
+  nationalIcuLoad: number;
+  activeOutbreaks: number;
+  ambulanceCoverPct: number;
+  medicineShortfalls: number;
+  mortalityIndex: number;
+  disasterState: 'normal' | 'watch' | 'emergency' | 'national-disaster';
+  worstRegion: string;
+  posture: 'steady' | 'elevated' | 'crisis';
+  headline: string;
+}
+export function nationalSituation(id: string, t: number): NationalSituation {
+  const hd = hospitalDeepExecution(id, t);
+  const ei = emergencyIncidentExecution(id, t);
+  const ep = diseaseEpidemiology(id, t);
+  const px = pharmaceuticalDeepExecution(id, t);
+  const regions: RegionPressure[] = REGIONS.map((region, i): RegionPressure => {
+    const hr = hd.regions.find(r => r.region === region);
+    const bedPressure = hr ? hr.bedOccPct : Math.round(wave(`ns:bp:${id}:${i}`, t, 50, 100));
+    const icuPressure = hr ? hr.icuOccPct : Math.round(wave(`ns:ip:${id}:${i}`, t, 50, 100));
+    const emergencyLoad = Math.round(wave(`ns:el:${id}:${i}`, t, 8, 100));
+    const gridCells = ep.grid.filter(g => g.region === region);
+    const outbreakHeat = gridCells.length ? Math.round(gridCells.reduce((s, c) => s + c.intensity, 0) / gridCells.length) : 0;
+    const pr = px.regions.find(r => r.region === region);
+    const medicineShortage = pr ? Math.max(0, 100 - pr.fillRatePct) : Math.round(wave(`ns:ms:${id}:${i}`, t, 0, 70));
+    const composite = Math.round(bedPressure * 0.26 + icuPressure * 0.26 + emergencyLoad * 0.18 + outbreakHeat * 0.18 + medicineShortage * 0.12);
+    const state: RegionPressure['state'] = composite >= 80 ? 'critical' : composite >= 60 ? 'elevated' : 'stable';
+    return { region, bedPressure, icuPressure, emergencyLoad, outbreakHeat, medicineShortage, composite, state, tone: state === 'critical' ? 'alert' : state === 'elevated' ? 'warn' : 'ok' };
+  }).sort((a, b) => b.composite - a.composite);
+  const mean = (sel: (r: RegionPressure) => number) => Math.round(regions.reduce((s, r) => s + sel(r), 0) / regions.length);
+  const nationalBedPressure = mean(r => r.bedPressure);
+  const nationalIcuLoad = mean(r => r.icuPressure);
+  const activeOutbreaks = ep.pathogens.filter(p => p.phase !== 'sporadic').length;
+  const ambulanceCoverPct = Math.round(100 - Math.min(100, ei.meanDispatchMin * 3));
+  const medicineShortfalls = px.criticalDrugs;
+  const mortalityIndex = Math.round(wave(`ns:mi:${id}`, t, 6, 24) * 10) / 10;
+  const critical = regions.filter(r => r.state === 'critical').length;
+  const disasterState: NationalSituation['disasterState'] =
+    ei.posture === 'mci' && critical >= 2 ? 'national-disaster'
+      : ei.posture === 'mci' || critical >= 2 ? 'emergency'
+        : critical >= 1 || ep.posture === 'epidemic' ? 'watch' : 'normal';
+  const posture: NationalSituation['posture'] =
+    disasterState === 'national-disaster' || critical >= 3 ? 'crisis'
+      : disasterState === 'emergency' || critical >= 1 || nationalIcuLoad >= 92 ? 'elevated' : 'steady';
+  const worst = regions[0]!;
+  const headline =
+    posture === 'crisis' ? `NATIONAL HEALTH EMERGENCY — ${worst.region} critical (composite ${worst.composite})`
+      : posture === 'elevated' ? `Elevated national pressure — ${worst.region} leading (composite ${worst.composite})`
+        : `National health posture nominal — peak ${worst.region} ${worst.composite}`;
+  return { regions, nationalBedPressure, nationalIcuLoad, activeOutbreaks, ambulanceCoverPct, medicineShortfalls, mortalityIndex, disasterState, worstRegion: worst.region, posture, headline };
+}
+
 // ── Health regulatory deep execution system ────────────────────────────
 // Licensing pipeline, facility accreditation cycle, practitioner-registry
 // integrity and an enforcement / sanctions case queue as a true execution
