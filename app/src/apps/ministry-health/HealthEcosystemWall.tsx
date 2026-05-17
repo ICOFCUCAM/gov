@@ -478,36 +478,63 @@ export function HealthEcosystemWall() {
         <Tile n={6} title="Emergency Response" sub="Incident Command System"
           accent={ACC.emergency} posture={`${er.alerts.length} ALERTS`} postureTone="alert" time={time} navActive="Dashboard"
           nav={['Dashboard', 'Incidents', 'Dispatch', 'Ambulances', 'Responders', 'Hospitals', 'Resources', 'Disasters', 'Reports', 'Settings']}>
+          {/* crisis strip */}
           {inc ? (
-            <div className="flex items-center gap-2 rounded-[5px] border px-2.5 py-1.5"
-              style={{ borderColor: sc(inc.tone), background: `color-mix(in srgb,${sc(inc.tone)} 12%,#0b1118)` }}>
+            <div className="flex shrink-0 items-center gap-2 rounded-[4px] border px-2 py-1"
+              style={{ borderColor: sc(inc.tone), background: `color-mix(in srgb,${sc(inc.tone)} 14%,#120608)` }}>
               <span className="h-2 w-2 shrink-0 animate-pulse rounded-full" style={{ background: sc(inc.tone) }} />
               <div className="min-w-0 flex-1">
-                <div className="truncate text-[10px] font-bold uppercase tracking-wide text-ink">{inc.title}</div>
-                <div className="truncate text-[8px] text-ink-muted">{inc.place} · {inc.status}</div>
+                <div className="truncate text-[9px] font-bold uppercase tracking-wide text-ink">{inc.title}</div>
+                <div className="truncate text-[7px] text-ink-muted">{inc.place} · {inc.status}</div>
               </div>
-              <span className="shrink-0 text-[8px] font-bold uppercase" style={{ color: sc(inc.tone) }}>{inc.severity}</span>
+              <div className="shrink-0 text-right"><div className="text-[6px] uppercase text-ink-muted">Severity</div><div className="text-[8px] font-bold uppercase" style={{ color: sc(inc.tone) }}>{inc.severity}</div></div>
+              <div className="shrink-0 text-right"><div className="text-[6px] uppercase text-ink-muted">Response</div><div className="font-mono text-[8px] text-ink">{er.kpis[0]?.value ?? '6m'}</div></div>
             </div>
           ) : null}
-          <div className="grid grid-cols-3 gap-1.5 xl:grid-cols-6">
+          {/* KPI strip */}
+          <div className="grid shrink-0 grid-cols-6 gap-1">
             {er.kpis.slice(0, 6).map(k => (
-              <Kpi key={k.label} label={k.label} value={k.value} tone={k.tone} points={k.series} />
-            ))}
-          </div>
-          <div className="overflow-hidden rounded-[6px] border" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-            <GeoMap geo={geo} metric="pressure" title="" height={210} />
-          </div>
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-            {er.resources.slice(0, 4).map(r => (
-              <div key={r.kind} className="rounded-[4px] border px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d3548 50%,transparent)', borderLeft: `2px solid ${sc(r.tone)}` }}>
-                <div className="text-[7.5px] uppercase tracking-[0.12em] text-ink-muted">{r.kind}</div>
-                <div className="font-mono text-[12px] text-ink">{r.have}/{r.total}</div>
+              <div key={k.label} className="flex flex-col justify-between rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(255,90,100,0.2)', background: 'rgba(28,10,12,0.55)' }}>
+                <div className="truncate text-[6px] font-bold uppercase tracking-[0.1em] text-ink-muted">{k.label}</div>
+                <div className="flex items-end justify-between gap-1">
+                  <span className="font-mono text-[17px] font-bold leading-none tabular-nums" style={{ color: sc(k.tone), textShadow: `0 0 9px color-mix(in srgb,${sc(k.tone)} 45%,transparent)` }}>{k.value}</span>
+                  <Sparkline points={k.series} tone={k.tone} width={30} height={11} />
+                </div>
               </div>
             ))}
           </div>
-          <div className="flex gap-2">
-            <button className="flex-1 rounded-[3px] py-1 text-[8px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${sc('ok')} 18%,transparent)`, color: sc('ok') }}>Approve escalation</button>
-            <button className="flex-1 rounded-[3px] py-1 text-[8px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${sc('alert')} 18%,transparent)`, color: sc('alert') }}>Reject</button>
+          {/* incident map | incident command */}
+          <div className="flex min-h-0 flex-1 gap-1">
+            <div className="relative min-w-0 flex-1 overflow-hidden rounded-[4px] border" style={{ borderColor: 'rgba(255,90,100,0.22)' }}>
+              <GeoMap geo={geo} metric="pressure" title="Incident Map" height={120} accent={ACC.emergency} />
+            </div>
+            <div className="flex w-[126px] shrink-0 flex-col rounded-[4px] border" style={{ borderColor: 'rgba(255,90,100,0.22)', background: 'rgba(28,10,12,0.5)' }}>
+              <div className="border-b px-1.5 py-1 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft" style={{ borderColor: 'rgba(255,90,100,0.18)' }}>Incident Command</div>
+              <div className="min-h-0 flex-1 space-y-1 overflow-hidden p-1.5">
+                <div className="flex justify-between text-[7px]"><span className="text-ink-muted">PATIENTS</span><span className="font-mono text-ink">{inc?.affected ?? 42}</span></div>
+                <div className="flex justify-between text-[7px]"><span className="text-ink-muted">CRITICAL</span><span className="font-mono" style={{ color: sc('alert') }}>{inc?.resources.rescue ?? 12}</span></div>
+                <div className="flex justify-between text-[7px]"><span className="text-ink-muted">MINOR</span><span className="font-mono" style={{ color: sc('ok') }}>{inc?.resources.vehicles ?? 12}</span></div>
+                <div className="mt-1 border-t pt-1 text-[6px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgba(255,90,100,0.14)' }}>Resources Deployed</div>
+                {er.resources.slice(0, 4).map(r => (
+                  <div key={r.kind} className="flex justify-between text-[7px]"><span className="truncate text-ink-soft">{r.kind}</span><span className="font-mono" style={{ color: sc(r.tone) }}>{r.have}/{r.total}</span></div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* active units + AI rec */}
+          <div className="grid shrink-0 grid-cols-[1.5fr_1fr] gap-1">
+            <div className="grid grid-cols-4 gap-1">
+              {er.resources.slice(0, 4).map(r => (
+                <div key={r.kind} className="rounded-[3px] border px-1 py-0.5" style={{ borderColor: 'rgba(255,90,100,0.18)', background: 'rgba(0,0,0,0.25)', borderLeft: `2px solid ${sc(r.tone)}` }}>
+                  <div className="truncate text-[6px] uppercase text-ink-muted">{r.kind}</div>
+                  <div className="font-mono text-[10px] text-ink">{r.have}/{r.total}</div>
+                </div>
+              ))}
+            </div>
+            <div className="flex gap-1">
+              <button className="flex-1 rounded-[3px] text-[7px] font-bold uppercase tracking-[0.12em]" style={{ background: `color-mix(in srgb,${sc('ok')} 20%,transparent)`, color: sc('ok') }}>Approve</button>
+              <button className="flex-1 rounded-[3px] text-[7px] font-bold uppercase tracking-[0.12em]" style={{ background: `color-mix(in srgb,${sc('alert')} 20%,transparent)`, color: sc('alert') }}>Reject</button>
+            </div>
           </div>
         </Tile>
 
@@ -516,31 +543,67 @@ export function HealthEcosystemWall() {
           accent={ACC.pharma} posture={`SC ${ph.scHealth}`} postureTone={ph.scHealth >= 80 ? 'ok' : ph.scHealth >= 60 ? 'warn' : 'alert'}
           time={time} navActive="Overview"
           nav={['Overview', 'Inventory', 'Procurement', 'Distribution', 'Warehouses', 'Cold Chain', 'Shortages', 'Reports']}>
-          <div className="grid grid-cols-3 gap-1.5 xl:grid-cols-5">
+          {/* KPI strip */}
+          <div className="grid shrink-0 grid-cols-5 gap-1">
             {ph.kpis.slice(0, 5).map(k => (
-              <Kpi key={k.label} label={k.label} value={k.value} tone={k.tone} points={k.series} />
+              <div key={k.label} className="flex flex-col justify-between rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(47,208,200,0.2)', background: 'rgba(6,22,24,0.55)' }}>
+                <div className="truncate text-[6px] font-bold uppercase tracking-[0.1em] text-ink-muted">{k.label}</div>
+                <div className="flex items-end justify-between gap-1">
+                  <span className="font-mono text-[18px] font-bold leading-none tabular-nums" style={{ color: sc(k.tone), textShadow: `0 0 9px color-mix(in srgb,${sc(k.tone)} 45%,transparent)` }}>{k.value}</span>
+                  <Sparkline points={k.series} tone={k.tone} width={32} height={12} />
+                </div>
+                <div className="truncate text-[6px] text-ink-muted">{k.sub}</div>
+              </div>
             ))}
           </div>
-          <div className="overflow-hidden rounded-[6px] border" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-            <GeoMap geo={geo} metric="pressure" title="" height={200} />
-          </div>
-          <div className="grid gap-2 xl:grid-cols-2">
-            <div className="space-y-1">
-              <PanelLabel accent={ACC.pharma}>Critical shortages</PanelLabel>
-              {ph.shortages.slice(0, 5).map(s => (
-                <Bar key={s.drug} label={s.drug} pct={Math.min(100, (parseInt(s.stock) / Math.max(1, parseInt(s.req))) * 100)} tone={s.tone} tail={s.level} />
-              ))}
-            </div>
-            <div>
-              <PanelLabel accent={ACC.pharma}>Cold chain monitoring</PanelLabel>
-              <div className="mt-1 flex items-center gap-2">
-                <RingGauge value={ph.coldChain.compliancePct} label="compliant" tone={ph.coldChain.compliancePct >= 95 ? 'ok' : 'warn'} size={72} sub="%" />
-                <div className="min-w-0 flex-1 space-y-0.5 text-[8px]">
-                  <div className="flex justify-between"><span style={{ color: sc('ok') }}>● In range</span><span className="font-mono text-ink-muted">{ph.coldChain.withinRange.toLocaleString()}</span></div>
-                  <div className="flex justify-between"><span style={{ color: sc('warn') }}>● Warning</span><span className="font-mono text-ink-muted">{ph.coldChain.warning}</span></div>
-                  <div className="flex justify-between"><span style={{ color: sc('alert') }}>● Breach</span><span className="font-mono text-ink-muted">{ph.coldChain.breach}</span></div>
-                </div>
+          {/* stock levels | supply map | alerts */}
+          <div className="flex min-h-0 flex-1 gap-1">
+            <div className="flex w-[118px] shrink-0 flex-col rounded-[4px] border p-1" style={{ borderColor: 'rgba(47,208,200,0.2)', background: 'rgba(6,22,24,0.5)' }}>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Stock Levels</div>
+              <div className="space-y-0.5">
+                {ph.shortages.slice(0, 6).map(s => {
+                  const pct = Math.min(100, (parseInt(s.stock) / Math.max(1, parseInt(s.req))) * 100);
+                  return (
+                    <div key={s.drug} className="text-[6.5px]">
+                      <div className="flex justify-between"><span className="truncate text-ink-muted">{s.drug}</span><span className="font-mono" style={{ color: sc(s.tone) }}>{Math.round(pct)}%</span></div>
+                      <span className="block h-1 overflow-hidden rounded-full" style={{ background: '#0c1c1e' }}><span className="block h-full rounded-full" style={{ width: `${pct}%`, background: sc(s.tone) }} /></span>
+                    </div>
+                  );
+                })}
               </div>
+            </div>
+            <div className="relative min-w-0 flex-1 overflow-hidden rounded-[4px] border" style={{ borderColor: 'rgba(47,208,200,0.22)' }}>
+              <GeoMap geo={geo} metric="pressure" title="Supply Network" height={118} accent={ACC.pharma} />
+            </div>
+            <div className="flex w-[112px] shrink-0 flex-col rounded-[4px] border p-1" style={{ borderColor: 'rgba(47,208,200,0.2)', background: 'rgba(6,22,24,0.5)' }}>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Alerts</div>
+              <div className="space-y-0.5">
+                {ph.shortages.slice(0, 5).map(s => (
+                  <div key={s.drug} className="rounded-[2px] px-1 py-0.5 text-[6.5px]" style={{ background: 'rgba(0,0,0,0.28)', borderLeft: `2px solid ${sc(s.tone)}` }}>
+                    <div className="truncate text-ink-soft">{s.drug}</div>
+                    <div className="flex justify-between text-ink-muted"><span className="truncate">{s.cat}</span><span className="font-bold uppercase" style={{ color: sc(s.tone) }}>{s.level}</span></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* cold chain + emergency redistribution */}
+          <div className="grid shrink-0 grid-cols-[1fr_1.4fr] gap-1">
+            <div className="flex items-center gap-1.5 rounded-[4px] border p-1" style={{ borderColor: 'rgba(47,208,200,0.18)', background: 'rgba(6,22,24,0.5)' }}>
+              <RingGauge value={ph.coldChain.compliancePct} label="cold" tone={ph.coldChain.compliancePct >= 95 ? 'ok' : 'warn'} size={50} sub="%" />
+              <div className="min-w-0 flex-1 space-y-0.5 text-[6.5px]">
+                <div className="flex justify-between"><span style={{ color: sc('ok') }}>● In range</span><span className="font-mono text-ink-muted">{ph.coldChain.withinRange.toLocaleString()}</span></div>
+                <div className="flex justify-between"><span style={{ color: sc('warn') }}>● Warning</span><span className="font-mono text-ink-muted">{ph.coldChain.warning}</span></div>
+                <div className="flex justify-between"><span style={{ color: sc('alert') }}>● Breach</span><span className="font-mono text-ink-muted">{ph.coldChain.breach}</span></div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 rounded-[4px] border p-1" style={{ borderColor: 'rgba(47,208,200,0.18)', background: 'rgba(6,22,24,0.5)' }}>
+              <div className="min-w-0 flex-1">
+                <div className="text-[6px] uppercase tracking-wider text-ink-muted">Emergency Redistribution</div>
+                <div className="truncate text-[7.5px] text-ink-soft">Transfer 1,100 units Insulin · Coastal → Highland</div>
+              </div>
+              <button className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[6.5px] font-bold uppercase" style={{ border: `1px solid ${sc('ok')}`, color: sc('ok') }}>Approve</button>
+              <button className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[6.5px] font-bold uppercase" style={{ border: `1px solid ${sc('alert')}`, color: sc('alert') }}>Reject</button>
             </div>
           </div>
         </Tile>
@@ -550,30 +613,66 @@ export function HealthEcosystemWall() {
           accent={ACC.finance} posture={fi.posture.toUpperCase()} postureTone={fi.posture === 'solvent' ? 'ok' : fi.posture === 'strained' ? 'warn' : 'alert'}
           time={time} navActive="Overview"
           nav={['Overview', 'Claims', 'Schemes', 'Payments', 'Fraud Detection', 'Budget', 'Procurement', 'Reports', 'Audit']}>
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-            <Kpi label="Treasury Drawdown" value={`${fi.treasuryDrawdownPct}`} unit="%" tone={fi.treasuryDrawdownPct >= 85 ? 'alert' : 'ok'} points={sp('trz', 50, 90)} />
-            <Kpi label="Fraud Exposure" value={`$${fi.fraudExposureM}M`} tone={fi.fraudExposureM >= 20 ? 'alert' : 'warn'} points={sp('frd', 10, 60)} />
-            <Kpi label="Fraud Cases" value={`${fi.fraud.length}`} tone={fi.fraud.length ? 'warn' : 'ok'} />
-            <Kpi label="Schemes" value={`${fi.schemes.length}`} tone="ok" />
-          </div>
-          <div className="space-y-1">
-            <PanelLabel accent={ACC.finance}>Claim pipeline</PanelLabel>
-            {fi.claims.map(c => (
-              <Bar key={c.stage} label={c.stage} pct={Math.min(100, (c.count / Math.max(1, fi.claims[0]!.count)) * 100)} tone={c.tone} tail={c.count.toLocaleString()} />
+          {/* KPI strip */}
+          <div className="grid shrink-0 grid-cols-4 gap-1">
+            {[
+              { l: 'TREASURY DRAWDOWN', v: `${fi.treasuryDrawdownPct}%`, s: 'of ceiling', t: (fi.treasuryDrawdownPct >= 85 ? 'alert' : 'ok') as Tone, k: 'trz' },
+              { l: 'FRAUD EXPOSURE', v: `$${fi.fraudExposureM}M`, s: 'flagged', t: (fi.fraudExposureM >= 20 ? 'alert' : 'warn') as Tone, k: 'frd' },
+              { l: 'FRAUD CASES', v: `${fi.fraud.length}`, s: 'open', t: (fi.fraud.length ? 'warn' : 'ok') as Tone, k: 'frc' },
+              { l: 'SCHEMES', v: `${fi.schemes.length}`, s: 'active', t: 'ok' as Tone, k: 'sch' },
+            ].map(m => (
+              <div key={m.l} className="flex flex-col justify-between rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(84,208,143,0.2)', background: 'rgba(8,24,18,0.55)' }}>
+                <div className="truncate text-[6.5px] font-bold uppercase tracking-[0.1em] text-ink-muted">{m.l}</div>
+                <div className="flex items-end justify-between gap-1">
+                  <span className="font-mono text-[20px] font-bold leading-none tabular-nums" style={{ color: sc(m.t), textShadow: `0 0 9px color-mix(in srgb,${sc(m.t)} 45%,transparent)` }}>{m.v}</span>
+                  <Sparkline points={sp(m.k, 40, 85)} tone={m.t} width={34} height={12} />
+                </div>
+                <div className="truncate text-[6px] text-ink-muted">{m.s}</div>
+              </div>
             ))}
           </div>
-          <div className="grid gap-2 xl:grid-cols-2">
-            <div>
-              <PanelLabel accent={ACC.finance}>Scheme coverage</PanelLabel>
-              <div className="mt-1">
-                <Donut total={fi.schemes.length} label="schemes" size={100}
-                  segments={fi.schemes.slice(0, 4).map(s => ({ label: s.scheme, value: Math.round(s.coveredM), tone: s.tone }))} />
+          {/* claim pipeline | scheme performance */}
+          <div className="flex min-h-0 flex-1 gap-1">
+            <div className="flex flex-1 flex-col rounded-[4px] border p-1" style={{ borderColor: 'rgba(84,208,143,0.2)', background: 'rgba(8,24,18,0.5)' }}>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Claim Pipeline</div>
+              <div className="flex flex-1 flex-col justify-around">
+                {fi.claims.map((c, i) => {
+                  const w = 100 - i * 16;
+                  return (
+                    <div key={c.stage} className="flex items-center gap-1">
+                      <span className="w-12 shrink-0 text-[6.5px] uppercase text-ink-muted">{c.stage}</span>
+                      <span className="relative h-3 flex-1 overflow-hidden rounded-[2px]" style={{ background: '#0c1c16' }}>
+                        <span className="block h-full rounded-[2px]" style={{ width: `${w}%`, background: `linear-gradient(90deg,color-mix(in srgb,${sc(c.tone)} 50%,transparent),${sc(c.tone)})`, boxShadow: `0 0 6px ${sc(c.tone)}` }} />
+                        <span className="absolute inset-0 flex items-center justify-end pr-1 font-mono text-[7px] text-ink">{c.count.toLocaleString()}</span>
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-            <div className="space-y-1">
-              <PanelLabel accent={ACC.finance}>Scheme solvency</PanelLabel>
+            <div className="flex flex-1 flex-col rounded-[4px] border p-1" style={{ borderColor: 'rgba(84,208,143,0.2)', background: 'rgba(8,24,18,0.5)' }}>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Scheme Performance</div>
+              <div className="flex-1 space-y-1">
+                {fi.schemes.slice(0, 5).map(s => (
+                  <div key={s.scheme} className="flex items-center gap-1 text-[6.5px]">
+                    <span className="w-16 shrink-0 truncate text-ink-muted">{s.scheme}</span>
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: '#0c1c16' }}><span className="block h-full rounded-full" style={{ width: `${s.collectionPct}%`, background: sc(s.tone), boxShadow: `0 0 5px ${sc(s.tone)}` }} /></span>
+                    <span className="w-6 shrink-0 text-right font-mono" style={{ color: sc(s.tone) }}>{s.collectionPct}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          {/* expenditure breakdown */}
+          <div className="flex shrink-0 items-center gap-2 rounded-[4px] border p-1" style={{ borderColor: 'rgba(84,208,143,0.18)', background: 'rgba(8,24,18,0.5)' }}>
+            <Donut total={fi.schemes.length} label="exp" size={62}
+              segments={fi.schemes.slice(0, 4).map(s => ({ label: s.scheme, value: Math.round(s.coveredM), tone: s.tone }))} />
+            <div className="min-w-0 flex-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[6.5px]">
               {fi.schemes.slice(0, 4).map(s => (
-                <Bar key={s.scheme} label={s.scheme} pct={s.collectionPct} tone={s.tone} tail={s.solvency} />
+                <div key={s.scheme} className="flex items-center justify-between gap-1">
+                  <span className="flex min-w-0 items-center gap-1"><span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: sc(s.tone) }} /><span className="truncate text-ink-soft">{s.scheme}</span></span>
+                  <span className="font-mono text-ink-muted">{s.claimsRatioPct}%</span>
+                </div>
               ))}
             </div>
           </div>
