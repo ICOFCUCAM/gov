@@ -82,6 +82,10 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Facility registry', 'registry'), S('Asset telemetry', 'network'),
       S('Blood & warehouse network', 'logistics'),
     ]),
+    G('portal', 'Citizen Health Portal', 'Citizen digital health ecosystem', [
+      S('Digital health ID', 'citizen'), S('Health timeline', 'citizen'),
+      S('Telemedicine & personal AI', 'citizen'),
+    ]),
   ],
   FINANCE: [
     G('command', 'Fiscal Command', 'Sovereign fiscal authority', [

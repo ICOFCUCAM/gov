@@ -134,6 +134,77 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── Citizen Digital Health Portal ──────────────────────────────────────
+// The citizen-facing healthcare ecosystem: national digital health ID,
+// longitudinal health timeline, appointments, digital prescriptions,
+// insurance coverage, notifications, telemedicine and a personal-health
+// AI. Pure & deterministic (national aggregate view).
+export interface TimelineEntry { kind: 'Diagnosis' | 'Prescription' | 'Lab result' | 'Imaging' | 'Surgery' | 'Vaccination'; detail: string; daysAgo: number; tone: Tone }
+export interface CitizenAppointment { facility: string; kind: 'Hospital' | 'Clinic' | 'Specialist' | 'Telemedicine'; inDays: number; status: 'confirmed' | 'pending' | 'waitlist'; tone: Tone }
+export interface DigitalRx { id: string; drug: string; status: 'active' | 'refill-due' | 'collected'; refillsLeft: number; tone: Tone }
+export interface CitizenPortal {
+  enrolledM: number;
+  digitalIdCoveragePct: number;
+  activeAppointments: number;
+  telemedicineSessions: number;
+  insuranceCoveragePct: number;
+  claimsInProgress: number;
+  notificationsOut: number;
+  healthScore: number;            // 0-100 population mean
+  riskBand: 'low' | 'moderate' | 'elevated';
+  timeline: TimelineEntry[];
+  appointments: CitizenAppointment[];
+  prescriptions: DigitalRx[];
+  aiGuidance: string[];
+  posture: 'healthy' | 'attention' | 'at-risk';
+}
+export function citizenHealthPortal(id: string, t: number): CitizenPortal {
+  const digitalIdCoveragePct = Math.round(wave(`cp:id:${id}`, t, 58, 99));
+  const healthScore = Math.round(wave(`cp:hs:${id}`, t, 48, 92));
+  const riskBand: CitizenPortal['riskBand'] = healthScore < 60 ? 'elevated' : healthScore < 76 ? 'moderate' : 'low';
+  const timeline: TimelineEntry[] = ([
+    ['Diagnosis', 'Hypertension — stage 1', 4],
+    ['Prescription', 'Amlodipine 5mg · 30d', 4],
+    ['Lab result', 'Lipid panel — borderline', 11],
+    ['Vaccination', 'Influenza (seasonal)', 38],
+    ['Imaging', 'Chest X-ray — clear', 64],
+    ['Surgery', 'Day-case · uneventful', 210],
+  ] as const).map(([kind, detail, daysAgo]): TimelineEntry => ({
+    kind, detail, daysAgo, tone: daysAgo < 7 ? 'warn' : 'ok',
+  }));
+  const appointments: CitizenAppointment[] = ([
+    ['Central Polyclinic', 'Clinic', 3],
+    ['Cardiology — National Referral', 'Specialist', 12],
+    ['Telemedicine review', 'Telemedicine', 1],
+  ] as const).map(([facility, kind, inDays]): CitizenAppointment => {
+    const st = seed(`cp:ap:${id}:${facility}`);
+    const status: CitizenAppointment['status'] = st > 0.66 ? 'confirmed' : st > 0.33 ? 'pending' : 'waitlist';
+    return { facility, kind, inDays, status, tone: status === 'waitlist' ? 'alert' : status === 'pending' ? 'warn' : 'ok' };
+  });
+  const prescriptions: DigitalRx[] = ['Amlodipine 5mg', 'Metformin 850mg', 'Atorvastatin 20mg'].map((drug, i): DigitalRx => {
+    const phase = Math.floor((t / 6 + seed(`cp:rx:${id}:${i}`) * 3)) % 3;
+    const status = (['active', 'refill-due', 'collected'] as const)[phase]!;
+    return { id: `RX-${7000 + i}`, drug, status, refillsLeft: 1 + Math.round(seed(`cp:rf:${id}:${i}`) * 4), tone: status === 'refill-due' ? 'warn' : 'ok' };
+  });
+  const claimsInProgress = Math.round(wave(`cp:cl:${id}`, t, 0, 6));
+  const posture: CitizenPortal['posture'] = riskBand === 'elevated' ? 'at-risk' : riskBand === 'moderate' ? 'attention' : 'healthy';
+  const aiGuidance = [
+    healthScore < 70 ? 'Blood-pressure trend rising — schedule a review within 14 days' : 'Health indicators stable — maintain current plan',
+    prescriptions.some(p => p.status === 'refill-due') ? 'Prescription refill due — collect to avoid therapy gap' : 'No prescription action required',
+    'Seasonal influenza vaccination recommended for your risk profile',
+  ];
+  return {
+    enrolledM: Math.round(wave(`cp:en:${id}`, t, 18, 46) * 10) / 10,
+    digitalIdCoveragePct,
+    activeAppointments: appointments.filter(a => a.status !== 'waitlist').length,
+    telemedicineSessions: Math.round(wave(`cp:tm:${id}`, t, 200, 14000)),
+    insuranceCoveragePct: Math.round(wave(`cp:in:${id}`, t, 48, 96)),
+    claimsInProgress,
+    notificationsOut: Math.round(wave(`cp:no:${id}`, t, 1000, 480000)),
+    healthScore, riskBand, timeline, appointments, prescriptions, aiGuidance, posture,
+  };
+}
+
 // ── National Healthcare Grid — every facility & asset registered ───────
 // The complete national asset register with live telemetry: hospitals,
 // clinics, labs, ambulances, pharmacies, blood banks, warehouses. Pure &

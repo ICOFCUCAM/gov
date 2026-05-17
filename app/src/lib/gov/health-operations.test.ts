@@ -4,7 +4,7 @@ import {
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
   patientDeepExecution, emergencyIncidentExecution, diseaseEpidemiology,
-  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid,
+  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid, citizenHealthPortal,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -261,5 +261,18 @@ describe('ministry of health operations engine', () => {
     expect(a.onlinePct).toBeLessThanOrEqual(100);
     for (const c of a.classes) { expect(c.online).toBeLessThanOrEqual(c.total); expect(['ok','warn','alert']).toContain(c.tone); }
     for (let i = 1; i < a.regions.length; i++) expect(a.regions[i - 1]!.onlinePct).toBeLessThanOrEqual(a.regions[i]!.onlinePct);
+  });
+
+  it('citizenHealthPortal is deterministic & bounded', () => {
+    const a = citizenHealthPortal('MOH', 130);
+    expect(a).toEqual(citizenHealthPortal('MOH', 130));
+    expect(['healthy','attention','at-risk']).toContain(a.posture);
+    expect(['low','moderate','elevated']).toContain(a.riskBand);
+    expect(a.healthScore).toBeGreaterThanOrEqual(0);
+    expect(a.healthScore).toBeLessThanOrEqual(100);
+    expect(a.timeline.length).toBeGreaterThan(3);
+    expect(a.prescriptions.length).toBe(3);
+    expect(a.aiGuidance.length).toBeGreaterThan(2);
+    for (const p of a.prescriptions) expect(['active','refill-due','collected']).toContain(p.status);
   });
 });
