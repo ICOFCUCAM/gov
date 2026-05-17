@@ -145,6 +145,15 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                   : `Appropriation stalled — ${lg.blocked} blocked bills (constitutional gate)`;
               }
             }
+            // Cross-institution chain feedback: procurement-bearing
+            // institutions are constrained when Treasury liquidity is low.
+            let chainConstraint: string | null = null;
+            if (['health', 'education', 'transport', 'energy'].includes(app.domain)) {
+              const trOp = federationPosture(mins, now / 4000).institutions.find(i => i.archetype === 'FINANCE')?.operational;
+              if (trOp != null && trOp < 75) {
+                chainConstraint = `Procurement constrained — Treasury liquidity ${trOp} (cross-institution chain)`;
+              }
+            }
             const vt = verdict.posture === 'breach' ? 'alert' : fiscalGate ? 'alert' : verdict.posture === 'under-review' ? 'warn' : 'ok';
             return (
               <>
@@ -157,6 +166,7 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                       <span className="text-[9px] text-ink-muted">withholding: {withheld.join(', ')}</span>
                     ) : <span className="text-[9px] text-ink-muted">all capabilities constitutionally available</span>}
                     {fiscalGate ? <span className="text-[9px] font-semibold" style={{ color: 'rgb(var(--c-alert))' }}>⛔ {fiscalGate}</span> : null}
+                    {chainConstraint ? <span className="text-[9px] font-semibold" style={{ color: 'rgb(var(--c-warn))' }}>⛓ {chainConstraint}</span> : null}
                     {(() => {
                       const es = escalationState(app.kind as AppKind, stress);
                       const archMap: Record<string, string> = { health: 'HEALTH', treasury: 'FINANCE', education: 'EDUCATION', transport: 'TRANSPORT', energy: 'ENERGY' };
