@@ -126,9 +126,23 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                 : app.kind === 'branch' ? `${app.archetypeOrBranch === 'legislature' ? 'leg' : 'jud'}:${app.archetypeOrBranch}`
                   : `${app.id}:${active ?? 'command'}`;
             const chain = verifyChain(auditScope);
+            // Emergency powers are a real, time-bound constitutional
+            // instrument: severe sustained stress asserts an emergency at a
+            // deterministic prior hour, with a constituted renewal enacted
+            // mid-window. The lifecycle clock then governs sunset/lapse —
+            // no synthetic age.
+            const nowHrs = now / 4000;
+            const emergency = stress >= 88
+              ? {
+                  scope: app.domain,
+                  authority: app.kind === 'branch' ? 'Apex authority' : 'Cabinet emergency cell',
+                  assertedAtHrs: nowHrs - (stress - 50),
+                  renewals: [{ atHrs: nowHrs - (stress - 50) / 2, authority: 'Legislature' }],
+                }
+              : null;
             const verdict = evaluateConstitution({
               kind: app.kind as AppKind, domain: app.domain, stress,
-              emergencyAsserted: stress >= 88, emergencyAgeHrs: stress >= 88 ? Math.round(stress) : 0,
+              emergencyAsserted: emergency != null, emergency, nowHrs,
               auditIntact: chain.intact,
             });
             // Constitutional execution-chain: the Treasury may not execute
@@ -180,6 +194,21 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                       );
                     })()}
                   </div>
+                  {verdict.emergency.phase !== 'none' ? (() => {
+                    const ep = verdict.emergency;
+                    const et = ep.phase === 'lapsed' ? 'alert' : ep.phase === 'renewal-due' ? 'warn' : 'ok';
+                    return (
+                      <div className="mt-1 flex flex-wrap items-center gap-2 rounded-[2px] border border-line bg-surface-2/40 px-1.5 py-1">
+                        <span className="text-[8.5px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${et}))` }}>
+                          Emergency powers · {ep.phase}
+                        </span>
+                        <span className="font-mono text-[9px] tabular-nums text-ink-muted">
+                          age {ep.ageHrs}h · {ep.renewalCount} renewal{ep.renewalCount === 1 ? '' : 's'} · sunset {ep.hrsToSunset > 0 ? `in ${ep.hrsToSunset}h` : `lapsed ${Math.abs(ep.hrsToSunset)}h ago`}
+                        </span>
+                        <span className="text-[9px] text-ink-soft">{ep.detail}</span>
+                      </div>
+                    );
+                  })() : null}
                   <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5">
                     {verdict.checks.map(c => (
                       <span key={c.rule} className="text-[8.5px]" style={{ color: c.status === 'breach' ? 'rgb(var(--c-alert))' : c.status === 'watch' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink-muted))' }}>

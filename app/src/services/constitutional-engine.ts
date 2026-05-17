@@ -6,6 +6,13 @@
 // emergency-power sunset, rights safeguards, audit integrity — and returns
 // a compliance verdict that gates sensitive runtime actions. No React/DOM.
 
+import {
+  emergencyLifecycle,
+  emergencyCheckStatus,
+  type EmergencyDeclaration,
+  type EmergencyLifecycle,
+} from '@/shared/sovereignty/emergency-powers';
+
 export type AppKind = 'ministry' | 'branch' | 'agency' | 'citizen' | 'officer';
 
 export interface ConstitutionalInput {
@@ -16,8 +23,12 @@ export interface ConstitutionalInput {
   stress: number;
   /** is an emergency posture currently asserted */
   emergencyAsserted: boolean;
-  /** hours since emergency asserted (for sunset) */
+  /** hours since emergency asserted (legacy sunset input) */
   emergencyAgeHrs?: number;
+  /** full emergency-power declaration record (preferred — drives the lifecycle clock) */
+  emergency?: EmergencyDeclaration | null;
+  /** wall-clock hour for the lifecycle clock (defaults to emergencyAgeHrs) */
+  nowHrs?: number;
   /** audit chain intact */
   auditIntact: boolean;
 }
@@ -31,11 +42,11 @@ export interface ConstitutionalVerdict {
   compliant: boolean;
   posture: 'compliant' | 'under-review' | 'breach';
   checks: ConstitutionalCheck[];
+  /** live emergency-power lifecycle (phase 'none' when not asserted) */
+  emergency: EmergencyLifecycle;
   /** capabilities the constitution withholds while non-compliant */
   withheld: string[];
 }
-
-const EMERGENCY_SUNSET_HRS = 72;
 
 export function evaluateConstitution(i: ConstitutionalInput): ConstitutionalVerdict {
   const checks: ConstitutionalCheck[] = [];
@@ -54,19 +65,23 @@ export function evaluateConstitution(i: ConstitutionalInput): ConstitutionalVerd
     detail: i.kind === 'branch' ? 'Branch authority bounded to its constitutional remit' : 'Executive instrument under constituted oversight',
   });
 
-  // Emergency-power sunset — asserted emergency must be time-bound.
-  if (i.emergencyAsserted) {
-    const age = i.emergencyAgeHrs ?? 0;
-    checks.push({
-      rule: 'Emergency-power sunset',
-      status: age >= EMERGENCY_SUNSET_HRS ? 'breach' : age >= EMERGENCY_SUNSET_HRS * 0.7 ? 'watch' : 'ok',
-      detail: age >= EMERGENCY_SUNSET_HRS
-        ? `Emergency exceeded ${EMERGENCY_SUNSET_HRS}h sunset without renewal — constitutional breach`
-        : `Emergency asserted ${age}h ago — renewal required by ${EMERGENCY_SUNSET_HRS}h`,
-    });
-  } else {
-    checks.push({ rule: 'Emergency-power sunset', status: 'ok', detail: 'No emergency powers asserted' });
-  }
+  // Emergency-power sunset — driven by the real lifecycle clock. A
+  // declaration record is preferred; legacy callers supplying only
+  // `emergencyAsserted`/`emergencyAgeHrs` are mapped to a synthetic
+  // declaration so the same constitutional clock governs every path.
+  const decl: EmergencyDeclaration | null =
+    i.emergency !== undefined
+      ? i.emergency
+      : i.emergencyAsserted
+        ? { scope: i.domain, authority: 'Asserting authority', assertedAtHrs: 0 }
+        : null;
+  const nowHrs = i.nowHrs ?? i.emergencyAgeHrs ?? 0;
+  const emergency = emergencyLifecycle(decl, nowHrs);
+  checks.push({
+    rule: 'Emergency-power sunset',
+    status: emergencyCheckStatus(emergency.phase),
+    detail: emergency.detail,
+  });
 
   // Rights safeguards — citizen-facing systems carry a higher bar.
   checks.push({
@@ -89,5 +104,5 @@ export function evaluateConstitution(i: ConstitutionalInput): ConstitutionalVerd
   // While breached, the constitution withholds escalation/configuration.
   const withheld = breach ? ['escalate', 'configure'] : watch ? ['configure'] : [];
 
-  return { compliant: !breach, posture, checks, withheld };
+  return { compliant: !breach, posture, checks, emergency, withheld };
 }
