@@ -12,6 +12,8 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { diseaseIntel } from '@/lib/gov/health-systems';
 import { diseaseEpidemiology } from '@/lib/gov/health-operations';
 import { propagateNationalEvent } from '@/lib/gov/national-propagation';
+import { healthGeo } from '@/lib/gov/health-geo';
+import { GeoMap } from '@/apps/_shared/GeoMap';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
@@ -21,6 +23,7 @@ export function DiseaseSystem({ id, now, role, withheld }: {
   const ts = now / 4000;
   const di = diseaseIntel(id, ts);
   const ep = diseaseEpidemiology(id, ts);
+  const geo = healthGeo(id, ts);
   const [selPath, setSelPath] = React.useState<string | null>(null);
   const lead = ep.pathogens.find(p => p.pathogen === selPath) ?? ep.pathogens[0]!;
 
@@ -139,6 +142,8 @@ export function DiseaseSystem({ id, now, role, withheld }: {
           ))}
         </div>
       </Panel>
+
+      <GeoMap geo={geo} metric="outbreakHeat" title="Outbreak propagation map — regional transmission intensity" height={300} />
 
       <Panel title="National infection propagation" meta={`outbreak cascade · ${prop.escalation}`}>
         <div className="space-y-0.5">

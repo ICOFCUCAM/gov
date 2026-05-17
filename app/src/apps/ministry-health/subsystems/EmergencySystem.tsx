@@ -10,6 +10,8 @@ import * as React from 'react';
 import { StatGrid, Panel, PosturePill, ac } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { emergencyMedical, emergencyIncidentExecution, type IncidentStage } from '@/lib/gov/health-operations';
+import { healthGeo } from '@/lib/gov/health-geo';
+import { GeoMap } from '@/apps/_shared/GeoMap';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
@@ -21,6 +23,8 @@ export function EmergencySystem({ id, now, role, withheld }: {
   const ts = now / 4000;
   const em = emergencyMedical(id, ts);
   const ex = emergencyIncidentExecution(id, ts);
+  const geo = healthGeo(id, ts);
+  const rr = geo.reroute;
 
   const [selId, setSelId] = React.useState<string | null>(null);
   const sel = ex.incidents.find(x => x.id === selId) ?? ex.incidents[0] ?? null;
@@ -62,6 +66,13 @@ export function EmergencySystem({ id, now, role, withheld }: {
         <div className="mt-0.5 text-[10px] text-ink">{adv.headline}</div>
         <ul className="mt-0.5 flex flex-wrap gap-x-4">{adv.recommended.map((r, i) => <li key={i} className="text-[9px] text-ink-soft">▸ {r}</li>)}</ul>
       </div>
+
+      <div className="flex items-start gap-2 rounded-[3px] border px-2.5 py-1.5" style={{ borderColor: ac(rr.tone), boxShadow: rr.active ? `0 0 14px color-mix(in srgb, ${ac(rr.tone)} 26%, transparent)` : 'none' }}>
+        <span className="mt-0.5 text-[8px] font-bold uppercase tracking-[0.18em]" style={{ color: ac(rr.tone) }}>AI ▸</span>
+        <span className="text-[11px] leading-snug" style={{ color: rr.active ? ac(rr.tone) : 'rgb(var(--c-ink-soft))' }}>{rr.text}</span>
+      </div>
+
+      <GeoMap geo={geo} metric="icuLoad" title="ICU load geography — inter-region transfer corridors" height={290} />
 
       <div className="grid gap-2 lg:grid-cols-5">
         {/* MASTER — dense live incident board */}
