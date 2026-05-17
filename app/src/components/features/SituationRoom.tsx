@@ -997,6 +997,17 @@ export function SituationRoom() {
     <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]"
       style={{ ...PALETTE, ...(war ? { ['--accent' as string]: TONE.alert } : {}) }}>
       <CommandPalette items={cmdItems} accent={war ? TONE.alert : ACCENT} />
+      {/* Phase-2 cinematic environmental atmosphere — tactical vignette,
+          depth haze, volumetric corner glow & scanline glaze. Non-blocking. */}
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-[55]" style={{
+        background:
+          `radial-gradient(120% 80% at 50% -10%, color-mix(in srgb,${war ? TONE.alert : ACCENT} 9%,transparent) 0%, transparent 55%),` +
+          'radial-gradient(80% 60% at 50% 120%, rgba(2,6,14,0.55) 0%, transparent 60%),' +
+          'radial-gradient(140% 120% at 50% 50%, transparent 58%, rgba(1,4,9,0.5) 100%)',
+      }} />
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-[55] opacity-[0.05]" style={{
+        backgroundImage: 'repeating-linear-gradient(0deg, rgba(150,200,235,0.6) 0 1px, transparent 1px 3px)',
+      }} />
       {war ? (
         <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-1.5 text-xs"
           style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, borderBottom: `1px solid ${TONE.alert}` }}>
@@ -1024,8 +1035,8 @@ export function SituationRoom() {
           </span>
         </Link>
         <div className="hidden flex-1 text-center md:block">
-          <div className="text-sm font-semibold tracking-[0.22em] text-ink">NATIONAL SITUATION ROOM</div>
-          <div className="text-[10px] uppercase tracking-[0.18em] text-ink-muted">Real-time command &amp; coordination</div>
+          <div className="text-sm font-bold uppercase tracking-[0.34em] text-ink" style={{ textShadow: `0 0 16px color-mix(in srgb,${war ? TONE.alert : ACCENT} 50%,transparent)` }}>NATIONAL SITUATION ROOM</div>
+          <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.34em] text-ink-muted">Real-time Command &amp; Coordination</div>
         </div>
         <div className="ml-auto flex items-center gap-3">
           <button type="button"
