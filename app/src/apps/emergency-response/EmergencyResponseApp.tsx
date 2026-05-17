@@ -1,15 +1,18 @@
 'use client';
 
 // apps/emergency-response — federated crisis-response execution app.
-// Crisis severity & resource cover emerge into national emergency posture.
+// Cinematic sovereign command rhythm (shared ops kit).
 
 import * as React from 'react';
-import { StatGrid, Bars, Panel, FieldPanel } from '@/apps/_shared/AppKit';
+import { FieldPanel } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { emergencyOps } from '@/lib/gov/agency-systems';
+import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
+import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
+const ACC = '#ff5d5d';
 const WF: Record<string, WorkKind> = { command: 'incident', dispatch: 'incident', resources: 'procurement', recovery: 'incident' };
 const LABEL: Record<string, string> = { command: 'Crisis Command', dispatch: 'Dispatch', resources: 'Resource Coordination', recovery: 'Recovery Workflows' };
 
@@ -20,40 +23,40 @@ export function EmergencyResponseApp({ appId, domain, now, role, withheld }: {
   const o = emergencyOps(appId, ts);
   const d = WF[domain] ? domain : 'command';
   const label = LABEL[d] ?? 'Crisis Command';
-  type Tone = 'ok' | 'warn' | 'alert';
   const sevT: Tone = o.severity === 'national' || o.severity === 'major' ? 'alert' : o.severity === 'elevated' ? 'warn' : 'ok';
   const fieldDomain = d === 'command' || d === 'dispatch';
-  const items: { l: string; v: string; t?: Tone }[] = d === 'resources' ? [
-    { l: 'Resource cover', v: `${o.resourceCoverPct}%`, t: o.resourceCoverPct >= 70 ? 'ok' : o.resourceCoverPct >= 50 ? 'warn' : 'alert' },
-    { l: 'Shelters open', v: `${o.sheltersOpen}`, t: o.sheltersOpen ? 'warn' : 'ok' },
-    { l: 'Responders available', v: `${o.respondersAvailable}/${o.responders}`, t: 'ok' },
+  const raw: { l: string; v: string; t?: Tone }[] = d === 'resources' ? [
+    { l: 'Resource Cover', v: `${o.resourceCoverPct}%`, t: o.resourceCoverPct >= 70 ? 'ok' : o.resourceCoverPct >= 50 ? 'warn' : 'alert' },
+    { l: 'Shelters Open', v: `${o.sheltersOpen}`, t: o.sheltersOpen ? 'warn' : 'ok' },
+    { l: 'Responders Available', v: `${o.respondersAvailable}/${o.responders}`, t: 'ok' },
   ] : d === 'recovery' ? [
-    { l: 'Population assisted', v: o.populationAssisted.toLocaleString(), t: 'ok' },
-    { l: 'Shelters open', v: `${o.sheltersOpen}`, t: o.sheltersOpen ? 'warn' : 'ok' },
-    { l: 'Resource cover', v: `${o.resourceCoverPct}%`, t: o.resourceCoverPct >= 70 ? 'ok' : 'warn' },
-    { l: 'Active crises', v: `${o.activeCrises}`, t: o.activeCrises >= 4 ? 'alert' : 'ok' },
+    { l: 'Population Assisted', v: o.populationAssisted.toLocaleString(), t: 'ok' },
+    { l: 'Shelters Open', v: `${o.sheltersOpen}`, t: o.sheltersOpen ? 'warn' : 'ok' },
+    { l: 'Resource Cover', v: `${o.resourceCoverPct}%`, t: o.resourceCoverPct >= 70 ? 'ok' : 'warn' },
+    { l: 'Active Crises', v: `${o.activeCrises}`, t: o.activeCrises >= 4 ? 'alert' : 'ok' },
   ] : d === 'dispatch' ? [
-    { l: 'Responders available', v: `${o.respondersAvailable}/${o.responders}`, t: 'ok' },
-    { l: 'Mean mobilise', v: `${o.meanMobiliseMin}m`, t: o.meanMobiliseMin >= 25 ? 'alert' : o.meanMobiliseMin >= 14 ? 'warn' : 'ok' },
-    { l: 'Active crises', v: `${o.activeCrises}`, t: o.activeCrises >= 4 ? 'alert' : o.activeCrises ? 'warn' : 'ok' },
+    { l: 'Responders Available', v: `${o.respondersAvailable}/${o.responders}`, t: 'ok' },
+    { l: 'Mean Mobilise', v: `${o.meanMobiliseMin}m`, t: o.meanMobiliseMin >= 25 ? 'alert' : o.meanMobiliseMin >= 14 ? 'warn' : 'ok' },
+    { l: 'Active Crises', v: `${o.activeCrises}`, t: o.activeCrises >= 4 ? 'alert' : o.activeCrises ? 'warn' : 'ok' },
     { l: 'Severity', v: o.severity, t: sevT },
   ] : [
-    { l: 'Active crises', v: `${o.activeCrises}`, t: o.activeCrises >= 4 ? 'alert' : o.activeCrises ? 'warn' : 'ok' },
+    { l: 'Active Crises', v: `${o.activeCrises}`, t: o.activeCrises >= 4 ? 'alert' : o.activeCrises ? 'warn' : 'ok' },
     { l: 'Severity', v: o.severity, t: sevT },
-    { l: 'Responders available', v: `${o.respondersAvailable}/${o.responders}`, t: 'ok' },
-    { l: 'Mean mobilise', v: `${o.meanMobiliseMin}m`, t: o.meanMobiliseMin >= 25 ? 'alert' : 'warn' },
-    { l: 'Shelters open', v: `${o.sheltersOpen}`, t: o.sheltersOpen ? 'warn' : 'ok' },
-    { l: 'Resource cover', v: `${o.resourceCoverPct}%`, t: o.resourceCoverPct >= 70 ? 'ok' : 'warn' },
+    { l: 'Responders Available', v: `${o.respondersAvailable}/${o.responders}`, t: 'ok' },
+    { l: 'Mean Mobilise', v: `${o.meanMobiliseMin}m`, t: o.meanMobiliseMin >= 25 ? 'alert' : 'warn' },
+    { l: 'Shelters Open', v: `${o.sheltersOpen}`, t: o.sheltersOpen ? 'warn' : 'ok' },
+    { l: 'Resource Cover', v: `${o.resourceCoverPct}%`, t: o.resourceCoverPct >= 70 ? 'ok' : 'warn' },
   ];
+  const kpis = raw.map((m, i) => ({ l: m.l, v: m.v, t: (m.t ?? 'ok') as Tone, s: '', k: `er${i}` }));
+  const pTone: Tone = kpis.some(x => x.t === 'alert') ? 'alert' : kpis.some(x => x.t === 'warn') ? 'warn' : 'ok';
+
   return (
-    <div className="space-y-2">
-      <div className="rounded-[3px] border border-line bg-surface px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
-        {label} subsystem
-      </div>
-      <StatGrid items={items} />
-      <Panel title="Regional crisis posture" meta="population assisted · shelters">
-        <Bars rows={o.regional.map(r => ({ label: r.region, pct: r.status === 'crisis' ? 92 : r.status === 'watch' ? 58 : 26, tone: r.tone, tail: r.status }))} />
-      </Panel>
+    <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#0c0406', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
+      <OpsHeader index={1} title={`Emergency · ${label}`} subtitle="Sovereign Crisis Execution"
+        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ELEVATED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+      <KpiStrip ts={ts} accent={ACC} items={kpis} />
+      <BarPanel title="Regional crisis posture" meta="population assisted · shelters" accent={ACC} live
+        rows={o.regional.map(r => ({ label: r.region, pct: r.status === 'crisis' ? 92 : r.status === 'watch' ? 58 : 26, tone: r.tone, tail: r.status }))} />
       {fieldDomain ? (
         <>
           <FieldPanel instId={appId} archetype="INTERIOR" now={now} />
