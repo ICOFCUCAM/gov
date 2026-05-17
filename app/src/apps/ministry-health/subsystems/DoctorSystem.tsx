@@ -74,8 +74,8 @@ export function DoctorSystem({ id, now, role, withheld }: {
         ))}
       </div>
 
-      {/* Body grid — benchmark 4-column composition */}
-      <div className="grid gap-2 xl:grid-cols-4">
+      {/* Body grid — spec 3-column composition (≈30 / 35 / 25) */}
+      <div className="grid gap-[14px] xl:grid-cols-[1.1fr_1.5fr_1fr]">
         {/* Col 1 — timeline + medications */}
         <div className="space-y-2">
         <CommandPanel title="Patient timeline" meta="today" accent={ACC}>
@@ -149,12 +149,9 @@ export function DoctorSystem({ id, now, role, withheld }: {
               ))}
             </div>
           </CommandPanel>
-        </div>
-
-        {/* Col 3 — vitals · care plan · pending orders */}
-        <div className="space-y-2">
+          {/* center continues — vitals · care plan · pending orders */}
           <CommandPanel title="Vital signs trend" meta="last 24h" accent={ACC} live>
-            <TrendChart height={96}
+            <TrendChart height={150}
               series={p.vitals.map(v => ({ name: v.label.split(' ')[0]!, points: norm(v.series), tone: v.tone }))} />
             <div className="mt-1 grid grid-cols-2 gap-1">
               {p.vitals.map(v => (
@@ -189,7 +186,7 @@ export function DoctorSystem({ id, now, role, withheld }: {
           </CommandPanel>
         </div>
 
-        {/* Col 4 — AI · alerts · queue */}
+        {/* Col 3 — AI · alerts · queue */}
         <div className="space-y-2">
           <CommandPanel title="AI clinical assistant" meta="beta" accent={ACC} live>
             <div className="text-[9.5px] text-ink-soft">{p.ai.summary}</div>
