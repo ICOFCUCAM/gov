@@ -15,7 +15,7 @@ import {
   emergencyCommandView, pharmaSupplyCommand, healthFinanceExecution, publicHealthSite,
 } from '@/lib/gov/health-operations';
 import { hospitalOps } from '@/lib/gov/health-systems';
-import { waveSeries } from '@/lib/telemetry';
+import { waveSeries, seed } from '@/lib/telemetry';
 
 const ID = 'health';
 const ACC = {
@@ -182,32 +182,82 @@ export function HealthEcosystemWall() {
           accent={ACC.command} posture={ns.posture} postureTone={ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok'}
           time={time} navActive="Situation Room"
           nav={['National Command', 'Situation Room', 'Executive Briefing', 'National Grid', 'Alerts & Directives', 'Escalations', 'Interventions', 'AI Insights', 'Reports', 'Settings']}>
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-5">
-            <Kpi label="Health Index" value={`${nhi}`} tone={nhi >= 70 ? 'ok' : nhi >= 55 ? 'warn' : 'alert'} points={sp('nhi', 55, 85)} />
-            <Kpi label="Critical Alerts" value={`${criticalRegions}`} tone={criticalRegions ? 'alert' : 'ok'} points={sp('alr', 0, 40)} />
-            <Kpi label="ICU Occupancy" value={`${ns.nationalIcuLoad}`} unit="%" tone={ns.nationalIcuLoad >= 88 ? 'alert' : ns.nationalIcuLoad >= 75 ? 'warn' : 'ok'} points={sp('icu', 60, 95)} />
-            <Kpi label="Outbreak Risk" value={ns.activeOutbreaks >= 8 ? 'HIGH' : ns.activeOutbreaks >= 4 ? 'MED' : 'LOW'} tone={ns.activeOutbreaks >= 8 ? 'alert' : ns.activeOutbreaks >= 4 ? 'warn' : 'ok'} />
-            <Kpi label="Disaster" value={ns.disasterState === 'national-disaster' ? 'L3' : ns.disasterState === 'emergency' ? 'L2' : ns.disasterState === 'watch' ? 'L1' : 'L0'} tone={ns.disasterState === 'normal' ? 'ok' : ns.disasterState === 'watch' ? 'warn' : 'alert'} />
-          </div>
-          <div className="overflow-hidden rounded-[6px] border" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-            <GeoMap geo={geo} metric="pressure" title="" height={210} />
-          </div>
-          <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
-            {[['ICU load', 'icul', 'alert'], ['ER load', 'erl', 'warn'], ['Ventilators', 'vent', 'ok'], ['Staffing', 'stf', 'ok']].map(([l, k, tn]) => (
-              <div key={l} className="rounded-[4px] border px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d3548 50%,transparent)' }}>
-                <div className="text-[7.5px] uppercase tracking-[0.14em] text-ink-muted">{l}</div>
-                <Sparkline points={sp(k as string, 40, 92)} tone={tn as Tone} width={92} height={20} />
+          {/* KPI strip — 5 compact command metrics */}
+          <div className="grid shrink-0 grid-cols-5 gap-1">
+            {[
+              { l: 'NAT HEALTH INDEX', v: `${nhi}`, s: `▲ ${(nhi / 20).toFixed(1)}`, t: (nhi >= 70 ? 'ok' : nhi >= 55 ? 'warn' : 'alert') as Tone, k: 'nhi' },
+              { l: 'CRITICAL ALERTS', v: `${criticalRegions}`, s: 'Active', t: (criticalRegions ? 'alert' : 'ok') as Tone, k: 'alr' },
+              { l: 'ICU OCCUPANCY', v: `${ns.nationalIcuLoad}%`, s: '▲ 6%', t: (ns.nationalIcuLoad >= 88 ? 'alert' : ns.nationalIcuLoad >= 75 ? 'warn' : 'ok') as Tone, k: 'icu' },
+              { l: 'OUTBREAK RISK', v: ns.activeOutbreaks >= 8 ? 'HIGH' : ns.activeOutbreaks >= 4 ? 'MED' : 'LOW', s: ns.worstRegion, t: (ns.activeOutbreaks >= 8 ? 'alert' : ns.activeOutbreaks >= 4 ? 'warn' : 'ok') as Tone, k: 'obr' },
+              { l: 'DISASTER POSTURE', v: ns.disasterState === 'national-disaster' ? 'L3' : ns.disasterState === 'emergency' ? 'L2' : ns.disasterState === 'watch' ? 'L1' : 'L0', s: 'Partial Activation', t: (ns.disasterState === 'normal' ? 'ok' : ns.disasterState === 'watch' ? 'warn' : 'alert') as Tone, k: 'dis' },
+            ].map(m => (
+              <div key={m.l} className="flex flex-col justify-between rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
+                <div className="truncate text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-muted">{m.l}</div>
+                <div className="flex items-end justify-between gap-1">
+                  <span className="font-mono text-[19px] font-bold leading-none tabular-nums" style={{ color: sc(m.t), textShadow: `0 0 10px color-mix(in srgb,${sc(m.t)} 45%,transparent)` }}>{m.v}</span>
+                  <Sparkline points={sp(m.k, m.t === 'alert' ? 50 : 30, m.t === 'alert' ? 95 : 78)} tone={m.t} width={40} height={14} />
+                </div>
+                <div className="truncate text-[6.5px] text-ink-muted">{m.s}</div>
               </div>
             ))}
           </div>
-          <PanelLabel accent={ACC.command}>AI recommendations</PanelLabel>
-          <div className="space-y-1">
-            {[`Redirect ICU patients from ${ns.worstRegion} to relief corridor`, 'Activate emergency medicine reserve (EMR)', 'Escalate genomic surveillance in capital district'].map((r, i) => (
-              <div key={r} className="flex items-center gap-2 rounded-[3px] border px-2 py-1 text-[8.5px]" style={{ borderColor: 'color-mix(in srgb,#1d3548 50%,transparent)', borderLeft: `2px solid ${i === 0 ? sc('alert') : sc('warn')}` }}>
-                <span className="min-w-0 flex-1 truncate text-ink-soft">{r}</span>
-                <span className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[7px] font-bold uppercase" style={{ border: `1px solid ${ACC.command}`, color: ACC.command }}>{i === 0 ? 'Approve' : 'Review'}</span>
+          {/* big national map  |  active escalations */}
+          <div className="flex min-h-0 flex-1 gap-1">
+            <div className="relative min-w-0 flex-1 overflow-hidden rounded-[4px] border" style={{ borderColor: 'rgba(90,170,255,0.18)' }}>
+              <GeoMap geo={geo} metric="pressure" title="National Command Map" height={188} />
+            </div>
+            <div className="flex w-[136px] shrink-0 flex-col rounded-[4px] border" style={{ borderColor: 'rgba(90,170,255,0.18)', background: 'rgba(6,15,28,0.6)' }}>
+              <div className="border-b px-1.5 py-1 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft" style={{ borderColor: 'rgba(90,170,255,0.14)' }}>Active Escalations</div>
+              <div className="min-h-0 flex-1 space-y-0.5 overflow-hidden p-1">
+                {ns.regions.slice(0, 5).map(r => (
+                  <div key={r.region} className="rounded-[2px] px-1 py-0.5" style={{ background: 'rgba(0,0,0,0.25)', borderLeft: `2px solid ${sc(r.tone)}` }}>
+                    <div className="truncate text-[7.5px] font-semibold text-ink">{r.region}</div>
+                    <div className="flex items-center justify-between text-[6.5px] text-ink-muted">
+                      <span className="truncate">{r.state}</span>
+                      <span className="shrink-0 font-bold uppercase" style={{ color: sc(r.tone) }}>{r.composite >= 70 ? 'L3' : r.composite >= 45 ? 'L2' : 'L1'}</span>
+                    </div>
+                  </div>
+                ))}
+                <div className="pt-0.5 text-center text-[6.5px] font-semibold" style={{ color: ACC.command }}>View All ({ns.regions.length})</div>
               </div>
-            ))}
+            </div>
+          </div>
+          {/* bottom: pressure sparklines | AI recommendations | propagation graph */}
+          <div className="grid shrink-0 grid-cols-[1.15fr_1.3fr_0.85fr] gap-1">
+            <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">Health System Pressure</div>
+              <div className="grid grid-cols-4 gap-1">
+                {([['ICU', 'icul', 'alert', 78], ['ER', 'erl', 'warn', 64], ['VENT', 'vent', 'ok', 76], ['STAFF', 'stf', 'ok', 82]] as const).map(([l, k, t, pc]) => (
+                  <div key={l}>
+                    <Sparkline points={sp(k, 40, 92)} tone={t as Tone} width={52} height={22} />
+                    <div className="mt-0.5 flex items-center justify-between text-[6.5px] text-ink-muted"><span>{l}</span><span className="font-mono" style={{ color: sc(t as Tone) }}>{pc}%</span></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">AI Recommendations</div>
+              <div className="space-y-0.5">
+                {[[`Redirect 14 ICU patients · ${ns.worstRegion} → Highland`, 'Approve', 'alert'], ['Activate Emergency Medicine Reserve (EMR)', 'Review', 'warn'], ['Increase genomic surveillance · Capital District', 'Review', 'warn']].map(([r, b, t]) => (
+                  <div key={r} className="flex items-center gap-1 rounded-[2px] px-1 py-0.5" style={{ background: 'rgba(0,0,0,0.25)', borderLeft: `2px solid ${sc(t as Tone)}` }}>
+                    <span className="min-w-0 flex-1 truncate text-[7px] text-ink-soft">{r}</span>
+                    <span className="shrink-0 rounded-[2px] px-1 py-0.5 text-[6px] font-bold uppercase" style={{ border: `1px solid ${b === 'Approve' ? sc('ok') : ACC.command}`, color: b === 'Approve' ? sc('ok') : ACC.command }}>{b}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">Propagation Map</div>
+              <svg viewBox="0 0 100 56" className="w-full" style={{ height: 52 }}>
+                {Array.from({ length: 7 }, (_, i) => ({ x: 12 + ((seed(`pg:x:${i}`) * 76)), y: 8 + seed(`pg:y:${i}`) * 40, t: seed(`pg:t:${i}`) > 0.7 ? 'alert' : seed(`pg:t:${i}`) > 0.4 ? 'warn' : 'ok' })).map((n, i, a) => (
+                  <g key={i}>
+                    {i < a.length - 1 ? <line x1={n.x} y1={n.y} x2={a[i + 1]!.x} y2={a[i + 1]!.y} stroke={ACC.command} strokeOpacity="0.4" strokeWidth="0.5" className="animate-dash-flow" strokeDasharray="2 2" /> : null}
+                    {i > 1 ? <line x1={n.x} y1={n.y} x2={a[i - 2]!.x} y2={a[i - 2]!.y} stroke={ACC.command} strokeOpacity="0.25" strokeWidth="0.4" /> : null}
+                    <circle cx={n.x} cy={n.y} r={2.2} fill={sc(n.t as Tone)} className={n.t !== 'ok' ? 'animate-breathe' : undefined} style={{ filter: `drop-shadow(0 0 3px ${sc(n.t as Tone)})` }} />
+                  </g>
+                ))}
+              </svg>
+            </div>
           </div>
         </Tile>
 
