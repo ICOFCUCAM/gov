@@ -6,6 +6,7 @@
 // maps. Built to the reference concept; not a dashboard, not a website.
 
 import * as React from 'react';
+import Link from 'next/link';
 import { GeoMap } from '@/apps/_shared/GeoMap';
 import { healthGeo } from '@/lib/gov/health-geo';
 import { KpiSpark, Donut, TrendChart, RingGauge, Sparkline, sc, type Tone } from '@/apps/_shared/SovereignUI';
@@ -473,9 +474,9 @@ export function HealthEcosystemWall() {
           nav={['Preview', 'Home', 'Health Topics', 'Services', 'Find Facilities', 'News & Alerts', 'About', 'Contact']}>
           <div className="overflow-hidden rounded-[8px] border border-[#d8dee6] bg-white text-[#0b1f3a] shadow-inner">
             <div className="flex items-center justify-between px-3 py-2" style={{ background: '#0b1f3a' }}>
-              <span className="text-[9px] font-bold uppercase tracking-[0.18em] text-white">Ministry of Health</span>
-              <span className="hidden gap-3 text-[7.5px] text-white/70 sm:flex">{['Home', 'Topics', 'Services', 'Facilities', 'News'].map(x => <span key={x}>{x}</span>)}</span>
-              <span className="rounded-[3px] bg-[#e0452a] px-2 py-0.5 text-[7.5px] font-bold text-white">Emergency</span>
+              <Link href="/health" className="text-[9px] font-bold uppercase tracking-[0.18em] text-white hover:underline">Ministry of Health</Link>
+              <span className="hidden gap-3 text-[7.5px] text-white/70 sm:flex">{([['Home', '/health'], ['Topics', '/health'], ['Services', '/health/laboratory'], ['Facilities', '/health'], ['News', '/health']] as const).map(([x, h]) => <Link key={x} href={h} className="hover:text-white">{x}</Link>)}</span>
+              <Link href="/health" className="rounded-[3px] bg-[#e0452a] px-2 py-0.5 text-[7.5px] font-bold text-white hover:brightness-110">Emergency</Link>
             </div>
             {pub.emergencyBanner.active ? (
               <div className="px-3 py-2 text-white" style={{ background: 'linear-gradient(90deg,#9a1f12,#c0341d)' }}>
@@ -484,8 +485,8 @@ export function HealthEcosystemWall() {
               </div>
             ) : null}
             <div className="grid grid-cols-2 gap-2 p-3 sm:grid-cols-4">
-              {['Find Hospital', 'Find Pharmacy', 'Book Appointment', 'Vaccination Info'].map(s => (
-                <div key={s} className="rounded-[6px] border border-[#e5e7eb] bg-[#f6f8fb] px-2 py-2 text-center text-[8px] font-semibold text-[#1f5fad]">{s}</div>
+              {([['Find Hospital', '/health'], ['Find Pharmacy', '/health'], ['Book Appointment', '/health'], ['Lab Services', '/health/laboratory']] as const).map(([s, h]) => (
+                <Link key={s} href={h} className="rounded-[6px] border border-[#e5e7eb] bg-[#f6f8fb] px-2 py-2 text-center text-[8px] font-semibold text-[#1f5fad] hover:bg-[#eef4fb]">{s}</Link>
               ))}
             </div>
             <div className="px-3 pb-2">
@@ -513,6 +514,10 @@ export function HealthEcosystemWall() {
                   <div className="text-[7px] uppercase tracking-[0.1em] text-[#6b7a90]">{k.label}</div>
                 </div>
               ))}
+            </div>
+            <div className="flex items-center justify-between gap-2 border-t border-[#e5e7eb] bg-[#0b1f3a] px-3 py-2">
+              <Link href="/health" className="text-[8px] font-bold uppercase tracking-[0.16em] text-white hover:underline">Open public website →</Link>
+              <Link href="/health/laboratory" className="text-[8px] font-bold uppercase tracking-[0.16em] text-[#7fb3ea] hover:underline">Laboratory Services →</Link>
             </div>
           </div>
         </Tile>

@@ -14,7 +14,15 @@ const BLUE = '#1f5fad';
 const GREEN = '#0f9d6b';
 const LINE = '#e5e7eb';
 
-const NAV = ['Home', 'Health Topics', 'Services', 'Find Facilities', 'Programs', 'News & Alerts', 'About Us'];
+const NAV: { label: string; href: string }[] = [
+  { label: 'Home', href: '/health' },
+  { label: 'Health Topics', href: '/health' },
+  { label: 'Services', href: '/health/laboratory' },
+  { label: 'Find Facilities', href: '/health' },
+  { label: 'Programs', href: '/health' },
+  { label: 'News & Alerts', href: '/health' },
+  { label: 'About Us', href: '/health' },
+];
 const QUICK = [
   { t: 'Book Appointment', s: 'Hospital or clinic', c: '#1f5fad' },
   { t: 'Consult a Doctor', s: 'Telemedicine', c: '#7c5cff' },
@@ -69,9 +77,9 @@ export default function PublicHealthHomepage() {
           </div>
           <nav className="mx-auto hidden items-center gap-7 text-[14px] font-medium text-slate-600 lg:flex">
             {NAV.map(n => (
-              <span key={n} className={n === 'Home' ? 'relative font-semibold' : 'hover:text-slate-900'} style={n === 'Home' ? { color: BLUE } : undefined}>
-                {n}{n === 'Home' ? <span className="absolute -bottom-[15px] left-0 h-0.5 w-full" style={{ background: BLUE }} /> : null}
-              </span>
+              <Link key={n.label} href={n.href} className={n.label === 'Home' ? 'relative font-semibold' : 'hover:text-slate-900'} style={n.label === 'Home' ? { color: BLUE } : undefined}>
+                {n.label}{n.label === 'Home' ? <span className="absolute -bottom-[15px] left-0 h-0.5 w-full" style={{ background: BLUE }} /> : null}
+              </Link>
             ))}
           </nav>
           <div className="flex items-center gap-4">
@@ -120,7 +128,7 @@ export default function PublicHealthHomepage() {
         <section>
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-[20px] font-bold" style={{ color: NAVY }}>I want to…</h2>
-            <span className="text-[12px] font-semibold" style={{ color: BLUE }}>View All Services →</span>
+            <Link href="/health/laboratory" className="text-[12px] font-semibold" style={{ color: BLUE }}>View All Services →</Link>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {QUICK.map(q => (
@@ -249,7 +257,7 @@ export default function PublicHealthHomepage() {
           ].map(([h, items]) => (
             <div key={h as string}>
               <div className="text-[13px] font-semibold text-white">{h as string}</div>
-              <ul className="mt-2 space-y-1.5 text-[12px] text-white/60">{(items as string[]).map(i => <li key={i} className="hover:text-white">{i}</li>)}</ul>
+              <ul className="mt-2 space-y-1.5 text-[12px] text-white/60">{(items as string[]).map(i => <li key={i}><Link href={i === 'Services' ? '/health/laboratory' : '/health'} className="hover:text-white">{i}</Link></li>)}</ul>
             </div>
           ))}
           <div>
@@ -265,7 +273,7 @@ export default function PublicHealthHomepage() {
         <div className="border-t border-white/10">
           <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-6 py-4 text-[12px] text-white/60">
             <span>© 2025 Ministry of Health. All rights reserved.</span>
-            <div className="flex gap-4">{['Privacy Policy', 'Terms of Use', 'Accessibility', 'Sitemap'].map(l => <Link key={l} href="/health/laboratory" className="hover:text-white">{l}</Link>)}</div>
+            <div className="flex gap-4">{['Privacy Policy', 'Terms of Use', 'Accessibility', 'Sitemap'].map(l => <Link key={l} href="/health" className="hover:text-white">{l}</Link>)}</div>
           </div>
         </div>
       </footer>

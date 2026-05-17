@@ -74,9 +74,9 @@ export default function LaboratoryServicesPage() {
           </div>
           <nav className="mx-auto hidden items-center gap-7 text-[14px] font-medium text-slate-600 lg:flex">
             {['Home', 'Health Topics', 'Services', 'Find Facilities', 'Programs', 'News & Alerts', 'About Us'].map(n => (
-              <span key={n} className={n === 'Services' ? 'relative font-semibold' : 'hover:text-slate-900'} style={n === 'Services' ? { color: BLUE } : undefined}>
+              <Link key={n} href={n === 'Services' ? '/health/laboratory' : '/health'} className={n === 'Services' ? 'relative font-semibold' : 'hover:text-slate-900'} style={n === 'Services' ? { color: BLUE } : undefined}>
                 {n}{n === 'Services' ? <span className="absolute -bottom-[18px] left-0 h-0.5 w-full" style={{ background: BLUE }} /> : null}
-              </span>
+              </Link>
             ))}
           </nav>
           <div className="flex items-center gap-4">
