@@ -52,7 +52,7 @@ export function CommandPanel({
   title: string; meta?: string; accent?: string; live?: boolean; dense?: boolean; children: React.ReactNode;
 }) {
   return (
-    <section className="flex h-full flex-col rounded-[3px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
+    <section className="flex flex-col rounded-[3px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
       <div className="flex items-center justify-between gap-2 border-b px-2.5 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
         <div className="flex items-center gap-2">
           <span className="h-2.5 w-0.5 rounded-full" style={{ background: accent, boxShadow: `0 0 8px ${accent}` }} />
@@ -63,7 +63,7 @@ export function CommandPanel({
           {live ? <span className="h-1.5 w-1.5 rounded-full animate-breathe" style={{ background: sc('ok') }} /> : null}
         </div>
       </div>
-      <div className={`min-h-0 flex-1 ${dense ? 'p-1.5' : 'p-2.5'}`}>{children}</div>
+      <div className={`flex-1 ${dense ? 'p-1.5' : 'p-2.5'}`}>{children}</div>
     </section>
   );
 }

@@ -74,8 +74,10 @@ export function DoctorSystem({ id, now, role, withheld }: {
         ))}
       </div>
 
-      {/* Body grid */}
+      {/* Body grid — benchmark 4-column composition */}
       <div className="grid gap-2 xl:grid-cols-4">
+        {/* Col 1 — timeline + medications */}
+        <div className="space-y-2">
         <CommandPanel title="Patient timeline" meta="today" accent={ACC}>
           <div className="space-y-2">
             {p.timeline.map((e, i) => (
@@ -94,7 +96,20 @@ export function DoctorSystem({ id, now, role, withheld }: {
             ))}
           </div>
         </CommandPanel>
+        <CommandPanel title="Medications" meta={`${p.medications.length}`} accent={ACC}>
+          <div className="space-y-0.5">
+            {p.medications.map(m => (
+              <div key={m.drug} className="flex items-center gap-2 text-[9.5px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{m.drug}</span>
+                <span className="shrink-0 font-mono text-[8px] text-ink-muted">{m.route} · {m.freq}</span>
+                <span className="w-10 shrink-0 text-right font-mono text-[8px] tabular-nums text-ink-muted">{m.time}</span>
+              </div>
+            ))}
+          </div>
+        </CommandPanel>
+        </div>
 
+        {/* Col 2 — complaint · diagnoses · notes · labs */}
         <div className="space-y-2">
           <CommandPanel title="Chief complaint" accent={ACC}>
             <p className="text-[10px] italic text-ink-soft">“{p.chiefComplaint}”</p>
@@ -122,8 +137,21 @@ export function DoctorSystem({ id, now, role, withheld }: {
               ))}
             </div>
           </CommandPanel>
+          <CommandPanel title="Recent lab results" meta="View all" accent={ACC}>
+            <div className="space-y-0.5">
+              {p.labs.map(l => (
+                <div key={l.test} className="flex items-center gap-2 text-[9.5px]">
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{l.test}</span>
+                  <span className="shrink-0 font-mono tabular-nums text-ink-muted">{l.value} {l.unit}</span>
+                  <span className="w-16 shrink-0 text-right text-[8px] font-bold uppercase" style={{ color: C(l.tone) }}>{l.flag}</span>
+                  <span className="w-10 shrink-0 text-right text-[7.5px] text-ink-muted">{l.day}</span>
+                </div>
+              ))}
+            </div>
+          </CommandPanel>
         </div>
 
+        {/* Col 3 — vitals · care plan · pending orders */}
         <div className="space-y-2">
           <CommandPanel title="Vital signs trend" meta="last 24h" accent={ACC} live>
             <TrendChart height={96}
@@ -149,8 +177,19 @@ export function DoctorSystem({ id, now, role, withheld }: {
               <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${p.carePlanPct}%`, background: C('ok') }} /></div>
             </div>
           </CommandPanel>
+          <CommandPanel title="Pending orders" meta={`${p.orders.length}`} accent={ACC} live>
+            <div className="space-y-0.5">
+              {p.orders.map(o => (
+                <div key={o.name} className="flex items-center gap-2 text-[9.5px]">
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{o.name}</span>
+                  <span className="shrink-0 text-[7.5px] font-bold uppercase" style={{ color: C(o.tone) }}>{o.priority}</span>
+                </div>
+              ))}
+            </div>
+          </CommandPanel>
         </div>
 
+        {/* Col 4 — AI · alerts · queue */}
         <div className="space-y-2">
           <CommandPanel title="AI clinical assistant" meta="beta" accent={ACC} live>
             <div className="text-[9.5px] text-ink-soft">{p.ai.summary}</div>
@@ -191,42 +230,6 @@ export function DoctorSystem({ id, now, role, withheld }: {
             </div>
           </CommandPanel>
         </div>
-      </div>
-
-      {/* Meds | Labs | Orders */}
-      <div className="grid gap-2 xl:grid-cols-3">
-        <CommandPanel title="Medications" meta={`${p.medications.length}`} accent={ACC}>
-          <div className="space-y-0.5">
-            {p.medications.map(m => (
-              <div key={m.drug} className="flex items-center gap-2 text-[9.5px]">
-                <span className="min-w-0 flex-1 truncate text-ink-soft">{m.drug}</span>
-                <span className="shrink-0 font-mono text-[8px] text-ink-muted">{m.route} · {m.freq}</span>
-                <span className="w-10 shrink-0 text-right font-mono text-[8px] tabular-nums text-ink-muted">{m.time}</span>
-              </div>
-            ))}
-          </div>
-        </CommandPanel>
-        <CommandPanel title="Recent lab results" accent={ACC}>
-          <div className="space-y-0.5">
-            {p.labs.map(l => (
-              <div key={l.test} className="flex items-center gap-2 text-[9.5px]">
-                <span className="min-w-0 flex-1 truncate text-ink-soft">{l.test}</span>
-                <span className="shrink-0 font-mono tabular-nums text-ink-muted">{l.value} {l.unit}</span>
-                <span className="w-16 shrink-0 text-right text-[8px] font-bold uppercase" style={{ color: C(l.tone) }}>{l.flag}</span>
-              </div>
-            ))}
-          </div>
-        </CommandPanel>
-        <CommandPanel title="Pending orders" meta={`${p.orders.length}`} accent={ACC} live>
-          <div className="space-y-0.5">
-            {p.orders.map(o => (
-              <div key={o.name} className="flex items-center gap-2 text-[9.5px]">
-                <span className="min-w-0 flex-1 truncate text-ink-soft">{o.name}</span>
-                <span className="shrink-0 text-[7.5px] font-bold uppercase" style={{ color: C(o.tone) }}>{o.priority}</span>
-              </div>
-            ))}
-          </div>
-        </CommandPanel>
       </div>
 
       {/* Clinical action bar */}
