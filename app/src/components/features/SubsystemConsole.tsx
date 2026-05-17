@@ -8,7 +8,7 @@ import { instantiateMinistry, systemKindLabel, blueprintFor } from '@/lib/instit
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, patientServices,
-  laboratoryOps,
+  laboratoryOps, pharmaceuticalOps,
 } from '@/lib/gov/health-systems';
 import {
   fiscalCommand, revenueOps, budgetOps, procurementOps, bankingRails,
@@ -223,7 +223,48 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
-  if (isHealth && (group === 'patient' || group === 'pharma' || group === 'finance' || group === 'regulatory')) {
+  if (isHealth && group === 'pharma') {
+    const P = pharmaceuticalOps(id, ts);
+    const pt: 'ok' | 'warn' | 'alert' = P.posture === 'shortage' ? 'alert' : P.posture === 'strained' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="SKUs tracked" v={P.skuTracked.toLocaleString()} t="ok" />
+          <Stat l="National days cover" v={`${P.nationalDaysCover}d`} t={P.nationalDaysCover < 21 ? 'alert' : P.nationalDaysCover < 35 ? 'warn' : 'ok'} />
+          <Stat l="Critical classes" v={`${P.classesCritical}`} t={P.classesCritical ? 'alert' : 'ok'} />
+          <Stat l="Emergency redistrib." v={`${P.emergencyRedistributions}`} t={P.emergencyRedistributions ? 'alert' : 'ok'} />
+          <Stat l="Procurement in-flight" v={`${P.procurementInFlight}`} t="ok" />
+          <Stat l="Cold-chain integrity" v={`${P.coldChainIntegrityPct}%`} t={P.coldChainIntegrityPct >= 95 ? 'ok' : 'warn'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-2">
+          <Panel title="Inventory & stock-exhaustion prediction" meta="class · days cover · ETA stockout" bodyClass="!p-0">
+            {P.inventory.map(d => (
+              <div key={d.drugClass} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
+                <span className="w-44 shrink-0 truncate text-[11px] text-ink">{d.drugClass}</span>
+                <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{d.stockUnits.toLocaleString()}u · burn {d.monthlyBurn.toLocaleString()}/mo</span>
+                <span className="w-20 shrink-0 text-right text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: tc(d.tone) }}>{d.status}</span>
+                <span className="w-12 shrink-0 text-right font-mono text-[11px] tabular-nums" style={{ color: tc(d.tone) }}>{d.etaStockoutDays}d</span>
+              </div>
+            ))}
+          </Panel>
+          <Panel title="National medicine routing" meta="region · fill rate · redistribution" bodyClass="!p-0">
+            {P.regions.map(r => (
+              <div key={r.region} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(r.tone)}` }}>
+                <span className="w-28 shrink-0 truncate text-[11px] text-ink">{r.region}</span>
+                <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${r.fillRatePct}%`, backgroundColor: tc(r.tone) }} /></div>
+                <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums text-ink-soft">{r.fillRatePct}%</span>
+                <span className="w-32 shrink-0 text-right text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: tc(r.tone) }}>{r.action}</span>
+              </div>
+            ))}
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:pharma`} kind="procurement" title="Pharmaceutical supply runtime — requisition → sourced → contracted → delivered" by="Supply Officer" n={14} />
+      </div>
+    );
+  }
+
+  if (isHealth && (group === 'patient' || group === 'finance' || group === 'regulatory')) {
     const ps = patientServices(id, ts);
     const rx = prescriptions(id, ts);
     const labs = labRequests(id, ts);

@@ -352,6 +352,72 @@ export function laboratoryOps(instId: string, t: number): LaboratoryOps {
   };
 }
 
+// ── Pharmaceutical Systems ───────────────────────────────────────────
+// The national medicine supply chain is an execution surface: inventory
+// by class with live days-of-cover, stock-exhaustion prediction, a
+// regional distribution grid that flags emergency redistribution, and a
+// procurement pipeline. Pure & deterministic.
+const DRUG_CLASSES = ['Antibiotics', 'Analgesics', 'Antimalarials', 'Insulin & endocrine', 'Vaccines (cold chain)', 'Emergency / resus', 'Antiretrovirals', 'Oncology'];
+
+export interface DrugStockLine {
+  drugClass: string; stockUnits: number; daysCover: number;
+  monthlyBurn: number; status: 'ok' | 'low' | 'critical' | 'stockout';
+  etaStockoutDays: number; tone: 'ok' | 'warn' | 'alert';
+}
+export interface PharmaRegionNode {
+  region: string; fillRatePct: number; shortages: number;
+  action: 'stocked' | 'replenish' | 'emergency-redistribute'; tone: 'ok' | 'warn' | 'alert';
+}
+export interface PharmaceuticalOps {
+  skuTracked: number;
+  classesCritical: number;
+  nationalDaysCover: number;
+  emergencyRedistributions: number;
+  procurementInFlight: number;
+  coldChainIntegrityPct: number;
+  inventory: DrugStockLine[];
+  regions: PharmaRegionNode[];
+  posture: 'secure' | 'strained' | 'shortage';
+}
+export function pharmaceuticalOps(instId: string, t: number): PharmaceuticalOps {
+  const inventory: DrugStockLine[] = DRUG_CLASSES.map((drugClass, i) => {
+    const stockUnits = Math.round(wave(`ph:stk:${instId}:${i}`, t, 0, 90_000));
+    const monthlyBurn = Math.round(wave(`ph:burn:${instId}:${i}`, t, 1_800, 30_000));
+    const daysCover = Math.round((stockUnits / Math.max(1, monthlyBurn)) * 30);
+    const status: DrugStockLine['status'] =
+      daysCover <= 0 ? 'stockout' : daysCover < 14 ? 'critical' : daysCover < 30 ? 'low' : 'ok';
+    const tone: 'ok' | 'warn' | 'alert' =
+      status === 'stockout' || status === 'critical' ? 'alert' : status === 'low' ? 'warn' : 'ok';
+    return { drugClass, stockUnits, daysCover, monthlyBurn, status, etaStockoutDays: daysCover, tone };
+  }).sort((a, b) => a.daysCover - b.daysCover);
+  const regions: PharmaRegionNode[] = REGIONS.map((region) => {
+    const fillRatePct = Math.round(wave(`ph:fill:${instId}:${region}`, t, 35, 100));
+    const shortages = Math.round(wave(`ph:short:${instId}:${region}`, t, 0, 9));
+    const action: PharmaRegionNode['action'] =
+      fillRatePct < 55 || shortages >= 6 ? 'emergency-redistribute' : fillRatePct < 78 || shortages >= 2 ? 'replenish' : 'stocked';
+    const tone: 'ok' | 'warn' | 'alert' =
+      action === 'emergency-redistribute' ? 'alert' : action === 'replenish' ? 'warn' : 'ok';
+    return { region, fillRatePct, shortages, action, tone };
+  }).sort((a, b) => a.fillRatePct - b.fillRatePct);
+  const classesCritical = inventory.filter(d => d.status === 'critical' || d.status === 'stockout').length;
+  const emergencyRedistributions = regions.filter(r => r.action === 'emergency-redistribute').length;
+  const nationalDaysCover = Math.round(inventory.reduce((s, d) => s + d.daysCover, 0) / inventory.length);
+  const posture: PharmaceuticalOps['posture'] =
+    classesCritical >= 3 || emergencyRedistributions >= 2 ? 'shortage'
+      : classesCritical >= 1 || emergencyRedistributions >= 1 ? 'strained' : 'secure';
+  return {
+    skuTracked: Math.round(wave(`ph:sku:${instId}`, t, 1_200, 4_800)),
+    classesCritical,
+    nationalDaysCover,
+    emergencyRedistributions,
+    procurementInFlight: Math.round(wave(`ph:proc:${instId}`, t, 2, 28)),
+    coldChainIntegrityPct: Math.round(wave(`ph:cc:${instId}`, t, 88, 100)),
+    inventory,
+    regions,
+    posture,
+  };
+}
+
 /** 0-100 national healthcare instability — drives cross-system propagation. */
 export function healthInstability(instId: string, t: number): number {
   const h = hospitalOps(instId, t);

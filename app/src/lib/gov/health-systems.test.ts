@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, healthInstability, patientServices,
-  nationalHealthcareCapacity, laboratoryOps,
+  nationalHealthcareCapacity, laboratoryOps, pharmaceuticalOps,
 } from './health-systems';
 
 describe('health systems engine', () => {
@@ -104,6 +104,29 @@ describe('health systems engine', () => {
     for (const s of a.assays) {
       expect(s.turnaroundHrs).toBeGreaterThanOrEqual(0);
       expect(['ok', 'warn', 'alert']).toContain(s.tone);
+    }
+  });
+
+  it('pharmaceuticalOps is a deterministic, bounded supply-chain execution surface', () => {
+    const a = pharmaceuticalOps('MOH', 140);
+    expect(a).toEqual(pharmaceuticalOps('MOH', 140));
+    expect(['secure', 'strained', 'shortage']).toContain(a.posture);
+    expect(a.inventory.length).toBe(8);
+    expect(a.regions.length).toBe(6);
+    expect(a.coldChainIntegrityPct).toBeGreaterThanOrEqual(0);
+    expect(a.coldChainIntegrityPct).toBeLessThanOrEqual(100);
+    // worst days-cover first (stock-exhaustion ordering)
+    for (let i = 1; i < a.inventory.length; i++) {
+      expect(a.inventory[i - 1]!.daysCover).toBeLessThanOrEqual(a.inventory[i]!.daysCover);
+    }
+    for (const d of a.inventory) {
+      expect(['ok', 'low', 'critical', 'stockout']).toContain(d.status);
+      expect(d.daysCover).toBeGreaterThanOrEqual(0);
+    }
+    for (const r of a.regions) {
+      expect(['stocked', 'replenish', 'emergency-redistribute']).toContain(r.action);
+      expect(r.fillRatePct).toBeGreaterThanOrEqual(0);
+      expect(r.fillRatePct).toBeLessThanOrEqual(100);
     }
   });
 });
