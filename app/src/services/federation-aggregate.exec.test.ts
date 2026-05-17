@@ -41,3 +41,15 @@ describe('operational causality (exec injection)', () => {
     expect(dropped.institutions[0]!.operational).toBeGreaterThanOrEqual(0);
   });
 });
+
+describe('citizen-load propagation', () => {
+  it('inbound citizen pressure degrades institutional operational headroom', () => {
+    const mk = (id: string, a: 'HEALTH') => ({ id, name: id, slug: id, archetype: a, status: 'active' as const, createdAt: '2026-01-01T00:00:00Z', departments: [], modules: [] });
+    const mins = [mk('H', 'HEALTH')];
+    const base = federationPosture(mins as never, 50);
+    const loaded = federationPosture(mins as never, 50, undefined, () => 100);
+    expect(loaded.institutions[0]!.operational).toBeLessThanOrEqual(base.institutions[0]!.operational);
+    expect(loaded.institutions[0]!.operational).toBeGreaterThanOrEqual(0);
+    expect(loaded).toEqual(federationPosture(mins as never, 50, undefined, () => 100));
+  });
+});

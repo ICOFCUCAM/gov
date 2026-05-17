@@ -21,6 +21,7 @@ import { stateFabric } from '@/lib/gov/state-fabric';
 import { nationalRuntime } from '@/lib/gov/national-runtime';
 import { subscribe as auditSubscribe, auditStats, version as auditVersion } from '@/services/audit-ledger';
 import { federationPosture, sovereignExecutionIndex } from '@/services/federation-aggregate';
+import { citizenLoad } from '@/lib/gov/citizen-requests';
 import { deployableRoots } from '@/apps/deployment';
 import { chainSummary } from '@/services/execution-chains';
 import { interoperabilityFabric } from '@/services/interoperability-fabric';
@@ -126,7 +127,7 @@ export function NationalShell() {
   const leadTone = !lead ? 'ok' : lead.band === 'severe' || lead.band === 'high' ? 'alert' : lead.band === 'elevated' ? 'warn' : 'ok';
   const stress = lead ? resilienceUnderShock(mins, ts, lead.key) : null;
   const ne = nationalEcosystem(mins, ts);
-  const fp = federationPosture(mins, ts, executionDelta);
+  const fp = federationPosture(mins, ts, executionDelta, (a) => citizenLoad(a, ts));
   const iof = interoperabilityFabric(mins, ts);
   const leg = legislativeState(ts, model.legislature.chambers.map(c => c.name).slice(0, 2));
   const jud = judicialState(ts);
