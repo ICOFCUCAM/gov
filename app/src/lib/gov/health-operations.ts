@@ -134,6 +134,46 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── Executive / Ministerial Briefing ───────────────────────────────────
+// The ministerial command surface: synthesised national briefing, ranked
+// strategic directives, cabinet escalations and active emergency
+// declarations. Pure & deterministic.
+export interface BriefingAlert { headline: string; domain: string; severity: 'info' | 'priority' | 'critical'; tone: Tone }
+export interface StrategicDirective { id: string; directive: string; owner: string; status: 'drafted' | 'issued' | 'in-effect'; tone: Tone }
+export interface EmergencyDeclaration { scope: string; level: 'regional' | 'national'; ageHrs: number; renewalDueHrs: number; tone: Tone }
+export interface ExecutiveBriefing {
+  posture: 'routine' | 'elevated' | 'crisis';
+  briefingLine: string;
+  alerts: BriefingAlert[];
+  directives: StrategicDirective[];
+  declarations: EmergencyDeclaration[];
+  cabinetEscalation: boolean;
+  confidencePct: number;
+}
+export function executiveBriefing(id: string, t: number): ExecutiveBriefing {
+  const ns = nationalSituation(id, t);
+  const sm = healthSimulation(id, t);
+  const sev = ns.posture === 'crisis' ? 'crisis' : ns.posture === 'elevated' || sm.posture === 'critical' ? 'elevated' : 'routine';
+  const alerts: BriefingAlert[] = [
+    { headline: `National posture ${ns.posture} — peak ${ns.worstRegion} (${ns.regions[0]!.composite})`, domain: 'Situation', severity: ns.posture === 'crisis' ? 'critical' : ns.posture === 'elevated' ? 'priority' : 'info', tone: ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok' },
+    { headline: `Systemic risk index ${sm.systemicRiskIndex} — top vector ${sm.collapseRisks[0]!.system}`, domain: 'Simulation', severity: sm.posture === 'critical' ? 'critical' : sm.posture === 'watch' ? 'priority' : 'info', tone: sm.collapseRisks[0]!.tone },
+    { headline: `${ns.activeOutbreaks} active outbreak signal(s) · disaster ${ns.disasterState}`, domain: 'Disease', severity: ns.activeOutbreaks >= 2 ? 'critical' : ns.activeOutbreaks ? 'priority' : 'info', tone: ns.activeOutbreaks >= 2 ? 'alert' : ns.activeOutbreaks ? 'warn' : 'ok' },
+  ];
+  const directives: StrategicDirective[] = [
+    { id: 'SD-01', directive: sm.recommendedIntervention, owner: 'Health Command', status: sev === 'crisis' ? 'issued' : 'drafted', tone: sev === 'crisis' ? 'alert' : 'warn' },
+    { id: 'SD-02', directive: `Sustain surge readiness in ${ns.worstRegion}`, owner: 'Hospital Network', status: 'in-effect', tone: 'ok' },
+    { id: 'SD-03', directive: 'Maintain national medicine buffer ≥ 30 days', owner: 'Pharmaceutical', status: ns.medicineShortfalls ? 'issued' : 'in-effect', tone: ns.medicineShortfalls ? 'warn' : 'ok' },
+  ];
+  const declarations: EmergencyDeclaration[] = ns.disasterState === 'normal' ? [] : [
+    { scope: ns.worstRegion, level: ns.disasterState === 'national-disaster' ? 'national' : 'regional', ageHrs: Math.round(wave(`eb:da:${id}`, t, 1, 70)), renewalDueHrs: 72, tone: ns.disasterState === 'national-disaster' ? 'alert' : 'warn' },
+  ];
+  const cabinetEscalation = ns.disasterState === 'national-disaster' || sm.posture === 'critical';
+  const briefingLine = sev === 'crisis'
+    ? `CRISIS BRIEFING — ${ns.headline}; cabinet escalation ${cabinetEscalation ? 'ACTIVE' : 'standby'}`
+    : sev === 'elevated' ? `Elevated briefing — ${ns.headline}` : `Routine briefing — national health posture nominal`;
+  return { posture: sev, briefingLine, alerts, directives, declarations, cabinetEscalation, confidencePct: sm.confidencePct };
+}
+
 // ── National Interoperability — cross-government health data fabric ────
 // The Ministry cannot exist alone. Live integration links to Treasury,
 // Immigration, Police, Customs, National ID, Civil Registry, Education,

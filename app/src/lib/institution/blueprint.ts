@@ -98,6 +98,10 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Audit chain', 'audit'), S('Access governance', 'regulatory'),
       S('Threat posture', 'command'),
     ]),
+    G('executive', 'Executive Briefing', 'Ministerial & cabinet command', [
+      S('Ministerial briefing', 'command'), S('Strategic directives', 'workflow'),
+      S('Emergency declarations', 'emergency'),
+    ]),
   ],
   FINANCE: [
     G('command', 'Fiscal Command', 'Sovereign fiscal authority', [

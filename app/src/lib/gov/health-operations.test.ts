@@ -4,7 +4,7 @@ import {
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
   patientDeepExecution, emergencyIncidentExecution, diseaseEpidemiology,
-  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid, citizenHealthPortal, nationalInteroperability, healthSimulation, sovereignSecurity,
+  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid, citizenHealthPortal, nationalInteroperability, healthSimulation, sovereignSecurity, executiveBriefing,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -296,5 +296,16 @@ describe('ministry of health operations engine', () => {
     expect(se.accessTiers.length).toBe(5);
     expect(['secure', 'guarded', 'breach']).toContain(se.posture);
     expect(se.openIncidents).toBe(se.threats.filter(x => !x.blocked).length);
+  });
+
+  it('executiveBriefing is deterministic & bounded', () => {
+    const a = executiveBriefing('MOH', 130);
+    expect(a).toEqual(executiveBriefing('MOH', 130));
+    expect(['routine', 'elevated', 'crisis']).toContain(a.posture);
+    expect(a.alerts.length).toBe(3);
+    expect(a.directives.length).toBe(3);
+    expect(typeof a.cabinetEscalation).toBe('boolean');
+    expect(a.briefingLine.length).toBeGreaterThan(10);
+    for (const d of a.directives) expect(['drafted', 'issued', 'in-effect']).toContain(d.status);
   });
 });
