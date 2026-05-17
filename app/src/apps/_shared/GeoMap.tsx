@@ -77,7 +77,13 @@ export function GeoMap({
         };
       });
     }
-    return { provs, nodes, outlineD };
+    // Non-uniform stretch so the territory fills the whole panel edge-to-
+    // edge (no aspect-ratio letterboxing — map must not look tight).
+    const [[bx0, by0], [bx1, by1]] = path.bounds(fc as never);
+    const sx = (W - 2) / Math.max(1, bx1 - bx0);
+    const sy = (H - 2) / Math.max(1, by1 - by0);
+    const stretch = `translate(${1 - bx0 * sx} ${1 - by0 * sy}) scale(${sx} ${sy})`;
+    return { provs, nodes, outlineD, stretch };
   }, [data, W, H, geo, metric, iso3]);
 
   return (
@@ -101,8 +107,8 @@ export function GeoMap({
             {loading ? 'ACQUIRING TERRITORY…' : 'NO GEOGRAPHIC DATA'}
           </text>
         ) : (
-          <>
-            {view.outlineD ? <path d={view.outlineD} fill="none" stroke={accent} strokeWidth="4" strokeOpacity="0.32" filter="url(#gms)" /> : null}
+          <g transform={view.stretch}>
+            {view.outlineD ? <path d={view.outlineD} fill="none" stroke={accent} strokeWidth="4" strokeOpacity="0.32" filter="url(#gms)" vectorEffect="non-scaling-stroke" /> : null}
             {view.provs.map((pr, i) => (
               <path key={`g${i}`} d={pr.d} fill="none" stroke={accent} strokeWidth="3.5" strokeOpacity="0.2" filter="url(#gms)" />
             ))}
@@ -146,7 +152,7 @@ export function GeoMap({
                 </g>
               );
             })}
-          </>
+          </g>
         )}
       </svg>
 

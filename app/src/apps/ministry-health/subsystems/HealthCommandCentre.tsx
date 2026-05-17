@@ -177,14 +177,15 @@ export function HealthCommandCentre({ id, now, role, withheld }: {
           <CommandPanel title="Health System Pressure" meta="by region" accent={ACC}>
             <div className="space-y-0.5 text-[7.5px]">
               <div className="flex items-center gap-1 border-b pb-0.5 font-bold uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgba(90,170,255,0.14)' }}>
-                <span className="min-w-0 flex-1">Region</span><span className="w-12 text-right">Hosp</span><span className="w-12 text-right">ICU</span><span className="w-6 text-center">T</span>
+                <span className="min-w-0 flex-1">Region</span><span className="w-14">Risk</span><span className="w-10 text-right">Hosp</span><span className="w-10 text-right">ICU</span><span className="w-5 text-center">T</span>
               </div>
               {pressure.map(p => (
                 <div key={p.region} className="flex items-center gap-1">
                   <span className="min-w-0 flex-1 truncate text-ink-soft">{p.region}</span>
-                  <span className="w-12 text-right font-mono tabular-nums" style={{ color: sc(p.tone) }}>{p.ho}%</span>
-                  <span className="w-12 text-right font-mono tabular-nums" style={{ color: sc(p.tone) }}>{p.iu}%</span>
-                  <span className="w-6 text-center" style={{ color: sc(p.tone) }}>{p.trend}</span>
+                  <span className="w-14 font-bold uppercase" style={{ color: sc(p.tone) }}>{p.level === 'critical' ? 'Critical' : p.level === 'watch' ? 'High' : 'Low'}</span>
+                  <span className="w-10 text-right font-mono tabular-nums" style={{ color: sc(p.tone) }}>{p.ho}%</span>
+                  <span className="w-10 text-right font-mono tabular-nums" style={{ color: sc(p.tone) }}>{p.iu}%</span>
+                  <span className="w-5 text-center" style={{ color: sc(p.tone) }}>{p.trend}</span>
                 </div>
               ))}
             </div>
