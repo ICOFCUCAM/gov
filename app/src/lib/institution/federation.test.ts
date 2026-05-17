@@ -47,4 +47,29 @@ describe('canonical sovereign federation', () => {
       }
     }
   });
+
+  // Locks in the per-institution subsystem differentiation: each archetype
+  // must still expose at least these routable groups, so a regression that
+  // drops a group (re-introducing a conflated/dead surface) fails CI.
+  it('every seeded archetype keeps its differentiated subsystem groups', () => {
+    const REQUIRED: Record<string, string[]> = {
+      HEALTH: ['command', 'hospitals', 'doctor', 'patient', 'lab', 'pharma', 'emergency', 'disease', 'finance', 'regulatory'],
+      FINANCE: ['command', 'revenue', 'budget', 'procurement', 'rails', 'audit'],
+      EDUCATION: ['command', 'schools', 'higher', 'exams', 'curriculum', 'teacher', 'student'],
+      TRANSPORT: ['command', 'aviation', 'maritime', 'rail', 'road', 'logistics'],
+      ENERGY: ['command', 'generation', 'grid', 'access', 'fuel'],
+      JUSTICE: ['command', 'courts', 'legalaid', 'corrections', 'registries'],
+      INTERIOR: ['command', 'identity', 'border', 'licensing', 'coordination'],
+      AGRICULTURE: ['command', 'crop', 'livestock', 'irrigation', 'market', 'farmer'],
+      ENVIRONMENT: ['command', 'monitoring', 'protected', 'permit', 'climate'],
+      LABOR: ['command', 'employment', 'inspection', 'insurance', 'disputes'],
+      TRADE: ['command', 'registry', 'standards', 'export', 'licensing', 'industry'],
+    };
+    for (const m of federationSeed()) {
+      const keys = new Set(blueprintFor(m.archetype).map(g => g.key));
+      for (const req of REQUIRED[m.archetype] ?? []) {
+        expect(keys.has(req), `${m.archetype} missing group '${req}'`).toBe(true);
+      }
+    }
+  });
 });
