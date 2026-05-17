@@ -1490,6 +1490,52 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
+  if (isJustice && (group === 'courts' || group === 'legalaid' || group === 'corrections' || group === 'registries' || group === 'citizen')) {
+    const o = justiceOps(id, ts);
+    const LA = o.legalAid, RG = o.registries, CO = o.corrections, CL = o.courtLiaison;
+    const title = group === 'courts' ? 'Court liaison & coordination'
+      : group === 'legalaid' ? 'Legal aid — access to justice'
+        : group === 'corrections' ? 'Corrections & custodial system'
+          : group === 'registries' ? 'Public legal registries'
+            : 'Citizen justice services';
+    const stats = group === 'courts' ? [
+      { l: 'Cases coordinated', v: CL.casesCoordinated.toLocaleString(), t: 'ok' as const },
+      { l: 'Transfers pending', v: CL.transfersPending.toLocaleString(), t: (CL.transfersPending > 500 ? 'alert' : CL.transfersPending > 200 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'SLA met', v: `${CL.slaMetPct}%`, t: (CL.slaMetPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Access-to-justice', v: `${o.accessToJusticeIndex}`, t: (o.accessToJusticeIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'legalaid' ? [
+      { l: 'Aid centres', v: `${LA.centres}`, t: 'ok' as const },
+      { l: 'Open matters', v: LA.openMatters.toLocaleString(), t: 'warn' as const },
+      { l: 'Represented', v: `${LA.representedPct}%`, t: (LA.representedPct >= 75 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Backlog', v: LA.backlog.toLocaleString(), t: (LA.backlog > 4000 ? 'alert' : LA.backlog > 2000 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'corrections' ? [
+      { l: 'Facilities', v: `${CO.facilities}`, t: 'ok' as const },
+      { l: 'Population', v: CO.population.toLocaleString(), t: 'ok' as const },
+      { l: 'Occupancy', v: `${CO.occupancyPct}%`, t: (CO.occupancyPct >= 110 ? 'alert' : CO.occupancyPct >= 95 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Rehab active', v: CO.rehabActive.toLocaleString(), t: 'ok' as const },
+    ] : group === 'registries' ? [
+      { l: 'Records', v: `${RG.recordsM}M`, t: 'ok' as const },
+      { l: 'Verifications/hr', v: RG.verificationsPerHr.toLocaleString(), t: 'ok' as const },
+      { l: 'Integrity', v: `${RG.integrityPct}%`, t: (RG.integrityPct >= 98 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Backlog', v: RG.backlog.toLocaleString(), t: (RG.backlog > 2500 ? 'alert' : RG.backlog > 1000 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+    ] : [
+      { l: 'Access-to-justice', v: `${o.accessToJusticeIndex}`, t: (o.accessToJusticeIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Represented', v: `${LA.representedPct}%`, t: (LA.representedPct >= 75 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Registry integrity', v: `${RG.integrityPct}%`, t: (RG.integrityPct >= 98 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Court SLA', v: `${CL.slaMetPct}%`, t: (CL.slaMetPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ];
+    const kind: WorkKind = group === 'legalaid' ? 'case' : group === 'registries' ? 'permit' : group === 'corrections' ? 'case' : group === 'citizen' ? 'permit' : 'judicial';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
+        </div>
+        <RuntimeQueue scope={`${id}:${group}`} kind={kind} title={`${title} runtime — execute the workflow`} by="Justice Officer" n={14} />
+      </div>
+    );
+  }
+
   if (isJustice) {
     const o = justiceOps(id, ts);
     return (
