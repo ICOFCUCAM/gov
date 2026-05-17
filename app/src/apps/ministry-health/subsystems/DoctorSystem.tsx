@@ -15,7 +15,7 @@ import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
 const ACC = ACCENT.doctor!;
 const TABS = ['Overview', 'History', 'Examination', 'Diagnosis', 'Treatment plan', 'Results', 'Documents', 'Billing'];
-const ACTIONS = ['New consultation', 'Quick note', 'Order lab', 'Order imaging', 'Prescription', 'Referral', 'Discharge plan', 'Print summary'];
+const ACTIONS = ['New consultation', 'Quick note', 'Order lab', 'Order imaging', 'Prescription', 'Referral', 'Discharge plan', 'Print summary', 'More actions'];
 
 export function DoctorSystem({ id, now, role, withheld }: {
   id: string; now: number; role: SovereignRole; withheld: Capability[];
@@ -23,6 +23,10 @@ export function DoctorSystem({ id, now, role, withheld }: {
   const ts = now / 4000;
   const [sel, setSel] = React.useState<string | undefined>(undefined);
   const [tab, setTab] = React.useState('Overview');
+  const [act, setAct] = React.useState<string | null>(null);
+  const [actNote, setActNote] = React.useState('');
+  const [actLog, setActLog] = React.useState<{ a: string; at: string }[]>([]);
+  const clock = new Date(now).toLocaleTimeString('en-GB', { hour12: false });
   const w = clinicianWorkstation(id, ts, sel);
   const p = w.patient;
   const rb: Tone = p.riskBand === 'High' ? 'alert' : p.riskBand === 'Moderate' ? 'warn' : 'ok';
@@ -229,13 +233,58 @@ export function DoctorSystem({ id, now, role, withheld }: {
         </div>
       </div>
 
-      {/* Clinical action bar */}
-      <div className="flex flex-wrap gap-1.5 rounded-[3px] border px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 70%,transparent)', background: '#0a0f18' }}>
-        {ACTIONS.map(a => (
-          <button key={a} className="focus-ring rounded-[3px] border px-2.5 py-1 text-[8.5px] font-semibold uppercase tracking-[0.12em] text-ink-soft transition-colors hover:text-ink"
-            style={{ borderColor: 'color-mix(in srgb,#1d2a36 70%,transparent)' }}>{a}</button>
-        ))}
+      {/* Clinical action bar — functional */}
+      <div className="rounded-[3px] border px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 70%,transparent)', background: '#0a0f18' }}>
+        <div className="flex flex-wrap gap-1.5">
+          {ACTIONS.map(a => (
+            <button key={a} type="button" onClick={() => { setAct(a); setActNote(''); }}
+              className="focus-ring cursor-pointer rounded-[3px] border px-2.5 py-1 text-[8.5px] font-semibold uppercase tracking-[0.12em] text-ink-soft transition-colors hover:text-ink"
+              style={{ borderColor: `color-mix(in srgb,${ACC} 35%,#1d2a36)` }}
+              onMouseEnter={e => { e.currentTarget.style.background = `color-mix(in srgb,${ACC} 14%,transparent)`; e.currentTarget.style.color = ACC; }}
+              onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.color = ''; }}>
+              {a}
+            </button>
+          ))}
+        </div>
+        {actLog.length ? (
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 border-t pt-1 text-[8px] text-ink-muted" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+            <span className="font-bold uppercase tracking-[0.14em]" style={{ color: ACC }}>Session activity</span>
+            {actLog.slice(-6).map((l, i) => (
+              <span key={i} className="inline-flex items-center gap-1"><span className="font-mono text-ink-soft">{l.at}</span> {l.a} <span style={{ color: C('ok') }}>✓</span></span>
+            ))}
+          </div>
+        ) : null}
       </div>
+
+      {/* Action modal — performs the clinical action */}
+      {act ? (
+        <div className="fixed inset-0 z-50 grid place-items-center p-4" style={{ background: 'rgba(2,5,10,0.72)' }}
+          onClick={() => setAct(null)}>
+          <div className="w-full max-w-md rounded-[6px] border p-3" style={{ borderColor: `color-mix(in srgb,${ACC} 40%,#1d2a36)`, background: '#0a0f18', boxShadow: `0 0 30px color-mix(in srgb,${ACC} 25%,transparent)` }}
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <div className="text-[12px] font-bold uppercase tracking-[0.16em]" style={{ color: ACC }}>{act}</div>
+              <button type="button" onClick={() => setAct(null)} className="focus-ring text-[12px] text-ink-muted hover:text-ink">✕</button>
+            </div>
+            <div className="mt-1 text-[9px] text-ink-muted">Patient · {p.name} · {p.mrn} · {p.ward} {p.bed}</div>
+            <textarea autoFocus value={actNote} onChange={e => setActNote(e.target.value)}
+              placeholder={`Detail for "${act}"…`}
+              className="focus-ring mt-2 h-24 w-full resize-none rounded-[3px] border bg-[#070b12] p-2 text-[10px] text-ink-soft"
+              style={{ borderColor: 'color-mix(in srgb,#1d2a36 70%,transparent)' }} />
+            <div className="mt-2 flex justify-end gap-2">
+              <button type="button" onClick={() => setAct(null)}
+                className="focus-ring rounded-[3px] border px-3 py-1 text-[9px] font-semibold uppercase tracking-wider text-ink-muted hover:text-ink"
+                style={{ borderColor: 'color-mix(in srgb,#1d2a36 70%,transparent)' }}>Cancel</button>
+              <button type="button"
+                onClick={() => { setActLog(l => [...l, { a: act, at: clock }]); setAct(null); }}
+                className="focus-ring rounded-[3px] px-3 py-1 text-[9px] font-bold uppercase tracking-wider"
+                style={{ background: `color-mix(in srgb,${ACC} 22%,transparent)`, color: ACC, border: `1px solid ${ACC}` }}>
+                Confirm {act}
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <RuntimeQueue
         scope={`${id}:doctor`}
