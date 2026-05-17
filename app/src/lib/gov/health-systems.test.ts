@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, healthInstability, patientServices,
-  nationalHealthcareCapacity, laboratoryOps, pharmaceuticalOps, emergencyMedicalOps,
+  nationalHealthcareCapacity, laboratoryOps, pharmaceuticalOps, emergencyMedicalOps, healthCommand,
 } from './health-systems';
 
 describe('health systems engine', () => {
@@ -149,5 +149,21 @@ describe('health systems engine', () => {
       expect(['P1', 'P2', 'P3']).toContain(c.priority);
       expect(c.meanResponseMin).toBeGreaterThanOrEqual(0);
     }
+  });
+
+  it('healthCommand synthesises subsystems into a deterministic command posture', () => {
+    const a = healthCommand('MOH', 130);
+    expect(a).toEqual(healthCommand('MOH', 130));
+    expect(['steady', 'engaged', 'crisis']).toContain(a.posture);
+    expect(a.postureIndex).toBeGreaterThanOrEqual(0);
+    expect(a.postureIndex).toBeLessThanOrEqual(100);
+    expect(a.domains.length).toBe(5);
+    for (const d of a.domains) expect(['ok', 'warn', 'alert']).toContain(d.tone);
+    // directives are ranked critical → priority → advisory
+    const rank = { critical: 0, priority: 1, advisory: 2 } as const;
+    for (let i = 1; i < a.directives.length; i++) {
+      expect(rank[a.directives[i - 1]!.priority]).toBeLessThanOrEqual(rank[a.directives[i]!.priority]);
+    }
+    for (const d of a.directives) expect(d.target.length).toBeGreaterThan(2);
   });
 });

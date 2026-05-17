@@ -481,10 +481,66 @@ export function emergencyMedicalOps(instId: string, t: number): EmergencyMedical
   };
 }
 
-/** 0-100 national healthcare instability — drives cross-system propagation. */
-export function healthInstability(instId: string, t: number): number {
+// ── Health Command ───────────────────────────────────────────────────
+// The national healthcare command authority is not the hospital ward
+// screen: it SYNTHESISES every health subsystem engine (hospitals, EMS,
+// labs, pharma, disease) into one operating posture, a per-domain status
+// rollup and a ranked set of executable command directives. Emergent —
+// every figure derives from a real subsystem engine. Pure & deterministic.
+export interface HealthDomainStatus {
+  domain: string; metric: string; value: string; tone: 'ok' | 'warn' | 'alert';
+}
+export interface HealthDirective {
+  priority: 'critical' | 'priority' | 'advisory';
+  title: string; rationale: string; target: string;
+}
+export interface HealthCommand {
+  postureIndex: number;          // 0-100 (higher = healthier)
+  posture: 'steady' | 'engaged' | 'crisis';
+  domains: HealthDomainStatus[];
+  directives: HealthDirective[];
+  criticalDomains: number;
+}
+export function healthCommand(instId: string, t: number): HealthCommand {
   const h = hospitalOps(instId, t);
-  const d = diseaseIntel(instId, t);
+  const ems = emergencyMedicalOps(instId, t);
+  const lab = laboratoryOps(instId, t);
+  const ph = pharmaceuticalOps(instId, t);
+  const dis = diseaseIntel(instId, t);
+  const inst = Math.round(Math.max(0, Math.min(100, 100 - healthInstabilityCore(h, dis, instId, t))));
+
+  const domains: HealthDomainStatus[] = [
+    { domain: 'Hospital network', metric: 'ICU occupancy', value: `${h.icu.occupancyPct}%`,
+      tone: h.icu.occupancyPct >= 95 ? 'alert' : h.icu.occupancyPct >= 85 ? 'warn' : 'ok' },
+    { domain: 'Emergency medical', metric: 'Mean response', value: `${ems.meanResponseMin}m`,
+      tone: ems.posture === 'overwhelmed' ? 'alert' : ems.posture === 'surged' ? 'warn' : 'ok' },
+    { domain: 'Laboratory', metric: 'Turnaround', value: `${lab.meanTurnaroundHrs}h`,
+      tone: lab.posture === 'overloaded' ? 'alert' : lab.posture === 'strained' ? 'warn' : 'ok' },
+    { domain: 'Pharmaceutical', metric: 'Days cover', value: `${ph.nationalDaysCover}d`,
+      tone: ph.posture === 'shortage' ? 'alert' : ph.posture === 'strained' ? 'warn' : 'ok' },
+    { domain: 'Disease intelligence', metric: 'National Rt', value: `${dis.nationalRt}`,
+      tone: dis.nationalRt > 1.3 ? 'alert' : dis.nationalRt > 1.0 ? 'warn' : 'ok' },
+  ];
+
+  const directives: HealthDirective[] = [];
+  if (h.icu.occupancyPct >= 95) directives.push({ priority: 'critical', title: 'Activate ICU surge & regional diversion', rationale: `ICU occupancy ${h.icu.occupancyPct}% — no headroom`, target: 'hospitals' });
+  if (ems.massCasualtyActive >= 1) directives.push({ priority: 'critical', title: 'Stand up mass-casualty coordination', rationale: `${ems.massCasualtyActive} region(s) at mass-casualty posture`, target: 'emergency' });
+  if (ph.classesCritical >= 1) directives.push({ priority: ph.posture === 'shortage' ? 'critical' : 'priority', title: 'Emergency pharmaceutical redistribution', rationale: `${ph.classesCritical} drug class(es) critical/stockout`, target: 'pharma' });
+  if (dis.nationalRt > 1.3) directives.push({ priority: 'critical', title: 'Escalate outbreak containment', rationale: `National Rt ${dis.nationalRt} — exponential spread`, target: 'disease' });
+  if (lab.posture === 'overloaded') directives.push({ priority: 'priority', title: 'Surge diagnostic capacity', rationale: `Lab turnaround ${lab.meanTurnaroundHrs}h — diagnostics delayed`, target: 'lab' });
+  if (ems.meanResponseMin >= 15 && ems.massCasualtyActive === 0) directives.push({ priority: 'priority', title: 'Rebalance ambulance deployment', rationale: `EMS mean response ${ems.meanResponseMin}m`, target: 'emergency' });
+  directives.sort((a, b) => ({ critical: 0, priority: 1, advisory: 2 }[a.priority] - { critical: 0, priority: 1, advisory: 2 }[b.priority]));
+
+  const criticalDomains = domains.filter(d => d.tone === 'alert').length;
+  const postureIndex = Math.round(inst * 0.5 + (100 - criticalDomains * 18) * 0.5);
+  const posture: HealthCommand['posture'] =
+    criticalDomains >= 3 || postureIndex < 45 ? 'crisis' : criticalDomains >= 1 || postureIndex < 70 ? 'engaged' : 'steady';
+  return { postureIndex: Math.max(0, Math.min(100, postureIndex)), posture, domains, directives, criticalDomains };
+}
+
+function healthInstabilityCore(
+  h: HospitalOps, d: DiseaseIntel, instId: string, t: number,
+): number {
   const wl = workloadIntelligence(doctorRoster(instId, t));
   const v =
     (h.icu.occupancyPct - 70) * 0.6 +
@@ -494,4 +550,9 @@ export function healthInstability(instId: string, t: number): number {
     wl.burnoutAlert * 3 +
     Math.max(0, (h.ambulances.meanResponseMin - 12) * 1.5);
   return Math.round(Math.max(0, Math.min(100, v)));
+}
+
+/** 0-100 national healthcare instability — drives cross-system propagation. */
+export function healthInstability(instId: string, t: number): number {
+  return healthInstabilityCore(hospitalOps(instId, t), diseaseIntel(instId, t), instId, t);
 }
