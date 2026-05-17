@@ -40,6 +40,48 @@ export function energyOps(id: string, t: number): EnergyOps {
   };
 }
 
+// ── Energy Command ───────────────────────────────────────────────────
+// Grid & energy-security authority: synthesises generation/grid/reserve
+// state into one emergent posture, domain rollup and ranked directives.
+export interface EnDomainStatus { domain: string; metric: string; value: string; tone: 'ok' | 'warn' | 'alert' }
+export interface EnDirective { priority: 'critical' | 'priority' | 'advisory'; title: string; rationale: string; target: string }
+export interface EnergyCommand {
+  postureIndex: number;
+  posture: 'steady' | 'engaged' | 'crisis';
+  domains: EnDomainStatus[];
+  directives: EnDirective[];
+  criticalDomains: number;
+}
+export function energyCommand(id: string, t: number): EnergyCommand {
+  const o = energyOps(id, t);
+  const freqDev = Math.abs(o.gridFrequencyHz - 50);
+  const worstGen = [...o.generation].sort((a, b) => a.outputPct - b.outputPct)[0]!;
+  const domains: EnDomainStatus[] = [
+    { domain: 'Grid frequency', metric: 'Deviation', value: `${o.gridFrequencyHz}Hz`,
+      tone: freqDev <= 0.2 ? 'ok' : freqDev <= 0.4 ? 'warn' : 'alert' },
+    { domain: 'Reserve margin', metric: 'Headroom', value: `${o.reserveMarginPct}%`,
+      tone: o.reserveMarginPct >= 12 ? 'ok' : o.reserveMarginPct >= 6 ? 'warn' : 'alert' },
+    { domain: `Weakest source · ${worstGen.source}`, metric: 'Output', value: `${worstGen.outputPct}%`,
+      tone: worstGen.tone },
+    { domain: 'Substation faults', metric: 'Offline', value: `${o.substations.faults}`,
+      tone: o.substations.faults > 24 ? 'alert' : o.substations.faults > 10 ? 'warn' : 'ok' },
+    { domain: 'Fuel reserves', metric: 'Days cover', value: `${o.fuelReserveDays}d`,
+      tone: o.fuelReserveDays < 14 ? 'alert' : o.fuelReserveDays < 30 ? 'warn' : 'ok' },
+  ];
+  const directives: EnDirective[] = [];
+  if (o.loadShedding) directives.push({ priority: 'critical', title: 'Activate load-shedding management & demand response', rationale: `Reserve margin ${o.reserveMarginPct}% — supply deficit`, target: 'grid' });
+  if (freqDev > 0.4) directives.push({ priority: 'critical', title: 'Stabilise grid frequency', rationale: `Frequency ${o.gridFrequencyHz}Hz off nominal`, target: 'grid' });
+  if (worstGen.tone === 'alert') directives.push({ priority: 'priority', title: `Recover ${worstGen.source} generation`, rationale: `${worstGen.source} output ${worstGen.outputPct}%`, target: 'generation' });
+  if (o.fuelReserveDays < 14) directives.push({ priority: 'priority', title: 'Replenish strategic fuel reserves', rationale: `${o.fuelReserveDays}d reserve cover`, target: 'fuel' });
+  if (o.electrificationPct < 75) directives.push({ priority: 'advisory', title: 'Accelerate electrification programme', rationale: `Access at ${o.electrificationPct}%`, target: 'access' });
+  directives.sort((a, b) => ({ critical: 0, priority: 1, advisory: 2 }[a.priority] - { critical: 0, priority: 1, advisory: 2 }[b.priority]));
+  const criticalDomains = domains.filter(d => d.tone === 'alert').length;
+  const postureIndex = Math.max(0, Math.min(100, Math.round((100 - energyInstability(id, t)) * 0.5 + (100 - criticalDomains * 18) * 0.5)));
+  const posture: EnergyCommand['posture'] =
+    criticalDomains >= 3 || postureIndex < 45 ? 'crisis' : criticalDomains >= 1 || postureIndex < 70 ? 'engaged' : 'steady';
+  return { postureIndex, posture, domains, directives, criticalDomains };
+}
+
 export function energyInstability(id: string, t: number): number {
   const o = energyOps(id, t);
   const v =

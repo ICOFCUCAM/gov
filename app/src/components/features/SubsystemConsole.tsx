@@ -18,7 +18,7 @@ import {
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { schoolNetwork, examOps, teacherOps, studentServices, higherEducation, curriculumOps, educationCommand } from '@/lib/gov/education-systems';
 import { transportOps, transportCommand } from '@/lib/gov/transport-systems';
-import { energyOps } from '@/lib/gov/energy-systems';
+import { energyOps, energyCommand } from '@/lib/gov/energy-systems';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { justiceOps } from '@/lib/gov/justice-systems';
@@ -1150,6 +1150,121 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'citizen' ? 'permit' : grp.key === 'logistics' ? 'procurement' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (isEnergy && group === 'command') {
+    const C = energyCommand(id, ts);
+    const pt: 'ok' | 'warn' | 'alert' = C.posture === 'crisis' ? 'alert' : C.posture === 'engaged' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} />
+          <Stat l="Command posture" v={C.posture} t={pt} />
+          <Stat l="Critical domains" v={`${C.criticalDomains}`} t={C.criticalDomains ? 'alert' : 'ok'} />
+          <Stat l="Open directives" v={`${C.directives.length}`} t={C.directives.some(d => d.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok'} />
+          <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
+          <Stat l="Authority" v="National" t="ok" />
+        </div>
+        <Panel title="Whole-of-energy domain status" meta="emergent from generation/grid/reserve engines" bodyClass="!p-0">
+          {C.domains.map(d => (
+            <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
+              <span className="w-52 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>
+              <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{d.metric}</span>
+              <span className="w-16 shrink-0 text-right font-mono text-[11px] tabular-nums" style={{ color: tc(d.tone) }}>{d.value}</span>
+            </div>
+          ))}
+        </Panel>
+        <Panel title="Command directives" meta="ranked · executable across the energy federation" bodyClass="!p-2">
+          {C.directives.length === 0 ? (
+            <p className="text-[11px] text-ink-muted">No outstanding command directives — grid & energy security within tolerance.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {C.directives.map((d, i) => {
+                const dt = d.priority === 'critical' ? 'alert' : d.priority === 'priority' ? 'warn' : 'ok';
+                return (
+                  <div key={i} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2.5 py-2" style={{ borderLeft: `3px solid ${tc(dt)}` }}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[8.5px] font-bold uppercase tracking-[0.16em]" style={{ color: tc(dt) }}>{d.priority}</span>
+                      <span className="text-[11px] font-medium text-ink">{d.title}</span>
+                      <a href={`/ministries/${id}/system/${d.target}`} className="ml-auto text-[9px] text-link no-underline hover:underline">→ {d.target}</a>
+                    </div>
+                    <div className="mt-0.5 text-[9px] text-ink-muted">{d.rationale}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+        <RuntimeQueue scope={`${id}:command`} kind="incident" title="Energy Command runtime — execute grid & energy-security directives" by="Energy Command" n={14} />
+      </div>
+    );
+  }
+
+  if (isEnergy && group === 'generation') {
+    const o = energyOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Supply" v={`${o.supplyGw}GW`} t={o.supplyGw >= o.demandGw ? 'ok' : 'alert'} />
+          <Stat l="Demand" v={`${o.demandGw}GW`} t="ok" />
+          <Stat l="Reserve margin" v={`${o.reserveMarginPct}%`} t={o.reserveMarginPct >= 12 ? 'ok' : o.reserveMarginPct >= 6 ? 'warn' : 'alert'} />
+          <Stat l="Load shedding" v={o.loadShedding ? 'ACTIVE' : 'none'} t={o.loadShedding ? 'alert' : 'ok'} />
+        </div>
+        <Panel title="Generation mix" meta="source · output" bodyClass="!p-0">
+          {o.generation.map(g => (
+            <div key={g.source} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(g.tone)}` }}>
+              <span className="w-32 shrink-0 truncate text-[11px] text-ink">{g.source}</span>
+              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${g.outputPct}%`, backgroundColor: tc(g.tone) }} /></div>
+              <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: tc(g.tone) }}>{g.outputPct}%</span>
+            </div>
+          ))}
+        </Panel>
+        <RuntimeQueue scope={`${id}:generation`} kind="case" title="Generation runtime — dispatch → ramp → fault → restore" by="Dispatch Engineer" n={14} />
+      </div>
+    );
+  }
+
+  if (isEnergy && group === 'grid') {
+    const o = energyOps(id, ts);
+    const fd = Math.abs(o.gridFrequencyHz - 50);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Grid frequency" v={`${o.gridFrequencyHz}Hz`} t={fd <= 0.2 ? 'ok' : fd <= 0.4 ? 'warn' : 'alert'} />
+          <Stat l="Substations online" v={`${o.substations.online}/${o.substations.total}`} t={o.substations.faults > 24 ? 'alert' : o.substations.faults > 10 ? 'warn' : 'ok'} />
+          <Stat l="Faults" v={`${o.substations.faults}`} t={o.substations.faults > 24 ? 'alert' : 'warn'} />
+          <Stat l="Outage minutes/day" v={`${o.outageMinutesPerDay}`} t={o.outageMinutesPerDay > 60 ? 'alert' : o.outageMinutesPerDay > 25 ? 'warn' : 'ok'} />
+          <Stat l="Reserve margin" v={`${o.reserveMarginPct}%`} t={o.reserveMarginPct >= 12 ? 'ok' : 'warn'} />
+          <Stat l="Load shedding" v={o.loadShedding ? 'ACTIVE' : 'none'} t={o.loadShedding ? 'alert' : 'ok'} />
+        </div>
+        <RuntimeQueue scope={`${id}:grid`} kind="incident" title="Grid operations runtime — fault → isolate → reroute → restore" by="Grid Controller" n={14} />
+      </div>
+    );
+  }
+
+  if (isEnergy && (group === 'access' || group === 'fuel' || group === 'citizen')) {
+    const o = energyOps(id, ts);
+    const isFuel = group === 'fuel';
+    const isAccess = group === 'access';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Electrification" v={`${o.electrificationPct}%`} t={o.electrificationPct >= 80 ? 'ok' : o.electrificationPct >= 65 ? 'warn' : 'alert'} />
+          <Stat l="Fuel reserve" v={`${o.fuelReserveDays}d`} t={o.fuelReserveDays < 14 ? 'alert' : o.fuelReserveDays < 30 ? 'warn' : 'ok'} />
+          <Stat l="Outage minutes/day" v={`${o.outageMinutesPerDay}`} t={o.outageMinutesPerDay > 60 ? 'alert' : 'warn'} />
+          <Stat l="Supply / demand" v={`${o.supplyGw}/${o.demandGw}GW`} t={o.supplyGw >= o.demandGw ? 'ok' : 'alert'} />
+        </div>
+        <RuntimeQueue scope={`${id}:${group}`} kind={isAccess ? 'case' : isFuel ? 'procurement' : 'permit'}
+          title={isAccess ? 'Electrification runtime — survey → connect → energise'
+            : isFuel ? 'Strategic-reserve runtime — requisition → procure → store'
+              : 'Consumer services runtime — request → connect → bill'}
+          by={isAccess ? 'Electrification Officer' : isFuel ? 'Reserve Officer' : 'Consumer Services'} n={14} />
       </div>
     );
   }
