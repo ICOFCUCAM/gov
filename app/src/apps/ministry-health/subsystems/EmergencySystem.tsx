@@ -39,11 +39,6 @@ export function EmergencySystem({ id, now, role, withheld }: {
         <div className="xl:col-span-2">
           <CommandPanel title="Incident map" meta="incident density · live" accent={ACC} live>
             <GeoMap geo={geo} metric="pressure" title="" height={300} />
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 text-[7.5px] uppercase tracking-wider text-ink-muted">
-              {[['Critical', 'alert'], ['Major', 'warn'], ['Moderate', 'warn'], ['Minor', 'ok'], ['Resolved', 'ok']].map(([l, tn]) => (
-                <span key={l} className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: C(tn as Tone) }} />{l}</span>
-              ))}
-            </div>
           </CommandPanel>
         </div>
         <CommandPanel title="Active incidents" meta={`${e.incidents.length}`} accent={ACC} live>
