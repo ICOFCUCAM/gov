@@ -4,7 +4,7 @@ import {
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
   patientDeepExecution, emergencyIncidentExecution, diseaseEpidemiology,
-  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid, citizenHealthPortal,
+  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid, citizenHealthPortal, nationalInteroperability, healthSimulation, sovereignSecurity,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -274,5 +274,27 @@ describe('ministry of health operations engine', () => {
     expect(a.prescriptions.length).toBe(3);
     expect(a.aiGuidance.length).toBeGreaterThan(2);
     for (const p of a.prescriptions) expect(['active','refill-due','collected']).toContain(p.status);
+  });
+
+  it('interop / simulation / security engines are deterministic & bounded', () => {
+    const io = nationalInteroperability('MOH', 120);
+    expect(io).toEqual(nationalInteroperability('MOH', 120));
+    expect(io.links.length).toBe(9);
+    expect(['integrated', 'partial', 'fragmented']).toContain(io.posture);
+    for (const l of io.links) expect(['live', 'degraded', 'down']).toContain(l.status);
+
+    const sm = healthSimulation('MOH', 120);
+    expect(sm).toEqual(healthSimulation('MOH', 120));
+    expect(sm.scenarios.length).toBe(5);
+    expect(['stable', 'watch', 'critical']).toContain(sm.posture);
+    for (let i = 1; i < sm.collapseRisks.length; i++) {
+      expect(sm.collapseRisks[i - 1]!.riskPct).toBeGreaterThanOrEqual(sm.collapseRisks[i]!.riskPct);
+    }
+
+    const se = sovereignSecurity('MOH', 120);
+    expect(se).toEqual(sovereignSecurity('MOH', 120));
+    expect(se.accessTiers.length).toBe(5);
+    expect(['secure', 'guarded', 'breach']).toContain(se.posture);
+    expect(se.openIncidents).toBe(se.threats.filter(x => !x.blocked).length);
   });
 });

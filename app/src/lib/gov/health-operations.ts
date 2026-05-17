@@ -134,6 +134,144 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── National Interoperability — cross-government health data fabric ────
+// The Ministry cannot exist alone. Live integration links to Treasury,
+// Immigration, Police, Customs, National ID, Civil Registry, Education,
+// Military and Border Control, with a flagship automatic flow: birth
+// registration → citizen health identity. Pure & deterministic.
+export interface InteropLink {
+  institution: string;
+  direction: 'inbound' | 'outbound' | 'bidirectional';
+  purpose: string;
+  status: 'live' | 'degraded' | 'down';
+  latencyMs: number;
+  throughputPerMin: number;
+  tone: Tone;
+}
+export interface InteropFlow { name: string; from: string; to: string; perDay: number; autoPct: number; tone: Tone }
+export interface NationalInteroperability {
+  links: InteropLink[];
+  flows: InteropFlow[];
+  liveLinks: number;
+  degradedLinks: number;
+  identityFederationPct: number;
+  eventsExchangedPerMin: number;
+  posture: 'integrated' | 'partial' | 'fragmented';
+}
+export function nationalInteroperability(id: string, t: number): NationalInteroperability {
+  const SPEC: { institution: string; direction: InteropLink['direction']; purpose: string }[] = [
+    { institution: 'Civil Registry', direction: 'inbound', purpose: 'Birth/death → health identity' },
+    { institution: 'National ID', direction: 'bidirectional', purpose: 'Identity verification' },
+    { institution: 'Treasury', direction: 'bidirectional', purpose: 'Funding & reimbursement' },
+    { institution: 'Immigration', direction: 'inbound', purpose: 'Traveller health screening' },
+    { institution: 'Border Control', direction: 'bidirectional', purpose: 'Port-of-entry surveillance' },
+    { institution: 'Police', direction: 'outbound', purpose: 'Forensic & MLC coordination' },
+    { institution: 'Customs', direction: 'inbound', purpose: 'Medical-import clearance' },
+    { institution: 'Education', direction: 'bidirectional', purpose: 'School health & vaccination' },
+    { institution: 'Military', direction: 'bidirectional', purpose: 'Medical surge support' },
+  ];
+  const links: InteropLink[] = SPEC.map((s, i): InteropLink => {
+    const r = wave(`io:s:${id}:${i}`, t, 0, 1);
+    const status: InteropLink['status'] = r > 0.86 ? 'down' : r > 0.7 ? 'degraded' : 'live';
+    const latencyMs = Math.round(wave(`io:l:${id}:${i}`, t, 12, 900));
+    const throughputPerMin = Math.round(wave(`io:tp:${id}:${i}`, t, 5, 4200));
+    const tone: Tone = status === 'down' ? 'alert' : status === 'degraded' ? 'warn' : 'ok';
+    return { institution: s.institution, direction: s.direction, purpose: s.purpose, status, latencyMs, throughputPerMin, tone };
+  });
+  const flows: InteropFlow[] = [
+    { name: 'Birth → health identity', from: 'Civil Registry', to: 'Health', perDay: Math.round(wave(`io:f1:${id}`, t, 800, 9000)), autoPct: Math.round(wave(`io:a1:${id}`, t, 70, 100)), tone: 'ok' },
+    { name: 'Death → record closure', from: 'Civil Registry', to: 'Health', perDay: Math.round(wave(`io:f2:${id}`, t, 200, 3200)), autoPct: Math.round(wave(`io:a2:${id}`, t, 60, 99)), tone: 'ok' },
+    { name: 'Traveller screening', from: 'Immigration', to: 'Health', perDay: Math.round(wave(`io:f3:${id}`, t, 1000, 42000)), autoPct: Math.round(wave(`io:a3:${id}`, t, 55, 98)), tone: 'ok' },
+    { name: 'Reimbursement settlement', from: 'Health', to: 'Treasury', perDay: Math.round(wave(`io:f4:${id}`, t, 300, 7000)), autoPct: Math.round(wave(`io:a4:${id}`, t, 50, 96)), tone: 'ok' },
+  ].map(f => ({ ...f, tone: (f.autoPct < 70 ? 'warn' : 'ok') as Tone }));
+  const liveLinks = links.filter(l => l.status === 'live').length;
+  const degradedLinks = links.filter(l => l.status !== 'live').length;
+  const identityFederationPct = Math.round(wave(`io:if:${id}`, t, 62, 99));
+  const eventsExchangedPerMin = links.reduce((s, l) => s + (l.status === 'live' ? l.throughputPerMin : 0), 0);
+  const down = links.filter(l => l.status === 'down').length;
+  const posture: NationalInteroperability['posture'] =
+    down >= 2 || liveLinks < links.length * 0.6 ? 'fragmented' : down >= 1 || degradedLinks >= 3 ? 'partial' : 'integrated';
+  return { links, flows, liveLinks, degradedLinks, identityFederationPct, eventsExchangedPerMin, posture };
+}
+
+// ── AI & National Health Simulation ────────────────────────────────────
+// Predictive sovereign AI: pandemic simulation, intervention modelling and
+// systemic collapse-risk detection. Pure & deterministic.
+export interface SimScenario { name: string; peakLoadPct: number; mortalityIdx: number; weeksToPeak: number; tone: Tone }
+export interface CollapseRisk { system: string; riskPct: number; horizonDays: number; driver: string; tone: Tone }
+export interface HealthSimulation {
+  scenarios: SimScenario[];
+  collapseRisks: CollapseRisk[];
+  recommendedIntervention: string;
+  systemicRiskIndex: number;
+  confidencePct: number;
+  posture: 'stable' | 'watch' | 'critical';
+}
+export function healthSimulation(id: string, t: number): HealthSimulation {
+  const scenarios: SimScenario[] = ['Baseline', 'Respiratory pandemic', 'Cholera surge', 'Mass-casualty + outbreak', 'Containment applied'].map((name, i): SimScenario => {
+    const peakLoadPct = Math.round(wave(`sm:pk:${id}:${i}`, t, 40, 180));
+    const mortalityIdx = Math.round(wave(`sm:mo:${id}:${i}`, t, 4, 60));
+    const weeksToPeak = Math.max(1, Math.round(wave(`sm:wk:${id}:${i}`, t, 1, 16)));
+    const tone: Tone = peakLoadPct >= 130 ? 'alert' : peakLoadPct >= 100 ? 'warn' : 'ok';
+    return { name, peakLoadPct, mortalityIdx, weeksToPeak, tone };
+  });
+  const collapseRisks: CollapseRisk[] = ['ICU capacity', 'Oxygen supply', 'Workforce', 'Medicine stock', 'Cold chain'].map((system, i): CollapseRisk => {
+    const riskPct = Math.round(wave(`sm:cr:${id}:${i}`, t, 5, 92));
+    const tone: Tone = riskPct >= 70 ? 'alert' : riskPct >= 45 ? 'warn' : 'ok';
+    return { system, riskPct, horizonDays: Math.max(1, Math.round(wave(`sm:hz:${id}:${i}`, t, 2, 45))), driver: ['surge', 'logistics', 'attrition', 'depletion', 'equipment'][i]!, tone };
+  }).sort((a, b) => b.riskPct - a.riskPct);
+  const systemicRiskIndex = Math.round(collapseRisks.reduce((s, r) => s + r.riskPct, 0) / collapseRisks.length);
+  const posture: HealthSimulation['posture'] = systemicRiskIndex >= 65 ? 'critical' : systemicRiskIndex >= 42 ? 'watch' : 'stable';
+  const top = collapseRisks[0]!;
+  const recommendedIntervention =
+    posture === 'critical' ? `Pre-position resources against ${top.system} (${top.riskPct}% in ${top.horizonDays}d) — activate containment scenario`
+      : posture === 'watch' ? `Monitor ${top.system}; stage contingency for ${top.driver}`
+        : 'No intervention required — systems within modelled tolerance';
+  return { scenarios, collapseRisks, recommendedIntervention, systemicRiskIndex, confidencePct: Math.round(wave(`sm:cf:${id}`, t, 70, 96)), posture };
+}
+
+// ── Sovereign Data & Security Layer ────────────────────────────────────
+// Health-data sovereignty: tamper-evident audit chain integrity, access
+// governance, residency and live threat posture. Pure & deterministic.
+export interface AccessTier { role: string; activeSessions: number; deniedPct: number; tone: Tone }
+export interface SecurityThreat { vector: string; severity: 'low' | 'medium' | 'high'; blocked: boolean; tone: Tone }
+export interface SovereignSecurity {
+  auditChainIntactPct: number;
+  auditEvents24h: number;
+  dataResidencyPct: number;
+  encryptionCoveragePct: number;
+  accessTiers: AccessTier[];
+  threats: SecurityThreat[];
+  openIncidents: number;
+  posture: 'secure' | 'guarded' | 'breach';
+}
+export function sovereignSecurity(id: string, t: number): SovereignSecurity {
+  const auditChainIntactPct = Math.round(wave(`sc:ai:${id}`, t, 97, 100) * 100) / 100;
+  const accessTiers: AccessTier[] = ['Clinician', 'Administrator', 'Citizen', 'Researcher', 'System'].map((role, i): AccessTier => {
+    const deniedPct = Math.round(wave(`sc:dp:${id}:${i}`, t, 0, 14));
+    const tone: Tone = deniedPct >= 9 ? 'alert' : deniedPct >= 4 ? 'warn' : 'ok';
+    return { role, activeSessions: Math.round(wave(`sc:as:${id}:${i}`, t, 20, 24000)), deniedPct, tone };
+  });
+  const threats: SecurityThreat[] = ['Credential stuffing', 'Exfiltration attempt', 'Ransomware probe', 'Insider anomaly', 'API abuse'].map((vector, i): SecurityThreat => {
+    const sv = seed(`sc:ts:${id}:${i}`);
+    const severity: SecurityThreat['severity'] = sv > 0.72 ? 'high' : sv > 0.4 ? 'medium' : 'low';
+    const blocked = seed(`sc:tb:${id}:${i}`) > 0.2;
+    return { vector, severity, blocked, tone: !blocked && severity === 'high' ? 'alert' : severity === 'high' || !blocked ? 'warn' : 'ok' };
+  });
+  const openIncidents = threats.filter(x => !x.blocked).length;
+  const auditOk = auditChainIntactPct >= 99.5;
+  const posture: SovereignSecurity['posture'] =
+    !auditOk || threats.some(x => !x.blocked && x.severity === 'high') ? 'breach'
+      : openIncidents >= 1 || threats.some(x => x.severity === 'high') ? 'guarded' : 'secure';
+  return {
+    auditChainIntactPct,
+    auditEvents24h: Math.round(wave(`sc:ae:${id}`, t, 40000, 4200000)),
+    dataResidencyPct: Math.round(wave(`sc:dr:${id}`, t, 88, 100)),
+    encryptionCoveragePct: Math.round(wave(`sc:ec:${id}`, t, 94, 100) * 100) / 100,
+    accessTiers, threats, openIncidents, posture,
+  };
+}
+
 // ── Citizen Digital Health Portal ──────────────────────────────────────
 // The citizen-facing healthcare ecosystem: national digital health ID,
 // longitudinal health timeline, appointments, digital prescriptions,

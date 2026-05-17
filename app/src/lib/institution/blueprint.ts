@@ -86,6 +86,18 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Digital health ID', 'citizen'), S('Health timeline', 'citizen'),
       S('Telemedicine & personal AI', 'citizen'),
     ]),
+    G('interop', 'National Interoperability', 'Cross-government health data fabric', [
+      S('Inter-ministry links', 'interop'), S('Identity federation', 'registry'),
+      S('Event exchange', 'intelligence'),
+    ]),
+    G('simulation', 'AI & Simulation', 'National health simulation & predictive AI', [
+      S('Pandemic simulation', 'intelligence'), S('Intervention modelling', 'intelligence'),
+      S('Collapse-risk AI', 'command'),
+    ]),
+    G('security', 'Sovereign Data & Security', 'Health data sovereignty & security', [
+      S('Audit chain', 'audit'), S('Access governance', 'regulatory'),
+      S('Threat posture', 'command'),
+    ]),
   ],
   FINANCE: [
     G('command', 'Fiscal Command', 'Sovereign fiscal authority', [
