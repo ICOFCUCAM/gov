@@ -34,15 +34,15 @@ function Tile({
   nav: string[]; navActive: string; time: string; span?: string; children: React.ReactNode;
 }) {
   return (
-    <section className={`flex min-w-0 flex-col overflow-hidden rounded-[14px] border ${span ?? ''}`}
+    <section className={`flex h-full min-w-0 flex-col overflow-hidden rounded-[6px] border ${span ?? ''}`}
       style={{
-        borderColor: 'color-mix(in srgb,#1d3548 70%,transparent)',
-        background: `linear-gradient(150deg,#070b12,#0a1019 55%,color-mix(in srgb,${accent} 7%,#0a1019))`,
-        boxShadow: `0 0 0 1px color-mix(in srgb,${accent} 12%,transparent), inset 0 1px 0 rgba(255,255,255,0.03), 0 18px 40px -24px ${accent}`,
+        borderColor: 'rgba(90,170,255,0.18)',
+        background: `linear-gradient(150deg,rgba(8,18,32,0.94),rgba(6,14,25,0.96) 55%,color-mix(in srgb,${accent} 6%,rgba(8,18,32,0.94)))`,
+        boxShadow: `0 0 0 1px color-mix(in srgb,${accent} 14%,transparent), inset 0 1px 0 rgba(255,255,255,0.03), 0 14px 30px -22px ${accent}`,
       }}>
-      {/* module header strip */}
-      <div className="flex items-center gap-2 border-b px-3 py-2"
-        style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)', background: `linear-gradient(100deg,#080d15,color-mix(in srgb,${accent} 9%,#0b1320))` }}>
+      {/* module header strip — fixed 44px */}
+      <div className="flex h-11 shrink-0 items-center gap-2 border-b px-3"
+        style={{ borderColor: 'rgba(90,170,255,0.16)', background: `linear-gradient(100deg,#06101c,color-mix(in srgb,${accent} 9%,#0a1626))` }}>
         <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold tabular-nums"
           style={{ color: accent, border: `1px solid ${accent}`, boxShadow: `0 0 10px color-mix(in srgb,${accent} 55%,transparent)` }}>{n}</span>
         <div className="min-w-0 flex-1">
@@ -58,21 +58,21 @@ function Tile({
         <span className="hidden shrink-0 font-mono text-[7.5px] tabular-nums text-ink-muted lg:inline">{time}</span>
       </div>
       {/* body: nav rail + content */}
-      <div className="flex min-h-0 flex-1">
-        <nav className="hidden w-[92px] shrink-0 flex-col gap-0.5 border-r px-1.5 py-2 sm:flex"
-          style={{ borderColor: 'color-mix(in srgb,#1d3548 45%,transparent)' }}>
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        <nav className="hidden w-[76px] shrink-0 flex-col gap-[5px] overflow-hidden border-r px-1 py-1.5 sm:flex"
+          style={{ borderColor: 'rgba(90,170,255,0.14)' }}>
           {nav.map(it => {
             const on = it === navActive;
             return (
               <span key={it}
-                className="truncate rounded-[3px] px-1.5 py-1 text-[8px] tracking-wide"
+                className="flex h-[26px] shrink-0 items-center truncate rounded-[3px] px-1.5 text-[7.5px] tracking-wide"
                 style={on
-                  ? { color: accent, background: `color-mix(in srgb,${accent} 14%,transparent)`, boxShadow: `inset 2px 0 0 ${accent}` }
+                  ? { color: accent, background: `color-mix(in srgb,${accent} 16%,transparent)`, boxShadow: `inset 2px 0 0 ${accent}` }
                   : { color: 'rgb(var(--c-ink-muted))' }}>{it}</span>
             );
           })}
         </nav>
-        <div className="min-w-0 flex-1 space-y-1.5 p-1.5">{children}</div>
+        <div className="min-w-0 flex-1 space-y-1 overflow-hidden p-1.5">{children}</div>
       </div>
     </section>
   );
@@ -132,43 +132,50 @@ export function HealthEcosystemWall() {
     <div className="min-h-screen text-ink"
       style={{
         background:
-          'radial-gradient(1200px 600px at 18% -10%, #0c1a2b 0%, transparent 60%),' +
-          'radial-gradient(1100px 700px at 92% 8%, #0a1622 0%, transparent 55%),' +
-          'linear-gradient(180deg,#04070d 0%,#05090f 100%)',
+          'radial-gradient(1200px 600px at 18% -10%, #0a1a2b 0%, transparent 60%),' +
+          'radial-gradient(1100px 700px at 92% 8%, #07131f 0%, transparent 55%),' +
+          'linear-gradient(180deg,#040b16 0%,#040a13 100%)',
       }}>
-      <div className="pointer-events-none fixed inset-0 opacity-[0.06]"
-        style={{ backgroundImage: 'linear-gradient(#2bd3e8 1px,transparent 1px),linear-gradient(90deg,#2bd3e8 1px,transparent 1px)', backgroundSize: '46px 46px' }} />
+      <div className="pointer-events-none fixed inset-0 opacity-[0.05]"
+        style={{ backgroundImage: 'linear-gradient(#5aaaff 1px,transparent 1px),linear-gradient(90deg,#5aaaff 1px,transparent 1px)', backgroundSize: '44px 44px' }} />
 
       {/* GLOBAL COMMAND HEADER */}
-      <header className="sticky top-0 z-20 flex flex-wrap items-center gap-3 border-b px-5 py-3 backdrop-blur"
-        style={{ borderColor: 'color-mix(in srgb,#1d3548 70%,transparent)', background: 'linear-gradient(100deg,rgba(6,10,18,0.92),rgba(8,16,28,0.92))' }}>
-        <span className="grid h-9 w-9 shrink-0 place-items-center rounded-full text-[15px]"
-          style={{ border: '1px solid #2fd0e8', color: '#2fd0e8', boxShadow: '0 0 18px rgba(47,208,232,0.45)' }}>✚</span>
+      <header className="sticky top-0 z-20 mx-auto flex h-[52px] w-full max-w-[1920px] flex-wrap items-center gap-3 border-b px-3 backdrop-blur"
+        style={{ borderColor: 'rgba(90,170,255,0.18)', background: 'linear-gradient(100deg,rgba(4,11,22,0.94),rgba(8,20,35,0.94))' }}>
+        <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[14px]"
+          style={{ border: '1px solid #2dd4bf', color: '#2dd4bf', boxShadow: '0 0 16px rgba(45,212,191,0.45)' }}>✚</span>
         <div className="min-w-0">
-          <h1 className="text-[14px] font-bold uppercase tracking-[0.22em] sm:text-[16px]"
-            style={{ textShadow: '0 0 18px rgba(47,208,232,0.4)' }}>
+          <h1 className="text-[15px] font-bold uppercase leading-none tracking-[0.18em] sm:text-[18px]"
+            style={{ textShadow: '0 0 16px rgba(45,212,191,0.4)' }}>
             Ministry of Health — Sovereign Healthcare Operating Ecosystem
           </h1>
-          <div className="text-[8.5px] uppercase tracking-[0.3em] text-ink-muted">Visual Design Concepts — Operational Domains</div>
+          <div className="mt-0.5 text-[8px] uppercase tracking-[0.3em] text-ink-muted">Visual Design Concepts — Operational Domains</div>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
           {[
             ['◈', 'AI Powered'], ['◉', 'Real-Time'], ['◍', 'National Scale'], ['⬡', 'Interoperable'], ['⬢', 'Secure'],
           ].map(([ic, lb], i) => (
             <React.Fragment key={lb}>
-              {i > 0 ? <span className="h-3 w-px bg-[#1d3548]" /> : null}
+              {i > 0 ? <span className="h-3 w-px bg-[rgba(90,170,255,0.2)]" /> : null}
               <span className="inline-flex items-center gap-1.5">
-                <span style={{ color: '#2fd0e8', textShadow: '0 0 8px rgba(47,208,232,0.6)' }}>{ic}</span>{lb}
+                <span style={{ color: '#2dd4bf', textShadow: '0 0 8px rgba(45,212,191,0.6)' }}>{ic}</span>{lb}
               </span>
             </React.Fragment>
           ))}
-          <span className="hidden h-3 w-px bg-[#1d3548] xl:block" />
+          <span className="hidden h-3 w-px bg-[rgba(90,170,255,0.2)] xl:block" />
           <span className="hidden font-mono tabular-nums text-ink-soft xl:inline">{time}</span>
         </div>
       </header>
 
-      {/* OPERATIONAL GRID — 3 rows × 3 modules */}
-      <main className="relative z-10 grid grid-cols-1 gap-1.5 p-1.5 lg:grid-cols-2 2xl:grid-cols-3">
+      {/* OPERATIONAL WALL — fixed 3×3 sovereign grid (1.05fr 1.05fr 1fr / 410 370 320) */}
+      <main className="relative z-10 mx-auto w-full max-w-[1920px] overflow-x-auto"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '1.05fr 1.05fr 1fr',
+          gridTemplateRows: '410px 370px 320px',
+          gap: '10px',
+          padding: '10px',
+        }}>
 
         {/* 1 — NATIONAL HEALTH COMMAND */}
         <Tile n={1} title="National Health Command" sub="National Situation Room"
