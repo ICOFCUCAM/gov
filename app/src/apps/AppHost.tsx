@@ -34,6 +34,7 @@ import { ROLES, type SovereignRole, type Capability } from '@/shared/permissions
 import { evaluateConstitution, type AppKind } from '@/services/constitutional-engine';
 import { escalationState } from '@/shared/sovereignty/escalation';
 import { subscribe as auditSubscribe, auditTrail, verifyChain, version as auditVersion } from '@/services/audit-ledger';
+import { legislativeState } from '@/lib/gov/legislative-engine';
 import { wave } from '@/lib/telemetry';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -130,7 +131,21 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
               emergencyAsserted: stress >= 88, emergencyAgeHrs: stress >= 88 ? Math.round(stress) : 0,
               auditIntact: chain.intact,
             });
-            const vt = verdict.posture === 'breach' ? 'alert' : verdict.posture === 'under-review' ? 'warn' : 'ok';
+            // Constitutional execution-chain: the Treasury may not execute
+            // spending capabilities while the Legislature withholds fiscal
+            // authorisation (no quorum / blocked appropriation).
+            let withheld: Capability[] = verdict.withheld as Capability[];
+            let fiscalGate: string | null = null;
+            if (app.domain === 'treasury') {
+              const lg = legislativeState(now / 4000);
+              if (!lg.quorum || lg.blocked >= 3) {
+                if (!withheld.includes('approve')) withheld = [...withheld, 'approve'];
+                fiscalGate = !lg.quorum
+                  ? 'Fiscal authorisation withheld — Legislature has no quorum (constitutional gate)'
+                  : `Appropriation stalled — ${lg.blocked} blocked bills (constitutional gate)`;
+              }
+            }
+            const vt = verdict.posture === 'breach' ? 'alert' : fiscalGate ? 'alert' : verdict.posture === 'under-review' ? 'warn' : 'ok';
             return (
               <>
                 <div className="mb-2 rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid rgb(var(--c-${vt}))` }}>
@@ -138,9 +153,10 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                     <span className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${vt}))` }}>
                       Constitutional posture <PosturePill label={verdict.posture} tone={vt as 'ok' | 'warn' | 'alert'} />
                     </span>
-                    {verdict.withheld.length ? (
-                      <span className="text-[9px] text-ink-muted">withholding: {verdict.withheld.join(', ')}</span>
+                    {withheld.length ? (
+                      <span className="text-[9px] text-ink-muted">withholding: {withheld.join(', ')}</span>
                     ) : <span className="text-[9px] text-ink-muted">all capabilities constitutionally available</span>}
+                    {fiscalGate ? <span className="text-[9px] font-semibold" style={{ color: 'rgb(var(--c-alert))' }}>⛔ {fiscalGate}</span> : null}
                     {(() => {
                       const es = escalationState(app.kind as AppKind, stress);
                       const archMap: Record<string, string> = { health: 'HEALTH', treasury: 'FINANCE', education: 'EDUCATION', transport: 'TRANSPORT', energy: 'ENERGY' };
@@ -186,37 +202,37 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                 {!app.activated ? (
                   <p className="text-[12px] text-ink-muted">This sovereign application is provisioned but not activated. Activate the institution from the platform to bring its operational systems online.</p>
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'HEALTH' ? (
-                  <MinistryHealthApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <MinistryHealthApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'FINANCE' ? (
-                  <TreasuryApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <TreasuryApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'EDUCATION' ? (
-                  <MinistryEducationApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <MinistryEducationApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'TRANSPORT' ? (
-                  <MinistryTransportApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <MinistryTransportApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'ENERGY' ? (
-                  <MinistryEnergyApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <MinistryEnergyApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId ? (
-                  <SectorInstitutionApp instanceId={app.instanceId} archetype={app.archetypeOrBranch as ArchetypeKey} label={app.label} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <SectorInstitutionApp instanceId={app.instanceId} archetype={app.archetypeOrBranch as ArchetypeKey} label={app.label} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'branch' && app.archetypeOrBranch === 'judiciary' ? (
-                  <JudiciaryApp instanceId={`jud:${app.archetypeOrBranch}`} domain={active ?? 'constitutional'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <JudiciaryApp instanceId={`jud:${app.archetypeOrBranch}`} domain={active ?? 'constitutional'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'branch' && app.archetypeOrBranch === 'legislature' ? (
-                  <LegislatureApp domain={active ?? 'bills'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <LegislatureApp domain={active ?? 'bills'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'branch' ? (
                   <BranchWorkspace branchKey={app.archetypeOrBranch} />
                 ) : app.id === 'police-command' ? (
-                  <PoliceCommandApp appId={app.id} domain={active ?? 'incident'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <PoliceCommandApp appId={app.id} domain={active ?? 'incident'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'immigration' ? (
-                  <ImmigrationApp appId={app.id} domain={active ?? 'border'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <ImmigrationApp appId={app.id} domain={active ?? 'border'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'customs' ? (
-                  <CustomsApp appId={app.id} domain={active ?? 'clearance'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <CustomsApp appId={app.id} domain={active ?? 'clearance'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'emergency-response' ? (
-                  <EmergencyResponseApp appId={app.id} domain={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <EmergencyResponseApp appId={app.id} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'citizen-wallet' ? (
-                  <CitizenWalletApp appId={app.id} domain={active ?? 'identity'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <CitizenWalletApp appId={app.id} domain={active ?? 'identity'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'officer-console' ? (
-                  <OfficerConsoleApp appId={app.id} domain={active ?? 'queue'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <OfficerConsoleApp appId={app.id} domain={active ?? 'queue'} now={now} role={role} withheld={withheld} />
                 ) : (
-                  <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} role={role} withheld={verdict.withheld as Capability[]} />
+                  <AgencyApp appId={app.id} label={app.label} archetype={app.archetypeOrBranch as ArchetypeKey} navKey={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 )}
                 {(() => {
                   const iof = interoperabilityFabric(mins, now / 4000);
