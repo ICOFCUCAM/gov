@@ -37,6 +37,118 @@ export function pharmaceuticalSupply(id: string, t: number): PharmaceuticalSuppl
   };
 }
 
+// ── Pharmaceutical & Supply-Chain Command View ────────────────────────
+// National medicine logistics command: inventory value & SKU telemetry,
+// inventory-availability distribution, critical shortages, supply-vs-
+// demand trend, top-moving items, warehouse & supplier performance,
+// inbound shipments, AI demand forecast, cold-chain compliance and AI
+// recommendations. Pure & deterministic.
+export interface ScKpi { label: string; value: string; sub: string; delta?: string; up?: boolean; good?: boolean; tone: Tone; series: number[] }
+export interface ScShortage { drug: string; cat: string; stock: string; req: string; level: 'Critical' | 'Low'; tone: Tone }
+export interface ScMover { item: string; cat: string; movement: string; trend: number[]; tone: Tone }
+export interface ScWarehouse { name: string; fillRate: number; value: string; health: 'Excellent' | 'Good' | 'Moderate'; tone: Tone }
+export interface ScShipment { sid: string; supplier: string; eta: string; status: 'In transit' | 'Pending' | 'Confirmed'; tone: Tone }
+export interface ScSupplier { name: string; onTime: number; quality: number; rating: number; tone: Tone }
+export interface ScColdNode { node: string; tempC: number; status: 'Within range' | 'Breach'; tone: Tone }
+export interface PharmaSupplyCommand {
+  kpis: ScKpi[];
+  availability: { band: string; skus: number; pct: number; tone: Tone }[];
+  overallAvailabilityPct: number;
+  shortages: ScShortage[];
+  supplyDemand: { demand: number[]; supply: number[]; stock: number[] };
+  movers: ScMover[];
+  warehouses: ScWarehouse[];
+  shipments: ScShipment[];
+  suppliers: ScSupplier[];
+  forecast: { historical: number[]; forecast: number[]; band: number[]; highDemand: { item: string; pct: number }[] };
+  coldChain: { compliancePct: number; withinRange: number; warning: number; breach: number; nodes: ScColdNode[] };
+  recommendations: { text: string; sub: string; tone: Tone }[];
+  scHealth: number;
+  serviceLevelPct: number;
+}
+export function pharmaSupplyCommand(id: string, t: number): PharmaSupplyCommand {
+  const px = pharmaceuticalDeepExecution(id, t);
+  const sk = (label: string, value: string, sub: string, delta: string | undefined, up: boolean, good: boolean, lo: number, hi: number): ScKpi =>
+    ({ label, value, sub, delta, up, good, tone: good ? 'ok' : up ? 'alert' : 'warn', series: waveSeries(`sc:k:${label}:${id}`, t, 14, lo, hi) });
+  const kpis: ScKpi[] = [
+    sk('Total inventory value', `$ ${(1.0 + wave(`sc:iv:${id}`, t, 0, 0.6)).toFixed(2)}B`, 'vs last 7 days', '▲8.7%', true, true, 40, 95),
+    sk('Total SKUs', (22000 + Math.round(wave(`sc:sk:${id}`, t, 0, 5000))).toLocaleString(), 'active items', undefined, true, true, 40, 80),
+    sk('Critical items', (1000 + Math.round(wave(`sc:ci:${id}`, t, 0, 500))).toLocaleString(), 'vs last 7 days', '▼3.2%', false, false, 30, 80),
+    sk('At-risk items', (400 + Math.round(wave(`sc:ar:${id}`, t, 0, 400))).toLocaleString(), 'vs last 7 days', '▼12.5%', false, false, 30, 80),
+    sk('Order fill rate', `${Math.round(wave(`sc:of:${id}`, t, 84, 96))}%`, 'vs last 7 days', '▲4.6%', true, true, 50, 95),
+    sk('On-time delivery', `${Math.round(wave(`sc:od:${id}`, t, 80, 94))}%`, 'vs last 7 days', '▲6.1%', true, true, 50, 95),
+    sk('Stockouts (7d)', `${Math.round(wave(`sc:so:${id}`, t, 60, 220))}`, 'vs last 7 days', '▼15.3%', false, false, 30, 90),
+    sk('Total suppliers', (1200 + Math.round(wave(`sc:ts:${id}`, t, 0, 300))).toLocaleString(), 'active suppliers', undefined, true, true, 40, 75),
+  ];
+  const availability = [
+    { band: '> 80% (good)', skus: 1872, pct: 45, tone: 'ok' as Tone },
+    { band: '50–80% (moderate)', skus: 1354, pct: 32, tone: 'warn' as Tone },
+    { band: '20–50% (low)', skus: 812, pct: 15, tone: 'warn' as Tone },
+    { band: '< 20% (critical)', skus: 345, pct: 8, tone: 'alert' as Tone },
+  ];
+  const overallAvailabilityPct = Math.round(wave(`sc:oa:${id}`, t, 74, 90));
+  const shortages: ScShortage[] = px.inventory.slice(0, 4).map((d, i): ScShortage => ({
+    drug: ['Meropenem 1g injection', 'Insulin Glargine 100IU/ml', 'Atorvastatin 40mg', 'Salbutamol inhaler 100mcg'][i]!,
+    cat: ['Antibiotic', 'Diabetes care', 'Cardiovascular', 'Respiratory'][i]!,
+    stock: ['120 vials', '210 units', '1,320 tabs', '250 units'][i]!,
+    req: ['2,450 vials', '1,980 units', '4,800 tabs', '2,100 units'][i]!,
+    level: i < 2 ? 'Critical' : 'Low', tone: i < 2 ? 'alert' : 'warn',
+  }));
+  const movers: ScMover[] = [
+    ['Paracetamol 500mg', 'Analgesic', '1.24M'], ['Amoxicillin 500mg', 'Antibiotic', '952K'],
+    ['ORS sachet', 'Electrolyte', '842K'], ['Azithromycin 500mg', 'Antibiotic', '621K'],
+    ['Metformin 500mg', 'Diabetes care', '512K'],
+  ].map(([item, cat, movement], i): ScMover => ({ item: item!, cat: cat!, movement: movement!, trend: waveSeries(`sc:mv:${id}:${i}`, t, 4, 4, 14), tone: 'ok' }));
+  const warehouses: ScWarehouse[] = [
+    ['Central Medical Warehouse', 96.2, '$ 256.4M', 'Excellent'], ['North Regional Warehouse', 92.1, '$ 198.7M', 'Good'],
+    ['East Regional Warehouse', 88.4, '$ 145.3M', 'Good'], ['South Regional Warehouse', 85.7, '$ 132.6M', 'Good'],
+    ['West Regional Warehouse', 78.3, '$ 98.2M', 'Moderate'],
+  ].map(([name, fr, val, h]): ScWarehouse => ({ name: name as string, fillRate: fr as number, value: val as string, health: h as ScWarehouse['health'], tone: h === 'Excellent' ? 'ok' : h === 'Good' ? 'ok' : 'warn' }));
+  const shipments: ScShipment[] = [
+    ['SH-250516-001', 'PharmaCare Ltd.', 'May 17, 2025', 'In transit'], ['SH-250516-002', 'MediSource Inc.', 'May 18, 2025', 'In transit'],
+    ['SH-250516-003', 'Global Meds', 'May 19, 2025', 'Pending'], ['SH-250516-004', 'HealthGen Pharma', 'May 20, 2025', 'Confirmed'],
+    ['SH-250516-005', 'BioMed Solutions', 'May 21, 2025', 'Confirmed'],
+  ].map(([sid, supplier, eta, status]): ScShipment => ({ sid: sid!, supplier: supplier!, eta: eta!, status: status as ScShipment['status'], tone: status === 'Pending' ? 'warn' : 'ok' }));
+  const suppliers: ScSupplier[] = [
+    ['PharmaCare Ltd.', 96.2, 98, 4.5], ['MediSource Inc.', 92.5, 95, 4.5], ['Global Meds', 90.1, 93, 4.0],
+    ['HealthGen Pharma', 88.3, 90, 4.0], ['BioMed Solutions', 85.6, 89, 4.0],
+  ].map(([name, ot, q, r]): ScSupplier => ({ name: name as string, onTime: ot as number, quality: q as number, rating: r as number, tone: (ot as number) >= 92 ? 'ok' : (ot as number) >= 86 ? 'warn' : 'alert' }));
+  const forecast = {
+    historical: waveSeries(`sc:fh:${id}`, t, 14, 6000, 14000).map(Math.round),
+    forecast: waveSeries(`sc:ff:${id}`, t, 10, 9000, 18000).map(Math.round),
+    band: waveSeries(`sc:fb:${id}`, t, 10, 11000, 20000).map(Math.round),
+    highDemand: [{ item: 'Amoxicillin 500mg', pct: 28 }, { item: 'Paracetamol 500mg', pct: 21 }, { item: 'Salbutamol inhaler', pct: 19 }],
+  };
+  const breach = Math.round(wave(`sc:cb:${id}`, t, 4, 30));
+  const warning = Math.round(wave(`sc:cw:${id}`, t, 10, 60));
+  const coldChain = {
+    compliancePct: Math.round(wave(`sc:cc:${id}`, t, 90, 99)),
+    withinRange: 1248, warning, breach,
+    nodes: [
+      { node: 'North hub', tempC: 2, status: 'Within range', tone: 'ok' as Tone },
+      { node: 'Central depot', tempC: -1, status: 'Breach', tone: 'alert' as Tone },
+      { node: 'South hub', tempC: 4, status: 'Within range', tone: 'ok' as Tone },
+    ] as ScColdNode[],
+  };
+  const recommendations = [
+    { text: 'Increase reorder quantity for Meropenem 1g', sub: 'High risk of stockout in 5 days', tone: 'alert' as Tone },
+    { text: 'Redistribute Atorvastatin 40mg from West to South', sub: 'Optimize inventory balance', tone: 'warn' as Tone },
+    { text: 'Consider alternative supplier for Insulin Glargine', sub: 'Lead-time issues detected', tone: 'warn' as Tone },
+    { text: 'Expedite shipment SH-250516-002', sub: 'High-priority items in transit', tone: 'ok' as Tone },
+  ];
+  return {
+    kpis, availability, overallAvailabilityPct, shortages,
+    supplyDemand: {
+      demand: waveSeries(`sc:sd:d:${id}`, t, 28, 6000, 13000).map(Math.round),
+      supply: waveSeries(`sc:sd:s:${id}`, t, 28, 5000, 11000).map(Math.round),
+      stock: waveSeries(`sc:sd:k:${id}`, t, 28, 2000, 7000).map(Math.round),
+    },
+    movers, warehouses, shipments, suppliers, forecast, coldChain, recommendations,
+    scHealth: Math.round(wave(`sc:h:${id}`, t, 70, 92)),
+    serviceLevelPct: Math.round(wave(`sc:sl:${id}`, t, 86, 96) * 10) / 10,
+  };
+}
+
 // ── Pharmaceutical deep execution system ───────────────────────────────
 // Inventory management with depletion prediction, regional medicine
 // routing, a procurement pipeline and an emergency-redistribution queue
