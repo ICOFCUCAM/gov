@@ -89,7 +89,12 @@ export function GeoMap({
       const mx = (m.x + n.x) / 2, my = (m.y + n.y) / 2 - Math.abs(n.x - m.x) * 0.12;
       return `M ${m.x} ${m.y} Q ${mx} ${my} ${n.x} ${n.y}`;
     });
-    return { landD, districts, markers, routes };
+    // Outbreak heat field — soft red/orange blooms over the territory
+    // (benchmark "National Outbreak Map"). Scoped to the outbreak metric.
+    const heat = metric === 'outbreakHeat'
+      ? cand.slice(0, 42).map(c => ({ x: c.x, y: c.y, r: Math.max(W, H) * (0.05 + (c.v / 100) * 0.11) }))
+      : [];
+    return { landD, districts, markers, routes, heat };
   }, [data, W, H, geo, metric, iso3]);
 
   return (
@@ -104,6 +109,13 @@ export function GeoMap({
             <stop offset="60%" stopColor="#123a5a" stopOpacity="0.42" />
             <stop offset="100%" stopColor="#0b2740" stopOpacity="0.4" />
           </linearGradient>
+          <radialGradient id="gmHeat" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#ff3b30" stopOpacity="0.62" />
+            <stop offset="38%" stopColor="#ff7a1a" stopOpacity="0.34" />
+            <stop offset="70%" stopColor="#ffd23d" stopOpacity="0.12" />
+            <stop offset="100%" stopColor="#ffd23d" stopOpacity="0" />
+          </radialGradient>
+          <clipPath id="gmClip"><path d={view ? view.landD : ''} /></clipPath>
         </defs>
 
         {loading || !view ? (
@@ -120,6 +132,14 @@ export function GeoMap({
             <g filter="url(#gmSoft)">
               {view.districts.map((d, i) => <path key={`d${i}`} d={d} fill="none" stroke="#7fc4ec" strokeOpacity="0.05" strokeWidth="0.4" />)}
             </g>
+            {/* outbreak heat field (scoped to outbreak metric) */}
+            {view.heat.length ? (
+              <g clipPath="url(#gmClip)">
+                {view.heat.map((h, i) => (
+                  <circle key={`ht${i}`} cx={h.x} cy={h.y} r={h.r} fill="url(#gmHeat)" />
+                ))}
+              </g>
+            ) : null}
             {/* faint routes */}
             {view.routes.map((d, i) => (
               <path key={`r${i}`} d={d} fill="none" stroke="#5fd0e0" strokeOpacity="0.16" strokeWidth="0.8" strokeDasharray="3 4" className="animate-dash-flow" />
