@@ -1635,6 +1635,56 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
+  if (isEnv && (group === 'monitoring' || group === 'protected' || group === 'permit' || group === 'climate' || group === 'citizen')) {
+    const o = environmentOps(id, ts);
+    const title = group === 'monitoring' ? 'Environmental monitoring network'
+      : group === 'protected' ? 'Protected areas & conservation'
+        : group === 'permit' ? 'Permits & compliance'
+          : group === 'climate' ? 'Climate adaptation & resilience'
+            : 'Public environment services';
+    const monPct = Math.round((o.monitoringOnline / o.monitoringTotal) * 100);
+    const stats = group === 'monitoring' ? [
+      { l: 'Sensors online', v: `${o.monitoringOnline}/${o.monitoringTotal}`, t: (monPct >= 92 ? 'ok' : monPct >= 80 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Air-quality index', v: `${o.airQualityIndex}`, t: (o.airQualityIndex <= 80 ? 'ok' : o.airQualityIndex <= 120 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Water quality', v: `${o.waterQualityPct}%`, t: (o.waterQualityPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'protected' ? [
+      { l: 'Area integrity', v: `${o.protectedAreaIntegrityPct}%`, t: (o.protectedAreaIntegrityPct >= 80 ? 'ok' : o.protectedAreaIntegrityPct >= 65 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Compliance', v: `${o.compliancePct}%`, t: (o.compliancePct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'permit' ? [
+      { l: 'Permits pending', v: o.permitsPending.toLocaleString(), t: (o.permitsPending > 1800 ? 'alert' : o.permitsPending > 900 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Compliance', v: `${o.compliancePct}%`, t: (o.compliancePct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'climate' ? [
+      { l: 'Emissions vs target', v: `${o.emissionsVsTargetPct}%`, t: (o.emissionsVsTargetPct <= 100 ? 'ok' : o.emissionsVsTargetPct <= 115 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Protected integrity', v: `${o.protectedAreaIntegrityPct}%`, t: (o.protectedAreaIntegrityPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : [
+      { l: 'Air-quality index', v: `${o.airQualityIndex}`, t: (o.airQualityIndex <= 80 ? 'ok' : o.airQualityIndex <= 120 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Water quality', v: `${o.waterQualityPct}%`, t: (o.waterQualityPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Compliance', v: `${o.compliancePct}%`, t: (o.compliancePct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ];
+    const kind: WorkKind = group === 'permit' ? 'permit' : group === 'citizen' ? 'permit' : 'case';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
+        </div>
+        <Panel title={`${title} — regional hazard grid`} meta="region · level · kind" bodyClass="!p-0">
+          {o.hazards.map(h => {
+            const ht: 'ok' | 'warn' | 'alert' = h.level === 'severe' ? 'alert' : h.level === 'moderate' ? 'warn' : 'ok';
+            return (
+              <div key={h.region} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(ht)}` }}>
+                <span className="w-32 shrink-0 truncate text-[11px] text-ink">{h.region}</span>
+                <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{h.kind}</span>
+                <span className="w-16 shrink-0 text-right text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: tc(ht) }}>{h.level}</span>
+              </div>
+            );
+          })}
+        </Panel>
+        <RuntimeQueue scope={`${id}:${group}`} kind={kind} title={`${title} runtime — execute the workflow`} by="Environment Officer" n={14} />
+      </div>
+    );
+  }
+
   if (isEnv) {
     const o = environmentOps(id, ts);
     return (
