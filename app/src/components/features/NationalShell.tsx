@@ -32,7 +32,7 @@ import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, activatedApps, version as orchVersion } from '@/services/orchestration-engine';
 import { subscribeBus, version as busVersion, eventLog, eventStats } from '@/services/event-bus';
-import { subscribe as rtSubscribe, runtimeStats, runtimeContinuity, scopeSummaries, executionDelta, injectItem, version as rtVersion } from '@/lib/gov/runtime-store';
+import { subscribe as rtSubscribe, runtimeStats, runtimeContinuity, scopeSummaries, executionDelta, injectDirective, directiveState, version as rtVersion } from '@/lib/gov/runtime-store';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -413,17 +413,25 @@ export function NationalShell() {
               <div className="space-y-1.5">
                 {strategy.decisions.map(d => {
                   const dt = d.severity === 'critical' ? 'alert' : d.severity === 'priority' ? 'warn' : 'ok';
+                  const dkey = `${d.id}|${d.directive.scope}`;
+                  const done = directiveState(dkey);
                   return (
                     <div key={d.id} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2.5 py-2" style={{ borderLeft: `3px solid ${TONE[dt]}` }}>
                       <div className="flex flex-wrap items-center gap-2">
                         <span className="text-[8.5px] font-bold uppercase tracking-[0.16em]" style={{ color: TONE[dt] }}>{d.severity}</span>
                         <span className="text-[11px] font-medium text-ink">{d.title}</span>
-                        <button
-                          onClick={() => injectItem(d.directive.scope, d.directive.kind, d.directive.title, 'Sovereign Command')}
-                          className="focus-ring ml-auto rounded-[3px] border border-line bg-surface px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-ink transition-colors hover:bg-surface-2"
-                        >
-                          Execute directive →
-                        </button>
+                        {done ? (
+                          <span className="ml-auto rounded-[3px] border border-line px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider" style={{ color: TONE.ok }}>
+                            ✓ executed · {done.itemId}
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => injectDirective(dkey, d.directive.scope, d.directive.kind, d.directive.title, 'Sovereign Command')}
+                            className="focus-ring ml-auto rounded-[3px] border border-line bg-surface px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-ink transition-colors hover:bg-surface-2"
+                          >
+                            Execute directive →
+                          </button>
+                        )}
                       </div>
                       <div className="mt-0.5 text-[9px] text-ink-muted">{d.rationale}</div>
                       <div className="mt-0.5 truncate text-[8.5px] text-ink-soft">⇒ inject <span className="font-mono">{d.directive.kind}</span> · <span className="font-mono">{d.directive.scope}</span> · {d.directive.title}</div>

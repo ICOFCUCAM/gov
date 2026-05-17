@@ -114,4 +114,17 @@ describe('operational continuity', () => {
     expect(c.restoredTransitions).toBe(0);
     expect(typeof c.lastPersistAt).toBe('number');
   });
+
+  it('strategic directives are idempotent per key', async () => {
+    const { injectDirective, directiveState, getScope } = await import('./runtime-store');
+    const s = 'dir:1';
+    const k = 'exec-stabilise|dir:1';
+    expect(directiveState(k)).toBeNull();
+    const r1 = injectDirective(k, s, 'incident', 'Stabilise X', 'Sovereign Command');
+    const r2 = injectDirective(k, s, 'incident', 'Stabilise X', 'Sovereign Command');
+    // Second execution is a no-op: same record, no duplicate work item.
+    expect(r2).toEqual(r1);
+    expect(directiveState(k)!.itemId).toBe(r1.itemId);
+    expect(getScope(s, 'incident', 4).filter(i => i.id === r1.itemId).length).toBe(1);
+  });
 });

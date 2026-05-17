@@ -51,6 +51,7 @@ let _hydrated = false;
 interface RuntimeSnapshot {
   scopes: [string, WorkItem[]][];
   ledger: LedgerEntry[];
+  directives: [string, DirectiveRecord][];
   injCount: number;
   at: number;
 }
@@ -61,6 +62,7 @@ function persist() {
     const snap: RuntimeSnapshot = {
       scopes: [...scopes.entries()],
       ledger: ledger.slice(0, 200),
+      directives: [...directives.entries()],
       injCount,
       at: Date.now(),
     };
@@ -86,6 +88,9 @@ function hydrate() {
     if (Array.isArray(snap.ledger)) {
       ledger.length = 0;
       ledger.push(...snap.ledger.slice(0, 200));
+    }
+    if (Array.isArray(snap.directives)) {
+      for (const [k, v] of snap.directives) if (k && v) directives.set(k, v);
     }
     if (typeof snap.injCount === 'number') injCount = snap.injCount;
     _restoredTransitions = ledger.length;
@@ -185,6 +190,48 @@ export function injectItem(scope: string, kind: WorkKind, title: string, by: str
   if (ledger.length > 200) ledger.length = 200;
   appendAudit(scope, by, 'inject', item.id, title);
   emit();
+}
+
+// ── Idempotent strategic directives ───────────────────────────────────
+// A standing sovereign decision must not spam the runtime: executing the
+// same directive twice is a no-op. The registry records which decisions
+// have been actioned and the runtime item they produced, so the command
+// surface can show "executed" state and trace decision → execution.
+
+export interface DirectiveRecord { key: string; scope: string; itemId: string; title: string; at: number }
+const directives = new Map<string, DirectiveRecord>();
+
+/**
+ * Inject a strategic directive exactly once per stable key. Returns the
+ * directive record (existing one if already executed — idempotent).
+ */
+export function injectDirective(
+  key: string, scope: string, kind: WorkKind, title: string, by: string,
+): DirectiveRecord {
+  hydrate();
+  const existing = directives.get(key);
+  if (existing) return existing;
+  const wf = workflowFor(kind);
+  const items = scopes.get(scope) ?? [];
+  const item: WorkItem = {
+    id: `${kind.slice(0, 2).toUpperCase()}-D${900 + injCount++}`,
+    title, kind, stage: wf.stages[0]!, priority: 'priority',
+    assignee: by, ageHrs: 0, meta: { origin: 'directive' }, history: [], closed: false,
+  };
+  scopes.set(scope, [item, ...items]);
+  ledger.unshift({ at: Date.now(), scope, itemId: item.id, kind, from: '—', to: wf.stages[0]!, action: 'assign', by });
+  if (ledger.length > 200) ledger.length = 200;
+  const rec: DirectiveRecord = { key, scope, itemId: item.id, title, at: Date.now() };
+  directives.set(key, rec);
+  appendAudit(scope, by, 'inject', item.id, `directive: ${title}`);
+  busPublish('runtime.transition', scope, { itemId: item.id, action: 'assign', from: '—', to: wf.stages[0]!, by, closed: false });
+  emit();
+  return rec;
+}
+
+/** The execution record for a directive key, or null if not yet actioned. */
+export function directiveState(key: string): DirectiveRecord | null {
+  return directives.get(key) ?? null;
 }
 
 export function getLedger(limit = 50): LedgerEntry[] {
