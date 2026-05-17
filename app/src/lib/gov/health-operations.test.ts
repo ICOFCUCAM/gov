@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   pharmaceuticalSupply, laboratoryNetwork, healthFinance,
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
-  doctorClinicalExecution, hospitalDeepExecution,
+  doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -104,5 +104,24 @@ describe('ministry of health operations engine', () => {
       expect(['covered', 'thin', 'critical']).toContain(z.posture);
     }
     expect(a.transferRequests).toBe(a.regions.reduce((s, r) => s + r.transfersPending, 0));
+  });
+
+  it('pharmaceuticalDeepExecution is a deterministic, bounded supply execution system', () => {
+    const a = pharmaceuticalDeepExecution('MOH', 160);
+    expect(a).toEqual(pharmaceuticalDeepExecution('MOH', 160));
+    expect(a.inventory.length).toBe(8);
+    expect(a.regions.length).toBe(6);
+    expect(a.procurement.map(p => p.stage)).toEqual(['Requisition', 'Tender', 'Awarded', 'In transit', 'Received']);
+    expect(['secure', 'strained', 'shortage']).toContain(a.posture);
+    // inventory worst-cover first; regions worst-fill first
+    for (let i = 1; i < a.inventory.length; i++) {
+      expect(a.inventory[i - 1]!.coverDays).toBeLessThanOrEqual(a.inventory[i]!.coverDays);
+    }
+    for (let i = 1; i < a.regions.length; i++) {
+      expect(a.regions[i - 1]!.fillRatePct).toBeLessThanOrEqual(a.regions[i]!.fillRatePct);
+    }
+    for (const d of a.inventory) expect(['ok', 'reorder', 'critical', 'stockout']).toContain(d.status);
+    for (const o of a.redistribution) expect(['proposed', 'authorised', 'in-transit']).toContain(o.status);
+    expect(a.emergencyOrders).toBe(a.redistribution.filter(o => o.status === 'proposed').length);
   });
 });

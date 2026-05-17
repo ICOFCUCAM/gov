@@ -37,6 +37,78 @@ export function pharmaceuticalSupply(id: string, t: number): PharmaceuticalSuppl
   };
 }
 
+// ── Pharmaceutical deep execution system ───────────────────────────────
+// Inventory management with depletion prediction, regional medicine
+// routing, a procurement pipeline and an emergency-redistribution queue
+// as a true execution system. Pure & deterministic.
+export interface DrugInventory { drug: string; coverDays: number; monthlyBurn: number; stockoutEtaDays: number; status: 'ok' | 'reorder' | 'critical' | 'stockout'; tone: Tone }
+export interface PharmaRegionFill { region: string; fillRatePct: number; shortages: number; action: 'stocked' | 'replenish' | 'redistribute'; tone: Tone }
+export interface ProcurementStage { stage: 'Requisition' | 'Tender' | 'Awarded' | 'In transit' | 'Received'; count: number; valueM: number; tone: Tone }
+export interface RedistributionOrder { id: string; drug: string; fromRegion: string; toRegion: string; units: number; status: 'proposed' | 'authorised' | 'in-transit'; tone: Tone }
+export interface PharmaceuticalDeepExecution {
+  inventory: DrugInventory[];
+  regions: PharmaRegionFill[];
+  procurement: ProcurementStage[];
+  redistribution: RedistributionOrder[];
+  criticalDrugs: number;
+  emergencyOrders: number;
+  nationalCoverDays: number;
+  timeline: LabTimelineEvent[];
+  posture: 'secure' | 'strained' | 'shortage';
+}
+export function pharmaceuticalDeepExecution(id: string, t: number): PharmaceuticalDeepExecution {
+  const base = pharmaceuticalSupply(id, t);
+  const inventory: DrugInventory[] = base.drugs.map((d, i): DrugInventory => {
+    const monthlyBurn = Math.round(wave(`pd:mb:${id}:${i}`, t, 1800, 30000));
+    const stockoutEtaDays = d.coverDays;
+    const status: DrugInventory['status'] =
+      d.coverDays <= 0 ? 'stockout' : d.coverDays < 14 ? 'critical' : d.coverDays < 25 ? 'reorder' : 'ok';
+    const tone: Tone = status === 'stockout' || status === 'critical' ? 'alert' : status === 'reorder' ? 'warn' : 'ok';
+    return { drug: d.drug, coverDays: d.coverDays, monthlyBurn, stockoutEtaDays, status, tone };
+  }).sort((a, b) => a.coverDays - b.coverDays);
+  const regions: PharmaRegionFill[] = REGIONS.map((region, i): PharmaRegionFill => {
+    const fillRatePct = Math.round(wave(`pd:fr:${id}:${i}`, t, 35, 100));
+    const shortages = Math.round(wave(`pd:sh:${id}:${i}`, t, 0, 9));
+    const action: PharmaRegionFill['action'] = fillRatePct < 55 || shortages >= 6 ? 'redistribute' : fillRatePct < 78 || shortages >= 2 ? 'replenish' : 'stocked';
+    const tone: Tone = action === 'redistribute' ? 'alert' : action === 'replenish' ? 'warn' : 'ok';
+    return { region, fillRatePct, shortages, action, tone };
+  }).sort((a, b) => a.fillRatePct - b.fillRatePct);
+  const procurement: ProcurementStage[] = (['Requisition', 'Tender', 'Awarded', 'In transit', 'Received'] as const).map((stage, i): ProcurementStage => {
+    const count = Math.round(wave(`pd:pc:${id}:${i}`, t, 1, 36));
+    const valueM = Math.round(wave(`pd:pv:${id}:${i}`, t, 2, 180));
+    const tone: Tone = stage === 'Requisition' && count > 24 ? 'warn' : 'ok';
+    return { stage, count, valueM, tone };
+  });
+  const nRedist = Math.round(wave(`pd:nr:${id}`, t, 0, 6));
+  const redistribution: RedistributionOrder[] = Array.from({ length: nRedist }, (_, i): RedistributionOrder => {
+    const st = wave(`pd:rs:${id}:${i}`, t, 0, 1);
+    const status: RedistributionOrder['status'] = st > 0.66 ? 'in-transit' : st > 0.33 ? 'authorised' : 'proposed';
+    return {
+      id: `RD-${500 + i}`,
+      drug: base.drugs[i % base.drugs.length]!.drug,
+      fromRegion: REGIONS[i % REGIONS.length]!,
+      toRegion: REGIONS[(i + 3) % REGIONS.length]!,
+      units: 500 + Math.round(wave(`pd:ru:${id}:${i}`, t, 0, 9500)),
+      status,
+      tone: status === 'proposed' ? 'warn' : 'ok',
+    };
+  });
+  const criticalDrugs = inventory.filter(d => d.status === 'critical' || d.status === 'stockout').length;
+  const emergencyOrders = redistribution.filter(r => r.status === 'proposed').length;
+  const nationalCoverDays = Math.round(inventory.reduce((s, d) => s + d.coverDays, 0) / inventory.length);
+  const redistRegions = regions.filter(r => r.action === 'redistribute').length;
+  const posture: PharmaceuticalDeepExecution['posture'] =
+    criticalDrugs >= 3 || redistRegions >= 2 ? 'shortage'
+      : criticalDrugs >= 1 || redistRegions >= 1 ? 'strained' : 'secure';
+  const timeline: LabTimelineEvent[] = [
+    { atHrsAgo: 0, kind: 'sync', detail: `National cover ${nationalCoverDays}d · ${base.pipelineInTransit} units in transit`, tone: nationalCoverDays < 21 ? 'warn' : 'ok' },
+    { atHrsAgo: 1, kind: 'alert', detail: `${criticalDrugs} drug class(es) critical/stockout · worst ${inventory[0]!.drug} ${inventory[0]!.coverDays}d`, tone: criticalDrugs ? 'alert' : 'ok' },
+    { atHrsAgo: 2, kind: 'reroute', detail: `${emergencyOrders} emergency redistribution order(s) awaiting authorisation`, tone: emergencyOrders ? 'warn' : 'ok' },
+    { atHrsAgo: 4, kind: 'result', detail: `${base.expiringSoon} batch(es) expiring soon · ${base.procurementOpen} procurements open`, tone: base.expiringSoon > 80 ? 'warn' : 'ok' },
+  ];
+  return { inventory, regions, procurement, redistribution, criticalDrugs, emergencyOrders, nationalCoverDays, timeline, posture };
+}
+
 // ── Laboratory network ─────────────────────────────────────────────────
 export interface LaboratoryNetwork {
   labs: number;
