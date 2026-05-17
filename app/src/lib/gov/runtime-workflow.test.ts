@@ -4,7 +4,7 @@ import {
   seedWorkItems, applyAction, queueStats, type WorkKind, type WorkItem,
 } from './runtime-workflow';
 
-const KINDS: WorkKind[] = ['approval', 'permit', 'procurement', 'encounter', 'bill', 'judicial', 'case', 'incident', 'field'];
+const KINDS: WorkKind[] = ['approval', 'permit', 'procurement', 'encounter', 'bill', 'judicial', 'case', 'incident', 'field', 'lab'];
 
 describe('operational runtime workflow', () => {
   it('every workflow is a coherent reachable state machine', () => {

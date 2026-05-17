@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, healthInstability, patientServices,
-  nationalHealthcareCapacity,
+  nationalHealthcareCapacity, laboratoryOps,
 } from './health-systems';
 
 describe('health systems engine', () => {
@@ -83,5 +83,27 @@ describe('health systems engine', () => {
       expect(v).toBeLessThanOrEqual(100);
     }
     expect(healthInstability('MOH', 99)).toBe(healthInstability('MOH', 99));
+  });
+
+  it('laboratoryOps is a deterministic, bounded diagnostic execution surface', () => {
+    const a = laboratoryOps('MOH', 120);
+    expect(a).toEqual(laboratoryOps('MOH', 120));
+    expect(['nominal', 'strained', 'overloaded']).toContain(a.posture);
+    expect(a.assays.length).toBe(6);
+    expect(a.regions.length).toBe(6);
+    expect(a.accessioned).toBeLessThanOrEqual(a.specimensToday);
+    for (const r of a.regions) {
+      expect(r.capacityPct).toBeGreaterThanOrEqual(0);
+      expect(r.capacityPct).toBeLessThanOrEqual(100);
+      expect(['nominal', 'surge', 'divert']).toContain(r.escalation);
+    }
+    // worst-capacity region first (escalation ordering)
+    for (let i = 1; i < a.regions.length; i++) {
+      expect(a.regions[i - 1]!.capacityPct).toBeLessThanOrEqual(a.regions[i]!.capacityPct);
+    }
+    for (const s of a.assays) {
+      expect(s.turnaroundHrs).toBeGreaterThanOrEqual(0);
+      expect(['ok', 'warn', 'alert']).toContain(s.tone);
+    }
   });
 });

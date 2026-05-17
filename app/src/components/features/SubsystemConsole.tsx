@@ -8,6 +8,7 @@ import { instantiateMinistry, systemKindLabel, blueprintFor } from '@/lib/instit
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, patientServices,
+  laboratoryOps,
 } from '@/lib/gov/health-systems';
 import {
   fiscalCommand, revenueOps, budgetOps, procurementOps, bankingRails,
@@ -366,7 +367,47 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
-  if (isHealth && (group === 'disease' || group === 'lab')) {
+  if (isHealth && group === 'lab') {
+    const L = laboratoryOps(id, ts);
+    const pt: 'ok' | 'warn' | 'alert' = L.posture === 'overloaded' ? 'alert' : L.posture === 'strained' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Specimens today" v={L.specimensToday.toLocaleString()} t="ok" />
+          <Stat l="Accessioned" v={L.accessioned.toLocaleString()} t="ok" />
+          <Stat l="Backlog" v={L.backlog.toLocaleString()} t={L.backlog > 900 ? 'alert' : L.backlog > 500 ? 'warn' : 'ok'} />
+          <Stat l="Critical results" v={`${L.criticalResults}`} t={L.criticalResults ? 'alert' : 'ok'} />
+          <Stat l="Mean turnaround" v={`${L.meanTurnaroundHrs}h`} t={L.meanTurnaroundHrs >= 34 ? 'alert' : L.meanTurnaroundHrs >= 22 ? 'warn' : 'ok'} />
+          <Stat l="Rejection rate" v={`${L.rejectionRatePct}%`} t={L.rejectionRatePct >= 6 ? 'warn' : 'ok'} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-2">
+          <Panel title="Diagnostic pipeline" meta="assay · pending · in-assay · turnaround" bodyClass="!p-0">
+            {L.assays.map(a => (
+              <div key={a.assay} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(a.tone)}` }}>
+                <span className="w-40 shrink-0 truncate text-[11px] text-ink">{a.assay}</span>
+                <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{a.pending} pending · {a.inProcess} in assay</span>
+                <span className="w-14 shrink-0 text-right font-mono text-[11px] tabular-nums" style={{ color: tc(a.tone) }}>{a.turnaroundHrs}h</span>
+              </div>
+            ))}
+          </Panel>
+          <Panel title="Regional lab network" meta="capacity · backlog · escalation" bodyClass="!p-0">
+            {L.regions.map(r => (
+              <div key={r.region} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(r.tone)}` }}>
+                <span className="w-28 shrink-0 truncate text-[11px] text-ink">{r.region}</span>
+                <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${r.capacityPct}%`, backgroundColor: tc(r.tone) }} /></div>
+                <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums text-ink-soft">{r.capacityPct}%</span>
+                <span className="w-16 shrink-0 text-right text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: tc(r.tone) }}>{r.escalation}</span>
+              </div>
+            ))}
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:lab`} kind="lab" title="Specimen runtime — received → accessioned → in assay → verified → reported" by="Lab Scientist" n={14} />
+      </div>
+    );
+  }
+
+  if (isHealth && group === 'disease') {
     const d = diseaseIntel(id, ts);
     return (
       <div className="space-y-2">

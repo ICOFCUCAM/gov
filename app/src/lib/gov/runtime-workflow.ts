@@ -11,7 +11,7 @@ import { seed } from '@/lib/telemetry';
 
 export type WorkKind =
   | 'approval' | 'case' | 'procurement' | 'encounter'
-  | 'bill' | 'judicial' | 'incident' | 'permit' | 'field';
+  | 'bill' | 'judicial' | 'incident' | 'permit' | 'field' | 'lab';
 
 export type ActionKey = 'advance' | 'approve' | 'reject' | 'escalate' | 'assign' | 'resolve' | 'return';
 
@@ -148,6 +148,17 @@ export const WORKFLOWS: Record<WorkKind, WorkflowDef> = {
       'En route': { advance: 'On scene', escalate: 'On scene', return: 'Tasked' },
       'On scene': { resolve: 'Cleared', escalate: 'On scene', reject: 'Recalled' },
       Cleared: {}, Recalled: {},
+    },
+  },
+  lab: {
+    kind: 'lab', label: 'Diagnostic specimen', stages: ['Received', 'Accessioned', 'In assay', 'Verified', 'Reported', 'Rejected'],
+    terminal: ['Reported', 'Rejected'],
+    transitions: {
+      Received: { assign: 'Accessioned', advance: 'Accessioned', reject: 'Rejected' },
+      Accessioned: { advance: 'In assay', return: 'Received' },
+      'In assay': { advance: 'Verified', escalate: 'Verified', reject: 'Rejected', return: 'Accessioned' },
+      Verified: { resolve: 'Reported', return: 'In assay' },
+      Reported: {}, Rejected: {},
     },
   },
 };

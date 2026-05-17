@@ -292,6 +292,66 @@ export function nationalHealthcareCapacity(
   };
 }
 
+// ── Laboratory Systems ───────────────────────────────────────────────
+// The national diagnostic network is an execution surface, not a chart:
+// specimens flow through accession → assay → verification → report, with
+// per-assay turnaround telemetry, a regional lab grid that escalates under
+// load, and critical-result alerting. Pure & deterministic.
+const ASSAYS = ['Haematology', 'Microbiology culture', 'Molecular / PCR', 'Clinical chemistry', 'Histopathology', 'Serology'];
+
+export interface LabAssayLine {
+  assay: string; pending: number; inProcess: number; turnaroundHrs: number;
+  tone: 'ok' | 'warn' | 'alert';
+}
+export interface LabRegionNode {
+  region: string; capacityPct: number; backlog: number;
+  escalation: 'nominal' | 'surge' | 'divert'; tone: 'ok' | 'warn' | 'alert';
+}
+export interface LaboratoryOps {
+  specimensToday: number;
+  accessioned: number;
+  backlog: number;
+  criticalResults: number;
+  meanTurnaroundHrs: number;
+  rejectionRatePct: number;
+  assays: LabAssayLine[];
+  regions: LabRegionNode[];
+  posture: 'nominal' | 'strained' | 'overloaded';
+}
+export function laboratoryOps(instId: string, t: number): LaboratoryOps {
+  const assays: LabAssayLine[] = ASSAYS.map((assay, i) => {
+    const pending = Math.round(wave(`lab:pend:${instId}:${i}`, t, 6, 140));
+    const inProcess = Math.round(wave(`lab:proc:${instId}:${i}`, t, 4, 70));
+    const turnaroundHrs = Math.round(wave(`lab:tat:${instId}:${i}`, t, 2, 54));
+    const tone: 'ok' | 'warn' | 'alert' =
+      turnaroundHrs >= 36 || pending >= 110 ? 'alert' : turnaroundHrs >= 20 || pending >= 70 ? 'warn' : 'ok';
+    return { assay, pending, inProcess, turnaroundHrs, tone };
+  });
+  const regions: LabRegionNode[] = REGIONS.map((region, i) => {
+    const capacityPct = Math.round(wave(`lab:cap:${instId}:${region}`, t, 1, 100));
+    const backlog = Math.round(wave(`lab:bk:${instId}:${region}`, t, 0, 320));
+    const escalation: LabRegionNode['escalation'] =
+      capacityPct < 35 || backlog > 240 ? 'divert' : capacityPct < 60 || backlog > 140 ? 'surge' : 'nominal';
+    const tone: 'ok' | 'warn' | 'alert' =
+      escalation === 'divert' ? 'alert' : escalation === 'surge' ? 'warn' : 'ok';
+    return { region, capacityPct, backlog, escalation, tone };
+  }).sort((a, b) => a.capacityPct - b.capacityPct);
+  const backlog = regions.reduce((s, r) => s + r.backlog, 0);
+  const specimensToday = Math.round(wave(`lab:spec:${instId}`, t, 600, 5200));
+  const accessioned = Math.round(specimensToday * (0.6 + seed(`lab:acc:${instId}`) * 0.35));
+  const criticalResults = Math.round(wave(`lab:crit:${instId}`, t, 0, 24));
+  const meanTurnaroundHrs = Math.round(assays.reduce((s, a) => s + a.turnaroundHrs, 0) / assays.length);
+  const rejectionRatePct = Math.round(wave(`lab:rej:${instId}`, t, 1, 9) * 10) / 10;
+  const divert = regions.filter(r => r.escalation === 'divert').length;
+  const posture: LaboratoryOps['posture'] =
+    divert >= 2 || meanTurnaroundHrs >= 34 ? 'overloaded'
+      : divert >= 1 || meanTurnaroundHrs >= 22 ? 'strained' : 'nominal';
+  return {
+    specimensToday, accessioned, backlog, criticalResults,
+    meanTurnaroundHrs, rejectionRatePct, assays, regions, posture,
+  };
+}
+
 /** 0-100 national healthcare instability — drives cross-system propagation. */
 export function healthInstability(instId: string, t: number): number {
   const h = hospitalOps(instId, t);
