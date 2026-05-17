@@ -26,11 +26,13 @@ import { deployableRoots } from '@/apps/deployment';
 import { chainSummary } from '@/services/execution-chains';
 import { interoperabilityFabric } from '@/services/interoperability-fabric';
 import { resiliencePropagation } from '@/services/resilience-propagation';
+import { strategicPosture } from '@/services/strategic-decisions';
+import { emergencyLifecycle } from '@/shared/sovereignty/emergency-powers';
 import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, activatedApps, version as orchVersion } from '@/services/orchestration-engine';
 import { subscribeBus, version as busVersion, eventLog, eventStats } from '@/services/event-bus';
-import { subscribe as rtSubscribe, runtimeStats, runtimeContinuity, scopeSummaries, executionDelta, version as rtVersion } from '@/lib/gov/runtime-store';
+import { subscribe as rtSubscribe, runtimeStats, runtimeContinuity, scopeSummaries, executionDelta, injectItem, version as rtVersion } from '@/lib/gov/runtime-store';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -151,6 +153,36 @@ export function NationalShell() {
     runtimeLoad: Math.min(100, (liveRt.open > 0 ? Math.min(100, liveRt.open) : 0) + chainTop.systemicDrag),
     auditIntact: audit.intact,
   });
+  // Lapsed emergencies emerge from real operational collapse: an
+  // institution operating in the floor band is treated as having asserted
+  // emergency powers whose sunset is exceeded the deeper the collapse —
+  // derived from posture, never a constant.
+  const lapsedEmergencies = fp.institutions.filter(i => {
+    if (i.operational >= 12) return false;
+    const life = emergencyLifecycle(
+      { scope: i.id, authority: 'Cabinet emergency cell', assertedAtHrs: 0 },
+      (12 - i.operational) * 9,
+    );
+    return life.phase === 'lapsed';
+  }).length;
+  const strategy = strategicPosture({
+    executionIndex: sei.index,
+    executionBand: sei.band,
+    fragility: rprop.fragility,
+    amplification: rprop.amplification,
+    worstNode: rprop.worst ? { id: rprop.worst.id, name: rprop.worst.name, effective: rprop.worst.effective } : null,
+    chainConstraints: chainTop.constraints,
+    chainWorstTarget: chainTop.worstTarget,
+    systemicDrag: chainTop.systemicDrag,
+    legislativeQuorum: leg.quorum,
+    legislativeBlocked: leg.blocked,
+    judicialClearancePct: jud.meanClearance,
+    judicialBacklog: jud.totalBacklog,
+    treasuryOperational: fp.institutions.find(i => i.archetype === 'FINANCE')?.operational ?? 100,
+    lapsedEmergencies,
+    worstInstitution: fp.worst ? { id: fp.worst.id, name: fp.worst.name, operational: fp.worst.operational } : null,
+  });
+
   const constContinuity =
     !leg.quorum || jud.meanClearance < 60 ? { l: 'STRAINED', t: 'alert' as const }
       : leg.blocked >= 4 || jud.totalBacklog > 900 ? { l: 'WATCH', t: 'warn' as const }
@@ -361,6 +393,43 @@ export function NationalShell() {
                     <div className="truncate text-[8.5px] text-ink-muted">{n.inbound} dependencies · contagion −{n.contagion}</div>
                   </div>
                 ))}
+              </div>
+            )}
+          </P>
+        );
+      })()}
+
+      {(() => {
+        const sn = strategy.posture === 'crisis' ? 'alert' : strategy.posture === 'engaged' ? 'warn' : 'ok';
+        return (
+          <P title="Sovereign decision queue" meta={`national intelligence → executable directives · ${strategy.posture} · ${strategy.critical} critical`}>
+            <div className="mb-2 flex flex-wrap items-center gap-3">
+              <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[sn]} 16%, transparent)`, color: TONE[sn] }}>{strategy.posture}</span>
+              <span className="text-[10px] text-ink-muted">every decision terminates in execution — directives inject real work into the institutional runtime, not a dashboard</span>
+            </div>
+            {strategy.decisions.length === 0 ? (
+              <p className="text-[11px] text-ink-muted">No outstanding sovereign decisions — national posture within tolerance. The queue is emergent; it is empty because nothing requires command action.</p>
+            ) : (
+              <div className="space-y-1.5">
+                {strategy.decisions.map(d => {
+                  const dt = d.severity === 'critical' ? 'alert' : d.severity === 'priority' ? 'warn' : 'ok';
+                  return (
+                    <div key={d.id} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2.5 py-2" style={{ borderLeft: `3px solid ${TONE[dt]}` }}>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="text-[8.5px] font-bold uppercase tracking-[0.16em]" style={{ color: TONE[dt] }}>{d.severity}</span>
+                        <span className="text-[11px] font-medium text-ink">{d.title}</span>
+                        <button
+                          onClick={() => injectItem(d.directive.scope, d.directive.kind, d.directive.title, 'Sovereign Command')}
+                          className="focus-ring ml-auto rounded-[3px] border border-line bg-surface px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-ink transition-colors hover:bg-surface-2"
+                        >
+                          Execute directive →
+                        </button>
+                      </div>
+                      <div className="mt-0.5 text-[9px] text-ink-muted">{d.rationale}</div>
+                      <div className="mt-0.5 truncate text-[8.5px] text-ink-soft">⇒ inject <span className="font-mono">{d.directive.kind}</span> · <span className="font-mono">{d.directive.scope}</span> · {d.directive.title}</div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </P>
