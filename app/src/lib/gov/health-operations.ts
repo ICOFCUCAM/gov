@@ -1115,6 +1115,121 @@ export function diseaseEpidemiology(id: string, t: number): DiseaseEpidemiology 
   return { pathogens, grid, spread, peakInDays, scenarios, dominantPathogen: lead.pathogen, nationalRt: lead.rt, posture };
 }
 
+// ── Emergency Response Command View — tactical dispatch ───────────────
+// National emergency command: incident telemetry, an incident board with
+// per-incident command detail, resource deployment, unit status,
+// situational awareness, evacuation centres, incident trend, response
+// timeline, alerts and inter-agency comms. Pure & deterministic.
+export interface ErKpi { label: string; value: string; sub: string; delta: string; up: boolean; good: boolean; tone: Tone; series: number[] }
+export interface ErIncident {
+  id: string; title: string; place: string; started: string; affected: number;
+  severity: 'Critical' | 'Major' | 'Moderate' | 'Minor'; status: string; progressPct: number;
+  desc: string; resources: { rescue: number; boats: number; vehicles: number; helicopters: number }; tone: Tone;
+}
+export interface ErResource { kind: string; pct: number; have: number; total: number; tone: Tone }
+export interface ErUnitSeg { label: string; value: number; pct: number; tone: Tone }
+export interface ErEvac { name: string; used: number; cap: number; pct: number; tone: Tone }
+export interface ErTimeline { at: string; detail: string; sub: string; tone: Tone }
+export interface ErAlert { sev: 'Critical' | 'Warning' | 'Advisory' | 'Info'; title: string; sub: string; at: string; tone: Tone }
+export interface ErChannel { name: string; channel: string; signal: number; count: number }
+export interface EmergencyCommandView {
+  kpis: ErKpi[];
+  incidents: ErIncident[];
+  resources: ErResource[];
+  unitTotal: number;
+  unitStatus: ErUnitSeg[];
+  situational: { kind: string; title: string; sub: string; tone: Tone }[];
+  evacuation: ErEvac[];
+  trend: { total: number[]; resolved: number[]; critical: number[] };
+  timeline: ErTimeline[];
+  alerts: ErAlert[];
+  channels: ErChannel[];
+}
+export function emergencyCommandView(id: string, t: number): EmergencyCommandView {
+  const ek = (label: string, value: string, sub: string, delta: string, up: boolean, good: boolean, lo: number, hi: number): ErKpi =>
+    ({ label, value, sub, delta, up, good, tone: good ? 'ok' : up ? 'alert' : 'warn', series: waveSeries(`er:k:${label}:${id}`, t, 14, lo, hi) });
+  const active = 18 + Math.round(wave(`er:ai:${id}`, t, 0, 14));
+  const kpis: ErKpi[] = [
+    ek('Active incidents', `${active}`, 'vs yesterday', '▲6', true, false, 40, 90),
+    ek('Critical incidents', `${3 + Math.round(wave(`er:ci:${id}`, t, 0, 7))}`, 'vs yesterday', '▲2', true, false, 30, 85),
+    ek('People affected', (9000 + Math.round(wave(`er:pa:${id}`, t, 0, 6000))).toLocaleString(), 'vs yesterday', '▲18%', true, false, 40, 95),
+    ek('Rescued today', (900 + Math.round(wave(`er:rt:${id}`, t, 0, 600))).toLocaleString(), 'vs yesterday', '▲15%', true, true, 40, 95),
+    ek('Deployed units', `${120 + Math.round(wave(`er:du:${id}`, t, 0, 60))}`, 'units in field', '', true, true, 40, 80),
+    ek('Response time (avg)', `${10 + Math.round(wave(`er:rs:${id}`, t, 0, 6))}:${String(Math.round(wave(`er:rsm:${id}`, t, 0, 59))).padStart(2, '0')}`, 'min', '▼1:30', false, true, 30, 80),
+    ek('Resolution rate', `${Math.round(wave(`er:rr:${id}`, t, 60, 84))}%`, 'vs yesterday', '▲5%', true, true, 50, 95),
+  ];
+  const SPEC: [string, ErIncident['severity'], string, string][] = [
+    ['Major Flooding', 'Critical', 'Riverdale Area, North City', '08:15 AM'],
+    ['Hospital Power Outage', 'Critical', 'City General Hospital', '09:02 AM'],
+    ['Chemical Spill', 'Major', 'Industrial Zone, East District', '07:45 AM'],
+    ['Building Fire', 'Major', 'Market Street, Central District', '09:18 AM'],
+    ['Traffic Accident', 'Moderate', 'Highway 45, South District', '09:33 AM'],
+    ['Power Substation Fault', 'Minor', 'West District Grid 4', '06:10 AM'],
+  ];
+  const incidents: ErIncident[] = SPEC.map(([title, severity, place, started], i): ErIncident => {
+    const affected = [2350, 1120, 890, 560, 320, 80][i]!;
+    const tone: Tone = severity === 'Critical' ? 'alert' : severity === 'Major' ? 'warn' : 'ok';
+    return {
+      id: `INC-2025-0516-00${i + 1}`, title, place, started, affected, severity,
+      status: i === 4 ? 'Contained' : 'In progress',
+      progressPct: Math.round(wave(`er:ip:${id}:${i}`, t, 25, 92)),
+      desc: i === 0 ? 'Heavy rainfall has caused severe flooding in low-lying areas. Multiple roads closed. Evacuations in progress.' : `${title} — response active; resources deploying to ${place}.`,
+      resources: { rescue: 20 + (affected % 30), boats: 6 + (i * 3), vehicles: 12 + (i * 5), helicopters: i < 2 ? 2 : 1 },
+      tone,
+    };
+  }).sort((a, b) => ({ Critical: 0, Major: 1, Moderate: 2, Minor: 3 }[a.severity] - { Critical: 0, Major: 1, Moderate: 2, Minor: 3 }[b.severity]) || b.affected - a.affected);
+  const resources: ErResource[] = [
+    ['Rescue Teams', 38], ['Ambulances', 58], ['Fire Units', 28], ['Boats', 20], ['Helicopters', 10],
+  ].map(([kind, total]): ErResource => {
+    const pct = Math.round(wave(`er:rd:${id}:${kind}`, t, 55, 96));
+    const have = Math.round((total as number) * pct / 100);
+    return { kind: kind as string, pct, have, total: total as number, tone: pct >= 85 ? 'ok' : pct >= 70 ? 'warn' : 'alert' };
+  });
+  const unitTotal = 156;
+  const unitStatus: ErUnitSeg[] = [
+    { label: 'In service', value: 98, pct: 63, tone: 'ok' },
+    { label: 'At scene', value: 32, pct: 21, tone: 'warn' },
+    { label: 'En route', value: 16, pct: 10, tone: 'warn' },
+    { label: 'Available', value: 10, pct: 6, tone: 'alert' },
+  ];
+  const situational = [
+    { kind: 'Weather alert', title: 'Heavy rain', sub: 'In effect until 08:00 PM · high risk of flooding', tone: 'alert' as Tone },
+    { kind: 'Hazard alert', title: 'Chemical leak', sub: 'East Industrial Zone · avoid area', tone: 'alert' as Tone },
+    { kind: 'Road conditions', title: '23 roads closed', sub: '12 major, 11 minor · use alternate routes', tone: 'warn' as Tone },
+    { kind: 'Public advisory', title: 'Stay informed', sub: 'Follow official updates · avoid unnecessary travel', tone: 'ok' as Tone },
+  ];
+  const evacuation: ErEvac[] = [
+    ['North City Community Center', 450, 600], ['East District High School', 380, 500],
+    ['Central City Convention Hall', 620, 800], ['Southside Shelter', 260, 400],
+  ].map(([name, used, cap]): ErEvac => {
+    const pct = Math.round((used as number) / (cap as number) * 100);
+    return { name: name as string, used: used as number, cap: cap as number, pct, tone: pct >= 85 ? 'alert' : pct >= 70 ? 'warn' : 'ok' };
+  });
+  const trend = {
+    total: [18, 22, 25, 28, 21, 24, 24], resolved: [12, 15, 18, 19, 16, 18, 17],
+    critical: [5, 6, 7, 8, 6, 5, 7],
+  };
+  const timeline: ErTimeline[] = [
+    { at: '08:15 AM', detail: 'Major Flooding reported', sub: 'Riverdale Area, North City', tone: 'alert' },
+    { at: '08:20 AM', detail: 'Rescue Teams dispatched', sub: '32 units deployed', tone: 'warn' },
+    { at: '08:45 AM', detail: 'Evacuation centers activated', sub: '3 centers opened', tone: 'warn' },
+    { at: '09:30 AM', detail: 'Helicopter support requested', sub: '2 units deployed', tone: 'ok' },
+  ];
+  const alerts: ErAlert[] = [
+    { sev: 'Critical', title: 'Flash flood warning', sub: 'North City & surrounding areas', at: '10:30 AM', tone: 'alert' },
+    { sev: 'Warning', title: 'Severe thunderstorm', sub: 'High winds and heavy rain expected', at: '10:15 AM', tone: 'warn' },
+    { sev: 'Advisory', title: 'Road closure', sub: 'Multiple roads closed due to flooding', at: '09:50 AM', tone: 'warn' },
+    { sev: 'Info', title: 'Public advisory', sub: 'Stay indoors and stay safe', at: '09:30 AM', tone: 'ok' },
+  ];
+  const channels: ErChannel[] = [
+    { name: 'All units', channel: 'Channel 1', signal: 4, count: 12 },
+    { name: 'Medical teams', channel: 'Channel 2', signal: 4, count: 8 },
+    { name: 'Fire department', channel: 'Channel 3', signal: 3, count: 15 },
+    { name: 'Law enforcement', channel: 'Channel 4', signal: 4, count: 10 },
+  ];
+  return { kpis, incidents, resources, unitTotal, unitStatus, situational, evacuation, trend, timeline, alerts, channels };
+}
+
 // ── Emergency incident deep execution system ───────────────────────────
 // Pre-hospital command as a true master/detail execution system: a live
 // incident board where every incident carries its own command core —
