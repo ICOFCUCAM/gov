@@ -23,6 +23,7 @@ import { PatientSystem } from '@/apps/ministry-health/subsystems/PatientSystem';
 import { HealthCommandCentre } from '@/apps/ministry-health/subsystems/HealthCommandCentre';
 import { EmergencySystem } from '@/apps/ministry-health/subsystems/EmergencySystem';
 import { DiseaseSystem } from '@/apps/ministry-health/subsystems/DiseaseSystem';
+import { HealthFinanceSystem } from '@/apps/ministry-health/subsystems/HealthFinanceSystem';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -107,6 +108,9 @@ export function MinistryHealthApp({
   }
   if (d === 'disease') {
     return <DiseaseSystem id={id} now={now} role={role} withheld={withheld} />;
+  }
+  if (d === 'finance') {
+    return <HealthFinanceSystem id={id} now={now} role={role} withheld={withheld} />;
   }
 
   let body: React.ReactNode = null;

@@ -134,6 +134,65 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── Health finance deep execution system ───────────────────────────────
+// Insurance orchestration, a claims-adjudication pipeline, fraud-detection
+// case queue, reimbursement chains and treasury coordination as a true
+// execution system. Pure & deterministic.
+export interface ClaimsStage { stage: 'Submitted' | 'Adjudication' | 'Approved' | 'Paid' | 'Denied'; count: number; valueM: number; tone: Tone }
+export interface InsuranceScheme { scheme: string; coveredM: number; collectionPct: number; claimsRatioPct: number; solvency: 'solvent' | 'pressured' | 'deficit'; tone: Tone }
+export interface FraudCase { id: string; pattern: string; exposureM: number; confidencePct: number; status: 'flagged' | 'investigating' | 'referred'; tone: Tone }
+export interface ReimbursementChain { tier: string; owedM: number; ageDays: number; tone: Tone }
+export interface HealthFinanceExecution {
+  claims: ClaimsStage[];
+  schemes: InsuranceScheme[];
+  fraud: FraudCase[];
+  reimbursement: ReimbursementChain[];
+  treasuryDrawdownPct: number;
+  fraudExposureM: number;
+  posture: 'solvent' | 'strained' | 'distressed';
+}
+export function healthFinanceExecution(id: string, t: number): HealthFinanceExecution {
+  const claims: ClaimsStage[] = (['Submitted', 'Adjudication', 'Approved', 'Paid', 'Denied'] as const).map((stage, i): ClaimsStage => {
+    const count = Math.round(wave(`hfx:c:${id}:${i}`, t, 200, 22000));
+    const valueM = Math.round(wave(`hfx:v:${id}:${i}`, t, 4, 320));
+    const tone: Tone = stage === 'Adjudication' && count > 14000 ? 'alert' : stage === 'Denied' && count > 6000 ? 'warn' : 'ok';
+    return { stage, count, valueM, tone };
+  });
+  const schemes: InsuranceScheme[] = ['National Health Insurance', 'Civil-service scheme', 'Indigent cover', 'Maternity & child', 'Chronic-illness fund'].map((scheme, i): InsuranceScheme => {
+    const collectionPct = Math.round(wave(`hfx:cl:${id}:${i}`, t, 52, 99));
+    const claimsRatioPct = Math.round(wave(`hfx:cr:${id}:${i}`, t, 62, 128));
+    const solvency: InsuranceScheme['solvency'] = claimsRatioPct > 108 ? 'deficit' : claimsRatioPct > 95 ? 'pressured' : 'solvent';
+    const tone: Tone = solvency === 'deficit' ? 'alert' : solvency === 'pressured' ? 'warn' : 'ok';
+    return { scheme, coveredM: Math.round(wave(`hfx:cm:${id}:${i}`, t, 1, 22) * 10) / 10, collectionPct, claimsRatioPct, solvency, tone };
+  }).sort((a, b) => b.claimsRatioPct - a.claimsRatioPct);
+  const nFraud = Math.round(wave(`hfx:nf:${id}`, t, 0, 6));
+  const fraud: FraudCase[] = Array.from({ length: nFraud }, (_, i): FraudCase => {
+    const confidencePct = Math.round(wave(`hfx:fc:${id}:${i}`, t, 45, 99));
+    const st = seed(`hfx:fs:${id}:${i}`);
+    const status: FraudCase['status'] = st > 0.7 ? 'referred' : st > 0.4 ? 'investigating' : 'flagged';
+    return {
+      id: `FR-${300 + i}`,
+      pattern: ['Phantom billing', 'Upcoding', 'Duplicate claims', 'Ghost providers', 'Kickback ring', 'Eligibility fraud'][i % 6]!,
+      exposureM: Math.round(wave(`hfx:fe:${id}:${i}`, t, 1, 90)),
+      confidencePct, status,
+      tone: confidencePct >= 80 ? 'alert' : confidencePct >= 60 ? 'warn' : 'ok',
+    };
+  }).sort((a, b) => b.exposureM - a.exposureM);
+  const reimbursement: ReimbursementChain[] = ['Public hospitals', 'Private providers', 'Pharmacies', 'Diagnostic labs'].map((tier, i): ReimbursementChain => {
+    const owedM = Math.round(wave(`hfx:ro:${id}:${i}`, t, 5, 480));
+    const ageDays = Math.round(wave(`hfx:ra:${id}:${i}`, t, 4, 150));
+    const tone: Tone = ageDays >= 90 || owedM > 360 ? 'alert' : ageDays >= 45 || owedM > 180 ? 'warn' : 'ok';
+    return { tier, owedM, ageDays, tone };
+  });
+  const treasuryDrawdownPct = Math.round(wave(`hfx:td:${id}`, t, 35, 100));
+  const fraudExposureM = fraud.reduce((s, f) => s + f.exposureM, 0);
+  const deficits = schemes.filter(s => s.solvency === 'deficit').length;
+  const posture: HealthFinanceExecution['posture'] =
+    deficits >= 2 || treasuryDrawdownPct >= 95 || fraudExposureM > 240 ? 'distressed'
+      : deficits >= 1 || treasuryDrawdownPct >= 85 || fraudExposureM > 90 ? 'strained' : 'solvent';
+  return { claims, schemes, fraud, reimbursement, treasuryDrawdownPct, fraudExposureM, posture };
+}
+
 // ── Disease intelligence deep epidemiology engine ──────────────────────
 // Not a heatmap row: per-pathogen epidemiological intelligence (Rt,
 // doubling time, attack rate, CFR), a region×severity grid, a predictive

@@ -4,6 +4,7 @@ import {
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
   patientDeepExecution, emergencyIncidentExecution, diseaseEpidemiology,
+  healthFinanceExecution,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -193,5 +194,24 @@ describe('ministry of health operations engine', () => {
       expect(s.lower).toBeLessThanOrEqual(s.projected);
       expect(s.upper).toBeGreaterThanOrEqual(s.projected);
     }
+  });
+
+  it('healthFinanceExecution is a deterministic, bounded fiscal execution system', () => {
+    const a = healthFinanceExecution('MOH', 165);
+    expect(a).toEqual(healthFinanceExecution('MOH', 165));
+    expect(a.claims.map(c => c.stage)).toEqual(['Submitted', 'Adjudication', 'Approved', 'Paid', 'Denied']);
+    expect(a.schemes.length).toBe(5);
+    expect(a.reimbursement.length).toBe(4);
+    expect(['solvent', 'strained', 'distressed']).toContain(a.posture);
+    // schemes claims-ratio ordered; fraud exposure ordered
+    for (let i = 1; i < a.schemes.length; i++) {
+      expect(a.schemes[i - 1]!.claimsRatioPct).toBeGreaterThanOrEqual(a.schemes[i]!.claimsRatioPct);
+    }
+    for (let i = 1; i < a.fraud.length; i++) {
+      expect(a.fraud[i - 1]!.exposureM).toBeGreaterThanOrEqual(a.fraud[i]!.exposureM);
+    }
+    for (const s of a.schemes) expect(['solvent', 'pressured', 'deficit']).toContain(s.solvency);
+    for (const f of a.fraud) expect(['flagged', 'investigating', 'referred']).toContain(f.status);
+    expect(a.fraudExposureM).toBe(a.fraud.reduce((s, f) => s + f.exposureM, 0));
   });
 });
