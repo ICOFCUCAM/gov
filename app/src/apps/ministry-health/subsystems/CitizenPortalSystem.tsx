@@ -34,6 +34,7 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
   const ts = now / 4000;
   const v = citizenPortalView(id, ts);
   const [navSel, setNavSel] = React.useState('Overview');
+  const [navOpen, setNavOpen] = React.useState(false);
   const [booked, setBooked] = React.useState(false);
   const scoreTone: Tone = v.healthScore >= 85 ? 'ok' : v.healthScore >= 70 ? 'ok' : v.healthScore >= 55 ? 'warn' : 'alert';
 
@@ -41,6 +42,9 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
     <div className="rounded-[12px] p-2" style={{ background: '#070b11' }}>
       {/* Top bar */}
       <div className="mb-2 flex flex-wrap items-center gap-3 rounded-[10px] border px-3 py-2" style={{ borderColor: 'color-mix(in srgb,#1c2733 70%,transparent)', background: `linear-gradient(100deg,#0a0f17,color-mix(in srgb,${ACC} 6%,#0a0f17))` }}>
+        <button type="button" aria-label="Menu" aria-expanded={navOpen} onClick={() => setNavOpen(o => !o)}
+          className="focus-ring grid h-8 w-8 shrink-0 place-items-center rounded-[7px] border text-[13px] lg:hidden"
+          style={{ borderColor: `color-mix(in srgb,${ACC} 45%,#1c2733)`, color: ACC }}>{navOpen ? '✕' : '☰'}</button>
         <div className="min-w-0">
           <div className="text-[12px] font-bold tracking-tight text-ink">MINISTRY OF HEALTH</div>
           <div className="text-[9px] uppercase tracking-[0.16em]" style={{ color: ACC }}>Citizen Health Portal</div>
@@ -60,6 +64,31 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
           </div>
         </div>
       </div>
+
+      {/* Mobile nav drawer */}
+      {navOpen ? (
+        <div className="mb-2 rounded-[10px] border p-2 lg:hidden" style={{ borderColor: 'color-mix(in srgb,#1c2733 70%,transparent)', background: '#0c121b' }}>
+          <div className="grid max-h-[50vh] grid-cols-2 gap-1 overflow-y-auto sm:grid-cols-3">
+            {NAV.map(n => (
+              <button key={n} type="button" onClick={() => { setNavSel(n); setNavOpen(false); }}
+                className="focus-ring rounded-[7px] px-2 py-2 text-left text-[11px] transition-colors"
+                style={{ color: navSel === n ? '#04130d' : 'rgb(var(--c-ink-soft))', background: navSel === n ? ACC : 'color-mix(in srgb,#1c2733 50%,transparent)' }}>{n}</button>
+            ))}
+          </div>
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <div className="rounded-[8px] border p-2 text-center" style={{ borderColor: `color-mix(in srgb,${C('alert')} 40%,transparent)`, background: `color-mix(in srgb,${C('alert')} 9%,#0c121b)` }}>
+              <div className="text-[8px] font-bold uppercase tracking-wider" style={{ color: C('alert') }}>Emergency SOS</div>
+              <div className="my-0.5 text-[18px] font-bold" style={{ color: C('alert') }}>998</div>
+              <div className="text-[7.5px] text-ink-muted">Tap to call · Share location</div>
+            </div>
+            <div className="rounded-[8px] border p-2 text-center" style={{ borderColor: 'color-mix(in srgb,#1c2733 70%,transparent)' }}>
+              <div className="text-[8px] font-bold uppercase tracking-wider text-ink-muted">Health ID</div>
+              <div className="mx-auto my-1 grid h-9 w-9 place-items-center rounded-[4px] border text-[6px] text-ink-muted" style={{ borderColor: ACC }} aria-hidden>▦ QR</div>
+              <div className="font-mono text-[7.5px] text-ink-soft">{v.healthId}</div>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-2 lg:grid-cols-[150px_1fr]">
         {/* Left rail */}
