@@ -20,16 +20,29 @@ export function CustomsApp({ appId, domain, now, role, withheld }: {
   const o = customsOps(appId, ts);
   const d = WF[domain] ? domain : 'clearance';
   const label = LABEL[d] ?? 'Clearance';
+  type Tone = 'ok' | 'warn' | 'alert';
+  const items: { l: string; v: string; t?: Tone }[] = d === 'tariffs' || d === 'revenue' ? [
+    { l: 'Revenue index', v: `${o.revenueIdx}`, t: o.revenueIdx >= 70 ? 'ok' : o.revenueIdx >= 55 ? 'warn' : 'alert' },
+    { l: 'Declarations today', v: o.declarationsToday.toLocaleString(), t: 'ok' },
+    { l: 'Corridors open', v: `${o.corridorsOpen}/${o.corridorsTotal}`, t: o.corridorsOpen < o.corridorsTotal ? 'warn' : 'ok' },
+  ] : d === 'inspection' ? [
+    { l: 'Inspection rate', v: `${o.inspectionRatePct}%`, t: 'ok' },
+    { l: 'Seizures', v: `${o.seizures}`, t: o.seizures > 20 ? 'alert' : o.seizures > 8 ? 'warn' : 'ok' },
+    { l: 'Declarations today', v: o.declarationsToday.toLocaleString(), t: 'ok' },
+  ] : [
+    { l: 'Declarations today', v: o.declarationsToday.toLocaleString(), t: 'ok' },
+    { l: 'Clearance median', v: `${o.clearanceMedianHrs}h`, t: o.clearanceMedianHrs >= 36 ? 'alert' : o.clearanceMedianHrs >= 18 ? 'warn' : 'ok' },
+    { l: 'Revenue index', v: `${o.revenueIdx}`, t: o.revenueIdx >= 70 ? 'ok' : 'warn' },
+    { l: 'Inspection rate', v: `${o.inspectionRatePct}%`, t: 'ok' },
+    { l: 'Seizures', v: `${o.seizures}`, t: o.seizures > 20 ? 'alert' : 'warn' },
+    { l: 'Corridors open', v: `${o.corridorsOpen}/${o.corridorsTotal}`, t: o.corridorsOpen < o.corridorsTotal ? 'warn' : 'ok' },
+  ];
   return (
     <div className="space-y-2">
-      <StatGrid items={[
-        { l: 'Declarations today', v: o.declarationsToday.toLocaleString(), t: 'ok' },
-        { l: 'Clearance median', v: `${o.clearanceMedianHrs}h`, t: o.clearanceMedianHrs >= 36 ? 'alert' : o.clearanceMedianHrs >= 18 ? 'warn' : 'ok' },
-        { l: 'Revenue index', v: `${o.revenueIdx}`, t: o.revenueIdx >= 70 ? 'ok' : 'warn' },
-        { l: 'Inspection rate', v: `${o.inspectionRatePct}%`, t: 'ok' },
-        { l: 'Seizures', v: `${o.seizures}`, t: o.seizures > 20 ? 'alert' : 'warn' },
-        { l: 'Corridors open', v: `${o.corridorsOpen}/${o.corridorsTotal}`, t: o.corridorsOpen < o.corridorsTotal ? 'warn' : 'ok' },
-      ]} />
+      <div className="rounded-[3px] border border-line bg-surface px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
+        {label} subsystem
+      </div>
+      <StatGrid items={items} />
       <Panel title="Trade-corridor throughput" meta="clearance · revenue · interdiction">
         <Bars rows={[
           { label: 'Corridor availability', pct: (o.corridorsOpen / o.corridorsTotal) * 100, tone: o.corridorsOpen < o.corridorsTotal ? 'warn' : 'ok', tail: `${o.corridorsOpen}/${o.corridorsTotal}` },
