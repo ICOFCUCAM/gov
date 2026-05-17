@@ -1448,6 +1448,58 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
+  if (isAgri && (group === 'crop' || group === 'livestock' || group === 'irrigation' || group === 'market' || group === 'farmer')) {
+    const o = agricultureOps(id, ts);
+    const title = group === 'crop' ? 'Crop production & advisory'
+      : group === 'livestock' ? 'Livestock production & health'
+        : group === 'irrigation' ? 'Irrigation & water for production'
+          : group === 'market' ? 'Commodity intelligence & price stability'
+            : 'Farmer-facing services';
+    const stats = group === 'crop' ? [
+      { l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : o.foodSecurityIndex >= 55 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Pest alerts', v: `${o.pestAlerts}`, t: (o.pestAlerts > 8 ? 'alert' : o.pestAlerts ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Reserve cover', v: `${o.strategicReserveDays}d`, t: (o.strategicReserveDays < 30 ? 'alert' : o.strategicReserveDays < 60 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'livestock' ? [
+      { l: 'Livestock health', v: `${o.livestockHealthPct}%`, t: (o.livestockHealthPct >= 85 ? 'ok' : o.livestockHealthPct >= 70 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Pest/disease alerts', v: `${o.pestAlerts}`, t: (o.pestAlerts > 8 ? 'alert' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'irrigation' ? [
+      { l: 'Irrigation coverage', v: `${o.irrigationCoveragePct}%`, t: (o.irrigationCoveragePct >= 60 ? 'ok' : o.irrigationCoveragePct >= 40 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Reserve cover', v: `${o.strategicReserveDays}d`, t: (o.strategicReserveDays < 30 ? 'alert' : 'ok') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'market' ? [
+      { l: 'Strategic reserve', v: `${o.strategicReserveDays}d`, t: (o.strategicReserveDays < 30 ? 'alert' : o.strategicReserveDays < 60 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Regions tracked', v: `${o.byRegion.length}`, t: 'ok' as const },
+    ] : [
+      { l: 'Farmers registered', v: `${o.farmersRegisteredM}M`, t: 'ok' as const },
+      { l: 'Subsidy disbursement', v: `${o.subsidyDisbursementPct}%`, t: (o.subsidyDisbursementPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ];
+    const rows = group === 'crop' ? o.crops.map(c => ({ label: c.crop, pct: c.yieldIdx, tone: c.tone, tail: `${c.yieldIdx}` }))
+      : group === 'market' ? o.byRegion.map(r => ({ label: r.region, pct: r.productionIdx, tone: r.tone, tail: `${r.productionIdx}` }))
+        : o.byRegion.map(r => ({ label: r.region, pct: r.productionIdx, tone: r.tone, tail: `${r.productionIdx}` }));
+    const kind: WorkKind = group === 'farmer' ? 'approval' : group === 'market' ? 'procurement' : 'case';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
+        </div>
+        <Panel title={title} meta={group === 'crop' ? 'crop · yield index' : 'region · production index'} bodyClass="!p-0">
+          {rows.map(r => (
+            <div key={r.label} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(r.tone)}` }}>
+              <span className="w-32 shrink-0 truncate text-[11px] text-ink">{r.label}</span>
+              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${Math.min(100, r.pct)}%`, backgroundColor: tc(r.tone) }} /></div>
+              <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: tc(r.tone) }}>{r.tail}</span>
+            </div>
+          ))}
+        </Panel>
+        <RuntimeQueue scope={`${id}:${group}`} kind={kind} title={`${title} runtime — execute the workflow`} by="Agriculture Officer" n={14} />
+      </div>
+    );
+  }
+
   if (isAgri) {
     const o = agricultureOps(id, ts);
     return (
