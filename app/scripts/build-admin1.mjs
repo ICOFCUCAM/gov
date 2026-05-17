@@ -7,7 +7,7 @@
 import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const A1 = '/tmp/ne_admin1_50m.geojson';
+const A1 = '/tmp/ne_admin1_10m.geojson';
 const A0 = '/tmp/ne0.geojson';
 const DIR1 = resolve('src/lib/geo/admin1');
 const DIR0 = resolve('src/lib/geo/outline');
@@ -15,11 +15,24 @@ const IDX = resolve('src/lib/geo/countries.json');
 for (const d of [DIR1, DIR0]) if (!existsSync(d)) mkdirSync(d, { recursive: true });
 
 const r2 = n => Math.round(n * 100) / 100;
-const ring = c => c.map(([x, y]) => [r2(x), r2(y)]);
+// Round to ~1km and decimate long rings (every 2nd point past 80) — faithful
+// at command scale, keeps per-country lazy chunks small from 10m source.
+function ring(c) {
+  const out = [];
+  const step = c.length > 80 ? 2 : 1;
+  for (let i = 0; i < c.length; i += step) out.push([r2(c[i][0]), r2(c[i][1])]);
+  const last = c[c.length - 1];
+  if (out.length && (out[out.length - 1][0] !== r2(last[0]) || out[out.length - 1][1] !== r2(last[1]))) out.push([r2(last[0]), r2(last[1])]);
+  return out.length >= 4 ? out : null;
+}
+function rings(rs) { return rs.map(ring).filter(Boolean); }
 function geom(g) {
   if (!g) return null;
-  if (g.type === 'Polygon') return { type: 'Polygon', coordinates: g.coordinates.map(ring) };
-  if (g.type === 'MultiPolygon') return { type: 'MultiPolygon', coordinates: g.coordinates.map(p => p.map(ring)) };
+  if (g.type === 'Polygon') { const c = rings(g.coordinates); return c.length ? { type: 'Polygon', coordinates: c } : null; }
+  if (g.type === 'MultiPolygon') {
+    const c = g.coordinates.map(rings).filter(p => p.length);
+    return c.length ? { type: 'MultiPolygon', coordinates: c } : null;
+  }
   return null;
 }
 
