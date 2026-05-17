@@ -4,7 +4,7 @@ import {
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
   patientDeepExecution, emergencyIncidentExecution, diseaseEpidemiology,
-  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid, citizenHealthPortal, nationalInteroperability, healthSimulation, sovereignSecurity, executiveBriefing,
+  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid, citizenHealthPortal, nationalInteroperability, healthSimulation, sovereignSecurity, executiveBriefing, publicHealthSite,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -307,5 +307,16 @@ describe('ministry of health operations engine', () => {
     expect(typeof a.cabinetEscalation).toBe('boolean');
     expect(a.briefingLine.length).toBeGreaterThan(10);
     for (const d of a.directives) expect(['drafted', 'issued', 'in-effect']).toContain(d.status);
+  });
+
+  it('publicHealthSite is deterministic & SSR-safe', () => {
+    const a = publicHealthSite(100);
+    expect(a).toEqual(publicHealthSite(100));
+    expect(a.advisories.length).toBe(3);
+    expect(a.campaigns.length).toBe(4);
+    expect(a.kpis.length).toBe(4);
+    expect(a.programmes.length).toBeGreaterThan(4);
+    expect(typeof a.emergencyBanner.active).toBe('boolean');
+    expect(a.findable.hospitals).toBeGreaterThanOrEqual(0);
   });
 });

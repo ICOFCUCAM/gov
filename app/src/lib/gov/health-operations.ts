@@ -134,6 +134,54 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── Public Ministry Website model ──────────────────────────────────────
+// The public-facing Ministry of Health site: emergency alerts, vaccination
+// campaigns, national programmes, public health advisories, disease
+// updates and open public-data KPIs. Pure & deterministic (SSR-safe).
+export interface PublicAdvisory { title: string; body: string; level: 'info' | 'advisory' | 'urgent'; tone: Tone }
+export interface PublicCampaign { name: string; coveragePct: number; status: 'active' | 'upcoming' | 'closing'; tone: Tone }
+export interface PublicKpi { label: string; value: string; tone: Tone }
+export interface PublicHealthSite {
+  emergencyBanner: { active: boolean; text: string; tone: Tone };
+  advisories: PublicAdvisory[];
+  campaigns: PublicCampaign[];
+  programmes: string[];
+  diseaseUpdates: { disease: string; status: string; tone: Tone }[];
+  kpis: PublicKpi[];
+  findable: { hospitals: number; pharmacies: number; ambulances: number; labs: number };
+}
+export function publicHealthSite(t: number): PublicHealthSite {
+  const ns = nationalSituation('MOH', t);
+  const ep = diseaseEpidemiology('MOH', t);
+  const g = nationalHealthcareGrid('MOH', t);
+  const emergencyActive = ns.disasterState !== 'normal';
+  const advisories: PublicAdvisory[] = [
+    { title: 'Seasonal influenza vaccination open', body: 'Free at all public clinics for priority groups.', level: 'info', tone: 'ok' },
+    { title: ep.pathogens[0]!.phase === 'epidemic' ? `${ep.pathogens[0]!.pathogen}: outbreak response active` : `${ep.pathogens[0]!.pathogen}: surveillance ongoing`, body: 'Follow regional health authority guidance.', level: ep.pathogens[0]!.phase === 'epidemic' ? 'urgent' : 'advisory', tone: ep.pathogens[0]!.tone },
+    { title: 'Travel health', body: 'Check requirements before regional travel.', level: 'info', tone: 'ok' },
+  ];
+  const campaigns: PublicCampaign[] = ['Childhood immunisation', 'Measles catch-up', 'Maternal health', 'Hypertension screening'].map((name, i): PublicCampaign => {
+    const coveragePct = Math.round(wave(`pw:c:${i}`, t, 45, 96));
+    const status = (['active', 'upcoming', 'closing'] as const)[i % 3]!;
+    return { name, coveragePct, status, tone: coveragePct >= 80 ? 'ok' : coveragePct >= 60 ? 'warn' : 'alert' };
+  });
+  const kpis: PublicKpi[] = [
+    { label: 'Facilities online', value: `${g.onlinePct}%`, tone: g.onlinePct >= 92 ? 'ok' : 'warn' },
+    { label: 'Vaccination coverage', value: `${100 - Math.round(ep.pathogens[0]!.attackRatePer100k / 10)}%`, tone: 'ok' },
+    { label: 'National posture', value: ns.posture, tone: ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok' },
+    { label: 'Active outbreaks', value: `${ns.activeOutbreaks}`, tone: ns.activeOutbreaks ? 'warn' : 'ok' },
+  ];
+  return {
+    emergencyBanner: { active: emergencyActive, text: emergencyActive ? `Public health ${ns.disasterState.replace('-', ' ')} declared — ${ns.worstRegion}. Follow official guidance.` : 'No active national health emergency.', tone: emergencyActive ? 'alert' : 'ok' },
+    advisories,
+    campaigns,
+    programmes: ['Universal Health Coverage', 'National Immunisation Programme', 'Maternal & Child Health', 'NCD Prevention', 'Mental Health Access', 'Rural Health Outreach'],
+    diseaseUpdates: ep.pathogens.slice(0, 4).map(p => ({ disease: p.pathogen, status: p.phase, tone: p.tone })),
+    kpis,
+    findable: { hospitals: g.classes.find(c => c.kind === 'Hospital')?.online ?? 0, pharmacies: g.classes.find(c => c.kind === 'Pharmacy')?.online ?? 0, ambulances: g.classes.find(c => c.kind === 'Ambulance')?.online ?? 0, labs: g.classes.find(c => c.kind === 'Laboratory')?.online ?? 0 },
+  };
+}
+
 // ── Executive / Ministerial Briefing ───────────────────────────────────
 // The ministerial command surface: synthesised national briefing, ranked
 // strategic directives, cabinet escalations and active emergency
