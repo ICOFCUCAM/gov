@@ -234,6 +234,31 @@ export function directiveState(key: string): DirectiveRecord | null {
   return directives.get(key) ?? null;
 }
 
+export interface InboxItem { scope: string; item: WorkItem }
+/**
+ * Directive-origin work items addressed to an institution — the inbound
+ * sovereign-command queue rendered INSIDE the institution so a national
+ * decision terminates in institutional execution, not a store. An
+ * institution is matched tolerantly across its candidate keys (instance
+ * id / app id / domain) so scope-id drift never strands a directive.
+ */
+export function directiveInbox(keys: string[]): InboxItem[] {
+  hydrate();
+  const ks = keys.filter(Boolean);
+  const matches = (scope: string) => {
+    const head = scope.split(':')[0]!;
+    return ks.some(k => scope === k || scope.startsWith(`${k}:`) || head === k);
+  };
+  const out: InboxItem[] = [];
+  for (const [scope, items] of scopes.entries()) {
+    if (!matches(scope)) continue;
+    for (const it of items) {
+      if (it.meta.origin === 'directive') out.push({ scope, item: it });
+    }
+  }
+  return out.sort((a, b) => Number(a.item.closed) - Number(b.item.closed));
+}
+
 export function getLedger(limit = 50): LedgerEntry[] {
   return ledger.slice(0, limit);
 }

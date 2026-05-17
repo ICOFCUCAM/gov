@@ -22,6 +22,7 @@ import { MinistryEnergyApp } from '@/apps/ministry-energy/MinistryEnergyApp';
 import { CitizenWalletApp } from '@/apps/citizen-wallet/CitizenWalletApp';
 import { OfficerConsoleApp } from '@/apps/officer-console/OfficerConsoleApp';
 import { BranchWorkspace } from '@/components/features/BranchWorkspace';
+import { DirectivesInbox } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { policeOps, emergencyOps, immigrationOps, customsOps } from '@/lib/gov/agency-systems';
@@ -238,6 +239,14 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                     </div>
                   );
                 })()}
+                {app.activated ? (
+                  <div className="mb-2">
+                    <DirectivesInbox
+                      instKeys={[app.instanceId, app.id, app.domain].filter(Boolean) as string[]}
+                      by={app.label} role={role} withheld={withheld}
+                    />
+                  </div>
+                ) : null}
                 {!app.activated ? (
                   <p className="text-[12px] text-ink-muted">This sovereign application is provisioned but not activated. Activate the institution from the platform to bring its operational systems online.</p>
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'HEALTH' ? (

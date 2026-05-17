@@ -127,4 +127,14 @@ describe('operational continuity', () => {
     expect(directiveState(k)!.itemId).toBe(r1.itemId);
     expect(getScope(s, 'incident', 4).filter(i => i.id === r1.itemId).length).toBe(1);
   });
+
+  it('directiveInbox surfaces directives to an institution by tolerant key match', async () => {
+    const { injectDirective, directiveInbox } = await import('./runtime-store');
+    injectDirective('inbox-A|treasury:command', 'treasury:command', 'procurement', 'Liquidity', 'Sovereign Command');
+    // Matches on the institution head segment regardless of sub-scope.
+    const got = directiveInbox(['treasury']);
+    expect(got.some(x => x.scope === 'treasury:command' && x.item.title === 'Liquidity')).toBe(true);
+    // A non-matching institution sees nothing of it.
+    expect(directiveInbox(['health']).some(x => x.scope === 'treasury:command')).toBe(false);
+  });
 });

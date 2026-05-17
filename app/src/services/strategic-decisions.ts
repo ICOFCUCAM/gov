@@ -97,13 +97,13 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
       'Restore legislative quorum',
       'No legislative quorum — fiscal authorisation is constitutionally withheld.',
       'legislature',
-      { scope: 'leg:legislature', kind: 'bill', title: 'Convene quorum — restore fiscal authorisation' });
+      { scope: 'legislature:command', kind: 'bill', title: 'Convene quorum — restore fiscal authorisation' });
   } else if (s.legislativeBlocked >= 3) {
     push('leg-blocked', 'priority', s.legislativeBlocked * 4,
       'Clear blocked appropriations',
       `${s.legislativeBlocked} appropriations stalled — fiscal execution constrained.`,
       'legislature',
-      { scope: 'leg:legislature', kind: 'bill', title: 'Expedite blocked appropriations' });
+      { scope: 'legislature:command', kind: 'bill', title: 'Expedite blocked appropriations' });
   }
 
   // 5. Lapsed emergency powers — constitutional breach, must be resolved.
@@ -111,8 +111,8 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
     push('emergency-lapsed', 'critical', s.lapsedEmergencies * 10,
       'Resolve lapsed emergency powers',
       `${s.lapsedEmergencies} emergency declaration(s) past sunset without renewal — powers void.`,
-      'constitutional',
-      { scope: 'cab:command', kind: 'approval', title: 'Re-authorise or stand down lapsed emergency powers' });
+      'legislature',
+      { scope: 'legislature:command', kind: 'approval', title: 'Re-authorise or stand down lapsed emergency powers' });
   }
 
   // 6. Judicial backlog — constitutional enforcement is delayed.
@@ -121,7 +121,7 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
       'Surge judicial clearance',
       `Clearance ${s.judicialClearancePct}% · backlog ${s.judicialBacklog} — enforcement delayed.`,
       'judiciary',
-      { scope: 'jud:judiciary', kind: 'judicial', title: 'Backlog-clearance surge directive' });
+      { scope: 'judiciary:command', kind: 'judicial', title: 'Backlog-clearance surge directive' });
   }
 
   // 7. Cross-institution chain constraint — relieve the worst target.

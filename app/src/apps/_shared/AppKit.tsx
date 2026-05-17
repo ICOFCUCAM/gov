@@ -62,6 +62,60 @@ export function PosturePill({ label, tone }: { label: string; tone: 'ok' | 'warn
 
 import { fieldOperations } from '@/lib/gov/field-operations';
 import type { ArchetypeKey } from '@/lib/api/types';
+import { subscribe as rtSub, version as rtVer, directiveInbox, actOnItem } from '@/lib/gov/runtime-store';
+import { actionsFor } from '@/lib/gov/runtime-workflow';
+import { checkAction, capabilityForAction, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
+
+// Inbound sovereign-command queue rendered INSIDE the institution. A
+// national strategic decision injects a directive addressed here; the
+// operator executes its workflow on this surface — the loop terminates in
+// institutional execution, not a dashboard. RBAC + constitutional withhold
+// gate every action exactly as the institution's own runtime does.
+export function DirectivesInbox({ instKeys, by = 'Institution', role = 'commander', withheld = [] }: {
+  instKeys: string[]; by?: string; role?: SovereignRole; withheld?: Capability[];
+}) {
+  React.useSyncExternalStore(rtSub, rtVer, rtVer);
+  const inbox = directiveInbox(instKeys);
+  if (inbox.length === 0) return null;
+  const open = inbox.filter(x => !x.item.closed).length;
+  return (
+    <Panel title="Sovereign directives — inbound command" meta={`${open} open · ${inbox.length} total · national decisions terminating in this institution`}>
+      <div className="space-y-1.5">
+        {inbox.map(({ scope, item }) => {
+          const acts = item.closed ? [] : actionsFor(item.kind, item.stage);
+          const dt: 'ok' | 'warn' | 'alert' = item.closed ? 'ok' : item.stage === item.history.at(-1)?.to && acts.length === 0 ? 'warn' : 'warn';
+          return (
+            <div key={item.id} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2.5 py-2" style={{ borderLeft: `3px solid ${ac(item.closed ? 'ok' : dt)}` }}>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-[9px] tabular-nums text-ink-muted">{item.id}</span>
+                <span className="text-[11px] font-medium text-ink">{item.title}</span>
+                <span className="ml-auto text-[8.5px] uppercase tracking-wider" style={{ color: ac(item.closed ? 'ok' : 'warn') }}>
+                  {item.closed ? 'closed' : item.stage}
+                </span>
+              </div>
+              <div className="mt-0.5 truncate text-[8.5px] text-ink-soft">scope <span className="font-mono">{scope}</span> · {item.kind}</div>
+              {acts.length > 0 ? (
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {acts.map(a => {
+                    const allowed = checkAction(role, a).allowed && !withheld.includes(capabilityForAction(a));
+                    return (
+                      <button key={a} disabled={!allowed}
+                        title={allowed ? undefined : 'Not authorised / withheld by constitutional posture'}
+                        onClick={() => actOnItem(scope, item.id, a, `${by} (${role})`)}
+                        className="focus-ring rounded-[3px] border border-line bg-surface px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider transition-colors enabled:hover:bg-surface-2 disabled:cursor-not-allowed disabled:opacity-40">
+                        {a}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+    </Panel>
+  );
+}
 
 // Reusable Field Operations panel — live field-unit deployment & telemetry
 // for any institution that runs physical field units.
