@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { federationSeed, federationId, resolveInstitution } from './federation';
+import { blueprintFor } from './blueprint';
 
 describe('canonical sovereign federation', () => {
   it('seeds a stable, deterministic, all-active institution set', () => {
@@ -27,5 +28,23 @@ describe('canonical sovereign federation', () => {
     const r = resolveInstitution('totally-unknown-xyz');
     expect(r).toBeTruthy();
     expect(r.archetype).toBe('HEALTH');
+  });
+
+  // Regression guard for the fake-federation class of bug: every seeded
+  // institution MUST have a real archetype topology behind it, so every
+  // /ministries/<id>/system/<group> route resolves to an operational
+  // surface (no empty store, no group without a blueprint).
+  it('every seeded institution has a non-empty blueprint topology', () => {
+    for (const m of federationSeed()) {
+      const groups = blueprintFor(m.archetype);
+      expect(groups.length).toBeGreaterThan(0);
+      expect(groups.some(g => g.key === 'command')).toBe(true);
+      // departments are instantiated from the blueprint groups
+      expect(m.departments.length).toBe(groups.length);
+      for (const g of groups) {
+        expect(g.key).toMatch(/^[a-z-]+$/);
+        expect(g.systems.length).toBeGreaterThan(0);
+      }
+    }
   });
 });
