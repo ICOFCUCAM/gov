@@ -72,7 +72,7 @@ function Tile({
             );
           })}
         </nav>
-        <div className="min-w-0 flex-1 space-y-2 p-2.5">{children}</div>
+        <div className="min-w-0 flex-1 space-y-1.5 p-1.5">{children}</div>
       </div>
     </section>
   );
@@ -168,7 +168,7 @@ export function HealthEcosystemWall() {
       </header>
 
       {/* OPERATIONAL GRID — 3 rows × 3 modules */}
-      <main className="relative z-10 grid grid-cols-1 gap-3 p-3 lg:grid-cols-2 2xl:grid-cols-3">
+      <main className="relative z-10 grid grid-cols-1 gap-1.5 p-1.5 lg:grid-cols-2 2xl:grid-cols-3">
 
         {/* 1 — NATIONAL HEALTH COMMAND */}
         <Tile n={1} title="National Health Command" sub="National Situation Room"
@@ -183,7 +183,7 @@ export function HealthEcosystemWall() {
             <Kpi label="Disaster" value={ns.disasterState === 'national-disaster' ? 'L3' : ns.disasterState === 'emergency' ? 'L2' : ns.disasterState === 'watch' ? 'L1' : 'L0'} tone={ns.disasterState === 'normal' ? 'ok' : ns.disasterState === 'watch' ? 'warn' : 'alert'} />
           </div>
           <div className="overflow-hidden rounded-[6px] border" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-            <GeoMap geo={geo} metric="pressure" title="" height={150} />
+            <GeoMap geo={geo} metric="pressure" title="" height={210} />
           </div>
           <div className="grid grid-cols-2 gap-2 xl:grid-cols-4">
             {[['ICU load', 'icul', 'alert'], ['ER load', 'erl', 'warn'], ['Ventilators', 'vent', 'ok'], ['Staffing', 'stf', 'ok']].map(([l, k, tn]) => (
@@ -217,7 +217,7 @@ export function HealthEcosystemWall() {
             <Kpi label="ER Wait" value={`${ho.ambulances.meanResponseMin}`} unit="min" tone={ho.ambulances.meanResponseMin >= 22 ? 'alert' : 'warn'} points={sp('erw', 40, 80)} />
           </div>
           <div className="overflow-hidden rounded-[6px] border" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-            <GeoMap geo={geo} metric="icuLoad" title="" height={150} />
+            <GeoMap geo={geo} metric="icuLoad" title="" height={210} />
           </div>
           <div className="grid gap-2 xl:grid-cols-2">
             <div className="space-y-1">
@@ -338,7 +338,7 @@ export function HealthEcosystemWall() {
             ))}
           </div>
           <div className="overflow-hidden rounded-[6px] border" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-            <GeoMap geo={geo} metric="outbreakHeat" title="" height={156} />
+            <GeoMap geo={geo} metric="outbreakHeat" title="" height={210} />
           </div>
           <div className="grid gap-2 xl:grid-cols-2">
             <div>
@@ -384,7 +384,7 @@ export function HealthEcosystemWall() {
             ))}
           </div>
           <div className="overflow-hidden rounded-[6px] border" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-            <GeoMap geo={geo} metric="pressure" title="" height={150} />
+            <GeoMap geo={geo} metric="pressure" title="" height={210} />
           </div>
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
             {er.resources.slice(0, 4).map(r => (
@@ -411,7 +411,7 @@ export function HealthEcosystemWall() {
             ))}
           </div>
           <div className="overflow-hidden rounded-[6px] border" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-            <GeoMap geo={geo} metric="pressure" title="" height={144} />
+            <GeoMap geo={geo} metric="pressure" title="" height={200} />
           </div>
           <div className="grid gap-2 xl:grid-cols-2">
             <div className="space-y-1">
