@@ -481,6 +481,53 @@ export function emergencyMedicalOps(instId: string, t: number): EmergencyMedical
   };
 }
 
+// ── Health Finance ───────────────────────────────────────────────────
+// Insurance, claims adjudication, provider reimbursement & fraud control
+// as an execution surface — not the patient portal. Pure & deterministic.
+const INSURANCE_SCHEMES = ['National Health Insurance', 'Civil-service scheme', 'Indigent cover', 'Maternity & child', 'Chronic-illness fund', 'Private top-up'];
+
+export interface ClaimLine {
+  scheme: string; submitted: number; adjudicated: number; paid: number;
+  denialRatePct: number; turnaroundDays: number; tone: 'ok' | 'warn' | 'alert';
+}
+export interface HealthFinanceOps {
+  coveredPopulationPct: number;
+  claimsBacklog: number;
+  meanReimbursementDays: number;
+  fraudFlags: number;
+  providerPaymentsDueM: number;
+  schemes: ClaimLine[];
+  posture: 'solvent' | 'strained' | 'distressed';
+}
+export function healthFinanceOps(instId: string, t: number): HealthFinanceOps {
+  const schemes: ClaimLine[] = INSURANCE_SCHEMES.map((scheme, i) => {
+    const submitted = Math.round(wave(`hf:sub:${instId}:${i}`, t, 200, 9_000));
+    const adjudicated = Math.round(submitted * (0.55 + seed(`hf:adj:${instId}:${i}`) * 0.4));
+    const paid = Math.round(adjudicated * (0.6 + seed(`hf:paid:${instId}:${i}`) * 0.35));
+    const denialRatePct = Math.round(wave(`hf:den:${instId}:${i}`, t, 2, 26));
+    const turnaroundDays = Math.round(wave(`hf:tat:${instId}:${i}`, t, 4, 60));
+    const tone: 'ok' | 'warn' | 'alert' =
+      turnaroundDays >= 40 || denialRatePct >= 20 ? 'alert' : turnaroundDays >= 25 || denialRatePct >= 12 ? 'warn' : 'ok';
+    return { scheme, submitted, adjudicated, paid, denialRatePct, turnaroundDays, tone };
+  }).sort((a, b) => b.turnaroundDays - a.turnaroundDays);
+  const claimsBacklog = schemes.reduce((s, c) => s + (c.submitted - c.adjudicated), 0);
+  const meanReimbursementDays = Math.round(schemes.reduce((s, c) => s + c.turnaroundDays, 0) / schemes.length);
+  const fraudFlags = Math.round(wave(`hf:fraud:${instId}`, t, 0, 38));
+  const distressed = schemes.filter(s => s.tone === 'alert').length;
+  const posture: HealthFinanceOps['posture'] =
+    distressed >= 3 || meanReimbursementDays >= 38 ? 'distressed'
+      : distressed >= 1 || meanReimbursementDays >= 24 ? 'strained' : 'solvent';
+  return {
+    coveredPopulationPct: Math.round(wave(`hf:cov:${instId}`, t, 48, 96)),
+    claimsBacklog,
+    meanReimbursementDays,
+    fraudFlags,
+    providerPaymentsDueM: Math.round(wave(`hf:pay:${instId}`, t, 5, 240)),
+    schemes,
+    posture,
+  };
+}
+
 // ── Health Command ───────────────────────────────────────────────────
 // The national healthcare command authority is not the hospital ward
 // screen: it SYNTHESISES every health subsystem engine (hospitals, EMS,

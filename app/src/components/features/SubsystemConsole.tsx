@@ -8,7 +8,7 @@ import { instantiateMinistry, systemKindLabel, blueprintFor } from '@/lib/instit
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, patientServices,
-  laboratoryOps, pharmaceuticalOps, emergencyMedicalOps, healthCommand,
+  laboratoryOps, pharmaceuticalOps, emergencyMedicalOps, healthCommand, healthFinanceOps,
 } from '@/lib/gov/health-systems';
 import {
   fiscalCommand, revenueOps, budgetOps, procurementOps, bankingRails,
@@ -264,7 +264,35 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
-  if (isHealth && (group === 'patient' || group === 'finance' || group === 'regulatory')) {
+  if (isHealth && group === 'finance') {
+    const F = healthFinanceOps(id, ts);
+    const pt: 'ok' | 'warn' | 'alert' = F.posture === 'distressed' ? 'alert' : F.posture === 'strained' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Population covered" v={`${F.coveredPopulationPct}%`} t={F.coveredPopulationPct >= 75 ? 'ok' : 'warn'} />
+          <Stat l="Claims backlog" v={F.claimsBacklog.toLocaleString()} t={F.claimsBacklog > 14000 ? 'alert' : F.claimsBacklog > 7000 ? 'warn' : 'ok'} />
+          <Stat l="Mean reimbursement" v={`${F.meanReimbursementDays}d`} t={F.meanReimbursementDays >= 38 ? 'alert' : F.meanReimbursementDays >= 24 ? 'warn' : 'ok'} />
+          <Stat l="Fraud flags" v={`${F.fraudFlags}`} t={F.fraudFlags > 25 ? 'alert' : F.fraudFlags ? 'warn' : 'ok'} />
+          <Stat l="Provider payments due" v={`${F.providerPaymentsDueM}M`} t={F.providerPaymentsDueM > 160 ? 'warn' : 'ok'} />
+          <Stat l="Posture" v={F.posture} t={pt} />
+        </div>
+        <Panel title="Scheme claims pipeline" meta="scheme · submitted → adjudicated → paid · denial · turnaround" bodyClass="!p-0">
+          {F.schemes.map(c => (
+            <div key={c.scheme} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(c.tone)}` }}>
+              <span className="w-44 shrink-0 truncate text-[11px] text-ink">{c.scheme}</span>
+              <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{c.submitted.toLocaleString()} → {c.adjudicated.toLocaleString()} → {c.paid.toLocaleString()} · {c.denialRatePct}% denied</span>
+              <span className="w-12 shrink-0 text-right font-mono text-[11px] tabular-nums" style={{ color: tc(c.tone) }}>{c.turnaroundDays}d</span>
+            </div>
+          ))}
+        </Panel>
+        <RuntimeQueue scope={`${id}:finance`} kind="approval" title="Claims adjudication runtime — submitted → reviewed → adjudicated → paid" by="Claims Adjudicator" n={14} />
+      </div>
+    );
+  }
+
+  if (isHealth && (group === 'patient' || group === 'regulatory')) {
     const ps = patientServices(id, ts);
     const rx = prescriptions(id, ts);
     const labs = labRequests(id, ts);

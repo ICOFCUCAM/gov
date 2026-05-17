@@ -3,6 +3,7 @@ import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, healthInstability, patientServices,
   nationalHealthcareCapacity, laboratoryOps, pharmaceuticalOps, emergencyMedicalOps, healthCommand,
+  healthFinanceOps,
 } from './health-systems';
 
 describe('health systems engine', () => {
@@ -165,5 +166,23 @@ describe('health systems engine', () => {
       expect(rank[a.directives[i - 1]!.priority]).toBeLessThanOrEqual(rank[a.directives[i]!.priority]);
     }
     for (const d of a.directives) expect(d.target.length).toBeGreaterThan(2);
+  });
+
+  it('healthFinanceOps is a deterministic, bounded claims execution surface', () => {
+    const a = healthFinanceOps('MOH', 150);
+    expect(a).toEqual(healthFinanceOps('MOH', 150));
+    expect(['solvent', 'strained', 'distressed']).toContain(a.posture);
+    expect(a.schemes.length).toBe(6);
+    expect(a.coveredPopulationPct).toBeGreaterThanOrEqual(0);
+    expect(a.coveredPopulationPct).toBeLessThanOrEqual(100);
+    // worst-turnaround scheme first
+    for (let i = 1; i < a.schemes.length; i++) {
+      expect(a.schemes[i - 1]!.turnaroundDays).toBeGreaterThanOrEqual(a.schemes[i]!.turnaroundDays);
+    }
+    for (const c of a.schemes) {
+      expect(c.adjudicated).toBeLessThanOrEqual(c.submitted);
+      expect(c.paid).toBeLessThanOrEqual(c.adjudicated);
+      expect(['ok', 'warn', 'alert']).toContain(c.tone);
+    }
   });
 });
