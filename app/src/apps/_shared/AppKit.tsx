@@ -59,3 +59,26 @@ export function PosturePill({ label, tone }: { label: string; tone: 'ok' | 'warn
     </span>
   );
 }
+
+import { fieldOperations } from '@/lib/gov/field-operations';
+import type { ArchetypeKey } from '@/lib/api/types';
+
+// Reusable Field Operations panel — live field-unit deployment & telemetry
+// for any institution that runs physical field units.
+export function FieldPanel({ instId, archetype, now }: { instId: string; archetype: ArchetypeKey; now: number }) {
+  const f = fieldOperations(instId, archetype, now / 4000);
+  const pt: 'ok' | 'warn' | 'alert' = f.posture === 'overstretched' ? 'alert' : f.posture === 'surged' ? 'warn' : 'ok';
+  return (
+    <Panel title="Field operations" meta={`${f.unitClass} · ${f.posture}`}>
+      <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+        <Stat l="Fleet" v={`${f.fleet}`} />
+        <Stat l="Deployed" v={`${f.deployed}`} t={pt} />
+        <Stat l="Available" v={`${f.available}`} t="ok" />
+        <Stat l="Mean ETA" v={`${f.meanEtaMin}m`} t={f.meanEtaMin >= 25 ? 'alert' : f.meanEtaMin >= 15 ? 'warn' : 'ok'} />
+        <Stat l="Telemetry health" v={`${f.telemetryHealthPct}%`} t={f.telemetryHealthPct >= 85 ? 'ok' : 'warn'} />
+        <Stat l="Posture" v={f.posture} t={pt} />
+      </div>
+      <Bars rows={f.byRegion.map(r => ({ label: r.region, pct: Math.min(100, r.active * 4 + r.backlog), tone: r.tone, tail: `${r.active} active · ${r.backlog} bk` }))} />
+    </Panel>
+  );
+}

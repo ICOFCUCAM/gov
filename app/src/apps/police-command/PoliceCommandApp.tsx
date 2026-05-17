@@ -5,7 +5,7 @@
 // from these operations into national command.
 
 import * as React from 'react';
-import { StatGrid, Bars, Panel } from '@/apps/_shared/AppKit';
+import { StatGrid, Bars, Panel, FieldPanel } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { policeOps } from '@/lib/gov/agency-systems';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -45,6 +45,8 @@ export function PoliceCommandApp({ appId, domain, now, role, withheld }: {
       <Panel title="Patrol divisions" meta="deployment status">
         <Bars rows={o.patrols.map(p => ({ label: `${p.label} · ${p.region}`, pct: p.status === 'responding' ? 92 : p.status === 'patrolling' ? 55 : 25, tone: p.tone, tail: p.status }))} />
       </Panel>
+      <FieldPanel instId={appId} archetype="INTERIOR" now={now} />
+      <RuntimeQueue scope={`${appId}:field`} kind="field" title="Field deployment runtime — stage → task → en-route → on-scene → cleared" by="Field Coordinator" role={role} withheld={withheld} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'incident'} title={`${label} runtime — execute the policing workflow`} by="Watch Commander" role={role} withheld={withheld} />
     </div>
   );

@@ -6,7 +6,7 @@
 // dashboard fallback. Subsystems live inside the institution app.
 
 import * as React from 'react';
-import { StatGrid, Bars, Panel } from '@/apps/_shared/AppKit';
+import { StatGrid, Bars, Panel, FieldPanel } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { justiceOps } from '@/lib/gov/justice-systems';
@@ -104,6 +104,12 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
     <div className="space-y-2">
       <StatGrid items={items} />
       {bars ? <Panel title={bars.title} meta={bars.meta}><Bars rows={bars.rows} /></Panel> : null}
+      {(['AGRICULTURE', 'INTERIOR', 'ENVIRONMENT', 'TRANSPORT'] as ArchetypeKey[]).includes(archetype) ? (
+        <>
+          <FieldPanel instId={id} archetype={archetype} now={now} />
+          <RuntimeQueue scope={`${id}:field`} kind="field" title={`${label} field deployment runtime — stage → task → on-scene → cleared`} by="Field Coordinator" role={role} withheld={withheld} />
+        </>
+      ) : null}
       <RuntimeQueue scope={`${id}:${domain}`} kind={wf} title={`${label} · ${domain} runtime — execute the institutional workflow`} by="Institution Officer" role={role} withheld={withheld} />
     </div>
   );

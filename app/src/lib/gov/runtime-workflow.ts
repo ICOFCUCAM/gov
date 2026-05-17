@@ -11,7 +11,7 @@ import { seed } from '@/lib/telemetry';
 
 export type WorkKind =
   | 'approval' | 'case' | 'procurement' | 'encounter'
-  | 'bill' | 'judicial' | 'incident' | 'permit';
+  | 'bill' | 'judicial' | 'incident' | 'permit' | 'field';
 
 export type ActionKey = 'advance' | 'approve' | 'reject' | 'escalate' | 'assign' | 'resolve' | 'return';
 
@@ -137,6 +137,17 @@ export const WORKFLOWS: Record<WorkKind, WorkflowDef> = {
       Containment: { advance: 'Recovery' },
       Recovery: { resolve: 'Closed', return: 'Containment' },
       Closed: {},
+    },
+  },
+  field: {
+    kind: 'field', label: 'Field deployment', stages: ['Staged', 'Tasked', 'En route', 'On scene', 'Cleared', 'Recalled'],
+    terminal: ['Cleared', 'Recalled'],
+    transitions: {
+      Staged: { assign: 'Tasked', advance: 'Tasked' },
+      Tasked: { advance: 'En route', return: 'Staged' },
+      'En route': { advance: 'On scene', escalate: 'On scene', return: 'Tasked' },
+      'On scene': { resolve: 'Cleared', escalate: 'On scene', reject: 'Recalled' },
+      Cleared: {}, Recalled: {},
     },
   },
 };

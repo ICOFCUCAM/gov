@@ -4,7 +4,7 @@
 // Crisis severity & resource cover emerge into national emergency posture.
 
 import * as React from 'react';
-import { StatGrid, Bars, Panel } from '@/apps/_shared/AppKit';
+import { StatGrid, Bars, Panel, FieldPanel } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { emergencyOps } from '@/lib/gov/agency-systems';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -33,6 +33,8 @@ export function EmergencyResponseApp({ appId, domain, now, role, withheld }: {
       <Panel title="Regional crisis posture" meta="population assisted · shelters">
         <Bars rows={o.regional.map(r => ({ label: r.region, pct: r.status === 'crisis' ? 92 : r.status === 'watch' ? 58 : 26, tone: r.tone, tail: r.status }))} />
       </Panel>
+      <FieldPanel instId={appId} archetype="INTERIOR" now={now} />
+      <RuntimeQueue scope={`${appId}:field`} kind="field" title="Responder field deployment — stage → task → on-scene → cleared" by="Field Coordinator" role={role} withheld={withheld} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'incident'} title={`${label} runtime — execute the response workflow`} by="Crisis Coordinator" role={role} withheld={withheld} />
     </div>
   );
