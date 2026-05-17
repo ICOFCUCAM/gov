@@ -17,7 +17,7 @@ import {
 } from '@/lib/gov/treasury-systems';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
 import { schoolNetwork, examOps, teacherOps, studentServices, higherEducation, curriculumOps, educationCommand } from '@/lib/gov/education-systems';
-import { transportOps } from '@/lib/gov/transport-systems';
+import { transportOps, transportCommand } from '@/lib/gov/transport-systems';
 import { energyOps } from '@/lib/gov/energy-systems';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
@@ -1013,6 +1013,100 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'exams' ? 'case' : grp.key === 'student' ? 'approval' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (isTransport && group === 'command') {
+    const C = transportCommand(id, ts);
+    const pt: 'ok' | 'warn' | 'alert' = C.posture === 'crisis' ? 'alert' : C.posture === 'engaged' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} />
+          <Stat l="Command posture" v={C.posture} t={pt} />
+          <Stat l="Critical domains" v={`${C.criticalDomains}`} t={C.criticalDomains ? 'alert' : 'ok'} />
+          <Stat l="Open directives" v={`${C.directives.length}`} t={C.directives.some(d => d.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok'} />
+          <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
+          <Stat l="Authority" v="National" t="ok" />
+        </div>
+        <Panel title="Whole-of-mobility domain status" meta="emergent from modal/corridor/fleet engines" bodyClass="!p-0">
+          {C.domains.map(d => (
+            <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
+              <span className="w-52 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>
+              <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{d.metric}</span>
+              <span className="w-16 shrink-0 text-right font-mono text-[11px] tabular-nums" style={{ color: tc(d.tone) }}>{d.value}</span>
+            </div>
+          ))}
+        </Panel>
+        <Panel title="Command directives" meta="ranked · executable across the mobility federation" bodyClass="!p-2">
+          {C.directives.length === 0 ? (
+            <p className="text-[11px] text-ink-muted">No outstanding command directives — mobility network within tolerance.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {C.directives.map((d, i) => {
+                const dt = d.priority === 'critical' ? 'alert' : d.priority === 'priority' ? 'warn' : 'ok';
+                return (
+                  <div key={i} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2.5 py-2" style={{ borderLeft: `3px solid ${tc(dt)}` }}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[8.5px] font-bold uppercase tracking-[0.16em]" style={{ color: tc(dt) }}>{d.priority}</span>
+                      <span className="text-[11px] font-medium text-ink">{d.title}</span>
+                      <a href={`/ministries/${id}/system/${d.target}`} className="ml-auto text-[9px] text-link no-underline hover:underline">→ {d.target}</a>
+                    </div>
+                    <div className="mt-0.5 text-[9px] text-ink-muted">{d.rationale}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+        <RuntimeQueue scope={`${id}:command`} kind="incident" title="Transport Command runtime — execute national mobility directives" by="Transport Command" n={14} />
+      </div>
+    );
+  }
+
+  if (isTransport && (group === 'aviation' || group === 'maritime' || group === 'rail' || group === 'road')) {
+    const o = transportOps(id, ts);
+    const modeName = group.charAt(0).toUpperCase() + group.slice(1);
+    const md = o.modes.find(x => x.mode.toLowerCase() === group) ?? o.modes[0]!;
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l={`${modeName} throughput`} v={`${md.throughputPct}%`} t={md.tone} />
+          <Stat l="Delays" v={`${md.delaysMin}m`} t={md.delaysMin >= 50 ? 'alert' : md.delaysMin >= 25 ? 'warn' : 'ok'} />
+          <Stat l="Incidents" v={`${md.incidents}`} t={md.incidents >= 6 ? 'alert' : md.incidents ? 'warn' : 'ok'} />
+          <Stat l="Network availability" v={`${o.networkAvailabilityPct}%`} t={o.networkAvailabilityPct >= 85 ? 'ok' : 'warn'} />
+          <Stat l="Safety index" v={`${o.safetyIndex}`} t={o.safetyIndex >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Fleet available" v={`${o.fleet.available}/${o.fleet.vehicles}`} t={o.fleet.available < o.fleet.vehicles * 0.6 ? 'alert' : 'ok'} />
+        </div>
+        <Panel title={`${modeName} corridor flow`} meta="load · throughput" bodyClass="!p-0">
+          {o.corridors.map(c => (
+            <div key={c.corridor} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(c.tone)}` }}>
+              <span className="w-32 shrink-0 truncate text-[11px] text-ink">{c.corridor}</span>
+              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${c.loadPct}%`, backgroundColor: tc(c.tone) }} /></div>
+              <span className="w-14 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: tc(c.tone) }}>{c.throughputKt}kt</span>
+            </div>
+          ))}
+        </Panel>
+        <RuntimeQueue scope={`${id}:${group}`} kind="case" title={`${modeName} operations runtime — incident → contain → restore`} by={`${modeName} Controller`} n={14} />
+      </div>
+    );
+  }
+
+  if (isTransport && group === 'citizen') {
+    const o = transportOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Vehicles registered" v={`${o.registry.vehiclesM}M`} t="ok" />
+          <Stat l="Licences issued today" v={o.registry.licencesIssuedToday.toLocaleString()} t="ok" />
+          <Stat l="Registry backlog" v={o.registry.backlog.toLocaleString()} t={o.registry.backlog > 3000 ? 'alert' : o.registry.backlog > 1500 ? 'warn' : 'ok'} />
+          <Stat l="Network availability" v={`${o.networkAvailabilityPct}%`} t={o.networkAvailabilityPct >= 85 ? 'ok' : 'warn'} />
+        </div>
+        <RuntimeQueue scope={`${id}:citizen`} kind="permit" title="Mobility services runtime — application → verification → licence issuance" by="Licensing Officer" n={14} />
       </div>
     );
   }

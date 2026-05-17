@@ -37,6 +37,48 @@ export function transportOps(id: string, t: number): TransportOps {
   };
 }
 
+// ── Transport Command ────────────────────────────────────────────────
+// National mobility authority: synthesises modal/corridor/fleet/registry
+// state into one emergent posture, domain rollup and ranked directives.
+export interface TransDomainStatus { domain: string; metric: string; value: string; tone: 'ok' | 'warn' | 'alert' }
+export interface TransDirective { priority: 'critical' | 'priority' | 'advisory'; title: string; rationale: string; target: string }
+export interface TransportCommand {
+  postureIndex: number;
+  posture: 'steady' | 'engaged' | 'crisis';
+  domains: TransDomainStatus[];
+  directives: TransDirective[];
+  criticalDomains: number;
+}
+export function transportCommand(id: string, t: number): TransportCommand {
+  const o = transportOps(id, t);
+  const worstMode = [...o.modes].sort((a, b) => a.throughputPct - b.throughputPct)[0]!;
+  const congested = o.corridors.filter(c => c.tone === 'alert').length;
+  const domains: TransDomainStatus[] = [
+    { domain: 'Network availability', metric: 'Mean throughput', value: `${o.networkAvailabilityPct}%`,
+      tone: o.networkAvailabilityPct >= 85 ? 'ok' : o.networkAvailabilityPct >= 68 ? 'warn' : 'alert' },
+    { domain: `Weakest mode · ${worstMode.mode}`, metric: 'Throughput', value: `${worstMode.throughputPct}%`,
+      tone: worstMode.tone },
+    { domain: 'Corridor congestion', metric: 'Critical corridors', value: `${congested}`,
+      tone: congested >= 2 ? 'alert' : congested >= 1 ? 'warn' : 'ok' },
+    { domain: 'Fleet readiness', metric: 'Maint. backlog', value: `${o.fleet.maintenanceBacklog}`,
+      tone: o.fleet.maintenanceBacklog > 200 ? 'alert' : o.fleet.maintenanceBacklog > 90 ? 'warn' : 'ok' },
+    { domain: 'Road safety', metric: 'Safety index', value: `${o.safetyIndex}`,
+      tone: o.safetyIndex >= 80 ? 'ok' : o.safetyIndex >= 65 ? 'warn' : 'alert' },
+  ];
+  const directives: TransDirective[] = [];
+  if (worstMode.tone === 'alert') directives.push({ priority: 'critical', title: `Restore ${worstMode.mode} throughput`, rationale: `${worstMode.mode} at ${worstMode.throughputPct}%`, target: worstMode.mode.toLowerCase() });
+  if (congested >= 2) directives.push({ priority: 'priority', title: 'Corridor congestion relief', rationale: `${congested} corridors critical`, target: 'logistics' });
+  if (o.fleet.maintenanceBacklog > 200) directives.push({ priority: 'priority', title: 'Clear fleet maintenance backlog', rationale: `${o.fleet.maintenanceBacklog} units awaiting maintenance`, target: 'logistics' });
+  if (o.safetyIndex < 65) directives.push({ priority: 'critical', title: 'Road-safety intervention', rationale: `Safety index ${o.safetyIndex}`, target: 'road' });
+  if (o.registry.backlog > 3000) directives.push({ priority: 'advisory', title: 'Reduce registry backlog', rationale: `${o.registry.backlog} pending registrations`, target: 'citizen' });
+  directives.sort((a, b) => ({ critical: 0, priority: 1, advisory: 2 }[a.priority] - { critical: 0, priority: 1, advisory: 2 }[b.priority]));
+  const criticalDomains = domains.filter(d => d.tone === 'alert').length;
+  const postureIndex = Math.max(0, Math.min(100, Math.round((100 - transportInstability(id, t)) * 0.5 + (100 - criticalDomains * 18) * 0.5)));
+  const posture: TransportCommand['posture'] =
+    criticalDomains >= 3 || postureIndex < 45 ? 'crisis' : criticalDomains >= 1 || postureIndex < 70 ? 'engaged' : 'steady';
+  return { postureIndex, posture, domains, directives, criticalDomains };
+}
+
 export function transportInstability(id: string, t: number): number {
   const o = transportOps(id, t);
   const v =
