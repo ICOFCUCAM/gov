@@ -1,12 +1,11 @@
 'use client';
 
-// Sector institution apps — Agriculture, Justice (ministry), Interior,
-// Labour, Trade, Environment. Each is engine-driven (its bespoke
-// operational engine), with executable workflow runtimes — NOT a generic
-// dashboard fallback. Subsystems live inside the institution app.
+// Sector institution apps — Agriculture, Justice, Interior, Labour, Trade,
+// Environment. Engine-driven with executable workflow runtimes. Cinematic
+// sovereign command rhythm (shared ops kit).
 
 import * as React from 'react';
-import { StatGrid, Bars, Panel, FieldPanel } from '@/apps/_shared/AppKit';
+import { FieldPanel } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { justiceOps } from '@/lib/gov/justice-systems';
@@ -14,22 +13,20 @@ import { interiorOps } from '@/lib/gov/interior-systems';
 import { laborOps } from '@/lib/gov/labor-systems';
 import { tradeOps } from '@/lib/gov/trade-systems';
 import { environmentOps } from '@/lib/gov/environment-systems';
+import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
+import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { ArchetypeKey } from '@/lib/api/types';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
-type Tone = 'ok' | 'warn' | 'alert';
+const ACC = '#54d08f';
 const WF: Record<string, WorkKind> = {
   command: 'incident', regulatory: 'permit', permit: 'permit', citizen: 'approval',
   farmer: 'approval', legalaid: 'case', registries: 'permit', corrections: 'case',
   disputes: 'case', insurance: 'approval', identity: 'permit', border: 'incident',
   licensing: 'permit', registry: 'permit', export: 'procurement', monitoring: 'case',
 };
-
 type FocusItem = { l: string; v: string; t?: Tone };
-// Domain-focused slice for the deployable path: each subsystem nav renders
-// its OWN operational readout, not the archetype-wide blob. Returns null
-// for command/unknown (falls back to the whole-institution view).
 function focusFor(a: ArchetypeKey, d: string, id: string, ts: number): FocusItem[] | null {
   if (a === 'AGRICULTURE') {
     const o = agricultureOps(id, ts);
@@ -79,8 +76,8 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
 }) {
   const id = instanceId; const ts = now / 4000;
   const wf = WF[domain] ?? 'case';
-  let items: { l: string; v: string; t?: Tone }[] = [];
-  let bars: { title: string; meta: string; rows: { label: string; pct: number; tone: Tone; tail?: string }[] } | null = null;
+  let items: FocusItem[] = [];
+  let bars: { title: string; meta: string; rows: { label: string; pct: number; tone: Tone; tail: string }[] } | null = null;
 
   if (archetype === 'AGRICULTURE') {
     const o = agricultureOps(id, ts);
@@ -134,7 +131,7 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
       { l: 'Registration median', v: `${o.businessRegistry.medianDays}d`, t: o.businessRegistry.medianDays >= 14 ? 'warn' : 'ok' },
       { l: 'Standards conformity', v: `${o.standards.conformityPct}%`, t: o.standards.conformityPct >= 85 ? 'ok' : 'warn' },
     ];
-  } else { // ENVIRONMENT / GENERIC
+  } else {
     const o = environmentOps(id, ts);
     items = [
       { l: 'Air quality index', v: `${o.airQualityIndex}`, t: o.airQualityIndex >= 150 ? 'alert' : o.airQualityIndex >= 100 ? 'warn' : 'ok' },
@@ -144,23 +141,19 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
       { l: 'Protected integrity', v: `${o.protectedAreaIntegrityPct}%`, t: o.protectedAreaIntegrityPct >= 75 ? 'ok' : 'warn' },
       { l: 'Compliance', v: `${o.compliancePct}%`, t: o.compliancePct >= 80 ? 'ok' : 'warn' },
     ];
-    bars = { title: 'Environmental hazards', meta: 'regional risk', rows: o.hazards.map(h => ({ label: `${h.region} · ${h.kind}`, pct: h.level === 'severe' ? 92 : h.level === 'moderate' ? 58 : 26, tone: h.level === 'severe' ? 'alert' : h.level === 'moderate' ? 'warn' : 'ok', tail: h.level })) };
+    bars = { title: 'Environmental hazards', meta: 'regional risk', rows: o.hazards.map(h => ({ label: `${h.region} · ${h.kind}`, pct: h.level === 'severe' ? 92 : h.level === 'moderate' ? 58 : 26, tone: (h.level === 'severe' ? 'alert' : h.level === 'moderate' ? 'warn' : 'ok') as Tone, tail: h.level })) };
   }
 
-  // Deployable-path subsystem differentiation: each nav domain renders its
-  // own focused operational readout, not the archetype-wide blob.
   const focus = focusFor(archetype, domain, id, ts);
-  const shownItems = focus ?? items;
+  const shown = (focus ?? items).map((m, i) => ({ l: m.l, v: m.v, t: (m.t ?? 'ok') as Tone, s: '', k: `si${i}` }));
+  const pTone: Tone = shown.some(x => x.t === 'alert') ? 'alert' : shown.some(x => x.t === 'warn') ? 'warn' : 'ok';
 
   return (
-    <div className="space-y-2">
-      {focus ? (
-        <div className="rounded-[3px] border border-line bg-surface px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
-          {label} · {domain} subsystem
-        </div>
-      ) : null}
-      <StatGrid items={shownItems} />
-      {!focus && bars ? <Panel title={bars.title} meta={bars.meta}><Bars rows={bars.rows} /></Panel> : null}
+    <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
+      <OpsHeader index={1} title={`${label}${focus ? ` · ${domain}` : ''}`} subtitle="Sovereign Institutional Execution"
+        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+      <KpiStrip ts={ts} accent={ACC} items={shown} />
+      {!focus && bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
       {(['AGRICULTURE', 'INTERIOR', 'ENVIRONMENT', 'TRANSPORT'] as ArchetypeKey[]).includes(archetype) ? (
         <>
           <FieldPanel instId={id} archetype={archetype} now={now} />
