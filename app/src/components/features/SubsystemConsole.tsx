@@ -1768,6 +1768,54 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
+  if (isTrade && (group === 'registry' || group === 'standards' || group === 'export' || group === 'licensing' || group === 'industry' || group === 'citizen')) {
+    const o = tradeOps(id, ts);
+    const BR = o.businessRegistry, ST = o.standards, EX = o.exports, LI = o.licensing, IP = o.industrialParks;
+    const title = group === 'registry' ? 'Business registry'
+      : group === 'standards' ? 'Standards & metrology'
+        : group === 'export' ? 'Export facilitation'
+          : group === 'licensing' ? 'Commercial licensing'
+            : group === 'industry' ? 'Industrial development'
+              : 'Enterprise services';
+    const stats = group === 'registry' ? [
+      { l: 'Active businesses', v: `${BR.activeM}M`, t: 'ok' as const },
+      { l: 'New today', v: BR.newToday.toLocaleString(), t: 'ok' as const },
+      { l: 'Backlog', v: BR.backlog.toLocaleString(), t: (BR.backlog > 2800 ? 'alert' : BR.backlog > 1400 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Median days', v: `${BR.medianDays}`, t: (BR.medianDays >= 18 ? 'alert' : BR.medianDays >= 10 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'standards' ? [
+      { l: 'Accredited labs', v: `${ST.labs}`, t: 'ok' as const },
+      { l: 'Conformity', v: `${ST.conformityPct}%`, t: (ST.conformityPct >= 85 ? 'ok' : ST.conformityPct >= 72 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Certs pending', v: ST.certificationsPending.toLocaleString(), t: (ST.certificationsPending > 1200 ? 'alert' : ST.certificationsPending > 600 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'export' ? [
+      { l: 'Corridors open', v: `${EX.corridorsOpen}/${EX.corridorsTotal}`, t: (EX.corridorsOpen < EX.corridorsTotal ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Export value index', v: `${EX.valueIdx}`, t: (EX.valueIdx >= 70 ? 'ok' : EX.valueIdx >= 55 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Clearance days', v: `${EX.clearanceDays}`, t: (EX.clearanceDays >= 12 ? 'alert' : EX.clearanceDays >= 7 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Trade balance idx', v: `${o.tradeBalanceIdx}`, t: (o.tradeBalanceIdx >= 60 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'licensing' ? [
+      { l: 'Permits pending', v: LI.pending.toLocaleString(), t: (LI.pending > 2500 ? 'alert' : LI.pending > 1200 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Issued today', v: LI.issuedToday.toLocaleString(), t: 'ok' as const },
+      { l: 'SLA met', v: `${LI.slaMetPct}%`, t: (LI.slaMetPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'industry' ? [
+      { l: 'Industrial parks', v: `${IP.parks}`, t: 'ok' as const },
+      { l: 'Occupancy', v: `${IP.occupancyPct}%`, t: (IP.occupancyPct >= 70 ? 'ok' : IP.occupancyPct >= 50 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Investment index', v: `${IP.investmentIdx}`, t: (IP.investmentIdx >= 60 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : [
+      { l: 'Active businesses', v: `${BR.activeM}M`, t: 'ok' as const },
+      { l: 'Registry median', v: `${BR.medianDays}d`, t: (BR.medianDays >= 18 ? 'alert' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Licensing SLA', v: `${LI.slaMetPct}%`, t: (LI.slaMetPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ];
+    const kind: WorkKind = group === 'registry' || group === 'licensing' || group === 'citizen' ? 'permit' : group === 'export' ? 'procurement' : 'case';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
+        </div>
+        <RuntimeQueue scope={`${id}:${group}`} kind={kind} title={`${title} runtime — execute the workflow`} by="Trade Officer" n={14} />
+      </div>
+    );
+  }
+
   if (isTrade) {
     const o = tradeOps(id, ts);
     return (
