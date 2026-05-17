@@ -10,7 +10,6 @@
 import * as React from 'react';
 import { geoMercator, geoPath } from 'd3-geo';
 import { ac } from '@/apps/_shared/AppKit';
-import { seed } from '@/lib/telemetry';
 import { loadCountry, provinceLabel, type Admin1Country } from '@/lib/geo/admin1';
 import type { HealthGeo } from '@/lib/gov/health-geo';
 
@@ -53,37 +52,23 @@ export function GeoMap({
       : data.outline ? [{ type: 'Feature' as const, properties: {}, geometry: data.outline }] : [];
     if (!feats.length) return null;
     const fc = { type: 'FeatureCollection' as const, features: feats };
-    // Margin tiny → map nearly touches edges and dominates the panel.
-    const proj = geoMercator().fitExtent([[2, 2], [W - 2, H - 2]], fc as never);
+    // Fit true country shape large into the panel (aspect preserved — a
+    // clean, recognisable territory, never a distorted blob).
+    const proj = geoMercator().fitExtent([[8, 8], [W - 8, H - 8]], fc as never);
     const path = geoPath(proj);
     const outlineD = data.outline ? path({ type: 'Feature', properties: {}, geometry: data.outline } as never) || '' : '';
     const provs = data.provinces.map((p, i) => {
       const reg = geo.regions[i % geo.regions.length];
       const v = reg ? reg[metric] : 50;
       const c = proj([p.lng, p.lat]);
-      return { p, d: path({ type: 'Feature', properties: {}, geometry: p.geometry } as never) || '', cx: c?.[0] ?? null, cy: c?.[1] ?? null, v, t: tnf(v) };
+      return { d: path({ type: 'Feature', properties: {}, geometry: p.geometry } as never) || '', cx: c?.[0] ?? null, cy: c?.[1] ?? null, v, t: tnf(v), name: provinceLabel(p, 'en') };
     });
-    let nodes = provs.filter(x => x.cx != null).map(x => ({ x: x.cx as number, y: x.cy as number, v: x.v, t: x.t, label: provinceLabel(x.p, 'en') }));
-    if (!nodes.length) {
-      const [[x0, y0], [x1, y1]] = path.bounds(fc as never);
-      const n = Math.max(6, geo.regions.length + 4);
-      nodes = Array.from({ length: n }, (_, i) => {
-        const reg = geo.regions[i % geo.regions.length];
-        const v = reg ? reg[metric] : Math.round(seed(`${iso3}:${i}`) * 100);
-        return {
-          x: x0 + (0.12 + 0.76 * seed(`${iso3}:nx:${i}`)) * (x1 - x0),
-          y: y0 + (0.12 + 0.76 * seed(`${iso3}:ny:${i}`)) * (y1 - y0),
-          v, t: tnf(v), label: reg?.region ?? '',
-        };
-      });
-    }
-    // Non-uniform stretch so the territory fills the whole panel edge-to-
-    // edge (no aspect-ratio letterboxing — map must not look tight).
-    const [[bx0, by0], [bx1, by1]] = path.bounds(fc as never);
-    const sx = (W - 2) / Math.max(1, bx1 - bx0);
-    const sy = (H - 2) / Math.max(1, by1 - by0);
-    const stretch = `translate(${1 - bx0 * sx} ${1 - by0 * sy}) scale(${sx} ${sy})`;
-    return { provs, nodes, outlineD, stretch };
+    // Clean, deliberate hotspot set — a handful of glowing nodes, not a
+    // confetti storm. Highest-pressure districts only.
+    const topNodes = provs.filter(x => x.cx != null)
+      .sort((a, b) => b.v - a.v).slice(0, 14)
+      .map(x => ({ x: x.cx as number, y: x.cy as number, v: x.v, t: x.t, label: x.name }));
+    return { provs, topNodes, outlineD };
   }, [data, W, H, geo, metric, iso3]);
 
   return (
@@ -107,48 +92,29 @@ export function GeoMap({
             {loading ? 'ACQUIRING TERRITORY…' : 'NO GEOGRAPHIC DATA'}
           </text>
         ) : (
-          <g transform={view.stretch}>
-            {view.outlineD ? <path d={view.outlineD} fill="none" stroke={accent} strokeWidth="4" strokeOpacity="0.32" filter="url(#gms)" vectorEffect="non-scaling-stroke" /> : null}
+          <g>
+            {/* soft territory glow */}
+            {view.outlineD ? <path d={view.outlineD} fill="none" stroke={accent} strokeWidth="3" strokeOpacity="0.28" filter="url(#gms)" /> : null}
+            {/* clean province fills + crisp thin borders */}
             {view.provs.map((pr, i) => (
-              <path key={`g${i}`} d={pr.d} fill="none" stroke={accent} strokeWidth="3.5" strokeOpacity="0.2" filter="url(#gms)" />
+              <path key={`p${i}`} d={pr.d} fill={ac(pr.t)} fillOpacity={0.06 + (pr.v / 100) * 0.22}
+                stroke={`color-mix(in srgb,${accent} 50%,transparent)`} strokeWidth="0.35" strokeOpacity="0.55" />
             ))}
-            {view.provs.map((pr, i) => (
-              <path key={`p${i}`} d={pr.d} fill={ac(pr.t)} fillOpacity={0.05 + (pr.v / 100) * 0.2}
-                stroke={`color-mix(in srgb,${accent} 55%,transparent)`} strokeWidth="0.4" strokeOpacity="0.7" />
-            ))}
-            {view.outlineD && !view.provs.length ? (
-              <path d={view.outlineD} fill={`color-mix(in srgb,${accent} 10%,transparent)`} stroke={accent} strokeWidth="1.1" strokeOpacity="0.92" />
-            ) : null}
-            {/* dense glowing health-node field (benchmark signature) */}
-            {view.provs.filter(p => p.cx != null).flatMap((pr, pi) => {
-              const col = ac(pr.t);
-              const cnt = 3 + Math.round((pr.v / 100) * 9);
-              const spread = Math.min(W, H) * (0.035 + (pr.v / 100) * 0.05);
-              return Array.from({ length: cnt }, (_, j) => {
-                const a = seed(`${iso3}:${pi}:a:${j}`) * 6.283;
-                const dd = (0.15 + 0.85 * seed(`${iso3}:${pi}:d:${j}`)) * spread;
-                const x = (pr.cx as number) + Math.cos(a) * dd;
-                const y = (pr.cy as number) + Math.sin(a) * dd * 0.92;
-                const rr = 0.6 + seed(`${iso3}:${pi}:r:${j}`) * 1.2;
-                return <circle key={`s${pi}-${j}`} cx={x} cy={y} r={rr} fill={col}
-                  fillOpacity={0.45 + seed(`${iso3}:${pi}:o:${j}`) * 0.4}
-                  style={{ filter: `drop-shadow(0 0 ${rr * 1.6}px ${col})` }} />;
-              });
+            {view.outlineD ? <path d={view.outlineD} fill="none" stroke={accent} strokeWidth="0.8" strokeOpacity="0.85" /> : null}
+            {/* a few clean corridors between principal hotspots */}
+            {view.topNodes.slice(0, 6).map((nd, i, a) => {
+              const nx = a[(i + 1) % a.length]!;
+              return <line key={`c${i}`} x1={nd.x} y1={nd.y} x2={nx.x} y2={nx.y} stroke={accent} strokeWidth="0.5" strokeOpacity="0.3" strokeDasharray="3 3" className="animate-dash-flow" />;
             })}
-            {view.nodes.slice(0, view.nodes.length - 1).map((nd, i) => {
-              const nx = view.nodes[i + 1]!;
-              const cr = geo.corridors[i % Math.max(1, geo.corridors.length)];
-              return <line key={`c${i}`} x1={nd.x} y1={nd.y} x2={nx.x} y2={nx.y} stroke={ac(cr?.tone ?? 'ok')} strokeWidth="0.8" strokeDasharray="4 4" className="animate-dash-flow" style={{ opacity: 0.45 }} />;
-            })}
-            {view.nodes.map((nd, i) => {
-              const col = ac(nd.t); const r = 2.2 + (nd.v / 100) * 3.6;
+            {/* deliberate glowing hotspot nodes */}
+            {view.topNodes.map((nd, i) => {
+              const col = ac(nd.t); const r = 2 + (nd.v / 100) * 3;
               return (
                 <g key={`n${i}`}>
-                  {nd.t === 'alert' ? <circle cx={nd.x} cy={nd.y} r={r + 7} fill="none" stroke={col} strokeWidth="0.8" className="animate-diffuse" style={{ transformOrigin: `${nd.x}px ${nd.y}px` }} /> : null}
-                  <circle cx={nd.x} cy={nd.y} r={r + 3} fill={col} fillOpacity="0.12" />
-                  <circle cx={nd.x} cy={nd.y} r={r} fill={col} fillOpacity="0.97" stroke="#03070f" strokeWidth="0.6"
-                    className={nd.t !== 'ok' ? 'animate-breathe' : undefined} style={{ filter: `drop-shadow(0 0 ${r * 1.4}px ${col})` }} />
-                  {nd.label && nd.v >= 60 ? <text x={nd.x} y={nd.y - r - 2.5} textAnchor="middle" fontSize="6" fill="rgb(var(--c-ink-soft))" style={{ fontFamily: 'var(--font-mono,monospace)' }}>{nd.label}</text> : null}
+                  {nd.t === 'alert' ? <circle cx={nd.x} cy={nd.y} r={r + 5} fill="none" stroke={col} strokeWidth="0.7" strokeOpacity="0.7" className="animate-diffuse" style={{ transformOrigin: `${nd.x}px ${nd.y}px` }} /> : null}
+                  <circle cx={nd.x} cy={nd.y} r={r} fill={col} fillOpacity="0.95" stroke="#03070f" strokeWidth="0.5"
+                    className={nd.t === 'alert' ? 'animate-breathe' : undefined} style={{ filter: `drop-shadow(0 0 ${r}px ${col})` }} />
+                  {i < 4 ? <text x={nd.x} y={nd.y - r - 2} textAnchor="middle" fontSize="6" fill="rgb(var(--c-ink-soft))" style={{ fontFamily: 'var(--font-mono,monospace)', textShadow: '0 0 4px #03070f' }}>{nd.label}</text> : null}
                 </g>
               );
             })}
