@@ -72,7 +72,7 @@ function Tile({
             );
           })}
         </nav>
-        <div className="min-w-0 flex-1 space-y-1 overflow-hidden p-1.5">{children}</div>
+        <div className="flex min-w-0 flex-1 flex-col gap-1 overflow-hidden p-1.5">{children}</div>
       </div>
     </section>
   );
@@ -332,38 +332,60 @@ export function HealthEcosystemWall() {
           accent={ACC.doctor} posture={cw.patient.riskBand === 'High' ? 'HIGH RISK' : 'CLINICAL'}
           postureTone={cw.patient.riskBand === 'High' ? 'alert' : 'ok'} time={time} navActive="Patient Queue"
           nav={['Dashboard', 'Patient Queue', 'Patients', 'Diagnostics', 'Lab Results', 'Imaging', 'Prescriptions', 'Referrals', 'Messages', 'Protocols', 'AI Assistant']}>
-          <div className="flex items-center gap-2 rounded-[5px] border px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)', background: '#0b1320' }}>
-            <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[11px] font-bold" style={{ background: `color-mix(in srgb,${ACC.doctor} 20%,transparent)`, color: ACC.doctor }}>{cw.patient.attending.split(' ').map(s => s[0]).slice(0, 2).join('')}</span>
-            <div className="min-w-0 flex-1">
-              <div className="truncate text-[10px] font-semibold text-ink">{cw.patient.attending}</div>
-              <div className="truncate text-[8px] text-ink-muted">Attending · {cw.patient.ward}</div>
+          {/* clinician profile + KPI strip */}
+          <div className="flex shrink-0 items-center gap-1">
+            <div className="flex flex-1 items-center gap-2 rounded-[3px] border px-2 py-1" style={{ borderColor: 'rgba(95,168,255,0.2)', background: 'rgba(8,16,30,0.6)' }}>
+              <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[10px] font-bold" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>{cw.patient.attending.split(' ').map(s => s[0]).slice(0, 2).join('')}</span>
+              <div className="min-w-0 flex-1"><div className="truncate text-[9px] font-semibold text-ink">{cw.patient.attending}</div><div className="truncate text-[7px] text-ink-muted">Attending · {cw.patient.ward}</div></div>
             </div>
-          </div>
-          <div className="grid grid-cols-4 gap-1.5">
-            <Kpi label="Patients" value={`${cw.queueCount}`} tone="ok" />
-            <Kpi label="Crit Alerts" value={`${cw.patient.alerts.length}`} tone={cw.patient.alerts.length ? 'alert' : 'ok'} />
-            <Kpi label="Pending" value={`${cw.resultsPending}`} tone={cw.resultsPending ? 'warn' : 'ok'} />
-            <Kpi label="Orders" value={`${cw.ordersPending}`} tone={cw.ordersPending ? 'warn' : 'ok'} />
-          </div>
-          <div className="grid gap-2 xl:grid-cols-3">
-            <div className="space-y-1 xl:col-span-2">
-              <PanelLabel accent={ACC.doctor}>Patient queue</PanelLabel>
-              {cw.queue.slice(0, 5).map(q => (
-                <div key={q.id} className="flex items-center gap-2 rounded-[3px] border px-2 py-1 text-[9px]" style={{ borderColor: 'color-mix(in srgb,#1d3548 45%,transparent)' }}>
-                  <span className="min-w-0 flex-1 truncate text-ink-soft">{q.name}</span>
-                  <span className="shrink-0 text-[8px] text-ink-muted">{q.ward} · {q.time}</span>
-                  <span className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[7px] font-bold uppercase" style={{ background: `color-mix(in srgb,${sc(q.tone)} 18%,transparent)`, color: sc(q.tone) }}>{q.acuity}</span>
-                </div>
-              ))}
-            </div>
-            <div className="rounded-[5px] border p-2" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-              <PanelLabel accent={ACC.doctor}>Patient summary</PanelLabel>
-              <div className="mt-1 truncate text-[10px] font-semibold text-ink">{cw.patient.name}</div>
-              <div className="text-[8px] text-ink-muted">{cw.patient.age}{cw.patient.sex[0]} · {cw.patient.blood} · {cw.patient.chiefComplaint}</div>
-              <div className="mt-2 flex items-center gap-2">
-                <RingGauge value={cw.patient.riskScore} label="risk" tone={cw.patient.riskBand === 'High' ? 'alert' : cw.patient.riskBand === 'Moderate' ? 'warn' : 'ok'} size={64} sub={cw.patient.riskBand} />
-                <div className="min-w-0 text-[8px] text-ink-soft">{cw.patient.ai.recommended.slice(0, 3).map(r => <div key={r} className="truncate">• {r}</div>)}</div>
+            {[['PATIENTS', cw.queueCount, 'ok'], ['CRIT', cw.patient.alerts.length, cw.patient.alerts.length ? 'alert' : 'ok'], ['PENDING', cw.resultsPending, cw.resultsPending ? 'warn' : 'ok'], ['ORDERS', cw.ordersPending, cw.ordersPending ? 'warn' : 'ok']].map(([l, v, t]) => (
+              <div key={l as string} className="flex w-[58px] shrink-0 flex-col rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(95,168,255,0.18)', background: 'rgba(8,16,30,0.6)' }}>
+                <div className="text-[6px] font-bold uppercase tracking-[0.1em] text-ink-muted">{l as string}</div>
+                <div className="font-mono text-[18px] font-bold leading-none tabular-nums" style={{ color: sc(t as Tone), textShadow: `0 0 8px color-mix(in srgb,${sc(t as Tone)} 45%,transparent)` }}>{v as number}</div>
               </div>
+            ))}
+          </div>
+          {/* patient queue | patient summary */}
+          <div className="flex min-h-0 flex-1 gap-1">
+            <div className="flex min-w-0 flex-1 flex-col rounded-[4px] border" style={{ borderColor: 'rgba(95,168,255,0.2)', background: 'rgba(8,16,30,0.5)' }}>
+              <div className="flex items-center justify-between border-b px-1.5 py-1" style={{ borderColor: 'rgba(95,168,255,0.16)' }}>
+                <span className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Patient Queue</span>
+                <span className="text-[6.5px] text-ink-muted">All ({cw.queueCount}) · Critical ({cw.patient.alerts.length})</span>
+              </div>
+              <div className="min-h-0 flex-1 space-y-0.5 overflow-hidden p-1">
+                {cw.queue.slice(0, 7).map(q => (
+                  <div key={q.id} className="flex items-center gap-1.5 rounded-[2px] px-1.5 py-1 text-[7.5px]" style={{ background: 'rgba(0,0,0,0.22)' }}>
+                    <span className="font-mono text-[6.5px] text-ink-muted">{q.id}</span>
+                    <span className="min-w-0 flex-1 truncate text-ink-soft">{q.name}</span>
+                    <span className="shrink-0 text-[6.5px] text-ink-muted">{q.ward} · {q.time}</span>
+                    <span className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[6px] font-bold uppercase" style={{ background: `color-mix(in srgb,${sc(q.tone)} 20%,transparent)`, color: sc(q.tone) }}>{q.acuity}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex w-[150px] shrink-0 flex-col rounded-[4px] border p-1.5" style={{ borderColor: 'rgba(95,168,255,0.2)', background: 'rgba(8,16,30,0.5)' }}>
+              <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Patient Summary</div>
+              <div className="mt-1 truncate text-[9px] font-semibold text-ink">{cw.patient.name}</div>
+              <div className="text-[6.5px] text-ink-muted">{cw.patient.mrn} · {cw.patient.age}{cw.patient.sex[0]} · {cw.patient.blood}</div>
+              <div className="mt-1 grid grid-cols-2 gap-x-1 gap-y-0.5">
+                {cw.patient.vitals.slice(0, 4).map(v => (
+                  <div key={v.label} className="flex justify-between text-[6.5px]"><span className="text-ink-muted">{v.label}</span><span className="font-mono" style={{ color: sc(v.tone) }}>{v.value}</span></div>
+                ))}
+              </div>
+              <div className="mt-1 flex items-center gap-1.5">
+                <RingGauge value={cw.patient.riskScore} label="risk" tone={cw.patient.riskBand === 'High' ? 'alert' : cw.patient.riskBand === 'Moderate' ? 'warn' : 'ok'} size={48} sub={cw.patient.riskBand} />
+                <div className="min-w-0 flex-1 text-[6.5px] text-ink-soft">{cw.patient.ai.recommended.slice(0, 3).map(r => <div key={r} className="truncate">▸ {r}</div>)}</div>
+              </div>
+              <button className="mt-auto rounded-[2px] py-1 text-[7px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>Run AI Analysis</button>
+            </div>
+          </div>
+          {/* today's schedule */}
+          <div className="shrink-0 rounded-[4px] border p-1" style={{ borderColor: 'rgba(95,168,255,0.18)', background: 'rgba(8,16,30,0.5)' }}>
+            <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Today's Schedule</div>
+            <div className="flex gap-0.5">
+              {cw.patient.timeline.slice(0, 8).map((e, i) => (
+                <div key={i} className="h-3 flex-1 rounded-[1px]" style={{ background: `color-mix(in srgb,${sc(e.tone)} 55%,transparent)` }} title={`${e.at} ${e.detail}`} />
+              ))}
             </div>
           </div>
         </Tile>
@@ -373,44 +395,48 @@ export function HealthEcosystemWall() {
           accent={ACC.citizen} posture={cp.healthBand.toUpperCase()} postureTone={cp.healthBand === 'Low' ? 'alert' : cp.healthBand === 'Fair' ? 'warn' : 'ok'}
           time={time} navActive="Overview"
           nav={['Overview', 'Appointments', 'Prescriptions', 'Health Records', 'Lab Reports', 'Vaccinations', 'Insurance', 'Telemedicine', 'Reminders', 'Emergency ID', 'Settings']}>
-          <div className="grid gap-2 sm:grid-cols-3">
-            <div className="space-y-2 sm:col-span-2">
-              <div className="rounded-[6px] border px-2.5 py-2" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)', background: '#0b1320' }}>
-                <div className="text-[9px] text-ink-muted">Welcome,</div>
-                <div className="text-[12px] font-semibold text-ink">{cp.name}</div>
-                <div className="font-mono text-[8px] text-ink-muted">HEALTH ID · {cp.healthId}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-1.5 text-center text-[8px]">
-                {['Book Appointment', 'Teleconsult', 'My Prescriptions'].map(a => (
-                  <div key={a} className="rounded-[4px] border px-1 py-2 text-ink-soft" style={{ borderColor: 'color-mix(in srgb,#1d3548 50%,transparent)' }}>{a}</div>
-                ))}
-              </div>
-              <div className="rounded-[5px] border p-2" style={{ borderColor: 'color-mix(in srgb,#1d3548 50%,transparent)' }}>
-                <div className="text-[8px] uppercase tracking-[0.14em] text-ink-muted">Upcoming appointment</div>
-                <div className="text-[9.5px] text-ink-soft">{cp.upcoming.spec} · {cp.upcoming.doctor}</div>
-                <div className="text-[8px] text-ink-muted">{cp.upcoming.date} · {cp.upcoming.time} · {cp.upcoming.place}</div>
-              </div>
+          {/* welcome + actions */}
+          <div className="flex shrink-0 items-center gap-1">
+            <div className="flex-1 rounded-[3px] border px-2 py-1" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.6)' }}>
+              <div className="text-[7px] text-ink-muted">Welcome,</div>
+              <div className="text-[11px] font-semibold text-ink">{cp.name}</div>
+              <div className="font-mono text-[7px] text-ink-muted">HEALTH ID · {cp.healthId}</div>
             </div>
-            <div className="flex flex-col items-center justify-center rounded-[6px] border py-2" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-              <RingGauge value={cp.healthScore} label="score" tone={cp.healthBand === 'Low' ? 'alert' : cp.healthBand === 'Fair' ? 'warn' : 'ok'} size={92} sub={cp.healthBand} />
-            </div>
+            {['Book Appointment', 'Teleconsult', 'Prescriptions'].map(a => (
+              <div key={a} className="grid w-[78px] shrink-0 place-items-center rounded-[3px] border px-1 py-2 text-center text-[7px] text-ink-soft" style={{ borderColor: 'rgba(54,211,155,0.18)', background: 'rgba(8,26,20,0.5)' }}>{a}</div>
+            ))}
           </div>
-          <div className="grid gap-2 xl:grid-cols-2">
-            <div className="space-y-1">
-              <PanelLabel accent={ACC.citizen}>Health timeline</PanelLabel>
-              {cp.timeline.slice(0, 4).map((tl, i) => (
-                <div key={i} className="flex items-center gap-2 text-[8.5px]">
-                  <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: sc(tl.tone) }} />
-                  <span className="min-w-0 flex-1 truncate text-ink-soft">{tl.detail}</span>
-                  <span className="shrink-0 text-ink-muted">{tl.date}</span>
+          {/* left detail column | health score + insurance */}
+          <div className="flex min-h-0 flex-1 gap-1">
+            <div className="flex min-w-0 flex-1 flex-col gap-1">
+              <div className="shrink-0 rounded-[4px] border p-1.5" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
+                <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Upcoming Appointment</div>
+                <div className="mt-0.5 text-[8.5px] text-ink-soft">{cp.upcoming.spec} · {cp.upcoming.doctor}</div>
+                <div className="text-[7px] text-ink-muted">{cp.upcoming.date} · {cp.upcoming.time} · {cp.upcoming.place}</div>
+              </div>
+              <div className="flex min-h-0 flex-1 flex-col rounded-[4px] border p-1.5" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
+                <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Health Timeline</div>
+                <div className="mt-0.5 min-h-0 flex-1 space-y-0.5 overflow-hidden">
+                  {cp.timeline.slice(0, 6).map((tl, i) => (
+                    <div key={i} className="flex items-center gap-1.5 text-[7px]">
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: sc(tl.tone) }} />
+                      <span className="min-w-0 flex-1 truncate text-ink-soft">{tl.detail}</span>
+                      <span className="shrink-0 text-ink-muted">{tl.date}</span>
+                    </div>
+                  ))}
                 </div>
-              ))}
+              </div>
             </div>
-            <div>
-              <PanelLabel accent={ACC.citizen}>Insurance coverage</PanelLabel>
-              <div className="mt-1 text-[9px] text-ink-soft">{cp.insurance.plan}</div>
-              <Bar label="Coverage used" pct={cp.insurance.coverageUsedPct} tone={cp.insurance.coverageUsedPct >= 80 ? 'alert' : 'ok'} tail={`${cp.insurance.coverageUsedPct}%`} />
-              <div className="mt-1 text-[8px] text-ink-muted">Valid till {cp.insurance.validTill} · {cp.insurance.policyNo}</div>
+            <div className="flex w-[128px] shrink-0 flex-col gap-1">
+              <div className="flex flex-1 flex-col items-center justify-center rounded-[4px] border" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
+                <RingGauge value={cp.healthScore} label="score" tone={cp.healthBand === 'Low' ? 'alert' : cp.healthBand === 'Fair' ? 'warn' : 'ok'} size={84} sub={cp.healthBand} />
+              </div>
+              <div className="shrink-0 rounded-[4px] border p-1.5" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
+                <div className="text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-soft">Insurance</div>
+                <div className="truncate text-[7px] text-ink-soft">{cp.insurance.plan}</div>
+                <div className="mt-0.5 h-1.5 overflow-hidden rounded-full" style={{ background: '#0c1c16' }}><span className="block h-full rounded-full" style={{ width: `${cp.insurance.coverageUsedPct}%`, background: sc(cp.insurance.coverageUsedPct >= 80 ? 'alert' : 'ok') }} /></div>
+                <div className="mt-0.5 text-[6px] text-ink-muted">Valid {cp.insurance.validTill}</div>
+              </div>
             </div>
           </div>
         </Tile>
@@ -682,7 +708,7 @@ export function HealthEcosystemWall() {
         <Tile n={9} title="Public Health Portal" sub="Website — Citizen-facing"
           accent={ACC.portal} posture="LIVE SITE" postureTone="ok" time={time} navActive="Preview"
           nav={['Preview', 'Home', 'Health Topics', 'Services', 'Find Facilities', 'News & Alerts', 'About', 'Contact']}>
-          <div className="overflow-hidden rounded-[8px] border border-[#d8dee6] bg-white text-[#0b1f3a] shadow-inner">
+          <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-[#d8dee6] bg-white text-[#0b1f3a] shadow-inner">
             <div className="flex items-center justify-between px-3 py-2" style={{ background: '#0b1f3a' }}>
               <Link href="/health" className="text-[9px] font-bold uppercase tracking-[0.18em] text-white hover:underline">Ministry of Health</Link>
               <span className="hidden gap-3 text-[7.5px] text-white/70 sm:flex">{([['Home', '/health'], ['Topics', '/health'], ['Services', '/health/laboratory'], ['Facilities', '/health'], ['News', '/health']] as const).map(([x, h]) => <Link key={x} href={h} className="hover:text-white">{x}</Link>)}</span>
@@ -707,9 +733,9 @@ export function HealthEcosystemWall() {
                 ))}
               </div>
             </div>
-            <div className="border-t border-[#e5e7eb] px-3 py-2">
+            <div className="min-h-0 flex-1 overflow-hidden border-t border-[#e5e7eb] px-3 py-2">
               <div className="text-[8px] font-bold uppercase tracking-[0.16em] text-[#0b1f3a]">Latest advisories</div>
-              {pub.advisories.slice(0, 3).map(a => (
+              {pub.advisories.slice(0, 5).map(a => (
                 <div key={a.title} className="mt-1 flex items-center gap-2 text-[8px]">
                   <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: a.level === 'urgent' ? '#c0341d' : a.level === 'advisory' ? '#d98a1f' : '#1f5fad' }} />
                   <span className="min-w-0 flex-1 truncate text-[#22324a]">{a.title}</span>
