@@ -13,6 +13,7 @@ import { buildOperationalChain } from '@/lib/gov/operational-chain';
 import { legislativeState } from '@/lib/gov/legislative-engine';
 import { judicialState } from '@/lib/gov/judicial-engine';
 import { nationalRuntime } from '@/lib/gov/national-runtime';
+import { resiliencePropagation } from '@/services/resilience-propagation';
 import { waveSeries } from '@/lib/telemetry';
 import type { Ministry } from '@/lib/api/types';
 
@@ -94,13 +95,20 @@ export function nationalResilience(mins: Ministry[], t: number): NationalResilie
     ? `chain ${chain.containment} · ${chain.totalAffected} affected · runtime ${rt.posture} · jud ${jud.meanClearance}%`
     : `runtime ${rt.posture} · leg ${leg.quorum ? 'quorum' : 'at-risk'} · jud ${jud.meanClearance}%`;
 
+  // Network propagation integrity — how much resilience survives contagion
+  // across the real interoperability fabric (a low score means failure
+  // amplifies through dependencies, not that any single node is weak).
+  const prop = resiliencePropagation(mins, t);
+  const pProp = Math.round(Math.max(0, Math.min(100, prop.meanEffective - prop.amplification)));
+
   const pillars: ResiliencePillar[] = [
-    { key: 'inst', label: 'Institutional readiness', score: pInst, weight: 0.24, tone: toneOf(pInst), detail: `${dir.length} active · ${Math.round(deployRatio * 100)}% deployable` },
-    { key: 'svc', label: 'Service-signature health', score: pSvc, weight: 0.18, tone: toneOf(pSvc), detail: `mean across ${dir.length || 0} institutions` },
-    { key: 'casc', label: 'Cascade integrity', score: pCascade, weight: 0.18, tone: toneOf(pCascade), detail: `${critNodes} critical nodes` },
-    { key: 'reg', label: 'Regional posture', score: pRegion, weight: 0.14, tone: toneOf(pRegion), detail: `${roll.meanReadiness}% mean · ${roll.critical} critical` },
-    { key: 'thr', label: 'Threat preparedness', score: pThreat, weight: 0.14, tone: toneOf(pThreat), detail: prio[0] ? `lead · ${prio[0].label}` : 'no active vectors' },
+    { key: 'inst', label: 'Institutional readiness', score: pInst, weight: 0.20, tone: toneOf(pInst), detail: `${dir.length} active · ${Math.round(deployRatio * 100)}% deployable` },
+    { key: 'svc', label: 'Service-signature health', score: pSvc, weight: 0.16, tone: toneOf(pSvc), detail: `mean across ${dir.length || 0} institutions` },
+    { key: 'casc', label: 'Cascade integrity', score: pCascade, weight: 0.16, tone: toneOf(pCascade), detail: `${critNodes} critical nodes` },
+    { key: 'reg', label: 'Regional posture', score: pRegion, weight: 0.12, tone: toneOf(pRegion), detail: `${roll.meanReadiness}% mean · ${roll.critical} critical` },
+    { key: 'thr', label: 'Threat preparedness', score: pThreat, weight: 0.12, tone: toneOf(pThreat), detail: prio[0] ? `lead · ${prio[0].label}` : 'no active vectors' },
     { key: 'cont', label: 'Operational continuity', score: pCont, weight: 0.12, tone: toneOf(pCont), detail: contDetail },
+    { key: 'prop', label: 'Network propagation integrity', score: pProp, weight: 0.12, tone: toneOf(pProp), detail: `fabric ${prop.fragility} · amplification ${prop.amplification} · worst ${prop.worst?.name ?? 'n/a'}` },
   ];
 
   const index = Math.round(pillars.reduce((a, p) => a + p.score * p.weight, 0));
@@ -140,6 +148,8 @@ export function resilienceUnderShock(mins: Ministry[], t: number, key: ScenarioK
     if (p.key === 'inst') return { ...p, score: Math.round(Math.max(0, p.score - sc.severity * 0.25)) };
     if (p.key === 'thr') return { ...p, score: Math.round(Math.max(0, 100 - sc.severity)) };
     if (p.key === 'cont') return { ...p, score: Math.round(Math.max(0, p.score - sc.severity * 0.5)) };
+    // Shock tightens fabric coupling — contagion amplifies the harder it hits.
+    if (p.key === 'prop') return { ...p, score: Math.round(Math.max(0, p.score - sc.severity * 0.45)) };
     return p;
   });
   const projected = Math.round(shocked.reduce((a, p) => a + p.score * p.weight, 0));

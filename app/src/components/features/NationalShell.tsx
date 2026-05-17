@@ -25,6 +25,7 @@ import { citizenLoad } from '@/lib/gov/citizen-requests';
 import { deployableRoots } from '@/apps/deployment';
 import { chainSummary } from '@/services/execution-chains';
 import { interoperabilityFabric } from '@/services/interoperability-fabric';
+import { resiliencePropagation } from '@/services/resilience-propagation';
 import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, activatedApps, version as orchVersion } from '@/services/orchestration-engine';
@@ -129,6 +130,7 @@ export function NationalShell() {
   const ne = nationalEcosystem(mins, ts);
   const fp = federationPosture(mins, ts, executionDelta, (a) => citizenLoad(a, ts));
   const iof = interoperabilityFabric(mins, ts);
+  const rprop = resiliencePropagation(mins, ts);
   const leg = legislativeState(ts, model.legislature.chambers.map(c => c.name).slice(0, 2));
   const jud = judicialState(ts);
   // Close the causal loop: cross-institution constraint drag lowers the
@@ -328,6 +330,36 @@ export function NationalShell() {
                     </div>
                     <div className="truncate text-[8.5px] text-ink-muted">{e.relation} · {e.direction}</div>
                   </Link>
+                ))}
+              </div>
+            )}
+          </P>
+        );
+      })()}
+
+      {(() => {
+        const fn = rprop.fragility === 'cascading' ? 'alert' : rprop.fragility === 'coupled' ? 'warn' : 'ok';
+        return (
+          <P title="Resilience propagation" meta={`RULE 3 · contagion across the live fabric · base ${rprop.meanBase} → effective ${rprop.meanEffective} · −${rprop.amplification} systemic drag`}>
+            <div className="mb-2 flex flex-wrap items-center gap-3">
+              <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[fn]} 16%, transparent)`, color: TONE[fn] }}>{rprop.fragility}</span>
+              <span className="text-[10px] text-ink-muted">
+                a brittle provider drags every dependant through real contracts — not a snapshot average
+                {rprop.hotPath ? <> · hottest link <span className="text-ink-soft">{rprop.hotPath.provider} → {rprop.hotPath.dependant}</span> (−{rprop.hotPath.transmitted})</> : null}
+              </span>
+            </div>
+            {rprop.nodes.length === 0 ? (
+              <p className="text-[11px] text-ink-muted">No active institutions — contagion is undefined until institutions operate.</p>
+            ) : (
+              <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
+                {rprop.nodes.slice(0, 9).map(n => (
+                  <div key={n.id} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 truncate text-[10px] text-ink">{n.name}</span>
+                      <span className="shrink-0 font-mono text-[10px] tabular-nums" style={{ color: TONE[n.tone] }}>{n.base} → {n.effective}</span>
+                    </div>
+                    <div className="truncate text-[8.5px] text-ink-muted">{n.inbound} dependencies · contagion −{n.contagion}</div>
+                  </div>
                 ))}
               </div>
             )}
