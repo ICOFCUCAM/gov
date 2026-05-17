@@ -98,3 +98,20 @@ describe('operational causality', () => {
     expect(eventLog(20).some(e => e.type === 'runtime.transition' && e.source === s)).toBe(true);
   });
 });
+
+describe('operational continuity', () => {
+  it('persistence is SSR/test-safe and never blocks execution', async () => {
+    const { runtimeContinuity, getScope, actOnItem } = await import('./runtime-store');
+    const { actionsFor } = await import('./runtime-workflow');
+    // No `window` under the node test env → continuity is inert, and the
+    // runtime keeps executing deterministically without throwing.
+    const s = 'cont:1';
+    const its = getScope(s, 'approval', 5);
+    const tgt = its.find(i => actionsFor(i.kind, i.stage).length > 0)!;
+    actOnItem(s, tgt.id, actionsFor(tgt.kind, tgt.stage)[0]!, 'tester');
+    const c = runtimeContinuity();
+    expect(c.persisted).toBe(false);
+    expect(c.restoredTransitions).toBe(0);
+    expect(typeof c.lastPersistAt).toBe('number');
+  });
+});

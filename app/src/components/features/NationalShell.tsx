@@ -30,7 +30,7 @@ import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, activatedApps, version as orchVersion } from '@/services/orchestration-engine';
 import { subscribeBus, version as busVersion, eventLog, eventStats } from '@/services/event-bus';
-import { subscribe as rtSubscribe, runtimeStats, scopeSummaries, executionDelta, version as rtVersion } from '@/lib/gov/runtime-store';
+import { subscribe as rtSubscribe, runtimeStats, runtimeContinuity, scopeSummaries, executionDelta, version as rtVersion } from '@/lib/gov/runtime-store';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -562,7 +562,7 @@ export function NationalShell() {
         const rt = nationalRuntime(mins, ts);
         const pt = rt.posture === 'overloaded' ? 'alert' : rt.posture === 'strained' ? 'warn' : 'ok';
         return (
-          <P title="National operations runtime" meta={`work backlog · ${rt.posture} · ${rt.throughputPerHr}/h throughput`}>
+          <P title="National operations runtime" meta={(() => { const c = runtimeContinuity(); return `work backlog · ${rt.posture} · ${rt.throughputPerHr}/h throughput · ${c.persisted ? `continuity on${c.restoredTransitions ? ` · ${c.restoredTransitions} restored` : ''}` : 'session-only'}`; })()}>
             <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
               {[
                 { l: 'Open work items', v: rt.totalOpen.toLocaleString(), t: 'ok' as const },

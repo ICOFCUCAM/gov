@@ -36,8 +36,70 @@ let _version = 0;
 /** Stable snapshot for useSyncExternalStore — changes only on mutation. */
 export function version(): number { return _version; }
 
+// ── Operational continuity ────────────────────────────────────────────
+// A sovereign runtime does not forget. Executed work and the transition
+// ledger are serialised to client storage so navigation, reload or a new
+// session resumes exactly where the operator left off. SSR-safe & inert
+// under test (no `window`), so engine determinism is unaffected.
+
+const PERSIST_KEY = 'civicos.runtime.v1';
+let _restoredTransitions = 0;
+let _persisted = false;
+let _lastPersistAt = 0;
+let _hydrated = false;
+
+interface RuntimeSnapshot {
+  scopes: [string, WorkItem[]][];
+  ledger: LedgerEntry[];
+  injCount: number;
+  at: number;
+}
+
+function persist() {
+  if (typeof window === 'undefined') return;
+  try {
+    const snap: RuntimeSnapshot = {
+      scopes: [...scopes.entries()],
+      ledger: ledger.slice(0, 200),
+      injCount,
+      at: Date.now(),
+    };
+    window.localStorage.setItem(PERSIST_KEY, JSON.stringify(snap));
+    _persisted = true;
+    _lastPersistAt = snap.at;
+  } catch {
+    // Storage unavailable/quota — continuity degrades gracefully to
+    // session-only; never block execution on persistence.
+  }
+}
+
+/** Hydrate once from client storage before first scope access. */
+function hydrate() {
+  if (_hydrated || typeof window === 'undefined') return;
+  _hydrated = true;
+  try {
+    const raw = window.localStorage.getItem(PERSIST_KEY);
+    if (!raw) return;
+    const snap = JSON.parse(raw) as RuntimeSnapshot;
+    if (!snap || !Array.isArray(snap.scopes)) return;
+    for (const [k, v] of snap.scopes) if (Array.isArray(v)) scopes.set(k, v);
+    if (Array.isArray(snap.ledger)) {
+      ledger.length = 0;
+      ledger.push(...snap.ledger.slice(0, 200));
+    }
+    if (typeof snap.injCount === 'number') injCount = snap.injCount;
+    _restoredTransitions = ledger.length;
+    _persisted = true;
+    _lastPersistAt = typeof snap.at === 'number' ? snap.at : 0;
+    if (scopes.size || ledger.length) _version++;
+  } catch {
+    // Corrupt snapshot — discard and start a clean runtime.
+  }
+}
+
 function emit() {
   _version++;
+  persist();
   for (const l of listeners) l();
 }
 
@@ -48,6 +110,7 @@ export function subscribe(l: Listener): () => void {
 
 /** Items for a scope; seeded deterministically on first access. */
 export function getScope(scope: string, kind: WorkKind, n: number): WorkItem[] {
+  hydrate();
   let items = scopes.get(scope);
   if (!items) {
     items = seedWorkItems(scope, kind, 0, n);
@@ -148,6 +211,16 @@ export function runtimeStats(): RuntimeStats {
     transitions: ledger.length,
     closedByOperator: ledger.filter(e => e.action === 'resolve' || e.action === 'approve').length,
   };
+}
+
+export interface RuntimeContinuity {
+  persisted: boolean;          // runtime state is being written to client storage
+  restoredTransitions: number; // transitions recovered from a prior session
+  lastPersistAt: number;       // epoch ms of the last successful persist
+}
+/** Whether the runtime survived reload — proof of operational continuity. */
+export function runtimeContinuity(): RuntimeContinuity {
+  return { persisted: _persisted, restoredTransitions: _restoredTransitions, lastPersistAt: _lastPersistAt };
 }
 
 export interface ScopeSummary { scope: string; open: number; total: number; transitions: number }
