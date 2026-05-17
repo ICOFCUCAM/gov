@@ -31,6 +31,7 @@ import type { Ministry } from '@/lib/api/types';
 import { resolveInstitution } from '@/lib/institution/federation';
 import { verifyChain } from '@/services/audit-ledger';
 import { escalationState } from '@/shared/sovereignty/escalation';
+import { DirectivesInbox } from '@/apps/_shared/AppKit';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 
@@ -111,6 +112,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <span className="text-ink-muted">escalation · <span className="text-ink-soft">{esc.current}</span>{esc.next ? ` → ${esc.next.tier} (${esc.next.authority})` : ' · apex'}</span>
       <span className="ml-auto text-ink-muted">operational stress · <span style={{ color: stress >= 50 ? 'rgb(var(--c-alert))' : stress >= 30 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' }}>{stress}</span></span>
     </div>
+    <DirectivesInbox instKeys={[id, m.slug, grp.key]} by={m.name} />
     </>
   );
 
