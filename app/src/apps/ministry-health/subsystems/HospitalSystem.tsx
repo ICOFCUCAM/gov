@@ -7,8 +7,7 @@
 // executable admissions runtime. Multi-role aware.
 
 import * as React from 'react';
-import { ac, Bars } from "@/apps/_shared/AppKit";
-import { CommandHeader, CommandPanel, KpiTile, RingGauge, ACCENT } from '@/apps/_shared/SovereignUI';
+import { CommandHeader, CommandPanel, KpiTile, RingGauge, sc, ACCENT } from '@/apps/_shared/SovereignUI';
 import { GeoMap } from '@/apps/_shared/GeoMap';
 import { healthGeo } from '@/lib/gov/health-geo';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
@@ -82,13 +81,13 @@ export function HospitalSystem({ id, now, role, withheld }: {
           {hd.regions.map(r => {
             const done = accepted.has(r.region);
             return (
-              <div key={r.region} className="flex flex-wrap items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2.5 py-1.5" style={{ borderLeft: `3px solid ${ac(r.tone)}` }}>
+              <div key={r.region} className="flex flex-wrap items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2.5 py-1.5" style={{ borderLeft: `3px solid ${sc(r.tone)}` }}>
                 <span className="w-28 shrink-0 truncate text-[11px] text-ink">{r.region}</span>
                 <span className="font-mono text-[9px] tabular-nums text-ink-muted">bed {r.bedOccPct}% · ICU {r.icuOccPct}%</span>
-                <span className="text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: ac(r.tone) }}>{r.surge}</span>
+                <span className="text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: sc(r.tone) }}>{r.surge}</span>
                 {r.transfersPending > 0 ? (
                   done ? (
-                    <span className="ml-auto text-[8.5px] font-semibold uppercase tracking-wider" style={{ color: ac('ok') }}>✓ {r.transfersPending} accepted</span>
+                    <span className="ml-auto text-[8.5px] font-semibold uppercase tracking-wider" style={{ color: sc('ok') }}>✓ {r.transfersPending} accepted</span>
                   ) : (
                     <button
                       onClick={() => setAccepted(prev => new Set(prev).add(r.region))}
@@ -109,9 +108,9 @@ export function HospitalSystem({ id, now, role, withheld }: {
             {hd.icu.map(u => (
               <div key={u.unit} className="flex items-center gap-2 text-[10px]">
                 <span className="w-28 shrink-0 truncate text-ink">{u.unit}</span>
-                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${Math.min(100, (u.occupied / u.beds) * 100)}%`, backgroundColor: ac(u.tone) }} /></div>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${Math.min(100, (u.occupied / u.beds) * 100)}%`, backgroundColor: sc(u.tone) }} /></div>
                 <span className="w-32 shrink-0 text-right font-mono tabular-nums text-ink-muted">{u.occupied}/{u.beds} · v{u.ventilated} · e{u.ecmo}</span>
-                <span className="w-14 shrink-0 text-right text-[8px] font-bold uppercase" style={{ color: ac(u.tone) }}>{u.escalation}</span>
+                <span className="w-14 shrink-0 text-right text-[8px] font-bold uppercase" style={{ color: sc(u.tone) }}>{u.escalation}</span>
               </div>
             ))}
           </div>
@@ -122,8 +121,8 @@ export function HospitalSystem({ id, now, role, withheld }: {
               <div key={x.theatre} className="flex items-center gap-2 text-[10px]">
                 <span className="w-14 shrink-0 text-ink">{x.theatre}</span>
                 <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{x.caseType}</span>
-                <span className="w-16 shrink-0 text-right text-[8px] font-bold uppercase" style={{ color: ac(x.tone) }}>{x.status}</span>
-                <span className="w-12 shrink-0 text-right font-mono tabular-nums" style={{ color: ac(x.tone) }}>{x.delayMin}m</span>
+                <span className="w-16 shrink-0 text-right text-[8px] font-bold uppercase" style={{ color: sc(x.tone) }}>{x.status}</span>
+                <span className="w-12 shrink-0 text-right font-mono tabular-nums" style={{ color: sc(x.tone) }}>{x.delayMin}m</span>
               </div>
             ))}
           </div>
@@ -132,14 +131,22 @@ export function HospitalSystem({ id, now, role, withheld }: {
 
       <div className="grid gap-2 xl:grid-cols-2">
         <CommandPanel title="Ambulance zone coordination" meta="zone · available/units · ETA · posture" accent={ACC}>
-          <Bars rows={hd.ambulanceZones.map(z => ({ label: `${z.zone} (${z.available}/${z.units})`, pct: Math.min(100, (z.available / z.units) * 100), tone: z.tone, tail: `${z.meanEtaMin}m` }))} />
+          <div className="space-y-1">
+            {hd.ambulanceZones.map(z => (
+              <div key={z.zone} className="flex items-center gap-2 text-[8.5px]">
+                <span className="w-32 shrink-0 truncate text-ink-soft">{z.zone} ({z.available}/{z.units})</span>
+                <span className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: '#13243a' }}><span className="block h-full rounded-full" style={{ width: `${Math.min(100, (z.available / z.units) * 100)}%`, background: sc(z.tone), boxShadow: `0 0 6px ${sc(z.tone)}` }} /></span>
+                <span className="w-12 shrink-0 text-right font-mono tabular-nums" style={{ color: sc(z.tone) }}>{z.meanEtaMin}m</span>
+              </div>
+            ))}
+          </div>
         </CommandPanel>
         <CommandPanel title="Operational timeline" meta="most recent first" accent={ACC}>
           <div className="space-y-1">
             {hd.timeline.map((e, i) => (
               <div key={i} className="flex items-start gap-2 text-[10px]">
                 <span className="w-12 shrink-0 font-mono tabular-nums text-ink-muted">−{e.atHrsAgo}h</span>
-                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: ac(e.tone) }} />
+                <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: sc(e.tone) }} />
                 <span className="min-w-0"><span className="text-[8px] uppercase tracking-wider text-ink-muted">{e.kind}</span><span className="block text-ink-soft">{e.detail}</span></span>
               </div>
             ))}
