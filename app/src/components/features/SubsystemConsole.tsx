@@ -16,7 +16,7 @@ import {
   citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
-import { schoolNetwork, examOps, teacherOps, studentServices } from '@/lib/gov/education-systems';
+import { schoolNetwork, examOps, teacherOps, studentServices, higherEducation, curriculumOps, educationCommand } from '@/lib/gov/education-systems';
 import { transportOps } from '@/lib/gov/transport-systems';
 import { energyOps } from '@/lib/gov/energy-systems';
 import { interiorOps } from '@/lib/gov/interior-systems';
@@ -785,6 +785,174 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
           </Panel>
         </div>
+      </div>
+    );
+  }
+
+  if (isEdu && group === 'command') {
+    const C = educationCommand(id, ts);
+    const pt: 'ok' | 'warn' | 'alert' = C.posture === 'crisis' ? 'alert' : C.posture === 'engaged' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} />
+          <Stat l="Command posture" v={C.posture} t={pt} />
+          <Stat l="Critical domains" v={`${C.criticalDomains}`} t={C.criticalDomains ? 'alert' : 'ok'} />
+          <Stat l="Open directives" v={`${C.directives.length}`} t={C.directives.some(d => d.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok'} />
+          <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
+          <Stat l="Authority" v="National" t="ok" />
+        </div>
+        <Panel title="Whole-of-education domain status" meta="emergent from every subsystem engine" bodyClass="!p-0">
+          {C.domains.map(d => (
+            <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
+              <span className="w-44 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>
+              <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{d.metric}</span>
+              <span className="w-16 shrink-0 text-right font-mono text-[11px] tabular-nums" style={{ color: tc(d.tone) }}>{d.value}</span>
+            </div>
+          ))}
+        </Panel>
+        <Panel title="Command directives" meta="ranked · executable across the education federation" bodyClass="!p-2">
+          {C.directives.length === 0 ? (
+            <p className="text-[11px] text-ink-muted">No outstanding command directives — every education domain within tolerance.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {C.directives.map((d, i) => {
+                const dt = d.priority === 'critical' ? 'alert' : d.priority === 'priority' ? 'warn' : 'ok';
+                return (
+                  <div key={i} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2.5 py-2" style={{ borderLeft: `3px solid ${tc(dt)}` }}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[8.5px] font-bold uppercase tracking-[0.16em]" style={{ color: tc(dt) }}>{d.priority}</span>
+                      <span className="text-[11px] font-medium text-ink">{d.title}</span>
+                      <a href={`/ministries/${id}/system/${d.target}`} className="ml-auto text-[9px] text-link no-underline hover:underline">→ {d.target}</a>
+                    </div>
+                    <div className="mt-0.5 text-[9px] text-ink-muted">{d.rationale}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+        <RuntimeQueue scope={`${id}:command`} kind="incident" title="Education Command runtime — execute national education directives" by="Education Command" n={14} />
+      </div>
+    );
+  }
+
+  if (isEdu && group === 'higher') {
+    const H = higherEducation(id, ts);
+    const pt: 'ok' | 'warn' | 'alert' = H.posture === 'underfunded' ? 'alert' : H.posture === 'pressured' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Institutions" v={`${H.institutions}`} t="ok" />
+          <Stat l="Enrolment" v={`${H.enrolmentK}k`} t="ok" />
+          <Stat l="Graduation rate" v={`${H.graduationRatePct}%`} t={H.graduationRatePct >= 70 ? 'ok' : 'warn'} />
+          <Stat l="Research output" v={`${H.researchOutputIndex}`} t={H.researchOutputIndex >= 60 ? 'ok' : 'warn'} />
+          <Stat l="Funding gap" v={`${H.fundingGapPct}%`} t={H.fundingGapPct >= 25 ? 'alert' : H.fundingGapPct >= 14 ? 'warn' : 'ok'} />
+          <Stat l="Posture" v={H.posture} t={pt} />
+        </div>
+        <Panel title="Institution tiers" meta="tier · institutions · utilisation" bodyClass="!p-0">
+          {H.tiers.map(x => (
+            <div key={x.tier} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(x.tone)}` }}>
+              <span className="w-48 shrink-0 truncate text-[11px] text-ink">{x.tier}</span>
+              <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{x.institutions} institutions</span>
+              <div className="h-1.5 w-24 shrink-0 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${Math.min(100, x.utilisationPct)}%`, backgroundColor: tc(x.tone) }} /></div>
+              <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: tc(x.tone) }}>{x.utilisationPct}%</span>
+            </div>
+          ))}
+        </Panel>
+        <RuntimeQueue scope={`${id}:higher`} kind="approval" title="Higher-education runtime — accreditation & funding workflow" by="Tertiary Officer" n={14} />
+      </div>
+    );
+  }
+
+  if (isEdu && group === 'exams') {
+    const ex = examOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Candidates" v={ex.candidates.toLocaleString()} t="ok" />
+          <Stat l="Results pending" v={ex.resultsPending.toLocaleString()} t={ex.resultsPending > 30000 ? 'warn' : 'ok'} />
+          <Stat l="Integrity flags" v={`${ex.integrityFlags}`} t={ex.integrityFlags >= 12 ? 'alert' : ex.integrityFlags ? 'warn' : 'ok'} />
+          <Stat l="Pipeline stages" v={`${ex.pipeline.length}`} t="ok" />
+        </div>
+        <Panel title="Examination pipeline" meta="registration → marking → release" bodyClass="!p-2">
+          <div className="space-y-1">
+            {ex.pipeline.map(s => (
+              <div key={s.stage} className="flex items-center gap-2 text-[10px]">
+                <span className="w-32 shrink-0 truncate text-ink-soft">{s.stage}</span>
+                <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${Math.min(100, s.count)}%`, backgroundColor: TONE.warn }} /></div>
+                <span className="w-8 shrink-0 text-right font-mono tabular-nums text-ink-muted">{s.count}</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+        <RuntimeQueue scope={`${id}:exams`} kind="case" title="Examinations runtime — registration → invigilation → marking → release" by="Exams Officer" n={14} />
+      </div>
+    );
+  }
+
+  if (isEdu && group === 'curriculum') {
+    const Cu = curriculumOps(id, ts);
+    const pt: 'ok' | 'warn' | 'alert' = Cu.posture === 'obsolete' ? 'alert' : Cu.posture === 'lagging' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Frameworks" v={`${Cu.frameworks}`} t="ok" />
+          <Stat l="Revision cycle" v={`${Cu.revisionCyclePct}%`} t={Cu.revisionCyclePct >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Textbook coverage" v={`${Cu.textbookCoveragePct}%`} t={Cu.textbookCoveragePct >= 85 ? 'ok' : 'warn'} />
+          <Stat l="Digital adoption" v={`${Cu.digitalAdoptionPct}%`} t={Cu.digitalAdoptionPct >= 60 ? 'ok' : 'warn'} />
+          <Stat l="Outdated frameworks" v={`${Cu.outdatedFrameworks}`} t={Cu.outdatedFrameworks ? 'alert' : 'ok'} />
+          <Stat l="Posture" v={Cu.posture} t={pt} />
+        </div>
+        <Panel title="Subject frameworks" meta="subject · coverage · last revised" bodyClass="!p-0">
+          {Cu.subjects.map(s => (
+            <div key={s.subject} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(s.tone)}` }}>
+              <span className="w-40 shrink-0 truncate text-[11px] text-ink">{s.subject}</span>
+              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${s.coveragePct}%`, backgroundColor: tc(s.tone) }} /></div>
+              <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums text-ink-soft">{s.coveragePct}%</span>
+              <span className="w-20 shrink-0 text-right text-[8px] uppercase tracking-[0.14em]" style={{ color: tc(s.tone) }}>{s.lastRevisedYrs}y ago</span>
+            </div>
+          ))}
+        </Panel>
+        <RuntimeQueue scope={`${id}:curriculum`} kind="case" title="Curriculum runtime — draft → review → pilot → ratify" by="Curriculum Officer" n={14} />
+      </div>
+    );
+  }
+
+  if (isEdu && group === 'teacher') {
+    const tch = teacherOps(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Teachers" v={tch.teachers.toLocaleString()} t="ok" />
+          <Stat l="Vacancies" v={`${tch.vacanciesPct}%`} t={tch.vacanciesPct >= 15 ? 'alert' : tch.vacanciesPct >= 8 ? 'warn' : 'ok'} />
+          <Stat l="Postings pending" v={tch.postingsPending.toLocaleString()} t={tch.postingsPending > 1500 ? 'warn' : 'ok'} />
+          <Stat l="Payroll on-time" v={`${tch.payrollOnTimePct}%`} t={tch.payrollOnTimePct >= 95 ? 'ok' : 'warn'} />
+          <Stat l="Training active" v={tch.trainingActive.toLocaleString()} t="ok" />
+        </div>
+        <RuntimeQueue scope={`${id}:teacher`} kind="approval" title="Teacher workforce runtime — posting → vetting → deployment → payroll" by="HR Officer" n={14} />
+      </div>
+    );
+  }
+
+  if (isEdu && group === 'student') {
+    const ss = studentServices(id, ts);
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Learner records" v={`${ss.learnerRecordsM}M`} t="ok" />
+          <Stat l="Portal uptime" v={`${ss.portalUptime}%`} t={ss.portalUptime >= 99 ? 'ok' : 'warn'} />
+          <Stat l="Scholarships active" v={ss.scholarshipsActive.toLocaleString()} t="ok" />
+          <Stat l="Enrolment requests" v={ss.enrolmentRequests.toLocaleString()} t={ss.enrolmentRequests > 10000 ? 'warn' : 'ok'} />
+          <Stat l="Satisfaction" v={`${ss.satisfactionPct}%`} t={ss.satisfactionPct >= 70 ? 'ok' : 'warn'} />
+        </div>
+        <RuntimeQueue scope={`${id}:student`} kind="approval" title="Learner services runtime — application → verification → award" by="Student Services" n={14} />
       </div>
     );
   }
