@@ -26,6 +26,53 @@ const WF: Record<string, WorkKind> = {
   licensing: 'permit', registry: 'permit', export: 'procurement', monitoring: 'case',
 };
 
+type FocusItem = { l: string; v: string; t?: Tone };
+// Domain-focused slice for the deployable path: each subsystem nav renders
+// its OWN operational readout, not the archetype-wide blob. Returns null
+// for command/unknown (falls back to the whole-institution view).
+function focusFor(a: ArchetypeKey, d: string, id: string, ts: number): FocusItem[] | null {
+  if (a === 'AGRICULTURE') {
+    const o = agricultureOps(id, ts);
+    if (d === 'crop') return [{ l: 'Food security', v: `${o.foodSecurityIndex}`, t: o.foodSecurityIndex >= 70 ? 'ok' : 'warn' }, { l: 'Pest alerts', v: `${o.pestAlerts}`, t: o.pestAlerts > 8 ? 'alert' : 'warn' }, { l: 'Reserve cover', v: `${o.strategicReserveDays}d`, t: o.strategicReserveDays < 30 ? 'alert' : 'ok' }];
+    if (d === 'livestock') return [{ l: 'Livestock health', v: `${o.livestockHealthPct}%`, t: o.livestockHealthPct >= 85 ? 'ok' : 'warn' }, { l: 'Pest/disease alerts', v: `${o.pestAlerts}`, t: o.pestAlerts > 8 ? 'alert' : 'warn' }];
+    if (d === 'irrigation') return [{ l: 'Irrigation coverage', v: `${o.irrigationCoveragePct}%`, t: o.irrigationCoveragePct >= 60 ? 'ok' : 'warn' }, { l: 'Reserve cover', v: `${o.strategicReserveDays}d`, t: o.strategicReserveDays < 30 ? 'alert' : 'ok' }];
+    if (d === 'farmer') return [{ l: 'Farmers registered', v: `${o.farmersRegisteredM}M`, t: 'ok' }, { l: 'Subsidy disbursed', v: `${o.subsidyDisbursementPct}%`, t: o.subsidyDisbursementPct >= 75 ? 'ok' : 'warn' }];
+    if (d === 'market') return [{ l: 'Strategic reserve', v: `${o.strategicReserveDays}d`, t: o.strategicReserveDays < 30 ? 'alert' : 'ok' }, { l: 'Food security', v: `${o.foodSecurityIndex}`, t: o.foodSecurityIndex >= 70 ? 'ok' : 'warn' }];
+  } else if (a === 'JUSTICE') {
+    const o = justiceOps(id, ts);
+    if (d === 'legalaid') return [{ l: 'Aid centres', v: `${o.legalAid.centres}`, t: 'ok' }, { l: 'Represented', v: `${o.legalAid.representedPct}%`, t: o.legalAid.representedPct >= 75 ? 'ok' : 'warn' }, { l: 'Backlog', v: o.legalAid.backlog.toLocaleString(), t: o.legalAid.backlog > 4000 ? 'alert' : 'warn' }];
+    if (d === 'corrections') return [{ l: 'Occupancy', v: `${o.corrections.occupancyPct}%`, t: o.corrections.occupancyPct >= 110 ? 'alert' : o.corrections.occupancyPct >= 95 ? 'warn' : 'ok' }, { l: 'Rehab active', v: o.corrections.rehabActive.toLocaleString(), t: 'ok' }];
+    if (d === 'registries') return [{ l: 'Records', v: `${o.registries.recordsM}M`, t: 'ok' }, { l: 'Integrity', v: `${o.registries.integrityPct}%`, t: o.registries.integrityPct >= 98 ? 'ok' : 'warn' }, { l: 'Backlog', v: o.registries.backlog.toLocaleString(), t: o.registries.backlog > 2500 ? 'alert' : 'ok' }];
+    if (d === 'courts') return [{ l: 'Cases coordinated', v: o.courtLiaison.casesCoordinated.toLocaleString(), t: 'ok' }, { l: 'Transfers pending', v: `${o.courtLiaison.transfersPending}`, t: o.courtLiaison.transfersPending > 500 ? 'alert' : 'ok' }, { l: 'SLA met', v: `${o.courtLiaison.slaMetPct}%`, t: o.courtLiaison.slaMetPct >= 80 ? 'ok' : 'warn' }];
+  } else if (a === 'INTERIOR') {
+    const o = interiorOps(id, ts);
+    if (d === 'identity') return [{ l: 'Enrolled', v: `${o.identity.enrolledM}M`, t: 'ok' }, { l: 'Issuance backlog', v: o.identity.issuanceBacklog.toLocaleString(), t: o.identity.issuanceBacklog > 6000 ? 'alert' : 'warn' }, { l: 'Uptime', v: `${o.identity.uptimePct}%`, t: o.identity.uptimePct >= 99 ? 'ok' : 'warn' }];
+    if (d === 'border') return [{ l: 'Posts open', v: `${o.border.open}/${o.border.posts}`, t: o.border.open < o.border.posts ? 'warn' : 'ok' }, { l: 'Flagged entries', v: `${o.border.flaggedEntries}`, t: o.border.flaggedEntries > 90 ? 'alert' : 'warn' }, { l: 'Mean clearance', v: `${o.border.meanClearanceMin}m`, t: o.border.meanClearanceMin >= 30 ? 'alert' : 'ok' }];
+    if (d === 'licensing') return [{ l: 'Permits pending', v: o.licensing.pending.toLocaleString(), t: o.licensing.pending > 3500 ? 'alert' : 'warn' }, { l: 'SLA met', v: `${o.licensing.slaMetPct}%`, t: o.licensing.slaMetPct >= 80 ? 'ok' : 'warn' }];
+    if (d === 'coordination') return [{ l: 'Cells active', v: `${o.coordination.cellsActive}`, t: 'ok' }, { l: 'Public order', v: `${o.coordination.publicOrderIndex}`, t: o.coordination.publicOrderIndex >= 70 ? 'ok' : 'warn' }, { l: 'Threat level', v: o.internalThreatLevel, t: o.internalThreatLevel === 'high' ? 'alert' : o.internalThreatLevel === 'elevated' ? 'warn' : 'ok' }];
+  } else if (a === 'LABOR') {
+    const o = laborOps(id, ts);
+    if (d === 'employment') return [{ l: 'Unemployment', v: `${o.unemploymentPct}%`, t: o.unemploymentPct >= 16 ? 'alert' : o.unemploymentPct >= 9 ? 'warn' : 'ok' }, { l: 'Placements today', v: o.placementsToday.toLocaleString(), t: 'ok' }, { l: 'Vacancies', v: o.vacancies.toLocaleString(), t: 'ok' }];
+    if (d === 'inspection') return [{ l: 'Compliance', v: `${o.inspection.compliancePct}%`, t: o.inspection.compliancePct >= 80 ? 'ok' : 'warn' }, { l: 'Open cases', v: o.inspection.openCases.toLocaleString(), t: o.inspection.openCases > 1500 ? 'alert' : 'ok' }];
+    if (d === 'insurance') return [{ l: 'Funds', v: `${o.socialInsurance.fundsBn}bn`, t: 'ok' }, { l: 'Claims pending', v: o.socialInsurance.claimsPending.toLocaleString(), t: o.socialInsurance.claimsPending > 6000 ? 'alert' : 'warn' }, { l: 'Payout on-time', v: `${o.socialInsurance.payoutOnTimePct}%`, t: o.socialInsurance.payoutOnTimePct >= 90 ? 'ok' : 'warn' }];
+    if (d === 'disputes') return [{ l: 'Open disputes', v: o.disputes.openDisputes.toLocaleString(), t: o.disputes.openDisputes > 3500 ? 'alert' : 'ok' }, { l: 'Median days', v: `${o.disputes.medianDays}`, t: o.disputes.medianDays >= 120 ? 'alert' : 'warn' }, { l: 'Resolved rate', v: `${o.disputes.resolvedRate}%`, t: o.disputes.resolvedRate >= 75 ? 'ok' : 'warn' }];
+  } else if (a === 'TRADE') {
+    const o = tradeOps(id, ts);
+    if (d === 'registry') return [{ l: 'Active businesses', v: `${o.businessRegistry.activeM}M`, t: 'ok' }, { l: 'Backlog', v: o.businessRegistry.backlog.toLocaleString(), t: o.businessRegistry.backlog > 2800 ? 'alert' : 'ok' }, { l: 'Median days', v: `${o.businessRegistry.medianDays}`, t: o.businessRegistry.medianDays >= 18 ? 'alert' : 'ok' }];
+    if (d === 'standards') return [{ l: 'Accredited labs', v: `${o.standards.labs}`, t: 'ok' }, { l: 'Conformity', v: `${o.standards.conformityPct}%`, t: o.standards.conformityPct >= 85 ? 'ok' : 'warn' }, { l: 'Certs pending', v: o.standards.certificationsPending.toLocaleString(), t: o.standards.certificationsPending > 1200 ? 'alert' : 'ok' }];
+    if (d === 'export') return [{ l: 'Corridors open', v: `${o.exports.corridorsOpen}/${o.exports.corridorsTotal}`, t: o.exports.corridorsOpen < o.exports.corridorsTotal ? 'warn' : 'ok' }, { l: 'Value index', v: `${o.exports.valueIdx}`, t: o.exports.valueIdx >= 70 ? 'ok' : 'warn' }, { l: 'Clearance days', v: `${o.exports.clearanceDays}`, t: o.exports.clearanceDays >= 12 ? 'alert' : 'ok' }];
+    if (d === 'licensing') return [{ l: 'Permits pending', v: o.licensing.pending.toLocaleString(), t: o.licensing.pending > 2500 ? 'alert' : 'ok' }, { l: 'SLA met', v: `${o.licensing.slaMetPct}%`, t: o.licensing.slaMetPct >= 80 ? 'ok' : 'warn' }];
+    if (d === 'industry') return [{ l: 'Industrial parks', v: `${o.industrialParks.parks}`, t: 'ok' }, { l: 'Occupancy', v: `${o.industrialParks.occupancyPct}%`, t: o.industrialParks.occupancyPct >= 70 ? 'ok' : 'warn' }, { l: 'Investment idx', v: `${o.industrialParks.investmentIdx}`, t: o.industrialParks.investmentIdx >= 60 ? 'ok' : 'warn' }];
+  } else if (a === 'ENVIRONMENT') {
+    const o = environmentOps(id, ts);
+    if (d === 'monitoring') return [{ l: 'Sensors online', v: `${o.monitoringOnline}/${o.monitoringTotal}`, t: o.monitoringOnline < o.monitoringTotal * 0.85 ? 'warn' : 'ok' }, { l: 'Air quality', v: `${o.airQualityIndex}`, t: o.airQualityIndex >= 120 ? 'alert' : 'warn' }, { l: 'Water quality', v: `${o.waterQualityPct}%`, t: o.waterQualityPct >= 80 ? 'ok' : 'warn' }];
+    if (d === 'protected') return [{ l: 'Area integrity', v: `${o.protectedAreaIntegrityPct}%`, t: o.protectedAreaIntegrityPct >= 80 ? 'ok' : 'warn' }, { l: 'Compliance', v: `${o.compliancePct}%`, t: o.compliancePct >= 80 ? 'ok' : 'warn' }];
+    if (d === 'permit') return [{ l: 'Permits pending', v: o.permitsPending.toLocaleString(), t: o.permitsPending > 1800 ? 'alert' : 'ok' }, { l: 'Compliance', v: `${o.compliancePct}%`, t: o.compliancePct >= 80 ? 'ok' : 'warn' }];
+    if (d === 'climate') return [{ l: 'Emissions vs target', v: `${o.emissionsVsTargetPct}%`, t: o.emissionsVsTargetPct > 115 ? 'alert' : o.emissionsVsTargetPct > 100 ? 'warn' : 'ok' }, { l: 'Protected integrity', v: `${o.protectedAreaIntegrityPct}%`, t: o.protectedAreaIntegrityPct >= 80 ? 'ok' : 'warn' }];
+  }
+  return null;
+}
+
 export function SectorInstitutionApp({ instanceId, archetype, label, domain, now, role, withheld }: {
   instanceId: string; archetype: ArchetypeKey; label: string; domain: string;
   now: number; role: SovereignRole; withheld: Capability[];
@@ -100,10 +147,20 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
     bars = { title: 'Environmental hazards', meta: 'regional risk', rows: o.hazards.map(h => ({ label: `${h.region} · ${h.kind}`, pct: h.level === 'severe' ? 92 : h.level === 'moderate' ? 58 : 26, tone: h.level === 'severe' ? 'alert' : h.level === 'moderate' ? 'warn' : 'ok', tail: h.level })) };
   }
 
+  // Deployable-path subsystem differentiation: each nav domain renders its
+  // own focused operational readout, not the archetype-wide blob.
+  const focus = focusFor(archetype, domain, id, ts);
+  const shownItems = focus ?? items;
+
   return (
     <div className="space-y-2">
-      <StatGrid items={items} />
-      {bars ? <Panel title={bars.title} meta={bars.meta}><Bars rows={bars.rows} /></Panel> : null}
+      {focus ? (
+        <div className="rounded-[3px] border border-line bg-surface px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
+          {label} · {domain} subsystem
+        </div>
+      ) : null}
+      <StatGrid items={shownItems} />
+      {!focus && bars ? <Panel title={bars.title} meta={bars.meta}><Bars rows={bars.rows} /></Panel> : null}
       {(['AGRICULTURE', 'INTERIOR', 'ENVIRONMENT', 'TRANSPORT'] as ArchetypeKey[]).includes(archetype) ? (
         <>
           <FieldPanel instId={id} archetype={archetype} now={now} />
