@@ -1,14 +1,17 @@
 'use client';
 
-// apps/ministry-health/subsystems/SimulationSystem — Layer 12. Predictive
-// sovereign AI: pandemic simulation, intervention modelling and systemic
-// collapse-risk detection.
+// Domain — AI & Simulation. Predictive sovereign AI: pandemic simulation,
+// intervention modelling and systemic collapse-risk detection. Cinematic
+// sovereign command rhythm.
 
 import * as React from 'react';
-import { StatGrid, Bars, Panel, PosturePill, ac } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { healthSimulation } from '@/lib/gov/health-operations';
+import { CommandPanel, sc, type Tone } from '@/apps/_shared/SovereignUI';
+import { OpsHeader, KpiStrip, BarPanel } from '@/apps/ministry-health/subsystems/_ops';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
+
+const ACC = '#7c5cff';
 
 export function SimulationSystem({ id, now, role, withheld }: {
   id: string; now: number; role: SovereignRole; withheld: Capability[];
@@ -16,66 +19,65 @@ export function SimulationSystem({ id, now, role, withheld }: {
   const ts = now / 4000;
   const sm = healthSimulation(id, ts);
   const [selected, setSelected] = React.useState<string | null>(null);
-  const sc = sm.scenarios.find(s => s.name === selected) ?? sm.scenarios[0]!;
-  const pTone: 'ok' | 'warn' | 'alert' = sm.posture === 'critical' ? 'alert' : sm.posture === 'watch' ? 'warn' : 'ok';
+  const scn = sm.scenarios.find(s => s.name === selected) ?? sm.scenarios[0]!;
+  const pTone: Tone = sm.posture === 'critical' ? 'alert' : sm.posture === 'watch' ? 'warn' : 'ok';
+
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-3 rounded-[3px] border border-line bg-surface px-2.5 py-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">AI &amp; National Health Simulation</span>
-        <PosturePill label={sm.posture} tone={pTone} />
-        <span className="text-[9px] text-ink-muted">systemic risk · <span style={{ color: ac(pTone) }}>{sm.systemicRiskIndex}</span> · confidence {sm.confidencePct}%</span>
-        <span className="ml-auto text-[9px] text-ink-muted">operator · {role}</span>
-      </div>
-      <StatGrid items={[
-        { l: 'Systemic risk', v: `${sm.systemicRiskIndex}`, t: pTone },
-        { l: 'Posture', v: sm.posture, t: pTone },
-        { l: 'Scenarios', v: `${sm.scenarios.length}`, t: 'ok' },
-        { l: 'Collapse vectors', v: `${sm.collapseRisks.length}`, t: 'ok' },
-        { l: 'Top risk', v: `${sm.collapseRisks[0]!.riskPct}%`, t: sm.collapseRisks[0]!.tone },
-        { l: 'Confidence', v: `${sm.confidencePct}%`, t: 'ok' },
+    <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#06050f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
+      <OpsHeader index={11} title="AI & National Health Simulation" subtitle="Pandemic Modelling · Collapse-Risk Detection"
+        posture={sm.posture} tone={pTone} now={now} role={role} accent={ACC} />
+
+      <KpiStrip ts={ts} accent={ACC} items={[
+        { l: 'Systemic Risk', v: `${sm.systemicRiskIndex}`, s: 'index', t: pTone, k: 'smr' },
+        { l: 'Posture', v: sm.posture.toUpperCase(), s: 'national', t: pTone, k: 'smp' },
+        { l: 'Scenarios', v: `${sm.scenarios.length}`, s: 'modelled', t: 'ok', k: 'sms' },
+        { l: 'Collapse Vectors', v: `${sm.collapseRisks.length}`, s: 'detected', t: sm.collapseRisks.some(r => r.tone === 'alert') ? 'alert' : 'warn', k: 'smc' },
+        { l: 'Top Risk', v: `${sm.collapseRisks[0]!.riskPct}%`, s: sm.collapseRisks[0]!.system, t: sm.collapseRisks[0]!.tone, k: 'smt' },
+        { l: 'Confidence', v: `${sm.confidencePct}%`, s: 'ensemble', t: 'ok', k: 'smf' },
       ]} />
-      <div className="rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid ${ac(pTone)}` }}>
-        <div className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: ac(pTone) }}>AI recommended intervention</div>
-        <div className="mt-0.5 text-[10px] text-ink">{sm.recommendedIntervention}</div>
-      </div>
-      <div className="grid gap-2 lg:grid-cols-5">
-        <div className="lg:col-span-2">
-          <Panel title="Simulation scenarios" meta="select to model">
+
+      <CommandPanel title="AI recommended intervention" meta={`confidence ${sm.confidencePct}%`} accent={ACC} live>
+        <div className="text-[10px] text-ink">{sm.recommendedIntervention}</div>
+      </CommandPanel>
+
+      <div className="grid gap-2 xl:grid-cols-5">
+        <div className="xl:col-span-2">
+          <CommandPanel title="Simulation scenarios" meta="select to model" accent={ACC}>
             <div className="space-y-1">
               {sm.scenarios.map(s => {
-                const on = sc.name === s.name;
+                const on = scn.name === s.name;
                 return (
                   <button key={s.name} onClick={() => setSelected(s.name)}
-                    className="focus-ring flex w-full items-center gap-2 rounded-[3px] border px-2 py-1 text-left transition-colors"
-                    style={{ borderColor: on ? ac(s.tone) : 'rgb(var(--c-line-soft))', backgroundColor: on ? 'rgb(var(--c-surface-2))' : 'transparent', borderLeft: `3px solid ${ac(s.tone)}` }}>
-                    <span className="min-w-0 flex-1 truncate text-[10px] text-ink">{s.name}</span>
-                    <span className="w-12 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: ac(s.tone) }}>{s.peakLoadPct}%</span>
+                    className="focus-ring flex w-full items-center gap-2 rounded-[3px] border px-2 py-1.5 text-left transition-colors"
+                    style={{ borderColor: on ? sc(s.tone) : 'rgba(124,92,255,0.18)', background: on ? 'rgba(124,92,255,0.14)' : 'rgba(0,0,0,0.22)', borderLeft: `3px solid ${sc(s.tone)}` }}>
+                    <span className="min-w-0 flex-1 truncate text-[9px] text-ink">{s.name}</span>
+                    <span className="w-12 shrink-0 text-right font-mono text-[9px] tabular-nums" style={{ color: sc(s.tone) }}>{s.peakLoadPct}%</span>
                   </button>
                 );
               })}
             </div>
-          </Panel>
+          </CommandPanel>
         </div>
-        <div className="lg:col-span-3 space-y-2">
-          <Panel title={`Modelled · ${sc.name}`} meta={`peak in ${sc.weeksToPeak}w`}>
+        <div className="space-y-2 xl:col-span-3">
+          <CommandPanel title={`Modelled · ${scn.name}`} meta={`peak in ${scn.weeksToPeak}w`} accent={ACC} live>
             <div className="grid grid-cols-3 gap-1.5">
               {[
-                { l: 'Peak load', v: `${sc.peakLoadPct}%`, t: sc.tone },
-                { l: 'Mortality idx', v: `${sc.mortalityIdx}`, t: (sc.mortalityIdx >= 40 ? 'alert' : sc.mortalityIdx >= 20 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
-                { l: 'Weeks to peak', v: `${sc.weeksToPeak}w`, t: (sc.weeksToPeak <= 3 ? 'alert' : 'warn') as 'ok' | 'warn' | 'alert' },
+                { l: 'Peak load', v: `${scn.peakLoadPct}%`, t: scn.tone },
+                { l: 'Mortality idx', v: `${scn.mortalityIdx}`, t: (scn.mortalityIdx >= 40 ? 'alert' : scn.mortalityIdx >= 20 ? 'warn' : 'ok') as Tone },
+                { l: 'Weeks to peak', v: `${scn.weeksToPeak}w`, t: (scn.weeksToPeak <= 3 ? 'alert' : 'warn') as Tone },
               ].map(x => (
-                <div key={x.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
-                  <div className="text-[7.5px] uppercase tracking-[0.14em] text-ink-muted">{x.l}</div>
-                  <div className="font-mono text-[13px] tabular-nums" style={{ color: ac(x.t) }}>{x.v}</div>
+                <div key={x.l} className="rounded-[4px] border px-2 py-1.5" style={{ borderColor: 'rgba(124,92,255,0.18)', background: 'rgba(0,0,0,0.22)' }}>
+                  <div className="text-[7px] uppercase tracking-[0.14em] text-ink-muted">{x.l}</div>
+                  <div className="font-mono text-[15px] font-bold tabular-nums" style={{ color: sc(x.t) }}>{x.v}</div>
                 </div>
               ))}
             </div>
-          </Panel>
-          <Panel title="Collapse-risk detection" meta="system · risk% · horizon · driver (risk-ordered)">
-            <Bars rows={sm.collapseRisks.map(r => ({ label: `${r.system} (${r.horizonDays}d · ${r.driver})`, pct: r.riskPct, tone: r.tone, tail: `${r.riskPct}%` }))} />
-          </Panel>
+          </CommandPanel>
+          <BarPanel title="Collapse-risk detection" meta="system · risk% · horizon (risk-ordered)" accent={ACC} live
+            rows={sm.collapseRisks.map(r => ({ label: `${r.system} (${r.horizonDays}d · ${r.driver})`, pct: r.riskPct, tone: r.tone, tail: `${r.riskPct}%` }))} />
         </div>
       </div>
+
       <RuntimeQueue scope={`${id}:simulation`} kind="incident" title="Simulation runtime — model → recommend → authorise → deploy intervention" by="Strategic Analyst" role={role} withheld={withheld} />
     </div>
   );
