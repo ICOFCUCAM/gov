@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { archetypeOperations } from './archetype-operations';
+import { archetypeOperations, sectorCommand } from './archetype-operations';
 import type { ArchetypeKey } from '@/lib/api/types';
 
 const KEYS: ArchetypeKey[] = [
@@ -34,5 +34,21 @@ describe('archetype operations engine', () => {
     const t0 = archetypeOperations('INST', 'TRANSPORT', 0);
     const t1 = archetypeOperations('INST', 'TRANSPORT', 400);
     expect(t0.meanOperational !== t1.meanOperational || t0.command.directives !== t1.command.directives).toBe(true);
+  });
+
+  it('sectorCommand is a deterministic, bounded synthesis for any archetype', () => {
+    for (const k of ['JUSTICE', 'AGRICULTURE', 'ENVIRONMENT', 'INTERIOR', 'LABOR', 'TRADE'] as ArchetypeKey[]) {
+      const c = sectorCommand('INST', k, 80);
+      expect(c).toEqual(sectorCommand('INST', k, 80));
+      expect(['steady', 'engaged', 'crisis']).toContain(c.posture);
+      expect(c.postureIndex).toBeGreaterThanOrEqual(0);
+      expect(c.postureIndex).toBeLessThanOrEqual(100);
+      expect(c.domains.length).toBe(5);
+      for (const d of c.domains) expect(['ok', 'warn', 'alert']).toContain(d.tone);
+      const rank = { critical: 0, priority: 1, advisory: 2 } as const;
+      for (let i = 1; i < c.directives.length; i++) {
+        expect(rank[c.directives[i - 1]!.priority]).toBeLessThanOrEqual(rank[c.directives[i]!.priority]);
+      }
+    }
   });
 });

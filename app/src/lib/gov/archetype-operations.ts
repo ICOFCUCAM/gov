@@ -48,6 +48,51 @@ export interface ArchetypeOperations {
   meanOperational: number;
 }
 
+// ── Sector Command ───────────────────────────────────────────────────
+// A generic, archetype-agnostic command synthesis: turns any
+// institution's archetypeOperations into the standard sovereign command
+// surface — emergent posture index, domain rollup and ranked directives.
+// Pure & deterministic.
+export interface SectorDomainStatus { domain: string; metric: string; value: string; tone: Tone }
+export interface SectorDirective { priority: 'critical' | 'priority' | 'advisory'; title: string; rationale: string; target: string }
+export interface SectorCommand {
+  postureIndex: number;
+  posture: 'steady' | 'engaged' | 'crisis';
+  domains: SectorDomainStatus[];
+  directives: SectorDirective[];
+  criticalDomains: number;
+}
+export function sectorCommand(instId: string, archetype: ArchetypeKey, t: number): SectorCommand {
+  const ao = archetypeOperations(instId, archetype, t);
+  const breaching = ao.queues.filter(q => q.breaching).length;
+  const worstQueue = [...ao.queues].sort((a, b) => b.oldestHrs - a.oldestHrs)[0];
+  const risks = ao.intelligence.filter(s => s.level === 'risk').length;
+  const domains: SectorDomainStatus[] = [
+    { domain: 'Operational posture', metric: ao.command.posture, value: `${ao.meanOperational}%`,
+      tone: ao.command.postureTone },
+    { domain: 'Workflow queues', metric: 'Breaching', value: `${breaching}`,
+      tone: breaching >= 3 ? 'alert' : breaching >= 1 ? 'warn' : 'ok' },
+    { domain: 'Personnel', metric: 'Staffed', value: `${ao.personnel.staffedPct}%`,
+      tone: ao.personnel.staffedPct >= 80 ? 'ok' : ao.personnel.staffedPct >= 65 ? 'warn' : 'alert' },
+    { domain: 'Fiscal', metric: 'Budget pressure', value: `${ao.finance.budgetPressure}`,
+      tone: ao.finance.budgetPressure <= 35 ? 'ok' : ao.finance.budgetPressure <= 60 ? 'warn' : 'alert' },
+    { domain: 'Intelligence', metric: 'Active risks', value: `${risks}`,
+      tone: risks >= 2 ? 'alert' : risks >= 1 ? 'warn' : 'ok' },
+  ];
+  const directives: SectorDirective[] = [];
+  if (ao.command.escalationTier >= 2) directives.push({ priority: 'critical', title: 'Stand up crisis command cell', rationale: `Escalation tier ${ao.command.escalationTier}`, target: 'command' });
+  if (breaching >= 1 && worstQueue) directives.push({ priority: breaching >= 3 ? 'critical' : 'priority', title: `Clear breaching workflow — ${worstQueue.label}`, rationale: `${breaching} queue(s) breaching SLA · oldest ${worstQueue.oldestHrs}h`, target: 'workflow' });
+  if (ao.personnel.staffedPct < 65) directives.push({ priority: 'priority', title: 'Emergency staffing mobilisation', rationale: `Staffed ${ao.personnel.staffedPct}%`, target: 'personnel' });
+  if (ao.finance.budgetPressure > 60) directives.push({ priority: 'priority', title: 'Fiscal-pressure intervention', rationale: `Budget pressure ${ao.finance.budgetPressure}`, target: 'finance' });
+  if (risks >= 2) directives.push({ priority: 'advisory', title: 'Convene intelligence review', rationale: `${risks} active risk signals`, target: 'intelligence' });
+  directives.sort((a, b) => ({ critical: 0, priority: 1, advisory: 2 }[a.priority] - { critical: 0, priority: 1, advisory: 2 }[b.priority]));
+  const criticalDomains = domains.filter(d => d.tone === 'alert').length;
+  const postureIndex = Math.max(0, Math.min(100, Math.round(ao.meanOperational * 0.5 + (100 - criticalDomains * 18) * 0.5)));
+  const posture: SectorCommand['posture'] =
+    criticalDomains >= 3 || postureIndex < 45 ? 'crisis' : criticalDomains >= 1 || postureIndex < 70 ? 'engaged' : 'steady';
+  return { postureIndex, posture, domains, directives, criticalDomains };
+}
+
 export function archetypeOperations(instId: string, archetype: ArchetypeKey, t: number): ArchetypeOperations {
   const profile = profileFor(archetype);
   const op = ministryOpState(instId, archetype, 55 + Math.round(seed(`ao:p:${instId}`) * 35), t);

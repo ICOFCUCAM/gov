@@ -15,7 +15,7 @@ import {
   fiscalCommand, revenueOps, budgetOps, procurementOps, bankingRails,
   citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
-import { archetypeOperations } from '@/lib/gov/archetype-operations';
+import { archetypeOperations, sectorCommand } from '@/lib/gov/archetype-operations';
 import { schoolNetwork, examOps, teacherOps, studentServices, higherEducation, curriculumOps, educationCommand } from '@/lib/gov/education-systems';
 import { transportOps, transportCommand } from '@/lib/gov/transport-systems';
 import { energyOps, energyCommand } from '@/lib/gov/energy-systems';
@@ -1305,6 +1305,55 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <RuntimeQueue scope={`${id}:${grp.key}`} kind={grp.key === 'access' ? 'permit' : grp.key === 'fuel' ? 'procurement' : grp.key === 'command' ? 'incident' : 'case'} title={`${grp.name} runtime — executable workflow`} />
+      </div>
+    );
+  }
+
+  if (group === 'command' && (isInterior || isAgri || isJustice || isEnv || isTrade || isLabor)) {
+    const C = sectorCommand(id, m.archetype, ts);
+    const pt: 'ok' | 'warn' | 'alert' = C.posture === 'crisis' ? 'alert' : C.posture === 'engaged' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} />
+          <Stat l="Command posture" v={C.posture} t={pt} />
+          <Stat l="Critical domains" v={`${C.criticalDomains}`} t={C.criticalDomains ? 'alert' : 'ok'} />
+          <Stat l="Open directives" v={`${C.directives.length}`} t={C.directives.some(d => d.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok'} />
+          <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
+          <Stat l="Authority" v="National" t="ok" />
+        </div>
+        <Panel title={`Whole-of-${m.archetype.toLowerCase()} domain status`} meta="emergent from the institution's operational engine" bodyClass="!p-0">
+          {C.domains.map(d => (
+            <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
+              <span className="w-44 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>
+              <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{d.metric}</span>
+              <span className="w-16 shrink-0 text-right font-mono text-[11px] tabular-nums" style={{ color: tc(d.tone) }}>{d.value}</span>
+            </div>
+          ))}
+        </Panel>
+        <Panel title="Command directives" meta="ranked · executable across the institution" bodyClass="!p-2">
+          {C.directives.length === 0 ? (
+            <p className="text-[11px] text-ink-muted">No outstanding command directives — every domain within tolerance.</p>
+          ) : (
+            <div className="space-y-1.5">
+              {C.directives.map((d, i) => {
+                const dt = d.priority === 'critical' ? 'alert' : d.priority === 'priority' ? 'warn' : 'ok';
+                return (
+                  <div key={i} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2.5 py-2" style={{ borderLeft: `3px solid ${tc(dt)}` }}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[8.5px] font-bold uppercase tracking-[0.16em]" style={{ color: tc(dt) }}>{d.priority}</span>
+                      <span className="text-[11px] font-medium text-ink">{d.title}</span>
+                      <a href={`/ministries/${id}/system/${d.target}`} className="ml-auto text-[9px] text-link no-underline hover:underline">→ {d.target}</a>
+                    </div>
+                    <div className="mt-0.5 text-[9px] text-ink-muted">{d.rationale}</div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+        <RuntimeQueue scope={`${id}:command`} kind="incident" title={`${m.name} Command runtime — execute national directives`} by="Command Authority" n={14} />
       </div>
     );
   }
