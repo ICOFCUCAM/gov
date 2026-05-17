@@ -4,7 +4,7 @@ import {
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
   patientDeepExecution, emergencyIncidentExecution, diseaseEpidemiology,
-  healthFinanceExecution, healthRegulatoryExecution, nationalSituation,
+  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -249,5 +249,17 @@ describe('ministry of health operations engine', () => {
     }
     expect(a.worstRegion).toBe(a.regions[0]!.region);
     expect(a.headline.length).toBeGreaterThan(10);
+  });
+
+  it('nationalHealthcareGrid is deterministic & bounded', () => {
+    const a = nationalHealthcareGrid('MOH', 140);
+    expect(a).toEqual(nationalHealthcareGrid('MOH', 140));
+    expect(a.classes.length).toBe(7);
+    expect(a.regions.length).toBe(6);
+    expect(['operational','degraded','critical']).toContain(a.posture);
+    expect(a.onlinePct).toBeGreaterThanOrEqual(0);
+    expect(a.onlinePct).toBeLessThanOrEqual(100);
+    for (const c of a.classes) { expect(c.online).toBeLessThanOrEqual(c.total); expect(['ok','warn','alert']).toContain(c.tone); }
+    for (let i = 1; i < a.regions.length; i++) expect(a.regions[i - 1]!.onlinePct).toBeLessThanOrEqual(a.regions[i]!.onlinePct);
   });
 });

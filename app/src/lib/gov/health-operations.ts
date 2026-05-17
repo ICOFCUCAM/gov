@@ -134,6 +134,64 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── National Healthcare Grid — every facility & asset registered ───────
+// The complete national asset register with live telemetry: hospitals,
+// clinics, labs, ambulances, pharmacies, blood banks, warehouses. Pure &
+// deterministic.
+export type GridAssetKind = 'Hospital' | 'Clinic' | 'Laboratory' | 'Ambulance' | 'Pharmacy' | 'Blood bank' | 'Med warehouse';
+export interface GridAssetClass {
+  kind: GridAssetKind;
+  total: number;
+  online: number;
+  utilisationPct: number;
+  degraded: number;
+  tone: Tone;
+}
+export interface GridRegionRollup { region: string; assets: number; onlinePct: number; tone: Tone }
+export interface NationalHealthcareGrid {
+  classes: GridAssetClass[];
+  regions: GridRegionRollup[];
+  totalAssets: number;
+  onlinePct: number;
+  degradedAssets: number;
+  bloodUnitsAvailable: number;
+  warehouseStockPct: number;
+  posture: 'operational' | 'degraded' | 'critical';
+}
+export function nationalHealthcareGrid(id: string, t: number): NationalHealthcareGrid {
+  const SPEC: { kind: GridAssetKind; lo: number; hi: number }[] = [
+    { kind: 'Hospital', lo: 180, hi: 520 }, { kind: 'Clinic', lo: 1800, hi: 5200 },
+    { kind: 'Laboratory', lo: 90, hi: 280 }, { kind: 'Ambulance', lo: 600, hi: 2400 },
+    { kind: 'Pharmacy', lo: 1400, hi: 6200 }, { kind: 'Blood bank', lo: 40, hi: 160 },
+    { kind: 'Med warehouse', lo: 20, hi: 90 },
+  ];
+  const classes: GridAssetClass[] = SPEC.map((s, i): GridAssetClass => {
+    const total = s.lo + Math.round(seed(`gg:n:${id}:${i}`) * (s.hi - s.lo));
+    const onlineFrac = wave(`gg:o:${id}:${i}`, t, 0.7, 0.995);
+    const online = Math.round(total * onlineFrac);
+    const utilisationPct = Math.round(wave(`gg:u:${id}:${i}`, t, 45, 99));
+    const degraded = total - online;
+    const tone: Tone = onlineFrac < 0.8 ? 'alert' : onlineFrac < 0.92 ? 'warn' : 'ok';
+    return { kind: s.kind, total, online, utilisationPct, degraded, tone };
+  });
+  const regions: GridRegionRollup[] = REGIONS.map((region, i): GridRegionRollup => {
+    const assets = 400 + Math.round(seed(`gg:ra:${id}:${i}`) * 2600);
+    const onlinePct = Math.round(wave(`gg:rp:${id}:${i}`, t, 70, 100));
+    const tone: Tone = onlinePct < 82 ? 'alert' : onlinePct < 92 ? 'warn' : 'ok';
+    return { region, assets, onlinePct, tone };
+  }).sort((a, b) => a.onlinePct - b.onlinePct);
+  const totalAssets = classes.reduce((s, c) => s + c.total, 0);
+  const onlineTotal = classes.reduce((s, c) => s + c.online, 0);
+  const onlinePct = Math.round((onlineTotal / totalAssets) * 100);
+  const degradedAssets = classes.reduce((s, c) => s + c.degraded, 0);
+  const bloodUnitsAvailable = Math.round(wave(`gg:bu:${id}`, t, 2000, 48000));
+  const warehouseStockPct = Math.round(wave(`gg:ws:${id}`, t, 40, 98));
+  const critClasses = classes.filter(c => c.tone === 'alert').length;
+  const posture: NationalHealthcareGrid['posture'] =
+    critClasses >= 2 || onlinePct < 82 ? 'critical' : critClasses >= 1 || onlinePct < 92 ? 'degraded' : 'operational';
+  return { classes, regions, totalAssets, onlinePct, degradedAssets, bloodUnitsAvailable, warehouseStockPct, posture };
+}
+
 // ── National Situation Room — whole-of-nation health command picture ───
 // Fuses every deep health subsystem engine into one sovereign command
 // telemetry: regional pressure map, ICU load, emergency/outbreak heat,
