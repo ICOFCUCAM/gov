@@ -155,6 +155,82 @@ export function laboratoryExecution(id: string, t: number): LaboratoryExecution 
   return { pipeline, queues, outbreaks, routing, criticalAlerts, timeline, slaBreaches, criticalUnacked, escalationLevel, posture };
 }
 
+// ── Doctor clinical deep execution system ──────────────────────────────
+// Clinical workforce as a true execution system: a patient→clinician
+// assignment board, shift coordination with handover-gap detection, live
+// emergency escalation codes, treatment-workflow lanes and workforce
+// strain. Pure & deterministic.
+const DOC_SPECIALTIES = ['Emergency', 'Internal medicine', 'Surgery', 'Paediatrics', 'Obstetrics', 'ICU / Critical'];
+const DOC_CODES = ['Code Blue', 'Code Trauma', 'Code Sepsis', 'Code STEMI', 'Code Stroke'];
+export interface ClinicianSlot { specialty: string; onDuty: number; required: number; utilisationPct: number; tone: Tone }
+export interface AssignmentRow { patient: string; triage: 1 | 2 | 3 | 4 | 5; specialty: string; assignedTo: string | null; waitMin: number; tone: Tone }
+export interface EmergencyCode { id: string; code: string; location: string; clinician: string; ageMin: number; status: 'dispatched' | 'on-scene' | 'stabilising'; tone: Tone }
+export interface TreatmentLane { stage: 'Triage' | 'Diagnosis' | 'Treatment' | 'Disposition'; patients: number; throughputPerHr: number; tone: Tone }
+export interface DoctorClinicalExecution {
+  shift: ClinicianSlot[];
+  assignments: AssignmentRow[];
+  unassigned: number;
+  codes: EmergencyCode[];
+  lanes: TreatmentLane[];
+  meanWorkloadPct: number;
+  burnoutAlerts: number;
+  nextShiftGap: number;
+  timeline: LabTimelineEvent[];
+  posture: 'steady' | 'strained' | 'crisis';
+}
+export function doctorClinicalExecution(id: string, t: number): DoctorClinicalExecution {
+  const shift: ClinicianSlot[] = DOC_SPECIALTIES.map((specialty, i): ClinicianSlot => {
+    const required = 6 + Math.round(seed(`dc:rq:${id}:${i}`) * 14);
+    const onDuty = Math.max(1, Math.round(required * wave(`dc:od:${id}:${i}`, t, 0.5, 1.05)));
+    const utilisationPct = Math.round(Math.min(100, (1 - Math.min(1, onDuty / required)) * 0 + wave(`dc:ut:${id}:${i}`, t, 45, 100)));
+    const tone: Tone = onDuty < required * 0.7 || utilisationPct >= 92 ? 'alert' : onDuty < required || utilisationPct >= 80 ? 'warn' : 'ok';
+    return { specialty, onDuty, required, utilisationPct, tone };
+  });
+  const nAssign = 8;
+  const assignments: AssignmentRow[] = Array.from({ length: nAssign }, (_, i): AssignmentRow => {
+    const triage = (1 + Math.floor(seed(`dc:tg:${id}:${i}`) * 5)) as AssignmentRow['triage'];
+    const specialty = DOC_SPECIALTIES[i % DOC_SPECIALTIES.length]!;
+    const waitMin = Math.round(wave(`dc:wt:${id}:${i}`, t, 0, 220));
+    const slot = shift.find(s => s.specialty === specialty)!;
+    const assignedTo = slot.onDuty >= slot.required * 0.7 && seed(`dc:as:${id}:${i}`) > 0.35
+      ? `DR-${1000 + (i % 12)}` : null;
+    const tone: Tone = triage <= 2 && !assignedTo ? 'alert' : !assignedTo || waitMin > 120 ? 'warn' : 'ok';
+    return { patient: `PV-${4000 + i}`, triage, specialty, assignedTo, waitMin, tone };
+  }).sort((a, b) => a.triage - b.triage || b.waitMin - a.waitMin);
+  const unassigned = assignments.filter(a => !a.assignedTo).length;
+  const nCodes = Math.round(wave(`dc:nc:${id}`, t, 0, 5));
+  const codes: EmergencyCode[] = Array.from({ length: nCodes }, (_, i): EmergencyCode => {
+    const ageMin = Math.round(wave(`dc:cm:${id}:${i}`, t, 0, 40));
+    const status: EmergencyCode['status'] = ageMin < 4 ? 'dispatched' : ageMin < 14 ? 'on-scene' : 'stabilising';
+    return {
+      id: `EC-${700 + i}`, code: DOC_CODES[i % DOC_CODES.length]!,
+      location: `${['ED', 'Ward 4', 'ICU', 'Theatre 2', 'Maternity'][i % 5]}`,
+      clinician: `DR-${1000 + (i * 3 % 12)}`, ageMin, status,
+      tone: ageMin >= 14 ? 'alert' : ageMin >= 4 ? 'warn' : 'ok',
+    };
+  });
+  const lanes: TreatmentLane[] = (['Triage', 'Diagnosis', 'Treatment', 'Disposition'] as const).map((stage, i): TreatmentLane => {
+    const patients = Math.round(wave(`dc:ln:${id}:${i}`, t, 4, 220));
+    const throughputPerHr = Math.round(wave(`dc:tp:${id}:${i}`, t, 6, 90));
+    const tone: Tone = patients > 160 ? 'alert' : patients > 90 ? 'warn' : 'ok';
+    return { stage, patients, throughputPerHr, tone };
+  });
+  const meanWorkloadPct = Math.round(shift.reduce((s, x) => s + x.utilisationPct, 0) / shift.length);
+  const burnoutAlerts = shift.filter(s => s.utilisationPct >= 92).length;
+  const nextShiftGap = shift.reduce((s, x) => s + Math.max(0, x.required - x.onDuty), 0);
+  const criticalCodes = codes.filter(c => c.tone === 'alert').length;
+  const posture: DoctorClinicalExecution['posture'] =
+    criticalCodes >= 2 || unassigned >= 4 || nextShiftGap >= 18 ? 'crisis'
+      : criticalCodes >= 1 || unassigned >= 1 || nextShiftGap >= 6 ? 'strained' : 'steady';
+  const timeline: LabTimelineEvent[] = [
+    { atHrsAgo: 0, kind: 'sync', detail: `${assignments.length - unassigned}/${assignments.length} patients assigned · mean workload ${meanWorkloadPct}%`, tone: unassigned ? 'warn' : 'ok' },
+    { atHrsAgo: 1, kind: 'alert', detail: codes.length ? `${codes.length} active emergency code(s) — oldest ${Math.max(0, ...codes.map(c => c.ageMin))}m` : 'No active emergency codes', tone: criticalCodes ? 'alert' : codes.length ? 'warn' : 'ok' },
+    { atHrsAgo: 2, kind: 'escalation', detail: `Next-shift gap ${nextShiftGap} clinician(s) — handover risk`, tone: nextShiftGap >= 12 ? 'alert' : nextShiftGap ? 'warn' : 'ok' },
+    { atHrsAgo: 4, kind: 'result', detail: `Treatment lane peak · ${lanes.reduce((m, l) => l.patients > m.patients ? l : m).stage}`, tone: lanes.some(l => l.tone === 'alert') ? 'alert' : 'ok' },
+  ];
+  return { shift, assignments, unassigned, codes, lanes, meanWorkloadPct, burnoutAlerts, nextShiftGap, timeline, posture };
+}
+
 // ── Health finance & claims ────────────────────────────────────────────
 export interface HealthFinance {
   insuranceCoveragePct: number;

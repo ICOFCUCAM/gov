@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   pharmaceuticalSupply, laboratoryNetwork, healthFinance,
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
+  doctorClinicalExecution,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -56,5 +57,27 @@ describe('ministry of health operations engine', () => {
       expect(['ok', 'warn', 'alert']).toContain(q.tone);
     }
     expect(a.timeline.length).toBeGreaterThan(3);
+  });
+
+  it('doctorClinicalExecution is a deterministic, bounded clinical execution system', () => {
+    const a = doctorClinicalExecution('MOH', 130);
+    expect(a).toEqual(doctorClinicalExecution('MOH', 130));
+    expect(a.shift.length).toBe(6);
+    expect(a.assignments.length).toBe(8);
+    expect(a.lanes.map(l => l.stage)).toEqual(['Triage', 'Diagnosis', 'Treatment', 'Disposition']);
+    expect(['steady', 'strained', 'crisis']).toContain(a.posture);
+    expect(a.unassigned).toBe(a.assignments.filter(x => !x.assignedTo).length);
+    // assignment board triage-ordered (acute first)
+    for (let i = 1; i < a.assignments.length; i++) {
+      expect(a.assignments[i - 1]!.triage).toBeLessThanOrEqual(a.assignments[i]!.triage);
+    }
+    for (const s of a.shift) {
+      expect(s.onDuty).toBeGreaterThanOrEqual(1);
+      expect(s.utilisationPct).toBeGreaterThanOrEqual(0);
+      expect(s.utilisationPct).toBeLessThanOrEqual(100);
+      expect(['ok', 'warn', 'alert']).toContain(s.tone);
+    }
+    for (const c of a.codes) expect(['dispatched', 'on-scene', 'stabilising']).toContain(c.status);
+    expect(a.nextShiftGap).toBeGreaterThanOrEqual(0);
   });
 });
