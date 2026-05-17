@@ -29,6 +29,8 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
 import { resolveInstitution } from '@/lib/institution/federation';
+import { verifyChain } from '@/services/audit-ledger';
+import { escalationState } from '@/shared/sovereignty/escalation';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 
@@ -72,7 +74,16 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const isTrade = m.archetype === 'TRADE';
   const isLabor = m.archetype === 'LABOR';
 
+  // Uniform operational-context: audit-chain integrity for this subsystem
+  // scope + emergent escalation tier — surfaced on every subsystem.
+  const scope = `${id}:${grp.key}`;
+  const chain = verifyChain(scope);
+  const stress = Math.max(0, Math.min(100, 100 - archetypeOperations(id, m.archetype, ts).meanOperational));
+  const esc = escalationState('ministry', stress);
+  const chainColor = !chain.intact ? 'rgb(var(--c-alert))' : chain.entries ? 'rgb(var(--c-ok))' : 'rgb(var(--c-ink-muted))';
+
   const header = (
+    <>
     <div className="flex flex-wrap items-end justify-between gap-2">
       <div className="flex items-center gap-2">
         <Link href={`/ministries/${id}/operations`} className="focus-ring text-[11px] text-link underline underline-offset-2">← {m.name}</Link>
@@ -92,6 +103,15 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
         ))}
       </div>
     </div>
+    <div className="flex flex-wrap items-center gap-3 rounded-[3px] border border-line bg-surface px-2.5 py-1.5 text-[9px]">
+      <span className="font-mono uppercase tracking-[0.16em] text-ink-muted">scope · {scope}</span>
+      <span style={{ color: chainColor }}>
+        audit chain · {chain.intact ? `intact (${chain.entries})` : `BREACH @${chain.brokenAt}`}
+      </span>
+      <span className="text-ink-muted">escalation · <span className="text-ink-soft">{esc.current}</span>{esc.next ? ` → ${esc.next.tier} (${esc.next.authority})` : ' · apex'}</span>
+      <span className="ml-auto text-ink-muted">operational stress · <span style={{ color: stress >= 50 ? 'rgb(var(--c-alert))' : stress >= 30 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' }}>{stress}</span></span>
+    </div>
+    </>
   );
 
   // ── HEALTH operational worlds ────────────────────────────────────────
