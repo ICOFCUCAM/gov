@@ -5,7 +5,7 @@
 // finance/claims, regulatory licensing, emergency medical command and the
 // national health command picture. Pure & deterministic; no React/DOM.
 
-import { seed, wave } from '@/lib/telemetry';
+import { seed, wave, waveSeries } from '@/lib/telemetry';
 
 const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
 type Tone = 'ok' | 'warn' | 'alert';
@@ -1013,6 +1013,144 @@ export function laboratoryExecution(id: string, t: number): LaboratoryExecution 
     { atHrsAgo: 5, kind: 'result', detail: `Pipeline ${pipeline.find(p => p.bottleneck)?.stage ?? 'flow'} ${pipeline.some(p => p.bottleneck) ? 'bottleneck' : 'nominal'}`, tone: pipeline.some(p => p.bottleneck) ? 'alert' : 'ok' },
   ];
   return { pipeline, queues, outbreaks, routing, criticalAlerts, timeline, slaBreaches, criticalUnacked, escalationLevel, posture };
+}
+
+// ── Clinician Workstation — patient-centric clinical execution ─────────
+// A doctor's deep chart: patient queue + the selected patient's live
+// record (vitals trend, timeline, diagnoses, care plan, medications,
+// labs, pending orders, AI clinical assistant, active alerts). Pure &
+// deterministic — every datum derives from the patient key.
+const WS_NAMES = ['Ahmed Khan', 'Fatima Ali', 'Mohammed Yousuf', 'Aisha Rahman', 'Hassan Ahmed', 'Layla Saeed', 'Omar Farouk', 'Noor Habib'];
+const WS_WARDS = ['Cardiology Ward · 3B', 'Medical Ward · 2A', 'Surgical Ward · 1C', 'Orthopedic Ward · 4B', 'Emergency', 'ICU · 5A'];
+export interface WsQueueItem { id: string; name: string; ward: string; acuity: 'High' | 'Medium' | 'Low'; time: string; riskScore: number; tone: Tone }
+export interface WsVital { label: string; value: string; tone: Tone; series: number[] }
+export interface WsTimelineEvent { at: string; kind: string; detail: string; by: string; tone: Tone }
+export interface WsDiagnosis { code: string; name: string; rank: 'Primary' | 'Secondary' }
+export interface WsCarePlanItem { task: string; due: string; done: boolean }
+export interface WsMed { drug: string; route: string; freq: string; time: string }
+export interface WsLab { test: string; value: string; unit: string; flag: 'Normal' | 'High' | 'Borderline'; day: string; tone: Tone }
+export interface WsOrder { name: string; priority: 'Medium' | 'Routine' | 'Low'; tone: Tone }
+export interface WsAlert { title: string; sub: string; ago: string; tone: Tone }
+export interface ClinicianPatient {
+  id: string; name: string; mrn: string; age: number; sex: 'Male' | 'Female';
+  blood: string; allergies: string; ward: string; bed: string; attending: string;
+  admittedDaysAgo: number; insurance: string; vip: boolean; highRisk: boolean;
+  riskScore: number; riskBand: 'Low' | 'Moderate' | 'High';
+  chiefComplaint: string;
+  vitals: WsVital[];
+  timeline: WsTimelineEvent[];
+  diagnoses: WsDiagnosis[];
+  notes: { at: string; text: string; by: string }[];
+  carePlan: WsCarePlanItem[];
+  carePlanPct: number;
+  medications: WsMed[];
+  labs: WsLab[];
+  orders: WsOrder[];
+  alerts: WsAlert[];
+  ai: { summary: string; riskAssessment: string; recommended: string[] };
+}
+export interface ClinicianWorkstation {
+  queue: WsQueueItem[];
+  patient: ClinicianPatient;
+  queueCount: number;
+  ordersPending: number;
+  resultsPending: number;
+}
+export function clinicianWorkstation(id: string, t: number, selected?: string): ClinicianWorkstation {
+  const queue: WsQueueItem[] = WS_NAMES.slice(0, 6).map((name, i): WsQueueItem => {
+    const riskScore = Math.round(wave(`cw:rs:${id}:${i}`, t, 38, 92));
+    const acuity: WsQueueItem['acuity'] = riskScore >= 72 ? 'High' : riskScore >= 52 ? 'Medium' : 'Low';
+    const hh = 8 + Math.floor(i * 0.5); const mm = (i * 18) % 60;
+    return {
+      id: `PT-${7801 + i}`, name, ward: WS_WARDS[i % WS_WARDS.length]!, acuity,
+      time: `${String(hh).padStart(2, '0')}:${String(mm).padStart(2, '0')}`,
+      riskScore, tone: acuity === 'High' ? 'alert' : acuity === 'Medium' ? 'warn' : 'ok',
+    };
+  }).sort((a, b) => b.riskScore - a.riskScore);
+  const sel = queue.find(q => q.id === selected) ?? queue[0]!;
+  const k = sel.id;
+  const riskScore = sel.riskScore;
+  const riskBand: ClinicianPatient['riskBand'] = riskScore >= 72 ? 'High' : riskScore >= 50 ? 'Moderate' : 'Low';
+  const vit = (label: string, lo: number, hi: number, fmt: (v: number) => string, warnAt: number, alertAt: number): WsVital => {
+    const series = waveSeries(`cw:v:${k}:${label}`, t, 16, lo, hi);
+    const v = series.at(-1)!;
+    return { label, value: fmt(v), tone: v >= alertAt ? 'alert' : v >= warnAt ? 'warn' : 'ok', series };
+  };
+  const vitals: WsVital[] = [
+    vit('HR (bpm)', 60, 110, v => `${Math.round(v)}`, 100, 120),
+    vit('BP (mmHg)', 110, 175, v => `${Math.round(v)}/${Math.round(v * 0.62)}`, 150, 165),
+    vit('RR (/min)', 12, 26, v => `${Math.round(v)}`, 22, 28),
+    vit('SpO₂ (%)', 91, 99, v => `${Math.round(v)}`, 0, 0),
+  ];
+  const carePlan: WsCarePlanItem[] = [
+    { task: 'Continue anti-anginal therapy', due: 'May 17', done: false },
+    { task: 'Monitor cardiac enzymes', due: 'May 16', done: false },
+    { task: 'Echocardiogram follow-up', due: 'May 16', done: true },
+    { task: 'Diabetes management', due: 'May 18', done: false },
+  ];
+  const carePlanPct = Math.round((carePlan.filter(c => c.done).length / carePlan.length) * 100) + 50;
+  const patient: ClinicianPatient = {
+    id: sel.id, name: sel.name, mrn: `784${51200 + (riskScore * 7)}`, age: 48 + (riskScore % 30),
+    sex: riskScore % 2 ? 'Male' : 'Female', blood: ['O+', 'A+', 'B+', 'AB+', 'O−'][riskScore % 5]!,
+    allergies: riskScore % 3 ? 'Penicillin, Aspirin' : 'None known',
+    ward: sel.ward, bed: `Bed ${300 + (riskScore % 80)}`, attending: 'Dr. Sarah Ahmed',
+    admittedDaysAgo: 1 + (riskScore % 6), insurance: 'National Health Shield', vip: riskScore >= 80, highRisk: riskBand === 'High',
+    riskScore, riskBand,
+    chiefComplaint: 'Chest pain and shortness of breath on exertion',
+    vitals,
+    timeline: [
+      { at: '08:15', kind: 'Physician note', detail: 'Patient reports mild chest discomfort. ECG shows improvement.', by: 'Dr. Sarah Ahmed', tone: 'ok' },
+      { at: '07:10', kind: 'Medication given', detail: 'Aspirin 75mg PO', by: 'Nurse Fatima Ali', tone: 'ok' },
+      { at: '10:30', kind: 'Lab result', detail: 'Troponin I: 0.03 (Normal)', by: 'Lab', tone: 'ok' },
+      { at: '06:45', kind: 'Procedure', detail: 'Echocardiogram completed', by: 'Dr. Michael D’Souza', tone: 'warn' },
+      { at: '02:20', kind: 'Consultation', detail: 'Cardiology consultation', by: 'Dr. Sarah Ahmed', tone: 'ok' },
+    ],
+    diagnoses: [
+      { code: 'I20.9', name: 'Angina pectoris', rank: 'Primary' },
+      { code: 'I10', name: 'Essential (primary) hypertension', rank: 'Secondary' },
+      { code: 'E11.9', name: 'Type 2 diabetes mellitus', rank: 'Secondary' },
+    ],
+    notes: [
+      { at: 'May 16, 08:15', text: 'Patient clinically stable. Continue current management.', by: 'Dr. Sarah Ahmed' },
+      { at: 'May 15, 02:20', text: 'Admitted with typical angina. ECG: ST depression in V4–V6.', by: 'Dr. Sarah Ahmed' },
+    ],
+    carePlan, carePlanPct: Math.min(100, carePlanPct),
+    medications: [
+      { drug: 'Aspirin 75 mg', route: 'PO', freq: 'OD', time: '08:00' },
+      { drug: 'Atorvastatin 40 mg', route: 'PO', freq: 'NIGHTLY', time: '21:00' },
+      { drug: 'Metoprolol 50 mg', route: 'PO', freq: 'BD', time: '08:00' },
+      { drug: 'Clopidogrel 75 mg', route: 'PO', freq: 'OD', time: '08:00' },
+      { drug: 'Ramipril 5 mg', route: 'PO', freq: 'OD', time: '08:00' },
+      { drug: 'Nitroglycerin 0.4 mg', route: 'SL', freq: 'PRN', time: '—' },
+    ],
+    labs: ([
+      ['Troponin I', '0.03', 'ng/mL', 'Normal'], ['CK-MB', '12', 'U/L', 'Normal'],
+      ['HbA1c', '7.2', '%', 'High'], ['Creatinine', '1.1', 'mg/dL', 'Normal'],
+      ['Hemoglobin', '13.2', 'g/dL', 'Normal'], ['Total cholesterol', '198', 'mg/dL', 'Borderline'],
+    ] as const).map(([test, value, unit, flag]): WsLab => ({
+      test, value, unit, flag, day: 'May 15', tone: flag === 'High' ? 'alert' : flag === 'Borderline' ? 'warn' : 'ok',
+    })),
+    orders: [
+      { name: 'Stress test (treadmill)', priority: 'Medium', tone: 'warn' },
+      { name: 'Lipid profile', priority: 'Routine', tone: 'ok' },
+      { name: 'Chest X-ray', priority: 'Routine', tone: 'ok' },
+      { name: 'Consult nutritionist', priority: 'Low', tone: 'ok' },
+    ],
+    alerts: [
+      { title: 'High blood pressure', sub: 'BP 182/96 mmHg', ago: '10 min ago', tone: 'alert' },
+      { title: 'Pending lab results', sub: 'Troponin I, CK-MB', ago: '25 min ago', tone: 'warn' },
+      { title: 'Drug interaction', sub: 'Clopidogrel + Omeprazole', ago: '1 hr ago', tone: 'alert' },
+    ],
+    ai: {
+      summary: 'Patient shows improvement in cardiac markers and vital signs. Consider step-down in care level if stable for next 24 hours.',
+      riskAssessment: `${riskBand} risk of cardiac event in the next 7 days.`,
+      recommended: ['Continue monitoring troponin levels', 'Consider stress test before discharge', 'Optimize blood-pressure control'],
+    },
+  };
+  return {
+    queue, patient, queueCount: 24,
+    ordersPending: 7, resultsPending: 12,
+  };
 }
 
 // ── Doctor clinical deep execution system ──────────────────────────────
