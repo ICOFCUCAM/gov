@@ -144,6 +144,50 @@ export function fiscalAssurance(id: string, t: number): FiscalAssurance {
   };
 }
 
+// ── Treasury Command ─────────────────────────────────────────────────
+// Sovereign fiscal authority: synthesises fiscal/revenue/budget/
+// procurement/assurance engines into one emergent posture, domain rollup
+// and ranked directives. Pure & deterministic.
+export interface TreDomainStatus { domain: string; metric: string; value: string; tone: 'ok' | 'warn' | 'alert' }
+export interface TreDirective { priority: 'critical' | 'priority' | 'advisory'; title: string; rationale: string; target: string }
+export interface TreasuryCommand {
+  postureIndex: number;
+  posture: 'steady' | 'engaged' | 'crisis';
+  domains: TreDomainStatus[];
+  directives: TreDirective[];
+  criticalDomains: number;
+}
+export function treasuryCommand(id: string, t: number): TreasuryCommand {
+  const fc = fiscalCommand(id, t);
+  const rv = revenueOps(id, t);
+  const bg = budgetOps(id, t);
+  const pr = procurementOps(id, t);
+  const fa = fiscalAssurance(id, t);
+  const domains: TreDomainStatus[] = [
+    { domain: 'Macro stability', metric: `Liquidity ${fc.liquidityDays}d · debt/GDP ${fc.debtToGdp}%`, value: `${fc.macroStability}`, tone: fc.tone },
+    { domain: 'Revenue', metric: 'Collection rate', value: `${rv.collectionRatePct}%`,
+      tone: rv.collectionRatePct >= 85 ? 'ok' : rv.collectionRatePct >= 72 ? 'warn' : 'alert' },
+    { domain: 'Budget execution', metric: `${bg.blockedAllocations} blocked`, value: `${bg.executionPct}%`,
+      tone: bg.blockedAllocations >= 4 || bg.executionPct < 60 ? 'alert' : bg.executionPct < 78 ? 'warn' : 'ok' },
+    { domain: 'Procurement integrity', metric: `${pr.flaggedContracts} flagged`, value: `${pr.integrityPct}%`,
+      tone: pr.integrityPct >= 85 ? 'ok' : pr.integrityPct >= 72 ? 'warn' : 'alert' },
+    { domain: 'Fiscal assurance', metric: `${fa.openFindings} findings · ${fa.fraudSignals} fraud`, value: `${fa.chainIntactPct}%`,
+      tone: fa.fraudSignals >= 6 || fa.openFindings >= 25 ? 'alert' : fa.openFindings >= 12 ? 'warn' : 'ok' },
+  ];
+  const directives: TreDirective[] = [];
+  if (fc.tone === 'alert') directives.push({ priority: 'critical', title: 'Activate liquidity & debt-stress response', rationale: `Macro stability ${fc.macroStability} · liquidity ${fc.liquidityDays}d`, target: 'rails' });
+  if (rv.collectionRatePct < 72) directives.push({ priority: 'priority', title: 'Revenue-recovery enforcement', rationale: `Collection ${rv.collectionRatePct}% · arrears ${rv.arrearsBn}bn`, target: 'revenue' });
+  if (bg.blockedAllocations >= 4) directives.push({ priority: 'critical', title: 'Unblock stalled appropriations', rationale: `${bg.blockedAllocations} blocked allocations`, target: 'budget' });
+  if (pr.flaggedContracts >= 1 && pr.integrityPct < 85) directives.push({ priority: 'priority', title: 'Procurement-integrity investigation', rationale: `${pr.flaggedContracts} flagged · integrity ${pr.integrityPct}%`, target: 'procurement' });
+  if (fa.fraudSignals >= 6) directives.push({ priority: 'critical', title: 'Fiscal-fraud containment', rationale: `${fa.fraudSignals} fraud signals`, target: 'audit' });
+  directives.sort((a, b) => ({ critical: 0, priority: 1, advisory: 2 }[a.priority] - { critical: 0, priority: 1, advisory: 2 }[b.priority]));
+  const criticalDomains = domains.filter(d => d.tone === 'alert').length;
+  const postureIndex = Math.max(0, Math.min(100, Math.round((100 - treasuryInstability(id, t)) * 0.5 + (100 - criticalDomains * 18) * 0.5)));
+  const posture: TreasuryCommand['posture'] =
+    criticalDomains >= 3 || postureIndex < 45 ? 'crisis' : criticalDomains >= 1 || postureIndex < 70 ? 'engaged' : 'steady';
+  return { postureIndex, posture, domains, directives, criticalDomains };
+}
+
 /** 0-100 treasury instability — drives cross-system propagation. */
 export function treasuryInstability(id: string, t: number): number {
   const fc = fiscalCommand(id, t);

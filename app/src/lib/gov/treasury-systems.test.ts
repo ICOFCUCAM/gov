@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   fiscalCommand, revenueOps, budgetOps, procurementOps, bankingRails,
-  citizenFinance, fiscalAssurance, treasuryInstability,
+  citizenFinance, fiscalAssurance, treasuryInstability, treasuryCommand,
 } from './treasury-systems';
 
 describe('treasury systems engine', () => {
@@ -41,5 +41,19 @@ describe('treasury systems engine', () => {
       expect(v).toBeLessThanOrEqual(100);
     }
     expect(treasuryInstability('F', 77)).toBe(treasuryInstability('F', 77));
+  });
+
+  it('treasuryCommand is a deterministic, bounded synthesis surface', () => {
+    const c = treasuryCommand('F', 110);
+    expect(c).toEqual(treasuryCommand('F', 110));
+    expect(['steady', 'engaged', 'crisis']).toContain(c.posture);
+    expect(c.postureIndex).toBeGreaterThanOrEqual(0);
+    expect(c.postureIndex).toBeLessThanOrEqual(100);
+    expect(c.domains.length).toBe(5);
+    for (const d of c.domains) expect(['ok', 'warn', 'alert']).toContain(d.tone);
+    const rank = { critical: 0, priority: 1, advisory: 2 } as const;
+    for (let i = 1; i < c.directives.length; i++) {
+      expect(rank[c.directives[i - 1]!.priority]).toBeLessThanOrEqual(rank[c.directives[i]!.priority]);
+    }
   });
 });
