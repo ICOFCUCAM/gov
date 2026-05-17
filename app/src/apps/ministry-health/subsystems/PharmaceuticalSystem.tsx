@@ -39,11 +39,6 @@ export function PharmaceuticalSystem({ id, now, role, withheld }: {
         <div className="xl:col-span-2">
           <CommandPanel title="National supply chain map" meta="warehouses · hubs · routes" accent={ACC} live>
             <GeoMap geo={geo} metric="pressure" title="" height={300} />
-            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[7.5px] uppercase tracking-wider text-ink-muted">
-              {['> 80%', '50–80%', '20–50%', '< 20%', 'Stockout'].map((l, i) => (
-                <span key={l} className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: ['#3fd6a8', '#f0c33a', '#f0892a', '#e0452a', '#c01020'][i] }} />{l}</span>
-              ))}
-            </div>
           </CommandPanel>
         </div>
         <CommandPanel title="Inventory availability" meta={`overall ${s.overallAvailabilityPct}%`} accent={ACC}>
