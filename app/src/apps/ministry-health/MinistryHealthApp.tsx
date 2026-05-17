@@ -24,6 +24,7 @@ import { HealthCommandCentre } from '@/apps/ministry-health/subsystems/HealthCom
 import { EmergencySystem } from '@/apps/ministry-health/subsystems/EmergencySystem';
 import { DiseaseSystem } from '@/apps/ministry-health/subsystems/DiseaseSystem';
 import { HealthFinanceSystem } from '@/apps/ministry-health/subsystems/HealthFinanceSystem';
+import { RegulatorySystem } from '@/apps/ministry-health/subsystems/RegulatorySystem';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -111,6 +112,9 @@ export function MinistryHealthApp({
   }
   if (d === 'finance') {
     return <HealthFinanceSystem id={id} now={now} role={role} withheld={withheld} />;
+  }
+  if (d === 'regulatory') {
+    return <RegulatorySystem id={id} now={now} role={role} withheld={withheld} />;
   }
 
   let body: React.ReactNode = null;

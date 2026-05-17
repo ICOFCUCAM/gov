@@ -4,7 +4,7 @@ import {
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
   patientDeepExecution, emergencyIncidentExecution, diseaseEpidemiology,
-  healthFinanceExecution,
+  healthFinanceExecution, healthRegulatoryExecution,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -213,5 +213,22 @@ describe('ministry of health operations engine', () => {
     for (const s of a.schemes) expect(['solvent', 'pressured', 'deficit']).toContain(s.solvency);
     for (const f of a.fraud) expect(['flagged', 'investigating', 'referred']).toContain(f.status);
     expect(a.fraudExposureM).toBe(a.fraud.reduce((s, f) => s + f.exposureM, 0));
+  });
+
+  it('healthRegulatoryExecution is a deterministic, bounded regulatory execution system', () => {
+    const a = healthRegulatoryExecution('MOH', 175);
+    expect(a).toEqual(healthRegulatoryExecution('MOH', 175));
+    expect(a.licensing.map(l => l.stage)).toEqual(['Application', 'Review', 'Inspection', 'Granted', 'Refused']);
+    expect(a.accreditation.length).toBe(4);
+    expect(a.registry.length).toBe(5);
+    expect(['compliant', 'watch', 'breach']).toContain(a.posture);
+    expect(a.compliancePct).toBeGreaterThanOrEqual(0);
+    expect(a.compliancePct).toBeLessThanOrEqual(100);
+    const rank = { critical: 0, serious: 1, minor: 2 } as const;
+    for (let i = 1; i < a.enforcement.length; i++) {
+      expect(rank[a.enforcement[i - 1]!.severity]).toBeLessThanOrEqual(rank[a.enforcement[i]!.severity]);
+    }
+    for (const e of a.enforcement) expect(['notice', 'hearing', 'sanctioned']).toContain(e.stage);
+    expect(a.criticalBreaches).toBe(a.enforcement.filter(e => e.severity === 'critical').length);
   });
 });

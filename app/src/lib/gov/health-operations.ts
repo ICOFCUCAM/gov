@@ -134,6 +134,64 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── Health regulatory deep execution system ────────────────────────────
+// Licensing pipeline, facility accreditation cycle, practitioner-registry
+// integrity and an enforcement / sanctions case queue as a true execution
+// system. Pure & deterministic.
+export interface LicensingStage { stage: 'Application' | 'Review' | 'Inspection' | 'Granted' | 'Refused'; count: number; medianDays: number; tone: Tone }
+export interface AccreditationBand { band: 'Accredited' | 'Conditional' | 'Provisional' | 'Lapsed'; facilities: number; tone: Tone }
+export interface EnforcementCase { id: string; subject: string; breach: string; severity: 'minor' | 'serious' | 'critical'; stage: 'notice' | 'hearing' | 'sanctioned'; tone: Tone }
+export interface RegistryDiscipline { discipline: string; registeredK: number; lapsedPct: number; verificationPct: number; tone: Tone }
+export interface HealthRegulatoryExecution {
+  licensing: LicensingStage[];
+  accreditation: AccreditationBand[];
+  registry: RegistryDiscipline[];
+  enforcement: EnforcementCase[];
+  compliancePct: number;
+  criticalBreaches: number;
+  posture: 'compliant' | 'watch' | 'breach';
+}
+export function healthRegulatoryExecution(id: string, t: number): HealthRegulatoryExecution {
+  const licensing: LicensingStage[] = (['Application', 'Review', 'Inspection', 'Granted', 'Refused'] as const).map((stage, i): LicensingStage => {
+    const count = Math.round(wave(`hrx:c:${id}:${i}`, t, 20, 3200));
+    const medianDays = Math.round(wave(`hrx:m:${id}:${i}`, t, 2, 70));
+    const tone: Tone = stage === 'Review' && medianDays > 45 ? 'alert' : medianDays > 30 ? 'warn' : 'ok';
+    return { stage, count, medianDays, tone };
+  });
+  const accreditation: AccreditationBand[] = (['Accredited', 'Conditional', 'Provisional', 'Lapsed'] as const).map((band, i): AccreditationBand => {
+    const facilities = Math.round(wave(`hrx:a:${id}:${i}`, t, 20, 4200));
+    const tone: Tone = band === 'Lapsed' ? 'alert' : band === 'Provisional' ? 'warn' : 'ok';
+    return { band, facilities, tone };
+  });
+  const registry: RegistryDiscipline[] = ['Physicians', 'Nurses', 'Pharmacists', 'Allied health', 'Specialists'].map((discipline, i): RegistryDiscipline => {
+    const lapsedPct = Math.round(wave(`hrx:l:${id}:${i}`, t, 1, 22));
+    const verificationPct = Math.round(wave(`hrx:v:${id}:${i}`, t, 70, 100));
+    const tone: Tone = lapsedPct >= 15 || verificationPct < 85 ? 'alert' : lapsedPct >= 8 || verificationPct < 93 ? 'warn' : 'ok';
+    return { discipline, registeredK: Math.round(wave(`hrx:rk:${id}:${i}`, t, 4, 120)), lapsedPct, verificationPct, tone };
+  });
+  const nEnf = Math.round(wave(`hrx:ne:${id}`, t, 0, 6));
+  const enforcement: EnforcementCase[] = Array.from({ length: nEnf }, (_, i): EnforcementCase => {
+    const sv = seed(`hrx:es:${id}:${i}`);
+    const severity: EnforcementCase['severity'] = sv > 0.7 ? 'critical' : sv > 0.4 ? 'serious' : 'minor';
+    const st = seed(`hrx:et:${id}:${i}`);
+    const stage: EnforcementCase['stage'] = st > 0.66 ? 'sanctioned' : st > 0.33 ? 'hearing' : 'notice';
+    return {
+      id: `EN-${400 + i}`,
+      subject: ['District Hospital', 'Private clinic chain', 'Compounding pharmacy', 'Diagnostic lab', 'Specialist practice', 'Care facility'][i % 6]!,
+      breach: ['Unlicensed practice', 'Infection-control failure', 'Falsified records', 'Substandard drugs', 'Negligence', 'Billing fraud'][i % 6]!,
+      severity, stage,
+      tone: severity === 'critical' ? 'alert' : severity === 'serious' ? 'warn' : 'ok',
+    };
+  }).sort((a, b) => ({ critical: 0, serious: 1, minor: 2 }[a.severity] - { critical: 0, serious: 1, minor: 2 }[b.severity]));
+  const compliancePct = Math.round(wave(`hrx:cp:${id}`, t, 58, 98));
+  const criticalBreaches = enforcement.filter(e => e.severity === 'critical').length;
+  const lapsed = accreditation.find(a => a.band === 'Lapsed')?.facilities ?? 0;
+  const posture: HealthRegulatoryExecution['posture'] =
+    criticalBreaches >= 2 || compliancePct < 70 ? 'breach'
+      : criticalBreaches >= 1 || compliancePct < 85 || lapsed > 2000 ? 'watch' : 'compliant';
+  return { licensing, accreditation, registry, enforcement, compliancePct, criticalBreaches, posture };
+}
+
 // ── Health finance deep execution system ───────────────────────────────
 // Insurance orchestration, a claims-adjudication pipeline, fraud-detection
 // case queue, reimbursement chains and treasury coordination as a true
