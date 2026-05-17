@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   pharmaceuticalSupply, laboratoryNetwork, healthFinance,
-  healthRegulatory, emergencyMedical, healthCommand,
+  healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -32,5 +32,29 @@ describe('ministry of health operations engine', () => {
     expect(hc.logisticsCorridorsOpen).toBeLessThanOrEqual(hc.logisticsCorridorsTotal);
     expect(healthCommand('MOH', 50, 0).posture).toBe('nominal');
     expect(healthCommand('MOH', 50, 5).posture).toBe('crisis');
+  });
+
+  it('laboratoryExecution is a deterministic, bounded deep execution system', () => {
+    const a = laboratoryExecution('MOH', 120);
+    expect(a).toEqual(laboratoryExecution('MOH', 120));
+    expect(a.pipeline.length).toBe(6);
+    expect(a.pipeline[0]!.stage).toBe('Collected');
+    expect(a.pipeline.at(-1)!.stage).toBe('Reported');
+    expect(a.queues.length).toBe(3);
+    expect(a.queues.map(q => q.priority)).toEqual(['STAT', 'Urgent', 'Routine']);
+    expect(a.outbreaks.length).toBe(6);
+    for (let i = 1; i < a.outbreaks.length; i++) {
+      expect(a.outbreaks[i - 1]!.positivityPct).toBeGreaterThanOrEqual(a.outbreaks[i]!.positivityPct);
+    }
+    expect(['nominal', 'regional', 'national']).toContain(a.escalationLevel);
+    expect(['steady', 'strained', 'crisis']).toContain(a.posture);
+    expect(a.criticalUnacked).toBe(a.criticalAlerts.filter(x => !x.acknowledged).length);
+    expect(a.slaBreaches).toBe(a.queues.reduce((s, q) => s + q.breaching, 0));
+    for (const q of a.queues) {
+      expect(q.breaching).toBeGreaterThanOrEqual(0);
+      expect(q.breaching).toBeLessThanOrEqual(q.depth);
+      expect(['ok', 'warn', 'alert']).toContain(q.tone);
+    }
+    expect(a.timeline.length).toBeGreaterThan(3);
   });
 });

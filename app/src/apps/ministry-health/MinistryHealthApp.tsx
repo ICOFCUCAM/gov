@@ -15,6 +15,7 @@ import {
   pharmaceuticalSupply, laboratoryNetwork, healthFinance,
   healthRegulatory, emergencyMedical, healthCommand,
 } from '@/lib/gov/health-operations';
+import { LaboratorySystem } from '@/apps/ministry-health/subsystems/LaboratorySystem';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -73,6 +74,12 @@ export function MinistryHealthApp({
   const d = (DOMAIN_WF[domain] ? domain : 'command');
   const wf = DOMAIN_WF[d] ?? 'case';
   const label = DOMAIN_LABEL[d] ?? 'Health Command';
+
+  // Laboratory Systems is a deep, self-contained execution system
+  // (own runtime + interactions) — render it directly.
+  if (d === 'lab') {
+    return <LaboratorySystem id={id} now={now} role={role} withheld={withheld} />;
+  }
 
   let body: React.ReactNode = null;
 
