@@ -1407,6 +1407,50 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
+  if (isInterior && (group === 'identity' || group === 'border' || group === 'licensing' || group === 'coordination' || group === 'citizen')) {
+    const o = interiorOps(id, ts);
+    const ID = o.identity, BD = o.border, CO = o.coordination, LI = o.licensing;
+    const title = group === 'identity' ? 'Civil identity backbone'
+      : group === 'border' ? 'Border & frontier control'
+        : group === 'licensing' ? 'Internal permits & licensing'
+          : group === 'coordination' ? 'Multi-agency internal coordination'
+            : 'Citizen identity services';
+    const stats = group === 'identity' ? [
+      { l: 'Enrolled', v: `${ID.enrolledM}M`, t: 'ok' as const },
+      { l: 'Issuance backlog', v: ID.issuanceBacklog.toLocaleString(), t: (ID.issuanceBacklog > 6000 ? 'alert' : ID.issuanceBacklog > 3000 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Verifications/hr', v: ID.verificationsPerHr.toLocaleString(), t: 'ok' as const },
+      { l: 'Uptime', v: `${ID.uptimePct}%`, t: (ID.uptimePct >= 99 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'border' ? [
+      { l: 'Posts open', v: `${BD.open}/${BD.posts}`, t: (BD.open < BD.posts ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Crossings today', v: BD.crossingsToday.toLocaleString(), t: 'ok' as const },
+      { l: 'Flagged entries', v: `${BD.flaggedEntries}`, t: (BD.flaggedEntries > 90 ? 'alert' : BD.flaggedEntries > 40 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Mean clearance', v: `${BD.meanClearanceMin}m`, t: (BD.meanClearanceMin >= 30 ? 'alert' : BD.meanClearanceMin >= 18 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'licensing' ? [
+      { l: 'Permits pending', v: LI.pending.toLocaleString(), t: (LI.pending > 3500 ? 'alert' : LI.pending > 1800 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Issued today', v: LI.issuedToday.toLocaleString(), t: 'ok' as const },
+      { l: 'SLA met', v: `${LI.slaMetPct}%`, t: (LI.slaMetPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'coordination' ? [
+      { l: 'Cells active', v: `${CO.cellsActive}`, t: 'ok' as const },
+      { l: 'Joint ops active', v: `${CO.jointOpsActive}`, t: (CO.jointOpsActive > 8 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Public-order index', v: `${CO.publicOrderIndex}`, t: (CO.publicOrderIndex >= 70 ? 'ok' : CO.publicOrderIndex >= 55 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Threat level', v: o.internalThreatLevel, t: (o.internalThreatLevel === 'high' ? 'alert' : o.internalThreatLevel === 'elevated' ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+    ] : [
+      { l: 'Enrolled', v: `${ID.enrolledM}M`, t: 'ok' as const },
+      { l: 'Identity uptime', v: `${ID.uptimePct}%`, t: (ID.uptimePct >= 99 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { l: 'Licensing SLA', v: `${LI.slaMetPct}%`, t: (LI.slaMetPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ];
+    const kind: WorkKind = group === 'identity' || group === 'licensing' || group === 'citizen' ? 'permit' : group === 'coordination' ? 'incident' : 'case';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
+        </div>
+        <RuntimeQueue scope={`${id}:${group}`} kind={kind} title={`${title} runtime — execute the workflow`} by="Interior Officer" n={14} />
+      </div>
+    );
+  }
+
   if (isInterior) {
     const o = interiorOps(id, ts);
     const lt = o.internalThreatLevel === 'high' ? 'alert' : o.internalThreatLevel === 'elevated' ? 'warn' : 'ok';
