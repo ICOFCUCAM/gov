@@ -231,6 +231,81 @@ export function doctorClinicalExecution(id: string, t: number): DoctorClinicalEx
   return { shift, assignments, unassigned, codes, lanes, meanWorkloadPct, burnoutAlerts, nextShiftGap, timeline, posture };
 }
 
+// ── Hospital network deep execution system ─────────────────────────────
+// ICU orchestration, bed intelligence, operating-theatre management,
+// ambulance coordination and national capacity telemetry as a true
+// execution system. Pure & deterministic.
+export interface HospRegionCapacity { region: string; bedOccPct: number; icuOccPct: number; surge: 'nominal' | 'surge' | 'divert'; transfersPending: number; tone: Tone }
+export interface IcuUnit { unit: string; beds: number; occupied: number; ventilated: number; ecmo: number; escalation: 'stable' | 'stretched' | 'critical'; tone: Tone }
+export interface TheatreSlot { theatre: string; caseType: 'Elective' | 'Emergency' | 'Trauma'; status: 'in-progress' | 'turnover' | 'delayed' | 'scheduled'; delayMin: number; tone: Tone }
+export interface AmbulanceZone { zone: string; units: number; available: number; meanEtaMin: number; posture: 'covered' | 'thin' | 'critical'; tone: Tone }
+export interface HospitalDeepExecution {
+  regions: HospRegionCapacity[];
+  icu: IcuUnit[];
+  theatres: TheatreSlot[];
+  ambulanceZones: AmbulanceZone[];
+  nationalBedHeadroomPct: number;
+  transferRequests: number;
+  blockedBeds: number;
+  admissionsPerHr: number;
+  dischargesPerHr: number;
+  timeline: LabTimelineEvent[];
+  posture: 'steady' | 'strained' | 'crisis';
+}
+export function hospitalDeepExecution(id: string, t: number): HospitalDeepExecution {
+  const regions: HospRegionCapacity[] = REGIONS.map((region, i): HospRegionCapacity => {
+    const bedOccPct = Math.round(wave(`hd:bo:${id}:${i}`, t, 55, 102));
+    const icuOccPct = Math.round(wave(`hd:io:${id}:${i}`, t, 50, 104));
+    const surge: HospRegionCapacity['surge'] = bedOccPct >= 98 || icuOccPct >= 98 ? 'divert' : bedOccPct >= 88 || icuOccPct >= 90 ? 'surge' : 'nominal';
+    const transfersPending = Math.round(wave(`hd:tp:${id}:${i}`, t, 0, 24));
+    const tone: Tone = surge === 'divert' ? 'alert' : surge === 'surge' ? 'warn' : 'ok';
+    return { region, bedOccPct, icuOccPct, surge, transfersPending, tone };
+  }).sort((a, b) => b.icuOccPct - a.icuOccPct);
+  const icu: IcuUnit[] = ['Medical ICU', 'Surgical ICU', 'Neonatal ICU', 'Cardiac ICU'].map((unit, i): IcuUnit => {
+    const beds = 14 + Math.round(seed(`hd:ib:${id}:${i}`) * 26);
+    const occupied = Math.round(beds * wave(`hd:iu:${id}:${i}`, t, 0.55, 1.04));
+    const ventilated = Math.round(Math.min(occupied, occupied * wave(`hd:vt:${id}:${i}`, t, 0.4, 0.95)));
+    const ecmo = Math.round(wave(`hd:ec:${id}:${i}`, t, 0, 5));
+    const ratio = occupied / beds;
+    const escalation: IcuUnit['escalation'] = ratio >= 1 ? 'critical' : ratio >= 0.88 ? 'stretched' : 'stable';
+    const tone: Tone = escalation === 'critical' ? 'alert' : escalation === 'stretched' ? 'warn' : 'ok';
+    return { unit, beds, occupied: Math.min(occupied, beds + 2), ventilated, ecmo, escalation, tone };
+  });
+  const theatres: TheatreSlot[] = Array.from({ length: 8 }, (_, i): TheatreSlot => {
+    const caseType: TheatreSlot['caseType'] = i % 4 === 0 ? 'Trauma' : i % 3 === 0 ? 'Emergency' : 'Elective';
+    const delayMin = Math.round(wave(`hd:td:${id}:${i}`, t, 0, 140));
+    const status: TheatreSlot['status'] = delayMin > 90 ? 'delayed' : i % 5 === 0 ? 'turnover' : delayMin > 0 && i % 2 === 0 ? 'in-progress' : 'scheduled';
+    const tone: Tone = status === 'delayed' ? 'alert' : status === 'turnover' ? 'warn' : 'ok';
+    return { theatre: `OR-${i + 1}`, caseType, status, delayMin, tone };
+  });
+  const ambulanceZones: AmbulanceZone[] = REGIONS.slice(0, 5).map((zone, i): AmbulanceZone => {
+    const units = 8 + Math.round(seed(`hd:au:${id}:${i}`) * 26);
+    const available = Math.round(units * wave(`hd:aa:${id}:${i}`, t, 0.15, 0.85));
+    const meanEtaMin = Math.round(wave(`hd:ae:${id}:${i}`, t, 5, 32));
+    const ratio = available / units;
+    const posture: AmbulanceZone['posture'] = ratio < 0.15 || meanEtaMin >= 24 ? 'critical' : ratio < 0.35 || meanEtaMin >= 15 ? 'thin' : 'covered';
+    const tone: Tone = posture === 'critical' ? 'alert' : posture === 'thin' ? 'warn' : 'ok';
+    return { zone, units, available, meanEtaMin, posture, tone };
+  });
+  const nationalBedHeadroomPct = Math.max(0, Math.round(100 - regions.reduce((s, r) => s + r.bedOccPct, 0) / regions.length));
+  const transferRequests = regions.reduce((s, r) => s + r.transfersPending, 0);
+  const blockedBeds = Math.round(wave(`hd:bb:${id}`, t, 10, 420));
+  const admissionsPerHr = Math.round(wave(`hd:ad:${id}`, t, 20, 180));
+  const dischargesPerHr = Math.round(wave(`hd:di:${id}`, t, 18, 175));
+  const diverts = regions.filter(r => r.surge === 'divert').length;
+  const criticalIcu = icu.filter(u => u.escalation === 'critical').length;
+  const posture: HospitalDeepExecution['posture'] =
+    diverts >= 2 || criticalIcu >= 2 || nationalBedHeadroomPct < 4 ? 'crisis'
+      : diverts >= 1 || criticalIcu >= 1 || nationalBedHeadroomPct < 12 ? 'strained' : 'steady';
+  const timeline: LabTimelineEvent[] = [
+    { atHrsAgo: 0, kind: 'sync', detail: `National bed headroom ${nationalBedHeadroomPct}% · ${admissionsPerHr}↓/${dischargesPerHr}↑ per hr`, tone: nationalBedHeadroomPct < 12 ? 'warn' : 'ok' },
+    { atHrsAgo: 1, kind: 'escalation', detail: `${diverts} region(s) on divert · ${transferRequests} inter-facility transfers pending`, tone: diverts ? 'alert' : transferRequests > 30 ? 'warn' : 'ok' },
+    { atHrsAgo: 2, kind: 'alert', detail: `${criticalIcu} ICU unit(s) at/over capacity`, tone: criticalIcu ? 'alert' : 'ok' },
+    { atHrsAgo: 3, kind: 'reroute', detail: `${theatres.filter(x => x.status === 'delayed').length} theatre(s) delayed · ${blockedBeds} blocked beds`, tone: theatres.some(x => x.status === 'delayed') ? 'warn' : 'ok' },
+  ];
+  return { regions, icu, theatres, ambulanceZones, nationalBedHeadroomPct, transferRequests, blockedBeds, admissionsPerHr, dischargesPerHr, timeline, posture };
+}
+
 // ── Health finance & claims ────────────────────────────────────────────
 export interface HealthFinance {
   insuranceCoveragePct: number;

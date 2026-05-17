@@ -17,6 +17,7 @@ import {
 } from '@/lib/gov/health-operations';
 import { LaboratorySystem } from '@/apps/ministry-health/subsystems/LaboratorySystem';
 import { DoctorSystem } from '@/apps/ministry-health/subsystems/DoctorSystem';
+import { HospitalSystem } from '@/apps/ministry-health/subsystems/HospitalSystem';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -83,6 +84,9 @@ export function MinistryHealthApp({
   }
   if (d === 'doctor') {
     return <DoctorSystem id={id} now={now} role={role} withheld={withheld} />;
+  }
+  if (d === 'hospitals') {
+    return <HospitalSystem id={id} now={now} role={role} withheld={withheld} />;
   }
 
   let body: React.ReactNode = null;

@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   pharmaceuticalSupply, laboratoryNetwork, healthFinance,
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
-  doctorClinicalExecution,
+  doctorClinicalExecution, hospitalDeepExecution,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -79,5 +79,30 @@ describe('ministry of health operations engine', () => {
     }
     for (const c of a.codes) expect(['dispatched', 'on-scene', 'stabilising']).toContain(c.status);
     expect(a.nextShiftGap).toBeGreaterThanOrEqual(0);
+  });
+
+  it('hospitalDeepExecution is a deterministic, bounded hospital execution system', () => {
+    const a = hospitalDeepExecution('MOH', 140);
+    expect(a).toEqual(hospitalDeepExecution('MOH', 140));
+    expect(a.regions.length).toBe(6);
+    expect(a.icu.length).toBe(4);
+    expect(a.theatres.length).toBe(8);
+    expect(a.ambulanceZones.length).toBe(5);
+    expect(['steady', 'strained', 'crisis']).toContain(a.posture);
+    expect(a.nationalBedHeadroomPct).toBeGreaterThanOrEqual(0);
+    expect(a.nationalBedHeadroomPct).toBeLessThanOrEqual(100);
+    // regions ICU-occupancy ordered (worst first)
+    for (let i = 1; i < a.regions.length; i++) {
+      expect(a.regions[i - 1]!.icuOccPct).toBeGreaterThanOrEqual(a.regions[i]!.icuOccPct);
+    }
+    for (const u of a.icu) {
+      expect(u.occupied).toBeLessThanOrEqual(u.beds + 2);
+      expect(['stable', 'stretched', 'critical']).toContain(u.escalation);
+    }
+    for (const z of a.ambulanceZones) {
+      expect(z.available).toBeLessThanOrEqual(z.units);
+      expect(['covered', 'thin', 'critical']).toContain(z.posture);
+    }
+    expect(a.transferRequests).toBe(a.regions.reduce((s, r) => s + r.transfersPending, 0));
   });
 });
