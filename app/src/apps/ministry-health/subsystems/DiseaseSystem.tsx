@@ -1,164 +1,167 @@
 'use client';
 
-// apps/ministry-health/subsystems/DiseaseSystem — a TRUE epidemiological
-// intelligence system: per-pathogen intelligence (master/detail), a
-// region×pathogen heatmap grid, a predictive spread curve with confidence
-// band, intervention modelling and national infection propagation. Its
-// own visual grammar (epi grid + curve). Multi-role aware.
+// Domain 5 — Disease Intelligence Command. The epidemiology war-room:
+// map-dominant, intelligence-heavy. Amber/red command rhythm, distinct
+// from every other domain.
 
 import * as React from 'react';
-import { StatGrid, Panel, PosturePill, ac } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
-import { diseaseIntel } from '@/lib/gov/health-systems';
-import { diseaseEpidemiology } from '@/lib/gov/health-operations';
-import { propagateNationalEvent } from '@/lib/gov/national-propagation';
+import { diseaseCommandView } from '@/lib/gov/health-operations';
 import { healthGeo } from '@/lib/gov/health-geo';
 import { GeoMap } from '@/apps/_shared/GeoMap';
-import { aiAdvisory } from '@/shared/ai/advisory';
+import { CommandHeader, CommandPanel, KpiSpark, Donut, TrendChart, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
+
+const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
+const ACC = ACCENT.disease!;
+const LAYERS = ['Heatmap', 'Clusters', 'Hospitals', 'Mobility', 'Testing', 'Vaccination'];
 
 export function DiseaseSystem({ id, now, role, withheld }: {
   id: string; now: number; role: SovereignRole; withheld: Capability[];
 }) {
   const ts = now / 4000;
-  const di = diseaseIntel(id, ts);
-  const ep = diseaseEpidemiology(id, ts);
+  const d = diseaseCommandView(id, ts);
   const geo = healthGeo(id, ts);
-  const [selPath, setSelPath] = React.useState<string | null>(null);
-  const lead = ep.pathogens.find(p => p.pathogen === selPath) ?? ep.pathogens[0]!;
-
-  const sev = Math.min(100, Math.round((lead.rt - 1) * 80 + (lead.phase === 'epidemic' ? 35 : lead.phase === 'cluster' ? 15 : 0)));
-  const prop = propagateNationalEvent({ trigger: 'outbreak', severity: sev, originRegion: di.worstRegion }, ts);
-  const pTone: 'ok' | 'warn' | 'alert' = ep.posture === 'epidemic' ? 'alert' : ep.posture === 'response' ? 'warn' : 'ok';
-  const maxProj = Math.max(...ep.spread.map(s => s.upper), 1);
-
-  const adv = aiAdvisory('Disease Intelligence', [
-    { label: 'Dominant Rt', value: Math.min(100, Math.round((lead.rt - 0.6) * 70)), adverse: true },
-    { label: 'Epidemic pathogens', value: Math.min(100, ep.pathogens.filter(p => p.phase === 'epidemic').length * 34), adverse: true },
-    { label: 'Cascade reach', value: Math.min(100, prop.reach * 14), adverse: true },
-    { label: 'CFR', value: Math.min(100, lead.cfrPct * 8), adverse: true },
-  ]);
-  const at: 'ok' | 'warn' | 'alert' = adv.severity === 'critical' || adv.severity === 'priority' ? 'alert' : adv.severity === 'advisory' ? 'warn' : 'ok';
+  const [layer, setLayer] = React.useState('Heatmap');
+  const [win, setWin] = React.useState('7D');
+  const norm = (s: number[]) => { const mn = Math.min(...s), sp = Math.max(...s) - mn || 1; return s.map(v => ((v - mn) / sp) * 100); };
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-3 rounded-[3px] border border-line bg-surface px-2.5 py-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">Disease Intelligence — national epidemiology</span>
-        <PosturePill label={ep.posture} tone={pTone} />
-        <span className="text-[9px] text-ink-muted">dominant · <span className="text-ink-soft">{ep.dominantPathogen}</span> · peak ~<span className="text-ink-soft">{ep.peakInDays}d</span></span>
-        <span className="ml-auto text-[9px] text-ink-muted">operator · {role}</span>
+    <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#05080e', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.7)' }}>
+      <CommandHeader index={5} title="Disease Intelligence Command" subtitle="Predict · Detect · Prevent"
+        postureLabel={`Rt · ${d.kpis[2]!.value}`} postureTone={Number(d.kpis[2]!.value) > 1.2 ? 'alert' : Number(d.kpis[2]!.value) > 1 ? 'warn' : 'ok'}
+        now={now} role={role} accent={ACC} />
+
+      {/* KPI epidemic telemetry */}
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
+        {d.kpis.map(k => (
+          <KpiSpark key={k.label} label={k.label} value={k.value} unit={k.sub} tone={k.tone}
+            points={k.series} />
+        ))}
       </div>
 
-      <StatGrid items={[
-        { l: 'National Rt', v: `${ep.nationalRt}`, t: ep.nationalRt > 1.3 ? 'alert' : ep.nationalRt > 1 ? 'warn' : 'ok' },
-        { l: 'Active cases', v: di.activeCases.toLocaleString(), t: di.activeCases > 4000 ? 'alert' : 'warn' },
-        { l: 'Mortality 7d', v: `${di.mortality7d}`, t: di.mortality7d > 200 ? 'alert' : 'warn' },
-        { l: 'Vaccination', v: `${di.vaccinationCoverage}%`, t: di.vaccinationCoverage >= 80 ? 'ok' : 'warn' },
-        { l: 'Epidemic pathogens', v: `${ep.pathogens.filter(p => p.phase === 'epidemic').length}`, t: ep.pathogens.some(p => p.phase === 'epidemic') ? 'alert' : 'ok' },
-        { l: 'Cascade escalation', v: prop.escalation, t: prop.escalation === 'cabinet' || prop.escalation === 'mobilise' ? 'alert' : prop.escalation === 'coordinate' ? 'warn' : 'ok' },
-      ]} />
-
-      <div className="rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid ${ac(at)}` }}>
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: ac(at) }}>AI epidemic forecaster · {adv.severity}</span>
-          <span className="font-mono text-[9px] tabular-nums text-ink-muted">{adv.confidence}%</span>
+      {/* National outbreak map | Epidemic curve + age donut */}
+      <div className="grid gap-2 xl:grid-cols-3">
+        <div className="xl:col-span-2">
+          <CommandPanel title="National outbreak map" meta={`active cases · ${win}`} accent={ACC} live>
+            <div className="mb-1.5 flex flex-wrap items-center gap-1">
+              {LAYERS.map(l => (
+                <button key={l} onClick={() => setLayer(l)}
+                  className="focus-ring rounded-[3px] border px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider transition-colors"
+                  style={{ borderColor: layer === l ? ACC : 'color-mix(in srgb,#1d2a36 70%,transparent)', color: layer === l ? ACC : 'rgb(var(--c-ink-muted))' }}>{l}</button>
+              ))}
+              <div className="ml-auto flex gap-0.5">
+                {['7D', '30D', '90D', '1Y'].map(wv => (
+                  <button key={wv} onClick={() => setWin(wv)}
+                    className="focus-ring rounded-[3px] px-1.5 py-0.5 text-[8px] font-bold tabular-nums transition-colors"
+                    style={{ background: win === wv ? ACC : 'transparent', color: win === wv ? '#100a02' : 'rgb(var(--c-ink-muted))' }}>{wv}</button>
+                ))}
+              </div>
+            </div>
+            <GeoMap geo={geo} metric="outbreakHeat" title="" height={300} />
+            <div className="mt-1 flex items-center gap-1 text-[7px] text-ink-muted">
+              <span>0</span>
+              {['#1f6f4a', '#9bbf3a', '#f0c33a', '#f0892a', '#e0452a', '#c01020'].map((c, i) => <span key={i} className="h-2 flex-1 rounded-sm" style={{ background: c }} />)}
+              <span>10K+</span>
+            </div>
+          </CommandPanel>
         </div>
-        <div className="mt-0.5 text-[10px] text-ink">{adv.headline} — {lead.pathogen} Rt {lead.rt}, doubling {lead.doublingDays}d, peak ~{ep.peakInDays}d</div>
-        <ul className="mt-0.5 flex flex-wrap gap-x-4">{adv.recommended.map((r, i) => <li key={i} className="text-[9px] text-ink-soft">▸ {r}</li>)}</ul>
-      </div>
-
-      <div className="grid gap-2 lg:grid-cols-5">
-        <div className="lg:col-span-2">
-          <Panel title="Pathogen intelligence" meta="Rt-ordered · select for detail">
-            <div className="space-y-1">
-              {ep.pathogens.map(p => {
-                const on = lead.pathogen === p.pathogen;
-                return (
-                  <button key={p.pathogen} onClick={() => setSelPath(p.pathogen)}
-                    className="focus-ring flex w-full items-center gap-2 rounded-[3px] border px-2 py-1 text-left transition-colors"
-                    style={{ borderColor: on ? ac(p.tone) : 'rgb(var(--c-line-soft))', backgroundColor: on ? 'rgb(var(--c-surface-2))' : 'transparent', borderLeft: `3px solid ${ac(p.tone)}` }}>
-                    <span className="min-w-0 flex-1 truncate text-[10px] text-ink">{p.pathogen}</span>
-                    <span className="shrink-0 text-[8px] uppercase" style={{ color: ac(p.tone) }}>{p.phase}</span>
-                    <span className="w-10 shrink-0 text-right font-mono text-[10px] tabular-nums" style={{ color: ac(p.tone) }}>Rt{p.rt}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </Panel>
-        </div>
-        <div className="lg:col-span-3 space-y-2">
-          <Panel title={`Epidemiology · ${lead.pathogen}`} meta={`${lead.trend} · ${lead.phase}`}>
-            <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
-              {([
-                { l: 'Rt', v: `${lead.rt}`, t: lead.rt > 1.3 ? 'alert' : lead.rt > 1 ? 'warn' : 'ok' },
-                { l: 'Doubling', v: lead.doublingDays >= 99 ? '—' : `${lead.doublingDays}d`, t: lead.doublingDays < 5 ? 'alert' : 'warn' },
-                { l: 'Attack /100k', v: `${lead.attackRatePer100k}`, t: lead.attackRatePer100k > 200 ? 'alert' : 'warn' },
-                { l: 'CFR', v: `${lead.cfrPct}%`, t: lead.cfrPct > 5 ? 'alert' : 'warn' },
-              ] as { l: string; v: string; t: 'ok' | 'warn' | 'alert' }[]).map(s => (
-                <div key={s.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
-                  <div className="text-[7.5px] uppercase tracking-[0.14em] text-ink-muted">{s.l}</div>
-                  <div className="font-mono text-[13px] tabular-nums" style={{ color: ac(s.t) }}>{s.v}</div>
-                </div>
-              ))}
-            </div>
-            <div className="mt-2 text-[8.5px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Predictive spread (30d · 78–130% band)</div>
-            <div className="mt-1 flex items-end gap-1" style={{ height: 64 }}>
-              {ep.spread.map(s => (
-                <div key={s.tPlusDays} className="flex flex-1 flex-col items-center justify-end gap-0.5">
-                  <div className="w-full rounded-t-[2px]" style={{ height: `${Math.max(3, (s.projected / maxProj) * 56)}px`, backgroundColor: ac(s.projected > ep.spread[0]!.projected ? 'alert' : 'ok') }} title={`${s.lower}–${s.upper}`} />
-                  <span className="text-[7.5px] tabular-nums text-ink-muted">+{s.tPlusDays}d</span>
-                </div>
-              ))}
-            </div>
-          </Panel>
-          <Panel title="Intervention modelling" meta="projected peak · reduction vs no-action">
-            <div className="space-y-1">
-              {ep.scenarios.map(s => (
-                <div key={s.scenario} className="flex items-center gap-2 text-[10px]">
-                  <span className="w-32 shrink-0 text-ink">{s.scenario}</span>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${Math.min(100, (s.peakCases / (ep.scenarios[0]!.peakCases || 1)) * 100)}%`, backgroundColor: ac(s.tone) }} /></div>
-                  <span className="w-20 shrink-0 text-right font-mono tabular-nums text-ink-muted">{s.peakCases.toLocaleString()}</span>
-                  <span className="w-10 shrink-0 text-right font-mono tabular-nums" style={{ color: ac(s.tone) }}>−{s.reductionPct}%</span>
-                </div>
-              ))}
-            </div>
-          </Panel>
+        <div className="space-y-2">
+          <CommandPanel title="Epidemic curve" meta="new cases · 7-day avg" accent={ACC} live>
+            <TrendChart height={104}
+              series={[
+                { name: 'New cases', points: norm(d.epidemicCurve.cases), tone: 'alert' },
+                { name: '7-day avg', points: norm(d.epidemicCurve.avg), tone: 'warn' },
+              ]}
+              labels={['Apr 19', 'May 3', 'May 16']} />
+          </CommandPanel>
+          <CommandPanel title="Cases by age group" meta={`${d.totalCases.toLocaleString()} total`} accent={ACC}>
+            <Donut total={d.totalCases} label="cases"
+              segments={d.ageGroups.map(a => ({ label: `${a.band} (${a.pct}%)`, value: a.count, tone: a.tone }))} />
+          </CommandPanel>
         </div>
       </div>
 
-      <Panel title="Region × pathogen heatmap" meta="intensity grid · top 3 pathogens">
-        <div className="grid gap-0.5" style={{ gridTemplateColumns: `90px repeat(3, 1fr)` }}>
-          <span />
-          {ep.pathogens.slice(0, 3).map(p => <span key={p.pathogen} className="truncate px-1 text-[7.5px] font-semibold uppercase tracking-wider text-ink-muted">{p.pathogen}</span>)}
-          {[...new Set(ep.grid.map(g => g.region))].map(region => (
-            <React.Fragment key={region}>
-              <span className="truncate px-1 py-1 text-[9px] text-ink-soft">{region}</span>
-              {ep.pathogens.slice(0, 3).map(p => {
-                const cell = ep.grid.find(g => g.region === region && g.pathogen === p.pathogen);
-                const it = cell?.intensity ?? 0;
-                return <div key={p.pathogen} className="flex items-center justify-center py-1 text-[8.5px] font-mono tabular-nums" style={{ backgroundColor: `color-mix(in srgb, ${ac(cell?.tone ?? 'ok')} ${Math.round(it * 0.7)}%, transparent)`, color: it > 55 ? '#fff' : 'rgb(var(--c-ink-soft))' }}>{it}</div>;
-              })}
-            </React.Fragment>
-          ))}
-        </div>
-      </Panel>
-
-      <GeoMap geo={geo} metric="outbreakHeat" title="Outbreak propagation map — regional transmission intensity" height={300} />
-
-      <Panel title="National infection propagation" meta={`outbreak cascade · ${prop.escalation}`}>
-        <div className="space-y-0.5">
-          {prop.hops.map(h => (
-            <div key={h.order} className="flex items-center gap-2 text-[9.5px]" style={{ opacity: h.status === 'latent' ? 0.5 : 1 }}>
-              <span className="w-5 text-center font-mono text-ink-muted">{h.order}</span>
-              <span className="w-36 shrink-0 truncate text-ink">{h.institution}{h.amplified ? <span style={{ color: ac('alert') }}> ⤴</span> : null}</span>
-              <span className="min-w-0 flex-1 truncate text-ink-muted">{h.signal}</span>
-              <span className="w-8 shrink-0 text-right font-mono tabular-nums" style={{ color: ac(h.tone) }}>{h.magnitude}</span>
-              <span className="w-9 shrink-0 text-right font-mono text-[8px] tabular-nums text-ink-muted">+{h.etaHrs}h</span>
-              <span className="w-11 shrink-0 text-right text-[7.5px] font-bold uppercase" style={{ color: ac(h.tone) }}>{h.status}</span>
+      {/* Top regions | Variants | Intervention impact | Mobility */}
+      <div className="grid gap-2 xl:grid-cols-4">
+        <CommandPanel title="Top regions by active cases" meta="incidence /100K" accent={ACC}>
+          <div className="space-y-1">
+            <div className="grid grid-cols-[1fr_auto_46px_auto] gap-x-2 px-1 text-[7px] font-bold uppercase tracking-wider text-ink-muted">
+              <span>Region</span><span>Active</span><span>Trend</span><span>Inc</span>
             </div>
-          ))}
+            {d.topRegions.map(r => (
+              <div key={r.region} className="grid grid-cols-[1fr_auto_46px_auto] items-center gap-x-2 px-1 text-[9px]">
+                <span className="truncate text-ink-soft">{r.region}</span>
+                <span className="font-mono tabular-nums text-ink-muted">{r.active.toLocaleString()}</span>
+                <svg width="46" height="14" viewBox="0 0 46 14"><polyline points={r.trend.map((v, i) => `${(i / (r.trend.length - 1)) * 46},${14 - v}`).join(' ')} fill="none" stroke={C(r.tone)} strokeWidth="1.1" /></svg>
+                <span className="text-right font-mono tabular-nums" style={{ color: C(r.tone) }}>{r.incidence}</span>
+              </div>
+            ))}
+          </div>
+        </CommandPanel>
+        <CommandPanel title="Variant distribution" meta={`${d.totalCases.toLocaleString()} samples`} accent={ACC}>
+          <Donut total={d.totalCases} label="samples"
+            segments={d.variants.map(v => ({ label: `${v.name} ${v.pct}%`, value: Math.round(d.totalCases * v.pct / 100), tone: v.tone }))} />
+        </CommandPanel>
+        <CommandPanel title="Intervention impact" meta="Rₜ change" accent={ACC}>
+          <div className="space-y-1">
+            {d.interventions.map(iv => (
+              <div key={iv.name} className="flex items-center gap-2 text-[9.5px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{iv.name}</span>
+                <span className="font-mono tabular-nums" style={{ color: C('ok') }}>{iv.rtChange}</span>
+                <span className="w-16 shrink-0 text-right text-[7.5px] font-bold uppercase" style={{ color: C(iv.tone) }}>{iv.impact}</span>
+              </div>
+            ))}
+          </div>
+        </CommandPanel>
+        <CommandPanel title="Mobility impact" meta="vs baseline" accent={ACC}>
+          <div className="space-y-1.5">
+            {d.mobility.map(m => (
+              <div key={m.category} className="flex items-center gap-2 text-[9.5px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{m.category}</span>
+                <span className="font-mono tabular-nums" style={{ color: C(m.tone) }}>{m.pct > 0 ? '+' : ''}{m.pct}% {m.up ? '↑' : '↓'}</span>
+              </div>
+            ))}
+          </div>
+        </CommandPanel>
+      </div>
+
+      {/* Predictive outlook | Early warning signals */}
+      <div className="grid gap-2 xl:grid-cols-3">
+        <div className="xl:col-span-2">
+          <CommandPanel title="Predictive outlook" meta={`${d.predictive.model} · confidence ${d.predictive.confidence}`} accent={ACC} live>
+            <div className="grid gap-2 sm:grid-cols-[auto_1fr]">
+              <div className="space-y-1 text-[10px]">
+                <div><span className="text-ink-muted">Peak cases</span><div className="font-semibold" style={{ color: C('alert') }}>{d.predictive.peakDate} <span className="text-[8px] text-ink-muted">{d.predictive.peakBand}</span></div></div>
+                <div><span className="text-ink-muted">Projected peak</span><div className="font-mono tabular-nums text-ink">{d.predictive.peakPerDay.toLocaleString()} / day</div></div>
+                <div><span className="text-ink-muted">Total projected</span><div className="font-mono tabular-nums text-ink">{d.predictive.totalLow}K – {d.predictive.totalHigh}K</div></div>
+              </div>
+              <div>
+                <TrendChart height={110}
+                  series={[
+                    { name: 'Observed', points: norm([...d.predictive.observed, ...d.predictive.best.slice(0, 1)]), tone: 'info' },
+                    { name: 'Projected (best)', points: norm(d.predictive.best), tone: 'ok' },
+                    { name: 'Projected (worst)', points: norm(d.predictive.worst), tone: 'alert' },
+                  ]}
+                  labels={['May 1', 'May 22', 'Jun 12']} />
+              </div>
+            </div>
+            <div className="mt-1.5 rounded-[3px] border px-2 py-1 text-[9px] text-ink-soft" style={{ borderColor: `color-mix(in srgb,${ACC} 35%,transparent)` }}>
+              <span style={{ color: ACC }}>Key insight ▸ </span>{d.predictive.insight}
+            </div>
+          </CommandPanel>
         </div>
-      </Panel>
+        <CommandPanel title="Early warning signals" meta={`${d.warnings.length}`} accent={ACC} live>
+          <div className="space-y-1">
+            {d.warnings.map(w => (
+              <div key={w.signal} className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/30 px-2 py-1" style={{ borderLeft: `3px solid ${C(w.tone)}` }}>
+                <span className="min-w-0 flex-1 text-[9px] text-ink-soft">{w.signal}</span>
+                <span className="shrink-0 text-[7.5px] font-bold uppercase" style={{ color: C(w.tone) }}>{w.level}</span>
+              </div>
+            ))}
+          </div>
+        </CommandPanel>
+      </div>
 
       <RuntimeQueue
         scope={`${id}:disease`}

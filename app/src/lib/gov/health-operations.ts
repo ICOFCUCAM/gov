@@ -844,6 +844,93 @@ export function healthFinanceExecution(id: string, t: number): HealthFinanceExec
   return { claims, schemes, fraud, reimbursement, treasuryDrawdownPct, fraudExposureM, posture };
 }
 
+// ── Disease Intelligence Command View — the epidemiology war-room ─────
+// A WHO-grade command picture: live epidemic KPIs with trend, epidemic
+// curve, age distribution, regional incidence, variant distribution,
+// intervention impact (Rt change), mobility impact, an ensemble
+// predictive outlook and early-warning signals. Pure & deterministic.
+export interface DcKpi { label: string; value: string; sub: string; delta: string; up: boolean; good: boolean; tone: Tone; series: number[] }
+export interface DcRegionRow { region: string; active: number; trend: number[]; incidence: number; tone: Tone }
+export interface DcVariant { name: string; pct: number; tone: Tone }
+export interface DcIntervention { name: string; rtChange: number; impact: 'High' | 'Moderate' | 'Low'; tone: Tone }
+export interface DcMobility { category: string; pct: number; up: boolean; tone: Tone }
+export interface DcWarning { signal: string; level: 'High' | 'Medium' | 'Low'; tone: Tone }
+export interface DiseaseCommandView {
+  kpis: DcKpi[];
+  epidemicCurve: { cases: number[]; avg: number[] };
+  ageGroups: { band: string; count: number; pct: number; tone: Tone }[];
+  totalCases: number;
+  topRegions: DcRegionRow[];
+  variants: DcVariant[];
+  interventions: DcIntervention[];
+  mobility: DcMobility[];
+  predictive: { model: string; confidence: string; peakDate: string; peakBand: string; peakPerDay: number; totalLow: number; totalHigh: number; observed: number[]; best: number[]; worst: number[]; insight: string };
+  warnings: DcWarning[];
+}
+export function diseaseCommandView(id: string, t: number): DiseaseCommandView {
+  const ep = diseaseEpidemiology(id, t);
+  const active = 90000 + Math.round(wave(`dc:ac:${id}`, t, 0, 60000));
+  const new24 = 3500 + Math.round(wave(`dc:nc:${id}`, t, 0, 4000));
+  const rt = ep.nationalRt;
+  const kpi = (label: string, value: string, sub: string, delta: string, up: boolean, good: boolean, lo: number, hi: number): DcKpi =>
+    ({ label, value, sub, delta, up, good, tone: good ? 'ok' : up ? 'alert' : 'warn', series: waveSeries(`dc:k:${label}:${id}`, t, 16, lo, hi) });
+  const kpis: DcKpi[] = [
+    kpi('Active cases', active.toLocaleString(), 'vs last 7 days', '▲12.4%', true, false, 40, 95),
+    kpi('New cases (24h)', new24.toLocaleString(), 'vs yesterday', '▲8.7%', true, false, 40, 95),
+    kpi('Rt (effective)', `${rt}`, 'transmission', '▲0.08', true, rt <= 1, 40, 90),
+    kpi('Doubling time', `${ep.pathogens[0]!.doublingDays}`, 'days', '▼1.2 days', false, false, 30, 80),
+    kpi('CFR (current)', `${ep.pathogens[0]!.cfrPct}%`, 'case fatality', '▼0.12%', false, true, 20, 60),
+    kpi('Hospitalized', (6000 + Math.round(wave(`dc:hz:${id}`, t, 0, 5000))).toLocaleString(), '72 ICU · 892 vent', '▲', true, false, 40, 90),
+    kpi('Recovered', (500000 + Math.round(wave(`dc:rc:${id}`, t, 0, 200000))).toLocaleString(), 'vs last 7 days', '▲3.2%', true, true, 40, 95),
+    kpi('Test positivity', `${Math.round(wave(`dc:tp:${id}`, t, 6, 22))}%`, 'rolling 7-day', '▲1.8%', true, false, 30, 90),
+  ];
+  const cases = waveSeries(`dc:cv:${id}`, t, 28, 1800, 9200).map(Math.round);
+  const avg = cases.map((_, i) => Math.round(cases.slice(Math.max(0, i - 6), i + 1).reduce((s, x) => s + x, 0) / Math.min(7, i + 1)));
+  const bands: [string, number][] = [['0-17', 12.3], ['18-29', 23.1], ['30-44', 29.6], ['45-64', 24.0], ['65+', 10.9]];
+  const totalCases = active;
+  const ageTones: Tone[] = ['ok', 'ok', 'warn', 'alert', 'ok'];
+  const ageGroups = bands.map(([band, pct], i): { band: string; count: number; pct: number; tone: Tone } =>
+    ({ band, pct, count: Math.round(totalCases * pct / 100), tone: ageTones[i]! }));
+  const topRegions: DcRegionRow[] = REGIONS.slice(0, 5).map((region, i): DcRegionRow => {
+    const a = Math.round(wave(`dc:tr:${id}:${i}`, t, 8000, 30000));
+    return { region, active: a, trend: waveSeries(`dc:tt:${id}:${i}`, t, 10, 2, 14), incidence: Math.round(a / 84 * 10) / 10, tone: a > 24000 ? 'alert' : a > 16000 ? 'warn' : 'ok' };
+  }).sort((x, y) => y.active - x.active);
+  const variants: DcVariant[] = [
+    { name: 'Omicron XBB.1.5', pct: 42.6, tone: 'alert' }, { name: 'Omicron BA.2.86', pct: 28.3, tone: 'warn' },
+    { name: 'Omicron JN.1', pct: 16.7, tone: 'warn' }, { name: 'Delta', pct: 6.2, tone: 'ok' }, { name: 'Others', pct: 6.2, tone: 'ok' },
+  ];
+  const interventions: DcIntervention[] = [
+    { name: 'School closure', rtChange: -0.21, impact: 'High', tone: 'ok' },
+    { name: 'Mask mandate', rtChange: -0.15, impact: 'High', tone: 'ok' },
+    { name: 'Public gathering limit', rtChange: -0.12, impact: 'Moderate', tone: 'warn' },
+    { name: 'Travel restrictions', rtChange: -0.08, impact: 'Moderate', tone: 'warn' },
+    { name: 'Vaccination campaign', rtChange: -0.05, impact: 'Low', tone: 'alert' },
+  ];
+  const mobility: DcMobility[] = [
+    { category: 'Retail & recreation', pct: -18, up: false, tone: 'alert' },
+    { category: 'Transit stations', pct: -24, up: false, tone: 'alert' },
+    { category: 'Workplaces', pct: -15, up: false, tone: 'warn' },
+    { category: 'Residential', pct: 12, up: true, tone: 'ok' },
+  ];
+  const obs = waveSeries(`dc:obs:${id}`, t, 8, 1500, 6000).map(Math.round);
+  const best = waveSeries(`dc:bst:${id}`, t, 12, 5500, 8800).map(Math.round);
+  const worst = waveSeries(`dc:wst:${id}`, t, 12, 7000, 14500).map(Math.round);
+  const predictive = {
+    model: 'Ensemble (AI + statistical)', confidence: 'High',
+    peakDate: 'May 28, 2025', peakBand: '+/- 4 days', peakPerDay: 8000 + Math.round(wave(`dc:pp:${id}`, t, 0, 1200)),
+    totalLow: 165, totalHigh: 182, observed: obs, best, worst,
+    insight: 'If current trends continue, cases may peak in 9-13 days. Stronger interventions can reduce peak by up to 37%.',
+  };
+  const warnings: DcWarning[] = [
+    { signal: 'Rising cases in 3 adjacent districts', level: 'High', tone: 'alert' },
+    { signal: 'Increased pneumonia in children <5', level: 'High', tone: 'alert' },
+    { signal: 'Unusual spike in ILI in North Region', level: 'Medium', tone: 'warn' },
+    { signal: 'Wastewater viral load increasing', level: 'Medium', tone: 'warn' },
+    { signal: 'SARI admissions above threshold', level: 'Low', tone: 'ok' },
+  ];
+  return { kpis, epidemicCurve: { cases, avg }, ageGroups, totalCases, topRegions, variants, interventions, mobility, predictive, warnings };
+}
+
 // ── Disease intelligence deep epidemiology engine ──────────────────────
 // Not a heatmap row: per-pathogen epidemiological intelligence (Rt,
 // doubling time, attack rate, CFR), a region×severity grid, a predictive
