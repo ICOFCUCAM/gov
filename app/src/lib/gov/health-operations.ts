@@ -443,6 +443,92 @@ export function sovereignSecurity(id: string, t: number): SovereignSecurity {
   };
 }
 
+// ── Citizen Portal View — the consumer-grade health super-app ─────────
+// A warm, human, citizen-facing record: hero + health score, upcoming
+// appointment, health timeline, wearable health overview, medicines,
+// records summary, insurance, immunisation, telemedicine doctors, health
+// wallet, nearby services and public advisories. Pure & deterministic.
+export interface CzMetric { label: string; value: string; sub: string; tone: Tone; series: number[] }
+export interface CzTimeline { date: string; kind: string; detail: string; status: 'Normal' | 'Done' | 'Info'; tone: Tone }
+export interface CzMed { drug: string; instr: string; daysLeft: number; tone: Tone }
+export interface CzImmun { vaccine: string; date: string; done: boolean }
+export interface CzDoctor { name: string; spec: string; rating: number; exp: number; available: boolean }
+export interface CzService { kind: 'Hospital' | 'Clinic' | 'Lab' | 'Pharmacy'; name: string; sub: string; km: number; rating: number; reviews: number; tag: string }
+export interface CzAlert { title: string; body: string; date: string; tone: Tone }
+export interface CitizenPortalView {
+  name: string; healthId: string; healthScore: number; healthBand: 'Excellent' | 'Good' | 'Fair' | 'Low';
+  upcoming: { type: string; doctor: string; spec: string; date: string; time: string; place: string };
+  timeline: CzTimeline[];
+  overview: CzMetric[];
+  meds: { active: number; pendingRefills: number; list: CzMed[] };
+  records: { reports: number; labs: number; imaging: number; documents: number };
+  insurance: { plan: string; policyNo: string; validTill: string; coverageUsedPct: number };
+  immun: { uptoDatePct: number; list: CzImmun[] };
+  doctors: CzDoctor[];
+  wallet: { points: number };
+  services: CzService[];
+  alerts: CzAlert[];
+  unread: number;
+}
+export function citizenPortalView(id: string, t: number): CitizenPortalView {
+  const healthScore = Math.round(wave(`cz:hs:${id}`, t, 58, 94));
+  const healthBand: CitizenPortalView['healthBand'] = healthScore >= 85 ? 'Excellent' : healthScore >= 70 ? 'Good' : healthScore >= 55 ? 'Fair' : 'Low';
+  const m = (label: string, value: string, sub: string, lo: number, hi: number, tone: Tone): CzMetric =>
+    ({ label, value, sub, tone, series: waveSeries(`cz:${label}:${id}`, t, 16, lo, hi) });
+  return {
+    name: 'Aisha Rahman', healthId: '7845 1236 9871',
+    healthScore, healthBand,
+    upcoming: { type: 'Cardiology Consultation', doctor: 'Dr. Sarah Ahmed', spec: 'Consultant Cardiologist', date: 'May 20, 2025', time: '10:30 AM', place: 'National Cardiac Center · Building A, Floor 3' },
+    timeline: [
+      { date: 'May 15', kind: 'Lab test', detail: 'Complete blood count', status: 'Normal', tone: 'ok' },
+      { date: 'May 14', kind: 'Prescription', detail: 'Atorvastatin 40mg', status: 'Info', tone: 'ok' },
+      { date: 'May 10', kind: 'Vaccination', detail: 'Influenza vaccine', status: 'Done', tone: 'ok' },
+      { date: 'May 05', kind: 'Consultation', detail: 'Dr. Sarah Ahmed', status: 'Info', tone: 'ok' },
+      { date: 'Apr 28', kind: 'Lab test', detail: 'Thyroid profile', status: 'Normal', tone: 'ok' },
+    ],
+    overview: [
+      m('Steps', `${(7000 + Math.round(wave(`cz:st:${id}`, t, 0, 2400))).toLocaleString()}`, '/ 10,000', 30, 95, 'ok'),
+      m('Heart rate', `${Math.round(wave(`cz:hr:${id}`, t, 64, 84))}`, 'bpm', 60, 90, 'ok'),
+      m('Sleep', `7h ${Math.round(wave(`cz:sl:${id}`, t, 5, 55))}m`, 'last night', 30, 90, 'ok'),
+      m('Calories', `${(1600 + Math.round(wave(`cz:ca:${id}`, t, 0, 600))).toLocaleString()}`, 'kcal', 30, 95, 'warn'),
+    ],
+    meds: {
+      active: 2, pendingRefills: 1,
+      list: [
+        { drug: 'Atorvastatin 40mg', instr: 'Once daily at night', daysLeft: 5, tone: 'warn' },
+        { drug: 'Aspirin 75mg', instr: 'Once daily after breakfast', daysLeft: 12, tone: 'ok' },
+      ],
+    },
+    records: { reports: 24, labs: 18, imaging: 7, documents: 11 },
+    insurance: { plan: 'National Health Shield', policyNo: 'NHS-78451236', validTill: 'Dec 31, 2025', coverageUsedPct: Math.round(wave(`cz:ic:${id}`, t, 40, 80)) },
+    immun: {
+      uptoDatePct: Math.round(wave(`cz:im:${id}`, t, 72, 96)),
+      list: [
+        { vaccine: 'COVID-19 booster', date: 'Jan 10, 2025', done: true },
+        { vaccine: 'Influenza', date: 'Oct 12, 2024', done: true },
+        { vaccine: 'Tetanus', date: 'Jul 20, 2024', done: true },
+        { vaccine: 'Hepatitis B', date: 'Next due: Jul 20, 2025', done: false },
+      ],
+    },
+    doctors: [
+      { name: 'Dr. Fatima Ali', spec: 'General Physician', rating: 4.9, exp: 8, available: true },
+      { name: 'Dr. Omar Hassan', spec: 'Pediatrician', rating: 4.8, exp: 10, available: true },
+    ],
+    wallet: { points: 1250 },
+    services: [
+      { kind: 'Hospital', name: 'National Cardiac Center', sub: 'Specialized Cardiology Hospital', km: 3.2, rating: 4.8, reviews: 324, tag: '24/7 Emergency' },
+      { kind: 'Hospital', name: 'City Hospital', sub: 'Multi-Speciality Hospital', km: 4.7, rating: 4.5, reviews: 512, tag: '24/7 Emergency' },
+      { kind: 'Hospital', name: 'Al Noor Medical Center', sub: 'Multi-Speciality Hospital', km: 6.1, rating: 4.4, reviews: 256, tag: 'Open · Closes 10:00 PM' },
+    ],
+    alerts: [
+      { title: 'Dengue advisory', body: 'High risk in your area. Protect yourself and your family.', date: 'May 16, 2025', tone: 'alert' },
+      { title: 'Seasonal flu vaccination', body: 'Flu vaccine is now available. Book your slot today.', date: 'May 14, 2025', tone: 'ok' },
+      { title: 'Heatwave alert', body: 'Stay hydrated and avoid direct sunlight.', date: 'May 12, 2025', tone: 'ok' },
+    ],
+    unread: 7,
+  };
+}
+
 // ── Citizen Digital Health Portal ──────────────────────────────────────
 // The citizen-facing healthcare ecosystem: national digital health ID,
 // longitudinal health timeline, appointments, digital prescriptions,
