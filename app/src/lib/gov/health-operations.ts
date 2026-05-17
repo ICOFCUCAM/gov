@@ -134,6 +134,78 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── Disease intelligence deep epidemiology engine ──────────────────────
+// Not a heatmap row: per-pathogen epidemiological intelligence (Rt,
+// doubling time, attack rate, CFR), a region×severity grid, a predictive
+// spread curve with peak estimate, and intervention modelling that
+// projects case reduction under containment / vaccination. Pure &
+// deterministic.
+const EPI_PATHOGENS = ['Cholera', 'Measles', 'Influenza A(H3)', 'Dengue', 'Meningococcal', 'Viral haemorrhagic'];
+export interface PathogenIntel {
+  pathogen: string;
+  rt: number;
+  doublingDays: number;
+  attackRatePer100k: number;
+  cfrPct: number;
+  trend: 'rising' | 'plateau' | 'declining';
+  phase: 'sporadic' | 'cluster' | 'epidemic';
+  tone: Tone;
+}
+export interface EpiGridCell { region: string; pathogen: string; intensity: number; severity: 'contained' | 'active' | 'critical'; tone: Tone }
+export interface SpreadPoint { tPlusDays: number; projected: number; lower: number; upper: number }
+export interface InterventionScenario { scenario: 'No action' | 'Containment' | 'Mass vaccination' | 'Combined'; peakCases: number; reductionPct: number; tone: Tone }
+export interface DiseaseEpidemiology {
+  pathogens: PathogenIntel[];
+  grid: EpiGridCell[];
+  spread: SpreadPoint[];
+  peakInDays: number;
+  scenarios: InterventionScenario[];
+  dominantPathogen: string;
+  nationalRt: number;
+  posture: 'surveillance' | 'response' | 'epidemic';
+}
+export function diseaseEpidemiology(id: string, t: number): DiseaseEpidemiology {
+  const pathogens: PathogenIntel[] = EPI_PATHOGENS.map((pathogen, i): PathogenIntel => {
+    const rt = Math.round(wave(`ep:rt:${id}:${i}`, t, 0.5, 2.6) * 100) / 100;
+    const doublingDays = rt > 1 ? Math.max(1, Math.round(10 / (rt - 1 + 0.15))) : 99;
+    const attackRatePer100k = Math.round(wave(`ep:ar:${id}:${i}`, t, 2, 480));
+    const cfrPct = Math.round(wave(`ep:cf:${id}:${i}`, t, 0, 14) * 10) / 10;
+    const trend: PathogenIntel['trend'] = rt > 1.15 ? 'rising' : rt > 0.95 ? 'plateau' : 'declining';
+    const phase: PathogenIntel['phase'] = rt > 1.3 && attackRatePer100k > 200 ? 'epidemic' : rt > 1.05 ? 'cluster' : 'sporadic';
+    const tone: Tone = phase === 'epidemic' ? 'alert' : phase === 'cluster' ? 'warn' : 'ok';
+    return { pathogen, rt, doublingDays, attackRatePer100k, cfrPct, trend, phase, tone };
+  }).sort((a, b) => b.rt - a.rt);
+  const grid: EpiGridCell[] = [];
+  for (const r of REGIONS) {
+    for (let p = 0; p < 3; p++) {
+      const pathogen = pathogens[p]!.pathogen;
+      const intensity = Math.round(wave(`ep:gi:${id}:${r}:${p}`, t, 0, 100));
+      const severity: EpiGridCell['severity'] = intensity >= 70 ? 'critical' : intensity >= 38 ? 'active' : 'contained';
+      grid.push({ region: r, pathogen, intensity, severity, tone: severity === 'critical' ? 'alert' : severity === 'active' ? 'warn' : 'ok' });
+    }
+  }
+  const lead = pathogens[0]!;
+  const base = Math.round(wave(`ep:bc:${id}`, t, 200, 6000));
+  const spread: SpreadPoint[] = [0, 7, 14, 21, 30].map((tPlusDays): SpreadPoint => {
+    const growth = Math.pow(Math.max(0.6, lead.rt), tPlusDays / Math.max(3, lead.doublingDays));
+    const projected = Math.round(base * growth);
+    return { tPlusDays, projected, lower: Math.round(projected * 0.78), upper: Math.round(projected * 1.3) };
+  });
+  // peak when Rt-driven growth saturates the susceptible pool (bounded model)
+  const peakInDays = lead.rt <= 1 ? 0 : Math.min(60, Math.round(lead.doublingDays * 3.2));
+  const peakNoAction = spread.at(-1)!.upper;
+  const scenarios: InterventionScenario[] = [
+    { scenario: 'No action', peakCases: peakNoAction, reductionPct: 0, tone: 'alert' },
+    { scenario: 'Containment', peakCases: Math.round(peakNoAction * 0.62), reductionPct: 38, tone: 'warn' },
+    { scenario: 'Mass vaccination', peakCases: Math.round(peakNoAction * 0.5), reductionPct: 50, tone: 'warn' },
+    { scenario: 'Combined', peakCases: Math.round(peakNoAction * 0.31), reductionPct: 69, tone: 'ok' },
+  ];
+  const epidemic = pathogens.filter(p => p.phase === 'epidemic').length;
+  const posture: DiseaseEpidemiology['posture'] =
+    epidemic >= 2 || lead.rt > 1.5 ? 'epidemic' : epidemic >= 1 || lead.rt > 1.1 ? 'response' : 'surveillance';
+  return { pathogens, grid, spread, peakInDays, scenarios, dominantPathogen: lead.pathogen, nationalRt: lead.rt, posture };
+}
+
 // ── Emergency incident deep execution system ───────────────────────────
 // Pre-hospital command as a true master/detail execution system: a live
 // incident board where every incident carries its own command core —

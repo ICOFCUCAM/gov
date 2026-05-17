@@ -3,7 +3,7 @@ import {
   pharmaceuticalSupply, laboratoryNetwork, healthFinance,
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
-  patientDeepExecution, emergencyIncidentExecution,
+  patientDeepExecution, emergencyIncidentExecution, diseaseEpidemiology,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -167,5 +167,31 @@ describe('ministry of health operations engine', () => {
     }
     expect(a.immediate).toBe(a.incidents.filter(x => x.severity === 1 && x.stage !== 'Cleared').length);
     expect(a.unitsCommitted).toBe(a.incidents.reduce((s, x) => s + x.responders.length, 0));
+  });
+
+  it('diseaseEpidemiology is a deterministic, bounded epidemiology engine', () => {
+    const a = diseaseEpidemiology('MOH', 155);
+    expect(a).toEqual(diseaseEpidemiology('MOH', 155));
+    expect(a.pathogens.length).toBe(6);
+    expect(a.grid.length).toBe(18); // 6 regions × 3 pathogens
+    expect(a.spread.map(s => s.tPlusDays)).toEqual([0, 7, 14, 21, 30]);
+    expect(a.scenarios.length).toBe(4);
+    expect(['surveillance', 'response', 'epidemic']).toContain(a.posture);
+    // Rt-ordered; scenarios monotonically reduce peak
+    for (let i = 1; i < a.pathogens.length; i++) {
+      expect(a.pathogens[i - 1]!.rt).toBeGreaterThanOrEqual(a.pathogens[i]!.rt);
+    }
+    for (let i = 1; i < a.scenarios.length; i++) {
+      expect(a.scenarios[i]!.peakCases).toBeLessThanOrEqual(a.scenarios[i - 1]!.peakCases);
+      expect(a.scenarios[i]!.reductionPct).toBeGreaterThanOrEqual(a.scenarios[i - 1]!.reductionPct);
+    }
+    for (const p of a.pathogens) {
+      expect(['sporadic', 'cluster', 'epidemic']).toContain(p.phase);
+      expect(p.rt).toBeGreaterThanOrEqual(0);
+    }
+    for (const s of a.spread) {
+      expect(s.lower).toBeLessThanOrEqual(s.projected);
+      expect(s.upper).toBeGreaterThanOrEqual(s.projected);
+    }
   });
 });
