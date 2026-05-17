@@ -266,33 +266,63 @@ export function HealthEcosystemWall() {
           accent={ACC.hospital} posture={ho.loadBalanceTone === 'alert' ? 'STRAINED' : ho.loadBalanceTone === 'warn' ? 'BUSY' : 'BALANCED'}
           postureTone={ho.loadBalanceTone} time={time} navActive="Overview"
           nav={['Overview', 'ICU Command', 'Theatres', 'Bed Management', 'ER Command', 'Transfers', 'Ambulances', 'Staffing', 'Wards', 'Supply', 'Reports']}>
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-5">
-            <Kpi label="Hospitals" value={`${geo.regions.length * 27}`} tone="ok" points={sp('hsp', 60, 80)} />
-            <Kpi label="Total Beds" value={ho.beds.total.toLocaleString()} tone="ok" points={sp('bed', 50, 85)} />
-            <Kpi label="ICU Occupancy" value={`${ho.icu.occupancyPct}`} unit="%" tone={ho.icu.occupancyPct >= 90 ? 'alert' : ho.icu.occupancyPct >= 78 ? 'warn' : 'ok'} points={sp('ico', 65, 95)} />
-            <Kpi label="Available Beds" value={(ho.beds.total - ho.beds.occupied).toLocaleString()} tone={ho.beds.occupancyPct >= 90 ? 'warn' : 'ok'} points={sp('avb', 30, 70)} />
-            <Kpi label="ER Wait" value={`${ho.ambulances.meanResponseMin}`} unit="min" tone={ho.ambulances.meanResponseMin >= 22 ? 'alert' : 'warn'} points={sp('erw', 40, 80)} />
-          </div>
-          <div className="overflow-hidden rounded-[6px] border" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-            <GeoMap geo={geo} metric="icuLoad" title="" height={210} />
-          </div>
-          <div className="grid gap-2 xl:grid-cols-2">
-            <div className="space-y-1">
-              <PanelLabel accent={ACC.hospital}>ICU occupancy by region</PanelLabel>
-              {ns.regions.slice(0, 5).map(r => (
-                <Bar key={r.region} label={r.region} pct={r.icuPressure} tone={r.tone} tail={`${r.icuPressure}%`} />
-              ))}
-            </div>
-            <div>
-              <PanelLabel accent={ACC.hospital}>Theatre utilisation</PanelLabel>
-              <div className="mt-1">
-                <Donut total={ho.theatres.utilisationPct} label="util %" size={104}
-                  segments={[
-                    { label: 'Active', value: ho.theatres.active, tone: 'ok' },
-                    { label: 'Scheduled', value: ho.theatres.scheduledToday, tone: 'warn' },
-                    { label: 'Idle', value: Math.max(0, ho.theatres.total - ho.theatres.active), tone: 'alert' },
-                  ]} />
+          {/* KPI strip */}
+          <div className="grid shrink-0 grid-cols-5 gap-1">
+            {[
+              { l: 'HOSPITALS', v: `${geo.regions.length * 27}`, s: 'Active', t: 'ok' as Tone, k: 'hsp' },
+              { l: 'TOTAL BEDS', v: ho.beds.total.toLocaleString(), s: '▲ 1.2%', t: 'ok' as Tone, k: 'bed' },
+              { l: 'ICU OCCUPANCY', v: `${ho.icu.occupancyPct}%`, s: '▲ 6%', t: (ho.icu.occupancyPct >= 90 ? 'alert' : ho.icu.occupancyPct >= 78 ? 'warn' : 'ok') as Tone, k: 'ico' },
+              { l: 'AVAILABLE BEDS', v: (ho.beds.total - ho.beds.occupied).toLocaleString(), s: 'Open', t: (ho.beds.occupancyPct >= 90 ? 'warn' : 'ok') as Tone, k: 'avb' },
+              { l: 'ER WAIT', v: `${ho.ambulances.meanResponseMin}m`, s: '▼ 4m', t: (ho.ambulances.meanResponseMin >= 22 ? 'alert' : 'warn') as Tone, k: 'erw' },
+            ].map(m => (
+              <div key={m.l} className="flex flex-col justify-between rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
+                <div className="truncate text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-muted">{m.l}</div>
+                <div className="flex items-end justify-between gap-1">
+                  <span className="font-mono text-[22px] font-bold leading-none tabular-nums" style={{ color: sc(m.t), textShadow: `0 0 10px color-mix(in srgb,${sc(m.t)} 45%,transparent)` }}>{m.v}</span>
+                  <Sparkline points={sp(m.k, 50, 90)} tone={m.t} width={36} height={13} />
+                </div>
+                <div className="truncate text-[6.5px] text-ink-muted">{m.s}</div>
               </div>
+            ))}
+          </div>
+          {/* dominant hospital network map */}
+          <div className="relative min-h-0 flex-1 overflow-hidden rounded-[4px] border" style={{ borderColor: 'rgba(90,170,255,0.18)' }}>
+            <GeoMap geo={geo} metric="icuLoad" title="Hospital Network Map" height={150} />
+          </div>
+          {/* bottom: ICU by region | live transfers | theatre donut */}
+          <div className="grid shrink-0 grid-cols-[1.1fr_1.1fr_0.95fr] gap-1">
+            <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">ICU Occupancy · Region</div>
+              <div className="space-y-0.5">
+                {ns.regions.slice(0, 5).map(r => (
+                  <div key={r.region} className="flex items-center gap-1 text-[7px]">
+                    <span className="w-12 shrink-0 truncate text-ink-muted">{r.region}</span>
+                    <span className="h-1 flex-1 overflow-hidden rounded-full" style={{ background: '#16222e' }}><span className="block h-full rounded-full" style={{ width: `${r.icuPressure}%`, background: sc(r.tone), boxShadow: `0 0 5px ${sc(r.tone)}` }} /></span>
+                    <span className="w-6 shrink-0 text-right font-mono" style={{ color: sc(r.tone) }}>{r.icuPressure}%</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">Live Transfers</div>
+              <div className="space-y-0.5">
+                {ns.regions.slice(0, 4).map((r, i) => (
+                  <div key={r.region} className="flex items-center justify-between rounded-[2px] px-1 py-0.5 text-[7px]" style={{ background: 'rgba(0,0,0,0.25)', borderLeft: `2px solid ${sc(r.tone)}` }}>
+                    <span className="min-w-0 flex-1 truncate text-ink-soft">{r.region} → {ns.regions[(i + 1) % ns.regions.length]!.region}</span>
+                    <span className="shrink-0 font-mono text-ink-muted">{1 + (i % 3)}p</span>
+                    <span className="ml-1 shrink-0 font-bold uppercase" style={{ color: sc(r.tone) }}>{r.tone === 'alert' ? 'CRIT' : 'HIGH'}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="flex flex-col items-center justify-center rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
+              <div className="mb-0.5 self-start text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">Theatre Util</div>
+              <Donut total={ho.theatres.utilisationPct} label="util %" size={78}
+                segments={[
+                  { label: 'Active', value: ho.theatres.active, tone: 'ok' },
+                  { label: 'Sched', value: ho.theatres.scheduledToday, tone: 'warn' },
+                  { label: 'Idle', value: Math.max(0, ho.theatres.total - ho.theatres.active), tone: 'alert' },
+                ]} />
             </div>
           </div>
         </Tile>
@@ -389,32 +419,56 @@ export function HealthEcosystemWall() {
         <Tile n={5} title="Disease Intelligence" sub="Epidemiology & Outbreak Intelligence"
           accent={ACC.disease} posture="SURVEILLANCE" postureTone="warn" time={time} navActive="Overview"
           nav={['Overview', 'Outbreaks', 'Surveillance', 'Genomics', 'Forecasting', 'Interventions', 'Reports', 'Alerts', 'Settings']}>
-          <div className="grid grid-cols-3 gap-1.5 xl:grid-cols-6">
+          {/* KPI strip — 6 epidemiology metrics */}
+          <div className="grid shrink-0 grid-cols-6 gap-1">
             {di.kpis.slice(0, 6).map(k => (
-              <Kpi key={k.label} label={k.label} value={k.value} tone={k.tone} points={k.series} />
+              <div key={k.label} className="flex flex-col justify-between rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(255,120,90,0.2)', background: 'rgba(28,12,10,0.55)' }}>
+                <div className="truncate text-[6.5px] font-bold uppercase tracking-[0.1em] text-ink-muted">{k.label}</div>
+                <div className="flex items-end justify-between gap-1">
+                  <span className="font-mono text-[18px] font-bold leading-none tabular-nums" style={{ color: sc(k.tone), textShadow: `0 0 10px color-mix(in srgb,${sc(k.tone)} 45%,transparent)` }}>{k.value}</span>
+                  <Sparkline points={k.series} tone={k.tone} width={32} height={12} />
+                </div>
+                <div className="truncate text-[6px] text-ink-muted">{k.sub}</div>
+              </div>
             ))}
           </div>
-          <div className="overflow-hidden rounded-[6px] border" style={{ borderColor: 'color-mix(in srgb,#1d3548 55%,transparent)' }}>
-            <GeoMap geo={geo} metric="outbreakHeat" title="" height={210} />
-          </div>
-          <div className="grid gap-2 xl:grid-cols-2">
-            <div>
-              <PanelLabel accent={ACC.disease}>Epidemic curve</PanelLabel>
-              <div className="mt-1">
-                <TrendChart height={86} series={[
-                  { name: 'Daily cases', points: di.epidemicCurve.cases, tone: 'alert' },
-                  { name: '7-day avg', points: di.epidemicCurve.avg, tone: 'warn' },
-                ]} />
+          {/* dominant outbreak heatmap | top outbreaks */}
+          <div className="flex min-h-0 flex-1 gap-1">
+            <div className="relative min-w-0 flex-1 overflow-hidden rounded-[4px] border" style={{ borderColor: 'rgba(255,120,90,0.22)' }}>
+              <GeoMap geo={geo} metric="outbreakHeat" title="Outbreak Heatmap" height={140} accent={ACC.disease} />
+            </div>
+            <div className="flex w-[124px] shrink-0 flex-col rounded-[4px] border" style={{ borderColor: 'rgba(255,120,90,0.22)', background: 'rgba(28,12,10,0.5)' }}>
+              <div className="border-b px-1.5 py-1 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft" style={{ borderColor: 'rgba(255,120,90,0.18)' }}>Top Outbreaks</div>
+              <div className="min-h-0 flex-1 space-y-0.5 overflow-hidden p-1">
+                {di.topRegions.slice(0, 5).map(r => (
+                  <div key={r.region} className="flex items-center justify-between rounded-[2px] px-1 py-0.5 text-[7px]" style={{ background: 'rgba(0,0,0,0.3)', borderLeft: `2px solid ${sc(r.tone)}` }}>
+                    <span className="min-w-0 flex-1 truncate text-ink-soft">{r.region}</span>
+                    <span className="shrink-0 font-mono tabular-nums" style={{ color: sc(r.tone) }}>{r.active.toLocaleString()}</span>
+                  </div>
+                ))}
               </div>
             </div>
-            <div>
-              <PanelLabel accent={ACC.disease}>Predictive spread (7d)</PanelLabel>
-              <div className="mt-1">
-                <TrendChart height={86} series={[
-                  { name: 'Observed', points: di.predictive.observed, tone: 'info' },
-                  { name: 'Best', points: di.predictive.best, tone: 'ok' },
-                  { name: 'Worst', points: di.predictive.worst, tone: 'alert' },
-                ]} />
+          </div>
+          {/* bottom: epidemic curve | predictive spread | intervention impact */}
+          <div className="grid shrink-0 grid-cols-3 gap-1">
+            <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(255,120,90,0.18)', background: 'rgba(28,12,10,0.5)' }}>
+              <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Epidemic Curve</div>
+              <TrendChart height={48} series={[{ name: 'Cases', points: di.epidemicCurve.cases, tone: 'alert' }, { name: 'Avg', points: di.epidemicCurve.avg, tone: 'warn' }]} />
+            </div>
+            <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(255,120,90,0.18)', background: 'rgba(28,12,10,0.5)' }}>
+              <div className="text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Predictive Spread</div>
+              <TrendChart height={48} series={[{ name: 'Best', points: di.predictive.best, tone: 'ok' }, { name: 'Worst', points: di.predictive.worst, tone: 'alert' }]} />
+            </div>
+            <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(255,120,90,0.18)', background: 'rgba(28,12,10,0.5)' }}>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-soft">Intervention Impact</div>
+              <div className="space-y-0.5">
+                {di.interventions.slice(0, 4).map(iv => (
+                  <div key={iv.name} className="flex items-center gap-1 text-[6.5px]">
+                    <span className="w-14 shrink-0 truncate text-ink-muted">{iv.name}</span>
+                    <span className="h-1 flex-1 overflow-hidden rounded-full" style={{ background: '#241210' }}><span className="block h-full rounded-full" style={{ width: `${Math.min(100, Math.abs(iv.rtChange))}%`, background: sc(iv.tone) }} /></span>
+                    <span className="w-7 shrink-0 text-right font-mono" style={{ color: sc(iv.tone) }}>{iv.rtChange}%</span>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
