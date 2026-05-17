@@ -128,14 +128,26 @@ export function NationalShell() {
   const ne = nationalEcosystem(mins, ts);
   const fp = federationPosture(mins, ts, executionDelta);
   const iof = interoperabilityFabric(mins, ts);
+  const leg = legislativeState(ts, model.legislature.chambers.map(c => c.name).slice(0, 2));
+  const jud = judicialState(ts);
+  // Close the causal loop: cross-institution constraint drag lowers the
+  // national execution index (national intelligence reflects coupled
+  // operational reality, not isolated metrics).
+  const chainTop = chainSummary({
+    treasuryOperational: fp.institutions.find(i => i.archetype === 'FINANCE')?.operational ?? 100,
+    legislativeQuorum: leg.quorum,
+    legislativeBlocked: leg.blocked,
+    judicialClearancePct: jud.meanClearance,
+    judicialBacklog: jud.totalBacklog,
+    policeOperational: fp.institutions.find(i => i.archetype === 'INTERIOR')?.operational ?? 100,
+    healthOperational: fp.institutions.find(i => i.archetype === 'HEALTH')?.operational ?? 100,
+  });
   const sei = sovereignExecutionIndex({
     federationOperational: fp.institutions.length ? fp.meanOperational : 100,
     resilience: resilience.index,
-    runtimeLoad: liveRt.open > 0 ? Math.min(100, liveRt.open) : 0,
+    runtimeLoad: Math.min(100, (liveRt.open > 0 ? Math.min(100, liveRt.open) : 0) + chainTop.systemicDrag),
     auditIntact: audit.intact,
   });
-  const leg = legislativeState(ts, model.legislature.chambers.map(c => c.name).slice(0, 2));
-  const jud = judicialState(ts);
   const constContinuity =
     !leg.quorum || jud.meanClearance < 60 ? { l: 'STRAINED', t: 'alert' as const }
       : leg.blocked >= 4 || jud.totalBacklog > 900 ? { l: 'WATCH', t: 'warn' as const }
