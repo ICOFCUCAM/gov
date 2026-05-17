@@ -28,10 +28,10 @@ function Glow({ a }: { a: string }) {
 }
 
 function Tile({
-  n, title, sub, accent, posture, postureTone, nav, navActive, time, span, children,
+  n, title, sub, accent, posture, postureTone, nav, navActive, time, span, href, children,
 }: {
   n: number; title: string; sub: string; accent: string; posture: string; postureTone: Tone;
-  nav: string[]; navActive: string; time: string; span?: string; children: React.ReactNode;
+  nav: string[]; navActive: string; time: string; span?: string; href: string; children: React.ReactNode;
 }) {
   return (
     <section className={`flex h-full min-w-0 flex-col overflow-hidden rounded-[6px] border ${span ?? ''}`}
@@ -40,13 +40,14 @@ function Tile({
         background: `linear-gradient(150deg,rgba(8,18,32,0.94),rgba(6,14,25,0.96) 55%,color-mix(in srgb,${accent} 6%,rgba(8,18,32,0.94)))`,
         boxShadow: `0 0 0 1px color-mix(in srgb,${accent} 14%,transparent), inset 0 1px 0 rgba(255,255,255,0.03), 0 14px 30px -22px ${accent}`,
       }}>
-      {/* module header strip — fixed 44px */}
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b px-3"
+      {/* module header strip — fixed 44px · clickable → opens the domain */}
+      <Link href={href} aria-label={`Open ${title}`}
+        className="group flex h-11 shrink-0 items-center gap-2 border-b px-3 no-underline transition-colors hover:brightness-125"
         style={{ borderColor: 'rgba(90,170,255,0.16)', background: `linear-gradient(100deg,#06101c,color-mix(in srgb,${accent} 9%,#0a1626))` }}>
         <span className="grid h-5 w-5 shrink-0 place-items-center rounded-full text-[10px] font-bold tabular-nums"
           style={{ color: accent, border: `1px solid ${accent}`, boxShadow: `0 0 10px color-mix(in srgb,${accent} 55%,transparent)` }}>{n}</span>
         <div className="min-w-0 flex-1">
-          <div className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-ink"
+          <div className="truncate text-[11px] font-bold uppercase tracking-[0.18em] text-ink group-hover:underline"
             style={{ textShadow: `0 0 12px color-mix(in srgb,${accent} 45%,transparent)` }}>{title}</div>
           <div className="truncate text-[8px] uppercase tracking-[0.16em] text-ink-muted">{sub}</div>
         </div>
@@ -56,7 +57,8 @@ function Tile({
           <span className="h-1.5 w-1.5 rounded-full animate-breathe" style={{ background: sc('ok') }} />live
         </span>
         <span className="hidden shrink-0 font-mono text-[7.5px] tabular-nums text-ink-muted lg:inline">{time}</span>
-      </div>
+        <span className="shrink-0 text-[10px] font-bold opacity-0 transition-opacity group-hover:opacity-100" style={{ color: accent }}>→</span>
+      </Link>
       {/* body: nav rail + content */}
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <nav className="hidden w-[76px] shrink-0 flex-col gap-[5px] overflow-hidden border-r px-1 py-1.5 sm:flex"
@@ -178,7 +180,7 @@ export function HealthEcosystemWall() {
         }}>
 
         {/* 1 — NATIONAL HEALTH COMMAND */}
-        <Tile n={1} title="National Health Command" sub="National Situation Room"
+        <Tile n={1} href="/app/health/command" title="National Health Command" sub="National Situation Room"
           accent={ACC.command} posture={ns.posture} postureTone={ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok'}
           time={time} navActive="Situation Room"
           nav={['National Command', 'Situation Room', 'Executive Briefing', 'National Grid', 'Alerts & Directives', 'Escalations', 'Interventions', 'AI Insights', 'Reports', 'Settings']}>
@@ -262,7 +264,7 @@ export function HealthEcosystemWall() {
         </Tile>
 
         {/* 2 — HOSPITAL OPERATIONS */}
-        <Tile n={2} title="Hospital Operations" sub="Hospital Network Command"
+        <Tile n={2} href="/app/health/hospitals" title="Hospital Operations" sub="Hospital Network Command"
           accent={ACC.hospital} posture={ho.loadBalanceTone === 'alert' ? 'STRAINED' : ho.loadBalanceTone === 'warn' ? 'BUSY' : 'BALANCED'}
           postureTone={ho.loadBalanceTone} time={time} navActive="Overview"
           nav={['Overview', 'ICU Command', 'Theatres', 'Bed Management', 'ER Command', 'Transfers', 'Ambulances', 'Staffing', 'Wards', 'Supply', 'Reports']}>
@@ -328,7 +330,7 @@ export function HealthEcosystemWall() {
         </Tile>
 
         {/* 3 — DOCTOR WORKSPACE */}
-        <Tile n={3} title="Doctor Workspace" sub="Clinical Command Center"
+        <Tile n={3} href="/app/health/doctor" title="Doctor Workspace" sub="Clinical Command Center"
           accent={ACC.doctor} posture={cw.patient.riskBand === 'High' ? 'HIGH RISK' : 'CLINICAL'}
           postureTone={cw.patient.riskBand === 'High' ? 'alert' : 'ok'} time={time} navActive="Patient Queue"
           nav={['Dashboard', 'Patient Queue', 'Patients', 'Diagnostics', 'Lab Results', 'Imaging', 'Prescriptions', 'Referrals', 'Messages', 'Protocols', 'AI Assistant']}>
@@ -391,7 +393,7 @@ export function HealthEcosystemWall() {
         </Tile>
 
         {/* 4 — CITIZEN HEALTH PORTAL */}
-        <Tile n={4} title="Citizen Health Portal" sub="Your Health, Your Rights"
+        <Tile n={4} href="/app/health/portal" title="Citizen Health Portal" sub="Your Health, Your Rights"
           accent={ACC.citizen} posture={cp.healthBand.toUpperCase()} postureTone={cp.healthBand === 'Low' ? 'alert' : cp.healthBand === 'Fair' ? 'warn' : 'ok'}
           time={time} navActive="Overview"
           nav={['Overview', 'Appointments', 'Prescriptions', 'Health Records', 'Lab Reports', 'Vaccinations', 'Insurance', 'Telemedicine', 'Reminders', 'Emergency ID', 'Settings']}>
@@ -442,7 +444,7 @@ export function HealthEcosystemWall() {
         </Tile>
 
         {/* 5 — DISEASE INTELLIGENCE */}
-        <Tile n={5} title="Disease Intelligence" sub="Epidemiology & Outbreak Intelligence"
+        <Tile n={5} href="/app/health/disease" title="Disease Intelligence" sub="Epidemiology & Outbreak Intelligence"
           accent={ACC.disease} posture="SURVEILLANCE" postureTone="warn" time={time} navActive="Overview"
           nav={['Overview', 'Outbreaks', 'Surveillance', 'Genomics', 'Forecasting', 'Interventions', 'Reports', 'Alerts', 'Settings']}>
           {/* KPI strip — 6 epidemiology metrics */}
@@ -501,7 +503,7 @@ export function HealthEcosystemWall() {
         </Tile>
 
         {/* 6 — EMERGENCY RESPONSE */}
-        <Tile n={6} title="Emergency Response" sub="Incident Command System"
+        <Tile n={6} href="/app/health/emergency" title="Emergency Response" sub="Incident Command System"
           accent={ACC.emergency} posture={`${er.alerts.length} ALERTS`} postureTone="alert" time={time} navActive="Dashboard"
           nav={['Dashboard', 'Incidents', 'Dispatch', 'Ambulances', 'Responders', 'Hospitals', 'Resources', 'Disasters', 'Reports', 'Settings']}>
           {/* crisis strip */}
@@ -565,7 +567,7 @@ export function HealthEcosystemWall() {
         </Tile>
 
         {/* 7 — PHARMACEUTICAL & SUPPLY CHAIN */}
-        <Tile n={7} title="Pharmaceutical & Supply Chain" sub="Medicine Availability & Logistics"
+        <Tile n={7} href="/app/health/pharma" title="Pharmaceutical & Supply Chain" sub="Medicine Availability & Logistics"
           accent={ACC.pharma} posture={`SC ${ph.scHealth}`} postureTone={ph.scHealth >= 80 ? 'ok' : ph.scHealth >= 60 ? 'warn' : 'alert'}
           time={time} navActive="Overview"
           nav={['Overview', 'Inventory', 'Procurement', 'Distribution', 'Warehouses', 'Cold Chain', 'Shortages', 'Reports']}>
@@ -635,7 +637,7 @@ export function HealthEcosystemWall() {
         </Tile>
 
         {/* 8 — FINANCE & INSURANCE */}
-        <Tile n={8} title="Finance & Insurance" sub="Health Finance Command"
+        <Tile n={8} href="/app/health/finance" title="Finance & Insurance" sub="Health Finance Command"
           accent={ACC.finance} posture={fi.posture.toUpperCase()} postureTone={fi.posture === 'solvent' ? 'ok' : fi.posture === 'strained' ? 'warn' : 'alert'}
           time={time} navActive="Overview"
           nav={['Overview', 'Claims', 'Schemes', 'Payments', 'Fraud Detection', 'Budget', 'Procurement', 'Reports', 'Audit']}>
@@ -705,7 +707,7 @@ export function HealthEcosystemWall() {
         </Tile>
 
         {/* 9 — PUBLIC HEALTH PORTAL PREVIEW */}
-        <Tile n={9} title="Public Health Portal" sub="Website — Citizen-facing"
+        <Tile n={9} href="/health" title="Public Health Portal" sub="Website — Citizen-facing"
           accent={ACC.portal} posture="LIVE SITE" postureTone="ok" time={time} navActive="Preview"
           nav={['Preview', 'Home', 'Health Topics', 'Services', 'Find Facilities', 'News & Alerts', 'About', 'Contact']}>
           <div className="flex h-full min-h-0 flex-1 flex-col overflow-hidden rounded-[6px] border border-[#d8dee6] bg-white text-[#0b1f3a] shadow-inner">

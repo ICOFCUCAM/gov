@@ -15,7 +15,7 @@ import { loadCountry, provinceLabel, type Admin1Country } from '@/lib/geo/admin1
 import type { HealthGeo } from '@/lib/gov/health-geo';
 
 // The ONE sovereign country the entire ecosystem operates over. Fixed.
-export const SOVEREIGN_ISO = 'NGA';
+export const SOVEREIGN_ISO = 'UGA';
 
 type Metric = 'pressure' | 'icuLoad' | 'outbreakHeat';
 const tnf = (v: number): 'ok' | 'warn' | 'alert' => (v >= 80 ? 'alert' : v >= 58 ? 'warn' : 'ok');
