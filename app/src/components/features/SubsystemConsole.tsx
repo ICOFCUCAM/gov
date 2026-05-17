@@ -8,7 +8,7 @@ import { instantiateMinistry, systemKindLabel, blueprintFor } from '@/lib/instit
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, patientServices,
-  laboratoryOps, pharmaceuticalOps,
+  laboratoryOps, pharmaceuticalOps, emergencyMedicalOps,
 } from '@/lib/gov/health-systems';
 import {
   fiscalCommand, revenueOps, budgetOps, procurementOps, bankingRails,
@@ -355,7 +355,47 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
-  if (isHealth && (group === 'hospitals' || group === 'command' || group === 'emergency')) {
+  if (isHealth && group === 'emergency') {
+    const E = emergencyMedicalOps(id, ts);
+    const pt: 'ok' | 'warn' | 'alert' = E.posture === 'overwhelmed' ? 'alert' : E.posture === 'surged' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Active incidents" v={`${E.activeIncidents}`} t={E.activeIncidents > 180 ? 'alert' : E.activeIncidents > 110 ? 'warn' : 'ok'} />
+          <Stat l="Fleet available" v={`${E.fleetAvailable}/${E.fleetTotal}`} t={E.fleetAvailable < E.fleetTotal * 0.2 ? 'alert' : E.fleetAvailable < E.fleetTotal * 0.35 ? 'warn' : 'ok'} />
+          <Stat l="Mean response" v={`${E.meanResponseMin}m`} t={E.meanResponseMin >= 24 ? 'alert' : E.meanResponseMin >= 15 ? 'warn' : 'ok'} />
+          <Stat l="Dispatch backlog" v={`${E.dispatchBacklog}`} t={E.dispatchBacklog > 25 ? 'alert' : E.dispatchBacklog > 12 ? 'warn' : 'ok'} />
+          <Stat l="Mass-casualty regions" v={`${E.massCasualtyActive}`} t={E.massCasualtyActive ? 'alert' : 'ok'} />
+          <Stat l="Posture" v={E.posture} t={pt} />
+        </div>
+        <div className="grid gap-2 xl:grid-cols-2">
+          <Panel title="Incident load by category" meta="type · priority · response" bodyClass="!p-0">
+            {E.incidents.map(c => (
+              <div key={c.type} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(c.tone)}` }}>
+                <span className="w-40 shrink-0 truncate text-[11px] text-ink">{c.type}</span>
+                <span className="w-8 shrink-0 text-[8px] font-bold uppercase" style={{ color: tc(c.tone) }}>{c.priority}</span>
+                <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{c.active} active</span>
+                <span className="w-12 shrink-0 text-right font-mono text-[11px] tabular-nums" style={{ color: tc(c.tone) }}>{c.meanResponseMin}m</span>
+              </div>
+            ))}
+          </Panel>
+          <Panel title="Regional EMS grid" meta="units · response · escalation" bodyClass="!p-0">
+            {E.regions.map(r => (
+              <div key={r.region} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(r.tone)}` }}>
+                <span className="w-28 shrink-0 truncate text-[11px] text-ink">{r.region}</span>
+                <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{r.unitsAvailable} avail · {r.unitsCommitted} committed · {r.meanResponseMin}m</span>
+                <span className="w-28 shrink-0 text-right text-[8px] font-bold uppercase tracking-[0.14em]" style={{ color: tc(r.tone) }}>{r.posture}</span>
+              </div>
+            ))}
+          </Panel>
+        </div>
+        <RuntimeQueue scope={`${id}:ems`} kind="incident" title="Emergency medical dispatch runtime — acknowledge → contain → recover" by="EMS Controller" n={14} />
+      </div>
+    );
+  }
+
+  if (isHealth && (group === 'hospitals' || group === 'command')) {
     const h = hospitalOps(id, ts);
     return (
       <div className="space-y-2">

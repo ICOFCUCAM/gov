@@ -418,6 +418,69 @@ export function pharmaceuticalOps(instId: string, t: number): PharmaceuticalOps 
   };
 }
 
+// ── Emergency Medical Systems ────────────────────────────────────────
+// Pre-hospital & disaster medicine as an execution surface: live incident
+// load by category, ambulance fleet disposition, response-time telemetry,
+// a regional EMS grid that escalates to mass-casualty, and surge posture.
+// Pure & deterministic.
+const EMS_TYPES = ['Trauma / RTA', 'Cardiac arrest', 'Obstetric emergency', 'Respiratory', 'Mass-casualty', 'Paediatric', 'Stroke', 'Poisoning'];
+
+export interface EmsIncidentLine {
+  type: string; active: number; meanResponseMin: number;
+  priority: 'P1' | 'P2' | 'P3'; tone: 'ok' | 'warn' | 'alert';
+}
+export interface EmsRegionNode {
+  region: string; unitsAvailable: number; unitsCommitted: number;
+  meanResponseMin: number; posture: 'ready' | 'surge' | 'mass-casualty';
+  tone: 'ok' | 'warn' | 'alert';
+}
+export interface EmergencyMedicalOps {
+  activeIncidents: number;
+  fleetTotal: number;
+  fleetAvailable: number;
+  meanResponseMin: number;
+  dispatchBacklog: number;
+  massCasualtyActive: number;
+  incidents: EmsIncidentLine[];
+  regions: EmsRegionNode[];
+  posture: 'nominal' | 'surged' | 'overwhelmed';
+}
+export function emergencyMedicalOps(instId: string, t: number): EmergencyMedicalOps {
+  const incidents: EmsIncidentLine[] = EMS_TYPES.map((type, i) => {
+    const active = Math.round(wave(`ems:act:${instId}:${i}`, t, 0, 60));
+    const meanResponseMin = Math.round(wave(`ems:rt:${instId}:${i}`, t, 5, 34));
+    const priority: EmsIncidentLine['priority'] = i <= 1 || type === 'Mass-casualty' ? 'P1' : i <= 4 ? 'P2' : 'P3';
+    const tone: 'ok' | 'warn' | 'alert' =
+      meanResponseMin >= 20 || (priority === 'P1' && active >= 25) ? 'alert' : meanResponseMin >= 12 || active >= 30 ? 'warn' : 'ok';
+    return { type, active, meanResponseMin, priority, tone };
+  }).sort((a, b) => b.active - a.active);
+  const regions: EmsRegionNode[] = REGIONS.map((region) => {
+    const fleet = 14 + Math.round(seed(`ems:flt:${instId}:${region}`) * 22);
+    const unitsCommitted = Math.round(wave(`ems:cmt:${instId}:${region}`, t, 0, fleet));
+    const unitsAvailable = Math.max(0, fleet - unitsCommitted);
+    const meanResponseMin = Math.round(wave(`ems:rrt:${instId}:${region}`, t, 5, 38));
+    const ratio = unitsAvailable / fleet;
+    const posture: EmsRegionNode['posture'] =
+      ratio < 0.12 || meanResponseMin >= 26 ? 'mass-casualty' : ratio < 0.32 || meanResponseMin >= 16 ? 'surge' : 'ready';
+    const tone: 'ok' | 'warn' | 'alert' =
+      posture === 'mass-casualty' ? 'alert' : posture === 'surge' ? 'warn' : 'ok';
+    return { region, unitsAvailable, unitsCommitted, meanResponseMin, posture, tone };
+  }).sort((a, b) => a.unitsAvailable - b.unitsAvailable);
+  const fleetTotal = regions.reduce((s, r) => s + r.unitsAvailable + r.unitsCommitted, 0);
+  const fleetAvailable = regions.reduce((s, r) => s + r.unitsAvailable, 0);
+  const activeIncidents = incidents.reduce((s, i) => s + i.active, 0);
+  const meanResponseMin = Math.round(regions.reduce((s, r) => s + r.meanResponseMin, 0) / regions.length);
+  const massCasualtyActive = regions.filter(r => r.posture === 'mass-casualty').length;
+  const posture: EmergencyMedicalOps['posture'] =
+    massCasualtyActive >= 2 || meanResponseMin >= 24 ? 'overwhelmed'
+      : massCasualtyActive >= 1 || meanResponseMin >= 15 ? 'surged' : 'nominal';
+  return {
+    activeIncidents, fleetTotal, fleetAvailable, meanResponseMin,
+    dispatchBacklog: Math.round(wave(`ems:bk:${instId}`, t, 0, 40)),
+    massCasualtyActive, incidents, regions, posture,
+  };
+}
+
 /** 0-100 national healthcare instability — drives cross-system propagation. */
 export function healthInstability(instId: string, t: number): number {
   const h = hospitalOps(instId, t);

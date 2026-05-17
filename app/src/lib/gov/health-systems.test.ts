@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, healthInstability, patientServices,
-  nationalHealthcareCapacity, laboratoryOps, pharmaceuticalOps,
+  nationalHealthcareCapacity, laboratoryOps, pharmaceuticalOps, emergencyMedicalOps,
 } from './health-systems';
 
 describe('health systems engine', () => {
@@ -127,6 +127,27 @@ describe('health systems engine', () => {
       expect(['stocked', 'replenish', 'emergency-redistribute']).toContain(r.action);
       expect(r.fillRatePct).toBeGreaterThanOrEqual(0);
       expect(r.fillRatePct).toBeLessThanOrEqual(100);
+    }
+  });
+
+  it('emergencyMedicalOps is a deterministic, bounded pre-hospital execution surface', () => {
+    const a = emergencyMedicalOps('MOH', 160);
+    expect(a).toEqual(emergencyMedicalOps('MOH', 160));
+    expect(['nominal', 'surged', 'overwhelmed']).toContain(a.posture);
+    expect(a.incidents.length).toBe(8);
+    expect(a.regions.length).toBe(6);
+    expect(a.fleetAvailable).toBeLessThanOrEqual(a.fleetTotal);
+    // worst-availability region first
+    for (let i = 1; i < a.regions.length; i++) {
+      expect(a.regions[i - 1]!.unitsAvailable).toBeLessThanOrEqual(a.regions[i]!.unitsAvailable);
+    }
+    for (const r of a.regions) {
+      expect(['ready', 'surge', 'mass-casualty']).toContain(r.posture);
+      expect(r.unitsAvailable).toBeGreaterThanOrEqual(0);
+    }
+    for (const c of a.incidents) {
+      expect(['P1', 'P2', 'P3']).toContain(c.priority);
+      expect(c.meanResponseMin).toBeGreaterThanOrEqual(0);
     }
   });
 });
