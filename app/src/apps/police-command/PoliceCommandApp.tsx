@@ -1,16 +1,18 @@
 'use client';
 
-// apps/police-command — federated police execution application.
-// Civil stability, emergency posture and regional escalation EMERGE
-// from these operations into national command.
+// apps/police-command — federated police execution application. Cinematic
+// sovereign command rhythm (shared ops kit).
 
 import * as React from 'react';
-import { StatGrid, Bars, Panel, FieldPanel } from '@/apps/_shared/AppKit';
+import { FieldPanel } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { policeOps } from '@/lib/gov/agency-systems';
+import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
+import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
+const ACC = '#5fa8ff';
 const WF: Record<string, WorkKind> = {
   incident: 'incident', dispatch: 'incident', patrol: 'case', investigations: 'case',
   evidence: 'case', intelligence: 'case', detention: 'case', border: 'incident',
@@ -28,44 +30,41 @@ export function PoliceCommandApp({ appId, domain, now, role, withheld }: {
   const o = policeOps(appId, ts);
   const d = WF[domain] ? domain : 'incident';
   const label = LABEL[d] ?? 'Incident Command';
-
-  type Tone = 'ok' | 'warn' | 'alert';
   const respT: Tone = o.meanResponseMin >= 18 ? 'alert' : o.meanResponseMin >= 12 ? 'warn' : 'ok';
   const isInv = d === 'investigations' || d === 'evidence';
   const isIntel = d === 'intelligence';
   const fieldDomain = d === 'incident' || d === 'dispatch' || d === 'patrol';
 
-  const items: { l: string; v: string; t?: Tone }[] = isInv ? [
-    { l: 'Open investigations', v: o.openInvestigations.toLocaleString(), t: o.openInvestigations > 4000 ? 'alert' : 'warn' },
-    { l: 'Clearance rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : o.clearanceRatePct >= 55 ? 'warn' : 'alert' },
-    { l: 'Custody occupancy', v: `${o.custodyOccupancyPct}%`, t: o.custodyOccupancyPct >= 110 ? 'alert' : o.custodyOccupancyPct >= 95 ? 'warn' : 'ok' },
-    { l: 'Active incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : 'ok' },
+  const raw: { l: string; v: string; t?: Tone }[] = isInv ? [
+    { l: 'Open Investigations', v: o.openInvestigations.toLocaleString(), t: o.openInvestigations > 4000 ? 'alert' : 'warn' },
+    { l: 'Clearance Rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : o.clearanceRatePct >= 55 ? 'warn' : 'alert' },
+    { l: 'Custody Occupancy', v: `${o.custodyOccupancyPct}%`, t: o.custodyOccupancyPct >= 110 ? 'alert' : o.custodyOccupancyPct >= 95 ? 'warn' : 'ok' },
+    { l: 'Active Incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : 'ok' },
   ] : isIntel ? [
-    { l: 'Active incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : o.activeIncidents > 40 ? 'warn' : 'ok' },
-    { l: 'Clearance rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : 'warn' },
-    { l: 'Regions tracked', v: `${o.regional.length}`, t: 'ok' },
+    { l: 'Active Incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : o.activeIncidents > 40 ? 'warn' : 'ok' },
+    { l: 'Clearance Rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : 'warn' },
+    { l: 'Regions Tracked', v: `${o.regional.length}`, t: 'ok' },
   ] : [
-    { l: 'Active incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : o.activeIncidents > 40 ? 'warn' : 'ok' },
-    { l: 'Units deployed', v: `${o.unitsDeployed}/${o.unitsTotal}`, t: 'ok' },
-    { l: 'Mean response', v: `${o.meanResponseMin}m`, t: respT },
-    { l: 'Clearance rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : 'warn' },
-    { l: 'Open investigations', v: o.openInvestigations.toLocaleString(), t: 'warn' },
-    { l: 'Custody occupancy', v: `${o.custodyOccupancyPct}%`, t: o.custodyOccupancyPct >= 110 ? 'alert' : o.custodyOccupancyPct >= 95 ? 'warn' : 'ok' },
+    { l: 'Active Incidents', v: `${o.activeIncidents}`, t: o.activeIncidents > 90 ? 'alert' : o.activeIncidents > 40 ? 'warn' : 'ok' },
+    { l: 'Units Deployed', v: `${o.unitsDeployed}/${o.unitsTotal}`, t: 'ok' },
+    { l: 'Mean Response', v: `${o.meanResponseMin}m`, t: respT },
+    { l: 'Clearance Rate', v: `${o.clearanceRatePct}%`, t: o.clearanceRatePct >= 70 ? 'ok' : 'warn' },
+    { l: 'Open Investigations', v: o.openInvestigations.toLocaleString(), t: 'warn' },
+    { l: 'Custody Occupancy', v: `${o.custodyOccupancyPct}%`, t: o.custodyOccupancyPct >= 110 ? 'alert' : o.custodyOccupancyPct >= 95 ? 'warn' : 'ok' },
   ];
+  const kpis = raw.map((m, i) => ({ l: m.l, v: m.v, t: (m.t ?? 'ok') as Tone, s: '', k: `pc${i}` }));
+  const pTone: Tone = kpis.some(x => x.t === 'alert') ? 'alert' : kpis.some(x => x.t === 'warn') ? 'warn' : 'ok';
 
   return (
-    <div className="space-y-2">
-      <div className="rounded-[3px] border border-line bg-surface px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
-        {label} subsystem
-      </div>
-      <StatGrid items={items} />
-      <Panel title="Regional patrol load" meta="civil-stability footprint → national escalation">
-        <Bars rows={o.regional.map(r => ({ label: r.region, pct: r.load, tone: r.tone, tail: `${r.load}` }))} />
-      </Panel>
+    <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
+      <OpsHeader index={1} title={`Police · ${label}`} subtitle="Sovereign Civil-Stability Execution"
+        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+      <KpiStrip ts={ts} accent={ACC} items={kpis} />
+      <BarPanel title="Regional patrol load" meta="civil-stability footprint → national escalation" accent={ACC} live
+        rows={o.regional.map(r => ({ label: r.region, pct: r.load, tone: r.tone, tail: `${r.load}` }))} />
       {!isInv && !isIntel ? (
-        <Panel title="Patrol divisions" meta="deployment status">
-          <Bars rows={o.patrols.map(p => ({ label: `${p.label} · ${p.region}`, pct: p.status === 'responding' ? 92 : p.status === 'patrolling' ? 55 : 25, tone: p.tone, tail: p.status }))} />
-        </Panel>
+        <BarPanel title="Patrol divisions" meta="deployment status" accent={ACC}
+          rows={o.patrols.map(p => ({ label: `${p.label} · ${p.region}`, pct: p.status === 'responding' ? 92 : p.status === 'patrolling' ? 55 : 25, tone: p.tone, tail: p.status }))} />
       ) : null}
       {fieldDomain ? (
         <>
