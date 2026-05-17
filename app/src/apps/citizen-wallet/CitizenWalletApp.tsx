@@ -20,16 +20,29 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
   const w = citizenWallet(appId, ts);
   const d = WF[domain] ? domain : 'identity';
   const label = LABEL[d] ?? 'Identity';
+  type Tone = 'ok' | 'warn' | 'alert';
+  const cwItems: { l: string; v: string; t?: Tone }[] = d === 'identity' ? [
+    { l: 'Citizens enrolled', v: `${w.enrolledM}M`, t: 'ok' },
+    { l: 'Identity verified', v: `${w.identityVerifiedPct}%`, t: w.identityVerifiedPct >= 85 ? 'ok' : w.identityVerifiedPct >= 70 ? 'warn' : 'alert' },
+    { l: 'Applications pending', v: w.applicationsPending.toLocaleString(), t: w.applicationsPending > 18000 ? 'warn' : 'ok' },
+  ] : d === 'payments' ? [
+    { l: 'Payments today', v: `${w.paymentsTodayM}M`, t: 'ok' },
+    { l: 'Services uptime', v: `${w.servicesUptimePct}%`, t: w.servicesUptimePct >= 99 ? 'ok' : 'warn' },
+    { l: 'Active requests', v: w.activeServiceRequests.toLocaleString(), t: 'ok' },
+  ] : [
+    { l: 'Citizens enrolled', v: `${w.enrolledM}M`, t: 'ok' },
+    { l: 'Identity verified', v: `${w.identityVerifiedPct}%`, t: w.identityVerifiedPct >= 85 ? 'ok' : 'warn' },
+    { l: 'Active requests', v: w.activeServiceRequests.toLocaleString(), t: 'ok' },
+    { l: 'Payments today', v: `${w.paymentsTodayM}M`, t: 'ok' },
+    { l: 'Applications pending', v: w.applicationsPending.toLocaleString(), t: w.applicationsPending > 18000 ? 'warn' : 'ok' },
+    { l: 'Services uptime', v: `${w.servicesUptimePct}%`, t: w.servicesUptimePct >= 99 ? 'ok' : 'warn' },
+  ];
   return (
     <div className="space-y-2">
-      <StatGrid items={[
-        { l: 'Citizens enrolled', v: `${w.enrolledM}M`, t: 'ok' },
-        { l: 'Identity verified', v: `${w.identityVerifiedPct}%`, t: w.identityVerifiedPct >= 85 ? 'ok' : 'warn' },
-        { l: 'Active requests', v: w.activeServiceRequests.toLocaleString(), t: 'ok' },
-        { l: 'Payments today', v: `${w.paymentsTodayM}M`, t: 'ok' },
-        { l: 'Applications pending', v: w.applicationsPending.toLocaleString(), t: w.applicationsPending > 18000 ? 'warn' : 'ok' },
-        { l: 'Services uptime', v: `${w.servicesUptimePct}%`, t: w.servicesUptimePct >= 99 ? 'ok' : 'warn' },
-      ]} />
+      <div className="rounded-[3px] border border-line bg-surface px-2.5 py-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
+        {label} subsystem
+      </div>
+      <StatGrid items={cwItems} />
       <Panel title="Service channels" meta="citizen access integrity">
         <Bars rows={w.channels.map(c => ({ label: c.channel, pct: c.uptime, tone: c.tone, tail: `${c.uptime}%` }))} />
       </Panel>
