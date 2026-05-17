@@ -1808,6 +1808,50 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
+  if (isLabor && (group === 'employment' || group === 'inspection' || group === 'insurance' || group === 'disputes' || group === 'citizen')) {
+    const o = laborOps(id, ts);
+    const IN = o.inspection, SI = o.socialInsurance, DI = o.disputes;
+    const title = group === 'employment' ? 'Employment & job placement'
+      : group === 'inspection' ? 'Workplace inspection & compliance'
+        : group === 'insurance' ? 'Social insurance & worker protection'
+          : group === 'disputes' ? 'Labour dispute resolution'
+            : 'Worker services';
+    const stats = group === 'employment' ? [
+      { l: 'Unemployment', v: `${o.unemploymentPct}%`, t: (o.unemploymentPct >= 18 ? 'alert' : o.unemploymentPct >= 10 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Jobseekers', v: `${o.jobseekersM}M`, t: 'ok' as const },
+      { l: 'Placements today', v: o.placementsToday.toLocaleString(), t: 'ok' as const },
+      { l: 'Vacancies', v: o.vacancies.toLocaleString(), t: 'ok' as const },
+    ] : group === 'inspection' ? [
+      { l: 'Units active', v: `${IN.unitsActive}`, t: 'ok' as const },
+      { l: 'Compliance', v: `${IN.compliancePct}%`, t: (IN.compliancePct >= 80 ? 'ok' : IN.compliancePct >= 65 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { l: 'Open cases', v: IN.openCases.toLocaleString(), t: (IN.openCases > 1500 ? 'alert' : IN.openCases > 800 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'insurance' ? [
+      { l: 'Funds', v: `${SI.fundsBn}bn`, t: 'ok' as const },
+      { l: 'Contributors', v: `${SI.contributorsM}M`, t: 'ok' as const },
+      { l: 'Claims pending', v: SI.claimsPending.toLocaleString(), t: (SI.claimsPending > 6000 ? 'alert' : SI.claimsPending > 3000 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Payout on-time', v: `${SI.payoutOnTimePct}%`, t: (SI.payoutOnTimePct >= 90 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : group === 'disputes' ? [
+      { l: 'Tribunals', v: `${DI.tribunals}`, t: 'ok' as const },
+      { l: 'Open disputes', v: DI.openDisputes.toLocaleString(), t: (DI.openDisputes > 3500 ? 'alert' : DI.openDisputes > 1800 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Median days', v: `${DI.medianDays}`, t: (DI.medianDays >= 120 ? 'alert' : DI.medianDays >= 60 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Resolved rate', v: `${DI.resolvedRate}%`, t: (DI.resolvedRate >= 75 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ] : [
+      { l: 'Unemployment', v: `${o.unemploymentPct}%`, t: (o.unemploymentPct >= 18 ? 'alert' : o.unemploymentPct >= 10 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
+      { l: 'Skills training active', v: o.skillsTrainingActive.toLocaleString(), t: 'ok' as const },
+      { l: 'Payout on-time', v: `${SI.payoutOnTimePct}%`, t: (SI.payoutOnTimePct >= 90 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+    ];
+    const kind: WorkKind = group === 'disputes' ? 'case' : group === 'insurance' ? 'approval' : group === 'inspection' ? 'case' : group === 'citizen' ? 'permit' : 'approval';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
+        </div>
+        <RuntimeQueue scope={`${id}:${group}`} kind={kind} title={`${title} runtime — execute the workflow`} by="Labour Officer" n={14} />
+      </div>
+    );
+  }
+
   if (isLabor) {
     const o = laborOps(id, ts);
     return (
