@@ -7,12 +7,17 @@
 // executable admissions runtime. Multi-role aware.
 
 import * as React from 'react';
-import { StatGrid, Bars, Panel, PosturePill, ac } from '@/apps/_shared/AppKit';
+import { ac, Bars } from "@/apps/_shared/AppKit";
+import { CommandHeader, CommandPanel, KpiTile, RingGauge, ACCENT } from '@/apps/_shared/SovereignUI';
+import { GeoMap } from '@/apps/_shared/GeoMap';
+import { healthGeo } from '@/lib/gov/health-geo';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { hospitalOps } from '@/lib/gov/health-systems';
 import { hospitalDeepExecution } from '@/lib/gov/health-operations';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
+
+const ACC = ACCENT.hospital!;
 
 export function HospitalSystem({ id, now, role, withheld }: {
   id: string; now: number; role: SovereignRole; withheld: Capability[];
@@ -20,6 +25,8 @@ export function HospitalSystem({ id, now, role, withheld }: {
   const ts = now / 4000;
   const h = hospitalOps(id, ts);
   const hd = hospitalDeepExecution(id, ts);
+  const hp = hospitalDeepExecution(id, ts - 3); // deterministic delta window
+  const geo = healthGeo(id, ts);
 
   // Inter-facility transfer authorisation — a real operational action.
   const [accepted, setAccepted] = React.useState<Set<string>>(() => new Set());
@@ -33,38 +40,44 @@ export function HospitalSystem({ id, now, role, withheld }: {
     { label: 'ICU escalation', value: Math.min(100, hd.icu.filter(u => u.escalation === 'critical').length * 34), adverse: true },
     { label: 'Theatre delays', value: Math.min(100, hd.theatres.filter(x => x.status === 'delayed').length * 18), adverse: true },
   ]);
-  const at: 'ok' | 'warn' | 'alert' =
-    adv.severity === 'critical' || adv.severity === 'priority' ? 'alert' : adv.severity === 'advisory' ? 'warn' : 'ok';
+  const headroomTone: 'ok' | 'warn' | 'alert' = hd.nationalBedHeadroomPct >= 12 ? 'ok' : hd.nationalBedHeadroomPct >= 4 ? 'warn' : 'alert';
 
   return (
-    <div className="space-y-2">
-      <div className="flex flex-wrap items-center gap-3 rounded-[3px] border border-line bg-surface px-2.5 py-1.5">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">Hospital Network</span>
-        <PosturePill label={hd.posture} tone={pTone} />
-        <span className="text-[9px] text-ink-muted">bed headroom · <span className="text-ink-soft">{hd.nationalBedHeadroomPct}%</span> · transfers <span className="text-ink-soft">{hd.transferRequests}</span></span>
-        <span className="ml-auto text-[9px] text-ink-muted">operator · {role}</span>
+    <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#070d11' }}>
+      <CommandHeader index={2} title="Hospital Operations" subtitle="Hospital Network Command"
+        postureLabel={`NETWORK · ${hd.posture}`} postureTone={pTone} now={now} role={role} accent={ACC} />
+
+      <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
+        <KpiTile label="Bed occ." value={`${h.beds.occupancyPct}%`} delta={h.beds.occupancyPct - hospitalOps(id, ts - 3).beds.occupancyPct} tone={h.beds.occupancyPct >= 92 ? 'alert' : h.beds.occupancyPct >= 82 ? 'warn' : 'ok'} />
+        <KpiTile label="ICU occ." value={`${h.icu.occupancyPct}%`} tone={h.icu.occupancyPct >= 95 ? 'alert' : h.icu.occupancyPct >= 85 ? 'warn' : 'ok'} />
+        <KpiTile label="Ventilators" value={`${h.icu.ventInUse}/${h.icu.ventilators}`} tone={h.icu.ventInUse / h.icu.ventilators >= 0.9 ? 'alert' : 'warn'} />
+        <KpiTile label="Theatre util." value={`${h.theatres.utilisationPct}%`} tone={h.theatres.utilisationPct >= 92 ? 'warn' : 'ok'} />
+        <KpiTile label="Blocked beds" value={`${hd.blockedBeds}`} delta={hd.blockedBeds - hp.blockedBeds} tone={hd.blockedBeds > 300 ? 'alert' : hd.blockedBeds > 150 ? 'warn' : 'ok'} />
+        <KpiTile label="Admit/hr" value={`${hd.admissionsPerHr}`} delta={hd.admissionsPerHr - hp.admissionsPerHr} tone={hd.admissionsPerHr > hd.dischargesPerHr + 30 ? 'alert' : 'ok'} />
+        <KpiTile label="Disch/hr" value={`${hd.dischargesPerHr}`} delta={hd.dischargesPerHr - hp.dischargesPerHr} tone="ok" />
+        <KpiTile label="Transfers" value={`${hd.transferRequests}`} delta={hd.transferRequests - hp.transferRequests} tone={hd.transferRequests > 30 ? 'warn' : 'ok'} />
       </div>
 
-      <StatGrid items={[
-        { l: 'Bed occupancy', v: `${h.beds.occupancyPct}%`, t: h.beds.occupancyPct >= 92 ? 'alert' : h.beds.occupancyPct >= 82 ? 'warn' : 'ok' },
-        { l: 'ICU occupancy', v: `${h.icu.occupancyPct}%`, t: h.icu.occupancyPct >= 95 ? 'alert' : h.icu.occupancyPct >= 85 ? 'warn' : 'ok' },
-        { l: 'Ventilators', v: `${h.icu.ventInUse}/${h.icu.ventilators}`, t: h.icu.ventInUse / h.icu.ventilators >= 0.9 ? 'alert' : 'warn' },
-        { l: 'Theatre util.', v: `${h.theatres.utilisationPct}%`, t: h.theatres.utilisationPct >= 92 ? 'warn' : 'ok' },
-        { l: 'Blocked beds', v: `${hd.blockedBeds}`, t: hd.blockedBeds > 300 ? 'alert' : hd.blockedBeds > 150 ? 'warn' : 'ok' },
-        { l: 'Admit/Disch per hr', v: `${hd.admissionsPerHr}/${hd.dischargesPerHr}`, t: hd.admissionsPerHr > hd.dischargesPerHr + 30 ? 'alert' : 'ok' },
-      ]} />
-
-      <div className="rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid ${ac(at)}` }}>
-        <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: ac(at) }}>AI operational guidance · {adv.severity}</span>
-          <span className="font-mono text-[9px] tabular-nums text-ink-muted">confidence {adv.confidence}%</span>
+      <div className="grid gap-2 xl:grid-cols-4">
+        <div className="xl:col-span-3">
+          <CommandPanel title="Hospital load geography" meta="ICU load · transfer corridors" accent={ACC} live>
+            <GeoMap geo={geo} metric="icuLoad" title="" height={260} />
+          </CommandPanel>
         </div>
-        <div className="mt-0.5 text-[11px] text-ink">{adv.headline}</div>
-        <div className="text-[9px] text-ink-muted">{adv.rationale}</div>
-        <ul className="mt-0.5 flex flex-wrap gap-x-4">{adv.recommended.map((r, i) => <li key={i} className="text-[9px] text-ink-soft">▸ {r}</li>)}</ul>
+        <div className="space-y-2">
+          <CommandPanel title="National bed headroom" accent={ACC}>
+            <div className="flex items-center justify-around py-1">
+              <RingGauge value={hd.nationalBedHeadroomPct} label="headroom" tone={headroomTone} size={100} sub="%" />
+            </div>
+          </CommandPanel>
+          <CommandPanel title="AI operational guidance" meta={`${adv.severity} · ${adv.confidence}%`} accent={ACC}>
+            <div className="text-[10px] text-ink">{adv.headline}</div>
+            <ul className="mt-0.5 space-y-0.5">{adv.recommended.map((r, i) => <li key={i} className="text-[9px] text-ink-soft">▸ {r}</li>)}</ul>
+          </CommandPanel>
+        </div>
       </div>
 
-      <Panel title="Regional capacity grid" meta="bed/ICU occupancy · surge state · accept transfer">
+      <CommandPanel title="Regional capacity grid" meta="bed/ICU · surge · accept transfer" accent={ACC} live>
         <div className="space-y-1.5">
           {hd.regions.map(r => {
             const done = accepted.has(r.region);
@@ -88,10 +101,10 @@ export function HospitalSystem({ id, now, role, withheld }: {
             );
           })}
         </div>
-      </Panel>
+      </CommandPanel>
 
       <div className="grid gap-2 xl:grid-cols-2">
-        <Panel title="ICU orchestration" meta="unit · occupied/beds · vent · ECMO · escalation">
+        <CommandPanel title="ICU orchestration" meta="unit · occupied/beds · vent · ECMO · escalation" accent={ACC}>
           <div className="space-y-1">
             {hd.icu.map(u => (
               <div key={u.unit} className="flex items-center gap-2 text-[10px]">
@@ -102,8 +115,8 @@ export function HospitalSystem({ id, now, role, withheld }: {
               </div>
             ))}
           </div>
-        </Panel>
-        <Panel title="Operating theatre management" meta="theatre · case · status · delay">
+        </CommandPanel>
+        <CommandPanel title="Operating theatre management" meta="theatre · case · status · delay" accent={ACC}>
           <div className="space-y-1">
             {hd.theatres.map(x => (
               <div key={x.theatre} className="flex items-center gap-2 text-[10px]">
@@ -114,14 +127,14 @@ export function HospitalSystem({ id, now, role, withheld }: {
               </div>
             ))}
           </div>
-        </Panel>
+        </CommandPanel>
       </div>
 
       <div className="grid gap-2 xl:grid-cols-2">
-        <Panel title="Ambulance zone coordination" meta="zone · available/units · ETA · posture">
+        <CommandPanel title="Ambulance zone coordination" meta="zone · available/units · ETA · posture" accent={ACC}>
           <Bars rows={hd.ambulanceZones.map(z => ({ label: `${z.zone} (${z.available}/${z.units})`, pct: Math.min(100, (z.available / z.units) * 100), tone: z.tone, tail: `${z.meanEtaMin}m` }))} />
-        </Panel>
-        <Panel title="Operational timeline" meta="most recent first">
+        </CommandPanel>
+        <CommandPanel title="Operational timeline" meta="most recent first" accent={ACC}>
           <div className="space-y-1">
             {hd.timeline.map((e, i) => (
               <div key={i} className="flex items-start gap-2 text-[10px]">
@@ -131,7 +144,7 @@ export function HospitalSystem({ id, now, role, withheld }: {
               </div>
             ))}
           </div>
-        </Panel>
+        </CommandPanel>
       </div>
 
       <RuntimeQueue
