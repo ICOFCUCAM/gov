@@ -9,6 +9,7 @@ import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, patientServices,
   laboratoryOps, pharmaceuticalOps, emergencyMedicalOps, healthCommand, healthFinanceOps,
+  healthRegulatoryOps,
 } from '@/lib/gov/health-systems';
 import {
   fiscalCommand, revenueOps, budgetOps, procurementOps, bankingRails,
@@ -292,7 +293,35 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     );
   }
 
-  if (isHealth && (group === 'patient' || group === 'regulatory')) {
+  if (isHealth && group === 'regulatory') {
+    const R = healthRegulatoryOps(id, ts);
+    const pt: 'ok' | 'warn' | 'alert' = R.posture === 'breach' ? 'alert' : R.posture === 'watch' ? 'warn' : 'ok';
+    return (
+      <div className="space-y-2">
+        {header}
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
+          <Stat l="Active licences" v={R.activeLicences.toLocaleString()} t="ok" />
+          <Stat l="Accredited facilities" v={`${R.accreditedFacilitiesPct}%`} t={R.accreditedFacilitiesPct >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Pending applications" v={R.pendingApplications.toLocaleString()} t={R.pendingApplications > 4000 ? 'warn' : 'ok'} />
+          <Stat l="Overdue reviews" v={R.overdueReviews.toLocaleString()} t={R.overdueReviews > 500 ? 'alert' : R.overdueReviews > 200 ? 'warn' : 'ok'} />
+          <Stat l="Enforcement actions" v={`${R.enforcementActions}`} t={R.enforcementActions > 30 ? 'alert' : 'warn'} />
+          <Stat l="Compliance index" v={`${R.complianceIndex}`} t={pt} />
+        </div>
+        <Panel title="Regulatory tracks" meta="track · pending → processed · overdue · median" bodyClass="!p-0">
+          {R.tracks.map(r => (
+            <div key={r.track} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(r.tone)}` }}>
+              <span className="w-48 shrink-0 truncate text-[11px] text-ink">{r.track}</span>
+              <span className="min-w-0 flex-1 truncate text-[9px] text-ink-muted">{r.pending.toLocaleString()} pending · {r.processed.toLocaleString()} processed · {r.overdue} overdue</span>
+              <span className="w-12 shrink-0 text-right font-mono text-[11px] tabular-nums" style={{ color: tc(r.tone) }}>{r.medianDays}d</span>
+            </div>
+          ))}
+        </Panel>
+        <RuntimeQueue scope={`${id}:regulatory`} kind="permit" title="Licensing & accreditation runtime — applied → reviewed → inspected → granted" by="Regulatory Officer" n={14} />
+      </div>
+    );
+  }
+
+  if (isHealth && group === 'patient') {
     const ps = patientServices(id, ts);
     const rx = prescriptions(id, ts);
     const labs = labRequests(id, ts);

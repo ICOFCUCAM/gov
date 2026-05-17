@@ -3,7 +3,7 @@ import {
   doctorRoster, intakeQueue, referrals, prescriptions, labRequests,
   workloadIntelligence, hospitalOps, diseaseIntel, healthInstability, patientServices,
   nationalHealthcareCapacity, laboratoryOps, pharmaceuticalOps, emergencyMedicalOps, healthCommand,
-  healthFinanceOps,
+  healthFinanceOps, healthRegulatoryOps,
 } from './health-systems';
 
 describe('health systems engine', () => {
@@ -183,6 +183,23 @@ describe('health systems engine', () => {
       expect(c.adjudicated).toBeLessThanOrEqual(c.submitted);
       expect(c.paid).toBeLessThanOrEqual(c.adjudicated);
       expect(['ok', 'warn', 'alert']).toContain(c.tone);
+    }
+  });
+
+  it('healthRegulatoryOps is a deterministic, bounded licensing execution surface', () => {
+    const a = healthRegulatoryOps('MOH', 170);
+    expect(a).toEqual(healthRegulatoryOps('MOH', 170));
+    expect(['compliant', 'watch', 'breach']).toContain(a.posture);
+    expect(a.tracks.length).toBe(6);
+    expect(a.complianceIndex).toBeGreaterThanOrEqual(0);
+    expect(a.complianceIndex).toBeLessThanOrEqual(100);
+    // worst-overdue track first
+    for (let i = 1; i < a.tracks.length; i++) {
+      expect(a.tracks[i - 1]!.overdue).toBeGreaterThanOrEqual(a.tracks[i]!.overdue);
+    }
+    for (const r of a.tracks) {
+      expect(r.medianDays).toBeGreaterThanOrEqual(0);
+      expect(['ok', 'warn', 'alert']).toContain(r.tone);
     }
   });
 });

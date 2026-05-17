@@ -481,6 +481,53 @@ export function emergencyMedicalOps(instId: string, t: number): EmergencyMedical
   };
 }
 
+// ── Health Regulatory ────────────────────────────────────────────────
+// Professional licensing, facility accreditation, drug authorisation &
+// inspection enforcement as an execution surface. Pure & deterministic.
+const REG_TRACKS = ['Practitioner licensing', 'Facility accreditation', 'Drug & device authorisation', 'Clinical-trial approval', 'Inspection enforcement', 'Sanctions & appeals'];
+
+export interface RegTrackLine {
+  track: string; pending: number; processed: number; overdue: number;
+  medianDays: number; tone: 'ok' | 'warn' | 'alert';
+}
+export interface HealthRegulatoryOps {
+  activeLicences: number;
+  accreditedFacilitiesPct: number;
+  pendingApplications: number;
+  overdueReviews: number;
+  enforcementActions: number;
+  complianceIndex: number;       // 0-100
+  tracks: RegTrackLine[];
+  posture: 'compliant' | 'watch' | 'breach';
+}
+export function healthRegulatoryOps(instId: string, t: number): HealthRegulatoryOps {
+  const tracks: RegTrackLine[] = REG_TRACKS.map((track, i) => {
+    const pending = Math.round(wave(`hr:pend:${instId}:${i}`, t, 5, 1_400));
+    const processed = Math.round(wave(`hr:proc:${instId}:${i}`, t, 4, 900));
+    const overdue = Math.round(wave(`hr:over:${instId}:${i}`, t, 0, 220));
+    const medianDays = Math.round(wave(`hr:med:${instId}:${i}`, t, 3, 75));
+    const tone: 'ok' | 'warn' | 'alert' =
+      overdue >= 140 || medianDays >= 55 ? 'alert' : overdue >= 60 || medianDays >= 30 ? 'warn' : 'ok';
+    return { track, pending, processed, overdue, medianDays, tone };
+  }).sort((a, b) => b.overdue - a.overdue);
+  const pendingApplications = tracks.reduce((s, r) => s + r.pending, 0);
+  const overdueReviews = tracks.reduce((s, r) => s + r.overdue, 0);
+  const breachTracks = tracks.filter(r => r.tone === 'alert').length;
+  const complianceIndex = Math.round(Math.max(0, Math.min(100, 100 - breachTracks * 16 - Math.min(30, overdueReviews / 30))));
+  const posture: HealthRegulatoryOps['posture'] =
+    breachTracks >= 3 || complianceIndex < 50 ? 'breach' : breachTracks >= 1 || complianceIndex < 75 ? 'watch' : 'compliant';
+  return {
+    activeLicences: Math.round(wave(`hr:lic:${instId}`, t, 8_000, 60_000)),
+    accreditedFacilitiesPct: Math.round(wave(`hr:acc:${instId}`, t, 55, 99)),
+    pendingApplications,
+    overdueReviews,
+    enforcementActions: Math.round(wave(`hr:enf:${instId}`, t, 0, 45)),
+    complianceIndex,
+    tracks,
+    posture,
+  };
+}
+
 // ── Health Finance ───────────────────────────────────────────────────
 // Insurance, claims adjudication, provider reimbursement & fraud control
 // as an execution surface — not the patient portal. Pure & deterministic.
