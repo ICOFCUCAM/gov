@@ -59,11 +59,6 @@ export function DiseaseSystem({ id, now, role, withheld }: {
               </div>
             </div>
             <GeoMap geo={geo} metric="outbreakHeat" title="" height={300} />
-            <div className="mt-1 flex items-center gap-1 text-[7px] text-ink-muted">
-              <span>0</span>
-              {['#1f6f4a', '#9bbf3a', '#f0c33a', '#f0892a', '#e0452a', '#c01020'].map((c, i) => <span key={i} className="h-2 flex-1 rounded-sm" style={{ background: c }} />)}
-              <span>10K+</span>
-            </div>
           </CommandPanel>
         </div>
         <div className="space-y-2">
