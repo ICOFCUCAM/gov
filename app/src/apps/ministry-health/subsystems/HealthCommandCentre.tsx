@@ -126,9 +126,9 @@ export function HealthCommandCentre({ id, now, role, withheld }: {
       {/* critical alerts | national health map | real-time intelligence */}
       <div className="grid gap-2 xl:grid-cols-4">
         <CommandPanel title="Critical Alerts" meta={`View all (${alerts.length})`} accent={ACC} live>
-          <div className="space-y-1">
+          <div className="flex h-full flex-col justify-between gap-1">
             {alerts.map((a, i) => (
-              <div key={i} className="rounded-[3px] border px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)', borderLeft: `3px solid ${sc(a.tone)}`, background: 'rgba(20,32,46,0.3)' }}>
+              <div key={i} className="flex flex-1 flex-col justify-center rounded-[3px] border px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)', borderLeft: `3px solid ${sc(a.tone)}`, background: 'rgba(20,32,46,0.3)' }}>
                 <div className="flex items-center justify-between gap-2">
                   <span className="min-w-0 flex-1 truncate text-[9.5px] font-semibold text-ink">{a.title}</span>
                   <span className="shrink-0 font-mono text-[7.5px] text-ink-muted">{2 + i * 3}m ago</span>
