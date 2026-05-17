@@ -22,6 +22,7 @@ import { ministryOpState } from '@/lib/gov/ministry-ops';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { nationalRegions } from '@/lib/gov/regions';
 import { buildCascade } from '@/lib/institution/cascade';
+import { resolveInstitution } from '@/lib/institution/federation';
 import type { Ministry } from '@/lib/api/types';
 import type {
   AnalyticSeries,
@@ -64,9 +65,12 @@ const OPERATOR = 'K. Otieno';
  * composed per archetype from the profile + operational data.
  */
 export function MinistryWorkspace({ id }: { id: string }) {
+  // Resolve the institution synchronously from the canonical federation so
+  // the workspace renders real identity on first paint — no skeleton loop.
+  const seedInst = React.useMemo(() => resolveInstitution(id), [id]);
   const [tab, setTab] = React.useState<Tab>('command');
-  const [name, setName] = React.useState('');
-  const [archetype, setArchetype] = React.useState('');
+  const [name, setName] = React.useState(seedInst.name);
+  const [archetype, setArchetype] = React.useState<string>(seedInst.archetype);
   const [labels, setLabels] = React.useState({ unit: 'Operational', capacity: 'Capacity', cases: 'Open cases' });
   const [regions, setRegions] = React.useState<RegionStat[]>([]);
   const [series, setSeries] = React.useState<AnalyticSeries[]>([]);
@@ -76,7 +80,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const [field, setField] = React.useState<FieldUnitStatus[]>([]);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
-  const [inst, setInst] = React.useState<Ministry | null>(null);
+  const [inst, setInst] = React.useState<Ministry | null>(() => seedInst);
   const [allMins, setAllMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(() => Date.now());
   const [ecoOpen, setEcoOpen] = React.useState<string | null>(null);

@@ -92,6 +92,7 @@ import { specFor } from '@/lib/ops-catalog';
 import { profileFor } from '@/lib/archetype-profiles';
 import { scoreInstitution } from '@/lib/institution/readiness';
 import { blueprintFor } from '@/lib/institution/blueprint';
+import { federationSeed } from '@/lib/institution/federation';
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -236,7 +237,10 @@ function seed() {
     { id: 'CFG-1', scope: 'global', version: 1, contentHash: hash('cfg-v1'), signedBy: 'STO', state: 'applied', createdAt: days(-20) },
   ];
 
-  const ministries: Ministry[] = [];
+  // The sovereign federation always exists — instantiated from the
+  // canonical institution set so every institutional route resolves to a
+  // real operational surface (no empty store, no 404 dead-end).
+  const ministries: Ministry[] = federationSeed();
   const ministryQueues: Record<string, QueueItem[]> = {};
   const ministryIncidents: Record<string, MinistryIncident[]> = {};
   // Global-state-neutral defaults — works for any state form; configurable.

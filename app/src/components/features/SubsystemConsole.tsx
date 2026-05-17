@@ -26,6 +26,7 @@ import { laborOps } from '@/lib/gov/labor-systems';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import type { Ministry } from '@/lib/api/types';
+import { resolveInstitution } from '@/lib/institution/federation';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 
@@ -39,18 +40,21 @@ function Stat({ l, v, t }: { l: string; v: string; t?: 'ok' | 'warn' | 'alert' }
 }
 
 export function SubsystemConsole({ id, group }: { id: string; group: string }) {
-  const [m, setM] = React.useState<Ministry | null>(null);
+  // Resolve the institution synchronously from the canonical federation so
+  // the operational surface renders on FIRST paint — no network dependency,
+  // no "Loading institution…" dead-end. The API call only refines it.
+  const [m, setM] = React.useState<Ministry>(() => resolveInstitution(id));
   const [now, setNow] = React.useState(() => Date.now());
   const [selDoc, setSelDoc] = React.useState<string | null>(null);
   const [selRow, setSelRow] = React.useState<string | null>(null);
   React.useEffect(() => {
-    api.org.get(id).then(r => setM(r.ministry)).catch(() => {});
+    setM(resolveInstitution(id));
+    api.org.get(id).then(r => { if (r?.ministry) setM(r.ministry); }).catch(() => {});
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, [id]);
 
   const ts = now / 4000;
-  if (!m) return <p className="text-[11px] text-ink-muted">Loading institution…</p>;
 
   const eco = instantiateMinistry(m, ts);
   const grp = eco.groups.find(g => g.key === group) ?? eco.groups[0]!;
