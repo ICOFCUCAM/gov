@@ -52,9 +52,8 @@ export function GeoMap({
       : data.outline ? [{ type: 'Feature' as const, properties: {}, geometry: data.outline }] : [];
     if (!feats.length) return null;
     const fc = { type: 'FeatureCollection' as const, features: feats };
-    // Fit true country shape large into the panel (aspect preserved — a
-    // clean, recognisable territory, never a distorted blob).
-    const proj = geoMercator().fitExtent([[8, 8], [W - 8, H - 8]], fc as never);
+    // Fit true country shape large into the panel (aspect preserved).
+    const proj = geoMercator().fitExtent([[4, 4], [W - 4, H - 4]], fc as never);
     const path = geoPath(proj);
     const outlineD = data.outline ? path({ type: 'Feature', properties: {}, geometry: data.outline } as never) || '' : '';
     const provs = data.provinces.map((p, i) => {
@@ -63,12 +62,21 @@ export function GeoMap({
       const c = proj([p.lng, p.lat]);
       return { d: path({ type: 'Feature', properties: {}, geometry: p.geometry } as never) || '', cx: c?.[0] ?? null, cy: c?.[1] ?? null, v, t: tnf(v), name: provinceLabel(p, 'en') };
     });
-    // Clean, deliberate hotspot set — a handful of glowing nodes, not a
-    // confetti storm. Highest-pressure districts only.
-    const topNodes = provs.filter(x => x.cx != null)
-      .sort((a, b) => b.v - a.v).slice(0, 14)
-      .map(x => ({ x: x.cx as number, y: x.cy as number, v: x.v, t: x.t, label: x.name }));
-    return { provs, topNodes, outlineD };
+    // Facility network: every district is a node; cap the icon/mesh set so
+    // it stays a clean structured network, not confetti.
+    const fac = provs.filter(x => x.cx != null)
+      .map(x => ({ x: x.cx as number, y: x.cy as number, v: x.v, t: x.t, label: x.name }))
+      .sort((a, b) => b.v - a.v).slice(0, 60);
+    // Nearest-neighbour mesh (each node → 2 closest) — organised, legible.
+    const mesh: { x1: number; y1: number; x2: number; y2: number }[] = [];
+    const seen = new Set<string>();
+    fac.forEach((n, i) => {
+      const d = fac.map((m, j) => ({ j, d: (m.x - n.x) ** 2 + (m.y - n.y) ** 2 })).filter(o => o.j !== i).sort((a, b) => a.d - b.d).slice(0, 2);
+      d.forEach(o => { const k = i < o.j ? `${i}-${o.j}` : `${o.j}-${i}`; if (!seen.has(k)) { seen.add(k); mesh.push({ x1: n.x, y1: n.y, x2: fac[o.j]!.x, y2: fac[o.j]!.y }); } });
+    });
+    const blooms = fac.filter(n => n.v >= 58).slice(0, 8);
+    const hubs = fac.slice(0, 6);
+    return { provs, fac, mesh, blooms, hubs, outlineD };
   }, [data, W, H, geo, metric, iso3]);
 
   return (
@@ -80,6 +88,11 @@ export function GeoMap({
             <stop offset="0%" stopColor="#0b1f33" /><stop offset="55%" stopColor="#06121f" /><stop offset="100%" stopColor="#03070f" />
           </radialGradient>
           <filter id="gms" x="-25%" y="-25%" width="150%" height="150%"><feGaussianBlur stdDeviation="3" /></filter>
+          <radialGradient id="gmheat" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor={ac('alert')} stopOpacity="0.55" />
+            <stop offset="45%" stopColor={ac('warn')} stopOpacity="0.22" />
+            <stop offset="100%" stopColor={ac('warn')} stopOpacity="0" />
+          </radialGradient>
         </defs>
         <rect x="0" y="0" width={W} height={H} fill="url(#gmb)" />
         <g stroke={accent} strokeOpacity="0.07" strokeWidth="0.5">
@@ -93,27 +106,35 @@ export function GeoMap({
           </text>
         ) : (
           <g>
-            {/* soft territory glow */}
-            {view.outlineD ? <path d={view.outlineD} fill="none" stroke={accent} strokeWidth="3" strokeOpacity="0.28" filter="url(#gms)" /> : null}
-            {/* clean province fills + crisp thin borders */}
+            {/* outbreak heat blooms — fill the dark space, benchmark glow */}
+            {view.blooms.map((b, i) => {
+              const rr = 26 + (b.v / 100) * 30;
+              return <ellipse key={`bl${i}`} cx={b.x} cy={b.y} rx={rr} ry={rr * 0.8} fill="url(#gmheat)" />;
+            })}
+            {/* soft territory glow + subtle fills + crisp borders */}
+            {view.outlineD ? <path d={view.outlineD} fill="none" stroke={accent} strokeWidth="3" strokeOpacity="0.26" filter="url(#gms)" /> : null}
             {view.provs.map((pr, i) => (
-              <path key={`p${i}`} d={pr.d} fill={ac(pr.t)} fillOpacity={0.06 + (pr.v / 100) * 0.22}
-                stroke={`color-mix(in srgb,${accent} 50%,transparent)`} strokeWidth="0.35" strokeOpacity="0.55" />
+              <path key={`p${i}`} d={pr.d} fill={ac(pr.t)} fillOpacity={0.05 + (pr.v / 100) * 0.16}
+                stroke={`color-mix(in srgb,${accent} 45%,transparent)`} strokeWidth="0.3" strokeOpacity="0.5" />
             ))}
             {view.outlineD ? <path d={view.outlineD} fill="none" stroke={accent} strokeWidth="0.8" strokeOpacity="0.85" /> : null}
-            {/* a few clean corridors between principal hotspots */}
-            {view.topNodes.slice(0, 6).map((nd, i, a) => {
-              const nx = a[(i + 1) % a.length]!;
-              return <line key={`c${i}`} x1={nd.x} y1={nd.y} x2={nx.x} y2={nx.y} stroke={accent} strokeWidth="0.5" strokeOpacity="0.3" strokeDasharray="3 3" className="animate-dash-flow" />;
-            })}
-            {/* deliberate glowing hotspot nodes */}
-            {view.topNodes.map((nd, i) => {
-              const col = ac(nd.t); const r = 2 + (nd.v / 100) * 3;
+            {/* facility network mesh */}
+            {view.mesh.map((m, i) => (
+              <line key={`m${i}`} x1={m.x1} y1={m.y1} x2={m.x2} y2={m.y2} stroke={accent} strokeWidth="0.3" strokeOpacity="0.22" />
+            ))}
+            {/* facility nodes — small, clean, dense */}
+            {view.fac.map((n, i) => (
+              <circle key={`f${i}`} cx={n.x} cy={n.y} r={1.1} fill={ac(n.t)} fillOpacity="0.85"
+                style={{ filter: `drop-shadow(0 0 1.5px ${ac(n.t)})` }} />
+            ))}
+            {/* principal hubs — glowing, labelled */}
+            {view.hubs.map((nd, i) => {
+              const col = ac(nd.t); const r = 2.4 + (nd.v / 100) * 2.6;
               return (
-                <g key={`n${i}`}>
+                <g key={`h${i}`}>
                   {nd.t === 'alert' ? <circle cx={nd.x} cy={nd.y} r={r + 5} fill="none" stroke={col} strokeWidth="0.7" strokeOpacity="0.7" className="animate-diffuse" style={{ transformOrigin: `${nd.x}px ${nd.y}px` }} /> : null}
-                  <circle cx={nd.x} cy={nd.y} r={r} fill={col} fillOpacity="0.95" stroke="#03070f" strokeWidth="0.5"
-                    className={nd.t === 'alert' ? 'animate-breathe' : undefined} style={{ filter: `drop-shadow(0 0 ${r}px ${col})` }} />
+                  <circle cx={nd.x} cy={nd.y} r={r} fill={col} fillOpacity="0.97" stroke="#03070f" strokeWidth="0.5"
+                    className={nd.t === 'alert' ? 'animate-breathe' : undefined} style={{ filter: `drop-shadow(0 0 ${r * 1.3}px ${col})` }} />
                   {i < 4 ? <text x={nd.x} y={nd.y - r - 2} textAnchor="middle" fontSize="6" fill="rgb(var(--c-ink-soft))" style={{ fontFamily: 'var(--font-mono,monospace)', textShadow: '0 0 4px #03070f' }}>{nd.label}</text> : null}
                 </g>
               );
