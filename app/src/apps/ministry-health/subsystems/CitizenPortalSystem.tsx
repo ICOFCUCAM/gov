@@ -28,6 +28,77 @@ function Card({ title, action, children }: { title?: string; action?: string; ch
   );
 }
 
+// Focused section view — every nav link routes here so each is genuinely
+// active (not a dead highlight). Surfaces the real engine slice per item.
+function PortalSection({ name, v }: { name: string; v: ReturnType<typeof citizenPortalView> }) {
+  const Title = ({ t }: { t: string }) => <h2 className="mb-2 text-[15px] font-bold text-ink">{t}</h2>;
+  const rows = (items: { a: string; b?: string; c?: string; tone?: Tone }[]) => (
+    <div className="space-y-1">
+      {items.map((r, i) => (
+        <div key={i} className="flex items-center gap-2 rounded-[8px] border px-3 py-2 text-[11px]" style={{ borderColor: 'color-mix(in srgb,#1c2733 70%,transparent)', background: '#0a0f17' }}>
+          <span className="min-w-0 flex-1 truncate text-ink-soft">{r.a}</span>
+          {r.b ? <span className="shrink-0 font-mono text-[10px] text-ink-muted">{r.b}</span> : null}
+          {r.c ? <span className="shrink-0 text-[9px] font-bold uppercase" style={{ color: r.tone ? C(r.tone) : ACC }}>{r.c}</span> : null}
+        </div>
+      ))}
+    </div>
+  );
+  let body: React.ReactNode;
+  switch (name) {
+    case 'Health Timeline':
+      body = rows(v.timeline.map(t => ({ a: `${t.kind} · ${t.detail}`, b: t.date, c: t.status, tone: t.tone })));
+      break;
+    case 'Appointments':
+      body = rows([{ a: `${v.upcoming.spec} · ${v.upcoming.doctor}`, b: `${v.upcoming.date} ${v.upcoming.time}`, c: 'Upcoming', tone: 'ok' }, { a: v.upcoming.place }]);
+      break;
+    case 'Prescriptions':
+      body = rows(v.meds.list.map(m => ({ a: `${m.drug} · ${m.instr}`, b: `${m.daysLeft}d left`, c: m.daysLeft <= 5 ? 'Refill' : 'Active', tone: m.tone })));
+      break;
+    case 'Lab Results':
+    case 'Health Records':
+      body = rows([
+        { a: 'Reports', b: `${v.records.reports}` }, { a: 'Lab Results', b: `${v.records.labs}` },
+        { a: 'Imaging', b: `${v.records.imaging}` }, { a: 'Documents', b: `${v.records.documents}` },
+      ]);
+      break;
+    case 'Immunizations':
+      body = rows(v.immun.list.map(im => ({ a: im.vaccine, b: im.date, c: im.done ? 'Done' : 'Due', tone: im.done ? 'ok' : 'warn' })));
+      break;
+    case 'Telemedicine':
+      body = rows(v.doctors.map(d => ({ a: `${d.name} · ${d.spec}`, b: `★ ${d.rating}`, c: d.available ? 'Available' : 'Busy', tone: d.available ? 'ok' : 'warn' })));
+      break;
+    case 'Insurance':
+      body = rows([
+        { a: v.insurance.plan, c: 'Active', tone: 'ok' }, { a: 'Policy No', b: v.insurance.policyNo },
+        { a: 'Valid till', b: v.insurance.validTill }, { a: 'Coverage used', b: `${v.insurance.coverageUsedPct}%` },
+      ]);
+      break;
+    case 'Health Wallet':
+      body = rows([{ a: 'Available balance', b: `${v.wallet.points.toLocaleString()} HS Points`, c: 'Redeem', tone: 'ok' }]);
+      break;
+    case 'Wearables':
+      body = rows(v.overview.map(o => ({ a: o.label, b: `${o.value} ${o.sub}`, tone: o.tone })));
+      break;
+    default:
+      body = (
+        <div className="rounded-[8px] border px-3 py-6 text-center" style={{ borderColor: 'color-mix(in srgb,#1c2733 70%,transparent)', background: '#0a0f17' }}>
+          <div className="text-[12px] font-semibold text-ink-soft">{name}</div>
+          <div className="mt-1 text-[10px] text-ink-muted">This service is active. Detailed {name.toLowerCase()} workflow opens here.</div>
+        </div>
+      );
+  }
+  return (
+    <Card>
+      <div className="mb-1 flex items-center justify-between">
+        <Title t={name} />
+        <span className="text-[10px]" style={{ color: ACC }}>Citizen Health Portal</span>
+      </div>
+      {body}
+    </Card>
+  );
+}
+
+
 export function CitizenPortalSystem({ id, now, role, withheld }: {
   id: string; now: number; role: SovereignRole; withheld: Capability[];
 }) {
@@ -115,6 +186,8 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
 
         {/* Main */}
         <div className="space-y-2">
+          {navSel !== 'Overview' ? <PortalSection name={navSel} v={v} /> : null}
+          <div className={navSel === 'Overview' ? 'space-y-2' : 'hidden'}>
           {/* Hero + upcoming */}
           <div className="grid gap-2 xl:grid-cols-3">
             <div className="xl:col-span-2 rounded-[10px] border p-4" style={{ borderColor: 'color-mix(in srgb,#1c2733 70%,transparent)', background: `radial-gradient(120% 120% at 80% 20%,color-mix(in srgb,${ACC} 14%,#0c121b),#0c121b)` }}>
@@ -280,14 +353,20 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
               </div>
             </Card>
           </div>
+          </div>
 
           {/* Mobile-style tab bar */}
           <div className="flex items-center justify-around rounded-[10px] border px-2 py-2 text-[9px] text-ink-muted" style={{ borderColor: 'color-mix(in srgb,#1c2733 70%,transparent)', background: '#0c121b' }}>
-            {['Home', 'Services', 'Health ID', 'Messages', 'Profile'].map((tb, i) => (
-              <span key={tb} className="flex flex-col items-center gap-0.5" style={{ color: i === 0 ? ACC : 'rgb(var(--c-ink-muted))' }}>
-                <span className="text-[12px]">{['⌂', '▦', '▣', '✉', '◔'][i]}</span>{tb}
-              </span>
-            ))}
+            {([['Home', 'Overview', '⌂'], ['Services', 'Appointments', '▦'], ['Health ID', 'Health Records', '▣'], ['Messages', 'Emergency', '✉'], ['Profile', 'Insurance', '◔']] as const).map(([tb, target, ic]) => {
+              const on = navSel === target;
+              return (
+                <button key={tb} type="button" onClick={() => { setNavSel(target); setNavOpen(false); }}
+                  className="focus-ring flex flex-1 flex-col items-center gap-0.5 rounded-[7px] py-1 transition-colors"
+                  style={{ color: on ? ACC : 'rgb(var(--c-ink-muted))', background: on ? `color-mix(in srgb,${ACC} 14%,transparent)` : 'transparent' }}>
+                  <span className="text-[12px]">{ic}</span>{tb}
+                </button>
+              );
+            })}
           </div>
 
           <RuntimeQueue scope={`${id}:portal`} kind="approval" title="Citizen services runtime — request → verify → fulfil → notify" by="Citizen Services" role={role} withheld={withheld} />
