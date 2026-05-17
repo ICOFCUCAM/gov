@@ -134,6 +134,89 @@ export function laboratoryNetwork(id: string, t: number): LaboratoryNetwork {
   };
 }
 
+// ── Research · Blood Bank · Genomic surveillance ───────────────────────
+// Blood inventory with emergency redistribution + genomic sequencing
+// pipeline and mutation/variant tracking. Pure & deterministic.
+export interface BloodStock { group: string; units: number; daysCover: number; status: 'ok' | 'low' | 'critical'; tone: Tone }
+export interface SequencingStage { stage: 'Extraction' | 'Library prep' | 'Sequencing' | 'Bioinformatics' | 'Reported'; samples: number; tone: Tone }
+export interface Variant { lineage: string; sharePct: number; trend: 'rising' | 'stable' | 'falling'; vocFlag: boolean; tone: Tone }
+export interface ResearchSystem {
+  blood: BloodStock[];
+  bloodEmergencyRedistributions: number;
+  sequencing: SequencingStage[];
+  variants: Variant[];
+  genomicCoveragePct: number;
+  posture: 'stable' | 'watch' | 'critical';
+}
+export function researchSystem(id: string, t: number): ResearchSystem {
+  const blood: BloodStock[] = ['O−', 'O+', 'A−', 'A+', 'B−', 'B+', 'AB−', 'AB+'].map((group, i): BloodStock => {
+    const daysCover = Math.round(wave(`rs:bc:${id}:${i}`, t, 0, 28));
+    const status: BloodStock['status'] = daysCover < 3 ? 'critical' : daysCover < 7 ? 'low' : 'ok';
+    return { group, units: Math.round(wave(`rs:bu:${id}:${i}`, t, 40, 9000)), daysCover, status, tone: status === 'critical' ? 'alert' : status === 'low' ? 'warn' : 'ok' };
+  }).sort((a, b) => a.daysCover - b.daysCover);
+  const sequencing: SequencingStage[] = (['Extraction', 'Library prep', 'Sequencing', 'Bioinformatics', 'Reported'] as const).map((stage, i): SequencingStage => {
+    const samples = Math.round(wave(`rs:sq:${id}:${i}`, t, 10, 1800));
+    return { stage, samples, tone: stage === 'Sequencing' && samples > 1200 ? 'warn' : 'ok' };
+  });
+  const variants: Variant[] = ['Wild-type', 'Lineage B.1', 'Lineage C.2', 'Variant X (VOC)', 'Recombinant R1'].map((lineage, i): Variant => {
+    const sharePct = Math.round(wave(`rs:vs:${id}:${i}`, t, 1, 60));
+    const tr = wave(`rs:vt:${id}:${i}`, t, 0, 1);
+    const trend: Variant['trend'] = tr > 0.66 ? 'rising' : tr > 0.33 ? 'stable' : 'falling';
+    const vocFlag = lineage.includes('VOC') && trend === 'rising';
+    return { lineage, sharePct, trend, vocFlag, tone: vocFlag ? 'alert' : trend === 'rising' && sharePct > 30 ? 'warn' : 'ok' };
+  }).sort((a, b) => b.sharePct - a.sharePct);
+  const critBlood = blood.filter(b => b.status === 'critical').length;
+  const voc = variants.some(v => v.vocFlag);
+  const posture: ResearchSystem['posture'] = critBlood >= 2 || voc ? 'critical' : critBlood >= 1 || variants.some(v => v.tone === 'warn') ? 'watch' : 'stable';
+  return {
+    blood,
+    bloodEmergencyRedistributions: Math.round(wave(`rs:br:${id}`, t, 0, 8)),
+    sequencing, variants,
+    genomicCoveragePct: Math.round(wave(`rs:gc:${id}`, t, 8, 64)),
+    posture,
+  };
+}
+
+// ── Ward & Surgical operations ─────────────────────────────────────────
+// Ward/nurse-station management, surgical queue intelligence and
+// medication-schedule adherence. Pure & deterministic.
+export interface WardRow { ward: string; beds: number; occupied: number; nurseRatio: number; acuity: 'routine' | 'high' | 'critical'; tone: Tone }
+export interface SurgicalCase { id: string; procedure: string; priority: 'elective' | 'urgent' | 'emergency'; waitHrs: number; status: 'queued' | 'in-theatre' | 'recovery'; tone: Tone }
+export interface WardSurgicalOps {
+  wards: WardRow[];
+  surgical: SurgicalCase[];
+  medicationAdherencePct: number;
+  theatreUtilisationPct: number;
+  emergencyBacklog: number;
+  posture: 'steady' | 'strained' | 'crisis';
+}
+export function wardSurgicalOps(id: string, t: number): WardSurgicalOps {
+  const wards: WardRow[] = ['General medicine', 'Surgical', 'Paediatric', 'Maternity', 'ICU step-down', 'Isolation'].map((ward, i): WardRow => {
+    const beds = 24 + Math.round(seed(`ws:b:${id}:${i}`) * 60);
+    const occupied = Math.round(beds * wave(`ws:o:${id}:${i}`, t, 0.5, 1.05));
+    const nurseRatio = Math.round(wave(`ws:nr:${id}:${i}`, t, 3, 12));
+    const acuity: WardRow['acuity'] = occupied >= beds || nurseRatio >= 9 ? 'critical' : occupied >= beds * 0.9 || nurseRatio >= 6 ? 'high' : 'routine';
+    return { ward, beds, occupied: Math.min(occupied, beds + 2), nurseRatio, acuity, tone: acuity === 'critical' ? 'alert' : acuity === 'high' ? 'warn' : 'ok' };
+  });
+  const surgical: SurgicalCase[] = Array.from({ length: 8 }, (_, i): SurgicalCase => {
+    const priority = (['elective', 'urgent', 'emergency'] as const)[i % 3]!;
+    const waitHrs = Math.round(wave(`ws:sw:${id}:${i}`, t, 0, 96));
+    const phase = Math.floor((t / 5 + seed(`ws:sp:${id}:${i}`) * 3)) % 3;
+    const status = (['queued', 'in-theatre', 'recovery'] as const)[phase]!;
+    const tone: Tone = priority === 'emergency' && status === 'queued' && waitHrs > 2 ? 'alert' : priority === 'urgent' && waitHrs > 24 ? 'warn' : 'ok';
+    return { id: `OP-${300 + i}`, procedure: ['Appendectomy', 'C-section', 'Laparotomy', 'Fracture fixation', 'Craniotomy', 'Bypass', 'Cholecystectomy', 'Amputation'][i]!, priority, waitHrs, status, tone };
+  }).sort((a, b) => ({ emergency: 0, urgent: 1, elective: 2 }[a.priority] - { emergency: 0, urgent: 1, elective: 2 }[b.priority]) || b.waitHrs - a.waitHrs);
+  const emergencyBacklog = surgical.filter(s => s.priority === 'emergency' && s.status === 'queued').length;
+  const critWards = wards.filter(w => w.acuity === 'critical').length;
+  const posture: WardSurgicalOps['posture'] = critWards >= 2 || emergencyBacklog >= 2 ? 'crisis' : critWards >= 1 || emergencyBacklog >= 1 ? 'strained' : 'steady';
+  return {
+    wards, surgical,
+    medicationAdherencePct: Math.round(wave(`ws:ma:${id}`, t, 72, 99)),
+    theatreUtilisationPct: Math.round(wave(`ws:tu:${id}`, t, 48, 98)),
+    emergencyBacklog, posture,
+  };
+}
+
 // ── Public Ministry Website model ──────────────────────────────────────
 // The public-facing Ministry of Health site: emergency alerts, vaccination
 // campaigns, national programmes, public health advisories, disease

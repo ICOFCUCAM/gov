@@ -4,7 +4,7 @@ import {
   healthRegulatory, emergencyMedical, healthCommand, laboratoryExecution,
   doctorClinicalExecution, hospitalDeepExecution, pharmaceuticalDeepExecution,
   patientDeepExecution, emergencyIncidentExecution, diseaseEpidemiology,
-  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid, citizenHealthPortal, nationalInteroperability, healthSimulation, sovereignSecurity, executiveBriefing, publicHealthSite,
+  healthFinanceExecution, healthRegulatoryExecution, nationalSituation, nationalHealthcareGrid, citizenHealthPortal, nationalInteroperability, healthSimulation, sovereignSecurity, executiveBriefing, publicHealthSite, researchSystem, wardSurgicalOps,
 } from './health-operations';
 
 describe('ministry of health operations engine', () => {
@@ -318,5 +318,26 @@ describe('ministry of health operations engine', () => {
     expect(a.programmes.length).toBeGreaterThan(4);
     expect(typeof a.emergencyBanner.active).toBe('boolean');
     expect(a.findable.hospitals).toBeGreaterThanOrEqual(0);
+  });
+
+  it('research / ward-surgical engines are deterministic & bounded', () => {
+    const r = researchSystem('MOH', 130);
+    expect(r).toEqual(researchSystem('MOH', 130));
+    expect(r.blood.length).toBe(8);
+    expect(r.sequencing.length).toBe(5);
+    expect(['stable', 'watch', 'critical']).toContain(r.posture);
+    for (let i = 1; i < r.blood.length; i++) expect(r.blood[i - 1]!.daysCover).toBeLessThanOrEqual(r.blood[i]!.daysCover);
+    for (const b of r.blood) expect(['ok', 'low', 'critical']).toContain(b.status);
+
+    const w = wardSurgicalOps('MOH', 130);
+    expect(w).toEqual(wardSurgicalOps('MOH', 130));
+    expect(w.wards.length).toBe(6);
+    expect(w.surgical.length).toBe(8);
+    expect(['steady', 'strained', 'crisis']).toContain(w.posture);
+    const rank = { emergency: 0, urgent: 1, elective: 2 } as const;
+    for (let i = 1; i < w.surgical.length; i++) {
+      expect(rank[w.surgical[i - 1]!.priority]).toBeLessThanOrEqual(rank[w.surgical[i]!.priority]);
+    }
+    for (const x of w.wards) expect(x.occupied).toBeLessThanOrEqual(x.beds + 2);
   });
 });

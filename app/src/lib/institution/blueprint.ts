@@ -102,6 +102,14 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Ministerial briefing', 'command'), S('Strategic directives', 'workflow'),
       S('Emergency declarations', 'emergency'),
     ]),
+    G('research', 'Research · Blood · Genomics', 'Blood bank network & genomic surveillance', [
+      S('Blood bank network', 'logistics'), S('Genomic sequencing', 'intelligence'),
+      S('Mutation tracking', 'analytics'),
+    ]),
+    G('wards', 'Ward & Surgical Ops', 'Ward management & surgical orchestration', [
+      S('Ward & nurse stations', 'network'), S('Surgical queue', 'workflow'),
+      S('Medication schedules', 'workflow'),
+    ]),
   ],
   FINANCE: [
     G('command', 'Fiscal Command', 'Sovereign fiscal authority', [

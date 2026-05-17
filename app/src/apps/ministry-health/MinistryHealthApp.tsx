@@ -32,6 +32,8 @@ import { InteroperabilitySystem } from '@/apps/ministry-health/subsystems/Intero
 import { SimulationSystem } from '@/apps/ministry-health/subsystems/SimulationSystem';
 import { SecuritySystem } from '@/apps/ministry-health/subsystems/SecuritySystem';
 import { ExecutiveBriefingSystem } from '@/apps/ministry-health/subsystems/ExecutiveBriefingSystem';
+import { ResearchSystemView } from '@/apps/ministry-health/subsystems/ResearchSystemView';
+import { WardSurgicalSystem } from '@/apps/ministry-health/subsystems/WardSurgicalSystem';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -73,7 +75,7 @@ function Panel({ title, meta, children }: { title: string; meta?: string; childr
 const DOMAIN_WF: Record<string, WorkKind> = {
   command: 'incident', hospitals: 'case', doctor: 'encounter', patient: 'approval',
   pharma: 'procurement', disease: 'incident', lab: 'case', emergency: 'incident',
-  finance: 'procurement', regulatory: 'permit', situation: 'incident', grid: 'case', portal: 'approval', interop: 'case', simulation: 'incident', security: 'incident', executive: 'incident',
+  finance: 'procurement', regulatory: 'permit', situation: 'incident', grid: 'case', portal: 'approval', interop: 'case', simulation: 'incident', security: 'incident', executive: 'incident', research: 'case', wards: 'case',
 };
 const DOMAIN_LABEL: Record<string, string> = {
   command: 'Health Command', hospitals: 'Hospital Network', doctor: 'Doctor Systems',
@@ -143,6 +145,12 @@ export function MinistryHealthApp({
   }
   if (d === 'executive') {
     return <ExecutiveBriefingSystem id={id} now={now} role={role} withheld={withheld} />;
+  }
+  if (d === 'research') {
+    return <ResearchSystemView id={id} now={now} role={role} withheld={withheld} />;
+  }
+  if (d === 'wards') {
+    return <WardSurgicalSystem id={id} now={now} role={role} withheld={withheld} />;
   }
 
   let body: React.ReactNode = null;
