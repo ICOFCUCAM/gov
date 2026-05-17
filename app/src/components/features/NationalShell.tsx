@@ -32,7 +32,8 @@ import { nationalHealthcareCapacity } from '@/lib/gov/health-systems';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, activatedApps, version as orchVersion } from '@/services/orchestration-engine';
 import { subscribeBus, version as busVersion, eventLog, eventStats } from '@/services/event-bus';
-import { subscribe as rtSubscribe, runtimeStats, runtimeContinuity, scopeSummaries, executionDelta, injectDirective, directiveState, version as rtVersion } from '@/lib/gov/runtime-store';
+import { subscribe as rtSubscribe, runtimeStats, runtimeContinuity, scopeSummaries, executionDelta, injectDirective, directiveState, directiveActioned, version as rtVersion } from '@/lib/gov/runtime-store';
+import { decisionEfficacy, efficacyRollup, type EfficacyResult } from '@/services/decision-efficacy';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
 
@@ -165,7 +166,7 @@ export function NationalShell() {
     );
     return life.phase === 'lapsed';
   }).length;
-  const strategy = strategicPosture({
+  const sig = {
     executionIndex: sei.index,
     executionBand: sei.band,
     fragility: rprop.fragility,
@@ -181,7 +182,19 @@ export function NationalShell() {
     treasuryOperational: fp.institutions.find(i => i.archetype === 'FINANCE')?.operational ?? 100,
     lapsedEmergencies,
     worstInstitution: fp.worst ? { id: fp.worst.id, name: fp.worst.name, operational: fp.worst.operational } : null,
-  });
+  } as const;
+  const strategy = strategicPosture(sig);
+  const signalNow: Record<string, number> = {
+    executionIndex: sig.executionIndex,
+    amplification: sig.amplification,
+    treasuryOperational: sig.treasuryOperational,
+    legislativeQuorum: sig.legislativeQuorum ? 1 : 0,
+    legislativeBlocked: sig.legislativeBlocked,
+    lapsedEmergencies: sig.lapsedEmergencies,
+    judicialClearancePct: sig.judicialClearancePct,
+    systemicDrag: sig.systemicDrag,
+    worstOperational: sig.worstInstitution?.operational ?? 0,
+  };
 
   const constContinuity =
     !leg.quorum || jud.meanClearance < 60 ? { l: 'STRAINED', t: 'alert' as const }
@@ -426,7 +439,7 @@ export function NationalShell() {
                           </span>
                         ) : (
                           <button
-                            onClick={() => injectDirective(dkey, d.directive.scope, d.directive.kind, d.directive.title, 'Sovereign Command')}
+                            onClick={() => injectDirective(dkey, d.directive.scope, d.directive.kind, d.directive.title, 'Sovereign Command', { metricKey: d.metric.key, baseline: d.metric.baseline, goal: d.metric.goal })}
                             className="focus-ring ml-auto rounded-[3px] border border-line bg-surface px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-ink transition-colors hover:bg-surface-2"
                           >
                             Execute directive →
@@ -440,6 +453,48 @@ export function NationalShell() {
                 })}
               </div>
             )}
+          </P>
+        );
+      })()}
+
+      {(() => {
+        const rows = strategy.decisions
+          .map(d => {
+            const dkey = `${d.id}|${d.directive.scope}`;
+            const rec = directiveState(dkey);
+            if (!rec) return null;
+            const res = decisionEfficacy({
+              baseline: rec.baseline ?? d.metric.baseline,
+              current: signalNow[d.metric.key] ?? d.metric.baseline,
+              goal: d.metric.goal,
+              actioned: directiveActioned(dkey),
+            });
+            return { d, rec, res };
+          })
+          .filter((x): x is { d: typeof strategy.decisions[number]; rec: NonNullable<ReturnType<typeof directiveState>>; res: EfficacyResult } => x !== null);
+        if (rows.length === 0) return null;
+        const roll = efficacyRollup(rows.map(r => r.res));
+        const rt = roll.hitRate < 0 ? 'warn' : roll.hitRate >= 60 ? 'ok' : roll.ineffective > 0 ? 'alert' : 'warn';
+        const vTone = (v: EfficacyResult['verdict']) =>
+          v === 'effective' ? 'ok' : v === 'ineffective' ? 'alert' : v === 'pending' ? 'warn' : 'neutral';
+        return (
+          <P title="Decision efficacy ledger" meta={`accountability · ${roll.effective} effective · ${roll.ineffective} regressed · ${roll.pending} pending${roll.hitRate >= 0 ? ` · ${roll.hitRate}% hit-rate` : ''}`}>
+            <div className="mb-2 text-[10px] text-ink-muted">every executed directive is held accountable to the signal it targeted — the loop verifies whether the decision actually worked, not just that it ran</div>
+            <div className="space-y-1.5">
+              {rows.map(({ d, res }) => {
+                const vt = vTone(res.verdict);
+                return (
+                  <div key={d.id} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2.5 py-2" style={{ borderLeft: `3px solid ${TONE[vt === 'neutral' ? 'warn' : vt]}` }}>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-[8.5px] font-bold uppercase tracking-[0.16em]" style={{ color: TONE[vt === 'neutral' ? 'warn' : vt] }}>{res.verdict}</span>
+                      <span className="text-[11px] font-medium text-ink">{d.title}</span>
+                      <span className="ml-auto font-mono text-[9px] tabular-nums text-ink-muted">{d.metric.label} · {res.delta >= 0 ? '+' : ''}{res.delta}</span>
+                    </div>
+                    <div className="mt-0.5 text-[9px] text-ink-muted">{res.detail}</div>
+                  </div>
+                );
+              })}
+            </div>
           </P>
         );
       })()}

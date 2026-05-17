@@ -35,6 +35,15 @@ export interface ExecutableDirective {
   kind: WorkKind;      // workflow the injected work item runs
   title: string;       // operator-facing directive title
 }
+export interface DecisionMetric {
+  /** stable signal key the decision is accountable to */
+  key: string;
+  label: string;
+  /** signal value at the moment the decision was raised */
+  baseline: number;
+  /** the direction that constitutes success */
+  goal: 'raise' | 'lower';
+}
 export interface StrategicDecision {
   id: string;
   title: string;
@@ -44,6 +53,8 @@ export interface StrategicDecision {
   urgency: number;
   domain: string;
   directive: ExecutableDirective;
+  /** the signal this decision is held accountable to (efficacy ledger) */
+  metric: DecisionMetric;
 }
 
 const SEV_RANK: Record<StrategicDecision['severity'], number> = {
@@ -60,7 +71,8 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
     rationale: string,
     domain: string,
     directive: ExecutableDirective,
-  ) => out.push({ id, severity, urgency: SEV_RANK[severity] + bump, title, rationale, domain, directive });
+    metric: DecisionMetric,
+  ) => out.push({ id, severity, urgency: SEV_RANK[severity] + bump, title, rationale, domain, directive, metric });
 
   // 1. Sovereign execution degraded — stabilise the worst institution.
   if (s.executionBand === 'degraded' && s.worstInstitution) {
@@ -69,7 +81,8 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
       `Stabilise sovereign execution — ${w.name}`,
       `Execution index ${s.executionIndex} (degraded); ${w.name} operating at ${w.operational}.`,
       w.id,
-      { scope: `${w.id}:command`, kind: 'incident', title: `Operational stabilisation directive — ${w.name}` });
+      { scope: `${w.id}:command`, kind: 'incident', title: `Operational stabilisation directive — ${w.name}` },
+      { key: 'executionIndex', label: 'Sovereign execution index', baseline: s.executionIndex, goal: 'raise' });
   }
 
   // 2. Fabric contagion cascading — contain at the worst propagation node.
@@ -79,7 +92,8 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
       `Contain fabric contagion — ${n.name}`,
       `Resilience cascading (−${s.amplification} systemic drag); ${n.name} effective resilience ${n.effective}.`,
       n.id,
-      { scope: `${n.id}:command`, kind: 'incident', title: `Dependency-isolation directive — ${n.name}` });
+      { scope: `${n.id}:command`, kind: 'incident', title: `Dependency-isolation directive — ${n.name}` },
+      { key: 'amplification', label: 'Systemic resilience drag', baseline: s.amplification, goal: 'lower' });
   }
 
   // 3. Treasury liquidity collapse — authorise a liquidity injection.
@@ -88,7 +102,8 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
       'Inject sovereign liquidity — Treasury',
       `Treasury operational ${s.treasuryOperational}; procurement gated across the federation.`,
       'treasury',
-      { scope: 'treasury:command', kind: 'procurement', title: 'Emergency liquidity authorisation' });
+      { scope: 'treasury:command', kind: 'procurement', title: 'Emergency liquidity authorisation' },
+      { key: 'treasuryOperational', label: 'Treasury operational', baseline: s.treasuryOperational, goal: 'raise' });
   }
 
   // 4. Legislative quorum lost — fiscal authority is unconstituted.
@@ -97,13 +112,15 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
       'Restore legislative quorum',
       'No legislative quorum — fiscal authorisation is constitutionally withheld.',
       'legislature',
-      { scope: 'legislature:command', kind: 'bill', title: 'Convene quorum — restore fiscal authorisation' });
+      { scope: 'legislature:command', kind: 'bill', title: 'Convene quorum — restore fiscal authorisation' },
+      { key: 'legislativeQuorum', label: 'Legislative quorum', baseline: s.legislativeQuorum ? 1 : 0, goal: 'raise' });
   } else if (s.legislativeBlocked >= 3) {
     push('leg-blocked', 'priority', s.legislativeBlocked * 4,
       'Clear blocked appropriations',
       `${s.legislativeBlocked} appropriations stalled — fiscal execution constrained.`,
       'legislature',
-      { scope: 'legislature:command', kind: 'bill', title: 'Expedite blocked appropriations' });
+      { scope: 'legislature:command', kind: 'bill', title: 'Expedite blocked appropriations' },
+      { key: 'legislativeBlocked', label: 'Blocked appropriations', baseline: s.legislativeBlocked, goal: 'lower' });
   }
 
   // 5. Lapsed emergency powers — constitutional breach, must be resolved.
@@ -112,7 +129,8 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
       'Resolve lapsed emergency powers',
       `${s.lapsedEmergencies} emergency declaration(s) past sunset without renewal — powers void.`,
       'legislature',
-      { scope: 'legislature:command', kind: 'approval', title: 'Re-authorise or stand down lapsed emergency powers' });
+      { scope: 'legislature:command', kind: 'approval', title: 'Re-authorise or stand down lapsed emergency powers' },
+      { key: 'lapsedEmergencies', label: 'Lapsed emergency powers', baseline: s.lapsedEmergencies, goal: 'lower' });
   }
 
   // 6. Judicial backlog — constitutional enforcement is delayed.
@@ -121,7 +139,8 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
       'Surge judicial clearance',
       `Clearance ${s.judicialClearancePct}% · backlog ${s.judicialBacklog} — enforcement delayed.`,
       'judiciary',
-      { scope: 'judiciary:command', kind: 'judicial', title: 'Backlog-clearance surge directive' });
+      { scope: 'judiciary:command', kind: 'judicial', title: 'Backlog-clearance surge directive' },
+      { key: 'judicialClearancePct', label: 'Judicial clearance %', baseline: s.judicialClearancePct, goal: 'raise' });
   }
 
   // 7. Cross-institution chain constraint — relieve the worst target.
@@ -131,7 +150,8 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
       `Relieve execution constraint — ${s.chainWorstTarget}`,
       `${s.chainConstraints} active constraint(s); systemic drag ${s.systemicDrag} on ${s.chainWorstTarget}.`,
       dom,
-      { scope: `${dom}:command`, kind: 'approval', title: `Constraint-relief directive — ${s.chainWorstTarget}` });
+      { scope: `${dom}:command`, kind: 'approval', title: `Constraint-relief directive — ${s.chainWorstTarget}` },
+      { key: 'systemicDrag', label: 'Cross-institution drag', baseline: s.systemicDrag, goal: 'lower' });
   }
 
   // 8. Single worst institution still below operating floor.
@@ -141,7 +161,8 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
       `Operational recovery — ${w.name}`,
       `${w.name} operating at ${w.operational}, below the 50 operating floor.`,
       w.id,
-      { scope: `${w.id}:command`, kind: 'incident', title: `Recovery directive — ${w.name}` });
+      { scope: `${w.id}:command`, kind: 'incident', title: `Recovery directive — ${w.name}` },
+      { key: 'worstOperational', label: `${w.name} operational`, baseline: w.operational, goal: 'raise' });
   }
 
   return out.sort((a, b) => b.urgency - a.urgency || a.id.localeCompare(b.id));

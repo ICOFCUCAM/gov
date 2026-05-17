@@ -198,7 +198,13 @@ export function injectItem(scope: string, kind: WorkKind, title: string, by: str
 // have been actioned and the runtime item they produced, so the command
 // surface can show "executed" state and trace decision → execution.
 
-export interface DirectiveRecord { key: string; scope: string; itemId: string; title: string; at: number }
+export interface DirectiveRecord {
+  key: string; scope: string; itemId: string; title: string; at: number;
+  /** signal the decision is accountable to, captured at execution time */
+  metricKey?: string;
+  baseline?: number;
+  goal?: 'raise' | 'lower';
+}
 const directives = new Map<string, DirectiveRecord>();
 
 /**
@@ -207,6 +213,7 @@ const directives = new Map<string, DirectiveRecord>();
  */
 export function injectDirective(
   key: string, scope: string, kind: WorkKind, title: string, by: string,
+  accountable?: { metricKey: string; baseline: number; goal: 'raise' | 'lower' },
 ): DirectiveRecord {
   hydrate();
   const existing = directives.get(key);
@@ -221,7 +228,12 @@ export function injectDirective(
   scopes.set(scope, [item, ...items]);
   ledger.unshift({ at: Date.now(), scope, itemId: item.id, kind, from: '—', to: wf.stages[0]!, action: 'assign', by });
   if (ledger.length > 200) ledger.length = 200;
-  const rec: DirectiveRecord = { key, scope, itemId: item.id, title, at: Date.now() };
+  const rec: DirectiveRecord = {
+    key, scope, itemId: item.id, title, at: Date.now(),
+    metricKey: accountable?.metricKey,
+    baseline: accountable?.baseline,
+    goal: accountable?.goal,
+  };
   directives.set(key, rec);
   appendAudit(scope, by, 'inject', item.id, `directive: ${title}`);
   busPublish('runtime.transition', scope, { itemId: item.id, action: 'assign', from: '—', to: wf.stages[0]!, by, closed: false });
@@ -232,6 +244,15 @@ export function injectDirective(
 /** The execution record for a directive key, or null if not yet actioned. */
 export function directiveState(key: string): DirectiveRecord | null {
   return directives.get(key) ?? null;
+}
+
+/** True once the runtime work item a directive produced has been closed. */
+export function directiveActioned(key: string): boolean {
+  const rec = directives.get(key);
+  if (!rec) return false;
+  const items = scopes.get(rec.scope);
+  const it = items?.find(i => i.id === rec.itemId);
+  return !!it?.closed;
 }
 
 export interface InboxItem { scope: string; item: WorkItem }
