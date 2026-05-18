@@ -1385,6 +1385,78 @@ export function nationalDirectiveRegister(
   return { directives, era, completed, failed, active };
 }
 
+// ── Human political governance & constitutional realism ───────────────────
+// Government is shaped by finite human leadership: cabinet factions
+// disagree, legitimacy constrains power, emergency mandates carry
+// constitutional cost, and decisions degrade under overload. Builds on the
+// political-continuity layer (no duplicated legitimacy logic).
+export interface CabinetVoice {
+  ministry: string;
+  position: string;
+  dissent: number;   // 0..100 strength of internal objection
+  tone: 'ok' | 'warn' | 'alert';
+}
+export interface ExecutiveLeadership {
+  cabinet: CabinetVoice[];
+  consensus: number;            // 0..100 (100 = aligned)
+  leadershipStability: number;  // 0..100
+  successionPressure: number;   // 0..100 (higher worse)
+  constitutionalStrain: number; // 0..100 emergency-mandate / oversight cost
+  decisionQuality: number;      // 0..100 human-imperfection-adjusted
+  administration: number;       // tenure index (administrations over time)
+  label: string;                // DECISIVE | FUNCTIONAL | CONTESTED | STRAINED | CARETAKER
+}
+export function executiveLeadership(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  ext: ExternalEnvironment, polit: PoliticalContinuity, powersLevel: number,
+  incidentN: number, epoch: number,
+): ExecutiveLeadership {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  // Cabinet factions — each voice's objection rises with the doctrine
+  // pressure it cares about.
+  const cabinet: CabinetVoice[] = [
+    { ministry: 'Treasury', position: 'resist aggressive expenditure', dissent: clamp(20 + Math.max(0, 50 - opS.resources.reserves.headroom) * 0.9 + (100 - post.deploymentConservatism) * 0.18) },
+    { ministry: 'Emergency', position: 'demand rapid escalation', dissent: clamp(18 + incidentN * 6 + (100 - post.execConfidence) * 0.2) },
+    { ministry: 'Health', position: 'prioritise containment', dissent: clamp(16 + post.containmentWeight * 0.4 + (100 - society.civilianConfidence) * 0.2) },
+    { ministry: 'Transport', position: 'prioritise economic continuity', dissent: clamp(16 + (100 - society.economicContinuity) * 0.45) },
+    { ministry: 'Foreign Affairs', position: 'urge diplomatic caution', dissent: clamp(14 + ext.externalPressure * 0.45 + (100 - ext.allianceReliability) * 0.2) },
+    { ministry: 'Energy', position: 'preserve strategic reserves', dissent: clamp(16 + Math.max(0, 55 - opS.resources.reserves.headroom) * 0.7 + opS.display.gridLoad * 0.12) },
+  ].map(v => ({ ...v, tone: (v.dissent >= 60 ? 'alert' : v.dissent >= 38 ? 'warn' : 'ok') as CabinetVoice['tone'] }))
+    .sort((a, b) => b.dissent - a.dissent);
+  const meanDissent = cabinet.reduce((s, v) => s + v.dissent, 0) / cabinet.length;
+  const consensus = clamp(100 - meanDissent);
+  // Leadership stability — governance continuity & confidence sustain it;
+  // dissent, crisis fatigue and a record of failure erode it.
+  const failMem = eventMemory('lead:fail', epoch, 16, 0.6, 0.34, 5);
+  const leadershipStability = clamp(
+    polit.governanceContinuity * 0.4 + post.execConfidence * 0.24 + consensus * 0.2
+    - failMem.pos * 0.2 - incidentN * 2);
+  const successionPressure = clamp(
+    (100 - leadershipStability) * 0.5 + meanDissent * 0.28
+    + failMem.pos * 0.16 + Math.max(0, powersLevel - 1) * 10);
+  // Constitutional strain — emergency mandates & aggressive doctrine carry
+  // oversight cost; eroded legitimacy amplifies it.
+  const constitutionalStrain = clamp(
+    powersLevel * 22 + (100 - post.deploymentConservatism < 40 ? 14 : 0)
+    + (100 - polit.legitimacy) * 0.3 + post.containmentWeight * 0.16);
+  // Human decision imperfection — overload, low confidence, faction
+  // ambiguity and fatigue degrade prioritisation quality.
+  const decisionQuality = clamp(
+    post.execConfidence * 0.42 + consensus * 0.24 + polit.legitimacy * 0.16
+    - incidentN * 3 - (100 - leadershipStability) * 0.18);
+  const administration = Math.floor(epoch / 12) + 1
+    + Math.round(failMem.pos / 40); // failed governments shorten tenures
+  const label = leadershipStability >= 70 && consensus >= 60 ? 'DECISIVE'
+    : leadershipStability >= 52 ? 'FUNCTIONAL'
+    : successionPressure >= 66 ? 'CARETAKER'
+    : consensus < 42 ? 'CONTESTED'
+    : 'STRAINED';
+  return {
+    cabinet, consensus, leadershipStability, successionPressure,
+    constitutionalStrain, decisionQuality, administration, label,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

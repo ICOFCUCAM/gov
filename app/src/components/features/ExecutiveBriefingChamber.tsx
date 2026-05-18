@@ -17,7 +17,7 @@ import {
   nationalSociety, externalEnvironment, strategicForesight, simulateDoctrines,
   nationalSustainability, politicalContinuity, nationalCapability,
   ministryOperations, institutionalFatigue, nationalStressExercise,
-  nationalDirectiveRegister,
+  nationalDirectiveRegister, executiveLeadership,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -137,6 +137,9 @@ export function ExecutiveBriefingChamber() {
   const sustain = nationalSustainability(opS, post, society, foresight, epoch);
   const polit = politicalContinuity(opS, post, society, ext, foresight, epoch);
   const politTone = polit.label === 'FRACTURING' || polit.label === 'FRAGILE' ? 'alert' : polit.label === 'STRAINED' ? 'warn' : 'ok';
+  const powersLevel = powers === 'WAR CABINET' ? 3 : powers === 'ELEVATED MANDATE' ? 2 : 1;
+  const lead = executiveLeadership(opS, post, society, ext, polit, powersLevel, incidents.length, epoch);
+  const leadTone = lead.label === 'CARETAKER' || lead.label === 'CONTESTED' ? 'alert' : lead.label === 'STRAINED' ? 'warn' : 'ok';
   const cap = nationalCapability(opS, post, society, ext, sustain, polit, peakP, incidents.length, epoch);
   const capTone = cap.label === 'DECLINING' || cap.label === 'ERODING' ? 'alert' : cap.label === 'STRAINED' ? 'warn' : 'ok';
   const drill = nationalStressExercise(opS, post, society, ext, foresight, sustain, polit, cap, incidents.length, epoch);
@@ -235,6 +238,13 @@ export function ExecutiveBriefingChamber() {
       L.push(`     ${d.stage} · ${d.progress}% · execution ${d.accountability}${d.outcome !== 'pending' ? ` · ${d.outcome}` : ''}`);
     });
     L.push('');
+    L.push(`IX.  EXECUTIVE LEADERSHIP & CABINET — ADMINISTRATION ${lead.administration}`);
+    L.push(thin);
+    L.push(`  Posture ${lead.label} · consensus ${lead.consensus} · leadership stability ${lead.leadershipStability}`);
+    L.push(`  Succession pressure ${lead.successionPressure} · constitutional strain ${lead.constitutionalStrain} · decision quality ${lead.decisionQuality}`);
+    L.push('  Cabinet positions:');
+    lead.cabinet.forEach(v => L.push(`   - ${v.ministry}: ${v.position} (dissent ${v.dissent})`));
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -254,7 +264,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -297,6 +307,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: 'rgb(var(--c-ink-soft))' }} title="governing administration / doctrine generation">
             {register.era.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[leadTone] }} title={`executive leadership · administration ${lead.administration}`}>
+            leadership {lead.label.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -485,6 +498,22 @@ export function ExecutiveBriefingChamber() {
               Governance continuity <span className="font-semibold" style={{ color: TONE[politTone] }}>{polit.governanceContinuity}</span> ·
               regime {polit.label.toLowerCase()}{polit.fragility >= 55 ? ' — sustained pressure threatens governing continuity' : ' — political continuity holding'}.
             </p>
+            <div className="mt-2 mb-1 flex items-baseline justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Cabinet & leadership · admin {lead.administration}</span>
+              <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[leadTone] }}>{lead.label}</span>
+            </div>
+            <Stat label="Cabinet consensus" value={`${lead.consensus}`} tone={lead.consensus >= 60 ? 'ok' : lead.consensus >= 42 ? 'warn' : 'alert'} />
+            <Stat label="Leadership stability" value={`${lead.leadershipStability}`} tone={lead.leadershipStability >= 60 ? 'ok' : lead.leadershipStability >= 42 ? 'warn' : 'alert'} />
+            <Stat label="Succession pressure" value={`${lead.successionPressure}`} tone={lead.successionPressure >= 60 ? 'alert' : lead.successionPressure >= 40 ? 'warn' : 'ok'} />
+            <Stat label="Constitutional strain" value={`${lead.constitutionalStrain}`} tone={lead.constitutionalStrain >= 60 ? 'alert' : lead.constitutionalStrain >= 40 ? 'warn' : 'ok'} note={`decision quality ${lead.decisionQuality}`} />
+            <div className="mt-1 space-y-0.5">
+              {lead.cabinet.slice(0, 3).map(v => (
+                <div key={v.ministry} className="flex items-baseline justify-between gap-3 text-[10px] text-ink-muted">
+                  <span className="truncate">{v.ministry}: {v.position}</span>
+                  <span className="shrink-0 font-mono tabular-nums" style={{ color: TONE[v.tone] }}>dissent {v.dissent}</span>
+                </div>
+              ))}
+            </div>
           </Panel>
 
           <Panel title="Executive directive flow" meta="institutional governance procedure">

@@ -10,7 +10,7 @@ import {
   fieldDeployment, FIELD_STAGES, nationalSociety, externalEnvironment,
   strategicForesight, simulateDoctrines, nationalSustainability,
   politicalContinuity, nationalCapability, ministryOperations,
-  nationalStressExercise, nationalDirectiveRegister,
+  nationalStressExercise, nationalDirectiveRegister, executiveLeadership,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -498,5 +498,30 @@ describe('sovereign operating model', () => {
     const g0 = r.directives.find(d => d.key === 'reserve-pres')!;
     const g1 = later.directives.find(d => d.key === 'reserve-pres')!;
     expect(g1.generation).toBeGreaterThanOrEqual(g0.generation);
+  });
+
+  it('executive leadership models cabinet dissent, succession & human limits', () => {
+    const oS = nationalOperatingState(60, 70, 85, 3, 5, 13);
+    const p = nationalPosture(13);
+    const soc = nationalSociety(oS, p, 5, 3, 13);
+    const ex = externalEnvironment(13);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 13);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 13);
+    const el = executiveLeadership(oS, p, soc, ex, pc, 1, 5, 13);
+    expect(el).toEqual(executiveLeadership(oS, p, soc, ex, pc, 1, 5, 13));
+    expect(el.cabinet.length).toBe(6);
+    for (let i = 1; i < el.cabinet.length; i++) {
+      expect(el.cabinet[i - 1]!.dissent).toBeGreaterThanOrEqual(el.cabinet[i]!.dissent);
+    }
+    for (const k of ['consensus', 'leadershipStability', 'successionPressure', 'constitutionalStrain', 'decisionQuality'] as const) {
+      expect(el[k]).toBeGreaterThanOrEqual(0);
+      expect(el[k]).toBeLessThanOrEqual(100);
+    }
+    expect(el.administration).toBeGreaterThanOrEqual(1);
+    expect(['DECISIVE', 'FUNCTIONAL', 'CONTESTED', 'STRAINED', 'CARETAKER']).toContain(el.label);
+    // war-cabinet emergency powers raise constitutional strain & succession
+    const elPower = executiveLeadership(oS, p, soc, ex, pc, 3, 8, 13);
+    expect(elPower.constitutionalStrain).toBeGreaterThanOrEqual(el.constitutionalStrain);
+    expect(elPower.successionPressure).toBeGreaterThanOrEqual(el.successionPressure);
   });
 });
