@@ -9,7 +9,7 @@ import {
   nationalPosture, ministryInteraction, coordinationLoad,
   fieldDeployment, FIELD_STAGES, nationalSociety, externalEnvironment,
   strategicForesight, simulateDoctrines, nationalSustainability,
-  politicalContinuity, nationalCapability,
+  politicalContinuity, nationalCapability, ministryOperations,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -420,5 +420,27 @@ describe('sovereign operating model', () => {
     const cPc = politicalContinuity(cS, p, cSoc, ex, cF, 9);
     const cCap = nationalCapability(cS, p, cSoc, ex, cSu, cPc, 25, 1, 9);
     expect(cCap.capabilityIndex).toBeGreaterThanOrEqual(cap.capabilityIndex);
+  });
+
+  it('ministry operations run continuously, accountable & deterministic', () => {
+    const a = ministryOperations('TRANSPORT', 60, 80, 20, 10);
+    expect(a).toEqual(ministryOperations('TRANSPORT', 60, 80, 20, 10));
+    expect(typeof a.program).toBe('string');
+    expect(a.cycle).toBeGreaterThanOrEqual(1);
+    expect(a.progress).toBeGreaterThanOrEqual(0);
+    expect(a.progress).toBeLessThanOrEqual(100);
+    expect(a.throughput).toBeGreaterThanOrEqual(8);
+    expect(a.throughput).toBeLessThanOrEqual(99);
+    expect(['on-track', 'delayed', 'backlog']).toContain(a.accountability);
+    expect(['met', 'partial', 'missed']).toContain(a.lastOutcome);
+    expect(a.completedCycles).toBeGreaterThanOrEqual(0);
+    // the programme advances over operating epochs (continuous, not static)
+    const b = ministryOperations('TRANSPORT', 60, 80, 20, 14);
+    expect(b.cycle).toBeGreaterThanOrEqual(a.cycle);
+    expect(b.completedCycles).toBeGreaterThanOrEqual(a.completedCycles);
+    // a strained, fatigued ministry is less accountable than a healthy one
+    const healthy = ministryOperations('HEALTH', 30, 92, 5, 12).throughput;
+    const strained = ministryOperations('HEALTH', 90, 55, 80, 12).throughput;
+    expect(strained).toBeLessThan(healthy);
   });
 });

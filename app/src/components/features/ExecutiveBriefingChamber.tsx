@@ -16,6 +16,7 @@ import {
   ministryBehavior, ministryReliability, ministryInteraction, coordinationLoad,
   nationalSociety, externalEnvironment, strategicForesight, simulateDoctrines,
   nationalSustainability, politicalContinuity, nationalCapability,
+  ministryOperations, institutionalFatigue,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -106,10 +107,13 @@ export function ExecutiveBriefingChamber() {
       const interaction = ministryInteraction(arch, p, opS, post, epoch);
       return { n, p, beh, rel, interaction };
     });
+  const ops = ministries.map(({ n, p, rel }) =>
+    ministryOperations(String(n.archetype), p, rel, institutionalFatigue(String(n.archetype), epoch), epoch));
   const heldGates = threats.filter(t => t.g.gate.held).length;
   const coordLoad = coordinationLoad(
     nat?.totals.activeMinistries ?? nodes.length, opS, post, heldGates);
   const aligned = ministries.filter(m => m.interaction.aligned).length;
+  const backlogOps = ops.filter(o => o.accountability === 'backlog').length;
   const coordTone = coordLoad >= 70 ? 'alert' : coordLoad >= 45 ? 'warn' : 'ok';
 
   // Strategic outlook — same doctrine pools as the situation room.
@@ -195,7 +199,15 @@ export function ExecutiveBriefingChamber() {
     } else L.push('  Early warning: no leading indicators above threshold.');
     L.push(`  Capability trajectory: ${cap.trajectory} (human ${cap.humanCapital}, knowledge ${cap.institutionalKnowledge}, tech ${cap.technologicalResilience}).`);
     L.push('');
-    L.push('V.  DOCTRINE RECOMMENDATION');
+    L.push('V.  STANDING MINISTRY OPERATIONS');
+    L.push(thin);
+    if (ops.length === 0) L.push('  No standing operations reported.');
+    ops.forEach(o => {
+      L.push(`  ${o.ministry.padEnd(12)} ${o.program}`);
+      L.push(`     cycle ${o.cycle} (${o.phase}) · ${o.completedCycles} completed, last ${o.lastOutcome} · ${o.accountability} · throughput ${o.throughput}%`);
+    });
+    L.push('');
+    L.push('VI.  DOCTRINE RECOMMENDATION');
     L.push(thin);
     policy.sims.slice(0, 3).forEach((s, i) => {
       L.push(`  ${i === 0 ? '▸' : ' '} ${s.label.padEnd(30)} score ${s.score} · survive ~${s.survivalWeeks}w · ${s.sustainable ? 'sustainable' : 'not sustainable'}`);
@@ -222,7 +234,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -463,6 +475,24 @@ export function ExecutiveBriefingChamber() {
                         {g.field.relapse ? <span style={{ color: TONE.alert }}> · relapse risk</span> : null}
                         {g.field.eta !== '—' ? <> · ETA {g.field.eta}</> : null}.</>}
                 </div>
+              </div>
+            ))}
+            <div className="mt-2 mb-1 flex items-baseline justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Standing ministry operations</span>
+              <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[backlogOps ? 'alert' : 'ok'] }}>
+                {ops.length} active{backlogOps ? ` · ${backlogOps} backlog` : ''}
+              </span>
+            </div>
+            {ops.length === 0 ? (
+              <p className="text-[11px] text-ink-muted">No standing operations reported.</p>
+            ) : ops.map(o => (
+              <div key={o.ministry} className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1 last:border-0">
+                <span className="min-w-0 flex-1 truncate text-[11px] text-ink-muted">
+                  <span className="text-ink-soft">{o.program}</span> · cy{o.cycle} {o.phase} · {o.completedCycles} done ({o.lastOutcome})
+                </span>
+                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider" style={{ color: TONE[o.accTone] }}>
+                  {o.accountability} {o.throughput}%
+                </span>
               </div>
             ))}
           </Panel>

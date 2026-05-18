@@ -1143,6 +1143,73 @@ export function nationalCapability(
   };
 }
 
+// ── National execution & governance operations continuity ─────────────────
+// The state never stops operating. Each ministry runs a continuous rolling
+// programme that advances through cycle phases every operating epoch,
+// carries an accountability signal from its live capacity, and accumulates
+// a historical execution record — administratively alive at all times.
+const MINISTRY_PROGRAMS: Record<string, { name: string; phases: string[] }> = {
+  TRANSPORT:   { name: 'Rolling logistics rotation', phases: ['routing', 'dispatch', 'corridor clearance', 'replenishment'] },
+  HEALTH:      { name: 'Hospital stabilization programme', phases: ['triage', 'surge support', 'consolidation', 'normalization'] },
+  FINANCE:     { name: 'Staged reserve allocation', phases: ['assessment', 'tranche release', 'audit', 'rebalance'] },
+  TREASURY:    { name: 'Staged reserve allocation', phases: ['assessment', 'tranche release', 'audit', 'rebalance'] },
+  TELECOM:     { name: 'Continuity restoration sequence', phases: ['survey', 'repair', 'validation', 'hardening'] },
+  ENERGY:      { name: 'Grid-hardening campaign', phases: ['load balancing', 'reinforcement', 'inspection', 'reserve build'] },
+  INTERIOR:    { name: 'Deployment rotation', phases: ['staging', 'deployment', 'relief', 'recovery'] },
+  EMERGENCY:   { name: 'Field deployment rotation', phases: ['staging', 'deployment', 'relief', 'recovery'] },
+  AGRICULTURE: { name: 'Supply-continuity cycle', phases: ['planning', 'distribution', 'review', 'replenishment'] },
+  TRADE:       { name: 'Throughput-continuity cycle', phases: ['scheduling', 'clearance', 'audit', 'rebalance'] },
+  JUSTICE:     { name: 'Case-continuity programme', phases: ['intake', 'processing', 'review', 'clearance'] },
+  EDUCATION:   { name: 'Service-continuity cycle', phases: ['planning', 'delivery', 'assessment', 'consolidation'] },
+  LABOR:       { name: 'Workforce-continuity cycle', phases: ['assessment', 'placement', 'review', 'stabilization'] },
+  ENVIRONMENT: { name: 'Hazard-containment cycle', phases: ['survey', 'containment', 'monitoring', 'remediation'] },
+};
+export interface MinistryProgram {
+  ministry: string;
+  program: string;
+  phase: string;
+  cycle: number;            // rolling cycle index (continuous, grows with epoch)
+  progress: number;         // 0..100 within current cycle
+  throughput: number;       // 0..100 operational output
+  accountability: 'on-track' | 'delayed' | 'backlog';
+  accTone: 'ok' | 'warn' | 'alert';
+  completedCycles: number;  // historical execution record
+  lastOutcome: 'met' | 'partial' | 'missed';
+}
+export function ministryOperations(
+  arch: string, pressure: number, reliability: number, fatigue: number, epoch: number,
+): MinistryProgram {
+  const def = MINISTRY_PROGRAMS[arch] ?? { name: 'Operational continuity cycle', phases: ['plan', 'execute', 'review', 'sustain'] };
+  const phases = def.phases;
+  const phase = phases[epoch % phases.length] ?? phases[0]!;
+  // structural offset so ministries are not phase-locked to each other.
+  const off = Math.floor(seed(`mop:${arch}`) * 4);
+  const cycle = Math.floor((epoch + off) / phases.length) + 1;
+  const progress = Math.round(((epoch % phases.length) / phases.length) * 100
+    + wave(`mop:p:${arch}`, epoch, 0, 22));
+  // operational output: reliability sustains it; pressure & fatigue erode it.
+  const throughput = Math.max(8, Math.min(99, Math.round(
+    reliability * 0.62 - Math.max(0, pressure - 55) * 0.5 - fatigue * 0.22
+    + wave(`mop:t:${arch}`, epoch, 0, 16))));
+  const accountability: MinistryProgram['accountability'] =
+    throughput < 38 || pressure >= 82 ? 'backlog'
+    : throughput < 56 || pressure >= 64 ? 'delayed'
+    : 'on-track';
+  const accTone: MinistryProgram['accTone'] =
+    accountability === 'backlog' ? 'alert' : accountability === 'delayed' ? 'warn' : 'ok';
+  // historical execution record — completed cycles accumulate; the most
+  // recent closed cycle's outcome comes from a decayed performance memory.
+  const m = eventMemory(`mop:rec:${arch}`, epoch, 12, 0.55, 0.34, 4);
+  const completedCycles = Math.max(0, cycle - 1) + Math.round(m.pos / 24);
+  const lastOutcome: MinistryProgram['lastOutcome'] =
+    m.neg > m.pos + 14 ? 'missed' : m.pos >= m.neg + 12 ? 'met' : 'partial';
+  return {
+    ministry: arch, program: def.name, phase, cycle,
+    progress: Math.max(0, Math.min(100, progress)), throughput,
+    accountability, accTone, completedCycles, lastOutcome,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.
