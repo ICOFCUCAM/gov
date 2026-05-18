@@ -40,6 +40,10 @@ export const PALETTE = {
 
 import { seed, toneFor, wave, waveSeries, domainStress } from '@/lib/telemetry';
 import { nationalAssets, nationalNetworks, networkPressure, NET_TONE, ASSET_GLYPH } from '@/lib/gov/infrastructure';
+import {
+  nationalOperatingState, ministryBehavior, cascadeChain, responseLatency,
+  ministryReliability,
+} from '@/lib/gov/sovereign-operating-model';
 
 const NATL_ASSETS = nationalAssets();
 const NATL_NETWORKS = nationalNetworks();
@@ -567,18 +571,17 @@ export function NationalMap({
   const aggP = mapNodes.length ? Math.round(mapNodes.reduce((s, m) => s + m.pressure, 0) / mapNodes.length) : 30;
   const peakP = mapNodes.length ? Math.max(...mapNodes.map(m => m.pressure)) : 40;
   const sevLoad = incidents.filter(i => i.severity === 'sev1' || i.severity === 'sev2').length;
+  // One shared finite-capacity operating model drives both this substrate
+  // strip and per-incident strain so the nation stays mutually consistent.
+  const opState = nationalOperatingState(ts, aggP, peakP, sevLoad, incidents.length, epoch);
+  const D = opState.display;
   const tBand = (v: number, a: number, b: number) => (v >= b ? 'alert' : v >= a ? 'warn' : 'ok');
-  const gridLoad = Math.min(99, Math.round(42 + aggP * 0.46 + wave('ns:grid', ts, 0, 9)));
-  const logiThru = Math.max(120, Math.round(820 - peakP * 4.1 - sevLoad * 28 + wave('ns:logi', ts, 0, 40)));
-  const telecom = Math.max(72, Math.round(99.4 - peakP * 0.22 - sevLoad * 0.6 - wave('ns:tel', ts, 0, 0.8) * 0.1));
-  const reserves = Math.max(28, Math.round(96 - sevLoad * 7 - (epoch % 9) * 1.3 - wave('ns:res', ts, 0, 4)));
-  const coordBw = Math.max(34, Math.round(98 - incidents.length * 3.4 - aggP * 0.2 - wave('ns:bw', ts, 0, 3)));
   const overlay = [
-    { l: 'Grid corridors', v: `${gridLoad}% load`, t: tBand(gridLoad, 72, 86) },
-    { l: 'Logistics throughput', v: `${logiThru.toLocaleString()} kt/h`, t: tBand(700 - logiThru, 180, 320) },
-    { l: 'Telecom integrity', v: `${telecom.toFixed(1)}%`, t: tBand(99 - telecom, 4, 9) },
-    { l: 'Strategic reserves', v: `${reserves}%`, t: tBand(90 - reserves, 22, 40) },
-    { l: 'Coord bandwidth', v: `${coordBw}%`, t: tBand(95 - coordBw, 20, 38) },
+    { l: 'Grid corridors', v: `${D.gridLoad}% load`, t: tBand(D.gridLoad, 72, 86) },
+    { l: 'Logistics throughput', v: `${D.logiThru.toLocaleString()} kt/h`, t: tBand(700 - D.logiThru, 180, 320) },
+    { l: 'Telecom integrity', v: `${D.telecom.toFixed(1)}%`, t: tBand(99 - D.telecom, 4, 9) },
+    { l: 'Strategic reserves', v: `${D.reserves}%`, t: tBand(90 - D.reserves, 22, 40) },
+    { l: 'Coord bandwidth', v: `${D.coordBw}%`, t: tBand(95 - D.coordBw, 20, 38) },
   ];
   const [tactical, setTactical] = React.useState(true);
   const [heat, setHeat] = React.useState(false);
@@ -1201,6 +1204,12 @@ export function SituationRoom() {
     .reverse();
 
   const nationalRisk = posture?.nationalRisk ?? 42;
+  // Shared operating model at command scope — feeds escalation latency,
+  // cascade and strain so the stream and the map agree on national state.
+  const aggPS = mapNodes.length ? Math.round(mapNodes.reduce((s, m) => s + m.pressure, 0) / mapNodes.length) : nationalRisk;
+  const peakPS = mapNodes.length ? Math.max(...mapNodes.map(m => m.pressure)) : nationalRisk;
+  const sevLoadS = incidents.filter(i => i.severity === 'sev1' || i.severity === 'sev2').length;
+  const opS = nationalOperatingState(ts, aggPS, peakPS, sevLoadS, incidents.length, epoch);
   const pressOf = (arch: string) => {
     const n = nodes.find(x => x.archetype === arch);
     return n ? (fabricById.get(n.ministryId)?.pressure ?? n.riskScore) : 28 + Math.round(seed(`syn:${arch}:${epoch}`) * 48);
@@ -1611,11 +1620,17 @@ export function SituationRoom() {
                 const ack = seed(`ack:${c.ministry}:${i}:${epoch}`) > 0.45;
                 const treas = c.severity === 'sev1' ? 'Reserve intervention' : c.severity === 'sev2' ? 'Contingency draw' : 'Within budget';
                 const owner = c.authority;
-                const eta = lvl === 3 ? `${1 + (epoch % 4)}h` : lvl === 2 ? `${4 + (epoch % 6)}h` : `${12 + (epoch % 12)}h`;
-                const linked = (coord?.edges ?? []).filter(e => e.fromId === c.ministryId || e.toId === c.ministryId).length;
-                const dep = depChain(String(c.archetype));
+                const arch = String(c.archetype);
+                const beh = ministryBehavior(arch);
+                const rel = ministryReliability(arch, epoch);
+                const casc = cascadeChain(arch, lvl);
+                const lat = responseLatency(arch, lvl, opS.contention, opS.display.telecom, opS.resources.reserves.headroom);
+                const eta = lat.totalMin >= 60 ? `${(lat.totalMin / 60).toFixed(1)}h` : `${lat.totalMin}m`;
+                const dep = depChain(arch);
                 const cause = dep.up.length ? dep.up.join('·') : 'root cause';
-                const pIdx = pipeStage(lvl, ageM, ack);
+                // Institutional authorization delay — slow-cadence ministries
+                // (treasury) hold at the gate longer than rapid ones.
+                const pIdx = pipeStage(lvl, ageM / beh.auth, ack);
                 const cur = PIPELINE[pIdx]; const nxt = PIPELINE[Math.min(8, pIdx + 1)];
                 const machinery = responseMachinery(pIdx);
                 const tradeoff = TRADEOFF[String(c.archetype)] ?? 'resource arbitration in progress';
@@ -1625,7 +1640,7 @@ export function SituationRoom() {
                 // Recovery physics — strain cools through containment but
                 // lingers; stabilization stays fragile, never instant.
                 const strain = Math.max(6, Math.min(99, Math.round(
-                  prop * 0.55 + lvl * 13 + ageM * 0.35 - (pIdx >= 8 ? 40 : pIdx >= 7 ? 26 : pIdx >= 6 ? 15 : 0))));
+                  prop * 0.5 + lvl * 12 + ageM * 0.3 + opS.contention * 0.2 - (pIdx >= 8 ? 40 : pIdx >= 7 ? 26 : pIdx >= 6 ? 15 : 0))));
                 const strainTone = strain >= 75 ? 'alert' : strain >= 50 ? 'warn' : 'ok';
                 const fragile = pIdx === 7;
                 return (
@@ -1640,21 +1655,21 @@ export function SituationRoom() {
                       </span>
                     </div>
                     <div className="mt-1 truncate text-xs font-medium text-ink">{c.label}</div>
-                    <div className="truncate text-[10px] text-ink-muted">{id.glyph} {c.ministry} · owner {owner}</div>
+                    <div className="truncate text-[10px] text-ink-muted">{id.glyph} {c.ministry} · owner {owner} · <span style={{ color: TONE.neutral }}>{beh.orientation}</span></div>
                     <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-ink-muted">
                       <span>~{pop}M · {regionsN} regions</span>
                       <span className="text-right" style={{ color: prop >= 70 ? TONE.alert : prop >= 50 ? TONE.warn : TONE.neutral }}>propagation {prop}%</span>
                       <span>treasury: {treas}</span>
-                      <span className="text-right">ETA {eta} · {linked} linked</span>
+                      <span className="text-right">ETA {eta} · rel <span style={{ color: rel >= 80 ? TONE.ok : rel >= 65 ? TONE.warn : TONE.alert }}>{rel}%</span></span>
                     </div>
                     <div className="mt-1 flex items-center gap-1 truncate text-[9px]">
                       <span style={{ color: TONE.neutral }}>⛓</span>
                       <span style={{ color: dep.up.length ? TONE.warn : TONE.neutral }}>{cause}</span>
                       <span className="text-line">▸</span>
-                      <span className="font-semibold" style={{ color: TONE[tn] }}>{String(c.archetype)}</span>
-                      {dep.down.length ? <><span className="text-line">▸</span><span className="truncate" style={{ color: TONE.alert }}>{dep.down.join('·')}</span></> : null}
+                      <span className="font-semibold" style={{ color: TONE[tn] }}>{arch}</span>
+                      {casc.hops.length > 1 ? <><span className="text-line">▸</span><span className="truncate" style={{ color: TONE.alert }}>{casc.hops.slice(1).join('▸')}</span></> : null}
                     </div>
-                    <div className="truncate text-[9px] text-ink-muted">⮡ {dep.effect}</div>
+                    <div className="truncate text-[9px] text-ink-muted">⮡ {casc.effect}{casc.depth >= 2 ? <span style={{ color: TONE.warn }}> · {casc.depth}-hop cascade</span> : null}</div>
                     <div className="mt-1 flex items-center justify-between gap-2 text-[9px]">
                       <span className="truncate" style={{ color: TONE.warn }}>▸ {machinery}</span>
                       <span className="shrink-0 font-mono uppercase tracking-wider" style={{ color: stT }}>
