@@ -71,6 +71,49 @@ export function depChain(arch: string): { up: string[]; down: string[]; effect: 
   return NATL_DEP[arch] ?? { up: [], down: [], effect: 'localized operational strain' };
 }
 
+// Sovereign decision pipeline — the procedural spine every national crisis
+// moves through. Stage is derived deterministically from severity, age and
+// acknowledgement so the system reads as actively governing the response,
+// not merely observing it.
+export const PIPELINE = [
+  'DETECTED', 'VERIFIED', 'ESCALATED', 'CABINET REVIEW', 'RESPONSE AUTHORIZED',
+  'FIELD EXECUTION', 'CONTAINMENT', 'STABILIZATION', 'RECOVERY',
+] as const;
+export function pipeStage(lvl: number, ageM: number, ack: boolean): number {
+  const speed = lvl >= 3 ? 1.6 : lvl === 2 ? 1.05 : 0.7;
+  let idx = Math.floor((ageM / 9) * speed);
+  if (!ack) idx = Math.min(idx, 3);       // authorization gate holds until acknowledged
+  if (lvl === 1) idx = Math.min(idx, 6);  // routine crises resolved at containment level
+  return Math.max(0, Math.min(8, idx));
+}
+export function responseMachinery(idx: number): string {
+  return idx <= 1 ? 'Signal verification · triage in progress'
+    : idx === 2 ? 'Cross-ministry coordination bridge opened'
+    : idx === 3 ? 'Cabinet escalation pending · authorization gate'
+    : idx === 4 ? 'Intervention authorized · reserves unlocked'
+    : idx === 5 ? 'Field execution · resource rerouting active'
+    : idx === 6 ? 'Containment active · ministry synchronization'
+    : idx === 7 ? 'Stabilization · load normalization'
+    : 'Recovery · resilience restoration';
+}
+// Competing national resource the response must arbitrate (strategic tradeoff).
+export const TRADEOFF: Record<string, string> = {
+  HEALTH: 'ICU capacity vs transport logistics',
+  ENERGY: 'grid reserve vs hospital continuity',
+  TRANSPORT: 'corridor capacity vs supply continuity',
+  FINANCE: 'treasury reserve vs emergency deployment',
+  AGRICULTURE: 'food reserve vs export continuity',
+  INTERIOR: 'security deployment vs civil stability',
+  TRADE: 'throughput vs revenue protection',
+  JUSTICE: 'custody capacity vs due-process tempo',
+  EDUCATION: 'service continuity vs budget reallocation',
+  LABOR: 'workforce stability vs fiscal exposure',
+  ENVIRONMENT: 'hazard containment vs economic activity',
+};
+export function mandateFor(lvl: number): string {
+  return lvl >= 3 ? 'SOVEREIGN OVERRIDE' : lvl === 2 ? 'CABINET MANDATE' : 'MINISTRY MANDATE';
+}
+
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] = [
   { g: 'Sovereign Command', items: [
     { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room', on: true },
@@ -1498,7 +1541,20 @@ export function SituationRoom() {
               })()}
             </Panel>
 
-            <Panel title="Cabinet escalation stream" meta="executive level" className="xl:col-span-2" bodyClass="!p-0">
+            <Panel title="Cabinet escalation stream"
+              meta={(() => {
+                if (!incidents.length) return 'executive level';
+                const s = incidents.slice(0, 9).reduce((a, c, i) => {
+                  const lv = c.severity === 'sev1' ? 3 : c.severity === 'sev2' ? 2 : 1;
+                  const ag = 2 + Math.floor(seed(`ag:${c.ministry}:${i}`) * 58);
+                  const ak = seed(`ack:${c.ministry}:${i}:${epoch}`) > 0.45;
+                  const ix = pipeStage(lv, ag, ak);
+                  if (ix >= 7) a.rec++; else if (ix >= 4) a.auth++; else a.coord++;
+                  return a;
+                }, { coord: 0, auth: 0, rec: 0 });
+                return `${s.coord} coordinating · ${s.auth} authorized · ${s.rec} recovering`;
+              })()}
+              className="xl:col-span-2" bodyClass="!p-0">
               {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry escalations.</p> : incidents.slice(0, 9).map((c, i) => {
                 const id = identityFor(c.archetype);
                 const tn = c.severity === 'sev1' || c.severity === 'sev2' ? 'alert' : c.severity === 'sev3' ? 'warn' : 'neutral';
@@ -1512,12 +1568,14 @@ export function SituationRoom() {
                 const owner = c.authority;
                 const eta = lvl === 3 ? `${1 + (epoch % 4)}h` : lvl === 2 ? `${4 + (epoch % 6)}h` : `${12 + (epoch % 12)}h`;
                 const linked = (coord?.edges ?? []).filter(e => e.fromId === c.ministryId || e.toId === c.ministryId).length;
-                const rec = c.severity === 'sev1' ? 'Convene Cabinet · activate War Room' : c.severity === 'sev2' ? 'Regional coordination · pre-position reserves' : 'Ministry-level containment';
                 const dep = depChain(String(c.archetype));
                 const cause = dep.up.length ? dep.up.join('·') : 'root cause';
-                const stage = lvl === 3 ? (ack ? 'CONTAINING' : 'DETECTED') : lvl === 2 ? 'COORDINATING' : 'MONITORED';
-                const urgency = lvl === 3 ? 'IMMEDIATE' : lvl === 2 ? 'PRIORITY' : 'ROUTINE';
-                const urgT = lvl === 3 ? TONE.alert : lvl === 2 ? TONE.warn : TONE.neutral;
+                const pIdx = pipeStage(lvl, ageM, ack);
+                const cur = PIPELINE[pIdx]; const nxt = PIPELINE[Math.min(8, pIdx + 1)];
+                const machinery = responseMachinery(pIdx);
+                const tradeoff = TRADEOFF[String(c.archetype)] ?? 'resource arbitration in progress';
+                const mandate = mandateFor(lvl);
+                const stT = pIdx >= 6 ? TONE.ok : pIdx >= 4 ? ACCENT : pIdx >= 2 ? TONE.warn : TONE.alert;
                 return (
                   <Link key={i} href={`/gov/ministry/${c.ministryId}`} className="focus-ring block border-b border-line-soft px-3 py-2 no-underline transition-colors hover:bg-surface-2/50 last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
                     <div className="flex items-center justify-between">
@@ -1546,8 +1604,12 @@ export function SituationRoom() {
                     </div>
                     <div className="truncate text-[9px] text-ink-muted">⮡ {dep.effect}</div>
                     <div className="mt-1 flex items-center justify-between gap-2 text-[9px]">
-                      <span className="truncate" style={{ color: TONE.warn }}>▸ {rec}</span>
-                      <span className="shrink-0 font-mono uppercase tracking-wider" style={{ color: urgT }}>{stage} · {urgency}</span>
+                      <span className="truncate" style={{ color: TONE.warn }}>▸ {machinery}</span>
+                      <span className="shrink-0 font-mono uppercase tracking-wider" style={{ color: stT }}>{cur}▸{nxt}</span>
+                    </div>
+                    <div className="mt-0.5 flex items-center justify-between gap-2 text-[9px] text-ink-muted">
+                      <span className="truncate">⚖ {tradeoff}</span>
+                      <span className="shrink-0 font-mono uppercase tracking-wider" style={{ color: lvl >= 3 ? TONE.alert : lvl === 2 ? TONE.warn : TONE.neutral }}>{mandate}</span>
                     </div>
                   </Link>
                 );
