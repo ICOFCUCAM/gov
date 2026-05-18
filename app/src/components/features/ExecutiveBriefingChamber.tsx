@@ -14,6 +14,7 @@ import { Panel, TONE, ACCENT, PALETTE, LiveValue, seed } from '@/components/feat
 import {
   governIncident, nationalPosture, nationalOperatingState, forecast,
   ministryBehavior, ministryReliability, ministryInteraction, coordinationLoad,
+  nationalSociety,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -120,6 +121,12 @@ export function ExecutiveBriefingChamber() {
   const stability = Math.max(1, 100 - nationalRisk);
   const stabTone = stability >= 65 ? 'ok' : stability >= 45 ? 'warn' : 'alert';
   const reserveTone = opS.resources.reserves.headroom >= 55 ? 'ok' : opS.resources.reserves.headroom >= 35 ? 'warn' : 'alert';
+  // Civilian-state coupling — the society the state governs.
+  const society = nationalSociety(opS, post, incidents.length, sevLoad, epoch);
+  const socTone = society.label === 'ERODING' ? 'alert' : society.label === 'FRAGILE' ? 'warn' : society.label === 'STRAINED' ? 'neutral' : 'ok';
+  const hi = (v: number, good = true) => (good
+    ? (v >= 65 ? 'ok' : v >= 45 ? 'warn' : 'alert')
+    : (v >= 65 ? 'alert' : v >= 45 ? 'warn' : 'ok'));
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -142,6 +149,9 @@ export function ExecutiveBriefingChamber() {
           <span className="hidden font-mono tabular-nums sm:inline" style={{ color: TONE[coordTone] }} title="national coordination load">
             coord {coordLoad}%
           </span>
+          <span className="hidden font-mono uppercase tracking-wider md:inline" style={{ color: TONE[socTone] }} title="civilian state">
+            society {society.label.toLowerCase()}
+          </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
           <span className="font-mono tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
@@ -150,7 +160,7 @@ export function ExecutiveBriefingChamber() {
 
       <main className="mx-auto w-full max-w-[1320px] flex-1 space-y-3 p-4">
         <div className="grid gap-3 xl:grid-cols-3">
-          <Panel title="National posture" meta="evolving doctrine">
+          <Panel title="National posture & society" meta="evolving doctrine · civilian state">
             <div className="mb-2 flex items-baseline justify-between">
               <span className="text-lg font-semibold tracking-wide text-ink">{post.label.replace('-', ' ')}</span>
               <span className="font-mono text-sm tabular-nums" style={{ color: TONE[stabTone] }}>
@@ -161,8 +171,19 @@ export function ExecutiveBriefingChamber() {
             <Stat label="National risk" value={`${nationalRisk}`} tone={nationalRisk >= 60 ? 'alert' : nationalRisk >= 40 ? 'warn' : 'ok'} />
             <Stat label="Deployment conservatism" value={`${post.deploymentConservatism}`} tone={post.deploymentConservatism >= 60 ? 'warn' : 'ok'} />
             <Stat label="Containment weighting" value={`${post.containmentWeight}`} tone={post.containmentWeight >= 60 ? 'warn' : 'ok'} />
-            <Stat label="Coordination caution" value={`${post.coordinationCaution}`} tone={post.coordinationCaution >= 55 ? 'warn' : 'ok'} />
-            <Stat label="Geopolitical sensitivity" value={`${post.geopolitical}`} tone={post.geopolitical >= 60 ? 'warn' : 'ok'} />
+            <div className="mt-2 mb-1 flex items-baseline justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Civilian state</span>
+              <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[socTone] }}>{society.label}</span>
+            </div>
+            <Stat label="Civilian confidence" value={`${society.civilianConfidence}`} tone={hi(society.civilianConfidence)} />
+            <Stat label="Public order" value={`${society.publicOrder}`} tone={hi(society.publicOrder)} />
+            <Stat label="Institutional trust" value={`${society.institutionalTrust}`} tone={hi(society.institutionalTrust)} />
+            <Stat label="Economic continuity" value={`${society.economicContinuity}`} tone={hi(society.economicContinuity)} />
+            <Stat label="Continuity pressure" value={`${society.continuityPressure}`} tone={hi(society.continuityPressure, false)} note={society.recoveryLag >= 55 ? 'recovery lag' : undefined} />
+            <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+              National continuity: balancing {post.containmentWeight >= 55 ? 'containment over mobility' : 'mobility'} and{' '}
+              {society.economicContinuity < 50 ? 'economic recovery' : 'economic continuity'}; societal trust restores slower than infrastructure.
+            </p>
           </Panel>
 
           <Panel title="Reserve & infrastructure integrity" meta="finite national capacity">

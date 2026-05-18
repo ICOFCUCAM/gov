@@ -7,7 +7,7 @@ import {
   governIncident, pipeStage, mandateFor,
   institutionalFatigue, attentionWeight, commandConfidence, coordinationBurden,
   nationalPosture, ministryInteraction, coordinationLoad,
-  fieldDeployment, FIELD_STAGES,
+  fieldDeployment, FIELD_STAGES, nationalSociety,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -246,5 +246,26 @@ describe('sovereign operating model', () => {
     });
     expect(typeof g.field.region).toBe('string');
     expect(['ok', 'warn', 'alert', 'neutral']).toContain(g.field.frictionTone);
+  });
+
+  it('national society couples to operational reality, bounded & deterministic', () => {
+    const calmS = nationalOperatingState(40, 22, 28, 0, 1, 4);
+    const hardS = nationalOperatingState(40, 96, 98, 6, 9, 4);
+    const pCalm = nationalPosture(4);
+    const pHard = { ...nationalPosture(4), execConfidence: 18, containmentWeight: 85, stabilizationCaution: 80 };
+
+    const a = nationalSociety(calmS, pCalm, 1, 0, 4);
+    expect(a).toEqual(nationalSociety(calmS, pCalm, 1, 0, 4));
+    for (const k of ['civilianConfidence', 'publicOrder', 'institutionalTrust', 'economicContinuity', 'socialStrain', 'recoveryLag', 'continuityPressure'] as const) {
+      expect(a[k]).toBeGreaterThanOrEqual(0);
+      expect(a[k]).toBeLessThanOrEqual(100);
+    }
+    expect(['COHESIVE', 'STRAINED', 'FRAGILE', 'ERODING']).toContain(a.label);
+
+    // a strained nation under crises has weaker confidence & higher strain
+    const b = nationalSociety(hardS, pHard, 8, 6, 4);
+    expect(b.civilianConfidence).toBeLessThan(a.civilianConfidence);
+    expect(b.socialStrain).toBeGreaterThan(a.socialStrain);
+    expect(b.continuityPressure).toBeGreaterThan(a.continuityPressure);
   });
 });

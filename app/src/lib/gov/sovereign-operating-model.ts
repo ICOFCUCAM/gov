@@ -663,6 +663,86 @@ export function fieldDeployment(
   return { fIdx, stage, region, velocity, friction, frictionTone, eta, relapse };
 }
 
+// ── National civilian reality ─────────────────────────────────────────────
+// The state governs a society, not just infrastructure. Civilian
+// confidence, public order, institutional trust and economic continuity
+// are coupled to operational reality; trust erodes fast but rebuilds slowly
+// (societal recovery lags infrastructure recovery).
+
+// Long-horizon societal memory — accumulated recovery success vs. failure
+// scars institutional trust and slows its restoration.
+function societalMemory(epoch: number): { trust: number; scar: number } {
+  const H = 14;
+  let win = 0, loss = 0, n = 0;
+  for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
+    const decay = 1 - (epoch - e) / (H + 4);
+    if (seed(`soc:rec:${e}`) > 0.55) win += decay; else if (seed(`soc:rec:${e}`) < 0.32) loss += decay;
+    n += decay;
+  }
+  const trust = Math.round((win / Math.max(1, n)) * 100);
+  const scar = Math.round((loss / Math.max(1, n)) * 100);
+  return { trust, scar };
+}
+
+export interface NationalSociety {
+  civilianConfidence: number;   // 0..100
+  publicOrder: number;          // 0..100 compliance / order
+  institutionalTrust: number;   // 0..100
+  economicContinuity: number;   // 0..100
+  socialStrain: number;         // 0..100
+  recoveryLag: number;          // 0..100 how far societal trails infra recovery
+  continuityPressure: number;   // 0..100 governing-tradeoff burden
+  label: string;                // COHESIVE | STRAINED | FRAGILE | ERODING
+}
+export function nationalSociety(
+  opS: OperatingState, post: NationalPosture, incidentN: number, sevLoad: number, epoch: number,
+): NationalSociety {
+  const mem = societalMemory(epoch);
+  const telecom = opS.display.telecom;
+  const reserves = opS.resources.reserves.headroom;
+  // Economic continuity — energy stability, transport throughput, telecom
+  // productivity, treasury slack.
+  const economicContinuity = Math.max(8, Math.min(99, Math.round(
+    (100 - opS.display.gridLoad) * 0.3
+    + (100 - opS.resources.transport.util) * 0.3
+    + telecom * 0.22
+    + (100 - opS.resources.treasury.util) * 0.18
+    - sevLoad * 3)));
+  // Civilian confidence — executive confidence + public coordination
+  // (telecom) + reserve assurance, eroded by crises and prolonged
+  // containment, rebuilt slowly by a record of recoveries.
+  const civilianConfidence = Math.max(6, Math.min(99, Math.round(
+    post.execConfidence * 0.4
+    + telecom * 0.18
+    + reserves * 0.16
+    + mem.trust * 0.16
+    - incidentN * 2.4
+    - post.containmentWeight * 0.12
+    - mem.scar * 0.14)));
+  const socialStrain = Math.max(1, Math.min(100, Math.round(
+    100 - (civilianConfidence * 0.5 + economicContinuity * 0.5))));
+  const publicOrder = Math.max(5, Math.min(99, Math.round(
+    civilianConfidence * 0.55 + (100 - socialStrain) * 0.3 + post.containmentWeight * 0.1)));
+  const institutionalTrust = Math.max(5, Math.min(99, Math.round(
+    post.execConfidence * 0.35 + mem.trust * 0.35 + publicOrder * 0.2 - mem.scar * 0.25)));
+  // Societal recovery lags infrastructure recovery (trust restoration delay).
+  const recoveryLag = Math.max(0, Math.min(100, Math.round(
+    post.stabilizationCaution * 0.4 + mem.scar * 0.4 + (100 - institutionalTrust) * 0.2)));
+  // National-continuity pressure — the governing tradeoff burden
+  // (containment vs mobility, stability vs economy, caution vs recovery).
+  const continuityPressure = Math.max(0, Math.min(100, Math.round(
+    socialStrain * 0.34 + (100 - economicContinuity) * 0.28
+    + post.containmentWeight * 0.2 + opS.contention * 0.18)));
+  const label = institutionalTrust < 35 || socialStrain >= 70 ? 'ERODING'
+    : socialStrain >= 52 ? 'FRAGILE'
+    : socialStrain >= 36 ? 'STRAINED'
+    : 'COHESIVE';
+  return {
+    civilianConfidence, publicOrder, institutionalTrust, economicContinuity,
+    socialStrain, recoveryLag, continuityPressure, label,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.
