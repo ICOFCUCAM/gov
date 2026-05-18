@@ -395,6 +395,38 @@ export function KpiCell({ d }: { d: Instr }) {
   );
 }
 
+// Live sovereign decision spine — completed stages cool to green, the
+// active stage pulses under pressure (shared breathe cadence), future
+// stages stay dim. Makes the procedural pipeline feel alive & progressing.
+export function PipelineSpine({ idx, tone, n = 9 }: { idx: number; tone: string; n?: number }) {
+  const c = TONE[tone] ?? ACCENT;
+  return (
+    <span aria-hidden className="flex items-center gap-[2px]">
+      {Array.from({ length: n }).map((_, k) => {
+        const done = k < idx, active = k === idx;
+        return (
+          <span key={k} className="relative h-[3px] flex-1 overflow-hidden rounded-full"
+            style={{ background: done ? `color-mix(in srgb,${TONE.ok} 52%,transparent)` : active ? c : 'rgb(var(--c-line))' }}>
+            {active ? <span className="absolute inset-0 rounded-full motion-safe:animate-breathe"
+              style={{ background: c, boxShadow: `0 0 6px ${c}` }} /> : null}
+          </span>
+        );
+      })}
+    </span>
+  );
+}
+
+// Operational resource-strain bar — visualizes the competing national
+// resource under load (depletion %), cooling as the response stabilizes.
+export function StrainBar({ pct, tone }: { pct: number; tone: string }) {
+  const c = TONE[tone] ?? ACCENT;
+  return (
+    <span aria-hidden className="relative inline-block h-[3px] w-12 overflow-hidden rounded-full align-middle" style={{ background: 'rgb(var(--c-line))' }}>
+      <span className="absolute inset-y-0 left-0 rounded-full" style={{ width: `${Math.min(100, pct)}%`, background: c, boxShadow: `0 0 5px ${c}` }} />
+    </span>
+  );
+}
+
 const INFRA_KINDS = [
   { k: 'hospital', g: '✚', label: 'Medical centre' },
   { k: 'port', g: '⚓', label: 'Seaport' },
@@ -1576,6 +1608,13 @@ export function SituationRoom() {
                 const tradeoff = TRADEOFF[String(c.archetype)] ?? 'resource arbitration in progress';
                 const mandate = mandateFor(lvl);
                 const stT = pIdx >= 6 ? TONE.ok : pIdx >= 4 ? ACCENT : pIdx >= 2 ? TONE.warn : TONE.alert;
+                const stTone = pIdx >= 7 ? 'ok' : pIdx >= 4 ? 'accent' : pIdx >= 2 ? 'warn' : 'alert';
+                // Recovery physics — strain cools through containment but
+                // lingers; stabilization stays fragile, never instant.
+                const strain = Math.max(6, Math.min(99, Math.round(
+                  prop * 0.55 + lvl * 13 + ageM * 0.35 - (pIdx >= 8 ? 40 : pIdx >= 7 ? 26 : pIdx >= 6 ? 15 : 0))));
+                const strainTone = strain >= 75 ? 'alert' : strain >= 50 ? 'warn' : 'ok';
+                const fragile = pIdx === 7;
                 return (
                   <Link key={i} href={`/gov/ministry/${c.ministryId}`} className="focus-ring block border-b border-line-soft px-3 py-2 no-underline transition-colors hover:bg-surface-2/50 last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
                     <div className="flex items-center justify-between">
@@ -1605,10 +1644,17 @@ export function SituationRoom() {
                     <div className="truncate text-[9px] text-ink-muted">⮡ {dep.effect}</div>
                     <div className="mt-1 flex items-center justify-between gap-2 text-[9px]">
                       <span className="truncate" style={{ color: TONE.warn }}>▸ {machinery}</span>
-                      <span className="shrink-0 font-mono uppercase tracking-wider" style={{ color: stT }}>{cur}▸{nxt}</span>
+                      <span className="shrink-0 font-mono uppercase tracking-wider" style={{ color: stT }}>
+                        {cur}▸{nxt}{fragile ? <span style={{ color: TONE.warn }}> · fragile</span> : null}
+                      </span>
                     </div>
-                    <div className="mt-0.5 flex items-center justify-between gap-2 text-[9px] text-ink-muted">
-                      <span className="truncate">⚖ {tradeoff}</span>
+                    <div className="mt-1"><PipelineSpine idx={pIdx} tone={stTone} /></div>
+                    <div className="mt-1 flex items-center justify-between gap-2 text-[9px] text-ink-muted">
+                      <span className="flex min-w-0 items-center gap-1.5">
+                        <span className="truncate">⚖ {tradeoff}</span>
+                        <StrainBar pct={strain} tone={strainTone} />
+                        <span className="shrink-0 font-mono tabular-nums" style={{ color: TONE[strainTone] }}>{strain}%</span>
+                      </span>
                       <span className="shrink-0 font-mono uppercase tracking-wider" style={{ color: lvl >= 3 ? TONE.alert : lvl === 2 ? TONE.warn : TONE.neutral }}>{mandate}</span>
                     </div>
                   </Link>
