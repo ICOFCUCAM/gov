@@ -18,7 +18,7 @@ import {
   nationalSustainability, politicalContinuity, nationalCapability,
   ministryOperations, institutionalFatigue, nationalStressExercise,
   nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
-  nationalChronology, allianceFramework, nationalOperations,
+  nationalChronology, allianceFramework, nationalOperations, populationOrder,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -154,6 +154,8 @@ export function ExecutiveBriefingChamber() {
   const stanceTone = (s: string) => (s === 'aligned' ? 'ok' : s === 'conditional' || s === 'restraint' ? 'warn' : 'alert');
   const nops = nationalOperations(opS, post, society, ext, polit, lead, alliance, epoch);
   const opsTone = nops.atRisk >= 3 ? 'alert' : nops.atRisk >= 1 ? 'warn' : 'ok';
+  const popn = populationOrder(opS, post, society, ext, polit, peakP, epoch);
+  const popTone = popn.label === 'UNGOVERNABLE' || popn.label === 'FRACTURING' ? 'alert' : popn.label === 'STRAINED' ? 'warn' : 'ok';
   const cf = (c: string) => (c === 'probable' ? 'alert' : c === 'possible' ? 'warn' : 'neutral');
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
@@ -302,6 +304,14 @@ export function ExecutiveBriefingChamber() {
     });
     L.push(`  ${nops.note}.`);
     L.push('');
+    L.push(`XIV.  NATIONAL POPULATION & SOCIAL ORDER — SOCIETY ${popn.label}`);
+    L.push(thin);
+    L.push(`  Governability ${popn.governability} · morale ${popn.morale} · feedback drag ${popn.feedbackDrag}`);
+    L.push(`  Protest ${popn.protestPressure} · civil fatigue ${popn.civilFatigue} · panic ${popn.panicRisk} · migration ${popn.migrationPressure}`);
+    L.push('  Population cohorts (sentiment / compliance):');
+    popn.cohorts.forEach(c => L.push(`   - ${c.name.padEnd(30)} ${c.sentiment} / ${c.compliance}`));
+    L.push(`  Public memory: ${popn.memoNote}`);
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -321,7 +331,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -379,6 +389,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[opsTone] }} title="national operations execution">
             ops {nops.activeCount}/{nops.atRisk}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[popTone] }} title={`national population & social order · governability ${popn.governability}`}>
+            society {popn.label.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -806,6 +819,35 @@ export function ExecutiveBriefingChamber() {
           ))}
           <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
             {nops.note}. Operations require coordinated ministry participation and degrade when coordination fails — governed active state machinery, not advisory.
+          </p>
+        </Panel>
+
+        <Panel title="National population & social order"
+          meta={`society ${popn.label.toLowerCase()} · governability ${popn.governability} · feedback drag ${popn.feedbackDrag}`}>
+          <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Population cohorts</div>
+              {popn.cohorts.map(c => (
+                <div key={c.name} className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1 last:border-0">
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{c.name}</span>
+                  <span className="shrink-0 font-mono text-[10px] tabular-nums" style={{ color: TONE[c.tone] }}>
+                    sentiment {c.sentiment} · comply {c.compliance}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Civil order dynamics</div>
+              <Stat label="Public morale" value={`${popn.morale}`} tone={popn.morale >= 58 ? 'ok' : popn.morale >= 40 ? 'warn' : 'alert'} />
+              <Stat label="Protest pressure" value={`${popn.protestPressure}`} tone={popn.protestPressure >= 60 ? 'alert' : popn.protestPressure >= 40 ? 'warn' : 'ok'} />
+              <Stat label="Civil fatigue" value={`${popn.civilFatigue}`} tone={popn.civilFatigue >= 60 ? 'alert' : popn.civilFatigue >= 40 ? 'warn' : 'ok'} />
+              <Stat label="Panic risk" value={`${popn.panicRisk}`} tone={popn.panicRisk >= 55 ? 'alert' : popn.panicRisk >= 35 ? 'warn' : 'ok'} />
+              <Stat label="Migration pressure" value={`${popn.migrationPressure}`} tone={popn.migrationPressure >= 55 ? 'alert' : popn.migrationPressure >= 35 ? 'warn' : 'ok'} />
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+            Society is <span className="font-semibold" style={{ color: TONE[popTone] }}>{popn.label.toLowerCase()}</span>;
+            low public compliance imposes a {popn.feedbackDrag}-point capability drag on national operations. {popn.memoNote}. The state governs a living society — bidirectional, with memory.
           </p>
         </Panel>
 

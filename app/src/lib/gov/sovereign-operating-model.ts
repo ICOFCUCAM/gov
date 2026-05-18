@@ -1842,6 +1842,84 @@ export function nationalOperations(
   return { operations, activeCount, atRisk, note };
 }
 
+// ── National population & social order ────────────────────────────────────
+// The state governs people, not only infrastructure. Distinct societal
+// cohorts react differently to doctrine, civil order evolves dynamically,
+// the public remembers, and society feeds back into governing capability.
+// Builds on nationalSociety (consumes it; no duplicated social logic).
+export interface PopulationCohort {
+  name: string;
+  sentiment: number;    // 0..100 supportive/calm
+  compliance: number;   // 0..100
+  tone: 'ok' | 'warn' | 'alert';
+}
+export interface PopulationOrder {
+  cohorts: PopulationCohort[];
+  protestPressure: number;   // 0..100
+  civilFatigue: number;      // 0..100
+  panicRisk: number;         // 0..100
+  migrationPressure: number; // 0..100
+  morale: number;            // 0..100
+  governability: number;     // 0..100
+  feedbackDrag: number;      // 0..100 society→state capability drag
+  label: string;             // GOVERNABLE | STRAINED | FRACTURING | UNGOVERNABLE
+  memoNote: string;
+}
+export function populationOrder(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  ext: ExternalEnvironment, polit: PoliticalContinuity, peakPressure: number, epoch: number,
+): PopulationOrder {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  const econ = society.economicContinuity, conf = society.civilianConfidence;
+  const tel = opS.display.telecom, res = opS.resources.reserves.headroom;
+  const cont = post.containmentWeight, trust = society.institutionalTrust;
+  const mem = eventMemory('pop:mem', epoch, 16, 0.56, 0.34, 5);
+  const memShift = (mem.pos - mem.neg) * 0.12;
+  // Each cohort weights the signals it is structurally sensitive to.
+  const C = (name: string, base: number) => {
+    const sentiment = clamp(base + memShift);
+    const compliance = clamp(sentiment * 0.7 + trust * 0.3 - cont * 0.1);
+    return { name, sentiment, compliance, tone: (sentiment >= 58 ? 'ok' : sentiment >= 40 ? 'warn' : 'alert') as PopulationCohort['tone'] };
+  };
+  const cohorts: PopulationCohort[] = [
+    C('Urban population', tel * 0.3 + econ * 0.34 + (100 - cont) * 0.22 + conf * 0.14),
+    C('Industrial workforce', econ * 0.4 + (100 - opS.display.gridLoad) * 0.24 + (100 - cont) * 0.2 + 6),
+    C('Rural population', (100 - society.recoveryLag) * 0.4 + econ * 0.26 + conf * 0.2),
+    C('Logistics sector', (100 - opS.resources.transport.util) * 0.42 + econ * 0.3 + 4),
+    C('Healthcare personnel', (100 - Math.max(0, peakPressure - 55)) * 0.5 + trust * 0.26),
+    C('Institutional workforce', post.execConfidence * 0.36 + polit.legitimacy * 0.34 + trust * 0.2),
+    C('Reserve-dependent civilians', res * 0.45 + econ * 0.3 + conf * 0.12),
+    C('Youth & students', tel * 0.28 + econ * 0.3 + (100 - society.socialStrain) * 0.28),
+    C('Vulnerable populations', conf * 0.34 + res * 0.26 + (100 - cont) * 0.24),
+  ];
+  const meanSent = cohorts.reduce((s, c) => s + c.sentiment, 0) / cohorts.length;
+  const meanComp = cohorts.reduce((s, c) => s + c.compliance, 0) / cohorts.length;
+  const protestPressure = clamp((100 - meanSent) * 0.55 + cont * 0.2 + society.socialStrain * 0.2);
+  const civilFatigue = clamp(society.socialStrain * 0.4 + cont * 0.24 + (100 - econ) * 0.2 + mem.neg * 0.1);
+  const panicRisk = clamp((100 - tel) * 0.34 + (100 - res) * 0.28 + (100 - conf) * 0.24);
+  const migrationPressure = clamp(ext.externalPressure * 0.3 + polit.regionalStrain * 0.34 + (100 - econ) * 0.22);
+  const morale = clamp(meanSent * 0.5 + conf * 0.26 + (100 - civilFatigue) * 0.18);
+  const governability = clamp(
+    meanComp * 0.4 + trust * 0.24 + morale * 0.2 - protestPressure * 0.18 - panicRisk * 0.12);
+  // Society→state capability drag (reported, not recursively fed back).
+  const feedbackDrag = clamp(
+    (100 - meanComp) * 0.4 + civilFatigue * 0.26 + protestPressure * 0.2 + migrationPressure * 0.14);
+  const label = governability >= 66 ? 'GOVERNABLE'
+    : governability >= 48 ? 'STRAINED'
+    : governability >= 30 ? 'FRACTURING'
+    : 'UNGOVERNABLE';
+  const memoNote = mem.neg > mem.pos + 14
+    ? 'repeated failure scarred public trust — long-term civic caution'
+    : mem.pos >= mem.neg + 14
+      ? 'resilient recoveries rebuilt legitimacy & national cohesion'
+      : 'mixed public memory — civic belief held conditionally';
+  return {
+    cohorts: cohorts.sort((a, b) => a.sentiment - b.sentiment),
+    protestPressure, civilFatigue, panicRisk, migrationPressure, morale,
+    governability, feedbackDrag, label, memoNote,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

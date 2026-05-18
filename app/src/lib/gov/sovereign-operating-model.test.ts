@@ -12,7 +12,7 @@ import {
   politicalContinuity, nationalCapability, ministryOperations,
   nationalStressExercise, nationalDirectiveRegister, executiveLeadership,
   intelligenceAssessment, nationalChronology, allianceFramework,
-  nationalOperations,
+  nationalOperations, populationOrder,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -649,5 +649,39 @@ describe('sovereign operating model', () => {
     const a0 = r.operations.find(o => o.key === 'reserve-rebuild')!;
     const a1 = later.operations.find(o => o.key === 'reserve-rebuild')!;
     expect(a1.generation).toBeGreaterThanOrEqual(a0.generation);
+  });
+
+  it('population order: stratified cohorts, civil dynamics, bounded', () => {
+    const oS = nationalOperatingState(60, 70, 84, 3, 5, 21);
+    const p = nationalPosture(21);
+    const soc = nationalSociety(oS, p, 5, 3, 21);
+    const ex = externalEnvironment(21);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 21);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 21);
+    const po = populationOrder(oS, p, soc, ex, pc, 84, 21);
+    expect(po).toEqual(populationOrder(oS, p, soc, ex, pc, 84, 21));
+    expect(po.cohorts.length).toBe(9);
+    for (let i = 1; i < po.cohorts.length; i++) {
+      expect(po.cohorts[i - 1]!.sentiment).toBeLessThanOrEqual(po.cohorts[i]!.sentiment);
+    }
+    for (const c of po.cohorts) {
+      expect(c.sentiment).toBeGreaterThanOrEqual(0);
+      expect(c.sentiment).toBeLessThanOrEqual(100);
+      expect(c.compliance).toBeGreaterThanOrEqual(0);
+      expect(c.compliance).toBeLessThanOrEqual(100);
+      expect(['ok', 'warn', 'alert']).toContain(c.tone);
+    }
+    for (const k of ['protestPressure', 'civilFatigue', 'panicRisk', 'migrationPressure', 'morale', 'governability', 'feedbackDrag'] as const) {
+      expect(po[k]).toBeGreaterThanOrEqual(0);
+      expect(po[k]).toBeLessThanOrEqual(100);
+    }
+    expect(['GOVERNABLE', 'STRAINED', 'FRACTURING', 'UNGOVERNABLE']).toContain(po.label);
+    // a calmer, well-resourced nation is more governable than a strained one
+    const cS = nationalOperatingState(40, 20, 25, 0, 1, 21);
+    const cSoc = nationalSociety(cS, p, 1, 0, 21);
+    const cF = strategicForesight(cS, p, cSoc, ex, 22, 0, 1, 21);
+    const cPc = politicalContinuity(cS, p, cSoc, ex, cF, 21);
+    const cPo = populationOrder(cS, p, cSoc, ex, cPc, 25, 21);
+    expect(cPo.governability).toBeGreaterThanOrEqual(po.governability);
   });
 });
