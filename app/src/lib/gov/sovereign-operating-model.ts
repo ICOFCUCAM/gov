@@ -402,11 +402,69 @@ export interface IncidentGovernance {
   strain: number;
   strainTone: 'ok' | 'warn' | 'alert';
   fragile: boolean;
+  // ── command cognition ──
+  attention: number;     // executive attention weight 0..100
+  fatigue: number;       // institutional exhaustion 0..100
+  confidence: number;    // command confidence in the picture 0..100
+  confLabel: string;     // verified | probable | uncertain | contested
+  burden: number;        // cross-ministry coordination burden 0..100
+}
+
+// ── Command cognition & operator psychology ───────────────────────────────
+// The system reasons under finite executive attention, institutional
+// fatigue, probabilistic confidence and coordination cost — it triages a
+// nation, it is not omniscient.
+
+// Sustained pressure accumulates institutional exhaustion; calm epochs
+// relieve it slowly (recovery restores capability gradually, not instantly).
+export function institutionalFatigue(arch: string, epoch: number): number {
+  let acc = 0;
+  for (let e = Math.max(0, epoch - 9); e <= epoch; e++) {
+    const stress = seed(`fatig:${arch}:${e}`);
+    acc += stress > 0.5 ? (stress - 0.5) * 26 : -3;
+  }
+  return Math.max(0, Math.min(100, Math.round(acc)));
+}
+
+// Executive attention weight — severity, cascade reach, multi-ministry
+// dependency, unresolved-chain age and national contention all compete.
+export function attentionWeight(
+  lvl: number, cascadeDepth: number, depDown: number, ageM: number, ack: boolean, contention: number,
+): number {
+  const sev = lvl * 22;
+  const casc = cascadeDepth * 12;
+  const dep = Math.min(18, depDown * 6);
+  const unresolved = (!ack ? 10 : 0) + Math.min(16, ageM * 0.25);
+  const nat = contention * 0.18;
+  return Math.max(0, Math.min(100, Math.round(sev + casc + dep + unresolved + nat)));
+}
+
+// Probabilistic command confidence — degraded by unacknowledged reports,
+// telecom loss, contention, institutional fatigue and incident age.
+export function commandConfidence(
+  ack: boolean, ageM: number, telecom: number, contention: number, fatigue: number,
+): { pct: number; label: string } {
+  let c = 92;
+  if (!ack) c -= 18;
+  c -= (100 - telecom) * 0.5;
+  c -= contention * 0.18;
+  c -= fatigue * 0.12;
+  c -= Math.min(14, ageM * 0.18);
+  const pct = Math.max(20, Math.min(99, Math.round(c)));
+  const label = pct >= 85 ? 'verified' : pct >= 68 ? 'probable' : pct >= 48 ? 'uncertain' : 'contested';
+  return { pct, label };
+}
+
+// Coordination burden — more ministries, weaker telecom and higher
+// contention make an operation harder to govern at scale.
+export function coordinationBurden(cascadeDepth: number, telecom: number, contention: number): number {
+  return Math.max(0, Math.min(100, Math.round(
+    cascadeDepth * 18 + (100 - telecom) * 0.42 + contention * 0.34)));
 }
 
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
-// chain, prioritization conflict, aging & recovery policy. One source.
+// chain, prioritization conflict, aging, recovery & cognition. One source.
 export function governIncident(inp: GovInput): IncidentGovernance {
   const lvl = typeof inp.severity === 'number'
     ? inp.severity
@@ -419,7 +477,9 @@ export function governIncident(inp: GovInput): IncidentGovernance {
   const cascade = cascadeChain(arch, lvl);
   const lat = responseLatency(arch, lvl, inp.contention, inp.telecom, inp.reservesHeadroom);
   const eta = lat.totalMin >= 60 ? `${(lat.totalMin / 60).toFixed(1)}h` : `${lat.totalMin}m`;
-  const pIdx = pipeStage(lvl, inp.ageM / behavior.auth, inp.ack);
+  // Institutional fatigue slows escalation velocity (felt, not shown loudly).
+  const fatigue = institutionalFatigue(arch, inp.epoch);
+  const pIdx = pipeStage(lvl, inp.ageM / (behavior.auth * (1 + fatigue / 240)), inp.ack);
   const stageCur = PIPELINE[pIdx]!;
   const stageNext = PIPELINE[Math.min(8, pIdx + 1)]!;
   const machinery = responseMachinery(pIdx);
@@ -429,8 +489,7 @@ export function governIncident(inp: GovInput): IncidentGovernance {
   const authority = authorityChain(arch, lvl);
   const conflict = priorityConflict(arch, inp.contention);
   const velocity = commandVelocity(lvl, behavior.auth, inp.contention);
-  const fatigue = corridorFatigue(inp.ministryId, inp.epoch);
-  const wear = Math.min(100, Math.round(inp.ageM * (inp.ack ? 0.7 : 1.4) + fatigue * 0.4 + (pIdx <= 3 ? 16 : 0)));
+  const wear = Math.min(100, Math.round(inp.ageM * (inp.ack ? 0.7 : 1.4) + corridorFatigue(inp.ministryId, inp.epoch) * 0.4 + (pIdx <= 3 ? 16 : 0)));
   const aged = wear >= 55;
   const wornDot = aged && !inp.ack;
   const strain = Math.max(6, Math.min(99, Math.round(
@@ -438,9 +497,13 @@ export function governIncident(inp: GovInput): IncidentGovernance {
     - (pIdx >= 8 ? 40 : pIdx >= 7 ? 24 : pIdx >= 6 ? 14 : 0) + (aged && pIdx >= 6 ? 8 : 0))));
   const strainTone: 'ok' | 'warn' | 'alert' = strain >= 75 ? 'alert' : strain >= 50 ? 'warn' : 'ok';
   const fragile = pIdx === 7;
+  const attention = attentionWeight(lvl, cascade.depth, dep.down.length, inp.ageM, inp.ack, inp.contention);
+  const conf = commandConfidence(inp.ack, inp.ageM, inp.telecom, inp.contention, fatigue);
+  const burden = coordinationBurden(cascade.depth, inp.telecom, inp.contention);
   return {
     lvl, arch, behavior, reliability, cause, dep, cascade, latencyMin: lat.totalMin, eta,
     pIdx, stageCur, stageNext, machinery, stTone, mandate, gate, authority, conflict,
     velocity, wear, aged, wornDot, strain, strainTone, fragile,
+    attention, fatigue, confidence: conf.pct, confLabel: conf.label, burden,
   };
 }

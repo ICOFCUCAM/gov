@@ -1588,7 +1588,23 @@ export function SituationRoom() {
                 return `${s.coord} coordinating · ${s.auth} authorized · ${s.rec} recovering${s.held ? ` · ${s.held} held at gate` : ''}`;
               })()}
               className="xl:col-span-2" bodyClass="!p-0">
-              {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry escalations.</p> : incidents.slice(0, 9).map((c, i) => {
+              {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry escalations.</p> : (() => {
+                // Executive attention triage — finite command bandwidth, so
+                // the stream is continuously ordered by what matters most and
+                // lower-priority items are deferred (attention-constrained).
+                const ranked = incidents.slice(0, 9).map((c, i) => {
+                  const ag = 2 + Math.floor(seed(`ag:${c.ministry}:${i}`) * 58);
+                  const ak = seed(`ack:${c.ministry}:${i}:${epoch}`) > 0.45;
+                  const pr = Math.round(40 + seed(`pr:${c.ministry}:${i}:${epoch}`) * 58);
+                  const a = governIncident({
+                    archetype: String(c.archetype), severity: c.severity, ageM: ag, ack: ak, epoch,
+                    ministryId: c.ministryId, prop: pr,
+                    contention: opS.contention, telecom: opS.display.telecom,
+                    reservesHeadroom: opS.resources.reserves.headroom,
+                  }).attention;
+                  return { c, i, a };
+                }).sort((x, y) => y.a - x.a);
+                return ranked.map(({ c, i }, rank) => {
                 const id = identityFor(c.archetype);
                 const tn = c.severity === 'sev1' || c.severity === 'sev2' ? 'alert' : c.severity === 'sev3' ? 'warn' : 'neutral';
                 const pop = (0.2 + seed(`pop:${c.ministry}:${i}`) * 7.8).toFixed(1);
@@ -1612,14 +1628,20 @@ export function SituationRoom() {
                   behavior: beh, reliability: rel, cascade: casc, eta, dep, cause,
                   pIdx, stageCur: cur, stageNext: nxt, machinery, stTone, mandate,
                   gate: gov, authority: chain, conflict, wear, aged, wornDot,
-                  strain, strainTone, fragile,
+                  strain, strainTone, fragile, confLabel, confidence, burden, fatigue,
                 } = g;
                 const stT = pIdx >= 6 ? TONE.ok : pIdx >= 4 ? ACCENT : pIdx >= 2 ? TONE.warn : TONE.alert;
+                const deferred = rank >= 5 && lvl < 3;
+                const confTone = confidence >= 85 ? TONE.ok : confidence >= 68 ? TONE.neutral : confidence >= 48 ? TONE.warn : TONE.alert;
                 return (
-                  <Link key={i} href={`/gov/ministry/${c.ministryId}`} className="focus-ring block border-b border-line-soft px-3 py-2 no-underline transition-colors hover:bg-surface-2/50 last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
+                  <Link key={i} href={`/gov/ministry/${c.ministryId}`} className="focus-ring block border-b border-line-soft px-3 py-2 no-underline transition-colors hover:bg-surface-2/50 last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}`, opacity: deferred ? 0.5 : 1 }}>
                     <div className="flex items-center justify-between">
-                      <span className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 18%, transparent)`, color: TONE[tn] }}>
-                        {c.severity === 'sev1' ? 'Critical' : c.severity === 'sev2' ? 'Elevated' : c.severity === 'sev3' ? 'Warning' : 'Info'} · L{lvl}
+                      <span className="flex items-center gap-1.5">
+                        <span className="rounded px-1 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[tn]} 18%, transparent)`, color: TONE[tn] }}>
+                          {c.severity === 'sev1' ? 'Critical' : c.severity === 'sev2' ? 'Elevated' : c.severity === 'sev3' ? 'Warning' : 'Info'} · L{lvl}
+                        </span>
+                        {rank === 0 ? <span className="text-[8px] font-bold uppercase tracking-wider" style={{ color: TONE.alert }}>▲ focus</span>
+                          : deferred ? <span className="text-[8px] uppercase tracking-wider text-ink-muted">⤓ deferred</span> : null}
                       </span>
                       <span className="flex items-center gap-1.5 font-mono text-[10px] tabular-nums text-ink-muted">
                         {aged ? <span style={{ color: wear >= 75 ? TONE.alert : TONE.warn }} title={`operational wear ${wear}`}>⊘{wear}</span> : null}
@@ -1629,7 +1651,7 @@ export function SituationRoom() {
                       </span>
                     </div>
                     <div className="mt-1 truncate text-xs font-medium text-ink">{c.label}</div>
-                    <div className="truncate text-[10px] text-ink-muted">{id.glyph} {c.ministry} · owner {owner} › {chain.slice(1).join(' › ')} · <span style={{ color: TONE.neutral }}>{beh.orientation}</span></div>
+                    <div className="truncate text-[10px] text-ink-muted">{id.glyph} {c.ministry} · owner {owner} › {chain.slice(1).join(' › ')} · <span style={{ color: TONE.neutral }}>{beh.orientation}</span>{fatigue > 45 ? <span style={{ color: fatigue >= 70 ? TONE.alert : TONE.warn }}> · fatigue {fatigue}</span> : null}</div>
                     <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-ink-muted">
                       <span>~{pop}M · {regionsN} regions</span>
                       <span className="text-right" style={{ color: prop >= 70 ? TONE.alert : prop >= 50 ? TONE.warn : TONE.neutral }}>propagation {prop}%</span>
@@ -1643,7 +1665,7 @@ export function SituationRoom() {
                       <span className="font-semibold" style={{ color: TONE[tn] }}>{arch}</span>
                       {casc.hops.length > 1 ? <><span className="text-line">▸</span><span className="truncate" style={{ color: TONE.alert }}>{casc.hops.slice(1).join('▸')}</span></> : null}
                     </div>
-                    <div className="truncate text-[9px] text-ink-muted">⮡ {casc.effect}{casc.depth >= 2 ? <span style={{ color: TONE.warn }}> · {casc.depth}-hop cascade</span> : null}</div>
+                    <div className="truncate text-[9px] text-ink-muted">⮡ {casc.effect}{casc.depth >= 2 ? <span style={{ color: TONE.warn }}> · {casc.depth}-hop cascade</span> : null} · <span style={{ color: confTone }}>{confLabel} {confidence}%</span></div>
                     <div className="mt-1 flex items-center justify-between gap-2 text-[9px]">
                       <span className="truncate" style={{ color: TONE.warn }}>▸ {machinery}</span>
                       <span className="shrink-0 font-mono uppercase tracking-wider" style={{ color: stT }}>
@@ -1652,6 +1674,7 @@ export function SituationRoom() {
                     </div>
                     <div className="mt-1 flex items-center gap-2">
                       <span className="min-w-0 flex-1"><PipelineSpine idx={pIdx} tone={stTone} /></span>
+                      <span className="shrink-0 font-mono text-[8px] uppercase tracking-wider text-ink-muted" title="coordination burden">cb {burden}</span>
                       <span className="shrink-0 font-mono text-[8px] uppercase tracking-wider"
                         style={{ color: gov.held ? TONE.warn : gov.idx >= 5 ? TONE.ok : ACCENT }}>
                         {gov.held ? '⏸ ' : ''}{gov.stage}
@@ -1667,7 +1690,8 @@ export function SituationRoom() {
                     </div>
                   </Link>
                 );
-              })}
+                });
+              })()}
             </Panel>
           </div>
 

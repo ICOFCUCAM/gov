@@ -5,6 +5,7 @@ import {
   provinceMemory, diffuseTopology, territorialField, corridorAdjacency,
   executiveGate, commandVelocity, authorityChain, priorityConflict, GOV_STAGES,
   governIncident, pipeStage, mandateFor,
+  institutionalFatigue, attentionWeight, commandConfidence, coordinationBurden,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -123,7 +124,7 @@ describe('sovereign operating model', () => {
     const g = governIncident(inp);
     expect(g).toEqual(governIncident(inp));
     expect(g.lvl).toBe(3);
-    expect(g.pIdx).toBe(pipeStage(3, 40 / g.behavior.auth, true));
+    expect(g.pIdx).toBe(pipeStage(3, 40 / (g.behavior.auth * (1 + g.fatigue / 240)), true));
     expect(g.mandate).toBe(mandateFor(3));
     expect(['ok', 'warn', 'alert']).toContain(g.strainTone);
     expect(g.strain).toBeGreaterThanOrEqual(6);
@@ -133,5 +134,38 @@ describe('sovereign operating model', () => {
     // unacknowledged crisis is held earlier in the pipeline than acknowledged
     const held = governIncident({ ...inp, ack: false });
     expect(held.pIdx).toBeLessThanOrEqual(g.pIdx);
+  });
+
+  it('command cognition: attention triage, fatigue, confidence, burden', () => {
+    for (const e of [0, 6, 18]) {
+      const f = institutionalFatigue('HEALTH', e);
+      expect(f).toBeGreaterThanOrEqual(0);
+      expect(f).toBeLessThanOrEqual(100);
+    }
+    expect(institutionalFatigue('HEALTH', 9)).toEqual(institutionalFatigue('HEALTH', 9));
+
+    // a national-critical cascading event outranks a minor isolated one
+    const big = attentionWeight(3, 3, 4, 50, false, 70);
+    const small = attentionWeight(1, 0, 0, 4, true, 20);
+    expect(big).toBeGreaterThan(small);
+
+    // confidence degrades when unacknowledged & telecom poor
+    const sure = commandConfidence(true, 5, 98, 20, 5);
+    const shaky = commandConfidence(false, 50, 60, 80, 70);
+    expect(sure.pct).toBeGreaterThan(shaky.pct);
+    expect(['verified', 'probable', 'uncertain', 'contested']).toContain(shaky.label);
+
+    // more cascade hops + weaker telecom => heavier coordination burden
+    expect(coordinationBurden(3, 60, 70)).toBeGreaterThan(coordinationBurden(0, 98, 20));
+
+    const g = governIncident({
+      archetype: 'ENERGY', severity: 'sev1' as const, ageM: 30, ack: false,
+      epoch: 7, ministryId: 'M-EN', prop: 50, contention: 60, telecom: 70, reservesHeadroom: 35,
+    });
+    expect(g.attention).toBeGreaterThanOrEqual(0);
+    expect(g.attention).toBeLessThanOrEqual(100);
+    expect(g.confidence).toBeGreaterThanOrEqual(20);
+    expect(typeof g.confLabel).toBe('string');
+    expect(g.burden).toBeGreaterThanOrEqual(0);
   });
 });
