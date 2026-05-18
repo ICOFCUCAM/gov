@@ -560,12 +560,25 @@ export function NationalMap({
     { from: 0, to: 4, kind: 'air' }, { from: 2, to: 4, kind: 'air' }, { from: 2, to: 5, kind: 'maritime' }, { from: 5, to: 4, kind: 'maritime' },
   ];
   const CORR_TONE = { energy: ACCENT, logistics: TONE.warn, air: TONE.link, maritime: '#5fb0d9' };
+  // National infrastructure substrate — the deep invisible machinery the
+  // command surface sits on. Backbone load is coupled to live ministry
+  // pressure & escalation load so the nation reads as interlocked and
+  // continuously evolving, not a static readout.
+  const aggP = mapNodes.length ? Math.round(mapNodes.reduce((s, m) => s + m.pressure, 0) / mapNodes.length) : 30;
+  const peakP = mapNodes.length ? Math.max(...mapNodes.map(m => m.pressure)) : 40;
+  const sevLoad = incidents.filter(i => i.severity === 'sev1' || i.severity === 'sev2').length;
+  const tBand = (v: number, a: number, b: number) => (v >= b ? 'alert' : v >= a ? 'warn' : 'ok');
+  const gridLoad = Math.min(99, Math.round(42 + aggP * 0.46 + wave('ns:grid', ts, 0, 9)));
+  const logiThru = Math.max(120, Math.round(820 - peakP * 4.1 - sevLoad * 28 + wave('ns:logi', ts, 0, 40)));
+  const telecom = Math.max(72, Math.round(99.4 - peakP * 0.22 - sevLoad * 0.6 - wave('ns:tel', ts, 0, 0.8) * 0.1));
+  const reserves = Math.max(28, Math.round(96 - sevLoad * 7 - (epoch % 9) * 1.3 - wave('ns:res', ts, 0, 4)));
+  const coordBw = Math.max(34, Math.round(98 - incidents.length * 3.4 - aggP * 0.2 - wave('ns:bw', ts, 0, 3)));
   const overlay = [
-    { l: 'Corridor tempo', v: `${Math.round(wave('mo:ct', ts, 38, 92))}/min`, t: 'ok' },
-    { l: 'Regional readiness', v: `${Math.round(wave('mo:rr', ts, 60, 97))}%`, t: 'ok' },
-    { l: 'Escalation cadence', v: `${Math.round(wave('mo:ec', ts, 2, 11))}/h`, t: 'warn' },
-    { l: 'Signal integrity', v: `${(98 + wave('mo:si', ts, 0, 1.8) / 1).toFixed(1)}%`, t: 'ok' },
-    { l: 'Active corridors', v: `${CORRIDORS.length}`, t: 'ok' },
+    { l: 'Grid corridors', v: `${gridLoad}% load`, t: tBand(gridLoad, 72, 86) },
+    { l: 'Logistics throughput', v: `${logiThru.toLocaleString()} kt/h`, t: tBand(700 - logiThru, 180, 320) },
+    { l: 'Telecom integrity', v: `${telecom.toFixed(1)}%`, t: tBand(99 - telecom, 4, 9) },
+    { l: 'Strategic reserves', v: `${reserves}%`, t: tBand(90 - reserves, 22, 40) },
+    { l: 'Coord bandwidth', v: `${coordBw}%`, t: tBand(95 - coordBw, 20, 38) },
   ];
   const [tactical, setTactical] = React.useState(true);
   const [heat, setHeat] = React.useState(false);
