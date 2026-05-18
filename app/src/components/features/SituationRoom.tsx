@@ -42,7 +42,7 @@ import { seed, toneFor, wave, waveSeries, domainStress } from '@/lib/telemetry';
 import { nationalAssets, nationalNetworks, networkPressure, NET_TONE, ASSET_GLYPH } from '@/lib/gov/infrastructure';
 import {
   nationalOperatingState, ministryBehavior, cascadeChain, responseLatency,
-  ministryReliability, corridorFatigue,
+  ministryReliability, corridorFatigue, forecast,
 } from '@/lib/gov/sovereign-operating-model';
 
 const NATL_ASSETS = nationalAssets();
@@ -1764,22 +1764,37 @@ export function SituationRoom() {
               })}
               {(coord?.timeline ?? []).length === 0 ? <p className="p-3 text-xs text-ink-muted">Awaiting operational events…</p> : null}
             </Panel>
-            <Panel title="Strategic forecast · 72h" meta="advisory simulation">
-              <ul className="space-y-1.5 text-xs">
-                {[
-                  { l: 'Energy reserve threshold', v: `In ${10 + Math.round(seed(`f1:${epoch}`) * 40)}h`, t: pressOf('ENERGY') >= 60 ? 'alert' : 'warn' },
-                  { l: 'Hospital capacity stress', v: `+${8 + Math.round(seed(`f2:${epoch}`) * 18)}%`, t: pressOf('HEALTH') >= 55 ? 'alert' : 'warn' },
-                  { l: 'Logistics disruption probability', v: pressOf('TRANSPORT') >= 60 ? 'High' : 'Moderate', t: pressOf('TRANSPORT') >= 60 ? 'alert' : 'warn' },
-                  { l: 'Treasury stress forecast', v: 'Intervention within 48h', t: 'warn' },
-                  { l: 'Infrastructure degradation', v: `${4 + Math.round(seed(`f5:${epoch}`) * 9)}% / wk`, t: 'neutral' },
-                  { l: 'Civil unrest probability', v: nationalRisk >= 60 ? 'Elevated' : 'Low–Moderate', t: nationalRisk >= 60 ? 'alert' : 'ok' },
-                ].map(f => (
-                  <li key={f.l} className="flex items-center justify-between gap-2">
-                    <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[f.t] }} /><span className="text-ink-soft">{f.l}</span></span>
-                    <span className="font-mono text-[11px] tabular-nums" style={{ color: TONE[f.t] }}>{f.v}</span>
-                  </li>
-                ))}
-              </ul>
+            <Panel title="Strategic forecast · 72h" meta="24h → 72h · operating doctrine">
+              {(() => {
+                // Forward projection from the shared operating doctrine —
+                // same pools/keys as the substrate so the outlook stays
+                // consistent with live national state (no separate math).
+                const fEn = forecast('som:en', opS.resources.energy.util, ts, false);
+                const fRes = forecast('som:res', opS.resources.reserves.headroom, ts, true);
+                const fHe = forecast('hsat', pressOf('HEALTH'), ts, false);
+                const fLo = forecast('som:logi', opS.resources.logistics.util, ts, false);
+                const fTr = forecast('som:tre', opS.resources.treasury.util, ts, false);
+                const fCv = forecast('civil', nationalRisk, ts, false);
+                const prob = (r: string) => (r === 'alert' ? 'High' : r === 'warn' ? 'Moderate' : 'Low');
+                const rows: { l: string; v: string; t: string }[] = [
+                  { l: 'Energy grid outlook', v: `${fEn.h24}→${fEn.h72}% load`, t: fEn.risk },
+                  { l: 'Reserve exhaustion', v: fRes.exhaustMin ? `~${Math.max(1, Math.round(fRes.exhaustMin / 60))}h` : 'sustained', t: fRes.risk },
+                  { l: 'Healthcare saturation', v: `${fHe.h24}→${fHe.h72}%`, t: fHe.risk },
+                  { l: 'Logistics disruption probability', v: prob(fLo.risk), t: fLo.risk },
+                  { l: 'Treasury stress forecast', v: fTr.risk === 'alert' ? 'Intervention <48h' : fTr.risk === 'warn' ? 'Contingency watch' : 'Within budget', t: fTr.risk },
+                  { l: 'Civil instability trajectory', v: `${fCv.h24}→${fCv.h72}`, t: fCv.risk },
+                ];
+                return (
+                  <ul className="space-y-1.5 text-xs">
+                    {rows.map(f => (
+                      <li key={f.l} className="flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE[f.t] }} /><span className="text-ink-soft">{f.l}</span></span>
+                        <span className="font-mono text-[11px] tabular-nums" style={{ color: TONE[f.t] }}>{f.v}</span>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
               <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory projection only — no autonomous action. Executive decides.</p>
             </Panel>
             <Panel title="Regional risk heatmap" meta="exposure by region" bodyClass="!p-2">
