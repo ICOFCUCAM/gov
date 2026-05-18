@@ -554,7 +554,6 @@ export function NationalMap({
   const pos = new Map(mapNodes.map(m => [m.ministryId, m]));
   const pulse = (now / 1000) % 2 / 2;
   const ts = now / 4000;
-  const provRisk = PROV.map((p, i) => ({ p, risk: Math.round(wave(`prov:${i}`, ts, 8, 96)) }));
   // National infrastructure corridors — energy / logistics / air / maritime
   // lattices threaded through province centroids so the territory reads as
   // a connected operational fabric, not floating markers.
@@ -575,6 +574,39 @@ export function NationalMap({
   // strip and per-incident strain so the nation stays mutually consistent.
   const opState = nationalOperatingState(ts, aggP, peakP, sevLoad, incidents.length, epoch);
   const D = opState.display;
+  // ── Territorial pressure diffusion ──────────────────────────────────────
+  // Regional strain derives from the shared operating doctrine: ministry
+  // operational zones (spatially weighted), national contention floor,
+  // decayed crisis memory, then propagated along corridor topology so
+  // pressure radiates through connectivity and cools gradually — crisis
+  // zones stay warm after containment (never an instant reset).
+  const zoneStrain = (cx: number, cy: number) => {
+    if (!mapNodes.length) return 0;
+    let s = 0;
+    for (const m of mapNodes) {
+      const d = Math.hypot(m.x * 10 - cx, m.y * 6.2 - cy);
+      s += m.pressure * Math.max(0, 1 - d / 520);
+    }
+    return (s / mapNodes.length) * 2.3;
+  };
+  const provMem = (i: number) => {
+    let acc = 0;
+    for (let e = Math.max(0, epoch - 6); e <= epoch; e++) {
+      acc += seed(`prov:${i}:${e}`) * 30 * (e === epoch ? 1 : 1 - (epoch - e) / 7.5);
+    }
+    return Math.min(58, acc);
+  };
+  const provRaw = PROV.map((p, i) =>
+    wave(`prov:${i}`, ts, 8, 66) + zoneStrain(p.cx, p.cy) + opState.contention * 0.3 + provMem(i) * 0.5 + (p.cap ? 7 : 0));
+  const provAdj: number[][] = PROV.map(() => []);
+  for (const c of CORRIDORS) { provAdj[c.from]?.push(c.to); provAdj[c.to]?.push(c.from); }
+  const provRisk = PROV.map((p, i) => {
+    const ns = provAdj[i] ?? [];
+    const inh = ns.length ? ns.reduce((s, j) => s + (provRaw[j] ?? 0), 0) / ns.length : 0;
+    // partial inherited strain via topology + gradual cooling vs memory
+    const v = Math.max((provRaw[i] ?? 0) * 0.78 + inh * 0.22, provMem(i) * 0.9);
+    return { p, risk: Math.max(2, Math.min(99, Math.round(v))) };
+  });
   const tBand = (v: number, a: number, b: number) => (v >= b ? 'alert' : v >= a ? 'warn' : 'ok');
   const overlay = [
     { l: 'Grid corridors', v: `${D.gridLoad}% load`, t: tBand(D.gridLoad, 72, 86) },
