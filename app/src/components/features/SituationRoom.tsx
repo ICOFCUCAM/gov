@@ -415,16 +415,16 @@ export function TerritoryHeat({ epoch, height = 150, focus, tactical = true }: {
   const provRisk = PROV.map((p, i) => ({ p, risk: field[i] ?? 30 }));
   return (
     <div className="relative w-full overflow-hidden rounded-[3px] border border-line-soft"
-      style={{ height, background: 'radial-gradient(ellipse at 48% 32%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 70%)' }}>
+      style={{ height, background: 'radial-gradient(ellipse at 48% 32%, rgba(55,199,212,0.06) 0%, rgb(var(--c-bg)) 70%)' }}>
       <WorldMap focus={focus} riskOf={riskOf} />
       {tactical ? (
         <>
           <div aria-hidden className="pointer-events-none absolute" style={{ left: '52%', top: '50%', width: '120%', height: '120%', transform: 'translate(-50%,-50%)' }}>
-            <div className="h-full w-full animate-radar rounded-full opacity-[0.06]"
+            <div className="h-full w-full animate-radar rounded-full opacity-[0.04]"
               style={{ background: `conic-gradient(from 0deg, transparent 0deg, ${ACCENT} 22deg, transparent 52deg, transparent 360deg)` }} />
           </div>
           <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-full overflow-hidden">
-            <div className="animate-scanline h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}, transparent)`, boxShadow: `0 0 6px ${ACCENT}` }} />
+            <div className="animate-scanline h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}, transparent)`, boxShadow: `0 0 3px ${ACCENT}` }} />
           </div>
         </>
       ) : null}
@@ -571,11 +571,11 @@ export function NationalMap({
       style={{
         ...(height ? { height } : {}),
         borderColor: `color-mix(in srgb, ${ACCENT} 26%, rgb(var(--c-line-soft)))`,
-        boxShadow: `inset 0 0 120px rgba(0,0,0,0.7), inset 0 0 0 1px color-mix(in srgb,${ACCENT} 10%,transparent)`,
+        boxShadow: `inset 0 0 90px rgba(0,0,0,0.62), inset 0 0 0 1px color-mix(in srgb,${ACCENT} 8%,transparent)`,
         background:
-          `radial-gradient(ellipse at 46% 26%, color-mix(in srgb,${ACCENT} 16%,transparent) 0%, color-mix(in srgb,${ACCENT} 4%,transparent) 34%, transparent 60%),` +
-          'radial-gradient(ellipse at 50% 120%, rgba(3,9,18,0.6) 0%, transparent 55%),' +
-          'radial-gradient(150% 130% at 50% 48%, transparent 52%, rgba(1,4,9,0.6) 100%),' +
+          `radial-gradient(ellipse at 46% 26%, color-mix(in srgb,${ACCENT} 9%,transparent) 0%, color-mix(in srgb,${ACCENT} 3%,transparent) 34%, transparent 60%),` +
+          'radial-gradient(ellipse at 50% 120%, rgba(3,9,18,0.5) 0%, transparent 55%),' +
+          'radial-gradient(150% 130% at 50% 48%, transparent 56%, rgba(1,4,9,0.5) 100%),' +
           'rgb(var(--c-bg))',
       }}>
       <WorldMap focus={focus} />
@@ -583,7 +583,7 @@ export function NationalMap({
       {/* radar sweep — slow strategic scan over the capital */}
       {tactical ? (
         <div aria-hidden className="pointer-events-none absolute" style={{ left: '52%', top: '50%', width: '120%', height: '120%', transform: 'translate(-50%,-50%)' }}>
-          <div className="h-full w-full animate-radar rounded-full opacity-[0.08]"
+          <div className="h-full w-full animate-radar rounded-full opacity-[0.045]"
             style={{ background: `conic-gradient(from 0deg, transparent 0deg, ${ACCENT} 24deg, transparent 56deg, transparent 360deg)` }} />
         </div>
       ) : null}
@@ -591,7 +591,7 @@ export function NationalMap({
       {/* tactical scanline — slow live signal sweep */}
       {tactical ? (
         <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-full overflow-hidden">
-          <div className="animate-scanline h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}, transparent)`, boxShadow: `0 0 8px ${ACCENT}` }} />
+          <div className="animate-scanline h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}, transparent)`, boxShadow: `0 0 4px ${ACCENT}` }} />
         </div>
       ) : null}
 
@@ -744,8 +744,8 @@ export function NationalMap({
               (rA + rB) / 2 * 0.66 + opState.contention * 0.24 + wave(`corrload:${i}`, ts, 0, 20))));
             const cls = load >= 80 ? 'congested' : load >= 55 ? 'active' : 'nominal';
             const col = cls === 'congested' ? TONE.alert : cls === 'active' ? baseCol : baseCol;
-            const haloW = cls === 'congested' ? 7 : cls === 'active' ? 5 : 3.2;
-            const haloO = cls === 'congested' ? 0.2 : cls === 'active' ? 0.13 : 0.07;
+            const haloW = cls === 'congested' ? 5 : cls === 'active' ? 3.6 : 2.4;
+            const haloO = cls === 'congested' ? 0.15 : cls === 'active' ? 0.1 : 0.06;
             const coreW = 0.9 + (load / 100) * 1.8;
             const coreO = 0.32 + (load / 100) * 0.45;
             const d = `M${a.cx},${a.cy} Q${mx},${my} ${b.cx},${b.cy}`;
@@ -753,11 +753,11 @@ export function NationalMap({
             const pkt = cls === 'congested' ? 3 : cls === 'active' ? 2 : 1;
             return (
               <g key={`c${i}`}>
-                <path d={d} fill="none" stroke={col} strokeWidth={haloW} strokeOpacity={haloO} strokeLinecap="round" style={{ filter: cls === 'congested' ? `drop-shadow(0 0 4px ${col})` : undefined }} />
+                <path d={d} fill="none" stroke={col} strokeWidth={haloW} strokeOpacity={haloO} strokeLinecap="round" style={{ filter: cls === 'congested' ? `drop-shadow(0 0 2px ${col})` : undefined }} />
                 <path d={d} fill="none" stroke={col} strokeWidth={coreW}
                   strokeOpacity={coreO} strokeDasharray="2 8" strokeLinecap="round" className="motion-safe:animate-dash-flow" style={{ animationDuration: cls === 'congested' ? '0.55s' : flowDur }} />
                 {Array.from({ length: pkt }).map((_, k) => (
-                  <circle key={k} r={c.kind === 'energy' ? 1.8 : 1.4} fill={col} opacity="0.9" style={{ filter: `drop-shadow(0 0 3px ${col})` }}>
+                  <circle key={k} r={c.kind === 'energy' ? 1.4 : 1.1} fill={col} opacity="0.7" style={{ filter: `drop-shadow(0 0 1.5px ${col})` }}>
                     <animateMotion dur={dur} begin={`${(k / pkt) * parseFloat(dur)}s`} repeatCount="indefinite" path={d} />
                   </circle>
                 ))}
@@ -862,9 +862,9 @@ export function NationalMap({
           {/* incident diffusion shock rings */}
           {layers.incidents ? mapNodes.filter(m => m.pressure >= 68).slice(0, 8).map(m => (
             <g key={`bl${m.ministryId}`}>
-              <circle cx={m.x * 10} cy={m.y * 6.2} r="30" fill="none" stroke={TONE.alert} strokeWidth="1.6"
+              <circle cx={m.x * 10} cy={m.y * 6.2} r="24" fill="none" stroke={TONE.alert} strokeWidth="1.1"
                 className="origin-center animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
-              <circle cx={m.x * 10} cy={m.y * 6.2} r={20 + pulse * 40} fill={TONE.alert} opacity={0.12 - pulse * 0.1} />
+              <circle cx={m.x * 10} cy={m.y * 6.2} r={16 + pulse * 22} fill={TONE.alert} opacity={0.08 - pulse * 0.06} />
             </g>
           )) : null}
 
@@ -927,9 +927,9 @@ export function NationalMap({
         return (
           <span key={n.id} className="group absolute z-10 -translate-x-1/2 -translate-y-1/2"
             style={{ left: `${n.x}%`, top: `${n.y}%` }} title={`${n.kind.label} · risk ${n.risk} · ${tone}`}>
-            {crit ? <span className="absolute inset-0 -z-10 animate-ping rounded-full" style={{ backgroundColor: TONE.alert, opacity: 0.4 }} /> : null}
+            {crit ? <span className="absolute inset-0 -z-10 rounded-full motion-safe:animate-breathe" style={{ backgroundColor: TONE.alert, opacity: 0.2 }} /> : null}
             <span className="grid h-5 w-5 place-items-center rounded-[4px] text-[9px] ring-1"
-              style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tone], borderColor: TONE[tone], boxShadow: crit ? `0 0 8px ${TONE.alert}` : undefined }}>
+              style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tone], borderColor: TONE[tone], boxShadow: crit ? `0 0 4px ${TONE.alert}` : undefined }}>
               {n.kind.g}
             </span>
             {crit ? (
@@ -966,7 +966,7 @@ export function NationalMap({
         const tn = toneFor(m.pressure);
         const tier = m.pressure >= 80 ? 'crit' : m.pressure >= 60 ? 'sec' : 'passive';
         const sz = tier === 'crit' ? 'h-11 w-11 text-[13px]' : tier === 'sec' ? 'h-9 w-9 text-[11px]' : 'h-7 w-7 text-[9px]';
-        const glow = tier === 'crit' ? `0 0 26px ${TONE[tn]}, 0 0 10px ${TONE[tn]}` : tier === 'sec' ? `0 0 16px ${TONE[tn]}66` : `0 0 7px ${TONE[tn]}3a`;
+        const glow = tier === 'crit' ? `0 0 11px ${TONE[tn]}, 0 0 4px ${TONE[tn]}` : tier === 'sec' ? `0 0 8px ${TONE[tn]}55` : `0 0 4px ${TONE[tn]}2e`;
         return (
           <Link key={m.ministryId} href={`/gov/ministry/${m.ministryId}`}
             className="focus-ring group absolute -translate-x-1/2 -translate-y-1/2"
@@ -975,9 +975,9 @@ export function NationalMap({
             {tier === 'crit' ? (
               <>
                 <span aria-hidden className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-diffuse"
-                  style={{ height: '2.6rem', width: '2.6rem', border: `1.5px solid ${TONE[tn]}`, transformOrigin: 'center' }} />
-                <span aria-hidden className="absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-breathe"
-                  style={{ background: `radial-gradient(circle, ${TONE[tn]}40 0%, transparent 70%)` }} />
+                  style={{ height: '2rem', width: '2rem', border: `1px solid ${TONE[tn]}99`, transformOrigin: 'center' }} />
+                <span aria-hidden className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-breathe"
+                  style={{ background: `radial-gradient(circle, ${TONE[tn]}26 0%, transparent 70%)` }} />
               </>
             ) : null}
             <span className={`relative grid place-items-center rounded-full font-bold text-white ring-2 transition-transform group-hover:scale-110 ${sz}`}
@@ -1269,15 +1269,15 @@ export function SituationRoom() {
     <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]"
       style={{ ...PALETTE, ...(war ? { ['--accent' as string]: TONE.alert } : {}) }}>
       <CommandPalette items={cmdItems} accent={war ? TONE.alert : ACCENT} />
-      {/* Phase-2 cinematic environmental atmosphere — tactical vignette,
-          depth haze, volumetric corner glow & scanline glaze. Non-blocking. */}
+      {/* Restrained environmental depth — institutional vignette only
+          (corner glow & scanline glaze dialled back). Non-blocking. */}
       <div aria-hidden className="pointer-events-none fixed inset-0 z-[55]" style={{
         background:
-          `radial-gradient(120% 80% at 50% -10%, color-mix(in srgb,${war ? TONE.alert : ACCENT} 9%,transparent) 0%, transparent 55%),` +
-          'radial-gradient(80% 60% at 50% 120%, rgba(2,6,14,0.55) 0%, transparent 60%),' +
-          'radial-gradient(140% 120% at 50% 50%, transparent 58%, rgba(1,4,9,0.5) 100%)',
+          `radial-gradient(120% 80% at 50% -10%, color-mix(in srgb,${war ? TONE.alert : ACCENT} 4%,transparent) 0%, transparent 55%),` +
+          'radial-gradient(80% 60% at 50% 120%, rgba(2,6,14,0.4) 0%, transparent 60%),' +
+          'radial-gradient(140% 120% at 50% 50%, transparent 62%, rgba(1,4,9,0.42) 100%)',
       }} />
-      <div aria-hidden className="pointer-events-none fixed inset-0 z-[55] opacity-[0.05]" style={{
+      <div aria-hidden className="pointer-events-none fixed inset-0 z-[55] opacity-[0.025]" style={{
         backgroundImage: 'repeating-linear-gradient(0deg, rgba(150,200,235,0.6) 0 1px, transparent 1px 3px)',
       }} />
       {war ? (
