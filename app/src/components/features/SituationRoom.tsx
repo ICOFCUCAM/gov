@@ -368,8 +368,17 @@ export function NationalMap({
   };
 
   return (
-    <div ref={rootRef} className={`relative w-full overflow-hidden rounded-[3px] border border-line-soft ${height ? '' : 'h-full min-h-[440px]'}`}
-      style={{ ...(height ? { height } : {}), background: 'radial-gradient(ellipse at 46% 30%, rgba(55,199,212,0.12) 0%, rgba(55,199,212,0.03) 38%, rgb(var(--c-bg)) 72%)' }}>
+    <div ref={rootRef} className={`relative w-full overflow-hidden rounded-[4px] border ${height ? '' : 'h-full min-h-[560px]'}`}
+      style={{
+        ...(height ? { height } : {}),
+        borderColor: `color-mix(in srgb, ${ACCENT} 26%, rgb(var(--c-line-soft)))`,
+        boxShadow: `inset 0 0 120px rgba(0,0,0,0.7), inset 0 0 0 1px color-mix(in srgb,${ACCENT} 10%,transparent)`,
+        background:
+          `radial-gradient(ellipse at 46% 26%, color-mix(in srgb,${ACCENT} 16%,transparent) 0%, color-mix(in srgb,${ACCENT} 4%,transparent) 34%, transparent 60%),` +
+          'radial-gradient(ellipse at 50% 120%, rgba(3,9,18,0.6) 0%, transparent 55%),' +
+          'radial-gradient(150% 130% at 50% 48%, transparent 52%, rgba(1,4,9,0.6) 100%),' +
+          'rgb(var(--c-bg))',
+      }}>
       <WorldMap focus={focus} />
 
       {/* radar sweep — slow strategic scan over the capital */}
@@ -527,18 +536,27 @@ export function NationalMap({
             const a = PROV[c.from]!, b = PROV[c.to]!;
             const mx = (a.cx + b.cx) / 2 + (seed(`cm:${i}`) - 0.5) * 60;
             const my = (a.cy + b.cy) / 2 - 30 - seed(`cn:${i}`) * 40;
-            const col = CORR_TONE[c.kind];
+            const baseCol = CORR_TONE[c.kind];
+            // Per-corridor live load → classification + intensity drives
+            // glow width, opacity, congestion tint and flow speed.
+            const load = Math.round(wave(`corrload:${i}`, ts, 22, 98));
+            const cls = load >= 80 ? 'congested' : load >= 55 ? 'active' : 'nominal';
+            const col = cls === 'congested' ? TONE.alert : cls === 'active' ? baseCol : baseCol;
+            const haloW = cls === 'congested' ? 7 : cls === 'active' ? 5 : 3.2;
+            const haloO = cls === 'congested' ? 0.2 : cls === 'active' ? 0.13 : 0.07;
+            const coreW = 0.9 + (load / 100) * 1.8;
+            const coreO = 0.32 + (load / 100) * 0.45;
             const d = `M${a.cx},${a.cy} Q${mx},${my} ${b.cx},${b.cy}`;
-            const dur = `${(2.6 + seed(`cd:${i}`) * 2.4).toFixed(1)}s`;
+            const dur = `${(1.4 + (100 - load) / 100 * 3).toFixed(1)}s`;
+            const pkt = cls === 'congested' ? 3 : cls === 'active' ? 2 : 1;
             return (
               <g key={`c${i}`}>
-                <path d={d} fill="none" stroke={col} strokeWidth="3.6" strokeOpacity="0.10" />
-                <path d={d} fill="none" stroke={col} strokeWidth="1.4"
-                  strokeOpacity="0.55" strokeDasharray="2 8" strokeLinecap="round" className="motion-safe:animate-dash-flow" style={{ animationDuration: flowDur }} />
-                {/* directional logistics flow packets */}
-                {[0, 0.5].map((off, k) => (
-                  <circle key={k} r={c.kind === 'energy' ? 1.7 : 1.3} fill={col} opacity="0.85">
-                    <animateMotion dur={dur} begin={`${off * parseFloat(dur)}s`} repeatCount="indefinite" path={d} />
+                <path d={d} fill="none" stroke={col} strokeWidth={haloW} strokeOpacity={haloO} strokeLinecap="round" style={{ filter: cls === 'congested' ? `drop-shadow(0 0 4px ${col})` : undefined }} />
+                <path d={d} fill="none" stroke={col} strokeWidth={coreW}
+                  strokeOpacity={coreO} strokeDasharray="2 8" strokeLinecap="round" className="motion-safe:animate-dash-flow" style={{ animationDuration: cls === 'congested' ? '0.55s' : flowDur }} />
+                {Array.from({ length: pkt }).map((_, k) => (
+                  <circle key={k} r={c.kind === 'energy' ? 1.8 : 1.4} fill={col} opacity="0.9" style={{ filter: `drop-shadow(0 0 3px ${col})` }}>
+                    <animateMotion dur={dur} begin={`${(k / pkt) * parseFloat(dur)}s`} repeatCount="indefinite" path={d} />
                   </circle>
                 ))}
               </g>
@@ -744,15 +762,27 @@ export function NationalMap({
       {mapNodes.map(m => {
         const id = identityFor(m.archetype as ArchetypeKey);
         const tn = toneFor(m.pressure);
+        const tier = m.pressure >= 80 ? 'crit' : m.pressure >= 60 ? 'sec' : 'passive';
+        const sz = tier === 'crit' ? 'h-11 w-11 text-[13px]' : tier === 'sec' ? 'h-9 w-9 text-[11px]' : 'h-7 w-7 text-[9px]';
+        const glow = tier === 'crit' ? `0 0 26px ${TONE[tn]}, 0 0 10px ${TONE[tn]}` : tier === 'sec' ? `0 0 16px ${TONE[tn]}66` : `0 0 7px ${TONE[tn]}3a`;
         return (
           <Link key={m.ministryId} href={`/gov/ministry/${m.ministryId}`}
             className="focus-ring group absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${m.x}%`, top: `${m.y}%` }} title={`${m.ministry} · pressure ${m.pressure}`}>
-            <span className="grid h-9 w-9 place-items-center rounded-full text-[11px] font-bold text-white ring-2 transition-transform group-hover:scale-110"
-              style={{ backgroundColor: id.accent, borderColor: TONE[tn], boxShadow: `0 0 16px ${TONE[tn]}66` }}>
+            style={{ left: `${m.x}%`, top: `${m.y}%`, zIndex: tier === 'crit' ? 14 : tier === 'sec' ? 12 : 10, opacity: tier === 'passive' ? 0.62 : 1 }}
+            title={`${m.ministry} · pressure ${m.pressure}`}>
+            {tier === 'crit' ? (
+              <>
+                <span aria-hidden className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-diffuse"
+                  style={{ height: '2.6rem', width: '2.6rem', border: `1.5px solid ${TONE[tn]}`, transformOrigin: 'center' }} />
+                <span aria-hidden className="absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-breathe"
+                  style={{ background: `radial-gradient(circle, ${TONE[tn]}40 0%, transparent 70%)` }} />
+              </>
+            ) : null}
+            <span className={`relative grid place-items-center rounded-full font-bold text-white ring-2 transition-transform group-hover:scale-110 ${sz}`}
+              style={{ backgroundColor: id.accent, borderColor: TONE[tn], boxShadow: glow }}>
               {id.glyph}
             </span>
-            <span className="absolute left-1/2 top-10 -translate-x-1/2 whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[9px] text-ink-soft opacity-0 ring-1 ring-line transition-opacity group-hover:opacity-100">
+            <span className="absolute left-1/2 top-[110%] -translate-x-1/2 whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[9px] text-ink-soft opacity-0 ring-1 ring-line transition-opacity group-hover:opacity-100">
               {m.ministry} · {m.pressure}
             </span>
           </Link>
