@@ -42,7 +42,7 @@ import { seed, toneFor, wave, waveSeries, domainStress } from '@/lib/telemetry';
 import { nationalAssets, nationalNetworks, networkPressure, NET_TONE, ASSET_GLYPH } from '@/lib/gov/infrastructure';
 import {
   nationalOperatingState, ministryBehavior, cascadeChain, responseLatency,
-  ministryReliability,
+  ministryReliability, corridorFatigue,
 } from '@/lib/gov/sovereign-operating-model';
 
 const NATL_ASSETS = nationalAssets();
@@ -1639,8 +1639,16 @@ export function SituationRoom() {
                 const stTone = pIdx >= 7 ? 'ok' : pIdx >= 4 ? 'accent' : pIdx >= 2 ? 'warn' : 'alert';
                 // Recovery physics — strain cools through containment but
                 // lingers; stabilization stays fragile, never instant.
+                // Operational aging — unresolved pressure accumulates;
+                // aged/unacked incidents carry institutional wear that
+                // lingers into recovery (time-aware, not stateless).
+                const fatigue = corridorFatigue(c.ministryId, epoch);
+                const wear = Math.min(100, Math.round(ageM * (ack ? 0.7 : 1.4) + fatigue * 0.4 + (pIdx <= 3 ? 16 : 0)));
+                const aged = wear >= 55;
+                const wornDot = aged && !ack;
                 const strain = Math.max(6, Math.min(99, Math.round(
-                  prop * 0.5 + lvl * 12 + ageM * 0.3 + opS.contention * 0.2 - (pIdx >= 8 ? 40 : pIdx >= 7 ? 26 : pIdx >= 6 ? 15 : 0))));
+                  prop * 0.5 + lvl * 12 + ageM * 0.3 + opS.contention * 0.2 + wear * 0.12
+                  - (pIdx >= 8 ? 40 : pIdx >= 7 ? 24 : pIdx >= 6 ? 14 : 0) + (aged && pIdx >= 6 ? 8 : 0))));
                 const strainTone = strain >= 75 ? 'alert' : strain >= 50 ? 'warn' : 'ok';
                 const fragile = pIdx === 7;
                 return (
@@ -1650,7 +1658,9 @@ export function SituationRoom() {
                         {c.severity === 'sev1' ? 'Critical' : c.severity === 'sev2' ? 'Elevated' : c.severity === 'sev3' ? 'Warning' : 'Info'} · L{lvl}
                       </span>
                       <span className="flex items-center gap-1.5 font-mono text-[10px] tabular-nums text-ink-muted">
-                        <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: ack ? TONE.ok : TONE.warn }} title={ack ? 'Acknowledged' : 'Unacknowledged'} />
+                        {aged ? <span style={{ color: wear >= 75 ? TONE.alert : TONE.warn }} title={`operational wear ${wear}`}>⊘{wear}</span> : null}
+                        <span className={`h-1.5 w-1.5 rounded-full ${wornDot ? 'motion-safe:animate-breathe' : !ack ? 'motion-safe:animate-pulse' : ''}`}
+                          style={{ backgroundColor: ack ? TONE.ok : TONE.warn }} title={ack ? 'Acknowledged' : wornDot ? 'Unacknowledged · institutional inertia' : 'Unacknowledged'} />
                         {ageM}m
                       </span>
                     </div>
