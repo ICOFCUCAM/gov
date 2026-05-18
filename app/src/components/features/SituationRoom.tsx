@@ -51,6 +51,26 @@ export function rel(at: string, now: number): string {
   return m < 60 ? `${m}m` : `${Math.round(m / 60)}h`;
 }
 
+// National interdependence model — sovereign causality: each domain's
+// upstream stressors, the domains it strains downstream, and the plain
+// operational consequence. Drives explainable escalation narrative.
+export const NATL_DEP: Record<string, { up: string[]; down: string[]; effect: string }> = {
+  HEALTH: { up: ['ENERGY', 'TRANSPORT'], down: ['INTERIOR', 'LABOR'], effect: 'care capacity erosion → civil-stability strain' },
+  ENERGY: { up: ['FINANCE'], down: ['HEALTH', 'TRANSPORT', 'INTERIOR'], effect: 'grid load → hospital & corridor degradation' },
+  TRANSPORT: { up: ['ENERGY'], down: ['HEALTH', 'TRADE', 'AGRICULTURE'], effect: 'corridor disruption → supply & care delay' },
+  FINANCE: { up: [], down: ['ENERGY', 'TRADE', 'LABOR', 'EDUCATION'], effect: 'liquidity stress → cross-sector funding shortfall' },
+  AGRICULTURE: { up: ['ENERGY', 'TRANSPORT'], down: ['TRADE', 'LABOR'], effect: 'yield/logistics loss → food-security pressure' },
+  TRADE: { up: ['FINANCE', 'TRANSPORT'], down: ['LABOR'], effect: 'throughput contraction → revenue & employment drag' },
+  INTERIOR: { up: ['ENERGY'], down: ['JUSTICE'], effect: 'security load → judicial backlog escalation' },
+  JUSTICE: { up: ['INTERIOR'], down: [], effect: 'case surge → custody & due-process strain' },
+  EDUCATION: { up: ['FINANCE'], down: ['LABOR'], effect: 'service interruption → workforce-pipeline risk' },
+  LABOR: { up: ['FINANCE'], down: [], effect: 'employment shock → social-cohesion pressure' },
+  ENVIRONMENT: { up: ['ENERGY'], down: ['HEALTH', 'AGRICULTURE'], effect: 'environmental hazard → public-health & yield impact' },
+};
+export function depChain(arch: string): { up: string[]; down: string[]; effect: string } {
+  return NATL_DEP[arch] ?? { up: [], down: [], effect: 'localized operational strain' };
+}
+
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] = [
   { g: 'Sovereign Command', items: [
     { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room', on: true },
@@ -1493,6 +1513,11 @@ export function SituationRoom() {
                 const eta = lvl === 3 ? `${1 + (epoch % 4)}h` : lvl === 2 ? `${4 + (epoch % 6)}h` : `${12 + (epoch % 12)}h`;
                 const linked = (coord?.edges ?? []).filter(e => e.fromId === c.ministryId || e.toId === c.ministryId).length;
                 const rec = c.severity === 'sev1' ? 'Convene Cabinet · activate War Room' : c.severity === 'sev2' ? 'Regional coordination · pre-position reserves' : 'Ministry-level containment';
+                const dep = depChain(String(c.archetype));
+                const cause = dep.up.length ? dep.up.join('·') : 'root cause';
+                const stage = lvl === 3 ? (ack ? 'CONTAINING' : 'DETECTED') : lvl === 2 ? 'COORDINATING' : 'MONITORED';
+                const urgency = lvl === 3 ? 'IMMEDIATE' : lvl === 2 ? 'PRIORITY' : 'ROUTINE';
+                const urgT = lvl === 3 ? TONE.alert : lvl === 2 ? TONE.warn : TONE.neutral;
                 return (
                   <Link key={i} href={`/gov/ministry/${c.ministryId}`} className="focus-ring block border-b border-line-soft px-3 py-2 no-underline transition-colors hover:bg-surface-2/50 last:border-0" style={{ borderLeft: `3px solid ${TONE[tn]}` }}>
                     <div className="flex items-center justify-between">
@@ -1512,7 +1537,18 @@ export function SituationRoom() {
                       <span>treasury: {treas}</span>
                       <span className="text-right">ETA {eta} · {linked} linked</span>
                     </div>
-                    <div className="mt-1 truncate text-[9px]" style={{ color: TONE.warn }}>▸ {rec}</div>
+                    <div className="mt-1 flex items-center gap-1 truncate text-[9px]">
+                      <span style={{ color: TONE.neutral }}>⛓</span>
+                      <span style={{ color: dep.up.length ? TONE.warn : TONE.neutral }}>{cause}</span>
+                      <span className="text-line">▸</span>
+                      <span className="font-semibold" style={{ color: TONE[tn] }}>{String(c.archetype)}</span>
+                      {dep.down.length ? <><span className="text-line">▸</span><span className="truncate" style={{ color: TONE.alert }}>{dep.down.join('·')}</span></> : null}
+                    </div>
+                    <div className="truncate text-[9px] text-ink-muted">⮡ {dep.effect}</div>
+                    <div className="mt-1 flex items-center justify-between gap-2 text-[9px]">
+                      <span className="truncate" style={{ color: TONE.warn }}>▸ {rec}</span>
+                      <span className="shrink-0 font-mono uppercase tracking-wider" style={{ color: urgT }}>{stage} · {urgency}</span>
+                    </div>
                   </Link>
                 );
               })}
