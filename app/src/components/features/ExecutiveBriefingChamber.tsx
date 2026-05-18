@@ -14,7 +14,7 @@ import { Panel, TONE, ACCENT, PALETTE, LiveValue, seed } from '@/components/feat
 import {
   governIncident, nationalPosture, nationalOperatingState, forecast,
   ministryBehavior, ministryReliability, ministryInteraction, coordinationLoad,
-  nationalSociety, externalEnvironment, strategicForesight,
+  nationalSociety, externalEnvironment, strategicForesight, simulateDoctrines,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -127,6 +127,7 @@ export function ExecutiveBriefingChamber() {
   const socTone = society.label === 'ERODING' ? 'alert' : society.label === 'FRAGILE' ? 'warn' : society.label === 'STRAINED' ? 'neutral' : 'ok';
   const foresight = strategicForesight(opS, post, society, ext, nationalRisk, sevLoad, incidents.length, epoch);
   const projTone = foresight.projRisk >= 60 ? 'alert' : foresight.projRisk >= 40 ? 'warn' : 'ok';
+  const policy = simulateDoctrines(opS, post, society, ext, foresight, nationalRisk, epoch);
   const hi = (v: number, good = true) => (good
     ? (v >= 65 ? 'ok' : v >= 45 ? 'warn' : 'alert')
     : (v >= 65 ? 'alert' : v >= 45 ? 'warn' : 'ok'));
@@ -325,6 +326,38 @@ export function ExecutiveBriefingChamber() {
             ))}
           </Panel>
         </div>
+
+        <Panel title="Policy doctrine simulation"
+          meta={`alternate futures · ${policy.ambiguity >= 60 ? 'contested' : 'distinct'} · recommend ${policy.recommended.toLowerCase()}`}>
+          <div className="hidden grid-cols-[1.6fr_repeat(6,1fr)_0.8fr] gap-x-3 border-b border-line pb-1 text-[10px] uppercase tracking-[0.12em] text-ink-muted sm:grid">
+            <span>Doctrine</span><span className="text-right">Stability</span><span className="text-right">Reserves</span>
+            <span className="text-right">Economy</span><span className="text-right">Society</span>
+            <span className="text-right">Geo exp.</span><span className="text-right">Recovery</span><span className="text-right">Conf.</span>
+          </div>
+          {policy.sims.map((s, i) => (
+            <div key={s.key}
+              className="grid grid-cols-2 gap-x-3 gap-y-0.5 border-b border-line-soft py-1.5 text-[11px] last:border-0 sm:grid-cols-[1.6fr_repeat(6,1fr)_0.8fr] sm:py-1">
+              <span className="col-span-2 flex items-baseline gap-2 sm:col-span-1">
+                {i === 0 ? <span className="shrink-0 text-[9px] font-bold uppercase tracking-wider" style={{ color: TONE.ok }}>▸ rec</span> : null}
+                <span className="truncate text-ink-soft">{s.label}</span>
+              </span>
+              <span className="text-right font-mono tabular-nums" style={{ color: TONE[s.stability >= 60 ? 'ok' : s.stability >= 40 ? 'warn' : 'alert'] }}>{s.stability}</span>
+              <span className="text-right font-mono tabular-nums" style={{ color: TONE[s.reserves >= 50 ? 'ok' : s.reserves >= 32 ? 'warn' : 'alert'] }}>{s.reserves}</span>
+              <span className="text-right font-mono tabular-nums" style={{ color: TONE[s.economy >= 55 ? 'ok' : s.economy >= 40 ? 'warn' : 'alert'] }}>{s.economy}</span>
+              <span className="text-right font-mono tabular-nums" style={{ color: TONE[s.society >= 55 ? 'ok' : s.society >= 38 ? 'warn' : 'alert'] }}>{s.society}</span>
+              <span className="text-right font-mono tabular-nums" style={{ color: TONE[s.geoExposure >= 60 ? 'alert' : s.geoExposure >= 40 ? 'warn' : 'ok'] }}>{s.geoExposure}</span>
+              <span className="text-right font-mono tabular-nums text-ink-muted">{s.recoveryWeeks}w</span>
+              <span className="text-right font-mono tabular-nums" style={{ color: TONE[s.confidence >= 65 ? 'ok' : s.confidence >= 48 ? 'warn' : 'alert'] }}>{s.confidence}%</span>
+              <span className="col-span-2 truncate text-[10px] text-ink-muted sm:hidden">{s.note}</span>
+            </div>
+          ))}
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+            {policy.sims[0]?.note ? <>Recommended path: {policy.sims[0]!.note}. </> : null}
+            {policy.ambiguity >= 60
+              ? 'Leading doctrines are closely scored — outcome ambiguous under present uncertainty.'
+              : 'A distinct doctrine leads under current projections.'} Simulated, not executed — leadership decides.
+          </p>
+        </Panel>
 
         <p className="pb-2 text-center text-[11px] leading-relaxed text-ink-muted">
           Advisory synthesis from the sovereign operating doctrine. No autonomous action — national leadership decides.

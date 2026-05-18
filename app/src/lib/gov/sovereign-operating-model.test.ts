@@ -8,7 +8,7 @@ import {
   institutionalFatigue, attentionWeight, commandConfidence, coordinationBurden,
   nationalPosture, ministryInteraction, coordinationLoad,
   fieldDeployment, FIELD_STAGES, nationalSociety, externalEnvironment,
-  strategicForesight,
+  strategicForesight, simulateDoctrines,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -311,5 +311,35 @@ describe('sovereign operating model', () => {
     const calm = strategicForesight(
       nationalOperatingState(40, 20, 25, 0, 1, 6), p, soc, ex, 25, 0, 1, 6);
     expect(calm.projRisk).toBeLessThan(f.projRisk);
+  });
+
+  it('policy simulation projects competing doctrines, ranked & bounded', () => {
+    const oS = nationalOperatingState(60, 70, 80, 3, 5, 6);
+    const p = nationalPosture(6);
+    const soc = nationalSociety(oS, p, 5, 3, 6);
+    const ex = externalEnvironment(6);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 6);
+    const sim = simulateDoctrines(oS, p, soc, ex, f, 55, 6);
+    expect(sim).toEqual(simulateDoctrines(oS, p, soc, ex, f, 55, 6));
+    expect(sim.sims.length).toBe(5);
+    // sorted by score desc; recommended == top
+    for (let i = 1; i < sim.sims.length; i++) {
+      expect(sim.sims[i - 1]!.score).toBeGreaterThanOrEqual(sim.sims[i]!.score);
+    }
+    expect(sim.recommended).toBe(sim.sims[0]!.label);
+    for (const s of sim.sims) {
+      for (const k of ['stability', 'reserves', 'economy', 'society', 'geoExposure', 'confidence', 'score'] as const) {
+        expect(s[k]).toBeGreaterThanOrEqual(0);
+        expect(s[k]).toBeLessThanOrEqual(100);
+      }
+      expect(s.recoveryWeeks).toBeGreaterThanOrEqual(1);
+      expect(typeof s.note).toBe('string');
+    }
+    expect(sim.ambiguity).toBeGreaterThanOrEqual(0);
+    expect(sim.ambiguity).toBeLessThanOrEqual(100);
+    // aggressive doctrine strains reserves vs. the conservative one
+    const agg = sim.sims.find(s => s.key === 'aggressive')!;
+    const con = sim.sims.find(s => s.key === 'conservative')!;
+    expect(agg.reserves).toBeLessThan(con.reserves);
   });
 });

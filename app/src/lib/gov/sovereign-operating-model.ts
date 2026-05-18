@@ -872,6 +872,80 @@ export function strategicForesight(
   return { warnings: w, projRisk, projLo, projHi, horizon, confidence, scenarios, dominant };
 }
 
+// ── Multi-timeline policy simulation ──────────────────────────────────────
+// Project competing executive doctrines forward before any decision is
+// executed: each doctrine bends the present trajectory along its own
+// tradeoffs, yielding alternate national futures with simulation
+// confidence and a recommended (but uncertain) course.
+export interface DoctrineSim {
+  key: string;
+  label: string;
+  stability: number;     // projected national stability (higher better)
+  reserves: number;      // projected reserve headroom
+  economy: number;       // economic continuity
+  society: number;       // civilian confidence
+  geoExposure: number;   // geopolitical exposure (higher worse)
+  recoveryWeeks: number; // time to stabilize
+  confidence: number;    // simulation confidence
+  score: number;         // composite desirability 0..100
+  note: string;          // headline tradeoff
+}
+export interface PolicySimulation {
+  sims: DoctrineSim[];
+  recommended: string;
+  ambiguity: number;     // 0..100 — how close the leading options are
+}
+export function simulateDoctrines(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  ext: ExternalEnvironment, foresight: StrategicForesight, nationalRisk: number, epoch: number,
+): PolicySimulation {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  const base = {
+    stability: 100 - nationalRisk,
+    reserves: opS.resources.reserves.headroom,
+    economy: society.economicContinuity,
+    society: society.civilianConfidence,
+    geoExposure: ext.externalPressure,
+    recoveryWeeks: 2 + Math.round(foresight.projRisk / 12 + post.stabilizationCaution / 30),
+  };
+  // Each doctrine: deltas vs. baseline (decision-consequence modelling).
+  const D: { key: string; label: string; d: Partial<typeof base>; note: string }[] = [
+    { key: 'aggressive', label: 'Aggressive deployment', note: 'faster stabilization, reserves & geopolitical exposure strained',
+      d: { stability: +14, reserves: -22, society: +6, geoExposure: +12, recoveryWeeks: -2 } },
+    { key: 'conservative', label: 'Reserve-sensitive conservative', note: 'resilient reserves, slower recovery',
+      d: { stability: -8, reserves: +16, recoveryWeeks: +2, geoExposure: -4 } },
+    { key: 'containment', label: 'Containment-heavy', note: 'short-term order, mobility & economy reduced',
+      d: { stability: +8, society: -12, economy: -10, recoveryWeeks: +1 } },
+    { key: 'continuity', label: 'Civilian-continuity-heavy', note: 'economy & confidence protected, slower crisis grip',
+      d: { stability: -6, economy: +14, society: +12, reserves: -6 } },
+    { key: 'diplomatic', label: 'Diplomatic-caution', note: 'lower external exposure, slower assertive recovery',
+      d: { geoExposure: -16, recoveryWeeks: +2, stability: -2, economy: +4 } },
+  ];
+  const sims: DoctrineSim[] = D.map(({ key, label, d, note }) => {
+    const stability = clamp(base.stability + (d.stability ?? 0));
+    const reserves = clamp(base.reserves + (d.reserves ?? 0));
+    const economy = clamp(base.economy + (d.economy ?? 0));
+    const soc = clamp(base.society + (d.society ?? 0));
+    const geoExposure = clamp(base.geoExposure + (d.geoExposure ?? 0));
+    const recoveryWeeks = Math.max(1, base.recoveryWeeks + (d.recoveryWeeks ?? 0));
+    // simulation confidence — foresight confidence with per-doctrine
+    // uncertainty (assertive doctrines are harder to predict).
+    const confidence = clamp(foresight.confidence
+      - (key === 'aggressive' ? 10 : key === 'containment' ? 6 : 0)
+      - ext.externalPressure * 0.06
+      - seed(`sim:${key}:${epoch}`) * 6);
+    const score = clamp(
+      stability * 0.3 + reserves * 0.18 + economy * 0.2 + soc * 0.17
+      + (100 - geoExposure) * 0.1 - recoveryWeeks * 1.6 + 8);
+    return { key, label, stability, reserves, economy, society: soc, geoExposure, recoveryWeeks, confidence, score, note };
+  }).sort((a, b) => b.score - a.score);
+  const recommended = sims[0]?.label ?? '';
+  const top = sims[0]?.score ?? 0;
+  const second = sims[1]?.score ?? 0;
+  const ambiguity = clamp(100 - (top - second) * 6);
+  return { sims, recommended, ambiguity };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.
