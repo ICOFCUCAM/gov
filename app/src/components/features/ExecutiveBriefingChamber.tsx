@@ -80,7 +80,8 @@ export function ExecutiveBriefingChamber() {
       archetype: String(c.archetype), severity: c.severity, ageM, ack, epoch,
       ministryId: c.ministryId, prop,
       contention: opS.contention, telecom: opS.display.telecom,
-      reservesHeadroom: opS.resources.reserves.headroom, posture: post,
+      reservesHeadroom: opS.resources.reserves.headroom,
+      transportUtil: opS.resources.transport.util, posture: post,
     });
     return { c, g };
   }).sort((a, b) => b.g.attention - a.g.attention).slice(0, 5);
@@ -266,6 +267,14 @@ export function ExecutiveBriefingChamber() {
                   {g.gate.held
                     ? <>Held at <span style={{ color: TONE.warn }}>{g.gate.stage}</span> — {g.lvl >= 3 ? 'sovereign authorization' : 'cabinet concurrence'} required to proceed.</>
                     : <>Progressing · <span className="text-ink-soft">{g.stageCur}</span> → {g.stageNext}. {g.machinery}.</>}
+                </div>
+                <div className="mt-0.5 text-[11px] text-ink-muted">
+                  {g.field.fIdx < 0
+                    ? <>Field: awaiting authorization — no territorial deployment released.</>
+                    : <>Field: <span className="text-ink-soft">{g.field.stage}</span> in {g.field.region} ·{' '}
+                        <span style={{ color: TONE[g.field.frictionTone] }}>{g.field.friction}</span>
+                        {g.field.relapse ? <span style={{ color: TONE.alert }}> · relapse risk</span> : null}
+                        {g.field.eta !== '—' ? <> · ETA {g.field.eta}</> : null}.</>}
                 </div>
               </div>
             ))}

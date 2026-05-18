@@ -375,6 +375,7 @@ export interface GovInput {
   contention: number;
   telecom: number;
   reservesHeadroom: number;
+  transportUtil?: number;    // corridor saturation (defaults to contention)
   posture?: NationalPosture; // shared strategic doctrine (derived if absent)
 }
 export interface IncidentGovernance {
@@ -409,6 +410,19 @@ export interface IncidentGovernance {
   confidence: number;    // command confidence in the picture 0..100
   confLabel: string;     // verified | probable | uncertain | contested
   burden: number;        // cross-ministry coordination burden 0..100
+  // ── national field operations ──
+  field: FieldOps;
+}
+
+export interface FieldOps {
+  fIdx: number;          // -1 = pre-authorization
+  stage: string;         // field execution stage
+  region: string;        // territorial theatre
+  velocity: number;      // 0..100 execution velocity (regional)
+  friction: string;      // nominal | staging backlog | corridor congestion | deployment delay
+  frictionTone: 'ok' | 'warn' | 'alert' | 'neutral';
+  eta: string;           // ETA to next field stage
+  relapse: boolean;      // fragile stabilization at risk of relapse
 }
 
 // ── Command cognition & operator psychology ───────────────────────────────
@@ -584,6 +598,71 @@ export function coordinationLoad(
     + (100 - post.execConfidence) * 0.15)));
 }
 
+// ── National field operations ─────────────────────────────────────────────
+// Authorized decisions propagate into real territorial execution: a
+// deployment pipeline that trails the decision pipeline, runs at a
+// region-specific velocity (infrastructure, telecom, corridor saturation,
+// fatigue, reserves, distance) under operational friction, and recovers
+// gradually with relapse risk under strategic strain.
+export const FIELD_STAGES = [
+  'AUTHORIZATION', 'STAGING', 'MOBILIZATION', 'REGIONAL DEPLOYMENT',
+  'ACTIVE STABILIZATION', 'INFRASTRUCTURE RECOVERY', 'OPERATIONAL SUPERVISION', 'NORMALIZATION',
+] as const;
+const FIELD_REGIONS = [
+  'Capital District', 'Northern Province', 'Highland Region',
+  'Eastern Region', 'Western Region', 'Coastal Region',
+] as const;
+
+export function fieldDeployment(
+  ministryId: string, pIdx: number, lvl: number,
+  telecom: number, transportUtil: number, reservesHeadroom: number, contention: number,
+  post: NationalPosture, fatigue: number, epoch: number,
+): FieldOps {
+  const region = FIELD_REGIONS[Math.floor(seed(`fr:${ministryId}:${epoch}`) * FIELD_REGIONS.length)]
+    ?? FIELD_REGIONS[0]!;
+  // Regional execution variance — distance + infrastructure quality are
+  // per-region structural; telecom / corridor / reserves / fatigue are live.
+  const distance = seed(`fdist:${ministryId}`) * 26;          // 0..26 drag
+  const infraQuality = 40 + seed(`finfra:${region}`) * 50;    // 40..90
+  let velocity = 58 + infraQuality * 0.25
+    - distance
+    - (100 - telecom) * 0.32
+    - Math.max(0, transportUtil - 60) * 0.5                    // corridor saturation
+    - Math.max(0, 50 - reservesHeadroom) * 0.4                 // thin reserves stall staging
+    - fatigue * 0.22
+    - contention * 0.14
+    + (lvl >= 3 ? 12 : 0);                                     // criticals surge faster
+  velocity = Math.max(6, Math.min(99, Math.round(velocity)));
+  // Field execution trails authorization (pipeline stage 4 = RESPONSE
+  // AUTHORIZED). Before that, operations are not yet released.
+  let fIdx = -1;
+  if (pIdx >= 4) {
+    const released = pIdx - 4;                                 // 0..4
+    const advance = Math.round(released * (velocity / 70));
+    fIdx = Math.max(0, Math.min(7, advance + (pIdx >= 8 ? 2 : 0)));
+  }
+  const stage = fIdx < 0 ? 'AWAITING AUTHORIZATION' : FIELD_STAGES[fIdx]!;
+  // Operational friction sources, worst-first.
+  const friction =
+    fIdx < 0 ? 'pending mandate'
+    : transportUtil >= 78 ? 'corridor congestion'
+    : reservesHeadroom < 38 ? 'staging backlog'
+    : velocity < 40 ? 'deployment delay'
+    : 'nominal';
+  const frictionTone: FieldOps['frictionTone'] =
+    friction === 'corridor congestion' || friction === 'staging backlog' ? 'alert'
+    : friction === 'deployment delay' ? 'warn'
+    : friction === 'pending mandate' ? 'neutral' : 'ok';
+  const stepMin = Math.max(8, Math.round(120 / Math.max(8, velocity) * 9));
+  const eta = fIdx < 0 || fIdx >= 7 ? '—'
+    : stepMin >= 60 ? `${(stepMin / 60).toFixed(1)}h` : `${stepMin}m`;
+  // Fragile stabilization can relapse when the nation is strategically
+  // scarred (recovery is gradual, not guaranteed).
+  const relapse = fIdx >= 4 && fIdx <= 6
+    && post.stabilizationCaution >= 55 && contention >= 60;
+  return { fIdx, stage, region, velocity, friction, frictionTone, eta, relapse };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.
@@ -638,10 +717,13 @@ export function governIncident(inp: GovInput): IncidentGovernance {
     label: confPct >= 85 ? 'verified' : confPct >= 68 ? 'probable' : confPct >= 48 ? 'uncertain' : 'contested',
   };
   const burden = coordinationBurden(cascade.depth, inp.telecom, inp.contention);
+  const field = fieldDeployment(
+    inp.ministryId, pIdx, lvl, inp.telecom, inp.transportUtil ?? inp.contention,
+    inp.reservesHeadroom, inp.contention, post, fatigue, inp.epoch);
   return {
     lvl, arch, behavior, reliability, cause, dep, cascade, latencyMin: lat.totalMin, eta,
     pIdx, stageCur, stageNext, machinery, stTone, mandate, gate, authority, conflict,
     velocity, wear, aged, wornDot, strain, strainTone, fragile,
-    attention, fatigue, confidence: conf.pct, confLabel: conf.label, burden,
+    attention, fatigue, confidence: conf.pct, confLabel: conf.label, burden, field,
   };
 }

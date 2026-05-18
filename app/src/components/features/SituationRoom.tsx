@@ -1582,7 +1582,7 @@ export function SituationRoom() {
                     archetype: String(c.archetype), severity: c.severity, ageM: ag, ack: ak,
                     epoch, ministryId: c.ministryId, prop: 0,
                     contention: opS.contention, telecom: opS.display.telecom,
-                    reservesHeadroom: opS.resources.reserves.headroom, posture: natPost,
+                    reservesHeadroom: opS.resources.reserves.headroom, transportUtil: opS.resources.transport.util, posture: natPost,
                   });
                   if (ig.pIdx >= 7) a.rec++; else if (ig.pIdx >= 4) a.auth++; else a.coord++;
                   if (ig.gate.held) a.held++;
@@ -1603,7 +1603,7 @@ export function SituationRoom() {
                     archetype: String(c.archetype), severity: c.severity, ageM: ag, ack: ak, epoch,
                     ministryId: c.ministryId, prop: pr,
                     contention: opS.contention, telecom: opS.display.telecom,
-                    reservesHeadroom: opS.resources.reserves.headroom, posture: natPost,
+                    reservesHeadroom: opS.resources.reserves.headroom, transportUtil: opS.resources.transport.util, posture: natPost,
                   }).attention;
                   return { c, i, a };
                 }).sort((x, y) => y.a - x.a);
@@ -1625,13 +1625,13 @@ export function SituationRoom() {
                   archetype: arch, severity: c.severity, ageM, ack, epoch,
                   ministryId: c.ministryId, prop,
                   contention: opS.contention, telecom: opS.display.telecom,
-                  reservesHeadroom: opS.resources.reserves.headroom, posture: natPost,
+                  reservesHeadroom: opS.resources.reserves.headroom, transportUtil: opS.resources.transport.util, posture: natPost,
                 });
                 const {
                   behavior: beh, reliability: rel, cascade: casc, eta, dep, cause,
                   pIdx, stageCur: cur, stageNext: nxt, machinery, stTone, mandate,
                   gate: gov, authority: chain, conflict, wear, aged, wornDot,
-                  strain, strainTone, fragile, confLabel, confidence, burden, fatigue,
+                  strain, strainTone, fragile, confLabel, confidence, burden, fatigue, field,
                 } = g;
                 const stT = pIdx >= 6 ? TONE.ok : pIdx >= 4 ? ACCENT : pIdx >= 2 ? TONE.warn : TONE.alert;
                 const deferred = rank >= 5 && lvl < 3;
@@ -1669,6 +1669,9 @@ export function SituationRoom() {
                       {casc.hops.length > 1 ? <><span className="text-line">▸</span><span className="truncate" style={{ color: TONE.alert }}>{casc.hops.slice(1).join('▸')}</span></> : null}
                     </div>
                     <div className="truncate text-[9px] text-ink-muted">⮡ {casc.effect}{casc.depth >= 2 ? <span style={{ color: TONE.warn }}> · {casc.depth}-hop cascade</span> : null} · <span style={{ color: confTone }}>{confLabel} {confidence}%</span></div>
+                    {field.fIdx >= 0 ? (
+                      <div className="truncate text-[9px] text-ink-muted">⟱ {field.stage} · {field.region} · <span style={{ color: TONE[field.frictionTone] }}>{field.friction}</span>{field.relapse ? <span style={{ color: TONE.alert }}> · relapse risk</span> : null}{field.eta !== '—' ? <span className="text-ink-muted"> · ETA {field.eta}</span> : null}</div>
+                    ) : null}
                     <div className="mt-1 flex items-center justify-between gap-2 text-[9px]">
                       <span className="truncate" style={{ color: TONE.warn }}>▸ {machinery}</span>
                       <span className="shrink-0 font-mono uppercase tracking-wider" style={{ color: stT }}>

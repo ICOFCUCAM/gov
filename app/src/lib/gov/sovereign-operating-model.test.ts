@@ -7,6 +7,7 @@ import {
   governIncident, pipeStage, mandateFor,
   institutionalFatigue, attentionWeight, commandConfidence, coordinationBurden,
   nationalPosture, ministryInteraction, coordinationLoad,
+  fieldDeployment, FIELD_STAGES,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -216,5 +217,34 @@ describe('sovereign operating model', () => {
     const hi = coordinationLoad(11, strained, pHard, 5);
     expect(hi).toBeGreaterThan(lo);
     expect(hi).toBeLessThanOrEqual(100);
+  });
+
+  it('field operations trail authorization and vary by region/strain', () => {
+    const p = nationalPosture(4);
+    // pre-authorization (pipeline stage < 4) => not yet released
+    const pre = fieldDeployment('M-H', 2, 3, 95, 40, 60, 30, p, 10, 4);
+    expect(pre.fIdx).toBe(-1);
+    expect(pre.stage).toBe('AWAITING AUTHORIZATION');
+
+    // released & deterministic
+    const a = fieldDeployment('M-H', 6, 3, 95, 40, 60, 30, p, 10, 4);
+    expect(a).toEqual(fieldDeployment('M-H', 6, 3, 95, 40, 60, 30, p, 10, 4));
+    expect(a.fIdx).toBeGreaterThanOrEqual(0);
+    expect(FIELD_STAGES).toContain(a.stage as typeof FIELD_STAGES[number]);
+    expect(a.velocity).toBeGreaterThanOrEqual(6);
+    expect(a.velocity).toBeLessThanOrEqual(99);
+
+    // strained theatre executes slower than a clear one
+    const clear = fieldDeployment('M-H', 6, 3, 98, 30, 70, 20, p, 5, 4).velocity;
+    const strained = fieldDeployment('M-H', 6, 3, 55, 90, 20, 90, p, 80, 4).velocity;
+    expect(strained).toBeLessThan(clear);
+
+    const g = governIncident({
+      archetype: 'HEALTH', severity: 'sev1' as const, ageM: 60, ack: true, epoch: 4,
+      ministryId: 'M-H', prop: 60, contention: 50, telecom: 85, reservesHeadroom: 40,
+      transportUtil: 70,
+    });
+    expect(typeof g.field.region).toBe('string');
+    expect(['ok', 'warn', 'alert', 'neutral']).toContain(g.field.frictionTone);
   });
 });
