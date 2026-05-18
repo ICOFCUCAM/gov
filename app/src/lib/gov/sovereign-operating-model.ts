@@ -888,6 +888,8 @@ export interface DoctrineSim {
   recoveryWeeks: number; // time to stabilize
   confidence: number;    // simulation confidence
   score: number;         // composite desirability 0..100
+  survivalWeeks: number; // how long the nation can sustain this doctrine
+  sustainable: boolean;  // endures beyond the recovery horizon
   note: string;          // headline tradeoff
 }
 export interface PolicySimulation {
@@ -937,13 +939,76 @@ export function simulateDoctrines(
     const score = clamp(
       stability * 0.3 + reserves * 0.18 + economy * 0.2 + soc * 0.17
       + (100 - geoExposure) * 0.1 - recoveryWeeks * 1.6 + 8);
-    return { key, label, stability, reserves, economy, society: soc, geoExposure, recoveryWeeks, confidence, score, note };
+    // Recovery economics — how long the nation can carry this doctrine:
+    // reserves & economy fund endurance, recovery time consumes it.
+    const survivalWeeks = Math.max(1, Math.round(
+      (reserves * 0.12 + economy * 0.08) - recoveryWeeks * 0.4
+      + (key === 'conservative' ? 6 : key === 'aggressive' ? -4 : key === 'continuity' ? 3 : 0)));
+    const sustainable = survivalWeeks >= recoveryWeeks + 2;
+    return { key, label, stability, reserves, economy, society: soc, geoExposure, recoveryWeeks, confidence, score, survivalWeeks, sustainable, note };
   }).sort((a, b) => b.score - a.score);
   const recommended = sims[0]?.label ?? '';
   const top = sims[0]?.score ?? 0;
   const second = sims[1]?.score ?? 0;
   const ambiguity = clamp(100 - (top - second) * 6);
   return { sims, recommended, ambiguity };
+}
+
+// ── Long-horizon national sustainability ──────────────────────────────────
+// A nation is finite. Sustained operations age infrastructure and draw
+// reserves faster than industry rebuilds them; survivability is whether
+// the state can endure its own doctrine over a long horizon.
+export interface NationalSustainability {
+  reserveLongevityWeeks: number; // reserves at current net draw
+  infraAging: number;            // 0..100 accumulated structural fatigue
+  productionIndex: number;       // 0..100 industrial/repair output
+  replenishmentRate: number;     // 0..100 reserve-rebuild velocity (slow post-overuse)
+  economicResilience: number;    // 0..100
+  survivabilityWeeks: number;    // overall endurance horizon
+  outlook: string;               // SUSTAINABLE | STRAINED | DEPLETING | UNSUSTAINABLE
+}
+export function nationalSustainability(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  foresight: StrategicForesight, epoch: number,
+): NationalSustainability {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  // Infrastructure ages from a long-horizon record of strain epochs.
+  const H = 18;
+  let strain = 0, n = 0;
+  for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
+    const decay = 1 - (epoch - e) / (H + 6);
+    strain += (seed(`age:infra:${e}`) > 0.55 ? 1 : 0) * decay;
+    n += decay;
+  }
+  const infraAging = clamp((strain / Math.max(1, n)) * 100 * 0.85 + opS.contention * 0.18);
+  // Industrial / production output — energy generation stability, repair
+  // throughput, logistics replenishment, minus structural aging.
+  const productionIndex = clamp(
+    (100 - opS.display.gridLoad) * 0.3
+    + (100 - opS.resources.transport.util) * 0.22
+    + opS.display.telecom * 0.2
+    + (100 - opS.resources.treasury.util) * 0.16
+    - infraAging * 0.3);
+  // Reserves rebuild slowly, slower still after heavy overuse / low output.
+  const replenishmentRate = clamp(productionIndex * 0.5
+    - post.deploymentConservatism * 0.1
+    + opS.resources.reserves.headroom * 0.3
+    - infraAging * 0.2);
+  // Net weekly reserve draw vs. rebuild → longevity horizon.
+  const netDraw = Math.max(0.4, (foresight.projRisk / 22) + post.deploymentConservatism / 60 - replenishmentRate / 45);
+  const reserveLongevityWeeks = Math.max(1, Math.round(opS.resources.reserves.headroom / (netDraw * 6)));
+  const economicResilience = clamp(
+    society.economicContinuity * 0.5 + productionIndex * 0.3 + replenishmentRate * 0.2);
+  const survivabilityWeeks = Math.max(1, Math.round(
+    reserveLongevityWeeks * 0.5 + economicResilience * 0.12 + (100 - infraAging) * 0.06));
+  const outlook = survivabilityWeeks >= 18 && infraAging < 55 ? 'SUSTAINABLE'
+    : survivabilityWeeks >= 10 ? 'STRAINED'
+    : survivabilityWeeks >= 5 ? 'DEPLETING'
+    : 'UNSUSTAINABLE';
+  return {
+    reserveLongevityWeeks, infraAging, productionIndex, replenishmentRate,
+    economicResilience, survivabilityWeeks, outlook,
+  };
 }
 
 // Govern one incident end-to-end from the shared doctrine — causality,

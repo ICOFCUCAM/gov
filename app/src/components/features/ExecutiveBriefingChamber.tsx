@@ -15,6 +15,7 @@ import {
   governIncident, nationalPosture, nationalOperatingState, forecast,
   ministryBehavior, ministryReliability, ministryInteraction, coordinationLoad,
   nationalSociety, externalEnvironment, strategicForesight, simulateDoctrines,
+  nationalSustainability,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -128,6 +129,9 @@ export function ExecutiveBriefingChamber() {
   const foresight = strategicForesight(opS, post, society, ext, nationalRisk, sevLoad, incidents.length, epoch);
   const projTone = foresight.projRisk >= 60 ? 'alert' : foresight.projRisk >= 40 ? 'warn' : 'ok';
   const policy = simulateDoctrines(opS, post, society, ext, foresight, nationalRisk, epoch);
+  const sustain = nationalSustainability(opS, post, society, foresight, epoch);
+  const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
+  const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
     ? (v >= 65 ? 'ok' : v >= 45 ? 'warn' : 'alert')
     : (v >= 65 ? 'alert' : v >= 45 ? 'warn' : 'ok'));
@@ -158,6 +162,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider lg:inline" style={{ color: TONE[extTone] }} title="external environment">
             ext {ext.label.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider lg:inline" style={{ color: TONE[sustTone] }} title="long-horizon sustainability">
+            sustain {sustain.outlook.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -208,6 +215,14 @@ export function ExecutiveBriefingChamber() {
             <Stat label="Foreign dependency" value={`${ext.foreignDependency}`} tone={ext.foreignDependency >= 60 ? 'warn' : 'ok'} />
             <Stat label="Alliance reliability" value={`${ext.allianceReliability}%`} tone={ext.allianceReliability >= 70 ? 'ok' : ext.allianceReliability >= 50 ? 'warn' : 'alert'} />
             <Stat label="Intl coordination load" value={`${ext.intlCoordLoad}`} tone={ext.intlCoordLoad >= 60 ? 'warn' : 'ok'} />
+            <div className="mt-2 mb-1 flex items-baseline justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Long-horizon sustainability</span>
+              <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[sustTone] }}>{sustain.outlook}</span>
+            </div>
+            <Stat label="Reserve longevity" value={`${sustain.reserveLongevityWeeks}w`} tone={sustain.reserveLongevityWeeks >= 16 ? 'ok' : sustain.reserveLongevityWeeks >= 8 ? 'warn' : 'alert'} />
+            <Stat label="Infrastructure aging" value={`${sustain.infraAging}`} tone={sustain.infraAging >= 60 ? 'alert' : sustain.infraAging >= 40 ? 'warn' : 'ok'} />
+            <Stat label="Production index" value={`${sustain.productionIndex}`} tone={sustain.productionIndex >= 60 ? 'ok' : sustain.productionIndex >= 42 ? 'warn' : 'alert'} />
+            <Stat label="Reserve replenishment" value={`${sustain.replenishmentRate}`} tone={sustain.replenishmentRate >= 55 ? 'ok' : sustain.replenishmentRate >= 35 ? 'warn' : 'alert'} note={`survivability ~${sustain.survivabilityWeeks}w`} />
             <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
               Emergency-powers posture: <span className="font-semibold" style={{ color: TONE[powersTone] }}>{powers}</span>.
               Reserve deployment requires Treasury concurrence{ext.reserveSensitivity >= 55 ? ' — sanctions-scarred reserves under strategic caution' : ''};
@@ -355,7 +370,9 @@ export function ExecutiveBriefingChamber() {
             {policy.sims[0]?.note ? <>Recommended path: {policy.sims[0]!.note}. </> : null}
             {policy.ambiguity >= 60
               ? 'Leading doctrines are closely scored — outcome ambiguous under present uncertainty.'
-              : 'A distinct doctrine leads under current projections.'} Simulated, not executed — leadership decides.
+              : 'A distinct doctrine leads under current projections.'}{' '}
+            {policy.sims[0] ? <>Recommended doctrine is {policy.sims[0]!.sustainable ? 'sustainable' : <span style={{ color: TONE.warn }}>not sustainable</span>} (~{policy.sims[0]!.survivalWeeks}w endurance){mostSust && mostSust.key !== policy.sims[0]!.key ? <>; most enduring is {mostSust.label.toLowerCase()} (~{mostSust.survivalWeeks}w)</> : null}. </> : null}
+            Simulated, not executed — leadership decides.
           </p>
         </Panel>
 

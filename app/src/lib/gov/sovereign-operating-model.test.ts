@@ -8,7 +8,7 @@ import {
   institutionalFatigue, attentionWeight, commandConfidence, coordinationBurden,
   nationalPosture, ministryInteraction, coordinationLoad,
   fieldDeployment, FIELD_STAGES, nationalSociety, externalEnvironment,
-  strategicForesight, simulateDoctrines,
+  strategicForesight, simulateDoctrines, nationalSustainability,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -341,5 +341,34 @@ describe('sovereign operating model', () => {
     const agg = sim.sims.find(s => s.key === 'aggressive')!;
     const con = sim.sims.find(s => s.key === 'conservative')!;
     expect(agg.reserves).toBeLessThan(con.reserves);
+    // conservative endures longer than aggressive (recovery economics)
+    expect(con.survivalWeeks).toBeGreaterThan(agg.survivalWeeks);
+    for (const s of sim.sims) {
+      expect(s.survivalWeeks).toBeGreaterThanOrEqual(1);
+      expect(typeof s.sustainable).toBe('boolean');
+    }
+  });
+
+  it('national sustainability is finite, aging-aware & bounded', () => {
+    const oS = nationalOperatingState(60, 70, 80, 3, 5, 7);
+    const p = nationalPosture(7);
+    const soc = nationalSociety(oS, p, 5, 3, 7);
+    const ex = externalEnvironment(7);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 7);
+    const su = nationalSustainability(oS, p, soc, f, 7);
+    expect(su).toEqual(nationalSustainability(oS, p, soc, f, 7));
+    for (const k of ['infraAging', 'productionIndex', 'replenishmentRate', 'economicResilience'] as const) {
+      expect(su[k]).toBeGreaterThanOrEqual(0);
+      expect(su[k]).toBeLessThanOrEqual(100);
+    }
+    expect(su.reserveLongevityWeeks).toBeGreaterThanOrEqual(1);
+    expect(su.survivabilityWeeks).toBeGreaterThanOrEqual(1);
+    expect(['SUSTAINABLE', 'STRAINED', 'DEPLETING', 'UNSUSTAINABLE']).toContain(su.outlook);
+    // a calmer, well-resourced nation endures longer than a strained one
+    const calmS = nationalOperatingState(40, 20, 25, 0, 1, 7);
+    const calmSoc = nationalSociety(calmS, p, 1, 0, 7);
+    const calmF = strategicForesight(calmS, p, calmSoc, ex, 22, 0, 1, 7);
+    const calmSu = nationalSustainability(calmS, p, calmSoc, calmF, 7);
+    expect(calmSu.survivabilityWeeks).toBeGreaterThanOrEqual(su.survivabilityWeeks);
   });
 });
