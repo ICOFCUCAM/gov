@@ -4,6 +4,7 @@ import {
   ministryReliability, corridorFatigue, forecast, OP_TICK,
   provinceMemory, diffuseTopology, territorialField, corridorAdjacency,
   executiveGate, commandVelocity, authorityChain, priorityConflict, GOV_STAGES,
+  governIncident, pipeStage, mandateFor,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -112,5 +113,25 @@ describe('sovereign operating model', () => {
     const pc = priorityConflict('HEALTH', 70);
     expect(typeof pc.text).toBe('string');
     expect(pc.tense).toBe(true);
+  });
+
+  it('governIncident is the single deterministic governing model', () => {
+    const inp = {
+      archetype: 'HEALTH', severity: 'sev1' as const, ageM: 40, ack: true,
+      epoch: 5, ministryId: 'M-HEALTH', prop: 60, contention: 55, telecom: 88, reservesHeadroom: 40,
+    };
+    const g = governIncident(inp);
+    expect(g).toEqual(governIncident(inp));
+    expect(g.lvl).toBe(3);
+    expect(g.pIdx).toBe(pipeStage(3, 40 / g.behavior.auth, true));
+    expect(g.mandate).toBe(mandateFor(3));
+    expect(['ok', 'warn', 'alert']).toContain(g.strainTone);
+    expect(g.strain).toBeGreaterThanOrEqual(6);
+    expect(g.strain).toBeLessThanOrEqual(99);
+    expect(g.authority[0]).toBe('HEALTH lead');
+    expect(GOV_STAGES).toContain(g.gate.stage);
+    // unacknowledged crisis is held earlier in the pipeline than acknowledged
+    const held = governIncident({ ...inp, ack: false });
+    expect(held.pIdx).toBeLessThanOrEqual(g.pIdx);
   });
 });

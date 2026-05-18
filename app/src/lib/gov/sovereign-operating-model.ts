@@ -311,3 +311,136 @@ const CONFLICT: Record<string, string> = {
 export function priorityConflict(arch: string, contention: number): { text: string; tense: boolean } {
   return { text: CONFLICT[arch] ?? 'Cross-ministry authorization contention', tense: contention >= 60 };
 }
+
+// ── Unified executive doctrine ────────────────────────────────────────────
+// The single governing model. Every panel renders this output rather than
+// scripting its own escalation behaviour, so governance is centrally
+// derived, not panel-local.
+
+// Cross-ministry causality — upstream stressors, downstream strain and the
+// plain operational consequence (explainable escalation narrative).
+export const NATL_DEP: Record<string, { up: string[]; down: string[]; effect: string }> = {
+  HEALTH: { up: ['ENERGY', 'TRANSPORT'], down: ['INTERIOR', 'LABOR'], effect: 'care capacity erosion → civil-stability strain' },
+  ENERGY: { up: ['FINANCE'], down: ['HEALTH', 'TRANSPORT', 'INTERIOR'], effect: 'grid load → hospital & corridor degradation' },
+  TRANSPORT: { up: ['ENERGY'], down: ['HEALTH', 'TRADE', 'AGRICULTURE'], effect: 'corridor disruption → supply & care delay' },
+  FINANCE: { up: [], down: ['ENERGY', 'TRADE', 'LABOR', 'EDUCATION'], effect: 'liquidity stress → cross-sector funding shortfall' },
+  AGRICULTURE: { up: ['ENERGY', 'TRANSPORT'], down: ['TRADE', 'LABOR'], effect: 'yield/logistics loss → food-security pressure' },
+  TRADE: { up: ['FINANCE', 'TRANSPORT'], down: ['LABOR'], effect: 'throughput contraction → revenue & employment drag' },
+  INTERIOR: { up: ['ENERGY'], down: ['JUSTICE'], effect: 'security load → judicial backlog escalation' },
+  JUSTICE: { up: ['INTERIOR'], down: [], effect: 'case surge → custody & due-process strain' },
+  EDUCATION: { up: ['FINANCE'], down: ['LABOR'], effect: 'service interruption → workforce-pipeline risk' },
+  LABOR: { up: ['FINANCE'], down: [], effect: 'employment shock → social-cohesion pressure' },
+  ENVIRONMENT: { up: ['ENERGY'], down: ['HEALTH', 'AGRICULTURE'], effect: 'environmental hazard → public-health & yield impact' },
+};
+export function depChain(arch: string): { up: string[]; down: string[]; effect: string } {
+  return NATL_DEP[arch] ?? { up: [], down: [], effect: 'localized operational strain' };
+}
+
+// Sovereign decision pipeline — the procedural spine every crisis moves
+// through. Stage is derived from severity, age and acknowledgement.
+export const PIPELINE = [
+  'DETECTED', 'VERIFIED', 'ESCALATED', 'CABINET REVIEW', 'RESPONSE AUTHORIZED',
+  'FIELD EXECUTION', 'CONTAINMENT', 'STABILIZATION', 'RECOVERY',
+] as const;
+export function pipeStage(lvl: number, ageM: number, ack: boolean): number {
+  const speed = lvl >= 3 ? 1.6 : lvl === 2 ? 1.05 : 0.7;
+  let idx = Math.floor((ageM / 9) * speed);
+  if (!ack) idx = Math.min(idx, 3);       // authorization gate holds until acknowledged
+  if (lvl === 1) idx = Math.min(idx, 6);  // routine crises resolved at containment level
+  return Math.max(0, Math.min(8, idx));
+}
+export function responseMachinery(idx: number): string {
+  return idx <= 1 ? 'Signal verification · triage in progress'
+    : idx === 2 ? 'Cross-ministry coordination bridge opened'
+    : idx === 3 ? 'Cabinet escalation pending · authorization gate'
+    : idx === 4 ? 'Intervention authorized · reserves unlocked'
+    : idx === 5 ? 'Field execution · resource rerouting active'
+    : idx === 6 ? 'Containment active · ministry synchronization'
+    : idx === 7 ? 'Stabilization · load normalization'
+    : 'Recovery · resilience restoration';
+}
+export function mandateFor(lvl: number): string {
+  return lvl >= 3 ? 'SOVEREIGN OVERRIDE' : lvl === 2 ? 'CABINET MANDATE' : 'MINISTRY MANDATE';
+}
+
+export type Sev = 'sev1' | 'sev2' | 'sev3' | 'sev4';
+export interface GovInput {
+  archetype: string;
+  severity: Sev | number;
+  ageM: number;
+  ack: boolean;
+  epoch: number;
+  ministryId: string;
+  prop: number;
+  contention: number;
+  telecom: number;
+  reservesHeadroom: number;
+}
+export interface IncidentGovernance {
+  lvl: number;
+  arch: string;
+  behavior: Behavior;
+  reliability: number;
+  cause: string;
+  dep: { up: string[]; down: string[]; effect: string };
+  cascade: Cascade;
+  latencyMin: number;
+  eta: string;
+  pIdx: number;
+  stageCur: string;
+  stageNext: string;
+  machinery: string;
+  stTone: string;
+  mandate: string;
+  gate: GovGate;
+  authority: string[];
+  conflict: { text: string; tense: boolean };
+  velocity: number;
+  wear: number;
+  aged: boolean;
+  wornDot: boolean;
+  strain: number;
+  strainTone: 'ok' | 'warn' | 'alert';
+  fragile: boolean;
+}
+
+// Govern one incident end-to-end from the shared doctrine — causality,
+// cascade, latency, decision pipeline, mandate, executive gate, authority
+// chain, prioritization conflict, aging & recovery policy. One source.
+export function governIncident(inp: GovInput): IncidentGovernance {
+  const lvl = typeof inp.severity === 'number'
+    ? inp.severity
+    : inp.severity === 'sev1' ? 3 : inp.severity === 'sev2' ? 2 : 1;
+  const arch = inp.archetype;
+  const behavior = ministryBehavior(arch);
+  const reliability = ministryReliability(arch, inp.epoch);
+  const dep = depChain(arch);
+  const cause = dep.up.length ? dep.up.join('·') : 'root cause';
+  const cascade = cascadeChain(arch, lvl);
+  const lat = responseLatency(arch, lvl, inp.contention, inp.telecom, inp.reservesHeadroom);
+  const eta = lat.totalMin >= 60 ? `${(lat.totalMin / 60).toFixed(1)}h` : `${lat.totalMin}m`;
+  const pIdx = pipeStage(lvl, inp.ageM / behavior.auth, inp.ack);
+  const stageCur = PIPELINE[pIdx]!;
+  const stageNext = PIPELINE[Math.min(8, pIdx + 1)]!;
+  const machinery = responseMachinery(pIdx);
+  const stTone = pIdx >= 7 ? 'ok' : pIdx >= 4 ? 'accent' : pIdx >= 2 ? 'warn' : 'alert';
+  const mandate = mandateFor(lvl);
+  const gate = executiveGate(lvl, inp.ageM, inp.ack, behavior.auth, inp.contention);
+  const authority = authorityChain(arch, lvl);
+  const conflict = priorityConflict(arch, inp.contention);
+  const velocity = commandVelocity(lvl, behavior.auth, inp.contention);
+  const fatigue = corridorFatigue(inp.ministryId, inp.epoch);
+  const wear = Math.min(100, Math.round(inp.ageM * (inp.ack ? 0.7 : 1.4) + fatigue * 0.4 + (pIdx <= 3 ? 16 : 0)));
+  const aged = wear >= 55;
+  const wornDot = aged && !inp.ack;
+  const strain = Math.max(6, Math.min(99, Math.round(
+    inp.prop * 0.5 + lvl * 12 + inp.ageM * 0.3 + inp.contention * 0.2 + wear * 0.12
+    - (pIdx >= 8 ? 40 : pIdx >= 7 ? 24 : pIdx >= 6 ? 14 : 0) + (aged && pIdx >= 6 ? 8 : 0))));
+  const strainTone: 'ok' | 'warn' | 'alert' = strain >= 75 ? 'alert' : strain >= 50 ? 'warn' : 'ok';
+  const fragile = pIdx === 7;
+  return {
+    lvl, arch, behavior, reliability, cause, dep, cascade, latencyMin: lat.totalMin, eta,
+    pIdx, stageCur, stageNext, machinery, stTone, mandate, gate, authority, conflict,
+    velocity, wear, aged, wornDot, strain, strainTone, fragile,
+  };
+}
