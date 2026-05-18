@@ -802,6 +802,76 @@ export function nationalSociety(
   };
 }
 
+// ── Strategic foresight & predictive intelligence ─────────────────────────
+// Anticipatory governance: read leading indicators before full escalation,
+// project a probabilistic national-risk band, weigh divergent scenarios and
+// decay foresight confidence from a record of forecast hits vs. misses.
+export interface EarlyWarning { signal: string; risk: number; lead: string; }
+export interface Scenario { label: string; prob: number; }
+export interface StrategicForesight {
+  warnings: EarlyWarning[];
+  projRisk: number;       // projected national risk (forward)
+  projLo: number;         // confidence band
+  projHi: number;
+  horizon: string;        // dominant lead time
+  confidence: number;     // 0..100 foresight confidence
+  scenarios: Scenario[];  // divergent futures, weighted ~100
+  dominant: string;
+}
+// Record of anticipation: prior misses erode foresight confidence and widen
+// the uncertainty band; consistent anticipation builds doctrine trust.
+function foresightMemory(epoch: number): { miss: number; hit: number } {
+  const H = 12;
+  let miss = 0, hit = 0, n = 0;
+  for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
+    const decay = 1 - (epoch - e) / (H + 4);
+    if (seed(`fore:${e}`) > 0.6) hit += decay; else if (seed(`fore:${e}`) < 0.34) miss += decay;
+    n += decay;
+  }
+  return { miss: Math.round((miss / Math.max(1, n)) * 100), hit: Math.round((hit / Math.max(1, n)) * 100) };
+}
+export function strategicForesight(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  ext: ExternalEnvironment, nationalRisk: number, sevLoad: number, incidentN: number, epoch: number,
+): StrategicForesight {
+  const w: EarlyWarning[] = [];
+  const add = (cond: boolean, signal: string, risk: number, lead: string) => { if (cond) w.push({ signal, risk, lead }); };
+  add(opS.display.telecom < 82, 'telecom degradation → coordination risk', Math.round((100 - opS.display.telecom) * 0.6), '24h');
+  add(opS.resources.reserves.headroom < 42, 'reserve exhaustion → recovery fragility', Math.round((50 - opS.resources.reserves.headroom) * 1.1), '48h');
+  add(opS.resources.transport.util >= 72, 'corridor congestion → deployment slowdown', Math.round((opS.resources.transport.util - 60) * 1.1), '24h');
+  add(post.containmentWeight >= 55, 'sustained containment → social fatigue', Math.round(post.containmentWeight * 0.6), '72h');
+  add(ext.externalPressure >= 44, 'regional instability → migration & strategic pressure', Math.round(ext.externalPressure * 0.6), '72h');
+  add(ext.allianceReliability < 60, 'alliance unreliability → strategic caution', Math.round((70 - ext.allianceReliability) * 0.9), '72h');
+  add(opS.contention >= 62, 'infrastructure fatigue → cascade risk', Math.round((opS.contention - 50) * 1.1), '48h');
+  w.sort((a, b) => b.risk - a.risk);
+
+  const mem = foresightMemory(epoch);
+  const confidence = Math.max(20, Math.min(95, Math.round(70 + mem.hit * 0.3 - mem.miss * 0.5 - ext.externalPressure * 0.1)));
+  const warnLift = w.reduce((s, x) => s + x.risk, 0) / Math.max(1, w.length) * 0.35;
+  const projRisk = Math.max(0, Math.min(100, Math.round(
+    nationalRisk + warnLift + sevLoad * 2 + (100 - confidence) * 0.08 - society.institutionalTrust * 0.05)));
+  const spread = Math.round(6 + (100 - confidence) * 0.22 + ext.externalPressure * 0.12 + w.length * 1.4);
+  const projLo = Math.max(0, projRisk - spread);
+  const projHi = Math.min(100, projRisk + spread);
+  const horizon = w[0]?.lead ?? '72h';
+
+  // Divergent futures — weighted by present signals (deterministic).
+  const raw: Scenario[] = [
+    { label: 'Rapid stabilization', prob: 30 + post.execConfidence * 0.3 - projRisk * 0.3 - sevLoad * 4 },
+    { label: 'Prolonged containment', prob: 14 + post.containmentWeight * 0.4 + incidentN * 1.5 },
+    { label: 'Economic degradation', prob: 10 + (100 - society.economicContinuity) * 0.35 },
+    { label: 'Geopolitical escalation', prob: 6 + ext.externalPressure * 0.4 },
+    { label: 'Infrastructure recovery', prob: 16 + opS.resources.reserves.headroom * 0.25 - projRisk * 0.15 },
+    { label: 'Societal fracture', prob: 4 + society.socialStrain * 0.35 - society.institutionalTrust * 0.1 },
+  ].map(s => ({ label: s.label, prob: Math.max(2, s.prob) }));
+  const tot = raw.reduce((s, x) => s + x.prob, 0);
+  const scenarios = raw.map(s => ({ label: s.label, prob: Math.round((s.prob / tot) * 100) }))
+    .sort((a, b) => b.prob - a.prob);
+  const dominant = scenarios[0]?.label ?? 'Rapid stabilization';
+
+  return { warnings: w, projRisk, projLo, projHi, horizon, confidence, scenarios, dominant };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

@@ -14,7 +14,7 @@ import { Panel, TONE, ACCENT, PALETTE, LiveValue, seed } from '@/components/feat
 import {
   governIncident, nationalPosture, nationalOperatingState, forecast,
   ministryBehavior, ministryReliability, ministryInteraction, coordinationLoad,
-  nationalSociety, externalEnvironment,
+  nationalSociety, externalEnvironment, strategicForesight,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -114,7 +114,6 @@ export function ExecutiveBriefingChamber() {
   // Strategic outlook — same doctrine pools as the situation room.
   const fEn = forecast('som:en', opS.resources.energy.util, ts, false);
   const fRes = forecast('som:res', opS.resources.reserves.headroom, ts, true);
-  const fHe = forecast('hsat', peakP, ts, false);
   const fCv = forecast('civil', nationalRisk, ts, false);
   const fc = (r: string) => (r === 'alert' ? 'alert' : r === 'warn' ? 'warn' : 'ok');
 
@@ -126,6 +125,8 @@ export function ExecutiveBriefingChamber() {
   const extTone = ext.label === 'HOSTILE' ? 'alert' : ext.label === 'CONTESTED' ? 'warn' : ext.label === 'PRESSURED' ? 'neutral' : 'ok';
   const society = nationalSociety(opS, post, incidents.length, sevLoad, epoch);
   const socTone = society.label === 'ERODING' ? 'alert' : society.label === 'FRAGILE' ? 'warn' : society.label === 'STRAINED' ? 'neutral' : 'ok';
+  const foresight = strategicForesight(opS, post, society, ext, nationalRisk, sevLoad, incidents.length, epoch);
+  const projTone = foresight.projRisk >= 60 ? 'alert' : foresight.projRisk >= 40 ? 'warn' : 'ok';
   const hi = (v: number, good = true) => (good
     ? (v >= 65 ? 'ok' : v >= 45 ? 'warn' : 'alert')
     : (v >= 65 ? 'alert' : v >= 45 ? 'warn' : 'ok'));
@@ -213,16 +214,25 @@ export function ExecutiveBriefingChamber() {
             </p>
           </Panel>
 
-          <Panel title="Strategic forecast" meta="24h → 72h doctrine outlook">
-            <Stat label="National stability" value={`${stability}`} tone={stabTone} note="now" />
+          <Panel title="Strategic foresight" meta="anticipatory · probabilistic">
+            <Stat label="Projected national risk" value={`${foresight.projLo}–${foresight.projHi}`} tone={projTone} note={`p${foresight.projRisk} · ${foresight.horizon}`} />
+            <Stat label="Foresight confidence" value={`${foresight.confidence}%`} tone={foresight.confidence >= 70 ? 'ok' : foresight.confidence >= 50 ? 'warn' : 'alert'} />
             <Stat label="Energy grid outlook" value={`${fEn.h24}→${fEn.h72}%`} tone={fc(fEn.risk)} />
             <Stat label="Reserve exhaustion" value={fRes.exhaustMin ? `~${Math.max(1, Math.round(fRes.exhaustMin / 60))}h` : 'sustained'} tone={fc(fRes.risk)} />
-            <Stat label="Healthcare saturation" value={`${fHe.h24}→${fHe.h72}%`} tone={fc(fHe.risk)} />
             <Stat label="Civil instability" value={`${fCv.h24}→${fCv.h72}`} tone={fc(fCv.risk)} />
+            <div className="mt-2 mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Early warning</div>
+            {foresight.warnings.length === 0 ? (
+              <p className="text-[11px] text-ink-muted">No leading instability indicators above threshold.</p>
+            ) : foresight.warnings.slice(0, 3).map(wn => (
+              <div key={wn.signal} className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1 last:border-0">
+                <span className="truncate text-[11px] text-ink-soft">{wn.signal}</span>
+                <span className="shrink-0 font-mono text-[10px] tabular-nums" style={{ color: TONE[wn.risk >= 55 ? 'alert' : wn.risk >= 30 ? 'warn' : 'neutral'] }}>{wn.lead}</span>
+              </div>
+            ))}
             <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
-              Doctrine drift: posture <span className="text-ink-soft">{post.label.toLowerCase()}</span> —
-              {post.deploymentConservatism >= 55 ? ' reserves managed conservatively;' : ' reserves nominal;'}
-              {post.stabilizationCaution >= 55 ? ' fragile-recovery caution active.' : ' recovery confidence holding.'}
+              Dominant scenario: <span className="font-semibold text-ink-soft">{foresight.dominant}</span> ({foresight.scenarios[0]?.prob ?? 0}%)
+              {foresight.scenarios[1] ? <>, then {foresight.scenarios[1].label.toLowerCase()} ({foresight.scenarios[1].prob}%)</> : null}.
+              Doctrine adapts: {foresight.projRisk >= 55 ? 'projected risk raises reserve conservatism & executive caution.' : 'projected trajectory within planning tolerance.'}
             </p>
           </Panel>
         </div>

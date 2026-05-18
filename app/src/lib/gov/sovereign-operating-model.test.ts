@@ -8,6 +8,7 @@ import {
   institutionalFatigue, attentionWeight, commandConfidence, coordinationBurden,
   nationalPosture, ministryInteraction, coordinationLoad,
   fieldDeployment, FIELD_STAGES, nationalSociety, externalEnvironment,
+  strategicForesight,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -283,5 +284,32 @@ describe('sovereign operating model', () => {
     expect(p.geopolitical).toBeLessThanOrEqual(100);
     expect(p.authThreshold).toBeGreaterThanOrEqual(0.55);
     expect(p.authThreshold).toBeLessThanOrEqual(1.7);
+  });
+
+  it('strategic foresight projects a bounded band & weighted scenarios', () => {
+    const oS = nationalOperatingState(60, 70, 80, 3, 5, 6);
+    const p = nationalPosture(6);
+    const soc = nationalSociety(oS, p, 5, 3, 6);
+    const ex = externalEnvironment(6);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 6);
+    expect(f).toEqual(strategicForesight(oS, p, soc, ex, 55, 3, 5, 6));
+    expect(f.projLo).toBeLessThanOrEqual(f.projRisk);
+    expect(f.projHi).toBeGreaterThanOrEqual(f.projRisk);
+    expect(f.projLo).toBeGreaterThanOrEqual(0);
+    expect(f.projHi).toBeLessThanOrEqual(100);
+    expect(f.confidence).toBeGreaterThanOrEqual(20);
+    expect(f.confidence).toBeLessThanOrEqual(95);
+    const sum = f.scenarios.reduce((s, x) => s + x.prob, 0);
+    expect(sum).toBeGreaterThanOrEqual(96);
+    expect(sum).toBeLessThanOrEqual(104);
+    expect(f.scenarios[0]!.label).toBe(f.dominant);
+    for (const wn of f.warnings) {
+      expect(wn.risk).toBeGreaterThanOrEqual(0);
+      expect(typeof wn.signal).toBe('string');
+    }
+    // a calmer state carries lower projected risk than a strained one
+    const calm = strategicForesight(
+      nationalOperatingState(40, 20, 25, 0, 1, 6), p, soc, ex, 25, 0, 1, 6);
+    expect(calm.projRisk).toBeLessThan(f.projRisk);
   });
 });
