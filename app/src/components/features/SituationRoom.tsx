@@ -92,17 +92,26 @@ export function Panel({
   title: string; meta?: React.ReactNode; className?: string; bodyClass?: string; children: React.ReactNode;
 }) {
   return (
-    <section className={`flex min-h-0 flex-col rounded-[3px] border border-line bg-surface ${className}`}
-      style={{ boxShadow: 'inset 2px 0 0 color-mix(in srgb,#37c7d4 26%,transparent)' }}>
-      <div className="flex items-center justify-between gap-2 border-b border-line px-2 py-1"
-        style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.08)' }}>
+    <section className={`relative flex min-h-0 flex-col rounded-[3px] border border-line bg-surface ${className}`}
+      style={{
+        boxShadow:
+          'inset 2px 0 0 color-mix(in srgb,#37c7d4 28%,transparent),' +   // tactical command rail
+          'inset 0 0 0 1px rgba(120,170,205,0.045),' +                    // inner chassis hairline
+          'inset 0 -26px 34px -30px rgba(0,0,0,0.85),' +                  // recessed structural depth
+          '0 1px 0 rgba(0,0,0,0.5)',                                      // mounted-into-surface edge
+      }}>
+      {/* infrastructure grain — restrained machine texture, non-blocking */}
+      <span aria-hidden className="pointer-events-none absolute inset-0 z-0 rounded-[3px] opacity-[0.035]"
+        style={{ backgroundImage: 'repeating-linear-gradient(0deg, rgba(150,200,235,0.7) 0 1px, transparent 1px 4px)' }} />
+      <div className="relative z-[1] flex items-center justify-between gap-2 border-b border-line px-2 py-1"
+        style={{ backgroundImage: 'linear-gradient(180deg, rgba(120,170,205,0.05), transparent)', boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.08)' }}>
         <h2 className="flex min-w-0 items-center gap-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.13em] text-ink-soft">
           <span aria-hidden className="h-1 w-1 shrink-0 rounded-full motion-safe:animate-breathe" style={{ background: ACCENT, boxShadow: `0 0 4px ${ACCENT}` }} />
           {title}
         </h2>
         {meta ? <span className="shrink-0 text-[9.5px] text-ink-muted">{meta}</span> : null}
       </div>
-      <div className={`flex-1 p-2 ${bodyClass}`}>{children}</div>
+      <div className={`relative z-[1] flex-1 p-2 ${bodyClass}`}>{children}</div>
     </section>
   );
 }
@@ -166,17 +175,31 @@ export function Ring({ pct, label }: { pct: number; label: string }) {
 }
 
 export function Spark({ pts, tone }: { pts: number[]; tone: string }) {
-  const max = Math.max(...pts), min = Math.min(...pts);
-  const line = pts.map((p, i) => {
-    const x = (i / (pts.length - 1)) * 100;
-    const y = 30 - ((p - min) / (max - min || 1)) * 26 - 2;
-    return `${i === 0 ? 'M' : 'L'}${x.toFixed(1)},${y.toFixed(1)}`;
-  }).join(' ');
+  const rid = React.useId().replace(/:/g, '');
+  const max = Math.max(...pts), min = Math.min(...pts), rng = max - min || 1;
+  const mean = pts.reduce((s, p) => s + p, 0) / pts.length;
+  const Y = (p: number) => 30 - ((p - min) / rng) * 26 - 2;
+  const line = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${((i / (pts.length - 1)) * 100).toFixed(1)},${Y(p).toFixed(1)}`).join(' ');
   const area = `${line} L100,30 L0,30 Z`;
+  const meanY = Y(mean).toFixed(1);
+  const c = TONE[tone] ?? ACCENT;
+  const ey = Y(pts[pts.length - 1] ?? mean);
   return (
-    <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="h-9 w-full">
-      <path d={area} fill={TONE[tone]} fillOpacity="0.12" />
-      <path d={line} fill="none" stroke={TONE[tone]} strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+    <svg viewBox="0 0 100 30" preserveAspectRatio="none" className="h-9 w-full overflow-visible">
+      <defs>
+        <linearGradient id={`sg${rid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={c} stopOpacity="0.26" />
+          <stop offset="100%" stopColor={c} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {[25, 50, 75].map(g => (
+        <line key={g} x1={g} y1="0" x2={g} y2="30" stroke="rgb(var(--c-line))" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+      ))}
+      <line x1="0" y1={meanY} x2="100" y2={meanY} stroke={c} strokeOpacity="0.3" strokeWidth="0.55"
+        strokeDasharray="2.2 2.4" vectorEffect="non-scaling-stroke" />
+      <path d={area} fill={`url(#sg${rid})`} />
+      <path d={line} fill="none" stroke={c} strokeWidth="1.4" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      <circle cx="100" cy={ey} r="1.7" fill={c} />
     </svg>
   );
 }
