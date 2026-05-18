@@ -215,6 +215,96 @@ export function LiveValue({ raw }: { raw: string }) {
   return <>{m[1] ?? ''}<AnimatedNum value={num} fixed={dec} />{m[3] ?? ''}</>;
 }
 
+// ── Sovereign national telemetry spine primitives (top intelligence band) ──
+// Intelligence-grade KPI model: value + drift + anomaly + state + threshold.
+export type Instr = {
+  l: string; v: string; t: string; d: number; traj: string;
+  spark: number[]; crit: boolean; anom: boolean; state: string;
+  base: number; band: number; pulse: boolean;
+};
+
+// Sharp infrastructure-monitoring sparkline — gradient body, threshold
+// baseline, anomaly-peak markers, live pulsing telemetry head.
+export function TeleSpark({ pts, tone, active }: { pts: number[]; tone: string; active?: boolean }) {
+  const rid = React.useId().replace(/:/g, '');
+  const max = Math.max(...pts), min = Math.min(...pts), rng = max - min || 1;
+  const mean = pts.reduce((s, p) => s + p, 0) / pts.length;
+  const X = (i: number) => (i / (pts.length - 1)) * 100;
+  const Y = (p: number) => 28 - ((p - min) / rng) * 23 - 2.5;
+  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${X(i).toFixed(1)},${Y(p).toFixed(1)}`).join(' ');
+  const area = `${line} L100,28 L0,28 Z`;
+  const meanY = Y(mean).toFixed(1);
+  const thr = min + rng * 0.8;
+  const peaks = pts.map((p, i) => (p >= thr && i > 0 && i < pts.length - 1 ? { x: X(i), y: Y(p), i } : null))
+    .filter(Boolean) as { x: number; y: number; i: number }[];
+  const c = TONE[tone] ?? ACCENT;
+  const ex = X(pts.length - 1), ey = Y(pts[pts.length - 1] ?? mean);
+  return (
+    <svg viewBox="0 0 100 28" preserveAspectRatio="none" className="h-7 w-full overflow-visible">
+      <defs>
+        <linearGradient id={`tg${rid}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={c} stopOpacity="0.32" />
+          <stop offset="100%" stopColor={c} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      {[20, 40, 60, 80].map(g => (
+        <line key={g} x1={g} y1="0" x2={g} y2="28" stroke="rgb(var(--c-line))" strokeWidth="0.5" vectorEffect="non-scaling-stroke" />
+      ))}
+      <line x1="0" y1={meanY} x2="100" y2={meanY} stroke={c} strokeOpacity="0.36" strokeWidth="0.6"
+        strokeDasharray="2.2 2.2" vectorEffect="non-scaling-stroke" />
+      <path d={area} fill={`url(#tg${rid})`} />
+      <path d={line} fill="none" stroke={c} strokeWidth="1.45" strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
+      {peaks.map(pk => (
+        <circle key={pk.i} cx={pk.x} cy={pk.y} r="1.4" fill={c}
+          className={active ? 'motion-safe:animate-breathe' : ''} />
+      ))}
+      {active ? <circle cx={ex} cy={ey} r="2.4" fill="none" stroke={c} strokeWidth="0.9" className="motion-safe:animate-diffuse" /> : null}
+      <circle cx={ex} cy={ey} r="2" fill={c} />
+    </svg>
+  );
+}
+
+// Intelligence-grade KPI cell — state chip, dominant metric, drift,
+// sharp telemetry, baseline/threshold footer; criticals visually dominate.
+export function KpiCell({ d }: { d: Instr }) {
+  const tone = d.t || 'ok';
+  const c = TONE[tone] ?? ACCENT;
+  const up = d.d > 0, dn = d.d < 0;
+  const dC = up ? TONE.ok : dn ? TONE.alert : TONE.neutral;
+  return (
+    <div className="relative overflow-hidden rounded-[3px] border bg-surface px-2 py-1.5"
+      style={{
+        borderColor: d.crit ? `color-mix(in srgb,${c} 52%,rgb(var(--c-line)))` : 'rgb(var(--c-line))',
+        boxShadow: d.crit
+          ? `inset 0 0 0 1px color-mix(in srgb,${c} 20%,transparent), inset 0 1px 0 rgba(55,199,212,0.06), 0 0 16px color-mix(in srgb,${c} 13%,transparent)`
+          : 'inset 0 1px 0 rgba(55,199,212,0.06)',
+      }}>
+      <span aria-hidden className="absolute inset-y-0 left-0 w-[2px]"
+        style={{ background: c, opacity: d.crit ? 0.95 : 0.42 }} />
+      <div className="flex items-center gap-1">
+        <span className="min-w-0 flex-1 truncate text-[8px] font-semibold uppercase tracking-[0.13em] text-ink-muted">{d.l}</span>
+        <span className="shrink-0 rounded-[2px] px-1 py-px text-[7px] font-bold uppercase tracking-[0.07em]"
+          style={{ background: `color-mix(in srgb,${c} 15%,transparent)`, color: c }}>{d.state}</span>
+      </div>
+      <div className="mt-0.5 flex items-baseline gap-1">
+        {d.pulse ? <span className="h-1 w-1 shrink-0 rounded-full motion-safe:animate-breathe" style={{ background: c, boxShadow: `0 0 5px ${c}` }} /> : null}
+        <span className="font-mono text-[16px] font-semibold leading-none tabular-nums"
+          style={{ color: c, textShadow: d.crit ? `0 0 12px color-mix(in srgb,${c} 60%,transparent)` : undefined }}>
+          <LiveValue raw={d.v} />
+        </span>
+        <span className="ml-auto shrink-0 font-mono text-[9px] tabular-nums" style={{ color: dC }}>{d.traj}{d.d ? Math.abs(d.d) : ''}</span>
+      </div>
+      <div className="mt-1 -mb-0.5"><TeleSpark pts={d.spark} tone={tone} active={d.crit || d.pulse} /></div>
+      <div className="mt-0.5 flex items-center justify-between text-[7px] font-medium uppercase tracking-[0.05em]">
+        <span className="text-ink-muted">base {d.base}</span>
+        {d.anom
+          ? <span className="flex items-center gap-0.5" style={{ color: TONE.warn }}><span className="h-[3px] w-[3px] rounded-full motion-safe:animate-pulse" style={{ background: TONE.warn }} />anomaly</span>
+          : <span style={{ color: c }}>thr {d.band}</span>}
+      </div>
+    </div>
+  );
+}
+
 const INFRA_KINDS = [
   { k: 'hospital', g: '✚', label: 'Medical centre' },
   { k: 'port', g: '⚓', label: 'Seaport' },
@@ -996,31 +1086,65 @@ export function SituationRoom() {
     ...incidents.slice(0, 12).map((c, i) => ({ id: `i-${i}`, group: 'Incident jump', label: c.label, hint: c.ministry, href: `/gov/ministry/${c.ministryId}` })),
   ];
 
-  // Executive operational instruments — value · drift · trajectory · spark.
-  const mkInstr = (l: string, val: number, unit: string, goodHigh: boolean, sk: string) => {
+  // Executive operational instruments — multi-layer national telemetry:
+  // value · drift · anomaly · operational state · alert threshold · spark.
+  const STATE = (t: string) => (t === 'alert' ? 'CRIT' : t === 'warn' ? 'ELEV' : t === 'ok' ? 'NOMINAL' : 'WATCH');
+  const mkInstr = (l: string, val: number, unit: string, goodHigh: boolean, sk: string): Instr => {
     const prev = Math.round(val + (seed(`prev:${sk}:${epoch}`) - 0.5) * 14);
     const d = val - prev;
     const sevV = goodHigh ? 100 - val : val;
+    const t = toneFor(sevV) as string;
+    const spark = waveSeries(`is:${sk}`, ts, 18, 32, 97);
+    const base = Math.round(spark.reduce((s, p) => s + p, 0) / spark.length);
+    const peak = Math.round(Math.max(...spark));
+    const last = spark[spark.length - 1] ?? val;
     return {
-      l, v: `${val}${unit}`,
-      t: toneFor(sevV) as string,
+      l, v: `${val}${unit}`, t,
       d, traj: d > 1 ? '↗' : d < -1 ? '↘' : '→',
-      spark: waveSeries(`is:${sk}`, ts, 16, 35, 95),
-      dot: false,
+      spark, crit: t === 'alert',
+      anom: t === 'alert' || last >= base + 13,
+      state: STATE(t), base, band: peak, pulse: false,
+    };
+  };
+  const fill = (o: Partial<Instr> & Pick<Instr, 'l' | 'v' | 't' | 'spark'>): Instr => {
+    const base = Math.round(o.spark.reduce((s, p) => s + p, 0) / o.spark.length);
+    return {
+      d: 0, traj: '→', crit: o.t === 'alert', anom: o.t === 'alert',
+      state: STATE(o.t), base, band: Math.round(Math.max(...o.spark)), pulse: false, ...o,
     };
   };
   const stabilityIdx = Math.max(1, 100 - nationalRisk);
-  const instruments = [
+  const instruments: Instr[] = [
     mkInstr('National Stability Index', stabilityIdx, '', true, 'stab'),
-    { l: 'Institutional Pressure', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok', d: 0, traj: '→', spark: mhPts, dot: true },
+    fill({ l: 'Institutional Pressure', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok', spark: mhPts, pulse: true, anom: posture?.level === 'alert' || posture?.level === 'warn' }),
     mkInstr('Economic Resilience', 55 + Math.round(seed(`er:${epoch}`) * 24), '%', true, 'er'),
-    { l: 'Treasury Liquidity', v: `$${revenue}B`, t: 'ok', d: 1, traj: '↗', spark: revPts, dot: false },
+    fill({ l: 'Treasury Liquidity', v: `$${revenue}B`, t: 'ok', d: 1, traj: '↗', spark: revPts }),
     mkInstr('Energy Stability', Math.max(1, 100 - pressOf('ENERGY')), '%', true, 'en'),
     mkInstr('Healthcare Capacity', Math.max(1, 100 - pressOf('HEALTH')), '%', true, 'hc'),
     mkInstr('Civil Stability', Math.max(1, 100 - Math.round(nationalRisk * 0.9)), '%', true, 'cs'),
     mkInstr('Infrastructure Integrity', Math.max(1, 100 - pressOf('TRANSPORT')), '%', true, 'ii'),
     mkInstr('Security Readiness', Math.max(1, 100 - pressOf('INTERIOR')), '%', true, 'sr'),
     mkInstr('Constitutional Integrity', totals?.auditIntact === false ? 71 : 96 + Math.round(seed(`ci:${epoch}`) * 3), '%', true, 'ci'),
+  ];
+
+  // National intelligence telemetry spine — multidimensional sovereign
+  // synchronization signals rendered as a fixed command sub-header.
+  const coordLvl = critCount >= 1 || incidents.length >= 6 ? 'CRITICAL' : incidents.length >= 3 || nationalRisk >= 55 ? 'ELEVATED' : 'SYNCHRONISED';
+  const coordTone = coordLvl === 'CRITICAL' ? 'alert' : coordLvl === 'ELEVATED' ? 'warn' : 'ok';
+  const propVel = Math.round(wave(`prop:${epoch}`, ts, 4, 34));
+  const syncInt = (99.2 - (incidents.length * 0.18)).toFixed(2);
+  const emLoad = Math.round((incidents.length / 9) * 100);
+  const driftSign = (posture?.level === 'alert' ? '↑' : posture?.level === 'warn' ? '↗' : '→');
+  const spine: { k: string; v: string; t: string; pulse?: boolean }[] = [
+    { k: 'POSTURE', v: war ? 'WAR ROOM' : (posture?.label ?? 'STABLE'), t: war ? 'alert' : (posture?.level ?? 'ok'), pulse: true },
+    { k: 'NAT RISK', v: `${nationalRisk}`, t: toneFor(nationalRisk) as string },
+    { k: 'COORD', v: coordLvl, t: coordTone, pulse: coordTone !== 'ok' },
+    { k: 'SYNC', v: `${syncInt}%`, t: Number(syncInt) >= 98 ? 'ok' : 'warn' },
+    { k: 'READINESS', v: `${stabilityIdx}`, t: toneFor(100 - stabilityIdx) as string },
+    { k: 'PROPAGATION', v: `${propVel}/s`, t: propVel >= 24 ? 'alert' : propVel >= 14 ? 'warn' : 'ok' },
+    { k: 'ESC DRIFT', v: driftSign, t: posture?.level ?? 'ok' },
+    { k: 'EMERG LOAD', v: `${emLoad}%`, t: emLoad >= 60 ? 'alert' : emLoad >= 30 ? 'warn' : 'ok', pulse: emLoad >= 60 },
+    { k: 'INCIDENTS', v: `${incidents.length}`, t: incidents.length >= 6 ? 'alert' : incidents.length ? 'warn' : 'ok' },
   ];
 
   return (
@@ -1052,11 +1176,13 @@ export function SituationRoom() {
           </button>
         </div>
       ) : null}
-      {/* Command top bar */}
-      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
+      {/* National command operations header */}
+      <header className="relative flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
+        <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, color-mix(in srgb,${war ? TONE.alert : ACCENT} 60%,transparent), transparent)` }} />
         <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
           <span aria-hidden className="grid h-9 w-9 place-items-center rounded-sm text-sm font-bold text-white ring-1 ring-white/15"
-            style={{ backgroundColor: ACCENT }}>
+            style={{ backgroundColor: war ? TONE.alert : ACCENT, boxShadow: `0 0 14px color-mix(in srgb,${war ? TONE.alert : ACCENT} 45%,transparent)` }}>
             {identity ? identity.seal : 'CO'}
           </span>
           <span className="leading-tight">
@@ -1064,11 +1190,21 @@ export function SituationRoom() {
             <span className="block text-[9px] uppercase tracking-[0.16em] text-ink-muted">Sovereign Operating System</span>
           </span>
         </Link>
-        <div className="hidden flex-1 text-center md:block">
-          <div className="text-sm font-bold uppercase tracking-[0.34em] text-ink" style={{ textShadow: `0 0 16px color-mix(in srgb,${war ? TONE.alert : ACCENT} 50%,transparent)` }}>NATIONAL SITUATION ROOM</div>
-          <div className="mt-0.5 text-[9px] font-semibold uppercase tracking-[0.34em] text-ink-muted">Real-time Command &amp; Coordination</div>
+        <div className="hidden min-w-0 flex-1 flex-col items-center md:flex">
+          <div className="flex items-center gap-2">
+            <span aria-hidden className="h-px w-6" style={{ background: `color-mix(in srgb,${war ? TONE.alert : ACCENT} 50%,transparent)` }} />
+            <span className="text-sm font-bold uppercase tracking-[0.34em] text-ink" style={{ textShadow: `0 0 16px color-mix(in srgb,${war ? TONE.alert : ACCENT} 50%,transparent)` }}>NATIONAL SITUATION ROOM</span>
+            <span aria-hidden className="h-px w-6" style={{ background: `color-mix(in srgb,${war ? TONE.alert : ACCENT} 50%,transparent)` }} />
+          </div>
+          <div className="mt-0.5 flex items-center gap-1.5 text-[8.5px] font-semibold uppercase tracking-[0.22em] text-ink-muted">
+            <span>Real-time Command &amp; Coordination</span>
+            <span className="text-line">·</span>
+            <span style={{ color: war ? TONE.alert : ACCENT }}>SOVEREIGN ∕∕ EYES-ONLY</span>
+            <span className="text-line">·</span>
+            <span className="font-mono tabular-nums">EPOCH {String(epoch).padStart(3, '0')}</span>
+          </div>
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2.5">
           <button type="button"
             onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true }); window.dispatchEvent(e); }}
             className="focus-ring hidden items-center gap-1.5 rounded-sm border border-line bg-bg px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink lg:flex">
@@ -1089,15 +1225,47 @@ export function SituationRoom() {
             title="Toggle War Room posture">
             ⚑ War Room
           </button>
-          <span className="flex items-center gap-1.5 rounded-sm border border-line px-2 py-1">
-            <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: war ? TONE.alert : TONE.ok }} />
-            <span className="text-[10px] font-semibold uppercase tracking-wider text-ink-soft">{war ? 'CRISIS' : 'Live'} · T{tickN}</span>
+          <span className="relative flex items-center gap-1.5 overflow-hidden rounded-sm border px-2 py-1"
+            style={{ borderColor: war ? `color-mix(in srgb,${TONE.alert} 45%,rgb(var(--c-line)))` : 'rgb(var(--c-line))' }}>
+            <span aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.55] motion-safe:animate-shimmer"
+              style={{ backgroundImage: `linear-gradient(90deg, transparent, color-mix(in srgb,${war ? TONE.alert : TONE.ok} 28%,transparent), transparent)`, backgroundSize: '200% 100%' }} />
+            <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: war ? TONE.alert : TONE.ok, boxShadow: `0 0 6px ${war ? TONE.alert : TONE.ok}` }} />
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-wider tabular-nums text-ink-soft">{war ? 'CRISIS' : 'SYNC'} · T{tickN}</span>
           </span>
           <span className="border-l border-line pl-3">
             <ExecutiveMenu title={sov?.executiveTitle ?? 'Executive Office'} sub="Head of Government" accent={war ? TONE.alert : ACCENT} />
           </span>
         </div>
       </header>
+
+      {/* National intelligence telemetry spine — fixed synchronization band */}
+      <div className="relative flex h-7 shrink-0 items-stretch overflow-hidden border-b border-line bg-bg"
+        style={{ boxShadow: 'inset 0 -8px 14px -10px rgba(0,0,0,0.7)' }}>
+        <span aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.04] motion-safe:animate-shimmer"
+          style={{ backgroundImage: 'linear-gradient(90deg, transparent, rgba(150,200,235,0.8), transparent)', backgroundSize: '240% 100%' }} />
+        <span className="flex shrink-0 items-center gap-1.5 px-3 text-[8.5px] font-bold uppercase tracking-[0.18em]"
+          style={{ color: war ? TONE.alert : ACCENT }}>
+          <span className="h-1.5 w-1.5 rounded-full motion-safe:animate-breathe" style={{ background: war ? TONE.alert : ACCENT, boxShadow: `0 0 6px ${war ? TONE.alert : ACCENT}` }} />
+          NATIONAL TELEMETRY
+        </span>
+        <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
+          {spine.map((s, i) => {
+            const c = TONE[s.t] ?? ACCENT;
+            return (
+              <div key={s.k} className="flex shrink-0 items-center gap-1.5 px-3"
+                style={{ borderLeft: i ? '1px solid rgb(var(--c-line))' : undefined }}>
+                <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{s.k}</span>
+                {s.pulse ? <span className="h-1 w-1 rounded-full motion-safe:animate-breathe" style={{ background: c, boxShadow: `0 0 5px ${c}` }} /> : null}
+                <span className="font-mono text-[10px] font-bold uppercase tabular-nums" style={{ color: c }}>{s.v}</span>
+              </div>
+            );
+          })}
+        </div>
+        <span className="hidden shrink-0 items-center gap-1.5 border-l border-line px-3 font-mono text-[8.5px] uppercase tracking-[0.14em] text-ink-muted lg:flex">
+          <span className="h-1 w-1 rounded-full motion-safe:animate-pulse" style={{ background: TONE.ok }} />
+          LINK SECURE · {new Date(now).toLocaleTimeString()}
+        </span>
+      </div>
 
       <div className="flex min-h-0 flex-1">
         {/* Icon command rail */}
@@ -1153,20 +1321,9 @@ export function SituationRoom() {
         {/* Operational canvas */}
         <main className="min-w-0 flex-1 space-y-2 overflow-y-auto p-2"
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.022) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
-          {/* Row 1 — executive telemetry (10) */}
-          <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-5 xl:grid-cols-10">
-            {instruments.map(t => (
-              <div key={t.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5"
-                style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{t.l}</div>
-                <div className="flex items-center gap-1 font-mono text-[15px] leading-tight tabular-nums" style={{ color: t.t ? TONE[t.t] : 'rgb(var(--c-ink))' }}>
-                  {t.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[t.t ?? 'ok'] }} /> : null}
-                  <LiveValue raw={t.v} />
-                  <span className="ml-auto text-[10px]" style={{ color: t.d > 0 ? TONE.ok : t.d < 0 ? TONE.alert : TONE.neutral }}>{t.traj}{t.d ? Math.abs(t.d) : ''}</span>
-                </div>
-                <div className="mt-1 opacity-80"><Spark pts={t.spark} tone={t.t ?? 'ok'} /></div>
-              </div>
-            ))}
+          {/* Row 1 — sovereign national intelligence telemetry (10) */}
+          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5 xl:grid-cols-10">
+            {instruments.map(t => <KpiCell key={t.l} d={t} />)}
           </div>
 
           {/* Map-first band */}
