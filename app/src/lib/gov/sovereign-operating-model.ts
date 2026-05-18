@@ -730,17 +730,25 @@ export function fieldDeployment(
 
 // Long-horizon societal memory — accumulated recovery success vs. failure
 // scars institutional trust and slows its restoration.
-function societalMemory(epoch: number): { trust: number; scar: number } {
-  const H = 14;
-  let win = 0, loss = 0, n = 0;
+// Shared decayed binary-event memory — consolidates the long-horizon
+// "competence vs. failure" accumulators (societal / foresight / political /
+// capability) into one primitive. Recent epochs weigh more (recency decay).
+function eventMemory(
+  prefix: string, epoch: number, H: number, hi: number, lo: number, tail: number,
+): { pos: number; neg: number } {
+  let p = 0, q = 0, n = 0;
   for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
-    const decay = 1 - (epoch - e) / (H + 4);
-    if (seed(`soc:rec:${e}`) > 0.55) win += decay; else if (seed(`soc:rec:${e}`) < 0.32) loss += decay;
+    const decay = 1 - (epoch - e) / (H + tail);
+    const s = seed(`${prefix}:${e}`);
+    if (s > hi) p += decay; else if (s < lo) q += decay;
     n += decay;
   }
-  const trust = Math.round((win / Math.max(1, n)) * 100);
-  const scar = Math.round((loss / Math.max(1, n)) * 100);
-  return { trust, scar };
+  return { pos: Math.round((p / Math.max(1, n)) * 100), neg: Math.round((q / Math.max(1, n)) * 100) };
+}
+
+function societalMemory(epoch: number): { trust: number; scar: number } {
+  const m = eventMemory('soc:rec', epoch, 14, 0.55, 0.32, 4);
+  return { trust: m.pos, scar: m.neg };
 }
 
 export interface NationalSociety {
@@ -821,14 +829,8 @@ export interface StrategicForesight {
 // Record of anticipation: prior misses erode foresight confidence and widen
 // the uncertainty band; consistent anticipation builds doctrine trust.
 function foresightMemory(epoch: number): { miss: number; hit: number } {
-  const H = 12;
-  let miss = 0, hit = 0, n = 0;
-  for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
-    const decay = 1 - (epoch - e) / (H + 4);
-    if (seed(`fore:${e}`) > 0.6) hit += decay; else if (seed(`fore:${e}`) < 0.34) miss += decay;
-    n += decay;
-  }
-  return { miss: Math.round((miss / Math.max(1, n)) * 100), hit: Math.round((hit / Math.max(1, n)) * 100) };
+  const m = eventMemory('fore', epoch, 12, 0.6, 0.34, 4);
+  return { miss: m.neg, hit: m.pos };
 }
 export function strategicForesight(
   opS: OperatingState, post: NationalPosture, society: NationalSociety,
@@ -1027,14 +1029,8 @@ export interface PoliticalContinuity {
 // Long-horizon political memory — legitimacy erodes through visible failure
 // and rebuilds slowly through demonstrated competence.
 function politicalMemory(epoch: number): { competence: number; failure: number } {
-  const H = 16;
-  let comp = 0, fail = 0, n = 0;
-  for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
-    const decay = 1 - (epoch - e) / (H + 5);
-    if (seed(`pol:${e}`) > 0.58) comp += decay; else if (seed(`pol:${e}`) < 0.34) fail += decay;
-    n += decay;
-  }
-  return { competence: Math.round((comp / Math.max(1, n)) * 100), failure: Math.round((fail / Math.max(1, n)) * 100) };
+  const m = eventMemory('pol', epoch, 16, 0.58, 0.34, 5);
+  return { competence: m.pos, failure: m.neg };
 }
 export function politicalContinuity(
   opS: OperatingState, post: NationalPosture, society: NationalSociety,
@@ -1097,14 +1093,8 @@ export interface NationalCapability {
 // Long-horizon learning memory — repeated competent recovery compounds
 // institutional knowledge; chronic failure causes hesitation that lingers.
 function capabilityMemory(epoch: number): { learned: number; lost: number } {
-  const H = 20;
-  let learn = 0, lose = 0, n = 0;
-  for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
-    const decay = 1 - (epoch - e) / (H + 6);
-    if (seed(`cap:learn:${e}`) > 0.57) learn += decay; else if (seed(`cap:learn:${e}`) < 0.33) lose += decay;
-    n += decay;
-  }
-  return { learned: Math.round((learn / Math.max(1, n)) * 100), lost: Math.round((lose / Math.max(1, n)) * 100) };
+  const m = eventMemory('cap:learn', epoch, 20, 0.57, 0.33, 6);
+  return { learned: m.pos, lost: m.neg };
 }
 export function nationalCapability(
   opS: OperatingState, post: NationalPosture, society: NationalSociety,

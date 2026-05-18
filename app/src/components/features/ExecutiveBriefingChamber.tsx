@@ -140,6 +140,90 @@ export function ExecutiveBriefingChamber() {
     ? (v >= 65 ? 'ok' : v >= 45 ? 'warn' : 'alert')
     : (v >= 65 ? 'alert' : v >= 45 ? 'warn' : 'ok'));
 
+  const [memoState, setMemoState] = React.useState<'idle' | 'issued'>('idle');
+  const issueMemo = React.useCallback(() => {
+    const W = 74;
+    const rule = '═'.repeat(W);
+    const thin = '─'.repeat(W);
+    const L: string[] = [];
+    const stamp = new Date(now).toISOString().replace('T', ' ').slice(0, 19) + ' UTC';
+    L.push(rule);
+    L.push(`NATIONAL EXECUTIVE BRIEFING MEMORANDUM`);
+    L.push(`${(sov?.stateName ?? 'SOVEREIGN STATE').toUpperCase()} — ${(sov?.executiveTitle ?? 'EXECUTIVE OFFICE').toUpperCase()}`);
+    L.push(`CLASSIFICATION: SOVEREIGN // EYES-ONLY`);
+    L.push(`ISSUED: ${stamp}  ·  OPERATING EPOCH ${epoch}  ·  REF EBM-${epoch}`);
+    L.push(rule);
+    L.push('');
+    L.push('I.  EXECUTIVE SUMMARY');
+    L.push(thin);
+    L.push(`National posture is ${post.label} with executive confidence ${post.execConfidence}% and`);
+    L.push(`national stability ${stability} (risk ${nationalRisk}). Emergency-powers posture: ${powers}.`);
+    L.push(`Coordination load ${coordLoad}% across ${ministries.length} lead ministries.`);
+    L.push(`Civilian state ${society.label} (confidence ${society.civilianConfidence}, trust ${society.institutionalTrust}).`);
+    L.push(`Political continuity ${polit.label} (governance ${polit.governanceContinuity}, unity ${polit.nationalUnity}).`);
+    L.push(`External environment ${ext.label} (pressure ${ext.externalPressure}, alliance ${ext.allianceReliability}%).`);
+    L.push(`Sustainability ${sustain.outlook} (~${sustain.survivabilityWeeks}w survivability).`);
+    L.push(`National capability ${cap.label}, ${cap.trajectory} (index ${cap.capabilityIndex}).`);
+    L.push('');
+    L.push(`II.  ACTIVE STRATEGIC THREATS (${threats.length})`);
+    L.push(thin);
+    if (threats.length === 0) L.push('  None requiring executive attention.');
+    threats.forEach(({ c, g }, i) => {
+      L.push(`  ${i + 1}. [${g.lvl >= 3 ? 'CRITICAL' : g.lvl === 2 ? 'ELEVATED' : 'WATCH'}] ${c.label}`);
+      L.push(`     ${c.ministry} · ${g.authority.join(' > ')} · mandate ${g.mandate}`);
+      L.push(`     stage ${g.gate.held ? 'HELD @ ' : ''}${g.gate.stage} · pipeline ${g.stageCur}→${g.stageNext} · confidence ${g.confLabel} ${g.confidence}%`);
+      L.push(`     cause ${g.cause} > ${g.cascade.hops.join(' > ')} · ETA ${g.eta}`);
+      L.push(`     field ${g.field.fIdx < 0 ? 'awaiting authorization' : `${g.field.stage} / ${g.field.region} (${g.field.friction})`}`);
+      L.push(`     directive: ${g.machinery}`);
+      L.push(`     conflict: ${g.conflict.text}`);
+    });
+    L.push('');
+    L.push('III.  MINISTRY READINESS & COORDINATION');
+    L.push(thin);
+    ministries.forEach(({ n, p, beh, rel, interaction }) => {
+      L.push(`  ${n.ministry.padEnd(26)} pressure ${String(p).padStart(3)} · reliability ${rel}% · ${beh.orientation}`);
+      L.push(`     requests ${interaction.ask} from ${interaction.counterpart} — ${interaction.stance}`);
+    });
+    L.push('');
+    L.push('IV.  STRATEGIC OUTLOOK & FORESIGHT');
+    L.push(thin);
+    L.push(`  Projected national risk ${foresight.projLo}–${foresight.projHi} (p${foresight.projRisk}), confidence ${foresight.confidence}%.`);
+    L.push(`  Dominant scenario: ${foresight.dominant} (${foresight.scenarios[0]?.prob ?? 0}%).`);
+    if (foresight.warnings.length) {
+      L.push('  Early warning:');
+      foresight.warnings.slice(0, 4).forEach(wn => L.push(`   - [${wn.lead}] ${wn.signal}`));
+    } else L.push('  Early warning: no leading indicators above threshold.');
+    L.push(`  Capability trajectory: ${cap.trajectory} (human ${cap.humanCapital}, knowledge ${cap.institutionalKnowledge}, tech ${cap.technologicalResilience}).`);
+    L.push('');
+    L.push('V.  DOCTRINE RECOMMENDATION');
+    L.push(thin);
+    policy.sims.slice(0, 3).forEach((s, i) => {
+      L.push(`  ${i === 0 ? '▸' : ' '} ${s.label.padEnd(30)} score ${s.score} · survive ~${s.survivalWeeks}w · ${s.sustainable ? 'sustainable' : 'not sustainable'}`);
+      L.push(`     ${s.note}`);
+    });
+    L.push(`  Recommended: ${policy.recommended}. ${policy.ambiguity >= 60 ? 'Leading options closely scored — outcome contested.' : 'Distinct doctrine leads.'}`);
+    L.push('');
+    L.push(rule);
+    L.push('Advisory synthesis from the sovereign operating doctrine.');
+    L.push('No autonomous action — national leadership decides.');
+    L.push(rule);
+    const text = L.join('\n');
+    try {
+      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `EBM-${(sov?.stateName ?? 'state').replace(/\s+/g, '-').toLowerCase()}-epoch${epoch}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      void navigator.clipboard?.writeText(text).catch(() => {});
+    } catch { /* non-fatal */ }
+    setMemoState('issued');
+    setTimeout(() => setMemoState('idle'), 4000);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy]);
+
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-6">
@@ -178,6 +262,12 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
+          <button type="button" onClick={issueMemo}
+            className="focus-ring rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider transition-colors hover:text-ink"
+            style={{ borderColor: memoState === 'issued' ? TONE.ok : 'rgb(var(--c-line))', color: memoState === 'issued' ? TONE.ok : 'rgb(var(--c-ink-soft))' }}
+            title="Issue formal executive briefing memorandum (download + clipboard)">
+            {memoState === 'issued' ? '✓ Memorandum issued' : '⎙ Issue memorandum'}
+          </button>
           <span className="font-mono tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
         </div>
       </header>
