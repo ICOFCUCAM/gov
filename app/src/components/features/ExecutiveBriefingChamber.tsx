@@ -19,6 +19,7 @@ import {
   ministryOperations, institutionalFatigue, nationalStressExercise,
   nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
   nationalChronology, allianceFramework, nationalOperations, populationOrder,
+  governanceAudit,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -156,6 +157,9 @@ export function ExecutiveBriefingChamber() {
   const opsTone = nops.atRisk >= 3 ? 'alert' : nops.atRisk >= 1 ? 'warn' : 'ok';
   const popn = populationOrder(opS, post, society, ext, polit, peakP, epoch);
   const popTone = popn.label === 'UNGOVERNABLE' || popn.label === 'FRACTURING' ? 'alert' : popn.label === 'STRAINED' ? 'warn' : 'ok';
+  const audit = governanceAudit(opS, post, society, ext, polit, lead, sustain, cap, register, nops, popn, epoch);
+  const auditTone = ['EXHAUSTED', 'DECLINING', 'FRAGMENTING'].includes(audit.healthVerdict) ? 'alert'
+    : ['OVEREXTENDED', 'STRAINED', 'RECOVERING'].includes(audit.healthVerdict) ? 'warn' : 'ok';
   const cf = (c: string) => (c === 'probable' ? 'alert' : c === 'possible' ? 'warn' : 'neutral');
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
@@ -312,6 +316,18 @@ export function ExecutiveBriefingChamber() {
     popn.cohorts.forEach(c => L.push(`   - ${c.name.padEnd(30)} ${c.sentiment} / ${c.compliance}`));
     L.push(`  Public memory: ${popn.memoNote}`);
     L.push('');
+    L.push(`XV.  SOVEREIGN GOVERNANCE AUDIT — ${audit.healthVerdict}`);
+    L.push(thin);
+    L.push(`  Civilization ${audit.trajectory} (${audit.civScore}) · institutional decay ${audit.institutionalDecay}`);
+    L.push('  Governance drift:');
+    if (audit.drift.length === 0) L.push('   - none tripped');
+    audit.drift.forEach(d => L.push(`   - ${d}`));
+    L.push('  Policy consequence:');
+    audit.policyNotes.forEach(pn => L.push(`   - ${pn}`));
+    L.push('  Recommended adaptation:');
+    audit.adaptation.forEach(a => L.push(`   - ${a}`));
+    L.push(`  Audit memory: ${audit.auditMemoNote}`);
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -331,7 +347,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -392,6 +408,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[popTone] }} title={`national population & social order · governability ${popn.governability}`}>
             society {popn.label.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[auditTone] }} title={`sovereign governance audit · civilization ${audit.trajectory}`}>
+            audit {audit.healthVerdict.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -848,6 +867,37 @@ export function ExecutiveBriefingChamber() {
           <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
             Society is <span className="font-semibold" style={{ color: TONE[popTone] }}>{popn.label.toLowerCase()}</span>;
             low public compliance imposes a {popn.feedbackDrag}-point capability drag on national operations. {popn.memoNote}. The state governs a living society — bidirectional, with memory.
+          </p>
+        </Panel>
+
+        <Panel title="Sovereign governance audit"
+          meta={`${audit.healthVerdict} · civilization ${audit.trajectory} (${audit.civScore}) · institutional decay ${audit.institutionalDecay}`}>
+          <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Governance drift</div>
+              {audit.drift.length === 0 ? (
+                <p className="text-[11px] text-ink-muted">No structural drift indicators tripped.</p>
+              ) : audit.drift.map(d => (
+                <div key={d} className="flex items-baseline gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
+                  <span className="shrink-0" style={{ color: TONE.warn }}>▸</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{d}</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Recommended doctrine adaptation</div>
+              {audit.adaptation.map(a => (
+                <div key={a} className="flex items-baseline gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
+                  <span className="shrink-0" style={{ color: ACCENT }}>→</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{a}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+            Policy consequence: {audit.policyNotes.join(' ')} Governance condition is{' '}
+            <span className="font-semibold" style={{ color: TONE[auditTone] }}>{audit.healthVerdict.toLowerCase()}</span>;
+            civilization is <span className="font-semibold" style={{ color: TONE[audit.trajectory === 'degrading' ? 'alert' : audit.trajectory === 'drifting' ? 'warn' : 'ok'] }}>{audit.trajectory}</span>. {audit.auditMemoNote}. The state audits and corrects itself.
           </p>
         </Panel>
 

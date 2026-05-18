@@ -12,7 +12,7 @@ import {
   politicalContinuity, nationalCapability, ministryOperations,
   nationalStressExercise, nationalDirectiveRegister, executiveLeadership,
   intelligenceAssessment, nationalChronology, allianceFramework,
-  nationalOperations, populationOrder,
+  nationalOperations, populationOrder, governanceAudit,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -683,5 +683,32 @@ describe('sovereign operating model', () => {
     const cPc = politicalContinuity(cS, p, cSoc, ex, cF, 21);
     const cPo = populationOrder(cS, p, cSoc, ex, cPc, 25, 21);
     expect(cPo.governability).toBeGreaterThanOrEqual(po.governability);
+  });
+
+  it('governance audit synthesizes drift, verdict & civilizational trajectory', () => {
+    const oS = nationalOperatingState(60, 72, 86, 4, 6, 23);
+    const p = nationalPosture(23);
+    const soc = nationalSociety(oS, p, 6, 4, 23);
+    const ex = externalEnvironment(23);
+    const f = strategicForesight(oS, p, soc, ex, 56, 4, 6, 23);
+    const su = nationalSustainability(oS, p, soc, f, 23);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 23);
+    const el = executiveLeadership(oS, p, soc, ex, pc, 2, 6, 23);
+    const cp = nationalCapability(oS, p, soc, ex, su, pc, 86, 6, 23);
+    const reg = nationalDirectiveRegister(p, oS.contention, 23);
+    const af = allianceFramework(ex, p, soc, f, 2, 23);
+    const no = nationalOperations(oS, p, soc, ex, pc, el, af, 23);
+    const po = populationOrder(oS, p, soc, ex, pc, 86, 23);
+    const ga = governanceAudit(oS, p, soc, ex, pc, el, su, cp, reg, no, po, 23);
+    expect(ga).toEqual(governanceAudit(oS, p, soc, ex, pc, el, su, cp, reg, no, po, 23));
+    expect(ga.institutionalDecay).toBeGreaterThanOrEqual(0);
+    expect(ga.institutionalDecay).toBeLessThanOrEqual(100);
+    expect(ga.civScore).toBeGreaterThanOrEqual(0);
+    expect(ga.civScore).toBeLessThanOrEqual(100);
+    expect(ga.policyNotes.length).toBeGreaterThan(0);
+    expect(ga.adaptation.length).toBeGreaterThan(0);
+    expect(['strengthening', 'holding', 'drifting', 'degrading']).toContain(ga.trajectory);
+    expect(['COHESIVE', 'RESILIENT', 'ADAPTIVE', 'RECOVERING', 'STRAINED', 'OVEREXTENDED', 'FRAGMENTING', 'EXHAUSTED', 'DECLINING']).toContain(ga.healthVerdict);
+    expect(typeof ga.auditMemoNote).toBe('string');
   });
 });

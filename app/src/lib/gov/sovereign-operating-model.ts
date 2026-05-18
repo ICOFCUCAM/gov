@@ -1920,6 +1920,95 @@ export function populationOrder(
   };
 }
 
+// ── Sovereign self-correction & governance audit ──────────────────────────
+// The apex synthesis: the state audits itself — detecting governance drift,
+// institutional decay and policy consequence, recommending doctrine
+// adaptation, and rendering a governance-health verdict and a long-horizon
+// civilizational trajectory. Pure synthesis over the existing doctrine.
+export interface GovernanceAudit {
+  drift: string[];               // tripped degradation indicators
+  institutionalDecay: number;    // 0..100 (higher worse)
+  policyNotes: string[];         // measured doctrine consequences
+  adaptation: string[];          // recommended doctrine adjustments
+  healthVerdict: string;         // COHESIVE … DECLINING
+  trajectory: 'strengthening' | 'holding' | 'drifting' | 'degrading';
+  civScore: number;              // 0..100 civilizational condition
+  auditMemoNote: string;
+}
+export function governanceAudit(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  ext: ExternalEnvironment, polit: PoliticalContinuity, lead: ExecutiveLeadership,
+  sustain: NationalSustainability, cap: NationalCapability,
+  register: DirectiveRegister, nops: { atRisk: number }, popn: PopulationOrder, epoch: number,
+): GovernanceAudit {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  // 1 — governance drift detection.
+  const drift: string[] = [];
+  if (register.failed > register.completed) drift.push('directive failure outpacing completion');
+  if (lead.consensus < 48) drift.push('unstable executive consensus');
+  if (polit.cabinetCohesion < 45) drift.push('eroding cabinet cohesion');
+  if (sustain.infraAging >= 58) drift.push('accumulating infrastructure decay');
+  if (opS.resources.reserves.headroom < 38) drift.push('persistent reserve exhaustion');
+  if (popn.governability < 48) drift.push('declining public governability');
+  if (ext.foreignDependency >= 62) drift.push('chronic geopolitical dependence');
+  if (nops.atRisk >= 3) drift.push('national operations under coordination strain');
+  if (lead.constitutionalStrain >= 60) drift.push('constitutional / mandate overextension');
+  // 2/3 — institutional decay composite.
+  const institutionalDecay = clamp(
+    drift.length * 7
+    + (100 - polit.governanceContinuity) * 0.22
+    + sustain.infraAging * 0.2
+    + (100 - lead.decisionQuality) * 0.16
+    + opS.contention * 0.12);
+  // 2 — measured policy consequences (historical doctrine evaluation).
+  const policyNotes: string[] = [];
+  if (post.deploymentConservatism >= 58) policyNotes.push('Reserve-austere doctrine improved survivability at economic-continuity cost.');
+  if (post.containmentWeight >= 58) policyNotes.push('Prolonged containment preserved infrastructure but eroded public trust.');
+  if (ext.strategicCaution >= 55) policyNotes.push('Diplomatic caution lowered escalation risk but slowed recovery.');
+  if (post.execConfidence >= 70) policyNotes.push('Assertive posture accelerated stabilization under sustained confidence.');
+  if (policyNotes.length === 0) policyNotes.push('Doctrine consequences within expected balance over the period.');
+  // 4 — strategic adaptation recommendations from outcomes.
+  const adaptation: string[] = [];
+  if (register.failed > register.completed) adaptation.push('increase authorization caution; revise failing directive doctrine');
+  if (ext.allianceReliability < 55) adaptation.push('raise sovereignty bias; reduce alliance-dependent posture');
+  if (sustain.infraAging >= 58) adaptation.push('prioritise infrastructure hardening allocation');
+  if (popn.migrationPressure >= 55) adaptation.push('shift continuity allocation toward regional stabilization');
+  if (society.socialStrain >= 55) adaptation.push('raise legitimacy sensitivity; ease containment weighting');
+  if (adaptation.length === 0) adaptation.push('maintain current doctrine; no corrective adjustment indicated');
+  // 6/7 — governance-health verdict & civilizational trajectory.
+  const health = clamp(
+    polit.governanceContinuity * 0.26 + cap.capabilityIndex * 0.2
+    + popn.governability * 0.18 + sustain.survivabilityWeeks * 1.0
+    + lead.leadershipStability * 0.16 - institutionalDecay * 0.3);
+  const mem = eventMemory('audit:civ', epoch, 20, 0.56, 0.34, 6);
+  const civScore = clamp(health * 0.7 + (mem.pos - mem.neg) * 0.3 + 10);
+  const drend = mem.pos - mem.neg;
+  const trajectory: GovernanceAudit['trajectory'] =
+    civScore >= 60 && drend >= 10 ? 'strengthening'
+    : civScore < 38 || drend <= -14 ? 'degrading'
+    : drend <= -4 || institutionalDecay >= 56 ? 'drifting'
+    : 'holding';
+  const healthVerdict =
+    institutionalDecay >= 70 ? 'EXHAUSTED'
+    : health < 30 ? 'DECLINING'
+    : drift.length >= 5 ? 'FRAGMENTING'
+    : lead.constitutionalStrain >= 62 ? 'OVEREXTENDED'
+    : health < 46 ? 'STRAINED'
+    : trajectory === 'strengthening' ? 'RESILIENT'
+    : drend > 0 && health < 60 ? 'RECOVERING'
+    : trajectory === 'holding' && drift.length <= 1 ? 'COHESIVE'
+    : 'ADAPTIVE';
+  const auditMemoNote = mem.neg > mem.pos + 14
+    ? 'failed governance eras left inherited caution & constitutional scars'
+    : mem.pos >= mem.neg + 14
+      ? 'resilient administrations established durable doctrine precedent'
+      : 'mixed governance record — doctrine precedent held provisionally';
+  return {
+    drift, institutionalDecay, policyNotes, adaptation,
+    healthVerdict, trajectory, civScore, auditMemoNote,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.
