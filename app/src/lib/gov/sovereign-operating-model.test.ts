@@ -11,7 +11,7 @@ import {
   strategicForesight, simulateDoctrines, nationalSustainability,
   politicalContinuity, nationalCapability, ministryOperations,
   nationalStressExercise, nationalDirectiveRegister, executiveLeadership,
-  intelligenceAssessment,
+  intelligenceAssessment, nationalChronology,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -559,5 +559,27 @@ describe('sovereign operating model', () => {
     const cPc = politicalContinuity(cS, p, cSoc, ex, cF, 15);
     const cIa = intelligenceAssessment(cS, p, cSoc, ex, cF, cSu, cPc, 15);
     expect(cIa.threatLevel).toBeLessThanOrEqual(ia.threatLevel);
+  });
+
+  it('national chronology replays deterministically with eras & interpretation', () => {
+    const ch = nationalChronology(30, 55);
+    expect(ch).toEqual(nationalChronology(30, 55));
+    expect(ch.eras.length).toBeGreaterThanOrEqual(1);
+    // eras tile the covered span contiguously
+    for (let i = 1; i < ch.eras.length; i++) {
+      expect(ch.eras[i]!.from).toBe(ch.eras[i - 1]!.to + 1);
+    }
+    expect(ch.eras[0]!.from).toBe(Math.max(0, 30 - 14));
+    expect(ch.eras[ch.eras.length - 1]!.to).toBe(30);
+    expect(ch.events.length).toBeLessThanOrEqual(12);
+    for (const ev of ch.events) {
+      expect(['era', 'posture', 'external', 'administration', 'confidence']).toContain(ev.kind);
+      expect(['ok', 'warn', 'alert', 'neutral']).toContain(ev.tone);
+      expect(ev.epoch).toBeLessThanOrEqual(30);
+    }
+    expect(ch.interpretation.length).toBeGreaterThan(0);
+    expect(ch.administration).toBe(Math.floor(30 / 12) + 1);
+    expect(typeof ch.currentEra).toBe('string');
+    expect(ch.span).toBe(15);
   });
 });

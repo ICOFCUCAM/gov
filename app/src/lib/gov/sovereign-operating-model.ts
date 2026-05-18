@@ -1553,6 +1553,90 @@ export function intelligenceAssessment(
   return { signals, counter, preemptive, assessmentConfidence, threatLevel, posture, memoNote };
 }
 
+// ── National continuity chronology ────────────────────────────────────────
+// The doctrine is a pure function of the operating epoch, so the nation's
+// trajectory can be deterministically replayed. This reconstructs the
+// continuity record — era segmentation, posture/leadership transitions and
+// analytical historical interpretation — without any stored state.
+export interface ChronEvent {
+  epoch: number;
+  kind: 'era' | 'posture' | 'external' | 'administration' | 'confidence';
+  text: string;
+  tone: 'ok' | 'warn' | 'alert' | 'neutral';
+}
+export interface ChronEra { from: number; to: number; label: string; }
+export interface NationalChronology {
+  events: ChronEvent[];
+  eras: ChronEra[];
+  interpretation: string[];
+  currentEra: string;
+  administration: number;
+  span: number;            // epochs covered
+}
+export function nationalChronology(epoch: number, contention: number): NationalChronology {
+  const start = Math.max(0, epoch - 14);
+  const events: ChronEvent[] = [];
+  const eras: ChronEra[] = [];
+  let prevPost = '', prevExt = '', prevEra = '', prevAdmin = -1, prevConfBand = '';
+  let eraStart = start, eraLabel = '';
+  const confBand = (c: number) => (c >= 70 ? 'high' : c >= 45 ? 'moderate' : 'low');
+  for (let e = start; e <= epoch; e++) {
+    const post = nationalPosture(e);
+    const ext = externalEnvironment(e);
+    const reg = nationalDirectiveRegister(post, contention, e);
+    const admin = Math.floor(e / 12) + 1;
+    const cb = confBand(post.execConfidence);
+    if (e === start) { prevPost = post.label; prevExt = ext.label; prevEra = reg.era; prevAdmin = admin; prevConfBand = cb; eraLabel = reg.era; }
+    if (reg.era !== prevEra) {
+      eras.push({ from: eraStart, to: e - 1, label: eraLabel });
+      eraStart = e; eraLabel = reg.era;
+      events.push({ epoch: e, kind: 'era', text: `Governing era transition: ${prevEra} → ${reg.era}`, tone: 'neutral' });
+      prevEra = reg.era;
+    }
+    if (post.label !== prevPost) {
+      const worse = post.execConfidence < 45;
+      events.push({ epoch: e, kind: 'posture', text: `Doctrine posture shifted: ${prevPost} → ${post.label}`, tone: worse ? 'warn' : 'ok' });
+      prevPost = post.label;
+    }
+    if (ext.label !== prevExt) {
+      const worse = ext.externalPressure >= 46;
+      events.push({ epoch: e, kind: 'external', text: `External environment: ${prevExt} → ${ext.label}`, tone: worse ? 'alert' : 'ok' });
+      prevExt = ext.label;
+    }
+    if (admin !== prevAdmin) {
+      events.push({ epoch: e, kind: 'administration', text: `Administration ${admin} assumed continuity of government`, tone: 'neutral' });
+      prevAdmin = admin;
+    }
+    if (cb !== prevConfBand) {
+      events.push({ epoch: e, kind: 'confidence', text: `Executive confidence ${cb === 'low' ? 'weakened to low' : cb === 'high' ? 'strengthened to high' : 'moved to moderate'}`, tone: cb === 'low' ? 'alert' : cb === 'high' ? 'ok' : 'warn' });
+      prevConfBand = cb;
+    }
+  }
+  eras.push({ from: eraStart, to: epoch, label: eraLabel });
+  const nowPost = nationalPosture(epoch);
+  const nowExt = externalEnvironment(epoch);
+  const nowReg = nationalDirectiveRegister(nowPost, contention, epoch);
+  // Historical interpretation — analytical, not archival.
+  const interpretation: string[] = [];
+  if (nowPost.deploymentConservatism >= 58) interpretation.push('Continuity preserved through conservative reserve policy.');
+  if (nowPost.containmentWeight >= 58) interpretation.push('Legitimacy erosion followed prolonged containment posture.');
+  if (nowExt.externalPressure >= 50) interpretation.push('External pressure accumulation amplified internal strain.');
+  if (events.filter(x => x.kind === 'era').length >= 2) interpretation.push('The state transitioned through successive governing eras under sustained pressure.');
+  if (nowPost.execConfidence >= 70) interpretation.push('Demonstrated competence rebuilt executive assertiveness over the period.');
+  else if (nowPost.execConfidence < 45) interpretation.push('Repeated strain suppressed executive confidence across administrations.');
+  if (nowReg.failed > nowReg.completed) interpretation.push('Directive failure outpaced completion — doctrine caution increased.');
+  else if (nowReg.completed > nowReg.failed) interpretation.push('Directive completion outpaced failure — institutional trust reinforced.');
+  if (interpretation.length === 0) interpretation.push('Continuity held without major doctrinal discontinuity over the period.');
+  return {
+    events: events.slice(-12),
+    eras,
+    interpretation,
+    currentEra: nowReg.era,
+    administration: Math.floor(epoch / 12) + 1,
+    span: epoch - start + 1,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

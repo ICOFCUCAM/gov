@@ -18,6 +18,7 @@ import {
   nationalSustainability, politicalContinuity, nationalCapability,
   ministryOperations, institutionalFatigue, nationalStressExercise,
   nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
+  nationalChronology,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -147,6 +148,7 @@ export function ExecutiveBriefingChamber() {
   const register = nationalDirectiveRegister(post, opS.contention, epoch);
   const intel = intelligenceAssessment(opS, post, society, ext, foresight, sustain, polit, epoch);
   const intelTone = intel.posture === 'CRITICAL' || intel.posture === 'ALERT' ? 'alert' : intel.posture === 'ELEVATED' ? 'warn' : intel.posture === 'GUARDED' ? 'neutral' : 'ok';
+  const chron = nationalChronology(epoch, opS.contention);
   const cf = (c: string) => (c === 'probable' ? 'alert' : c === 'possible' ? 'warn' : 'neutral');
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
@@ -263,6 +265,17 @@ export function ExecutiveBriefingChamber() {
     L.push(`  Classified memory: ${intel.memoNote}`);
     L.push('  Assessments interpretive at stated confidence — not certainty.');
     L.push('');
+    L.push(`XI.  NATIONAL CONTINUITY CHRONOLOGY — ADMINISTRATION ${chron.administration}`);
+    L.push(thin);
+    L.push(`  Current era ${chron.currentEra} · ${chron.span}-epoch record`);
+    L.push('  Governing eras:');
+    chron.eras.forEach(er => L.push(`   - e${er.from}–${er.to}: ${er.label}`));
+    L.push('  Continuity record:');
+    if (chron.events.length === 0) L.push('   - no major doctrinal transitions');
+    chron.events.forEach(ev => L.push(`   - e${ev.epoch}: ${ev.text}`));
+    L.push('  Historical interpretation:');
+    chron.interpretation.forEach(it => L.push(`   - ${it}`));
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -282,7 +295,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -331,6 +344,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[intelTone] }} title={`classified intelligence posture · threat ${intel.threatLevel}`}>
             intel {intel.posture.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline text-ink-soft" title={`continuity chronology · ${chron.span}-epoch record`}>
+            admin {chron.administration}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -673,6 +689,31 @@ export function ExecutiveBriefingChamber() {
               ? <>Preemptive measures advised: {intel.preemptive.join('; ')}. </>
               : <>No preemptive measures triggered at current confidence. </>}
             Classified memory: {intel.memoNote}. Assessments are interpretive at stated confidence — not certainty.
+          </p>
+        </Panel>
+
+        <Panel title="National continuity chronology"
+          meta={`administration ${chron.administration} · ${chron.currentEra} · ${chron.span}-epoch record`}>
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Governing eras</div>
+          <div className="mb-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-ink-muted">
+            {chron.eras.map((er, i) => (
+              <span key={`${er.from}-${i}`} className="whitespace-nowrap">
+                <span className="font-mono tabular-nums">e{er.from}–{er.to}</span> <span className="text-ink-soft">{er.label}</span>
+                {i < chron.eras.length - 1 ? <span className="text-line"> ·</span> : null}
+              </span>
+            ))}
+          </div>
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Continuity record</div>
+          {chron.events.length === 0 ? (
+            <p className="text-[11px] text-ink-muted">No major doctrinal transitions over the recorded span.</p>
+          ) : chron.events.map((ev, i) => (
+            <div key={`${ev.epoch}-${i}`} className="flex items-baseline gap-3 border-b border-line-soft py-1 last:border-0">
+              <span className="w-12 shrink-0 font-mono text-[10px] tabular-nums text-ink-muted">e{ev.epoch}</span>
+              <span className="min-w-0 flex-1 truncate text-[11px]" style={{ color: TONE[ev.tone] }}>{ev.text}</span>
+            </div>
+          ))}
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+            Historical interpretation: {chron.interpretation.join(' ')} Deterministic continuity replay — interpretive, not archival.
           </p>
         </Panel>
 
