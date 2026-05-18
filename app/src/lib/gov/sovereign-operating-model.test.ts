@@ -6,7 +6,7 @@ import {
   executiveGate, commandVelocity, authorityChain, priorityConflict, GOV_STAGES,
   governIncident, pipeStage, mandateFor,
   institutionalFatigue, attentionWeight, commandConfidence, coordinationBurden,
-  nationalPosture,
+  nationalPosture, ministryInteraction, coordinationLoad,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -193,5 +193,28 @@ describe('sovereign operating model', () => {
     });
     expect(conservative.pIdx).toBeLessThanOrEqual(base.pIdx);
     expect(conservative.confidence).toBeLessThan(base.confidence);
+  });
+
+  it('inter-ministerial interaction & coordination load behave institutionally', () => {
+    const slack = nationalOperatingState(50, 25, 30, 0, 1, 3);
+    const strained = nationalOperatingState(50, 95, 98, 6, 9, 3);
+    const pCalm = nationalPosture(2);
+    const pHard = { ...nationalPosture(2), deploymentConservatism: 90, execConfidence: 20 };
+
+    const easy = ministryInteraction('HEALTH', 40, slack, pCalm, 3);
+    const hard = ministryInteraction('HEALTH', 90, strained, pHard, 3);
+    expect(easy).toEqual(ministryInteraction('HEALTH', 40, slack, pCalm, 3));
+    expect(['concurred', 'conditional', 'delayed', 'resisted']).toContain(hard.stance);
+    expect(['ok', 'warn', 'alert', 'neutral']).toContain(hard.stanceTone);
+    expect(typeof easy.ask).toBe('string');
+    expect(easy.counterpart.length).toBeGreaterThan(0);
+    // a strained, conservative state yields more institutional friction
+    const rank = { concurred: 0, conditional: 1, delayed: 2, resisted: 3 } as const;
+    expect(rank[hard.stance as keyof typeof rank]).toBeGreaterThanOrEqual(rank[easy.stance as keyof typeof rank]);
+
+    const lo = coordinationLoad(3, slack, pCalm, 0);
+    const hi = coordinationLoad(11, strained, pHard, 5);
+    expect(hi).toBeGreaterThan(lo);
+    expect(hi).toBeLessThanOrEqual(100);
   });
 });

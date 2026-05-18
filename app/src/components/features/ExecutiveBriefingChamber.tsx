@@ -13,7 +13,7 @@ import type { NationalSnapshot, NationalCoordination, SovereignProfile } from '@
 import { Panel, TONE, ACCENT, PALETTE, LiveValue, seed } from '@/components/features/SituationRoom';
 import {
   governIncident, nationalPosture, nationalOperatingState, forecast,
-  ministryBehavior, ministryReliability,
+  ministryBehavior, ministryReliability, ministryInteraction, coordinationLoad,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -100,14 +100,14 @@ export function ExecutiveBriefingChamber() {
       const arch = String(n.archetype);
       const beh = ministryBehavior(arch);
       const rel = ministryReliability(arch, epoch);
-      const g = governIncident({
-        archetype: arch, severity: p >= 75 ? 'sev1' : p >= 55 ? 'sev2' : 'sev3', ageM: 20, ack: true,
-        epoch, ministryId: n.ministryId, prop: p,
-        contention: opS.contention, telecom: opS.display.telecom,
-        reservesHeadroom: opS.resources.reserves.headroom, posture: post,
-      });
-      return { n, p, beh, rel, conflict: g.conflict };
+      const interaction = ministryInteraction(arch, p, opS, post, epoch);
+      return { n, p, beh, rel, interaction };
     });
+  const heldGates = threats.filter(t => t.g.gate.held).length;
+  const coordLoad = coordinationLoad(
+    nat?.totals.activeMinistries ?? nodes.length, opS, post, heldGates);
+  const aligned = ministries.filter(m => m.interaction.aligned).length;
+  const coordTone = coordLoad >= 70 ? 'alert' : coordLoad >= 45 ? 'warn' : 'ok';
 
   // Strategic outlook — same doctrine pools as the situation room.
   const fEn = forecast('som:en', opS.resources.energy.util, ts, false);
@@ -138,6 +138,9 @@ export function ExecutiveBriefingChamber() {
             SOVEREIGN ∕∕ EYES-ONLY
           </span>
           <span className="hidden text-ink-muted md:inline">{sov?.executiveTitle ?? 'Executive Office'}</span>
+          <span className="hidden font-mono tabular-nums sm:inline" style={{ color: TONE[coordTone] }} title="national coordination load">
+            coord {coordLoad}%
+          </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
           <span className="font-mono tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
@@ -222,10 +225,11 @@ export function ExecutiveBriefingChamber() {
         </Panel>
 
         <div className="grid gap-3 xl:grid-cols-2">
-          <Panel title="Ministry alignment & conflict" meta="competing national priorities">
+          <Panel title="Ministry alignment & conflict"
+            meta={`coordination load ${coordLoad}% · ${aligned}/${ministries.length} aligned`}>
             {ministries.length === 0 ? (
               <p className="py-4 text-center text-sm text-ink-muted">Awaiting institutional telemetry…</p>
-            ) : ministries.map(({ n, p, beh, rel, conflict }) => {
+            ) : ministries.map(({ n, p, beh, rel, interaction }) => {
               const t = p >= 70 ? 'alert' : p >= 50 ? 'warn' : 'ok';
               return (
                 <div key={n.ministryId} className="flex items-center gap-3 border-b border-line-soft py-2 last:border-0">
@@ -238,7 +242,8 @@ export function ExecutiveBriefingChamber() {
                       </span>
                     </div>
                     <div className="truncate text-[10px] text-ink-muted">
-                      {beh.orientation} · ⚖ {conflict.text}
+                      <span className="text-ink-soft">{beh.orientation}</span> · → requests {interaction.ask} from {interaction.counterpart} ·{' '}
+                      <span style={{ color: TONE[interaction.stanceTone] }}>{interaction.stance}</span>
                     </div>
                   </div>
                 </div>

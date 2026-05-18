@@ -518,6 +518,72 @@ export function nationalPosture(epoch: number): NationalPosture {
   };
 }
 
+// ── Inter-ministerial governance operations ───────────────────────────────
+// Ministries are competing & cooperating institutions, not isolated feeds.
+// Each carries a standing institutional ask of a counterpart; the
+// counterpart's stance is its own behavioural culture under live pressure,
+// posture and contention — concurrence, delay or resistance.
+
+interface MinistryAsk { ask: string; from: string; }
+const MINISTRY_ASK: Record<string, MinistryAsk> = {
+  HEALTH:      { ask: 'emergency logistics allocation', from: 'TRANSPORT' },
+  EMERGENCY:   { ask: 'deployment-priority authorization', from: 'FINANCE' },
+  TRANSPORT:   { ask: 'corridor-closure relief', from: 'INTERIOR' },
+  ENERGY:      { ask: 'grid-stabilization funding window', from: 'FINANCE' },
+  TELECOM:     { ask: 'coordination bandwidth restoration', from: 'ENERGY' },
+  INTERIOR:    { ask: 'containment deployment priority', from: 'EMERGENCY' },
+  FINANCE:     { ask: 'reserve-preservation concurrence', from: 'INTERIOR' },
+  AGRICULTURE: { ask: 'supply-corridor protection', from: 'TRANSPORT' },
+  TRADE:       { ask: 'throughput-continuity guarantee', from: 'TRANSPORT' },
+  JUSTICE:     { ask: 'custody-capacity relief', from: 'INTERIOR' },
+  EDUCATION:   { ask: 'service-continuity funding', from: 'FINANCE' },
+  LABOR:       { ask: 'workforce-stabilization support', from: 'FINANCE' },
+  ENVIRONMENT: { ask: 'hazard-containment logistics', from: 'TRANSPORT' },
+};
+
+export interface MinistryInteraction {
+  ask: string;
+  counterpart: string;
+  stance: string;          // concurred | conditional | delayed | resisted
+  stanceTone: 'ok' | 'warn' | 'alert' | 'neutral';
+  aligned: boolean;
+}
+// The counterpart answers from its own institutional culture: a
+// conservative / fatigued / contended counterpart delays or resists.
+export function ministryInteraction(
+  arch: string, pressure: number, opS: OperatingState, post: NationalPosture, epoch: number,
+): MinistryInteraction {
+  const a = MINISTRY_ASK[arch] ?? { ask: 'cross-ministry concurrence', from: 'FINANCE' };
+  const cb = ministryBehavior(a.from);
+  const cFatigue = institutionalFatigue(a.from, epoch);
+  // friction rises with the counterpart's conservatism, fatigue, national
+  // contention, conservative posture and the asking ministry's pressure.
+  let friction = cb.auth * 16 + cFatigue * 0.3 + opS.contention * 0.28
+    + post.deploymentConservatism * 0.16 + pressure * 0.12;
+  if (cb.reserveSensitive && opS.resources.reserves.headroom < 45) friction += 18;
+  if (a.from === 'TRANSPORT' && opS.resources.transport.util >= 75) friction += 12;
+  if (a.from === 'ENERGY' && opS.resources.energy.util >= 80) friction += 12;
+  friction -= post.execConfidence * 0.12;
+  const f = Math.round(friction);
+  const stance = f >= 78 ? 'resisted' : f >= 56 ? 'delayed' : f >= 38 ? 'conditional' : 'concurred';
+  const stanceTone = f >= 78 ? 'alert' : f >= 56 ? 'warn' : f >= 38 ? 'neutral' : 'ok';
+  return { ask: a.ask, counterpart: a.from, stance, stanceTone, aligned: f < 38 };
+}
+
+// National coordination load — how hard the state is to synchronize right
+// now: active institutions, telecom integrity, executive-review burden and
+// institutional fatigue all add cabinet bandwidth strain.
+export function coordinationLoad(
+  activeMinistries: number, opS: OperatingState, post: NationalPosture, heldGates: number,
+): number {
+  return Math.max(0, Math.min(100, Math.round(
+    activeMinistries * 5
+    + (100 - opS.display.telecom) * 0.5
+    + opS.contention * 0.25
+    + heldGates * 6
+    + (100 - post.execConfidence) * 0.15)));
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.
