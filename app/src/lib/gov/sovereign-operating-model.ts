@@ -1637,6 +1637,95 @@ export function nationalChronology(epoch: number, contention: number): NationalC
   };
 }
 
+// ── Multi-sovereign coordination & alliance realism ───────────────────────
+// No sovereign operates in isolation. This models the external coordination
+// environment: partner blocs of varying reliability that strategically
+// diverge, multinational dependency exposure, regional order and the
+// executive negotiation tension between national survival and alliance
+// obligation. Builds on externalEnvironment (no duplicated logic).
+export interface AlliancePartner {
+  name: string;
+  role: string;
+  reliability: number;  // 0..100
+  stance: 'aligned' | 'conditional' | 'diverging' | 'restraint' | 'escalation';
+  tone: 'ok' | 'warn' | 'alert';
+}
+export interface DependencyChannel { channel: string; exposure: number; tone: 'ok' | 'warn' | 'alert'; }
+export interface AllianceFramework {
+  partners: AlliancePartner[];
+  coalitionConsensus: number;     // 0..100
+  treatyReliability: number;      // 0..100
+  dependency: DependencyChannel[];
+  regionalOrder: string;          // STABLE ORDER | FRAGILE EQUILIBRIUM | STRAINED BLOC | FRAGMENTED REGION | SANCTION-HEAVY ENVIRONMENT
+  negotiationTension: number;     // 0..100 survival-vs-obligation strain
+  memoNote: string;               // interstate continuity memory
+  blocPosture: string;            // COHESIVE | FUNCTIONAL | DIVIDED | FRACTURED
+}
+export function allianceFramework(
+  ext: ExternalEnvironment, post: NationalPosture, society: NationalSociety,
+  foresight: StrategicForesight, powersLevel: number, epoch: number,
+): AllianceFramework {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  const mem = eventMemory('ally:hist', epoch, 16, 0.57, 0.34, 5);
+  const baseRel = ext.allianceReliability + mem.pos * 0.12 - mem.neg * 0.16;
+  const DEFS: { name: string; role: string; bias: number }[] = [
+    { name: 'Northern Security Pact', role: 'collective security & intelligence', bias: 4 },
+    { name: 'Regional Trade Bloc', role: 'trade & logistics corridors', bias: -6 },
+    { name: 'Strategic Energy Partners', role: 'energy & infrastructure', bias: 0 },
+    { name: 'Continuity Treaty Group', role: 'reserve-sharing & recovery', bias: 6 },
+    { name: 'Diplomatic Coordination Forum', role: 'sanction & diplomatic alignment', bias: -10 },
+  ];
+  const partners: AlliancePartner[] = DEFS.map(d => {
+    const reliability = clamp(baseRel + d.bias - ext.externalPressure * 0.2
+      + seed(`ally:${d.name}:${epoch}`) * 18 - 9);
+    // stance diverges with external pressure, foresight risk and reliability.
+    const press = ext.externalPressure + foresight.projRisk * 0.4;
+    let stance: AlliancePartner['stance'];
+    if (reliability >= 70 && press < 60) stance = 'aligned';
+    else if (reliability < 42) stance = 'diverging';
+    else if (press >= 70) stance = seed(`ally:s:${d.name}:${epoch}`) > 0.5 ? 'escalation' : 'restraint';
+    else stance = 'conditional';
+    const tone: AlliancePartner['tone'] = reliability >= 65 ? 'ok' : reliability >= 45 ? 'warn' : 'alert';
+    return { name: d.name, role: d.role, reliability, stance, tone };
+  }).sort((a, b) => b.reliability - a.reliability);
+  const meanRel = partners.reduce((s, p) => s + p.reliability, 0) / partners.length;
+  const diverging = partners.filter(p => p.stance === 'diverging' || p.stance === 'escalation').length;
+  const coalitionConsensus = clamp(meanRel - diverging * 9 - ext.externalPressure * 0.12);
+  const treatyReliability = clamp(meanRel * 0.7 + (100 - ext.intlCoordLoad) * 0.3);
+  const dependency: DependencyChannel[] = [
+    { channel: 'telecom & coordination imports', exposure: clamp(ext.foreignDependency * 0.6 + ext.externalPressure * 0.2) },
+    { channel: 'strategic energy reliance', exposure: clamp(ext.foreignDependency * 0.5 + 14) },
+    { channel: 'reserve-market vulnerability', exposure: clamp(ext.reserveSensitivity * 0.7 + (100 - treatyReliability) * 0.2) },
+    { channel: 'foreign logistics corridors', exposure: clamp(ext.foreignDependency * 0.55 + ext.externalPressure * 0.15) },
+    { channel: 'treaty-based security dependence', exposure: clamp((100 - treatyReliability) * 0.6 + ext.externalPressure * 0.18) },
+  ].map(c => ({ ...c, tone: (c.exposure >= 60 ? 'alert' : c.exposure >= 40 ? 'warn' : 'ok') as DependencyChannel['tone'] }))
+    .sort((a, b) => b.exposure - a.exposure);
+  const regionalOrder =
+    ext.externalPressure >= 66 ? 'SANCTION-HEAVY ENVIRONMENT'
+    : ext.externalPressure >= 50 || diverging >= 3 ? 'FRAGMENTED REGION'
+    : coalitionConsensus < 48 ? 'STRAINED BLOC'
+    : coalitionConsensus < 64 ? 'FRAGILE EQUILIBRIUM'
+    : 'STABLE ORDER';
+  // Executive negotiation tension — survival vs. obligation.
+  const negotiationTension = clamp(
+    post.deploymentConservatism * 0.24 + ext.foreignDependency * 0.26
+    + Math.max(0, powersLevel - 1) * 14 + (100 - coalitionConsensus) * 0.24
+    + (100 - society.economicContinuity) * 0.12);
+  const memoNote = mem.neg > mem.pos + 14
+    ? 'prior coordination failures scarred diplomacy — alliance caution applied'
+    : mem.pos >= mem.neg + 14
+      ? 'reliable allied behaviour historically reinforced trust & openness'
+      : 'mixed alliance record — treaty commitments weighed cautiously';
+  const blocPosture = coalitionConsensus >= 70 ? 'COHESIVE'
+    : coalitionConsensus >= 52 ? 'FUNCTIONAL'
+    : coalitionConsensus >= 36 ? 'DIVIDED'
+    : 'FRACTURED';
+  return {
+    partners, coalitionConsensus, treatyReliability, dependency,
+    regionalOrder, negotiationTension, memoNote, blocPosture,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

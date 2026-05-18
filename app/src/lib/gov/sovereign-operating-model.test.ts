@@ -11,7 +11,7 @@ import {
   strategicForesight, simulateDoctrines, nationalSustainability,
   politicalContinuity, nationalCapability, ministryOperations,
   nationalStressExercise, nationalDirectiveRegister, executiveLeadership,
-  intelligenceAssessment, nationalChronology,
+  intelligenceAssessment, nationalChronology, allianceFramework,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -581,5 +581,34 @@ describe('sovereign operating model', () => {
     expect(ch.administration).toBe(Math.floor(30 / 12) + 1);
     expect(typeof ch.currentEra).toBe('string');
     expect(ch.span).toBe(15);
+  });
+
+  it('alliance framework: bounded, deterministic, dependency-aware', () => {
+    const ex = externalEnvironment(17);
+    const p = nationalPosture(17);
+    const oS = nationalOperatingState(60, 70, 80, 3, 5, 17);
+    const soc = nationalSociety(oS, p, 5, 3, 17);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 17);
+    const af = allianceFramework(ex, p, soc, f, 2, 17);
+    expect(af).toEqual(allianceFramework(ex, p, soc, f, 2, 17));
+    expect(af.partners.length).toBe(5);
+    for (let i = 1; i < af.partners.length; i++) {
+      expect(af.partners[i - 1]!.reliability).toBeGreaterThanOrEqual(af.partners[i]!.reliability);
+    }
+    for (const pt of af.partners) {
+      expect(pt.reliability).toBeGreaterThanOrEqual(0);
+      expect(pt.reliability).toBeLessThanOrEqual(100);
+      expect(['aligned', 'conditional', 'diverging', 'restraint', 'escalation']).toContain(pt.stance);
+    }
+    expect(af.dependency.length).toBe(5);
+    for (const k of ['coalitionConsensus', 'treatyReliability', 'negotiationTension'] as const) {
+      expect(af[k]).toBeGreaterThanOrEqual(0);
+      expect(af[k]).toBeLessThanOrEqual(100);
+    }
+    expect(['STABLE ORDER', 'FRAGILE EQUILIBRIUM', 'STRAINED BLOC', 'FRAGMENTED REGION', 'SANCTION-HEAVY ENVIRONMENT']).toContain(af.regionalOrder);
+    expect(['COHESIVE', 'FUNCTIONAL', 'DIVIDED', 'FRACTURED']).toContain(af.blocPosture);
+    // emergency powers raise survival-vs-obligation negotiation tension
+    const afPow = allianceFramework(ex, p, soc, f, 3, 17);
+    expect(afPow.negotiationTension).toBeGreaterThanOrEqual(af.negotiationTension);
   });
 });

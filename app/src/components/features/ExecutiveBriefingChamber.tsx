@@ -18,7 +18,7 @@ import {
   nationalSustainability, politicalContinuity, nationalCapability,
   ministryOperations, institutionalFatigue, nationalStressExercise,
   nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
-  nationalChronology,
+  nationalChronology, allianceFramework,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -149,6 +149,9 @@ export function ExecutiveBriefingChamber() {
   const intel = intelligenceAssessment(opS, post, society, ext, foresight, sustain, polit, epoch);
   const intelTone = intel.posture === 'CRITICAL' || intel.posture === 'ALERT' ? 'alert' : intel.posture === 'ELEVATED' ? 'warn' : intel.posture === 'GUARDED' ? 'neutral' : 'ok';
   const chron = nationalChronology(epoch, opS.contention);
+  const alliance = allianceFramework(ext, post, society, foresight, powersLevel, epoch);
+  const allianceTone = alliance.blocPosture === 'FRACTURED' ? 'alert' : alliance.blocPosture === 'DIVIDED' ? 'warn' : alliance.blocPosture === 'FUNCTIONAL' ? 'neutral' : 'ok';
+  const stanceTone = (s: string) => (s === 'aligned' ? 'ok' : s === 'conditional' || s === 'restraint' ? 'warn' : 'alert');
   const cf = (c: string) => (c === 'probable' ? 'alert' : c === 'possible' ? 'warn' : 'neutral');
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
@@ -276,6 +279,17 @@ export function ExecutiveBriefingChamber() {
     L.push('  Historical interpretation:');
     chron.interpretation.forEach(it => L.push(`   - ${it}`));
     L.push('');
+    L.push(`XII.  INTERSTATE COORDINATION & ALLIANCE FRAMEWORK — ${alliance.regionalOrder}`);
+    L.push(thin);
+    L.push(`  Bloc posture ${alliance.blocPosture} · coalition consensus ${alliance.coalitionConsensus} · treaty reliability ${alliance.treatyReliability}`);
+    L.push('  Partner blocs:');
+    alliance.partners.forEach(pt => L.push(`   - ${pt.name} (${pt.role}): ${pt.stance}, reliability ${pt.reliability}`));
+    L.push('  Multinational dependency exposure:');
+    alliance.dependency.forEach(d => L.push(`   - ${d.channel}: ${d.exposure}`));
+    L.push(`  Survival-vs-obligation tension ${alliance.negotiationTension}`);
+    L.push(`  Interstate memory: ${alliance.memoNote}`);
+    L.push('  Coordination negotiated, not assured.');
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -295,7 +309,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -347,6 +361,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline text-ink-soft" title={`continuity chronology · ${chron.span}-epoch record`}>
             admin {chron.administration}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[allianceTone] }} title={`interstate coordination · ${alliance.regionalOrder}`}>
+            bloc {alliance.blocPosture.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -714,6 +731,37 @@ export function ExecutiveBriefingChamber() {
           ))}
           <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
             Historical interpretation: {chron.interpretation.join(' ')} Deterministic continuity replay — interpretive, not archival.
+          </p>
+        </Panel>
+
+        <Panel title="Interstate coordination & alliance framework"
+          meta={`${alliance.regionalOrder} · bloc ${alliance.blocPosture.toLowerCase()} · consensus ${alliance.coalitionConsensus}`}>
+          <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Partner blocs</div>
+              {alliance.partners.map(pt => (
+                <div key={pt.name} className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1 last:border-0">
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{pt.name} <span className="text-ink-muted">· {pt.role}</span></span>
+                  <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider" style={{ color: TONE[stanceTone(pt.stance)] }}>
+                    {pt.stance} · {pt.reliability}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Multinational dependency exposure</div>
+              {alliance.dependency.map(d => (
+                <div key={d.channel} className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1 last:border-0">
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{d.channel}</span>
+                  <span className="shrink-0 font-mono text-[10px] tabular-nums" style={{ color: TONE[d.tone] }}>{d.exposure}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+            Treaty reliability <span className="font-semibold" style={{ color: TONE[alliance.treatyReliability >= 60 ? 'ok' : alliance.treatyReliability >= 42 ? 'warn' : 'alert'] }}>{alliance.treatyReliability}</span> ·
+            survival-vs-obligation tension <span className="font-semibold" style={{ color: TONE[alliance.negotiationTension >= 60 ? 'alert' : alliance.negotiationTension >= 40 ? 'warn' : 'ok'] }}>{alliance.negotiationTension}</span>.
+            Interstate memory: {alliance.memoNote}. Coordination is negotiated, not assured.
           </p>
         </Panel>
 
