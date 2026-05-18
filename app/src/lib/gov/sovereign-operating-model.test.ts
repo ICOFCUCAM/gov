@@ -10,6 +10,7 @@ import {
   fieldDeployment, FIELD_STAGES, nationalSociety, externalEnvironment,
   strategicForesight, simulateDoctrines, nationalSustainability,
   politicalContinuity, nationalCapability, ministryOperations,
+  nationalStressExercise,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -442,5 +443,35 @@ describe('sovereign operating model', () => {
     const healthy = ministryOperations('HEALTH', 30, 92, 5, 12).throughput;
     const strained = ministryOperations('HEALTH', 90, 55, 80, 12).throughput;
     expect(strained).toBeLessThan(healthy);
+  });
+
+  it('national stress exercise is deterministic, cascading & verdicted', () => {
+    const oS = nationalOperatingState(60, 70, 85, 3, 5, 11);
+    const p = nationalPosture(11);
+    const soc = nationalSociety(oS, p, 5, 3, 11);
+    const ex = externalEnvironment(11);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 11);
+    const su = nationalSustainability(oS, p, soc, f, 11);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 11);
+    const cp = nationalCapability(oS, p, soc, ex, su, pc, 85, 5, 11);
+    const d = nationalStressExercise(oS, p, soc, ex, f, su, pc, cp, 5, 11);
+    expect(d).toEqual(nationalStressExercise(oS, p, soc, ex, f, su, pc, cp, 5, 11));
+    expect(typeof d.name).toBe('string');
+    expect(d.cascade.length).toBeGreaterThan(0);
+    for (const k of ['intensity', 'decisionDegradation', 'resilienceScore'] as const) {
+      expect(d[k]).toBeGreaterThanOrEqual(0);
+      expect(d[k]).toBeLessThanOrEqual(100);
+    }
+    expect(d.recoveryWeeks).toBeGreaterThanOrEqual(1);
+    expect(['WITHSTANDS', 'STRAINED', 'DEGRADED', 'FAILS']).toContain(d.verdict);
+    // a resilient nation withstands the same drill better than a brittle one
+    const cS = nationalOperatingState(40, 20, 25, 0, 1, 11);
+    const cSoc = nationalSociety(cS, p, 1, 0, 11);
+    const cF = strategicForesight(cS, p, cSoc, ex, 22, 0, 1, 11);
+    const cSu = nationalSustainability(cS, p, cSoc, cF, 11);
+    const cPc = politicalContinuity(cS, p, cSoc, ex, cF, 11);
+    const cCp = nationalCapability(cS, p, cSoc, ex, cSu, cPc, 25, 1, 11);
+    const cd = nationalStressExercise(cS, p, cSoc, ex, cF, cSu, cPc, cCp, 1, 11);
+    expect(cd.resilienceScore).toBeGreaterThanOrEqual(d.resilienceScore);
   });
 });

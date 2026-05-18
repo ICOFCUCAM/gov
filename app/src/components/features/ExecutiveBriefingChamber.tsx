@@ -16,7 +16,7 @@ import {
   ministryBehavior, ministryReliability, ministryInteraction, coordinationLoad,
   nationalSociety, externalEnvironment, strategicForesight, simulateDoctrines,
   nationalSustainability, politicalContinuity, nationalCapability,
-  ministryOperations, institutionalFatigue,
+  ministryOperations, institutionalFatigue, nationalStressExercise,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -138,6 +138,8 @@ export function ExecutiveBriefingChamber() {
   const politTone = polit.label === 'FRACTURING' || polit.label === 'FRAGILE' ? 'alert' : polit.label === 'STRAINED' ? 'warn' : 'ok';
   const cap = nationalCapability(opS, post, society, ext, sustain, polit, peakP, incidents.length, epoch);
   const capTone = cap.label === 'DECLINING' || cap.label === 'ERODING' ? 'alert' : cap.label === 'STRAINED' ? 'warn' : 'ok';
+  const drill = nationalStressExercise(opS, post, society, ext, foresight, sustain, polit, cap, incidents.length, epoch);
+  const drillTone = drill.verdict === 'FAILS' ? 'alert' : drill.verdict === 'DEGRADED' ? 'alert' : drill.verdict === 'STRAINED' ? 'warn' : 'ok';
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
@@ -215,6 +217,14 @@ export function ExecutiveBriefingChamber() {
     });
     L.push(`  Recommended: ${policy.recommended}. ${policy.ambiguity >= 60 ? 'Leading options closely scored — outcome contested.' : 'Distinct doctrine leads.'}`);
     L.push('');
+    L.push('VII.  LIVE STRESS EXERCISE');
+    L.push(thin);
+    L.push(`  Drill: ${drill.name} — vector ${drill.vector}`);
+    L.push(`  Intensity ${drill.intensity} · resilience ${drill.resilienceScore} · verdict ${drill.verdict}`);
+    L.push(`  Executive decision degradation ${drill.decisionDegradation} · projected recovery ~${drill.recoveryWeeks}w`);
+    L.push('  Cascade:');
+    drill.cascade.forEach(cstr => L.push(`   - ${cstr}`));
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -234,7 +244,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -271,6 +281,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[capTone] }} title="national capability">
             capability {cap.label.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[drillTone] }} title={`live stress exercise: ${drill.name}`}>
+            drill {drill.verdict.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -375,6 +388,16 @@ export function ExecutiveBriefingChamber() {
               {cap.trajectory === 'eroding' ? ' sustained pressure is degrading long-term national competence.'
                 : cap.trajectory === 'regenerating' ? ' demonstrated competence is compounding institutional knowledge.'
                 : ' long-term capability is being preserved under current strain.'}
+            </p>
+            <div className="mt-2 mb-1 flex items-baseline justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Live stress exercise</span>
+              <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[drillTone] }}>{drill.verdict}</span>
+            </div>
+            <Stat label={drill.name} value={`${drill.resilienceScore}`} tone={drillTone} note={`intensity ${drill.intensity}`} />
+            <Stat label="Decision degradation" value={`${drill.decisionDegradation}`} tone={drill.decisionDegradation >= 55 ? 'alert' : drill.decisionDegradation >= 35 ? 'warn' : 'ok'} note={`recovery ~${drill.recoveryWeeks}w`} />
+            <p className="mt-1 text-[11px] leading-relaxed text-ink-muted">
+              Vector: {drill.vector}. Cascade: {drill.cascade.slice(0, 3).join(' → ')}
+              {drill.cascade.length > 3 ? ' …' : ''}. National doctrine {drill.verdict === 'WITHSTANDS' ? 'holds under the drill' : drill.verdict === 'STRAINED' ? 'holds but strained' : drill.verdict === 'DEGRADED' ? 'degrades under the drill' : 'fails the drill — continuity at risk'}.
             </p>
           </Panel>
         </div>

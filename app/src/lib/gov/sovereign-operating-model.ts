@@ -1210,6 +1210,90 @@ export function ministryOperations(
   };
 }
 
+// ── Live national crisis exercise & sovereign war-gaming ──────────────────
+// A deterministic stress drill runs continuously: each operating epoch
+// selects a national exercise, injects an adversarial stress vector,
+// propagates a cascading multi-system failure, degrades executive decision
+// quality under overload, and returns a resilience verdict. The nation is
+// tested, not assumed stable.
+const EXERCISES: { key: string; name: string; vector: string; hits: string[] }[] = [
+  { key: 'telecom-blackout', name: 'Telecom blackout drill', vector: 'national telecom degradation', hits: ['telecom', 'coordination', 'deployment', 'civilian', 'economy'] },
+  { key: 'grid-collapse', name: 'Grid collapse exercise', vector: 'cascading energy failure', hits: ['energy', 'telecom', 'health', 'economy', 'reserves'] },
+  { key: 'reserve-exhaustion', name: 'Reserve exhaustion rehearsal', vector: 'strategic reserve depletion', hits: ['reserves', 'deployment', 'recovery', 'economy'] },
+  { key: 'pandemic-resurgence', name: 'Pandemic resurgence scenario', vector: 'health-system surge', hits: ['health', 'logistics', 'civilian', 'workforce', 'economy'] },
+  { key: 'logistics-blockade', name: 'Logistics blockade simulation', vector: 'corridor / supply blockade', hits: ['transport', 'logistics', 'health', 'economy'] },
+  { key: 'cyber-coordination', name: 'Cyber coordination-failure drill', vector: 'coordination-layer compromise', hits: ['telecom', 'coordination', 'authorization', 'deployment'] },
+  { key: 'multi-region', name: 'Multi-region containment breakdown', vector: 'simultaneous regional failure', hits: ['containment', 'deployment', 'civilian', 'unity', 'reserves'] },
+  { key: 'sanction-escalation', name: 'Geopolitical sanction escalation', vector: 'hostile economic & alliance pressure', hits: ['geopolitical', 'reserves', 'economy', 'alliance', 'recovery'] },
+];
+export interface StressExercise {
+  key: string;
+  name: string;
+  vector: string;
+  intensity: number;          // 0..100 stress magnitude
+  cascade: string[];          // propagated multi-system impacts
+  decisionDegradation: number;// 0..100 executive decision-quality loss
+  resilienceScore: number;    // 0..100 (higher = withstands)
+  recoveryWeeks: number;      // projected recovery timeline under stress
+  verdict: string;            // WITHSTANDS | STRAINED | DEGRADED | FAILS
+}
+export function nationalStressExercise(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  ext: ExternalEnvironment, foresight: StrategicForesight, sustain: NationalSustainability,
+  polit: PoliticalContinuity, cap: NationalCapability, incidentN: number, epoch: number,
+): StressExercise {
+  const ex = EXERCISES[Math.floor(seed(`drill:${epoch}`) * EXERCISES.length)] ?? EXERCISES[0]!;
+  // intensity scales with present fragility & external pressure so drills
+  // bite harder when the nation is already strained.
+  const intensity = Math.max(20, Math.min(100, Math.round(
+    46 + ext.externalPressure * 0.22 + foresight.projRisk * 0.2
+    + incidentN * 2 + (100 - sustain.survivabilityWeeks) * 0.1
+    + seed(`drill:i:${epoch}`) * 14)));
+  // Cascading multi-system failure — each hit compounds the prior.
+  const CASCADE_TXT: Record<string, string> = {
+    telecom: 'telecom degradation weakens national coordination',
+    coordination: 'coordination failure slows emergency deployment',
+    deployment: 'delayed deployment worsens civilian instability',
+    civilian: 'civilian instability erodes economic continuity',
+    economy: 'economic contraction limits recovery funding',
+    reserves: 'reserve depletion constrains intervention capacity',
+    energy: 'energy collapse destabilises dependent infrastructure',
+    health: 'health-system surge overruns regional capacity',
+    logistics: 'logistics blockade delays critical supply',
+    transport: 'corridor disruption isolates affected regions',
+    recovery: 'recovery timeline extends under sustained load',
+    geopolitical: 'geopolitical pressure amplifies internal strain',
+    alliance: 'alliance hesitation removes external relief',
+    workforce: 'workforce attrition lowers operational throughput',
+    containment: 'containment breakdown spreads instability',
+    unity: 'national cohesion fractures under simultaneous strain',
+    authorization: 'authorization integrity loss stalls directives',
+  };
+  const cascade = ex.hits.map(h => CASCADE_TXT[h] ?? `${h} under stress`);
+  // Executive decision degradation — simultaneous load + ambiguity +
+  // coordination strain reduce prioritisation quality.
+  const decisionDegradation = Math.max(0, Math.min(100, Math.round(
+    incidentN * 4 + (100 - foresight.confidence) * 0.3 + opS.contention * 0.22
+    + (100 - post.execConfidence) * 0.2 + intensity * 0.18 - polit.cabinetCohesion * 0.15)));
+  // Resilience — endurance vs. the injected stress.
+  const endurance =
+    sustain.survivabilityWeeks * 1.6 + cap.capabilityIndex * 0.34
+    + polit.governanceContinuity * 0.3 + society.institutionalTrust * 0.18
+    + opS.resources.reserves.headroom * 0.16;
+  const resilienceScore = Math.max(0, Math.min(100, Math.round(
+    endurance - intensity * 0.55 - decisionDegradation * 0.3 + 10)));
+  const recoveryWeeks = Math.max(1, Math.round(
+    2 + intensity / 14 + decisionDegradation / 22 + (100 - resilienceScore) / 16));
+  const verdict = resilienceScore >= 66 ? 'WITHSTANDS'
+    : resilienceScore >= 48 ? 'STRAINED'
+    : resilienceScore >= 30 ? 'DEGRADED'
+    : 'FAILS';
+  return {
+    key: ex.key, name: ex.name, vector: ex.vector, intensity, cascade,
+    decisionDegradation, resilienceScore, recoveryWeeks, verdict,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.
