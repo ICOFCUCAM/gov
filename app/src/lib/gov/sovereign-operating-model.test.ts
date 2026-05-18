@@ -13,7 +13,7 @@ import {
   nationalStressExercise, nationalDirectiveRegister, executiveLeadership,
   intelligenceAssessment, nationalChronology, allianceFramework,
   nationalOperations, populationOrder, governanceAudit,
-  EXEC_DIRECTIVES, directiveProjection,
+  EXEC_DIRECTIVES, directiveProjection, liveScenario,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -739,4 +739,36 @@ describe('sovereign operating model', () => {
     expect(split.contested || split.stage === 'HELD AT CABINET' || !split.authorized).toBe(true);
     expect(Math.abs(split.deltas.reserves)).toBeLessThanOrEqual(20);
   });
+
+  it('live scenario unfolds across epochs, cascades & risks continuity', () => {
+    const oS = nationalOperatingState(60, 72, 86, 4, 6, 27);
+    const p = nationalPosture(27);
+    const soc = nationalSociety(oS, p, 6, 4, 27);
+    const ex = externalEnvironment(27);
+    const f = strategicForesight(oS, p, soc, ex, 56, 4, 6, 27);
+    const su = nationalSustainability(oS, p, soc, f, 27);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 27);
+    const el = executiveLeadership(oS, p, soc, ex, pc, 2, 6, 27);
+    const cp = nationalCapability(oS, p, soc, ex, su, pc, 86, 6, 27);
+    const po = populationOrder(oS, p, soc, ex, pc, 86, 27);
+    const s = liveScenario(27, el, pc, su, cp, po, ex, false);
+    expect(s).toEqual(liveScenario(27, el, pc, su, cp, po, ex, false));
+    expect(SCENARIO_STAGES_OK).toContain(s.stage);
+    expect(s.cascade.length).toBeGreaterThanOrEqual(1);
+    for (const k of ['responsePressure', 'continuityRisk'] as const) {
+      expect(s[k]).toBeGreaterThanOrEqual(0);
+      expect(s[k]).toBeLessThanOrEqual(100);
+    }
+    expect(['CONTAINED', 'STRAINED', 'DEGRADED', 'CONTINUITY AT RISK']).toContain(s.verdict);
+    expect(typeof s.outlook.h24).toBe('string');
+    // indecision (no authorized directive) raises response pressure
+    const decisive = liveScenario(27, el, pc, su, cp, po, ex, true);
+    expect(decisive.responsePressure).toBeLessThan(s.responsePressure);
+    // stage advances with epoch; after-action produces a review
+    const aa = liveScenario(7, el, pc, su, cp, po, ex, false);
+    expect(aa.stage).toBe('AFTER-ACTION');
+    expect(aa.afterAction.length).toBeGreaterThan(0);
+  });
 });
+
+const SCENARIO_STAGES_OK = ['EMERGING', 'DEVELOPING', 'PEAK', 'CASCADING', 'ARBITRATION', 'CONTAINMENT', 'STABILIZING', 'AFTER-ACTION'];

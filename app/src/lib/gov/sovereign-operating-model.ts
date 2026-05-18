@@ -2094,6 +2094,98 @@ export function directiveProjection(
   return { key, label: def.label, intent: def.intent, tradeoff: def.tradeoff, deltas, stage, authorized, contested, window, note };
 }
 
+// ── Live sovereign scenario operations ────────────────────────────────────
+// A multi-stage national event unfolds deterministically across operating
+// epochs: cascading consequences, executive response pressure (worsened by
+// indecision), an unfolding timeline outlook, live ministry tension, a
+// continuity-failure risk, and an after-action review when it resolves.
+const SCENARIO_DEFS: { key: string; name: string; severity: number; cascade: string[] }[] = [
+  { key: 'telecom-cascade', name: 'Telecom collapse cascade', severity: 78, cascade: ['telecom degradation', 'coordination failure', 'logistics slowdown', 'economic contraction', 'legitimacy erosion'] },
+  { key: 'energy-wave', name: 'Energy instability wave', severity: 74, cascade: ['grid destabilization', 'hospital strain', 'industrial slowdown', 'reserve drawdown'] },
+  { key: 'pandemic-resurge', name: 'Pandemic resurgence', severity: 80, cascade: ['health surge', 'workforce attrition', 'logistics strain', 'civil anxiety'] },
+  { key: 'reserve-crisis', name: 'Reserve exhaustion crisis', severity: 82, cascade: ['reserve depletion', 'deployment constraint', 'recovery infeasibility', 'confidence collapse'] },
+  { key: 'alliance-fracture', name: 'Alliance fracture', severity: 70, cascade: ['treaty withdrawal', 'external exposure', 'strategic isolation', 'doctrine conservatism'] },
+  { key: 'border-destab', name: 'Border destabilization', severity: 72, cascade: ['migration pressure', 'regional strain', 'security load', 'containment escalation'] },
+  { key: 'logistics-paralysis', name: 'Logistics paralysis', severity: 76, cascade: ['corridor seizure', 'supply delay', 'medical-inventory pressure', 'economic contraction'] },
+  { key: 'infra-sabotage', name: 'Infrastructure sabotage', severity: 84, cascade: ['critical-asset compromise', 'cascade failure', 'coordination loss', 'recovery extension'] },
+  { key: 'civil-unrest', name: 'Civil unrest escalation', severity: 73, cascade: ['protest surge', 'compliance loss', 'legitimacy erosion', 'deployment strain'] },
+  { key: 'economic-breakdown', name: 'Economic continuity breakdown', severity: 79, cascade: ['liquidity stress', 'sector funding shortfall', 'workforce shock', 'social fragmentation'] },
+];
+const SCENARIO_STAGES = ['EMERGING', 'DEVELOPING', 'PEAK', 'CASCADING', 'ARBITRATION', 'CONTAINMENT', 'STABILIZING', 'AFTER-ACTION'] as const;
+export interface LiveScenario {
+  key: string;
+  name: string;
+  stage: string;
+  stageIdx: number;
+  cycle: number;
+  cascade: string[];          // active cascade front (progressive)
+  responsePressure: number;   // 0..100 — worsened by indecision
+  continuityRisk: number;     // 0..100 continuity-failure risk
+  outlook: { h6: string; h24: string; h72: string; w2: string; horizon: string };
+  afterAction: string[];      // populated at AFTER-ACTION stage
+  verdict: string;            // CONTAINED | STRAINED | DEGRADED | CONTINUITY AT RISK
+  note: string;
+}
+export function liveScenario(
+  epoch: number, lead: ExecutiveLeadership, polit: PoliticalContinuity,
+  sustain: NationalSustainability, cap: NationalCapability, popn: PopulationOrder,
+  ext: ExternalEnvironment, directiveAuthorized: boolean,
+): LiveScenario {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  const cycle = Math.floor(epoch / SCENARIO_STAGES.length);
+  const def = SCENARIO_DEFS[Math.floor(seed(`scen:${cycle}`) * SCENARIO_DEFS.length)] ?? SCENARIO_DEFS[0]!;
+  const stageIdx = epoch % SCENARIO_STAGES.length;
+  const stage = SCENARIO_STAGES[stageIdx]!;
+  // cascade front advances with the stage (progressive, not all-at-once).
+  const reach = stageIdx <= 1 ? 1 : stageIdx <= 3 ? Math.min(def.cascade.length, stageIdx + 1)
+    : stageIdx <= 5 ? def.cascade.length : Math.max(1, def.cascade.length - (stageIdx - 5));
+  const cascade = def.cascade.slice(0, reach);
+  // executive response pressure — peaks mid-event; indecision (no
+  // authorized directive) and weak decision quality raise it.
+  const stageLoad = [40, 62, 88, 80, 70, 52, 36, 22][stageIdx] ?? 40;
+  const responsePressure = clamp(
+    stageLoad * (def.severity / 80)
+    + (directiveAuthorized ? -10 : 12)
+    + (100 - lead.decisionQuality) * 0.2
+    + (100 - lead.consensus) * 0.12);
+  const resilience = sustain.survivabilityWeeks * 1.5 + cap.capabilityIndex * 0.3
+    + polit.governanceContinuity * 0.28 + popn.governability * 0.22;
+  const continuityRisk = clamp(
+    def.severity * 0.42 + responsePressure * 0.3 + ext.externalPressure * 0.14
+    - resilience * 0.34 + 14);
+  const band = (lead24: number) => (lead24 >= 66 ? 'severe' : lead24 >= 46 ? 'elevated' : lead24 >= 28 ? 'guarded' : 'stable');
+  const outlook = {
+    h6: `${band(responsePressure + 6)} — immediate ${stage.toLowerCase()} pressure`,
+    h24: `${band(responsePressure)} — ${cascade.length}-stage cascade in motion`,
+    h72: `${band(continuityRisk)} — survivability ${sustain.survivabilityWeeks}w under load`,
+    w2: `${band(continuityRisk - 8)} — ${polit.label.toLowerCase()} continuity trajectory`,
+    horizon: continuityRisk >= 60 ? 'institutional scarring probable' : 'recovery feasible with sustained doctrine',
+  };
+  const afterAction: string[] = [];
+  if (stage === 'AFTER-ACTION') {
+    afterAction.push(directiveAuthorized
+      ? 'Timely executive directive limited cascade depth.'
+      : 'Authorization latency deepened the cascade — institutional scar recorded.');
+    afterAction.push(lead.consensus < 50
+      ? 'Cabinet division degraded arbitration speed.'
+      : 'Cabinet alignment sustained coordinated response.');
+    afterAction.push(continuityRisk >= 60
+      ? 'Continuity fracture risk leaves residual social & institutional strain.'
+      : 'Continuity preserved; doctrine precedent reinforced.');
+  }
+  const verdict = continuityRisk >= 68 ? 'CONTINUITY AT RISK'
+    : continuityRisk >= 50 ? 'DEGRADED'
+    : continuityRisk >= 34 ? 'STRAINED'
+    : 'CONTAINED';
+  const note = stage === 'AFTER-ACTION'
+    ? 'Event resolving — after-action review recorded into governance memory.'
+    : `Unfolding national event at ${stage.toLowerCase()} — leadership arbitrating under live pressure.`;
+  return {
+    key: def.key, name: def.name, stage, stageIdx, cycle, cascade,
+    responsePressure, continuityRisk, outlook, afterAction, verdict, note,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

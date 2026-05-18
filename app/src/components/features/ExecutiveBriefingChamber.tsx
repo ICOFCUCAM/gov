@@ -19,7 +19,7 @@ import {
   ministryOperations, institutionalFatigue, nationalStressExercise,
   nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
   nationalChronology, allianceFramework, nationalOperations, populationOrder,
-  governanceAudit, EXEC_DIRECTIVES, directiveProjection,
+  governanceAudit, EXEC_DIRECTIVES, directiveProjection, liveScenario,
 } from '@/lib/gov/sovereign-operating-model';
 import type { ExecDirectiveKey } from '@/lib/gov/sovereign-operating-model';
 
@@ -167,6 +167,8 @@ export function ExecutiveBriefingChamber() {
   const dirTone = directive === 'NONE' ? 'neutral' : dproj.authorized ? 'ok' : dproj.contested ? 'alert' : 'warn';
   const dlt = (n: number) => (n > 0 ? `+${n}` : `${n}`);
   const dltTone = (n: number, good = true) => (n === 0 ? 'neutral' : (good ? n > 0 : n < 0) ? 'ok' : 'alert');
+  const scen = liveScenario(epoch, lead, polit, sustain, cap, popn, ext, dproj.authorized);
+  const scenTone = scen.verdict === 'CONTINUITY AT RISK' || scen.verdict === 'DEGRADED' ? 'alert' : scen.verdict === 'STRAINED' ? 'warn' : 'ok';
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
@@ -346,6 +348,21 @@ export function ExecutiveBriefingChamber() {
       L.push(`  ${dproj.window}. ${dproj.note}`);
     }
     L.push('');
+    L.push(`XVII.  LIVE NATIONAL SCENARIO — ${scen.name.toUpperCase()}`);
+    L.push(thin);
+    L.push(`  Stage ${scen.stage} (cycle ${scen.cycle}) · verdict ${scen.verdict}`);
+    L.push(`  Response pressure ${scen.responsePressure} · continuity risk ${scen.continuityRisk}`);
+    L.push(`  Cascade front: ${scen.cascade.join(' → ')}`);
+    L.push(`  Outlook — 6h: ${scen.outlook.h6}`);
+    L.push(`           24h: ${scen.outlook.h24}`);
+    L.push(`           72h: ${scen.outlook.h72}`);
+    L.push(`           2wk: ${scen.outlook.w2}`);
+    L.push(`       horizon: ${scen.outlook.horizon}`);
+    if (scen.afterAction.length) {
+      L.push('  After-action review:');
+      scen.afterAction.forEach(a => L.push(`   - ${a}`));
+    }
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -365,7 +382,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit, directive, dproj]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit, directive, dproj, scen]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -429,6 +446,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[auditTone] }} title={`sovereign governance audit · civilization ${audit.trajectory}`}>
             audit {audit.healthVerdict.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[scenTone] }} title={`live scenario · ${scen.name} (${scen.stage})`}>
+            scenario {scen.verdict.toLowerCase()}
           </span>
           {directive !== 'NONE' ? (
             <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[dirTone] }} title={`executive directive · ${dproj.stage}`}>
@@ -899,6 +919,54 @@ export function ExecutiveBriefingChamber() {
             Society is <span className="font-semibold" style={{ color: TONE[popTone] }}>{popn.label.toLowerCase()}</span>;
             low public compliance imposes a {popn.feedbackDrag}-point capability drag on national operations. {popn.memoNote}. The state governs a living society — bidirectional, with memory.
           </p>
+        </Panel>
+
+        <Panel title="Live national scenario"
+          meta={`${scen.name} · ${scen.stage.toLowerCase()} · ${scen.verdict.toLowerCase()}`}>
+          <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] uppercase tracking-[0.14em]">
+            {['Emerging', 'Developing', 'Peak', 'Cascading', 'Arbitration', 'Containment', 'Stabilizing', 'After-action'].map((s, i) => (
+              <span key={s} className="flex items-center gap-2">
+                <span style={{ color: i === scen.stageIdx ? TONE[scenTone] : i < scen.stageIdx ? 'rgb(var(--c-ink-soft))' : 'rgb(var(--c-ink-muted))' }}>
+                  {i === scen.stageIdx ? '▣' : i < scen.stageIdx ? '▪' : '▢'} {s}
+                </span>
+                {i < 7 ? <span className="text-line">→</span> : null}
+              </span>
+            ))}
+          </div>
+          <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Cascade front</div>
+              {scen.cascade.map((c, i) => (
+                <div key={c} className="flex items-baseline gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
+                  <span className="shrink-0 font-mono text-[10px] text-ink-muted">{i + 1}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{c}</span>
+                </div>
+              ))}
+              <div className="mt-1 flex flex-wrap gap-x-4 text-[11px] text-ink-muted">
+                <span>response pressure <span className="font-mono tabular-nums" style={{ color: TONE[scen.responsePressure >= 66 ? 'alert' : scen.responsePressure >= 44 ? 'warn' : 'ok'] }}>{scen.responsePressure}</span></span>
+                <span>continuity risk <span className="font-mono tabular-nums" style={{ color: TONE[scen.continuityRisk >= 60 ? 'alert' : scen.continuityRisk >= 40 ? 'warn' : 'ok'] }}>{scen.continuityRisk}</span></span>
+              </div>
+            </div>
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Unfolding outlook</div>
+              <Stat label="6h" value={scen.outlook.h6} tone="neutral" />
+              <Stat label="24h" value={scen.outlook.h24} tone="neutral" />
+              <Stat label="72h" value={scen.outlook.h72} tone="neutral" />
+              <Stat label="2-week" value={scen.outlook.w2} tone="neutral" />
+              <Stat label="Long-horizon" value={scen.outlook.horizon} tone="neutral" />
+            </div>
+          </div>
+          {scen.afterAction.length ? (
+            <div className="mt-2">
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">After-action review</div>
+              {scen.afterAction.map(a => (
+                <div key={a} className="flex items-baseline gap-2 py-0.5 text-[11px] text-ink-muted">
+                  <span className="shrink-0" style={{ color: ACCENT }}>▸</span><span className="min-w-0 flex-1">{a}</span>
+                </div>
+              ))}
+            </div>
+          ) : null}
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">{scen.note} Leadership arbitrates ministry tension under live pressure; indecision deepens the cascade.</p>
         </Panel>
 
         <Panel title="Executive directive"
