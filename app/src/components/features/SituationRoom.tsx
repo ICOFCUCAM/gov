@@ -62,6 +62,7 @@ export function rel(at: string, now: number): string {
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] = [
   { g: 'Sovereign Command', items: [
     { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room', on: true },
+    { i: '⬡', l: 'Briefing Chamber', s: 'Executive governance', href: '/gov/briefing' },
     { i: '◆', l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov' },
     { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination' },
   ]},
