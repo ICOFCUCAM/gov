@@ -2009,6 +2009,91 @@ export function governanceAudit(
   };
 }
 
+// ── Executive interaction & human command ─────────────────────────────────
+// Leadership issues a strategic directive; the state adapts within real
+// constraints. Directives move through a formal institutional procedure,
+// carry visible tradeoffs, and are gated by cabinet consensus & legitimacy
+// — leadership is constrained, not omnipotent.
+export type ExecDirectiveKey =
+  | 'NONE' | 'PRESERVE_RESERVES' | 'AGGRESSIVE_MOBILIZATION' | 'INCREASE_CONTAINMENT'
+  | 'TELECOM_PRIORITY' | 'CIVILIAN_RECOVERY' | 'DIPLOMATIC_DEESCALATION' | 'INFRASTRUCTURE_HARDENING';
+export interface ExecDirectiveDef {
+  key: ExecDirectiveKey;
+  label: string;
+  intent: string;
+  tradeoff: string;
+  // signed projected effect at full realization (scaled by consensus).
+  base: { reserves: number; recovery: number; cohesion: number; escalation: number; survivability: number };
+}
+export const EXEC_DIRECTIVES: ExecDirectiveDef[] = [
+  { key: 'NONE', label: 'No standing directive', intent: 'doctrine operates autonomously', tradeoff: 'no executive override in force',
+    base: { reserves: 0, recovery: 0, cohesion: 0, escalation: 0, survivability: 0 } },
+  { key: 'PRESERVE_RESERVES', label: 'Preserve strategic reserves', intent: 'protect reserve longevity & survivability', tradeoff: 'slower national recovery; tighter operational latitude',
+    base: { reserves: +16, recovery: -10, cohesion: -3, escalation: -2, survivability: +12 } },
+  { key: 'AGGRESSIVE_MOBILIZATION', label: 'Accelerate mobilization', intent: 'rapid stabilization through aggressive deployment', tradeoff: 'reserve exhaustion; raised geopolitical exposure',
+    base: { reserves: -20, recovery: +15, cohesion: +4, escalation: +10, survivability: -8 } },
+  { key: 'INCREASE_CONTAINMENT', label: 'Increase containment', intent: 'protect infrastructure & restore order', tradeoff: 'erodes civilian cohesion & economic continuity',
+    base: { reserves: -2, recovery: +6, cohesion: -14, escalation: -4, survivability: +4 } },
+  { key: 'TELECOM_PRIORITY', label: 'Prioritise telecom restoration', intent: 'restore national coordination integrity', tradeoff: 'delays civilian normalization; energy diverted',
+    base: { reserves: -6, recovery: -4, cohesion: +6, escalation: -3, survivability: +6 } },
+  { key: 'CIVILIAN_RECOVERY', label: 'Prioritise civilian recovery', intent: 'restore public confidence & continuity', tradeoff: 'consumes reserves; slower infrastructure hardening',
+    base: { reserves: -10, recovery: +12, cohesion: +14, escalation: -2, survivability: -2 } },
+  { key: 'DIPLOMATIC_DEESCALATION', label: 'Diplomatic de-escalation', intent: 'reduce external pressure & escalation risk', tradeoff: 'slower assertive recovery; weaker alliance leverage',
+    base: { reserves: +2, recovery: -6, cohesion: +3, escalation: -16, survivability: +5 } },
+  { key: 'INFRASTRUCTURE_HARDENING', label: 'Harden critical infrastructure', intent: 'reduce future cascade & sabotage risk', tradeoff: 'fiscal & reserve cost; slower near-term recovery',
+    base: { reserves: -12, recovery: -5, cohesion: +2, escalation: -4, survivability: +14 } },
+];
+export interface DirectiveProjection {
+  key: ExecDirectiveKey;
+  label: string;
+  intent: string;
+  tradeoff: string;
+  deltas: { reserves: number; recovery: number; cohesion: number; escalation: number; survivability: number };
+  stage: string;        // PROPOSAL | REVIEW | CABINET ALIGNMENT | AUTHORIZATION | MANDATE ISSUED | HELD AT CABINET
+  authorized: boolean;
+  contested: boolean;
+  window: string;
+  note: string;
+}
+export function directiveProjection(
+  key: ExecDirectiveKey, lead: ExecutiveLeadership, polit: PoliticalContinuity,
+  ext: ExternalEnvironment,
+): DirectiveProjection {
+  const def = EXEC_DIRECTIVES.find(d => d.key === key) ?? EXEC_DIRECTIVES[0]!;
+  if (key === 'NONE') {
+    return {
+      key, label: def.label, intent: def.intent, tradeoff: def.tradeoff,
+      deltas: { ...def.base }, stage: '—', authorized: false, contested: false,
+      window: 'no directive tabled', note: 'Doctrine operating without executive override.',
+    };
+  }
+  // Realized effect scales with cabinet consensus (contested directives
+  // execute weakly); legitimacy & constitutional strain gate the procedure.
+  const k = Math.max(0.35, Math.min(1, lead.consensus / 100 + 0.15));
+  const round = (v: number) => Math.round(v * k);
+  const deltas = {
+    reserves: round(def.base.reserves), recovery: round(def.base.recovery),
+    cohesion: round(def.base.cohesion), escalation: round(def.base.escalation),
+    survivability: round(def.base.survivability),
+  };
+  const contested = lead.consensus < 50 || polit.legitimacy < 45;
+  let stage: string;
+  let authorized = false;
+  if (lead.consensus < 38) stage = 'HELD AT CABINET';
+  else if (contested) stage = 'CABINET ALIGNMENT';
+  else if (polit.legitimacy < 55 || lead.constitutionalStrain >= 60) stage = 'AUTHORIZATION';
+  else { stage = 'MANDATE ISSUED'; authorized = true; }
+  const window = lead.constitutionalStrain >= 60
+    ? 'narrow authorization window — constitutional cost elevated'
+    : authorized ? 'mandate window open' : 'authorization pending cabinet alignment';
+  const note = contested
+    ? 'Recommendation contested — cabinet dissent and legitimacy strain reduce realized effect.'
+    : authorized
+      ? 'Cabinet aligned — directive in force at projected effect.'
+      : 'Awaiting alignment — directive not yet binding; intelligence incomplete.';
+  return { key, label: def.label, intent: def.intent, tradeoff: def.tradeoff, deltas, stage, authorized, contested, window, note };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

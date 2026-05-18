@@ -19,8 +19,9 @@ import {
   ministryOperations, institutionalFatigue, nationalStressExercise,
   nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
   nationalChronology, allianceFramework, nationalOperations, populationOrder,
-  governanceAudit,
+  governanceAudit, EXEC_DIRECTIVES, directiveProjection,
 } from '@/lib/gov/sovereign-operating-model';
+import type { ExecDirectiveKey } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
 
@@ -43,6 +44,7 @@ export function ExecutiveBriefingChamber() {
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [now, setNow] = React.useState(() => Date.now());
+  const [directive, setDirective] = React.useState<ExecDirectiveKey>('NONE');
 
   React.useEffect(() => {
     const load = async () => {
@@ -161,6 +163,10 @@ export function ExecutiveBriefingChamber() {
   const auditTone = ['EXHAUSTED', 'DECLINING', 'FRAGMENTING'].includes(audit.healthVerdict) ? 'alert'
     : ['OVEREXTENDED', 'STRAINED', 'RECOVERING'].includes(audit.healthVerdict) ? 'warn' : 'ok';
   const cf = (c: string) => (c === 'probable' ? 'alert' : c === 'possible' ? 'warn' : 'neutral');
+  const dproj = directiveProjection(directive, lead, polit, ext);
+  const dirTone = directive === 'NONE' ? 'neutral' : dproj.authorized ? 'ok' : dproj.contested ? 'alert' : 'warn';
+  const dlt = (n: number) => (n > 0 ? `+${n}` : `${n}`);
+  const dltTone = (n: number, good = true) => (n === 0 ? 'neutral' : (good ? n > 0 : n < 0) ? 'ok' : 'alert');
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
@@ -328,6 +334,18 @@ export function ExecutiveBriefingChamber() {
     audit.adaptation.forEach(a => L.push(`   - ${a}`));
     L.push(`  Audit memory: ${audit.auditMemoNote}`);
     L.push('');
+    L.push(`XVI.  EXECUTIVE DIRECTIVE — ADMINISTRATION ${lead.administration}`);
+    L.push(thin);
+    if (directive === 'NONE') {
+      L.push('  No standing executive directive — doctrine operating autonomously.');
+    } else {
+      L.push(`  Directive: ${dproj.label} — ${dproj.stage}${dproj.authorized ? ' (in force)' : ''}`);
+      L.push(`  Intent: ${dproj.intent}`);
+      L.push(`  Tradeoff: ${dproj.tradeoff}`);
+      L.push(`  Projected (consensus-scaled): reserves ${dlt(dproj.deltas.reserves)} · recovery ${dlt(dproj.deltas.recovery)} · cohesion ${dlt(dproj.deltas.cohesion)} · escalation ${dlt(dproj.deltas.escalation)} · survivability ${dlt(dproj.deltas.survivability)}`);
+      L.push(`  ${dproj.window}. ${dproj.note}`);
+    }
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -347,7 +365,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit, directive, dproj]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -412,8 +430,21 @@ export function ExecutiveBriefingChamber() {
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[auditTone] }} title={`sovereign governance audit · civilization ${audit.trajectory}`}>
             audit {audit.healthVerdict.toLowerCase()}
           </span>
+          {directive !== 'NONE' ? (
+            <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[dirTone] }} title={`executive directive · ${dproj.stage}`}>
+              directive {dproj.authorized ? 'in force' : dproj.contested ? 'contested' : 'pending'}
+            </span>
+          ) : null}
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
+          <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-ink-muted" title="Issue an executive strategic directive">
+            <span className="hidden sm:inline">Directive</span>
+            <select value={directive} onChange={e => setDirective(e.target.value as ExecDirectiveKey)}
+              className="focus-ring rounded-sm border bg-surface px-1.5 py-1 font-mono text-[10px] uppercase tracking-wider text-ink-soft"
+              style={{ borderColor: directive === 'NONE' ? 'rgb(var(--c-line))' : TONE[dirTone] }}>
+              {EXEC_DIRECTIVES.map(d => <option key={d.key} value={d.key}>{d.label}</option>)}
+            </select>
+          </label>
           <button type="button" onClick={issueMemo}
             className="focus-ring rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider transition-colors hover:text-ink"
             style={{ borderColor: memoState === 'issued' ? TONE.ok : 'rgb(var(--c-line))', color: memoState === 'issued' ? TONE.ok : 'rgb(var(--c-ink-soft))' }}
@@ -868,6 +899,48 @@ export function ExecutiveBriefingChamber() {
             Society is <span className="font-semibold" style={{ color: TONE[popTone] }}>{popn.label.toLowerCase()}</span>;
             low public compliance imposes a {popn.feedbackDrag}-point capability drag on national operations. {popn.memoNote}. The state governs a living society — bidirectional, with memory.
           </p>
+        </Panel>
+
+        <Panel title="Executive directive"
+          meta={directive === 'NONE' ? `administration ${lead.administration} · no override` : `administration ${lead.administration} · ${dproj.stage.toLowerCase()}`}>
+          {directive === 'NONE' ? (
+            <p className="py-3 text-[12px] text-ink-muted">
+              No standing executive directive — doctrine operating autonomously. Leadership may table a strategic directive from the executive control above; it will move through proposal → review → cabinet alignment → authorization → mandate, gated by cabinet consensus and legitimacy.
+            </p>
+          ) : (
+            <>
+              <div className="mb-2 flex items-baseline justify-between gap-3">
+                <span className="text-[13px] font-semibold text-ink">{dproj.label}</span>
+                <span className="shrink-0 font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[dirTone] }}>{dproj.stage}</span>
+              </div>
+              <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] uppercase tracking-[0.14em]">
+                {['Proposal', 'Review', 'Cabinet alignment', 'Authorization', 'Mandate issued'].map((s, i) => {
+                  const reached = ['HELD AT CABINET', 'CABINET ALIGNMENT', 'AUTHORIZATION', 'MANDATE ISSUED'][Math.min(3, i)];
+                  const order = ['PROPOSAL', 'REVIEW', 'CABINET ALIGNMENT', 'AUTHORIZATION', 'MANDATE ISSUED'];
+                  const cur = order.indexOf(dproj.stage === 'HELD AT CABINET' ? 'CABINET ALIGNMENT' : dproj.stage);
+                  const on = i <= (cur < 0 ? 1 : cur);
+                  return (
+                    <span key={s} className="flex items-center gap-2">
+                      <span style={{ color: on ? (dproj.stage === 'HELD AT CABINET' && i === 2 ? TONE.alert : ACCENT) : 'rgb(var(--c-ink-muted))' }}>
+                        {on ? '▣' : '▢'} {s}
+                      </span>
+                      {i < 4 ? <span className="text-line">→</span> : null}
+                    </span>
+                  );
+                })}
+              </div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Projected consequence (consensus-scaled)</div>
+              <div className="flex flex-wrap gap-x-5 gap-y-0.5 text-[11px] text-ink-muted">
+                {([['reserves', dproj.deltas.reserves, true], ['recovery', dproj.deltas.recovery, true], ['cohesion', dproj.deltas.cohesion, true], ['escalation', dproj.deltas.escalation, false], ['survivability', dproj.deltas.survivability, true]] as const).map(([l, v, good]) => (
+                  <span key={l}>{l} <span className="font-mono tabular-nums" style={{ color: TONE[dltTone(v, good)] }}>{dlt(v)}</span></span>
+                ))}
+              </div>
+              <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+                Intent: {dproj.intent}. Tradeoff: <span className="text-ink-soft">{dproj.tradeoff}</span>. {dproj.window}. {dproj.note}
+                {' '}Bound to administration {lead.administration}; continuity memory persists across leadership change.
+              </p>
+            </>
+          )}
         </Panel>
 
         <Panel title="Sovereign governance audit"

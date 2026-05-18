@@ -13,6 +13,7 @@ import {
   nationalStressExercise, nationalDirectiveRegister, executiveLeadership,
   intelligenceAssessment, nationalChronology, allianceFramework,
   nationalOperations, populationOrder, governanceAudit,
+  EXEC_DIRECTIVES, directiveProjection,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -710,5 +711,32 @@ describe('sovereign operating model', () => {
     expect(['strengthening', 'holding', 'drifting', 'degrading']).toContain(ga.trajectory);
     expect(['COHESIVE', 'RESILIENT', 'ADAPTIVE', 'RECOVERING', 'STRAINED', 'OVEREXTENDED', 'FRAGMENTING', 'EXHAUSTED', 'DECLINING']).toContain(ga.healthVerdict);
     expect(typeof ga.auditMemoNote).toBe('string');
+  });
+
+  it('executive directive: procedural, consensus-gated, consequence-aware', () => {
+    const oS = nationalOperatingState(60, 70, 84, 3, 5, 25);
+    const p = nationalPosture(25);
+    const soc = nationalSociety(oS, p, 5, 3, 25);
+    const ex = externalEnvironment(25);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 25);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 25);
+    const elAligned = executiveLeadership(oS, { ...p, execConfidence: 88 }, soc, ex, { ...pc, cabinetCohesion: 90, legitimacy: 80 }, 1, 1, 25);
+
+    expect(EXEC_DIRECTIVES.length).toBe(8);
+    const none = directiveProjection('NONE', elAligned, pc, ex);
+    expect(none.stage).toBe('—');
+    expect(none.authorized).toBe(false);
+
+    const dp = directiveProjection('PRESERVE_RESERVES', elAligned, { ...pc, legitimacy: 80 }, ex);
+    expect(dp).toEqual(directiveProjection('PRESERVE_RESERVES', elAligned, { ...pc, legitimacy: 80 }, ex));
+    expect(dp.deltas.reserves).toBeGreaterThan(0);
+    expect(dp.deltas.recovery).toBeLessThan(0);
+    expect(['PROPOSAL', 'REVIEW', 'CABINET ALIGNMENT', 'AUTHORIZATION', 'MANDATE ISSUED', 'HELD AT CABINET']).toContain(dp.stage);
+
+    // a fractured cabinet holds the directive and weakens its realized effect
+    const elSplit = executiveLeadership(oS, p, soc, ex, pc, 3, 9, 25);
+    const split = directiveProjection('AGGRESSIVE_MOBILIZATION', elSplit, pc, ex);
+    expect(split.contested || split.stage === 'HELD AT CABINET' || !split.authorized).toBe(true);
+    expect(Math.abs(split.deltas.reserves)).toBeLessThanOrEqual(20);
   });
 });
