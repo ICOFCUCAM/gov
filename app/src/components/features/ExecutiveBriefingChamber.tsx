@@ -20,6 +20,7 @@ import {
   nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
   nationalChronology, allianceFramework, nationalOperations, populationOrder,
   governanceAudit, EXEC_DIRECTIVES, directiveProjection, liveScenario,
+  civilizationalMemory,
 } from '@/lib/gov/sovereign-operating-model';
 import type { ExecDirectiveKey } from '@/lib/gov/sovereign-operating-model';
 
@@ -169,6 +170,9 @@ export function ExecutiveBriefingChamber() {
   const dltTone = (n: number, good = true) => (n === 0 ? 'neutral' : (good ? n > 0 : n < 0) ? 'ok' : 'alert');
   const scen = liveScenario(epoch, lead, polit, sustain, cap, popn, ext, dproj.authorized);
   const scenTone = scen.verdict === 'CONTINUITY AT RISK' || scen.verdict === 'DEGRADED' ? 'alert' : scen.verdict === 'STRAINED' ? 'warn' : 'ok';
+  const civ = civilizationalMemory(epoch, post, polit, ext, sustain, cap, audit, chron);
+  const civTone = ['DECLINING', 'EXHAUSTED', 'FRAGMENTING'].includes(civ.trajectory) ? 'alert'
+    : ['STAGNANT', 'REGENERATING'].includes(civ.trajectory) ? 'warn' : 'ok';
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
@@ -363,6 +367,21 @@ export function ExecutiveBriefingChamber() {
       scen.afterAction.forEach(a => L.push(`   - ${a}`));
     }
     L.push('');
+    L.push(`XVIII.  CIVILIZATIONAL MEMORY & HISTORICAL INHERITANCE — GENERATION ${civ.generation}`);
+    L.push(thin);
+    L.push(`  Governing personality ${civ.personality} · trajectory ${civ.trajectory} · continuity ${civ.civContinuity}`);
+    L.push(`  International standing ${civ.reputationStanding} (${civ.reputationTrend})`);
+    L.push('  Inherited scars:');
+    civ.inheritedScars.forEach(s => L.push(`   - ${s}`));
+    L.push('  Inherited strengths:');
+    civ.inheritedStrengths.forEach(s => L.push(`   - ${s}`));
+    L.push('  Permanent consequences:');
+    civ.permanentConsequences.forEach(s => L.push(`   - ${s}`));
+    L.push('  Executive legacy:');
+    civ.legacies.forEach(l => L.push(`   - Administration ${l.generation}: ${l.profile}`));
+    L.push(`  Constitutional drift: ${civ.constitutionalDrift}`);
+    L.push(`  Doctrine inheritance: ${civ.doctrineBias}`);
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -382,7 +401,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit, directive, dproj, scen]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit, directive, dproj, scen, civ]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -449,6 +468,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[scenTone] }} title={`live scenario · ${scen.name} (${scen.stage})`}>
             scenario {scen.verdict.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[civTone] }} title={`civilizational memory · ${civ.personality} · generation ${civ.generation}`}>
+            civ {civ.trajectory.toLowerCase()}
           </span>
           {directive !== 'NONE' ? (
             <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[dirTone] }} title={`executive directive · ${dproj.stage}`}>
@@ -1039,6 +1061,49 @@ export function ExecutiveBriefingChamber() {
             Policy consequence: {audit.policyNotes.join(' ')} Governance condition is{' '}
             <span className="font-semibold" style={{ color: TONE[auditTone] }}>{audit.healthVerdict.toLowerCase()}</span>;
             civilization is <span className="font-semibold" style={{ color: TONE[audit.trajectory === 'degrading' ? 'alert' : audit.trajectory === 'drifting' ? 'warn' : 'ok'] }}>{audit.trajectory}</span>. {audit.auditMemoNote}. The state audits and corrects itself.
+          </p>
+        </Panel>
+
+        <Panel title="Civilizational memory & historical inheritance"
+          meta={`generation ${civ.generation} · ${civ.personality.toLowerCase()} · ${civ.trajectory.toLowerCase()} · continuity ${civ.civContinuity}`}>
+          <div className="mb-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[11px]">
+            <span className="text-ink-muted">Governing personality <span className="font-semibold text-ink-soft">{civ.personality}</span></span>
+            <span className="text-ink-muted">Civilizational trajectory <span className="font-semibold" style={{ color: TONE[civTone] }}>{civ.trajectory}</span></span>
+            <span className="text-ink-muted">International standing <span className="font-mono tabular-nums" style={{ color: TONE[civ.reputationStanding >= 60 ? 'ok' : civ.reputationStanding >= 42 ? 'warn' : 'alert'] }}>{civ.reputationStanding}</span> ({civ.reputationTrend})</span>
+          </div>
+          <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Inherited scars</div>
+              {civ.inheritedScars.map(s => (
+                <div key={s} className="flex items-baseline gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
+                  <span className="shrink-0" style={{ color: TONE.alert }}>▾</span><span className="min-w-0 flex-1 truncate text-ink-soft">{s}</span>
+                </div>
+              ))}
+              <div className="mb-1 mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Inherited strengths</div>
+              {civ.inheritedStrengths.map(s => (
+                <div key={s} className="flex items-baseline gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
+                  <span className="shrink-0" style={{ color: TONE.ok }}>▴</span><span className="min-w-0 flex-1 truncate text-ink-soft">{s}</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Permanent consequences</div>
+              {civ.permanentConsequences.map(s => (
+                <div key={s} className="flex items-baseline gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
+                  <span className="shrink-0 text-ink-muted">▪</span><span className="min-w-0 flex-1 truncate text-ink-soft">{s}</span>
+                </div>
+              ))}
+              <div className="mb-1 mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Executive legacy</div>
+              {civ.legacies.map(l => (
+                <div key={l.generation} className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1 text-[11px] last:border-0">
+                  <span className="shrink-0 font-mono text-[10px] text-ink-muted">Adm {l.generation}</span>
+                  <span className="min-w-0 flex-1 truncate text-right text-ink-soft">{l.profile}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+            Constitutional drift: {civ.constitutionalDrift}. {civ.doctrineBias}. The nation carries accumulated institutional memory — history is path-dependent and only partially reversible.
           </p>
         </Panel>
 

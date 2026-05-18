@@ -2186,6 +2186,117 @@ export function liveScenario(
   };
 }
 
+// ── Civilizational memory & historical inheritance ────────────────────────
+// The apex of continuity: accumulated eras permanently bias the civilization.
+// Pure synthesis over the EXISTING doctrine accumulators (eventMemory key
+// families already in use) integrated over a generational horizon — no new
+// accumulator logic, no omniscience. History is path-dependent: some scars
+// and strengths become semi-permanent and inherited by future governments.
+export interface ExecutiveLegacy { generation: number; profile: string; }
+export interface CivilizationalMemory {
+  generation: number;
+  personality: string;          // inherited governing personality
+  trajectory: string;           // ASCENDING…REGENERATING (accumulated, not single-event)
+  civContinuity: number;        // 0..100 cumulative civilizational condition
+  inheritedScars: string[];     // semi-permanent weaknesses carried forward
+  inheritedStrengths: string[]; // semi-permanent strengths carried forward
+  constitutionalDrift: string;  // permanent governance-balance consequence
+  reputationStanding: number;   // 0..100 cumulative international standing
+  reputationTrend: 'rising' | 'holding' | 'eroding';
+  permanentConsequences: string[];
+  legacies: ExecutiveLegacy[];  // recent administrations' permanent legacy
+  doctrineBias: string;         // how inherited history biases future choices
+}
+export function civilizationalMemory(
+  epoch: number, post: NationalPosture, polit: PoliticalContinuity,
+  ext: ExternalEnvironment, sustain: NationalSustainability, cap: NationalCapability,
+  audit: GovernanceAudit, chron: NationalChronology,
+): CivilizationalMemory {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  const generation = Math.floor(epoch / 12) + 1;
+  // Generational horizon integration of the EXISTING accumulators.
+  const H = 48; // multi-generational ("centuries of institutional memory")
+  const civ = eventMemory('audit:civ', epoch, H, 0.56, 0.34, 8);
+  const pol = eventMemory('pol', epoch, H, 0.58, 0.34, 8);
+  const soc = eventMemory('soc:rec', epoch, H, 0.55, 0.32, 8);
+  const ally = eventMemory('ally:hist', epoch, H, 0.57, 0.34, 8);
+  const era = eventMemory('era:rec', epoch, H, 0.56, 0.34, 8);
+  const learn = eventMemory('cap:learn', epoch, H, 0.57, 0.33, 8);
+  const winBias = (civ.pos + pol.pos + soc.pos + learn.pos) - (civ.neg + pol.neg + soc.neg + learn.neg);
+  // cumulative civilizational condition — accumulated, not the present tick.
+  const civContinuity = clamp(
+    50 + winBias * 0.35 + audit.civScore * 0.18 + cap.capabilityIndex * 0.12
+    + sustain.survivabilityWeeks * 0.6 - ext.externalPressure * 0.1);
+  // inherited governing personality from the accumulated balance.
+  const personality =
+    civ.neg + pol.neg > civ.pos + pol.pos + 24 ? 'FRAGMENTED'
+    : era.neg > era.pos + 18 ? 'CAUTIOUS'
+    : learn.pos >= learn.neg + 22 && civContinuity >= 62 ? 'RESILIENT'
+    : soc.neg > soc.pos + 18 ? 'DISTRUSTFUL'
+    : winBias <= -12 ? 'RETRENCHING'
+    : winBias >= 24 ? 'ASSERTIVE'
+    : 'STEADY';
+  const drend = winBias;
+  const trajectory =
+    civContinuity >= 74 && drend >= 18 ? 'ASCENDING'
+    : civContinuity >= 60 ? 'RESILIENT'
+    : civContinuity < 30 ? 'DECLINING'
+    : drend <= -22 ? 'EXHAUSTED'
+    : drend <= -8 ? 'FRAGMENTING'
+    : drend >= 10 && civContinuity < 60 ? 'REGENERATING'
+    : 'STAGNANT';
+  const inheritedScars: string[] = [];
+  if (pol.neg > pol.pos + 12) inheritedScars.push('legitimacy distrust inherited from failed administrations');
+  if (era.neg > era.pos + 12) inheritedScars.push('doctrine caution scarred by prior emergency eras');
+  if (ally.neg > ally.pos + 12) inheritedScars.push('diplomatic credibility eroded by past alliance failures');
+  if (soc.neg > soc.pos + 12) inheritedScars.push('public distrust embedded across generations');
+  if (sustain.infraAging >= 60) inheritedScars.push('infrastructure decay now partially irrecoverable');
+  const inheritedStrengths: string[] = [];
+  if (learn.pos >= learn.neg + 12) inheritedStrengths.push('institutional competence compounded across eras');
+  if (civ.pos >= civ.neg + 12) inheritedStrengths.push('continuity culture reinforced by resilient governance');
+  if (ally.pos >= ally.neg + 12) inheritedStrengths.push('durable international standing from reliable conduct');
+  if (inheritedScars.length === 0) inheritedScars.push('no semi-permanent scarring beyond ordinary strain');
+  if (inheritedStrengths.length === 0) inheritedStrengths.push('no compounded strengths beyond baseline resilience');
+  // constitutional evolution — prolonged emergency reshapes the balance.
+  const emgScar = clamp(post.containmentWeight * 0.4 + pol.neg * 0.4 + era.neg * 0.3);
+  const constitutionalDrift =
+    emgScar >= 62 ? 'centralized — emergency precedent now semi-permanent, restraint partially lost'
+    : emgScar >= 42 ? 'tilted toward centralization; recovery eras only partially restore restraint'
+    : civ.pos >= civ.neg + 12 ? 'institutional restraint historically preserved'
+    : 'balanced — constitutional tolerance within historical norms';
+  // international reputation memory — cumulative, decades-long.
+  const reputationStanding = clamp(
+    50 + (ally.pos - ally.neg) * 0.6 + ext.allianceReliability * 0.2 - ext.externalPressure * 0.14);
+  const reputationTrend: CivilizationalMemory['reputationTrend'] =
+    ally.pos >= ally.neg + 10 ? 'rising' : ally.neg >= ally.pos + 10 ? 'eroding' : 'holding';
+  const permanentConsequences: string[] = [];
+  if (sustain.infraAging >= 64) permanentConsequences.push('partial infrastructure loss — not fully recoverable');
+  if (pol.neg > pol.pos + 20) permanentConsequences.push('institutional-trust corrosion — historically bounded recovery');
+  if (ally.neg > ally.pos + 20) permanentConsequences.push('geopolitical fragmentation — standing repairs slowly over decades');
+  if (learn.pos >= learn.neg + 20) permanentConsequences.push('permanent civilizational competence gain');
+  if (permanentConsequences.length === 0) permanentConsequences.push('no irreversible consequences accrued — recovery remains feasible');
+  // executive legacy — recent administrations historically judged.
+  const legacies: ExecutiveLegacy[] = [];
+  for (let g = Math.max(1, generation - 3); g <= generation; g++) {
+    const m = eventMemory(`pol`, g * 12, 12, 0.58, 0.34, 5);
+    const profile = m.neg > m.pos + 10 ? 'failed — caution & distrust inherited'
+      : m.pos >= m.neg + 10 ? 'competent — institutional confidence inherited'
+      : 'mixed — provisional precedent';
+    legacies.push({ generation: g, profile });
+  }
+  const doctrineBias =
+    personality === 'CAUTIOUS' || personality === 'RETRENCHING' ? 'inherited history biases toward conservative, reserve-protective doctrine'
+    : personality === 'ASSERTIVE' ? 'inherited confidence biases toward assertive recovery doctrine'
+    : personality === 'FRAGMENTED' || personality === 'DISTRUSTFUL' ? 'inherited fragmentation biases toward defensive, legitimacy-sensitive doctrine'
+    : personality === 'RESILIENT' ? 'inherited resilience permits balanced, adaptive doctrine'
+    : 'inherited history exerts no decisive doctrinal bias';
+  return {
+    generation, personality, trajectory, civContinuity, inheritedScars,
+    inheritedStrengths, constitutionalDrift, reputationStanding, reputationTrend,
+    permanentConsequences, legacies: legacies.reverse(), doctrineBias,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

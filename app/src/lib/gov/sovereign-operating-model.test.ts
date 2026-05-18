@@ -13,7 +13,7 @@ import {
   nationalStressExercise, nationalDirectiveRegister, executiveLeadership,
   intelligenceAssessment, nationalChronology, allianceFramework,
   nationalOperations, populationOrder, governanceAudit,
-  EXEC_DIRECTIVES, directiveProjection, liveScenario,
+  EXEC_DIRECTIVES, directiveProjection, liveScenario, civilizationalMemory,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -768,6 +768,38 @@ describe('sovereign operating model', () => {
     const aa = liveScenario(7, el, pc, su, cp, po, ex, false);
     expect(aa.stage).toBe('AFTER-ACTION');
     expect(aa.afterAction.length).toBeGreaterThan(0);
+  });
+
+  it('civilizational memory: inherited, path-dependent, deterministic', () => {
+    const oS = nationalOperatingState(60, 72, 86, 4, 6, 36);
+    const p = nationalPosture(36);
+    const soc = nationalSociety(oS, p, 6, 4, 36);
+    const ex = externalEnvironment(36);
+    const f = strategicForesight(oS, p, soc, ex, 56, 4, 6, 36);
+    const su = nationalSustainability(oS, p, soc, f, 36);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 36);
+    const el = executiveLeadership(oS, p, soc, ex, pc, 2, 6, 36);
+    const cp = nationalCapability(oS, p, soc, ex, su, pc, 86, 6, 36);
+    const reg = nationalDirectiveRegister(p, oS.contention, 36);
+    const af = allianceFramework(ex, p, soc, f, 2, 36);
+    const no = nationalOperations(oS, p, soc, ex, pc, el, af, 36);
+    const po = populationOrder(oS, p, soc, ex, pc, 86, 36);
+    const ga = governanceAudit(oS, p, soc, ex, pc, el, su, cp, reg, no, po, 36);
+    const ch = nationalChronology(36, oS.contention);
+    const cm = civilizationalMemory(36, p, pc, ex, su, cp, ga, ch);
+    expect(cm).toEqual(civilizationalMemory(36, p, pc, ex, su, cp, ga, ch));
+    expect(cm.civContinuity).toBeGreaterThanOrEqual(0);
+    expect(cm.civContinuity).toBeLessThanOrEqual(100);
+    expect(cm.reputationStanding).toBeGreaterThanOrEqual(0);
+    expect(cm.reputationStanding).toBeLessThanOrEqual(100);
+    expect(['ASCENDING', 'RESILIENT', 'STAGNANT', 'FRAGMENTING', 'EXHAUSTED', 'DECLINING', 'REGENERATING']).toContain(cm.trajectory);
+    expect(['rising', 'holding', 'eroding']).toContain(cm.reputationTrend);
+    expect(cm.inheritedScars.length).toBeGreaterThan(0);
+    expect(cm.inheritedStrengths.length).toBeGreaterThan(0);
+    expect(cm.permanentConsequences.length).toBeGreaterThan(0);
+    expect(cm.legacies.length).toBeGreaterThanOrEqual(1);
+    expect(cm.generation).toBe(Math.floor(36 / 12) + 1);
+    expect(typeof cm.doctrineBias).toBe('string');
   });
 });
 
