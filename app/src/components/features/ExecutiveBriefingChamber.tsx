@@ -452,68 +452,16 @@ export function ExecutiveBriefingChamber() {
             SOVEREIGN ∕∕ EYES-ONLY
           </span>
           <span className="hidden text-ink-muted md:inline">{sov?.executiveTitle ?? 'Executive Office'}</span>
-          <span className="hidden font-mono tabular-nums sm:inline" style={{ color: TONE[coordTone] }} title="national coordination load">
-            coord {coordLoad}%
+          <span className="hidden font-mono text-[10px] uppercase tracking-[0.16em] text-ink-muted lg:inline"
+            title={`continuity status — governance ${audit.healthVerdict}, civilization ${civ.trajectory}, drift ${frail.drift}, intelligence ${intel.posture}, society ${popn.label}, administration ${chron.administration}, coordination ${coordLoad}%`}>
+            <span style={{ color: 'rgb(var(--c-ink-soft))' }}>continuity</span>
+            {' · '}<span style={{ color: TONE[auditTone] }}>{audit.healthVerdict.toLowerCase()}</span>
+            {' · '}<span style={{ color: TONE[civTone] }}>{civ.trajectory.toLowerCase()}</span>
+            {' · drift '}<span style={{ color: TONE[driftTone] }}>{frail.drift.toLowerCase()}</span>
+            {' · intel '}<span style={{ color: TONE[intelTone] }}>{intel.posture.toLowerCase()}</span>
+            {directive !== 'NONE' ? <>{' · directive '}<span style={{ color: TONE[dirTone] }}>{dproj.authorized ? 'in force' : dproj.contested ? 'contested' : 'pending'}</span></> : null}
+            {' · adm '}{chron.administration}
           </span>
-          <span className="hidden font-mono uppercase tracking-wider md:inline" style={{ color: TONE[socTone] }} title="civilian state">
-            society {society.label.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider lg:inline" style={{ color: TONE[extTone] }} title="external environment">
-            ext {ext.label.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider lg:inline" style={{ color: TONE[sustTone] }} title="long-horizon sustainability">
-            sustain {sustain.outlook.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[politTone] }} title="political continuity">
-            regime {polit.label.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[capTone] }} title="national capability">
-            capability {cap.label.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[drillTone] }} title={`live stress exercise: ${drill.name}`}>
-            drill {drill.verdict.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: 'rgb(var(--c-ink-soft))' }} title="governing administration / doctrine generation">
-            {register.era.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[leadTone] }} title={`executive leadership · administration ${lead.administration}`}>
-            leadership {lead.label.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[intelTone] }} title={`classified intelligence posture · threat ${intel.threatLevel}`}>
-            intel {intel.posture.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline text-ink-soft" title={`continuity chronology · ${chron.span}-epoch record`}>
-            admin {chron.administration}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[allianceTone] }} title={`interstate coordination · ${alliance.regionalOrder}`}>
-            bloc {alliance.blocPosture.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[opsTone] }} title="national operations execution">
-            ops {nops.activeCount}/{nops.atRisk}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[popTone] }} title={`national population & social order · governability ${popn.governability}`}>
-            society {popn.label.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[auditTone] }} title={`sovereign governance audit · civilization ${audit.trajectory}`}>
-            audit {audit.healthVerdict.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[scenTone] }} title={`live scenario · ${scen.name} (${scen.stage})`}>
-            scenario {scen.verdict.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[civTone] }} title={`civilizational memory · ${civ.personality} · generation ${civ.generation}`}>
-            civ {civ.trajectory.toLowerCase()}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[irecTone] }} title={`institutional posture · ${irec.identity}`}>
-            {irec.stateTone}
-          </span>
-          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[driftTone] }} title={`historical drift · entropy ${frail.entropy}`}>
-            drift {frail.drift.toLowerCase()}
-          </span>
-          {directive !== 'NONE' ? (
-            <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[dirTone] }} title={`executive directive · ${dproj.stage}`}>
-              directive {dproj.authorized ? 'in force' : dproj.contested ? 'contested' : 'pending'}
-            </span>
-          ) : null}
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
           <label className="flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-ink-muted" title="Issue an executive strategic directive">
