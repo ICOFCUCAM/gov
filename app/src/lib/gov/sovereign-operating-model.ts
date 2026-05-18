@@ -249,3 +249,65 @@ export function corridorAdjacency(edges: [number, number][], n: number): number[
   for (const [a, b] of edges) { adj[a]?.push(b); adj[b]?.push(a); }
   return adj;
 }
+
+// ── Executive command doctrine ────────────────────────────────────────────
+// How a crisis is *governed*: the institutional gate it sits behind,
+// command velocity (severity accelerates, bureaucracy & contention drag),
+// the authority chain that owns it, and the live prioritization conflict.
+
+export const GOV_STAGES = [
+  'REGIONAL ACK', 'MINISTRY ESCALATION', 'CABINET REVIEW', 'EXECUTIVE AUTHORIZATION',
+  'SOVEREIGN DIRECTIVE', 'OPERATIONAL DEPLOYMENT', 'STABILIZATION OVERSIGHT', 'RECOVERY SUPERVISION',
+] as const;
+
+// >1 = faster than baseline. Severity accelerates command velocity;
+// bureaucratic authorization cadence and national contention slow it.
+export function commandVelocity(sev: number, behAuth: number, contention: number): number {
+  const sevK = sev >= 3 ? 2.2 : sev >= 2 ? 1.3 : 0.7;
+  return Math.max(0.25, sevK / (behAuth * (1 + contention / 180)));
+}
+
+export interface GovGate { idx: number; stage: string; held: boolean; }
+export function executiveGate(
+  sev: number, ageM: number, ack: boolean, behAuth: number, contention: number,
+): GovGate {
+  const v = commandVelocity(sev, behAuth, contention);
+  let idx = Math.floor((ageM / 9) * v);
+  // executive review gate — unacknowledged crises cannot pass CABINET REVIEW
+  if (!ack) idx = Math.min(idx, 2);
+  // governmental inertia — low-severity events drag through governance layers
+  if (sev <= 1) idx = Math.min(idx, 5);
+  idx = Math.max(0, Math.min(7, idx));
+  const held = (!ack && idx === 2) || (sev <= 1 && idx === 5);
+  return { idx, stage: GOV_STAGES[idx]!, held };
+}
+
+// Who governs whom — escalation ownership inherits up the command chain
+// with severity (regional → cabinet → executive → sovereign).
+export function authorityChain(arch: string, sev: number): string[] {
+  const chain = [`${arch} lead`, 'Cabinet'];
+  if (sev >= 2) chain.push('Executive');
+  if (sev >= 3) chain.push('Sovereign');
+  return chain;
+}
+
+// Live prioritization conflict — the institution contending with this
+// ministry for executive authorization / national resources.
+const CONFLICT: Record<string, string> = {
+  HEALTH: 'Treasury resists deployment cost',
+  EMERGENCY: 'Treasury resists emergency-deployment cost',
+  ENERGY: 'Civilian recovery delayed for grid stabilization',
+  TRANSPORT: 'Containment policy conflicts with rerouting',
+  FINANCE: 'Reserve draw contested by Emergency',
+  TELECOM: 'Restoration competes with reserve bandwidth',
+  INTERIOR: 'Civil-stability priority contests logistics',
+  AGRICULTURE: 'Supply continuity contests transport allocation',
+  TRADE: 'Throughput protection contests containment',
+  JUSTICE: 'Custody capacity contests interior tempo',
+  EDUCATION: 'Service continuity contests budget reallocation',
+  LABOR: 'Workforce stability contests fiscal exposure',
+  ENVIRONMENT: 'Hazard containment contests economic activity',
+};
+export function priorityConflict(arch: string, contention: number): { text: string; tense: boolean } {
+  return { text: CONFLICT[arch] ?? 'Cross-ministry authorization contention', tense: contention >= 60 };
+}

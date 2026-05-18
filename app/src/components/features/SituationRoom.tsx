@@ -44,6 +44,7 @@ import {
   nationalOperatingState, ministryBehavior, cascadeChain, responseLatency,
   ministryReliability, corridorFatigue, forecast,
   provinceMemory, diffuseTopology, corridorAdjacency, territorialField,
+  executiveGate, authorityChain, priorityConflict,
 } from '@/lib/gov/sovereign-operating-model';
 
 const NATL_ASSETS = nationalAssets();
@@ -1638,9 +1639,10 @@ export function SituationRoom() {
                   const ak = seed(`ack:${c.ministry}:${i}:${epoch}`) > 0.45;
                   const ix = pipeStage(lv, ag, ak);
                   if (ix >= 7) a.rec++; else if (ix >= 4) a.auth++; else a.coord++;
+                  if (executiveGate(lv, ag, ak, ministryBehavior(String(c.archetype)).auth, opS.contention).held) a.held++;
                   return a;
-                }, { coord: 0, auth: 0, rec: 0 });
-                return `${s.coord} coordinating · ${s.auth} authorized · ${s.rec} recovering`;
+                }, { coord: 0, auth: 0, rec: 0, held: 0 });
+                return `${s.coord} coordinating · ${s.auth} authorized · ${s.rec} recovering${s.held ? ` · ${s.held} held at gate` : ''}`;
               })()}
               className="xl:col-span-2" bodyClass="!p-0">
               {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry escalations.</p> : incidents.slice(0, 9).map((c, i) => {
@@ -1667,8 +1669,12 @@ export function SituationRoom() {
                 const pIdx = pipeStage(lvl, ageM / beh.auth, ack);
                 const cur = PIPELINE[pIdx]; const nxt = PIPELINE[Math.min(8, pIdx + 1)];
                 const machinery = responseMachinery(pIdx);
-                const tradeoff = TRADEOFF[String(c.archetype)] ?? 'resource arbitration in progress';
                 const mandate = mandateFor(lvl);
+                // Executive governance — institutional gate, command
+                // authority chain, and the live prioritization conflict.
+                const gov = executiveGate(lvl, ageM, ack, beh.auth, opS.contention);
+                const chain = authorityChain(arch, lvl);
+                const conflict = priorityConflict(arch, opS.contention);
                 const stT = pIdx >= 6 ? TONE.ok : pIdx >= 4 ? ACCENT : pIdx >= 2 ? TONE.warn : TONE.alert;
                 const stTone = pIdx >= 7 ? 'ok' : pIdx >= 4 ? 'accent' : pIdx >= 2 ? 'warn' : 'alert';
                 // Recovery physics — strain cools through containment but
@@ -1699,7 +1705,7 @@ export function SituationRoom() {
                       </span>
                     </div>
                     <div className="mt-1 truncate text-xs font-medium text-ink">{c.label}</div>
-                    <div className="truncate text-[10px] text-ink-muted">{id.glyph} {c.ministry} · owner {owner} · <span style={{ color: TONE.neutral }}>{beh.orientation}</span></div>
+                    <div className="truncate text-[10px] text-ink-muted">{id.glyph} {c.ministry} · owner {owner} › {chain.slice(1).join(' › ')} · <span style={{ color: TONE.neutral }}>{beh.orientation}</span></div>
                     <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px] text-ink-muted">
                       <span>~{pop}M · {regionsN} regions</span>
                       <span className="text-right" style={{ color: prop >= 70 ? TONE.alert : prop >= 50 ? TONE.warn : TONE.neutral }}>propagation {prop}%</span>
@@ -1720,10 +1726,16 @@ export function SituationRoom() {
                         {cur}▸{nxt}{fragile ? <span style={{ color: TONE.warn }}> · fragile</span> : null}
                       </span>
                     </div>
-                    <div className="mt-1"><PipelineSpine idx={pIdx} tone={stTone} /></div>
+                    <div className="mt-1 flex items-center gap-2">
+                      <span className="min-w-0 flex-1"><PipelineSpine idx={pIdx} tone={stTone} /></span>
+                      <span className="shrink-0 font-mono text-[8px] uppercase tracking-wider"
+                        style={{ color: gov.held ? TONE.warn : gov.idx >= 5 ? TONE.ok : ACCENT }}>
+                        {gov.held ? '⏸ ' : ''}{gov.stage}
+                      </span>
+                    </div>
                     <div className="mt-1 flex items-center justify-between gap-2 text-[9px] text-ink-muted">
                       <span className="flex min-w-0 items-center gap-1.5">
-                        <span className="truncate">⚖ {tradeoff}</span>
+                        <span className="truncate" style={{ color: conflict.tense ? TONE.warn : 'rgb(var(--c-ink-muted))' }}>⚖ {conflict.text}</span>
                         <StrainBar pct={strain} tone={strainTone} />
                         <span className="shrink-0 font-mono tabular-nums" style={{ color: TONE[strainTone] }}>{strain}%</span>
                       </span>

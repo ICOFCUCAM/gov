@@ -3,6 +3,7 @@ import {
   nationalOperatingState, ministryBehavior, cascadeChain, responseLatency,
   ministryReliability, corridorFatigue, forecast, OP_TICK,
   provinceMemory, diffuseTopology, territorialField, corridorAdjacency,
+  executiveGate, commandVelocity, authorityChain, priorityConflict, GOV_STAGES,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -87,5 +88,29 @@ describe('sovereign operating model', () => {
     expect(f).toEqual(territorialField(7, adj, 3));
     expect(f.length).toBe(3);
     for (const v of f) { expect(v).toBeGreaterThanOrEqual(2); expect(v).toBeLessThanOrEqual(99); }
+  });
+
+  it('executive doctrine: severity accelerates, bureaucracy & gates drag', () => {
+    // severity accelerates command velocity; treasury auth drags it
+    const vCrit = commandVelocity(3, 0.5, 30);
+    const vRoutineSlow = commandVelocity(1, 2.4, 80);
+    expect(vCrit).toBeGreaterThan(vRoutineSlow);
+
+    // unacknowledged crisis is held at the cabinet-review gate
+    const held = executiveGate(3, 90, false, 1, 40);
+    expect(held.idx).toBeLessThanOrEqual(2);
+    expect(held.held).toBe(true);
+    expect(GOV_STAGES).toContain(held.stage);
+
+    // acknowledged critical progresses past the gate
+    const moving = executiveGate(3, 90, true, 0.5, 20);
+    expect(moving.idx).toBeGreaterThan(2);
+
+    expect(authorityChain('HEALTH', 3)).toEqual(['HEALTH lead', 'Cabinet', 'Executive', 'Sovereign']);
+    expect(authorityChain('TRADE', 1)).toEqual(['TRADE lead', 'Cabinet']);
+
+    const pc = priorityConflict('HEALTH', 70);
+    expect(typeof pc.text).toBe('string');
+    expect(pc.tense).toBe(true);
   });
 });
