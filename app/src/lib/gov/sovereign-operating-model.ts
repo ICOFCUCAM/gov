@@ -2388,6 +2388,104 @@ export function institutionalRecord(
   };
 }
 
+// ── Institutional frailty & historical imperfection ───────────────────────
+// Closing synthesis over the EXISTING doctrine — no new domain. Renders the
+// state as historically human: misjudgement, bureaucratic drag, contradictory
+// intelligence, administrative entropy, uneven recovery, latent fracture,
+// doctrinal traps, unresolved scars, blind spots and slow civilizational
+// drift. Errors emerge from accumulated history & bias, never randomness.
+export interface InstitutionalFrailty {
+  misjudgementRisk: number;     // 0..100
+  misjudgementNote: string;
+  bureaucraticDrag: number;     // 0..100 implementation inertia
+  contradictions: string[];     // unresolved intelligence/interpretation conflicts
+  entropy: number;              // 0..100 administrative-competence decay
+  partialRecovery: string[];    // uneven recovery asymmetries
+  fractureRisk: number;         // 0..100 latent fragility even when strong
+  overcorrection: string;       // inherited doctrinal trap
+  unresolvedScars: string[];
+  blindSpots: string[];
+  drift: string;                // RESILIENCE | STAGNATION | EXHAUSTION | FRAGMENTATION | RENEWAL
+  driftNote: string;
+}
+export function institutionalFrailty(
+  epoch: number, civ: CivilizationalMemory, audit: GovernanceAudit,
+  intel: IntelligenceAssessment, lead: ExecutiveLeadership, sustain: NationalSustainability,
+  ext: ExternalEnvironment, polit: PoliticalContinuity, foresight: StrategicForesight,
+  society: NationalSociety,
+): InstitutionalFrailty {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  const memNeg = eventMemory('audit:civ', epoch, 40, 0.56, 0.34, 8);
+  // 1 — misjudgement: low foresight confidence + intel ambiguity + extreme
+  // consensus + inherited bias (cautious=slow, assertive=overextend).
+  const ambiguity = intel.signals.filter(s => s.confidence === 'speculative').length * 8;
+  const biasLoad = civ.personality === 'CAUTIOUS' || civ.personality === 'RETRENCHING' ? 12
+    : civ.personality === 'ASSERTIVE' ? 14 : civ.personality === 'FRAGMENTED' ? 16 : 4;
+  const misjudgementRisk = clamp(
+    (100 - foresight.confidence) * 0.3 + (100 - intel.assessmentConfidence) * 0.24
+    + ambiguity + Math.abs(60 - lead.consensus) * 0.18 + biasLoad);
+  const misjudgementNote =
+    civ.personality === 'CAUTIOUS' || civ.personality === 'RETRENCHING'
+      ? 'inherited caution risks under-reacting to emerging escalation'
+      : civ.personality === 'ASSERTIVE'
+        ? 'inherited confidence risks overextension beyond sustainable capacity'
+        : 'incomplete information may bias threat weighting in either direction';
+  // 2 — bureaucratic drag from fatigue, contention, authorization strain.
+  const bureaucraticDrag = clamp(
+    lead.constitutionalStrain * 0.26 + (100 - lead.decisionQuality) * 0.22
+    + audit.institutionalDecay * 0.22 + (100 - polit.cabinetCohesion) * 0.18 + 8);
+  // 3 — contradictory intelligence (unresolved).
+  const contradictions: string[] = [];
+  if (intel.signals.some(s => s.confidence === 'probable') && intel.signals.some(s => s.confidence === 'speculative'))
+    contradictions.push('threat vectors disputed across confidence bands — interpretation unresolved');
+  if (lead.consensus < 52) contradictions.push('ministries read the same signals differently; executive must act without consensus');
+  if (memNeg.neg > memNeg.pos + 12) contradictions.push('historical scars bias current interpretation toward pessimism');
+  if (contradictions.length === 0) contradictions.push('no material interpretive conflict — assessment provisionally coherent');
+  // 4 — administrative entropy (asymmetric: decay faster than repair).
+  const entropy = clamp(
+    audit.institutionalDecay * 0.4 + memNeg.neg * 0.3 - memNeg.pos * 0.16
+    + sustain.infraAging * 0.18 + 6);
+  // 5 — partial recovery asymmetries.
+  const partialRecovery: string[] = [];
+  if (sustain.survivabilityWeeks >= 12 && polit.legitimacy < 50) partialRecovery.push('infrastructure stabilising faster than legitimacy');
+  if (sustain.reserveLongevityWeeks >= 12 && ext.allianceReliability < 55) partialRecovery.push('reserves rebuilding while alliances weaken');
+  if (society.economicContinuity >= 55 && society.socialStrain >= 50) partialRecovery.push('economy stabilising while public exhaustion persists');
+  if (partialRecovery.length === 0) partialRecovery.push('recovery broadly even — no major divergence detected');
+  // 6 — latent fracture risk (brittleness even when strong).
+  const overOptimized = audit.civScore >= 70 && civ.constitutionalDrift.startsWith('centralized');
+  const fractureRisk = clamp(
+    (100 - polit.nationalUnity) * 0.28 + ext.externalPressure * 0.2
+    + entropy * 0.22 + (overOptimized ? 16 : 0) + (civ.personality === 'FRAGMENTED' ? 14 : 0));
+  // 7 — doctrinal overcorrection / inherited trap.
+  const overcorrection =
+    memNeg.neg > memNeg.pos + 16 ? 'post-failure caution may now be trapping doctrine in excessive conservatism'
+      : memNeg.pos > memNeg.neg + 16 ? 'sustained success risks future overconfidence beyond sustainable doctrine'
+        : 'doctrine inheritance currently within adaptive tolerance';
+  // 8 — unresolved historical scars.
+  const unresolvedScars = civ.permanentConsequences
+    .filter(c => !c.startsWith('no irreversible') && !c.startsWith('permanent civilizational competence'))
+    .slice(0, 3);
+  if (unresolvedScars.length === 0) unresolvedScars.push('no era remembered as a permanent unresolved scar');
+  // 9 — blind spots (recognised only historically).
+  const blindSpots: string[] = [];
+  if (intel.assessmentConfidence < 60) blindSpots.push('low analytic confidence — some deterioration likely unrecognised until escalation');
+  if (foresight.confidence < 55) blindSpots.push('forecast confidence weak — long-horizon risk only retrospectively visible');
+  if (blindSpots.length === 0) blindSpots.push('awareness adequate — material risk surfaces are observed');
+  // 10 — long-horizon civilizational drift (organic, hard to reverse).
+  const drift =
+    civ.trajectory === 'DECLINING' || civ.trajectory === 'EXHAUSTED' ? 'EXHAUSTION'
+      : civ.trajectory === 'FRAGMENTING' ? 'FRAGMENTATION'
+        : civ.trajectory === 'REGENERATING' ? 'RENEWAL'
+          : civ.trajectory === 'ASCENDING' || civ.trajectory === 'RESILIENT' ? 'RESILIENCE'
+            : 'STAGNATION';
+  const driftNote = `Accumulated doctrine, continuity strain (${entropy}) and historical inheritance drift the civilization toward ${drift.toLowerCase()}; the trajectory is gradual and not readily reversible within a single administration.`;
+  return {
+    misjudgementRisk, misjudgementNote, bureaucraticDrag, contradictions,
+    entropy, partialRecovery, fractureRisk, overcorrection, unresolvedScars,
+    blindSpots, drift, driftNote,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

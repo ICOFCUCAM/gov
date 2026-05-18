@@ -14,7 +14,7 @@ import {
   intelligenceAssessment, nationalChronology, allianceFramework,
   nationalOperations, populationOrder, governanceAudit,
   EXEC_DIRECTIVES, directiveProjection, liveScenario, civilizationalMemory,
-  institutionalRecord,
+  institutionalRecord, institutionalFrailty,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -816,6 +816,20 @@ describe('sovereign operating model', () => {
     // war-cabinet powers carry an exceptional constitutional posture
     const irPow = institutionalRecord(cm, ga, el, pc, sc, ch, dp, 3);
     expect(irPow.emergencyPosture).toMatch(/[Ee]xceptional|war-cabinet/);
+
+    const ints = intelligenceAssessment(oS, p, soc, ex, f, su, pc, 36);
+    const fr = institutionalFrailty(36, cm, ga, ints, el, su, ex, pc, f, soc);
+    expect(fr).toEqual(institutionalFrailty(36, cm, ga, ints, el, su, ex, pc, f, soc));
+    for (const k of ['misjudgementRisk', 'bureaucraticDrag', 'entropy', 'fractureRisk'] as const) {
+      expect(fr[k]).toBeGreaterThanOrEqual(0);
+      expect(fr[k]).toBeLessThanOrEqual(100);
+    }
+    expect(fr.contradictions.length).toBeGreaterThan(0);
+    expect(fr.partialRecovery.length).toBeGreaterThan(0);
+    expect(fr.unresolvedScars.length).toBeGreaterThan(0);
+    expect(fr.blindSpots.length).toBeGreaterThan(0);
+    expect(['RESILIENCE', 'STAGNATION', 'EXHAUSTION', 'FRAGMENTATION', 'RENEWAL']).toContain(fr.drift);
+    expect(typeof fr.overcorrection).toBe('string');
   });
 });
 

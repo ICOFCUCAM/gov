@@ -20,7 +20,7 @@ import {
   nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
   nationalChronology, allianceFramework, nationalOperations, populationOrder,
   governanceAudit, EXEC_DIRECTIVES, directiveProjection, liveScenario,
-  civilizationalMemory, institutionalRecord,
+  civilizationalMemory, institutionalRecord, institutionalFrailty,
 } from '@/lib/gov/sovereign-operating-model';
 import type { ExecDirectiveKey } from '@/lib/gov/sovereign-operating-model';
 
@@ -176,6 +176,9 @@ export function ExecutiveBriefingChamber() {
   const irec = institutionalRecord(civ, audit, lead, polit, scen, chron, dproj, powersLevel);
   const irecTone = ['grieving', 'exhausted', 'strained'].includes(irec.stateTone) ? 'alert'
     : ['hardened', 'reconstructive'].includes(irec.stateTone) ? 'warn' : 'ok';
+  const frail = institutionalFrailty(epoch, civ, audit, intel, lead, sustain, ext, polit, foresight, society);
+  const driftTone = ['EXHAUSTION', 'FRAGMENTATION'].includes(frail.drift) ? 'alert'
+    : ['STAGNATION', 'RENEWAL'].includes(frail.drift) ? 'warn' : 'ok';
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
@@ -397,6 +400,19 @@ export function ExecutiveBriefingChamber() {
     L.push(`  Succession: ${irec.successionNote}`);
     if (irec.mourningEra) L.push('  Continuity-recovery period observed — restoration is generational.');
     L.push('');
+    L.push(`XX.  INSTITUTIONAL FRAILTY & HISTORICAL IMPERFECTION — DRIFT TOWARD ${frail.drift}`);
+    L.push(thin);
+    L.push(`  Misjudgement risk ${frail.misjudgementRisk} — ${frail.misjudgementNote}`);
+    L.push(`  Bureaucratic drag ${frail.bureaucraticDrag} · administrative entropy ${frail.entropy} · latent fracture ${frail.fractureRisk}`);
+    L.push('  Contradictory intelligence:');
+    frail.contradictions.forEach(c => L.push(`   - ${c}`));
+    L.push('  Uneven recovery:');
+    frail.partialRecovery.forEach(s => L.push(`   - ${s}`));
+    L.push('  Unresolved scars & blind spots:');
+    [...frail.unresolvedScars, ...frail.blindSpots].forEach(s => L.push(`   - ${s}`));
+    L.push(`  Doctrinal overcorrection: ${frail.overcorrection}`);
+    L.push(`  ${frail.driftNote}`);
+    L.push('');
     L.push(rule);
     L.push(`Advisory synthesis from the sovereign operating doctrine — issued in ${irec.stateTone} posture.`);
     L.push('No autonomous action — national leadership decides.');
@@ -416,7 +432,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit, directive, dproj, scen, civ, irec]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit, directive, dproj, scen, civ, irec, frail]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -489,6 +505,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[irecTone] }} title={`institutional posture · ${irec.identity}`}>
             {irec.stateTone}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[driftTone] }} title={`historical drift · entropy ${frail.entropy}`}>
+            drift {frail.drift.toLowerCase()}
           </span>
           {directive !== 'NONE' ? (
             <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[dirTone] }} title={`executive directive · ${dproj.stage}`}>
@@ -1150,6 +1169,41 @@ export function ExecutiveBriefingChamber() {
               The state observes a continuity-recovery period; restoration of institutional confidence and restraint is generational, not immediate.
             </p>
           ) : null}
+        </Panel>
+
+        <Panel title="Institutional frailty & historical imperfection"
+          meta={`drift toward ${frail.drift.toLowerCase()} · entropy ${frail.entropy} · misjudgement ${frail.misjudgementRisk}`}>
+          <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Imperfection & inertia</div>
+              <p className="text-[11px] text-ink-muted">Misjudgement risk <span className="font-mono tabular-nums" style={{ color: TONE[frail.misjudgementRisk >= 60 ? 'alert' : frail.misjudgementRisk >= 40 ? 'warn' : 'ok'] }}>{frail.misjudgementRisk}</span> — {frail.misjudgementNote}.</p>
+              <p className="mt-1 text-[11px] text-ink-muted">Bureaucratic drag <span className="font-mono tabular-nums" style={{ color: TONE[frail.bureaucraticDrag >= 60 ? 'alert' : frail.bureaucraticDrag >= 40 ? 'warn' : 'ok'] }}>{frail.bureaucraticDrag}</span>; administrative entropy <span className="font-mono tabular-nums" style={{ color: TONE[frail.entropy >= 55 ? 'alert' : frail.entropy >= 35 ? 'warn' : 'ok'] }}>{frail.entropy}</span> (decay outpaces repair).</p>
+              <p className="mt-1 text-[11px] text-ink-muted">Latent fracture risk <span className="font-mono tabular-nums" style={{ color: TONE[frail.fractureRisk >= 55 ? 'alert' : frail.fractureRisk >= 35 ? 'warn' : 'ok'] }}>{frail.fractureRisk}</span> — strength does not eliminate brittleness.</p>
+              <div className="mb-1 mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Contradictory intelligence</div>
+              {frail.contradictions.map(c => (
+                <div key={c} className="flex items-baseline gap-2 py-0.5 text-[11px] text-ink-muted">
+                  <span className="shrink-0" style={{ color: TONE.warn }}>≠</span><span className="min-w-0 flex-1">{c}</span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Uneven recovery</div>
+              {frail.partialRecovery.map(s => (
+                <div key={s} className="flex items-baseline gap-2 py-0.5 text-[11px] text-ink-muted">
+                  <span className="shrink-0 text-ink-muted">≈</span><span className="min-w-0 flex-1">{s}</span>
+                </div>
+              ))}
+              <div className="mb-1 mt-2 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Unresolved scars & blind spots</div>
+              {[...frail.unresolvedScars, ...frail.blindSpots].map(s => (
+                <div key={s} className="flex items-baseline gap-2 py-0.5 text-[11px] text-ink-muted">
+                  <span className="shrink-0 text-ink-muted">§</span><span className="min-w-0 flex-1">{s}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+            Doctrinal overcorrection: {frail.overcorrection}. {frail.driftNote} The state is observant, not omniscient — some deterioration is recognised only historically.
+          </p>
         </Panel>
 
         <p className="pb-2 text-center text-[11px] leading-relaxed text-ink-muted">
