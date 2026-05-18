@@ -1191,11 +1191,27 @@ export function SituationRoom() {
               <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
             </Panel>
 
-            <Panel title="Ministry status matrix" meta="cross-domain risk" className="xl:col-span-4" bodyClass="!p-0">
+            <Panel title="Ministry status matrix" meta="inter-ministerial coordination · live" className="xl:col-span-4" bodyClass="!p-0">
+              {(() => {
+                // Cross-ministry dependency lattice — upstream stressors per
+                // archetype propagate cascading pressure (sovereign realism).
+                const DEP: Record<string, string[]> = {
+                  HEALTH: ['TRANSPORT', 'ENERGY'], TRANSPORT: ['ENERGY'], ENERGY: ['FINANCE'],
+                  EDUCATION: ['FINANCE'], AGRICULTURE: ['ENERGY', 'TRANSPORT'], ENVIRONMENT: ['ENERGY'],
+                  JUSTICE: ['INTERIOR'], LABOR: ['FINANCE'], TRADE: ['FINANCE', 'TRANSPORT'],
+                  INTERIOR: ['ENERGY'], FINANCE: [],
+                };
+                const pByArch = new Map<string, number>();
+                mapNodes.forEach(n => pByArch.set(String(n.archetype), Math.max(pByArch.get(String(n.archetype)) ?? 0, n.pressure)));
+                const critN = mapNodes.filter(n => n.pressure >= 80).length;
+                const elevN = mapNodes.filter(n => n.pressure >= 60 && n.pressure < 80).length;
+                const coordTone = critN >= 2 ? 'alert' : critN || elevN >= 3 ? 'warn' : 'ok';
+                return (
               <table className="w-full text-[11px]">
                 <thead>
-                  <tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8px] uppercase tracking-wide text-ink-muted">
-                    <th className="px-2 py-1.5">Ministry</th>
+                  <tr className="sticky top-0 z-10 border-b text-left text-[8px] font-bold uppercase tracking-[0.16em] text-ink-muted"
+                    style={{ background: 'rgb(var(--c-surface-2))', borderColor: `color-mix(in srgb,${ACCENT} 28%,rgb(var(--c-line)))` }}>
+                    <th className="px-2 py-1.5">Ministry · State · Telemetry</th>
                     {['Ops', 'Fisc', 'Infra', 'Civil', 'Sec', 'Logi', 'SLA', 'Esc', 'Work', 'Emrg'].map(d => (
                       <th key={d} className="px-1 py-1.5 text-center">{d}</th>
                     ))}
@@ -1204,32 +1220,78 @@ export function SituationRoom() {
                 <tbody>
                   {mapNodes.map(m => {
                     const id = identityFor(m.archetype as ArchetypeKey);
-                    const cell = (dom: string) => {
-                      const v = domainStress(m.archetype as string, dom.toLowerCase(), m.pressure, ts, m.ministryId);
-                      const st = v >= 78 ? 'alert' : v >= 58 ? 'warn' : v >= 40 ? 'neutral' : 'ok';
-                      const lbl = st === 'alert' ? 'CRIT' : st === 'warn' ? 'ELEV' : st === 'neutral' ? 'WTCH' : 'STBL';
-                      return (
-                        <td key={dom} className="px-1 py-1.5 text-center">
-                          <span className="inline-block w-full rounded px-1 py-0.5 text-[8.5px] font-semibold"
-                            style={{ backgroundColor: `color-mix(in srgb, ${TONE[st]} 16%, transparent)`, color: TONE[st] }}>{lbl}</span>
-                        </td>
-                      );
-                    };
+                    const p = m.pressure;
+                    const tier = p >= 80 ? 'alert' : p >= 60 ? 'warn' : p >= 40 ? 'neutral' : 'ok';
+                    const tierLbl = tier === 'alert' ? 'CRIT' : tier === 'warn' ? 'ELEV' : tier === 'neutral' ? 'WTCH' : 'STBL';
+                    const trend = waveSeries(`msm:${m.ministryId}`, ts, 9, Math.max(4, p - 26), Math.min(99, p + 14));
+                    const drift = trend[trend.length - 1]! - trend[0]!;
+                    const dArrow = drift > 6 ? '▲' : drift < -6 ? '▼' : '→';
+                    const dTone = drift > 6 ? 'alert' : drift < -6 ? 'ok' : 'neutral';
+                    const alerts = ['ops', 'fisc', 'infra', 'civil', 'sec', 'logi', 'sla', 'esc', 'work', 'emrg']
+                      .reduce((n, dm) => n + (domainStress(m.archetype as string, dm, p, ts, m.ministryId) >= 78 ? 1 : 0), 0);
+                    const ups = (DEP[String(m.archetype)] ?? []).map(a => pByArch.get(a) ?? 0);
+                    const cascade = ups.filter(v => v >= 58).length;
+                    const cascTone = ups.some(v => v >= 80) ? 'alert' : cascade ? 'warn' : 'ok';
+                    const sl = (() => { const mn = Math.min(...trend), sp = Math.max(...trend) - mn || 1; return trend.map((v, i) => `${(i / (trend.length - 1)) * 44},${13 - ((v - mn) / sp) * 11}`).join(' '); })();
                     return (
-                      <tr key={m.ministryId} className="border-b border-line-soft transition-colors hover:bg-surface-2/50 last:border-0">
+                      <tr key={m.ministryId} className="border-b transition-colors hover:bg-surface-2/60 last:border-0"
+                        style={{
+                          borderColor: 'rgb(var(--c-line-soft))',
+                          background: tier === 'alert' ? `color-mix(in srgb,${TONE.alert} 9%,transparent)` : tier === 'warn' ? `color-mix(in srgb,${TONE.warn} 5%,transparent)` : 'transparent',
+                          opacity: tier === 'ok' ? 0.74 : 1,
+                          boxShadow: `inset 3px 0 0 ${TONE[tier]}`,
+                        }}>
                         <td className="px-2 py-1.5">
-                          <Link href={`/gov/ministry/${m.ministryId}`} className="focus-ring flex items-center gap-1.5 no-underline">
-                            <span className="grid h-3.5 w-3.5 shrink-0 place-items-center rounded-[3px] text-[7px] text-white" style={{ backgroundColor: id.accent }}>{id.glyph}</span>
-                            <span className="truncate text-ink">{m.ministry}</span>
-                          </Link>
+                          <div className="flex items-center gap-1.5">
+                            {tier === 'alert' ? <span aria-hidden className="h-1.5 w-1.5 shrink-0 rounded-full motion-safe:animate-breathe" style={{ background: TONE.alert, boxShadow: `0 0 6px ${TONE.alert}` }} /> : <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: TONE[tier], opacity: 0.7 }} />}
+                            <Link href={`/gov/ministry/${m.ministryId}`} className="focus-ring flex min-w-0 items-center gap-1.5 no-underline">
+                              <span className="grid h-4 w-4 shrink-0 place-items-center rounded-[3px] text-[7px] text-white" style={{ backgroundColor: id.accent }}>{id.glyph}</span>
+                              <span className="truncate font-medium text-ink">{m.ministry}</span>
+                            </Link>
+                            <span className="ml-auto shrink-0 rounded-[2px] px-1 py-0.5 text-[7.5px] font-bold uppercase tracking-[0.12em]" style={{ background: `color-mix(in srgb,${TONE[tier]} 20%,transparent)`, color: TONE[tier] }}>{tierLbl}</span>
+                            <span className="shrink-0 font-mono text-[9px] tabular-nums" style={{ color: TONE[tier] }}>{p}</span>
+                          </div>
+                          <div className="mt-0.5 flex items-center gap-2 pl-3 text-[7.5px] text-ink-muted">
+                            <svg width="44" height="13" viewBox="0 0 44 13" className="shrink-0"><polyline points={sl} fill="none" stroke={TONE[dTone]} strokeWidth="1" vectorEffect="non-scaling-stroke" /></svg>
+                            <span className="font-mono" style={{ color: TONE[dTone] }}>{dArrow}{Math.abs(Math.round(drift))}</span>
+                            <span className="font-mono uppercase tracking-wider" style={{ color: alerts ? TONE.alert : 'rgb(var(--c-ink-muted))' }}>A:{alerts}</span>
+                            <span className="font-mono uppercase tracking-wider" style={{ color: TONE[cascTone] }} title="upstream dependency stress">⇄{cascade}</span>
+                          </div>
                         </td>
-                        {['Ops', 'Fisc', 'Infra', 'Civil', 'Sec', 'Logi', 'SLA', 'Esc', 'Work', 'Emrg'].map(cell)}
+                        {['ops', 'fisc', 'infra', 'civil', 'sec', 'logi', 'sla', 'esc', 'work', 'emrg'].map(dom => {
+                          const v = domainStress(m.archetype as string, dom, p, ts, m.ministryId);
+                          const st = v >= 78 ? 'alert' : v >= 58 ? 'warn' : v >= 40 ? 'neutral' : 'ok';
+                          const lbl = st === 'alert' ? 'CRIT' : st === 'warn' ? 'ELEV' : st === 'neutral' ? 'WTCH' : 'STBL';
+                          return (
+                            <td key={dom} className="px-1 py-1.5 text-center align-middle">
+                              <span className="inline-flex w-full flex-col items-center gap-px rounded px-1 py-0.5 text-[8px] font-bold tracking-wide"
+                                style={{ backgroundColor: `color-mix(in srgb, ${TONE[st]} ${st === 'alert' ? 22 : 14}%, transparent)`, color: TONE[st] }}>
+                                {lbl}
+                                <span className="h-0.5 w-full overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}><span className="block h-full rounded-full" style={{ width: `${v}%`, background: TONE[st] }} /></span>
+                              </span>
+                            </td>
+                          );
+                        })}
                       </tr>
                     );
                   })}
                   {mapNodes.length === 0 ? <tr><td colSpan={11} className="px-3 py-8 text-center text-ink-muted">No active institutions.</td></tr> : null}
                 </tbody>
+                <tfoot>
+                  <tr className="border-t text-[7.5px] uppercase tracking-[0.14em] text-ink-muted" style={{ borderColor: `color-mix(in srgb,${ACCENT} 24%,rgb(var(--c-line)))`, background: 'rgb(var(--c-surface-2))' }}>
+                    <td className="px-2 py-1.5">
+                      <span className="font-bold" style={{ color: TONE[coordTone] }}>● COORDINATION {coordTone === 'alert' ? 'CRITICAL' : coordTone === 'warn' ? 'ELEVATED' : 'SYNCHRONISED'}</span>
+                    </td>
+                    <td colSpan={10} className="px-2 py-1.5 text-right font-mono">
+                      <span style={{ color: TONE.alert }}>{critN} CRIT</span><span className="mx-1.5 text-line">·</span>
+                      <span style={{ color: TONE.warn }}>{elevN} ELEV</span><span className="mx-1.5 text-line">·</span>
+                      <span className="text-ink-muted">⇄ cascade lattice live · {mapNodes.length} ministries</span>
+                    </td>
+                  </tr>
+                </tfoot>
               </table>
+                );
+              })()}
             </Panel>
 
             <Panel title="Cabinet escalation stream" meta="executive level" className="xl:col-span-2" bodyClass="!p-0">
