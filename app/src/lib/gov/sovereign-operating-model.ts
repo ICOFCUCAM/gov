@@ -1294,6 +1294,97 @@ export function nationalStressExercise(
   };
 }
 
+// ── Persistent sovereign administrative statecraft ────────────────────────
+// The state is a living administrative organism: standing directives
+// persist across operating epochs, move through an institutional policy
+// lifecycle, are judged by executing-ministry performance, accumulate
+// outcome memory, and roll into successive doctrine generations (eras).
+const DIRECTIVE_DEFS: { key: string; arch: string; title: string; span: number }[] = [
+  { key: 'energy-stab', arch: 'ENERGY', title: 'National energy stabilization mandate', span: 11 },
+  { key: 'telecom-rest', arch: 'TELECOM', title: 'Telecom restoration order', span: 8 },
+  { key: 'reserve-pres', arch: 'FINANCE', title: 'Strategic reserve preservation policy', span: 14 },
+  { key: 'logi-decree', arch: 'TRANSPORT', title: 'Emergency logistics decree', span: 7 },
+  { key: 'infra-harden', arch: 'ENERGY', title: 'Infrastructure hardening initiative', span: 16 },
+  { key: 'health-surge', arch: 'HEALTH', title: 'Healthcare surge doctrine', span: 9 },
+  { key: 'industrial-rec', arch: 'TRADE', title: 'Industrial recovery programme', span: 13 },
+  { key: 'reserve-rebuild', arch: 'FINANCE', title: 'Strategic reserve rebuilding directive', span: 12 },
+];
+export interface SovereignDirective {
+  key: string;
+  title: string;
+  ministry: string;
+  generation: number;     // doctrine generation (re-issued across eras)
+  ageEpochs: number;      // epochs since this generation was issued
+  stage: string;          // institutional lifecycle stage
+  progress: number;       // 0..100
+  accountability: 'reliable' | 'lagging' | 'failing';
+  accTone: 'ok' | 'warn' | 'alert';
+  outcome: 'pending' | 'succeeded' | 'failed';
+}
+export interface DirectiveRegister {
+  directives: SovereignDirective[];
+  era: string;            // governing administration / doctrine generation
+  completed: number;
+  failed: number;
+  active: number;
+}
+export function nationalDirectiveRegister(
+  post: NationalPosture, contention: number, epoch: number,
+): DirectiveRegister {
+  let completed = 0, failed = 0, active = 0;
+  const directives: SovereignDirective[] = DIRECTIVE_DEFS.map(def => {
+    const off = Math.floor(seed(`dir:off:${def.key}`) * def.span);
+    const t = epoch + off;
+    const generation = Math.floor(t / def.span) + 1;
+    const ageEpochs = t % def.span;
+    const frac = ageEpochs / def.span; // 0..1 progression through lifecycle
+    // Executing-ministry performance gates the lifecycle branch.
+    const rel = ministryReliability(def.arch, epoch);
+    const fatigue = institutionalFatigue(def.arch, epoch);
+    const perf = rel - fatigue * 0.4 - Math.max(0, contention - 55) * 0.3
+      - post.deploymentConservatism * 0.1;
+    const mem = eventMemory(`dir:out:${def.key}`, epoch, 12, 0.56, 0.36, 4);
+    let stage: string;
+    let outcome: SovereignDirective['outcome'] = 'pending';
+    if (frac < 0.12) stage = 'proposed';
+    else if (frac < 0.24) stage = 'under review';
+    else if (frac < 0.36) stage = 'authorized';
+    else if (frac < 0.52) stage = perf < 40 ? 'delayed' : 'partially deployed';
+    else if (frac < 0.72) stage = perf < 32 ? 'resisted' : perf < 48 ? 'degraded' : 'nationally active';
+    else if (frac < 0.86) stage = perf < 42 ? 'revised' : 'nationally active';
+    else {
+      // terminal: outcome from performance + accumulated outcome memory.
+      const ok = perf + (mem.pos - mem.neg) >= 46;
+      stage = ok ? 'completed' : 'failed';
+      outcome = ok ? 'succeeded' : 'failed';
+    }
+    if (frac >= 0.97) stage = 'archived';
+    const progress = stage === 'archived' ? 100
+      : stage === 'completed' || stage === 'failed' ? Math.round(90 + frac * 10)
+      : Math.round(frac * 100);
+    const accountability: SovereignDirective['accountability'] =
+      perf >= 56 ? 'reliable' : perf >= 38 ? 'lagging' : 'failing';
+    const accTone: SovereignDirective['accTone'] =
+      accountability === 'failing' ? 'alert' : accountability === 'lagging' ? 'warn' : 'ok';
+    if (outcome === 'succeeded') completed++;
+    else if (outcome === 'failed') failed++;
+    else active++;
+    return {
+      key: def.key, title: def.title, ministry: def.arch, generation, ageEpochs,
+      stage, progress, accountability, accTone, outcome,
+    };
+  });
+  // Governing era — dominant long-horizon administrative character.
+  const recovery = eventMemory('era:rec', epoch, 18, 0.56, 0.34, 6);
+  const era = post.deploymentConservatism >= 62 ? 'Reserve Rebuilding Era'
+    : recovery.neg > recovery.pos + 16 ? 'Reconstruction Administration'
+    : post.containmentWeight >= 60 ? 'Hardening Generation'
+    : recovery.pos >= recovery.neg + 16 ? 'Recovery Administration'
+    : post.execConfidence >= 70 ? 'Continuity Administration'
+    : 'Stabilization Administration';
+  return { directives, era, completed, failed, active };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

@@ -10,7 +10,7 @@ import {
   fieldDeployment, FIELD_STAGES, nationalSociety, externalEnvironment,
   strategicForesight, simulateDoctrines, nationalSustainability,
   politicalContinuity, nationalCapability, ministryOperations,
-  nationalStressExercise,
+  nationalStressExercise, nationalDirectiveRegister,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -473,5 +473,30 @@ describe('sovereign operating model', () => {
     const cCp = nationalCapability(cS, p, cSoc, ex, cSu, cPc, 25, 1, 11);
     const cd = nationalStressExercise(cS, p, cSoc, ex, cF, cSu, cPc, cCp, 1, 11);
     expect(cd.resilienceScore).toBeGreaterThanOrEqual(d.resilienceScore);
+  });
+
+  it('directive register persists, cycles lifecycle & accumulates eras', () => {
+    const p = nationalPosture(12);
+    const r = nationalDirectiveRegister(p, 55, 12);
+    expect(r).toEqual(nationalDirectiveRegister(p, 55, 12));
+    expect(r.directives.length).toBe(8);
+    const STAGES = ['proposed', 'under review', 'authorized', 'partially deployed',
+      'nationally active', 'delayed', 'resisted', 'degraded', 'revised', 'completed', 'failed', 'archived'];
+    for (const d of r.directives) {
+      expect(STAGES).toContain(d.stage);
+      expect(d.progress).toBeGreaterThanOrEqual(0);
+      expect(d.progress).toBeLessThanOrEqual(100);
+      expect(d.generation).toBeGreaterThanOrEqual(1);
+      expect(['reliable', 'lagging', 'failing']).toContain(d.accountability);
+      expect(['pending', 'succeeded', 'failed']).toContain(d.outcome);
+    }
+    expect(r.completed + r.failed + r.active).toBe(8);
+    expect(['Reserve Rebuilding Era', 'Reconstruction Administration', 'Hardening Generation',
+      'Recovery Administration', 'Continuity Administration', 'Stabilization Administration']).toContain(r.era);
+    // directives persist & advance across operating epochs (generation grows)
+    const later = nationalDirectiveRegister(p, 55, 12 + 14);
+    const g0 = r.directives.find(d => d.key === 'reserve-pres')!;
+    const g1 = later.directives.find(d => d.key === 'reserve-pres')!;
+    expect(g1.generation).toBeGreaterThanOrEqual(g0.generation);
   });
 });

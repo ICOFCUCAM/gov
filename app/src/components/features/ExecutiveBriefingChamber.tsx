@@ -17,6 +17,7 @@ import {
   nationalSociety, externalEnvironment, strategicForesight, simulateDoctrines,
   nationalSustainability, politicalContinuity, nationalCapability,
   ministryOperations, institutionalFatigue, nationalStressExercise,
+  nationalDirectiveRegister,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -140,6 +141,7 @@ export function ExecutiveBriefingChamber() {
   const capTone = cap.label === 'DECLINING' || cap.label === 'ERODING' ? 'alert' : cap.label === 'STRAINED' ? 'warn' : 'ok';
   const drill = nationalStressExercise(opS, post, society, ext, foresight, sustain, polit, cap, incidents.length, epoch);
   const drillTone = drill.verdict === 'FAILS' ? 'alert' : drill.verdict === 'DEGRADED' ? 'alert' : drill.verdict === 'STRAINED' ? 'warn' : 'ok';
+  const register = nationalDirectiveRegister(post, opS.contention, epoch);
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
@@ -225,6 +227,14 @@ export function ExecutiveBriefingChamber() {
     L.push('  Cascade:');
     drill.cascade.forEach(cstr => L.push(`   - ${cstr}`));
     L.push('');
+    L.push(`VIII.  SOVEREIGN DIRECTIVE REGISTER — ${register.era.toUpperCase()}`);
+    L.push(thin);
+    L.push(`  ${register.active} active · ${register.completed} completed · ${register.failed} failed`);
+    register.directives.forEach(d => {
+      L.push(`  ${d.title.padEnd(42)} [${d.ministry}] g${d.generation}`);
+      L.push(`     ${d.stage} · ${d.progress}% · execution ${d.accountability}${d.outcome !== 'pending' ? ` · ${d.outcome}` : ''}`);
+    });
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -244,7 +254,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -284,6 +294,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[drillTone] }} title={`live stress exercise: ${drill.name}`}>
             drill {drill.verdict.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: 'rgb(var(--c-ink-soft))' }} title="governing administration / doctrine generation">
+            {register.era.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -552,6 +565,30 @@ export function ExecutiveBriefingChamber() {
               : 'A distinct doctrine leads under current projections.'}{' '}
             {policy.sims[0] ? <>Recommended doctrine is {policy.sims[0]!.sustainable ? 'sustainable' : <span style={{ color: TONE.warn }}>not sustainable</span>} (~{policy.sims[0]!.survivalWeeks}w endurance){mostSust && mostSust.key !== policy.sims[0]!.key ? <>; most enduring is {mostSust.label.toLowerCase()} (~{mostSust.survivalWeeks}w)</> : null}. </> : null}
             Simulated, not executed — leadership decides.
+          </p>
+        </Panel>
+
+        <Panel title="Sovereign directive register"
+          meta={`${register.era} · ${register.active} active · ${register.completed} completed · ${register.failed} failed`}>
+          <div className="hidden grid-cols-[2fr_1fr_1.4fr_0.7fr_0.9fr] gap-x-3 border-b border-line pb-1 text-[10px] uppercase tracking-[0.12em] text-ink-muted sm:grid">
+            <span>Directive</span><span>Ministry</span><span>Stage</span><span className="text-right">Prog.</span><span className="text-right">Exec.</span>
+          </div>
+          {register.directives.map(d => (
+            <div key={d.key}
+              className="grid grid-cols-2 gap-x-3 gap-y-0.5 border-b border-line-soft py-1.5 text-[11px] last:border-0 sm:grid-cols-[2fr_1fr_1.4fr_0.7fr_0.9fr] sm:py-1">
+              <span className="col-span-2 truncate text-ink-soft sm:col-span-1">{d.title} <span className="text-ink-muted">· g{d.generation}</span></span>
+              <span className="truncate text-ink-muted">{d.ministry}</span>
+              <span className="truncate font-mono uppercase tracking-wide"
+                style={{ color: TONE[d.stage === 'failed' ? 'alert' : d.stage === 'completed' || d.stage === 'nationally active' ? 'ok' : d.stage === 'delayed' || d.stage === 'resisted' || d.stage === 'degraded' || d.stage === 'revised' ? 'warn' : 'neutral'] }}>
+                {d.stage}
+              </span>
+              <span className="text-right font-mono tabular-nums text-ink-muted">{d.progress}%</span>
+              <span className="text-right font-mono uppercase tracking-wider" style={{ color: TONE[d.accTone] }}>{d.accountability}</span>
+            </div>
+          ))}
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+            Standing directives persist and advance across operating epochs under <span className="text-ink-soft">{register.era}</span>;
+            executing-ministry performance and accumulated policy memory determine completion or failure. Administrative continuity of state — leadership revises doctrine.
           </p>
         </Panel>
 
