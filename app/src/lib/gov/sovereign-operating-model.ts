@@ -375,6 +375,7 @@ export interface GovInput {
   contention: number;
   telecom: number;
   reservesHeadroom: number;
+  posture?: NationalPosture; // shared strategic doctrine (derived if absent)
 }
 export interface IncidentGovernance {
   lvl: number;
@@ -462,6 +463,61 @@ export function coordinationBurden(cascadeDepth: number, telecom: number, conten
     cascadeDepth * 18 + (100 - telecom) * 0.42 + contention * 0.34)));
 }
 
+// ── Strategic evolution & doctrine drift ──────────────────────────────────
+// The nation is a geopolitical organism: long-running history bends
+// executive doctrine over time. Posture is integrated over a long horizon
+// of operating epochs, not the current tick — it remembers and adapts.
+export interface NationalPosture {
+  authThreshold: number;          // >1 slower to authorize (conservative), <1 faster
+  deploymentConservatism: number; // 0..100 reserve-protective
+  containmentWeight: number;      // 0..100 prioritise containment
+  stabilizationCaution: number;   // 0..100 distrust of fragile recovery
+  execConfidence: number;         // 0..100 institutional confidence
+  coordinationCaution: number;    // 0..100 telecom-failure scarring
+  geopolitical: number;           // 0..100 external-pressure sensitivity
+  label: string;
+}
+export function nationalPosture(epoch: number): NationalPosture {
+  const H = 16; // long-horizon strategic memory window (epochs)
+  let telecomFail = 0, energyStrain = 0, reserveDepl = 0, containFail = 0,
+    recoverWin = 0, unrest = 0, external = 0, n = 0;
+  for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
+    const decay = 1 - (epoch - e) / (H + 4); // recent epochs weigh more
+    telecomFail += (seed(`hist:tel:${e}`) > 0.62 ? 1 : 0) * decay;
+    energyStrain += (seed(`hist:en:${e}`) > 0.58 ? 1 : 0) * decay;
+    reserveDepl += seed(`hist:res:${e}`) * decay;
+    containFail += (seed(`hist:cont:${e}`) > 0.66 ? 1 : 0) * decay;
+    recoverWin += (seed(`hist:rec:${e}`) > 0.55 ? 1 : 0) * decay;
+    unrest += (seed(`hist:civ:${e}`) > 0.6 ? 1 : 0) * decay;
+    external += seed(`hist:geo:${e}`) * decay;
+    n += decay;
+  }
+  const norm = (v: number) => Math.max(0, Math.min(100, Math.round((v / Math.max(1, n)) * 100)));
+  const deploymentConservatism = norm(reserveDepl * 1.1);
+  const containmentWeight = norm(unrest);
+  const coordinationCaution = norm(telecomFail);
+  const stabilizationCaution = norm(containFail);
+  const geopolitical = norm(external);
+  // confidence: successful recoveries build it, containment failures erode it
+  const execConfidence = Math.max(15, Math.min(95, Math.round(
+    60 + norm(recoverWin) * 0.4 - norm(containFail) * 0.45 - norm(energyStrain) * 0.15)));
+  // doctrine drift: chronic severity accelerates authorization, but exhausted
+  // reserves & low confidence make it conservative again
+  const authThreshold = Math.max(0.55, Math.min(1.7, Number((
+    1 + deploymentConservatism / 220 + (100 - execConfidence) / 260 - containmentWeight / 320
+  ).toFixed(3))));
+  const label = execConfidence < 35 ? 'STRAINED'
+    : deploymentConservatism >= 60 ? 'CONSERVATIVE'
+    : containmentWeight >= 60 ? 'HARDENED'
+    : stabilizationCaution >= 55 ? 'CAUTIOUS-RECOVERY'
+    : execConfidence >= 75 ? 'ADAPTIVE-STABLE'
+    : 'BALANCED';
+  return {
+    authThreshold, deploymentConservatism, containmentWeight, stabilizationCaution,
+    execConfidence, coordinationCaution, geopolitical, label,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.
@@ -477,28 +533,44 @@ export function governIncident(inp: GovInput): IncidentGovernance {
   const cascade = cascadeChain(arch, lvl);
   const lat = responseLatency(arch, lvl, inp.contention, inp.telecom, inp.reservesHeadroom);
   const eta = lat.totalMin >= 60 ? `${(lat.totalMin / 60).toFixed(1)}h` : `${lat.totalMin}m`;
+  // Strategic doctrine drift — long-running national history bends the
+  // effective authorization cadence (single shared posture).
+  const post = inp.posture ?? nationalPosture(inp.epoch);
   // Institutional fatigue slows escalation velocity (felt, not shown loudly).
   const fatigue = institutionalFatigue(arch, inp.epoch);
-  const pIdx = pipeStage(lvl, inp.ageM / (behavior.auth * (1 + fatigue / 240)), inp.ack);
+  const effAuth = behavior.auth * post.authThreshold;
+  const pIdx = pipeStage(lvl, inp.ageM / (effAuth * (1 + fatigue / 240)), inp.ack);
   const stageCur = PIPELINE[pIdx]!;
   const stageNext = PIPELINE[Math.min(8, pIdx + 1)]!;
   const machinery = responseMachinery(pIdx);
   const stTone = pIdx >= 7 ? 'ok' : pIdx >= 4 ? 'accent' : pIdx >= 2 ? 'warn' : 'alert';
   const mandate = mandateFor(lvl);
-  const gate = executiveGate(lvl, inp.ageM, inp.ack, behavior.auth, inp.contention);
+  const gate = executiveGate(lvl, inp.ageM, inp.ack, effAuth, inp.contention);
   const authority = authorityChain(arch, lvl);
   const conflict = priorityConflict(arch, inp.contention);
-  const velocity = commandVelocity(lvl, behavior.auth, inp.contention);
+  const velocity = commandVelocity(lvl, effAuth, inp.contention);
   const wear = Math.min(100, Math.round(inp.ageM * (inp.ack ? 0.7 : 1.4) + corridorFatigue(inp.ministryId, inp.epoch) * 0.4 + (pIdx <= 3 ? 16 : 0)));
   const aged = wear >= 55;
   const wornDot = aged && !inp.ack;
+  // stabilization caution: a strategically scarred nation distrusts fragile
+  // recovery, so residual strain lingers harder late in the pipeline.
+  const cautionDrag = pIdx >= 6 ? Math.round(post.stabilizationCaution * 0.08) : 0;
   const strain = Math.max(6, Math.min(99, Math.round(
     inp.prop * 0.5 + lvl * 12 + inp.ageM * 0.3 + inp.contention * 0.2 + wear * 0.12
-    - (pIdx >= 8 ? 40 : pIdx >= 7 ? 24 : pIdx >= 6 ? 14 : 0) + (aged && pIdx >= 6 ? 8 : 0))));
+    - (pIdx >= 8 ? 40 : pIdx >= 7 ? 24 : pIdx >= 6 ? 14 : 0) + (aged && pIdx >= 6 ? 8 : 0) + cautionDrag)));
   const strainTone: 'ok' | 'warn' | 'alert' = strain >= 75 ? 'alert' : strain >= 50 ? 'warn' : 'ok';
   const fragile = pIdx === 7;
-  const attention = attentionWeight(lvl, cascade.depth, dep.down.length, inp.ageM, inp.ack, inp.contention);
-  const conf = commandConfidence(inp.ack, inp.ageM, inp.telecom, inp.contention, fatigue);
+  // containment-weighted doctrine raises attention to spreading events.
+  const attention = Math.min(100, attentionWeight(lvl, cascade.depth, dep.down.length, inp.ageM, inp.ack, inp.contention)
+    + (cascade.depth >= 1 ? Math.round(post.containmentWeight * 0.08) : 0));
+  // confidence tempered by institutional confidence & telecom-failure scarring.
+  const baseConf = commandConfidence(inp.ack, inp.ageM, inp.telecom, inp.contention, fatigue);
+  const confPct = Math.max(20, Math.min(99, Math.round(
+    baseConf.pct * 0.7 + post.execConfidence * 0.3 - post.coordinationCaution * 0.08)));
+  const conf = {
+    pct: confPct,
+    label: confPct >= 85 ? 'verified' : confPct >= 68 ? 'probable' : confPct >= 48 ? 'uncertain' : 'contested',
+  };
   const burden = coordinationBurden(cascade.depth, inp.telecom, inp.contention);
   return {
     lvl, arch, behavior, reliability, cause, dep, cascade, latencyMin: lat.totalMin, eta,

@@ -6,6 +6,7 @@ import {
   executiveGate, commandVelocity, authorityChain, priorityConflict, GOV_STAGES,
   governIncident, pipeStage, mandateFor,
   institutionalFatigue, attentionWeight, commandConfidence, coordinationBurden,
+  nationalPosture,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -124,7 +125,7 @@ describe('sovereign operating model', () => {
     const g = governIncident(inp);
     expect(g).toEqual(governIncident(inp));
     expect(g.lvl).toBe(3);
-    expect(g.pIdx).toBe(pipeStage(3, 40 / (g.behavior.auth * (1 + g.fatigue / 240)), true));
+    expect(g.pIdx).toBe(pipeStage(3, 40 / (g.behavior.auth * nationalPosture(5).authThreshold * (1 + g.fatigue / 240)), true));
     expect(g.mandate).toBe(mandateFor(3));
     expect(['ok', 'warn', 'alert']).toContain(g.strainTone);
     expect(g.strain).toBeGreaterThanOrEqual(6);
@@ -167,5 +168,30 @@ describe('sovereign operating model', () => {
     expect(g.confidence).toBeGreaterThanOrEqual(20);
     expect(typeof g.confLabel).toBe('string');
     expect(g.burden).toBeGreaterThanOrEqual(0);
+  });
+
+  it('strategic posture is deterministic, bounded and drifts doctrine', () => {
+    const p = nationalPosture(12);
+    expect(p).toEqual(nationalPosture(12));
+    for (const k of ['deploymentConservatism', 'containmentWeight', 'stabilizationCaution', 'execConfidence', 'coordinationCaution', 'geopolitical'] as const) {
+      expect(p[k]).toBeGreaterThanOrEqual(0);
+      expect(p[k]).toBeLessThanOrEqual(100);
+    }
+    expect(p.authThreshold).toBeGreaterThanOrEqual(0.55);
+    expect(p.authThreshold).toBeLessThanOrEqual(1.7);
+    expect(['STRAINED', 'CONSERVATIVE', 'HARDENED', 'CAUTIOUS-RECOVERY', 'ADAPTIVE-STABLE', 'BALANCED']).toContain(p.label);
+
+    // posture changes the governed outcome (doctrine drift is wired in)
+    const base = governIncident({
+      archetype: 'ENERGY', severity: 'sev2' as const, ageM: 40, ack: true, epoch: 9,
+      ministryId: 'M-EN', prop: 50, contention: 50, telecom: 85, reservesHeadroom: 40,
+    });
+    const conservative = governIncident({
+      archetype: 'ENERGY', severity: 'sev2' as const, ageM: 40, ack: true, epoch: 9,
+      ministryId: 'M-EN', prop: 50, contention: 50, telecom: 85, reservesHeadroom: 40,
+      posture: { ...nationalPosture(9), authThreshold: 1.7, execConfidence: 20, coordinationCaution: 80 },
+    });
+    expect(conservative.pIdx).toBeLessThanOrEqual(base.pIdx);
+    expect(conservative.confidence).toBeLessThan(base.confidence);
   });
 });

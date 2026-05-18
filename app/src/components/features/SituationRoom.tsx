@@ -41,7 +41,7 @@ export const PALETTE = {
 import { seed, toneFor, wave, waveSeries, domainStress } from '@/lib/telemetry';
 import { nationalAssets, nationalNetworks, networkPressure, NET_TONE, ASSET_GLYPH } from '@/lib/gov/infrastructure';
 import {
-  nationalOperatingState, forecast, governIncident,
+  nationalOperatingState, forecast, governIncident, nationalPosture,
   provinceMemory, diffuseTopology, corridorAdjacency, territorialField,
 } from '@/lib/gov/sovereign-operating-model';
 
@@ -1184,6 +1184,8 @@ export function SituationRoom() {
   const peakPS = mapNodes.length ? Math.max(...mapNodes.map(m => m.pressure)) : nationalRisk;
   const sevLoadS = incidents.filter(i => i.severity === 'sev1' || i.severity === 'sev2').length;
   const opS = nationalOperatingState(ts, aggPS, peakPS, sevLoadS, incidents.length, epoch);
+  // Shared evolving strategic doctrine — one posture for the whole surface.
+  const natPost = nationalPosture(epoch);
   const pressOf = (arch: string) => {
     const n = nodes.find(x => x.archetype === arch);
     return n ? (fabricById.get(n.ministryId)?.pressure ?? n.riskScore) : 28 + Math.round(seed(`syn:${arch}:${epoch}`) * 48);
@@ -1579,13 +1581,13 @@ export function SituationRoom() {
                     archetype: String(c.archetype), severity: c.severity, ageM: ag, ack: ak,
                     epoch, ministryId: c.ministryId, prop: 0,
                     contention: opS.contention, telecom: opS.display.telecom,
-                    reservesHeadroom: opS.resources.reserves.headroom,
+                    reservesHeadroom: opS.resources.reserves.headroom, posture: natPost,
                   });
                   if (ig.pIdx >= 7) a.rec++; else if (ig.pIdx >= 4) a.auth++; else a.coord++;
                   if (ig.gate.held) a.held++;
                   return a;
                 }, { coord: 0, auth: 0, rec: 0, held: 0 });
-                return `${s.coord} coordinating · ${s.auth} authorized · ${s.rec} recovering${s.held ? ` · ${s.held} held at gate` : ''}`;
+                return `doctrine ${natPost.label.toLowerCase()} · conf ${natPost.execConfidence}% · ${s.coord} coordinating · ${s.auth} authorized · ${s.rec} recovering${s.held ? ` · ${s.held} held at gate` : ''}`;
               })()}
               className="xl:col-span-2" bodyClass="!p-0">
               {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry escalations.</p> : (() => {
@@ -1600,7 +1602,7 @@ export function SituationRoom() {
                     archetype: String(c.archetype), severity: c.severity, ageM: ag, ack: ak, epoch,
                     ministryId: c.ministryId, prop: pr,
                     contention: opS.contention, telecom: opS.display.telecom,
-                    reservesHeadroom: opS.resources.reserves.headroom,
+                    reservesHeadroom: opS.resources.reserves.headroom, posture: natPost,
                   }).attention;
                   return { c, i, a };
                 }).sort((x, y) => y.a - x.a);
@@ -1622,7 +1624,7 @@ export function SituationRoom() {
                   archetype: arch, severity: c.severity, ageM, ack, epoch,
                   ministryId: c.ministryId, prop,
                   contention: opS.contention, telecom: opS.display.telecom,
-                  reservesHeadroom: opS.resources.reserves.headroom,
+                  reservesHeadroom: opS.resources.reserves.headroom, posture: natPost,
                 });
                 const {
                   behavior: beh, reliability: rel, cascade: casc, eta, dep, cause,
