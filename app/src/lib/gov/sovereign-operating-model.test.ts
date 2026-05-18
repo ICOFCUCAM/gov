@@ -9,6 +9,7 @@ import {
   nationalPosture, ministryInteraction, coordinationLoad,
   fieldDeployment, FIELD_STAGES, nationalSociety, externalEnvironment,
   strategicForesight, simulateDoctrines, nationalSustainability,
+  politicalContinuity,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -370,5 +371,27 @@ describe('sovereign operating model', () => {
     const calmF = strategicForesight(calmS, p, calmSoc, ex, 22, 0, 1, 7);
     const calmSu = nationalSustainability(calmS, p, calmSoc, calmF, 7);
     expect(calmSu.survivabilityWeeks).toBeGreaterThanOrEqual(su.survivabilityWeeks);
+  });
+
+  it('political continuity is bounded, deterministic & pressure-sensitive', () => {
+    const oS = nationalOperatingState(60, 70, 80, 3, 5, 8);
+    const p = nationalPosture(8);
+    const soc = nationalSociety(oS, p, 5, 3, 8);
+    const ex = externalEnvironment(8);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 8);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 8);
+    expect(pc).toEqual(politicalContinuity(oS, p, soc, ex, f, 8));
+    for (const k of ['legitimacy', 'cabinetCohesion', 'regionalStrain', 'nationalUnity', 'governanceContinuity', 'fragility'] as const) {
+      expect(pc[k]).toBeGreaterThanOrEqual(0);
+      expect(pc[k]).toBeLessThanOrEqual(100);
+    }
+    expect(['CONSOLIDATED', 'STABLE', 'STRAINED', 'FRAGILE', 'FRACTURING']).toContain(pc.label);
+
+    // a calmer, trusted state holds more governance continuity than a strained one
+    const calmS = nationalOperatingState(40, 20, 25, 0, 1, 8);
+    const calmSoc = nationalSociety(calmS, p, 1, 0, 8);
+    const calmF = strategicForesight(calmS, p, calmSoc, ex, 22, 0, 1, 8);
+    const calmPc = politicalContinuity(calmS, p, calmSoc, ex, calmF, 8);
+    expect(calmPc.governanceContinuity).toBeGreaterThanOrEqual(pc.governanceContinuity);
   });
 });

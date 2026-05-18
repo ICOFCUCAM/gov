@@ -1011,6 +1011,75 @@ export function nationalSustainability(
   };
 }
 
+// ── Political stability & regime continuity ───────────────────────────────
+// Nations are governed by political structures that gain or lose
+// legitimacy, cohesion and unity under pressure. Continuity is whether the
+// government can keep governing — distinct from operational capacity.
+export interface PoliticalContinuity {
+  legitimacy: number;            // 0..100 governing mandate / public authority
+  cabinetCohesion: number;       // 0..100 executive-layer alignment
+  regionalStrain: number;        // 0..100 territorial political tension (higher worse)
+  nationalUnity: number;         // 0..100 collective cohesion
+  governanceContinuity: number;  // 0..100 ability to keep governing
+  fragility: number;             // 0..100 regime fragility (higher worse)
+  label: string;                 // CONSOLIDATED | STABLE | STRAINED | FRAGILE | FRACTURING
+}
+// Long-horizon political memory — legitimacy erodes through visible failure
+// and rebuilds slowly through demonstrated competence.
+function politicalMemory(epoch: number): { competence: number; failure: number } {
+  const H = 16;
+  let comp = 0, fail = 0, n = 0;
+  for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
+    const decay = 1 - (epoch - e) / (H + 5);
+    if (seed(`pol:${e}`) > 0.58) comp += decay; else if (seed(`pol:${e}`) < 0.34) fail += decay;
+    n += decay;
+  }
+  return { competence: Math.round((comp / Math.max(1, n)) * 100), failure: Math.round((fail / Math.max(1, n)) * 100) };
+}
+export function politicalContinuity(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  ext: ExternalEnvironment, foresight: StrategicForesight, epoch: number,
+): PoliticalContinuity {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  const mem = politicalMemory(epoch);
+  // Legitimacy — executive confidence + institutional trust + a record of
+  // competence, eroded by prolonged containment and reserve exhaustion.
+  const legitimacy = clamp(
+    post.execConfidence * 0.32 + society.institutionalTrust * 0.3 + mem.competence * 0.18
+    - post.containmentWeight * 0.12 - Math.max(0, 50 - opS.resources.reserves.headroom) * 0.2
+    - mem.failure * 0.16);
+  // Cabinet cohesion — sustained crisis & contention create fatigue;
+  // forecast uncertainty and conservative overreach weaken alignment.
+  const cabinetCohesion = clamp(
+    post.execConfidence * 0.4 + (100 - opS.contention) * 0.22
+    + foresight.confidence * 0.16 - post.deploymentConservatism * 0.12
+    - (100 - society.economicContinuity) * 0.14);
+  // Regional political strain — uneven recovery, containment burden and
+  // corridor saturation breed territorial tension.
+  const regionalStrain = clamp(
+    post.containmentWeight * 0.3 + opS.resources.transport.util * 0.22
+    + (100 - society.economicContinuity) * 0.24 + ext.externalPressure * 0.12
+    + seed(`reg:pol:${epoch}`) * 14);
+  // National unity — coordination & shared confidence build it; visible
+  // strain and regional inequality fracture it.
+  const nationalUnity = clamp(
+    society.civilianConfidence * 0.4 + legitimacy * 0.28 + (100 - regionalStrain) * 0.22
+    - (100 - cabinetCohesion) * 0.12);
+  const governanceContinuity = clamp(
+    legitimacy * 0.34 + cabinetCohesion * 0.3 + nationalUnity * 0.24
+    - ext.strategicCaution * 0.1);
+  const fragility = clamp(100 - governanceContinuity * 0.7 - nationalUnity * 0.3 + regionalStrain * 0.2);
+  const label = governanceContinuity >= 78 ? 'CONSOLIDATED'
+    : governanceContinuity >= 60 ? 'STABLE'
+    : governanceContinuity >= 44 ? 'STRAINED'
+    : governanceContinuity >= 28 ? 'FRAGILE'
+    : 'FRACTURING';
+  return {
+    legitimacy, cabinetCohesion, regionalStrain, nationalUnity,
+    governanceContinuity, fragility, label,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

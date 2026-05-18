@@ -15,7 +15,7 @@ import {
   governIncident, nationalPosture, nationalOperatingState, forecast,
   ministryBehavior, ministryReliability, ministryInteraction, coordinationLoad,
   nationalSociety, externalEnvironment, strategicForesight, simulateDoctrines,
-  nationalSustainability,
+  nationalSustainability, politicalContinuity,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -130,6 +130,8 @@ export function ExecutiveBriefingChamber() {
   const projTone = foresight.projRisk >= 60 ? 'alert' : foresight.projRisk >= 40 ? 'warn' : 'ok';
   const policy = simulateDoctrines(opS, post, society, ext, foresight, nationalRisk, epoch);
   const sustain = nationalSustainability(opS, post, society, foresight, epoch);
+  const polit = politicalContinuity(opS, post, society, ext, foresight, epoch);
+  const politTone = polit.label === 'FRACTURING' || polit.label === 'FRAGILE' ? 'alert' : polit.label === 'STRAINED' ? 'warn' : 'ok';
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
@@ -165,6 +167,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider lg:inline" style={{ color: TONE[sustTone] }} title="long-horizon sustainability">
             sustain {sustain.outlook.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[politTone] }} title="political continuity">
+            regime {polit.label.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -311,6 +316,18 @@ export function ExecutiveBriefingChamber() {
                 </div>
               );
             })}
+            <div className="mt-2 mb-1 flex items-baseline justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Political continuity</span>
+              <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[politTone] }}>{polit.label}</span>
+            </div>
+            <Stat label="Governing legitimacy" value={`${polit.legitimacy}`} tone={polit.legitimacy >= 60 ? 'ok' : polit.legitimacy >= 42 ? 'warn' : 'alert'} />
+            <Stat label="Cabinet cohesion" value={`${polit.cabinetCohesion}`} tone={polit.cabinetCohesion >= 60 ? 'ok' : polit.cabinetCohesion >= 42 ? 'warn' : 'alert'} />
+            <Stat label="Regional political strain" value={`${polit.regionalStrain}`} tone={polit.regionalStrain >= 60 ? 'alert' : polit.regionalStrain >= 40 ? 'warn' : 'ok'} />
+            <Stat label="National unity" value={`${polit.nationalUnity}`} tone={polit.nationalUnity >= 60 ? 'ok' : polit.nationalUnity >= 42 ? 'warn' : 'alert'} />
+            <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+              Governance continuity <span className="font-semibold" style={{ color: TONE[politTone] }}>{polit.governanceContinuity}</span> ·
+              regime {polit.label.toLowerCase()}{polit.fragility >= 55 ? ' — sustained pressure threatens governing continuity' : ' — political continuity holding'}.
+            </p>
           </Panel>
 
           <Panel title="Executive directive flow" meta="institutional governance procedure">
