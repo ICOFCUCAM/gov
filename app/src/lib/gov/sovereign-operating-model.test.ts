@@ -7,7 +7,7 @@ import {
   governIncident, pipeStage, mandateFor,
   institutionalFatigue, attentionWeight, commandConfidence, coordinationBurden,
   nationalPosture, ministryInteraction, coordinationLoad,
-  fieldDeployment, FIELD_STAGES, nationalSociety,
+  fieldDeployment, FIELD_STAGES, nationalSociety, externalEnvironment,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -267,5 +267,21 @@ describe('sovereign operating model', () => {
     expect(b.civilianConfidence).toBeLessThan(a.civilianConfidence);
     expect(b.socialStrain).toBeGreaterThan(a.socialStrain);
     expect(b.continuityPressure).toBeGreaterThan(a.continuityPressure);
+  });
+
+  it('external environment is bounded, deterministic and bends posture', () => {
+    const e = externalEnvironment(8);
+    expect(e).toEqual(externalEnvironment(8));
+    for (const k of ['externalPressure', 'foreignDependency', 'allianceReliability', 'intlCoordLoad', 'reserveSensitivity', 'strategicCaution'] as const) {
+      expect(e[k]).toBeGreaterThanOrEqual(0);
+      expect(e[k]).toBeLessThanOrEqual(100);
+    }
+    expect(['STABLE NEIGHBOURHOOD', 'PRESSURED', 'CONTESTED', 'HOSTILE']).toContain(e.label);
+    // posture still respects its invariants with external coupling wired in
+    const p = nationalPosture(8);
+    expect(p.geopolitical).toBeGreaterThanOrEqual(0);
+    expect(p.geopolitical).toBeLessThanOrEqual(100);
+    expect(p.authThreshold).toBeGreaterThanOrEqual(0.55);
+    expect(p.authThreshold).toBeLessThanOrEqual(1.7);
   });
 });

@@ -477,6 +477,59 @@ export function coordinationBurden(cascadeDepth: number, telecom: number, conten
     cascadeDepth * 18 + (100 - telecom) * 0.42 + contention * 0.34)));
 }
 
+// ── Geopolitical & external pressure ──────────────────────────────────────
+// No sovereign operates in isolation. The external environment is integrated
+// over a long horizon of geopolitical memory (regional instability, foreign
+// telecom failures, sanctions, alliance reliability, cross-border
+// disruption) and bends national doctrine accordingly.
+export interface ExternalEnvironment {
+  externalPressure: number;    // 0..100 aggregate external strain
+  foreignDependency: number;   // 0..100 import/energy/logistics reliance
+  allianceReliability: number; // 0..100 partner dependability
+  intlCoordLoad: number;       // 0..100 treaty/diplomatic coordination drag
+  reserveSensitivity: number;  // 0..100 sanctions-scarred reserve caution
+  strategicCaution: number;    // 0..100 externally-imposed caution
+  label: string;               // STABLE NEIGHBOURHOOD | PRESSURED | CONTESTED | HOSTILE
+}
+export function externalEnvironment(epoch: number): ExternalEnvironment {
+  const H = 14;
+  let regionInstab = 0, foreignTel = 0, sanctions = 0, allianceFail = 0,
+    crossBorder = 0, market = 0, n = 0;
+  for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
+    const decay = 1 - (epoch - e) / (H + 4);
+    regionInstab += (seed(`ext:reg:${e}`) > 0.58 ? 1 : 0) * decay;
+    foreignTel += (seed(`ext:tel:${e}`) > 0.64 ? 1 : 0) * decay;
+    sanctions += (seed(`ext:san:${e}`) > 0.7 ? 1 : 0) * decay;
+    allianceFail += (seed(`ext:ally:${e}`) > 0.66 ? 1 : 0) * decay;
+    crossBorder += (seed(`ext:xb:${e}`) > 0.6 ? 1 : 0) * decay;
+    market += seed(`ext:mkt:${e}`) * decay;
+    n += decay;
+  }
+  const norm = (v: number) => Math.max(0, Math.min(100, Math.round((v / Math.max(1, n)) * 100)));
+  // foreign dependency is partly structural (a fixed national exposure)
+  // plus accumulated cross-border reliance.
+  const foreignDependency = Math.max(0, Math.min(100, Math.round(
+    28 + seed('ext:struct') * 34 + norm(crossBorder) * 0.4)));
+  const allianceReliability = Math.max(10, Math.min(98, Math.round(85 - norm(allianceFail) * 0.7)));
+  const reserveSensitivity = Math.max(0, Math.min(100, Math.round(
+    norm(sanctions) * 0.6 + norm(market) * 0.4)));
+  const intlCoordLoad = Math.max(0, Math.min(100, Math.round(
+    norm(crossBorder) * 0.4 + norm(regionInstab) * 0.3 + (100 - allianceReliability) * 0.3)));
+  const externalPressure = Math.max(0, Math.min(100, Math.round(
+    norm(regionInstab) * 0.28 + norm(foreignTel) * 0.18 + norm(sanctions) * 0.2
+    + norm(crossBorder) * 0.18 + norm(market) * 0.16)));
+  const strategicCaution = Math.max(0, Math.min(100, Math.round(
+    externalPressure * 0.5 + reserveSensitivity * 0.3 + (100 - allianceReliability) * 0.2)));
+  const label = externalPressure >= 66 ? 'HOSTILE'
+    : externalPressure >= 46 ? 'CONTESTED'
+    : externalPressure >= 28 ? 'PRESSURED'
+    : 'STABLE NEIGHBOURHOOD';
+  return {
+    externalPressure, foreignDependency, allianceReliability, intlCoordLoad,
+    reserveSensitivity, strategicCaution, label,
+  };
+}
+
 // ── Strategic evolution & doctrine drift ──────────────────────────────────
 // The nation is a geopolitical organism: long-running history bends
 // executive doctrine over time. Posture is integrated over a long horizon
@@ -507,18 +560,24 @@ export function nationalPosture(epoch: number): NationalPosture {
     n += decay;
   }
   const norm = (v: number) => Math.max(0, Math.min(100, Math.round((v / Math.max(1, n)) * 100)));
-  const deploymentConservatism = norm(reserveDepl * 1.1);
+  // External environment bends doctrine — the nation is geopolitically
+  // situated, not isolated.
+  const ext = externalEnvironment(epoch);
+  const deploymentConservatism = Math.min(100, Math.round(norm(reserveDepl * 1.1) * 0.78 + ext.reserveSensitivity * 0.22));
   const containmentWeight = norm(unrest);
   const coordinationCaution = norm(telecomFail);
   const stabilizationCaution = norm(containFail);
-  const geopolitical = norm(external);
-  // confidence: successful recoveries build it, containment failures erode it
+  const geopolitical = Math.min(100, Math.round(norm(external) * 0.5 + ext.externalPressure * 0.5));
+  // confidence: successful recoveries build it, containment failures erode
+  // it, fragile alliances temper it
   const execConfidence = Math.max(15, Math.min(95, Math.round(
-    60 + norm(recoverWin) * 0.4 - norm(containFail) * 0.45 - norm(energyStrain) * 0.15)));
+    60 + norm(recoverWin) * 0.4 - norm(containFail) * 0.45 - norm(energyStrain) * 0.15
+    - (100 - ext.allianceReliability) * 0.1)));
   // doctrine drift: chronic severity accelerates authorization, but exhausted
-  // reserves & low confidence make it conservative again
+  // reserves, low confidence & external strategic caution make it conservative
   const authThreshold = Math.max(0.55, Math.min(1.7, Number((
     1 + deploymentConservatism / 220 + (100 - execConfidence) / 260 - containmentWeight / 320
+    + ext.strategicCaution / 480
   ).toFixed(3))));
   const label = execConfidence < 35 ? 'STRAINED'
     : deploymentConservatism >= 60 ? 'CONSERVATIVE'

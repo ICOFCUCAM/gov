@@ -14,7 +14,7 @@ import { Panel, TONE, ACCENT, PALETTE, LiveValue, seed } from '@/components/feat
 import {
   governIncident, nationalPosture, nationalOperatingState, forecast,
   ministryBehavior, ministryReliability, ministryInteraction, coordinationLoad,
-  nationalSociety,
+  nationalSociety, externalEnvironment,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -122,6 +122,8 @@ export function ExecutiveBriefingChamber() {
   const stabTone = stability >= 65 ? 'ok' : stability >= 45 ? 'warn' : 'alert';
   const reserveTone = opS.resources.reserves.headroom >= 55 ? 'ok' : opS.resources.reserves.headroom >= 35 ? 'warn' : 'alert';
   // Civilian-state coupling — the society the state governs.
+  const ext = externalEnvironment(epoch);
+  const extTone = ext.label === 'HOSTILE' ? 'alert' : ext.label === 'CONTESTED' ? 'warn' : ext.label === 'PRESSURED' ? 'neutral' : 'ok';
   const society = nationalSociety(opS, post, incidents.length, sevLoad, epoch);
   const socTone = society.label === 'ERODING' ? 'alert' : society.label === 'FRAGILE' ? 'warn' : society.label === 'STRAINED' ? 'neutral' : 'ok';
   const hi = (v: number, good = true) => (good
@@ -151,6 +153,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider md:inline" style={{ color: TONE[socTone] }} title="civilian state">
             society {society.label.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider lg:inline" style={{ color: TONE[extTone] }} title="external environment">
+            ext {ext.label.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -193,9 +198,18 @@ export function ExecutiveBriefingChamber() {
             <Stat label="Logistics throughput" value={`${opS.display.logiThru.toLocaleString()}`} tone="ok" note="kt/h" />
             <Stat label="Treasury draw" value={`${opS.resources.treasury.util}%`} tone={opS.resources.treasury.util >= 80 ? 'warn' : 'ok'} />
             <Stat label="Coordination bandwidth" value={`${opS.display.coordBw}%`} tone={opS.display.coordBw >= 60 ? 'ok' : 'warn'} />
+            <div className="mt-2 mb-1 flex items-baseline justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">External environment</span>
+              <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[extTone] }}>{ext.label}</span>
+            </div>
+            <Stat label="External pressure" value={`${ext.externalPressure}`} tone={ext.externalPressure >= 60 ? 'alert' : ext.externalPressure >= 38 ? 'warn' : 'ok'} />
+            <Stat label="Foreign dependency" value={`${ext.foreignDependency}`} tone={ext.foreignDependency >= 60 ? 'warn' : 'ok'} />
+            <Stat label="Alliance reliability" value={`${ext.allianceReliability}%`} tone={ext.allianceReliability >= 70 ? 'ok' : ext.allianceReliability >= 50 ? 'warn' : 'alert'} />
+            <Stat label="Intl coordination load" value={`${ext.intlCoordLoad}`} tone={ext.intlCoordLoad >= 60 ? 'warn' : 'ok'} />
             <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
               Emergency-powers posture: <span className="font-semibold" style={{ color: TONE[powersTone] }}>{powers}</span>.
-              Reserve deployment requires Treasury concurrence; containment directives bind Transport &amp; Logistics.
+              Reserve deployment requires Treasury concurrence{ext.reserveSensitivity >= 55 ? ' — sanctions-scarred reserves under strategic caution' : ''};
+              containment directives bind Transport &amp; Logistics.
             </p>
           </Panel>
 
