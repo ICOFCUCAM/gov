@@ -1080,6 +1080,79 @@ export function politicalContinuity(
   };
 }
 
+// ── Civilizational continuity & national capability ───────────────────────
+// Beyond surviving a crisis, a nation must preserve and regenerate its
+// long-term capability: human capital, institutional knowledge,
+// technological resilience and generational continuity. Institutions learn
+// from demonstrated competence and deteriorate under chronic failure.
+export interface NationalCapability {
+  humanCapital: number;            // 0..100 workforce / expertise capacity
+  institutionalKnowledge: number;  // 0..100 accumulated doctrine competence
+  technologicalResilience: number; // 0..100 innovation / modernization depth
+  generationalContinuity: number;  // 0..100 long-term demographic resilience
+  capabilityIndex: number;         // 0..100 composite
+  trajectory: 'regenerating' | 'holding' | 'eroding';
+  label: string;                   // ADVANCING | RESILIENT | STRAINED | ERODING | DECLINING
+}
+// Long-horizon learning memory — repeated competent recovery compounds
+// institutional knowledge; chronic failure causes hesitation that lingers.
+function capabilityMemory(epoch: number): { learned: number; lost: number } {
+  const H = 20;
+  let learn = 0, lose = 0, n = 0;
+  for (let e = Math.max(0, epoch - H); e <= epoch; e++) {
+    const decay = 1 - (epoch - e) / (H + 6);
+    if (seed(`cap:learn:${e}`) > 0.57) learn += decay; else if (seed(`cap:learn:${e}`) < 0.33) lose += decay;
+    n += decay;
+  }
+  return { learned: Math.round((learn / Math.max(1, n)) * 100), lost: Math.round((lose / Math.max(1, n)) * 100) };
+}
+export function nationalCapability(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  ext: ExternalEnvironment, sustain: NationalSustainability, polit: PoliticalContinuity,
+  peakPressure: number, incidentN: number, epoch: number,
+): NationalCapability {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  const mem = capabilityMemory(epoch);
+  // Human capital — workforce/expertise: economy & confidence sustain it,
+  // hospital overload and telecom loss and chronic crises erode it.
+  const humanCapital = clamp(
+    society.economicContinuity * 0.32 + society.civilianConfidence * 0.26
+    + opS.display.telecom * 0.16 + mem.learned * 0.16
+    - Math.max(0, peakPressure - 60) * 0.4 - incidentN * 1.8 - mem.lost * 0.12);
+  // Institutional knowledge — doctrine competence compounds with learning,
+  // erodes with fatigue and chronic failure.
+  const institutionalKnowledge = clamp(
+    post.execConfidence * 0.3 + mem.learned * 0.34 + polit.cabinetCohesion * 0.18
+    - mem.lost * 0.22 - opS.contention * 0.12);
+  // Technological resilience — telecom reliability, infrastructure youth,
+  // modernization funding (reserves), external cooperation.
+  const technologicalResilience = clamp(
+    opS.display.telecom * 0.3 + (100 - sustain.infraAging) * 0.28
+    + opS.resources.reserves.headroom * 0.2 + (100 - ext.externalPressure) * 0.22);
+  // Generational continuity — long-term demographic/readiness resilience.
+  const generationalContinuity = clamp(
+    polit.nationalUnity * 0.3 + sustain.economicResilience * 0.26
+    + society.institutionalTrust * 0.22 - post.containmentWeight * 0.14
+    - Math.max(0, 50 - sustain.survivabilityWeeks) * 0.3);
+  const capabilityIndex = clamp(
+    humanCapital * 0.3 + institutionalKnowledge * 0.26
+    + technologicalResilience * 0.22 + generationalContinuity * 0.22);
+  const drift = mem.learned - mem.lost;
+  const trajectory: NationalCapability['trajectory'] =
+    drift >= 12 && capabilityIndex >= 50 ? 'regenerating'
+    : drift <= -12 || capabilityIndex < 38 ? 'eroding'
+    : 'holding';
+  const label = capabilityIndex >= 74 ? 'ADVANCING'
+    : capabilityIndex >= 58 ? 'RESILIENT'
+    : capabilityIndex >= 44 ? 'STRAINED'
+    : capabilityIndex >= 30 ? 'ERODING'
+    : 'DECLINING';
+  return {
+    humanCapital, institutionalKnowledge, technologicalResilience,
+    generationalContinuity, capabilityIndex, trajectory, label,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

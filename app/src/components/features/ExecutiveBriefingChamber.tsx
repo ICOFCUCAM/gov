@@ -15,7 +15,7 @@ import {
   governIncident, nationalPosture, nationalOperatingState, forecast,
   ministryBehavior, ministryReliability, ministryInteraction, coordinationLoad,
   nationalSociety, externalEnvironment, strategicForesight, simulateDoctrines,
-  nationalSustainability, politicalContinuity,
+  nationalSustainability, politicalContinuity, nationalCapability,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -132,6 +132,8 @@ export function ExecutiveBriefingChamber() {
   const sustain = nationalSustainability(opS, post, society, foresight, epoch);
   const polit = politicalContinuity(opS, post, society, ext, foresight, epoch);
   const politTone = polit.label === 'FRACTURING' || polit.label === 'FRAGILE' ? 'alert' : polit.label === 'STRAINED' ? 'warn' : 'ok';
+  const cap = nationalCapability(opS, post, society, ext, sustain, polit, peakP, incidents.length, epoch);
+  const capTone = cap.label === 'DECLINING' || cap.label === 'ERODING' ? 'alert' : cap.label === 'STRAINED' ? 'warn' : 'ok';
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
@@ -170,6 +172,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[politTone] }} title="political continuity">
             regime {polit.label.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[capTone] }} title="national capability">
+            capability {cap.label.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -254,6 +259,20 @@ export function ExecutiveBriefingChamber() {
               Dominant scenario: <span className="font-semibold text-ink-soft">{foresight.dominant}</span> ({foresight.scenarios[0]?.prob ?? 0}%)
               {foresight.scenarios[1] ? <>, then {foresight.scenarios[1].label.toLowerCase()} ({foresight.scenarios[1].prob}%)</> : null}.
               Doctrine adapts: {foresight.projRisk >= 55 ? 'projected risk raises reserve conservatism & executive caution.' : 'projected trajectory within planning tolerance.'}
+            </p>
+            <div className="mt-2 mb-1 flex items-baseline justify-between">
+              <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">National capability outlook</span>
+              <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[capTone] }}>{cap.label} · {cap.trajectory}</span>
+            </div>
+            <Stat label="Human capital" value={`${cap.humanCapital}`} tone={cap.humanCapital >= 60 ? 'ok' : cap.humanCapital >= 42 ? 'warn' : 'alert'} />
+            <Stat label="Institutional knowledge" value={`${cap.institutionalKnowledge}`} tone={cap.institutionalKnowledge >= 60 ? 'ok' : cap.institutionalKnowledge >= 42 ? 'warn' : 'alert'} />
+            <Stat label="Technological resilience" value={`${cap.technologicalResilience}`} tone={cap.technologicalResilience >= 60 ? 'ok' : cap.technologicalResilience >= 42 ? 'warn' : 'alert'} />
+            <Stat label="Generational continuity" value={`${cap.generationalContinuity}`} tone={cap.generationalContinuity >= 60 ? 'ok' : cap.generationalContinuity >= 42 ? 'warn' : 'alert'} note={`index ${cap.capabilityIndex}`} />
+            <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+              Civilizational capability is <span className="font-semibold" style={{ color: TONE[capTone] }}>{cap.trajectory}</span> —
+              {cap.trajectory === 'eroding' ? ' sustained pressure is degrading long-term national competence.'
+                : cap.trajectory === 'regenerating' ? ' demonstrated competence is compounding institutional knowledge.'
+                : ' long-term capability is being preserved under current strain.'}
             </p>
           </Panel>
         </div>

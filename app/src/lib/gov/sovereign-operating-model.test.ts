@@ -9,7 +9,7 @@ import {
   nationalPosture, ministryInteraction, coordinationLoad,
   fieldDeployment, FIELD_STAGES, nationalSociety, externalEnvironment,
   strategicForesight, simulateDoctrines, nationalSustainability,
-  politicalContinuity,
+  politicalContinuity, nationalCapability,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -393,5 +393,32 @@ describe('sovereign operating model', () => {
     const calmF = strategicForesight(calmS, p, calmSoc, ex, 22, 0, 1, 8);
     const calmPc = politicalContinuity(calmS, p, calmSoc, ex, calmF, 8);
     expect(calmPc.governanceContinuity).toBeGreaterThanOrEqual(pc.governanceContinuity);
+  });
+
+  it('national capability is bounded, deterministic & continuity-aware', () => {
+    const oS = nationalOperatingState(60, 70, 85, 3, 5, 9);
+    const p = nationalPosture(9);
+    const soc = nationalSociety(oS, p, 5, 3, 9);
+    const ex = externalEnvironment(9);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 9);
+    const su = nationalSustainability(oS, p, soc, f, 9);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 9);
+    const cap = nationalCapability(oS, p, soc, ex, su, pc, 85, 5, 9);
+    expect(cap).toEqual(nationalCapability(oS, p, soc, ex, su, pc, 85, 5, 9));
+    for (const k of ['humanCapital', 'institutionalKnowledge', 'technologicalResilience', 'generationalContinuity', 'capabilityIndex'] as const) {
+      expect(cap[k]).toBeGreaterThanOrEqual(0);
+      expect(cap[k]).toBeLessThanOrEqual(100);
+    }
+    expect(['regenerating', 'holding', 'eroding']).toContain(cap.trajectory);
+    expect(['ADVANCING', 'RESILIENT', 'STRAINED', 'ERODING', 'DECLINING']).toContain(cap.label);
+
+    // a calmer, well-resourced nation preserves more capability
+    const cS = nationalOperatingState(40, 20, 25, 0, 1, 9);
+    const cSoc = nationalSociety(cS, p, 1, 0, 9);
+    const cF = strategicForesight(cS, p, cSoc, ex, 22, 0, 1, 9);
+    const cSu = nationalSustainability(cS, p, cSoc, cF, 9);
+    const cPc = politicalContinuity(cS, p, cSoc, ex, cF, 9);
+    const cCap = nationalCapability(cS, p, cSoc, ex, cSu, cPc, 25, 1, 9);
+    expect(cCap.capabilityIndex).toBeGreaterThanOrEqual(cap.capabilityIndex);
   });
 });
