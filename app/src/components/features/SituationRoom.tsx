@@ -593,7 +593,7 @@ export function NationalMap({
   };
 
   return (
-    <div ref={rootRef} className={`relative w-full overflow-hidden rounded-[4px] border ${height ? '' : 'h-full min-h-[560px]'}`}
+    <div ref={rootRef} className={`relative w-full overflow-hidden rounded-[4px] border ${height ? '' : 'h-full min-h-[620px]'}`}
       style={{
         ...(height ? { height } : {}),
         borderColor: `color-mix(in srgb, ${ACCENT} 26%, rgb(var(--c-line-soft)))`,
@@ -646,6 +646,21 @@ export function NationalMap({
             <stop offset="60%" stopColor="rgb(var(--c-bg))" stopOpacity="0" />
             <stop offset="100%" stopColor="rgb(var(--c-bg))" stopOpacity="0.66" />
           </radialGradient>
+          {/* territorial haze + continental atmosphere bloom */}
+          <radialGradient id="terrhaze" cx="50%" cy="42%" r="70%">
+            <stop offset="0%" stopColor={ACCENT} stopOpacity="0.10" />
+            <stop offset="42%" stopColor={ACCENT} stopOpacity="0.045" />
+            <stop offset="100%" stopColor={ACCENT} stopOpacity="0" />
+          </radialGradient>
+          <radialGradient id="contbloom" cx="52%" cy="50%" r="62%">
+            <stop offset="0%" stopColor="#5fb0d9" stopOpacity="0.07" />
+            <stop offset="60%" stopColor="#5fb0d9" stopOpacity="0.02" />
+            <stop offset="100%" stopColor="#5fb0d9" stopOpacity="0" />
+          </radialGradient>
+          <filter id="corrglow" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="18" result="b" />
+            <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+          </filter>
           {provRisk.map(({ p }, i) => {
             const k = heat ? 1.8 : 1;
             return (
@@ -658,9 +673,47 @@ export function NationalMap({
           })}
         </defs>
 
-        {/* always-on faint operational graticule + terrain wash */}
-        <rect width="1000" height="620" fill="url(#grid)" opacity={layers.grid ? 0.5 : 0.16} />
-        <rect width="1000" height="620" fill="url(#terrain)" opacity="0.10" />
+        {/* ── infrastructure depth stack ───────────────────────────────
+            1 terrain shadow · 2 tactical grid · 3 infra topology ·
+            4 pressure heat · 5 active corridor movement (rendered below) */}
+        {/* L1 — terrain shadow + territorial haze + continental bloom */}
+        <g style={{ pointerEvents: 'none' }}>
+          <rect width="1000" height="620" fill="url(#terrhaze)" />
+          <rect width="1000" height="620" fill="url(#contbloom)" />
+          <ellipse cx="520" cy="372" rx="540" ry="330" fill="rgba(2,7,15,0.55)" />
+          <rect width="1000" height="620" fill="url(#terrain)" opacity="0.18" />
+        </g>
+        {/* L2 — tactical grid */}
+        <rect width="1000" height="620" fill="url(#grid)" opacity={layers.grid ? 0.5 : 0.16} style={{ pointerEvents: 'none' }} />
+        {/* L3 — infrastructure topology substrate (faint national lattice) */}
+        <g stroke={ACCENT} fill="none" strokeOpacity="0.26" strokeWidth="0.5" style={{ pointerEvents: 'none' }}>
+          {Array.from({ length: 9 }).map((_, i) => (
+            <path key={`tl${i}`} d={`M${60 + i * 105},70 Q${520},${260 + (i % 3) * 70} ${940 - i * 96},560`} strokeDasharray="2 9" />
+          ))}
+          {Array.from({ length: 5 }).map((_, i) => (
+            <path key={`tc${i}`} d={`M70,${120 + i * 95} Q520,${100 + i * 90} 940,${150 + i * 95}`} strokeDasharray="1 7" />
+          ))}
+        </g>
+        {/* overlapping operational sectors */}
+        <g style={{ pointerEvents: 'none' }}>
+          {[
+            { cx: 360, cy: 250, r: 300, c: ACCENT }, { cx: 640, cy: 300, r: 320, c: '#5fb0d9' },
+            { cx: 520, cy: 430, r: 280, c: TONE.warn }, { cx: 470, cy: 220, r: 240, c: TONE.ok },
+          ].map((s, i) => (
+            <circle key={`sect${i}`} cx={s.cx} cy={s.cy} r={s.r} fill="none" stroke={s.c} strokeOpacity="0.07" strokeWidth="1.2" strokeDasharray="6 10" />
+          ))}
+        </g>
+        {/* L4 — pressure heat base wash + capital congestion clusters */}
+        <g style={{ pointerEvents: 'none' }}>
+          <ellipse cx="520" cy="356" rx="240" ry="180" fill={TONE.alert} fillOpacity="0.05" />
+          {Array.from({ length: 46 }).map((_, i) => {
+            const ang = seed(`cc:${i}`) * Math.PI * 2;
+            const rad = 18 + seed(`cc:${i}:r`) * 150;
+            const cx = 520 + Math.cos(ang) * rad, cy = 356 + Math.sin(ang) * rad * 0.7;
+            const near = Math.max(0, 1 - rad / 168);
+            return <circle key={`cc${i}`} cx={cx} cy={cy} r={0.7 + near * 1.7} fill={ACCENT} opacity={0.06 + near * 0.22} />;
+          })}
+        </g>
         {/* topographic relief + population — environment stratum */}
         {layers.environment !== false ? (
         <g style={{ pointerEvents: 'none' }}>
@@ -765,20 +818,25 @@ export function NationalMap({
             // Per-corridor live load → classification + intensity drives
             // glow width, opacity, congestion tint and flow speed.
             const load = Math.round(wave(`corrload:${i}`, ts, 22, 98));
-            const cls = load >= 80 ? 'congested' : load >= 55 ? 'active' : 'nominal';
-            const col = cls === 'congested' ? TONE.alert : cls === 'active' ? baseCol : baseCol;
-            const haloW = cls === 'congested' ? 7 : cls === 'active' ? 5 : 3.2;
-            const haloO = cls === 'congested' ? 0.2 : cls === 'active' ? 0.13 : 0.07;
-            const coreW = 0.9 + (load / 100) * 1.8;
-            const coreO = 0.32 + (load / 100) * 0.45;
+            // Corridor hierarchy — low 1px · medium 3px · severe 6px bloom
+            // · critical 10px pulse (18px glow on severe+).
+            const cls = load >= 85 ? 'critical' : load >= 65 ? 'severe' : load >= 40 ? 'medium' : 'low';
+            const col = cls === 'critical' ? TONE.alert : cls === 'severe' ? TONE.warn : baseCol;
+            const coreW = cls === 'critical' ? 10 : cls === 'severe' ? 6 : cls === 'medium' ? 3 : 1;
+            const haloW = coreW + (cls === 'critical' ? 14 : cls === 'severe' ? 9 : 4);
+            const haloO = cls === 'critical' ? 0.26 : cls === 'severe' ? 0.18 : cls === 'medium' ? 0.1 : 0.05;
+            const coreO = 0.34 + (load / 100) * 0.5;
+            const bloom = cls === 'critical' || cls === 'severe';
             const d = `M${a.cx},${a.cy} Q${mx},${my} ${b.cx},${b.cy}`;
             const dur = `${(1.4 + (100 - load) / 100 * 3).toFixed(1)}s`;
-            const pkt = cls === 'congested' ? 3 : cls === 'active' ? 2 : 1;
+            const pkt = cls === 'critical' ? 3 : cls === 'severe' ? 2 : 1;
             return (
               <g key={`c${i}`}>
-                <path d={d} fill="none" stroke={col} strokeWidth={haloW} strokeOpacity={haloO} strokeLinecap="round" style={{ filter: cls === 'congested' ? `drop-shadow(0 0 4px ${col})` : undefined }} />
+                <path d={d} fill="none" stroke={col} strokeWidth={haloW} strokeOpacity={haloO} strokeLinecap="round"
+                  style={{ filter: bloom ? 'url(#corrglow)' : undefined }}
+                  className={cls === 'critical' ? 'motion-safe:animate-breathe' : ''} />
                 <path d={d} fill="none" stroke={col} strokeWidth={coreW}
-                  strokeOpacity={coreO} strokeDasharray="2 8" strokeLinecap="round" className="motion-safe:animate-dash-flow" style={{ animationDuration: cls === 'congested' ? '0.55s' : flowDur }} />
+                  strokeOpacity={coreO} strokeDasharray="2 8" strokeLinecap="round" className="motion-safe:animate-dash-flow" style={{ animationDuration: cls === 'critical' ? '0.55s' : flowDur }} />
                 {Array.from({ length: pkt }).map((_, k) => (
                   <circle key={k} r={c.kind === 'energy' ? 1.8 : 1.4} fill={col} opacity="0.9" style={{ filter: `drop-shadow(0 0 3px ${col})` }}>
                     <animateMotion dur={dur} begin={`${(k / pkt) * parseFloat(dur)}s`} repeatCount="indefinite" path={d} />
@@ -882,14 +940,18 @@ export function NationalMap({
             </g>
           </g>
 
-          {/* incident diffusion shock rings */}
-          {layers.incidents ? mapNodes.filter(m => m.pressure >= 68).slice(0, 8).map(m => (
-            <g key={`bl${m.ministryId}`}>
-              <circle cx={m.x * 10} cy={m.y * 6.2} r="30" fill="none" stroke={TONE.alert} strokeWidth="1.6"
-                className="origin-center animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
-              <circle cx={m.x * 10} cy={m.y * 6.2} r={20 + pulse * 40} fill={TONE.alert} opacity={0.12 - pulse * 0.1} />
-            </g>
-          )) : null}
+          {/* regional crisis bloom — 140px radius */}
+          {layers.incidents ? mapNodes.filter(m => m.pressure >= 68).slice(0, 8).map(m => {
+            const cx = m.x * 10, cy = m.y * 6.2;
+            return (
+              <g key={`bl${m.ministryId}`}>
+                <circle cx={cx} cy={cy} r="140" fill={TONE.alert} opacity="0.06" />
+                <circle cx={cx} cy={cy} r={70 + pulse * 70} fill={TONE.alert} opacity={0.14 - pulse * 0.1} />
+                <circle cx={cx} cy={cy} r="38" fill="none" stroke={TONE.alert} strokeWidth="1.6"
+                  className="origin-center animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+              </g>
+            );
+          }) : null}
 
           {/* cascading-failure spread — critical nodes propagate to provinces */}
           {layers.incidents ? mapNodes.filter(m => m.pressure >= 80).slice(0, 3).flatMap(m => {
@@ -987,24 +1049,25 @@ export function NationalMap({
       {mapNodes.map(m => {
         const id = identityFor(m.archetype as ArchetypeKey);
         const tn = toneFor(m.pressure);
-        const tier = m.pressure >= 80 ? 'crit' : m.pressure >= 60 ? 'sec' : 'passive';
-        const sz = tier === 'crit' ? 'h-11 w-11 text-[13px]' : tier === 'sec' ? 'h-9 w-9 text-[11px]' : 'h-7 w-7 text-[9px]';
-        const glow = tier === 'crit' ? `0 0 26px ${TONE[tn]}, 0 0 10px ${TONE[tn]}` : tier === 'sec' ? `0 0 16px ${TONE[tn]}66` : `0 0 7px ${TONE[tn]}3a`;
+        // node scaling — village 8 · city 18 · strategic 34 · national critical 52
+        const tier = m.pressure >= 80 ? 'natl' : m.pressure >= 58 ? 'strat' : m.pressure >= 32 ? 'city' : 'village';
+        const px = tier === 'natl' ? 52 : tier === 'strat' ? 34 : tier === 'city' ? 18 : 8;
+        const glow = tier === 'natl' ? `0 0 30px ${TONE[tn]}, 0 0 12px ${TONE[tn]}` : tier === 'strat' ? `0 0 18px ${TONE[tn]}66` : tier === 'city' ? `0 0 9px ${TONE[tn]}44` : `0 0 5px ${TONE[tn]}33`;
         return (
           <Link key={m.ministryId} href={`/gov/ministry/${m.ministryId}`}
             className="focus-ring group absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${m.x}%`, top: `${m.y}%`, zIndex: tier === 'crit' ? 14 : tier === 'sec' ? 12 : 10, opacity: tier === 'passive' ? 0.62 : 1 }}
+            style={{ left: `${m.x}%`, top: `${m.y}%`, zIndex: tier === 'natl' ? 14 : tier === 'strat' ? 12 : tier === 'city' ? 11 : 10, opacity: tier === 'village' ? 0.6 : 1 }}
             title={`${m.ministry} · pressure ${m.pressure}`}>
-            {tier === 'crit' ? (
+            {tier === 'natl' || tier === 'strat' ? (
               <>
                 <span aria-hidden className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-diffuse"
-                  style={{ height: '2.6rem', width: '2.6rem', border: `1.5px solid ${TONE[tn]}`, transformOrigin: 'center' }} />
-                <span aria-hidden className="absolute left-1/2 top-1/2 h-9 w-9 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-breathe"
-                  style={{ background: `radial-gradient(circle, ${TONE[tn]}40 0%, transparent 70%)` }} />
+                  style={{ height: px * 1.5, width: px * 1.5, border: `1.5px solid ${TONE[tn]}`, transformOrigin: 'center' }} />
+                <span aria-hidden className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-breathe"
+                  style={{ height: px * 1.7, width: px * 1.7, background: `radial-gradient(circle, ${TONE[tn]}40 0%, transparent 70%)` }} />
               </>
             ) : null}
-            <span className={`relative grid place-items-center rounded-full font-bold text-white ring-2 transition-transform group-hover:scale-110 ${sz}`}
-              style={{ backgroundColor: id.accent, borderColor: TONE[tn], boxShadow: glow }}>
+            <span className="relative grid place-items-center rounded-full font-bold text-white ring-2 transition-transform group-hover:scale-110"
+              style={{ height: px, width: px, fontSize: Math.max(7, Math.round(px * 0.42)), backgroundColor: id.accent, borderColor: TONE[tn], boxShadow: glow }}>
               {id.glyph}
             </span>
             <span className="absolute left-1/2 top-[110%] -translate-x-1/2 whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[9px] text-ink-soft opacity-0 ring-1 ring-line transition-opacity group-hover:opacity-100">
@@ -1479,11 +1542,12 @@ export function SituationRoom() {
                   ))}
                 </span>
               }
-              className="xl:col-span-6" bodyClass="!p-2">
+              className="xl:col-span-8" bodyClass="!p-0">
               <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
             </Panel>
+            <div className="flex min-h-0 flex-col gap-1.5 xl:col-span-4">
 
-            <Panel title="Ministry status matrix" meta="inter-ministerial coordination · live" className="xl:col-span-4" bodyClass="!p-0">
+            <Panel title="Ministry status matrix" meta="inter-ministerial coordination · live" className="" bodyClass="!p-0">
               {(() => {
                 // Cross-ministry dependency lattice — upstream stressors per
                 // archetype propagate cascading pressure (sovereign realism).
@@ -1599,7 +1663,7 @@ export function SituationRoom() {
                 }, { coord: 0, auth: 0, rec: 0 });
                 return `${s.coord} coordinating · ${s.auth} authorized · ${s.rec} recovering`;
               })()}
-              className="xl:col-span-2" bodyClass="!p-0">
+              className="" bodyClass="!p-0">
               {incidents.length === 0 ? <p className="p-3 text-xs text-ink-muted">No active cross-ministry escalations.</p> : incidents.slice(0, 9).map((c, i) => {
                 const id = identityFor(c.archetype);
                 const tn = c.severity === 'sev1' || c.severity === 'sev2' ? 'alert' : c.severity === 'sev3' ? 'warn' : 'neutral';
@@ -1674,6 +1738,7 @@ export function SituationRoom() {
                 );
               })}
             </Panel>
+            </div>
           </div>
 
           {/* Dependency intelligence + strategic forecast */}
