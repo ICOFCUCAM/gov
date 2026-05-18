@@ -92,13 +92,17 @@ export function Panel({
   title: string; meta?: React.ReactNode; className?: string; bodyClass?: string; children: React.ReactNode;
 }) {
   return (
-    <section className={`flex min-h-0 flex-col rounded-[3px] border border-line bg-surface ${className}`}>
-      <div className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-1.5"
+    <section className={`flex min-h-0 flex-col rounded-[3px] border border-line bg-surface ${className}`}
+      style={{ boxShadow: 'inset 2px 0 0 color-mix(in srgb,#37c7d4 26%,transparent)' }}>
+      <div className="flex items-center justify-between gap-2 border-b border-line px-2 py-1"
         style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.08)' }}>
-        <h2 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}</h2>
-        {meta ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
+        <h2 className="flex min-w-0 items-center gap-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.13em] text-ink-soft">
+          <span aria-hidden className="h-1 w-1 shrink-0 rounded-full motion-safe:animate-breathe" style={{ background: ACCENT, boxShadow: `0 0 4px ${ACCENT}` }} />
+          {title}
+        </h2>
+        {meta ? <span className="shrink-0 text-[9.5px] text-ink-muted">{meta}</span> : null}
       </div>
-      <div className={`flex-1 p-2.5 ${bodyClass}`}>{children}</div>
+      <div className={`flex-1 p-2 ${bodyClass}`}>{children}</div>
     </section>
   );
 }
@@ -1319,7 +1323,7 @@ export function SituationRoom() {
         </nav>
 
         {/* Operational canvas */}
-        <main className="min-w-0 flex-1 space-y-2 overflow-y-auto p-2"
+        <main className="min-w-0 flex-1 space-y-1.5 overflow-y-auto p-1.5"
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.022) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
           {/* Row 1 — sovereign national intelligence telemetry (10) */}
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5 xl:grid-cols-10">
@@ -1327,7 +1331,7 @@ export function SituationRoom() {
           </div>
 
           {/* Map-first band */}
-          <div className="grid gap-2 xl:grid-cols-12">
+          <div className="grid gap-1.5 xl:grid-cols-12">
             <Panel title="National activity map"
               meta={
                 <span className="flex items-center gap-1">
@@ -1493,7 +1497,7 @@ export function SituationRoom() {
           </div>
 
           {/* Dependency intelligence + strategic forecast */}
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-4">
             <Panel title="National dependency graph" meta="systemic impact propagation" bodyClass="!pb-2">
               {(() => {
                 const dep = [
@@ -1556,7 +1560,7 @@ export function SituationRoom() {
               {(coord?.timeline ?? []).length === 0 ? <p className="p-3 text-xs text-ink-muted">Awaiting operational events…</p> : null}
             </Panel>
             <Panel title="Strategic forecast · 72h" meta="advisory simulation">
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-1.5 text-xs">
                 {[
                   { l: 'Energy reserve threshold', v: `In ${10 + Math.round(seed(`f1:${epoch}`) * 40)}h`, t: pressOf('ENERGY') >= 60 ? 'alert' : 'warn' },
                   { l: 'Hospital capacity stress', v: `+${8 + Math.round(seed(`f2:${epoch}`) * 18)}%`, t: pressOf('HEALTH') >= 55 ? 'alert' : 'warn' },
@@ -1584,7 +1588,7 @@ export function SituationRoom() {
           </div>
 
           {/* Operational analytics band */}
-          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-4">
             <Panel title="Infrastructure network pressure" meta="digital twin" bodyClass="!p-1.5">
               <div className="grid grid-cols-2 gap-1">
                 {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
@@ -1637,7 +1641,7 @@ export function SituationRoom() {
           </div>
 
           {/* Executive band */}
-          <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-1.5 lg:grid-cols-2 xl:grid-cols-4">
             <Panel title="System integration fabric" meta="cross-government" bodyClass="">
               <div className="mb-2 flex items-center gap-3">
                 <Ring pct={integ} label="integrated" />
@@ -1688,7 +1692,7 @@ export function SituationRoom() {
             </Panel>
             <Panel title="Top operational alerts" meta="high impact">
               {alerts.length === 0 ? <p className="text-xs text-ink-muted">No high-impact alerts in the current window.</p> : (
-                <ul className="space-y-2 text-xs">
+                <ul className="space-y-1.5 text-xs">
                   {alerts.map((a, i) => {
                     const owner = a.tone === 'alert' ? 'Cabinet Office' : 'Duty Coordinator';
                     const eta = a.tone === 'alert' ? `${1 + (epoch % 3)}h` : `${4 + (epoch % 8)}h`;
@@ -1711,7 +1715,7 @@ export function SituationRoom() {
               )}
             </Panel>
             <Panel title="Cabinet calendar" meta="upcoming">
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-1.5 text-xs">
                 {cal.map(c => <li key={c.t} className="flex items-center justify-between"><span className="text-ink-soft">{c.t}</span><span className="font-mono text-[10px] tabular-nums text-ink-muted">in {c.m < 60 ? `${c.m}m` : `${Math.floor(c.m / 60)}h ${c.m % 60}m`}</span></li>)}
               </ul>
               <Link href="/gov" className="focus-ring mt-3 inline-block text-[11px] text-link underline underline-offset-2">Open Cabinet →</Link>
