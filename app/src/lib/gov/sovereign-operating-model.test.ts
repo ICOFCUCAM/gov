@@ -14,6 +14,7 @@ import {
   intelligenceAssessment, nationalChronology, allianceFramework,
   nationalOperations, populationOrder, governanceAudit,
   EXEC_DIRECTIVES, directiveProjection, liveScenario, civilizationalMemory,
+  institutionalRecord,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -800,6 +801,21 @@ describe('sovereign operating model', () => {
     expect(cm.legacies.length).toBeGreaterThanOrEqual(1);
     expect(cm.generation).toBe(Math.floor(36 / 12) + 1);
     expect(typeof cm.doctrineBias).toBe('string');
+
+    const sc = liveScenario(36, el, pc, su, cp, po, ex, false);
+    const dp = directiveProjection('PRESERVE_RESERVES', el, pc, ex);
+    const ir = institutionalRecord(cm, ga, el, pc, sc, ch, dp, 2);
+    expect(ir).toEqual(institutionalRecord(cm, ga, el, pc, sc, ch, dp, 2));
+    expect(['resolute', 'measured', 'hardened', 'strained', 'grieving', 'reconstructive', 'exhausted']).toContain(ir.stateTone);
+    expect(typeof ir.identity).toBe('string');
+    expect(ir.ritualStage.length).toBeGreaterThan(0);
+    expect(ir.cabinetProceeding.length).toBeGreaterThan(0);
+    expect(ir.archiveReview.length).toBeGreaterThan(0);
+    expect(ir.nationalAddress).toContain('STATE BRIEFING');
+    expect(typeof ir.mourningEra).toBe('boolean');
+    // war-cabinet powers carry an exceptional constitutional posture
+    const irPow = institutionalRecord(cm, ga, el, pc, sc, ch, dp, 3);
+    expect(irPow.emergencyPosture).toMatch(/[Ee]xceptional|war-cabinet/);
   });
 });
 

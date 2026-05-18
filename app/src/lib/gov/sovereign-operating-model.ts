@@ -2297,6 +2297,97 @@ export function civilizationalMemory(
   };
 }
 
+// ── Embodied institutional record & sovereign atmosphere ──────────────────
+// Pure synthesis over existing doctrine outputs — renders the state's
+// procedural weight as government-grade institutional language: ritual
+// stage, cabinet proceeding, constitutional-emergency posture, succession
+// inheritance, archive lessons and a restrained national address. No new
+// accumulators, no omniscience, no theatre.
+export interface InstitutionalRecord {
+  stateTone: string;            // resolute | measured | hardened | strained | grieving | reconstructive | exhausted
+  identity: string;             // matured civilizational governing identity
+  ritualStage: string;          // current sovereign ceremony stage of standing action
+  cabinetProceeding: string;    // restrained cabinet-session summary
+  emergencyPosture: string;     // constitutional-emergency path & legitimacy cost
+  successionNote: string;       // what an incoming administration inherits
+  archiveReview: string[];      // prior-era institutional lessons
+  nationalAddress: string;      // formal classified-tone briefing
+  mourningEra: boolean;
+}
+export function institutionalRecord(
+  civ: CivilizationalMemory, audit: GovernanceAudit, lead: ExecutiveLeadership,
+  polit: PoliticalContinuity, scen: LiveScenario, chron: NationalChronology,
+  dproj: DirectiveProjection, powersLevel: number,
+): InstitutionalRecord {
+  const exhausted = audit.healthVerdict === 'EXHAUSTED' || civ.trajectory === 'EXHAUSTED';
+  const declining = civ.trajectory === 'DECLINING' || audit.healthVerdict === 'DECLINING';
+  const catastrophic = scen.verdict === 'CONTINUITY AT RISK' || declining;
+  const recovering = civ.trajectory === 'REGENERATING' || audit.healthVerdict === 'RECOVERING';
+  const resilient = civ.trajectory === 'ASCENDING' || civ.trajectory === 'RESILIENT';
+  const stateTone = catastrophic ? 'grieving'
+    : exhausted ? 'exhausted'
+    : recovering ? 'reconstructive'
+    : civ.personality === 'FRAGMENTED' || civ.personality === 'DISTRUSTFUL' ? 'strained'
+    : civ.personality === 'CAUTIOUS' || civ.personality === 'RETRENCHING' ? 'hardened'
+    : resilient ? 'resolute'
+    : 'measured';
+  // matured civilizational identity from accumulated behaviour.
+  const identity = civ.personality === 'RESILIENT' ? 'a resilient continuity-bearing state'
+    : civ.personality === 'CAUTIOUS' ? 'a cautious, reserve-protective state'
+    : civ.personality === 'RETRENCHING' ? 'a sovereignty-focused, retrenching state'
+    : civ.personality === 'FRAGMENTED' ? 'a fragmented, continuity-strained state'
+    : civ.personality === 'DISTRUSTFUL' ? 'a legitimacy-guarded, distrustful state'
+    : civ.personality === 'ASSERTIVE' ? 'an assertive, recovery-driven state'
+    : 'a steady institutional state';
+  // sovereign ceremony stage of the standing directive.
+  const ritualStage = dproj.key === 'NONE'
+    ? 'no action before the chamber — doctrine proceeds under standing mandate'
+    : dproj.stage === 'MANDATE ISSUED'
+      ? 'national issuance complete — under implementation oversight'
+      : dproj.stage === 'HELD AT CABINET'
+        ? 'held at cabinet review — constitutional alignment unresolved'
+        : `before the chamber at ${dproj.stage.toLowerCase()} — proposal → cabinet review → constitutional review → authorization → national issuance`;
+  // restrained cabinet proceeding.
+  const topDissent = lead.cabinet[0];
+  const cabinetProceeding = lead.consensus >= 66
+    ? `Cabinet aligned (consensus ${lead.consensus}); proceedings advance without material objection.`
+    : lead.consensus >= 48
+      ? `Cabinet proceeds under compromise pressure; ${topDissent ? `${topDissent.ministry} maintains a reservation (${topDissent.position})` : 'reservations noted'}.`
+      : `Cabinet divided (consensus ${lead.consensus}); ${topDissent ? `${topDissent.ministry} leads a dissent bloc — ${topDissent.position}` : 'dissent blocs unresolved'}; procedural hesitation recorded.`;
+  // constitutional-emergency posture & legitimacy cost.
+  const emergencyPosture = powersLevel >= 3
+    ? `Exceptional constitutional review active under war-cabinet authority; legitimacy cost ${lead.constitutionalStrain} — repeated invocation permanently reshapes constitutional culture.`
+    : powersLevel >= 2
+      ? `Elevated mandate in force; constitutional strain ${lead.constitutionalStrain} accruing as institutional precedent.`
+      : 'Standing constitutional authority; no exceptional powers invoked.';
+  // succession inheritance.
+  const successionNote =
+    `An incoming administration would inherit ${civ.personality.toLowerCase()} doctrine, international standing ${civ.reputationStanding} (${civ.reputationTrend}), ${polit.legitimacy < 50 ? 'strained' : 'serviceable'} institutional trust, ${civ.constitutionalDrift.split(' —')[0]} constitutional balance, and unfinished directives — the handover is historically material, not cosmetic.`;
+  // archive lessons from prior eras.
+  const archiveReview: string[] = [];
+  if (chron.eras.length >= 2) archiveReview.push(`The state passed through ${chron.eras.length} governing eras; ${chron.eras[0]!.label.toLowerCase()} precedent still conditions present doctrine.`);
+  civ.legacies.filter(l => l.profile.startsWith('failed')).slice(0, 1).forEach(l => archiveReview.push(`Administration ${l.generation} recorded as a failed era — inherited caution persists.`));
+  civ.legacies.filter(l => l.profile.startsWith('competent')).slice(0, 1).forEach(l => archiveReview.push(`Administration ${l.generation} recorded as competent — institutional confidence inherited.`));
+  if (civ.permanentConsequences[0] && !civ.permanentConsequences[0].startsWith('no irreversible')) archiveReview.push(`Standing institutional lesson: ${civ.permanentConsequences[0]}.`);
+  if (archiveReview.length === 0) archiveReview.push('No defining prior-era lesson dominates the current institutional record.');
+  // restrained national address — classified, constitutional, no populism.
+  const head = `STATE BRIEFING — ${stateTone.toUpperCase()} POSTURE.`;
+  const body = catastrophic
+    ? 'The state acknowledges continuity strain of historical magnitude. Recovery will be generational and bounded; institutions are directed to preserve essential continuity and constitutional order.'
+    : recovering
+      ? 'The state notes incremental restoration of institutional confidence following prior strain. Restraint is to be re-established progressively; reconstruction remains the standing priority.'
+      : resilient
+        ? 'National continuity is sound. Institutions are directed to preserve doctrine discipline and resist complacency; resilience is maintained, not assumed.'
+        : exhausted
+          ? 'Institutional capacity is materially fatigued. Conservative posture is mandated; non-essential strain is to be deferred pending recovery.'
+          : 'The state maintains measured continuity. Institutions are directed to sustain coordination, observe constitutional limits and report drift.';
+  const nationalAddress = `${head} ${body} Issued under sovereign authority; no autonomous action.`;
+  return {
+    stateTone, identity, ritualStage, cabinetProceeding, emergencyPosture,
+    successionNote, archiveReview, nationalAddress, mourningEra: catastrophic || exhausted,
+  };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.

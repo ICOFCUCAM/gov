@@ -20,7 +20,7 @@ import {
   nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
   nationalChronology, allianceFramework, nationalOperations, populationOrder,
   governanceAudit, EXEC_DIRECTIVES, directiveProjection, liveScenario,
-  civilizationalMemory,
+  civilizationalMemory, institutionalRecord,
 } from '@/lib/gov/sovereign-operating-model';
 import type { ExecDirectiveKey } from '@/lib/gov/sovereign-operating-model';
 
@@ -173,6 +173,9 @@ export function ExecutiveBriefingChamber() {
   const civ = civilizationalMemory(epoch, post, polit, ext, sustain, cap, audit, chron);
   const civTone = ['DECLINING', 'EXHAUSTED', 'FRAGMENTING'].includes(civ.trajectory) ? 'alert'
     : ['STAGNANT', 'REGENERATING'].includes(civ.trajectory) ? 'warn' : 'ok';
+  const irec = institutionalRecord(civ, audit, lead, polit, scen, chron, dproj, powersLevel);
+  const irecTone = ['grieving', 'exhausted', 'strained'].includes(irec.stateTone) ? 'alert'
+    : ['hardened', 'reconstructive'].includes(irec.stateTone) ? 'warn' : 'ok';
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
@@ -382,8 +385,20 @@ export function ExecutiveBriefingChamber() {
     L.push(`  Constitutional drift: ${civ.constitutionalDrift}`);
     L.push(`  Doctrine inheritance: ${civ.doctrineBias}`);
     L.push('');
+    L.push(`XIX.  INSTITUTIONAL RECORD & STATE ADDRESS — ${irec.stateTone.toUpperCase()} POSTURE`);
+    L.push(thin);
+    L.push(`  Identity: ${irec.identity}`);
+    L.push(`  ${irec.nationalAddress}`);
+    L.push(`  Standing action: ${irec.ritualStage}`);
+    L.push(`  Cabinet: ${irec.cabinetProceeding}`);
+    L.push(`  Constitutional: ${irec.emergencyPosture}`);
+    L.push('  Archive lessons:');
+    irec.archiveReview.forEach(a => L.push(`   - ${a}`));
+    L.push(`  Succession: ${irec.successionNote}`);
+    if (irec.mourningEra) L.push('  Continuity-recovery period observed — restoration is generational.');
+    L.push('');
     L.push(rule);
-    L.push('Advisory synthesis from the sovereign operating doctrine.');
+    L.push(`Advisory synthesis from the sovereign operating doctrine — issued in ${irec.stateTone} posture.`);
     L.push('No autonomous action — national leadership decides.');
     L.push(rule);
     const text = L.join('\n');
@@ -401,7 +416,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit, directive, dproj, scen, civ]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops, popn, audit, directive, dproj, scen, civ, irec]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -412,7 +427,7 @@ export function ExecutiveBriefingChamber() {
           <span className="leading-tight">
             <span className="block text-sm font-bold tracking-[0.16em] text-ink">EXECUTIVE BRIEFING CHAMBER</span>
             <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-muted">
-              {sov?.stateName ?? 'Sovereign State'} · Strategic Governance
+              {sov?.stateName ?? 'Sovereign State'} · Strategic Governance · {irec.stateTone} posture
             </span>
           </span>
         </Link>
@@ -471,6 +486,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[civTone] }} title={`civilizational memory · ${civ.personality} · generation ${civ.generation}`}>
             civ {civ.trajectory.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[irecTone] }} title={`institutional posture · ${irec.identity}`}>
+            {irec.stateTone}
           </span>
           {directive !== 'NONE' ? (
             <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[dirTone] }} title={`executive directive · ${dproj.stage}`}>
@@ -1107,8 +1125,35 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
+        <Panel title="Institutional record & state address"
+          meta={`${irec.stateTone} posture · ${irec.identity}`}>
+          <p className="text-[12px] leading-relaxed text-ink-soft">{irec.nationalAddress}</p>
+          <div className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Sovereign procedure</div>
+              <p className="text-[11px] text-ink-muted">Standing action: {irec.ritualStage}.</p>
+              <p className="mt-1 text-[11px] text-ink-muted">{irec.cabinetProceeding}</p>
+              <p className="mt-1 text-[11px] text-ink-muted">{irec.emergencyPosture}</p>
+            </div>
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Continuity & archive</div>
+              {irec.archiveReview.map(a => (
+                <div key={a} className="flex items-baseline gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
+                  <span className="shrink-0 text-ink-muted">§</span><span className="min-w-0 flex-1 text-ink-soft">{a}</span>
+                </div>
+              ))}
+              <p className="mt-1 text-[11px] text-ink-muted">Succession: {irec.successionNote}</p>
+            </div>
+          </div>
+          {irec.mourningEra ? (
+            <p className="mt-2 text-[11px] leading-relaxed" style={{ color: TONE.warn }}>
+              The state observes a continuity-recovery period; restoration of institutional confidence and restraint is generational, not immediate.
+            </p>
+          ) : null}
+        </Panel>
+
         <p className="pb-2 text-center text-[11px] leading-relaxed text-ink-muted">
-          Advisory synthesis from the sovereign operating doctrine. No autonomous action — national leadership decides.
+          Advisory synthesis from the sovereign operating doctrine — issued in {irec.stateTone} posture. No autonomous action — national leadership decides.
         </p>
       </main>
     </div>
