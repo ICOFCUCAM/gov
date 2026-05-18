@@ -12,6 +12,7 @@ import {
   politicalContinuity, nationalCapability, ministryOperations,
   nationalStressExercise, nationalDirectiveRegister, executiveLeadership,
   intelligenceAssessment, nationalChronology, allianceFramework,
+  nationalOperations,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -610,5 +611,43 @@ describe('sovereign operating model', () => {
     // emergency powers raise survival-vs-obligation negotiation tension
     const afPow = allianceFramework(ex, p, soc, f, 3, 17);
     expect(afPow.negotiationTension).toBeGreaterThanOrEqual(af.negotiationTension);
+  });
+
+  it('national operations: multi-ministry execution chains, bounded & deterministic', () => {
+    const oS = nationalOperatingState(60, 70, 84, 3, 5, 19);
+    const p = nationalPosture(19);
+    const soc = nationalSociety(oS, p, 5, 3, 19);
+    const ex = externalEnvironment(19);
+    const f = strategicForesight(oS, p, soc, ex, 55, 3, 5, 19);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 19);
+    const el = executiveLeadership(oS, p, soc, ex, pc, 2, 5, 19);
+    const af = allianceFramework(ex, p, soc, f, 2, 19);
+    const r = nationalOperations(oS, p, soc, ex, pc, el, af, 19);
+    expect(r).toEqual(nationalOperations(oS, p, soc, ex, pc, el, af, 19));
+    expect(r.operations.length).toBe(6);
+    const PHASES = ['PROPOSED', 'REVIEW', 'AUTHORIZED', 'MOBILIZING', 'PARTIAL EXECUTION',
+      'NATIONAL EXECUTION', 'STABILIZING', 'RECOVERY', 'COMPLETED', 'STALLED', 'DEGRADED', 'FAILED'];
+    for (const o of r.operations) {
+      expect(PHASES).toContain(o.phase);
+      expect(o.ministries.length).toBeGreaterThanOrEqual(3);
+      for (const m of o.ministries) {
+        expect(m.contribution).toBeGreaterThanOrEqual(0);
+        expect(m.contribution).toBeLessThanOrEqual(100);
+        expect(['on-track', 'lagging', 'failing']).toContain(m.status);
+      }
+      for (const k of ['progress', 'coordination', 'confidence', 'survivability', 'escalationRisk'] as const) {
+        expect(o[k]).toBeGreaterThanOrEqual(0);
+        expect(o[k]).toBeLessThanOrEqual(100);
+      }
+      expect(['pending', 'succeeded', 'failed']).toContain(o.outcome);
+      expect(o.generation).toBeGreaterThanOrEqual(1);
+    }
+    expect(r.activeCount + r.operations.filter(o => o.outcome !== 'pending').length).toBe(6);
+    expect(r.atRisk).toBeGreaterThanOrEqual(0);
+    // operations persist & advance across operating epochs (generation grows)
+    const later = nationalOperations(oS, p, soc, ex, pc, el, af, 19 + 15);
+    const a0 = r.operations.find(o => o.key === 'reserve-rebuild')!;
+    const a1 = later.operations.find(o => o.key === 'reserve-rebuild')!;
+    expect(a1.generation).toBeGreaterThanOrEqual(a0.generation);
   });
 });

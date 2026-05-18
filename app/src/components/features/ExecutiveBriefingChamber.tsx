@@ -18,7 +18,7 @@ import {
   nationalSustainability, politicalContinuity, nationalCapability,
   ministryOperations, institutionalFatigue, nationalStressExercise,
   nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
-  nationalChronology, allianceFramework,
+  nationalChronology, allianceFramework, nationalOperations,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -152,6 +152,8 @@ export function ExecutiveBriefingChamber() {
   const alliance = allianceFramework(ext, post, society, foresight, powersLevel, epoch);
   const allianceTone = alliance.blocPosture === 'FRACTURED' ? 'alert' : alliance.blocPosture === 'DIVIDED' ? 'warn' : alliance.blocPosture === 'FUNCTIONAL' ? 'neutral' : 'ok';
   const stanceTone = (s: string) => (s === 'aligned' ? 'ok' : s === 'conditional' || s === 'restraint' ? 'warn' : 'alert');
+  const nops = nationalOperations(opS, post, society, ext, polit, lead, alliance, epoch);
+  const opsTone = nops.atRisk >= 3 ? 'alert' : nops.atRisk >= 1 ? 'warn' : 'ok';
   const cf = (c: string) => (c === 'probable' ? 'alert' : c === 'possible' ? 'warn' : 'neutral');
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
@@ -290,6 +292,16 @@ export function ExecutiveBriefingChamber() {
     L.push(`  Interstate memory: ${alliance.memoNote}`);
     L.push('  Coordination negotiated, not assured.');
     L.push('');
+    L.push(`XIII.  NATIONAL OPERATIONS EXECUTION — ${nops.activeCount} ACTIVE, ${nops.atRisk} UNDER STRAIN`);
+    L.push(thin);
+    nops.operations.forEach(o => {
+      L.push(`  ${o.title.padEnd(40)} g${o.generation} · ${o.phase} · ${o.progress}%`);
+      L.push(`     coord ${o.coordination} · confidence ${o.confidence} · survivability ${o.survivability} · escalation ${o.escalationRisk}`);
+      L.push(`     ministries ${o.ministries.map(m => `${m.ministry}(${m.status})`).join(', ')}`);
+      if (o.friction.length) L.push(`     friction: ${o.friction.join(', ')}`);
+    });
+    L.push(`  ${nops.note}.`);
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -309,7 +321,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel, chron, alliance, nops]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -364,6 +376,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[allianceTone] }} title={`interstate coordination · ${alliance.regionalOrder}`}>
             bloc {alliance.blocPosture.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[opsTone] }} title="national operations execution">
+            ops {nops.activeCount}/{nops.atRisk}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -762,6 +777,35 @@ export function ExecutiveBriefingChamber() {
             Treaty reliability <span className="font-semibold" style={{ color: TONE[alliance.treatyReliability >= 60 ? 'ok' : alliance.treatyReliability >= 42 ? 'warn' : 'alert'] }}>{alliance.treatyReliability}</span> ·
             survival-vs-obligation tension <span className="font-semibold" style={{ color: TONE[alliance.negotiationTension >= 60 ? 'alert' : alliance.negotiationTension >= 40 ? 'warn' : 'ok'] }}>{alliance.negotiationTension}</span>.
             Interstate memory: {alliance.memoNote}. Coordination is negotiated, not assured.
+          </p>
+        </Panel>
+
+        <Panel title="National operations execution"
+          meta={`${nops.activeCount} active · ${nops.atRisk} under strain`}>
+          {nops.operations.map(o => (
+            <div key={o.key} className="border-b border-line-soft py-2 last:border-0">
+              <div className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 flex-1 truncate text-[12px] text-ink-soft">{o.title} <span className="text-ink-muted">· g{o.generation}</span></span>
+                <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider" style={{ color: TONE[o.tone] }}>
+                  {o.phase} · {o.progress}%
+                </span>
+              </div>
+              <div className="mt-0.5 flex flex-wrap items-baseline gap-x-4 gap-y-0.5 text-[10px] text-ink-muted">
+                <span>coord <span style={{ color: TONE[o.coordination >= 56 ? 'ok' : o.coordination >= 40 ? 'warn' : 'alert'] }}>{o.coordination}</span></span>
+                <span>confidence {o.confidence}</span>
+                <span>survivability <span style={{ color: TONE[o.survivability >= 52 ? 'ok' : o.survivability >= 34 ? 'warn' : 'alert'] }}>{o.survivability}</span></span>
+                <span>escalation {o.escalationRisk}</span>
+                <span className="truncate">
+                  {o.ministries.map(m => `${m.ministry}${m.status === 'on-track' ? '' : m.status === 'lagging' ? '·lag' : '·fail'}`).join(' / ')}
+                </span>
+              </div>
+              {o.friction.length ? (
+                <div className="mt-0.5 truncate text-[10px]" style={{ color: TONE.warn }}>friction: {o.friction.join(', ')}</div>
+              ) : null}
+            </div>
+          ))}
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+            {nops.note}. Operations require coordinated ministry participation and degrade when coordination fails — governed active state machinery, not advisory.
           </p>
         </Panel>
 

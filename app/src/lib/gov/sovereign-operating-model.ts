@@ -1726,6 +1726,122 @@ export function allianceFramework(
   };
 }
 
+// ── Interactive national execution operations ─────────────────────────────
+// The doctrine now executes. Standing national operations require
+// coordinated multi-ministry participation, advance through sovereign
+// execution phases, accumulate real friction, degrade when coordination
+// fails, and persist across operating epochs. Reuses ministryOperations
+// for per-ministry contribution (no duplicated execution logic).
+const OPERATION_DEFS: { key: string; title: string; ministries: string[]; span: number }[] = [
+  { key: 'reserve-rebuild', title: 'National reserve rebuilding campaign', ministries: ['FINANCE', 'ENERGY', 'TRADE'], span: 15 },
+  { key: 'telecom-restore', title: 'Telecom restoration programme', ministries: ['TELECOM', 'ENERGY', 'INTERIOR'], span: 9 },
+  { key: 'infra-harden', title: 'Strategic infrastructure hardening', ministries: ['ENERGY', 'TRANSPORT', 'FINANCE'], span: 14 },
+  { key: 'logi-mobilize', title: 'Emergency logistics mobilization', ministries: ['TRANSPORT', 'EMERGENCY', 'HEALTH'], span: 7 },
+  { key: 'econ-continuity', title: 'Economic continuity operation', ministries: ['FINANCE', 'TRADE', 'LABOR'], span: 12 },
+  { key: 'health-stab', title: 'Healthcare stabilization initiative', ministries: ['HEALTH', 'TRANSPORT', 'INTERIOR'], span: 10 },
+];
+const OP_PHASES = ['PROPOSED', 'REVIEW', 'AUTHORIZED', 'MOBILIZING', 'PARTIAL EXECUTION',
+  'NATIONAL EXECUTION', 'STABILIZING', 'RECOVERY', 'COMPLETED'] as const;
+export interface OpMinistry { ministry: string; contribution: number; status: 'on-track' | 'lagging' | 'failing'; }
+export interface NationalOperation {
+  key: string;
+  title: string;
+  ministries: OpMinistry[];
+  phase: string;
+  generation: number;
+  progress: number;       // 0..100
+  coordination: number;   // 0..100 inter-ministry cohesion for this op
+  confidence: number;     // 0..100 executive confidence in the op
+  survivability: number;  // 0..100 likelihood it endures to completion
+  escalationRisk: number; // 0..100
+  friction: string[];
+  outcome: 'pending' | 'succeeded' | 'failed';
+  tone: 'ok' | 'warn' | 'alert';
+}
+export function nationalOperations(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  ext: ExternalEnvironment, polit: PoliticalContinuity, lead: ExecutiveLeadership,
+  alliance: AllianceFramework, epoch: number,
+): { operations: NationalOperation[]; activeCount: number; atRisk: number; note: string } {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  let atRisk = 0;
+  const operations: NationalOperation[] = OPERATION_DEFS.map(def => {
+    const off = Math.floor(seed(`op:off:${def.key}`) * def.span);
+    const t = epoch + off;
+    const generation = Math.floor(t / def.span) + 1;
+    const frac = (t % def.span) / def.span;
+    // Per-ministry contribution via the rolling ministry programme.
+    const ministries: OpMinistry[] = def.ministries.map(a => {
+      const rel = ministryReliability(a, epoch);
+      const fat = institutionalFatigue(a, epoch);
+      const mp = ministryOperations(a, Math.max(0, 100 - rel), rel, fat, epoch);
+      const contribution = clamp(mp.throughput * 0.7 + rel * 0.3 - fat * 0.15);
+      return {
+        ministry: a, contribution,
+        status: contribution >= 56 ? 'on-track' : contribution >= 38 ? 'lagging' : 'failing',
+      };
+    });
+    const coordination = clamp(
+      ministries.reduce((s, m) => s + m.contribution, 0) / ministries.length
+      - (100 - lead.consensus) * 0.16 - (100 - polit.cabinetCohesion) * 0.12);
+    // Friction sources — real execution strain.
+    const friction: string[] = [];
+    if (lead.consensus < 50) friction.push('ministry disagreement');
+    if (opS.resources.reserves.headroom < 40) friction.push('reserve exhaustion');
+    if (opS.display.telecom < 80) friction.push('telecom degradation');
+    if (opS.resources.transport.util >= 76) friction.push('corridor congestion');
+    if (alliance.blocPosture === 'DIVIDED' || alliance.blocPosture === 'FRACTURED') friction.push('alliance hesitation');
+    if (post.deploymentConservatism >= 60) friction.push('political caution');
+    if (society.civilianConfidence < 45) friction.push('public instability');
+    if (opS.contention >= 62) friction.push('infrastructure fatigue');
+    if (post.execConfidence < 45) friction.push('low executive confidence');
+    if (ext.intlCoordLoad >= 60) friction.push('international coordination drag');
+    // Phase — lifecycle gated by coordination & friction load.
+    const drag = friction.length * 0.045;
+    const eff = Math.max(0, frac - drag);
+    let phase: string;
+    let outcome: NationalOperation['outcome'] = 'pending';
+    if (frac < 0.12) phase = 'PROPOSED';
+    else if (frac < 0.22) phase = 'REVIEW';
+    else if (frac < 0.32) phase = 'AUTHORIZED';
+    else if (coordination < 34) phase = 'FAILED';
+    else if (coordination < 46) phase = friction.length >= 5 ? 'DEGRADED' : 'STALLED';
+    else if (eff < 0.5) phase = 'MOBILIZING';
+    else if (eff < 0.62) phase = 'PARTIAL EXECUTION';
+    else if (eff < 0.76) phase = 'NATIONAL EXECUTION';
+    else if (eff < 0.86) phase = 'STABILIZING';
+    else if (eff < 0.96) phase = 'RECOVERY';
+    else phase = coordination >= 52 ? 'COMPLETED' : 'DEGRADED';
+    if (phase === 'COMPLETED') outcome = 'succeeded';
+    else if (phase === 'FAILED') outcome = 'failed';
+    const progress = phase === 'COMPLETED' ? 100
+      : phase === 'FAILED' ? clamp(frac * 70)
+      : clamp(eff * 100);
+    const confidence = clamp(
+      lead.decisionQuality * 0.34 + coordination * 0.4 + post.execConfidence * 0.16
+      - friction.length * 4);
+    const survivability = clamp(
+      coordination * 0.45 + opS.resources.reserves.headroom * 0.22
+      + polit.governanceContinuity * 0.18 - friction.length * 3.5);
+    const escalationRisk = clamp(
+      ext.externalPressure * 0.34 + opS.contention * 0.26
+      + (100 - coordination) * 0.24 + friction.length * 2);
+    const tone: NationalOperation['tone'] =
+      phase === 'FAILED' || survivability < 34 ? 'alert'
+      : phase === 'STALLED' || phase === 'DEGRADED' || survivability < 52 ? 'warn' : 'ok';
+    if (tone !== 'ok') atRisk++;
+    return {
+      key: def.key, title: def.title, ministries, phase, generation, progress,
+      coordination, confidence, survivability, escalationRisk, friction, outcome, tone,
+    };
+  });
+  const activeCount = operations.filter(o => o.outcome === 'pending').length;
+  const note = atRisk === 0
+    ? 'all national operations executing within coordination tolerance'
+    : `${atRisk} operation${atRisk > 1 ? 's' : ''} under coordination strain — executive oversight required`;
+  return { operations, activeCount, atRisk, note };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.
