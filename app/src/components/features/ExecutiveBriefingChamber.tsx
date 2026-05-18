@@ -17,7 +17,7 @@ import {
   nationalSociety, externalEnvironment, strategicForesight, simulateDoctrines,
   nationalSustainability, politicalContinuity, nationalCapability,
   ministryOperations, institutionalFatigue, nationalStressExercise,
-  nationalDirectiveRegister, executiveLeadership,
+  nationalDirectiveRegister, executiveLeadership, intelligenceAssessment,
 } from '@/lib/gov/sovereign-operating-model';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
@@ -145,6 +145,9 @@ export function ExecutiveBriefingChamber() {
   const drill = nationalStressExercise(opS, post, society, ext, foresight, sustain, polit, cap, incidents.length, epoch);
   const drillTone = drill.verdict === 'FAILS' ? 'alert' : drill.verdict === 'DEGRADED' ? 'alert' : drill.verdict === 'STRAINED' ? 'warn' : 'ok';
   const register = nationalDirectiveRegister(post, opS.contention, epoch);
+  const intel = intelligenceAssessment(opS, post, society, ext, foresight, sustain, polit, epoch);
+  const intelTone = intel.posture === 'CRITICAL' || intel.posture === 'ALERT' ? 'alert' : intel.posture === 'ELEVATED' ? 'warn' : intel.posture === 'GUARDED' ? 'neutral' : 'ok';
+  const cf = (c: string) => (c === 'probable' ? 'alert' : c === 'possible' ? 'warn' : 'neutral');
   const sustTone = sustain.outlook === 'UNSUSTAINABLE' ? 'alert' : sustain.outlook === 'DEPLETING' ? 'alert' : sustain.outlook === 'STRAINED' ? 'warn' : 'ok';
   const mostSust = [...policy.sims].sort((a, b) => b.survivalWeeks - a.survivalWeeks)[0];
   const hi = (v: number, good = true) => (good
@@ -245,6 +248,21 @@ export function ExecutiveBriefingChamber() {
     L.push('  Cabinet positions:');
     lead.cabinet.forEach(v => L.push(`   - ${v.ministry}: ${v.position} (dissent ${v.dissent})`));
     L.push('');
+    L.push(`X.  CLASSIFIED INTELLIGENCE ASSESSMENT — ${intel.posture}`);
+    L.push(thin);
+    L.push(`  Analytic confidence ${intel.assessmentConfidence}% · composite threat ${intel.threatLevel}`);
+    L.push('  Emerging threat vectors:');
+    if (intel.signals.length === 0) L.push('   - none above reporting threshold');
+    intel.signals.forEach(s => L.push(`   - [${s.confidence}] ${s.vector} (risk ${s.risk})`));
+    L.push('  Counter-intelligence exposure:');
+    intel.counter.forEach(c => L.push(`   - ${c.indicator}: ${c.exposure}`));
+    if (intel.preemptive.length) {
+      L.push('  Preemptive measures advised:');
+      intel.preemptive.forEach(pm => L.push(`   - ${pm}`));
+    }
+    L.push(`  Classified memory: ${intel.memoNote}`);
+    L.push('  Assessments interpretive at stated confidence — not certainty.');
+    L.push('');
     L.push(rule);
     L.push('Advisory synthesis from the sovereign operating doctrine.');
     L.push('No autonomous action — national leadership decides.');
@@ -264,7 +282,7 @@ export function ExecutiveBriefingChamber() {
     } catch { /* non-fatal */ }
     setMemoState('issued');
     setTimeout(() => setMemoState('idle'), 4000);
-  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead]);
+  }, [now, sov, epoch, post, stability, nationalRisk, powers, coordLoad, ministries, society, polit, ext, sustain, cap, threats, foresight, policy, ops, drill, register, lead, intel]);
 
   return (
     <div className="sov flex min-h-screen flex-col font-sans [min-height:100dvh]" style={PALETTE}>
@@ -310,6 +328,9 @@ export function ExecutiveBriefingChamber() {
           </span>
           <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[leadTone] }} title={`executive leadership · administration ${lead.administration}`}>
             leadership {lead.label.toLowerCase()}
+          </span>
+          <span className="hidden font-mono uppercase tracking-wider xl:inline" style={{ color: TONE[intelTone] }} title={`classified intelligence posture · threat ${intel.threatLevel}`}>
+            intel {intel.posture.toLowerCase()}
           </span>
           <span className="rounded-sm border px-2 py-1 font-semibold uppercase tracking-wider"
             style={{ borderColor: TONE[powersTone], color: TONE[powersTone] }}>{powers}</span>
@@ -618,6 +639,40 @@ export function ExecutiveBriefingChamber() {
           <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
             Standing directives persist and advance across operating epochs under <span className="text-ink-soft">{register.era}</span>;
             executing-ministry performance and accumulated policy memory determine completion or failure. Administrative continuity of state — leadership revises doctrine.
+          </p>
+        </Panel>
+
+        <Panel title="Classified intelligence assessment"
+          meta={`${intel.posture} · analytic confidence ${intel.assessmentConfidence}% · threat ${intel.threatLevel}`}>
+          <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Emerging threat vectors</div>
+              {intel.signals.length === 0 ? (
+                <p className="text-[11px] text-ink-muted">No vectors above reporting threshold.</p>
+              ) : intel.signals.map(s => (
+                <div key={s.vector} className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1 last:border-0">
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{s.vector}</span>
+                  <span className="shrink-0 font-mono text-[10px] uppercase tracking-wider" style={{ color: TONE[cf(s.confidence)] }}>
+                    {s.confidence} · {s.risk}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Counter-intelligence exposure</div>
+              {intel.counter.map(c => (
+                <div key={c.indicator} className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1 last:border-0">
+                  <span className="min-w-0 flex-1 truncate text-[11px] text-ink-soft">{c.indicator}</span>
+                  <span className="shrink-0 font-mono text-[10px] tabular-nums" style={{ color: TONE[c.tone] }}>{c.exposure}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
+            {intel.preemptive.length
+              ? <>Preemptive measures advised: {intel.preemptive.join('; ')}. </>
+              : <>No preemptive measures triggered at current confidence. </>}
+            Classified memory: {intel.memoNote}. Assessments are interpretive at stated confidence — not certainty.
           </p>
         </Panel>
 

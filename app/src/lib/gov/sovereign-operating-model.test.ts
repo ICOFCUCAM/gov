@@ -11,6 +11,7 @@ import {
   strategicForesight, simulateDoctrines, nationalSustainability,
   politicalContinuity, nationalCapability, ministryOperations,
   nationalStressExercise, nationalDirectiveRegister, executiveLeadership,
+  intelligenceAssessment,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -523,5 +524,40 @@ describe('sovereign operating model', () => {
     const elPower = executiveLeadership(oS, p, soc, ex, pc, 3, 8, 13);
     expect(elPower.constitutionalStrain).toBeGreaterThanOrEqual(el.constitutionalStrain);
     expect(elPower.successionPressure).toBeGreaterThanOrEqual(el.successionPressure);
+  });
+
+  it('intelligence assessment is confidence-weighted, bounded & not omniscient', () => {
+    const oS = nationalOperatingState(60, 72, 86, 4, 6, 15);
+    const p = nationalPosture(15);
+    const soc = nationalSociety(oS, p, 6, 4, 15);
+    const ex = externalEnvironment(15);
+    const f = strategicForesight(oS, p, soc, ex, 58, 4, 6, 15);
+    const su = nationalSustainability(oS, p, soc, f, 15);
+    const pc = politicalContinuity(oS, p, soc, ex, f, 15);
+    const ia = intelligenceAssessment(oS, p, soc, ex, f, su, pc, 15);
+    expect(ia).toEqual(intelligenceAssessment(oS, p, soc, ex, f, su, pc, 15));
+    for (const s of ia.signals) {
+      expect(['probable', 'possible', 'speculative']).toContain(s.confidence);
+      expect(s.risk).toBeGreaterThanOrEqual(0);
+      expect(s.risk).toBeLessThanOrEqual(100);
+    }
+    expect(ia.signals.length).toBeGreaterThanOrEqual(0);
+    expect(ia.signals.length).toBeLessThanOrEqual(6);
+    for (let i = 1; i < ia.signals.length; i++) {
+      expect(ia.signals[i - 1]!.risk).toBeGreaterThanOrEqual(ia.signals[i]!.risk);
+    }
+    expect(ia.counter.length).toBe(5);
+    for (const c of ia.counter) { expect(c.exposure).toBeGreaterThanOrEqual(0); expect(c.exposure).toBeLessThanOrEqual(100); }
+    expect(ia.assessmentConfidence).toBeGreaterThanOrEqual(0);
+    expect(ia.assessmentConfidence).toBeLessThanOrEqual(100);
+    expect(['NOMINAL', 'GUARDED', 'ELEVATED', 'ALERT', 'CRITICAL']).toContain(ia.posture);
+    // a strained, contested nation reads a higher classified threat level
+    const cS = nationalOperatingState(40, 20, 25, 0, 1, 15);
+    const cSoc = nationalSociety(cS, p, 1, 0, 15);
+    const cF = strategicForesight(cS, p, cSoc, ex, 22, 0, 1, 15);
+    const cSu = nationalSustainability(cS, p, cSoc, cF, 15);
+    const cPc = politicalContinuity(cS, p, cSoc, ex, cF, 15);
+    const cIa = intelligenceAssessment(cS, p, cSoc, ex, cF, cSu, cPc, 15);
+    expect(cIa.threatLevel).toBeLessThanOrEqual(ia.threatLevel);
   });
 });

@@ -1457,6 +1457,102 @@ export function executiveLeadership(
   };
 }
 
+// ── Strategic intelligence & deep-state realism ───────────────────────────
+// Continuous classified assessment: confidence-weighted emerging-threat
+// vectors, counter-intelligence internal-vulnerability indicators,
+// preemptive measures and a classified risk memory. Analytic, cautious,
+// never omniscient — it interprets, it does not assert certainty.
+export interface IntelSignal {
+  vector: string;
+  confidence: 'probable' | 'possible' | 'speculative';
+  risk: number;        // 0..100 weighted threat
+}
+export interface CounterIntel {
+  indicator: string;
+  exposure: number;    // 0..100
+  tone: 'ok' | 'warn' | 'alert';
+}
+export interface IntelligenceAssessment {
+  signals: IntelSignal[];
+  counter: CounterIntel[];
+  preemptive: string[];
+  assessmentConfidence: number;  // analytic confidence (not omniscience)
+  threatLevel: number;           // 0..100 classified composite
+  posture: string;               // NOMINAL | GUARDED | ELEVATED | ALERT | CRITICAL
+  memoNote: string;              // classified risk-memory across eras
+}
+export function intelligenceAssessment(
+  opS: OperatingState, post: NationalPosture, society: NationalSociety,
+  ext: ExternalEnvironment, foresight: StrategicForesight, sustain: NationalSustainability,
+  polit: PoliticalContinuity, epoch: number,
+): IntelligenceAssessment {
+  const clamp = (v: number) => Math.max(0, Math.min(100, Math.round(v)));
+  // Analytic confidence is bounded — degraded comms & external noise lower
+  // it; a record of accurate prior assessment raises it.
+  const intelMem = eventMemory('intel:rec', epoch, 14, 0.57, 0.35, 5);
+  const assessmentConfidence = clamp(
+    foresight.confidence * 0.5 + intelMem.pos * 0.3 - intelMem.neg * 0.2
+    - (100 - opS.display.telecom) * 0.18 - ext.externalPressure * 0.12);
+  // Confidence label per signal: stronger raw risk + analytic confidence +
+  // per-signal seeded ambiguity → probable / possible / speculative.
+  const conf = (risk: number, key: string): IntelSignal['confidence'] => {
+    const c = risk * 0.5 + assessmentConfidence * 0.5 - seed(`intel:amb:${key}:${epoch}`) * 30;
+    return c >= 60 ? 'probable' : c >= 38 ? 'possible' : 'speculative';
+  };
+  const raw: { vector: string; risk: number; key: string }[] = [
+    { key: 'telecom', vector: 'emerging coordination-layer instability', risk: clamp((100 - opS.display.telecom) * 0.8 + opS.contention * 0.2) },
+    { key: 'reserve', vector: 'anomalous strategic-reserve depletion', risk: clamp((60 - opS.resources.reserves.headroom) * 1.1 + ext.reserveSensitivity * 0.2) },
+    { key: 'corridor', vector: 'suspicious corridor / supply disruption', risk: clamp(Math.max(0, opS.resources.transport.util - 55) * 1.0 + 8) },
+    { key: 'external', vector: 'external coordination anomaly', risk: clamp(ext.externalPressure * 0.6 + (100 - ext.allianceReliability) * 0.3) },
+    { key: 'economic', vector: 'hostile economic-pressure pattern', risk: clamp(ext.reserveSensitivity * 0.5 + (100 - society.economicContinuity) * 0.4) },
+    { key: 'covert', vector: 'covert geopolitical destabilization', risk: clamp(ext.externalPressure * 0.4 + (100 - polit.nationalUnity) * 0.35) },
+    { key: 'sabotage', vector: 'infrastructure-sabotage probability', risk: clamp(sustain.infraAging * 0.5 + opS.contention * 0.3) },
+    { key: 'dependency', vector: 'strategic dependency exposure', risk: clamp(ext.foreignDependency * 0.6 + (100 - sustain.economicResilience) * 0.25) },
+  ];
+  const signals: IntelSignal[] = raw
+    .filter(r => r.risk >= 24)
+    .map(r => ({ vector: r.vector, risk: r.risk, confidence: conf(r.risk, r.key) }))
+    .sort((a, b) => b.risk - a.risk)
+    .slice(0, 6);
+  // Counter-intelligence — internal vulnerability surfaces.
+  const counter: CounterIntel[] = [
+    { indicator: 'coordination leakage exposure', exposure: clamp((100 - opS.display.telecom) * 0.5 + opS.contention * 0.3) },
+    { indicator: 'institutional compromise risk', exposure: clamp((100 - polit.cabinetCohesion) * 0.5 + (100 - post.execConfidence) * 0.25) },
+    { indicator: 'strategic dependency manipulation', exposure: clamp(ext.foreignDependency * 0.6 + ext.externalPressure * 0.2) },
+    { indicator: 'diplomatic reliability degradation', exposure: clamp((100 - ext.allianceReliability) * 0.7) },
+    { indicator: 'reserve-market exploitation', exposure: clamp(ext.reserveSensitivity * 0.6 + Math.max(0, 50 - opS.resources.reserves.headroom) * 0.5) },
+  ].map(c => ({ ...c, tone: (c.exposure >= 60 ? 'alert' : c.exposure >= 38 ? 'warn' : 'ok') as CounterIntel['tone'] }))
+    .sort((a, b) => b.exposure - a.exposure);
+  // Preemptive measures — act before visible collapse, keyed to top signals.
+  const PRE: Record<string, string> = {
+    telecom: 'telecom hardening ahead of outage',
+    reserve: 'reserve reinforcement ahead of shortage',
+    corridor: 'corridor stabilization ahead of congestion',
+    external: 'diplomatic caution ahead of escalation',
+    economic: 'liquidity ring-fencing ahead of market pressure',
+    covert: 'internal-security tightening ahead of destabilization',
+    sabotage: 'critical-infrastructure protection ahead of compromise',
+    dependency: 'supply diversification ahead of dependency shock',
+  };
+  const preemptive = raw.filter(r => r.risk >= 50)
+    .sort((a, b) => b.risk - a.risk).slice(0, 4)
+    .map(r => PRE[r.key] ?? 'preemptive stabilization');
+  const threatLevel = clamp(
+    (signals.reduce((s, x) => s + x.risk, 0) / Math.max(1, signals.length)) * 0.6
+    + (counter.reduce((s, x) => s + x.exposure, 0) / Math.max(1, counter.length)) * 0.4);
+  const posture = threatLevel >= 72 ? 'CRITICAL'
+    : threatLevel >= 56 ? 'ALERT'
+    : threatLevel >= 40 ? 'ELEVATED'
+    : threatLevel >= 24 ? 'GUARDED'
+    : 'NOMINAL';
+  const memoNote = intelMem.neg > intelMem.pos + 14
+    ? 'prior assessments under-weighted emerging pressure — caution bias applied'
+    : intelMem.pos >= intelMem.neg + 14
+      ? 'preemptive assessments historically validated — analytic confidence reinforced'
+      : 'mixed assessment record — interpretations held at stated confidence';
+  return { signals, counter, preemptive, assessmentConfidence, threatLevel, posture, memoNote };
+}
+
 // Govern one incident end-to-end from the shared doctrine — causality,
 // cascade, latency, decision pipeline, mandate, executive gate, authority
 // chain, prioritization conflict, aging, recovery & cognition. One source.
