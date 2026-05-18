@@ -43,6 +43,7 @@ import { nationalAssets, nationalNetworks, networkPressure, NET_TONE, ASSET_GLYP
 import {
   nationalOperatingState, ministryBehavior, cascadeChain, responseLatency,
   ministryReliability, corridorFatigue, forecast,
+  provinceMemory, diffuseTopology, corridorAdjacency, territorialField,
 } from '@/lib/gov/sovereign-operating-model';
 
 const NATL_ASSETS = nationalAssets();
@@ -462,11 +463,16 @@ interface Infra { id: string; kind: typeof INFRA_KINDS[number]; x: number; y: nu
 // per-country risk (world by default, zooms to the sovereign nation).
 const TH_CORRIDORS: [number, number][] = [[0, 1], [1, 2], [1, 4], [4, 3], [4, 5], [3, 0], [2, 5]];
 export function TerritoryHeat({ epoch, height = 150, focus, tactical = true }: { epoch: number; height?: number; focus?: string; tactical?: boolean }) {
+  // Derived from the shared territorial doctrine (contention + crisis
+  // memory + corridor-topology diffusion) — not isolated per-region noise.
+  const thAdj = corridorAdjacency(TH_CORRIDORS, PROV.length);
+  const field = territorialField(epoch, thAdj, PROV.length);
+  const natFloor = field.reduce((s, v) => s + v, 0) / Math.max(1, field.length);
   const riskOf = React.useCallback(
-    (name: string) => Math.round(seed(`geo:${name}:${epoch}`) * 100),
-    [epoch],
+    (name: string) => Math.round(Math.min(99, seed(`geo:${name}:${epoch}`) * 62 + natFloor * 0.42)),
+    [epoch, natFloor],
   );
-  const provRisk = PROV.map((p, i) => ({ p, risk: Math.round(seed(`thp:${i}:${epoch}`) * 100) }));
+  const provRisk = PROV.map((p, i) => ({ p, risk: field[i] ?? 30 }));
   return (
     <div className="relative w-full overflow-hidden rounded-[3px] border border-line-soft"
       style={{ height, background: 'radial-gradient(ellipse at 48% 32%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 70%)' }}>
@@ -589,24 +595,17 @@ export function NationalMap({
     }
     return (s / mapNodes.length) * 2.3;
   };
-  const provMem = (i: number) => {
-    let acc = 0;
-    for (let e = Math.max(0, epoch - 6); e <= epoch; e++) {
-      acc += seed(`prov:${i}:${e}`) * 30 * (e === epoch ? 1 : 1 - (epoch - e) / 7.5);
-    }
-    return Math.min(58, acc);
-  };
+  // Raw strain blends live ministry zones + national contention with the
+  // shared crisis-memory law; then propagates along corridor topology and
+  // cools gradually (same doctrine as every other map-bearing surface).
   const provRaw = PROV.map((p, i) =>
-    wave(`prov:${i}`, ts, 8, 66) + zoneStrain(p.cx, p.cy) + opState.contention * 0.3 + provMem(i) * 0.5 + (p.cap ? 7 : 0));
-  const provAdj: number[][] = PROV.map(() => []);
-  for (const c of CORRIDORS) { provAdj[c.from]?.push(c.to); provAdj[c.to]?.push(c.from); }
-  const provRisk = PROV.map((p, i) => {
-    const ns = provAdj[i] ?? [];
-    const inh = ns.length ? ns.reduce((s, j) => s + (provRaw[j] ?? 0), 0) / ns.length : 0;
-    // partial inherited strain via topology + gradual cooling vs memory
-    const v = Math.max((provRaw[i] ?? 0) * 0.78 + inh * 0.22, provMem(i) * 0.9);
-    return { p, risk: Math.max(2, Math.min(99, Math.round(v))) };
-  });
+    wave(`prov:${i}`, ts, 8, 66) + zoneStrain(p.cx, p.cy) + opState.contention * 0.3 + provinceMemory(i, epoch) * 0.5 + (p.cap ? 7 : 0));
+  const provAdj = corridorAdjacency(CORRIDORS.map(c => [c.from, c.to] as [number, number]), PROV.length);
+  const provDiff = diffuseTopology(provRaw, provAdj);
+  const provRisk = PROV.map((p, i) => ({
+    p,
+    risk: Math.max(2, Math.min(99, Math.round(Math.max(provDiff[i] ?? 0, provinceMemory(i, epoch) * 0.9)))),
+  }));
   const tBand = (v: number, a: number, b: number) => (v >= b ? 'alert' : v >= a ? 'warn' : 'ok');
   const overlay = [
     { l: 'Grid corridors', v: `${D.gridLoad}% load`, t: tBand(D.gridLoad, 72, 86) },
@@ -797,9 +796,12 @@ export function NationalMap({
             const mx = (a.cx + b.cx) / 2 + (seed(`cm:${i}`) - 0.5) * 60;
             const my = (a.cy + b.cy) / 2 - 30 - seed(`cn:${i}`) * 40;
             const baseCol = CORR_TONE[c.kind];
-            // Per-corridor live load → classification + intensity drives
-            // glow width, opacity, congestion tint and flow speed.
-            const load = Math.round(wave(`corrload:${i}`, ts, 22, 98));
+            // Corridor load = strain of the two regions it connects +
+            // national contention (strategic corridors between stressed
+            // zones accumulate layered congestion) with a live jitter.
+            const rA = provRisk[c.from]?.risk ?? 40, rB = provRisk[c.to]?.risk ?? 40;
+            const load = Math.round(Math.max(8, Math.min(99,
+              (rA + rB) / 2 * 0.66 + opState.contention * 0.24 + wave(`corrload:${i}`, ts, 0, 20))));
             const cls = load >= 80 ? 'congested' : load >= 55 ? 'active' : 'nominal';
             const col = cls === 'congested' ? TONE.alert : cls === 'active' ? baseCol : baseCol;
             const haloW = cls === 'congested' ? 7 : cls === 'active' ? 5 : 3.2;

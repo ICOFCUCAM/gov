@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   nationalOperatingState, ministryBehavior, cascadeChain, responseLatency,
   ministryReliability, corridorFatigue, forecast, OP_TICK,
+  provinceMemory, diffuseTopology, territorialField, corridorAdjacency,
 } from './sovereign-operating-model';
 
 describe('sovereign operating model', () => {
@@ -67,5 +68,24 @@ describe('sovereign operating model', () => {
     expect(['ok', 'warn', 'alert']).toContain(f.risk);
     expect(f.h24).toBeGreaterThanOrEqual(0);
     expect(f.h72).toBeLessThanOrEqual(100);
+  });
+
+  it('territorial doctrine: memory persists, diffusion is topological & bounded', () => {
+    const m = provinceMemory(2, 10);
+    expect(m).toEqual(provinceMemory(2, 10));
+    expect(m).toBeGreaterThanOrEqual(0);
+    expect(m).toBeLessThanOrEqual(58);
+
+    const adj = corridorAdjacency([[0, 1], [1, 2]], 3);
+    expect(adj[1]).toEqual([0, 2]);
+    // an isolated hot node bleeds into its neighbour after diffusion
+    const d = diffuseTopology([100, 0, 0], adj);
+    expect(d[1]!).toBeGreaterThan(0);
+    expect(d[0]!).toBeLessThan(100);
+
+    const f = territorialField(7, adj, 3);
+    expect(f).toEqual(territorialField(7, adj, 3));
+    expect(f.length).toBe(3);
+    for (const v of f) { expect(v).toBeGreaterThanOrEqual(2); expect(v).toBeLessThanOrEqual(99); }
   });
 });

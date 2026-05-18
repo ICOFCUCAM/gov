@@ -203,3 +203,49 @@ export function forecast(
   if (goodHigh && grad < -0.1) exhaustMin = Math.round((current / -grad) * 6 * 4);
   return { h24, h72, risk, exhaustMin };
 }
+
+// ── 4b. Territorial pressure doctrine ─────────────────────────────────────
+// One shared territorial law so every map-bearing surface diffuses, cools
+// and clusters identically (no isolated per-surface noise).
+
+// Decayed crisis memory for a region — recent epochs keep a zone warm so
+// recovery is gradual and stabilization never resets the territory.
+export function provinceMemory(i: number, epoch: number, cap = 58, decay = 7.5): number {
+  let acc = 0;
+  for (let e = Math.max(0, epoch - 6); e <= epoch; e++) {
+    acc += seed(`prov:${i}:${e}`) * 30 * (e === epoch ? 1 : 1 - (epoch - e) / decay);
+  }
+  return Math.min(cap, acc);
+}
+
+// Propagate raw strain along an infrastructure adjacency (corridor topology)
+// — each region inherits a partial share of its connected neighbours.
+export function diffuseTopology(raw: number[], adjacency: number[][], inherit = 0.22): number[] {
+  return raw.map((v, i) => {
+    const ns = adjacency[i] ?? [];
+    const inh = ns.length ? ns.reduce((s, j) => s + (raw[j] ?? 0), 0) / ns.length : 0;
+    return v * (1 - inherit) + inh * inherit;
+  });
+}
+
+// Deterministic territorial field for prop-less surfaces (heatmaps): a
+// national contention floor + crisis memory, propagated through topology
+// and floored to memory so crisis zones stay warm after containment.
+export function territorialField(epoch: number, adjacency: number[][], n: number): number[] {
+  const aggP = 28 + seed(`natagg:${epoch}`) * 52;
+  const peakP = Math.min(99, aggP + 14 + seed(`natpk:${epoch}`) * 24);
+  const sev = Math.floor(seed(`natsev:${epoch}`) * 5);
+  const st = nationalOperatingState(epoch, aggP, peakP, sev, sev + 1, epoch);
+  const raw = Array.from({ length: n }).map((_, i) =>
+    20 + seed(`prov:${i}:${epoch}`) * 34 + st.contention * 0.3 + provinceMemory(i, epoch) * 0.6);
+  const diff = diffuseTopology(raw, adjacency);
+  return diff.map((v, i) =>
+    Math.max(2, Math.min(99, Math.round(Math.max(v, provinceMemory(i, epoch) * 0.9)))));
+}
+
+// Build an undirected adjacency list from corridor edges (province indices).
+export function corridorAdjacency(edges: [number, number][], n: number): number[][] {
+  const adj: number[][] = Array.from({ length: n }, () => []);
+  for (const [a, b] of edges) { adj[a]?.push(b); adj[b]?.push(a); }
+  return adj;
+}
