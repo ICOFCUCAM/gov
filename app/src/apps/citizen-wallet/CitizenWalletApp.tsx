@@ -37,6 +37,19 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
   const submitEnrol = () => { if (cwName.trim()) { enroll(enrMin, enrFac.id, cwName, enrRole, 'Citizen self-service', now); setCwName(''); } };
   const myReqs = cwEnr.filter(e => e.by === 'Citizen self-service').slice(-4).reverse();
   const enrMinistries = React.useMemo(() => Object.keys(MINISTRY_CHAIN), []);
+  // Consolidated footprint — the citizen's self-service enrolments across
+  // every ministry (same lead-facility pick as each ministry desk).
+  const footprint = React.useMemo(() => {
+    const out: { ministry: string; name: string; status: string; at: number }[] = [];
+    for (const k of enrMinistries) {
+      const fs = facilities(k, cwEpoch);
+      const f = fs[Math.abs([...appId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % fs.length] ?? fs[0]!;
+      for (const e of enrollments(k, f.id, chainDef(k).actorRole, now)) {
+        if (e.by === 'Citizen self-service') out.push({ ministry: chainDef(k).ministry, name: e.name, status: e.status, at: e.at });
+      }
+    }
+    return out.sort((a, b) => b.at - a.at).slice(0, 8);
+  }, [enrMinistries, appId, cwEpoch, now, ewv]);
   const d = WF[domain] ? domain : 'identity';
   const label = LABEL[d] ?? 'Identity';
   const raw: { l: string; v: string; t?: Tone }[] = d === 'identity' ? [
@@ -110,6 +123,19 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
           </div>
         ) : <div className="text-[9px] text-ink-muted">No enrolment submitted yet. Your request appears on the branch desk for verification.</div>}
       </CommandPanel>
+      {footprint.length ? (
+        <CommandPanel title="My government — enrolment footprint" meta={`${footprint.length} across ministries`} accent={ACC}>
+          <div className="space-y-0.5">
+            {footprint.map((f, i) => (
+              <div key={i} className="flex items-center gap-2 text-[9.5px]">
+                <span className="shrink-0 text-[8px] text-ink-muted">{f.ministry}</span>
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{f.name}</span>
+                <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: f.status === 'active' ? 'rgb(var(--c-ok))' : f.status === 'verified' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-link))' }}>{f.status}</span>
+              </div>
+            ))}
+          </div>
+        </CommandPanel>
+      ) : null}
       <EncounterThread scope={`enc:${enrMin.toLowerCase()}:${enrFac.id}`} now={now} accent={ACC}
         selfAuthor="PUBLIC" officialName={`${enrRole} · ${enrFac.id}`} publicName="Citizen"
         title={`Message ${chainDef(enrMin).ministry} · ${enrFac.id}`} />
