@@ -123,7 +123,7 @@ export function DispatchChannel({
           {liveCount ? <span style={{ color: accent }}>{liveCount} sent</span> : 'live'}
         </span>
       </div>
-      <div className="max-h-[168px] space-y-1 overflow-y-auto px-3 py-2">
+      <div className="max-h-[168px] space-y-1 overflow-y-auto px-3 py-2" aria-live="polite" aria-relevant="additions">
         {full.length > 7 ? (
           <button type="button" onClick={() => setShowAll(s => !s)}
             className="focus-ring w-full text-center text-[8px] uppercase tracking-wider text-ink-muted hover:text-ink-soft">
@@ -198,7 +198,7 @@ export function EncounterThread({
           {liveCount ? <span style={{ color: accent }}>{liveCount} sent</span> : 'live'}
         </span>
       </div>
-      <div className="max-h-[168px] space-y-1.5 overflow-y-auto px-3 py-2">
+      <div className="max-h-[168px] space-y-1.5 overflow-y-auto px-3 py-2" aria-live="polite" aria-relevant="additions">
         {full.length > 7 ? (
           <button type="button" onClick={() => setShowAll(s => !s)}
             className="focus-ring w-full text-center text-[8px] uppercase tracking-wider text-ink-muted hover:text-ink-soft">
