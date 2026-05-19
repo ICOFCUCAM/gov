@@ -52,6 +52,10 @@ import { GenerationalForecast } from '@/apps/ministry-interior/domains/Generatio
 import { InstitutionalAging } from '@/apps/ministry-interior/domains/InstitutionalAging';
 import { DemographicEvolution } from '@/apps/ministry-interior/domains/DemographicEvolution';
 import { ConstitutionalResilience } from '@/apps/ministry-interior/domains/ConstitutionalResilience';
+import { CivicTrust } from '@/apps/ministry-interior/domains/CivicTrust';
+import { ProceduralFairness } from '@/apps/ministry-interior/domains/ProceduralFairness';
+import { RightsPerception } from '@/apps/ministry-interior/domains/RightsPerception';
+import { LegitimacyTrajectory } from '@/apps/ministry-interior/domains/LegitimacyTrajectory';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -116,6 +120,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'institutional-aging': return <InstitutionalAging id={id} now={now} />;
     case 'demographic-evolution': return <DemographicEvolution id={id} now={now} />;
     case 'constitutional-resilience': return <ConstitutionalResilience id={id} now={now} />;
+    case 'civic-trust': return <CivicTrust id={id} now={now} />;
+    case 'procedural-fairness': return <ProceduralFairness id={id} now={now} />;
+    case 'rights-perception': return <RightsPerception id={id} now={now} />;
+    case 'legitimacy-trajectory': return <LegitimacyTrajectory id={id} now={now} />;
   }
 }
 
