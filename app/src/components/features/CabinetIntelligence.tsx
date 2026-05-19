@@ -422,11 +422,12 @@ export function CabinetIntelligence() {
             </Panel>
 
             <Panel title="Ministry risk matrix" meta={`${mRows.length} institutions`} className="xl:col-span-3" bodyClass="!p-0">
-              <table className="w-full text-[11px]">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[340px] text-[11px]">
                 <thead>
                   <tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8.5px] uppercase tracking-wider text-ink-muted">
                     <th className="px-2 py-1.5">Ministry</th>
-                    {DOMAINS.map(d => <th key={d} className="px-1 py-1.5 text-center">{d.slice(0, 5)}</th>)}
+                    {DOMAINS.map(d => <th key={d} className="px-0.5 py-1.5 text-center">{d.slice(0, 5)}</th>)}
                   </tr>
                 </thead>
                 <tbody>
@@ -447,10 +448,10 @@ export function CabinetIntelligence() {
                           const v = domainStress(m.archetype, DOMAIN_KEYS[di] ?? 'ops', m.pressure, ts, m.ministryId);
                           const st = riskState(v);
                           return (
-                            <td key={d} className="px-1 py-1.5 text-center">
-                              <span className="inline-block rounded px-1 py-0.5 text-[9px] font-semibold"
-                                style={{ backgroundColor: `color-mix(in srgb, ${TONE[RISK_TONE[st]]} 16%, transparent)`, color: TONE[RISK_TONE[st]] }}>
-                                {RISK_LABEL[st]}
+                            <td key={d} className="px-0.5 py-1.5 align-middle" title={`${d} · ${RISK_LABEL[st]}`}>
+                              <span className="flex flex-col items-center gap-0.5">
+                                <span className="h-1.5 w-1.5 rounded-full" style={{ background: TONE[RISK_TONE[st]], boxShadow: RISK_TONE[st] === 'alert' ? `0 0 4px ${TONE.alert}` : undefined }} />
+                                <span className="h-0.5 w-5 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}><span className="block h-full rounded-full" style={{ width: `${Math.min(100, Math.round(v))}%`, background: TONE[RISK_TONE[st]] }} /></span>
                               </span>
                             </td>
                           );
@@ -564,6 +565,7 @@ export function CabinetIntelligence() {
                   })}
                 </tbody>
               </table>
+              </div>
             </Panel>
 
             <Panel title="Cabinet escalation feed" meta={`${escList.length} active`} className="xl:col-span-2" bodyClass="!p-0">
