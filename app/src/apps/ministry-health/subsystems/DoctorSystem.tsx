@@ -38,12 +38,19 @@ export function DoctorSystem({ id, now, role, withheld }: {
   const epoch = Math.max(0, Math.floor(ts));
   const hList = facilities('HEALTH', epoch);
   const myHospital = hList[Math.abs([...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)) % hList.length] ?? hList[0]!;
-  const lineage = recordLineage(`MRN-${p.mrn}`, p.attending, myHospital, 'HEALTH', epoch);
+  const baseLineage = recordLineage(`MRN-${p.mrn}`, p.attending, myHospital, 'HEALTH', epoch);
   const hIntegrity = chainIntegrity('HEALTH', epoch);
   const dispatchScope = `health:${myHospital.id}`;
   const rv = React.useSyncExternalStore(recSub, recVer, () => 0);
   const ptRecs = React.useMemo(() => recordsOf('HEALTH', myHospital.id, 'clinical record', now), [myHospital.id, now, rv]);
   const ptRec = ptRecs.find(r => r.subject.startsWith(`MRN-${p.mrn}`));
+  // When a real record has been committed, the lineage strip reflects its
+  // live custody stage instead of the deterministic placeholder.
+  const lineage = ptRec ? (() => {
+    const si = STAGE_ORDER.indexOf(ptRec.stage); // 0..4 → ACTOR..NATIONAL
+    const stages = baseLineage.stages.map((s, i) => ({ ...s, done: i <= si }));
+    return { ...baseLineage, stages, current: stages[Math.min(si, 4)]!.tier, synced: ptRec.stage === 'synced' };
+  })() : baseLineage;
   const rb: Tone = p.riskBand === 'High' ? 'alert' : p.riskBand === 'Moderate' ? 'warn' : 'ok';
   const norm = (s: number[]) => { const mn = Math.min(...s), sp = Math.max(...s) - mn || 1; return s.map(v => ((v - mn) / sp) * 100); };
 
