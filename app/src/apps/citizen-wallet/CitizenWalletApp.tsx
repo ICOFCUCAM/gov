@@ -10,6 +10,7 @@ import { citizenRequests } from '@/lib/gov/citizen-requests';
 import { OpsHeader, KpiStrip, BarPanel, StatTiles } from '@/apps/_shared/Ops';
 import { MinistryChainSection, EncounterThread } from '@/apps/_shared/InstitutionChain';
 import { facilities } from '@/lib/gov/institution-chain';
+import { enroll, enrollments, subscribe as enSub, version as enVer } from '@/lib/gov/enrollment-store';
 import { CommandPanel, type Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -28,6 +29,11 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
   const cwEpoch = Math.max(0, Math.floor(now / 4000));
   const cwFacs = facilities('FINANCE', cwEpoch);
   const cwFac = cwFacs[Math.abs([...appId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % cwFacs.length] ?? cwFacs[0]!;
+  const ewv = React.useSyncExternalStore(enSub, enVer, () => 0);
+  const cwEnr = React.useMemo(() => enrollments('FINANCE', cwFac.id, 'Assessor', now), [cwFac.id, now, ewv]);
+  const [cwName, setCwName] = React.useState('');
+  const submitEnrol = () => { if (cwName.trim()) { enroll('FINANCE', cwFac.id, cwName, 'Assessor', 'Citizen self-service', now); setCwName(''); } };
+  const myReqs = cwEnr.filter(e => e.by === 'Citizen self-service').slice(-4).reverse();
   const d = WF[domain] ? domain : 'identity';
   const label = LABEL[d] ?? 'Identity';
   const raw: { l: string; v: string; t?: Tone }[] = d === 'identity' ? [
@@ -77,6 +83,25 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
             </div>
           ))}
         </div>
+      </CommandPanel>
+      <CommandPanel title={`Enrolment portal · ${cwFac.id}`} meta="register at the service branch — pending review at the desk" accent={ACC}>
+        <div className="mb-1.5 flex items-center gap-1.5">
+          <input value={cwName} onChange={e => setCwName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submitEnrol(); }}
+            placeholder={`Full name to enrol at ${cwFac.name}…`}
+            className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
+          <button type="button" onClick={submitEnrol}
+            className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: ACC, color: ACC }}>Submit enrolment</button>
+        </div>
+        {myReqs.length ? (
+          <div className="space-y-0.5">
+            {myReqs.map(e => (
+              <div key={e.id} className="flex items-center gap-2 text-[9.5px]">
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{e.name}</span>
+                <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: e.status === 'active' ? 'rgb(var(--c-ok))' : e.status === 'verified' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-link))' }}>{e.status}</span>
+              </div>
+            ))}
+          </div>
+        ) : <div className="text-[9px] text-ink-muted">No enrolment submitted yet. Your request appears on the branch desk for verification.</div>}
       </CommandPanel>
       <EncounterThread scope={`enc:finance:${cwFac.id}`} now={now} accent={ACC}
         selfAuthor="PUBLIC" officialName={`Assessor · ${cwFac.id}`} publicName="Citizen"
