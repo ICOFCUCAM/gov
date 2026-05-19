@@ -452,11 +452,21 @@ export function MinistryChainSection({
   const refStC = (s: string) => (s === 'closed' ? 'ok' : s === 'actioned' ? 'warn' : s === 'accepted' ? 'info' : 'alert');
   const iTone = integrity.status === 'synchronised' ? 'ok' : integrity.status === 'lagging' ? 'warn' : 'alert';
   const stC = (s: string) => (s === 'active' || s === 'operational' ? 'ok' : s === 'verified' || s === 'strained' ? 'warn' : s === 'pending' ? 'info' : 'alert');
+  // Collapse preference persists per ministry across navigation (SSR-safe).
+  const prefKey = `civicos.chain.collapsed.${ministryKey}`;
   const [expanded, setExpanded] = React.useState(true);
+  React.useEffect(() => {
+    try { if (window.localStorage.getItem(prefKey) === '1') setExpanded(false); } catch { /* no continuity */ }
+  }, [prefKey]);
+  const toggleExpanded = () => setExpanded(e => {
+    const next = !e;
+    try { window.localStorage.setItem(prefKey, next ? '0' : '1'); } catch { /* no continuity */ }
+    return next;
+  });
 
   return (
     <div className="space-y-2">
-      <button type="button" onClick={() => setExpanded(e => !e)} aria-expanded={expanded}
+      <button type="button" onClick={toggleExpanded} aria-expanded={expanded}
         className="focus-ring flex w-full items-center justify-between rounded-[4px] border px-3 py-1.5"
         style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
         <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>
