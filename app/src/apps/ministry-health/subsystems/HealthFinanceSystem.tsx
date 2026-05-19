@@ -8,6 +8,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { healthFinanceExecution } from '@/lib/gov/health-operations';
 import { CommandHeader, CommandPanel, Sparkline, Donut, TrendChart, RingGauge, sc, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import { wave, waveSeries } from '@/lib/telemetry';
@@ -250,6 +251,10 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
           </div>
         </CommandPanel>
       </div>
+
+      <DispatchChannel scope={`health:claimsline:${id}`} now={now} accent={ACC}
+        selfTier="MINISTRY" selfName="Claims adjudication" toTier="FACILITY"
+        title="Claims ↔ hospitals & insurers — adjudication & reimbursement" />
 
       <RuntimeQueue
         scope={`${id}:finance`}

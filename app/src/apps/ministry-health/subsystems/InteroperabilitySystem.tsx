@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { nationalInteroperability } from '@/lib/gov/health-operations';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { CommandPanel, sc, type Tone } from '@/apps/_shared/SovereignUI';
@@ -69,6 +70,10 @@ export function InteroperabilitySystem({ id, now, role, withheld }: {
           ))}
         </div>
       </CommandPanel>
+
+      <DispatchChannel scope={`health:interopline:${id}`} now={now} accent={ACC}
+        selfTier="FACILITY" selfName="Integration desk" toTier="NATIONAL"
+        title="Integration ↔ national exchange & vendors — feeds & reconciliation" />
 
       <RuntimeQueue scope={`${id}:interop`} kind="case" title="Interoperability runtime — establish → verify → exchange → reconcile" by="Integration Officer" role={role} withheld={withheld} />
     </div>

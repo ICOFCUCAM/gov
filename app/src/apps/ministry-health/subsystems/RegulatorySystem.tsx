@@ -7,6 +7,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { healthRegulatory, healthRegulatoryExecution } from '@/lib/gov/health-operations';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { CommandPanel, sc, type Tone } from '@/apps/_shared/SovereignUI';
@@ -106,6 +107,10 @@ export function RegulatorySystem({ id, now, role, withheld }: {
           </div>
         )}
       </CommandPanel>
+
+      <DispatchChannel scope={`health:regline:${id}`} now={now} accent={ACC}
+        selfTier="MINISTRY" selfName="Licensing & accreditation" toTier="FACILITY"
+        title="Regulator ↔ facilities — licensing, inspection & sanctions" />
 
       <RuntimeQueue scope={`${id}:regulatory`} kind="permit" title="Licensing & accreditation runtime — applied → reviewed → inspected → granted" by="Regulatory Officer" role={role} withheld={withheld} />
     </div>

@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { researchSystem } from '@/lib/gov/health-operations';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { CommandPanel, sc, type Tone } from '@/apps/_shared/SovereignUI';
@@ -81,6 +82,10 @@ export function ResearchSystemView({ id, now, role, withheld }: {
           </div>
         </CommandPanel>
       </div>
+
+      <DispatchChannel scope={`health:resline:${id}`} now={now} accent={ACC}
+        selfTier="FACILITY" selfName="Research coordination" toTier="MINISTRY"
+        title="Research ↔ ethics board & study sites — protocols & findings" />
 
       <RuntimeQueue scope={`${id}:research`} kind="case" title="Research runtime — receive → sequence → analyse → report" by="Lab Scientist" role={role} withheld={withheld} />
     </div>
