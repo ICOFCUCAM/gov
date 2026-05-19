@@ -48,6 +48,10 @@ import { NationalDigitalTwin } from '@/apps/ministry-interior/domains/NationalDi
 import { CausalityGraph } from '@/apps/ministry-interior/domains/CausalityGraph';
 import { SystemicCollapseForecast } from '@/apps/ministry-interior/domains/SystemicCollapseForecast';
 import { NationalStabilization } from '@/apps/ministry-interior/domains/NationalStabilization';
+import { GenerationalForecast } from '@/apps/ministry-interior/domains/GenerationalForecast';
+import { InstitutionalAging } from '@/apps/ministry-interior/domains/InstitutionalAging';
+import { DemographicEvolution } from '@/apps/ministry-interior/domains/DemographicEvolution';
+import { ConstitutionalResilience } from '@/apps/ministry-interior/domains/ConstitutionalResilience';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -108,6 +112,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'causality-graph': return <CausalityGraph id={id} now={now} />;
     case 'systemic-collapse-forecast': return <SystemicCollapseForecast id={id} now={now} />;
     case 'national-stabilization': return <NationalStabilization id={id} now={now} />;
+    case 'generational-forecast': return <GenerationalForecast id={id} now={now} />;
+    case 'institutional-aging': return <InstitutionalAging id={id} now={now} />;
+    case 'demographic-evolution': return <DemographicEvolution id={id} now={now} />;
+    case 'constitutional-resilience': return <ConstitutionalResilience id={id} now={now} />;
   }
 }
 

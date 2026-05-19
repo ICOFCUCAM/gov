@@ -6,7 +6,7 @@
 // key compatibility. Pure data — no React, no engine — so the navigation
 // framework, shell and manifest all derive from one normalized model.
 
-export type DomainGroupKey = 'command' | 'national' | 'runtime' | 'procedural' | 'economy' | 'temporal' | 'constitutional' | 'civil' | 'federated' | 'infra';
+export type DomainGroupKey = 'command' | 'national' | 'generational' | 'runtime' | 'procedural' | 'economy' | 'temporal' | 'constitutional' | 'civil' | 'federated' | 'infra';
 
 export interface DomainGroup {
   key: DomainGroupKey;
@@ -37,7 +37,8 @@ export type SurfaceId =
   | 'workflow-orchestration' | 'appeals-rights' | 'jurisdiction-delegation' | 'constitutional-interruption'
   | 'institutional-economy' | 'pressure-propagation' | 'resilience-continuity' | 'corruption-pressure'
   | 'temporal-forecast' | 'early-warning' | 'continuity-forecast' | 'temporal-corruption'
-  | 'national-digital-twin' | 'causality-graph' | 'systemic-collapse-forecast' | 'national-stabilization';
+  | 'national-digital-twin' | 'causality-graph' | 'systemic-collapse-forecast' | 'national-stabilization'
+  | 'generational-forecast' | 'institutional-aging' | 'demographic-evolution' | 'constitutional-resilience';
 
 export interface InteriorDomain {
   key: string;
@@ -55,6 +56,7 @@ export interface InteriorDomain {
 export const GROUPS: DomainGroup[] = [
   { key: 'command', label: 'National Command', purpose: 'Sovereign internal-governance apex' },
   { key: 'national', label: 'National Digital Twin', purpose: 'Cross-shell causality, systemic collapse forecast & sovereign stabilization' },
+  { key: 'generational', label: 'Generational Continuity', purpose: 'Institutional aging, demographic evolution & constitutional durability across decades' },
   { key: 'runtime', label: 'Sovereign Runtime', purpose: 'National observability, deadline enforcement & anti-corruption' },
   { key: 'procedural', label: 'Procedural Execution', purpose: 'Sovereign workflow chains, appeals, jurisdiction & continuity' },
   { key: 'economy', label: 'Institutional Economy', purpose: 'Finite capacity, strain propagation, resilience & corruption pressure' },
@@ -76,6 +78,11 @@ export const DOMAINS: InteriorDomain[] = [
   { key: 'causality-graph', label: 'Causality Topology', group: 'national', accent: '#45c0c8', archetype: 'fabric', surface: 'causality-graph', federation: null, identity: 'Cross-shell causal propagation & cascades' },
   { key: 'systemic-collapse-forecast', label: 'Systemic Collapse Forecast', group: 'national', accent: '#e0673a', archetype: 'oversight', surface: 'systemic-collapse-forecast', federation: null, identity: 'National instability trajectory & fracture points' },
   { key: 'national-stabilization', label: 'National Stabilization', group: 'national', accent: '#54d08f', archetype: 'oversight', surface: 'national-stabilization', federation: null, identity: 'Sovereign stabilization & constitutional boundaries' },
+  // ── Generational Continuity ───────────────────────────────────────
+  { key: 'generational-forecast', label: 'Generational Forecast', group: 'generational', accent: '#5fb0ff', archetype: 'command', surface: 'generational-forecast', federation: null, identity: 'Multi-decade civilization continuity health' },
+  { key: 'institutional-aging', label: 'Institutional Aging', group: 'generational', accent: '#e0673a', archetype: 'runtime', surface: 'institutional-aging', federation: null, identity: 'Brittleness, sclerosis & adaptability' },
+  { key: 'demographic-evolution', label: 'Demographic Evolution', group: 'generational', accent: '#45c0c8', archetype: 'fabric', surface: 'demographic-evolution', federation: null, identity: 'Generational population currents → strain' },
+  { key: 'constitutional-resilience', label: 'Constitutional Resilience', group: 'generational', accent: '#8a7df0', archetype: 'oversight', surface: 'constitutional-resilience', federation: null, identity: 'Decadal authoritarian-drift & durability' },
   // ── Sovereign Runtime ─────────────────────────────────────────────
   { key: 'national-control-board', label: 'National Control Board', group: 'runtime', accent: '#e0673a', archetype: 'command', surface: 'national-control-board', federation: null, identity: 'National process observability & execution governance' },
   { key: 'transaction-observability', label: 'Transaction Observability', group: 'runtime', accent: '#45c0c8', archetype: 'runtime', surface: 'transaction-observability', federation: null, identity: 'Nationally observable citizen-transaction runtime' },
