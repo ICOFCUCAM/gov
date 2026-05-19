@@ -13,6 +13,7 @@ import { facilities, chainDef, MINISTRY_CHAIN } from '@/lib/gov/institution-chai
 import { pickIndex } from '@/lib/pick-index';
 import { enroll, enrollments, subscribe as enSub, version as enVer } from '@/lib/gov/enrollment-store';
 import { CommandPanel, type Tone } from '@/apps/_shared/SovereignUI';
+import { CitizenServicesOverview } from '@/apps/citizen-wallet/CitizenServicesOverview';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -72,18 +73,25 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
   const kpis = raw.map((m, i) => ({ l: m.l, v: m.v, t: (m.t ?? 'ok') as Tone, s: '', k: `cw${i}` }));
   const pTone: Tone = kpis.some(x => x.t === 'alert') ? 'alert' : kpis.some(x => x.t === 'warn') ? 'warn' : 'ok';
   const cr = citizenRequests(ts);
+  const isServices = d === 'services';
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#04100c', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      <OpsHeader index={1} title={`Citizen Wallet · ${label}`} subtitle="Sovereign Citizen-Service Execution"
-        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
-      <KpiStrip ts={ts} accent={ACC} items={kpis} />
-      <div className="grid gap-2 xl:grid-cols-2">
-        <BarPanel title="Service channels" meta="citizen access integrity" accent={ACC} live
-          rows={w.channels.map(c => ({ label: c.channel, pct: c.uptime, tone: c.tone, tail: `${c.uptime}%` }))} />
-        <BarPanel title="Top services" meta="volume · SLA" accent={ACC}
-          rows={w.topServices.map(s => ({ label: s.service, pct: s.slaMetPct, tone: (s.slaMetPct >= 80 ? 'ok' : 'warn') as Tone, tail: `${s.volume.toLocaleString()} · ${s.slaMetPct}%` }))} />
-      </div>
+      {isServices ? (
+        <CitizenServicesOverview appId={appId} now={now} />
+      ) : (
+        <>
+          <OpsHeader index={1} title={`Citizen Wallet · ${label}`} subtitle="Sovereign Citizen-Service Execution"
+            posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+          <KpiStrip ts={ts} accent={ACC} items={kpis} />
+          <div className="grid gap-2 xl:grid-cols-2">
+            <BarPanel title="Service channels" meta="citizen access integrity" accent={ACC} live
+              rows={w.channels.map(c => ({ label: c.channel, pct: c.uptime, tone: c.tone, tail: `${c.uptime}%` }))} />
+            <BarPanel title="Top services" meta="volume · SLA" accent={ACC}
+              rows={w.topServices.map(s => ({ label: s.service, pct: s.slaMetPct, tone: (s.slaMetPct >= 80 ? 'ok' : 'warn') as Tone, tail: `${s.volume.toLocaleString()} · ${s.slaMetPct}%` }))} />
+          </div>
+        </>
+      )}
       <CommandPanel title="Citizen request lifecycle" meta={`SLA met ${cr.slaMetPct}% · ${cr.breaching} breaching`} accent={ACC} live>
         <StatTiles accent={ACC} items={[
           { l: 'Open', v: `${cr.open}`, t: cr.open > 12 ? 'warn' : 'ok' },
