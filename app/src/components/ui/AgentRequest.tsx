@@ -21,7 +21,7 @@ export function AgentRequest({ subjectId, label = 'Talk to an agent', prefix = '
     const id = `${prefix}-${String(n).padStart(6, '0')}`;
     // Persist into the live encounter system so the request is a real,
     // official-visible thread — not just a local acknowledgement.
-    encPost(`enc:support:${subjectId}`, { author: 'PUBLIC', name: 'Citizen', kind: 'question', body: `[${id}] ${body}` }, Date.now());
+    encPost('enc:support:desk', { author: 'PUBLIC', name: 'Citizen', kind: 'question', body: `[${id}·${subjectId}] ${body}` }, Date.now());
     setRef(id);
     setText('');
   };

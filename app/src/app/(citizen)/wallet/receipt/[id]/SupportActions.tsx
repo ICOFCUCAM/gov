@@ -20,7 +20,7 @@ export function SupportActions({ receiptId, hash }: { receiptId: string; hash?: 
     const body = text.trim();
     if (!body) return;
     const id = ticket(prefix);
-    encPost(`enc:support:receipt:${receiptId}`, { author: 'PUBLIC', name: 'Citizen', kind: prefix === 'CMP' ? 'note' : 'question', body: `[${id}] ${body}` }, Date.now());
+    encPost('enc:support:desk', { author: 'PUBLIC', name: 'Citizen', kind: prefix === 'CMP' ? 'note' : 'question', body: `[${id}·receipt ${receiptId}] ${body}` }, Date.now());
     setRef(id);
     setText('');
   };
