@@ -80,6 +80,41 @@ function PortalSection({ name, v }: { name: string; v: ReturnType<typeof citizen
     case 'Wearables':
       body = rows(v.overview.map(o => ({ a: o.label, b: `${o.value} ${o.sub}`, tone: o.tone })));
       break;
+    case 'Emergency':
+      body = rows([
+        { a: 'Emergency hotline', b: '998', c: 'Call now', tone: 'alert' },
+        { a: 'Share live location with responders', c: 'Enabled', tone: 'ok' },
+        { a: `Health ID for responders`, b: v.healthId },
+        ...v.services.slice(0, 3).map(s => ({ a: `Nearest: ${s.name}`, b: `${s.km} km`, c: s.tag, tone: 'ok' as Tone })),
+      ]);
+      break;
+    case 'Family Health': {
+      const FAM = ['Spouse', 'Child', 'Child', 'Parent'];
+      const NM = ['Yusuf', 'Layla', 'Omar', 'Fatima', 'Hana', 'Idris'];
+      const h = [...v.healthId].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7);
+      const n = 2 + (Math.abs(h) % 3);
+      body = rows(Array.from({ length: n }).map((_, i) => {
+        const okk = Math.abs(h >> i) % 5 !== 0;
+        return { a: `${NM[Math.abs(h + i * 7) % NM.length]} · ${FAM[i % FAM.length]}`, b: okk ? 'Up to date' : 'Check-up due', c: okk ? 'OK' : 'Action', tone: (okk ? 'ok' : 'warn') as Tone };
+      }));
+      break;
+    }
+    case 'Wellness':
+      body = rows([
+        { a: 'Health score', b: `${v.healthScore}/100`, c: v.healthBand, tone: v.healthScore >= 70 ? 'ok' : 'warn' },
+        ...v.overview.map(o => ({ a: o.label, b: `${o.value} ${o.sub}`, tone: o.tone })),
+        { a: 'Tip', b: v.healthScore >= 80 ? 'Maintain your routine' : 'Add a 20-min daily walk' },
+      ]);
+      break;
+    case 'Settings':
+      body = rows([
+        { a: 'Name', b: v.name }, { a: 'Health ID', b: v.healthId },
+        { a: 'Identity status', c: 'Verified', tone: 'ok' },
+        { a: 'Language', b: 'English' },
+        { a: 'Notifications', c: 'On', tone: 'ok' },
+        { a: 'Data sharing with care team', c: 'Consented', tone: 'ok' },
+      ]);
+      break;
     default:
       body = (
         <div className="rounded-[8px] border px-3 py-6 text-center" style={{ borderColor: 'color-mix(in srgb,#1c2733 70%,transparent)', background: '#0a0f17' }}>
