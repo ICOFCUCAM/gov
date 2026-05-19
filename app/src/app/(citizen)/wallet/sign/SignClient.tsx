@@ -15,6 +15,8 @@ const DOC = {
 export function SignClient() {
   const [step, setStep] = React.useState<'review' | 'confirm' | 'done'>('review');
   const [busy, setBusy] = React.useState(false);
+  const [face, setFace] = React.useState(false);
+  const [key, setKey] = React.useState(false);
   const [result, setResult] = React.useState<SignatureResult | null>(null);
 
   async function doSign() {
@@ -81,14 +83,21 @@ export function SignClient() {
             this device.
           </p>
           <div className="flex gap-3 flex-wrap">
-            <Button variant="secondary">👤 Look at the camera</Button>
-            <Button variant="secondary">🔑 Tap your security key</Button>
+            <Button variant="secondary" onClick={() => setFace(true)} disabled={face} aria-pressed={face}>
+              {face ? '✓ Face verified' : '👤 Look at the camera'}
+            </Button>
+            <Button variant="secondary" onClick={() => setKey(true)} disabled={key} aria-pressed={key}>
+              {key ? '✓ Key verified' : '🔑 Tap your security key'}
+            </Button>
           </div>
+          {!(face && key) ? (
+            <p className="mt-2 text-sm text-ink-muted">Both factors are required before you can sign.</p>
+          ) : null}
           <div className="flex gap-3 mt-4">
-            <Button onClick={doSign} disabled={busy}>
+            <Button onClick={doSign} disabled={busy || !face || !key}>
               {busy ? 'Signing…' : 'Sign'}
             </Button>
-            <Button variant="secondary" onClick={() => setStep('review')}>
+            <Button variant="secondary" onClick={() => { setStep('review'); setFace(false); setKey(false); }}>
               Cancel
             </Button>
           </div>
