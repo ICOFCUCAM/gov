@@ -11,6 +11,7 @@ import {
   bankingRails, citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
+import { TreasuryOverview } from '@/apps/treasury/TreasuryOverview';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -109,12 +110,22 @@ export function TreasuryApp({ instanceId, domain, now, role, withheld }: {
     bars = { title: 'Procurement pipeline', meta: 'solicitation → disbursement', rows: pc.pipeline.map(s => ({ label: s.stage, pct: Math.min(100, s.count), tone: 'warn' as Tone, tail: `${s.count}` })) };
   }
 
+  // The command surface is the cinematic sovereign-treasury overview
+  // (benchmark-grade); every other domain keeps the ops execution rhythm.
+  const isOverview = d === 'command';
+
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      <OpsHeader index={1} title={`Treasury · ${label}`} subtitle="Sovereign Fiscal Execution"
-        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'STRAINED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
-      <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
-      <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} />
+      {isOverview ? (
+        <TreasuryOverview id={id} now={now} />
+      ) : (
+        <>
+          <OpsHeader index={1} title={`Treasury · ${label}`} subtitle="Sovereign Fiscal Execution"
+            posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'STRAINED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+          <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
+          <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} />
+        </>
+      )}
       <ActorChainStrip ministryKey="FINANCE" idKey={id} now={now} accent={ACC} recordPrefix="FISC" />
       <MinistryChainSection ministryKey="FINANCE" id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'procurement'} title={`${label} runtime — execute the fiscal workflow`} by="Treasury Officer" role={role} withheld={withheld} />
