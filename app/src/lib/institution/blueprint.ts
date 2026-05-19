@@ -286,17 +286,20 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
     G('command', 'Interior Command', 'Internal coordination authority', [
       S('Interior command centre', 'command'), S('Internal-security intelligence', 'intelligence'),
     ]),
-    G('identity', 'Identity Systems', 'Civil identity backbone', [
+    G('identity', 'Civil Registry & Identity', 'Civil identity backbone', [
       S('Civil registry', 'registry'), S('Identity issuance centres', 'network'),
       S('Biometric verification', 'workflow'),
+    ]),
+    G('population', 'Population Analytics', 'National statistics & demographics', [
+      S('Population statistics bureau', 'analytics'), S('Demographic intelligence', 'intelligence'),
     ]),
     G('border', 'Border Systems', 'Entry & frontier control', [
       S('Border & entry posts', 'field'), S('Entry/exit control', 'workflow'),
     ]),
-    G('licensing', 'Permit & Licensing', 'Internal permits', [
+    G('licensing', 'Permits & Licensing', 'Internal permits', [
       S('Permit & licensing desks', 'network'), S('Licensing workflows', 'workflow'),
     ]),
-    G('coordination', 'Internal Coordination', 'Multi-agency coordination', [
+    G('coordination', 'Regional Administration', 'Territorial governance & coordination', [
       S('Coordination cells', 'workflow'), S('Public-order monitoring', 'intelligence'),
     ]),
     G('citizen', 'Citizen Services', 'Public-facing identity services', [

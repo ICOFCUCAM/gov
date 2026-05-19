@@ -625,7 +625,7 @@ export function CabinetIntelligence() {
           {/* ROW 3 — 5 containers: dependency · timeline · forecast · heatmap(wider) · brief(taller) */}
           <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-12">
             <Panel title="National dependency graph" meta="systemic impact propagation" className="xl:col-span-3">
-              <div className="relative h-[200px] w-full">
+              <div className="relative h-[136px] w-full">
                 <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
                   {depLinks.map(([a, b], i) => {
                     const A = dep[a], B = dep[b];
@@ -646,17 +646,17 @@ export function CabinetIntelligence() {
                   const tn = toneFor(d.p);
                   return (
                     <span key={d.k} className="absolute -translate-x-1/2 -translate-y-1/2 text-center" style={{ left: `${d.x}%`, top: `${d.y}%` }}>
-                      <span className="grid h-9 w-9 place-items-center rounded-full text-sm text-white ring-2" style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tn], borderColor: TONE[tn], boxShadow: d.p >= 67 ? `0 0 10px ${TONE.alert}` : undefined }}>{d.g}</span>
-                      <span className="mt-0.5 block text-[9px] text-ink-muted">{d.k}</span>
-                      <span className="block font-mono text-[9px] tabular-nums" style={{ color: TONE[tn] }}>{d.p}</span>
+                      <span className="grid h-7 w-7 place-items-center rounded-full text-[11px] text-white ring-2" style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tn], borderColor: TONE[tn], boxShadow: d.p >= 67 ? `0 0 8px ${TONE.alert}` : undefined }}>{d.g}</span>
+                      <span className="mt-0.5 block text-[8px] text-ink-muted">{d.k}</span>
+                      <span className="block font-mono text-[8px] tabular-nums" style={{ color: TONE[tn] }}>{d.p}</span>
                     </span>
                   );
                 })}
               </div>
-              <div className="mt-1 flex gap-3 text-[10px] text-ink-muted">
-                <span className="flex items-center gap-1"><span className="h-px w-4" style={{ backgroundColor: TONE.ok }} />Direct</span>
-                <span className="flex items-center gap-1"><span className="h-px w-4 border-t border-dashed" style={{ borderColor: TONE.warn }} />Indirect</span>
-                <span className="flex items-center gap-1"><span className="h-px w-4" style={{ backgroundColor: TONE.alert }} />Critical path</span>
+              <div className="mt-1 flex gap-3 text-[8.5px] text-ink-muted">
+                <span className="flex items-center gap-1"><span className="h-px w-3" style={{ backgroundColor: TONE.ok }} />Direct</span>
+                <span className="flex items-center gap-1"><span className="h-px w-3 border-t border-dashed" style={{ borderColor: TONE.warn }} />Indirect</span>
+                <span className="flex items-center gap-1"><span className="h-px w-3" style={{ backgroundColor: TONE.alert }} />Critical path</span>
               </div>
             </Panel>
 
@@ -669,13 +669,13 @@ export function CabinetIntelligence() {
                   rel: `${e.age}m`, tone: TONE[RISK_TONE[e.sevState]], tag: e.sevState === 'critical' ? 'SEV1' : e.sevState === 'elevated' ? 'SEV2' : 'WATCH',
                   title: e.title, src: e.ministry,
                 }));
-                const events = [...synth, ...real].slice(0, 9);
+                const events = [...synth, ...real].slice(0, 7);
                 if (!events.length) return <p className="p-3 text-xs text-ink-muted">Awaiting events…</p>;
                 return events.map((e, i) => (
-                  <div key={i} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 text-xs last:border-0">
-                    <span className="w-9 shrink-0 font-mono text-[10px] tabular-nums text-ink-muted">{e.rel}</span>
-                    <span className="shrink-0 rounded-[2px] px-1 py-0.5 text-[8px] font-bold tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${e.tone} 18%, transparent)`, color: e.tone }}>{e.tag}</span>
-                    <span className="min-w-0 flex-1"><span className="block truncate text-ink-soft">{e.title}</span><span className="block truncate text-[9px] text-ink-muted">{e.src}</span></span>
+                  <div key={i} className="flex items-center gap-2 border-b border-line-soft px-3 py-1 text-[11px] last:border-0">
+                    <span className="w-8 shrink-0 font-mono text-[9px] tabular-nums text-ink-muted">{e.rel}</span>
+                    <span className="shrink-0 rounded-[2px] px-1 py-0.5 text-[7.5px] font-bold tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${e.tone} 18%, transparent)`, color: e.tone }}>{e.tag}</span>
+                    <span className="min-w-0 flex-1"><span className="block truncate text-ink-soft">{e.title}</span><span className="block truncate text-[8.5px] text-ink-muted">{e.src}</span></span>
                   </div>
                 ));
               })()}
@@ -700,7 +700,7 @@ export function CabinetIntelligence() {
             </Panel>
 
             <Panel title="National heatmap" meta="ministry stress · region" className="xl:col-span-3" bodyClass="!p-2">
-              <TerritoryHeat epoch={epoch} height={210} focus={sov?.stateName} />
+              <TerritoryHeat epoch={epoch} height={150} focus={sov?.stateName} />
               <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
                 <span>Low</span>
                 <span className="mx-2 h-1.5 flex-1 rounded-full" style={{ background: `linear-gradient(90deg, ${TONE.ok}, ${TONE.warn}, ${TONE.alert})` }} />
@@ -712,24 +712,22 @@ export function CabinetIntelligence() {
               <div className="mb-1.5 flex items-center gap-2 border-b border-line pb-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-ink-muted">
                 <span style={{ color: ACCENT }}>◆</span> INTEL SUMMARY<span className="ml-auto">{new Date(now).toLocaleDateString()}</span>
               </div>
-              <div className="space-y-1.5">
-                {memo.map((m, i) => {
+              <div className="space-y-1">
+                {memo.slice(0, 4).map((m, i) => {
                   const lt = m.lvl === 'CRITICAL' ? TONE.alert : m.lvl === 'ELEVATED' ? TONE.warn : TONE.neutral;
                   const mins = new Date(now - (i * 7 + 3) * 60000);
                   return (
-                    <div key={i} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5" style={{ borderLeft: `3px solid ${lt}` }}>
-                      <div className="flex items-center gap-1.5 text-[9px]">
+                    <div key={i} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1" style={{ borderLeft: `3px solid ${lt}` }}>
+                      <div className="flex items-center gap-1.5 text-[8.5px]">
                         <span className="font-mono tabular-nums text-ink-muted">{mins.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                         <span className="rounded-[2px] px-1 py-0.5 font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${lt} 18%, transparent)`, color: lt }}>{m.lvl}</span>
-                        <span className="font-semibold text-ink">{m.t}</span>
-                        <span className="ml-auto font-mono tabular-nums text-ink-muted">conf {m.conf}%</span>
+                        <span className="truncate font-semibold text-ink">{m.t}</span>
+                        <span className="ml-auto shrink-0 font-mono tabular-nums text-ink-muted">conf {m.conf}%</span>
                       </div>
-                      <div className="mt-0.5 text-[10px] leading-snug text-ink-soft">{m.body}</div>
-                      <div className="mt-1 grid grid-cols-2 gap-x-2 gap-y-0.5 text-[8.5px] text-ink-muted">
-                        <span>↳ {m.inst}</span>
-                        <span>Treasury: {m.econ}</span>
-                        <span className="col-span-2">Constitutional: {m.con}</span>
-                        <span className="col-span-2" style={{ color: TONE.warn }}>▸ Recommended: {m.rec}</span>
+                      <div className="mt-0.5 truncate text-[9px] leading-snug text-ink-soft">{m.body}</div>
+                      <div className="mt-0.5 flex items-center gap-x-2 text-[8px] text-ink-muted">
+                        <span className="truncate">↳ {m.inst}</span>
+                        <span className="ml-auto shrink-0" style={{ color: TONE.warn }}>▸ {m.rec}</span>
                       </div>
                     </div>
                   );
