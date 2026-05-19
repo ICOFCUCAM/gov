@@ -7,7 +7,7 @@ import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { immigrationOps } from '@/lib/gov/agency-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
-import { MinistryChainSection, InstitutionChainStrip, actorChain } from '@/apps/_shared/InstitutionChain';
+import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -56,10 +56,7 @@ export function ImmigrationApp({ appId, domain, now, role, withheld }: {
         { label: 'Visa SLA', pct: o.visaSlaMetPct, tone: (o.visaSlaMetPct >= 80 ? 'ok' : 'warn') as Tone, tail: `${o.visaSlaMetPct}%` },
         { label: 'Flagged-entry pressure', pct: Math.min(100, o.flaggedEntries / 1.6), tone: (o.flaggedEntries > 90 ? 'alert' : 'warn') as Tone, tail: `${o.flaggedEntries}` },
       ]} />
-      {(() => { const ch = actorChain('INTERIOR', appId, now, 'CASE'); return (
-        <InstitutionChainStrip accent={ACC} ministryKey="INTERIOR" facility={ch.facility}
-          actorName={ch.actorName} lineage={ch.lineage} integrity={ch.integrity} />
-      ); })()}
+      <ActorChainStrip ministryKey="INTERIOR" idKey={appId} now={now} accent={ACC} recordPrefix="CASE" />
       <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'incident'} title={`${label} runtime — execute the border workflow`} by="Border Officer" role={role} withheld={withheld} />
     </div>

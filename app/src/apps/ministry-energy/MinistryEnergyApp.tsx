@@ -8,7 +8,7 @@ import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { energyOps, energyCommand } from '@/lib/gov/energy-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
-import { MinistryChainSection, InstitutionChainStrip, actorChain } from '@/apps/_shared/InstitutionChain';
+import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -84,10 +84,7 @@ export function MinistryEnergyApp({ instanceId, domain, now, role, withheld }: {
         posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
       <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
       {bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
-      {(() => { const ch = actorChain('ENERGY', id, now, 'GRID'); return (
-        <InstitutionChainStrip accent={ACC} ministryKey="ENERGY" facility={ch.facility}
-          actorName={ch.actorName} lineage={ch.lineage} integrity={ch.integrity} />
-      ); })()}
+      <ActorChainStrip ministryKey="ENERGY" idKey={id} now={now} accent={ACC} recordPrefix="GRID" />
       <MinistryChainSection ministryKey="ENERGY" id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'case'} title={`${label} runtime — execute the energy workflow`} by="Grid Officer" role={role} withheld={withheld} />
     </div>

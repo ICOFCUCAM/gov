@@ -8,7 +8,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { legislativeState } from '@/lib/gov/legislative-engine';
 import { parliamentarySchedule, budgetApprovalPipeline, oversightHearings } from '@/lib/gov/legislative-operations';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
-import { MinistryChainSection, InstitutionChainStrip, actorChain } from '@/apps/_shared/InstitutionChain';
+import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -91,10 +91,7 @@ export function LegislatureApp({ domain, now, role, withheld }: {
         posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
       <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
       {bars.map((b, i) => <BarPanel key={i} title={b.title} meta={b.meta} accent={ACC} live={i === 0} rows={b.rows} />)}
-      {(() => { const ch = actorChain('LEGISLATURE', `leg:${d}`, now, 'BILL'); return (
-        <InstitutionChainStrip accent={ACC} ministryKey="LEGISLATURE" facility={ch.facility}
-          actorName={ch.actorName} lineage={ch.lineage} integrity={ch.integrity} />
-      ); })()}
+      <ActorChainStrip ministryKey="LEGISLATURE" idKey={`leg:${d}`} now={now} accent={ACC} recordPrefix="BILL" />
       <MinistryChainSection ministryKey="LEGISLATURE" id={`leg:${d}`} now={now} accent={ACC} />
       <RuntimeQueue scope={`leg:${d}`} kind={WF[d] ?? 'bill'} title={`${label} runtime — execute the legislative workflow`} by="Clerk" role={role} withheld={withheld} />
     </div>
