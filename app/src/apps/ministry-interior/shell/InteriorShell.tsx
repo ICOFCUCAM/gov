@@ -32,6 +32,10 @@ import { SeparationOfPowers } from '@/apps/ministry-interior/domains/SeparationO
 import { SovereignAuthority } from '@/apps/ministry-interior/domains/SovereignAuthority';
 import { OversightMirroring } from '@/apps/ministry-interior/domains/OversightMirroring';
 import { CitizenAccountability } from '@/apps/ministry-interior/domains/CitizenAccountability';
+import { WorkflowOrchestration } from '@/apps/ministry-interior/domains/WorkflowOrchestration';
+import { AppealsRights } from '@/apps/ministry-interior/domains/AppealsRights';
+import { JurisdictionDelegation } from '@/apps/ministry-interior/domains/JurisdictionDelegation';
+import { ConstitutionalInterruption } from '@/apps/ministry-interior/domains/ConstitutionalInterruption';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -76,6 +80,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'sovereign-authority': return <SovereignAuthority id={id} now={now} />;
     case 'oversight-mirroring': return <OversightMirroring id={id} now={now} />;
     case 'citizen-accountability': return <CitizenAccountability id={id} now={now} />;
+    case 'workflow-orchestration': return <WorkflowOrchestration id={id} now={now} />;
+    case 'appeals-rights': return <AppealsRights id={id} now={now} />;
+    case 'jurisdiction-delegation': return <JurisdictionDelegation id={id} now={now} />;
+    case 'constitutional-interruption': return <ConstitutionalInterruption id={id} now={now} />;
   }
 }
 

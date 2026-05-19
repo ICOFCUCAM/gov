@@ -6,7 +6,7 @@
 // key compatibility. Pure data — no React, no engine — so the navigation
 // framework, shell and manifest all derive from one normalized model.
 
-export type DomainGroupKey = 'command' | 'runtime' | 'constitutional' | 'civil' | 'federated' | 'infra';
+export type DomainGroupKey = 'command' | 'runtime' | 'procedural' | 'constitutional' | 'civil' | 'federated' | 'infra';
 
 export interface DomainGroup {
   key: DomainGroupKey;
@@ -33,7 +33,8 @@ export type SurfaceId =
   | 'police' | 'immigration' | 'emergency' | 'intelligence' | 'cyber' | 'investigations'
   | 'event-bus' | 'fabric' | 'audit' | 'reports'
   | 'national-control-board' | 'transaction-observability' | 'anti-corruption'
-  | 'separation-of-powers' | 'sovereign-authority' | 'oversight-mirroring' | 'citizen-accountability';
+  | 'separation-of-powers' | 'sovereign-authority' | 'oversight-mirroring' | 'citizen-accountability'
+  | 'workflow-orchestration' | 'appeals-rights' | 'jurisdiction-delegation' | 'constitutional-interruption';
 
 export interface InteriorDomain {
   key: string;
@@ -51,6 +52,7 @@ export interface InteriorDomain {
 export const GROUPS: DomainGroup[] = [
   { key: 'command', label: 'National Command', purpose: 'Sovereign internal-governance apex' },
   { key: 'runtime', label: 'Sovereign Runtime', purpose: 'National observability, deadline enforcement & anti-corruption' },
+  { key: 'procedural', label: 'Procedural Execution', purpose: 'Sovereign workflow chains, appeals, jurisdiction & continuity' },
   { key: 'constitutional', label: 'Constitutional Governance', purpose: 'Separation of powers, multi-key authority & citizen rights' },
   { key: 'civil', label: 'Civil Governance', purpose: 'Civil administration & territorial governance' },
   { key: 'federated', label: 'Federated Operations', purpose: 'Embedded sovereign operational shells' },
@@ -67,6 +69,11 @@ export const DOMAINS: InteriorDomain[] = [
   { key: 'national-control-board', label: 'National Control Board', group: 'runtime', accent: '#e0673a', archetype: 'command', surface: 'national-control-board', federation: null, identity: 'National process observability & execution governance' },
   { key: 'transaction-observability', label: 'Transaction Observability', group: 'runtime', accent: '#45c0c8', archetype: 'runtime', surface: 'transaction-observability', federation: null, identity: 'Nationally observable citizen-transaction runtime' },
   { key: 'anti-corruption', label: 'Anti-Corruption Runtime', group: 'runtime', accent: '#d8a23a', archetype: 'runtime', surface: 'anti-corruption', federation: null, identity: 'Deliberate-delay & bribery-risk enforcement layer' },
+  // ── Procedural Execution ──────────────────────────────────────────
+  { key: 'workflow-orchestration', label: 'Workflow Orchestration', group: 'procedural', accent: '#45c0c8', archetype: 'runtime', surface: 'workflow-orchestration', federation: null, identity: 'Sovereign execution-chain rails' },
+  { key: 'appeals-rights', label: 'Appeals & Rights', group: 'procedural', accent: '#54d08f', archetype: 'governance', surface: 'appeals-rights', federation: null, identity: 'Lawful citizen recourse & review timelines' },
+  { key: 'jurisdiction-delegation', label: 'Jurisdiction & Delegation', group: 'procedural', accent: '#d8a23a', archetype: 'fabric', surface: 'jurisdiction-delegation', federation: null, identity: 'Inter-jurisdiction transfer & delegated authority' },
+  { key: 'constitutional-interruption', label: 'Constitutional Interruption', group: 'procedural', accent: '#8a7df0', archetype: 'oversight', surface: 'constitutional-interruption', federation: null, identity: 'Judicial halt, continuity & bounded AI' },
   // ── Constitutional Governance ─────────────────────────────────────
   { key: 'separation-of-powers', label: 'Separation of Powers', group: 'constitutional', accent: '#8a7df0', archetype: 'oversight', surface: 'separation-of-powers', federation: null, identity: 'Federated branches & bounded powers' },
   { key: 'sovereign-authority', label: 'Sovereign Authority', group: 'constitutional', accent: '#8a7df0', archetype: 'oversight', surface: 'sovereign-authority', federation: null, identity: 'Multi-key distributed authorization runtime' },
