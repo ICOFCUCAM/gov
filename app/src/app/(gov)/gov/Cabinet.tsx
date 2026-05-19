@@ -11,6 +11,7 @@ import { api } from '@/lib/api/client';
 import { WorkspaceSkeleton } from '@/components/ui/Skeleton';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import { identityFor } from '@/lib/archetype-profiles';
+import { NationalBureaucracyPulse } from '@/apps/_shared/InstitutionChain';
 import type {
   CabinetOverview,
   NationalCoordination,
@@ -44,6 +45,8 @@ export function Cabinet() {
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [editing, setEditing] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
+  const [now, setNow] = React.useState(() => Date.now());
+  React.useEffect(() => { const t = setInterval(() => setNow(Date.now()), 4000); return () => clearInterval(t); }, []);
 
   const load = React.useCallback(async () => {
     const [o, n, p, c] = await Promise.all([
@@ -148,6 +151,8 @@ export function Cabinet() {
           {editing ? 'Cancel' : 'Configure sovereign profile'}
         </Button>
       </div>
+
+      <NationalBureaucracyPulse accent="#37c7d4" now={now} />
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] sm:grid-cols-3 md:grid-cols-6">
         {[
