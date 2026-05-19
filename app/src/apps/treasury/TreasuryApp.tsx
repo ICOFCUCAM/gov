@@ -11,7 +11,7 @@ import {
   bankingRails, citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
-import { MinistryChainSection, InstitutionChainStrip, actorChain } from '@/apps/_shared/InstitutionChain';
+import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -36,7 +36,6 @@ export function TreasuryApp({ instanceId, domain, now, role, withheld }: {
 }) {
   const id = instanceId;
   const ts = now / 4000;
-  const tCh = actorChain('FINANCE', id, now, 'FISC');
   const d = WF[domain] ? domain : 'command';
   const label = LABEL[d] ?? 'Fiscal Command';
 
@@ -116,8 +115,7 @@ export function TreasuryApp({ instanceId, domain, now, role, withheld }: {
         posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'STRAINED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
       <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
       <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} />
-      <InstitutionChainStrip accent={ACC} ministryKey="FINANCE" facility={tCh.facility}
-        actorName={tCh.actorName} lineage={tCh.lineage} integrity={tCh.integrity} />
+      <ActorChainStrip ministryKey="FINANCE" idKey={id} now={now} accent={ACC} recordPrefix="FISC" />
       <MinistryChainSection ministryKey="FINANCE" id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'procurement'} title={`${label} runtime — execute the fiscal workflow`} by="Treasury Officer" role={role} withheld={withheld} />
     </div>

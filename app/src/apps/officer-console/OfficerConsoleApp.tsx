@@ -7,7 +7,7 @@ import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { officerConsole } from '@/lib/gov/citizen-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
-import { MinistryChainSection, InstitutionChainStrip, actorChain } from '@/apps/_shared/InstitutionChain';
+import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -21,8 +21,6 @@ export function OfficerConsoleApp({ appId, domain, now, role, withheld }: {
 }) {
   const ts = now / 4000;
   const o = officerConsole(appId, ts);
-  // The officer serves the state THROUGH a station (shared chain helper).
-  const ch = actorChain('INTERIOR', appId, now, 'CASE');
   const d = WF[domain] ? domain : 'queue';
   const label = LABEL[d] ?? 'Work Queue';
   const raw: { l: string; v: string; t?: Tone }[] = d === 'decisions' ? [
@@ -52,8 +50,7 @@ export function OfficerConsoleApp({ appId, domain, now, role, withheld }: {
       <KpiStrip ts={ts} accent={ACC} items={kpis} />
       <BarPanel title="Desk load" meta="disposition queues" accent={ACC} live
         rows={o.byDesk.map(x => ({ label: x.desk, pct: Math.min(100, x.queue / 14), tone: x.tone, tail: `${x.queue}` }))} />
-      <InstitutionChainStrip accent={ACC} ministryKey="INTERIOR" facility={ch.facility}
-        actorName={ch.actorName} lineage={ch.lineage} integrity={ch.integrity} />
+      <ActorChainStrip ministryKey="INTERIOR" idKey={appId} now={now} accent={ACC} recordPrefix="CASE" />
       <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'case'} title={`${label} runtime — execute officer dispositions`} by="Officer" role={role} withheld={withheld} />
     </div>

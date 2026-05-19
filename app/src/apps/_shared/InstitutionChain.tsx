@@ -107,6 +107,18 @@ export function InstitutionChainStrip({
   );
 }
 
+// Drop-in actor→facility strip: resolves the chain bundle and renders it,
+// so apps don't repeat the actorChain()+InstitutionChainStrip IIFE.
+export function ActorChainStrip({ ministryKey, idKey, now, accent, recordPrefix = 'REC' }: {
+  ministryKey: string; idKey: string; now: number; accent: string; recordPrefix?: string;
+}) {
+  const ch = actorChain(ministryKey, idKey, now, recordPrefix);
+  return (
+    <InstitutionChainStrip accent={accent} ministryKey={ministryKey} facility={ch.facility}
+      actorName={ch.actorName} lineage={ch.lineage} integrity={ch.integrity} />
+  );
+}
+
 const P_TONE: Record<string, string> = { routine: 'rgb(var(--c-ink-muted))', priority: 'rgb(var(--c-warn))', urgent: 'rgb(var(--c-alert))' };
 
 export function DispatchChannel({
