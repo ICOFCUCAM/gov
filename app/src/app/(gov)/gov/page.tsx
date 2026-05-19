@@ -1,10 +1,10 @@
-import { CabinetIntelligence } from '@/components/features/CabinetIntelligence';
+import { ExecutiveOverview } from '@/components/features/ExecutiveOverview';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Cabinet Intelligence' };
+export const metadata = { title: 'Executive Overview' };
 
 
 // Flagship executive surface — self-contained command chrome, no AppShell.
 export default function CabinetPage() {
-  return <CabinetIntelligence />;
+  return <ExecutiveOverview />;
 }
