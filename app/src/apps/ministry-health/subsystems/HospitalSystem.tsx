@@ -14,6 +14,8 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { hospitalOps } from '@/lib/gov/health-systems';
 import { hospitalDeepExecution } from '@/lib/gov/health-operations';
 import { aiAdvisory } from '@/shared/ai/advisory';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
+import { facilities, actors, chainIntegrity } from '@/lib/gov/institution-chain';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 const ACC = ACCENT.hospital!;
@@ -40,6 +42,14 @@ export function HospitalSystem({ id, now, role, withheld }: {
     { label: 'Theatre delays', value: Math.min(100, hd.theatres.filter(x => x.status === 'delayed').length * 18), adverse: true },
   ]);
   const headroomTone: 'ok' | 'warn' | 'alert' = hd.nationalBedHeadroomPct >= 12 ? 'ok' : hd.nationalBedHeadroomPct >= 4 ? 'warn' : 'alert';
+  // The hospital is a facility tier: clinicians enrol here, records are
+  // held here, and it uplinks to the Ministry of Health → national system.
+  const epoch = Math.max(0, Math.floor(ts));
+  const fList = facilities('HEALTH', epoch);
+  const fac = fList[Math.abs([...id].reduce((hh, c) => (hh * 31 + c.charCodeAt(0)) | 0, 5)) % fList.length] ?? fList[0]!;
+  const roster = actors('HEALTH', fac.id, epoch);
+  const cInt = chainIntegrity('HEALTH', epoch);
+  const cTone = cInt.status === 'synchronised' ? 'ok' : cInt.status === 'lagging' ? 'warn' : 'alert';
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#070d11' }}>
@@ -55,6 +65,31 @@ export function HospitalSystem({ id, now, role, withheld }: {
         <KpiTile label="Admit/hr" value={`${hd.admissionsPerHr}`} delta={hd.admissionsPerHr - hp.admissionsPerHr} tone={hd.admissionsPerHr > hd.dischargesPerHr + 30 ? 'alert' : 'ok'} />
         <KpiTile label="Disch/hr" value={`${hd.dischargesPerHr}`} delta={hd.dischargesPerHr - hp.dischargesPerHr} tone="ok" />
         <KpiTile label="Transfers" value={`${hd.transferRequests}`} delta={hd.transferRequests - hp.transferRequests} tone={hd.transferRequests > 30 ? 'warn' : 'ok'} />
+      </div>
+
+      {/* Enrolled clinicians + ministry uplink (facility tier of the chain) */}
+      <div className="grid gap-2 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+        <CommandPanel title={`Enrolled clinicians · ${fac.id}`} meta={`${roster.length} · ${fac.name}`} accent={ACC}>
+          <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
+            {roster.map(a => (
+              <div key={a.id} className="flex items-center gap-2 text-[10px]">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: a.standing === 'active' ? sc('ok') : a.standing === 'probation' ? sc('warn') : sc('alert') }} />
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{a.name} <span className="text-ink-muted">· {a.role}</span></span>
+                <span className="shrink-0 font-mono text-[8px] tabular-nums text-ink-muted">load {a.caseload} · rel {a.reliability}%</span>
+              </div>
+            ))}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-0.5 border-t border-line-soft pt-1.5 text-[9px] text-ink-muted">
+            <span>Records held at {fac.id} → <span style={{ color: sc('warn') }}>{cInt.ministry}</span> → National</span>
+            <span>uplink sync <span style={{ color: sc(cTone) }}>{cInt.meanSyncPct}%</span> · {cInt.status}</span>
+            <span>roll-up {cInt.uplinkLatencyMin}m · national lag {cInt.nationalLagMin}m</span>
+          </div>
+        </CommandPanel>
+        </div>
+        <DispatchChannel scope={`health:${fac.id}`} now={now} accent={ACC}
+          selfTier="FACILITY" selfName={`${fac.id} admin`} toTier="MINISTRY"
+          title={`Ministry uplink · ${fac.id}`} />
       </div>
 
       <div className="grid gap-2 xl:grid-cols-4">

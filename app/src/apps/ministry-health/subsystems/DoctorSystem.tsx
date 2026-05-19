@@ -10,6 +10,8 @@ import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { clinicianWorkstation } from '@/lib/gov/health-operations';
 import { CommandHeader, CommandPanel, RingGauge, TrendChart, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
+import { InstitutionChainStrip, DispatchChannel } from '@/apps/_shared/InstitutionChain';
+import { facilities, recordLineage, chainIntegrity } from '@/lib/gov/institution-chain';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
@@ -29,6 +31,15 @@ export function DoctorSystem({ id, now, role, withheld }: {
   const clock = new Date(now).toLocaleTimeString('en-GB', { hour12: false });
   const w = clinicianWorkstation(id, ts, sel);
   const p = w.patient;
+  // The doctor serves the state THROUGH a hospital: enrolled at a facility,
+  // every clinical record held there first, then rolled to the Ministry of
+  // Health and synchronised to the national system.
+  const epoch = Math.max(0, Math.floor(ts));
+  const hList = facilities('HEALTH', epoch);
+  const myHospital = hList[Math.abs([...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)) % hList.length] ?? hList[0]!;
+  const lineage = recordLineage(`MRN-${p.mrn}`, p.attending, myHospital, 'HEALTH', epoch);
+  const hIntegrity = chainIntegrity('HEALTH', epoch);
+  const dispatchScope = `health:${myHospital.id}`;
   const rb: Tone = p.riskBand === 'High' ? 'alert' : p.riskBand === 'Moderate' ? 'warn' : 'ok';
   const norm = (s: number[]) => { const mn = Math.min(...s), sp = Math.max(...s) - mn || 1; return s.map(v => ((v - mn) / sp) * 100); };
 
@@ -66,6 +77,10 @@ export function DoctorSystem({ id, now, role, withheld }: {
           <RingGauge value={p.riskScore} label={`${p.riskBand} risk`} tone={rb} size={84} sub="score" />
         </div>
       </div>
+
+      {/* Bureaucratic chain — doctor → hospital → ministry → national */}
+      <InstitutionChainStrip accent={ACC} ministryKey="HEALTH" facility={myHospital}
+        actorName={p.attending} lineage={lineage} integrity={hIntegrity} />
 
       {/* Chart tabs */}
       <div className="flex flex-wrap gap-1 border-b" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
@@ -111,6 +126,9 @@ export function DoctorSystem({ id, now, role, withheld }: {
             ))}
           </div>
         </CommandPanel>
+        <DispatchChannel scope={dispatchScope} now={now} accent={ACC}
+          selfTier="ACTOR" selfName={`${p.attending} · ${myHospital.id}`} toTier="FACILITY"
+          title={`Hospital dispatch · ${myHospital.id}`} />
         </div>
 
         {/* Col 2 — complaint · diagnoses · notes · labs */}
