@@ -395,6 +395,16 @@ export function MinistryChainSection({
             );
           })}
         </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-t border-line-soft px-3 py-1.5 text-[9px]">
+          <span className="text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>{myFac.name}</span>
+          <span className="text-ink-muted">{myFac.region} · {myFac.tier}</span>
+          <span className="text-ink-soft">load <span style={{ color: myFac.load >= 85 ? 'rgb(var(--c-alert))' : myFac.load >= 65 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' }}>{myFac.load}%</span></span>
+          <span className="text-ink-soft">capacity {myFac.capacity.toLocaleString()}</span>
+          <span className="text-ink-soft">staff {myFac.staff}</span>
+          <span className="text-ink-soft">sync <span style={{ color: `rgb(var(--c-${iTone}))` }}>{myFac.syncPct}%</span></span>
+          <span className="rounded-[2px] px-1.5 py-0.5 text-[7.5px] font-bold uppercase tracking-wider" style={{ background: `color-mix(in srgb,rgb(var(--c-${stC(myFac.status)})) 18%,transparent)`, color: `rgb(var(--c-${stC(myFac.status)}))` }}>{myFac.status}</span>
+          <span className="font-mono text-[8px] text-ink-muted">head {myFac.headId}</span>
+        </div>
         <div className="flex flex-wrap gap-x-4 gap-y-0.5 border-t border-line-soft px-3 py-1.5 text-[9px] text-ink-muted">
           <span>Records: {d.recordNoun} held at facility → <span style={{ color: 'rgb(var(--c-warn))' }}>{d.ministry}</span> → National</span>
           <span>{myFac.id} register: <span style={{ color: 'rgb(var(--c-info))' }}>{filed.filter(r => r.stage !== 'synced').length} in transit</span> · <span style={{ color: 'rgb(var(--c-ok))' }}>{filed.filter(r => r.stage === 'synced').length} synced</span></span>
