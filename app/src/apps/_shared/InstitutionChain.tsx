@@ -423,8 +423,22 @@ export function MinistryChainSection({
   const refStC = (s: string) => (s === 'closed' ? 'ok' : s === 'actioned' ? 'warn' : s === 'accepted' ? 'info' : 'alert');
   const iTone = integrity.status === 'synchronised' ? 'ok' : integrity.status === 'lagging' ? 'warn' : 'alert';
   const stC = (s: string) => (s === 'active' || s === 'operational' ? 'ok' : s === 'verified' || s === 'strained' ? 'warn' : s === 'pending' ? 'info' : 'alert');
+  const [expanded, setExpanded] = React.useState(true);
 
   return (
+    <div className="space-y-2">
+      <button type="button" onClick={() => setExpanded(e => !e)} aria-expanded={expanded}
+        className="focus-ring flex w-full items-center justify-between rounded-[4px] border px-3 py-1.5"
+        style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
+        <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>
+          {d.ministry} · institutional chain
+        </span>
+        <span className="flex items-center gap-2 text-[8px] uppercase tracking-wider text-ink-muted">
+          <span>{integrity.facilities} facilities · chain {integrity.status}</span>
+          <span aria-hidden>{expanded ? '▾' : '▸'}</span>
+        </span>
+      </button>
+      {expanded ? (
     <div className="grid gap-2 lg:grid-cols-3">
       <div className="rounded-[4px] border lg:col-span-2" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
         <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
@@ -596,6 +610,8 @@ export function MinistryChainSection({
           selfAuthor="OFFICIAL" officialName={`${d.actorRole} · ${myFac.id}`} publicName="Citizen"
           title={`Citizen service desk · ${myFac.id}`} />
       </div>
+    </div>
+      ) : null}
     </div>
   );
 }
