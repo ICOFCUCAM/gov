@@ -11,6 +11,7 @@ import {
   bankingRails, citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
+import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -114,6 +115,7 @@ export function TreasuryApp({ instanceId, domain, now, role, withheld }: {
         posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'STRAINED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
       <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
       <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} />
+      <MinistryChainSection ministryKey="FINANCE" id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'procurement'} title={`${label} runtime — execute the fiscal workflow`} by="Treasury Officer" role={role} withheld={withheld} />
     </div>
   );

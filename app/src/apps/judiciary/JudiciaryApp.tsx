@@ -8,6 +8,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { judicialState } from '@/lib/gov/judicial-engine';
 import { evidenceRegistry, prisonCoordination, judicialOperations } from '@/lib/gov/judicial-operations';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
+import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -95,6 +96,7 @@ export function JudiciaryApp({ instanceId, domain, now, role, withheld }: {
         posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
       <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
       {bars.map((b, i) => <BarPanel key={i} title={b.title} meta={b.meta} accent={ACC} live={i === 0} rows={b.rows} />)}
+      <MinistryChainSection ministryKey="JUSTICE" id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`jud:${d}`} kind={WF[d] ?? 'judicial'} title={`${label} runtime — execute the judicial workflow`} by="Registrar" role={role} withheld={withheld} />
     </div>
   );
