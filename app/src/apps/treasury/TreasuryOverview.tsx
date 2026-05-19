@@ -8,6 +8,7 @@
 // and a sovereign footer. Pure & deterministic (engine + telemetry only).
 
 import * as React from 'react';
+import Link from 'next/link';
 import { fiscalCommand, revenueOps, budgetOps, bankingRails, citizenFinance, fiscalAssurance } from '@/lib/gov/treasury-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 
@@ -323,6 +324,11 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
                 {stable ? 'Stable' : fc.tone === 'warn' ? 'Strained' : 'Critical'}
               </div>
             </div>
+            <Link href="/treasury" target="_blank" rel="noopener"
+              className="focus-ring rounded-[3px] border px-2.5 py-1.5 text-[9px] font-bold uppercase tracking-[0.16em]"
+              style={{ borderColor: LINE, color: GOLD }}>
+              Public Site ↗
+            </Link>
           </div>
         </div>
       </div>

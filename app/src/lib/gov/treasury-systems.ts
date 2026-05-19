@@ -204,3 +204,75 @@ export function treasuryInstability(id: string, t: number): number {
     pc.flaggedContracts * 1.5;
   return Math.round(Math.max(0, Math.min(100, v)));
 }
+
+// ── Public Ministry website ──────────────────────────────────────────
+// Deterministic data for the public-facing Ministry of Treasury & Finance
+// portal (light institutional site). SSR-stable: pure function of the
+// tick, no Date.now/window. Distinct from the dark operational app.
+
+export interface PublicTreasurySite {
+  asOf: string;
+  snapshot: { label: string; value: string; delta?: string; tag?: string; up?: boolean }[];
+  budget: { total: string; segments: { label: string; amount: string; pct: number }[] };
+  indicators: { label: string; value: string; delta: number; flat?: boolean }[];
+  updates: { kind: string; title: string; date: string }[];
+}
+
+export function publicTreasurySite(t: number): PublicTreasurySite {
+  const id = 'MOF';
+  const fc = fiscalCommand(id, t);
+  const rv = revenueOps(id, t);
+  const cf = citizenFinance(id, t);
+  void cf;
+
+  const revenueYtd = Math.round(wave(`pt:rev:${id}`, t, 23, 33) * 100) / 100;
+  const expenditureYtd = Math.round(wave(`pt:exp:${id}`, t, 20, 30) * 100) / 100;
+  const fiscalBalance = Math.round((revenueYtd + 0.6) * 100) / 100;
+  const liqMonths = Math.round((fc.liquidityDays / 30) * 10) / 10;
+  const d2 = (k: string, lo: number, hi: number) => Math.round(wave(`pt:d:${k}:${id}`, t, lo, hi) * 100) / 100;
+
+  const snapshot: PublicTreasurySite['snapshot'] = [
+    { label: 'Fiscal Balance (YTD)', value: `$${fiscalBalance.toFixed(2)}B`, delta: `+${d2('fb', 1.4, 3.6).toFixed(2)}%`, up: true },
+    { label: 'Total Revenue (YTD)', value: `$${revenueYtd.toFixed(2)}B`, delta: `+${d2('tr', 3.2, 6.4).toFixed(2)}%`, up: true },
+    { label: 'Total Expenditure (YTD)', value: `$${expenditureYtd.toFixed(2)}B`, delta: `+${d2('te', 1.8, 4.4).toFixed(2)}%`, up: true },
+    { label: 'Debt to GDP Ratio', value: `${fc.debtToGdp.toFixed(1)}%`, tag: fc.debtToGdp < 50 ? 'SUSTAINABLE' : fc.debtToGdp < 65 ? 'WATCH' : 'ELEVATED' },
+    { label: 'Liquidity Position', value: fc.liquidityDays >= 30 ? 'STRONG' : fc.liquidityDays >= 14 ? 'ADEQUATE' : 'TIGHT', tag: `${liqMonths.toFixed(1)} MONTHS` },
+    { label: 'Foreign Reserves', value: `$${fc.fxReservesBn.toFixed(2)}B`, tag: fc.fxReservesBn >= 25 ? 'ADEQUATE' : 'TIGHT' },
+  ];
+
+  const total = Math.round(wave(`pt:bud:${id}`, t, 58, 78) * 10) / 10;
+  const segDefs: [string, number][] = [
+    ['Infrastructure', 26], ['Social Services', 23], ['Defense & Security', 15],
+    ['Education', 12], ['Economic Development', 9], ['Other Services', 15],
+  ];
+  const budget: PublicTreasurySite['budget'] = {
+    total: `$${total.toFixed(1)}B`,
+    segments: segDefs.map(([label, pct], i) => {
+      const p = Math.max(4, pct + Math.round((seed(`pt:seg:${id}:${i}`) - 0.5) * 4));
+      return { label, pct: p, amount: `$${(Math.round(total * (p / 100) * 10) / 10).toFixed(1)}B` };
+    }),
+  };
+
+  const ind = (k: string, lo: number, hi: number): { v: number; d: number } => {
+    const v = wave(`pt:ind:${k}:${id}`, t, lo, hi);
+    const prev = wave(`pt:ind:${k}:${id}`, t - 0.7, lo, hi);
+    return { v: Math.round(v * 100) / 100, d: Math.round((v - prev) * 100) / 100 };
+  };
+  const inf = ind('inf', 1.8, 5.8), gd = ind('gdp', 2.4, 5.6), by = ind('by', 3.2, 5.6);
+  const indicators: PublicTreasurySite['indicators'] = [
+    { label: 'Inflation (YoY)', value: `${inf.v.toFixed(1)}%`, delta: inf.d },
+    { label: 'GDP Growth (YoY)', value: `${gd.v.toFixed(1)}%`, delta: gd.d },
+    { label: 'Policy Rate', value: `${(Math.round(wave(`pt:pol:${id}`, t, 2.75, 5.5) * 4) / 4).toFixed(2)}%`, delta: 0, flat: true },
+    { label: 'Exchange Rate (USD)', value: (Math.round(wave(`pt:fx:${id}`, t, 0.97, 1.04) * 100) / 100).toFixed(2), delta: 0, flat: true },
+    { label: 'Bond Yield (10Y)', value: `${by.v.toFixed(2)}%`, delta: by.d },
+  ];
+
+  const updates: PublicTreasurySite['updates'] = [
+    { kind: 'Press Release', title: `Treasury Reports ${rv.collectionRatePct >= 85 ? 'Strong' : 'Resilient'} Fiscal Performance in Q1`, date: '26 May 2025' },
+    { kind: 'Announcement', title: 'Government Securities Auction Results — May 2025', date: '26 May 2025' },
+    { kind: 'Report', title: 'Monthly Economic Review — May 2025', date: '26 May 2025' },
+    { kind: 'News', title: 'New Fiscal Responsibility Framework Launched', date: '24 May 2025' },
+  ];
+
+  return { asOf: '28 May 2025', snapshot, budget, indicators, updates };
+}
