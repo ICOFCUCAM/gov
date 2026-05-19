@@ -312,7 +312,7 @@ export function NationalRecordsLedger({ accent = '#37c7d4', now }: { accent?: st
     <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
       <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
         <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>National records ledger — rolled & synced</span>
-        <span className="text-[8px] uppercase tracking-wider text-ink-muted">{ledger.filter(l => l.rec.stage === 'synced').length}/{ledger.length} synced · facility → ministry → national</span>
+        <span className="text-[8px] uppercase tracking-wider text-ink-muted">{ledger.filter(l => l.rec.stage === 'synced').length}/{ledger.length} synced of rolled-up · facility → ministry → national</span>
       </div>
       <div className="max-h-[200px] space-y-0.5 overflow-y-auto px-3 py-2">
         {ledger.map(({ rec, ministryKey }) => {
@@ -434,7 +434,7 @@ export function NationalBureaucracyPulse({ accent = '#37c7d4', now }: { accent?:
   return (
     <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
       {cell('Dispatch roll-up', `${stats.disp}`)}
-      {cell('Records → national', `${stats.recsSynced}/${stats.recsTotal} synced`)}
+      {cell('Records rolled→synced', `${stats.recsSynced}/${stats.recsTotal}`)}
       {cell('Public service turns', `${stats.enc}`)}
       {cell('Referrals open', `${stats.refOpen}/${stats.refTotal}`)}
       {cell('Enrolments pending', `${stats.enrPending}/${stats.enrTotal}`)}
