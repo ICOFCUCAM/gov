@@ -465,6 +465,7 @@ export function MinistryChainSection({
   const [nm, setNm] = React.useState('');
   const [subj, setSubj] = React.useState('');
   const [byA, setByA] = React.useState('');
+  const [recsAll, setRecsAll] = React.useState(false);
   const roster = React.useMemo(
     () => [...new Set([...baseRoster.map(a => a.name), ...enrolled.filter(e => e.status !== 'pending').map(e => e.name)])],
     [baseRoster, enrolled],
@@ -600,7 +601,13 @@ export function MinistryChainSection({
               className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: accent, color: accent }}>File</button>
           </div>
           <div className="max-h-[132px] space-y-0.5 overflow-y-auto">
-            {filed.slice(-6).reverse().map(r => {
+            {filed.length > 6 ? (
+              <button type="button" onClick={() => setRecsAll(s => !s)}
+                className="focus-ring w-full text-center text-[8px] uppercase tracking-wider text-ink-muted hover:text-ink-soft">
+                {recsAll ? 'show recent only' : `show all ${filed.length} records`}
+              </button>
+            ) : null}
+            {(recsAll ? filed : filed.slice(-6)).slice().reverse().map(r => {
               const at = STAGE_ORDER.indexOf(r.stage);
               const rt = r.stage === 'synced' ? 'ok' : r.stage === 'rolled' ? 'warn' : 'info';
               return (
