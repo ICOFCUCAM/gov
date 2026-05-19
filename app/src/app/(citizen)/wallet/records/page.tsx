@@ -6,6 +6,7 @@ import { PhoneShell } from '@/components/ui/PhoneShell';
 import { Card } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
 import { Button } from '@/components/ui/Button';
+import { civicRef } from '@/lib/civic-ref';
 
 const accessLog = [
   { who: 'Dr. K. Mwangi', where: 'Kiambu Hospital', when: 'Today, 09:02', purpose: 'pneumococcal vaccination follow-up' },
@@ -110,7 +111,7 @@ export default function RecordsPage() {
             ))}
             <li>
               <button type="button"
-                onClick={() => setShareCode(`SHR-${Math.abs([...'amina:health'].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7)) % 1e6}`)}
+                onClick={() => setShareCode(civicRef('SHR', 'amina', 'health'))}
                 className="focus-ring underline underline-offset-2">Share with a clinician</button>
               {shareCode ? (
                 <div className="mt-1 ml-3 text-sm text-ink">

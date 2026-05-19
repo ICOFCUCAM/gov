@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/Button';
 import { post as encPost } from '@/lib/gov/encounter-store';
+import { civicRef } from '@/lib/civic-ref';
 
 // Reusable citizen "talk to an agent" action — an inline disclosure that
 // captures the request and returns a tracked reference, so the button is
@@ -17,8 +18,7 @@ export function AgentRequest({ subjectId, label = 'Talk to an agent', prefix = '
   const submit = () => {
     const body = text.trim();
     if (!body) return;
-    const n = Math.abs([...`${prefix}:${subjectId}:${body}`].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)) % 1e6;
-    const id = `${prefix}-${String(n).padStart(6, '0')}`;
+    const id = civicRef(prefix, subjectId, body);
     // Persist into the live encounter system so the request is a real,
     // official-visible thread — not just a local acknowledgement.
     encPost('enc:support:desk', { author: 'PUBLIC', name: 'Citizen', kind: 'question', body: `[${id}·${subjectId}] ${body}` }, Date.now());

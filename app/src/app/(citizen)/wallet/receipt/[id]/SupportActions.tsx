@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { Button } from '@/components/ui/Button';
 import { post as encPost } from '@/lib/gov/encounter-store';
+import { civicRef } from '@/lib/civic-ref';
 
 // Citizen support actions for a receipt — previously dead buttons. These
 // are self-contained disclosures: an agent request and a complaint, each
@@ -12,14 +13,10 @@ export function SupportActions({ receiptId, hash }: { receiptId: string; hash?: 
   const [text, setText] = React.useState('');
   const [ref, setRef] = React.useState<string | null>(null);
 
-  const ticket = (prefix: string) => {
-    const n = Math.abs([...`${prefix}:${receiptId}:${text}`].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)) % 1e6;
-    return `${prefix}-${String(n).padStart(6, '0')}`;
-  };
   const submit = (prefix: string) => {
     const body = text.trim();
     if (!body) return;
-    const id = ticket(prefix);
+    const id = civicRef(prefix, receiptId, body);
     encPost('enc:support:desk', { author: 'PUBLIC', name: 'Citizen', kind: prefix === 'CMP' ? 'note' : 'question', body: `[${id}·receipt ${receiptId}] ${body}` }, Date.now());
     setRef(id);
     setText('');
