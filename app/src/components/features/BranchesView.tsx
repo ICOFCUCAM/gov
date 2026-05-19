@@ -39,10 +39,19 @@ export function BranchesView() {
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: TONE.link, color: TONE.link, backgroundColor: `color-mix(in srgb, ${TONE.link} 12%, transparent)` }}>{m.label}</span>
           <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
         </div>
-        <span className="rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
-          style={{ borderColor: sep.intact ? TONE.ok : TONE.alert, color: sep.intact ? TONE.ok : TONE.alert, backgroundColor: `color-mix(in srgb, ${sep.intact ? TONE.ok : TONE.alert} 12%, transparent)` }}>
-          Separation of powers · {sep.intact ? 'Intact' : 'Strained'}
-        </span>
+        <div className="flex items-center gap-2">
+          <label htmlFor="state-form" className="text-[9px] font-bold uppercase tracking-[0.16em] text-ink-muted">Constitutional form</label>
+          <select id="state-form" value={form} onChange={e => setForm(e.target.value as StateForm)}
+            className="focus-ring rounded-[3px] border bg-surface px-2 py-1 text-[10px] uppercase tracking-wider text-ink-soft" style={{ borderColor: TONE.neutral }}>
+            {(['republic', 'federation', 'monarchy', 'city-state', 'union', 'parliamentary'] as StateForm[]).map(f => (
+              <option key={f} value={f}>{f}</option>
+            ))}
+          </select>
+          <span className="rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
+            style={{ borderColor: sep.intact ? TONE.ok : TONE.alert, color: sep.intact ? TONE.ok : TONE.alert, backgroundColor: `color-mix(in srgb, ${sep.intact ? TONE.ok : TONE.alert} 12%, transparent)` }}>
+            Separation of powers · {sep.intact ? 'Intact' : 'Strained'}
+          </span>
+        </div>
       </div>
 
       <p className="text-[11px] text-ink-muted">
