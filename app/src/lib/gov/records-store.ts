@@ -101,6 +101,20 @@ export function fileRecord(ministryKey: string, facilityId: string, subject: str
   bump();
 }
 
+/** What the national system can see — records that have ROLLED to a
+ *  ministry or SYNCED nationally, merged across every touched register
+ *  (newest filed last). The apex view of the records chain. */
+export function nationalRecords(limit = 12): { rec: FiledRecord; ministryKey: string }[] {
+  hydrate();
+  const out: { rec: FiledRecord; ministryKey: string }[] = [];
+  for (const list of regs.values()) {
+    for (const r of list) {
+      if (r.stage === 'rolled' || r.stage === 'synced') out.push({ rec: r, ministryKey: r.ministryKey });
+    }
+  }
+  return out.sort((a, b) => a.rec.at - b.rec.at).slice(-limit);
+}
+
 export function advanceRecord(ministryKey: string, facilityId: string, id: string, now: number): void {
   hydrate();
   const list = regs.get(`${ministryKey}:${facilityId}`);

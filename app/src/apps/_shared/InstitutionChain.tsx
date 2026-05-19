@@ -26,7 +26,7 @@ import {
   type EncounterAuthor, type EncounterKind,
 } from '@/lib/gov/encounter-store';
 import {
-  records as recordsOf, fileRecord, advanceRecord, STAGE_ORDER,
+  records as recordsOf, fileRecord, advanceRecord, nationalRecords, STAGE_ORDER,
   subscribe as recSub, version as recVer,
 } from '@/lib/gov/records-store';
 
@@ -215,6 +215,43 @@ export function NationalDispatchDigest({ accent = '#37c7d4', now }: { accent?: s
             <div className="text-ink-soft">{m.body}</div>
           </div>
         ))}
+      </div>
+    </div>
+  );
+}
+
+// The national records ledger — every record that has rolled to a ministry
+// or synced nationally, across all ministries. Primes each ministry's lead
+// facility register so the apex view is deterministic and never empty.
+export function NationalRecordsLedger({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
+  const rv = React.useSyncExternalStore(recSub, recVer, () => 0);
+  const epoch = Math.max(0, Math.floor(now / 4000));
+  const ledger = React.useMemo(() => {
+    for (const k of Object.keys(MINISTRY_CHAIN)) {
+      const fac = facilitiesOf(k, epoch);
+      const d = chainDef(k);
+      for (const f of fac.slice(0, 2)) recordsOf(k, f.id, d.recordNoun, now);
+    }
+    return nationalRecords(12);
+  }, [epoch, now, rv]);
+  return (
+    <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
+      <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+        <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>National records ledger — rolled & synced</span>
+        <span className="text-[8px] uppercase tracking-wider text-ink-muted">facility → ministry → national</span>
+      </div>
+      <div className="max-h-[200px] space-y-0.5 overflow-y-auto px-3 py-2">
+        {ledger.map(({ rec, ministryKey }) => {
+          const rt = rec.stage === 'synced' ? 'ok' : 'warn';
+          return (
+            <div key={rec.id} className="flex items-center gap-2 text-[9.5px]">
+              <span className="shrink-0 font-mono text-[8px] text-ink-muted">{rec.ref}</span>
+              <span className="shrink-0 text-[8px] text-ink-muted">{chainDef(ministryKey).ministry}</span>
+              <span className="min-w-0 flex-1 truncate text-ink-soft">{rec.subject}</span>
+              <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${rt}))` }}>{rec.stage}</span>
+            </div>
+          );
+        })}
       </div>
     </div>
   );
