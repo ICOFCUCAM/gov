@@ -22,6 +22,13 @@ describe('encounter-store', () => {
     expect(last.seeded).toBeFalsy();
   });
 
+  it('caps a thread at 60 live turns, keeping the newest', () => {
+    for (let i = 0; i < 80; i++) post('t:enc:cap', { author: 'PUBLIC', name: 'C', kind: 'note', body: `t${i}` }, 9_000_000 + i);
+    const th = thread('t:enc:cap', 'O', 'C', 9_100_000);
+    expect(th.filter(m => !m.seeded).length).toBeLessThanOrEqual(60);
+    expect(th[th.length - 1]!.body).toBe('t79');
+  });
+
   it('encounterDigest merges threads newest-last within the limit', () => {
     post('t:enc:d1', { author: 'PUBLIC', name: 'C', kind: 'question', body: 'older' }, 4_000_000);
     post('t:enc:d2', { author: 'OFFICIAL', name: 'O', kind: 'result', body: 'newer' }, 4_500_000);

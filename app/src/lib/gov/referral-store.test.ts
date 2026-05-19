@@ -34,6 +34,13 @@ describe('referral-store', () => {
     expect(inbox('EDUCATION', 4_100_000).find(x => x.subject === 'No source')!.recordRef).toBeUndefined();
   });
 
+  it('caps an inbox at 40 live referrals, keeping the newest', () => {
+    for (let i = 0; i < 60; i++) raiseReferral('HEALTH', 'ENVIRONMENT', `r${i}`, 'L', 9_000_000 + i);
+    const inb = inbox('ENVIRONMENT', 9_100_000);
+    expect(inb.filter(r => !r.id.startsWith('seed-')).length).toBeLessThanOrEqual(40);
+    expect(inb[inb.length - 1]!.subject).toBe('r59');
+  });
+
   it('referralDigest merges inboxes newest-last within the limit', () => {
     raiseReferral('HEALTH', 'INTERIOR', 'A', 'L', 5_000_000);
     raiseReferral('FINANCE', 'INTERIOR', 'B', 'L', 5_100_000);
