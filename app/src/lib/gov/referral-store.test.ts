@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { inbox, raiseReferral, advanceReferral, version, REFERRAL_FLOW } from './referral-store';
+import { inbox, raiseReferral, advanceReferral, referralDigest, version, REFERRAL_FLOW } from './referral-store';
 
 describe('referral-store', () => {
   it('seeds a deterministic inbox addressed to the ministry', () => {
@@ -24,5 +24,21 @@ describe('referral-store', () => {
     const r = inbox('JUSTICE', 3_000_000).find(x => x.by === 'Officer')!;
     for (let i = 0; i < 6; i++) advanceReferral('JUSTICE', r.id, 3_000_000);
     expect(inbox('JUSTICE', 3_000_000).find(x => x.id === r.id)!.status).toBe('closed');
+  });
+
+  it('carries optional record provenance', () => {
+    raiseReferral('HEALTH', 'EDUCATION', 'Records cross-check', 'Health liaison', 4_000_000, 'HSP-2-CLI-104');
+    const r = inbox('EDUCATION', 4_000_000).find(x => x.by === 'Health liaison')!;
+    expect(r.recordRef).toBe('HSP-2-CLI-104');
+    raiseReferral('HEALTH', 'EDUCATION', 'No source', 'Health liaison', 4_100_000);
+    expect(inbox('EDUCATION', 4_100_000).find(x => x.subject === 'No source')!.recordRef).toBeUndefined();
+  });
+
+  it('referralDigest merges inboxes newest-last within the limit', () => {
+    raiseReferral('HEALTH', 'INTERIOR', 'A', 'L', 5_000_000);
+    raiseReferral('FINANCE', 'INTERIOR', 'B', 'L', 5_100_000);
+    const d = referralDigest(['INTERIOR', 'FINANCE'], 5_100_000, 5);
+    expect(d.length).toBeLessThanOrEqual(5);
+    for (let i = 1; i < d.length; i++) expect(d[i]!.at).toBeGreaterThanOrEqual(d[i - 1]!.at);
   });
 });
