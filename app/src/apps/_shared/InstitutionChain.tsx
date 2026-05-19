@@ -7,10 +7,10 @@
 
 import * as React from 'react';
 import {
-  chainDef, type Facility, type RecordLineage, type ChainIntegrity,
+  chainDef, MINISTRY_CHAIN, type Facility, type RecordLineage, type ChainIntegrity,
 } from '@/lib/gov/institution-chain';
 import {
-  channel, send, subscribe, version,
+  channel, send, digest, subscribe, version,
   type Dispatch, type DispatchTier,
 } from '@/lib/gov/dispatch-store';
 import {
@@ -184,6 +184,33 @@ export function EncounterThread({
         <button type="button" onClick={submit}
           className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider"
           style={{ borderColor: accent, color: accent }}>Send</button>
+      </div>
+    </div>
+  );
+}
+
+// The national tier reading every ministry's roll-up at once — the apex of
+// the chain, live. Drop into any national/cabinet surface.
+export function NationalDispatchDigest({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
+  const v = React.useSyncExternalStore(subscribe, version, () => 0);
+  const scopes = React.useMemo(() => Object.keys(MINISTRY_CHAIN).map(k => `natl:${k.toLowerCase()}`), []);
+  const feed = React.useMemo(() => digest(scopes, now, 10), [scopes, now, v]);
+  return (
+    <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
+      <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+        <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>National coordination — live ministry roll-up</span>
+        <span className="text-[8px] uppercase tracking-wider text-ink-muted">{scopes.length} ministries · MINISTRY ↔ NATIONAL</span>
+      </div>
+      <div className="max-h-[200px] space-y-1 overflow-y-auto px-3 py-2">
+        {feed.map(m => (
+          <div key={m.id} className="text-[10px]">
+            <span className="font-mono text-[8px] text-ink-muted">{new Date(m.at).toLocaleTimeString('en-GB', { hour12: false })}</span>{' '}
+            <span style={{ color: TIER_C[m.fromTier] }}>{m.from}</span>
+            <span className="text-ink-muted"> → {m.toTier.toLowerCase()}</span>
+            {m.priority !== 'routine' ? <span className="ml-1 text-[7.5px] font-bold uppercase" style={{ color: P_TONE[m.priority] }}>· {m.priority}</span> : null}
+            <div className="text-ink-soft">{m.body}</div>
+          </div>
+        ))}
       </div>
     </div>
   );

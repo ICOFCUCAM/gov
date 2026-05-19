@@ -11,6 +11,7 @@ import { networkPressure } from '@/lib/gov/infrastructure';
 import { scenarioSweep } from '@/lib/gov/simulation';
 import { buildOperationalChain } from '@/lib/gov/operational-chain';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { NationalDispatchDigest } from '@/apps/_shared/InstitutionChain';
 import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
@@ -443,6 +444,8 @@ export function NationalCoordination() {
           </div>
         ))}
       </div>
+
+      <NationalDispatchDigest accent={ACCENT} now={now} />
 
       <p className="text-[10px] text-ink-muted">
         Coordination intelligence is read-only and advisory. The platform surfaces dependency and tempo; humans hold escalation, mitigation and decision authority. No forecasting, no autonomous action.

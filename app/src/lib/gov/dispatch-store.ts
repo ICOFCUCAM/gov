@@ -91,6 +91,15 @@ export function channel(scope: string, now: number): Dispatch[] {
   return channels.get(scope)!;
 }
 
+/** Merged recent traffic across several channels — the national tier
+ *  reading every ministry's roll-up at once (newest last). */
+export function digest(scopes: string[], now: number, limit = 9): Dispatch[] {
+  hydrate();
+  const all: Dispatch[] = [];
+  for (const s of scopes) all.push(...channel(s, now));
+  return all.sort((a, b) => a.at - b.at).slice(-limit);
+}
+
 export function send(scope: string, msg: Omit<Dispatch, 'id' | 'at' | 'seeded'>, now: number): void {
   hydrate();
   const list = channels.get(scope) ?? seedChannel(scope, now);
