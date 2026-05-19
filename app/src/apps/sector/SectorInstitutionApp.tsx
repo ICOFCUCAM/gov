@@ -15,6 +15,7 @@ import { tradeOps } from '@/lib/gov/trade-systems';
 import { environmentOps } from '@/lib/gov/environment-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
+import { InteriorCommand } from '@/apps/interior/InteriorCommand';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { ArchetypeKey } from '@/lib/api/types';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -149,18 +150,29 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   const shown = (focus ?? items).map((m, i) => ({ l: m.l, v: m.v, t: (m.t ?? 'ok') as Tone, s: '', k: `si${i}` }));
   const pTone: Tone = shown.some(x => x.t === 'alert') ? 'alert' : shown.some(x => x.t === 'warn') ? 'warn' : 'ok';
 
+  // The Ministry of Interior command surface is the dense National Security
+  // & Civil Operations ecosystem; other archetypes/domains keep the ops
+  // execution rhythm.
+  const interiorCmd = archetype === 'INTERIOR' && domain === 'command';
+
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      <OpsHeader index={1} title={`${label}${focus ? ` · ${domain}` : ''}`} subtitle="Sovereign Institutional Execution"
-        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
-      <KpiStrip ts={ts} accent={ACC} items={shown} />
-      {!focus && bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
-      {(['AGRICULTURE', 'INTERIOR', 'ENVIRONMENT', 'TRANSPORT'] as ArchetypeKey[]).includes(archetype) ? (
+      {interiorCmd ? (
+        <InteriorCommand id={id} now={now} />
+      ) : (
         <>
-          <FieldPanel instId={id} archetype={archetype} now={now} />
-          <RuntimeQueue scope={`${id}:field`} kind="field" title={`${label} field deployment runtime — stage → task → on-scene → cleared`} by="Field Coordinator" role={role} withheld={withheld} />
+          <OpsHeader index={1} title={`${label}${focus ? ` · ${domain}` : ''}`} subtitle="Sovereign Institutional Execution"
+            posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+          <KpiStrip ts={ts} accent={ACC} items={shown} />
+          {!focus && bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
+          {(['AGRICULTURE', 'INTERIOR', 'ENVIRONMENT', 'TRANSPORT'] as ArchetypeKey[]).includes(archetype) ? (
+            <>
+              <FieldPanel instId={id} archetype={archetype} now={now} />
+              <RuntimeQueue scope={`${id}:field`} kind="field" title={`${label} field deployment runtime — stage → task → on-scene → cleared`} by="Field Coordinator" role={role} withheld={withheld} />
+            </>
+          ) : null}
         </>
-      ) : null}
+      )}
       <ActorChainStrip ministryKey={archetype} idKey={id} now={now} accent={ACC} />
       <MinistryChainSection ministryKey={archetype} id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${domain}`} kind={wf} title={`${label} · ${domain} runtime — execute the institutional workflow`} by="Institution Officer" role={role} withheld={withheld} />
