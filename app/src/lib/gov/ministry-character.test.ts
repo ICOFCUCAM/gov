@@ -23,4 +23,11 @@ describe('ministry character — no two ministries are the same', () => {
     expect(characterFor('interior')?.label).toBe('Ministry of Interior');
     expect(characterFor('does-not-exist')).toBeNull();
   });
+
+  it('accent collision is bounded — at most two ministries may share an accent', () => {
+    const buckets = new Map<string, number>();
+    for (const c of MINISTRY_CHARACTER) buckets.set(c.accent, (buckets.get(c.accent) ?? 0) + 1);
+    for (const n of buckets.values()) expect(n).toBeLessThanOrEqual(2);
+    expect(buckets.size).toBeGreaterThanOrEqual(6);
+  });
 });
