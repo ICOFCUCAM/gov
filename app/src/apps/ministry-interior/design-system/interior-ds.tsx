@@ -27,6 +27,7 @@ const ARCHETYPE: Record<LayoutArchetype, { tag: string; glyph: string }> = {
   workflow: { tag: 'WORKFLOW ORCHESTRATION', glyph: '⇉' },
   fabric: { tag: 'INFRASTRUCTURE FABRIC', glyph: '⌗' },
   runtime: { tag: 'OPERATIONAL RUNTIME', glyph: '⟳' },
+  oversight: { tag: 'CONSTITUTIONAL OVERSIGHT', glyph: '§' },
 };
 
 /**

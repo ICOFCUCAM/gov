@@ -28,6 +28,10 @@ import { InteriorReports } from '@/apps/ministry-interior/domains/InteriorReport
 import { NationalControlBoard } from '@/apps/ministry-interior/domains/NationalControlBoard';
 import { TransactionObservability } from '@/apps/ministry-interior/domains/TransactionObservability';
 import { AntiCorruptionRuntime } from '@/apps/ministry-interior/domains/AntiCorruptionRuntime';
+import { SeparationOfPowers } from '@/apps/ministry-interior/domains/SeparationOfPowers';
+import { SovereignAuthority } from '@/apps/ministry-interior/domains/SovereignAuthority';
+import { OversightMirroring } from '@/apps/ministry-interior/domains/OversightMirroring';
+import { CitizenAccountability } from '@/apps/ministry-interior/domains/CitizenAccountability';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -68,6 +72,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'national-control-board': return <NationalControlBoard id={id} now={now} />;
     case 'transaction-observability': return <TransactionObservability id={id} now={now} />;
     case 'anti-corruption': return <AntiCorruptionRuntime id={id} now={now} />;
+    case 'separation-of-powers': return <SeparationOfPowers id={id} />;
+    case 'sovereign-authority': return <SovereignAuthority id={id} now={now} />;
+    case 'oversight-mirroring': return <OversightMirroring id={id} now={now} />;
+    case 'citizen-accountability': return <CitizenAccountability id={id} now={now} />;
   }
 }
 
