@@ -6,7 +6,7 @@
 // key compatibility. Pure data — no React, no engine — so the navigation
 // framework, shell and manifest all derive from one normalized model.
 
-export type DomainGroupKey = 'command' | 'national' | 'generational' | 'civic' | 'runtime' | 'procedural' | 'economy' | 'temporal' | 'constitutional' | 'civil' | 'federated' | 'infra';
+export type DomainGroupKey = 'command' | 'national' | 'generational' | 'civic' | 'territorial' | 'runtime' | 'procedural' | 'economy' | 'temporal' | 'constitutional' | 'civil' | 'federated' | 'infra';
 
 export interface DomainGroup {
   key: DomainGroupKey;
@@ -39,7 +39,8 @@ export type SurfaceId =
   | 'temporal-forecast' | 'early-warning' | 'continuity-forecast' | 'temporal-corruption'
   | 'national-digital-twin' | 'causality-graph' | 'systemic-collapse-forecast' | 'national-stabilization'
   | 'generational-forecast' | 'institutional-aging' | 'demographic-evolution' | 'constitutional-resilience'
-  | 'civic-trust' | 'procedural-fairness' | 'rights-perception' | 'legitimacy-trajectory';
+  | 'civic-trust' | 'procedural-fairness' | 'rights-perception' | 'legitimacy-trajectory'
+  | 'territorial-continuity' | 'climate-propagation' | 'urbanization-evolution' | 'ecological-resilience';
 
 export interface InteriorDomain {
   key: string;
@@ -59,6 +60,7 @@ export const GROUPS: DomainGroup[] = [
   { key: 'national', label: 'National Digital Twin', purpose: 'Cross-shell causality, systemic collapse forecast & sovereign stabilization' },
   { key: 'generational', label: 'Generational Continuity', purpose: 'Institutional aging, demographic evolution & constitutional durability across decades' },
   { key: 'civic', label: 'Civic Legitimacy', purpose: 'Civic trust, procedural fairness, rights perception & democratic resilience' },
+  { key: 'territorial', label: 'Territorial Continuity', purpose: 'Ecological resilience, climate propagation, urbanization & sustainability' },
   { key: 'runtime', label: 'Sovereign Runtime', purpose: 'National observability, deadline enforcement & anti-corruption' },
   { key: 'procedural', label: 'Procedural Execution', purpose: 'Sovereign workflow chains, appeals, jurisdiction & continuity' },
   { key: 'economy', label: 'Institutional Economy', purpose: 'Finite capacity, strain propagation, resilience & corruption pressure' },
@@ -90,6 +92,11 @@ export const DOMAINS: InteriorDomain[] = [
   { key: 'procedural-fairness', label: 'Procedural Fairness', group: 'civic', accent: '#45c0c8', archetype: 'runtime', surface: 'procedural-fairness', federation: null, identity: 'Fairness continuity & regional imbalance' },
   { key: 'rights-perception', label: 'Rights Perception', group: 'civic', accent: '#54d08f', archetype: 'oversight', surface: 'rights-perception', federation: null, identity: 'Constitutional-confidence dimensions & civic fatigue' },
   { key: 'legitimacy-trajectory', label: 'Legitimacy Trajectory', group: 'civic', accent: '#8a7df0', archetype: 'oversight', surface: 'legitimacy-trajectory', federation: null, identity: 'Long-term legitimacy forecast & ethical guardrails' },
+  // ── Territorial Continuity ────────────────────────────────────────
+  { key: 'territorial-continuity', label: 'Territorial Continuity', group: 'territorial', accent: '#54d08f', archetype: 'command', surface: 'territorial-continuity', federation: null, identity: 'Per-region ecological strain & survivability' },
+  { key: 'climate-propagation', label: 'Climate Propagation', group: 'territorial', accent: '#45c0c8', archetype: 'fabric', surface: 'climate-propagation', federation: null, identity: 'Ecological causality → institutional load & water continuity' },
+  { key: 'urbanization-evolution', label: 'Urbanization Evolution', group: 'territorial', accent: '#e0673a', archetype: 'runtime', surface: 'urbanization-evolution', federation: null, identity: 'Territorial transformation & disaster adaptation' },
+  { key: 'ecological-resilience', label: 'Ecological Resilience', group: 'territorial', accent: '#8a7df0', archetype: 'oversight', surface: 'ecological-resilience', federation: null, identity: 'Long-horizon ecological resilience & safeguards' },
   // ── Sovereign Runtime ─────────────────────────────────────────────
   { key: 'national-control-board', label: 'National Control Board', group: 'runtime', accent: '#e0673a', archetype: 'command', surface: 'national-control-board', federation: null, identity: 'National process observability & execution governance' },
   { key: 'transaction-observability', label: 'Transaction Observability', group: 'runtime', accent: '#45c0c8', archetype: 'runtime', surface: 'transaction-observability', federation: null, identity: 'Nationally observable citizen-transaction runtime' },

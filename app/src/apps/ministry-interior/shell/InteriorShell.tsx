@@ -56,6 +56,10 @@ import { CivicTrust } from '@/apps/ministry-interior/domains/CivicTrust';
 import { ProceduralFairness } from '@/apps/ministry-interior/domains/ProceduralFairness';
 import { RightsPerception } from '@/apps/ministry-interior/domains/RightsPerception';
 import { LegitimacyTrajectory } from '@/apps/ministry-interior/domains/LegitimacyTrajectory';
+import { TerritorialContinuity } from '@/apps/ministry-interior/domains/TerritorialContinuity';
+import { ClimatePropagation } from '@/apps/ministry-interior/domains/ClimatePropagation';
+import { UrbanizationEvolution } from '@/apps/ministry-interior/domains/UrbanizationEvolution';
+import { EcologicalResilience } from '@/apps/ministry-interior/domains/EcologicalResilience';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -124,6 +128,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'procedural-fairness': return <ProceduralFairness id={id} now={now} />;
     case 'rights-perception': return <RightsPerception id={id} now={now} />;
     case 'legitimacy-trajectory': return <LegitimacyTrajectory id={id} now={now} />;
+    case 'territorial-continuity': return <TerritorialContinuity id={id} now={now} />;
+    case 'climate-propagation': return <ClimatePropagation id={id} now={now} />;
+    case 'urbanization-evolution': return <UrbanizationEvolution id={id} now={now} />;
+    case 'ecological-resilience': return <EcologicalResilience id={id} now={now} />;
   }
 }
 
