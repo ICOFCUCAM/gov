@@ -466,7 +466,8 @@ export function MinistryChainSection({
 
   return (
     <div className="space-y-2">
-      <button type="button" onClick={toggleExpanded} aria-expanded={expanded}
+      <button type="button" onClick={toggleExpanded} aria-expanded={expanded} aria-controls={`chain-${ministryKey}`}
+        aria-label={`${expanded ? 'Collapse' : 'Expand'} the ${d.ministry} institutional chain`}
         className="focus-ring flex w-full items-center justify-between rounded-[4px] border px-3 py-1.5"
         style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
         <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>
@@ -478,7 +479,7 @@ export function MinistryChainSection({
         </span>
       </button>
       {expanded ? (
-    <div className="grid gap-2 lg:grid-cols-3">
+    <div id={`chain-${ministryKey}`} className="grid gap-2 lg:grid-cols-3">
       <div className="rounded-[4px] border lg:col-span-2" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
         <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
           <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>{d.ministry} · facility network</span>
