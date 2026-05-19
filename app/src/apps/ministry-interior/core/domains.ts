@@ -45,7 +45,7 @@ export type SurfaceId =
   | 'knowledge-continuity' | 'expertise-transfer' | 'innovation-continuity' | 'cognitive-trajectory'
   | 'geopolitical-continuity' | 'migration-humanitarian' | 'global-shock-intelligence' | 'strategic-trajectory'
   | 'existential-continuity' | 'pandemic-biosurvival' | 'post-collapse-recovery' | 'existential-trajectory'
-  | 'civilization-organism';
+  | 'civilization-organism' | 'sovereign-safeguards-ledger';
 
 export interface InteriorDomain {
   key: string;
@@ -172,6 +172,7 @@ export const DOMAINS: InteriorDomain[] = [
   { key: 'fabric', label: 'Interoperability Fabric', group: 'infra', accent: '#45c0c8', archetype: 'fabric', surface: 'fabric', federation: null, identity: 'Cross-institution contract fabric' },
   { key: 'audit', label: 'Audit & Compliance', group: 'infra', accent: '#d8a23a', archetype: 'registry', surface: 'audit', federation: null, identity: 'Tamper-evident audit & chain integrity' },
   { key: 'reports', label: 'Reports & Analytics', group: 'infra', accent: '#54d08f', archetype: 'analytics', surface: 'reports', federation: null, identity: 'Consolidated Interior reporting' },
+  { key: 'sovereign-safeguards', label: 'Sovereign Safeguards Ledger', group: 'infra', accent: '#d8a23a', archetype: 'oversight', surface: 'sovereign-safeguards-ledger', federation: null, identity: 'Unified registry of every constitutional safeguard family' },
 ];
 
 // Migration-safe compatibility: legacy generic-sector / blueprint nav keys
