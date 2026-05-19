@@ -6,7 +6,7 @@
 // key compatibility. Pure data — no React, no engine — so the navigation
 // framework, shell and manifest all derive from one normalized model.
 
-export type DomainGroupKey = 'command' | 'national' | 'generational' | 'civic' | 'territorial' | 'civilizational' | 'runtime' | 'procedural' | 'economy' | 'temporal' | 'constitutional' | 'civil' | 'federated' | 'infra';
+export type DomainGroupKey = 'command' | 'national' | 'generational' | 'civic' | 'territorial' | 'civilizational' | 'cognitive' | 'runtime' | 'procedural' | 'economy' | 'temporal' | 'constitutional' | 'civil' | 'federated' | 'infra';
 
 export interface DomainGroup {
   key: DomainGroupKey;
@@ -41,7 +41,8 @@ export type SurfaceId =
   | 'generational-forecast' | 'institutional-aging' | 'demographic-evolution' | 'constitutional-resilience'
   | 'civic-trust' | 'procedural-fairness' | 'rights-perception' | 'legitimacy-trajectory'
   | 'territorial-continuity' | 'climate-propagation' | 'urbanization-evolution' | 'ecological-resilience'
-  | 'civilizational-identity' | 'migration-integration' | 'heritage-memory' | 'civilizational-trajectory';
+  | 'civilizational-identity' | 'migration-integration' | 'heritage-memory' | 'civilizational-trajectory'
+  | 'knowledge-continuity' | 'expertise-transfer' | 'innovation-continuity' | 'cognitive-trajectory';
 
 export interface InteriorDomain {
   key: string;
@@ -63,6 +64,7 @@ export const GROUPS: DomainGroup[] = [
   { key: 'civic', label: 'Civic Legitimacy', purpose: 'Civic trust, procedural fairness, rights perception & democratic resilience' },
   { key: 'territorial', label: 'Territorial Continuity', purpose: 'Ecological resilience, climate propagation, urbanization & sustainability' },
   { key: 'civilizational', label: 'Civilizational Continuity', purpose: 'Constitutional identity, cultural resilience, heritage memory & pluralistic cohesion' },
+  { key: 'cognitive', label: 'Knowledge Continuity', purpose: 'Educational resilience, constitutional literacy, expertise transfer & innovation' },
   { key: 'runtime', label: 'Sovereign Runtime', purpose: 'National observability, deadline enforcement & anti-corruption' },
   { key: 'procedural', label: 'Procedural Execution', purpose: 'Sovereign workflow chains, appeals, jurisdiction & continuity' },
   { key: 'economy', label: 'Institutional Economy', purpose: 'Finite capacity, strain propagation, resilience & corruption pressure' },
@@ -104,6 +106,11 @@ export const DOMAINS: InteriorDomain[] = [
   { key: 'migration-integration', label: 'Migration & Integration', group: 'civilizational', accent: '#45c0c8', archetype: 'fabric', surface: 'migration-integration', federation: null, identity: 'Pluralistic integration continuity & inclusion' },
   { key: 'heritage-memory', label: 'Heritage & Memory', group: 'civilizational', accent: '#54d08f', archetype: 'runtime', surface: 'heritage-memory', federation: null, identity: 'Heritage, language & constitutional-memory continuity' },
   { key: 'civilizational-trajectory', label: 'Civilizational Trajectory', group: 'civilizational', accent: '#8a7df0', archetype: 'oversight', surface: 'civilizational-trajectory', federation: null, identity: 'Long-horizon identity continuity & pluralistic safeguards' },
+  // ── Knowledge Continuity ──────────────────────────────────────────
+  { key: 'knowledge-continuity', label: 'Knowledge Continuity', group: 'cognitive', accent: '#5fb0ff', archetype: 'command', surface: 'knowledge-continuity', federation: null, identity: 'Aggregate educational resilience & constitutional literacy' },
+  { key: 'expertise-transfer', label: 'Expertise Transfer', group: 'cognitive', accent: '#45c0c8', archetype: 'fabric', surface: 'expertise-transfer', federation: null, identity: 'Institutional knowledge transfer & succession' },
+  { key: 'innovation-continuity', label: 'Innovation Continuity', group: 'cognitive', accent: '#54d08f', archetype: 'runtime', surface: 'innovation-continuity', federation: null, identity: 'Scientific/innovation & institutional cognitive resilience' },
+  { key: 'cognitive-trajectory', label: 'Cognitive Trajectory', group: 'cognitive', accent: '#8a7df0', archetype: 'oversight', surface: 'cognitive-trajectory', federation: null, identity: 'Long-horizon knowledge continuity & ethical safeguards' },
   // ── Sovereign Runtime ─────────────────────────────────────────────
   { key: 'national-control-board', label: 'National Control Board', group: 'runtime', accent: '#e0673a', archetype: 'command', surface: 'national-control-board', federation: null, identity: 'National process observability & execution governance' },
   { key: 'transaction-observability', label: 'Transaction Observability', group: 'runtime', accent: '#45c0c8', archetype: 'runtime', surface: 'transaction-observability', federation: null, identity: 'Nationally observable citizen-transaction runtime' },

@@ -64,6 +64,10 @@ import { CivilizationalIdentity } from '@/apps/ministry-interior/domains/Civiliz
 import { MigrationIntegration } from '@/apps/ministry-interior/domains/MigrationIntegration';
 import { HeritageMemory } from '@/apps/ministry-interior/domains/HeritageMemory';
 import { CivilizationalTrajectory } from '@/apps/ministry-interior/domains/CivilizationalTrajectory';
+import { KnowledgeContinuity } from '@/apps/ministry-interior/domains/KnowledgeContinuity';
+import { ExpertiseTransfer } from '@/apps/ministry-interior/domains/ExpertiseTransfer';
+import { InnovationContinuity } from '@/apps/ministry-interior/domains/InnovationContinuity';
+import { CognitiveTrajectory } from '@/apps/ministry-interior/domains/CognitiveTrajectory';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -140,6 +144,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'migration-integration': return <MigrationIntegration id={id} now={now} />;
     case 'heritage-memory': return <HeritageMemory id={id} now={now} />;
     case 'civilizational-trajectory': return <CivilizationalTrajectory id={id} now={now} />;
+    case 'knowledge-continuity': return <KnowledgeContinuity id={id} now={now} />;
+    case 'expertise-transfer': return <ExpertiseTransfer id={id} now={now} />;
+    case 'innovation-continuity': return <InnovationContinuity id={id} now={now} />;
+    case 'cognitive-trajectory': return <CognitiveTrajectory id={id} now={now} />;
   }
 }
 
