@@ -8,6 +8,7 @@ import { FieldPanel } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { emergencyOps } from '@/lib/gov/agency-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
+import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -60,6 +61,7 @@ export function EmergencyResponseApp({ appId, domain, now, role, withheld }: {
       {fieldDomain ? (
         <>
           <FieldPanel instId={appId} archetype="INTERIOR" now={now} />
+          <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
           <RuntimeQueue scope={`${appId}:field`} kind="field" title="Responder field deployment — stage → task → on-scene → cleared" by="Field Coordinator" role={role} withheld={withheld} />
         </>
       ) : null}

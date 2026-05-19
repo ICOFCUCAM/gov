@@ -7,6 +7,7 @@ import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { customsOps } from '@/lib/gov/agency-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
+import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -51,6 +52,7 @@ export function CustomsApp({ appId, domain, now, role, withheld }: {
         { label: 'Revenue index', pct: o.revenueIdx, tone: (o.revenueIdx >= 70 ? 'ok' : 'warn') as Tone, tail: `${o.revenueIdx}` },
         { label: 'Clearance speed', pct: Math.max(0, 100 - o.clearanceMedianHrs * 1.5), tone: (o.clearanceMedianHrs >= 36 ? 'alert' : 'warn') as Tone, tail: `${o.clearanceMedianHrs}h` },
       ]} />
+      <MinistryChainSection ministryKey="TRADE" id={appId} now={now} accent={ACC} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'permit'} title={`${label} runtime — execute the customs workflow`} by="Customs Officer" role={role} withheld={withheld} />
     </div>
   );
