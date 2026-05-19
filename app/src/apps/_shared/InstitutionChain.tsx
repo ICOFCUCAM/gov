@@ -25,6 +25,10 @@ import {
   subscribe as encSub, version as encVer,
   type EncounterAuthor, type EncounterKind,
 } from '@/lib/gov/encounter-store';
+import {
+  records as recordsOf, fileRecord, advanceRecord, STAGE_ORDER,
+  subscribe as recSub, version as recVer,
+} from '@/lib/gov/records-store';
 
 const TIER_C: Record<string, string> = {
   ACTOR: 'rgb(var(--c-link))', FACILITY: 'rgb(var(--c-ok))',
@@ -234,7 +238,10 @@ export function MinistryChainSection({
   const integrity = integrityOf(ministryKey, epoch);
   const baseRoster = actorsOf(ministryKey, myFac.id, epoch);
   const enrolled = React.useMemo(() => enrollments(ministryKey, myFac.id, d.actorRole, now), [ministryKey, myFac.id, d.actorRole, now, ev]);
+  const rv = React.useSyncExternalStore(recSub, recVer, () => 0);
+  const filed = React.useMemo(() => recordsOf(ministryKey, myFac.id, d.recordNoun, now), [ministryKey, myFac.id, d.recordNoun, now, rv]);
   const [nm, setNm] = React.useState('');
+  const [subj, setSubj] = React.useState('');
   const iTone = integrity.status === 'synchronised' ? 'ok' : integrity.status === 'lagging' ? 'warn' : 'alert';
   const stC = (s: string) => (s === 'active' || s === 'operational' ? 'ok' : s === 'verified' || s === 'strained' ? 'warn' : s === 'pending' ? 'info' : 'alert');
 
@@ -294,6 +301,40 @@ export function MinistryChainSection({
                 ) : null}
               </div>
             ))}
+          </div>
+        </div>
+        {/* Records desk — actor files at the facility, then walks it up */}
+        <div className="border-t px-3 py-2" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-ink-muted">Records desk · {myFac.id}</span>
+            <span className="text-[8px] text-ink-muted">{filed.length} {d.recordNoun}s · captured → held → committed → rolled → synced</span>
+          </div>
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <input value={subj} onChange={e => setSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && subj.trim()) { fileRecord(ministryKey, myFac.id, subj, d.actorRole, d.recordNoun, now); setSubj(''); } }}
+              placeholder={`File a ${d.recordNoun} at ${myFac.id}…`}
+              className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
+            <button type="button" onClick={() => { if (subj.trim()) { fileRecord(ministryKey, myFac.id, subj, d.actorRole, d.recordNoun, now); setSubj(''); } }}
+              className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: accent, color: accent }}>File</button>
+          </div>
+          <div className="max-h-[132px] space-y-0.5 overflow-y-auto">
+            {filed.slice(-6).reverse().map(r => {
+              const at = STAGE_ORDER.indexOf(r.stage);
+              const rt = r.stage === 'synced' ? 'ok' : r.stage === 'rolled' ? 'warn' : 'info';
+              return (
+                <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
+                  <span className="shrink-0 font-mono text-[8px] text-ink-muted">{r.ref}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject}</span>
+                  <span className="shrink-0 font-mono text-[7.5px] text-ink-muted">{at + 1}/5</span>
+                  <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${rt}))` }}>{r.stage}</span>
+                  {r.stage !== 'synced' ? (
+                    <button type="button" onClick={() => advanceRecord(ministryKey, myFac.id, r.id, now)}
+                      className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
+                      → {STAGE_ORDER[at + 1]}
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
