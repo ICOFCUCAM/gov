@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
 import { Card } from '@/components/ui/Card';
-import { Button } from '@/components/ui/Button';
 import { Plain } from '@/components/ui/Plain';
 import { Timeline } from '@/components/ui/Timeline';
 import { PermitStatusBadge } from '@/components/ui/StatusBadge';
 import { CopilotPanel } from '@/components/ui/CopilotPanel';
 import { ContestDialog } from '@/components/features/ContestDialog';
+import { AgentRequest } from '@/components/ui/AgentRequest';
 import { getPermit } from '@/lib/data/store';
 
 export const dynamic = 'force-dynamic';
@@ -99,9 +99,9 @@ export default function PermitDetailPage({ params }: { params: { id: string } })
 
         <section>
           <h3 className="font-semibold text-lg mb-2">If something's wrong</h3>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap items-start gap-3">
             <ContestDialog receiptId={permit.id} />
-            <Button variant="secondary">Talk to an agent</Button>
+            <AgentRequest subjectId={permit.id} />
           </div>
           <p className="text-sm text-ink-muted mt-2">
             Questioning a decision never delays or penalises your application.
