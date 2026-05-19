@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { thread, post, version } from './encounter-store';
+import { thread, post, encounterDigest, version } from './encounter-store';
 
 describe('encounter-store', () => {
   it('seeds a deterministic non-empty thread with both parties', () => {
@@ -20,5 +20,14 @@ describe('encounter-store', () => {
     const last = t[t.length - 1]!;
     expect(last.body).toBe('Is my referral approved?');
     expect(last.seeded).toBeFalsy();
+  });
+
+  it('encounterDigest merges threads newest-last within the limit', () => {
+    post('t:enc:d1', { author: 'PUBLIC', name: 'C', kind: 'question', body: 'older' }, 4_000_000);
+    post('t:enc:d2', { author: 'OFFICIAL', name: 'O', kind: 'result', body: 'newer' }, 4_500_000);
+    const d = encounterDigest(['t:enc:d1', 't:enc:d2'], 'O', 'C', 4_500_000, 6);
+    expect(d.length).toBeLessThanOrEqual(6);
+    for (let i = 1; i < d.length; i++) expect(d[i]!.msg.at).toBeGreaterThanOrEqual(d[i - 1]!.msg.at);
+    expect(d[d.length - 1]!.msg.body).toBe('newer');
   });
 });

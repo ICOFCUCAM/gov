@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { records, fileRecord, advanceRecord, version, STAGE_ORDER } from './records-store';
+import { records, fileRecord, advanceRecord, nationalRecords, version, STAGE_ORDER } from './records-store';
 
 describe('records-store', () => {
   it('seeds a deterministic non-empty register with valid stages', () => {
@@ -27,5 +27,18 @@ describe('records-store', () => {
     const r = list.find(x => x.byActor === 'Trade officer')!;
     for (let i = 0; i < 8; i++) advanceRecord('TRADE', 'TRD-9', r.id, 3_000_000);
     expect(records('TRADE', 'TRD-9', 'licence record', 3_000_000).find(x => x.id === r.id)!.stage).toBe('synced');
+  });
+
+  it('nationalRecords only surfaces rolled or synced records, newest last', () => {
+    fileRecord('ENERGY', 'GRD-3', 'Grid sync', 'Engineer', 'grid log', 4_000_000);
+    const list = records('ENERGY', 'GRD-3', 'grid log', 4_000_000);
+    const r = list.find(x => x.byActor === 'Engineer')!;
+    advanceRecord('ENERGY', 'GRD-3', r.id, 4_000_000); // held
+    advanceRecord('ENERGY', 'GRD-3', r.id, 4_000_000); // committed
+    advanceRecord('ENERGY', 'GRD-3', r.id, 4_000_000); // rolled
+    const nat = nationalRecords(50);
+    expect(nat.every(n => n.rec.stage === 'rolled' || n.rec.stage === 'synced')).toBe(true);
+    expect(nat.some(n => n.rec.id === r.id)).toBe(true);
+    for (let i = 1; i < nat.length; i++) expect(nat[i]!.rec.at).toBeGreaterThanOrEqual(nat[i - 1]!.rec.at);
   });
 });
