@@ -11,7 +11,9 @@ import {
   bankingRails, citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
-import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
+import { MinistryChainSection, InstitutionChainStrip } from '@/apps/_shared/InstitutionChain';
+import { facilities, actors, recordLineage, chainIntegrity } from '@/lib/gov/institution-chain';
+import { pickIndex } from '@/lib/pick-index';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -36,6 +38,12 @@ export function TreasuryApp({ instanceId, domain, now, role, withheld }: {
 }) {
   const id = instanceId;
   const ts = now / 4000;
+  const tEpoch = Math.max(0, Math.floor(ts));
+  const tBranches = facilities('FINANCE', tEpoch);
+  const tBranch = tBranches[pickIndex(id, tBranches.length, 7)] ?? tBranches[0]!;
+  const tAssessor = actors('FINANCE', tBranch.id, tEpoch)[0]?.name ?? 'Revenue assessor';
+  const tLineage = recordLineage(`FISC-${id}`, tAssessor, tBranch, 'FINANCE', tEpoch);
+  const tInteg = chainIntegrity('FINANCE', tEpoch);
   const d = WF[domain] ? domain : 'command';
   const label = LABEL[d] ?? 'Fiscal Command';
 
@@ -115,6 +123,8 @@ export function TreasuryApp({ instanceId, domain, now, role, withheld }: {
         posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'STRAINED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
       <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
       <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} />
+      <InstitutionChainStrip accent={ACC} ministryKey="FINANCE" facility={tBranch}
+        actorName={tAssessor} lineage={tLineage} integrity={tInteg} />
       <MinistryChainSection ministryKey="FINANCE" id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'procurement'} title={`${label} runtime — execute the fiscal workflow`} by="Treasury Officer" role={role} withheld={withheld} />
     </div>
