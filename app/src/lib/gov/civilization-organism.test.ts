@@ -21,4 +21,14 @@ describe('civilization organism apex synthesis', () => {
     expect(o.safeguardSetCount).toBe(6);
     expect(o.totalProhibitedCount).toBeGreaterThan(30);
   });
+
+  it('exposes a dominant (worst-performing) layer and a 3-layer reinforcement priority', () => {
+    const o = civilizationOrganism(4000 * 410);
+    expect(o.priorityLayers.length).toBeGreaterThan(0);
+    expect(o.priorityLayers.length).toBeLessThanOrEqual(3);
+    expect(o.dominantLayer.key).toBe(o.priorityLayers[0]!.key);
+    for (let i = 1; i < o.priorityLayers.length; i++) {
+      expect(o.priorityLayers[i - 1]!.index).toBeLessThanOrEqual(o.priorityLayers[i]!.index);
+    }
+  });
 });

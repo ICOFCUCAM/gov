@@ -26,8 +26,9 @@ describe('cross-engine safeguard sweep', () => {
   it('no engine board leaks any structural prohibition slug from any set', () => {
     const allSlugs = SAFEGUARD_REGISTRY.flatMap(s => s.prohibited as string[]);
     for (const [, fn] of Object.entries(BOARDS)) {
-      const { prohibited: _p, prohibitedActionsBlocked: _pa, ...rest } = fn(4000 * 160) as
+      const board = fn(4000 * 160) as unknown as
         { prohibited?: readonly string[]; prohibitedActionsBlocked?: readonly string[] } & Record<string, unknown>;
+      const { prohibited: _p, prohibitedActionsBlocked: _pa, ...rest } = board;
       void _p; void _pa;
       const json = JSON.stringify(rest);
       for (const slug of allSlugs) {

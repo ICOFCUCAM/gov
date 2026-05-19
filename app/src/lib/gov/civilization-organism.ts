@@ -33,6 +33,8 @@ export interface CivilizationOrganism {
   totalProhibitedCount: number;
   alerts: number;
   warns: number;
+  dominantLayer: LayerReading;           // worst-performing layer (highest reinforcement priority)
+  priorityLayers: LayerReading[];        // up to 3 layers ranked by reinforcement priority
 }
 
 const tone = (good: number, badThreshold = 45, warnThreshold = 62): 'ok' | 'warn' | 'alert' =>
@@ -86,6 +88,7 @@ export function civilizationOrganism(now: number): CivilizationOrganism {
     KNOWLEDGE_SAFEGUARDS, GEOPOLITICAL_SAFEGUARDS, EXISTENTIAL_SAFEGUARDS];
   const totalProhibitedCount = safeguardSets.reduce((s, g) => s + g.prohibited.length, 0);
 
+  const ranked = [...layers].sort((a, b) => a.index - b.index);
   return {
     epoch: Math.max(0, Math.floor(now / 4000)),
     layers,
@@ -94,5 +97,7 @@ export function civilizationOrganism(now: number): CivilizationOrganism {
     safeguardSetCount: safeguardSets.length,
     totalProhibitedCount,
     alerts, warns,
+    dominantLayer: ranked[0]!,
+    priorityLayers: ranked.slice(0, 3),
   };
 }
