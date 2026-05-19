@@ -40,6 +40,10 @@ import { InstitutionalEconomy } from '@/apps/ministry-interior/domains/Instituti
 import { PressurePropagation } from '@/apps/ministry-interior/domains/PressurePropagation';
 import { ResilienceContinuity } from '@/apps/ministry-interior/domains/ResilienceContinuity';
 import { CorruptionPressure } from '@/apps/ministry-interior/domains/CorruptionPressure';
+import { TemporalForecast } from '@/apps/ministry-interior/domains/TemporalForecast';
+import { EarlyWarning } from '@/apps/ministry-interior/domains/EarlyWarning';
+import { ContinuityForecast } from '@/apps/ministry-interior/domains/ContinuityForecast';
+import { TemporalCorruption } from '@/apps/ministry-interior/domains/TemporalCorruption';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -92,6 +96,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'pressure-propagation': return <PressurePropagation id={id} now={now} />;
     case 'resilience-continuity': return <ResilienceContinuity id={id} now={now} />;
     case 'corruption-pressure': return <CorruptionPressure id={id} now={now} />;
+    case 'temporal-forecast': return <TemporalForecast id={id} now={now} />;
+    case 'early-warning': return <EarlyWarning id={id} now={now} />;
+    case 'continuity-forecast': return <ContinuityForecast id={id} now={now} />;
+    case 'temporal-corruption': return <TemporalCorruption id={id} now={now} />;
   }
 }
 

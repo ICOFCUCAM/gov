@@ -6,7 +6,7 @@
 // key compatibility. Pure data — no React, no engine — so the navigation
 // framework, shell and manifest all derive from one normalized model.
 
-export type DomainGroupKey = 'command' | 'runtime' | 'procedural' | 'economy' | 'constitutional' | 'civil' | 'federated' | 'infra';
+export type DomainGroupKey = 'command' | 'runtime' | 'procedural' | 'economy' | 'temporal' | 'constitutional' | 'civil' | 'federated' | 'infra';
 
 export interface DomainGroup {
   key: DomainGroupKey;
@@ -35,7 +35,8 @@ export type SurfaceId =
   | 'national-control-board' | 'transaction-observability' | 'anti-corruption'
   | 'separation-of-powers' | 'sovereign-authority' | 'oversight-mirroring' | 'citizen-accountability'
   | 'workflow-orchestration' | 'appeals-rights' | 'jurisdiction-delegation' | 'constitutional-interruption'
-  | 'institutional-economy' | 'pressure-propagation' | 'resilience-continuity' | 'corruption-pressure';
+  | 'institutional-economy' | 'pressure-propagation' | 'resilience-continuity' | 'corruption-pressure'
+  | 'temporal-forecast' | 'early-warning' | 'continuity-forecast' | 'temporal-corruption';
 
 export interface InteriorDomain {
   key: string;
@@ -55,6 +56,7 @@ export const GROUPS: DomainGroup[] = [
   { key: 'runtime', label: 'Sovereign Runtime', purpose: 'National observability, deadline enforcement & anti-corruption' },
   { key: 'procedural', label: 'Procedural Execution', purpose: 'Sovereign workflow chains, appeals, jurisdiction & continuity' },
   { key: 'economy', label: 'Institutional Economy', purpose: 'Finite capacity, strain propagation, resilience & corruption pressure' },
+  { key: 'temporal', label: 'Temporal Intelligence', purpose: 'Forecasting, early warning, anticipatory continuity' },
   { key: 'constitutional', label: 'Constitutional Governance', purpose: 'Separation of powers, multi-key authority & citizen rights' },
   { key: 'civil', label: 'Civil Governance', purpose: 'Civil administration & territorial governance' },
   { key: 'federated', label: 'Federated Operations', purpose: 'Embedded sovereign operational shells' },
@@ -81,6 +83,11 @@ export const DOMAINS: InteriorDomain[] = [
   { key: 'pressure-propagation', label: 'Pressure Propagation', group: 'economy', accent: '#e0673a', archetype: 'fabric', surface: 'pressure-propagation', federation: null, identity: 'National strain mesh & regional propagation' },
   { key: 'resilience-continuity', label: 'Resilience & Continuity', group: 'economy', accent: '#5fb0ff', archetype: 'oversight', surface: 'resilience-continuity', federation: null, identity: 'Resilience modes & sovereign stabilization' },
   { key: 'corruption-pressure', label: 'Corruption Pressure', group: 'economy', accent: '#d8a23a', archetype: 'runtime', surface: 'corruption-pressure', federation: null, identity: 'Lawful overload vs suspicious obstruction' },
+  // ── Temporal Intelligence ─────────────────────────────────────────
+  { key: 'temporal-forecast', label: 'Temporal Forecast', group: 'temporal', accent: '#45c0c8', archetype: 'runtime', surface: 'temporal-forecast', federation: null, identity: 'Seasonal congestion & pressure trajectories' },
+  { key: 'early-warning', label: 'National Early-Warning', group: 'temporal', accent: '#e0673a', archetype: 'oversight', surface: 'early-warning', federation: null, identity: 'Collapse-signal detection before failure' },
+  { key: 'continuity-forecast', label: 'Continuity Forecast', group: 'temporal', accent: '#5fb0ff', archetype: 'oversight', surface: 'continuity-forecast', federation: null, identity: 'Anticipatory continuity & pre-emptive orchestration' },
+  { key: 'temporal-corruption', label: 'Temporal Corruption', group: 'temporal', accent: '#d8a23a', archetype: 'runtime', surface: 'temporal-corruption', federation: null, identity: 'Corruption emergence across time' },
   // ── Constitutional Governance ─────────────────────────────────────
   { key: 'separation-of-powers', label: 'Separation of Powers', group: 'constitutional', accent: '#8a7df0', archetype: 'oversight', surface: 'separation-of-powers', federation: null, identity: 'Federated branches & bounded powers' },
   { key: 'sovereign-authority', label: 'Sovereign Authority', group: 'constitutional', accent: '#8a7df0', archetype: 'oversight', surface: 'sovereign-authority', federation: null, identity: 'Multi-key distributed authorization runtime' },
