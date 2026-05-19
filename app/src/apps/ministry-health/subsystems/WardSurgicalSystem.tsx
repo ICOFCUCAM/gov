@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { wardSurgicalOps } from '@/lib/gov/health-operations';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { CommandPanel, sc, type Tone } from '@/apps/_shared/SovereignUI';
@@ -79,6 +80,10 @@ export function WardSurgicalSystem({ id, now, role, withheld }: {
           })}
         </div>
       </CommandPanel>
+
+      <DispatchChannel scope={`health:wardline:${id}`} now={now} accent={ACC}
+        selfTier="FACILITY" selfName="Ward charge desk" toTier="ACTOR"
+        title="Wards ↔ theatre & ICU — bed, transfer & escalation coordination" />
 
       <RuntimeQueue scope={`${id}:wards`} kind="case" title="Ward & surgical runtime — admit → schedule → operate → discharge" by="Charge Nurse" role={role} withheld={withheld} />
     </div>

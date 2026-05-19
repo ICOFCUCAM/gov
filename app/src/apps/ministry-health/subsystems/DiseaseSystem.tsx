@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { diseaseCommandView } from '@/lib/gov/health-operations';
 import { healthGeo } from '@/lib/gov/health-geo';
 import { GeoMap } from '@/apps/_shared/GeoMap';
@@ -157,6 +158,10 @@ export function DiseaseSystem({ id, now, role, withheld }: {
           </div>
         </CommandPanel>
       </div>
+
+      <DispatchChannel scope={`health:survline:${id}`} now={now} accent={ACC}
+        selfTier="MINISTRY" selfName="Surveillance cell" toTier="FACILITY"
+        title="Surveillance ↔ field teams & labs — signals, samples & containment" />
 
       <RuntimeQueue
         scope={`${id}:disease`}

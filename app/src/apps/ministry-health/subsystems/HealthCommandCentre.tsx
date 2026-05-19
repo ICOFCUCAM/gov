@@ -9,6 +9,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { GeoMap } from '@/apps/_shared/GeoMap';
 import { healthGeo } from '@/lib/gov/health-geo';
 import { CommandHeader, CommandPanel, KpiSpark, Sparkline, Donut, TrendChart, Stepper, sc, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
@@ -260,6 +261,10 @@ export function HealthCommandCentre({ id, now, role, withheld }: {
           </div>
         </CommandPanel>
       </div>
+
+      <DispatchChannel scope={`natl:health`} now={now} accent={ACC}
+        selfTier="MINISTRY" selfName="Health Command" toTier="NATIONAL"
+        title="Health Command ↔ national system — directives & posture" />
 
       <RuntimeQueue
         scope={`${id}:command`}
