@@ -278,7 +278,7 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                 ) : app.kind === 'branch' ? (
                   <BranchWorkspace branchKey={app.archetypeOrBranch} />
                 ) : app.id === 'police-command' ? (
-                  <PoliceCommandApp appId={app.id} domain={active ?? 'incident'} now={now} role={role} withheld={withheld} />
+                  <PoliceCommandApp appId={app.id} domain={active ?? 'strategic-command'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'immigration' ? (
                   <ImmigrationApp appId={app.id} domain={active ?? 'border'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'customs' ? (

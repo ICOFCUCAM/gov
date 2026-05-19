@@ -9,6 +9,7 @@
 import type { ArchetypeKey } from '@/lib/api/types';
 import { blueprintFor } from '@/lib/institution/blueprint';
 import { interiorNav } from '@/apps/ministry-interior/core/domains';
+import { policeNav } from '@/apps/police-command/core/domains';
 import type { AppManifest } from '@/services/orchestration-engine';
 
 const ARCHETYPE_APP: Partial<Record<ArchetypeKey, { id: string; label: string; domain: string }>> = {
@@ -68,7 +69,7 @@ export const BRANCH_APPS: AppManifest[] = [
 
 export const AGENCY_APPS: AppManifest[] = [
   { id: 'police-command', label: 'Police Command', domain: 'police', kind: 'agency', archetypeOrBranch: 'INTERIOR',
-    nav: [{ key: 'incident', label: 'Incident command' }, { key: 'dispatch', label: 'Dispatch' }, { key: 'patrol', label: 'Patrol coordination' }, { key: 'investigations', label: 'Investigations' }, { key: 'evidence', label: 'Evidence' }, { key: 'intelligence', label: 'Intelligence' }, { key: 'cyber', label: 'Cybercrime' }] },
+    nav: policeNav() },
   { id: 'emergency-response', label: 'Emergency Response', domain: 'emergency', kind: 'agency', archetypeOrBranch: 'INTERIOR',
     nav: [{ key: 'command', label: 'Crisis command' }, { key: 'dispatch', label: 'Dispatch' }, { key: 'resources', label: 'Resource coordination' }, { key: 'recovery', label: 'Recovery workflows' }] },
   { id: 'immigration', label: 'Immigration', domain: 'immigration', kind: 'agency', archetypeOrBranch: 'INTERIOR',
