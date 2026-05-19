@@ -6,7 +6,7 @@
 // key compatibility. Pure data — no React, no engine — so the navigation
 // framework, shell and manifest all derive from one normalized model.
 
-export type DomainGroupKey = 'command' | 'national' | 'generational' | 'civic' | 'territorial' | 'civilizational' | 'cognitive' | 'geopolitical' | 'runtime' | 'procedural' | 'economy' | 'temporal' | 'constitutional' | 'civil' | 'federated' | 'infra';
+export type DomainGroupKey = 'command' | 'national' | 'generational' | 'civic' | 'territorial' | 'civilizational' | 'cognitive' | 'geopolitical' | 'existential' | 'runtime' | 'procedural' | 'economy' | 'temporal' | 'constitutional' | 'civil' | 'federated' | 'infra';
 
 export interface DomainGroup {
   key: DomainGroupKey;
@@ -43,7 +43,8 @@ export type SurfaceId =
   | 'territorial-continuity' | 'climate-propagation' | 'urbanization-evolution' | 'ecological-resilience'
   | 'civilizational-identity' | 'migration-integration' | 'heritage-memory' | 'civilizational-trajectory'
   | 'knowledge-continuity' | 'expertise-transfer' | 'innovation-continuity' | 'cognitive-trajectory'
-  | 'geopolitical-continuity' | 'migration-humanitarian' | 'global-shock-intelligence' | 'strategic-trajectory';
+  | 'geopolitical-continuity' | 'migration-humanitarian' | 'global-shock-intelligence' | 'strategic-trajectory'
+  | 'existential-continuity' | 'pandemic-biosurvival' | 'post-collapse-recovery' | 'existential-trajectory';
 
 export interface InteriorDomain {
   key: string;
@@ -67,6 +68,7 @@ export const GROUPS: DomainGroup[] = [
   { key: 'civilizational', label: 'Civilizational Continuity', purpose: 'Constitutional identity, cultural resilience, heritage memory & pluralistic cohesion' },
   { key: 'cognitive', label: 'Knowledge Continuity', purpose: 'Educational resilience, constitutional literacy, expertise transfer & innovation' },
   { key: 'geopolitical', label: 'Strategic Continuity', purpose: 'Strategic autonomy, cross-border pressure, humanitarian & diplomatic resilience' },
+  { key: 'existential', label: 'Existential Continuity', purpose: 'Pandemic / catastrophic resilience, post-collapse recovery & species continuity' },
   { key: 'runtime', label: 'Sovereign Runtime', purpose: 'National observability, deadline enforcement & anti-corruption' },
   { key: 'procedural', label: 'Procedural Execution', purpose: 'Sovereign workflow chains, appeals, jurisdiction & continuity' },
   { key: 'economy', label: 'Institutional Economy', purpose: 'Finite capacity, strain propagation, resilience & corruption pressure' },
@@ -118,6 +120,11 @@ export const DOMAINS: InteriorDomain[] = [
   { key: 'migration-humanitarian', label: 'Migration & Humanitarian', group: 'geopolitical', accent: '#45c0c8', archetype: 'fabric', surface: 'migration-humanitarian', federation: null, identity: 'Lawful migration & humanitarian continuity' },
   { key: 'global-shock-intelligence', label: 'Global Shock Intelligence', group: 'geopolitical', accent: '#e0673a', archetype: 'runtime', surface: 'global-shock-intelligence', federation: null, identity: 'External economic shock, diplomacy & strategic information' },
   { key: 'strategic-trajectory', label: 'Strategic Trajectory', group: 'geopolitical', accent: '#8a7df0', archetype: 'oversight', surface: 'strategic-trajectory', federation: null, identity: 'Long-horizon sovereignty resilience & safeguards' },
+  // ── Existential Continuity ────────────────────────────────────────
+  { key: 'existential-continuity', label: 'Existential Continuity', group: 'existential', accent: '#5fb0ff', archetype: 'command', surface: 'existential-continuity', federation: null, identity: 'Catastrophic-risk continuity & long-duration governance' },
+  { key: 'pandemic-biosurvival', label: 'Pandemic & Biosurvival', group: 'existential', accent: '#54d08f', archetype: 'runtime', surface: 'pandemic-biosurvival', federation: null, identity: 'Health-system survivability & planetary biosphere' },
+  { key: 'post-collapse-recovery', label: 'Post-Collapse Recovery', group: 'existential', accent: '#45c0c8', archetype: 'fabric', surface: 'post-collapse-recovery', federation: null, identity: 'Recovery durability & species memory' },
+  { key: 'existential-trajectory', label: 'Existential Trajectory', group: 'existential', accent: '#8a7df0', archetype: 'oversight', surface: 'existential-trajectory', federation: null, identity: 'Long-horizon civilization resilience & safeguards' },
   // ── Sovereign Runtime ─────────────────────────────────────────────
   { key: 'national-control-board', label: 'National Control Board', group: 'runtime', accent: '#e0673a', archetype: 'command', surface: 'national-control-board', federation: null, identity: 'National process observability & execution governance' },
   { key: 'transaction-observability', label: 'Transaction Observability', group: 'runtime', accent: '#45c0c8', archetype: 'runtime', surface: 'transaction-observability', federation: null, identity: 'Nationally observable citizen-transaction runtime' },
