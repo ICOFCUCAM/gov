@@ -7,7 +7,9 @@ import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { officerConsole } from '@/lib/gov/citizen-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
-import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
+import { MinistryChainSection, InstitutionChainStrip } from '@/apps/_shared/InstitutionChain';
+import { facilities, actors, recordLineage, chainIntegrity } from '@/lib/gov/institution-chain';
+import { pickIndex } from '@/lib/pick-index';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -21,6 +23,14 @@ export function OfficerConsoleApp({ appId, domain, now, role, withheld }: {
 }) {
   const ts = now / 4000;
   const o = officerConsole(appId, ts);
+  // The officer serves the state THROUGH a station: enrolled there, every
+  // case file held at the station, then rolled to Interior and national.
+  const epoch = Math.max(0, Math.floor(ts));
+  const stations = facilities('INTERIOR', epoch);
+  const myStation = stations[pickIndex(appId, stations.length, 7)] ?? stations[0]!;
+  const officerName = actors('INTERIOR', myStation.id, epoch)[0]?.name ?? 'Duty officer';
+  const caseLineage = recordLineage(`CASE-${appId}`, officerName, myStation, 'INTERIOR', epoch);
+  const intInteg = chainIntegrity('INTERIOR', epoch);
   const d = WF[domain] ? domain : 'queue';
   const label = LABEL[d] ?? 'Work Queue';
   const raw: { l: string; v: string; t?: Tone }[] = d === 'decisions' ? [
@@ -50,6 +60,8 @@ export function OfficerConsoleApp({ appId, domain, now, role, withheld }: {
       <KpiStrip ts={ts} accent={ACC} items={kpis} />
       <BarPanel title="Desk load" meta="disposition queues" accent={ACC} live
         rows={o.byDesk.map(x => ({ label: x.desk, pct: Math.min(100, x.queue / 14), tone: x.tone, tail: `${x.queue}` }))} />
+      <InstitutionChainStrip accent={ACC} ministryKey="INTERIOR" facility={myStation}
+        actorName={officerName} lineage={caseLineage} integrity={intInteg} />
       <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'case'} title={`${label} runtime — execute officer dispositions`} by="Officer" role={role} withheld={withheld} />
     </div>
