@@ -279,6 +279,12 @@ export function MinistryChainSection({
   const filed = React.useMemo(() => recordsOf(ministryKey, myFac.id, d.recordNoun, now), [ministryKey, myFac.id, d.recordNoun, now, rv]);
   const [nm, setNm] = React.useState('');
   const [subj, setSubj] = React.useState('');
+  const [byA, setByA] = React.useState('');
+  const roster = React.useMemo(
+    () => [...new Set([...baseRoster.map(a => a.name), ...enrolled.filter(e => e.status !== 'pending').map(e => e.name)])],
+    [baseRoster, enrolled],
+  );
+  const filingActor = byA || roster[0] || d.actorRole;
   const iTone = integrity.status === 'synchronised' ? 'ok' : integrity.status === 'lagging' ? 'warn' : 'alert';
   const stC = (s: string) => (s === 'active' || s === 'operational' ? 'ok' : s === 'verified' || s === 'strained' ? 'warn' : s === 'pending' ? 'info' : 'alert');
 
@@ -347,10 +353,14 @@ export function MinistryChainSection({
             <span className="text-[8px] text-ink-muted">{filed.length} {d.recordNoun}s · captured → held → committed → rolled → synced</span>
           </div>
           <div className="mb-1.5 flex items-center gap-1.5">
-            <input value={subj} onChange={e => setSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && subj.trim()) { fileRecord(ministryKey, myFac.id, subj, d.actorRole, d.recordNoun, now); setSubj(''); } }}
+            <select value={filingActor} onChange={e => setByA(e.target.value)}
+              className="focus-ring max-w-[110px] shrink-0 rounded-[3px] border bg-surface px-1 py-1 text-[9px] text-ink-soft" style={{ borderColor: 'rgb(var(--c-line))' }}>
+              {roster.map(n => <option key={n} value={n}>{n}</option>)}
+            </select>
+            <input value={subj} onChange={e => setSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && subj.trim()) { fileRecord(ministryKey, myFac.id, subj, filingActor, d.recordNoun, now); setSubj(''); } }}
               placeholder={`File a ${d.recordNoun} at ${myFac.id}…`}
               className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
-            <button type="button" onClick={() => { if (subj.trim()) { fileRecord(ministryKey, myFac.id, subj, d.actorRole, d.recordNoun, now); setSubj(''); } }}
+            <button type="button" onClick={() => { if (subj.trim()) { fileRecord(ministryKey, myFac.id, subj, filingActor, d.recordNoun, now); setSubj(''); } }}
               className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: accent, color: accent }}>File</button>
           </div>
           <div className="max-h-[132px] space-y-0.5 overflow-y-auto">
@@ -360,7 +370,7 @@ export function MinistryChainSection({
               return (
                 <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
                   <span className="shrink-0 font-mono text-[8px] text-ink-muted">{r.ref}</span>
-                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject} <span className="text-ink-muted">· {r.byActor}</span></span>
                   <span className="shrink-0 font-mono text-[7.5px] text-ink-muted">{at + 1}/5</span>
                   <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${rt}))` }}>{r.stage}</span>
                   {r.stage !== 'synced' ? (
