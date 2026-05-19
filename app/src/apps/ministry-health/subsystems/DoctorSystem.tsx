@@ -44,7 +44,9 @@ export function DoctorSystem({ id, now, role, withheld }: {
   const dispatchScope = `health:${myHospital.id}`;
   const rv = React.useSyncExternalStore(recSub, recVer, () => 0);
   const ptRecs = React.useMemo(() => recordsOf('HEALTH', myHospital.id, 'clinical record', now), [myHospital.id, now, rv]);
-  const ptRec = ptRecs.find(r => r.subject.startsWith(`MRN-${p.mrn}`));
+  // Match the exact MRN token (with the ' · ' delimiter) so e.g. MRN-12
+  // does not collide with MRN-123.
+  const ptRec = ptRecs.find(r => r.subject === `MRN-${p.mrn}` || r.subject.startsWith(`MRN-${p.mrn} `));
   // When a real record has been committed, the lineage strip reflects its
   // live custody stage instead of the deterministic placeholder.
   const lineage = ptRec ? lineageAtStage(baseLineage, STAGE_ORDER.indexOf(ptRec.stage)) : baseLineage;
