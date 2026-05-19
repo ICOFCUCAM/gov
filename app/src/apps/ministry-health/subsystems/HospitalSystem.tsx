@@ -16,6 +16,7 @@ import { hospitalDeepExecution } from '@/lib/gov/health-operations';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { facilities, actors, chainIntegrity } from '@/lib/gov/institution-chain';
+import { records as recordsOf, fileRecord, advanceRecord, STAGE_ORDER, subscribe as recSub, version as recVer } from '@/lib/gov/records-store';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 const ACC = ACCENT.hospital!;
@@ -50,6 +51,11 @@ export function HospitalSystem({ id, now, role, withheld }: {
   const roster = actors('HEALTH', fac.id, epoch);
   const cInt = chainIntegrity('HEALTH', epoch);
   const cTone = cInt.status === 'synchronised' ? 'ok' : cInt.status === 'lagging' ? 'warn' : 'alert';
+  const rv = React.useSyncExternalStore(recSub, recVer, () => 0);
+  const clinRecs = React.useMemo(() => recordsOf('HEALTH', fac.id, 'clinical record', now), [fac.id, now, rv]);
+  const [recSubj, setRecSubj] = React.useState('');
+  const [recBy, setRecBy] = React.useState('');
+  const recActor = recBy || roster[0]?.name || 'Physician';
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#070d11' }}>
@@ -69,7 +75,7 @@ export function HospitalSystem({ id, now, role, withheld }: {
 
       {/* Enrolled clinicians + ministry uplink (facility tier of the chain) */}
       <div className="grid gap-2 lg:grid-cols-3">
-        <div className="lg:col-span-2">
+        <div className="space-y-2 lg:col-span-2">
         <CommandPanel title={`Enrolled clinicians · ${fac.id}`} meta={`${roster.length} · ${fac.name}`} accent={ACC}>
           <div className="grid gap-x-4 gap-y-1 sm:grid-cols-2">
             {roster.map(a => (
@@ -84,6 +90,39 @@ export function HospitalSystem({ id, now, role, withheld }: {
             <span>Records held at {fac.id} → <span style={{ color: sc('warn') }}>{cInt.ministry}</span> → National</span>
             <span>uplink sync <span style={{ color: sc(cTone) }}>{cInt.meanSyncPct}%</span> · {cInt.status}</span>
             <span>roll-up {cInt.uplinkLatencyMin}m · national lag {cInt.nationalLagMin}m</span>
+          </div>
+        </CommandPanel>
+        <CommandPanel title={`Clinical records · ${fac.id}`} meta={`${clinRecs.length} held · captured → synced`} accent={ACC}>
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <select value={recActor} onChange={e => setRecBy(e.target.value)}
+              className="focus-ring max-w-[120px] shrink-0 rounded-[3px] border bg-surface px-1 py-1 text-[9px] text-ink-soft" style={{ borderColor: 'rgb(var(--c-line))' }}>
+              {roster.map(a => <option key={a.id} value={a.name}>{a.name}</option>)}
+            </select>
+            <input value={recSubj} onChange={e => setRecSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && recSubj.trim()) { fileRecord('HEALTH', fac.id, recSubj, recActor, 'clinical record', now); setRecSubj(''); } }}
+              placeholder={`File a clinical record at ${fac.id}…`}
+              className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
+            <button type="button" onClick={() => { if (recSubj.trim()) { fileRecord('HEALTH', fac.id, recSubj, recActor, 'clinical record', now); setRecSubj(''); } }}
+              className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: ACC, color: ACC }}>File</button>
+          </div>
+          <div className="max-h-[132px] space-y-0.5 overflow-y-auto">
+            {clinRecs.slice(-6).reverse().map(r => {
+              const si = STAGE_ORDER.indexOf(r.stage);
+              const rt = r.stage === 'synced' ? 'ok' : r.stage === 'rolled' ? 'warn' : 'info';
+              return (
+                <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
+                  <span className="shrink-0 font-mono text-[8px] text-ink-muted">{r.ref}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject} <span className="text-ink-muted">· {r.byActor}</span></span>
+                  <span className="shrink-0 font-mono text-[7.5px] text-ink-muted">{si + 1}/5</span>
+                  <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: sc(rt) }}>{r.stage}</span>
+                  {r.stage !== 'synced' ? (
+                    <button type="button" onClick={() => advanceRecord('HEALTH', fac.id, r.id, now)}
+                      className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
+                      → {STAGE_ORDER[si + 1]}
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         </CommandPanel>
         </div>
