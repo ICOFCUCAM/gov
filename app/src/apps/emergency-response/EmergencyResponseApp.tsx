@@ -9,6 +9,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { emergencyOps } from '@/lib/gov/agency-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
+import { EmergencyCommand } from '@/apps/emergency-response/EmergencyCommand';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -51,21 +52,35 @@ export function EmergencyResponseApp({ appId, domain, now, role, withheld }: {
   const kpis = raw.map((m, i) => ({ l: m.l, v: m.v, t: (m.t ?? 'ok') as Tone, s: '', k: `er${i}` }));
   const pTone: Tone = kpis.some(x => x.t === 'alert') ? 'alert' : kpis.some(x => x.t === 'warn') ? 'warn' : 'ok';
 
+  // The command surface is the dense National Emergency Response System;
+  // other domains keep the ops execution rhythm.
+  const isOverview = d === 'command';
+
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#0c0406', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      <OpsHeader index={1} title={`Emergency · ${label}`} subtitle="Sovereign Crisis Execution"
-        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ELEVATED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
-      <KpiStrip ts={ts} accent={ACC} items={kpis} />
-      <BarPanel title="Regional crisis posture" meta="population assisted · shelters" accent={ACC} live
-        rows={o.regional.map(r => ({ label: r.region, pct: r.status === 'crisis' ? 92 : r.status === 'watch' ? 58 : 26, tone: r.tone, tail: r.status }))} />
-      {fieldDomain ? (
+      {isOverview ? (
         <>
-          <FieldPanel instId={appId} archetype="INTERIOR" now={now} />
+          <EmergencyCommand id={appId} now={now} />
           <ActorChainStrip ministryKey="INTERIOR" idKey={appId} now={now} accent={ACC} recordPrefix="INC" />
           <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
-          <RuntimeQueue scope={`${appId}:field`} kind="field" title="Responder field deployment — stage → task → on-scene → cleared" by="Field Coordinator" role={role} withheld={withheld} />
         </>
-      ) : null}
+      ) : (
+        <>
+          <OpsHeader index={1} title={`Emergency · ${label}`} subtitle="Sovereign Crisis Execution"
+            posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ELEVATED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+          <KpiStrip ts={ts} accent={ACC} items={kpis} />
+          <BarPanel title="Regional crisis posture" meta="population assisted · shelters" accent={ACC} live
+            rows={o.regional.map(r => ({ label: r.region, pct: r.status === 'crisis' ? 92 : r.status === 'watch' ? 58 : 26, tone: r.tone, tail: r.status }))} />
+          {fieldDomain ? (
+            <>
+              <FieldPanel instId={appId} archetype="INTERIOR" now={now} />
+              <ActorChainStrip ministryKey="INTERIOR" idKey={appId} now={now} accent={ACC} recordPrefix="INC" />
+              <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
+              <RuntimeQueue scope={`${appId}:field`} kind="field" title="Responder field deployment — stage → task → on-scene → cleared" by="Field Coordinator" role={role} withheld={withheld} />
+            </>
+          ) : null}
+        </>
+      )}
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'incident'} title={`${label} runtime — execute the response workflow`} by="Crisis Coordinator" role={role} withheld={withheld} />
     </div>
   );
