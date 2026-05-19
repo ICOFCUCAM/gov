@@ -29,6 +29,10 @@ import {
   records as recordsOf, fileRecord, advanceRecord, returnRecord, nationalRecords, STAGE_ORDER,
   subscribe as recSub, version as recVer,
 } from '@/lib/gov/records-store';
+import {
+  inbox as refInbox, raiseReferral, advanceReferral, REFERRAL_FLOW,
+  subscribe as refSub, version as refVer,
+} from '@/lib/gov/referral-store';
 
 const TIER_C: Record<string, string> = {
   ACTOR: 'rgb(var(--c-link))', FACILITY: 'rgb(var(--c-ok))',
@@ -318,6 +322,13 @@ export function MinistryChainSection({
     [baseRoster, enrolled],
   );
   const filingActor = byA || roster[0] || d.actorRole;
+  const refV = React.useSyncExternalStore(refSub, refVer, () => 0);
+  const myInbox = React.useMemo(() => refInbox(ministryKey, now), [ministryKey, now, refV]);
+  const peers = React.useMemo(() => Object.keys(MINISTRY_CHAIN).filter(k => k !== ministryKey), [ministryKey]);
+  const [refTo, setRefTo] = React.useState('');
+  const [refSubj, setRefSubj] = React.useState('');
+  const refTarget = refTo || peers[0] || 'FINANCE';
+  const refStC = (s: string) => (s === 'closed' ? 'ok' : s === 'actioned' ? 'warn' : s === 'accepted' ? 'info' : 'alert');
   const iTone = integrity.status === 'synchronised' ? 'ok' : integrity.status === 'lagging' ? 'warn' : 'alert';
   const stC = (s: string) => (s === 'active' || s === 'operational' ? 'ok' : s === 'verified' || s === 'strained' ? 'warn' : s === 'pending' ? 'info' : 'alert');
 
@@ -417,6 +428,43 @@ export function MinistryChainSection({
                     <button type="button" onClick={() => advanceRecord(ministryKey, myFac.id, r.id, now)}
                       className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
                       → {STAGE_ORDER[at + 1]}
+                    </button>
+                  ) : null}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        {/* Cross-ministry referrals — bureaucracy spans ministries */}
+        <div className="border-t px-3 py-2" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-ink-muted">Cross-ministry referrals</span>
+            <span className="text-[8px] text-ink-muted">{myInbox.length} addressed to {d.ministry} · raised → accepted → actioned → closed</span>
+          </div>
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <span className="text-[8px] uppercase tracking-wider text-ink-muted">to</span>
+            <select value={refTarget} onChange={e => setRefTo(e.target.value)}
+              className="focus-ring max-w-[110px] shrink-0 rounded-[3px] border bg-surface px-1 py-1 text-[9px] text-ink-soft" style={{ borderColor: 'rgb(var(--c-line))' }}>
+              {peers.map(k => <option key={k} value={k}>{chainDef(k).ministry}</option>)}
+            </select>
+            <input value={refSubj} onChange={e => setRefSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && refSubj.trim()) { raiseReferral(ministryKey, refTarget, refSubj, `${d.ministry} liaison`, now); setRefSubj(''); } }}
+              placeholder="Refer a matter to another ministry…"
+              className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
+            <button type="button" onClick={() => { if (refSubj.trim()) { raiseReferral(ministryKey, refTarget, refSubj, `${d.ministry} liaison`, now); setRefSubj(''); } }}
+              className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: accent, color: accent }}>Refer</button>
+          </div>
+          <div className="max-h-[120px] space-y-0.5 overflow-y-auto">
+            {myInbox.slice(-6).reverse().map(r => {
+              const fi = REFERRAL_FLOW.indexOf(r.status);
+              return (
+                <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
+                  <span className="shrink-0 text-[8px] text-ink-muted">{chainDef(r.fromKey).ministry} →</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject}</span>
+                  <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${refStC(r.status)}))` }}>{r.status}</span>
+                  {r.status !== 'closed' ? (
+                    <button type="button" onClick={() => advanceReferral(ministryKey, r.id, now)}
+                      className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
+                      → {REFERRAL_FLOW[fi + 1]}
                     </button>
                   ) : null}
                 </div>
