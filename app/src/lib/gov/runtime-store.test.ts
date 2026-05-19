@@ -97,6 +97,23 @@ describe('operational causality', () => {
     expect(d).toBeLessThanOrEqual(15);
     expect(eventLog(20).some(e => e.type === 'runtime.transition' && e.source === s)).toBe(true);
   });
+
+  it('executionDelta does not bleed across instances sharing an id prefix', async () => {
+    const { getScope, actOnItem, executionDelta } = await import('./runtime-store');
+    const { actionsFor } = await import('./runtime-workflow');
+    const a = 'INST1';     // prefix of INST12
+    const b = 'INST12';
+    const sb = `${b}:command`;
+    for (let r = 0; r < 4; r++) {
+      const items = getScope(sb, 'incident', 8);
+      const tgt = items.find(i => actionsFor(i.kind, i.stage).length > 0);
+      if (!tgt) break;
+      actOnItem(sb, tgt.id, actionsFor(tgt.kind, tgt.stage)[0]!, 'Officer');
+    }
+    expect(executionDelta(b)).toBeGreaterThan(0);
+    // INST1 must stay at 0 — INST12's ledger must not be absorbed by prefix.
+    expect(executionDelta(a)).toBe(0);
+  });
 });
 
 describe('operational continuity', () => {

@@ -336,7 +336,9 @@ export function scopeSummaries(): ScopeSummary[] {
 export function executionDelta(instId: string): number {
   let v = 0;
   for (const e of ledger) {
-    if (!e.scope.startsWith(instId)) continue;
+    // Scopes are `${instId}:${domain}` — match the exact instance, not a
+    // prefix, so inst1 does not also absorb inst12's execution ledger.
+    if (e.scope !== instId && !e.scope.startsWith(`${instId}:`)) continue;
     if (e.action === 'resolve' || e.action === 'approve') v += 2.4;
     else if (e.action === 'advance' || e.action === 'assign') v += 1.2;
     else if (e.action === 'reject' || e.action === 'return') v -= 2.6;
