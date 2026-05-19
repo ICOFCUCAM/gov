@@ -45,7 +45,7 @@ import {
   provinceMemory, diffuseTopology, corridorAdjacency, territorialField,
 } from '@/lib/gov/sovereign-operating-model';
 
-import { DispatchChannel, NationalDispatchDigest } from '@/apps/_shared/InstitutionChain';
+import { DispatchChannel, NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard } from '@/apps/_shared/InstitutionChain';
 
 const NATL_ASSETS = nationalAssets();
 const NATL_NETWORKS = nationalNetworks();
@@ -1973,13 +1973,16 @@ export function SituationRoom() {
             ))}
           </div>
 
-          {/* Row 6 — live bureaucratic chain coordination */}
+          {/* Row 6 — the whole-of-government live bureaucratic chain */}
           <div className="grid gap-2 lg:grid-cols-2">
             <NationalDispatchDigest accent={ACCENT} now={now} />
-            <DispatchChannel scope="xmin:coordination" now={now} accent={ACCENT}
-              selfTier="MINISTRY" selfName="Cabinet Secretariat" toTier="MINISTRY"
-              title="Interministerial coordination — lateral, cross-ministry" />
+            <NationalRecordsLedger accent={ACCENT} now={now} />
+            <NationalEncounterDigest accent={ACCENT} now={now} />
+            <NationalReferralBoard accent={ACCENT} now={now} />
           </div>
+          <DispatchChannel scope="xmin:coordination" now={now} accent={ACCENT}
+            selfTier="MINISTRY" selfName="Cabinet Secretariat" toTier="MINISTRY"
+            title="Interministerial coordination — lateral, cross-ministry" />
         </main>
       </div>
     </div>
