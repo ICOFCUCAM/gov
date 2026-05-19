@@ -88,6 +88,15 @@ export function thread(scope: string, official: string, pub: string, now: number
   return threads.get(scope)!;
 }
 
+/** Merged recent turns across several encounter threads — the apex view
+ *  of public service load (newest last). */
+export function encounterDigest(scopes: string[], official: string, pub: string, now: number, limit = 10): { msg: EncounterMsg; scope: string }[] {
+  hydrate();
+  const all: { msg: EncounterMsg; scope: string }[] = [];
+  for (const s of scopes) for (const m of thread(s, official, pub, now)) all.push({ msg: m, scope: s });
+  return all.sort((a, b) => a.msg.at - b.msg.at).slice(-limit);
+}
+
 export function post(scope: string, msg: Omit<EncounterMsg, 'id' | 'at' | 'seeded'>, now: number): void {
   hydrate();
   const list = threads.get(scope) ?? seedThread(scope, msg.name, msg.name, now);

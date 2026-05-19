@@ -21,7 +21,7 @@ import {
   subscribe as enSub, version as enVer,
 } from '@/lib/gov/enrollment-store';
 import {
-  thread as encThread, post as encPost,
+  thread as encThread, post as encPost, encounterDigest,
   subscribe as encSub, version as encVer,
   type EncounterAuthor, type EncounterKind,
 } from '@/lib/gov/encounter-store';
@@ -252,6 +252,39 @@ export function NationalRecordsLedger({ accent = '#37c7d4', now }: { accent?: st
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// The national view of public service load — recent citizen↔official turns
+// across every ministry's lead service desks. Primes deterministically.
+export function NationalEncounterDigest({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
+  const v = React.useSyncExternalStore(encSub, encVer, () => 0);
+  const epoch = Math.max(0, Math.floor(now / 4000));
+  const feed = React.useMemo(() => {
+    const scopes: string[] = [];
+    for (const k of Object.keys(MINISTRY_CHAIN)) {
+      const fac = facilitiesOf(k, epoch);
+      for (const f of fac.slice(0, 2)) scopes.push(`enc:${k.toLowerCase()}:${f.id}`);
+    }
+    return encounterDigest(scopes, 'Service desk', 'Citizen', now, 10);
+  }, [epoch, now, v]);
+  return (
+    <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
+      <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+        <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>National service load — citizen ↔ official, live</span>
+        <span className="text-[8px] uppercase tracking-wider text-ink-muted">across ministry service desks</span>
+      </div>
+      <div className="max-h-[200px] space-y-1 overflow-y-auto px-3 py-2">
+        {feed.map(({ msg: m }) => (
+          <div key={m.id} className="text-[10px]">
+            <span className="font-mono text-[8px] text-ink-muted">{new Date(m.at).toLocaleTimeString('en-GB', { hour12: false })}</span>{' '}
+            <span style={{ color: m.author === 'OFFICIAL' ? accent : 'rgb(var(--c-link))' }}>{m.name}</span>
+            <span className="ml-1 text-[7.5px] font-bold uppercase" style={{ color: K_TONE[m.kind] }}>· {m.kind}</span>
+            <div className="text-ink-soft">{m.body}</div>
+          </div>
+        ))}
       </div>
     </div>
   );
