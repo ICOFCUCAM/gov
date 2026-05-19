@@ -61,13 +61,17 @@ export function clockLabel(at: number, now: number): string {
 // Derive the actor→facility→ministry→national bundle for a surface so
 // every actor-facing app shows the same strip without repeating the
 // facility-pick + lineage + integrity wiring. Pure (no hooks).
-export function actorChain(ministryKey: string, key: string, now: number, recordPrefix = 'REC') {
+export function actorChain(ministryKey: string, key: string, now: number, recordPrefix?: string) {
   const epoch = Math.max(0, Math.floor(now / 4000));
   const facs = facilitiesOf(ministryKey, epoch);
   const facility = facs[pickIndex(key, facs.length, 7)] ?? facs[0]!;
   const d = chainDef(ministryKey);
+  // Default the record prefix from the ministry's own record noun (e.g.
+  // 'clinical record' → CLI, 'case file' → CAS) so an omitted prefix is
+  // still meaningful instead of a generic 'REC'.
+  const prefix = recordPrefix ?? (d.recordNoun.replace(/[^a-zA-Z]/g, '').slice(0, 3).toUpperCase() || 'REC');
   const actorName = actorsOf(ministryKey, facility.id, epoch)[0]?.name ?? `${d.actorRole}`;
-  const lineage = recordLineage(`${recordPrefix}-${key}`, actorName, facility, ministryKey, epoch);
+  const lineage = recordLineage(`${prefix}-${key}`, actorName, facility, ministryKey, epoch);
   const integrity = integrityOf(ministryKey, epoch);
   return { facility, actorName, lineage, integrity };
 }
@@ -117,7 +121,7 @@ export function InstitutionChainStrip({
 
 // Drop-in actor→facility strip: resolves the chain bundle and renders it,
 // so apps don't repeat the actorChain()+InstitutionChainStrip IIFE.
-export function ActorChainStrip({ ministryKey, idKey, now, accent, recordPrefix = 'REC' }: {
+export function ActorChainStrip({ ministryKey, idKey, now, accent, recordPrefix }: {
   ministryKey: string; idKey: string; now: number; accent: string; recordPrefix?: string;
 }) {
   const ch = actorChain(ministryKey, idKey, now, recordPrefix);

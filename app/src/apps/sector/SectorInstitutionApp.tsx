@@ -161,7 +161,7 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
           <RuntimeQueue scope={`${id}:field`} kind="field" title={`${label} field deployment runtime — stage → task → on-scene → cleared`} by="Field Coordinator" role={role} withheld={withheld} />
         </>
       ) : null}
-      <ActorChainStrip ministryKey={archetype} idKey={id} now={now} accent={ACC} recordPrefix="REC" />
+      <ActorChainStrip ministryKey={archetype} idKey={id} now={now} accent={ACC} />
       <MinistryChainSection ministryKey={archetype} id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${domain}`} kind={wf} title={`${label} · ${domain} runtime — execute the institutional workflow`} by="Institution Officer" role={role} withheld={withheld} />
     </div>
