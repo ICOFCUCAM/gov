@@ -17,6 +17,7 @@ import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import { InteriorCommand } from '@/apps/interior/InteriorCommand';
 import { CivilRegistryCommand } from '@/apps/interior/CivilRegistryCommand';
+import { PopulationAnalytics } from '@/apps/interior/PopulationAnalytics';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { ArchetypeKey } from '@/lib/api/types';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -156,6 +157,7 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   // execution rhythm.
   const interiorCmd = archetype === 'INTERIOR' && domain === 'command';
   const interiorReg = archetype === 'INTERIOR' && domain === 'identity';
+  const interiorPop = archetype === 'INTERIOR' && domain === 'population';
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
@@ -163,6 +165,8 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <InteriorCommand id={id} now={now} />
       ) : interiorReg ? (
         <CivilRegistryCommand id={id} now={now} />
+      ) : interiorPop ? (
+        <PopulationAnalytics id={id} now={now} />
       ) : (
         <>
           <OpsHeader index={1} title={`${label}${focus ? ` · ${domain}` : ''}`} subtitle="Sovereign Institutional Execution"
