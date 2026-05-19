@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/Card';
 import { Pill } from '@/components/ui/Pill';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { listNotifications } from '@/lib/data/store';
+import { SupportThread } from './SupportThread';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,7 +27,8 @@ export default function InboxPage() {
       >
         {notifications.length === 0 ? (
           <EmptyState title="No messages" hint="Notifications from the state appear here." />
-        ) : (
+        ) : null}
+        {notifications.length > 0 ? (
           <>
             <section>
               <h3 className="font-semibold text-lg mb-2">Unread</h3>
@@ -72,7 +74,9 @@ export default function InboxPage() {
               </section>
             ) : null}
           </>
-        )}
+        ) : null}
+
+        <SupportThread />
       </PhoneShell>
     </main>
   );
