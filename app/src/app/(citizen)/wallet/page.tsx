@@ -37,8 +37,8 @@ const receipts: Receipt[] = [
 ];
 
 const needsTo = [
-  { title: 'Confirm your address', subtitle: 'for the school transfer — about 2 minutes', href: '#' },
-  { title: 'Review your tax draft', subtitle: 'due in 12 days', href: '#' },
+  { title: 'Confirm your address', subtitle: 'for the school transfer — about 2 minutes', href: '/wallet/identity' },
+  { title: 'Review your tax draft', subtitle: 'due in 12 days', href: '/wallet/receipt/R-3F511' },
 ];
 
 export default function WalletHomePage() {
@@ -53,9 +53,9 @@ export default function WalletHomePage() {
               <div className="text-xs text-ink-muted">Amina H. Mwangi</div>
             </div>
             <div className="flex gap-2 items-center">
-              <button className="text-sm underline underline-offset-2" aria-label="Notifications">
+              <Link href="/wallet/inbox" className="text-sm underline underline-offset-2" aria-label="Notifications">
                 🔔
-              </button>
+              </Link>
             </div>
           </>
         }
@@ -113,7 +113,7 @@ export default function WalletHomePage() {
             ))}
           </div>
           <p className="mt-3">
-            <Link href="#" className="text-link underline underline-offset-2">
+            <Link href="/wallet/inbox" className="text-link underline underline-offset-2">
               Show all receipts →
             </Link>
           </p>
