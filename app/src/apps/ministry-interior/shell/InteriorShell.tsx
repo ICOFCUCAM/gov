@@ -76,6 +76,7 @@ import { ExistentialContinuity } from '@/apps/ministry-interior/domains/Existent
 import { PandemicBiosurvival } from '@/apps/ministry-interior/domains/PandemicBiosurvival';
 import { PostCollapseRecovery } from '@/apps/ministry-interior/domains/PostCollapseRecovery';
 import { ExistentialTrajectory } from '@/apps/ministry-interior/domains/ExistentialTrajectory';
+import { CivilizationOrganism } from '@/apps/ministry-interior/domains/CivilizationOrganism';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -164,6 +165,7 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'pandemic-biosurvival': return <PandemicBiosurvival id={id} now={now} />;
     case 'post-collapse-recovery': return <PostCollapseRecovery id={id} now={now} />;
     case 'existential-trajectory': return <ExistentialTrajectory id={id} now={now} />;
+    case 'civilization-organism': return <CivilizationOrganism id={id} now={now} />;
   }
 }
 

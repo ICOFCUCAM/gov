@@ -44,7 +44,8 @@ export type SurfaceId =
   | 'civilizational-identity' | 'migration-integration' | 'heritage-memory' | 'civilizational-trajectory'
   | 'knowledge-continuity' | 'expertise-transfer' | 'innovation-continuity' | 'cognitive-trajectory'
   | 'geopolitical-continuity' | 'migration-humanitarian' | 'global-shock-intelligence' | 'strategic-trajectory'
-  | 'existential-continuity' | 'pandemic-biosurvival' | 'post-collapse-recovery' | 'existential-trajectory';
+  | 'existential-continuity' | 'pandemic-biosurvival' | 'post-collapse-recovery' | 'existential-trajectory'
+  | 'civilization-organism';
 
 export interface InteriorDomain {
   key: string;
@@ -86,6 +87,7 @@ export const DOMAINS: InteriorDomain[] = [
   { key: 'national-overview', label: 'National Overview', group: 'command', accent: '#5fb0ff', archetype: 'command', surface: 'national-overview', federation: null, identity: 'National internal-governance situational picture' },
   { key: 'security-command', label: 'Security Command', group: 'command', accent: '#5fb0ff', archetype: 'command', surface: 'interior-command', federation: null, identity: 'Internal-security coordination authority' },
   // ── National Digital Twin (sovereign apex) ────────────────────────
+  { key: 'civilization-organism', label: 'Civilization Organism', group: 'national', accent: '#5fb0ff', archetype: 'command', surface: 'civilization-organism', federation: null, identity: 'Apex synthesis of every continuity layer' },
   { key: 'national-digital-twin', label: 'National Digital Twin', group: 'national', accent: '#5fb0ff', archetype: 'command', surface: 'national-digital-twin', federation: null, identity: 'Live sovereign operational twin of the nation' },
   { key: 'causality-graph', label: 'Causality Topology', group: 'national', accent: '#45c0c8', archetype: 'fabric', surface: 'causality-graph', federation: null, identity: 'Cross-shell causal propagation & cascades' },
   { key: 'systemic-collapse-forecast', label: 'Systemic Collapse Forecast', group: 'national', accent: '#e0673a', archetype: 'oversight', surface: 'systemic-collapse-forecast', federation: null, identity: 'National instability trajectory & fracture points' },
