@@ -9,7 +9,7 @@ import { citizenWallet } from '@/lib/gov/citizen-systems';
 import { citizenRequests } from '@/lib/gov/citizen-requests';
 import { OpsHeader, KpiStrip, BarPanel, StatTiles } from '@/apps/_shared/Ops';
 import { MinistryChainSection, EncounterThread } from '@/apps/_shared/InstitutionChain';
-import { facilities } from '@/lib/gov/institution-chain';
+import { facilities, chainDef, MINISTRY_CHAIN } from '@/lib/gov/institution-chain';
 import { enroll, enrollments, subscribe as enSub, version as enVer } from '@/lib/gov/enrollment-store';
 import { CommandPanel, type Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -30,10 +30,15 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
   const cwFacs = facilities('FINANCE', cwEpoch);
   const cwFac = cwFacs[Math.abs([...appId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % cwFacs.length] ?? cwFacs[0]!;
   const ewv = React.useSyncExternalStore(enSub, enVer, () => 0);
-  const cwEnr = React.useMemo(() => enrollments('FINANCE', cwFac.id, 'Assessor', now), [cwFac.id, now, ewv]);
+  const [enrMin, setEnrMin] = React.useState('FINANCE');
+  const enrFacs = React.useMemo(() => facilities(enrMin, cwEpoch), [enrMin, cwEpoch]);
+  const enrFac = enrFacs[Math.abs([...appId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % enrFacs.length] ?? enrFacs[0]!;
+  const enrRole = chainDef(enrMin).actorRole;
+  const cwEnr = React.useMemo(() => enrollments(enrMin, enrFac.id, enrRole, now), [enrMin, enrFac.id, enrRole, now, ewv]);
   const [cwName, setCwName] = React.useState('');
-  const submitEnrol = () => { if (cwName.trim()) { enroll('FINANCE', cwFac.id, cwName, 'Assessor', 'Citizen self-service', now); setCwName(''); } };
+  const submitEnrol = () => { if (cwName.trim()) { enroll(enrMin, enrFac.id, cwName, enrRole, 'Citizen self-service', now); setCwName(''); } };
   const myReqs = cwEnr.filter(e => e.by === 'Citizen self-service').slice(-4).reverse();
+  const enrMinistries = React.useMemo(() => Object.keys(MINISTRY_CHAIN), []);
   const d = WF[domain] ? domain : 'identity';
   const label = LABEL[d] ?? 'Identity';
   const raw: { l: string; v: string; t?: Tone }[] = d === 'identity' ? [
@@ -84,10 +89,14 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
           ))}
         </div>
       </CommandPanel>
-      <CommandPanel title={`Enrolment portal · ${cwFac.id}`} meta="register at the service branch — pending review at the desk" accent={ACC}>
+      <CommandPanel title={`Enrolment portal · ${chainDef(enrMin).ministry}`} meta={`register at ${enrFac.id} — pending review at the desk`} accent={ACC}>
         <div className="mb-1.5 flex items-center gap-1.5">
+          <select value={enrMin} onChange={e => setEnrMin(e.target.value)}
+            className="focus-ring max-w-[140px] shrink-0 rounded-[3px] border bg-surface px-1 py-1 text-[9px] text-ink-soft" style={{ borderColor: 'rgb(var(--c-line))' }}>
+            {enrMinistries.map(k => <option key={k} value={k}>{chainDef(k).ministry}</option>)}
+          </select>
           <input value={cwName} onChange={e => setCwName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submitEnrol(); }}
-            placeholder={`Full name to enrol at ${cwFac.name}…`}
+            placeholder={`Full name to enrol at ${enrFac.name}…`}
             className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
           <button type="button" onClick={submitEnrol}
             className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: ACC, color: ACC }}>Submit enrolment</button>
