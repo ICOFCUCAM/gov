@@ -60,6 +60,10 @@ import { TerritorialContinuity } from '@/apps/ministry-interior/domains/Territor
 import { ClimatePropagation } from '@/apps/ministry-interior/domains/ClimatePropagation';
 import { UrbanizationEvolution } from '@/apps/ministry-interior/domains/UrbanizationEvolution';
 import { EcologicalResilience } from '@/apps/ministry-interior/domains/EcologicalResilience';
+import { CivilizationalIdentity } from '@/apps/ministry-interior/domains/CivilizationalIdentity';
+import { MigrationIntegration } from '@/apps/ministry-interior/domains/MigrationIntegration';
+import { HeritageMemory } from '@/apps/ministry-interior/domains/HeritageMemory';
+import { CivilizationalTrajectory } from '@/apps/ministry-interior/domains/CivilizationalTrajectory';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -132,6 +136,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'climate-propagation': return <ClimatePropagation id={id} now={now} />;
     case 'urbanization-evolution': return <UrbanizationEvolution id={id} now={now} />;
     case 'ecological-resilience': return <EcologicalResilience id={id} now={now} />;
+    case 'civilizational-identity': return <CivilizationalIdentity id={id} now={now} />;
+    case 'migration-integration': return <MigrationIntegration id={id} now={now} />;
+    case 'heritage-memory': return <HeritageMemory id={id} now={now} />;
+    case 'civilizational-trajectory': return <CivilizationalTrajectory id={id} now={now} />;
   }
 }
 
