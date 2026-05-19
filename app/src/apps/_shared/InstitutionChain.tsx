@@ -382,6 +382,9 @@ export function MinistryChainSection({
         <DispatchChannel scope={`natl:${ministryKey.toLowerCase()}`} now={now} accent={accent}
           selfTier="MINISTRY" selfName={`${d.ministry} coordination`} toTier="NATIONAL"
           title="National coordination" />
+        <EncounterThread scope={`enc:${ministryKey.toLowerCase()}:${myFac.id}`} now={now} accent={accent}
+          selfAuthor="OFFICIAL" officialName={`${d.actorRole} · ${myFac.id}`} publicName="Citizen"
+          title={`Citizen service desk · ${myFac.id}`} />
       </div>
     </div>
   );
