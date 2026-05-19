@@ -18,6 +18,7 @@ import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/Institutio
 import { InteriorCommand } from '@/apps/interior/InteriorCommand';
 import { CivilRegistryCommand } from '@/apps/interior/CivilRegistryCommand';
 import { PopulationAnalytics } from '@/apps/interior/PopulationAnalytics';
+import { PermitsLicensing } from '@/apps/interior/PermitsLicensing';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { ArchetypeKey } from '@/lib/api/types';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -158,6 +159,7 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   const interiorCmd = archetype === 'INTERIOR' && domain === 'command';
   const interiorReg = archetype === 'INTERIOR' && domain === 'identity';
   const interiorPop = archetype === 'INTERIOR' && domain === 'population';
+  const interiorLic = archetype === 'INTERIOR' && domain === 'licensing';
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
@@ -167,6 +169,8 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <CivilRegistryCommand id={id} now={now} />
       ) : interiorPop ? (
         <PopulationAnalytics id={id} now={now} />
+      ) : interiorLic ? (
+        <PermitsLicensing id={id} now={now} />
       ) : (
         <>
           <OpsHeader index={1} title={`${label}${focus ? ` · ${domain}` : ''}`} subtitle="Sovereign Institutional Execution"
