@@ -37,7 +37,10 @@ export function ContestDialog({ receiptId, trigger }: ContestDialogProps) {
     const action = String(data.get('action') ?? '');
     const reason = String(data.get('reason') ?? '');
     const note = String(data.get('note') ?? '');
-    const caseId = 'C-' + Math.floor(7000 + Math.random() * 2999);
+    // Deterministic case id — reproducible from the contestation content
+    // (the platform's no-randomness doctrine; also avoids collisions).
+    const h = Math.abs([...`${receiptId}|${action}|${reason}|${note}`].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7));
+    const caseId = 'C-' + (7000 + (h % 2999));
     appendAuditEntry('contestation', { caseId, receiptId, action, reason, note });
     setSubmitted({ caseId, reason });
   }
@@ -45,7 +48,7 @@ export function ContestDialog({ receiptId, trigger }: ContestDialogProps) {
   return (
     <>
       {trigger ? (
-        <span onClick={open} role="button" tabIndex={0}
+        <span onClick={open} role="button" tabIndex={0} aria-label="Question this decision"
           onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') open(); }}
         >
           {trigger}
