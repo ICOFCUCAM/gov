@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Button } from '@/components/ui/Button';
 import { Plain } from '@/components/ui/Plain';
 import { appendAuditEntry } from '@/lib/audit/localVault';
+import { civicRef } from '@/lib/civic-ref';
 
 export interface ContestDialogProps {
   receiptId: string;
@@ -39,8 +40,7 @@ export function ContestDialog({ receiptId, trigger }: ContestDialogProps) {
     const note = String(data.get('note') ?? '');
     // Deterministic case id — reproducible from the contestation content
     // (the platform's no-randomness doctrine; also avoids collisions).
-    const h = Math.abs([...`${receiptId}|${action}|${reason}|${note}`].reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7));
-    const caseId = 'C-' + (7000 + (h % 2999));
+    const caseId = civicRef('C', receiptId, action, reason, note);
     appendAuditEntry('contestation', { caseId, receiptId, action, reason, note });
     setSubmitted({ caseId, reason });
   }
