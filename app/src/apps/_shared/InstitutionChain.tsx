@@ -241,8 +241,11 @@ export function EncounterThread({
 // the chain, live. Drop into any national/cabinet surface.
 export function NationalDispatchDigest({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
   const v = React.useSyncExternalStore(subscribe, version, () => 0);
+  const epoch = Math.max(0, Math.floor(now / 4000));
   const scopes = React.useMemo(() => Object.keys(MINISTRY_CHAIN).map(k => `natl:${k.toLowerCase()}`), []);
-  const feed = React.useMemo(() => digest(scopes, now, 10), [scopes, now, v]);
+  // Heavy aggregation recomputes per epoch (≈4s), not per 1s tick; the
+  // store data is epoch-stable so epoch-bucketed time is the honest dep.
+  const feed = React.useMemo(() => digest(scopes, epoch * 4000, 10), [scopes, epoch, v]);
   return (
     <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
       <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
@@ -274,10 +277,10 @@ export function NationalRecordsLedger({ accent = '#37c7d4', now }: { accent?: st
     for (const k of Object.keys(MINISTRY_CHAIN)) {
       const fac = facilitiesOf(k, epoch);
       const d = chainDef(k);
-      for (const f of fac.slice(0, 2)) recordsOf(k, f.id, d.recordNoun, now);
+      for (const f of fac.slice(0, 2)) recordsOf(k, f.id, d.recordNoun, epoch * 4000);
     }
     return nationalRecords(12);
-  }, [epoch, now, rv]);
+  }, [epoch, rv]);
   return (
     <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
       <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
@@ -312,8 +315,8 @@ export function NationalEncounterDigest({ accent = '#37c7d4', now }: { accent?: 
       const fac = facilitiesOf(k, epoch);
       for (const f of fac.slice(0, 2)) scopes.push(`enc:${k.toLowerCase()}:${f.id}`);
     }
-    return encounterDigest(scopes, 'Service desk', 'Citizen', now, 10);
-  }, [epoch, now, v]);
+    return encounterDigest(scopes, 'Service desk', 'Citizen', epoch * 4000, 10);
+  }, [epoch, v]);
   return (
     <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
       <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
@@ -338,8 +341,9 @@ export function NationalEncounterDigest({ accent = '#37c7d4', now }: { accent?: 
 // across all ministry inboxes.
 export function NationalReferralBoard({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
   const v = React.useSyncExternalStore(refSub, refVer, () => 0);
+  const epoch = Math.max(0, Math.floor(now / 4000));
   const keys = React.useMemo(() => Object.keys(MINISTRY_CHAIN), []);
-  const feed = React.useMemo(() => referralDigest(keys, now, 12), [keys, now, v]);
+  const feed = React.useMemo(() => referralDigest(keys, epoch * 4000, 12), [keys, epoch, v]);
   const stC = (s: string) => (s === 'closed' ? 'ok' : s === 'actioned' ? 'warn' : s === 'accepted' ? 'info' : 'alert');
   return (
     <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
@@ -377,11 +381,12 @@ export function NationalBureaucracyPulse({ accent = '#37c7d4', now }: { accent?:
       encScopes.push(`enc:${k.toLowerCase()}:${f.id}`);
       enrKeys.push({ ministryKey: k, facilityId: f.id, role: chainDef(k).actorRole });
     }
-    const disp = digest(dispScopes, now, 999).length;
+    const et = epoch * 4000;
+    const disp = digest(dispScopes, et, 999).length;
     const recs = nationalRecords(999);
-    const enc = encounterDigest(encScopes, 'Service desk', 'Citizen', now, 999).length;
-    const refsAll = referralDigest(keys, now, 999);
-    const enr = enrollmentTally(enrKeys, now);
+    const enc = encounterDigest(encScopes, 'Service desk', 'Citizen', et, 999).length;
+    const refsAll = referralDigest(keys, et, 999);
+    const enr = enrollmentTally(enrKeys, et);
     return {
       disp,
       recsSynced: recs.filter(r => r.rec.stage === 'synced').length,
@@ -392,7 +397,7 @@ export function NationalBureaucracyPulse({ accent = '#37c7d4', now }: { accent?:
       enrPending: enr.pending,
       enrTotal: enr.total,
     };
-  }, [epoch, now, dv, ev, rev, nv]);
+  }, [epoch, dv, ev, rev, nv]);
   const cell = (l: string, v: string) => (
     <div className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
       <span className="text-[8px] uppercase tracking-[0.14em] text-ink-muted">{l}</span>
