@@ -41,7 +41,7 @@ const TIER_C: Record<string, string> = {
 
 // HH:MM for same-day messages, DD/MM HH:MM otherwise — so expanded
 // multi-day threads aren't ambiguous.
-function clockLabel(at: number, now: number): string {
+export function clockLabel(at: number, now: number): string {
   const d = new Date(at);
   const hm = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   const sameDay = new Date(now).toDateString() === d.toDateString();
