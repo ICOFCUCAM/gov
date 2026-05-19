@@ -34,6 +34,7 @@ import { SecuritySystem } from '@/apps/ministry-health/subsystems/SecuritySystem
 import { ExecutiveBriefingSystem } from '@/apps/ministry-health/subsystems/ExecutiveBriefingSystem';
 import { ResearchSystemView } from '@/apps/ministry-health/subsystems/ResearchSystemView';
 import { WardSurgicalSystem } from '@/apps/ministry-health/subsystems/WardSurgicalSystem';
+import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -327,6 +328,7 @@ export function MinistryHealthApp({
   return (
     <div className="space-y-2">
       {body}
+      <MinistryChainSection ministryKey="HEALTH" id={`${id}:${d}`} now={now} accent="#37c7d4" />
       <RuntimeQueue
         scope={`${id}:${d}`}
         kind={wf}

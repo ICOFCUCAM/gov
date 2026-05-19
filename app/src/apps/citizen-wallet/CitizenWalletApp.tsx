@@ -8,6 +8,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { citizenWallet } from '@/lib/gov/citizen-systems';
 import { citizenRequests } from '@/lib/gov/citizen-requests';
 import { OpsHeader, KpiStrip, BarPanel, StatTiles } from '@/apps/_shared/Ops';
+import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
 import { CommandPanel, type Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -71,6 +72,7 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
           ))}
         </div>
       </CommandPanel>
+      <MinistryChainSection ministryKey="FINANCE" id={appId} now={now} accent={ACC} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'approval'} title={`${label} runtime — execute the citizen-service workflow`} by="Service Agent" role={role} withheld={withheld} />
     </div>
   );

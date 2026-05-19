@@ -35,6 +35,7 @@ export const MINISTRY_CHAIN: Record<string, MinistryChainDef> = {
   JUSTICE:     { ministry: 'Ministry of Justice', facilityKind: 'Court registry', facilityPrefix: 'CRT', actorRole: 'Registrar', recordNoun: 'docket' },
   LABOR:       { ministry: 'Ministry of Labour', facilityKind: 'Labour office', facilityPrefix: 'LAB', actorRole: 'Inspector', recordNoun: 'employment record' },
   ENVIRONMENT: { ministry: 'Ministry of Environment', facilityKind: 'Field unit', facilityPrefix: 'ENV', actorRole: 'Field officer', recordNoun: 'monitoring record' },
+  LEGISLATURE: { ministry: 'National Legislature', facilityKind: 'Committee office', facilityPrefix: 'CMT', actorRole: 'Clerk', recordNoun: 'bill record' },
 };
 export function chainDef(ministryKey: string): MinistryChainDef {
   return MINISTRY_CHAIN[ministryKey]
