@@ -1,14 +1,16 @@
 import { CommandShell } from '@/components/ui/CommandShell';
-import { DomainCommand } from '@/components/features/DomainCommand';
+import { NationalOverview } from '@/components/features/NationalOverview';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Security & Interior' };
+export const metadata = { title: 'National Overview — Sovereign Operations Command Center' };
 
 
-export default function SecurityCommandPage() {
+// National Overview — the apex Sovereign Operations Command Center
+// (Head of Government), rendered within the national command chrome.
+export default function NationalOverviewPage() {
   return (
     <CommandShell active="sec">
-      <DomainCommand domain="security" />
+      <NationalOverview />
     </CommandShell>
   );
 }
