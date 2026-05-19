@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { sovereignSecurity } from '@/lib/gov/health-operations';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { CommandPanel, sc, type Tone } from '@/apps/_shared/SovereignUI';
@@ -69,6 +70,10 @@ export function SecuritySystem({ id, now, role, withheld }: {
           })}
         </div>
       </CommandPanel>
+
+      <DispatchChannel scope={`health:secline:${id}`} now={now} accent={ACC}
+        selfTier="MINISTRY" selfName="Security operations" toTier="NATIONAL"
+        title="Security ops ↔ national CERT — incidents & containment" />
 
       <RuntimeQueue scope={`${id}:security`} kind="incident" title="Security runtime — detect → contain → eradicate → attest" by="Security Officer" role={role} withheld={withheld} />
     </div>

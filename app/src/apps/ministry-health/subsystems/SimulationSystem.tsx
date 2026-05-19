@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { healthSimulation } from '@/lib/gov/health-operations';
 import { CommandPanel, sc, type Tone } from '@/apps/_shared/SovereignUI';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/ministry-health/subsystems/_ops';
@@ -77,6 +78,10 @@ export function SimulationSystem({ id, now, role, withheld }: {
             rows={sm.collapseRisks.map(r => ({ label: `${r.system} (${r.horizonDays}d · ${r.driver})`, pct: r.riskPct, tone: r.tone, tail: `${r.riskPct}%` }))} />
         </div>
       </div>
+
+      <DispatchChannel scope={`health:simline:${id}`} now={now} accent={ACC}
+        selfTier="MINISTRY" selfName="Strategic modelling" toTier="NATIONAL"
+        title="Modelling ↔ command — scenario findings & recommended interventions" />
 
       <RuntimeQueue scope={`${id}:simulation`} kind="incident" title="Simulation runtime — model → recommend → authorise → deploy intervention" by="Strategic Analyst" role={role} withheld={withheld} />
     </div>

@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { nationalHealthcareGrid } from '@/lib/gov/health-operations';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { CommandPanel, type Tone } from '@/apps/_shared/SovereignUI';
@@ -61,6 +62,10 @@ export function HealthcareGridSystem({ id, now, role, withheld }: {
 
       <BarPanel title="Regional grid availability" meta="region · online% (worst-first)" accent={ACC} live
         rows={g.regions.map(r => ({ label: `${r.region} (${r.assets.toLocaleString()})`, pct: r.onlinePct, tone: r.tone, tail: `${r.onlinePct}%` }))} />
+
+      <DispatchChannel scope={`health:gridline:${id}`} now={now} accent={ACC}
+        selfTier="MINISTRY" selfName="Grid operations" toTier="FACILITY"
+        title="Grid operations ↔ regional facilities — outages & restoration" />
 
       <RuntimeQueue
         scope={`${id}:grid`}

@@ -7,6 +7,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { patientServices } from '@/lib/gov/health-systems';
 import { patientDeepExecution } from '@/lib/gov/health-operations';
 import { CommandHeader, CommandPanel, KpiSpark, Sparkline, sc, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
@@ -150,6 +151,10 @@ export function PatientSystem({ id, now, role, withheld }: {
           </CommandPanel>
         ))}
       </div>
+
+      <DispatchChannel scope={`health:intakeline:${id}`} now={now} accent={ACC}
+        selfTier="FACILITY" selfName="Intake desk" toTier="ACTOR"
+        title="Intake desk ↔ clinicians — triage routing & bed assignment" />
 
       <RuntimeQueue
         scope={`${id}:patient`}
