@@ -238,7 +238,7 @@ export function NationalRecordsLedger({ accent = '#37c7d4', now }: { accent?: st
     <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
       <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
         <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>National records ledger — rolled & synced</span>
-        <span className="text-[8px] uppercase tracking-wider text-ink-muted">facility → ministry → national</span>
+        <span className="text-[8px] uppercase tracking-wider text-ink-muted">{ledger.filter(l => l.rec.stage === 'synced').length}/{ledger.length} synced · facility → ministry → national</span>
       </div>
       <div className="max-h-[200px] space-y-0.5 overflow-y-auto px-3 py-2">
         {ledger.map(({ rec, ministryKey }) => {
@@ -347,6 +347,7 @@ export function MinistryChainSection({
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-0.5 border-t border-line-soft px-3 py-1.5 text-[9px] text-ink-muted">
           <span>Records: {d.recordNoun} held at facility → <span style={{ color: 'rgb(var(--c-warn))' }}>{d.ministry}</span> → National</span>
+          <span>{myFac.id} register: <span style={{ color: 'rgb(var(--c-info))' }}>{filed.filter(r => r.stage !== 'synced').length} in transit</span> · <span style={{ color: 'rgb(var(--c-ok))' }}>{filed.filter(r => r.stage === 'synced').length} synced</span></span>
           <span>mean sync <span style={{ color: `rgb(var(--c-${iTone}))` }}>{integrity.meanSyncPct}%</span></span>
           <span>roll-up {integrity.uplinkLatencyMin}m · national lag {integrity.nationalLagMin}m</span>
         </div>
