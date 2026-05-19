@@ -93,7 +93,9 @@ export function DispatchChannel({
   const v = React.useSyncExternalStore(subscribe, version, () => 0);
   const [draft, setDraft] = React.useState('');
   const [prio, setPrio] = React.useState<Dispatch['priority']>('routine');
-  const list = React.useMemo(() => channel(scope, now).slice(-7), [scope, now, v]);
+  const full = React.useMemo(() => channel(scope, now), [scope, now, v]);
+  const list = full.slice(-7);
+  const liveCount = full.reduce((n, m) => n + (m.seeded ? 0 : 1), 0);
   const submit = () => {
     const b = draft.trim();
     if (!b) return;
@@ -104,7 +106,11 @@ export function DispatchChannel({
     <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#0a0f18' }}>
       <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
         <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>{title}</span>
-        <span className="text-[8px] uppercase tracking-wider text-ink-muted">{selfTier} ↔ {toTier} · live</span>
+        <span className="flex items-center gap-1.5 text-[8px] uppercase tracking-wider text-ink-muted">
+          {selfTier} ↔ {toTier}
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: accent }} />
+          {liveCount ? <span style={{ color: accent }}>{liveCount} sent</span> : 'live'}
+        </span>
       </div>
       <div className="max-h-[168px] space-y-1 overflow-y-auto px-3 py-2">
         {list.map(m => (
@@ -152,7 +158,9 @@ export function EncounterThread({
   const v = React.useSyncExternalStore(encSub, encVer, () => 0);
   const [draft, setDraft] = React.useState('');
   const [kind, setKind] = React.useState<EncounterKind>(selfAuthor === 'OFFICIAL' ? 'instruction' : 'question');
-  const list = React.useMemo(() => encThread(scope, officialName, publicName, now).slice(-7), [scope, officialName, publicName, now, v]);
+  const full = React.useMemo(() => encThread(scope, officialName, publicName, now), [scope, officialName, publicName, now, v]);
+  const list = full.slice(-7);
+  const liveCount = full.reduce((n, m) => n + (m.seeded ? 0 : 1), 0);
   const submit = () => {
     const b = draft.trim();
     if (!b) return;
@@ -164,7 +172,11 @@ export function EncounterThread({
     <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#0a0f18' }}>
       <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
         <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>{title}</span>
-        <span className="text-[8px] uppercase tracking-wider text-ink-muted">{officialName} ↔ {publicName} · live</span>
+        <span className="flex items-center gap-1.5 text-[8px] uppercase tracking-wider text-ink-muted">
+          {officialName} ↔ {publicName}
+          <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ background: accent }} />
+          {liveCount ? <span style={{ color: accent }}>{liveCount} sent</span> : 'live'}
+        </span>
       </div>
       <div className="max-h-[168px] space-y-1.5 overflow-y-auto px-3 py-2">
         {list.map(m => {
