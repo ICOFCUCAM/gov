@@ -236,11 +236,13 @@ export function territorialField(epoch: number, adjacency: number[][], n: number
   const peakP = Math.min(99, aggP + 14 + seed(`natpk:${epoch}`) * 24);
   const sev = Math.floor(seed(`natsev:${epoch}`) * 5);
   const st = nationalOperatingState(epoch, aggP, peakP, sev, sev + 1, epoch);
+  // Bounded weighted blend (≈0..100): per-region idiosyncrasy + national
+  // contention floor + decayed crisis memory — spread, not saturated.
   const raw = Array.from({ length: n }).map((_, i) =>
-    20 + seed(`prov:${i}:${epoch}`) * 34 + st.contention * 0.3 + provinceMemory(i, epoch) * 0.6);
+    24 + seed(`prov:${i}:${epoch}`) * 40 + st.contention * 0.24 + provinceMemory(i, epoch) * 0.18);
   const diff = diffuseTopology(raw, adjacency);
   return diff.map((v, i) =>
-    Math.max(2, Math.min(99, Math.round(Math.max(v, provinceMemory(i, epoch) * 0.9)))));
+    Math.max(2, Math.min(99, Math.round(Math.max(v, provinceMemory(i, epoch) * 0.6)))));
 }
 
 // Build an undirected adjacency list from corridor edges (province indices).

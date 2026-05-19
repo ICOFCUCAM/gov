@@ -527,25 +527,35 @@ export function NationalMap({
   // decayed crisis memory, then propagated along corridor topology so
   // pressure radiates through connectivity and cools gradually — crisis
   // zones stay warm after containment (never an instant reset).
+  // Distance-weighted MEAN of nearby ministry pressure (0..100) — a region
+  // reads at the strain level of the institutions operating around it, so it
+  // varies by proximity instead of summing into saturation.
   const zoneStrain = (cx: number, cy: number) => {
-    if (!mapNodes.length) return 0;
-    let s = 0;
+    if (!mapNodes.length) return 38;
+    let s = 0, w = 0;
     for (const m of mapNodes) {
       const d = Math.hypot(m.x * 10 - cx, m.y * 6.2 - cy);
-      s += m.pressure * Math.max(0, 1 - d / 520);
+      const k = Math.max(0, 1 - d / 420);
+      s += m.pressure * k; w += k;
     }
-    return (s / mapNodes.length) * 2.3;
+    return w > 0 ? s / w : mapNodes.reduce((a, m) => a + m.pressure, 0) / mapNodes.length;
   };
-  // Raw strain blends live ministry zones + national contention with the
-  // shared crisis-memory law; then propagates along corridor topology and
-  // cools gradually (same doctrine as every other map-bearing surface).
+  // Normalized weighted blend (≈0..100): live ministry-zone strain, national
+  // contention floor, per-province idiosyncrasy and decayed crisis memory —
+  // every doctrine factor retained, but bounded so provinces spread instead
+  // of pinning to the clamp. Propagated along corridor topology; crisis
+  // zones stay warm after containment (never an instant reset).
   const provRaw = PROV.map((p, i) =>
-    wave(`prov:${i}`, ts, 8, 66) + zoneStrain(p.cx, p.cy) + opState.contention * 0.3 + provinceMemory(i, epoch) * 0.5 + (p.cap ? 7 : 0));
+    zoneStrain(p.cx, p.cy) * 0.52
+    + opState.contention * 0.2
+    + wave(`prov:${i}`, ts, 8, 70) * 0.18
+    + provinceMemory(i, epoch) * 0.1
+    + (p.cap ? 6 : 0));
   const provAdj = corridorAdjacency(CORRIDORS.map(c => [c.from, c.to] as [number, number]), PROV.length);
   const provDiff = diffuseTopology(provRaw, provAdj);
   const provRisk = PROV.map((p, i) => ({
     p,
-    risk: Math.max(2, Math.min(99, Math.round(Math.max(provDiff[i] ?? 0, provinceMemory(i, epoch) * 0.9)))),
+    risk: Math.max(2, Math.min(99, Math.round(Math.max(provDiff[i] ?? 0, provinceMemory(i, epoch) * 0.7)))),
   }));
   const tBand = (v: number, a: number, b: number) => (v >= b ? 'alert' : v >= a ? 'warn' : 'ok');
   const overlay = [
