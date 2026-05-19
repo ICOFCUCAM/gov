@@ -1485,13 +1485,14 @@ export function SituationRoom() {
                 const elevN = mapNodes.filter(n => n.pressure >= 60 && n.pressure < 80).length;
                 const coordTone = critN >= 2 ? 'alert' : critN || elevN >= 3 ? 'warn' : 'ok';
                 return (
-              <table className="w-full text-[11px]">
+              <div className="overflow-x-auto">
+              <table className="w-full min-w-[440px] text-[11px]">
                 <thead>
                   <tr className="sticky top-0 z-10 border-b text-left text-[8px] font-bold uppercase tracking-[0.16em] text-ink-muted"
                     style={{ background: 'rgb(var(--c-surface-2))', borderColor: `color-mix(in srgb,${ACCENT} 28%,rgb(var(--c-line)))` }}>
                     <th className="px-2 py-1.5">Ministry · State · Telemetry</th>
                     {['Ops', 'Fisc', 'Infra', 'Civil', 'Sec', 'Logi', 'SLA', 'Esc', 'Work', 'Emrg'].map(d => (
-                      <th key={d} className="px-1 py-1.5 text-center">{d}</th>
+                      <th key={d} className="px-0.5 py-1.5 text-center">{d}</th>
                     ))}
                   </tr>
                 </thead>
@@ -1539,13 +1540,11 @@ export function SituationRoom() {
                         {['ops', 'fisc', 'infra', 'civil', 'sec', 'logi', 'sla', 'esc', 'work', 'emrg'].map(dom => {
                           const v = domainStress(m.archetype as string, dom, p, ts, m.ministryId);
                           const st = v >= 78 ? 'alert' : v >= 58 ? 'warn' : v >= 40 ? 'neutral' : 'ok';
-                          const lbl = st === 'alert' ? 'CRIT' : st === 'warn' ? 'ELEV' : st === 'neutral' ? 'WTCH' : 'STBL';
                           return (
-                            <td key={dom} className="px-1 py-1.5 text-center align-middle">
-                              <span className="inline-flex w-full flex-col items-center gap-px rounded px-1 py-0.5 text-[8px] font-bold tracking-wide"
-                                style={{ backgroundColor: `color-mix(in srgb, ${TONE[st]} ${st === 'alert' ? 22 : 14}%, transparent)`, color: TONE[st] }}>
-                                {lbl}
-                                <span className="h-0.5 w-full overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}><span className="block h-full rounded-full" style={{ width: `${v}%`, background: TONE[st] }} /></span>
+                            <td key={dom} className="px-0.5 py-1.5 align-middle" title={`${dom} ${Math.round(v)}`}>
+                              <span className="flex flex-col items-center gap-0.5">
+                                <span className="h-1.5 w-1.5 rounded-full" style={{ background: TONE[st], boxShadow: st === 'alert' ? `0 0 4px ${TONE.alert}` : undefined }} />
+                                <span className="h-0.5 w-5 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}><span className="block h-full rounded-full" style={{ width: `${v}%`, background: TONE[st] }} /></span>
                               </span>
                             </td>
                           );
@@ -1568,6 +1567,7 @@ export function SituationRoom() {
                   </tr>
                 </tfoot>
               </table>
+              </div>
                 );
               })()}
             </Panel>
