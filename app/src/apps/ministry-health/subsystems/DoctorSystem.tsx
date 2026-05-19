@@ -11,7 +11,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { clinicianWorkstation } from '@/lib/gov/health-operations';
 import { CommandHeader, CommandPanel, RingGauge, TrendChart, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import { InstitutionChainStrip, DispatchChannel, EncounterThread } from '@/apps/_shared/InstitutionChain';
-import { facilities, recordLineage, chainIntegrity } from '@/lib/gov/institution-chain';
+import { facilities, recordLineage, lineageAtStage, chainIntegrity } from '@/lib/gov/institution-chain';
 import { records as recordsOf, fileRecord, advanceRecord, STAGE_ORDER, subscribe as recSub, version as recVer } from '@/lib/gov/records-store';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
@@ -46,11 +46,7 @@ export function DoctorSystem({ id, now, role, withheld }: {
   const ptRec = ptRecs.find(r => r.subject.startsWith(`MRN-${p.mrn}`));
   // When a real record has been committed, the lineage strip reflects its
   // live custody stage instead of the deterministic placeholder.
-  const lineage = ptRec ? (() => {
-    const si = STAGE_ORDER.indexOf(ptRec.stage); // 0..4 → ACTOR..NATIONAL
-    const stages = baseLineage.stages.map((s, i) => ({ ...s, done: i <= si }));
-    return { ...baseLineage, stages, current: stages[Math.min(si, 4)]!.tier, synced: ptRec.stage === 'synced' };
-  })() : baseLineage;
+  const lineage = ptRec ? lineageAtStage(baseLineage, STAGE_ORDER.indexOf(ptRec.stage)) : baseLineage;
   const rb: Tone = p.riskBand === 'High' ? 'alert' : p.riskBand === 'Moderate' ? 'warn' : 'ok';
   const norm = (s: number[]) => { const mn = Math.min(...s), sp = Math.max(...s) - mn || 1; return s.map(v => ((v - mn) / sp) * 100); };
 

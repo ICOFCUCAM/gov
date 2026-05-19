@@ -138,6 +138,15 @@ export function recordLineage(
   const current: ChainTier = synced ? 'NATIONAL' : reached(3) ? 'MINISTRY' : reached(1) ? 'FACILITY' : 'ACTOR';
   return { recordId, stages, current, synced };
 }
+
+/** Re-derive a lineage so that stages 0..stageIndex are done — used to make
+ *  the lineage strip reflect a real record's live custody stage (0=captured
+ *  … 4=synced) instead of the deterministic placeholder progression. */
+export function lineageAtStage(base: RecordLineage, stageIndex: number): RecordLineage {
+  const i = Math.max(0, Math.min(stageIndex, base.stages.length - 1));
+  const stages = base.stages.map((s, idx) => ({ ...s, done: idx <= i }));
+  return { ...base, stages, current: stages[i]!.tier, synced: i >= base.stages.length - 1 };
+}
 function hash(s: string): number {
   let h = 2166136261;
   for (let i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }

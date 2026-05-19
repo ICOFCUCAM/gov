@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  chainDef, facilities, actors, recordLineage, chainIntegrity, MINISTRY_CHAIN,
+  chainDef, facilities, actors, recordLineage, lineageAtStage, chainIntegrity, MINISTRY_CHAIN,
 } from './institution-chain';
 
 describe('institution chain', () => {
@@ -62,5 +62,19 @@ describe('institution chain', () => {
     expect(c.meanSyncPct).toBeGreaterThanOrEqual(0);
     expect(c.meanSyncPct).toBeLessThanOrEqual(100);
     expect(['synchronised', 'lagging', 'degraded']).toContain(c.status);
+  });
+
+  it('lineageAtStage marks stages 0..i done and clamps out-of-range', () => {
+    const f = facilities('HEALTH', 3)[0]!;
+    const base = recordLineage('MRN-1', 'Dr A', f, 'HEALTH', 3);
+    const at2 = lineageAtStage(base, 2);
+    expect(at2.stages.map(s => s.done)).toEqual([true, true, true, false, false]);
+    expect(at2.synced).toBe(false);
+    const at4 = lineageAtStage(base, 9); // clamped to last
+    expect(at4.stages.every(s => s.done)).toBe(true);
+    expect(at4.synced).toBe(true);
+    expect(at4.current).toBe('NATIONAL');
+    const at0 = lineageAtStage(base, -3); // clamped to 0
+    expect(at0.stages.filter(s => s.done)).toHaveLength(1);
   });
 });
