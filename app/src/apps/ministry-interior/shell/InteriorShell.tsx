@@ -68,6 +68,10 @@ import { KnowledgeContinuity } from '@/apps/ministry-interior/domains/KnowledgeC
 import { ExpertiseTransfer } from '@/apps/ministry-interior/domains/ExpertiseTransfer';
 import { InnovationContinuity } from '@/apps/ministry-interior/domains/InnovationContinuity';
 import { CognitiveTrajectory } from '@/apps/ministry-interior/domains/CognitiveTrajectory';
+import { GeopoliticalContinuity } from '@/apps/ministry-interior/domains/GeopoliticalContinuity';
+import { MigrationHumanitarian } from '@/apps/ministry-interior/domains/MigrationHumanitarian';
+import { GlobalShockIntelligence } from '@/apps/ministry-interior/domains/GlobalShockIntelligence';
+import { StrategicTrajectory } from '@/apps/ministry-interior/domains/StrategicTrajectory';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -148,6 +152,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'expertise-transfer': return <ExpertiseTransfer id={id} now={now} />;
     case 'innovation-continuity': return <InnovationContinuity id={id} now={now} />;
     case 'cognitive-trajectory': return <CognitiveTrajectory id={id} now={now} />;
+    case 'geopolitical-continuity': return <GeopoliticalContinuity id={id} now={now} />;
+    case 'migration-humanitarian': return <MigrationHumanitarian id={id} now={now} />;
+    case 'global-shock-intelligence': return <GlobalShockIntelligence id={id} now={now} />;
+    case 'strategic-trajectory': return <StrategicTrajectory id={id} now={now} />;
   }
 }
 
