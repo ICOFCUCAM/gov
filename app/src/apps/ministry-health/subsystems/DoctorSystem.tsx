@@ -10,7 +10,7 @@ import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { clinicianWorkstation } from '@/lib/gov/health-operations';
 import { CommandHeader, CommandPanel, RingGauge, TrendChart, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
-import { InstitutionChainStrip, DispatchChannel } from '@/apps/_shared/InstitutionChain';
+import { InstitutionChainStrip, DispatchChannel, EncounterThread } from '@/apps/_shared/InstitutionChain';
 import { facilities, recordLineage, chainIntegrity } from '@/lib/gov/institution-chain';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
@@ -129,6 +129,9 @@ export function DoctorSystem({ id, now, role, withheld }: {
         <DispatchChannel scope={dispatchScope} now={now} accent={ACC}
           selfTier="ACTOR" selfName={`${p.attending} · ${myHospital.id}`} toTier="FACILITY"
           title={`Hospital dispatch · ${myHospital.id}`} />
+        <EncounterThread scope={`enc:health:${myHospital.id}:${p.mrn}`} now={now} accent={ACC}
+          selfAuthor="OFFICIAL" officialName={p.attending} publicName={p.name}
+          title={`Patient encounter · ${p.mrn}`} />
         </div>
 
         {/* Col 2 — complaint · diagnoses · notes · labs */}

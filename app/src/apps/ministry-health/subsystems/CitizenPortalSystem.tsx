@@ -8,6 +8,7 @@ import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { citizenPortalView } from '@/lib/gov/health-operations';
 import { RingGauge, Sparkline, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
+import { EncounterThread } from '@/apps/_shared/InstitutionChain';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
@@ -314,6 +315,11 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
                 ))}
               </div>
               <button className="focus-ring mt-2 w-full rounded-[8px] py-1.5 text-[10px] font-semibold" style={{ background: ACC, color: '#04130d' }}>Start consultation</button>
+              <div className="mt-2">
+                <EncounterThread scope={`enc:health:portal:${v.healthId}`} now={now} accent={ACC}
+                  selfAuthor="PUBLIC" officialName={v.upcoming.doctor} publicName={v.name}
+                  title="Message your care team" />
+              </div>
             </Card>
             <Card title="Health wallet" action="View Transactions">
               <div className="text-[9px] text-ink-muted">Available balance</div>

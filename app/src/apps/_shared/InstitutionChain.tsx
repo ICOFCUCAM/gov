@@ -20,6 +20,11 @@ import {
   enrollments, enroll, advanceEnrollment,
   subscribe as enSub, version as enVer,
 } from '@/lib/gov/enrollment-store';
+import {
+  thread as encThread, post as encPost,
+  subscribe as encSub, version as encVer,
+  type EncounterAuthor, type EncounterKind,
+} from '@/lib/gov/encounter-store';
 
 const TIER_C: Record<string, string> = {
   ACTOR: 'rgb(var(--c-link))', FACILITY: 'rgb(var(--c-ok))',
@@ -112,6 +117,68 @@ export function DispatchChannel({
         </select>
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submit(); }}
           placeholder={`Dispatch to ${toTier.toLowerCase()}…`}
+          className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink"
+          style={{ borderColor: 'rgb(var(--c-line))' }} />
+        <button type="button" onClick={submit}
+          className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider"
+          style={{ borderColor: accent, color: accent }}>Send</button>
+      </div>
+    </div>
+  );
+}
+
+const K_TONE: Record<string, string> = {
+  note: 'rgb(var(--c-ink-muted))', question: 'rgb(var(--c-link))',
+  instruction: 'rgb(var(--c-warn))', result: 'rgb(var(--c-ok))',
+};
+
+// Live two-way service encounter between a PUBLIC actor and the OFFICIAL
+// serving them THROUGH a facility (clinician↔patient, officer↔citizen).
+// The operator posts as `selfAuthor`; turns persist across navigation.
+export function EncounterThread({
+  scope, now, accent, selfAuthor, officialName, publicName, title,
+}: {
+  scope: string; now: number; accent: string;
+  selfAuthor: EncounterAuthor; officialName: string; publicName: string; title: string;
+}) {
+  const v = React.useSyncExternalStore(encSub, encVer, () => 0);
+  const [draft, setDraft] = React.useState('');
+  const [kind, setKind] = React.useState<EncounterKind>(selfAuthor === 'OFFICIAL' ? 'instruction' : 'question');
+  const list = React.useMemo(() => encThread(scope, officialName, publicName, now).slice(-7), [scope, officialName, publicName, now, v]);
+  const submit = () => {
+    const b = draft.trim();
+    if (!b) return;
+    encPost(scope, { author: selfAuthor, name: selfAuthor === 'OFFICIAL' ? officialName : publicName, kind, body: b }, now);
+    setDraft('');
+  };
+  const kinds: EncounterKind[] = selfAuthor === 'OFFICIAL' ? ['instruction', 'result', 'note'] : ['question', 'note'];
+  return (
+    <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#0a0f18' }}>
+      <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+        <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>{title}</span>
+        <span className="text-[8px] uppercase tracking-wider text-ink-muted">{officialName} ↔ {publicName} · live</span>
+      </div>
+      <div className="max-h-[168px] space-y-1.5 overflow-y-auto px-3 py-2">
+        {list.map(m => {
+          const mine = m.author === selfAuthor;
+          return (
+            <div key={m.id} className={`text-[10px] ${mine ? 'pl-6 text-right' : 'pr-6'}`}>
+              <span className="font-mono text-[8px] text-ink-muted">{new Date(m.at).toLocaleTimeString('en-GB', { hour12: false })}</span>{' '}
+              <span style={{ color: m.author === 'OFFICIAL' ? accent : 'rgb(var(--c-link))' }}>{m.name}</span>
+              <span className="ml-1 text-[7.5px] font-bold uppercase" style={{ color: K_TONE[m.kind] }}>· {m.kind}</span>
+              <div className="text-ink-soft">{m.body}</div>
+            </div>
+          );
+        })}
+      </div>
+      <div className="flex items-center gap-1.5 border-t px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+        <select value={kind} onChange={e => setKind(e.target.value as EncounterKind)}
+          className="focus-ring rounded-[3px] border bg-surface px-1 py-1 text-[9px] uppercase tracking-wider text-ink-soft"
+          style={{ borderColor: 'rgb(var(--c-line))' }}>
+          {kinds.map(k => <option key={k} value={k}>{k}</option>)}
+        </select>
+        <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          placeholder={selfAuthor === 'OFFICIAL' ? `Reply to ${publicName}…` : `Message ${officialName}…`}
           className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink"
           style={{ borderColor: 'rgb(var(--c-line))' }} />
         <button type="button" onClick={submit}
