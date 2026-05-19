@@ -47,10 +47,12 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
     b.key === 'legislature' ? 'LEGISLATURE'
       : b.key === 'judiciary' ? 'JUDICIARY'
       : 'GENERIC';
-  const [tab, setTab] = React.useState(tabs[0]!);
+  const firstTab = tabs[0]!;
+  const [tab, setTab] = React.useState(firstTab);
   const [selCase, setSelCase] = React.useState<string | null>(null);
   const [selBill, setSelBill] = React.useState<string | null>(null);
-  React.useEffect(() => { setTab(tabs[0]!); /* reset when engine changes */ }, [engine]); // eslint-disable-line
+  // Reset to the first tab whenever the engine (hence the tab set) changes.
+  React.useEffect(() => { setTab(firstTab); }, [firstTab]);
 
   const tele = (() => {
     if (engine === 'legislative') {
