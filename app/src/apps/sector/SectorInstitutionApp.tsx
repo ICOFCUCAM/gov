@@ -14,7 +14,7 @@ import { laborOps } from '@/lib/gov/labor-systems';
 import { tradeOps } from '@/lib/gov/trade-systems';
 import { environmentOps } from '@/lib/gov/environment-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
-import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
+import { MinistryChainSection, InstitutionChainStrip, actorChain } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { ArchetypeKey } from '@/lib/api/types';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -161,6 +161,10 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
           <RuntimeQueue scope={`${id}:field`} kind="field" title={`${label} field deployment runtime — stage → task → on-scene → cleared`} by="Field Coordinator" role={role} withheld={withheld} />
         </>
       ) : null}
+      {(() => { const ch = actorChain(archetype, id, now, 'REC'); return (
+        <InstitutionChainStrip accent={ACC} ministryKey={archetype} facility={ch.facility}
+          actorName={ch.actorName} lineage={ch.lineage} integrity={ch.integrity} />
+      ); })()}
       <MinistryChainSection ministryKey={archetype} id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${domain}`} kind={wf} title={`${label} · ${domain} runtime — execute the institutional workflow`} by="Institution Officer" role={role} withheld={withheld} />
     </div>
