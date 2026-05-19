@@ -16,7 +16,7 @@ import { hospitalDeepExecution } from '@/lib/gov/health-operations';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { facilities, actors, chainIntegrity } from '@/lib/gov/institution-chain';
-import { records as recordsOf, fileRecord, advanceRecord, STAGE_ORDER, subscribe as recSub, version as recVer } from '@/lib/gov/records-store';
+import { records as recordsOf, fileRecord, advanceRecord, returnRecord, STAGE_ORDER, subscribe as recSub, version as recVer } from '@/lib/gov/records-store';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 const ACC = ACCENT.hospital!;
@@ -111,9 +111,15 @@ export function HospitalSystem({ id, now, role, withheld }: {
               return (
                 <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
                   <span className="shrink-0 font-mono text-[8px] text-ink-muted">{r.ref}</span>
-                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject} <span className="text-ink-muted">· {r.byActor}</span></span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject} <span className="text-ink-muted">· {r.byActor}</span>{r.returns ? <span className="ml-1 text-[7.5px]" style={{ color: sc('alert') }}>↩{r.returns}</span> : null}</span>
                   <span className="shrink-0 font-mono text-[7.5px] text-ink-muted">{si + 1}/5</span>
                   <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: sc(rt) }}>{r.stage}</span>
+                  {r.stage !== 'synced' && si > 0 ? (
+                    <button type="button" onClick={() => returnRecord('HEALTH', fac.id, r.id, now)} title="Return for correction"
+                      className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
+                      ↩
+                    </button>
+                  ) : null}
                   {r.stage !== 'synced' ? (
                     <button type="button" onClick={() => advanceRecord('HEALTH', fac.id, r.id, now)}
                       className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>

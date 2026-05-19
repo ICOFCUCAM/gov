@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { records, fileRecord, advanceRecord, nationalRecords, version, STAGE_ORDER } from './records-store';
+import { records, fileRecord, advanceRecord, returnRecord, nationalRecords, version, STAGE_ORDER } from './records-store';
 
 describe('records-store', () => {
   it('seeds a deterministic non-empty register with valid stages', () => {
@@ -27,6 +27,18 @@ describe('records-store', () => {
     const r = list.find(x => x.byActor === 'Trade officer')!;
     for (let i = 0; i < 8; i++) advanceRecord('TRADE', 'TRD-9', r.id, 3_000_000);
     expect(records('TRADE', 'TRD-9', 'licence record', 3_000_000).find(x => x.id === r.id)!.stage).toBe('synced');
+  });
+
+  it('returnRecord sends a record back one stage and counts the return', () => {
+    fileRecord('LABOR', 'LAB-1', 'Employment record', 'Inspector', 'employment record', 5_000_000);
+    const r = records('LABOR', 'LAB-1', 'employment record', 5_000_000).find(x => x.byActor === 'Inspector')!;
+    advanceRecord('LABOR', 'LAB-1', r.id, 5_000_000); // held
+    returnRecord('LABOR', 'LAB-1', r.id, 5_000_000);  // back to captured
+    const back = records('LABOR', 'LAB-1', 'employment record', 5_000_000).find(x => x.id === r.id)!;
+    expect(back.stage).toBe('captured');
+    expect(back.returns).toBe(1);
+    returnRecord('LABOR', 'LAB-1', r.id, 5_000_000); // already at captured — no-op
+    expect(records('LABOR', 'LAB-1', 'employment record', 5_000_000).find(x => x.id === r.id)!.returns).toBe(1);
   });
 
   it('nationalRecords only surfaces rolled or synced records, newest last', () => {

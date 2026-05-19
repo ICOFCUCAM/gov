@@ -22,6 +22,7 @@ export interface FiledRecord {
   subject: string;
   byActor: string;
   stage: RecordStage;
+  returns?: number; // times sent back for correction
 }
 
 type Listener = () => void;
@@ -123,4 +124,16 @@ export function advanceRecord(ministryKey: string, facilityId: string, id: strin
   if (!r) return;
   const i = STAGE_ORDER.indexOf(r.stage);
   if (i < STAGE_ORDER.length - 1) { r.stage = STAGE_ORDER[i + 1]!; bump(); }
+}
+
+/** Send a record back one stage for correction — real bureaucracy is not
+ *  monotonic. A synced record is closed and cannot be returned. */
+export function returnRecord(ministryKey: string, facilityId: string, id: string, now: number): void {
+  hydrate();
+  const list = regs.get(`${ministryKey}:${facilityId}`);
+  if (!list) return;
+  const r = list.find(x => x.id === id);
+  if (!r || r.stage === 'synced') return;
+  const i = STAGE_ORDER.indexOf(r.stage);
+  if (i > 0) { r.stage = STAGE_ORDER[i - 1]!; r.returns = (r.returns ?? 0) + 1; bump(); }
 }

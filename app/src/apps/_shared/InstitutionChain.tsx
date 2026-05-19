@@ -26,7 +26,7 @@ import {
   type EncounterAuthor, type EncounterKind,
 } from '@/lib/gov/encounter-store';
 import {
-  records as recordsOf, fileRecord, advanceRecord, nationalRecords, STAGE_ORDER,
+  records as recordsOf, fileRecord, advanceRecord, returnRecord, nationalRecords, STAGE_ORDER,
   subscribe as recSub, version as recVer,
 } from '@/lib/gov/records-store';
 
@@ -404,9 +404,15 @@ export function MinistryChainSection({
               return (
                 <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
                   <span className="shrink-0 font-mono text-[8px] text-ink-muted">{r.ref}</span>
-                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject} <span className="text-ink-muted">· {r.byActor}</span></span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject} <span className="text-ink-muted">· {r.byActor}</span>{r.returns ? <span className="ml-1 text-[7.5px]" style={{ color: 'rgb(var(--c-alert))' }}>↩{r.returns}</span> : null}</span>
                   <span className="shrink-0 font-mono text-[7.5px] text-ink-muted">{at + 1}/5</span>
                   <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${rt}))` }}>{r.stage}</span>
+                  {r.stage !== 'synced' && at > 0 ? (
+                    <button type="button" onClick={() => returnRecord(ministryKey, myFac.id, r.id, now)} title="Return for correction"
+                      className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
+                      ↩
+                    </button>
+                  ) : null}
                   {r.stage !== 'synced' ? (
                     <button type="button" onClick={() => advanceRecord(ministryKey, myFac.id, r.id, now)}
                       className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
