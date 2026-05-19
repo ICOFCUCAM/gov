@@ -13,6 +13,13 @@ import {
   channel, send, subscribe, version,
   type Dispatch, type DispatchTier,
 } from '@/lib/gov/dispatch-store';
+import {
+  facilities as facilitiesOf, actors as actorsOf, chainIntegrity as integrityOf,
+} from '@/lib/gov/institution-chain';
+import {
+  enrollments, enroll, advanceEnrollment,
+  subscribe as enSub, version as enVer,
+} from '@/lib/gov/enrollment-store';
 
 const TIER_C: Record<string, string> = {
   ACTOR: 'rgb(var(--c-link))', FACILITY: 'rgb(var(--c-ok))',
@@ -111,6 +118,88 @@ export function DispatchChannel({
           className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider"
           style={{ borderColor: accent, color: accent }}>Send</button>
       </div>
+    </div>
+  );
+}
+
+// One drop-in section giving any ministry surface its bureaucratic spine:
+// facility network + chain integrity, an enrolment desk (actors register
+// INTO a facility, session-persistent), and a facility↔ministry dispatch.
+export function MinistryChainSection({
+  ministryKey, id, now, accent = '#37c7d4',
+}: {
+  ministryKey: string; id: string; now: number; accent?: string;
+}) {
+  const ev = React.useSyncExternalStore(enSub, enVer, () => 0);
+  const epoch = Math.max(0, Math.floor(now / 4000));
+  const d = chainDef(ministryKey);
+  const fac = facilitiesOf(ministryKey, epoch);
+  const idx = Math.abs([...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % fac.length;
+  const myFac = fac[idx] ?? fac[0]!;
+  const integrity = integrityOf(ministryKey, epoch);
+  const baseRoster = actorsOf(ministryKey, myFac.id, epoch);
+  const enrolled = React.useMemo(() => enrollments(ministryKey, myFac.id, d.actorRole, now), [ministryKey, myFac.id, d.actorRole, now, ev]);
+  const [nm, setNm] = React.useState('');
+  const iTone = integrity.status === 'synchronised' ? 'ok' : integrity.status === 'lagging' ? 'warn' : 'alert';
+  const stC = (s: string) => (s === 'active' || s === 'operational' ? 'ok' : s === 'verified' || s === 'strained' ? 'warn' : s === 'pending' ? 'info' : 'alert');
+
+  return (
+    <div className="grid gap-2 lg:grid-cols-3">
+      <div className="rounded-[4px] border lg:col-span-2" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
+        <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+          <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>{d.ministry} · facility network</span>
+          <span className="rounded-[2px] px-1.5 py-0.5 text-[7.5px] font-bold uppercase tracking-wider"
+            style={{ background: `color-mix(in srgb,rgb(var(--c-${iTone})) 18%,transparent)`, color: `rgb(var(--c-${iTone}))` }}>
+            CHAIN {integrity.status}
+          </span>
+        </div>
+        <div className="grid gap-x-4 gap-y-1 px-3 py-2 text-[10px] sm:grid-cols-2">
+          {fac.map(f => (
+            <div key={f.id} className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: `rgb(var(--c-${stC(f.status)}))` }} />
+              <span className="min-w-0 flex-1 truncate text-ink-soft">{f.id} · {f.name} <span className="text-ink-muted">· {f.region}</span></span>
+              <span className="shrink-0 font-mono text-[8px] tabular-nums text-ink-muted">{f.staff} staff · sync {f.syncPct}%</span>
+            </div>
+          ))}
+        </div>
+        <div className="flex flex-wrap gap-x-4 gap-y-0.5 border-t border-line-soft px-3 py-1.5 text-[9px] text-ink-muted">
+          <span>Records: {d.recordNoun} held at facility → <span style={{ color: 'rgb(var(--c-warn))' }}>{d.ministry}</span> → National</span>
+          <span>mean sync <span style={{ color: `rgb(var(--c-${iTone}))` }}>{integrity.meanSyncPct}%</span></span>
+          <span>roll-up {integrity.uplinkLatencyMin}m · national lag {integrity.nationalLagMin}m</span>
+        </div>
+        {/* Enrolment desk — actors register INTO the facility */}
+        <div className="border-t px-3 py-2" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+          <div className="mb-1 flex items-center gap-2">
+            <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-ink-muted">Enrolment desk · {myFac.id}</span>
+            <span className="text-[8px] text-ink-muted">{baseRoster.length + enrolled.length} {d.actorRole.toLowerCase()}s on register</span>
+          </div>
+          <div className="mb-1.5 flex items-center gap-1.5">
+            <input value={nm} onChange={e => setNm(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && nm.trim()) { enroll(ministryKey, myFac.id, nm, d.actorRole, 'Facility registrar', now); setNm(''); } }}
+              placeholder={`Enrol ${d.actorRole.toLowerCase()} at ${myFac.id}…`}
+              className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
+            <button type="button" onClick={() => { if (nm.trim()) { enroll(ministryKey, myFac.id, nm, d.actorRole, 'Facility registrar', now); setNm(''); } }}
+              className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: accent, color: accent }}>Enrol</button>
+          </div>
+          <div className="max-h-[120px] space-y-0.5 overflow-y-auto">
+            {enrolled.slice(-6).reverse().map(e => (
+              <div key={e.id} className="flex items-center gap-2 text-[9.5px]">
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: `rgb(var(--c-${stC(e.status)}))` }} />
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{e.name}</span>
+                <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${stC(e.status)}))` }}>{e.status}</span>
+                {e.status !== 'active' ? (
+                  <button type="button" onClick={() => advanceEnrollment(ministryKey, myFac.id, e.id, now)}
+                    className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
+                    {e.status === 'pending' ? 'verify' : 'activate'}
+                  </button>
+                ) : null}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+      <DispatchChannel scope={`${ministryKey.toLowerCase()}:${myFac.id}`} now={now} accent={accent}
+        selfTier="FACILITY" selfName={`${myFac.id} desk`} toTier="MINISTRY"
+        title={`Ministry uplink · ${myFac.id}`} />
     </div>
   );
 }
