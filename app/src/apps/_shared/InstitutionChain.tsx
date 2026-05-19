@@ -333,6 +333,46 @@ export function NationalReferralBoard({ accent = '#37c7d4', now }: { accent?: st
   );
 }
 
+// One-glance executive summary of every live bureaucratic flow.
+export function NationalBureaucracyPulse({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
+  const dv = React.useSyncExternalStore(subscribe, version, () => 0);
+  const ev = React.useSyncExternalStore(encSub, encVer, () => 0);
+  const rev = React.useSyncExternalStore(refSub, refVer, () => 0);
+  const epoch = Math.max(0, Math.floor(now / 4000));
+  const stats = React.useMemo(() => {
+    const keys = Object.keys(MINISTRY_CHAIN);
+    const dispScopes = keys.map(k => `natl:${k.toLowerCase()}`);
+    const encScopes: string[] = [];
+    for (const k of keys) for (const f of facilitiesOf(k, epoch).slice(0, 2)) encScopes.push(`enc:${k.toLowerCase()}:${f.id}`);
+    const disp = digest(dispScopes, now, 999).length;
+    const recs = nationalRecords(999);
+    const enc = encounterDigest(encScopes, 'Service desk', 'Citizen', now, 999).length;
+    const refsAll = referralDigest(keys, now, 999);
+    return {
+      disp,
+      recsSynced: recs.filter(r => r.rec.stage === 'synced').length,
+      recsTotal: recs.length,
+      enc,
+      refOpen: refsAll.filter(r => r.status !== 'closed').length,
+      refTotal: refsAll.length,
+    };
+  }, [epoch, now, dv, ev, rev]);
+  const cell = (l: string, v: string) => (
+    <div className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+      <span className="text-[8px] uppercase tracking-[0.14em] text-ink-muted">{l}</span>
+      <span className="font-mono text-[11px] font-semibold tabular-nums" style={{ color: accent }}>{v}</span>
+    </div>
+  );
+  return (
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-4">
+      {cell('Dispatch roll-up', `${stats.disp}`)}
+      {cell('Records → national', `${stats.recsSynced}/${stats.recsTotal} synced`)}
+      {cell('Public service turns', `${stats.enc}`)}
+      {cell('Referrals open', `${stats.refOpen}/${stats.refTotal}`)}
+    </div>
+  );
+}
+
 // One drop-in section giving any ministry surface its bureaucratic spine:
 // facility network + chain integrity, an enrolment desk (actors register
 // INTO a facility, session-persistent), and a facility↔ministry dispatch.
