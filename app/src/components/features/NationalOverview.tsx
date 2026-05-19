@@ -1,154 +1,101 @@
 'use client';
 
-// National Overview — Sovereign Operations Command Center. The apex
-// whole-of-government command surface (Head of Government / National
-// Executive): national posture KPI strip, national threat map, active
-// incidents, incident & operational summaries, top alerts, system health,
-// threat forecast, resource deployment, intelligence summary, regional
-// risk distribution and a command feed. Pure & deterministic — telemetry
-// only; SSR-safe (client clock follows the codebase pattern).
+// National Overview — National Governance Platform apex unified-insights
+// surface. Dense dark whole-of-nation console modelled on the benchmark:
+// KPI strip with sparklines, performance-over-time multi-line trend,
+// initiative-coverage region map, critical alerts, budget & project
+// donuts, risk heat map, top initiatives, citizen feedback, recent
+// activities, upcoming deadlines and a month calendar. Pure &
+// deterministic — telemetry only. Self-contained (rendered in shell).
 
 import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 
-const BG = '#070b11';
-const PANEL = '#0c1119';
-const PANEL2 = '#10151f';
-const LINE = 'rgba(224,104,95,0.15)';
-const RED = '#e0685f';
-const RED_BR = '#f4877c';
+const PANEL = '#0d131c';
+const PANEL2 = '#111927';
+const LINE = 'rgba(90,150,210,0.16)';
+const LINE2 = 'rgba(255,255,255,0.06)';
+const CYAN = '#37c7d4';
+const BLUE = '#4f8df0';
+const GREEN = '#35c08a';
+const TEAL = '#2bb3a6';
+const PURPLE = '#8a6cf0';
 const AMBER = '#e0a13a';
-const GOLD = '#c9a24a';
-const CYAN = '#4fb3d9';
-const EMER = '#3fae82';
-const INK = '#d6dde6';
-const SOFT = '#93a0ad';
-const MUT = '#62707e';
-const SERIF = 'Georgia, "Times New Roman", ui-serif, serif';
+const ORANGE = '#e07a3a';
+const RED = '#e0685f';
+const INK = '#d8e0e8';
+const SOFT = '#8c99a7';
+const MUT = '#5d6a77';
 
-const SEV_C: Record<string, string> = { CRITICAL: RED, HIGH: AMBER, MEDIUM: GOLD, LOW: EMER };
+const ID = 'nov';
 
-function Spark({ pts, color = RED, w = 64, h = 18 }: { pts: number[]; color?: string; w?: number; h?: number }) {
-  if (pts.length < 2) return null;
-  const mn = Math.min(...pts), sp = Math.max(...pts) - mn || 1;
-  const d = pts.map((p, i) => `${(i / (pts.length - 1)) * w},${h - ((p - mn) / sp) * h}`).join(' ');
-  return (
-    <svg width={w} height={h} viewBox={`0 0 ${w} ${h}`} className="overflow-visible" aria-hidden>
-      <polyline points={d} fill="none" stroke={color} strokeWidth="1.3" strokeLinejoin="round" strokeLinecap="round"
-        style={{ filter: `drop-shadow(0 0 3px color-mix(in srgb,${color} 55%,transparent))` }} />
-    </svg>
-  );
-}
-
-function Ring({ value, sub, color }: { value: number; sub: string; color: string }) {
-  const v = Math.max(0, Math.min(100, value));
-  const r = 40, circ = 2 * Math.PI * r;
-  return (
-    <svg width="104" height="104" viewBox="0 0 104 104" aria-hidden>
-      <circle cx="52" cy="52" r={r} fill="none" stroke="#1a1f29" strokeWidth="9" />
-      <circle cx="52" cy="52" r={r} fill="none" stroke={color} strokeWidth="9" strokeLinecap="round"
-        strokeDasharray={circ} strokeDashoffset={circ * (1 - v / 100)} transform="rotate(-90 52 52)"
-        style={{ filter: `drop-shadow(0 0 6px color-mix(in srgb,${color} 60%,transparent))` }} />
-      <text x="52" y="50" textAnchor="middle" fontSize="22" fontWeight="700" fill={color} style={{ fontFamily: SERIF }}>{Math.round(v)}%</text>
-      <text x="52" y="66" textAnchor="middle" fontSize="8" fill={MUT} className="uppercase" style={{ letterSpacing: '0.14em' }}>{sub}</text>
-    </svg>
-  );
-}
-
-// National threat map: glow clusters + connecting lines + warning markers.
-function ThreatMap({ seedKey }: { seedKey: string }) {
-  const cols = 30, rows = 13;
-  const clusters = Array.from({ length: 7 }).map((_, i) => ({
-    x: 12 + seed(`${seedKey}:cx:${i}`) * 76, y: 16 + seed(`${seedKey}:cy:${i}`) * 64,
-    r: 3 + seed(`${seedKey}:cr:${i}`) * 7, hot: seed(`${seedKey}:ch:${i}`) > 0.45,
-  }));
-  return (
-    <div className="relative overflow-hidden rounded-[3px]" style={{ background: 'radial-gradient(120% 90% at 50% 40%,#0d141d,#070b11)' }}>
-      <div className="grid gap-[3px] p-2" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-        {Array.from({ length: cols * rows }).map((_, i) => {
-          const v = seed(`${seedKey}:${i}`);
-          const inland = (i % cols > 2 && i % cols < cols - 2 && Math.floor(i / cols) > 0 && Math.floor(i / cols) < rows - 1);
-          return <span key={i} className="aspect-square rounded-full" style={{ background: inland ? (v > 0.93 ? RED : v > 0.86 ? '#3a4a55' : '#1c2730') : 'transparent', opacity: inland ? (v > 0.86 ? 0.9 : 0.4) : 0 }} />;
-        })}
-      </div>
-      <svg viewBox="0 0 100 80" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-        {clusters.map((c, i) => i < clusters.length - 1 ? (
-          <line key={i} x1={c.x} y1={c.y} x2={clusters[i + 1]!.x} y2={clusters[i + 1]!.y}
-            stroke={RED} strokeWidth="0.3" opacity="0.3" />
-        ) : null)}
-        {clusters.map((c, i) => (
-          <g key={`g${i}`}>
-            <circle cx={c.x} cy={c.y} r={c.r} fill={c.hot ? RED : AMBER} opacity="0.18" />
-            <circle cx={c.x} cy={c.y} r={c.r * 0.4} fill={c.hot ? RED_BR : AMBER}
-              style={{ filter: `drop-shadow(0 0 4px ${c.hot ? RED : AMBER})` }} />
-          </g>
-        ))}
-      </svg>
-      <div className="absolute right-2 top-2 flex flex-col gap-1">
-        {['⛶', '+', '−'].map(s => (
-          <span key={s} className="grid h-6 w-6 place-items-center rounded-[2px] border text-[11px]"
-            style={{ borderColor: LINE, background: PANEL, color: SOFT }} aria-hidden>{s}</span>
-        ))}
-      </div>
-      <div className="absolute bottom-2 left-2 flex flex-col gap-0.5 rounded-[2px] border px-2 py-1.5"
-        style={{ borderColor: LINE, background: 'rgba(8,11,17,0.7)' }}>
-        {[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Low', EMER], ['Monitoring', CYAN]].map(([l, c]) => (
-          <span key={l} className="flex items-center gap-1.5 text-[7.5px] uppercase tracking-wider" style={{ color: SOFT }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}
-          </span>
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function MultiLine({ series, height = 130 }: { series: { name: string; c: string; pts: number[] }[]; height?: number }) {
-  const all = series.flatMap(s => s.pts);
-  const mn = Math.min(...all), sp = Math.max(...all) - mn || 1;
-  const line = (pts: number[]) => pts.map((p, i) => `${(i / (pts.length - 1)) * 100},${94 - ((p - mn) / sp) * 84}`).join(' ');
-  return (
-    <svg viewBox="0 0 100 100" preserveAspectRatio="none" style={{ width: '100%', height }} aria-hidden>
-      {[20, 40, 60, 80].map(y => <line key={y} x1="0" y1={y} x2="100" y2={y} stroke="#161c26" strokeWidth="0.4" />)}
-      {series.map(s => (
-        <React.Fragment key={s.name}>
-          <polygon points={`0,94 ${line(s.pts)} 100,94`} fill={s.c} opacity="0.07" />
-          <polyline points={line(s.pts)} fill="none" stroke={s.c} strokeWidth="1" vectorEffect="non-scaling-stroke"
-            style={{ filter: `drop-shadow(0 0 2px color-mix(in srgb,${s.c} 45%,transparent))` }} />
-        </React.Fragment>
-      ))}
-    </svg>
-  );
-}
-
-// Regional risk distribution — hex-ish tessellation coloured by risk.
-function RiskHexMap({ seedKey }: { seedKey: string }) {
-  const cols = 14, rows = 9;
-  return (
-    <div className="grid gap-[2px]" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-      {Array.from({ length: cols * rows }).map((_, i) => {
-        const v = seed(`${seedKey}:${i}`);
-        const on = (i % cols > 0 && i % cols < cols - 1 && Math.floor(i / cols) > 0 && Math.floor(i / cols) < rows - 1);
-        const left = i % cols < cols / 2;
-        const c = !on ? 'transparent' : left
-          ? (v > 0.7 ? RED : v > 0.45 ? AMBER : '#7a3b34')
-          : (v > 0.7 ? CYAN : v > 0.45 ? '#3a7d8f' : '#274652');
-        return <span key={i} className="h-3 rounded-[2px]" style={{ background: c, opacity: on ? 0.9 : 0, clipPath: 'polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)' }} />;
-      })}
-    </div>
-  );
-}
-
-function Panel({ title, action, children, className }: {
-  title: string; action?: string; children: React.ReactNode; className?: string;
+function Card({ title, sub, action, children, className }: {
+  title: string; sub?: string; action?: string; children: React.ReactNode; className?: string;
 }) {
   return (
-    <section className={`flex flex-col rounded-[4px] border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
-      <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: LINE }}>
-        <h3 className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: INK }}>{title}</h3>
-        {action ? <span className="text-[8.5px] font-semibold uppercase tracking-[0.12em]" style={{ color: RED }}>{action}</span> : null}
+    <section className={`flex flex-col rounded-lg border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
+      <div className="flex items-center justify-between border-b px-3.5 py-2.5" style={{ borderColor: LINE2 }}>
+        <div>
+          <h3 className="text-[12px] font-semibold" style={{ color: INK }}>{title}</h3>
+          {sub ? <div className="text-[9px]" style={{ color: MUT }}>{sub}</div> : null}
+        </div>
+        {action ? <span className="text-[9.5px] font-medium" style={{ color: CYAN }}>{action}</span> : null}
       </div>
-      <div className="flex-1 p-3">{children}</div>
+      <div className="flex-1 p-3.5">{children}</div>
     </section>
+  );
+}
+
+function Donut({ segs, top, sub, size = 138 }: { segs: { label: string; v: number; n: string; c: string }[]; top: string; sub: string; size?: number }) {
+  const sum = segs.reduce((s, x) => s + x.v, 0) || 1, r = size / 2 - 12, circ = 2 * Math.PI * r;
+  let acc = 0;
+  return (
+    <div className="flex items-center gap-3">
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`} className="shrink-0" aria-hidden>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="#1a212c" strokeWidth="12" />
+        {segs.map((s, i) => {
+          const fr = s.v / sum;
+          const el = <circle key={i} cx={size / 2} cy={size / 2} r={r} fill="none" stroke={s.c} strokeWidth="12"
+            strokeDasharray={`${Math.max(0, fr * circ - 2)} ${circ}`} strokeDashoffset={-acc * circ}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`} />;
+          acc += fr; return el;
+        })}
+        <text x="50%" y="47%" textAnchor="middle" fontSize="15" fontWeight="700" fill={INK}>{top}</text>
+        <text x="50%" y="58%" textAnchor="middle" fontSize="7.5" fill={MUT}>{sub}</text>
+      </svg>
+      <div className="min-w-0 flex-1 space-y-1">
+        {segs.map(s => (
+          <div key={s.label} className="flex items-center gap-1.5 text-[9.5px]">
+            <span className="h-2 w-2 rounded-full" style={{ background: s.c }} />
+            <span className="min-w-0 flex-1 truncate" style={{ color: SOFT }}>{s.label}</span>
+            <span className="tabular-nums" style={{ color: INK }}>{s.n}</span>
+            <span className="w-10 text-right tabular-nums" style={{ color: MUT }}>{Math.round((s.v / sum) * 1000) / 10}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CoverageMap() {
+  const cells = Array.from({ length: 36 }).map((_, i) => {
+    const v = seed(`no:cv:${ID}:${i}`);
+    return v > 0.78 ? GREEN : v > 0.5 ? BLUE : v > 0.28 ? PURPLE : '#3a4a6a';
+  });
+  return (
+    <div>
+      <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(6,1fr)' }} aria-hidden>
+        {cells.map((c, i) => (
+          <span key={i} style={{ aspectRatio: '1', background: c, opacity: 0.55 + (i % 4) * 0.12,
+            clipPath: 'polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)' }} />
+        ))}
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-1 text-[8.5px]" style={{ color: SOFT }}>
+        {[['Excellent (90%+)', GREEN], ['Good (70 - 89%)', BLUE], ['Average (50 - 69%)', PURPLE], ['Below Average (<50%)', '#3a4a6a']].map(([l, c]) => (
+          <span key={l} className="inline-flex items-center gap-1.5"><span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}</span>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -158,260 +105,246 @@ export function NationalOverview() {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
-  const id = 'NATL';
   const ts = now / 4000;
   const clock = new Date(now);
-  const hh = clock.toLocaleTimeString('en-GB', { hour12: false });
-  const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
-  const day = clock.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase();
-  const W = (k: string, lo: number, hi: number, n = 16) => waveSeries(`no:${k}:${id}`, ts, n, lo, hi);
-
-  const readiness = Math.round(wave(`no:rd:${id}`, ts, 92, 99.4) * 10) / 10;
-  const sysHealth = Math.round(wave(`no:sh:${id}`, ts, 96, 99.6) * 10) / 10;
-  const critical = 4 + Math.round(seed(`no:cr:${id}`) * 6);
-  const posture = critical >= 8 ? 'CRITICAL' : critical >= 5 ? 'SEVERE' : 'ELEVATED';
-  const pTone = critical >= 8 ? RED : critical >= 5 ? AMBER : GOLD;
+  const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const day = clock.toLocaleDateString('en-GB', { weekday: 'long' });
+  const tm = clock.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const gdp = (4.5 + wave(`no:gd:${ID}`, ts, 0, 0.6)).toFixed(1);
 
   const kpis: [string, string, string, string][] = [
-    ['National Posture', posture, `Level ${critical >= 8 ? 4 : 3}`, pTone],
-    ['Active Incidents', `${critical}`, '+2 new', RED],
-    ['Regions at Risk', `${14 + Math.round(seed(`no:rr:${id}`) * 12)}`, '+5', AMBER],
-    ['Agencies Deployed', `${10 + Math.round(seed(`no:ad:${id}`) * 6)}`, '78% readiness', INK],
-    ['Operational Readiness', `${readiness}%`, 'Optimal', EMER],
-    ['Population', `${(41 + seed(`no:pp:${id}`)).toFixed(2)}M`, '+0.38%', INK],
-    ['Threat Level', critical >= 8 ? 'SEVERE' : critical >= 5 ? 'HIGH' : 'GUARDED', '', RED],
-    ['System Health', `${sysHealth}%`, 'All Systems', EMER],
+    ['GDP Growth (Q1 2025)', `${gdp}%`, '↑ 0.6 pp vs Q4 2024', CYAN],
+    ['Budget Utilization', '68.3%', '↑ 5.2% vs last month', GREEN],
+    ['Active Policies', '1,247', '↑ 32 new this month', PURPLE],
+    ['Citizen Satisfaction', '82.1%', '↑ 3.4% vs last month', AMBER],
+    ['Service Delivery Index', '91.7%', '↑ 4.1% vs last month', CYAN],
+    ['National Risk Level', 'Low', '◉ Stable', GREEN],
   ];
 
-  const incidents = [
-    ['Border Security Breach', 'Northern Region', '12:35', 'CRITICAL'],
-    ['Terror Threat Intelligence', 'Central Region', '11:58', 'HIGH'],
-    ['Major Traffic Collision', 'East Region', '11:42', 'HIGH'],
-    ['Cyber Attack Attempt', 'National Infrastructure', '11:28', 'HIGH'],
-    ['Flood Alert', 'Coastal Region', '10:47', 'MEDIUM'],
-  ] as [string, string, string, string][];
+  const series: [string, string][] = [
+    ['Service Delivery Index', BLUE], ['Citizen Satisfaction', GREEN], ['Budget Utilization', PURPLE],
+    ['Policy Compliance', AMBER], ['Risk Score (inverted)', CYAN],
+  ];
+  const months = ['Dec 2024', 'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025'];
 
-  const alerts = [
-    ['Multiple Threats Detected', 'Northern Corridor', '12:35', 'CRITICAL'],
-    ['Suspicious Activity Reported', 'West District', '12:18', 'HIGH'],
-    ['Unusual Border Movement', 'Southern Border', '11:57', 'HIGH'],
-    ['Infrastructure Vulnerability', 'Power Grid', '11:22', 'MEDIUM'],
-    ['Public Safety Warning', 'Central Region', '10:41', 'MEDIUM'],
-  ] as [string, string, string, string][];
-
-  const incSummary: [string, string, string, string][] = [
-    ['Total Incidents', `${Math.round(wave(`no:ti:${id}`, ts, 6000, 9000)).toLocaleString()}`, '+12%', AMBER],
-    ['Critical Incidents', `${critical}`, '+2', RED],
-    ['High Priority', `${18 + Math.round(seed(`no:hp:${id}`) * 12)}`, '+5', AMBER],
-    ['Contained', `${Math.round(wave(`no:ct:${id}`, ts, 1200, 2400)).toLocaleString()}`, '+8%', EMER],
-    ['Resolved Today', `${Math.round(wave(`no:rs:${id}`, ts, 220, 480))}`, '+15%', EMER],
+  const alerts: [string, string, string, string][] = [
+    ['Budget overrun in Infrastructure Program', 'Finance · Region 3', '10:21 AM', RED],
+    ['High risk identified in Data Security', 'IT Security · National', '09:47 AM', AMBER],
+    ['Policy compliance below threshold', 'Health Department · Region 7', '08:35 AM', AMBER],
+    ['System maintenance scheduled', '18 May 2025, 02:00 AM', 'Info', BLUE],
+  ].map(a => a as [string, string, string, string]);
+  const budget = [
+    { label: 'Allocated', v: 100, n: '$42.7B', c: PURPLE }, { label: 'Utilized', v: 68.3, n: '$29.1B', c: GREEN },
+    { label: 'Committed', v: 20.4, n: '$8.7B', c: BLUE }, { label: 'Remaining', v: 11.3, n: '$4.9B', c: CYAN },
   ];
-  const readinessBars: [string, number][] = [
-    ['Personnel', 90], ['Equipment', 78], ['Intelligence', 85], ['Logistics', 72], ['Communications', 96],
+  const projects = [
+    { label: 'Completed', v: 36, n: '248', c: GREEN }, { label: 'In Progress', v: 36, n: '247', c: BLUE },
+    { label: 'At Risk', v: 17, n: '118', c: AMBER }, { label: 'Not Started', v: 11, n: '76', c: MUT },
   ];
-  const sysHealthRows: [string, number][] = [
-    ['Network', 100], ['Databases', 98], ['Applications', 99], ['Security', 100], ['Integrations', 97],
+  const heat = [
+    [2, 4, 7, 10, 6], [1, 3, 6, 9, 5], [1, 2, 5, 4, 2], [0, 1, 3, 4, 2], [0, 0, 1, 2, 1],
   ];
-  const resources: [string, string][] = [
-    ['Personnel', Math.round(wave(`no:rp:${id}`, ts, 14000, 22000)).toLocaleString()],
-    ['Vehicles', Math.round(wave(`no:rv:${id}`, ts, 3000, 4800)).toLocaleString()],
-    ['Aircraft', `${Math.round(wave(`no:ra:${id}`, ts, 90, 180))}`],
-    ['Vessels', `${Math.round(wave(`no:rves:${id}`, ts, 28, 64))}`],
-    ['Drones', `${Math.round(wave(`no:rdr:${id}`, ts, 180, 340))}`],
+  const heatC = (v: number) => v >= 8 ? RED : v >= 5 ? ORANGE : v >= 3 ? AMBER : v >= 1 ? '#3f7a5a' : '#1f3a4a';
+  const initiatives: [string, number, string][] = [
+    ['Digital Government Expansion', 78, BLUE], ['Healthcare Accessibility', 65, GREEN],
+    ['Education Excellence Program', 54, PURPLE], ['Sustainable Infrastructure', 60, TEAL], ['Cybersecurity Enhancement', 72, CYAN],
   ];
-  const intel: [string, string, string, string][] = [
-    ['Intel Reports', Math.round(wave(`no:ir:${id}`, ts, 900, 1600)).toLocaleString(), '+18%', EMER],
-    ['Active Sources', `${Math.round(wave(`no:as:${id}`, ts, 280, 460))}`, '+12%', EMER],
-    ['Surveillance Ops', `${Math.round(wave(`no:so:${id}`, ts, 14, 36))}`, '+5%', EMER],
-    ['Risk Indicators', `${Math.round(wave(`no:rik:${id}`, ts, 60, 110))}`, '-3%', AMBER],
+  const feedback: [string, number][] = [['5 Stars', 57], ['4 Stars', 28], ['3 Stars', 10], ['2 Stars', 3], ['1 Star', 2]];
+  const activities: [string, string][] = [
+    ["New policy 'Data Protection Act' published", '17 May 2025, 09:15 AM'],
+    ['Infrastructure Project Phase 2 completed', '16 May 2025, 04:30 PM'],
+    ['Budget reallocation approved', '16 May 2025, 11:20 AM'],
+    ['Public consultation on Education Policy', '15 May 2025, 02:45 PM'],
+    ['System security update completed', '15 May 2025, 01:10 AM'],
   ];
-  const feed = [
-    ['12:40', 'Border patrol increased in Northern Region'],
-    ['12:35', 'Emergency response deployed to flood zone'],
-    ['12:28', 'Cyber threat neutralised in critical infrastructure'],
-  ] as [string, string][];
-  const deployed = Math.round(wave(`no:dep:${id}`, ts, 64, 88));
+  const deadlines: [string, string, string, string, string][] = [
+    ['MAY 20', 'Quarterly Performance Report', 'Due in 3 days', 'High', RED],
+    ['MAY 25', 'Budget Review Meeting', 'Due in 8 days', 'Medium', AMBER],
+    ['MAY 31', 'Policy Compliance Audit', 'Due in 14 days', 'High', RED],
+    ['JUN 05', 'Annual Strategic Review', 'Due in 19 days', 'Medium', AMBER],
+  ];
+  const calCells = Array.from({ length: 35 }).map((_, i) => { const d = i - 3; return d >= 1 && d <= 31 ? d : null; });
 
   return (
-    <div className="space-y-2 rounded-[5px] p-2" style={{ background: BG, boxShadow: 'inset 0 0 140px rgba(0,0,0,0.7)' }}>
+    <div className="space-y-3 rounded-[5px] p-3" style={{ background: '#070b12', color: INK }}>
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-2 rounded-[4px] border px-4 py-3"
-        style={{ borderColor: LINE, background: 'linear-gradient(100deg,#0c0f15,#12161e)' }}>
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
         <div className="flex items-center gap-3">
-          <span className="grid h-10 w-10 place-items-center rounded-full text-[15px]" style={{ border: `1px solid ${GOLD}`, color: GOLD }} aria-hidden>⚜</span>
+          <span className="grid h-9 w-9 place-items-center rounded-lg text-[15px] text-white" style={{ background: `linear-gradient(135deg,${CYAN},${PURPLE})` }} aria-hidden>♛</span>
           <div>
-            <div className="text-[18px] font-bold uppercase tracking-[0.14em]" style={{ color: INK, fontFamily: SERIF }}>National Overview</div>
-            <div className="text-[8px] uppercase tracking-[0.24em]" style={{ color: RED }}>Sovereign Operations Command Center</div>
+            <div className="text-[12px] font-bold leading-tight" style={{ color: INK }}>National Governance Platform</div>
+            <div className="text-[9px]" style={{ color: MUT }}>One Nation. One Platform. One Future.</div>
           </div>
         </div>
-        <div className="ml-auto flex flex-wrap items-center gap-x-6 gap-y-1 text-[8.5px]" style={{ color: MUT }}>
-          <span><span style={{ color: SOFT }}>{dd}</span> · {day}</span>
-          <span>TIME <span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> GMT+1</span>
-          <span className="flex items-center gap-1.5">
-            <span className="relative inline-block">🔔<span className="absolute -right-1.5 -top-1.5 grid h-3 w-3 place-items-center rounded-full text-[6px] font-bold text-white" style={{ background: RED }}>9</span></span>
-            <span className="uppercase tracking-[0.12em]">Alerts</span>
-          </span>
-          <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-1" style={{ borderColor: LINE }}>
-            <span className="grid h-5 w-5 place-items-center rounded-full text-[8px] font-bold" style={{ background: GOLD, color: '#1a1305' }}>HG</span>
-            <span><span className="block uppercase tracking-[0.1em]" style={{ color: MUT }}>Head of Government</span><span style={{ color: INK }}>National Executive</span></span>
+        <div>
+          <div className="text-[20px] font-bold leading-tight" style={{ color: INK }}>National Overview</div>
+          <div className="text-[10.5px]" style={{ color: MUT }}>Unified insights for a stronger nation</div>
+        </div>
+        <div className="ml-auto flex flex-wrap items-center gap-2.5 text-[10.5px]">
+          <span className="rounded-lg border px-3 py-1.5" style={{ borderColor: LINE2, background: PANEL, color: SOFT }}>📅 <span style={{ color: INK }}>{dd}</span> · {day}</span>
+          <span className="rounded-lg border px-3 py-1.5" style={{ borderColor: LINE2, background: PANEL, color: MUT }}>⌕ Search across platform…</span>
+          <span className="relative grid h-8 w-8 place-items-center rounded-lg border" style={{ borderColor: LINE2, background: PANEL, color: SOFT }}>⛁<span className="absolute -right-1 -top-1 grid h-3.5 min-w-3.5 place-items-center rounded-full px-1 text-[8px] font-bold text-white" style={{ background: RED }}>6</span></span>
+          <span className="flex items-center gap-2 rounded-lg border px-3 py-1.5" style={{ borderColor: LINE2, background: PANEL }}>
+            <span className="grid h-6 w-6 place-items-center rounded-full text-[9px] font-bold text-white" style={{ background: CYAN }}>AK</span>
+            <span><span className="block font-medium" style={{ color: INK }}>Ayesha Khan</span><span style={{ color: MUT }}>National Administrator</span></span>
           </span>
         </div>
       </div>
 
-      {/* ── National posture KPI strip ─────────────────────────── */}
-      <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[4px] border md:grid-cols-4 xl:grid-cols-8"
-        style={{ borderColor: LINE, background: LINE }}>
-        {kpis.map(([l, v, s, c]) => (
-          <div key={l} className="px-3 py-2.5 text-center" style={{ background: PANEL }}>
-            <div className="text-[7.5px] font-semibold uppercase tracking-[0.16em]" style={{ color: MUT }}>{l}</div>
-            <div className="mt-1 text-[17px] font-bold tabular-nums" style={{ color: c, fontFamily: SERIF }}>{v}</div>
-            {s ? <div className="text-[8px]" style={{ color: SOFT }}>{s}</div> : <div className="h-[12px]" />}
+      {/* ── KPI strip ──────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
+        {kpis.map(([l, v, n, c], i) => (
+          <div key={l} className="relative overflow-hidden rounded-lg border p-3.5" style={{ borderColor: LINE, background: PANEL }}>
+            <div className="flex items-center gap-2">
+              <span className="grid h-7 w-7 place-items-center rounded-lg text-[12px]" style={{ background: `color-mix(in srgb,${c} 18%,${PANEL})`, color: c }} aria-hidden>◈</span>
+              <span className="text-[10px]" style={{ color: MUT }}>{l}</span>
+            </div>
+            <div className="mt-1.5 text-[20px] font-bold tabular-nums" style={{ color: INK }}>{v}</div>
+            <div className="text-[8.5px]" style={{ color: c }}>{n}</div>
+            <svg viewBox="0 0 100 20" preserveAspectRatio="none" className="mt-1 h-4 w-full" aria-hidden>
+              <polyline points={waveSeries(`no:k${i}:${ID}`, ts, 20, 4, 16).map((p, j) => `${(j / 19) * 100},${18 - p}`).join(' ')}
+                fill="none" stroke={c} strokeWidth="1.2" vectorEffect="non-scaling-stroke" opacity="0.7" />
+            </svg>
           </div>
         ))}
       </div>
 
-      {/* ── Threat map + active incidents ──────────────────────── */}
-      <div className="grid gap-2 xl:grid-cols-[1.7fr_1fr]">
-        <Panel title="National Threat Map">
-          <div className="h-[300px]"><ThreatMap seedKey={`no:tm:${id}`} /></div>
-        </Panel>
-        <Panel title="Active Incidents" action="View All">
-          <div className="space-y-1.5">
-            {incidents.map(([t, rg, tm, sv]) => (
-              <div key={t} className="flex items-center gap-2 rounded-[3px] border px-2.5 py-2" style={{ borderColor: LINE, background: PANEL2 }}>
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-[11px]" style={{ background: `color-mix(in srgb,${SEV_C[sv]} 16%,transparent)`, color: SEV_C[sv] }} aria-hidden>⚠</span>
-                <div className="min-w-0 flex-1">
-                  <div className="truncate text-[11px] font-semibold" style={{ color: INK }}>{t}</div>
-                  <div className="text-[9px]" style={{ color: MUT }}>{rg}</div>
-                </div>
-                <div className="text-right">
-                  <div className="font-mono text-[9px]" style={{ color: SOFT }}>{tm}</div>
-                  <div className="text-[8px] font-bold uppercase tracking-wider" style={{ color: SEV_C[sv] }}>{sv}</div>
-                </div>
+      {/* ── Row 1 ──────────────────────────────────────────────── */}
+      <div className="grid gap-3 xl:grid-cols-[1.5fr_1fr_1fr]">
+        <Card title="Performance Over Time" sub="Key performance indicators trend" action="6 Months ▾">
+          <svg viewBox="0 0 100 52" preserveAspectRatio="none" style={{ width: '100%', height: 184 }} aria-hidden>
+            {[10, 22, 34, 46].map(y => <line key={y} x1="0" y1={y} x2="100" y2={y} stroke={LINE2} strokeWidth="0.4" />)}
+            {series.map(([nm, c], si) => {
+              const pts = waveSeries(`no:s${si}:${ID}`, ts, 6, 28 + si * 6, 78 + si * 4).map((v, i) => v + i * 2);
+              const xy = pts.map((p, i) => [(i / 5) * 100, 50 - (p / 100) * 46] as [number, number]);
+              return (
+                <React.Fragment key={nm}>
+                  <polyline points={xy.map(([x, y]) => `${x},${y}`).join(' ')} fill="none" stroke={c} strokeWidth="1.3" vectorEffect="non-scaling-stroke" strokeLinejoin="round" />
+                  {xy.map(([x, y], i) => <circle key={i} cx={x} cy={y} r="1" fill={c} vectorEffect="non-scaling-stroke" />)}
+                </React.Fragment>
+              );
+            })}
+          </svg>
+          <div className="mt-1 flex justify-between text-[8px]" style={{ color: MUT }}>{months.map(m => <span key={m}>{m}</span>)}</div>
+          <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[8px]" style={{ color: SOFT }}>
+            {series.map(([nm, c]) => <span key={nm} className="inline-flex items-center gap-1"><span className="h-1.5 w-3 rounded-full" style={{ background: c }} />{nm}</span>)}
+          </div>
+        </Card>
+        <Card title="Initiative Coverage" sub="Coverage across regions" action="View Map">
+          <CoverageMap />
+        </Card>
+        <Card title="Critical Alerts" action="View All">
+          <div className="space-y-2.5">
+            {alerts.map(([t, ctx, ago, c]) => (
+              <div key={t} className="flex items-start gap-2.5 text-[10px]">
+                <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[10px]" style={{ background: `color-mix(in srgb,${c} 18%,${PANEL})`, color: c }} aria-hidden>⚠</span>
+                <div className="min-w-0 flex-1"><div className="truncate" style={{ color: INK }}>{t}</div><div className="text-[8.5px]" style={{ color: MUT }}>{ctx}</div></div>
+                <span className="shrink-0 text-[8px]" style={{ color: MUT }}>{ago}</span>
               </div>
             ))}
           </div>
-        </Panel>
+        </Card>
       </div>
 
-      {/* ── Summaries row ──────────────────────────────────────── */}
-      <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
-        <Panel title="Incident Summary">
+      {/* ── Row 2 ──────────────────────────────────────────────── */}
+      <div className="grid gap-3 xl:grid-cols-4">
+        <Card title="Budget Overview" sub="FY 2025" action="View Details">
+          <Donut top="$42.7B" sub="Total Budget" segs={budget} />
+          <div className="mt-2 border-t pt-2 text-[8px]" style={{ borderColor: LINE2, color: MUT }}>Last Updated: {dd} {tm}</div>
+        </Card>
+        <Card title="Project Status" action="View All">
+          <Donut top="689" sub="Total Projects" segs={projects} />
+        </Card>
+        <Card title="Risk Heat Map" action="View All">
+          <div className="flex gap-1">
+            <div className="flex flex-col justify-between py-1 text-[7px]" style={{ color: MUT }}>
+              {['High', '', 'Medium', '', 'Low'].map((l, i) => <span key={i} className="h-5">{l}</span>)}
+            </div>
+            <div className="flex-1">
+              <div className="grid grid-cols-5 gap-1">
+                {heat.flat().map((v, i) => (
+                  <span key={i} className="grid h-5 place-items-center rounded text-[8px] font-bold" style={{ background: heatC(v), color: '#fff' }}>{v}</span>
+                ))}
+              </div>
+              <div className="mt-1 flex justify-between text-[7px]" style={{ color: MUT }}>
+                {['1 Low', '2', 'Medium', '4', '5 High'].map(l => <span key={l}>{l}</span>)}
+              </div>
+              <div className="mt-0.5 text-center text-[7px]" style={{ color: MUT }}>Likelihood</div>
+            </div>
+          </div>
+          <div className="mt-1 text-center text-[7px]" style={{ color: MUT }}>← Impact</div>
+        </Card>
+        <Card title="Top Initiatives" action="View All">
           <div className="space-y-2">
-            {incSummary.map(([l, v, d, c]) => (
-              <div key={l} className="flex items-center gap-2 text-[10px]">
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />
-                <span className="min-w-0 flex-1" style={{ color: SOFT }}>{l}</span>
-                <span className="font-mono tabular-nums" style={{ color: INK }}>{v}</span>
-                <span className="w-10 text-right font-mono tabular-nums" style={{ color: d.startsWith('-') ? AMBER : EMER }}>{d}</span>
+            {initiatives.map(([nm, pr, c]) => (
+              <div key={nm} className="text-[9px]">
+                <div className="flex justify-between"><span style={{ color: SOFT }}>{nm}</span><span className="tabular-nums" style={{ color: INK }}>{pr}%</span></div>
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: '#1a212c' }}><span className="block h-full rounded-full" style={{ width: `${pr}%`, background: c }} /></div>
               </div>
             ))}
+            <div className="text-[9px] font-medium" style={{ color: CYAN }}>See all initiatives →</div>
           </div>
-        </Panel>
-        <Panel title="Operational Readiness">
-          <div className="space-y-2.5">
-            {readinessBars.map(([l, v]) => (
-              <div key={l} className="text-[9px]">
-                <div className="flex justify-between"><span style={{ color: SOFT }}>{l}</span><span className="font-mono tabular-nums" style={{ color: INK }}>{v}%</span></div>
-                <div className="mt-0.5 h-1.5 overflow-hidden rounded-full" style={{ background: '#1a1f29' }}>
-                  <span className="block h-full rounded-full" style={{ width: `${v}%`, background: v >= 85 ? EMER : v >= 75 ? GOLD : AMBER }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </Panel>
-        <Panel title="Top Alerts" action="View All">
-          <div className="space-y-2">
-            {alerts.map(([t, rg, tm, sv]) => (
-              <div key={t} className="flex items-center gap-2 text-[9px]">
-                <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: SEV_C[sv] }} />
-                <div className="min-w-0 flex-1">
-                  <div className="truncate" style={{ color: INK }}>{t}</div>
-                  <div className="text-[8px]" style={{ color: MUT }}>{rg}</div>
-                </div>
-                <span className="font-mono text-[8px]" style={{ color: SOFT }}>{tm}</span>
-                <span className="w-12 text-right text-[7.5px] font-bold uppercase" style={{ color: SEV_C[sv] }}>{sv}</span>
-              </div>
-            ))}
-          </div>
-        </Panel>
-        <Panel title="System Health">
+        </Card>
+      </div>
+
+      {/* ── Row 3 ──────────────────────────────────────────────── */}
+      <div className="grid gap-3 xl:grid-cols-4">
+        <Card title="Citizen Feedback" action="View All">
           <div className="flex items-center gap-3">
-            <Ring value={readiness} sub="Optimal" color={EMER} />
-            <div className="flex-1 space-y-1.5">
-              {sysHealthRows.map(([l, v]) => (
-                <div key={l} className="flex items-center gap-2 text-[9px]">
-                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: v >= 99 ? EMER : GOLD }} />
-                  <span className="flex-1" style={{ color: SOFT }}>{l}</span>
-                  <span className="font-mono tabular-nums" style={{ color: INK }}>{v}%</span>
+            <div className="text-center"><div className="text-[24px] font-bold" style={{ color: INK }}>4.6</div><div className="text-[11px]" style={{ color: AMBER }}>★★★★★</div><div className="text-[8px]" style={{ color: MUT }}>Average Rating</div></div>
+            <div className="min-w-0 flex-1 space-y-1">
+              {feedback.map(([l, p]) => (
+                <div key={l} className="flex items-center gap-2 text-[8.5px]">
+                  <span className="w-12 shrink-0" style={{ color: MUT }}>{l}</span>
+                  <span className="h-1.5 flex-1 overflow-hidden rounded-full" style={{ background: '#1a212c' }}><span className="block h-full rounded-full" style={{ width: `${p}%`, background: AMBER }} /></span>
+                  <span className="w-8 text-right tabular-nums" style={{ color: SOFT }}>{p}%</span>
                 </div>
               ))}
             </div>
           </div>
-        </Panel>
-      </div>
-
-      {/* ── Forecast / deployment / intel / regional ───────────── */}
-      <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
-        <Panel title="Threat Forecast (24H)">
-          <MultiLine series={[
-            { name: 'Critical', c: RED, pts: W('fc', 20, 70, 13) },
-            { name: 'High', c: AMBER, pts: W('fh', 25, 60, 13) },
-            { name: 'Medium', c: GOLD, pts: W('fm', 18, 48, 13) },
-            { name: 'Low', c: EMER, pts: W('fl', 10, 36, 13) },
-          ]} />
-          <div className="mt-1 flex flex-wrap gap-x-3 text-[8px]" style={{ color: MUT }}>
-            {[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Low', EMER]].map(([l, c]) => (
-              <span key={l} className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}</span>
-            ))}
+          <div className="mt-2 flex justify-between border-t pt-2 text-[8.5px]" style={{ borderColor: LINE2, color: MUT }}>
+            <span>Total Responses</span><span style={{ color: INK }}>12,458 <span style={{ color: GREEN }}>↑ 8.2%</span></span>
           </div>
-        </Panel>
-        <Panel title="Resource Deployment">
-          <div className="flex items-center gap-3">
-            <Ring value={deployed} sub="Deployed" color={deployed >= 75 ? EMER : AMBER} />
-            <div className="flex-1 space-y-1.5">
-              {resources.map(([l, v]) => (
-                <div key={l} className="flex items-center justify-between text-[9px]">
-                  <span style={{ color: SOFT }}>{l}</span>
-                  <span className="font-mono tabular-nums" style={{ color: INK }}>{v}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </Panel>
-        <Panel title="Intelligence Summary">
-          <div className="space-y-2.5">
-            {intel.map(([l, v, d, c]) => (
-              <div key={l} className="flex items-center gap-2 text-[10px]">
-                <span className="grid h-5 w-5 shrink-0 place-items-center rounded text-[9px]" style={{ background: PANEL2, color: CYAN }} aria-hidden>◈</span>
-                <span className="min-w-0 flex-1" style={{ color: SOFT }}>{l}</span>
-                <span className="font-mono tabular-nums" style={{ color: INK }}>{v}</span>
-                <span className="w-9 text-right font-mono tabular-nums" style={{ color: c }}>{d}</span>
+        </Card>
+        <Card title="Recent Activities" action="View All">
+          <div className="space-y-2">
+            {activities.map(([t, dt]) => (
+              <div key={t} className="flex items-start gap-2 text-[9px]">
+                <span className="mt-0.5 h-2 w-2 shrink-0 rounded-full" style={{ background: CYAN }} />
+                <div className="min-w-0 flex-1"><div className="truncate" style={{ color: SOFT }}>{t}</div><div className="text-[7.5px]" style={{ color: MUT }}>{dt}</div></div>
               </div>
             ))}
           </div>
-        </Panel>
-        <Panel title="Regional Risk Distribution">
-          <RiskHexMap seedKey={`no:rx:${id}`} />
-          <div className="mt-2 flex flex-wrap gap-x-3 text-[8px]" style={{ color: MUT }}>
-            {[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Low', CYAN], ['Minimal', '#274652']].map(([l, c]) => (
-              <span key={l} className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}</span>
+        </Card>
+        <Card title="Upcoming Deadlines">
+          <div className="space-y-2">
+            {deadlines.map(([dt, t, due, pr, c]) => (
+              <div key={t} className="flex items-center gap-2.5 text-[9.5px]">
+                <div className="grid w-12 shrink-0 place-items-center rounded-md py-1 text-center" style={{ background: PANEL2 }}>
+                  <span className="text-[7px]" style={{ color: MUT }}>{dt.split(' ')[0]}</span>
+                  <span className="text-[13px] font-bold leading-none" style={{ color: INK }}>{dt.split(' ')[1]}</span>
+                </div>
+                <div className="min-w-0 flex-1"><div className="truncate" style={{ color: INK }}>{t}</div><div className="text-[8px]" style={{ color: MUT }}>{due}</div></div>
+                <span className="shrink-0 rounded px-1.5 py-0.5 text-[8px] font-semibold" style={{ color: c, background: `color-mix(in srgb,${c} 16%,${PANEL})` }}>{pr}</span>
+              </div>
             ))}
           </div>
-        </Panel>
+        </Card>
+        <Card title="May 2025">
+          <div className="grid grid-cols-7 gap-1 text-center text-[8px]" style={{ color: MUT }}>
+            {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(d => <span key={d}>{d}</span>)}
+            {calCells.map((d, i) => (
+              <span key={i} className="grid h-6 place-items-center rounded"
+                style={{ color: d === 17 ? '#fff' : d ? SOFT : 'transparent', background: d === 17 ? BLUE : 'transparent' }}>{d ?? '·'}</span>
+            ))}
+          </div>
+        </Card>
       </div>
 
-      {/* ── Command feed ───────────────────────────────────────── */}
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-1 rounded-[4px] border px-4 py-2.5"
-        style={{ borderColor: LINE, background: PANEL }}>
-        <span className="text-[9px] font-bold uppercase tracking-[0.18em]" style={{ color: RED }}>Command Feed</span>
-        {feed.map(([t, e]) => (
-          <span key={e} className="flex items-center gap-2 text-[9px]">
-            <span className="font-mono" style={{ color: MUT }}>{t}</span>
-            <span style={{ color: SOFT }}>{e}</span>
-          </span>
-        ))}
-        <span className="ml-auto text-[8.5px] font-semibold uppercase tracking-[0.12em]" style={{ color: RED }}>View All Updates →</span>
+      {/* ── Footer ─────────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-[9.5px]" style={{ borderColor: LINE2, color: MUT }}>
+        <span>© 2025 National Governance Platform. All rights reserved.</span>
+        <span>System Health Healthy · Uptime 99.98% · GDP {gdp}% · Privacy · Terms · Accessibility · Updated {tm}</span>
       </div>
     </div>
   );
