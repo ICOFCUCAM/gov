@@ -202,7 +202,8 @@ export function MinistryChainSection({
   const d = chainDef(ministryKey);
   const fac = facilitiesOf(ministryKey, epoch);
   const idx = Math.abs([...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % fac.length;
-  const myFac = fac[idx] ?? fac[0]!;
+  const [selFac, setSelFac] = React.useState<string | null>(null);
+  const myFac = fac.find(f => f.id === selFac) ?? fac[idx] ?? fac[0]!;
   const integrity = integrityOf(ministryKey, epoch);
   const baseRoster = actorsOf(ministryKey, myFac.id, epoch);
   const enrolled = React.useMemo(() => enrollments(ministryKey, myFac.id, d.actorRole, now), [ministryKey, myFac.id, d.actorRole, now, ev]);
@@ -221,13 +222,18 @@ export function MinistryChainSection({
           </span>
         </div>
         <div className="grid gap-x-4 gap-y-1 px-3 py-2 text-[10px] sm:grid-cols-2">
-          {fac.map(f => (
-            <div key={f.id} className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: `rgb(var(--c-${stC(f.status)}))` }} />
-              <span className="min-w-0 flex-1 truncate text-ink-soft">{f.id} · {f.name} <span className="text-ink-muted">· {f.region}</span></span>
-              <span className="shrink-0 font-mono text-[8px] tabular-nums text-ink-muted">{f.staff} staff · sync {f.syncPct}%</span>
-            </div>
-          ))}
+          {fac.map(f => {
+            const on = f.id === myFac.id;
+            return (
+              <button key={f.id} type="button" onClick={() => setSelFac(f.id)}
+                className="focus-ring flex items-center gap-2 rounded-[3px] px-1.5 py-0.5 text-left transition-colors"
+                style={{ background: on ? `color-mix(in srgb,${accent} 13%,transparent)` : 'transparent' }}>
+                <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: `rgb(var(--c-${stC(f.status)}))` }} />
+                <span className="min-w-0 flex-1 truncate" style={{ color: on ? accent : 'rgb(var(--c-ink-soft))' }}>{f.id} · {f.name} <span className="text-ink-muted">· {f.region}</span></span>
+                <span className="shrink-0 font-mono text-[8px] tabular-nums text-ink-muted">{f.staff} staff · sync {f.syncPct}%</span>
+              </button>
+            );
+          })}
         </div>
         <div className="flex flex-wrap gap-x-4 gap-y-0.5 border-t border-line-soft px-3 py-1.5 text-[9px] text-ink-muted">
           <span>Records: {d.recordNoun} held at facility → <span style={{ color: 'rgb(var(--c-warn))' }}>{d.ministry}</span> → National</span>
@@ -264,9 +270,14 @@ export function MinistryChainSection({
           </div>
         </div>
       </div>
-      <DispatchChannel scope={`${ministryKey.toLowerCase()}:${myFac.id}`} now={now} accent={accent}
-        selfTier="FACILITY" selfName={`${myFac.id} desk`} toTier="MINISTRY"
-        title={`Ministry uplink · ${myFac.id}`} />
+      <div className="space-y-2">
+        <DispatchChannel scope={`${ministryKey.toLowerCase()}:${myFac.id}`} now={now} accent={accent}
+          selfTier="FACILITY" selfName={`${myFac.id} desk`} toTier="MINISTRY"
+          title={`Ministry uplink · ${myFac.id}`} />
+        <DispatchChannel scope={`natl:${ministryKey.toLowerCase()}`} now={now} accent={accent}
+          selfTier="MINISTRY" selfName={`${d.ministry} coordination`} toTier="NATIONAL"
+          title="National coordination" />
+      </div>
     </div>
   );
 }
