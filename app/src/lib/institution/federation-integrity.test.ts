@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { federationSeed } from './federation';
 import { blueprintFor } from './blueprint';
 import { ministryAppManifest } from '@/apps/manifests';
+import { DOMAINS, resolveDomain } from '@/apps/ministry-interior/core/domains';
 
 // Federation integrity: the seeded institution set, the blueprint topology
 // and the federated app manifest must stay mutually consistent. A drift
@@ -19,12 +20,26 @@ describe('federation integrity (seed ↔ blueprint ↔ manifest)', () => {
       expect(mf.instanceId).toBe(m.id);
       expect(mf.domain.length).toBeGreaterThan(0);
 
-      // The deployable-path nav must expose exactly the blueprint groups —
-      // so every subsystem the institution has is reachable, and no nav
-      // entry points at a group that does not exist.
       const navKeys = mf.nav.map(n => n.key).sort();
       const groupKeys = groups.map(g => g.key).sort();
-      expect(navKeys).toEqual(groupKeys);
+      if (m.archetype === 'INTERIOR') {
+        // Interior is a Tier-1 sovereign shell: its nav is the dedicated
+        // normalized domain framework, intentionally decoupled from the
+        // blueprint ecosystem. The anti-fake-federation guarantee still
+        // holds — every nav key must resolve to a real Interior domain,
+        // the nav must cover the full domain registry, and a national
+        // command authority must exist.
+        expect(navKeys).toEqual([...DOMAINS].map(d => d.key).sort());
+        for (const n of mf.nav) {
+          expect(resolveDomain(n.key).key, `Interior nav key ${n.key} must resolve`).toBe(n.key);
+        }
+        expect(mf.nav.some(n => n.key === 'national-overview')).toBe(true);
+      } else {
+        // The deployable-path nav must expose exactly the blueprint groups —
+        // so every subsystem the institution has is reachable, and no nav
+        // entry points at a group that does not exist.
+        expect(navKeys).toEqual(groupKeys);
+      }
 
       // Departments are instantiated 1:1 from blueprint groups.
       expect(m.departments.length).toBe(groups.length);

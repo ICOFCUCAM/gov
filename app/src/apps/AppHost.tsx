@@ -20,6 +20,7 @@ import { EmergencyResponseApp } from '@/apps/emergency-response/EmergencyRespons
 import { MinistryEducationApp } from '@/apps/ministry-education/MinistryEducationApp';
 import { MinistryTransportApp } from '@/apps/ministry-transport/MinistryTransportApp';
 import { MinistryEnergyApp } from '@/apps/ministry-energy/MinistryEnergyApp';
+import { MinistryInteriorApp } from '@/apps/ministry-interior/MinistryInteriorApp';
 import { CitizenWalletApp } from '@/apps/citizen-wallet/CitizenWalletApp';
 import { OfficerConsoleApp } from '@/apps/officer-console/OfficerConsoleApp';
 import { BranchWorkspace } from '@/components/features/BranchWorkspace';
@@ -266,6 +267,8 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                   <MinistryTransportApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'ENERGY' ? (
                   <MinistryEnergyApp instanceId={app.instanceId} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
+                ) : app.kind === 'ministry' && app.instanceId && app.archetypeOrBranch === 'INTERIOR' ? (
+                  <MinistryInteriorApp instanceId={app.instanceId} domain={active ?? 'national-overview'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId ? (
                   <SectorInstitutionApp instanceId={app.instanceId} archetype={app.archetypeOrBranch as ArchetypeKey} label={app.label} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'branch' && app.archetypeOrBranch === 'judiciary' ? (

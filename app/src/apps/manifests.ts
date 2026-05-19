@@ -8,6 +8,7 @@
 
 import type { ArchetypeKey } from '@/lib/api/types';
 import { blueprintFor } from '@/lib/institution/blueprint';
+import { interiorNav } from '@/apps/ministry-interior/core/domains';
 import type { AppManifest } from '@/services/orchestration-engine';
 
 const ARCHETYPE_APP: Partial<Record<ArchetypeKey, { id: string; label: string; domain: string }>> = {
@@ -35,7 +36,11 @@ export function ministryAppManifest(m: { id: string; name: string; archetype: Ar
     kind: 'ministry',
     archetypeOrBranch: m.archetype,
     instanceId: m.id,
-    nav: blueprintFor(m.archetype).map(g => ({ key: g.key, label: g.name })),
+    // Interior is a Tier-1 sovereign shell with its own normalized domain
+    // navigation framework; other ministries derive nav from the blueprint.
+    nav: m.archetype === 'INTERIOR'
+      ? interiorNav()
+      : blueprintFor(m.archetype).map(g => ({ key: g.key, label: g.name })),
   };
 }
 

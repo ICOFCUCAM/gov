@@ -9,18 +9,12 @@ import { FieldPanel } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { justiceOps } from '@/lib/gov/justice-systems';
-import { interiorOps } from '@/lib/gov/interior-systems';
 import { laborOps } from '@/lib/gov/labor-systems';
 import { tradeOps } from '@/lib/gov/trade-systems';
 import { environmentOps } from '@/lib/gov/environment-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
-import { InteriorCommand } from '@/apps/interior/InteriorCommand';
-import { CivilRegistryCommand } from '@/apps/interior/CivilRegistryCommand';
-import { PopulationAnalytics } from '@/apps/interior/PopulationAnalytics';
-import { PermitsLicensing } from '@/apps/interior/PermitsLicensing';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
-import { RegionalAdministration } from '@/apps/interior/RegionalAdministration';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { ArchetypeKey } from '@/lib/api/types';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -48,12 +42,6 @@ function focusFor(a: ArchetypeKey, d: string, id: string, ts: number): FocusItem
     if (d === 'corrections') return [{ l: 'Occupancy', v: `${o.corrections.occupancyPct}%`, t: o.corrections.occupancyPct >= 110 ? 'alert' : o.corrections.occupancyPct >= 95 ? 'warn' : 'ok' }, { l: 'Rehab active', v: o.corrections.rehabActive.toLocaleString(), t: 'ok' }];
     if (d === 'registries') return [{ l: 'Records', v: `${o.registries.recordsM}M`, t: 'ok' }, { l: 'Integrity', v: `${o.registries.integrityPct}%`, t: o.registries.integrityPct >= 98 ? 'ok' : 'warn' }, { l: 'Backlog', v: o.registries.backlog.toLocaleString(), t: o.registries.backlog > 2500 ? 'alert' : 'ok' }];
     if (d === 'courts') return [{ l: 'Cases coordinated', v: o.courtLiaison.casesCoordinated.toLocaleString(), t: 'ok' }, { l: 'Transfers pending', v: `${o.courtLiaison.transfersPending}`, t: o.courtLiaison.transfersPending > 500 ? 'alert' : 'ok' }, { l: 'SLA met', v: `${o.courtLiaison.slaMetPct}%`, t: o.courtLiaison.slaMetPct >= 80 ? 'ok' : 'warn' }];
-  } else if (a === 'INTERIOR') {
-    const o = interiorOps(id, ts);
-    if (d === 'identity') return [{ l: 'Enrolled', v: `${o.identity.enrolledM}M`, t: 'ok' }, { l: 'Issuance backlog', v: o.identity.issuanceBacklog.toLocaleString(), t: o.identity.issuanceBacklog > 6000 ? 'alert' : 'warn' }, { l: 'Uptime', v: `${o.identity.uptimePct}%`, t: o.identity.uptimePct >= 99 ? 'ok' : 'warn' }];
-    if (d === 'border') return [{ l: 'Posts open', v: `${o.border.open}/${o.border.posts}`, t: o.border.open < o.border.posts ? 'warn' : 'ok' }, { l: 'Flagged entries', v: `${o.border.flaggedEntries}`, t: o.border.flaggedEntries > 90 ? 'alert' : 'warn' }, { l: 'Mean clearance', v: `${o.border.meanClearanceMin}m`, t: o.border.meanClearanceMin >= 30 ? 'alert' : 'ok' }];
-    if (d === 'licensing') return [{ l: 'Permits pending', v: o.licensing.pending.toLocaleString(), t: o.licensing.pending > 3500 ? 'alert' : 'warn' }, { l: 'SLA met', v: `${o.licensing.slaMetPct}%`, t: o.licensing.slaMetPct >= 80 ? 'ok' : 'warn' }];
-    if (d === 'coordination') return [{ l: 'Cells active', v: `${o.coordination.cellsActive}`, t: 'ok' }, { l: 'Public order', v: `${o.coordination.publicOrderIndex}`, t: o.coordination.publicOrderIndex >= 70 ? 'ok' : 'warn' }, { l: 'Threat level', v: o.internalThreatLevel, t: o.internalThreatLevel === 'high' ? 'alert' : o.internalThreatLevel === 'elevated' ? 'warn' : 'ok' }];
   } else if (a === 'LABOR') {
     const o = laborOps(id, ts);
     if (d === 'employment') return [{ l: 'Unemployment', v: `${o.unemploymentPct}%`, t: o.unemploymentPct >= 16 ? 'alert' : o.unemploymentPct >= 9 ? 'warn' : 'ok' }, { l: 'Placements today', v: o.placementsToday.toLocaleString(), t: 'ok' }, { l: 'Vacancies', v: o.vacancies.toLocaleString(), t: 'ok' }];
@@ -107,17 +95,6 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
       { l: 'Court-liaison SLA', v: `${o.courtLiaison.slaMetPct}%`, t: o.courtLiaison.slaMetPct >= 80 ? 'ok' : 'warn' },
       { l: 'Transfers pending', v: `${o.courtLiaison.transfersPending}`, t: o.courtLiaison.transfersPending > 500 ? 'warn' : 'ok' },
     ];
-  } else if (archetype === 'INTERIOR') {
-    const o = interiorOps(id, ts);
-    const lt: Tone = o.internalThreatLevel === 'high' ? 'alert' : o.internalThreatLevel === 'elevated' ? 'warn' : 'ok';
-    items = [
-      { l: 'Identity enrolled', v: `${o.identity.enrolledM}M`, t: 'ok' },
-      { l: 'ID issuance backlog', v: o.identity.issuanceBacklog.toLocaleString(), t: o.identity.issuanceBacklog > 5000 ? 'alert' : 'warn' },
-      { l: 'Border posts open', v: `${o.border.open}/${o.border.posts}`, t: o.border.open < o.border.posts ? 'warn' : 'ok' },
-      { l: 'Flagged entries', v: `${o.border.flaggedEntries}`, t: o.border.flaggedEntries > 80 ? 'alert' : 'warn' },
-      { l: 'Public order', v: `${o.coordination.publicOrderIndex}`, t: lt },
-      { l: 'Threat level', v: o.internalThreatLevel, t: lt },
-    ];
   } else if (archetype === 'LABOR') {
     const o = laborOps(id, ts);
     items = [
@@ -158,34 +135,19 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   // The Ministry of Interior command surface is the dense National Security
   // & Civil Operations ecosystem; other archetypes/domains keep the ops
   // execution rhythm.
-  const interiorCmd = archetype === 'INTERIOR' && domain === 'command';
-  const interiorReg = archetype === 'INTERIOR' && domain === 'identity';
-  const interiorPop = archetype === 'INTERIOR' && domain === 'population';
-  const interiorLic = archetype === 'INTERIOR' && domain === 'licensing';
   const justiceCorr = archetype === 'JUSTICE' && domain === 'corrections';
-  const interiorReg2 = archetype === 'INTERIOR' && domain === 'coordination';
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      {interiorCmd ? (
-        <InteriorCommand id={id} now={now} />
-      ) : interiorReg ? (
-        <CivilRegistryCommand id={id} now={now} />
-      ) : interiorPop ? (
-        <PopulationAnalytics id={id} now={now} />
-      ) : interiorLic ? (
-        <PermitsLicensing id={id} now={now} />
-      ) : justiceCorr ? (
+      {justiceCorr ? (
         <PrisonsCorrections id={id} now={now} />
-      ) : interiorReg2 ? (
-        <RegionalAdministration id={id} now={now} />
       ) : (
         <>
           <OpsHeader index={1} title={`${label}${focus ? ` · ${domain}` : ''}`} subtitle="Sovereign Institutional Execution"
             posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
           <KpiStrip ts={ts} accent={ACC} items={shown} />
           {!focus && bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
-          {(['AGRICULTURE', 'INTERIOR', 'ENVIRONMENT', 'TRANSPORT'] as ArchetypeKey[]).includes(archetype) ? (
+          {(['AGRICULTURE', 'ENVIRONMENT', 'TRANSPORT'] as ArchetypeKey[]).includes(archetype) ? (
             <>
               <FieldPanel instId={id} archetype={archetype} now={now} />
               <RuntimeQueue scope={`${id}:field`} kind="field" title={`${label} field deployment runtime — stage → task → on-scene → cleared`} by="Field Coordinator" role={role} withheld={withheld} />
