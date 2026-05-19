@@ -18,6 +18,18 @@ describe('dispatch-store', () => {
     expect(c[c.length - 1]!.seeded).toBeFalsy();
   });
 
+  it('caps a channel at 60 entries under heavy send volume', () => {
+    for (let i = 0; i < 80; i++) {
+      send('t:disp:cap', { fromTier: 'ACTOR', from: 'A', toTier: 'FACILITY', body: `m${i}`, priority: 'routine' }, 9_000_000 + i);
+    }
+    const c = channel('t:disp:cap', 9_100_000);
+    // live (operator) traffic is capped at 60; seeded history may be
+    // re-prepended on read, so assert the live slice, not the total.
+    expect(c.filter(m => !m.seeded).length).toBeLessThanOrEqual(60);
+    // newest must survive the cap
+    expect(c[c.length - 1]!.body).toBe('m79');
+  });
+
   it('digest merges channels newest-last and respects the limit', () => {
     send('t:disp:a', { fromTier: 'MINISTRY', from: 'M', toTier: 'NATIONAL', body: 'first', priority: 'routine' }, 3_000_000);
     send('t:disp:b', { fromTier: 'MINISTRY', from: 'M', toTier: 'NATIONAL', body: 'second', priority: 'routine' }, 3_100_000);

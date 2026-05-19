@@ -29,6 +29,14 @@ describe('records-store', () => {
     expect(records('TRADE', 'TRD-9', 'licence record', 3_000_000).find(x => x.id === r.id)!.stage).toBe('synced');
   });
 
+  it('caps a register at 40 entries under heavy filing', () => {
+    for (let i = 0; i < 60; i++) fileRecord('ENVIRONMENT', 'ENV-9', `subj-${i}`, 'Field officer', 'monitoring record', 9_000_000 + i);
+    const list = records('ENVIRONMENT', 'ENV-9', 'monitoring record', 9_100_000);
+    // live filings capped at 40; seeded backlog may be re-prepended on read.
+    expect(list.filter(r => !r.id.startsWith('seed-')).length).toBeLessThanOrEqual(40);
+    expect(list[list.length - 1]!.subject).toBe('subj-59');
+  });
+
   it('returnRecord sends a record back one stage and counts the return', () => {
     fileRecord('LABOR', 'LAB-1', 'Employment record', 'Inspector', 'employment record', 5_000_000);
     const r = records('LABOR', 'LAB-1', 'employment record', 5_000_000).find(x => x.byActor === 'Inspector')!;
