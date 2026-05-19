@@ -501,7 +501,10 @@ export function MinistryChainSection({
           {d.ministry} · institutional chain
         </span>
         <span className="flex items-center gap-2 text-[8px] uppercase tracking-wider text-ink-muted">
-          <span>{integrity.facilities} facilities · chain {integrity.status}</span>
+          <span>
+            {integrity.facilities} facilities · chain {integrity.status}
+            {!expanded ? ` · ${filed.length} records · ${enrolled.filter(e => e.status === 'pending').length} enrol pending` : ''}
+          </span>
           <span aria-hidden>{expanded ? '▾' : '▸'}</span>
         </span>
       </button>
