@@ -489,7 +489,10 @@ export function MinistryChainSection({
   const iTone = integrity.status === 'synchronised' ? 'ok' : integrity.status === 'lagging' ? 'warn' : 'alert';
   const stC = (s: string) => (s === 'active' || s === 'operational' ? 'ok' : s === 'verified' || s === 'strained' ? 'warn' : s === 'pending' ? 'info' : 'alert');
   // Collapse preference persists per ministry across navigation (SSR-safe).
-  const prefKey = `civicos.chain.collapsed.${ministryKey}`;
+  // Keyed by ministry AND the surface's id so two different surfaces that
+  // both render a same-ministry chain (e.g. Treasury and Citizen Wallet,
+  // both FINANCE) keep independent collapse state.
+  const prefKey = `civicos.chain.collapsed.${ministryKey}.${id}`;
   const [expanded, setExpanded] = React.useState(true);
   React.useEffect(() => {
     try { if (window.localStorage.getItem(prefKey) === '1') setExpanded(false); } catch { /* no continuity */ }
