@@ -30,7 +30,7 @@ import {
   subscribe as recSub, version as recVer,
 } from '@/lib/gov/records-store';
 import {
-  inbox as refInbox, raiseReferral, advanceReferral, REFERRAL_FLOW,
+  inbox as refInbox, raiseReferral, advanceReferral, referralDigest, REFERRAL_FLOW,
   subscribe as refSub, version as refVer,
 } from '@/lib/gov/referral-store';
 
@@ -287,6 +287,33 @@ export function NationalEncounterDigest({ accent = '#37c7d4', now }: { accent?: 
             <span style={{ color: m.author === 'OFFICIAL' ? accent : 'rgb(var(--c-link))' }}>{m.name}</span>
             <span className="ml-1 text-[7.5px] font-bold uppercase" style={{ color: K_TONE[m.kind] }}>· {m.kind}</span>
             <div className="text-ink-soft">{m.body}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// The national view of inter-ministry casework — every referral in flight
+// across all ministry inboxes.
+export function NationalReferralBoard({ accent = '#37c7d4', now }: { accent?: string; now: number }) {
+  const v = React.useSyncExternalStore(refSub, refVer, () => 0);
+  const keys = React.useMemo(() => Object.keys(MINISTRY_CHAIN), []);
+  const feed = React.useMemo(() => referralDigest(keys, now, 12), [keys, now, v]);
+  const stC = (s: string) => (s === 'closed' ? 'ok' : s === 'actioned' ? 'warn' : s === 'accepted' ? 'info' : 'alert');
+  return (
+    <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
+      <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
+        <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>Inter-ministry referrals — live casework</span>
+        <span className="text-[8px] uppercase tracking-wider text-ink-muted">{feed.filter(r => r.status !== 'closed').length} open · cross-ministry</span>
+      </div>
+      <div className="max-h-[200px] space-y-0.5 overflow-y-auto px-3 py-2">
+        {feed.map(r => (
+          <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
+            <span className="font-mono text-[8px] text-ink-muted">{new Date(r.at).toLocaleTimeString('en-GB', { hour12: false })}</span>
+            <span className="shrink-0 text-[8px] text-ink-muted">{chainDef(r.fromKey).ministry} → {chainDef(r.toKey).ministry}</span>
+            <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject}</span>
+            <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${stC(r.status)}))` }}>{r.status}</span>
           </div>
         ))}
       </div>

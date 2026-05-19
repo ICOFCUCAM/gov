@@ -11,7 +11,7 @@ import { networkPressure } from '@/lib/gov/infrastructure';
 import { scenarioSweep } from '@/lib/gov/simulation';
 import { buildOperationalChain } from '@/lib/gov/operational-chain';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
-import { NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, DispatchChannel } from '@/apps/_shared/InstitutionChain';
+import { NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard, DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
@@ -449,7 +449,10 @@ export function NationalCoordination() {
         <NationalDispatchDigest accent={ACCENT} now={now} />
         <NationalRecordsLedger accent={ACCENT} now={now} />
       </div>
-      <NationalEncounterDigest accent={ACCENT} now={now} />
+      <div className="grid gap-2 lg:grid-cols-2">
+        <NationalEncounterDigest accent={ACCENT} now={now} />
+        <NationalReferralBoard accent={ACCENT} now={now} />
+      </div>
       <DispatchChannel scope="xmin:coordination" now={now} accent={ACCENT}
         selfTier="MINISTRY" selfName="Cabinet Secretariat" toTier="MINISTRY"
         title="Interministerial coordination — lateral, cross-ministry" />

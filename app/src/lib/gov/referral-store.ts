@@ -94,6 +94,15 @@ export function raiseReferral(fromKey: string, toKey: string, subject: string, b
   bump();
 }
 
+/** Every referral in flight across all ministry inboxes — the national
+ *  view of inter-ministry casework (newest last). */
+export function referralDigest(keys: string[], now: number, limit = 12): Referral[] {
+  hydrate();
+  const all: Referral[] = [];
+  for (const k of keys) all.push(...inbox(k, now));
+  return all.sort((a, b) => a.at - b.at).slice(-limit);
+}
+
 export function advanceReferral(toKey: string, id: string, now: number): void {
   hydrate();
   const list = refs.get(toKey);
