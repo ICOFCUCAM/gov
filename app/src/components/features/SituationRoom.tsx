@@ -578,7 +578,7 @@ export function NationalMap({
   };
 
   return (
-    <div ref={rootRef} className={`relative w-full overflow-hidden rounded-[4px] border ${height ? '' : 'h-full min-h-[560px]'}`}
+    <div ref={rootRef} className={`relative w-full overflow-hidden rounded-[4px] border ${height ? '' : 'h-[clamp(360px,40vw,540px)]'}`}
       style={{
         ...(height ? { height } : {}),
         borderColor: `color-mix(in srgb, ${ACCENT} 26%, rgb(var(--c-line-soft)))`,
@@ -1475,7 +1475,7 @@ export function SituationRoom() {
                   ))}
                 </span>
               }
-              className="xl:col-span-6" bodyClass="!p-2">
+              className="self-start xl:col-span-6" bodyClass="!p-2">
               <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
             </Panel>
 
