@@ -125,11 +125,13 @@ export function DispatchChannel({
       </div>
       <div className="flex items-center gap-1.5 border-t px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
         <select value={prio} onChange={e => setPrio(e.target.value as Dispatch['priority'])}
+          aria-label="Dispatch priority"
           className="focus-ring rounded-[3px] border bg-surface px-1 py-1 text-[9px] uppercase tracking-wider text-ink-soft"
           style={{ borderColor: 'rgb(var(--c-line))' }}>
           <option value="routine">routine</option><option value="priority">priority</option><option value="urgent">urgent</option>
         </select>
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          aria-label={`Dispatch message to ${toTier.toLowerCase()}`}
           placeholder={`Dispatch to ${toTier.toLowerCase()}…`}
           className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink"
           style={{ borderColor: 'rgb(var(--c-line))' }} />
@@ -193,11 +195,13 @@ export function EncounterThread({
       </div>
       <div className="flex items-center gap-1.5 border-t px-2 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
         <select value={kind} onChange={e => setKind(e.target.value as EncounterKind)}
+          aria-label="Message kind"
           className="focus-ring rounded-[3px] border bg-surface px-1 py-1 text-[9px] uppercase tracking-wider text-ink-soft"
           style={{ borderColor: 'rgb(var(--c-line))' }}>
           {kinds.map(k => <option key={k} value={k}>{k}</option>)}
         </select>
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submit(); }}
+          aria-label={selfAuthor === 'OFFICIAL' ? `Reply to ${publicName}` : `Message ${officialName}`}
           placeholder={selfAuthor === 'OFFICIAL' ? `Reply to ${publicName}…` : `Message ${officialName}…`}
           className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink"
           style={{ borderColor: 'rgb(var(--c-line))' }} />
@@ -468,6 +472,7 @@ export function MinistryChainSection({
           </div>
           <div className="mb-1.5 flex items-center gap-1.5">
             <input value={nm} onChange={e => setNm(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && nm.trim()) { enroll(ministryKey, myFac.id, nm, d.actorRole, 'Facility registrar', now); setNm(''); } }}
+              aria-label={`Enrol ${d.actorRole.toLowerCase()} at ${myFac.id}`}
               placeholder={`Enrol ${d.actorRole.toLowerCase()} at ${myFac.id}…`}
               className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
             <button type="button" onClick={() => { if (nm.trim()) { enroll(ministryKey, myFac.id, nm, d.actorRole, 'Facility registrar', now); setNm(''); } }}
@@ -497,10 +502,12 @@ export function MinistryChainSection({
           </div>
           <div className="mb-1.5 flex items-center gap-1.5">
             <select value={filingActor} onChange={e => setByA(e.target.value)}
+              aria-label="Filing actor"
               className="focus-ring max-w-[110px] shrink-0 rounded-[3px] border bg-surface px-1 py-1 text-[9px] text-ink-soft" style={{ borderColor: 'rgb(var(--c-line))' }}>
               {roster.map(n => <option key={n} value={n}>{n}</option>)}
             </select>
             <input value={subj} onChange={e => setSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && subj.trim()) { fileRecord(ministryKey, myFac.id, subj, filingActor, d.recordNoun, now); setSubj(''); } }}
+              aria-label={`File a ${d.recordNoun} at ${myFac.id}`}
               placeholder={`File a ${d.recordNoun} at ${myFac.id}…`}
               className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
             <button type="button" onClick={() => { if (subj.trim()) { fileRecord(ministryKey, myFac.id, subj, filingActor, d.recordNoun, now); setSubj(''); } }}
@@ -542,10 +549,12 @@ export function MinistryChainSection({
           <div className="mb-1.5 flex items-center gap-1.5">
             <span className="text-[8px] uppercase tracking-wider text-ink-muted">to</span>
             <select value={refTarget} onChange={e => setRefTo(e.target.value)}
+              aria-label="Refer to ministry"
               className="focus-ring max-w-[110px] shrink-0 rounded-[3px] border bg-surface px-1 py-1 text-[9px] text-ink-soft" style={{ borderColor: 'rgb(var(--c-line))' }}>
               {peers.map(k => <option key={k} value={k}>{chainDef(k).ministry}</option>)}
             </select>
             <input value={refSubj} onChange={e => setRefSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && refSubj.trim()) { raiseReferral(ministryKey, refTarget, refSubj, `${d.ministry} liaison`, now, filed[filed.length - 1]?.ref); setRefSubj(''); } }}
+              aria-label="Referral subject"
               placeholder="Refer a matter to another ministry…"
               className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
             <button type="button" onClick={() => { if (refSubj.trim()) { raiseReferral(ministryKey, refTarget, refSubj, `${d.ministry} liaison`, now, filed[filed.length - 1]?.ref); setRefSubj(''); } }}
