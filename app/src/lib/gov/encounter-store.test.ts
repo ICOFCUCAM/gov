@@ -22,6 +22,14 @@ describe('encounter-store', () => {
     expect(last.seeded).toBeFalsy();
   });
 
+  it('encounterDigest does not reorder the underlying threads', () => {
+    post('t:enc:nm', { author: 'PUBLIC', name: 'C', kind: 'note', body: 'x1' }, 7_000_000);
+    post('t:enc:nm', { author: 'OFFICIAL', name: 'O', kind: 'note', body: 'x2' }, 7_100_000);
+    const before = thread('t:enc:nm', 'O', 'C', 7_100_000).map(m => m.id);
+    encounterDigest(['t:enc:nm'], 'O', 'C', 7_100_000, 999);
+    expect(thread('t:enc:nm', 'O', 'C', 7_100_000).map(m => m.id)).toEqual(before);
+  });
+
   it('caps a thread at 60 live turns, keeping the newest', () => {
     for (let i = 0; i < 80; i++) post('t:enc:cap', { author: 'PUBLIC', name: 'C', kind: 'note', body: `t${i}` }, 9_000_000 + i);
     const th = thread('t:enc:cap', 'O', 'C', 9_100_000);

@@ -18,6 +18,14 @@ describe('dispatch-store', () => {
     expect(c[c.length - 1]!.seeded).toBeFalsy();
   });
 
+  it('digest does not reorder the underlying channels', () => {
+    send('t:disp:nm:a', { fromTier: 'ACTOR', from: 'A', toTier: 'FACILITY', body: 'a1', priority: 'routine' }, 7_000_000);
+    send('t:disp:nm:a', { fromTier: 'ACTOR', from: 'A', toTier: 'FACILITY', body: 'a2', priority: 'routine' }, 7_100_000);
+    const before = channel('t:disp:nm:a', 7_100_000).map(d => d.id);
+    digest(['t:disp:nm:a'], 7_100_000, 999);
+    expect(channel('t:disp:nm:a', 7_100_000).map(d => d.id)).toEqual(before);
+  });
+
   it('caps a channel at 60 entries under heavy send volume', () => {
     for (let i = 0; i < 80; i++) {
       send('t:disp:cap', { fromTier: 'ACTOR', from: 'A', toTier: 'FACILITY', body: `m${i}`, priority: 'routine' }, 9_000_000 + i);
