@@ -316,7 +316,7 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
               </div>
               <button className="focus-ring mt-2 w-full rounded-[8px] py-1.5 text-[10px] font-semibold" style={{ background: ACC, color: '#04130d' }}>Start consultation</button>
               <div className="mt-2">
-                <EncounterThread scope={`enc:health:portal:${v.healthId}`} now={now} accent={ACC}
+                <EncounterThread scope={`enc:health:careteam:${id}`} now={now} accent={ACC}
                   selfAuthor="PUBLIC" officialName={v.upcoming.doctor} publicName={v.name}
                   title="Message your care team" />
               </div>

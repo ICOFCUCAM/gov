@@ -167,6 +167,9 @@ export function DoctorSystem({ id, now, role, withheld }: {
         <EncounterThread scope={`enc:health:${myHospital.id}:${p.mrn}`} now={now} accent={ACC}
           selfAuthor="OFFICIAL" officialName={p.attending} publicName={p.name}
           title={`Patient encounter · ${p.mrn}`} />
+        <EncounterThread scope={`enc:health:careteam:${id}`} now={now} accent={ACC}
+          selfAuthor="OFFICIAL" officialName={p.attending} publicName="Enrolled citizen"
+          title="Primary care team ↔ citizen portal" />
         <DispatchChannel scope={`health:labline:${id}`} now={now} accent={ACC}
           selfTier="ACTOR" selfName={p.attending} toTier="FACILITY"
           title="Laboratory liaison — order queries & results" />
