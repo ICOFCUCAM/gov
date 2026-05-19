@@ -10,6 +10,7 @@ import { policeOps } from '@/lib/gov/agency-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import { PoliceCommand } from '@/apps/police-command/PoliceCommand';
+import { IntelligenceCommand } from '@/apps/police-command/IntelligenceCommand';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -66,6 +67,11 @@ export function PoliceCommandApp({ appId, domain, now, role, withheld }: {
       {isOverview ? (
         <>
           <PoliceCommand id={appId} now={now} />
+          <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
+        </>
+      ) : isIntel ? (
+        <>
+          <IntelligenceCommand id={appId} now={now} />
           <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
         </>
       ) : (
