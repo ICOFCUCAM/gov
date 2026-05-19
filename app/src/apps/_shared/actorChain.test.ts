@@ -21,4 +21,19 @@ describe('actorChain', () => {
       expect(c.actorName.length).toBeGreaterThan(0);
     }
   });
+
+  it('every actor-facing surface ministry key resolves a real facility (no empty strip)', () => {
+    // Keys actually passed by ActorChainStrip / InstitutionChainStrip across
+    // the platform — Health/Interior/Finance/Education/Transport/Energy/
+    // Justice/Trade/Legislature plus Sector archetypes incl. the GENERIC
+    // fallback. None may yield an undefined facility or blank actor.
+    const keys = ['HEALTH', 'INTERIOR', 'FINANCE', 'EDUCATION', 'TRANSPORT', 'ENERGY', 'JUSTICE', 'TRADE', 'LEGISLATURE', 'AGRICULTURE', 'ENVIRONMENT', 'LABOR', 'GENERIC', 'UNKNOWN-X'];
+    for (const m of keys) {
+      const c = actorChain(m, `inst-${m}`, 6_000_000, 'REC');
+      expect(c.facility?.id).toBeTruthy();
+      expect(c.facility?.name).toBeTruthy();
+      expect(c.lineage.stages).toHaveLength(5);
+      expect(c.actorName.trim().length).toBeGreaterThan(0);
+    }
+  });
 });
