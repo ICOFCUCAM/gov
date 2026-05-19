@@ -1,14 +1,14 @@
 import { CommandShell } from '@/components/ui/CommandShell';
-import { MissionOrchestration } from '@/components/features/MissionOrchestration';
+import { NationalCoordination } from '@/components/features/NationalCoordination';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Workflows & Missions' };
+export const metadata = { title: 'National Coordination' };
 
 
 export default function NationalCoordinationPage() {
   return (
     <CommandShell active="coord">
-      <MissionOrchestration />
+      <NationalCoordination />
     </CommandShell>
   );
 }
