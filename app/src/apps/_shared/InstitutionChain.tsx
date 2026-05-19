@@ -39,6 +39,15 @@ const TIER_C: Record<string, string> = {
   MINISTRY: 'rgb(var(--c-warn))', NATIONAL: 'rgb(var(--c-alert))',
 };
 
+// HH:MM for same-day messages, DD/MM HH:MM otherwise — so expanded
+// multi-day threads aren't ambiguous.
+function clockLabel(at: number, now: number): string {
+  const d = new Date(at);
+  const hm = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const sameDay = new Date(now).toDateString() === d.toDateString();
+  return sameDay ? hm : `${d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })} ${hm}`;
+}
+
 export function InstitutionChainStrip({
   accent, ministryKey, facility, actorName, lineage, integrity,
 }: {
@@ -122,7 +131,7 @@ export function DispatchChannel({
         ) : null}
         {list.map(m => (
           <div key={m.id} className="text-[10px]">
-            <span className="font-mono text-[8px] text-ink-muted">{new Date(m.at).toLocaleTimeString('en-GB', { hour12: false })}</span>{' '}
+            <span className="font-mono text-[8px] text-ink-muted">{clockLabel(m.at, now)}</span>{' '}
             <span style={{ color: TIER_C[m.fromTier] }}>{m.from}</span>
             <span className="text-ink-muted"> → {m.toTier.toLowerCase()}</span>
             {m.priority !== 'routine' ? <span className="ml-1 text-[7.5px] font-bold uppercase" style={{ color: P_TONE[m.priority] }}>· {m.priority}</span> : null}
@@ -199,7 +208,7 @@ export function EncounterThread({
           const mine = m.author === selfAuthor;
           return (
             <div key={m.id} className={`text-[10px] ${mine ? 'pl-6 text-right' : 'pr-6'}`}>
-              <span className="font-mono text-[8px] text-ink-muted">{new Date(m.at).toLocaleTimeString('en-GB', { hour12: false })}</span>{' '}
+              <span className="font-mono text-[8px] text-ink-muted">{clockLabel(m.at, now)}</span>{' '}
               <span style={{ color: m.author === 'OFFICIAL' ? accent : 'rgb(var(--c-link))' }}>{m.name}</span>
               <span className="ml-1 text-[7.5px] font-bold uppercase" style={{ color: K_TONE[m.kind] }}>· {m.kind}</span>
               <div className="text-ink-soft">{m.body}</div>
@@ -242,7 +251,7 @@ export function NationalDispatchDigest({ accent = '#37c7d4', now }: { accent?: s
       <div className="max-h-[200px] space-y-1 overflow-y-auto px-3 py-2">
         {feed.map(m => (
           <div key={m.id} className="text-[10px]">
-            <span className="font-mono text-[8px] text-ink-muted">{new Date(m.at).toLocaleTimeString('en-GB', { hour12: false })}</span>{' '}
+            <span className="font-mono text-[8px] text-ink-muted">{clockLabel(m.at, now)}</span>{' '}
             <span style={{ color: TIER_C[m.fromTier] }}>{m.from}</span>
             <span className="text-ink-muted"> → {m.toTier.toLowerCase()}</span>
             {m.priority !== 'routine' ? <span className="ml-1 text-[7.5px] font-bold uppercase" style={{ color: P_TONE[m.priority] }}>· {m.priority}</span> : null}
@@ -313,7 +322,7 @@ export function NationalEncounterDigest({ accent = '#37c7d4', now }: { accent?: 
       <div className="max-h-[200px] space-y-1 overflow-y-auto px-3 py-2">
         {feed.map(({ msg: m }) => (
           <div key={m.id} className="text-[10px]">
-            <span className="font-mono text-[8px] text-ink-muted">{new Date(m.at).toLocaleTimeString('en-GB', { hour12: false })}</span>{' '}
+            <span className="font-mono text-[8px] text-ink-muted">{clockLabel(m.at, now)}</span>{' '}
             <span style={{ color: m.author === 'OFFICIAL' ? accent : 'rgb(var(--c-link))' }}>{m.name}</span>
             <span className="ml-1 text-[7.5px] font-bold uppercase" style={{ color: K_TONE[m.kind] }}>· {m.kind}</span>
             <div className="text-ink-soft">{m.body}</div>
@@ -340,7 +349,7 @@ export function NationalReferralBoard({ accent = '#37c7d4', now }: { accent?: st
       <div className="max-h-[200px] space-y-0.5 overflow-y-auto px-3 py-2">
         {feed.map(r => (
           <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
-            <span className="font-mono text-[8px] text-ink-muted">{new Date(r.at).toLocaleTimeString('en-GB', { hour12: false })}</span>
+            <span className="font-mono text-[8px] text-ink-muted">{clockLabel(r.at, now)}</span>
             <span className="shrink-0 text-[8px] text-ink-muted">{chainDef(r.fromKey).ministry} → {chainDef(r.toKey).ministry}</span>
             <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject}{r.recordRef ? <span className="ml-1 font-mono text-[7.5px] text-ink-muted">[{r.recordRef}]</span> : null}</span>
             <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${stC(r.status)}))` }}>{r.status}</span>
