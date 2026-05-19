@@ -12,6 +12,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { DomainFrame, INTERIOR_DS } from '@/apps/ministry-interior/design-system/interior-ds';
 import { FederatedMount, FederatedBadge } from '@/apps/ministry-interior/federation/federation';
+import { SovereignHeaderPulse } from '@/apps/_shared/SovereignHeaderPulse';
 import type { InteriorDomain, SurfaceId } from '@/apps/ministry-interior/core/domains';
 
 import { NationalOverview } from '@/components/features/NationalOverview';
@@ -215,6 +216,7 @@ export function InteriorShell({ domain, instanceId, now, role, withheld }: {
           Identity uptime <span className="font-semibold tabular-nums text-ink">{o.identity.uptimePct}%</span>
         </span>
       </div>
+      <SovereignHeaderPulse now={now} accent={INTERIOR_DS.shellAccent} />
 
       <DomainFrame domain={domain} badge={domain.federation ? <FederatedBadge /> : null}>
         {domain.federation
