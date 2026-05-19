@@ -24,11 +24,9 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
 }) {
   const ts = now / 4000;
   const w = citizenWallet(appId, ts);
-  // Mirror MinistryChainSection's facility pick (FINANCE, seed 9) so the
-  // citizen's encounter shares the exact scope as the ministry's desk.
+  // Mirror MinistryChainSection's facility pick (seed 9) so the citizen's
+  // enrolment and encounter share the exact scope as the ministry desk.
   const cwEpoch = Math.max(0, Math.floor(now / 4000));
-  const cwFacs = facilities('FINANCE', cwEpoch);
-  const cwFac = cwFacs[Math.abs([...appId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % cwFacs.length] ?? cwFacs[0]!;
   const ewv = React.useSyncExternalStore(enSub, enVer, () => 0);
   const [enrMin, setEnrMin] = React.useState('FINANCE');
   const enrFacs = React.useMemo(() => facilities(enrMin, cwEpoch), [enrMin, cwEpoch]);
@@ -112,9 +110,9 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
           </div>
         ) : <div className="text-[9px] text-ink-muted">No enrolment submitted yet. Your request appears on the branch desk for verification.</div>}
       </CommandPanel>
-      <EncounterThread scope={`enc:finance:${cwFac.id}`} now={now} accent={ACC}
-        selfAuthor="PUBLIC" officialName={`Assessor · ${cwFac.id}`} publicName="Citizen"
-        title={`Message the service desk · ${cwFac.id}`} />
+      <EncounterThread scope={`enc:${enrMin.toLowerCase()}:${enrFac.id}`} now={now} accent={ACC}
+        selfAuthor="PUBLIC" officialName={`${enrRole} · ${enrFac.id}`} publicName="Citizen"
+        title={`Message ${chainDef(enrMin).ministry} · ${enrFac.id}`} />
       <MinistryChainSection ministryKey="FINANCE" id={appId} now={now} accent={ACC} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'approval'} title={`${label} runtime — execute the citizen-service workflow`} by="Service Agent" role={role} withheld={withheld} />
     </div>
