@@ -8,7 +8,8 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { citizenWallet } from '@/lib/gov/citizen-systems';
 import { citizenRequests } from '@/lib/gov/citizen-requests';
 import { OpsHeader, KpiStrip, BarPanel, StatTiles } from '@/apps/_shared/Ops';
-import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
+import { MinistryChainSection, EncounterThread } from '@/apps/_shared/InstitutionChain';
+import { facilities } from '@/lib/gov/institution-chain';
 import { CommandPanel, type Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -22,6 +23,11 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
 }) {
   const ts = now / 4000;
   const w = citizenWallet(appId, ts);
+  // Mirror MinistryChainSection's facility pick (FINANCE, seed 9) so the
+  // citizen's encounter shares the exact scope as the ministry's desk.
+  const cwEpoch = Math.max(0, Math.floor(now / 4000));
+  const cwFacs = facilities('FINANCE', cwEpoch);
+  const cwFac = cwFacs[Math.abs([...appId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % cwFacs.length] ?? cwFacs[0]!;
   const d = WF[domain] ? domain : 'identity';
   const label = LABEL[d] ?? 'Identity';
   const raw: { l: string; v: string; t?: Tone }[] = d === 'identity' ? [
@@ -72,6 +78,9 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
           ))}
         </div>
       </CommandPanel>
+      <EncounterThread scope={`enc:finance:${cwFac.id}`} now={now} accent={ACC}
+        selfAuthor="PUBLIC" officialName={`Assessor · ${cwFac.id}`} publicName="Citizen"
+        title={`Message the service desk · ${cwFac.id}`} />
       <MinistryChainSection ministryKey="FINANCE" id={appId} now={now} accent={ACC} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'approval'} title={`${label} runtime — execute the citizen-service workflow`} by="Service Agent" role={role} withheld={withheld} />
     </div>
