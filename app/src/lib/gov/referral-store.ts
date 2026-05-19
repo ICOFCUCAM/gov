@@ -19,6 +19,7 @@ export interface Referral {
   subject: string;
   by: string;
   status: ReferralStatus;
+  recordRef?: string; // provenance — the originating facility record
 }
 
 type Listener = () => void;
@@ -83,12 +84,13 @@ export function inbox(toKey: string, now: number): Referral[] {
   return refs.get(toKey)!;
 }
 
-export function raiseReferral(fromKey: string, toKey: string, subject: string, by: string, now: number): void {
+export function raiseReferral(fromKey: string, toKey: string, subject: string, by: string, now: number, recordRef?: string): void {
   hydrate();
   const list = refs.get(toKey) ?? seedRefs(toKey, now);
   list.push({
     id: `rf-${now}-${Math.floor(seed(`rf:${toKey}:${now}`) * 1e6)}`,
     at: now, fromKey, toKey, subject: subject.trim(), by, status: 'raised',
+    ...(recordRef ? { recordRef } : {}),
   });
   refs.set(toKey, list.slice(-40));
   bump();

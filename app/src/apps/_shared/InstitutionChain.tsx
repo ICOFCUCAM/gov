@@ -324,7 +324,7 @@ export function NationalReferralBoard({ accent = '#37c7d4', now }: { accent?: st
           <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
             <span className="font-mono text-[8px] text-ink-muted">{new Date(r.at).toLocaleTimeString('en-GB', { hour12: false })}</span>
             <span className="shrink-0 text-[8px] text-ink-muted">{chainDef(r.fromKey).ministry} → {chainDef(r.toKey).ministry}</span>
-            <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject}</span>
+            <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject}{r.recordRef ? <span className="ml-1 font-mono text-[7.5px] text-ink-muted">[{r.recordRef}]</span> : null}</span>
             <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${stC(r.status)}))` }}>{r.status}</span>
           </div>
         ))}
@@ -496,10 +496,10 @@ export function MinistryChainSection({
               className="focus-ring max-w-[110px] shrink-0 rounded-[3px] border bg-surface px-1 py-1 text-[9px] text-ink-soft" style={{ borderColor: 'rgb(var(--c-line))' }}>
               {peers.map(k => <option key={k} value={k}>{chainDef(k).ministry}</option>)}
             </select>
-            <input value={refSubj} onChange={e => setRefSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && refSubj.trim()) { raiseReferral(ministryKey, refTarget, refSubj, `${d.ministry} liaison`, now); setRefSubj(''); } }}
+            <input value={refSubj} onChange={e => setRefSubj(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && refSubj.trim()) { raiseReferral(ministryKey, refTarget, refSubj, `${d.ministry} liaison`, now, filed[filed.length - 1]?.ref); setRefSubj(''); } }}
               placeholder="Refer a matter to another ministry…"
               className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink" style={{ borderColor: 'rgb(var(--c-line))' }} />
-            <button type="button" onClick={() => { if (refSubj.trim()) { raiseReferral(ministryKey, refTarget, refSubj, `${d.ministry} liaison`, now); setRefSubj(''); } }}
+            <button type="button" onClick={() => { if (refSubj.trim()) { raiseReferral(ministryKey, refTarget, refSubj, `${d.ministry} liaison`, now, filed[filed.length - 1]?.ref); setRefSubj(''); } }}
               className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: accent, color: accent }}>Refer</button>
           </div>
           <div className="max-h-[120px] space-y-0.5 overflow-y-auto">
@@ -508,7 +508,7 @@ export function MinistryChainSection({
               return (
                 <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
                   <span className="shrink-0 text-[8px] text-ink-muted">{chainDef(r.fromKey).ministry} →</span>
-                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-soft">{r.subject}{r.recordRef ? <span className="ml-1 font-mono text-[7.5px] text-ink-muted">[{r.recordRef}]</span> : null}</span>
                   <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${refStC(r.status)}))` }}>{r.status}</span>
                   {r.status !== 'closed' ? (
                     <button type="button" onClick={() => advanceReferral(ministryKey, r.id, now)}
