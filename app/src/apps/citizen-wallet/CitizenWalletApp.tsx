@@ -10,6 +10,7 @@ import { citizenRequests } from '@/lib/gov/citizen-requests';
 import { OpsHeader, KpiStrip, BarPanel, StatTiles } from '@/apps/_shared/Ops';
 import { MinistryChainSection, EncounterThread } from '@/apps/_shared/InstitutionChain';
 import { facilities, chainDef, MINISTRY_CHAIN } from '@/lib/gov/institution-chain';
+import { pickIndex } from '@/lib/pick-index';
 import { enroll, enrollments, subscribe as enSub, version as enVer } from '@/lib/gov/enrollment-store';
 import { CommandPanel, type Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -30,7 +31,7 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
   const ewv = React.useSyncExternalStore(enSub, enVer, () => 0);
   const [enrMin, setEnrMin] = React.useState('FINANCE');
   const enrFacs = React.useMemo(() => facilities(enrMin, cwEpoch), [enrMin, cwEpoch]);
-  const enrFac = enrFacs[Math.abs([...appId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % enrFacs.length] ?? enrFacs[0]!;
+  const enrFac = enrFacs[pickIndex(appId, enrFacs.length)] ?? enrFacs[0]!;
   const enrRole = chainDef(enrMin).actorRole;
   const cwEnr = React.useMemo(() => enrollments(enrMin, enrFac.id, enrRole, now), [enrMin, enrFac.id, enrRole, now, ewv]);
   const [cwName, setCwName] = React.useState('');
@@ -43,7 +44,7 @@ export function CitizenWalletApp({ appId, domain, now, role, withheld }: {
     const out: { ministry: string; name: string; status: string; at: number }[] = [];
     for (const k of enrMinistries) {
       const fs = facilities(k, cwEpoch);
-      const f = fs[Math.abs([...appId].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % fs.length] ?? fs[0]!;
+      const f = fs[pickIndex(appId, fs.length)] ?? fs[0]!;
       for (const e of enrollments(k, f.id, chainDef(k).actorRole, now)) {
         if (e.by === 'Citizen self-service') out.push({ ministry: chainDef(k).ministry, name: e.name, status: e.status, at: e.at });
       }

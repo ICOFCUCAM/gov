@@ -17,6 +17,7 @@ import { aiAdvisory } from '@/shared/ai/advisory';
 import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { facilities, actors, chainIntegrity } from '@/lib/gov/institution-chain';
 import { records as recordsOf, fileRecord, advanceRecord, returnRecord, STAGE_ORDER, subscribe as recSub, version as recVer } from '@/lib/gov/records-store';
+import { pickIndex } from '@/lib/pick-index';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 const ACC = ACCENT.hospital!;
@@ -47,7 +48,7 @@ export function HospitalSystem({ id, now, role, withheld }: {
   // held here, and it uplinks to the Ministry of Health → national system.
   const epoch = Math.max(0, Math.floor(ts));
   const fList = facilities('HEALTH', epoch);
-  const fac = fList[Math.abs([...id].reduce((hh, c) => (hh * 31 + c.charCodeAt(0)) | 0, 5)) % fList.length] ?? fList[0]!;
+  const fac = fList[pickIndex(id, fList.length, 5)] ?? fList[0]!;
   const roster = actors('HEALTH', fac.id, epoch);
   const cInt = chainIntegrity('HEALTH', epoch);
   const cTone = cInt.status === 'synchronised' ? 'ok' : cInt.status === 'lagging' ? 'warn' : 'alert';

@@ -33,6 +33,7 @@ import {
   inbox as refInbox, raiseReferral, advanceReferral, referralDigest, REFERRAL_FLOW,
   subscribe as refSub, version as refVer,
 } from '@/lib/gov/referral-store';
+import { pickIndex } from '@/lib/pick-index';
 
 const TIER_C: Record<string, string> = {
   ACTOR: 'rgb(var(--c-link))', FACILITY: 'rgb(var(--c-ok))',
@@ -421,7 +422,7 @@ export function MinistryChainSection({
   const epoch = Math.max(0, Math.floor(now / 4000));
   const d = chainDef(ministryKey);
   const fac = facilitiesOf(ministryKey, epoch);
-  const idx = Math.abs([...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 9)) % fac.length;
+  const idx = pickIndex(id, fac.length);
   const [selFac, setSelFac] = React.useState<string | null>(null);
   const myFac = fac.find(f => f.id === selFac) ?? fac[idx] ?? fac[0]!;
   const integrity = integrityOf(ministryKey, epoch);

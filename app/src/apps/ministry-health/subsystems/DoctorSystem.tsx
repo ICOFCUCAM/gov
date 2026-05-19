@@ -13,6 +13,7 @@ import { CommandHeader, CommandPanel, RingGauge, TrendChart, ACCENT, type Tone }
 import { InstitutionChainStrip, DispatchChannel, EncounterThread } from '@/apps/_shared/InstitutionChain';
 import { facilities, recordLineage, lineageAtStage, chainIntegrity } from '@/lib/gov/institution-chain';
 import { records as recordsOf, fileRecord, advanceRecord, STAGE_ORDER, subscribe as recSub, version as recVer } from '@/lib/gov/records-store';
+import { pickIndex } from '@/lib/pick-index';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
@@ -37,7 +38,7 @@ export function DoctorSystem({ id, now, role, withheld }: {
   // Health and synchronised to the national system.
   const epoch = Math.max(0, Math.floor(ts));
   const hList = facilities('HEALTH', epoch);
-  const myHospital = hList[Math.abs([...id].reduce((h, c) => (h * 31 + c.charCodeAt(0)) | 0, 7)) % hList.length] ?? hList[0]!;
+  const myHospital = hList[pickIndex(id, hList.length, 7)] ?? hList[0]!;
   const baseLineage = recordLineage(`MRN-${p.mrn}`, p.attending, myHospital, 'HEALTH', epoch);
   const hIntegrity = chainIntegrity('HEALTH', epoch);
   const dispatchScope = `health:${myHospital.id}`;
