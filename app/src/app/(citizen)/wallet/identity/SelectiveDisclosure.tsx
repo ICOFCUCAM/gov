@@ -22,19 +22,37 @@ const ALL: Attr[] = [
 ];
 
 export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
-  const [requested] = React.useState<string[]>(['name', 'over18', 'vaccination']);
+  const requested = React.useMemo(() => ['name', 'over18', 'vaccination'], []);
+  const [granted, setGranted] = React.useState<string[]>(requested);
   const [shared, setShared] = React.useState(false);
+  const [declined, setDeclined] = React.useState(false);
 
   const sharing = ALL.filter(a => requested.includes(a.key));
   const notSharing = ALL.filter(a => !requested.includes(a.key));
+  const toggle = (k: string) => setGranted(g => (g.includes(k) ? g.filter(x => x !== k) : [...g, k]));
 
   function share() {
     appendAuditEntry('selective-disclosure', {
       to: 'Kiambu County Hospital',
-      shared: requested,
+      shared: granted,
       subject: subjectName,
     });
     setShared(true);
+  }
+
+  if (declined) {
+    return (
+      <Card tight>
+        <h4 className="font-semibold">Nothing shared</h4>
+        <p className="text-sm">
+          You declined the request from <strong>Kiambu County Hospital</strong>.
+          No attributes were disclosed; the decline is noted in your access log.
+        </p>
+        <Button className="mt-3" variant="secondary" onClick={() => setDeclined(false)}>
+          Back
+        </Button>
+      </Card>
+    );
   }
 
   if (shared) {
@@ -42,7 +60,7 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
       <Card tight>
         <h4 className="font-semibold">Shared</h4>
         <p className="text-sm">
-          You shared {sharing.length} attributes with{' '}
+          You shared {granted.length} of {sharing.length} requested attributes with{' '}
           <strong>Kiambu County Hospital</strong> for this visit only. This is
           now in your records access log. You can revoke it later.
         </p>
@@ -61,11 +79,14 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
         follow-up</em>, for <em>this visit only</em>:
       </p>
 
-      <h4 className="font-semibold mt-3 mb-1">You will share</h4>
+      <h4 className="font-semibold mt-3 mb-1">Choose what to share</h4>
       <ul className="space-y-1">
         {sharing.map(a => (
-          <li key={a.key} className="flex justify-between text-sm">
-            <span>{a.label}</span>
+          <li key={a.key} className="flex items-center justify-between gap-3 text-sm">
+            <label className="flex items-center gap-2">
+              <input type="checkbox" checked={granted.includes(a.key)} onChange={() => toggle(a.key)} />
+              <span>{a.label}</span>
+            </label>
             <span className="text-ink-muted">{a.value}</span>
           </li>
         ))}
@@ -79,8 +100,10 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
       </div>
 
       <div className="flex gap-3 mt-4">
-        <Button onClick={share}>Share now</Button>
-        <Button variant="secondary">Cancel</Button>
+        <Button onClick={share} disabled={granted.length === 0}>
+          {granted.length ? `Share ${granted.length} now` : 'Select at least one'}
+        </Button>
+        <Button variant="secondary" onClick={() => setDeclined(true)}>Cancel</Button>
       </div>
       <p className="text-sm text-ink-muted mt-2">You can revoke this later.</p>
     </Card>
