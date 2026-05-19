@@ -12,6 +12,7 @@ import { clinicianWorkstation } from '@/lib/gov/health-operations';
 import { CommandHeader, CommandPanel, RingGauge, TrendChart, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import { InstitutionChainStrip, DispatchChannel, EncounterThread } from '@/apps/_shared/InstitutionChain';
 import { facilities, recordLineage, chainIntegrity } from '@/lib/gov/institution-chain';
+import { records as recordsOf, fileRecord, advanceRecord, STAGE_ORDER, subscribe as recSub, version as recVer } from '@/lib/gov/records-store';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
@@ -40,6 +41,9 @@ export function DoctorSystem({ id, now, role, withheld }: {
   const lineage = recordLineage(`MRN-${p.mrn}`, p.attending, myHospital, 'HEALTH', epoch);
   const hIntegrity = chainIntegrity('HEALTH', epoch);
   const dispatchScope = `health:${myHospital.id}`;
+  const rv = React.useSyncExternalStore(recSub, recVer, () => 0);
+  const ptRecs = React.useMemo(() => recordsOf('HEALTH', myHospital.id, 'clinical record', now), [myHospital.id, now, rv]);
+  const ptRec = ptRecs.find(r => r.subject.startsWith(`MRN-${p.mrn}`));
   const rb: Tone = p.riskBand === 'High' ? 'alert' : p.riskBand === 'Moderate' ? 'warn' : 'ok';
   const norm = (s: number[]) => { const mn = Math.min(...s), sp = Math.max(...s) - mn || 1; return s.map(v => ((v - mn) / sp) * 100); };
 
@@ -81,6 +85,37 @@ export function DoctorSystem({ id, now, role, withheld }: {
       {/* Bureaucratic chain — doctor → hospital → ministry → national */}
       <InstitutionChainStrip accent={ACC} ministryKey="HEALTH" facility={myHospital}
         actorName={p.attending} lineage={lineage} integrity={hIntegrity} />
+
+      {/* Commit this patient's record into the hospital register → chain */}
+      <div className="flex flex-wrap items-center gap-2 rounded-[4px] border px-3 py-2 text-[10px]"
+        style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#0a0f18' }}>
+        <span className="text-[8px] font-bold uppercase tracking-[0.16em] text-ink-muted">Record custody</span>
+        {ptRec ? (
+          <>
+            <span className="font-mono text-[8px] text-ink-muted">{ptRec.ref}</span>
+            <span className="text-ink-soft">{p.name} · MRN {p.mrn}</span>
+            <span className="text-[7.5px] uppercase tracking-wider" style={{ color: ptRec.stage === 'synced' ? C('ok') : ptRec.stage === 'rolled' ? C('warn') : C('info') }}>
+              {STAGE_ORDER.indexOf(ptRec.stage) + 1}/5 · {ptRec.stage}
+            </span>
+            {ptRec.stage !== 'synced' ? (
+              <button type="button" onClick={() => advanceRecord('HEALTH', myHospital.id, ptRec.id, now)}
+                className="focus-ring ml-auto rounded-[3px] border px-2 py-1 text-[8px] font-bold uppercase tracking-wider"
+                style={{ borderColor: ACC, color: ACC }}>
+                Advance → {STAGE_ORDER[STAGE_ORDER.indexOf(ptRec.stage) + 1]}
+              </button>
+            ) : <span className="ml-auto text-[8px] font-bold uppercase tracking-wider" style={{ color: C('ok') }}>✓ synchronised nationally</span>}
+          </>
+        ) : (
+          <>
+            <span className="text-ink-soft">No record committed for {p.name} at {myHospital.id}</span>
+            <button type="button" onClick={() => fileRecord('HEALTH', myHospital.id, `MRN-${p.mrn} · ${p.chiefComplaint}`, p.attending, 'clinical record', now)}
+              className="focus-ring ml-auto rounded-[3px] border px-2 py-1 text-[8px] font-bold uppercase tracking-wider"
+              style={{ borderColor: ACC, color: ACC }}>
+              Commit to {myHospital.id} register
+            </button>
+          </>
+        )}
+      </div>
 
       {/* Chart tabs */}
       <div className="flex flex-wrap gap-1 border-b" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
