@@ -15,6 +15,7 @@ import {
 } from '@/lib/gov/dispatch-store';
 import {
   facilities as facilitiesOf, actors as actorsOf, chainIntegrity as integrityOf,
+  recordLineage,
 } from '@/lib/gov/institution-chain';
 import {
   enrollments, enroll, advanceEnrollment, enrollmentTally,
@@ -47,6 +48,20 @@ export function clockLabel(at: number, now: number): string {
   const hm = d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', hour12: false });
   const sameDay = new Date(now).toDateString() === d.toDateString();
   return sameDay ? hm : `${d.toLocaleDateString('en-GB', { day: '2-digit', month: '2-digit' })} ${hm}`;
+}
+
+// Derive the actor→facility→ministry→national bundle for a surface so
+// every actor-facing app shows the same strip without repeating the
+// facility-pick + lineage + integrity wiring. Pure (no hooks).
+export function actorChain(ministryKey: string, key: string, now: number, recordPrefix = 'REC') {
+  const epoch = Math.max(0, Math.floor(now / 4000));
+  const facs = facilitiesOf(ministryKey, epoch);
+  const facility = facs[pickIndex(key, facs.length, 7)] ?? facs[0]!;
+  const d = chainDef(ministryKey);
+  const actorName = actorsOf(ministryKey, facility.id, epoch)[0]?.name ?? `${d.actorRole}`;
+  const lineage = recordLineage(`${recordPrefix}-${key}`, actorName, facility, ministryKey, epoch);
+  const integrity = integrityOf(ministryKey, epoch);
+  return { facility, actorName, lineage, integrity };
 }
 
 export function InstitutionChainStrip({
