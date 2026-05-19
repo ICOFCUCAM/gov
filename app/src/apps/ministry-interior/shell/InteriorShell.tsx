@@ -36,6 +36,10 @@ import { WorkflowOrchestration } from '@/apps/ministry-interior/domains/Workflow
 import { AppealsRights } from '@/apps/ministry-interior/domains/AppealsRights';
 import { JurisdictionDelegation } from '@/apps/ministry-interior/domains/JurisdictionDelegation';
 import { ConstitutionalInterruption } from '@/apps/ministry-interior/domains/ConstitutionalInterruption';
+import { InstitutionalEconomy } from '@/apps/ministry-interior/domains/InstitutionalEconomy';
+import { PressurePropagation } from '@/apps/ministry-interior/domains/PressurePropagation';
+import { ResilienceContinuity } from '@/apps/ministry-interior/domains/ResilienceContinuity';
+import { CorruptionPressure } from '@/apps/ministry-interior/domains/CorruptionPressure';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -84,6 +88,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'appeals-rights': return <AppealsRights id={id} now={now} />;
     case 'jurisdiction-delegation': return <JurisdictionDelegation id={id} now={now} />;
     case 'constitutional-interruption': return <ConstitutionalInterruption id={id} now={now} />;
+    case 'institutional-economy': return <InstitutionalEconomy id={id} now={now} />;
+    case 'pressure-propagation': return <PressurePropagation id={id} now={now} />;
+    case 'resilience-continuity': return <ResilienceContinuity id={id} now={now} />;
+    case 'corruption-pressure': return <CorruptionPressure id={id} now={now} />;
   }
 }
 
