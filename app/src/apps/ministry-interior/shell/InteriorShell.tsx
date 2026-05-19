@@ -44,6 +44,10 @@ import { TemporalForecast } from '@/apps/ministry-interior/domains/TemporalForec
 import { EarlyWarning } from '@/apps/ministry-interior/domains/EarlyWarning';
 import { ContinuityForecast } from '@/apps/ministry-interior/domains/ContinuityForecast';
 import { TemporalCorruption } from '@/apps/ministry-interior/domains/TemporalCorruption';
+import { NationalDigitalTwin } from '@/apps/ministry-interior/domains/NationalDigitalTwin';
+import { CausalityGraph } from '@/apps/ministry-interior/domains/CausalityGraph';
+import { SystemicCollapseForecast } from '@/apps/ministry-interior/domains/SystemicCollapseForecast';
+import { NationalStabilization } from '@/apps/ministry-interior/domains/NationalStabilization';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -100,6 +104,10 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'early-warning': return <EarlyWarning id={id} now={now} />;
     case 'continuity-forecast': return <ContinuityForecast id={id} now={now} />;
     case 'temporal-corruption': return <TemporalCorruption id={id} now={now} />;
+    case 'national-digital-twin': return <NationalDigitalTwin id={id} now={now} />;
+    case 'causality-graph': return <CausalityGraph id={id} now={now} />;
+    case 'systemic-collapse-forecast': return <SystemicCollapseForecast id={id} now={now} />;
+    case 'national-stabilization': return <NationalStabilization id={id} now={now} />;
   }
 }
 
