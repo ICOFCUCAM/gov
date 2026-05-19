@@ -11,6 +11,7 @@ import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import { PoliceCommand } from '@/apps/police-command/PoliceCommand';
 import { IntelligenceCommand } from '@/apps/police-command/IntelligenceCommand';
+import { CyberCommand } from '@/apps/police-command/CyberCommand';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -18,12 +19,12 @@ import type { WorkKind } from '@/lib/gov/runtime-workflow';
 const ACC = '#5fa8ff';
 const WF: Record<string, WorkKind> = {
   incident: 'incident', dispatch: 'incident', patrol: 'case', investigations: 'case',
-  evidence: 'case', intelligence: 'case', detention: 'case', border: 'incident',
+  evidence: 'case', intelligence: 'case', cyber: 'case', detention: 'case', border: 'incident',
 };
 const LABEL: Record<string, string> = {
   incident: 'Incident Command', dispatch: 'Dispatch Systems', patrol: 'Patrol Coordination',
   investigations: 'Investigations', evidence: 'Evidence Routing', intelligence: 'Intelligence Workflows',
-  detention: 'Detention Workflows', border: 'Border Escalation',
+  cyber: 'Cybercrime Unit', detention: 'Detention Workflows', border: 'Border Escalation',
 };
 
 export function PoliceCommandApp({ appId, domain, now, role, withheld }: {
@@ -72,6 +73,11 @@ export function PoliceCommandApp({ appId, domain, now, role, withheld }: {
       ) : isIntel ? (
         <>
           <IntelligenceCommand id={appId} now={now} />
+          <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
+        </>
+      ) : d === 'cyber' ? (
+        <>
+          <CyberCommand id={appId} now={now} />
           <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
         </>
       ) : (
