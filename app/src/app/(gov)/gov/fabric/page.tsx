@@ -1,13 +1,13 @@
 import { CommandShell } from '@/components/ui/CommandShell';
-import { NationalFabricView } from '@/components/features/NationalFabricView';
+import { EventBusMonitor } from '@/components/features/EventBusMonitor';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'National Interoperability Fabric' };
+export const metadata = { title: 'Event Bus Monitor' };
 
 export default function FabricPage() {
   return (
     <CommandShell active="fabric">
-      <NationalFabricView />
+      <EventBusMonitor />
     </CommandShell>
   );
 }
