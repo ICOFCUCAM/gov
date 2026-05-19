@@ -93,6 +93,21 @@ export function enroll(ministryKey: string, facilityId: string, name: string, ro
   bump();
 }
 
+/** National roll-up of the enrolment registers — counts across the given
+ *  ministry:facility keys (the apex view of enrolment load). */
+export function enrollmentTally(keys: { ministryKey: string; facilityId: string; role: string }[], now: number): { total: number; pending: number; active: number } {
+  hydrate();
+  let total = 0, pending = 0, active = 0;
+  for (const { ministryKey, facilityId, role } of keys) {
+    for (const e of enrollments(ministryKey, facilityId, role, now)) {
+      total++;
+      if (e.status === 'pending') pending++;
+      else if (e.status === 'active') active++;
+    }
+  }
+  return { total, pending, active };
+}
+
 export function advanceEnrollment(ministryKey: string, facilityId: string, id: string, now: number): void {
   hydrate();
   const key = `${ministryKey}:${facilityId}`;

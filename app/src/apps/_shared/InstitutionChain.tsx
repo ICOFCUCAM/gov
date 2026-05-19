@@ -17,7 +17,7 @@ import {
   facilities as facilitiesOf, actors as actorsOf, chainIntegrity as integrityOf,
 } from '@/lib/gov/institution-chain';
 import {
-  enrollments, enroll, advanceEnrollment,
+  enrollments, enroll, advanceEnrollment, enrollmentTally,
   subscribe as enSub, version as enVer,
 } from '@/lib/gov/enrollment-store';
 import {
@@ -338,16 +338,22 @@ export function NationalBureaucracyPulse({ accent = '#37c7d4', now }: { accent?:
   const dv = React.useSyncExternalStore(subscribe, version, () => 0);
   const ev = React.useSyncExternalStore(encSub, encVer, () => 0);
   const rev = React.useSyncExternalStore(refSub, refVer, () => 0);
+  const nv = React.useSyncExternalStore(enSub, enVer, () => 0);
   const epoch = Math.max(0, Math.floor(now / 4000));
   const stats = React.useMemo(() => {
     const keys = Object.keys(MINISTRY_CHAIN);
     const dispScopes = keys.map(k => `natl:${k.toLowerCase()}`);
     const encScopes: string[] = [];
-    for (const k of keys) for (const f of facilitiesOf(k, epoch).slice(0, 2)) encScopes.push(`enc:${k.toLowerCase()}:${f.id}`);
+    const enrKeys: { ministryKey: string; facilityId: string; role: string }[] = [];
+    for (const k of keys) for (const f of facilitiesOf(k, epoch).slice(0, 2)) {
+      encScopes.push(`enc:${k.toLowerCase()}:${f.id}`);
+      enrKeys.push({ ministryKey: k, facilityId: f.id, role: chainDef(k).actorRole });
+    }
     const disp = digest(dispScopes, now, 999).length;
     const recs = nationalRecords(999);
     const enc = encounterDigest(encScopes, 'Service desk', 'Citizen', now, 999).length;
     const refsAll = referralDigest(keys, now, 999);
+    const enr = enrollmentTally(enrKeys, now);
     return {
       disp,
       recsSynced: recs.filter(r => r.rec.stage === 'synced').length,
@@ -355,8 +361,10 @@ export function NationalBureaucracyPulse({ accent = '#37c7d4', now }: { accent?:
       enc,
       refOpen: refsAll.filter(r => r.status !== 'closed').length,
       refTotal: refsAll.length,
+      enrPending: enr.pending,
+      enrTotal: enr.total,
     };
-  }, [epoch, now, dv, ev, rev]);
+  }, [epoch, now, dv, ev, rev, nv]);
   const cell = (l: string, v: string) => (
     <div className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
       <span className="text-[8px] uppercase tracking-[0.14em] text-ink-muted">{l}</span>
@@ -364,11 +372,12 @@ export function NationalBureaucracyPulse({ accent = '#37c7d4', now }: { accent?:
     </div>
   );
   return (
-    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-4">
+    <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
       {cell('Dispatch roll-up', `${stats.disp}`)}
       {cell('Records → national', `${stats.recsSynced}/${stats.recsTotal} synced`)}
       {cell('Public service turns', `${stats.enc}`)}
       {cell('Referrals open', `${stats.refOpen}/${stats.refTotal}`)}
+      {cell('Enrolments pending', `${stats.enrPending}/${stats.enrTotal}`)}
     </div>
   );
 }

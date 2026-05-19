@@ -45,7 +45,7 @@ import {
   provinceMemory, diffuseTopology, corridorAdjacency, territorialField,
 } from '@/lib/gov/sovereign-operating-model';
 
-import { DispatchChannel, NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard } from '@/apps/_shared/InstitutionChain';
+import { DispatchChannel, NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard, NationalBureaucracyPulse } from '@/apps/_shared/InstitutionChain';
 
 const NATL_ASSETS = nationalAssets();
 const NATL_NETWORKS = nationalNetworks();
@@ -1974,6 +1974,7 @@ export function SituationRoom() {
           </div>
 
           {/* Row 6 — the whole-of-government live bureaucratic chain */}
+          <NationalBureaucracyPulse accent={ACCENT} now={now} />
           <div className="grid gap-2 lg:grid-cols-2">
             <NationalDispatchDigest accent={ACCENT} now={now} />
             <NationalRecordsLedger accent={ACCENT} now={now} />
