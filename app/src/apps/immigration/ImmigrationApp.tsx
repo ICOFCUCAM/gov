@@ -8,6 +8,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { immigrationOps } from '@/lib/gov/agency-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
+import { ImmigrationCommand } from '@/apps/immigration/ImmigrationCommand';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -46,16 +47,26 @@ export function ImmigrationApp({ appId, domain, now, role, withheld }: {
   const kpis = raw.map((m, i) => ({ l: m.l, v: m.v, t: (m.t ?? 'ok') as Tone, s: '', k: `im${i}` }));
   const pTone: Tone = kpis.some(x => x.t === 'alert') ? 'alert' : kpis.some(x => x.t === 'warn') ? 'warn' : 'ok';
 
+  // The Border Control surface is the dense National Immigration
+  // Intelligence System; other domains keep the ops execution rhythm.
+  const isOverview = d === 'border';
+
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      <OpsHeader index={1} title={`Immigration · ${label}`} subtitle="Sovereign Border Execution"
-        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
-      <KpiStrip ts={ts} accent={ACC} items={kpis} />
-      <BarPanel title="Border posture" meta="entry control · enforcement" accent={ACC} live rows={[
-        { label: 'Border availability', pct: (o.bordersOpen / o.bordersTotal) * 100, tone: (o.bordersOpen < o.bordersTotal ? 'warn' : 'ok') as Tone, tail: `${o.bordersOpen}/${o.bordersTotal}` },
-        { label: 'Visa SLA', pct: o.visaSlaMetPct, tone: (o.visaSlaMetPct >= 80 ? 'ok' : 'warn') as Tone, tail: `${o.visaSlaMetPct}%` },
-        { label: 'Flagged-entry pressure', pct: Math.min(100, o.flaggedEntries / 1.6), tone: (o.flaggedEntries > 90 ? 'alert' : 'warn') as Tone, tail: `${o.flaggedEntries}` },
-      ]} />
+      {isOverview ? (
+        <ImmigrationCommand id={appId} now={now} />
+      ) : (
+        <>
+          <OpsHeader index={1} title={`Immigration · ${label}`} subtitle="Sovereign Border Execution"
+            posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+          <KpiStrip ts={ts} accent={ACC} items={kpis} />
+          <BarPanel title="Border posture" meta="entry control · enforcement" accent={ACC} live rows={[
+            { label: 'Border availability', pct: (o.bordersOpen / o.bordersTotal) * 100, tone: (o.bordersOpen < o.bordersTotal ? 'warn' : 'ok') as Tone, tail: `${o.bordersOpen}/${o.bordersTotal}` },
+            { label: 'Visa SLA', pct: o.visaSlaMetPct, tone: (o.visaSlaMetPct >= 80 ? 'ok' : 'warn') as Tone, tail: `${o.visaSlaMetPct}%` },
+            { label: 'Flagged-entry pressure', pct: Math.min(100, o.flaggedEntries / 1.6), tone: (o.flaggedEntries > 90 ? 'alert' : 'warn') as Tone, tail: `${o.flaggedEntries}` },
+          ]} />
+        </>
+      )}
       <ActorChainStrip ministryKey="INTERIOR" idKey={appId} now={now} accent={ACC} recordPrefix="CASE" />
       <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'incident'} title={`${label} runtime — execute the border workflow`} by="Border Officer" role={role} withheld={withheld} />
