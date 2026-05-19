@@ -439,6 +439,7 @@ export function MinistryChainSection({
             const on = f.id === myFac.id;
             return (
               <button key={f.id} type="button" onClick={() => setSelFac(f.id)}
+                aria-pressed={on} aria-label={`Select facility ${f.id} · ${f.name} (${f.region})`}
                 className="focus-ring flex items-center gap-2 rounded-[3px] px-1.5 py-0.5 text-left transition-colors"
                 style={{ background: on ? `color-mix(in srgb,${accent} 13%,transparent)` : 'transparent' }}>
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: `rgb(var(--c-${stC(f.status)}))` }} />
