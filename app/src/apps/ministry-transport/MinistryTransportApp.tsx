@@ -7,6 +7,7 @@ import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { transportOps, transportCommand } from '@/lib/gov/transport-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
+import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -25,6 +26,7 @@ export function MinistryTransportApp({ instanceId, domain, now, role, withheld }
   const o = transportOps(id, ts);
   const d = WF[domain] ? domain : 'command';
   const label = LABEL[d] ?? 'Transport Command';
+  const isOverview = d === 'command';
 
   let kpis: K[] = [];
   let bars: { title: string; meta: string; rows: { label: string; pct: number; tone: Tone; tail: string }[] } | null = null;
@@ -72,10 +74,16 @@ export function MinistryTransportApp({ instanceId, domain, now, role, withheld }
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      <OpsHeader index={1} title={`Transport · ${label}`} subtitle="Sovereign Transport Execution"
-        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
-      <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
-      {bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
+      {isOverview ? (
+        <MunicipalSystems id={id} now={now} />
+      ) : (
+        <>
+          <OpsHeader index={1} title={`Transport · ${label}`} subtitle="Sovereign Transport Execution"
+            posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+          <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
+          {bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
+        </>
+      )}
       <ActorChainStrip ministryKey="TRANSPORT" idKey={id} now={now} accent={ACC} recordPrefix="MOV" />
       <MinistryChainSection ministryKey="TRANSPORT" id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'case'} title={`${label} runtime — execute the transport workflow`} by="Transport Officer" role={role} withheld={withheld} />
