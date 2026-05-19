@@ -45,7 +45,7 @@ export type SurfaceId =
   | 'knowledge-continuity' | 'expertise-transfer' | 'innovation-continuity' | 'cognitive-trajectory'
   | 'geopolitical-continuity' | 'migration-humanitarian' | 'global-shock-intelligence' | 'strategic-trajectory'
   | 'existential-continuity' | 'pandemic-biosurvival' | 'post-collapse-recovery' | 'existential-trajectory'
-  | 'civilization-organism' | 'sovereign-safeguards-ledger' | 'continuity-matrix' | 'citizen-public-brief' | 'interior-os-status';
+  | 'civilization-organism' | 'sovereign-safeguards-ledger' | 'continuity-matrix' | 'citizen-public-brief' | 'interior-os-status' | 'ministry-character';
 
 export interface InteriorDomain {
   key: string;
@@ -176,6 +176,7 @@ export const DOMAINS: InteriorDomain[] = [
   { key: 'sovereign-safeguards', label: 'Sovereign Safeguards Ledger', group: 'infra', accent: '#d8a23a', archetype: 'oversight', surface: 'sovereign-safeguards-ledger', federation: null, identity: 'Unified registry of every constitutional safeguard family' },
   { key: 'citizen-public-brief', label: 'Citizen Public Brief', group: 'infra', accent: '#54d08f', archetype: 'governance', surface: 'citizen-public-brief', federation: null, identity: 'Citizen-safe one-screen national status' },
   { key: 'interior-os-status', label: 'Interior OS Status', group: 'infra', accent: '#5fb0ff', archetype: 'command', surface: 'interior-os-status', federation: null, identity: 'Apex synthesis of pulse, trend, brief & registry counts' },
+  { key: 'ministry-character', label: 'Ministry Character Registry', group: 'infra', accent: '#8a7df0', archetype: 'governance', surface: 'ministry-character', federation: null, identity: 'Formal sovereign identity per Tier-1 ministry shell' },
 ];
 
 // Migration-safe compatibility: legacy generic-sector / blueprint nav keys
