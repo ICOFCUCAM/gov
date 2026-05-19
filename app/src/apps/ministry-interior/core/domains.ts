@@ -45,7 +45,7 @@ export type SurfaceId =
   | 'knowledge-continuity' | 'expertise-transfer' | 'innovation-continuity' | 'cognitive-trajectory'
   | 'geopolitical-continuity' | 'migration-humanitarian' | 'global-shock-intelligence' | 'strategic-trajectory'
   | 'existential-continuity' | 'pandemic-biosurvival' | 'post-collapse-recovery' | 'existential-trajectory'
-  | 'civilization-organism' | 'sovereign-safeguards-ledger' | 'continuity-matrix';
+  | 'civilization-organism' | 'sovereign-safeguards-ledger' | 'continuity-matrix' | 'citizen-public-brief';
 
 export interface InteriorDomain {
   key: string;
@@ -174,6 +174,7 @@ export const DOMAINS: InteriorDomain[] = [
   { key: 'audit', label: 'Audit & Compliance', group: 'infra', accent: '#d8a23a', archetype: 'registry', surface: 'audit', federation: null, identity: 'Tamper-evident audit & chain integrity' },
   { key: 'reports', label: 'Reports & Analytics', group: 'infra', accent: '#54d08f', archetype: 'analytics', surface: 'reports', federation: null, identity: 'Consolidated Interior reporting' },
   { key: 'sovereign-safeguards', label: 'Sovereign Safeguards Ledger', group: 'infra', accent: '#d8a23a', archetype: 'oversight', surface: 'sovereign-safeguards-ledger', federation: null, identity: 'Unified registry of every constitutional safeguard family' },
+  { key: 'citizen-public-brief', label: 'Citizen Public Brief', group: 'infra', accent: '#54d08f', archetype: 'governance', surface: 'citizen-public-brief', federation: null, identity: 'Citizen-safe one-screen national status' },
 ];
 
 // Migration-safe compatibility: legacy generic-sector / blueprint nav keys

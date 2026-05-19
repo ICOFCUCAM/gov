@@ -79,6 +79,7 @@ import { ExistentialTrajectory } from '@/apps/ministry-interior/domains/Existent
 import { CivilizationOrganism } from '@/apps/ministry-interior/domains/CivilizationOrganism';
 import { SovereignSafeguardsLedger } from '@/apps/ministry-interior/domains/SovereignSafeguardsLedger';
 import { ContinuityMatrix } from '@/apps/ministry-interior/domains/ContinuityMatrix';
+import { CitizenPublicBrief } from '@/apps/ministry-interior/domains/CitizenPublicBrief';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -170,6 +171,7 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'civilization-organism': return <CivilizationOrganism id={id} now={now} />;
     case 'sovereign-safeguards-ledger': return <SovereignSafeguardsLedger id={id} />;
     case 'continuity-matrix': return <ContinuityMatrix id={id} now={now} />;
+    case 'citizen-public-brief': return <CitizenPublicBrief id={id} now={now} />;
   }
 }
 
