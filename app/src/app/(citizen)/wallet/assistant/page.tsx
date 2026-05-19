@@ -20,7 +20,11 @@ function answer(q: string): string {
   if (s.includes('grant') || s.includes('benefit') || s.includes('child')) return 'Child grant eligibility is assessed automatically each cycle. You can see the next payment and contest any decision from its receipt.';
   if (s.includes('tax')) return 'Your tax draft is prepared for review — nothing is filed until you confirm. Open the draft from your wallet receipts.';
   if (s.includes('id') || s.includes('identity') || s.includes('address')) return 'Identity and address changes are handled under Identity. Selective disclosure lets you prove a fact without revealing the underlying record.';
-  return 'I can help you find civic information — schools, permits, grants, tax, identity. For a binding decision, use a case panel or talk to a human officer below.';
+  if (s.includes('appointment') || s.includes('doctor') || s.includes('health') || s.includes('vaccin')) return 'Health appointments and vaccinations are booked from your health portal; your care team is reachable there and replies arrive in your wallet inbox.';
+  if (s.includes('document') || s.includes('verify') || s.includes('certificate')) return 'To verify a document, open Verify a document and scan or enter its code — the state confirms authenticity without storing a copy.';
+  if (s.includes('complaint') || s.includes('contest') || s.includes('appeal') || s.includes('wrong')) return 'You can contest any decision from its receipt — your payment continues during review and contesting is never penalised. "Talk to a human officer" below logs a tracked request.';
+  if (s.includes('pay') || s.includes('bill') || s.includes('fee')) return 'Bills and fees are paid under Payments; every payment produces a signed, permanent receipt you can later verify or contest.';
+  return 'I can help you find civic information — schools, permits, grants, tax, identity, health, documents, payments. For a binding decision, use a case panel or talk to a human officer below.';
 }
 
 export default function AssistantPage() {
