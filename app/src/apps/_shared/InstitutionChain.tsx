@@ -94,7 +94,8 @@ export function DispatchChannel({
   const [draft, setDraft] = React.useState('');
   const [prio, setPrio] = React.useState<Dispatch['priority']>('routine');
   const full = React.useMemo(() => channel(scope, now), [scope, now, v]);
-  const list = full.slice(-7);
+  const [showAll, setShowAll] = React.useState(false);
+  const list = showAll ? full : full.slice(-7);
   const liveCount = full.reduce((n, m) => n + (m.seeded ? 0 : 1), 0);
   const submit = () => {
     const b = draft.trim();
@@ -113,6 +114,12 @@ export function DispatchChannel({
         </span>
       </div>
       <div className="max-h-[168px] space-y-1 overflow-y-auto px-3 py-2">
+        {full.length > 7 ? (
+          <button type="button" onClick={() => setShowAll(s => !s)}
+            className="focus-ring w-full text-center text-[8px] uppercase tracking-wider text-ink-muted hover:text-ink-soft">
+            {showAll ? 'show recent only' : `show full thread (${full.length})`}
+          </button>
+        ) : null}
         {list.map(m => (
           <div key={m.id} className="text-[10px]">
             <span className="font-mono text-[8px] text-ink-muted">{new Date(m.at).toLocaleTimeString('en-GB', { hour12: false })}</span>{' '}
@@ -161,7 +168,8 @@ export function EncounterThread({
   const [draft, setDraft] = React.useState('');
   const [kind, setKind] = React.useState<EncounterKind>(selfAuthor === 'OFFICIAL' ? 'instruction' : 'question');
   const full = React.useMemo(() => encThread(scope, officialName, publicName, now), [scope, officialName, publicName, now, v]);
-  const list = full.slice(-7);
+  const [showAll, setShowAll] = React.useState(false);
+  const list = showAll ? full : full.slice(-7);
   const liveCount = full.reduce((n, m) => n + (m.seeded ? 0 : 1), 0);
   const submit = () => {
     const b = draft.trim();
@@ -181,6 +189,12 @@ export function EncounterThread({
         </span>
       </div>
       <div className="max-h-[168px] space-y-1.5 overflow-y-auto px-3 py-2">
+        {full.length > 7 ? (
+          <button type="button" onClick={() => setShowAll(s => !s)}
+            className="focus-ring w-full text-center text-[8px] uppercase tracking-wider text-ink-muted hover:text-ink-soft">
+            {showAll ? 'show recent only' : `show full thread (${full.length})`}
+          </button>
+        ) : null}
         {list.map(m => {
           const mine = m.author === selfAuthor;
           return (
