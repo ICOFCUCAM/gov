@@ -7,6 +7,7 @@
 import * as React from 'react';
 import { civilizationOrganism } from '@/lib/gov/civilization-organism';
 import { organismTrend } from '@/lib/gov/organism-trend';
+import { reinforcementDoctrineFor } from '@/lib/gov/reinforcement-doctrine';
 
 const TONE: Record<'ok' | 'warn' | 'alert', string> = {
   ok: 'rgb(var(--c-ok))', warn: 'rgb(var(--c-warn))', alert: 'rgb(var(--c-alert))',
@@ -63,6 +64,10 @@ export function CivilizationOrganism({ id, now }: { id: string; now: number }) {
             </span>
           </div>
         ))}
+      </div>
+      <div className="border border-line bg-black/10 px-2 py-1.5 text-[10px] italic text-ink-soft">
+        <span className="text-[8px] not-italic uppercase tracking-[0.16em] text-ink-muted mr-2">▌ Constitutional doctrine</span>
+        {reinforcementDoctrineFor(o.organismMode)}
       </div>
       <p className="text-[9px] text-ink-muted">
         The Interior OS is a federation of {o.layers.length} continuity engines protected by {o.safeguardSetCount}
