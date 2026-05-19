@@ -57,11 +57,11 @@ function hydrate() {
 }
 
 const SEED_TURNS: { author: EncounterAuthor; kind: EncounterKind; body: string }[] = [
-  { author: 'PUBLIC', kind: 'question', body: 'Following up — are the latest results back, and is the current plan unchanged?' },
-  { author: 'OFFICIAL', kind: 'result', body: 'Results received and filed at the facility; values within expected range.' },
-  { author: 'OFFICIAL', kind: 'instruction', body: 'Continue the current regimen; book a review in two weeks through the desk.' },
-  { author: 'PUBLIC', kind: 'note', body: 'Understood — symptoms easing, will keep to the schedule and report any change.' },
-  { author: 'OFFICIAL', kind: 'note', body: 'Encounter committed to the facility record and rolled to the ministry registry.' },
+  { author: 'PUBLIC', kind: 'question', body: 'Following up on my case — is the assessment back, and is anything still required from me?' },
+  { author: 'OFFICIAL', kind: 'result', body: 'Your submission has been received and filed at the facility; it is within the expected criteria.' },
+  { author: 'OFFICIAL', kind: 'instruction', body: 'No further action needed from you now; a review is scheduled and you can follow up through this desk.' },
+  { author: 'PUBLIC', kind: 'note', body: 'Understood — thank you, I will keep to the schedule and report any change.' },
+  { author: 'OFFICIAL', kind: 'note', body: 'Encounter committed to the facility record and rolled up to the ministry registry.' },
 ];
 
 /** Deterministic prior exchange so an encounter thread is never empty. */
