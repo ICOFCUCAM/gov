@@ -63,7 +63,7 @@ export const BRANCH_APPS: AppManifest[] = [
 
 export const AGENCY_APPS: AppManifest[] = [
   { id: 'police-command', label: 'Police Command', domain: 'police', kind: 'agency', archetypeOrBranch: 'INTERIOR',
-    nav: [{ key: 'incident', label: 'Incident command' }, { key: 'dispatch', label: 'Dispatch' }, { key: 'patrol', label: 'Patrol coordination' }, { key: 'investigations', label: 'Investigations' }, { key: 'evidence', label: 'Evidence' }, { key: 'intelligence', label: 'Intelligence' }] },
+    nav: [{ key: 'incident', label: 'Incident command' }, { key: 'dispatch', label: 'Dispatch' }, { key: 'patrol', label: 'Patrol coordination' }, { key: 'investigations', label: 'Investigations' }, { key: 'evidence', label: 'Evidence' }, { key: 'intelligence', label: 'Intelligence' }, { key: 'cyber', label: 'Cybercrime' }] },
   { id: 'emergency-response', label: 'Emergency Response', domain: 'emergency', kind: 'agency', archetypeOrBranch: 'INTERIOR',
     nav: [{ key: 'command', label: 'Crisis command' }, { key: 'dispatch', label: 'Dispatch' }, { key: 'resources', label: 'Resource coordination' }, { key: 'recovery', label: 'Recovery workflows' }] },
   { id: 'immigration', label: 'Immigration', domain: 'immigration', kind: 'agency', archetypeOrBranch: 'INTERIOR',
