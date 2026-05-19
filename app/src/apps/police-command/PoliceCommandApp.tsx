@@ -8,7 +8,9 @@ import { FieldPanel } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { policeOps } from '@/lib/gov/agency-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
-import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
+import { MinistryChainSection, InstitutionChainStrip } from '@/apps/_shared/InstitutionChain';
+import { facilities, actors, recordLineage, chainIntegrity } from '@/lib/gov/institution-chain';
+import { pickIndex } from '@/lib/pick-index';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -29,6 +31,12 @@ export function PoliceCommandApp({ appId, domain, now, role, withheld }: {
 }) {
   const ts = now / 4000;
   const o = policeOps(appId, ts);
+  const pcEpoch = Math.max(0, Math.floor(ts));
+  const pcStations = facilities('INTERIOR', pcEpoch);
+  const pcStation = pcStations[pickIndex(appId, pcStations.length, 7)] ?? pcStations[0]!;
+  const pcOfficer = actors('INTERIOR', pcStation.id, pcEpoch)[0]?.name ?? 'Watch commander';
+  const pcLineage = recordLineage(`CASE-${appId}`, pcOfficer, pcStation, 'INTERIOR', pcEpoch);
+  const pcInteg = chainIntegrity('INTERIOR', pcEpoch);
   const d = WF[domain] ? domain : 'incident';
   const label = LABEL[d] ?? 'Incident Command';
   const respT: Tone = o.meanResponseMin >= 18 ? 'alert' : o.meanResponseMin >= 12 ? 'warn' : 'ok';
@@ -74,6 +82,8 @@ export function PoliceCommandApp({ appId, domain, now, role, withheld }: {
           <RuntimeQueue scope={`${appId}:field`} kind="field" title="Field deployment runtime — stage → task → en-route → on-scene → cleared" by="Field Coordinator" role={role} withheld={withheld} />
         </>
       ) : null}
+      <InstitutionChainStrip accent={ACC} ministryKey="INTERIOR" facility={pcStation}
+        actorName={pcOfficer} lineage={pcLineage} integrity={pcInteg} />
       <RuntimeQueue scope={`${appId}:${d}`} kind={WF[d] ?? 'incident'} title={`${label} runtime — execute the policing workflow`} by="Watch Commander" role={role} withheld={withheld} />
     </div>
   );
