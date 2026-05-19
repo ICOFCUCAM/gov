@@ -49,6 +49,15 @@ describe('records-store', () => {
     expect(records('LABOR', 'LAB-1', 'employment record', 5_000_000).find(x => x.id === r.id)!.returns).toBe(1);
   });
 
+  it('nationalRecords does not mutate the stored register order', () => {
+    fileRecord('JUSTICE', 'CRT-9', 'first', 'Registrar', 'docket', 6_000_000);
+    fileRecord('JUSTICE', 'CRT-9', 'second', 'Registrar', 'docket', 6_100_000);
+    const before = records('JUSTICE', 'CRT-9', 'docket', 6_100_000).map(r => r.id);
+    nationalRecords(999); // sorts a local copy, must not reorder the store
+    const after = records('JUSTICE', 'CRT-9', 'docket', 6_100_000).map(r => r.id);
+    expect(after).toEqual(before);
+  });
+
   it('nationalRecords only surfaces rolled or synced records, newest last', () => {
     fileRecord('ENERGY', 'GRD-3', 'Grid sync', 'Engineer', 'grid log', 4_000_000);
     const list = records('ENERGY', 'GRD-3', 'grid log', 4_000_000);
