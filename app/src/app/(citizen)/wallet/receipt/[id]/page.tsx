@@ -2,9 +2,8 @@ import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
 import { ReceiptHeader } from '@/components/ui/Receipt';
 import { CopilotPanel } from '@/components/ui/CopilotPanel';
-import { Plain } from '@/components/ui/Plain';
-import { Button } from '@/components/ui/Button';
 import { ContestDialog } from '@/components/features/ContestDialog';
+import { SupportActions } from './SupportActions';
 import type { Receipt } from '@/lib/types';
 
 // Mock receipt lookup. Production: server fetch with sovereign-controlled auth.
@@ -100,26 +99,14 @@ export default function ReceiptPage({ params }: PageProps) {
 
         <section>
           <h3 className="font-semibold text-lg">If something's wrong</h3>
-          <div className="flex flex-wrap gap-3 mb-2">
+          <div className="mb-2 flex flex-wrap gap-3">
             <ContestDialog receiptId={receipt.id} />
-            <Button variant="secondary">Talk to an agent</Button>
-            <Button variant="secondary">Submit a complaint</Button>
           </div>
-          <p className="text-sm text-ink-muted">
+          <p className="mb-3 text-sm text-ink-muted">
             If you contest, your payment continues while we review. You will not
             be punished for contesting.
           </p>
-        </section>
-
-        <section>
-          <h3 className="font-semibold text-lg">Proof</h3>
-          <Plain>
-            This receipt is signed and permanent. Hash:{' '}
-            <code className="font-mono text-sm">{receipt.hash}</code>.{' '}
-            <Link href="#" className="text-link underline underline-offset-2">
-              Verify signature
-            </Link>.
-          </Plain>
+          <SupportActions receiptId={receipt.id} hash={receipt.hash} />
         </section>
       </PhoneShell>
     </main>
