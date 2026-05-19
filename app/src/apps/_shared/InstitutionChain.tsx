@@ -1,9 +1,17 @@
 'use client';
 
-// Shared bureaucratic-chain UI: the actor→facility→ministry→national
-// lineage and a live inter-tier dispatch channel. Used by every ministry
-// surface so public actors visibly serve the state THROUGH institutions,
-// not as standalone dashboards.
+// Shared bureaucratic-chain UI. The actor→facility→ministry→national spine
+// rendered everywhere so public actors visibly serve the state THROUGH
+// institutions, not as standalone dashboards. Exports:
+//  - InstitutionChainStrip / ActorChainStrip / actorChain — the per-actor
+//    lineage strip and its derivation helper
+//  - DispatchChannel — live inter-tier dispatch (vertical + lateral)
+//  - EncounterThread — two-way citizen↔official service encounters
+//  - MinistryChainSection — facility network + vitals + enrolment desk +
+//    records desk + cross-ministry referrals + the channels (collapsible)
+//  - National{DispatchDigest,RecordsLedger,EncounterDigest,ReferralBoard,
+//    BureaucracyPulse} — the apex read-side roll-ups
+//  - clockLabel — same-day/cross-day timestamp formatting
 
 import * as React from 'react';
 import {
