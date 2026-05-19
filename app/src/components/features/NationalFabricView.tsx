@@ -17,6 +17,7 @@ export function NationalFabricView() {
   const [now, setNow] = React.useState(() => Date.now());
   const [mins, setMins] = React.useState<Ministry[]>([]);
   const [ack, setAck] = React.useState<Record<string, boolean>>({});
+  const [sel, setSel] = React.useState<string | null>(null);
   React.useEffect(() => {
     api.org.ministries().then(r => setMins(r.ministries)).catch(() => {});
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -40,6 +41,12 @@ export function NationalFabricView() {
   for (const e of f.edges) {
     degree.set(e.fromId, (degree.get(e.fromId) ?? 0) + 1);
     degree.set(e.toId, (degree.get(e.toId) ?? 0) + 1);
+  }
+  const selNode = sel ? f.nodes.find(n => n.id === sel) ?? null : null;
+  const selNeighbors = new Set<string>();
+  if (sel) for (const e of f.edges) {
+    if (e.fromId === sel) selNeighbors.add(e.toId);
+    if (e.toId === sel) selNeighbors.add(e.fromId);
   }
   const erosion = [...cascade]
     .map(c => ({ ...c, dependents: degree.get(c.id) ?? 0, weight: c.totalStress * (1 + (degree.get(c.id) ?? 0) * 0.2) }))
@@ -120,11 +127,15 @@ export function NationalFabricView() {
                 const id = identityFor(n.archetype);
                 const cn = cascadeById.get(n.id);
                 const ring = cn ? TONE[POS_TONE[cn.posture]!] : 'rgba(255,255,255,0.15)';
+                const dim = sel !== null && sel !== n.id && !selNeighbors.has(n.id);
+                const isSel = sel === n.id;
                 return (
-                  <span key={n.id} className="absolute -translate-x-1/2 -translate-y-1/2 text-center" style={{ left: `${p.x}%`, top: `${p.y}%` }}>
-                    <span className="grid h-7 w-7 place-items-center rounded-full text-[11px] text-white"
-                      style={{ backgroundColor: n.external ? 'rgb(var(--c-surface-2))' : id.accent, color: n.external ? TONE.warn : '#fff', boxShadow: `0 0 0 2px ${ring}` }}
-                      title={`${n.name}${n.external ? ' · external capability' : cn ? ` · ${cn.posture} (stress ${cn.totalStress})` : ''}`}>{id.glyph}</span>
+                  <span key={n.id} className="absolute -translate-x-1/2 -translate-y-1/2 text-center" style={{ left: `${p.x}%`, top: `${p.y}%`, opacity: dim ? 0.28 : 1, transition: 'opacity .15s' }}>
+                    <button type="button" onClick={() => setSel(s => (s === n.id ? null : n.id))}
+                      aria-label={`Inspect ${n.name}`} aria-pressed={isSel}
+                      className="focus-ring grid h-7 w-7 place-items-center rounded-full text-[11px] text-white"
+                      style={{ backgroundColor: n.external ? 'rgb(var(--c-surface-2))' : id.accent, color: n.external ? TONE.warn : '#fff', boxShadow: `0 0 0 ${isSel ? 3 : 2}px ${isSel ? TONE.ok : ring}` }}
+                      title={`${n.name}${n.external ? ' · external capability' : cn ? ` · ${cn.posture} (stress ${cn.totalStress})` : ''}`}>{id.glyph}</button>
                     <span className="mt-0.5 block max-w-[80px] truncate text-[8px] text-ink-muted">{n.name.replace(/ Ministry| \(capability\)/, '')}</span>
                   </span>
                 );
@@ -136,7 +147,18 @@ export function NationalFabricView() {
             <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: TONE.warn }} />strained</span>
             <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: TONE.alert }} />degraded</span>
             <span className="border-l border-line pl-2">ring colour = institution · grey = external capability</span>
+            <span className="border-l border-line pl-2">click a node to inspect its dependencies</span>
           </div>
+          {selNode ? (
+            <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 rounded-[3px] border border-line-soft bg-surface-2/40 px-3 py-1.5 text-[10px]">
+              <span className="font-semibold text-ink">{selNode.name}</span>
+              <span className="text-ink-muted">{selNode.external ? 'external capability' : selNode.archetype}</span>
+              <span className="text-ink-soft">{degree.get(selNode.id) ?? 0} links</span>
+              <span className="text-ink-soft">{selNeighbors.size} direct dependencies</span>
+              {cascadeById.get(selNode.id) ? <span style={{ color: TONE[POS_TONE[cascadeById.get(selNode.id)!.posture]!] }}>{cascadeById.get(selNode.id)!.posture} · stress {cascadeById.get(selNode.id)!.totalStress}</span> : null}
+              <button type="button" onClick={() => setSel(null)} className="focus-ring ml-auto rounded-[2px] border border-line px-1.5 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted">clear</button>
+            </div>
+          ) : null}
         </Panel>
 
         <Panel title="Systemic-risk institutions" meta="most depended-upon" bodyClass="!p-1.5">
