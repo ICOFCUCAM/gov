@@ -6,7 +6,7 @@
 // key compatibility. Pure data — no React, no engine — so the navigation
 // framework, shell and manifest all derive from one normalized model.
 
-export type DomainGroupKey = 'command' | 'civil' | 'federated' | 'infra';
+export type DomainGroupKey = 'command' | 'runtime' | 'civil' | 'federated' | 'infra';
 
 export interface DomainGroup {
   key: DomainGroupKey;
@@ -17,7 +17,7 @@ export interface DomainGroup {
 // Layout archetypes give each domain a distinct visual hierarchy and
 // information architecture instead of "same dashboard, different label".
 export type LayoutArchetype =
-  | 'command' | 'registry' | 'analytics' | 'governance' | 'ops' | 'workflow' | 'fabric';
+  | 'command' | 'registry' | 'analytics' | 'governance' | 'ops' | 'workflow' | 'fabric' | 'runtime';
 
 // A federated domain's source of truth lives in another sovereign shell.
 // Interior orchestrates and monitors it — it never owns or replaces it.
@@ -31,7 +31,8 @@ export type SurfaceId =
   | 'national-overview' | 'interior-command' | 'civil-registry' | 'population'
   | 'permits' | 'regional' | 'municipal' | 'councils' | 'corrections' | 'workflows'
   | 'police' | 'immigration' | 'emergency' | 'intelligence' | 'cyber' | 'investigations'
-  | 'event-bus' | 'fabric' | 'audit' | 'reports';
+  | 'event-bus' | 'fabric' | 'audit' | 'reports'
+  | 'national-control-board' | 'transaction-observability' | 'anti-corruption';
 
 export interface InteriorDomain {
   key: string;
@@ -48,6 +49,7 @@ export interface InteriorDomain {
 
 export const GROUPS: DomainGroup[] = [
   { key: 'command', label: 'National Command', purpose: 'Sovereign internal-governance apex' },
+  { key: 'runtime', label: 'Sovereign Runtime', purpose: 'National observability, deadline enforcement & anti-corruption' },
   { key: 'civil', label: 'Civil Governance', purpose: 'Civil administration & territorial governance' },
   { key: 'federated', label: 'Federated Operations', purpose: 'Embedded sovereign operational shells' },
   { key: 'infra', label: 'Sovereign Infrastructure', purpose: 'Cross-shell fabric, audit & analytics' },
@@ -59,6 +61,10 @@ export const DOMAINS: InteriorDomain[] = [
   // ── National Command ──────────────────────────────────────────────
   { key: 'national-overview', label: 'National Overview', group: 'command', accent: '#5fb0ff', archetype: 'command', surface: 'national-overview', federation: null, identity: 'National internal-governance situational picture' },
   { key: 'security-command', label: 'Security Command', group: 'command', accent: '#5fb0ff', archetype: 'command', surface: 'interior-command', federation: null, identity: 'Internal-security coordination authority' },
+  // ── Sovereign Runtime ─────────────────────────────────────────────
+  { key: 'national-control-board', label: 'National Control Board', group: 'runtime', accent: '#e0673a', archetype: 'command', surface: 'national-control-board', federation: null, identity: 'National process observability & execution governance' },
+  { key: 'transaction-observability', label: 'Transaction Observability', group: 'runtime', accent: '#45c0c8', archetype: 'runtime', surface: 'transaction-observability', federation: null, identity: 'Nationally observable citizen-transaction runtime' },
+  { key: 'anti-corruption', label: 'Anti-Corruption Runtime', group: 'runtime', accent: '#d8a23a', archetype: 'runtime', surface: 'anti-corruption', federation: null, identity: 'Deliberate-delay & bribery-risk enforcement layer' },
   // ── Civil Governance ──────────────────────────────────────────────
   { key: 'civil-registry', label: 'Civil Registry & ID', group: 'civil', accent: '#54d08f', archetype: 'registry', surface: 'civil-registry', federation: null, identity: 'Sovereign civil-identity backbone' },
   { key: 'population', label: 'Population Analytics', group: 'civil', accent: '#54d08f', archetype: 'analytics', surface: 'population', federation: null, identity: 'National statistics & demographic intelligence' },

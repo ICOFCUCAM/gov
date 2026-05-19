@@ -25,6 +25,9 @@ import { PermitsLicensing } from '@/apps/ministry-interior/domains/PermitsLicens
 import { RegionalAdministration } from '@/apps/ministry-interior/domains/RegionalAdministration';
 import { AuditCompliance } from '@/apps/ministry-interior/domains/AuditCompliance';
 import { InteriorReports } from '@/apps/ministry-interior/domains/InteriorReports';
+import { NationalControlBoard } from '@/apps/ministry-interior/domains/NationalControlBoard';
+import { TransactionObservability } from '@/apps/ministry-interior/domains/TransactionObservability';
+import { AntiCorruptionRuntime } from '@/apps/ministry-interior/domains/AntiCorruptionRuntime';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -62,6 +65,9 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'fabric': return <InteroperabilityFabric />;
     case 'audit': return <AuditCompliance id={id} now={now} />;
     case 'reports': return <InteriorReports id={id} now={now} />;
+    case 'national-control-board': return <NationalControlBoard id={id} now={now} />;
+    case 'transaction-observability': return <TransactionObservability id={id} now={now} />;
+    case 'anti-corruption': return <AntiCorruptionRuntime id={id} now={now} />;
   }
 }
 
