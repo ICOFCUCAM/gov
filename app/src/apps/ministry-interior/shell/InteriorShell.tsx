@@ -81,6 +81,7 @@ import { CivilizationOrganism } from '@/apps/ministry-interior/domains/Civilizat
 import { SovereignSafeguardsLedger } from '@/apps/ministry-interior/domains/SovereignSafeguardsLedger';
 import { ContinuityMatrix } from '@/apps/ministry-interior/domains/ContinuityMatrix';
 import { CitizenPublicBrief } from '@/apps/ministry-interior/domains/CitizenPublicBrief';
+import { InteriorOSStatus } from '@/apps/ministry-interior/domains/InteriorOSStatus';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -173,6 +174,7 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'sovereign-safeguards-ledger': return <SovereignSafeguardsLedger id={id} />;
     case 'continuity-matrix': return <ContinuityMatrix id={id} now={now} />;
     case 'citizen-public-brief': return <CitizenPublicBrief id={id} now={now} />;
+    case 'interior-os-status': return <InteriorOSStatus id={id} now={now} />;
   }
 }
 
