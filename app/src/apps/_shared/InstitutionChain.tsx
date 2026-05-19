@@ -486,6 +486,7 @@ export function MinistryChainSection({
                 <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${stC(e.status)}))` }}>{e.status}</span>
                 {e.status !== 'active' ? (
                   <button type="button" onClick={() => advanceEnrollment(ministryKey, myFac.id, e.id, now)}
+                    aria-label={`${e.status === 'pending' ? 'Verify' : 'Activate'} enrolment for ${e.name}`}
                     className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
                     {e.status === 'pending' ? 'verify' : 'activate'}
                   </button>
@@ -525,12 +526,14 @@ export function MinistryChainSection({
                   <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${rt}))` }}>{r.stage}</span>
                   {r.stage !== 'synced' && at > 0 ? (
                     <button type="button" onClick={() => returnRecord(ministryKey, myFac.id, r.id, now)} title="Return for correction"
+                      aria-label={`Return ${r.ref} for correction`}
                       className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
                       ↩
                     </button>
                   ) : null}
                   {r.stage !== 'synced' ? (
                     <button type="button" onClick={() => advanceRecord(ministryKey, myFac.id, r.id, now)}
+                      aria-label={`Advance ${r.ref} to ${STAGE_ORDER[at + 1]}`}
                       className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
                       → {STAGE_ORDER[at + 1]}
                     </button>
@@ -570,6 +573,7 @@ export function MinistryChainSection({
                   <span className="shrink-0 text-[7.5px] uppercase tracking-wider" style={{ color: `rgb(var(--c-${refStC(r.status)}))` }}>{r.status}</span>
                   {r.status !== 'closed' ? (
                     <button type="button" onClick={() => advanceReferral(ministryKey, r.id, now)}
+                      aria-label={`Advance referral to ${REFERRAL_FLOW[fi + 1]}`}
                       className="focus-ring shrink-0 rounded-[2px] border px-1 text-[7.5px] uppercase tracking-wider text-ink-muted" style={{ borderColor: 'rgb(var(--c-line))' }}>
                       → {REFERRAL_FLOW[fi + 1]}
                     </button>
