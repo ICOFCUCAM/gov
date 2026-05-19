@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { emergencyCommandView } from '@/lib/gov/health-operations';
 import { healthGeo } from '@/lib/gov/health-geo';
 import { GeoMap } from '@/apps/_shared/GeoMap';
@@ -169,6 +170,10 @@ export function EmergencySystem({ id, now, role, withheld }: {
           </div>
         </CommandPanel>
       </div>
+
+      <DispatchChannel scope={`health:emsline:${id}`} now={now} accent={ACC}
+        selfTier="FACILITY" selfName="EMS control" toTier="MINISTRY"
+        title="Emergency control ↔ health command — surge & diversion" />
 
       <RuntimeQueue
         scope={`${id}:emergency`}

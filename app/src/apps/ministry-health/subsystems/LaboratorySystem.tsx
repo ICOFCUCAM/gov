@@ -8,6 +8,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { laboratoryNetwork, laboratoryExecution } from '@/lib/gov/health-operations';
 import { CommandHeader, CommandPanel, KpiSpark, Sparkline, sc, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import { aiAdvisory } from '@/shared/ai/advisory';
@@ -166,6 +167,10 @@ export function LaboratorySystem({ id, now, role, withheld }: {
           </div>
         </CommandPanel>
       </div>
+
+      <DispatchChannel scope={`health:labline:${id}`} now={now} accent={ACC}
+        selfTier="FACILITY" selfName="Laboratory desk" toTier="ACTOR"
+        title="Laboratory ↔ requesting clinicians — results & queries" />
 
       <RuntimeQueue
         scope={`${id}:lab`}

@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
+import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { pharmaSupplyCommand } from '@/lib/gov/health-operations';
 import { healthGeo } from '@/lib/gov/health-geo';
 import { GeoMap } from '@/apps/_shared/GeoMap';
@@ -171,6 +172,10 @@ export function PharmaceuticalSystem({ id, now, role, withheld }: {
           </div>
         </CommandPanel>
       </div>
+
+      <DispatchChannel scope={`health:rxline:${id}`} now={now} accent={ACC}
+        selfTier="FACILITY" selfName="Pharmacy desk" toTier="FACILITY"
+        title="Pharmacy ↔ wards — dispensing & stock-out coordination" />
 
       <RuntimeQueue
         scope={`${id}:pharma`}
