@@ -8,6 +8,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { legislativeState } from '@/lib/gov/legislative-engine';
 import { parliamentarySchedule, budgetApprovalPipeline, oversightHearings } from '@/lib/gov/legislative-operations';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
+import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -35,6 +36,7 @@ export function LegislatureApp({ domain, now, role, withheld }: {
   const ls = legislativeState(ts);
   const d = WF[domain] ? domain : 'bills';
   const label = LABEL[d] ?? 'Bill Pipeline';
+  const isCouncils = d === 'live';
 
   let kpis: K[] = [];
   const bars: { title: string; meta: string; rows: { label: string; pct: number; tone: Tone; tail: string }[] }[] = [];
@@ -87,10 +89,16 @@ export function LegislatureApp({ domain, now, role, withheld }: {
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#0c0a05', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      <OpsHeader index={1} title={`Legislature · ${label}`} subtitle="Sovereign Legislative Execution"
-        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
-      <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
-      {bars.map((b, i) => <BarPanel key={i} title={b.title} meta={b.meta} accent={ACC} live={i === 0} rows={b.rows} />)}
+      {isCouncils ? (
+        <LocalCouncils id={`leg:${d}`} now={now} />
+      ) : (
+        <>
+          <OpsHeader index={1} title={`Legislature · ${label}`} subtitle="Sovereign Legislative Execution"
+            posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+          <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
+          {bars.map((b, i) => <BarPanel key={i} title={b.title} meta={b.meta} accent={ACC} live={i === 0} rows={b.rows} />)}
+        </>
+      )}
       <ActorChainStrip ministryKey="LEGISLATURE" idKey={`leg:${d}`} now={now} accent={ACC} recordPrefix="BILL" />
       <MinistryChainSection ministryKey="LEGISLATURE" id={`leg:${d}`} now={now} accent={ACC} />
       <RuntimeQueue scope={`leg:${d}`} kind={WF[d] ?? 'bill'} title={`${label} runtime — execute the legislative workflow`} by="Clerk" role={role} withheld={withheld} />
