@@ -41,6 +41,9 @@ import { FoodContinuityCommand } from '@/apps/ministry-agriculture/FoodContinuit
 import { HarvestProductionField } from '@/apps/ministry-agriculture/HarvestProductionField';
 import { WaterClimateInfrastructure } from '@/apps/ministry-agriculture/WaterClimateInfrastructure';
 import { FoodContinuityResponse } from '@/apps/ministry-agriculture/FoodContinuityResponse';
+import { RuralGovernanceCommunityStability } from '@/apps/ministry-agriculture/RuralGovernanceCommunityStability';
+import { AgriculturalIntelligenceForecasting } from '@/apps/ministry-agriculture/AgriculturalIntelligenceForecasting';
+import { PublicAgriculturePortal } from '@/apps/ministry-agriculture/PublicAgriculturePortal';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { ArchetypeKey } from '@/lib/api/types';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -63,6 +66,7 @@ const WF: Record<string, WorkKind> = {
   'environment-portal': 'approval',
   'workforce-command': 'incident', 'social-protection': 'approval',
   'demographic-analytics': 'case', 'social-continuity': 'incident',
+  'rural-governance': 'case', 'agri-intelligence': 'incident', 'agri-portal': 'approval',
 };
 type FocusItem = { l: string; v: string; t?: Tone };
 function focusFor(a: ArchetypeKey, d: string, id: string, ts: number): FocusItem[] | null {
@@ -199,6 +203,9 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   const agriProd = archetype === 'AGRICULTURE' && domain === 'harvest-production';
   const agriWater = archetype === 'AGRICULTURE' && domain === 'water-climate';
   const agriResp = archetype === 'AGRICULTURE' && domain === 'food-response';
+  const agriRural = archetype === 'AGRICULTURE' && domain === 'rural-governance';
+  const agriIntel = archetype === 'AGRICULTURE' && domain === 'agri-intelligence';
+  const agriPortal = archetype === 'AGRICULTURE' && domain === 'agri-portal';
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
@@ -256,6 +263,12 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <WaterClimateInfrastructure id={id} now={now} />
       ) : agriResp ? (
         <FoodContinuityResponse id={id} now={now} />
+      ) : agriRural ? (
+        <RuralGovernanceCommunityStability id={id} now={now} />
+      ) : agriIntel ? (
+        <AgriculturalIntelligenceForecasting id={id} now={now} />
+      ) : agriPortal ? (
+        <PublicAgriculturePortal id={id} now={now} />
       ) : (
         <>
           <OpsHeader index={1} title={`${label}${focus ? ` · ${domain}` : ''}`} subtitle="Sovereign Institutional Execution"

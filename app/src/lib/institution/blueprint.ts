@@ -248,6 +248,23 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Rural stability', 'analytics'),
       S('Cross-ministry cascade', 'audit'),
     ]),
+    G('rural-governance', 'Rural Governance & Community Stability', 'Cooperatives · subsidies · workforce · land registration', [
+      S('Regional cooperative networks', 'network'),
+      S('Subsidy programmes', 'finance'),
+      S('Agricultural workforce', 'analytics'),
+      S('Land registration cadastre', 'registry'),
+    ]),
+    G('agri-intelligence', 'Agricultural Intelligence & Forecasting', '25-year yield, trade exposure & sustainability horizon', [
+      S('25-year yield production bands', 'analytics'),
+      S('Trade exposure ledger', 'audit'),
+      S('Sustainability layered horizon', 'analytics'),
+    ]),
+    G('agri-portal', 'Public Agriculture Portal', 'Permits · subsidies · advisories · pest alerts · irrigation requests', [
+      S('Permit stalls', 'workflow'),
+      S('Subsidy applications queue', 'citizen'),
+      S('Climate & pest advisories', 'intelligence'),
+      S('Irrigation requests ledger', 'workflow'),
+    ]),
   ],
   ENERGY: [
     G('command', 'Energy Command', 'Grid & energy security', [
