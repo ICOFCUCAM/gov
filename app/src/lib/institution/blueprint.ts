@@ -377,6 +377,22 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Constitutional crisis chronology', 'workflow'),
       S('Cross-branch cascade', 'audit'),
     ]),
+    G('legal-records', 'National Legal Records Continuity', 'Sovereign archives · judicial memory · chain-of-custody', [
+      S('Sovereign archival vaults', 'registry'),
+      S('Chain-of-custody fascicles', 'audit'),
+      S('Digitisation & integrity ledger', 'analytics'),
+    ]),
+    G('forensic-evidence', 'Forensic & Evidence Coordination', 'National forensic laboratories · evidence corpus · inter-agency exchange', [
+      S('National forensic laboratories', 'network'),
+      S('Evidence corpus inventory', 'analytics'),
+      S('Inter-agency evidence exchange', 'workflow'),
+    ]),
+    G('justice-portal', 'Public Justice Portal', 'Filings · civil complaints · rights petitions · attorney registration', [
+      S('Legal filing counters', 'workflow'),
+      S('Civil complaints pipeline', 'citizen'),
+      S('Rights petitions docket', 'citizen'),
+      S('Attorney registration & discipline', 'regulatory'),
+    ]),
   ],
   ENVIRONMENT: [
     G('command', 'Environment Command', 'Climate & ecology authority', [

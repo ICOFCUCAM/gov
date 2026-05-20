@@ -19,6 +19,9 @@ import { ConstitutionalReviewChamber } from '@/apps/ministry-justice/Constitutio
 import { JudicialOperationsRoster } from '@/apps/ministry-justice/JudicialOperationsRoster';
 import { RightsAdministrativeReview } from '@/apps/ministry-justice/RightsAdministrativeReview';
 import { JusticeContinuityForesight } from '@/apps/ministry-justice/JusticeContinuityForesight';
+import { LegalRecordsContinuity } from '@/apps/ministry-justice/LegalRecordsContinuity';
+import { ForensicEvidenceCoordination } from '@/apps/ministry-justice/ForensicEvidenceCoordination';
+import { PublicJusticePortal } from '@/apps/ministry-justice/PublicJusticePortal';
 import { NationalIndustrialCommand } from '@/apps/ministry-trade/NationalIndustrialCommand';
 import { TradeCorridorsExports } from '@/apps/ministry-trade/TradeCorridorsExports';
 import { SupplyChainCommerce } from '@/apps/ministry-trade/SupplyChainCommerce';
@@ -51,6 +54,7 @@ const WF: Record<string, WorkKind> = {
   licensing: 'permit', registry: 'permit', export: 'procurement', monitoring: 'case',
   'constitutional-review': 'incident', 'judicial-operations': 'case',
   'rights-administrative': 'incident', 'justice-foresight': 'incident',
+  'legal-records': 'permit', 'forensic-evidence': 'case', 'justice-portal': 'approval',
   'industrial-command': 'incident', 'trade-corridors': 'procurement',
   'supply-chain': 'procurement', 'economic-foresight': 'incident',
   'planetary-resilience': 'incident', 'biosphere-restoration': 'case',
@@ -173,6 +177,9 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   const justiceJudOps = archetype === 'JUSTICE' && domain === 'judicial-operations';
   const justiceRights = archetype === 'JUSTICE' && domain === 'rights-administrative';
   const justiceForesight = archetype === 'JUSTICE' && domain === 'justice-foresight';
+  const justiceRecords = archetype === 'JUSTICE' && domain === 'legal-records';
+  const justiceForensic = archetype === 'JUSTICE' && domain === 'forensic-evidence';
+  const justicePortal = archetype === 'JUSTICE' && domain === 'justice-portal';
   const tradeIndCmd = archetype === 'TRADE' && domain === 'industrial-command';
   const tradeCorridors = archetype === 'TRADE' && domain === 'trade-corridors';
   const tradeSupply = archetype === 'TRADE' && domain === 'supply-chain';
@@ -205,6 +212,12 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <RightsAdministrativeReview id={id} now={now} />
       ) : justiceForesight ? (
         <JusticeContinuityForesight id={id} now={now} />
+      ) : justiceRecords ? (
+        <LegalRecordsContinuity id={id} now={now} />
+      ) : justiceForensic ? (
+        <ForensicEvidenceCoordination id={id} now={now} />
+      ) : justicePortal ? (
+        <PublicJusticePortal id={id} now={now} />
       ) : tradeIndCmd ? (
         <NationalIndustrialCommand id={id} now={now} />
       ) : tradeCorridors ? (
