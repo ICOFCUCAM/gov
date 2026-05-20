@@ -10,6 +10,9 @@ import { GeopoliticalCommandCenter } from '@/apps/foreign-affairs/GeopoliticalCo
 import { DiplomaticMissionsRegister } from '@/apps/foreign-affairs/DiplomaticMissionsRegister';
 import { TreatyAlliancesAtlas } from '@/apps/foreign-affairs/TreatyAlliancesAtlas';
 import { InternationalCrisisForesight } from '@/apps/foreign-affairs/InternationalCrisisForesight';
+import { GeopoliticalIntelligenceSystems } from '@/apps/foreign-affairs/GeopoliticalIntelligenceSystems';
+import { InternationalLawSovereignty } from '@/apps/foreign-affairs/InternationalLawSovereignty';
+import { CitizenForeignServicesPortal } from '@/apps/foreign-affairs/CitizenForeignServicesPortal';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
@@ -18,12 +21,18 @@ const WF: Record<string, WorkKind> = {
   'diplomatic-missions': 'case',
   'treaties-alliances': 'approval',
   'crisis-foresight': 'incident',
+  'intelligence-systems': 'incident',
+  'law-sovereignty': 'case',
+  'citizen-portal': 'approval',
 };
 const LABEL: Record<string, string> = {
   'geopolitical-command': 'Geopolitical Command Center',
   'diplomatic-missions': 'Diplomatic Missions & Consular Register',
   'treaties-alliances': 'Treaty & Alliances Atlas',
   'crisis-foresight': 'International Crisis & Strategic Foresight',
+  'intelligence-systems': 'Geopolitical Intelligence Systems',
+  'law-sovereignty': 'International Law & Sovereignty Protection',
+  'citizen-portal': 'Citizen Foreign Services Portal',
 };
 
 export function ForeignAffairsApp({ appId, domain, now, role, withheld = [] }: {
@@ -37,7 +46,11 @@ export function ForeignAffairsApp({ appId, domain, now, role, withheld = [] }: {
       {d === 'geopolitical-command' ? <GeopoliticalCommandCenter id={id} now={now} />
         : d === 'diplomatic-missions' ? <DiplomaticMissionsRegister id={id} now={now} />
           : d === 'treaties-alliances' ? <TreatyAlliancesAtlas id={id} now={now} />
-            : <InternationalCrisisForesight id={id} now={now} />}
+            : d === 'crisis-foresight' ? <InternationalCrisisForesight id={id} now={now} />
+              : d === 'intelligence-systems' ? <GeopoliticalIntelligenceSystems id={id} now={now} />
+                : d === 'law-sovereignty' ? <InternationalLawSovereignty id={id} now={now} />
+                  : d === 'citizen-portal' ? <CitizenForeignServicesPortal id={id} now={now} />
+                    : <GeopoliticalCommandCenter id={id} now={now} />}
       <div className="px-3 pb-3">
         <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'case'} title={`${label} runtime — diplomatic workflow`} by="Diplomatic Officer" role={role} withheld={withheld} />
       </div>
