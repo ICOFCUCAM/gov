@@ -20,6 +20,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '◎', l: 'National Situation Room', s: 'Real-time command & coordination', href: '/gov/situation-room', live: true },
     { i: '◆', l: 'National Shell', s: 'Whole-of-government environment', href: '/gov/shell' },
     { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade · live tempo', href: '/gov/coordination', live: true },
+    { i: '▤', l: 'Ministry Charter Registry', s: 'Institutional depth · maturity tier · gaps', href: '/gov/charter-registry', live: true },
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution operational state', href: '/ops' },
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity · assurance', href: '/audit' },
   ]},
