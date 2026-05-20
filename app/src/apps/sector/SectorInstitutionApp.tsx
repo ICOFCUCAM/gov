@@ -27,6 +27,9 @@ import { PlanetaryClimateResilience } from '@/apps/ministry-environment/Planetar
 import { BiosphereRestorationAtlas } from '@/apps/ministry-environment/BiosphereRestorationAtlas';
 import { AtmosphericHydrologicalSystems } from '@/apps/ministry-environment/AtmosphericHydrologicalSystems';
 import { EcologicalForesightCrisis } from '@/apps/ministry-environment/EcologicalForesightCrisis';
+import { NaturalResourceGovernance } from '@/apps/ministry-environment/NaturalResourceGovernance';
+import { EnergyEcologicalCoupling } from '@/apps/ministry-environment/EnergyEcologicalCoupling';
+import { PublicEnvironmentPortal } from '@/apps/ministry-environment/PublicEnvironmentPortal';
 import { NationalWorkforceCommand } from '@/apps/ministry-labour/NationalWorkforceCommand';
 import { SocialProtectionSystems } from '@/apps/ministry-labour/SocialProtectionSystems';
 import { DemographicLaborAnalytics } from '@/apps/ministry-labour/DemographicLaborAnalytics';
@@ -52,6 +55,8 @@ const WF: Record<string, WorkKind> = {
   'supply-chain': 'procurement', 'economic-foresight': 'incident',
   'planetary-resilience': 'incident', 'biosphere-restoration': 'case',
   'atmospheric-hydrology': 'incident', 'ecological-foresight': 'incident',
+  'resource-governance': 'permit', 'energy-ecological': 'incident',
+  'environment-portal': 'approval',
   'workforce-command': 'incident', 'social-protection': 'approval',
   'demographic-analytics': 'case', 'social-continuity': 'incident',
 };
@@ -176,6 +181,9 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   const envBiosphere = archetype === 'ENVIRONMENT' && domain === 'biosphere-restoration';
   const envAtmos = archetype === 'ENVIRONMENT' && domain === 'atmospheric-hydrology';
   const envForesight = archetype === 'ENVIRONMENT' && domain === 'ecological-foresight';
+  const envResource = archetype === 'ENVIRONMENT' && domain === 'resource-governance';
+  const envEnergyEco = archetype === 'ENVIRONMENT' && domain === 'energy-ecological';
+  const envPortal = archetype === 'ENVIRONMENT' && domain === 'environment-portal';
   const lbrWorkforce = archetype === 'LABOR' && domain === 'workforce-command';
   const lbrSocial = archetype === 'LABOR' && domain === 'social-protection';
   const lbrDemo = archetype === 'LABOR' && domain === 'demographic-analytics';
@@ -213,6 +221,12 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <AtmosphericHydrologicalSystems id={id} now={now} />
       ) : envForesight ? (
         <EcologicalForesightCrisis id={id} now={now} />
+      ) : envResource ? (
+        <NaturalResourceGovernance id={id} now={now} />
+      ) : envEnergyEco ? (
+        <EnergyEcologicalCoupling id={id} now={now} />
+      ) : envPortal ? (
+        <PublicEnvironmentPortal id={id} now={now} />
       ) : lbrWorkforce ? (
         <NationalWorkforceCommand id={id} now={now} />
       ) : lbrSocial ? (

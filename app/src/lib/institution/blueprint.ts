@@ -417,6 +417,23 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Pollution & compliance ledger', 'regulatory'),
       S('Ecological crisis chronology', 'workflow'),
     ]),
+    G('resource-governance', 'Natural Resource Governance', 'Water allocations · land protection · forestry · extraction permits', [
+      S('Water allocation ledger', 'analytics'),
+      S('Land protection register', 'registry'),
+      S('Forestry administration', 'workflow'),
+      S('Extraction permits register', 'regulatory'),
+    ]),
+    G('energy-ecological', 'Energy & Ecological Interdependency', 'Cross-system load ↔ recovery diagnostics', [
+      S('Coupling pressure matrix', 'analytics'),
+      S('Industrial pollution exposure', 'audit'),
+      S('Green transition progress', 'workflow'),
+    ]),
+    G('environment-portal', 'Public Environment Portal', 'Permits · citizen reports · advisories · participation', [
+      S('Environmental permit applications', 'workflow'),
+      S('Citizen incident reports queue', 'citizen'),
+      S('Public advisory feed', 'citizen'),
+      S('Conservation engagement', 'citizen'),
+    ]),
   ],
   INTERIOR: [
     G('command', 'Interior Command', 'Internal coordination authority', [
