@@ -16,7 +16,16 @@ import { FundingChains } from '@/apps/treasury/FundingChains';
 import { ReserveWorkflows } from '@/apps/treasury/ReserveWorkflows';
 import { BudgetPropagation } from '@/apps/treasury/BudgetPropagation';
 import { InterMinistryFiscal } from '@/apps/treasury/InterMinistryFiscal';
+import { TreasuryShell } from '@/apps/treasury/shell/TreasuryShell';
+import { TREASURY_DOMAINS, type SurfaceId as ShellSurfaceId } from '@/apps/treasury/core/domains';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
+
+// New Treasury reference-tier surfaces. When a domain key matches one
+// of these, dispatch through TreasuryShell instead of the legacy ops
+// rendering. The legacy domains (command / budget / revenue / etc.)
+// continue to render as before for backward compatibility.
+const LEGACY_DOMAINS = new Set(['command', 'budget', 'revenue', 'procurement', 'rails', 'citizen', 'audit', 'allocation', 'debt', 'forecast', 'funding-chains', 'reserve-workflows', 'budget-propagation', 'inter-ministry']);
+const TREASURY_SHELL_SURFACES: Set<string> = new Set(TREASURY_DOMAINS.map(d => d.surface as string).filter(s => !LEGACY_DOMAINS.has(s)));
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -28,6 +37,21 @@ const WF: Record<string, WorkKind> = {
   debt: 'procurement', forecast: 'case',
   'funding-chains': 'approval', 'reserve-workflows': 'approval',
   'budget-propagation': 'procurement', 'inter-ministry': 'procurement',
+  // shell-routed surfaces — kind is informational; TreasuryShell owns dispatch
+  'fiscal-command': 'incident', 'single-account-overview': 'procurement',
+  'macro-stability': 'case', 'fiscal-forecasting': 'case',
+  'appropriation-ledger': 'procurement', 'sub-ledger-reconciliation': 'case',
+  'daily-statement': 'case', 'expenditure-control': 'procurement',
+  'tax-revenue': 'approval', 'customs-revenue': 'approval', 'taxpayer-registry': 'permit',
+  'e-invoicing': 'approval', 'risk-based-audit': 'case',
+  'disbursement-vouchers': 'procurement',
+  'procurement-boards': 'procurement', 'contract-registry': 'permit',
+  'vendor-registry': 'permit', 'milestone-escrow': 'procurement',
+  'payments-rail': 'procurement', 'cbdc-operations': 'procurement',
+  'settlement-reconciliation': 'case',
+  'sovereign-reserves': 'procurement', 'public-debt': 'procurement',
+  'fiscal-audit': 'case', 'anti-fraud': 'case',
+  'taxpayer-portal': 'approval', 'public-budget-dashboard': 'approval',
 };
 const LABEL: Record<string, string> = {
   command: 'Fiscal Command', budget: 'National Budget Engine', revenue: 'Sovereign Revenue',
@@ -123,6 +147,11 @@ export function TreasuryApp({ instanceId, domain, now, role, withheld }: {
   // The command surface is the cinematic sovereign-treasury overview
   // (benchmark-grade); every other domain keeps the ops execution rhythm.
   const isOverview = d === 'command';
+
+  // If the requested domain is a new TreasuryShell surface, delegate.
+  if (TREASURY_SHELL_SURFACES.has(d)) {
+    return <TreasuryShell id={id} surface={d as ShellSurfaceId} now={now} role={role} withheld={withheld} />;
+  }
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>

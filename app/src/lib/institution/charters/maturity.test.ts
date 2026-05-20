@@ -20,16 +20,32 @@ function dirExists(p: string): boolean {
 }
 
 function countSurfaces(appDir: string): number {
-  // Count *.tsx files at the top level and one level deep (domains/, subsystems/)
+  // Count *exported components* across top-level .tsx files and the
+  // standard subdirectories (domains/, subsystems/). A single file
+  // may export multiple surface components — count each.
   if (!dirExists(appDir)) return 0;
+  const { readFileSync } = require('node:fs') as typeof import('node:fs');
+  const exportFnRe = /^\s*export\s+function\s+[A-Z][A-Za-z0-9_]*/gm;
+  const exportConstRe = /^\s*export\s+const\s+[A-Z][A-Za-z0-9_]*\s*[:=]\s*(?:[A-Za-z_<][^=;]*=\s*)?\(/gm;
   let n = 0;
+  const tally = (file: string) => {
+    if (!file.endsWith('.tsx')) return;
+    if (/App\.tsx$/.test(file)) return; // skip ministry app shells
+    try {
+      const src = readFileSync(file, 'utf8');
+      const fnMatches = src.match(exportFnRe) ?? [];
+      const constMatches = src.match(exportConstRe) ?? [];
+      // Filter to PascalCase components only; a file with no exports counts as 1 for the default behaviour
+      const exported = fnMatches.length + constMatches.length;
+      n += exported > 0 ? exported : 1;
+    } catch { n += 1; }
+  };
   for (const entry of readdirSync(appDir)) {
     const full = join(appDir, entry);
-    if (statSync(full).isFile() && entry.endsWith('.tsx')) {
-      // Exclude the ministry app shell itself
-      if (!/App\.tsx$/.test(entry)) n++;
+    if (statSync(full).isFile()) {
+      tally(full);
     } else if (statSync(full).isDirectory() && ['domains', 'subsystems'].includes(entry)) {
-      n += readdirSync(full).filter(f => f.endsWith('.tsx')).length;
+      for (const f of readdirSync(full)) tally(join(full, f));
     }
   }
   return n;
