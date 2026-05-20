@@ -15,6 +15,10 @@ import { environmentOps } from '@/lib/gov/environment-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
+import { ConstitutionalReviewChamber } from '@/apps/ministry-justice/ConstitutionalReviewChamber';
+import { JudicialOperationsRoster } from '@/apps/ministry-justice/JudicialOperationsRoster';
+import { RightsAdministrativeReview } from '@/apps/ministry-justice/RightsAdministrativeReview';
+import { JusticeContinuityForesight } from '@/apps/ministry-justice/JusticeContinuityForesight';
 import { FoodContinuityCommand } from '@/apps/ministry-agriculture/FoodContinuityCommand';
 import { HarvestProductionField } from '@/apps/ministry-agriculture/HarvestProductionField';
 import { WaterClimateInfrastructure } from '@/apps/ministry-agriculture/WaterClimateInfrastructure';
@@ -30,6 +34,8 @@ const WF: Record<string, WorkKind> = {
   farmer: 'approval', legalaid: 'case', registries: 'permit', corrections: 'case',
   disputes: 'case', insurance: 'approval', identity: 'permit', border: 'incident',
   licensing: 'permit', registry: 'permit', export: 'procurement', monitoring: 'case',
+  'constitutional-review': 'incident', 'judicial-operations': 'case',
+  'rights-administrative': 'incident', 'justice-foresight': 'incident',
 };
 type FocusItem = { l: string; v: string; t?: Tone };
 function focusFor(a: ArchetypeKey, d: string, id: string, ts: number): FocusItem[] | null {
@@ -140,6 +146,10 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   // & Civil Operations ecosystem; other archetypes/domains keep the ops
   // execution rhythm.
   const justiceCorr = archetype === 'JUSTICE' && domain === 'corrections';
+  const justiceConstReview = archetype === 'JUSTICE' && domain === 'constitutional-review';
+  const justiceJudOps = archetype === 'JUSTICE' && domain === 'judicial-operations';
+  const justiceRights = archetype === 'JUSTICE' && domain === 'rights-administrative';
+  const justiceForesight = archetype === 'JUSTICE' && domain === 'justice-foresight';
   const agriFood = archetype === 'AGRICULTURE' && domain === 'food-continuity';
   const agriProd = archetype === 'AGRICULTURE' && domain === 'harvest-production';
   const agriWater = archetype === 'AGRICULTURE' && domain === 'water-climate';
@@ -149,6 +159,14 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
       {justiceCorr ? (
         <PrisonsCorrections id={id} now={now} />
+      ) : justiceConstReview ? (
+        <ConstitutionalReviewChamber id={id} now={now} />
+      ) : justiceJudOps ? (
+        <JudicialOperationsRoster id={id} now={now} />
+      ) : justiceRights ? (
+        <RightsAdministrativeReview id={id} now={now} />
+      ) : justiceForesight ? (
+        <JusticeContinuityForesight id={id} now={now} />
       ) : agriFood ? (
         <FoodContinuityCommand id={id} now={now} />
       ) : agriProd ? (

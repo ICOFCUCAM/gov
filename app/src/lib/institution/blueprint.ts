@@ -357,6 +357,26 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
     G('citizen', 'Citizen Justice', 'Public-facing services', [
       S('Justice portal', 'citizen'), S('Complaints & redress', 'workflow'),
     ]),
+    G('constitutional-review', 'Constitutional Review Chamber', 'Sovereign constitutional posture & article register', [
+      S('Constitutional articles register', 'registry'),
+      S('Separation of powers ledger', 'audit'),
+      S('Emergency powers oversight', 'regulatory'),
+    ]),
+    G('judicial-operations', 'Judicial Operations Roster', 'National bench roster, statute review, prosecutorial coordination', [
+      S('Court tier roster', 'network'),
+      S('Statute legality review', 'regulatory'),
+      S('Prosecutorial dockets', 'workflow'),
+    ]),
+    G('rights-administrative', 'Rights & Administrative Legality', 'Bill of rights register · executive accountability', [
+      S('Bill of rights monitoring', 'analytics'),
+      S('Administrative legality ledger', 'audit'),
+      S('Correctional oversight register', 'regulatory'),
+    ]),
+    G('justice-foresight', 'Justice Continuity Foresight', '20-year constitutional trajectory & crisis cascade', [
+      S('Long-view forecast', 'analytics'),
+      S('Constitutional crisis chronology', 'workflow'),
+      S('Cross-branch cascade', 'audit'),
+    ]),
   ],
   ENVIRONMENT: [
     G('command', 'Environment Command', 'Climate & ecology authority', [
