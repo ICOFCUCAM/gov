@@ -1,128 +1,22 @@
 'use client';
 
 // apps/ministry-transport — federated transport execution application.
-// Cinematic sovereign command rhythm (shared ops kit).
+//
+// Tier-1 federated operational application backed by the dedicated
+// Corridor Map design system, shell, federation contract and
+// executable workflows. Legacy domain keys remain resolvable through
+// resolveTransportSurface().
 
 import * as React from 'react';
-import { RuntimeQueue } from '@/components/features/RuntimeQueue';
-import { transportOps, transportCommand } from '@/lib/gov/transport-systems';
-import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
-import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
-import { MobilityCommandTheater } from '@/apps/ministry-transport/MobilityCommandTheater';
-import { MultiModalOperations } from '@/apps/ministry-transport/MultiModalOperations';
-import { LogisticsNetwork } from '@/apps/ministry-transport/LogisticsNetwork';
-import { TransportContinuity } from '@/apps/ministry-transport/TransportContinuity';
-import { TransportEmergencyRecovery } from '@/apps/ministry-transport/TransportEmergencyRecovery';
-import { MobilityIntelligenceForesight } from '@/apps/ministry-transport/MobilityIntelligenceForesight';
-import { PublicTransportPortal } from '@/apps/ministry-transport/PublicTransportPortal';
-import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
-import type { Tone } from '@/apps/_shared/SovereignUI';
+import { TransportShell } from '@/apps/ministry-transport/shell/TransportShell';
+import { resolveTransportSurface } from '@/apps/ministry-transport/core/domains';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
-import type { WorkKind } from '@/lib/gov/runtime-workflow';
-
-const ACC = '#37c7d4';
-const WF: Record<string, WorkKind> = {
-  command: 'incident', aviation: 'case', maritime: 'case', rail: 'case', road: 'case', logistics: 'procurement', citizen: 'permit',
-  'mobility-theater': 'incident', 'multi-modal': 'incident', 'logistics-network': 'procurement', 'transport-continuity': 'incident',
-  'transport-recovery': 'incident', 'mobility-foresight': 'incident', 'transport-portal': 'approval',
-};
-const LABEL: Record<string, string> = {
-  command: 'Transport Command', aviation: 'Aviation Systems', maritime: 'Maritime Systems',
-  rail: 'Rail Systems', road: 'Road Systems', logistics: 'Logistics & Fleet', citizen: 'Mobility Services',
-  'mobility-theater': 'National Mobility Command Theater',
-  'multi-modal': 'Ports · Rail · Aviation Operations',
-  'logistics-network': 'National Logistics & Infrastructure',
-  'transport-continuity': 'Transport Continuity & Emergency Response',
-  'transport-recovery': 'Transport Emergency & Recovery Operations',
-  'mobility-foresight': 'Mobility Intelligence & Long-Horizon Foresight',
-  'transport-portal': 'Public Transport Services Portal',
-};
-type K = { l: string; v: string; t: Tone };
-const strip = (items: K[]) => items.map((m, i) => ({ ...m, s: '', k: `tp${i}` }));
 
 export function MinistryTransportApp({ instanceId, domain, now, role, withheld }: {
   instanceId: string; domain: string; now: number; role: SovereignRole; withheld: Capability[];
 }) {
-  const id = instanceId; const ts = now / 4000;
-  const o = transportOps(id, ts);
-  const d = WF[domain] ? domain : 'command';
-  const label = LABEL[d] ?? 'Transport Command';
-  const isOverview = d === 'command';
-
-  let kpis: K[] = [];
-  let bars: { title: string; meta: string; rows: { label: string; pct: number; tone: Tone; tail: string }[] } | null = null;
-  let pTone: Tone = 'ok';
-
-  if (d === 'command') {
-    const C = transportCommand(id, ts);
-    pTone = C.posture === 'crisis' ? 'alert' : C.posture === 'engaged' ? 'warn' : 'ok';
-    kpis = [
-      { l: 'Posture Index', v: `${C.postureIndex}`, t: pTone }, { l: 'Command Posture', v: C.posture, t: pTone },
-      { l: 'Critical Domains', v: `${C.criticalDomains}`, t: C.criticalDomains ? 'alert' : 'ok' },
-      { l: 'Open Directives', v: `${C.directives.length}`, t: C.directives.some(x => x.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok' },
-      { l: 'Network Availability', v: `${o.networkAvailabilityPct}%`, t: o.networkAvailabilityPct >= 85 ? 'ok' : 'warn' },
-      { l: 'Safety Index', v: `${o.safetyIndex}`, t: o.safetyIndex >= 80 ? 'ok' : 'warn' },
-    ];
-    bars = { title: 'Command domain status', meta: 'emergent', rows: C.domains.map(x => ({ label: x.domain, pct: x.tone === 'ok' ? 88 : x.tone === 'warn' ? 55 : 22, tone: x.tone, tail: x.value })) };
-  } else if (d === 'aviation' || d === 'maritime' || d === 'rail' || d === 'road') {
-    const md = o.modes.find(x => x.mode.toLowerCase() === d) ?? o.modes[0]!;
-    pTone = md.tone;
-    kpis = [
-      { l: `${md.mode} Throughput`, v: `${md.throughputPct}%`, t: md.tone },
-      { l: 'Delays', v: `${md.delaysMin}m`, t: md.delaysMin >= 50 ? 'alert' : md.delaysMin >= 25 ? 'warn' : 'ok' },
-      { l: 'Incidents', v: `${md.incidents}`, t: md.incidents >= 6 ? 'alert' : md.incidents ? 'warn' : 'ok' },
-      { l: 'Network Availability', v: `${o.networkAvailabilityPct}%`, t: o.networkAvailabilityPct >= 85 ? 'ok' : 'warn' },
-      { l: 'Safety Index', v: `${o.safetyIndex}`, t: o.safetyIndex >= 80 ? 'ok' : 'warn' },
-    ];
-    bars = { title: `${md.mode} corridor flow`, meta: 'load · throughput', rows: o.corridors.map(c => ({ label: c.corridor, pct: c.loadPct, tone: c.tone, tail: `${c.throughputKt}kt` })) };
-  } else if (d === 'logistics') {
-    pTone = o.fleet.maintenanceBacklog > 200 ? 'alert' : o.fleet.maintenanceBacklog > 90 ? 'warn' : 'ok';
-    kpis = [
-      { l: 'Fleet Available', v: `${o.fleet.available}/${o.fleet.vehicles}`, t: o.fleet.available < o.fleet.vehicles * 0.6 ? 'alert' : 'ok' },
-      { l: 'Maint. Backlog', v: `${o.fleet.maintenanceBacklog}`, t: pTone },
-      { l: 'Network Availability', v: `${o.networkAvailabilityPct}%`, t: o.networkAvailabilityPct >= 85 ? 'ok' : 'warn' },
-    ];
-    bars = { title: 'Corridor flow', meta: 'logistics load · throughput', rows: o.corridors.map(c => ({ label: c.corridor, pct: c.loadPct, tone: c.tone, tail: `${c.throughputKt}kt` })) };
-  } else {
-    pTone = o.registry.backlog > 3000 ? 'alert' : o.registry.backlog > 1500 ? 'warn' : 'ok';
-    kpis = [
-      { l: 'Vehicles Registered', v: `${o.registry.vehiclesM}M`, t: 'ok' },
-      { l: 'Licences Issued Today', v: o.registry.licencesIssuedToday.toLocaleString(), t: 'ok' },
-      { l: 'Registry Backlog', v: o.registry.backlog.toLocaleString(), t: pTone },
-      { l: 'Network Availability', v: `${o.networkAvailabilityPct}%`, t: o.networkAvailabilityPct >= 85 ? 'ok' : 'warn' },
-    ];
-  }
-
+  const surface = resolveTransportSurface(domain);
   return (
-    <div className="space-y-2 rounded-[5px] p-2"
-      style={{ background: 'linear-gradient(180deg, #0a0c10 0%, #07090d 100%)', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      {isOverview ? (
-        <MunicipalSystems id={id} now={now} />
-      ) : d === 'mobility-theater' ? (
-        <MobilityCommandTheater id={id} now={now} />
-      ) : d === 'multi-modal' ? (
-        <MultiModalOperations id={id} now={now} />
-      ) : d === 'logistics-network' ? (
-        <LogisticsNetwork id={id} now={now} />
-      ) : d === 'transport-continuity' ? (
-        <TransportContinuity id={id} now={now} />
-      ) : d === 'transport-recovery' ? (
-        <TransportEmergencyRecovery id={id} now={now} />
-      ) : d === 'mobility-foresight' ? (
-        <MobilityIntelligenceForesight id={id} now={now} />
-      ) : d === 'transport-portal' ? (
-        <PublicTransportPortal id={id} now={now} />
-      ) : (
-        <>
-          <OpsHeader index={1} title={`Transport · ${label}`} subtitle="Sovereign Transport Execution"
-            posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
-          <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
-          {bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
-        </>
-      )}
-      <ActorChainStrip ministryKey="TRANSPORT" idKey={id} now={now} accent={ACC} recordPrefix="MOV" />
-      <MinistryChainSection ministryKey="TRANSPORT" id={id} now={now} accent={ACC} />
-      <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'case'} title={`${label} runtime — execute the transport workflow`} by="Transport Officer" role={role} withheld={withheld} />
-    </div>
+    <TransportShell id={instanceId} surface={surface} now={now} role={role} withheld={withheld} />
   );
 }
