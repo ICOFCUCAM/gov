@@ -231,6 +231,26 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Consumer portal', 'citizen'), S('Billing & tariffs', 'finance'),
       S('Outage reporting', 'citizen'),
     ]),
+    G('grid-theater', 'Grid Command Theater', 'National grid stability theater', [
+      S('Frequency stability', 'analytics'),
+      S('Regional load distribution', 'network'),
+      S('Blackout-prevention orchestration', 'workflow'),
+    ]),
+    G('generation-reserves', 'Generation & Strategic Reserves', 'Production + sovereign reserves', [
+      S('Per-source plant status', 'network'),
+      S('Strategic fuel reserves', 'logistics'),
+      S('Emergency-release eligibility', 'audit'),
+    ]),
+    G('transmission-infra', 'Transmission Infrastructure', 'Corridors, transformers & repair dispatch', [
+      S('Corridor utilisation', 'network'),
+      S('Transformer health', 'field'),
+      S('Industrial continuity', 'finance'),
+    ]),
+    G('energy-continuity', 'Energy Continuity & Emergency', 'Emergency response + forecasting', [
+      S('Energy incident cascade', 'workflow'),
+      S('Inter-ministry propagation', 'audit'),
+      S('24h forecast', 'analytics'),
+    ]),
   ],
   TRANSPORT: [
     G('command', 'Transport Command', 'National mobility authority', [

@@ -9,13 +9,27 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { energyOps, energyCommand } from '@/lib/gov/energy-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
+import { GridCommandTheater } from '@/apps/ministry-energy/GridCommandTheater';
+import { GenerationReserves } from '@/apps/ministry-energy/GenerationReserves';
+import { TransmissionInfrastructure } from '@/apps/ministry-energy/TransmissionInfrastructure';
+import { EnergyContinuity } from '@/apps/ministry-energy/EnergyContinuity';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
 const ACC = '#f0a13a';
-const WF: Record<string, WorkKind> = { command: 'incident', generation: 'case', grid: 'incident', access: 'case', fuel: 'procurement', citizen: 'permit' };
-const LABEL: Record<string, string> = { command: 'Energy Command', generation: 'Generation Network', grid: 'Transmission & Distribution', access: 'Electrification', fuel: 'Fuel & Reserves', citizen: 'Consumer Systems' };
+const WF: Record<string, WorkKind> = {
+  command: 'incident', generation: 'case', grid: 'incident', access: 'case', fuel: 'procurement', citizen: 'permit',
+  'grid-theater': 'incident', 'generation-reserves': 'procurement', 'transmission-infra': 'incident', 'energy-continuity': 'incident',
+};
+const LABEL: Record<string, string> = {
+  command: 'Energy Command', generation: 'Generation Network', grid: 'Transmission & Distribution',
+  access: 'Electrification', fuel: 'Fuel & Reserves', citizen: 'Consumer Systems',
+  'grid-theater': 'National Grid Command Theater',
+  'generation-reserves': 'Generation & Strategic Reserves',
+  'transmission-infra': 'Transmission Infrastructure',
+  'energy-continuity': 'Energy Continuity & Emergency Response',
+};
 type K = { l: string; v: string; t: Tone };
 const strip = (items: K[]) => items.map((m, i) => ({ ...m, s: '', k: `en${i}` }));
 
@@ -78,12 +92,26 @@ export function MinistryEnergyApp({ instanceId, domain, now, role, withheld }: {
     ];
   }
 
+  const isGridTheater = d === 'grid-theater';
+  const isGenReserves = d === 'generation-reserves';
+  const isTxInfra = d === 'transmission-infra';
+  const isContinuity = d === 'energy-continuity';
+
   return (
-    <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#0c0905', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      <OpsHeader index={1} title={`Energy · ${label}`} subtitle="Sovereign Energy Execution"
-        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
-      <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
-      {bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
+    <div className="space-y-2 rounded-[5px] p-2"
+      style={{ background: 'linear-gradient(180deg, #0c0a08 0%, #07070a 100%)', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
+      {isGridTheater ? <GridCommandTheater id={id} now={now} />
+        : isGenReserves ? <GenerationReserves id={id} now={now} />
+          : isTxInfra ? <TransmissionInfrastructure id={id} now={now} />
+            : isContinuity ? <EnergyContinuity id={id} now={now} />
+              : (
+                <>
+                  <OpsHeader index={1} title={`Energy · ${label}`} subtitle="Sovereign Energy Execution"
+                    posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+                  <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
+                  {bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
+                </>
+              )}
       <ActorChainStrip ministryKey="ENERGY" idKey={id} now={now} accent={ACC} recordPrefix="GRID" />
       <MinistryChainSection ministryKey="ENERGY" id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'case'} title={`${label} runtime — execute the energy workflow`} by="Grid Officer" role={role} withheld={withheld} />
