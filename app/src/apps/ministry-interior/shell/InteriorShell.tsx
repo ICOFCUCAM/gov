@@ -84,6 +84,9 @@ import { CitizenPublicBrief } from '@/apps/ministry-interior/domains/CitizenPubl
 import { InteriorOSStatus } from '@/apps/ministry-interior/domains/InteriorOSStatus';
 import { MinistryCharacter } from '@/apps/ministry-interior/domains/MinistryCharacter';
 import { NationalStabilityCommand } from '@/apps/ministry-interior/domains/NationalStabilityCommand';
+import { InteriorCommandTheater } from '@/apps/ministry-interior/domains/InteriorCommandTheater';
+import { EventPropagation } from '@/apps/ministry-interior/domains/EventPropagation';
+import { OperationalTimeline } from '@/apps/ministry-interior/domains/OperationalTimeline';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
 import { LocalCouncils } from '@/apps/legislature/LocalCouncils';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
@@ -179,6 +182,9 @@ function renderSurface(surface: SurfaceId, id: string, now: number): React.React
     case 'interior-os-status': return <InteriorOSStatus id={id} now={now} />;
     case 'ministry-character': return <MinistryCharacter id={id} />;
     case 'national-stability-command': return <NationalStabilityCommand id={id} now={now} />;
+    case 'interior-command-theater': return <InteriorCommandTheater id={id} now={now} />;
+    case 'event-propagation': return <EventPropagation id={id} now={now} />;
+    case 'operational-timeline': return <OperationalTimeline id={id} now={now} />;
   }
 }
 
