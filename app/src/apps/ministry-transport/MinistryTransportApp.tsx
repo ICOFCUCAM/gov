@@ -12,6 +12,9 @@ import { MobilityCommandTheater } from '@/apps/ministry-transport/MobilityComman
 import { MultiModalOperations } from '@/apps/ministry-transport/MultiModalOperations';
 import { LogisticsNetwork } from '@/apps/ministry-transport/LogisticsNetwork';
 import { TransportContinuity } from '@/apps/ministry-transport/TransportContinuity';
+import { TransportEmergencyRecovery } from '@/apps/ministry-transport/TransportEmergencyRecovery';
+import { MobilityIntelligenceForesight } from '@/apps/ministry-transport/MobilityIntelligenceForesight';
+import { PublicTransportPortal } from '@/apps/ministry-transport/PublicTransportPortal';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -21,6 +24,7 @@ const ACC = '#37c7d4';
 const WF: Record<string, WorkKind> = {
   command: 'incident', aviation: 'case', maritime: 'case', rail: 'case', road: 'case', logistics: 'procurement', citizen: 'permit',
   'mobility-theater': 'incident', 'multi-modal': 'incident', 'logistics-network': 'procurement', 'transport-continuity': 'incident',
+  'transport-recovery': 'incident', 'mobility-foresight': 'incident', 'transport-portal': 'approval',
 };
 const LABEL: Record<string, string> = {
   command: 'Transport Command', aviation: 'Aviation Systems', maritime: 'Maritime Systems',
@@ -29,6 +33,9 @@ const LABEL: Record<string, string> = {
   'multi-modal': 'Ports · Rail · Aviation Operations',
   'logistics-network': 'National Logistics & Infrastructure',
   'transport-continuity': 'Transport Continuity & Emergency Response',
+  'transport-recovery': 'Transport Emergency & Recovery Operations',
+  'mobility-foresight': 'Mobility Intelligence & Long-Horizon Foresight',
+  'transport-portal': 'Public Transport Services Portal',
 };
 type K = { l: string; v: string; t: Tone };
 const strip = (items: K[]) => items.map((m, i) => ({ ...m, s: '', k: `tp${i}` }));
@@ -99,6 +106,12 @@ export function MinistryTransportApp({ instanceId, domain, now, role, withheld }
         <LogisticsNetwork id={id} now={now} />
       ) : d === 'transport-continuity' ? (
         <TransportContinuity id={id} now={now} />
+      ) : d === 'transport-recovery' ? (
+        <TransportEmergencyRecovery id={id} now={now} />
+      ) : d === 'mobility-foresight' ? (
+        <MobilityIntelligenceForesight id={id} now={now} />
+      ) : d === 'transport-portal' ? (
+        <PublicTransportPortal id={id} now={now} />
       ) : (
         <>
           <OpsHeader index={1} title={`Transport · ${label}`} subtitle="Sovereign Transport Execution"

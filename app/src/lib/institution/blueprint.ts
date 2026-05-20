@@ -370,6 +370,23 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Inter-ministry propagation', 'audit'),
       S('24h congestion forecast', 'analytics'),
     ]),
+    G('transport-recovery', 'Transport Emergency & Recovery Operations', 'Infrastructure failures · evacuation corridors · repair crews', [
+      S('Active infrastructure failures', 'emergency'),
+      S('Evacuation corridor lanes', 'logistics'),
+      S('Repair crew dispatch', 'field'),
+    ]),
+    G('mobility-foresight', 'Mobility Intelligence & Long-Horizon Foresight', '25-year mobility horizon · climate risk · bottlenecks · anomalies', [
+      S('25-year mobility horizon', 'analytics'),
+      S('Climate-mobility risk matrix', 'intelligence'),
+      S('Freight bottleneck ledger', 'audit'),
+      S('Mobility anomaly stream', 'intelligence'),
+    ]),
+    G('transport-portal', 'Public Transport Services Portal', 'Schedules · permits · logistics requests · advisories', [
+      S('Transit schedules', 'workflow'),
+      S('Transport permit stalls', 'regulatory'),
+      S('Logistics requests register', 'logistics'),
+      S('Public advisories', 'citizen'),
+    ]),
   ],
   JUSTICE: [
     G('command', 'Justice Command', 'Rule-of-law administration', [
