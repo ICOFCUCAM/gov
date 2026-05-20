@@ -45,7 +45,8 @@ export type SurfaceId =
   | 'knowledge-continuity' | 'expertise-transfer' | 'innovation-continuity' | 'cognitive-trajectory'
   | 'geopolitical-continuity' | 'migration-humanitarian' | 'global-shock-intelligence' | 'strategic-trajectory'
   | 'existential-continuity' | 'pandemic-biosurvival' | 'post-collapse-recovery' | 'existential-trajectory'
-  | 'civilization-organism' | 'sovereign-safeguards-ledger' | 'continuity-matrix' | 'citizen-public-brief' | 'interior-os-status' | 'ministry-character';
+  | 'civilization-organism' | 'sovereign-safeguards-ledger' | 'continuity-matrix' | 'citizen-public-brief' | 'interior-os-status' | 'ministry-character'
+  | 'national-stability-command';
 
 export interface InteriorDomain {
   key: string;
@@ -86,6 +87,7 @@ export const DOMAINS: InteriorDomain[] = [
   // ── National Command ──────────────────────────────────────────────
   { key: 'national-overview', label: 'National Overview', group: 'command', accent: '#5fb0ff', archetype: 'command', surface: 'national-overview', federation: null, identity: 'National internal-governance situational picture' },
   { key: 'security-command', label: 'Security Command', group: 'command', accent: '#5fb0ff', archetype: 'command', surface: 'interior-command', federation: null, identity: 'Internal-security coordination authority' },
+  { key: 'national-stability-command', label: 'National Stability Command', group: 'command', accent: '#e0673a', archetype: 'command', surface: 'national-stability-command', federation: null, identity: 'Eight role areas Interior owns — operational apex orchestration' },
   // ── National Digital Twin (sovereign apex) ────────────────────────
   { key: 'civilization-organism', label: 'Civilization Organism', group: 'national', accent: '#5fb0ff', archetype: 'command', surface: 'civilization-organism', federation: null, identity: 'Apex synthesis of every continuity layer' },
   { key: 'continuity-matrix', label: 'Continuity Matrix', group: 'national', accent: '#45c0c8', archetype: 'fabric', surface: 'continuity-matrix', federation: null, identity: 'Every continuity engine’s live mode in one view' },
