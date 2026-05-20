@@ -184,6 +184,26 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Student portal', 'citizen'), S('Enrolment', 'workflow'),
       S('Scholarships', 'finance'), S('Learner registry', 'registry'),
     ]),
+    G('national-knowledge', 'National Education Command', 'Sovereign literacy & capability ledger', [
+      S('Regional literacy ledger', 'analytics'),
+      S('Generational chronology', 'audit'),
+      S('Institutional performance', 'regulatory'),
+    ]),
+    G('institutions-research', 'Institutions & Research Lineage', 'Institutional inventory & funded research', [
+      S('Institutional inventory', 'registry'),
+      S('Research programme lineage', 'workflow'),
+      S('Accreditation continuity', 'regulatory'),
+    ]),
+    G('knowledge-infra', 'Knowledge Infrastructure', 'Digital learning + civilizational memory', [
+      S('Digital learning coverage', 'network'),
+      S('Civilizational archives', 'registry'),
+      S('Bandwidth equity', 'analytics'),
+    ]),
+    G('continuity-foresight', 'Continuity Foresight Chamber', '25-year horizon + crisis cascade', [
+      S('Long-horizon forecast', 'analytics'),
+      S('Educational crisis chronology', 'workflow'),
+      S('Cross-ministry cascade', 'audit'),
+    ]),
   ],
   AGRICULTURE: [
     G('command', 'Agriculture Command', 'Food-security authority', [

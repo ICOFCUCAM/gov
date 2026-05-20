@@ -8,13 +8,27 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { schoolNetwork, examOps, teacherOps, studentServices, higherEducation, curriculumOps, educationCommand } from '@/lib/gov/education-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
+import { NationalEducationCommand } from '@/apps/ministry-education/NationalEducationCommand';
+import { InstitutionsResearchLineage } from '@/apps/ministry-education/InstitutionsResearchLineage';
+import { KnowledgeInfrastructure } from '@/apps/ministry-education/KnowledgeInfrastructure';
+import { ContinuityForesightChamber } from '@/apps/ministry-education/ContinuityForesightChamber';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
 const ACC = '#5fa8ff';
-const WF: Record<string, WorkKind> = { command: 'incident', schools: 'case', higher: 'case', exams: 'case', curriculum: 'case', teacher: 'approval', student: 'approval' };
-const LABEL: Record<string, string> = { command: 'Education Command', schools: 'School Network', higher: 'Higher Education', exams: 'Examination Systems', curriculum: 'Curriculum', teacher: 'Teacher Systems', student: 'Student Systems' };
+const WF: Record<string, WorkKind> = {
+  command: 'incident', schools: 'case', higher: 'case', exams: 'case', curriculum: 'case', teacher: 'approval', student: 'approval',
+  'national-knowledge': 'incident', 'institutions-research': 'case', 'knowledge-infra': 'case', 'continuity-foresight': 'incident',
+};
+const LABEL: Record<string, string> = {
+  command: 'Education Command', schools: 'School Network', higher: 'Higher Education',
+  exams: 'Examination Systems', curriculum: 'Curriculum', teacher: 'Teacher Systems', student: 'Student Systems',
+  'national-knowledge': 'National Education Command',
+  'institutions-research': 'Institutions & Research Lineage',
+  'knowledge-infra': 'Knowledge Infrastructure & Civilizational Memory',
+  'continuity-foresight': 'Continuity Foresight Chamber',
+};
 type K = { l: string; v: string; t: Tone };
 const strip = (items: K[]) => items.map((m, i) => ({ ...m, s: '', k: `ed${i}` }));
 
@@ -93,12 +107,26 @@ export function MinistryEducationApp({ instanceId, domain, now, role, withheld }
     bars = { title: 'Regional school capacity', meta: 'infrastructure · enrolment', rows: sn.byRegion.map(r => ({ label: r.region, pct: r.capacityPct, tone: r.tone, tail: `${r.capacityPct}%` })) };
   }
 
+  const isKnowledgeCmd = d === 'national-knowledge';
+  const isInstitutions = d === 'institutions-research';
+  const isKnowledgeInfra = d === 'knowledge-infra';
+  const isForesight = d === 'continuity-foresight';
+
   return (
-    <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      <OpsHeader index={1} title={`Education · ${label}`} subtitle="Sovereign Education Execution"
-        posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
-      <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
-      {bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
+    <div className="space-y-3 rounded-[5px] p-3"
+      style={{ background: 'linear-gradient(180deg, rgba(244,236,214,0.05) 0%, #08090d 80%)', boxShadow: 'inset 0 0 70px rgba(0,0,0,0.55)', color: 'rgb(var(--c-ink))' }}>
+      {isKnowledgeCmd ? <NationalEducationCommand id={id} now={now} />
+        : isInstitutions ? <InstitutionsResearchLineage id={id} now={now} />
+          : isKnowledgeInfra ? <KnowledgeInfrastructure id={id} now={now} />
+            : isForesight ? <ContinuityForesightChamber id={id} now={now} />
+              : (
+                <>
+                  <OpsHeader index={1} title={`Education · ${label}`} subtitle="Sovereign Education Execution"
+                    posture={pTone === 'alert' ? 'CRITICAL' : pTone === 'warn' ? 'ENGAGED' : 'STABLE'} tone={pTone} now={now} role={role} accent={ACC} />
+                  <KpiStrip ts={ts} accent={ACC} items={strip(kpis)} />
+                  {bars ? <BarPanel title={bars.title} meta={bars.meta} accent={ACC} live rows={bars.rows} /> : null}
+                </>
+              )}
       <ActorChainStrip ministryKey="EDUCATION" idKey={id} now={now} accent={ACC} recordPrefix="ENR" />
       <MinistryChainSection ministryKey="EDUCATION" id={id} now={now} accent={ACC} />
       <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'case'} title={`${label} runtime — execute the education workflow`} by="Education Officer" role={role} withheld={withheld} />
