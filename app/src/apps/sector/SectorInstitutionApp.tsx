@@ -15,6 +15,10 @@ import { environmentOps } from '@/lib/gov/environment-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
+import { FoodContinuityCommand } from '@/apps/ministry-agriculture/FoodContinuityCommand';
+import { HarvestProductionField } from '@/apps/ministry-agriculture/HarvestProductionField';
+import { WaterClimateInfrastructure } from '@/apps/ministry-agriculture/WaterClimateInfrastructure';
+import { FoodContinuityResponse } from '@/apps/ministry-agriculture/FoodContinuityResponse';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { ArchetypeKey } from '@/lib/api/types';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -136,11 +140,23 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   // & Civil Operations ecosystem; other archetypes/domains keep the ops
   // execution rhythm.
   const justiceCorr = archetype === 'JUSTICE' && domain === 'corrections';
+  const agriFood = archetype === 'AGRICULTURE' && domain === 'food-continuity';
+  const agriProd = archetype === 'AGRICULTURE' && domain === 'harvest-production';
+  const agriWater = archetype === 'AGRICULTURE' && domain === 'water-climate';
+  const agriResp = archetype === 'AGRICULTURE' && domain === 'food-response';
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
       {justiceCorr ? (
         <PrisonsCorrections id={id} now={now} />
+      ) : agriFood ? (
+        <FoodContinuityCommand id={id} now={now} />
+      ) : agriProd ? (
+        <HarvestProductionField id={id} now={now} />
+      ) : agriWater ? (
+        <WaterClimateInfrastructure id={id} now={now} />
+      ) : agriResp ? (
+        <FoodContinuityResponse id={id} now={now} />
       ) : (
         <>
           <OpsHeader index={1} title={`${label}${focus ? ` · ${domain}` : ''}`} subtitle="Sovereign Institutional Execution"

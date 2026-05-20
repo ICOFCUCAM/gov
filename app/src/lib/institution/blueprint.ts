@@ -208,6 +208,26 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Farmer registry', 'registry'), S('Subsidy disbursement', 'finance'),
       S('Cooperative portal', 'citizen'),
     ]),
+    G('food-continuity', 'Food Continuity Command', 'National food posture & reserves', [
+      S('Regional food state', 'field'),
+      S('Strategic food reserves', 'logistics'),
+      S('Seasonal cycle progression', 'analytics'),
+    ]),
+    G('harvest-production', 'Harvest & Production Field', 'Crops + livestock continuity', [
+      S('Crop production field', 'field'),
+      S('Livestock continuity', 'field'),
+      S('Pest & disease pressure', 'intelligence'),
+    ]),
+    G('water-climate', 'Water & Climate Infrastructure', 'Reservoirs + climate resilience', [
+      S('Reservoirs & irrigation', 'network'),
+      S('Climate pressure by region', 'analytics'),
+      S('Rural water allocation', 'workflow'),
+    ]),
+    G('food-response', 'Food Continuity & Emergency', 'Distribution + cascade response', [
+      S('Distribution & cold-chain lanes', 'logistics'),
+      S('Rural stability', 'analytics'),
+      S('Cross-ministry cascade', 'audit'),
+    ]),
   ],
   ENERGY: [
     G('command', 'Energy Command', 'Grid & energy security', [
