@@ -27,6 +27,10 @@ import { PlanetaryClimateResilience } from '@/apps/ministry-environment/Planetar
 import { BiosphereRestorationAtlas } from '@/apps/ministry-environment/BiosphereRestorationAtlas';
 import { AtmosphericHydrologicalSystems } from '@/apps/ministry-environment/AtmosphericHydrologicalSystems';
 import { EcologicalForesightCrisis } from '@/apps/ministry-environment/EcologicalForesightCrisis';
+import { NationalWorkforceCommand } from '@/apps/ministry-labour/NationalWorkforceCommand';
+import { SocialProtectionSystems } from '@/apps/ministry-labour/SocialProtectionSystems';
+import { DemographicLaborAnalytics } from '@/apps/ministry-labour/DemographicLaborAnalytics';
+import { SocialContinuityCrisis } from '@/apps/ministry-labour/SocialContinuityCrisis';
 import { FoodContinuityCommand } from '@/apps/ministry-agriculture/FoodContinuityCommand';
 import { HarvestProductionField } from '@/apps/ministry-agriculture/HarvestProductionField';
 import { WaterClimateInfrastructure } from '@/apps/ministry-agriculture/WaterClimateInfrastructure';
@@ -48,6 +52,8 @@ const WF: Record<string, WorkKind> = {
   'supply-chain': 'procurement', 'economic-foresight': 'incident',
   'planetary-resilience': 'incident', 'biosphere-restoration': 'case',
   'atmospheric-hydrology': 'incident', 'ecological-foresight': 'incident',
+  'workforce-command': 'incident', 'social-protection': 'approval',
+  'demographic-analytics': 'case', 'social-continuity': 'incident',
 };
 type FocusItem = { l: string; v: string; t?: Tone };
 function focusFor(a: ArchetypeKey, d: string, id: string, ts: number): FocusItem[] | null {
@@ -170,6 +176,10 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   const envBiosphere = archetype === 'ENVIRONMENT' && domain === 'biosphere-restoration';
   const envAtmos = archetype === 'ENVIRONMENT' && domain === 'atmospheric-hydrology';
   const envForesight = archetype === 'ENVIRONMENT' && domain === 'ecological-foresight';
+  const lbrWorkforce = archetype === 'LABOR' && domain === 'workforce-command';
+  const lbrSocial = archetype === 'LABOR' && domain === 'social-protection';
+  const lbrDemo = archetype === 'LABOR' && domain === 'demographic-analytics';
+  const lbrCrisis = archetype === 'LABOR' && domain === 'social-continuity';
   const agriFood = archetype === 'AGRICULTURE' && domain === 'food-continuity';
   const agriProd = archetype === 'AGRICULTURE' && domain === 'harvest-production';
   const agriWater = archetype === 'AGRICULTURE' && domain === 'water-climate';
@@ -203,6 +213,14 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <AtmosphericHydrologicalSystems id={id} now={now} />
       ) : envForesight ? (
         <EcologicalForesightCrisis id={id} now={now} />
+      ) : lbrWorkforce ? (
+        <NationalWorkforceCommand id={id} now={now} />
+      ) : lbrSocial ? (
+        <SocialProtectionSystems id={id} now={now} />
+      ) : lbrDemo ? (
+        <DemographicLaborAnalytics id={id} now={now} />
+      ) : lbrCrisis ? (
+        <SocialContinuityCrisis id={id} now={now} />
       ) : agriFood ? (
         <FoodContinuityCommand id={id} now={now} />
       ) : agriProd ? (

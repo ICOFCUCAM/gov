@@ -462,6 +462,26 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
     G('citizen', 'Worker Services', 'Public-facing services', [
       S('Worker portal', 'citizen'), S('Skills & training centres', 'network'),
     ]),
+    G('workforce-command', 'National Workforce Command', 'Sovereign workforce continuity & regional labour markets', [
+      S('Workforce flow ribbon', 'analytics'),
+      S('Regional workforce register', 'network'),
+      S('Employment continuity ledger', 'command'),
+    ]),
+    G('social-protection', 'Social Protection Systems', 'Pension · unemployment · welfare · emergency support', [
+      S('Support corridor rails', 'workflow'),
+      S('Benefits programme registry', 'registry'),
+      S('Vulnerable-population coverage', 'analytics'),
+    ]),
+    G('demographic-analytics', 'Demographic & Human Capital', 'Age cohorts · skills pipelines · long-horizon sustainability', [
+      S('Cohort pyramid', 'analytics'),
+      S('Skills pipelines', 'workflow'),
+      S('Sustainability index', 'audit'),
+    ]),
+    G('social-continuity', 'Social Continuity & Crisis Foresight', 'Pressure register · disputes · 25-year workforce trajectory', [
+      S('Social pressure register', 'intelligence'),
+      S('Labour-rights dispute ledger', 'audit'),
+      S('25-year workforce trajectory', 'analytics'),
+    ]),
   ],
   TRADE: [
     G('command', 'Trade Command', 'Commerce & industry authority', [
