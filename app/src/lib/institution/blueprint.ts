@@ -308,6 +308,23 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Inter-ministry propagation', 'audit'),
       S('24h forecast', 'analytics'),
     ]),
+    G('emergency-recovery', 'Energy Emergency & Recovery Operations', 'Blackout restoration choreography · crews · backup', [
+      S('Active blackout events', 'emergency'),
+      S('Restoration crew roster', 'network'),
+      S('Asset deployment & critical services', 'logistics'),
+    ]),
+    G('intel-foresight', 'Energy Intelligence & Long-Horizon Foresight', '25-year demand, climate-energy risk, cascading failure', [
+      S('25-year demand horizon', 'analytics'),
+      S('Climate-energy risk matrix', 'intelligence'),
+      S('Geopolitical exposure ledger', 'audit'),
+      S('Cascading failure scenarios', 'workflow'),
+    ]),
+    G('public-portal', 'Public Energy Services Portal', 'Outage triage · permits · renewable integration · advisories', [
+      S('Outage triage lanes', 'citizen'),
+      S('Energy permit stalls', 'workflow'),
+      S('Renewable integration requests', 'workflow'),
+      S('Public advisories', 'citizen'),
+    ]),
   ],
   TRANSPORT: [
     G('command', 'Transport Command', 'National mobility authority', [

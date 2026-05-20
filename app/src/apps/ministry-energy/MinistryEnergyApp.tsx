@@ -13,6 +13,9 @@ import { GridCommandTheater } from '@/apps/ministry-energy/GridCommandTheater';
 import { GenerationReserves } from '@/apps/ministry-energy/GenerationReserves';
 import { TransmissionInfrastructure } from '@/apps/ministry-energy/TransmissionInfrastructure';
 import { EnergyContinuity } from '@/apps/ministry-energy/EnergyContinuity';
+import { EnergyEmergencyRecovery } from '@/apps/ministry-energy/EnergyEmergencyRecovery';
+import { EnergyIntelligenceForesight } from '@/apps/ministry-energy/EnergyIntelligenceForesight';
+import { PublicEnergyServicesPortal } from '@/apps/ministry-energy/PublicEnergyServicesPortal';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -21,6 +24,7 @@ const ACC = '#f0a13a';
 const WF: Record<string, WorkKind> = {
   command: 'incident', generation: 'case', grid: 'incident', access: 'case', fuel: 'procurement', citizen: 'permit',
   'grid-theater': 'incident', 'generation-reserves': 'procurement', 'transmission-infra': 'incident', 'energy-continuity': 'incident',
+  'emergency-recovery': 'incident', 'intel-foresight': 'incident', 'public-portal': 'approval',
 };
 const LABEL: Record<string, string> = {
   command: 'Energy Command', generation: 'Generation Network', grid: 'Transmission & Distribution',
@@ -29,6 +33,9 @@ const LABEL: Record<string, string> = {
   'generation-reserves': 'Generation & Strategic Reserves',
   'transmission-infra': 'Transmission Infrastructure',
   'energy-continuity': 'Energy Continuity & Emergency Response',
+  'emergency-recovery': 'Energy Emergency & Recovery Operations',
+  'intel-foresight': 'Energy Intelligence & Long-Horizon Foresight',
+  'public-portal': 'Public Energy Services Portal',
 };
 type K = { l: string; v: string; t: Tone };
 const strip = (items: K[]) => items.map((m, i) => ({ ...m, s: '', k: `en${i}` }));
@@ -96,6 +103,9 @@ export function MinistryEnergyApp({ instanceId, domain, now, role, withheld }: {
   const isGenReserves = d === 'generation-reserves';
   const isTxInfra = d === 'transmission-infra';
   const isContinuity = d === 'energy-continuity';
+  const isEmergRecovery = d === 'emergency-recovery';
+  const isIntelForesight = d === 'intel-foresight';
+  const isPublicPortal = d === 'public-portal';
 
   return (
     <div className="space-y-2 rounded-[5px] p-2"
@@ -104,6 +114,9 @@ export function MinistryEnergyApp({ instanceId, domain, now, role, withheld }: {
         : isGenReserves ? <GenerationReserves id={id} now={now} />
           : isTxInfra ? <TransmissionInfrastructure id={id} now={now} />
             : isContinuity ? <EnergyContinuity id={id} now={now} />
+              : isEmergRecovery ? <EnergyEmergencyRecovery id={id} now={now} />
+                : isIntelForesight ? <EnergyIntelligenceForesight id={id} now={now} />
+                  : isPublicPortal ? <PublicEnergyServicesPortal id={id} now={now} />
               : (
                 <>
                   <OpsHeader index={1} title={`Energy · ${label}`} subtitle="Sovereign Energy Execution"
