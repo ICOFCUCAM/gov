@@ -14,6 +14,23 @@ const tone = (n: number, hi = 70, mid = 45): Tone => (n >= hi ? 'ok' : n >= mid 
 export interface AgencyMetric { label: string; value: string; tone: Tone }
 export interface AgencyUnitRow { id: string; label: string; status: string; region: string; tone: Tone }
 
+// Constitutional safeguard envelope for sovereign law-enforcement.
+// Every operational surface in police-command is bound by this contract.
+export const POLICE_SAFEGUARDS = {
+  warrantBackedSearch: true as const,
+  useOfForceProportional: true as const,
+  custodyTimeLimited: true as const,
+  detaineeRightsAttested: true as const,
+  surveillanceJudiciallyAuthorised: true as const,
+  internalAffairsIndependentlyOverseen: true as const,
+  prohibited: [
+    'warrantless-mass-surveillance', 'arbitrary-detention',
+    'extra-judicial-force', 'torture-or-degrading-treatment',
+    'racial-or-political-profiling', 'evidence-tampering',
+    'concealment-of-misconduct', 'use-of-force-without-review',
+  ] as const,
+};
+
 export interface PoliceOps {
   activeIncidents: number;
   unitsDeployed: number; unitsTotal: number;

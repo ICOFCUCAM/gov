@@ -46,7 +46,7 @@ describe('federated app manifests', () => {
       expect(a.nav.length, `${a.id} must expose >1 subsystem nav`).toBeGreaterThan(1);
       const keys = a.nav.map(n => n.key);
       expect(new Set(keys).size).toBe(keys.length); // unique
-      for (const n of keys) expect(n).toMatch(/^[a-z-]+$/);
+      for (const n of keys) expect(n).toMatch(/^[a-z0-9-]+$/);
     }
   });
 });

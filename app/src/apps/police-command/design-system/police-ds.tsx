@@ -22,7 +22,76 @@ const ARCHETYPE: Record<PoliceArchetype, { tag: string; glyph: string }> = {
   registry: { tag: 'REGISTRY SYSTEM', glyph: '▤' },
   governance: { tag: 'SERVICE DESK', glyph: '⬡' },
   oversight: { tag: 'SOVEREIGN OVERSIGHT', glyph: '§' },
+  patrol: { tag: 'PATROL DIVISION', glyph: '◇' },
+  casework: { tag: 'INVESTIGATIVE CASEWORK', glyph: '⌖' },
+  forensic: { tag: 'FORENSIC TIER', glyph: '⌬' },
+  'public-order': { tag: 'PUBLIC ORDER', glyph: '⌘' },
+  service: { tag: 'COMMUNITY SERVICE', glyph: '✚' },
+  tribunal: { tag: 'INTERNAL TRIBUNAL', glyph: '§' },
 };
+
+// ── Police primitives ────────────────────────────────────────────────
+// Standard chrome reused across the new operational surfaces. Each
+// surface composes a KpiStrip, RosterRow list and a CalloutNote.
+
+export function PoliceKpiStrip({ items, accent }: {
+  items: { label: string; value: React.ReactNode; tone?: 'ok' | 'warn' | 'alert' | 'mute' }[];
+  accent: string;
+}) {
+  const tones: Record<'ok' | 'warn' | 'alert' | 'mute', string> = {
+    ok: '#54d08f', warn: '#e0a13a', alert: '#e0685f', mute: '#93a0ad',
+  };
+  return (
+    <div className="grid grid-cols-2 gap-1 md:grid-cols-4">
+      {items.map(k => (
+        <div key={k.label} className="border px-2 py-1.5"
+          style={{ borderColor: `color-mix(in srgb, ${accent} 20%, ${POLICE_DS.line})`, background: 'rgba(255,255,255,0.012)' }}>
+          <div className="text-[9px] uppercase tracking-[0.18em]" style={{ color: '#93a0ad', fontFamily: 'ui-monospace, monospace' }}>{k.label}</div>
+          <div className="text-[14px] font-semibold tabular-nums" style={{ color: k.tone ? tones[k.tone] : accent }}>{k.value}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export function PoliceRosterRow({ id, label, status, tail, tone, accent }: {
+  id: string; label: string; status: string; tail?: React.ReactNode;
+  tone?: 'ok' | 'warn' | 'alert' | 'mute'; accent: string;
+}) {
+  const tones: Record<'ok' | 'warn' | 'alert' | 'mute', string> = {
+    ok: '#54d08f', warn: '#e0a13a', alert: '#e0685f', mute: '#93a0ad',
+  };
+  const col = tone ? tones[tone] : accent;
+  return (
+    <div className="grid grid-cols-[110px_1fr_130px_110px] gap-3 border-b py-1.5 text-[11px]"
+      style={{ borderColor: POLICE_DS.line, fontFamily: 'ui-monospace, monospace' }}>
+      <span className="tabular-nums" style={{ color: accent }}>{id}</span>
+      <span style={{ color: '#d6dde6' }}>{label}</span>
+      <span className="uppercase tracking-[0.16em]" style={{ color: col }}>● {status}</span>
+      <span className="text-right tabular-nums" style={{ color: '#93a0ad' }}>{tail}</span>
+    </div>
+  );
+}
+
+export function PoliceCalloutNote({ kicker, body }: { kicker: string; body: string }) {
+  return (
+    <div className="rounded-[3px] border border-dashed px-3 py-2 text-[10.5px] italic"
+      style={{ borderColor: 'rgba(216,162,58,0.28)', color: '#a8a08a', background: 'rgba(216,162,58,0.04)' }}>
+      <span className="not-italic font-semibold uppercase tracking-[0.18em]" style={{ color: '#d8a23a' }}>{kicker}</span>
+      {' — '}{body}
+    </div>
+  );
+}
+
+export function PoliceRule({ label }: { label?: string }) {
+  return (
+    <div className="flex items-center gap-2 py-0.5">
+      <div className="h-px flex-1" style={{ background: 'rgba(95,168,255,0.16)' }} />
+      {label ? <span className="text-[9px] uppercase tracking-[0.22em]" style={{ color: '#62707e' }}>{label}</span> : null}
+      <div className="h-px flex-1" style={{ background: 'rgba(95,168,255,0.16)' }} />
+    </div>
+  );
+}
 
 export function PoliceDomainFrame({ domain, badge, children }: {
   domain: PoliceDomain;
