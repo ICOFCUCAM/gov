@@ -1,45 +1,23 @@
 'use client';
 
-// Communications sovereign standing-agency app shell. Hosts four
-// digital-infrastructure surfaces plus a runtime queue.
+// apps/communications — Communications & Digital Infrastructure
+// sovereign standing-agency app.
+//
+// Tier-1 federated operational application backed by the dedicated
+// Topology Graph design system, shell, federation contract and
+// executable workflows. Legacy domain keys remain resolvable through
+// resolveCommsSurface().
 
 import * as React from 'react';
-import { RuntimeQueue } from '@/components/features/RuntimeQueue';
-import { NationalConnectivityCommand } from '@/apps/communications/NationalConnectivityCommand';
-import { CyberSecurityResilience } from '@/apps/communications/CyberSecurityResilience';
-import { DigitalIdentitySpectrum } from '@/apps/communications/DigitalIdentitySpectrum';
-import { CommsForesightPortal } from '@/apps/communications/CommsForesightPortal';
+import { CommunicationsShell } from '@/apps/communications/shell/CommunicationsShell';
+import { resolveCommsSurface } from '@/apps/communications/core/domains';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
-import type { WorkKind } from '@/lib/gov/runtime-workflow';
-
-const WF: Record<string, WorkKind> = {
-  'connectivity-command': 'incident',
-  'cyber-resilience': 'incident',
-  'identity-spectrum': 'permit',
-  'foresight-portal': 'approval',
-};
-const LABEL: Record<string, string> = {
-  'connectivity-command': 'National Connectivity Command',
-  'cyber-resilience': 'Cybersecurity & Information Resilience',
-  'identity-spectrum': 'Digital Identity · Spectrum · Media',
-  'foresight-portal': 'Intelligence Forecast & Public Portal',
-};
 
 export function CommunicationsApp({ appId, domain, now, role, withheld = [] }: {
   appId: string; domain: string; now: number; role: SovereignRole; withheld?: Capability[];
 }) {
-  const id = appId;
-  const d = WF[domain] ? domain : 'connectivity-command';
-  const label = LABEL[d] ?? LABEL['connectivity-command']!;
+  const surface = resolveCommsSurface(domain);
   return (
-    <div className="space-y-3 rounded-[3px]" style={{ background: '#040813', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      {d === 'connectivity-command' ? <NationalConnectivityCommand id={id} now={now} />
-        : d === 'cyber-resilience' ? <CyberSecurityResilience id={id} now={now} />
-          : d === 'identity-spectrum' ? <DigitalIdentitySpectrum id={id} now={now} />
-            : <CommsForesightPortal id={id} now={now} />}
-      <div className="px-3 pb-3">
-        <RuntimeQueue scope={`${id}:${d}`} kind={WF[d] ?? 'case'} title={`${label} runtime — execute the communications workflow`} by="Network Officer" role={role} withheld={withheld} />
-      </div>
-    </div>
+    <CommunicationsShell id={appId} surface={surface} now={now} role={role} withheld={withheld} />
   );
 }
