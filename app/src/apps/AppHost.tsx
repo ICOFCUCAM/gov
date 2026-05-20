@@ -17,6 +17,7 @@ import { PoliceCommandApp } from '@/apps/police-command/PoliceCommandApp';
 import { ImmigrationApp } from '@/apps/immigration/ImmigrationApp';
 import { CustomsApp } from '@/apps/customs/CustomsApp';
 import { EmergencyResponseApp } from '@/apps/emergency-response/EmergencyResponseApp';
+import { ForeignAffairsApp } from '@/apps/foreign-affairs/ForeignAffairsApp';
 import { MinistryEducationApp } from '@/apps/ministry-education/MinistryEducationApp';
 import { MinistryTransportApp } from '@/apps/ministry-transport/MinistryTransportApp';
 import { MinistryEnergyApp } from '@/apps/ministry-energy/MinistryEnergyApp';
@@ -285,6 +286,8 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                   <CustomsApp appId={app.id} domain={active ?? 'clearance'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'emergency-response' ? (
                   <EmergencyResponseApp appId={app.id} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
+                ) : app.id === 'foreign-affairs' ? (
+                  <ForeignAffairsApp appId={app.id} domain={active ?? 'geopolitical-command'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'citizen-wallet' ? (
                   <CitizenWalletApp appId={app.id} domain={active ?? 'identity'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'officer-console' ? (

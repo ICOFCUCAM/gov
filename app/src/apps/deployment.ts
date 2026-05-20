@@ -63,6 +63,8 @@ export const DEPLOYABLE_ROOTS: DeployableRoot[] = [
     ['clearance', 'tariffs-duties', 'inspection', 'revenue']),
   R('emergency-response', 'Emergency Response', 'agency', 'emergency',
     ['crisis-command', 'dispatch', 'resource-coordination', 'recovery-workflows']),
+  R('foreign-affairs', 'Foreign Affairs & Geopolitical Relations', 'agency', 'foreign',
+    ['geopolitical-command', 'diplomatic-missions', 'treaties-alliances', 'crisis-foresight', 'consular-continuity', 'multilateral-coordination']),
   R('citizen-wallet', 'Citizen Wallet', 'citizen', 'citizen',
     ['identity', 'services', 'payments']),
   R('officer-console', 'Officer Console', 'officer', 'officer',
