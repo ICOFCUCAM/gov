@@ -444,6 +444,44 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Rights petitions docket', 'citizen'),
       S('Attorney registration & discipline', 'regulatory'),
     ]),
+    // ── Justice reference-tier expansion (23 new domains) ─────────
+    G('separation-of-powers', 'Separation of Powers', '§ II — three-branch independence', [
+      S('Branch independence index', 'audit'),
+    ]),
+    G('emergency-powers', 'Emergency Powers Watch', '§ III — Art. V invocations & sunset', [
+      S('Active invocations register', 'audit'),
+    ]),
+    G('sovereignty-defence', 'Sovereignty Defence', '§ IV — constitutional integrity over 20 years', [
+      S('Integrity trajectory', 'analytics'),
+    ]),
+    G('supreme-court-bench', 'Supreme Court Bench', '⚖ II — apex bench live matters', [
+      S('Apex docket', 'workflow'),
+    ]),
+    G('appellate-routing', 'Appellate Routing Ladder', '⚖ III — case escalation between tiers', [
+      S('Tier ladder', 'network'),
+    ]),
+    G('judicial-statistics', 'Judicial Statistics', '⚖ IV — caseload throughput', [
+      S('Backlog distribution', 'analytics'),
+    ]),
+    G('judicial-conduct', 'Judicial Conduct Office', '⚖ V — discipline & recusals', [
+      S('Conduct review docket', 'audit'),
+    ]),
+    G('civil-docket', 'Civil Docket', '¶ I — civil case filings', [S('Civil filing pipeline', 'workflow')]),
+    G('criminal-docket', 'Criminal Docket', '¶ II — criminal case filings', [S('Criminal filing pipeline', 'workflow')]),
+    G('family-docket', 'Family Docket', '¶ III — family case filings', [S('Family filing pipeline', 'workflow')]),
+    G('commercial-docket', 'Commercial Docket', '¶ IV — commercial case filings', [S('Commercial filing pipeline', 'workflow')]),
+    G('administrative-docket', 'Administrative Review Docket', '¶ V — administrative legality', [S('Administrative review pipeline', 'workflow')]),
+    G('case-scheduling', 'Case Scheduling Chamber', '¶ VI — procedural deadlines', [S('Stage progression', 'workflow')]),
+    G('evidence-vault', 'Evidence Vault', '✠ II — cryptographic chain-of-custody', [S('Chain-of-custody ledger', 'audit')]),
+    G('judicial-signatures', 'Judicial Signatures', '✠ III — HSM-backed sig registry', [S('Signature throughput', 'audit')]),
+    G('authentication-queue', 'Authentication Queue', '⚗ II — evidence pending auth', [S('Backlog by discipline', 'workflow')]),
+    G('rights-petitions', 'Constitutional Petitions', '☩ II — rights petitions docket', [S('Petition docket', 'citizen')]),
+    G('public-docket-redacted', 'Public Docket (Redacted)', '☩ III — public record view', [S('Redacted public docket', 'citizen')]),
+    G('legal-aid', 'Legal Aid Intake', '☩ IV — counsel of last resort', [S('Aid-eligible matters', 'citizen')]),
+    G('corrections-administration', 'Corrections Administration', '◇ I — facility administration', [S('Facility register', 'field')]),
+    G('probation-registry', 'Probation Registry', '◇ II — post-custodial conditions', [S('Probation programme register', 'registry')]),
+    G('attorney-registry', 'Attorney Registry', '◊ II — bar admissions & discipline', [S('Bar discipline register', 'regulatory')]),
+    G('continuity-cascade', 'Cross-Ministry Cascade', '⏳ II — constitutional events propagating', [S('Cascade chronology', 'audit')]),
   ],
   ENVIRONMENT: [
     G('command', 'Environment Command', 'Climate & ecology authority', [

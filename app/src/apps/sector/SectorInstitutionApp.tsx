@@ -15,13 +15,8 @@ import { environmentOps } from '@/lib/gov/environment-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
-import { ConstitutionalReviewChamber } from '@/apps/ministry-justice/ConstitutionalReviewChamber';
-import { JudicialOperationsRoster } from '@/apps/ministry-justice/JudicialOperationsRoster';
-import { RightsAdministrativeReview } from '@/apps/ministry-justice/RightsAdministrativeReview';
-import { JusticeContinuityForesight } from '@/apps/ministry-justice/JusticeContinuityForesight';
-import { LegalRecordsContinuity } from '@/apps/ministry-justice/LegalRecordsContinuity';
-import { ForensicEvidenceCoordination } from '@/apps/ministry-justice/ForensicEvidenceCoordination';
-import { PublicJusticePortal } from '@/apps/ministry-justice/PublicJusticePortal';
+import { JusticeShell } from '@/apps/ministry-justice/shell/JusticeShell';
+import type { SurfaceId } from '@/apps/ministry-justice/core/domains';
 import { NationalIndustrialCommand } from '@/apps/ministry-trade/NationalIndustrialCommand';
 import { TradeCorridorsExports } from '@/apps/ministry-trade/TradeCorridorsExports';
 import { SupplyChainCommerce } from '@/apps/ministry-trade/SupplyChainCommerce';
@@ -61,6 +56,14 @@ const WF: Record<string, WorkKind> = {
   'constitutional-review': 'incident', 'judicial-operations': 'case',
   'rights-administrative': 'incident', 'justice-foresight': 'incident',
   'legal-records': 'permit', 'forensic-evidence': 'case', 'justice-portal': 'approval',
+  'separation-of-powers': 'judicial', 'emergency-powers': 'judicial', 'sovereignty-defence': 'incident',
+  'supreme-court-bench': 'judicial', 'appellate-routing': 'judicial', 'judicial-statistics': 'judicial',
+  'judicial-conduct': 'judicial', 'civil-docket': 'judicial', 'criminal-docket': 'judicial',
+  'family-docket': 'judicial', 'commercial-docket': 'judicial', 'administrative-docket': 'judicial',
+  'case-scheduling': 'judicial', 'evidence-vault': 'permit', 'judicial-signatures': 'judicial',
+  'authentication-queue': 'lab', 'rights-petitions': 'judicial', 'public-docket-redacted': 'judicial',
+  'legal-aid': 'case', 'corrections-administration': 'incident', 'probation-registry': 'case',
+  'attorney-registry': 'permit', 'continuity-cascade': 'incident',
   'industrial-command': 'incident', 'trade-corridors': 'procurement',
   'supply-chain': 'procurement', 'economic-foresight': 'incident',
   'planetary-resilience': 'incident', 'biosphere-restoration': 'case',
@@ -180,14 +183,11 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   // The Ministry of Interior command surface is the dense National Security
   // & Civil Operations ecosystem; other archetypes/domains keep the ops
   // execution rhythm.
+  // Justice ministry has its own JusticeShell as the reference-tier
+  // implementation — dispatches all 30 domain surfaces through the
+  // Justice design system.
   const justiceCorr = archetype === 'JUSTICE' && domain === 'corrections';
-  const justiceConstReview = archetype === 'JUSTICE' && domain === 'constitutional-review';
-  const justiceJudOps = archetype === 'JUSTICE' && domain === 'judicial-operations';
-  const justiceRights = archetype === 'JUSTICE' && domain === 'rights-administrative';
-  const justiceForesight = archetype === 'JUSTICE' && domain === 'justice-foresight';
-  const justiceRecords = archetype === 'JUSTICE' && domain === 'legal-records';
-  const justiceForensic = archetype === 'JUSTICE' && domain === 'forensic-evidence';
-  const justicePortal = archetype === 'JUSTICE' && domain === 'justice-portal';
+  const isJustice = archetype === 'JUSTICE' && !justiceCorr;
   const tradeIndCmd = archetype === 'TRADE' && domain === 'industrial-command';
   const tradeCorridors = archetype === 'TRADE' && domain === 'trade-corridors';
   const tradeSupply = archetype === 'TRADE' && domain === 'supply-chain';
@@ -218,20 +218,8 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
       {justiceCorr ? (
         <PrisonsCorrections id={id} now={now} />
-      ) : justiceConstReview ? (
-        <ConstitutionalReviewChamber id={id} now={now} />
-      ) : justiceJudOps ? (
-        <JudicialOperationsRoster id={id} now={now} />
-      ) : justiceRights ? (
-        <RightsAdministrativeReview id={id} now={now} />
-      ) : justiceForesight ? (
-        <JusticeContinuityForesight id={id} now={now} />
-      ) : justiceRecords ? (
-        <LegalRecordsContinuity id={id} now={now} />
-      ) : justiceForensic ? (
-        <ForensicEvidenceCoordination id={id} now={now} />
-      ) : justicePortal ? (
-        <PublicJusticePortal id={id} now={now} />
+      ) : isJustice ? (
+        <JusticeShell id={id} surface={(domain as SurfaceId) ?? 'constitutional-review'} now={now} role={role} withheld={withheld} />
       ) : tradeIndCmd ? (
         <NationalIndustrialCommand id={id} now={now} />
       ) : tradeCorridors ? (
