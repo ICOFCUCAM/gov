@@ -276,6 +276,26 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Vehicle registry', 'registry'), S('Driver licensing', 'citizen'),
       S('Transit information', 'citizen'),
     ]),
+    G('mobility-theater', 'Mobility Command Theater', 'National corridor flow & route stabilisation', [
+      S('Corridor flow lattice', 'network'),
+      S('Regional congestion heat', 'analytics'),
+      S('Emergency corridor activation', 'workflow'),
+    ]),
+    G('multi-modal', 'Multi-modal Operations', 'Ports · Rail · Aviation in one operational view', [
+      S('Port traffic & customs', 'logistics'),
+      S('Rail synchronisation', 'logistics'),
+      S('Airspace strain & cargo', 'workflow'),
+    ]),
+    G('logistics-network', 'National Logistics & Infrastructure', 'Supply-chain continuity + asset integrity', [
+      S('Logistics lane continuity', 'logistics'),
+      S('Infrastructure integrity', 'field'),
+      S('Inter-ministry support map', 'audit'),
+    ]),
+    G('transport-continuity', 'Transport Continuity & Emergency', 'Emergency response + forecasting + cascade', [
+      S('Transport incident cascade', 'workflow'),
+      S('Inter-ministry propagation', 'audit'),
+      S('24h congestion forecast', 'analytics'),
+    ]),
   ],
   JUSTICE: [
     G('command', 'Justice Command', 'Rule-of-law administration', [

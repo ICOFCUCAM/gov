@@ -8,14 +8,28 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { transportOps, transportCommand } from '@/lib/gov/transport-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MunicipalSystems } from '@/apps/ministry-transport/MunicipalSystems';
+import { MobilityCommandTheater } from '@/apps/ministry-transport/MobilityCommandTheater';
+import { MultiModalOperations } from '@/apps/ministry-transport/MultiModalOperations';
+import { LogisticsNetwork } from '@/apps/ministry-transport/LogisticsNetwork';
+import { TransportContinuity } from '@/apps/ministry-transport/TransportContinuity';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
 const ACC = '#37c7d4';
-const WF: Record<string, WorkKind> = { command: 'incident', aviation: 'case', maritime: 'case', rail: 'case', road: 'case', logistics: 'procurement', citizen: 'permit' };
-const LABEL: Record<string, string> = { command: 'Transport Command', aviation: 'Aviation Systems', maritime: 'Maritime Systems', rail: 'Rail Systems', road: 'Road Systems', logistics: 'Logistics & Fleet', citizen: 'Mobility Services' };
+const WF: Record<string, WorkKind> = {
+  command: 'incident', aviation: 'case', maritime: 'case', rail: 'case', road: 'case', logistics: 'procurement', citizen: 'permit',
+  'mobility-theater': 'incident', 'multi-modal': 'incident', 'logistics-network': 'procurement', 'transport-continuity': 'incident',
+};
+const LABEL: Record<string, string> = {
+  command: 'Transport Command', aviation: 'Aviation Systems', maritime: 'Maritime Systems',
+  rail: 'Rail Systems', road: 'Road Systems', logistics: 'Logistics & Fleet', citizen: 'Mobility Services',
+  'mobility-theater': 'National Mobility Command Theater',
+  'multi-modal': 'Ports · Rail · Aviation Operations',
+  'logistics-network': 'National Logistics & Infrastructure',
+  'transport-continuity': 'Transport Continuity & Emergency Response',
+};
 type K = { l: string; v: string; t: Tone };
 const strip = (items: K[]) => items.map((m, i) => ({ ...m, s: '', k: `tp${i}` }));
 
@@ -73,9 +87,18 @@ export function MinistryTransportApp({ instanceId, domain, now, role, withheld }
   }
 
   return (
-    <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
+    <div className="space-y-2 rounded-[5px] p-2"
+      style={{ background: 'linear-gradient(180deg, #0a0c10 0%, #07090d 100%)', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
       {isOverview ? (
         <MunicipalSystems id={id} now={now} />
+      ) : d === 'mobility-theater' ? (
+        <MobilityCommandTheater id={id} now={now} />
+      ) : d === 'multi-modal' ? (
+        <MultiModalOperations id={id} now={now} />
+      ) : d === 'logistics-network' ? (
+        <LogisticsNetwork id={id} now={now} />
+      ) : d === 'transport-continuity' ? (
+        <TransportContinuity id={id} now={now} />
       ) : (
         <>
           <OpsHeader index={1} title={`Transport · ${label}`} subtitle="Sovereign Transport Execution"
