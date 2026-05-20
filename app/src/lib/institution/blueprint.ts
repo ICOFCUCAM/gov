@@ -110,6 +110,16 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Ward & nurse stations', 'network'), S('Surgical queue', 'workflow'),
       S('Medication schedules', 'workflow'),
     ]),
+    // ── Health reference-tier expansion (9 new domains) ───────────
+    G('ward-board', 'Ward Board', '◧ II — inpatient bay layout', [S('Bay status', 'field')]),
+    G('icu-board', 'ICU Board', '◧ III — critical care · live vital signs', [S('Vital signs per bay', 'emergency')]),
+    G('or-board', 'Operating Theatre Board', '◧ IV — surgical scheduling', [S('Theatre line-up', 'workflow')]),
+    G('emergency-department', 'Emergency Department', '◧ V — ED triage queue', [S('Triage queue', 'emergency')]),
+    G('syndromic-surveillance', 'Syndromic Surveillance', '⌬ I — outbreak detection', [S('Above-baseline alerts', 'intelligence')]),
+    G('contact-tracing', 'Contact Tracing', '⌬ II — privacy-safe contact tracing', [S('Consent doctrine', 'workflow')]),
+    G('master-patient-index', 'Master Patient Index', '⊟ I — CivicID-linked MPI', [S('Linkage doctrine', 'registry')]),
+    G('longitudinal-ehr', 'Longitudinal EHR', '⊟ II — FHIR R5+ encounter view', [S('Encounter chart', 'workflow')]),
+    G('break-glass-audit', 'Break-Glass Audit', '◇ II — emergency EHR access with mandatory review', [S('Invocation log', 'audit')]),
   ],
   FINANCE: [
     G('command', 'Fiscal Command', 'Sovereign fiscal authority', [

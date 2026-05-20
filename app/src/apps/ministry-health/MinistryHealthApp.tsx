@@ -35,8 +35,15 @@ import { ExecutiveBriefingSystem } from '@/apps/ministry-health/subsystems/Execu
 import { ResearchSystemView } from '@/apps/ministry-health/subsystems/ResearchSystemView';
 import { WardSurgicalSystem } from '@/apps/ministry-health/subsystems/WardSurgicalSystem';
 import { MinistryChainSection } from '@/apps/_shared/InstitutionChain';
+import { HealthShell } from '@/apps/ministry-health/shell/HealthShell';
+import { HEALTH_DOMAINS, type SurfaceId as ShellSurfaceId } from '@/apps/ministry-health/core/domains';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+
+// Legacy domains keep their existing renderers; new reference-tier
+// surfaces dispatch through HealthShell.
+const LEGACY_HEALTH_DOMAINS = new Set(['command', 'situation', 'briefing', 'capacity', 'hospitals', 'doctor', 'patient', 'disease', 'lab', 'pharma', 'emergency', 'ward', 'finance', 'regulatory', 'interop', 'citizen', 'research', 'security', 'simulation']);
+const HEALTH_SHELL_SURFACES: Set<string> = new Set(HEALTH_DOMAINS.map(d => d.surface as string).filter(s => !LEGACY_HEALTH_DOMAINS.has(s)));
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 
@@ -90,6 +97,13 @@ export function MinistryHealthApp({
 }: { instanceId: string; domain: string; now: number; role: SovereignRole; withheld: Capability[] }) {
   const id = instanceId;
   const ts = now / 4000;
+
+  // Reference-tier delegation — if the requested domain is one of
+  // the new HealthShell surfaces, render the shell directly.
+  if (HEALTH_SHELL_SURFACES.has(domain)) {
+    return <HealthShell id={id} surface={domain as ShellSurfaceId} now={now} role={role} withheld={withheld} />;
+  }
+
   const d = (DOMAIN_WF[domain] ? domain : 'command');
   const wf = DOMAIN_WF[d] ?? 'case';
   const label = DOMAIN_LABEL[d] ?? 'Health Command';
