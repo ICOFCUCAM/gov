@@ -37,6 +37,9 @@ import { NationalWorkforceCommand } from '@/apps/ministry-labour/NationalWorkfor
 import { SocialProtectionSystems } from '@/apps/ministry-labour/SocialProtectionSystems';
 import { DemographicLaborAnalytics } from '@/apps/ministry-labour/DemographicLaborAnalytics';
 import { SocialContinuityCrisis } from '@/apps/ministry-labour/SocialContinuityCrisis';
+import { LabourEmergencyRecovery } from '@/apps/ministry-labour/LabourEmergencyRecovery';
+import { WorkplaceSafetyRights } from '@/apps/ministry-labour/WorkplaceSafetyRights';
+import { PublicLabourPortal } from '@/apps/ministry-labour/PublicLabourPortal';
 import { FoodContinuityCommand } from '@/apps/ministry-agriculture/FoodContinuityCommand';
 import { HarvestProductionField } from '@/apps/ministry-agriculture/HarvestProductionField';
 import { WaterClimateInfrastructure } from '@/apps/ministry-agriculture/WaterClimateInfrastructure';
@@ -66,6 +69,7 @@ const WF: Record<string, WorkKind> = {
   'environment-portal': 'approval',
   'workforce-command': 'incident', 'social-protection': 'approval',
   'demographic-analytics': 'case', 'social-continuity': 'incident',
+  'labour-recovery': 'incident', 'workplace-rights': 'case', 'labour-portal': 'approval',
   'rural-governance': 'case', 'agri-intelligence': 'incident', 'agri-portal': 'approval',
 };
 type FocusItem = { l: string; v: string; t?: Tone };
@@ -199,6 +203,9 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   const lbrSocial = archetype === 'LABOR' && domain === 'social-protection';
   const lbrDemo = archetype === 'LABOR' && domain === 'demographic-analytics';
   const lbrCrisis = archetype === 'LABOR' && domain === 'social-continuity';
+  const lbrRecovery = archetype === 'LABOR' && domain === 'labour-recovery';
+  const lbrRights = archetype === 'LABOR' && domain === 'workplace-rights';
+  const lbrPortal = archetype === 'LABOR' && domain === 'labour-portal';
   const agriFood = archetype === 'AGRICULTURE' && domain === 'food-continuity';
   const agriProd = archetype === 'AGRICULTURE' && domain === 'harvest-production';
   const agriWater = archetype === 'AGRICULTURE' && domain === 'water-climate';
@@ -255,6 +262,12 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <DemographicLaborAnalytics id={id} now={now} />
       ) : lbrCrisis ? (
         <SocialContinuityCrisis id={id} now={now} />
+      ) : lbrRecovery ? (
+        <LabourEmergencyRecovery id={id} now={now} />
+      ) : lbrRights ? (
+        <WorkplaceSafetyRights id={id} now={now} />
+      ) : lbrPortal ? (
+        <PublicLabourPortal id={id} now={now} />
       ) : agriFood ? (
         <FoodContinuityCommand id={id} now={now} />
       ) : agriProd ? (

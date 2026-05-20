@@ -566,6 +566,23 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Labour-rights dispute ledger', 'audit'),
       S('25-year workforce trajectory', 'analytics'),
     ]),
+    G('labour-recovery', 'Labour Emergency & Recovery Operations', 'Industrial closures · redeployment corridors · emergency programmes', [
+      S('Industrial closures register', 'emergency'),
+      S('Redeployment corridors', 'workflow'),
+      S('Emergency social programmes', 'finance'),
+    ]),
+    G('workplace-rights', 'Workplace Safety & Labour Rights', 'Inspections · occupational incidents · tribunal lanes', [
+      S('Workplace inspections', 'regulatory'),
+      S('Occupational incidents', 'audit'),
+      S('Tribunal lanes', 'workflow'),
+    ]),
+    G('labour-portal', 'Public Labour & Welfare Portal', 'Employment · pension · complaints · vocational · advisories', [
+      S('Employment applications', 'citizen'),
+      S('Pension access requests', 'citizen'),
+      S('Labour complaints', 'citizen'),
+      S('Vocational enrolment lanes', 'workflow'),
+      S('Public advisories', 'citizen'),
+    ]),
   ],
   TRADE: [
     G('command', 'Trade Command', 'Commerce & industry authority', [
