@@ -17,6 +17,8 @@ import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/Institutio
 import { PrisonsCorrections } from '@/apps/justice/PrisonsCorrections';
 import { JusticeShell } from '@/apps/ministry-justice/shell/JusticeShell';
 import type { SurfaceId } from '@/apps/ministry-justice/core/domains';
+import { EnvironmentShell } from '@/apps/ministry-environment/shell/EnvironmentShell';
+import { resolveEnvironmentSurface } from '@/apps/ministry-environment/core/domains';
 import { NationalIndustrialCommand } from '@/apps/ministry-trade/NationalIndustrialCommand';
 import { TradeCorridorsExports } from '@/apps/ministry-trade/TradeCorridorsExports';
 import { SupplyChainCommerce } from '@/apps/ministry-trade/SupplyChainCommerce';
@@ -188,6 +190,7 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   // Justice design system.
   const justiceCorr = archetype === 'JUSTICE' && domain === 'corrections';
   const isJustice = archetype === 'JUSTICE' && !justiceCorr;
+  const isEnvironment = archetype === 'ENVIRONMENT';
   const tradeIndCmd = archetype === 'TRADE' && domain === 'industrial-command';
   const tradeCorridors = archetype === 'TRADE' && domain === 'trade-corridors';
   const tradeSupply = archetype === 'TRADE' && domain === 'supply-chain';
@@ -220,6 +223,8 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <PrisonsCorrections id={id} now={now} />
       ) : isJustice ? (
         <JusticeShell id={id} surface={(domain as SurfaceId) ?? 'constitutional-review'} now={now} role={role} withheld={withheld} />
+      ) : isEnvironment ? (
+        <EnvironmentShell id={id} surface={resolveEnvironmentSurface(domain)} now={now} role={role} withheld={withheld} />
       ) : tradeIndCmd ? (
         <NationalIndustrialCommand id={id} now={now} />
       ) : tradeCorridors ? (
