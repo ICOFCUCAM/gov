@@ -19,6 +19,10 @@ import { ConstitutionalReviewChamber } from '@/apps/ministry-justice/Constitutio
 import { JudicialOperationsRoster } from '@/apps/ministry-justice/JudicialOperationsRoster';
 import { RightsAdministrativeReview } from '@/apps/ministry-justice/RightsAdministrativeReview';
 import { JusticeContinuityForesight } from '@/apps/ministry-justice/JusticeContinuityForesight';
+import { NationalIndustrialCommand } from '@/apps/ministry-trade/NationalIndustrialCommand';
+import { TradeCorridorsExports } from '@/apps/ministry-trade/TradeCorridorsExports';
+import { SupplyChainCommerce } from '@/apps/ministry-trade/SupplyChainCommerce';
+import { EconomicForesightCrisis } from '@/apps/ministry-trade/EconomicForesightCrisis';
 import { FoodContinuityCommand } from '@/apps/ministry-agriculture/FoodContinuityCommand';
 import { HarvestProductionField } from '@/apps/ministry-agriculture/HarvestProductionField';
 import { WaterClimateInfrastructure } from '@/apps/ministry-agriculture/WaterClimateInfrastructure';
@@ -36,6 +40,8 @@ const WF: Record<string, WorkKind> = {
   licensing: 'permit', registry: 'permit', export: 'procurement', monitoring: 'case',
   'constitutional-review': 'incident', 'judicial-operations': 'case',
   'rights-administrative': 'incident', 'justice-foresight': 'incident',
+  'industrial-command': 'incident', 'trade-corridors': 'procurement',
+  'supply-chain': 'procurement', 'economic-foresight': 'incident',
 };
 type FocusItem = { l: string; v: string; t?: Tone };
 function focusFor(a: ArchetypeKey, d: string, id: string, ts: number): FocusItem[] | null {
@@ -150,6 +156,10 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   const justiceJudOps = archetype === 'JUSTICE' && domain === 'judicial-operations';
   const justiceRights = archetype === 'JUSTICE' && domain === 'rights-administrative';
   const justiceForesight = archetype === 'JUSTICE' && domain === 'justice-foresight';
+  const tradeIndCmd = archetype === 'TRADE' && domain === 'industrial-command';
+  const tradeCorridors = archetype === 'TRADE' && domain === 'trade-corridors';
+  const tradeSupply = archetype === 'TRADE' && domain === 'supply-chain';
+  const tradeForesight = archetype === 'TRADE' && domain === 'economic-foresight';
   const agriFood = archetype === 'AGRICULTURE' && domain === 'food-continuity';
   const agriProd = archetype === 'AGRICULTURE' && domain === 'harvest-production';
   const agriWater = archetype === 'AGRICULTURE' && domain === 'water-climate';
@@ -167,6 +177,14 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <RightsAdministrativeReview id={id} now={now} />
       ) : justiceForesight ? (
         <JusticeContinuityForesight id={id} now={now} />
+      ) : tradeIndCmd ? (
+        <NationalIndustrialCommand id={id} now={now} />
+      ) : tradeCorridors ? (
+        <TradeCorridorsExports id={id} now={now} />
+      ) : tradeSupply ? (
+        <SupplyChainCommerce id={id} now={now} />
+      ) : tradeForesight ? (
+        <EconomicForesightCrisis id={id} now={now} />
       ) : agriFood ? (
         <FoodContinuityCommand id={id} now={now} />
       ) : agriProd ? (

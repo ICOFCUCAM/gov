@@ -465,6 +465,26 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
     G('citizen', 'Business Services', 'Enterprise-facing services', [
       S('Business portal', 'citizen'), S('Permit applications', 'citizen'),
     ]),
+    G('industrial-command', 'National Industrial Command', 'Sovereign industrial output continuity & factory lattice', [
+      S('Factory network lattice', 'network'),
+      S('Industrial capacity ledger', 'analytics'),
+      S('Strategic prioritisation board', 'command'),
+    ]),
+    G('trade-corridors', 'Trade Corridors & Exports', 'Trade-route geometry, customs, tariff escalation', [
+      S('Trade-corridor rails', 'network'),
+      S('Tariff pressure marquee', 'regulatory'),
+      S('Trade agreements roster', 'registry'),
+    ]),
+    G('supply-chain', 'Supply Chain & Commerce', 'Strategic production · industrial districts · supply-chain visibility', [
+      S('Supply-chain flow stripes', 'analytics'),
+      S('Strategic production register', 'workflow'),
+      S('Industrial districts grid', 'network'),
+    ]),
+    G('economic-foresight', 'Economic Foresight & Industrial Crisis', '20-year industrial trajectory + crisis cascade', [
+      S('Long-horizon industrial trajectory', 'analytics'),
+      S('Industrial crisis chronology', 'workflow'),
+      S('Cross-ministry economic cascade', 'audit'),
+    ]),
   ],
   GENERIC: [
     G('command', 'Institutional Command', 'Executive authority', [
