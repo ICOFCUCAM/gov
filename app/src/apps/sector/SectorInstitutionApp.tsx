@@ -23,6 +23,10 @@ import { NationalIndustrialCommand } from '@/apps/ministry-trade/NationalIndustr
 import { TradeCorridorsExports } from '@/apps/ministry-trade/TradeCorridorsExports';
 import { SupplyChainCommerce } from '@/apps/ministry-trade/SupplyChainCommerce';
 import { EconomicForesightCrisis } from '@/apps/ministry-trade/EconomicForesightCrisis';
+import { PlanetaryClimateResilience } from '@/apps/ministry-environment/PlanetaryClimateResilience';
+import { BiosphereRestorationAtlas } from '@/apps/ministry-environment/BiosphereRestorationAtlas';
+import { AtmosphericHydrologicalSystems } from '@/apps/ministry-environment/AtmosphericHydrologicalSystems';
+import { EcologicalForesightCrisis } from '@/apps/ministry-environment/EcologicalForesightCrisis';
 import { FoodContinuityCommand } from '@/apps/ministry-agriculture/FoodContinuityCommand';
 import { HarvestProductionField } from '@/apps/ministry-agriculture/HarvestProductionField';
 import { WaterClimateInfrastructure } from '@/apps/ministry-agriculture/WaterClimateInfrastructure';
@@ -42,6 +46,8 @@ const WF: Record<string, WorkKind> = {
   'rights-administrative': 'incident', 'justice-foresight': 'incident',
   'industrial-command': 'incident', 'trade-corridors': 'procurement',
   'supply-chain': 'procurement', 'economic-foresight': 'incident',
+  'planetary-resilience': 'incident', 'biosphere-restoration': 'case',
+  'atmospheric-hydrology': 'incident', 'ecological-foresight': 'incident',
 };
 type FocusItem = { l: string; v: string; t?: Tone };
 function focusFor(a: ArchetypeKey, d: string, id: string, ts: number): FocusItem[] | null {
@@ -160,6 +166,10 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   const tradeCorridors = archetype === 'TRADE' && domain === 'trade-corridors';
   const tradeSupply = archetype === 'TRADE' && domain === 'supply-chain';
   const tradeForesight = archetype === 'TRADE' && domain === 'economic-foresight';
+  const envPlanetary = archetype === 'ENVIRONMENT' && domain === 'planetary-resilience';
+  const envBiosphere = archetype === 'ENVIRONMENT' && domain === 'biosphere-restoration';
+  const envAtmos = archetype === 'ENVIRONMENT' && domain === 'atmospheric-hydrology';
+  const envForesight = archetype === 'ENVIRONMENT' && domain === 'ecological-foresight';
   const agriFood = archetype === 'AGRICULTURE' && domain === 'food-continuity';
   const agriProd = archetype === 'AGRICULTURE' && domain === 'harvest-production';
   const agriWater = archetype === 'AGRICULTURE' && domain === 'water-climate';
@@ -185,6 +195,14 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <SupplyChainCommerce id={id} now={now} />
       ) : tradeForesight ? (
         <EconomicForesightCrisis id={id} now={now} />
+      ) : envPlanetary ? (
+        <PlanetaryClimateResilience id={id} now={now} />
+      ) : envBiosphere ? (
+        <BiosphereRestorationAtlas id={id} now={now} />
+      ) : envAtmos ? (
+        <AtmosphericHydrologicalSystems id={id} now={now} />
+      ) : envForesight ? (
+        <EcologicalForesightCrisis id={id} now={now} />
       ) : agriFood ? (
         <FoodContinuityCommand id={id} now={now} />
       ) : agriProd ? (

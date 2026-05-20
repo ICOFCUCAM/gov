@@ -397,6 +397,26 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
     G('citizen', 'Public Environment', 'Citizen-facing services', [
       S('Environmental portal', 'citizen'), S('Incident reporting', 'citizen'),
     ]),
+    G('planetary-resilience', 'Planetary Climate Resilience', 'National climate command · ecoregion lattice', [
+      S('Stratified planetary readout', 'analytics'),
+      S('Ecoregion stress lattice', 'network'),
+      S('Civilisational survivability', 'command'),
+    ]),
+    G('biosphere-restoration', 'Biosphere & Restoration', 'Biodiversity · protected regions · restoration corridors', [
+      S('Protected-region atlas', 'registry'),
+      S('Restoration corridors', 'workflow'),
+      S('Habitat-loss vs reforestation', 'analytics'),
+    ]),
+    G('atmospheric-hydrology', 'Atmospheric & Hydrological Systems', 'Weather events · river basins · oceanic continuity', [
+      S('Atmospheric event feed', 'intelligence'),
+      S('River basin currents', 'field'),
+      S('Oceanic readout', 'analytics'),
+    ]),
+    G('ecological-foresight', 'Ecological Foresight & Crisis', '25-year planetary trajectory + ecological crisis cascade', [
+      S('Long-horizon planetary trajectory', 'analytics'),
+      S('Pollution & compliance ledger', 'regulatory'),
+      S('Ecological crisis chronology', 'workflow'),
+    ]),
   ],
   INTERIOR: [
     G('command', 'Interior Command', 'Internal coordination authority', [
