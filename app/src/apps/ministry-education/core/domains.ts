@@ -8,7 +8,8 @@ import type { EducationArchetype } from '@/apps/ministry-education/design-system
 
 export type EducationGroupKey =
   | 'command' | 'institutions' | 'cohorts' | 'research'
-  | 'knowledge' | 'curriculum' | 'continuity' | 'memory' | 'portal' | 'oversight';
+  | 'knowledge' | 'curriculum' | 'continuity' | 'memory' | 'portal' | 'oversight'
+  | 'futurist';
 
 export interface EducationGroup {
   key: EducationGroupKey;
@@ -18,6 +19,9 @@ export interface EducationGroup {
 }
 
 export type EducationSurfaceId =
+  // futurist (front of menu — defines the leap)
+  | 'sovereign-learner-twin' | 'ai-tutor-mesh' | 'neural-curriculum-graph'
+  | 'civilizational-projection' | 'generational-foresight' | 'public-institution-index'
   // command
   | 'education-command' | 'literacy-board' | 'regional-literacy'
   // institutions
@@ -50,6 +54,7 @@ export interface EducationDomain {
 }
 
 export const EDUCATION_GROUPS: EducationGroup[] = [
+  { key: 'futurist',     label: 'Futurist Mesh',         purpose: 'Sovereign Learner Twin, AI Tutor Mesh, neural curriculum', blueprintSection: '14.0' },
   { key: 'command',      label: 'Education Command',     purpose: 'National literacy command',                  blueprintSection: '14.1' },
   { key: 'institutions', label: 'Institutions',          purpose: 'Schools, universities, teacher colleges',    blueprintSection: '14.2' },
   { key: 'cohorts',      label: 'Generational Cohorts',  purpose: 'Per-cohort readiness & equality',            blueprintSection: '14.3' },
@@ -63,6 +68,13 @@ export const EDUCATION_GROUPS: EducationGroup[] = [
 ];
 
 export const EDUCATION_DOMAINS: EducationDomain[] = [
+  // futurist mesh — leads the menu
+  { surface: 'sovereign-learner-twin',    group: 'futurist',     code: 'FT-LRN-00', label: 'Sovereign Learner Twin',     purpose: 'Privacy-preserving learner companion',   archetype: 'knowledge',   blueprintSection: '14.0' },
+  { surface: 'ai-tutor-mesh',             group: 'futurist',     code: 'FT-AIT-00', label: 'AI Tutor Mesh',              purpose: 'National AI-tutor mesh hubs',            archetype: 'knowledge',   blueprintSection: '14.0' },
+  { surface: 'neural-curriculum-graph',   group: 'futurist',     code: 'FT-NCG-00', label: 'Neural Curriculum Graph',    purpose: 'Adaptive cross-subject curriculum graph', archetype: 'curriculum', blueprintSection: '14.0' },
+  { surface: 'civilizational-projection', group: 'futurist',     code: 'FT-CVP-00', label: 'Civilizational Projection',  purpose: '100y intergenerational projection',      archetype: 'memory',      blueprintSection: '14.0' },
+  { surface: 'generational-foresight',    group: 'futurist',     code: 'FT-GFR-00', label: 'Generational Foresight',     purpose: 'Cohort-by-cohort capability foresight',  archetype: 'cohorts',     blueprintSection: '14.0' },
+  { surface: 'public-institution-index',  group: 'futurist',     code: 'FT-PII-00', label: 'Public Institution Index',   purpose: 'All Education public sites by branch',   archetype: 'institutions',blueprintSection: '14.0' },
   // command
   { surface: 'education-command',         group: 'command',      code: 'CM-EDU-01', label: 'National Education Command', purpose: 'Top-level education command',     archetype: 'command',     blueprintSection: '14.1' },
   { surface: 'literacy-board',            group: 'command',      code: 'CM-LIT-02', label: 'Literacy Board',             purpose: 'National literacy index',          archetype: 'command',     blueprintSection: '14.1' },

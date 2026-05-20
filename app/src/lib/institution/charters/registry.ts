@@ -236,8 +236,8 @@ export const CHARTERS: MinistryCharter[] = [
     hasDesignSystem: true,
     hasShell: true,
     federation: { produces: ['Labour', 'Cabinet', 'Health', 'Trade', 'Emergency', 'Justice'], consumes: ['Treasury', 'Foreign Affairs', 'Communications'], emitsCascade: true },
-    expectedDomains: 30,
-    shippedDomains: 30,
+    expectedDomains: 35,
+    shippedDomains: 35,
     workflows: [
       { id: 'curriculum-review', title: 'Curriculum review', kind: 'approval' },
       { id: 'exam-integrity-response', title: 'Examination integrity response', kind: 'incident' },

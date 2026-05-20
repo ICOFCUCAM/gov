@@ -19,9 +19,20 @@ const SOFT = '#5b6b78';
 const LINE = '#e8e3d6';
 const SERIF = 'Georgia, "Times New Roman", ui-serif, serif';
 
-const NAV = ['Home', 'About Us', 'Our Mandate', 'Services', 'Data & Reports', 'Legislation', 'Newsroom'];
-const QUICK_L = ['Revenue Collection', 'Budget Execution', 'Public Debt Management', 'Financial Reports'];
-const QUICK_R = ['Procurement Portal', 'Grant Management', 'Tax Policy & Administration', 'Financial Regulations'];
+const NAV = ['Home', 'About Us', 'Pillars', 'Services', 'Data & Reports', 'Legislation', 'Newsroom'];
+const QUICK_L = ['Treasury Command', 'Central Bank', 'Tax & Revenue', 'Procurement Grid'];
+const QUICK_R = ['Expenditure Control', 'Economic Intelligence', 'Taxpayer Portal', 'Public Budget'];
+
+// Six-pillar map of the Ministry of Finance, mirroring the operational
+// shell taxonomy.
+const PILLARS: { ordinal: string; label: string; href: string; tagline: string; glyph: string }[] = [
+  { ordinal: 'I',   label: 'National Treasury Command',    href: '/treasury', tagline: 'Sovereign fiscal posture · Single Account · Daily statement', glyph: '⌘' },
+  { ordinal: 'II',  label: 'Central Bank Operations',      href: '/treasury', tagline: 'GovPay · CBDC · Settlement · FX reserves · Public debt', glyph: '◴' },
+  { ordinal: 'III', label: 'Tax & Revenue Intelligence',   href: '/treasury', tagline: 'Tax · Customs · Taxpayer registry · e-Invoicing · Risk-based audit', glyph: '▤' },
+  { ordinal: 'IV',  label: 'National Procurement Grid',    href: '/treasury', tagline: 'Tenders · Contracts · Vendors · Milestone escrow', glyph: '⊟' },
+  { ordinal: 'V',   label: 'Public Expenditure Control',   href: '/treasury', tagline: 'Appropriation ledger · Funding chains · Cross-ministry allocation', glyph: '⊡' },
+  { ordinal: 'VI',  label: 'Economic Intelligence Center', href: '/treasury', tagline: 'Macro stability · 25y forecast · Audit trail · Anti-fraud', glyph: '✦' },
+];
 const SEG_C = [GREEN, '#2bb377', GOLD2, GOLD, '#caa75a', '#cfd2cb'];
 
 function Crest({ size = 44 }: { size?: number }) {
@@ -191,6 +202,32 @@ export default function PublicTreasuryHomepage() {
       </section>
 
       <div className="mx-auto max-w-[1280px] space-y-8 px-6 py-10">
+        {/* 2b. Six pillars of sovereign finance */}
+        <section>
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="text-[20px] font-bold" style={{ color: NAVY, fontFamily: SERIF }}>The Six Pillars of Sovereign Finance</h2>
+            <span className="text-[11px]" style={{ color: SOFT }}>{PILLARS.length} pillars · 29 surfaces · 1 citizen portal</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {PILLARS.map(p => (
+              <Link key={p.ordinal} href={p.href}
+                className="rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                style={{ borderColor: LINE }}>
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded text-[16px] font-bold"
+                    style={{ background: '#f6efde', color: GOLD }} aria-hidden>{p.glyph}</span>
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: GOLD }}>Pillar {p.ordinal}</div>
+                    <div className="text-[14px] font-bold" style={{ color: NAVY, fontFamily: SERIF }}>{p.label}</div>
+                  </div>
+                </div>
+                <p className="mt-2 text-[11.5px] leading-relaxed" style={{ color: SOFT }}>{p.tagline}</p>
+                <div className="mt-2 text-[11px] font-semibold" style={{ color: GREEN }}>Browse pillar →</div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
         {/* 3. Three info cards */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
           {/* Fiscal snapshot */}

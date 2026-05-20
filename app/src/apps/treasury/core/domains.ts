@@ -6,33 +6,33 @@
 
 import type { TreasuryArchetype } from '@/apps/treasury/design-system/treasury-ds';
 
+// Reorganised into the six sovereign-finance pillars. Each pillar owns
+// its own submenu in the operational shell and the public site. The
+// citizen portal sits below the pillars as a separate top-level menu.
 export type TreasuryGroupKey =
-  | 'command'      // fiscal command & posture
-  | 'ledger'       // public ledger / TSA / appropriation
-  | 'revenue'      // taxation / collection
-  | 'expenditure'  // budget execution / disbursement
-  | 'procurement'  // contracting / vendors
-  | 'rails'        // banking / settlement
-  | 'reserves'     // sovereign reserves / debt
-  | 'assurance'    // audit / anti-fraud
-  | 'portal';      // citizen-facing
+  | 'treasury-command'   // Pillar I  — National Treasury Command
+  | 'central-bank'       // Pillar II — Central Bank Operations
+  | 'tax-revenue'        // Pillar III — Tax & Revenue Intelligence
+  | 'procurement-grid'   // Pillar IV — National Procurement Grid
+  | 'expenditure-control'// Pillar V  — Public Expenditure Control
+  | 'economic-intel'     // Pillar VI — Economic Intelligence Center
+  | 'portal';            // Citizen Fiscal Portal (separate)
 
 export interface TreasuryGroup {
   key: TreasuryGroupKey;
   label: string;
   purpose: string;
+  pillar?: 'I' | 'II' | 'III' | 'IV' | 'V' | 'VI';
 }
 
 export const TREASURY_GROUPS: TreasuryGroup[] = [
-  { key: 'command',     label: 'Fiscal Command',          purpose: 'Macro stability · posture · single account oversight' },
-  { key: 'ledger',      label: 'Public Ledger',           purpose: 'TSA · sub-ledgers · appropriation register · daily reconciliation' },
-  { key: 'revenue',     label: 'Revenue Collection',      purpose: 'Tax · customs · e-invoicing · withholding' },
-  { key: 'expenditure', label: 'Budget Execution',        purpose: 'Appropriation drawdown · disbursement vouchers · expenditure control' },
-  { key: 'procurement', label: 'Procurement & Contracts', purpose: 'Tenders · awards · contract registry · vendor management' },
-  { key: 'rails',       label: 'Banking & Payments Rail', purpose: 'GovPay · GovCollect · CBDC · settlement & reconciliation' },
-  { key: 'reserves',    label: 'Reserves & Debt',         purpose: 'FX reserves · public debt · sovereign instruments' },
-  { key: 'assurance',   label: 'Fiscal Assurance',        purpose: 'Audit trail · anti-fraud · sanctions · compliance' },
-  { key: 'portal',      label: 'Citizen Fiscal Portal',   purpose: 'Taxpayer portal · refunds · receipts · CBDC wallet' },
+  { key: 'treasury-command',    pillar: 'I',   label: 'National Treasury Command',     purpose: 'Sovereign fiscal posture · TSA · daily statement · macro coordination' },
+  { key: 'central-bank',        pillar: 'II',  label: 'Central Bank Operations',       purpose: 'GovPay · CBDC · settlement · FX reserves · public-debt instruments' },
+  { key: 'tax-revenue',         pillar: 'III', label: 'Tax & Revenue Intelligence',    purpose: 'Tax · customs · taxpayer registry · e-invoicing · risk-based audit' },
+  { key: 'procurement-grid',    pillar: 'IV',  label: 'National Procurement Grid',     purpose: 'Tenders · contracts · vendor registry · milestone escrow' },
+  { key: 'expenditure-control', pillar: 'V',   label: 'Public Expenditure Control',    purpose: 'Appropriation ledger · disbursement vouchers · expenditure control · funding chains' },
+  { key: 'economic-intel',      pillar: 'VI',  label: 'Economic Intelligence Center',  purpose: 'Macro stability · 25y fiscal forecast · audit trail · anti-fraud intelligence' },
+  { key: 'portal',              label: 'Citizen Fiscal Portal',         purpose: 'Taxpayer portal · refunds · receipts · public-budget dashboard' },
 ];
 
 export type SurfaceId =
@@ -88,47 +88,51 @@ export interface TreasuryDomain {
 }
 
 export const TREASURY_DOMAINS: TreasuryDomain[] = [
-  // command
-  { surface: 'fiscal-command', group: 'command', ref: 'TR-CMD-01', label: 'Fiscal Command', purpose: 'Sovereign fiscal posture & directives', archetype: 'command', blueprintSection: '9' },
-  { surface: 'single-account-overview', group: 'command', ref: 'TR-CMD-02', label: 'Treasury Single Account', purpose: 'TSA position & sub-ledgers', archetype: 'command', blueprintSection: '9.1' },
-  { surface: 'macro-stability', group: 'command', ref: 'TR-CMD-03', label: 'Macro Stability Monitor', purpose: 'Macro indicators feeding fiscal policy', archetype: 'gauge', blueprintSection: '9' },
-  { surface: 'fiscal-forecasting', group: 'command', ref: 'TR-CMD-04', label: 'Fiscal Forecasting', purpose: '25-year fiscal trajectory', archetype: 'gauge', blueprintSection: '9' },
-  // ledger
-  { surface: 'appropriation-ledger', group: 'ledger', ref: 'LD-APP-01', label: 'Appropriation Ledger', purpose: 'Budget vs spend by ministry', archetype: 'ledger', blueprintSection: '9.5' },
-  { surface: 'sub-ledger-reconciliation', group: 'ledger', ref: 'LD-REC-02', label: 'Sub-Ledger Reconciliation', purpose: 'Three-way TSA ↔ rail ↔ ministry', archetype: 'audit', blueprintSection: '9.5' },
-  { surface: 'daily-statement', group: 'ledger', ref: 'LD-DST-03', label: 'Daily Fiscal Statement', purpose: 'End-of-day fiscal position', archetype: 'statement', blueprintSection: '9.5' },
-  { surface: 'expenditure-control', group: 'ledger', ref: 'LD-EXC-04', label: 'Expenditure Control', purpose: 'Encumbrance & release control', archetype: 'ledger', blueprintSection: '9.5' },
-  // revenue
-  { surface: 'tax-revenue', group: 'revenue', ref: 'RV-TAX-01', label: 'Tax Revenue Collection', purpose: 'Live tax collection by stream', archetype: 'statement', blueprintSection: '22.1' },
-  { surface: 'customs-revenue', group: 'revenue', ref: 'RV-CUS-02', label: 'Customs Revenue', purpose: 'Customs duty collection', archetype: 'statement', blueprintSection: '22.1' },
-  { surface: 'taxpayer-registry', group: 'revenue', ref: 'RV-REG-03', label: 'Taxpayer Registry', purpose: 'Citizen + entity tax registry', archetype: 'register', blueprintSection: '22.1' },
-  { surface: 'e-invoicing', group: 'revenue', ref: 'RV-EIN-04', label: 'e-Invoicing', purpose: 'Real-time invoice validation', archetype: 'register', blueprintSection: '22.1' },
-  { surface: 'risk-based-audit', group: 'revenue', ref: 'RV-AUD-05', label: 'Risk-Based Audit', purpose: 'AI-driven audit selection with transparent criteria', archetype: 'audit', blueprintSection: '22.1' },
-  // expenditure
-  { surface: 'disbursement-vouchers', group: 'expenditure', ref: 'EX-DSB-01', label: 'Disbursement Vouchers', purpose: 'Live disbursement voucher register', archetype: 'voucher', blueprintSection: '9.2' },
-  { surface: 'funding-chains', group: 'expenditure', ref: 'EX-FCH-02', label: 'Executable Funding Chains', purpose: 'Request → review → approval → release', archetype: 'voucher', blueprintSection: '9.2' },
-  { surface: 'budget-propagation', group: 'expenditure', ref: 'EX-BPR-03', label: 'Budget Propagation', purpose: 'Envelope → department → encumbrance → spend', archetype: 'ledger', blueprintSection: '9.5' },
-  { surface: 'inter-ministry-fiscal', group: 'expenditure', ref: 'EX-IMF-04', label: 'Inter-Ministry Allocation', purpose: 'Cross-ministry fiscal flows', archetype: 'ledger', blueprintSection: '9.5' },
-  // procurement
-  { surface: 'procurement-boards', group: 'procurement', ref: 'PR-BRD-01', label: 'Procurement Boards', purpose: 'Open tenders & evaluation', archetype: 'register', blueprintSection: '11' },
-  { surface: 'contract-registry', group: 'procurement', ref: 'PR-CTR-02', label: 'Contract Registry', purpose: 'Awarded contracts', archetype: 'register', blueprintSection: '11' },
-  { surface: 'vendor-registry', group: 'procurement', ref: 'PR-VND-03', label: 'Vendor Registry', purpose: 'Supplier registration & status', archetype: 'register', blueprintSection: '11' },
-  { surface: 'milestone-escrow', group: 'procurement', ref: 'PR-ESC-04', label: 'Milestone Escrow', purpose: 'Procurement milestone disbursement escrow', archetype: 'voucher', blueprintSection: '9.2' },
-  // rails
-  { surface: 'payments-rail', group: 'rails', ref: 'RA-PAY-01', label: 'GovPay Rail', purpose: 'Instant credit transfer & batch disbursement throughput', archetype: 'gauge', blueprintSection: '9.2' },
-  { surface: 'cbdc-operations', group: 'rails', ref: 'RA-CBD-02', label: 'CBDC Operations', purpose: 'Retail & wholesale CBDC issuance', archetype: 'gauge', blueprintSection: '9.3' },
-  { surface: 'reserve-workflows', group: 'reserves', ref: 'RS-WKF-01', label: 'Reserve Workflows', purpose: 'FX / gold drawdown with multi-authority release', archetype: 'voucher', blueprintSection: '9' },
-  { surface: 'settlement-reconciliation', group: 'rails', ref: 'RA-SET-03', label: 'Settlement Reconciliation', purpose: 'Bank settlement reconciliation', archetype: 'audit', blueprintSection: '9.5' },
-  // reserves
-  { surface: 'sovereign-reserves', group: 'reserves', ref: 'RS-FXR-02', label: 'Sovereign Reserves', purpose: 'FX reserves position', archetype: 'statement', blueprintSection: '9' },
-  { surface: 'public-debt', group: 'reserves', ref: 'RS-DBT-03', label: 'Public Debt Portfolio', purpose: 'Sovereign debt instruments & maturity', archetype: 'statement', blueprintSection: '9' },
-  // assurance
-  { surface: 'fiscal-audit', group: 'assurance', ref: 'AS-AUD-01', label: 'Fiscal Audit Trail', purpose: 'Hash-chained audit trail', archetype: 'audit', blueprintSection: '9.5' },
-  { surface: 'anti-fraud', group: 'assurance', ref: 'AS-FRD-02', label: 'Anti-Fraud Intelligence', purpose: 'AI-driven fraud detection with explainability', archetype: 'audit', blueprintSection: '44' },
-  // portal
-  { surface: 'taxpayer-portal', group: 'portal', ref: 'PT-TXP-01', label: 'Taxpayer Portal', purpose: 'Citizen tax filing & refunds', archetype: 'portal', blueprintSection: '22.2' },
-  { surface: 'public-budget-dashboard', group: 'portal', ref: 'PT-PUB-02', label: 'Public Budget Dashboard', purpose: 'Public budget execution view', archetype: 'portal', blueprintSection: '9.5' },
+  // ── Pillar I  — National Treasury Command ───────────────────────────
+  { surface: 'fiscal-command',          group: 'treasury-command',    ref: 'TC-CMD-01', label: 'Fiscal Command',              purpose: 'Sovereign fiscal posture & directives',           archetype: 'command',   blueprintSection: '9' },
+  { surface: 'single-account-overview', group: 'treasury-command',    ref: 'TC-TSA-02', label: 'Treasury Single Account',     purpose: 'TSA position & sub-ledgers',                       archetype: 'command',   blueprintSection: '9.1' },
+  { surface: 'daily-statement',         group: 'treasury-command',    ref: 'TC-DST-03', label: 'Daily Fiscal Statement',      purpose: 'End-of-day fiscal position',                       archetype: 'statement', blueprintSection: '9.5' },
+  // ── Pillar II — Central Bank Operations ─────────────────────────────
+  { surface: 'payments-rail',           group: 'central-bank',        ref: 'CB-PAY-01', label: 'GovPay Rail',                 purpose: 'Instant credit transfer & batch disbursement',     archetype: 'gauge',     blueprintSection: '9.2' },
+  { surface: 'cbdc-operations',         group: 'central-bank',        ref: 'CB-CBD-02', label: 'CBDC Operations',             purpose: 'Retail & wholesale CBDC issuance',                 archetype: 'gauge',     blueprintSection: '9.3' },
+  { surface: 'settlement-reconciliation', group: 'central-bank',      ref: 'CB-SET-03', label: 'Settlement Reconciliation',   purpose: 'Bank settlement reconciliation',                   archetype: 'audit',     blueprintSection: '9.5' },
+  { surface: 'sovereign-reserves',      group: 'central-bank',        ref: 'CB-FXR-04', label: 'Sovereign Reserves',          purpose: 'FX & gold reserves position',                       archetype: 'statement', blueprintSection: '9' },
+  { surface: 'public-debt',             group: 'central-bank',        ref: 'CB-DBT-05', label: 'Public Debt Portfolio',       purpose: 'Sovereign debt instruments & maturity',            archetype: 'statement', blueprintSection: '9' },
+  { surface: 'reserve-workflows',       group: 'central-bank',        ref: 'CB-WKF-06', label: 'Reserve Workflows',           purpose: 'FX / gold drawdown with multi-authority release',  archetype: 'voucher',   blueprintSection: '9' },
+  // ── Pillar III — Tax & Revenue Intelligence ─────────────────────────
+  { surface: 'tax-revenue',             group: 'tax-revenue',         ref: 'TR-TAX-01', label: 'Tax Revenue Collection',      purpose: 'Live tax collection by stream',                    archetype: 'statement', blueprintSection: '22.1' },
+  { surface: 'customs-revenue',         group: 'tax-revenue',         ref: 'TR-CUS-02', label: 'Customs Revenue',             purpose: 'Customs duty collection',                          archetype: 'statement', blueprintSection: '22.1' },
+  { surface: 'taxpayer-registry',       group: 'tax-revenue',         ref: 'TR-REG-03', label: 'Taxpayer Registry',           purpose: 'Citizen + entity tax registry',                    archetype: 'register',  blueprintSection: '22.1' },
+  { surface: 'e-invoicing',             group: 'tax-revenue',         ref: 'TR-EIN-04', label: 'e-Invoicing',                 purpose: 'Real-time invoice validation',                     archetype: 'register',  blueprintSection: '22.1' },
+  { surface: 'risk-based-audit',        group: 'tax-revenue',         ref: 'TR-AUD-05', label: 'Risk-Based Audit',            purpose: 'AI-driven audit selection with transparent criteria', archetype: 'audit',  blueprintSection: '22.1' },
+  // ── Pillar IV — National Procurement Grid ──────────────────────────
+  { surface: 'procurement-boards',      group: 'procurement-grid',    ref: 'PG-BRD-01', label: 'Procurement Boards',          purpose: 'Open tenders & evaluation',                        archetype: 'register',  blueprintSection: '11' },
+  { surface: 'contract-registry',       group: 'procurement-grid',    ref: 'PG-CTR-02', label: 'Contract Registry',           purpose: 'Awarded contracts',                                 archetype: 'register',  blueprintSection: '11' },
+  { surface: 'vendor-registry',         group: 'procurement-grid',    ref: 'PG-VND-03', label: 'Vendor Registry',             purpose: 'Supplier registration & status',                   archetype: 'register',  blueprintSection: '11' },
+  { surface: 'milestone-escrow',        group: 'procurement-grid',    ref: 'PG-ESC-04', label: 'Milestone Escrow',            purpose: 'Procurement milestone disbursement escrow',        archetype: 'voucher',   blueprintSection: '9.2' },
+  // ── Pillar V  — Public Expenditure Control ─────────────────────────
+  { surface: 'appropriation-ledger',    group: 'expenditure-control', ref: 'EC-APP-01', label: 'Appropriation Ledger',        purpose: 'Budget vs spend by ministry',                       archetype: 'ledger',    blueprintSection: '9.5' },
+  { surface: 'sub-ledger-reconciliation', group: 'expenditure-control', ref: 'EC-REC-02', label: 'Sub-Ledger Reconciliation', purpose: 'Three-way TSA ↔ rail ↔ ministry',                 archetype: 'audit',     blueprintSection: '9.5' },
+  { surface: 'expenditure-control',     group: 'expenditure-control', ref: 'EC-EXC-03', label: 'Expenditure Control',         purpose: 'Encumbrance & release control',                    archetype: 'ledger',    blueprintSection: '9.5' },
+  { surface: 'disbursement-vouchers',   group: 'expenditure-control', ref: 'EC-DSB-04', label: 'Disbursement Vouchers',       purpose: 'Live disbursement voucher register',               archetype: 'voucher',   blueprintSection: '9.2' },
+  { surface: 'funding-chains',          group: 'expenditure-control', ref: 'EC-FCH-05', label: 'Executable Funding Chains',   purpose: 'Request → review → approval → release',           archetype: 'voucher',   blueprintSection: '9.2' },
+  { surface: 'budget-propagation',      group: 'expenditure-control', ref: 'EC-BPR-06', label: 'Budget Propagation',          purpose: 'Envelope → department → encumbrance → spend',     archetype: 'ledger',    blueprintSection: '9.5' },
+  { surface: 'inter-ministry-fiscal',   group: 'expenditure-control', ref: 'EC-IMF-07', label: 'Inter-Ministry Allocation',   purpose: 'Cross-ministry fiscal flows',                       archetype: 'ledger',    blueprintSection: '9.5' },
+  // ── Pillar VI — Economic Intelligence Center ───────────────────────
+  { surface: 'macro-stability',         group: 'economic-intel',      ref: 'EI-MAC-01', label: 'Macro Stability Monitor',     purpose: 'Macro indicators feeding fiscal policy',           archetype: 'gauge',     blueprintSection: '9' },
+  { surface: 'fiscal-forecasting',      group: 'economic-intel',      ref: 'EI-FOR-02', label: 'Fiscal Forecasting',          purpose: '25-year fiscal trajectory',                         archetype: 'gauge',     blueprintSection: '9' },
+  { surface: 'fiscal-audit',            group: 'economic-intel',      ref: 'EI-AUD-03', label: 'Fiscal Audit Trail',          purpose: 'Hash-chained audit trail',                          archetype: 'audit',     blueprintSection: '9.5' },
+  { surface: 'anti-fraud',              group: 'economic-intel',      ref: 'EI-FRD-04', label: 'Anti-Fraud Intelligence',     purpose: 'AI-driven fraud detection with explainability',    archetype: 'audit',     blueprintSection: '44' },
+  // ── Citizen Fiscal Portal ──────────────────────────────────────────
+  { surface: 'taxpayer-portal',         group: 'portal',              ref: 'CP-TXP-01', label: 'Taxpayer Portal',             purpose: 'Citizen tax filing & refunds',                     archetype: 'portal',    blueprintSection: '22.2' },
+  { surface: 'public-budget-dashboard', group: 'portal',              ref: 'CP-PUB-02', label: 'Public Budget Dashboard',     purpose: 'Public budget execution view',                     archetype: 'portal',    blueprintSection: '9.5' },
 ];
+
+// Helper — domains grouped by pillar in display order. Useful for the
+// operational shell sub-menu and the public-site pillar overview.
+export function treasuryByPillar(): { group: TreasuryGroup; domains: TreasuryDomain[] }[] {
+  return TREASURY_GROUPS.map(g => ({ group: g, domains: TREASURY_DOMAINS.filter(d => d.group === g.key) }));
+}
 
 export function domainBySurface(surface: SurfaceId): TreasuryDomain | undefined {
   return TREASURY_DOMAINS.find(d => d.surface === surface);

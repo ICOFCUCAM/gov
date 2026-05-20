@@ -19,12 +19,20 @@ import { ContinuityForesightChamber } from '@/apps/ministry-education/Continuity
 import { LiteracyBoard, RegionalLiteracy, PrimarySecondary, Tertiary, TeacherColleges, GenerationalCohorts, WorkforceReadiness, CohortEquality } from '@/apps/ministry-education/domains/CommandInstitutions';
 import { ResearchProgrammes, StrategicResearchPriority, RemoteLearning, ArchivalRecords, BandwidthEquity, CurriculumBoard, ExaminationBoard, TeacherWorkforce, StudentServicesBoard } from '@/apps/ministry-education/domains/ResearchKnowledge';
 import { EducationIncidents, SchoolDisruption, ExamIntegrity, CivilizationalMemoryBoard, HistoricalArchives, ConstitutionalLiteracy, CivicEducation, StudentApplications, ScholarshipPortal, PublicAdvisories, KnowledgeSafeguards, PluralismAudit } from '@/apps/ministry-education/domains/ContinuityMemory';
+import { SovereignLearnerTwin, AiTutorMesh, NeuralCurriculumGraph, CivilizationalProjection, GenerationalForesight, PublicInstitutionIndex } from '@/apps/ministry-education/domains/Futurist';
 
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 type Render = (p: { id: string; now: number; role: SovereignRole; withheld: Capability[] }) => React.ReactElement;
 
 const RENDER: Record<EducationSurfaceId, Render> = {
+  // futurist mesh
+  'sovereign-learner-twin':       p => <SovereignLearnerTwin id={p.id} now={p.now} />,
+  'ai-tutor-mesh':                p => <AiTutorMesh id={p.id} now={p.now} />,
+  'neural-curriculum-graph':      p => <NeuralCurriculumGraph id={p.id} now={p.now} />,
+  'civilizational-projection':    p => <CivilizationalProjection id={p.id} now={p.now} />,
+  'generational-foresight':       p => <GenerationalForesight id={p.id} now={p.now} />,
+  'public-institution-index':     p => <PublicInstitutionIndex id={p.id} now={p.now} />,
   // command
   'education-command':            p => <NationalEducationCommand id={p.id} now={p.now} />,
   'literacy-board':               p => <LiteracyBoard id={p.id} now={p.now} />,
