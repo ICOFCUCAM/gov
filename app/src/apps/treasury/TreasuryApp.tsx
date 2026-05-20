@@ -12,6 +12,10 @@ import {
 } from '@/lib/gov/treasury-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { TreasuryOverview } from '@/apps/treasury/TreasuryOverview';
+import { FundingChains } from '@/apps/treasury/FundingChains';
+import { ReserveWorkflows } from '@/apps/treasury/ReserveWorkflows';
+import { BudgetPropagation } from '@/apps/treasury/BudgetPropagation';
+import { InterMinistryFiscal } from '@/apps/treasury/InterMinistryFiscal';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -22,12 +26,18 @@ const WF: Record<string, WorkKind> = {
   command: 'incident', budget: 'procurement', revenue: 'approval', procurement: 'procurement',
   rails: 'procurement', citizen: 'approval', audit: 'case', allocation: 'procurement',
   debt: 'procurement', forecast: 'case',
+  'funding-chains': 'approval', 'reserve-workflows': 'approval',
+  'budget-propagation': 'procurement', 'inter-ministry': 'procurement',
 };
 const LABEL: Record<string, string> = {
   command: 'Fiscal Command', budget: 'National Budget Engine', revenue: 'Sovereign Revenue',
   procurement: 'Procurement', rails: 'Sovereign Payments Rail', citizen: 'Citizen Finance',
   audit: 'Anti-Corruption Audit', allocation: 'Inter-Ministry Allocation', debt: 'Debt & Reserves',
   forecast: 'Fiscal Forecasting',
+  'funding-chains': 'Executable Funding Chains',
+  'reserve-workflows': 'Sovereign Reserve Workflows',
+  'budget-propagation': 'Budget Propagation',
+  'inter-ministry': 'Inter-Ministry Fiscal Execution',
 };
 type K = { l: string; v: string; t: Tone };
 const strip = (items: K[]) => items.map((m, i) => ({ ...m, s: '', k: `tr${i}` }));
@@ -118,6 +128,14 @@ export function TreasuryApp({ instanceId, domain, now, role, withheld }: {
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#03070f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
       {isOverview ? (
         <TreasuryOverview id={id} now={now} />
+      ) : d === 'funding-chains' ? (
+        <FundingChains id={id} now={now} />
+      ) : d === 'reserve-workflows' ? (
+        <ReserveWorkflows id={id} now={now} />
+      ) : d === 'budget-propagation' ? (
+        <BudgetPropagation id={id} now={now} />
+      ) : d === 'inter-ministry' ? (
+        <InterMinistryFiscal id={id} now={now} />
       ) : (
         <>
           <OpsHeader index={1} title={`Treasury · ${label}`} subtitle="Sovereign Fiscal Execution"

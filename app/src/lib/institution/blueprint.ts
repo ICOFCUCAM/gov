@@ -140,6 +140,22 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Audit trail', 'audit'), S('Anti-fraud intelligence', 'intelligence'),
       S('Compliance', 'regulatory'),
     ]),
+    G('funding-chains', 'Funding Chains', 'Executable funding workflow', [
+      S('Request → review → approval → release → disbursement', 'workflow'),
+      S('Approver chain & SLA', 'audit'),
+    ]),
+    G('reserve-workflows', 'Reserve Workflows', 'Sovereign reserve draw-down', [
+      S('FX / gold draw-down', 'finance'),
+      S('Multi-authority release & repatriation', 'audit'),
+    ]),
+    G('budget-propagation', 'Budget Propagation', 'Envelope → department → encumbrance → spend', [
+      S('Annual envelope cascade', 'finance'),
+      S('Year-to-date variance', 'analytics'),
+    ]),
+    G('inter-ministry', 'Inter-Ministry Fiscal', 'Treasury → ministry → facility → vendor', [
+      S('Three-hop transfer chains', 'finance'),
+      S('Per-hop SLA & reconciliation', 'audit'),
+    ]),
   ],
   EDUCATION: [
     G('command', 'Education Command', 'National education authority', [
