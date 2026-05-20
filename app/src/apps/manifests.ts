@@ -85,6 +85,14 @@ export const AGENCY_APPS: AppManifest[] = [
     nav: [{ key: 'border', label: 'Border control' }, { key: 'permits', label: 'Visas & permits' }, { key: 'registry', label: 'Resident registry' }, { key: 'enforcement', label: 'Enforcement' }] },
   { id: 'customs', label: 'Customs', domain: 'customs', kind: 'agency', archetypeOrBranch: 'TRADE',
     nav: [{ key: 'clearance', label: 'Clearance' }, { key: 'tariffs', label: 'Tariffs & duties' }, { key: 'inspection', label: 'Inspection' }, { key: 'revenue', label: 'Revenue' }] },
+  { id: 'communications', label: 'Communications & Digital Infrastructure', domain: 'communications', kind: 'agency',
+    archetypeOrBranch: 'GENERIC',
+    nav: [
+      { key: 'connectivity-command', label: 'National Connectivity Command' },
+      { key: 'cyber-resilience', label: 'Cybersecurity & Resilience' },
+      { key: 'identity-spectrum', label: 'Digital Identity & Spectrum' },
+      { key: 'foresight-portal', label: 'Forecast & Public Portal' },
+    ] },
   { id: 'foreign-affairs', label: 'Foreign Affairs & Geopolitical Relations', domain: 'foreign', kind: 'agency',
     archetypeOrBranch: 'GENERIC',
     nav: [
