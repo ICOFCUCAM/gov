@@ -23,6 +23,8 @@ import { AgricultureShell } from '@/apps/ministry-agriculture/shell/AgricultureS
 import { resolveAgricultureSurface } from '@/apps/ministry-agriculture/core/domains';
 import { LabourShell } from '@/apps/ministry-labour/shell/LabourShell';
 import { resolveLabourSurface } from '@/apps/ministry-labour/core/domains';
+import { TradeShell } from '@/apps/ministry-trade/shell/TradeShell';
+import { resolveTradeSurface } from '@/apps/ministry-trade/core/domains';
 import { NationalIndustrialCommand } from '@/apps/ministry-trade/NationalIndustrialCommand';
 import { TradeCorridorsExports } from '@/apps/ministry-trade/TradeCorridorsExports';
 import { SupplyChainCommerce } from '@/apps/ministry-trade/SupplyChainCommerce';
@@ -197,6 +199,7 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   const isEnvironment = archetype === 'ENVIRONMENT';
   const isAgriculture = archetype === 'AGRICULTURE';
   const isLabour = archetype === 'LABOR';
+  const isTrade = archetype === 'TRADE';
   const tradeIndCmd = archetype === 'TRADE' && domain === 'industrial-command';
   const tradeCorridors = archetype === 'TRADE' && domain === 'trade-corridors';
   const tradeSupply = archetype === 'TRADE' && domain === 'supply-chain';
@@ -235,6 +238,8 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
         <AgricultureShell id={id} surface={resolveAgricultureSurface(domain)} now={now} role={role} withheld={withheld} />
       ) : isLabour ? (
         <LabourShell id={id} surface={resolveLabourSurface(domain)} now={now} role={role} withheld={withheld} />
+      ) : isTrade ? (
+        <TradeShell id={id} surface={resolveTradeSurface(domain)} now={now} role={role} withheld={withheld} />
       ) : tradeIndCmd ? (
         <NationalIndustrialCommand id={id} now={now} />
       ) : tradeCorridors ? (

@@ -14,6 +14,18 @@ import { tradeOps } from '@/lib/gov/trade-systems';
 
 const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
 
+export const INDUSTRIAL_CONTINUITY_SAFEGUARDS = {
+  strategicReserveProtection: true as const,
+  nonDiscriminatoryMarketAccess: true as const,
+  workerProtectionDuringClosure: true as const,
+  transparentTenderAndLicensing: true as const,
+  prohibited: [
+    'discriminatory-market-exclusion', 'arbitrary-export-ban-without-cabinet-review',
+    'concealment-of-supply-chain-vulnerability', 'tariff-escalation-without-reciprocity-review',
+    'cartel-toleration', 'extraction-of-strategic-reserve-without-authorisation',
+  ] as const,
+};
+
 export type IndustrialPosture =
   | 'productive' | 'engaged' | 'pressured' | 'contraction' | 'industrial-crisis';
 
