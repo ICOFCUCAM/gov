@@ -10,13 +10,27 @@ import { emergencyOps } from '@/lib/gov/agency-systems';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/_shared/Ops';
 import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/InstitutionChain';
 import { EmergencyCommand } from '@/apps/emergency-response/EmergencyCommand';
+import { NationalEmergencyCommandCenter } from '@/apps/emergency-response/NationalEmergencyCommandCenter';
+import { HumanitarianContinuityCoordination } from '@/apps/emergency-response/HumanitarianContinuityCoordination';
+import { CrisisCommunicationsAlertNetwork } from '@/apps/emergency-response/CrisisCommunicationsAlertNetwork';
+import { ResilienceRecoveryForesight } from '@/apps/emergency-response/ResilienceRecoveryForesight';
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 
 const ACC = '#ff5d5d';
-const WF: Record<string, WorkKind> = { command: 'incident', dispatch: 'incident', resources: 'procurement', recovery: 'incident' };
-const LABEL: Record<string, string> = { command: 'Crisis Command', dispatch: 'Dispatch', resources: 'Resource Coordination', recovery: 'Recovery Workflows' };
+const WF: Record<string, WorkKind> = {
+  command: 'incident', dispatch: 'incident', resources: 'procurement', recovery: 'incident',
+  'national-command': 'incident', 'humanitarian-continuity': 'case',
+  'alert-network': 'incident', 'resilience-foresight': 'incident',
+};
+const LABEL: Record<string, string> = {
+  command: 'Crisis Command', dispatch: 'Dispatch', resources: 'Resource Coordination', recovery: 'Recovery Workflows',
+  'national-command': 'National Emergency Command Center',
+  'humanitarian-continuity': 'Humanitarian Continuity & Civil Support',
+  'alert-network': 'Crisis Communications & Alert Networks',
+  'resilience-foresight': 'Resilience, Recovery & Foresight',
+};
 
 export function EmergencyResponseApp({ appId, domain, now, role, withheld }: {
   appId: string; domain: string; now: number; role: SovereignRole; withheld: Capability[];
@@ -55,10 +69,24 @@ export function EmergencyResponseApp({ appId, domain, now, role, withheld }: {
   // The command surface is the dense National Emergency Response System;
   // other domains keep the ops execution rhythm.
   const isOverview = d === 'command';
+  const isNationalCommand = d === 'national-command';
+  const isHumanitarian = d === 'humanitarian-continuity';
+  const isAlertNet = d === 'alert-network';
+  const isForesight = d === 'resilience-foresight';
+  const isResilienceSurface = isNationalCommand || isHumanitarian || isAlertNet || isForesight;
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#0c0406', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      {isOverview ? (
+      {isResilienceSurface ? (
+        <>
+          {isNationalCommand ? <NationalEmergencyCommandCenter id={appId} now={now} />
+            : isHumanitarian ? <HumanitarianContinuityCoordination id={appId} now={now} />
+              : isAlertNet ? <CrisisCommunicationsAlertNetwork id={appId} now={now} />
+                : <ResilienceRecoveryForesight id={appId} now={now} />}
+          <ActorChainStrip ministryKey="INTERIOR" idKey={appId} now={now} accent={ACC} recordPrefix="INC" />
+          <MinistryChainSection ministryKey="INTERIOR" id={appId} now={now} accent={ACC} />
+        </>
+      ) : isOverview ? (
         <>
           <EmergencyCommand id={appId} now={now} />
           <ActorChainStrip ministryKey="INTERIOR" idKey={appId} now={now} accent={ACC} recordPrefix="INC" />
