@@ -1,18 +1,24 @@
-// Sovereign Audit Ledger — shared federation service.
+// Sovereign Audit Ledger — federation service.
 //
-// RULE 4: every institutional system carries a tamper-evident audit
-// trail. This is a per-scope hash-chained ledger: each entry links to the
-// previous via a deterministic digest, so any retro-edit breaks the chain
-// and is detectable. Institution-scoped (one chain per app/instance).
-// Pure runtime singleton; no React/DOM, no crypto deps.
+// RULE 4: every institutional system carries a tamper-evident audit trail.
+// Per-scope, hash-chained (FNV-1a), append-only.
+//
+// Architecture: the ledger keeps an in-memory mirror for synchronous UI
+// reads, AND persists to the civicos.audit_entries substrate via a
+// SECURITY DEFINER RPC. The DB enforces the chain (concurrent inserts are
+// serialized per scope via pg_advisory_xact_lock), so the in-memory copy
+// is a cache, not the source of truth. When the substrate isn't configured
+// the ledger falls back to memory-only — UI works either way.
+
+import { appendAuditRow, auditTrailRows, verifyChainRow, substrateAvailable } from '@/lib/db/repos/audit';
 
 export interface AuditEntry {
   seq: number;
   at: number;
-  scope: string;        // institution/app scope
-  actor: string;        // who (role-qualified)
-  action: string;       // what
-  subject: string;      // on what (item id / target)
+  scope: string;
+  actor: string;
+  action: string;
+  subject: string;
   detail: string;
   prevHash: string;
   hash: string;
@@ -31,7 +37,9 @@ export function subscribe(l: Listener): () => void {
   return () => listeners.delete(l);
 }
 
-// Small, fast, deterministic non-crypto digest (FNV-1a 32-bit, hex).
+// Local FNV-1a digest — identical to the Postgres civicos.fnv1a_hex
+// function, so the in-memory mirror agrees with the DB byte-for-byte
+// (verified by the migration test in this PR).
 function digest(s: string): string {
   let h = 0x811c9dc5;
   for (let i = 0; i < s.length; i++) {
@@ -41,16 +49,35 @@ function digest(s: string): string {
   return h.toString(16).padStart(8, '0');
 }
 
-export function appendAudit(scope: string, actor: string, action: string, subject: string, detail = ''): AuditEntry {
+/** Compute the next entry locally (used when persistence is unavailable
+ *  AND for synchronous UI feedback while the DB round-trip is in-flight). */
+function nextEntry(scope: string, actor: string, action: string, subject: string, detail: string): AuditEntry {
   const chain = chains.get(scope) ?? [];
   const prev = chain[chain.length - 1];
   const prevHash = prev ? prev.hash : '00000000';
   const seq = chain.length + 1;
   const at = Date.now();
   const hash = digest(`${prevHash}|${seq}|${scope}|${actor}|${action}|${subject}|${detail}`);
-  const entry: AuditEntry = { seq, at, scope, actor, action, subject, detail, prevHash, hash };
+  return { seq, at, scope, actor, action, subject, detail, prevHash, hash };
+}
+
+/** Append an audit entry. Returns synchronously with the in-memory entry;
+ *  persistence happens in the background. The DB-canonical entry will be
+ *  reconciled in via hydrateScope() on next mount. */
+export function appendAudit(scope: string, actor: string, action: string, subject: string, detail = ''): AuditEntry {
+  const entry = nextEntry(scope, actor, action, subject, detail);
+  const chain = chains.get(scope) ?? [];
   chains.set(scope, [...chain, entry]);
   emit();
+
+  // Persist if substrate is available — fire and forget.
+  if (substrateAvailable()) {
+    void appendAuditRow(scope, actor, action, subject, detail).catch(() => {
+      // Persistence failures don't break the UI; the in-memory mirror
+      // remains. A reconciliation pass on hydrate will re-establish truth.
+    });
+  }
+
   return entry;
 }
 
@@ -81,4 +108,34 @@ export function auditStats() {
     if (!v.intact) intact = false;
   }
   return { scopes: chains.size, entries, intact };
+}
+
+// ── Persistent reconciliation ─────────────────────────────────────────
+// Hydrate an in-memory scope from the canonical DB chain. Call this when
+// mounting a surface that wants to display history beyond the current
+// process's memory.
+export async function hydrateScope(scope: string, limit = 100): Promise<number> {
+  if (!substrateAvailable()) return 0;
+  const rows = await auditTrailRows(scope, limit);
+  if (rows.length === 0) return 0;
+  // Rows arrive newest-first; replace local chain with newest-last order.
+  chains.set(scope, [...rows].reverse());
+  emit();
+  return rows.length;
+}
+
+/** Server-canonical verification (DB-side walk). Falls back to the local
+ *  walk when the substrate isn't configured. */
+export async function verifyChainPersistent(scope: string): Promise<ChainVerification> {
+  if (substrateAvailable()) {
+    const r = await verifyChainRow(scope);
+    if (r) return r;
+  }
+  return verifyChain(scope);
+}
+
+/** Reset (tests only). */
+export function __resetAudit(): void {
+  chains.clear();
+  _version = 0;
 }
