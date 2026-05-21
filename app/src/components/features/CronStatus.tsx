@@ -54,6 +54,13 @@ const KNOWN_CRONS = [
     expectedIntervalMin: 15,
     path: '/api/cron/witness-divergence',
   },
+  {
+    name: 'audit-anchor',
+    description: 'Broadcasts every chain head as a federation audit.anchor event (constitutional channel).',
+    sentinelStream: null,
+    expectedIntervalMin: 10,
+    path: '/api/cron/audit-anchor',
+  },
 ];
 
 /**

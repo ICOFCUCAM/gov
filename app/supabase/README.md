@@ -289,7 +289,8 @@ Vercel Cron (`vercel.json`):
     { "path": "/api/cron/posture-digest?token=$CIVICOS_CRON_SECRET",    "schedule": "*/30 * * * *" },
     { "path": "/api/cron/audit-self?token=$CIVICOS_CRON_SECRET",        "schedule": "0 * * * *" },
     { "path": "/api/cron/witness-sweep?token=$CIVICOS_CRON_SECRET",     "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/witness-divergence?token=$CIVICOS_CRON_SECRET","schedule": "5,20,35,50 * * * *" }
+    { "path": "/api/cron/witness-divergence?token=$CIVICOS_CRON_SECRET","schedule": "5,20,35,50 * * * *" },
+    { "path": "/api/cron/audit-anchor?token=$CIVICOS_CRON_SECRET",      "schedule": "*/10 * * * *" }
 ] }
 ```
 
