@@ -105,7 +105,17 @@ export function CitizenHome() {
             personal · realtime
           </span>
         </div>
-        <span className="font-mono text-[10px] text-ink-muted">{actor.name}</span>
+        <div className="flex items-center gap-2">
+          <a href="/wallet/substrate"
+             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            full wallet →
+          </a>
+          <a href="/gov/me"
+             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            profile
+          </a>
+          <span className="font-mono text-[10px] text-ink-muted">{actor.name}</span>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
