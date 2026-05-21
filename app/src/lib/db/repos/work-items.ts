@@ -186,6 +186,22 @@ export interface SignedStepRow extends WorkItemStepRow {
   originating_charter_id: string | null;
 }
 
+/** Joined step rows with parent work-item context. Returned from
+ *  civicos_actor_steps (all steps, joined) — pair with the more
+ *  selective civicos_signed_steps when only signed actions are needed. */
+export type ActorStepRow = SignedStepRow & {
+  work_item_title: string;
+};
+
+export async function myRecentStepsRows(actorId: string, limit = 30): Promise<ActorStepRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.from('civicos_actor_steps').select('*')
+    .eq('actor_id', actorId).order('at', { ascending: false }).limit(limit);
+  if (error || !data) return [];
+  return data as ActorStepRow[];
+}
+
 export async function recentSignedStepsRows(limit = 50): Promise<SignedStepRow[]> {
   const sb = publicClient();
   if (!sb) return [];

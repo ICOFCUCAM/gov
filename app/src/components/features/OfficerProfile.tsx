@@ -8,6 +8,8 @@ import { registerSigningKeyRow } from '@/lib/db/repos/identity';
 import { refreshIdentity } from '@/services/identity';
 import { ensureSigningKey, publicSigningJwk } from '@/lib/db/webcrypto';
 import { signOut } from '@/lib/db/auth';
+import { myRecentStepsRows, type ActorStepRow } from '@/lib/db/repos/work-items';
+import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 
 interface OfficerSelf {
   id: string;
@@ -40,6 +42,7 @@ export function OfficerProfile() {
   const [busy, setBusy] = React.useState<'register' | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [info, setInfo] = React.useState<string | null>(null);
+  const [activity, setActivity] = React.useState<ActorStepRow[]>([]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -56,6 +59,18 @@ export function OfficerProfile() {
     if (typeof window === 'undefined') return;
     void publicSigningJwk().then(jwk => setDeviceJwk(jwk));
   }, []);
+
+  const refreshActivity = React.useCallback(async () => {
+    if (!actor || actor.kind !== 'officer') { setActivity([]); return; }
+    setActivity(await myRecentStepsRows(actor.id, 30));
+  }, [actor]);
+
+  React.useEffect(() => { if (ready) void refreshActivity(); }, [ready, refreshActivity]);
+
+  useRealtimeRefresh(
+    React.useMemo(() => [{ table: 'work_item_steps' as const }], []),
+    refreshActivity,
+  );
 
   if (!available) {
     return (
@@ -162,6 +177,36 @@ export function OfficerProfile() {
             <Field label="Created" value={new Date(self.created_at).toLocaleString()} />
             <Field label="Joined" value={self.charter_id ?? '—'} mono />
           </div>
+        </Panel>
+      ) : null}
+
+      {!isCitizen ? (
+        <Panel title="My recent activity" meta={`${activity.length} steps`} bodyClass="!p-0">
+          {activity.length === 0 ? (
+            <p className="px-3 py-4 text-[11px] text-ink-muted">No transitions attributed to you yet.</p>
+          ) : (
+            <div className="max-h-[280px] overflow-y-auto">
+              {activity.map(s => (
+                <div key={s.id} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                  <div className="flex items-center gap-2">
+                    <span className="w-10 shrink-0 font-mono tabular-nums text-ink-muted">#{s.seq}</span>
+                    <span className="w-20 shrink-0 truncate font-mono text-link">{s.action}</span>
+                    <span className="min-w-0 flex-1 truncate text-ink">{s.work_item_title}</span>
+                    <span className="w-24 shrink-0 truncate text-right font-mono text-ink-soft">{s.work_item_ref}</span>
+                    <span className="w-16 shrink-0 text-right font-mono tabular-nums text-ink-muted">
+                      {new Date(s.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2 font-mono text-[9px] text-ink-muted">
+                    <span>{s.from_stage ?? '—'} → {s.to_stage}</span>
+                    {s.signature_hash ? (
+                      <span className="ml-auto">{s.signature_hash.length === 8 ? 'digest' : 'ECDSA'} · {s.signature_hash.slice(0, 12)}…</span>
+                    ) : null}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </Panel>
       ) : null}
 
