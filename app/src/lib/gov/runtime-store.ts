@@ -18,6 +18,12 @@ import {
   openWorkItemRow, transitionWorkItemRow, substrateAvailable,
 } from '@/lib/db/repos/work-items';
 import { resolvedActor } from '@/services/actor-resolver';
+import { transitionSignature } from '@/lib/db/signatures';
+
+// Actions that the platform default workflows treat as signature-worthy.
+// Approvals (approve/reject) and resolutions stand on the record; advance
+// and assign are routine workflow movement.
+const SIGNATURE_ACTIONS = new Set<ActionKey>(['approve', 'reject', 'resolve']);
 
 export interface LedgerEntry {
   at: number;
@@ -152,12 +158,19 @@ export function actOnItem(scope: string, itemId: string, action: ActionKey, by: 
   // and role so the step_history row points to a real foreign key.
   if (after.meta.persistent === '1' && substrateAvailable()) {
     const a = resolvedActor();
+    const actorId = a?.kind === 'officer' ? a.id : null;
+    const wantsSig = SIGNATURE_ACTIONS.has(action) && actorId != null;
+    const sig = wantsSig
+      ? transitionSignature({ actorId, scope, ref: itemId, action, at: last.at })
+      : null;
     void transitionWorkItemRow({
       ref: itemId, action,
       actorName: a?.name ?? by,
-      actorId: a?.kind === 'officer' ? a.id : null,
+      actorId,
       actorRole: a?.role ?? null,
       detail: `${last.from} → ${last.to}`,
+      requiresSignature: !!sig,
+      signatureHash: sig?.hash ?? null,
     }).catch(() => { /* best-effort */ });
   }
 }
