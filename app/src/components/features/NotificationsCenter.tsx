@@ -10,6 +10,7 @@ import { isSeen, markSeen, clearSeen } from '@/lib/seen';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { buildCsv, downloadCsv } from '@/lib/csv-download';
 
 const sevTone: Record<AlertSeverity, string | undefined> = {
   national: TONE.alert, major: TONE.alert,
@@ -70,14 +71,11 @@ export function NotificationsCenter() {
           </button>
           <button type="button"
             onClick={() => {
-              const csv = ['at,kind,severity,title,detail,href',
-                ...alerts.map(a => `${new Date(a.at).toISOString()},${a.kind},${a.severity},${(a.title ?? '').replace(/,/g,';')},${(a.detail ?? '').replace(/,/g,';')},${a.href}`)].join('\n');
-              const blob = new Blob([csv], { type: 'text/csv' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `civicos-alerts-${new Date().toISOString().slice(0,10)}.csv`;
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              const csv = buildCsv(
+                ['at','kind','severity','title','detail','href'],
+                alerts.map(a => [new Date(a.at).toISOString(), a.kind, a.severity, a.title ?? '', a.detail ?? '', a.href]),
+              );
+              downloadCsv('civicos-alerts', csv);
             }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             csv
