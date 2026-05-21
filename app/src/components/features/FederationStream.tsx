@@ -116,9 +116,10 @@ export function FederationStream() {
             {events.map(e => (
               <div key={e.id} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
                 <div className="flex items-center gap-2">
-                  <span className="w-16 shrink-0 font-mono tabular-nums text-ink-muted">
+                  <a href={`/gov/federation/${e.id}`}
+                     className="w-16 shrink-0 font-mono tabular-nums text-ink-muted hover:text-link hover:underline">
                     {new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                  </span>
+                  </a>
                   <span
                     className="w-24 shrink-0 text-[8.5px] font-bold uppercase tracking-wider"
                     style={{ color: channelTone(e.channel) }}

@@ -48,6 +48,15 @@ export async function publishEventRow(
   return fromRow(data as FederationEventRow);
 }
 
+export async function eventById(id: string): Promise<PersistedEvent | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_federation_events')
+    .select('*').eq('id', id).limit(1).maybeSingle();
+  if (error || !data) return null;
+  return fromRow(data as FederationEventRow);
+}
+
 export async function recentEventsRows(
   opts: { type?: string; channel?: string; source?: string; limit?: number } = {},
 ): Promise<PersistedEvent[]> {
