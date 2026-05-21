@@ -11,6 +11,7 @@ import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /**
  * Telemetry Wall — define streams, append samples, watch the wall live.
@@ -68,11 +69,7 @@ export function TelemetryWall() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Telemetry Wall" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Telemetry Wall" />;
   }
 
   const activeStream = streams.find(s => s.stream_id === active) ?? null;

@@ -8,6 +8,7 @@ import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
 import { ageMinutes } from '@/lib/format';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const KNOWN_CRONS = [
   {
@@ -73,11 +74,7 @@ export function CronStatus() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Cron status" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Cron status" />;
   }
 
   function staleness(samples: TelemetrySampleRow[] | undefined, expectedMin: number): { lastAt: number | null; ageMin: number | null; stale: boolean } {

@@ -6,6 +6,7 @@ import { substrateAvailable, publicClient } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { distinctAuditScopesRows, verifyChainRow } from '@/lib/db/repos/audit';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 interface TableCount { table: string; count: number; via: string }
 
@@ -134,11 +135,7 @@ export function SubstrateStatus() {
   }, []);
 
   if (!available) {
-    return (
-      <Panel title="Substrate Status" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Substrate Status" />;
   }
 
   const scopeLabel = !ready ? 'resolving…'

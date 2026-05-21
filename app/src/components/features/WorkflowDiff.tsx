@@ -5,6 +5,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { listWorkflowDefinitionsRows } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkflowDefinitionRow } from '@/lib/db/types';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 interface DiffEntry { kind: 'added' | 'removed' | 'changed'; path: string; lhs?: string; rhs?: string }
 
@@ -64,7 +65,7 @@ export function WorkflowDiff() {
   }, [available]);
 
   if (!available) {
-    return <Panel title="Workflow diff" meta="not configured" bodyClass="!p-3"><p className="text-[10px] text-ink-muted">Substrate not configured.</p></Panel>;
+    return <SubstrateNotConfigured title="Workflow diff" />;
   }
 
   const lhs = defs.find(d => d.workflow_id === a);

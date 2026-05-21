@@ -4,6 +4,7 @@ import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable, publicClient } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 interface RpcDef {
   name: string;
@@ -57,7 +58,7 @@ export function SubstratePlayground() {
   const isPlatform = actor?.kind === 'officer' && actor.role !== null && PLATFORM_ROLES.has(actor.role);
 
   if (!available) {
-    return <Panel title="Substrate playground" meta="not configured" bodyClass="!p-3"><p className="text-[10px] text-ink-muted">Substrate not configured.</p></Panel>;
+    return <SubstrateNotConfigured title="Substrate playground" />;
   }
   if (!isPlatform) {
     return (

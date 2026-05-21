@@ -5,6 +5,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { listWorkflowDefinitionsRows } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkflowDefinitionRow, ActionKey } from '@/lib/db/types';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 interface WorkflowMap { terminal: string[]; transitions: Record<string, Record<string, string>> }
 
@@ -103,11 +104,7 @@ export function WorkflowSimulator() {
   }
 
   if (!available) {
-    return (
-      <Panel title="Workflow simulator" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Workflow simulator" />;
   }
 
   return (
