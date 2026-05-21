@@ -7,9 +7,10 @@ import {
   grantConsentRow, revokeConsentRow, myConsentsRows,
   fileAppealRow, myAppealsRows,
 } from '@/lib/db/repos/citizen';
-import { openWorkItemRow } from '@/lib/db/repos/work-items';
+import { openWorkItemRow, workItemsByIds } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
-import type { ServiceRequestRow, ConsentRow, AppealRow } from '@/lib/db/types';
+import type { ServiceRequestRow, ConsentRow, AppealRow, WorkItemRow } from '@/lib/db/types';
+import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { ensureCitizenLinkage, refreshIdentity } from '@/services/identity';
 
@@ -34,6 +35,7 @@ export function CitizenSubstrate() {
   const [requests, setRequests] = React.useState<ServiceRequestRow[]>([]);
   const [consents, setConsents] = React.useState<ConsentRow[]>([]);
   const [appeals, setAppeals] = React.useState<AppealRow[]>([]);
+  const [linkedItems, setLinkedItems] = React.useState<Map<string, WorkItemRow>>(new Map());
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -46,9 +48,29 @@ export function CitizenSubstrate() {
     setRequests(r);
     setConsents(c);
     setAppeals(a);
+
+    // Fetch each linked work item so the citizen sees the officer-side
+    // execution progress next to their request status.
+    const itemIds = Array.from(new Set([
+      ...r.map(x => x.linked_work_item_id).filter((x): x is string => !!x),
+      ...a.map(x => x.linked_work_item_id).filter((x): x is string => !!x),
+    ]));
+    if (itemIds.length > 0) {
+      const items = await workItemsByIds(itemIds);
+      setLinkedItems(new Map(items.map(i => [i.id, i])));
+    } else {
+      setLinkedItems(new Map());
+    }
   }, [available]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, actor?.id, session?.user.id, refresh]);
+
+  // Realtime: when an officer advances the linked work item, the
+  // citizen's progress chip updates without a refresh.
+  useRealtimeRefresh(
+    React.useMemo(() => [{ table: 'work_items' as const }], []),
+    refresh,
+  );
 
   if (!available) {
     return (
@@ -117,9 +139,9 @@ export function CitizenSubstrate() {
         <span className="font-mono text-[10px] text-ink-muted">{actor.name}</span>
       </div>
 
-      <ServiceRequestsPanel citizenId={actor.id} rows={requests} onChange={refresh} />
+      <ServiceRequestsPanel citizenId={actor.id} rows={requests} onChange={refresh} linkedItems={linkedItems} />
       <ConsentsPanel citizenId={actor.id} rows={consents} onChange={refresh} />
-      <AppealsPanel citizenId={actor.id} rows={appeals} onChange={refresh} />
+      <AppealsPanel citizenId={actor.id} rows={appeals} onChange={refresh} linkedItems={linkedItems} />
 
       <p className="text-[10px] text-ink-muted">
         Each panel reads only your own records. The substrate's row-level
@@ -131,8 +153,13 @@ export function CitizenSubstrate() {
 }
 
 function ServiceRequestsPanel({
-  citizenId, rows, onChange,
-}: { citizenId: string; rows: ServiceRequestRow[]; onChange: () => Promise<void> }) {
+  citizenId, rows, onChange, linkedItems,
+}: {
+  citizenId: string;
+  rows: ServiceRequestRow[];
+  onChange: () => Promise<void>;
+  linkedItems: Map<string, WorkItemRow>;
+}) {
   const [open, setOpen] = React.useState(false);
   return (
     <Panel
@@ -159,17 +186,32 @@ function ServiceRequestsPanel({
         <p className="px-3 py-4 text-[11px] text-ink-muted">No service requests on file.</p>
       ) : (
         <div className="max-h-[280px] overflow-y-auto">
-          {rows.map(r => (
-            <div key={r.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
-              <span className="w-24 shrink-0 truncate font-mono text-ink-soft">{r.ref}</span>
-              <span className="w-28 shrink-0 truncate font-mono text-link">{r.target_charter_id}</span>
-              <span className="min-w-0 flex-1 truncate text-ink">{r.title ?? r.service}</span>
-              <span className="w-24 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                style={{ color: r.resolved_at ? TONE.ok : r.acknowledged_at ? TONE.warn : TONE.link }}>
-                {r.status}
-              </span>
-            </div>
-          ))}
+          {rows.map(r => {
+            const linked = r.linked_work_item_id ? linkedItems.get(r.linked_work_item_id) : null;
+            return (
+              <div key={r.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <span className="w-24 shrink-0 truncate font-mono text-ink-soft">{r.ref}</span>
+                <span className="w-28 shrink-0 truncate font-mono text-link">{r.target_charter_id}</span>
+                <span className="min-w-0 flex-1 truncate text-ink">{r.title ?? r.service}</span>
+                {linked ? (
+                  <span
+                    className="w-28 shrink-0 truncate rounded-[3px] border px-1.5 py-0.5 text-right text-[8.5px] uppercase tracking-wider"
+                    style={{
+                      borderColor: linked.closed ? TONE.ok : TONE.link,
+                      color: linked.closed ? TONE.ok : TONE.link,
+                    }}
+                    title={`Linked work item: ${linked.ref}`}
+                  >
+                    ⊳ {linked.current_stage}
+                  </span>
+                ) : <span className="w-28 shrink-0" />}
+                <span className="w-24 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
+                  style={{ color: r.resolved_at ? TONE.ok : r.acknowledged_at ? TONE.warn : TONE.link }}>
+                  {r.status}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </Panel>
@@ -350,8 +392,13 @@ function ConsentComposer({
 }
 
 function AppealsPanel({
-  citizenId, rows, onChange,
-}: { citizenId: string; rows: AppealRow[]; onChange: () => Promise<void> }) {
+  citizenId, rows, onChange, linkedItems,
+}: {
+  citizenId: string;
+  rows: AppealRow[];
+  onChange: () => Promise<void>;
+  linkedItems: Map<string, WorkItemRow>;
+}) {
   const [open, setOpen] = React.useState(false);
   return (
     <Panel title="Appeals" meta={`${rows.length}`} bodyClass="!p-0">
@@ -374,18 +421,32 @@ function AppealsPanel({
         <p className="px-3 py-4 text-[11px] text-ink-muted">No appeals on file.</p>
       ) : (
         <div className="max-h-[280px] overflow-y-auto">
-          {rows.map(a => (
-            <div key={a.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
-              <span className="w-28 shrink-0 truncate font-mono text-ink-soft">{a.ref}</span>
-              <span className="w-32 shrink-0 truncate font-mono text-link">{a.originating_charter_id}</span>
-              <span className="min-w-0 flex-1 truncate text-ink">{a.ground}</span>
-              <span className="w-24 shrink-0 truncate text-right text-ink-soft">{a.decision ?? '—'}</span>
-              <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                style={{ color: a.decided_at ? TONE.ok : TONE.warn }}>
-                {a.status}
-              </span>
-            </div>
-          ))}
+          {rows.map(a => {
+            const linked = a.linked_work_item_id ? linkedItems.get(a.linked_work_item_id) : null;
+            return (
+              <div key={a.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <span className="w-28 shrink-0 truncate font-mono text-ink-soft">{a.ref}</span>
+                <span className="w-32 shrink-0 truncate font-mono text-link">{a.originating_charter_id}</span>
+                <span className="min-w-0 flex-1 truncate text-ink">{a.ground}</span>
+                <span className="w-24 shrink-0 truncate text-right text-ink-soft">{a.decision ?? '—'}</span>
+                {linked ? (
+                  <span
+                    className="w-28 shrink-0 truncate rounded-[3px] border px-1.5 py-0.5 text-right text-[8.5px] uppercase tracking-wider"
+                    style={{
+                      borderColor: linked.closed ? TONE.ok : TONE.link,
+                      color: linked.closed ? TONE.ok : TONE.link,
+                    }}
+                  >
+                    ⊳ {linked.current_stage}
+                  </span>
+                ) : <span className="w-28 shrink-0" />}
+                <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
+                  style={{ color: a.decided_at ? TONE.ok : TONE.warn }}>
+                  {a.status}
+                </span>
+              </div>
+            );
+          })}
         </div>
       )}
     </Panel>

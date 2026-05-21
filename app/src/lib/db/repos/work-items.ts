@@ -205,6 +205,14 @@ export async function fetchOfficerPublicKey(officerId: string): Promise<JsonWebK
   return row.signing_public_key ?? null;
 }
 
+export async function workItemsByIds(ids: string[]): Promise<WorkItemRow[]> {
+  const sb = publicClient();
+  if (!sb || ids.length === 0) return [];
+  const { data, error } = await sb.from('civicos_work_items').select('*').in('id', ids);
+  if (error || !data) return [];
+  return data as WorkItemRow[];
+}
+
 export async function listWorkItemsRows(opts: { scope?: string; workflowId?: string; closed?: boolean; limit?: number } = {}): Promise<WorkItemRow[]> {
   const sb = publicClient();
   if (!sb) return [];
