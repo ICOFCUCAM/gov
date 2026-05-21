@@ -6,6 +6,7 @@ import { recentEventsRows, publishEventRow, type PersistedEvent } from '@/lib/db
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
 
@@ -91,33 +92,8 @@ export function FederationStream() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-ink-muted">type:</span>
-        {['all', ...types].map(t => (
-          <button key={t} type="button" onClick={() => setTypeFilter(t)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-            style={{
-              borderColor: typeFilter === t ? TONE.link : 'rgb(var(--c-line))',
-              color: typeFilter === t ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}>
-            {t}
-          </button>
-        ))}
-      </div>
-
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-ink-muted">channel:</span>
-        {['all', ...channels].map(c => (
-          <button key={c} type="button" onClick={() => setChannelFilter(c)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-            style={{
-              borderColor: channelFilter === c ? TONE.link : 'rgb(var(--c-line))',
-              color: channelFilter === c ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}>
-            {c}
-          </button>
-        ))}
-      </div>
+      <FilterChips label="type:" options={['all', ...types]} value={typeFilter} onChange={setTypeFilter} />
+      <FilterChips label="channel:" options={['all', ...channels]} value={channelFilter} onChange={setChannelFilter} />
 
       {composerOpen ? (
         <FederationComposer defaultSource={actor?.charterId ?? 'platform'} onDone={async () => { await refresh(); setComposerOpen(false); }} />
