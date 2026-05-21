@@ -27,14 +27,31 @@ export function WatchedRecords({ limit = 6 }: { limit?: number }) {
 
   if (!actor) return null;
 
+  // Tally by kind across the full watchlist, not just the displayed slice.
+  const all = listWatch(actor.id);
+  const tallies = all.reduce<Record<string, number>>((acc, e) => {
+    acc[e.kind] = (acc[e.kind] ?? 0) + 1; return acc;
+  }, {});
+
   return (
-    <Panel title="Starred" meta={`${entries.length}`} bodyClass="!p-0">
+    <Panel title="Starred" meta={`${all.length}`} bodyClass="!p-0">
       {entries.length === 0 ? (
         <p className="px-3 py-4 text-[11px] text-ink-muted">
           Nothing starred. Click ☆ on any record detail page to add it here.
         </p>
       ) : (
         <div>
+          {Object.keys(tallies).length > 1 ? (
+            <div className="flex flex-wrap items-center gap-1 border-b border-line-soft px-3 py-1.5">
+              {(Object.entries(tallies).sort(([, a], [, b]) => b - a)).map(([k, n]) => (
+                <span key={k}
+                  className="rounded-[3px] border border-line bg-bg px-1.5 py-0.5 text-[8.5px] font-mono uppercase tracking-wider"
+                  style={{ color: kindTone[k as WatchEntry['kind']] }}>
+                  {k} · {n}
+                </span>
+              ))}
+            </div>
+          ) : null}
           {entries.map(e => (
             <Link key={e.kind + ':' + e.ref} href={watchHref(e)}
               className="block border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px] hover:bg-surface-2">
