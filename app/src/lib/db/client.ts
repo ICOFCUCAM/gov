@@ -31,8 +31,16 @@ export function publicClient(): DbClient | null {
   const url  = process.env[URL_KEY];
   const anon = process.env[ANON_KEY];
   if (!url || !anon) { _publicState = { client: null }; return null; }
+  // Persist sessions only in browser contexts — the same client is used
+  // by SSR API routes where window is absent, and Supabase's localStorage
+  // adapter throws when missing. autoRefreshToken keeps the JWT live
+  // across long sessions.
+  const inBrowser = typeof window !== 'undefined';
   const client = createClient(url, anon, {
-    auth: { persistSession: false, autoRefreshToken: false },
+    auth: {
+      persistSession: inBrowser, autoRefreshToken: inBrowser,
+      storageKey: 'civicos.auth',
+    },
     db: { schema: 'public' as never },
     global: { headers: { 'x-civicos-client': 'public' } },
   });

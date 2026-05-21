@@ -37,6 +37,7 @@ import {
   registerCitizenRow, submitServiceRequestRow, updateServiceRequestRow,
   grantConsentRow, revokeConsentRow, fileAppealRow, decideAppealRow,
 } from './repos/citizen';
+import { currentActor } from './repos/identity';
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -356,6 +357,14 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     expect(decided!.status).toBe('decided');
     expect(decided!.decision).toBe('upheld');
     expect(decided!.published_at).not.toBeNull();
+  });
+
+  it('IDENTITY — current_actor returns null for unauthenticated anon sessions', async () => {
+    // The test harness uses the anonymous publishable key; no session is
+    // attached, so the contract must return null rather than a stale
+    // actor or a permission error.
+    const a = await currentActor();
+    expect(a).toBeNull();
   });
 
   it('CONTRACT — direct INSERT to audit_entries is denied (RLS)', async () => {
