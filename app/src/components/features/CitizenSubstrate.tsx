@@ -14,6 +14,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { ensureCitizenLinkage, refreshIdentity } from '@/services/identity';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 /**
  * CitizenSubstrate — the citizen's view of their own persistent records.
@@ -410,18 +411,7 @@ function ConsentsPanel({
   return (
     <Panel title="Consents" meta={`${visible.length} / ${rows.length}`} bodyClass="!p-0">
       <div className="flex items-center justify-between gap-2 border-b border-line-soft px-3 py-1.5">
-        <div className="flex flex-wrap items-center gap-1">
-          {(['all','granted','revoked','expired'] as const).map(k => (
-            <button key={k} type="button" onClick={() => setFilter(k)}
-              className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
-              style={{
-                borderColor: filter === k ? TONE.link : 'rgb(var(--c-line))',
-                color: filter === k ? TONE.link : 'rgb(var(--c-ink-muted))',
-              }}>
-              {k}
-            </button>
-          ))}
-        </div>
+        <FilterChips options={['all','granted','revoked','expired'] as const} value={filter} onChange={setFilter} />
         <button
           type="button"
           onClick={() => setOpen(o => !o)}
