@@ -89,6 +89,19 @@ export function AuditEntryDetail({ scope, seq }: { scope: string; seq: number })
             className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
             {verifying ? 'verifying…' : 'verify scope chain'}
           </button>
+          <button type="button"
+            onClick={() => {
+              const payload = { scope, entry, exported_at: new Date().toISOString() };
+              const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-audit-${scope.replace(/[^a-z0-9._-]+/gi,'_')}-${entry.seq}.json`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2">
+            download entry
+          </button>
           {intact != null ? (
             <span className="text-[10px] font-mono" style={{ color: intact ? TONE.ok : TONE.alert }}>
               {intact ? 'intact' : 'BROKEN'}
