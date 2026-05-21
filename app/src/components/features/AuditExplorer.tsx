@@ -9,6 +9,7 @@ import {
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /**
  * Audit Explorer — surface the hash-chained audit ledger live.
@@ -97,13 +98,7 @@ export function AuditExplorer() {
   }, [active, trail, verification]);
 
   if (!available) {
-    return (
-      <Panel title="Audit Explorer" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">
-          Substrate not configured.
-        </p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Audit Explorer" />;
   }
 
   return (

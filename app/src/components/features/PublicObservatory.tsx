@@ -8,6 +8,7 @@ import { listDirectivesRows } from '@/lib/db/repos/memory';
 import { listInstitutionsRows } from '@/lib/db/repos/institutions';
 import { listTelemetryStreamsRows } from '@/lib/db/repos/telemetry';
 import type { DirectiveRow, InstitutionRow, TelemetryStreamRow } from '@/lib/db/types';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /**
  * PublicObservatory — what an anonymous visitor can see of the
@@ -49,9 +50,7 @@ export function PublicObservatory() {
   if (!available) {
     return (
       <main className="max-w-5xl mx-auto px-4 py-8">
-        <Panel title="Public Observatory" meta="not configured" bodyClass="!p-3">
-          <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-        </Panel>
+        <SubstrateNotConfigured title="Public Observatory" />
       </main>
     );
   }
