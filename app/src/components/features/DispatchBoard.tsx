@@ -11,6 +11,7 @@ import type { DispatchRow, Priority } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
+import { WatchStar } from '@/components/identity/WatchStar';
 
 const statusTone = (s: string) =>
   s === 'closed' ? TONE.ok
@@ -175,6 +176,7 @@ export function DispatchBoard() {
                     if (e.currentTarget.checked) next.add(d.ref); else next.delete(d.ref);
                     setSelected(next);
                   }} />
+                <WatchStar kind="dispatch" ref={d.ref} label={d.detail ?? d.kind} />
                 <a href={`/gov/dispatches/${encodeURIComponent(d.ref)}`}
                    className="w-28 shrink-0 truncate font-mono text-ink-soft hover:text-link hover:underline">
                   {d.ref}
