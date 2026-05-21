@@ -11,8 +11,7 @@ import type { ServiceRequestRow, AppealRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { getBoolPref, setPref } from '@/lib/prefs';
-
-const ageMin = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
+import { ageMinutes } from '@/lib/format';
 
 /**
  * CitizenIntakeQueue — the officer-side counterpart to CitizenSubstrate.
@@ -187,7 +186,7 @@ export function CitizenIntakeQueue() {
                 <span className="w-32 shrink-0 truncate font-mono text-link">{r.service}</span>
                 <span className="min-w-0 flex-1 truncate text-ink">{r.title ?? r.domain ?? '—'}</span>
                 <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">
-                  {ageMin(r.submitted_at)}m
+                  {ageMinutes(r.submitted_at)}m
                 </span>
                 <span
                   className="w-24 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
