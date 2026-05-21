@@ -33,6 +33,7 @@ const ALL_KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declar
 export function DirectiveBoard() {
   const { actor, session, ready } = useIdentity();
   const [items, setItems] = React.useState<DirectiveRow[]>([]);
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'drafting' | 'signed' | 'effective' | 'rescinded' | 'published'>('all');
   const [loading, setLoading] = React.useState(false);
   const [composerOpen, setComposerOpen] = React.useState(false);
   const [busyRef, setBusyRef] = React.useState<string | null>(null);
@@ -108,15 +109,32 @@ export function DirectiveBoard() {
         />
       ) : null}
 
-      <Panel title="Directives" meta={`${items.length} visible`} bodyClass="!p-0">
-        {items.length === 0 ? (
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="text-[9px] uppercase tracking-wider text-ink-muted">status:</span>
+        {(['all','drafting','signed','effective','rescinded','published'] as const).map(s => (
+          <button key={s} type="button" onClick={() => setStatusFilter(s)}
+            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
+            style={{
+              borderColor: statusFilter === s ? TONE.link : 'rgb(var(--c-line))',
+              color: statusFilter === s ? TONE.link : 'rgb(var(--c-ink-muted))',
+            }}>
+            {s}
+          </button>
+        ))}
+      </div>
+
+      <Panel title="Directives" meta={`${(statusFilter === 'all' ? items : items.filter(i => i.status === statusFilter)).length} visible`} bodyClass="!p-0">
+        {(() => {
+          const visible = statusFilter === 'all' ? items : items.filter(i => i.status === statusFilter);
+          return visible.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
-            No directives visible at the current scope. Draft one above to
-            create the first record — it will appear here live.
+            {items.length === 0
+              ? 'No directives visible at the current scope. Draft one above to create the first record — it will appear here live.'
+              : `No directives in status '${statusFilter}'.`}
           </p>
         ) : (
           <div className="max-h-[480px] overflow-y-auto">
-            {items.map(d => (
+            {visible.map(d => (
               <div
                 key={d.id}
                 className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]"
@@ -167,7 +185,8 @@ export function DirectiveBoard() {
               </div>
             ))}
           </div>
-        )}
+        );
+        })()}
       </Panel>
 
       <p className="text-[10px] text-ink-muted">
