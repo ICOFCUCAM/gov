@@ -5,6 +5,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { listWorkItemsRows, substrateAvailable } from '@/lib/db/repos/work-items';
 import type { WorkItemRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 
 const priorityTone = (p: string) =>
   p === 'critical' || p === 'urgent' ? TONE.alert
@@ -46,6 +47,18 @@ export function SubstrateLedger() {
     void refresh();
   }, [ready, actor?.id, session?.user.id, refresh]);
 
+  // Live updates via Realtime — any INSERT/UPDATE on civicos.work_items
+  // the current session can see re-triggers the fetch. RLS scopes which
+  // changes flow through; the client doesn't filter.
+  useRealtimeRefresh(
+    React.useMemo(() => [
+      { table: 'work_items' as const },
+      { table: 'work_item_steps' as const },
+    ], []),
+    refresh,
+  );
+
+  // Wall clock tick (display only).
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 30_000);
     return () => clearInterval(t);
