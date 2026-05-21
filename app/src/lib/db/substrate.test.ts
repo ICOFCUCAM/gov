@@ -21,6 +21,7 @@
 import { describe, it, expect, beforeAll } from 'vitest';
 import { publicClient, substrateAvailable, __resetClients } from './client';
 import { appendAuditRow, auditTrailRows, verifyChainRow } from './repos/audit';
+import { publishEventRow, recentEventsRows } from './repos/events';
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -97,6 +98,25 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     expect(v!.intact).toBe(true);
     expect(v!.brokenAt).toBeNull();
     expect(v!.entries).toBeGreaterThanOrEqual(2);
+  });
+
+  it('FEDERATION — events written via publish_event are readable from a fresh client', async () => {
+    const channel = `vitest-${scope.slice(0, 16)}`;
+    const ev = await publishEventRow(
+      'institution.escalation',
+      'vitest.app',
+      channel,
+      { reason: 'integration-proof', severity: 'minor' },
+    );
+    expect(ev).not.toBeNull();
+    expect(ev!.type).toBe('institution.escalation');
+    expect(ev!.payload).toMatchObject({ reason: 'integration-proof' });
+
+    __resetClients();
+    const rows = await recentEventsRows({ channel, limit: 5 });
+    expect(rows.length).toBeGreaterThanOrEqual(1);
+    expect(rows[0]!.source).toBe('vitest.app');
+    expect(rows[0]!.payload).toMatchObject({ severity: 'minor' });
   });
 
   it('CONTRACT — direct INSERT to audit_entries is denied (RLS)', async () => {
