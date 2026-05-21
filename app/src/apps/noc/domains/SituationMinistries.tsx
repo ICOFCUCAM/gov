@@ -136,6 +136,87 @@ export function MinistryContribution({ id, now }: { id: string; now: number }) {
   );
 }
 
+export function MultiDomainWatch({ id, now }: { id: string; now: number }) {
+  const ts = now / 4000;
+  void id;
+  const domains = ['Energy grid', 'Health system', 'Border posture', 'Cyber surface', 'Climate / hydro', 'Transport network', 'Finance rails'];
+  return (
+    <SituationFrame archetype="situation" code="SR-MDW-27" title="Multi-Domain Watch"
+      subtitle="24/7 cross-domain watch floor">
+      <SituationKpi items={[
+        { label: 'Domains under watch', value: domains.length, tone: 'info' },
+        { label: 'Watch officers on duty', value: Math.round(wave('mdw:o', ts, 12, 28)), tone: 'ok' },
+        { label: 'Alerts (last hour)', value: Math.round(wave('mdw:a', ts, 0, 12)) },
+        { label: 'Shift handover', value: 'every 8h', tone: 'ok' },
+      ]} />
+      <SituationRule label="watch posture per domain" />
+      {domains.map((d, i) => {
+        const v = Math.round(wave(`mdw:${i}`, ts, 64, 96));
+        return <SituationBar key={d} label={d} pct={v} tone={v >= 82 ? 'ok' : v >= 65 ? 'warn' : 'alert'} tail={`${v}% green`} />;
+      })}
+      <SituationCallout kicker="watch doctrine" body="Watch is observed continuously — never paused. Officers rotate on 8-hour shifts; every handover is logged and the audit chain is unbroken." />
+    </SituationFrame>
+  );
+}
+
+export function SovereignTime({ id, now }: { id: string; now: number }) {
+  const ts = now / 4000;
+  void id;
+  const regions = [
+    { name: 'Capital (UTC+3)', offsetH: 3 },
+    { name: 'Northern (UTC+3)', offsetH: 3 },
+    { name: 'Coastal (UTC+3)', offsetH: 3 },
+    { name: 'Polar (UTC+2)', offsetH: 2 },
+    { name: 'Continental peers', offsetH: 1 },
+  ];
+  return (
+    <SituationFrame archetype="situation" code="SR-TIM-28" title="Sovereign Time"
+      subtitle="continental time alignment & sync">
+      <SituationKpi items={[
+        { label: 'Sovereign clock', value: '✓ NTP stratum-1', tone: 'ok' },
+        { label: 'Sync drift (ms)', value: Math.round(wave('st:d', ts, 1, 14)), tone: 'ok' },
+        { label: 'Time-sync nodes', value: Math.round(wave('st:n', ts, 48, 96)).toLocaleString(), tone: 'info' },
+        { label: 'Last anomaly', value: 'never', tone: 'ok' },
+      ]} />
+      <SituationRule label="regional clocks" />
+      {regions.map(r => (
+        <div key={r.name} className="grid grid-cols-[1fr_120px_60px] gap-3 border-b py-1 text-[11px]"
+          style={{ borderColor: NOC_DS.ruleSoft, fontFamily: 'ui-monospace, monospace' }}>
+          <span style={{ color: NOC_DS.parchmentInk }}>{r.name}</span>
+          <span style={{ color: NOC_DS.mut }}>UTC{r.offsetH >= 0 ? '+' : ''}{r.offsetH}</span>
+          <span className="text-right uppercase" style={{ color: NOC_DS.jade }}>● sync</span>
+        </div>
+      ))}
+    </SituationFrame>
+  );
+}
+
+export function DutyRoster({ id, now }: { id: string; now: number }) {
+  const ts = now / 4000;
+  void id;
+  const desks = ['Floor Director', 'Senior Analyst', 'Communications Lead', 'Cabinet Liaison', 'Continuity Officer', 'Audit Witness'];
+  return (
+    <SituationFrame archetype="situation" code="SR-DTY-29" title="Duty Roster"
+      subtitle="NOC duty officers & escalation chain">
+      <SituationKpi items={[
+        { label: 'On-duty officers', value: desks.length, tone: 'info' },
+        { label: 'Shift hours', value: '8h', tone: 'ok' },
+        { label: 'Next handover', value: `${Math.round(wave('dr:n', ts, 1, 8))}h`, tone: 'info' },
+        { label: 'Escalation chain', value: '✓ publicly known', tone: 'ok' },
+      ]} />
+      <SituationRule label="floor desks" />
+      {desks.map(d => (
+        <div key={d} className="grid grid-cols-[1fr_120px_100px] gap-3 border-b py-1 text-[11px]"
+          style={{ borderColor: NOC_DS.ruleSoft, fontFamily: 'ui-monospace, monospace' }}>
+          <span style={{ color: NOC_DS.parchmentInk }}>{d}</span>
+          <span style={{ color: NOC_DS.mut }}>civilian</span>
+          <span className="text-right uppercase" style={{ color: NOC_DS.jade }}>● on duty</span>
+        </div>
+      ))}
+    </SituationFrame>
+  );
+}
+
 export function MinistryIncidents({ id, now }: { id: string; now: number }) {
   const b = nocBoard(now);
   void id;

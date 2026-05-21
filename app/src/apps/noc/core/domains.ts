@@ -21,7 +21,8 @@ export type NocSurfaceId =
   | 'national-continuity' | 'cog-status' | 'continuity-exercises'
   | 'intel-fusion' | 'open-source-fusion' | 'cyber-posture'
   | 'noc-safeguards' | 'civilian-command-doctrine' | 'rationale-doctrine'
-  | 'cabinet-non-substitution';
+  | 'cabinet-non-substitution'
+  | 'multi-domain-watch' | 'sovereign-time' | 'duty-roster' | 'public-archive';
 
 export interface NocDomain {
   surface: NocSurfaceId;
@@ -70,6 +71,10 @@ export const NOC_DOMAINS: NocDomain[] = [
   { surface: 'civilian-command-doctrine', group: 'safeguards', code: 'SF-CIV-24', label: 'Civilian Command Doctrine',purpose: 'Civilian command doctrine',             archetype: 'safeguards' },
   { surface: 'rationale-doctrine',        group: 'safeguards', code: 'SF-RAT-25', label: 'Rationale Doctrine',       purpose: 'Every NOC decision is reasoned',         archetype: 'safeguards' },
   { surface: 'cabinet-non-substitution',  group: 'safeguards', code: 'SF-CAB-26', label: 'Cabinet Non-Substitution', purpose: 'NOC does not substitute for Cabinet',   archetype: 'safeguards' },
+  { surface: 'multi-domain-watch',        group: 'situation',  code: 'SR-MDW-27', label: 'Multi-Domain Watch',       purpose: '24/7 cross-domain watch floor',         archetype: 'situation' },
+  { surface: 'sovereign-time',            group: 'situation',  code: 'SR-TIM-28', label: 'Sovereign Time',           purpose: 'Continental time alignment',            archetype: 'situation' },
+  { surface: 'duty-roster',               group: 'situation',  code: 'SR-DTY-29', label: 'Duty Roster',              purpose: 'NOC duty officers & escalation',        archetype: 'situation' },
+  { surface: 'public-archive',            group: 'briefing',   code: 'PB-PUB-30', label: 'Public Archive Stream',    purpose: 'Live citizen archive stream',           archetype: 'briefing' },
 ];
 
 const BY_SURFACE = new Map(NOC_DOMAINS.map(d => [d.surface, d]));

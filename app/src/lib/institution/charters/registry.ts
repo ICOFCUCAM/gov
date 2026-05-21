@@ -367,9 +367,9 @@ export const CHARTERS: MinistryCharter[] = [
     tags: ['command', 'continuity', 'service'],
   },
   {
-    id: 'citizen-portal',
+    id: 'citizen-wallet',
     label: 'Citizen Super-Portal',
-    mount: { kind: 'agency', appId: 'citizen-portal' },
+    mount: { kind: 'agency', appId: 'citizen-wallet' },
     blueprint: [{ document: 'master', section: '11', title: 'Citizen Super-Portal — Unified Wallet' }],
     grammar: 'citizen-wallet',
     hasDesignSystem: true,
@@ -394,8 +394,8 @@ export const CHARTERS: MinistryCharter[] = [
     hasDesignSystem: true,
     hasShell: true,
     federation: { produces: ['Presidency / Cabinet', 'Emergency Response', 'Communications', 'Audit Vault'], consumes: ['All 15 ministries', 'Police Command', 'Emergency Response', 'Communications', 'Foreign Affairs', 'Senate · Assembly'], emitsCascade: true },
-    expectedDomains: 26,
-    shippedDomains: 26,
+    expectedDomains: 30,
+    shippedDomains: 30,
     workflows: [
       { id: 'cross-ministry-coordination', title: 'Cross-ministry coordination decision', kind: 'approval' },
       { id: 'incident-fusion', title: 'National incident fusion', kind: 'incident' },

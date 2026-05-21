@@ -14,7 +14,7 @@ import { senateNav } from '@/apps/senate/core/domains';
 import { assemblyNav } from '@/apps/assembly/core/domains';
 import { judicialNav } from '@/apps/judicial-branch/core/domains';
 import { presidencyNav } from '@/apps/presidency/core/domains';
-import { portalNav } from '@/apps/citizen-portal/core/domains';
+import { portalNav } from '@/apps/citizen-wallet/core/domains';
 import { nocNav } from '@/apps/noc/core/domains';
 import type { AppManifest } from '@/services/orchestration-engine';
 
@@ -108,9 +108,7 @@ export const AGENCY_APPS: AppManifest[] = [
       { key: 'law-sovereignty', label: 'International Law & Sovereignty' },
       { key: 'citizen-portal', label: 'Citizen Foreign Services' },
     ] },
-  { id: 'citizen-wallet', label: 'Citizen Wallet', domain: 'citizen', kind: 'citizen',
-    archetypeOrBranch: 'GENERIC', nav: [{ key: 'identity', label: 'Identity' }, { key: 'services', label: 'Services' }, { key: 'payments', label: 'Payments' }] },
-  { id: 'citizen-portal', label: 'Citizen Super-Portal', domain: 'portal', kind: 'citizen',
+  { id: 'citizen-wallet', label: 'Citizen Super-Portal', domain: 'citizen', kind: 'citizen',
     archetypeOrBranch: 'GENERIC', nav: portalNav() },
   { id: 'noc', label: 'National Operations Centre', domain: 'noc', kind: 'agency',
     archetypeOrBranch: 'GENERIC', nav: nocNav() },

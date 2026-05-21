@@ -5,7 +5,7 @@
 // citizen-initiated requests, consents, appeals and votes back.
 
 import * as React from 'react';
-import { PORTAL_DS } from '@/apps/citizen-portal/design-system/portal-ds';
+import { PORTAL_DS } from '@/apps/citizen-wallet/design-system/portal-ds';
 
 export type FederationEdge = {
   partner: string;

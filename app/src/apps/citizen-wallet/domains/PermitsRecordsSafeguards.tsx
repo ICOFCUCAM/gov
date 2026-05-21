@@ -4,7 +4,7 @@
 
 import * as React from 'react';
 import { CITIZEN_PORTAL_SAFEGUARDS } from '@/lib/gov/citizen-portal-engine';
-import { CitizenFrame, CitizenKpi, CitizenRule, CitizenCallout, PORTAL_DS } from '@/apps/citizen-portal/design-system/portal-ds';
+import { CitizenFrame, CitizenKpi, CitizenRule, CitizenCallout, PORTAL_DS } from '@/apps/citizen-wallet/design-system/portal-ds';
 import { wave } from '@/lib/telemetry';
 
 export function PermitsLicences({ id, now }: { id: string; now: number }) {

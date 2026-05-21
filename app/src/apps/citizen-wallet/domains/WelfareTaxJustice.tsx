@@ -3,7 +3,7 @@
 // Citizen Portal domains — Welfare, Taxation, Justice, Civic surfaces.
 
 import * as React from 'react';
-import { CitizenFrame, CitizenKpi, CitizenRule, CitizenBar, CitizenCallout, PORTAL_DS } from '@/apps/citizen-portal/design-system/portal-ds';
+import { CitizenFrame, CitizenKpi, CitizenRule, CitizenBar, CitizenCallout, PORTAL_DS } from '@/apps/citizen-wallet/design-system/portal-ds';
 import { wave } from '@/lib/telemetry';
 
 export function WelfareBenefits({ id, now }: { id: string; now: number }) {

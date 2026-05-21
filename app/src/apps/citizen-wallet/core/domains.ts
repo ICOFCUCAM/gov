@@ -1,6 +1,6 @@
 // apps/citizen-portal/core — Citizen Super-Portal domain registry.
 
-import type { PortalArchetype } from '@/apps/citizen-portal/design-system/portal-ds';
+import type { PortalArchetype } from '@/apps/citizen-wallet/design-system/portal-ds';
 
 export type PortalGroupKey =
   | 'wallet' | 'identity' | 'health' | 'education' | 'welfare'

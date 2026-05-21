@@ -9,8 +9,8 @@ import { domainBySurface, type NocSurfaceId } from '@/apps/noc/core/domains';
 import { FederationStrip } from '@/apps/noc/federation/federation';
 import { CROSS_MINISTRY_COORDINATION } from '@/apps/noc/workflows/noc-workflows';
 
-import { SituationRoom, NationalReadiness, CabinetSync, CrossDomainFabric, MinistryPosture, MinistryContribution, MinistryIncidents } from '@/apps/noc/domains/SituationMinistries';
-import { IncidentFloor, MajorIncidents, RegionalRollup, CoordinationDecisions, RecommendationsPublished, CabinetRouted, PublicBriefing, BriefingArchive, Translations } from '@/apps/noc/domains/IncidentsDecisionsBriefing';
+import { SituationRoom, NationalReadiness, CabinetSync, CrossDomainFabric, MinistryPosture, MinistryContribution, MinistryIncidents, MultiDomainWatch, SovereignTime, DutyRoster } from '@/apps/noc/domains/SituationMinistries';
+import { IncidentFloor, MajorIncidents, RegionalRollup, CoordinationDecisions, RecommendationsPublished, CabinetRouted, PublicBriefing, BriefingArchive, Translations, PublicArchiveStream } from '@/apps/noc/domains/IncidentsDecisionsBriefing';
 import { NationalContinuity, CogStatus, ContinuityExercises, IntelFusion, OpenSourceFusion, CyberPosture, NocSafeguardsView, CivilianCommandDoctrine, RationaleDoctrine, CabinetNonSubstitution } from '@/apps/noc/domains/ContinuityFusionSafeguards';
 
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -44,6 +44,10 @@ const RENDER: Record<NocSurfaceId, Render> = {
   'civilian-command-doctrine': p => <CivilianCommandDoctrine id={p.id} now={p.now} />,
   'rationale-doctrine':        p => <RationaleDoctrine id={p.id} now={p.now} />,
   'cabinet-non-substitution':  p => <CabinetNonSubstitution id={p.id} now={p.now} />,
+  'multi-domain-watch':        p => <MultiDomainWatch id={p.id} now={p.now} />,
+  'sovereign-time':            p => <SovereignTime id={p.id} now={p.now} />,
+  'duty-roster':               p => <DutyRoster id={p.id} now={p.now} />,
+  'public-archive':            p => <PublicArchiveStream id={p.id} now={p.now} />,
 };
 
 export function NocShell({ id, surface, now, role, withheld = [] }: {

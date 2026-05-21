@@ -89,8 +89,13 @@ export function PublicSiteShell({
       {/* 1. Utility ribbon */}
       <div className="w-full text-[12px] text-white/85"
         style={{ background: `linear-gradient(90deg, ${theme.ink}, ${theme.inkSoft})` }}>
-        <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-2">
-          <span>Official Website of the {institution.name}</span>
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
+          <div className="flex items-center gap-4">
+            <span>Official Website of the {institution.name}</span>
+            <Link href="/government" className="hidden border-l border-white/20 pl-4 hover:text-white sm:inline">⛨ All Institutions</Link>
+            <Link href="/portal" className="hidden hover:text-white sm:inline">◯ Citizen Portal</Link>
+            <Link href="/noc" className="hidden hover:text-white sm:inline">⌖ Live Briefing</Link>
+          </div>
           <div className="flex items-center gap-4">
             <span className="hidden sm:inline hover:text-white">Skip to Main Content</span>
             <span className="flex gap-1.5">

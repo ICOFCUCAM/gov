@@ -36,6 +36,12 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '▣', l: 'Ministry Control', s: 'Daily operational control room', href: '/control' },
     { i: '◉', l: 'NCCC Wall', s: 'National coordination wall', href: '/wall' },
   ]},
+  { g: 'Public Websites', items: [
+    { i: '⛨', l: 'Government Directory', s: 'All institutions · official portals', href: '/government' },
+    { i: '◯', l: 'Citizen Super-Portal', s: 'Citizen-facing service portal', href: '/portal' },
+    { i: '◈', l: 'Office of the President', s: 'Executive Mansion public site', href: '/presidency' },
+    { i: '⌖', l: 'National Operations Centre', s: 'Live public briefing', href: '/noc' },
+  ]},
   { g: 'Foundational Services', items: [
     { i: '⊕', l: 'Sign-in', s: 'Identity & access', href: '/login' },
     { i: '▤', l: 'Permits', s: 'Licensing & approvals', href: '/wallet/permits' },
@@ -397,6 +403,49 @@ export default function SovereignCommandCenter() {
                   <span className="ml-2 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: TONE.ok }} />
                 </Link>
               ))}
+            </div>
+          </Section>
+
+          <Section label="Public Websites — Institutional Portals">
+            <div className="rounded-[3px] border border-line bg-surface p-3">
+              <div className="mb-2 flex items-end justify-between">
+                <div>
+                  <div className="text-[12px] font-semibold text-ink">Open the official public site of any sovereign institution.</div>
+                  <div className="text-[10px] text-ink-muted">Each institution operates an independent public portal — citizen-facing, accessible, multi-language.</div>
+                </div>
+                <Link href="/government" className="text-[11px] font-semibold underline underline-offset-2" style={{ color: ACCENT }}>Open full directory →</Link>
+              </div>
+              <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 md:grid-cols-6 xl:grid-cols-8">
+                {[
+                  ['/government', '⛨', 'Directory'],
+                  ['/portal', '◯', 'Citizen Portal'],
+                  ['/presidency', '◈', 'Presidency'],
+                  ['/noc', '⌖', 'NOC Briefing'],
+                  ['/senate', '◈', 'Senate'],
+                  ['/assembly', '⌬', 'Assembly'],
+                  ['/judiciary', '⚖', 'Judicial Branch'],
+                  ['/interior', '⌂', 'Interior'],
+                  ['/health', '⚕', 'Health'],
+                  ['/treasury', '◈', 'Treasury'],
+                  ['/justice', '⚖', 'Justice'],
+                  ['/education', '✎', 'Education'],
+                  ['/energy', '⌬', 'Energy'],
+                  ['/transport', '↬', 'Transport'],
+                  ['/trade', '⌗', 'Trade'],
+                  ['/labour', '✚', 'Labour'],
+                  ['/environment', '◯', 'Environment'],
+                  ['/agriculture', '☷', 'Agriculture'],
+                  ['/police', '⌖', 'Police'],
+                  ['/emergency', '⚠', 'Emergency'],
+                  ['/communications', '⌬', 'Communications'],
+                  ['/foreign-affairs', '⌖', 'Foreign Affairs'],
+                ].map(([href, icon, label]) => (
+                  <Link key={href} href={href!} className="focus-ring flex items-center gap-1.5 rounded-[3px] border border-line bg-surface-2/30 px-2 py-1.5 no-underline transition-colors hover:border-link/40">
+                    <span aria-hidden className="text-[12px] text-ink-soft">{icon}</span>
+                    <span className="truncate text-[10.5px] text-ink-soft">{label}</span>
+                  </Link>
+                ))}
+              </div>
             </div>
           </Section>
 

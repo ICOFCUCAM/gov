@@ -1,6 +1,6 @@
 // apps/citizen-portal/workflows — executable workflow contracts.
 
-import type { PortalArchetype } from '@/apps/citizen-portal/design-system/portal-ds';
+import type { PortalArchetype } from '@/apps/citizen-wallet/design-system/portal-ds';
 
 export type PortalStepKind =
   | 'submission' | 'verification' | 'consent' | 'review'

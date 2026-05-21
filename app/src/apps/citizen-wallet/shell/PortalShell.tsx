@@ -4,14 +4,14 @@
 
 import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
-import { PORTAL_DS, CitizenSeal } from '@/apps/citizen-portal/design-system/portal-ds';
-import { domainBySurface, type PortalSurfaceId } from '@/apps/citizen-portal/core/domains';
-import { FederationStrip } from '@/apps/citizen-portal/federation/federation';
-import { SERVICE_REQUEST } from '@/apps/citizen-portal/workflows/portal-workflows';
+import { PORTAL_DS, CitizenSeal } from '@/apps/citizen-wallet/design-system/portal-ds';
+import { domainBySurface, type PortalSurfaceId } from '@/apps/citizen-wallet/core/domains';
+import { FederationStrip } from '@/apps/citizen-wallet/federation/federation';
+import { SERVICE_REQUEST } from '@/apps/citizen-wallet/workflows/portal-workflows';
 
-import { WalletHome, UnifiedInbox, ServicesDirectory, ConsentsLedger, SovereignIdentity, IdentityVerification, BiometricDoctrine, HealthWallet, HealthRecords, Appointments, LearnerTwin, CredentialsPortfolio } from '@/apps/citizen-portal/domains/WalletIdentity';
-import { WelfareBenefits, UnemploymentAccount, TaxAccount, PaymentsHistory, TaxFiling, CivicJustice, CaseTracker, AppealCentre, CivicVoice, PetitionsWallet, PublicConsultations } from '@/apps/citizen-portal/domains/WelfareTaxJustice';
-import { PermitsLicences, BusinessRegistry, PersonalRecords, MobilityWallet, EnergyAccount, ConsularServices, VoterWallet, CitizenSafeguardsView, DataDoctrine, AppealDoctrine } from '@/apps/citizen-portal/domains/PermitsRecordsSafeguards';
+import { WalletHome, UnifiedInbox, ServicesDirectory, ConsentsLedger, SovereignIdentity, IdentityVerification, BiometricDoctrine, HealthWallet, HealthRecords, Appointments, LearnerTwin, CredentialsPortfolio } from '@/apps/citizen-wallet/domains/WalletIdentity';
+import { WelfareBenefits, UnemploymentAccount, TaxAccount, PaymentsHistory, TaxFiling, CivicJustice, CaseTracker, AppealCentre, CivicVoice, PetitionsWallet, PublicConsultations } from '@/apps/citizen-wallet/domains/WelfareTaxJustice';
+import { PermitsLicences, BusinessRegistry, PersonalRecords, MobilityWallet, EnergyAccount, ConsularServices, VoterWallet, CitizenSafeguardsView, DataDoctrine, AppealDoctrine } from '@/apps/citizen-wallet/domains/PermitsRecordsSafeguards';
 
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 

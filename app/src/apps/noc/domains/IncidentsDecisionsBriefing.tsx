@@ -190,6 +190,23 @@ export function BriefingArchive({ id, now }: { id: string; now: number }) {
   );
 }
 
+export function PublicArchiveStream({ id, now }: { id: string; now: number }) {
+  const ts = now / 4000;
+  void id;
+  return (
+    <SituationFrame archetype="briefing" code="PB-PUB-30" title="Public Archive Stream"
+      subtitle="live citizen archive — every briefing, instantly">
+      <SituationKpi items={[
+        { label: 'Stream uptime', value: `${Math.round(wave('pa:u', ts, 99.4, 99.99) * 100) / 100}%`, tone: 'ok' },
+        { label: 'Subscribers (citizen)', value: Math.round(wave('pa:s', ts, 240000, 1200000)).toLocaleString(), tone: 'info' },
+        { label: 'Median publish lag', value: `${Math.round(wave('pa:l', ts, 1, 8))}s`, tone: 'ok' },
+        { label: 'Open formats', value: 'RSS · ATOM · JSON', tone: 'ok' },
+      ]} />
+      <SituationCallout kicker="citizen access" body="The archive is open by default and exportable in machine-readable formats. Any citizen, journalist, or auditor may subscribe; the NOC may not throttle access." />
+    </SituationFrame>
+  );
+}
+
 export function Translations({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   void id;
