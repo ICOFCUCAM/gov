@@ -21,6 +21,7 @@ const sevTone: Record<AlertSeverity, string | undefined> = {
 
 const kindIcon: Record<Alert['kind'], string> = {
   'chain-broken': '⚠',
+  'witness-divergence': '◇',
   escalation: '!',
   dispatch: '⇨',
   'work-item': '⊳',
@@ -38,7 +39,7 @@ export function NotificationsCenter() {
   const { actor } = useIdentity();
   const { alerts, loading, refresh } = useSubstrateAlerts();
   const [kindFilter, setKindFilter] = React.useState<Alert['kind'] | 'all'>(
-    () => getPref<Alert['kind'] | 'all'>('alerts.kind', ['all','chain-broken','escalation','dispatch','work-item'] as const, 'all'));
+    () => getPref<Alert['kind'] | 'all'>('alerts.kind', ['all','chain-broken','witness-divergence','escalation','dispatch','work-item'] as const, 'all'));
   React.useEffect(() => { setPref('alerts.kind', kindFilter); }, [kindFilter]);
   const available = substrateAvailable();
 
@@ -105,7 +106,7 @@ export function NotificationsCenter() {
       </div>
 
       <FilterChips label="kind:"
-        options={['all','chain-broken','escalation','dispatch','work-item'] as const}
+        options={['all','chain-broken','witness-divergence','escalation','dispatch','work-item'] as const}
         value={kindFilter}
         onChange={setKindFilter} />
 

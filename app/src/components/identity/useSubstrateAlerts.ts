@@ -4,14 +4,17 @@ import * as React from 'react';
 import { listEscalationsRows } from '@/lib/db/repos/memory';
 import { listDispatchesRows } from '@/lib/db/repos/memory';
 import { listWorkItemsRows } from '@/lib/db/repos/work-items';
-import { distinctAuditScopesRows, verifyChainRow } from '@/lib/db/repos/audit';
+import {
+  distinctAuditScopesRows, verifyChainRow,
+  recentWitnessRows, witnessAgreementRow,
+} from '@/lib/db/repos/audit';
 import { substrateAvailable } from '@/lib/db/client';
 import type { EscalationRow, DispatchRow, WorkItemRow } from '@/lib/db/types';
 import { useRealtimeRefresh } from './useRealtimeRefresh';
 import { isSeen, subscribeSeen } from '@/lib/seen';
 import { useIdentity } from './useIdentity';
 
-export type AlertKind = 'chain-broken' | 'escalation' | 'dispatch' | 'work-item';
+export type AlertKind = 'chain-broken' | 'witness-divergence' | 'escalation' | 'dispatch' | 'work-item';
 export type AlertSeverity = 'national' | 'major' | 'critical' | 'urgent' | 'minor' | 'warn';
 
 export interface Alert {
@@ -50,11 +53,12 @@ export function useSubstrateAlerts(): { alerts: Alert[]; unseen: Alert[]; loadin
     setLoading(true);
     try {
       // Parallel reads — each is small, RLS-shaped.
-      const [escs, dispatches, work, scopes] = await Promise.all([
+      const [escs, dispatches, work, scopes, witnesses] = await Promise.all([
         listEscalationsRows({ openOnly: true, limit: 40 }),
         listDispatchesRows({ limit: 60 }),
         listWorkItemsRows({ closed: false, limit: 60 }),
         distinctAuditScopesRows(8),
+        recentWitnessRows({ limit: 60 }),
       ]);
 
       // Chain sweep (parallel verify on the recent scopes).
@@ -75,6 +79,30 @@ export function useSubstrateAlerts(): { alerts: Alert[]; unseen: Alert[]; loadin
             title: `Audit chain broken · ${c.scope}`,
             detail: `${c.entries} entries; integrity sweep failed`,
             href: '/gov/audit',
+            at: Date.now(),
+          });
+        }
+      }
+
+      // Witness divergences — for any scope with attestations, check if
+      // the live latest-seq hash still matches. Disagreement is a
+      // tamper-after-the-fact alarm; severity 'major' (the chain itself
+      // hasn't been broken; the chain was rewritten and the attestation
+      // catches it).
+      const witnessScopes = Array.from(new Set(witnesses.map(w => w.scope))).slice(0, 12);
+      const witnessAgreements = await Promise.all(witnessScopes.map(async s => {
+        const a = await witnessAgreementRow(s);
+        return [s, a] as const;
+      }));
+      for (const [s, a] of witnessAgreements) {
+        if (a && !a.consistent && a.attestations > 0) {
+          next.push({
+            id: `wd:${s}`,
+            kind: 'witness-divergence',
+            severity: 'major',
+            title: `Witness divergence · ${s}`,
+            detail: `live chain disagrees with ${a.attestations} attestation${a.attestations === 1 ? '' : 's'}`,
+            href: '/gov/witnesses',
             at: Date.now(),
           });
         }
