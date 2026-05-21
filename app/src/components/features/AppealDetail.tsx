@@ -81,7 +81,17 @@ export function AppealDetail({ ref: appealRef }: { ref: string }) {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
           <Field label="Ref" value={row.ref} mono />
           <Field label="Originating charter" value={row.originating_charter_id} mono />
-          <Field label="Decision ref" value={row.originating_decision_ref ?? '—'} mono />
+          {row.originating_decision_ref ? (
+            <div>
+              <div className="text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Decision ref</div>
+              <Link href={row.originating_decision_ref.startsWith('SR-')
+                ? `/gov/intake/request/${encodeURIComponent(row.originating_decision_ref)}`
+                : `/gov/items/${encodeURIComponent(row.originating_decision_ref)}`}
+                className="mt-0.5 block truncate font-mono text-[11px] text-link hover:underline">
+                {row.originating_decision_ref}
+              </Link>
+            </div>
+          ) : <Field label="Decision ref" value="—" mono />}
           <Field label="Filed" value={new Date(row.filed_at).toLocaleString()} />
           {row.admitted_at ? <Field label="Admitted" value={new Date(row.admitted_at).toLocaleString()} /> : null}
           {row.heard_at ? <Field label="Heard" value={new Date(row.heard_at).toLocaleString()} /> : null}
