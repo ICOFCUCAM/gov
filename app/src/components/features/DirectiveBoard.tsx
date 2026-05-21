@@ -13,6 +13,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { getPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const statusTone = (s: string) =>
   s === 'effective' ? TONE.ok
@@ -128,19 +129,10 @@ export function DirectiveBoard() {
         />
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-ink-muted">status:</span>
-        {(['all','drafting','signed','effective','rescinded','published'] as const).map(s => (
-          <button key={s} type="button" onClick={() => setStatusFilter(s)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
-            style={{
-              borderColor: statusFilter === s ? TONE.link : 'rgb(var(--c-line))',
-              color: statusFilter === s ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}>
-            {s}
-          </button>
-        ))}
-      </div>
+      <FilterChips label="status:"
+        options={['all','drafting','signed','effective','rescinded','published'] as const}
+        value={statusFilter}
+        onChange={setStatusFilter} />
 
       <Panel title="Directives" meta={`${(statusFilter === 'all' ? items : items.filter(i => i.status === statusFilter)).length} visible`} bodyClass="!p-0">
         {(() => {
