@@ -11,6 +11,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { getPref, getBoolPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { buildCsv, downloadCsv as downloadCsvFile } from '@/lib/csv-download';
 
 const KINDS: (WorkKind | 'all')[] = ['all','approval','case','procurement','encounter','bill','judicial','incident','permit','field','lab'];
 
@@ -72,27 +73,17 @@ export function ActivityLog() {
   const ecdsaCount = rows.filter(r => r.signature_hash && r.signature_hash.length > 8).length;
 
   function downloadCsv() {
-    const header = ['at','seq','action','from_stage','to_stage','actor_name','actor_role','actor_id','work_item_ref','work_item_scope','workflow_id','signature_alg','signature_hash'];
-    const csv = [
-      header.join(','),
-      ...rows.map(r => [
+    const csv = buildCsv(
+      ['at','seq','action','from_stage','to_stage','actor_name','actor_role','actor_id','work_item_ref','work_item_scope','workflow_id','signature_alg','signature_hash'],
+      rows.map(r => [
         new Date(r.at).toISOString(), r.seq, r.action,
         r.from_stage ?? '', r.to_stage, r.actor_name, r.actor_role ?? '', r.actor_id ?? '',
         r.work_item_ref, r.work_item_scope, r.workflow_id,
         r.signature_hash ? (r.signature_hash.length === 8 ? 'fnv1a' : 'ecdsa-p256') : '',
         r.signature_hash ?? '',
-      ].map(v => {
-        const s = String(v);
-        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
-      }).join(',')),
-    ].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `civicos-activity-${new Date().toISOString().slice(0,10)}.csv`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+      ]),
+    );
+    downloadCsvFile('civicos-activity', csv);
   }
 
   return (
