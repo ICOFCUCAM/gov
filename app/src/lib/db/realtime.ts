@@ -16,7 +16,8 @@ export interface SubscribeOptions {
   /** civicos table name. */
   table: 'work_items' | 'work_item_steps' | 'federation_events'
        | 'audit_entries' | 'directives' | 'dispatches'
-       | 'escalations' | 'posture_history';
+       | 'escalations' | 'posture_history'
+       | 'telemetry_streams' | 'telemetry_samples';
   event?: RealtimeEvent;
   /** Optional filter, e.g. `ref=eq.WI-X`. */
   filter?: string;

@@ -9,6 +9,7 @@ import {
 import { substrateAvailable } from '@/lib/db/client';
 import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 
 /**
  * Telemetry Wall — define streams, append samples, watch the wall live.
@@ -51,14 +52,19 @@ export function TelemetryWall() {
   React.useEffect(() => { if (ready) void refreshStreams(); }, [ready, refreshStreams]);
   React.useEffect(() => { if (streams.length > 0) void refreshSamples(); }, [streams, refreshSamples]);
 
-  // Telemetry tables are not on the supabase_realtime publication today,
-  // so we poll on a sweep instead of subscribing. 5 s is a sensible
-  // cadence for the wall view; samples-per-stream stays bounded.
-  React.useEffect(() => {
-    if (!available || streams.length === 0) return;
-    const interval = setInterval(() => { void refreshSamples(); }, 5_000);
-    return () => clearInterval(interval);
-  }, [available, streams.length, refreshSamples]);
+  // Telemetry tables are now on supabase_realtime — subscribe to both
+  // streams (definition changes) and samples (new readings). RLS still
+  // governs which events flow through; we just react to anything visible.
+  useRealtimeRefresh(
+    React.useMemo(() => [
+      { table: 'telemetry_streams' as const },
+      { table: 'telemetry_samples' as const },
+    ], []),
+    React.useCallback(async () => {
+      await refreshStreams();
+      await refreshSamples();
+    }, [refreshStreams, refreshSamples]),
+  );
 
   if (!available) {
     return (
