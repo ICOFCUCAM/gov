@@ -9,6 +9,7 @@ import type { EscalationRow, DispatchRow, WorkItemRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { ageMinutes } from '@/lib/format';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const severityTone = (s: string) =>
   s === 'national' || s === 'major' ? TONE.alert
@@ -71,11 +72,7 @@ export function LiveWall() {
   }, []);
 
   if (!available) {
-    return (
-      <Panel title="Live Wall" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Live Wall" />;
   }
 
   const scopeLabel = (() => {

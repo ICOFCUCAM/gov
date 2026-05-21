@@ -8,6 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
 
@@ -47,11 +48,7 @@ export function ConstitutionalDesk() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Constitutional desk" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Constitutional desk" />;
   }
 
   return (

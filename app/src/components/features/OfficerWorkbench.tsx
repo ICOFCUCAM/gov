@@ -14,6 +14,7 @@ import { resolvedActor } from '@/services/actor-resolver';
 import { transitionSignature } from '@/lib/db/signatures';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { getBoolPref, setPref } from '@/lib/prefs';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 interface WorkflowMap { terminal: string[]; transitions: Record<string, Record<string, string>> }
 
@@ -89,11 +90,7 @@ export function OfficerWorkbench() {
   }, [active, items]);
 
   if (!available) {
-    return (
-      <Panel title="Officer Workbench" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Officer Workbench" />;
   }
 
   if (!session) {

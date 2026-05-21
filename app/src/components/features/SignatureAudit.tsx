@@ -8,6 +8,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { canonicalSignatureMaterial } from '@/lib/db/signatures';
 import { verifyMessage } from '@/lib/db/webcrypto';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 type VerificationStatus = 'pending' | 'verified' | 'failed' | 'no-key' | 'digest' | 'unsupported';
 
@@ -107,11 +108,7 @@ export function SignatureAudit() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Signature Audit" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Signature Audit" />;
   }
 
   const tallies = results.reduce<Record<VerificationStatus, number>>((acc, r) => {

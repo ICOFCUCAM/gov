@@ -17,6 +17,7 @@ import { LiveActivityStrip } from '@/components/identity/LiveActivityStrip';
 import { ConstitutionalStrip } from '@/components/identity/ConstitutionalStrip';
 import { myRecentStepsRows, type ActorStepRow } from '@/lib/db/repos/work-items';
 import { ageMinutes } from '@/lib/format';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const priorityTone = (p: string) =>
   p === 'critical' || p === 'urgent' ? TONE.alert
@@ -85,11 +86,7 @@ export function OfficerHome() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Officer Home" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Officer Home" />;
   }
 
   if (!session) {

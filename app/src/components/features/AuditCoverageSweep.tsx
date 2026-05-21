@@ -7,6 +7,7 @@ import { distinctAuditScopesRows, verifyChainRow } from '@/lib/db/repos/audit';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { getBoolPref, setPref } from '@/lib/prefs';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 interface SweepResult { scope: string; entries: number; intact: boolean; brokenAt: number | null }
 
@@ -58,7 +59,7 @@ export function AuditCoverageSweep() {
   }
 
   if (!available) {
-    return <Panel title="Coverage sweep" meta="not configured" bodyClass="!p-3"><p className="text-[10px] text-ink-muted">Substrate not configured.</p></Panel>;
+    return <SubstrateNotConfigured title="Coverage sweep" />;
   }
 
   const intact = results.filter(r => r.intact).length;
