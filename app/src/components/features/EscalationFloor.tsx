@@ -16,12 +16,7 @@ import { getPref, getBoolPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
-
-const severityTone = (s: string) =>
-  s === 'national' ? TONE.alert
-  : s === 'major'  ? TONE.alert
-  : s === 'minor'  ? TONE.warn
-  : TONE.link;
+import { severityTone } from '@/lib/tone';
 
 const SEVERITIES: Severity[] = ['watch', 'minor', 'major', 'national'];
 

@@ -16,17 +16,13 @@ import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
+import { priorityTone } from '@/lib/tone';
 
 const statusTone = (s: string) =>
   s === 'closed' ? TONE.ok
   : s === 'acknowledged' ? TONE.link
   : s === 'dispatched' ? TONE.warn
   : TONE.neutral;
-
-const priorityTone = (p: string) =>
-  p === 'critical' || p === 'urgent' ? TONE.alert
-  : p === 'priority' ? TONE.warn
-  : TONE.link;
 
 const KINDS = ['unit-deploy', 'medical-evac', 'inspection', 'investigation', 'relief'];
 const PRIORITIES: Priority[] = ['routine', 'priority', 'urgent', 'critical'];

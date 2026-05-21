@@ -12,17 +12,13 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { priorityTone } from '@/lib/tone';
 
 const statusTone = (s: string) =>
   s === 'closed' ? TONE.ok
   : s === 'acknowledged' ? TONE.link
   : s === 'dispatched' ? TONE.warn
   : TONE.neutral;
-
-const priorityTone = (p: string) =>
-  p === 'critical' || p === 'urgent' ? TONE.alert
-  : p === 'priority' ? TONE.warn
-  : TONE.link;
 
 export function DispatchDetail({ ref: dispatchRef }: { ref: string }) {
   const { actor, ready } = useIdentity();
