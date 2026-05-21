@@ -87,6 +87,10 @@ export function WorkflowCatalogue() {
              className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             simulator
           </a>
+          <a href="/gov/workflows/diff"
+             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            diff
+          </a>
           {isPlatform ? (
             <button
               type="button"
