@@ -125,6 +125,29 @@ Auditors detect the algorithm by hex length.
    firewall; runs against the live cluster otherwise).
 7. Verify with `pnpm tsc --noEmit` and `pnpm test --run`.
 
+## Sticky preferences
+
+Most board filters persist per-device via `lib/prefs` (localStorage,
+namespaced under `civicos.pref.*`). Filters survive navigation and
+reload. Keys in use today:
+
+- `directive.status` · DirectiveBoard status filter
+- `dispatch.priority` · DispatchBoard priority filter
+- `escalation.openOnly`, `escalation.severity` · EscalationFloor
+- `intake.openOnly` · CitizenIntakeQueue
+- `workbench.openOnly` · OfficerWorkbench
+- `activity.kind`, `activity.signedOnly`, `activity.scope` · ActivityLog
+- `alerts.kind` · NotificationsCenter
+- `global.kind` · GlobalFeed
+- `search.kind` · SubstrateSearch
+- `workflow.kind` · WorkflowCatalogue
+- `registry.kind`, `registry.activatedOnly` · InstitutionsCatalogue
+- `charter.kind` · CharterList
+- `posture.charter`, `posture.sort` · PostureBoard
+
+`lib/seen.ts` (alert acknowledgement) and `lib/watchlist.ts` (per-record
+stars) live alongside.
+
 ## Surfaces (as of the most recent batch)
 
 Officer-side: `/sign-in`, `/gov/home`, `/gov/me`, `/gov/search`,
