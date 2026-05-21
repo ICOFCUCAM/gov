@@ -60,7 +60,8 @@ export async function substrateSearch(query: string): Promise<SearchHit[]> {
   const hits: SearchHit[] = [
     ...wi.map(r => ({ kind: 'work-item' as const, id: r.id, ref: r.ref,
       label: r.title, detail: `${r.scope} · ${r.current_stage}`,
-      href: '/gov/workbench', at: new Date(r.created_at).getTime() })),
+      href: `/gov/items/${encodeURIComponent(r.ref)}`,
+      at: new Date(r.created_at).getTime() })),
     ...dr.map(r => ({ kind: 'directive' as const, id: r.id, ref: r.ref,
       label: r.title, detail: `${r.issued_by_charter_id} · ${r.status}`,
       href: '/gov/directives', at: new Date(r.updated_at).getTime() })),
