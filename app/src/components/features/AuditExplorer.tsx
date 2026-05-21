@@ -67,6 +67,31 @@ export function AuditExplorer() {
     }
   }, [active]);
 
+  const downloadChain = React.useCallback(() => {
+    if (!active || trail.length === 0) return;
+    const chain = [...trail].reverse(); // newest-last for chain order
+    const payload = {
+      scope: active,
+      exported_at: new Date().toISOString(),
+      entries: chain.length,
+      verification: verification ?? null,
+      chain: chain.map(e => ({
+        seq: e.seq, at: e.at, actor: e.actor, action: e.action,
+        subject: e.subject, detail: e.detail,
+        prev_hash: e.prevHash, hash: e.hash,
+      })),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `civicos-chain-${active.replace(/[^a-z0-9._-]+/gi, '_')}-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [active, trail, verification]);
+
   if (!available) {
     return (
       <Panel title="Audit Explorer" meta="not configured" bodyClass="!p-3">
@@ -90,6 +115,14 @@ export function AuditExplorer() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={downloadChain}
+            disabled={!active || trail.length === 0}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
+          >
+            download chain
+          </button>
           <button
             type="button"
             onClick={() => { void refresh(); }}
