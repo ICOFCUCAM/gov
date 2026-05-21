@@ -85,6 +85,7 @@ const ROUTE_TABLE: { path: string; what: string }[] = [
   { path: '/gov/telemetry/[id]',   what: 'Telemetry stream chart' },
   { path: '/gov/charter/[id]',     what: 'Single charter dashboard' },
   { path: '/gov/officers/[id]',    what: 'Officer profile + activity' },
+  { path: '/gov/global',           what: 'Unified recent feed across kinds' },
 ];
 
 const API_TABLE: { path: string; what: string }[] = [
