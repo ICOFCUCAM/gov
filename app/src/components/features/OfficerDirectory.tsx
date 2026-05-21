@@ -9,6 +9,7 @@ import type { OfficerRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
+import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
 /** OfficerDirectory — read-only phone book grouped by charter.
  *  Non-admin counterpart to OfficerRegistry; everyone in the visible
@@ -43,13 +44,7 @@ export function OfficerDirectory() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Officer directory</h2>
-          <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>
-            read-only · by charter
-          </span>
-        </div>
+        <SurfaceHeading title="Officer directory" badge="read-only · by charter" />
         <div className="flex items-center gap-2">
           <button type="button"
             onClick={() => {
