@@ -8,6 +8,7 @@ import {
 import { substrateAvailable } from '@/lib/db/client';
 import type { InstitutionRow, InstitutionKind } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { getPref, getBoolPref, setPref } from '@/lib/prefs';
 
 const KINDS: (InstitutionKind | 'all')[] = ['all', 'ministry', 'branch', 'agency', 'platform', 'officer', 'citizen'];
 
@@ -24,8 +25,11 @@ export function InstitutionsCatalogue() {
   const { ready } = useIdentity();
   const [items, setItems] = React.useState<InstitutionRow[]>([]);
   const [facilities, setFacilities] = React.useState<FacilityRowLite[]>([]);
-  const [kindFilter, setKindFilter] = React.useState<InstitutionKind | 'all'>('all');
-  const [activatedOnly, setActivatedOnly] = React.useState(false);
+  const [kindFilter, setKindFilter] = React.useState<InstitutionKind | 'all'>(
+    () => getPref<InstitutionKind | 'all'>('registry.kind',
+      ['all','ministry','branch','agency','platform','officer','citizen'] as const, 'all'));
+  const [activatedOnly, setActivatedOnly] = React.useState(() => getBoolPref('registry.activatedOnly', false));
+  React.useEffect(() => { setPref('registry.kind', kindFilter); setPref('registry.activatedOnly', activatedOnly); }, [kindFilter, activatedOnly]);
   const [active, setActive] = React.useState<string | null>(null);
   const available = substrateAvailable();
 
