@@ -96,7 +96,9 @@ export function ChainSentinel({ className = '' }: { className?: string }) {
       className={`inline-flex items-center gap-1 rounded-[3px] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] hover:bg-surface-2 ${className}`}
       style={{ borderColor: tone, color: tone }}
     >
-      <span aria-hidden>{state.status === 'broken' ? '⚠' : state.status === 'partial' ? '◐' : '●'}</span>
+      <span aria-hidden className={state.status === 'broken' ? 'animate-pulse' : ''}>
+        {state.status === 'broken' ? '⚠' : state.status === 'partial' ? '◐' : '●'}
+      </span>
       <span>{LABEL[state.status]}</span>
       {state.scopesChecked > 0 ? (
         <span className="font-mono tabular-nums opacity-70">{state.scopesChecked}</span>
