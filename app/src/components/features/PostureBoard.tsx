@@ -10,6 +10,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { getStringPref, getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const POSTURES: Posture[] = ['steady', 'elevated', 'crisis', 'national-emergency', 'recovery'];
 
@@ -52,11 +53,7 @@ export function PostureBoard() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Posture Board" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Posture Board" />;
   }
 
   const charters = Array.from(new Set(rows.map(r => r.charter_id))).sort();

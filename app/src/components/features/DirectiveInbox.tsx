@@ -8,6 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { DirectiveRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const statusTone = (s: string) =>
   s === 'effective' ? TONE.ok
@@ -38,7 +39,7 @@ export function DirectiveInbox() {
   );
 
   if (!available) {
-    return <Panel title="Directive inbox" meta="not configured" bodyClass="!p-3"><p className="text-[10px] text-ink-muted">Substrate not configured.</p></Panel>;
+    return <SubstrateNotConfigured title="Directive inbox" />;
   }
 
   if (!session) {

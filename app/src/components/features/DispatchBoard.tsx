@@ -14,6 +14,7 @@ import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const statusTone = (s: string) =>
   s === 'closed' ? TONE.ok
@@ -72,14 +73,8 @@ export function DispatchBoard() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Dispatch Board" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">
-          The persistent substrate is not configured. Set the public
-          Supabase env vars to surface the dispatch lifecycle here.
-        </p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Dispatch Board"
+      message="The persistent substrate is not configured. Set the public Supabase env vars to surface the dispatch lifecycle here." />;
   }
 
   return (

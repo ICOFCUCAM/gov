@@ -14,6 +14,7 @@ import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { getPref, getBoolPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const severityTone = (s: string) =>
   s === 'national' ? TONE.alert
@@ -57,14 +58,8 @@ export function EscalationFloor() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Escalation Floor" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">
-          The persistent substrate is not configured. Set the public
-          Supabase env vars to surface escalations here.
-        </p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Escalation Floor"
+      message="The persistent substrate is not configured. Set the public Supabase env vars to surface escalations here." />;
   }
 
   return (

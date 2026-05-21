@@ -14,6 +14,7 @@ import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const statusTone = (s: string) =>
   s === 'effective' ? TONE.ok
@@ -66,15 +67,8 @@ export function DirectiveBoard() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Directive Board" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">
-          The persistent substrate is not configured. Set
-          NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-          to surface the directive lifecycle here.
-        </p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Directive Board"
+      message="The persistent substrate is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to surface the directive lifecycle here." />;
   }
 
   return (
