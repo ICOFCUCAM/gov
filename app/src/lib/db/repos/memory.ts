@@ -153,4 +153,34 @@ export async function recordEscalationRow(e: EscalationInput): Promise<Escalatio
   return (data as EscalationRow) ?? null;
 }
 
+export async function acknowledgeEscalationRow(id: string, acknowledgedBy?: string | null): Promise<EscalationRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_acknowledge_escalation', {
+    p_id: id, p_acknowledged_by: acknowledgedBy ?? null,
+  });
+  if (error) { console.error('[civicos] acknowledge_escalation failed:', error.message); return null; }
+  return (data as EscalationRow) ?? null;
+}
+
+export async function resolveEscalationRow(id: string): Promise<EscalationRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_resolve_escalation', { p_id: id });
+  if (error) { console.error('[civicos] resolve_escalation failed:', error.message); return null; }
+  return (data as EscalationRow) ?? null;
+}
+
+export async function listEscalationsRows(opts: { severity?: string; source?: string; openOnly?: boolean; limit?: number } = {}): Promise<EscalationRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_escalations').select('*');
+  if (opts.severity) q = q.eq('severity', opts.severity);
+  if (opts.source) q = q.eq('source_charter_id', opts.source);
+  if (opts.openOnly) q = q.is('resolved_at', null);
+  const { data, error } = await q.order('triggered_at', { ascending: false }).limit(opts.limit ?? 50);
+  if (error || !data) return [];
+  return data as EscalationRow[];
+}
+
 export { substrateAvailable };

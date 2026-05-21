@@ -62,6 +62,26 @@ export async function auditTrailRows(scope: string, limit = 50): Promise<AuditEn
   return (data as AuditEntryRow[]).map(fromRow);
 }
 
+export async function recentAuditEntriesRows(limit = 100): Promise<AuditEntry[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from('civicos_audit_entries').select('*')
+    .order('at', { ascending: false }).limit(limit);
+  if (error || !data) return [];
+  return (data as AuditEntryRow[]).map(fromRow);
+}
+
+export async function distinctAuditScopesRows(limit = 30): Promise<string[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb
+    .from('civicos_audit_entries').select('scope')
+    .order('at', { ascending: false }).limit(limit * 10);
+  if (error || !data) return [];
+  return Array.from(new Set((data as { scope: string }[]).map(r => r.scope))).slice(0, limit);
+}
+
 export async function verifyChainRow(scope: string): Promise<{ scope: string; entries: number; intact: boolean; brokenAt: number | null } | null> {
   const sb = publicClient();
   if (!sb) return null;

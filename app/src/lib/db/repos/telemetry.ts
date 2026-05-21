@@ -64,4 +64,14 @@ export async function recentTelemetrySamplesRows(streamId: string, limit = 100):
   return data as TelemetrySampleRow[];
 }
 
+export async function listTelemetryStreamsRows(opts: { activeOnly?: boolean; limit?: number } = {}): Promise<TelemetryStreamRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_telemetry_streams').select('*');
+  if (opts.activeOnly) q = q.eq('active', true);
+  const { data, error } = await q.order('charter_id').limit(opts.limit ?? 50);
+  if (error || !data) return [];
+  return data as TelemetryStreamRow[];
+}
+
 export { substrateAvailable };
