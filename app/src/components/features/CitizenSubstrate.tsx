@@ -404,9 +404,23 @@ function ConsentsPanel({
 }: { citizenId: string; rows: ConsentRow[]; onChange: () => Promise<void> }) {
   const [open, setOpen] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [filter, setFilter] = React.useState<'all' | 'granted' | 'revoked' | 'expired'>('all');
+  const visible = filter === 'all' ? rows : rows.filter(r => r.status === filter);
   return (
-    <Panel title="Consents" meta={`${rows.length}`} bodyClass="!p-0">
-      <div className="flex justify-end border-b border-line-soft px-3 py-1.5">
+    <Panel title="Consents" meta={`${visible.length} / ${rows.length}`} bodyClass="!p-0">
+      <div className="flex items-center justify-between gap-2 border-b border-line-soft px-3 py-1.5">
+        <div className="flex flex-wrap items-center gap-1">
+          {(['all','granted','revoked','expired'] as const).map(k => (
+            <button key={k} type="button" onClick={() => setFilter(k)}
+              className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
+              style={{
+                borderColor: filter === k ? TONE.link : 'rgb(var(--c-line))',
+                color: filter === k ? TONE.link : 'rgb(var(--c-ink-muted))',
+              }}>
+              {k}
+            </button>
+          ))}
+        </div>
         <button
           type="button"
           onClick={() => setOpen(o => !o)}
@@ -421,13 +435,16 @@ function ConsentsPanel({
           onDone={async () => { await onChange(); setOpen(false); }}
         />
       ) : null}
-      {rows.length === 0 ? (
-        <p className="px-3 py-4 text-[11px] text-ink-muted">No consents on file.</p>
+      {visible.length === 0 ? (
+        <p className="px-3 py-4 text-[11px] text-ink-muted">
+          {rows.length === 0 ? 'No consents on file.' : 'No consents match the filter.'}
+        </p>
       ) : (
         <div className="max-h-[280px] overflow-y-auto">
-          {rows.map(c => (
+          {visible.map(c => (
             <div key={c.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
-              <span className="w-28 shrink-0 truncate font-mono text-link">{c.target_charter_id}</span>
+              <a href={`/wallet/consent/${c.id}`}
+                 className="w-28 shrink-0 truncate font-mono text-link hover:underline">{c.target_charter_id}</a>
               <span className="min-w-0 flex-1 truncate font-mono text-ink">{c.scope}</span>
               <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
                 style={{
