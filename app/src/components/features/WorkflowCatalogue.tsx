@@ -47,6 +47,7 @@ export function WorkflowCatalogue() {
   const [editing, setEditing] = React.useState(false);
   const [importNote, setImportNote] = React.useState<string | null>(null);
   const importInputRef = React.useRef<HTMLInputElement>(null);
+  const [q, setQ] = React.useState('');
   const available = substrateAvailable();
   const isPlatform = actor?.kind === 'officer' && actor.role !== null && PLATFORM_ROLES.has(actor.role);
 
@@ -188,11 +189,19 @@ export function WorkflowCatalogue() {
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[260px_1fr]">
         <Panel title="Workflows" meta={`${items.length}`} bodyClass="!p-0">
+          <div className="border-b border-line-soft px-3 py-1.5">
+            <input type="search" value={q} onChange={e => setQ(e.currentTarget.value)}
+              placeholder="search id / title / kind…"
+              className="w-full rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[10px]" />
+          </div>
           {items.length === 0 ? (
             <p className="px-3 py-4 text-[11px] text-ink-muted">No workflow definitions in scope.</p>
           ) : (
             <div className="max-h-[560px] overflow-y-auto">
-              {items.map(w => (
+              {items.filter(w => {
+                const n = q.trim().toLowerCase();
+                return n === '' || `${w.workflow_id} ${w.title} ${w.kind} ${w.institution_charter_id}`.toLowerCase().includes(n);
+              }).map(w => (
                 <button
                   key={w.id}
                   type="button"
