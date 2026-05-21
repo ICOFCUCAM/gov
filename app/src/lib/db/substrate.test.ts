@@ -33,6 +33,10 @@ import {
   recordEscalationRow,
 } from './repos/memory';
 import { defineTelemetryStreamRow, recordTelemetrySampleRow, recentTelemetrySamplesRows } from './repos/telemetry';
+import {
+  registerCitizenRow, submitServiceRequestRow, updateServiceRequestRow,
+  grantConsentRow, revokeConsentRow, fileAppealRow, decideAppealRow,
+} from './repos/citizen';
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -289,6 +293,69 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     expect(samples.length).toBeGreaterThanOrEqual(2);
     // Newest first.
     expect(samples[0]!.value).toBe(87.0);
+  });
+
+  it('CITIZEN — service request lifecycle (submit → ack → resolve with satisfaction)', async () => {
+    const cit = await registerCitizenRow({
+      nationalId: `NID-VITEST-${Date.now()}`, displayName: 'Vitest Citizen', region: 'r1',
+    });
+    expect(cit).not.toBeNull();
+    const ref = `SR-VITEST-${Date.now()}`;
+    const sub = await submitServiceRequestRow({
+      ref, citizenId: cit!.id, targetCharterId: 'ministry-health',
+      service: 'birth-cert', domain: 'health', title: 'Birth certificate',
+      payload: { copies: 1 },
+    });
+    expect(sub!.status).toBe('submitted');
+
+    const acked = await updateServiceRequestRow({ ref, status: 'in-progress' });
+    expect(acked!.acknowledged_at).not.toBeNull();
+    expect(acked!.status).toBe('in-progress');
+
+    const resolved = await updateServiceRequestRow({
+      ref, status: 'resolved', satisfaction: 5, payloadPatch: { outcome: 'issued' },
+    });
+    expect(resolved!.status).toBe('resolved');
+    expect(resolved!.resolved_at).not.toBeNull();
+    expect(resolved!.satisfaction).toBe(5);
+    expect((resolved!.payload as Record<string, unknown>).outcome).toBe('issued');
+  });
+
+  it('CITIZEN — consent grant supersedes prior active grant for same scope', async () => {
+    const cit = await registerCitizenRow({
+      nationalId: `NID-CONSENT-${Date.now()}`, displayName: 'Consent Tester',
+    });
+    expect(cit).not.toBeNull();
+
+    const first = await grantConsentRow(cit!.id, 'ministry-health', 'health.records');
+    expect(first!.status).toBe('granted');
+
+    // Re-grant supersedes — the unique partial index would otherwise block a
+    // duplicate active row. The RPC marks the prior one expired.
+    const second = await grantConsentRow(cit!.id, 'ministry-health', 'health.records');
+    expect(second!.status).toBe('granted');
+    expect(second!.id).not.toBe(first!.id);
+
+    const revoked = await revokeConsentRow(second!.id);
+    expect(revoked!.status).toBe('revoked');
+    expect(revoked!.revoked_at).not.toBeNull();
+  });
+
+  it('CITIZEN — appeal filed and decided with reasoning + publication', async () => {
+    const cit = await registerCitizenRow({
+      nationalId: `NID-APPEAL-${Date.now()}`, displayName: 'Appellant',
+    });
+    const ref = `AP-VITEST-${Date.now()}`;
+    const filed = await fileAppealRow({
+      ref, citizenId: cit!.id, originatingCharterId: 'ministry-health',
+      ground: 'procedural-error',
+    });
+    expect(filed!.status).toBe('filed');
+
+    const decided = await decideAppealRow(ref, 'upheld', 'finding for applicant', true);
+    expect(decided!.status).toBe('decided');
+    expect(decided!.decision).toBe('upheld');
+    expect(decided!.published_at).not.toBeNull();
   });
 
   it('CONTRACT — direct INSERT to audit_entries is denied (RLS)', async () => {
