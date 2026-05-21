@@ -203,6 +203,10 @@ export function CitizenHome() {
       </div>
 
       <QuickFile citizenId={actor.id} onSubmitted={refresh} />
+      <a href="/wallet/substrate#audit"
+         className="inline-block text-[10px] text-ink-muted underline-offset-2 hover:text-ink hover:underline">
+        view full audit trail →
+      </a>
 
       <WatchedRecords />
 
