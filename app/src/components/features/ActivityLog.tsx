@@ -122,6 +122,21 @@ export function ActivityLog() {
         </div>
       </div>
 
+      <div className="grid grid-cols-3 gap-2">
+        <div className="rounded-[3px] border border-line bg-surface px-3 py-2">
+          <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Total</div>
+          <div className="font-mono text-[15px] tabular-nums text-ink">{rows.length}</div>
+        </div>
+        <div className="rounded-[3px] border border-line bg-surface px-3 py-2">
+          <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Signed</div>
+          <div className="font-mono text-[15px] tabular-nums" style={{ color: TONE.link }}>{signedCount}</div>
+        </div>
+        <div className="rounded-[3px] border border-line bg-surface px-3 py-2">
+          <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">ECDSA</div>
+          <div className="font-mono text-[15px] tabular-nums" style={{ color: TONE.ok }}>{ecdsaCount}</div>
+        </div>
+      </div>
+
       <div className="flex flex-wrap items-center gap-2">
         <div className="flex items-center gap-1">
           <span className="text-[9px] uppercase tracking-wider text-ink-muted">scope:</span>
