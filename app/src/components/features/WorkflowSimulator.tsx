@@ -33,7 +33,10 @@ const actionTone = (a: string) =>
  */
 export function WorkflowSimulator() {
   const [defs, setDefs] = React.useState<WorkflowDefinitionRow[]>([]);
-  const [workflowId, setWorkflowId] = React.useState<string>('');
+  const [workflowId, setWorkflowId] = React.useState<string>(() => {
+    if (typeof window === 'undefined') return '';
+    return new URL(window.location.href).searchParams.get('wf') ?? '';
+  });
   const [trace, setTrace] = React.useState<SimulationStep[]>([]);
   const [error, setError] = React.useState<string | null>(null);
   const available = substrateAvailable();
@@ -42,7 +45,12 @@ export function WorkflowSimulator() {
     if (!available) return;
     void listWorkflowDefinitionsRows({ limit: 100 }).then(rows => {
       setDefs(rows);
-      if (rows.length > 0) setWorkflowId(rows[0]!.workflow_id);
+      // Honour the URL-supplied workflowId if it matches a synced
+      // definition; otherwise fall back to the first one.
+      setWorkflowId(prev => {
+        if (prev && rows.some(r => r.workflow_id === prev)) return prev;
+        return rows[0]?.workflow_id ?? '';
+      });
     });
   }, [available]);
 
@@ -53,6 +61,16 @@ export function WorkflowSimulator() {
 
   const stages = def ? Object.keys(def.transitions) : [];
   const initialStage = stages[0] ?? '';
+
+  // Sync selection into the URL so the page is shareable.
+  React.useEffect(() => {
+    if (typeof window === 'undefined' || !workflowId) return;
+    const url = new URL(window.location.href);
+    if (url.searchParams.get('wf') !== workflowId) {
+      url.searchParams.set('wf', workflowId);
+      window.history.replaceState(null, '', url.toString());
+    }
+  }, [workflowId]);
 
   // Reset trace when workflow changes.
   React.useEffect(() => {
