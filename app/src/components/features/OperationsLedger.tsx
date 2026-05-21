@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { subscribe, getLedger, runtimeStats, version as rtVersion } from '@/lib/gov/runtime-store';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const actTone = (a: string) =>
   a === 'approve' || a === 'resolve' ? TONE.ok : a === 'reject' ? TONE.alert : a === 'escalate' ? TONE.warn : TONE.link;
@@ -73,15 +74,7 @@ export function OperationsLedger() {
         ))}
       </div>
 
-      <div className="flex flex-wrap gap-1">
-        {['all', ...scopeKeys].map(k => (
-          <button key={k} onClick={() => setScopeFilter(k)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-            style={{ borderColor: scopeFilter === k ? TONE.link : 'rgb(var(--c-line))', color: scopeFilter === k ? TONE.link : 'rgb(var(--c-ink-muted))' }}>
-            {k}
-          </button>
-        ))}
-      </div>
+      <FilterChips options={['all', ...scopeKeys]} value={scopeFilter} onChange={setScopeFilter} />
       <Panel title="Transition ledger" meta={`${ledger.length} actions · scope ${scopeFilter}`} bodyClass="!p-0">
         {ledger.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
