@@ -8,6 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { EscalationRow, DispatchRow, WorkItemRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { ageMinutes } from '@/lib/format';
 
 const severityTone = (s: string) =>
   s === 'national' || s === 'major' ? TONE.alert
@@ -19,7 +20,6 @@ const priorityTone = (p: string) =>
   : p === 'priority' ? TONE.warn
   : TONE.link;
 
-const ageMin = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
 
 /**
  * LiveWall — composite operational picture for the NOC.
@@ -154,7 +154,7 @@ export function LiveWall() {
                     </span>
                     <span className="min-w-0 flex-1 truncate text-ink">{e.reason}</span>
                     <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">
-                      {ageMin(e.triggered_at)}m
+                      {ageMinutes(e.triggered_at)}m
                     </span>
                   </div>
                   <div className="mt-0.5 flex items-center gap-2 font-mono text-[9px] text-ink-muted">
@@ -200,7 +200,7 @@ export function LiveWall() {
                   <div className="mt-0.5 flex items-center gap-2 font-mono text-[9px] text-ink-muted">
                     <span>{d.issued_by_charter_id}</span>
                     {d.target_charter_id ? <span>→ {d.target_charter_id}</span> : null}
-                    <span className="ml-auto">{ageMin(d.dispatched_at)}m</span>
+                    <span className="ml-auto">{ageMinutes(d.dispatched_at)}m</span>
                   </div>
                 </div>
               ))}
@@ -232,7 +232,7 @@ export function LiveWall() {
                   </div>
                   <div className="mt-0.5 flex items-center gap-2 font-mono text-[9px] text-ink-muted">
                     <span>{w.scope}</span>
-                    <span className="ml-auto">{ageMin(w.created_at)}m old</span>
+                    <span className="ml-auto">{ageMinutes(w.created_at)}m old</span>
                   </div>
                 </div>
               ))}
