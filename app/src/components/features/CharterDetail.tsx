@@ -7,10 +7,11 @@ import { listInstitutionsRows, listFacilitiesRows, type FacilityRowLite } from '
 import { listWorkItemsRows } from '@/lib/db/repos/work-items';
 import { listDispatchesRows, listEscalationsRows, listPostureHistoryRows, listDirectivesRows } from '@/lib/db/repos/memory';
 import { recentAuditEntriesRows } from '@/lib/db/repos/audit';
+import { listOfficersRows } from '@/lib/db/repos/admin';
 import { substrateAvailable } from '@/lib/db/client';
 import type {
   InstitutionRow, WorkItemRow, DispatchRow, EscalationRow,
-  PostureHistoryRow, DirectiveRow,
+  PostureHistoryRow, DirectiveRow, OfficerRow,
 } from '@/lib/db/types';
 import type { AuditEntry } from '@/lib/db/repos/audit';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -35,11 +36,12 @@ export function CharterDetail({ charterId }: { charterId: string }) {
   const [directives, setDirectives] = React.useState<DirectiveRow[]>([]);
   const [posture, setPosture] = React.useState<PostureHistoryRow[]>([]);
   const [audit, setAudit] = React.useState<AuditEntry[]>([]);
+  const [officers, setOfficers] = React.useState<OfficerRow[]>([]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
-    const [allInst, fac, wi, dsp, esc, dir, post, aud] = await Promise.all([
+    const [allInst, fac, wi, dsp, esc, dir, post, aud, off] = await Promise.all([
       listInstitutionsRows({}),
       listFacilitiesRows({ charter: charterId, limit: 50 }),
       listWorkItemsRows({ closed: false, limit: 50 }),
@@ -48,6 +50,7 @@ export function CharterDetail({ charterId }: { charterId: string }) {
       listDirectivesRows({ issuer: charterId, limit: 30 }),
       listPostureHistoryRows({ charter: charterId, limit: 50 }),
       recentAuditEntriesRows(80),
+      listOfficersRows({ charter: charterId, activeOnly: true, limit: 80 }),
     ]);
     setInst(allInst.find(i => i.charter_id === charterId) ?? null);
     setFacilities(fac);
@@ -57,6 +60,7 @@ export function CharterDetail({ charterId }: { charterId: string }) {
     setDirectives(dir);
     setPosture(post);
     setAudit(aud.filter(a => a.scope === charterId || a.scope.startsWith(charterId + ':')));
+    setOfficers(off);
   }, [available, charterId]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
@@ -178,6 +182,29 @@ export function CharterDetail({ charterId }: { charterId: string }) {
                   <span className="w-16 shrink-0 truncate font-mono text-ink">{a.action}</span>
                   <span className="min-w-0 flex-1 truncate text-ink-soft">{a.subject}</span>
                   <span className="w-24 shrink-0 truncate text-right text-ink-muted">{a.actor}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <Panel title="Officers" meta={`${officers.length}`} bodyClass="!p-0">
+        {officers.length === 0 ? (
+          <p className="px-3 py-4 text-[11px] text-ink-muted">No officers registered to this charter.</p>
+        ) : (
+          <div className="max-h-[240px] overflow-y-auto">
+            {officers.map(o => (
+              <Link key={o.id} href={`/gov/officers/${encodeURIComponent(o.id)}`}
+                className="block border-b border-line-soft px-3 py-1 last:border-0 text-[10px] hover:bg-surface-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-32 shrink-0 truncate text-ink">{o.name}</span>
+                  <span className="w-24 shrink-0 truncate font-mono text-link">{o.role}</span>
+                  <span className="min-w-0 flex-1 truncate font-mono text-ink-soft">{o.email ?? '—'}</span>
+                  <span className="w-16 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
+                    style={{ color: o.auth_user_id ? TONE.ok : TONE.warn }}>
+                    {o.auth_user_id ? 'linked' : 'pending'}
+                  </span>
                 </div>
               </Link>
             ))}
