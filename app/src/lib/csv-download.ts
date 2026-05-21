@@ -23,9 +23,19 @@ export function downloadCsv(basename: string, csv: string): void {
   downloadBlob(csv, `${basename}-${todayIso()}.csv`, 'text/csv');
 }
 
-/** Trigger a browser download of a pretty-printed JSON payload. */
-export function downloadJson(basename: string, payload: unknown): void {
-  downloadBlob(JSON.stringify(payload, null, 2), `${basename}-${todayIso()}.json`, 'application/json');
+/**
+ * Trigger a browser download of a pretty-printed JSON payload.
+ * Appends `-YYYY-MM-DD.json` to the basename unless `{ dated: false }`.
+ */
+export function downloadJson(basename: string, payload: unknown, opts: { dated?: boolean } = {}): void {
+  const dated = opts.dated ?? true;
+  const filename = dated ? `${basename}-${todayIso()}.json` : `${basename}.json`;
+  downloadBlob(JSON.stringify(payload, null, 2), filename, 'application/json');
+}
+
+/** Trigger a browser download of plain text content. Filename used verbatim. */
+export function downloadText(filename: string, body: string): void {
+  downloadBlob(body, filename, 'text/plain;charset=utf-8');
 }
 
 function downloadBlob(body: string, filename: string, mime: string): void {

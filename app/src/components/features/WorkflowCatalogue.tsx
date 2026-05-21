@@ -8,6 +8,7 @@ import type { WorkflowDefinitionRow, WorkKind, ActionKey } from '@/lib/db/types'
 import { useIdentity } from '@/components/identity/useIdentity';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { downloadJson } from '@/lib/csv-download';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
@@ -213,7 +214,7 @@ export function WorkflowCatalogue() {
             <div className="flex items-center justify-end gap-2 border-b border-line-soft px-3 py-1.5">
               <button type="button"
                 onClick={() => {
-                  const payload = {
+                  downloadJson(`civicos-workflow-${activeRow.workflow_id}`, {
                     workflow_id: activeRow.workflow_id,
                     institution_charter_id: activeRow.institution_charter_id,
                     archetype: activeRow.archetype,
@@ -224,13 +225,7 @@ export function WorkflowCatalogue() {
                     step_count: activeRow.step_count,
                     emits: activeRow.emits,
                     definition: activeRow.definition,
-                  };
-                  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-                  const url = URL.createObjectURL(blob);
-                  const a = document.createElement('a');
-                  a.href = url; a.download = `civicos-workflow-${activeRow.workflow_id}.json`;
-                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-                  URL.revokeObjectURL(url);
+                  }, { dated: false });
                 }}
                 className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
                 download json
