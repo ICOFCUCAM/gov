@@ -13,6 +13,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { getPref, getBoolPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const severityTone = (s: string) =>
   s === 'national' ? TONE.alert
@@ -162,19 +163,10 @@ export function EscalationFloor() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-ink-muted">severity:</span>
-        {(['all','national','major','minor','watch'] as const).map(s => (
-          <button key={s} type="button" onClick={() => setSeverityFilter(s)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
-            style={{
-              borderColor: severityFilter === s ? TONE.link : 'rgb(var(--c-line))',
-              color: severityFilter === s ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}>
-            {s}
-          </button>
-        ))}
-      </div>
+      <FilterChips label="severity:"
+        options={['all','national','major','minor','watch'] as const}
+        value={severityFilter}
+        onChange={setSeverityFilter} />
 
       <Panel title="Escalations" meta={`${(severityFilter === 'all' ? items : items.filter(e => e.severity === severityFilter)).length} visible`} bodyClass="!p-0">
         {items.length === 0 ? (
