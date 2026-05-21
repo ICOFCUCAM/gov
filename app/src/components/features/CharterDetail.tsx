@@ -20,6 +20,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { PostureTimeline } from '@/components/features/PostureTimeline';
 import { PostureBadge } from '@/components/identity/PostureBadge';
 import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /**
  * CharterDetail — everything visible about a single charter on one page.
@@ -87,11 +88,7 @@ export function CharterDetail({ charterId }: { charterId: string }) {
   );
 
   if (!available) {
-    return (
-      <Panel title="Charter" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Charter" />;
   }
   if (!inst) {
     return (

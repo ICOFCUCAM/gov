@@ -11,6 +11,7 @@ import { signOut } from '@/lib/db/auth';
 import { myRecentStepsRows, type ActorStepRow } from '@/lib/db/repos/work-items';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { PostureBadge } from '@/components/identity/PostureBadge';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 interface OfficerSelf {
   id: string;
@@ -74,11 +75,7 @@ export function OfficerProfile() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Profile" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Profile" />;
   }
 
   if (!session) {

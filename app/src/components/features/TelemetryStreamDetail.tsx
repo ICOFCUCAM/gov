@@ -8,6 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /** TelemetryStreamDetail — one stream + its time-series with thresholds.
  *  SVG line chart with warn/alert threshold rules. Reads up to 240
@@ -39,11 +40,7 @@ export function TelemetryStreamDetail({ streamId }: { streamId: string }) {
   );
 
   if (!available) {
-    return (
-      <Panel title="Telemetry stream" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Telemetry stream" />;
   }
   if (!stream) {
     return (

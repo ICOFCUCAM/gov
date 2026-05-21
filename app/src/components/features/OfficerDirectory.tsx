@@ -7,6 +7,7 @@ import { listOfficersRows } from '@/lib/db/repos/admin';
 import { substrateAvailable } from '@/lib/db/client';
 import type { OfficerRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /** OfficerDirectory — read-only phone book grouped by charter.
  *  Non-admin counterpart to OfficerRegistry; everyone in the visible
@@ -23,7 +24,7 @@ export function OfficerDirectory() {
   }, [available, ready]);
 
   if (!available) {
-    return <Panel title="Officer directory" meta="not configured" bodyClass="!p-3"><p className="text-[10px] text-ink-muted">Substrate not configured.</p></Panel>;
+    return <SubstrateNotConfigured title="Officer directory" />;
   }
 
   const needle = q.trim().toLowerCase();

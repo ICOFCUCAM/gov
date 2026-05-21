@@ -10,6 +10,7 @@ import type { ServiceRequestRow, WorkItemRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 export function ServiceRequestDetail({ ref: srRef }: { ref: string }) {
   const { actor, ready } = useIdentity();
@@ -40,11 +41,7 @@ export function ServiceRequestDetail({ ref: srRef }: { ref: string }) {
   );
 
   if (!available) {
-    return (
-      <Panel title="Service request" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Service request" />;
   }
   if (!row) {
     return (

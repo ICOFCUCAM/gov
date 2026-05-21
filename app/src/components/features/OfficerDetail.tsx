@@ -9,6 +9,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { OfficerRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const actionTone = (a: string) =>
   a === 'approve' || a === 'resolve' ? TONE.ok
@@ -47,11 +48,7 @@ export function OfficerDetail({ id }: { id: string }) {
   );
 
   if (!available) {
-    return (
-      <Panel title="Officer" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Officer" />;
   }
   if (!row) {
     return (

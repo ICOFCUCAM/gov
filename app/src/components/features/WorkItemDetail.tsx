@@ -14,6 +14,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { transitionSignature } from '@/lib/db/signatures';
 import { WatchStar } from '@/components/identity/WatchStar';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 interface WorkflowMap { terminal: string[]; transitions: Record<string, Record<string, string>> }
 
@@ -77,11 +78,7 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
   );
 
   if (!available) {
-    return (
-      <Panel title="Work item" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Work item" />;
   }
 
   if (!item) {
