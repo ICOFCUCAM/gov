@@ -16,6 +16,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { ensureCitizenLinkage, refreshIdentity } from '@/services/identity';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { downloadJson } from '@/lib/csv-download';
 
 /**
  * CitizenSubstrate — the citizen's view of their own persistent records.
@@ -133,48 +134,24 @@ export function CitizenSubstrate() {
 
   async function downloadAuditTrail() {
     if (!actor) return;
-    // Pull recent audit entries the citizen's session is entitled to see;
-    // RLS clips to citizen scopes. The substrate enforces what's visible.
     const { recentAuditEntriesRows } = await import('@/lib/db/repos/audit');
     const all = await recentAuditEntriesRows(200);
-    const payload = {
+    downloadJson(`civicos-citizen-audit-${actor.id.slice(0, 8)}`, {
       generated_at: new Date().toISOString(),
       citizen: { id: actor.id, name: actor.name },
       audit_entries: all,
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = `civicos-citizen-audit-${actor.id.slice(0, 8)}-${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    });
   }
 
-  // Per-citizen data export — JSON blob with all rows the substrate
-  // has linked to this auth.uid(). The right-to-take-your-data baked
-  // into the surface itself.
   const downloadMyData = () => {
-    const payload = {
+    downloadJson(`civicos-citizen-${actor.id.slice(0, 8)}`, {
       generated_at: new Date().toISOString(),
-      citizen: {
-        id: actor.id,
-        name: actor.name,
-        email: session.user.email ?? null,
-      },
+      citizen: { id: actor.id, name: actor.name, email: session.user.email ?? null },
       service_requests: requests,
       consents: consents,
       appeals: appeals,
       linked_work_items: Array.from(linkedItems.values()),
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `civicos-citizen-${actor.id.slice(0, 8)}-${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    });
   };
 
   return (
