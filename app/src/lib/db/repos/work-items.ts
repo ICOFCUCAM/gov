@@ -193,6 +193,18 @@ export type ActorStepRow = SignedStepRow & {
   work_item_title: string;
 };
 
+export async function recentActorStepsRows(opts: { charter?: string; kind?: WorkKind; signedOnly?: boolean; limit?: number } = {}): Promise<ActorStepRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_actor_steps').select('*');
+  if (opts.charter) q = q.eq('originating_charter_id', opts.charter);
+  if (opts.kind) q = q.eq('kind', opts.kind);
+  if (opts.signedOnly) q = q.not('signature_hash', 'is', null);
+  const { data, error } = await q.order('at', { ascending: false }).limit(opts.limit ?? 100);
+  if (error || !data) return [];
+  return data as ActorStepRow[];
+}
+
 export async function myRecentStepsRows(actorId: string, limit = 30): Promise<ActorStepRow[]> {
   const sb = publicClient();
   if (!sb) return [];

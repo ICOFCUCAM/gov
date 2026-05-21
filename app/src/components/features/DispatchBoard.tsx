@@ -124,7 +124,10 @@ export function DispatchBoard() {
                 key={d.id}
                 className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]"
               >
-                <span className="w-28 shrink-0 truncate font-mono text-ink-soft">{d.ref}</span>
+                <a href={`/gov/dispatches/${encodeURIComponent(d.ref)}`}
+                   className="w-28 shrink-0 truncate font-mono text-ink-soft hover:text-link hover:underline">
+                  {d.ref}
+                </a>
                 <span className="w-28 shrink-0 truncate font-mono text-link no-underline">{d.issued_by_charter_id}</span>
                 <span className="w-24 shrink-0 truncate font-mono text-ink-soft">{d.target_charter_id ?? '—'}</span>
                 <span className="min-w-0 flex-1 truncate text-ink">{d.detail ?? d.kind}</span>
