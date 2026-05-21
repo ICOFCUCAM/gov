@@ -7,6 +7,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { WorkflowDefinitionRow, WorkKind, ActionKey } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { getPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
 const WORK_KINDS: WorkKind[] = ['approval','case','procurement','encounter','bill','judicial','incident','permit','field','lab'];
@@ -169,23 +170,7 @@ export function WorkflowCatalogue() {
         />
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-ink-muted">kind:</span>
-        {KINDS.map(k => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => setKindFilter(k as WorkKind | 'all')}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-            style={{
-              borderColor: kindFilter === k ? TONE.link : 'rgb(var(--c-line))',
-              color: kindFilter === k ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}
-          >
-            {k}
-          </button>
-        ))}
-      </div>
+      <FilterChips label="kind:" options={KINDS} value={kindFilter} onChange={setKindFilter} />
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[260px_1fr]">
         <Panel title="Workflows" meta={`${items.length}`} bodyClass="!p-0">
