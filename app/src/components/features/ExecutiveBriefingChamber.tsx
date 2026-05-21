@@ -23,6 +23,7 @@ import {
   civilizationalMemory, institutionalRecord, institutionalFrailty,
 } from '@/lib/gov/sovereign-operating-model';
 import type { ExecDirectiveKey } from '@/lib/gov/sovereign-operating-model';
+import { downloadText } from '@/lib/csv-download';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
 
@@ -419,15 +420,7 @@ export function ExecutiveBriefingChamber() {
     L.push(rule);
     const text = L.join('\n');
     try {
-      const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `EBM-${(sov?.stateName ?? 'state').replace(/\s+/g, '-').toLowerCase()}-epoch${epoch}.txt`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      downloadText(`EBM-${(sov?.stateName ?? 'state').replace(/\s+/g, '-').toLowerCase()}-epoch${epoch}.txt`, text);
       void navigator.clipboard?.writeText(text).catch(() => {});
     } catch { /* non-fatal */ }
     setMemoState('issued');
