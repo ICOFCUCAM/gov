@@ -7,6 +7,7 @@ import { auditTrailRows, verifyChainRow, type AuditEntry } from '@/lib/db/repos/
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { downloadJson } from '@/lib/csv-download';
 
 /** AuditEntryDetail — single entry within its chain context.
  *  URL: /gov/audit/[scope]/[seq]. Resolves the scope's chain and
@@ -88,13 +89,8 @@ export function AuditEntryDetail({ scope, seq }: { scope: string; seq: number })
           </button>
           <button type="button"
             onClick={() => {
-              const payload = { scope, entry, exported_at: new Date().toISOString() };
-              const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `civicos-audit-${scope.replace(/[^a-z0-9._-]+/gi,'_')}-${entry.seq}.json`;
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              downloadJson(`civicos-audit-${scope.replace(/[^a-z0-9._-]+/gi,'_')}-${entry.seq}`,
+                { scope, entry, exported_at: new Date().toISOString() });
             }}
             className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2">
             download entry

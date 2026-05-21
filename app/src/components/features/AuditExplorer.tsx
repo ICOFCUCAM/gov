@@ -10,6 +10,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { downloadJson } from '@/lib/csv-download';
 
 /**
  * Audit Explorer — surface the hash-chained audit ledger live.
@@ -75,7 +76,7 @@ export function AuditExplorer() {
   const downloadChain = React.useCallback(() => {
     if (!active || trail.length === 0) return;
     const chain = [...trail].reverse(); // newest-last for chain order
-    const payload = {
+    downloadJson(`civicos-chain-${active.replace(/[^a-z0-9._-]+/gi, '_')}`, {
       scope: active,
       exported_at: new Date().toISOString(),
       entries: chain.length,
@@ -85,16 +86,7 @@ export function AuditExplorer() {
         subject: e.subject, detail: e.detail,
         prev_hash: e.prevHash, hash: e.hash,
       })),
-    };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `civicos-chain-${active.replace(/[^a-z0-9._-]+/gi, '_')}-${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    });
   }, [active, trail, verification]);
 
   if (!available) {
