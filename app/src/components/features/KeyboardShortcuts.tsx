@@ -98,7 +98,13 @@ const API_TABLE: { path: string; what: string }[] = [
 ];
 
 export function KeyboardShortcuts() {
-  const [q, setQ] = React.useState('');
+  const [q, setQ] = React.useState(() =>
+    typeof window === 'undefined' ? '' : window.localStorage.getItem('civicos.pref.help.q') ?? '');
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (q) window.localStorage.setItem('civicos.pref.help.q', q);
+    else window.localStorage.removeItem('civicos.pref.help.q');
+  }, [q]);
   const needle = q.trim().toLowerCase();
   const matchRow = (s: string) => needle === '' || s.toLowerCase().includes(needle);
   return (
