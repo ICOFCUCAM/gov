@@ -7,6 +7,8 @@ import { substrateAvailable, publicClient } from '@/lib/db/client';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
 import { listInstitutionsRows } from '@/lib/db/repos/institutions';
 import { listTelemetryStreamsRows } from '@/lib/db/repos/telemetry';
+import { recentWitnessRows, type AuditWitness } from '@/lib/db/repos/audit';
+import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
 import type { DirectiveRow, InstitutionRow, TelemetryStreamRow } from '@/lib/db/types';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
@@ -26,6 +28,8 @@ export function PublicObservatory() {
   const [directives, setDirectives] = React.useState<DirectiveRow[]>([]);
   const [institutions, setInstitutions] = React.useState<InstitutionRow[]>([]);
   const [streams, setStreams] = React.useState<TelemetryStreamRow[]>([]);
+  const [witnesses, setWitnesses] = React.useState<AuditWitness[]>([]);
+  const [anchors, setAnchors] = React.useState<PersistedEvent[]>([]);
   const [loading, setLoading] = React.useState(false);
   const available = substrateAvailable();
 
@@ -41,6 +45,9 @@ export function PublicObservatory() {
         setDirectives(ds.filter(d => ['signed','effective','rescinded','published'].includes(d.status)));
         setInstitutions(await listInstitutionsRows({ activated: true }));
         setStreams(await listTelemetryStreamsRows({ activeOnly: true, limit: 30 }));
+        setWitnesses(await recentWitnessRows({ limit: 12 }));
+        const events = await recentEventsRows({ type: 'audit.anchor', limit: 12 });
+        setAnchors(events);
       } finally {
         setLoading(false);
       }
@@ -66,7 +73,7 @@ export function PublicObservatory() {
           not appear here.
         </p>
         <p className="font-mono text-[10px] text-ink-muted">
-          loaded {institutions.length} institutions · {directives.length} public directives · {streams.length} active telemetry streams
+          loaded {institutions.length} institutions · {directives.length} public directives · {streams.length} active telemetry streams · {anchors.length} chain anchors · {witnesses.length} attestations
         </p>
       </div>
 
@@ -145,10 +152,66 @@ export function PublicObservatory() {
         </Panel>
       </div>
 
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <Panel title="Latest chain anchors" meta={`${anchors.length}`} bodyClass="!p-0">
+          {anchors.length === 0 ? (
+            <p className="px-3 py-4 text-[11px] text-ink-muted">
+              No audit anchors broadcast yet.
+            </p>
+          ) : (
+            <div className="max-h-[320px] overflow-y-auto">
+              {anchors.map(e => {
+                const p = e.payload as Record<string, unknown>;
+                const scope = String(p['scope'] ?? '');
+                const seq = String(p['head_seq'] ?? '');
+                const hash = String(p['head_hash'] ?? '');
+                return (
+                  <div key={e.id} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                    <div className="flex items-center gap-2">
+                      <span className="w-44 shrink-0 truncate font-mono text-link">{scope}</span>
+                      <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">@{seq}</span>
+                      <span className="min-w-0 flex-1 truncate font-mono text-ink-soft">{hash.slice(0, 24)}…</span>
+                    </div>
+                    <p className="mt-0.5 font-mono text-[9px] text-ink-muted">
+                      {new Date(e.at).toLocaleString()}
+                    </p>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </Panel>
+
+        <Panel title="Latest witness attestations" meta={`${witnesses.length}`} bodyClass="!p-0">
+          {witnesses.length === 0 ? (
+            <p className="px-3 py-4 text-[11px] text-ink-muted">
+              No witness attestations on record.
+            </p>
+          ) : (
+            <div className="max-h-[320px] overflow-y-auto">
+              {witnesses.map(w => (
+                <div key={w.id} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                  <div className="flex items-center gap-2">
+                    <span className="w-44 shrink-0 truncate font-mono text-link">{w.scope}</span>
+                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">@{w.observedSeq}</span>
+                    <span className="min-w-0 flex-1 truncate text-ink">{w.label}</span>
+                  </div>
+                  <p className="mt-0.5 font-mono text-[9px] text-ink-muted">
+                    {w.hasSignature ? '+ signed · ' : ''}{new Date(w.at).toLocaleString()}
+                  </p>
+                </div>
+              ))}
+            </div>
+          )}
+        </Panel>
+      </div>
+
       <p className="text-[10px] text-ink-muted">
         The substrate enforces visibility at the database. This page reads
         the same views every authenticated surface uses, but the RLS
         policies clip rows to what an anonymous session is entitled to see.
+        Audit chain anchors and witness attestations are public by design —
+        the more eyes on them, the harder tamper-after-the-fact becomes.{' '}
         To see your own records, <Link href="/sign-in?from=/public" className="text-link underline">sign in</Link>.
       </p>
     </main>
