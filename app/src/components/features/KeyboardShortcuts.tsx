@@ -153,8 +153,10 @@ export function KeyboardShortcuts() {
       </Panel>
 
       <p className="text-[10px] text-ink-muted">
-        All API endpoints require <span className="font-mono">CIVICOS_CRON_SECRET</span>
-        (either <span className="font-mono">?token=…</span> or Bearer header).
+        All API endpoints except <span className="font-mono">/api/health</span> require
+        <span className="font-mono"> CIVICOS_CRON_SECRET</span> (either
+        <span className="font-mono"> ?token=…</span> or Bearer header). Cadence recipes
+        for Vercel Cron / pg_cron live in <span className="font-mono">supabase/README.md</span>.
       </p>
     </div>
   );
