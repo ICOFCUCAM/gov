@@ -8,7 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { PostureHistoryRow, Posture } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
-import { getStringPref, setPref } from '@/lib/prefs';
+import { getStringPref, getPref, setPref } from '@/lib/prefs';
 
 const POSTURES: Posture[] = ['steady', 'elevated', 'crisis', 'national-emergency', 'recovery'];
 
@@ -33,6 +33,9 @@ export function PostureBoard() {
   const [composerOpen, setComposerOpen] = React.useState(false);
   const [charterFilter, setCharterFilter] = React.useState<string>(() => getStringPref('posture.charter', 'all'));
   React.useEffect(() => { setPref('posture.charter', charterFilter); }, [charterFilter]);
+  const [sortBy, setSortBy] = React.useState<'stress' | 'readiness' | 'charter'>(
+    () => getPref<'stress' | 'readiness' | 'charter'>('posture.sort', ['stress','readiness','charter'] as const, 'stress'));
+  React.useEffect(() => { setPref('posture.sort', sortBy); }, [sortBy]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -125,9 +128,25 @@ export function PostureBoard() {
       </Panel>
 
       {latest.length > 0 ? (
-        <Panel title="Comparative stress" meta={`${latest.length} charters`} bodyClass="!p-3">
+        <Panel title="Comparative stress" meta={`${latest.length} charters · sort ${sortBy}`} bodyClass="!p-3">
+          <div className="mb-2 flex items-center gap-1">
+            {(['stress','readiness','charter'] as const).map(k => (
+              <button key={k} type="button" onClick={() => setSortBy(k)}
+                className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
+                style={{
+                  borderColor: sortBy === k ? TONE.link : 'rgb(var(--c-line))',
+                  color: sortBy === k ? TONE.link : 'rgb(var(--c-ink-muted))',
+                }}>
+                sort {k}
+              </button>
+            ))}
+          </div>
           <div className="space-y-1">
-            {[...latest].sort((a, b) => (b.stress ?? 0) - (a.stress ?? 0)).slice(0, 12).map(r => {
+            {[...latest].sort((a, b) =>
+              sortBy === 'stress' ? (b.stress ?? 0) - (a.stress ?? 0)
+              : sortBy === 'readiness' ? (b.readiness ?? 0) - (a.readiness ?? 0)
+              : a.charter_id.localeCompare(b.charter_id)
+            ).slice(0, 12).map(r => {
               const s = Math.max(0, Math.min(100, r.stress ?? 0));
               return (
                 <div key={'cs:' + r.charter_id} className="flex items-center gap-2 text-[10px]">
