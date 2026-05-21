@@ -239,8 +239,26 @@ export function OfficerProfile() {
             can verify your signatures offline.
           </p>
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <Field label="This device" value={deviceFp ?? '(no key yet)'} mono />
-            <Field label="Registered" value={registeredFp ?? '(not registered)'} mono />
+            <div>
+              <div className="text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">This device</div>
+              <div className="mt-0.5 flex items-center gap-1">
+                <span className="truncate font-mono text-[11px] text-ink">{deviceFp ?? '(no key yet)'}</span>
+                {deviceFp ? (
+                  <button type="button" className="text-[9px] uppercase text-ink-muted hover:text-ink"
+                    onClick={() => { void navigator.clipboard?.writeText(deviceFp); }}>copy</button>
+                ) : null}
+              </div>
+            </div>
+            <div>
+              <div className="text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Registered</div>
+              <div className="mt-0.5 flex items-center gap-1">
+                <span className="truncate font-mono text-[11px] text-ink">{registeredFp ?? '(not registered)'}</span>
+                {registeredFp ? (
+                  <button type="button" className="text-[9px] uppercase text-ink-muted hover:text-ink"
+                    onClick={() => { void navigator.clipboard?.writeText(registeredFp); }}>copy</button>
+                ) : null}
+              </div>
+            </div>
           </div>
           {error ? <p className="text-[10px]" style={{ color: TONE.alert }}>{error}</p> : null}
           {info  ? <p className="text-[10px]" style={{ color: TONE.ok }}>{info}</p>     : null}
