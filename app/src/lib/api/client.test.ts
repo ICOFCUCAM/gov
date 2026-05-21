@@ -5,8 +5,7 @@ const fetchMock = vi.fn();
 
 beforeEach(() => {
   fetchMock.mockReset();
-  // @ts-expect-error vitest stub
-  globalThis.fetch = fetchMock;
+  (globalThis as unknown as { fetch: typeof fetchMock }).fetch = fetchMock;
 });
 
 function jsonResponse(body: unknown, opts: { status?: number } = {}) {

@@ -51,7 +51,7 @@ describe('GET /api/cron/substrate-metrics', () => {
 
     // 6 define + 6 sample RPC calls.
     expect(rpcMock).toHaveBeenCalledTimes(12);
-    const calls = rpcMock.mock.calls.map(c => c[0]);
+    const calls = rpcMock.mock.calls.map(c => (c as unknown as string[])[0]);
     expect(calls.filter(c => c === 'civicos_define_telemetry_stream')).toHaveLength(6);
     expect(calls.filter(c => c === 'civicos_record_telemetry_sample')).toHaveLength(6);
   });

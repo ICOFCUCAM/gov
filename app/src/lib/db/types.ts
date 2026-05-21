@@ -159,6 +159,18 @@ export interface AuditEntryRow {
   hash: string;
 }
 
+export interface AuditWitnessRow {
+  id: string;
+  scope: string;
+  observed_seq: number;
+  observed_hash: string;
+  witness_label: string;
+  has_jwk: boolean;
+  has_signature: boolean;
+  at: string;
+  recorded_by: string | null;
+}
+
 export interface DirectiveRow {
   id: string;
   ref: string;
