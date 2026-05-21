@@ -71,4 +71,27 @@ export async function listInstitutionsRows(opts: { kind?: InstitutionKind; activ
   return data as InstitutionRow[];
 }
 
+export interface FacilityRowLite {
+  id: string;
+  code: string;
+  institution_id: string | null;
+  charter_id: string | null;
+  archetype: string | null;
+  name: string;
+  region: string | null;
+  kind: string | null;
+  operational_status: string;
+}
+
+export async function listFacilitiesRows(opts: { charter?: string; region?: string; limit?: number } = {}): Promise<FacilityRowLite[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_facilities').select('*');
+  if (opts.charter) q = q.eq('charter_id', opts.charter);
+  if (opts.region) q = q.eq('region', opts.region);
+  const { data, error } = await q.order('charter_id').limit(opts.limit ?? 200);
+  if (error || !data) return [];
+  return data as FacilityRowLite[];
+}
+
 export { substrateAvailable };
