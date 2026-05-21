@@ -9,6 +9,7 @@ import type { WorkKind } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { getPref, getBoolPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const KINDS: (WorkKind | 'all')[] = ['all','approval','case','procurement','encounter','bill','judicial','incident','permit','field','lab'];
 
@@ -138,32 +139,8 @@ export function ActivityLog() {
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="flex items-center gap-1">
-          <span className="text-[9px] uppercase tracking-wider text-ink-muted">scope:</span>
-          {(['all','mine','charter'] as const).map(s => (
-            <button key={s} type="button" onClick={() => setScope(s)}
-              className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-              style={{
-                borderColor: scope === s ? TONE.link : 'rgb(var(--c-line))',
-                color: scope === s ? TONE.link : 'rgb(var(--c-ink-muted))',
-              }}>
-              {s}
-            </button>
-          ))}
-        </div>
-        <div className="flex items-center gap-1">
-          <span className="text-[9px] uppercase tracking-wider text-ink-muted">kind:</span>
-          {KINDS.map(k => (
-            <button key={k} type="button" onClick={() => setKindFilter(k)}
-              className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-              style={{
-                borderColor: kindFilter === k ? TONE.link : 'rgb(var(--c-line))',
-                color: kindFilter === k ? TONE.link : 'rgb(var(--c-ink-muted))',
-              }}>
-              {k}
-            </button>
-          ))}
-        </div>
+        <FilterChips label="scope:" options={['all','mine','charter'] as const} value={scope} onChange={setScope} />
+        <FilterChips label="kind:" options={KINDS} value={kindFilter} onChange={setKindFilter} />
         <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
           <input type="checkbox" checked={signedOnly} onChange={e => setSignedOnly(e.currentTarget.checked)} />
           signed only
