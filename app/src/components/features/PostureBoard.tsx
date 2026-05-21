@@ -11,6 +11,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { getStringPref, getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { buildCsv, downloadCsv } from '@/lib/csv-download';
 
 const POSTURES: Posture[] = ['steady', 'elevated', 'crisis', 'national-emergency', 'recovery'];
 
@@ -81,14 +82,11 @@ export function PostureBoard() {
         <div className="flex items-center gap-2">
           <button type="button"
             onClick={() => {
-              const csv = ['charter_id,posture,readiness,stress,snapshot_at',
-                ...latest.map(r => `${r.charter_id},${r.posture},${r.readiness ?? ''},${r.stress ?? ''},${r.snapshot_at}`)].join('\n');
-              const blob = new Blob([csv], { type: 'text/csv' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `civicos-posture-${new Date().toISOString().slice(0,10)}.csv`;
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              const csv = buildCsv(
+                ['charter_id','posture','readiness','stress','snapshot_at'],
+                latest.map(r => [r.charter_id, r.posture, r.readiness ?? '', r.stress ?? '', r.snapshot_at]),
+              );
+              downloadCsv('civicos-posture', csv);
             }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             download csv
