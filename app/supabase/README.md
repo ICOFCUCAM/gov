@@ -125,7 +125,34 @@ Auditors detect the algorithm by hex length.
    firewall; runs against the live cluster otherwise).
 7. Verify with `pnpm tsc --noEmit` and `pnpm test --run`.
 
-## Surfaces
+## Surfaces (as of the most recent batch)
+
+Officer-side: `/sign-in`, `/gov/home`, `/gov/me`, `/gov/search`,
+`/gov/watchlist`, `/gov/alerts`, `/gov/crons`, `/gov/live`,
+`/gov/global`, `/gov/substrate`, `/gov/registry`, `/gov/charter`,
+`/gov/charter/[id]`, `/gov/officers`, `/gov/officers/[id]`,
+`/gov/directory`, `/gov/workbench`, `/gov/workflows`,
+`/gov/workflows/simulator`, `/gov/workflows/diff`,
+`/gov/items/[ref]`, `/gov/directives`, `/gov/directives/[ref]`,
+`/gov/inbox`, `/gov/dispatches`, `/gov/dispatches/[ref]`,
+`/gov/escalations`, `/gov/escalations/[id]`, `/gov/intake`,
+`/gov/intake/request/[ref]`, `/gov/intake/appeal/[ref]`,
+`/gov/posture`, `/gov/telemetry`, `/gov/telemetry/[id]`,
+`/gov/federation`, `/gov/federation/[id]`, `/gov/audit`,
+`/gov/audit/[scope]/[seq]`, `/gov/audit/sweep`, `/gov/signatures`,
+`/gov/activity`, `/gov/constitutional`, `/gov/help`, `/gov/map`,
+`/gov/playground`.
+
+Citizen-side: `/wallet/home`, `/wallet/substrate`,
+`/wallet/consent/[id]`.
+
+Public: `/public`.
+
+API: `/api/health`, `/api/cron/sla`, `/api/cron/substrate-metrics`,
+`/api/cron/posture-digest`, `/api/cron/audit-self`,
+`/api/substrate/digest`.
+
+## Original surfaces table (for reference)
 
 | Path | Component | Reads | Writes |
 |---|---|---|---|
