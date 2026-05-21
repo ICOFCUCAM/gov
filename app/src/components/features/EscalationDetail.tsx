@@ -13,11 +13,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
-
-const severityTone = (s: string) =>
-  s === 'national' || s === 'major' ? TONE.alert
-  : s === 'minor' ? TONE.warn
-  : TONE.link;
+import { severityTone } from '@/lib/tone';
 
 export function EscalationDetail({ id }: { id: string }) {
   const { actor, ready } = useIdentity();

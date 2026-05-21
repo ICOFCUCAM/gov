@@ -10,17 +10,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { ageMinutes } from '@/lib/format';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
-
-const severityTone = (s: string) =>
-  s === 'national' || s === 'major' ? TONE.alert
-  : s === 'minor' ? TONE.warn
-  : TONE.link;
-
-const priorityTone = (p: string) =>
-  p === 'critical' || p === 'urgent' ? TONE.alert
-  : p === 'priority' ? TONE.warn
-  : TONE.link;
-
+import { severityTone, priorityTone } from '@/lib/tone';
 
 /**
  * LiveWall — composite operational picture for the NOC.
