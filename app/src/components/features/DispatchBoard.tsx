@@ -17,6 +17,7 @@ import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { priorityTone, dispatchStatusTone } from '@/lib/tone';
+import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
 const KINDS = ['unit-deploy', 'medical-evac', 'inspection', 'investigation', 'relief'];
 const PRIORITIES: Priority[] = ['routine', 'priority', 'urgent', 'critical'];
@@ -71,15 +72,7 @@ export function DispatchBoard() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Dispatch Board</h2>
-          <span
-            className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
-          >
-            durable · realtime
-          </span>
-        </div>
+        <SurfaceHeading title="Dispatch Board" badge="durable · realtime" />
         <div className="flex items-center gap-2">
           <button
             type="button"

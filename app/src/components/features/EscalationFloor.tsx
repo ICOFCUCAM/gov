@@ -17,6 +17,7 @@ import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { severityTone } from '@/lib/tone';
+import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
 const SEVERITIES: Severity[] = ['watch', 'minor', 'major', 'national'];
 
@@ -61,15 +62,7 @@ export function EscalationFloor() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Escalation Floor</h2>
-          <span
-            className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
-          >
-            durable · realtime
-          </span>
-        </div>
+        <SurfaceHeading title="Escalation Floor" badge="durable · realtime" />
         <div className="flex items-center gap-2">
           <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
             <input type="checkbox" checked={openOnly} onChange={e => setOpenOnly(e.currentTarget.checked)} />
