@@ -7,6 +7,7 @@ import { listInstitutionsRows } from '@/lib/db/repos/institutions';
 import { substrateAvailable } from '@/lib/db/client';
 import type { InstitutionRow, InstitutionKind } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { PostureBadge } from '@/components/identity/PostureBadge';
 
 const KINDS: (InstitutionKind | 'all')[] = ['all','ministry','branch','agency','platform','officer','citizen'];
 
@@ -71,10 +72,13 @@ export function CharterList() {
                 className="block bg-surface px-3 py-2 hover:bg-surface-2">
                 <div className="flex items-center justify-between gap-2">
                   <span className="truncate font-mono text-[10px] text-link">{i.charter_id}</span>
-                  <span className="text-[8.5px] font-bold uppercase tracking-wider"
-                    style={{ color: i.activated ? TONE.ok : TONE.warn }}>
-                    {i.activated ? 'live' : 'idle'}
-                  </span>
+                  <div className="flex items-center gap-1">
+                    <PostureBadge charterId={i.charter_id} />
+                    <span className="text-[8.5px] font-bold uppercase tracking-wider"
+                      style={{ color: i.activated ? TONE.ok : TONE.warn }}>
+                      {i.activated ? 'live' : 'idle'}
+                    </span>
+                  </div>
                 </div>
                 <div className="mt-1 truncate text-[10px] text-ink">{i.label}</div>
                 <div className="mt-0.5 truncate font-mono text-[9px] text-ink-muted">
