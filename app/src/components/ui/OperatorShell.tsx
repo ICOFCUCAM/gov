@@ -2,6 +2,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AccessibilityMenu } from './AccessibilityMenu';
+import { IdentityBadge } from '@/components/identity/IdentityBadge';
 import { OfflineBanner } from './OfflineBanner';
 
 export type OperatorRole = 'officer' | 'ministry' | 'auditor' | 'admin';
@@ -95,6 +96,7 @@ export function OperatorShell({
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden font-mono text-xs text-ink-muted sm:inline">{who}</span>
+          <IdentityBadge className="hidden md:flex" />
           <AccessibilityMenu />
         </div>
       </header>

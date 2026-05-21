@@ -11,6 +11,7 @@
 // the ledger falls back to memory-only — UI works either way.
 
 import { appendAuditRow, auditTrailRows, verifyChainRow, substrateAvailable } from '@/lib/db/repos/audit';
+import { enrichActorString } from '@/services/actor-resolver';
 
 export interface AuditEntry {
   seq: number;
@@ -65,14 +66,18 @@ function nextEntry(scope: string, actor: string, action: string, subject: string
  *  persistence happens in the background. The DB-canonical entry will be
  *  reconciled in via hydrateScope() on next mount. */
 export function appendAudit(scope: string, actor: string, action: string, subject: string, detail = ''): AuditEntry {
-  const entry = nextEntry(scope, actor, action, subject, detail);
+  // Tag the actor with the signed-in identity when available so the
+  // chain records who really acted. The tag is part of the hashed
+  // material, so in-memory and DB digests stay aligned.
+  const taggedActor = enrichActorString(actor);
+  const entry = nextEntry(scope, taggedActor, action, subject, detail);
   const chain = chains.get(scope) ?? [];
   chains.set(scope, [...chain, entry]);
   emit();
 
   // Persist if substrate is available — fire and forget.
   if (substrateAvailable()) {
-    void appendAuditRow(scope, actor, action, subject, detail).catch(() => {
+    void appendAuditRow(scope, taggedActor, action, subject, detail).catch(() => {
       // Persistence failures don't break the UI; the in-memory mirror
       // remains. A reconciliation pass on hydrate will re-establish truth.
     });

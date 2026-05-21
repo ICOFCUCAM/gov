@@ -17,6 +17,7 @@ import { publish as busPublish } from '@/services/event-bus';
 import {
   openWorkItemRow, transitionWorkItemRow, substrateAvailable,
 } from '@/lib/db/repos/work-items';
+import { resolvedActor } from '@/services/actor-resolver';
 
 export interface LedgerEntry {
   at: number;
@@ -147,10 +148,16 @@ export function actOnItem(scope: string, itemId: string, action: ActionKey, by: 
 
   // Mirror to substrate when the item has a persistent counterpart. The
   // server validates the transition independently against the stored
-  // workflow definition.
+  // workflow definition. When a real actor is signed in, pass their id
+  // and role so the step_history row points to a real foreign key.
   if (after.meta.persistent === '1' && substrateAvailable()) {
+    const a = resolvedActor();
     void transitionWorkItemRow({
-      ref: itemId, action, actorName: by, detail: `${last.from} → ${last.to}`,
+      ref: itemId, action,
+      actorName: a?.name ?? by,
+      actorId: a?.kind === 'officer' ? a.id : null,
+      actorRole: a?.role ?? null,
+      detail: `${last.from} → ${last.to}`,
     }).catch(() => { /* best-effort */ });
   }
 }
@@ -186,10 +193,12 @@ let injCount = 0;
  *  Tags the item with persistent='1' so actOnItem dual-writes transitions. */
 function mirrorOpenedItem(scope: string, item: WorkItem, by: string): void {
   if (!substrateAvailable()) return;
+  const a = resolvedActor();
   void openWorkItemRow({
     ref: item.id, scope, workflowId: item.kind, kind: item.kind,
     title: item.title, currentStage: item.stage, priority: item.priority,
-    assigneeName: by,
+    assigneeName: a?.name ?? by,
+    assigneeId: a?.kind === 'officer' ? a.id : null,
     meta: { origin: item.meta.origin ?? 'directive' },
   }).then(row => {
     if (!row) return;

@@ -10,6 +10,7 @@
 
 import { seed } from '@/lib/telemetry';
 import { recordDispatchRow, substrateAvailable } from '@/lib/db/repos/memory';
+import { resolvedActor } from '@/services/actor-resolver';
 
 export type DispatchTier = 'ACTOR' | 'FACILITY' | 'MINISTRY' | 'NATIONAL';
 export interface Dispatch {
@@ -113,9 +114,11 @@ export function send(scope: string, msg: Omit<Dispatch, 'id' | 'at' | 'seeded'>,
   // we persist the issuer's tier as the charter and the channel scope
   // as the target, so cross-process consumers can reconstruct the flow.
   if (substrateAvailable()) {
+    const a = resolvedActor();
     void recordDispatchRow({
       ref: id,
       issuedByCharterId: msg.from || scope,
+      issuedByOfficerId: a?.kind === 'officer' ? a.id : null,
       kind: `${msg.fromTier.toLowerCase()}-to-${msg.toTier.toLowerCase()}`,
       priority: msg.priority,
       detail: msg.body,

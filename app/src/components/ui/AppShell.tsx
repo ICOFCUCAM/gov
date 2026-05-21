@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { AccessibilityMenu } from './AccessibilityMenu';
+import { IdentityBadge } from '@/components/identity/IdentityBadge';
 import { OfflineBanner } from './OfflineBanner';
 import { api } from '@/lib/api/client';
 import { resolveIdentity, shellStrings } from '@/lib/sovereign-identity';
@@ -371,6 +372,7 @@ export function AppShell({
               <span className="hidden rounded-sm border border-line bg-surface-2 px-2 py-0.5 text-xs text-ink-soft sm:inline">
                 {nat ? nat.environment : 'Production'} · {sov?.currency ?? 'USD'}
               </span>
+              <IdentityBadge className="hidden md:flex" />
               <AccessibilityMenu />
             </div>
           </header>
