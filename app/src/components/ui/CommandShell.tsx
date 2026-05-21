@@ -61,6 +61,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⇨', l: 'Dispatch Board',     s: 'Record · ack · close',       href: '/gov/dispatches',  key: 'dispatches'  },
     { i: '!',  l: 'Escalation Floor',   s: 'Severity-tiered escalations',href: '/gov/escalations', key: 'escalations' },
     { i: '⟐', l: 'Audit Explorer',     s: 'Hash-chained ledger',        href: '/gov/audit',       key: 'audit'       },
+    { i: '◇', l: 'Audit Witnesses',    s: 'External tamper attestations',href: '/gov/witnesses',   key: 'witnesses'   },
     { i: '◰', l: 'Telemetry Wall',     s: 'Streams · samples · alerts', href: '/gov/telemetry',   key: 'telemetry'   },
     { i: '⊡', l: 'Officer Registry',   s: 'Provision officers',         href: '/gov/officers',    key: 'officers'    },
     { i: '☷', l: 'Officer Directory',  s: 'Read-only phone book',       href: '/gov/directory',   key: 'directory'   },
