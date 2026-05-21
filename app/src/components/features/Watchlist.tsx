@@ -7,6 +7,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import {
   listWatch, subscribeWatch, toggleWatch, watchHref, type WatchEntry,
 } from '@/lib/watchlist';
+import { buildCsv, downloadCsv } from '@/lib/csv-download';
 
 const kindTone: Record<WatchEntry['kind'], string | undefined> = {
   'work-item': TONE.link,
@@ -56,14 +57,11 @@ export function Watchlist() {
         <div className="flex items-center gap-2">
           <button type="button" disabled={entries.length === 0}
             onClick={() => {
-              const csv = ['kind,ref,label,added_at',
-                ...entries.map(e => `${e.kind},${e.ref},${(e.label ?? '').replace(/,/g,';')},${new Date(e.addedAt).toISOString()}`)].join('\n');
-              const blob = new Blob([csv], { type: 'text/csv' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `civicos-watchlist-${new Date().toISOString().slice(0,10)}.csv`;
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              const csv = buildCsv(
+                ['kind','ref','label','added_at'],
+                entries.map(e => [e.kind, e.ref, e.label ?? '', new Date(e.addedAt).toISOString()]),
+              );
+              downloadCsv('civicos-watchlist', csv);
             }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
             csv
