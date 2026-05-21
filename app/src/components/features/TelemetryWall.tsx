@@ -10,6 +10,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 /**
  * Telemetry Wall — define streams, append samples, watch the wall live.
@@ -235,22 +236,8 @@ function TelemetryComposer({
 
   return (
     <form onSubmit={onSubmit} className="space-y-2 rounded-[3px] border border-line bg-surface p-3 text-[11px]">
-      <div className="flex gap-2">
-        {(['define', 'sample'] as const).map(m => (
-          <button
-            key={m}
-            type="button"
-            onClick={() => setMode(m)}
-            className="focus-ring rounded-[3px] border px-2 py-0.5 text-[9px] uppercase tracking-wider"
-            style={{
-              borderColor: mode === m ? TONE.link : 'rgb(var(--c-line))',
-              color: mode === m ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}
-          >
-            {m === 'define' ? 'define stream' : 'append sample'}
-          </button>
-        ))}
-      </div>
+      <FilterChips options={['define','sample'] as const} value={mode} onChange={setMode}
+        format={m => m === 'define' ? 'define stream' : 'append sample'} />
       {mode === 'define' ? (
         <>
           <div className="grid grid-cols-2 gap-2">
