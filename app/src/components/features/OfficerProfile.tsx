@@ -173,6 +173,9 @@ export function OfficerProfile() {
         <div className="grid grid-cols-2 gap-2">
           <Field label="auth.uid" value={session.user.id} mono />
           <Field label="Email" value={session.user.email ?? '—'} mono />
+          {session.expires_at ? (
+            <Field label="Session expires" value={new Date(session.expires_at * 1000).toLocaleString()} />
+          ) : null}
           {actor ? (
             <>
               <Field label="Kind" value={actor.kind} />
