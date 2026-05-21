@@ -11,6 +11,7 @@ import type { WorkItemRow, EscalationRow, DispatchRow, ServiceRequestRow, Appeal
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { useSubstrateAlerts } from '@/components/identity/useSubstrateAlerts';
+import { WatchedRecords } from '@/components/features/WatchedRecords';
 
 const priorityTone = (p: string) =>
   p === 'critical' || p === 'urgent' ? TONE.alert
@@ -223,6 +224,8 @@ export function OfficerHome() {
           )}
         </Panel>
       </div>
+
+      <WatchedRecords />
     </div>
   );
 }

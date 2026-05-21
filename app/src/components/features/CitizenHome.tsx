@@ -11,6 +11,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { ServiceRequestRow, ConsentRow, AppealRow, WorkItemRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { WatchedRecords } from '@/components/features/WatchedRecords';
 
 const ageMin = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
 
@@ -187,6 +188,8 @@ export function CitizenHome() {
           )}
         </Panel>
       </div>
+
+      <WatchedRecords />
 
       <p className="text-[10px] text-ink-muted">
         Every record here is RLS-scoped to your citizen id. Officer-side
