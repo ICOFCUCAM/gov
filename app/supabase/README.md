@@ -146,6 +146,53 @@ Auditors detect the algorithm by hex length.
 | `/gov/workflows` | WorkflowCatalogue | workflow_definitions | — |
 | `/wallet/substrate` | CitizenSubstrate | service_requests, consents, appeals (own) | submit_service_request, grant_consent, revoke_consent, file_appeal |
 
+## API endpoints
+
+All shared-secret-gated (`CIVICOS_CRON_SECRET` env var, presented as
+`?token=…` or `Authorization: Bearer …`). They use the service-role
+client server-side; the secret never reaches the browser bundle.
+
+### `GET|POST /api/cron/sla?token=…[&hours=NN]`
+Calls `civicos_escalate_stale_service_requests(hours)`. Default
+threshold 48h. Records a `minor` escalation per stale request,
+idempotent per request within 24h. Returns `{ ok, escalated, threshold_hours, at }`.
+
+### `GET|POST /api/cron/substrate-metrics?token=…`
+Defines (idempotent) six substrate-level telemetry streams and appends
+a sample to each:
+- `substrate.work_items.open` (warn 100, alert 250)
+- `substrate.escalations.open` (warn 20, alert 60)
+- `substrate.dispatches.open` (warn 50, alert 150)
+- `substrate.requests.unacked` (warn 30, alert 100)
+- `substrate.audit_entries.total`
+- `substrate.federation.total`
+
+Samples flow through `/gov/telemetry`; threshold breaches auto-escalate
+via the existing telemetry trigger.
+
+### `GET|POST /api/substrate/digest?token=…[&verify=1]`
+Programmatic equivalent of the /gov/substrate download digest. Returns
+per-view row counts (RLS-unfiltered via service-role) and optionally
+the chain integrity sweep across recent scopes. Suitable for archival.
+
+## Cron recipes
+
+Vercel Cron (`vercel.json`):
+```json
+{ "crons": [
+    { "path": "/api/cron/sla?token=$CIVICOS_CRON_SECRET&hours=48", "schedule": "0 * * * *" },
+    { "path": "/api/cron/substrate-metrics?token=$CIVICOS_CRON_SECRET", "schedule": "*/5 * * * *" }
+] }
+```
+
+Supabase scheduled function (pg_cron):
+```sql
+select cron.schedule('civicos-sla', '0 * * * *',
+  $$ select net.http_post(
+       'https://<host>/api/cron/sla?token=<secret>&hours=48',
+       '{}'::jsonb, '{"content-type":"application/json"}'::jsonb) $$);
+```
+
 ## Testing
 
 - **Unit tests** (`pnpm test --run`): 727 tests over the runtime logic.

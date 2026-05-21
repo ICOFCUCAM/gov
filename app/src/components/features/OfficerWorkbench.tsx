@@ -49,6 +49,9 @@ export function OfficerWorkbench() {
   const [busyAction, setBusyAction] = React.useState<string | null>(null);
   const [openOnly, setOpenOnly] = React.useState(true);
   const [lastError, setLastError] = React.useState<string | null>(null);
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [bulkReport, setBulkReport] = React.useState<{ ok: number; failed: number } | null>(null);
   const available = substrateAvailable();
 
   const refreshItems = React.useCallback(async () => {
@@ -120,6 +123,45 @@ export function OfficerWorkbench() {
     ? Object.entries(activeDef.transitions[activeItem.current_stage] ?? {}) as [ActionKey, string][]
     : [];
 
+  async function runBulk(action: ActionKey) {
+    if (selected.size === 0) return;
+    const targets = items.filter(w => selected.has(w.ref) && !w.closed);
+    setBulkBusy(true);
+    setBulkReport(null);
+    let ok = 0, failed = 0;
+    const me = resolvedActor();
+    const actorId = me?.kind === 'officer' ? me.id : null;
+    const wantsSig = SIGNATURE_ACTIONS.has(action) && actorId != null;
+    try {
+      for (const w of targets) {
+        // Skip when the action isn't valid for this stage in the synced
+        // definition — saves a substrate round-trip per misfit.
+        const def = defs.get(w.workflow_id);
+        if (!def || !def.transitions[w.current_stage]?.[action]) {
+          failed += 1;
+          continue;
+        }
+        const sig = wantsSig
+          ? await transitionSignature({ actorId, scope: w.scope, ref: w.ref, action })
+          : null;
+        const result = await transitionWorkItemRow({
+          ref: w.ref, action,
+          actorName: me?.name ?? 'officer',
+          actorId, actorRole: me?.role ?? null,
+          detail: `bulk: ${w.current_stage} → ${action}`,
+          requiresSignature: !!sig,
+          signatureHash: sig?.hash ?? null,
+          signedAt: sig ? new Date(sig.at).toISOString() : null,
+        });
+        if (result && result.ok) ok += 1; else failed += 1;
+      }
+    } finally {
+      setBulkReport({ ok, failed });
+      setSelected(new Set());
+      setBulkBusy(false);
+    }
+  }
+
   async function take(action: ActionKey) {
     if (!activeItem) return;
     const me = resolvedActor();
@@ -176,6 +218,35 @@ export function OfficerWorkbench() {
         scope: {actor.name} · {actor.role ?? 'officer'} · {actor.charterId ?? '—'}
       </p>
 
+      {selected.size > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-[3px] border border-line bg-surface px-3 py-2 text-[10px]">
+          <span className="font-mono uppercase tracking-wider text-ink-muted">
+            {selected.size} selected
+          </span>
+          <span className="text-ink-muted">·</span>
+          <button type="button" disabled={bulkBusy}
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50"
+            onClick={async () => { await runBulk('advance'); }}>
+            bulk advance
+          </button>
+          <button type="button" disabled={bulkBusy}
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50"
+            onClick={async () => { await runBulk('resolve'); }}>
+            bulk resolve
+          </button>
+          <button type="button" disabled={bulkBusy}
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50"
+            onClick={() => { setSelected(new Set()); setBulkReport(null); }}>
+            clear
+          </button>
+          {bulkReport ? (
+            <span className="font-mono text-ink-muted">
+              · last: {bulkReport.ok} ok / {bulkReport.failed} failed
+            </span>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[1fr_420px]">
         <Panel title="Work items" meta={`${items.length}`} bodyClass="!p-0">
           {items.length === 0 ? (
@@ -183,30 +254,45 @@ export function OfficerWorkbench() {
           ) : (
             <div className="max-h-[560px] overflow-y-auto">
               {items.map(w => (
-                <button
+                <div
                   key={w.id}
-                  type="button"
-                  onClick={() => setActive(w.ref)}
-                  className="block w-full border-b border-line-soft px-3 py-1.5 text-left last:border-0 hover:bg-surface-2"
+                  className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 hover:bg-surface-2"
                   style={{ backgroundColor: w.ref === active ? 'rgba(55,199,212,0.05)' : undefined }}
                 >
-                  <div className="flex items-center gap-2 text-[10px]">
-                    <span
-                      className="w-14 shrink-0 text-[8.5px] font-bold uppercase tracking-wider"
-                      style={{ color: priorityTone(w.priority) }}
-                    >
-                      {w.priority}
-                    </span>
-                    <span className="min-w-0 flex-1 truncate text-ink">{w.title}</span>
-                    <span className="w-28 shrink-0 truncate text-right font-mono text-ink-soft">{w.current_stage}</span>
-                    {w.closed ? (
-                      <span className="w-14 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider" style={{ color: TONE.ok }}>closed</span>
-                    ) : null}
-                  </div>
-                  <div className="mt-0.5 truncate font-mono text-[9px] text-ink-muted">
-                    {w.ref} · {w.scope}
-                  </div>
-                </button>
+                  <input
+                    type="checkbox"
+                    className="shrink-0"
+                    aria-label={`select ${w.ref}`}
+                    checked={selected.has(w.ref)}
+                    onChange={e => {
+                      const next = new Set(selected);
+                      if (e.currentTarget.checked) next.add(w.ref); else next.delete(w.ref);
+                      setSelected(next);
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setActive(w.ref)}
+                    className="block min-w-0 flex-1 text-left"
+                  >
+                    <div className="flex items-center gap-2 text-[10px]">
+                      <span
+                        className="w-14 shrink-0 text-[8.5px] font-bold uppercase tracking-wider"
+                        style={{ color: priorityTone(w.priority) }}
+                      >
+                        {w.priority}
+                      </span>
+                      <span className="min-w-0 flex-1 truncate text-ink">{w.title}</span>
+                      <span className="w-28 shrink-0 truncate text-right font-mono text-ink-soft">{w.current_stage}</span>
+                      {w.closed ? (
+                        <span className="w-14 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider" style={{ color: TONE.ok }}>closed</span>
+                      ) : null}
+                    </div>
+                    <div className="mt-0.5 truncate font-mono text-[9px] text-ink-muted">
+                      {w.ref} · {w.scope}
+                    </div>
+                  </button>
+                </div>
               ))}
             </div>
           )}

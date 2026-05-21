@@ -181,6 +181,24 @@ export async function listServiceRequestsRows(opts: { target?: string; openOnly?
   return data as ServiceRequestRow[];
 }
 
+export async function serviceRequestByRef(ref: string): Promise<ServiceRequestRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_service_requests').select('*')
+    .eq('ref', ref).limit(1).maybeSingle();
+  if (error || !data) return null;
+  return data as ServiceRequestRow;
+}
+
+export async function appealByRef(ref: string): Promise<AppealRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_appeals').select('*')
+    .eq('ref', ref).limit(1).maybeSingle();
+  if (error || !data) return null;
+  return data as AppealRow;
+}
+
 export async function listAppealsRows(opts: { originating?: string; openOnly?: boolean; limit?: number } = {}): Promise<AppealRow[]> {
   const sb = publicClient();
   if (!sb) return [];
