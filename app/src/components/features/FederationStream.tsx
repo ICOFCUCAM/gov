@@ -2,10 +2,12 @@
 
 import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
+import { recentEventsRows, publishEventRow, type PersistedEvent } from '@/lib/db/repos/events';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+
+const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
 
 const channelTone = (c: string) =>
   c === 'escalation' ? TONE.alert
@@ -32,6 +34,7 @@ export function FederationStream() {
   const [typeFilter, setTypeFilter] = React.useState<string>('all');
   const [channelFilter, setChannelFilter] = React.useState<string>('all');
   const [showPayload, setShowPayload] = React.useState(false);
+  const [composerOpen, setComposerOpen] = React.useState(false);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -74,10 +77,18 @@ export function FederationStream() {
             inter-institutional · realtime
           </span>
         </div>
-        <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
-          <input type="checkbox" checked={showPayload} onChange={e => setShowPayload(e.currentTarget.checked)} />
-          payload
-        </label>
+        <div className="flex items-center gap-2">
+          {actor?.kind === 'officer' && actor.role !== null && PLATFORM_ROLES.has(actor.role) ? (
+            <button type="button" onClick={() => setComposerOpen(o => !o)}
+              className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+              {composerOpen ? 'cancel' : '+ publish event'}
+            </button>
+          ) : null}
+          <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
+            <input type="checkbox" checked={showPayload} onChange={e => setShowPayload(e.currentTarget.checked)} />
+            payload
+          </label>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1">
@@ -107,6 +118,10 @@ export function FederationStream() {
           </button>
         ))}
       </div>
+
+      {composerOpen ? (
+        <FederationComposer defaultSource={actor?.charterId ?? 'platform'} onDone={async () => { await refresh(); setComposerOpen(false); }} />
+      ) : null}
 
       <Panel title="Events" meta={`${events.length}`} bodyClass="!p-0">
         {events.length === 0 ? (
@@ -149,5 +164,55 @@ export function FederationStream() {
         Realtime latency.
       </p>
     </div>
+  );
+}
+
+function FederationComposer({ defaultSource, onDone }: { defaultSource: string; onDone: () => Promise<void> }) {
+  const [type, setType] = React.useState('runtime.transition');
+  const [channel, setChannel] = React.useState('runtime');
+  const [source, setSource] = React.useState(defaultSource);
+  const [target, setTarget] = React.useState('');
+  const [payload, setPayload] = React.useState('{}');
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    let parsed: Record<string, unknown> = {};
+    if (payload.trim()) {
+      try { parsed = JSON.parse(payload); }
+      catch (err) { setError('invalid JSON: ' + (err instanceof Error ? err.message : String(err))); return; }
+    }
+    setBusy(true);
+    try {
+      const row = await publishEventRow(type.trim(), source.trim(), channel.trim(), parsed, target.trim() || null);
+      if (!row) setError('publish_event failed');
+      else await onDone();
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <form onSubmit={onSubmit} className="space-y-2 rounded-[3px] border border-line bg-surface p-3 text-[11px]">
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <input className="rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
+               value={type} onChange={e => setType(e.currentTarget.value)} placeholder="type" required />
+        <input className="rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
+               value={channel} onChange={e => setChannel(e.currentTarget.value)} placeholder="channel" required />
+        <input className="rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
+               value={source} onChange={e => setSource(e.currentTarget.value)} placeholder="source" required />
+        <input className="rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
+               value={target} onChange={e => setTarget(e.currentTarget.value)} placeholder="target (optional)" />
+      </div>
+      <textarea className="h-24 w-full rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[10px]"
+                value={payload} onChange={e => setPayload(e.currentTarget.value)} spellCheck={false} placeholder='{ "reason": "…" }' />
+      {error ? <p className="text-[10px]" style={{ color: TONE.alert }}>{error}</p> : null}
+      <div className="flex justify-end">
+        <button type="submit" disabled={busy}
+          className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+          {busy ? 'publishing…' : 'publish'}
+        </button>
+      </div>
+    </form>
   );
 }
