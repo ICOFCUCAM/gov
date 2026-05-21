@@ -57,6 +57,33 @@ export async function rescindDirectiveRow(ref: string): Promise<DirectiveRow | n
   return (data as DirectiveRow) ?? null;
 }
 
+export async function directiveByRef(ref: string): Promise<DirectiveRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_directives').select('*')
+    .eq('ref', ref).limit(1).maybeSingle();
+  if (error || !data) return null;
+  return data as DirectiveRow;
+}
+
+export async function escalationById(id: string): Promise<EscalationRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_escalations').select('*')
+    .eq('id', id).limit(1).maybeSingle();
+  if (error || !data) return null;
+  return data as EscalationRow;
+}
+
+export async function dispatchByRef(ref: string): Promise<DispatchRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_dispatches').select('*')
+    .eq('ref', ref).limit(1).maybeSingle();
+  if (error || !data) return null;
+  return data as DispatchRow;
+}
+
 export async function listDirectivesRows(opts: { status?: string; issuer?: string; limit?: number } = {}): Promise<DirectiveRow[]> {
   const sb = publicClient();
   if (!sb) return [];
