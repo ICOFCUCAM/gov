@@ -25,7 +25,7 @@ export function NotificationsBell({ className = '' }: { className?: string }) {
       className={`inline-flex items-center gap-1 rounded-[3px] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] hover:bg-surface-2 ${className}`}
       style={{ borderColor: tone, color: tone }}
     >
-      <span aria-hidden>◔</span>
+      <span aria-hidden className={highest === 'national' || highest === 'major' ? 'animate-pulse' : ''}>◔</span>
       <span>alerts</span>
       <span className="font-mono tabular-nums">{count}</span>
     </a>
