@@ -10,6 +10,9 @@ import type { ArchetypeKey } from '@/lib/api/types';
 import { blueprintFor } from '@/lib/institution/blueprint';
 import { interiorNav } from '@/apps/ministry-interior/core/domains';
 import { policeNav } from '@/apps/police-command/core/domains';
+import { senateNav } from '@/apps/senate/core/domains';
+import { assemblyNav } from '@/apps/assembly/core/domains';
+import { judicialNav } from '@/apps/judicial-branch/core/domains';
 import type { AppManifest } from '@/services/orchestration-engine';
 
 const ARCHETYPE_APP: Partial<Record<ArchetypeKey, { id: string; label: string; domain: string }>> = {
@@ -45,25 +48,19 @@ export function ministryAppManifest(m: { id: string; name: string; archetype: Ar
   };
 }
 
-// Constitutional branches & standing sovereign agencies are fixed apps.
+// Constitutional branches as sovereign reference-tier operational apps.
 export const BRANCH_APPS: AppManifest[] = [
   {
-    id: 'judiciary', label: 'Judiciary', domain: 'judiciary', kind: 'branch', archetypeOrBranch: 'judiciary',
-    nav: [
-      { key: 'live', label: 'Live judiciary' }, { key: 'courts', label: 'Court systems' },
-      { key: 'cases', label: 'Case management' }, { key: 'constitutional', label: 'Constitutional review' },
-      { key: 'appeals', label: 'Appeals' }, { key: 'prosecution', label: 'Prosecution liaison' },
-      { key: 'corrections', label: 'Corrections integration' },
-    ],
+    id: 'judiciary', label: 'Judicial Branch', domain: 'judiciary', kind: 'branch', archetypeOrBranch: 'judiciary',
+    nav: judicialNav(),
   },
   {
-    id: 'legislature', label: 'Legislature', domain: 'parliament', kind: 'branch', archetypeOrBranch: 'legislature',
-    nav: [
-      { key: 'live', label: 'Live legislature' }, { key: 'chambers', label: 'Chambers' },
-      { key: 'committees', label: 'Committees' }, { key: 'bills', label: 'Bill pipeline' },
-      { key: 'voting', label: 'Voting systems' }, { key: 'appropriation', label: 'Appropriation' },
-      { key: 'oversight', label: 'Oversight' },
-    ],
+    id: 'senate', label: 'Senate', domain: 'senate', kind: 'branch', archetypeOrBranch: 'legislature',
+    nav: senateNav(),
+  },
+  {
+    id: 'assembly', label: 'National Assembly', domain: 'assembly', kind: 'branch', archetypeOrBranch: 'legislature',
+    nav: assemblyNav(),
   },
 ];
 

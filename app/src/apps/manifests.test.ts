@@ -15,7 +15,8 @@ describe('federated app manifests', () => {
   it('standing apps cover branches + sovereign agencies', () => {
     const ids = STANDING_APPS.map(a => a.id);
     expect(ids).toContain('judiciary');
-    expect(ids).toContain('legislature');
+    expect(ids).toContain('senate');
+    expect(ids).toContain('assembly');
     expect(ids).toContain('police-command');
     expect(ids).toContain('emergency-response');
     expect(ids).toContain('citizen-wallet');

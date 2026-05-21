@@ -33,6 +33,9 @@ export type LayoutGrammar =
   | 'industrial-corridor'   // Trade & Industry
   | 'lecture-hall'          // Education
   | 'crisis-theatre'        // Emergency Management
+  | 'senate-chamber'        // Senate (Upper House)
+  | 'assembly-floor'        // National Assembly (Lower House)
+  | 'apex-court'            // Judicial Branch
   | 'generic-sector';       // fallback — explicit flag of unrealised identity
 
 /** Constitutional / blueprint section references. Charters MUST cite the

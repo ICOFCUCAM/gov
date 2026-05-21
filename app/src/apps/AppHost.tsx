@@ -13,6 +13,9 @@ import { HealthEcosystemWall } from '@/apps/ministry-health/HealthEcosystemWall'
 import { TreasuryApp } from '@/apps/treasury/TreasuryApp';
 import { JudiciaryApp } from '@/apps/judiciary/JudiciaryApp';
 import { LegislatureApp } from '@/apps/legislature/LegislatureApp';
+import { SenateApp } from '@/apps/senate/SenateApp';
+import { AssemblyApp } from '@/apps/assembly/AssemblyApp';
+import { JudicialBranchApp } from '@/apps/judicial-branch/JudicialBranchApp';
 import { PoliceCommandApp } from '@/apps/police-command/PoliceCommandApp';
 import { ImmigrationApp } from '@/apps/immigration/ImmigrationApp';
 import { CustomsApp } from '@/apps/customs/CustomsApp';
@@ -273,6 +276,12 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                   <MinistryInteriorApp instanceId={app.instanceId} domain={active ?? 'national-overview'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId ? (
                   <SectorInstitutionApp instanceId={app.instanceId} archetype={app.archetypeOrBranch as ArchetypeKey} label={app.label} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
+                ) : app.kind === 'branch' && app.id === 'judiciary' ? (
+                  <JudicialBranchApp appId={app.id} domain={active ?? 'apex-bench'} now={now} role={role} withheld={withheld} />
+                ) : app.kind === 'branch' && app.id === 'senate' ? (
+                  <SenateApp appId={app.id} domain={active ?? 'senate-floor'} now={now} role={role} withheld={withheld} />
+                ) : app.kind === 'branch' && app.id === 'assembly' ? (
+                  <AssemblyApp appId={app.id} domain={active ?? 'assembly-floor'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'branch' && app.archetypeOrBranch === 'judiciary' ? (
                   <JudiciaryApp instanceId={`jud:${app.archetypeOrBranch}`} domain={active ?? 'constitutional'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'branch' && app.archetypeOrBranch === 'legislature' ? (

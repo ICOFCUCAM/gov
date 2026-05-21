@@ -69,6 +69,9 @@ function ministryAppDir(id: string): string {
     'foreign-affairs': 'foreign-affairs',
     'emergency-response': 'emergency-response',
     'communications': 'communications',
+    'senate': 'senate',
+    'assembly': 'assembly',
+    'judicial-branch': 'judicial-branch',
   };
   return join(APP_ROOT, map[id] ?? id);
 }
