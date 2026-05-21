@@ -6,6 +6,7 @@ import { listWorkflowDefinitionsRows } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkflowDefinitionRow, ActionKey } from '@/lib/db/types';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { buildCsv, downloadCsv } from '@/lib/csv-download';
 
 interface WorkflowMap { terminal: string[]; transitions: Record<string, Record<string, string>> }
 
@@ -170,14 +171,11 @@ export function WorkflowSimulator() {
       <div className="flex justify-end">
         <button type="button" disabled={trace.length === 0}
           onClick={() => {
-            const csv = ['seq,action,from,to,terminal',
-              ...trace.map(s => `${s.seq},${s.action},${s.from ?? ''},${s.to},${s.terminal}`)].join('\n');
-            const blob = new Blob([csv], { type: 'text/csv' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url; a.download = `civicos-sim-${workflowId || 'trace'}-${new Date().toISOString().slice(0,10)}.csv`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a);
-            URL.revokeObjectURL(url);
+            const csv = buildCsv(
+              ['seq','action','from','to','terminal'],
+              trace.map(s => [s.seq, s.action, s.from ?? '', s.to, s.terminal]),
+            );
+            downloadCsv(`civicos-sim-${workflowId || 'trace'}`, csv);
           }}
           className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
           trace csv

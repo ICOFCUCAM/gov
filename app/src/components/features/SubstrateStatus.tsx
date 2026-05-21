@@ -7,6 +7,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { distinctAuditScopesRows, verifyChainRow } from '@/lib/db/repos/audit';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { buildCsv, downloadCsv, downloadJson } from '@/lib/csv-download';
 
 interface TableCount { table: string; count: number; via: string }
 
@@ -87,7 +88,7 @@ export function SubstrateStatus() {
   // and a timestamp. Useful as a compliance handover artefact — an
   // auditor can save it offline and compare across days.
   const downloadDigest = React.useCallback(() => {
-    const digest = {
+    downloadJson('civicos-substrate-digest', {
       generated_at: new Date().toISOString(),
       scope: scopeLabel,
       session: session
@@ -108,16 +109,7 @@ export function SubstrateStatus() {
         results: chainResults,
       },
       substrate_url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? null,
-    };
-    const blob = new Blob([JSON.stringify(digest, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `civicos-substrate-digest-${new Date().toISOString().slice(0,10)}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
+    });
   }, [actor, session, counts, chainResults]);
 
   const sweepChain = React.useCallback(async () => {
@@ -174,14 +166,8 @@ export function SubstrateStatus() {
           <button
             type="button"
             onClick={() => {
-              const header = ['table','count'];
-              const csv = [header.join(','), ...counts.map(c => `${c.table},${c.count}`)].join('\n');
-              const blob = new Blob([csv], { type: 'text/csv' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `civicos-counts-${new Date().toISOString().slice(0,10)}.csv`;
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              const csv = buildCsv(['table','count'], counts.map(c => [c.table, c.count]));
+              downloadCsv('civicos-counts', csv);
             }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
           >
