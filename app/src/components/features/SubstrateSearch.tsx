@@ -6,6 +6,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable } from '@/lib/db/client';
 import { substrateSearch, type SearchHit, type SearchHitKind } from '@/lib/db/search';
 import { getPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const kindTone: Record<SearchHitKind, string | undefined> = {
   'work-item': TONE.link,
@@ -105,18 +106,11 @@ export function SubstrateSearch() {
         )
       ) : (
         <>
-          <div className="flex flex-wrap items-center gap-1">
-            {(['all','work-item','directive','dispatch','escalation','service-request','appeal','institution','officer'] as const).map(k => (
-              <button key={k} type="button" onClick={() => setKindFilter(k)}
-                className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-                style={{
-                  borderColor: kindFilter === k ? TONE.link : 'rgb(var(--c-line))',
-                  color: kindFilter === k ? TONE.link : 'rgb(var(--c-ink-muted))',
-                }}>
-                {k}{k !== 'all' ? ` · ${tallies[k]}` : ` · ${hits.length}`}
-              </button>
-            ))}
-          </div>
+          <FilterChips
+            options={['all','work-item','directive','dispatch','escalation','service-request','appeal','institution','officer'] as const}
+            value={kindFilter}
+            onChange={setKindFilter}
+            format={k => `${k}${k !== 'all' ? ` · ${tallies[k]}` : ` · ${hits.length}`}`} />
 
           <Panel title="Matches" meta={`${filtered.length}`} bodyClass="!p-0">
             <div className="max-h-[560px] overflow-y-auto">
