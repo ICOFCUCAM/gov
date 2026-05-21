@@ -16,12 +16,7 @@ import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
-
-const statusTone = (s: string) =>
-  s === 'effective' ? TONE.ok
-  : s === 'signed'    ? TONE.link
-  : s === 'rescinded' ? TONE.alert
-  : TONE.warn;
+import { directiveStatusTone } from '@/lib/tone';
 
 const ALL_KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declaration'];
 
@@ -152,7 +147,7 @@ export function DirectiveBoard() {
                 <span className="w-20 shrink-0 truncate text-right text-ink-soft">{d.kind}</span>
                 <span
                   className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                  style={{ color: statusTone(d.status) }}
+                  style={{ color: directiveStatusTone(d.status) }}
                 >
                   {d.status}
                 </span>

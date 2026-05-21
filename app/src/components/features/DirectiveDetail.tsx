@@ -12,12 +12,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
-
-const statusTone = (s: string) =>
-  s === 'effective' ? TONE.ok
-  : s === 'signed'    ? TONE.link
-  : s === 'rescinded' ? TONE.alert
-  : TONE.warn;
+import { directiveStatusTone } from '@/lib/tone';
 
 /**
  * DirectiveDetail — single-record drill-in for /gov/directives/[ref].
@@ -71,7 +66,7 @@ export function DirectiveDetail({ ref: directiveRef }: { ref: string }) {
           <WatchStar kind="directive" ref={row.ref} label={row.title} />
           <span
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: statusTone(row.status), color: statusTone(row.status) }}
+            style={{ borderColor: directiveStatusTone(row.status), color: directiveStatusTone(row.status) }}
           >
             {row.status}
           </span>

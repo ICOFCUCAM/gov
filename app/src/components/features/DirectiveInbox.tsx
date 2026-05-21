@@ -9,12 +9,7 @@ import type { DirectiveRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
-
-const statusTone = (s: string) =>
-  s === 'effective' ? TONE.ok
-  : s === 'signed' ? TONE.link
-  : s === 'rescinded' ? TONE.alert
-  : TONE.warn;
+import { directiveStatusTone } from '@/lib/tone';
 
 /** DirectiveInbox — directives addressed TO the signed-in officer's
  *  charter. Reads all visible directives and filters by
@@ -91,7 +86,7 @@ export function DirectiveInbox() {
                   <span className="w-28 shrink-0 truncate font-mono text-link">{d.issued_by_charter_id}</span>
                   <span className="min-w-0 flex-1 truncate text-ink">{d.title}</span>
                   <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                    style={{ color: statusTone(d.status) }}>
+                    style={{ color: directiveStatusTone(d.status) }}>
                     {d.status}
                   </span>
                 </div>
