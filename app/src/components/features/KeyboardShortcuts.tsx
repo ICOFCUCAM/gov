@@ -73,12 +73,27 @@ const ROUTE_TABLE: { path: string; what: string }[] = [
   { path: '/gov/activity',         what: 'Cross-substrate transition log + CSV export' },
   { path: '/gov/constitutional',   what: 'Constitutional channel signals' },
   { path: '/wallet/substrate',     what: 'Citizen-side wallet · requests/consents/appeals' },
+  { path: '/wallet/home',          what: 'Citizen landing dashboard' },
+  { path: '/wallet/consent/[id]',  what: 'Consent detail (revoke / re-grant)' },
+  { path: '/gov/charter',          what: 'Charter quick-jump list' },
+  { path: '/gov/directory',        what: 'Officer directory (read-only)' },
+  { path: '/gov/inbox',            what: 'Directives addressed to your charter' },
+  { path: '/gov/audit/sweep',      what: 'Full-substrate chain coverage' },
+  { path: '/gov/workflows/diff',   what: 'Compare two workflow definitions' },
+  { path: '/gov/audit/[scope]/[seq]', what: 'Single audit entry · in chain context' },
+  { path: '/gov/federation/[id]',  what: 'Federation event detail' },
+  { path: '/gov/telemetry/[id]',   what: 'Telemetry stream chart' },
+  { path: '/gov/charter/[id]',     what: 'Single charter dashboard' },
+  { path: '/gov/officers/[id]',    what: 'Officer profile + activity' },
 ];
 
 const API_TABLE: { path: string; what: string }[] = [
-  { path: 'POST /api/cron/sla',                 what: 'Sweep stale service requests' },
+  { path: 'POST /api/cron/sla',                 what: 'Sweep stale service requests · emits substrate.sla.escalated' },
   { path: 'POST /api/cron/substrate-metrics',   what: 'Emit substrate.* telemetry samples' },
+  { path: 'POST /api/cron/posture-digest',      what: 'Per-charter posture snapshots' },
+  { path: 'POST /api/cron/audit-self',          what: 'Heartbeat audit entry on substrate:self' },
   { path: 'GET  /api/substrate/digest',         what: 'Substrate snapshot JSON (counts + chains)' },
+  { path: 'GET  /api/health',                   what: 'Public reachability probe (no auth)' },
 ];
 
 export function KeyboardShortcuts() {
