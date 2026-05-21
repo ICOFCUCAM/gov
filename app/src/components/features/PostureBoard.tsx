@@ -112,6 +112,17 @@ export function PostureBoard() {
         />
       ) : null}
 
+      {(() => {
+        const crises = latest.filter(r => r.posture === 'crisis' || r.posture === 'national-emergency');
+        return crises.length > 0 ? (
+          <div className="rounded-[3px] border px-3 py-2 text-[11px] animate-pulse"
+            style={{ borderColor: TONE.alert, color: TONE.alert }}>
+            ⚠ {crises.length} charter{crises.length === 1 ? '' : 's'} at crisis or national-emergency:{' '}
+            <span className="font-mono">{crises.map(c => c.charter_id).join(', ')}</span>
+          </div>
+        ) : null;
+      })()}
+
       <Panel title="Latest per charter" meta={`${latest.length}`} bodyClass="!p-0">
         {latest.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">No posture snapshots in scope.</p>
