@@ -10,8 +10,11 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import {
   recentWitnessRows, recordWitnessAttestationRow,
   distinctAuditScopesRows, witnessAgreementRow,
+  witnessWithSignatureRow,
   type AuditWitness,
 } from '@/lib/db/repos/audit';
+import { signWitnessAttestation, verifyWitnessAttestation } from '@/lib/db/signatures';
+import { publicSigningJwk, ensureSigningKey } from '@/lib/db/webcrypto';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { ageMinutes } from '@/lib/format';
 
@@ -166,6 +169,7 @@ export function AuditWitnesses() {
                   <div className="mt-0.5 flex items-center gap-2 font-mono text-[9px] text-ink-muted">
                     {w.hasJwk ? <span style={{ color: TONE.link }}>+ jwk</span> : null}
                     {w.hasSignature ? <span style={{ color: TONE.link }}>+ signed</span> : null}
+                    {w.hasJwk && w.hasSignature ? <VerifyButton witnessId={w.id} /> : null}
                     <span>· {new Date(w.at).toLocaleString()}</span>
                     {w.recordedBy ? <span>· {w.recordedBy}</span> : null}
                   </div>
@@ -190,6 +194,7 @@ function AttestationComposer({ scopes, onDone }: { scopes: string[]; onDone: () 
   const [observedSeq, setObservedSeq] = React.useState('');
   const [observedHash, setObservedHash] = React.useState('');
   const [label, setLabel] = React.useState('');
+  const [signMine, setSignMine] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -207,9 +212,24 @@ function AttestationComposer({ scopes, onDone }: { scopes: string[]; onDone: () 
     }
     setBusy(true);
     try {
+      let jwk: JsonWebKey | null = null;
+      let signature: string | null = null;
+      if (signMine) {
+        await ensureSigningKey();
+        jwk = await publicSigningJwk();
+        signature = await signWitnessAttestation({
+          scope, observedSeq: seq, observedHash: observedHash.trim(),
+          witnessLabel: label.trim(),
+        });
+        if (!jwk || !signature) {
+          setError('WebCrypto unavailable; uncheck signing or use a browser');
+          return;
+        }
+      }
       const row = await recordWitnessAttestationRow({
         scope, observedSeq: seq, observedHash: observedHash.trim(),
         label: label.trim(),
+        jwk, signature,
       });
       if (!row) {
         setError('record_witness_attestation failed');
@@ -259,10 +279,53 @@ function AttestationComposer({ scopes, onDone }: { scopes: string[]; onDone: () 
           className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
           {busy ? 'attesting…' : 'attest'}
         </button>
+        <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
+          <input type="checkbox" checked={signMine} onChange={e => setSignMine(e.currentTarget.checked)} />
+          sign with my device key
+        </label>
         <p className="text-[9px] text-ink-muted">
           Public, append-only. Anyone can attest; tamper-after-the-fact becomes detectable.
         </p>
       </div>
     </form>
+  );
+}
+
+/** Per-row "verify" control. Pulls the underlying row (jwk + signature)
+ *  from civicos.audit_witnesses, re-derives the canonical material from
+ *  the public-view fields, and runs WebCrypto.subtle.verify locally.
+ *  Reports verified / failed / unavailable in-place. */
+function VerifyButton({ witnessId }: { witnessId: string }) {
+  const [state, setState] = React.useState<'idle' | 'checking' | 'ok' | 'fail' | 'unavailable'>('idle');
+
+  async function run() {
+    setState('checking');
+    const full = await witnessWithSignatureRow(witnessId);
+    if (!full || !full.witnessJwk || !full.witnessSignature) {
+      setState('fail');
+      return;
+    }
+    const ok = await verifyWitnessAttestation({
+      scope: full.scope,
+      observedSeq: full.observedSeq,
+      observedHash: full.observedHash,
+      witnessLabel: full.witnessLabel,
+      jwk: full.witnessJwk,
+      hexSignature: full.witnessSignature,
+    });
+    if (ok === null) setState('unavailable');
+    else setState(ok ? 'ok' : 'fail');
+  }
+
+  return (
+    <button type="button" onClick={() => void run()}
+      className="focus-ring rounded-[3px] border border-line-soft px-1.5 py-0 text-[9px] uppercase tracking-wider hover:text-ink"
+      style={{ color: state === 'ok' ? TONE.ok : state === 'fail' ? TONE.alert : 'rgb(var(--c-ink-muted))' }}>
+      {state === 'checking' ? 'verifying…'
+        : state === 'ok' ? 'verified ✓'
+        : state === 'fail' ? 'failed ✗'
+        : state === 'unavailable' ? 'no webcrypto'
+        : 'verify'}
+    </button>
   );
 }

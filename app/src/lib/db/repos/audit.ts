@@ -127,6 +127,34 @@ export async function recentWitnessRows(opts: { scope?: string; limit?: number }
   return (data as AuditWitnessRow[]).map(mapWitness);
 }
 
+/** Fetch the full underlying row (including the jwk + signature, which
+ *  the public view hides as booleans) for a single witness. Used by the
+ *  client-side verifier to re-derive the canonical material and run
+ *  WebCrypto.subtle.verify. Reads through the civicos.audit_witnesses
+ *  table directly via the public SELECT policy. */
+export async function witnessWithSignatureRow(id: string): Promise<{
+  scope: string; observedSeq: number; observedHash: string; witnessLabel: string;
+  witnessJwk: JsonWebKey | null; witnessSignature: string | null;
+} | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  // civicos.audit_witnesses has a public SELECT policy; reading via the
+  // schema-qualified table exposes the witness_jwk + witness_signature.
+  const { data, error } = await sb.schema('civicos' as never).from('audit_witnesses')
+    .select('scope,observed_seq,observed_hash,witness_label,witness_jwk,witness_signature')
+    .eq('id', id).limit(1).maybeSingle();
+  if (error || !data) return null;
+  const r = data as {
+    scope: string; observed_seq: number; observed_hash: string;
+    witness_label: string; witness_jwk: JsonWebKey | null; witness_signature: string | null;
+  };
+  return {
+    scope: r.scope, observedSeq: r.observed_seq, observedHash: r.observed_hash,
+    witnessLabel: r.witness_label, witnessJwk: r.witness_jwk,
+    witnessSignature: r.witness_signature,
+  };
+}
+
 /** Record an attestation. Returns the row, or null on failure. The
  *  observed (seq, hash) pair becomes a tamper proof if the chain is
  *  later rewritten. */
@@ -135,7 +163,7 @@ export async function recordWitnessAttestationRow(opts: {
   observedSeq: number;
   observedHash: string;
   label: string;
-  jwk?: Record<string, unknown> | null;
+  jwk?: JsonWebKey | Record<string, unknown> | null;
   signature?: string | null;
 }): Promise<AuditWitness | null> {
   const sb = publicClient();

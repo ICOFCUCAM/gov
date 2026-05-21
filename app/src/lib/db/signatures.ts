@@ -73,3 +73,37 @@ export function transitionDigest(opts: {
     at,
   };
 }
+
+/* ── Witness attestations ──────────────────────────────────────────
+ * Witness attestations sign a different canonical tuple than transitions
+ * because the witness records what was OBSERVED, not what they DID.
+ * Canonical material: `<scope>|<observed_seq>|<observed_hash>|<witness_label>`
+ * The substrate stamps `at` server-side, so it isn't part of the signed
+ * material — the row's `at` is the wall-clock recording time, distinct
+ * from the observation event itself. */
+export function canonicalWitnessMaterial(
+  scope: string, observedSeq: number, observedHash: string, witnessLabel: string,
+): string {
+  return `${scope}|${observedSeq}|${observedHash}|${witnessLabel}`;
+}
+
+/** Sign a witness attestation with the device's per-device ECDSA key.
+ *  Returns the hex signature, or null when WebCrypto isn't available. */
+export async function signWitnessAttestation(opts: {
+  scope: string; observedSeq: number; observedHash: string; witnessLabel: string;
+}): Promise<string | null> {
+  const { signMessage: sign } = await import('@/lib/db/webcrypto');
+  const material = canonicalWitnessMaterial(opts.scope, opts.observedSeq, opts.observedHash, opts.witnessLabel);
+  return sign(material);
+}
+
+/** Verify a witness attestation's signature against a public JWK.
+ *  Returns true / false / null (when WebCrypto isn't available). */
+export async function verifyWitnessAttestation(opts: {
+  scope: string; observedSeq: number; observedHash: string; witnessLabel: string;
+  jwk: JsonWebKey; hexSignature: string;
+}): Promise<boolean | null> {
+  const { verifyMessage } = await import('@/lib/db/webcrypto');
+  const material = canonicalWitnessMaterial(opts.scope, opts.observedSeq, opts.observedHash, opts.witnessLabel);
+  return verifyMessage(opts.jwk, material, opts.hexSignature);
+}
