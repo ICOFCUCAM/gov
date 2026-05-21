@@ -31,6 +31,8 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
   ]},
   { g: 'Substrate', items: [
     { i: '◆', l: 'Officer Home',       s: 'Personal landing for the signed-in officer', href: '/gov/home', key: 'home' },
+    { i: '⊕', l: 'Profile',            s: 'Self · signing keys · session',  href: '/gov/me',          key: 'me'          },
+    { i: '⌕', l: 'Search',             s: 'Cross-substrate search',     href: '/gov/search',      key: 'search'      },
     { i: '◉', l: 'Live Wall',          s: 'Composite operational picture', href: '/gov/live',      key: 'live'        },
     { i: '◐', l: 'Substrate Status',   s: 'Counts · chain integrity',   href: '/gov/substrate',   key: 'substrate'   },
     { i: '▤', l: 'Institutions Catalogue', s: 'Federation registry',     href: '/gov/registry',    key: 'registry'    },
