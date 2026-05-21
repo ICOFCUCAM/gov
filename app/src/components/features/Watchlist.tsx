@@ -53,9 +53,23 @@ export function Watchlist() {
             per-device · this identity
           </span>
         </div>
-        <span className="font-mono text-[10px] text-ink-muted">
-          {entries.length} starred
-        </span>
+        <div className="flex items-center gap-2">
+          <button type="button" disabled={entries.length === 0}
+            onClick={() => {
+              const csv = ['kind,ref,label,added_at',
+                ...entries.map(e => `${e.kind},${e.ref},${(e.label ?? '').replace(/,/g,';')},${new Date(e.addedAt).toISOString()}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-watchlist-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+            csv
+          </button>
+          <span className="font-mono text-[10px] text-ink-muted">{entries.length} starred</span>
+        </div>
       </div>
 
       <Panel title="Starred records" meta={`${entries.length}`} bodyClass="!p-0">
