@@ -81,6 +81,20 @@ export function AuditCoverageSweep() {
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
             download report
           </button>
+          <button type="button" disabled={results.length === 0}
+            onClick={() => {
+              const csv = ['scope,entries,intact,broken_at',
+                ...results.map(r => `${r.scope.replace(/,/g, ';')},${r.entries},${r.intact},${r.brokenAt ?? ''}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-coverage-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+            download csv
+          </button>
         </div>
       </div>
 
