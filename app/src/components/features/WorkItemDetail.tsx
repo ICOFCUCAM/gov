@@ -218,6 +218,21 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
         )}
       </Panel>
 
+      {typeof item.meta?.serviceRequestRef === 'string' ? (
+        <Panel title="Linked service request" meta={String(item.meta.serviceRequestRef)} bodyClass="!p-3 text-[11px]">
+          <Link href={`/gov/intake/request/${encodeURIComponent(String(item.meta.serviceRequestRef))}`}
+                className="inline-flex items-center gap-2 rounded-[3px] border border-line px-2 py-1 font-mono text-link hover:bg-surface-2">
+            <span>{String(item.meta.serviceRequestRef)}</span>
+            <span className="text-ink-muted">→</span>
+            <span className="text-ink">open</span>
+          </Link>
+          <p className="mt-2 text-[10px] text-ink-muted">
+            This work item was opened by the citizen→work-item bridge when
+            the corresponding service request was submitted.
+          </p>
+        </Panel>
+      ) : null}
+
       {item.meta && Object.keys(item.meta).length > 0 ? (
         <Panel title="Meta" meta="payload" bodyClass="!p-3 text-[10px]">
           <pre className="overflow-x-auto rounded-[3px] bg-bg px-2 py-1 font-mono">{JSON.stringify(item.meta, null, 2)}</pre>
