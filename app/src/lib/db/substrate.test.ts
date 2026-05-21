@@ -30,7 +30,7 @@ import {
 import {
   recordDirectiveRow, signDirectiveRow, rescindDirectiveRow,
   recordDispatchRow, acknowledgeDispatchRow, closeDispatchRow,
-  recordEscalationRow,
+  recordEscalationRow, recordPostureRow, listPostureHistoryRows,
 } from './repos/memory';
 import { defineTelemetryStreamRow, recordTelemetrySampleRow, recentTelemetrySamplesRows } from './repos/telemetry';
 import {
@@ -365,6 +365,44 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     // actor or a permission error.
     const a = await currentActor();
     expect(a).toBeNull();
+  });
+
+  it('POSTURE — snapshots persist and listings sort newest-first', async () => {
+    const charter = `vitest-charter-${Date.now()}`;
+    const s1 = await recordPostureRow({
+      charterId: charter, posture: 'steady', readiness: 80, stress: 20,
+    });
+    expect(s1).not.toBeNull();
+    expect(s1!.posture).toBe('steady');
+
+    const s2 = await recordPostureRow({
+      charterId: charter, posture: 'elevated', readiness: 65, stress: 55,
+    });
+    expect(s2).not.toBeNull();
+    expect(s2!.posture).toBe('elevated');
+
+    const rows = await listPostureHistoryRows({ charter, limit: 10 });
+    expect(rows.length).toBeGreaterThanOrEqual(2);
+    expect(rows[0]!.posture).toBe('elevated'); // newest first
+    expect(rows[1]!.posture).toBe('steady');
+  });
+
+  it('CATALOGUE — institutions and facilities listings honor filters', async () => {
+    // Register a fresh institution then prove it's visible in the kind filter.
+    const charter = `vitest-cat-${Date.now()}`;
+    const dom = `vitest-cat-domain-${Date.now()}`;
+    const reg = await registerInstitutionRow({
+      charterId: charter, label: 'Vitest Catalogue', kind: 'agency',
+      domain: dom, archetypeOrBranch: 'GENERIC',
+    });
+    expect(reg).not.toBeNull();
+
+    const agencies = await listInstitutionsRows({ kind: 'agency' });
+    expect(agencies.some(r => r.charter_id === charter)).toBe(true);
+
+    const activated = await listInstitutionsRows({ activated: true });
+    // Newly registered is NOT activated by default.
+    expect(activated.some(r => r.charter_id === charter)).toBe(false);
   });
 
   it('CONTRACT — direct INSERT to audit_entries is denied (RLS)', async () => {
