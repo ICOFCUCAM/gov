@@ -6,6 +6,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { distinctAuditScopesRows, verifyChainRow } from '@/lib/db/repos/audit';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { getBoolPref, setPref } from '@/lib/prefs';
 
 interface SweepResult { scope: string; entries: number; intact: boolean; brokenAt: number | null }
 
@@ -37,7 +38,9 @@ export function AuditCoverageSweep() {
     }
   }, [available]);
 
-  React.useEffect(() => { if (ready) void run(); }, [ready, run]);
+  const [autoRun, setAutoRun] = React.useState(() => getBoolPref('coverage.autoRun', true));
+  React.useEffect(() => { setPref('coverage.autoRun', autoRun); }, [autoRun]);
+  React.useEffect(() => { if (ready && autoRun) void run(); }, [ready, autoRun, run]);
 
   function downloadReport() {
     const payload = {
@@ -77,6 +80,10 @@ export function AuditCoverageSweep() {
             className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
             {running ? 'sweeping…' : 'sweep again'}
           </button>
+          <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
+            <input type="checkbox" checked={autoRun} onChange={e => setAutoRun(e.currentTarget.checked)} />
+            auto on load
+          </label>
           <button type="button" onClick={downloadReport} disabled={results.length === 0}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
             download report
