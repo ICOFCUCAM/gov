@@ -125,6 +125,17 @@ Auditors detect the algorithm by hex length.
    firewall; runs against the live cluster otherwise).
 7. Verify with `pnpm tsc --noEmit` and `pnpm test --run`.
 
+## CSV exports
+
+Most surfaces expose a one-click CSV export of their filtered view:
+ActivityLog, AuditCoverageSweep, CharterList, GlobalFeed,
+NotificationsCenter, OfficerDirectory, PostureBoard, SubstrateStatus,
+TelemetryWall, Watchlist, WorkflowSimulator. JSON exports cover the
+full report (AuditCoverageSweep), per-scope chain (AuditExplorer),
+single audit entry (AuditEntryDetail), citizen data + audit trail
+(CitizenSubstrate), substrate digest (SubstrateStatus), and the full
+workflow definition (WorkflowCatalogue).
+
 ## Sticky preferences
 
 Most board filters persist per-device via `lib/prefs` (localStorage,
