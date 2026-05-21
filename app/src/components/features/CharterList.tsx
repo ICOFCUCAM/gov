@@ -9,6 +9,7 @@ import type { InstitutionRow, InstitutionKind } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { PostureBadge } from '@/components/identity/PostureBadge';
 import { getPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const KINDS: (InstitutionKind | 'all')[] = ['all','ministry','branch','agency','platform','officer','citizen'];
 
@@ -70,19 +71,7 @@ export function CharterList() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-ink-muted">kind:</span>
-        {KINDS.map(k => (
-          <button key={k} type="button" onClick={() => setKind(k)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-            style={{
-              borderColor: kind === k ? TONE.link : 'rgb(var(--c-line))',
-              color: kind === k ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}>
-            {k}
-          </button>
-        ))}
-      </div>
+      <FilterChips label="kind:" options={KINDS} value={kind} onChange={setKind} />
 
       {Array.from(byKind.entries()).map(([k, list]) => (
         <Panel key={k} title={k} meta={`${list.length}`} bodyClass="!p-0">
