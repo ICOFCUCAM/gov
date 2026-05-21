@@ -37,7 +37,8 @@ export function WatchedRecords({ limit = 6 }: { limit?: number }) {
     <Panel title="Starred" meta={`${all.length}`} bodyClass="!p-0">
       {entries.length === 0 ? (
         <p className="px-3 py-4 text-[11px] text-ink-muted">
-          Nothing starred. Click ☆ on any record detail page to add it here.
+          Nothing starred. Click ☆ on any record (detail page or board row)
+          to pin it here for quick access. Per-device, scoped to your identity.
         </p>
       ) : (
         <div>
