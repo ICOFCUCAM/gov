@@ -10,6 +10,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { directiveStatusTone } from '@/lib/tone';
+import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
 /** DirectiveInbox — directives addressed TO the signed-in officer's
  *  charter. Reads all visible directives and filters by
@@ -61,13 +62,7 @@ export function DirectiveInbox() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Directive inbox</h2>
-          <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>
-            addressed to {myCharter ?? '—'}
-          </span>
-        </div>
+        <SurfaceHeading title="Directive inbox" badge="addressed to {myCharter ?? '—'}" />
         <span className="font-mono text-[10px] text-ink-muted">{open.length} open · {addressed.length} total</span>
       </div>
 
