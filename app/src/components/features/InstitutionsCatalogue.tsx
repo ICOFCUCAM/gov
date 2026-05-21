@@ -9,6 +9,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { InstitutionRow, InstitutionKind } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { getPref, getBoolPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const KINDS: (InstitutionKind | 'all')[] = ['all', 'ministry', 'branch', 'agency', 'platform', 'officer', 'citizen'];
 
@@ -88,23 +89,7 @@ export function InstitutionsCatalogue() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-ink-muted">kind:</span>
-        {KINDS.map(k => (
-          <button
-            key={k}
-            type="button"
-            onClick={() => setKindFilter(k)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-            style={{
-              borderColor: kindFilter === k ? TONE.link : 'rgb(var(--c-line))',
-              color: kindFilter === k ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}
-          >
-            {k}
-          </button>
-        ))}
-      </div>
+      <FilterChips label="kind:" options={KINDS} value={kindFilter} onChange={setKindFilter} />
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[320px_1fr]">
         <Panel title="Institutions" meta={`${items.length}`} bodyClass="!p-0">
