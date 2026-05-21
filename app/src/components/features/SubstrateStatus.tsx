@@ -35,6 +35,7 @@ export function SubstrateStatus() {
   const { actor, session, ready } = useIdentity();
   const [counts, setCounts] = React.useState<TableCount[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [refreshedAt, setRefreshedAt] = React.useState<number | null>(null);
   const [chainResults, setChainResults] = React.useState<{ scope: string; entries: number; intact: boolean }[]>([]);
   const [verifying, setVerifying] = React.useState(false);
   const available = substrateAvailable();
@@ -55,6 +56,7 @@ export function SubstrateStatus() {
       );
       next.sort((a, b) => a.table.localeCompare(b.table));
       setCounts(next);
+      setRefreshedAt(Date.now());
     } finally {
       setLoading(false);
     }
@@ -197,7 +199,10 @@ export function SubstrateStatus() {
         </div>
       </div>
 
-      <p className="font-mono text-[10px] text-ink-muted">scope: {scopeLabel}</p>
+      <p className="font-mono text-[10px] text-ink-muted">
+        scope: {scopeLabel}
+        {refreshedAt ? ` · refreshed ${new Date(refreshedAt).toLocaleTimeString()}` : ''}
+      </p>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <Tile label="Tables visible" value={String(visibleTables)} />
