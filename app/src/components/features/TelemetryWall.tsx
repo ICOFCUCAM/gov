@@ -131,7 +131,9 @@ export function TelemetryWall() {
                   style={{ backgroundColor: s.stream_id === active ? 'rgba(55,199,212,0.04)' : undefined }}
                 >
                   <div className="w-64 shrink-0">
-                    <div className="truncate font-mono text-[10px] text-ink-soft">{s.stream_id}</div>
+                    <a href={`/gov/telemetry/${encodeURIComponent(s.stream_id)}`}
+                       onClick={ev => ev.stopPropagation()}
+                       className="block truncate font-mono text-[10px] text-link hover:underline">{s.stream_id}</a>
                     <div className="truncate text-[10px] text-ink">{s.label}</div>
                   </div>
                   <div className="flex min-w-0 flex-1 items-end gap-px h-8">
