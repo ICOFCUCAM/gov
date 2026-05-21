@@ -52,6 +52,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '◉', l: 'Live Wall',          s: 'Composite operational picture', href: '/gov/live',      key: 'live'        },
     { i: '◐', l: 'Substrate Status',   s: 'Counts · chain integrity',   href: '/gov/substrate',   key: 'substrate'   },
     { i: '▤', l: 'Institutions Catalogue', s: 'Federation registry',     href: '/gov/registry',    key: 'registry'    },
+    { i: '◫', l: 'Charters',           s: 'Quick-jump charter list',    href: '/gov/charter',     key: 'charter'     },
     { i: '✦', l: 'Directive Board',    s: 'Draft · sign · rescind',     href: '/gov/directives',  key: 'directives'  },
     { i: '⇨', l: 'Dispatch Board',     s: 'Record · ack · close',       href: '/gov/dispatches',  key: 'dispatches'  },
     { i: '!',  l: 'Escalation Floor',   s: 'Severity-tiered escalations',href: '/gov/escalations', key: 'escalations' },
