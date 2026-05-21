@@ -117,6 +117,10 @@ export function AuditWitnesses() {
           ⚠ {divergent.length} scope{divergent.length === 1 ? '' : 's'} with attestations that diverge from the live chain.
           Possible tamper-after-the-fact on:{' '}
           <span className="font-mono">{divergent.map(([s]) => s).join(', ')}</span>
+          {' '}— the witness-divergence cron writes an escalation per scope; see{' '}
+          <a href="/gov/escalations" className="underline">/gov/escalations</a>{' '}
+          and{' '}<a href="/gov/federation" className="underline">/gov/federation</a>{' '}
+          (channel <span className="font-mono">constitutional</span>, type <span className="font-mono">audit.divergence</span>).
         </div>
       ) : witnesses.length > 0 ? (
         <div className="rounded-[3px] border px-3 py-2 text-[11px]"
