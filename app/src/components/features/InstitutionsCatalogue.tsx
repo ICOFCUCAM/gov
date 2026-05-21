@@ -11,6 +11,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { getPref, getBoolPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
 const KINDS: (InstitutionKind | 'all')[] = ['all', 'ministry', 'branch', 'agency', 'platform', 'officer', 'citizen'];
 
@@ -69,15 +70,7 @@ export function InstitutionsCatalogue() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Institutions Catalogue</h2>
-          <span
-            className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
-          >
-            federation registry
-          </span>
-        </div>
+        <SurfaceHeading title="Institutions Catalogue" badge="federation registry" />
         <div className="flex items-center gap-2">
           <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
             <input type="checkbox" checked={activatedOnly} onChange={e => setActivatedOnly(e.currentTarget.checked)} />

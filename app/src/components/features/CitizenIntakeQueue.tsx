@@ -14,6 +14,7 @@ import { getBoolPref, setPref } from '@/lib/prefs';
 import { ageMinutes } from '@/lib/format';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
+import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
 /**
  * CitizenIntakeQueue — the officer-side counterpart to CitizenSubstrate.
@@ -98,15 +99,7 @@ export function CitizenIntakeQueue() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Citizen Intake Queue</h2>
-          <span
-            className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
-          >
-            officer-side · RLS-scoped
-          </span>
-        </div>
+        <SurfaceHeading title="Citizen Intake Queue" badge="officer-side · RLS-scoped" />
         <div className="flex items-center gap-2">
           <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
             <input type="checkbox" checked={openOnly} onChange={e => setOpenOnly(e.currentTarget.checked)} />

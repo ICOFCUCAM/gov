@@ -19,6 +19,7 @@ import { myRecentStepsRows, type ActorStepRow } from '@/lib/db/repos/work-items'
 import { ageMinutes } from '@/lib/format';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { priorityTone } from '@/lib/tone';
+import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
 /**
  * OfficerHome — personalised landing for a signed-in officer.
@@ -110,15 +111,7 @@ export function OfficerHome() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Officer Home</h2>
-          <span
-            className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
-          >
-            personal · realtime
-          </span>
-        </div>
+        <SurfaceHeading title="Officer Home" badge="personal · realtime" />
         <div className="flex items-center gap-2">
           {actor.charterId ? <PostureBadge charterId={actor.charterId} /> : null}
           <span className="font-mono text-[10px] text-ink-muted">

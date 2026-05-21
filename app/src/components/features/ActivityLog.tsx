@@ -12,6 +12,7 @@ import { getPref, getBoolPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv as downloadCsvFile } from '@/lib/csv-download';
+import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
 const KINDS: (WorkKind | 'all')[] = ['all','approval','case','procurement','encounter','bill','judicial','incident','permit','field','lab'];
 
@@ -89,15 +90,7 @@ export function ActivityLog() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Activity Log</h2>
-          <span
-            className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
-          >
-            transitions · realtime
-          </span>
-        </div>
+        <SurfaceHeading title="Activity Log" badge="transitions · realtime" />
         <div className="flex items-center gap-2">
           <span className="font-mono text-[10px] text-ink-muted">
             {rows.length} steps · {signedCount} signed · {ecdsaCount} ECDSA
