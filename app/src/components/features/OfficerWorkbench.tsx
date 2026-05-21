@@ -16,13 +16,9 @@ import { WatchStar } from '@/components/identity/WatchStar';
 import { getBoolPref, setPref } from '@/lib/prefs';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
+import { priorityTone } from '@/lib/tone';
 
 interface WorkflowMap { terminal: string[]; transitions: Record<string, Record<string, string>> }
-
-const priorityTone = (p: string) =>
-  p === 'critical' || p === 'urgent' ? TONE.alert
-  : p === 'priority' ? TONE.warn
-  : TONE.link;
 
 const actionTone = (a: string) =>
   a === 'approve' || a === 'resolve' ? TONE.ok

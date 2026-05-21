@@ -18,11 +18,7 @@ import { ConstitutionalStrip } from '@/components/identity/ConstitutionalStrip';
 import { myRecentStepsRows, type ActorStepRow } from '@/lib/db/repos/work-items';
 import { ageMinutes } from '@/lib/format';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
-
-const priorityTone = (p: string) =>
-  p === 'critical' || p === 'urgent' ? TONE.alert
-  : p === 'priority' ? TONE.warn
-  : TONE.link;
+import { priorityTone } from '@/lib/tone';
 
 /**
  * OfficerHome — personalised landing for a signed-in officer.

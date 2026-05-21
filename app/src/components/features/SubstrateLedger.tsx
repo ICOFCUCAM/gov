@@ -6,11 +6,7 @@ import { listWorkItemsRows, substrateAvailable } from '@/lib/db/repos/work-items
 import type { WorkItemRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
-
-const priorityTone = (p: string) =>
-  p === 'critical' || p === 'urgent' ? TONE.alert
-  : p === 'priority' ? TONE.warn
-  : TONE.link;
+import { priorityTone } from '@/lib/tone';
 
 /**
  * Substrate Ledger — pairs with OperationsLedger.
