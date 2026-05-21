@@ -64,6 +64,30 @@ export function ActivityLog() {
   const signedCount = rows.filter(r => !!r.signature_hash).length;
   const ecdsaCount = rows.filter(r => r.signature_hash && r.signature_hash.length > 8).length;
 
+  function downloadCsv() {
+    const header = ['at','seq','action','from_stage','to_stage','actor_name','actor_role','actor_id','work_item_ref','work_item_scope','workflow_id','signature_alg','signature_hash'];
+    const csv = [
+      header.join(','),
+      ...rows.map(r => [
+        new Date(r.at).toISOString(), r.seq, r.action,
+        r.from_stage ?? '', r.to_stage, r.actor_name, r.actor_role ?? '', r.actor_id ?? '',
+        r.work_item_ref, r.work_item_scope, r.workflow_id,
+        r.signature_hash ? (r.signature_hash.length === 8 ? 'fnv1a' : 'ecdsa-p256') : '',
+        r.signature_hash ?? '',
+      ].map(v => {
+        const s = String(v);
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      }).join(',')),
+    ].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `civicos-activity-${new Date().toISOString().slice(0,10)}.csv`;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -76,9 +100,17 @@ export function ActivityLog() {
             transitions · realtime
           </span>
         </div>
-        <span className="font-mono text-[10px] text-ink-muted">
-          {rows.length} steps · {signedCount} signed · {ecdsaCount} ECDSA
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[10px] text-ink-muted">
+            {rows.length} steps · {signedCount} signed · {ecdsaCount} ECDSA
+          </span>
+          <button type="button"
+            onClick={downloadCsv}
+            disabled={rows.length === 0}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+            download csv
+          </button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
