@@ -37,3 +37,9 @@ export function duration(ms: number): string {
 export function isoSeconds(ms: number): string {
   return new Date(ms).toISOString().slice(0, 19) + 'Z';
 }
+
+/** Integer minutes since an ISO/ms timestamp, clamped at zero. */
+export function ageMinutes(at: string | number, now = Date.now()): number {
+  const t = typeof at === 'string' ? new Date(at).getTime() : at;
+  return Math.max(0, Math.floor((now - t) / 60_000));
+}
