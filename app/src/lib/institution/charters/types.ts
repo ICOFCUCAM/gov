@@ -36,6 +36,9 @@ export type LayoutGrammar =
   | 'senate-chamber'        // Senate (Upper House)
   | 'assembly-floor'        // National Assembly (Lower House)
   | 'apex-court'            // Judicial Branch
+  | 'executive-mansion'     // Presidency / Cabinet Office
+  | 'citizen-wallet'        // Citizen Super-Portal
+  | 'national-ops-room'     // National Operations Centre
   | 'generic-sector';       // fallback — explicit flag of unrealised identity
 
 /** Constitutional / blueprint section references. Charters MUST cite the

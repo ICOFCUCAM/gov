@@ -13,6 +13,9 @@ import { policeNav } from '@/apps/police-command/core/domains';
 import { senateNav } from '@/apps/senate/core/domains';
 import { assemblyNav } from '@/apps/assembly/core/domains';
 import { judicialNav } from '@/apps/judicial-branch/core/domains';
+import { presidencyNav } from '@/apps/presidency/core/domains';
+import { portalNav } from '@/apps/citizen-portal/core/domains';
+import { nocNav } from '@/apps/noc/core/domains';
 import type { AppManifest } from '@/services/orchestration-engine';
 
 const ARCHETYPE_APP: Partial<Record<ArchetypeKey, { id: string; label: string; domain: string }>> = {
@@ -50,6 +53,10 @@ export function ministryAppManifest(m: { id: string; name: string; archetype: Ar
 
 // Constitutional branches as sovereign reference-tier operational apps.
 export const BRANCH_APPS: AppManifest[] = [
+  {
+    id: 'presidency', label: 'Presidency · Cabinet Office', domain: 'presidency', kind: 'branch', archetypeOrBranch: 'GENERIC',
+    nav: presidencyNav(),
+  },
   {
     id: 'judiciary', label: 'Judicial Branch', domain: 'judiciary', kind: 'branch', archetypeOrBranch: 'judiciary',
     nav: judicialNav(),
@@ -103,6 +110,10 @@ export const AGENCY_APPS: AppManifest[] = [
     ] },
   { id: 'citizen-wallet', label: 'Citizen Wallet', domain: 'citizen', kind: 'citizen',
     archetypeOrBranch: 'GENERIC', nav: [{ key: 'identity', label: 'Identity' }, { key: 'services', label: 'Services' }, { key: 'payments', label: 'Payments' }] },
+  { id: 'citizen-portal', label: 'Citizen Super-Portal', domain: 'portal', kind: 'citizen',
+    archetypeOrBranch: 'GENERIC', nav: portalNav() },
+  { id: 'noc', label: 'National Operations Centre', domain: 'noc', kind: 'agency',
+    archetypeOrBranch: 'GENERIC', nav: nocNav() },
   { id: 'officer-console', label: 'Officer Console', domain: 'officer', kind: 'officer',
     archetypeOrBranch: 'GENERIC', nav: [{ key: 'queue', label: 'Work queue' }, { key: 'decisions', label: 'Decisions' }, { key: 'review', label: 'Review' }] },
 ];

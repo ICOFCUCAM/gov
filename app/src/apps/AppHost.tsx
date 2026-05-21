@@ -16,6 +16,9 @@ import { LegislatureApp } from '@/apps/legislature/LegislatureApp';
 import { SenateApp } from '@/apps/senate/SenateApp';
 import { AssemblyApp } from '@/apps/assembly/AssemblyApp';
 import { JudicialBranchApp } from '@/apps/judicial-branch/JudicialBranchApp';
+import { PresidencyApp } from '@/apps/presidency/PresidencyApp';
+import { CitizenPortalApp } from '@/apps/citizen-portal/CitizenPortalApp';
+import { NocApp } from '@/apps/noc/NocApp';
 import { PoliceCommandApp } from '@/apps/police-command/PoliceCommandApp';
 import { ImmigrationApp } from '@/apps/immigration/ImmigrationApp';
 import { CustomsApp } from '@/apps/customs/CustomsApp';
@@ -276,6 +279,8 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                   <MinistryInteriorApp instanceId={app.instanceId} domain={active ?? 'national-overview'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'ministry' && app.instanceId ? (
                   <SectorInstitutionApp instanceId={app.instanceId} archetype={app.archetypeOrBranch as ArchetypeKey} label={app.label} domain={active ?? 'command'} now={now} role={role} withheld={withheld} />
+                ) : app.kind === 'branch' && app.id === 'presidency' ? (
+                  <PresidencyApp appId={app.id} domain={active ?? 'cabinet-floor'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'branch' && app.id === 'judiciary' ? (
                   <JudicialBranchApp appId={app.id} domain={active ?? 'apex-bench'} now={now} role={role} withheld={withheld} />
                 ) : app.kind === 'branch' && app.id === 'senate' ? (
@@ -302,6 +307,10 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                   <CommunicationsApp appId={app.id} domain={active ?? 'connectivity-command'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'citizen-wallet' ? (
                   <CitizenWalletApp appId={app.id} domain={active ?? 'identity'} now={now} role={role} withheld={withheld} />
+                ) : app.id === 'citizen-portal' ? (
+                  <CitizenPortalApp appId={app.id} domain={active ?? 'wallet-home'} now={now} role={role} withheld={withheld} />
+                ) : app.id === 'noc' ? (
+                  <NocApp appId={app.id} domain={active ?? 'situation-room'} now={now} role={role} withheld={withheld} />
                 ) : app.id === 'officer-console' ? (
                   <OfficerConsoleApp appId={app.id} domain={active ?? 'queue'} now={now} role={role} withheld={withheld} />
                 ) : (
