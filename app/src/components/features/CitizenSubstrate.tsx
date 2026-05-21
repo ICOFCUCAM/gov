@@ -206,12 +206,51 @@ export function CitizenSubstrate() {
       <ConsentsPanel citizenId={actor.id} rows={consents} onChange={refresh} />
       <AppealsPanel citizenId={actor.id} rows={appeals} onChange={refresh} linkedItems={linkedItems} />
 
+      <CitizenAuditPanel />
+
       <p className="text-[10px] text-ink-muted">
         Each panel reads only your own records. The substrate's row-level
         security policies enforce <span className="font-mono">citizen_id = my id</span> —
         the client cannot widen its own scope.
       </p>
     </div>
+  );
+}
+
+function CitizenAuditPanel() {
+  const [rows, setRows] = React.useState<Awaited<ReturnType<typeof import('@/lib/db/repos/audit').recentAuditEntriesRows>>>([]);
+  React.useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const { recentAuditEntriesRows } = await import('@/lib/db/repos/audit');
+      const r = await recentAuditEntriesRows(40);
+      if (alive) setRows(r);
+    })();
+    return () => { alive = false; };
+  }, []);
+  return (
+    <Panel title="Recent audit entries" meta={`${rows.length}`} bodyClass="!p-0">
+      {rows.length === 0 ? (
+        <p className="px-3 py-4 text-[11px] text-ink-muted">
+          No audit entries visible at your scope. The substrate's hash-chain
+          will start carrying entries here as officers act on your records.
+        </p>
+      ) : (
+        <div className="max-h-[260px] overflow-y-auto">
+          {rows.map(e => (
+            <a key={e.hash} href={`/gov/audit/${encodeURIComponent(e.scope)}/${e.seq}`}
+              className="block border-b border-line-soft px-3 py-1 last:border-0 text-[10px] hover:bg-surface-2">
+              <div className="flex items-center gap-2">
+                <span className="w-32 shrink-0 truncate font-mono text-link">{e.scope}</span>
+                <span className="w-10 shrink-0 font-mono tabular-nums text-ink-muted">#{e.seq}</span>
+                <span className="w-20 shrink-0 truncate font-mono text-ink">{e.action}</span>
+                <span className="min-w-0 flex-1 truncate text-ink-soft">{e.subject}</span>
+              </div>
+            </a>
+          ))}
+        </div>
+      )}
+    </Panel>
   );
 }
 
