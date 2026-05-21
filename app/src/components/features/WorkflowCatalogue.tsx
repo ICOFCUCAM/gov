@@ -6,6 +6,7 @@ import { listWorkflowDefinitionsRows, syncWorkflowDefinitionRow } from '@/lib/db
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkflowDefinitionRow, WorkKind, ActionKey } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { getPref, setPref } from '@/lib/prefs';
 
 const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
 const WORK_KINDS: WorkKind[] = ['approval','case','procurement','encounter','bill','judicial','incident','permit','field','lab'];
@@ -38,7 +39,10 @@ const actionTone = (a: string) =>
 export function WorkflowCatalogue() {
   const { ready, actor } = useIdentity();
   const [items, setItems] = React.useState<WorkflowDefinitionRow[]>([]);
-  const [kindFilter, setKindFilter] = React.useState<WorkKind | 'all'>('all');
+  const [kindFilter, setKindFilter] = React.useState<WorkKind | 'all'>(
+    () => getPref<WorkKind | 'all'>('workflow.kind',
+      ['all','approval','case','procurement','encounter','bill','judicial','incident','permit','field','lab'] as const, 'all'));
+  React.useEffect(() => { setPref('workflow.kind', kindFilter); }, [kindFilter]);
   const [active, setActive] = React.useState<string | null>(null);
   const [editing, setEditing] = React.useState(false);
   const [importNote, setImportNote] = React.useState<string | null>(null);
