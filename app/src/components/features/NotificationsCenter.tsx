@@ -71,6 +71,20 @@ export function NotificationsCenter() {
             mark all read
           </button>
           <button type="button"
+            onClick={() => {
+              const csv = ['at,kind,severity,title,detail,href',
+                ...alerts.map(a => `${new Date(a.at).toISOString()},${a.kind},${a.severity},${(a.title ?? '').replace(/,/g,';')},${(a.detail ?? '').replace(/,/g,';')},${a.href}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-alerts-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            csv
+          </button>
+          <button type="button"
             onClick={() => { clearSeen(actor?.id ?? null); }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             reset
