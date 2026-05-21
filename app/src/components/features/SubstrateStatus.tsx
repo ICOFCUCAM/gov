@@ -76,6 +76,45 @@ export function SubstrateStatus() {
     refreshCounts,
   );
 
+  // ── Daily digest export ─────────────────────────────────────────────
+  // Builds a JSON snapshot of what THIS session can see right now:
+  // scope label, per-view row counts, chain integrity sweep results,
+  // and a timestamp. Useful as a compliance handover artefact — an
+  // auditor can save it offline and compare across days.
+  const downloadDigest = React.useCallback(() => {
+    const digest = {
+      generated_at: new Date().toISOString(),
+      scope: scopeLabel,
+      session: session
+        ? { user_id: session.user.id, email: session.user.email ?? null }
+        : null,
+      actor: actor
+        ? { kind: actor.kind, id: actor.id, name: actor.name,
+            role: actor.role, charter_id: actor.charterId }
+        : null,
+      counts: Object.fromEntries(counts.map(c => [c.table, c.count])),
+      totals: {
+        tables_visible: counts.filter(c => c.count > 0).length,
+        total_rows: counts.reduce((s, c) => s + (c.count > 0 ? c.count : 0), 0),
+      },
+      chains: chainResults.length === 0 ? null : {
+        scopes_checked: chainResults.length,
+        all_intact: chainResults.every(r => r.intact),
+        results: chainResults,
+      },
+      substrate_url: process.env.NEXT_PUBLIC_SUPABASE_URL ?? null,
+    };
+    const blob = new Blob([JSON.stringify(digest, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `civicos-substrate-digest-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }, [actor, session, counts, chainResults]);
+
   const sweepChain = React.useCallback(async () => {
     setVerifying(true);
     try {
@@ -123,6 +162,14 @@ export function SubstrateStatus() {
             self-portrait · RLS-scoped
           </span>
         </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={downloadDigest}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+          >
+            download digest
+          </button>
         <button
           type="button"
           onClick={() => { void refreshCounts(); }}
@@ -131,6 +178,7 @@ export function SubstrateStatus() {
         >
           {loading ? 'sweeping…' : 'refresh counts'}
         </button>
+        </div>
       </div>
 
       <p className="font-mono text-[10px] text-ink-muted">scope: {scopeLabel}</p>
