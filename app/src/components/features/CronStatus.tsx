@@ -98,9 +98,15 @@ export function CronStatus() {
             derived from telemetry
           </span>
         </div>
-        <span className="font-mono text-[10px] text-ink-muted">
-          {streams.filter(s => s.stream_id.startsWith('substrate.')).length} substrate streams
-        </span>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={() => { void refresh(); }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            refresh
+          </button>
+          <span className="font-mono text-[10px] text-ink-muted">
+            {streams.filter(s => s.stream_id.startsWith('substrate.')).length} substrate streams
+          </span>
+        </div>
       </div>
 
       <Panel title="Scheduled workers" meta={`${KNOWN_CRONS.length}`} bodyClass="!p-0">
