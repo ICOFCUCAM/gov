@@ -12,6 +12,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { buildCsv, downloadCsv } from '@/lib/csv-download';
 
 /**
  * Telemetry Wall — define streams, append samples, watch the wall live.
@@ -89,14 +90,11 @@ export function TelemetryWall() {
         <div className="flex items-center gap-2">
           <button type="button"
             onClick={() => {
-              const csv = ['stream_id,charter_id,label,unit,warn,alert,active',
-                ...streams.map(s => `${s.stream_id},${s.charter_id},${(s.label ?? '').replace(/,/g,';')},${s.unit ?? ''},${s.warn_threshold ?? ''},${s.alert_threshold ?? ''},${s.active}`)].join('\n');
-              const blob = new Blob([csv], { type: 'text/csv' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `civicos-streams-${new Date().toISOString().slice(0,10)}.csv`;
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              const csv = buildCsv(
+                ['stream_id','charter_id','label','unit','warn','alert','active'],
+                streams.map(s => [s.stream_id, s.charter_id, s.label ?? '', s.unit ?? '', s.warn_threshold ?? '', s.alert_threshold ?? '', s.active]),
+              );
+              downloadCsv('civicos-streams', csv);
             }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             csv
