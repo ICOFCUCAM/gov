@@ -41,6 +41,8 @@ export function WorkflowCatalogue() {
   const [kindFilter, setKindFilter] = React.useState<WorkKind | 'all'>('all');
   const [active, setActive] = React.useState<string | null>(null);
   const [editing, setEditing] = React.useState(false);
+  const [importNote, setImportNote] = React.useState<string | null>(null);
+  const importInputRef = React.useRef<HTMLInputElement>(null);
   const available = substrateAvailable();
   const isPlatform = actor?.kind === 'officer' && actor.role !== null && PLATFORM_ROLES.has(actor.role);
 
@@ -88,6 +90,50 @@ export function WorkflowCatalogue() {
           {isPlatform ? (
             <button
               type="button"
+              onClick={() => importInputRef.current?.click()}
+              className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+            >
+              import json
+            </button>
+          ) : null}
+          <input
+            ref={importInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={async e => {
+              const file = e.currentTarget.files?.[0];
+              e.currentTarget.value = '';
+              if (!file) return;
+              try {
+                const text = await file.text();
+                const payload = JSON.parse(text);
+                if (!payload.workflow_id || !payload.definition) throw new Error('missing workflow_id or definition');
+                const row = await syncWorkflowDefinitionRow({
+                  workflowId: payload.workflow_id,
+                  institutionCharterId: payload.institution_charter_id ?? 'platform',
+                  archetype: payload.archetype ?? null,
+                  title: payload.title ?? payload.workflow_id,
+                  kind: (payload.kind ?? 'approval') as WorkKind,
+                  definition: payload.definition,
+                  description: payload.description ?? null,
+                  blueprintCitation: payload.blueprint_citation ?? null,
+                  stepCount: payload.step_count ?? null,
+                  emits: payload.emits ?? [],
+                });
+                setImportNote(row ? `imported ${row.workflow_id}` : 'import failed');
+                if (row) {
+                  setActive(row.workflow_id);
+                  setItems(await listWorkflowDefinitionsRows({ limit: 100 }));
+                }
+              } catch (err) {
+                setImportNote('import error: ' + (err instanceof Error ? err.message : String(err)));
+              }
+            }}
+          />
+          {isPlatform ? (
+            <button
+              type="button"
               onClick={() => setEditing(e => !e)}
               className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
             >
@@ -96,6 +142,10 @@ export function WorkflowCatalogue() {
           ) : null}
         </div>
       </div>
+
+      {importNote ? (
+        <p className="rounded-[3px] border border-line bg-surface px-2 py-1 text-[10px] text-ink-muted">{importNote}</p>
+      ) : null}
 
       {editing && isPlatform ? (
         <WorkflowEditor
