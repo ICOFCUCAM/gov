@@ -12,6 +12,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { transitionSignature } from '@/lib/db/signatures';
+import { WatchStar } from '@/components/identity/WatchStar';
 
 interface WorkflowMap { terminal: string[]; transitions: Record<string, Record<string, string>> }
 
@@ -270,6 +271,7 @@ export function OfficerWorkbench() {
                       setSelected(next);
                     }}
                   />
+                  <WatchStar kind="work-item" ref={w.ref} label={w.title} />
                   <button
                     type="button"
                     onClick={() => setActive(w.ref)}
