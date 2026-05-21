@@ -19,7 +19,7 @@ const KNOWN_CRONS = [
   {
     name: 'sla',
     description: 'Sweeps stale service requests and escalates them',
-    sentinelStream: null, // no per-run telemetry yet; status derived from escalations
+    sentinelStream: 'substrate.sla.escalated',
     expectedIntervalMin: 60,
     path: '/api/cron/sla',
   },

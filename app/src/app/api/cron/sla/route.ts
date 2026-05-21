@@ -37,6 +37,22 @@ export async function POST(req: Request) {
   if (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
+
+  // Emit a self-telemetry sample so CronStatus can detect staleness.
+  // Idempotent stream definition; sample value = number escalated.
+  await sb.rpc('civicos_define_telemetry_stream', {
+    p_stream_id: 'substrate.sla.escalated', p_charter_id: 'platform',
+    p_label: 'SLA escalations recorded per run', p_unit: 'rows',
+    p_aggregation: 'instantaneous', p_retention_days: 90,
+    p_warn_threshold: null, p_alert_threshold: null, p_facility_id: null,
+  });
+  await sb.rpc('civicos_record_telemetry_sample', {
+    p_stream_id: 'substrate.sla.escalated',
+    p_value: typeof data === 'number' ? data : 0,
+    p_ts: null, p_facility_id: null,
+    p_meta: { threshold_hours: thresholdHours },
+  });
+
   return NextResponse.json({
     ok: true,
     escalated: data,
