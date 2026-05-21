@@ -98,12 +98,19 @@ const API_TABLE: { path: string; what: string }[] = [
 ];
 
 export function KeyboardShortcuts() {
+  const [q, setQ] = React.useState('');
+  const needle = q.trim().toLowerCase();
+  const matchRow = (s: string) => needle === '' || s.toLowerCase().includes(needle);
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Help · shortcuts &amp; routes</h2>
         <span className="font-mono text-[10px] text-ink-muted">Cmd/Ctrl-K for the palette</span>
       </div>
+
+      <input type="search" value={q} onChange={e => setQ(e.currentTarget.value)}
+        placeholder="filter routes / shortcuts…"
+        className="w-full rounded-[3px] border border-line bg-bg px-3 py-1 font-mono text-[11px]" />
 
       {GROUPS.map(g => (
         <Panel key={g.title} title={g.title} meta={`${g.items.length}`} bodyClass="!p-0">
@@ -118,7 +125,7 @@ export function KeyboardShortcuts() {
 
       <Panel title="Routes" meta={`${ROUTE_TABLE.length}`} bodyClass="!p-0">
         <div className="max-h-[480px] overflow-y-auto">
-          {ROUTE_TABLE.map(r => (
+          {ROUTE_TABLE.filter(r => matchRow(`${r.path} ${r.what}`)).map(r => (
             <div key={r.path} className="flex items-center gap-3 border-b border-line-soft px-3 py-1 last:border-0 text-[10px]">
               <Link href={r.path.replace('[ref]','').replace('[id]','').replace('[scope]','').replace(/\/+$/,'') || r.path}
                 className="w-64 shrink-0 truncate font-mono text-link hover:underline">
@@ -131,7 +138,7 @@ export function KeyboardShortcuts() {
       </Panel>
 
       <Panel title="API endpoints" meta={`${API_TABLE.length}`} bodyClass="!p-0">
-        {API_TABLE.map(r => (
+        {API_TABLE.filter(r => matchRow(`${r.path} ${r.what}`)).map(r => (
           <div key={r.path} className="flex items-center gap-3 border-b border-line-soft px-3 py-1 last:border-0 text-[10px]">
             <span className="w-64 shrink-0 truncate font-mono text-link">{r.path}</span>
             <span className="min-w-0 flex-1 truncate text-ink">{r.what}</span>
