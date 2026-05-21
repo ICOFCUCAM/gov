@@ -141,13 +141,32 @@ export function OfficerProfile() {
           </span>
           {actor?.kind === 'officer' && actor.charterId ? <PostureBadge charterId={actor.charterId} /> : null}
         </div>
-        <button
-          type="button"
-          onClick={async () => { await signOut(); window.location.href = '/'; }}
-          className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
-        >
-          sign out
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => {
+              if (typeof window === 'undefined') return;
+              if (!confirm('Clear all per-device preferences, the watchlist, and the "seen" set? Your substrate records are unaffected.')) return;
+              const keys: string[] = [];
+              for (let i = 0; i < window.localStorage.length; i++) {
+                const k = window.localStorage.key(i);
+                if (k && (k.startsWith('civicos.pref.') || k.startsWith('civicos.watchlist.') || k.startsWith('civicos.seen.'))) keys.push(k);
+              }
+              keys.forEach(k => window.localStorage.removeItem(k));
+              alert(`Cleared ${keys.length} keys.`);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+          >
+            clear local state
+          </button>
+          <button
+            type="button"
+            onClick={async () => { await signOut(); window.location.href = '/'; }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+          >
+            sign out
+          </button>
+        </div>
       </div>
 
       <Panel title="Session" meta={session.user.email ?? ''} bodyClass="!p-3 text-[11px]">
