@@ -47,6 +47,7 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521180000_civicos_fk_indexes.sql` | Add 8 covering indexes for foreign keys flagged by `unindexed_foreign_keys`. |
 | `20260521190000_civicos_revoke_anon_writes.sql` | Revoke EXECUTE from `anon` on 32 SECURITY DEFINER write/admin RPCs; keep `civicos_verify_audit_chain` and `civicos_current_actor` open for the Public Observatory. |
 | `20260521200000_civicos_revoke_admin_authenticated.sql` | Revoke EXECUTE from `authenticated` on the four admin/cron RPCs (catalog now matches the contract — service_role only). |
+| `20260521210000_civicos_audit_witnesses.sql` | `civicos.audit_witnesses` table + `record_witness_attestation` RPC + public view. External-party "I saw the chain at seq N with hash H" attestations; tamper-after-the-fact becomes detectable. Write RPC is intentionally anon-callable. |
 
 ### Advisor posture after hardening
 
@@ -280,10 +281,11 @@ Safe for unauthenticated monitoring systems.
 Vercel Cron (`vercel.json`):
 ```json
 { "crons": [
-    { "path": "/api/cron/sla?token=$CIVICOS_CRON_SECRET&hours=48",   "schedule": "0 * * * *" },
+    { "path": "/api/cron/sla?token=$CIVICOS_CRON_SECRET&hours=48",     "schedule": "0 * * * *" },
     { "path": "/api/cron/substrate-metrics?token=$CIVICOS_CRON_SECRET", "schedule": "*/5 * * * *" },
     { "path": "/api/cron/posture-digest?token=$CIVICOS_CRON_SECRET",    "schedule": "*/30 * * * *" },
-    { "path": "/api/cron/audit-self?token=$CIVICOS_CRON_SECRET",        "schedule": "0 * * * *" }
+    { "path": "/api/cron/audit-self?token=$CIVICOS_CRON_SECRET",        "schedule": "0 * * * *" },
+    { "path": "/api/cron/witness-sweep?token=$CIVICOS_CRON_SECRET",     "schedule": "*/15 * * * *" }
 ] }
 ```
 

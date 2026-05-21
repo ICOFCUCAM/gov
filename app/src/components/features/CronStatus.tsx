@@ -40,6 +40,13 @@ const KNOWN_CRONS = [
     expectedIntervalMin: 60,
     path: '/api/cron/audit-self',
   },
+  {
+    name: 'witness-sweep',
+    description: 'Substrate-self witness attestations on every audit scope',
+    sentinelStream: null,
+    expectedIntervalMin: 15,
+    path: '/api/cron/witness-sweep',
+  },
 ];
 
 /**
