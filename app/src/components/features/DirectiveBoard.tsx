@@ -11,6 +11,7 @@ import type { DirectiveRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
+import { WatchStar } from '@/components/identity/WatchStar';
 
 const statusTone = (s: string) =>
   s === 'effective' ? TONE.ok
@@ -139,6 +140,7 @@ export function DirectiveBoard() {
                 key={d.id}
                 className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]"
               >
+                <WatchStar kind="directive" ref={d.ref} label={d.title} />
                 <a href={`/gov/directives/${encodeURIComponent(d.ref)}`}
                    className="w-28 shrink-0 truncate font-mono text-ink-soft hover:text-link hover:underline">
                   {d.ref}
