@@ -2,10 +2,13 @@
 
 import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { listWorkflowDefinitionsRows } from '@/lib/db/repos/work-items';
+import { listWorkflowDefinitionsRows, syncWorkflowDefinitionRow } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
-import type { WorkflowDefinitionRow, WorkKind } from '@/lib/db/types';
+import type { WorkflowDefinitionRow, WorkKind, ActionKey } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
+
+const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
+const WORK_KINDS: WorkKind[] = ['approval','case','procurement','encounter','bill','judicial','incident','permit','field','lab'];
 
 const KINDS: (WorkKind | 'all')[] = [
   'all', 'approval', 'case', 'procurement', 'encounter',
@@ -33,11 +36,13 @@ const actionTone = (a: string) =>
  * follow when needed.
  */
 export function WorkflowCatalogue() {
-  const { ready } = useIdentity();
+  const { ready, actor } = useIdentity();
   const [items, setItems] = React.useState<WorkflowDefinitionRow[]>([]);
   const [kindFilter, setKindFilter] = React.useState<WorkKind | 'all'>('all');
   const [active, setActive] = React.useState<string | null>(null);
+  const [editing, setEditing] = React.useState(false);
   const available = substrateAvailable();
+  const isPlatform = actor?.kind === 'officer' && actor.role !== null && PLATFORM_ROLES.has(actor.role);
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
@@ -75,7 +80,29 @@ export function WorkflowCatalogue() {
             substrate-authoritative
           </span>
         </div>
+        {isPlatform ? (
+          <button
+            type="button"
+            onClick={() => setEditing(e => !e)}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+          >
+            {editing ? 'cancel new' : '+ new workflow'}
+          </button>
+        ) : null}
       </div>
+
+      {editing && isPlatform ? (
+        <WorkflowEditor
+          onDone={async (saved) => {
+            const opts: Parameters<typeof listWorkflowDefinitionsRows>[0] = { limit: 100 };
+            if (kindFilter !== 'all') opts.kind = kindFilter;
+            const rows = await listWorkflowDefinitionsRows(opts);
+            setItems(rows);
+            if (saved) setActive(saved);
+            setEditing(false);
+          }}
+        />
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-1">
         <span className="text-[9px] uppercase tracking-wider text-ink-muted">kind:</span>
@@ -196,5 +223,143 @@ function Field({ label, value, mono = false }: { label: string; value: string; m
       <div className="text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{label}</div>
       <div className={`mt-0.5 truncate text-[11px] text-ink ${mono ? 'font-mono' : ''}`}>{value}</div>
     </div>
+  );
+}
+
+/**
+ * WorkflowEditor — platform-tier admin composer for workflow definitions.
+ *
+ * The substrate's sync_workflow_definition RPC accepts a jsonb
+ * definition shaped as { terminal: string[], transitions:
+ * { [stage]: { [action]: nextStage } } }. The editor surfaces that
+ * shape directly: a JSON textarea pre-seeded with a minimal template,
+ * validated for shape before submission.
+ */
+function WorkflowEditor({ onDone }: { onDone: (savedWorkflowId: string | null) => void | Promise<void> }) {
+  const [workflowId, setWorkflowId] = React.useState('approval.v2');
+  const [institutionCharterId, setInstitutionCharterId] = React.useState('platform');
+  const [archetype, setArchetype] = React.useState('GENERIC');
+  const [title, setTitle] = React.useState('');
+  const [kind, setKind] = React.useState<WorkKind>('approval');
+  const [defJson, setDefJson] = React.useState<string>(() => JSON.stringify({
+    terminal: ['Closed', 'Rejected'],
+    transitions: {
+      Submitted:      { advance: 'Triaged' },
+      Triaged:        { advance: 'Under review', escalate: 'Decision' },
+      'Under review': { approve: 'Decision', reject: 'Rejected', return: 'Triaged' },
+      Decision:       { resolve: 'Closed' },
+    },
+  }, null, 2));
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  function parseAndValidate(): { terminal: string[]; transitions: Record<string, Record<string, string>> } | null {
+    try {
+      const parsed = JSON.parse(defJson);
+      if (typeof parsed !== 'object' || parsed === null) throw new Error('definition must be an object');
+      if (!Array.isArray(parsed.terminal)) throw new Error('terminal must be an array of strings');
+      if (typeof parsed.transitions !== 'object' || parsed.transitions === null) throw new Error('transitions required');
+      // Spot-check transitions shape: { [stage]: { [action]: string } }.
+      for (const [stage, tr] of Object.entries(parsed.transitions)) {
+        if (typeof tr !== 'object' || tr === null) throw new Error(`transitions.${stage} must be an object`);
+        for (const [action, next] of Object.entries(tr as Record<string, unknown>)) {
+          if (typeof next !== 'string') throw new Error(`transitions.${stage}.${action} must point to a stage string`);
+          if (!['advance','approve','reject','escalate','assign','resolve','return','sign'].includes(action)) {
+            throw new Error(`unknown action '${action}' on stage ${stage}`);
+          }
+        }
+      }
+      return parsed;
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+      return null;
+    }
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (!workflowId.trim() || !title.trim()) { setError('workflow id and title required'); return; }
+    const definition = parseAndValidate();
+    if (!definition) return;
+    setBusy(true);
+    try {
+      const row = await syncWorkflowDefinitionRow({
+        workflowId: workflowId.trim(),
+        institutionCharterId: institutionCharterId.trim(),
+        archetype: archetype.trim() || null,
+        title: title.trim(),
+        kind,
+        definition: definition as { terminal: string[]; transitions: Record<string, Partial<Record<ActionKey, string>>> },
+        stepCount: Object.keys(definition.transitions).length,
+      });
+      if (!row) { setError('sync_workflow_definition failed'); return; }
+      await onDone(row.workflow_id);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={onSubmit} className="space-y-2 rounded-[3px] border border-line bg-surface p-3 text-[11px]">
+      <div className="grid grid-cols-3 gap-2">
+        <label className="block">
+          <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Workflow ID</span>
+          <input className="mt-1 w-full rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
+                 value={workflowId} onChange={e => setWorkflowId(e.currentTarget.value)} required />
+        </label>
+        <label className="block">
+          <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Institution</span>
+          <input className="mt-1 w-full rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
+                 value={institutionCharterId} onChange={e => setInstitutionCharterId(e.currentTarget.value)} required />
+        </label>
+        <label className="block">
+          <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Archetype</span>
+          <input className="mt-1 w-full rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
+                 value={archetype} onChange={e => setArchetype(e.currentTarget.value)} />
+        </label>
+      </div>
+      <div className="grid grid-cols-2 gap-2">
+        <label className="block">
+          <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Title</span>
+          <input className="mt-1 w-full rounded-[3px] border border-line bg-bg px-2 py-1 text-[11px]"
+                 value={title} onChange={e => setTitle(e.currentTarget.value)} required />
+        </label>
+        <label className="block">
+          <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Kind</span>
+          <select className="mt-1 w-full rounded-[3px] border border-line bg-bg px-2 py-1 text-[11px]"
+                  value={kind} onChange={e => setKind(e.currentTarget.value as WorkKind)}>
+            {WORK_KINDS.map(k => <option key={k} value={k}>{k}</option>)}
+          </select>
+        </label>
+      </div>
+      <label className="block">
+        <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Definition (JSON)</span>
+        <textarea
+          className="mt-1 h-64 w-full rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[10px]"
+          value={defJson}
+          spellCheck={false}
+          onChange={e => setDefJson(e.currentTarget.value)}
+        />
+      </label>
+      {error ? <p className="text-[10px]" style={{ color: TONE.alert }}>{error}</p> : null}
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => parseAndValidate() && setError('OK — shape valid')}
+          className="focus-ring rounded-[3px] border border-line px-2 py-1 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+        >
+          validate
+        </button>
+        <button type="submit" disabled={busy}
+                className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+          {busy ? 'syncing…' : 'sync workflow'}
+        </button>
+      </div>
+      <p className="text-[10px] text-ink-muted">
+        Calls <span className="font-mono">civicos.sync_workflow_definition</span> (idempotent on workflow_id).
+        The substrate validates shape and refuses if <span className="font-mono">transitions</span> is missing.
+      </p>
+    </form>
   );
 }
