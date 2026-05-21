@@ -51,7 +51,23 @@ export function CharterList() {
             jump table
           </span>
         </div>
-        <span className="font-mono text-[10px] text-ink-muted">{filtered.length} visible</span>
+        <div className="flex items-center gap-2">
+          <button type="button"
+            onClick={() => {
+              const csv = ['charter_id,kind,domain,activated,label',
+                ...filtered.map(i => `${i.charter_id},${i.kind},${i.domain},${i.activated},${(i.label ?? '').replace(/,/g,';')}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-charters-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            csv
+          </button>
+          <span className="font-mono text-[10px] text-ink-muted">{filtered.length} visible</span>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1">
