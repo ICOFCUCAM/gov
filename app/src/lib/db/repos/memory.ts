@@ -6,7 +6,7 @@
 
 import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type {
-  DirectiveRow, DispatchRow, EscalationRow, Priority, Severity,
+  DirectiveRow, DispatchRow, EscalationRow, PostureHistoryRow, Posture, Priority, Severity,
 } from '@/lib/db/types';
 
 // ── Directives ────────────────────────────────────────────────────
@@ -181,6 +181,40 @@ export async function listEscalationsRows(opts: { severity?: string; source?: st
   const { data, error } = await q.order('triggered_at', { ascending: false }).limit(opts.limit ?? 50);
   if (error || !data) return [];
   return data as EscalationRow[];
+}
+
+// ── Posture ───────────────────────────────────────────────────────
+
+export interface PostureInput {
+  charterId: string;
+  posture: Posture;
+  readiness?: number | null;
+  stress?: number | null;
+  detail?: Record<string, unknown>;
+}
+
+export async function recordPostureRow(p: PostureInput): Promise<PostureHistoryRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_record_posture', {
+    p_charter_id: p.charterId,
+    p_posture: p.posture,
+    p_readiness: p.readiness ?? null,
+    p_stress: p.stress ?? null,
+    p_detail: p.detail ?? {},
+  });
+  if (error) { console.error('[civicos] record_posture failed:', error.message); return null; }
+  return (data as PostureHistoryRow) ?? null;
+}
+
+export async function listPostureHistoryRows(opts: { charter?: string; limit?: number } = {}): Promise<PostureHistoryRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_posture_history').select('*');
+  if (opts.charter) q = q.eq('charter_id', opts.charter);
+  const { data, error } = await q.order('snapshot_at', { ascending: false }).limit(opts.limit ?? 50);
+  if (error || !data) return [];
+  return data as PostureHistoryRow[];
 }
 
 export { substrateAvailable };

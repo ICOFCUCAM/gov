@@ -37,6 +37,8 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⟐', l: 'Audit Explorer',     s: 'Hash-chained ledger',        href: '/gov/audit',       key: 'audit'       },
     { i: '◰', l: 'Telemetry Wall',     s: 'Streams · samples · alerts', href: '/gov/telemetry',   key: 'telemetry'   },
     { i: '⊡', l: 'Officer Registry',   s: 'Provision officers',         href: '/gov/officers',    key: 'officers'    },
+    { i: '⌖', l: 'Posture Board',      s: 'Institutional posture log',  href: '/gov/posture',     key: 'posture'     },
+    { i: '⇆', l: 'Federation Stream',  s: 'Inter-institution events',   href: '/gov/federation',  key: 'federation'  },
   ]},
   { g: 'Strategic Domains', items: [
     { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury', key: 'trs' },
