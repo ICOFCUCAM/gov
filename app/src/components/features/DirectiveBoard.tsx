@@ -34,7 +34,14 @@ const ALL_KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declar
 export function DirectiveBoard() {
   const { actor, session, ready } = useIdentity();
   const [items, setItems] = React.useState<DirectiveRow[]>([]);
-  const [statusFilter, setStatusFilter] = React.useState<'all' | 'drafting' | 'signed' | 'effective' | 'rescinded' | 'published'>('all');
+  const [statusFilter, setStatusFilter] = React.useState<'all' | 'drafting' | 'signed' | 'effective' | 'rescinded' | 'published'>(() => {
+    if (typeof window === 'undefined') return 'all';
+    const v = window.localStorage.getItem('civicos.directive.statusFilter');
+    return (v === 'drafting' || v === 'signed' || v === 'effective' || v === 'rescinded' || v === 'published') ? v : 'all';
+  });
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') window.localStorage.setItem('civicos.directive.statusFilter', statusFilter);
+  }, [statusFilter]);
   const [loading, setLoading] = React.useState(false);
   const [composerOpen, setComposerOpen] = React.useState(false);
   const [busyRef, setBusyRef] = React.useState<string | null>(null);
