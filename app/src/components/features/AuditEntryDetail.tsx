@@ -95,6 +95,19 @@ export function AuditEntryDetail({ scope, seq }: { scope: string; seq: number })
             className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2">
             download entry
           </button>
+          <button type="button"
+            onClick={async () => {
+              const url = `/api/audit/proof?scope=${encodeURIComponent(scope)}&seq=${entry.seq}`;
+              const res = await fetch(url, { cache: 'no-store' });
+              if (!res.ok) return;
+              const proof = await res.json();
+              downloadJson(`civicos-proof-${scope.replace(/[^a-z0-9._-]+/gi,'_')}-${entry.seq}`,
+                proof, { dated: false });
+            }}
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2"
+            title="Chain prefix + witnesses; loads into /gov/audit-replay">
+            download proof
+          </button>
           {intact != null ? (
             <span className="text-[10px] font-mono" style={{ color: intact ? TONE.ok : TONE.alert }}>
               {intact ? 'intact' : 'BROKEN'}
