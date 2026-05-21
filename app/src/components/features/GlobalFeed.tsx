@@ -13,6 +13,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 interface FeedItem {
   id: string;
@@ -93,7 +94,7 @@ export function GlobalFeed() {
   );
 
   if (!available) {
-    return <Panel title="Global feed" meta="not configured" bodyClass="!p-3"><p className="text-[10px] text-ink-muted">Substrate not configured.</p></Panel>;
+    return <SubstrateNotConfigured title="Global feed" />;
   }
 
   const tallies = items.reduce<Record<FeedItem['kind'], number>>((acc, i) => {

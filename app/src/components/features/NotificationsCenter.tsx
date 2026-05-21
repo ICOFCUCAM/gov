@@ -9,6 +9,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { isSeen, markSeen, clearSeen } from '@/lib/seen';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const sevTone: Record<AlertSeverity, string | undefined> = {
   national: TONE.alert, major: TONE.alert,
@@ -40,11 +41,7 @@ export function NotificationsCenter() {
   const available = substrateAvailable();
 
   if (!available) {
-    return (
-      <Panel title="Notifications" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Notifications" />;
   }
 
   const filtered = kindFilter === 'all' ? alerts : alerts.filter(a => a.kind === kindFilter);
