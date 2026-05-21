@@ -49,6 +49,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '★', l: 'Watchlist',          s: 'Starred records (per device)',href: '/gov/watchlist',   key: 'watchlist'   },
     { i: '⏱', l: 'Cron status',        s: 'Scheduled workers',          href: '/gov/crons',       key: 'crons'       },
     { i: '?', l: 'Help',               s: 'Shortcuts · routes · API',   href: '/gov/help',        key: 'help'        },
+    { i: '⚛', l: 'Playground',         s: 'REPL for public RPC contracts', href: '/gov/playground', key: 'playground' },
     { i: '◉', l: 'Live Wall',          s: 'Composite operational picture', href: '/gov/live',      key: 'live'        },
     { i: '◐', l: 'Substrate Status',   s: 'Counts · chain integrity',   href: '/gov/substrate',   key: 'substrate'   },
     { i: '▤', l: 'Institutions Catalogue', s: 'Federation registry',     href: '/gov/registry',    key: 'registry'    },
