@@ -4,7 +4,7 @@ import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   recentAuditEntriesRows, distinctAuditScopesRows, verifyChainRow,
-  auditTrailRows, type AuditEntry,
+  auditTrailRows, recordWitnessAttestationRow, type AuditEntry,
 } from '@/lib/db/repos/audit';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -197,6 +197,9 @@ export function AuditExplorer() {
                 : `BROKEN · ${verification.entries} entries · broken at seq ${verification.brokenAt}`}
             </div>
           ) : null}
+          {verification?.intact ? (
+            <AttestThisChain scope={active!} latestEntry={trail[0] ?? null} />
+          ) : null}
         </Panel>
       </div>
 
@@ -218,6 +221,59 @@ export function AuditExplorer() {
           </div>
         )}
       </Panel>
+    </div>
+  );
+}
+
+/** Inline attestation: one-click record_witness_attestation for the
+ *  currently verified scope. Surfaces the most recent (seq, hash) pair
+ *  so auditors don't have to retype them. */
+function AttestThisChain({ scope, latestEntry }: { scope: string; latestEntry: AuditEntry | null }) {
+  const [label, setLabel] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [result, setResult] = React.useState<'idle' | 'ok' | 'fail'>('idle');
+
+  if (!latestEntry) return null;
+
+  async function attest() {
+    if (!label.trim() || !latestEntry) return;
+    setBusy(true);
+    setResult('idle');
+    try {
+      const row = await recordWitnessAttestationRow({
+        scope,
+        observedSeq: latestEntry.seq,
+        observedHash: latestEntry.hash,
+        label: label.trim(),
+      });
+      setResult(row ? 'ok' : 'fail');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <div className="mt-2 space-y-2 rounded-[3px] border border-line-soft px-2 py-1.5">
+      <p className="font-mono text-[10px] text-ink-muted">
+        Attest @{latestEntry.seq} = {latestEntry.hash.slice(0, 12)}…
+      </p>
+      <div className="flex gap-1">
+        <input
+          className="flex-1 rounded-[3px] border border-line bg-bg px-2 py-1 text-[10px]"
+          placeholder="witness label"
+          value={label}
+          onChange={e => setLabel(e.currentTarget.value)}
+        />
+        <button type="button" disabled={!label.trim() || busy} onClick={() => void attest()}
+          className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+          {busy ? '…' : 'attest'}
+        </button>
+      </div>
+      {result === 'ok' ? (
+        <p className="text-[9px]" style={{ color: TONE.ok }}>recorded</p>
+      ) : result === 'fail' ? (
+        <p className="text-[9px]" style={{ color: TONE.alert }}>failed</p>
+      ) : null}
     </div>
   );
 }
