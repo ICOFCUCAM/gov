@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable } from '@/lib/db/client';
 import { substrateSearch, type SearchHit, type SearchHitKind } from '@/lib/db/search';
+import { getPref, setPref } from '@/lib/prefs';
 
 const kindTone: Record<SearchHitKind, string | undefined> = {
   'work-item': TONE.link,
@@ -30,7 +31,10 @@ export function SubstrateSearch() {
   const [q, setQ] = React.useState('');
   const [hits, setHits] = React.useState<SearchHit[]>([]);
   const [busy, setBusy] = React.useState(false);
-  const [kindFilter, setKindFilter] = React.useState<SearchHitKind | 'all'>('all');
+  const [kindFilter, setKindFilter] = React.useState<SearchHitKind | 'all'>(
+    () => getPref<SearchHitKind | 'all'>('search.kind',
+      ['all','work-item','directive','dispatch','escalation','service-request','appeal','institution','officer'] as const, 'all'));
+  React.useEffect(() => { setPref('search.kind', kindFilter); }, [kindFilter]);
   const available = substrateAvailable();
 
   // Debounced search-on-change.
