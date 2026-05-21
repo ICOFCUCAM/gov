@@ -37,7 +37,8 @@ export function SignInForm() {
     setInfo(null);
     try {
       const fn = mode === 'sign-up' ? signUpWithPassword : signInWithPassword;
-      const { session, error: err } = await fn(email, password);
+      const cleanEmail = email.trim().toLowerCase();
+      const { session, error: err } = await fn(cleanEmail, password);
       if (err) { setError(err); return; }
       if (!session) {
         // Sign-up with email confirmation enabled returns null session.
@@ -47,7 +48,7 @@ export function SignInForm() {
       }
       // Best-effort: if an officer record matches this email, link it.
       // Otherwise auto-provision as a citizen.
-      const officer = await linkOfficerByEmail(email);
+      const officer = await linkOfficerByEmail(cleanEmail);
       if (officer) {
         // Officer signed in — ensure a device signing key exists and
         // register the public JWK so transitions can be cryptographically
