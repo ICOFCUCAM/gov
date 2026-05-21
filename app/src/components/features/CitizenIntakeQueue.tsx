@@ -110,10 +110,29 @@ export function CitizenIntakeQueue() {
             officer-side · RLS-scoped
           </span>
         </div>
-        <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
-          <input type="checkbox" checked={openOnly} onChange={e => setOpenOnly(e.currentTarget.checked)} />
-          open only
-        </label>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
+            <input type="checkbox" checked={openOnly} onChange={e => setOpenOnly(e.currentTarget.checked)} />
+            open only
+          </label>
+          <button type="button"
+            onClick={() => {
+              const csv = [
+                'kind,ref,service_or_ground,target_or_originating,status,submitted_or_filed,resolved_or_decided',
+                ...requests.map(r => `request,${r.ref},${r.service},${r.target_charter_id},${r.status},${r.submitted_at},${r.resolved_at ?? ''}`),
+                ...appeals.map(a => `appeal,${a.ref},${(a.ground ?? '').replace(/,/g,';')},${a.originating_charter_id},${a.status},${a.filed_at},${a.decided_at ?? ''}`),
+              ].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-intake-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            csv
+          </button>
+        </div>
       </div>
 
       <p className="font-mono text-[10px] text-ink-muted">
