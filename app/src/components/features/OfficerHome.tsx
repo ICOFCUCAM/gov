@@ -16,13 +16,12 @@ import { PostureBadge } from '@/components/identity/PostureBadge';
 import { LiveActivityStrip } from '@/components/identity/LiveActivityStrip';
 import { ConstitutionalStrip } from '@/components/identity/ConstitutionalStrip';
 import { myRecentStepsRows, type ActorStepRow } from '@/lib/db/repos/work-items';
+import { ageMinutes } from '@/lib/format';
 
 const priorityTone = (p: string) =>
   p === 'critical' || p === 'urgent' ? TONE.alert
   : p === 'priority' ? TONE.warn
   : TONE.link;
-
-const ageMin = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
 
 /**
  * OfficerHome — personalised landing for a signed-in officer.
@@ -178,7 +177,7 @@ export function OfficerHome() {
                     <span className="w-12 shrink-0 text-[8.5px] font-bold uppercase tracking-wider" style={{ color: TONE.link }}>req</span>
                     <span className="w-28 shrink-0 truncate font-mono text-link">{r.service}</span>
                     <span className="min-w-0 flex-1 truncate text-ink">{r.title ?? r.domain ?? '—'}</span>
-                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">{ageMin(r.submitted_at)}m</span>
+                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">{ageMinutes(r.submitted_at)}m</span>
                   </div>
                 </Link>
               ))}
@@ -188,7 +187,7 @@ export function OfficerHome() {
                     <span className="w-12 shrink-0 text-[8.5px] font-bold uppercase tracking-wider" style={{ color: TONE.warn }}>app</span>
                     <span className="w-28 shrink-0 truncate font-mono text-link">{a.originating_charter_id}</span>
                     <span className="min-w-0 flex-1 truncate text-ink">{a.ground}</span>
-                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">{ageMin(a.filed_at)}m</span>
+                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">{ageMinutes(a.filed_at)}m</span>
                   </div>
                 </Link>
               ))}
@@ -232,7 +231,7 @@ export function OfficerHome() {
                       {e.severity}
                     </span>
                     <span className="min-w-0 flex-1 truncate text-ink">{e.reason}</span>
-                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">{ageMin(e.triggered_at)}m</span>
+                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">{ageMinutes(e.triggered_at)}m</span>
                   </div>
                 </Link>
               ))}
