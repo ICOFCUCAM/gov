@@ -175,13 +175,22 @@ Programmatic equivalent of the /gov/substrate download digest. Returns
 per-view row counts (RLS-unfiltered via service-role) and optionally
 the chain integrity sweep across recent scopes. Suitable for archival.
 
+### `GET|POST /api/cron/posture-digest?token=…`
+Per-charter posture aggregator. For every activated institution,
+computes open / urgent / open-escalations counts and runs a simple
+heuristic to produce a `steady` / `elevated` / `crisis` posture +
+readiness/stress score, then appends a `posture_history` snapshot.
+Produces a continuous timeline on /gov/posture without needing any
+operator to manually snapshot. Recommended cadence: 30 min.
+
 ## Cron recipes
 
 Vercel Cron (`vercel.json`):
 ```json
 { "crons": [
-    { "path": "/api/cron/sla?token=$CIVICOS_CRON_SECRET&hours=48", "schedule": "0 * * * *" },
-    { "path": "/api/cron/substrate-metrics?token=$CIVICOS_CRON_SECRET", "schedule": "*/5 * * * *" }
+    { "path": "/api/cron/sla?token=$CIVICOS_CRON_SECRET&hours=48",   "schedule": "0 * * * *" },
+    { "path": "/api/cron/substrate-metrics?token=$CIVICOS_CRON_SECRET", "schedule": "*/5 * * * *" },
+    { "path": "/api/cron/posture-digest?token=$CIVICOS_CRON_SECRET",    "schedule": "*/30 * * * *" }
 ] }
 ```
 
