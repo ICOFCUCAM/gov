@@ -9,6 +9,7 @@
 // determinism is unaffected.
 
 import { seed } from '@/lib/telemetry';
+import { recordDispatchRow, substrateAvailable } from '@/lib/db/repos/memory';
 
 export type DispatchTier = 'ACTOR' | 'FACILITY' | 'MINISTRY' | 'NATIONAL';
 export interface Dispatch {
@@ -103,7 +104,23 @@ export function digest(scopes: string[], now: number, limit = 9): Dispatch[] {
 export function send(scope: string, msg: Omit<Dispatch, 'id' | 'at' | 'seeded'>, now: number): void {
   hydrate();
   const list = channels.get(scope) ?? seedChannel(scope, now);
-  list.push({ ...msg, id: `d-${now}-${Math.floor(seed(`d:${scope}:${now}`) * 1e6)}`, at: now });
+  const id = `d-${now}-${Math.floor(seed(`d:${scope}:${now}`) * 1e6)}`;
+  list.push({ ...msg, id, at: now });
   channels.set(scope, list.slice(-60));
   bump();
+
+  // Mirror to substrate. The dispatch-store models tier-to-tier traffic;
+  // we persist the issuer's tier as the charter and the channel scope
+  // as the target, so cross-process consumers can reconstruct the flow.
+  if (substrateAvailable()) {
+    void recordDispatchRow({
+      ref: id,
+      issuedByCharterId: msg.from || scope,
+      kind: `${msg.fromTier.toLowerCase()}-to-${msg.toTier.toLowerCase()}`,
+      priority: msg.priority,
+      detail: msg.body,
+      targetCharterId: scope,
+      payload: { fromTier: msg.fromTier, toTier: msg.toTier, scope },
+    }).catch(() => { /* best-effort */ });
+  }
 }

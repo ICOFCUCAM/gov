@@ -27,6 +27,12 @@ import {
   syncWorkflowDefinitionRow, openWorkItemRow, transitionWorkItemRow,
   workItemRow, workItemStepsRows,
 } from './repos/work-items';
+import {
+  recordDirectiveRow, signDirectiveRow, rescindDirectiveRow,
+  recordDispatchRow, acknowledgeDispatchRow, closeDispatchRow,
+  recordEscalationRow,
+} from './repos/memory';
+import { defineTelemetryStreamRow, recordTelemetrySampleRow, recentTelemetrySamplesRows } from './repos/telemetry';
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -212,6 +218,77 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     const afterClose = await transitionWorkItemRow({ ref, action: 'advance', actorName: 'X' });
     expect(afterClose!.ok).toBe(false);
     if (afterClose && !afterClose.ok) expect(afterClose.reason).toBe('closed');
+  });
+
+  it('MEMORY — directive lifecycle: draft → sign → rescind', async () => {
+    const ref = `DIR-VITEST-${Date.now()}`;
+    const d = await recordDirectiveRow({
+      ref, kind: 'executive-order', issuedByCharterId: 'presidency',
+      title: 'Test directive', targets: ['ministry-health'],
+      payload: { rationale: 'integration proof' },
+    });
+    expect(d).not.toBeNull();
+    expect(d!.status).toBe('drafting');
+
+    const signed = await signDirectiveRow(ref);
+    expect(signed).not.toBeNull();
+    expect(signed!.status).toBe('signed');
+    expect(signed!.signed_at).not.toBeNull();
+
+    const rescinded = await rescindDirectiveRow(ref);
+    expect(rescinded!.status).toBe('rescinded');
+    expect(rescinded!.rescinded_at).not.toBeNull();
+  });
+
+  it('MEMORY — dispatch lifecycle: record → acknowledge → close', async () => {
+    const ref = `DSP-VITEST-${Date.now()}`;
+    const d = await recordDispatchRow({
+      ref, issuedByCharterId: 'emergency-response',
+      kind: 'unit-deploy', priority: 'urgent', detail: 'Unit 14 → grid 4N',
+      targetCharterId: 'police-command',
+    });
+    expect(d).not.toBeNull();
+    expect(d!.status).toBe('dispatched');
+
+    const ack = await acknowledgeDispatchRow(ref);
+    expect(ack!.status).toBe('acknowledged');
+    expect(ack!.acknowledged_at).not.toBeNull();
+
+    const closed = await closeDispatchRow(ref);
+    expect(closed!.status).toBe('closed');
+    expect(closed!.closed_at).not.toBeNull();
+  });
+
+  it('MEMORY — escalation recorded with severity and source', async () => {
+    const e = await recordEscalationRow({
+      sourceCharterId: 'ministry-interior',
+      severity: 'major',
+      reason: `vitest-escalation-${Date.now()}`,
+      targetCharterId: 'noc',
+      triggeredByActor: 'vitest',
+    });
+    expect(e).not.toBeNull();
+    expect(e!.severity).toBe('major');
+    expect(e!.resolved_at).toBeNull();
+  });
+
+  it('TELEMETRY — stream definition and append-only samples', async () => {
+    const sid = `vitest.metric.${Date.now()}`;
+    const stream = await defineTelemetryStreamRow({
+      streamId: sid, charterId: 'platform', label: 'Vitest metric',
+      unit: 'ops/min', warnThreshold: 80, alertThreshold: 95,
+    });
+    expect(stream).not.toBeNull();
+
+    const s1 = await recordTelemetrySampleRow({ streamId: sid, value: 42.5 });
+    const s2 = await recordTelemetrySampleRow({ streamId: sid, value: 87.0 });
+    expect(s1).not.toBeNull();
+    expect(s2).not.toBeNull();
+
+    const samples = await recentTelemetrySamplesRows(sid, 10);
+    expect(samples.length).toBeGreaterThanOrEqual(2);
+    // Newest first.
+    expect(samples[0]!.value).toBe(87.0);
   });
 
   it('CONTRACT — direct INSERT to audit_entries is denied (RLS)', async () => {
