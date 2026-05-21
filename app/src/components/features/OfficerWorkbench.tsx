@@ -13,6 +13,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { transitionSignature } from '@/lib/db/signatures';
 import { WatchStar } from '@/components/identity/WatchStar';
+import { getBoolPref, setPref } from '@/lib/prefs';
 
 interface WorkflowMap { terminal: string[]; transitions: Record<string, Record<string, string>> }
 
@@ -48,7 +49,8 @@ export function OfficerWorkbench() {
   const [active, setActive] = React.useState<string | null>(null);
   const [steps, setSteps] = React.useState<WorkItemStepRow[]>([]);
   const [busyAction, setBusyAction] = React.useState<string | null>(null);
-  const [openOnly, setOpenOnly] = React.useState(true);
+  const [openOnly, setOpenOnly] = React.useState(() => getBoolPref('workbench.openOnly', true));
+  React.useEffect(() => { setPref('workbench.openOnly', openOnly); }, [openOnly]);
   const [lastError, setLastError] = React.useState<string | null>(null);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = React.useState(false);
