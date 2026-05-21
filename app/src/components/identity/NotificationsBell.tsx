@@ -12,10 +12,10 @@ const TONE_FOR = (highest: string | undefined) =>
 
 /** Compact bell with a count + colour from the highest-severity alert. */
 export function NotificationsBell({ className = '' }: { className?: string }) {
-  const { alerts } = useSubstrateAlerts();
+  const { unseen } = useSubstrateAlerts();
   if (!substrateAvailable()) return null;
-  const count = alerts.length;
-  const highest = alerts[0]?.severity;
+  const count = unseen.length;
+  const highest = unseen[0]?.severity;
   const tone = count === 0 ? 'rgb(var(--c-ink-muted))' : TONE_FOR(highest);
 
   return (

@@ -8,6 +8,8 @@ import { distinctAuditScopesRows, verifyChainRow } from '@/lib/db/repos/audit';
 import { substrateAvailable } from '@/lib/db/client';
 import type { EscalationRow, DispatchRow, WorkItemRow } from '@/lib/db/types';
 import { useRealtimeRefresh } from './useRealtimeRefresh';
+import { isSeen, subscribeSeen } from '@/lib/seen';
+import { useIdentity } from './useIdentity';
 
 export type AlertKind = 'chain-broken' | 'escalation' | 'dispatch' | 'work-item';
 export type AlertSeverity = 'national' | 'major' | 'critical' | 'urgent' | 'minor' | 'warn';
@@ -35,9 +37,12 @@ const sevWeight: Record<AlertSeverity, number> = {
  * All four sources are RLS-scoped, so the alerts an operator sees are
  * scoped to their identity automatically.
  */
-export function useSubstrateAlerts(): { alerts: Alert[]; loading: boolean; refresh: () => Promise<void> } {
+export function useSubstrateAlerts(): { alerts: Alert[]; unseen: Alert[]; loading: boolean; refresh: () => Promise<void> } {
+  const { actor } = useIdentity();
   const [alerts, setAlerts] = React.useState<Alert[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [, force] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => subscribeSeen(() => force()), []);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -143,5 +148,6 @@ export function useSubstrateAlerts(): { alerts: Alert[]; loading: boolean; refre
     refresh,
   );
 
-  return { alerts, loading, refresh };
+  const unseen = alerts.filter(a => !isSeen(actor?.id ?? null, a.id));
+  return { alerts, unseen, loading, refresh };
 }

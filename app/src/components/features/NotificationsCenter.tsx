@@ -6,6 +6,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable } from '@/lib/db/client';
 import { useSubstrateAlerts, type Alert, type AlertSeverity } from '@/components/identity/useSubstrateAlerts';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { isSeen, markSeen, clearSeen } from '@/lib/seen';
 
 const sevTone: Record<AlertSeverity, string | undefined> = {
   national: TONE.alert, major: TONE.alert,
@@ -60,14 +61,26 @@ export function NotificationsCenter() {
             substrate alerts · realtime
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => { void refresh(); }}
-          disabled={loading}
-          className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
-        >
-          {loading ? 'sweeping…' : 'refresh'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button type="button"
+            onClick={() => { markSeen(actor?.id ?? null, alerts.map(a => a.id)); }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            mark all read
+          </button>
+          <button type="button"
+            onClick={() => { clearSeen(actor?.id ?? null); }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            reset
+          </button>
+          <button
+            type="button"
+            onClick={() => { void refresh(); }}
+            disabled={loading}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
+          >
+            {loading ? 'sweeping…' : 'refresh'}
+          </button>
+        </div>
       </div>
 
       <p className="font-mono text-[10px] text-ink-muted">
@@ -108,11 +121,15 @@ export function NotificationsCenter() {
           </p>
         ) : (
           <div className="max-h-[560px] overflow-y-auto">
-            {filtered.map(a => (
+            {filtered.map(a => {
+              const seen = isSeen(actor?.id ?? null, a.id);
+              return (
               <Link
                 key={a.id}
                 href={a.href}
+                onClick={() => { markSeen(actor?.id ?? null, [a.id]); }}
                 className="block border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px] hover:bg-surface-2"
+                style={{ opacity: seen ? 0.55 : 1 }}
               >
                 <div className="flex items-center gap-2">
                   <span
@@ -136,7 +153,8 @@ export function NotificationsCenter() {
                   {a.detail}
                 </div>
               </Link>
-            ))}
+              );
+            })}
           </div>
         )}
       </Panel>
