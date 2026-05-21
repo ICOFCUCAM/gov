@@ -32,6 +32,9 @@ export function CitizenIntakeQueue() {
   const [requests, setRequests] = React.useState<ServiceRequestRow[]>([]);
   const [appeals, setAppeals]   = React.useState<AppealRow[]>([]);
   const [openOnly, setOpenOnly] = React.useState(true);
+  const [selectedReqs, setSelectedReqs] = React.useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [bulkReport, setBulkReport] = React.useState<{ ok: number; failed: number } | null>(null);
   const [busyId, setBusyId] = React.useState<string | null>(null);
   const available = substrateAvailable();
 
@@ -112,6 +115,36 @@ export function CitizenIntakeQueue() {
         scope: {actor.name} · {actor.role ?? 'officer'} · {actor.charterId ?? '—'}
       </p>
 
+      {selectedReqs.size > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-[3px] border border-line bg-surface px-3 py-2 text-[10px]">
+          <span className="font-mono uppercase tracking-wider text-ink-muted">
+            {selectedReqs.size} selected
+          </span>
+          <span className="text-ink-muted">·</span>
+          {(['in-progress','resolved','rejected'] as const).map(status => (
+            <button key={status} type="button" disabled={bulkBusy}
+              className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50"
+              onClick={async () => {
+                setBulkBusy(true);
+                let ok = 0, failed = 0;
+                for (const ref of selectedReqs) {
+                  try { (await updateServiceRequestRow({ ref, status })) ? ok++ : failed++; } catch { failed++; }
+                }
+                setBulkReport({ ok, failed }); setSelectedReqs(new Set()); setBulkBusy(false);
+                await refresh();
+              }}>
+              bulk {status}
+            </button>
+          ))}
+          <button type="button"
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2"
+            onClick={() => { setSelectedReqs(new Set()); setBulkReport(null); }}>
+            clear
+          </button>
+          {bulkReport ? <span className="font-mono text-ink-muted">· last: {bulkReport.ok} ok / {bulkReport.failed} failed</span> : null}
+        </div>
+      ) : null}
+
       <Panel title="Service requests" meta={`${requests.length}`} bodyClass="!p-0">
         {requests.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">No service requests in scope.</p>
@@ -119,6 +152,13 @@ export function CitizenIntakeQueue() {
           <div className="max-h-[400px] overflow-y-auto">
             {requests.map(r => (
               <div key={r.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <input type="checkbox" aria-label={`select ${r.ref}`}
+                  checked={selectedReqs.has(r.ref)}
+                  onChange={e => {
+                    const next = new Set(selectedReqs);
+                    if (e.currentTarget.checked) next.add(r.ref); else next.delete(r.ref);
+                    setSelectedReqs(next);
+                  }} />
                 <span className="w-24 shrink-0 truncate font-mono text-ink-soft">{r.ref}</span>
                 <span className="w-32 shrink-0 truncate font-mono text-link">{r.service}</span>
                 <span className="min-w-0 flex-1 truncate text-ink">{r.title ?? r.domain ?? '—'}</span>
