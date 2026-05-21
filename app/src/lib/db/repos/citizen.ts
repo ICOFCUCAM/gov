@@ -168,4 +168,28 @@ export async function myAppealsRows(limit = 50): Promise<AppealRow[]> {
   return data as AppealRow[];
 }
 
+// ── Officer-side reads (filtered by target charter) ───────────────
+
+export async function listServiceRequestsRows(opts: { target?: string; openOnly?: boolean; limit?: number } = {}): Promise<ServiceRequestRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_service_requests').select('*');
+  if (opts.target) q = q.eq('target_charter_id', opts.target);
+  if (opts.openOnly) q = q.is('resolved_at', null);
+  const { data, error } = await q.order('submitted_at', { ascending: false }).limit(opts.limit ?? 50);
+  if (error || !data) return [];
+  return data as ServiceRequestRow[];
+}
+
+export async function listAppealsRows(opts: { originating?: string; openOnly?: boolean; limit?: number } = {}): Promise<AppealRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_appeals').select('*');
+  if (opts.originating) q = q.eq('originating_charter_id', opts.originating);
+  if (opts.openOnly) q = q.is('decided_at', null);
+  const { data, error } = await q.order('filed_at', { ascending: false }).limit(opts.limit ?? 50);
+  if (error || !data) return [];
+  return data as AppealRow[];
+}
+
 export { substrateAvailable };
