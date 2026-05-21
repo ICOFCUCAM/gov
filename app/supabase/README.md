@@ -48,6 +48,9 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521190000_civicos_revoke_anon_writes.sql` | Revoke EXECUTE from `anon` on 32 SECURITY DEFINER write/admin RPCs; keep `civicos_verify_audit_chain` and `civicos_current_actor` open for the Public Observatory. |
 | `20260521200000_civicos_revoke_admin_authenticated.sql` | Revoke EXECUTE from `authenticated` on the four admin/cron RPCs (catalog now matches the contract — service_role only). |
 | `20260521210000_civicos_audit_witnesses.sql` | `civicos.audit_witnesses` table + `record_witness_attestation` RPC + public view. External-party "I saw the chain at seq N with hash H" attestations; tamper-after-the-fact becomes detectable. Write RPC is intentionally anon-callable. |
+| `20260521220000_civicos_admin_bulk_officers.sql` | `admin_bulk_create_officers(p_rows jsonb)` — server-side bulk onboarding wrapper around `admin_create_officer`. Per-row success/failure envelope; service_role bypass for the cron / admin route context. |
+| `20260521230000_civicos_citizen_receipt_timeline.sql` | `my_receipt_timeline(p_limit)` — unified citizen-side timeline joining service_requests + consents + appeals + linked work_item_steps. Right-to-take-your-data baked into the substrate. Authenticated only. |
+| `20260521240000_civicos_publish_citizen_realtime.sql` | Add service_requests / consents / appeals to `supabase_realtime` so /wallet/receipts updates without polling. RLS still gates each subscriber's stream. |
 
 ### Advisor posture after hardening
 

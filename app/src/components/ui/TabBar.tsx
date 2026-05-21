@@ -45,6 +45,16 @@ const tabs: Tab[] = [
     ),
   },
   {
+    href: '/wallet/receipts',
+    label: 'Receipts',
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className="h-5 w-5">
+        <path d="M5 3h11l3 3v15l-3-2-3 2-3-2-3 2-2-2V3z" />
+        <path d="M8 8h8M8 12h8M8 16h5" />
+      </svg>
+    ),
+  },
+  {
     href: '/wallet/assistant',
     label: 'Assistant',
     icon: (
@@ -59,7 +69,7 @@ const tabs: Tab[] = [
 export function TabBar({ activeTab }: TabBarProps) {
   return (
     <nav
-      className="grid grid-cols-4 bg-surface border-t border-line"
+      className="grid grid-cols-5 bg-surface border-t border-line"
       aria-label="Wallet navigation"
     >
       {tabs.map(t => {

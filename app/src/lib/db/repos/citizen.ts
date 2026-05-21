@@ -219,4 +219,27 @@ export async function listAppealsRows(opts: { originating?: string; openOnly?: b
   return data as AppealRow[];
 }
 
+/* ── Receipt timeline ──────────────────────────────────────────── */
+
+export interface ReceiptEvent {
+  at: string;
+  kind: 'service-request' | 'consent' | 'appeal' | 'work-item-step';
+  ref: string;
+  charter: string;
+  status: string;
+  detail: string;
+}
+
+/** Citizen's "show me what you have on me" unified timeline.
+ *  Joins service_requests / consents / appeals / linked work-item steps
+ *  for the signed-in citizen via the substrate's auth.uid() scope.
+ *  Returns [] when there's no auth session or no citizen profile. */
+export async function myReceiptTimelineRows(limit = 200): Promise<ReceiptEvent[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_my_receipt_timeline', { p_limit: limit });
+  if (error || !data) return [];
+  return data as ReceiptEvent[];
+}
+
 export { substrateAvailable };
