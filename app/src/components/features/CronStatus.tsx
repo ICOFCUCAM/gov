@@ -61,6 +61,13 @@ const KNOWN_CRONS = [
     expectedIntervalMin: 10,
     path: '/api/cron/audit-anchor',
   },
+  {
+    name: 'expire-consents',
+    description: 'Auto-revokes time-bound citizen consents past their expires_at, with one audit entry per expiry.',
+    sentinelStream: 'substrate.consents.expired',
+    expectedIntervalMin: 60,
+    path: '/api/cron/expire-consents',
+  },
 ];
 
 /**

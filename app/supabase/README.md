@@ -51,6 +51,7 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521220000_civicos_admin_bulk_officers.sql` | `admin_bulk_create_officers(p_rows jsonb)` — server-side bulk onboarding wrapper around `admin_create_officer`. Per-row success/failure envelope; service_role bypass for the cron / admin route context. |
 | `20260521230000_civicos_citizen_receipt_timeline.sql` | `my_receipt_timeline(p_limit)` — unified citizen-side timeline joining service_requests + consents + appeals + linked work_item_steps. Right-to-take-your-data baked into the substrate. Authenticated only. |
 | `20260521240000_civicos_publish_citizen_realtime.sql` | Add service_requests / consents / appeals to `supabase_realtime` so /wallet/receipts updates without polling. RLS still gates each subscriber's stream. |
+| `20260521250000_civicos_expire_consents.sql` | `expire_due_consents()` — auto-revokes time-bound consents past their `expires_at` with one audit entry per consent on the citizen's scope. Service-role only; paired with `/api/cron/expire-consents`. |
 
 ### Advisor posture after hardening
 
@@ -290,7 +291,8 @@ Vercel Cron (`vercel.json`):
     { "path": "/api/cron/audit-self?token=$CIVICOS_CRON_SECRET",        "schedule": "0 * * * *" },
     { "path": "/api/cron/witness-sweep?token=$CIVICOS_CRON_SECRET",     "schedule": "*/15 * * * *" },
     { "path": "/api/cron/witness-divergence?token=$CIVICOS_CRON_SECRET","schedule": "5,20,35,50 * * * *" },
-    { "path": "/api/cron/audit-anchor?token=$CIVICOS_CRON_SECRET",      "schedule": "*/10 * * * *" }
+    { "path": "/api/cron/audit-anchor?token=$CIVICOS_CRON_SECRET",      "schedule": "*/10 * * * *" },
+    { "path": "/api/cron/expire-consents?token=$CIVICOS_CRON_SECRET",   "schedule": "30 * * * *" }
 ] }
 ```
 
