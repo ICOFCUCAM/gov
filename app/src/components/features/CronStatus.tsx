@@ -23,6 +23,13 @@ const KNOWN_CRONS = [
     expectedIntervalMin: 60,
     path: '/api/cron/sla',
   },
+  {
+    name: 'posture-digest',
+    description: 'Computes per-charter posture and records a snapshot',
+    sentinelStream: null,
+    expectedIntervalMin: 30,
+    path: '/api/cron/posture-digest',
+  },
 ];
 
 /**
