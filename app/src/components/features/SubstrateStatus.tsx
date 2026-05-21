@@ -170,6 +170,22 @@ export function SubstrateStatus() {
           >
             download digest
           </button>
+          <button
+            type="button"
+            onClick={() => {
+              const header = ['table','count'];
+              const csv = [header.join(','), ...counts.map(c => `${c.table},${c.count}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-counts-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+          >
+            counts csv
+          </button>
         <button
           type="button"
           onClick={() => { void refreshCounts(); }}
