@@ -183,6 +183,18 @@ readiness/stress score, then appends a `posture_history` snapshot.
 Produces a continuous timeline on /gov/posture without needing any
 operator to manually snapshot. Recommended cadence: 30 min.
 
+### `GET|POST /api/cron/audit-self?token=…`
+Heartbeat append to the `substrate:self` audit scope on each run.
+Detail carries open work-item count + total audit entries. Gives
+the chain coverage sweep a guaranteed sample on every recent run
+and gives external monitors a liveness signal in the audit table.
+Recommended cadence: 1 h.
+
+### `GET /api/health` (public)
+Diagnostic ping with substrate reachability probe. Returns
+`{ ok, at, substrate: { configured, reachable, latency_ms } }`.
+Safe for unauthenticated monitoring systems.
+
 ## Cron recipes
 
 Vercel Cron (`vercel.json`):
@@ -190,7 +202,8 @@ Vercel Cron (`vercel.json`):
 { "crons": [
     { "path": "/api/cron/sla?token=$CIVICOS_CRON_SECRET&hours=48",   "schedule": "0 * * * *" },
     { "path": "/api/cron/substrate-metrics?token=$CIVICOS_CRON_SECRET", "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/posture-digest?token=$CIVICOS_CRON_SECRET",    "schedule": "*/30 * * * *" }
+    { "path": "/api/cron/posture-digest?token=$CIVICOS_CRON_SECRET",    "schedule": "*/30 * * * *" },
+    { "path": "/api/cron/audit-self?token=$CIVICOS_CRON_SECRET",        "schedule": "0 * * * *" }
 ] }
 ```
 
