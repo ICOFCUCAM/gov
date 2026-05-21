@@ -3,7 +3,10 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { auditTrailRows, verifyChainRow, type AuditEntry } from '@/lib/db/repos/audit';
+import {
+  auditTrailRows, verifyChainRow, recentWitnessRows,
+  type AuditEntry, type AuditWitness,
+} from '@/lib/db/repos/audit';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
@@ -16,6 +19,7 @@ import { downloadJson } from '@/lib/csv-download';
 export function AuditEntryDetail({ scope, seq }: { scope: string; seq: number }) {
   const { ready } = useIdentity();
   const [trail, setTrail] = React.useState<AuditEntry[]>([]);
+  const [witnesses, setWitnesses] = React.useState<AuditWitness[]>([]);
   const [verifying, setVerifying] = React.useState(false);
   const [intact, setIntact] = React.useState<boolean | null>(null);
   const available = substrateAvailable();
@@ -23,7 +27,10 @@ export function AuditEntryDetail({ scope, seq }: { scope: string; seq: number })
   React.useEffect(() => {
     if (!available || !ready) return;
     void auditTrailRows(scope, 200).then(setTrail);
-  }, [available, ready, scope]);
+    void recentWitnessRows({ scope, limit: 50 }).then(ws =>
+      setWitnesses(ws.filter(w => w.observedSeq === seq)),
+    );
+  }, [available, ready, scope, seq]);
 
   if (!available) {
     return <SubstrateNotConfigured title="Audit entry" />;
@@ -138,6 +145,42 @@ export function AuditEntryDetail({ scope, seq }: { scope: string; seq: number })
           ) : <p className="text-ink-muted">Latest entry — no successor yet.</p>}
         </Panel>
       </div>
+
+      <Panel
+        title="Witness attestations at this seq"
+        meta={`${witnesses.length}`}
+        bodyClass="!p-0"
+      >
+        {witnesses.length === 0 ? (
+          <p className="px-3 py-3 text-[11px] text-ink-muted">
+            No witnesses have attested seq {entry.seq} on this scope yet.{' '}
+            <Link href="/gov/witnesses" className="text-link underline">Attest →</Link>
+          </p>
+        ) : (
+          <div className="divide-y divide-line-soft">
+            {witnesses.map(w => {
+              const consistent = w.observedHash === entry.hash;
+              return (
+                <div key={w.id} className="px-3 py-1.5 text-[10px]">
+                  <div className="flex items-center gap-2">
+                    <span className="min-w-0 flex-1 truncate text-ink">{w.label}</span>
+                    <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
+                      style={{ color: consistent ? TONE.ok : TONE.alert }}>
+                      {consistent ? 'agrees' : 'divergent'}
+                    </span>
+                  </div>
+                  <div className="mt-0.5 flex items-center gap-2 font-mono text-[9px] text-ink-muted">
+                    <span>observed {w.observedHash.slice(0, 14)}…</span>
+                    {w.hasJwk ? <span style={{ color: TONE.link }}>+ jwk</span> : null}
+                    {w.hasSignature ? <span style={{ color: TONE.link }}>+ signed</span> : null}
+                    <span>· {new Date(w.at).toLocaleString()}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </Panel>
     </div>
   );
 }
