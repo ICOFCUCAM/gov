@@ -7,6 +7,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import { useSubstrateAlerts, type Alert, type AlertSeverity } from '@/components/identity/useSubstrateAlerts';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { isSeen, markSeen, clearSeen } from '@/lib/seen';
+import { getPref, setPref } from '@/lib/prefs';
 
 const sevTone: Record<AlertSeverity, string | undefined> = {
   national: TONE.alert, major: TONE.alert,
@@ -32,7 +33,9 @@ const kindIcon: Record<Alert['kind'], string> = {
 export function NotificationsCenter() {
   const { actor } = useIdentity();
   const { alerts, loading, refresh } = useSubstrateAlerts();
-  const [kindFilter, setKindFilter] = React.useState<Alert['kind'] | 'all'>('all');
+  const [kindFilter, setKindFilter] = React.useState<Alert['kind'] | 'all'>(
+    () => getPref<Alert['kind'] | 'all'>('alerts.kind', ['all','chain-broken','escalation','dispatch','work-item'] as const, 'all'));
+  React.useEffect(() => { setPref('alerts.kind', kindFilter); }, [kindFilter]);
   const available = substrateAvailable();
 
   if (!available) {
