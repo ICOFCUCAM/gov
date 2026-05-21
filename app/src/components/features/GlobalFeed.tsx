@@ -110,7 +110,23 @@ export function GlobalFeed() {
             unified · realtime
           </span>
         </div>
-        <span className="font-mono text-[10px] text-ink-muted">{items.length} entries</span>
+        <div className="flex items-center gap-2">
+          <button type="button"
+            onClick={() => {
+              const csv = ['at,kind,title,detail',
+                ...items.map(i => `${new Date(i.at).toISOString()},${i.kind},${(i.title ?? '').replace(/,/g,';')},${(i.detail ?? '').replace(/,/g,';')}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-global-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            csv
+          </button>
+          <span className="font-mono text-[10px] text-ink-muted">{items.length} entries</span>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1">
