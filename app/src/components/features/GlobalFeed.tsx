@@ -11,6 +11,7 @@ import {
 import { recentEventsRows } from '@/lib/db/repos/events';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { getPref, setPref } from '@/lib/prefs';
 
 interface FeedItem {
   id: string;
@@ -36,7 +37,9 @@ const KIND_TONE: Record<FeedItem['kind'], string | undefined> = {
 export function GlobalFeed() {
   const { ready } = useIdentity();
   const [items, setItems] = React.useState<FeedItem[]>([]);
-  const [kindFilter, setKindFilter] = React.useState<FeedItem['kind'] | 'all'>('all');
+  const [kindFilter, setKindFilter] = React.useState<FeedItem['kind'] | 'all'>(
+    () => getPref<FeedItem['kind'] | 'all'>('global.kind', ['all','work-item','directive','dispatch','escalation','federation'] as const, 'all'));
+  React.useEffect(() => { setPref('global.kind', kindFilter); }, [kindFilter]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
