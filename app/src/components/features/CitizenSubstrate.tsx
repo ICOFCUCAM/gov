@@ -15,6 +15,7 @@ import { WatchStar } from '@/components/identity/WatchStar';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { ensureCitizenLinkage, refreshIdentity } from '@/services/identity';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /**
  * CitizenSubstrate — the citizen's view of their own persistent records.
@@ -75,11 +76,7 @@ export function CitizenSubstrate() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Citizen Wallet — substrate" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Citizen Wallet — substrate" />;
   }
 
   if (!session) {

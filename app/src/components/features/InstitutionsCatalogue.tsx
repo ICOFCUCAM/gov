@@ -10,6 +10,7 @@ import type { InstitutionRow, InstitutionKind } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { getPref, getBoolPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const KINDS: (InstitutionKind | 'all')[] = ['all', 'ministry', 'branch', 'agency', 'platform', 'officer', 'citizen'];
 
@@ -52,11 +53,7 @@ export function InstitutionsCatalogue() {
   }, [active]);
 
   if (!available) {
-    return (
-      <Panel title="Institutions Catalogue" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Institutions Catalogue" />;
   }
 
   const activeRow = items.find(i => i.charter_id === active) ?? null;

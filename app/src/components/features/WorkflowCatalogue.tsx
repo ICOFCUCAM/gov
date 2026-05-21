@@ -8,6 +8,7 @@ import type { WorkflowDefinitionRow, WorkKind, ActionKey } from '@/lib/db/types'
 import { useIdentity } from '@/components/identity/useIdentity';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
 const WORK_KINDS: WorkKind[] = ['approval','case','procurement','encounter','bill','judicial','incident','permit','field','lab'];
@@ -64,11 +65,7 @@ export function WorkflowCatalogue() {
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
 
   if (!available) {
-    return (
-      <Panel title="Workflow Catalogue" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Workflow Catalogue" />;
   }
 
   const activeRow = items.find(i => i.workflow_id === active) ?? null;

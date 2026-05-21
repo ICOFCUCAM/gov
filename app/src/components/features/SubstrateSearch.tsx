@@ -7,6 +7,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import { substrateSearch, type SearchHit, type SearchHitKind } from '@/lib/db/search';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const kindTone: Record<SearchHitKind, string | undefined> = {
   'work-item': TONE.link,
@@ -56,11 +57,7 @@ export function SubstrateSearch() {
   }, [q]);
 
   if (!available) {
-    return (
-      <Panel title="Search" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Search" />;
   }
 
   const filtered = kindFilter === 'all' ? hits : hits.filter(h => h.kind === kindFilter);

@@ -16,6 +16,7 @@ import { submitServiceRequestRow, updateServiceRequestRow } from '@/lib/db/repos
 import { openWorkItemRow } from '@/lib/db/repos/work-items';
 import { TONE as TONE2 } from '@/components/features/SituationRoom';
 import { ageMinutes } from '@/lib/format';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /**
  * CitizenHome — personal landing for a signed-in citizen.
@@ -59,11 +60,7 @@ export function CitizenHome() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Wallet Home" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Wallet Home" />;
   }
   if (!session) {
     return (

@@ -10,6 +10,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { PostureBadge } from '@/components/identity/PostureBadge';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const KINDS: (InstitutionKind | 'all')[] = ['all','ministry','branch','agency','platform','officer','citizen'];
 
@@ -32,7 +33,7 @@ export function CharterList() {
   }, [available, ready]);
 
   if (!available) {
-    return <Panel title="Charters" meta="not configured" bodyClass="!p-3"><p className="text-[10px] text-ink-muted">Substrate not configured.</p></Panel>;
+    return <SubstrateNotConfigured title="Charters" />;
   }
 
   const filtered = kind === 'all' ? rows : rows.filter(r => r.kind === kind);

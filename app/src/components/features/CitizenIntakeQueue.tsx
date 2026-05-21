@@ -12,6 +12,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { getBoolPref, setPref } from '@/lib/prefs';
 import { ageMinutes } from '@/lib/format';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /**
  * CitizenIntakeQueue — the officer-side counterpart to CitizenSubstrate.
@@ -61,11 +62,7 @@ export function CitizenIntakeQueue() {
   );
 
   if (!available) {
-    return (
-      <Panel title="Citizen Intake Queue" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Citizen Intake Queue" />;
   }
 
   if (!session) {
