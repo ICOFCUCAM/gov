@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import { TONE, ACCENT, PALETTE } from '@/components/features/SituationRoom';
-import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
+import { CommandPalette, type CommandItem, type CommandSearchFn } from '@/components/ui/CommandPalette';
+import { substrateSearch } from '@/lib/db/search';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { deployableInstitutions } from '@/lib/institution/readiness';
 import { constitutionFor } from '@/lib/gov/constitution';
@@ -14,6 +15,18 @@ import { subscribe as rtSubscribe, runtimeStats, version as rtVersion } from '@/
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, orchestrationStats, version as orchVersion } from '@/services/orchestration-engine';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
+
+// Adapter from substrate search hits → CommandPalette items.
+const substrateSearchAsCommands: CommandSearchFn = async (query) => {
+  const hits = await substrateSearch(query);
+  return hits.slice(0, 24).map(h => ({
+    id: `${h.kind}:${h.id}`,
+    label: h.label,
+    hint: `${h.ref} · ${h.detail}`,
+    group: `Substrate · ${h.kind}`,
+    href: h.href,
+  }));
+};
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; key: string }[] }[] = [
   { g: 'Sovereign Command', items: [
@@ -140,7 +153,7 @@ export function CommandShell({
 
   return (
     <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]" style={{ ...PALETTE, ...(emergency ? { ['--accent' as string]: TONE.alert } : {}) }}>
-      <CommandPalette items={cmd} accent={accent} />
+      <CommandPalette items={cmd} accent={accent} searchFn={substrateSearchAsCommands} />
       {emergency ? (
         <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-1 text-[10px]"
           style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, borderBottom: `1px solid ${TONE.alert}` }}>

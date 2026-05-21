@@ -11,15 +11,22 @@ export interface CommandItem {
   href: string;
 }
 
+export type CommandSearchFn = (query: string) => Promise<CommandItem[]>;
+
 /**
  * Sovereign command palette — Cmd/Ctrl-K. Global quick-switcher across
  * surfaces, ministries and incident jumps. Keyboard-first, restrained.
+ * Accepts an optional async searchFn — when set, queries are fanned out
+ * and dynamic hits (e.g. substrate records by ref) appear inline.
  */
-export function CommandPalette({ items, accent = '#37c7d4' }: { items: CommandItem[]; accent?: string }) {
+export function CommandPalette({
+  items, accent = '#37c7d4', searchFn,
+}: { items: CommandItem[]; accent?: string; searchFn?: CommandSearchFn }) {
   const router = useRouter();
   const [open, setOpen] = React.useState(false);
   const [q, setQ] = React.useState('');
   const [sel, setSel] = React.useState(0);
+  const [dyn, setDyn] = React.useState<CommandItem[]>([]);
   const inputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -44,13 +51,25 @@ export function CommandPalette({ items, accent = '#37c7d4' }: { items: CommandIt
     }
   }, [open]);
 
+  // Dynamic substrate hits — debounced fan-out when the operator has
+  // typed at least 2 chars and a searchFn is configured.
+  React.useEffect(() => {
+    if (!searchFn || q.trim().length < 2) { setDyn([]); return; }
+    const handle = setTimeout(async () => {
+      try { setDyn(await searchFn(q.trim())); } catch { setDyn([]); }
+    }, 200);
+    return () => clearTimeout(handle);
+  }, [q, searchFn]);
+
   const filtered = React.useMemo(() => {
     const n = q.trim().toLowerCase();
-    const list = n
+    const staticMatched = n
       ? items.filter(i => `${i.label} ${i.hint ?? ''} ${i.group}`.toLowerCase().includes(n))
       : items;
-    return list.slice(0, 40);
-  }, [q, items]);
+    // Dynamic hits land first when the operator has actually typed a query.
+    const combined = n ? [...dyn, ...staticMatched] : staticMatched;
+    return combined.slice(0, 60);
+  }, [q, items, dyn]);
 
   React.useEffect(() => {
     if (sel >= filtered.length) setSel(0);
