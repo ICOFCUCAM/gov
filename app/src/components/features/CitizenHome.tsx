@@ -12,6 +12,9 @@ import type { ServiceRequestRow, ConsentRow, AppealRow, WorkItemRow } from '@/li
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchedRecords } from '@/components/features/WatchedRecords';
+import { submitServiceRequestRow, updateServiceRequestRow } from '@/lib/db/repos/citizen';
+import { openWorkItemRow } from '@/lib/db/repos/work-items';
+import { TONE as TONE2 } from '@/components/features/SituationRoom';
 
 const ageMin = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
 
@@ -189,6 +192,8 @@ export function CitizenHome() {
         </Panel>
       </div>
 
+      <QuickFile citizenId={actor.id} onSubmitted={refresh} />
+
       <WatchedRecords />
 
       <p className="text-[10px] text-ink-muted">
@@ -196,6 +201,58 @@ export function CitizenHome() {
         progress on linked work items updates live as actions are taken.
       </p>
     </div>
+  );
+}
+
+function QuickFile({ citizenId, onSubmitted }: { citizenId: string; onSubmitted: () => Promise<void> }) {
+  const [target, setTarget] = React.useState('ministry-health');
+  const [service, setService] = React.useState('birth-cert');
+  const [title, setTitle] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [info, setInfo] = React.useState<string | null>(null);
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!title.trim()) return;
+    setBusy(true); setInfo(null);
+    try {
+      const ref = `SR-${Date.now()}`;
+      const r = await submitServiceRequestRow({ ref, citizenId, targetCharterId: target.trim(), service: service.trim(), title: title.trim() });
+      if (!r) { setInfo('submit failed'); return; }
+      // Mirror the bridge from CitizenSubstrate so quick-file gets an
+      // officer-side work item too.
+      const workRef = `WI-${ref}`;
+      const wi = await openWorkItemRow({
+        ref: workRef, scope: `${target.trim()}:intake`, workflowId: 'approval',
+        kind: 'approval', title: r.title ?? `Service request · ${r.service}`,
+        currentStage: 'Submitted', priority: 'priority',
+        originatingCharterId: target.trim(), citizenId,
+        meta: { origin: 'service-request', serviceRequestRef: ref, persistent: '1' },
+      }).catch(() => null);
+      if (wi) await updateServiceRequestRow({ ref, linkedWorkItemId: wi.id });
+      setInfo(`filed · ${ref}`);
+      setTitle('');
+      await onSubmitted();
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <form onSubmit={onSubmit} className="rounded-[3px] border border-line bg-surface p-3 space-y-2 text-[11px]">
+      <div className="text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Quick file a service request</div>
+      <div className="grid grid-cols-3 gap-2">
+        <input className="rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
+               value={target} onChange={e => setTarget(e.currentTarget.value)} placeholder="target charter" required />
+        <input className="rounded-[3px] border border-line bg-bg px-2 py-1 text-[11px]"
+               value={service} onChange={e => setService(e.currentTarget.value)} placeholder="service" required />
+        <button type="submit" disabled={busy || !title.trim()}
+          className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+          {busy ? 'filing…' : 'file'}
+        </button>
+      </div>
+      <input className="w-full rounded-[3px] border border-line bg-bg px-2 py-1 text-[11px]"
+             value={title} onChange={e => setTitle(e.currentTarget.value)} placeholder="title (required)" required />
+      {info ? <p className="text-[10px]" style={{ color: TONE2.ok }}>{info}</p> : null}
+    </form>
   );
 }
 
