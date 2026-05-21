@@ -134,6 +134,7 @@ export function CitizenSubstrate() {
   }
 
   async function downloadAuditTrail() {
+    if (!actor) return;
     // Pull recent audit entries the citizen's session is entitled to see;
     // RLS clips to citizen scopes. The substrate enforces what's visible.
     const { recentAuditEntriesRows } = await import('@/lib/db/repos/audit');
