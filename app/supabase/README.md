@@ -36,6 +36,25 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521070000_civicos_hardening.sql` | Telemetry tables → Realtime; strict-identity overrides on transition/open/dispatch/directive (signed-in callers can no longer impersonate). |
 | `20260521080000_civicos_signing_keys.sql` | `officers.signing_public_key jsonb` + `register_signing_key(jwk)` for WebCrypto ECDSA. |
 | `20260521090000_civicos_officer_intake_rls.sql` | Officer-side read policies on service_requests / appeals / consents so the intake queue is populated. |
+| `20260521100000_civicos_officers_view_signing_key.sql` | Surfaces the officer signing key through the public view. |
+| `20260521110000_civicos_signed_steps_view.sql` | `civicos_signed_steps` projection for the SignatureAudit surface. |
+| `20260521120000_civicos_transition_signed_at.sql` | Optional `p_signed_at` parameter on `transition_work_item` for ECDSA flows. |
+| `20260521130000_civicos_actor_steps_view.sql` | `civicos_actor_steps` per-actor projection driving the ActivityLog. |
+| `20260521140000_civicos_telemetry_alert_escalation.sql` | Trigger: telemetry samples crossing the alert threshold auto-record an escalation. |
+| `20260521150000_civicos_stale_request_escalation.sql` | `escalate_stale_service_requests` — the SLA cron's underlying RPC. |
+| `20260521160000_civicos_rls_initplan_fix.sql` | Wrap `auth.uid()` in `(select …)` for 5 RLS policies (clears `auth_rls_initplan` perf warnings). |
+| `20260521170000_civicos_consolidated_select_policies.sql` | Merge citizen + officer SELECT policies on appeals/consents/service_requests into one; split modify per-command (clears `multiple_permissive_policies`). |
+| `20260521180000_civicos_fk_indexes.sql` | Add 8 covering indexes for foreign keys flagged by `unindexed_foreign_keys`. |
+| `20260521190000_civicos_revoke_anon_writes.sql` | Revoke EXECUTE from `anon` on 32 SECURITY DEFINER write/admin RPCs; keep `civicos_verify_audit_chain` and `civicos_current_actor` open for the Public Observatory. |
+| `20260521200000_civicos_revoke_admin_authenticated.sql` | Revoke EXECUTE from `authenticated` on the four admin/cron RPCs (catalog now matches the contract — service_role only). |
+
+### Advisor posture after hardening
+
+- **`auth_rls_initplan`** — 0 (was 5).
+- **`multiple_permissive_policies`** — 0 (was 3).
+- **`unindexed_foreign_keys`** — 0 (was 8).
+- **`anon_security_definer_function_executable`** — 2 (was 34); the remaining two are intentional: `civicos_current_actor` returns null for anon sessions, and `civicos_verify_audit_chain` is a public chain-integrity read.
+- **`authenticated_security_definer_function_executable`** — 30 (was 34); the remaining 30 are by design — they are the only way the substrate accepts writes, and each one performs its own identity check before mutating state. Revoking `authenticated` from these would break the application contract; revoking from `anon` is what closes the actual attack surface.
 
 ## Identity model
 
