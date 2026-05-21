@@ -432,4 +432,71 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     } as never);
     expect(error).not.toBeNull();
   });
+
+  /* ── Witness attestations ─────────────────────────────────────── */
+
+  it('WITNESS — recording an attestation appears in the public view', async () => {
+    const { recordWitnessAttestationRow, recentWitnessRows } = await import('./repos/audit');
+    const stamp = Date.now();
+    const myScope = `${scope}:witness:${stamp}`;
+    // Seed an audit entry under this scope so we have a real (seq, hash).
+    await appendAuditRow({ scope: myScope, actor: 'witness-test', action: 'seed', subject: 's', detail: 'd' });
+    const trail = await auditTrailRows(myScope, 5);
+    expect(trail.length).toBeGreaterThan(0);
+    const head = trail[0]!;
+
+    const w = await recordWitnessAttestationRow({
+      scope: myScope, observedSeq: head.seq, observedHash: head.hash,
+      label: `integration-${stamp}`,
+    });
+    expect(w).not.toBeNull();
+    expect(w!.observedSeq).toBe(head.seq);
+    expect(w!.observedHash).toBe(head.hash);
+
+    const list = await recentWitnessRows({ scope: myScope, limit: 10 });
+    expect(list.some(x => x.label === `integration-${stamp}`)).toBe(true);
+  });
+
+  it('WITNESS — second attestation by same label upserts in place', async () => {
+    const { recordWitnessAttestationRow, recentWitnessRows } = await import('./repos/audit');
+    const stamp = Date.now() + 1;
+    const myScope = `${scope}:witness-upsert:${stamp}`;
+    await appendAuditRow({ scope: myScope, actor: 't', action: 's', subject: 'x', detail: 'y' });
+    const trail = await auditTrailRows(myScope, 5);
+    const head = trail[0]!;
+
+    const label = `upsert-${stamp}`;
+    const a = await recordWitnessAttestationRow({
+      scope: myScope, observedSeq: head.seq, observedHash: head.hash, label,
+    });
+    const b = await recordWitnessAttestationRow({
+      scope: myScope, observedSeq: head.seq, observedHash: head.hash, label,
+    });
+    expect(a).not.toBeNull();
+    expect(b).not.toBeNull();
+    expect(a!.id).toBe(b!.id); // same row updated, not duplicated
+
+    const list = await recentWitnessRows({ scope: myScope, limit: 10 });
+    const mine = list.filter(x => x.label === label);
+    expect(mine).toHaveLength(1);
+  });
+
+  it('WITNESS — agreement check reports consistent for a freshly attested chain', async () => {
+    const { recordWitnessAttestationRow, witnessAgreementRow } = await import('./repos/audit');
+    const stamp = Date.now() + 2;
+    const myScope = `${scope}:witness-agree:${stamp}`;
+    await appendAuditRow({ scope: myScope, actor: 't', action: 's', subject: 'x', detail: 'y' });
+    const trail = await auditTrailRows(myScope, 5);
+    const head = trail[0]!;
+
+    await recordWitnessAttestationRow({
+      scope: myScope, observedSeq: head.seq, observedHash: head.hash,
+      label: `agree-${stamp}`,
+    });
+    const agreement = await witnessAgreementRow(myScope);
+    expect(agreement).not.toBeNull();
+    expect(agreement!.consistent).toBe(true);
+    expect(agreement!.attestations).toBeGreaterThan(0);
+    expect(agreement!.latestSeq).toBe(head.seq);
+  });
 });
