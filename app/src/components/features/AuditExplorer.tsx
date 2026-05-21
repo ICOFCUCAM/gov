@@ -166,7 +166,8 @@ export function AuditExplorer() {
           ) : (
             <div className="max-h-[480px] overflow-y-auto">
               {trail.map(e => (
-                <div key={e.hash} className="border-b border-line-soft px-3 py-1.5 text-[10px]">
+                <a key={e.hash} href={`/gov/audit/${encodeURIComponent(e.scope)}/${e.seq}`}
+                   className="block border-b border-line-soft px-3 py-1.5 text-[10px] hover:bg-surface-2">
                   <div className="flex items-center gap-2">
                     <span className="w-12 shrink-0 font-mono tabular-nums text-ink-muted">#{e.seq}</span>
                     <span className="w-20 shrink-0 truncate font-mono text-link">{e.action}</span>
@@ -179,7 +180,7 @@ export function AuditExplorer() {
                     <span style={{ color: TONE.link }}>hash {e.hash}</span>
                     {e.detail ? <span className="ml-2 truncate">· {e.detail}</span> : null}
                   </div>
-                </div>
+                </a>
               ))}
             </div>
           )}
@@ -221,13 +222,14 @@ export function AuditExplorer() {
         ) : (
           <div className="max-h-[320px] overflow-y-auto">
             {recent.map(e => (
-              <div key={e.hash} className="flex items-center gap-2 border-b border-line-soft px-3 py-1 text-[10px]">
+              <a key={e.hash} href={`/gov/audit/${encodeURIComponent(e.scope)}/${e.seq}`}
+                 className="flex items-center gap-2 border-b border-line-soft px-3 py-1 text-[10px] hover:bg-surface-2">
                 <span className="w-32 shrink-0 truncate font-mono text-link">{e.scope}</span>
                 <span className="w-10 shrink-0 font-mono tabular-nums text-ink-muted">#{e.seq}</span>
                 <span className="w-20 shrink-0 truncate font-mono text-ink">{e.action}</span>
                 <span className="min-w-0 flex-1 truncate text-ink">{e.subject}</span>
                 <span className="w-32 shrink-0 truncate text-right text-ink-soft">{e.actor}</span>
-              </div>
+              </a>
             ))}
           </div>
         )}
