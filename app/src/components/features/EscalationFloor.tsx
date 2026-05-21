@@ -98,6 +98,20 @@ export function EscalationFloor() {
           >
             {loading ? 'refreshing…' : 'refresh'}
           </button>
+          <button type="button"
+            onClick={() => {
+              const csv = ['id,severity,source,target,reason,triggered_by,triggered_at,acknowledged_at,resolved_at',
+                ...items.map(e => `${e.id},${e.severity},${e.source_charter_id},${e.target_charter_id ?? ''},${(e.reason ?? '').replace(/,/g,';')},${e.triggered_by_actor ?? ''},${e.triggered_at},${e.acknowledged_at ?? ''},${e.resolved_at ?? ''}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-escalations-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            csv
+          </button>
         </div>
       </div>
 
