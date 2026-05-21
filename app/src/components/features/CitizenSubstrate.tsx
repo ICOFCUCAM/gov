@@ -132,11 +132,47 @@ export function CitizenSubstrate() {
     );
   }
 
+  // Per-citizen data export — JSON blob with all rows the substrate
+  // has linked to this auth.uid(). The right-to-take-your-data baked
+  // into the surface itself.
+  const downloadMyData = () => {
+    const payload = {
+      generated_at: new Date().toISOString(),
+      citizen: {
+        id: actor.id,
+        name: actor.name,
+        email: session.user.email ?? null,
+      },
+      service_requests: requests,
+      consents: consents,
+      appeals: appeals,
+      linked_work_items: Array.from(linkedItems.values()),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `civicos-citizen-${actor.id.slice(0, 8)}-${new Date().toISOString().slice(0,10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="space-y-3">
       <div className="flex items-end justify-between gap-2">
         <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Citizen Wallet · substrate</h2>
-        <span className="font-mono text-[10px] text-ink-muted">{actor.name}</span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={downloadMyData}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+          >
+            download my data
+          </button>
+          <span className="font-mono text-[10px] text-ink-muted">{actor.name}</span>
+        </div>
       </div>
 
       <ServiceRequestsPanel citizenId={actor.id} rows={requests} onChange={refresh} linkedItems={linkedItems} />
