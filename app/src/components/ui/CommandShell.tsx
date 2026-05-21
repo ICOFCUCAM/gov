@@ -52,6 +52,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '◊', l: 'System map',         s: 'Substrate flow diagram',     href: '/gov/map',         key: 'map'         },
     { i: '⚛', l: 'Playground',         s: 'REPL for public RPC contracts', href: '/gov/playground', key: 'playground' },
     { i: '◉', l: 'Live Wall',          s: 'Composite operational picture', href: '/gov/live',      key: 'live'        },
+    { i: '⩘', l: 'Global feed',        s: 'Unified recent across all kinds', href: '/gov/global', key: 'global'      },
     { i: '◐', l: 'Substrate Status',   s: 'Counts · chain integrity',   href: '/gov/substrate',   key: 'substrate'   },
     { i: '▤', l: 'Institutions Catalogue', s: 'Federation registry',     href: '/gov/registry',    key: 'registry'    },
     { i: '◫', l: 'Charters',           s: 'Quick-jump charter list',    href: '/gov/charter',     key: 'charter'     },
