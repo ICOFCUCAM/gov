@@ -8,6 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { InstitutionRow, InstitutionKind } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { PostureBadge } from '@/components/identity/PostureBadge';
+import { getPref, setPref } from '@/lib/prefs';
 
 const KINDS: (InstitutionKind | 'all')[] = ['all','ministry','branch','agency','platform','officer','citizen'];
 
@@ -18,7 +19,10 @@ const KINDS: (InstitutionKind | 'all')[] = ['all','ministry','branch','agency','
 export function CharterList() {
   const { ready } = useIdentity();
   const [rows, setRows] = React.useState<InstitutionRow[]>([]);
-  const [kind, setKind] = React.useState<InstitutionKind | 'all'>('all');
+  const [kind, setKind] = React.useState<InstitutionKind | 'all'>(
+    () => getPref<InstitutionKind | 'all'>('charter.kind',
+      ['all','ministry','branch','agency','platform','officer','citizen'] as const, 'all'));
+  React.useEffect(() => { setPref('charter.kind', kind); }, [kind]);
   const available = substrateAvailable();
 
   React.useEffect(() => {
