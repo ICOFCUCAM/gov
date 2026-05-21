@@ -29,6 +29,14 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity', href: '/audit', key: 'aud' },
     { i: '⚖', l: 'Branches of Government', s: 'Separation of powers', href: '/gov/branches', key: 'branches' },
   ]},
+  { g: 'Substrate', items: [
+    { i: '✦', l: 'Directive Board',    s: 'Draft · sign · rescind',     href: '/gov/directives',  key: 'directives'  },
+    { i: '⇨', l: 'Dispatch Board',     s: 'Record · ack · close',       href: '/gov/dispatches',  key: 'dispatches'  },
+    { i: '!',  l: 'Escalation Floor',   s: 'Severity-tiered escalations',href: '/gov/escalations', key: 'escalations' },
+    { i: '⟐', l: 'Audit Explorer',     s: 'Hash-chained ledger',        href: '/gov/audit',       key: 'audit'       },
+    { i: '◰', l: 'Telemetry Wall',     s: 'Streams · samples · alerts', href: '/gov/telemetry',   key: 'telemetry'   },
+    { i: '⊡', l: 'Officer Registry',   s: 'Provision officers',         href: '/gov/officers',    key: 'officers'    },
+  ]},
   { g: 'Strategic Domains', items: [
     { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury', key: 'trs' },
     { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov/security', key: 'sec' },
