@@ -28,7 +28,13 @@ const kindTone: Record<SearchHitKind, string | undefined> = {
  * what each viewer sees.
  */
 export function SubstrateSearch() {
-  const [q, setQ] = React.useState('');
+  const [q, setQ] = React.useState(() => typeof window === 'undefined' ? '' : new URL(window.location.href).searchParams.get('q') ?? '');
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const url = new URL(window.location.href);
+    if (q) url.searchParams.set('q', q); else url.searchParams.delete('q');
+    if (url.toString() !== window.location.href) window.history.replaceState(null, '', url.toString());
+  }, [q]);
   const [hits, setHits] = React.useState<SearchHit[]>([]);
   const [busy, setBusy] = React.useState(false);
   const [kindFilter, setKindFilter] = React.useState<SearchHitKind | 'all'>(
