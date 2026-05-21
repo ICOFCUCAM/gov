@@ -33,8 +33,11 @@ export function CitizenIntakeQueue() {
   const [appeals, setAppeals]   = React.useState<AppealRow[]>([]);
   const [openOnly, setOpenOnly] = React.useState(true);
   const [selectedReqs, setSelectedReqs] = React.useState<Set<string>>(new Set());
+  const [selectedAppeals, setSelectedAppeals] = React.useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = React.useState(false);
   const [bulkReport, setBulkReport] = React.useState<{ ok: number; failed: number } | null>(null);
+  const [bulkAppealDecision, setBulkAppealDecision] = React.useState('upheld');
+  const [bulkAppealReason, setBulkAppealReason] = React.useState('');
   const [busyId, setBusyId] = React.useState<string | null>(null);
   const available = substrateAvailable();
 
@@ -215,14 +218,60 @@ export function CitizenIntakeQueue() {
         )}
       </Panel>
 
+      {selectedAppeals.size > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-[3px] border border-line bg-surface px-3 py-2 text-[10px]">
+          <span className="font-mono uppercase tracking-wider text-ink-muted">
+            {selectedAppeals.size} appeals selected
+          </span>
+          <select className="rounded-[3px] border border-line bg-bg px-2 py-1 text-[10px]"
+                  value={bulkAppealDecision} onChange={e => setBulkAppealDecision(e.currentTarget.value)}>
+            <option value="upheld">upheld</option>
+            <option value="rejected">rejected</option>
+            <option value="remanded">remanded</option>
+          </select>
+          <input className="min-w-[200px] flex-1 rounded-[3px] border border-line bg-bg px-2 py-1 text-[10px]"
+                 placeholder="bulk reasoning"
+                 value={bulkAppealReason} onChange={e => setBulkAppealReason(e.currentTarget.value)} />
+          <button type="button" disabled={bulkBusy || !bulkAppealReason.trim()}
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50"
+            onClick={async () => {
+              setBulkBusy(true);
+              let ok = 0, failed = 0;
+              for (const ref of selectedAppeals) {
+                try { (await decideAppealRow(ref, bulkAppealDecision, bulkAppealReason.trim(), true)) ? ok++ : failed++; }
+                catch { failed++; }
+              }
+              setBulkReport({ ok, failed });
+              setSelectedAppeals(new Set());
+              setBulkAppealReason('');
+              setBulkBusy(false);
+              await refresh();
+            }}>
+            decide all
+          </button>
+          <button type="button"
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2"
+            onClick={() => { setSelectedAppeals(new Set()); setBulkReport(null); }}>
+            clear
+          </button>
+        </div>
+      ) : null}
+
       <Panel title="Appeals" meta={`${appeals.length}`} bodyClass="!p-0">
         {appeals.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">No appeals in scope.</p>
         ) : (
           <div className="max-h-[400px] overflow-y-auto">
             {appeals.map(a => (
+              <div key={a.id} className="flex items-start gap-2 border-b border-line-soft last:border-0">
+                <input type="checkbox" className="ml-3 mt-2" aria-label={`select ${a.ref}`}
+                  checked={selectedAppeals.has(a.ref)}
+                  onChange={e => {
+                    const next = new Set(selectedAppeals);
+                    if (e.currentTarget.checked) next.add(a.ref); else next.delete(a.ref);
+                    setSelectedAppeals(next);
+                  }} />
               <AppealRowEditor
-                key={a.id}
                 appeal={a}
                 busy={busyId === a.id}
                 onDecide={async (decision, reasoning) => {
@@ -231,6 +280,7 @@ export function CitizenIntakeQueue() {
                   finally { setBusyId(null); }
                 }}
               />
+              </div>
             ))}
           </div>
         )}
