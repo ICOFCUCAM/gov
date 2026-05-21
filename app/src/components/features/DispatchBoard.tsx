@@ -12,6 +12,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
+import { getPref, setPref } from '@/lib/prefs';
 
 const statusTone = (s: string) =>
   s === 'closed' ? TONE.ok
@@ -38,6 +39,9 @@ const PRIORITIES: Priority[] = ['routine', 'priority', 'urgent', 'critical'];
 export function DispatchBoard() {
   const { actor, session, ready } = useIdentity();
   const [items, setItems] = React.useState<DispatchRow[]>([]);
+  const [priorityFilter, setPriorityFilter] = React.useState<'all'|'critical'|'urgent'|'priority'|'routine'>(
+    () => getPref('dispatch.priority', ['all','critical','urgent','priority','routine'] as const, 'all'));
+  React.useEffect(() => { setPref('dispatch.priority', priorityFilter); }, [priorityFilter]);
   const [selected, setSelected] = React.useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = React.useState(false);
   const [bulkReport, setBulkReport] = React.useState<{ ok: number; failed: number } | null>(null);
@@ -156,7 +160,21 @@ export function DispatchBoard() {
         </div>
       ) : null}
 
-      <Panel title="Dispatches" meta={`${items.length} visible`} bodyClass="!p-0">
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="text-[9px] uppercase tracking-wider text-ink-muted">priority:</span>
+        {(['all','critical','urgent','priority','routine'] as const).map(p => (
+          <button key={p} type="button" onClick={() => setPriorityFilter(p)}
+            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
+            style={{
+              borderColor: priorityFilter === p ? TONE.link : 'rgb(var(--c-line))',
+              color: priorityFilter === p ? TONE.link : 'rgb(var(--c-ink-muted))',
+            }}>
+            {p}
+          </button>
+        ))}
+      </div>
+
+      <Panel title="Dispatches" meta={`${(priorityFilter === 'all' ? items : items.filter(d => d.priority === priorityFilter)).length} visible`} bodyClass="!p-0">
         {items.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
             No dispatches visible at the current scope. Record one above
@@ -164,7 +182,7 @@ export function DispatchBoard() {
           </p>
         ) : (
           <div className="max-h-[480px] overflow-y-auto">
-            {items.map(d => (
+            {(priorityFilter === 'all' ? items : items.filter(d => d.priority === priorityFilter)).map(d => (
               <div
                 key={d.id}
                 className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]"
