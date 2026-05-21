@@ -8,6 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { OfficerRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { buildCsv, downloadCsv } from '@/lib/csv-download';
 
 /** OfficerDirectory — read-only phone book grouped by charter.
  *  Non-admin counterpart to OfficerRegistry; everyone in the visible
@@ -52,14 +53,11 @@ export function OfficerDirectory() {
         <div className="flex items-center gap-2">
           <button type="button"
             onClick={() => {
-              const csv = ['id,name,email,role,charter_id,active,linked',
-                ...filtered.map(o => `${o.id},${(o.name ?? '').replace(/,/g,';')},${o.email ?? ''},${o.role},${o.charter_id ?? ''},${o.active},${!!o.auth_user_id}`)].join('\n');
-              const blob = new Blob([csv], { type: 'text/csv' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `civicos-officers-${new Date().toISOString().slice(0,10)}.csv`;
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              const csv = buildCsv(
+                ['id','name','email','role','charter_id','active','linked'],
+                filtered.map(o => [o.id, o.name ?? '', o.email ?? '', o.role, o.charter_id ?? '', o.active, !!o.auth_user_id]),
+              );
+              downloadCsv('civicos-officers', csv);
             }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             csv
