@@ -48,10 +48,26 @@ export function OfficerDirectory() {
             read-only · by charter
           </span>
         </div>
-        <input type="search"
-               value={q} onChange={e => setQ(e.currentTarget.value)}
-               placeholder="name, email, role, charter…"
-               className="w-64 rounded-[3px] border border-line bg-bg px-3 py-1 font-mono text-[11px]" />
+        <div className="flex items-center gap-2">
+          <button type="button"
+            onClick={() => {
+              const csv = ['id,name,email,role,charter_id,active,linked',
+                ...filtered.map(o => `${o.id},${(o.name ?? '').replace(/,/g,';')},${o.email ?? ''},${o.role},${o.charter_id ?? ''},${o.active},${!!o.auth_user_id}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-officers-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            csv
+          </button>
+          <input type="search"
+                 value={q} onChange={e => setQ(e.currentTarget.value)}
+                 placeholder="name, email, role, charter…"
+                 className="w-64 rounded-[3px] border border-line bg-bg px-3 py-1 font-mono text-[11px]" />
+        </div>
       </div>
 
       {Array.from(byCharter.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([charter, list]) => (
