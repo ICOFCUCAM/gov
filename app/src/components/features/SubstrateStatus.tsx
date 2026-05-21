@@ -74,6 +74,8 @@ export function SubstrateStatus() {
       { table: 'dispatches' as const },
       { table: 'escalations' as const },
       { table: 'posture_history' as const },
+      { table: 'telemetry_streams' as const },
+      { table: 'telemetry_samples' as const },
     ], []),
     refreshCounts,
   );
