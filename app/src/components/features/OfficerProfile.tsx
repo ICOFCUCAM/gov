@@ -10,6 +10,7 @@ import { ensureSigningKey, publicSigningJwk } from '@/lib/db/webcrypto';
 import { signOut } from '@/lib/db/auth';
 import { myRecentStepsRows, type ActorStepRow } from '@/lib/db/repos/work-items';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { PostureBadge } from '@/components/identity/PostureBadge';
 
 interface OfficerSelf {
   id: string;
@@ -138,6 +139,7 @@ export function OfficerProfile() {
           >
             self · keys · session
           </span>
+          {actor?.kind === 'officer' && actor.charterId ? <PostureBadge charterId={actor.charterId} /> : null}
         </div>
         <button
           type="button"
