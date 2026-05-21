@@ -440,7 +440,7 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     const stamp = Date.now();
     const myScope = `${scope}:witness:${stamp}`;
     // Seed an audit entry under this scope so we have a real (seq, hash).
-    await appendAuditRow({ scope: myScope, actor: 'witness-test', action: 'seed', subject: 's', detail: 'd' });
+    await appendAuditRow(myScope, 'witness-test', 'seed', 's', 'd');
     const trail = await auditTrailRows(myScope, 5);
     expect(trail.length).toBeGreaterThan(0);
     const head = trail[0]!;
@@ -461,7 +461,7 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     const { recordWitnessAttestationRow, recentWitnessRows } = await import('./repos/audit');
     const stamp = Date.now() + 1;
     const myScope = `${scope}:witness-upsert:${stamp}`;
-    await appendAuditRow({ scope: myScope, actor: 't', action: 's', subject: 'x', detail: 'y' });
+    await appendAuditRow(myScope, 't', 's', 'x', 'y');
     const trail = await auditTrailRows(myScope, 5);
     const head = trail[0]!;
 
@@ -485,7 +485,7 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     const { recordWitnessAttestationRow, witnessAgreementRow } = await import('./repos/audit');
     const stamp = Date.now() + 2;
     const myScope = `${scope}:witness-agree:${stamp}`;
-    await appendAuditRow({ scope: myScope, actor: 't', action: 's', subject: 'x', detail: 'y' });
+    await appendAuditRow(myScope, 't', 's', 'x', 'y');
     const trail = await auditTrailRows(myScope, 5);
     const head = trail[0]!;
 

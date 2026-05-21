@@ -47,6 +47,13 @@ const KNOWN_CRONS = [
     expectedIntervalMin: 15,
     path: '/api/cron/witness-sweep',
   },
+  {
+    name: 'witness-divergence',
+    description: 'Tamper-detection watchdog. Escalates any witness↔chain disagreement.',
+    sentinelStream: null,
+    expectedIntervalMin: 15,
+    path: '/api/cron/witness-divergence',
+  },
 ];
 
 /**
