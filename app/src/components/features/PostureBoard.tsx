@@ -122,6 +122,28 @@ export function PostureBoard() {
         )}
       </Panel>
 
+      {latest.length > 0 ? (
+        <Panel title="Comparative stress" meta={`${latest.length} charters`} bodyClass="!p-3">
+          <div className="space-y-1">
+            {[...latest].sort((a, b) => (b.stress ?? 0) - (a.stress ?? 0)).slice(0, 12).map(r => {
+              const s = Math.max(0, Math.min(100, r.stress ?? 0));
+              return (
+                <div key={'cs:' + r.charter_id} className="flex items-center gap-2 text-[10px]">
+                  <span className="w-40 shrink-0 truncate font-mono text-link">{r.charter_id}</span>
+                  <div className="h-2 min-w-0 flex-1 rounded-[2px] bg-bg">
+                    <div className="h-full rounded-[2px]" style={{
+                      width: `${s}%`,
+                      backgroundColor: s >= 80 ? TONE.alert : s >= 50 ? TONE.warn : TONE.ok,
+                    }} />
+                  </div>
+                  <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">{s}</span>
+                </div>
+              );
+            })}
+          </div>
+        </Panel>
+      ) : null}
+
       <div className="flex flex-wrap items-center gap-1">
         <span className="text-[9px] uppercase tracking-wider text-ink-muted">filter:</span>
         {['all', ...charters].map(c => (
