@@ -9,6 +9,7 @@ import { ageMinutes } from '@/lib/format';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
 const KNOWN_CRONS = [
   {
@@ -87,15 +88,7 @@ export function CronStatus() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Cron status</h2>
-          <span
-            className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
-          >
-            derived from telemetry
-          </span>
-        </div>
+        <SurfaceHeading title="Cron status" badge="derived from telemetry" />
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => { void refresh(); }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">

@@ -12,6 +12,7 @@ import { getStringPref, getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
+import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
 const POSTURES: Posture[] = ['steady', 'elevated', 'crisis', 'national-emergency', 'recovery'];
 
@@ -70,15 +71,7 @@ export function PostureBoard() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Posture Board</h2>
-          <span
-            className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
-          >
-            append-only · realtime
-          </span>
-        </div>
+        <SurfaceHeading title="Posture Board" badge="append-only · realtime" />
         <div className="flex items-center gap-2">
           <button type="button"
             onClick={() => {
