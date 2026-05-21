@@ -44,6 +44,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⇣', l: 'Citizen Intake',     s: 'Requests · appeals from citizens', href: '/gov/intake', key: 'intake'  },
     { i: '⇶', l: 'Workflow Catalogue', s: 'Transition rules · stages',  href: '/gov/workflows',   key: 'workflows'   },
     { i: '⎈', l: 'Signature Audit',    s: 'Verify ECDSA signatures',    href: '/gov/signatures',  key: 'signatures'  },
+    { i: '⊳', l: 'Officer Workbench',  s: 'Execute on persistent items',href: '/gov/workbench',   key: 'workbench'   },
   ]},
   { g: 'Strategic Domains', items: [
     { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury', key: 'trs' },
