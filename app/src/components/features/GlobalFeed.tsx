@@ -12,6 +12,7 @@ import { recentEventsRows } from '@/lib/db/repos/events';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { getPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 interface FeedItem {
   id: string;
@@ -129,18 +130,11 @@ export function GlobalFeed() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1">
-        {(['all','work-item','directive','dispatch','escalation','federation'] as const).map(k => (
-          <button key={k} type="button" onClick={() => setKindFilter(k)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
-            style={{
-              borderColor: kindFilter === k ? TONE.link : 'rgb(var(--c-line))',
-              color: kindFilter === k ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}>
-            {k}{k !== 'all' ? ` · ${tallies[k]}` : ` · ${items.length}`}
-          </button>
-        ))}
-      </div>
+      <FilterChips
+        options={['all','work-item','directive','dispatch','escalation','federation'] as const}
+        value={kindFilter}
+        onChange={setKindFilter}
+        format={k => `${k}${k !== 'all' ? ` · ${tallies[k]}` : ` · ${items.length}`}`} />
 
       <Panel title="Recent across the substrate" meta={`${filtered.length}`} bodyClass="!p-0">
         {filtered.length === 0 ? (
