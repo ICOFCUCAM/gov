@@ -33,6 +33,7 @@ const COMMON_ROLES = [
 export function OfficerRegistry() {
   const { actor, session, ready } = useIdentity();
   const [items, setItems] = React.useState<OfficerRow[]>([]);
+  const [q, setQ] = React.useState('');
   const [composerOpen, setComposerOpen] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
   const available = substrateAvailable();
@@ -117,6 +118,10 @@ export function OfficerRegistry() {
         />
       ) : null}
 
+      <input type="search" value={q} onChange={e => setQ(e.currentTarget.value)}
+        placeholder="search name / email / role / charter…"
+        className="w-full rounded-[3px] border border-line bg-bg px-3 py-1 font-mono text-[11px]" />
+
       <Panel title="Officers" meta={`${items.length} visible`} bodyClass="!p-0">
         {items.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
@@ -124,7 +129,10 @@ export function OfficerRegistry() {
           </p>
         ) : (
           <div className="max-h-[480px] overflow-y-auto">
-            {items.map(o => (
+            {items.filter(o => {
+              const n = q.trim().toLowerCase();
+              return n === '' || `${o.name} ${o.email ?? ''} ${o.role} ${o.charter_id ?? ''}`.toLowerCase().includes(n);
+            }).map(o => (
               <div
                 key={o.id}
                 className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]"
