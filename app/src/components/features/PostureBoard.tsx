@@ -80,13 +80,29 @@ export function PostureBoard() {
             append-only · realtime
           </span>
         </div>
-        <button
-          type="button"
-          onClick={() => setComposerOpen(o => !o)}
-          className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
-        >
-          {composerOpen ? 'cancel' : '+ snapshot posture'}
-        </button>
+        <div className="flex items-center gap-2">
+          <button type="button"
+            onClick={() => {
+              const csv = ['charter_id,posture,readiness,stress,snapshot_at',
+                ...latest.map(r => `${r.charter_id},${r.posture},${r.readiness ?? ''},${r.stress ?? ''},${r.snapshot_at}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-posture-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            download csv
+          </button>
+          <button
+            type="button"
+            onClick={() => setComposerOpen(o => !o)}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+          >
+            {composerOpen ? 'cancel' : '+ snapshot posture'}
+          </button>
+        </div>
       </div>
 
       {composerOpen ? (
