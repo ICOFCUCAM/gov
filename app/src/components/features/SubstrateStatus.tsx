@@ -201,7 +201,13 @@ export function SubstrateStatus() {
 
       <p className="font-mono text-[10px] text-ink-muted">
         scope: {scopeLabel}
-        {refreshedAt ? ` · refreshed ${new Date(refreshedAt).toLocaleTimeString()}` : ''}
+        {refreshedAt ? (
+          <>
+            {' · refreshed '}
+            {new Date(refreshedAt).toLocaleTimeString()}
+            {Date.now() - refreshedAt > 60_000 ? <span className="ml-1 text-[9px]" style={{ color: TONE.warn }}>· stale</span> : null}
+          </>
+        ) : null}
       </p>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
