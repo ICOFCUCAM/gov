@@ -9,6 +9,7 @@ import type { PostureHistoryRow, Posture } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { getStringPref, getPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const POSTURES: Posture[] = ['steady', 'elevated', 'crisis', 'national-emergency', 'recovery'];
 
@@ -156,17 +157,9 @@ export function PostureBoard() {
 
       {latest.length > 0 ? (
         <Panel title="Comparative stress" meta={`${latest.length} charters · sort ${sortBy}`} bodyClass="!p-3">
-          <div className="mb-2 flex items-center gap-1">
-            {(['stress','readiness','charter'] as const).map(k => (
-              <button key={k} type="button" onClick={() => setSortBy(k)}
-                className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
-                style={{
-                  borderColor: sortBy === k ? TONE.link : 'rgb(var(--c-line))',
-                  color: sortBy === k ? TONE.link : 'rgb(var(--c-ink-muted))',
-                }}>
-                sort {k}
-              </button>
-            ))}
+          <div className="mb-2">
+            <FilterChips options={['stress','readiness','charter'] as const} value={sortBy} onChange={setSortBy}
+              format={k => `sort ${k}`} />
           </div>
           <div className="space-y-1">
             {[...latest].sort((a, b) =>
@@ -192,23 +185,7 @@ export function PostureBoard() {
         </Panel>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-ink-muted">filter:</span>
-        {['all', ...charters].map(c => (
-          <button
-            key={c}
-            type="button"
-            onClick={() => setCharterFilter(c)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-            style={{
-              borderColor: charterFilter === c ? TONE.link : 'rgb(var(--c-line))',
-              color: charterFilter === c ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}
-          >
-            {c}
-          </button>
-        ))}
-      </div>
+      <FilterChips label="filter:" options={['all', ...charters]} value={charterFilter} onChange={setCharterFilter} />
 
       {charterFilter !== 'all' && filtered.length > 0 ? (
         <Panel title={`Timeline · ${charterFilter}`} meta="readiness vs stress" bodyClass="!p-3">
