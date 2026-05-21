@@ -22,6 +22,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { publicClient, substrateAvailable, __resetClients } from './client';
 import { appendAuditRow, auditTrailRows, verifyChainRow } from './repos/audit';
 import { publishEventRow, recentEventsRows } from './repos/events';
+import { registerInstitutionRow, activateInstitutionRow, listInstitutionsRows } from './repos/institutions';
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -117,6 +118,38 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     expect(rows.length).toBeGreaterThanOrEqual(1);
     expect(rows[0]!.source).toBe('vitest.app');
     expect(rows[0]!.payload).toMatchObject({ severity: 'minor' });
+  });
+
+  it('REGISTRY — institutions persist and activate via the contract', async () => {
+    const charter = `vitest-inst-${Date.now()}`;
+    const domain = `vitest-domain-${Date.now()}`;
+    const reg = await registerInstitutionRow({
+      charterId: charter,
+      label: 'Vitest Ministry',
+      kind: 'ministry',
+      domain,
+      archetypeOrBranch: 'HEALTH',
+      meta: { instanceId: 'MIN-VITEST' },
+    });
+    expect(reg).not.toBeNull();
+    expect(reg!.activated).toBe(false);
+
+    const act = await activateInstitutionRow(charter);
+    expect(act).not.toBeNull();
+    expect(act!.activated).toBe(true);
+    expect(act!.activated_at).not.toBeNull();
+
+    // Re-register (idempotent ON CONFLICT) doesn't reset activation.
+    const reg2 = await registerInstitutionRow({
+      charterId: charter, label: 'Vitest Ministry (renamed)',
+      kind: 'ministry', domain, archetypeOrBranch: 'HEALTH',
+    });
+    expect(reg2).not.toBeNull();
+    expect(reg2!.activated).toBe(true);
+    expect(reg2!.label).toBe('Vitest Ministry (renamed)');
+
+    const rows = await listInstitutionsRows({ activated: true });
+    expect(rows.some(r => r.charter_id === charter)).toBe(true);
   });
 
   it('CONTRACT — direct INSERT to audit_entries is denied (RLS)', async () => {
