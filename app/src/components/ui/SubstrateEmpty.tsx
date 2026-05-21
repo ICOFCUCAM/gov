@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { Panel } from '@/components/features/SituationRoom';
 
 /** Consistent empty-state copy block. */
 export function SubstrateEmpty({
@@ -20,3 +21,19 @@ export function Spinner({ className = '' }: { className?: string }) {
     <span aria-hidden className={`inline-block h-3 w-3 animate-spin rounded-full border-[1.5px] border-line border-t-link ${className}`} />
   );
 }
+
+/**
+ * Standard "substrate not configured" outer panel. Used by every
+ * surface that returns early when `substrateAvailable()` is false.
+ */
+export function SubstrateNotConfigured({
+  title,
+  message = 'Substrate not configured.',
+}: { title: string; message?: string }) {
+  return (
+    <Panel title={title} meta="not configured" bodyClass="!p-3">
+      <p className="text-[10px] text-ink-muted">{message}</p>
+    </Panel>
+  );
+}
+
