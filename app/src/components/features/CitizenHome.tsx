@@ -15,8 +15,7 @@ import { WatchedRecords } from '@/components/features/WatchedRecords';
 import { submitServiceRequestRow, updateServiceRequestRow } from '@/lib/db/repos/citizen';
 import { openWorkItemRow } from '@/lib/db/repos/work-items';
 import { TONE as TONE2 } from '@/components/features/SituationRoom';
-
-const ageMin = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
+import { ageMinutes } from '@/lib/format';
 
 /**
  * CitizenHome — personal landing for a signed-in citizen.
@@ -149,7 +148,7 @@ export function CitizenHome() {
                         ⊳ {linked.current_stage}
                       </span>
                     ) : <span className="w-28 shrink-0" />}
-                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">{ageMin(r.submitted_at)}m</span>
+                    <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">{ageMinutes(r.submitted_at)}m</span>
                   </div>
                 </Link>
               );
