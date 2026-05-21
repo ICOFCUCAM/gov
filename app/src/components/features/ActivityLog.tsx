@@ -29,9 +29,24 @@ const actionTone = (a: string) =>
 export function ActivityLog() {
   const { actor, ready } = useIdentity();
   const [rows, setRows] = React.useState<ActorStepRow[]>([]);
-  const [kindFilter, setKindFilter] = React.useState<WorkKind | 'all'>('all');
-  const [signedOnly, setSignedOnly] = React.useState(false);
-  const [scope, setScope] = React.useState<'all' | 'mine' | 'charter'>('all');
+  const readPref = <T extends string>(key: string, allow: readonly T[], fallback: T): T => {
+    if (typeof window === 'undefined') return fallback;
+    const v = window.localStorage.getItem(key);
+    return (v && (allow as readonly string[]).includes(v) ? v as T : fallback);
+  };
+  const [kindFilter, setKindFilter] = React.useState<WorkKind | 'all'>(() =>
+    readPref<WorkKind | 'all'>('civicos.activity.kind', KINDS, 'all'));
+  const [signedOnly, setSignedOnly] = React.useState<boolean>(() =>
+    typeof window === 'undefined' ? false : window.localStorage.getItem('civicos.activity.signedOnly') === '1');
+  const [scope, setScope] = React.useState<'all' | 'mine' | 'charter'>(() =>
+    readPref<'all' | 'mine' | 'charter'>('civicos.activity.scope', ['all','mine','charter'], 'all'));
+
+  React.useEffect(() => {
+    if (typeof window === 'undefined') return;
+    window.localStorage.setItem('civicos.activity.kind', kindFilter);
+    window.localStorage.setItem('civicos.activity.signedOnly', signedOnly ? '1' : '0');
+    window.localStorage.setItem('civicos.activity.scope', scope);
+  }, [kindFilter, signedOnly, scope]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
