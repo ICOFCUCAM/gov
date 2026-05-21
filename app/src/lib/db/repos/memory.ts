@@ -113,6 +113,17 @@ export async function closeDispatchRow(ref: string): Promise<DispatchRow | null>
   return (data as DispatchRow) ?? null;
 }
 
+export async function listDispatchesRows(opts: { status?: string; issuer?: string; limit?: number } = {}): Promise<DispatchRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_dispatches').select('*');
+  if (opts.status) q = q.eq('status', opts.status);
+  if (opts.issuer) q = q.eq('issued_by_charter_id', opts.issuer);
+  const { data, error } = await q.order('dispatched_at', { ascending: false }).limit(opts.limit ?? 50);
+  if (error || !data) return [];
+  return data as DispatchRow[];
+}
+
 // ── Escalations ───────────────────────────────────────────────────
 
 export interface EscalationInput {
