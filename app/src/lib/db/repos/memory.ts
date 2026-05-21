@@ -57,6 +57,17 @@ export async function rescindDirectiveRow(ref: string): Promise<DirectiveRow | n
   return (data as DirectiveRow) ?? null;
 }
 
+export async function listDirectivesRows(opts: { status?: string; issuer?: string; limit?: number } = {}): Promise<DirectiveRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_directives').select('*');
+  if (opts.status) q = q.eq('status', opts.status);
+  if (opts.issuer) q = q.eq('issued_by_charter_id', opts.issuer);
+  const { data, error } = await q.order('updated_at', { ascending: false }).limit(opts.limit ?? 50);
+  if (error || !data) return [];
+  return data as DirectiveRow[];
+}
+
 // ── Dispatches ────────────────────────────────────────────────────
 
 export interface DispatchInput {
