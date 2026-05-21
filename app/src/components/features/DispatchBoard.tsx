@@ -13,6 +13,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { getPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const statusTone = (s: string) =>
   s === 'closed' ? TONE.ok
@@ -174,19 +175,10 @@ export function DispatchBoard() {
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-ink-muted">priority:</span>
-        {(['all','critical','urgent','priority','routine'] as const).map(p => (
-          <button key={p} type="button" onClick={() => setPriorityFilter(p)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
-            style={{
-              borderColor: priorityFilter === p ? TONE.link : 'rgb(var(--c-line))',
-              color: priorityFilter === p ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}>
-            {p}
-          </button>
-        ))}
-      </div>
+      <FilterChips label="priority:"
+        options={['all','critical','urgent','priority','routine'] as const}
+        value={priorityFilter}
+        onChange={setPriorityFilter} />
 
       <Panel title="Dispatches" meta={`${(priorityFilter === 'all' ? items : items.filter(d => d.priority === priorityFilter)).length} visible`} bodyClass="!p-0">
         {items.length === 0 ? (
