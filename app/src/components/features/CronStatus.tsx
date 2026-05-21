@@ -30,6 +30,13 @@ const KNOWN_CRONS = [
     expectedIntervalMin: 30,
     path: '/api/cron/posture-digest',
   },
+  {
+    name: 'audit-self',
+    description: 'Heartbeat audit entry on substrate:self scope',
+    sentinelStream: null,
+    expectedIntervalMin: 60,
+    path: '/api/cron/audit-self',
+  },
 ];
 
 /**
