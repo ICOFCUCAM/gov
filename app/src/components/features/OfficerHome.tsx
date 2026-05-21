@@ -15,6 +15,7 @@ import { WatchedRecords } from '@/components/features/WatchedRecords';
 import { PostureBadge } from '@/components/identity/PostureBadge';
 import { LiveActivityStrip } from '@/components/identity/LiveActivityStrip';
 import { ConstitutionalStrip } from '@/components/identity/ConstitutionalStrip';
+import { myRecentStepsRows, type ActorStepRow } from '@/lib/db/repos/work-items';
 
 const priorityTone = (p: string) =>
   p === 'critical' || p === 'urgent' ? TONE.alert
@@ -45,6 +46,7 @@ export function OfficerHome() {
   const [appeals, setAppeals] = React.useState<AppealRow[]>([]);
   const [dispatches, setDispatches] = React.useState<DispatchRow[]>([]);
   const [escalations, setEscalations] = React.useState<EscalationRow[]>([]);
+  const [mySteps, setMySteps] = React.useState<ActorStepRow[]>([]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -65,6 +67,11 @@ export function OfficerHome() {
     setAppeals(ap.slice(0, 10));
     setDispatches(dsp.filter(d => !d.closed_at).slice(0, 10));
     setEscalations(esc.slice(0, 10));
+    if (actor?.kind === 'officer') {
+      setMySteps(await myRecentStepsRows(actor.id, 8));
+    } else {
+      setMySteps([]);
+    }
   }, [available, actor?.id, actor?.kind, actor?.charterId]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, actor?.id, session?.user.id, refresh]);
@@ -233,6 +240,33 @@ export function OfficerHome() {
           )}
         </Panel>
       </div>
+
+      {mySteps.length > 0 ? (
+        <Panel title="My recent activity" meta={`${mySteps.length}`} bodyClass="!p-0">
+          <div className="max-h-[200px] overflow-y-auto">
+            {mySteps.map(s => (
+              <Link key={s.id} href={`/gov/items/${encodeURIComponent(s.work_item_ref)}`}
+                className="block border-b border-line-soft px-3 py-1 last:border-0 text-[10px] hover:bg-surface-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-14 shrink-0 font-mono tabular-nums text-ink-muted">
+                    {new Date(s.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span className="w-16 shrink-0 truncate font-mono"
+                    style={{ color: s.action === 'approve' || s.action === 'resolve' ? TONE.ok
+                                  : s.action === 'reject' ? TONE.alert
+                                  : s.action === 'escalate' ? TONE.warn : TONE.link }}>
+                    {s.action}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-ink">{s.work_item_title}</span>
+                  <span className="w-24 shrink-0 truncate text-right font-mono text-ink-soft">
+                    {s.from_stage ?? '—'} → {s.to_stage}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
 
       <WatchedRecords />
     </div>
