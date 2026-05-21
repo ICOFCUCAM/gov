@@ -8,6 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { PostureHistoryRow, Posture } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { getStringPref, setPref } from '@/lib/prefs';
 
 const POSTURES: Posture[] = ['steady', 'elevated', 'crisis', 'national-emergency', 'recovery'];
 
@@ -30,7 +31,8 @@ export function PostureBoard() {
   const { actor, session, ready } = useIdentity();
   const [rows, setRows] = React.useState<PostureHistoryRow[]>([]);
   const [composerOpen, setComposerOpen] = React.useState(false);
-  const [charterFilter, setCharterFilter] = React.useState<string>('all');
+  const [charterFilter, setCharterFilter] = React.useState<string>(() => getStringPref('posture.charter', 'all'));
+  React.useEffect(() => { setPref('posture.charter', charterFilter); }, [charterFilter]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
