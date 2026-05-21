@@ -10,7 +10,8 @@ import {
 } from '@/lib/db/auth';
 import { ensureCitizenLinkage, refreshIdentity } from '@/services/identity';
 import { substrateAvailable } from '@/lib/db/client';
-import { linkOfficerByEmail } from '@/lib/db/repos/identity';
+import { linkOfficerByEmail, registerSigningKeyRow } from '@/lib/db/repos/identity';
+import { publicSigningJwk } from '@/lib/db/webcrypto';
 
 type Mode = 'sign-in' | 'sign-up';
 
@@ -47,7 +48,16 @@ export function SignInForm() {
       // Best-effort: if an officer record matches this email, link it.
       // Otherwise auto-provision as a citizen.
       const officer = await linkOfficerByEmail(email);
-      if (!officer) await ensureCitizenLinkage();
+      if (officer) {
+        // Officer signed in — ensure a device signing key exists and
+        // register the public JWK so transitions can be cryptographically
+        // signed. Best-effort; transitions fall back to a tamper digest
+        // if registration fails or WebCrypto is unavailable.
+        const jwk = await publicSigningJwk();
+        if (jwk) await registerSigningKeyRow(jwk);
+      } else {
+        await ensureCitizenLinkage();
+      }
       await refreshIdentity();
       router.push(safeNext);
     } finally {

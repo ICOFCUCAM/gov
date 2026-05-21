@@ -160,18 +160,20 @@ export function actOnItem(scope: string, itemId: string, action: ActionKey, by: 
     const a = resolvedActor();
     const actorId = a?.kind === 'officer' ? a.id : null;
     const wantsSig = SIGNATURE_ACTIONS.has(action) && actorId != null;
-    const sig = wantsSig
-      ? transitionSignature({ actorId, scope, ref: itemId, action, at: last.at })
-      : null;
-    void transitionWorkItemRow({
-      ref: itemId, action,
-      actorName: a?.name ?? by,
-      actorId,
-      actorRole: a?.role ?? null,
-      detail: `${last.from} → ${last.to}`,
-      requiresSignature: !!sig,
-      signatureHash: sig?.hash ?? null,
-    }).catch(() => { /* best-effort */ });
+    void (async () => {
+      const sig = wantsSig
+        ? await transitionSignature({ actorId, scope, ref: itemId, action, at: last.at })
+        : null;
+      await transitionWorkItemRow({
+        ref: itemId, action,
+        actorName: a?.name ?? by,
+        actorId,
+        actorRole: a?.role ?? null,
+        detail: `${last.from} → ${last.to}`,
+        requiresSignature: !!sig,
+        signatureHash: sig?.hash ?? null,
+      });
+    })().catch(() => { /* best-effort */ });
   }
 }
 

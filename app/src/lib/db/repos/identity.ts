@@ -59,6 +59,18 @@ export async function claimCitizen(input: ClaimCitizenInput = {}): Promise<Citiz
   return (data as CitizenRow) ?? null;
 }
 
+export async function registerSigningKeyRow(jwk: JsonWebKey): Promise<OfficerRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_register_signing_key', { p_jwk: jwk });
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.error('[civicos] register_signing_key failed:', error.message);
+    return null;
+  }
+  return (data as OfficerRow) ?? null;
+}
+
 export async function linkOfficerByEmail(email: string): Promise<OfficerRow | null> {
   const sb = publicClient();
   if (!sb) return null;
