@@ -145,7 +145,24 @@ export function OfficerRegistry() {
                 >
                   {o.active ? 'active' : 'inactive'}
                 </span>
-                <div className="flex w-24 shrink-0 justify-end">
+                <div className="flex w-44 shrink-0 justify-end gap-1">
+                  {!o.auth_user_id && o.email ? (
+                    <button
+                      type="button"
+                      className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink"
+                      onClick={() => {
+                        const url = `${window.location.origin}/sign-in?email=${encodeURIComponent(o.email ?? '')}&mode=sign-up&from=/gov/me`;
+                        if (typeof navigator !== 'undefined' && navigator.clipboard) {
+                          void navigator.clipboard.writeText(url);
+                          alert('Onboarding link copied to clipboard.');
+                        } else {
+                          window.prompt('Onboarding link', url);
+                        }
+                      }}
+                    >
+                      copy invite
+                    </button>
+                  ) : null}
                   {isPlatform && o.active ? (
                     <button
                       type="button"
