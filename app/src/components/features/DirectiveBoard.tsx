@@ -15,6 +15,7 @@ import { WatchStar } from '@/components/identity/WatchStar';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { buildCsv, downloadCsv } from '@/lib/csv-download';
 
 const statusTone = (s: string) =>
   s === 'effective' ? TONE.ok
@@ -101,14 +102,11 @@ export function DirectiveBoard() {
           </button>
           <button type="button"
             onClick={() => {
-              const csv = ['ref,kind,issuer,status,title,signed_at,rescinded_at',
-                ...items.map(d => `${d.ref},${d.kind},${d.issued_by_charter_id},${d.status},${(d.title ?? '').replace(/,/g,';')},${d.signed_at ?? ''},${d.rescinded_at ?? ''}`)].join('\n');
-              const blob = new Blob([csv], { type: 'text/csv' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `civicos-directives-${new Date().toISOString().slice(0,10)}.csv`;
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              const csv = buildCsv(
+                ['ref','kind','issuer','status','title','signed_at','rescinded_at'],
+                items.map(d => [d.ref, d.kind, d.issued_by_charter_id, d.status, d.title ?? '', d.signed_at ?? '', d.rescinded_at ?? '']),
+              );
+              downloadCsv('civicos-directives', csv);
             }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             csv
