@@ -3,6 +3,7 @@
 import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { recordPostureRow, listPostureHistoryRows } from '@/lib/db/repos/memory';
+import { PostureTimeline } from '@/components/features/PostureTimeline';
 import { substrateAvailable } from '@/lib/db/client';
 import type { PostureHistoryRow, Posture } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -138,6 +139,12 @@ export function PostureBoard() {
           </button>
         ))}
       </div>
+
+      {charterFilter !== 'all' && filtered.length > 0 ? (
+        <Panel title={`Timeline · ${charterFilter}`} meta="readiness vs stress" bodyClass="!p-3">
+          <PostureTimeline rows={filtered} />
+        </Panel>
+      ) : null}
 
       <Panel title="Snapshots" meta={`${filtered.length}`} bodyClass="!p-0">
         {filtered.length === 0 ? (

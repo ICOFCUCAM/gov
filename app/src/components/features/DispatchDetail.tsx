@@ -10,6 +10,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { DispatchRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { WatchStar } from '@/components/identity/WatchStar';
 
 const statusTone = (s: string) =>
   s === 'closed' ? TONE.ok
@@ -68,6 +69,7 @@ export function DispatchDetail({ ref: dispatchRef }: { ref: string }) {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{row.detail ?? row.kind}</h2>
+          <WatchStar kind="dispatch" ref={row.ref} label={row.detail ?? row.kind} />
           <span
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: priorityTone(row.priority), color: priorityTone(row.priority) }}

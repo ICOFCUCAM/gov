@@ -37,6 +37,9 @@ const PRIORITIES: Priority[] = ['routine', 'priority', 'urgent', 'critical'];
 export function DispatchBoard() {
   const { actor, session, ready } = useIdentity();
   const [items, setItems] = React.useState<DispatchRow[]>([]);
+  const [selected, setSelected] = React.useState<Set<string>>(new Set());
+  const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [bulkReport, setBulkReport] = React.useState<{ ok: number; failed: number } | null>(null);
   const [loading, setLoading] = React.useState(false);
   const [composerOpen, setComposerOpen] = React.useState(false);
   const [busyRef, setBusyRef] = React.useState<string | null>(null);
@@ -111,6 +114,47 @@ export function DispatchBoard() {
         />
       ) : null}
 
+      {selected.size > 0 ? (
+        <div className="flex flex-wrap items-center gap-2 rounded-[3px] border border-line bg-surface px-3 py-2 text-[10px]">
+          <span className="font-mono uppercase tracking-wider text-ink-muted">
+            {selected.size} selected
+          </span>
+          <span className="text-ink-muted">·</span>
+          <button type="button" disabled={bulkBusy}
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50"
+            onClick={async () => {
+              setBulkBusy(true);
+              let ok = 0, failed = 0;
+              for (const d of items.filter(x => selected.has(x.ref) && x.status === 'dispatched')) {
+                try { (await acknowledgeDispatchRow(d.ref)) ? ok++ : failed++; } catch { failed++; }
+              }
+              setBulkReport({ ok, failed }); setSelected(new Set()); setBulkBusy(false);
+              await refresh();
+            }}>
+            bulk ack
+          </button>
+          <button type="button" disabled={bulkBusy}
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50"
+            onClick={async () => {
+              setBulkBusy(true);
+              let ok = 0, failed = 0;
+              for (const d of items.filter(x => selected.has(x.ref) && x.status !== 'closed')) {
+                try { (await closeDispatchRow(d.ref)) ? ok++ : failed++; } catch { failed++; }
+              }
+              setBulkReport({ ok, failed }); setSelected(new Set()); setBulkBusy(false);
+              await refresh();
+            }}>
+            bulk close
+          </button>
+          <button type="button"
+            className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2"
+            onClick={() => { setSelected(new Set()); setBulkReport(null); }}>
+            clear
+          </button>
+          {bulkReport ? <span className="font-mono text-ink-muted">· last: {bulkReport.ok} ok / {bulkReport.failed} failed</span> : null}
+        </div>
+      ) : null}
+
       <Panel title="Dispatches" meta={`${items.length} visible`} bodyClass="!p-0">
         {items.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
@@ -124,6 +168,13 @@ export function DispatchBoard() {
                 key={d.id}
                 className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]"
               >
+                <input type="checkbox" aria-label={`select ${d.ref}`}
+                  checked={selected.has(d.ref)}
+                  onChange={e => {
+                    const next = new Set(selected);
+                    if (e.currentTarget.checked) next.add(d.ref); else next.delete(d.ref);
+                    setSelected(next);
+                  }} />
                 <a href={`/gov/dispatches/${encodeURIComponent(d.ref)}`}
                    className="w-28 shrink-0 truncate font-mono text-ink-soft hover:text-link hover:underline">
                   {d.ref}

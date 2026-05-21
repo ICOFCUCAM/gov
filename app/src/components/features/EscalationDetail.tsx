@@ -11,6 +11,7 @@ import type { EscalationRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
+import { WatchStar } from '@/components/identity/WatchStar';
 
 const severityTone = (s: string) =>
   s === 'national' || s === 'major' ? TONE.alert
@@ -65,6 +66,7 @@ export function EscalationDetail({ id }: { id: string }) {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Escalation</h2>
+          <WatchStar kind="escalation" ref={row.id} label={row.reason} />
           <span
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: severityTone(row.severity), color: severityTone(row.severity) }}
