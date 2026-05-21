@@ -102,6 +102,21 @@ export function WorkflowDiff() {
         ))}
       </div>
 
+      {entries.length > 0 ? (
+        <div className="grid grid-cols-3 gap-2">
+          {(['added','removed','changed'] as const).map(k => {
+            const n = entries.filter(e => e.kind === k).length;
+            const t = k === 'added' ? TONE.ok : k === 'removed' ? TONE.alert : TONE.warn;
+            return (
+              <div key={k} className="rounded-[3px] border border-line bg-surface px-3 py-2">
+                <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{k}</div>
+                <div className="font-mono text-[15px] tabular-nums" style={{ color: t }}>{n}</div>
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+
       <Panel title="Differences" meta={`${entries.length} change${entries.length === 1 ? '' : 's'}`} bodyClass="!p-0">
         {entries.length === 0 ? (
           <p className="px-3 py-4 text-[11px]" style={{ color: TONE.ok }}>
