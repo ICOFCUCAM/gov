@@ -13,6 +13,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { useSubstrateAlerts } from '@/components/identity/useSubstrateAlerts';
 import { WatchedRecords } from '@/components/features/WatchedRecords';
 import { PostureBadge } from '@/components/identity/PostureBadge';
+import { LiveActivityStrip } from '@/components/identity/LiveActivityStrip';
 
 const priorityTone = (p: string) =>
   p === 'critical' || p === 'urgent' ? TONE.alert
@@ -133,6 +134,8 @@ export function OfficerHome() {
         <Tile label="Open dispatches" value={String(dispatches.length)} href="/gov/dispatches" tone={dispatches.length > 0 ? TONE.warn : TONE.ok} />
         <Tile label="Open escalations" value={String(escalations.length)} href="/gov/escalations" tone={escalations.length > 0 ? TONE.alert : TONE.ok} />
       </div>
+
+      <LiveActivityStrip />
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <Panel title="My work queue" meta={`${assigned.length}`} bodyClass="!p-0">
