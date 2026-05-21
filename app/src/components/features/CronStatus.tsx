@@ -5,6 +5,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { listTelemetryStreamsRows, recentTelemetrySamplesRows } from '@/lib/db/repos/telemetry';
 import { substrateAvailable } from '@/lib/db/client';
 import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
+import { ageMinutes } from '@/lib/format';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 
@@ -82,7 +83,7 @@ export function CronStatus() {
   function staleness(samples: TelemetrySampleRow[] | undefined, expectedMin: number): { lastAt: number | null; ageMin: number | null; stale: boolean } {
     if (!samples || samples.length === 0) return { lastAt: null, ageMin: null, stale: true };
     const lastAt = new Date(samples[0]!.ts).getTime();
-    const ageMin = Math.floor((Date.now() - lastAt) / 60_000);
+    const ageMin = ageMinutes(lastAt);
     return { lastAt, ageMin, stale: ageMin > expectedMin * 2 };
   }
 
