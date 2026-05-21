@@ -8,6 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { WorkKind } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { getPref, getBoolPref, setPref } from '@/lib/prefs';
 
 const KINDS: (WorkKind | 'all')[] = ['all','approval','case','procurement','encounter','bill','judicial','incident','permit','field','lab'];
 
@@ -29,23 +30,16 @@ const actionTone = (a: string) =>
 export function ActivityLog() {
   const { actor, ready } = useIdentity();
   const [rows, setRows] = React.useState<ActorStepRow[]>([]);
-  const readPref = <T extends string>(key: string, allow: readonly T[], fallback: T): T => {
-    if (typeof window === 'undefined') return fallback;
-    const v = window.localStorage.getItem(key);
-    return (v && (allow as readonly string[]).includes(v) ? v as T : fallback);
-  };
   const [kindFilter, setKindFilter] = React.useState<WorkKind | 'all'>(() =>
-    readPref<WorkKind | 'all'>('civicos.activity.kind', KINDS, 'all'));
-  const [signedOnly, setSignedOnly] = React.useState<boolean>(() =>
-    typeof window === 'undefined' ? false : window.localStorage.getItem('civicos.activity.signedOnly') === '1');
+    getPref<WorkKind | 'all'>('activity.kind', KINDS, 'all'));
+  const [signedOnly, setSignedOnly] = React.useState<boolean>(() => getBoolPref('activity.signedOnly', false));
   const [scope, setScope] = React.useState<'all' | 'mine' | 'charter'>(() =>
-    readPref<'all' | 'mine' | 'charter'>('civicos.activity.scope', ['all','mine','charter'], 'all'));
+    getPref<'all' | 'mine' | 'charter'>('activity.scope', ['all','mine','charter'] as const, 'all'));
 
   React.useEffect(() => {
-    if (typeof window === 'undefined') return;
-    window.localStorage.setItem('civicos.activity.kind', kindFilter);
-    window.localStorage.setItem('civicos.activity.signedOnly', signedOnly ? '1' : '0');
-    window.localStorage.setItem('civicos.activity.scope', scope);
+    setPref('activity.kind', kindFilter);
+    setPref('activity.signedOnly', signedOnly);
+    setPref('activity.scope', scope);
   }, [kindFilter, signedOnly, scope]);
   const available = substrateAvailable();
 
