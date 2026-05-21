@@ -12,6 +12,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
+import { getPref, getBoolPref, setPref } from '@/lib/prefs';
 
 const severityTone = (s: string) =>
   s === 'national' ? TONE.alert
@@ -30,7 +31,11 @@ export function EscalationFloor() {
   const [loading, setLoading] = React.useState(false);
   const [composerOpen, setComposerOpen] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
-  const [openOnly, setOpenOnly] = React.useState(false);
+  const [openOnly, setOpenOnly] = React.useState(() => getBoolPref('escalation.openOnly', false));
+  React.useEffect(() => { setPref('escalation.openOnly', openOnly); }, [openOnly]);
+  const [severityFilter, setSeverityFilter] = React.useState<'all'|'national'|'major'|'minor'|'watch'>(
+    () => getPref('escalation.severity', ['all','national','major','minor','watch'] as const, 'all'));
+  React.useEffect(() => { setPref('escalation.severity', severityFilter); }, [severityFilter]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -143,14 +148,28 @@ export function EscalationFloor() {
         </div>
       ) : null}
 
-      <Panel title="Escalations" meta={`${items.length} visible`} bodyClass="!p-0">
+      <div className="flex flex-wrap items-center gap-1">
+        <span className="text-[9px] uppercase tracking-wider text-ink-muted">severity:</span>
+        {(['all','national','major','minor','watch'] as const).map(s => (
+          <button key={s} type="button" onClick={() => setSeverityFilter(s)}
+            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider"
+            style={{
+              borderColor: severityFilter === s ? TONE.link : 'rgb(var(--c-line))',
+              color: severityFilter === s ? TONE.link : 'rgb(var(--c-ink-muted))',
+            }}>
+            {s}
+          </button>
+        ))}
+      </div>
+
+      <Panel title="Escalations" meta={`${(severityFilter === 'all' ? items : items.filter(e => e.severity === severityFilter)).length} visible`} bodyClass="!p-0">
         {items.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
             No escalations visible at the current scope.
           </p>
         ) : (
           <div className="max-h-[480px] overflow-y-auto">
-            {items.map(e => (
+            {(severityFilter === 'all' ? items : items.filter(e => e.severity === severityFilter)).map(e => (
               <div
                 key={e.id}
                 className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]"
