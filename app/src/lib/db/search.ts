@@ -84,10 +84,12 @@ export async function substrateSearch(query: string): Promise<SearchHit[]> {
       at: new Date(r.filed_at).getTime() })),
     ...ins.map(r => ({ kind: 'institution' as const, id: r.id, ref: r.charter_id,
       label: r.label, detail: `${r.kind} · ${r.domain}`,
-      href: '/gov/registry', at: new Date(r.created_at).getTime() })),
+      href: `/gov/charter/${encodeURIComponent(r.charter_id)}`,
+      at: new Date(r.created_at).getTime() })),
     ...off.map(r => ({ kind: 'officer' as const, id: r.id, ref: r.email ?? r.id,
       label: r.name, detail: `${r.role}${r.charter_id ? ' · ' + r.charter_id : ''}`,
-      href: '/gov/officers', at: new Date(r.created_at).getTime() })),
+      href: `/gov/officers/${encodeURIComponent(r.id)}`,
+      at: new Date(r.created_at).getTime() })),
   ];
 
   hits.sort((a, b) => b.at - a.at);

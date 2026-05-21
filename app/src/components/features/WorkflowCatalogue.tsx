@@ -80,15 +80,21 @@ export function WorkflowCatalogue() {
             substrate-authoritative
           </span>
         </div>
-        {isPlatform ? (
-          <button
-            type="button"
-            onClick={() => setEditing(e => !e)}
-            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
-          >
-            {editing ? 'cancel new' : '+ new workflow'}
-          </button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          <a href="/gov/workflows/simulator"
+             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            simulator
+          </a>
+          {isPlatform ? (
+            <button
+              type="button"
+              onClick={() => setEditing(e => !e)}
+              className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+            >
+              {editing ? 'cancel new' : '+ new workflow'}
+            </button>
+          ) : null}
+        </div>
       </div>
 
       {editing && isPlatform ? (

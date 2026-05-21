@@ -156,6 +156,10 @@ export function InstitutionsCatalogue() {
                   safeguards: {activeRow.safeguards_constant}
                 </div>
               ) : null}
+              <a href={`/gov/charter/${encodeURIComponent(activeRow.charter_id)}`}
+                className="inline-block focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2">
+                open charter detail →
+              </a>
             </Panel>
           ) : (
             <Panel title="Selected institution" meta="" bodyClass="!p-3">

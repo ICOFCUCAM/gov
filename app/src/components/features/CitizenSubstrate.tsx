@@ -11,6 +11,7 @@ import { openWorkItemRow, workItemsByIds } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { ServiceRequestRow, ConsentRow, AppealRow, WorkItemRow } from '@/lib/db/types';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { WatchStar } from '@/components/identity/WatchStar';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { ensureCitizenLinkage, refreshIdentity } from '@/services/identity';
 

@@ -1,0 +1,141 @@
+'use client';
+
+import * as React from 'react';
+import { TONE, Panel } from '@/components/features/SituationRoom';
+import { listTelemetryStreamsRows, recentTelemetrySamplesRows } from '@/lib/db/repos/telemetry';
+import { substrateAvailable } from '@/lib/db/client';
+import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
+import { useIdentity } from '@/components/identity/useIdentity';
+import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+
+const KNOWN_CRONS = [
+  {
+    name: 'substrate-metrics',
+    description: 'Defines substrate.* streams and appends a sample per metric',
+    sentinelStream: 'substrate.work_items.open',
+    expectedIntervalMin: 10,
+    path: '/api/cron/substrate-metrics',
+  },
+  {
+    name: 'sla',
+    description: 'Sweeps stale service requests and escalates them',
+    sentinelStream: null, // no per-run telemetry yet; status derived from escalations
+    expectedIntervalMin: 60,
+    path: '/api/cron/sla',
+  },
+];
+
+/**
+ * CronStatus — derive last-run timing for each scheduled worker.
+ * substrate-metrics emits its own telemetry samples, so the most
+ * recent sample timestamp on substrate.work_items.open is a proxy
+ * for "when did the cron last fire". SLA worker doesn't emit
+ * telemetry per run today; surfaced as "no telemetry signal".
+ */
+export function CronStatus() {
+  const { ready } = useIdentity();
+  const [streams, setStreams] = React.useState<TelemetryStreamRow[]>([]);
+  const [samples, setSamples] = React.useState<Map<string, TelemetrySampleRow[]>>(new Map());
+  const available = substrateAvailable();
+
+  const refresh = React.useCallback(async () => {
+    if (!available) return;
+    const all = await listTelemetryStreamsRows({ activeOnly: true, limit: 50 });
+    setStreams(all);
+    const wanted = KNOWN_CRONS.map(c => c.sentinelStream).filter((x): x is string => !!x);
+    const map = new Map<string, TelemetrySampleRow[]>();
+    await Promise.all(wanted.map(async id => {
+      map.set(id, await recentTelemetrySamplesRows(id, 5));
+    }));
+    setSamples(map);
+  }, [available]);
+
+  React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
+
+  useRealtimeRefresh(
+    React.useMemo(() => [{ table: 'telemetry_samples' as const }], []),
+    refresh,
+  );
+
+  if (!available) {
+    return (
+      <Panel title="Cron status" meta="not configured" bodyClass="!p-3">
+        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
+      </Panel>
+    );
+  }
+
+  function staleness(samples: TelemetrySampleRow[] | undefined, expectedMin: number): { lastAt: number | null; ageMin: number | null; stale: boolean } {
+    if (!samples || samples.length === 0) return { lastAt: null, ageMin: null, stale: true };
+    const lastAt = new Date(samples[0]!.ts).getTime();
+    const ageMin = Math.floor((Date.now() - lastAt) / 60_000);
+    return { lastAt, ageMin, stale: ageMin > expectedMin * 2 };
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Cron status</h2>
+          <span
+            className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
+            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
+          >
+            derived from telemetry
+          </span>
+        </div>
+        <span className="font-mono text-[10px] text-ink-muted">
+          {streams.filter(s => s.stream_id.startsWith('substrate.')).length} substrate streams
+        </span>
+      </div>
+
+      <Panel title="Scheduled workers" meta={`${KNOWN_CRONS.length}`} bodyClass="!p-0">
+        {KNOWN_CRONS.map(c => {
+          const stat = c.sentinelStream ? staleness(samples.get(c.sentinelStream), c.expectedIntervalMin) : { lastAt: null, ageMin: null, stale: true };
+          const tone = stat.stale ? TONE.alert : TONE.ok;
+          return (
+            <div key={c.name} className="border-b border-line-soft px-3 py-2 last:border-0 text-[10px]">
+              <div className="flex items-center gap-2">
+                <span className="w-32 shrink-0 truncate font-mono text-link">{c.name}</span>
+                <span className="min-w-0 flex-1 truncate text-ink">{c.description}</span>
+                <span className="w-32 shrink-0 truncate text-right font-mono text-ink-muted">{c.path}</span>
+                <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider" style={{ color: tone }}>
+                  {c.sentinelStream ? (stat.stale ? 'stale' : 'live') : 'no signal'}
+                </span>
+              </div>
+              <div className="mt-0.5 flex items-center gap-2 font-mono text-[9px] text-ink-muted">
+                <span>expected every {c.expectedIntervalMin}m</span>
+                {stat.lastAt ? (
+                  <>
+                    <span>· last ran {stat.ageMin}m ago</span>
+                    <span>· {new Date(stat.lastAt).toLocaleString()}</span>
+                  </>
+                ) : <span>· no sample seen on sentinel stream</span>}
+              </div>
+            </div>
+          );
+        })}
+      </Panel>
+
+      <Panel title="Substrate self-metrics streams" meta={`${streams.filter(s => s.stream_id.startsWith('substrate.')).length}`} bodyClass="!p-0">
+        {streams.filter(s => s.stream_id.startsWith('substrate.')).map(s => (
+          <div key={s.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+            <span className="w-44 shrink-0 truncate font-mono text-link">{s.stream_id}</span>
+            <span className="min-w-0 flex-1 truncate text-ink">{s.label}</span>
+            <span className="w-16 shrink-0 text-right font-mono tabular-nums text-ink-muted">
+              {s.warn_threshold != null ? `w${s.warn_threshold}` : ''}
+            </span>
+            <span className="w-16 shrink-0 text-right font-mono tabular-nums text-ink-muted">
+              {s.alert_threshold != null ? `a${s.alert_threshold}` : ''}
+            </span>
+          </div>
+        ))}
+      </Panel>
+
+      <p className="text-[10px] text-ink-muted">
+        Cron secret: <span className="font-mono">CIVICOS_CRON_SECRET</span> env
+        var. Recipes for Vercel Cron / Supabase pg_cron in supabase/README.md.
+      </p>
+    </div>
+  );
+}
