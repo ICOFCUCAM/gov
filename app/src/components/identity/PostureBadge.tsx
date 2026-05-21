@@ -41,7 +41,7 @@ export function PostureBadge({ charterId, className = '' }: { charterId: string;
       className={`inline-flex items-center gap-1 rounded-[3px] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em] hover:bg-surface-2 ${className}`}
       style={{ borderColor: tone, color: tone }}
     >
-      <span aria-hidden>●</span>
+      <span aria-hidden className={latest.posture === 'crisis' || latest.posture === 'national-emergency' ? 'animate-pulse' : ''}>●</span>
       <span>{latest.posture}</span>
     </Link>
   );
