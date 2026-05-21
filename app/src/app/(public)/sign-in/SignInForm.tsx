@@ -21,8 +21,8 @@ export function SignInForm() {
   const next = params.get('from');
   const safeNext = next && next.startsWith('/') ? next : '/wallet';
 
-  const [mode, setMode] = React.useState<Mode>('sign-in');
-  const [email, setEmail] = React.useState('');
+  const [mode, setMode] = React.useState<Mode>(params.get('mode') === 'sign-up' ? 'sign-up' : 'sign-in');
+  const [email, setEmail] = React.useState(() => params.get('email') ?? '');
   const [password, setPassword] = React.useState('');
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
