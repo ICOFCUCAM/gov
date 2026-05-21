@@ -12,13 +12,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
-import { priorityTone } from '@/lib/tone';
-
-const statusTone = (s: string) =>
-  s === 'closed' ? TONE.ok
-  : s === 'acknowledged' ? TONE.link
-  : s === 'dispatched' ? TONE.warn
-  : TONE.neutral;
+import { priorityTone, dispatchStatusTone } from '@/lib/tone';
 
 export function DispatchDetail({ ref: dispatchRef }: { ref: string }) {
   const { actor, ready } = useIdentity();
@@ -71,7 +65,7 @@ export function DispatchDetail({ ref: dispatchRef }: { ref: string }) {
           </span>
           <span
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: statusTone(row.status), color: statusTone(row.status) }}
+            style={{ borderColor: dispatchStatusTone(row.status), color: dispatchStatusTone(row.status) }}
           >
             {row.status}
           </span>

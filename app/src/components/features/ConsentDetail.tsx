@@ -8,12 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { ConsentRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
-
-const statusTone = (s: string) =>
-  s === 'granted' ? TONE.ok
-  : s === 'revoked' ? TONE.alert
-  : s === 'expired' ? TONE.warn
-  : TONE.link;
+import { consentStatusTone } from '@/lib/tone';
 
 export function ConsentDetail({ id }: { id: string }) {
   const { actor, ready } = useIdentity();
@@ -50,7 +45,7 @@ export function ConsentDetail({ id }: { id: string }) {
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Consent</h2>
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: statusTone(row.status), color: statusTone(row.status) }}>
+            style={{ borderColor: consentStatusTone(row.status), color: consentStatusTone(row.status) }}>
             {row.status}
           </span>
         </div>

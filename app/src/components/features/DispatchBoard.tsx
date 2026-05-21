@@ -16,13 +16,7 @@ import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
-import { priorityTone } from '@/lib/tone';
-
-const statusTone = (s: string) =>
-  s === 'closed' ? TONE.ok
-  : s === 'acknowledged' ? TONE.link
-  : s === 'dispatched' ? TONE.warn
-  : TONE.neutral;
+import { priorityTone, dispatchStatusTone } from '@/lib/tone';
 
 const KINDS = ['unit-deploy', 'medical-evac', 'inspection', 'investigation', 'relief'];
 const PRIORITIES: Priority[] = ['routine', 'priority', 'urgent', 'critical'];
@@ -205,7 +199,7 @@ export function DispatchBoard() {
                 </span>
                 <span
                   className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                  style={{ color: statusTone(d.status) }}
+                  style={{ color: dispatchStatusTone(d.status) }}
                 >
                   {d.status}
                 </span>
