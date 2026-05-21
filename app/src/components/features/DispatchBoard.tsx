@@ -15,6 +15,7 @@ import { WatchStar } from '@/components/identity/WatchStar';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { buildCsv, downloadCsv } from '@/lib/csv-download';
 
 const statusTone = (s: string) =>
   s === 'closed' ? TONE.ok
@@ -107,14 +108,11 @@ export function DispatchBoard() {
           </button>
           <button type="button"
             onClick={() => {
-              const csv = ['ref,issuer,target,kind,priority,status,detail,dispatched_at,acknowledged_at,closed_at',
-                ...items.map(d => `${d.ref},${d.issued_by_charter_id},${d.target_charter_id ?? ''},${d.kind},${d.priority},${d.status},${(d.detail ?? '').replace(/,/g,';')},${d.dispatched_at},${d.acknowledged_at ?? ''},${d.closed_at ?? ''}`)].join('\n');
-              const blob = new Blob([csv], { type: 'text/csv' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `civicos-dispatches-${new Date().toISOString().slice(0,10)}.csv`;
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              const csv = buildCsv(
+                ['ref','issuer','target','kind','priority','status','detail','dispatched_at','acknowledged_at','closed_at'],
+                items.map(d => [d.ref, d.issued_by_charter_id, d.target_charter_id ?? '', d.kind, d.priority, d.status, d.detail ?? '', d.dispatched_at, d.acknowledged_at ?? '', d.closed_at ?? '']),
+              );
+              downloadCsv('civicos-dispatches', csv);
             }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             csv
