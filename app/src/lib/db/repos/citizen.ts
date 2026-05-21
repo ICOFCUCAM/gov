@@ -139,4 +139,33 @@ export async function decideAppealRow(
   return (data as AppealRow) ?? null;
 }
 
+// ── Read helpers (RLS scopes to citizen_id = my id) ─────────────
+
+export async function myServiceRequestsRows(limit = 50): Promise<ServiceRequestRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.from('civicos_service_requests').select('*')
+    .order('submitted_at', { ascending: false }).limit(limit);
+  if (error || !data) return [];
+  return data as ServiceRequestRow[];
+}
+
+export async function myConsentsRows(limit = 50): Promise<ConsentRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.from('civicos_consents').select('*')
+    .order('created_at', { ascending: false }).limit(limit);
+  if (error || !data) return [];
+  return data as ConsentRow[];
+}
+
+export async function myAppealsRows(limit = 50): Promise<AppealRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.from('civicos_appeals').select('*')
+    .order('filed_at', { ascending: false }).limit(limit);
+  if (error || !data) return [];
+  return data as AppealRow[];
+}
+
 export { substrateAvailable };
