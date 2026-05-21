@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { TONE } from '@/components/features/SituationRoom';
+import { FilterChips } from '@/components/ui/FilterChips';
 import {
   actionsFor, queueStats, workflowFor,
   type WorkKind, type WorkItem, type ActionKey,
@@ -67,14 +68,8 @@ export function RuntimeQueue({
           <span style={{ color: TONE.ok }}>{stats.closed} closed</span>
         </div>
       </div>
-      <div className="flex flex-wrap gap-1 border-b border-line-soft px-3 py-1.5">
-        {['open', 'all', 'closed', ...wf.stages].map(f => (
-          <button key={f} onClick={() => setFilter(f)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider transition-colors"
-            style={{ borderColor: filter === f ? TONE.link : 'rgb(var(--c-line))', color: filter === f ? TONE.link : 'rgb(var(--c-ink-muted))' }}>
-            {f}
-          </button>
-        ))}
+      <div className="border-b border-line-soft px-3 py-1.5">
+        <FilterChips options={['open', 'all', 'closed', ...wf.stages]} value={filter} onChange={setFilter} />
       </div>
       <div className="grid lg:grid-cols-2">
         <div className="max-h-[300px] overflow-y-auto border-line-soft lg:border-r">
