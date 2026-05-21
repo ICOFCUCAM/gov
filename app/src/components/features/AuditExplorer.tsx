@@ -115,6 +115,10 @@ export function AuditExplorer() {
           </span>
         </div>
         <div className="flex items-center gap-2">
+          <a href="/gov/audit/sweep"
+             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            coverage sweep
+          </a>
           <button
             type="button"
             onClick={downloadChain}
