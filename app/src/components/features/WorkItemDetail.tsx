@@ -139,7 +139,11 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
             work item · realtime
           </span>
         </div>
-        <Link href="/gov/workbench" className="font-mono text-[10px] text-link underline">← workbench</Link>
+        <div className="flex items-center gap-2">
+          <Link href={`/gov/audit?scope=${encodeURIComponent(item.scope)}`}
+            className="font-mono text-[10px] text-link underline">audit ↗</Link>
+          <Link href="/gov/workbench" className="font-mono text-[10px] text-link underline">← workbench</Link>
+        </div>
       </div>
 
       <Panel title="Metadata" meta={item.ref} bodyClass="!p-3 text-[11px] space-y-2">
