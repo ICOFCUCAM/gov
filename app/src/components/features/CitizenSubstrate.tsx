@@ -3,10 +3,11 @@
 import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
-  submitServiceRequestRow, myServiceRequestsRows,
+  submitServiceRequestRow, updateServiceRequestRow, myServiceRequestsRows,
   grantConsentRow, revokeConsentRow, myConsentsRows,
   fileAppealRow, myAppealsRows,
 } from '@/lib/db/repos/citizen';
+import { openWorkItemRow } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { ServiceRequestRow, ConsentRow, AppealRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -188,12 +189,36 @@ function ServiceRequestComposer({
     e.preventDefault();
     setBusy(true); setError(null);
     try {
+      const ref = `SR-${Date.now()}`;
       const row = await submitServiceRequestRow({
-        ref: `SR-${Date.now()}`,
-        citizenId, targetCharterId: target.trim(), service: service.trim(),
+        ref, citizenId,
+        targetCharterId: target.trim(), service: service.trim(),
         title: title.trim() || null,
       });
       if (!row) { setError('submit failed'); return; }
+
+      // Auto-bridge: open an internal work item in the target charter's
+      // scope so officer queues pick the request up alongside other work.
+      // The link is patched back onto the service request so a viewer
+      // can navigate either direction. Failure here doesn't roll back
+      // the request — the citizen's record is still on file.
+      const workRef = `WI-${ref}`;
+      const wi = await openWorkItemRow({
+        ref: workRef,
+        scope: `${target.trim()}:intake`,
+        workflowId: 'approval',
+        kind: 'approval',
+        title: row.title ?? `Service request · ${row.service}`,
+        currentStage: 'Submitted',
+        priority: 'priority',
+        originatingCharterId: target.trim(),
+        citizenId,
+        meta: { origin: 'service-request', serviceRequestRef: ref, persistent: '1' },
+      }).catch(() => null);
+      if (wi) {
+        await updateServiceRequestRow({ ref, linkedWorkItemId: wi.id });
+      }
+
       await onDone();
     } finally {
       setBusy(false);

@@ -103,6 +103,10 @@ export interface TransitionInput {
   auditTag?: string | null;
   requiresSignature?: boolean;
   signatureHash?: string | null;
+  /** Client-supplied signed_at — the same ms the signature material used.
+   *  When present, the substrate stores this verbatim so verification
+   *  re-derives the canonical material byte-for-byte. */
+  signedAt?: string | null;
 }
 
 export interface TransitionOutcome {
@@ -129,6 +133,7 @@ export async function transitionWorkItemRow(t: TransitionInput): Promise<Transit
     p_audit_tag: t.auditTag ?? null,
     p_requires_signature: t.requiresSignature ?? false,
     p_signature_hash: t.signatureHash ?? null,
+    p_signed_at: t.signedAt ?? null,
   });
   if (error) {
     const msg = error.message ?? '';
@@ -171,6 +176,33 @@ export async function listWorkflowDefinitionsRows(opts: { kind?: WorkKind; insti
   const { data, error } = await q.order('workflow_id').limit(opts.limit ?? 100);
   if (error || !data) return [];
   return data as WorkflowDefinitionRow[];
+}
+
+export interface SignedStepRow extends WorkItemStepRow {
+  work_item_ref: string;
+  work_item_scope: string;
+  workflow_id: string;
+  kind: WorkKind;
+  originating_charter_id: string | null;
+}
+
+export async function recentSignedStepsRows(limit = 50): Promise<SignedStepRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.from('civicos_signed_steps').select('*')
+    .order('at', { ascending: false }).limit(limit);
+  if (error || !data) return [];
+  return data as SignedStepRow[];
+}
+
+export async function fetchOfficerPublicKey(officerId: string): Promise<JsonWebKey | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_officers')
+    .select('signing_public_key').eq('id', officerId).limit(1).maybeSingle();
+  if (error || !data) return null;
+  const row = data as { signing_public_key: JsonWebKey | null };
+  return row.signing_public_key ?? null;
 }
 
 export async function listWorkItemsRows(opts: { scope?: string; workflowId?: string; closed?: boolean; limit?: number } = {}): Promise<WorkItemRow[]> {

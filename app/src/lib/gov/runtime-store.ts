@@ -172,6 +172,10 @@ export function actOnItem(scope: string, itemId: string, action: ActionKey, by: 
         detail: `${last.from} → ${last.to}`,
         requiresSignature: !!sig,
         signatureHash: sig?.hash ?? null,
+        // Pass the exact ms used in the signature material so the
+        // substrate stores it as signed_at — verifier re-derives the
+        // same canonical string and ECDSA verify matches.
+        signedAt: sig ? new Date(sig.at).toISOString() : null,
       });
     })().catch(() => { /* best-effort */ });
   }
