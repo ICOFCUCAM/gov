@@ -18,6 +18,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { PostureTimeline } from '@/components/features/PostureTimeline';
 import { PostureBadge } from '@/components/identity/PostureBadge';
+import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
 
 /**
  * CharterDetail — everything visible about a single charter on one page.
@@ -38,6 +39,7 @@ export function CharterDetail({ charterId }: { charterId: string }) {
   const [posture, setPosture] = React.useState<PostureHistoryRow[]>([]);
   const [audit, setAudit] = React.useState<AuditEntry[]>([]);
   const [officers, setOfficers] = React.useState<OfficerRow[]>([]);
+  const [events, setEvents] = React.useState<PersistedEvent[]>([]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -62,6 +64,8 @@ export function CharterDetail({ charterId }: { charterId: string }) {
     setPosture(post);
     setAudit(aud.filter(a => a.scope === charterId || a.scope.startsWith(charterId + ':')));
     setOfficers(off);
+    const evs = await recentEventsRows({ source: charterId, limit: 12 });
+    setEvents(evs);
   }, [available, charterId]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
@@ -184,6 +188,30 @@ export function CharterDetail({ charterId }: { charterId: string }) {
                   <span className="w-16 shrink-0 truncate font-mono text-ink">{a.action}</span>
                   <span className="min-w-0 flex-1 truncate text-ink-soft">{a.subject}</span>
                   <span className="w-24 shrink-0 truncate text-right text-ink-muted">{a.actor}</span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <Panel title="Recent federation events from this charter" meta={`${events.length}`} bodyClass="!p-0">
+        {events.length === 0 ? (
+          <p className="px-3 py-4 text-[11px] text-ink-muted">No federation events emitted by this charter.</p>
+        ) : (
+          <div className="max-h-[260px] overflow-y-auto">
+            {events.map(e => (
+              <Link key={e.id} href={`/gov/federation/${e.id}`}
+                className="block border-b border-line-soft px-3 py-1 last:border-0 text-[10px] hover:bg-surface-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-16 shrink-0 font-mono tabular-nums text-ink-muted">
+                    {new Date(e.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </span>
+                  <span className="w-44 shrink-0 truncate font-mono text-link">{e.type}</span>
+                  <span className="w-24 shrink-0 truncate font-mono text-ink-soft">{e.channel}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink">
+                    {e.target ? `→ ${e.target}` : ''}
+                  </span>
                 </div>
               </Link>
             ))}
