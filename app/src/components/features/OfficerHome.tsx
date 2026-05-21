@@ -12,6 +12,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { useSubstrateAlerts } from '@/components/identity/useSubstrateAlerts';
 import { WatchedRecords } from '@/components/features/WatchedRecords';
+import { PostureBadge } from '@/components/identity/PostureBadge';
 
 const priorityTone = (p: string) =>
   p === 'critical' || p === 'urgent' ? TONE.alert
@@ -117,9 +118,12 @@ export function OfficerHome() {
             personal · realtime
           </span>
         </div>
-        <span className="font-mono text-[10px] text-ink-muted">
-          {actor.name} · {actor.role ?? 'officer'} · {actor.charterId ?? '—'}
-        </span>
+        <div className="flex items-center gap-2">
+          {actor.charterId ? <PostureBadge charterId={actor.charterId} /> : null}
+          <span className="font-mono text-[10px] text-ink-muted">
+            {actor.name} · {actor.role ?? 'officer'} · {actor.charterId ?? '—'}
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
