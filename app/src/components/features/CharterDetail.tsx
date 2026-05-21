@@ -8,10 +8,11 @@ import { listWorkItemsRows } from '@/lib/db/repos/work-items';
 import { listDispatchesRows, listEscalationsRows, listPostureHistoryRows, listDirectivesRows } from '@/lib/db/repos/memory';
 import { recentAuditEntriesRows } from '@/lib/db/repos/audit';
 import { listOfficersRows } from '@/lib/db/repos/admin';
+import { listServiceRequestsRows } from '@/lib/db/repos/citizen';
 import { substrateAvailable } from '@/lib/db/client';
 import type {
   InstitutionRow, WorkItemRow, DispatchRow, EscalationRow,
-  PostureHistoryRow, DirectiveRow, OfficerRow,
+  PostureHistoryRow, DirectiveRow, OfficerRow, ServiceRequestRow,
 } from '@/lib/db/types';
 import type { AuditEntry } from '@/lib/db/repos/audit';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -40,6 +41,7 @@ export function CharterDetail({ charterId }: { charterId: string }) {
   const [audit, setAudit] = React.useState<AuditEntry[]>([]);
   const [officers, setOfficers] = React.useState<OfficerRow[]>([]);
   const [events, setEvents] = React.useState<PersistedEvent[]>([]);
+  const [intake, setIntake] = React.useState<ServiceRequestRow[]>([]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -66,6 +68,8 @@ export function CharterDetail({ charterId }: { charterId: string }) {
     setOfficers(off);
     const evs = await recentEventsRows({ source: charterId, limit: 12 });
     setEvents(evs);
+    const ints = await listServiceRequestsRows({ target: charterId, openOnly: true, limit: 30 });
+    setIntake(ints);
   }, [available, charterId]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
@@ -212,6 +216,27 @@ export function CharterDetail({ charterId }: { charterId: string }) {
                   <span className="min-w-0 flex-1 truncate text-ink">
                     {e.target ? `→ ${e.target}` : ''}
                   </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <Panel title="Open intake (service requests)" meta={`${intake.length}`} bodyClass="!p-0">
+        {intake.length === 0 ? (
+          <p className="px-3 py-4 text-[11px] text-ink-muted">No open service requests addressed to this charter.</p>
+        ) : (
+          <div className="max-h-[260px] overflow-y-auto">
+            {intake.map(r => (
+              <Link key={r.id} href={`/gov/intake/request/${encodeURIComponent(r.ref)}`}
+                className="block border-b border-line-soft px-3 py-1 last:border-0 text-[10px] hover:bg-surface-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-28 shrink-0 truncate font-mono text-ink-soft">{r.ref}</span>
+                  <span className="w-32 shrink-0 truncate font-mono text-link">{r.service}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink">{r.title ?? r.domain ?? '—'}</span>
+                  <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
+                    style={{ color: r.acknowledged_at ? TONE.warn : TONE.link }}>{r.status}</span>
                 </div>
               </Link>
             ))}
