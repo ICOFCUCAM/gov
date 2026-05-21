@@ -10,6 +10,7 @@ import type { AppealRow, WorkItemRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 export function AppealDetail({ ref: appealRef }: { ref: string }) {
   const { actor, ready } = useIdentity();
@@ -40,11 +41,7 @@ export function AppealDetail({ ref: appealRef }: { ref: string }) {
   );
 
   if (!available) {
-    return (
-      <Panel title="Appeal" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Appeal" />;
   }
   if (!row) {
     return (

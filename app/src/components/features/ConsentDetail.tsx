@@ -7,6 +7,7 @@ import { consentById, revokeConsentRow, grantConsentRow } from '@/lib/db/repos/c
 import { substrateAvailable } from '@/lib/db/client';
 import type { ConsentRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const statusTone = (s: string) =>
   s === 'granted' ? TONE.ok
@@ -28,7 +29,7 @@ export function ConsentDetail({ id }: { id: string }) {
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
 
   if (!available) {
-    return <Panel title="Consent" meta="not configured" bodyClass="!p-3"><p className="text-[10px] text-ink-muted">Substrate not configured.</p></Panel>;
+    return <SubstrateNotConfigured title="Consent" />;
   }
   if (!row) {
     return (

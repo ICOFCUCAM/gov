@@ -11,6 +11,7 @@ import type { DispatchRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const statusTone = (s: string) =>
   s === 'closed' ? TONE.ok
@@ -44,11 +45,7 @@ export function DispatchDetail({ ref: dispatchRef }: { ref: string }) {
   );
 
   if (!available) {
-    return (
-      <Panel title="Dispatch" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Dispatch" />;
   }
   if (!row) {
     return (

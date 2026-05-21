@@ -11,6 +11,7 @@ import type { DirectiveRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const statusTone = (s: string) =>
   s === 'effective' ? TONE.ok
@@ -45,11 +46,7 @@ export function DirectiveDetail({ ref: directiveRef }: { ref: string }) {
   );
 
   if (!available) {
-    return (
-      <Panel title="Directive" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Directive" />;
   }
   if (!row) {
     return (

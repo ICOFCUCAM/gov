@@ -12,6 +12,7 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 const severityTone = (s: string) =>
   s === 'national' || s === 'major' ? TONE.alert
@@ -39,11 +40,7 @@ export function EscalationDetail({ id }: { id: string }) {
   );
 
   if (!available) {
-    return (
-      <Panel title="Escalation" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Escalation" />;
   }
   if (!row) {
     return (

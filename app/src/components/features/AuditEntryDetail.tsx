@@ -6,6 +6,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { auditTrailRows, verifyChainRow, type AuditEntry } from '@/lib/db/repos/audit';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
+import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /** AuditEntryDetail — single entry within its chain context.
  *  URL: /gov/audit/[scope]/[seq]. Resolves the scope's chain and
@@ -24,11 +25,7 @@ export function AuditEntryDetail({ scope, seq }: { scope: string; seq: number })
   }, [available, ready, scope]);
 
   if (!available) {
-    return (
-      <Panel title="Audit entry" meta="not configured" bodyClass="!p-3">
-        <p className="text-[10px] text-ink-muted">Substrate not configured.</p>
-      </Panel>
-    );
+    return <SubstrateNotConfigured title="Audit entry" />;
   }
 
   const ordered = [...trail].sort((a, b) => a.seq - b.seq);
