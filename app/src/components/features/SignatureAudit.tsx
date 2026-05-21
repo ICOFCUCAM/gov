@@ -149,6 +149,33 @@ export function SignatureAudit() {
         ))}
       </div>
 
+      {results.length > 0 ? (() => {
+        const byActor = new Map<string, { name: string; verified: number; failed: number; digest: number }>();
+        for (const r of results) {
+          const k = r.step.actor_id ?? r.step.actor_name;
+          if (!byActor.has(k)) byActor.set(k, { name: r.step.actor_name, verified: 0, failed: 0, digest: 0 });
+          const s = byActor.get(k)!;
+          if (r.status === 'verified') s.verified += 1;
+          else if (r.status === 'failed') s.failed += 1;
+          else if (r.status === 'digest') s.digest += 1;
+        }
+        const rows = Array.from(byActor.values()).sort((a, b) => (b.verified + b.failed + b.digest) - (a.verified + a.failed + a.digest));
+        return (
+          <Panel title="By actor" meta={`${rows.length} actors`} bodyClass="!p-0">
+            <div className="max-h-[240px] overflow-y-auto">
+              {rows.map(r => (
+                <div key={r.name} className="flex items-center gap-2 border-b border-line-soft px-3 py-1 last:border-0 text-[10px]">
+                  <span className="min-w-0 flex-1 truncate font-mono text-link">{r.name}</span>
+                  <span className="w-20 shrink-0 text-right" style={{ color: TONE.ok }}>{r.verified} ✓</span>
+                  <span className="w-20 shrink-0 text-right" style={{ color: TONE.alert }}>{r.failed} ✗</span>
+                  <span className="w-20 shrink-0 text-right" style={{ color: TONE.warn }}>{r.digest} dgst</span>
+                </div>
+              ))}
+            </div>
+          </Panel>
+        );
+      })() : null}
+
       <Panel title="Recent signed steps" meta={`${results.length}`} bodyClass="!p-0">
         {results.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
