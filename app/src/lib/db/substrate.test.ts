@@ -405,6 +405,20 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     expect(activated.some(r => r.charter_id === charter)).toBe(false);
   });
 
+  it('SEARCH — substrate search returns hits matching a freshly-recorded directive', async () => {
+    const { substrateSearch } = await import('./search');
+    const stamp = Date.now();
+    const ref = `DIR-SRCH-${stamp}`;
+    const needle = `SearchSmokeTest${stamp}`;
+    const d = await recordDirectiveRow({
+      ref, kind: 'executive-order', issuedByCharterId: 'presidency',
+      title: needle,
+    });
+    expect(d).not.toBeNull();
+    const hits = await substrateSearch(needle);
+    expect(hits.some(h => h.ref === ref)).toBe(true);
+  });
+
   it('CONTRACT — direct INSERT to audit_entries is denied (RLS)', async () => {
     const sb = publicClient();
     expect(sb).not.toBeNull();
