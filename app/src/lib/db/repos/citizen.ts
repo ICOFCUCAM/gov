@@ -190,6 +190,15 @@ export async function serviceRequestByRef(ref: string): Promise<ServiceRequestRo
   return data as ServiceRequestRow;
 }
 
+export async function consentById(id: string): Promise<ConsentRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_consents').select('*')
+    .eq('id', id).limit(1).maybeSingle();
+  if (error || !data) return null;
+  return data as ConsentRow;
+}
+
 export async function appealByRef(ref: string): Promise<AppealRow | null> {
   const sb = publicClient();
   if (!sb) return null;
