@@ -11,6 +11,7 @@ import { PostureBadge } from '@/components/identity/PostureBadge';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { buildCsv, downloadCsv } from '@/lib/csv-download';
 
 const KINDS: (InstitutionKind | 'all')[] = ['all','ministry','branch','agency','platform','officer','citizen'];
 
@@ -56,14 +57,11 @@ export function CharterList() {
         <div className="flex items-center gap-2">
           <button type="button"
             onClick={() => {
-              const csv = ['charter_id,kind,domain,activated,label',
-                ...filtered.map(i => `${i.charter_id},${i.kind},${i.domain},${i.activated},${(i.label ?? '').replace(/,/g,';')}`)].join('\n');
-              const blob = new Blob([csv], { type: 'text/csv' });
-              const url = URL.createObjectURL(blob);
-              const a = document.createElement('a');
-              a.href = url; a.download = `civicos-charters-${new Date().toISOString().slice(0,10)}.csv`;
-              document.body.appendChild(a); a.click(); document.body.removeChild(a);
-              URL.revokeObjectURL(url);
+              const csv = buildCsv(
+                ['charter_id','kind','domain','activated','label'],
+                filtered.map(i => [i.charter_id, i.kind, i.domain, i.activated, i.label ?? '']),
+              );
+              downloadCsv('civicos-charters', csv);
             }}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             csv
