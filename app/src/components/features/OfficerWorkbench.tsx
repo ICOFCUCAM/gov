@@ -211,10 +211,26 @@ export function OfficerWorkbench() {
             execute · sign · advance
           </span>
         </div>
-        <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
-          <input type="checkbox" checked={openOnly} onChange={e => setOpenOnly(e.currentTarget.checked)} />
-          open only
-        </label>
+        <div className="flex items-center gap-2">
+          <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
+            <input type="checkbox" checked={openOnly} onChange={e => setOpenOnly(e.currentTarget.checked)} />
+            open only
+          </label>
+          <button type="button"
+            onClick={() => {
+              const csv = ['ref,scope,kind,priority,current_stage,closed,workflow_id,title,originating_charter_id,assignee',
+                ...items.map(w => `${w.ref},${w.scope},${w.kind},${w.priority},${w.current_stage},${w.closed},${w.workflow_id},${(w.title ?? '').replace(/,/g,';')},${w.originating_charter_id ?? ''},${w.assignee_name ?? ''}`)].join('\n');
+              const blob = new Blob([csv], { type: 'text/csv' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url; a.download = `civicos-workitems-${new Date().toISOString().slice(0,10)}.csv`;
+              document.body.appendChild(a); a.click(); document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+            }}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            csv
+          </button>
+        </div>
       </div>
 
       <p className="font-mono text-[10px] text-ink-muted">
