@@ -75,12 +75,19 @@ export function WorkflowDiff() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Workflow diff</h2>
-        <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
-          style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>
-          structural diff
-        </span>
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Workflow diff</h2>
+          <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
+            style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>
+            structural diff
+          </span>
+        </div>
+        <button type="button" onClick={() => { setA(b); setB(a); }}
+          disabled={!a || !b}
+          className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+          swap A ↔ B
+        </button>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
