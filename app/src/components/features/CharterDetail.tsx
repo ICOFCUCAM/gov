@@ -17,6 +17,7 @@ import type { AuditEntry } from '@/lib/db/repos/audit';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { PostureTimeline } from '@/components/features/PostureTimeline';
+import { PostureBadge } from '@/components/identity/PostureBadge';
 
 /**
  * CharterDetail — everything visible about a single charter on one page.
@@ -104,6 +105,7 @@ export function CharterDetail({ charterId }: { charterId: string }) {
             style={{ borderColor: inst.activated ? TONE.ok : TONE.warn, color: inst.activated ? TONE.ok : TONE.warn }}>
             {inst.activated ? 'activated' : 'idle'}
           </span>
+          <PostureBadge charterId={inst.charter_id} />
         </div>
         <span className="font-mono text-[10px] text-ink-muted">
           {inst.kind} · {inst.charter_id} · domain {inst.domain}
