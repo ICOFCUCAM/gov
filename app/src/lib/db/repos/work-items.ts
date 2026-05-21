@@ -1,0 +1,177 @@
+// lib/db/repos/work-items — persistent workflow runtime.
+//
+// Three RPC contracts:
+//   • syncWorkflowDefinitionRow  — register/update a workflow's transition map
+//   • openWorkItemRow            — open a work item in its initial stage
+//   • transitionWorkItemRow      — apply an action; server validates against
+//                                  the stored definition and raises on
+//                                  invalid transitions / closed items.
+//
+// All RPCs are SECURITY DEFINER on the DB side. When the substrate isn't
+// configured, calls return null and callers fall back to memory state.
+
+import { publicClient, substrateAvailable } from '@/lib/db/client';
+import type {
+  WorkflowDefinitionRow, WorkItemRow, WorkItemStepRow,
+  WorkKind, Priority, ActionKey,
+} from '@/lib/db/types';
+
+export interface WorkflowDefinitionInput {
+  workflowId: string;
+  institutionCharterId: string;
+  archetype?: string | null;
+  title: string;
+  kind: WorkKind;
+  /** { terminal: string[], transitions: { [stage]: { [action]: nextStage } } } */
+  definition: { terminal: string[]; transitions: Record<string, Partial<Record<ActionKey, string>>> };
+  description?: string | null;
+  blueprintCitation?: string | null;
+  stepCount?: number | null;
+  emits?: string[];
+}
+
+export async function syncWorkflowDefinitionRow(d: WorkflowDefinitionInput): Promise<WorkflowDefinitionRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_sync_workflow_definition', {
+    p_workflow_id: d.workflowId,
+    p_institution_charter_id: d.institutionCharterId,
+    p_archetype: d.archetype ?? null,
+    p_title: d.title,
+    p_kind: d.kind,
+    p_definition: d.definition,
+    p_description: d.description ?? null,
+    p_blueprint_citation: d.blueprintCitation ?? null,
+    p_step_count: d.stepCount ?? null,
+    p_emits: d.emits ?? [],
+  });
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.error('[civicos] sync_workflow_definition failed:', error.message, error.code);
+    return null;
+  }
+  return (data as WorkflowDefinitionRow) ?? null;
+}
+
+export interface OpenWorkItemInput {
+  ref: string;
+  scope: string;
+  workflowId: string;
+  kind: WorkKind;
+  title: string;
+  currentStage: string;
+  priority?: Priority;
+  originatingCharterId?: string | null;
+  assigneeId?: string | null;
+  assigneeName?: string | null;
+  citizenId?: string | null;
+  meta?: Record<string, unknown>;
+}
+
+export async function openWorkItemRow(i: OpenWorkItemInput): Promise<WorkItemRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_open_work_item', {
+    p_ref: i.ref,
+    p_scope: i.scope,
+    p_workflow_id: i.workflowId,
+    p_kind: i.kind,
+    p_title: i.title,
+    p_current_stage: i.currentStage,
+    p_priority: i.priority ?? 'routine',
+    p_originating_charter_id: i.originatingCharterId ?? null,
+    p_assignee_id: i.assigneeId ?? null,
+    p_assignee_name: i.assigneeName ?? null,
+    p_citizen_id: i.citizenId ?? null,
+    p_meta: i.meta ?? {},
+  });
+  if (error) {
+    // eslint-disable-next-line no-console
+    console.error('[civicos] open_work_item failed:', error.message, error.code);
+    return null;
+  }
+  return (data as WorkItemRow) ?? null;
+}
+
+export interface TransitionInput {
+  ref: string;
+  action: ActionKey;
+  actorName: string;
+  actorId?: string | null;
+  actorRole?: string | null;
+  detail?: string;
+  auditTag?: string | null;
+  requiresSignature?: boolean;
+  signatureHash?: string | null;
+}
+
+export interface TransitionOutcome {
+  step: WorkItemStepRow;
+  ok: true;
+}
+export interface TransitionRejection {
+  ok: false;
+  /** 'closed' | 'invalid_transition' | 'not_found' | 'missing_signature' | 'other' */
+  reason: 'closed' | 'invalid_transition' | 'not_found' | 'missing_signature' | 'other';
+  message: string;
+}
+
+export async function transitionWorkItemRow(t: TransitionInput): Promise<TransitionOutcome | TransitionRejection | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_transition_work_item', {
+    p_ref: t.ref,
+    p_action: t.action,
+    p_actor_name: t.actorName,
+    p_actor_id: t.actorId ?? null,
+    p_actor_role: t.actorRole ?? null,
+    p_detail: t.detail ?? '',
+    p_audit_tag: t.auditTag ?? null,
+    p_requires_signature: t.requiresSignature ?? false,
+    p_signature_hash: t.signatureHash ?? null,
+  });
+  if (error) {
+    const msg = error.message ?? '';
+    let reason: TransitionRejection['reason'] = 'other';
+    if (msg.includes('not found')) reason = 'not_found';
+    else if (msg.includes('is closed')) reason = 'closed';
+    else if (msg.includes('invalid transition')) reason = 'invalid_transition';
+    else if (msg.includes('requires signature')) reason = 'missing_signature';
+    return { ok: false, reason, message: msg };
+  }
+  if (!data) return null;
+  return { ok: true, step: data as WorkItemStepRow };
+}
+
+export async function workItemRow(ref: string): Promise<WorkItemRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_work_items').select('*').eq('ref', ref).limit(1).maybeSingle();
+  if (error || !data) return null;
+  return data as WorkItemRow;
+}
+
+export async function workItemStepsRows(ref: string, limit = 50): Promise<WorkItemStepRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const item = await workItemRow(ref);
+  if (!item) return [];
+  const { data, error } = await sb.from('civicos_work_item_steps').select('*')
+    .eq('work_item_id', item.id).order('seq').limit(limit);
+  if (error || !data) return [];
+  return data as WorkItemStepRow[];
+}
+
+export async function listWorkItemsRows(opts: { scope?: string; workflowId?: string; closed?: boolean; limit?: number } = {}): Promise<WorkItemRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_work_items').select('*');
+  if (opts.scope) q = q.eq('scope', opts.scope);
+  if (opts.workflowId) q = q.eq('workflow_id', opts.workflowId);
+  if (opts.closed !== undefined) q = q.eq('closed', opts.closed);
+  const { data, error } = await q.order('created_at', { ascending: false }).limit(opts.limit ?? 100);
+  if (error || !data) return [];
+  return data as WorkItemRow[];
+}
+
+export { substrateAvailable };

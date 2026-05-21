@@ -23,6 +23,10 @@ import { publicClient, substrateAvailable, __resetClients } from './client';
 import { appendAuditRow, auditTrailRows, verifyChainRow } from './repos/audit';
 import { publishEventRow, recentEventsRows } from './repos/events';
 import { registerInstitutionRow, activateInstitutionRow, listInstitutionsRows } from './repos/institutions';
+import {
+  syncWorkflowDefinitionRow, openWorkItemRow, transitionWorkItemRow,
+  workItemRow, workItemStepsRows,
+} from './repos/work-items';
 
 const URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const KEY = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
@@ -150,6 +154,64 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
 
     const rows = await listInstitutionsRows({ activated: true });
     expect(rows.some(r => r.charter_id === charter)).toBe(true);
+  });
+
+  it('WORKFLOW — open and transition a work item end-to-end; invalid action rejected', async () => {
+    const wfId = `vitest-wf-${Date.now()}`;
+    const ref = `WI-VITEST-${Date.now()}`;
+    const def = await syncWorkflowDefinitionRow({
+      workflowId: wfId,
+      institutionCharterId: 'vitest',
+      archetype: 'GENERIC',
+      title: 'Vitest Approval',
+      kind: 'approval',
+      definition: {
+        terminal: ['Closed', 'Rejected'],
+        transitions: {
+          Submitted:     { advance: 'Triaged' },
+          Triaged:       { advance: 'Under review' },
+          'Under review':{ approve: 'Decision', reject: 'Rejected' },
+          Decision:      { resolve: 'Closed' },
+        },
+      },
+    });
+    expect(def).not.toBeNull();
+
+    const item = await openWorkItemRow({
+      ref, scope: `vitest:${ref}`, workflowId: wfId, kind: 'approval',
+      title: 'Test item', currentStage: 'Submitted', priority: 'priority',
+      originatingCharterId: 'vitest', assigneeName: 'Vitest Assignee',
+    });
+    expect(item).not.toBeNull();
+    expect(item!.current_stage).toBe('Submitted');
+
+    // Invalid transition (no rule for approve from Submitted) is rejected.
+    const bad = await transitionWorkItemRow({ ref, action: 'approve', actorName: 'X' });
+    expect(bad).not.toBeNull();
+    expect(bad!.ok).toBe(false);
+    if (bad && !bad.ok) expect(bad.reason).toBe('invalid_transition');
+
+    // Happy path advances through all stages.
+    for (const action of ['advance', 'advance', 'approve', 'resolve'] as const) {
+      const r = await transitionWorkItemRow({ ref, action, actorName: 'Vitest' });
+      expect(r).not.toBeNull();
+      expect(r!.ok).toBe(true);
+    }
+
+    const final = await workItemRow(ref);
+    expect(final).not.toBeNull();
+    expect(final!.current_stage).toBe('Closed');
+    expect(final!.closed).toBe(true);
+    expect(final!.closed_at).not.toBeNull();
+
+    const steps = await workItemStepsRows(ref);
+    expect(steps).toHaveLength(5); // open + 4 transitions
+    expect(steps[steps.length - 1]!.to_stage).toBe('Closed');
+
+    // Transitioning a closed item is rejected.
+    const afterClose = await transitionWorkItemRow({ ref, action: 'advance', actorName: 'X' });
+    expect(afterClose!.ok).toBe(false);
+    if (afterClose && !afterClose.ok) expect(afterClose.reason).toBe('closed');
   });
 
   it('CONTRACT — direct INSERT to audit_entries is denied (RLS)', async () => {
