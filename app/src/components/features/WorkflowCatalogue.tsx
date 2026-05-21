@@ -161,6 +161,32 @@ export function WorkflowCatalogue() {
             meta={`${activeRow.workflow_id} · ${stages.length} stages`}
             bodyClass="!p-0"
           >
+            <div className="flex items-center justify-end gap-2 border-b border-line-soft px-3 py-1.5">
+              <button type="button"
+                onClick={() => {
+                  const payload = {
+                    workflow_id: activeRow.workflow_id,
+                    institution_charter_id: activeRow.institution_charter_id,
+                    archetype: activeRow.archetype,
+                    title: activeRow.title,
+                    kind: activeRow.kind,
+                    description: activeRow.description,
+                    blueprint_citation: activeRow.blueprint_citation,
+                    step_count: activeRow.step_count,
+                    emits: activeRow.emits,
+                    definition: activeRow.definition,
+                  };
+                  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url; a.download = `civicos-workflow-${activeRow.workflow_id}.json`;
+                  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }}
+                className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+                download json
+              </button>
+            </div>
             <div className="border-b border-line-soft px-3 py-2 text-[11px]">
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Workflow ID" value={activeRow.workflow_id} mono />
