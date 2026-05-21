@@ -14,6 +14,9 @@ import {
 } from '@/lib/gov/runtime-workflow';
 import { appendAudit } from '@/services/audit-ledger';
 import { publish as busPublish } from '@/services/event-bus';
+import {
+  openWorkItemRow, transitionWorkItemRow, substrateAvailable,
+} from '@/lib/db/repos/work-items';
 
 export interface LedgerEntry {
   at: number;
@@ -141,6 +144,15 @@ export function actOnItem(scope: string, itemId: string, action: ActionKey, by: 
   appendAudit(scope, by, action, itemId, `${last.from} → ${last.to}`);
   busPublish('runtime.transition', scope, { itemId, action, from: last.from, to: last.to, by, closed: after.closed });
   emit();
+
+  // Mirror to substrate when the item has a persistent counterpart. The
+  // server validates the transition independently against the stored
+  // workflow definition.
+  if (after.meta.persistent === '1' && substrateAvailable()) {
+    void transitionWorkItemRow({
+      ref: itemId, action, actorName: by, detail: `${last.from} → ${last.to}`,
+    }).catch(() => { /* best-effort */ });
+  }
 }
 
 export function annotateItem(scope: string, itemId: string, note: string, by: string): void {
@@ -169,6 +181,31 @@ export function reassignItem(scope: string, itemId: string, assignee: string): v
 }
 
 let injCount = 0;
+
+/** Best-effort substrate mirror for an operator-originated item.
+ *  Tags the item with persistent='1' so actOnItem dual-writes transitions. */
+function mirrorOpenedItem(scope: string, item: WorkItem, by: string): void {
+  if (!substrateAvailable()) return;
+  void openWorkItemRow({
+    ref: item.id, scope, workflowId: item.kind, kind: item.kind,
+    title: item.title, currentStage: item.stage, priority: item.priority,
+    assigneeName: by,
+    meta: { origin: item.meta.origin ?? 'directive' },
+  }).then(row => {
+    if (!row) return;
+    // Tag the in-memory item so actOnItem mirrors future transitions.
+    const items = scopes.get(scope);
+    if (!items) return;
+    const idx = items.findIndex(i => i.id === item.id);
+    if (idx < 0) return;
+    const next = items.slice();
+    next[idx] = { ...items[idx]!, meta: { ...items[idx]!.meta, persistent: '1' } };
+    scopes.set(scope, next);
+    _version++;
+    for (const l of listeners) l();
+  }).catch(() => { /* best-effort */ });
+}
+
 /** Inject an operator-originated work item (e.g. an executive directive). */
 export function injectItem(scope: string, kind: WorkKind, title: string, by: string): void {
   const wf = workflowFor(kind);
@@ -189,6 +226,7 @@ export function injectItem(scope: string, kind: WorkKind, title: string, by: str
   ledger.unshift({ at: Date.now(), scope, itemId: item.id, kind, from: '—', to: wf.stages[0]!, action: 'assign', by });
   if (ledger.length > 200) ledger.length = 200;
   appendAudit(scope, by, 'inject', item.id, title);
+  mirrorOpenedItem(scope, item, by);
   emit();
 }
 
@@ -237,6 +275,7 @@ export function injectDirective(
   directives.set(key, rec);
   appendAudit(scope, by, 'inject', item.id, `directive: ${title}`);
   busPublish('runtime.transition', scope, { itemId: item.id, action: 'assign', from: '—', to: wf.stages[0]!, by, closed: false });
+  mirrorOpenedItem(scope, item, by);
   emit();
   return rec;
 }

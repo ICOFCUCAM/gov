@@ -4,6 +4,7 @@ import * as React from 'react';
 import type { Ministry } from '@/lib/api/types';
 import { registerApp, activateApp, deactivateApp } from '@/services/orchestration-engine';
 import { ministryAppManifest, STANDING_APPS } from '@/apps/manifests';
+import { syncAllWorkflows } from '@/services/workflow-sync';
 
 let standingRegistered = false;
 
@@ -20,6 +21,10 @@ export function useFederationSync(mins: Ministry[]): void {
         registerApp(a);
         activateApp(a.id, a.instanceId);
       }
+      // Sync the platform workflow catalog to the substrate so persistent
+      // work items can be validated by the runtime contract. Best-effort;
+      // memory-only fallback if the substrate is unavailable.
+      void syncAllWorkflows();
       standingRegistered = true;
     }
   }, []);
