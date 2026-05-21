@@ -42,6 +42,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⌖', l: 'Posture Board',      s: 'Institutional posture log',  href: '/gov/posture',     key: 'posture'     },
     { i: '⇆', l: 'Federation Stream',  s: 'Inter-institution events',   href: '/gov/federation',  key: 'federation'  },
     { i: '⇣', l: 'Citizen Intake',     s: 'Requests · appeals from citizens', href: '/gov/intake', key: 'intake'  },
+    { i: '⇶', l: 'Workflow Catalogue', s: 'Transition rules · stages',  href: '/gov/workflows',   key: 'workflows'   },
   ]},
   { g: 'Strategic Domains', items: [
     { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury', key: 'trs' },

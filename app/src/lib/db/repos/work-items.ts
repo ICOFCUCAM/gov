@@ -162,6 +162,17 @@ export async function workItemStepsRows(ref: string, limit = 50): Promise<WorkIt
   return data as WorkItemStepRow[];
 }
 
+export async function listWorkflowDefinitionsRows(opts: { kind?: WorkKind; institution?: string; limit?: number } = {}): Promise<WorkflowDefinitionRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  let q = sb.from('civicos_workflow_definitions').select('*');
+  if (opts.kind) q = q.eq('kind', opts.kind);
+  if (opts.institution) q = q.eq('institution_charter_id', opts.institution);
+  const { data, error } = await q.order('workflow_id').limit(opts.limit ?? 100);
+  if (error || !data) return [];
+  return data as WorkflowDefinitionRow[];
+}
+
 export async function listWorkItemsRows(opts: { scope?: string; workflowId?: string; closed?: boolean; limit?: number } = {}): Promise<WorkItemRow[]> {
   const sb = publicClient();
   if (!sb) return [];
