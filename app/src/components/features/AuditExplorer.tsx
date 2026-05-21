@@ -25,7 +25,11 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 export function AuditExplorer() {
   const { actor, session, ready } = useIdentity();
   const [scopes, setScopes] = React.useState<string[]>([]);
-  const [active, setActive] = React.useState<string | null>(null);
+  const [active, setActive] = React.useState<string | null>(() => {
+    if (typeof window === 'undefined') return null;
+    const sp = new URL(window.location.href).searchParams.get('scope');
+    return sp || null;
+  });
   const [recent, setRecent] = React.useState<AuditEntry[]>([]);
   const [trail, setTrail] = React.useState<AuditEntry[]>([]);
   const [verifying, setVerifying] = React.useState(false);
