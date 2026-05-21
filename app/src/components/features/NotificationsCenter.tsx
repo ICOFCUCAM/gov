@@ -8,6 +8,7 @@ import { useSubstrateAlerts, type Alert, type AlertSeverity } from '@/components
 import { useIdentity } from '@/components/identity/useIdentity';
 import { isSeen, markSeen, clearSeen } from '@/lib/seen';
 import { getPref, setPref } from '@/lib/prefs';
+import { FilterChips } from '@/components/ui/FilterChips';
 
 const sevTone: Record<AlertSeverity, string | undefined> = {
   national: TONE.alert, major: TONE.alert,
@@ -115,19 +116,10 @@ export function NotificationsCenter() {
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-1">
-        <span className="text-[9px] uppercase tracking-wider text-ink-muted">kind:</span>
-        {(['all','chain-broken','escalation','dispatch','work-item'] as const).map(k => (
-          <button key={k} type="button" onClick={() => setKindFilter(k)}
-            className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[9px] uppercase tracking-wider transition-colors"
-            style={{
-              borderColor: kindFilter === k ? TONE.link : 'rgb(var(--c-line))',
-              color: kindFilter === k ? TONE.link : 'rgb(var(--c-ink-muted))',
-            }}>
-            {k}
-          </button>
-        ))}
-      </div>
+      <FilterChips label="kind:"
+        options={['all','chain-broken','escalation','dispatch','work-item'] as const}
+        value={kindFilter}
+        onChange={setKindFilter} />
 
       <Panel title="Alerts" meta={`${filtered.length}`} bodyClass="!p-0">
         {filtered.length === 0 ? (
