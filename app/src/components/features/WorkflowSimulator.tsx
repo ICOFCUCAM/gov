@@ -170,6 +170,23 @@ export function WorkflowSimulator() {
         </Panel>
       </div>
 
+      <div className="flex justify-end">
+        <button type="button" disabled={trace.length === 0}
+          onClick={() => {
+            const csv = ['seq,action,from,to,terminal',
+              ...trace.map(s => `${s.seq},${s.action},${s.from ?? ''},${s.to},${s.terminal}`)].join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = `civicos-sim-${workflowId || 'trace'}-${new Date().toISOString().slice(0,10)}.csv`;
+            document.body.appendChild(a); a.click(); document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+          }}
+          className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+          trace csv
+        </button>
+      </div>
+
       <Panel title="Simulated trace" meta={`${trace.length} steps`} bodyClass="!p-0">
         {trace.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">Select a workflow.</p>
