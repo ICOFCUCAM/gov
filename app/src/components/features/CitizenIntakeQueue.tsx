@@ -10,6 +10,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import type { ServiceRequestRow, AppealRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
+import { getBoolPref, setPref } from '@/lib/prefs';
 
 const ageMin = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 60_000);
 
@@ -31,7 +32,8 @@ export function CitizenIntakeQueue() {
   const { actor, session, ready } = useIdentity();
   const [requests, setRequests] = React.useState<ServiceRequestRow[]>([]);
   const [appeals, setAppeals]   = React.useState<AppealRow[]>([]);
-  const [openOnly, setOpenOnly] = React.useState(true);
+  const [openOnly, setOpenOnly] = React.useState(() => getBoolPref('intake.openOnly', true));
+  React.useEffect(() => { setPref('intake.openOnly', openOnly); }, [openOnly]);
   const [selectedReqs, setSelectedReqs] = React.useState<Set<string>>(new Set());
   const [selectedAppeals, setSelectedAppeals] = React.useState<Set<string>>(new Set());
   const [bulkBusy, setBulkBusy] = React.useState(false);
