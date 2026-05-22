@@ -97,6 +97,12 @@ export function CharterProfile({ charterId }: { charterId: string }) {
         ) : null}
       </div>
 
+      <p className="font-mono text-[10px] text-ink-muted">
+        open data ·{' '}
+        <a href={`/api/public/accountability?charter=${encodeURIComponent(charterId)}`}
+           className="text-link underline">/api/public/accountability?charter={charterId}</a>
+      </p>
+
       {loading ? <p className="text-[11px] text-ink-muted">Loading…</p> : null}
 
       <Panel title="Service delivery (last 90 days)" meta={sla ? `${sla.submitted} requests` : '—'} bodyClass="!p-3">
