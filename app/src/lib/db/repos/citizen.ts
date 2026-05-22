@@ -171,6 +171,17 @@ export async function advanceAppealStageRow(ref: string, stage: 'admitted' | 'he
   return (Array.isArray(data) ? data[0] : data) as AppealRow;
 }
 
+/** Withdraw one of my own appeals before it is decided (citizen action),
+ *  audit-logged. Scoped to auth.uid()'s citizen by the RPC; fails if the
+ *  appeal isn't mine or is already decided/withdrawn. null on failure. */
+export async function withdrawMyAppealRow(ref: string, reason?: string): Promise<AppealRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_withdraw_my_appeal', { p_ref: ref, p_reason: reason ?? null });
+  if (error || !data) { if (error) console.error('[civicos] withdraw_my_appeal failed:', error.message); return null; }
+  return (Array.isArray(data) ? data[0] : data) as AppealRow;
+}
+
 // ── Read helpers (RLS scopes to citizen_id = my id) ─────────────
 
 export async function myServiceRequestsRows(limit = 50): Promise<ServiceRequestRow[]> {

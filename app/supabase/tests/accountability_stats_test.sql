@@ -39,19 +39,21 @@ begin
   if r.avg_satisfaction <> 4.0 then raise exception 'FAIL sla.avg_satisfaction = % (want 4.0)', r.avg_satisfaction; end if;
   raise notice 'PASS: service_sla_stats arithmetic (incl. satisfaction)';
 
-  -- appeals for TEST-AP: decided 2d,4d,10d (+1 pending 30d)
-  insert into civicos.appeals (ref, citizen_id, originating_charter_id, ground, status, filed_at, admitted_at, decided_at) values
-    ('TEST-AP-1', v_cit, 'TEST-AP', 'g', 'decided', now()-interval '10 d', now()-interval '9 d', now()-interval '8 d'),
-    ('TEST-AP-2', v_cit, 'TEST-AP', 'g', 'decided', now()-interval '10 d', now()-interval '9 d', now()-interval '6 d'),
-    ('TEST-AP-3', v_cit, 'TEST-AP', 'g', 'decided', now()-interval '10 d', now()-interval '9 d', now()-interval '0 d'),
-    ('TEST-AP-4', v_cit, 'TEST-AP', 'g', 'filed',   now()-interval '30 d', null, null);
+  -- appeals for TEST-AP: decided 2d,4d,10d (+1 pending 30d, +1 withdrawn)
+  insert into civicos.appeals (ref, citizen_id, originating_charter_id, ground, status, filed_at, admitted_at, decided_at, withdrawn_at) values
+    ('TEST-AP-1', v_cit, 'TEST-AP', 'g', 'decided',   now()-interval '10 d', now()-interval '9 d', now()-interval '8 d', null),
+    ('TEST-AP-2', v_cit, 'TEST-AP', 'g', 'decided',   now()-interval '10 d', now()-interval '9 d', now()-interval '6 d', null),
+    ('TEST-AP-3', v_cit, 'TEST-AP', 'g', 'decided',   now()-interval '10 d', now()-interval '9 d', now()-interval '0 d', null),
+    ('TEST-AP-4', v_cit, 'TEST-AP', 'g', 'filed',     now()-interval '30 d', null, null, null),
+    ('TEST-AP-5', v_cit, 'TEST-AP', 'g', 'withdrawn', now()-interval '20 d', null, null, now()-interval '15 d');
 
   select * into r from civicos.appeals_stats('TEST-AP', 365);
-  if r.filed <> 4 then raise exception 'FAIL appeals.filed = % (want 4)', r.filed; end if;
+  if r.filed <> 5 then raise exception 'FAIL appeals.filed = % (want 5)', r.filed; end if;
   if r.decided <> 3 then raise exception 'FAIL appeals.decided = % (want 3)', r.decided; end if;
-  if r.pending <> 1 then raise exception 'FAIL appeals.pending = % (want 1)', r.pending; end if;
+  if r.pending <> 1 then raise exception 'FAIL appeals.pending = % (want 1, excludes withdrawn)', r.pending; end if;
+  if r.withdrawn <> 1 then raise exception 'FAIL appeals.withdrawn = % (want 1)', r.withdrawn; end if;
   if r.median_decision_days <> 4.0 then raise exception 'FAIL appeals.median_decision_days = % (want 4.0)', r.median_decision_days; end if;
-  raise notice 'PASS: appeals_stats arithmetic';
+  raise notice 'PASS: appeals_stats arithmetic (incl. withdrawn)';
 
   -- cleanup (begin/rollback also covers this; explicit for non-tx runners)
   delete from civicos.appeals where citizen_id = v_cit;

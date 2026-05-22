@@ -112,10 +112,10 @@ describe('appealsStats', () => {
   it('maps aggregate rows to camelCase, coercing numeric strings and nulls', async () => {
     const rpc = vi.fn(async () => ({
       data: [{
-        charter_id: 'MIN-H', filed: 4, admitted: 3, decided: 3, published: 1, pending: 1,
+        charter_id: 'MIN-H', filed: 4, admitted: 3, decided: 3, published: 1, pending: 1, withdrawn: 1,
         median_decision_days: '4.0', p90_decision_days: '8.8', oldest_pending_days: '30.0',
       }, {
-        charter_id: 'MIN-X', filed: 1, admitted: 0, decided: 0, published: 0, pending: 1,
+        charter_id: 'MIN-X', filed: 1, admitted: 0, decided: 0, published: 0, pending: 1, withdrawn: 0,
         median_decision_days: null, p90_decision_days: null, oldest_pending_days: '5.0',
       }],
       error: null,
@@ -124,7 +124,7 @@ describe('appealsStats', () => {
     const out = await appealsStats({ days: 90 });
     expect(rpc).toHaveBeenCalledWith('civicos_appeals_stats', { p_charter_id: null, p_days: 90 });
     expect(out[0]).toEqual({
-      charterId: 'MIN-H', filed: 4, admitted: 3, decided: 3, published: 1, pending: 1,
+      charterId: 'MIN-H', filed: 4, admitted: 3, decided: 3, published: 1, pending: 1, withdrawn: 1,
       medianDecisionDays: 4, p90DecisionDays: 8.8, oldestPendingDays: 30,
     });
     expect(out[1]!.medianDecisionDays).toBeNull();

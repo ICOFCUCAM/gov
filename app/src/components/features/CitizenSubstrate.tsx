@@ -5,7 +5,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   submitServiceRequestRow, updateServiceRequestRow, myServiceRequestsRows,
   grantConsentRow, revokeConsentRow, revokeAllMyConsentsRows, myConsentsRows,
-  fileAppealRow, myAppealsRows, rateMyServiceRequestRow,
+  fileAppealRow, myAppealsRows, rateMyServiceRequestRow, withdrawMyAppealRow,
 } from '@/lib/db/repos/citizen';
 import { openWorkItemRow, workItemsByIds } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
@@ -333,6 +333,23 @@ function AppealButton({ row, citizenId, onChange }: { row: ServiceRequestRow; ci
   );
 }
 
+function WithdrawAppealButton({ row, onChange }: { row: AppealRow; onChange: () => Promise<void> }) {
+  const [busy, setBusy] = React.useState(false);
+  return (
+    <button type="button" disabled={busy} title="withdraw this appeal"
+      onClick={async () => {
+        if (!window.confirm(`Withdraw appeal ${row.ref}? This cannot be undone.`)) return;
+        const reason = window.prompt('Reason for withdrawing (optional):') ?? undefined;
+        setBusy(true);
+        try { if (await withdrawMyAppealRow(row.ref, reason)) await onChange(); }
+        finally { setBusy(false); }
+      }}
+      className="focus-ring w-14 shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+      {busy ? '…' : 'withdraw'}
+    </button>
+  );
+}
+
 function RateControl({ row, onChange }: { row: ServiceRequestRow; onChange: () => Promise<void> }) {
   const [busy, setBusy] = React.useState(false);
   if (row.satisfaction != null) {
@@ -608,9 +625,12 @@ function AppealsPanel({
                     </span>
                   ) : <span className="w-28 shrink-0" />}
                   <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                    style={{ color: a.decided_at ? TONE.ok : TONE.warn }}>
+                    style={{ color: a.withdrawn_at ? TONE.neutral : a.decided_at ? TONE.ok : TONE.warn }}>
                     {a.status}
                   </span>
+                  {!a.decided_at && !a.withdrawn_at
+                    ? <WithdrawAppealButton row={a} onChange={onChange} />
+                    : <span className="w-14 shrink-0" />}
                 </div>
                 {a.decided_at && a.reasoning ? (
                   <p className="mt-0.5 pl-6 text-[10px] text-ink-muted">

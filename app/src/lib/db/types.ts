@@ -311,6 +311,7 @@ export interface AppealRow {
   heard_at: string | null;
   decided_at: string | null;
   published_at: string | null;
+  withdrawn_at: string | null;
   created_at: string;
   updated_at: string;
 }

@@ -157,6 +157,7 @@ export interface AppealsStat {
   decided: number;
   published: number;
   pending: number;
+  withdrawn: number;
   medianDecisionDays: number | null;
   p90DecisionDays: number | null;
   oldestPendingDays: number | null;
@@ -164,7 +165,7 @@ export interface AppealsStat {
 
 interface AppealsStatRow {
   charter_id: string; filed: number; admitted: number; decided: number; published: number;
-  pending: number; median_decision_days: string | number | null;
+  pending: number; withdrawn: number; median_decision_days: string | number | null;
   p90_decision_days: string | number | null; oldest_pending_days: string | number | null;
 }
 
@@ -181,7 +182,7 @@ export async function appealsStats(opts: { charterId?: string; days?: number } =
   return (data as AppealsStatRow[]).map(r => ({
     charterId: r.charter_id,
     filed: Number(r.filed), admitted: Number(r.admitted), decided: Number(r.decided),
-    published: Number(r.published), pending: Number(r.pending),
+    published: Number(r.published), pending: Number(r.pending), withdrawn: Number(r.withdrawn),
     medianDecisionDays: numOrNull(r.median_decision_days),
     p90DecisionDays: numOrNull(r.p90_decision_days),
     oldestPendingDays: numOrNull(r.oldest_pending_days),

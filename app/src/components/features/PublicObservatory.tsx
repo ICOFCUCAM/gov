@@ -232,8 +232,8 @@ export function PublicObservatory() {
       <Panel title="Contestation — appeals pipeline"
         meta={<MetaWithCsv label={`${appeals.length} charters · last 90 days`} show={appeals.length > 0}
           onDownload={() => downloadCsv('civicos-appeals', buildCsv(
-            ['charter_id','filed','admitted','decided','published','pending','median_decision_days','p90_decision_days','oldest_pending_days'],
-            appeals.map(a => [a.charterId, a.filed, a.admitted, a.decided, a.published, a.pending, a.medianDecisionDays ?? '', a.p90DecisionDays ?? '', a.oldestPendingDays ?? '']),
+            ['charter_id','filed','admitted','decided','published','pending','withdrawn','median_decision_days','p90_decision_days','oldest_pending_days'],
+            appeals.map(a => [a.charterId, a.filed, a.admitted, a.decided, a.published, a.pending, a.withdrawn, a.medianDecisionDays ?? '', a.p90DecisionDays ?? '', a.oldestPendingDays ?? '']),
           ))} />}
         bodyClass="!p-0">
         {appeals.length === 0 ? (
