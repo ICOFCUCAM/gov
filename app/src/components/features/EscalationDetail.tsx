@@ -93,6 +93,14 @@ export function EscalationDetail({ id }: { id: string }) {
               </Link>
             </div>
           ) : null}
+          {row.linked_dispatch_id ? (
+            <div>
+              <div className="text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Linked dispatch</div>
+              <Link href="/gov/dispatches" className="mt-0.5 block truncate font-mono text-[11px] text-link underline">
+                {row.linked_dispatch_id}
+              </Link>
+            </div>
+          ) : null}
         </div>
 
         {canMutate ? (
