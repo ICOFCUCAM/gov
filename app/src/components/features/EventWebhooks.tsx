@@ -8,8 +8,8 @@ import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import {
   listEventWebhooksRows, registerEventWebhookRow, setEventWebhookActiveRow,
-  rotateEventWebhookSecretRow, listWebhookDeliveriesRows,
-  type EventWebhook, type WebhookDelivery,
+  rotateEventWebhookSecretRow, listWebhookDeliveriesRows, eventWebhooksHealth,
+  type EventWebhook, type WebhookDelivery, type EventWebhooksHealth,
 } from '@/lib/db/repos/events';
 import { ageMinutes } from '@/lib/format';
 
@@ -34,6 +34,7 @@ export function EventWebhooks() {
   const [expanded, setExpanded] = React.useState<string | null>(null);
   const [log, setLog] = React.useState<Record<string, WebhookDelivery[]>>({});
   const [rotating, setRotating] = React.useState<string | null>(null);
+  const [health, setHealth] = React.useState<EventWebhooksHealth | null>(null);
   const available = substrateAvailable();
 
   const toggleLog = React.useCallback(async (id: string) => {
@@ -66,8 +67,11 @@ export function EventWebhooks() {
   const refresh = React.useCallback(async () => {
     if (!available) return;
     setLoading(true);
-    try { setHooks(await listEventWebhooksRows()); }
-    finally { setLoading(false); }
+    try {
+      const [rows, summary] = await Promise.all([listEventWebhooksRows(), eventWebhooksHealth()]);
+      setHooks(rows);
+      setHealth(summary);
+    } finally { setLoading(false); }
   }, [available]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
@@ -111,6 +115,19 @@ export function EventWebhooks() {
         The secret is write-only — it is never returned by the substrate.
         Delivery is at-least-once; consumers dedupe on <code className="font-mono">x-civicos-event-id</code>.
       </p>
+
+      {health && health.total > 0 ? (
+        <div className="flex flex-wrap gap-x-4 gap-y-1 rounded-[3px] border border-line bg-surface px-3 py-2 text-[10px] font-mono">
+          <span className="text-ink-muted">fleet:</span>
+          <span>{health.total} total</span>
+          <span style={{ color: TONE.ok }}>{health.active} active</span>
+          {health.paused > 0 ? <span style={{ color: TONE.neutral }}>{health.paused} paused</span> : null}
+          {health.circuitOpen > 0 ? <span style={{ color: TONE.alert }}>{health.circuitOpen} circuit-open</span> : null}
+          <span className="text-ink-muted">·</span>
+          <span>{health.totalDelivered} delivered</span>
+          {health.totalFailures > 0 ? <span style={{ color: TONE.alert }}>{health.totalFailures} failing</span> : null}
+        </div>
+      ) : null}
 
       <RegisterForm onDone={refresh} />
 

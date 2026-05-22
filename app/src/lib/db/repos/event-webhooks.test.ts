@@ -8,7 +8,7 @@ vi.mock('@/lib/db/client', () => ({
 
 import {
   listEventWebhooksRows, registerEventWebhookRow, listWebhookDeliveriesRows,
-  rotateEventWebhookSecretRow,
+  rotateEventWebhookSecretRow, eventWebhooksHealth,
 } from './events';
 
 beforeEach(() => publicClientMock.mockReset());
@@ -144,5 +144,32 @@ describe('rotateEventWebhookSecretRow', () => {
       rpc: async () => ({ data: null, error: { message: 'insufficient_privilege' } }),
     });
     expect(await rotateEventWebhookSecretRow('w1', 'newsecret1')).toBe(false);
+  });
+});
+
+describe('eventWebhooksHealth', () => {
+  it('returns null when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await eventWebhooksHealth()).toBeNull();
+  });
+
+  it('maps the summary row into camelCase', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({
+        data: [{ total: 7, active: 4, paused: 1, circuit_open: 2, total_delivered: 1200, total_failures: 9 }],
+        error: null,
+      }),
+    });
+    const out = await eventWebhooksHealth();
+    expect(out).toEqual({
+      total: 7, active: 4, paused: 1, circuitOpen: 2, totalDelivered: 1200, totalFailures: 9,
+    });
+  });
+
+  it('returns null on RPC error', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: null, error: { message: 'denied' } }),
+    });
+    expect(await eventWebhooksHealth()).toBeNull();
   });
 });

@@ -153,6 +153,31 @@ export async function rotateEventWebhookSecretRow(id: string, newSecret: string)
   return !error && data === true;
 }
 
+export interface EventWebhooksHealth {
+  total: number;
+  active: number;
+  paused: number;
+  circuitOpen: number;
+  totalDelivered: number;
+  totalFailures: number;
+}
+
+/** Fleet-level roll-up of the registered webhooks (platform-tier).
+ *  Returns null without a substrate / on insufficient privilege. */
+export async function eventWebhooksHealth(): Promise<EventWebhooksHealth | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_event_webhooks_health');
+  if (error || !data) return null;
+  const r = (Array.isArray(data) ? data[0] : data) as Record<string, number> | undefined;
+  if (!r) return null;
+  return {
+    total: Number(r.total), active: Number(r.active), paused: Number(r.paused),
+    circuitOpen: Number(r.circuit_open), totalDelivered: Number(r.total_delivered),
+    totalFailures: Number(r.total_failures),
+  };
+}
+
 /* ── Webhook delivery log (platform-tier, read-only) ──────────────── */
 
 export interface WebhookDelivery {
