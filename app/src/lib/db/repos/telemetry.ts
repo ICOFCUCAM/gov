@@ -74,4 +74,45 @@ export async function listTelemetryStreamsRows(opts: { activeOnly?: boolean; lim
   return data as TelemetryStreamRow[];
 }
 
+export interface TelemetryStreamStats {
+  samples: number;
+  min: number | null;
+  max: number | null;
+  avg: number | null;
+  median: number | null;
+  p95: number | null;
+  stddev: number | null;
+  latest: number | null;
+  latestTs: string | null;
+  warnBreaches: number;
+  alertBreaches: number;
+}
+
+interface TelemetryStreamStatsRow {
+  samples: number; min_value: number | null; max_value: number | null;
+  avg_value: number | null; median_value: number | null; p95_value: number | null;
+  stddev_value: number | null; latest_value: number | null; latest_ts: string | null;
+  warn_breaches: number; alert_breaches: number;
+}
+
+/** Distribution + breach stats for one telemetry stream over `hours`.
+ *  Authenticated-tier (samples are not public). null without a substrate
+ *  or when the stream has no samples in the window. */
+export async function telemetryStreamStats(streamId: string, hours = 24): Promise<TelemetryStreamStats | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_telemetry_stream_stats', {
+    p_stream_id: streamId, p_hours: hours,
+  });
+  if (error || !data) return null;
+  const r = (Array.isArray(data) ? data[0] : data) as TelemetryStreamStatsRow | undefined;
+  if (!r || Number(r.samples) === 0) return null;
+  return {
+    samples: Number(r.samples), min: r.min_value, max: r.max_value, avg: r.avg_value,
+    median: r.median_value, p95: r.p95_value, stddev: r.stddev_value,
+    latest: r.latest_value, latestTs: r.latest_ts,
+    warnBreaches: Number(r.warn_breaches), alertBreaches: Number(r.alert_breaches),
+  };
+}
+
 export { substrateAvailable };

@@ -3,7 +3,10 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { listTelemetryStreamsRows, recentTelemetrySamplesRows } from '@/lib/db/repos/telemetry';
+import {
+  listTelemetryStreamsRows, recentTelemetrySamplesRows, telemetryStreamStats,
+  type TelemetryStreamStats,
+} from '@/lib/db/repos/telemetry';
 import { substrateAvailable } from '@/lib/db/client';
 import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -18,16 +21,19 @@ export function TelemetryStreamDetail({ streamId }: { streamId: string }) {
   const { ready } = useIdentity();
   const [stream, setStream] = React.useState<TelemetryStreamRow | null>(null);
   const [samples, setSamples] = React.useState<TelemetrySampleRow[]>([]);
+  const [stats, setStats] = React.useState<TelemetryStreamStats | null>(null);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
-    const [all, s] = await Promise.all([
+    const [all, s, st] = await Promise.all([
       listTelemetryStreamsRows({ limit: 200 }),
       recentTelemetrySamplesRows(streamId, 240),
+      telemetryStreamStats(streamId, 24),
     ]);
     setStream(all.find(x => x.stream_id === streamId) ?? null);
     setSamples(s);
+    setStats(st);
   }, [available, streamId]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
@@ -127,6 +133,29 @@ export function TelemetryStreamDetail({ streamId }: { streamId: string }) {
         )}
       </Panel>
 
+      {stats ? (
+        <Panel title="Statistics (last 24h)" meta={`${stats.samples} samples`} bodyClass="!p-3">
+          <div className="grid grid-cols-3 gap-3 sm:grid-cols-6 text-center">
+            <StatCell label="min" value={fmt(stats.min)} unit={stream.unit} />
+            <StatCell label="median" value={fmt(stats.median)} unit={stream.unit} />
+            <StatCell label="avg" value={fmt(stats.avg)} unit={stream.unit} />
+            <StatCell label="p95" value={fmt(stats.p95)} unit={stream.unit} />
+            <StatCell label="max" value={fmt(stats.max)} unit={stream.unit} />
+            <StatCell label="σ" value={fmt(stats.stddev)} unit={stream.unit} />
+          </div>
+          {(stats.warnBreaches > 0 || stats.alertBreaches > 0) ? (
+            <p className="mt-2 font-mono text-[10px]">
+              {stats.alertBreaches > 0 ? <span style={{ color: TONE.alert }}>{stats.alertBreaches} alert breaches</span> : null}
+              {stats.alertBreaches > 0 && stats.warnBreaches > 0 ? <span className="text-ink-muted"> · </span> : null}
+              {stats.warnBreaches > 0 ? <span style={{ color: TONE.warn }}>{stats.warnBreaches} warn breaches</span> : null}
+              <span className="text-ink-muted"> in 24h</span>
+            </p>
+          ) : (
+            <p className="mt-2 font-mono text-[10px]" style={{ color: TONE.ok }}>no threshold breaches in 24h</p>
+          )}
+        </Panel>
+      ) : null}
+
       <Panel title="Recent samples" meta={`${ordered.length}`} bodyClass="!p-0">
         {ordered.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">No samples on file.</p>
@@ -144,6 +173,20 @@ export function TelemetryStreamDetail({ streamId }: { streamId: string }) {
           </div>
         )}
       </Panel>
+    </div>
+  );
+}
+
+function fmt(v: number | null): string {
+  if (v == null) return '—';
+  return Number.isInteger(v) ? String(v) : v.toFixed(2);
+}
+
+function StatCell({ label, value, unit }: { label: string; value: string; unit: string | null }) {
+  return (
+    <div className="rounded-[3px] border border-line bg-surface px-2 py-1.5">
+      <div className="font-mono text-sm tabular-nums text-ink">{value}<span className="text-[9px] text-ink-muted"> {unit ?? ''}</span></div>
+      <div className="text-[8.5px] uppercase tracking-wider text-ink-muted">{label}</div>
     </div>
   );
 }
