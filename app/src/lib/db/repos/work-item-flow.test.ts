@@ -6,9 +6,35 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { workItemFlowStats, workItemStageDistribution, officerWorkload } from './work-items';
+import { workItemFlowStats, workItemStageDistribution, officerWorkload, claimWorkItemRow } from './work-items';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('claimWorkItemRow', () => {
+  it('returns null when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await claimWorkItemRow('WI-1')).toBeNull();
+  });
+
+  it('calls the RPC with the ref and returns the updated row', async () => {
+    const rpc = vi.fn(async () => ({ data: { id: 'wi1', ref: 'WI-1', assignee_name: 'Alice' }, error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await claimWorkItemRow('WI-1');
+    expect(rpc).toHaveBeenCalledWith('civicos_claim_work_item', { p_ref: 'WI-1' });
+    expect(out!.assignee_name).toBe('Alice');
+  });
+
+  it('unwraps a single-element array result', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: [{ id: 'wi1', ref: 'WI-1' }], error: null }) });
+    const out = await claimWorkItemRow('WI-1');
+    expect(out!.ref).toBe('WI-1');
+  });
+
+  it('returns null on RPC error (e.g. not a linked officer)', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'insufficient_privilege' } }) });
+    expect(await claimWorkItemRow('WI-1')).toBeNull();
+  });
+});
 
 describe('officerWorkload', () => {
   it('returns [] when the substrate is unavailable', async () => {

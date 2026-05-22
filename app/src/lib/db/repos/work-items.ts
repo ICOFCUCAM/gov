@@ -156,6 +156,18 @@ export async function workItemRow(ref: string): Promise<WorkItemRow | null> {
   return data as WorkItemRow;
 }
 
+/** Claim an open work item for the calling officer (assignee := self),
+ *  recorded on the item's audit scope. Assignment-only — does not advance
+ *  the workflow stage. Returns the updated row, or null on failure (no
+ *  substrate / not a linked officer / item closed). */
+export async function claimWorkItemRow(ref: string): Promise<WorkItemRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_claim_work_item', { p_ref: ref });
+  if (error || !data) { if (error) console.error('[civicos] claim_work_item failed:', error.message); return null; }
+  return (Array.isArray(data) ? data[0] : data) as WorkItemRow;
+}
+
 export async function workItemStepsRows(ref: string, limit = 50): Promise<WorkItemStepRow[]> {
   const sb = publicClient();
   if (!sb) return [];

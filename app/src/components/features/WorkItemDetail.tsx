@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   workItemRow, workItemStepsRows, listWorkflowDefinitionsRows,
-  transitionWorkItemRow,
+  transitionWorkItemRow, claimWorkItemRow,
 } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkItemRow, WorkItemStepRow, ActionKey } from '@/lib/db/types';
@@ -118,6 +118,18 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
     }
   }
 
+  async function claim() {
+    if (!item) return;
+    setBusy(true); setError(null);
+    try {
+      const updated = await claimWorkItemRow(item.ref);
+      if (!updated) setError('claim failed — you must be a linked officer and the item must be open');
+      else await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -150,6 +162,13 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
           <Field label="Assignee" value={item.assignee_name ?? '—'} />
           <Field label="Created" value={new Date(item.created_at).toLocaleString()} />
         </div>
+
+        {!item.closed && actor?.kind === 'officer' && item.assignee_id !== actor.id ? (
+          <button type="button" onClick={() => { void claim(); }} disabled={busy}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+            {item.assignee_id ? 'assign to me' : 'claim'}
+          </button>
+        ) : null}
 
         {item.closed ? (
           <p className="rounded-[3px] border border-line bg-bg px-2 py-1 text-[10px]" style={{ color: TONE.ok }}>
