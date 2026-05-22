@@ -286,6 +286,16 @@ export async function escalationsForWorkItemRow(workItemId: string): Promise<Esc
   return data as EscalationRow[];
 }
 
+/** Escalations linked to a given dispatch. [] without a substrate. */
+export async function escalationsForDispatchRow(dispatchId: string): Promise<EscalationRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.from('civicos_escalations').select('*')
+    .eq('linked_dispatch_id', dispatchId).order('triggered_at', { ascending: false }).limit(20);
+  if (error || !data) return [];
+  return data as EscalationRow[];
+}
+
 export interface EscalationResponseStat {
   charterId: string;
   total: number;

@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   dispatchByRef, acknowledgeDispatchRow, closeDispatchRow, markDispatchOnSceneRow,
+  escalationsForDispatchRow,
 } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
-import type { DispatchRow } from '@/lib/db/types';
+import type { DispatchRow, EscalationRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
@@ -17,12 +18,15 @@ import { priorityTone, dispatchStatusTone } from '@/lib/tone';
 export function DispatchDetail({ ref: dispatchRef }: { ref: string }) {
   const { actor, ready } = useIdentity();
   const [row, setRow] = React.useState<DispatchRow | null>(null);
+  const [linkedEscalations, setLinkedEscalations] = React.useState<EscalationRow[]>([]);
   const [busy, setBusy] = React.useState(false);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
-    setRow(await dispatchByRef(dispatchRef));
+    const d = await dispatchByRef(dispatchRef);
+    setRow(d);
+    setLinkedEscalations(d ? await escalationsForDispatchRow(d.id) : []);
   }, [available, dispatchRef]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
@@ -111,6 +115,20 @@ export function DispatchDetail({ ref: dispatchRef }: { ref: string }) {
           </div>
         ) : null}
       </Panel>
+
+      {linkedEscalations.length > 0 ? (
+        <Panel title="Responds to escalations" meta={`${linkedEscalations.length}`} bodyClass="!p-0">
+          {linkedEscalations.map(e => (
+            <Link key={e.id} href={`/gov/escalations/${encodeURIComponent(e.id)}`}
+              className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px] hover:bg-surface-2">
+              <span className="w-16 shrink-0 text-[8.5px] font-bold uppercase tracking-wider"
+                style={{ color: e.resolved_at ? TONE.ok : TONE.alert }}>{e.severity}</span>
+              <span className="min-w-0 flex-1 truncate text-ink">{e.reason}</span>
+              <span className="shrink-0 text-[8.5px] uppercase tracking-wider text-ink-muted">{e.resolved_at ? 'resolved' : 'open'}</span>
+            </Link>
+          ))}
+        </Panel>
+      ) : null}
 
       {row.payload && Object.keys(row.payload).length > 0 ? (
         <Panel title="Payload" meta="jsonb" bodyClass="!p-3 text-[10px]">
