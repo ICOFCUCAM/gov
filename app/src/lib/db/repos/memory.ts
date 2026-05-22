@@ -240,6 +240,21 @@ export async function acknowledgeEscalationRow(id: string, acknowledgedBy?: stri
   return (data as EscalationRow) ?? null;
 }
 
+/** Link an escalation to the dispatch and/or work item raised in response
+ *  (by ref). Officer-gated, audit-logged. Returns true on success. */
+export async function linkEscalationResponseRow(
+  escalationId: string, opts: { dispatchRef?: string | null; workItemRef?: string | null },
+): Promise<boolean> {
+  const sb = publicClient();
+  if (!sb) return false;
+  const { data, error } = await sb.rpc('civicos_link_escalation_response', {
+    p_escalation_id: escalationId,
+    p_dispatch_ref: opts.dispatchRef ?? null,
+    p_work_item_ref: opts.workItemRef ?? null,
+  });
+  return !error && data === true;
+}
+
 export async function resolveEscalationRow(id: string): Promise<EscalationRow | null> {
   const sb = publicClient();
   if (!sb) return null;

@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
-  escalationById, acknowledgeEscalationRow, resolveEscalationRow,
+  escalationById, acknowledgeEscalationRow, resolveEscalationRow, linkEscalationResponseRow,
 } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
 import type { EscalationRow } from '@/lib/db/types';
@@ -117,6 +117,7 @@ export function EscalationDetail({ id }: { id: string }) {
                 resolve
               </button>
             ) : null}
+            <LinkResponseForm escalationId={row.id} busy={busy} setBusy={setBusy} onDone={refresh} />
           </div>
         ) : null}
       </Panel>
@@ -136,5 +137,39 @@ function Field({ label, value, mono = false }: { label: string; value: string; m
       <div className="text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{label}</div>
       <div className={`mt-0.5 truncate text-[11px] text-ink ${mono ? 'font-mono' : ''}`}>{value}</div>
     </div>
+  );
+}
+
+function LinkResponseForm({
+  escalationId, busy, setBusy, onDone,
+}: { escalationId: string; busy: boolean; setBusy: (b: boolean) => void; onDone: () => Promise<void> }) {
+  const [ref, setRef] = React.useState('');
+  const [kind, setKind] = React.useState<'dispatch' | 'work_item'>('dispatch');
+  return (
+    <form
+      onSubmit={async e => {
+        e.preventDefault();
+        if (!ref.trim()) return;
+        setBusy(true);
+        try {
+          await linkEscalationResponseRow(escalationId,
+            kind === 'dispatch' ? { dispatchRef: ref.trim() } : { workItemRef: ref.trim() });
+          setRef('');
+          await onDone();
+        } finally { setBusy(false); }
+      }}
+      className="flex items-center gap-1">
+      <select value={kind} onChange={e => setKind(e.currentTarget.value as 'dispatch' | 'work_item')}
+        className="rounded-[3px] border border-line-soft bg-bg px-1 py-1 text-[9px]">
+        <option value="dispatch">dispatch</option>
+        <option value="work_item">work item</option>
+      </select>
+      <input value={ref} onChange={e => setRef(e.currentTarget.value)} placeholder="ref to link"
+        className="w-28 rounded-[3px] border border-line-soft bg-bg px-2 py-1 font-mono text-[9px]" />
+      <button type="submit" disabled={busy || !ref.trim()}
+        className="focus-ring rounded-[3px] border border-line bg-bg px-2 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+        link
+      </button>
+    </form>
   );
 }
