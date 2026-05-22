@@ -5,6 +5,7 @@ import { Pill } from '@/components/ui/Pill';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { listNotifications } from '@/lib/data/store';
 import { SupportThread } from './SupportThread';
+import { SubstrateNotices } from './SubstrateNotices';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,6 +26,7 @@ export default function InboxPage() {
           </>
         }
       >
+        <SubstrateNotices />
         {notifications.length === 0 ? (
           <EmptyState title="No messages" hint="Notifications from the state appear here." />
         ) : null}
