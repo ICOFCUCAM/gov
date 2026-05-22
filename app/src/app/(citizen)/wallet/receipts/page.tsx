@@ -169,7 +169,9 @@ export default function ReceiptsPage() {
                       <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
                         {e.kind}
                       </span>
-                      <span className="font-mono text-sm">{e.ref}</span>
+                      {e.kind === 'consent'
+                        ? <Link href={`/wallet/consent/${encodeURIComponent(e.ref)}`} className="font-mono text-sm text-link underline underline-offset-2">{e.ref}</Link>
+                        : <span className="font-mono text-sm">{e.ref}</span>}
                       <span className="ml-auto text-xs text-ink-muted">
                         {ageMinutes(e.at)}m ago
                       </span>
