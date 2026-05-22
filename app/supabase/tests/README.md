@@ -33,6 +33,7 @@ run those with the service-role / migration connection.
 | `incident_loop_test.sql` | The two auto-resolve triggers: a dispatch / work-item close resolves (and acknowledges) its linked escalation, and leaves unlinked escalations untouched. |
 | `webhook_delivery_test.sql` | Circuit breaker trips at 10 consecutive failures and clears on a successful delivery; the delivery log is trimmed to the last 50 per webhook; secret rotation rejects `< 8` chars and preserves the cursor. |
 | `accountability_stats_test.sql` | The published aggregate arithmetic — `service_sla_stats` (counts, median turnaround, rated count, avg satisfaction) and `appeals_stats` (counts, median days-to-decision) — over a fixed fabricated dataset. |
+| `cron_and_audit_test.sql` | `promote_due_directives` promotes only past-due signed directives (not future-dated); `escalate_stale_telemetry_streams` flags a silent active stream; `set_telemetry_stream_active(false)` drops a stream from fleet status; `append_audit` + `verify_audit_chain` report a fresh chain intact. |
 
 These intentionally focus on the **auth-independent** substrate logic
 (triggers, service-role RPCs, aggregates, validation). The `auth.uid()`-
