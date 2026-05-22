@@ -6,6 +6,7 @@ import {
   listServiceRequestsRows, updateServiceRequestRow,
   listAppealsRows, decideAppealRow,
 } from '@/lib/db/repos/citizen';
+import { recordEscalationRow } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
 import type { ServiceRequestRow, AppealRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -231,6 +232,24 @@ export function CitizenIntakeQueue() {
                         finally { setBusyId(null); }
                       }}>
                       reject
+                    </button>
+                  ) : null}
+                  {!r.resolved_at ? (
+                    <button type="button"
+                      className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
+                      disabled={busyId === r.id} title="raise an escalation for this request"
+                      onClick={async () => {
+                        setBusyId(r.id);
+                        try {
+                          await recordEscalationRow({
+                            sourceCharterId: r.target_charter_id, severity: 'minor',
+                            reason: `service request ${r.ref} escalated from intake`,
+                            payload: { service_request_ref: r.ref },
+                          });
+                          await refresh();
+                        } finally { setBusyId(null); }
+                      }}>
+                      escalate
                     </button>
                   ) : null}
                 </div>
