@@ -8,7 +8,7 @@ vi.mock('@/lib/db/client', () => ({
 
 import {
   listEventWebhooksRows, registerEventWebhookRow, listWebhookDeliveriesRows,
-  rotateEventWebhookSecretRow, eventWebhooksHealth,
+  rotateEventWebhookSecretRow, eventWebhooksHealth, federationChannelCatalog,
 } from './events';
 
 beforeEach(() => publicClientMock.mockReset());
@@ -171,5 +171,28 @@ describe('eventWebhooksHealth', () => {
       rpc: async () => ({ data: null, error: { message: 'denied' } }),
     });
     expect(await eventWebhooksHealth()).toBeNull();
+  });
+});
+
+describe('federationChannelCatalog', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await federationChannelCatalog()).toEqual([]);
+  });
+
+  it('maps rows and forwards the window', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [{ channel: 'escalation', type: 'institution.escalation', events: 3, last_at: '2026-05-21T00:00:00Z' }],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await federationChannelCatalog(30);
+    expect(rpc).toHaveBeenCalledWith('civicos_federation_channel_catalog', { p_days: 30 });
+    expect(out[0]).toEqual({ channel: 'escalation', type: 'institution.escalation', events: 3, lastAt: '2026-05-21T00:00:00Z' });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await federationChannelCatalog()).toEqual([]);
   });
 });

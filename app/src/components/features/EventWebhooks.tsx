@@ -9,7 +9,8 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import {
   listEventWebhooksRows, registerEventWebhookRow, setEventWebhookActiveRow,
   rotateEventWebhookSecretRow, listWebhookDeliveriesRows, eventWebhooksHealth,
-  type EventWebhook, type WebhookDelivery, type EventWebhooksHealth,
+  federationChannelCatalog,
+  type EventWebhook, type WebhookDelivery, type EventWebhooksHealth, type FederationChannelEntry,
 } from '@/lib/db/repos/events';
 import { ageMinutes } from '@/lib/format';
 
@@ -35,6 +36,7 @@ export function EventWebhooks() {
   const [log, setLog] = React.useState<Record<string, WebhookDelivery[]>>({});
   const [rotating, setRotating] = React.useState<string | null>(null);
   const [health, setHealth] = React.useState<EventWebhooksHealth | null>(null);
+  const [catalog, setCatalog] = React.useState<FederationChannelEntry[]>([]);
   const available = substrateAvailable();
 
   const toggleLog = React.useCallback(async (id: string) => {
@@ -68,9 +70,12 @@ export function EventWebhooks() {
     if (!available) return;
     setLoading(true);
     try {
-      const [rows, summary] = await Promise.all([listEventWebhooksRows(), eventWebhooksHealth()]);
+      const [rows, summary, cat] = await Promise.all([
+        listEventWebhooksRows(), eventWebhooksHealth(), federationChannelCatalog(30),
+      ]);
       setHooks(rows);
       setHealth(summary);
+      setCatalog(cat);
     } finally { setLoading(false); }
   }, [available]);
 
@@ -130,6 +135,21 @@ export function EventWebhooks() {
       ) : null}
 
       <RegisterForm onDone={refresh} />
+
+      {catalog.length > 0 ? (
+        <Panel title="Channel activity (last 30 days)" meta={`${catalog.length} channel·type pairs`} bodyClass="!p-0">
+          <div className="max-h-[220px] overflow-y-auto">
+            {catalog.map(c => (
+              <div key={`${c.channel}:${c.type}`} className="flex items-center gap-2 border-b border-line-soft px-3 py-1 last:border-0 font-mono text-[10px]">
+                <span className="w-24 shrink-0 truncate text-link">{c.channel}</span>
+                <span className="min-w-0 flex-1 truncate text-ink">{c.type}</span>
+                <span className="w-16 shrink-0 text-right text-ink-muted">{c.events}×</span>
+                <span className="w-28 shrink-0 text-right text-ink-muted">{ageMinutes(c.lastAt)}m ago</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
 
       <Panel title="Registered webhooks" meta={`${hooks.length}`} bodyClass="!p-0">
         {hooks.length === 0 ? (

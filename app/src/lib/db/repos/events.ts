@@ -210,3 +210,29 @@ export async function listWebhookDeliveriesRows(webhookId: string, limit = 20): 
     attemptedAt: r.attempted_at,
   }));
 }
+
+/* ── Federation channel catalog ───────────────────────────────────── */
+
+export interface FederationChannelEntry {
+  channel: string;
+  type: string;
+  events: number;
+  lastAt: string;
+}
+
+interface FederationChannelRow {
+  channel: string; type: string; events: number; last_at: string;
+}
+
+/** Per (channel, type) event volume + last occurrence over `days`, so an
+ *  operator can see what flows on each channel before registering a
+ *  webhook. Authenticated-tier. [] without a substrate. */
+export async function federationChannelCatalog(days = 30): Promise<FederationChannelEntry[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_federation_channel_catalog', { p_days: days });
+  if (error || !data) return [];
+  return (data as FederationChannelRow[]).map(r => ({
+    channel: r.channel, type: r.type, events: Number(r.events), lastAt: r.last_at,
+  }));
+}
