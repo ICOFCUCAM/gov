@@ -89,10 +89,16 @@ export function EventWebhooks() {
                 <div className="flex items-center gap-2">
                   <span className="w-24 shrink-0 truncate font-mono text-link">{h.channel}</span>
                   <span className="min-w-0 flex-1 truncate font-mono text-ink">{h.url}</span>
-                  <span className="w-16 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                    style={{ color: !h.active ? TONE.neutral : h.failures > 0 ? TONE.alert : TONE.ok }}>
-                    {!h.active ? 'inactive' : h.failures > 0 ? `${h.failures} fail` : 'healthy'}
-                  </span>
+                  {(() => {
+                    const tripped = !h.active && (h.pausedReason ?? '').startsWith('circuit-open');
+                    const label = tripped ? 'circuit open' : !h.active ? 'paused' : h.failures > 0 ? `${h.failures} fail` : 'healthy';
+                    const color = tripped ? TONE.alert : !h.active ? TONE.neutral : h.failures > 0 ? TONE.alert : TONE.ok;
+                    return (
+                      <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider" style={{ color }}>
+                        {label}
+                      </span>
+                    );
+                  })()}
                   <button type="button"
                     onClick={async () => { await setEventWebhookActiveRow(h.id, !h.active); await refresh(); }}
                     className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink">
@@ -106,6 +112,9 @@ export function EventWebhooks() {
                   {h.description ? <span>· {h.description}</span> : null}
                 </div>
                 {h.lastError ? <p className="mt-0.5 font-mono text-[9px]" style={{ color: TONE.alert }}>{h.lastError}</p> : null}
+                {h.pausedReason && (h.pausedReason ?? '').startsWith('circuit-open')
+                  ? <p className="mt-0.5 font-mono text-[9px]" style={{ color: TONE.alert }}>breaker tripped — {h.pausedReason}. resume to retry.</p>
+                  : null}
               </div>
             ))}
           </div>

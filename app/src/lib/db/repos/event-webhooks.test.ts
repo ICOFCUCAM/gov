@@ -22,7 +22,8 @@ describe('listEventWebhooksRows', () => {
         data: [{
           id: 'w1', channel: 'constitutional', url: 'https://h.test', description: 'd',
           active: true, cursor_at_ms: 1200, last_delivered_at: '2026-05-21T00:00:00Z',
-          delivered_count: 7, failures: 0, last_error: null, created_at: '2026-05-20T00:00:00Z',
+          delivered_count: 7, failures: 0, last_error: null,
+          paused_reason: null, created_at: '2026-05-20T00:00:00Z',
         }],
         error: null,
       }),
@@ -32,8 +33,27 @@ describe('listEventWebhooksRows', () => {
     expect(out[0]!.cursorAtMs).toBe(1200);
     expect(out[0]!.deliveredCount).toBe(7);
     expect(out[0]!.active).toBe(true);
+    expect(out[0]!.pausedReason).toBeNull();
     // No secret field is surfaced.
     expect((out[0] as unknown as Record<string, unknown>).secret).toBeUndefined();
+  });
+
+  it('surfaces a tripped circuit breaker reason on a deactivated row', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({
+        data: [{
+          id: 'w2', channel: 'metric', url: 'https://dead.test', description: null,
+          active: false, cursor_at_ms: 0, last_delivered_at: null,
+          delivered_count: 0, failures: 10, last_error: 'connection refused',
+          paused_reason: 'circuit-open: 10 consecutive delivery failures',
+          created_at: '2026-05-20T00:00:00Z',
+        }],
+        error: null,
+      }),
+    });
+    const out = await listEventWebhooksRows();
+    expect(out[0]!.active).toBe(false);
+    expect(out[0]!.pausedReason).toBe('circuit-open: 10 consecutive delivery failures');
   });
 
   it('returns [] when the RPC errors (e.g. insufficient privilege)', async () => {

@@ -86,13 +86,15 @@ export interface EventWebhook {
   deliveredCount: number;
   failures: number;
   lastError: string | null;
+  pausedReason: string | null;
   createdAt: string;
 }
 
 interface EventWebhookRow {
   id: string; channel: string; url: string; description: string | null;
   active: boolean; cursor_at_ms: number; last_delivered_at: string | null;
-  delivered_count: number; failures: number; last_error: string | null; created_at: string;
+  delivered_count: number; failures: number; last_error: string | null;
+  paused_reason: string | null; created_at: string;
 }
 
 function mapWebhook(r: EventWebhookRow): EventWebhook {
@@ -100,7 +102,8 @@ function mapWebhook(r: EventWebhookRow): EventWebhook {
     id: r.id, channel: r.channel, url: r.url, description: r.description,
     active: r.active, cursorAtMs: Number(r.cursor_at_ms),
     lastDeliveredAt: r.last_delivered_at, deliveredCount: Number(r.delivered_count),
-    failures: r.failures, lastError: r.last_error, createdAt: r.created_at,
+    failures: r.failures, lastError: r.last_error,
+    pausedReason: r.paused_reason ?? null, createdAt: r.created_at,
   };
 }
 
