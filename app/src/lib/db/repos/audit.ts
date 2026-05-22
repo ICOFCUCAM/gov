@@ -82,6 +82,31 @@ export async function distinctAuditScopesRows(limit = 30): Promise<string[]> {
   return Array.from(new Set((data as { scope: string }[]).map(r => r.scope))).slice(0, limit);
 }
 
+export interface AuditScopeSummary {
+  scope: string;
+  entries: number;
+  firstAt: string;
+  lastAt: string;
+  maxSeq: number;
+}
+
+interface AuditScopeSummaryRow {
+  scope: string; entries: number; first_at: string; last_at: string; max_seq: number;
+}
+
+/** Platform-tier/auditor index of every audit scope with entry count and
+ *  first/last activity, newest first. [] without a substrate or on
+ *  insufficient privilege. */
+export async function auditScopeSummaryRows(limit = 200): Promise<AuditScopeSummary[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_audit_scope_summary', { p_limit: limit });
+  if (error || !data) return [];
+  return (data as AuditScopeSummaryRow[]).map(r => ({
+    scope: r.scope, entries: Number(r.entries), firstAt: r.first_at, lastAt: r.last_at, maxSeq: Number(r.max_seq),
+  }));
+}
+
 export async function verifyChainRow(scope: string): Promise<{ scope: string; entries: number; intact: boolean; brokenAt: number | null } | null> {
   const sb = publicClient();
   if (!sb) return null;

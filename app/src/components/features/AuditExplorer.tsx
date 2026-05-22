@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
-  recentAuditEntriesRows, distinctAuditScopesRows, verifyChainRow,
+  recentAuditEntriesRows, distinctAuditScopesRows, verifyChainRow, auditScopeSummaryRows,
   auditTrailRows, recordWitnessAttestationRow, type AuditEntry,
 } from '@/lib/db/repos/audit';
 import { substrateAvailable } from '@/lib/db/client';
@@ -34,6 +34,7 @@ export function AuditExplorer() {
     return sp || null;
   });
   const [recent, setRecent] = React.useState<AuditEntry[]>([]);
+  const [counts, setCounts] = React.useState<Record<string, number>>({});
   const [trail, setTrail] = React.useState<AuditEntry[]>([]);
   const [verifying, setVerifying] = React.useState(false);
   const [verification, setVerification] = React.useState<{ entries: number; intact: boolean; brokenAt: number | null } | null>(null);
@@ -41,13 +42,17 @@ export function AuditExplorer() {
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
-    const [s, r] = await Promise.all([
+    const [s, r, sum] = await Promise.all([
       distinctAuditScopesRows(30),
       recentAuditEntriesRows(120),
+      auditScopeSummaryRows(200),
     ]);
-    setScopes(s);
+    // Prefer the platform-tier summary (has counts + ordered by activity);
+    // fall back to the distinct-scope list for non-platform sessions.
+    setScopes(sum.length > 0 ? sum.map(x => x.scope) : s);
+    setCounts(Object.fromEntries(sum.map(x => [x.scope, x.entries])));
     setRecent(r);
-    if (!active && s.length > 0) setActive(s[0]!);
+    if (!active && (sum.length > 0 || s.length > 0)) setActive((sum[0]?.scope) ?? s[0]!);
   }, [available, active]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, actor?.id, session?.user.id, refresh]);
@@ -132,10 +137,11 @@ export function AuditExplorer() {
                   key={s}
                   type="button"
                   onClick={() => setActive(s)}
-                  className="block w-full truncate border-b border-line-soft px-3 py-1.5 text-left font-mono text-[10px] hover:bg-surface-2"
+                  className="flex w-full items-center gap-2 border-b border-line-soft px-3 py-1.5 text-left font-mono text-[10px] hover:bg-surface-2"
                   style={{ color: s === active ? TONE.link : 'rgb(var(--c-ink))' }}
                 >
-                  {s}
+                  <span className="min-w-0 flex-1 truncate">{s}</span>
+                  {counts[s] != null ? <span className="shrink-0 text-ink-muted">{counts[s]}</span> : null}
                 </button>
               ))}
             </div>
