@@ -511,12 +511,12 @@ export async function postureTrend(opts: { charterId?: string; weeks?: number } 
 }
 
 export interface CharterAttentionItem {
-  kind: 'request_overdue' | 'escalation_unacked' | 'appeal_pending' | 'dispatch_unacked';
+  kind: 'request_overdue' | 'escalation_unacked' | 'appeal_pending' | 'dispatch_unacked' | 'workitem_stalled';
   ref: string;
   at: string | null;
   ageHours: number | null;
   detail: string;
-  action: 'ack' | 'decide' | 'respond';
+  action: 'ack' | 'decide' | 'respond' | 'progress';
 }
 
 interface CharterAttentionRow {

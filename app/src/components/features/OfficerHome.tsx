@@ -142,6 +142,7 @@ export function OfficerHome() {
                 a.kind === 'appeal_pending' ? '/gov/intake'
                 : a.kind === 'request_overdue' ? '/gov/intake'
                 : a.kind === 'dispatch_unacked' ? '/gov/dispatches'
+                : a.kind === 'workitem_stalled' ? '/gov/workbench'
                 : '/gov/escalations';
               const overdue = (a.ageHours ?? 0) >= 48;
               return (
