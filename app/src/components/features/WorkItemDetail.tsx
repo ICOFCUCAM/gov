@@ -10,7 +10,7 @@ import {
   type WorkItemPriority,
 } from '@/lib/db/repos/work-items';
 import { listOfficersRows } from '@/lib/db/repos/admin';
-import { escalationsForWorkItemRow } from '@/lib/db/repos/memory';
+import { escalationsForWorkItemRow, recordEscalationRow } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkItemRow, WorkItemStepRow, ActionKey, OfficerRow, EscalationRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -136,6 +136,26 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
     }
   }
 
+  async function escalate() {
+    if (!item) return;
+    if (!window.confirm(`Raise an escalation for ${item.ref}? It will be linked to this work item.`)) return;
+    setBusy(true); setError(null);
+    try {
+      const me = resolvedActor();
+      const ok = await recordEscalationRow({
+        sourceCharterId: item.originating_charter_id ?? item.scope,
+        severity: 'minor',
+        reason: `work item ${item.ref} flagged: ${item.title}`,
+        linkedWorkItemId: item.id,
+        triggeredByActor: me?.name ?? 'officer',
+      });
+      if (!ok) setError('escalation failed');
+      else await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function claim() {
     if (!item) return;
     setBusy(true); setError(null);
@@ -231,6 +251,11 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
                 release
               </button>
             ) : null}
+            <button type="button" onClick={() => { void escalate(); }} disabled={busy}
+              className="focus-ring rounded-[3px] border border-line-soft px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
+              style={{ color: TONE.warn }}>
+              escalate
+            </button>
             <span className="text-[8.5px] uppercase tracking-wider text-ink-muted">priority:</span>
             {(['routine', 'priority', 'urgent', 'critical'] as const).map(p => (
               <button key={p} type="button" onClick={() => { void setPriority(p); }} disabled={busy || p === item.priority}
