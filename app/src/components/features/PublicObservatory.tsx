@@ -111,7 +111,7 @@ export function PublicObservatory() {
         </p>
         <ul className="mt-2 space-y-1 font-mono text-[10px]">
           <li><a href="/api/public" className="text-link underline">/api/public</a> — endpoint directory</li>
-          <li><a href="/api/public/accountability" className="text-link underline">/api/public/accountability</a> — service SLAs, appeals, SLA + appeals decision-time trends (<code>?days</code>, <code>?charter</code>)</li>
+          <li><a href="/api/public/accountability" className="text-link underline">/api/public/accountability</a> — service SLAs, appeals, decision-time trends, data-access footprint, governance output (<code>?days</code>, <code>?charter</code>)</li>
           <li><a href="/api/public/charters" className="text-link underline">/api/public/charters</a> — activated charter directory</li>
           <li><a href="/api/public/telemetry" className="text-link underline">/api/public/telemetry</a> — active telemetry stream catalog</li>
           <li><a href="/api/public/directives" className="text-link underline">/api/public/directives</a> — public directives (<code>?issuer</code>)</li>
