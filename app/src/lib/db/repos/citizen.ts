@@ -268,4 +268,15 @@ export async function myDataExport(): Promise<CitizenDataExport | null> {
   return data as CitizenDataExport;
 }
 
+/** Append a tamper-evident audit entry recording that the citizen
+ *  exercised their data-portability right. Best-effort; returns the audit
+ *  entry id, or null when there's no substrate / linked citizen. */
+export async function logMyDataExport(): Promise<string | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_log_my_data_export');
+  if (error || !data) return null;
+  return data as string;
+}
+
 export { substrateAvailable };

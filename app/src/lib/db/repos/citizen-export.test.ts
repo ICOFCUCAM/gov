@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { myDataExport } from './citizen';
+import { myDataExport, logMyDataExport } from './citizen';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -40,5 +40,24 @@ describe('myDataExport', () => {
       rpc: async () => ({ data: null, error: { message: 'denied' } }),
     });
     expect(await myDataExport()).toBeNull();
+  });
+});
+
+describe('logMyDataExport', () => {
+  it('returns null when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await logMyDataExport()).toBeNull();
+  });
+
+  it('returns the audit entry id from the RPC', async () => {
+    const rpc = vi.fn(async () => ({ data: 'audit-entry-1', error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    expect(await logMyDataExport()).toBe('audit-entry-1');
+    expect(rpc).toHaveBeenCalledWith('civicos_log_my_data_export');
+  });
+
+  it('returns null when there is no linked citizen (RPC returns null)', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: null }) });
+    expect(await logMyDataExport()).toBeNull();
   });
 });

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { myReceiptTimelineRows, myDataExport, type ReceiptEvent } from '@/lib/db/repos/citizen';
+import { myReceiptTimelineRows, myDataExport, logMyDataExport, type ReceiptEvent } from '@/lib/db/repos/citizen';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
@@ -77,7 +77,11 @@ export default function ReceiptsPage() {
     setExporting(true);
     try {
       const doc = await myDataExport();
-      if (doc) downloadJson(`civicos-data-export-${actor.id.slice(0, 8)}`, doc);
+      if (doc) {
+        downloadJson(`civicos-data-export-${actor.id.slice(0, 8)}`, doc);
+        // Record the export in the tamper-evident audit chain (best-effort).
+        await logMyDataExport();
+      }
     } finally {
       setExporting(false);
     }
