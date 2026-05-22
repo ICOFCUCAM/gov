@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { escalationResponseStats, escalationResponseTrend, postureStats, dispatchResponseStats, dispatchResponseTrend } from './memory';
+import { escalationResponseStats, escalationResponseTrend, postureStats, postureTrend, dispatchResponseStats, dispatchResponseTrend } from './memory';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -103,6 +103,34 @@ describe('postureStats', () => {
   it('returns [] on RPC error', async () => {
     publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
     expect(await postureStats()).toEqual([]);
+  });
+});
+
+describe('postureTrend', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await postureTrend()).toEqual([]);
+  });
+
+  it('maps weekly buckets and forwards the window + charter', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        { week_start: '2026-05-04', snapshots: 3, avg_readiness: '60.0', avg_stress: '50.0', max_stress: 90 },
+        { week_start: '2026-05-11', snapshots: 1, avg_readiness: null, avg_stress: '20.0', max_stress: 20 },
+      ],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await postureTrend({ charterId: 'MIN-D', weeks: 8 });
+    expect(rpc).toHaveBeenCalledWith('civicos_posture_trend', { p_charter_id: 'MIN-D', p_weeks: 8 });
+    expect(out).toHaveLength(2);
+    expect(out[0]).toEqual({ weekStart: '2026-05-04', snapshots: 3, avgReadiness: 60, avgStress: 50, maxStress: 90 });
+    expect(out[1]!.avgReadiness).toBeNull();
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await postureTrend()).toEqual([]);
   });
 });
 

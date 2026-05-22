@@ -477,4 +477,37 @@ export async function postureStats(opts: { charterId?: string; days?: number } =
   }));
 }
 
+export interface PostureTrendPoint {
+  weekStart: string;
+  snapshots: number;
+  avgReadiness: number | null;
+  avgStress: number | null;
+  maxStress: number | null;
+}
+
+interface PostureTrendRow {
+  week_start: string; snapshots: number;
+  avg_readiness: string | number | null; avg_stress: string | number | null;
+  max_stress: number | null;
+}
+
+/** Weekly posture trend (snapshot-week buckets) over the last `weeks`,
+ *  oldest first: avg readiness, avg + peak stress. Authenticated-tier. []
+ *  without a substrate. */
+export async function postureTrend(opts: { charterId?: string; weeks?: number } = {}): Promise<PostureTrendPoint[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_posture_trend', {
+    p_charter_id: opts.charterId ?? null, p_weeks: opts.weeks ?? 12,
+  });
+  if (error || !data) return [];
+  return (data as PostureTrendRow[]).map(r => ({
+    weekStart: r.week_start,
+    snapshots: Number(r.snapshots),
+    avgReadiness: numOrNull(r.avg_readiness),
+    avgStress: numOrNull(r.avg_stress),
+    maxStress: r.max_stress,
+  }));
+}
+
 export { substrateAvailable };

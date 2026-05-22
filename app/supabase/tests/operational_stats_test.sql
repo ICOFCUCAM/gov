@@ -117,4 +117,25 @@ begin
   raise notice 'PASS: dispatch_response_trend weekly medians';
 end$$;
 
+-- ── posture_trend: weekly avg readiness / avg + peak stress ──
+-- Three snapshots this week: readiness 80/60/40 (avg 60.0), stress 20/40/90
+-- (avg 50.0, peak 90), bucketed by snapshot week.
+do $$
+declare r record; n int;
+begin
+  insert into civicos.posture_history (charter_id, posture, readiness, stress, snapshot_at) values
+    ('TEST-PT', 'steady',   80, 20, now()-interval '2 d'),
+    ('TEST-PT', 'steady',   60, 40, now()-interval '1 d'),
+    ('TEST-PT', 'elevated', 40, 90, now());
+  select count(*) into n from civicos.posture_trend('TEST-PT', 12);
+  if n <> 1 then raise exception 'FAIL posture trend bucket count = % (want 1)', n; end if;
+  select * into r from civicos.posture_trend('TEST-PT', 12) limit 1;
+  if r.week_start <> date_trunc('week', now())::date then raise exception 'FAIL posture trend week_start = %', r.week_start; end if;
+  if r.snapshots <> 3 then raise exception 'FAIL posture trend snapshots = % (want 3)', r.snapshots; end if;
+  if r.avg_readiness <> 60.0 then raise exception 'FAIL posture trend avg_readiness = % (want 60.0)', r.avg_readiness; end if;
+  if r.avg_stress <> 50.0 then raise exception 'FAIL posture trend avg_stress = % (want 50.0)', r.avg_stress; end if;
+  if r.max_stress <> 90 then raise exception 'FAIL posture trend max_stress = % (want 90)', r.max_stress; end if;
+  raise notice 'PASS: posture_trend weekly avg/peak';
+end$$;
+
 rollback;

@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { recordPostureRow, listPostureHistoryRows, postureStats, type PostureStat } from '@/lib/db/repos/memory';
+import { recordPostureRow, listPostureHistoryRows, postureStats, type PostureStat, postureTrend, type PostureTrendPoint } from '@/lib/db/repos/memory';
 import { PostureTimeline } from '@/components/features/PostureTimeline';
 import { substrateAvailable } from '@/lib/db/client';
 import type { PostureHistoryRow, Posture } from '@/lib/db/types';
@@ -55,6 +55,13 @@ export function PostureBoard() {
   }, [available]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, actor?.id, session?.user.id, refresh]);
+
+  const [trend, setTrend] = React.useState<PostureTrendPoint[]>([]);
+  React.useEffect(() => {
+    if (!available || !ready) return;
+    const cid = charterFilter === 'all' ? undefined : charterFilter;
+    void postureTrend({ charterId: cid, weeks: 12 }).then(setTrend);
+  }, [available, ready, charterFilter]);
 
   useRealtimeRefresh(
     React.useMemo(() => [{ table: 'posture_history' as const }], []),
@@ -188,6 +195,42 @@ export function PostureBoard() {
       {charterFilter !== 'all' && filtered.length > 0 ? (
         <Panel title={`Timeline · ${charterFilter}`} meta="readiness vs stress" bodyClass="!p-3">
           <PostureTimeline rows={filtered} />
+        </Panel>
+      ) : null}
+
+      {trend.length > 0 ? (
+        <Panel title={`Stress trend · ${charterFilter}`}
+          meta={
+            <button
+              className="text-[9px] uppercase tracking-wider text-link hover:underline"
+              onClick={() => downloadCsv('civicos-posture-trend', buildCsv(
+                ['week_start','snapshots','avg_readiness','avg_stress','max_stress'],
+                trend.map(t => [t.weekStart, t.snapshots, t.avgReadiness ?? '', t.avgStress ?? '', t.maxStress ?? '']),
+              ))}>
+              csv
+            </button>
+          }
+          bodyClass="!p-3">
+          <div className="space-y-1">
+            {trend.map(t => {
+              const s = Math.max(0, Math.min(100, t.avgStress ?? 0));
+              return (
+                <div key={t.weekStart} className="flex items-center gap-2 font-mono text-[9.5px]">
+                  <span className="w-20 shrink-0 text-ink-muted">{t.weekStart}</span>
+                  <span className="w-8 shrink-0 text-right text-ink-muted">{t.snapshots}×</span>
+                  <div className="h-2 min-w-0 flex-1 rounded-[2px] bg-bg">
+                    <div className="h-full rounded-[2px]" style={{
+                      width: `${s}%`,
+                      backgroundColor: s >= 80 ? TONE.alert : s >= 50 ? TONE.warn : TONE.ok,
+                    }} />
+                  </div>
+                  <span className="w-16 shrink-0 text-right text-ink">avg {t.avgStress ?? '—'}</span>
+                  <span className="w-16 shrink-0 text-right text-ink-muted">pk {t.maxStress ?? '—'}</span>
+                </div>
+              );
+            })}
+            <p className="pt-1 text-[8.5px] uppercase tracking-wider text-ink-muted">snapshot-week · avg stress (bar) · peak stress</p>
+          </div>
         </Panel>
       ) : null}
 
