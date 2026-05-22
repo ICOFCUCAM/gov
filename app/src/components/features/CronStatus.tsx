@@ -82,6 +82,13 @@ const KNOWN_CRONS = [
     expectedIntervalMin: 60,
     path: '/api/cron/telemetry-stale',
   },
+  {
+    name: 'promote-directives',
+    description: 'Promotes signed directives to effective once their future effective_at date arrives.',
+    sentinelStream: 'substrate.directives.promoted',
+    expectedIntervalMin: 60,
+    path: '/api/cron/promote-directives',
+  },
 ];
 
 /**
