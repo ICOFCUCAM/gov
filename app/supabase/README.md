@@ -53,6 +53,8 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521240000_civicos_publish_citizen_realtime.sql` | Add service_requests / consents / appeals to `supabase_realtime` so /wallet/receipts updates without polling. RLS still gates each subscriber's stream. |
 | `20260521250000_civicos_expire_consents.sql` | `expire_due_consents()` — auto-revokes time-bound consents past their `expires_at` with one audit entry per consent on the citizen's scope. Service-role only; paired with `/api/cron/expire-consents`. |
 | `20260521260000_civicos_relock_definer_grants.sql` | Re-lock EXECUTE on bulk-officers / expire-consents (service_role) and receipt-timeline (authenticated). **Gotcha fixed:** `CREATE OR REPLACE FUNCTION` silently re-applies Supabase default privileges (anon+authenticated), undoing any earlier `REVOKE`. Always re-revoke after a replace, and revoke from `PUBLIC` too. |
+| `20260521270000_civicos_event_webhooks.sql` | `civicos.event_webhooks` (service-role-only table holding webhook url + secret + cursor) and the register/list/mark-delivered/record-failure RPCs. Listing RPC is secret-free; paired with `/api/cron/deliver-events`. |
+| `20260521280000_civicos_service_context_helper.sql` | `is_service_context()` — recognises the PostgREST service_role path (`auth.role()='service_role'`) since SECURITY DEFINER funcs see `session_user='authenticator'`. Retrofitted into webhook + expire-consents + admin-officer RPCs (their `session_user` guards would have rejected real service-role calls). |
 
 ### Advisor posture after hardening
 
@@ -293,7 +295,8 @@ Vercel Cron (`vercel.json`):
     { "path": "/api/cron/witness-sweep?token=$CIVICOS_CRON_SECRET",     "schedule": "*/15 * * * *" },
     { "path": "/api/cron/witness-divergence?token=$CIVICOS_CRON_SECRET","schedule": "5,20,35,50 * * * *" },
     { "path": "/api/cron/audit-anchor?token=$CIVICOS_CRON_SECRET",      "schedule": "*/10 * * * *" },
-    { "path": "/api/cron/expire-consents?token=$CIVICOS_CRON_SECRET",   "schedule": "30 * * * *" }
+    { "path": "/api/cron/expire-consents?token=$CIVICOS_CRON_SECRET",   "schedule": "30 * * * *" },
+    { "path": "/api/cron/deliver-events?token=$CIVICOS_CRON_SECRET",    "schedule": "*/2 * * * *" }
 ] }
 ```
 

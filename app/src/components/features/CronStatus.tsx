@@ -68,6 +68,13 @@ const KNOWN_CRONS = [
     expectedIntervalMin: 60,
     path: '/api/cron/expire-consents',
   },
+  {
+    name: 'deliver-events',
+    description: 'Delivers new federation events to registered webhooks (HMAC-signed, cursor-tracked).',
+    sentinelStream: null,
+    expectedIntervalMin: 5,
+    path: '/api/cron/deliver-events',
+  },
 ];
 
 /**
