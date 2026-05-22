@@ -13,6 +13,7 @@ import { listTelemetryStreamsRows } from '@/lib/db/repos/telemetry';
 import { recentWitnessRows, type AuditWitness } from '@/lib/db/repos/audit';
 import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
 import type { DirectiveRow, InstitutionRow, TelemetryStreamRow } from '@/lib/db/types';
+import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
 /**
@@ -123,7 +124,13 @@ export function PublicObservatory() {
         )}
       </Panel>
 
-      <Panel title="Service delivery — published SLAs" meta={`${sla.length} charters · last 90 days`} bodyClass="!p-0">
+      <Panel title="Service delivery — published SLAs"
+        meta={<MetaWithCsv label={`${sla.length} charters · last 90 days`} show={sla.length > 0}
+          onDownload={() => downloadCsv('civicos-service-sla', buildCsv(
+            ['charter_id','submitted','acknowledged','resolved','open','median_ack_hours','median_resolve_hours','p90_resolve_hours','oldest_open_hours'],
+            sla.map(s => [s.charterId, s.submitted, s.acknowledged, s.resolved, s.open, s.medianAckHours ?? '', s.medianResolveHours ?? '', s.p90ResolveHours ?? '', s.oldestOpenHours ?? '']),
+          ))} />}
+        bodyClass="!p-0">
         {sla.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
             {loading ? 'Loading…' : 'No service requests on record in the window.'}
@@ -154,7 +161,13 @@ export function PublicObservatory() {
         )}
       </Panel>
 
-      <Panel title="Decision-time trend — all charters" meta={`${trend.length} weeks (median resolve hrs)`} bodyClass="!p-0">
+      <Panel title="Decision-time trend — all charters"
+        meta={<MetaWithCsv label={`${trend.length} weeks (median resolve hrs)`} show={trend.length > 0}
+          onDownload={() => downloadCsv('civicos-sla-trend', buildCsv(
+            ['week_start','resolved','median_resolve_hours','p90_resolve_hours'],
+            trend.map(t => [t.weekStart, t.resolved, t.medianResolveHours ?? '', t.p90ResolveHours ?? '']),
+          ))} />}
+        bodyClass="!p-0">
         {trend.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
             {loading ? 'Loading…' : 'No resolved requests in the window.'}
@@ -182,7 +195,13 @@ export function PublicObservatory() {
         })()}
       </Panel>
 
-      <Panel title="Contestation — appeals pipeline" meta={`${appeals.length} charters · last 90 days`} bodyClass="!p-0">
+      <Panel title="Contestation — appeals pipeline"
+        meta={<MetaWithCsv label={`${appeals.length} charters · last 90 days`} show={appeals.length > 0}
+          onDownload={() => downloadCsv('civicos-appeals', buildCsv(
+            ['charter_id','filed','admitted','decided','published','pending','median_decision_days','p90_decision_days','oldest_pending_days'],
+            appeals.map(a => [a.charterId, a.filed, a.admitted, a.decided, a.published, a.pending, a.medianDecisionDays ?? '', a.p90DecisionDays ?? '', a.oldestPendingDays ?? '']),
+          ))} />}
+        bodyClass="!p-0">
         {appeals.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
             {loading ? 'Loading…' : 'No appeals on record in the window.'}
@@ -314,5 +333,19 @@ export function PublicObservatory() {
         To see your own records, <Link href="/sign-in?from=/public" className="text-link underline">sign in</Link>.
       </p>
     </main>
+  );
+}
+
+function MetaWithCsv({ label, show, onDownload }: { label: string; show: boolean; onDownload: () => void }) {
+  return (
+    <span className="inline-flex items-center gap-2">
+      {label}
+      {show ? (
+        <button type="button" onClick={onDownload}
+          className="focus-ring rounded-[3px] border border-line px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink">
+          csv
+        </button>
+      ) : null}
+    </span>
   );
 }
