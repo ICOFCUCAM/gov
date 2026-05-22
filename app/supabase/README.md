@@ -52,6 +52,7 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521230000_civicos_citizen_receipt_timeline.sql` | `my_receipt_timeline(p_limit)` — unified citizen-side timeline joining service_requests + consents + appeals + linked work_item_steps. Right-to-take-your-data baked into the substrate. Authenticated only. |
 | `20260521240000_civicos_publish_citizen_realtime.sql` | Add service_requests / consents / appeals to `supabase_realtime` so /wallet/receipts updates without polling. RLS still gates each subscriber's stream. |
 | `20260521250000_civicos_expire_consents.sql` | `expire_due_consents()` — auto-revokes time-bound consents past their `expires_at` with one audit entry per consent on the citizen's scope. Service-role only; paired with `/api/cron/expire-consents`. |
+| `20260521260000_civicos_relock_definer_grants.sql` | Re-lock EXECUTE on bulk-officers / expire-consents (service_role) and receipt-timeline (authenticated). **Gotcha fixed:** `CREATE OR REPLACE FUNCTION` silently re-applies Supabase default privileges (anon+authenticated), undoing any earlier `REVOKE`. Always re-revoke after a replace, and revoke from `PUBLIC` too. |
 
 ### Advisor posture after hardening
 
