@@ -74,4 +74,25 @@ begin
   raise notice 'PASS: work_item_flow_stats cycle time + backlog';
 end$$;
 
+-- ── escalation_response_trend: weekly MTTA / MTTR ──
+-- All three resolved "now" so they share one ISO week; ack minutes are
+-- 30/60/90 (median 60.0) and resolve hours 2/3/4 (median 3.0), bucketed by
+-- the week the escalation was resolved.
+do $$
+declare r record; n int;
+begin
+  insert into civicos.escalations (source_charter_id, severity, reason, triggered_at, acknowledged_at, resolved_at) values
+    ('TEST-ERT', 'minor', 'a', now()-interval '2 h', now()-interval '90 min',  now()),
+    ('TEST-ERT', 'minor', 'b', now()-interval '3 h', now()-interval '2 h',     now()),
+    ('TEST-ERT', 'minor', 'c', now()-interval '4 h', now()-interval '150 min', now());
+  select count(*) into n from civicos.escalation_response_trend('TEST-ERT', 12);
+  if n <> 1 then raise exception 'FAIL esc trend bucket count = % (want 1)', n; end if;
+  select * into r from civicos.escalation_response_trend('TEST-ERT', 12) limit 1;
+  if r.week_start <> date_trunc('week', now())::date then raise exception 'FAIL esc trend week_start = %', r.week_start; end if;
+  if r.resolved <> 3 then raise exception 'FAIL esc trend resolved = % (want 3)', r.resolved; end if;
+  if r.median_ack_minutes <> 60.0 then raise exception 'FAIL esc trend mtta = % (want 60.0)', r.median_ack_minutes; end if;
+  if r.median_resolve_hours <> 3.0 then raise exception 'FAIL esc trend mttr = % (want 3.0)', r.median_resolve_hours; end if;
+  raise notice 'PASS: escalation_response_trend weekly MTTA/MTTR';
+end$$;
+
 rollback;

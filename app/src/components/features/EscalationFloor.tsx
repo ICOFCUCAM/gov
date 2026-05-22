@@ -5,6 +5,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   recordEscalationRow, acknowledgeEscalationRow, resolveEscalationRow,
   listEscalationsRows, escalationResponseStats, type EscalationResponseStat,
+  escalationResponseTrend, type EscalationResponseTrendPoint,
 } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
 import type { EscalationRow, Severity } from '@/lib/db/types';
@@ -38,17 +39,20 @@ export function EscalationFloor() {
   const available = substrateAvailable();
 
   const [responseStats, setResponseStats] = React.useState<EscalationResponseStat[]>([]);
+  const [responseTrend, setResponseTrend] = React.useState<EscalationResponseTrendPoint[]>([]);
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
     setLoading(true);
     try {
-      const [its, rs] = await Promise.all([
+      const [its, rs, rt] = await Promise.all([
         listEscalationsRows({ limit: 50, openOnly }),
         escalationResponseStats({ days: 30 }),
+        escalationResponseTrend({ weeks: 12 }),
       ]);
       setItems(its);
       setResponseStats(rs);
+      setResponseTrend(rt);
     } finally {
       setLoading(false);
     }
@@ -178,6 +182,44 @@ export function EscalationFloor() {
               </div>
             ))}
           </div>
+        </Panel>
+      ) : null}
+
+      {responseTrend.length > 0 ? (
+        <Panel title="Response-time trend"
+          meta={
+            <button
+              className="text-[9px] uppercase tracking-wider text-link hover:underline"
+              onClick={() => downloadCsv('civicos-escalation-response-trend', buildCsv(
+                ['week_start','resolved','median_ack_minutes','median_resolve_hours'],
+                responseTrend.map(t => [t.weekStart, t.resolved, t.medianAckMinutes ?? '', t.medianResolveHours ?? '']),
+              ))}>
+              csv
+            </button>
+          }
+          bodyClass="!p-0">
+          {(() => {
+            const maxMttr = Math.max(1, ...responseTrend.map(t => t.medianResolveHours ?? 0));
+            return (
+              <div className="space-y-1 px-3 py-2">
+                {responseTrend.map(t => {
+                  const pct = Math.round(((t.medianResolveHours ?? 0) / maxMttr) * 100);
+                  return (
+                    <div key={t.weekStart} className="flex items-center gap-2 font-mono text-[9.5px]">
+                      <span className="w-20 shrink-0 text-ink-muted">{t.weekStart}</span>
+                      <span className="w-10 shrink-0 text-right text-ink-muted">{t.resolved}×</span>
+                      <div className="h-2.5 min-w-0 flex-1 rounded-[2px] bg-surface-2">
+                        <div className="h-full rounded-[2px]" style={{ width: `${pct}%`, backgroundColor: TONE.link }} />
+                      </div>
+                      <span className="w-16 shrink-0 text-right text-ink-muted">{t.medianAckMinutes == null ? '—' : `${t.medianAckMinutes}m`}</span>
+                      <span className="w-14 shrink-0 text-right text-ink">{t.medianResolveHours == null ? '—' : `${t.medianResolveHours}h`}</span>
+                    </div>
+                  );
+                })}
+                <p className="pt-1 text-[8.5px] uppercase tracking-wider text-ink-muted">resolved-week · mtta (m) · mttr (h, bar)</p>
+              </div>
+            );
+          })()}
         </Panel>
       ) : null}
 

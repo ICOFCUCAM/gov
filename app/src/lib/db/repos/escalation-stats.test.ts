@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { escalationResponseStats, postureStats, dispatchResponseStats } from './memory';
+import { escalationResponseStats, escalationResponseTrend, postureStats, dispatchResponseStats } from './memory';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -104,5 +104,40 @@ describe('escalationResponseStats', () => {
   it('returns [] on RPC error', async () => {
     publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
     expect(await escalationResponseStats()).toEqual([]);
+  });
+});
+
+describe('escalationResponseTrend', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await escalationResponseTrend()).toEqual([]);
+  });
+
+  it('maps weekly buckets and forwards the window', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        { week_start: '2026-05-04', resolved: 3, median_ack_minutes: '60.0', median_resolve_hours: '3.0' },
+        { week_start: '2026-05-11', resolved: 1, median_ack_minutes: null, median_resolve_hours: '1.5' },
+      ],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await escalationResponseTrend({ weeks: 12 });
+    expect(rpc).toHaveBeenCalledWith('civicos_escalation_response_trend', { p_charter_id: null, p_weeks: 12 });
+    expect(out).toHaveLength(2);
+    expect(out[0]).toEqual({ weekStart: '2026-05-04', resolved: 3, medianAckMinutes: 60, medianResolveHours: 3 });
+    expect(out[1]!.medianAckMinutes).toBeNull();
+  });
+
+  it('forwards a charter filter', async () => {
+    const rpc = vi.fn(async () => ({ data: [], error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    await escalationResponseTrend({ charterId: 'MIN-E', weeks: 8 });
+    expect(rpc).toHaveBeenCalledWith('civicos_escalation_response_trend', { p_charter_id: 'MIN-E', p_weeks: 8 });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await escalationResponseTrend()).toEqual([]);
   });
 });

@@ -341,6 +341,36 @@ export async function escalationResponseStats(opts: { charterId?: string; days?:
   }));
 }
 
+export interface EscalationResponseTrendPoint {
+  weekStart: string;
+  resolved: number;
+  medianAckMinutes: number | null;
+  medianResolveHours: number | null;
+}
+
+interface EscalationResponseTrendRow {
+  week_start: string; resolved: number;
+  median_ack_minutes: string | number | null; median_resolve_hours: string | number | null;
+}
+
+/** Weekly escalation response-time trend (resolved-week buckets) over the
+ *  last `weeks`, oldest first: median MTTA minutes + MTTR hours.
+ *  Authenticated-tier. [] without a substrate. */
+export async function escalationResponseTrend(opts: { charterId?: string; weeks?: number } = {}): Promise<EscalationResponseTrendPoint[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_escalation_response_trend', {
+    p_charter_id: opts.charterId ?? null, p_weeks: opts.weeks ?? 12,
+  });
+  if (error || !data) return [];
+  return (data as EscalationResponseTrendRow[]).map(r => ({
+    weekStart: r.week_start,
+    resolved: Number(r.resolved),
+    medianAckMinutes: numOrNull(r.median_ack_minutes),
+    medianResolveHours: numOrNull(r.median_resolve_hours),
+  }));
+}
+
 // ── Posture ───────────────────────────────────────────────────────
 
 export interface PostureInput {
