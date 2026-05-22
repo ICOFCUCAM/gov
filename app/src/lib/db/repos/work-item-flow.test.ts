@@ -6,9 +6,35 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { workItemFlowStats } from './work-items';
+import { workItemFlowStats, workItemStageDistribution } from './work-items';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('workItemStageDistribution', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await workItemStageDistribution('wf')).toEqual([]);
+  });
+
+  it('maps rows and forwards the workflow id', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        { stage: 'review', open_items: 2, oldest_hours: '20.0', median_age_hours: '12.5' },
+        { stage: 'intake', open_items: 1, oldest_hours: '2.0', median_age_hours: '2.0' },
+      ],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await workItemStageDistribution('permit.v1');
+    expect(rpc).toHaveBeenCalledWith('civicos_work_item_stage_distribution', { p_workflow_id: 'permit.v1' });
+    expect(out[0]).toEqual({ stage: 'review', openItems: 2, oldestHours: 20, medianAgeHours: 12.5 });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await workItemStageDistribution('wf')).toEqual([]);
+  });
+});
 
 describe('workItemFlowStats', () => {
   it('returns [] when the substrate is unavailable', async () => {

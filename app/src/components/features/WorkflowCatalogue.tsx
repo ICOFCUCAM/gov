@@ -2,7 +2,10 @@
 
 import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { listWorkflowDefinitionsRows, syncWorkflowDefinitionRow, workItemFlowStats, type WorkItemFlowStat } from '@/lib/db/repos/work-items';
+import {
+  listWorkflowDefinitionsRows, syncWorkflowDefinitionRow, workItemFlowStats, workItemStageDistribution,
+  type WorkItemFlowStat, type WorkItemStageBucket,
+} from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkflowDefinitionRow, WorkKind, ActionKey } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -71,6 +74,12 @@ export function WorkflowCatalogue() {
   }, [available, kindFilter, active]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
+
+  const [stageDist, setStageDist] = React.useState<WorkItemStageBucket[]>([]);
+  React.useEffect(() => {
+    if (!available || !active) { setStageDist([]); return; }
+    void workItemStageDistribution(active).then(setStageDist);
+  }, [available, active]);
 
   if (!available) {
     return <SubstrateNotConfigured title="Workflow Catalogue" />;
@@ -237,6 +246,35 @@ export function WorkflowCatalogue() {
                 download json
               </button>
             </div>
+            {stageDist.length > 0 ? (
+              <div className="border-b border-line-soft px-3 py-2">
+                <div className="mb-1 text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
+                  Open work by stage (bottleneck)
+                </div>
+                {(() => {
+                  const maxOpen = Math.max(1, ...stageDist.map(s => s.openItems));
+                  return (
+                    <div className="space-y-1">
+                      {stageDist.map(s => (
+                        <div key={s.stage} className="flex items-center gap-2 font-mono text-[9.5px]">
+                          <span className="w-28 shrink-0 truncate text-ink">{s.stage}</span>
+                          <div className="h-2 min-w-0 flex-1 rounded-[2px] bg-bg">
+                            <div className="h-full rounded-[2px]" style={{
+                              width: `${Math.round((s.openItems / maxOpen) * 100)}%`,
+                              backgroundColor: s.oldestHours != null && s.oldestHours >= 72 ? TONE.alert : TONE.link,
+                            }} />
+                          </div>
+                          <span className="w-10 shrink-0 text-right text-ink">{s.openItems}</span>
+                          <span className="w-20 shrink-0 text-right text-ink-muted">
+                            {s.oldestHours == null ? '—' : `${Math.round(s.oldestHours)}h old`}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : null}
             <div className="border-b border-line-soft px-3 py-2 text-[11px]">
               <div className="grid grid-cols-2 gap-2">
                 <Field label="Workflow ID" value={activeRow.workflow_id} mono />

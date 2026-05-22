@@ -287,4 +287,31 @@ export async function workItemFlowStats(opts: { workflowId?: string; charterId?:
   }));
 }
 
+export interface WorkItemStageBucket {
+  stage: string;
+  openItems: number;
+  oldestHours: number | null;
+  medianAgeHours: number | null;
+}
+
+interface WorkItemStageBucketRow {
+  stage: string; open_items: number; oldest_hours: string | number | null;
+  median_age_hours: string | number | null;
+}
+
+/** Open work items for one workflow grouped by current_stage (WIP per
+ *  stage, with oldest + median age), busiest stage first — reveals the
+ *  bottleneck. Authenticated-tier. [] without a substrate. */
+export async function workItemStageDistribution(workflowId: string): Promise<WorkItemStageBucket[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const num = (v: string | number | null): number | null => v === null || v === undefined ? null : Number(v);
+  const { data, error } = await sb.rpc('civicos_work_item_stage_distribution', { p_workflow_id: workflowId });
+  if (error || !data) return [];
+  return (data as WorkItemStageBucketRow[]).map(r => ({
+    stage: r.stage, openItems: Number(r.open_items),
+    oldestHours: num(r.oldest_hours), medianAgeHours: num(r.median_age_hours),
+  }));
+}
+
 export { substrateAvailable };
