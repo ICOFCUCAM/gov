@@ -9,6 +9,8 @@
 
 import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
+import { substrateAvailable } from '@/lib/db/client';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';
@@ -123,11 +125,37 @@ function MeshViz({ ts }: { ts: number }) {
   );
 }
 
+const CHANNEL_TONE: Record<string, string> = {
+  escalation: AMBER, constitutional: PURPLE, wallet: CYAN, metric: BLUE,
+  runtime: TEAL, lifecycle: GREEN,
+};
+
+function relAgo(atMs: number): string {
+  const s = Math.max(0, Math.round((Date.now() - atMs) / 1000));
+  if (s < 60) return `${s}s ago`;
+  if (s < 3600) return `${Math.round(s / 60)}m ago`;
+  if (s < 86400) return `${Math.round(s / 3600)}h ago`;
+  return `${Math.round(s / 86400)}d ago`;
+}
+
 export function InteroperabilityFabric() {
   const [now, setNow] = React.useState(() => Date.now());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
+  }, []);
+
+  // Live fabric events from the real federation event log (includes the
+  // escalation.cascade propagations). Falls back to the demo strip when the
+  // substrate is unconfigured or no events have been published yet.
+  const [liveEvents, setLiveEvents] = React.useState<PersistedEvent[]>([]);
+  React.useEffect(() => {
+    if (!substrateAvailable()) return;
+    let cancelled = false;
+    const load = () => void recentEventsRows({ limit: 6 }).then(e => { if (!cancelled) setLiveEvents(e); });
+    load();
+    const t = setInterval(load, 15000);
+    return () => { cancelled = true; clearInterval(t); };
   }, []);
   const ts = now / 4000;
   const clock = new Date(now);
@@ -155,13 +183,22 @@ export function InteroperabilityFabric() {
     ['Health Data Sharing Agreement', '99.9%'], ['Finance Data Exchange Agreement', '100%'],
     ['Identity Federation Agreement', '99.7%'], ['Law Enforcement Data Access', '100%'],
   ];
-  const events: [string, string, string][] = [
+  const demoEvents: [string, string, string][] = [
     ['New system connected: Municipal Permit System', '10:41:23 AM', GREEN],
     ['Policy updated: Data Sovereignty Policy v2.1', '10:39:55 AM', BLUE],
     ['High throughput detected: Finance Data Lane', '10:38:41 AM', AMBER],
     ['Certificate renewed: Health Ministry Gateway', '10:37:12 AM', PURPLE],
     ['Integration deployed: Education Analytics API', '10:35:29 AM', CYAN],
   ];
+  // Real federation events when available, else the demo strip.
+  const events: [string, string, string][] = liveEvents.length > 0
+    ? liveEvents.map(e => [
+        `${e.type} · ${e.source}${e.target ? ` → ${e.target}` : ''}`,
+        relAgo(e.at),
+        CHANNEL_TONE[e.channel] ?? GREEN,
+      ])
+    : demoEvents;
+  const eventsLive = liveEvents.length > 0;
   const health: [string, string, string][] = [['Healthy', '128', GREEN], ['Warning', '3', AMBER], ['Degraded', '1', AMBER], ['Critical', '0', RED]];
 
   return (
@@ -278,7 +315,7 @@ export function InteroperabilityFabric() {
             ))}
           </div>
         </Card>
-        <Card title="Recent Fabric Events" action="View All">
+        <Card title="Recent Fabric Events" sub={eventsLive ? 'Live · federation event log' : undefined} action={eventsLive ? '● Live' : 'View All'}>
           <div className="space-y-2">
             {events.map(([t, ago, c]) => (
               <div key={t} className="flex items-start gap-2 text-[9px]">
