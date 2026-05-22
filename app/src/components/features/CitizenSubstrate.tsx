@@ -480,6 +480,7 @@ function ConsentComposer({
 }: { citizenId: string; onDone: () => Promise<void> }) {
   const [target, setTarget] = React.useState('ministry-health');
   const [scope, setScope] = React.useState('health.records');
+  const [days, setDays] = React.useState<string>('0');
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -487,7 +488,9 @@ function ConsentComposer({
     e.preventDefault();
     setBusy(true); setError(null);
     try {
-      const row = await grantConsentRow(citizenId, target.trim(), scope.trim());
+      const n = Number(days);
+      const expiresAt = n > 0 ? new Date(Date.now() + n * 24 * 60 * 60 * 1000).toISOString() : null;
+      const row = await grantConsentRow(citizenId, target.trim(), scope.trim(), expiresAt);
       if (!row) { setError('grant failed'); return; }
       await onDone();
     } finally {
@@ -496,16 +499,23 @@ function ConsentComposer({
   }
 
   return (
-    <form onSubmit={onSubmit} className="grid grid-cols-[1fr_1fr_auto] gap-2 border-b border-line-soft bg-surface p-3 text-[11px]">
+    <form onSubmit={onSubmit} className="grid grid-cols-[1fr_1fr_auto_auto] gap-2 border-b border-line-soft bg-surface p-3 text-[11px]">
       <input className="rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
              value={target} onChange={e => setTarget(e.currentTarget.value)} placeholder="target charter" required />
       <input className="rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
              value={scope} onChange={e => setScope(e.currentTarget.value)} placeholder="scope (e.g. health.records)" required />
+      <select className="rounded-[3px] border border-line bg-bg px-2 py-1 text-[11px]"
+              value={days} onChange={e => setDays(e.currentTarget.value)} title="consent duration">
+        <option value="0">no expiry</option>
+        <option value="30">30 days</option>
+        <option value="90">90 days</option>
+        <option value="365">1 year</option>
+      </select>
       <button type="submit" disabled={busy}
               className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
         {busy ? '…' : 'grant'}
       </button>
-      {error ? <p className="col-span-3 text-[10px]" style={{ color: TONE.alert }}>{error}</p> : null}
+      {error ? <p className="col-span-4 text-[10px]" style={{ color: TONE.alert }}>{error}</p> : null}
     </form>
   );
 }
