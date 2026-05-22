@@ -135,19 +135,23 @@ export function CitizenHome() {
       {notifications.length > 0 ? (
         <Panel title="Needs your attention" meta={`${notifications.length}`} bodyClass="!p-0">
           <div className="max-h-[220px] overflow-y-auto">
-            {notifications.map((n, i) => (
-              <div key={`${n.kind}:${n.ref}:${i}`} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
-                <span className="w-28 shrink-0 text-[8.5px] font-bold uppercase tracking-wider"
-                  style={{ color: n.kind === 'consent_expiring' ? TONE.warn : n.kind === 'appeal_decided' ? TONE.link : TONE.ok }}>
-                  {n.action}
-                </span>
-                <span className="w-24 shrink-0 truncate font-mono text-link">{n.ref}</span>
-                <span className="min-w-0 flex-1 truncate text-ink">{n.detail}</span>
-                <span className="shrink-0 text-[8.5px] uppercase tracking-wider text-ink-muted">
-                  {n.kind === 'request_unrated' ? 'rate it' : n.kind === 'appeal_decided' ? 'decided' : 'expiring'}
-                </span>
-              </div>
-            ))}
+            {notifications.map((n, i) => {
+              const href = n.kind === 'consent_expiring' ? `/wallet/consent/${encodeURIComponent(n.ref)}` : '/wallet/substrate';
+              return (
+                <Link key={`${n.kind}:${n.ref}:${i}`} href={href}
+                  className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px] hover:bg-surface-2">
+                  <span className="w-28 shrink-0 text-[8.5px] font-bold uppercase tracking-wider"
+                    style={{ color: n.kind === 'consent_expiring' ? TONE.warn : n.kind === 'appeal_decided' ? TONE.link : TONE.ok }}>
+                    {n.action}
+                  </span>
+                  <span className="w-24 shrink-0 truncate font-mono text-link">{n.ref}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink">{n.detail}</span>
+                  <span className="shrink-0 text-[8.5px] uppercase tracking-wider text-ink-muted">
+                    {n.kind === 'request_unrated' ? 'rate it' : n.kind === 'appeal_decided' ? 'decided' : 'expiring'}
+                  </span>
+                </Link>
+              );
+            })}
           </div>
         </Panel>
       ) : null}
