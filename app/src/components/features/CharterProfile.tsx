@@ -6,9 +6,9 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable } from '@/lib/db/client';
 import {
   institutionByCharterId, serviceSlaStats, serviceSlaTrend, appealsStats, appealsTrend,
-  consentFootprintStats, directiveStats,
+  consentFootprintStats, directiveStats, directiveTrend,
   type ServiceSlaStat, type SlaTrendPoint, type AppealsStat, type AppealsTrendPoint,
-  type ConsentFootprintStat, type DirectiveStat,
+  type ConsentFootprintStat, type DirectiveStat, type DirectiveTrendPoint,
 } from '@/lib/db/repos/institutions';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
 import { downloadJson } from '@/lib/csv-download';
@@ -34,6 +34,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
   const [appealTrend, setAppealTrend] = React.useState<AppealsTrendPoint[]>([]);
   const [footprint, setFootprint] = React.useState<ConsentFootprintStat[]>([]);
   const [dirStat, setDirStat] = React.useState<DirectiveStat | null>(null);
+  const [dirTrend, setDirTrend] = React.useState<DirectiveTrendPoint[]>([]);
   const [directives, setDirectives] = React.useState<DirectiveRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const available = substrateAvailable();
@@ -43,7 +44,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
     setLoading(true);
     void (async () => {
       try {
-        const [i, s, t, a, at, fp, dst, ds] = await Promise.all([
+        const [i, s, t, a, at, fp, dst, dtr, ds] = await Promise.all([
           institutionByCharterId(charterId),
           serviceSlaStats({ charterId, days: 90 }),
           serviceSlaTrend({ charterId, weeks: 12 }),
@@ -51,6 +52,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
           appealsTrend({ charterId, weeks: 12 }),
           consentFootprintStats({ charterId }),
           directiveStats({ charterId, days: 365 }),
+          directiveTrend({ charterId, weeks: 12 }),
           listDirectivesRows({ issuer: charterId, limit: 25 }),
         ]);
         setInst(i);
@@ -60,6 +62,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
         setAppealTrend(at);
         setFootprint(fp);
         setDirStat(dst[0] ?? null);
+        setDirTrend(dtr);
         setDirectives(ds.filter(d => PUBLIC_STATUSES.includes(d.status)));
       } finally {
         setLoading(false);
@@ -77,6 +80,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
 
   const maxMed = Math.max(1, ...trend.map(t => t.medianResolveHours ?? 0));
   const maxApMed = Math.max(1, ...appealTrend.map(t => t.medianDecisionDays ?? 0));
+  const maxDirSigned = Math.max(1, ...dirTrend.map(t => t.signed));
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8 space-y-4">
@@ -104,6 +108,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
               appeals_trend: appealTrend,
               consent_footprint: footprint,
               directive_stats: dirStat,
+              directive_trend: dirTrend,
               public_directives: directives,
             }, { dated: false })}
             className="focus-ring shrink-0 rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
@@ -211,6 +216,24 @@ export function CharterProfile({ charterId }: { charterId: string }) {
             <Stat label="in force" value={String(dirStat.inForce)} tone={dirStat.inForce > 0 ? TONE.ok : undefined} />
             <Stat label="rescinded" value={String(dirStat.rescinded)} tone={dirStat.rescinded > 0 ? TONE.warn : undefined} />
             <Stat label="sign→effect" value={dirStat.medianSignToEffectiveDays == null ? '—' : `${dirStat.medianSignToEffectiveDays}d`} />
+          </div>
+        </Panel>
+      ) : null}
+
+      {dirTrend.length > 0 ? (
+        <Panel title="Directive cadence trend" meta={`${dirTrend.length} weeks`} bodyClass="!p-3">
+          <div className="space-y-1">
+            {dirTrend.map(t => (
+              <div key={t.weekStart} className="flex items-center gap-2 font-mono text-[9.5px]">
+                <span className="w-20 shrink-0 text-ink-muted">{t.weekStart}</span>
+                <div className="h-2.5 min-w-0 flex-1 rounded-[2px] bg-surface-2">
+                  <div className="h-full rounded-[2px]" style={{ width: `${Math.round((t.signed / maxDirSigned) * 100)}%`, backgroundColor: TONE.link }} />
+                </div>
+                <span className="w-16 shrink-0 text-right text-ink">{t.signed} signed</span>
+                <span className="w-16 shrink-0 text-right text-ink-muted">{t.effective} eff.</span>
+              </div>
+            ))}
+            <p className="pt-1 text-[8.5px] uppercase tracking-wider text-ink-muted">signed-week · signed (bar) · since-effective</p>
           </div>
         </Panel>
       ) : null}

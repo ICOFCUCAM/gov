@@ -146,4 +146,24 @@ begin
   delete from civicos.directives where issued_by_charter_id = 'TEST-DIR';
 end$$;
 
+-- ── directive_trend: weekly signed buckets + since-effective + lag ──
+-- All three signed this week; 2 effective (lag 2d, 4d → median 3.0), 1 not.
+do $$
+declare r record; n int;
+begin
+  insert into civicos.directives (ref, kind, issued_by_charter_id, title, status, signed_at, effective_at) values
+    ('TEST-DT-1', 'order', 'TEST-DT', 't', 'effective', now()-interval '2 d', now()),
+    ('TEST-DT-2', 'order', 'TEST-DT', 't', 'effective', now()-interval '4 d', now()),
+    ('TEST-DT-3', 'order', 'TEST-DT', 't', 'signed',    now(), null);
+  select count(*) into n from civicos.directive_trend('TEST-DT', 12);
+  if n <> 1 then raise exception 'FAIL directive_trend bucket count = % (want 1)', n; end if;
+  select * into r from civicos.directive_trend('TEST-DT', 12) limit 1;
+  if r.week_start <> date_trunc('week', now())::date then raise exception 'FAIL directive_trend week_start = %', r.week_start; end if;
+  if r.signed <> 3 then raise exception 'FAIL directive_trend signed = % (want 3)', r.signed; end if;
+  if r.effective <> 2 then raise exception 'FAIL directive_trend effective = % (want 2)', r.effective; end if;
+  if r.median_sign_to_effective_days <> 3.0 then raise exception 'FAIL directive_trend median = % (want 3.0)', r.median_sign_to_effective_days; end if;
+  raise notice 'PASS: directive_trend weekly signed buckets';
+  delete from civicos.directives where issued_by_charter_id = 'TEST-DT';
+end$$;
+
 rollback;

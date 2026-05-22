@@ -314,4 +314,34 @@ export async function directiveStats(opts: { charterId?: string; days?: number }
   }));
 }
 
+export interface DirectiveTrendPoint {
+  weekStart: string;
+  signed: number;
+  effective: number;
+  medianSignToEffectiveDays: number | null;
+}
+
+interface DirectiveTrendRow {
+  week_start: string; signed: number; effective: number;
+  median_sign_to_effective_days: string | number | null;
+}
+
+/** Weekly directive trend (signed-week buckets) over the last `weeks`,
+ *  oldest first: signed count, how many became effective, median lag days.
+ *  Aggregate-only, anon-callable. [] without a substrate. */
+export async function directiveTrend(opts: { charterId?: string; weeks?: number } = {}): Promise<DirectiveTrendPoint[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_directive_trend', {
+    p_charter_id: opts.charterId ?? null, p_weeks: opts.weeks ?? 12,
+  });
+  if (error || !data) return [];
+  return (data as DirectiveTrendRow[]).map(r => ({
+    weekStart: r.week_start,
+    signed: Number(r.signed),
+    effective: Number(r.effective),
+    medianSignToEffectiveDays: numOrNull(r.median_sign_to_effective_days),
+  }));
+}
+
 export { substrateAvailable };

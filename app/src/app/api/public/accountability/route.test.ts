@@ -6,6 +6,7 @@ const serviceSlaTrend = vi.fn();
 const appealsTrend = vi.fn();
 const consentFootprintStats = vi.fn();
 const directiveStats = vi.fn();
+const directiveTrend = vi.fn();
 vi.mock('@/lib/db/repos/institutions', () => ({
   serviceSlaStats: (o: unknown) => serviceSlaStats(o),
   appealsStats: (o: unknown) => appealsStats(o),
@@ -13,6 +14,7 @@ vi.mock('@/lib/db/repos/institutions', () => ({
   appealsTrend: (o: unknown) => appealsTrend(o),
   consentFootprintStats: (o: unknown) => consentFootprintStats(o),
   directiveStats: (o: unknown) => directiveStats(o),
+  directiveTrend: (o: unknown) => directiveTrend(o),
 }));
 
 import { GET } from './route';
@@ -24,6 +26,7 @@ beforeEach(() => {
   appealsTrend.mockReset().mockResolvedValue([{ weekStart: '2026-05-11', decided: 1 }]);
   consentFootprintStats.mockReset().mockResolvedValue([{ charterId: 'MIN-H', scope: 'health.records', active: 2 }]);
   directiveStats.mockReset().mockResolvedValue([{ charterId: 'MIN-H', signed: 4 }]);
+  directiveTrend.mockReset().mockResolvedValue([{ weekStart: '2026-05-11', signed: 2 }]);
 });
 
 describe('GET /api/public/accountability', () => {
@@ -40,6 +43,8 @@ describe('GET /api/public/accountability', () => {
     expect(json.appeals_trend).toHaveLength(1);
     expect(json.consent_footprint).toHaveLength(1);
     expect(json.directive_stats).toHaveLength(1);
+    expect(json.directive_trend).toHaveLength(1);
+    expect(directiveTrend).toHaveBeenCalledWith({ charterId: undefined, weeks: 13 });
     expect(serviceSlaStats).toHaveBeenCalledWith({ charterId: undefined, days: 90 });
     // weeks ≈ round(90/7) = 13
     expect(serviceSlaTrend).toHaveBeenCalledWith({ charterId: undefined, weeks: 13 });

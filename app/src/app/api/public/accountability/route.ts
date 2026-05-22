@@ -13,7 +13,7 @@
 import { NextResponse } from 'next/server';
 import {
   serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend,
-  consentFootprintStats, directiveStats,
+  consentFootprintStats, directiveStats, directiveTrend,
 } from '@/lib/db/repos/institutions';
 
 export const dynamic = 'force-dynamic';
@@ -24,13 +24,14 @@ export async function GET(req: Request) {
   const weeks = Math.min(52, Math.max(1, Math.round(days / 7)));
   const charter = url.searchParams.get('charter') ?? undefined;
 
-  const [serviceSla, appeals, slaTrend, appealTrend, consentFootprint, directives] = await Promise.all([
+  const [serviceSla, appeals, slaTrend, appealTrend, consentFootprint, directives, directiveTrendPts] = await Promise.all([
     serviceSlaStats({ charterId: charter, days }),
     appealsStats({ charterId: charter, days }),
     serviceSlaTrend({ charterId: charter, weeks }),
     appealsTrend({ charterId: charter, weeks }),
     consentFootprintStats({ charterId: charter }),
     directiveStats({ charterId: charter, days: 365 }),
+    directiveTrend({ charterId: charter, weeks }),
   ]);
 
   return NextResponse.json(
@@ -46,6 +47,7 @@ export async function GET(req: Request) {
       appeals_trend: appealTrend,
       consent_footprint: consentFootprint,
       directive_stats: directives,
+      directive_trend: directiveTrendPts,
     },
     { headers: { 'cache-control': 'public, max-age=300' } },
   );

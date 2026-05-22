@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend, consentFootprintStats, directiveStats, institutionByCharterId } from './institutions';
+import { serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend, consentFootprintStats, directiveStats, directiveTrend, institutionByCharterId } from './institutions';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -98,6 +98,33 @@ describe('directiveStats', () => {
   it('returns [] on RPC error', async () => {
     publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
     expect(await directiveStats()).toEqual([]);
+  });
+});
+
+describe('directiveTrend', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await directiveTrend()).toEqual([]);
+  });
+
+  it('maps weekly buckets and forwards the window', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        { week_start: '2026-05-04', signed: 3, effective: 2, median_sign_to_effective_days: '3.0' },
+        { week_start: '2026-05-11', signed: 1, effective: 0, median_sign_to_effective_days: null },
+      ],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await directiveTrend({ charterId: 'MIN-J', weeks: 8 });
+    expect(rpc).toHaveBeenCalledWith('civicos_directive_trend', { p_charter_id: 'MIN-J', p_weeks: 8 });
+    expect(out[0]).toEqual({ weekStart: '2026-05-04', signed: 3, effective: 2, medianSignToEffectiveDays: 3 });
+    expect(out[1]!.medianSignToEffectiveDays).toBeNull();
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await directiveTrend()).toEqual([]);
   });
 });
 
