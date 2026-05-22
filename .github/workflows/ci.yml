@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+
+jobs:
+  app-checks:
+    name: typecheck + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit tests (vitest)
+        run: pnpm test
+
+  substrate-tests:
+    name: substrate SQL suite
+    runs-on: ubuntu-latest
+    # Runs only when a migrated test database is configured (secret set);
+    # otherwise it no-ops so forks / unconfigured repos stay green.
+    env:
+      DATABASE_URL: ${{ secrets.SUBSTRATE_TEST_DATABASE_URL }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Skip if no test DB configured
+        id: gate
+        run: |
+          if [ -z "${DATABASE_URL}" ]; then
+            echo "no SUBSTRATE_TEST_DATABASE_URL secret — skipping substrate suite"
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Install psql client
+        if: steps.gate.outputs.run == 'true'
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Run substrate regression suite
+        if: steps.gate.outputs.run == 'true'
+        run: bash supabase/tests/run.sh
+        working-directory: app
