@@ -10,8 +10,9 @@ import {
   type WorkItemPriority,
 } from '@/lib/db/repos/work-items';
 import { listOfficersRows } from '@/lib/db/repos/admin';
+import { escalationsForWorkItemRow } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
-import type { WorkItemRow, WorkItemStepRow, ActionKey, OfficerRow } from '@/lib/db/types';
+import type { WorkItemRow, WorkItemStepRow, ActionKey, OfficerRow, EscalationRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
@@ -51,6 +52,7 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [officers, setOfficers] = React.useState<OfficerRow[]>([]);
+  const [linkedEscalations, setLinkedEscalations] = React.useState<EscalationRow[]>([]);
   const available = substrateAvailable();
 
   const isPlatform = !!actor && actor.kind === 'officer'
@@ -66,11 +68,13 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
     const w = await workItemRow(itemRef);
     setItem(w);
     if (w) {
-      const [ss, defs] = await Promise.all([
+      const [ss, defs, esc] = await Promise.all([
         workItemStepsRows(itemRef, 100),
         listWorkflowDefinitionsRows({ limit: 100 }),
+        escalationsForWorkItemRow(w.id),
       ]);
       setSteps(ss);
+      setLinkedEscalations(esc);
       const found = defs.find(d => d.workflow_id === w.workflow_id);
       setDef(found ? (found.definition as unknown as WorkflowMap) : null);
     }
@@ -283,6 +287,22 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
           </p>
         ) : null}
       </Panel>
+
+      {linkedEscalations.length > 0 ? (
+        <Panel title="Addresses escalations" meta={`${linkedEscalations.length}`} bodyClass="!p-0">
+          {linkedEscalations.map(e => (
+            <Link key={e.id} href={`/gov/escalations/${encodeURIComponent(e.id)}`}
+              className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px] hover:bg-surface-2">
+              <span className="w-16 shrink-0 text-[8.5px] font-bold uppercase tracking-wider"
+                style={{ color: e.resolved_at ? TONE.ok : TONE.alert }}>{e.severity}</span>
+              <span className="min-w-0 flex-1 truncate text-ink">{e.reason}</span>
+              <span className="shrink-0 text-[8.5px] uppercase tracking-wider text-ink-muted">
+                {e.resolved_at ? 'resolved' : 'open'}
+              </span>
+            </Link>
+          ))}
+        </Panel>
+      ) : null}
 
       <Panel title="Step trail" meta={`${steps.length}`} bodyClass="!p-0">
         {steps.length === 0 ? (
