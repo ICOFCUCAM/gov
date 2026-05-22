@@ -208,9 +208,15 @@ export function CitizenIntakeQueue() {
                       className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
                       disabled={busyId === r.id}
                       onClick={async () => {
+                        const note = window.prompt('Resolution note for the citizen (optional):') ?? '';
                         setBusyId(r.id);
-                        try { await updateServiceRequestRow({ ref: r.ref, status: 'resolved' }); await refresh(); }
-                        finally { setBusyId(null); }
+                        try {
+                          await updateServiceRequestRow({
+                            ref: r.ref, status: 'resolved',
+                            payloadPatch: note.trim() ? { resolution_note: note.trim() } : undefined,
+                          });
+                          await refresh();
+                        } finally { setBusyId(null); }
                       }}>
                       resolve
                     </button>

@@ -265,8 +265,11 @@ function ServiceRequestsPanel({
         <div className="max-h-[280px] overflow-y-auto">
           {rows.map(r => {
             const linked = r.linked_work_item_id ? linkedItems.get(r.linked_work_item_id) : null;
+            const resolutionNote = r.resolved_at && r.payload && typeof (r.payload as Record<string, unknown>).resolution_note === 'string'
+              ? (r.payload as Record<string, unknown>).resolution_note as string : null;
             return (
-              <div key={r.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+              <div key={r.id} className="border-b border-line-soft px-3 py-1.5 last:border-0">
+              <div className="flex items-center gap-2 text-[10px]">
                 <WatchStar kind="service-request" ref={r.ref} label={r.title ?? r.service} />
                 <a href={`/wallet/substrate`} className="w-24 shrink-0 truncate font-mono text-ink-soft hover:text-link hover:underline">{r.ref}</a>
                 <span className="w-28 shrink-0 truncate font-mono text-link">{r.target_charter_id}</span>
@@ -289,6 +292,12 @@ function ServiceRequestsPanel({
                 </span>
                 {r.resolved_at ? <RateControl row={r} onChange={onChange} /> : <span className="w-20 shrink-0" />}
                 {r.resolved_at ? <AppealButton row={r} citizenId={citizenId} onChange={onChange} /> : <span className="w-12 shrink-0" />}
+              </div>
+                {resolutionNote ? (
+                  <p className="mt-0.5 pl-6 text-[10px] text-ink-muted">
+                    <span className="text-[8.5px] font-semibold uppercase tracking-wider">resolution:</span> {resolutionNote}
+                  </p>
+                ) : null}
               </div>
             );
           })}
