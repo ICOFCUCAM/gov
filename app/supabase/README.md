@@ -18,6 +18,16 @@ Project: **civicos** (eu-central-1, `gtgpbokcbngchvoijish`).
 | `services/*.ts` | Application-level singletons (audit ledger, event bus, identity, runtime store) that dual-write via the repos. |
 | Surfaces (`/gov/*`, `/wallet/*`) | React surfaces; read via repos, react to Realtime, write via repos. |
 
+## Scheduling
+
+The 11 `/api/cron/*` worker endpoints are driven in-database by **pg_cron +
+pg_net** (the free path — no Vercel Pro needed). Postgres calls the deployed
+Next.js routes on a timer, authenticating with a Bearer token read at run time
+from Supabase Vault (`civicos_cron_secret`, seeded once by an operator to match
+the app's `CIVICOS_CRON_SECRET`). The full re-runnable schedule lives in
+[`cron/schedule.sql`](cron/schedule.sql); cadences range from every 5 min
+(`deliver-events`) to hourly (SLA, consent expiry, directive promotion, etc.).
+
 ## Migrations
 
 All migrations are idempotent on a fresh database. Applied in lexical
