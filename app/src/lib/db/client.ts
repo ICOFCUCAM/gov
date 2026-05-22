@@ -65,6 +65,30 @@ export function serverClient(): DbClient | null {
   return client;
 }
 
+/**
+ * Build a request-scoped client carrying a caller's Supabase access
+ * token. Reads run under that user's RLS, and SECURITY DEFINER RPCs see
+ * the corresponding `auth.uid()`. Used by privileged API routes to
+ * verify "is this caller a platform-tier officer?" before escalating to
+ * the service-role client. Not memoised — one per request. Returns null
+ * when the substrate isn't configured.
+ */
+export function tokenScopedClient(accessToken: string): DbClient | null {
+  const url  = process.env[URL_KEY];
+  const anon = process.env[ANON_KEY];
+  if (!url || !anon) return null;
+  return createClient(url, anon, {
+    auth: { persistSession: false, autoRefreshToken: false },
+    db: { schema: 'public' as never },
+    global: {
+      headers: {
+        'x-civicos-client': 'token-scoped',
+        Authorization: `Bearer ${accessToken}`,
+      },
+    },
+  });
+}
+
 /** True when the persistent substrate is wired (public client available). */
 export function substrateAvailable(): boolean {
   return publicClient() !== null;

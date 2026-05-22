@@ -1,14 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 const serverClientMock = vi.fn();
+const tokenScopedClientMock = vi.fn();
 vi.mock('@/lib/db/client', () => ({
   serverClient: () => serverClientMock(),
+  tokenScopedClient: (t: string) => tokenScopedClientMock(t),
 }));
 
 import { POST, parseOfficerCsv } from './route';
 
+const JWT = 'aaa.bbb.ccc'; // shape-only; the route checks 3 dot-parts then asks the substrate
+
 beforeEach(() => {
   serverClientMock.mockReset();
+  tokenScopedClientMock.mockReset();
+  tokenScopedClientMock.mockReturnValue(null);
   delete process.env.CIVICOS_CRON_SECRET;
 });
 
@@ -138,5 +144,58 @@ describe('POST /api/admin/officers/bulk', () => {
       ] }),
     }));
     expect(res.status).toBe(500);
+  });
+
+  describe('session auth (platform-tier JWT)', () => {
+    it('accepts a platform-tier officer session and runs the bulk RPC', async () => {
+      tokenScopedClientMock.mockReturnValue({
+        rpc: async () => ({ data: { kind: 'officer', role: 'platform-admin' }, error: null }),
+      });
+      const rpc = vi.fn(async () => ({ data: [], error: null }));
+      serverClientMock.mockReturnValue({ rpc });
+      const res = await POST(new Request('http://x', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${JWT}` },
+        body: JSON.stringify({ rows: [] }),
+      }));
+      expect(res.status).toBe(200);
+      // platform check goes through the token-scoped client...
+      expect(tokenScopedClientMock).toHaveBeenCalledWith(JWT);
+    });
+
+    it('rejects a non-platform officer session with 401', async () => {
+      tokenScopedClientMock.mockReturnValue({
+        rpc: async () => ({ data: { kind: 'officer', role: 'field-officer' }, error: null }),
+      });
+      const res = await POST(new Request('http://x', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${JWT}` },
+        body: JSON.stringify({ rows: [] }),
+      }));
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects a citizen session with 401', async () => {
+      tokenScopedClientMock.mockReturnValue({
+        rpc: async () => ({ data: { kind: 'citizen', role: null }, error: null }),
+      });
+      const res = await POST(new Request('http://x', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${JWT}` },
+        body: JSON.stringify({ rows: [] }),
+      }));
+      expect(res.status).toBe(401);
+    });
+
+    it('rejects a non-JWT bearer that is not the cron secret', async () => {
+      const res = await POST(new Request('http://x', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: 'Bearer not-a-jwt' },
+        body: JSON.stringify({ rows: [] }),
+      }));
+      expect(res.status).toBe(401);
+      // single-token bearer never reaches the substrate
+      expect(tokenScopedClientMock).not.toHaveBeenCalled();
+    });
   });
 });

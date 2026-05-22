@@ -65,6 +65,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⤺', l: 'Audit Replay',       s: 'Offline chain + witness verifier', href: '/gov/audit-replay', key: 'audit-replay' },
     { i: '◰', l: 'Telemetry Wall',     s: 'Streams · samples · alerts', href: '/gov/telemetry',   key: 'telemetry'   },
     { i: '⊡', l: 'Officer Registry',   s: 'Provision officers',         href: '/gov/officers',    key: 'officers'    },
+    { i: '⊞', l: 'Bulk Onboarding',    s: 'CSV officer batch (platform-tier)', href: '/gov/officers/bulk', key: 'officers-bulk' },
     { i: '☷', l: 'Officer Directory',  s: 'Read-only phone book',       href: '/gov/directory',   key: 'directory'   },
     { i: '⌖', l: 'Posture Board',      s: 'Institutional posture log',  href: '/gov/posture',     key: 'posture'     },
     { i: '⇆', l: 'Federation Stream',  s: 'Inter-institution events',   href: '/gov/federation',  key: 'federation'  },

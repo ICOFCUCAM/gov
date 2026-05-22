@@ -11,9 +11,11 @@
 // route is a defense-in-depth gate, not the sole authorisation.
 
 import { NextResponse } from 'next/server';
-import { serverClient } from '@/lib/db/client';
+import { serverClient, tokenScopedClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
+
+const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
 
 interface InputRow {
   email: string;
@@ -33,13 +35,33 @@ interface OutputRow {
   error: string | null;
 }
 
-function authorized(req: Request): boolean {
+/** Cron-secret path: a fixed shared secret in ?token= or Authorization.
+ *  For CLI / automation that has no UI session. */
+function cronAuthorized(req: Request): boolean {
   const expected = process.env.CIVICOS_CRON_SECRET;
   if (!expected) return false;
   const url = new URL(req.url);
   const token = url.searchParams.get('token')
     ?? (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
   return token.length > 0 && token === expected;
+}
+
+/** Session path: a Supabase access token (JWT) belonging to a
+ *  platform-tier officer. Verified by asking the substrate, under that
+ *  user's RLS, who the current actor is. */
+async function sessionAuthorized(req: Request): Promise<boolean> {
+  const bearer = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+  if (!bearer || bearer.split('.').length !== 3) return false; // not a JWT
+  const scoped = tokenScopedClient(bearer);
+  if (!scoped) return false;
+  const { data, error } = await scoped.rpc('civicos_current_actor');
+  if (error || !data) return false;
+  const actor = (Array.isArray(data) ? data[0] : data) as { kind?: string; role?: string } | null;
+  return !!actor && actor.kind === 'officer' && PLATFORM_ROLES.has(actor.role ?? '');
+}
+
+async function authorized(req: Request): Promise<boolean> {
+  return cronAuthorized(req) || await sessionAuthorized(req);
 }
 
 /** Parse a CSV string with the documented header row. Returns the row
@@ -68,7 +90,7 @@ export function parseOfficerCsv(text: string): InputRow[] | { error: string } {
 }
 
 export async function POST(req: Request) {
-  if (!authorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!await authorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const sb = serverClient();
   if (!sb) return NextResponse.json({ error: 'substrate not configured' }, { status: 503 });
 
