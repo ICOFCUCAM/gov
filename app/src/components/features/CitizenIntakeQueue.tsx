@@ -176,7 +176,7 @@ export function CitizenIntakeQueue() {
                 <span className="min-w-0 flex-1 truncate text-ink">{r.title ?? r.domain ?? '—'}</span>
                 {(() => {
                   const ageH = (Date.now() - new Date(r.submitted_at).getTime()) / 3_600_000;
-                  const overdue = !r.acknowledged_at && !r.resolved_at && ageH >= 48;
+                  const overdue = !r.acknowledged_at && !r.resolved_at && !r.cancelled_at && ageH >= 48;
                   return (
                     <span className="w-14 shrink-0 text-right font-mono tabular-nums"
                       title={overdue ? 'past 48h SLA, unacknowledged' : undefined}
@@ -187,12 +187,12 @@ export function CitizenIntakeQueue() {
                 })()}
                 <span
                   className="w-24 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                  style={{ color: r.resolved_at ? TONE.ok : r.acknowledged_at ? TONE.warn : TONE.link }}
+                  style={{ color: r.cancelled_at ? TONE.neutral : r.resolved_at ? TONE.ok : r.acknowledged_at ? TONE.warn : TONE.link }}
                 >
                   {r.status}
                 </span>
                 <div className="flex w-44 shrink-0 justify-end gap-1">
-                  {!r.acknowledged_at ? (
+                  {!r.acknowledged_at && !r.cancelled_at ? (
                     <button type="button"
                       className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
                       disabled={busyId === r.id}
@@ -204,7 +204,7 @@ export function CitizenIntakeQueue() {
                       ack
                     </button>
                   ) : null}
-                  {!r.resolved_at ? (
+                  {!r.resolved_at && !r.cancelled_at ? (
                     <button type="button"
                       className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
                       disabled={busyId === r.id}
@@ -222,7 +222,7 @@ export function CitizenIntakeQueue() {
                       resolve
                     </button>
                   ) : null}
-                  {!r.resolved_at ? (
+                  {!r.resolved_at && !r.cancelled_at ? (
                     <button type="button"
                       className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
                       disabled={busyId === r.id}
@@ -234,7 +234,7 @@ export function CitizenIntakeQueue() {
                       reject
                     </button>
                   ) : null}
-                  {!r.resolved_at ? (
+                  {!r.resolved_at && !r.cancelled_at ? (
                     <button type="button"
                       className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
                       disabled={busyId === r.id} title="raise an escalation for this request"
@@ -356,11 +356,11 @@ function AppealRowEditor({
         <span className="w-24 shrink-0 truncate text-right text-ink-soft">{appeal.decision ?? '—'}</span>
         <span
           className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-          style={{ color: appeal.decided_at ? TONE.ok : TONE.warn }}
+          style={{ color: appeal.withdrawn_at ? TONE.neutral : appeal.decided_at ? TONE.ok : TONE.warn }}
         >
           {appeal.status}
         </span>
-        {!appeal.decided_at ? (
+        {!appeal.decided_at && !appeal.withdrawn_at ? (
           <button type="button"
             className="w-16 shrink-0 focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink"
             onClick={() => setOpen(o => !o)}>
