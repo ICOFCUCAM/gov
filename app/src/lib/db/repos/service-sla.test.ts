@@ -123,11 +123,11 @@ describe('serviceSlaStats', () => {
       data: [{
         charter_id: 'MIN-H', submitted: 4, acknowledged: 2, resolved: 3, open: 1,
         median_ack_hours: '1.0', median_resolve_hours: '4.0', p90_resolve_hours: '8.8',
-        oldest_open_hours: '50.0',
+        oldest_open_hours: '50.0', rated: 2, avg_satisfaction: '4.0',
       }, {
         charter_id: 'MIN-X', submitted: 1, acknowledged: 0, resolved: 0, open: 1,
         median_ack_hours: null, median_resolve_hours: null, p90_resolve_hours: null,
-        oldest_open_hours: '12.0',
+        oldest_open_hours: '12.0', rated: 0, avg_satisfaction: null,
       }],
       error: null,
     }));
@@ -137,11 +137,14 @@ describe('serviceSlaStats', () => {
     expect(out[0]).toEqual({
       charterId: 'MIN-H', submitted: 4, acknowledged: 2, resolved: 3, open: 1,
       medianAckHours: 1, medianResolveHours: 4, p90ResolveHours: 8.8, oldestOpenHours: 50,
+      rated: 2, avgSatisfaction: 4,
     });
     // nulls preserved (not coerced to 0)
     expect(out[1]!.medianAckHours).toBeNull();
     expect(out[1]!.medianResolveHours).toBeNull();
     expect(out[1]!.oldestOpenHours).toBe(12);
+    expect(out[1]!.avgSatisfaction).toBeNull();
+    expect(out[1]!.rated).toBe(0);
   });
 
   it('forwards a charter filter', async () => {

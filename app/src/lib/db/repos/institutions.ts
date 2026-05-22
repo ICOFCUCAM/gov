@@ -114,12 +114,15 @@ export interface ServiceSlaStat {
   medianResolveHours: number | null;
   p90ResolveHours: number | null;
   oldestOpenHours: number | null;
+  rated: number;
+  avgSatisfaction: number | null;
 }
 
 interface ServiceSlaStatRow {
   charter_id: string; submitted: number; acknowledged: number; resolved: number; open: number;
   median_ack_hours: string | number | null; median_resolve_hours: string | number | null;
   p90_resolve_hours: string | number | null; oldest_open_hours: string | number | null;
+  rated: number; avg_satisfaction: string | number | null;
 }
 
 const numOrNull = (v: string | number | null): number | null =>
@@ -143,6 +146,7 @@ export async function serviceSlaStats(opts: { charterId?: string; days?: number 
     medianResolveHours: numOrNull(r.median_resolve_hours),
     p90ResolveHours: numOrNull(r.p90_resolve_hours),
     oldestOpenHours: numOrNull(r.oldest_open_hours),
+    rated: Number(r.rated), avgSatisfaction: numOrNull(r.avg_satisfaction),
   }));
 }
 

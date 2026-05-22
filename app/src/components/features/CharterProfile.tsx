@@ -103,11 +103,13 @@ export function CharterProfile({ charterId }: { charterId: string }) {
         {!sla ? (
           <p className="text-[11px] text-ink-muted">No service requests on record for this charter.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-center">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 text-center">
             <Stat label="median decision" value={sla.medianResolveHours == null ? '—' : `${sla.medianResolveHours}h`} />
             <Stat label="p90 decision" value={sla.p90ResolveHours == null ? '—' : `${sla.p90ResolveHours}h`} />
             <Stat label="resolved" value={`${sla.resolved}/${sla.submitted}`} />
             <Stat label="open" value={String(sla.open)} tone={sla.open > 0 ? TONE.warn : TONE.ok} />
+            <Stat label={`rating (${sla.rated})`} value={sla.avgSatisfaction == null ? '—' : `★${sla.avgSatisfaction}`}
+              tone={sla.avgSatisfaction == null ? undefined : sla.avgSatisfaction >= 3.5 ? TONE.ok : TONE.warn} />
           </div>
         )}
       </Panel>

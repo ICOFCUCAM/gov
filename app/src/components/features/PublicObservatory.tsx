@@ -127,8 +127,8 @@ export function PublicObservatory() {
       <Panel title="Service delivery — published SLAs"
         meta={<MetaWithCsv label={`${sla.length} charters · last 90 days`} show={sla.length > 0}
           onDownload={() => downloadCsv('civicos-service-sla', buildCsv(
-            ['charter_id','submitted','acknowledged','resolved','open','median_ack_hours','median_resolve_hours','p90_resolve_hours','oldest_open_hours'],
-            sla.map(s => [s.charterId, s.submitted, s.acknowledged, s.resolved, s.open, s.medianAckHours ?? '', s.medianResolveHours ?? '', s.p90ResolveHours ?? '', s.oldestOpenHours ?? '']),
+            ['charter_id','submitted','acknowledged','resolved','open','median_ack_hours','median_resolve_hours','p90_resolve_hours','oldest_open_hours','rated','avg_satisfaction'],
+            sla.map(s => [s.charterId, s.submitted, s.acknowledged, s.resolved, s.open, s.medianAckHours ?? '', s.medianResolveHours ?? '', s.p90ResolveHours ?? '', s.oldestOpenHours ?? '', s.rated, s.avgSatisfaction ?? '']),
           ))} />}
         bodyClass="!p-0">
         {sla.length === 0 ? (
@@ -145,6 +145,7 @@ export function PublicObservatory() {
               <span className="w-24 shrink-0 text-right">med. decide</span>
               <span className="w-20 shrink-0 text-right">p90</span>
               <span className="w-20 shrink-0 text-right">oldest</span>
+              <span className="w-20 shrink-0 text-right">rating</span>
             </div>
             {sla.map(s => (
               <div key={s.charterId} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 font-mono text-[10px]">
@@ -155,6 +156,9 @@ export function PublicObservatory() {
                 <span className="w-24 shrink-0 text-right text-ink">{s.medianResolveHours == null ? '—' : `${s.medianResolveHours}h`}</span>
                 <span className="w-20 shrink-0 text-right text-ink-muted">{s.p90ResolveHours == null ? '—' : `${s.p90ResolveHours}h`}</span>
                 <span className="w-20 shrink-0 text-right text-ink-muted">{s.oldestOpenHours == null ? '—' : `${Math.round(s.oldestOpenHours)}h`}</span>
+                <span className="w-20 shrink-0 text-right" style={{ color: s.avgSatisfaction == null ? undefined : s.avgSatisfaction >= 3.5 ? TONE.ok : TONE.warn }}>
+                  {s.avgSatisfaction == null ? '—' : `★${s.avgSatisfaction}`}
+                </span>
               </div>
             ))}
           </div>
