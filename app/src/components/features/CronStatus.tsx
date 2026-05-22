@@ -75,6 +75,13 @@ const KNOWN_CRONS = [
     expectedIntervalMin: 5,
     path: '/api/cron/deliver-events',
   },
+  {
+    name: 'telemetry-stale',
+    description: 'Escalates active telemetry streams that have gone silent (no sample inside the window).',
+    sentinelStream: 'substrate.telemetry.stale_escalated',
+    expectedIntervalMin: 60,
+    path: '/api/cron/telemetry-stale',
+  },
 ];
 
 /**
