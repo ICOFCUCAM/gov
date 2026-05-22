@@ -4,19 +4,6 @@
   "buildCommand": "pnpm build",
   "installCommand": "pnpm install --frozen-lockfile",
   "outputDirectory": ".next",
-  "crons": [
-    { "path": "/api/cron/deliver-events",     "schedule": "*/5 * * * *" },
-    { "path": "/api/cron/substrate-metrics",  "schedule": "*/10 * * * *" },
-    { "path": "/api/cron/audit-anchor",       "schedule": "*/10 * * * *" },
-    { "path": "/api/cron/witness-sweep",      "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/witness-divergence", "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/posture-digest",     "schedule": "*/30 * * * *" },
-    { "path": "/api/cron/sla",                "schedule": "0 * * * *" },
-    { "path": "/api/cron/expire-consents",    "schedule": "0 * * * *" },
-    { "path": "/api/cron/audit-self",         "schedule": "0 * * * *" },
-    { "path": "/api/cron/telemetry-stale",    "schedule": "0 * * * *" },
-    { "path": "/api/cron/promote-directives", "schedule": "0 * * * *" }
-  ],
   "headers": [
     {
       "source": "/(.*)",
