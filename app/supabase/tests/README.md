@@ -1,0 +1,40 @@
+# Substrate regression tests
+
+Automated coverage for the **SQL layer** — the RPCs and triggers whose logic
+lives in Postgres, not in the TypeScript app. The app/repo layer is unit-
+tested with vitest (mocking the Supabase client); these tests pin the
+substrate behavior those mocks assume.
+
+Each file is **dependency-free**: plain SQL with `DO`-block assertions that
+`RAISE EXCEPTION` on failure, wrapped in `begin … rollback` so a run never
+persists data. No pgTAP / extension required.
+
+## Running
+
+Against any database with the `civicos` schema migrated (a local Supabase
+stack, a CI throwaway, or a scratch branch):
+
+```sh
+for f in supabase/tests/*_test.sql; do
+  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f" || exit 1
+done
+```
+
+`ON_ERROR_STOP=1` makes any failed assertion abort with a non-zero exit. A
+clean run prints the `PASS:` notices and commits nothing.
+
+Some suites exercise `is_service_context()`-gated RPCs (webhook delivery);
+run those with the service-role / migration connection.
+
+## Coverage
+
+| File | What it pins |
+|------|--------------|
+| `incident_loop_test.sql` | The two auto-resolve triggers: a dispatch / work-item close resolves (and acknowledges) its linked escalation, and leaves unlinked escalations untouched. |
+| `webhook_delivery_test.sql` | Circuit breaker trips at 10 consecutive failures and clears on a successful delivery; the delivery log is trimmed to the last 50 per webhook; secret rotation rejects `< 8` chars and preserves the cursor. |
+| `accountability_stats_test.sql` | The published aggregate arithmetic — `service_sla_stats` (counts, median turnaround, rated count, avg satisfaction) and `appeals_stats` (counts, median days-to-decision) — over a fixed fabricated dataset. |
+
+These intentionally focus on the **auth-independent** substrate logic
+(triggers, service-role RPCs, aggregates, validation). The `auth.uid()`-
+scoped citizen/officer RPCs are covered at the repo layer in
+`app/src/lib/db/repos/*.test.ts`.
