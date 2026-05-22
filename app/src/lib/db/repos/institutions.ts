@@ -136,4 +136,42 @@ export async function serviceSlaStats(opts: { charterId?: string; days?: number 
   }));
 }
 
+export interface AppealsStat {
+  charterId: string;
+  filed: number;
+  admitted: number;
+  decided: number;
+  published: number;
+  pending: number;
+  medianDecisionDays: number | null;
+  p90DecisionDays: number | null;
+  oldestPendingDays: number | null;
+}
+
+interface AppealsStatRow {
+  charter_id: string; filed: number; admitted: number; decided: number; published: number;
+  pending: number; median_decision_days: string | number | null;
+  p90_decision_days: string | number | null; oldest_pending_days: string | number | null;
+}
+
+/** Per-charter aggregate appeals (contestation) stats over the last `days`.
+ *  Aggregate-only (no PII) and anon-callable — powers the public
+ *  contestation board. Returns [] without a substrate. */
+export async function appealsStats(opts: { charterId?: string; days?: number } = {}): Promise<AppealsStat[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_appeals_stats', {
+    p_charter_id: opts.charterId ?? null, p_days: opts.days ?? 90,
+  });
+  if (error || !data) return [];
+  return (data as AppealsStatRow[]).map(r => ({
+    charterId: r.charter_id,
+    filed: Number(r.filed), admitted: Number(r.admitted), decided: Number(r.decided),
+    published: Number(r.published), pending: Number(r.pending),
+    medianDecisionDays: numOrNull(r.median_decision_days),
+    p90DecisionDays: numOrNull(r.p90_decision_days),
+    oldestPendingDays: numOrNull(r.oldest_pending_days),
+  }));
+}
+
 export { substrateAvailable };

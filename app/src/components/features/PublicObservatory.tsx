@@ -5,7 +5,10 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable, publicClient } from '@/lib/db/client';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
-import { listInstitutionsRows, serviceSlaStats, type ServiceSlaStat } from '@/lib/db/repos/institutions';
+import {
+  listInstitutionsRows, serviceSlaStats, appealsStats,
+  type ServiceSlaStat, type AppealsStat,
+} from '@/lib/db/repos/institutions';
 import { listTelemetryStreamsRows } from '@/lib/db/repos/telemetry';
 import { recentWitnessRows, type AuditWitness } from '@/lib/db/repos/audit';
 import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
@@ -31,6 +34,7 @@ export function PublicObservatory() {
   const [witnesses, setWitnesses] = React.useState<AuditWitness[]>([]);
   const [anchors, setAnchors] = React.useState<PersistedEvent[]>([]);
   const [sla, setSla] = React.useState<ServiceSlaStat[]>([]);
+  const [appeals, setAppeals] = React.useState<AppealsStat[]>([]);
   const [loading, setLoading] = React.useState(false);
   const available = substrateAvailable();
 
@@ -50,6 +54,7 @@ export function PublicObservatory() {
         const events = await recentEventsRows({ type: 'audit.anchor', limit: 12 });
         setAnchors(events);
         setSla(await serviceSlaStats({ days: 90 }));
+        setAppeals(await appealsStats({ days: 90 }));
       } finally {
         setLoading(false);
       }
@@ -141,6 +146,37 @@ export function PublicObservatory() {
                 <span className="w-24 shrink-0 text-right text-ink">{s.medianResolveHours == null ? '—' : `${s.medianResolveHours}h`}</span>
                 <span className="w-20 shrink-0 text-right text-ink-muted">{s.p90ResolveHours == null ? '—' : `${s.p90ResolveHours}h`}</span>
                 <span className="w-20 shrink-0 text-right text-ink-muted">{s.oldestOpenHours == null ? '—' : `${Math.round(s.oldestOpenHours)}h`}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <Panel title="Contestation — appeals pipeline" meta={`${appeals.length} charters · last 90 days`} bodyClass="!p-0">
+        {appeals.length === 0 ? (
+          <p className="px-3 py-4 text-[11px] text-ink-muted">
+            {loading ? 'Loading…' : 'No appeals on record in the window.'}
+          </p>
+        ) : (
+          <div className="max-h-[360px] overflow-y-auto">
+            <div className="flex items-center gap-2 border-b border-line px-3 py-1 text-[8.5px] font-bold uppercase tracking-wider text-ink-muted">
+              <span className="w-40 shrink-0">charter</span>
+              <span className="w-14 shrink-0 text-right">filed</span>
+              <span className="w-16 shrink-0 text-right">decided</span>
+              <span className="w-16 shrink-0 text-right">pending</span>
+              <span className="w-24 shrink-0 text-right">med. days</span>
+              <span className="w-20 shrink-0 text-right">p90</span>
+              <span className="w-20 shrink-0 text-right">oldest</span>
+            </div>
+            {appeals.map(a => (
+              <div key={a.charterId} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 font-mono text-[10px]">
+                <span className="w-40 shrink-0 truncate text-link">{a.charterId}</span>
+                <span className="w-14 shrink-0 text-right text-ink">{a.filed}</span>
+                <span className="w-16 shrink-0 text-right text-ink-muted">{a.decided}</span>
+                <span className="w-16 shrink-0 text-right" style={{ color: a.pending > 0 ? TONE.warn : TONE.ok }}>{a.pending}</span>
+                <span className="w-24 shrink-0 text-right text-ink">{a.medianDecisionDays == null ? '—' : `${a.medianDecisionDays}d`}</span>
+                <span className="w-20 shrink-0 text-right text-ink-muted">{a.p90DecisionDays == null ? '—' : `${a.p90DecisionDays}d`}</span>
+                <span className="w-20 shrink-0 text-right text-ink-muted">{a.oldestPendingDays == null ? '—' : `${Math.round(a.oldestPendingDays)}d`}</span>
               </div>
             ))}
           </div>

@@ -6,9 +6,52 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { serviceSlaStats } from './institutions';
+import { serviceSlaStats, appealsStats } from './institutions';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('appealsStats', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await appealsStats()).toEqual([]);
+  });
+
+  it('maps aggregate rows to camelCase, coercing numeric strings and nulls', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [{
+        charter_id: 'MIN-H', filed: 4, admitted: 3, decided: 3, published: 1, pending: 1,
+        median_decision_days: '4.0', p90_decision_days: '8.8', oldest_pending_days: '30.0',
+      }, {
+        charter_id: 'MIN-X', filed: 1, admitted: 0, decided: 0, published: 0, pending: 1,
+        median_decision_days: null, p90_decision_days: null, oldest_pending_days: '5.0',
+      }],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await appealsStats({ days: 90 });
+    expect(rpc).toHaveBeenCalledWith('civicos_appeals_stats', { p_charter_id: null, p_days: 90 });
+    expect(out[0]).toEqual({
+      charterId: 'MIN-H', filed: 4, admitted: 3, decided: 3, published: 1, pending: 1,
+      medianDecisionDays: 4, p90DecisionDays: 8.8, oldestPendingDays: 30,
+    });
+    expect(out[1]!.medianDecisionDays).toBeNull();
+    expect(out[1]!.oldestPendingDays).toBe(5);
+  });
+
+  it('forwards a charter filter', async () => {
+    const rpc = vi.fn(async () => ({ data: [], error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    await appealsStats({ charterId: 'MIN-H', days: 30 });
+    expect(rpc).toHaveBeenCalledWith('civicos_appeals_stats', { p_charter_id: 'MIN-H', p_days: 30 });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: null, error: { message: 'boom' } }),
+    });
+    expect(await appealsStats()).toEqual([]);
+  });
+});
 
 describe('serviceSlaStats', () => {
   it('returns [] when the substrate is unavailable', async () => {
