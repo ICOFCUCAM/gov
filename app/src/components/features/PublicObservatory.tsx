@@ -137,6 +137,9 @@ export function PublicObservatory() {
                 <div className="mt-1 font-mono text-[9.5px] text-ink-muted">
                   {d.kind} · {d.issued_by_charter_id}
                   {d.signed_at ? ` · signed ${new Date(d.signed_at).toLocaleDateString()}` : ''}
+                  {d.effective_at
+                    ? ` · ${new Date(d.effective_at) > new Date() ? 'effective from' : 'effective'} ${new Date(d.effective_at).toLocaleDateString()}`
+                    : ''}
                   {d.targets && d.targets.length > 0 ? ` · targets: ${d.targets.join(', ')}` : ''}
                 </div>
                 {d.citation ? (
