@@ -115,6 +115,33 @@ export async function telemetryStreamStats(streamId: string, hours = 24): Promis
   };
 }
 
+export interface TelemetrySeriesPoint {
+  bucketTs: string;
+  avg: number;
+  min: number;
+  max: number;
+  samples: number;
+}
+
+interface TelemetrySeriesRow {
+  bucket_ts: string; avg_value: number; min_value: number; max_value: number; samples: number;
+}
+
+/** Downsampled time series for one stream over `hours` into <= `buckets`
+ *  buckets (avg/min/max per bucket). Authenticated-tier. [] without a
+ *  substrate. */
+export async function telemetryStreamSeries(streamId: string, hours = 168, buckets = 96): Promise<TelemetrySeriesPoint[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_telemetry_stream_series', {
+    p_stream_id: streamId, p_hours: hours, p_buckets: buckets,
+  });
+  if (error || !data) return [];
+  return (data as TelemetrySeriesRow[]).map(r => ({
+    bucketTs: r.bucket_ts, avg: r.avg_value, min: r.min_value, max: r.max_value, samples: Number(r.samples),
+  }));
+}
+
 export type TelemetryStatus = 'ok' | 'warn' | 'alert' | 'stale';
 
 export interface TelemetryFleetEntry {

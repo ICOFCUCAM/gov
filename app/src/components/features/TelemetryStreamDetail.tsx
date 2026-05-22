@@ -4,11 +4,16 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
-  listTelemetryStreamsRows, recentTelemetrySamplesRows, telemetryStreamStats,
-  type TelemetryStreamStats,
+  listTelemetryStreamsRows, recentTelemetrySamplesRows, telemetryStreamStats, telemetryStreamSeries,
+  type TelemetryStreamStats, type TelemetrySeriesPoint,
 } from '@/lib/db/repos/telemetry';
 import { substrateAvailable } from '@/lib/db/client';
+import { FilterChips } from '@/components/ui/FilterChips';
 import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
+
+const WINDOWS = ['live', '7d', '30d'] as const;
+type Win = typeof WINDOWS[number];
+const WINDOW_HOURS: Record<Exclude<Win, 'live'>, number> = { '7d': 168, '30d': 720 };
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
@@ -22,6 +27,8 @@ export function TelemetryStreamDetail({ streamId }: { streamId: string }) {
   const [stream, setStream] = React.useState<TelemetryStreamRow | null>(null);
   const [samples, setSamples] = React.useState<TelemetrySampleRow[]>([]);
   const [stats, setStats] = React.useState<TelemetryStreamStats | null>(null);
+  const [win, setWin] = React.useState<Win>('live');
+  const [series, setSeries] = React.useState<TelemetrySeriesPoint[]>([]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -37,6 +44,12 @@ export function TelemetryStreamDetail({ streamId }: { streamId: string }) {
   }, [available, streamId]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
+
+  // Downsampled history for the 7d / 30d windows; 'live' uses raw samples.
+  React.useEffect(() => {
+    if (!available || win === 'live') { setSeries([]); return; }
+    void telemetryStreamSeries(streamId, WINDOW_HOURS[win], 120).then(setSeries);
+  }, [available, win, streamId]);
 
   useRealtimeRefresh(
     React.useMemo(() => [
@@ -60,17 +73,21 @@ export function TelemetryStreamDetail({ streamId }: { streamId: string }) {
   }
 
   const ordered = [...samples].sort((a, b) => +new Date(a.ts) - +new Date(b.ts));
+  // Chart source: raw samples for 'live', downsampled bucket averages otherwise.
+  const chartPoints: { ts: string; value: number }[] = win === 'live'
+    ? ordered.map(s => ({ ts: s.ts, value: s.value }))
+    : series.map(p => ({ ts: p.bucketTs, value: p.avg }));
   const latest = ordered[ordered.length - 1]?.value ?? null;
-  const min = Math.min(...ordered.map(s => s.value), stream.warn_threshold ?? Infinity, stream.alert_threshold ?? Infinity, 0);
-  const max = Math.max(...ordered.map(s => s.value), stream.warn_threshold ?? -Infinity, stream.alert_threshold ?? -Infinity, 1);
+  const min = Math.min(...chartPoints.map(p => p.value), stream.warn_threshold ?? Infinity, stream.alert_threshold ?? Infinity, 0);
+  const max = Math.max(...chartPoints.map(p => p.value), stream.warn_threshold ?? -Infinity, stream.alert_threshold ?? -Infinity, 1);
   const range = Math.max(1, max - min);
 
   const width = 720, height = 180, padX = 30, padY = 16;
   const innerW = width - 2 * padX, innerH = height - 2 * padY;
-  const xFor = (i: number) => padX + (ordered.length <= 1 ? innerW / 2 : (i / (ordered.length - 1)) * innerW);
+  const xFor = (i: number) => padX + (chartPoints.length <= 1 ? innerW / 2 : (i / (chartPoints.length - 1)) * innerW);
   const yFor = (v: number) => padY + (1 - (v - min) / range) * innerH;
 
-  const path = ordered.map((s, i) => `${i === 0 ? 'M' : 'L'} ${xFor(i).toFixed(1)} ${yFor(s.value).toFixed(1)}`).join(' ');
+  const path = chartPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${xFor(i).toFixed(1)} ${yFor(p.value).toFixed(1)}`).join(' ');
   const warnY = stream.warn_threshold != null ? yFor(stream.warn_threshold) : null;
   const alertY = stream.alert_threshold != null ? yFor(stream.alert_threshold) : null;
   const latestTone = latest == null ? TONE.neutral
@@ -91,12 +108,17 @@ export function TelemetryStreamDetail({ streamId }: { streamId: string }) {
             </span>
           ) : null}
         </div>
-        <Link href="/gov/telemetry" className="font-mono text-[10px] text-link underline">← wall</Link>
+        <div className="flex items-center gap-2">
+          <FilterChips label="window:" options={WINDOWS} value={win} onChange={v => setWin(v as Win)} />
+          <Link href="/gov/telemetry" className="font-mono text-[10px] text-link underline">← wall</Link>
+        </div>
       </div>
 
-      <Panel title="Time series" meta={`${ordered.length} samples`} bodyClass="!p-3">
-        {ordered.length === 0 ? (
-          <p className="text-[11px] text-ink-muted">No samples yet.</p>
+      <Panel title="Time series"
+        meta={win === 'live' ? `${ordered.length} samples · live` : `${chartPoints.length} buckets · ${win}`}
+        bodyClass="!p-3">
+        {chartPoints.length === 0 ? (
+          <p className="text-[11px] text-ink-muted">{win === 'live' ? 'No samples yet.' : 'No samples in this window.'}</p>
         ) : (
           <svg viewBox={`0 0 ${width} ${height}`} className="block w-full" role="img" aria-label="telemetry chart">
             {/* axis baseline */}
@@ -120,13 +142,13 @@ export function TelemetryStreamDetail({ streamId }: { streamId: string }) {
             {/* line */}
             <path d={path} fill="none" stroke={TONE.link} strokeWidth="1.2" />
             {/* sample dots */}
-            {ordered.map((s, i) => (
-              <circle key={s.id} cx={xFor(i)} cy={yFor(s.value)} r="1.6" fill={
-                stream.alert_threshold != null && s.value >= stream.alert_threshold ? TONE.alert
-                : stream.warn_threshold != null && s.value >= stream.warn_threshold ? TONE.warn
+            {chartPoints.map((p, i) => (
+              <circle key={`${p.ts}:${i}`} cx={xFor(i)} cy={yFor(p.value)} r="1.6" fill={
+                stream.alert_threshold != null && p.value >= stream.alert_threshold ? TONE.alert
+                : stream.warn_threshold != null && p.value >= stream.warn_threshold ? TONE.warn
                 : TONE.ok
               }>
-                <title>{`${s.value} @ ${new Date(s.ts).toLocaleString()}`}</title>
+                <title>{`${p.value} @ ${new Date(p.ts).toLocaleString()}`}</title>
               </circle>
             ))}
           </svg>

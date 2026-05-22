@@ -6,9 +6,36 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { telemetryStreamStats, telemetryFleetStatus } from './telemetry';
+import { telemetryStreamStats, telemetryFleetStatus, telemetryStreamSeries } from './telemetry';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('telemetryStreamSeries', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await telemetryStreamSeries('s1')).toEqual([]);
+  });
+
+  it('maps bucket rows and forwards the window + bucket count', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        { bucket_ts: '2026-05-15T00:00:00Z', avg_value: 15, min_value: 10, max_value: 20, samples: 2 },
+        { bucket_ts: '2026-05-21T00:00:00Z', avg_value: 60, min_value: 50, max_value: 70, samples: 2 },
+      ],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await telemetryStreamSeries('s1', 168, 120);
+    expect(rpc).toHaveBeenCalledWith('civicos_telemetry_stream_series', { p_stream_id: 's1', p_hours: 168, p_buckets: 120 });
+    expect(out).toHaveLength(2);
+    expect(out[0]).toEqual({ bucketTs: '2026-05-15T00:00:00Z', avg: 15, min: 10, max: 20, samples: 2 });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await telemetryStreamSeries('s1')).toEqual([]);
+  });
+});
 
 describe('telemetryFleetStatus', () => {
   it('returns [] when the substrate is unavailable', async () => {
