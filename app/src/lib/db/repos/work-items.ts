@@ -253,4 +253,38 @@ export async function listWorkItemsRows(opts: { scope?: string; workflowId?: str
   return data as WorkItemRow[];
 }
 
+export interface WorkItemFlowStat {
+  workflowId: string;
+  opened: number;
+  closed: number;
+  open: number;
+  medianCycleHours: number | null;
+  p90CycleHours: number | null;
+  oldestOpenHours: number | null;
+}
+
+interface WorkItemFlowStatRow {
+  workflow_id: string; opened: number; closed: number; open: number;
+  median_cycle_hours: string | number | null; p90_cycle_hours: string | number | null;
+  oldest_open_hours: string | number | null;
+}
+
+/** Per-workflow throughput: opened/closed/open counts, median + p90 cycle
+ *  time (hours), oldest open age, over a window. Backlog-heaviest first.
+ *  Authenticated-tier. [] without a substrate. */
+export async function workItemFlowStats(opts: { workflowId?: string; charterId?: string; days?: number } = {}): Promise<WorkItemFlowStat[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const num = (v: string | number | null): number | null => v === null || v === undefined ? null : Number(v);
+  const { data, error } = await sb.rpc('civicos_work_item_flow_stats', {
+    p_workflow_id: opts.workflowId ?? null, p_charter_id: opts.charterId ?? null, p_days: opts.days ?? 30,
+  });
+  if (error || !data) return [];
+  return (data as WorkItemFlowStatRow[]).map(r => ({
+    workflowId: r.workflow_id, opened: Number(r.opened), closed: Number(r.closed), open: Number(r.open),
+    medianCycleHours: num(r.median_cycle_hours), p90CycleHours: num(r.p90_cycle_hours),
+    oldestOpenHours: num(r.oldest_open_hours),
+  }));
+}
+
 export { substrateAvailable };

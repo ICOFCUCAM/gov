@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { listWorkflowDefinitionsRows, syncWorkflowDefinitionRow } from '@/lib/db/repos/work-items';
+import { listWorkflowDefinitionsRows, syncWorkflowDefinitionRow, workItemFlowStats, type WorkItemFlowStat } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkflowDefinitionRow, WorkKind, ActionKey } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -55,12 +55,18 @@ export function WorkflowCatalogue() {
   const available = substrateAvailable();
   const isPlatform = actor?.kind === 'officer' && actor.role !== null && PLATFORM_ROLES.has(actor.role);
 
+  const [flow, setFlow] = React.useState<Record<string, WorkItemFlowStat>>({});
+
   const refresh = React.useCallback(async () => {
     if (!available) return;
     const opts: Parameters<typeof listWorkflowDefinitionsRows>[0] = { limit: 100 };
     if (kindFilter !== 'all') opts.kind = kindFilter;
-    const rows = await listWorkflowDefinitionsRows(opts);
+    const [rows, fs] = await Promise.all([
+      listWorkflowDefinitionsRows(opts),
+      workItemFlowStats({ days: 90 }),
+    ]);
     setItems(rows);
+    setFlow(Object.fromEntries(fs.map(f => [f.workflowId, f])));
     if (!active && rows.length > 0) setActive(rows[0]!.workflow_id);
   }, [available, kindFilter, active]);
 
@@ -190,6 +196,13 @@ export function WorkflowCatalogue() {
                       {w.kind}
                     </span>
                     <span className="min-w-0 flex-1 truncate font-mono text-link">{w.workflow_id}</span>
+                    {flow[w.workflow_id] ? (
+                      <span className="shrink-0 font-mono text-[9px] tabular-nums"
+                        style={{ color: flow[w.workflow_id]!.open > 0 ? TONE.warn : TONE.ok }}>
+                        {flow[w.workflow_id]!.open} open
+                        {flow[w.workflow_id]!.medianCycleHours != null ? ` · ${flow[w.workflow_id]!.medianCycleHours}h` : ''}
+                      </span>
+                    ) : null}
                   </div>
                   <div className="mt-0.5 truncate text-[10px] text-ink">{w.title}</div>
                 </button>
