@@ -8,10 +8,30 @@ vi.mock('@/lib/db/client', () => ({
 
 import {
   workItemFlowStats, workItemStageDistribution, officerWorkload,
-  claimWorkItemRow, releaseWorkItemRow, setWorkItemPriorityRow,
+  claimWorkItemRow, releaseWorkItemRow, setWorkItemPriorityRow, reassignWorkItemRow,
 } from './work-items';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('reassignWorkItemRow', () => {
+  it('returns null when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await reassignWorkItemRow('WI-1', 'off-2')).toBeNull();
+  });
+
+  it('calls the RPC with ref + assignee id and returns the updated row', async () => {
+    const rpc = vi.fn(async () => ({ data: { id: 'wi1', ref: 'WI-1', assignee_name: 'Bob' }, error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await reassignWorkItemRow('WI-1', 'off-2');
+    expect(rpc).toHaveBeenCalledWith('civicos_reassign_work_item', { p_ref: 'WI-1', p_assignee_id: 'off-2' });
+    expect(out!.assignee_name).toBe('Bob');
+  });
+
+  it('returns null on RPC error (e.g. not platform-tier)', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'insufficient_privilege' } }) });
+    expect(await reassignWorkItemRow('WI-1', 'off-2')).toBeNull();
+  });
+});
 
 describe('setWorkItemPriorityRow', () => {
   it('returns null when the substrate is unavailable', async () => {

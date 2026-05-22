@@ -6,16 +6,20 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   workItemRow, workItemStepsRows, listWorkflowDefinitionsRows,
   transitionWorkItemRow, claimWorkItemRow, releaseWorkItemRow, setWorkItemPriorityRow,
+  reassignWorkItemRow,
   type WorkItemPriority,
 } from '@/lib/db/repos/work-items';
+import { listOfficersRows } from '@/lib/db/repos/admin';
 import { substrateAvailable } from '@/lib/db/client';
-import type { WorkItemRow, WorkItemStepRow, ActionKey } from '@/lib/db/types';
+import type { WorkItemRow, WorkItemStepRow, ActionKey, OfficerRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { resolvedActor } from '@/services/actor-resolver';
 import { transitionSignature } from '@/lib/db/signatures';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+
+const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
 
 interface WorkflowMap { terminal: string[]; transitions: Record<string, Record<string, string>> }
 
@@ -46,7 +50,16 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
   const [def, setDef] = React.useState<WorkflowMap | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [officers, setOfficers] = React.useState<OfficerRow[]>([]);
   const available = substrateAvailable();
+
+  const isPlatform = !!actor && actor.kind === 'officer'
+    && PLATFORM_ROLES.has(actor.role ?? '');
+
+  React.useEffect(() => {
+    if (!available || !isPlatform) return;
+    void listOfficersRows({ activeOnly: true, limit: 500 }).then(setOfficers);
+  }, [available, isPlatform]);
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
@@ -155,6 +168,18 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
     }
   }
 
+  async function reassign(assigneeId: string) {
+    if (!item || !assigneeId) return;
+    setBusy(true); setError(null);
+    try {
+      const updated = await reassignWorkItemRow(item.ref, assigneeId);
+      if (!updated) setError('reassign failed — requires a platform-tier officer and an active target');
+      else await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -213,6 +238,16 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
                 {p}
               </button>
             ))}
+            {isPlatform && officers.length > 0 ? (
+              <select disabled={busy} defaultValue=""
+                onChange={e => { const v = e.currentTarget.value; e.currentTarget.value = ''; void reassign(v); }}
+                className="focus-ring rounded-[3px] border border-line bg-bg px-1.5 py-0.5 text-[9px] text-ink-muted">
+                <option value="" disabled>reassign to…</option>
+                {officers.filter(o => o.id !== item.assignee_id).map(o => (
+                  <option key={o.id} value={o.id}>{o.name}{o.charter_id ? ` · ${o.charter_id}` : ''}</option>
+                ))}
+              </select>
+            ) : null}
           </div>
         ) : null}
 
