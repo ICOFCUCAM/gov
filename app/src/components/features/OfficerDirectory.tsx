@@ -4,6 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { listOfficersRows } from '@/lib/db/repos/admin';
+import { officerWorkload, type OfficerWorkloadEntry } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { OfficerRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -17,12 +18,16 @@ import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 export function OfficerDirectory() {
   const { ready } = useIdentity();
   const [rows, setRows] = React.useState<OfficerRow[]>([]);
+  const [load, setLoad] = React.useState<Record<string, OfficerWorkloadEntry>>({});
   const [q, setQ] = React.useState('');
   const available = substrateAvailable();
 
   React.useEffect(() => {
     if (!available || !ready) return;
     void listOfficersRows({ activeOnly: true, limit: 500 }).then(setRows);
+    void officerWorkload().then(w => setLoad(
+      Object.fromEntries(w.filter(e => e.assigneeId).map(e => [e.assigneeId as string, e])),
+    ));
   }, [available, ready]);
 
   if (!available) {
@@ -77,7 +82,14 @@ export function OfficerDirectory() {
                   </span>
                 </div>
                 <div className="mt-0.5 truncate font-mono text-[9px] text-link">{o.role}</div>
-                <div className="mt-0.5 truncate font-mono text-[9px] text-ink-muted">{o.email ?? '—'}</div>
+                <div className="mt-0.5 flex items-center justify-between gap-2 font-mono text-[9px] text-ink-muted">
+                  <span className="truncate">{o.email ?? '—'}</span>
+                  {load[o.id] ? (
+                    <span className="shrink-0" style={{ color: load[o.id]!.highPriority > 0 ? TONE.alert : TONE.warn }}>
+                      {load[o.id]!.openItems} open{load[o.id]!.highPriority > 0 ? ` · ${load[o.id]!.highPriority}!` : ''}
+                    </span>
+                  ) : null}
+                </div>
               </Link>
             ))}
           </div>

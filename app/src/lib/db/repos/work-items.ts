@@ -314,4 +314,33 @@ export async function workItemStageDistribution(workflowId: string): Promise<Wor
   }));
 }
 
+export interface OfficerWorkloadEntry {
+  assigneeId: string | null;
+  assigneeName: string;
+  openItems: number;
+  highPriority: number;
+  oldestOpenHours: number | null;
+  medianOpenHours: number | null;
+}
+
+interface OfficerWorkloadRow {
+  assignee_id: string | null; assignee_name: string; open_items: number; high_priority: number;
+  oldest_open_hours: string | number | null; median_open_hours: string | number | null;
+}
+
+/** Open work-item load per assignee (incl. an unassigned bucket), most
+ *  high-priority first. Authenticated-tier. [] without a substrate. */
+export async function officerWorkload(opts: { charterId?: string } = {}): Promise<OfficerWorkloadEntry[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const num = (v: string | number | null): number | null => v === null || v === undefined ? null : Number(v);
+  const { data, error } = await sb.rpc('civicos_officer_workload', { p_charter_id: opts.charterId ?? null });
+  if (error || !data) return [];
+  return (data as OfficerWorkloadRow[]).map(r => ({
+    assigneeId: r.assignee_id, assigneeName: r.assignee_name,
+    openItems: Number(r.open_items), highPriority: Number(r.high_priority),
+    oldestOpenHours: num(r.oldest_open_hours), medianOpenHours: num(r.median_open_hours),
+  }));
+}
+
 export { substrateAvailable };

@@ -6,9 +6,39 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { workItemFlowStats, workItemStageDistribution } from './work-items';
+import { workItemFlowStats, workItemStageDistribution, officerWorkload } from './work-items';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('officerWorkload', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await officerWorkload()).toEqual([]);
+  });
+
+  it('maps rows incl. the unassigned bucket and forwards the charter', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        { assignee_id: 'a1', assignee_name: 'Alice', open_items: 2, high_priority: 1, oldest_open_hours: '40.0', median_open_hours: '25.0' },
+        { assignee_id: null, assignee_name: '(unassigned)', open_items: 1, high_priority: 1, oldest_open_hours: '5.0', median_open_hours: '5.0' },
+      ],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await officerWorkload({ charterId: 'MIN-X' });
+    expect(rpc).toHaveBeenCalledWith('civicos_officer_workload', { p_charter_id: 'MIN-X' });
+    expect(out[0]).toEqual({
+      assigneeId: 'a1', assigneeName: 'Alice', openItems: 2, highPriority: 1,
+      oldestOpenHours: 40, medianOpenHours: 25,
+    });
+    expect(out[1]!.assigneeId).toBeNull();
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await officerWorkload()).toEqual([]);
+  });
+});
 
 describe('workItemStageDistribution', () => {
   it('returns [] when the substrate is unavailable', async () => {
