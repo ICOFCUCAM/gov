@@ -9,6 +9,7 @@ import {
   type ServiceSlaStat, type SlaTrendPoint, type AppealsStat,
 } from '@/lib/db/repos/institutions';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
+import { downloadJson } from '@/lib/csv-download';
 import type { InstitutionRow, DirectiveRow } from '@/lib/db/types';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
@@ -67,15 +68,33 @@ export function CharterProfile({ charterId }: { charterId: string }) {
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8 space-y-4">
-      <div className="space-y-1">
-        <Link href="/public" className="text-[11px] text-link underline underline-offset-2">← Public Observatory</Link>
-        <h1 className="text-2xl font-semibold text-ink">
-          {inst ? inst.label : charterId}
-        </h1>
-        <p className="font-mono text-[10px] text-ink-muted">
-          {charterId}
-          {inst ? ` · ${inst.kind} · ${inst.domain}${inst.activated ? ' · active' : ' · not activated'}` : ' · not in registry'}
-        </p>
+      <div className="flex items-start justify-between gap-2">
+        <div className="space-y-1">
+          <Link href="/public" className="text-[11px] text-link underline underline-offset-2">← Public Observatory</Link>
+          <h1 className="text-2xl font-semibold text-ink">
+            {inst ? inst.label : charterId}
+          </h1>
+          <p className="font-mono text-[10px] text-ink-muted">
+            {charterId}
+            {inst ? ` · ${inst.kind} · ${inst.domain}${inst.activated ? ' · active' : ' · not activated'}` : ' · not in registry'}
+          </p>
+        </div>
+        {!loading ? (
+          <button type="button"
+            onClick={() => downloadJson(`civicos-charter-${charterId}`, {
+              document: 'civicos.charter_accountability_profile',
+              generated_at: new Date().toISOString(),
+              charter_id: charterId,
+              institution: inst,
+              service_sla: sla,
+              service_sla_trend: trend,
+              appeals: appeals,
+              public_directives: directives,
+            }, { dated: false })}
+            className="focus-ring shrink-0 rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
+            download json
+          </button>
+        ) : null}
       </div>
 
       {loading ? <p className="text-[11px] text-ink-muted">Loading…</p> : null}
