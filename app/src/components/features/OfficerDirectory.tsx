@@ -72,7 +72,7 @@ export function OfficerDirectory() {
       {Array.from(byCharter.entries()).sort(([a], [b]) => a.localeCompare(b)).map(([charter, list]) => (
         <Panel key={charter} title={charter} meta={`${list.length}`} bodyClass="!p-0">
           <div className="grid grid-cols-1 gap-px bg-line sm:grid-cols-2 lg:grid-cols-3">
-            {list.map(o => (
+            {[...list].sort((a, b) => (load[b.id]?.openItems ?? 0) - (load[a.id]?.openItems ?? 0)).map(o => (
               <Link key={o.id} href={`/gov/officers/${encodeURIComponent(o.id)}`}
                 className="block bg-surface px-3 py-1.5 text-[10px] hover:bg-surface-2">
                 <div className="flex items-center justify-between gap-2">
