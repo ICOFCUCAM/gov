@@ -115,4 +115,41 @@ export async function telemetryStreamStats(streamId: string, hours = 24): Promis
   };
 }
 
+export type TelemetryStatus = 'ok' | 'warn' | 'alert' | 'stale';
+
+export interface TelemetryFleetEntry {
+  streamId: string;
+  charterId: string;
+  label: string;
+  unit: string | null;
+  latestValue: number | null;
+  latestTs: string | null;
+  ageMinutes: number | null;
+  warnThreshold: number | null;
+  alertThreshold: number | null;
+  status: TelemetryStatus;
+}
+
+interface TelemetryFleetRow {
+  stream_id: string; charter_id: string; label: string; unit: string | null;
+  latest_value: number | null; latest_ts: string | null; age_minutes: number | null;
+  warn_threshold: number | null; alert_threshold: number | null; status: TelemetryStatus;
+}
+
+/** Live status of every active stream (alert/warn/stale/ok), worst-first.
+ *  Authenticated-tier. [] without a substrate. */
+export async function telemetryFleetStatus(opts: { charterId?: string; staleMinutes?: number } = {}): Promise<TelemetryFleetEntry[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_telemetry_fleet_status', {
+    p_charter_id: opts.charterId ?? null, p_stale_minutes: opts.staleMinutes ?? 60,
+  });
+  if (error || !data) return [];
+  return (data as TelemetryFleetRow[]).map(r => ({
+    streamId: r.stream_id, charterId: r.charter_id, label: r.label, unit: r.unit,
+    latestValue: r.latest_value, latestTs: r.latest_ts, ageMinutes: r.age_minutes,
+    warnThreshold: r.warn_threshold, alertThreshold: r.alert_threshold, status: r.status,
+  }));
+}
+
 export { substrateAvailable };

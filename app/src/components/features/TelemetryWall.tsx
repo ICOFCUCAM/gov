@@ -5,6 +5,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   defineTelemetryStreamRow, recordTelemetrySampleRow,
   recentTelemetrySamplesRows, listTelemetryStreamsRows,
+  telemetryFleetStatus, type TelemetryFleetEntry,
 } from '@/lib/db/repos/telemetry';
 import { substrateAvailable } from '@/lib/db/client';
 import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
@@ -33,12 +34,17 @@ export function TelemetryWall() {
   const [samplesByStream, setSamplesByStream] = React.useState<Record<string, TelemetrySampleRow[]>>({});
   const [active, setActive] = React.useState<string | null>(null);
   const [composerOpen, setComposerOpen] = React.useState(false);
+  const [fleet, setFleet] = React.useState<TelemetryFleetEntry[]>([]);
   const available = substrateAvailable();
 
   const refreshStreams = React.useCallback(async () => {
     if (!available) return;
-    const s = await listTelemetryStreamsRows({ limit: 50 });
+    const [s, f] = await Promise.all([
+      listTelemetryStreamsRows({ limit: 50 }),
+      telemetryFleetStatus({ staleMinutes: 60 }),
+    ]);
     setStreams(s);
+    setFleet(f);
     if (!active && s.length > 0) setActive(s[0]!.stream_id);
   }, [available, active]);
 
@@ -110,6 +116,38 @@ export function TelemetryWall() {
           onDone={async () => { await refreshStreams(); await refreshSamples(); setComposerOpen(false); }}
         />
       ) : null}
+
+      {(() => {
+        const bad = fleet.filter(f => f.status !== 'ok');
+        if (fleet.length === 0) return null;
+        const counts = fleet.reduce((m, f) => { m[f.status] = (m[f.status] ?? 0) + 1; return m; }, {} as Record<string, number>);
+        const tone = (s: string) => s === 'alert' ? TONE.alert : s === 'warn' ? TONE.warn : s === 'stale' ? TONE.neutral : TONE.ok;
+        return (
+          <Panel title="Fleet status"
+            meta={`${counts.alert ?? 0} alert · ${counts.warn ?? 0} warn · ${counts.stale ?? 0} stale · ${counts.ok ?? 0} ok`}
+            bodyClass="!p-0">
+            {bad.length === 0 ? (
+              <p className="px-3 py-3 text-[11px]" style={{ color: TONE.ok }}>All {fleet.length} active streams healthy.</p>
+            ) : (
+              <div className="max-h-[240px] overflow-y-auto">
+                {bad.map(f => (
+                  <button type="button" key={f.streamId} onClick={() => setActive(f.streamId)}
+                    className="flex w-full items-center gap-2 border-b border-line-soft px-3 py-1.5 text-left last:border-0 font-mono text-[10px] hover:bg-surface-2">
+                    <span className="w-14 shrink-0 font-bold uppercase" style={{ color: tone(f.status) }}>{f.status}</span>
+                    <span className="w-44 shrink-0 truncate text-link">{f.streamId}</span>
+                    <span className="min-w-0 flex-1 truncate text-ink-muted">{f.label}</span>
+                    <span className="shrink-0 text-right text-ink">
+                      {f.status === 'stale'
+                        ? (f.ageMinutes == null ? 'no samples' : `${f.ageMinutes}m old`)
+                        : `${f.latestValue ?? '—'} ${f.unit ?? ''}`}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </Panel>
+        );
+      })()}
 
       <Panel title="Streams" meta={`${streams.length}`} bodyClass="!p-0">
         {streams.length === 0 ? (

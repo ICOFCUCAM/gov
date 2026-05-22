@@ -6,9 +6,40 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { telemetryStreamStats } from './telemetry';
+import { telemetryStreamStats, telemetryFleetStatus } from './telemetry';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('telemetryFleetStatus', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await telemetryFleetStatus()).toEqual([]);
+  });
+
+  it('maps fleet rows to camelCase and forwards options', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [{
+        stream_id: 'alert-stream', charter_id: 'MIN-E', label: 'Grid load', unit: 'MW',
+        latest_value: 99, latest_ts: '2026-05-22T00:00:00Z', age_minutes: 5,
+        warn_threshold: 80, alert_threshold: 95, status: 'alert',
+      }],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await telemetryFleetStatus({ charterId: 'MIN-E', staleMinutes: 30 });
+    expect(rpc).toHaveBeenCalledWith('civicos_telemetry_fleet_status', { p_charter_id: 'MIN-E', p_stale_minutes: 30 });
+    expect(out[0]).toEqual({
+      streamId: 'alert-stream', charterId: 'MIN-E', label: 'Grid load', unit: 'MW',
+      latestValue: 99, latestTs: '2026-05-22T00:00:00Z', ageMinutes: 5,
+      warnThreshold: 80, alertThreshold: 95, status: 'alert',
+    });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await telemetryFleetStatus()).toEqual([]);
+  });
+});
 
 describe('telemetryStreamStats', () => {
   it('returns null when the substrate is unavailable', async () => {
