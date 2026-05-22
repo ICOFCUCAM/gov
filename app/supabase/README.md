@@ -57,6 +57,7 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521280000_civicos_service_context_helper.sql` | `is_service_context()` — recognises the PostgREST service_role path (`auth.role()='service_role'`) since SECURITY DEFINER funcs see `session_user='authenticator'`. Retrofitted into webhook + expire-consents + admin-officer RPCs (their `session_user` guards would have rejected real service-role calls). |
 | `20260521290000_civicos_webhook_set_active.sql` | `set_event_webhook_active(p_id, p_active)` — platform-tier (or service) pause/resume toggle for a registered federation webhook; paused hooks are skipped by the deliver-events cron without losing their cursor. |
 | `20260521300000_civicos_webhook_circuit_breaker.sql` | Self-healing delivery: `record_webhook_failure` trips a circuit breaker after 10 consecutive failures (deactivates the hook + stamps `paused_reason`), so a dead endpoint stops being retried every run. `mark_webhook_delivered` clears the breaker on any 2xx; resume via `set_event_webhook_active` resets the failure state. Adds `paused_reason` column, surfaced through the secret-free listing RPC. |
+| `20260521310000_civicos_webhook_delivery_log.sql` | `civicos.webhook_deliveries` (service-role-only) + `record_webhook_delivery_attempt` (cron writes one bounded run-summary row per webhook, auto-trimmed to the last 50) + `list_webhook_deliveries` (platform-tier read). Gives operators the run-by-run delivery history the aggregate counters couldn't. |
 
 ### Advisor posture after hardening
 

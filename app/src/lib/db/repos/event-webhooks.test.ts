@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { listEventWebhooksRows, registerEventWebhookRow } from './events';
+import { listEventWebhooksRows, registerEventWebhookRow, listWebhookDeliveriesRows } from './events';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -87,5 +87,36 @@ describe('registerEventWebhookRow', () => {
       rpc: async () => ({ data: null, error: { message: 'denied' } }),
     });
     expect(await registerEventWebhookRow({ channel: 'c', url: 'u', secret: 'sssssssss' })).toBeNull();
+  });
+});
+
+describe('listWebhookDeliveriesRows', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await listWebhookDeliveriesRows('w1')).toEqual([]);
+  });
+
+  it('maps run summaries into camelCase and passes the limit through', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [{
+        id: 'd1', channel: 'metric', delivered: 3, ok: true, detail: null,
+        cursor_before: 100, cursor_after: 400, attempted_at: '2026-05-21T00:00:00Z',
+      }],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await listWebhookDeliveriesRows('w1', 5);
+    expect(out).toHaveLength(1);
+    expect(out[0]!.delivered).toBe(3);
+    expect(out[0]!.cursorBefore).toBe(100);
+    expect(out[0]!.cursorAfter).toBe(400);
+    expect(rpc).toHaveBeenCalledWith('civicos_list_webhook_deliveries', { p_webhook_id: 'w1', p_limit: 5 });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: null, error: { message: 'insufficient_privilege' } }),
+    });
+    expect(await listWebhookDeliveriesRows('w1')).toEqual([]);
   });
 });

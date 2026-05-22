@@ -8,7 +8,8 @@ import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import {
   listEventWebhooksRows, registerEventWebhookRow, setEventWebhookActiveRow,
-  type EventWebhook,
+  listWebhookDeliveriesRows,
+  type EventWebhook, type WebhookDelivery,
 } from '@/lib/db/repos/events';
 import { ageMinutes } from '@/lib/format';
 
@@ -30,7 +31,17 @@ export function EventWebhooks() {
   const [loading, setLoading] = React.useState(false);
   const [pinging, setPinging] = React.useState<string | null>(null);
   const [pings, setPings] = React.useState<Record<string, PingResult>>({});
+  const [expanded, setExpanded] = React.useState<string | null>(null);
+  const [log, setLog] = React.useState<Record<string, WebhookDelivery[]>>({});
   const available = substrateAvailable();
+
+  const toggleLog = React.useCallback(async (id: string) => {
+    if (expanded === id) { setExpanded(null); return; }
+    setExpanded(id);
+    setLog(prev => ({ ...prev, [id]: prev[id] ?? [] }));
+    const rows = await listWebhookDeliveriesRows(id, 20);
+    setLog(prev => ({ ...prev, [id]: rows }));
+  }, [expanded]);
 
   const sendPing = React.useCallback(async (id: string) => {
     const token = session?.access_token;
@@ -128,6 +139,11 @@ export function EventWebhooks() {
                     {pinging === h.id ? 'pinging…' : 'test'}
                   </button>
                   <button type="button"
+                    onClick={() => { void toggleLog(h.id); }}
+                    className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink">
+                    {expanded === h.id ? 'hide' : 'log'}
+                  </button>
+                  <button type="button"
                     onClick={async () => { await setEventWebhookActiveRow(h.id, !h.active); await refresh(); }}
                     className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink">
                     {h.active ? 'pause' : 'resume'}
@@ -148,11 +164,32 @@ export function EventWebhooks() {
                       test ping: {pings[h.id]!.ok ? 'ok' : 'failed'} — {pings[h.id]!.detail}
                     </p>
                   : null}
+                {expanded === h.id ? <DeliveryLog rows={log[h.id]} /> : null}
               </div>
             ))}
           </div>
         )}
       </Panel>
+    </div>
+  );
+}
+
+function DeliveryLog({ rows }: { rows: WebhookDelivery[] | undefined }) {
+  if (!rows) return <p className="mt-1 font-mono text-[9px] text-ink-muted">loading delivery log…</p>;
+  if (rows.length === 0) return <p className="mt-1 font-mono text-[9px] text-ink-muted">no delivery runs recorded yet.</p>;
+  return (
+    <div className="mt-1 space-y-0.5 rounded-[3px] border border-line-soft bg-bg p-1.5">
+      {rows.map(r => (
+        <div key={r.id} className="flex items-center gap-2 font-mono text-[9px]">
+          <span className="w-12 shrink-0 font-bold uppercase" style={{ color: r.ok ? TONE.ok : TONE.alert }}>
+            {r.ok ? 'ok' : 'fail'}
+          </span>
+          <span className="w-28 shrink-0 text-ink-muted">{ageMinutes(r.attemptedAt)}m ago</span>
+          <span className="w-20 shrink-0 text-ink-muted">{r.delivered} sent</span>
+          <span className="w-28 shrink-0 text-ink-muted">@{r.cursorBefore}→@{r.cursorAfter}</span>
+          {r.detail ? <span className="min-w-0 flex-1 truncate" style={{ color: TONE.alert }}>{r.detail}</span> : null}
+        </div>
+      ))}
     </div>
   );
 }

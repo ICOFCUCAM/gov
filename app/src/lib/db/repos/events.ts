@@ -140,3 +140,36 @@ export async function setEventWebhookActiveRow(id: string, active: boolean): Pro
   });
   return !error && data === true;
 }
+
+/* ── Webhook delivery log (platform-tier, read-only) ──────────────── */
+
+export interface WebhookDelivery {
+  id: string;
+  channel: string;
+  delivered: number;
+  ok: boolean;
+  detail: string | null;
+  cursorBefore: number;
+  cursorAfter: number;
+  attemptedAt: string;
+}
+
+interface WebhookDeliveryRow {
+  id: string; channel: string; delivered: number; ok: boolean; detail: string | null;
+  cursor_before: number; cursor_after: number; attempted_at: string;
+}
+
+/** Recent delivery-run summaries for one webhook (most recent first). */
+export async function listWebhookDeliveriesRows(webhookId: string, limit = 20): Promise<WebhookDelivery[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_list_webhook_deliveries', {
+    p_webhook_id: webhookId, p_limit: limit,
+  });
+  if (error || !data) return [];
+  return (data as WebhookDeliveryRow[]).map(r => ({
+    id: r.id, channel: r.channel, delivered: r.delivered, ok: r.ok, detail: r.detail,
+    cursorBefore: Number(r.cursor_before), cursorAfter: Number(r.cursor_after),
+    attemptedAt: r.attempted_at,
+  }));
+}

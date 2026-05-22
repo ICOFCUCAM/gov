@@ -109,6 +109,15 @@ export async function GET(req: Request) {
     if (failureDetail) {
       await sb.rpc('civicos_record_webhook_failure', { p_id: w.id, p_error: failureDetail });
     }
+    // Log a run summary only when something happened, so the delivery
+    // history doesn't fill with empty no-op rows on idle channels.
+    if (delivered > 0 || failureDetail) {
+      await sb.rpc('civicos_record_webhook_delivery_attempt', {
+        p_webhook_id: w.id, p_channel: w.channel, p_delivered: delivered,
+        p_ok: !failureDetail, p_detail: failureDetail,
+        p_cursor_before: w.cursor_at_ms, p_cursor_after: lastOkAtMs,
+      });
+    }
     results.push({ id: w.id, channel: w.channel, delivered, failed: !!failureDetail, detail: failureDetail });
   }
 

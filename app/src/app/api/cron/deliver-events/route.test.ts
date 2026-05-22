@@ -89,6 +89,11 @@ describe('GET /api/cron/deliver-events', () => {
     expect(rpc).toHaveBeenCalledWith('civicos_mark_webhook_delivered', expect.objectContaining({
       p_id: 'w1', p_last_event_id: 'e2', p_cursor_at_ms: 200, p_delivered: 2,
     }));
+
+    // A run summary is logged: ok=true, cursor 0 → 200.
+    expect(rpc).toHaveBeenCalledWith('civicos_record_webhook_delivery_attempt', expect.objectContaining({
+      p_webhook_id: 'w1', p_delivered: 2, p_ok: true, p_cursor_before: 0, p_cursor_after: 200,
+    }));
   });
 
   it('stops at the first failure, advances only past delivered events, records the failure', async () => {
@@ -115,6 +120,10 @@ describe('GET /api/cron/deliver-events', () => {
       p_last_event_id: 'e1', p_cursor_at_ms: 100, p_delivered: 1,
     }));
     expect(rpc).toHaveBeenCalledWith('civicos_record_webhook_failure', expect.objectContaining({ p_id: 'w1' }));
+    // The logged run summary marks the partial failure (one delivered).
+    expect(rpc).toHaveBeenCalledWith('civicos_record_webhook_delivery_attempt', expect.objectContaining({
+      p_webhook_id: 'w1', p_delivered: 1, p_ok: false,
+    }));
   });
 
   it('does not advance the cursor when the very first event fails', async () => {
