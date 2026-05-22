@@ -179,6 +179,18 @@ export async function myExpiringConsents(withinDays = 14): Promise<ExpiringConse
   return data as ExpiringConsent[];
 }
 
+/** Push out the expiry on one of the caller's own still-granted consents.
+ *  Owner-scoped server-side (a citizen can only extend their own grant).
+ *  Returns true on success. */
+export async function extendMyConsent(consentId: string, newExpiresAt: Date): Promise<boolean> {
+  const sb = publicClient();
+  if (!sb) return false;
+  const { data, error } = await sb.rpc('civicos_extend_my_consent', {
+    p_consent_id: consentId, p_new_expires_at: newExpiresAt.toISOString(),
+  });
+  return !error && data === true;
+}
+
 export async function myAppealsRows(limit = 50): Promise<AppealRow[]> {
   const sb = publicClient();
   if (!sb) return [];

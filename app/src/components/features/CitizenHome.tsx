@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { workItemsByIds } from '@/lib/db/repos/work-items';
 import {
-  myServiceRequestsRows, myConsentsRows, myAppealsRows, myExpiringConsents,
+  myServiceRequestsRows, myConsentsRows, myAppealsRows, myExpiringConsents, extendMyConsent,
   type ExpiringConsent,
 } from '@/lib/db/repos/citizen';
 import { substrateAvailable } from '@/lib/db/client';
@@ -36,6 +36,7 @@ export function CitizenHome() {
   const [appeals, setAppeals] = React.useState<AppealRow[]>([]);
   const [linkedItems, setLinkedItems] = React.useState<Map<string, WorkItemRow>>(new Map());
   const [expiring, setExpiring] = React.useState<ExpiringConsent[]>([]);
+  const [extendingId, setExtendingId] = React.useState<string | null>(null);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -57,6 +58,16 @@ export function CitizenHome() {
   }, [available]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, actor?.id, session?.user.id, refresh]);
+
+  const extend90 = React.useCallback(async (consentId: string) => {
+    setExtendingId(consentId);
+    try {
+      const when = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+      if (await extendMyConsent(consentId, when)) await refresh();
+    } finally {
+      setExtendingId(null);
+    }
+  }, [refresh]);
 
   useRealtimeRefresh(
     React.useMemo(() => [{ table: 'work_items' as const }], []),
@@ -122,17 +133,21 @@ export function CitizenHome() {
         <Panel title="Consents expiring soon" meta={`${expiring.length} within 14 days`} bodyClass="!p-0">
           <div className="max-h-[200px] overflow-y-auto">
             {expiring.map(c => (
-              <Link key={c.id} href={`/wallet/consent/${c.id}`}
-                className="block border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px] hover:bg-surface-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-28 shrink-0 truncate font-mono text-link">{c.target_charter_id}</span>
-                  <span className="min-w-0 flex-1 truncate text-ink">{c.scope}</span>
-                  <span className="shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                    style={{ color: c.days_remaining <= 3 ? TONE.alert : TONE.warn }}>
-                    {c.days_remaining === 0 ? 'today' : c.days_remaining === 1 ? '1 day' : `${c.days_remaining} days`}
-                  </span>
-                </div>
-              </Link>
+              <div key={c.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <Link href={`/wallet/consent/${c.id}`} className="w-28 shrink-0 truncate font-mono text-link hover:underline">
+                  {c.target_charter_id}
+                </Link>
+                <span className="min-w-0 flex-1 truncate text-ink">{c.scope}</span>
+                <span className="shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
+                  style={{ color: c.days_remaining <= 3 ? TONE.alert : TONE.warn }}>
+                  {c.days_remaining === 0 ? 'today' : c.days_remaining === 1 ? '1 day' : `${c.days_remaining} days`}
+                </span>
+                <button type="button" disabled={extendingId === c.id}
+                  onClick={() => { void extend90(c.id); }}
+                  className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+                  {extendingId === c.id ? 'extending…' : 'extend 90d'}
+                </button>
+              </div>
             ))}
           </div>
         </Panel>

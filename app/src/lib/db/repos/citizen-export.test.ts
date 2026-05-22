@@ -8,9 +8,34 @@ vi.mock('@/lib/db/client', () => ({
 
 import {
   myDataExport, logMyDataExport, myAuditTrail, verifyMyAuditTrail, myExpiringConsents,
+  extendMyConsent,
 } from './citizen';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('extendMyConsent', () => {
+  it('returns false when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await extendMyConsent('c1', new Date('2026-09-01T00:00:00Z'))).toBe(false);
+  });
+
+  it('sends the consent id + ISO expiry and returns true on success', async () => {
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    const when = new Date('2026-09-01T00:00:00Z');
+    expect(await extendMyConsent('c1', when)).toBe(true);
+    expect(rpc).toHaveBeenCalledWith('civicos_extend_my_consent', {
+      p_consent_id: 'c1', p_new_expires_at: when.toISOString(),
+    });
+  });
+
+  it('returns false on RPC error / not owned', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: false, error: null }),
+    });
+    expect(await extendMyConsent('c1', new Date('2026-09-01T00:00:00Z'))).toBe(false);
+  });
+});
 
 describe('myExpiringConsents', () => {
   it('returns [] when the substrate is unavailable', async () => {
