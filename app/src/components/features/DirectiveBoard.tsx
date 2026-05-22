@@ -144,20 +144,16 @@ export function DirectiveBoard() {
                 >
                   {d.status}
                 </span>
-                <div className="flex w-32 shrink-0 justify-end gap-1">
+                <div className="flex shrink-0 items-center justify-end gap-1">
                   {d.status === 'drafting' ? (
-                    <button
-                      type="button"
-                      className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
-                      disabled={busyRef === d.ref}
-                      onClick={async () => {
+                    <SignControl
+                      busy={busyRef === d.ref}
+                      onSign={async (effectiveAt) => {
                         setBusyRef(d.ref);
-                        try { await signDirectiveRow(d.ref); }
+                        try { await signDirectiveRow(d.ref, null, effectiveAt); }
                         finally { setBusyRef(null); }
                       }}
-                    >
-                      sign
-                    </button>
+                    />
                   ) : null}
                   {d.status !== 'rescinded' ? (
                     <button
@@ -279,5 +275,20 @@ function DirectiveComposer({
         </button>
       </div>
     </form>
+  );
+}
+
+function SignControl({ busy, onSign }: { busy: boolean; onSign: (effectiveAt: string | null) => Promise<void> }) {
+  const [date, setDate] = React.useState('');
+  return (
+    <span className="flex items-center gap-1">
+      <input type="date" value={date} onChange={e => setDate(e.currentTarget.value)} title="effective date (blank = immediate)"
+        className="rounded-[3px] border border-line-soft bg-bg px-1 py-0.5 text-[8.5px]" />
+      <button type="button" disabled={busy}
+        onClick={() => { void onSign(date ? new Date(date + 'T00:00:00').toISOString() : null); }}
+        className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+        sign
+      </button>
+    </span>
   );
 }
