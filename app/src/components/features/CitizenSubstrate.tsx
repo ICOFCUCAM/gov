@@ -5,7 +5,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   submitServiceRequestRow, updateServiceRequestRow, myServiceRequestsRows,
   grantConsentRow, revokeConsentRow, myConsentsRows,
-  fileAppealRow, myAppealsRows,
+  fileAppealRow, myAppealsRows, rateMyServiceRequestRow,
 } from '@/lib/db/repos/citizen';
 import { openWorkItemRow, workItemsByIds } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
@@ -287,12 +287,31 @@ function ServiceRequestsPanel({
                   style={{ color: r.resolved_at ? TONE.ok : r.acknowledged_at ? TONE.warn : TONE.link }}>
                   {r.status}
                 </span>
+                {r.resolved_at ? <RateControl row={r} onChange={onChange} /> : <span className="w-20 shrink-0" />}
               </div>
             );
           })}
         </div>
       )}
     </Panel>
+  );
+}
+
+function RateControl({ row, onChange }: { row: ServiceRequestRow; onChange: () => Promise<void> }) {
+  const [busy, setBusy] = React.useState(false);
+  if (row.satisfaction != null) {
+    return <span className="w-20 shrink-0 text-right font-mono text-[9px]" style={{ color: TONE.ok }}>★ {row.satisfaction}/5</span>;
+  }
+  return (
+    <span className="flex w-20 shrink-0 justify-end gap-0.5">
+      {[1, 2, 3, 4, 5].map(n => (
+        <button key={n} type="button" disabled={busy} title={`rate ${n}/5`}
+          onClick={async () => { setBusy(true); try { if (await rateMyServiceRequestRow(row.ref, n)) await onChange(); } finally { setBusy(false); } }}
+          className="focus-ring text-[10px] leading-none text-ink-muted hover:text-link disabled:opacity-50">
+          {n}
+        </button>
+      ))}
+    </span>
   );
 }
 

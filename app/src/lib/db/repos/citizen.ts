@@ -76,6 +76,17 @@ export async function updateServiceRequestRow(u: ServiceRequestUpdate): Promise<
   return (data as ServiceRequestRow) ?? null;
 }
 
+/** Citizen rates one of their OWN resolved service requests (1–5),
+ *  scoped to auth.uid() server-side. null on failure (not yours / not
+ *  resolved / no substrate). */
+export async function rateMyServiceRequestRow(ref: string, satisfaction: number): Promise<ServiceRequestRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_rate_my_service_request', { p_ref: ref, p_satisfaction: satisfaction });
+  if (error || !data) { if (error) console.error('[civicos] rate_my_service_request failed:', error.message); return null; }
+  return (Array.isArray(data) ? data[0] : data) as ServiceRequestRow;
+}
+
 // ── Consents ──────────────────────────────────────────────────────
 
 export async function grantConsentRow(
