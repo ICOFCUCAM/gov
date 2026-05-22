@@ -210,6 +210,51 @@ export async function listEscalationsRows(opts: { severity?: string; source?: st
   return data as EscalationRow[];
 }
 
+export interface EscalationResponseStat {
+  charterId: string;
+  total: number;
+  acknowledged: number;
+  resolved: number;
+  open: number;
+  medianAckMinutes: number | null;
+  p90AckMinutes: number | null;
+  medianResolveHours: number | null;
+  p90ResolveHours: number | null;
+  oldestOpenHours: number | null;
+}
+
+interface EscalationResponseStatRow {
+  charter_id: string; total: number; acknowledged: number; resolved: number; open: number;
+  median_ack_minutes: string | number | null; p90_ack_minutes: string | number | null;
+  median_resolve_hours: string | number | null; p90_resolve_hours: string | number | null;
+  oldest_open_hours: string | number | null;
+}
+
+const numOrNull = (v: string | number | null): number | null =>
+  v === null || v === undefined ? null : Number(v);
+
+/** Per-charter escalation response stats (MTTA minutes, MTTR hours, open
+ *  backlog) over the last `days`. Authenticated-tier. [] without a
+ *  substrate. */
+export async function escalationResponseStats(opts: { charterId?: string; days?: number } = {}): Promise<EscalationResponseStat[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_escalation_response_stats', {
+    p_charter_id: opts.charterId ?? null, p_days: opts.days ?? 30,
+  });
+  if (error || !data) return [];
+  return (data as EscalationResponseStatRow[]).map(r => ({
+    charterId: r.charter_id,
+    total: Number(r.total), acknowledged: Number(r.acknowledged),
+    resolved: Number(r.resolved), open: Number(r.open),
+    medianAckMinutes: numOrNull(r.median_ack_minutes),
+    p90AckMinutes: numOrNull(r.p90_ack_minutes),
+    medianResolveHours: numOrNull(r.median_resolve_hours),
+    p90ResolveHours: numOrNull(r.p90_resolve_hours),
+    oldestOpenHours: numOrNull(r.oldest_open_hours),
+  }));
+}
+
 // ── Posture ───────────────────────────────────────────────────────
 
 export interface PostureInput {

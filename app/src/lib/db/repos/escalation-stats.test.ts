@@ -1,0 +1,47 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const publicClientMock = vi.fn();
+vi.mock('@/lib/db/client', () => ({
+  publicClient: () => publicClientMock(),
+  substrateAvailable: () => publicClientMock() != null,
+}));
+
+import { escalationResponseStats } from './memory';
+
+beforeEach(() => publicClientMock.mockReset());
+
+describe('escalationResponseStats', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await escalationResponseStats()).toEqual([]);
+  });
+
+  it('maps rows to camelCase, coercing numeric strings and nulls, and forwards options', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [{
+        charter_id: 'MIN-E', total: 3, acknowledged: 2, resolved: 2, open: 1,
+        median_ack_minutes: '45.0', p90_ack_minutes: '58.0',
+        median_resolve_hours: '3.0', p90_resolve_hours: '3.8', oldest_open_hours: '10.0',
+      }, {
+        charter_id: 'MIN-X', total: 1, acknowledged: 0, resolved: 0, open: 1,
+        median_ack_minutes: null, p90_ack_minutes: null,
+        median_resolve_hours: null, p90_resolve_hours: null, oldest_open_hours: '5.0',
+      }],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await escalationResponseStats({ charterId: 'MIN-E', days: 30 });
+    expect(rpc).toHaveBeenCalledWith('civicos_escalation_response_stats', { p_charter_id: 'MIN-E', p_days: 30 });
+    expect(out[0]).toEqual({
+      charterId: 'MIN-E', total: 3, acknowledged: 2, resolved: 2, open: 1,
+      medianAckMinutes: 45, p90AckMinutes: 58, medianResolveHours: 3, p90ResolveHours: 3.8, oldestOpenHours: 10,
+    });
+    expect(out[1]!.medianAckMinutes).toBeNull();
+    expect(out[1]!.oldestOpenHours).toBe(5);
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await escalationResponseStats()).toEqual([]);
+  });
+});

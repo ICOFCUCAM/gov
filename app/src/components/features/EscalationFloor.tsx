@@ -4,7 +4,7 @@ import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   recordEscalationRow, acknowledgeEscalationRow, resolveEscalationRow,
-  listEscalationsRows,
+  listEscalationsRows, escalationResponseStats, type EscalationResponseStat,
 } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
 import type { EscalationRow, Severity } from '@/lib/db/types';
@@ -37,11 +37,18 @@ export function EscalationFloor() {
   React.useEffect(() => { setPref('escalation.severity', severityFilter); }, [severityFilter]);
   const available = substrateAvailable();
 
+  const [responseStats, setResponseStats] = React.useState<EscalationResponseStat[]>([]);
+
   const refresh = React.useCallback(async () => {
     if (!available) return;
     setLoading(true);
     try {
-      setItems(await listEscalationsRows({ limit: 50, openOnly }));
+      const [its, rs] = await Promise.all([
+        listEscalationsRows({ limit: 50, openOnly }),
+        escalationResponseStats({ days: 30 }),
+      ]);
+      setItems(its);
+      setResponseStats(rs);
     } finally {
       setLoading(false);
     }
@@ -148,6 +155,31 @@ export function EscalationFloor() {
         options={['all','national','major','minor','watch'] as const}
         value={severityFilter}
         onChange={setSeverityFilter} />
+
+      {responseStats.length > 0 ? (
+        <Panel title="Response times (last 30 days)" meta={`${responseStats.length} charters`} bodyClass="!p-0">
+          <div className="max-h-[240px] overflow-y-auto">
+            <div className="flex items-center gap-2 border-b border-line px-3 py-1 text-[8.5px] font-bold uppercase tracking-wider text-ink-muted">
+              <span className="w-40 shrink-0">charter</span>
+              <span className="w-12 shrink-0 text-right">total</span>
+              <span className="w-12 shrink-0 text-right">open</span>
+              <span className="w-20 shrink-0 text-right">mtta</span>
+              <span className="w-20 shrink-0 text-right">mttr</span>
+              <span className="w-20 shrink-0 text-right">oldest</span>
+            </div>
+            {responseStats.map(r => (
+              <div key={r.charterId} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 font-mono text-[10px]">
+                <span className="w-40 shrink-0 truncate text-link">{r.charterId}</span>
+                <span className="w-12 shrink-0 text-right text-ink">{r.total}</span>
+                <span className="w-12 shrink-0 text-right" style={{ color: r.open > 0 ? TONE.warn : TONE.ok }}>{r.open}</span>
+                <span className="w-20 shrink-0 text-right text-ink-muted">{r.medianAckMinutes == null ? '—' : `${r.medianAckMinutes}m`}</span>
+                <span className="w-20 shrink-0 text-right text-ink">{r.medianResolveHours == null ? '—' : `${r.medianResolveHours}h`}</span>
+                <span className="w-20 shrink-0 text-right text-ink-muted">{r.oldestOpenHours == null ? '—' : `${Math.round(r.oldestOpenHours)}h`}</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
 
       <Panel title="Escalations" meta={`${(severityFilter === 'all' ? items : items.filter(e => e.severity === severityFilter)).length} visible`} bodyClass="!p-0">
         {items.length === 0 ? (
