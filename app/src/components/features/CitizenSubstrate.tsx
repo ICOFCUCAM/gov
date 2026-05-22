@@ -288,12 +288,39 @@ function ServiceRequestsPanel({
                   {r.status}
                 </span>
                 {r.resolved_at ? <RateControl row={r} onChange={onChange} /> : <span className="w-20 shrink-0" />}
+                {r.resolved_at ? <AppealButton row={r} citizenId={citizenId} onChange={onChange} /> : <span className="w-12 shrink-0" />}
               </div>
             );
           })}
         </div>
       )}
     </Panel>
+  );
+}
+
+function AppealButton({ row, citizenId, onChange }: { row: ServiceRequestRow; citizenId: string; onChange: () => Promise<void> }) {
+  const [busy, setBusy] = React.useState(false);
+  const [done, setDone] = React.useState(false);
+  if (done) return <span className="shrink-0 text-[8.5px] uppercase tracking-wider" style={{ color: TONE.link }}>appealed</span>;
+  return (
+    <button type="button" disabled={busy} title="contest this decision"
+      onClick={async () => {
+        if (!window.confirm(`File an appeal contesting the outcome of ${row.ref}?`)) return;
+        setBusy(true);
+        try {
+          const ok = await fileAppealRow({
+            ref: `AP-${Date.now()}`, citizenId,
+            originatingCharterId: row.target_charter_id,
+            ground: 'citizen contests the outcome of service request ' + row.ref,
+            originatingDecisionRef: row.ref,
+            linkedWorkItemId: row.linked_work_item_id ?? null,
+          });
+          if (ok) { setDone(true); await onChange(); }
+        } finally { setBusy(false); }
+      }}
+      className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+      {busy ? '…' : 'appeal'}
+    </button>
   );
 }
 
