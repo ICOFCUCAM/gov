@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { consentById, revokeConsentRow, grantConsentRow } from '@/lib/db/repos/citizen';
+import { consentById, revokeConsentRow, grantConsentRow, extendMyConsent } from '@/lib/db/repos/citizen';
 import { substrateAvailable } from '@/lib/db/client';
 import type { ConsentRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -65,11 +65,25 @@ export function ConsentDetail({ id }: { id: string }) {
         {isMine ? (
           <div className="flex flex-wrap gap-1">
             {row.status === 'granted' ? (
-              <button type="button" disabled={busy}
-                onClick={async () => { setBusy(true); try { await revokeConsentRow(row.id); await refresh(); } finally { setBusy(false); } }}
-                className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
-                revoke
-              </button>
+              <>
+                <button type="button" disabled={busy}
+                  onClick={async () => { setBusy(true); try { await revokeConsentRow(row.id); await refresh(); } finally { setBusy(false); } }}
+                  className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+                  revoke
+                </button>
+                <button type="button" disabled={busy}
+                  onClick={async () => {
+                    setBusy(true);
+                    try {
+                      const when = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+                      await extendMyConsent(row.id, when);
+                      await refresh();
+                    } finally { setBusy(false); }
+                  }}
+                  className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+                  extend 90d
+                </button>
+              </>
             ) : row.status === 'revoked' || row.status === 'expired' ? (
               <button type="button" disabled={busy}
                 onClick={async () => {
