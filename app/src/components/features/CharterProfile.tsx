@@ -6,7 +6,9 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable } from '@/lib/db/client';
 import {
   institutionByCharterId, serviceSlaStats, serviceSlaTrend, appealsStats, appealsTrend,
+  consentFootprintStats,
   type ServiceSlaStat, type SlaTrendPoint, type AppealsStat, type AppealsTrendPoint,
+  type ConsentFootprintStat,
 } from '@/lib/db/repos/institutions';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
 import { downloadJson } from '@/lib/csv-download';
@@ -30,6 +32,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
   const [trend, setTrend] = React.useState<SlaTrendPoint[]>([]);
   const [appeals, setAppeals] = React.useState<AppealsStat | null>(null);
   const [appealTrend, setAppealTrend] = React.useState<AppealsTrendPoint[]>([]);
+  const [footprint, setFootprint] = React.useState<ConsentFootprintStat[]>([]);
   const [directives, setDirectives] = React.useState<DirectiveRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const available = substrateAvailable();
@@ -39,12 +42,13 @@ export function CharterProfile({ charterId }: { charterId: string }) {
     setLoading(true);
     void (async () => {
       try {
-        const [i, s, t, a, at, ds] = await Promise.all([
+        const [i, s, t, a, at, fp, ds] = await Promise.all([
           institutionByCharterId(charterId),
           serviceSlaStats({ charterId, days: 90 }),
           serviceSlaTrend({ charterId, weeks: 12 }),
           appealsStats({ charterId, days: 90 }),
           appealsTrend({ charterId, weeks: 12 }),
+          consentFootprintStats({ charterId }),
           listDirectivesRows({ issuer: charterId, limit: 25 }),
         ]);
         setInst(i);
@@ -52,6 +56,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
         setTrend(t);
         setAppeals(a[0] ?? null);
         setAppealTrend(at);
+        setFootprint(fp);
         setDirectives(ds.filter(d => PUBLIC_STATUSES.includes(d.status)));
       } finally {
         setLoading(false);
@@ -94,6 +99,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
               service_sla_trend: trend,
               appeals: appeals,
               appeals_trend: appealTrend,
+              consent_footprint: footprint,
               public_directives: directives,
             }, { dated: false })}
             className="focus-ring shrink-0 rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
@@ -171,6 +177,25 @@ export function CharterProfile({ charterId }: { charterId: string }) {
               </div>
             ))}
           </div>
+        </Panel>
+      ) : null}
+
+      {footprint.length > 0 ? (
+        <Panel title="Data-access footprint" meta={`${footprint.length} scopes`} bodyClass="!p-0">
+          <div className="flex items-center gap-2 border-b border-line px-3 py-1 text-[8.5px] font-bold uppercase tracking-wider text-ink-muted">
+            <span className="min-w-0 flex-1">scope</span>
+            <span className="w-16 shrink-0 text-right">active</span>
+            <span className="w-20 shrink-0 text-right">exp. 30d</span>
+            <span className="w-16 shrink-0 text-right">revoked</span>
+          </div>
+          {footprint.map(f => (
+            <div key={f.scope} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 font-mono text-[10px]">
+              <span className="min-w-0 flex-1 truncate text-ink">{f.scope}</span>
+              <span className="w-16 shrink-0 text-right text-ink">{f.active}</span>
+              <span className="w-20 shrink-0 text-right" style={{ color: f.expiring30d > 0 ? TONE.warn : undefined }}>{f.expiring30d}</span>
+              <span className="w-16 shrink-0 text-right text-ink-muted">{f.revoked}</span>
+            </div>
+          ))}
         </Panel>
       ) : null}
 
