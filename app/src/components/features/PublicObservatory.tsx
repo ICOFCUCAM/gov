@@ -87,6 +87,19 @@ export function PublicObservatory() {
         </p>
       </div>
 
+      <Panel title="Open data" meta="machine-readable JSON" bodyClass="!p-3">
+        <p className="text-[11px] text-ink-muted">
+          Everything on this page is also available as a programmatic open-data API —
+          aggregate / metadata only, no row-level records. Start at the index:
+        </p>
+        <ul className="mt-2 space-y-1 font-mono text-[10px]">
+          <li><a href="/api/public" className="text-link underline">/api/public</a> — endpoint directory</li>
+          <li><a href="/api/public/accountability" className="text-link underline">/api/public/accountability</a> — service SLAs, appeals, decision-time trend (<code>?days</code>, <code>?charter</code>)</li>
+          <li><a href="/api/public/charters" className="text-link underline">/api/public/charters</a> — activated charter directory</li>
+          <li><a href="/api/public/telemetry" className="text-link underline">/api/public/telemetry</a> — active telemetry stream catalog</li>
+        </ul>
+      </Panel>
+
       <Panel title="Signed directives" meta={`${directives.length}`} bodyClass="!p-0">
         {directives.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
