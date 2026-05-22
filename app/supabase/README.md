@@ -66,13 +66,14 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521370000_civicos_webhooks_health.sql` | `event_webhooks_health()` — platform-tier fleet roll-up of the registered webhooks: total / active / (manually) paused / circuit-open counts plus cumulative delivered and failure totals, in one summary row. Powers the at-a-glance header on the Federation Webhooks surface. |
 | `20260521380000_civicos_expiring_consents.sql` | `my_expiring_consents(p_within_days)` — a citizen's still-active consents whose `expires_at` falls within the window, with `days_remaining`, soonest first. Scoped to `auth.uid()`; authenticated. Powers a proactive "consents expiring soon" warning on the citizen home so a grant doesn't lapse unnoticed. |
 | `20260521390000_civicos_extend_my_consent.sql` | `extend_my_consent(p_consent_id, p_new_expires_at)` — push out the expiry on the caller's own still-granted consent in place, instead of re-granting. Owner-scoped via `auth.uid()` (a citizen can never extend another's grant); new expiry must be in the future. Authenticated only; powers the "extend 90d" action on the expiring-soon warning. |
+| `20260521400000_civicos_service_sla_stats.sql` | `service_sla_stats(p_charter_id, p_days)` — per-charter AGGREGATE service-delivery stats (volume, ack/resolve counts, median + p90 turnaround hours, oldest open age) over a window. Intentionally anon-callable (Public Observatory) but aggregate-only — no citizen id, ref, or row-level field — so there is nothing personal to leak. Serves the Phase 1 metric "permit median decision time published". |
 
 ### Advisor posture after hardening
 
 - **`auth_rls_initplan`** — 0 (was 5).
 - **`multiple_permissive_policies`** — 0 (was 3).
 - **`unindexed_foreign_keys`** — 0 (was 8).
-- **`anon_security_definer_function_executable`** — 2 (was 34); the remaining two are intentional: `civicos_current_actor` returns null for anon sessions, and `civicos_verify_audit_chain` is a public chain-integrity read.
+- **`anon_security_definer_function_executable`** — 4 (was 34); the remaining four are deliberate Public Observatory reads/attestations, each safe for an anonymous caller: `civicos_current_actor` (returns null for anon sessions), `civicos_verify_audit_chain` (public chain-integrity read), `civicos_record_witness_attestation` (external "I saw the chain at seq N" attestation), and `civicos_service_sla_stats` (charter-level aggregate service SLAs — no row-level data).
 - **`authenticated_security_definer_function_executable`** — 30 (was 34); the remaining 30 are by design — they are the only way the substrate accepts writes, and each one performs its own identity check before mutating state. Revoking `authenticated` from these would break the application contract; revoking from `anon` is what closes the actual attack surface.
 
 ## Identity model

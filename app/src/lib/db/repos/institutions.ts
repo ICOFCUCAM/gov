@@ -94,4 +94,46 @@ export async function listFacilitiesRows(opts: { charter?: string; region?: stri
   return data as FacilityRowLite[];
 }
 
+export interface ServiceSlaStat {
+  charterId: string;
+  submitted: number;
+  acknowledged: number;
+  resolved: number;
+  open: number;
+  medianAckHours: number | null;
+  medianResolveHours: number | null;
+  p90ResolveHours: number | null;
+  oldestOpenHours: number | null;
+}
+
+interface ServiceSlaStatRow {
+  charter_id: string; submitted: number; acknowledged: number; resolved: number; open: number;
+  median_ack_hours: string | number | null; median_resolve_hours: string | number | null;
+  p90_resolve_hours: string | number | null; oldest_open_hours: string | number | null;
+}
+
+const numOrNull = (v: string | number | null): number | null =>
+  v === null || v === undefined ? null : Number(v);
+
+/** Per-charter aggregate service-delivery SLA stats over the last `days`.
+ *  Aggregate-only (no PII) and anon-callable — powers the public SLA board.
+ *  Returns [] without a substrate. */
+export async function serviceSlaStats(opts: { charterId?: string; days?: number } = {}): Promise<ServiceSlaStat[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_service_sla_stats', {
+    p_charter_id: opts.charterId ?? null, p_days: opts.days ?? 30,
+  });
+  if (error || !data) return [];
+  return (data as ServiceSlaStatRow[]).map(r => ({
+    charterId: r.charter_id,
+    submitted: Number(r.submitted), acknowledged: Number(r.acknowledged),
+    resolved: Number(r.resolved), open: Number(r.open),
+    medianAckHours: numOrNull(r.median_ack_hours),
+    medianResolveHours: numOrNull(r.median_resolve_hours),
+    p90ResolveHours: numOrNull(r.p90_resolve_hours),
+    oldestOpenHours: numOrNull(r.oldest_open_hours),
+  }));
+}
+
 export { substrateAvailable };

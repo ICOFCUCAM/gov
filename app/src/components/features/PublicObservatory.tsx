@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable, publicClient } from '@/lib/db/client';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
-import { listInstitutionsRows } from '@/lib/db/repos/institutions';
+import { listInstitutionsRows, serviceSlaStats, type ServiceSlaStat } from '@/lib/db/repos/institutions';
 import { listTelemetryStreamsRows } from '@/lib/db/repos/telemetry';
 import { recentWitnessRows, type AuditWitness } from '@/lib/db/repos/audit';
 import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
@@ -30,6 +30,7 @@ export function PublicObservatory() {
   const [streams, setStreams] = React.useState<TelemetryStreamRow[]>([]);
   const [witnesses, setWitnesses] = React.useState<AuditWitness[]>([]);
   const [anchors, setAnchors] = React.useState<PersistedEvent[]>([]);
+  const [sla, setSla] = React.useState<ServiceSlaStat[]>([]);
   const [loading, setLoading] = React.useState(false);
   const available = substrateAvailable();
 
@@ -48,6 +49,7 @@ export function PublicObservatory() {
         setWitnesses(await recentWitnessRows({ limit: 12 }));
         const events = await recentEventsRows({ type: 'audit.anchor', limit: 12 });
         setAnchors(events);
+        setSla(await serviceSlaStats({ days: 90 }));
       } finally {
         setLoading(false);
       }
@@ -108,6 +110,37 @@ export function PublicObservatory() {
                 {d.citation ? (
                   <p className="mt-1 text-[10px] text-ink-soft">{d.citation}</p>
                 ) : null}
+              </div>
+            ))}
+          </div>
+        )}
+      </Panel>
+
+      <Panel title="Service delivery — published SLAs" meta={`${sla.length} charters · last 90 days`} bodyClass="!p-0">
+        {sla.length === 0 ? (
+          <p className="px-3 py-4 text-[11px] text-ink-muted">
+            {loading ? 'Loading…' : 'No service requests on record in the window.'}
+          </p>
+        ) : (
+          <div className="max-h-[360px] overflow-y-auto">
+            <div className="flex items-center gap-2 border-b border-line px-3 py-1 text-[8.5px] font-bold uppercase tracking-wider text-ink-muted">
+              <span className="w-40 shrink-0">charter</span>
+              <span className="w-14 shrink-0 text-right">vol</span>
+              <span className="w-14 shrink-0 text-right">open</span>
+              <span className="w-24 shrink-0 text-right">med. ack</span>
+              <span className="w-24 shrink-0 text-right">med. decide</span>
+              <span className="w-20 shrink-0 text-right">p90</span>
+              <span className="w-20 shrink-0 text-right">oldest</span>
+            </div>
+            {sla.map(s => (
+              <div key={s.charterId} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 font-mono text-[10px]">
+                <span className="w-40 shrink-0 truncate text-link">{s.charterId}</span>
+                <span className="w-14 shrink-0 text-right text-ink">{s.submitted}</span>
+                <span className="w-14 shrink-0 text-right" style={{ color: s.open > 0 ? TONE.warn : TONE.ok }}>{s.open}</span>
+                <span className="w-24 shrink-0 text-right text-ink-muted">{s.medianAckHours == null ? '—' : `${s.medianAckHours}h`}</span>
+                <span className="w-24 shrink-0 text-right text-ink">{s.medianResolveHours == null ? '—' : `${s.medianResolveHours}h`}</span>
+                <span className="w-20 shrink-0 text-right text-ink-muted">{s.p90ResolveHours == null ? '—' : `${s.p90ResolveHours}h`}</span>
+                <span className="w-20 shrink-0 text-right text-ink-muted">{s.oldestOpenHours == null ? '—' : `${Math.round(s.oldestOpenHours)}h`}</span>
               </div>
             ))}
           </div>
