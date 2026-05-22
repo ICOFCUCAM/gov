@@ -165,6 +165,15 @@ export function CharterProfile({ charterId }: { charterId: string }) {
                     {d.status}
                   </span>
                 </div>
+                {d.signed_at || d.effective_at ? (
+                  <div className="mt-0.5 font-mono text-[9px] text-ink-muted">
+                    {d.kind}
+                    {d.signed_at ? ` · signed ${new Date(d.signed_at).toLocaleDateString()}` : ''}
+                    {d.effective_at
+                      ? ` · ${new Date(d.effective_at) > new Date() ? 'effective from' : 'effective'} ${new Date(d.effective_at).toLocaleDateString()}`
+                      : ''}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
