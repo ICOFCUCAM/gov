@@ -6,7 +6,8 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { workItemsByIds } from '@/lib/db/repos/work-items';
 import {
   myServiceRequestsRows, myConsentsRows, myAppealsRows, myExpiringConsents, extendMyConsent,
-  type ExpiringConsent,
+  myNotifications,
+  type ExpiringConsent, type CitizenNotification,
 } from '@/lib/db/repos/citizen';
 import { substrateAvailable } from '@/lib/db/client';
 import type { ServiceRequestRow, ConsentRow, AppealRow, WorkItemRow } from '@/lib/db/types';
@@ -36,18 +37,20 @@ export function CitizenHome() {
   const [appeals, setAppeals] = React.useState<AppealRow[]>([]);
   const [linkedItems, setLinkedItems] = React.useState<Map<string, WorkItemRow>>(new Map());
   const [expiring, setExpiring] = React.useState<ExpiringConsent[]>([]);
+  const [notifications, setNotifications] = React.useState<CitizenNotification[]>([]);
   const [extendingId, setExtendingId] = React.useState<string | null>(null);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
-    const [r, c, a, exp] = await Promise.all([
+    const [r, c, a, exp, notes] = await Promise.all([
       myServiceRequestsRows(20),
       myConsentsRows(20),
       myAppealsRows(20),
       myExpiringConsents(14),
+      myNotifications(30),
     ]);
-    setRequests(r); setConsents(c); setAppeals(a); setExpiring(exp);
+    setRequests(r); setConsents(c); setAppeals(a); setExpiring(exp); setNotifications(notes);
     const ids = Array.from(new Set([
       ...r.map(x => x.linked_work_item_id).filter((x): x is string => !!x),
       ...a.map(x => x.linked_work_item_id).filter((x): x is string => !!x),
@@ -128,6 +131,26 @@ export function CitizenHome() {
         <Tile label="Active consents" value={String(activeConsents.length)} href="/wallet/substrate" tone={TONE.ok} />
         <Tile label="Total records" value={String(requests.length + consents.length + appeals.length)} href="/wallet/substrate" tone={TONE.link} />
       </div>
+
+      {notifications.length > 0 ? (
+        <Panel title="Needs your attention" meta={`${notifications.length}`} bodyClass="!p-0">
+          <div className="max-h-[220px] overflow-y-auto">
+            {notifications.map((n, i) => (
+              <div key={`${n.kind}:${n.ref}:${i}`} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                <span className="w-28 shrink-0 text-[8.5px] font-bold uppercase tracking-wider"
+                  style={{ color: n.kind === 'consent_expiring' ? TONE.warn : n.kind === 'appeal_decided' ? TONE.link : TONE.ok }}>
+                  {n.action}
+                </span>
+                <span className="w-24 shrink-0 truncate font-mono text-link">{n.ref}</span>
+                <span className="min-w-0 flex-1 truncate text-ink">{n.detail}</span>
+                <span className="shrink-0 text-[8.5px] uppercase tracking-wider text-ink-muted">
+                  {n.kind === 'request_unrated' ? 'rate it' : n.kind === 'appeal_decided' ? 'decided' : 'expiring'}
+                </span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
 
       {expiring.length > 0 ? (
         <Panel title="Consents expiring soon" meta={`${expiring.length} within 14 days`} bodyClass="!p-0">

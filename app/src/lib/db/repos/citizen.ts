@@ -191,6 +191,25 @@ export async function myConsentsRows(limit = 50): Promise<ConsentRow[]> {
   return data as ConsentRow[];
 }
 
+export interface CitizenNotification {
+  kind: 'request_unrated' | 'appeal_decided' | 'consent_expiring';
+  ref: string;
+  at: string | null;
+  detail: string;
+  action: 'rate' | 'view' | 'extend';
+}
+
+/** Short, forward-looking "needs your attention" feed for the signed-in
+ *  citizen (unrated resolved requests, decided appeals, expiring consents),
+ *  scoped to auth.uid(). [] without a substrate / session. */
+export async function myNotifications(limit = 30): Promise<CitizenNotification[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_my_notifications', { p_limit: limit });
+  if (error || !data) return [];
+  return data as CitizenNotification[];
+}
+
 export interface ExpiringConsent {
   id: string;
   target_charter_id: string;
