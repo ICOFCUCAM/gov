@@ -127,3 +127,13 @@ export async function registerEventWebhookRow(opts: {
   if (error || !data) return null;
   return data as string;
 }
+
+/** Pause / resume a webhook (platform-tier). Returns true on success. */
+export async function setEventWebhookActiveRow(id: string, active: boolean): Promise<boolean> {
+  const sb = publicClient();
+  if (!sb) return false;
+  const { data, error } = await sb.rpc('civicos_set_event_webhook_active', {
+    p_id: id, p_active: active,
+  });
+  return !error && data === true;
+}

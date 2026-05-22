@@ -55,6 +55,7 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521260000_civicos_relock_definer_grants.sql` | Re-lock EXECUTE on bulk-officers / expire-consents (service_role) and receipt-timeline (authenticated). **Gotcha fixed:** `CREATE OR REPLACE FUNCTION` silently re-applies Supabase default privileges (anon+authenticated), undoing any earlier `REVOKE`. Always re-revoke after a replace, and revoke from `PUBLIC` too. |
 | `20260521270000_civicos_event_webhooks.sql` | `civicos.event_webhooks` (service-role-only table holding webhook url + secret + cursor) and the register/list/mark-delivered/record-failure RPCs. Listing RPC is secret-free; paired with `/api/cron/deliver-events`. |
 | `20260521280000_civicos_service_context_helper.sql` | `is_service_context()` — recognises the PostgREST service_role path (`auth.role()='service_role'`) since SECURITY DEFINER funcs see `session_user='authenticator'`. Retrofitted into webhook + expire-consents + admin-officer RPCs (their `session_user` guards would have rejected real service-role calls). |
+| `20260521290000_civicos_webhook_set_active.sql` | `set_event_webhook_active(p_id, p_active)` — platform-tier (or service) pause/resume toggle for a registered federation webhook; paused hooks are skipped by the deliver-events cron without losing their cursor. |
 
 ### Advisor posture after hardening
 

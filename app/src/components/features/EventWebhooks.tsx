@@ -7,7 +7,8 @@ import { FilterChips } from '@/components/ui/FilterChips';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import {
-  listEventWebhooksRows, registerEventWebhookRow, type EventWebhook,
+  listEventWebhooksRows, registerEventWebhookRow, setEventWebhookActiveRow,
+  type EventWebhook,
 } from '@/lib/db/repos/events';
 import { ageMinutes } from '@/lib/format';
 
@@ -92,6 +93,11 @@ export function EventWebhooks() {
                     style={{ color: !h.active ? TONE.neutral : h.failures > 0 ? TONE.alert : TONE.ok }}>
                     {!h.active ? 'inactive' : h.failures > 0 ? `${h.failures} fail` : 'healthy'}
                   </span>
+                  <button type="button"
+                    onClick={async () => { await setEventWebhookActiveRow(h.id, !h.active); await refresh(); }}
+                    className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink">
+                    {h.active ? 'pause' : 'resume'}
+                  </button>
                 </div>
                 <div className="mt-0.5 flex items-center gap-2 font-mono text-[9px] text-ink-muted">
                   <span>delivered {h.deliveredCount}</span>
