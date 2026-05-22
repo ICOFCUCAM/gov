@@ -132,6 +132,16 @@ export async function acknowledgeDispatchRow(ref: string): Promise<DispatchRow |
   return (data as DispatchRow) ?? null;
 }
 
+/** Mark a dispatch on-scene (sets on_scene_at; backfills acknowledged_at).
+ *  Authenticated-tier. null on failure / no substrate. */
+export async function markDispatchOnSceneRow(ref: string): Promise<DispatchRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_mark_dispatch_on_scene', { p_ref: ref });
+  if (error || !data) { if (error) console.error('[civicos] mark_dispatch_on_scene failed:', error.message); return null; }
+  return (Array.isArray(data) ? data[0] : data) as DispatchRow;
+}
+
 export async function closeDispatchRow(ref: string): Promise<DispatchRow | null> {
   const sb = publicClient();
   if (!sb) return null;

@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
-  dispatchByRef, acknowledgeDispatchRow, closeDispatchRow,
+  dispatchByRef, acknowledgeDispatchRow, closeDispatchRow, markDispatchOnSceneRow,
 } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
 import type { DispatchRow } from '@/lib/db/types';
@@ -92,6 +92,13 @@ export function DispatchDetail({ ref: dispatchRef }: { ref: string }) {
                 onClick={async () => { setBusy(true); try { await acknowledgeDispatchRow(row.ref); } finally { setBusy(false); } }}
                 className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
                 ack
+              </button>
+            ) : null}
+            {row.status !== 'closed' && row.on_scene_at == null ? (
+              <button type="button" disabled={busy}
+                onClick={async () => { setBusy(true); try { await markDispatchOnSceneRow(row.ref); } finally { setBusy(false); } }}
+                className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+                on scene
               </button>
             ) : null}
             {row.status !== 'closed' ? (
