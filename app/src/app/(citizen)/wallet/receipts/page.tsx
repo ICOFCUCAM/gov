@@ -30,6 +30,7 @@ import { ageMinutes } from '@/lib/format';
 export default function ReceiptsPage() {
   const { actor, session, ready } = useIdentity();
   const [events, setEvents] = React.useState<ReceiptEvent[]>([]);
+  const [kindFilter, setKindFilter] = React.useState<'all' | ReceiptEvent['kind']>('all');
   const [loading, setLoading] = React.useState(false);
   const [exporting, setExporting] = React.useState(false);
   const [trail, setTrail] = React.useState<AuditTrailEntry[] | null>(null);
@@ -162,8 +163,19 @@ export default function ReceiptsPage() {
               <h3 className="font-semibold text-lg mb-2">
                 {events.length === 0 ? 'No receipts yet' : `${events.length} receipts`}
               </h3>
+              {events.length > 0 ? (
+                <div className="mb-2 flex flex-wrap gap-1">
+                  {(['all', 'service-request', 'consent', 'appeal', 'work-item-step'] as const).map(k => (
+                    <button key={k} type="button" onClick={() => setKindFilter(k)}
+                      className={`focus-ring rounded-[3px] border px-2 py-0.5 text-[10px] uppercase tracking-wider ${
+                        kindFilter === k ? 'border-link text-link' : 'border-line text-ink-muted'}`}>
+                      {k}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
               <ul className="space-y-2">
-                {events.map((e, i) => (
+                {events.filter(e => kindFilter === 'all' || e.kind === kindFilter).map((e, i) => (
                   <Card tight key={`${e.kind}:${e.ref}:${i}`}>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
