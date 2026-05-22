@@ -6,9 +6,43 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { serviceSlaStats, appealsStats } from './institutions';
+import { serviceSlaStats, appealsStats, serviceSlaTrend } from './institutions';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('serviceSlaTrend', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await serviceSlaTrend()).toEqual([]);
+  });
+
+  it('maps weekly buckets and forwards the window', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        { week_start: '2026-05-04', resolved: 2, median_resolve_hours: '36.0', p90_resolve_hours: '46.0' },
+        { week_start: '2026-05-11', resolved: 1, median_resolve_hours: '24.0', p90_resolve_hours: '24.0' },
+      ],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await serviceSlaTrend({ weeks: 12 });
+    expect(rpc).toHaveBeenCalledWith('civicos_service_sla_trend', { p_charter_id: null, p_weeks: 12 });
+    expect(out).toHaveLength(2);
+    expect(out[0]).toEqual({ weekStart: '2026-05-04', resolved: 2, medianResolveHours: 36, p90ResolveHours: 46 });
+  });
+
+  it('forwards a charter filter', async () => {
+    const rpc = vi.fn(async () => ({ data: [], error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    await serviceSlaTrend({ charterId: 'MIN-H', weeks: 8 });
+    expect(rpc).toHaveBeenCalledWith('civicos_service_sla_trend', { p_charter_id: 'MIN-H', p_weeks: 8 });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await serviceSlaTrend()).toEqual([]);
+  });
+});
 
 describe('appealsStats', () => {
   it('returns [] when the substrate is unavailable', async () => {

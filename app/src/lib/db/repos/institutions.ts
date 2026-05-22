@@ -174,4 +174,34 @@ export async function appealsStats(opts: { charterId?: string; days?: number } =
   }));
 }
 
+export interface SlaTrendPoint {
+  weekStart: string;
+  resolved: number;
+  medianResolveHours: number | null;
+  p90ResolveHours: number | null;
+}
+
+interface SlaTrendRow {
+  week_start: string; resolved: number;
+  median_resolve_hours: string | number | null; p90_resolve_hours: string | number | null;
+}
+
+/** Weekly service-delivery turnaround trend (resolved-week buckets) over
+ *  the last `weeks`, oldest first. Aggregate-only, anon-callable. [] without
+ *  a substrate. */
+export async function serviceSlaTrend(opts: { charterId?: string; weeks?: number } = {}): Promise<SlaTrendPoint[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_service_sla_trend', {
+    p_charter_id: opts.charterId ?? null, p_weeks: opts.weeks ?? 12,
+  });
+  if (error || !data) return [];
+  return (data as SlaTrendRow[]).map(r => ({
+    weekStart: r.week_start,
+    resolved: Number(r.resolved),
+    medianResolveHours: numOrNull(r.median_resolve_hours),
+    p90ResolveHours: numOrNull(r.p90_resolve_hours),
+  }));
+}
+
 export { substrateAvailable };

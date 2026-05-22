@@ -6,8 +6,8 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable, publicClient } from '@/lib/db/client';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
 import {
-  listInstitutionsRows, serviceSlaStats, appealsStats,
-  type ServiceSlaStat, type AppealsStat,
+  listInstitutionsRows, serviceSlaStats, appealsStats, serviceSlaTrend,
+  type ServiceSlaStat, type AppealsStat, type SlaTrendPoint,
 } from '@/lib/db/repos/institutions';
 import { listTelemetryStreamsRows } from '@/lib/db/repos/telemetry';
 import { recentWitnessRows, type AuditWitness } from '@/lib/db/repos/audit';
@@ -35,6 +35,7 @@ export function PublicObservatory() {
   const [anchors, setAnchors] = React.useState<PersistedEvent[]>([]);
   const [sla, setSla] = React.useState<ServiceSlaStat[]>([]);
   const [appeals, setAppeals] = React.useState<AppealsStat[]>([]);
+  const [trend, setTrend] = React.useState<SlaTrendPoint[]>([]);
   const [loading, setLoading] = React.useState(false);
   const available = substrateAvailable();
 
@@ -55,6 +56,7 @@ export function PublicObservatory() {
         setAnchors(events);
         setSla(await serviceSlaStats({ days: 90 }));
         setAppeals(await appealsStats({ days: 90 }));
+        setTrend(await serviceSlaTrend({ weeks: 12 }));
       } finally {
         setLoading(false);
       }
@@ -150,6 +152,34 @@ export function PublicObservatory() {
             ))}
           </div>
         )}
+      </Panel>
+
+      <Panel title="Decision-time trend — all charters" meta={`${trend.length} weeks (median resolve hrs)`} bodyClass="!p-0">
+        {trend.length === 0 ? (
+          <p className="px-3 py-4 text-[11px] text-ink-muted">
+            {loading ? 'Loading…' : 'No resolved requests in the window.'}
+          </p>
+        ) : (() => {
+          const maxMed = Math.max(1, ...trend.map(t => t.medianResolveHours ?? 0));
+          return (
+            <div className="space-y-1 px-3 py-2">
+              {trend.map(t => {
+                const med = t.medianResolveHours ?? 0;
+                const pct = Math.round((med / maxMed) * 100);
+                return (
+                  <div key={t.weekStart} className="flex items-center gap-2 font-mono text-[9.5px]">
+                    <span className="w-20 shrink-0 text-ink-muted">{t.weekStart}</span>
+                    <span className="w-10 shrink-0 text-right text-ink-muted">{t.resolved}×</span>
+                    <div className="h-2.5 min-w-0 flex-1 rounded-[2px] bg-surface-2">
+                      <div className="h-full rounded-[2px]" style={{ width: `${pct}%`, backgroundColor: TONE.link }} />
+                    </div>
+                    <span className="w-14 shrink-0 text-right text-ink">{t.medianResolveHours == null ? '—' : `${t.medianResolveHours}h`}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </Panel>
 
       <Panel title="Contestation — appeals pipeline" meta={`${appeals.length} charters · last 90 days`} bodyClass="!p-0">
