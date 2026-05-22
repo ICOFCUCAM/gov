@@ -242,4 +242,30 @@ export async function myReceiptTimelineRows(limit = 200): Promise<ReceiptEvent[]
   return data as ReceiptEvent[];
 }
 
+/* ── Data portability (right to take your data) ────────────────── */
+
+export interface CitizenDataExport {
+  document: string;
+  version: number;
+  generated_at: string;
+  citizen: Record<string, unknown> | null;
+  service_requests: unknown[];
+  consents: unknown[];
+  appeals: unknown[];
+  receipt_timeline: unknown[];
+  counts: { service_requests: number; consents: number; appeals: number };
+}
+
+/** A signed-in citizen's full self-describing data-portability document
+ *  (profile + every owned service request, consent, appeal, plus the
+ *  receipt timeline), scoped to the caller by the substrate's auth.uid().
+ *  Returns null when there is no substrate / session. */
+export async function myDataExport(): Promise<CitizenDataExport | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_my_data_export');
+  if (error || !data) return null;
+  return data as CitizenDataExport;
+}
+
 export { substrateAvailable };

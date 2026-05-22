@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { myReceiptTimelineRows, type ReceiptEvent } from '@/lib/db/repos/citizen';
+import { myReceiptTimelineRows, myDataExport, type ReceiptEvent } from '@/lib/db/repos/citizen';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
@@ -28,6 +28,7 @@ export default function ReceiptsPage() {
   const { actor, session, ready } = useIdentity();
   const [events, setEvents] = React.useState<ReceiptEvent[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [exporting, setExporting] = React.useState(false);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -68,6 +69,19 @@ export default function ReceiptsPage() {
       events,
     });
   }, [events, actor]);
+
+  // Full data-portability document: the complete rows the substrate holds
+  // on the citizen, fetched server-side and scoped to auth.uid().
+  const exportFull = React.useCallback(async () => {
+    if (!actor) return;
+    setExporting(true);
+    try {
+      const doc = await myDataExport();
+      if (doc) downloadJson(`civicos-data-export-${actor.id.slice(0, 8)}`, doc);
+    } finally {
+      setExporting(false);
+    }
+  }, [actor]);
 
   return (
     <main className="bg-bg min-h-screen">
@@ -114,6 +128,9 @@ export default function ReceiptsPage() {
               <Button variant="secondary" onClick={exportJson} disabled={events.length === 0}>
                 json
               </Button>
+              <Button variant="secondary" onClick={() => { void exportFull(); }} disabled={exporting}>
+                {exporting ? 'exporting…' : 'full data'}
+              </Button>
             </div>
 
             <section>
@@ -147,7 +164,10 @@ export default function ReceiptsPage() {
                 <code className="font-mono"> civicos_my_receipt_timeline</code>,
                 a SECURITY DEFINER RPC scoped to <code className="font-mono">auth.uid()</code>.
                 Officers cannot see your receipts; civil society cannot see them
-                without your account.
+                without your account. <strong>Full data</strong> downloads the
+                complete portability document — every request, consent, and appeal
+                row the substrate holds on you — via
+                <code className="font-mono"> civicos_my_data_export</code>.
               </p>
             </Card>
           </>
