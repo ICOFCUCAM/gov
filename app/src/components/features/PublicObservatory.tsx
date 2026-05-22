@@ -85,6 +85,17 @@ export function PublicObservatory() {
         <p className="font-mono text-[10px] text-ink-muted">
           loaded {institutions.length} institutions · {directives.length} public directives · {streams.length} active telemetry streams · {anchors.length} chain anchors · {witnesses.length} attestations
         </p>
+        {(() => {
+          const totalRated = sla.reduce((s, x) => s + x.rated, 0);
+          if (totalRated === 0) return null;
+          // ratings-weighted mean of per-charter averages
+          const weighted = sla.reduce((s, x) => s + (x.avgSatisfaction ?? 0) * x.rated, 0) / totalRated;
+          return (
+            <p className="text-sm" style={{ color: TONE.ok }}>
+              Citizens rate government services <strong>{weighted.toFixed(1)}/5</strong> across {totalRated} ratings (last 90 days).
+            </p>
+          );
+        })()}
       </div>
 
       <Panel title="Open data" meta="machine-readable JSON" bodyClass="!p-3">
