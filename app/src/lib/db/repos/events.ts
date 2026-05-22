@@ -72,3 +72,58 @@ export async function recentEventsRows(
 }
 
 export { substrateAvailable };
+
+/* ── Outbound event webhooks (platform-tier) ──────────────────────── */
+
+export interface EventWebhook {
+  id: string;
+  channel: string;
+  url: string;
+  description: string | null;
+  active: boolean;
+  cursorAtMs: number;
+  lastDeliveredAt: string | null;
+  deliveredCount: number;
+  failures: number;
+  lastError: string | null;
+  createdAt: string;
+}
+
+interface EventWebhookRow {
+  id: string; channel: string; url: string; description: string | null;
+  active: boolean; cursor_at_ms: number; last_delivered_at: string | null;
+  delivered_count: number; failures: number; last_error: string | null; created_at: string;
+}
+
+function mapWebhook(r: EventWebhookRow): EventWebhook {
+  return {
+    id: r.id, channel: r.channel, url: r.url, description: r.description,
+    active: r.active, cursorAtMs: Number(r.cursor_at_ms),
+    lastDeliveredAt: r.last_delivered_at, deliveredCount: Number(r.delivered_count),
+    failures: r.failures, lastError: r.last_error, createdAt: r.created_at,
+  };
+}
+
+/** List webhooks (secret-free) for a platform-tier session. [] otherwise. */
+export async function listEventWebhooksRows(): Promise<EventWebhook[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_list_event_webhooks');
+  if (error || !data) return [];
+  return (data as EventWebhookRow[]).map(mapWebhook);
+}
+
+/** Register a webhook. Returns the new id, or null on failure (incl.
+ *  insufficient privilege). The secret never round-trips back. */
+export async function registerEventWebhookRow(opts: {
+  channel: string; url: string; secret: string; description?: string | null;
+}): Promise<string | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_register_event_webhook', {
+    p_channel: opts.channel, p_url: opts.url, p_secret: opts.secret,
+    p_description: opts.description ?? null,
+  });
+  if (error || !data) return null;
+  return data as string;
+}

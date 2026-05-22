@@ -1,0 +1,71 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const publicClientMock = vi.fn();
+vi.mock('@/lib/db/client', () => ({
+  publicClient: () => publicClientMock(),
+  substrateAvailable: () => publicClientMock() != null,
+}));
+
+import { listEventWebhooksRows, registerEventWebhookRow } from './events';
+
+beforeEach(() => publicClientMock.mockReset());
+
+describe('listEventWebhooksRows', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await listEventWebhooksRows()).toEqual([]);
+  });
+
+  it('maps the secret-free RPC rows into camelCase', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({
+        data: [{
+          id: 'w1', channel: 'constitutional', url: 'https://h.test', description: 'd',
+          active: true, cursor_at_ms: 1200, last_delivered_at: '2026-05-21T00:00:00Z',
+          delivered_count: 7, failures: 0, last_error: null, created_at: '2026-05-20T00:00:00Z',
+        }],
+        error: null,
+      }),
+    });
+    const out = await listEventWebhooksRows();
+    expect(out).toHaveLength(1);
+    expect(out[0]!.cursorAtMs).toBe(1200);
+    expect(out[0]!.deliveredCount).toBe(7);
+    expect(out[0]!.active).toBe(true);
+    // No secret field is surfaced.
+    expect((out[0] as unknown as Record<string, unknown>).secret).toBeUndefined();
+  });
+
+  it('returns [] when the RPC errors (e.g. insufficient privilege)', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: null, error: { message: 'insufficient_privilege' } }),
+    });
+    expect(await listEventWebhooksRows()).toEqual([]);
+  });
+});
+
+describe('registerEventWebhookRow', () => {
+  it('returns null when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await registerEventWebhookRow({ channel: 'c', url: 'u', secret: 'sssssssss' })).toBeNull();
+  });
+
+  it('passes parameters through and returns the new id', async () => {
+    const rpc = vi.fn(async () => ({ data: 'new-uuid', error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    const id = await registerEventWebhookRow({
+      channel: 'constitutional', url: 'https://h.test', secret: 'topsecret', description: 'd',
+    });
+    expect(id).toBe('new-uuid');
+    expect(rpc).toHaveBeenCalledWith('civicos_register_event_webhook', expect.objectContaining({
+      p_channel: 'constitutional', p_url: 'https://h.test', p_secret: 'topsecret', p_description: 'd',
+    }));
+  });
+
+  it('returns null on RPC error', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: null, error: { message: 'denied' } }),
+    });
+    expect(await registerEventWebhookRow({ channel: 'c', url: 'u', secret: 'sssssssss' })).toBeNull();
+  });
+});
