@@ -22,11 +22,34 @@ const CHANNELS = ['lifecycle', 'escalation', 'metric', 'runtime', 'constitutiona
  * inside the substrate); the secret is write-only and never read back.
  * The deliver-events cron does the actual HMAC-signed POSTing.
  */
+interface PingResult { ok: boolean; detail: string }
+
 export function EventWebhooks() {
-  const { actor, ready } = useIdentity();
+  const { actor, session, ready } = useIdentity();
   const [hooks, setHooks] = React.useState<EventWebhook[]>([]);
   const [loading, setLoading] = React.useState(false);
+  const [pinging, setPinging] = React.useState<string | null>(null);
+  const [pings, setPings] = React.useState<Record<string, PingResult>>({});
   const available = substrateAvailable();
+
+  const sendPing = React.useCallback(async (id: string) => {
+    const token = session?.access_token;
+    if (!token) { setPings(p => ({ ...p, [id]: { ok: false, detail: 'no active session' } })); return; }
+    setPinging(id);
+    try {
+      const res = await fetch('/api/federation/webhooks/test', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json', authorization: `Bearer ${token}` },
+        body: JSON.stringify({ id }),
+      });
+      const json = (await res.json()) as { ok?: boolean; detail?: string; error?: string };
+      setPings(p => ({ ...p, [id]: { ok: !!json.ok, detail: json.detail ?? json.error ?? `HTTP ${res.status}` } }));
+    } catch (e) {
+      setPings(p => ({ ...p, [id]: { ok: false, detail: e instanceof Error ? e.message : 'request failed' } }));
+    } finally {
+      setPinging(null);
+    }
+  }, [session]);
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
@@ -99,6 +122,11 @@ export function EventWebhooks() {
                       </span>
                     );
                   })()}
+                  <button type="button" disabled={pinging === h.id}
+                    onClick={() => { void sendPing(h.id); }}
+                    className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+                    {pinging === h.id ? 'pinging…' : 'test'}
+                  </button>
                   <button type="button"
                     onClick={async () => { await setEventWebhookActiveRow(h.id, !h.active); await refresh(); }}
                     className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink">
@@ -114,6 +142,11 @@ export function EventWebhooks() {
                 {h.lastError ? <p className="mt-0.5 font-mono text-[9px]" style={{ color: TONE.alert }}>{h.lastError}</p> : null}
                 {h.pausedReason && (h.pausedReason ?? '').startsWith('circuit-open')
                   ? <p className="mt-0.5 font-mono text-[9px]" style={{ color: TONE.alert }}>breaker tripped — {h.pausedReason}. resume to retry.</p>
+                  : null}
+                {pings[h.id]
+                  ? <p className="mt-0.5 font-mono text-[9px]" style={{ color: pings[h.id]!.ok ? TONE.ok : TONE.alert }}>
+                      test ping: {pings[h.id]!.ok ? 'ok' : 'failed'} — {pings[h.id]!.detail}
+                    </p>
                   : null}
               </div>
             ))}
