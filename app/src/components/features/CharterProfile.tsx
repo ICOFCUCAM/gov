@@ -5,8 +5,8 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable } from '@/lib/db/client';
 import {
-  institutionByCharterId, serviceSlaStats, serviceSlaTrend, appealsStats,
-  type ServiceSlaStat, type SlaTrendPoint, type AppealsStat,
+  institutionByCharterId, serviceSlaStats, serviceSlaTrend, appealsStats, appealsTrend,
+  type ServiceSlaStat, type SlaTrendPoint, type AppealsStat, type AppealsTrendPoint,
 } from '@/lib/db/repos/institutions';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
 import { downloadJson } from '@/lib/csv-download';
@@ -29,6 +29,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
   const [sla, setSla] = React.useState<ServiceSlaStat | null>(null);
   const [trend, setTrend] = React.useState<SlaTrendPoint[]>([]);
   const [appeals, setAppeals] = React.useState<AppealsStat | null>(null);
+  const [appealTrend, setAppealTrend] = React.useState<AppealsTrendPoint[]>([]);
   const [directives, setDirectives] = React.useState<DirectiveRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const available = substrateAvailable();
@@ -38,17 +39,19 @@ export function CharterProfile({ charterId }: { charterId: string }) {
     setLoading(true);
     void (async () => {
       try {
-        const [i, s, t, a, ds] = await Promise.all([
+        const [i, s, t, a, at, ds] = await Promise.all([
           institutionByCharterId(charterId),
           serviceSlaStats({ charterId, days: 90 }),
           serviceSlaTrend({ charterId, weeks: 12 }),
           appealsStats({ charterId, days: 90 }),
+          appealsTrend({ charterId, weeks: 12 }),
           listDirectivesRows({ issuer: charterId, limit: 25 }),
         ]);
         setInst(i);
         setSla(s[0] ?? null);
         setTrend(t);
         setAppeals(a[0] ?? null);
+        setAppealTrend(at);
         setDirectives(ds.filter(d => PUBLIC_STATUSES.includes(d.status)));
       } finally {
         setLoading(false);
@@ -65,6 +68,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
   }
 
   const maxMed = Math.max(1, ...trend.map(t => t.medianResolveHours ?? 0));
+  const maxApMed = Math.max(1, ...appealTrend.map(t => t.medianDecisionDays ?? 0));
 
   return (
     <main className="max-w-4xl mx-auto px-4 py-8 space-y-4">
@@ -89,6 +93,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
               service_sla: sla,
               service_sla_trend: trend,
               appeals: appeals,
+              appeals_trend: appealTrend,
               public_directives: directives,
             }, { dated: false })}
             className="focus-ring shrink-0 rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
@@ -109,11 +114,12 @@ export function CharterProfile({ charterId }: { charterId: string }) {
         {!sla ? (
           <p className="text-[11px] text-ink-muted">No service requests on record for this charter.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 text-center">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-6 text-center">
             <Stat label="median decision" value={sla.medianResolveHours == null ? '—' : `${sla.medianResolveHours}h`} />
             <Stat label="p90 decision" value={sla.p90ResolveHours == null ? '—' : `${sla.p90ResolveHours}h`} />
             <Stat label="resolved" value={`${sla.resolved}/${sla.submitted}`} />
             <Stat label="open" value={String(sla.open)} tone={sla.open > 0 ? TONE.warn : TONE.ok} />
+            <Stat label="cancelled" value={String(sla.cancelled)} />
             <Stat label={`rating (${sla.rated})`} value={sla.avgSatisfaction == null ? '—' : `★${sla.avgSatisfaction}`}
               tone={sla.avgSatisfaction == null ? undefined : sla.avgSatisfaction >= 3.5 ? TONE.ok : TONE.warn} />
           </div>
@@ -141,14 +147,32 @@ export function CharterProfile({ charterId }: { charterId: string }) {
         {!appeals ? (
           <p className="text-[11px] text-ink-muted">No appeals on record for this charter.</p>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 text-center">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 text-center">
             <Stat label="filed" value={String(appeals.filed)} />
             <Stat label="decided" value={String(appeals.decided)} />
             <Stat label="median decision" value={appeals.medianDecisionDays == null ? '—' : `${appeals.medianDecisionDays}d`} />
             <Stat label="pending" value={String(appeals.pending)} tone={appeals.pending > 0 ? TONE.warn : TONE.ok} />
+            <Stat label="withdrawn" value={String(appeals.withdrawn)} />
           </div>
         )}
       </Panel>
+
+      {appealTrend.length > 0 ? (
+        <Panel title="Appeals decision-time trend" meta={`${appealTrend.length} weeks`} bodyClass="!p-3">
+          <div className="space-y-1">
+            {appealTrend.map(t => (
+              <div key={t.weekStart} className="flex items-center gap-2 font-mono text-[9.5px]">
+                <span className="w-20 shrink-0 text-ink-muted">{t.weekStart}</span>
+                <span className="w-10 shrink-0 text-right text-ink-muted">{t.decided}×</span>
+                <div className="h-2.5 min-w-0 flex-1 rounded-[2px] bg-surface-2">
+                  <div className="h-full rounded-[2px]" style={{ width: `${Math.round(((t.medianDecisionDays ?? 0) / maxApMed) * 100)}%`, backgroundColor: TONE.link }} />
+                </div>
+                <span className="w-14 shrink-0 text-right text-ink">{t.medianDecisionDays == null ? '—' : `${t.medianDecisionDays}d`}</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
 
       <Panel title="Public directives issued" meta={`${directives.length}`} bodyClass="!p-0">
         {directives.length === 0 ? (
