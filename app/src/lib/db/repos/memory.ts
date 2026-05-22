@@ -201,6 +201,40 @@ export async function dispatchResponseStats(opts: { charterId?: string; days?: n
   }));
 }
 
+export interface DispatchResponseTrendPoint {
+  weekStart: string;
+  closed: number;
+  medianAckMinutes: number | null;
+  medianOnSceneMinutes: number | null;
+  medianCloseHours: number | null;
+}
+
+interface DispatchResponseTrendRow {
+  week_start: string; closed: number;
+  median_ack_minutes: string | number | null;
+  median_on_scene_minutes: string | number | null;
+  median_close_hours: string | number | null;
+}
+
+/** Weekly dispatch response-time trend (closed-week buckets) over the last
+ *  `weeks`, oldest first: median time-to-ack/on-scene (minutes) + close
+ *  (hours). Authenticated-tier. [] without a substrate. */
+export async function dispatchResponseTrend(opts: { charterId?: string; weeks?: number } = {}): Promise<DispatchResponseTrendPoint[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_dispatch_response_trend', {
+    p_charter_id: opts.charterId ?? null, p_weeks: opts.weeks ?? 12,
+  });
+  if (error || !data) return [];
+  return (data as DispatchResponseTrendRow[]).map(r => ({
+    weekStart: r.week_start,
+    closed: Number(r.closed),
+    medianAckMinutes: numOrNull(r.median_ack_minutes),
+    medianOnSceneMinutes: numOrNull(r.median_on_scene_minutes),
+    medianCloseHours: numOrNull(r.median_close_hours),
+  }));
+}
+
 // ── Escalations ───────────────────────────────────────────────────
 
 export interface EscalationInput {

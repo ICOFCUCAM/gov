@@ -95,4 +95,26 @@ begin
   raise notice 'PASS: escalation_response_trend weekly MTTA/MTTR';
 end$$;
 
+-- ── dispatch_response_trend: weekly ack / on-scene / close medians ──
+-- All three closed "now" so they share one ISO week; ack 30/60/90 (median
+-- 60.0), on-scene 60/90/120 (median 90.0), close 2/3/4 h (median 3.0),
+-- bucketed by the week the dispatch was closed.
+do $$
+declare r record; n int;
+begin
+  insert into civicos.dispatches (ref, issued_by_charter_id, kind, status, dispatched_at, acknowledged_at, on_scene_at, closed_at) values
+    ('TEST-DRT-1', 'TEST-DRT', 'unit', 'closed', now()-interval '2 h', now()-interval '90 min',  now()-interval '60 min',  now()),
+    ('TEST-DRT-2', 'TEST-DRT', 'unit', 'closed', now()-interval '3 h', now()-interval '2 h',     now()-interval '90 min',  now()),
+    ('TEST-DRT-3', 'TEST-DRT', 'unit', 'closed', now()-interval '4 h', now()-interval '150 min', now()-interval '120 min', now());
+  select count(*) into n from civicos.dispatch_response_trend('TEST-DRT', 12);
+  if n <> 1 then raise exception 'FAIL dispatch trend bucket count = % (want 1)', n; end if;
+  select * into r from civicos.dispatch_response_trend('TEST-DRT', 12) limit 1;
+  if r.week_start <> date_trunc('week', now())::date then raise exception 'FAIL dispatch trend week_start = %', r.week_start; end if;
+  if r.closed <> 3 then raise exception 'FAIL dispatch trend closed = % (want 3)', r.closed; end if;
+  if r.median_ack_minutes <> 60.0 then raise exception 'FAIL dispatch trend ack = % (want 60.0)', r.median_ack_minutes; end if;
+  if r.median_on_scene_minutes <> 90.0 then raise exception 'FAIL dispatch trend on-scene = % (want 90.0)', r.median_on_scene_minutes; end if;
+  if r.median_close_hours <> 3.0 then raise exception 'FAIL dispatch trend close = % (want 3.0)', r.median_close_hours; end if;
+  raise notice 'PASS: dispatch_response_trend weekly medians';
+end$$;
+
 rollback;

@@ -5,6 +5,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   recordDispatchRow, acknowledgeDispatchRow, closeDispatchRow, markDispatchOnSceneRow,
   listDispatchesRows, dispatchResponseStats, type DispatchResponseStat,
+  dispatchResponseTrend, type DispatchResponseTrendPoint,
 } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
 import type { DispatchRow, Priority } from '@/lib/db/types';
@@ -45,17 +46,20 @@ export function DispatchBoard() {
   const available = substrateAvailable();
 
   const [responseStats, setResponseStats] = React.useState<DispatchResponseStat[]>([]);
+  const [responseTrend, setResponseTrend] = React.useState<DispatchResponseTrendPoint[]>([]);
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
     setLoading(true);
     try {
-      const [its, rs] = await Promise.all([
+      const [its, rs, rt] = await Promise.all([
         listDispatchesRows({ limit: 50 }),
         dispatchResponseStats({ days: 30 }),
+        dispatchResponseTrend({ weeks: 12 }),
       ]);
       setItems(its);
       setResponseStats(rs);
+      setResponseTrend(rt);
     } finally {
       setLoading(false);
     }
@@ -185,6 +189,45 @@ export function DispatchBoard() {
               </div>
             ))}
           </div>
+        </Panel>
+      ) : null}
+
+      {responseTrend.length > 0 ? (
+        <Panel title="Response-time trend"
+          meta={
+            <button
+              className="text-[9px] uppercase tracking-wider text-link hover:underline"
+              onClick={() => downloadCsv('civicos-dispatch-response-trend', buildCsv(
+                ['week_start','closed','median_ack_minutes','median_on_scene_minutes','median_close_hours'],
+                responseTrend.map(t => [t.weekStart, t.closed, t.medianAckMinutes ?? '', t.medianOnSceneMinutes ?? '', t.medianCloseHours ?? '']),
+              ))}>
+              csv
+            </button>
+          }
+          bodyClass="!p-0">
+          {(() => {
+            const maxClose = Math.max(1, ...responseTrend.map(t => t.medianCloseHours ?? 0));
+            return (
+              <div className="space-y-1 px-3 py-2">
+                {responseTrend.map(t => {
+                  const pct = Math.round(((t.medianCloseHours ?? 0) / maxClose) * 100);
+                  return (
+                    <div key={t.weekStart} className="flex items-center gap-2 font-mono text-[9.5px]">
+                      <span className="w-20 shrink-0 text-ink-muted">{t.weekStart}</span>
+                      <span className="w-10 shrink-0 text-right text-ink-muted">{t.closed}×</span>
+                      <div className="h-2.5 min-w-0 flex-1 rounded-[2px] bg-surface-2">
+                        <div className="h-full rounded-[2px]" style={{ width: `${pct}%`, backgroundColor: TONE.link }} />
+                      </div>
+                      <span className="w-14 shrink-0 text-right text-ink-muted">{t.medianAckMinutes == null ? '—' : `${t.medianAckMinutes}m`}</span>
+                      <span className="w-16 shrink-0 text-right text-ink-muted">{t.medianOnSceneMinutes == null ? '—' : `${t.medianOnSceneMinutes}m`}</span>
+                      <span className="w-14 shrink-0 text-right text-ink">{t.medianCloseHours == null ? '—' : `${t.medianCloseHours}h`}</span>
+                    </div>
+                  );
+                })}
+                <p className="pt-1 text-[8.5px] uppercase tracking-wider text-ink-muted">closed-week · ack (m) · on-scene (m) · close (h, bar)</p>
+              </div>
+            );
+          })()}
         </Panel>
       ) : null}
 
