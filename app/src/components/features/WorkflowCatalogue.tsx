@@ -4,7 +4,8 @@ import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   listWorkflowDefinitionsRows, syncWorkflowDefinitionRow, workItemFlowStats, workItemStageDistribution,
-  type WorkItemFlowStat, type WorkItemStageBucket,
+  workItemFlowTrend,
+  type WorkItemFlowStat, type WorkItemStageBucket, type WorkItemFlowTrendPoint,
 } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkflowDefinitionRow, WorkKind, ActionKey } from '@/lib/db/types';
@@ -76,9 +77,11 @@ export function WorkflowCatalogue() {
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
 
   const [stageDist, setStageDist] = React.useState<WorkItemStageBucket[]>([]);
+  const [flowTrend, setFlowTrend] = React.useState<WorkItemFlowTrendPoint[]>([]);
   React.useEffect(() => {
-    if (!available || !active) { setStageDist([]); return; }
+    if (!available || !active) { setStageDist([]); setFlowTrend([]); return; }
     void workItemStageDistribution(active).then(setStageDist);
+    void workItemFlowTrend({ workflowId: active, weeks: 12 }).then(setFlowTrend);
   }, [available, active]);
 
   if (!available) {
@@ -268,6 +271,30 @@ export function WorkflowCatalogue() {
                           <span className="w-20 shrink-0 text-right text-ink-muted">
                             {s.oldestHours == null ? '—' : `${Math.round(s.oldestHours)}h old`}
                           </span>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            ) : null}
+            {flowTrend.length > 0 ? (
+              <div className="border-b border-line-soft px-3 py-2">
+                <div className="mb-1 text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
+                  Throughput trend (closed/wk · median cycle)
+                </div>
+                {(() => {
+                  const maxMed = Math.max(1, ...flowTrend.map(t => t.medianCycleHours ?? 0));
+                  return (
+                    <div className="space-y-1">
+                      {flowTrend.map(t => (
+                        <div key={t.weekStart} className="flex items-center gap-2 font-mono text-[9.5px]">
+                          <span className="w-20 shrink-0 text-ink-muted">{t.weekStart}</span>
+                          <span className="w-10 shrink-0 text-right text-ink">{t.closed}×</span>
+                          <div className="h-2 min-w-0 flex-1 rounded-[2px] bg-bg">
+                            <div className="h-full rounded-[2px]" style={{ width: `${Math.round(((t.medianCycleHours ?? 0) / maxMed) * 100)}%`, backgroundColor: TONE.link }} />
+                          </div>
+                          <span className="w-14 shrink-0 text-right text-ink">{t.medianCycleHours == null ? '—' : `${t.medianCycleHours}h`}</span>
                         </div>
                       ))}
                     </div>

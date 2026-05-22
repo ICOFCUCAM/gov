@@ -336,6 +336,32 @@ export async function workItemFlowStats(opts: { workflowId?: string; charterId?:
   }));
 }
 
+export interface WorkItemFlowTrendPoint {
+  weekStart: string;
+  closed: number;
+  medianCycleHours: number | null;
+}
+
+interface WorkItemFlowTrendRow {
+  week_start: string; closed: number; median_cycle_hours: string | number | null;
+}
+
+/** Weekly throughput trend for a workflow (closed-week buckets): closed
+ *  count + median cycle hours, oldest first. Authenticated-tier. [] without
+ *  a substrate. */
+export async function workItemFlowTrend(opts: { workflowId?: string; charterId?: string; weeks?: number } = {}): Promise<WorkItemFlowTrendPoint[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_work_item_flow_trend', {
+    p_workflow_id: opts.workflowId ?? null, p_charter_id: opts.charterId ?? null, p_weeks: opts.weeks ?? 12,
+  });
+  if (error || !data) return [];
+  return (data as WorkItemFlowTrendRow[]).map(r => ({
+    weekStart: r.week_start, closed: Number(r.closed),
+    medianCycleHours: r.median_cycle_hours == null ? null : Number(r.median_cycle_hours),
+  }));
+}
+
 export interface WorkItemStageBucket {
   stage: string;
   openItems: number;
