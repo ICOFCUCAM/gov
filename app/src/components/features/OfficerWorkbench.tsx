@@ -4,7 +4,7 @@ import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   listWorkItemsRows, listWorkflowDefinitionsRows,
-  transitionWorkItemRow, workItemStepsRows, claimWorkItemRow,
+  transitionWorkItemRow, workItemStepsRows, claimWorkItemRow, setWorkItemPriorityRow,
 } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkItemRow, WorkItemStepRow, WorkflowDefinitionRow, ActionKey } from '@/lib/db/types';
@@ -314,16 +314,36 @@ export function OfficerWorkbench() {
                 <Field label="Priority" value={activeItem.priority} />
               </div>
 
-              {!activeItem.closed && actor?.kind === 'officer' && activeItem.assignee_id !== actor.id ? (
-                <button type="button" disabled={busyAction != null}
-                  onClick={async () => {
-                    setBusyAction('claim');
-                    try { if (await claimWorkItemRow(activeItem.ref)) await refreshItems(); }
-                    finally { setBusyAction(null); }
-                  }}
-                  className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
-                  {activeItem.assignee_id ? 'assign to me' : 'claim'}
-                </button>
+              {!activeItem.closed && actor?.kind === 'officer' ? (
+                <div className="flex flex-wrap items-center gap-1">
+                  {activeItem.assignee_id !== actor.id ? (
+                    <button type="button" disabled={busyAction != null}
+                      onClick={async () => {
+                        setBusyAction('claim');
+                        try { if (await claimWorkItemRow(activeItem.ref)) await refreshItems(); }
+                        finally { setBusyAction(null); }
+                      }}
+                      className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+                      {activeItem.assignee_id ? 'assign to me' : 'claim'}
+                    </button>
+                  ) : null}
+                  <span className="text-[8.5px] uppercase tracking-wider text-ink-muted">priority:</span>
+                  {(['routine', 'priority', 'urgent', 'critical'] as const).map(p => (
+                    <button key={p} type="button" disabled={busyAction != null || p === activeItem.priority}
+                      onClick={async () => {
+                        setBusyAction('priority');
+                        try { if (await setWorkItemPriorityRow(activeItem.ref, p)) await refreshItems(); }
+                        finally { setBusyAction(null); }
+                      }}
+                      className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider disabled:opacity-100"
+                      style={{
+                        borderColor: p === activeItem.priority ? TONE.link : 'rgb(var(--c-line))',
+                        color: p === activeItem.priority ? TONE.link : 'rgb(var(--c-ink-muted))',
+                      }}>
+                      {p}
+                    </button>
+                  ))}
+                </div>
               ) : null}
 
               {activeItem.closed ? (
