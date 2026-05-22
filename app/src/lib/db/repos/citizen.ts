@@ -159,6 +159,26 @@ export async function myConsentsRows(limit = 50): Promise<ConsentRow[]> {
   return data as ConsentRow[];
 }
 
+export interface ExpiringConsent {
+  id: string;
+  target_charter_id: string;
+  scope: string;
+  granted_at: string;
+  expires_at: string;
+  days_remaining: number;
+}
+
+/** Still-active consents whose expiry falls within the next `withinDays`,
+ *  soonest first, so the wallet can warn before a grant lapses. Scoped to
+ *  auth.uid() server-side; returns [] without a substrate / session. */
+export async function myExpiringConsents(withinDays = 14): Promise<ExpiringConsent[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_my_expiring_consents', { p_within_days: withinDays });
+  if (error || !data) return [];
+  return data as ExpiringConsent[];
+}
+
 export async function myAppealsRows(limit = 50): Promise<AppealRow[]> {
   const sb = publicClient();
   if (!sb) return [];

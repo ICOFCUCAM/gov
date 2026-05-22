@@ -6,9 +6,38 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { myDataExport, logMyDataExport, myAuditTrail, verifyMyAuditTrail } from './citizen';
+import {
+  myDataExport, logMyDataExport, myAuditTrail, verifyMyAuditTrail, myExpiringConsents,
+} from './citizen';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('myExpiringConsents', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await myExpiringConsents()).toEqual([]);
+  });
+
+  it('passes the window and returns the rows', async () => {
+    const rows = [{
+      id: 'c1', target_charter_id: 'MIN-H', scope: 'health.records',
+      granted_at: '2026-05-01T00:00:00Z', expires_at: '2026-05-28T00:00:00Z', days_remaining: 6,
+    }];
+    const rpc = vi.fn(async () => ({ data: rows, error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await myExpiringConsents(7);
+    expect(out).toHaveLength(1);
+    expect(out[0]!.days_remaining).toBe(6);
+    expect(rpc).toHaveBeenCalledWith('civicos_my_expiring_consents', { p_within_days: 7 });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: null, error: { message: 'denied' } }),
+    });
+    expect(await myExpiringConsents()).toEqual([]);
+  });
+});
 
 describe('myDataExport', () => {
   it('returns null when the substrate is unavailable', async () => {

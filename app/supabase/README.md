@@ -64,6 +64,7 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521350000_civicos_verify_my_audit_trail.sql` | `verify_my_audit_trail()` — resolves the caller's `citizen:<id>` scope from `auth.uid()` and delegates to the proven `verify_audit_chain`, returning `{entries, intact, broken_at}`. Lets a citizen confirm their own trail's hash-chain integrity without knowing their scope or reimplementing FNV-1a. Authenticated only. |
 | `20260521360000_civicos_webhook_rotate_secret.sql` | `rotate_event_webhook_secret(p_id, p_new_secret)` — in-place HMAC secret rotation for a federation webhook (leak response / routine rotation) that preserves the delivery cursor and history, instead of delete + re-register. Platform-tier (or service); secret stays write-only; validates >= 8 chars. |
 | `20260521370000_civicos_webhooks_health.sql` | `event_webhooks_health()` — platform-tier fleet roll-up of the registered webhooks: total / active / (manually) paused / circuit-open counts plus cumulative delivered and failure totals, in one summary row. Powers the at-a-glance header on the Federation Webhooks surface. |
+| `20260521380000_civicos_expiring_consents.sql` | `my_expiring_consents(p_within_days)` — a citizen's still-active consents whose `expires_at` falls within the window, with `days_remaining`, soonest first. Scoped to `auth.uid()`; authenticated. Powers a proactive "consents expiring soon" warning on the citizen home so a grant doesn't lapse unnoticed. |
 
 ### Advisor posture after hardening
 

@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { workItemsByIds } from '@/lib/db/repos/work-items';
 import {
-  myServiceRequestsRows, myConsentsRows, myAppealsRows,
+  myServiceRequestsRows, myConsentsRows, myAppealsRows, myExpiringConsents,
+  type ExpiringConsent,
 } from '@/lib/db/repos/citizen';
 import { substrateAvailable } from '@/lib/db/client';
 import type { ServiceRequestRow, ConsentRow, AppealRow, WorkItemRow } from '@/lib/db/types';
@@ -34,16 +35,18 @@ export function CitizenHome() {
   const [consents, setConsents] = React.useState<ConsentRow[]>([]);
   const [appeals, setAppeals] = React.useState<AppealRow[]>([]);
   const [linkedItems, setLinkedItems] = React.useState<Map<string, WorkItemRow>>(new Map());
+  const [expiring, setExpiring] = React.useState<ExpiringConsent[]>([]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
-    const [r, c, a] = await Promise.all([
+    const [r, c, a, exp] = await Promise.all([
       myServiceRequestsRows(20),
       myConsentsRows(20),
       myAppealsRows(20),
+      myExpiringConsents(14),
     ]);
-    setRequests(r); setConsents(c); setAppeals(a);
+    setRequests(r); setConsents(c); setAppeals(a); setExpiring(exp);
     const ids = Array.from(new Set([
       ...r.map(x => x.linked_work_item_id).filter((x): x is string => !!x),
       ...a.map(x => x.linked_work_item_id).filter((x): x is string => !!x),
@@ -114,6 +117,26 @@ export function CitizenHome() {
         <Tile label="Active consents" value={String(activeConsents.length)} href="/wallet/substrate" tone={TONE.ok} />
         <Tile label="Total records" value={String(requests.length + consents.length + appeals.length)} href="/wallet/substrate" tone={TONE.link} />
       </div>
+
+      {expiring.length > 0 ? (
+        <Panel title="Consents expiring soon" meta={`${expiring.length} within 14 days`} bodyClass="!p-0">
+          <div className="max-h-[200px] overflow-y-auto">
+            {expiring.map(c => (
+              <Link key={c.id} href={`/wallet/consent/${c.id}`}
+                className="block border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px] hover:bg-surface-2">
+                <div className="flex items-center gap-2">
+                  <span className="w-28 shrink-0 truncate font-mono text-link">{c.target_charter_id}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink">{c.scope}</span>
+                  <span className="shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
+                    style={{ color: c.days_remaining <= 3 ? TONE.alert : TONE.warn }}>
+                    {c.days_remaining === 0 ? 'today' : c.days_remaining === 1 ? '1 day' : `${c.days_remaining} days`}
+                  </span>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
 
       <Panel title="Latest requests" meta={`${openRequests.length} open`} bodyClass="!p-0">
         {openRequests.length === 0 ? (
