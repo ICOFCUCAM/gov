@@ -30,6 +30,12 @@ export async function GET(req: Request) {
           description: 'Catalog of active telemetry streams (metadata only; no sample values).',
           url: `${base}/api/public/telemetry`,
         },
+        {
+          path: '/api/public/directives',
+          description: 'Public directives (signed / effective / rescinded / published).',
+          params: { issuer: 'optional charter_id filter' },
+          url: `${base}/api/public/directives`,
+        },
       ],
       notes: 'All endpoints are aggregate/metadata only — no citizen identifiers or row-level records. Chain integrity is verifiable via civicos_verify_audit_chain.',
     },
