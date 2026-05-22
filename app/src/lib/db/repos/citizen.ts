@@ -279,4 +279,26 @@ export async function logMyDataExport(): Promise<string | null> {
   return data as string;
 }
 
+export interface AuditTrailEntry {
+  seq: number;
+  actor: string;
+  action: string;
+  subject: string;
+  detail: string;
+  at: string;
+  prev_hash: string;
+  hash: string;
+}
+
+/** The tamper-evident audit entries on the signed-in citizen's own scope
+ *  (consent expiries, data exports, …), newest first. Scoped to auth.uid()
+ *  server-side; returns [] without a substrate / session / citizen. */
+export async function myAuditTrail(limit = 100): Promise<AuditTrailEntry[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_my_audit_trail', { p_limit: limit });
+  if (error || !data) return [];
+  return data as AuditTrailEntry[];
+}
+
 export { substrateAvailable };

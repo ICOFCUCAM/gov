@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { myDataExport, logMyDataExport } from './citizen';
+import { myDataExport, logMyDataExport, myAuditTrail } from './citizen';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -59,5 +59,33 @@ describe('logMyDataExport', () => {
   it('returns null when there is no linked citizen (RPC returns null)', async () => {
     publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: null }) });
     expect(await logMyDataExport()).toBeNull();
+  });
+});
+
+describe('myAuditTrail', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await myAuditTrail()).toEqual([]);
+  });
+
+  it('returns the citizen-scope audit entries and passes the limit', async () => {
+    const rows = [{
+      seq: 42, actor: 'Amina', action: 'data_export', subject: 'c1',
+      detail: 'citizen exported their personal data (portability)',
+      at: '2026-05-22T00:00:00Z', prev_hash: 'aaaa', hash: 'bbbb',
+    }];
+    const rpc = vi.fn(async () => ({ data: rows, error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await myAuditTrail(50);
+    expect(out).toHaveLength(1);
+    expect(out[0]!.action).toBe('data_export');
+    expect(rpc).toHaveBeenCalledWith('civicos_my_audit_trail', { p_limit: 50 });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: null, error: { message: 'denied' } }),
+    });
+    expect(await myAuditTrail()).toEqual([]);
   });
 });

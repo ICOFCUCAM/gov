@@ -5,7 +5,10 @@ import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-import { myReceiptTimelineRows, myDataExport, logMyDataExport, type ReceiptEvent } from '@/lib/db/repos/citizen';
+import {
+  myReceiptTimelineRows, myDataExport, logMyDataExport, myAuditTrail,
+  type ReceiptEvent, type AuditTrailEntry,
+} from '@/lib/db/repos/citizen';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
@@ -29,7 +32,20 @@ export default function ReceiptsPage() {
   const [events, setEvents] = React.useState<ReceiptEvent[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [exporting, setExporting] = React.useState(false);
+  const [trail, setTrail] = React.useState<AuditTrailEntry[] | null>(null);
+  const [showTrail, setShowTrail] = React.useState(false);
   const available = substrateAvailable();
+
+  const loadTrail = React.useCallback(async () => {
+    setTrail(await myAuditTrail(100));
+  }, []);
+
+  const toggleTrail = React.useCallback(() => {
+    setShowTrail(s => {
+      if (!s && trail === null) void loadTrail();
+      return !s;
+    });
+  }, [trail, loadTrail]);
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
@@ -79,13 +95,15 @@ export default function ReceiptsPage() {
       const doc = await myDataExport();
       if (doc) {
         downloadJson(`civicos-data-export-${actor.id.slice(0, 8)}`, doc);
-        // Record the export in the tamper-evident audit chain (best-effort).
+        // Record the export in the tamper-evident audit chain (best-effort),
+        // then refresh the trail so the new entry is visible if it's open.
         await logMyDataExport();
+        if (showTrail) await loadTrail();
       }
     } finally {
       setExporting(false);
     }
-  }, [actor]);
+  }, [actor, showTrail, loadTrail]);
 
   return (
     <main className="bg-bg min-h-screen">
@@ -160,6 +178,40 @@ export default function ReceiptsPage() {
                   </Card>
                 ))}
               </ul>
+            </section>
+
+            <section>
+              <button type="button" onClick={toggleTrail}
+                className="focus-ring font-semibold text-lg underline underline-offset-2">
+                {showTrail ? 'Hide' : 'Show'} activity &amp; access log
+              </button>
+              {showTrail ? (
+                trail === null ? (
+                  <p className="mt-2 text-sm text-ink-muted">loading…</p>
+                ) : trail.length === 0 ? (
+                  <p className="mt-2 text-sm text-ink-muted">
+                    No entries on your audit scope yet. Tamper-evident events
+                    (consent expiries, data exports) appear here as they happen.
+                  </p>
+                ) : (
+                  <ul className="mt-2 space-y-2">
+                    {trail.map(e => (
+                      <Card tight key={e.seq}>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
+                            {e.action}
+                          </span>
+                          <span className="ml-auto text-xs text-ink-muted">{ageMinutes(e.at)}m ago</span>
+                        </div>
+                        <div className="text-sm text-ink">{e.detail}</div>
+                        <div className="font-mono text-[10px] text-ink-muted">
+                          #{e.seq} · {e.actor} · hash {e.hash.slice(0, 12)}…
+                        </div>
+                      </Card>
+                    ))}
+                  </ul>
+                )
+              ) : null}
             </section>
 
             <Card tight>
