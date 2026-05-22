@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
-  recordDispatchRow, acknowledgeDispatchRow, closeDispatchRow,
+  recordDispatchRow, acknowledgeDispatchRow, closeDispatchRow, markDispatchOnSceneRow,
   listDispatchesRows, dispatchResponseStats, type DispatchResponseStat,
 } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
@@ -241,6 +241,20 @@ export function DispatchBoard() {
                       }}
                     >
                       ack
+                    </button>
+                  ) : null}
+                  {d.status !== 'closed' && d.on_scene_at == null ? (
+                    <button
+                      type="button"
+                      className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
+                      disabled={busyRef === d.ref}
+                      onClick={async () => {
+                        setBusyRef(d.ref);
+                        try { await markDispatchOnSceneRow(d.ref); }
+                        finally { setBusyRef(null); }
+                      }}
+                    >
+                      on scene
                     </button>
                   ) : null}
                   {d.status !== 'closed' ? (
