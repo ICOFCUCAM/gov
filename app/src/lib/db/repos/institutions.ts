@@ -250,4 +250,36 @@ export async function appealsTrend(opts: { charterId?: string; weeks?: number } 
   }));
 }
 
+export interface ConsentFootprintStat {
+  charterId: string;
+  scope: string;
+  active: number;
+  expiring30d: number;
+  revoked: number;
+}
+
+interface ConsentFootprintRow {
+  charter_id: string; scope: string; active: number; expiring_30d: number; revoked: number;
+}
+
+/** Per-charter, per-scope data-access footprint: active consents, those
+ *  expiring within 30 days, and revoked. Aggregate-only (no citizen id) and
+ *  anon-callable. Only (charter, scope) pairs with an active grant appear.
+ *  [] without a substrate. */
+export async function consentFootprintStats(opts: { charterId?: string } = {}): Promise<ConsentFootprintStat[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_consent_footprint_stats', {
+    p_charter_id: opts.charterId ?? null,
+  });
+  if (error || !data) return [];
+  return (data as ConsentFootprintRow[]).map(r => ({
+    charterId: r.charter_id,
+    scope: r.scope,
+    active: Number(r.active),
+    expiring30d: Number(r.expiring_30d),
+    revoked: Number(r.revoked),
+  }));
+}
+
 export { substrateAvailable };

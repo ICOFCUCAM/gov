@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend, institutionByCharterId } from './institutions';
+import { serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend, consentFootprintStats, institutionByCharterId } from './institutions';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -66,6 +66,39 @@ describe('serviceSlaTrend', () => {
   it('returns [] on RPC error', async () => {
     publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
     expect(await serviceSlaTrend()).toEqual([]);
+  });
+});
+
+describe('consentFootprintStats', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await consentFootprintStats()).toEqual([]);
+  });
+
+  it('maps rows to camelCase and forwards a charter filter', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        { charter_id: 'MIN-H', scope: 'health.records', active: 2, expiring_30d: 1, revoked: 1 },
+        { charter_id: 'MIN-T', scope: 'tax.filings', active: 1, expiring_30d: 0, revoked: 0 },
+      ],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await consentFootprintStats({ charterId: 'MIN-H' });
+    expect(rpc).toHaveBeenCalledWith('civicos_consent_footprint_stats', { p_charter_id: 'MIN-H' });
+    expect(out[0]).toEqual({ charterId: 'MIN-H', scope: 'health.records', active: 2, expiring30d: 1, revoked: 1 });
+  });
+
+  it('passes null charter when omitted', async () => {
+    const rpc = vi.fn(async () => ({ data: [], error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    await consentFootprintStats();
+    expect(rpc).toHaveBeenCalledWith('civicos_consent_footprint_stats', { p_charter_id: null });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await consentFootprintStats()).toEqual([]);
   });
 });
 

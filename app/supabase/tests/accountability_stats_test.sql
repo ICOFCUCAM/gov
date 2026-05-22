@@ -93,4 +93,35 @@ begin
   delete from civicos.citizens where id = v_cit;
 end$$;
 
+-- ── consent_footprint_stats: active / expiring-30d / revoked by scope ──
+-- The (citizen, charter, scope) unique partial index forbids two granted
+-- rows for the same tuple, so distinct citizens are used. For health.records:
+-- 2 active (one no-expiry, one expiring in 10d), 1 expired (past), 1 revoked.
+do $$
+declare c1 uuid; c2 uuid; c3 uuid; c4 uuid; c5 uuid; r record;
+begin
+  insert into civicos.citizens (national_id, display_name, active) values ('TEST-CF-1','p1',true) returning id into c1;
+  insert into civicos.citizens (national_id, display_name, active) values ('TEST-CF-2','p2',true) returning id into c2;
+  insert into civicos.citizens (national_id, display_name, active) values ('TEST-CF-3','p3',true) returning id into c3;
+  insert into civicos.citizens (national_id, display_name, active) values ('TEST-CF-4','p4',true) returning id into c4;
+  insert into civicos.citizens (national_id, display_name, active) values ('TEST-CF-5','p5',true) returning id into c5;
+  insert into civicos.consents (citizen_id, target_charter_id, scope, status, granted_at, expires_at, revoked_at) values
+    (c1, 'TEST-CF', 'health.records', 'granted', now()-interval '5 d', null, null),
+    (c2, 'TEST-CF', 'health.records', 'granted', now()-interval '5 d', now()+interval '10 d', null),
+    (c3, 'TEST-CF', 'health.records', 'granted', now()-interval '5 d', now()-interval '1 d', null),
+    (c4, 'TEST-CF', 'health.records', 'revoked', now()-interval '5 d', null, now()-interval '2 d'),
+    (c5, 'TEST-CF', 'tax.filings',    'granted', now()-interval '5 d', now()+interval '60 d', null);
+
+  select * into r from civicos.consent_footprint_stats('TEST-CF') where scope = 'health.records';
+  if r.active <> 2 then raise exception 'FAIL footprint health active = % (want 2)', r.active; end if;
+  if r.expiring_30d <> 1 then raise exception 'FAIL footprint health expiring = % (want 1)', r.expiring_30d; end if;
+  if r.revoked <> 1 then raise exception 'FAIL footprint health revoked = % (want 1)', r.revoked; end if;
+  select * into r from civicos.consent_footprint_stats('TEST-CF') where scope = 'tax.filings';
+  if r.active <> 1 or r.expiring_30d <> 0 then raise exception 'FAIL footprint tax = %/%', r.active, r.expiring_30d; end if;
+  raise notice 'PASS: consent_footprint_stats active/expiring/revoked';
+
+  delete from civicos.consents where target_charter_id = 'TEST-CF';
+  delete from civicos.citizens where national_id like 'TEST-CF-%';
+end$$;
+
 rollback;

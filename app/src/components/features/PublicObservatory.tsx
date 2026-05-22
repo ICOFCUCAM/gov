@@ -7,7 +7,9 @@ import { substrateAvailable, publicClient } from '@/lib/db/client';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
 import {
   listInstitutionsRows, serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend,
+  consentFootprintStats,
   type ServiceSlaStat, type AppealsStat, type SlaTrendPoint, type AppealsTrendPoint,
+  type ConsentFootprintStat,
 } from '@/lib/db/repos/institutions';
 import { listTelemetryStreamsRows } from '@/lib/db/repos/telemetry';
 import { recentWitnessRows, type AuditWitness } from '@/lib/db/repos/audit';
@@ -38,6 +40,7 @@ export function PublicObservatory() {
   const [appeals, setAppeals] = React.useState<AppealsStat[]>([]);
   const [trend, setTrend] = React.useState<SlaTrendPoint[]>([]);
   const [appealTrend, setAppealTrend] = React.useState<AppealsTrendPoint[]>([]);
+  const [footprint, setFootprint] = React.useState<ConsentFootprintStat[]>([]);
   const [loading, setLoading] = React.useState(false);
   const available = substrateAvailable();
 
@@ -60,6 +63,7 @@ export function PublicObservatory() {
         setAppeals(await appealsStats({ days: 90 }));
         setTrend(await serviceSlaTrend({ weeks: 12 }));
         setAppealTrend(await appealsTrend({ weeks: 12 }));
+        setFootprint(await consentFootprintStats());
       } finally {
         setLoading(false);
       }
@@ -298,6 +302,39 @@ export function PublicObservatory() {
             </div>
           );
         })()}
+      </Panel>
+
+      <Panel title="Data-access footprint — active consents by charter · scope"
+        meta={<MetaWithCsv label={`${footprint.length} charter·scope pairs`} show={footprint.length > 0}
+          onDownload={() => downloadCsv('civicos-consent-footprint', buildCsv(
+            ['charter_id','scope','active','expiring_30d','revoked'],
+            footprint.map(f => [f.charterId, f.scope, f.active, f.expiring30d, f.revoked]),
+          ))} />}
+        bodyClass="!p-0">
+        {footprint.length === 0 ? (
+          <p className="px-3 py-4 text-[11px] text-ink-muted">
+            {loading ? 'Loading…' : 'No active consents on record.'}
+          </p>
+        ) : (
+          <div className="max-h-[360px] overflow-y-auto">
+            <div className="flex items-center gap-2 border-b border-line px-3 py-1 text-[8.5px] font-bold uppercase tracking-wider text-ink-muted">
+              <span className="w-40 shrink-0">charter</span>
+              <span className="min-w-0 flex-1">scope</span>
+              <span className="w-16 shrink-0 text-right">active</span>
+              <span className="w-20 shrink-0 text-right">exp. 30d</span>
+              <span className="w-16 shrink-0 text-right">revoked</span>
+            </div>
+            {footprint.map(f => (
+              <div key={`${f.charterId}:${f.scope}`} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 font-mono text-[10px]">
+                <Link href={`/public/charter/${encodeURIComponent(f.charterId)}`} className="w-40 shrink-0 truncate text-link hover:underline">{f.charterId}</Link>
+                <span className="min-w-0 flex-1 truncate text-ink">{f.scope}</span>
+                <span className="w-16 shrink-0 text-right text-ink">{f.active}</span>
+                <span className="w-20 shrink-0 text-right" style={{ color: f.expiring30d > 0 ? TONE.warn : undefined }}>{f.expiring30d}</span>
+                <span className="w-16 shrink-0 text-right text-ink-muted">{f.revoked}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </Panel>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
