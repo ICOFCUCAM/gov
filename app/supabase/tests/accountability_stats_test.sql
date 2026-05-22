@@ -59,4 +59,34 @@ begin
   delete from civicos.citizens where id = v_cit;
 end$$;
 
+-- ── appeals_trend: weekly decided buckets + median decision days ──
+-- All three decided "now" so they share one ISO week; decision days are
+-- 2/4/10 (median 4.0), bucketed by the week the appeal was decided.
+do $$
+declare
+  v_cit uuid;
+  r record;
+  n  int;
+begin
+  insert into civicos.citizens (national_id, display_name, active)
+    values ('TEST-APT-CIT', 'Appeals Trend Probe', true) returning id into v_cit;
+
+  insert into civicos.appeals (ref, citizen_id, originating_charter_id, ground, status, filed_at, admitted_at, decided_at) values
+    ('TEST-APT-1', v_cit, 'TEST-APT', 'g', 'decided', now()-interval '2 d',  now()-interval '2 d',  now()),
+    ('TEST-APT-2', v_cit, 'TEST-APT', 'g', 'decided', now()-interval '4 d',  now()-interval '4 d',  now()),
+    ('TEST-APT-3', v_cit, 'TEST-APT', 'g', 'decided', now()-interval '10 d', now()-interval '10 d', now());
+
+  select count(*) into n from civicos.appeals_trend('TEST-APT', 12);
+  if n <> 1 then raise exception 'FAIL appeals_trend bucket count = % (want 1)', n; end if;
+
+  select * into r from civicos.appeals_trend('TEST-APT', 12) limit 1;
+  if r.week_start <> date_trunc('week', now())::date then raise exception 'FAIL appeals_trend week_start = %', r.week_start; end if;
+  if r.decided <> 3 then raise exception 'FAIL appeals_trend decided = % (want 3)', r.decided; end if;
+  if r.median_decision_days <> 4.0 then raise exception 'FAIL appeals_trend median = % (want 4.0)', r.median_decision_days; end if;
+  raise notice 'PASS: appeals_trend weekly buckets + median';
+
+  delete from civicos.appeals where citizen_id = v_cit;
+  delete from civicos.citizens where id = v_cit;
+end$$;
+
 rollback;

@@ -218,4 +218,34 @@ export async function serviceSlaTrend(opts: { charterId?: string; weeks?: number
   }));
 }
 
+export interface AppealsTrendPoint {
+  weekStart: string;
+  decided: number;
+  medianDecisionDays: number | null;
+  p90DecisionDays: number | null;
+}
+
+interface AppealsTrendRow {
+  week_start: string; decided: number;
+  median_decision_days: string | number | null; p90_decision_days: string | number | null;
+}
+
+/** Weekly appeals decision-time trend (decided-week buckets) over the last
+ *  `weeks`, oldest first. Aggregate-only, anon-callable. [] without a
+ *  substrate. */
+export async function appealsTrend(opts: { charterId?: string; weeks?: number } = {}): Promise<AppealsTrendPoint[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_appeals_trend', {
+    p_charter_id: opts.charterId ?? null, p_weeks: opts.weeks ?? 12,
+  });
+  if (error || !data) return [];
+  return (data as AppealsTrendRow[]).map(r => ({
+    weekStart: r.week_start,
+    decided: Number(r.decided),
+    medianDecisionDays: numOrNull(r.median_decision_days),
+    p90DecisionDays: numOrNull(r.p90_decision_days),
+  }));
+}
+
 export { substrateAvailable };

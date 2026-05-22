@@ -6,8 +6,8 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable, publicClient } from '@/lib/db/client';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
 import {
-  listInstitutionsRows, serviceSlaStats, appealsStats, serviceSlaTrend,
-  type ServiceSlaStat, type AppealsStat, type SlaTrendPoint,
+  listInstitutionsRows, serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend,
+  type ServiceSlaStat, type AppealsStat, type SlaTrendPoint, type AppealsTrendPoint,
 } from '@/lib/db/repos/institutions';
 import { listTelemetryStreamsRows } from '@/lib/db/repos/telemetry';
 import { recentWitnessRows, type AuditWitness } from '@/lib/db/repos/audit';
@@ -37,6 +37,7 @@ export function PublicObservatory() {
   const [sla, setSla] = React.useState<ServiceSlaStat[]>([]);
   const [appeals, setAppeals] = React.useState<AppealsStat[]>([]);
   const [trend, setTrend] = React.useState<SlaTrendPoint[]>([]);
+  const [appealTrend, setAppealTrend] = React.useState<AppealsTrendPoint[]>([]);
   const [loading, setLoading] = React.useState(false);
   const available = substrateAvailable();
 
@@ -58,6 +59,7 @@ export function PublicObservatory() {
         setSla(await serviceSlaStats({ days: 90 }));
         setAppeals(await appealsStats({ days: 90 }));
         setTrend(await serviceSlaTrend({ weeks: 12 }));
+        setAppealTrend(await appealsTrend({ weeks: 12 }));
       } finally {
         setLoading(false);
       }
@@ -105,7 +107,7 @@ export function PublicObservatory() {
         </p>
         <ul className="mt-2 space-y-1 font-mono text-[10px]">
           <li><a href="/api/public" className="text-link underline">/api/public</a> — endpoint directory</li>
-          <li><a href="/api/public/accountability" className="text-link underline">/api/public/accountability</a> — service SLAs, appeals, decision-time trend (<code>?days</code>, <code>?charter</code>)</li>
+          <li><a href="/api/public/accountability" className="text-link underline">/api/public/accountability</a> — service SLAs, appeals, SLA + appeals decision-time trends (<code>?days</code>, <code>?charter</code>)</li>
           <li><a href="/api/public/charters" className="text-link underline">/api/public/charters</a> — activated charter directory</li>
           <li><a href="/api/public/telemetry" className="text-link underline">/api/public/telemetry</a> — active telemetry stream catalog</li>
           <li><a href="/api/public/directives" className="text-link underline">/api/public/directives</a> — public directives (<code>?issuer</code>)</li>
@@ -262,6 +264,40 @@ export function PublicObservatory() {
             ))}
           </div>
         )}
+      </Panel>
+
+      <Panel title="Appeals decision-time trend — all charters"
+        meta={<MetaWithCsv label={`${appealTrend.length} weeks (median decision days)`} show={appealTrend.length > 0}
+          onDownload={() => downloadCsv('civicos-appeals-trend', buildCsv(
+            ['week_start','decided','median_decision_days','p90_decision_days'],
+            appealTrend.map(t => [t.weekStart, t.decided, t.medianDecisionDays ?? '', t.p90DecisionDays ?? '']),
+          ))} />}
+        bodyClass="!p-0">
+        {appealTrend.length === 0 ? (
+          <p className="px-3 py-4 text-[11px] text-ink-muted">
+            {loading ? 'Loading…' : 'No decided appeals in the window.'}
+          </p>
+        ) : (() => {
+          const maxMed = Math.max(1, ...appealTrend.map(t => t.medianDecisionDays ?? 0));
+          return (
+            <div className="space-y-1 px-3 py-2">
+              {appealTrend.map(t => {
+                const med = t.medianDecisionDays ?? 0;
+                const pct = Math.round((med / maxMed) * 100);
+                return (
+                  <div key={t.weekStart} className="flex items-center gap-2 font-mono text-[9.5px]">
+                    <span className="w-20 shrink-0 text-ink-muted">{t.weekStart}</span>
+                    <span className="w-10 shrink-0 text-right text-ink-muted">{t.decided}×</span>
+                    <div className="h-2.5 min-w-0 flex-1 rounded-[2px] bg-surface-2">
+                      <div className="h-full rounded-[2px]" style={{ width: `${pct}%`, backgroundColor: TONE.link }} />
+                    </div>
+                    <span className="w-14 shrink-0 text-right text-ink">{t.medianDecisionDays == null ? '—' : `${t.medianDecisionDays}d`}</span>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
       </Panel>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">

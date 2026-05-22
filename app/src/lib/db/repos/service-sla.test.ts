@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { serviceSlaStats, appealsStats, serviceSlaTrend, institutionByCharterId } from './institutions';
+import { serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend, institutionByCharterId } from './institutions';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -66,6 +66,40 @@ describe('serviceSlaTrend', () => {
   it('returns [] on RPC error', async () => {
     publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
     expect(await serviceSlaTrend()).toEqual([]);
+  });
+});
+
+describe('appealsTrend', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await appealsTrend()).toEqual([]);
+  });
+
+  it('maps weekly buckets and forwards the window', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        { week_start: '2026-05-04', decided: 3, median_decision_days: '4.0', p90_decision_days: '8.8' },
+        { week_start: '2026-05-11', decided: 1, median_decision_days: '2.0', p90_decision_days: '2.0' },
+      ],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await appealsTrend({ weeks: 12 });
+    expect(rpc).toHaveBeenCalledWith('civicos_appeals_trend', { p_charter_id: null, p_weeks: 12 });
+    expect(out).toHaveLength(2);
+    expect(out[0]).toEqual({ weekStart: '2026-05-04', decided: 3, medianDecisionDays: 4, p90DecisionDays: 8.8 });
+  });
+
+  it('forwards a charter filter', async () => {
+    const rpc = vi.fn(async () => ({ data: [], error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    await appealsTrend({ charterId: 'MIN-H', weeks: 8 });
+    expect(rpc).toHaveBeenCalledWith('civicos_appeals_trend', { p_charter_id: 'MIN-H', p_weeks: 8 });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await appealsTrend()).toEqual([]);
   });
 });
 

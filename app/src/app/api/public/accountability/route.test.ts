@@ -3,10 +3,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 const serviceSlaStats = vi.fn();
 const appealsStats = vi.fn();
 const serviceSlaTrend = vi.fn();
+const appealsTrend = vi.fn();
 vi.mock('@/lib/db/repos/institutions', () => ({
   serviceSlaStats: (o: unknown) => serviceSlaStats(o),
   appealsStats: (o: unknown) => appealsStats(o),
   serviceSlaTrend: (o: unknown) => serviceSlaTrend(o),
+  appealsTrend: (o: unknown) => appealsTrend(o),
 }));
 
 import { GET } from './route';
@@ -15,6 +17,7 @@ beforeEach(() => {
   serviceSlaStats.mockReset().mockResolvedValue([{ charterId: 'MIN-H', submitted: 3 }]);
   appealsStats.mockReset().mockResolvedValue([{ charterId: 'MIN-H', filed: 1 }]);
   serviceSlaTrend.mockReset().mockResolvedValue([{ weekStart: '2026-05-11', resolved: 2 }]);
+  appealsTrend.mockReset().mockResolvedValue([{ weekStart: '2026-05-11', decided: 1 }]);
 });
 
 describe('GET /api/public/accountability', () => {
@@ -28,9 +31,11 @@ describe('GET /api/public/accountability', () => {
     expect(json.service_sla).toHaveLength(1);
     expect(json.appeals).toHaveLength(1);
     expect(json.sla_trend).toHaveLength(1);
+    expect(json.appeals_trend).toHaveLength(1);
     expect(serviceSlaStats).toHaveBeenCalledWith({ charterId: undefined, days: 90 });
     // weeks ≈ round(90/7) = 13
     expect(serviceSlaTrend).toHaveBeenCalledWith({ charterId: undefined, weeks: 13 });
+    expect(appealsTrend).toHaveBeenCalledWith({ charterId: undefined, weeks: 13 });
   });
 
   it('clamps the days window and forwards a charter filter', async () => {

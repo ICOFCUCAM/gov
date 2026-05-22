@@ -10,7 +10,7 @@
 // Query params: ?days=1..365 (default 90), ?charter=<charter_id> to scope.
 
 import { NextResponse } from 'next/server';
-import { serviceSlaStats, appealsStats, serviceSlaTrend } from '@/lib/db/repos/institutions';
+import { serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend } from '@/lib/db/repos/institutions';
 
 export const dynamic = 'force-dynamic';
 
@@ -20,10 +20,11 @@ export async function GET(req: Request) {
   const weeks = Math.min(52, Math.max(1, Math.round(days / 7)));
   const charter = url.searchParams.get('charter') ?? undefined;
 
-  const [serviceSla, appeals, slaTrend] = await Promise.all([
+  const [serviceSla, appeals, slaTrend, appealTrend] = await Promise.all([
     serviceSlaStats({ charterId: charter, days }),
     appealsStats({ charterId: charter, days }),
     serviceSlaTrend({ charterId: charter, weeks }),
+    appealsTrend({ charterId: charter, weeks }),
   ]);
 
   return NextResponse.json(
@@ -36,6 +37,7 @@ export async function GET(req: Request) {
       service_sla: serviceSla,
       appeals,
       sla_trend: slaTrend,
+      appeals_trend: appealTrend,
     },
     { headers: { 'cache-control': 'public, max-age=300' } },
   );
