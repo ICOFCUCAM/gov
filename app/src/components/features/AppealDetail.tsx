@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { appealByRef, decideAppealRow } from '@/lib/db/repos/citizen';
+import { appealByRef, decideAppealRow, advanceAppealStageRow } from '@/lib/db/repos/citizen';
 import { workItemsByIds } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { AppealRow, WorkItemRow } from '@/lib/db/types';
@@ -113,6 +113,25 @@ export function AppealDetail({ ref: appealRef }: { ref: string }) {
               <span className="text-ink-muted">·</span>
               <span style={{ color: linked.closed ? TONE.ok : TONE.link }}>{linked.current_stage}</span>
             </Link>
+          </div>
+        ) : null}
+
+        {canDecide ? (
+          <div className="flex flex-wrap items-center gap-2">
+            {row.admitted_at == null ? (
+              <button type="button" disabled={busy}
+                onClick={async () => { setBusy(true); try { await advanceAppealStageRow(row.ref, 'admitted'); await refresh(); } finally { setBusy(false); } }}
+                className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+                admit
+              </button>
+            ) : null}
+            {row.heard_at == null ? (
+              <button type="button" disabled={busy}
+                onClick={async () => { setBusy(true); try { await advanceAppealStageRow(row.ref, 'heard'); await refresh(); } finally { setBusy(false); } }}
+                className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+                hear
+              </button>
+            ) : null}
           </div>
         ) : null}
 

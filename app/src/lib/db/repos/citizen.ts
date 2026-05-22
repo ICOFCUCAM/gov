@@ -139,6 +139,16 @@ export async function decideAppealRow(
   return (data as AppealRow) ?? null;
 }
 
+/** Advance an open appeal to 'admitted' or 'heard' (officer/tribunal action),
+ *  audit-logged. 'heard' backfills admitted_at. null on failure. */
+export async function advanceAppealStageRow(ref: string, stage: 'admitted' | 'heard'): Promise<AppealRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_advance_appeal_stage', { p_ref: ref, p_stage: stage });
+  if (error || !data) { if (error) console.error('[civicos] advance_appeal_stage failed:', error.message); return null; }
+  return (Array.isArray(data) ? data[0] : data) as AppealRow;
+}
+
 // ── Read helpers (RLS scopes to citizen_id = my id) ─────────────
 
 export async function myServiceRequestsRows(limit = 50): Promise<ServiceRequestRow[]> {
