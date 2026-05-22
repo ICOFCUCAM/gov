@@ -4,7 +4,7 @@ import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   submitServiceRequestRow, updateServiceRequestRow, myServiceRequestsRows,
-  grantConsentRow, revokeConsentRow, myConsentsRows,
+  grantConsentRow, revokeConsentRow, revokeAllMyConsentsRows, myConsentsRows,
   fileAppealRow, myAppealsRows, rateMyServiceRequestRow,
 } from '@/lib/db/repos/citizen';
 import { openWorkItemRow, workItemsByIds } from '@/lib/db/repos/work-items';
@@ -399,19 +399,35 @@ function ConsentsPanel({
 }: { citizenId: string; rows: ConsentRow[]; onChange: () => Promise<void> }) {
   const [open, setOpen] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
+  const [revokingAll, setRevokingAll] = React.useState(false);
   const [filter, setFilter] = React.useState<'all' | 'granted' | 'revoked' | 'expired'>('all');
   const visible = filter === 'all' ? rows : rows.filter(r => r.status === filter);
+  const activeCount = rows.filter(r => r.status === 'granted').length;
   return (
     <Panel title="Consents" meta={`${visible.length} / ${rows.length}`} bodyClass="!p-0">
       <div className="flex items-center justify-between gap-2 border-b border-line-soft px-3 py-1.5">
         <FilterChips options={['all','granted','revoked','expired'] as const} value={filter} onChange={setFilter} />
-        <button
-          type="button"
-          onClick={() => setOpen(o => !o)}
-          className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
-        >
-          {open ? 'cancel' : '+ grant consent'}
-        </button>
+        <div className="flex items-center gap-2">
+          {activeCount > 0 ? (
+            <button type="button" disabled={revokingAll}
+              onClick={async () => {
+                if (!window.confirm(`Revoke all ${activeCount} active consents? Every charter loses access immediately.`)) return;
+                setRevokingAll(true);
+                try { await revokeAllMyConsentsRows(); await onChange(); } finally { setRevokingAll(false); }
+              }}
+              className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider hover:bg-surface-2 disabled:opacity-50"
+              style={{ color: TONE.alert, borderColor: TONE.alert }}>
+              {revokingAll ? 'revoking…' : `revoke all access (${activeCount})`}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={() => setOpen(o => !o)}
+            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink"
+          >
+            {open ? 'cancel' : '+ grant consent'}
+          </button>
+        </div>
       </div>
       {open ? (
         <ConsentComposer

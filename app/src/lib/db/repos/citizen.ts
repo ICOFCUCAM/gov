@@ -104,6 +104,17 @@ export async function grantConsentRow(
   return (data as ConsentRow) ?? null;
 }
 
+/** Revoke ALL of the calling citizen's still-granted consents at once
+ *  ("cut off all access"). Scoped to auth.uid(); returns the count revoked
+ *  (0 on no substrate / no linked citizen). */
+export async function revokeAllMyConsentsRows(): Promise<number> {
+  const sb = publicClient();
+  if (!sb) return 0;
+  const { data, error } = await sb.rpc('civicos_revoke_all_my_consents');
+  if (error || data == null) { if (error) console.error('[civicos] revoke_all_my_consents failed:', error.message); return 0; }
+  return Number(data);
+}
+
 export async function revokeConsentRow(consentId: string): Promise<ConsentRow | null> {
   const sb = publicClient();
   if (!sb) return null;

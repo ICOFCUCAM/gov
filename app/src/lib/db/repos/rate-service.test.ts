@@ -29,3 +29,24 @@ describe('rateMyServiceRequestRow', () => {
     expect(await rateMyServiceRequestRow('SR-1', 3)).toBeNull();
   });
 });
+
+import { revokeAllMyConsentsRows } from './citizen';
+
+describe('revokeAllMyConsentsRows', () => {
+  it('returns 0 when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await revokeAllMyConsentsRows()).toBe(0);
+  });
+
+  it('returns the count revoked', async () => {
+    const rpc = vi.fn(async () => ({ data: 3, error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    expect(await revokeAllMyConsentsRows()).toBe(3);
+    expect(rpc).toHaveBeenCalledWith('civicos_revoke_all_my_consents');
+  });
+
+  it('returns 0 on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'x' } }) });
+    expect(await revokeAllMyConsentsRows()).toBe(0);
+  });
+});
