@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { myDataExport, logMyDataExport, myAuditTrail } from './citizen';
+import { myDataExport, logMyDataExport, myAuditTrail, verifyMyAuditTrail } from './citizen';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -87,5 +87,35 @@ describe('myAuditTrail', () => {
       rpc: async () => ({ data: null, error: { message: 'denied' } }),
     });
     expect(await myAuditTrail()).toEqual([]);
+  });
+});
+
+describe('verifyMyAuditTrail', () => {
+  it('returns null when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await verifyMyAuditTrail()).toBeNull();
+  });
+
+  it('unwraps the set-returning verifier row', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: [{ entries: 3, intact: true, broken_at: null }], error: null }),
+    });
+    expect(await verifyMyAuditTrail()).toEqual({ entries: 3, intact: true, broken_at: null });
+  });
+
+  it('surfaces a broken chain', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: [{ entries: 5, intact: false, broken_at: 4 }], error: null }),
+    });
+    const out = await verifyMyAuditTrail();
+    expect(out!.intact).toBe(false);
+    expect(out!.broken_at).toBe(4);
+  });
+
+  it('returns null on RPC error', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: null, error: { message: 'denied' } }),
+    });
+    expect(await verifyMyAuditTrail()).toBeNull();
   });
 });

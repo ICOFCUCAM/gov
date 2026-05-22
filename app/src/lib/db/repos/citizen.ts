@@ -301,4 +301,22 @@ export async function myAuditTrail(limit = 100): Promise<AuditTrailEntry[]> {
   return data as AuditTrailEntry[];
 }
 
+export interface AuditChainStatus {
+  entries: number;
+  intact: boolean;
+  broken_at: number | null;
+}
+
+/** Verify the hash-chain integrity of the citizen's own audit scope via
+ *  the substrate's proven verifier (scope resolved server-side from
+ *  auth.uid()). Returns null without a substrate / session. */
+export async function verifyMyAuditTrail(): Promise<AuditChainStatus | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_verify_my_audit_trail');
+  if (error || !data) return null;
+  const row = (Array.isArray(data) ? data[0] : data) as AuditChainStatus | undefined;
+  return row ?? null;
+}
+
 export { substrateAvailable };

@@ -6,8 +6,8 @@ import { PhoneShell } from '@/components/ui/PhoneShell';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import {
-  myReceiptTimelineRows, myDataExport, logMyDataExport, myAuditTrail,
-  type ReceiptEvent, type AuditTrailEntry,
+  myReceiptTimelineRows, myDataExport, logMyDataExport, myAuditTrail, verifyMyAuditTrail,
+  type ReceiptEvent, type AuditTrailEntry, type AuditChainStatus,
 } from '@/lib/db/repos/citizen';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -33,11 +33,14 @@ export default function ReceiptsPage() {
   const [loading, setLoading] = React.useState(false);
   const [exporting, setExporting] = React.useState(false);
   const [trail, setTrail] = React.useState<AuditTrailEntry[] | null>(null);
+  const [chain, setChain] = React.useState<AuditChainStatus | null>(null);
   const [showTrail, setShowTrail] = React.useState(false);
   const available = substrateAvailable();
 
   const loadTrail = React.useCallback(async () => {
-    setTrail(await myAuditTrail(100));
+    const [rows, status] = await Promise.all([myAuditTrail(100), verifyMyAuditTrail()]);
+    setTrail(rows);
+    setChain(status);
   }, []);
 
   const toggleTrail = React.useCallback(() => {
@@ -185,6 +188,13 @@ export default function ReceiptsPage() {
                 className="focus-ring font-semibold text-lg underline underline-offset-2">
                 {showTrail ? 'Hide' : 'Show'} activity &amp; access log
               </button>
+              {showTrail && chain && chain.entries > 0 ? (
+                <p className={`mt-1 text-sm ${chain.intact ? 'text-ok' : 'text-alert'}`}>
+                  {chain.intact
+                    ? `✓ hash chain intact — ${chain.entries} ${chain.entries === 1 ? 'entry' : 'entries'} verified`
+                    : `⚠ chain broken at entry #${chain.broken_at}`}
+                </p>
+              ) : null}
               {showTrail ? (
                 trail === null ? (
                   <p className="mt-2 text-sm text-ink-muted">loading…</p>
