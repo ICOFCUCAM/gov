@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { escalationResponseStats, escalationResponseTrend, postureStats, postureTrend, dispatchResponseStats, dispatchResponseTrend } from './memory';
+import { escalationResponseStats, escalationResponseTrend, postureStats, postureTrend, dispatchResponseStats, dispatchResponseTrend, charterAttention } from './memory';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -103,6 +103,33 @@ describe('postureStats', () => {
   it('returns [] on RPC error', async () => {
     publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
     expect(await postureStats()).toEqual([]);
+  });
+});
+
+describe('charterAttention', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await charterAttention()).toEqual([]);
+  });
+
+  it('maps rows to camelCase and forwards the limit', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [
+        { kind: 'request_overdue', ref: 'SR-1', at: '2026-05-01T00:00:00Z', age_hours: '52.0', detail: 'passport', action: 'ack' },
+        { kind: 'appeal_pending', ref: 'AP-1', at: '2026-05-02T00:00:00Z', age_hours: null, detail: 'g', action: 'decide' },
+      ],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await charterAttention(25);
+    expect(rpc).toHaveBeenCalledWith('civicos_charter_attention', { p_limit: 25 });
+    expect(out[0]).toEqual({ kind: 'request_overdue', ref: 'SR-1', at: '2026-05-01T00:00:00Z', ageHours: 52, detail: 'passport', action: 'ack' });
+    expect(out[1]!.ageHours).toBeNull();
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await charterAttention()).toEqual([]);
   });
 });
 

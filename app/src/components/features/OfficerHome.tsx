@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { listWorkItemsRows } from '@/lib/db/repos/work-items';
-import { listEscalationsRows, listDispatchesRows } from '@/lib/db/repos/memory';
+import { listEscalationsRows, listDispatchesRows, charterAttention, type CharterAttentionItem } from '@/lib/db/repos/memory';
 import { listServiceRequestsRows, listAppealsRows } from '@/lib/db/repos/citizen';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkItemRow, EscalationRow, DispatchRow, ServiceRequestRow, AppealRow } from '@/lib/db/types';
@@ -44,6 +44,7 @@ export function OfficerHome() {
   const [dispatches, setDispatches] = React.useState<DispatchRow[]>([]);
   const [escalations, setEscalations] = React.useState<EscalationRow[]>([]);
   const [mySteps, setMySteps] = React.useState<ActorStepRow[]>([]);
+  const [attention, setAttention] = React.useState<CharterAttentionItem[]>([]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -66,8 +67,10 @@ export function OfficerHome() {
     setEscalations(esc.slice(0, 10));
     if (actor?.kind === 'officer') {
       setMySteps(await myRecentStepsRows(actor.id, 8));
+      setAttention(await charterAttention(50));
     } else {
       setMySteps([]);
+      setAttention([]);
     }
   }, [available, actor?.id, actor?.kind, actor?.charterId]);
 
@@ -130,6 +133,34 @@ export function OfficerHome() {
 
       <ConstitutionalStrip />
       <LiveActivityStrip />
+
+      {attention.length > 0 ? (
+        <Panel title="Needs attention" meta={`${attention.length} · oldest first`} bodyClass="!p-0">
+          <div className="max-h-[280px] overflow-y-auto">
+            {attention.map(a => {
+              const href =
+                a.kind === 'appeal_pending' ? '/gov/intake'
+                : a.kind === 'request_overdue' ? '/gov/intake'
+                : a.kind === 'dispatch_unacked' ? '/gov/dispatches'
+                : '/gov/escalations';
+              const overdue = (a.ageHours ?? 0) >= 48;
+              return (
+                <Link key={`${a.kind}:${a.ref}`} href={href}
+                  className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px] hover:bg-surface-2">
+                  <span className="w-32 shrink-0 text-[8.5px] font-bold uppercase tracking-wider text-ink-muted">{a.kind.replace(/_/g, ' ')}</span>
+                  <span className="w-24 shrink-0 truncate font-mono text-link">{a.ref}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink">{a.detail}</span>
+                  <span className="w-16 shrink-0 text-right font-mono tabular-nums"
+                    style={{ color: overdue ? TONE.alert : TONE.warn }}>
+                    {a.ageHours == null ? '—' : a.ageHours >= 24 ? `${Math.round(a.ageHours / 24)}d` : `${Math.round(a.ageHours)}h`}
+                  </span>
+                  <span className="w-14 shrink-0 text-right text-[8.5px] uppercase tracking-wider text-ink-muted">{a.action}</span>
+                </Link>
+              );
+            })}
+          </div>
+        </Panel>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <Panel title="My work queue" meta={`${assigned.length}`} bodyClass="!p-0">

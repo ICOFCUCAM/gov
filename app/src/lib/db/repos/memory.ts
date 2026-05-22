@@ -510,4 +510,32 @@ export async function postureTrend(opts: { charterId?: string; weeks?: number } 
   }));
 }
 
+export interface CharterAttentionItem {
+  kind: 'request_overdue' | 'escalation_unacked' | 'appeal_pending' | 'dispatch_unacked';
+  ref: string;
+  at: string | null;
+  ageHours: number | null;
+  detail: string;
+  action: 'ack' | 'decide' | 'respond';
+}
+
+interface CharterAttentionRow {
+  kind: CharterAttentionItem['kind']; ref: string; at: string | null;
+  age_hours: string | number | null; detail: string; action: CharterAttentionItem['action'];
+}
+
+/** The signed-in officer's charter attention feed (overdue requests, unacked
+ *  escalations, pending appeals, unacked dispatches), oldest-first. Scoped to
+ *  the officer's charter by the RPC. [] without a substrate or officer. */
+export async function charterAttention(limit = 50): Promise<CharterAttentionItem[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_charter_attention', { p_limit: limit });
+  if (error || !data) return [];
+  return (data as CharterAttentionRow[]).map(r => ({
+    kind: r.kind, ref: r.ref, at: r.at,
+    ageHours: numOrNull(r.age_hours), detail: r.detail, action: r.action,
+  }));
+}
+
 export { substrateAvailable };
