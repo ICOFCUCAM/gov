@@ -168,6 +168,18 @@ export async function claimWorkItemRow(ref: string): Promise<WorkItemRow | null>
   return (Array.isArray(data) ? data[0] : data) as WorkItemRow;
 }
 
+/** Release an open work item back to the unassigned pool (assignee := null),
+ *  recorded on the item's audit scope. Only the current assignee or a
+ *  platform-tier officer may release. Assignment-only — does not advance the
+ *  workflow stage. Returns the updated row, or null on failure. */
+export async function releaseWorkItemRow(ref: string): Promise<WorkItemRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_release_work_item', { p_ref: ref });
+  if (error || !data) { if (error) console.error('[civicos] release_work_item failed:', error.message); return null; }
+  return (Array.isArray(data) ? data[0] : data) as WorkItemRow;
+}
+
 export async function workItemStepsRows(ref: string, limit = 50): Promise<WorkItemStepRow[]> {
   const sb = publicClient();
   if (!sb) return [];

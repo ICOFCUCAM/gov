@@ -6,9 +6,32 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { workItemFlowStats, workItemStageDistribution, officerWorkload, claimWorkItemRow } from './work-items';
+import {
+  workItemFlowStats, workItemStageDistribution, officerWorkload,
+  claimWorkItemRow, releaseWorkItemRow,
+} from './work-items';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('releaseWorkItemRow', () => {
+  it('returns null when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await releaseWorkItemRow('WI-1')).toBeNull();
+  });
+
+  it('calls the RPC with the ref and returns the updated row', async () => {
+    const rpc = vi.fn(async () => ({ data: { id: 'wi1', ref: 'WI-1', assignee_name: null }, error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await releaseWorkItemRow('WI-1');
+    expect(rpc).toHaveBeenCalledWith('civicos_release_work_item', { p_ref: 'WI-1' });
+    expect(out!.assignee_name).toBeNull();
+  });
+
+  it('returns null on RPC error (e.g. not the assignee)', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'insufficient_privilege' } }) });
+    expect(await releaseWorkItemRow('WI-1')).toBeNull();
+  });
+});
 
 describe('claimWorkItemRow', () => {
   it('returns null when the substrate is unavailable', async () => {

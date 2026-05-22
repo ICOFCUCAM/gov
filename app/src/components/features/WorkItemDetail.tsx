@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   workItemRow, workItemStepsRows, listWorkflowDefinitionsRows,
-  transitionWorkItemRow, claimWorkItemRow,
+  transitionWorkItemRow, claimWorkItemRow, releaseWorkItemRow,
 } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkItemRow, WorkItemStepRow, ActionKey } from '@/lib/db/types';
@@ -130,6 +130,18 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
     }
   }
 
+  async function release() {
+    if (!item) return;
+    setBusy(true); setError(null);
+    try {
+      const updated = await releaseWorkItemRow(item.ref);
+      if (!updated) setError('release failed — only the current assignee or a platform officer may release');
+      else await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -163,11 +175,21 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
           <Field label="Created" value={new Date(item.created_at).toLocaleString()} />
         </div>
 
-        {!item.closed && actor?.kind === 'officer' && item.assignee_id !== actor.id ? (
-          <button type="button" onClick={() => { void claim(); }} disabled={busy}
-            className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
-            {item.assignee_id ? 'assign to me' : 'claim'}
-          </button>
+        {!item.closed && actor?.kind === 'officer' ? (
+          <div className="flex items-center gap-2">
+            {item.assignee_id !== actor.id ? (
+              <button type="button" onClick={() => { void claim(); }} disabled={busy}
+                className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+                {item.assignee_id ? 'assign to me' : 'claim'}
+              </button>
+            ) : null}
+            {item.assignee_id != null ? (
+              <button type="button" onClick={() => { void release(); }} disabled={busy}
+                className="focus-ring rounded-[3px] border border-line-soft px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+                release
+              </button>
+            ) : null}
+          </div>
         ) : null}
 
         {item.closed ? (
