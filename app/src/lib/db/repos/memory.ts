@@ -151,6 +151,46 @@ export async function listDispatchesRows(opts: { status?: string; issuer?: strin
   return data as DispatchRow[];
 }
 
+export interface DispatchResponseStat {
+  charterId: string;
+  total: number;
+  acknowledged: number;
+  onScene: number;
+  closed: number;
+  open: number;
+  medianAckMinutes: number | null;
+  medianOnSceneMinutes: number | null;
+  medianCloseHours: number | null;
+  oldestOpenHours: number | null;
+}
+
+interface DispatchResponseStatRow {
+  charter_id: string; total: number; acknowledged: number; on_scene: number; closed: number; open: number;
+  median_ack_minutes: string | number | null; median_on_scene_minutes: string | number | null;
+  median_close_hours: string | number | null; oldest_open_hours: string | number | null;
+}
+
+/** Per-issuing-charter dispatch response stats (ack/on-scene/close medians,
+ *  open backlog) over the last `days`. Authenticated-tier. [] without a
+ *  substrate. */
+export async function dispatchResponseStats(opts: { charterId?: string; days?: number } = {}): Promise<DispatchResponseStat[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_dispatch_response_stats', {
+    p_charter_id: opts.charterId ?? null, p_days: opts.days ?? 30,
+  });
+  if (error || !data) return [];
+  return (data as DispatchResponseStatRow[]).map(r => ({
+    charterId: r.charter_id,
+    total: Number(r.total), acknowledged: Number(r.acknowledged),
+    onScene: Number(r.on_scene), closed: Number(r.closed), open: Number(r.open),
+    medianAckMinutes: numOrNull(r.median_ack_minutes),
+    medianOnSceneMinutes: numOrNull(r.median_on_scene_minutes),
+    medianCloseHours: numOrNull(r.median_close_hours),
+    oldestOpenHours: numOrNull(r.oldest_open_hours),
+  }));
+}
+
 // ── Escalations ───────────────────────────────────────────────────
 
 export interface EscalationInput {

@@ -4,7 +4,7 @@ import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   recordDispatchRow, acknowledgeDispatchRow, closeDispatchRow,
-  listDispatchesRows,
+  listDispatchesRows, dispatchResponseStats, type DispatchResponseStat,
 } from '@/lib/db/repos/memory';
 import { substrateAvailable } from '@/lib/db/client';
 import type { DispatchRow, Priority } from '@/lib/db/types';
@@ -44,11 +44,18 @@ export function DispatchBoard() {
   const [busyRef, setBusyRef] = React.useState<string | null>(null);
   const available = substrateAvailable();
 
+  const [responseStats, setResponseStats] = React.useState<DispatchResponseStat[]>([]);
+
   const refresh = React.useCallback(async () => {
     if (!available) return;
     setLoading(true);
     try {
-      setItems(await listDispatchesRows({ limit: 50 }));
+      const [its, rs] = await Promise.all([
+        listDispatchesRows({ limit: 50 }),
+        dispatchResponseStats({ days: 30 }),
+      ]);
+      setItems(its);
+      setResponseStats(rs);
     } finally {
       setLoading(false);
     }
@@ -155,6 +162,31 @@ export function DispatchBoard() {
         options={['all','critical','urgent','priority','routine'] as const}
         value={priorityFilter}
         onChange={setPriorityFilter} />
+
+      {responseStats.length > 0 ? (
+        <Panel title="Response times (last 30 days)" meta={`${responseStats.length} charters`} bodyClass="!p-0">
+          <div className="max-h-[220px] overflow-y-auto">
+            <div className="flex items-center gap-2 border-b border-line px-3 py-1 text-[8.5px] font-bold uppercase tracking-wider text-ink-muted">
+              <span className="w-40 shrink-0">charter</span>
+              <span className="w-12 shrink-0 text-right">total</span>
+              <span className="w-12 shrink-0 text-right">open</span>
+              <span className="w-20 shrink-0 text-right">ack</span>
+              <span className="w-20 shrink-0 text-right">on-scene</span>
+              <span className="w-20 shrink-0 text-right">close</span>
+            </div>
+            {responseStats.map(r => (
+              <div key={r.charterId} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 font-mono text-[10px]">
+                <span className="w-40 shrink-0 truncate text-link">{r.charterId}</span>
+                <span className="w-12 shrink-0 text-right text-ink">{r.total}</span>
+                <span className="w-12 shrink-0 text-right" style={{ color: r.open > 0 ? TONE.warn : TONE.ok }}>{r.open}</span>
+                <span className="w-20 shrink-0 text-right text-ink-muted">{r.medianAckMinutes == null ? '—' : `${r.medianAckMinutes}m`}</span>
+                <span className="w-20 shrink-0 text-right text-ink-muted">{r.medianOnSceneMinutes == null ? '—' : `${r.medianOnSceneMinutes}m`}</span>
+                <span className="w-20 shrink-0 text-right text-ink">{r.medianCloseHours == null ? '—' : `${r.medianCloseHours}h`}</span>
+              </div>
+            ))}
+          </div>
+        </Panel>
+      ) : null}
 
       <Panel title="Dispatches" meta={`${(priorityFilter === 'all' ? items : items.filter(d => d.priority === priorityFilter)).length} visible`} bodyClass="!p-0">
         {items.length === 0 ? (

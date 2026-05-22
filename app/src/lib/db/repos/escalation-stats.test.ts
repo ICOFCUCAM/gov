@@ -6,9 +6,39 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { escalationResponseStats, postureStats } from './memory';
+import { escalationResponseStats, postureStats, dispatchResponseStats } from './memory';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('dispatchResponseStats', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await dispatchResponseStats()).toEqual([]);
+  });
+
+  it('maps rows to camelCase, coercing nulls, and forwards options', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [{
+        charter_id: 'POLICE', total: 5, acknowledged: 4, on_scene: 3, closed: 2, open: 3,
+        median_ack_minutes: '2.5', median_on_scene_minutes: '11.0', median_close_hours: '1.5',
+        oldest_open_hours: '8.0',
+      }],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await dispatchResponseStats({ charterId: 'POLICE', days: 30 });
+    expect(rpc).toHaveBeenCalledWith('civicos_dispatch_response_stats', { p_charter_id: 'POLICE', p_days: 30 });
+    expect(out[0]).toEqual({
+      charterId: 'POLICE', total: 5, acknowledged: 4, onScene: 3, closed: 2, open: 3,
+      medianAckMinutes: 2.5, medianOnSceneMinutes: 11, medianCloseHours: 1.5, oldestOpenHours: 8,
+    });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await dispatchResponseStats()).toEqual([]);
+  });
+});
 
 describe('postureStats', () => {
   it('returns [] when the substrate is unavailable', async () => {
