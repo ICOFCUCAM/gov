@@ -580,27 +580,34 @@ function AppealsPanel({
           {rows.map(a => {
             const linked = a.linked_work_item_id ? linkedItems.get(a.linked_work_item_id) : null;
             return (
-              <div key={a.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
-                <WatchStar kind="appeal" ref={a.ref} label={a.ground} />
-                <span className="w-28 shrink-0 truncate font-mono text-ink-soft">{a.ref}</span>
-                <span className="w-32 shrink-0 truncate font-mono text-link">{a.originating_charter_id}</span>
-                <span className="min-w-0 flex-1 truncate text-ink">{a.ground}</span>
-                <span className="w-24 shrink-0 truncate text-right text-ink-soft">{a.decision ?? '—'}</span>
-                {linked ? (
-                  <span
-                    className="w-28 shrink-0 truncate rounded-[3px] border px-1.5 py-0.5 text-right text-[8.5px] uppercase tracking-wider"
-                    style={{
-                      borderColor: linked.closed ? TONE.ok : TONE.link,
-                      color: linked.closed ? TONE.ok : TONE.link,
-                    }}
-                  >
-                    ⊳ {linked.current_stage}
+              <div key={a.id} className="border-b border-line-soft px-3 py-1.5 last:border-0">
+                <div className="flex items-center gap-2 text-[10px]">
+                  <WatchStar kind="appeal" ref={a.ref} label={a.ground} />
+                  <span className="w-28 shrink-0 truncate font-mono text-ink-soft">{a.ref}</span>
+                  <span className="w-32 shrink-0 truncate font-mono text-link">{a.originating_charter_id}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink">{a.ground}</span>
+                  <span className="w-24 shrink-0 truncate text-right text-ink-soft">{a.decision ?? '—'}</span>
+                  {linked ? (
+                    <span
+                      className="w-28 shrink-0 truncate rounded-[3px] border px-1.5 py-0.5 text-right text-[8.5px] uppercase tracking-wider"
+                      style={{
+                        borderColor: linked.closed ? TONE.ok : TONE.link,
+                        color: linked.closed ? TONE.ok : TONE.link,
+                      }}
+                    >
+                      ⊳ {linked.current_stage}
+                    </span>
+                  ) : <span className="w-28 shrink-0" />}
+                  <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
+                    style={{ color: a.decided_at ? TONE.ok : TONE.warn }}>
+                    {a.status}
                   </span>
-                ) : <span className="w-28 shrink-0" />}
-                <span className="w-20 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                  style={{ color: a.decided_at ? TONE.ok : TONE.warn }}>
-                  {a.status}
-                </span>
+                </div>
+                {a.decided_at && a.reasoning ? (
+                  <p className="mt-0.5 pl-6 text-[10px] text-ink-muted">
+                    <span className="font-semibold uppercase tracking-wider text-[8.5px]">reasoning:</span> {a.reasoning}
+                  </p>
+                ) : null}
               </div>
             );
           })}
