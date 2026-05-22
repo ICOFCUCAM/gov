@@ -6,9 +6,40 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { escalationResponseStats } from './memory';
+import { escalationResponseStats, postureStats } from './memory';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('postureStats', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await postureStats()).toEqual([]);
+  });
+
+  it('maps rows to camelCase and forwards options', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [{
+        charter_id: 'P', snapshots: 3, latest_posture: 'elevated',
+        latest_readiness: 50, latest_stress: 70, latest_at: '2026-05-21T00:00:00Z',
+        avg_readiness: '63.3', avg_stress: '43.3', max_stress: 70, min_readiness: 50,
+      }],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await postureStats({ charterId: 'P', days: 30 });
+    expect(rpc).toHaveBeenCalledWith('civicos_posture_stats', { p_charter_id: 'P', p_days: 30 });
+    expect(out[0]).toEqual({
+      charterId: 'P', snapshots: 3, latestPosture: 'elevated', latestReadiness: 50,
+      latestStress: 70, latestAt: '2026-05-21T00:00:00Z', avgReadiness: 63.3, avgStress: 43.3,
+      maxStress: 70, minReadiness: 50,
+    });
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await postureStats()).toEqual([]);
+  });
+});
 
 describe('escalationResponseStats', () => {
   it('returns [] when the substrate is unavailable', async () => {

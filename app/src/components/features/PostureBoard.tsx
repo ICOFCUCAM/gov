@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { recordPostureRow, listPostureHistoryRows } from '@/lib/db/repos/memory';
+import { recordPostureRow, listPostureHistoryRows, postureStats, type PostureStat } from '@/lib/db/repos/memory';
 import { PostureTimeline } from '@/components/features/PostureTimeline';
 import { substrateAvailable } from '@/lib/db/client';
 import type { PostureHistoryRow, Posture } from '@/lib/db/types';
@@ -42,9 +42,16 @@ export function PostureBoard() {
   React.useEffect(() => { setPref('posture.sort', sortBy); }, [sortBy]);
   const available = substrateAvailable();
 
+  const [stats, setStats] = React.useState<Record<string, PostureStat>>({});
+
   const refresh = React.useCallback(async () => {
     if (!available) return;
-    setRows(await listPostureHistoryRows({ limit: 100 }));
+    const [hist, st] = await Promise.all([
+      listPostureHistoryRows({ limit: 100 }),
+      postureStats({ days: 30 }),
+    ]);
+    setRows(hist);
+    setStats(Object.fromEntries(st.map(s => [s.charterId, s])));
   }, [available]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, actor?.id, session?.user.id, refresh]);
@@ -166,6 +173,9 @@ export function PostureBoard() {
                     }} />
                   </div>
                   <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink">{s}</span>
+                  <span className="w-20 shrink-0 text-right font-mono tabular-nums text-[9px] text-ink-muted">
+                    {stats[r.charter_id]?.avgStress != null ? `avg ${stats[r.charter_id]!.avgStress}` : ''}
+                  </span>
                 </div>
               );
             })}

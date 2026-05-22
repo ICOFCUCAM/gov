@@ -289,4 +289,42 @@ export async function listPostureHistoryRows(opts: { charter?: string; limit?: n
   return data as PostureHistoryRow[];
 }
 
+export interface PostureStat {
+  charterId: string;
+  snapshots: number;
+  latestPosture: string;
+  latestReadiness: number | null;
+  latestStress: number | null;
+  latestAt: string;
+  avgReadiness: number | null;
+  avgStress: number | null;
+  maxStress: number | null;
+  minReadiness: number | null;
+}
+
+interface PostureStatRow {
+  charter_id: string; snapshots: number; latest_posture: string;
+  latest_readiness: number | null; latest_stress: number | null; latest_at: string;
+  avg_readiness: string | number | null; avg_stress: string | number | null;
+  max_stress: number | null; min_readiness: number | null;
+}
+
+/** Per-charter posture summary (latest + avg/extreme readiness & stress)
+ *  over the last `days`, most-stressed first. Authenticated-tier. [] without
+ *  a substrate. */
+export async function postureStats(opts: { charterId?: string; days?: number } = {}): Promise<PostureStat[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_posture_stats', {
+    p_charter_id: opts.charterId ?? null, p_days: opts.days ?? 30,
+  });
+  if (error || !data) return [];
+  return (data as PostureStatRow[]).map(r => ({
+    charterId: r.charter_id, snapshots: Number(r.snapshots), latestPosture: r.latest_posture,
+    latestReadiness: r.latest_readiness, latestStress: r.latest_stress, latestAt: r.latest_at,
+    avgReadiness: numOrNull(r.avg_readiness), avgStress: numOrNull(r.avg_stress),
+    maxStress: r.max_stress, minReadiness: r.min_readiness,
+  }));
+}
+
 export { substrateAvailable };
