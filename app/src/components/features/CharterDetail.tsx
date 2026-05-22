@@ -3,7 +3,10 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
-import { listInstitutionsRows, listFacilitiesRows, type FacilityRowLite } from '@/lib/db/repos/institutions';
+import {
+  listInstitutionsRows, listFacilitiesRows, serviceSlaStats, appealsStats,
+  type FacilityRowLite, type ServiceSlaStat, type AppealsStat,
+} from '@/lib/db/repos/institutions';
 import { listWorkItemsRows } from '@/lib/db/repos/work-items';
 import { listDispatchesRows, listEscalationsRows, listPostureHistoryRows, listDirectivesRows } from '@/lib/db/repos/memory';
 import { recentAuditEntriesRows } from '@/lib/db/repos/audit';
@@ -43,6 +46,8 @@ export function CharterDetail({ charterId }: { charterId: string }) {
   const [officers, setOfficers] = React.useState<OfficerRow[]>([]);
   const [events, setEvents] = React.useState<PersistedEvent[]>([]);
   const [intake, setIntake] = React.useState<ServiceRequestRow[]>([]);
+  const [sla, setSla] = React.useState<ServiceSlaStat | null>(null);
+  const [appeals, setAppeals] = React.useState<AppealsStat | null>(null);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -71,6 +76,12 @@ export function CharterDetail({ charterId }: { charterId: string }) {
     setEvents(evs);
     const ints = await listServiceRequestsRows({ target: charterId, openOnly: true, limit: 30 });
     setIntake(ints);
+    const [slaRows, appealRows] = await Promise.all([
+      serviceSlaStats({ charterId, days: 90 }),
+      appealsStats({ charterId, days: 90 }),
+    ]);
+    setSla(slaRows[0] ?? null);
+    setAppeals(appealRows[0] ?? null);
   }, [available, charterId]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
@@ -124,6 +135,28 @@ export function CharterDetail({ charterId }: { charterId: string }) {
         <Tile label="Directives" value={String(directives.length)} href="/gov/directives" tone={TONE.link} />
         <Tile label="Audit entries" value={String(audit.length)} href="/gov/audit" tone={TONE.link} />
       </div>
+
+      {sla || appeals ? (
+        <Panel title="Service & contestation metrics" meta="last 90 days" bodyClass="!p-3">
+          <div className="flex flex-wrap gap-x-5 gap-y-1 font-mono text-[10px]">
+            {sla ? (
+              <>
+                <span className="text-ink-muted">requests <span className="text-ink">{sla.submitted}</span></span>
+                <span className="text-ink-muted">median decide <span className="text-ink">{sla.medianResolveHours == null ? '—' : `${sla.medianResolveHours}h`}</span></span>
+                <span className="text-ink-muted">open <span style={{ color: sla.open > 0 ? TONE.warn : TONE.ok }}>{sla.open}</span></span>
+                <span className="text-ink-muted">rating <span style={{ color: sla.avgSatisfaction == null ? undefined : sla.avgSatisfaction >= 3.5 ? TONE.ok : TONE.warn }}>{sla.avgSatisfaction == null ? '—' : `★${sla.avgSatisfaction}`}</span></span>
+              </>
+            ) : <span className="text-ink-muted">no service requests in window</span>}
+            {appeals ? (
+              <>
+                <span className="text-ink-muted">appeals <span className="text-ink">{appeals.filed}</span></span>
+                <span className="text-ink-muted">median decision <span className="text-ink">{appeals.medianDecisionDays == null ? '—' : `${appeals.medianDecisionDays}d`}</span></span>
+                <span className="text-ink-muted">pending <span style={{ color: appeals.pending > 0 ? TONE.warn : TONE.ok }}>{appeals.pending}</span></span>
+              </>
+            ) : null}
+          </div>
+        </Panel>
+      ) : null}
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
         <Panel title="Open work items" meta={`${workItems.length}`} bodyClass="!p-0">
