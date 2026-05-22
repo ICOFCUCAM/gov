@@ -7,6 +7,7 @@ import {
   listEscalationsRows, escalationResponseStats, type EscalationResponseStat,
   escalationResponseTrend, type EscalationResponseTrendPoint,
 } from '@/lib/db/repos/memory';
+import { recentCascadeEvents, type PersistedEvent } from '@/lib/db/repos/events';
 import { substrateAvailable } from '@/lib/db/client';
 import type { EscalationRow, Severity } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
@@ -40,19 +41,22 @@ export function EscalationFloor() {
 
   const [responseStats, setResponseStats] = React.useState<EscalationResponseStat[]>([]);
   const [responseTrend, setResponseTrend] = React.useState<EscalationResponseTrendPoint[]>([]);
+  const [cascades, setCascades] = React.useState<PersistedEvent[]>([]);
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
     setLoading(true);
     try {
-      const [its, rs, rt] = await Promise.all([
+      const [its, rs, rt, cas] = await Promise.all([
         listEscalationsRows({ limit: 50, openOnly }),
         escalationResponseStats({ days: 30 }),
         escalationResponseTrend({ weeks: 12 }),
+        recentCascadeEvents(20),
       ]);
       setItems(its);
       setResponseStats(rs);
       setResponseTrend(rt);
+      setCascades(cas);
     } finally {
       setLoading(false);
     }
@@ -220,6 +224,25 @@ export function EscalationFloor() {
               </div>
             );
           })()}
+        </Panel>
+      ) : null}
+
+      {cascades.length > 0 ? (
+        <Panel title="Cross-ministry cascades" meta={`${cascades.length} · propagated`} bodyClass="!p-0">
+          <div className="max-h-[240px] overflow-y-auto">
+            {cascades.map(c => {
+              const p = c.payload as { source_charter?: string; source_archetype?: string; target_archetype?: string; severity?: string; relation?: string; direction?: string };
+              return (
+                <div key={c.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
+                  <span className="w-16 shrink-0 text-[8.5px] font-bold uppercase tracking-wider" style={{ color: severityTone((p.severity ?? 'major') as Severity) }}>{p.severity}</span>
+                  <span className="w-28 shrink-0 truncate font-mono text-link">{p.source_charter}</span>
+                  <span className="shrink-0 text-ink-muted">→</span>
+                  <span className="w-28 shrink-0 truncate font-mono text-ink">{c.target}</span>
+                  <span className="min-w-0 flex-1 truncate text-ink-muted">{p.relation}{p.direction ? ` · ${p.direction}` : ''}</span>
+                </div>
+              );
+            })}
+          </div>
         </Panel>
       ) : null}
 

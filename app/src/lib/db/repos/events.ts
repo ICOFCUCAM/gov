@@ -71,6 +71,44 @@ export async function recentEventsRows(
   return (data as FederationEventRow[]).map(fromRow);
 }
 
+export interface FederationEdge {
+  sourceArchetype: string;
+  targetArchetype: string;
+  relation: string;
+  direction: 'provides' | 'consumes' | 'mutual';
+  weight: number;
+}
+
+interface FederationEdgeRow {
+  source_archetype: string; target_archetype: string; relation: string;
+  direction: FederationEdge['direction']; weight: string | number;
+}
+
+/** The declared cross-ministry dependency graph (archetype-level), optionally
+ *  scoped to one source archetype. Topology only — anon-readable. [] without a
+ *  substrate. */
+export async function listFederationEdges(sourceArchetype?: string): Promise<FederationEdge[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_list_federation_edges', {
+    p_source_archetype: sourceArchetype ?? null,
+  });
+  if (error || !data) return [];
+  return (data as FederationEdgeRow[]).map(r => ({
+    sourceArchetype: r.source_archetype,
+    targetArchetype: r.target_archetype,
+    relation: r.relation,
+    direction: r.direction,
+    weight: Number(r.weight),
+  }));
+}
+
+/** Recent cross-ministry escalation cascades — the federation events emitted
+ *  when a major/national escalation propagated along the dependency graph. */
+export async function recentCascadeEvents(limit = 20): Promise<PersistedEvent[]> {
+  return recentEventsRows({ type: 'escalation.cascade', limit });
+}
+
 export { substrateAvailable };
 
 /* ── Outbound event webhooks (platform-tier) ──────────────────────── */

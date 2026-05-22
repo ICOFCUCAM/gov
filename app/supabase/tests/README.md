@@ -31,6 +31,7 @@ run those with the service-role / migration connection.
 
 | File | What it pins |
 |------|--------------|
+| `federation_cascade_test.sql` | The escalation cascade trigger (Phase C): a major/national escalation against a registered institution emits `escalation.cascade` federation events to dependents along provides/mutual edges only (never consumes); minor severity and escalations against non-institution charters do not cascade. |
 | `incident_loop_test.sql` | The two auto-resolve triggers: a dispatch / work-item close resolves (and acknowledges) its linked escalation, and leaves unlinked escalations untouched. |
 | `webhook_delivery_test.sql` | Circuit breaker trips at 10 consecutive failures and clears on a successful delivery; the delivery log is trimmed to the last 50 per webhook; secret rotation rejects `< 8` chars and preserves the cursor. |
 | `accountability_stats_test.sql` | The published aggregate arithmetic — `service_sla_stats` (counts incl. cancelled, open excludes cancelled, median turnaround, rated count, avg satisfaction), `appeals_stats` (counts incl. withdrawn, pending excludes withdrawn, median days-to-decision), `appeals_trend` (weekly decided buckets + median decision days, fixed same-week dataset), `consent_footprint_stats` (per-scope active / expiring-30d / revoked, distinct-citizen dataset), `directive_stats` (signed / effective / in-force / rescinded + median signed→effective lag), and `directive_trend` (weekly signed buckets + since-effective + median lag) — over a fixed fabricated dataset. |

@@ -3,7 +3,7 @@ import { mergeScoreboard } from './AccountabilityScoreboard';
 import type { ServiceSlaStat, AppealsStat, DirectiveStat, ConsentFootprintStat } from '@/lib/db/repos/institutions';
 
 const sla = (over: Partial<ServiceSlaStat> & { charterId: string }): ServiceSlaStat => ({
-  charterId: over.charterId, submitted: 0, acknowledged: 0, resolved: 0, open: 0, cancelled: 0,
+  submitted: 0, acknowledged: 0, resolved: 0, open: 0, cancelled: 0,
   medianAckHours: null, medianResolveHours: null, p90ResolveHours: null, oldestOpenHours: null,
   rated: 0, avgSatisfaction: null, ...over,
 });
