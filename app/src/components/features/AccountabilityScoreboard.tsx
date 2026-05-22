@@ -21,7 +21,7 @@ import { FilterChips } from '@/components/ui/FilterChips';
  * panel; this is the cross-charter scoreboard operators lacked.
  */
 
-interface Row {
+export interface ScoreboardRow {
   charterId: string;
   slaOpen: number;
   slaMedianResolveHours: number | null;
@@ -33,8 +33,29 @@ interface Row {
 
 type SortKey = 'charter' | 'open' | 'pending' | 'in_force' | 'consent';
 
+/** Merge the four per-charter aggregates into one row per charter. Pure so
+ *  the join logic is unit-testable independently of the React surface. */
+export function mergeScoreboard(
+  sla: ServiceSlaStat[], appeals: AppealsStat[], directives: DirectiveStat[], footprint: ConsentFootprintStat[],
+): ScoreboardRow[] {
+  const byCharter = new Map<string, ScoreboardRow>();
+  const get = (id: string): ScoreboardRow => {
+    let r = byCharter.get(id);
+    if (!r) {
+      r = { charterId: id, slaOpen: 0, slaMedianResolveHours: null, appealsPending: 0, appealsMedianDays: null, directivesInForce: 0, consentActive: 0 };
+      byCharter.set(id, r);
+    }
+    return r;
+  };
+  for (const s of sla) { const r = get(s.charterId); r.slaOpen = s.open; r.slaMedianResolveHours = s.medianResolveHours; }
+  for (const a of appeals) { const r = get(a.charterId); r.appealsPending = a.pending; r.appealsMedianDays = a.medianDecisionDays; }
+  for (const d of directives) { const r = get(d.charterId); r.directivesInForce = d.inForce; }
+  for (const f of footprint) { const r = get(f.charterId); r.consentActive += f.active; }
+  return [...byCharter.values()];
+}
+
 export function AccountabilityScoreboard() {
-  const [rows, setRows] = React.useState<Row[]>([]);
+  const [rows, setRows] = React.useState<ScoreboardRow[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<SortKey>('open');
   const available = substrateAvailable();
@@ -52,20 +73,7 @@ export function AccountabilityScoreboard() {
           directiveStats({ days: 365 }),
           consentFootprintStats(),
         ]);
-        const byCharter = new Map<string, Row>();
-        const get = (id: string): Row => {
-          let r = byCharter.get(id);
-          if (!r) {
-            r = { charterId: id, slaOpen: 0, slaMedianResolveHours: null, appealsPending: 0, appealsMedianDays: null, directivesInForce: 0, consentActive: 0 };
-            byCharter.set(id, r);
-          }
-          return r;
-        };
-        for (const s of sla) { const r = get(s.charterId); r.slaOpen = s.open; r.slaMedianResolveHours = s.medianResolveHours; }
-        for (const a of appeals) { const r = get(a.charterId); r.appealsPending = a.pending; r.appealsMedianDays = a.medianDecisionDays; }
-        for (const d of directives) { const r = get(d.charterId); r.directivesInForce = d.inForce; }
-        for (const f of footprint) { const r = get(f.charterId); r.consentActive += f.active; }
-        setRows([...byCharter.values()]);
+        setRows(mergeScoreboard(sla, appeals, directives, footprint));
       } finally {
         setLoading(false);
       }
