@@ -173,9 +173,17 @@ export function CitizenIntakeQueue() {
                 <span className="w-24 shrink-0 truncate font-mono text-ink-soft">{r.ref}</span>
                 <span className="w-32 shrink-0 truncate font-mono text-link">{r.service}</span>
                 <span className="min-w-0 flex-1 truncate text-ink">{r.title ?? r.domain ?? '—'}</span>
-                <span className="w-12 shrink-0 text-right font-mono tabular-nums text-ink-muted">
-                  {ageMinutes(r.submitted_at)}m
-                </span>
+                {(() => {
+                  const ageH = (Date.now() - new Date(r.submitted_at).getTime()) / 3_600_000;
+                  const overdue = !r.acknowledged_at && !r.resolved_at && ageH >= 48;
+                  return (
+                    <span className="w-14 shrink-0 text-right font-mono tabular-nums"
+                      title={overdue ? 'past 48h SLA, unacknowledged' : undefined}
+                      style={{ color: overdue ? TONE.alert : undefined }}>
+                      {ageH >= 1 ? `${Math.round(ageH)}h` : `${ageMinutes(r.submitted_at)}m`}{overdue ? ' ⚠' : ''}
+                    </span>
+                  );
+                })()}
                 <span
                   className="w-24 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
                   style={{ color: r.resolved_at ? TONE.ok : r.acknowledged_at ? TONE.warn : TONE.link }}
