@@ -336,6 +336,7 @@ export interface CitizenDataExport {
   consents: unknown[];
   appeals: unknown[];
   receipt_timeline: unknown[];
+  audit_trail: unknown[];
   counts: { service_requests: number; consents: number; appeals: number };
 }
 
