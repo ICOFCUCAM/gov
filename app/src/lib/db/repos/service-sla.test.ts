@@ -6,9 +6,34 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { serviceSlaStats, appealsStats, serviceSlaTrend } from './institutions';
+import { serviceSlaStats, appealsStats, serviceSlaTrend, institutionByCharterId } from './institutions';
 
 beforeEach(() => publicClientMock.mockReset());
+
+describe('institutionByCharterId', () => {
+  it('returns null when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await institutionByCharterId('MIN-H')).toBeNull();
+  });
+
+  it('queries civicos_institutions by charter_id and returns the row', async () => {
+    const maybeSingle = vi.fn(async () => ({ data: { id: 'i1', charter_id: 'MIN-H', label: 'Health' }, error: null }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ select }));
+    publicClientMock.mockReturnValue({ from });
+    const out = await institutionByCharterId('MIN-H');
+    expect(from).toHaveBeenCalledWith('civicos_institutions');
+    expect(eq).toHaveBeenCalledWith('charter_id', 'MIN-H');
+    expect(out!.label).toBe('Health');
+  });
+
+  it('returns null when absent', async () => {
+    const maybeSingle = vi.fn(async () => ({ data: null, error: null }));
+    publicClientMock.mockReturnValue({ from: () => ({ select: () => ({ eq: () => ({ maybeSingle }) }) }) });
+    expect(await institutionByCharterId('NOPE')).toBeNull();
+  });
+});
 
 describe('serviceSlaTrend', () => {
   it('returns [] when the substrate is unavailable', async () => {

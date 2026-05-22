@@ -141,7 +141,7 @@ export function PublicObservatory() {
             </div>
             {sla.map(s => (
               <div key={s.charterId} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 font-mono text-[10px]">
-                <span className="w-40 shrink-0 truncate text-link">{s.charterId}</span>
+                <Link href={`/public/charter/${encodeURIComponent(s.charterId)}`} className="w-40 shrink-0 truncate text-link hover:underline">{s.charterId}</Link>
                 <span className="w-14 shrink-0 text-right text-ink">{s.submitted}</span>
                 <span className="w-14 shrink-0 text-right" style={{ color: s.open > 0 ? TONE.warn : TONE.ok }}>{s.open}</span>
                 <span className="w-24 shrink-0 text-right text-ink-muted">{s.medianAckHours == null ? '—' : `${s.medianAckHours}h`}</span>
@@ -200,7 +200,7 @@ export function PublicObservatory() {
             </div>
             {appeals.map(a => (
               <div key={a.charterId} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 font-mono text-[10px]">
-                <span className="w-40 shrink-0 truncate text-link">{a.charterId}</span>
+                <Link href={`/public/charter/${encodeURIComponent(a.charterId)}`} className="w-40 shrink-0 truncate text-link hover:underline">{a.charterId}</Link>
                 <span className="w-14 shrink-0 text-right text-ink">{a.filed}</span>
                 <span className="w-16 shrink-0 text-right text-ink-muted">{a.decided}</span>
                 <span className="w-16 shrink-0 text-right" style={{ color: a.pending > 0 ? TONE.warn : TONE.ok }}>{a.pending}</span>

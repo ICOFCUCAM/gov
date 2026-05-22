@@ -71,6 +71,16 @@ export async function listInstitutionsRows(opts: { kind?: InstitutionKind; activ
   return data as InstitutionRow[];
 }
 
+/** Fetch one institution by its charter_id. null if absent / no substrate. */
+export async function institutionByCharterId(charterId: string): Promise<InstitutionRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_institutions').select('*')
+    .eq('charter_id', charterId).maybeSingle();
+  if (error || !data) return null;
+  return data as InstitutionRow;
+}
+
 export interface FacilityRowLite {
   id: string;
   code: string;
