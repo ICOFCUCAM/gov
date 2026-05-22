@@ -281,7 +281,8 @@ export async function listServiceRequestsRows(opts: { target?: string; openOnly?
   if (!sb) return [];
   let q = sb.from('civicos_service_requests').select('*');
   if (opts.target) q = q.eq('target_charter_id', opts.target);
-  if (opts.openOnly) q = q.is('resolved_at', null);
+  // "open" excludes citizen-cancelled requests — they aren't pending work.
+  if (opts.openOnly) q = q.is('resolved_at', null).is('cancelled_at', null);
   const { data, error } = await q.order('submitted_at', { ascending: false }).limit(opts.limit ?? 50);
   if (error || !data) return [];
   return data as ServiceRequestRow[];
@@ -319,7 +320,8 @@ export async function listAppealsRows(opts: { originating?: string; openOnly?: b
   if (!sb) return [];
   let q = sb.from('civicos_appeals').select('*');
   if (opts.originating) q = q.eq('originating_charter_id', opts.originating);
-  if (opts.openOnly) q = q.is('decided_at', null);
+  // "open" excludes citizen-withdrawn appeals — they aren't pending work.
+  if (opts.openOnly) q = q.is('decided_at', null).is('withdrawn_at', null);
   const { data, error } = await q.order('filed_at', { ascending: false }).limit(opts.limit ?? 50);
   if (error || !data) return [];
   return data as AppealRow[];
