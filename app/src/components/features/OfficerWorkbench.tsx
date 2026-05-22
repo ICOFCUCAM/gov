@@ -4,7 +4,7 @@ import * as React from 'react';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   listWorkItemsRows, listWorkflowDefinitionsRows,
-  transitionWorkItemRow, workItemStepsRows,
+  transitionWorkItemRow, workItemStepsRows, claimWorkItemRow,
 } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkItemRow, WorkItemStepRow, WorkflowDefinitionRow, ActionKey } from '@/lib/db/types';
@@ -313,6 +313,18 @@ export function OfficerWorkbench() {
                 <Field label="Assignee" value={activeItem.assignee_name ?? '—'} />
                 <Field label="Priority" value={activeItem.priority} />
               </div>
+
+              {!activeItem.closed && actor?.kind === 'officer' && activeItem.assignee_id !== actor.id ? (
+                <button type="button" disabled={busyAction != null}
+                  onClick={async () => {
+                    setBusyAction('claim');
+                    try { if (await claimWorkItemRow(activeItem.ref)) await refreshItems(); }
+                    finally { setBusyAction(null); }
+                  }}
+                  className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+                  {activeItem.assignee_id ? 'assign to me' : 'claim'}
+                </button>
+              ) : null}
 
               {activeItem.closed ? (
                 <p className="rounded-[3px] border border-line bg-bg px-2 py-1 text-[10px]" style={{ color: TONE.ok }}>
