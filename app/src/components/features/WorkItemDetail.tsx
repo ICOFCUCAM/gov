@@ -5,7 +5,8 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   workItemRow, workItemStepsRows, listWorkflowDefinitionsRows,
-  transitionWorkItemRow, claimWorkItemRow, releaseWorkItemRow,
+  transitionWorkItemRow, claimWorkItemRow, releaseWorkItemRow, setWorkItemPriorityRow,
+  type WorkItemPriority,
 } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
 import type { WorkItemRow, WorkItemStepRow, ActionKey } from '@/lib/db/types';
@@ -142,6 +143,18 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
     }
   }
 
+  async function setPriority(p: WorkItemPriority) {
+    if (!item || p === item.priority) return;
+    setBusy(true); setError(null);
+    try {
+      const updated = await setWorkItemPriorityRow(item.ref, p);
+      if (!updated) setError('re-prioritise failed — only the current assignee or a platform officer may');
+      else await refresh();
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
@@ -189,6 +202,17 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
                 release
               </button>
             ) : null}
+            <span className="text-[8.5px] uppercase tracking-wider text-ink-muted">priority:</span>
+            {(['routine', 'priority', 'urgent', 'critical'] as const).map(p => (
+              <button key={p} type="button" onClick={() => { void setPriority(p); }} disabled={busy || p === item.priority}
+                className="focus-ring rounded-[3px] border px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider disabled:opacity-100"
+                style={{
+                  borderColor: p === item.priority ? TONE.link : 'rgb(var(--c-line))',
+                  color: p === item.priority ? TONE.link : 'rgb(var(--c-ink-muted))',
+                }}>
+                {p}
+              </button>
+            ))}
           </div>
         ) : null}
 
