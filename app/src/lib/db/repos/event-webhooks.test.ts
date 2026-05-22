@@ -6,7 +6,10 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { listEventWebhooksRows, registerEventWebhookRow, listWebhookDeliveriesRows } from './events';
+import {
+  listEventWebhooksRows, registerEventWebhookRow, listWebhookDeliveriesRows,
+  rotateEventWebhookSecretRow,
+} from './events';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -118,5 +121,28 @@ describe('listWebhookDeliveriesRows', () => {
       rpc: async () => ({ data: null, error: { message: 'insufficient_privilege' } }),
     });
     expect(await listWebhookDeliveriesRows('w1')).toEqual([]);
+  });
+});
+
+describe('rotateEventWebhookSecretRow', () => {
+  it('returns false when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await rotateEventWebhookSecretRow('w1', 'newsecret1')).toBe(false);
+  });
+
+  it('passes the id + new secret and returns true on success', async () => {
+    const rpc = vi.fn(async () => ({ data: true, error: null }));
+    publicClientMock.mockReturnValue({ rpc });
+    expect(await rotateEventWebhookSecretRow('w1', 'newsecret1')).toBe(true);
+    expect(rpc).toHaveBeenCalledWith('civicos_rotate_event_webhook_secret', {
+      p_id: 'w1', p_new_secret: 'newsecret1',
+    });
+  });
+
+  it('returns false on RPC error (e.g. insufficient privilege)', async () => {
+    publicClientMock.mockReturnValue({
+      rpc: async () => ({ data: null, error: { message: 'insufficient_privilege' } }),
+    });
+    expect(await rotateEventWebhookSecretRow('w1', 'newsecret1')).toBe(false);
   });
 });

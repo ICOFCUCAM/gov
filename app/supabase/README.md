@@ -62,6 +62,7 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521330000_civicos_log_data_export.sql` | `log_my_data_export()` — appends one tamper-evident audit entry on the caller's own `citizen:<id>` scope recording that they exercised data portability. Keeps `my_data_export` a pure read; this volatile companion writes the access record. Authenticated only; no-ops for a caller with no linked citizen. |
 | `20260521340000_civicos_my_audit_trail.sql` | `my_audit_trail(p_limit)` — citizen-scoped read of the tamper-evident audit entries on their own `citizen:<id>` scope (consent expiries, data exports, …), returning the hash chain so the citizen can verify continuity. Scoped to `auth.uid()`; authenticated only. Completes the transparency loop with `log_my_data_export`. |
 | `20260521350000_civicos_verify_my_audit_trail.sql` | `verify_my_audit_trail()` — resolves the caller's `citizen:<id>` scope from `auth.uid()` and delegates to the proven `verify_audit_chain`, returning `{entries, intact, broken_at}`. Lets a citizen confirm their own trail's hash-chain integrity without knowing their scope or reimplementing FNV-1a. Authenticated only. |
+| `20260521360000_civicos_webhook_rotate_secret.sql` | `rotate_event_webhook_secret(p_id, p_new_secret)` — in-place HMAC secret rotation for a federation webhook (leak response / routine rotation) that preserves the delivery cursor and history, instead of delete + re-register. Platform-tier (or service); secret stays write-only; validates >= 8 chars. |
 
 ### Advisor posture after hardening
 

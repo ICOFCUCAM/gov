@@ -8,7 +8,7 @@ import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import {
   listEventWebhooksRows, registerEventWebhookRow, setEventWebhookActiveRow,
-  listWebhookDeliveriesRows,
+  rotateEventWebhookSecretRow, listWebhookDeliveriesRows,
   type EventWebhook, type WebhookDelivery,
 } from '@/lib/db/repos/events';
 import { ageMinutes } from '@/lib/format';
@@ -33,6 +33,7 @@ export function EventWebhooks() {
   const [pings, setPings] = React.useState<Record<string, PingResult>>({});
   const [expanded, setExpanded] = React.useState<string | null>(null);
   const [log, setLog] = React.useState<Record<string, WebhookDelivery[]>>({});
+  const [rotating, setRotating] = React.useState<string | null>(null);
   const available = substrateAvailable();
 
   const toggleLog = React.useCallback(async (id: string) => {
@@ -144,6 +145,11 @@ export function EventWebhooks() {
                     {expanded === h.id ? 'hide' : 'log'}
                   </button>
                   <button type="button"
+                    onClick={() => { setRotating(r => r === h.id ? null : h.id); }}
+                    className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink">
+                    {rotating === h.id ? 'cancel' : 'rotate'}
+                  </button>
+                  <button type="button"
                     onClick={async () => { await setEventWebhookActiveRow(h.id, !h.active); await refresh(); }}
                     className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink">
                     {h.active ? 'pause' : 'resume'}
@@ -164,6 +170,7 @@ export function EventWebhooks() {
                       test ping: {pings[h.id]!.ok ? 'ok' : 'failed'} — {pings[h.id]!.detail}
                     </p>
                   : null}
+                {rotating === h.id ? <RotateSecretForm id={h.id} onDone={() => setRotating(null)} /> : null}
                 {expanded === h.id ? <DeliveryLog rows={log[h.id]} /> : null}
               </div>
             ))}
@@ -191,6 +198,42 @@ function DeliveryLog({ rows }: { rows: WebhookDelivery[] | undefined }) {
         </div>
       ))}
     </div>
+  );
+}
+
+function RotateSecretForm({ id, onDone }: { id: string; onDone: () => void }) {
+  const [secret, setSecret] = React.useState('');
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [ok, setOk] = React.useState(false);
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null); setOk(false);
+    if (secret.trim().length < 8) { setError('secret must be at least 8 characters'); return; }
+    setBusy(true);
+    try {
+      const done = await rotateEventWebhookSecretRow(id, secret.trim());
+      if (!done) { setError('rotation failed (insufficient privilege?)'); return; }
+      setSecret(''); setOk(true);
+      setTimeout(onDone, 800);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-1 flex items-center gap-2 rounded-[3px] border border-line-soft bg-bg p-1.5">
+      <input type="password" autoFocus value={secret} onChange={e => setSecret(e.currentTarget.value)}
+        placeholder="new signing secret (≥ 8 chars, write-only)"
+        className="min-w-0 flex-1 rounded-[3px] border border-line bg-surface px-2 py-0.5 font-mono text-[10px]" />
+      <button type="submit" disabled={busy}
+        className="focus-ring shrink-0 rounded-[3px] border border-line px-2 py-0.5 text-[8.5px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+        {busy ? 'rotating…' : 'apply'}
+      </button>
+      {error ? <span className="text-[9px]" style={{ color: TONE.alert }}>{error}</span> : null}
+      {ok ? <span className="text-[9px]" style={{ color: TONE.ok }}>rotated</span> : null}
+    </form>
   );
 }
 

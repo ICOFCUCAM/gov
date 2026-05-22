@@ -141,6 +141,18 @@ export async function setEventWebhookActiveRow(id: string, active: boolean): Pro
   return !error && data === true;
 }
 
+/** Rotate a webhook's signing secret in place (platform-tier), preserving
+ *  the delivery cursor and history. The secret is write-only — never read
+ *  back. Returns true on success (incl. a valid >= 8 char secret). */
+export async function rotateEventWebhookSecretRow(id: string, newSecret: string): Promise<boolean> {
+  const sb = publicClient();
+  if (!sb) return false;
+  const { data, error } = await sb.rpc('civicos_rotate_event_webhook_secret', {
+    p_id: id, p_new_secret: newSecret,
+  });
+  return !error && data === true;
+}
+
 /* ── Webhook delivery log (platform-tier, read-only) ──────────────── */
 
 export interface WebhookDelivery {
