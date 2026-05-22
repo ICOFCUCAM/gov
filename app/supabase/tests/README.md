@@ -12,16 +12,17 @@ persists data. No pgTAP / extension required.
 ## Running
 
 Against any database with the `civicos` schema migrated (a local Supabase
-stack, a CI throwaway, or a scratch branch):
+stack, a CI throwaway, or a scratch branch), point `DATABASE_URL` at it:
 
 ```sh
-for f in supabase/tests/*_test.sql; do
-  psql "$DATABASE_URL" -v ON_ERROR_STOP=1 -f "$f" || exit 1
-done
+DATABASE_URL=postgres://… npm run test:substrate     # from app/
+# or directly:
+DATABASE_URL=postgres://… bash supabase/tests/run.sh
 ```
 
-`ON_ERROR_STOP=1` makes any failed assertion abort with a non-zero exit. A
-clean run prints the `PASS:` notices and commits nothing.
+`run.sh` runs every `*_test.sql` with `ON_ERROR_STOP=1`, so any failed
+assertion aborts with a non-zero exit (CI-friendly). A clean run prints the
+`PASS:` notices and commits nothing.
 
 Some suites exercise `is_service_context()`-gated RPCs (webhook delivery);
 run those with the service-role / migration connection.
