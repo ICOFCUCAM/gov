@@ -6,9 +6,9 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable } from '@/lib/db/client';
 import {
   institutionByCharterId, serviceSlaStats, serviceSlaTrend, appealsStats, appealsTrend,
-  consentFootprintStats,
+  consentFootprintStats, directiveStats,
   type ServiceSlaStat, type SlaTrendPoint, type AppealsStat, type AppealsTrendPoint,
-  type ConsentFootprintStat,
+  type ConsentFootprintStat, type DirectiveStat,
 } from '@/lib/db/repos/institutions';
 import { listDirectivesRows } from '@/lib/db/repos/memory';
 import { downloadJson } from '@/lib/csv-download';
@@ -33,6 +33,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
   const [appeals, setAppeals] = React.useState<AppealsStat | null>(null);
   const [appealTrend, setAppealTrend] = React.useState<AppealsTrendPoint[]>([]);
   const [footprint, setFootprint] = React.useState<ConsentFootprintStat[]>([]);
+  const [dirStat, setDirStat] = React.useState<DirectiveStat | null>(null);
   const [directives, setDirectives] = React.useState<DirectiveRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const available = substrateAvailable();
@@ -42,13 +43,14 @@ export function CharterProfile({ charterId }: { charterId: string }) {
     setLoading(true);
     void (async () => {
       try {
-        const [i, s, t, a, at, fp, ds] = await Promise.all([
+        const [i, s, t, a, at, fp, dst, ds] = await Promise.all([
           institutionByCharterId(charterId),
           serviceSlaStats({ charterId, days: 90 }),
           serviceSlaTrend({ charterId, weeks: 12 }),
           appealsStats({ charterId, days: 90 }),
           appealsTrend({ charterId, weeks: 12 }),
           consentFootprintStats({ charterId }),
+          directiveStats({ charterId, days: 365 }),
           listDirectivesRows({ issuer: charterId, limit: 25 }),
         ]);
         setInst(i);
@@ -57,6 +59,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
         setAppeals(a[0] ?? null);
         setAppealTrend(at);
         setFootprint(fp);
+        setDirStat(dst[0] ?? null);
         setDirectives(ds.filter(d => PUBLIC_STATUSES.includes(d.status)));
       } finally {
         setLoading(false);
@@ -100,6 +103,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
               appeals: appeals,
               appeals_trend: appealTrend,
               consent_footprint: footprint,
+              directive_stats: dirStat,
               public_directives: directives,
             }, { dated: false })}
             className="focus-ring shrink-0 rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
@@ -196,6 +200,18 @@ export function CharterProfile({ charterId }: { charterId: string }) {
               <span className="w-16 shrink-0 text-right text-ink-muted">{f.revoked}</span>
             </div>
           ))}
+        </Panel>
+      ) : null}
+
+      {dirStat ? (
+        <Panel title="Governance output (signed directives, last 365 days)" meta={`${dirStat.signed} signed`} bodyClass="!p-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-5 text-center">
+            <Stat label="signed" value={String(dirStat.signed)} />
+            <Stat label="effective" value={String(dirStat.effective)} />
+            <Stat label="in force" value={String(dirStat.inForce)} tone={dirStat.inForce > 0 ? TONE.ok : undefined} />
+            <Stat label="rescinded" value={String(dirStat.rescinded)} tone={dirStat.rescinded > 0 ? TONE.warn : undefined} />
+            <Stat label="sign→effect" value={dirStat.medianSignToEffectiveDays == null ? '—' : `${dirStat.medianSignToEffectiveDays}d`} />
+          </div>
         </Panel>
       ) : null}
 

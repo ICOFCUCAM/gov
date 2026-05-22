@@ -282,4 +282,36 @@ export async function consentFootprintStats(opts: { charterId?: string } = {}): 
   }));
 }
 
+export interface DirectiveStat {
+  charterId: string;
+  signed: number;
+  effective: number;
+  inForce: number;
+  rescinded: number;
+  medianSignToEffectiveDays: number | null;
+}
+
+interface DirectiveStatRow {
+  charter_id: string; signed: number; effective: number; in_force: number;
+  rescinded: number; median_sign_to_effective_days: string | number | null;
+}
+
+/** Per-charter directive (governance output) stats over the last `days`,
+ *  counting only signed directives so drafts never leak. Aggregate-only and
+ *  anon-callable. [] without a substrate. */
+export async function directiveStats(opts: { charterId?: string; days?: number } = {}): Promise<DirectiveStat[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.rpc('civicos_directive_stats', {
+    p_charter_id: opts.charterId ?? null, p_days: opts.days ?? 365,
+  });
+  if (error || !data) return [];
+  return (data as DirectiveStatRow[]).map(r => ({
+    charterId: r.charter_id,
+    signed: Number(r.signed), effective: Number(r.effective),
+    inForce: Number(r.in_force), rescinded: Number(r.rescinded),
+    medianSignToEffectiveDays: numOrNull(r.median_sign_to_effective_days),
+  }));
+}
+
 export { substrateAvailable };

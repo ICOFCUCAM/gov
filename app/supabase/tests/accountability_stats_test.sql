@@ -124,4 +124,26 @@ begin
   delete from civicos.citizens where national_id like 'TEST-CF-%';
 end$$;
 
+-- ── directive_stats: signed / effective / in-force / rescinded + lag ──
+-- 4 signed: one effective in force (lag 2d), one effective then rescinded
+-- (lag 4d), one effective in the future (lag 15d, not yet in force), one
+-- signed-not-effective. median effective lag = median(2,4,15) = 4.0.
+do $$
+declare r record;
+begin
+  insert into civicos.directives (ref, kind, issued_by_charter_id, title, status, signed_at, effective_at, rescinded_at) values
+    ('TEST-DIR-1', 'order', 'TEST-DIR', 't', 'effective', now()-interval '10 d', now()-interval '8 d', null),
+    ('TEST-DIR-2', 'order', 'TEST-DIR', 't', 'rescinded', now()-interval '10 d', now()-interval '6 d', now()-interval '1 d'),
+    ('TEST-DIR-3', 'order', 'TEST-DIR', 't', 'signed',    now()-interval '10 d', now()+interval '5 d', null),
+    ('TEST-DIR-4', 'order', 'TEST-DIR', 't', 'signed',    now()-interval '10 d', null, null);
+  select * into r from civicos.directive_stats('TEST-DIR', 1825);
+  if r.signed <> 4 then raise exception 'FAIL directive signed = % (want 4)', r.signed; end if;
+  if r.effective <> 3 then raise exception 'FAIL directive effective = % (want 3)', r.effective; end if;
+  if r.in_force <> 1 then raise exception 'FAIL directive in_force = % (want 1)', r.in_force; end if;
+  if r.rescinded <> 1 then raise exception 'FAIL directive rescinded = % (want 1)', r.rescinded; end if;
+  if r.median_sign_to_effective_days <> 4.0 then raise exception 'FAIL directive median = % (want 4.0)', r.median_sign_to_effective_days; end if;
+  raise notice 'PASS: directive_stats signed/effective/in-force/rescinded';
+  delete from civicos.directives where issued_by_charter_id = 'TEST-DIR';
+end$$;
+
 rollback;

@@ -6,7 +6,7 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend, consentFootprintStats, institutionByCharterId } from './institutions';
+import { serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend, consentFootprintStats, directiveStats, institutionByCharterId } from './institutions';
 
 beforeEach(() => publicClientMock.mockReset());
 
@@ -66,6 +66,38 @@ describe('serviceSlaTrend', () => {
   it('returns [] on RPC error', async () => {
     publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
     expect(await serviceSlaTrend()).toEqual([]);
+  });
+});
+
+describe('directiveStats', () => {
+  it('returns [] when the substrate is unavailable', async () => {
+    publicClientMock.mockReturnValue(null);
+    expect(await directiveStats()).toEqual([]);
+  });
+
+  it('maps rows to camelCase, coerces nulls, and forwards options', async () => {
+    const rpc = vi.fn(async () => ({
+      data: [{
+        charter_id: 'MIN-J', signed: 4, effective: 3, in_force: 1, rescinded: 1,
+        median_sign_to_effective_days: '4.0',
+      }, {
+        charter_id: 'MIN-X', signed: 1, effective: 0, in_force: 0, rescinded: 0,
+        median_sign_to_effective_days: null,
+      }],
+      error: null,
+    }));
+    publicClientMock.mockReturnValue({ rpc });
+    const out = await directiveStats({ charterId: 'MIN-J', days: 365 });
+    expect(rpc).toHaveBeenCalledWith('civicos_directive_stats', { p_charter_id: 'MIN-J', p_days: 365 });
+    expect(out[0]).toEqual({
+      charterId: 'MIN-J', signed: 4, effective: 3, inForce: 1, rescinded: 1, medianSignToEffectiveDays: 4,
+    });
+    expect(out[1]!.medianSignToEffectiveDays).toBeNull();
+  });
+
+  it('returns [] on RPC error', async () => {
+    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+    expect(await directiveStats()).toEqual([]);
   });
 });
 
