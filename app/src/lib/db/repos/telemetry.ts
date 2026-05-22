@@ -179,4 +179,16 @@ export async function telemetryFleetStatus(opts: { charterId?: string; staleMinu
   }));
 }
 
+/** Decommission (or reactivate) a telemetry stream — platform-tier. A
+ *  deactivated stream drops out of fleet status, the public catalog, and
+ *  stale-sensor escalation. Returns true on success. */
+export async function setTelemetryStreamActiveRow(streamId: string, active: boolean): Promise<boolean> {
+  const sb = publicClient();
+  if (!sb) return false;
+  const { data, error } = await sb.rpc('civicos_set_telemetry_stream_active', {
+    p_stream_id: streamId, p_active: active,
+  });
+  return !error && data === true;
+}
+
 export { substrateAvailable };

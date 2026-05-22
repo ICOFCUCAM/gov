@@ -5,7 +5,7 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   defineTelemetryStreamRow, recordTelemetrySampleRow,
   recentTelemetrySamplesRows, listTelemetryStreamsRows,
-  telemetryFleetStatus, type TelemetryFleetEntry,
+  telemetryFleetStatus, setTelemetryStreamActiveRow, type TelemetryFleetEntry,
 } from '@/lib/db/repos/telemetry';
 import { substrateAvailable } from '@/lib/db/client';
 import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
@@ -28,8 +28,11 @@ import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
  * without polling. RLS is left broad on telemetry by design — operational
  * fabric should be visible to any authenticated session.
  */
+const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
+
 export function TelemetryWall() {
   const { actor, ready } = useIdentity();
+  const isPlatform = !!actor && actor.kind === 'officer' && PLATFORM_ROLES.has(actor.role ?? '');
   const [streams, setStreams] = React.useState<TelemetryStreamRow[]>([]);
   const [samplesByStream, setSamplesByStream] = React.useState<Record<string, TelemetrySampleRow[]>>({});
   const [active, setActive] = React.useState<string | null>(null);
@@ -199,6 +202,23 @@ export function TelemetryWall() {
                     </div>
                     <div className="font-mono text-[8.5px] text-ink-muted">{s.unit ?? ''}</div>
                   </div>
+                  {isPlatform ? (
+                    <span role="button" tabIndex={0}
+                      onClick={async ev => {
+                        ev.stopPropagation();
+                        await setTelemetryStreamActiveRow(s.stream_id, !s.active);
+                        await refreshStreams();
+                      }}
+                      className="focus-ring w-16 shrink-0 rounded-[3px] border border-line-soft px-1 py-0.5 text-center text-[8px] uppercase tracking-wider"
+                      style={{ color: s.active ? TONE.ok : TONE.neutral }}>
+                      {s.active ? 'active' : 'off'}
+                    </span>
+                  ) : (
+                    <span className="w-16 shrink-0 text-center text-[8px] uppercase tracking-wider"
+                      style={{ color: s.active ? TONE.ok : TONE.neutral }}>
+                      {s.active ? 'active' : 'off'}
+                    </span>
+                  )}
                 </button>
               );
             })}
