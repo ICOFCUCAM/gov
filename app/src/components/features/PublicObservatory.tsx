@@ -157,8 +157,8 @@ export function PublicObservatory() {
       <Panel title="Service delivery — published SLAs"
         meta={<MetaWithCsv label={`${sla.length} charters · last 90 days`} show={sla.length > 0}
           onDownload={() => downloadCsv('civicos-service-sla', buildCsv(
-            ['charter_id','submitted','acknowledged','resolved','open','median_ack_hours','median_resolve_hours','p90_resolve_hours','oldest_open_hours','rated','avg_satisfaction'],
-            sla.map(s => [s.charterId, s.submitted, s.acknowledged, s.resolved, s.open, s.medianAckHours ?? '', s.medianResolveHours ?? '', s.p90ResolveHours ?? '', s.oldestOpenHours ?? '', s.rated, s.avgSatisfaction ?? '']),
+            ['charter_id','submitted','acknowledged','resolved','open','cancelled','median_ack_hours','median_resolve_hours','p90_resolve_hours','oldest_open_hours','rated','avg_satisfaction'],
+            sla.map(s => [s.charterId, s.submitted, s.acknowledged, s.resolved, s.open, s.cancelled, s.medianAckHours ?? '', s.medianResolveHours ?? '', s.p90ResolveHours ?? '', s.oldestOpenHours ?? '', s.rated, s.avgSatisfaction ?? '']),
           ))} />}
         bodyClass="!p-0">
         {sla.length === 0 ? (

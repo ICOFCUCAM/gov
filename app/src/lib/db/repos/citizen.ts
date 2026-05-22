@@ -87,6 +87,18 @@ export async function rateMyServiceRequestRow(ref: string, satisfaction: number)
   return (Array.isArray(data) ? data[0] : data) as ServiceRequestRow;
 }
 
+/** Cancel one of my own service requests before it is resolved (citizen
+ *  action), audit-logged. Scoped to auth.uid()'s citizen by the RPC; fails
+ *  if the request isn't mine or is already resolved/cancelled. null on
+ *  failure. */
+export async function cancelMyServiceRequestRow(ref: string, reason?: string): Promise<ServiceRequestRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.rpc('civicos_cancel_my_service_request', { p_ref: ref, p_reason: reason ?? null });
+  if (error || !data) { if (error) console.error('[civicos] cancel_my_service_request failed:', error.message); return null; }
+  return (Array.isArray(data) ? data[0] : data) as ServiceRequestRow;
+}
+
 // ── Consents ──────────────────────────────────────────────────────
 
 export async function grantConsentRow(

@@ -23,21 +23,23 @@ begin
   insert into civicos.citizens (national_id, display_name, active)
     values ('TEST-STATS-CIT', 'Stats Probe', true) returning id into v_cit;
 
-  -- 4 requests for TEST-SLA: resolve cycles 2h,4h,10h (+1 open 50h); ratings 5,3,(null)
-  insert into civicos.service_requests (ref, citizen_id, target_charter_id, service, status, submitted_at, acknowledged_at, resolved_at, satisfaction) values
-    ('TEST-SLA-1', v_cit, 'TEST-SLA', 'svc', 'resolved', now()-interval '20 h', now()-interval '19 h', now()-interval '18 h', 5),
-    ('TEST-SLA-2', v_cit, 'TEST-SLA', 'svc', 'resolved', now()-interval '20 h', now()-interval '19 h', now()-interval '16 h', 3),
-    ('TEST-SLA-3', v_cit, 'TEST-SLA', 'svc', 'resolved', now()-interval '20 h', null,                  now()-interval '10 h', null),
-    ('TEST-SLA-4', v_cit, 'TEST-SLA', 'svc', 'submitted', now()-interval '50 h', null, null, null);
+  -- 5 requests for TEST-SLA: resolve cycles 2h,4h,10h (+1 open 50h, +1 cancelled); ratings 5,3,(null)
+  insert into civicos.service_requests (ref, citizen_id, target_charter_id, service, status, submitted_at, acknowledged_at, resolved_at, cancelled_at, satisfaction) values
+    ('TEST-SLA-1', v_cit, 'TEST-SLA', 'svc', 'resolved',  now()-interval '20 h', now()-interval '19 h', now()-interval '18 h', null, 5),
+    ('TEST-SLA-2', v_cit, 'TEST-SLA', 'svc', 'resolved',  now()-interval '20 h', now()-interval '19 h', now()-interval '16 h', null, 3),
+    ('TEST-SLA-3', v_cit, 'TEST-SLA', 'svc', 'resolved',  now()-interval '20 h', null,                  now()-interval '10 h', null, null),
+    ('TEST-SLA-4', v_cit, 'TEST-SLA', 'svc', 'submitted', now()-interval '50 h', null, null, null, null),
+    ('TEST-SLA-5', v_cit, 'TEST-SLA', 'svc', 'cancelled', now()-interval '30 h', null, null, now()-interval '25 h', null);
 
   select * into r from civicos.service_sla_stats('TEST-SLA', 365);
-  if r.submitted <> 4 then raise exception 'FAIL sla.submitted = % (want 4)', r.submitted; end if;
+  if r.submitted <> 5 then raise exception 'FAIL sla.submitted = % (want 5)', r.submitted; end if;
   if r.resolved <> 3 then raise exception 'FAIL sla.resolved = % (want 3)', r.resolved; end if;
-  if r.open <> 1 then raise exception 'FAIL sla.open = % (want 1)', r.open; end if;
+  if r.open <> 1 then raise exception 'FAIL sla.open = % (want 1, excludes cancelled)', r.open; end if;
+  if r.cancelled <> 1 then raise exception 'FAIL sla.cancelled = % (want 1)', r.cancelled; end if;
   if r.median_resolve_hours <> 4.0 then raise exception 'FAIL sla.median_resolve = % (want 4.0)', r.median_resolve_hours; end if;
   if r.rated <> 2 then raise exception 'FAIL sla.rated = % (want 2)', r.rated; end if;
   if r.avg_satisfaction <> 4.0 then raise exception 'FAIL sla.avg_satisfaction = % (want 4.0)', r.avg_satisfaction; end if;
-  raise notice 'PASS: service_sla_stats arithmetic (incl. satisfaction)';
+  raise notice 'PASS: service_sla_stats arithmetic (incl. satisfaction + cancelled)';
 
   -- appeals for TEST-AP: decided 2d,4d,10d (+1 pending 30d, +1 withdrawn)
   insert into civicos.appeals (ref, citizen_id, originating_charter_id, ground, status, filed_at, admitted_at, decided_at, withdrawn_at) values

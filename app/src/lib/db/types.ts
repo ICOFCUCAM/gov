@@ -276,6 +276,7 @@ export interface ServiceRequestRow {
   submitted_at: string;
   acknowledged_at: string | null;
   resolved_at: string | null;
+  cancelled_at: string | null;
   satisfaction: number | null;
   created_at: string;
   updated_at: string;

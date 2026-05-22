@@ -110,6 +110,7 @@ export interface ServiceSlaStat {
   acknowledged: number;
   resolved: number;
   open: number;
+  cancelled: number;
   medianAckHours: number | null;
   medianResolveHours: number | null;
   p90ResolveHours: number | null;
@@ -120,7 +121,7 @@ export interface ServiceSlaStat {
 
 interface ServiceSlaStatRow {
   charter_id: string; submitted: number; acknowledged: number; resolved: number; open: number;
-  median_ack_hours: string | number | null; median_resolve_hours: string | number | null;
+  cancelled: number; median_ack_hours: string | number | null; median_resolve_hours: string | number | null;
   p90_resolve_hours: string | number | null; oldest_open_hours: string | number | null;
   rated: number; avg_satisfaction: string | number | null;
 }
@@ -141,7 +142,7 @@ export async function serviceSlaStats(opts: { charterId?: string; days?: number 
   return (data as ServiceSlaStatRow[]).map(r => ({
     charterId: r.charter_id,
     submitted: Number(r.submitted), acknowledged: Number(r.acknowledged),
-    resolved: Number(r.resolved), open: Number(r.open),
+    resolved: Number(r.resolved), open: Number(r.open), cancelled: Number(r.cancelled),
     medianAckHours: numOrNull(r.median_ack_hours),
     medianResolveHours: numOrNull(r.median_resolve_hours),
     p90ResolveHours: numOrNull(r.p90_resolve_hours),

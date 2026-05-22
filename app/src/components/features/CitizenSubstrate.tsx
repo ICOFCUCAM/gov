@@ -6,6 +6,7 @@ import {
   submitServiceRequestRow, updateServiceRequestRow, myServiceRequestsRows,
   grantConsentRow, revokeConsentRow, revokeAllMyConsentsRows, myConsentsRows,
   fileAppealRow, myAppealsRows, rateMyServiceRequestRow, withdrawMyAppealRow,
+  cancelMyServiceRequestRow,
 } from '@/lib/db/repos/citizen';
 import { openWorkItemRow, workItemsByIds } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
@@ -287,11 +288,15 @@ function ServiceRequestsPanel({
                   </span>
                 ) : <span className="w-28 shrink-0" />}
                 <span className="w-24 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider"
-                  style={{ color: r.resolved_at ? TONE.ok : r.acknowledged_at ? TONE.warn : TONE.link }}>
+                  style={{ color: r.cancelled_at ? TONE.neutral : r.resolved_at ? TONE.ok : r.acknowledged_at ? TONE.warn : TONE.link }}>
                   {r.status}
                 </span>
                 {r.resolved_at ? <RateControl row={r} onChange={onChange} /> : <span className="w-20 shrink-0" />}
-                {r.resolved_at ? <AppealButton row={r} citizenId={citizenId} onChange={onChange} /> : <span className="w-12 shrink-0" />}
+                {r.resolved_at
+                  ? <AppealButton row={r} citizenId={citizenId} onChange={onChange} />
+                  : !r.cancelled_at
+                    ? <CancelServiceButton row={r} onChange={onChange} />
+                    : <span className="w-12 shrink-0" />}
               </div>
                 {resolutionNote ? (
                   <p className="mt-0.5 pl-6 text-[10px] text-ink-muted">
@@ -329,6 +334,23 @@ function AppealButton({ row, citizenId, onChange }: { row: ServiceRequestRow; ci
       }}
       className="focus-ring shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
       {busy ? '…' : 'appeal'}
+    </button>
+  );
+}
+
+function CancelServiceButton({ row, onChange }: { row: ServiceRequestRow; onChange: () => Promise<void> }) {
+  const [busy, setBusy] = React.useState(false);
+  return (
+    <button type="button" disabled={busy} title="cancel this request"
+      onClick={async () => {
+        if (!window.confirm(`Cancel request ${row.ref}? This cannot be undone.`)) return;
+        const reason = window.prompt('Reason for cancelling (optional):') ?? undefined;
+        setBusy(true);
+        try { if (await cancelMyServiceRequestRow(row.ref, reason)) await onChange(); }
+        finally { setBusy(false); }
+      }}
+      className="focus-ring w-12 shrink-0 rounded-[3px] border border-line-soft px-1.5 py-0 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">
+      {busy ? '…' : 'cancel'}
     </button>
   );
 }
