@@ -4,9 +4,9 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { listOfficersRows } from '@/lib/db/repos/admin';
-import { recentActorStepsRows, type ActorStepRow } from '@/lib/db/repos/work-items';
+import { recentActorStepsRows, listWorkItemsRows, type ActorStepRow } from '@/lib/db/repos/work-items';
 import { substrateAvailable } from '@/lib/db/client';
-import type { OfficerRow } from '@/lib/db/types';
+import type { OfficerRow, WorkItemRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
@@ -27,6 +27,7 @@ export function OfficerDetail({ id }: { id: string }) {
   const { ready } = useIdentity();
   const [row, setRow] = React.useState<OfficerRow | null>(null);
   const [steps, setSteps] = React.useState<ActorStepRow[]>([]);
+  const [openItems, setOpenItems] = React.useState<WorkItemRow[]>([]);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -36,8 +37,12 @@ export function OfficerDetail({ id }: { id: string }) {
     setRow(found);
     // Actor steps view is RLS-scoped — we just filter the global recent
     // list to this officer rather than running a per-officer query.
-    const all_steps = await recentActorStepsRows({ limit: 200 });
+    const [all_steps, assigned] = await Promise.all([
+      recentActorStepsRows({ limit: 200 }),
+      listWorkItemsRows({ assigneeId: id, closed: false, limit: 100 }),
+    ]);
     setSteps(all_steps.filter(s => s.actor_id === id).slice(0, 60));
+    setOpenItems(assigned);
   }, [available, id]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
@@ -99,6 +104,27 @@ export function OfficerDetail({ id }: { id: string }) {
           <Field label="Joined" value={new Date(row.joined_at).toLocaleDateString()} />
           <Field label="Updated" value={new Date(row.updated_at).toLocaleDateString()} />
         </div>
+      </Panel>
+
+      <Panel title="Open assignments" meta={`${openItems.length}`} bodyClass="!p-0">
+        {openItems.length === 0 ? (
+          <p className="px-3 py-4 text-[11px] text-ink-muted">No open work items assigned to this officer.</p>
+        ) : (
+          <div className="max-h-[280px] overflow-y-auto">
+            {openItems.map(w => (
+              <Link key={w.id} href={`/gov/items/${encodeURIComponent(w.ref)}`}
+                className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px] hover:bg-surface-2">
+                <span className="w-28 shrink-0 truncate font-mono text-link">{w.ref}</span>
+                <span className="min-w-0 flex-1 truncate text-ink">{w.title}</span>
+                <span className="w-24 shrink-0 truncate text-right text-[8.5px] uppercase tracking-wider text-ink-muted">{w.current_stage}</span>
+                <span className="w-16 shrink-0 text-right text-[8.5px] font-bold uppercase tracking-wider text-ink-muted"
+                  style={w.priority === 'critical' || w.priority === 'urgent' ? { color: TONE.alert } : undefined}>
+                  {w.priority}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
       </Panel>
 
       <Panel title="Recent activity" meta={`${steps.length} steps · ${signedSteps} signed · ${ecdsaSteps} ECDSA`} bodyClass="!p-0">

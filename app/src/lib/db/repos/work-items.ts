@@ -289,12 +289,13 @@ export async function workItemsByIds(ids: string[]): Promise<WorkItemRow[]> {
   return data as WorkItemRow[];
 }
 
-export async function listWorkItemsRows(opts: { scope?: string; workflowId?: string; closed?: boolean; limit?: number } = {}): Promise<WorkItemRow[]> {
+export async function listWorkItemsRows(opts: { scope?: string; workflowId?: string; assigneeId?: string; closed?: boolean; limit?: number } = {}): Promise<WorkItemRow[]> {
   const sb = publicClient();
   if (!sb) return [];
   let q = sb.from('civicos_work_items').select('*');
   if (opts.scope) q = q.eq('scope', opts.scope);
   if (opts.workflowId) q = q.eq('workflow_id', opts.workflowId);
+  if (opts.assigneeId) q = q.eq('assignee_id', opts.assigneeId);
   if (opts.closed !== undefined) q = q.eq('closed', opts.closed);
   const { data, error } = await q.order('created_at', { ascending: false }).limit(opts.limit ?? 100);
   if (error || !data) return [];
