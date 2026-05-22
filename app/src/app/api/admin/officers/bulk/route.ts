@@ -12,18 +12,11 @@
 
 import { NextResponse } from 'next/server';
 import { serverClient, tokenScopedClient } from '@/lib/db/client';
+import { parseOfficerCsv, type OfficerInputRow as InputRow } from '@/lib/officer-csv';
 
 export const dynamic = 'force-dynamic';
 
 const PLATFORM_ROLES = new Set(['platform-admin', 'noc-officer', 'cabinet-officer', 'auditor']);
-
-interface InputRow {
-  email: string;
-  name: string;
-  charter_id: string;
-  role: string;
-  title?: string | null;
-}
 
 interface OutputRow {
   email: string;
@@ -62,31 +55,6 @@ async function sessionAuthorized(req: Request): Promise<boolean> {
 
 async function authorized(req: Request): Promise<boolean> {
   return cronAuthorized(req) || await sessionAuthorized(req);
-}
-
-/** Parse a CSV string with the documented header row. Returns the row
- *  list, or { error } when the header is malformed. */
-export function parseOfficerCsv(text: string): InputRow[] | { error: string } {
-  const lines = text.split(/\r?\n/).filter(l => l.trim().length > 0);
-  if (lines.length === 0) return { error: 'empty CSV' };
-  const header = lines[0]!.split(',').map(c => c.trim().toLowerCase());
-  const required = ['email', 'name', 'charter_id', 'role'];
-  for (const k of required) {
-    if (!header.includes(k)) return { error: `missing header column: ${k}` };
-  }
-  const idx = (k: string) => header.indexOf(k);
-  const rows: InputRow[] = [];
-  for (let i = 1; i < lines.length; i++) {
-    const cells = lines[i]!.split(',').map(c => c.trim());
-    rows.push({
-      email: cells[idx('email')] ?? '',
-      name: cells[idx('name')] ?? '',
-      charter_id: cells[idx('charter_id')] ?? '',
-      role: cells[idx('role')] ?? '',
-      title: idx('title') >= 0 ? (cells[idx('title')] ?? null) : null,
-    });
-  }
-  return rows;
 }
 
 export async function POST(req: Request) {

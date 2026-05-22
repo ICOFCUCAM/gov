@@ -7,7 +7,8 @@ vi.mock('@/lib/db/client', () => ({
   tokenScopedClient: (t: string) => tokenScopedClientMock(t),
 }));
 
-import { POST, parseOfficerCsv } from './route';
+import { POST } from './route';
+import { parseOfficerCsv } from '@/lib/officer-csv';
 
 const JWT = 'aaa.bbb.ccc'; // shape-only; the route checks 3 dot-parts then asks the substrate
 
