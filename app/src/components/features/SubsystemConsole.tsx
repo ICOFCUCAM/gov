@@ -52,6 +52,8 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const [now, setNow] = React.useState(() => Date.now());
   const [selDoc, setSelDoc] = React.useState<string | null>(null);
   const [selRow, setSelRow] = React.useState<string | null>(null);
+  const [aiAdvisoryText, setAiAdvisoryText] = React.useState<string | null>(null);
+  const [aiAdvisoryTier, setAiAdvisoryTier] = React.useState<number>(-1);
   React.useEffect(() => {
     setM(resolveInstitution(id));
     api.org.get(id).then(r => { if (r?.ministry) setM(r.ministry); }).catch(() => {});
@@ -82,6 +84,32 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   const stress = Math.max(0, Math.min(100, 100 - archetypeOperations(id, m.archetype, ts).meanOperational));
   const esc = escalationState('ministry', stress);
   const chainColor = !chain.intact ? 'rgb(var(--c-alert))' : chain.entries ? 'rgb(var(--c-ok))' : 'rgb(var(--c-ink-muted))';
+
+  // Fetch a real AI advisory when tier changes — effect must be at top level,
+  // before any conditional returns, to satisfy Rules of Hooks.
+  const stressTier = stress >= 80 ? 3 : stress >= 60 ? 2 : stress >= 40 ? 1 : 0;
+  React.useEffect(() => {
+    if (stressTier === aiAdvisoryTier) return;
+    setAiAdvisoryTier(stressTier);
+    fetch('/api/ai/advisory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        label: m.name,
+        posture: stressTier >= 2 ? 'CRISIS' : stressTier === 1 ? 'ELEVATED' : 'NOMINAL',
+        escalationTier: stressTier,
+        readiness: 100 - stress,
+        incidents: 0,
+        budgetPressure: Math.round(stress * 0.8),
+        slaCompliance: 100 - Math.round(stress * 0.5),
+        constitutional: 'compliant',
+      }),
+    })
+      .then(r => r.json())
+      .then((d: { headline?: string }) => { if (d.headline) setAiAdvisoryText(d.headline); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, stressTier]);
 
   const header = (
     <>
@@ -1966,6 +1994,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
 
   // ── Generic deep environment — archetype-aware operating world ───────
   const ao = archetypeOperations(id, m.archetype, ts);
+
   return (
     <div className="space-y-2">
       {header}
@@ -1984,7 +2013,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             <Stat l="Directives" v={`${ao.command.directives}`} t="ok" />
             <Stat l="Decision latency" v={`${ao.command.decisionLatencyMin}m`} t={ao.command.decisionLatencyMin >= 24 ? 'warn' : 'ok'} />
           </div>
-          <div className="mt-1.5 text-[9px] text-ink-muted">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {ao.command.aiAdvisory}</div>
+          <div className="mt-1.5 text-[9px] text-ink-muted">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {aiAdvisoryText ?? ao.command.aiAdvisory}</div>
           <div className="mt-1.5 flex flex-wrap gap-1">
             {ao.command.chain.map((c, i) => (
               <span key={c} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-0.5 text-[8.5px] text-ink-soft">{i + 1}. {c}</span>
