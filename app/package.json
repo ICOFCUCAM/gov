@@ -13,6 +13,7 @@
     "test:substrate": "bash supabase/tests/run.sh"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.116.0",
     "@supabase/supabase-js": "^2.106.1",
     "@types/d3-geo": "^3.1.0",
     "clsx": "2.1.1",
