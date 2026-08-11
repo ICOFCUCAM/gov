@@ -81,6 +81,8 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const [busy, setBusy] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
   const [inst, setInst] = React.useState<Ministry | null>(() => seedInst);
+  const [aiHeadline, setAiHeadline] = React.useState<string | null>(null);
+  const [aiHeadlineTier, setAiHeadlineTier] = React.useState<number>(-1);
   const [allMins, setAllMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(() => Date.now());
   const [ecoOpen, setEcoOpen] = React.useState<string | null>(null);
@@ -192,6 +194,31 @@ export function MinistryWorkspace({ id }: { id: string }) {
       setTab('incidents');
     }
   }, [crisis]);
+
+  // Fetch a real AI advisory when the escalation tier changes.
+  const opTierForAdvisory = ministryOpState(id, (archetype || 'GENERIC') as ArchetypeKey, 100 - (readiness?.total ?? 60), now / 4000).escalationTier;
+  React.useEffect(() => {
+    if (opTierForAdvisory === aiHeadlineTier) return;
+    setAiHeadlineTier(opTierForAdvisory);
+    fetch('/api/ai/advisory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        label: name,
+        posture: opTierForAdvisory >= 2 ? 'CRISIS' : opTierForAdvisory === 1 ? 'ELEVATED' : 'NOMINAL',
+        escalationTier: opTierForAdvisory,
+        readiness: readiness?.total ?? 60,
+        incidents: activeAlerts.length,
+        budgetPressure: 50,
+        slaCompliance: 85,
+        constitutional: 'compliant',
+      }),
+    })
+      .then(r => r.json())
+      .then((d: { headline?: string }) => { if (d.headline) setAiHeadline(d.headline); })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id, opTierForAdvisory]);
 
   const regionCols: Column<RegionStat & { id?: string }>[] = [
     { key: 'r', header: 'Region', render: r => <strong>{r.region}</strong>, filter: r => r.region, sort: (a, b) => a.region.localeCompare(b.region) },
@@ -392,7 +419,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                     </div>
                   ))}
                 </div>
-                <p className="mt-1.5 text-[10px] text-ink-soft">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {op.aiAdvisory}</p>
+                <p className="mt-1.5 text-[10px] text-ink-soft">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {aiHeadline ?? op.aiAdvisory}</p>
               </Section>
               <Section title="Service operations" meta="archetype signature · live">
                 <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
