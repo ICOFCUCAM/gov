@@ -56,7 +56,18 @@ import type {
   SignatureRequest,
   SignatureResult,
   VerifyResult,
+  UpdateChamber,
+  ChamberRelease,
+  NationInstall,
+  FeatureRequest,
+  PublisherOverview,
+  DistributionRelease,
+  SubscribedNation,
+  InstallAction,
+  DeliveryMode,
+  MaintenanceWindow,
 } from './types';
+import { publicClient } from '@/lib/db/client';
 
 async function req<T>(input: string, init?: RequestInit): Promise<T> {
   const res = await fetch(input, {
@@ -70,6 +81,19 @@ async function req<T>(input: string, init?: RequestInit): Promise<T> {
   }
   return data;
 }
+
+/** Publisher calls carry the platform-tier session token when a substrate
+ *  session exists (required under CIVICOS_AUTH=enforce). */
+async function publisherInit(init: RequestInit = {}): Promise<RequestInit> {
+  try {
+    const sb = publicClient();
+    const token = sb ? (await sb.auth.getSession()).data.session?.access_token : undefined;
+    if (token) return { ...init, headers: { ...(init.headers ?? {}), authorization: `Bearer ${token}` } };
+  } catch { /* prototype mode: no substrate session */ }
+  return init;
+}
+
+const linkQ = (link?: string) => (link ? `?link=${encodeURIComponent(link)}` : '');
 
 export const api = {
   sovereign: {
@@ -298,5 +322,28 @@ export const api = {
         method: 'POST',
         body: JSON.stringify(body),
       }),
+  },
+  // Sovereign Update Center. `link` is a nation's private distribution link;
+  // without it the chamber is the installed nation's own.
+  updates: {
+    chamber: (link?: string) => req<{ chamber: UpdateChamber }>(`/api/releases${linkQ(link)}`),
+    release: (id: string, link?: string) =>
+      req<{ release: ChamberRelease; chamber: UpdateChamber }>(`/api/releases/${encodeURIComponent(id)}${linkQ(link)}`),
+    decide: (id: string, body: { action: InstallAction; by: string; note?: string; window?: MaintenanceWindow; mode?: DeliveryMode; verified?: boolean; acknowledge?: boolean; link?: string }) =>
+      req<{ install: NationInstall; chamber: UpdateChamber }>(`/api/releases/${encodeURIComponent(id)}/decision`, { method: 'POST', body: JSON.stringify(body) }),
+    requests: (link?: string) => req<{ requests: FeatureRequest[] }>(`/api/releases/requests${linkQ(link)}`),
+    submitRequest: (body: { title: string; description: string; priority: string; institution: string; by: string; link?: string }) =>
+      req<{ request: FeatureRequest }>('/api/releases/requests', { method: 'POST', body: JSON.stringify(body) }),
+    downloadUrl: (channelKey: string, artifactId: string) =>
+      `/api/releases/download/${encodeURIComponent(channelKey)}/${encodeURIComponent(artifactId)}`,
+    publisher: {
+      overview: async () => req<{ overview: PublisherOverview }>('/api/releases/publisher', await publisherInit()),
+      publish: async (body: Record<string, unknown>) =>
+        req<{ release: DistributionRelease }>('/api/releases/publisher', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      advance: async (id: string, body: { to: string; by?: string; note?: string; targetVersion?: string }) =>
+        req<{ request: FeatureRequest }>(`/api/releases/publisher/requests/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      enrol: async (body: { name: string; iso3?: string; deliveryMode: DeliveryMode; installedVersion: string }) =>
+        req<{ nation: SubscribedNation }>('/api/releases/publisher/nations', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+    },
   },
 };

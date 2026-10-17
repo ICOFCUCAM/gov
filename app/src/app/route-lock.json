@@ -1,6 +1,7 @@
 [
   "/",
   "/admin/onboarding",
+  "/admin/releases",
   "/agriculture",
   "/app/[domain]/[[...sub]]",
   "/assembly",
@@ -114,6 +115,9 @@
   "/trade",
   "/transport",
   "/treasury",
+  "/updates",
+  "/updates/[id]",
+  "/updates/requests",
   "/wall",
   "/wallet",
   "/wallet/assistant",

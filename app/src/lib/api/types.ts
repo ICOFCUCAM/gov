@@ -708,3 +708,172 @@ export interface NationalSnapshot {
     auditIntact: boolean;
   };
 }
+
+// ── Sovereign Update Center (release distribution to nations) ─────────
+// The platform pipeline above (Release → Deployment) builds and promotes a
+// version. Distribution is the layer after it: a promoted version is
+// published to nations as a global release, or a build is made for one
+// nation from its own feature requests. Nothing installs itself: each
+// nation's administrators approve, schedule or download, and record the
+// install themselves.
+export type DistributionChannel = 'global' | 'nation';
+export type ReleaseSeverity = 'security' | 'critical' | 'feature' | 'maintenance';
+/** How a nation runs the platform: hosted for it, on its own infrastructure, or disconnected. */
+export type DeliveryMode = 'saas' | 'self-hosted' | 'air-gapped';
+export type ArtifactKind =
+  | 'container-image' | 'helm-chart' | 'source-tarball' | 'binary-tarball'
+  | 'offline-bundle' | 'migration-kit' | 'mobile-android' | 'mobile-ios'
+  | 'desktop-console' | 'sbom-cyclonedx' | 'sbom-spdx' | 'documentation';
+
+export interface ArtifactSignature {
+  method: 'cosign' | 'gpg';
+  /** Fingerprint of the publisher key that signed it. */
+  keyFingerprint: string;
+  /** Detached signature file name, where the method uses one. */
+  signatureFile?: string;
+}
+export interface ReleaseArtifact {
+  id: string;
+  kind: ArtifactKind;
+  label: string;
+  /** Delivery mode this artifact serves; 'any' for SBOMs, documentation and client apps. */
+  mode: DeliveryMode | 'any';
+  filename: string;
+  /** OCI reference for images and charts (pinned by digest). */
+  ref?: string;
+  platform?: string;
+  sha256: string;
+  sizeBytes: number;
+  signature: ArtifactSignature;
+  /** Always true in this build: the link serves a manifest, not a real binary. */
+  placeholder: true;
+}
+
+export type ChangeKind = 'feature' | 'fix' | 'security' | 'breaking' | 'deprecation';
+export interface ReleaseChange { kind: ChangeKind; text: string; ref?: string }
+export interface ReleaseMigration {
+  id: string;
+  kind: 'database' | 'configuration' | 'data';
+  description: string;
+  reversible: boolean;
+  estimatedMinutes: number;
+}
+
+export interface DistributionRelease {
+  id: string;
+  version: string;
+  channel: DistributionChannel;
+  /** Set only for nation-specific builds: the one nation that can see it. */
+  nationId?: string;
+  /** Nation builds are made on top of a global version. */
+  baseVersion?: string;
+  title: string;
+  summary: string;
+  severity: ReleaseSeverity;
+  recommended: boolean;
+  releasedAt: ISODate;
+  /** Oldest installed version this release can be applied over directly. */
+  minCompatibleVersion: string;
+  changes: ReleaseChange[];
+  migrations: ReleaseMigration[];
+  breakingChanges: string[];
+  upgradeNotes: string;
+  rollbackNotes: string;
+  supportUntil: ISODate;
+  delivery: DeliveryMode[];
+  artifacts: ReleaseArtifact[];
+  /** Feature requests this build delivers (nation builds only). */
+  deliversRequests: string[];
+  /** The platform pipeline release this was promoted from, if any. */
+  platformReleaseId?: string;
+  publishedBy: string;
+}
+
+export type InstallState = 'available' | 'approved' | 'scheduled' | 'installed' | 'skipped' | 'rolled-back';
+export type InstallAction = 'approve' | 'schedule' | 'unschedule' | 'install' | 'skip' | 'reconsider' | 'rollback';
+export interface MaintenanceWindow { start: ISODate; end: ISODate }
+export interface InstallEvent {
+  at: ISODate;
+  by: string;
+  action: InstallAction;
+  from: InstallState;
+  to: InstallState;
+  note?: string;
+  window?: MaintenanceWindow;
+  mode?: DeliveryMode;
+  /** Sequence number of the audit-chain entry that records this decision. */
+  auditSeq?: number;
+}
+export interface NationInstall {
+  releaseId: string;
+  state: InstallState;
+  mode?: DeliveryMode;
+  window?: MaintenanceWindow;
+  events: InstallEvent[];
+}
+
+export interface SubscribedNation {
+  id: string;
+  name: string;
+  iso3?: string;
+  deliveryMode: DeliveryMode;
+  /** Private distribution link key: the nation's own feed and downloads. */
+  channelKey: string;
+  installedVersion: string;
+  installedReleaseId?: string;
+  /** Versions this nation ran before, most recent last (rollback target). */
+  history: { version: string; releaseId?: string; at: ISODate }[];
+  enrolledAt: ISODate;
+  /** True for the nation this installation belongs to. */
+  home?: boolean;
+}
+
+export type FeatureRequestStage =
+  | 'requested' | 'under-review' | 'scoped' | 'in-development' | 'ready' | 'delivered' | 'declined';
+export type FeatureRequestPriority = 'low' | 'normal' | 'high' | 'urgent';
+export interface FeatureRequest {
+  id: string;
+  nationId: string;
+  title: string;
+  description: string;
+  priority: FeatureRequestPriority;
+  institution: string;
+  stage: FeatureRequestStage;
+  submittedAt: ISODate;
+  submittedBy: string;
+  targetVersion?: string;
+  deliveredIn?: string;
+  history: { at: ISODate; by: string; from: FeatureRequestStage | null; to: FeatureRequestStage; note?: string }[];
+}
+
+/** A release as one nation sees it: its own decision state and fit. */
+export interface ChamberRelease extends DistributionRelease {
+  install: NationInstall;
+  /** Newer than what the nation runs. */
+  newer: boolean;
+  /** Can be applied directly over the installed version. */
+  compatible: boolean;
+  /** Installed earlier and since replaced by a newer install. */
+  superseded: boolean;
+}
+export interface PublisherKey { fingerprint: string; cosignKey: string; gpgKey: string; demo: true }
+export interface UpdateChamber {
+  nation: SubscribedNation;
+  installed: string;
+  latest: string;
+  releases: ChamberRelease[];
+  /** Release ids, in order, that take the installed version to the latest. */
+  upgradePath: string[];
+  requests: FeatureRequest[];
+  publisherKey: PublisherKey;
+}
+export interface PublisherOverview {
+  nations: (SubscribedNation & { openRequests: number; available: number; securityPending: number })[];
+  releases: DistributionRelease[];
+  requests: FeatureRequest[];
+  /** nationId → releaseId → state, for the install matrix. */
+  installs: Record<string, Record<string, InstallState>>;
+  /** Stable platform-pipeline releases not yet published to nations. */
+  promotable: { id: string; version: string; notes: string }[];
+  publisherKey: PublisherKey;
+}

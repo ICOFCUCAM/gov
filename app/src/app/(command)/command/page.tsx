@@ -29,6 +29,7 @@ const rail = (): { g: string; items: { i: string; l: string; s: string; href: st
   { g: 'Institutional Admin', items: [
     { i: '▦', l: 'Institutions Admin', s: 'Compose ministries', href: '/ministries' },
     { i: '⚙', l: 'Platform Operations', s: 'Releases · tenancy · backups', href: '/platform' },
+    { i: '⇪', l: 'Update Center', s: 'Releases · downloads · feature requests', href: '/updates' },
     { i: '⇄', l: 'Interoperability', s: 'Federation · webhooks · clients', href: '/integrations' },
     { i: '⌘', l: 'Developer Guide', s: 'API · SDK · integration', href: '/developers' },
   ]},

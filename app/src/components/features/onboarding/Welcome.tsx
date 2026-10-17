@@ -152,6 +152,7 @@ export function Welcome() {
             { href: institutionPath ? '/setup?path=institution' : '/setup', l: 'Review setup' },
             { href: '/gov/configuration', l: 'Sovereign configuration' },
             { href: '/admin/onboarding', l: 'Municipal onboarding' },
+            { href: '/updates', l: 'Update Center' },
           ].map(x => (
             <Link key={x.href} href={x.href} className="underline decoration-[#d9c398]/35 underline-offset-4 transition-colors hover:text-[#f4e4bd] hover:decoration-[#f4e4bd]" style={{ color: CHAMPAGNE }}>{x.l}</Link>
           ))}
