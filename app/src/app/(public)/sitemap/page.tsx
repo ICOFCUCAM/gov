@@ -33,7 +33,7 @@ export default function SitemapPage() {
           {sites.map(s => (
             <li key={s.id}>
               <Link href={`/${s.id}`} className="font-semibold text-[#1e63b8] hover:underline">{s.institution.name}</Link>
-              <div className="mt-1 flex flex-wrap gap-x-3 text-[12px] text-slate-500">
+              <div className="mt-1 flex flex-wrap gap-x-3 text-[12px] text-slate-600">
                 {SECTIONS.map(x => <Link key={x.key} href={siteHref(s.id, x.key)} className="hover:text-slate-900">{x.label}</Link>)}
               </div>
             </li>

@@ -6,6 +6,8 @@
 
 import * as React from 'react';
 import type { PublicSiteShellProps, PublicSiteTheme } from './PublicSiteShell';
+import { accessibleTheme } from './design/contrast';
+import { headers } from 'next/headers';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import type { SiteContent, SiteLink } from '@/lib/public-sites/types';
 import { fillDeep, siteTokens } from '@/lib/public-sites/tokens';
@@ -30,8 +32,23 @@ export function siteHref(id: string, to: SiteLink): string {
   return to === 'home' ? `/${id}` : `/${id}#${to}`;
 }
 
-export function siteProps(id: string, { theme, illustration, live = {}, year = new Date().getFullYear(), preview }: SitePropsOptions): PublicSiteShellProps {
+/** The page's absolute address, from the request (none outside a request, e.g. in tests). */
+function absolute(path: string): string | undefined {
+  try {
+    const h = headers();
+    const host = h.get('x-forwarded-host') ?? h.get('host');
+    if (!host) return undefined;
+    const proto = h.get('x-forwarded-proto') ?? (/^(localhost|127\.|\[::1\])/.test(host) ? 'http' : 'https');
+    return `${proto}://${host}${path}`;
+  } catch {
+    return undefined;
+  }
+}
+
+export function siteProps(id: string, { theme: given, illustration, live = {}, year = new Date().getFullYear(), preview }: SitePropsOptions): PublicSiteShellProps {
   const { content: raw, settings, previewing, language } = effectiveContent(id, preview);
+  // The ministry's colours, darkened where needed so text in them stays readable (WCAG AA).
+  const theme = accessibleTheme(given);
   // Live figures first, so a live value is never mistaken for a sample.
   const liveAt = new Set(raw.statistics.flatMap((s, i) => (/\{live\.\w+\}/.test(s.value) ? [i] : [])));
   const withLive = JSON.parse(JSON.stringify(raw).replace(/\{live\.(\w+)\}/g, (_, k: string) => JSON.stringify(live[k] ?? '—').slice(1, -1))) as SiteContent;
@@ -42,6 +59,7 @@ export function siteProps(id: string, { theme, illustration, live = {}, year = n
 
   return {
     theme,
+    url: absolute(`/${id}`),
     institution: {
       name: c.institution.name,
       tagline: c.institution.tagline,

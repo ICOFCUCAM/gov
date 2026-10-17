@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { PublicSite, presetFor } from './PublicSite';
 import { PRESETS, DEFAULT_PRESET, SITE_SECTOR, presetsFor } from './design/presets';
 import { siteProps } from './site-props';
+import { contrast, AA } from './design/contrast';
 import { SITE_IDS } from '@/lib/public-sites';
 import { applyNation } from '@/lib/nation/registry';
 import { resetSiteSettings, updateSiteSettings, syncSiteFeed } from '@/lib/data/site-settings';
@@ -115,5 +116,49 @@ describe('public-site design presets', () => {
     const health = decode(renderToStaticMarkup(React.createElement(HealthPage, {})));
     expect(health).toContain('Its main website is health.example.gov.');
     resetSiteSettings();
+  });
+});
+
+describe('public-site accessibility foundations (WCAG 2.2 AA)', () => {
+  beforeEach(() => applyNation({ configured: false }));
+
+  const pages = () => [
+    ...SITE_IDS.flatMap(id => presetsFor(id).filter(p => !p.bespoke).map(p => [`${id} / ${p.id}`, render(id, p.id)] as const)),
+    ['health', renderToStaticMarkup(React.createElement(HealthPage, {}))] as const,
+    ['treasury', renderToStaticMarkup(React.createElement(TreasuryPage, {}))] as const,
+  ];
+
+  it('give every design a skip link, one main region, banner, footer, one h1 and a language', () => {
+    for (const [name, html] of pages()) {
+      expect(html, `${name}: skip link`).toMatch(/<a href="#main"[^>]*>/);
+      expect(html.match(/<main[\s>]/g)?.length, `${name}: one <main>`).toBe(1);
+      expect(html, `${name}: main is the skip target`).toMatch(/<main id="main"/);
+      expect(html, `${name}: header`).toContain('<header');
+      expect(html, `${name}: footer`).toContain('<footer');
+      expect(html.match(/<h1[\s>]/g)?.length, `${name}: one h1`).toBe(1);
+      expect(html, `${name}: lang`).toMatch(/data-site-root=""|lang="[a-z]{2}"/);
+      expect(html, `${name}: official banner is a named region`).toMatch(/<section aria-label="Official website of /i);
+    }
+  });
+
+  it('name every control and image', () => {
+    for (const [name, html] of pages()) {
+      for (const b of html.match(/<button\b[^>]*>[\s\S]*?<\/button>/g) ?? []) {
+        const named = /aria-label="[^"]+"/.test(b) || /\p{L}/u.test(b.replace(/<[^>]+>/g, ''));
+        expect(named, `${name}: unnamed button ${b.slice(0, 80)}`).toBe(true);
+      }
+      for (const img of html.match(/<img\b[^>]*>/g) ?? []) expect(img, `${name}: image without alt`).toMatch(/\balt="/);
+      for (const input of html.match(/<input\b[^>]*>/g) ?? []) expect(input, `${name}: input without a label`).toMatch(/aria-label="[^"]+"|id="/);
+      for (const svg of html.match(/<svg\b[^>]*>/g) ?? []) expect(svg, `${name}: svg neither hidden nor named`).toMatch(/aria-hidden="true"|role="img"|aria-label=/);
+    }
+  });
+
+  it('use theme colours that read at 4.5:1 on the light surfaces', () => {
+    for (const id of SITE_IDS) {
+      const th = siteProps(id, { theme, illustration: null, live: LIVE }).theme;
+      for (const k of ['ink', 'inkSoft', 'primary', 'accent', 'emergencyA'] as const) {
+        for (const bg of ['#ffffff', th.surface, th.surfaceMute]) expect(contrast(th[k], bg), `${id}: ${k} on ${bg}`).toBeGreaterThanOrEqual(AA);
+      }
+    }
   });
 });

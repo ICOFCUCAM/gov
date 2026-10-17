@@ -4,16 +4,17 @@
 import Link from 'next/link';
 import { PublicSite } from '@/apps/_shared/public/PublicSite';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
+import { accessibleTheme } from '@/apps/_shared/public/design/contrast';
 import { educationPublicInstitutions } from '@/lib/gov/education-public-institutions';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Education — Official Portal' };
 
-const THEME = {
+const THEME = accessibleTheme({
   ink: '#1a1f30', inkSoft: '#262e44', primary: '#3a82d0', accent: '#c9a24a',
   surface: '#faf8f1', surfaceMute: '#eef2f9', line: '#dde3ee',
   emergencyA: '#c1252f', emergencyB: '#a01c25',
-};
+});
 
 export default function PublicEducationPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   const institutions = educationPublicInstitutions();
@@ -29,7 +30,7 @@ export default function PublicEducationPage({ searchParams }: { searchParams?: {
         <div className="mx-auto max-w-[1280px] px-6 py-12">
           <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="text-[24px] font-bold" style={{ color: THEME.ink, fontFamily: 'Georgia, ui-serif, serif' }}>Public Websites by Branch</h2>
-            <div className="text-[13px] text-slate-500">
+            <div className="text-[13px] text-slate-600">
               <span className="font-bold tabular-nums" style={{ color: THEME.primary }}>{institutions.length}</span> branches ·{' '}
               <span className="font-bold tabular-nums" style={{ color: THEME.primary }}>{totalSites.toLocaleString()}</span> independent public sites
             </div>
@@ -44,7 +45,7 @@ export default function PublicEducationPage({ searchParams }: { searchParams?: {
                     style={{ background: THEME.surfaceMute, color: THEME.primary }} aria-hidden>{b.glyph}</span>
                   <div>
                     <div className="text-[14px] font-bold" style={{ color: THEME.ink }}>{b.branch}</div>
-                    <div className="text-[10px] uppercase tracking-wide text-slate-500">{b.tier}</div>
+                    <div className="text-[10px] uppercase tracking-wide text-slate-600">{b.tier}</div>
                   </div>
                   <span className="ml-auto rounded-full px-2.5 py-0.5 text-[11px] font-semibold"
                     style={{ background: THEME.surfaceMute, color: THEME.primary }}>{b.publicSites.toLocaleString()} sites</span>
@@ -60,7 +61,7 @@ export default function PublicEducationPage({ searchParams }: { searchParams?: {
               </Link>
             ))}
           </div>
-          <p className="mt-6 text-[11px] italic text-slate-500">
+          <p className="mt-6 text-[11px] italic text-slate-600">
             Every public-facing institution carries its own portal — universities, school networks, exam boards, civic
             literacy centres and research consortia. The Ministry coordinates standards and protects pluralism without
             consolidating their voices.

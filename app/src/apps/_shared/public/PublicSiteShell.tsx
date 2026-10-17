@@ -23,7 +23,8 @@ import Link from 'next/link';
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 import { locales } from '@/lib/i18n/config';
-import { GatewayBar, PreviewBanner, SiteSchema, Fwd, type SiteGateway } from './integration';
+import { GatewayBar, SkipLink, PreviewBanner, SiteSchema, Fwd, type SiteGateway } from './integration';
+import { FontSizeControls } from './controls';
 
 export interface PublicSiteTheme {
   ink: string;
@@ -101,6 +102,10 @@ export interface PublicSiteShellProps {
   newsletter: { heading: string; body: string };
   legalLine: string;
   legalLinks: PublicSiteLinkItem[];
+  /** A section of the site's own drawn after the standard blocks, inside the main content (Education's public-branch index). */
+  extra?: React.ReactNode;
+  /** The site's absolute address, for schema.org (from the request; absent outside one). */
+  url?: string;
 }
 
 const itemLabel = (i: PublicSiteLinkItem) => (typeof i === 'string' ? i : i.label);
@@ -114,17 +119,18 @@ function Action({ href, className, style, children }: { href?: string; className
 }
 
 export function PublicSiteShell({
-  theme, institution, nav, hero, alert, quickServices, featured, statistics, statisticsSample, news, newsSample, newsFrom, gateway, preview, lang, dir, initiatives,
+  theme, extra, url, institution, nav, hero, alert, quickServices, featured, statistics, statisticsSample, news, newsSample, newsFrom, gateway, preview, lang, dir, initiatives,
   locator, shortcuts, footerSections, newsletter, legalLine, legalLinks,
 }: PublicSiteShellProps) {
   // Fixed wording in the nation's language (lib/i18n `site`); each institution's own content is unchanged.
   const t = nationMessages().site;
   const language = locales.find(l => l.code === nationLocale())?.name ?? 'English';
   return (
-    <div className="min-h-screen text-[#1a2332]" style={{ background: theme.surface }} lang={lang} dir={dir}>
+    <div className="min-h-screen text-[#1a2332]" style={{ background: theme.surface }} lang={lang} dir={dir} data-site-root="">
+      <SkipLink label={t.skipMain} />
       <PreviewBanner on={preview} />
       {/* 1. Utility ribbon */}
-      <div className="w-full text-[12px] text-white/85"
+      <section aria-label={fill(t.officialWebsite, { name: institution.name })} className="w-full text-[12px] text-white/85"
         style={{ background: `linear-gradient(90deg, ${theme.ink}, ${theme.inkSoft})` }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
           <div className="flex items-center gap-4">
@@ -134,16 +140,11 @@ export function PublicSiteShell({
             <Link href="/noc" className="hidden hover:text-white sm:inline">{t.liveBriefing}</Link>
           </div>
           <div className="flex items-center gap-4">
-            <span className="hidden sm:inline hover:text-white">{t.skipMain}</span>
-            <span className="flex gap-1.5">
-              <button className="hover:text-white" aria-label={t.fontUp}>A+</button>
-              <button className="hover:text-white" aria-label={t.fontNormal}>A</button>
-              <button className="hover:text-white" aria-label={t.fontDown}>A-</button>
-            </span>
+            <FontSizeControls up={t.fontUp} normal={t.fontNormal} down={t.fontDown} />
             <span className="hover:text-white">{language} ▾</span>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 2. Header */}
       <header className="sticky top-0 z-20 border-b bg-white" style={{ borderColor: theme.line }}>
@@ -153,7 +154,7 @@ export function PublicSiteShell({
               style={{ background: theme.ink }} aria-hidden>{institution.crest}</span>
             <div className="leading-tight">
               <div className="text-[18px] font-bold tracking-tight" style={{ color: theme.ink }}>{institution.name}</div>
-              <div className="text-[11px] text-slate-500">{institution.tagline}</div>
+              <div className="text-[11px] text-slate-600">{institution.tagline}</div>
             </div>
           </div>
           <nav className="mx-auto hidden items-center gap-7 text-[14px] font-medium text-slate-600 lg:flex">
@@ -167,7 +168,7 @@ export function PublicSiteShell({
             ))}
           </nav>
           <div className="flex items-center gap-4">
-            <button aria-label={t.search} className="text-slate-500 hover:text-slate-900">⌕</button>
+            <button aria-label={t.search} className="text-slate-600 hover:text-slate-900">⌕</button>
             {institution.emergencyButton ? (
               <button className="flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white"
                 style={{ background: `linear-gradient(90deg, ${theme.emergencyA}, ${theme.emergencyB})` }}>
@@ -178,7 +179,8 @@ export function PublicSiteShell({
         </div>
       </header>
       <GatewayBar gateway={gateway} name={institution.name} accent={theme.primary} />
-      <SiteSchema name={institution.name} description={institution.tagline} gateway={gateway} />
+      <main id="main">
+      <SiteSchema name={institution.name} description={institution.tagline} gateway={gateway} url={url} lang={lang} emergency={institution.emergencyButton?.label} />
 
       {/* 3. Hero */}
       <section style={{ background: `linear-gradient(110deg, #ffffff, ${theme.surfaceMute} 55%, ${theme.surfaceMute})` }}>
@@ -203,7 +205,7 @@ export function PublicSiteShell({
               <span className="grid h-12 w-12 place-items-center rounded-full text-[18px]"
                 style={{ background: theme.surfaceMute, color: theme.primary }} aria-hidden>{hero.sideNote.icon}</span>
               <div className="mt-3 text-[16px] font-bold leading-snug" style={{ color: theme.ink }}>{hero.sideNote.title}</div>
-              <p className="mt-1 text-[12px] text-slate-500">{hero.sideNote.body}</p>
+              <p className="mt-1 text-[12px] text-slate-600">{hero.sideNote.body}</p>
               {hero.sideNote.href
                 ? <Link href={hero.sideNote.href} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: theme.primary }}>{hero.sideNote.cta} <Fwd /></Link>
                 : <span className="mt-3 inline-block text-[12px] font-semibold" style={{ color: theme.primary }}>{hero.sideNote.cta} <Fwd /></span>}
@@ -217,11 +219,11 @@ export function PublicSiteShell({
         {alert ? (
           <div className="flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3"
             style={{ borderColor: '#f6c5c5', background: '#fdeeee' }}>
-            <span className="flex items-center gap-2 text-[13px] font-bold" style={{ color: '#d62b34' }}>
+            <span className="flex items-center gap-2 text-[13px] font-bold" style={{ color: '#c0232c' }}>
               <span aria-hidden>⚠</span> {alert.label}
             </span>
             <span className="min-w-0 flex-1 text-[13px] text-slate-700">{alert.text}</span>
-            <span className="text-[12px] font-semibold" style={{ color: '#d62b34' }}>{t.viewAlerts}</span>
+            <span className="text-[12px] font-semibold" style={{ color: '#c0232c' }}>{t.viewAlerts}</span>
           </div>
         ) : null}
 
@@ -238,7 +240,7 @@ export function PublicSiteShell({
                   <span className="mx-auto grid h-12 w-12 place-items-center rounded-full text-[18px] text-white"
                     style={{ background: q.color }} aria-hidden>{q.icon}</span>
                   <div className="mt-2 text-[13px] font-semibold" style={{ color: theme.ink }}>{q.title}</div>
-                  <div className="text-[11px] text-slate-500">{q.subtitle}</div>
+                  <div className="text-[11px] text-slate-600">{q.subtitle}</div>
                 </>
               );
               const cls = 'block rounded-xl border bg-white p-4 text-center shadow-sm transition-shadow hover:shadow-md';
@@ -263,11 +265,11 @@ export function PublicSiteShell({
                     : { borderColor: theme.line, background: theme.surfaceMute }}>
                 <div className="text-[11px] uppercase tracking-wide" style={isPrimary ? { opacity: 0.8 } : isAmber ? { color: '#92600e' } : { color: theme.inkSoft }}>{f.kicker}</div>
                 <div className="mt-1 text-[18px] font-bold" style={isPrimary ? undefined : isAmber ? { color: '#92600e' } : { color: theme.ink }}>{f.title}</div>
-                <p className={isPrimary ? 'mt-1 text-[12px] opacity-90' : isAmber ? 'mt-1 text-[12px] text-amber-800/80' : 'mt-1 text-[12px] text-slate-500'}>{f.body}</p>
+                <p className={isPrimary ? 'mt-1 text-[12px] opacity-90' : isAmber ? 'mt-1 text-[12px] text-amber-800' : 'mt-1 text-[12px] text-slate-600'}>{f.body}</p>
                 {React.createElement(f.href ? Link : 'span', {
                   ...(f.href ? { href: f.href } : {}),
                   className: isPrimary ? 'mt-3 inline-block rounded-md bg-white/15 px-3 py-1.5 text-[12px] font-semibold backdrop-blur' : 'mt-3 inline-block text-[12px] font-semibold',
-                  style: isPrimary ? undefined : isAmber ? { color: '#b8740f' } : { color: theme.primary },
+                  style: isPrimary ? undefined : isAmber ? { color: '#92600e' } : { color: theme.primary },
                 } as React.ComponentProps<typeof Link>, <>{f.cta} <Fwd /></>)}
               </div>
             );
@@ -294,8 +296,8 @@ export function PublicSiteShell({
                     style={{ background: theme.surfaceMute, color: theme.primary }} aria-hidden>◆</span>
                   <div className="mt-1.5 text-[18px] font-bold" style={{ color: theme.ink }}>{s.value}</div>
                   <div className="text-[11px] font-medium text-slate-600">{s.label}</div>
-                  <div className="text-[9px] text-slate-400">{s.sub}</div>
-                  {s.live ? <div className="mt-1 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide" style={{ color: '#0f9d6b' }}><span aria-hidden>●</span> {t.live}</div> : null}
+                  <div className="text-[9px] text-slate-600">{s.sub}</div>
+                  {s.live ? <div className="mt-1 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-wide" style={{ color: '#0a6e4c' }}><span aria-hidden>●</span> {t.live}</div> : null}
                 </div>
               ))}
             </div>
@@ -322,8 +324,8 @@ export function PublicSiteShell({
                     {n.url
                       ? <a href={n.url} rel="noopener" className="text-[12px] font-semibold hover:underline" style={{ color: theme.ink }}>{n.title} ↗</a>
                       : <div className="text-[12px] font-semibold" style={{ color: theme.ink }}>{n.title}</div>}
-                    <div className="text-[10px] text-slate-500">{n.summary}</div>
-                    {n.date ? <div className="text-[9px] text-slate-400">{n.date}</div> : null}
+                    <div className="text-[10px] text-slate-600">{n.summary}</div>
+                    {n.date ? <div className="text-[9px] text-slate-600">{n.date}</div> : null}
                   </div>
                 </div>
               ))}
@@ -341,7 +343,7 @@ export function PublicSiteShell({
                     style={{ background: theme.surfaceMute, color: theme.primary }} aria-hidden>✦</span>
                   <div>
                     <div className="text-[12px] font-semibold" style={{ color: theme.ink }}>{it.title}</div>
-                    <div className="text-[10px] text-slate-500">{it.body}</div>
+                    <div className="text-[10px] text-slate-600">{it.body}</div>
                   </div>
                 </div>
               ))}
@@ -355,7 +357,7 @@ export function PublicSiteShell({
                 <h3 className="text-[15px] font-bold" style={{ color: theme.ink }}>{locator.title}</h3>
                 <span className="text-[11px] font-semibold" style={{ color: theme.primary }}>{t.viewMap}</span>
               </div>
-              <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] text-slate-400"
+              <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] text-slate-600"
                 style={{ borderColor: theme.line }}>
                 <span>⌕</span> {locator.placeholder}
               </div>
@@ -370,14 +372,14 @@ export function PublicSiteShell({
               <div className="mt-2 flex flex-wrap gap-1.5">
                 {locator.tabs.map((t, i) => (
                   <span key={t} className="rounded-full px-2.5 py-0.5 text-[10px] font-medium"
-                    style={i === 0 ? { background: theme.primary, color: '#fff' } : { border: `1px solid ${theme.line}`, color: '#64748b' }}>{t}</span>
+                    style={i === 0 ? { background: theme.primary, color: '#fff' } : { border: `1px solid ${theme.line}`, color: '#475569' }}>{t}</span>
                 ))}
               </div>
             </div>
           ) : (
             <div id="contact" className="scroll-mt-24 rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: theme.line }}>
               <div className="mb-3 text-[15px] font-bold" style={{ color: theme.ink }}>{t.contact}</div>
-              <p className="text-[12px] text-slate-500">{t.contactText}</p>
+              <p className="text-[12px] text-slate-600">{t.contactText}</p>
               <button className="mt-3 w-full rounded-md py-1.5 text-[12px] font-semibold text-white"
                 style={{ background: theme.primary }}>{t.contactUs}</button>
             </div>
@@ -394,7 +396,7 @@ export function PublicSiteShell({
                   style={{ background: '#dbe8fb', color: theme.primary }} aria-hidden>▣</span>
                 <div>
                   <div className="text-[12px] font-bold" style={{ color: theme.ink }}>{s.title}</div>
-                  <div className="text-[10px] text-slate-500">{s.subtitle}</div>
+                  <div className="text-[10px] text-slate-600">{s.subtitle}</div>
                 </div>
               </>
             );
@@ -404,6 +406,10 @@ export function PublicSiteShell({
           })}
         </div>
       </div>
+
+      {extra}
+      </main>
+
 
       {/* 10. Footer */}
       <footer id="about" className="text-white/80" style={{ background: theme.ink }}>

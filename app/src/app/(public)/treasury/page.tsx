@@ -16,7 +16,8 @@ import { locales } from '@/lib/i18n/config';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
-import { GatewayBar, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
+import { GatewayBar, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
+import { FontSizeControls } from '@/apps/_shared/public/controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { t as fill } from '@/lib/i18n';
 
@@ -24,9 +25,10 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Treasury & Finance — Official Portal' };
 
 const NAVY = '#16233d';
-const GOLD = '#b58a35';
+// Gold and green carry text, so they are the darkest shade of the brand colours that reads at 4.5:1 on white (WCAG AA).
+const GOLD = '#8a6827';
 const GOLD2 = '#c9a24a';
-const GREEN = '#1f9d63';
+const GREEN = '#1a8152';
 const INK = '#23303f';
 const SOFT = '#5b6b78';
 const LINE = '#e8e3d6';
@@ -71,7 +73,7 @@ function TreasuryBuilding() {
   return (
     <div className="absolute inset-0" aria-hidden
       style={{ background: 'linear-gradient(120deg,#ffffff 0%,#fbfaf5 38%,#eaeef3 60%,#dfe7ef 100%)' }}>
-      <svg viewBox="0 0 520 400" preserveAspectRatio="xMaxYMid slice" className="h-full w-full">
+      <svg viewBox="0 0 520 400" preserveAspectRatio="xMaxYMid slice" className="h-full w-full" aria-hidden="true">
         <defs>
           <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#d8e6f2" /><stop offset="1" stopColor="#eef3f7" />
@@ -171,10 +173,11 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
   const half = Math.ceil(site.shortcuts.length / 2);
 
   return (
-    <div className="min-h-screen" style={{ background: '#ffffff', color: INK }} lang={site.lang} dir={site.dir}>
+    <div className="min-h-screen" style={{ background: '#ffffff', color: INK }} lang={site.lang} dir={site.dir} data-site-root="">
+      <SkipLink label={t.skipMain} />
       <PreviewBanner on={site.preview} />
       {/* 0. Official banner — the same on every public site. */}
-      <div className="w-full text-[12px] text-white/85" style={{ background: NAVY }}>
+      <section aria-label={fill(t.officialWebsite, { name: inst.name })} className="w-full text-[12px] text-white/85" style={{ background: NAVY }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
           <div className="flex items-center gap-4">
             <span>{fill(t.officialWebsite, { name: inst.name })}</span>
@@ -183,12 +186,11 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
             <Link href="/noc" className="hidden hover:text-white sm:inline">{t.liveBriefing}</Link>
           </div>
           <div className="flex items-center gap-4">
-            <a href="#services" className="hidden hover:text-white sm:inline">{t.skipMain}</a>
-            <span className="flex gap-1.5"><button className="hover:text-white" aria-label={t.fontUp}>A+</button><button className="hover:text-white" aria-label={t.fontNormal}>A</button><button className="hover:text-white" aria-label={t.fontDown}>A-</button></span>
+            <FontSizeControls up={t.fontUp} normal={t.fontNormal} down={t.fontDown} />
             <span>{language} ▾</span>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 1. Header */}
       <header className="sticky top-0 z-20 border-b bg-white" style={{ borderColor: LINE }}>
@@ -205,9 +207,9 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
             {UTILITY.map(l => <Link key={l.label} href={l.href} className="hover:text-slate-900">{l.label}</Link>)}
           </nav>
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-[12px]" style={{ borderColor: LINE, color: SOFT }}>
+            <label className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-[12px] focus-within:outline focus-within:outline-2 focus-within:outline-offset-2" style={{ borderColor: LINE, color: SOFT }}>
               <span aria-hidden>⌕</span>
-              <input aria-label={t.search} placeholder={`${t.search}…`} className="w-28 bg-transparent outline-none placeholder:text-slate-400" />
+              <input aria-label={t.search} placeholder={`${t.search}…`} className="w-28 bg-transparent outline-none placeholder:text-slate-500" />
             </label>
             <Link href="/gov/treasury" className="flex items-center gap-2 rounded-md px-4 py-2 text-[12px] font-semibold text-white"
               style={{ background: NAVY }}>
@@ -231,7 +233,8 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
         </div>
       </header>
       <GatewayBar gateway={site.gateway} name={inst.name} accent={GOLD} />
-      <SiteSchema name={inst.name} description={inst.tagline} gateway={site.gateway} />
+      <main id="main">
+      <SiteSchema name={inst.name} description={inst.tagline} gateway={site.gateway} url={site.url} lang={site.lang} emergency={inst.emergencyButton?.label} />
 
       {/* 2. Hero */}
       <section className="relative overflow-hidden" style={{ borderBottom: `1px solid ${LINE}` }}>
@@ -402,6 +405,9 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
           </section>
         </div>
       </div>
+
+      </main>
+
 
       {/* 5. Footer */}
       <footer id="about" className="text-white/75" style={{ background: NAVY }}>

@@ -26,6 +26,40 @@ jobs:
       - name: Unit tests (vitest)
         run: pnpm test
 
+  public-sites-audit:
+    name: public sites audit (accessibility, links, budgets)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright-core install --with-deps chromium
+      - name: Build
+        run: pnpm build
+      - name: Start the server
+        run: |
+          pnpm start -p 3000 > /tmp/next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/api/setup > /dev/null && exit 0; sleep 2; done
+          cat /tmp/next.log; exit 1
+      - name: Audit every public site in every design (WCAG 2.2 AA, links, budgets)
+        run: pnpm audit:sites --report public-sites-audit.json
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-sites-audit
+          path: app/public-sites-audit.json
+          if-no-files-found: ignore
+
   substrate-tests:
     name: substrate SQL suite
     runs-on: ubuntu-latest

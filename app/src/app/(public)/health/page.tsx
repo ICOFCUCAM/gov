@@ -14,7 +14,8 @@ import { t as fill } from '@/lib/i18n';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
-import { GatewayBar, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
+import { GatewayBar, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
+import { FontSizeControls } from '@/apps/_shared/public/controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { locales } from '@/lib/i18n/config';
 export const dynamic = 'force-dynamic';
@@ -22,7 +23,7 @@ export const metadata = { title: 'Ministry of Health — Official Portal' };
 
 const NAVY = '#0b1f3a';
 const BLUE = '#1f5fad';
-const GREEN = '#0f9d6b';
+const GREEN = '#0c8159'; // readable at 4.5:1 on white (WCAG AA)
 const LINE = '#e5e7eb';
 
 const THEME = {
@@ -61,10 +62,11 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
   const [campaign, surveillance, advisory] = featured;
 
   return (
-    <div className="min-h-screen bg-[#f4f6f9] text-[#1a2332]" lang={site.lang} dir={site.dir}>
+    <div className="min-h-screen bg-[#f4f6f9] text-[#1a2332]" lang={site.lang} dir={site.dir} data-site-root="">
+      <SkipLink label={t.skipMain} />
       <PreviewBanner on={site.preview} />
       {/* 1. Top utility bar */}
-      <div className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg,${NAVY},#10325c)` }}>
+      <section aria-label={fill(t.officialWebsite, { name: inst.name })} className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg,${NAVY},#10325c)` }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
           <div className="flex items-center gap-4">
             <span>{fill(t.officialWebsite, { name: inst.name })}</span>
@@ -73,12 +75,11 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
             <Link href="/noc" className="hidden hover:text-white sm:inline">{t.liveBriefing}</Link>
           </div>
           <div className="flex items-center gap-4">
-            <a href="#services" className="hidden sm:inline hover:text-white">{t.skipMain}</a>
-            <span className="flex gap-1.5"><button className="hover:text-white" aria-label={t.fontUp}>A+</button><button className="hover:text-white" aria-label={t.fontNormal}>A</button><button className="hover:text-white" aria-label={t.fontDown}>A-</button></span>
+            <FontSizeControls up={t.fontUp} normal={t.fontNormal} down={t.fontDown} />
             <span className="hover:text-white">{language} ▾</span>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* 2. Header / navbar */}
       <header className="sticky top-0 z-20 border-b bg-white" style={{ borderColor: LINE }}>
@@ -87,7 +88,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
             <span className="grid h-11 w-11 place-items-center rounded-full text-[16px] font-bold text-white" style={{ background: NAVY }} aria-hidden>{inst.crest}</span>
             <div className="leading-tight">
               <div className="text-[18px] font-bold tracking-tight" style={{ color: NAVY }}>{inst.name}</div>
-              <div className="text-[11px] text-slate-500">{inst.tagline}</div>
+              <div className="text-[11px] text-slate-600">{inst.tagline}</div>
             </div>
           </Link>
           <nav className="mx-auto hidden items-center gap-7 text-[14px] font-medium text-slate-600 lg:flex">
@@ -98,7 +99,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
             ))}
           </nav>
           <div className="flex items-center gap-4">
-            <button aria-label={t.search} className="text-slate-500 hover:text-slate-900">⌕</button>
+            <button aria-label={t.search} className="text-slate-600 hover:text-slate-900">⌕</button>
             {inst.emergencyButton ? (
               <Link href="#contact" className="flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white" style={{ background: 'linear-gradient(90deg,#d62b34,#b81f27)' }}>
                 <span aria-hidden>{inst.emergencyButton.icon}</span> {inst.emergencyButton.label}
@@ -111,7 +112,8 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
         </nav>
       </header>
       <GatewayBar gateway={site.gateway} name={inst.name} accent={BLUE} />
-      <SiteSchema name={inst.name} description={inst.tagline} gateway={site.gateway} />
+      <main id="main">
+      <SiteSchema name={inst.name} description={inst.tagline} gateway={site.gateway} url={site.url} lang={site.lang} emergency={inst.emergencyButton?.label} />
 
       {/* 3. Hero */}
       <section style={{ background: 'linear-gradient(110deg,#ffffff,#eef3fa 55%,#e3edf7)' }}>
@@ -130,9 +132,9 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
           <div className="h-[280px] w-full">{hero.illustration}</div>
           {hero.sideNote ? (
             <div className="rounded-2xl border bg-white p-5 shadow-lg" style={{ borderColor: LINE }}>
-              <span className="grid h-12 w-12 place-items-center rounded-full text-[18px]" style={{ background: '#fdecec', color: '#d62b34' }} aria-hidden>{hero.sideNote.icon}</span>
+              <span className="grid h-12 w-12 place-items-center rounded-full text-[18px]" style={{ background: '#fdecec', color: '#c0232c' }} aria-hidden>{hero.sideNote.icon}</span>
               <div className="mt-3 text-[16px] font-bold leading-snug" style={{ color: NAVY }}>{hero.sideNote.title}</div>
-              <p className="mt-1 text-[12px] text-slate-500">{hero.sideNote.body}</p>
+              <p className="mt-1 text-[12px] text-slate-600">{hero.sideNote.body}</p>
               <Link href={hero.sideNote.href ?? '#programmes'} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: BLUE }}>{hero.sideNote.cta} <Fwd /></Link>
             </div>
           ) : null}
@@ -143,9 +145,9 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
         {/* 4. Health alert banner (live from the health-operations engine) */}
         {alert ? (
           <div className="flex flex-col items-start gap-1.5 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:gap-3" style={{ borderColor: '#f6c5c5', background: '#fdeeee' }}>
-            <span className="flex shrink-0 items-center gap-2 text-[13px] font-bold" style={{ color: '#d62b34' }}><span aria-hidden>⚠</span> {alert.label}</span>
+            <span className="flex shrink-0 items-center gap-2 text-[13px] font-bold" style={{ color: '#c0232c' }}><span aria-hidden>⚠</span> {alert.label}</span>
             <span className="w-full min-w-0 text-[13px] text-slate-700 sm:w-auto sm:flex-1">{alert.text}</span>
-            <Link href="#news" className="text-[12px] font-semibold" style={{ color: '#d62b34' }}>{t.viewAlerts}</Link>
+            <Link href="#news" className="text-[12px] font-semibold" style={{ color: '#c0232c' }}>{t.viewAlerts}</Link>
           </div>
         ) : null}
 
@@ -160,7 +162,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
               <Link key={q.title} href={q.href ?? '/wallet/services'} className="block rounded-xl border bg-white p-4 text-center shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: LINE }}>
                 <span className="mx-auto grid h-12 w-12 place-items-center rounded-full text-[18px] text-white" style={{ background: q.color }} aria-hidden>{q.icon}</span>
                 <div className="mt-2 text-[13px] font-semibold" style={{ color: NAVY }}>{q.title}</div>
-                <div className="text-[11px] text-slate-500">{q.subtitle}</div>
+                <div className="text-[11px] text-slate-600">{q.subtitle}</div>
               </Link>
             ))}
           </div>
@@ -181,7 +183,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
             </div>
             <div className="mt-3 grid grid-cols-4 gap-2 text-center">
               {SURVEILLANCE.map(([l, n]) => (
-                <div key={l}><div className="text-[16px] font-bold" style={{ color: NAVY }}>{n}</div><div className="text-[9px] text-slate-500">{l}</div></div>
+                <div key={l}><div className="text-[16px] font-bold" style={{ color: NAVY }}>{n}</div><div className="text-[9px] text-slate-600">{l}</div></div>
               ))}
             </div>
             <Link href={surveillance.href ?? '/public'} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: BLUE }}>{surveillance.cta} <Fwd /></Link>
@@ -189,8 +191,8 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
           <div className="rounded-2xl border p-5 shadow-sm" style={{ borderColor: '#f0e2bf', background: '#fdf6e3' }}>
             <div className="text-[11px] uppercase tracking-wide text-amber-700">{advisory.kicker}</div>
             <div className="mt-1 text-[18px] font-bold" style={{ color: '#92600e' }}>{advisory.title}</div>
-            <p className="mt-1 text-[12px] text-amber-800/80">{advisory.body}</p>
-            <Link href={advisory.href ?? '#news'} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: '#b8740f' }}>{advisory.cta} <Fwd /></Link>
+            <p className="mt-1 text-[12px] text-amber-800">{advisory.body}</p>
+            <Link href={advisory.href ?? '#news'} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: '#92600e' }}>{advisory.cta} <Fwd /></Link>
           </div>
         </div>
 
@@ -209,7 +211,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
                 <span className="grid h-7 w-7 place-items-center rounded-lg text-[12px]" style={{ background: '#e8f0fb', color: BLUE }} aria-hidden>◆</span>
                 <div className="mt-1.5 text-[18px] font-bold" style={{ color: NAVY }}>{x.value}</div>
                 <div className="text-[11px] font-medium text-slate-600">{x.label}</div>
-                <div className="text-[9px] text-slate-400">{x.sub}</div>
+                <div className="text-[9px] text-slate-600">{x.sub}</div>
               </div>
             ))}
           </div>
@@ -223,7 +225,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
               {news.map(n => (
                 <div key={n.title} className="flex gap-3">
                   <div className="h-14 w-16 shrink-0 rounded-lg" style={{ background: 'linear-gradient(135deg,#cfe0f3,#1f5fad)' }} aria-hidden />
-                  <div>{n.url ? <a href={n.url} rel="noopener" className="text-[12px] font-semibold hover:underline" style={{ color: NAVY }}>{n.title} ↗</a> : <div className="text-[12px] font-semibold" style={{ color: NAVY }}>{n.title}</div>}<div className="text-[10px] text-slate-500">{n.summary}</div>{n.date ? <div className="text-[9px] text-slate-400">{n.date}</div> : null}</div>
+                  <div>{n.url ? <a href={n.url} rel="noopener" className="text-[12px] font-semibold hover:underline" style={{ color: NAVY }}>{n.title} ↗</a> : <div className="text-[12px] font-semibold" style={{ color: NAVY }}>{n.title}</div>}<div className="text-[10px] text-slate-600">{n.summary}</div>{n.date ? <div className="text-[9px] text-slate-600">{n.date}</div> : null}</div>
                 </div>
               ))}
             </div>
@@ -234,7 +236,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
               {initiatives.map(i => (
                 <div key={i.title} className="flex gap-3">
                   <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[13px]" style={{ background: '#e8f0fb', color: BLUE }} aria-hidden>✚</span>
-                  <div><div className="text-[12px] font-semibold" style={{ color: NAVY }}>{i.title}</div><div className="text-[10px] text-slate-500">{i.body}</div></div>
+                  <div><div className="text-[12px] font-semibold" style={{ color: NAVY }}>{i.title}</div><div className="text-[10px] text-slate-600">{i.body}</div></div>
                 </div>
               ))}
             </div>
@@ -244,7 +246,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
             <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>{locator?.title ?? t.contact}</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewMap}</span></div>
             {locator ? (
               <>
-                <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] text-slate-400" style={{ borderColor: LINE }}><span>⌕</span> {locator.placeholder}</div>
+                <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] text-slate-600" style={{ borderColor: LINE }}><span>⌕</span> {locator.placeholder}</div>
                 <div className="relative mt-2 h-36 overflow-hidden rounded-lg" style={{ background: 'linear-gradient(135deg,#dde6f0,#c3d4e6)' }} role="img" aria-label={locator.title}>
                   {locator.pinCoords.map(([x, y], i) => (
                     <span key={i} className="absolute grid h-4 w-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-[8px] font-bold text-white" style={{ left: `${x}%`, top: `${y}%`, background: BLUE }}>{locator.pinLabel}</span>
@@ -252,11 +254,11 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
                 </div>
                 <div className="mt-2 flex flex-wrap gap-1.5">
                   {locator.tabs.map((tb, i) => (
-                    <span key={tb} className="rounded-full px-2.5 py-0.5 text-[10px] font-medium" style={i === 0 ? { background: BLUE, color: '#fff' } : { border: `1px solid ${LINE}`, color: '#64748b' }}>{tb}</span>
+                    <span key={tb} className="rounded-full px-2.5 py-0.5 text-[10px] font-medium" style={i === 0 ? { background: BLUE, color: '#fff' } : { border: `1px solid ${LINE}`, color: '#475569' }}>{tb}</span>
                   ))}
                 </div>
               </>
-            ) : <p className="text-[12px] text-slate-500">{t.contactText}</p>}
+            ) : <p className="text-[12px] text-slate-600">{t.contactText}</p>}
           </div>
         </div>
 
@@ -265,13 +267,16 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
           {shortcuts.map(x => (
             <Link key={x.title} href={x.href ?? '/health'} className="flex gap-3 hover:opacity-80">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[14px]" style={{ background: '#dbe8fb', color: BLUE }} aria-hidden>▣</span>
-              <div><div className="text-[12px] font-bold" style={{ color: NAVY }}>{x.title}</div><div className="text-[10px] text-slate-500">{x.subtitle}</div></div>
+              <div><div className="text-[12px] font-bold" style={{ color: NAVY }}>{x.title}</div><div className="text-[10px] text-slate-600">{x.subtitle}</div></div>
             </Link>
           ))}
         </div>
       </div>
 
+      </main>
+
       {/* 10. Large footer */}
+
       <footer id="about" className="text-white/80" style={{ background: NAVY }}>
         <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-8 px-6 py-12 md:grid-cols-3 lg:grid-cols-5">
           <div>

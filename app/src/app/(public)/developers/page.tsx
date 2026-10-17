@@ -32,7 +32,7 @@ export default function DevelopersPage() {
       <section className="space-y-2">
         <h2 className="text-xl font-semibold">2. Authenticate</h2>
         <Card tight>
-          <pre className="overflow-x-auto text-sm"><code>{`curl https://<sovereign>/api/v1/permits \\
+          <pre tabIndex={0} aria-label="Example request" className="overflow-x-auto text-sm"><code>{`curl https://<sovereign>/api/v1/permits \\
   -H "x-api-key: civ_••••••••"`}</code></pre>
         </Card>
         <p className="text-sm text-ink-muted">

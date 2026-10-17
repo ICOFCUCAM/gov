@@ -14,7 +14,7 @@
     --c-surface-2: 241 238 232;
     --c-ink: 26 29 35;
     --c-ink-soft: 71 80 97;
-    --c-ink-muted: 108 117 136;
+    --c-ink-muted: 95 104 122; /* 5.6:1 on white (WCAG AA) */
     --c-line: 217 212 200;
     --c-line-soft: 236 232 222;
     --c-link: 31 95 173;

@@ -1,10 +1,11 @@
 // How a public site shows its relation to the ministry's existing website
 // (lib/data/site-settings.ts): the gateway bar in Link, Embed and Migrate mode,
 // the source label on news taken from that website, and schema.org markup
-// linking the CivicOS site to it. Shared by every design.
+// describing the institution, its website and its place in the government.
+// Shared by every design.
 
 import * as React from 'react';
-import { nationMessages } from '@/lib/nation/registry';
+import { nationMessages, nationInsignia, currentOffices } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 
 export interface SiteGateway {
@@ -18,6 +19,15 @@ export interface SiteGateway {
 /** A forward arrow that points the way of reading: right in left-to-right pages, left in right-to-left ones. */
 export function Fwd() {
   return <span className="inline-block rtl:-scale-x-100" aria-hidden>→</span>;
+}
+
+/** The first thing a keyboard or screen-reader user reaches: a link past the banner and header to the page's main content. Hidden until focused. */
+export function SkipLink({ label, href = '#main' }: { label: string; href?: string }) {
+  return (
+    <a href={href} className="sr-only focus:not-sr-only focus:fixed focus:start-3 focus:top-3 focus:z-50 focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-[14px] focus:font-semibold focus:text-[#0b1a2c] focus:shadow-lg focus:outline focus:outline-2 focus:outline-[#0b1a2c]">
+      {label}
+    </a>
+  );
 }
 
 /** Shown on a pending proposal's preview (officials only): nothing here is published yet. */
@@ -53,15 +63,52 @@ export function GatewayBar({ gateway, name, accent }: { gateway?: SiteGateway; n
   );
 }
 
-/** schema.org markup: the institution, its CivicOS site and (sameAs) its existing website. */
-export function SiteSchema({ name, description, gateway }: { name: string; description: string; gateway?: SiteGateway }) {
-  const data = {
-    '@context': 'https://schema.org',
+export interface SiteSchemaInput {
+  name: string;
+  description: string;
+  gateway?: SiteGateway;
+  /** Absolute URL of the site (from the request, see siteProps); left out when unknown. */
+  url?: string;
+  /** The language the page is in (BCP 47). */
+  lang?: string;
+  /** The emergency button's label, e.g. "Emergency 999": its number becomes an emergency contact point. */
+  emergency?: string;
+}
+
+/**
+ * schema.org JSON-LD for a public site: the institution (GovernmentOrganization)
+ * within the nation's government, the country it serves, its existing website
+ * (sameAs) and emergency number, and the website itself (WebSite) in the
+ * page's language. Facts come from the nation profile; nothing is invented.
+ */
+export function siteSchemaData({ name, description, gateway, url, lang, emergency }: SiteSchemaInput): Record<string, unknown> {
+  const insignia = nationInsignia();
+  const government = insignia ? currentOffices().government : undefined;
+  const tel = emergency ? /(\+?\d[\d\s-]{1,14}\d|\d{2,})/.exec(emergency)?.[0]?.replace(/[\s-]/g, '') : undefined;
+  const id = url ? { org: `${url}#organization`, site: `${url}#website` } : undefined;
+  const org = {
     '@type': 'GovernmentOrganization',
+    ...(id ? { '@id': id.org, url } : {}),
     name,
     description,
     ...(gateway ? { sameAs: [gateway.website] } : {}),
+    ...(insignia ? { areaServed: { '@type': 'Country', name: insignia.name } } : {}),
+    ...(government && government !== name ? { parentOrganization: { '@type': 'GovernmentOrganization', name: government } } : {}),
+    ...(tel ? { contactPoint: [{ '@type': 'ContactPoint', telephone: tel, contactType: 'emergency' }] } : {}),
   };
+  const website = {
+    '@type': 'WebSite',
+    ...(id ? { '@id': id.site, url } : {}),
+    name,
+    ...(lang ? { inLanguage: lang } : {}),
+    publisher: id ? { '@id': id.org } : { '@type': 'GovernmentOrganization', name },
+  };
+  return { '@context': 'https://schema.org', '@graph': [org, website] };
+}
+
+/** schema.org markup for the site (see siteSchemaData). */
+export function SiteSchema(props: SiteSchemaInput) {
+  const data = siteSchemaData(props);
   // JSON in a script element: escape "<" so no text can close the element.
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data).replace(/</g, '\\u003c') }} />;
 }

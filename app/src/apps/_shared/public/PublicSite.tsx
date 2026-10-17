@@ -9,7 +9,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import './design/fonts.css';
 import { PublicSiteShell, SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteTheme, type PublicSiteLinkItem } from './PublicSiteShell';
-import { GatewayBar, PreviewBanner, SiteSchema, Fwd } from './integration';
+import { GatewayBar, SkipLink, PreviewBanner, SiteSchema, Fwd } from './integration';
+import { FontSizeControls } from './controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { getSiteSettings } from '@/lib/data/site-settings';
 import { siteProps } from './site-props';
@@ -42,7 +43,7 @@ export function PublicSite({ id, theme, illustration, live, preset, preview, ext
   const site = siteProps(id, { theme, illustration, live, preview });
   const p = presetFor(id, preset ?? (preview ? effectiveContent(id, preview).previewPreset ?? undefined : undefined));
   // A bespoke design is drawn by the site's own page; here it falls back to Civic Standard.
-  if (p.id === 'civic-standard' || p.bespoke) return <div><PublicSiteShell {...site} />{extra}</div>;
+  if (p.id === 'civic-standard' || p.bespoke) return <PublicSiteShell {...site} extra={extra} />;
   return <ComposedSite site={site} preset={p} extra={extra} />;
 }
 
@@ -140,7 +141,7 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
   );
   const actions = (
     <div className="flex items-center gap-3">
-      <button aria-label={t.search} className="text-slate-500 hover:text-slate-900">⌕</button>
+      <button aria-label={t.search} className="text-slate-600 hover:text-slate-900">⌕</button>
       {emergency ? (
         tel
           ? <a href={`tel:${tel}`} className="flex items-center gap-2 px-4 py-2 text-[13px] font-semibold text-white" style={{ background: `linear-gradient(90deg, ${th.emergencyA}, ${th.emergencyB})`, borderRadius: d.radius }}><span aria-hidden>{emergency.icon}</span> {emergency.label}</a>
@@ -150,10 +151,11 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen text-[#1a2332]" style={{ background: c.bg, fontFamily: d.body }} lang={s.lang} dir={s.dir}>
+    <div className="min-h-screen text-[#1a2332]" style={{ background: c.bg, fontFamily: d.body }} lang={s.lang} dir={s.dir} data-site-root="">
+      <SkipLink label={t.skipMain} />
       <PreviewBanner on={s.preview} />
       {/* Official banner — the same on every public site. */}
-      <div className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg, ${th.ink}, ${th.inkSoft})` }}>
+      <section aria-label={fill(t.officialWebsite, { name: s.institution.name })} className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg, ${th.ink}, ${th.inkSoft})` }}>
         <Wrap className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 py-2">
           <div className="flex items-center gap-4">
             <span>{fill(t.officialWebsite, { name: s.institution.name })}</span>
@@ -162,16 +164,11 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
             <Link href="/noc" className="hidden hover:text-white sm:inline">{t.liveBriefing}</Link>
           </div>
           <div className="flex items-center gap-4">
-            <a href="#main" className="hidden hover:text-white sm:inline">{t.skipMain}</a>
-            <span className="flex gap-1.5">
-              <button className="hover:text-white" aria-label={t.fontUp}>A+</button>
-              <button className="hover:text-white" aria-label={t.fontNormal}>A</button>
-              <button className="hover:text-white" aria-label={t.fontDown}>A-</button>
-            </span>
+            <FontSizeControls up={t.fontUp} normal={t.fontNormal} down={t.fontDown} />
             <span>{language} ▾</span>
           </div>
         </Wrap>
-      </div>
+      </section>
 
       <header className="sticky top-0 z-20 border-b bg-white/95 backdrop-blur" style={{ borderColor: c.rule }}>
         {d.header === 'masthead' ? (
@@ -179,7 +176,7 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
             <Wrap className="flex flex-col items-center gap-2 pb-3 pt-5 text-center">
               {crest(56)}
               <div style={heading(c, 26)}>{s.institution.name}</div>
-              <div className="text-[12px] tracking-wide text-slate-500">{s.institution.tagline}</div>
+              <div className="text-[12px] tracking-wide text-slate-600">{s.institution.tagline}</div>
             </Wrap>
             <div className="border-t" style={{ borderColor: c.rule }}>
               <Wrap className="flex items-center justify-center gap-6 py-2.5">{nav}<div className="lg:absolute lg:end-6">{actions}</div></Wrap>
@@ -191,7 +188,7 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
               {crest(44)}
               <span className="leading-tight">
                 <span className="block" style={heading(c, 19)}>{s.institution.name}</span>
-                <span className="block text-[11px] text-slate-500">{s.institution.tagline}</span>
+                <span className="block text-[11px] text-slate-600">{s.institution.tagline}</span>
               </span>
             </Link>
             <div className="mx-auto">{nav}</div>
@@ -206,7 +203,7 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
         </nav>
       </header>
       <GatewayBar gateway={s.gateway} name={s.institution.name} accent={th.primary} />
-      <SiteSchema name={s.institution.name} description={s.institution.tagline} gateway={s.gateway} />
+      <SiteSchema name={s.institution.name} description={s.institution.tagline} gateway={s.gateway} url={s.url} lang={s.lang} emergency={s.institution.emergencyButton?.label} />
 
       <main id="main" className="flex flex-col" style={{ gap: d.gap, paddingBottom: d.gap }}>{children}</main>
 
@@ -266,7 +263,7 @@ function Hero({ c, variant }: { c: Ctx; variant: string }) {
     <div className="border bg-white p-5 shadow-sm" style={{ borderColor: c.rule, borderRadius: c.d.radius }}>
       <span className="grid h-10 w-10 place-items-center rounded-full text-[16px]" style={{ background: th.surfaceMute, color: th.primary }} aria-hidden>{h.sideNote.icon}</span>
       <div className="mt-3 text-[16px] font-bold" style={{ color: th.ink }}>{h.sideNote.title}</div>
-      <p className="mt-1 text-[12px] text-slate-500">{h.sideNote.body}</p>
+      <p className="mt-1 text-[12px] text-slate-600">{h.sideNote.body}</p>
       {h.sideNote.href ? <Link href={h.sideNote.href} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: th.primary }}>{h.sideNote.cta} <Fwd /></Link> : null}
     </div>
   ) : null;
@@ -368,7 +365,7 @@ function Hero({ c, variant }: { c: Ctx; variant: string }) {
           <div>{title(46)}{sub()}{ctas}{note ? <div className="mt-6 max-w-md">{note}</div> : null}</div>
           <div className="border bg-white p-5 shadow-lg" style={{ borderColor: c.rule, borderRadius: c.d.radius + 2 }}>
             <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-slate-500">{glanceTitle(c)}</div>
+              <div className="text-[12px] font-semibold uppercase tracking-[0.14em] text-slate-600">{glanceTitle(c)}</div>
               {figuresChip(c)}
             </div>
             <div className="grid grid-cols-2 gap-px overflow-hidden" style={{ background: c.rule, borderRadius: c.d.radius }}>
@@ -376,7 +373,7 @@ function Hero({ c, variant }: { c: Ctx; variant: string }) {
                 <div key={x.label} className="bg-white p-4">
                   <div className="text-[28px] font-semibold tabular-nums" style={{ color: th.ink, fontFamily: c.d.display }}>{x.value}</div>
                   <div className="text-[12px] font-medium text-slate-600">{x.label}</div>
-                  <div className="text-[10px] text-slate-400">{x.sub}</div>
+                  <div className="text-[10px] text-slate-600">{x.sub}</div>
                 </div>
               ))}
             </div>
@@ -430,9 +427,9 @@ function Alert({ c, variant }: { c: Ctx; variant: string }) {
   return (
     <Wrap>
       <div className="flex flex-col items-start gap-1.5 border px-4 py-3 sm:flex-row sm:items-center sm:gap-3" style={{ borderColor: '#f6c5c5', background: '#fdeeee', borderRadius: c.d.radius }}>
-        <span className="flex shrink-0 items-center gap-2 text-[13px] font-bold" style={{ color: '#d62b34' }}><span aria-hidden>⚠</span> {a.label}</span>
+        <span className="flex shrink-0 items-center gap-2 text-[13px] font-bold" style={{ color: '#c0232c' }}><span aria-hidden>⚠</span> {a.label}</span>
         <span className="w-full min-w-0 text-[13px] text-slate-700 sm:w-auto sm:flex-1">{a.text}</span>
-        <Link href="#news" className="text-[12px] font-semibold" style={{ color: '#d62b34' }}>{c.t.viewAlerts}</Link>
+        <Link href="#news" className="text-[12px] font-semibold" style={{ color: '#c0232c' }}>{c.t.viewAlerts}</Link>
       </div>
     </Wrap>
   );
@@ -449,7 +446,7 @@ function Services({ c, variant }: { c: Ctx; variant: string }) {
           <Link key={q.title} href={q.href ?? '/wallet/services'} className="flex items-center justify-between gap-4 border-b py-4 hover:opacity-80" style={{ borderColor: c.rule }}>
             <span className="flex items-center gap-3">
               <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: q.color }} aria-hidden />
-              <span><span className="block text-[16px] font-semibold" style={{ color: th.ink }}>{q.title}</span><span className="block text-[12px] text-slate-500">{q.subtitle}</span></span>
+              <span><span className="block text-[16px] font-semibold" style={{ color: th.ink }}>{q.title}</span><span className="block text-[12px] text-slate-600">{q.subtitle}</span></span>
             </span>
             <span className="text-[18px]" style={{ color: th.primary }} aria-hidden><Fwd /></span>
           </Link>
@@ -463,7 +460,7 @@ function Services({ c, variant }: { c: Ctx; variant: string }) {
           <Link key={q.title} href={q.href ?? '/wallet/services'} className="group border bg-white p-6 shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: c.rule, borderRadius: d.radius }}>
             <span className="grid h-12 w-12 place-items-center text-[20px] text-white" style={{ background: q.color, borderRadius: Math.min(d.radius, 14) }} aria-hidden>{q.icon}</span>
             <div className="mt-4 text-[17px] font-semibold" style={{ color: th.ink }}>{q.title}</div>
-            <div className="mt-1 text-[13px] text-slate-500">{q.subtitle}</div>
+            <div className="mt-1 text-[13px] text-slate-600">{q.subtitle}</div>
             <div className="mt-4 text-[12px] font-semibold" style={{ color: th.primary }}><Fwd /></div>
           </Link>
         ))}
@@ -476,7 +473,7 @@ function Services({ c, variant }: { c: Ctx; variant: string }) {
           <Link key={q.title} href={q.href ?? '/wallet/services'} className="block border bg-white p-4 text-center shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: c.rule, borderRadius: d.radius }}>
             <span className="mx-auto grid h-12 w-12 place-items-center rounded-full text-[18px] text-white" style={{ background: q.color }} aria-hidden>{q.icon}</span>
             <div className="mt-2 text-[13px] font-semibold" style={{ color: th.ink }}>{q.title}</div>
-            <div className="text-[11px] text-slate-500">{q.subtitle}</div>
+            <div className="text-[11px] text-slate-600">{q.subtitle}</div>
           </Link>
         ))}
       </div>
@@ -496,8 +493,8 @@ function Featured({ c, variant }: { c: Ctx; variant: string }) {
       <div key={f.title} className={`flex flex-col shadow-sm ${big ? 'p-8' : 'p-5'}`} style={{ ...style, borderRadius: d.radius }}>
         <div className="text-[11px] uppercase tracking-[0.14em]" style={primary ? { opacity: 0.8 } : { color: amber ? '#92600e' : th.inkSoft }}>{f.kicker}</div>
         <div className="mt-2" style={{ ...heading(c, big ? 30 : 19), color: primary ? '#fff' : amber ? '#92600e' : th.ink }}>{f.title}</div>
-        <p className={`mt-2 flex-1 ${big ? 'text-[15px]' : 'text-[13px]'}`} style={{ color: primary ? 'rgba(255,255,255,0.9)' : '#64748b' }}>{f.body}</p>
-        {f.href ? <Link href={f.href} className="mt-4 text-[13px] font-semibold" style={{ color: primary ? '#fff' : amber ? '#b8740f' : th.primary }}>{f.cta} <Fwd /></Link> : null}
+        <p className={`mt-2 flex-1 ${big ? 'text-[15px]' : 'text-[13px]'}`} style={{ color: primary ? 'rgba(255,255,255,0.9)' : '#475569' }}>{f.body}</p>
+        {f.href ? <Link href={f.href} className="mt-4 text-[13px] font-semibold" style={{ color: primary ? '#fff' : amber ? '#92600e' : th.primary }}>{f.cta} <Fwd /></Link> : null}
       </div>
     );
   };
@@ -514,7 +511,8 @@ function Featured({ c, variant }: { c: Ctx; variant: string }) {
 function Figures({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boolean }) {
   const { s, th } = c;
   if (s.statistics.length === 0) return null;
-  const live = (x: { live?: boolean }) => (x.live ? <div className="mt-1 text-[9px] font-semibold uppercase tracking-wide" style={{ color: '#0f9d6b' }}><span aria-hidden>●</span> {c.t.live}</div> : null);
+  // Live marker: dark green on light panels, light green on the dark band (both above 4.5:1).
+  const live = (x: { live?: boolean }, onDark = false) => (x.live ? <div className="mt-1 text-[9px] font-semibold uppercase tracking-wide" style={{ color: onDark ? '#6ee7b7' : '#0a6e4c' }}><span aria-hidden>●</span> {c.t.live}</div> : null);
   const more = { label: c.t.viewStats, href: '/public' };
   if (variant === 'band') {
     return (
@@ -530,7 +528,7 @@ function Figures({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boole
                 <div className="text-[30px] font-semibold tabular-nums text-white" style={{ fontFamily: c.d.display }}>{x.value}</div>
                 <div className="text-[12px] text-white/80">{x.label}</div>
                 <div className="text-[10px] text-white/50">{x.sub}</div>
-                {live(x)}
+                {live(x, true)}
               </div>
             ))}
           </div>
@@ -546,7 +544,7 @@ function Figures({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boole
           <tbody>
             {s.statistics.map(x => (
               <tr key={x.label} className="border-t" style={{ borderColor: c.rule }}>
-                <td className="py-2.5 pe-3 text-slate-600">{x.label}<div className="text-[10px] text-slate-400">{x.sub}</div></td>
+                <td className="py-2.5 pe-3 text-slate-600">{x.label}<div className="text-[10px] text-slate-600">{x.sub}</div></td>
                 <td className="py-2.5 text-end text-[17px] font-semibold tabular-nums" style={{ color: th.ink, fontFamily: c.d.display }}>{x.value}{live(x)}</td>
               </tr>
             ))}
@@ -564,7 +562,7 @@ function Figures({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boole
           <div key={x.label} className="border bg-white p-3 shadow-sm" style={{ borderColor: c.rule, borderRadius: c.d.radius }}>
             <div className="text-[20px] font-bold tabular-nums" style={{ color: th.ink, fontFamily: c.d.display }}>{x.value}</div>
             <div className="text-[11px] font-medium text-slate-600">{x.label}</div>
-            <div className="text-[9px] text-slate-400">{x.sub}</div>
+            <div className="text-[9px] text-slate-600">{x.sub}</div>
             {live(x)}
           </div>
         ))}
@@ -586,15 +584,15 @@ function News({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boolean 
           <div>
             <div style={heading(c, 20)}>{newsTitle(first!, {})}</div>
             <p className="mt-1 text-[13px] text-slate-600">{first!.summary}</p>
-            {first!.date ? <div className="mt-1 text-[11px] text-slate-400">{first!.date}</div> : null}
+            {first!.date ? <div className="mt-1 text-[11px] text-slate-600">{first!.date}</div> : null}
           </div>
         </div>
         <ul className="mt-4 divide-y border-t" style={{ borderColor: c.rule }}>
           {rest.map(n => (
             <li key={n.title} className="py-3" style={{ borderColor: c.rule }}>
               <div className="text-[14px] font-semibold">{newsTitle(n, { color: th.ink })}</div>
-              <div className="text-[12px] text-slate-500">{n.summary}</div>
-              {n.date ? <div className="text-[11px] text-slate-400">{n.date}</div> : null}
+              <div className="text-[12px] text-slate-600">{n.summary}</div>
+              {n.date ? <div className="text-[11px] text-slate-600">{n.date}</div> : null}
             </li>
           ))}
         </ul>
@@ -607,8 +605,8 @@ function News({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boolean 
           <li key={n.title} className="relative pb-5 last:pb-0">
             <span className="absolute -start-[27px] top-1 h-3 w-3 rounded-full border-2 bg-white" style={{ borderColor: th.primary }} aria-hidden />
             <div className="text-[14px] font-semibold">{newsTitle(n, { color: th.ink })}</div>
-            <div className="text-[12px] text-slate-500">{n.summary}</div>
-            {n.date ? <div className="text-[11px] text-slate-400">{n.date}</div> : null}
+            <div className="text-[12px] text-slate-600">{n.summary}</div>
+            {n.date ? <div className="text-[11px] text-slate-600">{n.date}</div> : null}
           </li>
         ))}
       </ol>
@@ -621,8 +619,8 @@ function News({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boolean 
             {thumb('h-14 w-16')}
             <div>
               <div className="text-[13px] font-semibold">{newsTitle(n, { color: th.ink })}</div>
-              <div className="text-[11px] text-slate-500">{n.summary}</div>
-              {n.date ? <div className="text-[10px] text-slate-400">{n.date}</div> : null}
+              <div className="text-[11px] text-slate-600">{n.summary}</div>
+              {n.date ? <div className="text-[10px] text-slate-600">{n.date}</div> : null}
             </div>
           </div>
         ))}
@@ -662,7 +660,7 @@ function Programmes({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: bo
         {s.initiatives.map(it => (
           <div key={it.title} className="flex gap-3">
             <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full text-[13px]" style={{ background: th.surfaceMute, color: th.primary }} aria-hidden>✦</span>
-            <div><div className="text-[13px] font-semibold" style={{ color: th.ink }}>{it.title}</div><div className="text-[12px] text-slate-500">{it.body}</div></div>
+            <div><div className="text-[13px] font-semibold" style={{ color: th.ink }}>{it.title}</div><div className="text-[12px] text-slate-600">{it.body}</div></div>
           </div>
         ))}
       </div>
@@ -686,20 +684,20 @@ function Contact({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boole
       <SectionHead c={c} title={loc?.title ?? t.contact} size={19} />
       {loc ? (
         <>
-          <div className="flex items-center gap-2 border px-2 py-1.5 text-[12px] text-slate-400" style={{ borderColor: c.rule, borderRadius: c.d.radius }}><span>⌕</span> {loc.placeholder}</div>
+          <div className="flex items-center gap-2 border px-2 py-1.5 text-[12px] text-slate-600" style={{ borderColor: c.rule, borderRadius: c.d.radius }}><span>⌕</span> {loc.placeholder}</div>
           {variant === 'panel' ? (
             <ul className="mt-3 grid grid-cols-2 gap-2 text-[12px]">
               {loc.tabs.map(tab => <li key={tab} className="border px-3 py-2 font-medium" style={{ borderColor: c.rule, borderRadius: c.d.radius, color: th.ink }}>{tab}</li>)}
             </ul>
           ) : (
             <div className="mt-2 flex flex-wrap gap-1.5">
-              {loc.tabs.map((tab, i) => <span key={tab} className="rounded-full px-2.5 py-0.5 text-[10px] font-medium" style={i === 0 ? { background: th.primary, color: '#fff' } : { border: `1px solid ${c.rule}`, color: '#64748b' }}>{tab}</span>)}
+              {loc.tabs.map((tab, i) => <span key={tab} className="rounded-full px-2.5 py-0.5 text-[10px] font-medium" style={i === 0 ? { background: th.primary, color: '#fff' } : { border: `1px solid ${c.rule}`, color: '#475569' }}>{tab}</span>)}
             </div>
           )}
           {map}
         </>
       ) : null}
-      <p className="mt-3 text-[12px] text-slate-500">{t.contactText}</p>
+      <p className="mt-3 text-[12px] text-slate-600">{t.contactText}</p>
       <Link href="/wallet/inbox" className="mt-3 block w-full py-2 text-center text-[12px] font-semibold text-white" style={{ background: th.primary, borderRadius: c.d.radius }}>{t.contactUs}</Link>
     </Card>
   );
@@ -711,7 +709,7 @@ function Shortcuts({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boo
   const item = (x: PublicSiteShellProps['shortcuts'][number]) => (
     <Link key={x.title} href={x.href ?? s.institution.href} className="flex gap-3 hover:opacity-80">
       <span className="grid h-9 w-9 shrink-0 place-items-center text-[14px]" style={{ background: th.surfaceMute, color: th.primary, borderRadius: Math.min(c.d.radius, 8) }} aria-hidden>▣</span>
-      <span><span className="block text-[13px] font-bold" style={{ color: th.ink }}>{x.title}</span><span className="block text-[11px] text-slate-500">{x.subtitle}</span></span>
+      <span><span className="block text-[13px] font-bold" style={{ color: th.ink }}>{x.title}</span><span className="block text-[11px] text-slate-600">{x.subtitle}</span></span>
     </Link>
   );
   if (variant === 'columns') {
@@ -737,7 +735,7 @@ function EmergencyNumbers({ c }: { c: Ctx }) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {list.map(e => (
           <a key={e.kind} href={`tel:${e.number.replace(/[\s-]/g, '')}`} className="flex items-center justify-between border bg-white px-4 py-3 shadow-sm" style={{ borderColor: c.rule, borderRadius: c.d.radius }}>
-            <span className="text-[12px] font-semibold uppercase tracking-wide text-slate-500">{label[e.kind]}</span>
+            <span className="text-[12px] font-semibold uppercase tracking-wide text-slate-600">{label[e.kind]}</span>
             <span className="text-[22px] font-bold tabular-nums" style={{ color: c.th.emergencyA, fontFamily: c.d.display }}>{e.number}</span>
           </a>
         ))}

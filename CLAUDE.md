@@ -173,6 +173,19 @@ What has been built is locked. Work only upgrades it toward the vision in
   official, published by a different one, never over a newer version, every
   version kept and restorable, all audited. Previews (`?preview=`) need a
   session. Do not add another path that changes a site's published content.
+- Translations go through the same review. Each string is kept with the
+  English it was made from (`lib/public-sites/translation.ts`), so an English
+  change marks it out of date; translators exchange XLIFF 2.0. A site turns
+  right to left only when every string is translated into a right-to-left
+  language. Public sites use logical CSS (`ms-`, `ps-`, `start-`, `border-s`)
+  and `<Fwd />` for arrows, never left/right.
+- Quality gate: `npm run audit:sites` (in `app/`, against a running build;
+  CI job *public sites audit*) fails on any WCAG A/AA violation (axe-core) on
+  any site, design or viewport, any broken on-platform link or anchor, a page
+  over its budget (`scripts/public-site-budgets.json`) or any request leaving
+  the platform. Theme colours reach text only through `siteProps()`, which
+  applies `accessibleTheme()` (4.5:1); new public pages get the skip link,
+  named banner, one `<main id="main">` and one h1 (`PublicSite.test.ts`).
 
 ## Branding and AI
 
@@ -220,18 +233,6 @@ What has been built is locked. Work only upgrades it toward the vision in
   own spelling (ISO 3166-2, natural word order; romanised for non-Latin
   scripts), e.g. "Bayern", "Małopolskie" — not English exonyms. After new map
   data, run `node scripts/official-names.mjs` (matches by ISO code or exact name).
-
-## Public websites
-
-- Plan: `docs/PUBLIC_WEBSITES_PLAN.md`. Every institution keeps a full CivicOS
-  site whatever mode its ministry chooses (Link by default with a website).
-- Site content changes, design choices and translations are proposals that a
-  second, different official publishes (`lib/data/site-editorial.ts`,
-  `/admin/sites`); never add another path that publishes site content.
-- Translations are kept per string with the English they were made from
-  (`lib/public-sites/translation.ts`); a site turns right to left only when
-  every string is translated into a right-to-left language. Use logical CSS
-  (`ms-`, `ps-`, `start-`, `border-s`) and `<Fwd />` for arrows on public sites.
 
 ## Integration register
 
