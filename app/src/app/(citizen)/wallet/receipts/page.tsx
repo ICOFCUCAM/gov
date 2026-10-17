@@ -15,6 +15,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { buildCsv, downloadCsv, downloadJson } from '@/lib/csv-download';
 import { ageMinutes } from '@/lib/format';
 
+import { nationMessages } from '@/lib/nation/registry';
 /**
  * /wallet/receipts — the citizen's unified substrate receipts.
  *
@@ -115,14 +116,14 @@ export default function ReceiptsPage() {
         activeTab="/wallet/receipts"
         header={
           <>
-            <Link href="/wallet" className="underline underline-offset-2">← Home</Link>
-            <strong>Receipts</strong>
+            <Link href="/wallet" className="underline underline-offset-2">← {nationMessages().common.home}</Link>
+            <strong>{nationMessages().wallet.receipts}</strong>
             <span />
           </>
         }
       >
         <Card tight>
-          <h3 className="font-semibold mb-1">Everything the state has on you</h3>
+          <h3 className="font-semibold mb-1">{nationMessages().records.everythingState}</h3>
           <p className="text-sm text-ink-muted">
             Service requests you filed, consents you granted, appeals you lodged,
             and every workflow step an officer took on something linked to you.

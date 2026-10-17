@@ -60,6 +60,40 @@ export interface Messages {
   doctrine: {
     fourSentences: string;
   };
+  /** Wallet records, identity and receipts pages. */
+  records: {
+    identity: string;
+    born: string;
+    civicIdActive: string;
+    showSelectively: string;
+    howDisclosure: string;
+    discloseOnly: string;
+    over18: string;
+    resident: string;
+    licensedNurse: string;
+    disclosureExplain: string;
+    credentials: string;
+    health: string;
+    shareClinician: string;
+    shareCode: string;
+    whoLooked: string;
+    allLogged: string;
+    withConsent: string;
+    showLess: string;
+    showFullLog: string;
+    digitalIdentity: string;
+    municipality: string;
+    statusActive: string;
+    intro: string;
+    introNot: string;
+    shareDetails: string;
+    howThisWorks: string;
+    how1: string;
+    how2: string;
+    how3: string;
+    how4: string;
+    everythingState: string;
+  };
   /** Wallet services: life situations, ministries and work in progress. */
   services: {
     search: string;
@@ -250,5 +284,38 @@ export const en: Messages = {
     taxRevenue: 'Tax and revenue',
     landProperty: 'Land and property',
     justice: 'Justice and legal aid',
+  },
+  records: {
+    identity: 'Identity',
+    born: 'Born {date} ({place})',
+    civicIdActive: 'CivicID active',
+    showSelectively: 'Show selectively',
+    howDisclosure: 'How selective disclosure works',
+    discloseOnly: "Disclose only what's asked",
+    over18: 'Over 18 — yes (date of birth stays hidden)',
+    resident: 'Resident of {place} — yes (address stays hidden)',
+    licensedNurse: 'Licensed nurse — yes (license number stays hidden)',
+    disclosureExplain: 'Selective disclosure proves a fact (e.g. “over 18”) without revealing the underlying data. The verifier sees only the answer, signed by the state — never your full record.',
+    credentials: 'Credentials',
+    health: 'Health',
+    shareClinician: 'Share with a clinician',
+    shareCode: 'One-time share code {code} — valid 15 minutes, read-only, logged below when used.',
+    whoLooked: 'Who has looked at my records?',
+    allLogged: 'All access is logged. You see who, when, and why.',
+    withConsent: 'With your consent',
+    showLess: 'Show less',
+    showFullLog: 'Show full access log ({count}) →',
+    digitalIdentity: 'Digital identity',
+    municipality: 'Municipality: {place}',
+    statusActive: 'Status: active',
+    intro: 'Your identity is yours. When a service asks for your details, you choose exactly what to share — and you can see what you are {not} sharing. There is no global ID number that follows you everywhere.',
+    introNot: 'not',
+    shareDetails: 'Share your details',
+    howThisWorks: 'How this works',
+    how1: 'Each service gets a different identifier — they cannot link you across services.',
+    how2: 'You approve every disclosure, one at a time.',
+    how3: 'You can revoke a disclosure later.',
+    how4: 'Every disclosure appears in your records access log.',
+    everythingState: 'Everything the state has on you',
   },
 };
