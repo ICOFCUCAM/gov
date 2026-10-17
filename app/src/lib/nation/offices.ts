@@ -78,3 +78,27 @@ export function successionOrder(o: NationOffices): string[] {
     'Minister of Finance',
   ];
 }
+
+const REFERENCE_CHAMBER_WORDS = /National Assembly|\bAssembly\b|\b[Ss]enate\b|\b[Ss]enators?\b/g;
+
+/**
+ * Chamber wording in the legislature apps, rewritten for the nation's own
+ * chambers: "Senate" → its upper chamber, "Senators" → its members,
+ * "National Assembly" / "Assembly" → its primary chamber. Unchanged before
+ * setup, and the upper-chamber words stay as they are when the nation has a
+ * single chamber (the Senate app keeps its reference wording there).
+ */
+export function chamberText(text: string, o: NationOffices): string {
+  if (o === REFERENCE_OFFICES) return text;
+  const upper = o.upperChamber;
+  const member = upper && /senate/i.test(upper) ? 'Senator' : upper && /lords/i.test(upper) ? 'Lord' : 'Member';
+  return text.replace(REFERENCE_CHAMBER_WORDS, w => {
+    if (w === 'National Assembly') return o.primaryChamber;
+    // The short form stays when the nation's chamber is itself an "… Assembly".
+    if (w === 'Assembly') return /\bAssembly$/.test(o.primaryChamber) ? w : o.primaryChamber;
+    if (!upper) return w;
+    if (/^[Ss]enate$/.test(w)) return upper;
+    const plural = w.endsWith('s') ? 's' : '';
+    return w[0] === 's' ? `${member.toLowerCase()}${plural}` : `${member}${plural}`;
+  });
+}

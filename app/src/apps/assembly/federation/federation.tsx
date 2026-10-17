@@ -4,6 +4,7 @@
 
 import * as React from 'react';
 import { ASSEMBLY_DS } from '@/apps/assembly/design-system/assembly-ds';
+import { nationChamberText } from '@/lib/nation/registry';
 
 export type FederationEdge = {
   partner: string;
@@ -40,7 +41,7 @@ export function FederationStrip() {
           <div className="text-[8.5px] uppercase tracking-[0.18em]" style={{ color: ASSEMBLY_DS.jade }}>emits →</div>
           {emit.map((e, i) => (
             <div key={`${e.partner}-${i}`} className="flex justify-between border-b py-0.5" style={{ borderColor: ASSEMBLY_DS.ruleSoft }}>
-              <span style={{ color: ASSEMBLY_DS.parchment }}>{e.partner}</span>
+              <span style={{ color: ASSEMBLY_DS.parchment }}>{nationChamberText(e.partner)}</span>
               <span style={{ color: ASSEMBLY_DS.mut }}>{e.channel} · {e.cadence}</span>
             </div>
           ))}
@@ -49,7 +50,7 @@ export function FederationStrip() {
           <div className="text-[8.5px] uppercase tracking-[0.18em]" style={{ color: ASSEMBLY_DS.rose }}>← consumes from</div>
           {consume.map((e, i) => (
             <div key={`${e.partner}-${i}`} className="flex justify-between border-b py-0.5" style={{ borderColor: ASSEMBLY_DS.ruleSoft }}>
-              <span style={{ color: ASSEMBLY_DS.parchment }}>{e.partner}</span>
+              <span style={{ color: ASSEMBLY_DS.parchment }}>{nationChamberText(e.partner)}</span>
               <span style={{ color: ASSEMBLY_DS.mut }}>{e.channel} · {e.cadence}</span>
             </div>
           ))}

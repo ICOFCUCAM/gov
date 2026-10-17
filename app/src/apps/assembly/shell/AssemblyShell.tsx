@@ -12,6 +12,7 @@ import { BudgetCycle, AppropriationBill, AuditFindings, CitizenPetitions, Petiti
 import { Hansard, RollCallRecords, SessionsCalendar, StandingCommittees, SelectCommittees, Inquiries, WatchLive, MembersDirectory, YouthParliament, CodeOfConduct, ConflictsOfInterest, MisconductTribunal, AssemblySafeguards, PublicVotingDoctrine, SovereignAudit } from '@/apps/assembly/domains/RecordsEthics';
 
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
+import { nationChamberText } from '@/lib/nation/registry';
 
 type Render = (p: { id: string; now: number; role: SovereignRole; withheld: Capability[] }) => React.ReactElement;
 
@@ -62,7 +63,7 @@ export function AssemblyShell({ id, surface, now, role, withheld = [] }: {
       <RuntimeQueue
         scope={`assembly:${surface}`}
         kind={domain?.archetype === 'budget' ? 'procurement' : domain?.archetype === 'petitions' ? 'case' : domain?.archetype === 'oversight' ? 'case' : 'approval'}
-        title={`${domain?.label ?? 'Assembly'} runtime — ${BUDGET_APPROPRIATION.title}`}
+        title={nationChamberText(`${domain?.label ?? 'Assembly'} runtime — ${BUDGET_APPROPRIATION.title}`)}
         by="Parliamentary Secretary"
         role={role}
         withheld={withheld} />

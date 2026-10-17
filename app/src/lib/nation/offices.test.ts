@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { nationOffices, REFERENCE_OFFICES } from './offices';
+import { nationOffices, chamberText, REFERENCE_OFFICES } from './offices';
 import type { SovereignProfile } from '@/lib/api/types';
 
 const uganda: SovereignProfile = {
@@ -46,5 +46,22 @@ describe('succession and deputy', () => {
     }, true);
     expect(deputyTitle(o)).toBe('Deputy Prime Minister');
     expect(successionOrder(o)).toEqual(['Deputy Prime Minister', 'Speaker of the Parliament', 'Chief Justice of the Supreme Court', 'Minister of Finance']);
+  });
+});
+
+describe('chamber wording', () => {
+  const line = "The Senate may delay. Senators below 60% attendance face review; gag orders on senators are void. Joint reports with the Assembly's audit go to the National Assembly.";
+  it('keeps the reference wording before setup', () => {
+    expect(chamberText(line, REFERENCE_OFFICES)).toBe(line);
+  });
+  it("uses the nation's chambers and members", () => {
+    const o = { ...REFERENCE_OFFICES, primaryChamber: 'House of Commons', upperChamber: 'House of Lords' };
+    expect(chamberText(line, o)).toBe("The House of Lords may delay. Lords below 60% attendance face review; gag orders on lords are void. Joint reports with the House of Commons's audit go to the House of Commons.");
+    const k = { ...REFERENCE_OFFICES, primaryChamber: 'National Assembly', upperChamber: 'Senate' };
+    expect(chamberText(line, k)).toBe(line);
+  });
+  it('leaves the upper-chamber words alone for a single-chamber legislature', () => {
+    const o = { ...REFERENCE_OFFICES, primaryChamber: 'Parliament', upperChamber: undefined };
+    expect(chamberText('Sent to Senate by the National Assembly', o)).toBe('Sent to Senate by the Parliament');
   });
 });

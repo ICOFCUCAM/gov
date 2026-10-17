@@ -5,6 +5,7 @@
 // burnished gold / parchment-ink.
 
 import * as React from 'react';
+import { nationChamberText } from '@/lib/nation/registry';
 
 export const SENATE_DS = {
   aubergine: '#170a1f',
@@ -66,11 +67,11 @@ export function ChamberFrame({ archetype, code, title, subtitle, posture, childr
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <span className="text-[9px] uppercase tracking-[0.22em]" style={{ color: SENATE_DS.mut, fontFamily: 'ui-monospace, monospace' }}>{code}</span>
-            <h2 className="truncate text-[13px] font-semibold tracking-tight" style={{ color: SENATE_DS.parchment, fontFamily: 'Georgia, ui-serif, serif' }}>{title}</h2>
+            <h2 className="truncate text-[13px] font-semibold tracking-tight" style={{ color: SENATE_DS.parchment, fontFamily: 'Georgia, ui-serif, serif' }}>{nationChamberText(title)}</h2>
             <span className="rounded-[2px] px-1.5 py-px text-[8px] font-semibold uppercase tracking-[0.16em]"
               style={{ background: 'rgba(201,162,74,0.16)', color: SENATE_DS.gold }}>{a.tag}</span>
           </div>
-          {subtitle ? <p className="truncate text-[10px] italic" style={{ color: SENATE_DS.mut }}>{subtitle}</p> : null}
+          {subtitle ? <p className="truncate text-[10px] italic" style={{ color: SENATE_DS.mut }}>{nationChamberText(subtitle)}</p> : null}
         </div>
         {posture ? (
           <div className="ml-auto flex items-center gap-2 text-[10px]">
@@ -96,7 +97,7 @@ export function ChamberKpi({ items }: {
       {items.map(k => (
         <div key={k.label} className="border px-2 py-1.5"
           style={{ borderColor: SENATE_DS.rule, background: 'rgba(255,255,255,0.012)' }}>
-          <div className="text-[9px] uppercase tracking-[0.18em]" style={{ color: SENATE_DS.mut, fontFamily: 'ui-monospace, monospace' }}>{k.label}</div>
+          <div className="text-[9px] uppercase tracking-[0.18em]" style={{ color: SENATE_DS.mut, fontFamily: 'ui-monospace, monospace' }}>{nationChamberText(k.label)}</div>
           <div className="text-[14px] font-semibold tabular-nums" style={{ color: k.tone ? tones[k.tone] : SENATE_DS.gold }}>{k.value}</div>
         </div>
       ))}
@@ -141,7 +142,7 @@ export function ChamberCallout({ kicker, body }: { kicker: string; body: string 
     <div className="rounded-[3px] border border-dashed px-3 py-2 text-[10.5px] italic"
       style={{ borderColor: 'rgba(201,162,74,0.32)', color: SENATE_DS.mut, background: 'rgba(201,162,74,0.04)' }}>
       <span className="not-italic font-semibold uppercase tracking-[0.18em]" style={{ color: SENATE_DS.gold }}>{kicker}</span>
-      {' — '}{body}
+      {' — '}{nationChamberText(body)}
     </div>
   );
 }

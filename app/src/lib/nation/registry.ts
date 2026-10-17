@@ -9,7 +9,7 @@
 
 import type { StateForm, NationalConstitution } from '@/lib/api/types';
 import { constitutionFor, type ConstitutionModel } from '@/lib/gov/constitution';
-import { nationOffices, type NationOffices } from '@/lib/nation/offices';
+import { nationOffices, chamberText, type NationOffices } from '@/lib/nation/offices';
 import { getMessages, type Messages } from '@/lib/i18n';
 import type { Locale } from '@/lib/types';
 
@@ -146,6 +146,11 @@ export function nationAppLabel(id: string, label: string): string {
   if (id === 'assembly') return o.primaryChamber;
   if (id === 'senate') return o.upperChamber ?? label;
   return label;
+}
+
+/** Legislature-app wording with the nation's own chamber names (see `chamberText`). */
+export function nationChamberText(text: string): string {
+  return chamberText(text, currentOffices());
 }
 
 /** The installed nation's constitution: its form-of-state template with its own facts applied. */
