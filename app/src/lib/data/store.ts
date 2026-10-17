@@ -1549,6 +1549,10 @@ export function setSovereign(
   if (patch.regions !== undefined && (!Array.isArray(patch.regions) || patch.regions.some(r => typeof r !== 'string'))) {
     return { error: 'Regions must be a list of names' };
   }
+  const ch = patch.constitution?.chambers;
+  if (ch !== undefined && (!Array.isArray(ch) || ch.length > 2 || ch.some(c => typeof c?.name !== 'string' || !Number.isFinite(c?.seats) || c.seats < 1))) {
+    return { error: 'Chambers must be one or two named chambers with a positive seat count' };
+  }
   db.sovereign = { ...db.sovereign, ...patch };
   applyNation(db.sovereign);
   appendAudit(by, 'sovereign.configure', 'Sovereign:profile', 'ok',
@@ -1654,7 +1658,7 @@ export function applySovereignPreset(
 ): SovereignProfile | { error: string } {
   const preset = SOVEREIGN_PRESETS.find(p => p.key === key);
   if (!preset) return { error: 'Unknown preset' };
-  db.sovereign = { ...preset.profile, iso3: db.sovereign.iso3, regions: db.sovereign.regions };
+  db.sovereign = { ...preset.profile, iso3: db.sovereign.iso3, regions: db.sovereign.regions, constitution: db.sovereign.constitution };
   applyNation(db.sovereign);
   appendAudit(by, 'sovereign.preset', `Sovereign:${key}`, 'ok', preset.label);
   return db.sovereign;

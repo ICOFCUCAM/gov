@@ -262,7 +262,7 @@ export function CommandShell({
               </div>
             ))}
             {(() => {
-              const cm = constitutionFor(sov?.stateForm ?? 'republic');
+              const cm = constitutionFor(sov?.stateForm ?? 'republic', sov?.constitution);
               return (
                 <div className="mb-0.5">
                   <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Constitutional Branches · {cm.label}</div>

@@ -5,16 +5,21 @@
 // country's regions, map or currency. Before a nation is installed every
 // engine keeps its own reference data, so behaviour is unchanged.
 //
-// See docs/NATION_CONVERSION_MANIFEST.md (Nation Pack, steps 1–4).
+// See docs/NATION_CONVERSION_MANIFEST.md (Nation Pack, steps 1–5).
+
+import type { StateForm, NationalConstitution } from '@/lib/api/types';
+import { constitutionFor, type ConstitutionModel } from '@/lib/gov/constitution';
 
 export interface NationFacts {
   iso3?: string;
   regions?: string[];
   currency?: string;
   locale?: string;
+  stateForm?: StateForm;
+  constitution?: NationalConstitution;
 }
 
-const state: { iso3?: string; regions: string[]; currency: string; locale: string } = {
+const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution } = {
   regions: [],
   currency: 'USD',
   locale: 'en',
@@ -27,6 +32,22 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.regions = (f.regions ?? []).map(r => r.trim()).filter(Boolean);
   state.currency = f.currency && /^[A-Z]{3}$/.test(f.currency) ? f.currency : 'USD';
   state.locale = f.locale || 'en';
+  state.stateForm = f.stateForm;
+  state.constitution = f.constitution;
+}
+
+/** The installed nation's constitution: its form-of-state template with its own facts applied. */
+export function nationConstitution(): ConstitutionModel {
+  return constitutionFor(state.stateForm ?? 'republic', state.constitution);
+}
+
+/**
+ * Seats in the nation's primary (index 0) or upper (index 1) chamber, when the
+ * nation has declared its chambers; otherwise the engine's own reference figure.
+ */
+export function chamberSeats(index: 0 | 1, reference: number): number {
+  const c = state.constitution?.chambers?.filter(x => x.name?.trim() && x.seats > 0)[index];
+  return c ? Math.round(c.seats) : reference;
 }
 
 /** ISO 3166-1 alpha-3 code of the installed nation, if one is set. */

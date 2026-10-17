@@ -286,7 +286,7 @@ export default function SovereignCommandCenter() {
             {(() => {
               const t = now / 4000;
               const sep = separationIntegrity(t);
-              const cells = constitutionFor(sov?.stateForm ?? 'republic').branches.map(b => {
+              const cells = constitutionFor(sov?.stateForm ?? 'republic', sov?.constitution).branches.map(b => {
                 const r = branchReadiness(b.key, t);
                 return { l: b.name, v: `${r.total}% · ${r.posture}`, c: r.total >= 85 ? 'rgb(var(--c-ok))' : r.total >= 65 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))', href: `/gov/branch/${b.key}` };
               });

@@ -89,7 +89,7 @@ export function NationalShell() {
     mins.filter(m => m.archetype === 'HEALTH' && m.status === 'active').map(m => m.id), ts,
   );
   const identity = sov ? resolveIdentity(sov) : null;
-  const model = constitutionFor(sov?.stateForm ?? 'republic');
+  const model = constitutionFor(sov?.stateForm ?? 'republic', sov?.constitution);
   const dir = deployableInstitutions(mins);
   const fabric = buildNationalFabric(mins);
   const cascade = buildCascade(mins, (mid) => Math.round(waveSeries(`nh:${mid}`, ts, 1, 58, 99).at(-1)!));

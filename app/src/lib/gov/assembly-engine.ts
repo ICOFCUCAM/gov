@@ -5,6 +5,7 @@
 // citizen-petition queue, Question Time and committee work.
 
 import { seed, wave } from '@/lib/telemetry';
+import { chamberSeats } from '@/lib/nation/registry';
 
 export const ASSEMBLY_SAFEGUARDS = {
   publicVotingByDefault: true as const,
@@ -66,11 +67,14 @@ export interface AssemblyBoard {
 export function assemblyBoard(now: number): AssemblyBoard {
   const epoch = Math.max(0, Math.floor(now / 4000));
   const ts = epoch;
-  const total = 420;
+  // Primary chamber size from the nation's constitution; blocs always sum to it.
+  const total = chamberSeats(0, 420);
+  const gov = Math.round(total * (0.519 + seed('as:gov') * 0.043));
+  const opp = Math.round(total * (0.4 + seed('as:opp') * 0.043));
   const blocs: AssemblyBoard['blocs'] = [
-    { bloc: 'government', seats: 218 + Math.round(seed('as:gov') * 18) },
-    { bloc: 'opposition', seats: 168 + Math.round(seed('as:opp') * 18) },
-    { bloc: 'crossbench', seats: total - 218 - 168 + 4 },
+    { bloc: 'government', seats: gov },
+    { bloc: 'opposition', seats: opp },
+    { bloc: 'crossbench', seats: Math.max(0, total - gov - opp) },
   ];
   const postures: AssemblyPosture[] = ['orderly', 'in-session', 'voting', 'recess', 'disorderly'];
   const posture = postures[Math.floor(seed(`as:p:${Math.floor(ts / 8)}`) * postures.length) % postures.length]!;

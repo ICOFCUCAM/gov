@@ -4,7 +4,7 @@
 // monarchy, federation, city-state or supranational union from one
 // abstraction. Pure; no React/DOM.
 
-import type { StateForm } from '@/lib/api/types';
+import type { StateForm, NationalConstitution } from '@/lib/api/types';
 
 export type BranchKey =
   | 'executive' | 'legislature' | 'judiciary' | 'oversight'
@@ -60,7 +60,46 @@ const judiciary = (apex: string, tiers: string[]): BranchDef => ({
   bodies: tiers.map(t => ({ name: t, role: t === apex ? 'Apex jurisdiction' : 'Adjudication' })),
 });
 
-export function constitutionFor(form: StateForm): ConstitutionModel {
+/**
+ * The constitution model for a nation: the template for its form of state,
+ * with the nation's own facts (chambers and seats, courts, head of state,
+ * emergency doctrine) laid over it when supplied.
+ */
+export function constitutionFor(form: StateForm, nation?: NationalConstitution | null): ConstitutionModel {
+  const base = templateFor(form);
+  if (!nation) return base;
+  const m: ConstitutionModel = { ...base, branches: base.branches.map(b => ({ ...b, bodies: [...b.bodies] })) };
+
+  const chambers = (nation.chambers ?? []).filter(c => c.name?.trim() && c.seats > 0);
+  if (chambers.length) {
+    const old = base.legislature.chambers.map(c => c.name);
+    m.legislature = {
+      structure: chambers.length === 1 ? 'unicameral' : 'bicameral',
+      chambers: chambers.map((c, i) => ({ name: c.name.trim(), seats: Math.round(c.seats), role: c.role?.trim() || base.legislature.chambers[i]?.role || 'Legislative chamber' })),
+    };
+    m.branches = m.branches.map(b => b.key !== 'legislature' ? b : {
+      ...b,
+      bodies: [
+        ...m.legislature.chambers.map(c => ({ name: c.name, role: c.role })),
+        ...b.bodies.filter(x => !old.includes(x.name)),
+      ],
+    });
+  }
+  if (nation.judicialApex?.trim() || nation.judicialTiers?.length) {
+    const apex = nation.judicialApex?.trim() || base.judicialApex;
+    const tiers = nation.judicialTiers?.filter(t => t.trim()).length ? nation.judicialTiers!.filter(t => t.trim()) : [apex, ...base.judicialTiers.slice(1)];
+    m.judicialApex = apex;
+    m.judicialTiers = tiers;
+    m.branches = m.branches.map(b => b.key === 'judiciary' ? judiciary(apex, tiers) : b);
+  }
+  if (nation.headOfStateTitle?.trim()) {
+    m.authorityChain = [{ rank: 1, office: nation.headOfStateTitle.trim() }, ...base.authorityChain.slice(1)];
+  }
+  if (nation.emergencyDoctrine?.trim()) m.emergencyDoctrine = nation.emergencyDoctrine.trim();
+  return m;
+}
+
+function templateFor(form: StateForm): ConstitutionModel {
   switch (form) {
     case 'parliamentary':
       return {

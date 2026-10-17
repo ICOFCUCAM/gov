@@ -7,9 +7,10 @@ import { resolveIdentity } from '@/lib/sovereign-identity';
 import { locales } from '@/lib/i18n/config';
 import { COUNTRIES, loadCountry } from '@/lib/geo/admin1';
 import { applyNation } from '@/lib/nation/registry';
+import { constitutionFor } from '@/lib/gov/constitution';
 import { ACCENT } from '@/components/features/SituationRoom';
 import { OnboardingFrame, Eyebrow, Field, inputCls, SealTile } from './Chrome';
-import type { SovereignProfile, SovereignPreset, StateForm, Ministry, Archetype, ArchetypeKey, PlatformSetup } from '@/lib/api/types';
+import type { NationalConstitution, SovereignProfile, SovereignPreset, StateForm, Ministry, Archetype, ArchetypeKey, PlatformSetup } from '@/lib/api/types';
 
 const STEPS = [
   { k: 'nation', t: 'Nation', s: 'Form of state and offices' },
@@ -102,6 +103,18 @@ export function SetupWizard() {
   }
 
   const set = <K extends keyof SovereignProfile>(k: K, v: SovereignProfile[K]) => { setProfile(p => p && { ...p, [k]: v }); };
+  const template = constitutionFor(profile.stateForm);
+  const cons: NationalConstitution = profile.constitution ?? {};
+  const setCons = (patch: Partial<NationalConstitution>) => set('constitution', { ...cons, ...patch });
+  const chamberRows = [0, 1].map(i => cons.chambers?.[i] ?? { name: '', seats: 0 });
+  const setChamber = (i: number, patch: Partial<{ name: string; seats: number }>) =>
+    setCons({ chambers: chamberRows.map((c, j) => (j === i ? { ...c, ...patch } : c)) });
+  // Only complete chambers are saved; blank rows fall back to the template.
+  const cleanConstitution = (c?: NationalConstitution): NationalConstitution | undefined => {
+    if (!c) return undefined;
+    const chambers = (c.chambers ?? []).filter(x => x.name.trim() && x.seats > 0);
+    return { ...c, chambers: chambers.length ? chambers : undefined };
+  };
   const identity = resolveIdentity(profile);
 
   const nationErrors = [
@@ -141,7 +154,7 @@ export function SetupWizard() {
       try { await fn(); settle(i, 'ok'); return true; } catch (e) { settle(i, 'fail', e instanceof Error ? e.message : 'failed'); return false; }
     }
 
-    const ok = await run(`Saving national profile · ${profile.stateName}`, () => api.sovereign.update({ ...profile, aiAssistant: !!profile.aiAssistant }).then(r => { applyNation(r.sovereign); return r; }));
+    const ok = await run(`Saving national profile · ${profile.stateName}`, () => api.sovereign.update({ ...profile, aiAssistant: !!profile.aiAssistant, constitution: cleanConstitution(profile.constitution) }).then(r => { applyNation(r.sovereign); return r; }));
     if (!ok) return false;
     for (const m of ministries) {
       const want = !!active[m.id], is = m.status === 'active';
@@ -273,6 +286,36 @@ export function SetupWizard() {
                       <button type="button" className="underline underline-offset-2 hover:text-white" onClick={() => set('regions', provinces)}>use all {provinces.length}</button>
                     ) : null}
                   </span>
+                </div>
+              </div>
+
+              <div className="mt-8 rounded-[10px] border border-[#16202f] bg-[#0b111c]/80 p-5">
+                <div className="flex flex-wrap items-baseline justify-between gap-2">
+                  <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#65748b]">Constitution</span>
+                  <span className="text-[12px] text-[#56647a]">Blank fields use the {template.label.toLowerCase()} template shown in grey.</span>
+                </div>
+                <div className="mt-4 grid gap-5 sm:grid-cols-2">
+                  <Field label="Head of state — title">
+                    <input className={inputCls} value={cons.headOfStateTitle ?? ''} placeholder={template.authorityChain[0]?.office} onChange={e => setCons({ headOfStateTitle: e.currentTarget.value })} />
+                  </Field>
+                  <Field label="Apex court">
+                    <input className={inputCls} value={cons.judicialApex ?? ''} placeholder={template.judicialApex} onChange={e => setCons({ judicialApex: e.currentTarget.value })} />
+                  </Field>
+                  {chamberRows.map((c, i) => (
+                    <div key={i} className="grid grid-cols-[minmax(0,1fr)_96px] gap-2">
+                      <Field label={i === 0 ? 'Primary chamber' : 'Upper chamber (leave blank if none)'}>
+                        <input className={inputCls} value={c.name} placeholder={template.legislature.chambers[i]?.name ?? '—'} onChange={e => setChamber(i, { name: e.currentTarget.value })} />
+                      </Field>
+                      <Field label="Seats">
+                        <input className={`${inputCls} font-mono`} type="number" min={1} value={c.seats || ''} placeholder={String(template.legislature.chambers[i]?.seats ?? '')} onChange={e => setChamber(i, { seats: Number(e.currentTarget.value) || 0 })} />
+                      </Field>
+                    </div>
+                  ))}
+                  <div className="sm:col-span-2">
+                    <Field label="Source" hint="Cite the constitution and articles these facts come from.">
+                      <input className={inputCls} value={cons.source ?? ''} placeholder="e.g. Constitution of 1995, arts. 77–78" onChange={e => setCons({ source: e.currentTarget.value })} />
+                    </Field>
+                  </div>
                 </div>
               </div>
 
@@ -429,6 +472,7 @@ export function SetupWizard() {
                     ['Executive', profile.executiveTitle], ['Legislature', profile.legislatureName],
                     ['Currency', profile.currency], ['Regions', profile.regionNoun],
                     ['Country', countries.find(c => c.iso3 === profile.iso3)?.name ?? '—'],
+                    ['Chambers', constitutionFor(profile.stateForm, cleanConstitution(profile.constitution)).legislature.chambers.map(c => `${c.name} (${c.seats})`).join(' · ')],
                     ['Regions', profile.regions?.length ? `${profile.regions.length} · ${profile.regions.slice(0, 3).join(', ')}${profile.regions.length > 3 ? '…' : ''}` : 'Reference set'],
                     ['AI assistant', profile.aiAssistant ? 'On' : 'Off'],
                   ]} />

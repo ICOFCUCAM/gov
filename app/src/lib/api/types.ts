@@ -512,6 +512,20 @@ export interface SovereignProfile {
   aiAssistant?: boolean;    // nation opted in to the AI assistant (false = off; unset = legacy on)
   iso3?: string;            // ISO 3166-1 alpha-3 country code — drives the national map
   regions?: string[];       // operational regions engines report by (from admin-1 or the nation's own grouping)
+  constitution?: NationalConstitution; // the nation's own constitutional facts, over the form-of-state template
+}
+
+/** A nation's own constitutional facts. Anything left out falls back to the
+ *  template for its form of state (lib/gov/constitution.ts). */
+export interface NationalConstitution {
+  headOfStateTitle?: string;
+  /** Chambers in order: the primary/lower chamber first, then any upper chamber. */
+  chambers?: { name: string; seats: number; role?: string }[];
+  judicialApex?: string;
+  judicialTiers?: string[];
+  emergencyDoctrine?: string;
+  /** Where these facts come from, e.g. "Constitution of 1995, arts. 77–78". */
+  source?: string;
 }
 
 /** First-run platform setup. Null until a nation or ministry has completed
