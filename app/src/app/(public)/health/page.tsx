@@ -6,7 +6,9 @@
 import Link from 'next/link';
 import { publicHealthSite } from '@/lib/gov/health-operations';
 
-import { aiLabel } from '@/lib/nation/registry';
+import { aiLabel, nationMessages, nationLocale } from '@/lib/nation/registry';
+import { t as fill } from '@/lib/i18n';
+import { locales } from '@/lib/i18n/config';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Health — Official Portal' };
 
@@ -52,17 +54,20 @@ const shortcuts = () => [
 
 export default function PublicHealthHomepage() {
   const s = publicHealthSite(100); // deterministic, SSR-stable
+  // Fixed site wording in the nation's language (lib/i18n `site`); the ministry's own content is unchanged.
+  const t = nationMessages().site;
+  const language = locales.find(l => l.code === nationLocale())?.name ?? 'English';
 
   return (
     <div className="min-h-screen bg-[#f4f6f9] text-[#1a2332]">
       {/* 1. Top utility bar */}
       <div className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg,${NAVY},#10325c)` }}>
         <div className="mx-auto flex max-w-[1280px] items-center justify-between px-6 py-2">
-          <span>Official Website of the Ministry of Health</span>
+          <span>{fill(t.officialWebsite, { name: 'Ministry of Health' })}</span>
           <div className="flex items-center gap-4">
-            <span className="hidden sm:inline hover:text-white">Skip to Main Content</span>
-            <span className="flex gap-1.5"><button className="hover:text-white">A+</button><button className="hover:text-white">A</button><button className="hover:text-white">A-</button></span>
-            <span className="hover:text-white">English ▾</span>
+            <span className="hidden sm:inline hover:text-white">{t.skipMain}</span>
+            <span className="flex gap-1.5"><button className="hover:text-white" aria-label={t.fontUp}>A+</button><button className="hover:text-white" aria-label={t.fontNormal}>A</button><button className="hover:text-white" aria-label={t.fontDown}>A-</button></span>
+            <span className="hover:text-white">{language} ▾</span>
           </div>
         </div>
       </div>
@@ -85,7 +90,7 @@ export default function PublicHealthHomepage() {
             ))}
           </nav>
           <div className="flex items-center gap-4">
-            <button aria-label="Search" className="text-slate-500 hover:text-slate-900">⌕</button>
+            <button aria-label={t.search} className="text-slate-500 hover:text-slate-900">⌕</button>
             <button className="flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white" style={{ background: 'linear-gradient(90deg,#d62b34,#b81f27)' }}>
               <span aria-hidden>☎</span> Emergency
             </button>
@@ -123,14 +128,14 @@ export default function PublicHealthHomepage() {
         <div className="flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3" style={{ borderColor: '#f6c5c5', background: '#fdeeee' }}>
           <span className="flex items-center gap-2 text-[13px] font-bold" style={{ color: '#d62b34' }}><span aria-hidden>⚠</span> HEALTH ALERT</span>
           <span className="min-w-0 flex-1 text-[13px] text-slate-700">{s.emergencyBanner.active ? s.emergencyBanner.text : 'Dengue activity is rising in several districts. Follow prevention tips and stay informed.'}</span>
-          <span className="text-[12px] font-semibold" style={{ color: '#d62b34' }}>View All Alerts →</span>
+          <span className="text-[12px] font-semibold" style={{ color: '#d62b34' }}>{t.viewAlerts}</span>
         </div>
 
         {/* 5. Citizen quick services */}
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[20px] font-bold" style={{ color: NAVY }}>I want to…</h2>
-            <Link href="/health/laboratory" className="text-[12px] font-semibold" style={{ color: BLUE }}>View All Services →</Link>
+            <h2 className="text-[20px] font-bold" style={{ color: NAVY }}>{t.iWantTo}</h2>
+            <Link href="/health/laboratory" className="text-[12px] font-semibold" style={{ color: BLUE }}>{t.viewServices}</Link>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {QUICK.map(q => (
@@ -172,8 +177,8 @@ export default function PublicHealthHomepage() {
         {/* 7. Health at a glance */}
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[20px] font-bold" style={{ color: NAVY }}>Health at a Glance</h2>
-            <span className="text-[12px] font-semibold" style={{ color: BLUE }}>View All Statistics →</span>
+            <h2 className="text-[20px] font-bold" style={{ color: NAVY }}>{fill(t.atGlance, { name: 'Health' })}</h2>
+            <span className="text-[12px] font-semibold" style={{ color: BLUE }}>{t.viewStats}</span>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
             {[
@@ -195,7 +200,7 @@ export default function PublicHealthHomepage() {
         {/* 8. News + initiatives + facilities */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>Latest News</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>View All News →</span></div>
+            <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>{t.latestNews}</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewNews}</span></div>
             <div className="space-y-3">
               {NEWS.map(([t, d, dt]) => (
                 <div key={t} className="flex gap-3">
@@ -206,7 +211,7 @@ export default function PublicHealthHomepage() {
             </div>
           </div>
           <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>Our Initiatives</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>View All Programs →</span></div>
+            <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>{t.ourInitiatives}</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewPrograms}</span></div>
             <div className="space-y-3">
               {INITIATIVES.map(([t, d]) => (
                 <div key={t} className="flex gap-3">
@@ -215,10 +220,10 @@ export default function PublicHealthHomepage() {
                 </div>
               ))}
             </div>
-            <button className="mt-3 w-full rounded-md border py-1.5 text-[11px] font-semibold" style={{ borderColor: BLUE, color: BLUE }}>All Programs &amp; Initiatives →</button>
+            <button className="mt-3 w-full rounded-md border py-1.5 text-[11px] font-semibold" style={{ borderColor: BLUE, color: BLUE }}>{t.allPrograms}</button>
           </div>
           <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>Find Health Facilities Near You</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>View Full Map →</span></div>
+            <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>Find Health Facilities Near You</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewMap}</span></div>
             <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] text-slate-400" style={{ borderColor: LINE }}><span>⌕</span> Enter your location</div>
             <div className="relative mt-2 h-36 overflow-hidden rounded-lg" style={{ background: 'linear-gradient(135deg,#dde6f0,#c3d4e6)' }} role="img" aria-label="Map showing nearby health facilities">
               {[[20, 30], [55, 25], [40, 60], [70, 55], [30, 75], [80, 70]].map(([x, y], i) => (
@@ -266,8 +271,8 @@ export default function PublicHealthHomepage() {
             <div className="text-[13px] font-semibold text-white">Subscribe to our newsletter</div>
             <p className="mt-1 text-[11px] text-white/60">Get the latest updates and health tips.</p>
             <div className="mt-3 flex">
-              <input placeholder="Enter your email" className="min-w-0 flex-1 rounded-l-md px-2 py-1.5 text-[12px] text-slate-800" />
-              <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: BLUE }}>Subscribe</button>
+              <input placeholder={t.enterEmail} aria-label={t.email} className="min-w-0 flex-1 rounded-l-md px-2 py-1.5 text-[12px] text-slate-800" />
+              <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: BLUE }}>{t.subscribe}</button>
             </div>
           </div>
         </div>

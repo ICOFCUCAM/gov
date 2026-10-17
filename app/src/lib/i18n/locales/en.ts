@@ -60,6 +60,35 @@ export interface Messages {
   doctrine: {
     fourSentences: string;
   };
+  /** Public institution websites: the shared frame (PublicSiteShell). */
+  site: {
+    officialWebsite: string;
+    allInstitutions: string;
+    citizenPortal: string;
+    liveBriefing: string;
+    skipMain: string;
+    fontUp: string;
+    fontNormal: string;
+    fontDown: string;
+    search: string;
+    viewAlerts: string;
+    iWantTo: string;
+    viewServices: string;
+    atGlance: string;
+    viewStats: string;
+    latestNews: string;
+    viewNews: string;
+    ourInitiatives: string;
+    viewPrograms: string;
+    allPrograms: string;
+    viewMap: string;
+    contact: string;
+    contactText: string;
+    contactUs: string;
+    enterEmail: string;
+    email: string;
+    subscribe: string;
+  };
   /** Permit and receipt detail pages. */
   detail: {
     notFoundPermit: string;
@@ -600,5 +629,33 @@ export const en: Messages = {
     aiReceipt: 'An AI Copilot helped Officer {name} by drafting an eligibility summary. {bold}',
     aiReceiptBold: 'The officer signed the decision.',
     aiNotDecide: 'The AI did not decide. The officer did.',
+  },
+  site: {
+    officialWebsite: 'Official Website of the {name}',
+    allInstitutions: '⛨ All Institutions',
+    citizenPortal: '◯ Citizen Portal',
+    liveBriefing: '⌖ Live Briefing',
+    skipMain: 'Skip to Main Content',
+    fontUp: 'Increase font size',
+    fontNormal: 'Normal font size',
+    fontDown: 'Decrease font size',
+    search: 'Search',
+    viewAlerts: 'View All Alerts →',
+    iWantTo: 'I want to…',
+    viewServices: 'View All Services →',
+    atGlance: '{name} at a Glance',
+    viewStats: 'View All Statistics →',
+    latestNews: 'Latest News',
+    viewNews: 'View All News →',
+    ourInitiatives: 'Our Initiatives',
+    viewPrograms: 'View All Programs →',
+    allPrograms: 'All Programs & Initiatives →',
+    viewMap: 'View Full Map →',
+    contact: 'Contact',
+    contactText: 'Public-affairs office, weekdays 9am-5pm. Visit your nearest branch or use the citizen portal.',
+    contactUs: 'Contact Us →',
+    enterEmail: 'Enter your email',
+    email: 'Email',
+    subscribe: 'Subscribe',
   },
 };

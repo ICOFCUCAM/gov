@@ -5,6 +5,9 @@
 // fully responsive. Imagery is rendered as clinical gradient placeholders.
 
 import Link from 'next/link';
+import { nationMessages, nationLocale } from '@/lib/nation/registry';
+import { t as fill } from '@/lib/i18n';
+import { locales } from '@/lib/i18n/config';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Laboratory Services — Ministry of Health' };
@@ -45,16 +48,19 @@ const STATS = [
 ];
 
 export default function LaboratoryServicesPage() {
+  // Fixed site wording in the nation's language (lib/i18n `site`); the ministry's own content is unchanged.
+  const t = nationMessages().site;
+  const language = locales.find(l => l.code === nationLocale())?.name ?? 'English';
   return (
     <div className="min-h-screen bg-[#f4f6f9] text-[#1a2332]">
       {/* 1. Top utility bar */}
       <div className="w-full text-[12px] text-white/85" style={{ background: NAVY }}>
         <div className="mx-auto flex max-w-[1440px] items-center justify-between px-6 py-2">
-          <span className="flex items-center gap-2"><span aria-hidden>⌂</span> Official Website of the Ministry of Health</span>
+          <span className="flex items-center gap-2"><span aria-hidden>⌂</span> {fill(t.officialWebsite, { name: 'Ministry of Health' })}</span>
           <div className="flex items-center gap-4">
             <span className="hidden gap-1.5 sm:flex"><button className="hover:text-white">A+</button><button className="hover:text-white">A</button><button className="hover:text-white">A-</button></span>
             <span className="opacity-40">|</span>
-            <span className="hover:text-white">English ▾</span>
+            <span className="hover:text-white">{language} ▾</span>
             <span className="hidden sm:inline hover:text-white">Accessibility</span>
             <span className="hover:text-white">Contact Us</span>
             <span className="hidden sm:inline hover:text-white">Help</span>
@@ -80,7 +86,7 @@ export default function LaboratoryServicesPage() {
             ))}
           </nav>
           <div className="flex items-center gap-4">
-            <button aria-label="Search" className="text-slate-500 hover:text-slate-900">⌕</button>
+            <button aria-label={t.search} className="text-slate-500 hover:text-slate-900">⌕</button>
             <button className="flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white" style={{ background: '#d62b34' }}>
               <span aria-hidden>☎</span> Emergency
             </button>
@@ -211,7 +217,7 @@ export default function LaboratoryServicesPage() {
             <p className="mt-1 text-[12px] text-slate-500">Subscribe to our newsletter for latest health updates.</p>
             <div className="mt-3 flex">
               <input placeholder="Enter your email" className="min-w-0 flex-1 rounded-l-md border px-2 py-1.5 text-[12px]" style={{ borderColor: LINE }} />
-              <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: BLUE }}>Subscribe</button>
+              <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: BLUE }}>{t.subscribe}</button>
             </div>
           </div>
           {[

@@ -6,6 +6,7 @@
 
 import Link from 'next/link';
 import { publicTreasurySite } from '@/lib/gov/treasury-systems';
+import { nationMessages } from '@/lib/nation/registry';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Treasury & Finance — Official Portal' };
@@ -130,6 +131,8 @@ function BudgetDonut({ segments, total, size = 188 }: {
 
 export default function PublicTreasuryHomepage() {
   const s = publicTreasurySite(100); // deterministic, SSR-stable
+  // Fixed site wording in the nation's language (lib/i18n `site`); the ministry's own content is unchanged.
+  const t = nationMessages().site;
 
   return (
     <div className="min-h-screen" style={{ background: '#ffffff', color: INK }}>
@@ -152,7 +155,7 @@ export default function PublicTreasuryHomepage() {
           <div className="flex items-center gap-3">
             <label className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-[12px]" style={{ borderColor: LINE, color: SOFT }}>
               <span aria-hidden>⌕</span>
-              <input aria-label="Search" placeholder="Search…" className="w-28 bg-transparent outline-none placeholder:text-slate-400" />
+              <input aria-label={t.search} placeholder={`${t.search}…`} className="w-28 bg-transparent outline-none placeholder:text-slate-400" />
             </label>
             <Link href="/gov/treasury" className="flex items-center gap-2 rounded-md px-4 py-2 text-[12px] font-semibold text-white"
               style={{ background: NAVY }}>
@@ -356,10 +359,10 @@ export default function PublicTreasuryHomepage() {
             </div>
           ))}
           <div>
-            <div className="text-[12px] font-semibold text-white">Subscribe</div>
+            <div className="text-[12px] font-semibold text-white">{t.subscribe}</div>
             <p className="mt-2 text-[11px] text-white/55">Stay updated with our latest news and publications.</p>
             <div className="mt-3 flex">
-              <input aria-label="Email" placeholder="Enter your email" className="min-w-0 flex-1 rounded-l-md px-2 py-1.5 text-[12px] text-slate-800 outline-none" />
+              <input aria-label={t.email} placeholder={t.enterEmail} className="min-w-0 flex-1 rounded-l-md px-2 py-1.5 text-[12px] text-slate-800 outline-none" />
               <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: GOLD }} aria-hidden>→</button>
             </div>
           </div>

@@ -20,6 +20,9 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import { nationMessages, nationLocale } from '@/lib/nation/registry';
+import { t as fill } from '@/lib/i18n';
+import { locales } from '@/lib/i18n/config';
 
 export interface PublicSiteTheme {
   ink: string;
@@ -84,6 +87,9 @@ export function PublicSiteShell({
   theme, institution, nav, hero, alert, quickServices, featured, statistics, news, initiatives,
   locator, shortcuts, footerSections, newsletter, legalLine, legalLinks,
 }: PublicSiteShellProps) {
+  // Fixed wording in the nation's language (lib/i18n `site`); each institution's own content is unchanged.
+  const t = nationMessages().site;
+  const language = locales.find(l => l.code === nationLocale())?.name ?? 'English';
   return (
     <div className="min-h-screen text-[#1a2332]" style={{ background: theme.surface }}>
       {/* 1. Utility ribbon */}
@@ -91,19 +97,19 @@ export function PublicSiteShell({
         style={{ background: `linear-gradient(90deg, ${theme.ink}, ${theme.inkSoft})` }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
           <div className="flex items-center gap-4">
-            <span>Official Website of the {institution.name}</span>
-            <Link href="/government" className="hidden border-l border-white/20 pl-4 hover:text-white sm:inline">⛨ All Institutions</Link>
-            <Link href="/portal" className="hidden hover:text-white sm:inline">◯ Citizen Portal</Link>
-            <Link href="/noc" className="hidden hover:text-white sm:inline">⌖ Live Briefing</Link>
+            <span>{fill(t.officialWebsite, { name: institution.name })}</span>
+            <Link href="/government" className="hidden border-l border-white/20 pl-4 hover:text-white sm:inline">{t.allInstitutions}</Link>
+            <Link href="/portal" className="hidden hover:text-white sm:inline">{t.citizenPortal}</Link>
+            <Link href="/noc" className="hidden hover:text-white sm:inline">{t.liveBriefing}</Link>
           </div>
           <div className="flex items-center gap-4">
-            <span className="hidden sm:inline hover:text-white">Skip to Main Content</span>
+            <span className="hidden sm:inline hover:text-white">{t.skipMain}</span>
             <span className="flex gap-1.5">
-              <button className="hover:text-white" aria-label="Increase font size">A+</button>
-              <button className="hover:text-white" aria-label="Normal font size">A</button>
-              <button className="hover:text-white" aria-label="Decrease font size">A-</button>
+              <button className="hover:text-white" aria-label={t.fontUp}>A+</button>
+              <button className="hover:text-white" aria-label={t.fontNormal}>A</button>
+              <button className="hover:text-white" aria-label={t.fontDown}>A-</button>
             </span>
-            <span className="hover:text-white">English ▾</span>
+            <span className="hover:text-white">{language} ▾</span>
           </div>
         </div>
       </div>
@@ -130,7 +136,7 @@ export function PublicSiteShell({
             ))}
           </nav>
           <div className="flex items-center gap-4">
-            <button aria-label="Search" className="text-slate-500 hover:text-slate-900">⌕</button>
+            <button aria-label={t.search} className="text-slate-500 hover:text-slate-900">⌕</button>
             {institution.emergencyButton ? (
               <button className="flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white"
                 style={{ background: `linear-gradient(90deg, ${theme.emergencyA}, ${theme.emergencyB})` }}>
@@ -180,15 +186,15 @@ export function PublicSiteShell({
               <span aria-hidden>⚠</span> {alert.label}
             </span>
             <span className="min-w-0 flex-1 text-[13px] text-slate-700">{alert.text}</span>
-            <span className="text-[12px] font-semibold" style={{ color: '#d62b34' }}>View All Alerts →</span>
+            <span className="text-[12px] font-semibold" style={{ color: '#d62b34' }}>{t.viewAlerts}</span>
           </div>
         ) : null}
 
         {/* 5. Quick services */}
         <section>
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[20px] font-bold" style={{ color: theme.ink }}>I want to…</h2>
-            <Link href={`${institution.href}/services`} className="text-[12px] font-semibold" style={{ color: theme.primary }}>View All Services →</Link>
+            <h2 className="text-[20px] font-bold" style={{ color: theme.ink }}>{t.iWantTo}</h2>
+            <Link href={`${institution.href}/services`} className="text-[12px] font-semibold" style={{ color: theme.primary }}>{t.viewServices}</Link>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {quickServices.map(q => (
@@ -229,8 +235,8 @@ export function PublicSiteShell({
         {statistics.length > 0 ? (
           <section>
             <div className="mb-3 flex items-center justify-between">
-              <h2 className="text-[20px] font-bold" style={{ color: theme.ink }}>{institution.name.replace('Ministry of ', '')} at a Glance</h2>
-              <span className="text-[12px] font-semibold" style={{ color: theme.primary }}>View All Statistics →</span>
+              <h2 className="text-[20px] font-bold" style={{ color: theme.ink }}>{fill(t.atGlance, { name: institution.name.replace('Ministry of ', '') })}</h2>
+              <span className="text-[12px] font-semibold" style={{ color: theme.primary }}>{t.viewStats}</span>
             </div>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
               {statistics.map(s => (
@@ -250,8 +256,8 @@ export function PublicSiteShell({
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: theme.line }}>
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-[15px] font-bold" style={{ color: theme.ink }}>Latest News</h3>
-              <span className="text-[11px] font-semibold" style={{ color: theme.primary }}>View All News →</span>
+              <h3 className="text-[15px] font-bold" style={{ color: theme.ink }}>{t.latestNews}</h3>
+              <span className="text-[11px] font-semibold" style={{ color: theme.primary }}>{t.viewNews}</span>
             </div>
             <div className="space-y-3">
               {news.map(n => (
@@ -269,8 +275,8 @@ export function PublicSiteShell({
           </div>
           <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: theme.line }}>
             <div className="mb-3 flex items-center justify-between">
-              <h3 className="text-[15px] font-bold" style={{ color: theme.ink }}>Our Initiatives</h3>
-              <span className="text-[11px] font-semibold" style={{ color: theme.primary }}>View All Programs →</span>
+              <h3 className="text-[15px] font-bold" style={{ color: theme.ink }}>{t.ourInitiatives}</h3>
+              <span className="text-[11px] font-semibold" style={{ color: theme.primary }}>{t.viewPrograms}</span>
             </div>
             <div className="space-y-3">
               {initiatives.map(it => (
@@ -285,13 +291,13 @@ export function PublicSiteShell({
               ))}
             </div>
             <button className="mt-3 w-full rounded-md border py-1.5 text-[11px] font-semibold"
-              style={{ borderColor: theme.primary, color: theme.primary }}>All Programs & Initiatives →</button>
+              style={{ borderColor: theme.primary, color: theme.primary }}>{t.allPrograms}</button>
           </div>
           {locator ? (
             <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: theme.line }}>
               <div className="mb-3 flex items-center justify-between">
                 <h3 className="text-[15px] font-bold" style={{ color: theme.ink }}>{locator.title}</h3>
-                <span className="text-[11px] font-semibold" style={{ color: theme.primary }}>View Full Map →</span>
+                <span className="text-[11px] font-semibold" style={{ color: theme.primary }}>{t.viewMap}</span>
               </div>
               <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] text-slate-400"
                 style={{ borderColor: theme.line }}>
@@ -314,10 +320,10 @@ export function PublicSiteShell({
             </div>
           ) : (
             <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: theme.line }}>
-              <div className="mb-3 text-[15px] font-bold" style={{ color: theme.ink }}>Contact</div>
-              <p className="text-[12px] text-slate-500">Public-affairs office, weekdays 9am-5pm. Visit your nearest branch or use the citizen portal.</p>
+              <div className="mb-3 text-[15px] font-bold" style={{ color: theme.ink }}>{t.contact}</div>
+              <p className="text-[12px] text-slate-500">{t.contactText}</p>
               <button className="mt-3 w-full rounded-md py-1.5 text-[12px] font-semibold text-white"
-                style={{ background: theme.primary }}>Contact Us →</button>
+                style={{ background: theme.primary }}>{t.contactUs}</button>
             </div>
           )}
         </div>
@@ -366,8 +372,8 @@ export function PublicSiteShell({
             <div className="text-[13px] font-semibold text-white">{newsletter.heading}</div>
             <p className="mt-1 text-[11px] text-white/60">{newsletter.body}</p>
             <div className="mt-3 flex">
-              <input placeholder="Enter your email" className="min-w-0 flex-1 rounded-l-md px-2 py-1.5 text-[12px] text-slate-800" aria-label="Email" />
-              <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: theme.primary }}>Subscribe</button>
+              <input placeholder={t.enterEmail} className="min-w-0 flex-1 rounded-l-md px-2 py-1.5 text-[12px] text-slate-800" aria-label={t.email} />
+              <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: theme.primary }}>{t.subscribe}</button>
             </div>
           </div>
         </div>
