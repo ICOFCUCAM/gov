@@ -2,9 +2,9 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { geoOrthographic, geoPath, geoGraticule10 } from 'd3-geo';
+import { geoAzimuthalEquidistant, geoPath } from 'd3-geo';
 import { worldFeatures } from '@/lib/geo/world';
-import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, useClock, useNationBrand, usePrefersReducedMotion, type EntryPath, type NationBrand } from './entry';
+import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, useClock, useNationBrand, type EntryPath, type NationBrand } from './entry';
 
 // Night palette: ink, champagne light and polished gold.
 const INK = '#04060a';
@@ -287,55 +287,51 @@ function Ground() {
   );
 }
 
-/** Ring inscription: the nation's name and motto once installed, repeated to
- *  circle the seal evenly (as on coinage); the platform name before setup. */
-function inscription(b: NationBrand) {
-  const unit = `${b.name} ✦ ${b.motto ? `${b.motto} ✦ ` : ''}`.toUpperCase();
-  let text = unit;
-  while (text.length < 52) text += unit;
-  return text;
+/** Font size that lets an inscription fit its half of the ring, capped large. */
+function inscriptionSize(text: string, radius: number) {
+  const arc = Math.PI * radius * 0.8; // leave room for the side stars
+  return Math.max(11, Math.min(23, arc / (Math.max(text.length, 1) * 0.84)));
 }
 
-/** The national seal: polished gold, black enamel band, emerald field, engraved globe and laurel. */
+// UN-emblem projection: the world seen from above the North Pole, out to 60°S.
+const MAP_R = 100;
+const MAP_REACH = 150; // degrees from the pole
+const unProjection = () =>
+  geoAzimuthalEquidistant().rotate([0, -90]).scale(MAP_R / ((MAP_REACH * Math.PI) / 180)).translate([0, 0]).clipAngle(MAP_REACH);
+
+/**
+ * The national seal: polished gold rim, black enamel band engraved with the
+ * nation's name across the top and its motto across the bottom, and a
+ * UN-emblem world map in gold on emerald, wreathed in laurel.
+ */
 function Seal({ brand }: { brand: NationBrand }) {
-  const reduced = usePrefersReducedMotion();
   const land = React.useMemo(() => worldFeatures(), []);
-  const grat = React.useMemo(() => geoGraticule10(), []);
-  const [rot, setRot] = React.useState(-10);
+  const gp = React.useMemo(() => geoPath(unProjection()), []);
+  const landPath = React.useMemo(() => gp({ type: 'FeatureCollection', features: land } as never) ?? '', [gp, land]);
 
-  React.useEffect(() => {
-    if (reduced) return;
-    let raf = 0, last = performance.now(), acc = 0;
-    const loop = (t: number) => {
-      acc += t - last; last = t;
-      if (acc > 40) { setRot(r => r + acc * 0.005); acc = 0; }
-      raf = requestAnimationFrame(loop);
-    };
-    raf = requestAnimationFrame(loop);
-    return () => cancelAnimationFrame(raf);
-  }, [reduced]);
+  const top = (brand.configured ? brand.name : 'CivicOS').toUpperCase();
+  const bottom = (brand.configured ? brand.motto : 'Sovereign Operating System').toUpperCase();
+  const TOP_R = 162, BOTTOM_R = 181;
+  const topSize = inscriptionSize(top, TOP_R);
+  const bottomSize = inscriptionSize(bottom, BOTTOM_R);
 
-  const proj = geoOrthographic().scale(104).translate([0, 0]).rotate([rot, -14]).clipAngle(90);
-  const gp = geoPath(proj);
-  const landPath = gp({ type: 'FeatureCollection', features: land } as never) ?? '';
-
+  // Laurel wreath around the map, meeting at the base.
   const leaves: { x: number; y: number; rot: number }[] = [];
-  for (let i = 0; i < 14; i++) {
-    const deg = 104 + i * 10.5;
+  for (let i = 0; i < 13; i++) {
+    const deg = 106 + i * 11;
     const a = (deg * Math.PI) / 180;
-    const rr = 128 + (i % 2 ? 8 : -5);
+    const rr = 124 + (i % 2 ? 7 : -5);
     for (const side of [1, -1]) {
       const ang = side === 1 ? a : Math.PI - a;
       leaves.push({ x: rr * Math.cos(ang), y: rr * Math.sin(ang), rot: (ang * 180) / Math.PI + 90 + side * (i % 2 ? -26 : 26) });
     }
   }
-  const stars = Array.from({ length: 12 }, (_, i) => (i * 30 - 90) * (Math.PI / 180));
 
   return (
     <div className="relative h-full w-full">
       <svg viewBox="-200 -200 400 400" className="h-full w-full"
         style={{ filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.85)) drop-shadow(0 0 40px rgba(240,205,140,0.18))' }}
-        role="img" aria-label={`${brand.name} seal: a globe wreathed in laurel`}>
+        role="img" aria-label={`Seal of ${brand.configured ? brand.name : 'CivicOS'}${bottom ? ` — ${brand.configured ? brand.motto : 'Sovereign Operating System'}` : ''}`}>
         <defs>
           {/* Polished metal: many stops imitate a brushed, light-catching surface */}
           <linearGradient id="seal-metal" x1="0.1" y1="0" x2="0.9" y2="1">
@@ -349,63 +345,76 @@ function Seal({ brand }: { brand: NationBrand }) {
           <linearGradient id="seal-leaf" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0" stopColor="#fff0c4" /><stop offset="0.5" stopColor="#c9a24f" /><stop offset="1" stopColor="#6e4c16" />
           </linearGradient>
+          <linearGradient id="seal-letter" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stopColor="#fff3cc" /><stop offset="0.55" stopColor="#e2c37c" /><stop offset="1" stopColor="#b48a3e" />
+          </linearGradient>
           <radialGradient id="seal-band" cx="50%" cy="40%" r="60%">
             <stop offset="0" stopColor="#1a1d24" /><stop offset="1" stopColor="#07080b" />
           </radialGradient>
           <radialGradient id="seal-enamel" cx="42%" cy="34%" r="72%">
             <stop offset="0" stopColor="#0f6b56" /><stop offset="0.55" stopColor="#063d31" /><stop offset="1" stopColor="#021a15" />
           </radialGradient>
-          <radialGradient id="seal-sphere" cx="36%" cy="30%" r="75%">
-            <stop offset="0" stopColor="#ffffff" stopOpacity="0.16" /><stop offset="0.45" stopColor="#ffffff" stopOpacity="0" />
-            <stop offset="0.85" stopColor="#000000" stopOpacity="0.35" /><stop offset="1" stopColor="#000000" stopOpacity="0.6" />
-          </radialGradient>
-          <path id="seal-ring-text" d="M0,0 m-174,0 a174,174 0 1,1 348,0 a174,174 0 1,1 -348,0" />
-          <clipPath id="seal-globe"><circle r="104" /></clipPath>
+          {/* Top arc runs left→right over the top; bottom arc left→right under the bottom, so both read upright */}
+          <path id="seal-arc-top" d={`M ${-TOP_R},0 A ${TOP_R},${TOP_R} 0 0,1 ${TOP_R},0`} />
+          <path id="seal-arc-bottom" d={`M ${-BOTTOM_R},0 A ${BOTTOM_R},${BOTTOM_R} 0 0,0 ${BOTTOM_R},0`} />
+          <clipPath id="seal-map"><circle r={MAP_R} /></clipPath>
         </defs>
 
-        {/* Bevelled metal rim */}
+        {/* Bevelled metal rim and black enamel band */}
         <circle r="199" fill="url(#seal-metal)" />
-        <circle r="193" fill="url(#seal-metal-r)" />
-        <circle r="190" fill="url(#seal-band)" />
-        <circle r="189.5" fill="none" stroke="#000" strokeOpacity="0.6" strokeWidth="1" />
-        <text fill="url(#seal-metal)" fontSize="11.5" fontWeight="600" letterSpacing="3.2">
-          <textPath href="#seal-ring-text" textLength="1080" lengthAdjust="spacing">
-            {inscription(brand)}
-          </textPath>
-        </text>
-        <circle r="160" fill="url(#seal-metal)" />
-        <circle r="156" fill="url(#seal-metal-r)" />
-        <circle r="153" fill="url(#seal-enamel)" />
+        <circle r="194" fill="url(#seal-metal-r)" />
+        <circle r="191" fill="url(#seal-band)" />
+        <circle r="190.5" fill="none" stroke="#000" strokeOpacity="0.6" strokeWidth="1" />
 
-        {/* Guilloché engraving in the enamel */}
-        <g opacity="0.16">
-          {Array.from({ length: 24 }).map((_, i) => (
-            <ellipse key={i} rx="150" ry="62" fill="none" stroke="#e9cf8a" strokeWidth="0.35" transform={`rotate(${i * 7.5})`} />
-          ))}
-        </g>
-        {stars.map((a, i) => (
-          <path key={i} transform={`translate(${141 * Math.cos(a)} ${141 * Math.sin(a)}) scale(0.9)`}
+        {/* Inscriptions — name above, motto below, once each */}
+        <text fill="url(#seal-letter)" fontSize={topSize} fontWeight="700" letterSpacing={topSize * 0.12} textAnchor="middle"
+          style={{ paintOrder: 'stroke', stroke: '#2a1c06', strokeWidth: 0.6 }}>
+          <textPath href="#seal-arc-top" startOffset="50%">{top}</textPath>
+        </text>
+        {bottom ? (
+          <text fill="url(#seal-letter)" fontSize={bottomSize} fontWeight="700" letterSpacing={bottomSize * 0.12} textAnchor="middle"
+            style={{ paintOrder: 'stroke', stroke: '#2a1c06', strokeWidth: 0.6 }}>
+            <textPath href="#seal-arc-bottom" startOffset="50%">{bottom}</textPath>
+          </text>
+        ) : null}
+        {[-1, 1].map(side => (
+          <path key={side} transform={`translate(${side * 171} 0) scale(1.5)`}
             d="M0,-5 L1.2,-1.4 L5,-1.4 L1.9,0.9 L3,4.6 L0,2.4 L-3,4.6 L-1.9,0.9 L-5,-1.4 L-1.2,-1.4 Z" fill="url(#seal-leaf)" />
         ))}
 
-        {/* Globe: engraved gold continents on a lit sphere */}
-        <g clipPath="url(#seal-globe)">
-          <circle r="104" fill="#03241d" />
-          <path d={gp(grat) ?? ''} fill="none" stroke="#e9cf8a" strokeOpacity="0.18" strokeWidth="0.5" />
-          <path d={landPath} fill="url(#seal-leaf)" fillOpacity="0.92" stroke="#fff0c4" strokeOpacity="0.55" strokeWidth="0.3" />
-          <circle r="104" fill="url(#seal-sphere)" />
+        {/* Inner rim and emerald field */}
+        <circle r="150" fill="url(#seal-metal)" />
+        <circle r="146" fill="url(#seal-metal-r)" />
+        <circle r="143" fill="url(#seal-enamel)" />
+        <g opacity="0.14">
+          {Array.from({ length: 24 }).map((_, i) => (
+            <ellipse key={i} rx="140" ry="58" fill="none" stroke="#e9cf8a" strokeWidth="0.35" transform={`rotate(${i * 7.5})`} />
+          ))}
         </g>
-        <circle r="105.5" fill="none" stroke="url(#seal-metal)" strokeWidth="3" />
+
+        {/* UN-emblem map: polar projection, concentric parallels and meridians */}
+        <g clipPath="url(#seal-map)">
+          <circle r={MAP_R} fill="#03241d" />
+          <path d={landPath} fill="url(#seal-leaf)" fillOpacity="0.95" stroke="#fff0c4" strokeOpacity="0.5" strokeWidth="0.3" />
+        </g>
+        <g fill="none" stroke="#f2dc9e" strokeOpacity="0.55" strokeWidth="0.7">
+          {[1, 2, 3, 4].map(k => <circle key={k} r={(MAP_R * k) / 5} />)}
+          {Array.from({ length: 8 }).map((_, i) => {
+            const a = (i * 45 * Math.PI) / 180;
+            return <line key={i} x1="0" y1="0" x2={MAP_R * Math.cos(a)} y2={MAP_R * Math.sin(a)} />;
+          })}
+        </g>
+        <circle r={MAP_R + 1.5} fill="none" stroke="url(#seal-metal)" strokeWidth="3" />
 
         {/* Laurel */}
-        <path d="M -24 132 Q -92 112 -124 40 M 24 132 Q 92 112 124 40" fill="none" stroke="url(#seal-metal)" strokeWidth="1.6" />
+        <path d="M -22 128 Q -88 108 -120 40 M 22 128 Q 88 108 120 40" fill="none" stroke="url(#seal-metal)" strokeWidth="1.6" />
         {leaves.map((l, i) => (
           <g key={i} transform={`rotate(${l.rot} ${l.x} ${l.y})`}>
             <ellipse cx={l.x} cy={l.y} rx="12" ry="4.4" fill="url(#seal-leaf)" stroke="#5e4012" strokeWidth="0.35" />
             <line x1={l.x - 10} y1={l.y} x2={l.x + 10} y2={l.y} stroke="#6e4c16" strokeOpacity="0.6" strokeWidth="0.4" />
           </g>
         ))}
-        <path d="M -28 143 L 0 129 L 28 143" fill="none" stroke="url(#seal-metal)" strokeWidth="2.6" strokeLinecap="round" />
+        <path d="M -26 138 L 0 125 L 26 138" fill="none" stroke="url(#seal-metal)" strokeWidth="2.6" strokeLinecap="round" />
       </svg>
 
       {/* Light glint sweeping across the metal */}
