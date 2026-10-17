@@ -5,7 +5,7 @@ import { api } from '@/lib/api/client';
 import { OnboardingFrame, Eyebrow, Section, Field, inputCls, Select, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI } from '@/components/features/onboarding/Chrome';
 import type { ResilienceSettings, UpdateChamber } from '@/lib/api/types';
 import { IncidentCard } from './resilience';
-import { ChamberNav, ChamberTabs, Chip, ErrorLine, Loading, Panel, PoweredBy, useActor, useCenterTitle, useLink } from './ui';
+import { ChamberNav, ChamberTabs, Chip, CopyValue, ErrorLine, Loading, Panel, PoweredBy, fmtDateTime, useActor, useCenterTitle, useLink } from './ui';
 
 /**
  * Chamber settings: how this nation's installs are protected — probation
@@ -89,6 +89,7 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
               </Select>
             </Field>
           </div>
+          <AgentCredential c={c} link={link} actor={actor} reload={reload} />
           <p className="mt-4 text-[12.5px] font-light text-white/45">Checks: readiness, liveness, error rate and latency against the pre-upgrade baseline, audit-chain integrity, and smoke tests of sign-in, the citizen wallet, payments and the registry. Fallback needs three failed or missing reports in a row, or two independent critical checks failing together.</p>
         </Section>
 
@@ -130,6 +131,42 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
         <BreakGlass c={c} link={link} reload={reload} />
       </Section>
     </>
+  );
+}
+
+/** Issue or rotate the deployment agent's credential. Shown once; only its hash is kept. */
+function AgentCredential({ c, link, actor, reload }: { c: UpdateChamber; link?: string; actor: string; reload: () => void }) {
+  const [fresh, setFresh] = React.useState<string | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [err, setErr] = React.useState<string | null>(null);
+  const meta = c.nation.agentCredential;
+  async function issue() {
+    setErr(null);
+    if (!actor.trim()) { setErr('Enter your name under “Changed by” first.'); return; }
+    if (meta && !window.confirm('Rotating revokes the current credential at once. The agent must be given the new one. Continue?')) return;
+    setBusy(true);
+    try { const r = await api.updates.issueAgentCredential(actor.trim(), link); setFresh(r.credential); reload(); }
+    catch (e) { setErr(e instanceof Error ? e.message : 'Could not issue'); }
+    finally { setBusy(false); }
+  }
+  return (
+    <Panel className="mt-5 p-5">
+      <div className="flex flex-wrap items-center gap-3">
+        <span className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/75">Deployment agent credential</span>
+        {meta ? <Chip tone="#9be7c4" solid>Active · cag_{meta.prefix}…</Chip> : <Chip tone="#f1b36b">Not issued</Chip>}
+        <button type="button" className={`${ghostBtn} ml-auto py-2 text-[12.5px]`} disabled={busy} onClick={issue}>{busy ? 'Issuing…' : meta ? 'Rotate credential' : 'Issue credential'}</button>
+      </div>
+      <p className="mt-2 text-[12.5px] font-light leading-relaxed text-white/55">
+        The agent sends it as <code className="font-mono text-[12px]">Authorization: Bearer cag_…</code> to <code className="font-mono text-[12px]">/api/releases/health</code>. Sessions and the distribution link are refused there. {meta ? `Issued ${fmtDateTime(meta.issuedAt)} by ${meta.issuedBy}${meta.rotations ? ` · rotated ${meta.rotations}×` : ''}.` : ''}
+      </p>
+      {fresh ? (
+        <div role="alert" className="mt-3 rounded-[3px] border p-3" style={{ borderColor: '#f4d58d77', background: 'rgba(244,213,141,0.06)' }}>
+          <p className="text-[12.5px] font-light text-[#f4d58d]">Copy it now — it is shown once and cannot be retrieved later.</p>
+          <div className="mt-2 min-w-0"><CopyValue value={fresh} label="agent credential" /></div>
+        </div>
+      ) : null}
+      <div className="mt-2 min-h-[16px]"><ErrorLine>{err}</ErrorLine></div>
+    </Panel>
   );
 }
 

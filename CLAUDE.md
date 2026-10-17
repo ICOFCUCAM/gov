@@ -58,6 +58,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   snapshot is a separate decision with an explicit loss warning. One bad or
   missing health report only marks the release degraded; fallback needs 3 in
   a row or two independent critical failures.
+- The watchdog `/api/cron/update-watchdog` (pg_cron, every minute) concludes
+  probations and never installs. Health reports need the nation's agent
+  credential (issued in `/updates/settings`, stored as a hash), never a
+  session or link key.
 - Security store (`/updates/security`, `lib/data/security-store.ts`):
   baseline protection is included free for every nation; paid tiers are
   certified third-party server-side tools (instant payment or procurement:

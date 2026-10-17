@@ -1,6 +1,6 @@
 -- supabase/cron/schedule.sql
 --
--- In-database scheduler for the 11 /api/cron/* worker endpoints, using
+-- In-database scheduler for the 12 /api/cron/* worker endpoints, using
 -- pg_cron + pg_net. This is the free (no Vercel Pro) path: Postgres itself
 -- calls the deployed Next.js cron routes on a timer.
 --
@@ -41,6 +41,10 @@ select cron.schedule('civicos-witness-divergence', '*/15 * * * *', $$select net.
 select cron.schedule('civicos-posture-digest',     '*/30 * * * *', $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/posture-digest',     headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
 select cron.schedule('civicos-expire-consents',    '0 * * * *',    $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/expire-consents',    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
 select cron.schedule('civicos-audit-self',         '0 * * * *',    $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/audit-self',         headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+-- Update Center watchdog: concludes due probations (pass, switch back to the
+-- last known good release, or wait for the nation) and records overdue health
+-- reports as missing. Never installs anything.
+select cron.schedule('civicos-update-watchdog',    '* * * * *',    $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/update-watchdog',    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
 
 -- POST workers ──────────────────────────────────────────────────────────
 select cron.schedule('civicos-sla',                '0 * * * *',    $$select net.http_post(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/sla',                headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret'), 'Content-Type', 'application/json'), body := '{}'::jsonb)$$);

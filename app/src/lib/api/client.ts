@@ -350,6 +350,8 @@ export const api = {
       req<{ probation: Probation; install: NationInstall }>('/api/releases/health', { method: 'POST', body: JSON.stringify({ checks, link }) }),
     settings: (patch: Partial<ResilienceSettings> & { estate?: { servers?: number; endpoints?: number }; by: string; link?: string }) =>
       req<{ nation: SubscribedNation }>('/api/releases/settings', { method: 'PUT', body: JSON.stringify(patch) }),
+    issueAgentCredential: (by: string, link?: string) =>
+      req<{ credential: string; prefix: string; issuedAt: string; rotated: boolean }>('/api/releases/settings/agent-credential', { method: 'POST', body: JSON.stringify({ by, link }) }),
     acknowledge: (id: string, by: string, link?: string) =>
       req<{ incident: FallbackIncident }>(`/api/releases/incidents/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify({ by, link }) }),
     restoreData: (id: string, body: { by: string; acknowledgeLoss: boolean; link?: string }) =>

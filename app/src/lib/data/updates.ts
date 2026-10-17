@@ -65,6 +65,7 @@ import type {
   RestorePoint,
   RolloutRing,
 } from '@/lib/api/types';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { recordAudit, getSovereign, getSetup, listMinistries, listReleases, verifyAuditChain } from './store';
 import { securityGate, posture as securityPosture } from './security-store';
 
@@ -177,6 +178,8 @@ interface UpdatesDb {
   requests: FeatureRequest[];
   requestSeq: number;
   incidents: FallbackIncident[];
+  /** Deployment-agent credentials, per nation. Only a SHA-256 hash is kept. */
+  agentKeys: Record<string, { hash: string; prefix: string; issuedAt: string; issuedBy: string; rotations: number }>;
 }
 
 function channelKey(): string {
@@ -414,7 +417,7 @@ function seedUpdates(): UpdatesDb {
     },
   ];
 
-  return { nations, releases, installs, requests, requestSeq: 1003, incidents };
+  return { nations, releases, installs, requests, requestSeq: 1003, incidents, agentKeys: {} };
 }
 
 const g = globalThis as unknown as { __civicosUpdates?: UpdatesDb };
@@ -430,10 +433,12 @@ export function resetUpdates(): void {
 // ── Nations and isolation ────────────────────────────────────────────
 /** The installed nation wears its live identity; before setup it is neutral. */
 function viewNation(n: SubscribedNation): SubscribedNation {
-  if (!n.home) return { ...n, history: [...n.history] };
+  const k = udb().agentKeys[n.id];
+  const agentCredential = k ? { prefix: k.prefix, issuedAt: k.issuedAt, issuedBy: k.issuedBy, rotations: k.rotations } : undefined;
+  if (!n.home) return { ...n, history: [...n.history], agentCredential };
   const s = getSovereign();
   const configured = !!getSetup();
-  return { ...n, history: [...n.history], name: configured ? s.stateName : 'This installation', iso3: configured ? s.iso3 : undefined, currency: s.currency };
+  return { ...n, history: [...n.history], agentCredential, name: configured ? s.stateName : 'This installation', iso3: configured ? s.iso3 : undefined, currency: s.currency };
 }
 
 function nationById(id: string): SubscribedNation | undefined {
@@ -1207,13 +1212,32 @@ function pushReport(p: Probation, rep: HealthReport) {
  * (prototype), treat a silent deployment agent as a failure, and pass the
  * release when its window ends healthy. Never installs anything newer.
  */
-export function superviseProbations(now = Date.now()): void {
+export interface WatchdogSummary {
+  at: string;
+  nations: number;
+  /** Probations still running after this pass. */
+  watching: { nationId: string; version: string; degraded: boolean }[];
+  passed: { nationId: string; version: string }[];
+  fellBack: { nationId: string; from: string; to: string }[];
+  awaitingDecision: { nationId: string; version: string }[];
+  /** Health reports recorded as missing in this pass. */
+  missingReports: number;
+}
+
+export function superviseProbations(now = Date.now()): WatchdogSummary {
+  const out: WatchdogSummary = { at: new Date(now).toISOString(), nations: udb().nations.length, watching: [], passed: [], fellBack: [], awaitingDecision: [], missingReports: 0 };
   for (const n of udb().nations) {
     if (!n.installedReleaseId) continue;
     const inst = installRecord(n, n.installedReleaseId);
     const p = inst?.probation;
     if (!inst || inst.state !== 'probation' || !p || p.state !== 'running') continue;
     const r = udb().releases.find(x => x.id === p.releaseId)!;
+    const conclude = () => {
+      if (inst.state === 'fallen-back') out.fellBack.push({ nationId: n.id, from: r.version, to: n.installedVersion });
+      else if (p.state === 'awaiting-decision') out.awaitingDecision.push({ nationId: n.id, version: r.version });
+      else if (p.state === 'passed') out.passed.push({ nationId: n.id, version: r.version });
+      else if (p.state === 'running') out.watching.push({ nationId: n.id, version: r.version, degraded: p.degraded });
+    };
     const start = Date.parse(p.startedAt), end = Date.parse(p.endsAt);
     const horizon = Math.min(now, end);
     if (n.settings.healthSource === 'simulated') {
@@ -1224,7 +1248,7 @@ export function superviseProbations(now = Date.now()): void {
         const failed = evaluate(p, rep);
         if (failed.length) { failProbation(n, r, inst, failed, rep.at, 'simulated health'); break; }
       }
-      if (p.state !== 'running') continue;
+      if (p.state !== 'running') { conclude(); continue; }
     } else {
       // Each silent interval since the last report (agent or recorded silence) counts as one missed report.
       const interval = p.thresholds.silenceMinutes * 60_000;
@@ -1234,13 +1258,16 @@ export function superviseProbations(now = Date.now()): void {
         const at = new Date(last).toISOString();
         const rep: HealthReport = { at, source: 'silence', checks: [{ key: 'liveness', ok: false, detail: `No report from the deployment agent for ${p.thresholds.silenceMinutes} minutes` }], ok: false };
         pushReport(p, rep);
+        out.missingReports++;
         const failed = evaluate(p, rep);
         if (failed.length) failProbation(n, r, inst, failed, at, `no report from the deployment agent for ${p.thresholds.silenceMinutes * p.thresholds.consecutiveFailures} minutes`);
       }
-      if (p.state !== 'running') continue;
+      if (p.state !== 'running') { conclude(); continue; }
     }
     if (now >= end) passProbation(n, r, inst, new Date(end).toISOString());
+    conclude();
   }
+  return out;
 }
 
 /** The nation's deployment agent reports health for the release on probation. */
@@ -1436,4 +1463,41 @@ export function restoreData(nationId: string, releaseId: string, input: { by?: s
   const chamber = getChamber(nationId);
   if ('error' in chamber) return { error: chamber.error, status: 500 };
   return { restorePoint: rp, chamber };
+}
+
+// ── Deployment-agent credential ──────────────────────────────────────
+// The agent that reports probation health authenticates with its own
+// per-nation credential — never a user session or the distribution link.
+// Issued (or rotated) from the nation's settings page and shown once; only
+// its SHA-256 hash is stored. Format: cag_<prefix>_<secret>.
+const sha256 = (v: string) => createHash('sha256').update(v).digest('hex');
+
+export function issueAgentCredential(nationId: string, by: string): { credential: string; prefix: string; issuedAt: string; rotated: boolean } | { error: string; status: number } {
+  const n = nationById(nationId);
+  if (!n) return { error: 'Nation not found', status: 404 };
+  const who = by.trim();
+  if (!who || who.length > 80) return { error: 'Name the person issuing the credential', status: 422 };
+  const bytes = new Uint8Array(24);
+  globalThis.crypto.getRandomValues(bytes);
+  const hex = Array.from(bytes, b => b.toString(16).padStart(2, '0')).join('');
+  const prefix = hex.slice(0, 8);
+  const credential = `cag_${prefix}_${hex.slice(8)}`;
+  const prev = udb().agentKeys[nationId];
+  const issuedAt = new Date().toISOString();
+  udb().agentKeys[nationId] = { hash: sha256(credential), prefix, issuedAt, issuedBy: who, rotations: prev ? prev.rotations + 1 : 0 };
+  recordAudit(who, prev ? 'update.agent.rotate' : 'update.agent.issue', `UpdateChamber:${nationId}/agent`, 'ok', prev ? `cag_${prev.prefix}… revoked; cag_${prefix}… issued` : `cag_${prefix}… issued`);
+  return { credential, prefix, issuedAt, rotated: !!prev };
+}
+
+/** The nation a deployment-agent credential belongs to, or null. Constant-time comparison. */
+export function nationForAgent(credential: string | null | undefined): SubscribedNation | null {
+  const m = /^cag_([0-9a-f]{8})_[0-9a-f]{40}$/.exec((credential ?? '').trim());
+  if (!m) return null;
+  const want = Buffer.from(sha256(credential!.trim()), 'hex');
+  for (const [nationId, k] of Object.entries(udb().agentKeys)) {
+    if (k.prefix !== m[1]) continue;
+    const have = Buffer.from(k.hash, 'hex');
+    if (have.length === want.length && timingSafeEqual(have, want)) return nationById(nationId) ?? null;
+  }
+  return null;
 }

@@ -940,6 +940,8 @@ export interface SubscribedNation {
   home?: boolean;
   /** Last known good: the release that most recently passed probation. */
   lkg?: { version: string; releaseId?: string };
+  /** Deployment-agent credential metadata (the secret itself is shown once and never stored). */
+  agentCredential?: { prefix: string; issuedAt: ISODate; issuedBy: string; rotations: number };
   settings: ResilienceSettings;
   /** Currency the nation is invoiced in, and the contract rate from the reference price list. */
   currency?: string;

@@ -18,7 +18,7 @@ import { POST as defsPOST } from './security/definitions/route';
 import { GET as secDownloadGET } from './security/download/[key]/[order]/route';
 import { POST as statusPOST } from './publisher/releases/[id]/route';
 import { GET as publisherGET } from './publisher/route';
-import { resetUpdates, HEALTH_CHECKS } from '@/lib/data/updates';
+import { resetUpdates, HEALTH_CHECKS, issueAgentCredential } from '@/lib/data/updates';
 import { resetSecurity } from '@/lib/data/security-store';
 import type { UpdateChamber, SecurityCenter, PublisherOverview } from '@/lib/api/types';
 
@@ -40,7 +40,18 @@ async function installSecurityRelease() {
   expect(r.status).toBe(200);
 }
 
-beforeEach(() => { resetUpdates(); resetSecurity(); platformAuth.mockReset(); });
+let agent = '';
+/** Health reports carry the nation's agent credential. */
+const health = (body: unknown) => healthPOST(new Request('http://x/api/releases/health', {
+  method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body),
+  headers: { 'content-type': 'application/json', authorization: `Bearer ${agent}` },
+}) as never);
+beforeEach(() => {
+  resetUpdates(); resetSecurity(); platformAuth.mockReset();
+  const c = issueAgentCredential('home', 'CIO');
+  if ('error' in c) throw new Error(c.error);
+  agent = c.credential;
+});
 afterEach(() => { delete process.env.CIVICOS_AUTH; });
 
 describe('health, probation and fallback over HTTP', () => {
@@ -49,19 +60,19 @@ describe('health, probation and fallback over HTTP', () => {
   });
 
   it('validates health reports', async () => {
-    expect((await healthPOST(post('x'))).status).toBe(400);
-    expect((await healthPOST(post({ checks: healthy() }))).status).toBe(409); // nothing on probation
+    expect((await health('x')).status).toBe(400);
+    expect((await health({ checks: healthy() })).status).toBe(409); // nothing on probation
     await installSecurityRelease();
-    expect((await healthPOST(post({ checks: [{ key: 'bogus', ok: true }] }))).status).toBe(422);
+    expect((await health({ checks: [{ key: 'bogus', ok: true }] })).status).toBe(422);
   });
 
   it('a failing smoke test falls back to last known good and opens an incident the nation acknowledges', async () => {
     await installSecurityRelease();
     expect((await chamber()).probation?.state).toBe('running');
     // One failure only degrades; two independent critical failures are confirmed.
-    const one = await healthPOST(post({ checks: healthy().map(c => c.key === 'smoke-registry' ? { ...c, ok: false } : c) }));
+    const one = await health({ checks: healthy().map(c => c.key === 'smoke-registry' ? { ...c, ok: false } : c) });
     expect((await one.json()).probation).toMatchObject({ state: 'running', degraded: true });
-    const res = await healthPOST(post({ checks: healthy().map(c => c.key === 'smoke-registry' || c.key === 'readiness' ? { ...c, ok: false } : c) }));
+    const res = await health({ checks: healthy().map(c => c.key === 'smoke-registry' || c.key === 'readiness' ? { ...c, ok: false } : c) });
     expect(res.status).toBe(200);
     const c = await chamber();
     expect(c.installed).toBe('1.4.0');
