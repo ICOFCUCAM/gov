@@ -42,8 +42,9 @@ What has been built is locked. Work only upgrades it toward the vision in
 - The Plaza seal's band reads "SOVEREIGN DIGITAL INSTITUTION" above and the
   platform label below ("OFFICIAL GOVERNMENT PLATFORM"; monarchies "OFFICIAL
   KINGDOM PLATFORM", emirates "OFFICIAL EMIRATE PLATFORM" via `platformLabel`).
-  The nation's name and motto sit once each on the ring outside, name above,
-  motto below.
+  The nation's name and motto sit once each in the dark ring directly around
+  the seal (part of the seal itself), name above, motto below. The plaza plan
+  is sized from the seal radius (`--sr`) so that ring always clears the moat.
 - AI is never part of the brand, logo, or landing copy. The AI assistant is a
   per-nation opt-in (`SovereignProfile.aiAssistant`, chosen in setup, off unless
   ticked). `/api/ai/advisory` refuses when it is off and callers fall back to

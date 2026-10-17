@@ -12,7 +12,9 @@ const CHAMPAGNE = '#d9c398';
 const CHAMPAGNE_HI = '#f4e4bd';
 const GOLD_DEEP = '#7a5418';
 
-// Ground plan geometry (SVG units = CSS px at --gs:1). The plaza centre sits under the seal.
+// Ground plan geometry (SVG units). The plan is sized from the seal radius (--sr) so the
+// seal's outer band always sits just inside the podium rims, at every screen size.
+const GROUND_PER_SR = 14.02; // ground box width in seal radii
 const S = 2400, C = S / 2, EXTENT = 1180;
 const RINGS = [{ r: 300, w: 30 }, { r: 560, w: 20 }, { r: 820, w: 16 }];
 const AVENUES = Array.from({ length: 8 }, (_, k) => ({ deg: k * 45, w: k % 2 === 0 ? 70 : 44 }));
@@ -49,9 +51,9 @@ export function CoverPlaza() {
   const brand = useNationBrand();
 
   return (
-    <main className="relative h-[100dvh] min-h-[680px] overflow-hidden font-sans text-[#f3efe6] [--gs:0.66] [--sy:47%] sm:[--gs:0.88] sm:[--sy:53%] lg:[--gs:1]"
-      style={{ background: INK }}>
-      <Scenery brand={brand} />
+    <main className="relative h-[100dvh] min-h-[680px] overflow-hidden font-sans text-[#f3efe6] [--sy:47%] sm:[--sy:53%]"
+      style={{ background: INK, ['--sr' as string]: 'min(19vh, 36vw, 190px)' }}>
+      <Scenery />
 
       {/* Top rail */}
       <header className="absolute inset-x-0 top-0 z-20 flex h-16 items-center gap-4 px-4 sm:px-8">
@@ -81,13 +83,13 @@ export function CoverPlaza() {
 
       {/* The seal */}
       <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
-        style={{ top: 'var(--sy)', width: 'min(38vh, 72vw, 380px)', aspectRatio: '1' }}>
+        style={{ top: 'var(--sy)', width: 'calc(var(--sr) * 2.5)', aspectRatio: '1' }}>
         <Seal brand={brand} />
       </div>
 
       {/* Roads in */}
       <nav aria-label="Choose your entrance" className="absolute inset-x-0 z-20 px-4"
-        style={{ top: 'calc(var(--sy) + 264px * var(--gs) + 16px)' }}>
+        style={{ top: 'calc(var(--sy) + var(--sr) * 1.52 + 14px)' }}>
         <ul className="mx-auto flex max-w-[680px] flex-wrap justify-center gap-2.5">
           {ENTRY_PATHS.map((p, i) => {
             const on = open && p.k === path;
@@ -170,13 +172,13 @@ export function CoverPlaza() {
 }
 
 /** The capital at night, drawn as a plan centred on the seal. Decorative only. */
-function Scenery({ brand }: { brand: NationBrand }) {
+function Scenery() {
   return (
     <div aria-hidden className="absolute inset-0">
       <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 70% 60% at 50% var(--sy), #0d1420 0%, ${INK} 75%)` }} />
       <div className="absolute left-1/2"
-        style={{ top: 'var(--sy)', width: S, height: S, transform: 'translate(-50%, -50%) scale(var(--gs))', transformOrigin: '50% 50%' }}>
-        <Ground brand={brand} />
+        style={{ top: 'var(--sy)', width: `calc(var(--sr) * ${GROUND_PER_SR})`, aspectRatio: '1', transform: 'translate(-50%, -50%)' }}>
+        <Ground />
       </div>
       {/* Warm civic glow at the centre, deep vignette, title shade, film grain */}
       <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 50% var(--sy), rgba(244,214,150,0.16), transparent 34%)' }} />
@@ -187,7 +189,7 @@ function Scenery({ brand }: { brand: NationBrand }) {
   );
 }
 
-function Ground({ brand }: { brand: NationBrand }) {
+function Ground() {
   const g = React.useMemo(() => {
     // City lights: warm points in the blocks between avenues and ring roads.
     const lights: { x: number; y: number; r: number; o: number; warm: boolean }[] = [];
@@ -205,7 +207,7 @@ function Ground({ brand }: { brand: NationBrand }) {
   }, []);
 
   return (
-    <svg viewBox={`0 0 ${S} ${S}`} width={S} height={S} className="block">
+    <svg viewBox={`0 0 ${S} ${S}`} className="block h-full w-full">
       <defs>
         <filter id="plz-bloom" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="6" /></filter>
         <filter id="plz-soft" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="2" /></filter>
@@ -273,19 +275,14 @@ function Ground({ brand }: { brand: NationBrand }) {
       <circle cx={C} cy={C} r={268} fill="url(#plz-obsidian)" />
       <circle cx={C} cy={C} r={268} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.7" strokeWidth="1.2" />
       <circle cx={C} cy={C} r={262} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.25" strokeWidth="1" />
-      <circle cx={C} cy={C} r={MOAT_R} fill="none" stroke="#08161b" strokeWidth="34" />
-      <circle cx={C} cy={C} r={MOAT_R} fill="none" stroke="#6fb8c6" strokeOpacity="0.12" strokeWidth="34" filter="url(#plz-soft)" />
-      <circle cx={C} cy={C} r={MOAT_R - 17} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.4" strokeWidth="0.8" />
-      <circle cx={C} cy={C} r={MOAT_R + 17} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.4" strokeWidth="0.8" />
+      <circle cx={C} cy={C} r={MOAT_R} fill="none" stroke="#08161b" strokeWidth="24" />
+      <circle cx={C} cy={C} r={MOAT_R} fill="none" stroke="#6fb8c6" strokeOpacity="0.12" strokeWidth="24" filter="url(#plz-soft)" />
+      <circle cx={C} cy={C} r={MOAT_R - 12} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.4" strokeWidth="0.8" />
+      <circle cx={C} cy={C} r={MOAT_R + 12} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.4" strokeWidth="0.8" />
       {Array.from({ length: 36 }).map((_, i) => {
-        const deg = i * 10;
-        // Once a nation is installed, its name and motto take the top and bottom of this ring.
-        const side = Math.min(deg % 180, 180 - (deg % 180)) <= 30;
-        if (brand.configured && !side) return null;
-        const a = (deg * Math.PI) / 180;
+        const a = (i * 10 * Math.PI) / 180;
         return <circle key={i} cx={C + MOAT_R * Math.cos(a)} cy={C + MOAT_R * Math.sin(a)} r="1.8" fill="#eaf8ff" className="plaza-anim" style={{ animation: `plazaPulse ${2 + (i % 6) * 0.35}s ease-in-out infinite` }} />;
       })}
-      {brand.configured ? <MoatInscription name={brand.name} motto={brand.motto} /> : null}
       <circle cx={C} cy={C} r={226} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.8" strokeWidth="1.2" />
       <circle cx={C} cy={C} r={220} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.3" strokeWidth="1" />
     </svg>
@@ -293,22 +290,6 @@ function Ground({ brand }: { brand: NationBrand }) {
 }
 
 const MOAT_R = 244;
-
-/** The nation's name across the top of the moat ring and its motto across the bottom. */
-function MoatInscription({ name, motto }: { name: string; motto: string }) {
-  const top = name.toUpperCase(), bottom = motto.toUpperCase();
-  const TOP_R = MOAT_R - 7, BOTTOM_R = MOAT_R + 7;
-  const size = Math.min(inscriptionSize(top, TOP_R, 0.62, 20), bottom ? inscriptionSize(bottom, BOTTOM_R, 0.62, 20) : 20);
-  const style = { paintOrder: 'stroke' as const, stroke: '#04060a', strokeWidth: 3 };
-  return (
-    <g fontWeight="700" letterSpacing={size * 0.22} textAnchor="middle" fill={CHAMPAGNE_HI} fontSize={size}>
-      <path id="moat-arc-top" d={`M ${C - TOP_R},${C} A ${TOP_R},${TOP_R} 0 0,1 ${C + TOP_R},${C}`} fill="none" />
-      <path id="moat-arc-bottom" d={`M ${C - BOTTOM_R},${C} A ${BOTTOM_R},${BOTTOM_R} 0 0,0 ${C + BOTTOM_R},${C}`} fill="none" />
-      <text style={style} dominantBaseline="middle"><textPath href="#moat-arc-top" startOffset="50%">{top}</textPath></text>
-      {bottom ? <text style={style} dominantBaseline="middle"><textPath href="#moat-arc-bottom" startOffset="50%">{bottom}</textPath></text> : null}
-    </g>
-  );
-}
 
 /** Font size that lets an inscription fit its half of the ring, capped large. */
 function inscriptionSize(text: string, radius: number, share = 0.8, max = 23) {
@@ -332,8 +313,16 @@ function Seal({ brand }: { brand: NationBrand }) {
   const gp = React.useMemo(() => geoPath(unProjection()), []);
   const landPath = React.useMemo(() => gp({ type: 'FeatureCollection', features: land } as never) ?? '', [gp, land]);
 
-  // The band names what this is; the nation's own name and motto sit on the ring outside.
+  // The enamel band names what this is; the nation's own name and motto sit in
+  // the dark outer ring directly around it, name above and motto below.
   const top = 'SOVEREIGN DIGITAL INSTITUTION';
+  const outerTop = brand.configured ? brand.name.toUpperCase() : '';
+  const outerBottom = brand.configured ? brand.motto.toUpperCase() : '';
+  const OUT_TOP_R = 219, OUT_BOTTOM_R = 236;
+  const outerSize = Math.min(
+    outerTop ? inscriptionSize(outerTop, OUT_TOP_R, 0.78, 27) : 27,
+    outerBottom ? inscriptionSize(outerBottom, OUT_BOTTOM_R, 0.78, 27) : 27,
+  );
   const bottom = brand.platform.toUpperCase();
   const TOP_R = 162, BOTTOM_R = 181;
   const topSize = Math.min(inscriptionSize(top, TOP_R), inscriptionSize(bottom, BOTTOM_R));
@@ -353,7 +342,7 @@ function Seal({ brand }: { brand: NationBrand }) {
 
   return (
     <div className="relative h-full w-full">
-      <svg viewBox="-200 -200 400 400" className="h-full w-full"
+      <svg viewBox="-250 -250 500 500" className="h-full w-full"
         style={{ filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.85)) drop-shadow(0 0 40px rgba(240,205,140,0.18))' }}
         role="img" aria-label={`Seal of ${brand.configured ? `${brand.name}${brand.motto ? ` — ${brand.motto}` : ''}` : 'CivicOS'}: Sovereign Digital Institution, ${brand.platform}`}>
         <defs>
@@ -382,7 +371,33 @@ function Seal({ brand }: { brand: NationBrand }) {
           <path id="seal-arc-top" d={`M ${-TOP_R},0 A ${TOP_R},${TOP_R} 0 0,1 ${TOP_R},0`} />
           <path id="seal-arc-bottom" d={`M ${-BOTTOM_R},0 A ${BOTTOM_R},${BOTTOM_R} 0 0,0 ${BOTTOM_R},0`} />
           <clipPath id="seal-map"><circle r={MAP_R} /></clipPath>
+          <radialGradient id="seal-obsidian" cx="50%" cy="38%" r="62%">
+            <stop offset="0.75" stopColor="#151922" /><stop offset="1" stopColor="#06080c" />
+          </radialGradient>
+          <path id="seal-out-top" d={`M ${-OUT_TOP_R},0 A ${OUT_TOP_R},${OUT_TOP_R} 0 0,1 ${OUT_TOP_R},0`} />
+          <path id="seal-out-bottom" d={`M ${-OUT_BOTTOM_R},0 A ${OUT_BOTTOM_R},${OUT_BOTTOM_R} 0 0,0 ${OUT_BOTTOM_R},0`} />
         </defs>
+
+        {/* Dark outer ring carrying the nation's name and motto */}
+        <circle r="249" fill="url(#seal-obsidian)" />
+        <circle r="248" fill="none" stroke={CHAMPAGNE} strokeOpacity="0.75" strokeWidth="1.4" />
+        <circle r="243" fill="none" stroke={CHAMPAGNE} strokeOpacity="0.25" strokeWidth="0.8" />
+        <circle r="205" fill="none" stroke={CHAMPAGNE} strokeOpacity="0.25" strokeWidth="0.8" />
+        {outerTop ? (
+          <text fill={CHAMPAGNE_HI} fontSize={outerSize} fontWeight="700" letterSpacing={outerSize * 0.16} textAnchor="middle"
+            style={{ paintOrder: 'stroke', stroke: '#05070b', strokeWidth: 1 }}>
+            <textPath href="#seal-out-top" startOffset="50%">{outerTop}</textPath>
+          </text>
+        ) : null}
+        {outerBottom ? (
+          <text fill={CHAMPAGNE_HI} fontSize={outerSize} fontWeight="700" letterSpacing={outerSize * 0.16} textAnchor="middle"
+            style={{ paintOrder: 'stroke', stroke: '#05070b', strokeWidth: 1 }}>
+            <textPath href="#seal-out-bottom" startOffset="50%">{outerBottom}</textPath>
+          </text>
+        ) : null}
+        {outerTop ? [-1, 1].map(side => (
+          <path key={side} transform={`translate(${side * 226} 0) rotate(45) scale(1.1)`} d="M-4,-4 L4,-4 L4,4 L-4,4 Z" fill={CHAMPAGNE} opacity="0.8" />
+        )) : null}
 
         {/* Bevelled metal rim and black enamel band */}
         <circle r="199" fill="url(#seal-metal)" />
