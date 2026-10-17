@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import { locales } from '@/lib/i18n/config';
 import { COUNTRIES, loadCountry } from '@/lib/geo/admin1';
+import { loadDivisions, defaultUnits, divisionNoun, type DivisionLevel } from '@/lib/geo/divisions';
 import { applyNation } from '@/lib/nation/registry';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { OnboardingFrame, Eyebrow, Field, inputCls, SealTile, Section, Select, Rule, Corners, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI, GOLD, INK } from './Chrome';
@@ -34,6 +35,7 @@ const SWATCHES = ['#1f6f8b', '#1f3a5f', '#2d6a4f', '#14532d', '#7a1f2b', '#5c3a8
 type NewInst = { archetype: ArchetypeKey; name: string };
 type LogLine = { m: string; s: 'run' | 'ok' | 'fail'; d?: string };
 
+const plural = (noun: string) => (/(s|x|ch|sh)$/.test(noun) ? `${noun}es` : /[^aeiou]y$/.test(noun) ? `${noun.slice(0, -1)}ies` : `${noun}s`);
 const slugify = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'institution';
 
 /**
@@ -61,6 +63,7 @@ export function SetupWizard() {
   const [done, setDone] = React.useState(false);
   const [running, setRunning] = React.useState(false);
   const [provinces, setProvinces] = React.useState<string[]>([]);
+  const [levels, setLevels] = React.useState<DivisionLevel[]>([]);
   const [regionDraft, setRegionDraft] = React.useState('');
   // null = not chosen yet: follows the saved chambers, else the template.
   const [singleChamber, setSingleChamber] = React.useState<boolean | null>(null);
@@ -69,16 +72,23 @@ export function SetupWizard() {
     try { return (Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf('timeZone'); } catch { return []; }
   }, []);
 
-  // The country's real admin-1 units (from the bundled geography) seed the region list.
+  // The nation's official divisions (ISO 3166-2) seed the region list in its own
+  // order — every US state, every Kenyan county. Countries the standard does not
+  // divide fall back to the map's admin-1 units.
   const iso3 = profile?.iso3;
   React.useEffect(() => {
-    if (!iso3) { setProvinces([]); return; }
+    if (!iso3) { setProvinces([]); setLevels([]); return; }
     let live = true;
-    loadCountry(iso3).then(c => {
-      if (!live || !c) return;
-      const names = c.provinces.map(p => p.name).sort((a, b) => a.localeCompare(b));
+    Promise.all([loadDivisions(iso3), loadCountry(iso3)]).then(([official, c]) => {
+      if (!live) return;
+      const names = (c?.provinces ?? []).map(p => p.name).sort((a, b) => a.localeCompare(b));
+      const lv: DivisionLevel[] = official.length ? official : names.length
+        ? [{ depth: 1, units: [...new Set(names)].map(n => ({ code: n, name: n, type: 'Province' })), types: [{ type: 'Province', count: new Set(names).size }] }]
+        : [];
       setProvinces(names);
-      setProfile(p => (p && !(p.regions?.length) && names.length <= 16 ? { ...p, regions: names } : p));
+      setLevels(lv);
+      const first = lv[0];
+      if (first) setProfile(p => (p && !(p.regions?.length) ? { ...p, regions: defaultUnits(first).map(u => u.name), regionNoun: divisionNoun(first) } : p));
     });
     return () => { live = false; };
   }, [iso3]);
@@ -212,9 +222,22 @@ export function SetupWizard() {
 
   const stepLocked = (i: number) => !!log || (i > step && !canLaunch && i === 3);
   const regionsList = profile.regions ?? [];
-  // Which level the regions are: the map's first-level administrative units, or the nation's own groupings.
-  const regionLevel: 'admin' | 'groups' = provinces.length > 0 && regionsList.length === provinces.length
-    && regionsList.every(r => provinces.includes(r)) ? 'admin' : 'groups';
+  // Which of the nation's levels the regions are drawn from, or 'custom' for the nation's own groupings.
+  const levelIndex = regionsList.length ? levels.findIndex(l => regionsList.every(r => l.units.some(u => u.name === r))) : -1;
+  const level = levels[levelIndex];
+  const chooseLevel = (i: number) => {
+    const l = levels[i];
+    if (l) setProfile(p => p && { ...p, regions: defaultUnits(l).map(u => u.name), regionNoun: divisionNoun(l) });
+    else if (level) set('regions', []);
+  };
+  // Within a level, unit types (e.g. US outlying areas) can be included or left out.
+  const toggleType = (type: string, on: boolean) => {
+    if (!level) return;
+    const keep = new Set(regionsList);
+    for (const u of level.units) if (u.type === type) { if (on) keep.add(u.name); else keep.delete(u.name); }
+    set('regions', level.units.map(u => u.name).filter(n => keep.has(n)));
+  };
+  const suggestions = [...new Set([...levels.flatMap(l => l.units.map(u => u.name)), ...provinces])];
 
   return (
     <OnboardingFrame right={<span className="hidden sm:inline">{existing ? 'SETUP · REVIEW' : 'FIRST-RUN SETUP'}</span>}>
@@ -347,15 +370,12 @@ export function SetupWizard() {
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="block font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/65">Operational regions</span>
-                      <div role="radiogroup" aria-label="Region level" className="flex rounded-full border p-0.5" style={{ borderColor: hair(0.2) }}>
-                        {([['admin', 'Administrative units'], ['groups', 'Reporting groups']] as const).map(([k, l]) => (
-                          <button key={k} type="button" role="radio" aria-checked={regionLevel === k} disabled={k === 'admin' && !provinces.length}
-                            onClick={() => {
-                              if (k === 'admin') set('regions', provinces);
-                              else if (regionLevel === 'admin') set('regions', []);
-                            }}
-                            className="rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-[0.16em] transition-colors disabled:opacity-35"
-                            style={regionLevel === k ? { background: hair(0.16), color: CHAMPAGNE_HI } : { color: 'rgba(255,255,255,0.45)' }}>{l}</button>
+                      <div role="radiogroup" aria-label="Region level" className="flex flex-wrap rounded-[14px] border p-0.5" style={{ borderColor: hair(0.2) }}>
+                        {[...levels.map((l, i) => ({ i, label: `${ROMAN[i]} · ${plural(divisionNoun(l))}` })), { i: -1, label: 'Custom groups' }].map(({ i, label }) => (
+                          <button key={i} type="button" role="radio" aria-checked={levelIndex === i}
+                            onClick={() => chooseLevel(i)}
+                            className="rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-[0.16em] transition-colors"
+                            style={levelIndex === i ? { background: hair(0.16), color: CHAMPAGNE_HI } : { color: 'rgba(255,255,255,0.45)' }}>{label}</button>
                         ))}
                       </div>
                     </div>
@@ -378,14 +398,26 @@ export function SetupWizard() {
                           setRegionDraft('');
                         }}
                         className="min-w-[140px] flex-1 bg-transparent px-1.5 text-[13.5px] font-light text-[#f3efe6] placeholder:text-white/25 focus:outline-none" />
-                      <datalist id="setup-provinces">{provinces.map((n, i) => <option key={`${n}-${i}`} value={n} />)}</datalist>
+                      <datalist id="setup-provinces">{suggestions.map((n, i) => <option key={`${n}-${i}`} value={n} />)}</datalist>
                     </div>
                     <span className="mt-1.5 block text-[11.5px] leading-snug text-white/40">
-                      {regionLevel === 'admin'
-                        ? `The ${provinces.length} first-level administrative units on the map — the level local government operates at. Map data can predate recent boundary changes; add or rename units to match current law.`
-                        : 'Groupings for national summaries (e.g. Central, Eastern, Northern, Western in Uganda). If no government sits at this level, facilities, permits and incidents are better reported by administrative units. '}
+                      {level
+                        ? `${regionsList.length} of the nation's ${level.units.length} ${level.depth === 1 ? 'first-level divisions' : `divisions beneath its ${plural(divisionNoun(levels[0]!))}`}, in official order (ISO 3166-2). Add or rename units if the law has changed since.`
+                        : 'Your own groupings for national summaries. If no government sits at this level, facilities, permits and incidents are better reported by an official level. '}
                     </span>
-                    {regionLevel === 'groups' ? <span className="mt-1 block text-[11.5px] leading-snug text-white/40">
+                    {level && level.types.length > 1 ? (
+                      <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+                        {level.types.map(t => (
+                          <label key={t.type} className="flex cursor-pointer items-center gap-1.5 text-[11.5px] font-light text-white/60">
+                            <input type="checkbox" className="h-3.5 w-3.5 accent-[#d9c398]"
+                              checked={level.units.filter(u => u.type === t.type).every(u => regionsList.includes(u.name))}
+                              onChange={e => toggleType(t.type, e.currentTarget.checked)} />
+                            {t.type} · {t.count}
+                          </label>
+                        ))}
+                      </div>
+                    ) : null}
+                    {!level ? <span className="mt-1 block text-[11.5px] leading-snug text-white/40">
                       {provinces.length > 16
                         ? `${provinces.length} first-level units on the map. Add the regions your government reports by, or `
                         : 'Dashboards and engines report by these regions. Press Enter to add.'}

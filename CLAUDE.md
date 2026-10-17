@@ -63,6 +63,10 @@ What has been built is locked. Work only upgrades it toward the vision in
 - Engines get the nation's regions, map country and currency from
   `app/src/lib/nation/registry.ts`: declare region lists as
   `regionList([...reference])` and format money with `formatMoney()`.
+- A nation's regions default to its official subdivisions in their own order
+  (ISO 3166-2, `app/src/lib/geo/divisions.ts`; e.g. all US states, Kenya's 47
+  counties, Uganda's regions or districts). Rebuild the data with
+  `scripts/build-divisions.py`; the map's admin-1 shapes are a separate source.
 
 ## Checks
 
