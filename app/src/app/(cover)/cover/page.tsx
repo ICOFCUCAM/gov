@@ -7,7 +7,7 @@ const VERSIONS = [
   { href: '/cover/boot', n: 'B', name: 'Boot', tone: 'Monochrome · black and white', d: 'The platform starts like an operating system: a kernel log verifies the constitutional root, then resolves into a giant wordmark and a login console.' },
   { href: '/cover/atlas', n: 'C', name: 'Atlas', tone: 'Light · stone and cobalt', d: 'Editorial and calm. A turning globe with federation arcs, sign-in above the fold, and the four principles beneath.' },
   { href: '/cover/doors', n: 'D', name: 'Doors', tone: 'Jewel tones · emerald, sapphire, amethyst', d: 'Three full-height entrances. Choose one and it opens to reveal sign-in while the others fold to spines.' },
-  { href: '/cover/plaza', n: 'E', name: 'Plaza', tone: 'Golden hour · emerald, ivory and gold', d: 'A flat site plan of a civic plaza at golden hour: the national seal at the centre, avenues radiating to every edge. Each way in is a road you choose.' },
+  { href: '/cover/plaza', n: 'E', name: 'Plaza', tone: 'Night · ink, champagne light, polished gold', d: 'The capital at night from above: a polished gold-and-enamel seal at the centre, avenues of light radiating to every edge. Each way in is a road you choose.' },
 ];
 
 // Comparison index for cover designs under evaluation. `/` serves the current choice.
