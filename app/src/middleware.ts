@@ -10,6 +10,10 @@ import type { NextRequest } from 'next/server';
 // audit chain's integrity check used by the start-up sequence.
 const PUBLIC_READ = [/^\/api\/sovereign$/, /^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/];
 const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/api\/health/];
+// Machine callers with no browser session that authenticate themselves in
+// the route: the update watchdog (CIVICOS_CRON_SECRET, called by pg_cron)
+// and the deployment agent's health reports (per-nation agent credential).
+const SELF_AUTHENTICATED = [/^\/api\/cron\/update-watchdog$/, /^\/api\/releases\/health$/];
 
 export function middleware(req: NextRequest) {
   const res = NextResponse.next();
@@ -22,6 +26,7 @@ export function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
   if (PUBLIC.some(re => re.test(pathname))) return res;
+  if (SELF_AUTHENTICATED.some(re => re.test(pathname))) return res;
   // The cover reads the nation's public identity before anyone signs in.
   if (req.method === 'GET' && PUBLIC_READ.some(re => re.test(pathname))) return res;
 

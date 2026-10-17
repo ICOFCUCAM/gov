@@ -27,3 +27,14 @@ export function nationFor(link: string | null | undefined): SubscribedNation | N
   if (!n) return NextResponse.json({ error: 'Unknown distribution link' }, { status: 404 });
   return n;
 }
+
+/** Parse a JSON object body and resolve the nation it speaks for (body `link`, else `?link=`). */
+export async function chamberBody<T extends object>(req: Request): Promise<{ b: T; nation: SubscribedNation } | NextResponse> {
+  let b: unknown;
+  try { b = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  if (!b || typeof b !== 'object' || Array.isArray(b)) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
+  const link = (b as { link?: unknown }).link;
+  const nation = nationFor(typeof link === 'string' ? link : new URL(req.url).searchParams.get('link'));
+  if (nation instanceof NextResponse) return nation;
+  return { b: b as T, nation };
+}

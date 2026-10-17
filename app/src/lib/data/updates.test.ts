@@ -1,10 +1,14 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { resetReadiness } from '@/lib/data/readiness';
+import { stagingOff, cosign } from '@/lib/data/testkit';
 import {
   resetUpdates, getChamber, getChamberRelease, decide, submitRequest, advanceRequest,
   publishRelease, enrolNation, publisherOverview, downloadManifest, upgradePath, resolveNation,
   HOME_NATION, type PublishInput,
 } from './updates';
 import { listAudit, verifyAuditChain } from './store';
+import { resetSecurity, registerByo } from './security-store';
+import { nationRecord } from './updates';
 import type { UpdateChamber } from '@/lib/api/types';
 
 const chamber = (id = HOME_NATION): UpdateChamber => {
@@ -23,7 +27,13 @@ const nationBuild = (over: Partial<PublishInput> = {}): PublishInput => ({
   ...over,
 });
 
-beforeEach(() => resetUpdates());
+beforeEach(() => { resetUpdates(); resetReadiness(); stagingOff(); resetSecurity(); });
+
+/** Estate-wide BYO attestation: satisfies the security rule for platform releases. */
+const coverHome = () => {
+  const t = registerByo(nationRecord(HOME_NATION)!, { product: 'Own EDR', vendor: 'National CERT', version: '4.1', category: 'edr', servers: 48, endpoints: 1250, lastScanAt: new Date().toISOString(), attestation: 'Full estate scan, no critical findings outstanding.', scope: 'estate', by: 'Head of Cyber Security' });
+  if ('error' in t) throw new Error(t.error);
+};
 
 describe('nation isolation', () => {
   it('each nation sees global releases plus only its own builds', () => {
@@ -44,7 +54,7 @@ describe('nation isolation', () => {
 
   it('a nation cannot open, decide on or download another nation’s build', () => {
     expect(getChamberRelease(HOME_NATION, 'DR-141-S1')).toBeUndefined();
-    const r = decide(HOME_NATION, 'DR-141-S1', { action: 'approve', by: 'CIO' });
+    const r = cosign(HOME_NATION, 'DR-141-S1', { action: 'approve', by: 'CIO' });
     expect(r).toMatchObject({ status: 404 });
     const sandboxArtifact = getChamberRelease('sandbox', 'DR-141-S1')!.artifacts[0]!;
     expect(downloadManifest(HOME_NATION, sandboxArtifact.id)).toBeUndefined();
@@ -101,14 +111,16 @@ describe('never automatic', () => {
   });
 
   it('cannot install without an approval first', () => {
-    const r = decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
+    const r = cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
     expect(r).toMatchObject({ status: 409 });
     expect(stateOf(HOME_NATION, 'DR-141')).toBe('available');
   });
 
   it('review → approve → schedule → install, each written to the audit chain', () => {
-    expect(decide(HOME_NATION, 'DR-141-H1', { action: 'approve', by: 'Chief Information Officer', note: 'Registry signed off' })).not.toHaveProperty('error');
-    expect(lastAudit()).toMatchObject({ action: 'update.approve', actor: 'Chief Information Officer', resource: `UpdateChamber:${HOME_NATION}/1.4.1+sov.1` });
+    expect(cosign(HOME_NATION, 'DR-141-H1', { action: 'approve', by: 'Chief Information Officer', note: 'Registry signed off' })).not.toHaveProperty('error');
+    // Four-eyes: proposed by the CIO, approved by a second official.
+    expect(lastAudit()).toMatchObject({ action: 'update.approve', actor: 'Second official', resource: `UpdateChamber:${HOME_NATION}/1.4.1+sov.1` });
+    expect(listAudit().find(a => a.action === 'update.approve.propose')).toMatchObject({ actor: 'Chief Information Officer' });
 
     const window = { start: future(24), end: future(26) };
     const s = decide(HOME_NATION, 'DR-141-H1', { action: 'schedule', by: 'CIO', window });
@@ -119,25 +131,29 @@ describe('never automatic', () => {
     // Scheduling installs nothing.
     expect(chamber().installed).toBe('1.4.0');
 
-    const i = decide(HOME_NATION, 'DR-141-H1', { action: 'install', by: 'Platform operations' });
+    coverHome();
+    expect(decide(HOME_NATION, 'DR-141-H1', { action: 'prepare', by: 'Platform operations' })).not.toHaveProperty('error');
+    const i = cosign(HOME_NATION, 'DR-141-H1', { action: 'install', by: 'Platform operations' });
     if ('error' in i) throw new Error(i.error);
     expect(i.chamber.installed).toBe('1.4.1+sov.1');
-    expect(i.install.events.map(e => e.action)).toEqual(['approve', 'schedule', 'install']);
+    expect(i.install.state).toBe('probation');
+    expect(i.install.events.map(e => e.action)).toEqual(['approve', 'approve', 'schedule', 'prepare', 'install', 'install']); // proposal + approval each
     expect(i.install.events.every(e => typeof e.auditSeq === 'number')).toBe(true);
     expect(lastAudit().action).toBe('update.install');
     expect(verifyAuditChain().ok).toBe(true);
   });
 
   it('self-hosted installs require the team to confirm checksums and signatures', () => {
-    decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' });
-    expect(decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted' })).toMatchObject({ status: 422 });
-    const ok = decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
+    cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' });
+    decide(HOME_NATION, 'DR-141', { action: 'prepare', by: 'Ops' });
+    expect(cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted' })).toMatchObject({ status: 422 });
+    const ok = cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
     expect(ok).not.toHaveProperty('error');
     expect(chamber().installed).toBe('1.4.1');
   });
 
   it('rejects windows in the past, inverted or too long', () => {
-    decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' });
+    cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' });
     expect(decide(HOME_NATION, 'DR-141', { action: 'schedule', by: 'CIO', window: { start: future(-5), end: future(-3) } })).toMatchObject({ status: 422 });
     expect(decide(HOME_NATION, 'DR-141', { action: 'schedule', by: 'CIO', window: { start: future(5), end: future(3) } })).toMatchObject({ status: 422 });
     expect(decide(HOME_NATION, 'DR-141', { action: 'schedule', by: 'CIO', window: { start: future(5), end: future(200) } })).toMatchObject({ status: 422 });
@@ -157,7 +173,7 @@ describe('never automatic', () => {
   it('refuses to install over an incompatible version', () => {
     const n = enrolNation({ name: 'Legacy deployment', deliveryMode: 'self-hosted', installedVersion: '1.2.0' });
     if ('error' in n) throw new Error(n.error);
-    decide(n.id, 'DR-141', { action: 'approve', by: 'CIO' });
+    cosign(n.id, 'DR-141', { action: 'approve', by: 'CIO' });
     const r = decide(n.id, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
     expect(r).toMatchObject({ status: 409 });
     if ('error' in r) expect(r.error).toMatch(/1\.4\.0 or later/);
@@ -177,7 +193,7 @@ describe('never automatic', () => {
   });
 
   it('rejects unknown actions and anonymous decisions', () => {
-    expect(decide(HOME_NATION, 'DR-141', { action: 'approve', by: '  ' })).toMatchObject({ status: 422 });
+    expect(cosign(HOME_NATION, 'DR-141', { action: 'approve', by: '  ' })).toMatchObject({ status: 422 });
     expect(decide(HOME_NATION, 'DR-141', { action: 'auto' as never, by: 'CIO' })).toMatchObject({ status: 422 });
   });
 });

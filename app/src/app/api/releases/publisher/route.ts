@@ -1,13 +1,14 @@
 // /api/releases/publisher — the publisher console: every nation, every
 // release and request (GET), and publishing a release (POST).
 import { NextRequest, NextResponse } from 'next/server';
-import { publisherOverview, publishRelease, type PublishInput } from '@/lib/data/updates';
+import { publisherOverview, publishRelease, superviseProbations, type PublishInput } from '@/lib/data/updates';
 import { publisherAuthorized, unauthorized } from '@/lib/updates/access';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   if (!await publisherAuthorized(req)) return unauthorized();
+  superviseProbations();
   return NextResponse.json({ overview: publisherOverview() });
 }
 

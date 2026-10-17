@@ -387,4 +387,14 @@ export const ar: Messages = {
     hash: 'التجزئة',
     footnote: 'تُقرأ الإيصالات مباشرة من قاعدة البيانات عبر {timelineRpc}، وهو إجراء SECURITY DEFINER مقصور على {uid}. لا يرى الموظفون إيصالاتك، ولا يراها المجتمع المدني دون حسابك. يُنزّل {fullData} وثيقة النقل الكاملة — كل طلب وموافقة وطعن تحتفظ به قاعدة البيانات عنك — عبر {exportRpc}.',
   },
+  releaseNotes: {
+    whatsNew: 'ما الجديد',
+    translationPending: 'الترجمة قيد الإعداد — معروض بالإنجليزية',
+    inYourLanguage: 'بلغتك',
+    learning: 'التدريب والأدلة',
+    adminGuide: 'دليل المسؤول',
+    training: 'تدريب',
+    runbook: 'دليل التشغيل',
+    video: 'فيديو',
+  },
 };

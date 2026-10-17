@@ -20,12 +20,13 @@ Project: **civicos** (eu-central-1, `gtgpbokcbngchvoijish`).
 
 ## Scheduling
 
-The 11 `/api/cron/*` worker endpoints are driven in-database by **pg_cron +
+The 12 `/api/cron/*` worker endpoints are driven in-database by **pg_cron +
 pg_net** (the free path — no Vercel Pro needed). Postgres calls the deployed
 Next.js routes on a timer, authenticating with a Bearer token read at run time
 from Supabase Vault (`civicos_cron_secret`, seeded once by an operator to match
 the app's `CIVICOS_CRON_SECRET`). The full re-runnable schedule lives in
-[`cron/schedule.sql`](cron/schedule.sql); cadences range from every 5 min
+[`cron/schedule.sql`](cron/schedule.sql); cadences range from every minute
+(`update-watchdog`, which concludes Update Center probations) and every 5 min
 (`deliver-events`) to hourly (SLA, consent expiry, directive promotion, etc.).
 
 ## Migrations

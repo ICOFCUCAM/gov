@@ -14,10 +14,12 @@ import type {
 // console), drawn in the night palette of the onboarding surfaces.
 
 export const STATE_LABEL: Record<InstallState, string> = {
-  available: 'Available', approved: 'Approved', scheduled: 'Scheduled', installed: 'Installed', skipped: 'Skipped', 'rolled-back': 'Rolled back',
+  available: 'Available', approved: 'Approved', scheduled: 'Scheduled', probation: 'On probation', installed: 'Installed', skipped: 'Skipped', 'rolled-back': 'Rolled back',
+  'fallen-back': 'Rolled back automatically',
 };
 const STATE_TONE: Record<InstallState, string> = {
-  available: '#d9c398', approved: '#9cc3ff', scheduled: '#c9b6ff', installed: '#9be7c4', skipped: '#8a8f99', 'rolled-back': '#f1b36b',
+  available: '#d9c398', approved: '#9cc3ff', scheduled: '#c9b6ff', probation: '#f4d58d', installed: '#9be7c4', skipped: '#8a8f99', 'rolled-back': '#f1b36b',
+  'fallen-back': '#f1938f',
 };
 export const SEVERITY_LABEL: Record<ReleaseSeverity, string> = { security: 'Security', critical: 'Critical', feature: 'Feature', maintenance: 'Maintenance' };
 const SEVERITY_TONE: Record<ReleaseSeverity, string> = { security: '#f1938f', critical: '#f1b36b', feature: '#d9c398', maintenance: '#a5abb5' };
@@ -43,7 +45,8 @@ export function Chip({ tone, children, solid = false, title }: { tone: string; c
 }
 export const StateChip = ({ state }: { state: InstallState }) => <Chip tone={STATE_TONE[state]} solid={state === 'installed'}>{STATE_LABEL[state]}</Chip>;
 export const SeverityChip = ({ severity }: { severity: ReleaseSeverity }) => <Chip tone={SEVERITY_TONE[severity]} solid={severity === 'security' || severity === 'critical'}>{SEVERITY_LABEL[severity]}</Chip>;
-export const ChangeChip = ({ kind }: { kind: ChangeKind }) => <Chip tone={CHANGE_TONE[kind]}>{CHANGE_LABEL[kind].replace(/s$/, '')}</Chip>;
+const CHANGE_SINGULAR: Record<ChangeKind, string> = { security: 'Security', breaking: 'Breaking', feature: 'Feature', fix: 'Fix', deprecation: 'Deprecation' };
+export const ChangeChip = ({ kind }: { kind: ChangeKind }) => <Chip tone={CHANGE_TONE[kind]}>{CHANGE_SINGULAR[kind]}</Chip>;
 export function ChannelChip({ r, nationName }: { r: Pick<DistributionRelease, 'channel'>; nationName?: string }) {
   return r.channel === 'global'
     ? <Chip tone="#a9c7e8" title="Released to every nation">Global</Chip>
@@ -165,8 +168,17 @@ export function VerifyGuide({ publisherKey, compact = false }: { publisherKey: P
 /** Remembers who is acting, so every decision carries a name. */
 export function useActor(): [string, (v: string) => void] {
   const [actor, setActor] = React.useState('');
-  React.useEffect(() => { try { setActor(localStorage.getItem('civicos.updates.actor') ?? ''); } catch { /* storage unavailable */ } }, []);
-  const set = React.useCallback((v: string) => { setActor(v); try { localStorage.setItem('civicos.updates.actor', v); } catch { /* storage unavailable */ } }, []);
+  React.useEffect(() => {
+    try { setActor(localStorage.getItem('civicos.updates.actor') ?? ''); } catch { /* storage unavailable */ }
+    // Every panel on the page shares one name: follow edits made elsewhere.
+    const on = (e: Event) => setActor((e as CustomEvent<string>).detail);
+    window.addEventListener('civicos-actor', on);
+    return () => window.removeEventListener('civicos-actor', on);
+  }, []);
+  const set = React.useCallback((v: string) => {
+    try { localStorage.setItem('civicos.updates.actor', v); } catch { /* storage unavailable */ }
+    window.dispatchEvent(new CustomEvent('civicos-actor', { detail: v }));
+  }, []);
   return [actor, set];
 }
 
@@ -184,16 +196,39 @@ export function useCenterTitle(nationName?: string, home = true): { title: strin
   return { title: nation ? `Update Center — ${nation}` : 'Update Center', nation, configured: brand.configured };
 }
 
-export function ChamberNav({ q, active }: { q: string; active: 'chamber' | 'requests' | 'release' }) {
-  const items = [
-    { href: `/updates${q}`, l: 'Chamber', k: 'chamber' },
-    { href: `/updates/requests${q}`, l: 'Requests', k: 'requests' },
-  ];
+type ChamberTab = 'chamber' | 'requests' | 'release' | 'security' | 'hosting' | 'mirror' | 'support' | 'assurance' | 'contract' | 'settings';
+const chamberItems = (q: string) => [
+  { href: `/updates${q}`, l: 'Chamber', k: 'chamber' },
+  { href: `/updates/security${q}`, l: 'Security', k: 'security' },
+  { href: `/updates/hosting${q}`, l: 'Hosting', k: 'hosting' },
+  { href: `/updates/mirror${q}`, l: 'Mirror', k: 'mirror' },
+  { href: `/updates/requests${q}`, l: 'Requests', k: 'requests' },
+  { href: `/updates/support${q}`, l: 'Support', k: 'support' },
+  { href: `/updates/assurance${q}`, l: 'Assurance', k: 'assurance' },
+  { href: `/updates/contract${q}`, l: 'Contract', k: 'contract' },
+  { href: `/updates/settings${q}`, l: 'Settings', k: 'settings' },
+];
+
+/** Header navigation (from extra-large screens up); smaller screens get ChamberTabs in the page body. */
+export function ChamberNav({ q, active }: { q: string; active: ChamberTab }) {
   return (
-    <nav aria-label="Update Center" className="flex items-center gap-4">
-      {items.map(i => (
+    <nav aria-label="Update Center" className="hidden items-center gap-4 xl:flex">
+      {chamberItems(q).map(i => (
         <Link key={i.k} href={i.href} aria-current={active === i.k ? 'page' : undefined}
           className={`uppercase transition-colors hover:text-[#f4e4bd] ${active === i.k ? 'text-[#f4e4bd]' : ''}`}>{i.l}</Link>
+      ))}
+    </nav>
+  );
+}
+
+/** The same navigation as a tab row for phones and tablets. */
+export function ChamberTabs({ q, active }: { q: string; active: ChamberTab }) {
+  return (
+    <nav aria-label="Update Center sections" className="-mt-4 mb-6 flex gap-2 overflow-x-auto pb-1 xl:hidden">
+      {chamberItems(q).map(i => (
+        <Link key={i.k} href={i.href} aria-current={active === i.k ? 'page' : undefined}
+          className="shrink-0 rounded-full border px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] no-underline"
+          style={{ borderColor: active === i.k ? CHAMPAGNE : hair(0.2), color: active === i.k ? CHAMPAGNE_HI : 'rgba(243,239,230,0.6)' }}>{i.l}</Link>
       ))}
     </nav>
   );

@@ -6,7 +6,7 @@ import { api } from '@/lib/api/client';
 import { OnboardingFrame, Eyebrow, Section, Field, inputCls, Select, goldBtn, goldStyle, hair, CHAMPAGNE, CHAMPAGNE_HI } from '@/components/features/onboarding/Chrome';
 import type { FeatureRequest, FeatureRequestPriority, UpdateChamber } from '@/lib/api/types';
 import {
-  ChamberNav, Chip, ErrorLine, Loading, Panel, PoweredBy, PRIORITY_LABEL, STAGES, STAGE_LABEL, fmtDate, useActor, useCenterTitle, useLink,
+  ChamberNav, ChamberTabs, Chip, ErrorLine, Loading, Panel, PoweredBy, PRIORITY_LABEL, STAGES, STAGE_LABEL, fmtDate, useActor, useCenterTitle, useLink,
 } from './ui';
 
 const PRIORITY_TONE: Record<FeatureRequestPriority, string> = { low: '#a5abb5', normal: '#d9c398', high: '#f1b36b', urgent: '#f1938f' };
@@ -36,6 +36,7 @@ export function FeatureRequests() {
   return (
     <OnboardingFrame right={<ChamberNav q={q} active="requests" />}>
       <div className="flex-1 py-10 lg:py-14">
+        <ChamberTabs q={q} active="requests" />
         <Link href={`/updates${q}`} className="font-mono text-[10.5px] uppercase tracking-[0.24em] text-white/45 no-underline transition-colors hover:text-[#f4e4bd]">← Update Center</Link>
         <div className="mt-6">
           <Eyebrow>Special feature requests</Eyebrow>

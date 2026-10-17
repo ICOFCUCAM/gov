@@ -50,6 +50,90 @@ What has been built is locked. Work only upgrades it toward the vision in
 - A nation sees only global releases and its own builds and requests; the
   server resolves the nation (installed nation or private link key), callers
   never name one.
+- Resilience: every install needs a verified restore point and runs on
+  probation (default 30 min; `/updates/settings`). A failed probation switches
+  the *software* back to the last known good release — the only automatic
+  step, never an upgrade and never data. Releases that are not backward
+  compatible (`compatibleWithPrevious`) always ask first. Restoring the data
+  snapshot is a separate decision with an explicit loss warning. One bad or
+  missing health report only marks the release degraded; fallback needs 3 in
+  a row or two independent critical failures.
+- The watchdog `/api/cron/update-watchdog` (pg_cron, every minute) concludes
+  probations and never installs. Health reports need the nation's agent
+  credential (issued in `/updates/settings`, stored as a hash), never a
+  session or link key.
+- Security store (`/updates/security`, `lib/data/security-store.ts`):
+  baseline protection is included free for every nation; paid tiers are
+  certified third-party server-side tools (instant payment or procurement:
+  quote → PO → invoice → bank transfer → licence). Nations may bring their
+  own tooling. Security updates are never blocked by payment or licence
+  status; coverage is advisory only.
+- Hosting & deployment (`/updates/hosting`, `lib/data/hosting.ts`): four
+  paths — own data centre, another cloud, our hosted cloud (yearly or
+  5-year prepaid), perpetual licence operated alone. Estimates come from one
+  parameterised cost model (`lib/updates/hosting-model.ts`, placeholder unit
+  costs, every figure labelled an estimate); the publisher's engineering
+  review issues versioned assessments. Switching paths is a new request with
+  a migration plan, data export and no lock-in.
+- Readiness (`lib/data/readiness.ts`): approval rescans the nation's
+  customisations (preflight); unwaived blocking findings stop it, and only
+  two named officials can waive one. A production install needs the release
+  to have passed staging probation plus a named UAT sign-off (per-nation
+  policy, on by default).
+- Change control (`lib/data/change-control.ts`): production approve and
+  install are four-eyes — one official proposes, a different one approves
+  (`pending` on the install). Scheduling into a blackout is refused; a
+  change freeze blocks installs except security/critical releases.
+- Security advisories (`lib/data/advisories.ts`): CSAF 2.0-style records
+  with a VEX status per nation computed from its installed version (publisher
+  VEX statements override, with a justification, audited). Each nation sees
+  only its own exposure and can download CSAF JSON; patch-time commitments
+  (`PATCH_COMMITMENTS`) are tracked met / open / breached in the console.
+- Support (`lib/data/support.ts`, `lib/data/status.ts`): tickets P1–P4 about
+  a release or incident, with response and resolution targets from the
+  nation's contract tier at opening (resolution pauses while waiting on the
+  nation). Every fallback incident opens a P2 ticket automatically. Each
+  nation has a status page (`/updates/status`) and a monthly SLA report;
+  the publisher works the queue and declares service incidents in the console.
+- Assurance (`lib/data/supply-chain.ts`, `/updates/assurance`): every
+  artifact has SLSA v1 provenance (builder, source commit, build time,
+  materials, digest) served as a DSSE attestation through the nation's own
+  download link; every release is deposited in source-code escrow (contents
+  hash, agent, release conditions) and nations can request source-code
+  audits by their own auditors. Each nation sees only its own releases.
+- Lifecycle (`lib/data/lifecycle.ts`): release lines (major.minor) are LTS or
+  standard, each with active, security-only and end-of-life windows from the
+  line's first release; the publisher sets the policy (audited). End-of-life
+  notices go out once each at 12, 6 and 3 months; the chamber warns when the
+  installed line nears its end.
+- Evidence packs (`lib/data/evidence.ts`, `/updates/[id]/evidence`): per
+  release and per nation, generated only from existing records (certification
+  references, DPIA template, security tests, SBOM, provenance, escrow,
+  advisories, the nation's install record and audit-chain entries), as a
+  readable page and a JSON manifest with a SHA-256 digest.
+- Mirror (`lib/data/mirror.ts`, `/updates/mirror`): self-hosted and
+  air-gapped nations register a local registry mirror; the sync manifest
+  lists what it lacks, with deltas from releases it holds and the bytes
+  saved. Physical media move through sealed → handed over → received →
+  seal verified, each step by a named person and audited; a seal mismatch
+  marks the media unusable.
+- Communication (`lib/data/comms.ts`): "what's new" in the nation's language
+  (labels from `nationMessages().releaseNotes`), English marked "translation
+  pending" until the publisher adds one; training and guide links per
+  release. Named officials subscribe per channel to security, releases,
+  incidents and end of life; `alert()` queues deliveries (no provider yet).
+- Contracts (`lib/data/contracts.ts`, `/updates/contract`): one per nation,
+  read from the systems that hold the facts — kind and fee from the hosting
+  path and `HOSTING_MODEL`, currency from the security store's `pricing()`,
+  security-store invoices beside platform invoices, support tier from
+  `lib/data/support.ts`. Renewal is proposed by the publisher and accepted
+  by a named official, never automatic.
+- Data sovereignty (`lib/data/sovereignty.ts`): crash reports, usage metrics,
+  health reports and support attachments are OFF unless an official enables
+  them (named approver, reason, audited), each with a sample payload. All
+  operational data leaves only through `transmit()`; health reports still
+  drive probation locally when off, and attachments are refused. Never add
+  another path that sends operational data to the publisher.
 
 ## Branding and AI
 

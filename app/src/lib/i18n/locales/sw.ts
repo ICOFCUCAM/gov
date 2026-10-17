@@ -388,4 +388,14 @@ export const sw: Messages = {
     hash: 'hashi',
     footnote: 'Risiti husomwa moja kwa moja kutoka kwenye mfumo wa data kupitia {timelineRpc}, RPC ya SECURITY DEFINER inayohusu {uid} pekee. Maafisa hawawezi kuona risiti zako; asasi za kiraia haziwezi kuziona bila akaunti yako. {fullData} hupakua hati kamili ya kuhamisha data — kila ombi, ridhaa na rufaa ambayo mfumo unashikilia kukuhusu — kupitia {exportRpc}.',
   },
+  releaseNotes: {
+    whatsNew: 'Kipya ni nini',
+    translationPending: 'Tafsiri inasubiriwa — imeonyeshwa kwa Kiingereza',
+    inYourLanguage: 'Kwa lugha yako',
+    learning: 'Mafunzo na miongozo',
+    adminGuide: 'Mwongozo wa msimamizi',
+    training: 'Mafunzo',
+    runbook: 'Kitabu cha taratibu',
+    video: 'Video',
+  },
 };

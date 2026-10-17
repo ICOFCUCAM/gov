@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { resetReadiness } from '@/lib/data/readiness';
+import { stagingOff } from '@/lib/data/testkit';
 
 // Publisher auth delegates to the platform tier; stub it so the enforce path is testable.
 const platformAuth = vi.fn();
@@ -13,6 +15,7 @@ import { GET as publisherGET, POST as publisherPOST } from './publisher/route';
 import { POST as advancePOST } from './publisher/requests/[id]/route';
 import { POST as enrolPOST } from './publisher/nations/route';
 import { resetUpdates } from '@/lib/data/updates';
+import { resetSecurity } from '@/lib/data/security-store';
 import type { UpdateChamber, PublisherOverview } from '@/lib/api/types';
 
 const get = (url: string) => new Request(`http://x${url}`) as never;
@@ -29,7 +32,7 @@ async function overview(): Promise<PublisherOverview> {
   return (await (await publisherGET(get('/api/releases/publisher'))).json()).overview;
 }
 
-beforeEach(() => { resetUpdates(); platformAuth.mockReset(); });
+beforeEach(() => { resetUpdates(); resetReadiness(); stagingOff(); resetSecurity(); platformAuth.mockReset(); });
 afterEach(() => { delete process.env.CIVICOS_AUTH; });
 
 describe('GET /api/releases (update chamber)', () => {
@@ -66,7 +69,13 @@ describe('GET /api/releases/[id]', () => {
 });
 
 describe('POST /api/releases/[id]/decision', () => {
-  const decide = (id: string, body: unknown) => decisionPOST(post(`/api/releases/${id}/decision`, body), { params: { id } });
+  /** Four-eyes over HTTP: a proposal returns `pending`; a second official then approves. */
+  const decide = async (id: string, body: unknown) => {
+    const first = await decisionPOST(post(`/api/releases/${id}/decision`, body), { params: { id } });
+    const action = (body as { action?: string })?.action;
+    if ((action !== 'approve' && action !== 'install') || first.status !== 200 || !(await first.clone().json()).pending) return first;
+    return decisionPOST(post(`/api/releases/${id}/decision`, { ...(body as object), by: 'Second official' }), { params: { id } });
+  };
 
   it('rejects invalid JSON, unknown actions and missing names', async () => {
     expect((await decide('DR-141', 'nope')).status).toBe(400);
@@ -79,9 +88,14 @@ describe('POST /api/releases/[id]/decision', () => {
     const a = await decide('DR-141', { action: 'approve', by: 'Chief Information Officer' });
     expect(a.status).toBe(200);
     expect((await a.json()).install.state).toBe('approved');
+    // No restore point yet: refused.
+    expect((await decide('DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).status).toBe(409);
+    expect((await decide('DR-141', { action: 'prepare', by: 'Ops' })).status).toBe(200);
     const i = await decide('DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
     expect(i.status).toBe(200);
-    expect((await i.json()).chamber.installed).toBe('1.4.1');
+    const body = await i.json();
+    expect(body.chamber.installed).toBe('1.4.1');
+    expect(body.install.state).toBe('probation');
   });
 
   it('schedules a hosted upgrade into a chosen window', async () => {

@@ -379,6 +379,17 @@ export interface Messages {
     signedBy: string;
     aiClass: string;
   };
+  /** Update Center release communication. */
+  releaseNotes: {
+    whatsNew: string;
+    translationPending: string;
+    inYourLanguage: string;
+    learning: string;
+    adminGuide: string;
+    training: string;
+    runbook: string;
+    video: string;
+  };
 }
 
 export const en: Messages = {
@@ -766,5 +777,15 @@ export const en: Messages = {
     noTrail: 'No entries on your audit scope yet. Tamper-evident events (consent expiries, data exports) appear here as they happen.',
     hash: 'hash',
     footnote: 'Receipts are read directly from the substrate via {timelineRpc}, a SECURITY DEFINER RPC scoped to {uid}. Officers cannot see your receipts; civil society cannot see them without your account. {fullData} downloads the complete portability document — every request, consent, and appeal row the substrate holds on you — via {exportRpc}.',
+  },
+  releaseNotes: {
+    whatsNew: 'What\'s new',
+    translationPending: 'Translation pending — shown in English',
+    inYourLanguage: 'In your language',
+    learning: 'Training and guides',
+    adminGuide: 'Administrator guide',
+    training: 'Training',
+    runbook: 'Runbook',
+    video: 'Video',
   },
 };

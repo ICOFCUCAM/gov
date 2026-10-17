@@ -387,4 +387,14 @@ export const fr: Messages = {
     hash: 'empreinte',
     footnote: 'Les reçus sont lus directement dans le substrat via {timelineRpc}, une RPC SECURITY DEFINER limitée à {uid}. Les agents ne voient pas vos reçus ; la société civile ne peut pas les voir sans votre compte. {fullData} télécharge le document complet de portabilité — chaque demande, consentement et recours que le substrat détient sur vous — via {exportRpc}.',
   },
+  releaseNotes: {
+    whatsNew: 'Nouveautés',
+    translationPending: 'Traduction en attente — affiché en anglais',
+    inYourLanguage: 'Dans votre langue',
+    learning: 'Formation et guides',
+    adminGuide: 'Guide de l’administrateur',
+    training: 'Formation',
+    runbook: 'Procédure d’exploitation',
+    video: 'Vidéo',
+  },
 };

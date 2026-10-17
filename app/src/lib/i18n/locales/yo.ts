@@ -387,4 +387,14 @@ export const yo: Messages = {
     hash: 'hash',
     footnote: 'A ń ka àwọn ìwé-ẹ̀rí ìsanwó tààrà láti ibi ìpamọ́ data nípasẹ̀ {timelineRpc}, RPC SECURITY DEFINER tí ó mọ sí {uid} nìkan. Àwọn òṣìṣẹ́ kò lè rí ìwé-ẹ̀rí rẹ; àwọn àjọ aráàlú kò lè rí wọn láìsí àkọọ́lẹ̀ rẹ. {fullData} ń gba ìwé ìgbéjáde data pípé sílẹ̀ — gbogbo ìbéèrè, ìyọ̀ǹda àti ẹ̀bẹ̀ tí ibi ìpamọ́ ní nípa rẹ — nípasẹ̀ {exportRpc}.',
   },
+  releaseNotes: {
+    whatsNew: 'Kí ni tuntun',
+    translationPending: 'Ìtúmọ̀ ń bọ̀ — ní èdè Gẹ̀ẹ́sì',
+    inYourLanguage: 'Ní èdè rẹ',
+    learning: 'Ìdánilẹ́kọ̀ọ́ àti ìtọ́sọ́nà',
+    adminGuide: 'Ìtọ́sọ́nà alábòójútó',
+    training: 'Ìdánilẹ́kọ̀ọ́',
+    runbook: 'Ìwé ìlànà iṣẹ́',
+    video: 'Fídíò',
+  },
 };
