@@ -8,6 +8,7 @@ import { publicHealthSite } from '@/lib/gov/health-operations';
 
 import { aiLabel, nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
+import { SampleChip } from '@/apps/_shared/public/PublicSiteShell';
 import { locales } from '@/lib/i18n/config';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Health — Official Portal' };
@@ -19,31 +20,41 @@ const LINE = '#e5e7eb';
 
 const NAV: { label: string; href: string }[] = [
   { label: 'Home', href: '/health' },
-  { label: 'Health Topics', href: '/health' },
+  { label: 'Health Topics', href: '/health#programmes' },
   { label: 'Services', href: '/health/laboratory' },
-  { label: 'Find Facilities', href: '/health' },
-  { label: 'Programs', href: '/health' },
-  { label: 'News & Alerts', href: '/health' },
-  { label: 'About Us', href: '/health' },
+  { label: 'Find Facilities', href: '/health#contact' },
+  { label: 'Programs', href: '/health#programmes' },
+  { label: 'News & Alerts', href: '/health#news' },
+  { label: 'About Us', href: '/health#about' },
 ];
+// Each task opens the service that handles it.
 const QUICK = [
-  { t: 'Book Appointment', s: 'Hospital or clinic', c: '#1f5fad' },
-  { t: 'Consult a Doctor', s: 'Telemedicine', c: '#7c5cff' },
-  { t: 'Vaccination', s: 'Schedule & info', c: '#0f9d6b' },
-  { t: 'Find Health Facility', s: 'Hospitals, labs, more', c: '#e08a2b' },
-  { t: 'Health Records', s: 'View your records', c: '#1f5fad' },
-  { t: 'Health Programs', s: 'Explore initiatives', c: '#d62b67' },
+  { t: 'Book Appointment', s: 'Hospital or clinic', c: '#1f5fad', href: '/wallet/permits/new' },
+  { t: 'Consult a Doctor', s: 'Telemedicine', c: '#7c5cff', href: '/wallet/services' },
+  { t: 'Vaccination', s: 'Schedule & info', c: '#0f9d6b', href: '/wallet/records' },
+  { t: 'Find Health Facility', s: 'Hospitals, labs, more', c: '#e08a2b', href: '/health#contact' },
+  { t: 'Health Records', s: 'View your records', c: '#1f5fad', href: '/wallet/records' },
+  { t: 'Health Programs', s: 'Explore initiatives', c: '#d62b67', href: '/health#programmes' },
 ];
 const NEWS = [
-  ['National Nutrition Month 2025', 'Join us in promoting healthy eating habits for all.', 'May 15, 2025'],
-  ['New Telemedicine Services', 'Now available in rural districts.', 'May 12, 2025'],
-  ['World Hypertension Day', 'Know your numbers and keep your heart healthy.', 'May 10, 2025'],
+  // Sample announcements (no dates) until the Ministry publishes its own.
+  ['National Nutrition Month', 'Join us in promoting healthy eating habits for all.'],
+  ['New Telemedicine Services', 'Now available in rural districts.'],
+  ['World Hypertension Day', 'Know your numbers and keep your heart healthy.'],
 ];
 const INITIATIVES = [
   ['Mental Health Support', 'Resources and helplines for your well-being.'],
   ['Mother & Child Health', 'Care and support for a healthy start in life.'],
   ['Non-Communicable Diseases', 'Prevention and control of NCDs for a healthier future.'],
 ];
+// Where each footer link leads: a section of this page or a platform page.
+const FOOTER_HREF: Record<string, string> = {
+  'Health Topics': '/health#programmes', Services: '/health/laboratory', Programs: '/health#programmes',
+  'Data & Statistics': '/health#statistics', 'News & Alerts': '/health#news', Publications: '/public',
+  'Forms & Downloads': '/wallet/services', 'Media Center': '/health#news', FAQs: '/wallet/assistant', 'Contact Us': '/wallet/inbox',
+  'Ministry Overview': '/health#about', Leadership: '/health#about', Careers: '/health#about', Policies: '/public', Transparency: '/public',
+  'Privacy Policy': '/legal/privacy', 'Terms of Use': '/legal/terms', Accessibility: '/legal/accessibility', Sitemap: '/sitemap',
+};
 // A function so the AI-assistant label follows the nation's AI choice at render.
 const shortcuts = () => [
   ['Publications & Reports', 'Download health reports and publications.'],
@@ -127,23 +138,23 @@ export default function PublicHealthHomepage() {
         {/* 4. Health alert banner */}
         <div className="flex flex-wrap items-center gap-3 rounded-xl border px-4 py-3" style={{ borderColor: '#f6c5c5', background: '#fdeeee' }}>
           <span className="flex items-center gap-2 text-[13px] font-bold" style={{ color: '#d62b34' }}><span aria-hidden>⚠</span> HEALTH ALERT</span>
-          <span className="min-w-0 flex-1 text-[13px] text-slate-700">{s.emergencyBanner.active ? s.emergencyBanner.text : 'Dengue activity is rising in several districts. Follow prevention tips and stay informed.'}</span>
+          <span className="min-w-0 flex-1 text-[13px] text-slate-700">{s.emergencyBanner.active ? s.emergencyBanner.text : 'No national health emergency is in effect. Follow the advisories from your regional health authority.'}</span>
           <span className="text-[12px] font-semibold" style={{ color: '#d62b34' }}>{t.viewAlerts}</span>
         </div>
 
         {/* 5. Citizen quick services */}
-        <section>
+        <section id="services" className="scroll-mt-24">
           <div className="mb-3 flex items-center justify-between">
             <h2 className="text-[20px] font-bold" style={{ color: NAVY }}>{t.iWantTo}</h2>
             <Link href="/health/laboratory" className="text-[12px] font-semibold" style={{ color: BLUE }}>{t.viewServices}</Link>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             {QUICK.map(q => (
-              <div key={q.t} className="rounded-xl border bg-white p-4 text-center shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: LINE }}>
+              <Link key={q.t} href={q.href} className="block rounded-xl border bg-white p-4 text-center shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: LINE }}>
                 <span className="mx-auto grid h-12 w-12 place-items-center rounded-full text-[18px] text-white" style={{ background: q.c }} aria-hidden>＋</span>
                 <div className="mt-2 text-[13px] font-semibold" style={{ color: NAVY }}>{q.t}</div>
                 <div className="text-[11px] text-slate-500">{q.s}</div>
-              </div>
+              </Link>
             ))}
           </div>
         </section>
@@ -157,8 +168,10 @@ export default function PublicHealthHomepage() {
             <button className="mt-3 rounded-md bg-white/15 px-3 py-1.5 text-[12px] font-semibold backdrop-blur">Check Your Vaccines →</button>
           </div>
           <div className="rounded-2xl border bg-[#eef4fb] p-5 shadow-sm" style={{ borderColor: LINE }}>
-            <div className="text-[15px] font-bold" style={{ color: NAVY }}>COVID-19 Update</div>
-            <div className="text-[11px] text-slate-500">As of 16 May 2025</div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-[15px] font-bold" style={{ color: NAVY }}>Disease Surveillance Update</div>
+              <SampleChip label={t.sampleFigures} note={fill(t.sampleNote, { name: 'Ministry of Health' })} />
+            </div>
             <div className="mt-3 grid grid-cols-4 gap-2 text-center">
               {[['New Cases', '248'], ['Active Cases', '1,286'], ['Recovered', '98,523'], ['Deaths', '1,235']].map(([l, n]) => (
                 <div key={l}><div className="text-[16px] font-bold" style={{ color: NAVY }}>{n}</div><div className="text-[9px] text-slate-500">{l}</div></div>
@@ -175,16 +188,19 @@ export default function PublicHealthHomepage() {
         </div>
 
         {/* 7. Health at a glance */}
-        <section>
+        <section id="statistics" className="scroll-mt-24">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-[20px] font-bold" style={{ color: NAVY }}>{fill(t.atGlance, { name: 'Health' })}</h2>
-            <span className="text-[12px] font-semibold" style={{ color: BLUE }}>{t.viewStats}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-[20px] font-bold" style={{ color: NAVY }}>{fill(t.atGlance, { name: 'Health' })}</h2>
+              <SampleChip label={t.sampleFigures} note={fill(t.sampleNote, { name: 'Ministry of Health' })} />
+            </div>
+            <Link href="/public" className="text-[12px] font-semibold" style={{ color: BLUE }}>{t.viewStats}</Link>
           </div>
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-7">
             {[
               ['145M+', 'Population Covered', 'Across the country'], ['72.6', 'Life Expectancy', 'Years'],
               ['103', 'Maternal Mortality', 'Per 100,000 live births'], ['18', 'Under-5 Mortality', 'Per 1,000 live births'],
-              ['92%', 'Immunization Coverage', 'Full immunization (2023)'], ['2,356', 'Health Facilities', 'Across the country'],
+              ['92%', 'Immunization Coverage', 'Full immunization'], ['2,356', 'Health Facilities', 'Across the country'],
               ['231K+', 'Health Workforce', 'Doctors, nurses & more'],
             ].map(([n, l, sub]) => (
               <div key={l} className="rounded-xl border bg-white p-3 shadow-sm" style={{ borderColor: LINE }}>
@@ -199,18 +215,18 @@ export default function PublicHealthHomepage() {
 
         {/* 8. News + initiatives + facilities */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
-          <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
-            <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>{t.latestNews}</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewNews}</span></div>
+          <div id="news" className="scroll-mt-24 rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
+            <div className="mb-3 flex items-center justify-between"><div className="flex flex-wrap items-center gap-2"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>{t.latestNews}</h3><SampleChip label={t.sampleNews} note={fill(t.sampleNote, { name: 'Ministry of Health' })} /></div><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewNews}</span></div>
             <div className="space-y-3">
-              {NEWS.map(([t, d, dt]) => (
+              {NEWS.map(([t, d]) => (
                 <div key={t} className="flex gap-3">
                   <div className="h-14 w-16 shrink-0 rounded-lg" style={{ background: 'linear-gradient(135deg,#cfe0f3,#1f5fad)' }} aria-hidden />
-                  <div><div className="text-[12px] font-semibold" style={{ color: NAVY }}>{t}</div><div className="text-[10px] text-slate-500">{d}</div><div className="text-[9px] text-slate-400">{dt}</div></div>
+                  <div><div className="text-[12px] font-semibold" style={{ color: NAVY }}>{t}</div><div className="text-[10px] text-slate-500">{d}</div></div>
                 </div>
               ))}
             </div>
           </div>
-          <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
+          <div id="programmes" className="scroll-mt-24 rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
             <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>{t.ourInitiatives}</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewPrograms}</span></div>
             <div className="space-y-3">
               {INITIATIVES.map(([t, d]) => (
@@ -222,7 +238,7 @@ export default function PublicHealthHomepage() {
             </div>
             <button className="mt-3 w-full rounded-md border py-1.5 text-[11px] font-semibold" style={{ borderColor: BLUE, color: BLUE }}>{t.allPrograms}</button>
           </div>
-          <div className="rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
+          <div id="contact" className="scroll-mt-24 rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
             <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>Find Health Facilities Near You</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewMap}</span></div>
             <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] text-slate-400" style={{ borderColor: LINE }}><span>⌕</span> Enter your location</div>
             <div className="relative mt-2 h-36 overflow-hidden rounded-lg" style={{ background: 'linear-gradient(135deg,#dde6f0,#c3d4e6)' }} role="img" aria-label="Map showing nearby health facilities">
@@ -250,7 +266,7 @@ export default function PublicHealthHomepage() {
       </div>
 
       {/* 10. Large footer */}
-      <footer className="text-white/80" style={{ background: NAVY }}>
+      <footer id="about" className="text-white/80" style={{ background: NAVY }}>
         <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-8 px-6 py-12 md:grid-cols-3 lg:grid-cols-5">
           <div>
             <div className="flex items-center gap-2 text-[15px] font-bold text-white"><span aria-hidden>⚕</span> Ministry of Health</div>
@@ -264,7 +280,7 @@ export default function PublicHealthHomepage() {
           ].map(([h, items]) => (
             <div key={h as string}>
               <div className="text-[13px] font-semibold text-white">{h as string}</div>
-              <ul className="mt-2 space-y-1.5 text-[12px] text-white/60">{(items as string[]).map(i => <li key={i}><Link href={i === 'Services' ? '/health/laboratory' : '/health'} className="hover:text-white">{i}</Link></li>)}</ul>
+              <ul className="mt-2 space-y-1.5 text-[12px] text-white/60">{(items as string[]).map(i => <li key={i}><Link href={FOOTER_HREF[i] ?? '/health'} className="hover:text-white">{i}</Link></li>)}</ul>
             </div>
           ))}
           <div>
@@ -279,8 +295,8 @@ export default function PublicHealthHomepage() {
         {/* 11. Bottom legal */}
         <div className="border-t border-white/10">
           <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-6 py-4 text-[12px] text-white/60">
-            <span>© 2025 Ministry of Health. All rights reserved.</span>
-            <div className="flex gap-4">{['Privacy Policy', 'Terms of Use', 'Accessibility', 'Sitemap'].map(l => <Link key={l} href="/health" className="hover:text-white">{l}</Link>)}</div>
+            <span>© {new Date().getFullYear()} Ministry of Health. All rights reserved.</span>
+            <div className="flex gap-4">{['Privacy Policy', 'Terms of Use', 'Accessibility', 'Sitemap'].map(l => <Link key={l} href={FOOTER_HREF[l] ?? '/health'} className="hover:text-white">{l}</Link>)}</div>
           </div>
         </div>
       </footer>

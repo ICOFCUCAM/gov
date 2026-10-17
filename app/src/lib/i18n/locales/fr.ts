@@ -357,6 +357,11 @@ export const fr: Messages = {
     enterEmail: 'Saisissez votre e-mail',
     email: 'E-mail',
     subscribe: 'S’abonner',
+    sampleFigures: 'Chiffres d’exemple',
+    includesSample: 'Comprend des chiffres d’exemple',
+    live: 'En direct',
+    sampleNews: 'Annonces d’exemple',
+    sampleNote: 'Affichés jusqu’à ce que {name} publie les siens.',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

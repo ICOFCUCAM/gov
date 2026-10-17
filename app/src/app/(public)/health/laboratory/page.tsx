@@ -5,7 +5,8 @@
 // fully responsive. Imagery is rendered as clinical gradient placeholders.
 
 import Link from 'next/link';
-import { nationMessages, nationLocale } from '@/lib/nation/registry';
+import { nationMessages, nationLocale, formatMoney } from '@/lib/nation/registry';
+import { SampleChip } from '@/apps/_shared/public/PublicSiteShell';
 import { t as fill } from '@/lib/i18n';
 import { locales } from '@/lib/i18n/config';
 
@@ -23,11 +24,11 @@ const SIDEBAR = [
   'Rules & Guidelines', 'Training & Resources', 'FAQs',
 ];
 const QUICK = [
-  { t: 'Book a Test', s: 'Schedule your lab test', c: '#1f5fad' },
-  { t: 'Find a Lab', s: 'Locate labs near you', c: '#0f9d6b' },
-  { t: 'View Packages', s: 'Explore health packages', c: '#7c5cff' },
-  { t: 'Sample Collection', s: 'Book home collection', c: '#e08a2b' },
-  { t: 'Reports & Results', s: 'View your reports', c: '#1f5fad' },
+  { t: 'Book a Test', s: 'Schedule your lab test', c: '#1f5fad', href: '/wallet/permits/new' },
+  { t: 'Find a Lab', s: 'Locate labs near you', c: '#0f9d6b', href: '/health#contact' },
+  { t: 'View Packages', s: 'Explore health packages', c: '#7c5cff', href: '/wallet/services' },
+  { t: 'Sample Collection', s: 'Book home collection', c: '#e08a2b', href: '/wallet/permits/new' },
+  { t: 'Reports & Results', s: 'View your reports', c: '#1f5fad', href: '/wallet/records' },
 ];
 const TESTS = [
   { n: 'Complete Blood Count', d: 'Measures different components of your blood.', cat: 'Blood Test', p: '8.50' },
@@ -36,14 +37,21 @@ const TESTS = [
   { n: 'Urinalysis', d: 'Checks for infections, kidney problems and more.', cat: 'Urine Test', p: '6.00' },
 ];
 const WHY = [
-  { t: 'NABL Accredited Labs', s: 'High quality and reliable results' },
+  { t: 'Nationally Accredited Labs', s: 'High quality and reliable results' },
   { t: 'Trained Professionals', s: 'Experienced and certified staff' },
   { t: 'Advanced Technology', s: 'State-of-the-art equipment' },
   { t: 'Timely Reports', s: 'Accurate results on time' },
   { t: 'Safe & Hygienic', s: 'Strict safety and hygiene protocols' },
 ];
+// Where each footer link leads.
+const FOOTER_HREF: Record<string, string> = {
+  'Health Library': '/health#programmes', 'Health Calculators': '/wallet/services', 'Wellness Tips': '/health#programmes', 'Health Videos': '/health#news',
+  'Help Center': '/wallet/assistant', 'Contact Us': '/wallet/inbox', Feedback: '/wallet/inbox', 'Report an Issue': '/wallet/inbox',
+  'Health Education': '/health#programmes', Careers: '/health#about', Tenders: '/public', 'Access to Information': '/public',
+  'Privacy Policy': '/legal/privacy', 'Terms of Use': '/legal/terms', Accessibility: '/legal/accessibility', Sitemap: '/sitemap',
+};
 const STATS = [
-  ['2,356+', 'Accredited Laboratories'], ['12 Cr+', 'Tests Conducted'],
+  ['2,356+', 'Accredited Laboratories'], ['120M+', 'Tests Conducted'],
   ['98.6%', 'Accuracy Rate'], ['24 – 48 hrs', 'Report Turnaround Time'], ['500+', 'Cities Covered'],
 ];
 
@@ -150,11 +158,11 @@ export default function LaboratoryServicesPage() {
           {/* 5B quick tiles */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-5">
             {QUICK.map(q => (
-              <div key={q.t} className="rounded-xl border bg-white p-4 shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: LINE }}>
+              <Link key={q.t} href={q.href} className="block rounded-xl border bg-white p-4 shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: LINE }}>
                 <span className="grid h-9 w-9 place-items-center rounded-lg text-[15px] text-white" style={{ background: q.c }} aria-hidden>▦</span>
                 <div className="mt-2 text-[13px] font-semibold" style={{ color: NAVY }}>{q.t}</div>
                 <div className="text-[11px] text-slate-500">{q.s}</div>
-              </div>
+              </Link>
             ))}
           </div>
 
@@ -176,7 +184,7 @@ export default function LaboratoryServicesPage() {
                       <span className="mt-1 inline-block rounded px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-wide" style={{ background: '#e8f0fb', color: BLUE }}>{tst.cat}</span>
                       <p className="mt-1 text-[10px] text-slate-500">{tst.d}</p>
                       <div className="mt-2 flex items-center justify-between">
-                        <span className="text-[14px] font-bold" style={{ color: NAVY }}>$ {tst.p}</span>
+                        <span className="text-[14px] font-bold" style={{ color: NAVY }}>{formatMoney(Number(tst.p), { digits: 2 })}</span>
                         <button className="rounded-md border px-2.5 py-1 text-[10px] font-semibold" style={{ borderColor: BLUE, color: BLUE }}>Book Now</button>
                       </div>
                     </div>
@@ -198,6 +206,7 @@ export default function LaboratoryServicesPage() {
           </div>
 
           {/* 5E stats strip */}
+          <div className="mb-2 flex justify-end"><SampleChip label={t.sampleFigures} note={fill(t.sampleNote, { name: 'Ministry of Health' })} /></div>
           <div className="grid grid-cols-2 gap-4 rounded-xl border bg-white px-5 py-6 shadow-sm sm:grid-cols-3 lg:grid-cols-5" style={{ borderColor: LINE }}>
             {STATS.map(([n, l]) => (
               <div key={l} className="flex items-center gap-3">
@@ -223,12 +232,12 @@ export default function LaboratoryServicesPage() {
           {[
             ['Health Resources', ['Health Library', 'Health Calculators', 'Wellness Tips', 'Health Videos']],
             ['Support', ['Help Center', 'Contact Us', 'Feedback', 'Report an Issue']],
-            ['Other Links', ['Health Education', 'Careers', 'Tenders', 'RTI & Transparency']],
+            ['Other Links', ['Health Education', 'Careers', 'Tenders', 'Access to Information']],
           ].map(([h, items]) => (
             <div key={h as string}>
               <div className="text-[13px] font-semibold" style={{ color: NAVY }}>{h as string}</div>
               <ul className="mt-2 space-y-1.5 text-[12px] text-slate-500">
-                {(items as string[]).map(it => <li key={it} className="hover:text-slate-800">{it}</li>)}
+                {(items as string[]).map(it => <li key={it}><Link href={FOOTER_HREF[it] ?? '/health'} className="hover:text-slate-800">{it}</Link></li>)}
               </ul>
             </div>
           ))}
@@ -248,8 +257,8 @@ export default function LaboratoryServicesPage() {
       <div className="text-white/80" style={{ background: NAVY }}>
         <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-3 px-6 py-4 text-[12px]">
           <span className="flex items-center gap-2 font-semibold text-white"><span aria-hidden>⚕</span> Ministry of Health</span>
-          <span>© 2025 Ministry of Health. All rights reserved.</span>
-          <div className="flex gap-4">{['Privacy Policy', 'Terms of Use', 'Accessibility', 'Sitemap'].map(l => <span key={l} className="hover:text-white">{l}</span>)}</div>
+          <span>© {new Date().getFullYear()} Ministry of Health. All rights reserved.</span>
+          <div className="flex gap-4">{['Privacy Policy', 'Terms of Use', 'Accessibility', 'Sitemap'].map(l => <Link key={l} href={FOOTER_HREF[l] ?? '/health'} className="hover:text-white">{l}</Link>)}</div>
         </div>
       </div>
     </div>

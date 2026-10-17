@@ -7,6 +7,8 @@
 import Link from 'next/link';
 import { publicTreasurySite } from '@/lib/gov/treasury-systems';
 import { nationMessages } from '@/lib/nation/registry';
+import { SampleChip } from '@/apps/_shared/public/PublicSiteShell';
+import { t as fill } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Treasury & Finance — Official Portal' };
@@ -21,6 +23,15 @@ const LINE = '#e8e3d6';
 const SERIF = 'Georgia, "Times New Roman", ui-serif, serif';
 
 const NAV = ['Home', 'About Us', 'Pillars', 'Services', 'Data & Reports', 'Legislation', 'Newsroom'];
+// Where each menu item leads: a section of this page or a platform page.
+const NAV_HREF: Record<string, string> = {
+  Home: '/treasury', 'About Us': '/treasury#about', Pillars: '/treasury#pillars', Services: '/wallet/services',
+  'Data & Reports': '/public', Legislation: '/public', Newsroom: '/treasury#news',
+  Careers: '/treasury#about', Publications: '/public', Transparency: '/public', Contact: '/treasury#about',
+  'Our Mandate': '/treasury#about', Leadership: '/treasury#about', Organization: '/treasury#about',
+  'Reports & Publications': '/public', 'Data Center': '/public', FAQ: '/wallet/assistant', 'Contact Us': '/wallet/inbox', Feedback: '/wallet/inbox',
+  'Privacy Policy': '/legal/privacy', 'Terms of Use': '/legal/terms', Accessibility: '/legal/accessibility',
+};
 const QUICK_L = ['Treasury Command', 'Central Bank', 'Tax & Revenue', 'Procurement Grid'];
 const QUICK_R = ['Expenditure Control', 'Economic Intelligence', 'Taxpayer Portal', 'Public Budget'];
 
@@ -149,7 +160,7 @@ export default function PublicTreasuryHomepage() {
           </Link>
           <nav className="ml-auto hidden items-center gap-6 text-[13px] font-medium lg:flex" style={{ color: SOFT }}>
             {['Careers', 'Publications', 'Transparency', 'Contact'].map(l => (
-              <Link key={l} href="/treasury" className="hover:text-slate-900">{l}</Link>
+              <Link key={l} href={NAV_HREF[l] ?? '/treasury'} className="hover:text-slate-900">{l}</Link>
             ))}
           </nav>
           <div className="flex items-center gap-3">
@@ -167,7 +178,7 @@ export default function PublicTreasuryHomepage() {
         <div className="border-t" style={{ borderColor: LINE }}>
           <div className="mx-auto flex max-w-[1280px] items-center gap-8 px-6">
             {NAV.map((n, i) => (
-              <Link key={n} href="/treasury"
+              <Link key={n} href={NAV_HREF[n] ?? '/treasury'}
                 className="relative py-3 text-[12px] font-semibold uppercase tracking-[0.12em]"
                 style={{ color: i === 0 ? NAVY : SOFT }}>
                 {n}
@@ -193,7 +204,7 @@ export default function PublicTreasuryHomepage() {
               stewardship, prudent allocation, and sustainable economic management.
             </p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/treasury" className="flex items-center gap-2 rounded-md px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-white" style={{ background: NAVY }}>
+              <Link href="/treasury#about" className="flex items-center gap-2 rounded-md px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-white" style={{ background: NAVY }}>
                 Our Mandate <span aria-hidden>→</span>
               </Link>
               <Link href="/gov/treasury" className="flex items-center gap-2 rounded-md border bg-white/80 px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.1em] backdrop-blur" style={{ borderColor: LINE, color: NAVY }}>
@@ -206,7 +217,7 @@ export default function PublicTreasuryHomepage() {
 
       <div className="mx-auto max-w-[1280px] space-y-8 px-6 py-10">
         {/* 2b. Six pillars of sovereign finance */}
-        <section>
+        <section id="pillars" className="scroll-mt-28">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
             <h2 className="text-[20px] font-bold" style={{ color: NAVY, fontFamily: SERIF }}>The Six Pillars of Sovereign Finance</h2>
             <span className="text-[11px]" style={{ color: SOFT }}>{PILLARS.length} pillars · 29 surfaces · 1 citizen portal</span>
@@ -237,7 +248,7 @@ export default function PublicTreasuryHomepage() {
           <section className="rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
             <div className="flex items-baseline justify-between border-b pb-2" style={{ borderColor: LINE }}>
               <h2 className="text-[12px] font-bold uppercase tracking-[0.16em]" style={{ color: NAVY }}>Fiscal Snapshot</h2>
-              <span className="text-[10px]" style={{ color: SOFT }}>As of {s.asOf}</span>
+              <SampleChip label={t.sampleFigures} note={fill(t.sampleNote, { name: 'Ministry of Treasury & Finance' })} />
             </div>
             <div className="mt-3 space-y-2.5">
               {s.snapshot.map(r => (
@@ -259,7 +270,7 @@ export default function PublicTreasuryHomepage() {
           <section className="rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
             <div className="flex items-baseline justify-between border-b pb-2" style={{ borderColor: LINE }}>
               <h2 className="text-[12px] font-bold uppercase tracking-[0.16em]" style={{ color: NAVY }}>Budget Allocation Overview</h2>
-              <span className="text-[10px]" style={{ color: SOFT }}>FY 2025</span>
+              <SampleChip label={t.sampleFigures} note={fill(t.sampleNote, { name: 'Ministry of Treasury & Finance' })} />
             </div>
             <div className="mt-4">
               <BudgetDonut total={s.budget.total} segments={s.budget.segments} />
@@ -296,17 +307,20 @@ export default function PublicTreasuryHomepage() {
 
         {/* 4. Latest updates + quick links */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[2fr_1fr]">
-          <section className="rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
+          <section id="news" className="scroll-mt-28 rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-[14px] font-bold uppercase tracking-[0.14em]" style={{ color: NAVY }}>Latest Updates</h2>
-              <Link href="/treasury" className="text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: GOLD }}>View All News →</Link>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-[14px] font-bold uppercase tracking-[0.14em]" style={{ color: NAVY }}>Latest Updates</h2>
+                <SampleChip label={t.sampleNews} note={fill(t.sampleNote, { name: 'Ministry of Treasury & Finance' })} />
+              </div>
+              <Link href="/public" className="text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: GOLD }}>View All News →</Link>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {s.updates.map(u => (
                 <article key={u.title} className="flex flex-col rounded-md border p-3" style={{ borderColor: LINE }}>
                   <div className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: GOLD }}>{u.kind}</div>
                   <div className="mt-2 flex-1 text-[12.5px] font-semibold leading-snug" style={{ color: NAVY }}>{u.title}</div>
-                  <div className="mt-3 border-t pt-2 text-[9.5px] uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: SOFT }}>{u.date}</div>
+
                 </article>
               ))}
             </div>
@@ -333,7 +347,7 @@ export default function PublicTreasuryHomepage() {
       </div>
 
       {/* 5. Footer */}
-      <footer className="text-white/75" style={{ background: NAVY }}>
+      <footer id="about" className="text-white/75" style={{ background: NAVY }}>
         <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-8 px-6 py-12 md:grid-cols-3 lg:grid-cols-6">
           <div className="col-span-2">
             <div className="flex items-center gap-3">
@@ -354,7 +368,7 @@ export default function PublicTreasuryHomepage() {
             <div key={h as string}>
               <div className="text-[12px] font-semibold text-white">{h as string}</div>
               <ul className="mt-3 space-y-2 text-[12px] text-white/55">
-                {(items as string[]).map(i => <li key={i}><Link href="/treasury" className="hover:text-white">{i}</Link></li>)}
+                {(items as string[]).map(i => <li key={i}><Link href={NAV_HREF[i] ?? '/treasury'} className="hover:text-white">{i}</Link></li>)}
               </ul>
             </div>
           ))}
@@ -369,9 +383,9 @@ export default function PublicTreasuryHomepage() {
         </div>
         <div className="border-t border-white/10">
           <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-6 py-4 text-[11px] text-white/55">
-            <span>© 2025 Ministry of Treasury &amp; Finance. All rights reserved.</span>
+            <span>© {new Date().getFullYear()} Ministry of Treasury &amp; Finance. All rights reserved.</span>
             <span className="font-semibold uppercase tracking-[0.22em]" style={{ color: GOLD2 }}>Sovereignty · Stability · Prosperity</span>
-            <div className="flex gap-4">{['Privacy Policy', 'Terms of Use', 'Accessibility'].map(l => <Link key={l} href="/treasury" className="hover:text-white">{l}</Link>)}</div>
+            <div className="flex gap-4">{['Privacy Policy', 'Terms of Use', 'Accessibility'].map(l => <Link key={l} href={NAV_HREF[l] ?? '/treasury'} className="hover:text-white">{l}</Link>)}</div>
           </div>
         </div>
       </footer>

@@ -187,7 +187,7 @@ export default function GovernmentDirectoryPage() {
           ))}
         </div>
         <div className="border-t px-6 py-4 text-center text-[11px] text-slate-500" style={{ borderColor: LINE }}>
-          © 2025 {o.government} · Every institution operates within the constitutional contract.
+          © {new Date().getFullYear()} {o.government} · Every institution operates within the constitutional contract.
         </div>
       </footer>
     </div>

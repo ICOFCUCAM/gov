@@ -19,12 +19,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const { iso3, regions, currency, locale, stateForm, constitution, stateName, executiveTitle, legislatureName, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant } = getSovereign();
+  const { iso3, regions, currency, locale, stateForm, constitution, stateName, executiveTitle, legislatureName, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant, seal, accent } = getSovereign();
   const configured = !!getSetup();
   return (
     <html lang="en" dir="ltr">
       <body>
-        <NationRegistry facts={{ iso3, regions, currency, locale, stateForm, constitution, stateName, executiveTitle, legislatureName, configured, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant }} />
+        <NationRegistry facts={{ iso3, regions, currency, locale, stateForm, constitution, stateName, executiveTitle, legislatureName, configured, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant, seal, accent }} />
         <RenderNowProvider value={Date.now()}>{children}</RenderNowProvider>
       </body>
     </html>

@@ -358,6 +358,11 @@ export const sw: Messages = {
     enterEmail: 'Weka barua pepe yako',
     email: 'Barua pepe',
     subscribe: 'Jiandikishe',
+    sampleFigures: 'Takwimu za mfano',
+    includesSample: 'Inajumuisha takwimu za mfano',
+    live: 'Moja kwa moja',
+    sampleNews: 'Matangazo ya mfano',
+    sampleNote: 'Yanaonyeshwa hadi {name} ichapishe yake.',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

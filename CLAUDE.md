@@ -135,6 +135,25 @@ What has been built is locked. Work only upgrades it toward the vision in
   drive probation locally when off, and attachments are refused. Never add
   another path that sends operational data to the publisher.
 
+## Public websites
+
+- Plan and decisions: `docs/PUBLIC_WEBSITES_PLAN.md`; status: register §14.
+- Each public site's content is a record in `app/src/lib/public-sites/content/`
+  (types in `types.ts`); the page passes it through `siteProps()`
+  (`apps/_shared/public/site-props.tsx`) to its design. Put new wording in the
+  record, not the page. Nation facts go in as placeholders (`{nation}`,
+  `{upperChamber}`, `{emergency.police:999}`, `{ai:AI wording|plain}`,
+  `{year}`), never typed in.
+- Nothing invented is shown as fact: figures without a data source are
+  labelled samples (`statisticsSource`), news is labelled sample and undated
+  (`newsSource`), no fixed years. Every link (`to`) is a section of the site or
+  a locked platform route (`public-sites.test.ts` checks).
+- Every institution keeps a full CivicOS site whatever mode its ministry picks
+  for its existing website (Link by default). Each ministry is to look like
+  itself: shared foundations, sector layouts and presets (phase 2).
+- Every page in the `(public)` route group is open without sign-in
+  (`middleware.ts`, checked by `middleware.test.ts`).
+
 ## Branding and AI
 
 - Once setup is complete, every front-door surface wears the installed

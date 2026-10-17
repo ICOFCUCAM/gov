@@ -135,6 +135,11 @@ export interface Messages {
     enterEmail: string;
     email: string;
     subscribe: string;
+    sampleFigures: string;
+    includesSample: string;
+    live: string;
+    sampleNews: string;
+    sampleNote: string;
   };
   /** Permit and receipt detail pages. */
   detail: {
@@ -748,6 +753,11 @@ export const en: Messages = {
     enterEmail: 'Enter your email',
     email: 'Email',
     subscribe: 'Subscribe',
+    sampleFigures: 'Sample figures',
+    includesSample: 'Includes sample figures',
+    live: 'Live',
+    sampleNews: 'Sample announcements',
+    sampleNote: 'Shown until the {name} publishes its own.',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

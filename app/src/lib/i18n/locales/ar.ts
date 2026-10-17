@@ -357,6 +357,11 @@ export const ar: Messages = {
     enterEmail: 'أدخل بريدك الإلكتروني',
     email: 'البريد الإلكتروني',
     subscribe: 'اشترك',
+    sampleFigures: 'أرقام توضيحية',
+    includesSample: 'تتضمن أرقامًا توضيحية',
+    live: 'مباشر',
+    sampleNews: 'إعلانات توضيحية',
+    sampleNote: 'تُعرض إلى أن ينشر {name} إعلاناته.',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

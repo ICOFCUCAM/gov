@@ -31,9 +31,12 @@ export interface NationFacts {
   foreignAffairs?: { partners?: { name: string; capital?: string }[]; memberships?: string[] };
   /** The nation's AI-assistant opt-in from setup (false = off; unset = on, as before). */
   aiAssistant?: boolean;
+  /** Insignia monogram and colour from the sovereign profile (identity). */
+  seal?: string;
+  accent?: string;
 }
 
-const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs']; aiAssistant?: boolean } = {
+const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs']; aiAssistant?: boolean; seal?: string; accent?: string } = {
   configured: false,
   regions: [],
   currency: 'USD',
@@ -58,6 +61,8 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.emergency = f.emergency;
   state.foreignAffairs = f.foreignAffairs;
   state.aiAssistant = f.aiAssistant;
+  state.seal = f.seal?.trim() || undefined;
+  state.accent = f.accent && /^#[0-9a-fA-F]{6}$/.test(f.accent) ? f.accent : undefined;
 }
 
 /**
@@ -136,6 +141,19 @@ export function currentOffices(): NationOffices {
     legislatureName: state.legislatureName ?? '', currency: state.currency, regionNoun: 'region', locale: state.locale,
     constitution: state.constitution,
   }, state.configured);
+}
+
+/**
+ * The installed nation's insignia for public surfaces: its seal monogram (or
+ * the initials of its name) and colour. Null until setup is complete, so the
+ * reference glyphs stay in place before a nation is installed.
+ */
+export function nationInsignia(): { seal: string; accent: string | undefined; name: string } | null {
+  if (!state.configured || !state.stateName?.trim()) return null;
+  const name = state.stateName.trim();
+  const words = name.split(/\s+/).filter(w => !/^(of|the|and|de|al)$/i.test(w));
+  const seal = state.seal || (words.length ? words : name.split(/\s+/)).slice(0, 2).map(w => w[0]?.toUpperCase() ?? '').join('');
+  return { seal, accent: state.accent, name };
 }
 
 /** Institution app names that follow the nation's offices and chambers. */

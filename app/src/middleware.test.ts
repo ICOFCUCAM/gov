@@ -27,6 +27,28 @@ describe('access gate (CIVICOS_AUTH=enforce)', () => {
   });
 });
 
+describe('public websites', () => {
+  // Every page in the (public) route group is reachable without a session.
+  const PUBLIC_GROUP = path.join(__dirname, 'app', '(public)');
+  const pages = (dir: string, base = ''): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap(e =>
+    e.isDirectory() ? pages(path.join(dir, e.name), `${base}/${e.name.replace(/^\[(.+)\]$/, 'x-$1')}`) : e.name === 'page.tsx' ? [base || '/'] : []);
+  const before = process.env.CIVICOS_AUTH;
+  afterEach(() => { process.env.CIVICOS_AUTH = before; });
+
+  it('are open to citizens without an account', () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    const all = pages(PUBLIC_GROUP);
+    expect(all.length).toBeGreaterThan(25);
+    for (const p of all) expect(call(p).headers.get('location'), p).toBeNull();
+  });
+
+  it('do not open officer routes that share a prefix', () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    expect(call('/gov/treasury').headers.get('location')).toMatch(/\/login/);
+    expect(call('/healthcheck-admin').headers.get('location')).toMatch(/\/login/);
+  });
+});
+
 describe('scheduled jobs authenticate themselves', () => {
   // The gate lets /api/cron/* through, so each route must refuse callers
   // without CIVICOS_CRON_SECRET — and refuse to run at all when it is unset.

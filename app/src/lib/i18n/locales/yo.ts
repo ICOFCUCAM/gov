@@ -357,6 +357,11 @@ export const yo: Messages = {
     enterEmail: 'Tẹ ímeèlì rẹ',
     email: 'Ímeèlì',
     subscribe: 'Forúkọ sílẹ̀',
+    sampleFigures: 'Àwọn àpẹẹrẹ ìṣirò',
+    includesSample: 'Ó ní àwọn àpẹẹrẹ ìṣirò nínú',
+    live: 'Láàyè',
+    sampleNews: 'Àwọn àpẹẹrẹ ìkéde',
+    sampleNote: 'A ń fi wọ́n hàn títí {name} yóò fi tẹ ti ara rẹ̀ jáde.',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

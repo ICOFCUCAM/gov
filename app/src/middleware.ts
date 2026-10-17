@@ -10,6 +10,10 @@ import type { NextRequest } from 'next/server';
 // audit chain's integrity check used by the start-up sequence.
 const PUBLIC_READ = [/^\/api\/sovereign$/, /^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/];
 const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/api\/health/];
+// The public institution websites and their shared pages: every page in the
+// (public) route group is for citizens without an account (middleware.test.ts
+// fails if a page there is not covered).
+const PUBLIC_SITES = /^\/(agriculture|assembly|communications|education|emergency|energy|environment|foreign-affairs|government|health|interior|judiciary|justice|labour|legal|noc|police|portal|presidency|public|senate|sign-in|sitemap|trade|transport|treasury)(\/|$)/;
 // Machine callers with no browser session that authenticate themselves in
 // the route: every scheduled job under /api/cron (CIVICOS_CRON_SECRET, called
 // by pg_cron; each refuses when the secret is unset, see middleware.test.ts)
@@ -27,6 +31,7 @@ export function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
   if (PUBLIC.some(re => re.test(pathname))) return res;
+  if (PUBLIC_SITES.test(pathname)) return res;
   if (SELF_AUTHENTICATED.some(re => re.test(pathname))) return res;
   // The cover reads the nation's public identity before anyone signs in.
   if (req.method === 'GET' && PUBLIC_READ.some(re => re.test(pathname))) return res;

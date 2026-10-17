@@ -270,8 +270,8 @@ export function publicTreasurySite(t: number): PublicTreasurySite {
 
   const updates: PublicTreasurySite['updates'] = [
     { kind: 'Press Release', title: `Treasury Reports ${rv.collectionRatePct >= 85 ? 'Strong' : 'Resilient'} Fiscal Performance in Q1`, date: '26 May 2025' },
-    { kind: 'Announcement', title: 'Government Securities Auction Results — May 2025', date: '26 May 2025' },
-    { kind: 'Report', title: 'Monthly Economic Review — May 2025', date: '26 May 2025' },
+    { kind: 'Announcement', title: 'Government Securities Auction Results', date: '26 May 2025' },
+    { kind: 'Report', title: 'Monthly Economic Review', date: '26 May 2025' },
     { kind: 'News', title: 'New Fiscal Responsibility Framework Launched', date: '24 May 2025' },
   ];
 
