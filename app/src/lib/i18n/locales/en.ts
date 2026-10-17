@@ -78,6 +78,35 @@ export interface Messages {
   doctrine: {
     fourSentences: string;
   };
+  /** Wallet receipts timeline (substrate). */
+  timeline: {
+    intro: string;
+    notConfigured: string;
+    signIn: string;
+    signInText: string;
+    noProfile: string;
+    refresh: string;
+    refreshing: string;
+    fullData: string;
+    exporting: string;
+    none: string;
+    count: string;
+    kindAll: string;
+    kindServiceRequest: string;
+    kindConsent: string;
+    kindAppeal: string;
+    kindWorkItemStep: string;
+    minutesAgo: string;
+    showLog: string;
+    hideLog: string;
+    chainIntactOne: string;
+    chainIntact: string;
+    chainBroken: string;
+    loading: string;
+    noTrail: string;
+    hash: string;
+    footnote: string;
+  };
   /** Public institution websites: the shared frame (PublicSiteShell). */
   site: {
     officialWebsite: string;
@@ -708,5 +737,34 @@ export const en: Messages = {
     enterEmail: 'Enter your email',
     email: 'Email',
     subscribe: 'Subscribe',
+  },
+  /** Wallet receipts timeline (substrate). */
+  timeline: {
+    intro: 'Service requests you filed, consents you granted, appeals you lodged, and every workflow step an officer took on something linked to you. Sorted newest-first. RLS enforces that you only see your own records.',
+    notConfigured: 'Substrate not configured.',
+    signIn: 'Sign in',
+    signInText: '{signIn} to view your receipts.',
+    noProfile: 'Signed in but no citizen profile is linked. Visit {link} to provision one.',
+    refresh: 'refresh',
+    refreshing: 'refreshing…',
+    fullData: 'full data',
+    exporting: 'exporting…',
+    none: 'No receipts yet',
+    count: '{n} receipts',
+    kindAll: 'all',
+    kindServiceRequest: 'service-request',
+    kindConsent: 'consent',
+    kindAppeal: 'appeal',
+    kindWorkItemStep: 'work-item-step',
+    minutesAgo: '{n}m ago',
+    showLog: 'Show activity & access log',
+    hideLog: 'Hide activity & access log',
+    chainIntactOne: '✓ hash chain intact — 1 entry verified',
+    chainIntact: '✓ hash chain intact — {n} entries verified',
+    chainBroken: '⚠ chain broken at entry #{n}',
+    loading: 'loading…',
+    noTrail: 'No entries on your audit scope yet. Tamper-evident events (consent expiries, data exports) appear here as they happen.',
+    hash: 'hash',
+    footnote: 'Receipts are read directly from the substrate via {timelineRpc}, a SECURITY DEFINER RPC scoped to {uid}. Officers cannot see your receipts; civil society cannot see them without your account. {fullData} downloads the complete portability document — every request, consent, and appeal row the substrate holds on you — via {exportRpc}.',
   },
 };
