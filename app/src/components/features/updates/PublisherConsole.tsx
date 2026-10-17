@@ -17,6 +17,7 @@ import { PublisherEscrow } from './Assurance';
 import { PublisherLifecycle } from './Lifecycle';
 import { PublisherMedia } from './MirrorCenter';
 import { PublisherComms } from './Comms';
+import { PublisherContracts } from './ContractCenter';
 import { NSTATUS_TEXT, NSTATUS_TONE, SEV_TONE } from './AdvisoriesPanel';
 import type { SecurityAdvisory, PatchCommitment, AdvisoryNationStatus } from '@/lib/api/types';
 import { EstimateView, HostingStepper, PATH_TITLE, hostingStageChip } from './HostingCenter';
@@ -132,11 +133,15 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         <PublisherMedia />
       </Section>
 
-      <Section n="12" title="Hosting assessment requests" aside="Engineering review: adjust and issue a versioned assessment">
+      <Section n="12" title="Contracts and licences" aside="Every nation · modules, seats, term, renewal, billing">
+        <PublisherContracts />
+      </Section>
+
+      <Section n="13" title="Hosting assessment requests" aside="Engineering review: adjust and issue a versioned assessment">
         <HostingQueue />
       </Section>
 
-      <Section n="13" title="Install matrix" aside="Each nation’s own decision — never pushed">
+      <Section n="14" title="Install matrix" aside="Each nation’s own decision — never pushed">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px] font-light">
             <thead>
@@ -165,7 +170,7 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         </div>
       </Section>
 
-      <Section n="14" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
+      <Section n="15" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
         <Pipeline requests={o.requests} nameOf={nameOf} onDone={reload} />
       </Section>
     </>

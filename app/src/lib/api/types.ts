@@ -1626,3 +1626,42 @@ export interface AlertDelivery {
   /** No provider is connected: deliveries are queued (placeholder). */
   status: 'queued' | 'sent' | 'failed';
 }
+
+// ── Update Center: licence and contract management ────────────────────
+export type ContractKind = 'hosted-subscription' | 'self-run-subscription' | 'perpetual-licence';
+export interface ContractModule { key: string; label: string; entitled: boolean }
+export interface ContractInvoice {
+  id: string;
+  /** Platform invoices come from the contract; security-store invoices from the security store's orders. */
+  source: 'platform' | 'security-store';
+  description: string;
+  period?: { from: ISODate; to: ISODate };
+  issuedAt: ISODate;
+  dueAt: ISODate;
+  amount: number;
+  currency: string;
+  status: 'paid' | 'due' | 'overdue' | 'upcoming';
+  paidAt?: ISODate;
+  reference?: string;
+}
+export interface Contract {
+  id: string;
+  nationId: string;
+  nationName: string;
+  kind: ContractKind;
+  hostingPath: HostingPath;
+  plan?: string;
+  modules: ContractModule[];
+  seats: { licensed: number; used: number };
+  term: { start: ISODate; end: ISODate; years: number };
+  renewal: { noticeDays: number; noticeFrom: ISODate; status: 'not-due' | 'notice-period' | 'proposed' | 'renewed' | 'lapsed'; proposal?: { years: number; annualFee: number; by: string; at: ISODate }; acceptedBy?: string; acceptedAt?: ISODate };
+  supportTier: SupportTier;
+  currency: string;
+  /** Contract rate applied to reference prices; false when prices are still in the reference currency. */
+  localPricing: boolean;
+  annualFee: number;
+  feeBasis: string;
+  invoices: ContractInvoice[];
+  outstanding: number;
+  history: { at: ISODate; by: string; action: string; note?: string }[];
+}

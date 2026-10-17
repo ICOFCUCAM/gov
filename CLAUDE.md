@@ -122,6 +122,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   pending" until the publisher adds one; training and guide links per
   release. Named officials subscribe per channel to security, releases,
   incidents and end of life; `alert()` queues deliveries (no provider yet).
+- Contracts (`lib/data/contracts.ts`, `/updates/contract`): one per nation,
+  read from the systems that hold the facts — kind and fee from the hosting
+  path and `HOSTING_MODEL`, currency from the security store's `pricing()`,
+  security-store invoices beside platform invoices, support tier from
+  `lib/data/support.ts`. Renewal is proposed by the publisher and accepted
+  by a named official, never automatic.
 
 ## Branding and AI
 

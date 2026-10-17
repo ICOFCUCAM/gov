@@ -111,6 +111,7 @@ import type {
   Official,
   AlertDelivery,
   AlertCategory,
+  Contract,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -413,6 +414,10 @@ export const api = {
     },
     evidence: (id: string, link?: string) =>
       req<{ pack: Record<string, unknown> & { digest: string } }>(`/api/releases/${encodeURIComponent(id)}/evidence${linkQ(link)}`),
+    contract: (link?: string) =>
+      req<{ contract: Contract; tier: SupportTierPolicy; priorities: Record<TicketPriority, string>; patchCommitments: Record<AdvisorySeverity, number> }>(`/api/releases/contract${linkQ(link)}`),
+    contractAction: (body: { action: 'accept-renewal' | 'request-change'; by: string; note?: string; link?: string }) =>
+      req<{ ok: true }>('/api/releases/contract', { method: 'POST', body: JSON.stringify(body) }),
     whatsNew: (id: string, link?: string) => req<{ whatsNew: WhatsNew }>(`/api/releases/${encodeURIComponent(id)}/whats-new${linkQ(link)}`),
     alerts: (link?: string) => req<{ officials: Official[]; outbox: AlertDelivery[]; categories: AlertCategory[] }>(`/api/releases/alerts${linkQ(link)}`),
     alertsAction: (body: { action: 'save' | 'remove'; by: string; official?: Partial<Official>; id?: string; link?: string }) =>
@@ -474,6 +479,9 @@ export const api = {
       escrow: async () => req<{ deposits: (EscrowStatusRow & { nationId?: string })[]; reviews: SourceReview[]; nations: Record<string, string>; agent: string; depositWithinDays: number }>('/api/releases/publisher/escrow', await publisherInit()),
       escrowAction: async (body: { action: 'deposit' | 'verify' | 'review'; by: string; [k: string]: unknown }) =>
         req<{ ok: true }>('/api/releases/publisher/escrow', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      contracts: async () => req<{ contracts: Contract[]; modules: { key: string; label: string }[] }>('/api/releases/publisher/contracts', await publisherInit()),
+      contractAction: async (body: { nationId: string; action: string; by: string; [k: string]: unknown }) =>
+        req<{ ok: true }>('/api/releases/publisher/contracts', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       comms: async () => req<{ nations: { id: string; name: string; language: string }[]; locales: string[]; releases: { id: string; version: string; title: string; changes: number; resources: number }[]; coverage: Record<string, Record<string, boolean>> }>('/api/releases/publisher/comms', await publisherInit()),
       commsAction: async (body: { action: 'translate' | 'resource'; releaseId: string; by: string; [k: string]: unknown }) =>
         req<{ ok: true }>('/api/releases/publisher/comms', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),

@@ -119,6 +119,7 @@
   "/updates/[id]",
   "/updates/[id]/evidence",
   "/updates/assurance",
+  "/updates/contract",
   "/updates/hosting",
   "/updates/mirror",
   "/updates/requests",
