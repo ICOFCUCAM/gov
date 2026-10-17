@@ -134,10 +134,16 @@ export function Welcome() {
           </ul>
         </div>
 
-        <p className="mt-8 text-[13px] text-[#65748b]">
-          Need to change the nation&rsquo;s profile or institutions?{' '}
-          <Link href={institutionPath ? '/setup?path=institution' : '/setup'} className="underline underline-offset-4 hover:text-white" style={{ color: ACCENT }}>Review setup</Link>
-        </p>
+        <nav aria-label="Configuration" className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-[#65748b]">
+          <span>Configuration:</span>
+          {[
+            { href: institutionPath ? '/setup?path=institution' : '/setup', l: 'Review setup' },
+            { href: '/gov/configuration', l: 'Sovereign configuration' },
+            { href: '/admin/onboarding', l: 'Municipal onboarding' },
+          ].map(x => (
+            <Link key={x.href} href={x.href} className="underline underline-offset-4 hover:text-white" style={{ color: ACCENT }}>{x.l}</Link>
+          ))}
+        </nav>
       </div>
     </OnboardingFrame>
   );

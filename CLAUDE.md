@@ -13,6 +13,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   `app/src/app/route-lock.test.ts` fails if a locked route loses its page or
   a new page is not recorded.
 - Redesigns keep every link, data source, and action the previous version had.
+- Build on what exists. Before adding a flow, API, or store field, search for
+  the existing system that already does it (e.g. `/api/sovereign`, the
+  ministry registry under `/api/org`, `/gov/configuration`,
+  `/admin/onboarding`) and use or extend it. New backends only for genuinely
+  missing capability.
 
 ## Entry flow
 
