@@ -82,6 +82,7 @@
   "/gov/telemetry",
   "/gov/telemetry/[id]",
   "/gov/treasury",
+  "/gov/twin",
   "/gov/watchlist",
   "/gov/webhooks",
   "/gov/witnesses",

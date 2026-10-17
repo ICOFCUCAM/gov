@@ -40,6 +40,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⬡', l: 'Interoperability Fabric', s: 'Whole-of-government mesh', href: '/gov/fabric', key: 'fabric' },
     { i: '◔', l: 'National Simulation', s: 'Scenario · cascade what-if', href: '/gov/simulation', key: 'sim' },
     { i: '◉', l: 'Regional Command', s: 'Provincial posture · readiness', href: '/gov/regional', key: 'reg' },
+    { i: '◬', l: 'National Twin', s: 'Register · sources · as-of', href: '/gov/twin', key: 'twin' },
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution state', href: '/ops', key: 'ops' },
     { i: '❒', l: 'Operations Ledger', s: 'Executed runtime transitions', href: '/gov/ledger', key: 'ledger' },
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity', href: '/audit', key: 'aud' },
@@ -157,16 +158,17 @@ export function CommandShell({
   const fedStats = orchestrationStats();
 
   // Each figure says where it comes from (lib/twin/signal.ts); samples and model outputs are marked.
-  const tele: { l: string; v: string; t?: string; dot?: boolean; kind: SignalKind; src: string }[] = [
-    { l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true, kind: 'reported', src: 'Platform configuration' },
-    { l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone, kind: 'sample', src: `Resilience model over ${REFERENCE_MODEL.toLowerCase()}` },
-    { l: 'Runtime', v: `${liveRt.open} open · ${liveRt.transitions} tx`, t: 'ok', kind: 'reported', src: 'Runtime queue in this browser' },
-    { l: 'Federated apps', v: `${fedStats.activated}/${fedStats.registered}`, t: 'ok', kind: 'reported', src: 'Federation registry' },
-    { l: 'Institutions', v: String(t?.institutions ?? 0), kind: 'reported', src: 'Ministry registry (/api/org)' },
-    { l: 'Active incidents', v: String(incidents.length), t: incidents.length ? 'alert' : 'ok', kind: 'sample', src: `Seeded ministry incidents · ${REFERENCE_MODEL}` },
-    { l: 'Queues breaching', v: String(t?.queuesBreaching ?? 0), t: (t?.queuesBreaching ?? 0) > 0 ? 'warn' : 'ok', kind: 'sample', src: `Seeded ministry queues · ${REFERENCE_MODEL}` },
-    { l: 'National risk', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok', kind: 'sample', src: `Posture computed from seeded incidents · ${REFERENCE_MODEL}` },
-    { l: 'Audit integrity', v: t?.auditIntact === false ? 'Review' : 'Intact', t: t?.auditIntact === false ? 'alert' : 'ok', kind: 'observed', src: 'Verification of the audit chain' },
+  // p: 1 always shown, 2 from 1600 px, 3 from 1840 px; every figure stays in the rail and the command palette.
+  const tele: { p: 1 | 2 | 3; l: string; v: string; t?: string; dot?: boolean; kind: SignalKind; src: string }[] = [
+    { p: 3, l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true, kind: 'reported', src: 'Platform configuration' },
+    { p: 2, l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone, kind: 'sample', src: `Resilience model over ${REFERENCE_MODEL.toLowerCase()}` },
+    { p: 3, l: 'Runtime', v: `${liveRt.open} open · ${liveRt.transitions} tx`, t: 'ok', kind: 'reported', src: 'Runtime queue in this browser' },
+    { p: 3, l: 'Federated apps', v: `${fedStats.activated}/${fedStats.registered}`, t: 'ok', kind: 'reported', src: 'Federation registry' },
+    { p: 2, l: 'Institutions', v: String(t?.institutions ?? 0), kind: 'reported', src: 'Ministry registry (/api/org)' },
+    { p: 1, l: 'Active incidents', v: String(incidents.length), t: incidents.length ? 'alert' : 'ok', kind: 'sample', src: `Seeded ministry incidents · ${REFERENCE_MODEL}` },
+    { p: 2, l: 'Queues breaching', v: String(t?.queuesBreaching ?? 0), t: (t?.queuesBreaching ?? 0) > 0 ? 'warn' : 'ok', kind: 'sample', src: `Seeded ministry queues · ${REFERENCE_MODEL}` },
+    { p: 1, l: 'National risk', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok', kind: 'sample', src: `Posture computed from seeded incidents · ${REFERENCE_MODEL}` },
+    { p: 1, l: 'Audit integrity', v: t?.auditIntact === false ? 'Review' : 'Intact', t: t?.auditIntact === false ? 'alert' : 'ok', kind: 'observed', src: 'Verification of the audit chain' },
   ];
   const cmd: CommandItem[] = RAIL.flatMap(g => g.items.map(it => ({ id: it.href + it.l, group: g.g, label: it.l, hint: it.s, href: it.href })));
 
@@ -190,9 +192,9 @@ export function CommandShell({
           <span className="text-base leading-none">{navOpen ? '✕' : '☰'}</span>
         </button>
         <ConsoleMark crisis={emergency} official />
-        <div className="ml-2 hidden flex-1 items-stretch lg:flex">
+        <div className="ml-2 hidden min-w-0 flex-1 items-stretch overflow-hidden lg:flex">
           {tele.map(m => (
-            <div key={m.l} className="border-l border-line px-4 py-1 first:border-l-0">
+            <div key={m.l} className={`shrink-0 whitespace-nowrap border-l border-line px-3 py-1 first:border-l-0 ${m.p === 1 ? '' : m.p === 2 ? 'hidden min-[1600px]:block' : 'hidden min-[1840px]:block'}`}>
               <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}<SignalTag kind={m.kind} source={m.src} className="!text-[7px] !leading-none" /></div>
               <div className="flex items-center gap-1.5 font-mono text-sm tabular-nums" style={{ color: m.t ? TONE[m.t] : 'rgb(var(--c-ink))' }}>
                 {m.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[m.t ?? 'ok'] }} /> : null}

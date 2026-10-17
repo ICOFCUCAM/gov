@@ -213,6 +213,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   observed, reported, modelled, sample or not connected; anything not observed
   or reported carries a `SignalTag`. Never show a generated number as the
   nation's (population, budgets, counts) without the marker.
+- The national twin (`lib/twin/register.ts`, `/gov/twin`): facts enter only as
+  observations of a registered source's run (named official, audited, rows
+  refused with reasons, never guessed); each keeps when it was true and when
+  it was recorded, so screens can answer "as of". Outside data is fetched only
+  by the server through `safeFetchText()` from the source's own host. A
+  national figure is shown only when every region reports it.
 - Engines must not read the nation's regions or offices into module-level
   constants; read them at use (`regionList()`, or a function). The root
   layout writes the nation's facts before scripts load, but data from setup
