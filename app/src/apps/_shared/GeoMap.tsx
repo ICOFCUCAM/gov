@@ -4,7 +4,8 @@
 // ONE smooth glowing national silhouette (no busy per-district borders),
 // a deliberate, well-spaced set of glowing severity icon-markers, a few
 // faint routes, a legend and density scale. Public-domain Natural Earth
-// geography, fixed sovereign country, live deterministic telemetry.
+// geography (upgraded per country to its official subdivisions where they
+// differ, credited on the map), live deterministic telemetry.
 
 import * as React from 'react';
 import { geoMercator, geoPath } from 'd3-geo';
@@ -187,6 +188,13 @@ export function GeoMap({
           </span>
         ))}
       </div>
+      {/* boundary credit, when the shapes come from an upgraded source */}
+      {data?.attribution ? (
+        <div className="absolute bottom-1.5 right-2.5 max-w-[42%] truncate text-right text-[7px] tracking-[0.04em]" style={{ color: 'rgba(150,180,205,0.55)' }}
+          title={`Boundaries: ${data.attribution.source} (${data.attribution.year}), via geoBoundaries · ${data.attribution.licence}`}>
+          Boundaries © {data.attribution.source} · geoBoundaries
+        </div>
+      ) : null}
       {/* incident density scale */}
       <div className="pointer-events-none absolute bottom-2.5 left-3 rounded-[6px] border px-2 py-1.5" style={{ borderColor: 'rgba(120,180,230,0.2)', background: 'rgba(6,16,28,0.66)' }}>
         <div className="text-[7.5px] font-bold uppercase tracking-[0.16em]" style={{ color: 'rgba(190,215,235,0.85)' }}>Incident Density</div>

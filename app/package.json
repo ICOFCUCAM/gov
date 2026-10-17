@@ -11,7 +11,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:substrate": "bash supabase/tests/run.sh",
-    "scan:nation": "node scripts/nation-scan.mjs"
+    "scan:nation": "node scripts/nation-scan.mjs",
+    "scan:boundaries": "node scripts/scan-boundaries.mjs",
+    "build:boundaries": "node scripts/build-boundaries.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

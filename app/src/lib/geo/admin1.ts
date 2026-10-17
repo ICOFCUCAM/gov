@@ -4,12 +4,14 @@
 // and real provinces/states.
 
 import COUNTRY_INDEX from './countries.json';
+import BOUNDARY_INDEX from './boundaries/index.json';
 
 export type Lang = 'en' | 'fr' | 'es' | 'pt' | 'ru' | 'zh' | 'ar' | 'hi';
 
 export interface Admin1Province {
   name: string;
-  i18n: Record<Lang, string>;
+  /** Translated names; upgraded shapes of new units may carry English only. */
+  i18n: Partial<Record<Lang, string>>;
   code: string;
   lng: number;
   lat: number;
@@ -22,7 +24,14 @@ export interface Admin1Country {
   name: string;
   provinces: Admin1Province[];
   outline?: Geom;
+  /** Set when the shapes come from an upgraded boundary source (credited on the map). */
+  attribution?: BoundaryCredit;
 }
+export interface BoundaryCredit { source: string; licence: string; year: string }
+
+// Countries whose shapes were upgraded to match their official subdivisions
+// (scripts/build-boundaries.mjs, geoBoundaries); all others keep Natural Earth.
+const UPGRADED = BOUNDARY_INDEX as Record<string, BoundaryCredit & { units: number }>;
 export interface CountryIndexEntry { iso3: string; iso2: string; name: string; continent: string; provinces: number }
 
 export const COUNTRIES = COUNTRY_INDEX as CountryIndexEntry[];
@@ -36,6 +45,15 @@ export async function loadCountry(iso3: string): Promise<Admin1Country | null> {
   if (cached) return cached;
   const meta = COUNTRIES.find(c => c.iso3 === iso3);
   try {
+    const up = UPGRADED[iso3];
+    if (up) {
+      const mod = await import(`./boundaries/${iso3}.json`).catch(() => null);
+      if (mod) {
+        const c = { ...((mod.default ?? mod) as Admin1Country), attribution: { source: up.source, licence: up.licence, year: up.year } };
+        cache.set(iso3, c);
+        return c;
+      }
+    }
     if (meta && meta.provinces > 0) {
       const mod = await import(`./admin1/${iso3}.json`);
       const c = (mod.default ?? mod) as Admin1Country;

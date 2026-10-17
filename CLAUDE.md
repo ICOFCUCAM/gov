@@ -66,7 +66,14 @@ What has been built is locked. Work only upgrades it toward the vision in
 - A nation's regions default to its official subdivisions in their own order
   (ISO 3166-2, `app/src/lib/geo/divisions.ts`; e.g. all US states, Kenya's 47
   counties, Uganda's regions or districts). Rebuild the data with
-  `scripts/build-divisions.py`; the map's admin-1 shapes are a separate source.
+  `scripts/build-divisions.py`.
+- Map shapes are Natural Earth admin-1 (`app/src/lib/geo/admin1/`), upgraded
+  per country where they disagree with the official list
+  (`app/src/lib/geo/boundaries/`, geoBoundaries, credited on the map).
+  `npm run scan:boundaries` lists countries still disagreeing;
+  `npm run build:boundaries -- --needed` upgrades them, and writes a country
+  only when the new shapes cover more of its official list, the same
+  territory and the same outline — a build never downgrades a map.
 
 ## Checks
 

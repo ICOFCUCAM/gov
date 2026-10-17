@@ -47,3 +47,20 @@ describe('provinceLabel', () => {
     expect(provinceLabel(stripped, 'ru')).toBe('Default Name');
   });
 });
+
+describe('upgraded boundaries', () => {
+  it("draws Kenya's 47 counties instead of its former provinces, credited to their source", async () => {
+    const { loadCountry } = await import('./admin1');
+    const ken = await loadCountry('KEN');
+    expect(ken?.provinces).toHaveLength(47);
+    expect(ken?.provinces.map(p => p.name)).toContain('Nairobi City');
+    expect(ken?.attribution?.licence).toBe('Public Domain');
+  });
+
+  it('keeps Natural Earth shapes for countries that were not upgraded', async () => {
+    const { loadCountry } = await import('./admin1');
+    const usa = await loadCountry('USA');
+    expect(usa?.provinces.length).toBeGreaterThanOrEqual(50);
+    expect(usa?.attribution).toBeUndefined();
+  });
+});
