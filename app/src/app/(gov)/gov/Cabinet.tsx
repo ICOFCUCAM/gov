@@ -369,6 +369,8 @@ export function Cabinet() {
                 label={ind.label}
                 value={`${ind.value}${ind.unit}`}
                 tone="neutral"
+                kind={ind.kind}
+                source={ind.source}
               />
             ))}
           </div>

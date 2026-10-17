@@ -1,12 +1,12 @@
 'use client';
 
 import * as React from 'react';
+import { ConsoleMark } from '@/components/ui/ConsoleMark';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { identityFor } from '@/lib/archetype-profiles';
-import { resolveIdentity } from '@/lib/sovereign-identity';
 import {
   TONE, ACCENT, PALETTE, seed, toneFor, rel, Panel, Spark, LiveValue, NationalMap, TerritoryHeat, waveSeries, domainStress,
 } from '@/components/features/SituationRoom';
@@ -132,7 +132,6 @@ export function CabinetIntelligence() {
 
   const tickN = coord?.tick ?? 0;
   const epoch = Math.floor(tickN / 2);
-  const identity = sov ? resolveIdentity(sov) : null;
   const nodes = coord?.nodes ?? [];
   const fabricById = new Map((coord?.fabric ?? []).map(f => [f.ministryId, f]));
   const mapNodes = nodes.map((nd, i) => ({
@@ -311,15 +310,7 @@ export function CabinetIntelligence() {
 
       {/* Command top bar */}
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
-        <Link href="/command" className="focus-ring flex items-center gap-2.5 no-underline">
-          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-sm text-sm font-bold text-white ring-1 ring-white/15" style={{ backgroundColor: war ? RED : ACCENT }}>
-            {identity ? identity.seal : 'CO'}
-          </span>
-          <span className="leading-tight">
-            <span className="block text-sm font-bold tracking-[0.18em] text-ink">CIVICOS</span>
-            <span className="block text-[9px] uppercase tracking-[0.16em] text-ink-muted">Sovereign Operating System</span>
-          </span>
-        </Link>
+        <ConsoleMark crisis={war} />
         <div className="hidden flex-1 text-center md:block">
           <div className="text-sm font-semibold tracking-[0.22em] text-ink">CABINET INTELLIGENCE</div>
           <div className="text-[10px] uppercase tracking-[0.16em] text-ink-muted">National executive command &amp; strategic coordination</div>

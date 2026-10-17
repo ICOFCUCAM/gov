@@ -3,8 +3,10 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
-import { resolveIdentity } from '@/lib/sovereign-identity';
 import { TONE, ACCENT, PALETTE } from '@/components/features/SituationRoom';
+import { ConsoleMark, PoweredBy } from '@/components/ui/ConsoleMark';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 import { CommandPalette, type CommandItem, type CommandSearchFn } from '@/components/ui/CommandPalette';
 import { substrateSearch } from '@/lib/db/search';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
@@ -135,7 +137,6 @@ export function CommandShell({
     return () => { clearInterval(poll); clearInterval(tick); };
   }, []);
 
-  const identity = sov ? resolveIdentity(sov) : null;
   const posture = coord?.posture;
   const t = nat?.totals;
   const incidents = nat?.crossMinistryIncidents ?? [];
@@ -155,16 +156,17 @@ export function CommandShell({
   React.useSyncExternalStore(orchSubscribe, orchVersion, orchVersion);
   const fedStats = orchestrationStats();
 
-  const tele = [
-    { l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true },
-    { l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone },
-    { l: 'Runtime', v: `${liveRt.open} open · ${liveRt.transitions} tx`, t: 'ok' },
-    { l: 'Federated apps', v: `${fedStats.activated}/${fedStats.registered}`, t: 'ok' },
-    { l: 'Institutions', v: String(t?.institutions ?? 0) },
-    { l: 'Active incidents', v: String(incidents.length), t: incidents.length ? 'alert' : 'ok' },
-    { l: 'Queues breaching', v: String(t?.queuesBreaching ?? 0), t: (t?.queuesBreaching ?? 0) > 0 ? 'warn' : 'ok' },
-    { l: 'National risk', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok' },
-    { l: 'Audit integrity', v: t?.auditIntact === false ? 'Review' : 'Intact', t: t?.auditIntact === false ? 'alert' : 'ok' },
+  // Each figure says where it comes from (lib/twin/signal.ts); samples and model outputs are marked.
+  const tele: { l: string; v: string; t?: string; dot?: boolean; kind: SignalKind; src: string }[] = [
+    { l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true, kind: 'reported', src: 'Platform configuration' },
+    { l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone, kind: 'sample', src: `Resilience model over ${REFERENCE_MODEL.toLowerCase()}` },
+    { l: 'Runtime', v: `${liveRt.open} open · ${liveRt.transitions} tx`, t: 'ok', kind: 'reported', src: 'Runtime queue in this browser' },
+    { l: 'Federated apps', v: `${fedStats.activated}/${fedStats.registered}`, t: 'ok', kind: 'reported', src: 'Federation registry' },
+    { l: 'Institutions', v: String(t?.institutions ?? 0), kind: 'reported', src: 'Ministry registry (/api/org)' },
+    { l: 'Active incidents', v: String(incidents.length), t: incidents.length ? 'alert' : 'ok', kind: 'sample', src: `Seeded ministry incidents · ${REFERENCE_MODEL}` },
+    { l: 'Queues breaching', v: String(t?.queuesBreaching ?? 0), t: (t?.queuesBreaching ?? 0) > 0 ? 'warn' : 'ok', kind: 'sample', src: `Seeded ministry queues · ${REFERENCE_MODEL}` },
+    { l: 'National risk', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok', kind: 'sample', src: `Posture computed from seeded incidents · ${REFERENCE_MODEL}` },
+    { l: 'Audit integrity', v: t?.auditIntact === false ? 'Review' : 'Intact', t: t?.auditIntact === false ? 'alert' : 'ok', kind: 'observed', src: 'Verification of the audit chain' },
   ];
   const cmd: CommandItem[] = RAIL.flatMap(g => g.items.map(it => ({ id: it.href + it.l, group: g.g, label: it.l, hint: it.s, href: it.href })));
 
@@ -187,21 +189,11 @@ export function CommandShell({
           className="focus-ring grid h-9 w-9 shrink-0 place-items-center rounded-[3px] border border-line text-ink-soft lg:hidden">
           <span className="text-base leading-none">{navOpen ? '✕' : '☰'}</span>
         </button>
-        <Link href="/command" className="focus-ring flex items-center gap-2.5 no-underline">
-          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-[3px] text-sm font-bold text-white ring-1 ring-white/15" style={{ backgroundColor: accent }}>
-            {identity ? identity.seal : 'CO'}
-          </span>
-          <span className="leading-tight">
-            <span className="flex items-center gap-1.5 text-sm font-bold tracking-[0.18em] text-ink">CIVICOS
-              <span className="rounded-[3px] border border-line px-1 text-[8px] font-semibold tracking-[0.2em] text-ink-soft">OFFICIAL</span>
-            </span>
-            <span className="block text-[9px] uppercase tracking-[0.16em] text-ink-muted">Sovereign Operating System</span>
-          </span>
-        </Link>
+        <ConsoleMark crisis={emergency} official />
         <div className="ml-2 hidden flex-1 items-stretch lg:flex">
           {tele.map(m => (
             <div key={m.l} className="border-l border-line px-4 py-1 first:border-l-0">
-              <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
+              <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}<SignalTag kind={m.kind} source={m.src} className="!text-[7px] !leading-none" /></div>
               <div className="flex items-center gap-1.5 font-mono text-sm tabular-nums" style={{ color: m.t ? TONE[m.t] : 'rgb(var(--c-ink))' }}>
                 {m.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[m.t ?? 'ok'] }} /> : null}
                 {m.v}
@@ -316,6 +308,7 @@ export function CommandShell({
               <div className="text-ink-muted">Incidents</div><div className="text-right font-mono" style={{ color: incidents.length ? TONE.alert : TONE.ok }}>{incidents.length}</div>
               <div className="text-ink-muted">Environment</div><div className="truncate text-right text-ink-soft">{nat?.environment ?? 'Production'}</div>
               <div className="text-ink-muted">Channel</div><div className="text-right" style={{ color: TONE.ok }}>Encrypted</div>
+              <PoweredBy />
             </div>
           </div>
         </nav>

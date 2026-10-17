@@ -670,7 +670,8 @@ export const FIELD_STAGES = [
   'AUTHORIZATION', 'STAGING', 'MOBILIZATION', 'REGIONAL DEPLOYMENT',
   'ACTIVE STABILIZATION', 'INFRASTRUCTURE RECOVERY', 'OPERATIONAL SUPERVISION', 'NORMALIZATION',
 ] as const;
-const FIELD_REGIONS = [
+// Read at use, not at load: the nation's regions arrive after this module loads in the browser.
+const fieldRegions = () => [
   regionName(0, 'Capital District'), regionName(1, 'Northern Province'), regionName(5, 'Highland Region'),
   regionName(2, 'Eastern Region'), regionName(3, 'Western Region'), regionName(4, 'Coastal Region'),
 ] as const;
@@ -680,6 +681,7 @@ export function fieldDeployment(
   telecom: number, transportUtil: number, reservesHeadroom: number, contention: number,
   post: NationalPosture, fatigue: number, epoch: number,
 ): FieldOps {
+  const FIELD_REGIONS = fieldRegions();
   const region = FIELD_REGIONS[Math.floor(seed(`fr:${ministryId}:${epoch}`) * FIELD_REGIONS.length)]
     ?? FIELD_REGIONS[0]!;
   // Regional execution variance — distance + infrastructure quality are

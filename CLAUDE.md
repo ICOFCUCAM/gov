@@ -200,6 +200,24 @@ What has been built is locked. Work only upgrades it toward the vision in
   applies `accessibleTheme()` (4.5:1); new public pages get the skip link,
   named banner, one `<main id="main">` and one h1 (`PublicSite.test.ts`).
 
+## Console design and the digital twin
+
+- Decisions and rollout: `docs/CONSOLE_DESIGN.md`; status: register §15–16.
+- Colours come from `lib/theme/tokens.ts` (`TONE`, `PALETTE` and
+  `globals.css` follow it; `tokens.test.ts` holds every text colour at 4.5:1).
+  Do not add new raw hex colours to console code; add a token.
+- Console headers wear the nation through `ConsoleMark` (seal in the nation's
+  colour via `sealTile()`, name, motto); crisis frames the seal, never
+  repaints it. Status colours never take the nation's accent or champagne.
+- Every figure a console shows says where it comes from (`lib/twin/signal.ts`):
+  observed, reported, modelled, sample or not connected; anything not observed
+  or reported carries a `SignalTag`. Never show a generated number as the
+  nation's (population, budgets, counts) without the marker.
+- Engines must not read the nation's regions or offices into module-level
+  constants; read them at use (`regionList()`, or a function). The root
+  layout writes the nation's facts before scripts load, but data from setup
+  can still change at runtime.
+
 ## Branding and AI
 
 - Once setup is complete, every front-door surface wears the installed

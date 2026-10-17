@@ -9,6 +9,7 @@
 // process. It is sufficient for Phase 1 demo/preview. Production uses a
 // durable sovereign datastore.
 
+import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { locales } from '@/lib/i18n/config';
 import type {
   AuditEntry,
@@ -95,7 +96,7 @@ import { profileFor } from '@/lib/archetype-profiles';
 import { scoreInstitution } from '@/lib/institution/readiness';
 import { blueprintFor } from '@/lib/institution/blueprint';
 import { federationSeed } from '@/lib/institution/federation';
-import { regionList, applyNation, nationPaymentRail } from '@/lib/nation/registry';
+import { regionList, applyNation, nationPaymentRail, nationRegions } from '@/lib/nation/registry';
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -2103,19 +2104,22 @@ export function nationalSnapshot(): NationalSnapshot {
   const ministries = db.ministries.filter(m => m.status !== 'merged');
   const active = ministries.filter(m => m.status === 'active');
 
-  // Realistic national figures, deterministic per configured state.
+  // Each figure says where it comes from (lib/twin/signal.ts). Population has no
+  // source until a statistics feed is connected (register 16.2); regions and
+  // institutions are the nation's own records; the indices are samples from
+  // the reference model, deterministic per configured state.
   const seedKey = db.sovereign.stateName;
-  const popM = seededInt(`nat:${seedKey}:pop`, 8, 210);          // 8–210 M
-  const regionsN = seededInt(`nat:${seedKey}:reg`, 6, 36);
   const fiscalIdx = seededInt(`nat:${seedKey}:fis`, 78, 118);    // budget exec index
   const svcAvail = seededInt(`nat:${seedKey}:svc`, 92, 100);
+  const regions = nationRegions();
+  const regionsN = regions.length || seededInt(`nat:${seedKey}:reg`, 6, 36);
 
   const indicators: NationalIndicator[] = [
-    { label: 'Population', value: String(popM), unit: 'M' },
-    { label: db.sovereign.regionNoun + 's', value: String(regionsN), unit: '' },
-    { label: 'Fiscal execution index', value: String(fiscalIdx), unit: '' },
-    { label: 'Service availability', value: String(svcAvail), unit: '%' },
-    { label: 'Institutions', value: String(ministries.length), unit: '' },
+    { label: 'Population', value: '—', unit: '', kind: 'unavailable', source: 'No population source connected (statistics office feed, register 16.2)' },
+    { label: db.sovereign.regionNoun + 's', value: String(regionsN), unit: '', ...(regions.length ? { kind: 'reported' as const, source: 'Nation profile (setup): official subdivisions' } : { kind: 'sample' as const, source: REFERENCE_MODEL }) },
+    { label: 'Fiscal execution index', value: String(fiscalIdx), unit: '', kind: 'sample', source: REFERENCE_MODEL },
+    { label: 'Service availability', value: String(svcAvail), unit: '%', kind: 'sample', source: REFERENCE_MODEL },
+    { label: 'Institutions', value: String(ministries.length), unit: '', kind: 'reported', source: 'Ministry registry (/api/org)' },
   ];
 
   const crossMinistryIncidents: CrossMinistryIncident[] = [];

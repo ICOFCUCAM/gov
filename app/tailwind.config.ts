@@ -22,7 +22,7 @@ const config: Config = {
         // Decision Class palette
         'class-a': '#4a6b8a',
         'class-b': '#2d6a4f',
-        'class-c': '#b08400',
+        'class-c': '#8a6700', // 5.2:1 on white (lib/theme/tokens.ts DECISION_CLASS)
         'class-d': '#8a3a36',
         'class-e': '#5c3a8a',
         // Status (paired with text/icon, never color-only) — tokenised

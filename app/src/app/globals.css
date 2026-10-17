@@ -20,7 +20,7 @@
     --c-link: 31 95 173;
     --c-link-hover: 19 63 120;
     --c-ok: 45 106 79;
-    --c-warn: 176 132 0;
+    --c-warn: 138 103 0; /* 5.2:1 on white (WCAG AA); values: lib/theme/tokens.ts */
     --c-alert: 138 58 54;
   }
 
@@ -33,7 +33,7 @@
     --c-surface-2: 26 32 42;
     --c-ink: 226 231 238;
     --c-ink-soft: 160 170 184;
-    --c-ink-muted: 124 134 149;
+    --c-ink-muted: 130 140 155;
     --c-line: 42 50 62;
     --c-line-soft: 30 37 47;
     --c-link: 124 172 232;

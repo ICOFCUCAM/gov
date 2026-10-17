@@ -72,6 +72,17 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.accent = f.accent && /^#[0-9a-fA-F]{6}$/.test(f.accent) ? f.accent : undefined;
 }
 
+/** The global the root layout's inline script fills with the nation's facts (see app/layout.tsx). */
+export const NATION_GLOBAL = '__CIVICOS_NATION__';
+
+// In the browser, take the nation's facts as soon as this module loads: page
+// modules that read regions or offices at load time then see the nation's,
+// exactly as the server rendered them (no hydration mismatch).
+if (typeof window !== 'undefined') {
+  const early = (window as unknown as Record<string, NationFacts | undefined>)[NATION_GLOBAL];
+  if (early) applyNation(early);
+}
+
 /**
  * Interface text in the nation's language (chosen in setup), from the
  * dictionaries in lib/i18n; English for any language without one yet.

@@ -43,6 +43,17 @@ export function readableOn(colour: string, backgrounds: string[], ratio = AA): s
   return '#000000';
 }
 
+/** The colour, lightened in small steps toward white (same hue) until it reaches `ratio` against every (dark) background. */
+export function readableOnDark(colour: string, backgrounds: string[], ratio = AA): string {
+  if (!/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(colour)) return colour;
+  const base = rgb(colour);
+  for (let k = 0; k <= 1; k += 0.02) {
+    const c = hex(base.map(v => v + (255 - v) * k));
+    if (backgrounds.every(bg => contrast(c, bg) >= ratio)) return c;
+  }
+  return '#ffffff';
+}
+
 /**
  * The theme with its text colours made readable: primary, accent, inkSoft and
  * the emergency colours carry links, buttons with white text and labels, so

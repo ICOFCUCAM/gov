@@ -7,7 +7,6 @@ import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette
 import { WorldMap } from '@/components/ui/WorldMap';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { identityFor } from '@/lib/archetype-profiles';
-import { resolveIdentity } from '@/lib/sovereign-identity';
 import type {
   NationalSnapshot,
   NationalCoordination,
@@ -16,21 +15,16 @@ import type {
 } from '@/lib/api/types';
 
 import { TONE } from '@/lib/tone-palette';
+import { CONSOLE, INFO } from '@/lib/theme/tokens';
+import { ConsoleMark, PoweredBy } from '@/components/ui/ConsoleMark';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 export { TONE };
-export const ACCENT = '#37c7d4';
+export const ACCENT = INFO;
 
-// Deep-navy situation-room palette (overrides the .sov tokens locally).
+// Deep-navy situation-room palette (overrides the .sov tokens locally); values in lib/theme/tokens.ts.
 export const PALETTE = {
-  '--c-bg': '7 12 20',
-  '--c-surface': '12 18 30',
-  '--c-surface-2': '19 27 43',
-  '--c-ink': '226 233 243',
-  '--c-ink-soft': '150 165 186',
-  '--c-ink-muted': '101 116 139',
-  '--c-line': '28 38 56',
-  '--c-line-soft': '21 29 44',
-  '--c-link': '74 198 212',
-  '--c-link-hover': '130 220 230',
+  ...CONSOLE,
   '--accent': ACCENT,
 } as React.CSSProperties;
 
@@ -258,6 +252,8 @@ export type Instr = {
   l: string; v: string; t: string; d: number; traj: string;
   spark: number[]; crit: boolean; anom: boolean; state: string;
   base: number; band: number; pulse: boolean;
+  /** What kind of figure it is; unset = a sample from the reference model (lib/twin/signal.ts). */
+  kind?: SignalKind; source?: string;
 };
 
 // Sharp infrastructure-monitoring sparkline — gradient body, threshold
@@ -334,6 +330,7 @@ export function KpiCell({ d }: { d: Instr }) {
       <div className="mt-1 -mb-0.5"><TeleSpark pts={d.spark} tone={tone} active={d.crit || d.pulse} /></div>
       <div className="mt-0.5 flex items-center justify-between text-[7px] font-medium uppercase tracking-[0.05em]">
         <span className="text-ink-muted">base {d.base}</span>
+        <SignalTag kind={d.kind ?? 'sample'} source={d.source ?? REFERENCE_MODEL} className="!text-[7px] !leading-none" />
         {d.anom
           ? <span className="flex items-center gap-0.5" style={{ color: TONE.warn }}><span className="h-[3px] w-[3px] rounded-full motion-safe:animate-pulse" style={{ background: TONE.warn }} />anomaly</span>
           : <span style={{ color: c }}>thr {d.band}</span>}
@@ -390,7 +387,8 @@ const INFRA_KINDS = [
 
 // Global-state-neutral province partition (real territorial polygons,
 // shared edges form the national silhouette). viewBox 1000×620.
-const PROV: { n: string; cx: number; cy: number; r: number; cap?: boolean }[] = [
+// Read at use, not at load: the nation's regions arrive after this module loads in the browser.
+const provinces = (): { n: string; cx: number; cy: number; r: number; cap?: boolean }[] => [
   { n: regionName(1, 'Northern Province'), cx: 320, cy: 196, r: 150 },
   { n: regionName(5, 'Highland Region'), cx: 545, cy: 188, r: 150 },
   { n: regionName(2, 'Eastern Region'), cx: 770, cy: 232, r: 150 },
@@ -405,6 +403,7 @@ interface Infra { id: string; kind: typeof INFRA_KINDS[number]; x: number; y: nu
 // per-country risk (world by default, zooms to the sovereign nation).
 const TH_CORRIDORS: [number, number][] = [[0, 1], [1, 2], [1, 4], [4, 3], [4, 5], [3, 0], [2, 5]];
 export function TerritoryHeat({ epoch, height = 150, focus, tactical = true }: { epoch: number; height?: number; focus?: string; tactical?: boolean }) {
+  const PROV = provinces();
   // Derived from the shared territorial doctrine (contention + crisis
   // memory + corridor-topology diffusion) — not isolated per-region noise.
   const thAdj = corridorAdjacency(TH_CORRIDORS, PROV.length);
@@ -441,8 +440,8 @@ export function TerritoryHeat({ epoch, height = 150, focus, tactical = true }: {
           </radialGradient>
         </defs>
         <rect width="1000" height="620" fill="url(#thgrid)" opacity="0.14" />
-        {provRisk.map(({ p, risk }) => (
-          <g key={p.n}>
+        {provRisk.map(({ p, risk }, i) => (
+          <g key={i}>
             <circle cx={p.cx} cy={p.cy} r={p.r * 0.72} fill={TONE[toneFor(risk)]}
               opacity={0.05 + (risk / 100) * 0.16} className="transition-all duration-1000 ease-sov" />
             {risk >= 72 ? (
@@ -485,6 +484,7 @@ export function NationalMap({
   focus?: string;
   onToggleLayer?: (k: LayerKey) => void;
 }) {
+  const PROV = provinces();
   const [layerOpen, setLayerOpen] = React.useState(false);
   const infra: Infra[] = React.useMemo(
     () => Array.from({ length: 38 }).map((_, i) => {
@@ -673,7 +673,7 @@ export function NationalMap({
           {provRisk.map(({ p, risk }, i) => {
             const tn = toneFor(risk);
             return (
-              <g key={p.n}>
+              <g key={i}>
                 <circle cx={p.cx} cy={p.cy} r={p.r} fill={`url(#pz${i})`} className="transition-all duration-1000 ease-sov" />
                 <circle cx={p.cx} cy={p.cy} r={p.r * 0.62} fill="none" stroke={TONE[tn]} strokeOpacity="0.28" strokeWidth="1" strokeDasharray="2 7" />
                 {risk >= 72 ? (
@@ -719,13 +719,13 @@ export function NationalMap({
           ))}
 
           {/* regional readiness intensity rings */}
-          {provRisk.map(({ p, risk }) => {
+          {provRisk.map(({ p, risk }, i) => {
             const ready = Math.max(1, 100 - risk);
             const rr = p.r * 0.46;
             const circ = 2 * Math.PI * rr;
             const tn = ready >= 65 ? 'ok' : ready >= 45 ? 'warn' : 'alert';
             return (
-              <g key={`rr${p.n}`} transform={`rotate(-90 ${p.cx} ${p.cy})`}>
+              <g key={`rr${i}`} transform={`rotate(-90 ${p.cx} ${p.cy})`}>
                 <circle cx={p.cx} cy={p.cy} r={rr} fill="none" stroke="rgb(var(--c-line))" strokeOpacity="0.25" strokeWidth="1.4" />
                 <circle cx={p.cx} cy={p.cy} r={rr} fill="none" stroke={TONE[tn]} strokeWidth="1.6"
                   strokeLinecap="round" strokeDasharray={`${(ready / 100) * circ} ${circ}`}
@@ -895,10 +895,10 @@ export function NationalMap({
           }) : null}
         </g>
 
-        {provRisk.map(({ p, risk }) => {
+        {provRisk.map(({ p, risk }, i) => {
           const tn = toneFor(risk);
           return (
-            <g key={`l${p.n}`} style={{ pointerEvents: 'none' }}>
+            <g key={`l${i}`} style={{ pointerEvents: 'none' }}>
               <text x={p.cx} y={p.cy - 5} textAnchor="middle"
                 className="fill-[rgb(var(--c-ink-soft))]" style={{ fontSize: 13, fontWeight: 600, letterSpacing: 0.5 }}>
                 {p.cap ? '★ ' : ''}{p.n}
@@ -1054,10 +1054,10 @@ export function NationalMap({
       <div className="absolute right-2 top-12 z-20 w-[148px] rounded-[3px] border border-line bg-surface/85 p-2 backdrop-blur">
         <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Regional pressure</div>
         <div className="space-y-1">
-          {provRisk.map(({ p, risk }) => {
+          {provRisk.map(({ p, risk }, i) => {
             const tn = toneFor(risk);
             return (
-              <div key={p.n}>
+              <div key={i}>
                 <div className="flex items-center justify-between text-[9px]">
                   <span className="truncate text-ink-soft">{p.cap ? '★ ' : ''}{p.n.replace(' Region', '').replace(' Province', '').replace(' District', '')}</span>
                   <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{risk}</span>
@@ -1133,7 +1133,6 @@ export function SituationRoom() {
 
   const tickN = coord?.tick ?? 0;
   const epoch = Math.floor(tickN / 2);
-  const identity = sov ? resolveIdentity(sov) : null;
 
   const regions = React.useMemo(
     () => Array.from({ length: 16 }).map((_, i) => ({
@@ -1312,16 +1311,7 @@ export function SituationRoom() {
       <header className="relative flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
         <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
           style={{ background: `linear-gradient(90deg, transparent, color-mix(in srgb,${war ? TONE.alert : ACCENT} 60%,transparent), transparent)` }} />
-        <Link href="/command" className="focus-ring flex items-center gap-2.5 no-underline">
-          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-sm text-sm font-bold text-white ring-1 ring-white/15"
-            style={{ backgroundColor: war ? TONE.alert : ACCENT, boxShadow: `0 0 14px color-mix(in srgb,${war ? TONE.alert : ACCENT} 45%,transparent)` }}>
-            {identity ? identity.seal : 'CO'}
-          </span>
-          <span className="leading-tight">
-            <span className="block text-sm font-bold tracking-[0.18em] text-ink">CIVICOS</span>
-            <span className="block text-[9px] uppercase tracking-[0.16em] text-ink-muted">Sovereign Operating System</span>
-          </span>
-        </Link>
+        <ConsoleMark crisis={war} />
         <div className="hidden min-w-0 flex-1 flex-col items-center md:flex">
           <div className="flex items-center gap-2">
             <span aria-hidden className="h-px w-6" style={{ background: `color-mix(in srgb,${war ? TONE.alert : ACCENT} 50%,transparent)` }} />
@@ -1447,6 +1437,7 @@ export function SituationRoom() {
             <div className="text-ink-muted">Environment</div><div className="text-right text-ink-soft">{nat?.environment ?? 'Production'}</div>
             <div className="text-ink-muted">Version</div><div className="text-right text-ink-soft">v2.1.0</div>
             <div className="text-ink-muted">Channel</div><div className="text-right" style={{ color: TONE.ok }}>Encrypted</div>
+            <PoweredBy />
           </div>
         </nav>
 

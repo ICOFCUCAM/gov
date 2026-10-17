@@ -3,6 +3,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
+import { sealTile } from '@/lib/theme/nation';
+import { SOV, hexOf } from '@/lib/theme/tokens';
 import { TONE, Spark, waveSeries } from '@/components/features/SituationRoom';
 import { deployableInstitutions } from '@/lib/institution/readiness';
 import { buildCascade } from '@/lib/institution/cascade';
@@ -219,11 +221,13 @@ export function NationalShell() {
     { l: 'Institutions Admin', s: 'Compose · activate', href: '/ministries', v: `${mins.length} composed`, t: 'ok' },
   ];
 
+  // The nation's seal in its own colour, kept visible on the graphite ground (lib/theme/nation.ts).
+  const seal = sealTile(identity?.accent, hexOf(SOV['--c-surface']!));
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span aria-hidden className="grid h-7 w-7 place-items-center rounded-[3px] text-[11px] font-bold text-white" style={{ backgroundColor: identity ? 'rgb(var(--c-link))' : 'rgb(var(--c-line))' }}>{identity?.seal ?? 'NS'}</span>
+          <span aria-hidden className="grid h-7 w-7 place-items-center rounded-[3px] text-[11px] font-bold" style={{ backgroundColor: seal.fill, color: seal.ink }}>{identity?.seal ?? 'NS'}</span>
           <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">National Shell</h1>
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>{sov?.stateName ?? 'Sovereign'} · {model.label}</span>
           <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>

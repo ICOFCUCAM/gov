@@ -6,7 +6,7 @@
 import { seed, wave, domainStress } from '@/lib/telemetry';
 import { scenarioFor, type ScenarioKey } from '@/lib/gov/simulation';
 import type { ArchetypeKey } from '@/lib/api/types';
-import { regionName } from '@/lib/nation/registry';
+import { nationRegions } from '@/lib/nation/registry';
 
 export interface RegionInfra { l: string; coverage: number }
 export interface RegionModel {
@@ -23,14 +23,28 @@ export interface RegionModel {
   domains: { k: string; v: number }[];
 }
 
-const DEF: { n: string; a: ArchetypeKey; cap: boolean; popM: number }[] = [
-  { n: regionName(1, 'Northern Province'), a: 'AGRICULTURE', cap: false, popM: 4.2 },
-  { n: regionName(5, 'Highland Region'), a: 'ENERGY', cap: false, popM: 3.1 },
-  { n: regionName(2, 'Eastern Region'), a: 'INTERIOR', cap: false, popM: 5.6 },
-  { n: regionName(0, 'Capital District'), a: 'FINANCE', cap: true, popM: 8.4 },
-  { n: regionName(3, 'Western Region'), a: 'TRANSPORT', cap: false, popM: 4.9 },
-  { n: regionName(4, 'Coastal Region'), a: 'TRADE', cap: false, popM: 6.3 },
+// The reference fabric: six example regions with a dominant character each,
+// used until the nation's own regions are set in setup.
+const REFERENCE: { n: string; a: ArchetypeKey; cap: boolean; popM: number }[] = [
+  { n: 'Northern Province', a: 'AGRICULTURE', cap: false, popM: 4.2 },
+  { n: 'Highland Region', a: 'ENERGY', cap: false, popM: 3.1 },
+  { n: 'Eastern Region', a: 'INTERIOR', cap: false, popM: 5.6 },
+  { n: 'Capital District', a: 'FINANCE', cap: true, popM: 8.4 },
+  { n: 'Western Region', a: 'TRANSPORT', cap: false, popM: 4.9 },
+  { n: 'Coastal Region', a: 'TRADE', cap: false, popM: 6.3 },
 ];
+
+// Every one of the nation's regions, in its official order — not six slots —
+// read at use (the nation's regions may arrive after this module loads). The
+// first is treated as the seat of government, as regionName(0) does; each
+// takes a dominant character from the reference cycle. Population per region
+// is a sample until a statistics source is connected (register 16.2).
+const DEF = (): { n: string; a: ArchetypeKey; cap: boolean; popM: number }[] => {
+  const own = nationRegions();
+  if (!own.length) return REFERENCE;
+  const cycle = [REFERENCE[3]!, ...REFERENCE.filter(r => !r.cap)];
+  return own.map((n, i) => ({ n, a: cycle[i % cycle.length]!.a, cap: i === 0, popM: cycle[i % cycle.length]!.popM }));
+};
 
 const DOMAIN_KEYS = ['ops', 'infra', 'civil', 'sec', 'logi', 'emrg'] as const;
 const INFRA = ['Road network', 'Power coverage', 'Water systems', 'Health facilities', 'Comms', 'Schools'] as const;
@@ -40,7 +54,7 @@ function postureOf(v: number): RegionModel['posture'] {
 }
 
 export function nationalRegions(t: number): RegionModel[] {
-  return DEF.map(r => {
+  return DEF().map(r => {
     const domains = DOMAIN_KEYS.map(k => ({ k, v: domainStress(r.a, k, 55, t, r.n) }));
     const composite = Math.round(domains.reduce((a, d) => a + d.v, 0) / domains.length);
     const readiness = Math.max(1, 100 - composite);

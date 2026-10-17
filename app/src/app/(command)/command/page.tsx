@@ -1,9 +1,9 @@
 'use client';
 
 import * as React from 'react';
+import { ConsoleMark } from '@/components/ui/ConsoleMark';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
-import { resolveIdentity } from '@/lib/sovereign-identity';
 import { TONE, ACCENT, PALETTE, seed, Spark, waveSeries } from '@/components/features/SituationRoom';
 import { WorldMap } from '@/components/ui/WorldMap';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
@@ -112,7 +112,6 @@ export default function SovereignCommandCenter() {
     return () => { clearInterval(poll); clearInterval(tick); };
   }, []);
 
-  const identity = sov ? resolveIdentity(sov) : null;
   const posture = coord?.posture;
   const t = nat?.totals;
   const incidents = nat?.crossMinistryIncidents ?? [];
@@ -179,17 +178,7 @@ export default function SovereignCommandCenter() {
 
       {/* Top telemetry strip */}
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
-        <Link href="/command" className="focus-ring flex items-center gap-2.5 no-underline">
-          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-sm text-sm font-bold text-white ring-1 ring-white/15" style={{ backgroundColor: ACCENT }}>
-            {identity ? identity.seal : 'CO'}
-          </span>
-          <span className="leading-tight">
-            <span className="flex items-center gap-1.5 text-sm font-bold tracking-[0.18em] text-ink">CIVICOS
-              <span className="rounded-sm border border-line px-1 text-[8px] font-semibold tracking-[0.2em] text-ink-soft">OFFICIAL</span>
-            </span>
-            <span className="block text-[9px] uppercase tracking-[0.16em] text-ink-muted">Sovereign Operating System</span>
-          </span>
-        </Link>
+        <ConsoleMark official />
         <div className="ml-2 hidden flex-1 items-stretch lg:flex">
           {tele.map(m => (
             <div key={m.l} className="border-l border-line px-4 py-1 first:border-l-0">

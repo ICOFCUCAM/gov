@@ -125,8 +125,9 @@ export function platformLabel(stateForm: string, stateName: string): string {
 }
 
 /** The identity the front door wears: the installed nation's name, motto and
- *  insignia once setup is complete, otherwise the CivicOS platform brand. */
-export function useNationBrand(): NationBrand {
+ *  insignia once setup is complete, otherwise the CivicOS platform brand.
+ *  Front-door pages take the nation's name as the window title; consoles keep their own (`title: false`). */
+export function useNationBrand({ title = true }: { title?: boolean } = {}): NationBrand {
   const [brand, setBrand] = React.useState<NationBrand>(PLATFORM_BRAND);
   React.useEffect(() => {
     let live = true;
@@ -135,10 +136,10 @@ export function useNationBrand(): NationBrand {
         if (!live || !st.setup) return;
         const id = resolveIdentity(s.sovereign);
         setBrand({ configured: true, name: id.stateName, motto: id.motto, seal: id.seal, accent: id.accent, platform: platformLabel(s.sovereign.stateForm, id.stateName) });
-        document.title = id.stateName;
+        if (title) document.title = id.stateName;
       })
       .catch(() => { /* keep the platform brand */ });
     return () => { live = false; };
-  }, []);
+  }, [title]);
   return brand;
 }

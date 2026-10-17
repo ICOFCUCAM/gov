@@ -3,9 +3,7 @@
 import * as React from 'react';
 import { projectedPaths, findCountry } from '@/lib/geo/world';
 
-const TONE: Record<string, string> = {
-  alert: '#f1707a', warn: '#e0b341', ok: '#34d39c', neutral: '#6b7a90',
-};
+import { TONE } from '@/lib/tone-palette';
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
 
 /**

@@ -685,6 +685,10 @@ export interface NationalIndicator {
   label: string;
   value: string;
   unit: string;
+  /** What kind of figure it is (lib/twin/signal.ts); screens mark anything not observed or reported. */
+  kind?: import('@/lib/twin/signal').SignalKind;
+  /** Where it comes from, in words. */
+  source?: string;
 }
 export interface CrossMinistryIncident {
   ministryId: string;
