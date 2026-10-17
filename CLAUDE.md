@@ -38,6 +38,19 @@ What has been built is locked. Work only upgrades it toward the vision in
 - Sign-in surfaces: `/sign-in` (substrate email + password) and `/login`
   (citizen verification). The cover hands off to them; it does not replace them.
 
+## Update Center
+
+- `/updates` is each nation's update chamber (global releases + builds made
+  for that nation from its feature requests, `/updates/requests`);
+  `/admin/releases` is the publisher console. Store: `lib/data/updates.ts`,
+  API: `/api/releases`.
+- Updates are never automatic: only `decide()` changes a nation's install
+  state, each step names a person and is written to the audit chain.
+  Security releases are highlighted, never forced.
+- A nation sees only global releases and its own builds and requests; the
+  server resolves the nation (installed nation or private link key), callers
+  never name one.
+
 ## Branding and AI
 
 - Once setup is complete, every front-door surface wears the installed
