@@ -364,6 +364,10 @@ export const sw: Messages = {
     sampleNews: 'Matangazo ya mfano',
     sampleNote: 'Yanaonyeshwa hadi {name} ichapishe yake.',
     browseTopics: 'Vinjari kwa mada',
+    gatewayLink: 'Huu ni ukurasa wa {name} kwenye jukwaa la taifa. Tovuti yake kuu ni {host}.',
+    gatewayMigrate: '{name} inahamishia tovuti yake hapa kutoka {host}; kurasa ambazo bado hazijahamishwa ziko huko.',
+    visitSite: 'Tembelea {host} ↗',
+    fromSite: 'Kutoka {host}',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

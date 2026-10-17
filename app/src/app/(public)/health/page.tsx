@@ -11,9 +11,10 @@ import Link from 'next/link';
 import { publicHealthSite } from '@/lib/gov/health-operations';
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
-import { SampleChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
+import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
+import { GatewayBar, SiteSchema } from '@/apps/_shared/public/integration';
 import { locales } from '@/lib/i18n/config';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Health — Official Portal' };
@@ -106,6 +107,8 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
           {site.nav.map(n => <Link key={n.label} href={n.href} className="shrink-0 whitespace-nowrap" style={{ color: n.active ? BLUE : '#475569' }}>{n.label}</Link>)}
         </nav>
       </header>
+      <GatewayBar gateway={site.gateway} name={inst.name} accent={BLUE} />
+      <SiteSchema name={inst.name} description={inst.tagline} gateway={site.gateway} />
 
       {/* 3. Hero */}
       <section style={{ background: 'linear-gradient(110deg,#ffffff,#eef3fa 55%,#e3edf7)' }}>
@@ -212,12 +215,12 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
         {/* 8. News + initiatives + facilities */}
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div id="news" className="scroll-mt-24 rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: LINE }}>
-            <div className="mb-3 flex items-center justify-between"><div className="flex flex-wrap items-center gap-2"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>{t.latestNews}</h3>{site.newsSample ? <SampleChip label={t.sampleNews} note={note} /> : null}</div><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewNews}</span></div>
+            <div className="mb-3 flex items-center justify-between"><div className="flex flex-wrap items-center gap-2"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>{t.latestNews}</h3>{site.newsSample ? <SampleChip label={t.sampleNews} note={note} /> : site.newsFrom ? <SourceChip label={fill(t.fromSite, { host: site.newsFrom })} /> : null}</div><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewNews}</span></div>
             <div className="space-y-3">
               {news.map(n => (
                 <div key={n.title} className="flex gap-3">
                   <div className="h-14 w-16 shrink-0 rounded-lg" style={{ background: 'linear-gradient(135deg,#cfe0f3,#1f5fad)' }} aria-hidden />
-                  <div><div className="text-[12px] font-semibold" style={{ color: NAVY }}>{n.title}</div><div className="text-[10px] text-slate-500">{n.summary}</div>{n.date ? <div className="text-[9px] text-slate-400">{n.date}</div> : null}</div>
+                  <div>{n.url ? <a href={n.url} rel="noopener" className="text-[12px] font-semibold hover:underline" style={{ color: NAVY }}>{n.title} ↗</a> : <div className="text-[12px] font-semibold" style={{ color: NAVY }}>{n.title}</div>}<div className="text-[10px] text-slate-500">{n.summary}</div>{n.date ? <div className="text-[9px] text-slate-400">{n.date}</div> : null}</div>
                 </div>
               ))}
             </div>

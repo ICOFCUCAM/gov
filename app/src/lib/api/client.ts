@@ -5,6 +5,10 @@
 
 'use client';
 
+import type { SiteSettings, SiteSettingsInput } from '@/lib/data/site-settings';
+
+/** A public institution site's integration settings with its name (GET /api/public-sites). */
+export type PublicSiteRow = SiteSettings & { name: string; role: string };
 import type {
   AuditEntry,
   Bill,
@@ -302,6 +306,13 @@ export const api = {
         req<{ config: ConfigBundle }>(`/api/platform/config/${id}/apply`, { method: 'POST', body: '{}' }),
       drift: () => req<ConfigDrift>('/api/platform/config/drift'),
     },
+  },
+  publicSites: {
+    list: () => req<{ sites: PublicSiteRow[] }>('/api/public-sites'),
+    update: (id: string, patch: SiteSettingsInput & { by: string }) =>
+      req<{ site: SiteSettings }>(`/api/public-sites/${id}`, { method: 'PUT', body: JSON.stringify(patch) }),
+    sync: (id: string, by: string) =>
+      req<{ site: SiteSettings }>(`/api/public-sites/${id}/sync`, { method: 'POST', body: JSON.stringify({ by }) }),
   },
   org: {
     archetypes: () => req<{ archetypes: Archetype[] }>('/api/org/archetypes'),

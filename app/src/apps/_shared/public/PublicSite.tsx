@@ -8,7 +8,9 @@
 import * as React from 'react';
 import Link from 'next/link';
 import './design/fonts.css';
-import { PublicSiteShell, SampleChip, type PublicSiteShellProps, type PublicSiteTheme, type PublicSiteLinkItem } from './PublicSiteShell';
+import { PublicSiteShell, SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteTheme, type PublicSiteLinkItem } from './PublicSiteShell';
+import { GatewayBar, SiteSchema } from './integration';
+import { getSiteSettings } from '@/lib/data/site-settings';
 import { siteProps } from './site-props';
 import { PRESETS, DEFAULT_PRESET, presetsFor, type Preset, type PresetDesign, type BlockRef } from './design/presets';
 import { nationMessages, nationLocale, nationEmergencyContacts } from '@/lib/nation/registry';
@@ -26,10 +28,11 @@ export interface PublicSiteProps {
   preset?: string;
 }
 
-/** The preset a site uses: the requested one when the site may use it, otherwise its default. */
+/** The preset a site uses: the requested one when the site may use it, else the one its ministry chose, else its default. */
 export function presetFor(id: string, requested?: string): Preset {
   const allowed = presetsFor(id);
-  return allowed.find(p => p.id === requested) ?? PRESETS[DEFAULT_PRESET[id] ?? 'civic-standard'] ?? PRESETS['civic-standard']!;
+  const chosen = getSiteSettings(id).preset;
+  return allowed.find(p => p.id === requested) ?? allowed.find(p => p.id === chosen) ?? PRESETS[DEFAULT_PRESET[id] ?? 'civic-standard'] ?? PRESETS['civic-standard']!;
 }
 
 export function PublicSite({ id, theme, illustration, live, preset, extra }: PublicSiteProps) {
@@ -100,7 +103,12 @@ function Btn({ c, href, primary, icon, label }: { c: Ctx; href?: string; primary
 const sampleNote = (c: Ctx) => fill(c.t.sampleNote, { name: c.s.institution.name });
 const figuresChip = (c: Ctx) => (c.s.statisticsSample && c.s.statistics.some(x => !x.live)
   ? <SampleChip label={c.s.statistics.some(x => x.live) ? c.t.includesSample : c.t.sampleFigures} note={sampleNote(c)} /> : null);
-const newsChip = (c: Ctx) => (c.s.newsSample ? <SampleChip label={c.t.sampleNews} note={sampleNote(c)} /> : null);
+const newsChip = (c: Ctx) => (c.s.newsSample ? <SampleChip label={c.t.sampleNews} note={sampleNote(c)} />
+  : c.s.newsFrom ? <SourceChip label={fill(c.t.fromSite, { host: c.s.newsFrom })} /> : null);
+/** A news title, linked to the item on the ministry's website when it came from there. */
+const newsTitle = (n: PublicSiteShellProps['news'][number], style: React.CSSProperties, className = '') => (n.url
+  ? <a href={n.url} rel="noopener" className={`${className} hover:underline`} style={style}>{n.title} ↗</a>
+  : <span className={className} style={style}>{n.title}</span>);
 const glanceTitle = (c: Ctx) => fill(c.t.atGlance, { name: c.s.institution.name.replace('Ministry of ', '') });
 
 /** The number in a label like "Emergency 999", for a tap-to-call link. */
@@ -193,6 +201,8 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
           ))}
         </nav>
       </header>
+      <GatewayBar gateway={s.gateway} name={s.institution.name} accent={th.primary} />
+      <SiteSchema name={s.institution.name} description={s.institution.tagline} gateway={s.gateway} />
 
       <main id="main" className="flex flex-col" style={{ gap: d.gap, paddingBottom: d.gap }}>{children}</main>
 
@@ -570,7 +580,7 @@ function News({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boolean 
         <div className="flex flex-col gap-4 sm:flex-row">
           {thumb('h-32 w-full sm:w-48')}
           <div>
-            <div style={heading(c, 20)}>{first!.title}</div>
+            <div style={heading(c, 20)}>{newsTitle(first!, {})}</div>
             <p className="mt-1 text-[13px] text-slate-600">{first!.summary}</p>
             {first!.date ? <div className="mt-1 text-[11px] text-slate-400">{first!.date}</div> : null}
           </div>
@@ -578,7 +588,7 @@ function News({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boolean 
         <ul className="mt-4 divide-y border-t" style={{ borderColor: c.rule }}>
           {rest.map(n => (
             <li key={n.title} className="py-3" style={{ borderColor: c.rule }}>
-              <div className="text-[14px] font-semibold" style={{ color: th.ink }}>{n.title}</div>
+              <div className="text-[14px] font-semibold">{newsTitle(n, { color: th.ink })}</div>
               <div className="text-[12px] text-slate-500">{n.summary}</div>
               {n.date ? <div className="text-[11px] text-slate-400">{n.date}</div> : null}
             </li>
@@ -592,7 +602,7 @@ function News({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boolean 
         {s.news.map(n => (
           <li key={n.title} className="relative pb-5 last:pb-0">
             <span className="absolute -left-[27px] top-1 h-3 w-3 rounded-full border-2 bg-white" style={{ borderColor: th.primary }} aria-hidden />
-            <div className="text-[14px] font-semibold" style={{ color: th.ink }}>{n.title}</div>
+            <div className="text-[14px] font-semibold">{newsTitle(n, { color: th.ink })}</div>
             <div className="text-[12px] text-slate-500">{n.summary}</div>
             {n.date ? <div className="text-[11px] text-slate-400">{n.date}</div> : null}
           </li>
@@ -606,7 +616,7 @@ function News({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boolean 
           <div key={n.title} className="flex gap-3">
             {thumb('h-14 w-16')}
             <div>
-              <div className="text-[13px] font-semibold" style={{ color: th.ink }}>{n.title}</div>
+              <div className="text-[13px] font-semibold">{newsTitle(n, { color: th.ink })}</div>
               <div className="text-[11px] text-slate-500">{n.summary}</div>
               {n.date ? <div className="text-[10px] text-slate-400">{n.date}</div> : null}
             </div>

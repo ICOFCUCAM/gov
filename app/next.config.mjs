@@ -11,9 +11,20 @@ const nextConfig = {
   async headers() {
     return [
       {
-        source: '/(.*)',
+        // Everything except the embeddable widgets is never framed.
+        source: '/((?!embed/).*)',
         headers: [
           { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
+        ],
+      },
+      {
+        // /embed/* may be framed only by the ministry's registered website: the
+        // route sets Content-Security-Policy frame-ancestors itself.
+        source: '/embed/(.*)',
+        headers: [
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },

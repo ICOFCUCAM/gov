@@ -363,6 +363,10 @@ export const yo: Messages = {
     sampleNews: 'Àwọn àpẹẹrẹ ìkéde',
     sampleNote: 'A ń fi wọ́n hàn títí {name} yóò fi tẹ ti ara rẹ̀ jáde.',
     browseTopics: 'Ṣàwárí nípa àkọlé',
+    gatewayLink: 'Èyí ni ojú-ìwé {name} lórí pẹpẹ orílẹ̀-èdè. Ojú-òpó rẹ̀ pàtàkì ni {host}.',
+    gatewayMigrate: '{name} ń gbé ojú-òpó rẹ̀ wá síbí láti {host}; àwọn ojú-ìwé tí a kò tíì gbé wà níbẹ̀ síbẹ̀.',
+    visitSite: 'Ṣàbẹ̀wò sí {host} ↗',
+    fromSite: 'Láti {host}',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

@@ -363,6 +363,10 @@ export const fr: Messages = {
     sampleNews: 'Annonces d’exemple',
     sampleNote: 'Affichés jusqu’à ce que {name} publie les siens.',
     browseTopics: 'Parcourir par thème',
+    gatewayLink: 'Voici la page de {name} sur la plateforme nationale. Son site principal est {host}.',
+    gatewayMigrate: '{name} transfère son site ici depuis {host} ; les pages non encore transférées y restent.',
+    visitSite: 'Visiter {host} ↗',
+    fromSite: 'Source : {host}',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

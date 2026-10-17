@@ -141,6 +141,10 @@ export interface Messages {
     sampleNews: string;
     sampleNote: string;
     browseTopics: string;
+    gatewayLink: string;
+    gatewayMigrate: string;
+    visitSite: string;
+    fromSite: string;
   };
   /** Permit and receipt detail pages. */
   detail: {
@@ -760,6 +764,10 @@ export const en: Messages = {
     sampleNews: 'Sample announcements',
     sampleNote: 'Shown until the {name} publishes its own.',
     browseTopics: 'Browse by topic',
+    gatewayLink: 'This is the {name} on the national platform. Its main website is {host}.',
+    gatewayMigrate: 'The {name} is moving its website here from {host}; pages not yet moved are still there.',
+    visitSite: 'Visit {host} ↗',
+    fromSite: 'From {host}',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

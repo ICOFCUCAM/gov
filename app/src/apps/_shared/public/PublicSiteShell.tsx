@@ -23,6 +23,7 @@ import Link from 'next/link';
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 import { locales } from '@/lib/i18n/config';
+import { GatewayBar, SiteSchema, type SiteGateway } from './integration';
 
 export interface PublicSiteTheme {
   ink: string;
@@ -54,7 +55,7 @@ export interface PublicSiteQuickService { title: string; subtitle: string; color
 export interface PublicSiteFeaturedCard { kicker: string; title: string; body: string; cta: string; tone: 'primary' | 'subtle' | 'amber'; href?: string }
 /** `live`: read from the platform's own data rather than typed in. */
 export interface PublicSiteStat { value: string; label: string; sub: string; live?: boolean }
-export interface PublicSiteNewsItem { title: string; date?: string; summary: string }
+export interface PublicSiteNewsItem { title: string; date?: string; summary: string; /** On the ministry's existing website (feed news). */ url?: string }
 export interface PublicSiteInitiative { title: string; body: string }
 export interface PublicSiteLocator { title: string; placeholder: string; tabs: string[]; pinLabel: string; pinCoords: [number, number][] }
 export interface PublicSiteShortcut { title: string; subtitle: string; href?: string }
@@ -84,6 +85,10 @@ export interface PublicSiteShellProps {
   news: PublicSiteNewsItem[];
   /** The announcements are reference samples until the institution publishes its own. */
   newsSample?: boolean;
+  /** The host the news was taken from (the ministry's existing website), when it was. */
+  newsFrom?: string;
+  /** The ministry's existing website, when the site is its gateway (Link, Embed or Migrate mode). */
+  gateway?: SiteGateway;
   initiatives: PublicSiteInitiative[];
   locator?: PublicSiteLocator;
   shortcuts: PublicSiteShortcut[];
@@ -104,7 +109,7 @@ function Action({ href, className, style, children }: { href?: string; className
 }
 
 export function PublicSiteShell({
-  theme, institution, nav, hero, alert, quickServices, featured, statistics, statisticsSample, news, newsSample, initiatives,
+  theme, institution, nav, hero, alert, quickServices, featured, statistics, statisticsSample, news, newsSample, newsFrom, gateway, initiatives,
   locator, shortcuts, footerSections, newsletter, legalLine, legalLinks,
 }: PublicSiteShellProps) {
   // Fixed wording in the nation's language (lib/i18n `site`); each institution's own content is unchanged.
@@ -166,6 +171,8 @@ export function PublicSiteShell({
           </div>
         </div>
       </header>
+      <GatewayBar gateway={gateway} name={institution.name} accent={theme.primary} />
+      <SiteSchema name={institution.name} description={institution.tagline} gateway={gateway} />
 
       {/* 3. Hero */}
       <section style={{ background: `linear-gradient(110deg, #ffffff, ${theme.surfaceMute} 55%, ${theme.surfaceMute})` }}>
@@ -296,6 +303,7 @@ export function PublicSiteShell({
               <div className="flex flex-wrap items-center gap-2">
                 <h3 className="text-[15px] font-bold" style={{ color: theme.ink }}>{t.latestNews}</h3>
                 {newsSample ? <SampleChip label={t.sampleNews} note={fill(t.sampleNote, { name: institution.name })} /> : null}
+                {newsFrom ? <SourceChip label={fill(t.fromSite, { host: newsFrom })} /> : null}
               </div>
               <span className="text-[11px] font-semibold" style={{ color: theme.primary }}>{t.viewNews}</span>
             </div>
@@ -305,7 +313,9 @@ export function PublicSiteShell({
                   <div className="h-14 w-16 shrink-0 rounded-lg"
                     style={{ background: `linear-gradient(135deg, ${theme.surfaceMute}, ${theme.primary})` }} aria-hidden />
                   <div>
-                    <div className="text-[12px] font-semibold" style={{ color: theme.ink }}>{n.title}</div>
+                    {n.url
+                      ? <a href={n.url} rel="noopener" className="text-[12px] font-semibold hover:underline" style={{ color: theme.ink }}>{n.title} ↗</a>
+                      : <div className="text-[12px] font-semibold" style={{ color: theme.ink }}>{n.title}</div>}
                     <div className="text-[10px] text-slate-500">{n.summary}</div>
                     {n.date ? <div className="text-[9px] text-slate-400">{n.date}</div> : null}
                   </div>
@@ -441,5 +451,13 @@ export function SampleChip({ label, note }: { label: string; note: string }) {
   return (
     <span title={note} className="rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide"
       style={{ borderColor: '#e7c879', background: '#fdf6e3', color: '#92600e' }}>{label}</span>
+  );
+}
+
+/** Marks content taken from the ministry's existing website. */
+export function SourceChip({ label }: { label: string }) {
+  return (
+    <span className="rounded-full border px-2 py-0.5 text-[10px] font-semibold tracking-wide"
+      style={{ borderColor: '#bfd6f2', background: '#eef5fd', color: '#1f5fad' }}>{label}</span>
   );
 }

@@ -363,6 +363,10 @@ export const ar: Messages = {
     sampleNews: 'إعلانات توضيحية',
     sampleNote: 'تُعرض إلى أن ينشر {name} إعلاناته.',
     browseTopics: 'تصفح حسب الموضوع',
+    gatewayLink: 'هذه صفحة {name} على المنصة الوطنية. موقعها الرئيسي هو {host}.',
+    gatewayMigrate: 'تنقل {name} موقعها إلى هنا من {host}؛ والصفحات التي لم تُنقل بعد ما زالت هناك.',
+    visitSite: 'زيارة {host} ↗',
+    fromSite: 'من {host}',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

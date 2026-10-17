@@ -13,9 +13,10 @@ import Link from 'next/link';
 import { publicTreasurySite } from '@/lib/gov/treasury-systems';
 import { nationMessages, nationInsignia, nationLocale } from '@/lib/nation/registry';
 import { locales } from '@/lib/i18n/config';
-import { SampleChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
+import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
+import { GatewayBar, SiteSchema } from '@/apps/_shared/public/integration';
 import { t as fill } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -226,6 +227,8 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
           </div>
         </div>
       </header>
+      <GatewayBar gateway={site.gateway} name={inst.name} accent={GOLD} />
+      <SiteSchema name={inst.name} description={inst.tagline} gateway={site.gateway} />
 
       {/* 2. Hero */}
       <section className="relative overflow-hidden" style={{ borderBottom: `1px solid ${LINE}` }}>
@@ -359,7 +362,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
             <div className="mb-4 flex items-center justify-between">
               <div className="flex flex-wrap items-center gap-2">
                 <h2 className="text-[14px] font-bold uppercase tracking-[0.14em]" style={{ color: NAVY }}>Latest Updates</h2>
-                {site.newsSample ? <SampleChip label={t.sampleNews} note={note} /> : null}
+                {site.newsSample ? <SampleChip label={t.sampleNews} note={note} /> : site.newsFrom ? <SourceChip label={fill(t.fromSite, { host: site.newsFrom })} /> : null}
               </div>
               <Link href="/public" className="text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: GOLD }}>{t.viewNews}</Link>
             </div>
@@ -367,7 +370,9 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
               {site.news.map(u => (
                 <article key={u.title} className="flex flex-col rounded-md border p-3" style={{ borderColor: LINE }}>
                   <div className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: GOLD }}>{u.summary}</div>
-                  <div className="mt-2 flex-1 text-[12.5px] font-semibold leading-snug" style={{ color: NAVY }}>{u.title}</div>
+                  {u.url
+                    ? <a href={u.url} rel="noopener" className="mt-2 flex-1 text-[12.5px] font-semibold leading-snug hover:underline" style={{ color: NAVY }}>{u.title} ↗</a>
+                    : <div className="mt-2 flex-1 text-[12.5px] font-semibold leading-snug" style={{ color: NAVY }}>{u.title}</div>}
                   {u.date ? <div className="mt-3 border-t pt-2 text-[9.5px] uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: SOFT }}>{u.date}</div> : null}
                 </article>
               ))}

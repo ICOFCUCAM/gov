@@ -1,11 +1,12 @@
 // Turns a public-site content record (lib/public-sites) into PublicSiteShell
 // props: fills the nation's placeholders, resolves links (a section of the
 // same site or a platform route), marks sample and live content, and wears the
-// nation's insignia once setup is complete.
+// nation's insignia once setup is complete. Integration settings bring in the
+// ministry's existing website: its news (Link, Embed, Migrate) and the gateway.
 
 import * as React from 'react';
 import type { PublicSiteShellProps, PublicSiteTheme } from './PublicSiteShell';
-import { siteContent } from '@/lib/public-sites';
+import { effectiveContent } from '@/lib/public-sites/effective';
 import type { SiteContent, SiteLink } from '@/lib/public-sites/types';
 import { fillDeep, siteTokens } from '@/lib/public-sites/tokens';
 import { nationInsignia } from '@/lib/nation/registry';
@@ -19,6 +20,8 @@ export interface SitePropsOptions {
   year?: number;
 }
 
+const hostOf = (url: string) => new URL(url).hostname.replace(/^www\./, '');
+
 /** Resolve a link: a section of this site becomes an anchor on its page. */
 export function siteHref(id: string, to: SiteLink): string {
   if (to.startsWith('/')) return to;
@@ -26,7 +29,7 @@ export function siteHref(id: string, to: SiteLink): string {
 }
 
 export function siteProps(id: string, { theme, illustration, live = {}, year = new Date().getFullYear() }: SitePropsOptions): PublicSiteShellProps {
-  const raw = siteContent(id);
+  const { content: raw, settings } = effectiveContent(id);
   // Live figures first, so a live value is never mistaken for a sample.
   const liveAt = new Set(raw.statistics.flatMap((s, i) => (/\{live\.\w+\}/.test(s.value) ? [i] : [])));
   const withLive = JSON.parse(JSON.stringify(raw).replace(/\{live\.(\w+)\}/g, (_, k: string) => JSON.stringify(live[k] ?? '—').slice(1, -1))) as SiteContent;
@@ -65,6 +68,8 @@ export function siteProps(id: string, { theme, illustration, live = {}, year = n
     statisticsSample: c.statisticsSource === 'sample',
     news: c.news,
     newsSample: c.newsSource === 'sample',
+    ...(c.newsSource === 'feed' && settings.website ? { newsFrom: hostOf(settings.website) } : {}),
+    ...(settings.mode !== 'host' && settings.website ? { gateway: { mode: settings.mode, website: settings.website, host: hostOf(settings.website) } } : {}),
     initiatives: c.initiatives,
     locator: c.locator,
     shortcuts: c.shortcuts.map(s => ({ title: s.title, subtitle: s.subtitle, href: href(s.to) })),

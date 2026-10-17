@@ -50,8 +50,9 @@ export interface SiteContent {
   /** Where the figures come from. Reference figures are samples until the institution supplies its own. */
   statisticsSource: 'sample' | 'nation';
   /** Announcements, newest first. Reference items are samples and carry no date. */
-  news: { title: string; summary: string; date?: string }[];
-  newsSource: 'sample' | 'nation';
+  news: { title: string; summary: string; date?: string; /** Link to the item on the ministry's existing website (feed news). */ url?: string }[];
+  /** 'feed': taken from the ministry's existing website (Link, Embed or Migrate mode). */
+  newsSource: 'sample' | 'nation' | 'feed';
   initiatives: { title: string; body: string }[];
   locator?: { title: string; placeholder: string; tabs: string[]; pinLabel: string; pinCoords: [number, number][] };
   shortcuts: { title: string; subtitle: string; to: SiteLink }[];

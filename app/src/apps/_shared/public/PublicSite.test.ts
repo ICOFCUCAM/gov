@@ -6,6 +6,7 @@ import { PRESETS, DEFAULT_PRESET, SITE_SECTOR, presetsFor } from './design/prese
 import { siteProps } from './site-props';
 import { SITE_IDS } from '@/lib/public-sites';
 import { applyNation } from '@/lib/nation/registry';
+import { resetSiteSettings, updateSiteSettings, syncSiteFeed } from '@/lib/data/site-settings';
 import HealthPage from '@/app/(public)/health/page';
 import TreasuryPage from '@/app/(public)/treasury/page';
 
@@ -90,5 +91,29 @@ describe('public-site design presets', () => {
         expect(html.match(new RegExp(`id="${anchor}"`, 'g'))?.length ?? 0, `${id}: #${anchor}`).toBe(1);
       }
     }
+  });
+
+  it("show a Link-mode ministry's existing website: gateway, its news with source, schema.org, and its chosen design", async () => {
+    resetSiteSettings();
+    const site = 'https://www.police.example.gov';
+    const rss = `<rss><channel><item><title>Station hours change</title><link>${site}/news/7</link><description>From Monday.</description><pubDate>Mon, 12 Oct 2026 08:00:00 GMT</pubDate></item></channel></rss>`;
+    updateSiteSettings('police', { website: site, feedUrl: `${site}/feed.xml`, preset: 'response-community' }, 'CIO');
+    await syncSiteFeed('police', 'test', { fetch: (async () => new Response(rss, { headers: { 'content-type': 'application/rss+xml' } })) as unknown as typeof fetch, resolve: async () => ['203.0.113.5'] });
+    for (const html of [render('police'), render('police', 'civic-standard')]) {
+      const text = decode(html);
+      expect(text).toContain('Its main website is police.example.gov.');
+      expect(html).toContain(`href="${site}"`);
+      expect(html).toContain(`href="${site}/news/7"`);
+      expect(text).toContain('From police.example.gov');
+      expect(text).toContain('12 Oct 2026');
+      expect(text).not.toContain('Sample announcements');
+      expect(html).toContain('"@type":"GovernmentOrganization"');
+      expect(html).toContain(`"sameAs":["${site}"]`);
+    }
+    expect(presetFor('police').id).toBe('response-community');
+    updateSiteSettings('health', { website: 'https://health.example.gov' }, 'CIO');
+    const health = decode(renderToStaticMarkup(React.createElement(HealthPage, {})));
+    expect(health).toContain('Its main website is health.example.gov.');
+    resetSiteSettings();
   });
 });

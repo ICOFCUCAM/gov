@@ -162,6 +162,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   Health and Treasury keep their own designs as bespoke presets that read
   their records. Typefaces are self-hosted under `public/fonts` (OFL); never
   load fonts or scripts from an outside service.
+- A ministry's existing website is a per-site setting (`lib/data/site-settings.ts`,
+  `/api/public-sites`, setup section 3.4): Link (default), Embed, Migrate or
+  Host. Feeds are fetched only by the server, only from the ministry's own
+  registered website, through `fetchFeed()` (private addresses refused, size
+  and time limits, plain text only); never fetch other external content on a
+  public page. `/embed/*` may be framed only by the registered website.
 
 ## Branding and AI
 

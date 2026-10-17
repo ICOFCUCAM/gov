@@ -2,7 +2,9 @@
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { api } from '@/lib/api/client';
+import { api, type PublicSiteRow } from '@/lib/api/client';
+import { checkPublicUrl, onSite } from '@/lib/public-sites/url-safety';
+import type { SiteMode } from '@/lib/data/site-settings';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import { locales } from '@/lib/i18n/config';
 import { COUNTRIES, loadCountry } from '@/lib/geo/admin1';
@@ -57,6 +59,9 @@ export function SetupWizard() {
   const [active, setActive] = React.useState<Record<string, boolean>>({});
   const [added, setAdded] = React.useState<NewInst[]>([]);
   const [draft, setDraft] = React.useState<NewInst>({ archetype: 'GENERIC', name: '' });
+  // Each public site's relation to the ministry's existing website (section 3.4).
+  const [sites, setSites] = React.useState<PublicSiteRow[]>([]);
+  const [siteDraft, setSiteDraft] = React.useState<Record<string, SiteDraft>>({});
   const [existing, setExisting] = React.useState<PlatformSetup | null>(null);
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [log, setLog] = React.useState<LogLine[] | null>(null);
@@ -94,8 +99,10 @@ export function SetupWizard() {
   }, [iso3]);
 
   React.useEffect(() => {
-    Promise.all([api.sovereign.get(), api.sovereign.presets(), api.org.ministries(), api.org.archetypes(), api.setup.get()])
-      .then(([s, p, m, a, st]) => {
+    Promise.all([api.sovereign.get(), api.sovereign.presets(), api.org.ministries(), api.org.archetypes(), api.setup.get(), api.publicSites.list().catch(() => ({ sites: [] as PublicSiteRow[] }))])
+      .then(([s, p, m, a, st, ps]) => {
+        setSites(ps.sites);
+        setSiteDraft(Object.fromEntries(ps.sites.map(x => [x.siteId, { website: x.website ?? '', mode: x.mode, feedUrl: x.feedUrl ?? '' }])));
         setProfile(s.sovereign);
         setPresets(p.presets);
         const live = m.ministries.filter(x => x.status !== 'merged');
@@ -168,7 +175,8 @@ export function SetupWizard() {
     ...chamberErrors,
   ].filter(Boolean) as string[];
   const activeCount = ministries.filter(m => active[m.id]).length + added.length;
-  const instErrors = activeCount === 0 ? ['Keep at least one institution active'] : [];
+  const siteErrors = sites.flatMap(x => siteProblems(x.name, siteDraft[x.siteId]));
+  const instErrors = [...(activeCount === 0 ? ['Keep at least one institution active'] : []), ...siteErrors];
   const errors = step === 0 ? nationErrors : step === 2 ? instErrors : [];
   const canLaunch = nationErrors.length === 0 && instErrors.length === 0;
 
@@ -216,6 +224,20 @@ export function SetupWizard() {
       while (taken.has(slug)) slug = `${slugify(n.name)}-${i++}`;
       taken.add(slug);
       await run(`Chartering ${n.name}`, () => api.org.create({ archetype: n.archetype, name: n.name, slug }));
+    }
+    for (const x of sites) {
+      const d = siteDraft[x.siteId];
+      if (!d) continue;
+      const website = d.website.trim(), feedUrl = d.feedUrl.trim();
+      const mode: SiteMode = website ? d.mode : 'host';
+      if (website === (x.website ?? '') && mode === x.mode && feedUrl === (x.feedUrl ?? '')) continue;
+      const host = website ? new URL(website).hostname.replace(/^www\./, '') : '';
+      const saved = await run(website ? `Linking ${x.name} to ${host} · ${MODE_LABEL[mode]}` : `${x.name} hosted on the platform`,
+        () => api.publicSites.update(x.siteId, { website: website || null, mode, feedUrl: website ? feedUrl || null : null, by: profile.executiveTitle }));
+      // A feed that cannot be fetched now is reported; the scheduled job keeps trying.
+      if (saved && website && feedUrl && mode !== 'host') await run(`Fetching news from ${host}`, () => api.publicSites.sync(x.siteId, profile.executiveTitle).then(r => {
+        if (r.site.feed.status === 'error') throw new Error(r.site.feed.error ?? 'Feed unavailable');
+      }));
     }
     return run('Recording setup in the audit chain', () => api.setup.complete(profile.executiveTitle));
   }
@@ -675,6 +697,50 @@ export function SetupWizard() {
                   </Field>
                 </div>
               </Section>
+
+              <Section n="3.4" title="Existing websites (optional)" aside={<span className="font-mono tracking-[0.12em]">{sites.filter(x => siteDraft[x.siteId]?.website.trim()).length} LINKED</span>}>
+                <p className="mb-4 max-w-3xl text-[13px] font-light leading-relaxed text-white/55">
+                  Every institution keeps a full site on the platform. Where a ministry already runs its own website, give its address:
+                  by default the platform site becomes its gateway (<em>Link</em>) and shows the news from its feed. <em>Embed</em> places
+                  the platform&apos;s services on the existing website; <em>Migrate</em> moves pages across one at a time with forwarding
+                  from the old addresses; <em>Host</em> makes the platform site the ministry&apos;s website. Feeds are fetched only from the
+                  ministry&apos;s own website, by the platform&apos;s servers.
+                </p>
+                <ul className="grid gap-2.5">
+                  {sites.map(x => {
+                    const d = siteDraft[x.siteId] ?? { website: '', mode: 'host' as SiteMode, feedUrl: '' };
+                    const setD = (patch: Partial<SiteDraft>) => setSiteDraft(all => ({ ...all, [x.siteId]: { ...d, ...patch } }));
+                    const linked = !!d.website.trim();
+                    const problems = siteProblems(x.name, d);
+                    return (
+                      <li key={x.siteId} className="rounded-[3px] border px-4 py-3" style={{ borderColor: linked ? hair(0.32) : hair(0.1), background: linked ? hair(0.04) : 'transparent' }}>
+                        <div className="grid items-center gap-3 lg:grid-cols-[220px_minmax(0,1.2fr)_150px_minmax(0,1fr)]">
+                          <span className="min-w-0">
+                            <span className="block truncate text-[14px] font-light text-[#f3efe6]">{x.name}</span>
+                            <span className="mt-0.5 block font-mono text-[9.5px] tracking-[0.08em] text-white/35">/{x.siteId} · {x.role}</span>
+                          </span>
+                          <input aria-label={`${x.name} existing website`} className={inputCls} value={d.website} placeholder="https://www.ministry.go.xx"
+                            onChange={e => { const website = e.currentTarget.value; setD({ website, mode: website.trim() && d.mode === 'host' ? 'link' : d.mode }); }} />
+                          <Select aria-label={`${x.name} mode`} value={linked ? d.mode : 'host'} disabled={!linked}
+                            onChange={e => setD({ mode: e.currentTarget.value as SiteMode })}>
+                            {(['link', 'embed', 'migrate', 'host'] as SiteMode[]).map(m => <option key={m} value={m}>{MODE_LABEL[m]}</option>)}
+                          </Select>
+                          <input aria-label={`${x.name} news feed`} className={inputCls} value={d.feedUrl} disabled={!linked || d.mode === 'host'}
+                            placeholder={linked ? 'News feed (RSS, Atom or JSON Feed)' : '—'}
+                            onChange={e => setD({ feedUrl: e.currentTarget.value })} />
+                        </div>
+                        {problems.length ? <p className="mt-2 text-[12px] text-[#f1938f]">{problems.join(' · ')}</p>
+                          : x.feed.status !== 'never' && x.feedUrl === d.feedUrl.trim() ? (
+                            <p className="mt-2 font-mono text-[10.5px] tracking-[0.04em]" style={{ color: x.feed.status === 'ok' ? CHAMPAGNE : '#f1938f' }}>
+                              {x.feed.status === 'ok' ? `News feed · ${x.feed.items.length} items` : `News feed unavailable: ${x.feed.error}`}
+                              {x.feed.lastSuccess ? ` · last good copy ${new Date(x.feed.lastSuccess).toISOString().slice(0, 16).replace('T', ' ')} UTC` : ''}
+                            </p>
+                          ) : null}
+                      </li>
+                    );
+                  })}
+                </ul>
+              </Section>
             </div>
           )}
 
@@ -882,5 +948,20 @@ function Summary({ n, title, rows, onEdit, wide = false }: { n: string; title: s
       </dl>
     </div>
   );
+}
+
+interface SiteDraft { website: string; mode: SiteMode; feedUrl: string }
+
+const MODE_LABEL: Record<SiteMode, string> = { link: 'Link (gateway)', embed: 'Embed', migrate: 'Migrate', host: 'Host here' };
+
+/** Problems with a site's existing-website answers, checked with the same rules as the server. */
+function siteProblems(name: string, d: SiteDraft | undefined): string[] {
+  if (!d || !d.website.trim()) return [];
+  const w = checkPublicUrl(d.website);
+  if (!w.ok) return [`${name}: ${w.error}`];
+  if (!d.feedUrl.trim() || d.mode === 'host') return [];
+  const f = checkPublicUrl(d.feedUrl);
+  if (!f.ok) return [`${name} feed: ${f.error}`];
+  return onSite(f.url.href, w.url.href) ? [] : [`${name}: the feed must be on ${w.url.hostname}`];
 }
 
