@@ -1142,3 +1142,101 @@ export interface SecurityCenter {
   definitions: SecurityDefinitions;
   posture: SecurityPosture;
 }
+
+// ── Update Center: hosting & deployment paths ─────────────────────────
+// Four ways to run the platform, each assessed from a questionnaire with a
+// documented cost model (lib/updates/hosting-model.ts). Every figure is an
+// estimate until the publisher's engineering review issues an assessment.
+export type HostingPath = 'sovereign-dc' | 'other-cloud' | 'hosted' | 'perpetual';
+export type CloudKind = 'public-hyperscaler' | 'regional-sovereign' | 'private-cloud';
+export interface HostingQuestionnaire {
+  population: number;
+  activeUsers: number;
+  institutions: number;
+  services: number;
+  residency: 'in-country' | 'regional' | 'none';
+  legalConstraints: string;
+  /** Target availability, e.g. 99.9. */
+  availability: number;
+  rtoHours: number;
+  rpoMinutes: number;
+  existingFacility: 'none' | 'partial' | 'tier3-ready';
+  power: 'reliable' | 'unstable';
+  connectivity: 'redundant-fibre' | 'single-link' | 'limited';
+  itStaff: number;
+  // Another cloud
+  cloudKind?: CloudKind;
+  cloudRegionInCountry?: boolean;
+  capabilities?: { kubernetes: boolean; managedPostgres: boolean; objectStorage: boolean; kms: boolean };
+  // Our hosted cloud
+  plan?: 'standard' | 'enterprise' | 'sovereign-dedicated';
+  term?: 1 | 5;
+  // Buy outright
+  support?: boolean;
+  updates?: boolean;
+}
+export interface CostLine { label: string; amount: number; basis: string }
+export interface TimelinePhase { phase: string; minWeeks: number; maxWeeks: number; detail: string }
+export interface HostingEstimate {
+  path: HostingPath;
+  modelVersion: string;
+  /** Amounts are in this currency (the nation's, once a contract rate exists). */
+  currency: string;
+  computedAt: ISODate;
+  sizing?: { vcpu: number; ramGb: number; storageTb: number; bandwidthGbps: number; nodes: number; racks: number; sites: string[]; tier: string };
+  timeline: TimelinePhase[];
+  totalWeeks: { min: number; max: number };
+  capex: CostLine[];
+  capexTotal: number;
+  annual: CostLine[];
+  annualTotal: number;
+  fiveYearTotal: number;
+  compatibility?: { item: string; status: 'ready' | 'needs-work' | 'missing'; note: string }[];
+  residencyFit?: { fits: boolean; note: string };
+  landingZone?: string[];
+  subscription?: { plan: string; term: 1 | 5; annual: number; termTotal: number; discountPct: number; includes: string[] };
+  licence?: { perpetual: number; supportAnnual: number; updatesAnnual: number; independent: string };
+  staffing?: { role: string; count: number; note: string }[];
+  risks: string[];
+  prerequisites: string[];
+  assumptions: string[];
+  migration?: { from: HostingPath; steps: string[]; guarantees: string[] };
+  /** Engineering-review adjustments applied (issued assessments only). */
+  adjustments?: { capexFactor: number; annualFactor: number; timelineFactor: number };
+}
+export type HostingStage = 'preliminary' | 'in-review' | 'issued' | 'revision-requested' | 'accepted' | 'withdrawn';
+export interface HostingAssessment {
+  version: number;
+  issuedAt: ISODate;
+  issuedBy: string;
+  notes: string;
+  estimate: HostingEstimate;
+}
+export interface HostingRequest {
+  id: string;
+  nationId: string;
+  path: HostingPath;
+  /** The path the nation runs today, for the migration plan. */
+  currentPath?: HostingPath;
+  questionnaire: HostingQuestionnaire;
+  stage: HostingStage;
+  submittedAt: ISODate;
+  submittedBy: string;
+  preliminary: HostingEstimate;
+  assessments: HostingAssessment[];
+  decision?: { at: ISODate; by: string; version: number; note?: string };
+  history: { at: ISODate; by: string; from: HostingStage | null; to: HostingStage; note?: string; auditSeq?: number }[];
+}
+export interface HostingCenter {
+  nation: SubscribedNation;
+  currentPath?: HostingPath;
+  currency: string;
+  localPricing: boolean;
+  /** Contract rate from the reference currency, for live client-side estimates. */
+  rate: number;
+  /** Indicative figures for all four paths from the nation's latest (or default) answers. */
+  comparison: Record<HostingPath, HostingEstimate>;
+  basis: HostingQuestionnaire;
+  requests: HostingRequest[];
+  model: { version: string; unitCosts: { label: string; value: string }[] };
+}

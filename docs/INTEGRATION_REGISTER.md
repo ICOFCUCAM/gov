@@ -120,3 +120,18 @@ Owner decisions (held as configuration in `STORE_POLICY`): the baseline is inclu
 | # | Area | Today | To integrate | Where |
 |---|---|---|---|---|
 | 9.1 | **Disaster recovery** | **Not built.** Update fallback covers bad updates only: it switches software back to the last known good release. It does not cover hardware failure, loss of a data centre or site, regional outages, or corrupted storage. | A separate capability: multi-site redundancy (active/standby or active/active), off-site and offline (immutable) backups, documented RTO/RPO targets per service, regular failover and restore drills, and a DR runbook. Restore points taken before updates are not a substitute for backups. | — (new capability) |
+
+## 10. Update Center — hosting & deployment
+
+Four paths at `/updates/hosting`: sovereign data centre, another cloud, our hosted cloud, and a perpetual licence the nation operates on its own. Requests flow request → preliminary estimate → engineering review → versioned assessment → accept or revise; every step is audited.
+
+| # | Area | Today | To integrate | Where |
+|---|---|---|---|---|
+| 10.1 | **Unit costs** | Placeholder. One parameterised cost model (`HOSTING_MODEL`, version `2026.10-placeholder`) in US dollars: servers, storage, facility per rack, power, staff, cloud unit prices, hosted plans, perpetual licence. Shown to nations in full. | Replace with the publisher's real price book and regional benchmarks (hardware quotes, power tariffs, local salaries, provider list prices), versioned. Review at least yearly. | `app/src/lib/updates/hosting-model.ts` |
+| 10.2 | **Engineering review** | Placeholder. A publisher user applies capital, running and timeline factors (0.5–2×) and notes, then issues a version. No site survey, no capacity test. | A real review: site survey or cloud account review, load profile from the nation's data, a named architect's sign-off, and attachments (designs, bills of quantities). | `publisherHostingAction()` in `app/src/lib/data/hosting.ts`, `/admin/releases` |
+| 10.3 | **Hosted subscriptions** | Partial. Accepting a hosted assessment records the chosen plan and term; no contract or invoice is created. | Create the subscription contract and invoices (yearly or 5-year prepaid) through the same billing path as the security store (8.3–8.4). | `nationAction('accept')` |
+| 10.4 | **Perpetual licence** | Partial. The quote is issued at once from the price list and acceptance is recorded; no licence file is produced. | Issue the signed perpetual licence and the offline bundle; invoice through billing. | `requestAssessment()` |
+| 10.5 | **Currency** | Partial. Estimates are in US dollars until a contract rate exists (same rule as 8.8). | Publisher-set contract currency and rate per nation. | `pricing()` in `app/src/lib/data/security-store.ts` |
+| 10.6 | **Migration between paths** | Placeholder. Assessments list the migration steps and guarantees (full export in open formats, no lock-in, parallel run). The export tooling itself is not built. | Build the export/import tooling: PostgreSQL dump, object-storage manifest with checksums, audit-chain export with proofs, and a reconciliation report. | `migration()` in `app/src/lib/updates/hosting-model.ts` |
+| 10.7 | **Persistence** | In-memory, like the rest of the Update Center. | Move requests and assessments to the durable datastore (1.1). | `app/src/lib/data/hosting.ts` |
+

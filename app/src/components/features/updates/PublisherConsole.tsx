@@ -12,6 +12,8 @@ import {
 } from './ui';
 import { RequestCard } from './FeatureRequests';
 import { IncidentCard } from './resilience';
+import { EstimateView, HostingStepper, PATH_TITLE, hostingStageChip } from './HostingCenter';
+import type { HostingRequest } from '@/lib/api/types';
 
 const CHANGE_KINDS: ChangeKind[] = ['feature', 'fix', 'security', 'breaking', 'deprecation'];
 const NEXT: Partial<Record<FeatureRequestStage, FeatureRequestStage>> = {
@@ -95,7 +97,11 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         </div>
       </Section>
 
-      <Section n="05" title="Install matrix" aside="Each nation’s own decision — never pushed">
+      <Section n="05" title="Hosting assessment requests" aside="Engineering review: adjust and issue a versioned assessment">
+        <HostingQueue />
+      </Section>
+
+      <Section n="06" title="Install matrix" aside="Each nation’s own decision — never pushed">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px] font-light">
             <thead>
@@ -124,10 +130,66 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         </div>
       </Section>
 
-      <Section n="06" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
+      <Section n="07" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
         <Pipeline requests={o.requests} nameOf={nameOf} onDone={reload} />
       </Section>
     </>
+  );
+}
+
+function HostingQueue() {
+  const [actor] = useActor();
+  const [q, setQ] = React.useState<{ requests: HostingRequest[]; nations: Record<string, string> } | null>(null);
+  const [err, setErr] = React.useState<string | null>(null);
+  const load = React.useCallback(() => { api.updates.publisher.hostingQueue().then(setQ).catch(e => setErr(e instanceof Error ? e.message : 'Could not load')); }, []);
+  React.useEffect(load, [load]);
+  if (!q) return <div className="min-h-[120px]"><ErrorLine>{err}</ErrorLine></div>;
+  return (
+    <div className="grid gap-3">
+      {q.requests.map(r => <HostingQueueItem key={r.id} r={r} nation={q.nations[r.nationId] ?? r.nationId} by={actor} onDone={load} />)}
+      {!q.requests.length ? <p className="text-[13.5px] font-light text-white/50">No requests yet. Nations request assessments from their Update Center’s Hosting tab.</p> : null}
+      <ErrorLine>{err}</ErrorLine>
+    </div>
+  );
+}
+
+function HostingQueueItem({ r, nation, by, onDone }: { r: HostingRequest; nation: string; by: string; onDone: () => void }) {
+  const [open, setOpen] = React.useState(false);
+  const [f, setF] = React.useState({ capexFactor: 1, annualFactor: 1, timelineFactor: 1, notes: '' });
+  const [err, setErr] = React.useState<string | null>(null);
+  const shown = r.assessments[r.assessments.length - 1]?.estimate ?? r.preliminary;
+  async function act(action: 'review' | 'issue') {
+    setErr(null);
+    try { await api.updates.publisher.hostingAction(r.id, { action, by: by || undefined, ...(action === 'issue' ? f : {}) }); onDone(); }
+    catch (e) { setErr(e instanceof Error ? e.message : 'Action failed'); }
+  }
+  const num = (k: 'capexFactor' | 'annualFactor' | 'timelineFactor') => (e: React.ChangeEvent<HTMLInputElement>) => setF(x => ({ ...x, [k]: Number(e.target.value) }));
+  return (
+    <Panel className="px-5 py-4">
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="font-mono text-[11px] text-white/40">{r.id}</span>
+        <span className="text-[15px] font-light text-[#f3efe6]">{PATH_TITLE[r.path]}</span>
+        <Chip tone="#a9c7e8">{nation}</Chip>
+        <span className="ml-auto">{hostingStageChip(r)}</span>
+      </div>
+      <HostingStepper r={r} />
+      <div className="mt-3 flex flex-wrap items-center gap-2">
+        {r.stage === 'preliminary' || r.stage === 'revision-requested' ? <button type="button" className={`${ghostBtn} py-2 text-[12.5px]`} onClick={() => act('review')}>Start engineering review</button> : null}
+        <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/45 hover:text-[#f4e4bd]">{open ? 'Hide' : 'Show'} estimate</button>
+        {r.history.at(-1)?.to === 'revision-requested' ? <span className="text-[12px] text-[#f1b36b]">Nation asks: {r.history.at(-1)?.note}</span> : null}
+      </div>
+      {r.stage === 'in-review' ? (
+        <div className="mt-4 grid gap-3 sm:grid-cols-[repeat(3,120px)_minmax(0,1fr)_auto] sm:items-end">
+          <Field label="Capital ×"><input type="number" step="0.05" min={0.5} max={2} className={inputCls} value={f.capexFactor} onChange={num('capexFactor')} /></Field>
+          <Field label="Running ×"><input type="number" step="0.05" min={0.5} max={2} className={inputCls} value={f.annualFactor} onChange={num('annualFactor')} /></Field>
+          <Field label="Timeline ×"><input type="number" step="0.05" min={0.5} max={2} className={inputCls} value={f.timelineFactor} onChange={num('timelineFactor')} /></Field>
+          <Field label="Engineering notes"><input className={inputCls} value={f.notes} onChange={e => setF(x => ({ ...x, notes: e.target.value }))} placeholder="What the review found" /></Field>
+          <button type="button" className={`${goldBtn} px-4 py-2.5 text-[12.5px]`} style={goldStyle} onClick={() => act('issue')}>Issue v{r.assessments.length + 1}</button>
+        </div>
+      ) : null}
+      {open ? <div className="mt-4"><EstimateView e={shown} /></div> : null}
+      <div className="min-h-[16px]"><ErrorLine>{err}</ErrorLine></div>
+    </Panel>
   );
 }
 

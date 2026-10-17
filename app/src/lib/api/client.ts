@@ -75,6 +75,9 @@ import type {
   SecurityDefinitions,
   HealthCheck,
   Probation,
+  HostingCenter,
+  HostingRequest,
+  HostingQuestionnaire,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -350,6 +353,11 @@ export const api = {
       req<{ probation: Probation; install: NationInstall }>('/api/releases/health', { method: 'POST', body: JSON.stringify({ checks, link }) }),
     settings: (patch: Partial<ResilienceSettings> & { estate?: { servers?: number; endpoints?: number }; by: string; link?: string }) =>
       req<{ nation: SubscribedNation }>('/api/releases/settings', { method: 'PUT', body: JSON.stringify(patch) }),
+    hosting: (link?: string) => req<{ hosting: HostingCenter }>(`/api/releases/hosting${linkQ(link)}`),
+    requestHosting: (body: { path: string; questionnaire: Partial<HostingQuestionnaire>; by: string; link?: string }) =>
+      req<{ request: HostingRequest }>('/api/releases/hosting', { method: 'POST', body: JSON.stringify(body) }),
+    hostingAction: (id: string, body: { action: 'accept' | 'revise' | 'withdraw'; by: string; note?: string; link?: string }) =>
+      req<{ request: HostingRequest }>(`/api/releases/hosting/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify(body) }),
     issueAgentCredential: (by: string, link?: string) =>
       req<{ credential: string; prefix: string; issuedAt: string; rotated: boolean }>('/api/releases/settings/agent-credential', { method: 'POST', body: JSON.stringify({ by, link }) }),
     acknowledge: (id: string, by: string, link?: string) =>
@@ -380,6 +388,9 @@ export const api = {
         req<{ request: FeatureRequest }>(`/api/releases/publisher/requests/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       enrol: async (body: { name: string; iso3?: string; deliveryMode: DeliveryMode; installedVersion: string; ring?: string }) =>
         req<{ nation: SubscribedNation }>('/api/releases/publisher/nations', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      hostingQueue: async () => req<{ requests: HostingRequest[]; nations: Record<string, string> }>('/api/releases/publisher/hosting', await publisherInit()),
+      hostingAction: async (id: string, body: { action: 'review' | 'issue'; by?: string; notes?: string; capexFactor?: number; annualFactor?: number; timelineFactor?: number }) =>
+        req<{ request: HostingRequest }>(`/api/releases/publisher/hosting/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       setStatus: async (id: string, body: { action: 'halt' | 'resume' | 'withdraw' | 'promote'; reason?: string; by?: string }) =>
         req<{ release: DistributionRelease }>(`/api/releases/publisher/releases/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
     },

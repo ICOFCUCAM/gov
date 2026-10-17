@@ -68,6 +68,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   quote → PO → invoice → bank transfer → licence). Nations may bring their
   own tooling. Security updates are never blocked by payment or licence
   status; coverage is advisory only.
+- Hosting & deployment (`/updates/hosting`, `lib/data/hosting.ts`): four
+  paths — own data centre, another cloud, our hosted cloud (yearly or
+  5-year prepaid), perpetual licence operated alone. Estimates come from one
+  parameterised cost model (`lib/updates/hosting-model.ts`, placeholder unit
+  costs, every figure labelled an estimate); the publisher's engineering
+  review issues versioned assessments. Switching paths is a new request with
+  a migration plan, data export and no lock-in.
 
 ## Branding and AI
 
