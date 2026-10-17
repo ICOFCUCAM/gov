@@ -6,8 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api/client';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import { locales } from '@/lib/i18n/config';
-import { ACCENT } from '@/components/features/SituationRoom';
-import { OnboardingFrame, Eyebrow, SealTile } from './Chrome';
+import { OnboardingFrame, Eyebrow, SealTile, Rule, Corners, hair, CHAMPAGNE, CHAMPAGNE_HI, GOLD } from './Chrome';
 import type { SovereignProfile, Ministry, PlatformSetup } from '@/lib/api/types';
 
 const FORM_LABEL: Record<string, string> = {
@@ -43,13 +42,15 @@ export function Welcome() {
   }, [router, institutionPath]);
 
   if (error) {
-    return <OnboardingFrame><div className="py-20"><Eyebrow>Welcome</Eyebrow><p className="mt-4 text-[15px] text-[#f1707a]">{error}</p></div></OnboardingFrame>;
+    return <OnboardingFrame><div className="py-20"><Eyebrow>Welcome</Eyebrow><p className="mt-4 text-[15px] font-light text-[#f1938f]">{error}</p></div></OnboardingFrame>;
   }
   if (!state) {
     return (
       <OnboardingFrame>
         <div className="grid flex-1 place-items-center py-20">
-          <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-[#65748b]">Establishing secure session…</p>
+          <p className="flex items-center gap-3 font-mono text-[10.5px] uppercase tracking-[0.3em] text-[#d9c398]/70">
+            <span aria-hidden className="h-px w-10 animate-pulse bg-[#d9c398]/60" />Establishing secure session…<span aria-hidden className="h-px w-10 animate-pulse bg-[#d9c398]/60" />
+          </p>
         </div>
       </OnboardingFrame>
     );
@@ -76,72 +77,83 @@ export function Welcome() {
   return (
     <OnboardingFrame right={
       <>
-        <span className="hidden items-center gap-2 sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-[#34d39c]" />Signed in</span>
-        <Link href="/" className="hover:text-white">Sign out</Link>
+        <span className="hidden items-center gap-2 sm:flex"><span className="h-1.5 w-1.5 rounded-full bg-[#9be7c4] shadow-[0_0_8px_#9be7c4]" />SIGNED IN</span>
+        <Link href="/" className="transition-colors hover:text-[#f4e4bd]">SIGN OUT</Link>
       </>
     }>
       <div dir={id.dir} className="flex-1 py-10 lg:py-16">
-        <div className="flex flex-col gap-6 sm:flex-row sm:items-center">
-          <SealTile seal={id.seal} accent={id.accent} size={72} />
+        <div className="flex flex-col gap-7 sm:flex-row sm:items-center sm:gap-9">
+          <SealTile seal={id.seal} accent={id.accent} size={132} inscription={id.stateName} />
           <div className="min-w-0">
             <Eyebrow>{hour === null ? 'Welcome' : greeting(hour)}, {profile.executiveTitle}</Eyebrow>
-            <h1 className="mt-2 text-[2.3rem] font-semibold leading-[1.05] tracking-[-0.03em] sm:text-[3.3rem]">
-              Welcome to {id.stateName}
+            <h1 className="mt-4 text-[2.3rem] font-extralight leading-[1.04] tracking-[-0.035em] text-[#f3efe6] sm:text-[3.6rem]">
+              Welcome to{' '}
+              <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{id.stateName}</span>
             </h1>
-            {id.motto ? <p className="mt-2 text-[15px] text-[#94a3b8]">{id.motto}</p> : null}
+            {id.motto ? <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[0.32em] text-white/50">{id.motto}</p> : null}
           </div>
         </div>
 
-        <dl className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-[10px] border border-[#16202f] bg-[#16202f] lg:grid-cols-5">
+        <Rule className="mt-12" strong />
+        <dl className="grid grid-cols-2 gap-px lg:grid-cols-5" style={{ background: hair(0.1) }}>
           {[
             ['Form of state', FORM_LABEL[profile.stateForm] ?? profile.stateForm],
             ['Legislature', profile.legislatureName],
             ['Institutions live', `${live.length} of ${total}`],
             ['Language · currency', `${locales.find(l => l.code === profile.locale)?.name ?? profile.locale} · ${profile.currency}`],
             ['Configured', new Date(setup.completedAt).toLocaleDateString()],
-          ].map(([k, v]) => (
-            <div key={k} className="bg-[#0b111c] px-5 py-4 last:col-span-2 lg:last:col-span-1">
-              <dt className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#65748b]">{k}</dt>
-              <dd className="mt-1.5 truncate text-[14.5px] font-medium text-[#e2e9f3]">{v}</dd>
+          ].map(([k, v], i) => (
+            <div key={k} className="bg-[#05070b] px-5 py-5 last:col-span-2 lg:last:col-span-1">
+              <dt className="flex items-center gap-2 font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">
+                <span className="tabular-nums text-white/30">{String(i + 1).padStart(2, '0')}</span>{k}
+              </dt>
+              <dd className="mt-2 truncate text-[15px] font-light text-[#f3efe6]">{v}</dd>
             </div>
           ))}
         </dl>
+        <Rule flip />
 
-        <div className="mt-8 grid gap-3 lg:grid-cols-[1.3fr_1fr]">
+        <div className="mt-10 grid gap-3 lg:grid-cols-[1.3fr_1fr]">
           <Link href={primary!.href}
-            className="group relative flex min-h-[190px] flex-col justify-between overflow-hidden rounded-[12px] p-7 text-[#03141a] no-underline transition-[filter] hover:brightness-110"
-            style={{ background: `linear-gradient(135deg, ${ACCENT}, #2aa3b0)` }}>
-            <span className="font-mono text-[11px] uppercase tracking-[0.22em] text-[#03141a]/60">{primary!.k}</span>
-            <span>
-              <span className="block text-[1.7rem] font-semibold leading-tight tracking-[-0.02em]">{primary!.t}</span>
-              <span className="mt-1 block text-[14px] text-[#03141a]/70">{primary!.s}</span>
+            className="group relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-[4px] border p-7 no-underline transition-[border-color,box-shadow] duration-300 hover:border-[#d9c398]/70 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#f4e4bd] sm:p-9"
+            style={{ borderColor: hair(0.4), background: `radial-gradient(ellipse 80% 90% at 100% 100%, ${hair(0.16)}, transparent 60%), linear-gradient(160deg, rgba(24,24,26,0.9), rgba(8,10,14,0.95))`, boxShadow: '0 40px 90px -40px rgba(0,0,0,0.9), inset 0 1px 0 rgba(255,240,210,0.08)' }}>
+            <Corners size={14} />
+            <span aria-hidden className="absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${CHAMPAGNE_HI}, transparent)` }} />
+            <span className="font-mono text-[10px] uppercase tracking-[0.34em]" style={{ color: CHAMPAGNE }}>{primary!.k}</span>
+            <span className="pr-16">
+              <span className="block text-[1.9rem] font-extralight leading-tight tracking-[-0.025em] text-[#f3efe6]">{primary!.t}</span>
+              <span className="mt-2 block text-[14px] font-light text-white/55">{primary!.s}</span>
             </span>
-            <span aria-hidden className="absolute bottom-7 right-7 text-[22px] transition-transform group-hover:translate-x-1">→</span>
+            <span aria-hidden className="absolute bottom-7 right-7 grid h-12 w-12 place-items-center rounded-full text-[18px] text-[#17120a] transition-transform duration-300 group-hover:translate-x-1 sm:bottom-9 sm:right-9"
+              style={{ background: GOLD, boxShadow: `0 10px 30px -10px ${CHAMPAGNE}99, inset 0 1px 0 rgba(255,255,255,0.6)` }}>→</span>
           </Link>
           <ul className="grid gap-3">
-            {rest.map(d => (
+            {rest.map((d, i) => (
               <li key={d.href}>
                 <Link href={d.href}
-                  className="group flex items-center gap-4 rounded-[10px] border border-[#16202f] bg-[#0b111c]/90 px-5 py-4 no-underline transition-colors hover:border-[#2a3a52]">
+                  className="group relative flex h-full items-center gap-4 rounded-[3px] border px-5 py-4 no-underline transition-colors duration-300 hover:border-[#d9c398]/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#f4e4bd]"
+                  style={{ borderColor: hair(0.14), background: 'linear-gradient(160deg, rgba(255,248,230,0.03), rgba(255,248,230,0.005))' }}>
+                  <span className="w-6 shrink-0 font-mono text-[10px] tabular-nums text-[#d9c398]/60">{String(i + 2).padStart(2, '0')}</span>
                   <span className="min-w-0 flex-1">
-                    <span className="block text-[15px] font-semibold text-[#e2e9f3]">{d.t}</span>
-                    <span className="block truncate text-[12.5px] text-[#7d8ba0]">{d.s}</span>
+                    <span className="block text-[15px] font-light text-[#f3efe6]">{d.t}</span>
+                    <span className="mt-0.5 block truncate text-[12.5px] font-light text-white/45">{d.s}</span>
                   </span>
-                  <span aria-hidden className="text-[#3a4759] transition-colors group-hover:text-[#37c7d4]">→</span>
+                  <span className="hidden font-mono text-[9.5px] uppercase tracking-[0.24em] text-white/30 sm:inline">{d.k}</span>
+                  <span aria-hidden className="text-[#d9c398]/50 transition-[color,transform] duration-300 group-hover:translate-x-0.5 group-hover:text-[#f4e4bd]">→</span>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
 
-        <nav aria-label="Configuration" className="mt-8 flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] text-[#65748b]">
-          <span>Configuration:</span>
+        <nav aria-label="Configuration" className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-light text-white/45">
+          <span className="font-mono text-[9.5px] uppercase tracking-[0.3em] text-white/35">Configuration</span>
           {[
             { href: institutionPath ? '/setup?path=institution' : '/setup', l: 'Review setup' },
             { href: '/gov/configuration', l: 'Sovereign configuration' },
             { href: '/admin/onboarding', l: 'Municipal onboarding' },
           ].map(x => (
-            <Link key={x.href} href={x.href} className="underline underline-offset-4 hover:text-white" style={{ color: ACCENT }}>{x.l}</Link>
+            <Link key={x.href} href={x.href} className="underline decoration-[#d9c398]/35 underline-offset-4 transition-colors hover:text-[#f4e4bd] hover:decoration-[#f4e4bd]" style={{ color: CHAMPAGNE }}>{x.l}</Link>
           ))}
         </nav>
       </div>
