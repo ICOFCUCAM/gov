@@ -111,6 +111,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   references, DPIA template, security tests, SBOM, provenance, escrow,
   advisories, the nation's install record and audit-chain entries), as a
   readable page and a JSON manifest with a SHA-256 digest.
+- Mirror (`lib/data/mirror.ts`, `/updates/mirror`): self-hosted and
+  air-gapped nations register a local registry mirror; the sync manifest
+  lists what it lacks, with deltas from releases it holds and the bytes
+  saved. Physical media move through sealed → handed over → received →
+  seal verified, each step by a named person and audited; a seal mismatch
+  marks the media unusable.
 
 ## Branding and AI
 

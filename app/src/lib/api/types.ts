@@ -1541,3 +1541,46 @@ export interface LifecycleWarning {
   /** The newest supported line to move to. */
   moveTo?: string;
 }
+
+// ── Update Center: local mirror and offline logistics ─────────────────
+export interface LocalMirror {
+  nationId: string;
+  registryUrl: string;
+  kind: 'connected' | 'air-gapped';
+  registeredAt: ISODate;
+  registeredBy: string;
+  lastSync?: { at: ISODate; by: string; releaseIds: string[]; bytes: number };
+  /** Releases whose artifacts are in the mirror. */
+  mirrored: string[];
+}
+export interface SyncItem {
+  releaseId: string;
+  version: string;
+  artifactId: string;
+  filename: string;
+  ref?: string;
+  sha256: string;
+  sizeBytes: number;
+  /** A delta from the previous release, when the mirror already holds it. */
+  delta?: { from: string; filename: string; sha256: string; sizeBytes: number; savedBytes: number };
+}
+export interface SyncManifest {
+  nationId: string;
+  generatedAt: ISODate;
+  registryUrl?: string;
+  items: SyncItem[];
+  fullBytes: number;
+  transferBytes: number;
+  savedBytes: number;
+}
+export type CustodyStep = 'sealed' | 'handed-over' | 'received' | 'seal-verified';
+export interface MediaShipment {
+  mediaId: string;
+  nationId: string;
+  releaseIds: string[];
+  /** Contents written to the media: file names and checksums. */
+  contents: { filename: string; sha256: string; sizeBytes: number }[];
+  sealId: string;
+  state: CustodyStep | 'seal-broken';
+  chain: { step: CustodyStep; at: ISODate; by: string; to?: string; note?: string; sealId?: string; ok?: boolean; auditSeq?: number }[];
+}

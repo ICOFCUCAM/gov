@@ -104,6 +104,9 @@ import type {
   LifecycleLine,
   LifecyclePolicy,
   LifecycleWarning,
+  LocalMirror,
+  SyncManifest,
+  MediaShipment,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -406,6 +409,10 @@ export const api = {
     },
     evidence: (id: string, link?: string) =>
       req<{ pack: Record<string, unknown> & { digest: string } }>(`/api/releases/${encodeURIComponent(id)}/evidence${linkQ(link)}`),
+    mirror: (link?: string) =>
+      req<{ deliveryMode: DeliveryMode; mirror: LocalMirror | null; manifest: SyncManifest | null; media: MediaShipment[] }>(`/api/releases/mirror${linkQ(link)}`),
+    mirrorAction: (body: { action: 'register' | 'sync' | 'custody'; by: string; link?: string; registryUrl?: string; kind?: string; releaseIds?: string[]; mediaId?: string; step?: string; sealId?: string; note?: string }) =>
+      req<{ ok: true }>('/api/releases/mirror', { method: 'POST', body: JSON.stringify(body) }),
     lifecycle: (link?: string) =>
       req<{ lines: LifecycleLine[]; policy: LifecyclePolicy; warning: LifecycleWarning | null; installedLine: string }>(`/api/releases/lifecycle${linkQ(link)}`),
     changeControl: (body: { action: 'freeze' | 'unfreeze' | 'add-blackout' | 'remove-blackout' | 'set-windows'; by: string; reason?: string; label?: string; kind?: string; start?: string; end?: string; id?: string; windows?: MaintenanceSlot[]; link?: string }) =>
@@ -459,6 +466,9 @@ export const api = {
       escrow: async () => req<{ deposits: (EscrowStatusRow & { nationId?: string })[]; reviews: SourceReview[]; nations: Record<string, string>; agent: string; depositWithinDays: number }>('/api/releases/publisher/escrow', await publisherInit()),
       escrowAction: async (body: { action: 'deposit' | 'verify' | 'review'; by: string; [k: string]: unknown }) =>
         req<{ ok: true }>('/api/releases/publisher/escrow', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      media: async () => req<{ media: MediaShipment[]; nations: { id: string; name: string; deliveryMode: DeliveryMode; mirror: LocalMirror | null }[] }>('/api/releases/publisher/media', await publisherInit()),
+      mediaAction: async (body: { action: 'seal' | 'hand-over'; by: string; [k: string]: unknown }) =>
+        req<{ media: MediaShipment }>('/api/releases/publisher/media', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       lifecycle: async () => req<{ lines: LifecycleLine[]; policy: LifecyclePolicy; nationsOnLine: Record<string, string[]> }>('/api/releases/publisher/lifecycle', await publisherInit()),
       setLifecycle: async (body: Partial<LifecyclePolicy> & { by: string }) =>
         req<{ policy: LifecyclePolicy; lines: LifecycleLine[] }>('/api/releases/publisher/lifecycle', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),

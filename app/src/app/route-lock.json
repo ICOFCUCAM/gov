@@ -120,6 +120,7 @@
   "/updates/[id]/evidence",
   "/updates/assurance",
   "/updates/hosting",
+  "/updates/mirror",
   "/updates/requests",
   "/updates/security",
   "/updates/settings",

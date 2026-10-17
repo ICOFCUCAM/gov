@@ -195,21 +195,22 @@ export function useCenterTitle(nationName?: string, home = true): { title: strin
   return { title: nation ? `Update Center — ${nation}` : 'Update Center', nation, configured: brand.configured };
 }
 
-type ChamberTab = 'chamber' | 'requests' | 'release' | 'security' | 'hosting' | 'support' | 'assurance' | 'settings';
+type ChamberTab = 'chamber' | 'requests' | 'release' | 'security' | 'hosting' | 'mirror' | 'support' | 'assurance' | 'settings';
 const chamberItems = (q: string) => [
   { href: `/updates${q}`, l: 'Chamber', k: 'chamber' },
   { href: `/updates/security${q}`, l: 'Security', k: 'security' },
   { href: `/updates/hosting${q}`, l: 'Hosting', k: 'hosting' },
+  { href: `/updates/mirror${q}`, l: 'Mirror', k: 'mirror' },
   { href: `/updates/requests${q}`, l: 'Requests', k: 'requests' },
   { href: `/updates/support${q}`, l: 'Support', k: 'support' },
   { href: `/updates/assurance${q}`, l: 'Assurance', k: 'assurance' },
   { href: `/updates/settings${q}`, l: 'Settings', k: 'settings' },
 ];
 
-/** Header navigation (from small screens up); phones get ChamberTabs in the page body. */
+/** Header navigation (from large screens up); smaller screens get ChamberTabs in the page body. */
 export function ChamberNav({ q, active }: { q: string; active: ChamberTab }) {
   return (
-    <nav aria-label="Update Center" className="hidden items-center gap-4 md:flex">
+    <nav aria-label="Update Center" className="hidden items-center gap-4 lg:flex">
       {chamberItems(q).map(i => (
         <Link key={i.k} href={i.href} aria-current={active === i.k ? 'page' : undefined}
           className={`uppercase transition-colors hover:text-[#f4e4bd] ${active === i.k ? 'text-[#f4e4bd]' : ''}`}>{i.l}</Link>
@@ -218,10 +219,10 @@ export function ChamberNav({ q, active }: { q: string; active: ChamberTab }) {
   );
 }
 
-/** The same navigation as a tab row for phones. */
+/** The same navigation as a tab row for phones and tablets. */
 export function ChamberTabs({ q, active }: { q: string; active: ChamberTab }) {
   return (
-    <nav aria-label="Update Center sections" className="-mt-4 mb-6 flex gap-2 overflow-x-auto pb-1 md:hidden">
+    <nav aria-label="Update Center sections" className="-mt-4 mb-6 flex gap-2 overflow-x-auto pb-1 lg:hidden">
       {chamberItems(q).map(i => (
         <Link key={i.k} href={i.href} aria-current={active === i.k ? 'page' : undefined}
           className="shrink-0 rounded-full border px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] no-underline"
