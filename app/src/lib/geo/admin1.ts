@@ -27,7 +27,7 @@ export interface Admin1Country {
   /** Set when the shapes come from an upgraded boundary source (credited on the map). */
   attribution?: BoundaryCredit;
 }
-export interface BoundaryCredit { source: string; licence: string; year: string }
+export interface BoundaryCredit { source: string; licence: string; year: string; /** Distribution channel, e.g. geoBoundaries or OCHA HDX. */ via?: string }
 
 // Countries whose shapes were upgraded to match their official subdivisions
 // (scripts/build-boundaries.mjs, geoBoundaries); all others keep Natural Earth.
@@ -49,7 +49,7 @@ export async function loadCountry(iso3: string): Promise<Admin1Country | null> {
     if (up) {
       const mod = await import(`./boundaries/${iso3}.json`).catch(() => null);
       if (mod) {
-        const c = { ...((mod.default ?? mod) as Admin1Country), attribution: { source: up.source, licence: up.licence, year: up.year } };
+        const c = { ...((mod.default ?? mod) as Admin1Country), attribution: { source: up.source, licence: up.licence, year: up.year, via: up.via ?? 'geoBoundaries' } };
         cache.set(iso3, c);
         return c;
       }

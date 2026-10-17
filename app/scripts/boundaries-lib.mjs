@@ -59,7 +59,27 @@ export function matchUnits(units, shapes) {
     if (i === undefined || used.has(i)) i = byName.get(norm(u.name));
     if (i !== undefined && !used.has(i)) { hits.set(u.code, i); used.add(i); }
   }
+  // Last, spelling variants of the same name (e.g. ISO "Sembabule", UBOS "Ssembabule"):
+  // at most two letters apart, and only when exactly one unused shape is that close.
+  for (const u of units) {
+    if (hits.has(u.code)) continue;
+    const n = norm(u.name);
+    if (n.length < 5) continue;
+    const near = shapes.map((s, i) => [i, norm(s.name)]).filter(([i, m]) => !used.has(i) && m.length >= 5 && distance(n, m) <= 2);
+    if (near.length === 1) { hits.set(u.code, near[0][0]); used.add(near[0][0]); }
+  }
   return hits;
+}
+
+function distance(a, b) {
+  if (Math.abs(a.length - b.length) > 2) return 3;
+  let prev = Array.from({ length: b.length + 1 }, (_, j) => j);
+  for (let i = 1; i <= a.length; i++) {
+    const cur = [i];
+    for (let j = 1; j <= b.length; j++) cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    prev = cur;
+  }
+  return prev[b.length];
 }
 
 export const coverage = (units, shapes) => (units.length ? matchUnits(units, shapes).size / units.length : 0);

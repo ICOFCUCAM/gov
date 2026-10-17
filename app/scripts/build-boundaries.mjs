@@ -1,13 +1,17 @@
 #!/usr/bin/env node
 // Upgrade map shapes where they disagree with a country's official subdivisions.
 //
-// Source: geoBoundaries gbOpen (https://www.geoboundaries.org), openly licensed
-// boundaries built from national sources; each file's licence and source are
-// recorded in src/lib/geo/boundaries/index.json and credited on the map.
+// Sources: geoBoundaries gbOpen (https://www.geoboundaries.org) and OCHA's
+// Common Operational Datasets on HDX (https://data.humdata.org, "cod-ab-<iso3>",
+// published from national statistics and mapping offices). Each file's
+// licence and source are recorded in src/lib/geo/boundaries/index.json and
+// credited on the map. When both cover a country, the better coverage of its
+// official list wins; on a tie the national dataset (HDX) is preferred.
 //
 //   npm i --no-save mapshaper            (or set MAPSHAPER_DIR to an install)
 //   node scripts/build-boundaries.mjs KEN GHA      specific countries
 //   node scripts/build-boundaries.mjs --needed     every country scan:boundaries flags
+//   (behind an HTTPS proxy, run with NODE_USE_ENV_PROXY=1 so Node's fetch uses it)
 //
 // A country is written only when the new shapes cover more of its official
 // list than the shapes the map draws today, so a build can only upgrade a map.
@@ -73,6 +77,37 @@ async function simplify(geo) {
   return JSON.parse(out['out.json']);
 }
 
+// OCHA COD-AB on HDX: a zip of <iso3>_admin1…4.geojson with adm<N>_name fields.
+const HDX = 'https://data.humdata.org/api/3/action/package_show?id=';
+async function codSources(iso3) {
+  const dir = path.join(CACHE, `cod-${iso3}`);
+  if (!fs.existsSync(path.join(dir, 'meta.json'))) {
+    const r = await fetch(HDX + `cod-ab-${iso3.toLowerCase()}`).catch(() => null);
+    if (!r?.ok) return [];
+    const pkg = (await r.json()).result;
+    const zip = pkg?.resources?.find(x => /geojson/i.test(x.format ?? '') && /\.zip$/i.test(x.url));
+    if (!zip) return [];
+    const z = await fetch(zip.url);
+    if (!z.ok) return [];
+    fs.mkdirSync(dir, { recursive: true });
+    fs.writeFileSync(path.join(dir, 'cod.zip'), Buffer.from(await z.arrayBuffer()));
+    execFileSync('unzip', ['-o', '-q', path.join(dir, 'cod.zip'), '-d', path.join(dir, 'x')]);
+    fs.writeFileSync(path.join(dir, 'meta.json'), JSON.stringify({ source: pkg.dataset_source, licence: pkg.license_title, id: pkg.name }));
+  }
+  const meta = JSON.parse(fs.readFileSync(path.join(dir, 'meta.json'), 'utf8'));
+  const out = [];
+  for (const n of [1, 2]) {
+    const f = fs.readdirSync(path.join(dir, 'x')).find(x => new RegExp(`admin${n}\\.geojson$`, 'i').test(x));
+    if (!f) continue;
+    const geo = JSON.parse(fs.readFileSync(path.join(dir, 'x', f), 'utf8'));
+    for (const ft of geo.features) ft.properties = { shapeName: ft.properties[`adm${n}_name`] ?? '', shapeISO: '', validOn: ft.properties.valid_on };
+    const year = String(geo.features[0]?.properties.validOn ?? '').slice(0, 4);
+    out.push({ adm: `ADM${n}`, via: 'OCHA HDX', official: true, geo,
+      meta: { boundarySource: meta.source, boundaryLicense: meta.licence, licenseDetail: '', boundaryYear: year, boundaryID: meta.id } });
+  }
+  return out;
+}
+
 async function build(iso3) {
   const t = targetLevel(iso3);
   const cur = currentShapes(iso3);
@@ -83,15 +118,21 @@ async function build(iso3) {
     const s = await source(iso3, adm);
     if (!s) continue;
     const shapes = s.geo.features.map(f => ({ code: f.properties.shapeISO || '', name: f.properties.shapeName || '' }));
+    candidates.push({ ...s, via: 'geoBoundaries', official: false, shapes, cov: coverage(t.units, shapes) });
+  }
+  for (const s of await codSources(iso3).catch(() => [])) {
+    const shapes = s.geo.features.map(f => ({ code: '', name: f.properties.shapeName }));
     candidates.push({ ...s, shapes, cov: coverage(t.units, shapes) });
   }
   // A level with far more shapes than official units is the level below (e.g. Mali's
   // cercles under its regions), matched only through shared names.
   const fits = c => c.shapes.length <= Math.max(t.units.length * 1.5, t.units.length + 3);
-  const best = candidates.filter(fits).sort((a, b) => b.cov - a.cov)[0];
-  if (!best) return { iso3, skip: candidates.length ? 'no geoBoundaries level of the right size' : 'not in geoBoundaries' };
+  const best = candidates.filter(fits).sort((a, b) => b.cov - a.cov || Number(b.official) - Number(a.official))[0];
+  if (!best) return { iso3, skip: candidates.length ? 'no source level of the right size' : 'not in geoBoundaries or HDX' };
   const licence = `${best.meta.boundaryLicense} ${best.meta.licenseDetail ?? ''}`;
   if (!OPEN.test(licence)) return { iso3, skip: `licence not open: ${best.meta.boundaryLicense}` };
+  // GADM forbids redistribution and commercial use whatever licence a re-publisher lists.
+  if (/gadm/i.test(best.meta.boundarySource ?? '')) return { iso3, skip: `derived from GADM, whose licence does not allow redistribution` };
   if (best.cov < 0.75 || best.cov < before + 0.05) return { iso3, skip: `no clear gain (${pct(before)} → ${pct(best.cov)} with ${best.adm})` };
 
   const simple = await simplify(best.geo);
@@ -130,7 +171,7 @@ async function build(iso3) {
       level: t.level, adm: best.adm, units: provinces.length,
       coverage: Number((hits.size / t.units.length).toFixed(3)),
       source: best.meta.boundarySource, licence: best.meta.boundaryLicense, year: best.meta.boundaryYear,
-      id: best.meta.boundaryID,
+      id: best.meta.boundaryID, via: best.via,
     },
   };
 }
@@ -146,6 +187,6 @@ for (const iso3 of list) {
   try { r = await build(iso3); } catch (e) { r = { iso3, skip: `error: ${e.message}` }; }
   if (r.skip) { console.log(`  ${iso3}  kept    ${r.skip}`); continue; }
   index[iso3] = r.entry;
-  console.log(`  ${iso3}  upgraded ${pct(r.before)} → ${pct(r.after)}  ${r.units} shapes (${r.entry.adm}, ${r.entry.licence}, ${r.entry.source})${r.missing.length ? `  missing: ${r.missing.slice(0, 6).join(', ')}${r.missing.length > 6 ? '…' : ''}` : ''}`);
+  console.log(`  ${iso3}  upgraded ${pct(r.before)} → ${pct(r.after)}  ${r.units} shapes (${r.entry.via} ${r.entry.adm}, ${r.entry.licence}, ${r.entry.source})${r.missing.length ? `  missing: ${r.missing.slice(0, 6).join(', ')}${r.missing.length > 6 ? '…' : ''}` : ''}`);
 }
 fs.writeFileSync(BOUNDARY_INDEX, JSON.stringify(Object.fromEntries(Object.entries(index).sort()), null, 1) + '\n');

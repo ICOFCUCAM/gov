@@ -74,7 +74,8 @@ What has been built is locked. Work only upgrades it toward the vision in
   `scripts/build-divisions.py`.
 - Map shapes are Natural Earth admin-1 (`app/src/lib/geo/admin1/`), upgraded
   per country where they disagree with the official list
-  (`app/src/lib/geo/boundaries/`, geoBoundaries, credited on the map).
+  (`app/src/lib/geo/boundaries/`, from geoBoundaries or the national datasets
+  OCHA publishes on HDX, credited on the map; never GADM-derived data).
   `npm run scan:boundaries` lists countries still disagreeing;
   `npm run build:boundaries -- --needed` upgrades them, and writes a country
   only when the new shapes cover more of its official list, the same

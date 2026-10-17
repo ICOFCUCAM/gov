@@ -192,8 +192,8 @@ export function GeoMap({
       {/* boundary credit, when the shapes come from an upgraded source */}
       {data?.attribution ? (
         <div className="absolute bottom-1.5 right-2.5 max-w-[42%] truncate text-right text-[7px] tracking-[0.04em]" style={{ color: 'rgba(150,180,205,0.55)' }}
-          title={`Boundaries: ${data.attribution.source} (${data.attribution.year}), via geoBoundaries · ${data.attribution.licence}`}>
-          Boundaries © {data.attribution.source} · geoBoundaries
+          title={`Boundaries: ${data.attribution.source} (${data.attribution.year}), via ${data.attribution.via ?? 'geoBoundaries'} · ${data.attribution.licence}`}>
+          Boundaries © {data.attribution.source} · {data.attribution.via ?? 'geoBoundaries'}
         </div>
       ) : null}
       {/* incident density scale */}

@@ -179,6 +179,28 @@
   "year": "2017",
   "id": "MNE-ADM1-59799669"
  },
+ "MRT": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 15,
+  "coverage": 0.933,
+  "source": "Agence Nationale de la Statistique, de l'Analyse Démographique et Economique (ANSADE)",
+  "licence": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+  "year": "2024",
+  "id": "cod-ab-mrt",
+  "via": "OCHA HDX"
+ },
+ "NAM": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 14,
+  "coverage": 1,
+  "source": "Namibia Statistics Agency (NSA)",
+  "licence": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+  "year": "2020",
+  "id": "cod-ab-nam",
+  "via": "OCHA HDX"
+ },
  "NPL": {
   "level": "I",
   "adm": "ADM1",
@@ -208,6 +230,17 @@
   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
   "year": "2019",
   "id": "PNG-ADM1-602756"
+ },
+ "POL": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 16,
+  "coverage": 1,
+  "source": "Państwowy Rejestr Granic (PRG)",
+  "licence": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+  "year": "2022",
+  "id": "cod-ab-pol",
+  "via": "OCHA HDX"
  },
  "QAT": {
   "level": "I",
@@ -248,6 +281,17 @@
   "licence": "Open Data Commons Open Database License 1.0",
   "year": "2017",
   "id": "TJK-ADM1-86453995"
+ },
+ "UGA": {
+  "level": "II",
+  "adm": "ADM2",
+  "units": 135,
+  "coverage": 1,
+  "source": "Uganda Bureau of Statistics with support from WHO",
+  "licence": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+  "year": "2020",
+  "id": "cod-ab-uga",
+  "via": "OCHA HDX"
  },
  "UKR": {
   "level": "I",
