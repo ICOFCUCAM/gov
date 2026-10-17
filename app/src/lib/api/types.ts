@@ -1000,6 +1000,8 @@ export interface UpdateChamber {
   advisories: { releaseId: string; version: string; status: ReleaseStatus; reason?: string }[];
   security: SecurityGate;
   changeControl: ChangeControl;
+  /** Set when the installed release line nears (or has passed) its end of life. */
+  lifecycle?: LifecycleWarning;
 }
 /** Advisory only: security coverage never blocks an update. */
 export interface SecurityGate {
@@ -1503,4 +1505,39 @@ export interface SourceReview {
   schedule?: { start: ISODate; end: ISODate };
   findings?: { summary: string; critical: number; high: number; medium: number; low: number; reportRef: string };
   history: { at: ISODate; by: string; from: SourceReviewStage | null; to: SourceReviewStage; note?: string }[];
+}
+
+// ── Update Center: support lifecycle ──────────────────────────────────
+export type LifecycleKind = 'lts' | 'standard';
+export type LifecyclePhase = 'active' | 'security-only' | 'end-of-life';
+export interface LifecyclePolicy {
+  /** Months of full support (features and fixes) from a line's first release, then months of security fixes only. */
+  standard: { activeMonths: number; securityMonths: number };
+  lts: { activeMonths: number; securityMonths: number };
+  /** Months before end of life at which notices go out. */
+  noticeMonths: number[];
+  /** Release lines (major.minor) designated long-term support. */
+  ltsLines: string[];
+  updatedAt?: ISODate;
+  updatedBy?: string;
+}
+export interface LifecycleLine {
+  line: string;
+  kind: LifecycleKind;
+  gaAt: ISODate;
+  activeUntil: ISODate;
+  endOfLife: ISODate;
+  phase: LifecyclePhase;
+  latestVersion: string;
+  /** Notices whose time has come (12, 6, 3 months before end of life). */
+  notices: { months: number; dueAt: ISODate; issuedAt?: ISODate }[];
+}
+export interface LifecycleWarning {
+  line: string;
+  version: string;
+  endOfLife: ISODate;
+  daysLeft: number;
+  level: 'notice' | 'warning' | 'urgent' | 'expired';
+  /** The newest supported line to move to. */
+  moveTo?: string;
 }

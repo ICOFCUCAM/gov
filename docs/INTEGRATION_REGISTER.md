@@ -156,3 +156,9 @@ Four paths at `/updates/hosting`: sovereign data centre, another cloud, our host
 | 12.6 | **Build attestation signing** | Placeholder. Each artifact's SLSA v1 provenance (in-toto Statement in a DSSE envelope) is complete, but the builder id is a placeholder and the signature is computed with no real key; the claimed level is SLSA Build L3. | Build releases on an isolated, ephemeral builder (e.g. a hardened CI runner with the SLSA generator), sign attestations with the publisher key in an HSM or keyless with a transparency log (Sigstore/Rekor), attach them to the OCI images, and register the builder id with `slsa-verifier`. | `provenanceStatement()`, `provenanceEnvelope()` in `app/src/lib/data/supply-chain.ts` |
 | 12.7 | **Source-code audit environment** | Process only. Requests, scoping, approval with dates, start and findings are recorded and audited; no reading room or access provisioning exists. | Provision read-only access at the escrow agent or a reading room per approved request (time-boxed accounts, no export), and route findings into the advisory process (12.1). | `requestReview()`, `advanceReview()` in `app/src/lib/data/supply-chain.ts` |
 
+## 13. Update Center — lifecycle, evidence, logistics, communication, contracts, data sovereignty
+
+| # | Area | Today | To integrate | Where |
+|---|---|---|---|---|
+| 13.1 | **Support lifecycle policy** | Config. Default windows (standard 6 + 6 months, LTS 12 + 24 months, notices at 12/6/3 months, line 1.3 LTS) are illustrative; the publisher edits them in the console. A release's own `supportUntil` is unchanged. | Publish the signed policy on the public site, align `supportUntil` with the line's end of life when a release is published, and bind the windows into contracts (13.5). | `app/src/lib/data/lifecycle.ts` |
+

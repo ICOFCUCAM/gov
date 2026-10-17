@@ -8,6 +8,7 @@ import { OnboardingFrame, Eyebrow, Section, Rule, hair, CHAMPAGNE, CHAMPAGNE_HI 
 import type { UpdateChamber as Chamber, ChamberRelease, SecurityPosture } from '@/lib/api/types';
 import { AdvisoryBanners, IncidentBanners, PosturePanel, ProbationPanel } from './resilience';
 import { AdvisoriesPanel } from './AdvisoriesPanel';
+import { LifecycleBanner, LifecyclePanel } from './Lifecycle';
 import {
   ChamberNav, ChamberTabs, ChannelChip, CopyValue, ErrorLine, Loading, MODE_LABEL, Panel, PoweredBy, SeverityChip,
   STAGES, STAGE_LABEL, StateChip, VerifyGuide, VersionBadge, fmtDate, useCenterTitle, useLink, Chip,
@@ -113,6 +114,7 @@ function Body({ c, q, link, title, nation, posture, reload }: { c: Chamber; q: s
         </div>
       ) : null}
 
+      {c.lifecycle ? <LifecycleBanner w={c.lifecycle} q={q} /> : null}
       <AdvisoryBanners c={c} q={q} />
       <IncidentBanners incidents={c.incidents} link={link} q={q} onChange={reload} />
       {c.probation ? (
@@ -185,7 +187,13 @@ function Body({ c, q, link, title, nation, posture, reload }: { c: Chamber; q: s
         <AdvisoriesPanel link={link} q={q} compact />
       </Section>
 
-      <Section n="06" title="Your distribution link and integrity">
+      <div id="lifecycle" className="scroll-mt-6">
+        <Section n="06" title="Support lifecycle" aside="Active · security fixes only · end of life">
+          <LifecyclePanel link={link} />
+        </Section>
+      </div>
+
+      <Section n="07" title="Your distribution link and integrity">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <span className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">Private link key</span>
           <CopyValue value={c.nation.channelKey} label="distribution link key" />

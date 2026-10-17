@@ -101,6 +101,9 @@ import type {
   EscrowStatusRow,
   SourceReview,
   SourceReviewEnvironment,
+  LifecycleLine,
+  LifecyclePolicy,
+  LifecycleWarning,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -401,6 +404,8 @@ export const api = {
       const p = new URLSearchParams({ ...(month ? { month } : {}), ...(link ? { link } : {}) }).toString();
       return req<{ report: SlaReport; months: string[] }>(`/api/releases/sla-report${p ? `?${p}` : ''}`);
     },
+    lifecycle: (link?: string) =>
+      req<{ lines: LifecycleLine[]; policy: LifecyclePolicy; warning: LifecycleWarning | null; installedLine: string }>(`/api/releases/lifecycle${linkQ(link)}`),
     changeControl: (body: { action: 'freeze' | 'unfreeze' | 'add-blackout' | 'remove-blackout' | 'set-windows'; by: string; reason?: string; label?: string; kind?: string; start?: string; end?: string; id?: string; windows?: MaintenanceSlot[]; link?: string }) =>
       req<{ changeControl: ChangeControl }>('/api/releases/change-control', { method: 'POST', body: JSON.stringify(body) }),
     registerStaging: (body: { name: string; url: string; by: string; link?: string }) =>
@@ -452,6 +457,9 @@ export const api = {
       escrow: async () => req<{ deposits: (EscrowStatusRow & { nationId?: string })[]; reviews: SourceReview[]; nations: Record<string, string>; agent: string; depositWithinDays: number }>('/api/releases/publisher/escrow', await publisherInit()),
       escrowAction: async (body: { action: 'deposit' | 'verify' | 'review'; by: string; [k: string]: unknown }) =>
         req<{ ok: true }>('/api/releases/publisher/escrow', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      lifecycle: async () => req<{ lines: LifecycleLine[]; policy: LifecyclePolicy; nationsOnLine: Record<string, string[]> }>('/api/releases/publisher/lifecycle', await publisherInit()),
+      setLifecycle: async (body: Partial<LifecyclePolicy> & { by: string }) =>
+        req<{ policy: LifecyclePolicy; lines: LifecycleLine[] }>('/api/releases/publisher/lifecycle', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       setStatus: async (id: string, body: { action: 'halt' | 'resume' | 'withdraw' | 'promote'; reason?: string; by?: string }) =>
         req<{ release: DistributionRelease }>(`/api/releases/publisher/releases/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
     },

@@ -71,6 +71,7 @@ import { securityGate, posture as securityPosture } from './security-store';
 import { preflightGate, stagingGate, superviseStaging } from './readiness';
 import { blackoutOverlapping, freezeBlocks, changeControl } from './change-control';
 import { openTicketForIncident } from './support';
+import { issueDueNotices, lifecycleWarning } from './lifecycle';
 
 /** Backward compatible with the previous release: every migration reversible and expand/contract, never in place. */
 export function isBackwardCompatible(migrations: ReleaseMigration[]): boolean {
@@ -531,6 +532,7 @@ export function getChamber(nationId: string): UpdateChamber | { error: string } 
       .map(r => ({ releaseId: r.id, version: r.version, status: r.status, reason: r.statusReason })),
     security: securityGate(raw),
     changeControl: changeControl(nationId),
+    lifecycle: lifecycleWarning(raw, udb().releases.filter(r => visibleTo(r, nationId))),
   };
 }
 
@@ -1275,6 +1277,7 @@ export interface WatchdogSummary {
 
 export function superviseProbations(now = Date.now()): WatchdogSummary {
   superviseStaging(now);
+  issueDueNotices(udb().releases, now);
   const out: WatchdogSummary = { at: new Date(now).toISOString(), nations: udb().nations.length, watching: [], passed: [], fellBack: [], awaitingDecision: [], missingReports: 0 };
   for (const n of udb().nations) {
     if (!n.installedReleaseId) continue;

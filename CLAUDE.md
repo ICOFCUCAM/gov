@@ -101,6 +101,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   download link; every release is deposited in source-code escrow (contents
   hash, agent, release conditions) and nations can request source-code
   audits by their own auditors. Each nation sees only its own releases.
+- Lifecycle (`lib/data/lifecycle.ts`): release lines (major.minor) are LTS or
+  standard, each with active, security-only and end-of-life windows from the
+  line's first release; the publisher sets the policy (audited). End-of-life
+  notices go out once each at 12, 6 and 3 months; the chamber warns when the
+  installed line nears its end.
 
 ## Branding and AI
 
