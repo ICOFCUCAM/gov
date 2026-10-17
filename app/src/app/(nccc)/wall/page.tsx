@@ -5,6 +5,7 @@ import { WallPanel } from '@/components/ui/WallPanel';
 import { Pill } from '@/components/ui/Pill';
 import { ClassBanner } from '@/components/ui/ClassBanner';
 import { TONE, Spark, seed, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
+import { nationCurrency } from '@/lib/nation/registry';
 
 
 const ACTIVATION = Date.UTC(2026, 4, 13, 8, 31);
@@ -133,7 +134,7 @@ export default function NcccWallPage() {
                 <tr>
                   <th className="py-2 pr-3">Option</th>
                   <th className="py-2 pr-3">Lives-at-risk reduction</th>
-                  <th className="py-2 pr-3">Cost (KES M)</th>
+                  <th className="py-2 pr-3">Cost ({nationCurrency()} M)</th>
                   <th className="py-2 pr-3">People displaced</th>
                   <th className="py-2">Civil society note</th>
                 </tr>

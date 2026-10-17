@@ -246,6 +246,9 @@ export function SetupWizard() {
                 <Field label="Legislature">
                   <input className={inputCls} value={profile.legislatureName} onChange={e => set('legislatureName', e.currentTarget.value)} placeholder="National Assembly …" />
                 </Field>
+                <Field label="Domestic payment rail" hint="How citizens pay, e.g. Mobile Money, Instant Payments">
+                  <input className={inputCls} value={profile.paymentRail ?? ''} placeholder="Mobile Money" onChange={e => set('paymentRail', e.currentTarget.value)} />
+                </Field>
                 <Field label="Currency" hint="ISO 4217, e.g. GHS, KES, NGN, EUR">
                   <input className={`${inputCls} font-mono uppercase`} maxLength={3} value={profile.currency} onChange={e => set('currency', e.currentTarget.value.toUpperCase())} />
                 </Field>

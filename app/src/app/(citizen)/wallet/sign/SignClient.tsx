@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button';
 import { Plain } from '@/components/ui/Plain';
 import { api } from '@/lib/api/client';
 import type { SignatureResult } from '@/lib/api/types';
+import { DEMO_CITIZEN } from '@/lib/nation/persona';
 
 const DOC = {
   id: 'DOC-FIRE-ANNEX-4F21',
@@ -25,7 +26,7 @@ export function SignClient() {
       const { result } = await api.signatures.sign({
         documentId: DOC.id,
         documentTitle: DOC.title,
-        signerName: 'Amina Hassan Mwangi',
+        signerName: DEMO_CITIZEN.name,
       });
       setResult(result);
       setStep('done');

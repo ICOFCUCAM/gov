@@ -11,8 +11,9 @@ import { serviceReadings } from '@/lib/gov/ministry-services';
 import { deployableInstitutions } from '@/lib/institution/readiness';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { Incident, OpsOverview, Ministry } from '@/lib/api/types';
+import { regionList } from '@/lib/nation/registry';
 
-const ME = 'W. Chebet (ops)';
+const ME = 'W. Tanaka (ops)';
 const sp = (k: string, n = 20, lo = 30, hi = 80) =>
   Array.from({ length: n }).map((_, i) => lo + seed(`ops:${k}:${i}`) * (hi - lo));
 
@@ -40,7 +41,7 @@ function Tile({ l, v, sub, t = 'ok', spark }: { l: string; v: string; sub?: stri
 const SVC_FALLBACK = [
   { name: 'Citizen API', sub: 'Public services gateway', status: 'ok', latencyMs: 78, detail: 'Nominal' },
   { name: 'Officer API', sub: 'Internal services gateway', status: 'ok', latencyMs: 96, detail: 'Nominal' },
-  { name: 'Payments Rail', sub: 'M-Pesa + ISO 20022', status: 'ok', latencyMs: 210, detail: 'Reachable' },
+  { name: 'Payments Rail', sub: 'Mobile Money + ISO 20022', status: 'ok', latencyMs: 210, detail: 'Reachable' },
   { name: 'Audit Ledger', sub: 'Blockchain integrity', status: 'ok', latencyMs: 12, detail: 'Chain intact' },
   { name: 'Identity Fabric', sub: 'Sovereign IdP', status: 'ok', latencyMs: 64, detail: 'Nominal' },
   { name: 'Edge Sync', sub: 'Municipal edge network', status: 'degraded', latencyMs: 540, detail: 'Municipalities lagging' },
@@ -53,9 +54,10 @@ const Q_FALLBACK = [
   { name: 'Identity verification', depth: 54, cap: 140, slaHours: 168, breaching: false },
   { name: 'Municipal onboarding', depth: 7, cap: 24, slaHours: 0, breaching: false },
 ];
-const MUNI = ['Kiambu', 'Garissa', 'Tana Delta', 'Uasin Gishu', 'Kisumu', 'Mombasa', 'Nakuru', 'Turkana'];
+// Municipalities shown on the edge-sync board follow the nation's regions.
+const MUNI = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 const INC_FALLBACK = [
-  { id: 'INC-2841', title: 'Edge sync delayed (>2h)', sev: 'sev1', lbl: 'CRITICAL', scope: 'Infrastructure · Garissa', tm: '21:18' },
+  { id: 'INC-2841', title: 'Edge sync delayed (>2h)', sev: 'sev1', lbl: 'CRITICAL', scope: 'Infrastructure · Eastern', tm: '21:18' },
   { id: 'INC-2840', title: 'Hospital capacity data delayed', sev: 'sev2', lbl: 'ELEVATED', scope: 'Health Ministry · 6 regions', tm: '21:02' },
   { id: 'INC-2839', title: 'Payment settlement backlog', sev: 'sev2', lbl: 'ELEVATED', scope: 'Treasury · Payment Rail', tm: '20:53' },
   { id: 'INC-2838', title: 'Permit approvals high latency', sev: 'sev3', lbl: 'WATCH', scope: 'Lands Ministry · 3 regions', tm: '20:41' },

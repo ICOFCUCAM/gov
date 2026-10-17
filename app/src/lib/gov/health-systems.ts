@@ -9,7 +9,7 @@
 import { seed, wave } from '@/lib/telemetry';
 import { regionList } from '@/lib/nation/registry';
 
-const FIRST = ['A. Mwangi', 'L. Okonkwo', 'S. Patel', 'R. Diallo', 'M. Hassan', 'T. Ndlovu', 'J. Kamau', 'F. Abebe', 'C. Mensah', 'N. Farah', 'P. Achieng', 'D. Sow'];
+const FIRST = ['A. Mehta', 'L. Okonkwo', 'S. Patel', 'R. Diallo', 'M. Hassan', 'T. Ndlovu', 'J. Brennan', 'F. Abebe', 'C. Mensah', 'N. Farah', 'P. Park', 'D. Sow'];
 const SPECIALTIES = ['Emergency', 'Internal Medicine', 'Surgery', 'Paediatrics', 'Obstetrics', 'Cardiology', 'ICU / Critical Care', 'Infectious Disease'];
 const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 

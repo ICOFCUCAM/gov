@@ -13,7 +13,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { api } from '@/lib/api/client';
 import type { Permit, PermitDecision } from '@/lib/api/types';
 
-const OFFICER = 'K. Otieno';
+const OFFICER = 'K. Adamu';
 const OPEN_STATES = new Set(['submitted', 'in-review', 'needs-info']);
 
 export function OfficerWorkspace() {

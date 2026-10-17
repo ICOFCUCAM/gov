@@ -7,6 +7,7 @@ import { TextField, SelectField } from '@/components/ui/Field';
 import { Plain } from '@/components/ui/Plain';
 import { api } from '@/lib/api/client';
 import type { PermitType } from '@/lib/api/types';
+import { DEMO_CITIZEN, homePlace } from '@/lib/nation/persona';
 
 const TYPES: { value: PermitType; label: string }[] = [
   { value: 'business', label: 'Business permit' },
@@ -71,14 +72,14 @@ export function NewPermitForm() {
           label="Applicant name"
           name="applicantName"
           required
-          defaultValue="Amina Hassan Mwangi"
+          defaultValue={DEMO_CITIZEN.name}
         />
 
         <TextField
           label="Municipality"
           name="municipality"
           required
-          defaultValue="Kiambu"
+          defaultValue={homePlace()}
         />
 
         <TextField

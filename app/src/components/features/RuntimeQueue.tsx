@@ -11,7 +11,7 @@ import { subscribe, getScope, actOnItem, annotateItem, reassignItem, version as 
 import { checkAction, capabilityForAction, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
 import { nextBestAction } from '@/shared/ai/next-action';
 
-const ASSIGNEES = ['K. Otieno', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Kamau'];
+const ASSIGNEES = ['K. Adamu', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Brennan'];
 
 const ACTION_LABEL: Record<ActionKey, string> = {
   advance: 'Advance', approve: 'Approve', reject: 'Reject', escalate: 'Escalate',

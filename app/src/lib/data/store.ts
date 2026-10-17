@@ -94,7 +94,7 @@ import { profileFor } from '@/lib/archetype-profiles';
 import { scoreInstitution } from '@/lib/institution/readiness';
 import { blueprintFor } from '@/lib/institution/blueprint';
 import { federationSeed } from '@/lib/institution/federation';
-import { regionList, applyNation } from '@/lib/nation/registry';
+import { regionList, applyNation, nationPaymentRail } from '@/lib/nation/registry';
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -108,9 +108,9 @@ function hash(seed: string): string {
 
 const citizen: Citizen = {
   id: 'cz-amina',
-  displayName: 'Amina Hassan Mwangi',
+  displayName: 'Amina Hassan',
   preferredLocale: 'en',
-  municipality: 'Kiambu',
+  municipality: 'Capital District',
 };
 
 // Module-level singletons (process-lifetime).
@@ -126,7 +126,7 @@ function seed() {
       type: 'business',
       title: 'Bakery — small business permit',
       applicantName: citizen.displayName,
-      municipality: 'Kiambu',
+      municipality: 'Capital District',
       status: 'in-review',
       submittedAt: days(-3),
       decisionDue: days(9),
@@ -143,17 +143,17 @@ function seed() {
   ];
 
   const bills: Bill[] = [
-    { id: 'BL-9001', kind: 'water', description: 'Water — April 2026', amountMinor: 84000, currency: 'KES', dueDate: days(6), status: 'due' },
-    { id: 'BL-9002', kind: 'waste', description: 'Solid waste — Q2 2026', amountMinor: 30000, currency: 'KES', dueDate: days(12), status: 'due' },
-    { id: 'BL-9003', kind: 'property-tax', description: 'Property tax — 2025 (paid)', amountMinor: 540000, currency: 'KES', dueDate: days(-40), status: 'paid' },
+    { id: 'BL-9001', kind: 'water', description: 'Water — April 2026', amountMinor: 84000, currency: 'USD', dueDate: days(6), status: 'due' },
+    { id: 'BL-9002', kind: 'waste', description: 'Solid waste — Q2 2026', amountMinor: 30000, currency: 'USD', dueDate: days(12), status: 'due' },
+    { id: 'BL-9003', kind: 'property-tax', description: 'Property tax — 2025 (paid)', amountMinor: 540000, currency: 'USD', dueDate: days(-40), status: 'paid' },
   ];
 
   const receipts: PaymentReceipt[] = [
-    { id: 'PR-3001', billId: 'BL-9003', amountMinor: 540000, currency: 'KES', rail: 'M-Pesa', paidAt: days(-40), hash: hash('BL-9003') },
+    { id: 'PR-3001', billId: 'BL-9003', amountMinor: 540000, currency: 'USD', rail: 'Mobile Money', paidAt: days(-40), hash: hash('BL-9003') },
   ];
 
   const notifications: Notification[] = [
-    { id: 'NT-7001', from: 'Ministry of Education', subject: 'School transfer approved', body: 'The transfer of Aisha to Mukuvisi Primary is confirmed.', at: days(-1), read: false, channel: 'wallet' },
+    { id: 'NT-7001', from: 'Ministry of Education', subject: 'School transfer approved', body: 'The transfer of Aisha to Northern Primary is confirmed.', at: days(-1), read: false, channel: 'wallet' },
     { id: 'NT-7002', from: 'Tax authority', subject: 'Your 2026 tax draft is ready', body: 'A pre-filled draft is ready for your review. No signature is needed yet.', at: days(-3), read: false, channel: 'wallet', aiClass: 'C' },
     { id: 'NT-7003', from: 'Civic Assistant', subject: 'Pension eligibility', body: 'Here is the information you asked for about pension eligibility.', at: days(-7), read: true, channel: 'wallet', aiClass: 'A' },
   ];
@@ -164,24 +164,24 @@ function seed() {
     {
       id: 'INC-2041',
       severity: 'sev3',
-      title: 'Garissa edge sync delayed (>2h)',
-      scope: 'Garissa',
+      title: 'Eastern edge sync delayed (>2h)',
+      scope: 'Eastern',
       status: 'acknowledged',
       openedAt: days(0),
       acknowledgedAt: days(0),
       owner: 'Platform on-call',
       events: [
         { at: days(0), by: 'system', action: 'opened', note: 'Sync lag threshold exceeded.' },
-        { at: days(0), by: 'W. Chebet', action: 'acknowledged', note: 'Investigating link to regional POP.' },
+        { at: days(0), by: 'W. Tanaka', action: 'acknowledged', note: 'Investigating link to regional POP.' },
       ],
     },
   ];
 
   // Minutes since last successful edge sync, per municipality.
   const tenantSync: Record<string, number> = {
-    Kiambu: 4,
-    Garissa: 137,
-    'Tana Delta': 22,
+    'Capital District': 4,
+    Eastern: 137,
+    Northern: 22,
   };
 
   const integrations: IntegrationClient[] = [
@@ -189,18 +189,18 @@ function seed() {
       id: 'IC-7001',
       kind: 'integration',
       name: 'County GIS connector',
-      ownerOrg: 'Kiambu Lands Office',
+      ownerOrg: 'Capital District Lands Office',
       scopes: ['permit:read'],
       status: 'approved',
       rateLimitRpm: 120,
       createdAt: days(-20),
-      approvedBy: 'L. Mwakio',
+      approvedBy: 'L. Petrov',
     },
   ];
   const grants: FederationGrant[] = [
     {
       id: 'FG-3001',
-      fromTenant: 'kiambu',
+      fromTenant: 'home',
       toTenant: 'min-health',
       scopes: ['permit:read'],
       status: 'approved',
@@ -213,7 +213,7 @@ function seed() {
     {
       id: 'WH-9001',
       topic: 'civicos.permit.decided',
-      url: 'https://lands.kiambu.go.ke/hooks/permits',
+      url: 'https://lands.home.gov.example/hooks/permits',
       status: 'active',
       failures: 0,
       createdAt: days(-10),
@@ -221,19 +221,19 @@ function seed() {
   ];
 
   const releases: Release[] = [
-    { id: 'REL-140', version: '1.4.0', channel: 'stable', notes: 'Permits SLA + audit chain', createdAt: days(-30), approvedBy: 'L. Mwakio' },
+    { id: 'REL-140', version: '1.4.0', channel: 'stable', notes: 'Permits SLA + audit chain', createdAt: days(-30), approvedBy: 'L. Petrov' },
     { id: 'REL-150', version: '1.5.0', channel: 'staging', notes: 'Operations centre + interop', createdAt: days(-7) },
   ];
   const deployments: Deployment[] = [];
   const lifecycle: TenantLifecycle = {
-    tenant: 'kiambu',
+    tenant: 'home',
     state: 'active',
     events: [
-      { at: days(-60), from: 'provisioning', to: 'active', reason: 'Go-live after inclusion-floor check', actor: 'L. Mwakio' },
+      { at: days(-60), from: 'provisioning', to: 'active', reason: 'Go-live after inclusion-floor check', actor: 'L. Petrov' },
     ],
   };
   const backups: BackupRecord[] = [
-    { id: 'BK-9001', kind: 'full', state: 'completed', location: 'sov://backups/kiambu/full-1.enc', encrypted: true, sizeBytes: 4_812_004, createdAt: days(-1) },
+    { id: 'BK-9001', kind: 'full', state: 'completed', location: 'sov://backups/home/full-1.enc', encrypted: true, sizeBytes: 4_812_004, createdAt: days(-1) },
   ];
   const configs: ConfigBundle[] = [
     { id: 'CFG-1', scope: 'global', version: 1, contentHash: hash('cfg-v1'), signedBy: 'STO', state: 'applied', createdAt: days(-20) },
@@ -434,7 +434,7 @@ export function verifyDocument(code: string): VerifyResult {
   if (c.startsWith('VC-')) {
     return {
       valid: true,
-      subject: 'Amina Hassan Mwangi',
+      subject: 'Amina Hassan',
       issuer: 'Ministry of Education',
       credentialType: 'Diploma in Nursing',
       issuedAt: new Date(Date.now() - 400 * 86400000).toISOString(),
@@ -551,7 +551,7 @@ export function serviceHealth(): ServiceHealth[] {
   return [
     { name: 'Citizen API', status: 'ok', latencyMs: 78, detail: 'Nominal' },
     { name: 'Officer API', status: 'ok', latencyMs: 96, detail: 'Nominal' },
-    { name: 'Payments rail', status: 'ok', latencyMs: 210, detail: 'M-Pesa + ISO 20022 reachable' },
+    { name: 'Payments rail', status: 'ok', latencyMs: 210, detail: `${nationPaymentRail()} + ISO 20022 reachable` },
     {
       name: 'Audit ledger',
       status: audit.ok ? 'ok' : 'down',
@@ -689,7 +689,7 @@ export const escalateIncident = (id: string, by: string, note?: string) =>
   mutateIncident(id, by, 'escalated', note);
 
 // ── Interoperability & federation (mirrors the backend contract) ──────
-const HOME_TENANT = 'kiambu';
+const HOME_TENANT = 'home';
 
 export function listIntegrations(): IntegrationClient[] {
   return [...db.integrations].sort(
@@ -1028,7 +1028,7 @@ export function createBackup(kind: BackupKind): BackupRecord {
     id: uid('BK'),
     kind,
     state: 'completed',
-    location: `sov://backups/kiambu/${kind}-${Date.now()}.enc`,
+    location: `sov://backups/home/${kind}-${Date.now()}.enc`,
     encrypted: true,
     sizeBytes: Math.floor(1_000_000 + Math.random() * 9_000_000),
     createdAt: new Date().toISOString(),
@@ -1555,6 +1555,7 @@ export function setSovereign(
   }
   db.sovereign = { ...db.sovereign, ...patch };
   applyNation({ ...db.sovereign, configured: !!db.setup });
+  localizeSeed();
   appendAudit(by, 'sovereign.configure', 'Sovereign:profile', 'ok',
     patch.stateForm ?? patch.stateName);
   return db.sovereign;
@@ -1619,6 +1620,30 @@ export function seriesFor(id: string): MinistrySeries | { error: string } {
   };
 }
 
+// ── Seed localisation ────────────────────────────────────────────────
+// Sample records are seeded with reference places, USD and a neutral payment
+// rail; whenever the nation changes they are rewritten to its own first
+// regions, currency and rail, so demo data never shows another country.
+let seedPlaces = ['Capital District', 'Eastern', 'Northern'];
+const SEED_BILLS = new Set(['BL-9001', 'BL-9002', 'BL-9003']);
+const SEED_RECEIPTS = new Set(['PR-3001']);
+
+function localizeSeed(): void {
+  const target = seedPlaces.map((p, i) => REGIONS[i] ?? p);
+  const map = new Map(seedPlaces.map((p, i) => [p, target[i]!]));
+  const re = new RegExp(seedPlaces.map(p => p.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).sort((a, b) => b.length - a.length).join('|'), 'g');
+  const swap = (v: string) => v.replace(re, m => map.get(m) ?? m);
+  citizen.municipality = swap(citizen.municipality);
+  for (const p of db.permits) p.municipality = swap(p.municipality);
+  for (const n of db.notifications) { n.subject = swap(n.subject); n.body = swap(n.body); }
+  for (const i of db.incidents) { i.title = swap(i.title); i.scope = swap(i.scope); }
+  for (const w of db.integrations) w.ownerOrg = swap(w.ownerOrg);
+  db.tenantSync = Object.fromEntries(Object.entries(db.tenantSync).map(([k, v]) => [swap(k), v]));
+  for (const b of db.bills) if (SEED_BILLS.has(b.id)) b.currency = db.sovereign.currency;
+  for (const r of db.receipts) if (SEED_RECEIPTS.has(r.id)) { r.currency = db.sovereign.currency; r.rail = nationPaymentRail(); }
+  seedPlaces = target;
+}
+
 // ── First-run platform setup ─────────────────────────────────────────
 export function getSetup(): PlatformSetup | null {
   return db.setup ?? null;
@@ -1627,6 +1652,7 @@ export function getSetup(): PlatformSetup | null {
 export function completeSetup(by: string): PlatformSetup {
   db.setup = { completedAt: new Date().toISOString(), by, stateName: db.sovereign.stateName };
   applyNation({ ...db.sovereign, configured: true });
+  localizeSeed();
   appendAudit(by, 'platform.setup.complete', 'Platform:setup', 'ok', db.sovereign.stateName);
   return db.setup;
 }
@@ -1659,8 +1685,9 @@ export function applySovereignPreset(
 ): SovereignProfile | { error: string } {
   const preset = SOVEREIGN_PRESETS.find(p => p.key === key);
   if (!preset) return { error: 'Unknown preset' };
-  db.sovereign = { ...preset.profile, iso3: db.sovereign.iso3, regions: db.sovereign.regions, constitution: db.sovereign.constitution };
+  db.sovereign = { ...preset.profile, iso3: db.sovereign.iso3, regions: db.sovereign.regions, constitution: db.sovereign.constitution, paymentRail: db.sovereign.paymentRail };
   applyNation({ ...db.sovereign, configured: !!db.setup });
+  localizeSeed();
   appendAudit(by, 'sovereign.preset', `Sovereign:${key}`, 'ok', preset.label);
   return db.sovereign;
 }

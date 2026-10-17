@@ -174,7 +174,9 @@ Steps 1–9 cover ≈165 files and make every *replace* and *shape* finding data
 | 5 · Constitution | **Done** | `SovereignProfile.constitution` (head of state, executive seat, one or two chambers with seats, apex court, emergency doctrine, source) laid over the form template by `constitutionFor(form, nation)`; setup has a Constitution panel. Senate/assembly engines size from it and their blocs now sum exactly (they did not before). |
 | 6 · Offices & wording | **Done for the public sites and branch apps** | `lib/nation/offices.ts` derives head of state/government, executive office and seat, chambers and apex court. The Government directory, Presidency, Senate and Assembly public sites, branch app names and the Branches pages use them; a unicameral nation lists no upper chamber. Reference wording is unchanged until setup. Deeper in-app copy (e.g. presidency/senate domain screens) remains. |
 
-After these steps: **replace** hits 1,181 → **979** in 212 → **194** files (the constitution and offices modules add reference wording by design).
+| 7 · Demo data | **Done** | No Kenya-specific content remains in runtime code or prototypes. Sample records are seeded with reference places, USD and a neutral rail, and `localizeSeed()` rewrites them to the nation's first regions, currency and payment rail on every profile change. `SovereignProfile.paymentRail` (setup field) replaces M-Pesa everywhere (wallet, payments API default, ops health). A multicultural demo persona (`lib/nation/persona.ts`) replaces Kenyan names; wallet amounts use the nation's currency. The backend drops its `KES` bill-currency default (new migration `0007_nation_neutral_currency`). |
+
+After these steps: **replace** hits 1,181 → **962** in 212 → **189** files. The remaining place hits are mostly neutral reference names ("Capital District", "Eastern") that the nation's regions override, not another country's data.
 
 ## 8. Instructions for the AI converter (after Path B)
 

@@ -4,17 +4,19 @@ import { Plain } from '@/components/ui/Plain';
 import { ReceiptCard } from '@/components/ui/Receipt';
 import type { Receipt } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
+import { DEMO_CITIZEN, DEMO_OFFICERS, homePlace, money, nationPaymentRail } from '@/lib/nation/persona';
 
 const today = new Date('2026-05-14T09:14:00');
 
-const receipts: Receipt[] = [
+// Sample data follows the installed nation's currency and payment rail.
+const receiptsFor = (): Receipt[] => [
   {
     id: 'R-3F9A2',
     title: 'Child grant deposited',
-    summary: 'Today, 09:14 — 2,400 KES → M-Pesa',
-    amount: '2,400 KES',
+    summary: `Today, 09:14 — ${money(2400)} → ${nationPaymentRail()}`,
+    amount: money(2400),
     date: today.toISOString(),
-    officerName: 'K. Otieno',
+    officerName: DEMO_OFFICERS.caseworker,
     aiClass: 'B',
     contestable: true,
   },
@@ -23,7 +25,7 @@ const receipts: Receipt[] = [
     title: 'Health record updated',
     summary: 'Yesterday, 16:02 — vaccination (pneumococcal)',
     date: new Date('2026-05-13T16:02:00').toISOString(),
-    officerName: 'Dr. K. Mwangi',
+    officerName: DEMO_OFFICERS.clinician,
     contestable: true,
   },
   {
@@ -42,6 +44,7 @@ const needsTo = [
 ];
 
 export default function WalletHomePage() {
+  const receipts = receiptsFor();
   return (
     <main className="bg-bg min-h-screen">
       <PhoneShell
@@ -50,7 +53,7 @@ export default function WalletHomePage() {
           <>
             <div>
               <strong>Civic Wallet</strong>
-              <div className="text-xs text-ink-muted">Amina H. Mwangi</div>
+              <div className="text-xs text-ink-muted">{DEMO_CITIZEN.short}</div>
             </div>
             <div className="flex gap-2 items-center">
               <Link href="/wallet/inbox" className="text-sm underline underline-offset-2" aria-label="Notifications">

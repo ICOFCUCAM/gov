@@ -36,7 +36,7 @@ enum TenantStatus {
 
 model Tenant {
   id            String       @id @default(cuid())
-  slug          String       @unique // e.g. "kiambu", "min-health"
+  slug          String       @unique // e.g. "capital-district", "min-health"
   name          String
   kind          TenantKind
   status        TenantStatus @default(PROVISIONING)
@@ -210,7 +210,7 @@ model Bill {
   kind        BillKind
   description String
   amountMinor Int
-  currency    String     @default("KES")
+  currency    String     // ISO 4217 of the installed nation; set explicitly
   dueDate     DateTime
   status      BillStatus @default(DUE)
   createdAt   DateTime   @default(now())
@@ -233,7 +233,7 @@ model Receipt {
   payload     Json
   amountMinor Int?
   currency    String?
-  rail        String? // payment rail e.g. ISO20022, M-Pesa
+  rail        String? // payment rail e.g. ISO20022, mobile money
   prevHash    String?
   hash        String
   seq         Int // monotonically increasing per tenant

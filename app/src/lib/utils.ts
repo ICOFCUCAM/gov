@@ -1,5 +1,6 @@
 // CivicOS — small utilities.
 import { clsx, type ClassValue } from 'clsx';
+import { nationCurrency } from '@/lib/nation/registry';
 
 export function cn(...inputs: ClassValue[]): string {
   return clsx(inputs);
@@ -26,11 +27,11 @@ export function formatDate(
   }
 }
 
-export function formatMinor(amountMinor: number, currency: string = 'KES', locale: string = 'en'): string {
+export function formatMinor(amountMinor: number, currency: string = nationCurrency(), locale: string = 'en'): string {
   return formatAmount(amountMinor / 100, currency, locale);
 }
 
-export function formatAmount(amount: number, currency: string = 'KES', locale: string = 'en'): string {
+export function formatAmount(amount: number, currency: string = nationCurrency(), locale: string = 'en'): string {
   try {
     return new Intl.NumberFormat(locale, {
       style: 'currency',

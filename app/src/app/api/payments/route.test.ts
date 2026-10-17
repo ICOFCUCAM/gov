@@ -51,14 +51,14 @@ describe('POST /api/payments', () => {
     expect(res.status).toBe(409);
   });
 
-  it('returns 201 with the receipt and defaults rail to M-Pesa', async () => {
+  it('returns 201 with the receipt and defaults rail to the nation payment rail', async () => {
     payBill.mockReturnValue({ id: 'r-new', billId: 'b-1' });
     const res = await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({ billId: 'b-1' }),
       headers: { 'content-type': 'application/json' },
     }) as never);
     expect(res.status).toBe(201);
-    expect(payBill).toHaveBeenCalledWith('b-1', 'M-Pesa');
+    expect(payBill).toHaveBeenCalledWith('b-1', 'Mobile Money');
   });
 
   it('honours an explicit rail', async () => {

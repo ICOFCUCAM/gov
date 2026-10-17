@@ -46,7 +46,7 @@ const ROLE_LABEL: Record<OperatorRole, string> = {
 
 export interface OperatorShellProps {
   role: OperatorRole;
-  who: string; // signed-in person + scope, e.g. "K. Otieno · Social Protection, Kiambu"
+  who: string; // signed-in person + scope, e.g. "K. Adamu · Social Protection, Capital District"
   active?: string;
   toolbar?: React.ReactNode;
   children: React.ReactNode;

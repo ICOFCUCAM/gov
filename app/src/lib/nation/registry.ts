@@ -23,9 +23,10 @@ export interface NationFacts {
   legislatureName?: string;
   /** True once setup is complete; offices keep the reference wording until then. */
   configured?: boolean;
+  paymentRail?: string;
 }
 
-const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean } = {
+const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string } = {
   configured: false,
   regions: [],
   currency: 'USD',
@@ -45,6 +46,12 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.executiveTitle = f.executiveTitle;
   state.legislatureName = f.legislatureName;
   state.configured = !!f.configured;
+  state.paymentRail = f.paymentRail?.trim() || undefined;
+}
+
+/** The nation's domestic payment rail (a neutral default until one is set). */
+export function nationPaymentRail(): string {
+  return state.paymentRail ?? 'Mobile Money';
 }
 
 /** The installed nation's offices (reference wording until setup is complete). */

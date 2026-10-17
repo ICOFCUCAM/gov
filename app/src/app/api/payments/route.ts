@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listBills, listReceipts, payBill } from '@/lib/data/store';
+import { nationPaymentRail } from '@/lib/nation/registry';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
   if (!body.billId) {
     return NextResponse.json({ error: 'billId is required' }, { status: 422 });
   }
-  const result = payBill(body.billId, body.rail ?? 'M-Pesa');
+  const result = payBill(body.billId, body.rail ?? nationPaymentRail());
   if ('error' in result) {
     return NextResponse.json(result, { status: 409 });
   }

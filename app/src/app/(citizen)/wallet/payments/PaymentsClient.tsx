@@ -9,6 +9,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { api } from '@/lib/api/client';
 import { formatMinor } from '@/lib/utils';
 import type { Bill, PaymentReceipt } from '@/lib/api/types';
+import { nationPaymentRail } from '@/lib/nation/registry';
 
 export function PaymentsClient({
   initialBills,
@@ -28,7 +29,7 @@ export function PaymentsClient({
     setPayingId(billId);
     setError(null);
     try {
-      const { receipt } = await api.payments.pay(billId, 'M-Pesa');
+      const { receipt } = await api.payments.pay(billId, nationPaymentRail());
       setReceipts(r => [receipt, ...r]);
       setBills(bs => bs.map(b => (b.id === billId ? { ...b, status: 'paid' as const } : b)));
     } catch (e) {
@@ -69,7 +70,7 @@ export function PaymentsClient({
                     onClick={() => pay(b.id)}
                     disabled={payingId === b.id}
                   >
-                    {payingId === b.id ? 'Paying…' : 'Pay with M-Pesa'}
+                    {payingId === b.id ? 'Paying…' : `Pay with ${nationPaymentRail()}`}
                   </Button>
                 </div>
               </Card>

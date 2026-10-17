@@ -175,7 +175,7 @@ export function isTerminal(kind: WorkKind, stage: string): boolean {
   return WORKFLOWS[kind].terminal.includes(stage) || actionsFor(kind, stage).length === 0;
 }
 
-const ASSIGNEES = ['K. Otieno', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Kamau', 'F. Abebe', 'N. Farah'];
+const ASSIGNEES = ['K. Adamu', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Brennan', 'F. Abebe', 'N. Farah'];
 
 /** Deterministic initial work set for a scope (stable across renders). */
 export function seedWorkItems(scope: string, kind: WorkKind, t: number, n = 12): WorkItem[] {

@@ -5,6 +5,7 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Pill } from '@/components/ui/Pill';
 import { appendAuditEntry } from '@/lib/audit/localVault';
+import { DEMO_CITIZEN, homePlace } from '@/lib/nation/persona';
 
 interface Attr {
   key: string;
@@ -12,16 +13,19 @@ interface Attr {
   value: string;
 }
 
-const ALL: Attr[] = [
-  { key: 'name', label: 'Full name', value: 'Amina Hassan Mwangi' },
+const attrsFor = (home: string): Attr[] => [
+  { key: 'name', label: 'Full name', value: DEMO_CITIZEN.name },
   { key: 'over18', label: 'Over 18', value: 'Yes' },
   { key: 'dob', label: 'Date of birth', value: '14.03.1992' },
-  { key: 'address', label: 'Address', value: 'Plot 4423, Kiambu' },
+  { key: 'address', label: 'Address', value: `Plot 4423, ${home}` },
   { key: 'nationalId', label: 'National ID number', value: '••••••••' },
   { key: 'vaccination', label: 'Pneumococcal vaccination', value: '12/2024' },
 ];
 
 export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
+  const home = homePlace();
+  const ALL = attrsFor(home);
+  const requester = `${home} Hospital`;
   const requested = React.useMemo(() => ['name', 'over18', 'vaccination'], []);
   const [granted, setGranted] = React.useState<string[]>(requested);
   const [shared, setShared] = React.useState(false);
@@ -33,7 +37,7 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
 
   function share() {
     appendAuditEntry('selective-disclosure', {
-      to: 'Kiambu County Hospital',
+      to: requester,
       shared: granted,
       subject: subjectName,
     });
@@ -45,7 +49,7 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
       <Card tight>
         <h4 className="font-semibold">Nothing shared</h4>
         <p className="text-sm">
-          You declined the request from <strong>Kiambu County Hospital</strong>.
+          You declined the request from <strong>{requester}</strong>.
           No attributes were disclosed; the decline is noted in your access log.
         </p>
         <Button className="mt-3" variant="secondary" onClick={() => setDeclined(false)}>
@@ -61,7 +65,7 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
         <h4 className="font-semibold">Shared</h4>
         <p className="text-sm">
           You shared {granted.length} of {sharing.length} requested attributes with{' '}
-          <strong>Kiambu County Hospital</strong> for this visit only. This is
+          <strong>{requester}</strong> for this visit only. This is
           now in your records access log. You can revoke it later.
         </p>
         <Button className="mt-3" variant="secondary" onClick={() => setShared(false)}>
@@ -74,7 +78,7 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
   return (
     <Card tight>
       <p className="text-sm">
-        <strong>Kiambu County Hospital</strong> is asking to verify the
+        <strong>{requester}</strong> is asking to verify the
         following, for the purpose of <em>scheduling a vaccination
         follow-up</em>, for <em>this visit only</em>:
       </p>

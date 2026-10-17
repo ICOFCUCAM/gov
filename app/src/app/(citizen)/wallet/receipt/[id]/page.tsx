@@ -5,30 +5,31 @@ import { CopilotPanel } from '@/components/ui/CopilotPanel';
 import { ContestDialog } from '@/components/features/ContestDialog';
 import { SupportActions } from './SupportActions';
 import type { Receipt } from '@/lib/types';
+import { DEMO_CITIZEN, DEMO_OFFICERS, homePlace, money, nationPaymentRail } from '@/lib/nation/persona';
 
 // Mock receipt lookup. Production: server fetch with sovereign-controlled auth.
-const RECEIPTS: Record<string, Receipt> = {
+const receiptsFor = (): Record<string, Receipt> => ({
   'R-3F9A2': {
     id: 'R-3F9A2',
     title: 'Child grant — April 2026',
-    summary: 'Deposited to M-Pesa ending 4421',
-    amount: '2,400 KES',
+    summary: `Deposited to ${nationPaymentRail()} ending 4421`,
+    amount: money(2400),
     date: '2026-05-14T09:14:00.000Z',
-    officerName: 'K. Otieno',
+    officerName: DEMO_OFFICERS.caseworker,
     officerId: '4423',
     aiClass: 'B',
-    reasoning: ['Base grant: 2,000 KES', 'Drought supplement: 400 KES'],
+    reasoning: [`Base grant: ${money(2000)}`, `Drought supplement: ${money(400)}`],
     hash: '3F9A2…b41c',
     contestable: true,
   },
-};
+});
 
 interface PageProps {
   params: { id: string };
 }
 
 export default function ReceiptPage({ params }: PageProps) {
-  const receipt = RECEIPTS[params.id];
+  const receipt = receiptsFor()[params.id];
 
   if (!receipt) {
     return (

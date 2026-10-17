@@ -56,7 +56,7 @@ const TABS: { k: Tab; label: string }[] = [
   { k: 'audit', label: 'Audit' },
 ];
 
-const OPERATOR = 'K. Otieno';
+const OPERATOR = 'K. Adamu';
 
 /**
  * A ministry as a deep institutional workspace: its own internal
