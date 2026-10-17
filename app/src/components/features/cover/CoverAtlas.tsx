@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { geoOrthographic, geoPath, geoGraticule10 } from 'd3-geo';
 import { worldFeatures } from '@/lib/geo/world';
-import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, usePathKeys, usePrefersReducedMotion } from './entry';
+import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, useNationBrand, usePathKeys, usePrefersReducedMotion } from './entry';
 
 const INK = '#0c1424';
 const COBALT = '#2348d8';
@@ -23,6 +23,7 @@ const PILLARS = [
  */
 export function CoverAtlas() {
   const { path, setPath, email, setEmail, enter, note, cta } = useCoverEntry();
+  const brand = useNationBrand();
   usePathKeys(setPath);
   const idx = ENTRY_PATHS.findIndex(p => p.k === path);
 
@@ -30,8 +31,8 @@ export function CoverAtlas() {
     <main className="min-h-screen font-sans" style={{ background: STONE, color: INK }}>
       <header className="mx-auto flex h-[72px] max-w-[1280px] items-center gap-8 px-4 sm:px-8">
         <span className="flex items-center gap-2.5">
-          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-[9px] text-[12px] font-bold text-white" style={{ background: INK }}>CO</span>
-          <span className="text-[15px] font-semibold tracking-tight">CivicOS</span>
+          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-[9px] text-[12px] font-bold text-white" style={{ background: brand.configured ? brand.accent : INK }}>{brand.seal}</span>
+          <span className="truncate text-[15px] font-semibold tracking-tight">{brand.name}</span>
         </span>
         <nav aria-label="Primary" className="hidden items-center gap-6 text-[13.5px] text-[#4a5568] md:flex">
           <Link href="/government" className="hover:text-black">Government</Link>
@@ -54,7 +55,7 @@ export function CoverAtlas() {
           </h1>
           <p className="mt-5 max-w-[46ch] text-[16px] leading-relaxed text-[#4a5568]">
             Ministries, officers and citizens on a single platform — bound by the constitution,
-            audited end to end, with AI that advises and never decides.
+            audited end to end, and owned by the people it serves.
           </p>
 
           <form onSubmit={enter}
@@ -111,7 +112,7 @@ export function CoverAtlas() {
         <nav aria-label="Public services" className="flex flex-wrap gap-x-5 gap-y-2">
           {PUBLIC_LINKS.map(l => <Link key={l.href} href={l.href} className="hover:text-black">{l.l}</Link>)}
         </nav>
-        <span>Humans govern · Institutions govern · Constitutions govern · AI assists</span>
+        <span>Humans govern · Institutions govern · Constitutions govern</span>
       </footer>
     </main>
   );

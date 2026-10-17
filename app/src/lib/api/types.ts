@@ -509,6 +509,7 @@ export interface SovereignProfile {
   seal?: string;            // short insignia monogram (e.g. national initials)
   accent?: string;          // sovereign theme accent (hex)
   motto?: string;           // formal national style / motto
+  aiAssistant?: boolean;    // nation opted in to the AI assistant (false = off; unset = legacy on)
 }
 
 /** First-run platform setup. Null until a nation or ministry has completed

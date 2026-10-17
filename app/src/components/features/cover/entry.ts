@@ -3,6 +3,8 @@
 import * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { substrateAvailable } from '@/lib/db/client';
+import { api } from '@/lib/api/client';
+import { resolveIdentity } from '@/lib/sovereign-identity';
 
 // Shared entry behaviour for every cover design. Designs differ in look;
 // where each path lands, and how sign-in is handed off, stays identical.
@@ -101,4 +103,34 @@ export function usePrefersReducedMotion() {
     return () => mq.removeEventListener('change', on);
   }, []);
   return reduced;
+}
+
+export interface NationBrand {
+  /** True once a nation has completed setup; until then the platform brand shows. */
+  configured: boolean;
+  name: string;
+  motto: string;
+  seal: string;
+  accent: string;
+}
+
+const PLATFORM_BRAND: NationBrand = { configured: false, name: 'CivicOS', motto: 'Sovereign Operating System', seal: 'CO', accent: '#37c7d4' };
+
+/** The identity the front door wears: the installed nation's name, motto and
+ *  insignia once setup is complete, otherwise the CivicOS platform brand. */
+export function useNationBrand(): NationBrand {
+  const [brand, setBrand] = React.useState<NationBrand>(PLATFORM_BRAND);
+  React.useEffect(() => {
+    let live = true;
+    Promise.all([api.setup.get(), api.sovereign.get()])
+      .then(([st, s]) => {
+        if (!live || !st.setup) return;
+        const id = resolveIdentity(s.sovereign);
+        setBrand({ configured: true, name: id.stateName, motto: id.motto, seal: id.seal, accent: id.accent });
+        document.title = id.stateName;
+      })
+      .catch(() => { /* keep the platform brand */ });
+    return () => { live = false; };
+  }, []);
+  return brand;
 }

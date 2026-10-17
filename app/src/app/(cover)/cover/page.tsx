@@ -3,7 +3,7 @@ import Link from 'next/link';
 export const metadata = { title: 'Cover designs' };
 
 const VERSIONS = [
-  { href: '/cover/stack', n: 'A', name: 'Stack', current: true, tone: 'Dark · teal command palette', d: 'Split layout. An isometric governance stack — Constitution, Institutions, Humans, AI — lights the layer your entry path lands in.' },
+  { href: '/cover/stack', n: 'A', name: 'Stack', current: true, tone: 'Dark · teal command palette', d: 'Split layout. An isometric governance stack — Constitution, Institutions, Humans — lights the layer your entry path lands in.' },
   { href: '/cover/boot', n: 'B', name: 'Boot', tone: 'Monochrome · black and white', d: 'The platform starts like an operating system: a kernel log verifies the constitutional root, then resolves into a giant wordmark and a login console.' },
   { href: '/cover/atlas', n: 'C', name: 'Atlas', tone: 'Light · stone and cobalt', d: 'Editorial and calm. A turning globe with federation arcs, sign-in above the fold, and the four principles beneath.' },
   { href: '/cover/doors', n: 'D', name: 'Doors', tone: 'Jewel tones · emerald, sapphire, amethyst', d: 'Three full-height entrances. Choose one and it opens to reveal sign-in while the others fold to spines.' },

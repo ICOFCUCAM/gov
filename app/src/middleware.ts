@@ -5,6 +5,8 @@ import type { NextRequest } from 'next/server';
 // public prototype/preview is not bricked: set CIVICOS_AUTH=enforce to
 // require a session cookie for non-public routes. Without it, the gate is
 // transparent (all routes pass) but the policy is in place and audited.
+// Read-only identity the cover shows pre-sign-in (name, motto, insignia).
+const PUBLIC_READ = [/^\/api\/sovereign$/, /^\/api\/setup$/];
 const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/api\/health/];
 
 export function middleware(req: NextRequest) {
@@ -18,6 +20,8 @@ export function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
   if (PUBLIC.some(re => re.test(pathname))) return res;
+  // The cover reads the nation's public identity before anyone signs in.
+  if (req.method === 'GET' && PUBLIC_READ.some(re => re.test(pathname))) return res;
 
   const session = req.cookies.get('civicos_session')?.value;
   if (session) return res;

@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { geoOrthographic, geoPath, geoGraticule10 } from 'd3-geo';
 import { worldFeatures } from '@/lib/geo/world';
-import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, useClock, usePrefersReducedMotion, type EntryPath } from './entry';
+import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, useClock, useNationBrand, usePrefersReducedMotion, type EntryPath, type NationBrand } from './entry';
 
 // Night palette: ink, champagne light and polished gold.
 const INK = '#04060a';
@@ -46,6 +46,7 @@ export function CoverPlaza() {
   }, [choose]);
 
   const active = ENTRY_PATHS.find(p => p.k === path)!;
+  const brand = useNationBrand();
 
   return (
     <main className="relative h-[100dvh] min-h-[680px] overflow-hidden font-sans text-[#f3efe6] [--gs:0.66] [--sy:47%] sm:[--gs:0.88] sm:[--sy:53%] lg:[--gs:1]"
@@ -55,11 +56,11 @@ export function CoverPlaza() {
       {/* Top rail */}
       <header className="absolute inset-x-0 top-0 z-20 flex h-16 items-center gap-4 px-4 sm:px-8">
         <span className="flex items-center gap-3">
-          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full border text-[10px] font-semibold tracking-[0.08em]"
-            style={{ borderColor: `${CHAMPAGNE}88`, color: CHAMPAGNE_HI, boxShadow: `inset 0 0 12px ${CHAMPAGNE}22` }}>CO</span>
-          <span className="leading-tight">
-            <span className="block text-[12px] font-medium tracking-[0.34em]">CIVICOS</span>
-            <span className="hidden text-[9px] uppercase tracking-[0.26em] text-white/45 sm:block">Sovereign Operating System</span>
+          <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full border text-[10px] font-semibold tracking-[0.08em]"
+            style={{ borderColor: `${CHAMPAGNE}88`, color: CHAMPAGNE_HI, boxShadow: `inset 0 0 12px ${CHAMPAGNE}22` }}>{brand.seal}</span>
+          <span className="min-w-0 leading-tight">
+            <span className="block truncate text-[12px] font-medium uppercase tracking-[0.3em]">{brand.name}</span>
+            <span className="hidden truncate text-[9px] uppercase tracking-[0.26em] text-white/45 sm:block">{brand.motto}</span>
           </span>
         </span>
         <div className="ml-auto flex items-center gap-5 whitespace-nowrap font-mono text-[10.5px] tracking-[0.08em] text-white/55">
@@ -72,7 +73,7 @@ export function CoverPlaza() {
 
       {/* Title */}
       <div className="absolute inset-x-0 top-[78px] z-10 px-4 text-center">
-        <p className="font-mono text-[10px] uppercase tracking-[0.42em]" style={{ color: CHAMPAGNE }}>Sovereign digital public infrastructure</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.42em]" style={{ color: CHAMPAGNE }}>{brand.configured ? 'Official government platform' : 'Sovereign digital public infrastructure'}</p>
         <h1 className="mx-auto mt-3 max-w-[26ch] text-[1.85rem] font-light leading-[1.08] tracking-[-0.03em] sm:text-[2.9rem]">
           Every road leads to <span className="bg-clip-text font-normal text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>the state.</span>
         </h1>
@@ -81,7 +82,7 @@ export function CoverPlaza() {
       {/* The seal */}
       <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
         style={{ top: 'var(--sy)', width: 'min(38vh, 72vw, 380px)', aspectRatio: '1' }}>
-        <Seal />
+        <Seal brand={brand} />
       </div>
 
       {/* Roads in */}
@@ -154,7 +155,7 @@ export function CoverPlaza() {
         <nav aria-label="Public services" className="flex flex-wrap gap-x-5 gap-y-1">
           {PUBLIC_LINKS.map(l => <Link key={l.href} href={l.href} className="transition-colors hover:text-[#f4e4bd]">{l.l}</Link>)}
         </nav>
-        <span className="hidden font-mono text-[10px] tracking-[0.12em] text-white/35 sm:inline">HUMANS GOVERN · INSTITUTIONS GOVERN · CONSTITUTIONS GOVERN · AI ASSISTS</span>
+        <span className="hidden font-mono text-[10px] tracking-[0.12em] text-white/35 sm:inline">{brand.configured ? `© ${new Date().getFullYear()} ${brand.name.toUpperCase()} · POWERED BY CIVICOS` : 'HUMANS GOVERN · INSTITUTIONS GOVERN · CONSTITUTIONS GOVERN'}</span>
       </footer>
 
       <style>{`
@@ -286,8 +287,17 @@ function Ground() {
   );
 }
 
+/** Ring inscription: the nation's name and motto once installed, repeated to
+ *  circle the seal evenly (as on coinage); the platform name before setup. */
+function inscription(b: NationBrand) {
+  const unit = `${b.name} ✦ ${b.motto ? `${b.motto} ✦ ` : ''}`.toUpperCase();
+  let text = unit;
+  while (text.length < 52) text += unit;
+  return text;
+}
+
 /** The national seal: polished gold, black enamel band, emerald field, engraved globe and laurel. */
-function Seal() {
+function Seal({ brand }: { brand: NationBrand }) {
   const reduced = usePrefersReducedMotion();
   const land = React.useMemo(() => worldFeatures(), []);
   const grat = React.useMemo(() => geoGraticule10(), []);
@@ -325,7 +335,7 @@ function Seal() {
     <div className="relative h-full w-full">
       <svg viewBox="-200 -200 400 400" className="h-full w-full"
         style={{ filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.85)) drop-shadow(0 0 40px rgba(240,205,140,0.18))' }}
-        role="img" aria-label="CivicOS seal: a globe wreathed in laurel">
+        role="img" aria-label={`${brand.name} seal: a globe wreathed in laurel`}>
         <defs>
           {/* Polished metal: many stops imitate a brushed, light-catching surface */}
           <linearGradient id="seal-metal" x1="0.1" y1="0" x2="0.9" y2="1">
@@ -360,7 +370,7 @@ function Seal() {
         <circle r="189.5" fill="none" stroke="#000" strokeOpacity="0.6" strokeWidth="1" />
         <text fill="url(#seal-metal)" fontSize="11.5" fontWeight="600" letterSpacing="3.2">
           <textPath href="#seal-ring-text" textLength="1080" lengthAdjust="spacing">
-            CIVICOS ✦ SOVEREIGN OPERATING SYSTEM ✦ HUMANS GOVERN ✦ AI ASSISTS ✦
+            {inscription(brand)}
           </textPath>
         </text>
         <circle r="160" fill="url(#seal-metal)" />

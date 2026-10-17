@@ -3,13 +3,12 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { ACCENT } from '@/components/features/SituationRoom';
-import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, usePathKeys, useClock, type EntryPath as Path } from './cover/entry';
+import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, usePathKeys, useClock, useNationBrand, type EntryPath as Path } from './cover/entry';
 
-type Layer = 'ai' | 'humans' | 'institutions' | 'constitution';
+type Layer = 'humans' | 'institutions' | 'constitution';
 
 // The doctrine, drawn as the system's own architecture. Top to bottom.
 const LAYERS: { k: Layer; name: string; verb: string; sub: string; hue: string }[] = [
-  { k: 'ai', name: 'AI', verb: 'assists', sub: 'Advisory only · never decides', hue: '#9aa8ff' },
   { k: 'humans', name: 'Humans', verb: 'govern', sub: 'Officers · citizens · consent', hue: '#62b6ff' },
   { k: 'institutions', name: 'Institutions', verb: 'govern', sub: 'Ministries · agencies · charters', hue: ACCENT },
   { k: 'constitution', name: 'Constitution', verb: 'governs', sub: 'Rights · powers · separation', hue: '#34d39c' },
@@ -30,6 +29,7 @@ export function CoverGate() {
   usePathKeys(setPath);
   const clock = useClock();
   const active = PATHS.find(p => p.k === path)!;
+  const brand = useNationBrand();
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#060a12] font-sans text-[#e2e9f3]">
@@ -48,10 +48,11 @@ export function CoverGate() {
         {/* Status rail */}
         <header className="flex h-16 items-center gap-4 border-b border-[#16202f]">
           <span className="flex items-center gap-2.5">
-            <span aria-hidden className="grid h-8 w-8 place-items-center rounded-[4px] text-[13px] font-bold text-[#04121a]" style={{ background: ACCENT }}>CO</span>
-            <span className="leading-tight">
-              <span className="block text-[13px] font-bold tracking-[0.2em]">CIVICOS</span>
-              <span className="block text-[9px] uppercase tracking-[0.18em] text-[#65748b]">Sovereign Operating System</span>
+            <span aria-hidden className={`grid h-8 w-8 shrink-0 place-items-center rounded-[4px] text-[12px] font-bold ${brand.configured ? 'text-white ring-1 ring-white/15' : 'text-[#04121a]'}`}
+              style={{ background: brand.configured ? brand.accent : ACCENT }}>{brand.seal}</span>
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-[13px] font-bold tracking-[0.2em] uppercase">{brand.name}</span>
+              <span className="block truncate text-[9px] uppercase tracking-[0.18em] text-[#65748b]">{brand.motto}</span>
             </span>
           </span>
           <div className="ml-auto flex items-center gap-5 font-mono text-[11px] text-[#7d8ba0]">
@@ -68,14 +69,14 @@ export function CoverGate() {
           {/* Architecture */}
           <section aria-labelledby="cover-title" className="min-w-0">
             <p className="font-mono text-[11px] uppercase tracking-[0.24em]" style={{ color: ACCENT }}>
-              Sovereign digital public infrastructure
+              {brand.configured ? 'Official government platform' : 'Sovereign digital public infrastructure'}
             </p>
             <h1 id="cover-title" className="mt-4 max-w-[16ch] text-[2.4rem] font-semibold leading-[1.04] tracking-[-0.025em] sm:text-[3.4rem]">
               The operating system of the&nbsp;state.
             </h1>
             <p className="mt-4 max-w-[52ch] text-[15px] leading-relaxed text-[#94a3b8]">
               Every decision rests on the layer beneath it. Constitutions bound institutions,
-              institutions serve people, and AI only ever advises.
+              and institutions serve the people.
             </p>
             <Stack activeLayer={active.layer} />
           </section>
@@ -85,7 +86,7 @@ export function CoverGate() {
             <form onSubmit={enter}
               className="rounded-[10px] border border-[#1a2536] bg-[#0b111c]/90 p-5 shadow-[0_30px_80px_-30px_rgba(0,0,0,0.8)] backdrop-blur sm:p-7">
               <div className="flex items-baseline justify-between">
-                <h2 className="text-lg font-semibold">Enter CivicOS</h2>
+                <h2 className="min-w-0 truncate text-lg font-semibold">Enter {brand.name}</h2>
                 <span className="hidden font-mono text-[10px] text-[#56647a] sm:inline">press 1 · 2 · 3</span>
               </div>
 
@@ -158,8 +159,8 @@ export function CoverGate() {
         </div>
 
         <footer className="flex flex-col gap-2 border-t border-[#16202f] py-5 font-mono text-[10.5px] text-[#4f5c70] sm:flex-row sm:justify-between">
-          <span>Humans govern · Institutions govern · Constitutions govern · AI assists</span>
-          <span>Open standards · zero tracking · © {new Date().getFullYear()} CivicOS</span>
+          <span>Humans govern · Institutions govern · Constitutions govern</span>
+          <span>Open standards · zero tracking · © {new Date().getFullYear()} {brand.name}{brand.configured ? ' · Powered by CivicOS' : ''}</span>
         </footer>
       </div>
     </main>
@@ -172,8 +173,8 @@ function Stack({ activeLayer }: { activeLayer: Layer }) {
   const n = LAYERS.length;
   return (
     <div className="mt-8 w-full max-w-[640px]">
-      <svg viewBox="0 0 600 380" className="h-auto w-full" role="img"
-        aria-label="CivicOS governance stack: Constitution governs, Institutions govern, Humans govern, AI assists">
+      <svg viewBox="0 0 600 300" className="h-auto w-full" role="img"
+        aria-label="Governance stack: Constitution governs, Institutions govern, Humans govern">
         <defs>
           {LAYERS.map(l => (
             <linearGradient key={l.k} id={`face-${l.k}`} x1="0" y1="0" x2="1" y2="1">
@@ -188,20 +189,19 @@ function Stack({ activeLayer }: { activeLayer: Layer }) {
           const i = n - 1 - ri;
           const y = top + i * gap;
           const on = l.k === activeLayer;
-          const ai = l.k === 'ai';
           const topFace = `${cx},${y} ${cx + hw},${y + hd} ${cx},${y + 2 * hd} ${cx - hw},${y + hd}`;
           const left = `${cx - hw},${y + hd} ${cx},${y + 2 * hd} ${cx},${y + 2 * hd + th} ${cx - hw},${y + hd + th}`;
           const right = `${cx + hw},${y + hd} ${cx},${y + 2 * hd} ${cx},${y + 2 * hd + th} ${cx + hw},${y + hd + th}`;
           const lx = cx + hw + 22;
           return (
             <g key={l.k} style={{ opacity: on ? 1 : 0.55, transition: 'opacity 300ms' }}>
-              {!ai && <polygon points={left} fill={l.hue} fillOpacity={on ? 0.35 : 0.18} />}
-              {!ai && <polygon points={right} fill={l.hue} fillOpacity={on ? 0.22 : 0.1} />}
-              <polygon points={topFace} fill={ai ? 'rgba(154,168,255,0.05)' : `url(#face-${l.k})`}
-                stroke={l.hue} strokeWidth={on ? 1.4 : 0.8} strokeDasharray={ai ? '4 4' : undefined}
+              <polygon points={left} fill={l.hue} fillOpacity={on ? 0.35 : 0.18} />
+              <polygon points={right} fill={l.hue} fillOpacity={on ? 0.22 : 0.1} />
+              <polygon points={topFace} fill={`url(#face-${l.k})`}
+                stroke={l.hue} strokeWidth={on ? 1.4 : 0.8}
                 style={on ? { filter: `drop-shadow(0 0 10px ${l.hue}88)` } : undefined} />
               {/* node lattice on the face */}
-              {!ai && [-0.5, 0, 0.5].flatMap(u => [-0.5, 0, 0.5].map(v => {
+              {[-0.5, 0, 0.5].flatMap(u => [-0.5, 0, 0.5].map(v => {
                 const px = cx + (u - v) * hw * 0.55, py = y + hd + (u + v) * hd * 0.55;
                 return <circle key={`${u}:${v}`} cx={px} cy={py} r={1.6} fill={l.hue} fillOpacity={0.7} />;
               }))}

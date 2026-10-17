@@ -7,7 +7,7 @@ export const metadata: Metadata = {
     template: '%s · CivicOS',
   },
   description:
-    'CivicOS — sovereign operational platform. Humans govern. Institutions govern. Constitutions govern. AI assists.',
+    'CivicOS — sovereign operational platform. Humans govern. Institutions govern. Constitutions govern.',
   applicationName: 'CivicOS',
   robots: { index: false, follow: false }, // prototype default
 };

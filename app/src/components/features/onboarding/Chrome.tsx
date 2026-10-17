@@ -3,12 +3,13 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { ACCENT } from '@/components/features/SituationRoom';
-import { useClock } from '@/components/features/cover/entry';
+import { useClock, useNationBrand } from '@/components/features/cover/entry';
 
 /** Page frame shared by the cover's follow-on surfaces (setup, welcome):
  *  the same engineering grid, glow and status rail as the cover. */
 export function OnboardingFrame({ children, right }: { children: React.ReactNode; right?: React.ReactNode }) {
   const clock = useClock();
+  const brand = useNationBrand();
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#060a12] font-sans text-[#e2e9f3]">
       <div aria-hidden className="pointer-events-none absolute inset-0"
@@ -24,10 +25,10 @@ export function OnboardingFrame({ children, right }: { children: React.ReactNode
       <div className="relative mx-auto flex min-h-screen max-w-[1320px] flex-col px-4 sm:px-8">
         <header className="flex h-16 shrink-0 items-center gap-4 border-b border-[#16202f]">
           <Link href="/" className="flex items-center gap-2.5 no-underline">
-            <span aria-hidden className="grid h-8 w-8 place-items-center rounded-[4px] text-[13px] font-bold text-[#04121a]" style={{ background: ACCENT }}>CO</span>
+            <span aria-hidden className={`grid h-8 w-8 shrink-0 place-items-center rounded-[4px] text-[12px] font-bold ${brand.configured ? 'text-white ring-1 ring-white/15' : 'text-[#04121a]'}`} style={{ background: brand.configured ? brand.accent : ACCENT }}>{brand.seal}</span>
             <span className="leading-tight">
-              <span className="block text-[13px] font-bold tracking-[0.2em] text-[#e2e9f3]">CIVICOS</span>
-              <span className="hidden text-[9px] uppercase tracking-[0.18em] text-[#65748b] sm:block">Sovereign Operating System</span>
+              <span className="block truncate text-[13px] font-bold uppercase tracking-[0.2em] text-[#e2e9f3]">{brand.name}</span>
+              <span className="hidden truncate text-[9px] uppercase tracking-[0.18em] text-[#65748b] sm:block">{brand.motto}</span>
             </span>
           </Link>
           <div className="ml-auto flex items-center gap-5 whitespace-nowrap font-mono text-[11px] text-[#7d8ba0]">
@@ -37,7 +38,7 @@ export function OnboardingFrame({ children, right }: { children: React.ReactNode
         </header>
         {children}
         <footer className="mt-auto flex flex-col gap-2 border-t border-[#16202f] py-5 font-mono text-[10.5px] text-[#4f5c70] sm:flex-row sm:justify-between">
-          <span>Humans govern · Institutions govern · Constitutions govern · AI assists</span>
+          <span>Humans govern · Institutions govern · Constitutions govern</span>
           <span>Every change is written to the audit chain</span>
         </footer>
       </div>

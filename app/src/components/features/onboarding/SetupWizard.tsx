@@ -122,7 +122,7 @@ export function SetupWizard() {
       try { await fn(); settle(i, 'ok'); return true; } catch (e) { settle(i, 'fail', e instanceof Error ? e.message : 'failed'); return false; }
     }
 
-    const ok = await run(`Saving national profile · ${profile.stateName}`, () => api.sovereign.update(profile));
+    const ok = await run(`Saving national profile · ${profile.stateName}`, () => api.sovereign.update({ ...profile, aiAssistant: !!profile.aiAssistant }));
     if (!ok) return false;
     for (const m of ministries) {
       const want = !!active[m.id], is = m.status === 'active';
@@ -215,6 +215,21 @@ export function SetupWizard() {
                 <Field label="Sub-national unit" hint="What you call your regions">
                   <input className={inputCls} value={profile.regionNoun} onChange={e => set('regionNoun', e.currentTarget.value)} placeholder="region, province, county …" />
                 </Field>
+              </div>
+
+              <div className="mt-8">
+                <span className="block font-mono text-[10px] uppercase tracking-[0.2em] text-[#65748b]">Optional services</span>
+                <label className="mt-3 flex cursor-pointer items-start gap-4 rounded-[8px] border border-[#16202f] bg-[#0b111c]/80 px-4 py-4 hover:border-[#2a3a52]">
+                  <input type="checkbox" checked={!!profile.aiAssistant} onChange={e => set('aiAssistant', e.currentTarget.checked)}
+                    className="mt-0.5 h-4 w-4 shrink-0 accent-[#37c7d4]" />
+                  <span>
+                    <span className="block text-[14px] font-semibold text-[#e2e9f3]">AI assistant</span>
+                    <span className="mt-0.5 block text-[12.5px] leading-relaxed text-[#7d8ba0]">
+                      Offer officers drafted advisories on operational dashboards. Off unless you switch it on;
+                      decisions always remain with people, and it can be changed later.
+                    </span>
+                  </span>
+                </label>
               </div>
             </div>
           )}
@@ -354,6 +369,7 @@ export function SetupWizard() {
                     ['State', profile.stateName], ['Form', STATE_FORMS.find(f => f.k === profile.stateForm)?.l ?? profile.stateForm],
                     ['Executive', profile.executiveTitle], ['Legislature', profile.legislatureName],
                     ['Currency', profile.currency], ['Regions', profile.regionNoun],
+                    ['AI assistant', profile.aiAssistant ? 'On' : 'Off'],
                   ]} />
                   <Summary title="Identity" onEdit={() => setStep(1)} rows={[
                     ['Insignia', identity.seal], ['Colour', identity.accent], ['Motto', identity.motto || '—'],

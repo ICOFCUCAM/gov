@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, type EntryPath } from './entry';
+import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, useNationBrand, type EntryPath } from './entry';
 
 const DOORS: Record<EntryPath, { n: string; line: string; from: string; to: string; accent: string; art: 'rings' | 'field' | 'columns' }> = {
   officer: { n: 'I', line: 'Command the state', from: '#03211c', to: '#0c4a3d', accent: '#5fe0b8', art: 'rings' },
@@ -16,6 +16,7 @@ const DOORS: Record<EntryPath, { n: string; line: string; from: string; to: stri
  */
 export function CoverDoors() {
   const { path, setPath, email, setEmail, enter, note, cta } = useCoverEntry();
+  const brand = useNationBrand();
   const [open, setOpen] = React.useState<EntryPath | null>(null);
 
   function choose(k: EntryPath) { setPath(k); setOpen(k); }
@@ -35,8 +36,8 @@ export function CoverDoors() {
     <main className="flex min-h-screen flex-col bg-[#08080b] font-sans text-white lg:h-screen">
       <header className="flex h-16 shrink-0 items-center justify-between px-4 sm:px-8">
         <span className="flex items-center gap-3">
-          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full border border-white/30 text-[11px] font-bold">CO</span>
-          <span className="text-[13px] font-semibold tracking-[0.28em]">CIVICOS</span>
+          <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full border border-white/30 text-[11px] font-bold">{brand.seal}</span>
+          <span className="truncate text-[13px] font-semibold uppercase tracking-[0.28em]">{brand.name}</span>
         </span>
         <span className="text-[12px] text-white/50">
           {open ? <button type="button" onClick={() => setOpen(null)} className="hover:text-white">← All entrances</button> : 'Choose your entrance'}
@@ -116,7 +117,7 @@ export function CoverDoors() {
         <nav aria-label="Public services" className="flex flex-wrap gap-x-5 gap-y-1">
           {PUBLIC_LINKS.map(l => <Link key={l.href} href={l.href} className="hover:text-white">{l.l}</Link>)}
         </nav>
-        <span>Humans govern · Institutions govern · Constitutions govern · AI assists</span>
+        <span>Humans govern · Institutions govern · Constitutions govern</span>
       </footer>
       <style>{'@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}'}</style>
     </main>

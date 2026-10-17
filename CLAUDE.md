@@ -23,7 +23,7 @@ What has been built is locked. Work only upgrades it toward the vision in
 
 - `/` is the cover page (`app/src/components/features/CoverGate.tsx`):
   everyone meets it first and chooses an entry path.
-- `/cover` compares cover designs under evaluation (Stack, Boot, Atlas, Doors);
+- `/cover` compares cover designs under evaluation (Stack, Boot, Atlas, Doors, Plaza);
   all share `app/src/components/features/cover/entry.ts` for routing.
 - Government and New institution entries go to `/welcome`. Until setup is
   complete (`GET /api/setup` returns null), `/welcome` hands over to `/setup`,
@@ -33,6 +33,16 @@ What has been built is locked. Work only upgrades it toward the vision in
 - `/command` is the Sovereign Command Center (formerly `/`), unchanged.
 - Sign-in surfaces: `/sign-in` (substrate email + password) and `/login`
   (citizen verification). The cover hands off to them; it does not replace them.
+
+## Branding and AI
+
+- Once setup is complete, every front-door surface wears the installed
+  nation's identity (name, motto, insignia, colour) via `useNationBrand()` in
+  `cover/entry.ts`; CivicOS appears only before setup and as "Powered by CivicOS".
+- AI is never part of the brand, logo, or landing copy. The AI assistant is a
+  per-nation opt-in (`SovereignProfile.aiAssistant`, chosen in setup, off unless
+  ticked). `/api/ai/advisory` refuses when it is off and callers fall back to
+  their rule-based advisories.
 
 ## Checks
 

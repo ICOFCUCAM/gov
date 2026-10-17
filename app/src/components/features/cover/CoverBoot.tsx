@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, usePathKeys, useClock, usePrefersReducedMotion } from './entry';
+import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, useNationBrand, usePathKeys, useClock, usePrefersReducedMotion } from './entry';
 
 const SIGNAL = '#8affc1';
 const STEP_MS = 280;
@@ -10,11 +10,12 @@ const BOOT_KEY = 'civicos.cover.booted';
 
 /**
  * Cover · Boot — the platform starts like an operating system: a kernel log
- * verifies the constitutional root, mounts institutions, binds AI to
+ * verifies the constitutional root, mounts institutions, applies the data
  * advise-only, then resolves into a monochrome sign-in console.
  */
 export function CoverBoot() {
   const entry = useCoverEntry();
+  const brand = useNationBrand();
   const { path, setPath, email, setEmail, live, enter, note, cta } = entry;
   usePathKeys(setPath);
   const clock = useClock();
@@ -26,7 +27,7 @@ export function CoverBoot() {
     { m: 'Mounting institution registry', s: 'mounted' },
     { m: 'Checking separation of powers', s: 'intact' },
     { m: 'Attaching append-only audit chain', s: 'attached' },
-    { m: 'Binding AI layer · advise-only', s: 'bound' },
+    { m: 'Applying data-protection policy', s: 'enforced' },
     { m: 'Identity substrate', s: live === false ? 'prototype' : 'connected' },
     { m: 'Opening secure session channel', s: 'ready' },
   ], [live]);
@@ -75,8 +76,8 @@ export function CoverBoot() {
       <div className="relative mx-auto flex min-h-screen max-w-[1360px] flex-col px-4 sm:px-10">
         <header className="flex h-16 items-center justify-between font-mono text-[11px] text-white/45">
           <span className="flex items-center gap-3">
-            <span aria-hidden className="grid h-6 w-6 place-items-center border border-white/60 text-[9px] font-bold text-white">CO</span>
-            <span className="tracking-[0.3em] text-white/80">CIVICOS</span>
+            <span aria-hidden className="grid h-6 w-6 place-items-center border border-white/60 text-[9px] font-bold text-white">{brand.seal}</span>
+            <span className="truncate uppercase tracking-[0.3em] text-white/80">{brand.name}</span>
           </span>
           <span className="flex items-center gap-5">
             <span className="hidden sm:inline">session · unauthenticated</span>
@@ -107,7 +108,7 @@ export function CoverBoot() {
               </h1>
               <p className="mt-6 max-w-[46ch] text-[15px] leading-relaxed text-white/55">
                 One verified system beneath every ministry, officer and citizen.
-                Constitution-bound. Audited by default. AI advises — people decide.
+                Constitution-bound. Audited by default. People decide.
               </p>
             </div>
           </section>
@@ -176,7 +177,7 @@ export function CoverBoot() {
           <div aria-hidden className="absolute left-0 top-0 h-px transition-[width] duration-300" style={{ width: `${progress}%`, background: ready ? 'rgba(255,255,255,0.5)' : SIGNAL }} />
         </div>
         <footer className="flex flex-col gap-1 py-4 font-mono text-[10.5px] text-white/30 sm:flex-row sm:justify-between">
-          <span>humans govern · institutions govern · constitutions govern · ai assists</span>
+          <span>humans govern · institutions govern · constitutions govern</span>
           {!ready
             ? <button type="button" onClick={finish} className="text-left text-white/60 hover:text-white">skip ⏎</button>
             : <span>env · {live === false ? 'prototype' : 'production'} · zero tracking</span>}

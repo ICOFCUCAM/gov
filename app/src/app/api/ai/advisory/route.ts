@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 import { NextRequest, NextResponse } from 'next/server';
+import { getSovereign } from '@/lib/data/store';
 
 export interface AdvisoryRequest {
   label: string;
@@ -23,6 +24,11 @@ export interface AdvisoryResponse {
 const client = new Anthropic();
 
 export async function POST(req: NextRequest) {
+  // The AI assistant is a national opt-in chosen at setup. When a nation has
+  // declined it, callers keep their deterministic rule-based advisories.
+  if (getSovereign().aiAssistant === false) {
+    return NextResponse.json({ error: 'AI assistant is not enabled for this nation' }, { status: 403 });
+  }
   const body: AdvisoryRequest = await req.json();
 
   const { label, posture, escalationTier, readiness, incidents, budgetPressure, slaCompliance, constitutional } = body;
