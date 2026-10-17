@@ -62,6 +62,8 @@ export function SetupWizard() {
   const [running, setRunning] = React.useState(false);
   const [provinces, setProvinces] = React.useState<string[]>([]);
   const [regionDraft, setRegionDraft] = React.useState('');
+  // null = not chosen yet: follows the saved chambers, else the template.
+  const [singleChamber, setSingleChamber] = React.useState<boolean | null>(null);
   const countries = React.useMemo(() => [...COUNTRIES].sort((a, b) => a.name.localeCompare(b.name)), []);
   const zones = React.useMemo<string[]>(() => {
     try { return (Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf('timeZone'); } catch { return []; }
@@ -121,12 +123,31 @@ export function SetupWizard() {
   const chamberRows = [0, 1].map(i => cons.chambers?.[i] ?? { name: '', seats: 0 });
   const setChamber = (i: number, patch: Partial<{ name: string; seats: number }>) =>
     setCons({ chambers: chamberRows.map((c, j) => (j === i ? { ...c, ...patch } : c)) });
-  // Only complete chambers are saved; blank rows fall back to the template.
+  const complete = (c: { name: string; seats: number }) => !!c.name.trim() && c.seats > 0;
+  const blank = (c: { name: string; seats: number }) => !c.name.trim() && !(c.seats > 0);
+  const single = singleChamber ?? (chamberRows.filter(complete).length === 1 && blank(chamberRows[1]!)
+    ? true : template.legislature.chambers.length === 1);
+  const chooseSingle = (v: boolean) => {
+    setSingleChamber(v);
+    if (v) setCons({ chambers: [chamberRows[0]!, { name: '', seats: 0 }] });
+  };
+  // Only complete chambers are saved; with none declared the template's chambers apply.
   const cleanConstitution = (c?: NationalConstitution): NationalConstitution | undefined => {
     if (!c) return undefined;
-    const chambers = (c.chambers ?? []).filter(x => x.name.trim() && x.seats > 0);
+    const chambers = (c.chambers ?? []).slice(0, single ? 1 : 2).filter(complete);
     return { ...c, chambers: chambers.length ? chambers : undefined };
   };
+  const chamberErrors = [
+    chamberRows.some(c => !complete(c) && !blank(c)) && 'Give each chamber both a name and a seat count',
+    singleChamber === true && !complete(chamberRows[0]!) && 'Name the single chamber and its seats',
+    !single && complete(chamberRows[0]!) !== complete(chamberRows[1]!) && 'Name both chambers, or tick "No upper chamber"',
+  ].filter(Boolean) as string[];
+  // Constitutional facts that will come from the form-of-state template rather than the nation.
+  const inherited = [
+    !cleanConstitution(cons)?.chambers && 'chambers',
+    !cons.judicialApex?.trim() && 'apex court',
+    !cons.headOfStateTitle?.trim() && 'head of state',
+  ].filter(Boolean) as string[];
   const identity = resolveIdentity(profile);
 
   const nationErrors = [
@@ -134,6 +155,7 @@ export function SetupWizard() {
     !profile.executiveTitle.trim() && 'Executive title is required',
     !profile.legislatureName.trim() && 'Legislature name is required',
     !/^[A-Z]{3}$/.test(profile.currency) && 'Currency must be a three-letter ISO code',
+    ...chamberErrors,
   ].filter(Boolean) as string[];
   const activeCount = ministries.filter(m => active[m.id]).length + added.length;
   const instErrors = activeCount === 0 ? ['Keep at least one institution active'] : [];
@@ -190,6 +212,9 @@ export function SetupWizard() {
 
   const stepLocked = (i: number) => !!log || (i > step && !canLaunch && i === 3);
   const regionsList = profile.regions ?? [];
+  // Which level the regions are: the map's first-level administrative units, or the nation's own groupings.
+  const regionLevel: 'admin' | 'groups' = provinces.length > 0 && regionsList.length === provinces.length
+    && regionsList.every(r => provinces.includes(r)) ? 'admin' : 'groups';
 
   return (
     <OnboardingFrame right={<span className="hidden sm:inline">{existing ? 'SETUP · REVIEW' : 'FIRST-RUN SETUP'}</span>}>
@@ -320,7 +345,20 @@ export function SetupWizard() {
                     </Select>
                   </Field>
                   <div className="min-w-0">
-                    <span className="block font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/65">Operational regions</span>
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="block font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/65">Operational regions</span>
+                      <div role="radiogroup" aria-label="Region level" className="flex rounded-full border p-0.5" style={{ borderColor: hair(0.2) }}>
+                        {([['admin', 'Administrative units'], ['groups', 'Reporting groups']] as const).map(([k, l]) => (
+                          <button key={k} type="button" role="radio" aria-checked={regionLevel === k} disabled={k === 'admin' && !provinces.length}
+                            onClick={() => {
+                              if (k === 'admin') set('regions', provinces);
+                              else if (regionLevel === 'admin') set('regions', []);
+                            }}
+                            className="rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-[0.16em] transition-colors disabled:opacity-35"
+                            style={regionLevel === k ? { background: hair(0.16), color: CHAMPAGNE_HI } : { color: 'rgba(255,255,255,0.45)' }}>{l}</button>
+                        ))}
+                      </div>
+                    </div>
                     <div className="mt-2 flex min-h-[46px] flex-wrap gap-1.5 rounded-[2px] border border-[#d9c398]/[0.13] border-b-[#d9c398]/[0.4] bg-[#07090d] bg-[linear-gradient(180deg,rgba(255,248,230,0.015),rgba(255,248,230,0.04))] p-2 shadow-[inset_0_1px_8px_rgba(0,0,0,0.45)] transition-colors focus-within:border-[#d9c398]/70 focus-within:border-b-[#f4e4bd]">
                       {regionsList.map(rg => (
                         <span key={rg} className="flex items-center gap-1.5 rounded-full border py-[3px] pl-3 pr-1.5 text-[12.5px] font-light text-[#f3efe6]"
@@ -343,13 +381,18 @@ export function SetupWizard() {
                       <datalist id="setup-provinces">{provinces.map((n, i) => <option key={`${n}-${i}`} value={n} />)}</datalist>
                     </div>
                     <span className="mt-1.5 block text-[11.5px] leading-snug text-white/40">
+                      {regionLevel === 'admin'
+                        ? `The ${provinces.length} first-level administrative units on the map — the level local government operates at. Map data can predate recent boundary changes; add or rename units to match current law.`
+                        : 'Groupings for national summaries (e.g. Central, Eastern, Northern, Western in Uganda). If no government sits at this level, facilities, permits and incidents are better reported by administrative units. '}
+                    </span>
+                    {regionLevel === 'groups' ? <span className="mt-1 block text-[11.5px] leading-snug text-white/40">
                       {provinces.length > 16
                         ? `${provinces.length} first-level units on the map. Add the regions your government reports by, or `
                         : 'Dashboards and engines report by these regions. Press Enter to add.'}
                       {provinces.length > 16 ? (
                         <button type="button" className="text-[#d9c398] underline decoration-[#d9c398]/40 underline-offset-2 hover:text-[#f4e4bd]" onClick={() => set('regions', provinces)}>use all {provinces.length}</button>
                       ) : null}
-                    </span>
+                    </span> : null}
                   </div>
                 </div>
               </Section>
@@ -383,16 +426,31 @@ export function SetupWizard() {
                     <Field label="Apex court">
                       <input className={inputCls} value={cons.judicialApex ?? ''} placeholder={template.judicialApex} onChange={e => setCons({ judicialApex: e.currentTarget.value })} />
                     </Field>
-                    {chamberRows.map((c, i) => (
+                    {chamberRows.map((c, i) => (single && i === 1 ? (
+                      <div key={i} className="flex flex-col justify-end">
+                        <span className="block font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/65">Upper chamber</span>
+                        <p className="mt-2 flex min-h-[46px] items-center rounded-[2px] border px-4 text-[13.5px] font-light text-white/45" style={{ borderColor: hair(0.1) }}>
+                          None · single-chamber legislature
+                        </p>
+                      </div>
+                    ) : (
                       <div key={i} className="grid grid-cols-[minmax(0,1fr)_96px] gap-2">
-                        <Field label={i === 0 ? 'Primary chamber' : 'Upper chamber (leave blank if none)'}>
-                          <input className={inputCls} value={c.name} placeholder={template.legislature.chambers[i]?.name ?? '—'} onChange={e => setChamber(i, { name: e.currentTarget.value })} />
+                        <Field label={i === 0 ? (single ? 'Legislature — single chamber' : 'Primary chamber') : 'Upper chamber'}>
+                          <input className={inputCls} value={c.name} placeholder={template.legislature.chambers[i]?.name ?? (i === 0 ? profile.legislatureName : '—')} onChange={e => setChamber(i, { name: e.currentTarget.value })} />
                         </Field>
                         <Field label="Seats">
                           <input className={`${inputCls} font-mono`} type="number" min={1} value={c.seats || ''} placeholder={String(template.legislature.chambers[i]?.seats ?? '')} onChange={e => setChamber(i, { seats: Number(e.currentTarget.value) || 0 })} />
                         </Field>
                       </div>
-                    ))}
+                    )))}
+                    <label className="flex cursor-pointer items-start gap-3 sm:col-span-2">
+                      <input type="checkbox" checked={single} onChange={e => chooseSingle(e.currentTarget.checked)}
+                        className="mt-[3px] h-4 w-4 shrink-0 accent-[#d9c398]" />
+                      <span className="text-[13px] font-light leading-snug text-[#f3efe6]">
+                        No upper chamber
+                        <span className="block text-[11.5px] text-white/40">The legislature has one chamber (e.g. the Parliament of Uganda). Leaving both chamber rows blank uses the template&apos;s chambers shown in grey.</span>
+                      </span>
+                    </label>
                     <div className="sm:col-span-2">
                       <Field label="Source" hint="Cite the constitution and articles these facts come from.">
                         <input className={inputCls} value={cons.source ?? ''} placeholder="e.g. Constitution of 1995, arts. 77–78" onChange={e => setCons({ source: e.currentTarget.value })} />
@@ -603,13 +661,23 @@ export function SetupWizard() {
                     {identity.motto ? <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-white/45">{identity.motto}</p> : null}
                   </div>
                   <Rule className="mt-8" strong />
+                  {inherited.length ? (
+                    <div role="note" className="mt-4 flex flex-wrap items-baseline gap-x-3 gap-y-1 rounded-[2px] border border-[#f1c27d]/30 bg-[#f1c27d]/[0.05] px-4 py-3 text-[12.5px] font-light leading-snug text-[#f1c27d]">
+                      <span aria-hidden className="grid h-4 w-4 shrink-0 translate-y-[2px] place-items-center rounded-full border border-[#f1c27d]/60 font-mono text-[9px]">!</span>
+                      <span className="min-w-0 flex-1">
+                        Not yet declared, so taken from the {template.label.toLowerCase()} template: {inherited.join(', ')}.
+                        {inherited.includes('chambers') ? ` This would launch with ${template.legislature.chambers.map(c => c.name).join(' and ')}.` : ''}
+                      </span>
+                      <button type="button" onClick={() => setStep(0)} className="font-mono text-[10px] uppercase tracking-[0.2em] underline underline-offset-4 hover:text-[#f4e4bd]">Declare in Article I</button>
+                    </div>
+                  ) : null}
                   <div className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-px md:grid-cols-2" style={{ background: hair(0.1) }}>
                     <Summary n="I" title="Nation" wide onEdit={() => setStep(0)} rows={[
                       ['State', profile.stateName], ['Form', STATE_FORMS.find(f => f.k === profile.stateForm)?.l ?? profile.stateForm],
                       ['Executive', profile.executiveTitle], ['Legislature', profile.legislatureName],
-                      ['Currency', profile.currency], ['Regions', profile.regionNoun],
+                      ['Currency', profile.currency], ['Regional unit', profile.regionNoun],
                       ['Country', countries.find(c => c.iso3 === profile.iso3)?.name ?? '—'],
-                      ['Chambers', constitutionFor(profile.stateForm, cleanConstitution(profile.constitution)).legislature.chambers.map(c => `${c.name} (${c.seats})`).join(' · ')],
+                      ['Chambers', constitutionFor(profile.stateForm, cleanConstitution(profile.constitution)).legislature.chambers.map(c => `${c.name} (${c.seats})`).join(' · ') + (inherited.includes('chambers') ? ' — template' : '')],
                       ['Regions', profile.regions?.length ? `${profile.regions.length} · ${profile.regions.slice(0, 3).join(', ')}${profile.regions.length > 3 ? '…' : ''}` : 'Reference set'],
                       ['AI assistant', profile.aiAssistant ? 'On' : 'Off'],
                     ]} />
