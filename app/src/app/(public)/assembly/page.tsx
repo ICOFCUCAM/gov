@@ -2,9 +2,19 @@
 
 import { PublicSiteShell } from '@/apps/_shared/public/PublicSiteShell';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
+import { getSovereign, getSetup } from '@/lib/data/store';
+import { nationOffices } from '@/lib/nation/offices';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'National Assembly — Lower House of the Legislature' };
+// Chamber names follow the nation's constitution (reference wording until setup).
+const chamber = () => {
+  const o = nationOffices(getSovereign(), !!getSetup());
+  return { name: o.primaryChamber, house: o.upperChamber ? 'Lower House' : 'The Legislature', short: o.primaryChamber === 'National Assembly' ? 'Assembly' : o.primaryChamber };
+};
+export function generateMetadata() {
+  const c = chamber();
+  return { title: `${c.name} — ${c.house === 'Lower House' ? 'Lower House of the Legislature' : 'The Legislature'}` };
+}
 
 const THEME = {
   ink: '#0e1e26', inkSoft: '#163040', primary: '#0f6e6a', accent: '#1f9d63',
@@ -13,10 +23,11 @@ const THEME = {
 };
 
 export default function PublicAssemblyPage() {
+  const c = chamber();
   return (
     <PublicSiteShell
       theme={THEME}
-      institution={{ name: 'National Assembly — Lower House', tagline: 'Voice of the people, makers of law', role: 'Chamber', href: '/assembly', crest: '⌬',
+      institution={{ name: `${c.name} — ${c.house}`, tagline: 'Voice of the people, makers of law', role: 'Chamber', href: '/assembly', crest: '⌬',
         emergencyButton: null }}
       nav={[
         { label: 'Home', href: '/assembly', active: true },
@@ -80,8 +91,8 @@ export default function PublicAssemblyPage() {
         { heading: 'Resources', items: ['Records', 'Open Data', 'Petitions', 'Publications', 'Contact'] },
         { heading: 'About', items: ['Role', 'Committees', 'Code of Conduct', 'Audit', 'Transparency'] },
       ]}
-      newsletter={{ heading: 'Assembly updates', body: 'Sessions, votes, and petition outcomes.' }}
-      legalLine="© 2025 National Assembly — Lower House of the Legislature."
+      newsletter={{ heading: `${c.short} updates`, body: 'Sessions, votes, and petition outcomes.' }}
+      legalLine={`© 2025 ${c.name} — ${c.house === 'Lower House' ? 'Lower House of the Legislature' : 'The Legislature'}.`}
       legalLinks={['Privacy', 'Terms', 'Accessibility', 'Sitemap']} />
   );
 }

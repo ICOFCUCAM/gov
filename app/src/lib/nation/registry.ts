@@ -9,6 +9,7 @@
 
 import type { StateForm, NationalConstitution } from '@/lib/api/types';
 import { constitutionFor, type ConstitutionModel } from '@/lib/gov/constitution';
+import { nationOffices, type NationOffices } from '@/lib/nation/offices';
 
 export interface NationFacts {
   iso3?: string;
@@ -17,9 +18,15 @@ export interface NationFacts {
   locale?: string;
   stateForm?: StateForm;
   constitution?: NationalConstitution;
+  stateName?: string;
+  executiveTitle?: string;
+  legislatureName?: string;
+  /** True once setup is complete; offices keep the reference wording until then. */
+  configured?: boolean;
 }
 
-const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution } = {
+const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean } = {
+  configured: false,
   regions: [],
   currency: 'USD',
   locale: 'en',
@@ -34,6 +41,29 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.locale = f.locale || 'en';
   state.stateForm = f.stateForm;
   state.constitution = f.constitution;
+  state.stateName = f.stateName;
+  state.executiveTitle = f.executiveTitle;
+  state.legislatureName = f.legislatureName;
+  state.configured = !!f.configured;
+}
+
+/** The installed nation's offices (reference wording until setup is complete). */
+export function currentOffices(): NationOffices {
+  return nationOffices({
+    stateName: state.stateName ?? '', stateForm: state.stateForm ?? 'republic', executiveTitle: state.executiveTitle ?? '',
+    legislatureName: state.legislatureName ?? '', currency: state.currency, regionNoun: 'region', locale: state.locale,
+    constitution: state.constitution,
+  }, state.configured);
+}
+
+/** Institution app names that follow the nation's offices and chambers. */
+export function nationAppLabel(id: string, label: string): string {
+  if (!state.configured) return label;
+  const o = currentOffices();
+  if (id === 'presidency') return `${o.executiveOffice} · Cabinet Office`;
+  if (id === 'assembly') return o.primaryChamber;
+  if (id === 'senate') return o.upperChamber ?? label;
+  return label;
 }
 
 /** The installed nation's constitution: its form-of-state template with its own facts applied. */

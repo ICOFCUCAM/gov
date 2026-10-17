@@ -2,9 +2,15 @@
 
 import { PublicSiteShell } from '@/apps/_shared/public/PublicSiteShell';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
+import { getSovereign, getSetup } from '@/lib/data/store';
+import { nationOffices } from '@/lib/nation/offices';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Office of the President & Cabinet — Official Portal' };
+
+const offices = () => nationOffices(getSovereign(), !!getSetup());
+export function generateMetadata() {
+  return { title: `${offices().executiveOffice} & Cabinet — Official Portal` };
+}
 
 const THEME = {
   ink: '#0a1326', inkSoft: '#142042', primary: '#1f3a7a', accent: '#c9a24a',
@@ -13,14 +19,17 @@ const THEME = {
 };
 
 export default function PublicPresidencyPage() {
+  // Offices follow the installed nation (reference wording until setup).
+  const o = offices();
+  const office = o.headOfGovernment === 'President' ? 'The Presidency' : `The ${o.executiveOffice}`;
   return (
     <PublicSiteShell
       theme={THEME}
-      institution={{ name: 'Office of the President', tagline: 'Executive Mansion · Cabinet Office', role: 'Branch', href: '/presidency', crest: '◈',
+      institution={{ name: o.executiveOffice, tagline: `${o.executiveSeat} · Cabinet Office`, role: 'Branch', href: '/presidency', crest: '◈',
         emergencyButton: { label: 'Cabinet Statement', icon: '✎' } }}
       nav={[
         { label: 'Home', href: '/presidency', active: true },
-        { label: 'The President', href: '/presidency' },
+        { label: `The ${o.headOfGovernment}`, href: '/presidency' },
         { label: 'Cabinet', href: '/presidency' },
         { label: 'Executive Orders', href: '/presidency' },
         { label: 'State Engagements', href: '/presidency' },
@@ -29,7 +38,7 @@ export default function PublicPresidencyPage() {
       ]}
       hero={{
         headline: <><span style={{ color: THEME.ink }}>Authority,</span><br /><span style={{ color: THEME.primary }}>In Trust</span></>,
-        subhead: 'The Office of the President exists in service of the polity — temporary, accountable, transparent.',
+        subhead: `The ${o.executiveOffice} exists in service of the polity — temporary, accountable, transparent.`,
         primaryCta: { label: 'Read Executive Orders', icon: '✎' },
         secondaryCta: { label: 'Watch Citizen Address', icon: '▶' },
         illustration: <HeroIllustration kind="parliament" primary={THEME.primary} accent={THEME.accent} aria="Executive mansion" />,
@@ -45,9 +54,9 @@ export default function PublicPresidencyPage() {
         { title: 'Succession Line', subtitle: 'Constitutional order', color: '#b48a3d', icon: '⌖' },
       ]}
       featured={[
-        { kicker: 'CONSTITUTIONAL ROLE', title: 'Govern Through Cabinet', body: 'The President governs *with* Cabinet, not above it. Collective responsibility binds every minister to every adopted resolution.', cta: 'How Cabinet decides', tone: 'primary' },
-        { kicker: 'TRANSPARENCY', title: 'Records You Can Read', body: 'Every order, resolution and engagement is published in open form within seven days. The Records Auditor reports to the Senate.', cta: 'Records publication', tone: 'subtle' },
-        { kicker: 'SAFEGUARDS', title: 'A Temporary Office', body: 'The Presidency is term-limited. Rule by decree, sealed orders, civil-military fusion and concealment of foreign engagements are constitutionally void.', cta: 'Read safeguards', tone: 'amber' },
+        { kicker: 'CONSTITUTIONAL ROLE', title: 'Govern Through Cabinet', body: `The ${o.headOfGovernment} governs *with* Cabinet, not above it. Collective responsibility binds every minister to every adopted resolution.`, cta: 'How Cabinet decides', tone: 'primary' },
+        { kicker: 'TRANSPARENCY', title: 'Records You Can Read', body: `Every order, resolution and engagement is published in open form within seven days. The Records Auditor reports to the ${o.upperChamber ?? o.primaryChamber}.`, cta: 'Records publication', tone: 'subtle' },
+        { kicker: 'SAFEGUARDS', title: 'A Temporary Office', body: `${office} is term-limited. Rule by decree, sealed orders, civil-military fusion and concealment of foreign engagements are constitutionally void.`, cta: 'Read safeguards', tone: 'amber' },
       ]}
       statistics={[
         { value: '15', label: 'Ministers', sub: 'Collective cabinet' },
@@ -76,12 +85,12 @@ export default function PublicPresidencyPage() {
         { title: 'Constitutional Library', subtitle: 'Full text' },
       ]}
       footerSections={[
-        { heading: 'The Presidency', items: ['The President', 'The Cabinet', 'Executive Orders', 'Resolutions', 'Succession'] },
+        { heading: office, items: [`The ${o.headOfGovernment}`, 'The Cabinet', 'Executive Orders', 'Resolutions', 'Succession'] },
         { heading: 'Engagement', items: ['Citizen Address', 'State Visits', 'Public Engagements', 'Foreign Affairs', 'Contact'] },
         { heading: 'Transparency', items: ['Transparency Reports', 'Asset Disclosures', 'Records', 'Audit', 'Safeguards'] },
       ]}
-      newsletter={{ heading: 'Presidential briefings', body: 'Weekly cabinet read-out and order publication notices.' }}
-      legalLine="© 2025 Office of the President — Executive Mansion."
+      newsletter={{ heading: o.headOfGovernment === 'President' ? 'Presidential briefings' : `${o.headOfGovernment}'s briefings`, body: 'Weekly cabinet read-out and order publication notices.' }}
+      legalLine={`© 2025 ${o.executiveOffice} — ${o.executiveSeat}.`}
       legalLinks={['Privacy', 'Terms', 'Accessibility', 'Sitemap']} />
   );
 }

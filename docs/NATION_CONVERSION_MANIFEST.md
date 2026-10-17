@@ -171,7 +171,10 @@ Steps 1–9 cover ≈165 files and make every *replace* and *shape* finding data
 | 2 · Regions | **Done for the 36 engine lists** | Every engine region list (35 in `lib/gov`, plus `store.ts`) follows `SovereignProfile.regions`, set in setup from the country's admin-1 units or the nation's own grouping. The Kenyan seed regions are gone. Region lists found by the scanner: 39 → 5 (the rest are world regions, not national). Inline placeholder regions inside some dashboards (e.g. Regional Administration's provinces) remain. |
 | 4 · Money | **Done for 99 amounts in 8 files** | Health finance, local councils, strategic and executive dashboards, regional administration, legislature and health apps now render in the nation's currency (`UGX 12.48B` for Uganda). Reserve and gold figures stay in USD by design. Money hits: 143 → 45. |
 
-After these steps: **replace** hits 1,181 → **976** in 212 → **193** files.
+| 5 · Constitution | **Done** | `SovereignProfile.constitution` (head of state, executive seat, one or two chambers with seats, apex court, emergency doctrine, source) laid over the form template by `constitutionFor(form, nation)`; setup has a Constitution panel. Senate/assembly engines size from it and their blocs now sum exactly (they did not before). |
+| 6 · Offices & wording | **Done for the public sites and branch apps** | `lib/nation/offices.ts` derives head of state/government, executive office and seat, chambers and apex court. The Government directory, Presidency, Senate and Assembly public sites, branch app names and the Branches pages use them; a unicameral nation lists no upper chamber. Reference wording is unchanged until setup. Deeper in-app copy (e.g. presidency/senate domain screens) remains. |
+
+After these steps: **replace** hits 1,181 → **979** in 212 → **194** files (the constitution and offices modules add reference wording by design).
 
 ## 8. Instructions for the AI converter (after Path B)
 

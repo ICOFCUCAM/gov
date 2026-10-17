@@ -14,19 +14,20 @@ import {
   legislativePipeline, chambersFor, committees, legislativeCalendar,
   judicialDocket, courtHierarchyFor, constitutionalReview, judicialRegistries,
 } from '@/lib/gov/branches';
-import type { StateForm } from '@/lib/api/types';
+import type { StateForm, NationalConstitution } from '@/lib/api/types';
 
 export function BranchWorkspace({ branchKey }: { branchKey: string }) {
   const [now, setNow] = React.useState(() => Date.now());
   const [form, setForm] = React.useState<StateForm>('republic');
+  const [nation, setNation] = React.useState<NationalConstitution | undefined>();
   React.useEffect(() => {
-    api.sovereign.get().then(r => r.sovereign?.stateForm && setForm(r.sovereign.stateForm)).catch(() => {});
+    api.sovereign.get().then(r => { if (r.sovereign?.stateForm) setForm(r.sovereign.stateForm); setNation(r.sovereign?.constitution); }).catch(() => {});
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
   const ts = now / 4000;
-  const model = constitutionFor(form);
-  const b = branchFor(form, branchKey);
+  const model = constitutionFor(form, nation);
+  const b = model.branches.find(x => x.key === branchKey) ?? branchFor(form, branchKey);
   const engine = b.engine ?? 'none';
   const r = branchReadiness(b.key, ts);
   const sep = separationIntegrity(ts);

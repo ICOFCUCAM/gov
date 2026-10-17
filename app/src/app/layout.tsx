@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { getSovereign } from '@/lib/data/store';
+import { getSovereign, getSetup } from '@/lib/data/store';
 import { NationRegistry } from '@/components/features/NationRegistry';
 
 // The installed nation is read per request so every page reflects it.
@@ -18,11 +18,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const { iso3, regions, currency, locale, stateForm, constitution } = getSovereign();
+  const { iso3, regions, currency, locale, stateForm, constitution, stateName, executiveTitle, legislatureName } = getSovereign();
+  const configured = !!getSetup();
   return (
     <html lang="en" dir="ltr">
       <body>
-        <NationRegistry facts={{ iso3, regions, currency, locale, stateForm, constitution }} />
+        <NationRegistry facts={{ iso3, regions, currency, locale, stateForm, constitution, stateName, executiveTitle, legislatureName, configured }} />
         {children}
       </body>
     </html>

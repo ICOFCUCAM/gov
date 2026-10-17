@@ -6,18 +6,19 @@ import { api } from '@/lib/api/client';
 import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/SituationRoom';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { legislativePipeline, judicialDocket, separationIntegrity, branchReadiness } from '@/lib/gov/branches';
-import type { StateForm } from '@/lib/api/types';
+import type { StateForm, NationalConstitution } from '@/lib/api/types';
 
 export function BranchesView() {
   const [now, setNow] = React.useState(() => Date.now());
   const [form, setForm] = React.useState<StateForm>('republic');
+  const [nation, setNation] = React.useState<NationalConstitution | undefined>();
   React.useEffect(() => {
-    api.sovereign.get().then(r => r.sovereign?.stateForm && setForm(r.sovereign.stateForm)).catch(() => {});
+    api.sovereign.get().then(r => { if (r.sovereign?.stateForm) setForm(r.sovereign.stateForm); setNation(r.sovereign?.constitution); }).catch(() => {});
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
   const ts = now / 4000;
-  const m = constitutionFor(form);
+  const m = constitutionFor(form, nation);
   const bills = legislativePipeline(ts);
   const docket = judicialDocket(ts);
   const sep = separationIntegrity(ts);

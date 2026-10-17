@@ -2,9 +2,15 @@
 
 import { PublicSiteShell } from '@/apps/_shared/public/PublicSiteShell';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
+import { getSovereign, getSetup } from '@/lib/data/store';
+import { nationOffices } from '@/lib/nation/offices';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Senate — Upper House of the Legislature' };
+// The upper chamber's name follows the nation's constitution (reference wording until setup).
+const upper = () => nationOffices(getSovereign(), !!getSetup()).upperChamber ?? 'Senate';
+export function generateMetadata() {
+  return { title: `${upper()} — Upper House of the Legislature` };
+}
 
 const THEME = {
   ink: '#1a1326', inkSoft: '#2a2042', primary: '#7a4d8a', accent: '#c9a24a',
@@ -13,10 +19,11 @@ const THEME = {
 };
 
 export default function PublicSenatePage() {
+  const name = upper();
   return (
     <PublicSiteShell
       theme={THEME}
-      institution={{ name: 'Senate — Upper House', tagline: 'Deliberative chamber of the legislature', role: 'Chamber', href: '/senate', crest: '◈',
+      institution={{ name: `${name} — Upper House`, tagline: 'Deliberative chamber of the legislature', role: 'Chamber', href: '/senate', crest: '◈',
         emergencyButton: null }}
       nav={[
         { label: 'Home', href: '/senate', active: true },
@@ -80,8 +87,8 @@ export default function PublicSenatePage() {
         { heading: 'Resources', items: ['Records', 'Open Data', 'Petitions', 'Publications', 'Contact'] },
         { heading: 'About', items: ['Role', 'Committees', 'Code of Conduct', 'Audit', 'Transparency'] },
       ]}
-      newsletter={{ heading: 'Senate updates', body: 'Sessions, votes, and report releases.' }}
-      legalLine="© 2025 Senate — Upper House of the Legislature."
+      newsletter={{ heading: `${name} updates`, body: 'Sessions, votes, and report releases.' }}
+      legalLine={`© 2025 ${name} — Upper House of the Legislature.`}
       legalLinks={['Privacy', 'Terms', 'Accessibility', 'Sitemap']} />
   );
 }

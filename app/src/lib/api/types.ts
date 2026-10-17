@@ -519,6 +519,8 @@ export interface SovereignProfile {
  *  template for its form of state (lib/gov/constitution.ts). */
 export interface NationalConstitution {
   headOfStateTitle?: string;
+  /** Official seat of the executive, e.g. "State House". */
+  executiveSeat?: string;
   /** Chambers in order: the primary/lower chamber first, then any upper chamber. */
   chambers?: { name: string; seats: number; role?: string }[];
   judicialApex?: string;

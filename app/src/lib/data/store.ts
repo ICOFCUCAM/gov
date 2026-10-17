@@ -291,7 +291,7 @@ function appendAudit(
 
 const db = (g.__civicos ??= seed());
 // Engines read the installed nation (regions, map, currency) from the registry.
-applyNation(db.sovereign);
+applyNation({ ...db.sovereign, configured: !!db.setup });
 
 // ── Session ───────────────────────────────────────────────────────────
 export function getSession(): Session {
@@ -1554,7 +1554,7 @@ export function setSovereign(
     return { error: 'Chambers must be one or two named chambers with a positive seat count' };
   }
   db.sovereign = { ...db.sovereign, ...patch };
-  applyNation(db.sovereign);
+  applyNation({ ...db.sovereign, configured: !!db.setup });
   appendAudit(by, 'sovereign.configure', 'Sovereign:profile', 'ok',
     patch.stateForm ?? patch.stateName);
   return db.sovereign;
@@ -1626,6 +1626,7 @@ export function getSetup(): PlatformSetup | null {
 
 export function completeSetup(by: string): PlatformSetup {
   db.setup = { completedAt: new Date().toISOString(), by, stateName: db.sovereign.stateName };
+  applyNation({ ...db.sovereign, configured: true });
   appendAudit(by, 'platform.setup.complete', 'Platform:setup', 'ok', db.sovereign.stateName);
   return db.setup;
 }
@@ -1659,7 +1660,7 @@ export function applySovereignPreset(
   const preset = SOVEREIGN_PRESETS.find(p => p.key === key);
   if (!preset) return { error: 'Unknown preset' };
   db.sovereign = { ...preset.profile, iso3: db.sovereign.iso3, regions: db.sovereign.regions, constitution: db.sovereign.constitution };
-  applyNation(db.sovereign);
+  applyNation({ ...db.sovereign, configured: !!db.setup });
   appendAudit(by, 'sovereign.preset', `Sovereign:${key}`, 'ok', preset.label);
   return db.sovereign;
 }

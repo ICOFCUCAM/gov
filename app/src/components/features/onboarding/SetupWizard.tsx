@@ -142,7 +142,12 @@ export function SetupWizard() {
   async function launch() {
     if (!profile) return;
     setRunning(true);
-    try { if (await applyAll(profile)) setDone(true); } finally { setRunning(false); }
+    try {
+      if (await applyAll(profile)) {
+        applyNation({ ...profile, constitution: cleanConstitution(profile.constitution), configured: true });
+        setDone(true);
+      }
+    } finally { setRunning(false); }
   }
 
   async function applyAll(profile: SovereignProfile): Promise<boolean> {
@@ -297,6 +302,9 @@ export function SetupWizard() {
                 <div className="mt-4 grid gap-5 sm:grid-cols-2">
                   <Field label="Head of state — title">
                     <input className={inputCls} value={cons.headOfStateTitle ?? ''} placeholder={template.authorityChain[0]?.office} onChange={e => setCons({ headOfStateTitle: e.currentTarget.value })} />
+                  </Field>
+                  <Field label="Official residence of the executive">
+                    <input className={inputCls} value={cons.executiveSeat ?? ''} placeholder="e.g. State House" onChange={e => setCons({ executiveSeat: e.currentTarget.value })} />
                   </Field>
                   <Field label="Apex court">
                     <input className={inputCls} value={cons.judicialApex ?? ''} placeholder={template.judicialApex} onChange={e => setCons({ judicialApex: e.currentTarget.value })} />

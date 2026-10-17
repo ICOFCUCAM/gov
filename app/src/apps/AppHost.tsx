@@ -48,6 +48,7 @@ import { legislativeState } from '@/lib/gov/legislative-engine';
 import { wave } from '@/lib/telemetry';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { nationAppLabel } from '@/lib/nation/registry';
 
 /**
  * Federated Application Host.
@@ -68,7 +69,9 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
   useFederationSync(mins);
   React.useSyncExternalStore(orchSubscribe, orchVersion, orchVersion);
 
-  const app = findApp(domain);
+  const found = findApp(domain);
+  // Branch app names follow the nation's offices and chambers once installed.
+  const app = found && { ...found, label: nationAppLabel(found.id, found.label) };
   React.useEffect(() => {
     if (app?.activated) busPublish('institution.metric', app.id, { domain: app.domain, kind: app.kind });
   }, [app?.id, app?.activated]);
