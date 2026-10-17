@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
 import { NewPermitForm } from './NewPermitForm';
-
 import { nationMessages } from '@/lib/nation/registry';
 export default function NewPermitPage() {
   const m = nationMessages();

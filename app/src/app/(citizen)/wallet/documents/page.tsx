@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
 import { VerifyClient } from './VerifyClient';
-
 import { nationMessages } from '@/lib/nation/registry';
 export default function DocumentsPage() {
   const m = nationMessages();

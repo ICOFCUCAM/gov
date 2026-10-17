@@ -8,7 +8,6 @@ import { Pill } from '@/components/ui/Pill';
 import { TextField } from '@/components/ui/Field';
 import { api } from '@/lib/api/client';
 import type { VerifyResult } from '@/lib/api/types';
-
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 export function VerifyClient() {
   const x = nationMessages().pages;

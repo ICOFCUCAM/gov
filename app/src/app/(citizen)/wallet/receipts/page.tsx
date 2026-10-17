@@ -14,7 +14,6 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { buildCsv, downloadCsv, downloadJson } from '@/lib/csv-download';
 import { ageMinutes } from '@/lib/format';
-
 import { nationMessages } from '@/lib/nation/registry';
 /**
  * /wallet/receipts — the citizen's unified substrate receipts.

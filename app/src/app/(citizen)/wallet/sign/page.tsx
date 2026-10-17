@@ -1,7 +1,6 @@
 import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
 import { SignClient } from './SignClient';
-
 import { nationMessages } from '@/lib/nation/registry';
 export default function SignPage() {
   const m = nationMessages();

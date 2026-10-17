@@ -7,7 +7,7 @@ import { Pill } from '@/components/ui/Pill';
 import { substrateAvailable } from '@/lib/db/client';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { myNotifications, type CitizenNotification } from '@/lib/db/repos/citizen';
-
+import { nationMessages } from '@/lib/nation/registry';
 const ACTION_HREF: Record<CitizenNotification['action'], string> = {
   rate: '/wallet/substrate',
   view: '/wallet/substrate',
@@ -34,7 +34,7 @@ export function SubstrateNotices() {
 
   return (
     <section className="mb-4">
-      <h3 className="font-semibold text-lg mb-2">From the substrate</h3>
+      <h3 className="font-semibold text-lg mb-2">{nationMessages().more.fromSubstrate}</h3>
       <div className="space-y-2">
         {items.map((n, i) => (
           <Link key={`${n.kind}:${n.ref}:${i}`} href={ACTION_HREF[n.action]} className="block">

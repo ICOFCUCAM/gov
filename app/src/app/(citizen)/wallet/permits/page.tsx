@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button';
 import { PermitStatusBadge } from '@/components/ui/StatusBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { listPermits } from '@/lib/data/store';
-
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 export const dynamic = 'force-dynamic';

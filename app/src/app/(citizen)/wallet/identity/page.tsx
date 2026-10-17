@@ -4,7 +4,6 @@ import { Card } from '@/components/ui/Card';
 import { Plain } from '@/components/ui/Plain';
 import { SelectiveDisclosure } from './SelectiveDisclosure';
 import { getSession } from '@/lib/data/store';
-
 import { nationMessages } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 import * as React from 'react';

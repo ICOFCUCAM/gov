@@ -10,7 +10,6 @@ import { api } from '@/lib/api/client';
 import { formatMinor } from '@/lib/utils';
 import type { Bill, PaymentReceipt } from '@/lib/api/types';
 import { nationPaymentRail } from '@/lib/nation/registry';
-
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 export function PaymentsClient({
