@@ -31,7 +31,13 @@ const send = (method: string, body: unknown) => new Request('http://x/api', {
 const post = (body: unknown) => send('POST', body);
 const chamber = async (): Promise<UpdateChamber> => (await chamberGET(get('/api/releases')).json()).chamber;
 const security = async (): Promise<SecurityCenter> => (await securityGET(get('/api/releases/security')).json()).security;
-const decide = (id: string, body: unknown) => decisionPOST(post(body), { params: { id } });
+/** Four-eyes over HTTP: a proposal returns `pending`; a second official then approves. */
+const decide = async (id: string, body: unknown) => {
+  const first = await decisionPOST(post(body), { params: { id } });
+  const action = (body as { action?: string })?.action;
+  if ((action !== 'approve' && action !== 'install') || first.status !== 200 || !(await first.clone().json()).pending) return first;
+  return decisionPOST(post({ ...(body as object), by: 'Second official' }), { params: { id } });
+};
 const healthy = () => HEALTH_CHECKS.map(c => ({ key: c.key, ok: true, value: c.key === 'latency' ? 230 : c.key === 'error-rate' ? 0.3 : undefined }));
 
 async function installSecurityRelease() {

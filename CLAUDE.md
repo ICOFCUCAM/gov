@@ -80,6 +80,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   two named officials can waive one. A production install needs the release
   to have passed staging probation plus a named UAT sign-off (per-nation
   policy, on by default).
+- Change control (`lib/data/change-control.ts`): production approve and
+  install are four-eyes — one official proposes, a different one approves
+  (`pending` on the install). Scheduling into a blackout is refused; a
+  change freeze blocks installs except security/critical releases.
 
 ## Branding and AI
 

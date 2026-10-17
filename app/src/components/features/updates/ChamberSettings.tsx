@@ -127,14 +127,18 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
         <div className="mt-3 min-h-[20px]" aria-live="polite">{err ? <ErrorLine>{err}</ErrorLine> : ok ? <p className="text-[12.5px] text-[#9be7c4]">{ok}</p> : null}</div>
       </form>
 
-      <Section n="06" title="Fallback incidents" aside={`${c.incidents.length} recorded`}>
+      <Section n="06" title="Change control" aside="Four-eyes · calendar · blackouts · freeze">
+        <ChangeControlPanel c={c} link={link} actor={actor} reload={reload} />
+      </Section>
+
+      <Section n="07" title="Fallback incidents" aside={`${c.incidents.length} recorded`}>
         <div className="grid gap-3">
           {c.incidents.map(i => <IncidentCard key={i.id} i={i} q={q} />)}
           {!c.incidents.length ? <p className="text-[13.5px] font-light text-white/50">No fallbacks so far.</p> : null}
         </div>
       </Section>
 
-      <Section n="07" title="Break-glass restore">
+      <Section n="08" title="Break-glass restore">
         <BreakGlass c={c} link={link} reload={reload} />
       </Section>
     </>
@@ -174,6 +178,62 @@ function AgentCredential({ c, link, actor, reload }: { c: UpdateChamber; link?: 
       ) : null}
       <div className="mt-2 min-h-[16px]"><ErrorLine>{err}</ErrorLine></div>
     </Panel>
+  );
+}
+
+const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+/** Four-eyes (always on), weekly maintenance windows, blackout periods and the change freeze. */
+function ChangeControlPanel({ c, link, actor, reload }: { c: UpdateChamber; link?: string; actor: string; reload: () => void }) {
+  const cc = c.changeControl;
+  const [err, setErr] = React.useState<string | null>(null);
+  const [freezeReason, setFreezeReason] = React.useState('');
+  const [bo, setBo] = React.useState({ label: '', kind: 'election', start: '', end: '' });
+  async function run(body: Parameters<typeof api.updates.changeControl>[0]) {
+    setErr(null);
+    if (!actor.trim()) { setErr('Enter your name under “Changed by” first.'); return; }
+    try { await api.updates.changeControl({ ...body, by: actor.trim(), link }); reload(); }
+    catch (e) { setErr(e instanceof Error ? e.message : 'Could not save'); }
+  }
+  return (
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
+      <Panel className="p-5">
+        <p className="flex items-center gap-2 font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/75">Four-eyes <Chip tone="#9be7c4" solid>Always on</Chip></p>
+        <p className="mt-2 text-[12.5px] font-light leading-relaxed text-white/60">Approving and installing a release in production take two named officials: the first proposes, a different official approves. The same person cannot do both. Each step is written to the audit chain.</p>
+        <p className="mt-4 flex flex-wrap items-center gap-2 font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/75">Change freeze {cc.freeze?.on ? <Chip tone="#f1938f" solid>On</Chip> : <Chip tone="#8a8f99">Off</Chip>}</p>
+        <p className="mt-2 text-[12.5px] font-light text-white/60">{cc.freeze?.on ? `Frozen by ${cc.freeze.by} on ${fmtDateTime(cc.freeze.at)}: ${cc.freeze.reason}. Only security and critical releases can be installed, still with four-eyes.` : 'While a freeze is on, only security and critical releases can be installed.'}</p>
+        {cc.freeze?.on ? (
+          <button type="button" className={`${ghostBtn} mt-3 py-2 text-[12.5px]`} onClick={() => run({ action: 'unfreeze', by: actor })}>Lift the freeze</button>
+        ) : (
+          <div className="mt-3 flex flex-wrap items-end gap-2">
+            <input aria-label="Freeze reason" className={`${inputCls} min-w-[200px] flex-1 py-2 text-[13px]`} value={freezeReason} onChange={e => setFreezeReason(e.target.value)} placeholder="Reason, e.g. national emergency response" />
+            <button type="button" className={`${ghostBtn} py-2 text-[12.5px]`} onClick={() => run({ action: 'freeze', by: actor, reason: freezeReason })}>Freeze changes</button>
+          </div>
+        )}
+      </Panel>
+      <Panel className="p-5">
+        <p className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/75">Maintenance calendar</p>
+        <ul className="mt-2 space-y-1">{cc.windows.map((w, i) => <li key={i} className="text-[12.5px] font-light text-white/70">{DAYS[w.day]} {w.start} · {w.hours} h</li>)}</ul>
+        <p className="mt-4 font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/75">Blackout periods — no upgrades scheduled</p>
+        <ul className="mt-2 space-y-1.5">
+          {cc.blackouts.map(b => (
+            <li key={b.id} className="flex flex-wrap items-center gap-2 text-[12.5px] font-light text-white/75">
+              <Chip tone="#f1b36b">{b.kind}</Chip>{b.label}<span className="font-mono text-[10.5px] text-white/45">{fmtDateTime(b.start)} → {fmtDateTime(b.end)}</span>
+              <button type="button" className="ml-auto text-[11px] text-white/40 hover:text-[#f1938f]" onClick={() => run({ action: 'remove-blackout', id: b.id, by: actor })}>Remove</button>
+            </li>
+          ))}
+          {!cc.blackouts.length ? <li className="text-[12px] text-white/40">None defined.</li> : null}
+        </ul>
+        <div className="mt-3 grid gap-2 sm:grid-cols-2">
+          <Field label="Label"><input className={inputCls} value={bo.label} onChange={e => setBo({ ...bo, label: e.target.value })} placeholder="General election" /></Field>
+          <Field label="Kind"><Select value={bo.kind} onChange={e => setBo({ ...bo, kind: e.target.value })}><option value="election">Election</option><option value="budget">Budget week</option><option value="emergency">Emergency</option><option value="other">Other</option></Select></Field>
+          <Field label="From"><input type="datetime-local" className={inputCls} value={bo.start} onChange={e => setBo({ ...bo, start: e.target.value })} /></Field>
+          <Field label="To"><input type="datetime-local" className={inputCls} value={bo.end} onChange={e => setBo({ ...bo, end: e.target.value })} /></Field>
+        </div>
+        <button type="button" className={`${ghostBtn} mt-3 py-2 text-[12.5px]`} onClick={() => run({ action: 'add-blackout', by: actor, label: bo.label, kind: bo.kind, start: bo.start ? new Date(bo.start).toISOString() : '', end: bo.end ? new Date(bo.end).toISOString() : '' })}>Add blackout</button>
+      </Panel>
+      <div className="lg:col-span-2"><ErrorLine>{err}</ErrorLine></div>
+    </div>
   );
 }
 

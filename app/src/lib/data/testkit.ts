@@ -4,7 +4,7 @@
 // staging policy off for the installed nation, so each suite tests one
 // thing; staging and preflight have their own suites.
 
-import { HOME_NATION, nationRecord } from './updates';
+import { HOME_NATION, nationRecord, decide, type DecisionInput, type DecisionResult } from './updates';
 import { stagingInstall, signUat, superviseStaging, registerStaging, stagingEnvironment } from './readiness';
 import { releaseFor } from './updates';
 
@@ -23,4 +23,11 @@ export function stageForProduction(nationId: string, releaseId: string): void {
   superviseStaging(Date.parse(run.endsAt) + 1000);
   const u = signUat(n, r, { tester: 'UAT lead', date: new Date().toISOString(), evidence: 'All acceptance scripts passed on staging' });
   if ('error' in u) throw new Error(u.error);
+}
+
+/** Four-eyes in tests: the named official proposes, a second official approves. */
+export function cosign(nationId: string, releaseId: string, input: DecisionInput, second = 'Second official'): DecisionResult {
+  const first = decide(nationId, releaseId, input);
+  if ('error' in first || !first.pending) return first;
+  return decide(nationId, releaseId, { ...input, by: second });
 }

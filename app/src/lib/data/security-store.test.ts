@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { resetReadiness } from '@/lib/data/readiness';
-import { stagingOff } from '@/lib/data/testkit';
+import { stagingOff, cosign } from '@/lib/data/testkit';
 import {
   resetSecurity, createQuote, orderAction, securityGate, registerByo, registerSoftware, definitions, applyDefinitions,
   posture, securityDownload, listOrders, pricing, setStorePolicy, securityCenter,
@@ -86,18 +86,18 @@ describe('the security rule', () => {
 
   it('security coverage never blocks an update — security or feature, paid or not', () => {
     expect(securityGate(home()).platformCovered).toBe(false);
-    decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' });
+    cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' });
     decide(HOME_NATION, 'DR-141', { action: 'prepare', by: 'Ops' });
-    expect(decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).not.toHaveProperty('error');
+    expect(cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).not.toHaveProperty('error');
   });
 
   it('a lapsed licence does not block installing a security release either', () => {
     resetSecurity();
     const o = listOrders(HOME_NATION)[0]!; // the backup licence
     o.licence!.expiresAt = new Date(Date.now() - DAY).toISOString();
-    decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' });
+    cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' });
     decide(HOME_NATION, 'DR-141', { action: 'prepare', by: 'Ops' });
-    expect(decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).not.toHaveProperty('error');
+    expect(cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).not.toHaveProperty('error');
   });
 
   it('an active host EDR licence covers the estate', () => {

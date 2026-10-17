@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { resetReadiness } from '@/lib/data/readiness';
-import { stagingOff } from '@/lib/data/testkit';
+import { stagingOff, cosign } from '@/lib/data/testkit';
 import {
   resetUpdates, getChamber, decide, reportHealth, superviseProbations, updateSettings, breakGlass, restoreData,
   setReleaseStatus, releaseStats, acknowledgeIncident, publishRelease, nationRecord, HOME_NATION, SYSTEM_ACTOR, HEALTH_CHECKS,
@@ -24,9 +24,9 @@ const ok = <T,>(r: T): Exclude<T, { error: string }> => { if (r && typeof r === 
 /** Approve, take a restore point and install the security release 1.4.1 (backward compatible). */
 function installSecurity(settings: Parameters<typeof updateSettings>[1] = {}) {
   ok(updateSettings(HOME_NATION, settings, 'CIO'));
-  ok(decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' }));
+  ok(cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' }));
   ok(decide(HOME_NATION, 'DR-141', { action: 'prepare', by: 'Ops' }));
-  const r = ok(decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true }));
+  const r = ok(cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true }));
   return r.install.probation!;
 }
 
@@ -34,14 +34,14 @@ beforeEach(() => { resetUpdates(); resetReadiness(); stagingOff(); resetSecurity
 
 describe('restore point before every install', () => {
   it('refuses to install without a verified restore point of the running version', () => {
-    ok(decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' }));
-    const r = decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
+    ok(cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' }));
+    const r = cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
     expect(r).toMatchObject({ status: 409 });
     if ('error' in r) expect(r.error).toMatch(/restore point/);
   });
 
   it('records the restore point on the install: id, time, size, verified, contents', () => {
-    ok(decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' }));
+    ok(cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' }));
     const r = ok(decide(HOME_NATION, 'DR-141', { action: 'prepare', by: 'Ops' }));
     const rp = r.install.restorePoint!;
     expect(rp).toMatchObject({ version: '1.4.0', releaseId: 'DR-140', verified: true, createdBy: 'Ops' });
@@ -155,9 +155,9 @@ describe('no false fallbacks', () => {
 
   it('only one release can be on probation at a time', () => {
     installSecurity();
-    ok(decide(HOME_NATION, 'DR-141-H1', { action: 'approve', by: 'CIO' }));
+    ok(cosign(HOME_NATION, 'DR-141-H1', { action: 'approve', by: 'CIO' }));
     ok(decide(HOME_NATION, 'DR-141-H1', { action: 'prepare', by: 'Ops' }));
-    expect(decide(HOME_NATION, 'DR-141-H1', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).toMatchObject({ status: 409 });
+    expect(cosign(HOME_NATION, 'DR-141-H1', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).toMatchObject({ status: 409 });
   });
 });
 
@@ -210,7 +210,7 @@ describe('automatic fallback switches software only', () => {
     installSecurity({ healthSource: 'agent' });
     ok(reportHealth(HOME_NATION, { checks: confirmed() }));
     expect(chamber().upgradePath).not.toContain('DR-141');
-    expect(decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO', note: 'Vendor confirmed fix in our config' })).not.toHaveProperty('error');
+    expect(cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO', note: 'Vendor confirmed fix in our config' })).not.toHaveProperty('error');
   });
 
   it('incidents are acknowledged by a named person', () => {
@@ -232,9 +232,9 @@ describe('a release that is not backward compatible never falls back automatical
     expect(fresh.compatibleWithPrevious).toBe(false);
     const m = mark();
     ok(updateSettings(HOME_NATION, { healthSource: 'agent', fallback: 'automatic' }, 'CIO'));
-    ok(decide(HOME_NATION, fresh.id, { action: 'approve', by: 'CIO' }));
+    ok(cosign(HOME_NATION, fresh.id, { action: 'approve', by: 'CIO' }));
     ok(decide(HOME_NATION, fresh.id, { action: 'prepare', by: 'Ops' }));
-    ok(decide(HOME_NATION, fresh.id, { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true }));
+    ok(cosign(HOME_NATION, fresh.id, { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true }));
     ok(reportHealth(HOME_NATION, { checks: confirmed() }));
     const c = chamber();
     expect(c.installed).toBe('1.3.9');
@@ -316,18 +316,18 @@ describe('never automatic upgrades', () => {
     const p = installSecurity();
     superviseProbations(Date.parse(p.endsAt) + MIN);
     const installs = stateOf('DR-141').events.filter(e => e.action === 'install' && e.from !== 'probation');
-    expect(installs).toHaveLength(1);
-    expect(installs[0]!.by).toBe('Ops');
+    // Four-eyes: proposed by Ops, carried out by a second official. Never the system.
+    expect(installs.map(e => e.by)).toEqual(['Ops', 'Second official']);
   });
 });
 
 describe('halt and recall', () => {
   it('a halted release cannot be approved, prepared or installed', () => {
-    ok(decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' }));
+    ok(cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' }));
     ok(setReleaseStatus('DR-141', { action: 'halt', reason: 'Failures reported in pilot nations', by: 'Release engineering' }));
     expect(decide(HOME_NATION, 'DR-141', { action: 'prepare', by: 'Ops' })).toMatchObject({ status: 409 });
-    expect(decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).toMatchObject({ status: 409 });
-    expect(decide(HOME_NATION, 'DR-141-H1', { action: 'approve', by: 'CIO' })).not.toHaveProperty('error');
+    expect(cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).toMatchObject({ status: 409 });
+    expect(cosign(HOME_NATION, 'DR-141-H1', { action: 'approve', by: 'CIO' })).not.toHaveProperty('error');
     expect(chamber().releases.find(r => r.id === 'DR-141')!.blocked).toBe(true);
     expect(chamber().upgradePath).not.toContain('DR-141');
   });

@@ -69,7 +69,13 @@ describe('GET /api/releases/[id]', () => {
 });
 
 describe('POST /api/releases/[id]/decision', () => {
-  const decide = (id: string, body: unknown) => decisionPOST(post(`/api/releases/${id}/decision`, body), { params: { id } });
+  /** Four-eyes over HTTP: a proposal returns `pending`; a second official then approves. */
+  const decide = async (id: string, body: unknown) => {
+    const first = await decisionPOST(post(`/api/releases/${id}/decision`, body), { params: { id } });
+    const action = (body as { action?: string })?.action;
+    if ((action !== 'approve' && action !== 'install') || first.status !== 200 || !(await first.clone().json()).pending) return first;
+    return decisionPOST(post(`/api/releases/${id}/decision`, { ...(body as object), by: 'Second official' }), { params: { id } });
+  };
 
   it('rejects invalid JSON, unknown actions and missing names', async () => {
     expect((await decide('DR-141', 'nope')).status).toBe(400);

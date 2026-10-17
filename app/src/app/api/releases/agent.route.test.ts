@@ -19,12 +19,18 @@ const report = (auth: string | null, body: Record<string, unknown> = { checks: h
 const post = (body: unknown) => new Request('http://x/api', { method: 'POST', body: JSON.stringify(body), headers: { 'content-type': 'application/json' } }) as never;
 const chamber = (id = HOME_NATION): UpdateChamber => { const c = getChamber(id); if ('error' in c) throw new Error(c.error); return c; };
 const MIN = 60_000;
+/** Four-eyes over HTTP: a proposal returns `pending`; a second official then approves. */
+async function cosignPOST(body: Record<string, unknown>, id = 'DR-141') {
+  const first = await decisionPOST(post(body), { params: { id } });
+  if (first.status !== 200 || !(await first.clone().json()).pending) return first;
+  return decisionPOST(post({ ...body, by: 'Second official' }), { params: { id } });
+}
 
 async function installSecurityRelease() {
   updateSettings(HOME_NATION, { healthSource: 'agent' }, 'CIO');
-  await decisionPOST(post({ action: 'approve', by: 'CIO' }), { params: { id: 'DR-141' } });
+  await cosignPOST({ action: 'approve', by: 'CIO' });
   await decisionPOST(post({ action: 'prepare', by: 'Ops' }), { params: { id: 'DR-141' } });
-  const r = await decisionPOST(post({ action: 'install', by: 'Ops', mode: 'self-hosted', verified: true }), { params: { id: 'DR-141' } });
+  const r = await cosignPOST({ action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
   expect(r.status).toBe(200);
 }
 
@@ -118,9 +124,9 @@ describe('scheduled watchdog (/api/cron/update-watchdog)', () => {
   it('passes a healthy probation at the end of its window', async () => {
     process.env.CIVICOS_CRON_SECRET = 'cron-test-secret';
     updateSettings(HOME_NATION, { healthSource: 'simulated' }, 'CIO');
-    await decisionPOST(post({ action: 'approve', by: 'CIO' }), { params: { id: 'DR-141' } });
+    await cosignPOST({ action: 'approve', by: 'CIO' });
     await decisionPOST(post({ action: 'prepare', by: 'Ops' }), { params: { id: 'DR-141' } });
-    await decisionPOST(post({ action: 'install', by: 'Ops', mode: 'self-hosted', verified: true }), { params: { id: 'DR-141' } });
+    await cosignPOST({ action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
     const end = Date.parse(chamber().probation!.endsAt);
     vi.useFakeTimers({ toFake: ['Date'] });
     vi.setSystemTime(end + MIN);

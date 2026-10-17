@@ -810,7 +810,7 @@ export type ReleaseStatus = 'active' | 'halted' | 'withdrawn';
 export type InstallState = 'available' | 'approved' | 'scheduled' | 'probation' | 'installed' | 'skipped' | 'rolled-back' | 'fallen-back';
 /** 'prepare' takes the restore point; 'fallback' and 'keep' answer a failed
  *  probation when the nation asked to decide before falling back. */
-export type InstallAction = 'approve' | 'schedule' | 'unschedule' | 'prepare' | 'install' | 'skip' | 'reconsider' | 'rollback' | 'fallback' | 'keep';
+export type InstallAction = 'approve' | 'schedule' | 'unschedule' | 'prepare' | 'install' | 'skip' | 'reconsider' | 'rollback' | 'fallback' | 'keep' | 'cancel-proposal';
 export interface MaintenanceWindow { start: ISODate; end: ISODate }
 export interface InstallEvent {
   at: ISODate;
@@ -833,6 +833,8 @@ export interface NationInstall {
   /** Taken before the install; required for it. */
   restorePoint?: RestorePoint;
   probation?: Probation;
+  /** Four-eyes: a production approve or install proposed by one official, awaiting a second. */
+  pending?: { action: 'approve' | 'install'; by: string; at: ISODate; mode?: DeliveryMode; verified?: boolean; note?: string };
 }
 
 // ── Resilience: restore points, probation and fallback ───────────────
@@ -997,6 +999,7 @@ export interface UpdateChamber {
   /** Halted or withdrawn releases this nation runs: falling back is advised. */
   advisories: { releaseId: string; version: string; status: ReleaseStatus; reason?: string }[];
   security: SecurityGate;
+  changeControl: ChangeControl;
 }
 /** Advisory only: security coverage never blocks an update. */
 export interface SecurityGate {
@@ -1284,4 +1287,17 @@ export interface StagingEnvironment {
   /** Hosted nations get staging provisioned by the publisher. */
   provisionedBy?: 'publisher' | 'nation';
   runs: StagingRun[];
+}
+
+// ── Update Center: change control ─────────────────────────────────────
+export interface Blackout { id: string; label: string; kind: 'election' | 'budget' | 'emergency' | 'other'; start: ISODate; end: ISODate; by: string; at: ISODate }
+/** A preferred weekly maintenance window, in the nation's local time. */
+export interface MaintenanceSlot { day: number; start: string; hours: number }
+export interface ChangeControl {
+  nationId: string;
+  windows: MaintenanceSlot[];
+  blackouts: Blackout[];
+  /** Blocks new installs except security and critical releases (which still need four-eyes). */
+  freeze?: { on: boolean; by: string; at: ISODate; reason: string };
+  fourEyes: true;
 }

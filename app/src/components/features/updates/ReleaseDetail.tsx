@@ -31,7 +31,7 @@ function eventLabel(e: InstallEvent): string {
 const DONE: Record<InstallAction, string> = {
   approve: 'Approved', schedule: 'Scheduled', unschedule: 'Schedule cancelled', prepare: 'Restore point taken and verified',
   install: 'Installed — probation started', skip: 'Skipped', reconsider: 'Reopened', rollback: 'Rollback recorded',
-  fallback: 'Fallback to last known good recorded', keep: 'Kept despite failed checks',
+  fallback: 'Fallback to last known good recorded', keep: 'Kept despite failed checks', 'cancel-proposal': 'Proposal cancelled',
 };
 
 export function ReleaseDetail({ id }: { id: string }) {
@@ -289,6 +289,7 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
   const rp = r.install.restorePoint;
   const rpValid = !!rp && rp.verified && rp.version === c.installed;
   const pr = r.install.probation;
+  const pending = r.install.pending;
   const can = {
     approve: (s === 'available' || s === 'rolled-back' || s === 'fallen-back') && r.newer && !r.blocked,
     schedule: (s === 'approved' || s === 'scheduled') && r.delivery.includes('saas') && !r.blocked,
@@ -349,7 +350,7 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
       {r.install.window && s === 'scheduled' ? (
         <p className="mt-2 text-[12.5px] font-light text-white/55">Window: {fmtDateTime(r.install.window.start)} → {fmtDateTime(r.install.window.end)}</p>
       ) : null}
-      <p className="mt-3 text-[12px] font-light leading-relaxed text-white/45">Never automatic. Each step is taken by a named person and written to the audit chain.</p>
+      <p className="mt-3 text-[12px] font-light leading-relaxed text-white/45">Never automatic. Each step is taken by a named person and written to the audit chain. Approving and installing need two different officials.</p>
 
       <Rule className="my-5" />
       <div className="grid gap-4">
@@ -360,7 +361,13 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
       </div>
 
       <div className="mt-5 grid gap-3">
-        {can.approve ? <button type="button" className={goldBtn} style={goldStyle} disabled={!!busy || !r.compatible} onClick={() => act('approve')}>{busy === 'approve' ? 'Approving…' : `Approve ${r.version}`}</button> : null}
+        {pending ? (
+          <div role="status" className="rounded-[3px] border px-4 py-3" style={{ borderColor: '#c9b6ff66', background: 'rgba(201,182,255,0.06)' }}>
+            <p className="text-[12.5px] font-light text-[#f3efe6]/85"><span className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#c9b6ff]">Four-eyes</span> {pending.by} proposed to {pending.action} {r.version} on {fmtDateTime(pending.at)}. A second, different official must approve it.</p>
+            <button type="button" className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-white/45 hover:text-[#f1938f]" disabled={!!busy} onClick={() => act('cancel-proposal')}>Cancel the proposal</button>
+          </div>
+        ) : null}
+        {can.approve ? <button type="button" className={goldBtn} style={goldStyle} disabled={!!busy || !r.compatible} onClick={() => act('approve')}>{busy === 'approve' ? 'Recording…' : pending?.action === 'approve' ? `Approve as second official` : `Propose approval of ${r.version}`}</button> : null}
         {can.approve && !r.compatible ? <p className="text-[12px] text-[#f1b36b]">Needs {r.minCompatibleVersion} or later installed first.</p> : null}
 
         {can.schedule ? (
@@ -407,8 +414,8 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
                 We verified every checksum and signature against the publisher key before installing.
               </label>
             ) : null}
-            <button type="button" className={goldBtn} style={goldStyle} disabled={!!busy || !r.compatible || !rpValid || (mode !== 'saas' && !verified)} onClick={() => act('install')}>
-              {busy === 'install' ? 'Recording…' : mode === 'saas' ? 'Apply now' : 'Mark as installed'}
+            <button type="button" className={goldBtn} style={goldStyle} disabled={!!busy || !r.compatible || !rpValid || (pending?.action !== 'install' && mode !== 'saas' && !verified)} onClick={() => act('install')}>
+              {busy === 'install' ? 'Recording…' : pending?.action === 'install' ? 'Approve install as second official' : mode === 'saas' ? 'Propose: apply now' : 'Propose: mark as installed'}
             </button>
             {!rpValid ? <p className="text-[11.5px] text-white/45">Take the restore point first.</p> : null}
           </fieldset>

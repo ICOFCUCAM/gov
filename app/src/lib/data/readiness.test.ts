@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { resetUpdates, decide, nationRecord, releaseFor, updateSettings, HOME_NATION } from './updates';
 import { resetSecurity } from './security-store';
 import { resetReadiness, scan, runPreflight, waiveFinding, latestPreflight, stagingEnvironment, registerStaging, stagingInstall, stagingFail, superviseStaging, signUat, stagingGate } from './readiness';
-import { stageForProduction } from './testkit';
+import { stageForProduction, cosign } from './testkit';
 import { listAudit } from './store';
 import { GET as readinessGET, POST as readinessPOST } from '@/app/api/releases/[id]/readiness/route';
 import { getChamber } from './updates';
@@ -35,7 +35,7 @@ describe('preflight compatibility', () => {
 
   it('blocking findings prevent approval until waived by two different officials', () => {
     updateSettings(HOME_NATION, { ring: 'pilot' }, 'CIO');
-    const r = decide(HOME_NATION, 'DR-150', { action: 'approve', by: 'CIO' });
+    const r = cosign(HOME_NATION, 'DR-150', { action: 'approve', by: 'CIO' });
     expect(r).toMatchObject({ status: 409 });
     if ('error' in r) expect(r.error).toMatch(/blocking/);
     const blocking = latestPreflight(HOME_NATION, 'DR-150')!.findings.find(x => x.status === 'blocking')!;
@@ -45,7 +45,7 @@ describe('preflight compatibility', () => {
     expect(after.approvable).toBe(true);
     expect(after.findings.find(x => x.key === blocking.key)!.waiver).toMatchObject({ by: 'CIO', secondBy: 'Head of Revenue IT' });
     expect(listAudit().some(a => a.action === 'update.preflight.waive' && a.actor === 'CIO + Head of Revenue IT')).toBe(true);
-    expect(decide(HOME_NATION, 'DR-150', { action: 'approve', by: 'CIO' })).not.toMatchObject({ status: 409 });
+    expect(cosign(HOME_NATION, 'DR-150', { action: 'approve', by: 'CIO' })).not.toMatchObject({ status: 409 });
   });
 
   it('only blocking findings can be waived; every run is audited', () => {
@@ -58,13 +58,13 @@ describe('preflight compatibility', () => {
 
 describe('staging and user acceptance', () => {
   it('production install needs staging passed and a UAT sign-off', () => {
-    ok(decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' }));
+    ok(cosign(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' }));
     ok(decide(HOME_NATION, 'DR-141', { action: 'prepare', by: 'Ops' }));
-    const refused = decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
+    const refused = cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
     expect(refused).toMatchObject({ status: 409 });
     if ('error' in refused) expect(refused.error).toMatch(/staging/);
     stageForProduction(HOME_NATION, 'DR-141');
-    expect(decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).not.toHaveProperty('error');
+    expect(cosign(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true })).not.toHaveProperty('error');
   });
 
   it('self-hosted nations register staging; hosted nations have it provisioned', () => {

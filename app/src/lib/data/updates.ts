@@ -69,6 +69,7 @@ import { createHash, timingSafeEqual } from 'node:crypto';
 import { recordAudit, getSovereign, getSetup, listMinistries, listReleases, verifyAuditChain } from './store';
 import { securityGate, posture as securityPosture } from './security-store';
 import { preflightGate, stagingGate, superviseStaging } from './readiness';
+import { blackoutOverlapping, freezeBlocks, changeControl } from './change-control';
 
 /** Backward compatible with the previous release: every migration reversible and expand/contract, never in place. */
 export function isBackwardCompatible(migrations: ReleaseMigration[]): boolean {
@@ -528,6 +529,7 @@ export function getChamber(nationId: string): UpdateChamber | { error: string } 
       .filter(r => r.status !== 'active' && r.id === raw.installedReleaseId)
       .map(r => ({ releaseId: r.id, version: r.version, status: r.status, reason: r.statusReason })),
     security: securityGate(raw),
+    changeControl: changeControl(nationId),
   };
 }
 
@@ -573,7 +575,10 @@ const TRANSITIONS: Record<InstallAction, { from: InstallState[]; to: InstallStat
   rollback: { from: ['installed', 'probation'], to: 'rolled-back' },
   fallback: { from: ['probation'], to: 'fallen-back' },
   keep: { from: ['probation'], to: 'installed' },
+  'cancel-proposal': { from: ['available', 'approved', 'scheduled', 'rolled-back', 'fallen-back'], to: 'same' },
 };
+/** Four-eyes: these production decisions need a proposal and a second, different official. */
+const FOUR_EYES: InstallAction[] = ['approve', 'install'];
 /** Actions that move a nation toward a release; refused while the publisher has halted it. */
 const FORWARD: InstallAction[] = ['approve', 'schedule', 'prepare', 'install'];
 
@@ -589,7 +594,7 @@ export interface DecisionInput {
   acknowledge?: boolean;
 }
 
-export type DecisionResult = { install: NationInstall; chamber: UpdateChamber } | { error: string; status: number };
+export type DecisionResult = { install: NationInstall; chamber: UpdateChamber; pending?: boolean } | { error: string; status: number };
 
 const MAX_WINDOW_HOURS = 72;
 
@@ -618,6 +623,22 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
   const next: NationInstall = { ...cur, events: [...cur.events] };
   let incident: FallbackIncident | undefined;
 
+  // Four-eyes: the first official proposes; a second, different official carries it out.
+  const fourEyes = FOUR_EYES.includes(input.action);
+  const proposal = fourEyes && cur.pending?.action === input.action ? cur.pending : undefined;
+  if (proposal && proposal.by.toLowerCase() === by.toLowerCase()) {
+    return { error: `${proposal.by} proposed this; a second, different official must approve it`, status: 409 };
+  }
+  const propose = (extra: { mode?: DeliveryMode; verified?: boolean } = {}): DecisionResult => {
+    next.pending = { action: input.action as 'approve' | 'install', by, at: event.at, note, ...extra };
+    const a = recordAudit(by, `update.${input.action}.propose`, `UpdateChamber:${nationId}/${r.version}`, 'ok', `awaiting a second official${note ? ` · ${note}` : ''}`);
+    next.events.push({ at: event.at, by, action: input.action, from: cur.state, to: cur.state, note: `Proposed — awaiting a second official${event.note && event.note !== note ? ` · ${event.note}` : note ? ` · ${note}` : ''}`, auditSeq: a.seq, mode: extra.mode });
+    (udb().installs[nationId] ??= {})[releaseId] = next;
+    const chamber = getChamber(nationId);
+    if ('error' in chamber) return { error: chamber.error, status: 500 };
+    return { install: next, chamber, pending: true };
+  };
+
   switch (input.action) {
     case 'approve': {
       if (!gt(r.version, n.installedVersion)) return { error: `Already running ${n.installedVersion}; ${r.version} is not newer`, status: 409 };
@@ -625,6 +646,9 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
       const pf = preflightGate(n, r, by);
       if (!pf.ok) return { error: pf.error, status: 409 };
       event.note = [`Preflight: ${pf.report.summary.compatible} compatible, ${pf.report.summary.needsChange} need change, ${pf.report.summary.blocking} blocking${pf.report.summary.waived ? ` (${pf.report.summary.waived} waived)` : ''}`, note].filter(Boolean).join(' · ');
+      if (!proposal) return propose();
+      event.note = [`Proposed by ${proposal.by}; approved by ${by}`, event.note].join(' · ');
+      next.pending = undefined;
       break;
     }
     case 'schedule': {
@@ -635,6 +659,8 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
       if (start < Date.now() - 60_000) return { error: 'The maintenance window must start in the future', status: 422 };
       if (end <= start) return { error: 'The window must end after it starts', status: 422 };
       if (end - start > MAX_WINDOW_HOURS * 3600_000) return { error: `A maintenance window can be at most ${MAX_WINDOW_HOURS} hours`, status: 422 };
+      const blackout = blackoutOverlapping(nationId, start, end);
+      if (blackout) return { error: `The window falls in the blackout “${blackout.label}” (${blackout.start.slice(0, 10)} → ${blackout.end.slice(0, 10)}). Choose another window`, status: 409 };
       next.window = { start: new Date(start).toISOString(), end: new Date(end).toISOString() };
       next.mode = 'saas';
       event.window = next.window;
@@ -651,9 +677,12 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
       break;
     }
     case 'install': {
-      const mode = input.mode ?? (cur.state === 'scheduled' ? 'saas' : n.deliveryMode);
+      const mode = proposal?.mode ?? input.mode ?? (cur.state === 'scheduled' ? 'saas' : n.deliveryMode);
+      const verified = proposal ? proposal.verified === true : input.verified === true;
       if (!DELIVERY_MODES.includes(mode) || !r.delivery.includes(mode)) return { error: `This release is not offered for ${mode} delivery`, status: 422 };
-      if (mode !== 'saas' && input.verified !== true) {
+      const frozen = freezeBlocks(nationId, r.severity);
+      if (frozen) return { error: frozen, status: 409 };
+      if (mode !== 'saas' && !verified) {
         return { error: 'Confirm that the checksums and signatures were verified before recording the install', status: 422 };
       }
       if (!gt(r.version, n.installedVersion)) return { error: `Already running ${n.installedVersion}; ${r.version} is not newer`, status: 409 };
@@ -668,6 +697,8 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
       if (!rp || !rp.verified || rp.version !== n.installedVersion) {
         return { error: `Take a verified restore point of ${n.installedVersion} before installing (it protects the version you fall back to)`, status: 409 };
       }
+      if (!proposal) return propose({ mode, verified });
+      next.pending = undefined;
       const lkg = n.lkg ?? { version: n.installedVersion, releaseId: n.installedReleaseId };
       n.history.push({ version: n.installedVersion, releaseId: n.installedReleaseId, at: event.at });
       n.installedVersion = r.version;
@@ -676,7 +707,7 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
       next.window = undefined;
       next.probation = startProbation(n, r, lkg, rp, event.at);
       event.mode = mode;
-      event.note = [`Probation ${next.probation.minutes} min; last known good ${lkg.version}`, note].filter(Boolean).join(' · ');
+      event.note = [`Proposed by ${proposal.by}; approved by ${by}`, `Probation ${next.probation.minutes} min; last known good ${lkg.version}`, note].filter(Boolean).join(' · ');
       break;
     }
     case 'skip':
@@ -684,8 +715,14 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
         return { error: `Skipping a ${r.severity} release needs a recorded reason (at least 10 characters)`, status: 422 };
       }
       next.window = undefined;
+      next.pending = undefined;
       break;
     case 'reconsider':
+      break;
+    case 'cancel-proposal':
+      if (!cur.pending) return { error: 'There is no proposal to cancel', status: 409 };
+      event.note = [`Cancelled ${cur.pending.by}’s proposal to ${cur.pending.action}`, note].filter(Boolean).join(' · ');
+      next.pending = undefined;
       break;
     case 'rollback': {
       if (n.installedReleaseId !== r.id) return { error: 'Only the release currently running can be rolled back', status: 409 };

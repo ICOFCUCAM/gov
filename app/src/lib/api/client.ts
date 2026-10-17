@@ -81,6 +81,8 @@ import type {
   PreflightReport,
   StagingEnvironment,
   StagingRun,
+  ChangeControl,
+  MaintenanceSlot,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -360,6 +362,8 @@ export const api = {
       req<{ preflight: PreflightReport | null; staging: StagingEnvironment; run: StagingRun | null; stagingRequired: boolean }>(`/api/releases/${encodeURIComponent(id)}/readiness${linkQ(link)}`),
     readinessAction: (id: string, body: { action: 'preflight' | 'waive' | 'stage' | 'stage-fail' | 'uat'; by?: string; secondBy?: string; reason?: string; findingKey?: string; tester?: string; date?: string; evidence?: string; link?: string }) =>
       req<{ preflight?: PreflightReport; run?: StagingRun }>(`/api/releases/${encodeURIComponent(id)}/readiness`, { method: 'POST', body: JSON.stringify(body) }),
+    changeControl: (body: { action: 'freeze' | 'unfreeze' | 'add-blackout' | 'remove-blackout' | 'set-windows'; by: string; reason?: string; label?: string; kind?: string; start?: string; end?: string; id?: string; windows?: MaintenanceSlot[]; link?: string }) =>
+      req<{ changeControl: ChangeControl }>('/api/releases/change-control', { method: 'POST', body: JSON.stringify(body) }),
     registerStaging: (body: { name: string; url: string; by: string; link?: string }) =>
       req<{ staging: StagingEnvironment }>('/api/releases/staging', { method: 'POST', body: JSON.stringify(body) }),
     hosting: (link?: string) => req<{ hosting: HostingCenter }>(`/api/releases/hosting${linkQ(link)}`),
