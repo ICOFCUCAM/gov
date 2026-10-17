@@ -178,9 +178,10 @@ Steps 1–9 cover ≈165 files and make every *replace* and *shape* finding data
 
 | 8 · Foreign affairs | **Done** | `SovereignProfile.foreignAffairs` (partners with capitals, international memberships; setup panel) replaces the fictional partners and organisations in the foreign-affairs engine; reference sets remain until declared. |
 | Inline regions | **Done** | 103 inline placeholder region names in 28 dashboards/engines ("North Province", "Capital District" …) and the health-geo schematic follow the nation via `regionName(slot, reference)`; slots map by direction so capital/region comparisons stay consistent. |
+| 3 · Facilities | **Assessed — no conversion needed now** | On inspection the ≈220 "fixture lines" are mostly generic programme and process names ("Hospital stabilization programme", "Birth → health identity") and generic institutions ("National Cardiac Center"); none names a real country. Region-bearing ones follow the nation via the inline-region step. A per-nation facility registry (real hospital/court names by role) remains an optional enhancement. |
 | 9 · Deployment, time & emergency | **Done** | `SovereignProfile.timeZone` (IANA, validated) drives 11 dashboard clocks and labels (were "GMT+1"/"UTC+3"); `emergency` (general/police) drives the public Police and Emergency sites (were inconsistent 999/112/911) and the police workflow step is now "Emergency call received". The 11 scheduled jobs read the deployment URL from Vault (`civicos_base_url`), falling back to the reference deployment. |
 
-After these steps: **replace** hits 1,181 → **962** in 212 → **189** files. The remaining place hits are mostly neutral reference names ("Capital District", "Eastern") that the nation's regions override, not another country's data.
+After these steps: **replace** hits 1,181 → **881** in 212 → **186** files (317 of the remaining 881 are in the doctrine documents, which are not converted). The remaining place hits are mostly neutral reference names ("Capital District", "Eastern") that the nation's regions override, not another country's data.
 
 ## 8. Instructions for the AI converter (after Path B)
 

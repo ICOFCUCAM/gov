@@ -115,6 +115,7 @@ for (const f of files) {
   // Reference fallbacks inside regionList([...]) follow the installed nation, so
   // they are no longer conversion work.
   text = text.replace(/regionList\(\[[^\]]*\]\)/g, 'regionList([])');
+  text = text.replace(/regionName\(\d+, '[^']*'\)/g, 'regionName()');
   // Font stacks name 'Georgia' etc.; ignore styling lines for country matching.
   const noStyle = text.split('\n').filter(l => !/font|serif|typeface/i.test(l)).join('\n');
   for (const [k, { re }] of Object.entries(SIGNALS)) {
