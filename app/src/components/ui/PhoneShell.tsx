@@ -2,6 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { TabBar } from './TabBar';
 
+import { nationTextDir } from '@/lib/nation/registry';
 export interface PhoneShellProps {
   /** Header content (title / actions) */
   header?: React.ReactNode;
@@ -26,7 +27,7 @@ export function PhoneShell({
   className,
 }: PhoneShellProps) {
   return (
-    <div className={cn('phone', className)} role="region" aria-label="Civic Wallet">
+    <div className={cn('phone', className)} role="region" aria-label="Civic Wallet" dir={nationTextDir()}>
       {header ? (
         <header className="px-4 py-3 border-b border-line bg-surface flex items-center justify-between gap-3">
           {header}

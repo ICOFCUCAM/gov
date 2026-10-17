@@ -9,9 +9,11 @@ import { ContestDialog } from '@/components/features/ContestDialog';
 import { AgentRequest } from '@/components/ui/AgentRequest';
 import { getPermit } from '@/lib/data/store';
 
+import { nationMessages } from '@/lib/nation/registry';
 export const dynamic = 'force-dynamic';
 
 export default function PermitDetailPage({ params }: { params: { id: string } }) {
+  const m = nationMessages();
   const permit = getPermit(params.id);
 
   if (!permit) {
@@ -81,7 +83,7 @@ export default function PermitDetailPage({ params }: { params: { id: string } })
 
         {permit.aiClass ? (
           <section>
-            <h3 className="font-semibold text-lg mb-2">Was AI involved?</h3>
+            <h3 className="font-semibold text-lg mb-2">{m.receipt.wasAIInvolved}</h3>
             <CopilotPanel decisionClass={permit.aiClass}>
               <p>
                 An AI Copilot helped the reviewing officer by drafting a
@@ -98,7 +100,7 @@ export default function PermitDetailPage({ params }: { params: { id: string } })
         </section>
 
         <section>
-          <h3 className="font-semibold text-lg mb-2">If something's wrong</h3>
+          <h3 className="font-semibold text-lg mb-2">{m.receipt.ifSomethingWrong}</h3>
           <div className="flex flex-wrap items-start gap-3">
             <ContestDialog receiptId={permit.id} />
             <AgentRequest subjectId={permit.id} />

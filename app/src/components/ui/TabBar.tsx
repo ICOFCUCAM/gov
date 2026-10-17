@@ -2,6 +2,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { cn } from '@/lib/utils';
 
+import { nationMessages } from '@/lib/nation/registry';
 export interface TabBarProps {
   activeTab?: string;
 }
@@ -66,7 +67,17 @@ const tabs: Tab[] = [
   },
 ];
 
+// Tab labels in the nation's language (lib/i18n); the English labels above are the fallback.
+const LABEL: Record<string, (m: ReturnType<typeof nationMessages>) => string> = {
+  '/wallet': m => m.common.home,
+  '/wallet/services': m => m.common.services,
+  '/wallet/records': m => m.common.records,
+  '/wallet/receipts': m => m.wallet.receipts,
+  '/wallet/assistant': m => m.common.assistant,
+};
+
 export function TabBar({ activeTab }: TabBarProps) {
+  const m = nationMessages();
   return (
     <nav
       className="grid grid-cols-5 bg-surface border-t border-line"
@@ -85,7 +96,7 @@ export function TabBar({ activeTab }: TabBarProps) {
             )}
           >
             {t.icon}
-            <span className="mt-0.5">{t.label}</span>
+            <span className="mt-0.5">{LABEL[t.href]?.(m) ?? t.label}</span>
           </Link>
         );
       })}

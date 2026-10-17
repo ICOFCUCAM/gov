@@ -5,10 +5,12 @@ import { Button } from '@/components/ui/Button';
 import { post as encPost } from '@/lib/gov/encounter-store';
 import { civicRef } from '@/lib/civic-ref';
 
+import { nationMessages } from '@/lib/nation/registry';
 // Citizen support actions for a receipt — previously dead buttons. These
 // are self-contained disclosures: an agent request and a complaint, each
 // producing a tracked reference so the citizen has proof of contact.
 export function SupportActions({ receiptId, hash }: { receiptId: string; hash?: string }) {
+  const m = nationMessages();
   const [open, setOpen] = React.useState<null | 'agent' | 'complaint' | 'verify'>(null);
   const [text, setText] = React.useState('');
   const [ref, setRef] = React.useState<string | null>(null);
@@ -27,10 +29,10 @@ export function SupportActions({ receiptId, hash }: { receiptId: string; hash?: 
     <div>
       <div className="mb-2 flex flex-wrap gap-3">
         <Button variant="secondary" onClick={() => { setOpen(o => (o === 'agent' ? null : 'agent')); setRef(null); }}>
-          Talk to an agent
+          {m.common.talkToAgent}
         </Button>
         <Button variant="secondary" onClick={() => { setOpen(o => (o === 'complaint' ? null : 'complaint')); setRef(null); }}>
-          Submit a complaint
+          {m.receipt.submitComplaint}
         </Button>
       </div>
 
@@ -72,7 +74,7 @@ export function SupportActions({ receiptId, hash }: { receiptId: string; hash?: 
           onClick={() => setOpen(o => (o === 'verify' ? null : 'verify'))}
           className="focus-ring text-link underline underline-offset-2"
         >
-          Verify signature
+          {m.receipt.verifySignature}
         </button>
         {open === 'verify' ? (
           <span className={sigOk ? 'ml-1 text-ok' : 'ml-1 text-alert'}>

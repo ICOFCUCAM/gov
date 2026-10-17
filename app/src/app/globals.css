@@ -76,6 +76,11 @@
   .phone {
     @apply w-full sm:w-[390px] sm:mx-auto bg-surface rounded-lg sm:rounded-md border border-line overflow-hidden grid grid-rows-[auto_1fr_auto] min-h-[100vh] sm:min-h-[844px] sm:my-8 sm:shadow-2xl;
   }
+  /* In a right-to-left wallet, text not yet translated keeps its own
+     direction, so English sentences and figures are not reordered. */
+  .phone[dir='rtl'] :is(p, h1, h2, h3, h4, li, small, label, legend, strong, em, a, button, span, div:not(:has(*))) {
+    unicode-bidi: plaintext;
+  }
 
   /* Sovereign typography scale — institutional rules, one source of
      truth. Tabular numerals everywhere figures are compared. */

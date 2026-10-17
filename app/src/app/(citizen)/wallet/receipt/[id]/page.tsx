@@ -7,6 +7,7 @@ import { SupportActions } from './SupportActions';
 import type { Receipt } from '@/lib/types';
 import { DEMO_CITIZEN, DEMO_OFFICERS, homePlace, money, nationPaymentRail } from '@/lib/nation/persona';
 
+import { nationMessages } from '@/lib/nation/registry';
 // Mock receipt lookup. Production: server fetch with sovereign-controlled auth.
 const receiptsFor = (): Record<string, Receipt> => ({
   'R-3F9A2': {
@@ -29,6 +30,7 @@ interface PageProps {
 }
 
 export default function ReceiptPage({ params }: PageProps) {
+  const m = nationMessages();
   const receipt = receiptsFor()[params.id];
 
   if (!receipt) {
@@ -63,7 +65,7 @@ export default function ReceiptPage({ params }: PageProps) {
         <ReceiptHeader receipt={receipt} />
 
         <section>
-          <h3 className="font-semibold text-lg">What happened</h3>
+          <h3 className="font-semibold text-lg">{m.receipt.whatHappened}</h3>
           <p>
             The Ministry of Social Protection approved your monthly child grant.
             Eligibility was verified by{' '}
@@ -73,7 +75,7 @@ export default function ReceiptPage({ params }: PageProps) {
 
         {receipt.reasoning ? (
           <section>
-            <h3 className="font-semibold text-lg">Why this amount</h3>
+            <h3 className="font-semibold text-lg">{m.receipt.whyThisAmount}</h3>
             <ul className="list-disc pl-5 space-y-1">
               {receipt.reasoning.map(r => (
                 <li key={r}>{r}</li>
@@ -85,7 +87,7 @@ export default function ReceiptPage({ params }: PageProps) {
 
         {receipt.aiClass ? (
           <section>
-            <h3 className="font-semibold text-lg">Was AI involved?</h3>
+            <h3 className="font-semibold text-lg">{m.receipt.wasAIInvolved}</h3>
             <CopilotPanel decisionClass={receipt.aiClass}>
               <p>
                 An AI Copilot helped Officer {receipt.officerName} by drafting an
@@ -99,13 +101,12 @@ export default function ReceiptPage({ params }: PageProps) {
         ) : null}
 
         <section>
-          <h3 className="font-semibold text-lg">If something's wrong</h3>
+          <h3 className="font-semibold text-lg">{m.receipt.ifSomethingWrong}</h3>
           <div className="mb-2 flex flex-wrap gap-3">
             <ContestDialog receiptId={receipt.id} />
           </div>
           <p className="mb-3 text-sm text-ink-muted">
-            If you contest, your payment continues while we review. You will not
-            be punished for contesting.
+            {m.receipt.continuationGuarantee}
           </p>
           <SupportActions receiptId={receipt.id} hash={receipt.hash} />
         </section>

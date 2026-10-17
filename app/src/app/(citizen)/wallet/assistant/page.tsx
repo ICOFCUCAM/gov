@@ -10,9 +10,11 @@ import { Plain } from '@/components/ui/Plain';
 import { AgentRequest } from '@/components/ui/AgentRequest';
 import { answer } from './answer';
 
+import { nationMessages } from '@/lib/nation/registry';
 type Msg = { who: 'you' | 'assistant'; text: string; at: string };
 
 export default function AssistantPage() {
+  const tx = nationMessages();
   const [log, setLog] = React.useState<Msg[]>([
     { who: 'you', text: 'How do I transfer my child to a school in another county?', at: '14:32' },
     { who: 'assistant', text: answer('school transfer'), at: '14:32' },
@@ -42,9 +44,7 @@ export default function AssistantPage() {
       >
         <CopilotPanel decisionClass="A">
           <p className="text-ink-muted m-0">
-            I help you find information. I will not draft binding decisions
-            here. For decisions, return to the case panel or talk to a human
-            officer.
+            {tx.assistant.classANotice}
           </p>
         </CopilotPanel>
 
@@ -58,10 +58,10 @@ export default function AssistantPage() {
                   <div className="mt-2 flex flex-wrap items-start gap-2">
                     <Link href="/wallet/permits/new"><Button>Start a transfer</Button></Link>
                     <Link href="/wallet/services"><Button variant="secondary">Find schools nearby</Button></Link>
-                    <AgentRequest subjectId="assistant" label="👤 Talk to a human officer" />
+                    <AgentRequest subjectId="assistant" label={`👤 ${tx.common.talkToHuman}`} />
                   </div>
                   <Plain className="mt-3 text-sm">
-                    <strong>Sources I used:</strong>
+                    <strong>{tx.assistant.sources}:</strong>
                     <br />• Education Act §12
                     <br />• Ministry of Education guidance, v.4
                   </Plain>
@@ -83,7 +83,7 @@ export default function AssistantPage() {
           <Button type="submit">Send</Button>
         </form>
         <div className="mt-2">
-          <AgentRequest subjectId="assistant-foot" label="👤 Talk to a human officer" />
+          <AgentRequest subjectId="assistant-foot" label={`👤 ${tx.common.talkToHuman}`} />
         </div>
       </PhoneShell>
     </main>

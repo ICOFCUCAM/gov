@@ -6,6 +6,8 @@ import type { Receipt } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
 import { DEMO_CITIZEN, DEMO_OFFICERS, homePlace, money, nationPaymentRail } from '@/lib/nation/persona';
 
+import { nationMessages } from '@/lib/nation/registry';
+import { t } from '@/lib/i18n';
 const today = new Date('2026-05-14T09:14:00');
 
 // Sample data follows the installed nation's currency and payment rail.
@@ -44,6 +46,11 @@ const needsTo = [
 ];
 
 export default function WalletHomePage() {
+  const m = nationMessages();
+  // First sentence in bold, as before; the dictionary holds the whole hint.
+  const hint = t(m.wallet.accessHint, { count: 3 });
+  const cut = hint.indexOf('. ') + 1;
+  const access = cut > 0 ? { lead: hint.slice(0, cut), rest: hint.slice(cut) } : { lead: hint, rest: '' };
   const receipts = receiptsFor();
   return (
     <main className="bg-bg min-h-screen">
@@ -64,12 +71,12 @@ export default function WalletHomePage() {
         }
       >
         <section aria-labelledby="greet">
-          <h2 id="greet" className="text-2xl font-semibold leading-tight">Good morning, Amina.</h2>
+          <h2 id="greet" className="text-2xl font-semibold leading-tight">{t(m.wallet.greeting, { name: DEMO_CITIZEN.name.split(' ')[0]! })}</h2>
           <p className="text-ink-muted">{formatDate(today)}</p>
         </section>
 
         <section aria-labelledby="needs">
-          <h3 id="needs" className="text-lg font-semibold mb-2">You need to</h3>
+          <h3 id="needs" className="text-lg font-semibold mb-2">{m.wallet.needsTo}</h3>
           <div className="space-y-2">
             {needsTo.map(item => (
               <Link
@@ -93,7 +100,7 @@ export default function WalletHomePage() {
               { href: '/wallet/identity', label: 'Identity' },
               { href: '/wallet/documents', label: 'Verify a doc' },
               { href: '/wallet/sign', label: 'Sign' },
-              { href: '/wallet/inbox', label: 'Inbox' },
+              { href: '/wallet/inbox', label: m.common.inbox },
             ].map(a => (
               <Link
                 key={a.href}
@@ -109,7 +116,7 @@ export default function WalletHomePage() {
         <hr className="border-line" />
 
         <section aria-labelledby="receipts">
-          <h3 id="receipts" className="text-lg font-semibold mb-2">Receipts</h3>
+          <h3 id="receipts" className="text-lg font-semibold mb-2">{m.wallet.receipts}</h3>
           <div className="space-y-2">
             {receipts.map(r => (
               <ReceiptCard key={r.id} receipt={r} href={`/wallet/receipt/${r.id}`} />
@@ -117,7 +124,7 @@ export default function WalletHomePage() {
           </div>
           <p className="mt-3">
             <Link href="/wallet/inbox" className="text-link underline underline-offset-2">
-              Show all receipts →
+              {m.wallet.showAllReceipts} →
             </Link>
           </p>
         </section>
@@ -126,10 +133,9 @@ export default function WalletHomePage() {
 
         <section>
           <Plain>
-            <strong>Today, 3 people looked at your records.</strong> All for the
-            medical visit you booked.{' '}
+            <strong>{access.lead}</strong>{access.rest}{' '}
             <Link href="/wallet/records" className="text-link underline underline-offset-2">
-              See who and why
+              {m.wallet.seeWhoAndWhy}
             </Link>.
           </Plain>
         </section>

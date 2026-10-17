@@ -10,6 +10,8 @@
 import type { StateForm, NationalConstitution } from '@/lib/api/types';
 import { constitutionFor, type ConstitutionModel } from '@/lib/gov/constitution';
 import { nationOffices, type NationOffices } from '@/lib/nation/offices';
+import { getMessages, type Messages } from '@/lib/i18n';
+import type { Locale } from '@/lib/types';
 
 export interface NationFacts {
   iso3?: string;
@@ -56,6 +58,19 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.emergency = f.emergency;
   state.foreignAffairs = f.foreignAffairs;
   state.aiAssistant = f.aiAssistant;
+}
+
+/**
+ * Interface text in the nation's language (chosen in setup), from the
+ * dictionaries in lib/i18n; English for any language without one yet.
+ */
+export function nationMessages(): Messages {
+  return getMessages(state.locale as Locale);
+}
+
+/** Text direction of the nation's language, for surfaces that render it. */
+export function nationTextDir(): 'ltr' | 'rtl' {
+  return state.locale === 'ar' ? 'rtl' : 'ltr';
 }
 
 /** Whether the nation has the AI assistant on (the same rule /api/ai/advisory applies). */

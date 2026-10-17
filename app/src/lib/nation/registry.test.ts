@@ -70,3 +70,17 @@ describe('AI wording follows the nation', () => {
     expect(aiLabel('AI Recommendations', 'Recommendations')).toBe('Recommendations');
   });
 });
+
+describe('interface language follows the nation', () => {
+  it('serves the dictionary of the language chosen in setup, English otherwise', async () => {
+    const { nationMessages, nationTextDir } = await import('./registry');
+    expect(nationMessages().common.home).toBe('Home');
+    applyNation({ locale: 'sw' });
+    expect(nationMessages().common.home).toBe('Mwanzo');
+    expect(nationTextDir()).toBe('ltr');
+    applyNation({ locale: 'ar' });
+    expect(nationTextDir()).toBe('rtl');
+    applyNation({ locale: 'xx' });
+    expect(nationMessages().common.home).toBe('Home');
+  });
+});
