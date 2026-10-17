@@ -60,6 +60,29 @@ export interface Messages {
   doctrine: {
     fourSentences: string;
   };
+  /** Wallet home: actions, to-dos and the sample receipts. */
+  home: {
+    walletName: string;
+    doSomething: string;
+    permits: string;
+    payBill: string;
+    identity: string;
+    verifyDoc: string;
+    sign: string;
+    confirmAddress: string;
+    confirmAddressHint: string;
+    reviewTax: string;
+    reviewTaxHint: string;
+    today: string;
+    yesterday: string;
+    childGrant: string;
+    healthUpdated: string;
+    vaccination: string;
+    taxDraftReady: string;
+    noSignatureYet: string;
+    signedBy: string;
+    aiClass: string;
+  };
 }
 
 export const en: Messages = {
@@ -120,5 +143,27 @@ export const en: Messages = {
   },
   doctrine: {
     fourSentences: 'Humans govern. Institutions govern. Constitutions govern. AI assists.',
+  },
+  home: {
+    walletName: 'Civic Wallet',
+    doSomething: 'Do something',
+    permits: 'Permits',
+    payBill: 'Pay a bill',
+    identity: 'Identity',
+    verifyDoc: 'Verify a doc',
+    sign: 'Sign',
+    confirmAddress: 'Confirm your address',
+    confirmAddressHint: 'for the school transfer — about 2 minutes',
+    reviewTax: 'Review your tax draft',
+    reviewTaxHint: 'due in {days} days',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    childGrant: 'Child grant deposited',
+    healthUpdated: 'Health record updated',
+    vaccination: 'vaccination (pneumococcal)',
+    taxDraftReady: 'Tax draft {year} ready for review',
+    noSignatureYet: 'no signature needed yet',
+    signedBy: 'Signed by {name}',
+    aiClass: 'AI: Class {cls}',
   },
 };

@@ -4,6 +4,8 @@ import { cn } from '@/lib/utils';
 import { Pill, Dot, type PillTone } from './Pill';
 import type { Receipt as ReceiptT } from '@/lib/types';
 
+import { nationMessages } from '@/lib/nation/registry';
+import { t } from '@/lib/i18n';
 export interface ReceiptCardProps {
   receipt: ReceiptT;
   /** href when the card is meant to be clickable */
@@ -12,6 +14,7 @@ export interface ReceiptCardProps {
 }
 
 export function ReceiptCard({ receipt, href, className }: ReceiptCardProps) {
+  const m = nationMessages();
   const Wrapper: React.ElementType = href ? Link : 'div';
   const wrapperProps = href ? { href } : {};
 
@@ -35,10 +38,10 @@ export function ReceiptCard({ receipt, href, className }: ReceiptCardProps) {
         <div className="flex gap-2 mt-2 flex-wrap">
           {receipt.officerName ? (
             <Pill tone="ok">
-              <Dot tone="ok" /> Signed by {receipt.officerName}
+              <Dot tone="ok" /> {t(m.home.signedBy, { name: receipt.officerName ?? '' })}
             </Pill>
           ) : null}
-          {receipt.aiClass ? <Pill>AI: Class {receipt.aiClass}</Pill> : null}
+          {receipt.aiClass ? <Pill>{t(m.home.aiClass, { cls: receipt.aiClass })}</Pill> : null}
         </div>
       ) : null}
     </Wrapper>

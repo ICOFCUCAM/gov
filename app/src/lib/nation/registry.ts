@@ -68,6 +68,11 @@ export function nationMessages(): Messages {
   return getMessages(state.locale as Locale);
 }
 
+/** The nation's language code from setup (e.g. 'en', 'sw', 'ar'). */
+export function nationLocale(): string {
+  return state.locale;
+}
+
 /** Text direction of the nation's language, for surfaces that render it. */
 export function nationTextDir(): 'ltr' | 'rtl' {
   return state.locale === 'ar' ? 'rtl' : 'ltr';
