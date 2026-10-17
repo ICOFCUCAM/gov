@@ -4,7 +4,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import { geoAzimuthalEquidistant, geoPath } from 'd3-geo';
 import { worldFeatures } from '@/lib/geo/world';
-import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, useClock, useNationBrand, type EntryPath, type NationBrand } from './entry';
+import { api } from '@/lib/api/client';
+import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, useClock, useNationBrand, usePrefersReducedMotion, type EntryPath, type NationBrand } from './entry';
 
 // Night palette: ink, champagne light and polished gold.
 const INK = '#04060a';
@@ -24,6 +25,21 @@ function rnd(n: number) { const x = Math.sin(n * 127.1 + 311.7) * 43758.5453; re
 
 const GRAIN = `url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 0.55 0'/></filter><rect width='100%' height='100%' filter='url(%23n)'/></svg>")`;
 
+// Opening sequence, every time the page opens:
+// 1 plaza revealed outward from the seal · 2 seal assembles · 3 system checks · 4 page rises · 5 done.
+const BOOT: [number, number][] = [[1, 150], [2, 1000], [3, 1900], [4, 3500], [5, 4300]];
+
+/** Style for a part that fades/transforms in at a boot stage. */
+function part(on: boolean, delay = 0, from = 'scale(0.9)', ms = 800, box: 'view-box' | 'fill-box' = 'view-box'): React.CSSProperties {
+  return {
+    opacity: on ? 1 : 0,
+    transform: on ? 'none' : from,
+    transformBox: box,
+    transformOrigin: '50% 50%',
+    transition: `opacity ${ms}ms ease ${delay}ms, transform ${ms}ms cubic-bezier(.2,.8,.2,1) ${delay}ms`,
+  };
+}
+
 /**
  * Cover · Plaza — the capital at night, seen from above. The national seal
  * stands at the centre in polished gold and enamel; avenues of light radiate
@@ -33,30 +49,65 @@ export function CoverPlaza() {
   const { path, setPath, email, setEmail, enter, note, cta } = useCoverEntry();
   const clock = useClock();
   const [open, setOpen] = React.useState(false);
+  const stageRef = React.useRef(0);
+  const [stage, setStage] = React.useState(0);
+  const finish = React.useCallback(() => setStage(5), []);
 
   const choose = React.useCallback((k: EntryPath) => { setPath(k); setOpen(true); }, [setPath]);
 
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
+      if (stageRef.current < 5 && (e.key === 'Enter' || e.key === ' ' || e.key === 'Escape')) { e.preventDefault(); finish(); return; }
       if (e.key === 'Escape') { setOpen(false); return; }
       if (e.target instanceof HTMLInputElement || e.metaKey || e.ctrlKey || e.altKey) return;
       const p = ENTRY_PATHS[Number(e.key) - 1];
-      if (p) { e.preventDefault(); choose(p.k); }
+      if (p) { e.preventDefault(); finish(); choose(p.k); }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [choose]);
+  }, [choose, finish]);
 
   const active = ENTRY_PATHS.find(p => p.k === path)!;
   const brand = useNationBrand();
 
+  // Boot sequence: plays on every open; any click or Enter/Space/Esc skips it.
+  const reduced = usePrefersReducedMotion();
+  React.useEffect(() => {
+    if (reduced) { setStage(5); return; }
+    const timers = BOOT.map(([st, at]) => setTimeout(() => setStage(v => Math.max(v, st)), at));
+    return () => timers.forEach(clearTimeout);
+  }, [reduced]);
+  const booting = stage < 5;
+  stageRef.current = stage;
+
+  // Live facts for the start-up checks (public reads; absent data shows neutrally).
+  const [facts, setFacts] = React.useState<{ institutions?: number; audit?: { ok: boolean; checked: number } }>({});
+  React.useEffect(() => {
+    api.org.ministries().then(m => setFacts(f => ({ ...f, institutions: m.ministries.filter(x => x.status === 'active').length }))).catch(() => {});
+    api.audit.verify().then(a => setFacts(f => ({ ...f, audit: { ok: a.ok, checked: a.checked } }))).catch(() => {});
+  }, []);
+  const checks: { t: string; warn?: boolean }[] = [
+    { t: brand.configured ? 'Constitutional profile verified' : 'Constitutional root verified' },
+    { t: facts.institutions != null ? `${facts.institutions} institutions online` : 'Institution registry online' },
+    facts.audit
+      ? (facts.audit.ok ? { t: `Audit chain intact · ${facts.audit.checked} records` } : { t: 'Audit chain needs attention', warn: true })
+      : { t: 'Audit chain · checking' },
+    { t: 'Session ready' },
+  ];
+
   return (
     <main className="relative h-[100dvh] min-h-[680px] overflow-hidden font-sans text-[#f3efe6] [--sy:47%] sm:[--sy:53%]"
-      style={{ background: INK, ['--sr' as string]: 'min(19vh, 36vw, 190px)' }}>
-      <Scenery />
+      style={{ background: INK, ['--sr' as string]: 'min(19vh, 36vw, 190px)' }}
+      onClickCapture={() => { if (booting) finish(); }}>
+      <noscript><style>{'.plaza-boot{opacity:1!important;transform:none!important;clip-path:none!important}'}</style></noscript>
+      <Scenery stage={stage} />
+      {stage >= 1 && stage <= 2 ? (
+        <div aria-hidden className="pointer-events-none absolute left-1/2 z-10 rounded-full"
+          style={{ top: 'var(--sy)', width: 'calc(var(--sr) * 2)', aspectRatio: '1', border: `1px solid ${CHAMPAGNE}`, boxShadow: `0 0 40px ${CHAMPAGNE}66, inset 0 0 30px ${CHAMPAGNE}44`, animation: 'plazaWave 1.7s cubic-bezier(.2,.7,.2,1) forwards' }} />
+      ) : null}
 
       {/* Top rail */}
-      <header className="absolute inset-x-0 top-0 z-20 flex h-16 items-center gap-4 px-4 sm:px-8">
+      <header className="plaza-boot absolute inset-x-0 top-0 z-20 flex h-16 items-center gap-4 px-4 sm:px-8" style={part(stage >= 4, 0, 'translateY(-8px)', 700)}>
         <span className="flex items-center gap-3">
           <span aria-hidden className="grid h-8 w-8 shrink-0 place-items-center rounded-full border text-[10px] font-semibold tracking-[0.08em]"
             style={{ borderColor: `${CHAMPAGNE}88`, color: CHAMPAGNE_HI, boxShadow: `inset 0 0 12px ${CHAMPAGNE}22` }}>{brand.seal}</span>
@@ -74,7 +125,7 @@ export function CoverPlaza() {
       </header>
 
       {/* Title */}
-      <div className="absolute inset-x-0 top-[78px] z-10 px-4 text-center">
+      <div className="plaza-boot absolute inset-x-0 top-[78px] z-10 px-4 text-center" style={part(stage >= 4, 100, 'translateY(14px)', 900)}>
         <p className="font-mono text-[10px] uppercase tracking-[0.42em]" style={{ color: CHAMPAGNE }}>{brand.configured ? brand.platform : 'Sovereign digital public infrastructure'}</p>
         <h1 className="mx-auto mt-3 max-w-[26ch] text-[1.85rem] font-light leading-[1.08] tracking-[-0.03em] sm:text-[2.9rem]">
           Every road leads to <span className="bg-clip-text font-normal text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>the state.</span>
@@ -84,13 +135,23 @@ export function CoverPlaza() {
       {/* The seal */}
       <div className="pointer-events-none absolute left-1/2 z-10 -translate-x-1/2 -translate-y-1/2"
         style={{ top: 'var(--sy)', width: 'calc(var(--sr) * 2.5)', aspectRatio: '1' }}>
-        <Seal brand={brand} />
+        <Seal brand={brand} stage={stage} />
       </div>
 
       {/* Roads in */}
       <nav aria-label="Choose your entrance" className="absolute inset-x-0 z-20 px-4"
         style={{ top: 'calc(var(--sy) + var(--sr) * 1.52 + 14px)' }}>
-        <ul className="mx-auto flex max-w-[680px] flex-wrap justify-center gap-2.5">
+        <ol aria-live="polite" aria-label="System start-up"
+          className="pointer-events-none absolute inset-x-0 top-0 mx-auto flex max-w-[420px] flex-col items-center gap-1.5 font-mono text-[11px] tracking-[0.06em] [text-shadow:0_1px_10px_#000,0_0_2px_#000]"
+          style={{ opacity: stage === 3 ? 1 : 0, transition: 'opacity 500ms ease' }}>
+          {stage >= 3 && stage < 5 ? checks.map((c, i) => (
+            <li key={i} className="flex items-center gap-2.5" style={{ ...part(stage >= 3, i * 300, 'translateY(6px)', 450), color: c.warn ? '#f1b36b' : 'rgba(243,239,230,0.75)' }}>
+              <span style={{ color: c.warn ? '#f1b36b' : CHAMPAGNE }}>{c.warn ? '!' : '✓'}</span>{c.t}
+            </li>
+          )) : null}
+        </ol>
+        <ul className="plaza-boot mx-auto flex max-w-[680px] flex-wrap justify-center gap-2.5" aria-hidden={stage < 4}
+          style={{ ...part(stage >= 4, 250, 'translateY(16px)', 800), pointerEvents: stage >= 4 ? 'auto' : 'none' }}>
           {ENTRY_PATHS.map((p, i) => {
             const on = open && p.k === path;
             return (
@@ -152,8 +213,15 @@ export function CoverPlaza() {
         </div>
       )}
 
+      {booting ? (
+        <button type="button" onClick={finish}
+          className="absolute bottom-5 right-4 z-40 font-mono text-[10.5px] tracking-[0.14em] text-white/45 hover:text-white sm:right-8">
+          SKIP INTRO ⏎
+        </button>
+      ) : null}
+
       {/* Foot */}
-      <footer className="absolute inset-x-0 bottom-0 z-20 flex flex-col gap-2 bg-gradient-to-t from-black/80 to-transparent px-4 pb-5 pt-12 text-[12px] text-white/55 sm:flex-row sm:items-end sm:justify-between sm:px-8">
+      <footer style={part(stage >= 4, 300, 'translateY(10px)', 800)} className="plaza-boot absolute inset-x-0 bottom-0 z-20 flex flex-col gap-2 bg-gradient-to-t from-black/80 to-transparent px-4 pb-5 pt-12 text-[12px] text-white/55 sm:flex-row sm:items-end sm:justify-between sm:px-8">
         <nav aria-label="Public services" className="flex flex-wrap gap-x-5 gap-y-1">
           {PUBLIC_LINKS.map(l => <Link key={l.href} href={l.href} className="transition-colors hover:text-[#f4e4bd]">{l.l}</Link>)}
         </nav>
@@ -164,6 +232,7 @@ export function CoverPlaza() {
         @keyframes plazaUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
         @keyframes plazaPulse{0%,100%{opacity:.35}50%{opacity:1}}
         @keyframes plazaTrail{to{stroke-dashoffset:-640}}
+        @keyframes plazaWave{from{transform:translate(-50%,-50%) scale(.15);opacity:1}to{transform:translate(-50%,-50%) scale(8);opacity:0}}
         @keyframes plazaGlint{0%,62%{transform:translateX(-140%) rotate(18deg)}100%{transform:translateX(140%) rotate(18deg)}}
         @media (prefers-reduced-motion:reduce){.plaza-anim{animation:none!important}}
       `}</style>
@@ -172,13 +241,16 @@ export function CoverPlaza() {
 }
 
 /** The capital at night, drawn as a plan centred on the seal. Decorative only. */
-function Scenery() {
+function Scenery({ stage }: { stage: number }) {
   return (
     <div aria-hidden className="absolute inset-0">
       <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 70% 60% at 50% var(--sy), #0d1420 0%, ${INK} 75%)` }} />
       <div className="absolute left-1/2"
         style={{ top: 'var(--sy)', width: `calc(var(--sr) * ${GROUND_PER_SR})`, aspectRatio: '1', transform: 'translate(-50%, -50%)' }}>
+        <div className="plaza-boot h-full w-full"
+          style={{ clipPath: stage >= 1 ? 'circle(71% at 50% 50%)' : 'circle(0% at 50% 50%)', transition: 'clip-path 1700ms cubic-bezier(.3,.7,.2,1)' }}>
         <Ground />
+        </div>
       </div>
       {/* Warm civic glow at the centre, deep vignette, title shade, film grain */}
       <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 50% var(--sy), rgba(244,214,150,0.16), transparent 34%)' }} />
@@ -308,7 +380,8 @@ const unProjection = () =>
  * nation's name across the top and its motto across the bottom, and a
  * UN-emblem world map in gold on emerald, wreathed in laurel.
  */
-function Seal({ brand }: { brand: NationBrand }) {
+function Seal({ brand, stage }: { brand: NationBrand; stage: number }) {
+  const on = stage >= 2;
   const land = React.useMemo(() => worldFeatures(), []);
   const gp = React.useMemo(() => geoPath(unProjection()), []);
   const landPath = React.useMemo(() => gp({ type: 'FeatureCollection', features: land } as never) ?? '', [gp, land]);
@@ -379,10 +452,13 @@ function Seal({ brand }: { brand: NationBrand }) {
         </defs>
 
         {/* Dark outer ring carrying the nation's name and motto */}
+        <g className="plaza-boot" style={part(on, 0, 'scale(0.86)', 900)}>
         <circle r="249" fill="url(#seal-obsidian)" />
         <circle r="248" fill="none" stroke={CHAMPAGNE} strokeOpacity="0.75" strokeWidth="1.4" />
         <circle r="243" fill="none" stroke={CHAMPAGNE} strokeOpacity="0.25" strokeWidth="0.8" />
         <circle r="205" fill="none" stroke={CHAMPAGNE} strokeOpacity="0.25" strokeWidth="0.8" />
+        </g>
+        <g className="plaza-boot" style={part(on, 1000, 'rotate(10deg)', 1000)}>
         {outerTop ? (
           <text fill={CHAMPAGNE_HI} fontSize={outerSize} fontWeight="700" letterSpacing={outerSize * 0.16} textAnchor="middle"
             style={{ paintOrder: 'stroke', stroke: '#05070b', strokeWidth: 1 }}>
@@ -398,14 +474,18 @@ function Seal({ brand }: { brand: NationBrand }) {
         {outerTop ? [-1, 1].map(side => (
           <path key={side} transform={`translate(${side * 226} 0) rotate(45) scale(1.1)`} d="M-4,-4 L4,-4 L4,4 L-4,4 Z" fill={CHAMPAGNE} opacity="0.8" />
         )) : null}
+        </g>
 
         {/* Bevelled metal rim and black enamel band */}
+        <g className="plaza-boot" style={part(on, 150, 'scale(0.9)', 800)}>
         <circle r="199" fill="url(#seal-metal)" />
         <circle r="194" fill="url(#seal-metal-r)" />
         <circle r="191" fill="url(#seal-band)" />
         <circle r="190.5" fill="none" stroke="#000" strokeOpacity="0.6" strokeWidth="1" />
+        </g>
 
         {/* Inscriptions — name above, motto below, once each */}
+        <g className="plaza-boot" style={part(on, 750, 'rotate(-12deg)', 1000)}>
         <text fill="url(#seal-letter)" fontSize={topSize} fontWeight="700" letterSpacing={topSize * 0.12} textAnchor="middle"
           style={{ paintOrder: 'stroke', stroke: '#2a1c06', strokeWidth: 0.6 }}>
           <textPath href="#seal-arc-top" startOffset="50%">{top}</textPath>
@@ -420,8 +500,10 @@ function Seal({ brand }: { brand: NationBrand }) {
           <path key={side} transform={`translate(${side * 171} 0) scale(1.5)`}
             d="M0,-5 L1.2,-1.4 L5,-1.4 L1.9,0.9 L3,4.6 L0,2.4 L-3,4.6 L-1.9,0.9 L-5,-1.4 L-1.2,-1.4 Z" fill="url(#seal-leaf)" />
         ))}
+        </g>
 
         {/* Inner rim and emerald field */}
+        <g className="plaza-boot" style={part(on, 300, 'scale(0.8)', 800)}>
         <circle r="150" fill="url(#seal-metal)" />
         <circle r="146" fill="url(#seal-metal-r)" />
         <circle r="143" fill="url(#seal-enamel)" />
@@ -430,8 +512,10 @@ function Seal({ brand }: { brand: NationBrand }) {
             <ellipse key={i} rx="140" ry="58" fill="none" stroke="#e9cf8a" strokeWidth="0.35" transform={`rotate(${i * 7.5})`} />
           ))}
         </g>
+        </g>
 
         {/* UN-emblem map: polar projection, concentric parallels and meridians */}
+        <g className="plaza-boot" style={part(on, 450, 'scale(0.55) rotate(-60deg)', 1200)}>
         <g clipPath="url(#seal-map)">
           <circle r={MAP_R} fill="#03241d" />
           <path d={landPath} fill="url(#seal-leaf)" fillOpacity="0.95" stroke="#fff0c4" strokeOpacity="0.5" strokeWidth="0.3" />
@@ -444,23 +528,26 @@ function Seal({ brand }: { brand: NationBrand }) {
           })}
         </g>
         <circle r={MAP_R + 1.5} fill="none" stroke="url(#seal-metal)" strokeWidth="3" />
+        </g>
 
-        {/* Laurel */}
-        <path d="M -22 128 Q -88 108 -120 40 M 22 128 Q 88 108 120 40" fill="none" stroke="url(#seal-metal)" strokeWidth="1.6" />
+        {/* Laurel — leaves arrive pair by pair */}
+        <path className="plaza-boot" style={part(on, 650, 'scale(0.9)', 600)} d="M -22 128 Q -88 108 -120 40 M 22 128 Q 88 108 120 40" fill="none" stroke="url(#seal-metal)" strokeWidth="1.6" />
         {leaves.map((l, i) => (
           <g key={i} transform={`rotate(${l.rot} ${l.x} ${l.y})`}>
+            <g className="plaza-boot" style={part(on, 700 + Math.floor(i / 2) * 45, 'scale(0.2)', 450, 'fill-box')}>
             <ellipse cx={l.x} cy={l.y} rx="12" ry="4.4" fill="url(#seal-leaf)" stroke="#5e4012" strokeWidth="0.35" />
             <line x1={l.x - 10} y1={l.y} x2={l.x + 10} y2={l.y} stroke="#6e4c16" strokeOpacity="0.6" strokeWidth="0.4" />
+            </g>
           </g>
         ))}
-        <path d="M -26 138 L 0 125 L 26 138" fill="none" stroke="url(#seal-metal)" strokeWidth="2.6" strokeLinecap="round" />
+        <path className="plaza-boot" style={part(on, 1300, 'scale(0.6)', 500, 'fill-box')} d="M -26 138 L 0 125 L 26 138" fill="none" stroke="url(#seal-metal)" strokeWidth="2.6" strokeLinecap="round" />
       </svg>
 
-      {/* Light glint sweeping across the metal */}
-      <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-full mix-blend-screen">
+      {/* Light glint sweeping across the metal, once the seal is complete */}
+      {stage >= 4 ? <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-full mix-blend-screen">
         <div className="plaza-anim absolute -inset-y-1/4 left-0 w-1/3"
           style={{ background: 'linear-gradient(90deg, transparent, rgba(255,246,220,0.28), transparent)', animation: 'plazaGlint 7s ease-in-out infinite' }} />
-      </div>
+      </div> : null}
     </div>
   );
 }

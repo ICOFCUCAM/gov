@@ -21,8 +21,12 @@ What has been built is locked. Work only upgrades it toward the vision in
 
 ## Entry flow
 
-- `/` is the cover page (`app/src/components/features/CoverGate.tsx`):
-  everyone meets it first and chooses an entry path.
+- `/` is the cover page, Plaza (`app/src/components/features/cover/CoverPlaza.tsx`):
+  everyone meets it first and chooses an entry path. It plays an opening
+  sequence on every open (plaza reveal, seal assembly, live start-up checks
+  from the registry and audit chain), skippable by click/Enter/Space/Esc and
+  skipped under reduced motion. The earlier Stack cover (`CoverGate.tsx`)
+  stays at `/cover/stack`.
 - `/cover` compares cover designs under evaluation (Stack, Boot, Atlas, Doors, Plaza);
   all share `app/src/components/features/cover/entry.ts` for routing.
 - Government and New institution entries go to `/welcome`. Until setup is
