@@ -1,6 +1,10 @@
 // English (baseline). Other locales mirror the Messages shape declared below.
 // Per Companion 22 (plain language) — People's Editor reviews citizen-facing copy.
 
+/** Topics the citizen assistant answers (wallet/assistant/answer.ts), in matching order. */
+export const ASSISTANT_TOPICS = ['school', 'permit', 'grant', 'tax', 'identity', 'health', 'document', 'contest', 'pay'] as const;
+export type AssistantTopic = (typeof ASSISTANT_TOPICS)[number];
+
 export interface Messages {
   common: {
     home: string;
@@ -56,6 +60,20 @@ export interface Messages {
   assistant: {
     classANotice: string;
     sources: string;
+    title: string;
+    conversation: string;
+    sampleQuestion: string;
+    startTransfer: string;
+    findSchools: string;
+    sourceAct: string;
+    sourceGuidance: string;
+    placeholder: string;
+    send: string;
+    sendAria: string;
+    /** Words that point a question to a topic (matched case- and accent-insensitively; English is always understood too). */
+    keywords: Record<AssistantTopic, string[]>;
+    /** One grounded answer per topic, plus the fallback. Information only, never a decision. */
+    answers: Record<AssistantTopic | 'fallback', string>;
   };
   doctrine: {
     fourSentences: string;
@@ -389,6 +407,39 @@ export const en: Messages = {
   assistant: {
     classANotice: 'I help you find information. I will not draft binding decisions here. For decisions, return to the case panel or talk to a human officer.',
     sources: 'Sources I used',
+    title: 'Civic Assistant',
+    conversation: 'Conversation',
+    sampleQuestion: 'How do I transfer my child to a school in another part of the country?',
+    startTransfer: 'Start a transfer',
+    findSchools: 'Find schools nearby',
+    sourceAct: 'Education Act §12',
+    sourceGuidance: 'Ministry of Education guidance, v.4',
+    placeholder: 'Type your question…',
+    send: 'Send',
+    sendAria: 'Send a message',
+    keywords: {
+      school: ['school', 'transfer'],
+      permit: ['permit', 'business'],
+      grant: ['grant', 'benefit', 'child'],
+      tax: ['tax'],
+      identity: ['id', 'identity', 'address'],
+      health: ['appointment', 'doctor', 'health', 'vaccin'],
+      document: ['document', 'verify', 'certificate'],
+      contest: ['complaint', 'contest', 'appeal', 'wrong'],
+      pay: ['pay', 'bill', 'fee'],
+    },
+    answers: {
+      school: 'To transfer a child to a school in another part of the country: bring the current enrollment record, apply to the new school (directly or via your wallet), and the Ministry of Education confirms within 10 working days. Use "Start a transfer" below.',
+      permit: 'Permits are applied for in the wallet. Open Permits → Apply, describe the premises and purpose; most decisions are returned within the statutory window with a tracked reference.',
+      grant: 'Child grant eligibility is assessed automatically each cycle. You can see the next payment and contest any decision from its receipt.',
+      tax: 'Your tax draft is prepared for review — nothing is filed until you confirm. Open the draft from your wallet receipts.',
+      identity: 'Identity and address changes are handled under Identity. Selective disclosure lets you prove a fact without revealing the underlying record.',
+      health: 'Health appointments and vaccinations are booked from your health portal; your care team is reachable there and replies arrive in your wallet inbox.',
+      document: 'To verify a document, open Verify a document and scan or enter its code — the state confirms authenticity without storing a copy.',
+      contest: 'You can contest any decision from its receipt — your payment continues during review and contesting is never penalised. "Talk to a human officer" below logs a tracked request.',
+      pay: 'Bills and fees are paid under Payments; every payment produces a signed, permanent receipt you can later verify or contest.',
+      fallback: 'I can help you find civic information — schools, permits, grants, tax, identity, health, documents, payments. For a binding decision, use a case panel or talk to a human officer below.',
+    },
   },
   doctrine: {
     fourSentences: 'Humans govern. Institutions govern. Constitutions govern. AI assists.',
