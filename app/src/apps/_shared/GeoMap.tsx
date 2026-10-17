@@ -8,7 +8,7 @@
 // differ, credited on the map), live deterministic telemetry.
 
 import * as React from 'react';
-import { geoMercator, geoPath } from 'd3-geo';
+import { geoAlbersUsa, geoMercator, geoPath } from 'd3-geo';
 import { loadCountry, provinceLabel, type Admin1Country } from '@/lib/geo/admin1';
 import type { HealthGeo } from '@/lib/gov/health-geo';
 import { nationIso3 } from '@/lib/nation/registry';
@@ -69,7 +69,8 @@ export function GeoMap({
       : data.outline ? [{ type: 'Feature' as const, properties: {}, geometry: data.outline }] : [];
     if (!feats.length) return null;
     const fc = { type: 'FeatureCollection' as const, features: feats };
-    const proj = geoMercator().fitExtent([[10, 14], [W - 10, H - 14]], fc as never);
+    // The United States uses its standard national layout, with Alaska and Hawaii inset.
+    const proj = (data.iso3 === 'USA' ? geoAlbersUsa() : geoMercator()).fitExtent([[10, 14], [W - 10, H - 14]], fc as never);
     const path = geoPath(proj);
     const landD = data.provinces.length
       ? data.provinces.map(p => path({ type: 'Feature', properties: {}, geometry: p.geometry } as never) || '').join(' ')

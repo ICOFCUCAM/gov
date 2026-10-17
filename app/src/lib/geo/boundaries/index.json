@@ -89,6 +89,16 @@
   "year": "2021",
   "id": "GHA-ADM1-69750345"
  },
+ "GRL": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 6,
+  "coverage": 1,
+  "source": "GeoBoundaries, Wikipedia",
+  "licence": "Creative Commons Attribution-ShareAlike 3.0 Unported",
+  "year": "2020",
+  "id": "GRL-ADM1-42512837"
+ },
  "KEN": {
   "level": "I",
   "adm": "ADM1",
