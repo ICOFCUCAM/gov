@@ -88,6 +88,13 @@ import type {
   AdvisorySeverity,
   SecurityAdvisory,
   AdvisoryNationStatus,
+  TicketView,
+  TicketPriority,
+  SupportTierPolicy,
+  SupportTier,
+  StatusPage,
+  SlaReport,
+  ServiceIncident,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -369,6 +376,17 @@ export const api = {
       req<{ preflight?: PreflightReport; run?: StagingRun }>(`/api/releases/${encodeURIComponent(id)}/readiness`, { method: 'POST', body: JSON.stringify(body) }),
     advisories: (link?: string) =>
       req<{ exposure: AdvisoryExposure[]; commitments: PatchCommitment[]; policy: Record<AdvisorySeverity, number> }>(`/api/releases/advisories${linkQ(link)}`),
+    support: (link?: string) =>
+      req<{ tickets: TicketView[]; policy: SupportTierPolicy; tiers: Record<SupportTier, SupportTierPolicy>; priorities: Record<TicketPriority, string>; linkable: { releases: { id: string; version: string; title: string }[]; incidents: { id: string; title: string }[] } }>(`/api/releases/support${linkQ(link)}`),
+    openTicket: (body: { priority: TicketPriority; title: string; description: string; by: string; about?: { kind: 'release' | 'incident'; id: string }; link?: string }) =>
+      req<{ ticket: TicketView }>('/api/releases/support', { method: 'POST', body: JSON.stringify(body) }),
+    ticketAction: (id: string, body: { action: 'reply' | 'close' | 'reopen'; by: string; text?: string; link?: string }) =>
+      req<{ ticket: TicketView }>(`/api/releases/support/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify(body) }),
+    status: (link?: string) => req<{ status: StatusPage }>(`/api/releases/status${linkQ(link)}`),
+    slaReport: (month?: string, link?: string) => {
+      const p = new URLSearchParams({ ...(month ? { month } : {}), ...(link ? { link } : {}) }).toString();
+      return req<{ report: SlaReport; months: string[] }>(`/api/releases/sla-report${p ? `?${p}` : ''}`);
+    },
     changeControl: (body: { action: 'freeze' | 'unfreeze' | 'add-blackout' | 'remove-blackout' | 'set-windows'; by: string; reason?: string; label?: string; kind?: string; start?: string; end?: string; id?: string; windows?: MaintenanceSlot[]; link?: string }) =>
       req<{ changeControl: ChangeControl }>('/api/releases/change-control', { method: 'POST', body: JSON.stringify(body) }),
     registerStaging: (body: { name: string; url: string; by: string; link?: string }) =>
@@ -412,6 +430,11 @@ export const api = {
       hostingAction: async (id: string, body: { action: 'review' | 'issue'; by?: string; notes?: string; capexFactor?: number; annualFactor?: number; timelineFactor?: number }) =>
         req<{ request: HostingRequest }>(`/api/releases/publisher/hosting/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       advisories: async () => req<{ advisories: SecurityAdvisory[]; commitments: PatchCommitment[]; policy: Record<AdvisorySeverity, number>; statuses: Record<string, Record<string, AdvisoryNationStatus>>; nations: { id: string; name: string }[] }>('/api/releases/publisher/advisories', await publisherInit()),
+      support: async () => req<{ tickets: TicketView[]; service: ServiceIncident[]; nations: { id: string; name: string; tier: SupportTier; deliveryMode: string }[]; tiers: Record<SupportTier, SupportTierPolicy>; components: { key: string; label: string; group: string }[] }>('/api/releases/publisher/support', await publisherInit()),
+      supportAction: async (body: { action: 'set-tier' | 'declare' | 'update-service'; [k: string]: unknown }) =>
+        req<Record<string, unknown>>('/api/releases/publisher/support', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      ticketAction: async (id: string, body: { action: string; by: string; text?: string; priority?: string }) =>
+        req<{ ticket: TicketView }>(`/api/releases/publisher/support/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       setStatus: async (id: string, body: { action: 'halt' | 'resume' | 'withdraw' | 'promote'; reason?: string; by?: string }) =>
         req<{ release: DistributionRelease }>(`/api/releases/publisher/releases/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
     },

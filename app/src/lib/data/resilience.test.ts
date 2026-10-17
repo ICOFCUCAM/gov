@@ -370,7 +370,7 @@ describe('break-glass', () => {
     expect(r.chamber.installed).toBe('1.3.0'); // RP-1300 protected 1.3.0 when 1.4.0 was installed
     expect(r.incident.trigger).toBe('break-glass');
     expect(r.chamber.releases.find(x => x.id === 'DR-140')!.install.restorePoint!.restoredAt).toBeUndefined();
-    expect(listAudit()[0]).toMatchObject({ action: 'update.break-glass', actor: 'CIO + CISO' });
+    expect(listAudit().find(a => a.action === 'update.break-glass')).toMatchObject({ action: 'update.break-glass', actor: 'CIO + CISO' });
   });
 });
 

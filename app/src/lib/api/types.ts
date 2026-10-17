@@ -1340,3 +1340,89 @@ export interface PatchCommitment {
   state: 'met' | 'breached' | 'open';
   hoursLeft?: number;
 }
+
+// ── Update Center: support desk and service levels ────────────────────
+export type SupportTier = 'standard' | 'enterprise' | 'sovereign';
+export type TicketPriority = 'P1' | 'P2' | 'P3' | 'P4';
+export type TicketState = 'open' | 'acknowledged' | 'in-progress' | 'waiting-on-nation' | 'resolved' | 'closed';
+export interface SlaTarget { responseMinutes: number; resolutionHours: number }
+export interface SupportTierPolicy {
+  tier: SupportTier;
+  label: string;
+  /** When the desk answers, e.g. 24×7 or business hours. */
+  coverage: string;
+  /** Monthly availability target for hosted services, percent. */
+  uptimeTarget: number;
+  targets: Record<TicketPriority, SlaTarget>;
+  /** Service credit when the monthly uptime target is missed, percent of the monthly fee (placeholder). */
+  creditPct: number;
+}
+export interface TicketMessage { at: ISODate; by: string; side: 'nation' | 'publisher' | 'system'; text: string }
+export interface SupportTicket {
+  id: string;
+  nationId: string;
+  priority: TicketPriority;
+  title: string;
+  description: string;
+  /** The release or fallback incident the ticket is about. */
+  link?: { kind: 'release' | 'incident'; id: string };
+  source: 'nation' | 'fallback-incident';
+  state: TicketState;
+  /** Contract tier at the time the ticket was opened: its targets apply. */
+  tier: SupportTier;
+  openedAt: ISODate;
+  openedBy: string;
+  firstResponseAt?: ISODate;
+  resolvedAt?: ISODate;
+  closedAt?: ISODate;
+  /** The resolution clock pauses while the publisher waits on the nation. */
+  waitingSince?: ISODate;
+  pausedMinutes: number;
+  thread: TicketMessage[];
+}
+export interface SlaClock { dueAt: ISODate; state: 'running' | 'met' | 'breached' | 'paused'; minutesLeft?: number }
+export interface TicketView extends SupportTicket { sla: { response: SlaClock; resolution: SlaClock }; nationName?: string }
+export type ServiceImpact = 'operational' | 'degraded' | 'partial-outage' | 'major-outage' | 'maintenance';
+export interface ServiceIncident {
+  id: string;
+  title: string;
+  impact: Exclude<ServiceImpact, 'operational'>;
+  components: string[];
+  /** Which nations it affects: every nation, or the ones listed. */
+  nations: 'all' | string[];
+  startedAt: ISODate;
+  resolvedAt?: ISODate;
+  /** Planned maintenance (announced ahead; excluded from availability). */
+  scheduled?: { start: ISODate; end: ISODate };
+  updates: { at: ISODate; state: 'investigating' | 'identified' | 'monitoring' | 'resolved' | 'scheduled' | 'in-progress' | 'completed'; text: string; by: string }[];
+}
+export interface StatusComponent { key: string; label: string; group: 'publisher' | 'hosted' | 'installation'; status: ServiceImpact; uptime90?: number; days?: { date: string; impact: ServiceImpact }[]; detail?: string }
+export interface StatusPage {
+  nation: { id: string; name: string; deliveryMode: DeliveryMode };
+  generatedAt: ISODate;
+  overall: ServiceImpact;
+  components: StatusComponent[];
+  active: ServiceIncident[];
+  recent: ServiceIncident[];
+  fallbackIncidents: FallbackIncident[];
+  maintenance: { upcoming: { title: string; start: ISODate; end: ISODate; kind: 'install' | 'publisher' }[]; windows: MaintenanceSlot[]; blackouts: Blackout[] };
+}
+export interface SlaReport {
+  nationId: string;
+  nationName: string;
+  month: string;
+  generatedAt: ISODate;
+  tier: SupportTierPolicy;
+  /** Hosted (or publisher) services counted for availability; planned maintenance excluded. */
+  uptime: { key: string; label: string; uptime: number; downtimeMinutes: number }[];
+  serviceUptime: number;
+  uptimeMet: boolean;
+  creditPct: number;
+  incidents: { id: string; title: string; kind: 'service' | 'fallback'; impact: string; startedAt: ISODate; resolvedAt?: ISODate; minutes?: number }[];
+  tickets: {
+    opened: number;
+    byPriority: Record<TicketPriority, { opened: number; responseMet: number; responseBreached: number; resolutionMet: number; resolutionBreached: number; open: number }>;
+    responsePct: number | null;
+    resolutionPct: number | null;
+  };
+}

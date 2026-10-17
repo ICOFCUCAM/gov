@@ -89,6 +89,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   VEX statements override, with a justification, audited). Each nation sees
   only its own exposure and can download CSAF JSON; patch-time commitments
   (`PATCH_COMMITMENTS`) are tracked met / open / breached in the console.
+- Support (`lib/data/support.ts`, `lib/data/status.ts`): tickets P1–P4 about
+  a release or incident, with response and resolution targets from the
+  nation's contract tier at opening (resolution pauses while waiting on the
+  nation). Every fallback incident opens a P2 ticket automatically. Each
+  nation has a status page (`/updates/status`) and a monthly SLA report;
+  the publisher works the queue and declares service incidents in the console.
 
 ## Branding and AI
 

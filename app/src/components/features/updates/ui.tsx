@@ -195,12 +195,13 @@ export function useCenterTitle(nationName?: string, home = true): { title: strin
   return { title: nation ? `Update Center — ${nation}` : 'Update Center', nation, configured: brand.configured };
 }
 
-type ChamberTab = 'chamber' | 'requests' | 'release' | 'security' | 'hosting' | 'settings';
+type ChamberTab = 'chamber' | 'requests' | 'release' | 'security' | 'hosting' | 'support' | 'settings';
 const chamberItems = (q: string) => [
   { href: `/updates${q}`, l: 'Chamber', k: 'chamber' },
   { href: `/updates/security${q}`, l: 'Security', k: 'security' },
   { href: `/updates/hosting${q}`, l: 'Hosting', k: 'hosting' },
   { href: `/updates/requests${q}`, l: 'Requests', k: 'requests' },
+  { href: `/updates/support${q}`, l: 'Support', k: 'support' },
   { href: `/updates/settings${q}`, l: 'Settings', k: 'settings' },
 ];
 

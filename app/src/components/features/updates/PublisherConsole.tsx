@@ -12,6 +12,7 @@ import {
 } from './ui';
 import { RequestCard } from './FeatureRequests';
 import { IncidentCard } from './resilience';
+import { PublisherServiceStatus, PublisherSupportQueue } from './PublisherSupport';
 import { NSTATUS_TEXT, NSTATUS_TONE, SEV_TONE } from './AdvisoriesPanel';
 import type { SecurityAdvisory, PatchCommitment, AdvisoryNationStatus } from '@/lib/api/types';
 import { EstimateView, HostingStepper, PATH_TITLE, hostingStageChip } from './HostingCenter';
@@ -103,11 +104,19 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         </div>
       </Section>
 
-      <Section n="06" title="Hosting assessment requests" aside="Engineering review: adjust and issue a versioned assessment">
+      <Section n="06" title="Support queue" aside="All nations · most urgent first · SLA timers">
+        <PublisherSupportQueue />
+      </Section>
+
+      <Section n="07" title="Service status and maintenance" aside="Feeds every nation’s status page and monthly report">
+        <PublisherServiceStatus />
+      </Section>
+
+      <Section n="08" title="Hosting assessment requests" aside="Engineering review: adjust and issue a versioned assessment">
         <HostingQueue />
       </Section>
 
-      <Section n="07" title="Install matrix" aside="Each nation’s own decision — never pushed">
+      <Section n="09" title="Install matrix" aside="Each nation’s own decision — never pushed">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px] font-light">
             <thead>
@@ -136,7 +145,7 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         </div>
       </Section>
 
-      <Section n="08" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
+      <Section n="10" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
         <Pipeline requests={o.requests} nameOf={nameOf} onDone={reload} />
       </Section>
     </>

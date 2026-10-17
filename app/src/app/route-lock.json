@@ -121,6 +121,8 @@
   "/updates/requests",
   "/updates/security",
   "/updates/settings",
+  "/updates/status",
+  "/updates/support",
   "/wall",
   "/wallet",
   "/wallet/assistant",

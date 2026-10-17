@@ -70,6 +70,7 @@ import { recordAudit, getSovereign, getSetup, listMinistries, listReleases, veri
 import { securityGate, posture as securityPosture } from './security-store';
 import { preflightGate, stagingGate, superviseStaging } from './readiness';
 import { blackoutOverlapping, freezeBlocks, changeControl } from './change-control';
+import { openTicketForIncident } from './support';
 
 /** Backward compatible with the previous release: every migration reversible and expand/contract, never in place. */
 export function isBackwardCompatible(migrations: ReleaseMigration[]): boolean {
@@ -1199,6 +1200,9 @@ function openIncident(n: SubscribedNation, r: DistributionRelease, p: Probation,
   };
   udb().incidents.push(inc);
   p.incidentId = inc.id;
+  // Every fallback incident opens a P2 support ticket automatically.
+  const t = openTicketForIncident(inc, Date.parse(at));
+  inc.timeline.push({ at, text: `Support ticket ${t.id} opened automatically (P2)` });
   return inc;
 }
 
@@ -1390,6 +1394,8 @@ export function breakGlass(nationId: string, input: { by?: string; secondBy?: st
     ],
   };
   udb().incidents.push(inc);
+  const t = openTicketForIncident(inc, Date.parse(at));
+  inc.timeline.push({ at, text: `Support ticket ${t.id} opened automatically (P2)` });
   const chamber = getChamber(nationId);
   if ('error' in chamber) return { error: chamber.error, status: 500 };
   return { incident: inc, chamber };
