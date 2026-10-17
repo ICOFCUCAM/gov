@@ -289,6 +289,18 @@ function appendAudit(
   return entry;
 }
 
+/** Writes one row to the shared audit chain for modules that keep their own
+ *  state outside this file (e.g. the Update Center in ./updates). */
+export function recordAudit(
+  actor: string,
+  action: string,
+  resource: string,
+  outcome: string,
+  detail?: string,
+): AuditEntry {
+  return appendAudit(actor, action, resource, outcome, detail);
+}
+
 const db = (g.__civicos ??= seed());
 // Engines read the installed nation (regions, map, currency) from the registry.
 applyNation({ ...db.sovereign, configured: !!db.setup });

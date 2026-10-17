@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import { CommandShell } from '@/components/ui/CommandShell';
 import { CommandHeading } from '@/components/ui/Telemetry';
 import { PlatformConsole } from './PlatformConsole';
@@ -11,6 +12,11 @@ export default function PlatformPage() {
     <CommandShell active="plat">
       <div className="space-y-2">
         <CommandHeading title="Platform Operations" sub="Releases · deployments · tenancy · backups · signed configuration — gated, reversible, audited." />
+        <p className="text-[12px] text-ink-muted">
+          Stable releases reach nations through the{' '}
+          <Link href="/admin/releases" className="underline underline-offset-4">Release Publisher</Link>; each nation installs from its{' '}
+          <Link href="/updates" className="underline underline-offset-4">Update Center</Link>.
+        </p>
         <PlatformConsole />
       </div>
     </CommandShell>
