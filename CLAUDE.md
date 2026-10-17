@@ -179,6 +179,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   right to left only when every string is translated into a right-to-left
   language. Public sites use logical CSS (`ms-`, `ps-`, `start-`, `border-s`)
   and `<Fwd />` for arrows, never left/right.
+- A nation may have further official languages (`SovereignProfile.languages`);
+  public-site visitors choose among them (`visitorLocale()`, cookie set only
+  by `/api/public-sites/language`). Shared site wording comes from
+  `siteMessages(locale)`, never `nationMessages()` directly.
+- A ministry's colours and logo (`lib/public-sites/brand.ts`) change only
+  through the Site editor; logos are stored in the platform (PNG, JPEG, WebP,
+  checked by bytes; never SVG, never hot-linked).
 - Search (`/search`, `lib/public-sites/search.ts`) indexes only what the sites
   publish (`effectiveContent`); never an outside search service. Email
   updates (`lib/data/site-subscriptions.ts`) are double opt-in, answer the same

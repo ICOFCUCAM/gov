@@ -372,6 +372,7 @@ export const fr: Messages = {
     searchAll: 'Rechercher dans tous les sites publics',
     searchFor: 'Rechercher',
     searchIn: 'Rechercher dans',
+    languageLabel: 'Langue',
     searchIntro: 'Services, actualités, programmes et pages, tels que chaque institution les publie.',
     searchResults: '{count} résultats pour « {q} »',
     searchOneResult: '1 résultat pour « {q} »',

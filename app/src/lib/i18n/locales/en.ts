@@ -150,6 +150,7 @@ export interface Messages {
     searchAll: string;
     searchFor: string;
     searchIn: string;
+    languageLabel: string;
     searchIntro: string;
     searchResults: string;
     searchOneResult: string;
@@ -799,6 +800,7 @@ export const en: Messages = {
     searchAll: 'Search all public sites',
     searchFor: 'Search for',
     searchIn: 'Search in',
+    languageLabel: 'Language',
     searchIntro: 'Services, news, programmes and pages, as each institution publishes them.',
     searchResults: '{count} results for “{q}”',
     searchOneResult: '1 result for “{q}”',

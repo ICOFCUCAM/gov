@@ -372,6 +372,7 @@ export const ar: Messages = {
     searchAll: 'البحث في جميع المواقع العامة',
     searchFor: 'ابحث عن',
     searchIn: 'البحث في',
+    languageLabel: 'اللغة',
     searchIntro: 'الخدمات والأخبار والبرامج والصفحات كما تنشرها كل مؤسسة.',
     searchResults: '{count} نتيجة لـ «{q}»',
     searchOneResult: 'نتيجة واحدة لـ «{q}»',

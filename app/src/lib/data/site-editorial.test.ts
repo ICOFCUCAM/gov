@@ -3,7 +3,7 @@ import { proposeSiteChange, decideProposal, proposeRestore, siteEditorial, reset
 import { resetSiteSettings, getSiteSettings, updateSiteSettings } from './site-settings';
 import { listAudit } from './store';
 import { effectiveContent } from '@/lib/public-sites/effective';
-import { applyNation } from '@/lib/nation/registry';
+import { applyNation, nationLanguages, siteMessages } from '@/lib/nation/registry';
 import { siteContent } from '@/lib/public-sites';
 import { translatableStrings } from '@/lib/public-sites/translation';
 
@@ -122,6 +122,17 @@ describe('site editorial workflow', () => {
       // Restoring version 2 brings back its content and its translations.
       ok(decideProposal('police', ok(proposeRestore('police', 2, 'T')).id, 'publish', 'D'));
       expect(effectiveContent('police').language.dir).toBe('rtl');
+    });
+
+    it('show a visitor the site in any of the nation\'s official languages they choose', () => {
+      applyNation({ configured: true, stateName: 'Republic of Meridia', locale: 'sw', languages: ['fr', 'xx', 'sw'] });
+      expect(nationLanguages()).toEqual(['sw', 'fr']);
+      ok(decideProposal('police', ok(proposeSiteChange('police', { translation: { locale: 'fr', entries: { 'hero.headline.0': { source: 'Safe Citizens,', target: 'Citoyens en sécurité,' } } } }, 'T')).id, 'publish', 'D'));
+      expect(effectiveContent('police', undefined, 'fr').content.hero.headline[0]).toBe('Citoyens en sécurité,');
+      expect(effectiveContent('police', undefined, 'fr').language.locale).toBe('fr');
+      // Not an official language: the nation's main language.
+      expect(effectiveContent('police', undefined, 'ar').language.locale).toBe('sw');
+      expect(siteMessages('fr').search).toBe('Rechercher');
     });
 
     it('refuse translations of text the site no longer has, or that break placeholders', () => {

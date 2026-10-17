@@ -506,6 +506,7 @@ export interface SovereignProfile {
   currency: string;         // ISO 4217
   regionNoun: string;       // region / province / state / emirate / canton …
   locale: string;
+  languages?: string[];     // further official languages (codes); public sites offer visitors each one
   seal?: string;            // short insignia monogram (e.g. national initials)
   accent?: string;          // sovereign theme accent (hex)
   motto?: string;           // formal national style / motto

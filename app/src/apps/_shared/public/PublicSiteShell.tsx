@@ -20,10 +20,9 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { nationMessages, nationLocale } from '@/lib/nation/registry';
+import { nationLocale, siteMessages } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
-import { locales } from '@/lib/i18n/config';
-import { GatewayBar, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd, type SiteGateway } from './integration';
+import { GatewayBar, LanguageSwitch, SiteLogo, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd, type SiteGateway } from './integration';
 import { FontSizeControls } from './controls';
 
 export interface PublicSiteTheme {
@@ -71,6 +70,8 @@ export interface PublicSiteShellProps {
     role: 'Ministry' | 'Agency' | 'Chamber' | 'Branch';
     href: string;
     crest: React.ReactNode;
+    /** The ministry's own logo (brand), shown in place of the crest in the header. */
+    logo?: { src: string; alt: string };
     /** A sentence about the institution (designs with their own footer use it). */
     about?: string;
     emergencyButton?: { label: string; icon: string } | null;
@@ -106,6 +107,10 @@ export interface PublicSiteShellProps {
   extra?: React.ReactNode;
   /** The site's absolute address, for schema.org (from the request; absent outside one). */
   url?: string;
+  /** The language the visitor reads the site in (one of `languages`), for the shared wording. */
+  locale?: string;
+  /** The nation's official languages; a language menu appears when there is more than one. */
+  languages?: string[];
 }
 
 const itemLabel = (i: PublicSiteLinkItem) => (typeof i === 'string' ? i : i.label);
@@ -119,18 +124,17 @@ function Action({ href, className, style, children }: { href?: string; className
 }
 
 export function PublicSiteShell({
-  theme, extra, url, institution, nav, hero, alert, quickServices, featured, statistics, statisticsSample, news, newsSample, newsFrom, gateway, preview, lang, dir, initiatives,
+  theme, extra, url, locale, languages, institution, nav, hero, alert, quickServices, featured, statistics, statisticsSample, news, newsSample, newsFrom, gateway, preview, lang, dir, initiatives,
   locator, shortcuts, footerSections, newsletter, legalLine, legalLinks,
 }: PublicSiteShellProps) {
   // Fixed wording in the nation's language (lib/i18n `site`); each institution's own content is unchanged.
-  const t = nationMessages().site;
-  const language = locales.find(l => l.code === nationLocale())?.name ?? 'English';
+  const t = siteMessages(locale);
   return (
     <div className="min-h-screen text-[#1a2332]" style={{ background: theme.surface }} lang={lang} dir={dir} data-site-root="">
       <SkipLink label={t.skipMain} />
       <PreviewBanner on={preview} />
       {/* 1. Utility ribbon */}
-      <section aria-label={fill(t.officialWebsite, { name: institution.name })} className="w-full text-[12px] text-white/85"
+      <section lang={locale} aria-label={fill(t.officialWebsite, { name: institution.name })} className="w-full text-[12px] text-white/85"
         style={{ background: `linear-gradient(90deg, ${theme.ink}, ${theme.inkSoft})` }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
           <div className="flex items-center gap-4">
@@ -141,7 +145,7 @@ export function PublicSiteShell({
           </div>
           <div className="flex items-center gap-4">
             <FontSizeControls up={t.fontUp} normal={t.fontNormal} down={t.fontDown} />
-            <span className="hover:text-white">{language} ▾</span>
+            <LanguageSwitch current={locale ?? nationLocale()} languages={languages} path={institution.href} label={t.languageLabel} />
           </div>
         </div>
       </section>
@@ -150,8 +154,8 @@ export function PublicSiteShell({
       <header className="sticky top-0 z-20 border-b bg-white" style={{ borderColor: theme.line }}>
         <div className="mx-auto flex max-w-[1280px] items-center gap-6 px-6 py-3">
           <div className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-full text-[16px] font-bold text-white"
-              style={{ background: theme.ink }} aria-hidden>{institution.crest}</span>
+            {institution.logo ? <SiteLogo logo={institution.logo} size={44} /> : <span className="grid h-11 w-11 place-items-center rounded-full text-[16px] font-bold text-white"
+              style={{ background: theme.ink }} aria-hidden>{institution.crest}</span>}
             <div className="leading-tight">
               <div className="text-[18px] font-bold tracking-tight" style={{ color: theme.ink }}>{institution.name}</div>
               <div className="text-[11px] text-slate-600">{institution.tagline}</div>
@@ -178,7 +182,7 @@ export function PublicSiteShell({
           </div>
         </div>
       </header>
-      <GatewayBar gateway={gateway} name={institution.name} accent={theme.primary} />
+      <GatewayBar gateway={gateway} name={institution.name} accent={theme.primary} locale={locale} />
       <main id="main">
       <SiteSchema name={institution.name} description={institution.tagline} gateway={gateway} url={url} lang={lang} emergency={institution.emergencyButton?.label} />
 

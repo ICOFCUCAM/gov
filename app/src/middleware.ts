@@ -8,7 +8,7 @@ import type { NextRequest } from 'next/server';
 // Read-only facts the cover shows pre-sign-in: identity (name, motto, insignia),
 // the institution register (also public in the Government Directory) and the
 // audit chain's integrity check used by the start-up sequence.
-const PUBLIC_READ = [/^\/api\/sovereign$/, /^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/];
+const PUBLIC_READ = [/^\/api\/sovereign$/, /^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/];
 // Citizens ask for and manage email updates from the public sites without signing in
 // (double opt-in and per-sender limits in lib/data/site-subscriptions.ts).
 const PUBLIC_WRITE = [/^\/api\/public-sites\/[a-z-]+\/subscribe$/, /^\/api\/subscriptions$/];

@@ -5,8 +5,9 @@
 // Shared by every design.
 
 import * as React from 'react';
-import { nationMessages, nationInsignia, currentOffices } from '@/lib/nation/registry';
+import { siteMessages, nationInsignia, currentOffices } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
+import { locales } from '@/lib/i18n/config';
 
 export interface SiteGateway {
   mode: 'link' | 'embed' | 'migrate';
@@ -47,6 +48,37 @@ export function NewsletterForm({ site, note, noteClassName = 'text-white/60', ch
   );
 }
 
+/**
+ * The language menu in the official banner: the nation's official languages,
+ * each a link that stores the visitor's choice and returns to the page. A
+ * disclosure, so it works without JavaScript. One language: its name only.
+ */
+export function LanguageSwitch({ current, languages, path, label }: { current: string; languages?: string[]; path: string; label: string }) {
+  const name = (c: string) => locales.find(l => l.code === c)?.name ?? c;
+  if (!languages || languages.length < 2) return <span>{name(current)} ▾</span>;
+  return (
+    <details className="relative">
+      <summary className="flex min-h-6 cursor-pointer list-none items-center gap-1 rounded px-1 hover:bg-white/10 hover:text-white [&::-webkit-details-marker]:hidden">
+        <span className="sr-only">{label}: </span><span lang={current}>{name(current)}</span> <span aria-hidden>▾</span>
+      </summary>
+      <ul className="absolute end-0 z-40 mt-2 min-w-[11rem] rounded-md bg-white py-1 text-[13px] text-slate-800 shadow-lg ring-1 ring-black/10">
+        {languages.map(c => (
+          <li key={c}>
+            <a href={`/api/public-sites/language?lang=${c}&next=${encodeURIComponent(path)}`} lang={c} hrefLang={c} aria-current={c === current ? 'true' : undefined}
+              className={`block px-3 py-2 hover:bg-slate-100 ${c === current ? 'font-semibold' : ''}`}>{name(c)}</a>
+          </li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
+/** The ministry's own logo (its brand), in place of the crest. Served from the platform, never hot-linked. */
+export function SiteLogo({ logo, size }: { logo: { src: string; alt: string }; size: number }) {
+  // eslint-disable-next-line @next/next/no-img-element -- an uploaded image of unknown size, served by the platform
+  return <img src={logo.src} alt={logo.alt} className="w-auto shrink-0 object-contain" style={{ height: size, maxWidth: size * 4 }} />;
+}
+
 /** Shown on a pending proposal's preview (officials only): nothing here is published yet. */
 export function PreviewBanner({ on }: { on?: boolean }) {
   if (!on) return null;
@@ -61,9 +93,9 @@ export function PreviewBanner({ on }: { on?: boolean }) {
 }
 
 /** A thin bar under the header pointing to the ministry's main website. */
-export function GatewayBar({ gateway, name, accent }: { gateway?: SiteGateway; name: string; accent: string }) {
+export function GatewayBar({ gateway, name, accent, locale }: { gateway?: SiteGateway; name: string; accent: string; locale?: string }) {
   if (!gateway) return null;
-  const t = nationMessages().site;
+  const t = siteMessages(locale);
   const text = gateway.mode === 'migrate' ? t.gatewayMigrate : t.gatewayLink;
   return (
     <div className="border-b bg-white" style={{ borderColor: '#e5e7eb' }}>

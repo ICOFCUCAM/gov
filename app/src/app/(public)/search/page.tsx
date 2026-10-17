@@ -8,7 +8,8 @@ import { searchSites, type SearchKind } from '@/lib/public-sites/search';
 import { SITE_IDS, siteContent } from '@/lib/public-sites';
 import { fillDeep, siteTokens } from '@/lib/public-sites/tokens';
 import { publishedOverride } from '@/lib/data/site-editorial';
-import { nationMessages } from '@/lib/nation/registry';
+import { siteMessages } from '@/lib/nation/registry';
+import { visitorLocale } from '@/apps/_shared/public/site-props';
 import { t as fill } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,8 @@ export const metadata = { title: 'Search', robots: { index: false } };
 const INK = '#0b1a2c';
 
 export default function SearchPage({ searchParams }: { searchParams?: { q?: string; site?: string } }) {
-  const t = nationMessages().site;
+  const locale = visitorLocale();
+  const t = siteMessages(locale);
   const q = (searchParams?.q ?? '').slice(0, 200);
   const site = searchParams?.site && SITE_IDS.includes(searchParams.site) ? searchParams.site : undefined;
   const tokens = siteTokens(new Date().getFullYear());
@@ -25,7 +27,7 @@ export default function SearchPage({ searchParams }: { searchParams?: { q?: stri
     .map(id => ({ id, name: fillDeep(siteContent(id, publishedOverride(id)).institution.name, tokens) }))
     .sort((a, b) => a.name.localeCompare(b.name));
   const siteName = names.find(n => n.id === site)?.name;
-  const hits = q.trim() ? searchSites(q, { site }) : [];
+  const hits = q.trim() ? searchSites(q, { site, locale }) : [];
   const kind: Record<SearchKind, string> = { service: t.kindService, news: t.kindNews, programme: t.kindProgramme, figure: t.kindFigure, page: t.kindPage };
 
   return (

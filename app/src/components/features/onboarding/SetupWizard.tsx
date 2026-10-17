@@ -548,10 +548,23 @@ export function SetupWizard() {
                         <input className={`${inputCls} font-mono uppercase tracking-[0.3em]`} maxLength={3} value={profile.seal ?? ''} onChange={e => set('seal', e.currentTarget.value.toUpperCase())} placeholder={identity.seal} />
                       </Field>
                       <Field label="Official language">
-                        <Select value={profile.locale} onChange={e => set('locale', e.currentTarget.value)}>
+                        <Select value={profile.locale} onChange={e => { const v = e.currentTarget.value; setProfile(p => p && { ...p, locale: v, languages: (p.languages ?? []).filter(x => x !== v) }); }}>
                           {locales.map(l => <option key={l.code} value={l.code}>{l.name}</option>)}
                         </Select>
                       </Field>
+                      <fieldset className="sm:col-span-2">
+                        <legend className="block font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/65">Further official languages</legend>
+                        <div className="mt-2 flex flex-wrap gap-x-5 gap-y-2">
+                          {locales.filter(l => l.code !== profile.locale).map(l => (
+                            <label key={l.code} className="flex items-center gap-2 text-[13px] font-light text-white/75">
+                              <input type="checkbox" className="accent-[#d9c398]" checked={(profile.languages ?? []).includes(l.code)}
+                                onChange={e => { const on = e.currentTarget.checked; set('languages', on ? [...(profile.languages ?? []), l.code] : (profile.languages ?? []).filter(x => x !== l.code)); }} />
+                              {l.name}
+                            </label>
+                          ))}
+                        </div>
+                        <p className="mt-1.5 text-[11.5px] leading-snug text-white/40">Public websites let visitors choose any of these; each site shows its translation where one is published, English otherwise.</p>
+                      </fieldset>
                       <div className="sm:col-span-2">
                         <Field label="Motto or formal style">
                           <input className={inputCls} value={profile.motto ?? ''} onChange={e => set('motto', e.currentTarget.value)} placeholder="Unity · Liberty · Service" />
@@ -782,7 +795,7 @@ export function SetupWizard() {
                     ]} />
                     <Summary n="II" title="Identity" onEdit={() => setStep(1)} rows={[
                       ['Insignia', identity.seal], ['Colour', identity.accent], ['Motto', identity.motto || '—'],
-                      ['Language', locales.find(l => l.code === profile.locale)?.name ?? profile.locale],
+                      ['Language', [profile.locale, ...(profile.languages ?? [])].map(c => locales.find(l => l.code === c)?.name ?? c).join(' · ')],
                     ]} />
                     <Summary n="III" title="Institutions" onEdit={() => setStep(2)} rows={[
                       ['Active', String(ministries.filter(m => active[m.id]).length)],

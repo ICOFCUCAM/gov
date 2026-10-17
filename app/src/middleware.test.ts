@@ -38,6 +38,7 @@ describe('email updates from the public sites', () => {
     expect(post('/api/subscriptions').headers.get('location')).toBeNull();
     expect(call('/search?q=permit').headers.get('location')).toBeNull();
     expect(call('/subscriptions?token=x').headers.get('location')).toBeNull();
+    expect(call('/api/public-sites/language?lang=fr&next=/police').headers.get('location')).toBeNull();
     expect(post('/api/public-sites/police/proposals').headers.get('location')).toMatch(/\/login/);
     expect(call('/api/subscriptions').headers.get('location')).toMatch(/\/login/);
   });

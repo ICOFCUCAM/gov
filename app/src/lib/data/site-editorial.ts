@@ -11,7 +11,8 @@
 
 import routes from '@/app/route-lock.json';
 import { recordAudit } from './store';
-import { updateSiteSettings, getSiteSettings } from './site-settings';
+import { updateSiteSettings, getSiteSettings, setSiteBrand } from './site-settings';
+import { brandProblem, type SiteBrand } from '@/lib/public-sites/brand';
 import { SITE_IDS } from '@/lib/public-sites';
 import type { SiteOverride, SiteSection } from '@/lib/public-sites/types';
 import { checkPublicUrl } from '@/lib/public-sites/url-safety';
@@ -33,6 +34,8 @@ export interface SiteChange {
   translation?: { locale: string; entries: TranslationEntries };
   /** Restoring: the translations to put back in place of the published ones. */
   translations?: Record<string, TranslationEntries>;
+  /** The ministry's own colours and logo; null removes them. */
+  brand?: SiteBrand | null;
 }
 
 export interface SiteProposal {
@@ -56,6 +59,8 @@ export interface SiteVersion {
   version: number;
   content: SiteOverride;
   preset?: string;
+  /** The ministry's colours and logo at this version. */
+  brand?: SiteBrand;
   /** The published translations at this version, by language. */
   translations: Record<string, TranslationEntries>;
   proposalId: string;
@@ -94,12 +99,12 @@ export function publishedTranslation(siteId: string, locale: string): Translatio
 }
 
 /** A pending proposal's content laid over what is published, for previewing it on the site. */
-export function previewOverride(siteId: string, proposalId: string): { content: SiteOverride; preset?: string | null; translations: Record<string, TranslationEntries> } | null {
+export function previewOverride(siteId: string, proposalId: string): { content: SiteOverride; preset?: string | null; brand?: SiteBrand | null; translations: Record<string, TranslationEntries> } | null {
   const e = db.get(siteId);
   const p = e?.proposals.find(x => x.id === proposalId && x.status === 'pending');
   if (!e || !p) return null;
   const content = p.change.replace ? { ...(p.change.content ?? {}) } : { ...(e.published?.content ?? {}), ...(p.change.content ?? {}) };
-  return { content, preset: p.change.preset, translations: nextTranslations(e, p.change) };
+  return { content, preset: p.change.preset, ...(p.change.brand !== undefined ? { brand: p.change.brand } : {}), translations: nextTranslations(e, p.change) };
 }
 
 /** The translations after a change: a restore puts its set back; a translation merges into its language. */
@@ -186,6 +191,10 @@ export function proposeSiteChange(siteId: string, change: SiteChange, by: string
   const problem = contentProblems(content);
   if (problem) return { error: problem };
   if (change.preset !== undefined && change.preset !== null && !presetsFor(siteId).some(p => p.id === change.preset)) return { error: `Design "${change.preset}" is not one this site may use` };
+  if (change.brand) {
+    const problem = brandProblem(change.brand);
+    if (problem) return { error: problem };
+  }
   if (change.translation) {
     const { locale, entries } = change.translation;
     if (locale === 'en' || !locales.some(l => l.code === locale)) return { error: `"${locale}" is not a language the platform can show` };
@@ -204,12 +213,13 @@ export function proposeSiteChange(siteId: string, change: SiteChange, by: string
     ...(change.replace ? ['restore an earlier version'] : []),
     ...Object.keys(content).map(k => LABEL[k] ?? k),
     ...(change.preset !== undefined ? [`design → ${change.preset ?? 'default'}`] : []),
+    ...(change.brand !== undefined && !change.replace ? [change.brand ? 'colours and logo' : 'remove colours and logo'] : []),
     ...(change.translation ? [`translation (${change.translation.locale}, ${Object.keys(change.translation.entries).length} strings)`] : []),
   ];
   if (summary.length === 0) return { error: 'The proposal changes nothing' };
   const e = siteEditorial(siteId);
   const p: SiteProposal = {
-    id: uid(), siteId, change: { ...(change.content ? { content } : {}), ...(change.preset !== undefined ? { preset: change.preset } : {}), ...(change.replace ? { replace: true, translations: change.translations ?? {} } : {}), ...(change.translation ? { translation: change.translation } : {}) },
+    id: uid(), siteId, change: { ...(change.content ? { content } : {}), ...(change.preset !== undefined ? { preset: change.preset } : {}), ...(change.brand !== undefined ? { brand: change.brand } : {}), ...(change.replace ? { replace: true, translations: change.translations ?? {} } : {}), ...(change.translation ? { translation: change.translation } : {}) },
     summary, note: note.trim().slice(0, 600), proposedBy: by.trim(), proposedAt: new Date().toISOString(), basedOn: e.version, status: 'pending',
   };
   db.set(siteId, { ...e, proposals: [p, ...e.proposals] });
@@ -248,10 +258,14 @@ export function decideProposal(siteId: string, proposalId: string, action: 'publ
     const r = updateSiteSettings(siteId, { preset: p.change.preset }, by.trim());
     if ('error' in r) return r;
   }
+  if (p.change.brand !== undefined) {
+    const r = setSiteBrand(siteId, p.change.brand, by.trim());
+    if ('error' in r) return r;
+  }
   const content = p.change.replace ? { ...(p.change.content ?? {}) } : { ...(e.published?.content ?? {}), ...(p.change.content ?? {}) };
   const translations = nextTranslations(e, p.change);
   const v: SiteVersion = {
-    version: e.version + 1, content, preset: getSiteSettings(siteId).preset, translations, proposalId: p.id,
+    version: e.version + 1, content, preset: getSiteSettings(siteId).preset, brand: getSiteSettings(siteId).brand, translations, proposalId: p.id,
     proposedBy: p.proposedBy, publishedBy: by.trim(), at: now, note: p.note,
   };
   const next: SiteEditorial = { ...e, version: v.version, published: v, versions: [v, ...e.versions], proposals: done('published'), translations };
@@ -273,7 +287,7 @@ export function proposeRestore(siteId: string, version: number, by: string, note
   if (version === e.version) return { error: 'That version is already published' };
   const v = version === 0 ? null : e.versions.find(x => x.version === version);
   if (version !== 0 && !v) return { error: 'Version not found' };
-  return proposeSiteChange(siteId, { content: v?.content ?? {}, preset: v?.preset ?? null, replace: true, translations: v?.translations ?? {} }, by, note || `Restore version ${version}`);
+  return proposeSiteChange(siteId, { content: v?.content ?? {}, preset: v?.preset ?? null, brand: v?.brand ?? null, replace: true, translations: v?.translations ?? {} }, by, note || `Restore version ${version}`);
 }
 
 /** Test helper. */

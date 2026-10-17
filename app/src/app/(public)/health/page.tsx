@@ -9,15 +9,14 @@
 
 import Link from 'next/link';
 import { publicHealthSite } from '@/lib/gov/health-operations';
-import { nationMessages, nationLocale } from '@/lib/nation/registry';
+import { siteMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
-import { GatewayBar, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
+import { GatewayBar, LanguageSwitch, SiteLogo, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
 import { FontSizeControls } from '@/apps/_shared/public/controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
-import { locales } from '@/lib/i18n/config';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Health — Official Portal' };
 
@@ -53,9 +52,8 @@ export default function PublicHealthHomepage({ searchParams }: { searchParams?: 
 }
 
 function HealthPortal({ site }: { site: PublicSiteShellProps }) {
-  // Fixed site wording in the nation's language (lib/i18n `site`).
-  const t = nationMessages().site;
-  const language = locales.find(l => l.code === nationLocale())?.name ?? 'English';
+  // Fixed site wording in the visitor's language among the nation's (lib/i18n `site`).
+  const t = siteMessages(site.locale);
   const { institution: inst, hero, alert, quickServices, featured, statistics, news, initiatives, locator, shortcuts, footerSections, newsletter } = site;
   const [l1, l2] = hero.headlineLines ?? ['', ''];
   const note = fill(t.sampleNote, { name: inst.name });
@@ -66,7 +64,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
       <SkipLink label={t.skipMain} />
       <PreviewBanner on={site.preview} />
       {/* 1. Top utility bar */}
-      <section aria-label={fill(t.officialWebsite, { name: inst.name })} className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg,${NAVY},#10325c)` }}>
+      <section lang={site.locale} aria-label={fill(t.officialWebsite, { name: inst.name })} className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg,${NAVY},#10325c)` }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
           <div className="flex items-center gap-4">
             <span>{fill(t.officialWebsite, { name: inst.name })}</span>
@@ -76,7 +74,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
           </div>
           <div className="flex items-center gap-4">
             <FontSizeControls up={t.fontUp} normal={t.fontNormal} down={t.fontDown} />
-            <span className="hover:text-white">{language} ▾</span>
+            <LanguageSwitch current={site.locale ?? nationLocale()} languages={site.languages} path={site.institution.href} label={t.languageLabel} />
           </div>
         </div>
       </section>
@@ -85,7 +83,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
       <header className="sticky top-0 z-20 border-b bg-white" style={{ borderColor: LINE }}>
         <div className="mx-auto flex max-w-[1280px] items-center gap-6 px-6 py-3">
           <Link href={inst.href} className="flex items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-full text-[16px] font-bold text-white" style={{ background: NAVY }} aria-hidden>{inst.crest}</span>
+            {inst.logo ? <SiteLogo logo={inst.logo} size={44} /> : <span className="grid h-11 w-11 place-items-center rounded-full text-[16px] font-bold text-white" style={{ background: NAVY }} aria-hidden>{inst.crest}</span>}
             <div className="leading-tight">
               <div className="text-[18px] font-bold tracking-tight" style={{ color: NAVY }}>{inst.name}</div>
               <div className="text-[11px] text-slate-600">{inst.tagline}</div>
@@ -111,7 +109,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
           {site.nav.map(n => <Link key={n.label} href={n.href} className="shrink-0 whitespace-nowrap" style={{ color: n.active ? BLUE : '#475569' }}>{n.label}</Link>)}
         </nav>
       </header>
-      <GatewayBar gateway={site.gateway} name={inst.name} accent={BLUE} />
+      <GatewayBar gateway={site.gateway} name={inst.name} accent={BLUE} locale={site.locale} />
       <main id="main">
       <SiteSchema name={inst.name} description={inst.tagline} gateway={site.gateway} url={site.url} lang={site.lang} emergency={inst.emergencyButton?.label} />
 

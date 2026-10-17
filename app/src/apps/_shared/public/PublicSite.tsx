@@ -9,15 +9,14 @@ import * as React from 'react';
 import Link from 'next/link';
 import './design/fonts.css';
 import { PublicSiteShell, SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteTheme, type PublicSiteLinkItem } from './PublicSiteShell';
-import { GatewayBar, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from './integration';
+import { GatewayBar, LanguageSwitch, SiteLogo, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from './integration';
 import { FontSizeControls } from './controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { getSiteSettings } from '@/lib/data/site-settings';
 import { siteProps } from './site-props';
 import { PRESETS, DEFAULT_PRESET, presetsFor, type Preset, type PresetDesign, type BlockRef } from './design/presets';
-import { nationMessages, nationLocale, nationEmergencyContacts } from '@/lib/nation/registry';
+import { nationLocale, siteMessages, nationEmergencyContacts } from '@/lib/nation/registry';
 import { t as fill, type Messages } from '@/lib/i18n';
-import { locales } from '@/lib/i18n/config';
 
 export interface PublicSiteProps {
   id: string;
@@ -122,10 +121,9 @@ const telOf = (label: string) => /(\+?\d[\d\s-]{1,14}\d|\d{2,})/.exec(label)?.[0
 
 function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
   const { s, th, d, t } = c;
-  const language = locales.find(l => l.code === nationLocale())?.name ?? 'English';
   const emergency = s.institution.emergencyButton;
   const tel = emergency ? telOf(emergency.label) : undefined;
-  const crest = (size: number) => (
+  const crest = (size: number) => s.institution.logo ? <SiteLogo logo={s.institution.logo} size={size} /> : (
     <span className="grid shrink-0 place-items-center rounded-full font-bold text-white"
       style={{ width: size, height: size, background: th.ink, fontSize: size * 0.36 }} aria-hidden>{s.institution.crest}</span>
   );
@@ -155,7 +153,7 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
       <SkipLink label={t.skipMain} />
       <PreviewBanner on={s.preview} />
       {/* Official banner — the same on every public site. */}
-      <section aria-label={fill(t.officialWebsite, { name: s.institution.name })} className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg, ${th.ink}, ${th.inkSoft})` }}>
+      <section lang={s.locale} aria-label={fill(t.officialWebsite, { name: s.institution.name })} className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg, ${th.ink}, ${th.inkSoft})` }}>
         <Wrap className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 py-2">
           <div className="flex items-center gap-4">
             <span>{fill(t.officialWebsite, { name: s.institution.name })}</span>
@@ -165,7 +163,7 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
           </div>
           <div className="flex items-center gap-4">
             <FontSizeControls up={t.fontUp} normal={t.fontNormal} down={t.fontDown} />
-            <span>{language} ▾</span>
+            <LanguageSwitch current={s.locale ?? nationLocale()} languages={s.languages} path={s.institution.href} label={t.languageLabel} />
           </div>
         </Wrap>
       </section>
@@ -202,7 +200,7 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
           ))}
         </nav>
       </header>
-      <GatewayBar gateway={s.gateway} name={s.institution.name} accent={th.primary} />
+      <GatewayBar gateway={s.gateway} name={s.institution.name} accent={th.primary} locale={s.locale} />
       <SiteSchema name={s.institution.name} description={s.institution.tagline} gateway={s.gateway} url={s.url} lang={s.lang} emergency={s.institution.emergencyButton?.label} />
 
       <main id="main" className="flex flex-col" style={{ gap: d.gap, paddingBottom: d.gap }}>{children}</main>
@@ -762,7 +760,7 @@ function Block({ c, r, inRow }: { c: Ctx; r: BlockRef; inRow?: boolean }) {
 function ComposedSite({ site, preset, extra }: { site: PublicSiteShellProps; preset: Preset; extra?: React.ReactNode }) {
   const sober = preset.design.palette === 'sober';
   const c: Ctx = {
-    s: site, th: site.theme, d: preset.design, t: nationMessages().site,
+    s: site, th: site.theme, d: preset.design, t: siteMessages(site.locale),
     bg: sober ? '#f6f5f1' : site.theme.surface,
     card: '#ffffff',
     rule: sober ? '#e2ded4' : site.theme.line,

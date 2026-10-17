@@ -139,7 +139,7 @@ describe('public-site accessibility foundations (WCAG 2.2 AA)', () => {
       expect(html, `${name}: footer`).toContain('<footer');
       expect(html.match(/<h1[\s>]/g)?.length, `${name}: one h1`).toBe(1);
       expect(html, `${name}: lang`).toMatch(/data-site-root=""|lang="[a-z]{2}"/);
-      expect(html, `${name}: official banner is a named region`).toMatch(/<section aria-label="Official website of /i);
+      expect(html, `${name}: official banner is a named region`).toMatch(/<section (lang="[a-z]+" )?aria-label="Official website of /i);
     }
   });
 

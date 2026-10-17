@@ -14,6 +14,7 @@
 // ministry's website is unreachable. In-memory like the rest of the store
 // (register 1.1).
 
+import { brandProblem, type SiteBrand } from '@/lib/public-sites/brand';
 import routes from '@/app/route-lock.json';
 import { recordAudit } from './store';
 import { SITE_IDS } from '@/lib/public-sites';
@@ -42,6 +43,8 @@ export interface SiteSettings {
   feedUrl?: string;
   /** The design preset chosen for this site (one its sector allows); the site's default when unset. */
   preset?: string;
+  /** The ministry's own colours and logo (published through the Site editor only, see setSiteBrand). */
+  brand?: SiteBrand;
   redirects: SiteRedirect[];
   feed: SiteFeedState;
   updatedAt?: string;
@@ -70,6 +73,22 @@ export function listSiteSettings(): SiteSettings[] {
 
 const LOCKED = new Set(routes as string[]);
 const destinationOk = (to: string) => to.startsWith('/') && !to.includes('..') && LOCKED.has(to.split('#')[0]!);
+
+/**
+ * Set the ministry's colours and logo. Only the Site editor calls this, when a
+ * second official publishes a proposal (four-eyes); null removes the brand.
+ */
+export function setSiteBrand(siteId: string, brand: SiteBrand | null, by: string): SiteSettings | { error: string } {
+  if (!SITE_IDS.includes(siteId)) return { error: `No public site "${siteId}"` };
+  const problem = brand ? brandProblem(brand) : null;
+  if (problem) return { error: problem };
+  const cur = getSiteSettings(siteId);
+  const next: SiteSettings = { ...cur, brand: brand && Object.keys(brand).length ? brand : undefined, updatedAt: new Date().toISOString(), updatedBy: by };
+  db.set(siteId, next);
+  const what = brand ? [brand.primary && `colour ${brand.primary}`, brand.accent && `second colour ${brand.accent}`, brand.logo && `logo (${brand.logo.type}, ${Math.round(brand.logo.data.length * 0.75 / 1024)} KB)`].filter(Boolean).join(' · ') : 'brand removed';
+  recordAudit(by, 'site.brand', `PublicSite:${siteId}`, 'ok', what || 'brand removed');
+  return next;
+}
 
 /** Change a site's settings. Returns the new settings or the first problem found; nothing is saved on error. */
 export function updateSiteSettings(siteId: string, input: SiteSettingsInput, by: string): SiteSettings | { error: string } {

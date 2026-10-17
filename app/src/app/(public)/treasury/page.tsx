@@ -11,12 +11,11 @@
 
 import Link from 'next/link';
 import { publicTreasurySite } from '@/lib/gov/treasury-systems';
-import { nationMessages, nationInsignia, nationLocale } from '@/lib/nation/registry';
-import { locales } from '@/lib/i18n/config';
+import { siteMessages, nationInsignia, nationLocale } from '@/lib/nation/registry';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
-import { GatewayBar, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
+import { GatewayBar, LanguageSwitch, SiteLogo, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
 import { FontSizeControls } from '@/apps/_shared/public/controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { t as fill } from '@/lib/i18n';
@@ -158,9 +157,8 @@ const href = (i: PublicSiteLinkItem) => (typeof i === 'string' ? '/treasury' : i
 
 function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
   const s = publicTreasurySite(100); // deterministic, SSR-stable
-  // Fixed site wording in the nation's language (lib/i18n `site`).
-  const t = nationMessages().site;
-  const language = locales.find(l => l.code === nationLocale())?.name ?? 'English';
+  // Fixed site wording in the visitor's language among the nation's (lib/i18n `site`).
+  const t = siteMessages(site.locale);
   const inst = site.institution;
   const note = fill(t.sampleNote, { name: inst.name });
   const shortName = inst.name.replace(/^Ministry of /, '');
@@ -177,7 +175,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
       <SkipLink label={t.skipMain} />
       <PreviewBanner on={site.preview} />
       {/* 0. Official banner — the same on every public site. */}
-      <section aria-label={fill(t.officialWebsite, { name: inst.name })} className="w-full text-[12px] text-white/85" style={{ background: NAVY }}>
+      <section lang={site.locale} aria-label={fill(t.officialWebsite, { name: inst.name })} className="w-full text-[12px] text-white/85" style={{ background: NAVY }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
           <div className="flex items-center gap-4">
             <span>{fill(t.officialWebsite, { name: inst.name })}</span>
@@ -187,7 +185,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
           </div>
           <div className="flex items-center gap-4">
             <FontSizeControls up={t.fontUp} normal={t.fontNormal} down={t.fontDown} />
-            <span>{language} ▾</span>
+            <LanguageSwitch current={site.locale ?? nationLocale()} languages={site.languages} path={site.institution.href} label={t.languageLabel} />
           </div>
         </div>
       </section>
@@ -196,7 +194,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
       <header className="sticky top-0 z-20 border-b bg-white" style={{ borderColor: LINE }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-8 gap-y-3 px-6 py-3">
           <Link href={inst.href} className="flex items-center gap-3">
-            {emblem(44)}
+            {inst.logo ? <SiteLogo logo={inst.logo} size={44} /> : emblem(44)}
             <div className="leading-tight">
               {shortName !== inst.name ? <div className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: GOLD }}>Ministry of</div> : null}
               <div className="text-[22px] font-bold leading-none tracking-tight" style={{ color: NAVY, fontFamily: SERIF }}>{shortName}</div>
@@ -235,7 +233,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
           </div>
         </div>
       </header>
-      <GatewayBar gateway={site.gateway} name={inst.name} accent={GOLD} />
+      <GatewayBar gateway={site.gateway} name={inst.name} accent={GOLD} locale={site.locale} />
       <main id="main">
       <SiteSchema name={inst.name} description={inst.tagline} gateway={site.gateway} url={site.url} lang={site.lang} emergency={inst.emergencyButton?.label} />
 

@@ -7,11 +7,12 @@
 import * as React from 'react';
 import type { PublicSiteShellProps, PublicSiteTheme } from './PublicSiteShell';
 import { accessibleTheme } from './design/contrast';
-import { headers } from 'next/headers';
+import { logoVersion } from '@/lib/public-sites/brand';
+import { headers, cookies } from 'next/headers';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import type { SiteContent, SiteLink } from '@/lib/public-sites/types';
 import { fillDeep, siteTokens } from '@/lib/public-sites/tokens';
-import { nationInsignia } from '@/lib/nation/registry';
+import { nationInsignia, nationLanguages, nationLocale } from '@/lib/nation/registry';
 
 export interface SitePropsOptions {
   theme: PublicSiteTheme;
@@ -45,10 +46,27 @@ function absolute(path: string): string | undefined {
   }
 }
 
+/** The cookie that holds a visitor's language choice on the public sites (set by /api/public-sites/language). */
+export const SITE_LANG_COOKIE = 'civicos_site_lang';
+
+/** The visitor's language among the nation's official languages; the nation's main language otherwise. */
+export function visitorLocale(): string {
+  try {
+    const v = cookies().get(SITE_LANG_COOKIE)?.value;
+    if (v && nationLanguages().includes(v)) return v;
+  } catch { /* outside a request */ }
+  return nationLocale();
+}
+
 export function siteProps(id: string, { theme: given, illustration, live = {}, year = new Date().getFullYear(), preview }: SitePropsOptions): PublicSiteShellProps {
-  const { content: raw, settings, previewing, language } = effectiveContent(id, preview);
-  // The ministry's colours, darkened where needed so text in them stays readable (WCAG AA).
-  const theme = accessibleTheme(given);
+  const { content: raw, settings, previewing, previewBrand, language } = effectiveContent(id, preview, visitorLocale());
+  // The ministry's own colours when it brought them (a previewed proposal's first), darkened where
+  // needed so text in them stays readable (WCAG AA).
+  const brand = previewBrand !== undefined ? previewBrand ?? undefined : settings.brand;
+  const theme = accessibleTheme({ ...given, ...(brand?.primary ? { primary: brand.primary } : {}), ...(brand?.accent ? { accent: brand.accent } : {}) });
+  const logo = brand?.logo
+    ? { src: previewBrand?.logo ? `data:${brand.logo.type};base64,${brand.logo.data}` : `/api/public-sites/${id}/logo?v=${logoVersion(brand.logo.data)}`, alt: brand.logo.alt }
+    : undefined;
   // Live figures first, so a live value is never mistaken for a sample.
   const liveAt = new Set(raw.statistics.flatMap((s, i) => (/\{live\.\w+\}/.test(s.value) ? [i] : [])));
   const withLive = JSON.parse(JSON.stringify(raw).replace(/\{live\.(\w+)\}/g, (_, k: string) => JSON.stringify(live[k] ?? '—').slice(1, -1))) as SiteContent;
@@ -68,6 +86,7 @@ export function siteProps(id: string, { theme: given, illustration, live = {}, y
       crest: insignia
         ? <span className="text-[13px] tracking-wide" title={insignia.name}>{insignia.seal}</span>
         : c.institution.crest,
+      ...(logo ? { logo } : {}),
       about: c.institution.about,
       emergencyButton: c.institution.emergencyButton,
     },
@@ -90,6 +109,8 @@ export function siteProps(id: string, { theme: given, illustration, live = {}, y
     newsSample: c.newsSource === 'sample',
     ...(c.newsSource === 'feed' && settings.website ? { newsFrom: hostOf(settings.website) } : {}),
     ...(previewing ? { preview: true } : {}),
+    locale: language.locale,
+    languages: nationLanguages(),
     lang: language.lang,
     dir: language.dir,
     ...(settings.mode !== 'host' && settings.website ? { gateway: { mode: settings.mode, website: settings.website, host: hostOf(settings.website) } } : {}),

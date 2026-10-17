@@ -71,14 +71,14 @@ function score(query: string[], e: Entry): number {
 }
 
 /** Search one site, or every public site when `site` is not given. At most `limit` results, best first. */
-export function searchSites(q: string, { site, limit = 40, year = new Date().getFullYear() }: { site?: string; limit?: number; year?: number } = {}): SearchHit[] {
+export function searchSites(q: string, { site, limit = 40, year = new Date().getFullYear(), locale }: { site?: string; limit?: number; year?: number; /** The visitor's language among the nation's. */ locale?: string } = {}): SearchHit[] {
   const query = [...new Set(words(q.slice(0, 200)))].filter(w => w.length > 1 || /\p{N}/u.test(w)).slice(0, 8);
   if (query.length === 0) return [];
   const ids = site && SITE_IDS.includes(site) ? [site] : SITE_IDS;
   const tokens = siteTokens(year);
   const hits: SearchHit[] = [];
   for (const id of ids) {
-    const c = fillDeep(effectiveContent(id).content, tokens);
+    const c = fillDeep(effectiveContent(id, undefined, locale).content, tokens);
     for (const e of entries(id, c)) {
       const s = score(query, e);
       if (s > 0) hits.push({ siteId: id, siteName: c.institution.name, ...e, score: s });

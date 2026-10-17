@@ -8,7 +8,8 @@ import { SITE_IDS, siteContent } from '@/lib/public-sites';
 import { publishedOverride } from '@/lib/data/site-editorial';
 import { fillDeep, siteTokens } from '@/lib/public-sites/tokens';
 import { lookupToken } from '@/lib/data/site-subscriptions';
-import { nationMessages } from '@/lib/nation/registry';
+import { siteMessages } from '@/lib/nation/registry';
+import { visitorLocale } from '@/apps/_shared/public/site-props';
 import { t as fill } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -17,7 +18,7 @@ export const metadata = { title: 'Email updates', robots: { index: false } };
 const INK = '#0b1a2c';
 
 export default function SubscriptionsPage({ searchParams }: { searchParams?: { token?: string; action?: string; status?: string; site?: string } }) {
-  const t = nationMessages().site;
+  const t = siteMessages(visitorLocale());
   const token = searchParams?.token ?? '';
   const action = searchParams?.action === 'unsubscribe' ? 'unsubscribe' : 'confirm';
   const link = token ? lookupToken(token) : null;

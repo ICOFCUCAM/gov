@@ -373,6 +373,7 @@ export const sw: Messages = {
     searchAll: 'Tafuta tovuti zote za umma',
     searchFor: 'Tafuta',
     searchIn: 'Tafuta ndani ya',
+    languageLabel: 'Lugha',
     searchIntro: 'Huduma, habari, programu na kurasa, kama kila taasisi inavyozichapisha.',
     searchResults: 'Matokeo {count} ya “{q}”',
     searchOneResult: 'Tokeo 1 la “{q}”',

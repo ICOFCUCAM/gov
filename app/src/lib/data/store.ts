@@ -9,6 +9,7 @@
 // process. It is sufficient for Phase 1 demo/preview. Production uses a
 // durable sovereign datastore.
 
+import { locales } from '@/lib/i18n/config';
 import type {
   AuditEntry,
   Bill,
@@ -1567,6 +1568,9 @@ export function setSovereign(
   }
   if (patch.timeZone) {
     try { new Intl.DateTimeFormat('en', { timeZone: patch.timeZone }); } catch { return { error: 'Unknown time zone' }; }
+  }
+  if (patch.languages !== undefined && (!Array.isArray(patch.languages) || patch.languages.length > 10 || patch.languages.some(l => typeof l !== 'string' || !locales.some(x => x.code === l)))) {
+    return { error: 'Further languages must be language codes the platform has' };
   }
   db.sovereign = { ...db.sovereign, ...patch };
   applyNation({ ...db.sovereign, configured: !!db.setup });

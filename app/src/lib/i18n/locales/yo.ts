@@ -372,6 +372,7 @@ export const yo: Messages = {
     searchAll: 'Ṣàwárí gbogbo ojú-òpó ìjọba',
     searchFor: 'Ṣàwárí',
     searchIn: 'Ṣàwárí nínú',
+    languageLabel: 'Èdè',
     searchIntro: 'Àwọn iṣẹ́, ìròyìn, ètò àti ojú-ewé, bí ilé-iṣẹ́ kọ̀ọ̀kan ṣe tẹ̀ wọ́n jáde.',
     searchResults: 'Èsì {count} fún “{q}”',
     searchOneResult: 'Èsì kan fún “{q}”',

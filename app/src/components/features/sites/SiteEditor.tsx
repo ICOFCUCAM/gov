@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { api, type PublicSiteRow, type SiteEditView } from '@/lib/api/client';
 import type { SiteChange } from '@/lib/data/site-editorial';
 import type { SiteContent } from '@/lib/public-sites/types';
+import type { SiteBrand, LogoType } from '@/lib/public-sites/brand';
 import { SiteTranslations } from './SiteTranslations';
 import { OnboardingFrame, Eyebrow, Section, Field, inputCls, Select, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI } from '@/components/features/onboarding/Chrome';
 
@@ -24,9 +25,13 @@ interface Draft {
   alertLabel: string; alertText: string;
   news: News[]; figures: Fig[]; programmes: Prog[];
   preset: string;
+  /** The ministry's own colours and logo ('' = none). */
+  primary: string; accent: string;
+  logo: { type: string; data: string; alt: string } | null;
 }
 
-const fromContent = (c: SiteContent, preset: string): Draft => ({
+const fromContent = (c: SiteContent, preset: string, brand?: SiteBrand): Draft => ({
+  primary: brand?.primary ?? '', accent: brand?.accent ?? '', logo: brand?.logo ? { ...brand.logo } : null,
   name: c.institution.name, tagline: c.institution.tagline, about: c.institution.about ?? '',
   h1: c.hero.headline[0], h2: c.hero.headline[1], subhead: c.hero.subhead,
   alertLabel: c.alert?.label ?? '', alertText: c.alert?.text ?? '',
@@ -53,7 +58,10 @@ function changeOf(c: SiteContent, cur: Draft, d: Draft): SiteChange {
     content.statisticsSource = 'nation';
   }
   if (JSON.stringify(d.programmes) !== JSON.stringify(cur.programmes)) content.initiatives = d.programmes.filter(p => p.title.trim()).map(p => ({ title: p.title.trim(), body: p.body.trim() }));
-  return { ...(Object.keys(content).length ? { content } : {}), ...(d.preset !== cur.preset ? { preset: d.preset } : {}) };
+  const brandOf = (x: Draft): SiteBrand => ({ ...(x.primary ? { primary: x.primary } : {}), ...(x.accent ? { accent: x.accent } : {}), ...(x.logo ? { logo: { ...x.logo, type: x.logo.type as LogoType, alt: x.logo.alt.trim() } } : {}) });
+  const brandChanged = JSON.stringify(brandOf(d)) !== JSON.stringify(brandOf(cur));
+  const nb = brandOf(d);
+  return { ...(Object.keys(content).length ? { content } : {}), ...(d.preset !== cur.preset ? { preset: d.preset } : {}), ...(brandChanged ? { brand: Object.keys(nb).length ? nb : null } : {}) };
 }
 
 const when = (iso?: string) => (iso ? new Date(iso).toISOString().slice(0, 16).replace('T', ' ') + ' UTC' : '');
@@ -72,7 +80,7 @@ export function SiteEditor() {
 
   const loadSites = React.useCallback(() => api.publicSites.list().then(r => { setSites(r.sites); setSiteId(id => id || (new URLSearchParams(window.location.search).get('site') ?? r.sites[0]?.siteId ?? '')); }), []);
   const loadSite = React.useCallback((id: string) => api.publicSites.editorial(id).then(v => {
-    const d = fromContent(v.content, v.settings.preset ?? v.defaultPreset);
+    const d = fromContent(v.content, v.settings.preset ?? v.defaultPreset, v.settings.brand);
     setView(v); setCur(d); setDraft(d);
   }), []);
   React.useEffect(() => { void loadSites(); }, [loadSites]);
@@ -152,6 +160,36 @@ export function SiteEditor() {
                   <Field label="Headline, first line"><input className={inputCls} value={draft.h1} onChange={e => set({ h1: e.currentTarget.value })} /></Field>
                   <Field label="Headline, second line"><input className={inputCls} value={draft.h2} onChange={e => set({ h2: e.currentTarget.value })} /></Field>
                 </div>
+                <fieldset className="mt-5 rounded-[3px] border px-4 pb-4 pt-2" style={{ borderColor: hair(0.15) }}>
+                  <legend className="px-1 font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/65">The ministry&apos;s own colours and logo</legend>
+                  <p className="text-[12px] text-white/45">From its existing website, so both read as one institution. Text in these colours is darkened where needed to stay readable. The logo is stored in the platform: PNG, JPEG or WebP, up to 150 KB.</p>
+                  <div className="mt-3 grid gap-4 sm:grid-cols-3">
+                    {(['primary', 'accent'] as const).map(k => (
+                      <Field key={k} label={k === 'primary' ? 'Main colour' : 'Second colour'} hint="Leave empty for the design's own">
+                        <span className="flex items-center gap-2">
+                          <input type="color" aria-label={`${k === 'primary' ? 'Main' : 'Second'} colour picker`} className="h-10 w-12 cursor-pointer rounded border-0 bg-transparent" value={draft[k] || '#1f5fad'} onChange={e => set({ [k]: e.currentTarget.value } as Partial<Draft>)} />
+                          <input className={`${inputCls} font-mono`} value={draft[k]} placeholder="#1f5fad" onChange={e => set({ [k]: e.currentTarget.value.trim() } as Partial<Draft>)} />
+                        </span>
+                      </Field>
+                    ))}
+                    <Field label="Logo" hint={draft.logo ? `${draft.logo.type.replace('image/', '').toUpperCase()} · ${Math.round(draft.logo.data.length * 0.75 / 1024)} KB` : 'No logo: the crest shows'}>
+                      <span className="flex items-center gap-3">
+                        {/* eslint-disable-next-line @next/next/no-img-element -- preview of the chosen file */}
+                        {draft.logo ? <img src={`data:${draft.logo.type};base64,${draft.logo.data}`} alt="" className="h-10 w-auto max-w-[120px] rounded bg-white/90 object-contain p-1" /> : null}
+                        <input type="file" accept="image/png,image/jpeg,image/webp" className="text-[12px] text-white/60 file:me-2 file:rounded file:border-0 file:bg-white/10 file:px-2 file:py-1 file:text-white/80"
+                          onChange={async e => {
+                            const f = e.currentTarget.files?.[0];
+                            if (!f) return;
+                            const buf = new Uint8Array(await f.arrayBuffer());
+                            let bin = ''; for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]!);
+                            set({ logo: { type: f.type, data: btoa(bin), alt: draft.logo?.alt || `${draft.name} logo` } });
+                          }} />
+                        {draft.logo ? <button type="button" className="text-[12px] text-white/45 underline-offset-4 hover:text-[#f1938f] hover:underline" onClick={() => set({ logo: null })}>Remove</button> : null}
+                      </span>
+                    </Field>
+                  </div>
+                  {draft.logo ? <div className="mt-3"><Field label="What the logo shows" hint="Read out to people who cannot see it"><input className={inputCls} value={draft.logo.alt} onChange={e => { const v = e.currentTarget.value; setDraft(d => d && d.logo ? { ...d, logo: { ...d.logo, alt: v } } : d); }} /></Field></div> : null}
+                </fieldset>
                 <div className="mt-4"><Field label="Subheading"><textarea rows={2} className={`${inputCls} resize-y`} value={draft.subhead} onChange={e => set({ subhead: e.currentTarget.value })} /></Field></div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-[200px_minmax(0,1fr)]">
                   <Field label="Notice label"><input className={inputCls} value={draft.alertLabel} onChange={e => set({ alertLabel: e.currentTarget.value })} placeholder="PUBLIC ADVISORY" /></Field>
@@ -184,7 +222,7 @@ export function SiteEditor() {
                     Propose for review
                   </button>
                 </div>
-                {changed ? <p className="mt-2 font-mono text-[10.5px] text-white/45">Changes: {[...Object.keys(change.content ?? {}), ...(change.preset !== undefined ? ['design'] : [])].join(', ')}</p> : null}
+                {changed ? <p className="mt-2 font-mono text-[10.5px] text-white/45">Changes: {[...Object.keys(change.content ?? {}), ...(change.preset !== undefined ? ['design'] : []), ...(change.brand !== undefined ? ['colours and logo'] : [])].join(', ')}</p> : null}
               </Section>
 
               <Section n="6" title="Awaiting review" aside={<span className="font-mono tracking-[0.12em]">{pending.length} PENDING</span>}>

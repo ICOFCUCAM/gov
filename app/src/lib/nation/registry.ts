@@ -12,12 +12,17 @@ import { constitutionFor, type ConstitutionModel } from '@/lib/gov/constitution'
 import { nationOffices, chamberText, type NationOffices } from '@/lib/nation/offices';
 import { getMessages, type Messages } from '@/lib/i18n';
 import type { Locale } from '@/lib/types';
+import { locales as LOCALES } from '@/lib/i18n/config';
+
+const KNOWN_LOCALES = LOCALES.map(l => l.code as string);
 
 export interface NationFacts {
   iso3?: string;
   regions?: string[];
   currency?: string;
   locale?: string;
+  /** Further official languages besides `locale` (codes known to lib/i18n). */
+  languages?: string[];
   stateForm?: StateForm;
   constitution?: NationalConstitution;
   stateName?: string;
@@ -36,11 +41,12 @@ export interface NationFacts {
   accent?: string;
 }
 
-const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs']; aiAssistant?: boolean; seal?: string; accent?: string } = {
+const state: { iso3?: string; regions: string[]; currency: string; locale: string; languages: string[]; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs']; aiAssistant?: boolean; seal?: string; accent?: string } = {
   configured: false,
   regions: [],
   currency: 'USD',
   locale: 'en',
+  languages: [],
 };
 
 /** Apply the installed nation's facts. Idempotent; safe to call on every render. */
@@ -50,6 +56,7 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.regions = (f.regions ?? []).map(r => r.trim()).filter(Boolean);
   state.currency = f.currency && /^[A-Z]{3}$/.test(f.currency) ? f.currency : 'USD';
   state.locale = f.locale || 'en';
+  state.languages = [...new Set((f.languages ?? []).filter(l => KNOWN_LOCALES.includes(l) && l !== state.locale))];
   state.stateForm = f.stateForm;
   state.constitution = f.constitution;
   state.stateName = f.stateName;
@@ -76,6 +83,16 @@ export function nationMessages(): Messages {
 /** The nation's language code from setup (e.g. 'en', 'sw', 'ar'). */
 export function nationLocale(): string {
   return state.locale;
+}
+
+/** The nation's official languages: its main language first, then the further ones from setup. */
+export function nationLanguages(): string[] {
+  return [state.locale, ...state.languages];
+}
+
+/** Shared public-site wording in a language the server has already resolved (siteProps), else the nation's main language. */
+export function siteMessages(locale?: string): Messages['site'] {
+  return getMessages((locale && KNOWN_LOCALES.includes(locale) ? locale : state.locale) as Locale).site;
 }
 
 /** Text direction of the nation's language, for surfaces that render it. */
