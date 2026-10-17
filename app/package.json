@@ -2,7 +2,7 @@
   "name": "civicos-app",
   "version": "0.1.0",
   "private": true,
-  "description": "CivicOS — sovereign operational platform. Citizen wallet, officer console, ministry control, NCCC. Doctrine: humans govern, institutions govern, constitutions govern, AI assists.",
+  "description": "CivicOS \u2014 sovereign operational platform. Citizen wallet, officer console, ministry control, NCCC. Doctrine: humans govern, institutions govern, constitutions govern, AI assists.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -10,7 +10,8 @@
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "test:substrate": "bash supabase/tests/run.sh"
+    "test:substrate": "bash supabase/tests/run.sh",
+    "scan:nation": "node scripts/nation-scan.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

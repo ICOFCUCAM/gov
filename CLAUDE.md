@@ -54,6 +54,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   ticked). `/api/ai/advisory` refuses when it is off and callers fall back to
   their rule-based advisories.
 
+## Nation conversion
+
+- `docs/NATION_CONVERSION_MANIFEST.md` records what ties the system to one
+  nation and the plan to move it all into a Nation Pack. Do not add new
+  hardcoded places, people, currencies, regions or office titles; read them
+  from the nation profile. `npm run scan:nation` (in `app/`) re-counts them.
+
 ## Checks
 
 From `app/`: `npm run typecheck`, `npm test`.
