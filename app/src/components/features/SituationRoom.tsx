@@ -1313,7 +1313,7 @@ export function SituationRoom() {
       <header className="relative flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
         <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
           style={{ background: `linear-gradient(90deg, transparent, color-mix(in srgb,${war ? TONE.alert : ACCENT} 60%,transparent), transparent)` }} />
-        <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
+        <Link href="/command" className="focus-ring flex items-center gap-2.5 no-underline">
           <span aria-hidden className="grid h-9 w-9 place-items-center rounded-sm text-sm font-bold text-white ring-1 ring-white/15"
             style={{ backgroundColor: war ? TONE.alert : ACCENT, boxShadow: `0 0 14px color-mix(in srgb,${war ? TONE.alert : ACCENT} 45%,transparent)` }}>
             {identity ? identity.seal : 'CO'}

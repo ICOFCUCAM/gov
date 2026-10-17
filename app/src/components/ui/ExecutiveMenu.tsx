@@ -13,7 +13,7 @@ const ITEMS: { l: string; href: string; k?: boolean }[] = [
   { l: 'Audit log', href: '/audit' },
   { l: 'Continuity posture', href: '/gov/coordination' },
   { l: 'Sovereign settings', href: '/gov/configuration' },
-  { l: 'Sign out', href: '/login', k: true },
+  { l: 'Sign out', href: '/', k: true },
 ];
 
 /**

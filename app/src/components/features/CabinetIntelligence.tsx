@@ -308,7 +308,7 @@ export function CabinetIntelligence() {
 
       {/* Command top bar */}
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
-        <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
+        <Link href="/command" className="focus-ring flex items-center gap-2.5 no-underline">
           <span aria-hidden className="grid h-9 w-9 place-items-center rounded-sm text-sm font-bold text-white ring-1 ring-white/15" style={{ backgroundColor: war ? RED : ACCENT }}>
             {identity ? identity.seal : 'CO'}
           </span>

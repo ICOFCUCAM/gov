@@ -186,7 +186,7 @@ export function CommandShell({
           className="focus-ring grid h-9 w-9 shrink-0 place-items-center rounded-[3px] border border-line text-ink-soft lg:hidden">
           <span className="text-base leading-none">{navOpen ? '✕' : '☰'}</span>
         </button>
-        <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
+        <Link href="/command" className="focus-ring flex items-center gap-2.5 no-underline">
           <span aria-hidden className="grid h-9 w-9 place-items-center rounded-[3px] text-sm font-bold text-white ring-1 ring-white/15" style={{ backgroundColor: accent }}>
             {identity ? identity.seal : 'CO'}
           </span>

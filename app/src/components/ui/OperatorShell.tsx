@@ -79,7 +79,7 @@ export function OperatorShell({
       <OfflineBanner />
       <header className="flex shrink-0 items-center justify-between gap-4 border-b border-line bg-surface px-4 py-2">
         <div className="flex items-center gap-3">
-          <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
+          <Link href="/command" className="focus-ring flex items-center gap-2.5 no-underline">
             <span
               aria-hidden
               className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-[11px] font-bold tracking-tight text-white ring-1 ring-white/15"
