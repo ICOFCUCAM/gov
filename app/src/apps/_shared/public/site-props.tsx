@@ -18,6 +18,8 @@ export interface SitePropsOptions {
   live?: Record<string, string>;
   /** The request's year, for {year}. */
   year?: number;
+  /** A pending proposal to show instead of the published content (officials only). */
+  preview?: string;
 }
 
 const hostOf = (url: string) => new URL(url).hostname.replace(/^www\./, '');
@@ -28,8 +30,8 @@ export function siteHref(id: string, to: SiteLink): string {
   return to === 'home' ? `/${id}` : `/${id}#${to}`;
 }
 
-export function siteProps(id: string, { theme, illustration, live = {}, year = new Date().getFullYear() }: SitePropsOptions): PublicSiteShellProps {
-  const { content: raw, settings } = effectiveContent(id);
+export function siteProps(id: string, { theme, illustration, live = {}, year = new Date().getFullYear(), preview }: SitePropsOptions): PublicSiteShellProps {
+  const { content: raw, settings, previewing } = effectiveContent(id, preview);
   // Live figures first, so a live value is never mistaken for a sample.
   const liveAt = new Set(raw.statistics.flatMap((s, i) => (/\{live\.\w+\}/.test(s.value) ? [i] : [])));
   const withLive = JSON.parse(JSON.stringify(raw).replace(/\{live\.(\w+)\}/g, (_, k: string) => JSON.stringify(live[k] ?? '—').slice(1, -1))) as SiteContent;
@@ -69,6 +71,7 @@ export function siteProps(id: string, { theme, illustration, live = {}, year = n
     news: c.news,
     newsSample: c.newsSource === 'sample',
     ...(c.newsSource === 'feed' && settings.website ? { newsFrom: hostOf(settings.website) } : {}),
+    ...(previewing ? { preview: true } : {}),
     ...(settings.mode !== 'host' && settings.website ? { gateway: { mode: settings.mode, website: settings.website, host: hostOf(settings.website) } } : {}),
     initiatives: c.initiatives,
     locator: c.locator,

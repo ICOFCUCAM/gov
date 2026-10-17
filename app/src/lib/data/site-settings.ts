@@ -57,7 +57,7 @@ export interface SiteSettingsInput {
 }
 
 const g = globalThis as unknown as { __civicosSites?: Map<string, SiteSettings> };
-const db = (g.__civicosSites ??= new Map());
+const db = (g.__civicosSites ??= new Map<string, SiteSettings>());
 
 const fresh = (siteId: string): SiteSettings => ({ siteId, mode: 'host', redirects: [], feed: { status: 'never', items: [] } });
 

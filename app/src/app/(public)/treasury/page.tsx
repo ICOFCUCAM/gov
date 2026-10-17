@@ -16,7 +16,8 @@ import { locales } from '@/lib/i18n/config';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
-import { GatewayBar, SiteSchema } from '@/apps/_shared/public/integration';
+import { GatewayBar, PreviewBanner, SiteSchema } from '@/apps/_shared/public/integration';
+import { effectiveContent } from '@/lib/public-sites/effective';
 import { t as fill } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
@@ -143,10 +144,11 @@ function BudgetDonut({ segments, total, size = 188 }: {
   );
 }
 
-export default function PublicTreasuryHomepage({ searchParams }: { searchParams?: { preset?: string } }) {
-  const preset = presetFor('treasury', searchParams?.preset);
-  if (!preset.bespoke) return <PublicSite id="treasury" theme={THEME} preset={preset.id} illustration={ART} />;
-  return <TreasuryPortal site={siteProps('treasury', { theme: THEME, illustration: ART })} />;
+export default function PublicTreasuryHomepage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
+  const preview = searchParams?.preview;
+  const preset = presetFor('treasury', searchParams?.preset ?? (preview ? effectiveContent('treasury', preview).previewPreset ?? undefined : undefined));
+  if (!preset.bespoke) return <PublicSite id="treasury" theme={THEME} preset={preset.id} preview={preview} illustration={ART} />;
+  return <TreasuryPortal site={siteProps('treasury', { theme: THEME, illustration: ART, preview })} />;
 }
 
 const label = (i: PublicSiteLinkItem) => (typeof i === 'string' ? i : i.label);
@@ -170,6 +172,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
 
   return (
     <div className="min-h-screen" style={{ background: '#ffffff', color: INK }}>
+      <PreviewBanner on={site.preview} />
       {/* 0. Official banner — the same on every public site. */}
       <div className="w-full text-[12px] text-white/85" style={{ background: NAVY }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">

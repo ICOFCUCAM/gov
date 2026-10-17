@@ -12,9 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicLabourPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicLabourPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="labour" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="labour" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="wave" primary={THEME.primary} accent={THEME.accent} aria="Workforce flow" />} />
   );
 }

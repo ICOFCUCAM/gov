@@ -12,9 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicEnvironmentPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicEnvironmentPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="environment" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="environment" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="leaf" primary={THEME.primary} accent={THEME.accent} aria="Leaf of biosphere" />} />
   );
 }

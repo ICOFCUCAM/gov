@@ -12,9 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicTransportPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicTransportPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="transport" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="transport" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="wheel" primary={THEME.primary} accent={THEME.accent} aria="Transport wheel" />} />
   );
 }

@@ -33,7 +33,8 @@ export function middleware(req: NextRequest) {
 
   const { pathname } = req.nextUrl;
   if (PUBLIC.some(re => re.test(pathname))) return res;
-  if (PUBLIC_SITES.test(pathname)) return res;
+  // Previews of unpublished proposals (?preview=) are for signed-in officials only.
+  if (PUBLIC_SITES.test(pathname) && !req.nextUrl.searchParams.has('preview')) return res;
   if (SELF_AUTHENTICATED.some(re => re.test(pathname))) return res;
   // The cover reads the nation's public identity before anyone signs in.
   if (req.method === 'GET' && PUBLIC_READ.some(re => re.test(pathname))) return res;

@@ -12,9 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicForeignAffairsPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicForeignAffairsPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="foreign-affairs" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="foreign-affairs" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="globe" primary={THEME.primary} accent={THEME.accent} aria="World globe" />} />
   );
 }

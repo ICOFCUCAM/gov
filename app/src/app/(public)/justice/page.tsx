@@ -12,9 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#7a1f2b',
 };
 
-export default function PublicJusticePage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicJusticePage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="justice" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="justice" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="scales" primary={THEME.primary} accent={THEME.accent} aria="Scales of justice" />} />
   );
 }

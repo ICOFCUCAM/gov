@@ -12,9 +12,9 @@ const THEME = {
   emergencyA: '#b8460e', emergencyB: '#7a2e08',
 };
 
-export default function PublicPortalPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicPortalPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="portal" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="portal" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="parliament" primary={THEME.primary} accent={THEME.accent} aria="Citizen wallet" />} />
   );
 }

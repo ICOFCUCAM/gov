@@ -15,12 +15,12 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicEducationPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicEducationPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   const institutions = educationPublicInstitutions();
   const totalSites = institutions.reduce((s, b) => s + b.publicSites, 0);
 
   return (
-    <PublicSite id="education" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="education" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       live={{ totalSites: totalSites.toLocaleString('en-US') }}
       illustration={<HeroIllustration kind="lecture" primary={THEME.primary} accent={THEME.accent} aria="Lecture hall" />}
       extra={<>

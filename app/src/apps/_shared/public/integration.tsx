@@ -15,6 +15,19 @@ export interface SiteGateway {
   host: string;
 }
 
+/** Shown on a pending proposal's preview (officials only): nothing here is published yet. */
+export function PreviewBanner({ on }: { on?: boolean }) {
+  if (!on) return null;
+  return (
+    <div className="sticky top-0 z-30 w-full bg-[#92600e] text-white">
+      <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-2 px-4 py-2 text-[12.5px] font-semibold sm:px-6">
+        <span>Preview — this proposal is not published. Citizens see the current version.</span>
+        <a href="/admin/sites" className="underline underline-offset-2">Back to the editor</a>
+      </div>
+    </div>
+  );
+}
+
 /** A thin bar under the header pointing to the ministry's main website. */
 export function GatewayBar({ gateway, name, accent }: { gateway?: SiteGateway; name: string; accent: string }) {
   if (!gateway) return null;

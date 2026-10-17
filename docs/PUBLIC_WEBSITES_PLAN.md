@@ -45,8 +45,8 @@ order of work. Status is kept current in `docs/INTEGRATION_REGISTER.md` §14.
    and adjusts. The current shell stays as the "Civic Standard" preset.
 9. **Presets are chosen per ministry.** Sectors and their presets live in
    `app/src/apps/_shared/public/design/presets.ts`; a site may use its
-   sector's presets or Civic Standard. Until the editor (phase 4) stores a
-   nation's choice, each site uses its default and `?preset=` previews others.
+   sector's presets or Civic Standard. The nation's choice is published
+   through the editor (phase 4); `?preset=` previews others.
 10. **Publishing is governed.** Officials propose, a second named official
    publishes, every change goes on the audit chain (editor at `/admin/sites`).
 
@@ -57,6 +57,6 @@ order of work. Status is kept current in `docs/INTEGRATION_REGISTER.md` §14.
 | 1 | **Content out of the pages.** Content records for the 19 shell sites, placeholders for the nation's offices, numbers and AI choice; sample labels; no fixed dates; real links and section anchors; nation insignia; shared privacy, accessibility and terms statements and a generated sitemap; public sites open without sign-in under `CIVICOS_AUTH=enforce`. Health, Laboratory and Treasury got the same fixes in place. | Done |
 | 2 | **Design system.** Six self-hosted open-licence typefaces (`app/public/fonts`), design tokens per preset (typefaces, heading style, shape, spacing, palette, header), a block library with several variants per section, 24 presets in 9 sectors (each of the 21 institutions starts with its own; Civic Standard stays selectable), Health and Treasury reading full content records with their designs kept as their sectors' own presets, a phone menu, and a test that every preset keeps every link, item and anchor. Compare designs with `?preset=<id>` on any site. | Done |
 | 3 | **Existing-site integration.** Settings per site (website, mode, feed, design choice, redirects) with audit; setup section 3.4; safe feed import (RSS, Atom, JSON Feed) every 30 minutes with the last good copy kept; gateway bar and the ministry's news in Link, Embed and Migrate mode; services widget and JSON content for Embed; `/r/<site>/<path>` forwarding for Migrate; schema.org markup linking each site to the ministry's website. | Done |
-| 4 | **Editorial workflow.** `/admin/sites`: propose, second-official publish, audit; content overrides stored with the nation. | Next |
-| 5 | **Languages and right-to-left.** Every content field per language; RTL layout once content is translated (register 5.5). | Planned |
+| 4 | **Editorial workflow.** `/admin/sites`: an official proposes changes to a site's name, opening, notice, news, figures, programmes and design; a second, different official publishes them (never over a newer version); rejections need a reason; only the proposer withdraws; every version is kept and restorable (to the reference content too) through the same review; previews on the real site for signed-in officials (`?preview=`); all audited. | Done |
+| 5 | **Languages and right-to-left.** Every content field per language; RTL layout once content is translated (register 5.5). | Next |
 | 6 | **Quality.** Accessibility audit (WCAG 2.2 AA), performance budgets, schema.org markup, link checker in CI. | Planned |

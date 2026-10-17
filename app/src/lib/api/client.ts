@@ -6,6 +6,17 @@
 'use client';
 
 import type { SiteSettings, SiteSettingsInput } from '@/lib/data/site-settings';
+import type { SiteChange, SiteProposal, SiteEditorial } from '@/lib/data/site-editorial';
+import type { SiteContent } from '@/lib/public-sites/types';
+
+/** GET /api/public-sites/<id>/editorial: what the site editor works from. */
+export interface SiteEditView {
+  content: SiteContent;
+  presets: { id: string; label: string; description: string }[];
+  defaultPreset: string;
+  editorial: SiteEditorial;
+  settings: SiteSettings;
+}
 
 /** A public institution site's integration settings with its name (GET /api/public-sites). */
 export type PublicSiteRow = SiteSettings & { name: string; role: string };
@@ -313,6 +324,11 @@ export const api = {
       req<{ site: SiteSettings }>(`/api/public-sites/${id}`, { method: 'PUT', body: JSON.stringify(patch) }),
     sync: (id: string, by: string) =>
       req<{ site: SiteSettings }>(`/api/public-sites/${id}/sync`, { method: 'POST', body: JSON.stringify({ by }) }),
+    editorial: (id: string) => req<SiteEditView>(`/api/public-sites/${id}/editorial`),
+    propose: (id: string, body: { change?: SiteChange; restore?: number; note?: string; by: string }) =>
+      req<{ proposal: SiteProposal }>(`/api/public-sites/${id}/proposals`, { method: 'POST', body: JSON.stringify(body) }),
+    decide: (id: string, pid: string, body: { action: 'publish' | 'reject' | 'withdraw'; by: string; reason?: string }) =>
+      req<{ editorial: SiteEditorial }>(`/api/public-sites/${id}/proposals/${pid}`, { method: 'POST', body: JSON.stringify(body) }),
   },
   org: {
     archetypes: () => req<{ archetypes: Archetype[] }>('/api/org/archetypes'),

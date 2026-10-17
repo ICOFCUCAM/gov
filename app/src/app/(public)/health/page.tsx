@@ -14,7 +14,8 @@ import { t as fill } from '@/lib/i18n';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
-import { GatewayBar, SiteSchema } from '@/apps/_shared/public/integration';
+import { GatewayBar, PreviewBanner, SiteSchema } from '@/apps/_shared/public/integration';
+import { effectiveContent } from '@/lib/public-sites/effective';
 import { locales } from '@/lib/i18n/config';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Health — Official Portal' };
@@ -39,14 +40,15 @@ const SURVEILLANCE = [['New Cases', '248'], ['Active Cases', '1,286'], ['Recover
 const label = (i: PublicSiteLinkItem) => (typeof i === 'string' ? i : i.label);
 const href = (i: PublicSiteLinkItem) => (typeof i === 'string' ? '/health' : i.href);
 
-export default function PublicHealthHomepage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicHealthHomepage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   const s = publicHealthSite(100); // deterministic, SSR-stable
   const live = {
     healthAlert: s.emergencyBanner.active ? s.emergencyBanner.text : 'No national health emergency is in effect. Follow the advisories from your regional health authority.',
   };
-  const preset = presetFor('health', searchParams?.preset);
-  if (!preset.bespoke) return <PublicSite id="health" theme={THEME} preset={preset.id} live={live} illustration={ART} />;
-  return <HealthPortal site={siteProps('health', { theme: THEME, illustration: ART, live })} />;
+  const preview = searchParams?.preview;
+  const preset = presetFor('health', searchParams?.preset ?? (preview ? effectiveContent('health', preview).previewPreset ?? undefined : undefined));
+  if (!preset.bespoke) return <PublicSite id="health" theme={THEME} preset={preset.id} preview={preview} live={live} illustration={ART} />;
+  return <HealthPortal site={siteProps('health', { theme: THEME, illustration: ART, live, preview })} />;
 }
 
 function HealthPortal({ site }: { site: PublicSiteShellProps }) {
@@ -60,6 +62,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
 
   return (
     <div className="min-h-screen bg-[#f4f6f9] text-[#1a2332]">
+      <PreviewBanner on={site.preview} />
       {/* 1. Top utility bar */}
       <div className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg,${NAVY},#10325c)` }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">

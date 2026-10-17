@@ -15,7 +15,8 @@ export default function PlatformPage() {
         <p className="text-[12px] text-ink-muted">
           Stable releases reach nations through the{' '}
           <Link href="/admin/releases" className="underline underline-offset-4">Release Publisher</Link>; each nation installs from its{' '}
-          <Link href="/updates" className="underline underline-offset-4">Update Center</Link>.
+          <Link href="/updates" className="underline underline-offset-4">Update Center</Link>. The public institution websites are edited in the{' '}
+          <Link href="/admin/sites" className="underline underline-offset-4">Site editor</Link> (proposed by one official, published by another).
         </p>
         <PlatformConsole />
       </div>

@@ -12,9 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicEnergyPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicEnergyPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="energy" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="energy" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="bolt" primary={THEME.primary} accent={THEME.accent} aria="Lightning bolt of the grid" />} />
   );
 }

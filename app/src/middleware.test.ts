@@ -42,6 +42,13 @@ describe('public websites', () => {
     for (const p of all) expect(call(p).headers.get('location'), p).toBeNull();
   });
 
+  it('keep previews of unpublished proposals for signed-in officials', () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    expect(call('/police?preview=SC-1234').headers.get('location')).toMatch(/\/login/);
+    expect(call('/police?preview=SC-1234', 'civicos_session=x').headers.get('location')).toBeNull();
+    expect(call('/police?preset=response-community').headers.get('location')).toBeNull();
+  });
+
   it('do not open officer routes that share a prefix', () => {
     process.env.CIVICOS_AUTH = 'enforce';
     expect(call('/gov/treasury').headers.get('location')).toMatch(/\/login/);

@@ -704,7 +704,8 @@ export function SetupWizard() {
                   by default the platform site becomes its gateway (<em>Link</em>) and shows the news from its feed. <em>Embed</em> places
                   the platform&apos;s services on the existing website; <em>Migrate</em> moves pages across one at a time with forwarding
                   from the old addresses; <em>Host</em> makes the platform site the ministry&apos;s website. Feeds are fetched only from the
-                  ministry&apos;s own website, by the platform&apos;s servers.
+                  ministry&apos;s own website, by the platform&apos;s servers. Each site&apos;s own wording, news, figures and design are edited
+                  afterwards in the <a href="/admin/sites" className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>Site editor</a>.
                 </p>
                 <ul className="grid gap-2.5">
                   {sites.map(x => {

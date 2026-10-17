@@ -12,9 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#7a161c',
 };
 
-export default function PublicNocPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicNocPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="noc" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="noc" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="parliament" primary={THEME.primary} accent={THEME.accent} aria="National operations centre" />} />
   );
 }

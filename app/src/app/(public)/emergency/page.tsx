@@ -12,9 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#7a1518',
 };
 
-export default function PublicEmergencyPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicEmergencyPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="emergency" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="emergency" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="siren" primary={THEME.primary} accent={THEME.accent} aria="Emergency siren" />} />
   );
 }

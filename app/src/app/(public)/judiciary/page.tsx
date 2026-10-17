@@ -12,9 +12,9 @@ const THEME = {
   emergencyA: '#5a3768', emergencyB: '#3e2548',
 };
 
-export default function PublicJudiciaryPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicJudiciaryPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="judiciary" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="judiciary" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="gavel" primary={THEME.primary} accent={THEME.accent} aria="Gavel of the courts" />} />
   );
 }

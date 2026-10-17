@@ -2,6 +2,7 @@
   "/",
   "/admin/onboarding",
   "/admin/releases",
+  "/admin/sites",
   "/agriculture",
   "/app/[domain]/[[...sub]]",
   "/assembly",

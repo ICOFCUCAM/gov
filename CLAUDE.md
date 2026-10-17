@@ -168,6 +168,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   registered website, through `fetchFeed()` (private addresses refused, size
   and time limits, plain text only); never fetch other external content on a
   public page. `/embed/*` may be framed only by the registered website.
+- A site's own content and design are changed only through the Site editor
+  (`/admin/sites`, `lib/data/site-editorial.ts`): proposed by one named
+  official, published by a different one, never over a newer version, every
+  version kept and restorable, all audited. Previews (`?preview=`) need a
+  session. Do not add another path that changes a site's published content.
 
 ## Branding and AI
 

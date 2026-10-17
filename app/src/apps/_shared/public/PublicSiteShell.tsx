@@ -23,7 +23,7 @@ import Link from 'next/link';
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 import { locales } from '@/lib/i18n/config';
-import { GatewayBar, SiteSchema, type SiteGateway } from './integration';
+import { GatewayBar, PreviewBanner, SiteSchema, type SiteGateway } from './integration';
 
 export interface PublicSiteTheme {
   ink: string;
@@ -89,6 +89,8 @@ export interface PublicSiteShellProps {
   newsFrom?: string;
   /** The ministry's existing website, when the site is its gateway (Link, Embed or Migrate mode). */
   gateway?: SiteGateway;
+  /** Showing a pending proposal (officials only), not the published site. */
+  preview?: boolean;
   initiatives: PublicSiteInitiative[];
   locator?: PublicSiteLocator;
   shortcuts: PublicSiteShortcut[];
@@ -109,7 +111,7 @@ function Action({ href, className, style, children }: { href?: string; className
 }
 
 export function PublicSiteShell({
-  theme, institution, nav, hero, alert, quickServices, featured, statistics, statisticsSample, news, newsSample, newsFrom, gateway, initiatives,
+  theme, institution, nav, hero, alert, quickServices, featured, statistics, statisticsSample, news, newsSample, newsFrom, gateway, preview, initiatives,
   locator, shortcuts, footerSections, newsletter, legalLine, legalLinks,
 }: PublicSiteShellProps) {
   // Fixed wording in the nation's language (lib/i18n `site`); each institution's own content is unchanged.
@@ -117,6 +119,7 @@ export function PublicSiteShell({
   const language = locales.find(l => l.code === nationLocale())?.name ?? 'English';
   return (
     <div className="min-h-screen text-[#1a2332]" style={{ background: theme.surface }}>
+      <PreviewBanner on={preview} />
       {/* 1. Utility ribbon */}
       <div className="w-full text-[12px] text-white/85"
         style={{ background: `linear-gradient(90deg, ${theme.ink}, ${theme.inkSoft})` }}>

@@ -9,7 +9,8 @@ import * as React from 'react';
 import Link from 'next/link';
 import './design/fonts.css';
 import { PublicSiteShell, SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteTheme, type PublicSiteLinkItem } from './PublicSiteShell';
-import { GatewayBar, SiteSchema } from './integration';
+import { GatewayBar, PreviewBanner, SiteSchema } from './integration';
+import { effectiveContent } from '@/lib/public-sites/effective';
 import { getSiteSettings } from '@/lib/data/site-settings';
 import { siteProps } from './site-props';
 import { PRESETS, DEFAULT_PRESET, presetsFor, type Preset, type PresetDesign, type BlockRef } from './design/presets';
@@ -26,6 +27,8 @@ export interface PublicSiteProps {
   extra?: React.ReactNode;
   /** A preset to show instead of the site's own (e.g. from ?preset= for comparing designs). Ignored if not allowed for the site. */
   preset?: string;
+  /** A pending proposal to preview (?preview=, officials only). */
+  preview?: string;
 }
 
 /** The preset a site uses: the requested one when the site may use it, else the one its ministry chose, else its default. */
@@ -35,9 +38,9 @@ export function presetFor(id: string, requested?: string): Preset {
   return allowed.find(p => p.id === requested) ?? allowed.find(p => p.id === chosen) ?? PRESETS[DEFAULT_PRESET[id] ?? 'civic-standard'] ?? PRESETS['civic-standard']!;
 }
 
-export function PublicSite({ id, theme, illustration, live, preset, extra }: PublicSiteProps) {
-  const site = siteProps(id, { theme, illustration, live });
-  const p = presetFor(id, preset);
+export function PublicSite({ id, theme, illustration, live, preset, preview, extra }: PublicSiteProps) {
+  const site = siteProps(id, { theme, illustration, live, preview });
+  const p = presetFor(id, preset ?? (preview ? effectiveContent(id, preview).previewPreset ?? undefined : undefined));
   // A bespoke design is drawn by the site's own page; here it falls back to Civic Standard.
   if (p.id === 'civic-standard' || p.bespoke) return <div><PublicSiteShell {...site} />{extra}</div>;
   return <ComposedSite site={site} preset={p} extra={extra} />;
@@ -148,6 +151,7 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen text-[#1a2332]" style={{ background: c.bg, fontFamily: d.body }}>
+      <PreviewBanner on={s.preview} />
       {/* Official banner — the same on every public site. */}
       <div className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg, ${th.ink}, ${th.inkSoft})` }}>
         <Wrap className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 py-2">

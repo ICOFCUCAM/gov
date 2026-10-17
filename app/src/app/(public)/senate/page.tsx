@@ -18,9 +18,9 @@ const THEME = {
   emergencyA: '#7a4d8a', emergencyB: '#5a3768',
 };
 
-export default function PublicSenatePage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicSenatePage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="senate" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="senate" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="parliament" primary={THEME.primary} accent={THEME.accent} aria="Senate chamber" />} />
   );
 }

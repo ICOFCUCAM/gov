@@ -22,9 +22,9 @@ const THEME = {
   emergencyA: '#0f6e6a', emergencyB: '#0a4f4c',
 };
 
-export default function PublicAssemblyPage({ searchParams }: { searchParams?: { preset?: string } }) {
+export default function PublicAssemblyPage({ searchParams }: { searchParams?: { preset?: string; preview?: string } }) {
   return (
-    <PublicSite id="assembly" theme={THEME} preset={searchParams?.preset}
+    <PublicSite id="assembly" theme={THEME} preset={searchParams?.preset} preview={searchParams?.preview}
       illustration={<HeroIllustration kind="parliament" primary={THEME.primary} accent={THEME.accent} aria="Assembly chamber" />} />
   );
 }
