@@ -98,6 +98,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   scripts), e.g. "Bayern", "Małopolskie" — not English exonyms. After new map
   data, run `node scripts/official-names.mjs` (matches by ISO code or exact name).
 
+## Integration register
+
+- `docs/INTEGRATION_REGISTER.md` lists everything built on a placeholder,
+  demo value or in-memory stand-in, and what connecting it for real takes.
+  Any change that adds a stub, placeholder, demo value, external dependency or
+  integration point adds or updates its entry there in the same change.
+
 ## Checks
 
 From `app/`: `npm run typecheck`, `npm test`.
