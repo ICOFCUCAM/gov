@@ -10,6 +10,7 @@ import { emergency } from './content/emergency';
 import { energy } from './content/energy';
 import { environment } from './content/environment';
 import { foreignAffairs } from './content/foreign-affairs';
+import { health } from './content/health';
 import { interior } from './content/interior';
 import { judiciary } from './content/judiciary';
 import { justice } from './content/justice';
@@ -20,13 +21,14 @@ import { portal } from './content/portal';
 import { presidency } from './content/presidency';
 import { senate } from './content/senate';
 import { trade } from './content/trade';
+import { treasury } from './content/treasury';
 import { transport } from './content/transport';
 
-/** The reference record of every public site built on PublicSiteShell, by route segment. */
+/** The reference record of every public institution site, by route segment. */
 export const REFERENCE_SITES: Record<string, SiteContent> = {
   agriculture, assembly, communications, education, emergency, energy, environment,
-  'foreign-affairs': foreignAffairs, interior, judiciary, justice, labour, noc, police,
-  portal, presidency, senate, trade, transport,
+  'foreign-affairs': foreignAffairs, health, interior, judiciary, justice, labour, noc, police,
+  portal, presidency, senate, trade, transport, treasury,
 };
 
 export const SITE_IDS = Object.keys(REFERENCE_SITES);

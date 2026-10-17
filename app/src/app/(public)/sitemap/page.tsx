@@ -16,12 +16,10 @@ const SECTIONS: { key: SiteSection; label: string }[] = [
   { key: 'programmes', label: 'Programmes' }, { key: 'contact', label: 'Contact' }, { key: 'about', label: 'About' },
 ];
 
-// Sites with their own design (not built from a content record yet).
+// Public pages that are not institution sites built from a content record.
 const OTHER = [
   { href: '/government', name: 'Government directory' },
-  { href: '/health', name: 'Ministry of Health' },
   { href: '/health/laboratory', name: 'Laboratory Services' },
-  { href: '/treasury', name: 'Ministry of Treasury & Finance' },
   { href: '/public', name: 'Public Observatory' },
 ];
 

@@ -362,6 +362,7 @@ export const ar: Messages = {
     live: 'مباشر',
     sampleNews: 'إعلانات توضيحية',
     sampleNote: 'تُعرض إلى أن ينشر {name} إعلاناته.',
+    browseTopics: 'تصفح حسب الموضوع',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

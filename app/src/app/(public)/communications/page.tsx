@@ -1,7 +1,6 @@
 // Public — Communications & Digital Infrastructure homepage.
 
-import { PublicSiteShell } from '@/apps/_shared/public/PublicSiteShell';
-import { siteProps } from '@/apps/_shared/public/site-props';
+import { PublicSite } from '@/apps/_shared/public/PublicSite';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 
 export const dynamic = 'force-dynamic';
@@ -13,11 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicCommunicationsPage() {
+export default function PublicCommunicationsPage({ searchParams }: { searchParams?: { preset?: string } }) {
   return (
-    <PublicSiteShell {...siteProps('communications', {
-      theme: THEME,
-      illustration: <HeroIllustration kind="satellite" primary={THEME.primary} accent={THEME.accent} aria="Satellite network" />,
-    })} />
+    <PublicSite id="communications" theme={THEME} preset={searchParams?.preset}
+      illustration={<HeroIllustration kind="satellite" primary={THEME.primary} accent={THEME.accent} aria="Satellite network" />} />
   );
 }

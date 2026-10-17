@@ -6,7 +6,7 @@
 // deterministic; no React/DOM. Drives treasury cross-system propagation.
 
 import { seed, wave } from '@/lib/telemetry';
-import { regionList } from '@/lib/nation/registry';
+import { regionList, formatMoney } from '@/lib/nation/registry';
 
 const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
@@ -233,12 +233,12 @@ export function publicTreasurySite(t: number): PublicTreasurySite {
   const d2 = (k: string, lo: number, hi: number) => Math.round(wave(`pt:d:${k}:${id}`, t, lo, hi) * 100) / 100;
 
   const snapshot: PublicTreasurySite['snapshot'] = [
-    { label: 'Fiscal Balance (YTD)', value: `$${fiscalBalance.toFixed(2)}B`, delta: `+${d2('fb', 1.4, 3.6).toFixed(2)}%`, up: true },
-    { label: 'Total Revenue (YTD)', value: `$${revenueYtd.toFixed(2)}B`, delta: `+${d2('tr', 3.2, 6.4).toFixed(2)}%`, up: true },
-    { label: 'Total Expenditure (YTD)', value: `$${expenditureYtd.toFixed(2)}B`, delta: `+${d2('te', 1.8, 4.4).toFixed(2)}%`, up: true },
+    { label: 'Fiscal Balance (YTD)', value: formatMoney((fiscalBalance) * 1e9, { compact: true, digits: 2 }), delta: `+${d2('fb', 1.4, 3.6).toFixed(2)}%`, up: true },
+    { label: 'Total Revenue (YTD)', value: formatMoney((revenueYtd) * 1e9, { compact: true, digits: 2 }), delta: `+${d2('tr', 3.2, 6.4).toFixed(2)}%`, up: true },
+    { label: 'Total Expenditure (YTD)', value: formatMoney((expenditureYtd) * 1e9, { compact: true, digits: 2 }), delta: `+${d2('te', 1.8, 4.4).toFixed(2)}%`, up: true },
     { label: 'Debt to GDP Ratio', value: `${fc.debtToGdp.toFixed(1)}%`, tag: fc.debtToGdp < 50 ? 'SUSTAINABLE' : fc.debtToGdp < 65 ? 'WATCH' : 'ELEVATED' },
     { label: 'Liquidity Position', value: fc.liquidityDays >= 30 ? 'STRONG' : fc.liquidityDays >= 14 ? 'ADEQUATE' : 'TIGHT', tag: `${liqMonths.toFixed(1)} MONTHS` },
-    { label: 'Foreign Reserves', value: `$${fc.fxReservesBn.toFixed(2)}B`, tag: fc.fxReservesBn >= 25 ? 'ADEQUATE' : 'TIGHT' },
+    { label: 'Foreign Reserves', value: formatMoney((fc.fxReservesBn) * 1e9, { compact: true, digits: 2 }), tag: fc.fxReservesBn >= 25 ? 'ADEQUATE' : 'TIGHT' },
   ];
 
   const total = Math.round(wave(`pt:bud:${id}`, t, 58, 78) * 10) / 10;
@@ -247,10 +247,10 @@ export function publicTreasurySite(t: number): PublicTreasurySite {
     ['Education', 12], ['Economic Development', 9], ['Other Services', 15],
   ];
   const budget: PublicTreasurySite['budget'] = {
-    total: `$${total.toFixed(1)}B`,
+    total: formatMoney((total) * 1e9, { compact: true, digits: 1 }),
     segments: segDefs.map(([label, pct], i) => {
       const p = Math.max(4, pct + Math.round((seed(`pt:seg:${id}:${i}`) - 0.5) * 4));
-      return { label, pct: p, amount: `$${(Math.round(total * (p / 100) * 10) / 10).toFixed(1)}B` };
+      return { label, pct: p, amount: formatMoney((Math.round(total * (p / 100) * 10) / 10) * 1e9, { compact: true, digits: 1 }) };
     }),
   };
 

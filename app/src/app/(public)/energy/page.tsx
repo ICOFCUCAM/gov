@@ -1,7 +1,6 @@
 // Public — Ministry of Energy homepage.
 
-import { PublicSiteShell } from '@/apps/_shared/public/PublicSiteShell';
-import { siteProps } from '@/apps/_shared/public/site-props';
+import { PublicSite } from '@/apps/_shared/public/PublicSite';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 
 export const dynamic = 'force-dynamic';
@@ -13,11 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicEnergyPage() {
+export default function PublicEnergyPage({ searchParams }: { searchParams?: { preset?: string } }) {
   return (
-    <PublicSiteShell {...siteProps('energy', {
-      theme: THEME,
-      illustration: <HeroIllustration kind="bolt" primary={THEME.primary} accent={THEME.accent} aria="Lightning bolt of the grid" />,
-    })} />
+    <PublicSite id="energy" theme={THEME} preset={searchParams?.preset}
+      illustration={<HeroIllustration kind="bolt" primary={THEME.primary} accent={THEME.accent} aria="Lightning bolt of the grid" />} />
   );
 }

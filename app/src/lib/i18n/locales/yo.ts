@@ -362,6 +362,7 @@ export const yo: Messages = {
     live: 'Láàyè',
     sampleNews: 'Àwọn àpẹẹrẹ ìkéde',
     sampleNote: 'A ń fi wọ́n hàn títí {name} yóò fi tẹ ti ara rẹ̀ jáde.',
+    browseTopics: 'Ṣàwárí nípa àkọlé',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

@@ -40,6 +40,8 @@ export interface PublicSiteNavItem { label: string; href: string; active?: boole
 
 export interface PublicSiteHero {
   headline: React.ReactNode;
+  /** The headline's two lines as text, for designs that colour them themselves. */
+  headlineLines?: [string, string];
   subhead: string;
   primaryCta: { label: string; icon: string; href?: string };
   secondaryCta: { label: string; icon: string; href?: string };
@@ -67,6 +69,8 @@ export interface PublicSiteShellProps {
     role: 'Ministry' | 'Agency' | 'Chamber' | 'Branch';
     href: string;
     crest: React.ReactNode;
+    /** A sentence about the institution (designs with their own footer use it). */
+    about?: string;
     emergencyButton?: { label: string; icon: string } | null;
   };
   nav: PublicSiteNavItem[];

@@ -1,7 +1,6 @@
 // Public — Ministry of Justice homepage.
 
-import { PublicSiteShell } from '@/apps/_shared/public/PublicSiteShell';
-import { siteProps } from '@/apps/_shared/public/site-props';
+import { PublicSite } from '@/apps/_shared/public/PublicSite';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 
 export const dynamic = 'force-dynamic';
@@ -13,11 +12,9 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#7a1f2b',
 };
 
-export default function PublicJusticePage() {
+export default function PublicJusticePage({ searchParams }: { searchParams?: { preset?: string } }) {
   return (
-    <PublicSiteShell {...siteProps('justice', {
-      theme: THEME,
-      illustration: <HeroIllustration kind="scales" primary={THEME.primary} accent={THEME.accent} aria="Scales of justice" />,
-    })} />
+    <PublicSite id="justice" theme={THEME} preset={searchParams?.preset}
+      illustration={<HeroIllustration kind="scales" primary={THEME.primary} accent={THEME.accent} aria="Scales of justice" />} />
   );
 }

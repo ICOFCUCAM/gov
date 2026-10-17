@@ -9,7 +9,7 @@ import type { NextRequest } from 'next/server';
 // the institution register (also public in the Government Directory) and the
 // audit chain's integrity check used by the start-up sequence.
 const PUBLIC_READ = [/^\/api\/sovereign$/, /^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/];
-const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/api\/health/];
+const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/fonts\//, /^\/api\/health/];
 // The public institution websites and their shared pages: every page in the
 // (public) route group is for citizens without an account (middleware.test.ts
 // fails if a page there is not covered).

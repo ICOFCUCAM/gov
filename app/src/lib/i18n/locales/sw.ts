@@ -363,6 +363,7 @@ export const sw: Messages = {
     live: 'Moja kwa moja',
     sampleNews: 'Matangazo ya mfano',
     sampleNote: 'Yanaonyeshwa hadi {name} ichapishe yake.',
+    browseTopics: 'Vinjari kwa mada',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

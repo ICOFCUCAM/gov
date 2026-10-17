@@ -1,7 +1,7 @@
 // Fills the placeholders in public-site content (see ./types.ts) from the
 // installed nation: its name, offices, emergency numbers and AI choice.
 
-import { aiLabel, currentOffices, nationEmergencyNumber } from '@/lib/nation/registry';
+import { aiLabel, currentOffices, formatMoney, nationEmergencyNumber } from '@/lib/nation/registry';
 import { REFERENCE_OFFICES } from '@/lib/nation/offices';
 
 type EmergencyKind = 'general' | 'police' | 'fire' | 'ambulance';
@@ -37,6 +37,7 @@ export function fillTokens(text: string, tokens: Record<string, string>): string
     .replace(/\{ai:([^|{}]*)\|([^{}]*)\}/g, (_, ai: string, plain: string) => aiLabel(ai, plain))
     .replace(/\{emergency\.(\w+):([^{}]*)\}/g, (w, kind: string, ref: string) =>
       KINDS.has(kind as EmergencyKind) ? nationEmergencyNumber(kind as EmergencyKind, ref) : w)
+    .replace(/\{money:(-?\d+(?:\.\d+)?)\}/g, (_, n: string) => formatMoney(Number(n), { compact: true }))
     .replace(/\{(\w+)\}/g, (w, key: string) => tokens[key] ?? w);
 }
 

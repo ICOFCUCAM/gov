@@ -27,10 +27,10 @@ describe('public-site content records', () => {
   it('cover every public site page built on PublicSiteShell, and each page reads its record', () => {
     for (const id of SITE_IDS) {
       const page = fs.readFileSync(path.join(APP, '(public)', id, 'page.tsx'), 'utf8');
-      expect(page, id).toContain(`siteProps('${id}'`);
+      expect(page, id).toContain(`<PublicSite id="${id}"`);
       expect(routes, id).toContain(`/${id}`);
     }
-    expect(SITE_IDS.length).toBe(19);
+    expect(SITE_IDS.length).toBe(21);
   });
 
   it('only link to real places: a section of the site or a locked platform route', () => {

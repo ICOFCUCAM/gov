@@ -45,11 +45,13 @@ export function siteProps(id: string, { theme, illustration, live = {}, year = n
       crest: insignia
         ? <span className="text-[13px] tracking-wide" title={insignia.name}>{insignia.seal}</span>
         : c.institution.crest,
+      about: c.institution.about,
       emergencyButton: c.institution.emergencyButton,
     },
     nav: c.nav.map((n, i) => ({ label: n.label, href: href(n.to), active: i === 0 })),
     hero: {
       headline: <><span style={{ color: theme.ink }}>{c.hero.headline[0]}</span><br /><span style={{ color: theme.primary }}>{c.hero.headline[1]}</span></>,
+      headlineLines: c.hero.headline,
       subhead: c.hero.subhead,
       primaryCta: { label: c.hero.primaryCta.label, icon: c.hero.primaryCta.icon, href: href(c.hero.primaryCta.to) },
       secondaryCta: { label: c.hero.secondaryCta.label, icon: c.hero.secondaryCta.icon, href: href(c.hero.secondaryCta.to) },

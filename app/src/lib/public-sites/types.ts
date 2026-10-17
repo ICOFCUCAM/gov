@@ -10,7 +10,8 @@
 // (./tokens.ts): {nation}, {year}, office names such as {headOfState} or
 // {upperChamber}, emergency numbers such as {emergency.police:999} (the
 // number after the colon is the reference until the nation sets its own),
-// and {ai:AI wording|plain wording}, which follows the nation's AI choice.
+// {ai:AI wording|plain wording}, which follows the nation's AI choice, and
+// {money:28580000000}, an amount in the nation's currency (compact).
 //
 // Links (`to`) are either a section of the same site — 'home', 'services',
 // 'statistics', 'news', 'programmes', 'contact', 'about' — or a platform route
@@ -28,6 +29,8 @@ export interface SiteContent {
     role: 'Ministry' | 'Agency' | 'Chamber' | 'Branch';
     /** Glyph shown before the nation's insignia is set. */
     crest: string;
+    /** A sentence about the institution for the footer; the tagline when absent. */
+    about?: string;
     emergencyButton: { label: string; icon: string } | null;
   };
   nav: { label: string; to: SiteLink }[];

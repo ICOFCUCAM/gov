@@ -2,8 +2,7 @@
 // with public-branch index counting per-institution public sites.
 
 import Link from 'next/link';
-import { PublicSiteShell } from '@/apps/_shared/public/PublicSiteShell';
-import { siteProps } from '@/apps/_shared/public/site-props';
+import { PublicSite } from '@/apps/_shared/public/PublicSite';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
 import { educationPublicInstitutions } from '@/lib/gov/education-public-institutions';
 
@@ -16,18 +15,15 @@ const THEME = {
   emergencyA: '#c1252f', emergencyB: '#a01c25',
 };
 
-export default function PublicEducationPage() {
+export default function PublicEducationPage({ searchParams }: { searchParams?: { preset?: string } }) {
   const institutions = educationPublicInstitutions();
   const totalSites = institutions.reduce((s, b) => s + b.publicSites, 0);
 
   return (
-    <div>
-      <PublicSiteShell {...siteProps('education', {
-        theme: THEME,
-        illustration: <HeroIllustration kind="lecture" primary={THEME.primary} accent={THEME.accent} aria="Lecture hall" />,
-        live: { totalSites: totalSites.toLocaleString('en-US') },
-      })} />
-
+    <PublicSite id="education" theme={THEME} preset={searchParams?.preset}
+      live={{ totalSites: totalSites.toLocaleString('en-US') }}
+      illustration={<HeroIllustration kind="lecture" primary={THEME.primary} accent={THEME.accent} aria="Lecture hall" />}
+      extra={<>
       {/* Education sub-branch public-website index — a unique feature of the Education portal. */}
       <section className="border-t" style={{ background: THEME.surface, borderColor: THEME.line }}>
         <div className="mx-auto max-w-[1280px] px-6 py-12">
@@ -71,6 +67,6 @@ export default function PublicEducationPage() {
           </p>
         </div>
       </section>
-    </div>
+      </>} />
   );
 }

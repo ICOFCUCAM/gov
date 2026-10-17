@@ -362,6 +362,7 @@ export const fr: Messages = {
     live: 'En direct',
     sampleNews: 'Annonces d’exemple',
     sampleNote: 'Affichés jusqu’à ce que {name} publie les siens.',
+    browseTopics: 'Parcourir par thème',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

@@ -129,6 +129,12 @@ export function nationEmergencyNumber(kind: 'general' | 'police' | 'fire' | 'amb
   return e?.[kind]?.trim() || e?.general?.trim() || reference;
 }
 
+/** The emergency numbers the nation has set in setup (none before then), for listing them together. */
+export function nationEmergencyContacts(): { kind: 'general' | 'police' | 'fire' | 'ambulance'; number: string }[] {
+  const e = state.emergency ?? {};
+  return (['general', 'police', 'fire', 'ambulance'] as const).flatMap(kind => (e[kind]?.trim() ? [{ kind, number: e[kind]!.trim() }] : []));
+}
+
 /** The nation's domestic payment rail (a neutral default until one is set). */
 export function nationPaymentRail(): string {
   return state.paymentRail ?? 'Mobile Money';

@@ -153,6 +153,15 @@ What has been built is locked. Work only upgrades it toward the vision in
   itself: shared foundations, sector layouts and presets (phase 2).
 - Every page in the `(public)` route group is open without sign-in
   (`middleware.ts`, checked by `middleware.test.ts`).
+- Designs are presets (`apps/_shared/public/design/presets.ts`): a sector's
+  typefaces, shape, palette, header and an ordered list of blocks with
+  variants, rendered by `PublicSite`. Shared foundations (official banner,
+  accessibility and language controls, legal footer) stay the same in every
+  preset. A new preset must show every item and link of the record
+  (`PublicSite.test.ts` checks); Civic Standard (`PublicSiteShell`) stays.
+  Health and Treasury keep their own designs as bespoke presets that read
+  their records. Typefaces are self-hosted under `public/fonts` (OFL); never
+  load fonts or scripts from an outside service.
 
 ## Branding and AI
 

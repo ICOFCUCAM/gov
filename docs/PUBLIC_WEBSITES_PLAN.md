@@ -43,7 +43,11 @@ order of work. Status is kept current in `docs/INTEGRATION_REGISTER.md` §14.
    with several variants per section, sector layouts that follow what each
    ministry does, and two or three presets per sector that a ministry chooses
    and adjusts. The current shell stays as the "Civic Standard" preset.
-9. **Publishing is governed.** Officials propose, a second named official
+9. **Presets are chosen per ministry.** Sectors and their presets live in
+   `app/src/apps/_shared/public/design/presets.ts`; a site may use its
+   sector's presets or Civic Standard. Until the editor (phase 4) stores a
+   nation's choice, each site uses its default and `?preset=` previews others.
+10. **Publishing is governed.** Officials propose, a second named official
    publishes, every change goes on the audit chain (editor at `/admin/sites`).
 
 ## Phases
@@ -51,8 +55,8 @@ order of work. Status is kept current in `docs/INTEGRATION_REGISTER.md` §14.
 | # | Phase | Status |
 |---|---|---|
 | 1 | **Content out of the pages.** Content records for the 19 shell sites, placeholders for the nation's offices, numbers and AI choice; sample labels; no fixed dates; real links and section anchors; nation insignia; shared privacy, accessibility and terms statements and a generated sitemap; public sites open without sign-in under `CIVICOS_AUTH=enforce`. Health, Laboratory and Treasury got the same fixes in place. | Done |
-| 2 | **Design system.** Tokens, block library with variants, a sector layout for each of the 21 institutions (Health and Treasury become the first two, reading full content records), ministry presets; before/after screenshots per site. | Next |
-| 3 | **Existing-site integration.** Ministry registry fields (website, mode, feed, content owner), setup question, the four modes, feed import with cache and fallback, redirect map for Migrate. | Planned |
+| 2 | **Design system.** Six self-hosted open-licence typefaces (`app/public/fonts`), design tokens per preset (typefaces, heading style, shape, spacing, palette, header), a block library with several variants per section, 24 presets in 9 sectors (each of the 21 institutions starts with its own; Civic Standard stays selectable), Health and Treasury reading full content records with their designs kept as their sectors' own presets, a phone menu, and a test that every preset keeps every link, item and anchor. Compare designs with `?preset=<id>` on any site. | Done |
+| 3 | **Existing-site integration.** Ministry registry fields (website, mode, feed, content owner), setup question, the four modes, feed import with cache and fallback, redirect map for Migrate. | Next |
 | 4 | **Editorial workflow.** `/admin/sites`: propose, second-official publish, audit; content overrides stored with the nation. | Planned |
 | 5 | **Languages and right-to-left.** Every content field per language; RTL layout once content is translated (register 5.5). | Planned |
 | 6 | **Quality.** Accessibility audit (WCAG 2.2 AA), performance budgets, schema.org markup, link checker in CI. | Planned |

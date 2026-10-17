@@ -140,6 +140,7 @@ export interface Messages {
     live: string;
     sampleNews: string;
     sampleNote: string;
+    browseTopics: string;
   };
   /** Permit and receipt detail pages. */
   detail: {
@@ -758,6 +759,7 @@ export const en: Messages = {
     live: 'Live',
     sampleNews: 'Sample announcements',
     sampleNote: 'Shown until the {name} publishes its own.',
+    browseTopics: 'Browse by topic',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {
