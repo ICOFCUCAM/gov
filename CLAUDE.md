@@ -80,6 +80,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   `npm run build:boundaries -- --needed` upgrades them, and writes a country
   only when the new shapes cover more of its official list, the same
   territory and the same outline — a build never downgrades a map.
+- Map labels and region names use each unit's official name in the nation's
+  own spelling (ISO 3166-2, natural word order; romanised for non-Latin
+  scripts), e.g. "Bayern", "Małopolskie" — not English exonyms. After new map
+  data, run `node scripts/official-names.mjs` (matches by ISO code or exact name).
 
 ## Checks
 

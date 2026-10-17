@@ -9,7 +9,7 @@
 
 import * as React from 'react';
 import { geoAlbersUsa, geoMercator, geoPath } from 'd3-geo';
-import { loadCountry, provinceLabel, type Admin1Country } from '@/lib/geo/admin1';
+import { loadCountry, type Admin1Country } from '@/lib/geo/admin1';
 import type { HealthGeo } from '@/lib/gov/health-geo';
 import { nationIso3 } from '@/lib/nation/registry';
 
@@ -81,7 +81,8 @@ export function GeoMap({
       const reg = geo.regions[i % geo.regions.length];
       const v = reg ? reg[metric] : 50;
       const c = proj([p.lng, p.lat]);
-      return { x: c?.[0] ?? null, y: c?.[1] ?? null, v, name: provinceLabel(p, 'en') };
+      // Official name in the nation's own spelling (ISO 3166-2, see scripts/official-names.mjs).
+      return { x: c?.[0] ?? null, y: c?.[1] ?? null, v, name: p.name };
     }).filter(x => x.x != null).sort((a, b) => b.v - a.v) as { x: number; y: number; v: number; name: string }[];
     const minGap = Math.max(26, Math.min(W, H) * 0.085);
     const markers: { x: number; y: number; v: number; name: string; band: BandKey }[] = [];
