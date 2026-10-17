@@ -77,6 +77,19 @@ async function simplify(geo) {
   return JSON.parse(out['out.json']);
 }
 
+// geoBoundaries' other collections through its API (gbHumanitarian: national
+// datasets curated by OCHA). Files are fetched from GitHub's media host.
+const API = 'https://www.geoboundaries.org/api/current';
+async function apiSource(iso3, release, adm) {
+  const metaFile = path.join(CACHE, `${release}-${iso3}-${adm}-meta.json`);
+  const meta = await fetchJson(`${API}/${release}/${iso3}/${adm}/`, metaFile);
+  const url = meta?.simplifiedGeometryGeoJSON;
+  if (!url) return null;
+  const media = url.replace(/^https:\/\/github\.com\/([^/]+)\/([^/]+)\/raw\//, 'https://media.githubusercontent.com/media/$1/$2/');
+  const geo = await fetchJson(media, path.join(CACHE, `${release}-${iso3}-${adm}.geojson`));
+  return geo?.features?.length ? { adm, meta: { ...meta, boundaryYear: meta.boundaryYearRepresented }, geo } : null;
+}
+
 // OCHA COD-AB on HDX: a zip of <iso3>_admin1…4.geojson with adm<N>_name fields.
 const HDX = 'https://data.humdata.org/api/3/action/package_show?id=';
 async function codSources(iso3) {
@@ -119,6 +132,12 @@ async function build(iso3) {
     if (!s) continue;
     const shapes = s.geo.features.map(f => ({ code: f.properties.shapeISO || '', name: f.properties.shapeName || '' }));
     candidates.push({ ...s, via: 'geoBoundaries', official: false, shapes, cov: coverage(t.units, shapes) });
+  }
+  for (const adm of ['ADM1', 'ADM2']) {
+    const s = await apiSource(iso3, 'gbHumanitarian', adm).catch(() => null);
+    if (!s) continue;
+    const shapes = s.geo.features.map(f => ({ code: f.properties.shapeISO || '', name: f.properties.shapeName || '' }));
+    candidates.push({ ...s, via: 'geoBoundaries', official: true, shapes, cov: coverage(t.units, shapes) });
   }
   for (const s of await codSources(iso3).catch(() => [])) {
     const shapes = s.geo.features.map(f => ({ code: '', name: f.properties.shapeName }));

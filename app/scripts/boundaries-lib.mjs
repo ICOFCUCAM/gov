@@ -68,6 +68,23 @@ export function matchUnits(units, shapes) {
     const near = shapes.map((s, i) => [i, norm(s.name)]).filter(([i, m]) => !used.has(i) && m.length >= 5 && distance(n, m) <= 2);
     if (near.length === 1) { hits.set(u.code, near[0][0]); used.add(near[0][0]); }
   }
+  // Then long and short forms of the same name, again only when exactly one shape fits:
+  // one name starts the other ("Gambela Peoples" / "Gambela"), or one is the
+  // initials of the other ("SNNP" / "Southern Nations, Nationalities and Peoples").
+  const initials = s => String(s).split(/[\s,-]+/).filter(w => w && !/^(and|of|the|de|et|y|e)$/i.test(w)).map(w => w[0].toLowerCase()).join('');
+  for (const u of units) {
+    if (hits.has(u.code)) continue;
+    const n = norm(u.name);
+    if (n.length < 5) continue;
+    const fit = shapes.map((s, i) => [i, s]).filter(([i, s]) => {
+      if (used.has(i)) return false;
+      const m = norm(s.name);
+      if (m.length >= 5 && (n.startsWith(m) || m.startsWith(n))) return true;
+      const short = s.name.replace(/[^A-Za-z]/g, '');
+      return short.length >= 3 && short === short.toUpperCase() && short.toLowerCase() === initials(u.name);
+    });
+    if (fit.length === 1) { hits.set(u.code, fit[0][0]); used.add(fit[0][0]); }
+  }
   return hits;
 }
 
