@@ -7,6 +7,7 @@ const VERSIONS = [
   { href: '/cover/boot', n: 'B', name: 'Boot', tone: 'Monochrome · black and white', d: 'The platform starts like an operating system: a kernel log verifies the constitutional root, then resolves into a giant wordmark and a login console.' },
   { href: '/cover/atlas', n: 'C', name: 'Atlas', tone: 'Light · stone and cobalt', d: 'Editorial and calm. A turning globe with federation arcs, sign-in above the fold, and the four principles beneath.' },
   { href: '/cover/doors', n: 'D', name: 'Doors', tone: 'Jewel tones · emerald, sapphire, amethyst', d: 'Three full-height entrances. Choose one and it opens to reveal sign-in while the others fold to spines.' },
+  { href: '/cover/plaza', n: 'E', name: 'Plaza', tone: 'Golden hour · emerald, ivory and gold', d: 'A flat site plan of a civic plaza at golden hour: the national seal at the centre, avenues radiating to every edge. Each way in is a road you choose.' },
 ];
 
 // Comparison index for cover designs under evaluation. `/` serves the current choice.
@@ -17,7 +18,7 @@ export default function CoverIndexPage() {
         <p className="font-mono text-[11px] uppercase tracking-[0.24em] text-[#7d8698]">CivicOS · cover designs</p>
         <h1 className="mt-3 text-[2rem] font-semibold tracking-tight sm:text-[2.6rem]">Choose the front door</h1>
         <p className="mt-3 max-w-[60ch] text-[15px] leading-relaxed text-[#9aa3b4]">
-          Four complete cover pages. All share the same entry logic — Government to the Command Center,
+          Five complete cover pages. All share the same entry logic — Government to the Command Center,
           Citizen to the Civic Wallet, New institution to Institutions Admin. Only the design differs.
         </p>
         <ul className="mt-10 grid gap-4 sm:grid-cols-2">
