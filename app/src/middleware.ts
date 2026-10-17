@@ -11,9 +11,10 @@ import type { NextRequest } from 'next/server';
 const PUBLIC_READ = [/^\/api\/sovereign$/, /^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/];
 const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/api\/health/];
 // Machine callers with no browser session that authenticate themselves in
-// the route: the update watchdog (CIVICOS_CRON_SECRET, called by pg_cron)
+// the route: every scheduled job under /api/cron (CIVICOS_CRON_SECRET, called
+// by pg_cron; each refuses when the secret is unset, see middleware.test.ts)
 // and the deployment agent's health reports (per-nation agent credential).
-const SELF_AUTHENTICATED = [/^\/api\/cron\/update-watchdog$/, /^\/api\/releases\/health$/];
+const SELF_AUTHENTICATED = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/];
 
 export function middleware(req: NextRequest) {
   const res = NextResponse.next();

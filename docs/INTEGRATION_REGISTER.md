@@ -99,7 +99,7 @@ Network hosts the boundary build needs: `data.humdata.org`, `www.geoboundaries.o
 | 7.2 | Resolved: the site icon is `app/src/app/icon.svg`. | — |
 | 7.3 | Resolved: on the US map the density legend sits bottom right, clear of the Alaska inset. | — |
 | 7.4 | Resolved with 7.1. | — |
-| 7.5 | Under `CIVICOS_AUTH=enforce`, the middleware's session gate sits in front of the other eleven `/api/cron/*` routes, so pg_cron calls (which carry no session cookie) are redirected to `/login` before the route can check `CIVICOS_CRON_SECRET`. Only `/api/cron/update-watchdog` and `/api/releases/health` are exempted, because they authenticate themselves. Every cron route already checks the secret, so the fix is to exempt `/api/cron/*` the same way. | `app/src/middleware.ts` |
+| 7.5 | Resolved: under `CIVICOS_AUTH=enforce` the session gate lets every `/api/cron/*` job through to its own `CIVICOS_CRON_SECRET` check (each refuses when the secret is unset); `app/src/middleware.test.ts` fails if a cron route ships without that check. | — |
 
 ## 8. Update Center — security store
 
