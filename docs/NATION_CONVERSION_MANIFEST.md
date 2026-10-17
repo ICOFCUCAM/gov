@@ -169,7 +169,7 @@ Run these as fixed, ordered commands on every new subscription. Each step has a 
 1. **Research** — "Produce a Nation Pack for `<country>` that conforms to `NationPack` schema. Cite an official source for each constitutional and legal field. Leave a field empty and flag it if no source is found; never invent constitutional facts."
 2. **Geography** — "Load `app/src/lib/geo/admin1/<ISO3>.json`. List the admin-1 units. Flag any that are out of date against the country's current official subdivisions (e.g. counties replacing provinces), and supply corrected names and codes."
 3. **Constitution** — "From the constitution of `<country>`, fill `constitution`: chambers and seats, court hierarchy, chain of authority, branches and bodies, emergency provisions, amendment rule. Quote the article for each value."
-4. **Validate** — `npm run nation:validate <pack>` checks the schema, ISO codes, region codes against the geo data and seat totals, and lists unsourced fields.
+4. **Validate** — `npm run nation:validate <pack>` (to be built with the refactor; it does not exist yet) checks the schema, ISO codes, region codes against the geo data and seat totals, and lists unsourced fields.
 5. **Human review** — An authorised officer of the subscribing nation approves the constitutional and legal fields. The approval is written to the audit chain.
 6. **Apply** — Load the pack through `/setup`, which already saves the profile and institutions and records the audit entry.
 7. **Verify** — `node app/scripts/nation-scan.mjs` shows no foreign-nation literals; tests pass; the front door shows the nation's name, motto and platform label.
