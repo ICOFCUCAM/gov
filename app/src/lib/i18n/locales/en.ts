@@ -115,6 +115,14 @@ export interface Messages {
     citizen: string;
     supportTitle: string;
     fromSubstrate: string;
+    classA: string;
+    classB: string;
+    classC: string;
+    classD: string;
+    classE: string;
+    flagAI: string;
+    flagAria: string;
+    panelAria: string;
   };
   /** Wallet permits, inbox, payments, document verification and signing. */
   pages: {
@@ -566,6 +574,14 @@ export const en: Messages = {
     citizen: 'Citizen',
     supportTitle: 'Your conversation with the support desk',
     fromSubstrate: 'From the substrate',
+    classA: 'Class A — Information only',
+    classB: 'Class B — Advisory',
+    classC: 'Class C — Narrow automation',
+    classD: 'Class D — Recommendation only',
+    classE: 'Class E — Sovereign coordination',
+    flagAI: '⚐ Flag this AI',
+    flagAria: 'Flag this AI behavior',
+    panelAria: 'AI Copilot panel (Class {cls})',
   },
   detail: {
     notFoundPermit: 'Permit not found.',

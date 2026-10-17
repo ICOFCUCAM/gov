@@ -2,6 +2,7 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import type { DecisionClass } from '@/lib/types';
 import { decisionClassLabel } from '@/lib/types';
+import { nationMessages } from '@/lib/nation/registry';
 
 export interface ClassBannerProps {
   decisionClass: DecisionClass;
@@ -17,6 +18,9 @@ const colorBg: Record<DecisionClass, string> = {
 };
 
 export function ClassBanner({ decisionClass, className }: ClassBannerProps) {
+  // The nation's language; decisionClassLabel stays the English reference.
+  const m = nationMessages().more;
+  const label = { A: m.classA, B: m.classB, C: m.classC, D: m.classD, E: m.classE }[decisionClass] ?? decisionClassLabel[decisionClass];
   return (
     <span
       className={cn(
@@ -25,9 +29,9 @@ export function ClassBanner({ decisionClass, className }: ClassBannerProps) {
         className,
       )}
       role="status"
-      aria-label={decisionClassLabel[decisionClass]}
+      aria-label={label}
     >
-      {decisionClassLabel[decisionClass]}
+      {label}
     </span>
   );
 }

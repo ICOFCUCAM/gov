@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Pill, Dot, type PillTone } from './Pill';
 import type { Receipt as ReceiptT } from '@/lib/types';
-import { nationMessages } from '@/lib/nation/registry';
+import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t } from '@/lib/i18n';
 export interface ReceiptCardProps {
   receipt: ReceiptT;
@@ -63,7 +63,7 @@ export function ReceiptHeader({ receipt, className }: ReceiptHeaderProps) {
         <div className="font-serif text-3xl">{receipt.amount}</div>
       ) : null}
       <div className="text-ink-muted">{receipt.summary}</div>
-      <div className="text-ink-muted text-sm mt-1">{new Date(receipt.date).toLocaleString()}</div>
+      <div className="text-ink-muted text-sm mt-1">{new Date(receipt.date).toLocaleDateString(nationLocale())} {new Date(receipt.date).toLocaleTimeString(nationLocale())}</div>
     </section>
   );
 }
