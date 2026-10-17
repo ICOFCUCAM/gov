@@ -134,7 +134,7 @@ function DoorArt({ kind, accent, lit }: { kind: 'rings' | 'field' | 'columns'; a
       ))}
       {kind === 'field' && Array.from({ length: 22 }).flatMap((_, r) => Array.from({ length: 16 }).map((__, c) => {
         const x = 12 + c * 26, y = 12 + r * 27;
-        const w = Math.sin(c * 0.55 + r * 0.32) * 0.5 + 0.5;
+        const w = Math.round((Math.sin(c * 0.55 + r * 0.32) * 0.5 + 0.5) * 1e4) / 1e4; // same value on server and browser
         return <circle key={`${r}:${c}`} cx={x} cy={y + w * 8} r={0.8 + w * 1.6} fill={accent} fillOpacity={o * (0.3 + w)} />;
       }))}
       {kind === 'columns' && (

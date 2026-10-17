@@ -15,12 +15,8 @@ import type {
   ArchetypeKey,
 } from '@/lib/api/types';
 
-export const TONE: Record<string, string> = {
-  alert: '#f1707a',
-  warn: '#e0b341',
-  ok: '#34d39c',
-  neutral: '#6b7a90',
-};
+import { TONE } from '@/lib/tone-palette';
+export { TONE };
 export const ACCENT = '#37c7d4';
 
 // Deep-navy situation-room palette (overrides the .sov tokens locally).
