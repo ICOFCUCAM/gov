@@ -83,6 +83,11 @@ import type {
   StagingRun,
   ChangeControl,
   MaintenanceSlot,
+  AdvisoryExposure,
+  PatchCommitment,
+  AdvisorySeverity,
+  SecurityAdvisory,
+  AdvisoryNationStatus,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -362,6 +367,8 @@ export const api = {
       req<{ preflight: PreflightReport | null; staging: StagingEnvironment; run: StagingRun | null; stagingRequired: boolean }>(`/api/releases/${encodeURIComponent(id)}/readiness${linkQ(link)}`),
     readinessAction: (id: string, body: { action: 'preflight' | 'waive' | 'stage' | 'stage-fail' | 'uat'; by?: string; secondBy?: string; reason?: string; findingKey?: string; tester?: string; date?: string; evidence?: string; link?: string }) =>
       req<{ preflight?: PreflightReport; run?: StagingRun }>(`/api/releases/${encodeURIComponent(id)}/readiness`, { method: 'POST', body: JSON.stringify(body) }),
+    advisories: (link?: string) =>
+      req<{ exposure: AdvisoryExposure[]; commitments: PatchCommitment[]; policy: Record<AdvisorySeverity, number> }>(`/api/releases/advisories${linkQ(link)}`),
     changeControl: (body: { action: 'freeze' | 'unfreeze' | 'add-blackout' | 'remove-blackout' | 'set-windows'; by: string; reason?: string; label?: string; kind?: string; start?: string; end?: string; id?: string; windows?: MaintenanceSlot[]; link?: string }) =>
       req<{ changeControl: ChangeControl }>('/api/releases/change-control', { method: 'POST', body: JSON.stringify(body) }),
     registerStaging: (body: { name: string; url: string; by: string; link?: string }) =>
@@ -404,6 +411,7 @@ export const api = {
       hostingQueue: async () => req<{ requests: HostingRequest[]; nations: Record<string, string> }>('/api/releases/publisher/hosting', await publisherInit()),
       hostingAction: async (id: string, body: { action: 'review' | 'issue'; by?: string; notes?: string; capexFactor?: number; annualFactor?: number; timelineFactor?: number }) =>
         req<{ request: HostingRequest }>(`/api/releases/publisher/hosting/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      advisories: async () => req<{ advisories: SecurityAdvisory[]; commitments: PatchCommitment[]; policy: Record<AdvisorySeverity, number>; statuses: Record<string, Record<string, AdvisoryNationStatus>>; nations: { id: string; name: string }[] }>('/api/releases/publisher/advisories', await publisherInit()),
       setStatus: async (id: string, body: { action: 'halt' | 'resume' | 'withdraw' | 'promote'; reason?: string; by?: string }) =>
         req<{ release: DistributionRelease }>(`/api/releases/publisher/releases/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
     },

@@ -6,6 +6,7 @@ import { formatMoney } from '@/lib/nation/registry';
 import { OnboardingFrame, Eyebrow, Section, Field, inputCls, Select, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI } from '@/components/features/onboarding/Chrome';
 import type { SecurityCenter, SecurityOrder, SecurityCategory, OrderStage } from '@/lib/api/types';
 import { PosturePanel } from './resilience';
+import { AdvisoriesPanel } from './AdvisoriesPanel';
 import { ChamberNav, ChamberTabs, Chip, CopyValue, ErrorLine, Loading, Panel, PoweredBy, fmtDate, useActor, useCenterTitle, useLink } from './ui';
 
 const CATEGORY_LABEL: Record<SecurityCategory, string> = {
@@ -58,7 +59,11 @@ function Body({ s, link, reload }: { s: SecurityCenter; link?: string; reload: (
         <PosturePanel p={s.posture} />
       </Section>
 
-      <Section n="02" title="Included for every nation" aside={<span className="text-[#9be7c4]/80">No nation is left unprotected for non-payment</span>}>
+      <Section n="02" title="Security advisories and exposure" aside="CSAF/VEX · patch commitments">
+        <AdvisoriesPanel link={link} q={link ? `?link=${encodeURIComponent(link)}` : ''} />
+      </Section>
+
+      <Section n="03" title="Included for every nation" aside={<span className="text-[#9be7c4]/80">No nation is left unprotected for non-payment</span>}>
         <Panel strong className="grid gap-5 p-5 sm:p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
           <div>
             <p className="flex flex-wrap items-center gap-2"><Chip tone="#9be7c4" solid>{s.baseline.active ? 'Active' : 'Inactive'}</Chip><span className="text-[15px] font-light text-[#f3efe6]">Baseline protection — free, always on</span></p>
@@ -73,29 +78,29 @@ function Body({ s, link, reload }: { s: SecurityCenter; link?: string; reload: (
         </Panel>
       </Section>
 
-      <Section n="03" title="Certified partners — advanced protection" aside={s.localPricing ? `Prices per unit per year, ${s.currency}` : `Prices in ${s.referenceCurrency} until your contract rate is set`}>
+      <Section n="04" title="Certified partners — advanced protection" aside={s.localPricing ? `Prices per unit per year, ${s.currency}` : `Prices in ${s.referenceCurrency} until your contract rate is set`}>
         <div className="grid gap-4 xl:grid-cols-2">
           {s.catalogue.filter(p => p.tier === 'paid').map(p => <ProductCard key={p.id} p={p} money={money} link={link} reload={reload} />)}
         </div>
         <p className="mt-4 text-[12px] font-light text-white/40">Vendors and products are placeholders for certified partners. Two purchase routes: pay at once on your payment rail, or government procurement (quote → purchase order → invoice → bank transfer → licence).</p>
       </Section>
 
-      <Section n="04" title="Orders, licences and billing" aside={`${s.orders.length} on record`}>
+      <Section n="05" title="Orders, licences and billing" aside={`${s.orders.length} on record`}>
         <div className="grid gap-3">
           {s.orders.map(o => <OrderRow key={o.id} o={o} s={s} money={money} link={link} reload={reload} />)}
           {!s.orders.length ? <p className="text-[13.5px] font-light text-white/50">No orders yet.</p> : null}
         </div>
       </Section>
 
-      <Section n="05" title="Bring your own security tooling">
+      <Section n="06" title="Bring your own security tooling">
         <Byo s={s} link={link} reload={reload} />
       </Section>
 
-      <Section n="06" title="Your own software">
+      <Section n="07" title="Your own software">
         <Software s={s} link={link} reload={reload} />
       </Section>
 
-      <Section n="07" title="Security definitions">
+      <Section n="08" title="Security definitions">
         <Definitions s={s} link={link} reload={reload} />
       </Section>
     </>

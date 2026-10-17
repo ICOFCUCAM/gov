@@ -144,3 +144,10 @@ Four paths at `/updates/hosting`: sovereign data centre, another cloud, our host
 | 11.3 | **Officials' identity in decisions** | Partial. Four-eyes, waivers and break-glass compare the typed names of the officials; two different names pass. Under `CIVICOS_AUTH=enforce` a session is required, but the name is not bound to it. | Take the acting official from the signed-in identity (substrate actor), require the second official to be a different authenticated officer with the right role, and sign the decision. | `decide()` in `app/src/lib/data/updates.ts`, `waiveFinding()`, `breakGlass()` |
 | 11.4 | **Maintenance calendar** | Partial. Weekly windows and blackouts are recorded per nation; scheduling into a blackout is refused. No calendar feed. | Publish the calendar as iCalendar to the nation's officials and import public holidays and election dates from the nation's own calendar. | `app/src/lib/data/change-control.ts` |
 
+## 12. Update Center — security, support and supply chain
+
+| # | Area | Today | To integrate | Where |
+|---|---|---|---|---|
+| 12.1 | **Advisory feed and CVE data source** | Placeholder. Advisories are seeded CSAF 2.0-style records with publisher-assigned ids (CSA-YYYY-NN); CVSS scores, CWE ids and VEX statements are entered by the publisher. No CVE ids are requested and no external feed is read. | Become a CNA (or use one) to assign CVE ids; publish the CSAF provider metadata (`/.well-known/csaf/provider-metadata.json`) and sign documents; ingest upstream advisories (OSV / NVD / GitHub Advisory Database) for third-party components listed in the SBOM. | `app/src/lib/data/advisories.ts` |
+| 12.2 | **Patch-time commitments** | Config. `PATCH_COMMITMENTS` (critical 72 h, high 14 d, medium 30 d, low 90 d) is the publisher's default policy; met / open / breached is computed from disclosure to the first release whose version fixes it. | Take the figures from each nation's signed contract (see licence and contract management) rather than one global default. | `PATCH_COMMITMENTS`, `commitments()` in `app/src/lib/data/advisories.ts` |
+

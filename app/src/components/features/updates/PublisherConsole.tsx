@@ -12,6 +12,8 @@ import {
 } from './ui';
 import { RequestCard } from './FeatureRequests';
 import { IncidentCard } from './resilience';
+import { NSTATUS_TEXT, NSTATUS_TONE, SEV_TONE } from './AdvisoriesPanel';
+import type { SecurityAdvisory, PatchCommitment, AdvisoryNationStatus } from '@/lib/api/types';
 import { EstimateView, HostingStepper, PATH_TITLE, hostingStageChip } from './HostingCenter';
 import type { HostingRequest } from '@/lib/api/types';
 
@@ -90,18 +92,22 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         <ReleaseSafety o={o} reload={reload} />
       </Section>
 
-      <Section n="04" title="Fallback incidents across nations" aside={`${o.incidents.length} recorded`}>
+      <Section n="04" title="Security advisories and patch commitments" aside="Disclosure to released fix, by severity">
+        <PublisherAdvisories />
+      </Section>
+
+      <Section n="05" title="Fallback incidents across nations" aside={`${o.incidents.length} recorded`}>
         <div className="grid gap-3">
           {o.incidents.map(i => <IncidentCard key={i.id} i={{ ...i, acknowledgedAt: i.acknowledgedAt ?? i.openedAt }} />)}
           {!o.incidents.length ? <p className="text-[13.5px] font-light text-white/50">No fallbacks reported.</p> : null}
         </div>
       </Section>
 
-      <Section n="05" title="Hosting assessment requests" aside="Engineering review: adjust and issue a versioned assessment">
+      <Section n="06" title="Hosting assessment requests" aside="Engineering review: adjust and issue a versioned assessment">
         <HostingQueue />
       </Section>
 
-      <Section n="06" title="Install matrix" aside="Each nation’s own decision — never pushed">
+      <Section n="07" title="Install matrix" aside="Each nation’s own decision — never pushed">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px] font-light">
             <thead>
@@ -130,9 +136,43 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         </div>
       </Section>
 
-      <Section n="07" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
+      <Section n="08" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
         <Pipeline requests={o.requests} nameOf={nameOf} onDone={reload} />
       </Section>
+    </>
+  );
+}
+
+function PublisherAdvisories() {
+  const [d, setD] = React.useState<{ advisories: SecurityAdvisory[]; commitments: PatchCommitment[]; statuses: Record<string, Record<string, AdvisoryNationStatus>>; nations: { id: string; name: string }[] } | null>(null);
+  React.useEffect(() => { api.updates.publisher.advisories().then(setD).catch(() => setD(null)); }, []);
+  if (!d) return <div className="min-h-[160px]" />;
+  const met = d.commitments.filter(c => c.state === 'met').length, breached = d.commitments.filter(c => c.state === 'breached').length;
+  return (
+    <>
+      <p className="mb-3 flex flex-wrap gap-2"><Chip tone="#9be7c4">{met} met</Chip><Chip tone="#f4d58d">{d.commitments.filter(c => c.state === 'open').length} open</Chip><Chip tone="#f1938f" solid={breached > 0}>{breached} breached</Chip></p>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[820px] text-left text-[12.5px] font-light">
+          <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65">
+            <th className="py-2 pr-3 font-normal">Advisory</th><th className="py-2 pr-3 font-normal">Severity</th><th className="py-2 pr-3 font-normal">Commitment</th><th className="py-2 pr-3 font-normal">Due</th><th className="py-2 pr-3 font-normal">Fix released</th><th className="py-2 pr-3 font-normal">State</th>
+            {d.nations.map(n => <th key={n.id} className="py-2 pr-3 font-normal">{n.name}</th>)}
+          </tr></thead>
+          <tbody>{d.advisories.map(a => {
+            const c = d.commitments.find(x => x.advisoryId === a.id)!;
+            return (
+              <tr key={a.id} className="border-t align-middle" style={{ borderColor: hair(0.08) }}>
+                <td className="py-2.5 pr-3"><span className="font-mono text-[11px] text-[#f4e4bd]">{a.id}</span><span className="block text-[11.5px] text-white/50">{a.title}</span></td>
+                <td className="py-2.5 pr-3"><Chip tone={SEV_TONE[a.severity]}>{a.severity} {a.cvss.toFixed(1)}</Chip></td>
+                <td className="py-2.5 pr-3 font-mono text-[11px] text-white/60">{c.committedHours < 72 ? `${c.committedHours} h` : `${Math.round(c.committedHours / 24)} d`}</td>
+                <td className="py-2.5 pr-3 font-mono text-[11px] text-white/60">{fmtDate(c.dueAt)}</td>
+                <td className="py-2.5 pr-3 font-mono text-[11px] text-white/60">{c.fixedAt ? fmtDate(c.fixedAt) : '—'}</td>
+                <td className="py-2.5 pr-3"><Chip tone={c.state === 'met' ? '#9be7c4' : c.state === 'breached' ? '#f1938f' : '#f4d58d'} solid={c.state === 'breached'}>{c.state}{c.hoursLeft !== undefined ? ` · ${Math.max(0, Math.round(c.hoursLeft / 24))} d left` : ''}</Chip></td>
+                {d.nations.map(n => { const st = d.statuses[a.id]?.[n.id]; return <td key={n.id} className="py-2.5 pr-3">{st ? <Chip tone={NSTATUS_TONE[st]}>{NSTATUS_TEXT[st]}</Chip> : null}</td>; })}
+              </tr>
+            );
+          })}</tbody>
+        </table>
+      </div>
     </>
   );
 }

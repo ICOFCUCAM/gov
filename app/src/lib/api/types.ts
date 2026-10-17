@@ -1301,3 +1301,42 @@ export interface ChangeControl {
   freeze?: { on: boolean; by: string; at: ISODate; reason: string };
   fourEyes: true;
 }
+
+// ── Update Center: security advisories (CSAF/VEX-style) ───────────────
+export type AdvisorySeverity = 'critical' | 'high' | 'medium' | 'low';
+export interface SecurityAdvisory {
+  id: string;
+  title: string;
+  summary: string;
+  severity: AdvisorySeverity;
+  /** CVSS v3.1 base score and vector. */
+  cvss: number;
+  cvssVector: string;
+  cwe?: string;
+  /** Affected versions: from `affectedFrom` up to (not including) `affectedBefore`, or all later versions if absent. */
+  affectedFrom: string;
+  affectedBefore?: string;
+  fixedIn?: string;
+  /** final: fix available; interim: still under investigation. */
+  status: 'final' | 'interim';
+  publishedAt: ISODate;
+  updatedAt: ISODate;
+}
+export type AdvisoryNationStatus = 'affected' | 'not-affected' | 'fixed' | 'under-investigation';
+export interface AdvisoryExposure {
+  advisory: SecurityAdvisory;
+  status: AdvisoryNationStatus;
+  /** VEX justification when the publisher states this nation is not affected. */
+  justification?: string;
+  /** The release that fixes it, as this nation sees it. */
+  fixReleaseId?: string;
+}
+export interface PatchCommitment {
+  advisoryId: string;
+  severity: AdvisorySeverity;
+  committedHours: number;
+  dueAt: ISODate;
+  fixedAt?: ISODate;
+  state: 'met' | 'breached' | 'open';
+  hoursLeft?: number;
+}

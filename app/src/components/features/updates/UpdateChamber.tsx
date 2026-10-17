@@ -7,6 +7,7 @@ import { parseVersion } from '@/lib/updates/semver';
 import { OnboardingFrame, Eyebrow, Section, Rule, hair, CHAMPAGNE, CHAMPAGNE_HI } from '@/components/features/onboarding/Chrome';
 import type { UpdateChamber as Chamber, ChamberRelease, SecurityPosture } from '@/lib/api/types';
 import { AdvisoryBanners, IncidentBanners, PosturePanel, ProbationPanel } from './resilience';
+import { AdvisoriesPanel } from './AdvisoriesPanel';
 import {
   ChamberNav, ChamberTabs, ChannelChip, CopyValue, ErrorLine, Loading, MODE_LABEL, Panel, PoweredBy, SeverityChip,
   STAGES, STAGE_LABEL, StateChip, VerifyGuide, VersionBadge, fmtDate, useCenterTitle, useLink, Chip,
@@ -180,7 +181,11 @@ function Body({ c, q, link, title, nation, posture, reload }: { c: Chamber; q: s
         {posture ? <PosturePanel p={posture} compact href={`/updates/security${q}`} /> : <div className="min-h-[220px]" />}
       </Section>
 
-      <Section n="05" title="Your distribution link and integrity">
+      <Section n="05" title="Security advisories — your exposure">
+        <AdvisoriesPanel link={link} q={q} compact />
+      </Section>
+
+      <Section n="06" title="Your distribution link and integrity">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <span className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">Private link key</span>
           <CopyValue value={c.nation.channelKey} label="distribution link key" />

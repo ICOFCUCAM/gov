@@ -84,6 +84,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   install are four-eyes — one official proposes, a different one approves
   (`pending` on the install). Scheduling into a blackout is refused; a
   change freeze blocks installs except security/critical releases.
+- Security advisories (`lib/data/advisories.ts`): CSAF 2.0-style records
+  with a VEX status per nation computed from its installed version (publisher
+  VEX statements override, with a justification, audited). Each nation sees
+  only its own exposure and can download CSAF JSON; patch-time commitments
+  (`PATCH_COMMITMENTS`) are tracked met / open / breached in the console.
 
 ## Branding and AI
 
