@@ -2,7 +2,6 @@ import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
 import { PaymentsClient } from './PaymentsClient';
 import { listBills, listReceipts } from '@/lib/data/store';
-
 import { nationMessages } from '@/lib/nation/registry';
 export const dynamic = 'force-dynamic';
 

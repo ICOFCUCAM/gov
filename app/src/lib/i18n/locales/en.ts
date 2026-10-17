@@ -60,6 +60,62 @@ export interface Messages {
   doctrine: {
     fourSentences: string;
   };
+  /** Permit and receipt detail pages. */
+  detail: {
+    notFoundPermit: string;
+    notFoundReceipt: string;
+    officer: string;
+    actionNeeded: string;
+    actionNeededText: string;
+    details: string;
+    progress: string;
+    aiPermit: string;
+    aiPermitBold: string;
+    neverDelays: string;
+    grantApproved: string;
+    officerWithId: string;
+    total: string;
+    aiReceipt: string;
+    aiReceiptBold: string;
+    aiNotDecide: string;
+  };
+  /** Status badges, selective disclosure and the support thread. */
+  more: {
+    draft: string;
+    submitted: string;
+    inReview: string;
+    needsInfo: string;
+    approved: string;
+    declined: string;
+    billPaid: string;
+    billOverdue: string;
+    billDue: string;
+    fullName: string;
+    over18: string;
+    dob: string;
+    address: string;
+    nationalId: string;
+    vaccination: string;
+    yes: string;
+    nothingShared: string;
+    declinedText: string;
+    sharedTitle: string;
+    sharedText: string;
+    done: string;
+    askingText: string;
+    purpose: string;
+    scope: string;
+    chooseShare: string;
+    notShared: string;
+    shareN: string;
+    selectOne: string;
+    revokeLater: string;
+    supportThread: string;
+    supportDesk: string;
+    citizen: string;
+    supportTitle: string;
+    fromSubstrate: string;
+  };
   /** Wallet permits, inbox, payments, document verification and signing. */
   pages: {
     permits: string;
@@ -474,5 +530,59 @@ export const en: Messages = {
     submitApplication: 'Submit application',
     otherChannels: 'Prefer not to use a phone? Dial *civic#, visit any office, or ask an agent. The same application works on every channel.',
     somethingWrong: 'Something went wrong',
+  },
+  more: {
+    draft: 'Draft',
+    submitted: 'Submitted',
+    inReview: 'In review',
+    needsInfo: 'Action needed',
+    approved: 'Approved',
+    declined: 'Declined',
+    billPaid: 'Paid',
+    billOverdue: 'Overdue',
+    billDue: 'Due',
+    fullName: 'Full name',
+    over18: 'Over 18',
+    dob: 'Date of birth',
+    address: 'Address',
+    nationalId: 'National ID number',
+    vaccination: 'Pneumococcal vaccination',
+    yes: 'Yes',
+    nothingShared: 'Nothing shared',
+    declinedText: 'You declined the request from {who}. No attributes were disclosed; the decline is noted in your access log.',
+    sharedTitle: 'Shared',
+    sharedText: 'You shared {n} of {total} requested attributes with {who} for this visit only. This is now in your records access log. You can revoke it later.',
+    done: 'Done',
+    askingText: '{who} is asking to verify the following, for the purpose of {purpose}, for {scope}:',
+    purpose: 'scheduling a vaccination follow-up',
+    scope: 'this visit only',
+    chooseShare: 'Choose what to share',
+    notShared: 'Not shared',
+    shareN: 'Share {n} now',
+    selectOne: 'Select at least one',
+    revokeLater: 'You can revoke this later.',
+    supportThread: 'Support thread',
+    supportDesk: 'Citizen support desk',
+    citizen: 'Citizen',
+    supportTitle: 'Your conversation with the support desk',
+    fromSubstrate: 'From the substrate',
+  },
+  detail: {
+    notFoundPermit: 'Permit not found.',
+    notFoundReceipt: 'Receipt not found.',
+    officer: 'Officer {name}',
+    actionNeeded: 'Action needed.',
+    actionNeededText: 'The officer asked for more information. You can respond here, on paper at any office, or through an agent — whichever works for you.',
+    details: 'Details',
+    progress: 'Progress',
+    aiPermit: 'An AI Copilot helped the reviewing officer by drafting a summary. {bold} The AI does not decide.',
+    aiPermitBold: 'The officer signs every decision.',
+    neverDelays: 'Questioning a decision never delays or penalises your application.',
+    grantApproved: 'The Ministry of Social Protection approved your monthly child grant. Eligibility was verified by {officer}.',
+    officerWithId: 'Officer {name} (ID {id})',
+    total: 'Total: {amount}',
+    aiReceipt: 'An AI Copilot helped Officer {name} by drafting an eligibility summary. {bold}',
+    aiReceiptBold: 'The officer signed the decision.',
+    aiNotDecide: 'The AI did not decide. The officer did.',
   },
 };

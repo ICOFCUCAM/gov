@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Pill, Dot, type PillTone } from './Pill';
 import type { Receipt as ReceiptT } from '@/lib/types';
-
 import { nationMessages } from '@/lib/nation/registry';
 import { t } from '@/lib/i18n';
 export interface ReceiptCardProps {

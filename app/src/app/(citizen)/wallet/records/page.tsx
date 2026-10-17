@@ -8,7 +8,6 @@ import { Pill } from '@/components/ui/Pill';
 import { Button } from '@/components/ui/Button';
 import { civicRef } from '@/lib/civic-ref';
 import { DEMO_CITIZEN, DEMO_OFFICERS, homePlace, } from '@/lib/nation/persona';
-
 import { nationMessages } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 const accessLogFor = (home: string) => [

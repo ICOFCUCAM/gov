@@ -5,7 +5,6 @@ import { ReceiptCard } from '@/components/ui/Receipt';
 import type { Receipt } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
 import { DEMO_CITIZEN, DEMO_OFFICERS, homePlace, money, nationPaymentRail } from '@/lib/nation/persona';
-
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t, type Messages } from '@/lib/i18n';
 const today = new Date('2026-05-14T09:14:00');

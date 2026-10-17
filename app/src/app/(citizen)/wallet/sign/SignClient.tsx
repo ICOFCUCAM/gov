@@ -7,7 +7,6 @@ import { Plain } from '@/components/ui/Plain';
 import { api } from '@/lib/api/client';
 import type { SignatureResult } from '@/lib/api/types';
 import { DEMO_CITIZEN } from '@/lib/nation/persona';
-
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 const DOC = {

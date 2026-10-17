@@ -6,7 +6,6 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { listNotifications } from '@/lib/data/store';
 import { SupportThread } from './SupportThread';
 import { SubstrateNotices } from './SubstrateNotices';
-
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 export const dynamic = 'force-dynamic';

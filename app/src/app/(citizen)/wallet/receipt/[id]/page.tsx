@@ -8,6 +8,8 @@ import type { Receipt } from '@/lib/types';
 import { DEMO_CITIZEN, DEMO_OFFICERS, homePlace, money, nationPaymentRail } from '@/lib/nation/persona';
 
 import { nationMessages } from '@/lib/nation/registry';
+import { t as fill } from '@/lib/i18n';
+import { rich } from '@/lib/i18n/rich';
 // Mock receipt lookup. Production: server fetch with sovereign-controlled auth.
 const receiptsFor = (): Record<string, Receipt> => ({
   'R-3F9A2': {
@@ -40,12 +42,12 @@ export default function ReceiptPage({ params }: PageProps) {
           activeTab="/wallet"
           header={
             <>
-              <Link href="/wallet" className="underline underline-offset-2">← Home</Link>
+              <Link href="/wallet" className="underline underline-offset-2">← {m.common.home}</Link>
               <span className="font-mono text-xs">{params.id}</span>
             </>
           }
         >
-          <p>Receipt not found.</p>
+          <p>{m.detail.notFoundReceipt}</p>
         </PhoneShell>
       </main>
     );
@@ -57,7 +59,7 @@ export default function ReceiptPage({ params }: PageProps) {
         activeTab="/wallet"
         header={
           <>
-            <Link href="/wallet" className="underline underline-offset-2">← Home</Link>
+            <Link href="/wallet" className="underline underline-offset-2">← {m.common.home}</Link>
             <span className="font-mono text-xs">{receipt.id}</span>
           </>
         }
@@ -67,9 +69,7 @@ export default function ReceiptPage({ params }: PageProps) {
         <section>
           <h3 className="font-semibold text-lg">{m.receipt.whatHappened}</h3>
           <p>
-            The Ministry of Social Protection approved your monthly child grant.
-            Eligibility was verified by{' '}
-            <strong>Officer {receipt.officerName} (ID {receipt.officerId})</strong>.
+            {rich(m.detail.grantApproved, { officer: <strong>{fill(m.detail.officerWithId, { name: receipt.officerName ?? '', id: receipt.officerId ?? '' })}</strong> })}
           </p>
         </section>
 
@@ -80,7 +80,7 @@ export default function ReceiptPage({ params }: PageProps) {
               {receipt.reasoning.map(r => (
                 <li key={r}>{r}</li>
               ))}
-              <li><strong>Total: {receipt.amount}</strong></li>
+              <li><strong>{fill(m.detail.total, { amount: receipt.amount ?? '' })}</strong></li>
             </ul>
           </section>
         ) : null}
@@ -90,11 +90,10 @@ export default function ReceiptPage({ params }: PageProps) {
             <h3 className="font-semibold text-lg">{m.receipt.wasAIInvolved}</h3>
             <CopilotPanel decisionClass={receipt.aiClass}>
               <p>
-                An AI Copilot helped Officer {receipt.officerName} by drafting an
-                eligibility summary. <strong>The officer signed the decision.</strong>
+                {rich(m.detail.aiReceipt, { name: receipt.officerName ?? '', bold: <strong>{m.detail.aiReceiptBold}</strong> })}
               </p>
               <p className="text-ink-muted text-sm">
-                The AI did not decide. The officer did.
+                {m.detail.aiNotDecide}
               </p>
             </CopilotPanel>
           </section>

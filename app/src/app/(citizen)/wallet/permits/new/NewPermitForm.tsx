@@ -8,7 +8,6 @@ import { Plain } from '@/components/ui/Plain';
 import { api } from '@/lib/api/client';
 import type { PermitType } from '@/lib/api/types';
 import { DEMO_CITIZEN, homePlace } from '@/lib/nation/persona';
-
 import { nationMessages } from '@/lib/nation/registry';
 import type { Messages } from '@/lib/i18n';
 // Labels in the nation's language; the values sent to the API are unchanged.
