@@ -95,6 +95,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   nation). Every fallback incident opens a P2 ticket automatically. Each
   nation has a status page (`/updates/status`) and a monthly SLA report;
   the publisher works the queue and declares service incidents in the console.
+- Assurance (`lib/data/supply-chain.ts`, `/updates/assurance`): every
+  artifact has SLSA v1 provenance (builder, source commit, build time,
+  materials, digest) served as a DSSE attestation through the nation's own
+  download link; every release is deposited in source-code escrow (contents
+  hash, agent, release conditions) and nations can request source-code
+  audits by their own auditors. Each nation sees only its own releases.
 
 ## Branding and AI
 

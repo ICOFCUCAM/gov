@@ -1556,6 +1556,9 @@ export function nationForAgent(credential: string | null | undefined): Subscribe
 }
 
 /** A release this nation may see (for readiness, advisories and other per-release routes). */
+/** Every release, global and nation builds (server-side callers only; never sent to a nation). */
+export function allReleases(): DistributionRelease[] { return [...udb().releases]; }
+
 export function releaseFor(nationId: string, releaseId: string): DistributionRelease | undefined {
   const r = udb().releases.find(x => x.id === releaseId);
   return r && visibleTo(r, nationId) ? r : undefined;

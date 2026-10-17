@@ -8,6 +8,7 @@ import { OnboardingFrame, Eyebrow, Section, Rule, Field, inputCls, Select, goldB
 import type { ChamberRelease, ChangeKind, DeliveryMode, InstallAction, InstallEvent, ReleaseChange, UpdateChamber } from '@/lib/api/types';
 import { fallbackMode, ProbationPanel } from './resilience';
 import { ReadinessPanel } from './ReadinessPanel';
+import { ProvenancePanel } from './Assurance';
 import {
   ArtifactTable, ChamberNav, ChamberTabs, ChangeChip, ChannelChip, Chip, CHANGE_LABEL, CHANGE_ORDER, ErrorLine, Loading, MODE_LABEL,
   Panel, PoweredBy, SeverityChip, StateChip, STATE_LABEL, VerifyGuide, VersionBadge, fmtBytes, fmtDate, fmtDateTime, useActor, useCenterTitle, useLink,
@@ -253,6 +254,12 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
         <Section n="06" title="Verify before you install">
           <VerifyGuide publisherKey={c.publisherKey} />
         </Section>
+
+        <div id="provenance" className="scroll-mt-6">
+          <Section n="07" title="Build provenance" aside="SLSA v1 · in-toto attestations">
+            <ProvenancePanel releaseId={r.id} link={link} />
+          </Section>
+        </div>
       </div>
 
       <aside className="lg:sticky lg:top-6 lg:self-start">

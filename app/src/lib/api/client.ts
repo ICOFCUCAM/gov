@@ -95,6 +95,12 @@ import type {
   StatusPage,
   SlaReport,
   ServiceIncident,
+  ProvenanceSummary,
+  PublisherKey,
+  EscrowAgreement,
+  EscrowStatusRow,
+  SourceReview,
+  SourceReviewEnvironment,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -365,6 +371,14 @@ export const api = {
       req<{ request: FeatureRequest }>('/api/releases/requests', { method: 'POST', body: JSON.stringify(body) }),
     downloadUrl: (channelKey: string, artifactId: string) =>
       `/api/releases/download/${encodeURIComponent(channelKey)}/${encodeURIComponent(artifactId)}`,
+    attestationUrl: (channelKey: string, artifactId: string) =>
+      `/api/releases/download/${encodeURIComponent(channelKey)}/${encodeURIComponent(artifactId)}/provenance`,
+    provenance: (id: string, link?: string) =>
+      req<{ provenance: ProvenanceSummary[]; publisherKey: PublisherKey; channelKey: string }>(`/api/releases/${encodeURIComponent(id)}/provenance${linkQ(link)}`),
+    escrow: (link?: string) =>
+      req<{ agreement?: EscrowAgreement; status: EscrowStatusRow[]; reviews: SourceReview[]; environments: Record<SourceReviewEnvironment, string> }>(`/api/releases/escrow${linkQ(link)}`),
+    escrowAction: (body: { action: 'request-review' | 'withdraw-review'; by: string; id?: string; link?: string; releaseId?: string; auditor?: string; auditorKind?: string; scope?: string; purpose?: string; environment?: string; ndaAccepted?: boolean }) =>
+      req<{ review: SourceReview }>('/api/releases/escrow', { method: 'POST', body: JSON.stringify(body) }),
     // Resilience
     health: (checks: HealthCheck[], link?: string) =>
       req<{ probation: Probation; install: NationInstall }>('/api/releases/health', { method: 'POST', body: JSON.stringify({ checks, link }) }),
@@ -435,6 +449,9 @@ export const api = {
         req<Record<string, unknown>>('/api/releases/publisher/support', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       ticketAction: async (id: string, body: { action: string; by: string; text?: string; priority?: string }) =>
         req<{ ticket: TicketView }>(`/api/releases/publisher/support/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      escrow: async () => req<{ deposits: (EscrowStatusRow & { nationId?: string })[]; reviews: SourceReview[]; nations: Record<string, string>; agent: string; depositWithinDays: number }>('/api/releases/publisher/escrow', await publisherInit()),
+      escrowAction: async (body: { action: 'deposit' | 'verify' | 'review'; by: string; [k: string]: unknown }) =>
+        req<{ ok: true }>('/api/releases/publisher/escrow', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       setStatus: async (id: string, body: { action: 'halt' | 'resume' | 'withdraw' | 'promote'; reason?: string; by?: string }) =>
         req<{ release: DistributionRelease }>(`/api/releases/publisher/releases/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
     },

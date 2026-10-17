@@ -1426,3 +1426,81 @@ export interface SlaReport {
     resolutionPct: number | null;
   };
 }
+
+// ── Update Center: supply-chain proof, source-code escrow, source audits ─
+export interface ProvenanceSummary {
+  artifactId: string;
+  filename: string;
+  kind: ArtifactKind;
+  label: string;
+  /** The in-toto subject: what the attestation is about. */
+  subject: { name: string; digest: { sha256: string } };
+  builder: { id: string; version: string };
+  buildType: string;
+  source: { uri: string; tag: string; commit: string };
+  startedOn: ISODate;
+  finishedOn: ISODate;
+  /** Inputs to the build, each pinned by digest. */
+  materials: { uri: string; digest: Record<string, string> }[];
+  slsaLevel: string;
+  verify: string[];
+}
+export interface EscrowDeposit {
+  id: string;
+  releaseId: string;
+  version: string;
+  /** Set for builds made for one nation. */
+  nationId?: string;
+  agent: string;
+  depositedAt: ISODate;
+  depositedBy: string;
+  /** SHA-256 of the deposit's contents manifest. */
+  contentsHash: string;
+  contents: string[];
+  sourceCommit: string;
+  verifiedAt?: ISODate;
+  verifiedBy?: string;
+}
+export type EscrowReleaseCondition = 'insolvency' | 'end-of-support' | 'material-breach';
+export interface EscrowAgreement {
+  nationId: string;
+  agent: string;
+  agreementRef: string;
+  effectiveFrom: ISODate;
+  covers: string;
+  depositWithinDays: number;
+  verification: string;
+  releaseConditions: { key: EscrowReleaseCondition; label: string; detail: string }[];
+  invocation: string[];
+  placeholder: true;
+}
+export interface EscrowStatusRow {
+  releaseId: string;
+  version: string;
+  title: string;
+  releasedAt: ISODate;
+  state: 'verified' | 'deposited' | 'pending' | 'overdue';
+  dueBy: ISODate;
+  installed: boolean;
+  deposit?: EscrowDeposit;
+}
+export type SourceReviewStage = 'requested' | 'scoping' | 'approved' | 'in-progress' | 'completed' | 'declined' | 'withdrawn';
+export type SourceReviewEnvironment = 'escrow-agent' | 'reading-room' | 'offline-copy';
+export interface SourceReview {
+  id: string;
+  nationId: string;
+  releaseId: string;
+  version: string;
+  auditor: string;
+  auditorKind: 'national-cert' | 'independent-firm' | 'academic' | 'government-team';
+  scope: string;
+  purpose: string;
+  environment: SourceReviewEnvironment;
+  ndaAccepted: true;
+  stage: SourceReviewStage;
+  requestedAt: ISODate;
+  requestedBy: string;
+  schedule?: { start: ISODate; end: ISODate };
+  findings?: { summary: string; critical: number; high: number; medium: number; low: number; reportRef: string };
+  history: { at: ISODate; by: string; from: SourceReviewStage | null; to: SourceReviewStage; note?: string }[];
+}

@@ -117,6 +117,7 @@
   "/treasury",
   "/updates",
   "/updates/[id]",
+  "/updates/assurance",
   "/updates/hosting",
   "/updates/requests",
   "/updates/security",
