@@ -6,6 +6,7 @@ import * as React from 'react';
 import { presidencyBoard } from '@/lib/gov/presidency-engine';
 import { MansionFrame, MansionKpi, MansionRule, MansionBar, MansionCallout, PRESIDENCY_DS } from '@/apps/presidency/design-system/presidency-ds';
 import { wave } from '@/lib/telemetry';
+import { currentOffices } from '@/lib/nation/registry';
 
 export function CabinetFloor({ id, now }: { id: string; now: number }) {
   const b = presidencyBoard(now);
@@ -29,7 +30,7 @@ export function CabinetFloor({ id, now }: { id: string; now: number }) {
           <span className="text-right" style={{ color: PRESIDENCY_DS.mut }}>{m.termMonthsRemaining}mo remaining</span>
         </div>
       ))}
-      <MansionCallout kicker="constitutional doctrine" body="The President governs through Cabinet, not above it. Decisions on policy require collective responsibility; unilateral rule-by-decree is void." />
+      <MansionCallout kicker="constitutional doctrine" body={`The ${currentOffices().headOfGovernment} governs through Cabinet, not above it. Decisions on policy require collective responsibility; unilateral rule-by-decree is void.`} />
     </MansionFrame>
   );
 }

@@ -57,3 +57,24 @@ export function nationOffices(p: SovereignProfile | null | undefined, configured
     apexCourt: c.judicialApex,
   };
 }
+
+/** The deputy to the head of government: "Vice-President" in presidential systems, otherwise "Deputy …". */
+export function deputyTitle(o: NationOffices): string {
+  return /^president$/i.test(o.headOfGovernment) ? 'Vice-President' : `Deputy ${o.headOfGovernment}`;
+}
+
+/**
+ * Order of succession to the executive, from the nation's offices: deputy,
+ * the presiding officers of the chambers (upper first), the apex court and
+ * finance. The reference order is kept until setup is complete.
+ */
+export function successionOrder(o: NationOffices): string[] {
+  if (o === REFERENCE_OFFICES) return ['Vice-President', 'Senate President', 'Speaker of the Assembly', 'Chief Justice', 'Treasury Secretary'];
+  return [
+    deputyTitle(o),
+    ...(o.upperChamber ? [`President of the ${o.upperChamber}`] : []),
+    `Speaker of the ${o.primaryChamber}`,
+    `Chief Justice of the ${o.apexCourt}`,
+    'Minister of Finance',
+  ];
+}

@@ -6,6 +6,8 @@ import * as React from 'react';
 import { presidencyBoard, PRESIDENTIAL_SAFEGUARDS } from '@/lib/gov/presidency-engine';
 import { MansionFrame, MansionKpi, MansionRule, MansionBar, MansionCallout, PRESIDENCY_DS } from '@/apps/presidency/design-system/presidency-ds';
 import { wave } from '@/lib/telemetry';
+import { currentOffices } from '@/lib/nation/registry';
+import { successionOrder } from '@/lib/nation/offices';
 
 export function TransparencyReports({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
@@ -69,13 +71,13 @@ export function RecordsPublication({ id, now }: { id: string; now: number }) {
 
 export function SuccessionLine({ id, now }: { id: string; now: number }) {
   void id; void now;
-  const line = [
-    { rank: 1, role: 'Vice-President', holder: 'Hon. Petrov' },
-    { rank: 2, role: 'Senate President', holder: 'Sen. Adamu' },
-    { rank: 3, role: 'Speaker of the Assembly', holder: 'Hon. Tanaka' },
-    { rank: 4, role: 'Chief Justice', holder: 'CJ Mehta' },
-    { rank: 5, role: 'Treasury Secretary', holder: 'Hon. Brennan' },
-  ];
+  // The order follows the nation's offices (reference order until setup is complete).
+  const holder = (role: string) =>
+    /^(Vice-President|Deputy )/.test(role) ? 'Hon. Petrov'
+      : /^(Senate President|President of the )/.test(role) ? 'Sen. Adamu'
+        : /^Speaker /.test(role) ? 'Hon. Tanaka'
+          : /^Chief Justice/.test(role) ? 'CJ Mehta' : 'Hon. Brennan';
+  const line = successionOrder(currentOffices()).map((role, i) => ({ rank: i + 1, role, holder: holder(role) }));
   return (
     <MansionFrame archetype="continuity" code="CO-SUC-24" title="Succession Line"
       subtitle="constitutional order of succession · §2.9">
@@ -164,7 +166,7 @@ export function CivilMilitaryDoctrine({ id, now }: { id: string; now: number }) 
         { label: 'Civilian audits / yr', value: 2, tone: 'ok' },
         { label: 'Mandatory training', value: '✓ all officers', tone: 'ok' },
       ]} />
-      <MansionCallout kicker="civilian supremacy" body="The President is Commander-in-Chief as a civilian office. Military officers cannot vote on civilian policy. Coup, mutiny, or unilateral mobilisation is treason." />
+      <MansionCallout kicker="civilian supremacy" body={`The ${currentOffices().headOfState} is Commander-in-Chief as a civilian office. Military officers cannot vote on civilian policy. Coup, mutiny, or unilateral mobilisation is treason.`} />
     </MansionFrame>
   );
 }

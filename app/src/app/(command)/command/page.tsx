@@ -14,9 +14,10 @@ import { buildCascade } from '@/lib/institution/cascade';
 import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
 import { constitutionFor } from '@/lib/gov/constitution';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
-import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { nationTime, nationTimeZoneLabel, currentOffices } from '@/lib/nation/registry';
 
-const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] = [
+// A function so the executive office's name follows the installed nation at render.
+const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] => [
   { g: 'Sovereign Command', items: [
     { i: '◎', l: 'National Situation Room', s: 'Real-time command & coordination', href: '/gov/situation-room', live: true },
     { i: '◆', l: 'National Shell', s: 'Whole-of-government environment', href: '/gov/shell' },
@@ -40,7 +41,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
   { g: 'Public Websites', items: [
     { i: '⛨', l: 'Government Directory', s: 'All institutions · official portals', href: '/government' },
     { i: '◯', l: 'Citizen Super-Portal', s: 'Citizen-facing service portal', href: '/portal' },
-    { i: '◈', l: 'Office of the President', s: 'Executive Mansion public site', href: '/presidency' },
+    { i: '◈', l: currentOffices().executiveOffice, s: `${currentOffices().executiveSeat} public site`, href: '/presidency' },
     { i: '⌖', l: 'National Operations Centre', s: 'Live public briefing', href: '/noc' },
   ]},
   { g: 'Foundational Services', items: [
@@ -166,7 +167,7 @@ export default function SovereignCommandCenter() {
   const exp = waveSeries('home:exp', now / 4000, 20, 60, 100);
 
   const cmd: CommandItem[] = [
-    ...RAIL.flatMap(g => g.items.map(it => ({ id: it.href + it.l, group: g.g, label: it.l, hint: it.s, href: it.href }))),
+    ...rail().flatMap(g => g.items.map(it => ({ id: it.href + it.l, group: g.g, label: it.l, hint: it.s, href: it.href }))),
   ];
 
   return (
@@ -212,7 +213,7 @@ export default function SovereignCommandCenter() {
         {/* Command rail */}
         <nav aria-label="Sovereign command" className="hidden w-[228px] shrink-0 flex-col border-r border-line bg-bg xl:flex">
           <div className="flex-1 overflow-y-auto py-2">
-            {RAIL.map(grp => (
+            {rail().map(grp => (
               <div key={grp.g} className="mb-1">
                 <div className="px-4 pb-1 pt-3 text-[9px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
                 {grp.items.map(it => (

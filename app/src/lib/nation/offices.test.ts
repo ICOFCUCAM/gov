@@ -29,3 +29,22 @@ describe('nation offices', () => {
     expect(o.upperChamber).toBe('Crown Council');
   });
 });
+
+describe('succession and deputy', () => {
+  it('keeps the reference order until setup is complete', async () => {
+    const { successionOrder, REFERENCE_OFFICES } = await import('./offices');
+    expect(successionOrder(REFERENCE_OFFICES)[0]).toBe('Vice-President');
+    expect(successionOrder(REFERENCE_OFFICES)).toHaveLength(5);
+  });
+
+  it('follows a parliamentary, single-chamber nation', async () => {
+    const { successionOrder, deputyTitle, nationOffices } = await import('./offices');
+    const o = nationOffices({
+      stateName: 'Republic of Example', stateForm: 'parliamentary', executiveTitle: 'Prime Minister',
+      legislatureName: 'Parliament', currency: 'USD', regionNoun: 'region', locale: 'en',
+      constitution: { chambers: [{ name: 'Parliament', seats: 120 }], judicialApex: 'Supreme Court' },
+    }, true);
+    expect(deputyTitle(o)).toBe('Deputy Prime Minister');
+    expect(successionOrder(o)).toEqual(['Deputy Prime Minister', 'Speaker of the Parliament', 'Chief Justice of the Supreme Court', 'Minister of Finance']);
+  });
+});

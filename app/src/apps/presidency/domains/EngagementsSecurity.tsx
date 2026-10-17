@@ -6,6 +6,8 @@ import * as React from 'react';
 import { presidencyBoard } from '@/lib/gov/presidency-engine';
 import { MansionFrame, MansionKpi, MansionRule, MansionBar, MansionCallout, PRESIDENCY_DS } from '@/apps/presidency/design-system/presidency-ds';
 import { wave } from '@/lib/telemetry';
+import { currentOffices } from '@/lib/nation/registry';
+import { deputyTitle } from '@/lib/nation/offices';
 
 export function StateEngagements({ id, now }: { id: string; now: number }) {
   const b = presidencyBoard(now);
@@ -82,7 +84,8 @@ export function DiplomaticCalls({ id, now }: { id: string; now: number }) {
 export function SecurityCouncil({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   void id;
-  const seats = ['President (chair)', 'Vice-President', 'Interior', 'Defence', 'Foreign Affairs', 'Justice', 'Emergency Response', 'Police Command'];
+  const o = currentOffices();
+  const seats = [`${o.headOfGovernment} (chair)`, deputyTitle(o), 'Interior', 'Defence', 'Foreign Affairs', 'Justice', 'Emergency Response', 'Police Command'];
   return (
     <MansionFrame archetype="security" code="SC-COU-13" title="National Security Council"
       subtitle="presidential security cabinet · §2.5">
@@ -90,7 +93,7 @@ export function SecurityCouncil({ id, now }: { id: string; now: number }) {
         { label: 'Council seats', value: seats.length },
         { label: 'Last convened', value: `${Math.round(wave('sc:l', ts, 1, 21))}d ago`, tone: 'info' },
         { label: 'Threat posture', value: 'STEADY', tone: 'ok' },
-        { label: 'Civilian chair', value: '✓ President', tone: 'ok' },
+        { label: 'Civilian chair', value: `✓ ${o.headOfGovernment}`, tone: 'ok' },
       ]} />
       <MansionRule label="council seats" />
       {seats.map((s, i) => (
@@ -100,7 +103,7 @@ export function SecurityCouncil({ id, now }: { id: string; now: number }) {
           <span className="text-right uppercase tracking-[0.16em]" style={{ color: i === 0 ? PRESIDENCY_DS.goldLeaf : PRESIDENCY_DS.jade }}>{i === 0 ? 'CHAIR' : '✓ ACTIVE'}</span>
         </div>
       ))}
-      <MansionCallout kicker="civilian supremacy" body="The Security Council is chaired by a civilian (the President). Military officers attend but do not vote. Civilian supremacy over the military is non-negotiable." />
+      <MansionCallout kicker="civilian supremacy" body={`The Security Council is chaired by a civilian (the ${o.headOfGovernment}). Military officers attend but do not vote. Civilian supremacy over the military is non-negotiable.`} />
     </MansionFrame>
   );
 }
