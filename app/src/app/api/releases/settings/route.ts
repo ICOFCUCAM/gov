@@ -11,8 +11,8 @@ export const dynamic = 'force-dynamic';
 export async function PUT(req: NextRequest) {
   const r = await chamberBody<Partial<ResilienceSettings> & { estate?: { servers?: number; endpoints?: number }; by?: string }>(req);
   if (r instanceof NextResponse) return r;
-  const { by, estate, probationMinutes, fallback, healthSource, ring, definitionsPolicy } = r.b;
-  const out = updateSettings(r.nation.id, { estate, probationMinutes, fallback, healthSource, ring, definitionsPolicy }, typeof by === 'string' ? by : '');
+  const { by, estate, probationMinutes, fallback, healthSource, ring, definitionsPolicy, stagingRequired } = r.b;
+  const out = updateSettings(r.nation.id, { estate, probationMinutes, fallback, healthSource, ring, definitionsPolicy, stagingRequired }, typeof by === 'string' ? by : '');
   if ('error' in out) return NextResponse.json(out, { status: 422 });
   return NextResponse.json({ nation: out });
 }

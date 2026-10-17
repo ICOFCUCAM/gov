@@ -922,6 +922,8 @@ export interface ResilienceSettings {
   ring: RolloutRing;
   /** Security definitions are data: applied automatically by default. */
   definitionsPolicy: 'automatic' | 'manual';
+  /** A production install needs the same release to pass staging probation and a UAT sign-off (default on). */
+  stagingRequired: boolean;
 }
 
 export interface SubscribedNation {
@@ -1239,4 +1241,47 @@ export interface HostingCenter {
   basis: HostingQuestionnaire;
   requests: HostingRequest[];
   model: { version: string; unitCosts: { label: string; value: string }[] };
+}
+
+// ── Update Center: preflight compatibility and staging ────────────────
+export type PreflightStatus = 'compatible' | 'needs-change' | 'blocking';
+export interface PreflightFinding {
+  key: string;
+  subject: string;
+  kind: 'module' | 'integration' | 'build' | 'configuration' | 'institution';
+  status: PreflightStatus;
+  reason: string;
+  /** A blocking finding waived by two named officials. */
+  waiver?: { by: string; secondBy: string; reason: string; at: ISODate };
+}
+export interface PreflightReport {
+  nationId: string;
+  releaseId: string;
+  version: string;
+  runAt: ISODate;
+  runBy: string;
+  findings: PreflightFinding[];
+  summary: { compatible: number; needsChange: number; blocking: number; waived: number };
+  /** No blocking finding is left unwaived. */
+  approvable: boolean;
+}
+export interface StagingRun {
+  releaseId: string;
+  version: string;
+  state: 'probation' | 'passed' | 'failed';
+  startedAt: ISODate;
+  endsAt: ISODate;
+  startedBy: string;
+  passedAt?: ISODate;
+  failedReason?: string;
+  uat?: { tester: string; date: ISODate; evidence: string; signedAt: ISODate };
+}
+export interface StagingEnvironment {
+  nationId: string;
+  name: string;
+  url?: string;
+  provisioned: boolean;
+  /** Hosted nations get staging provisioned by the publisher. */
+  provisionedBy?: 'publisher' | 'nation';
+  runs: StagingRun[];
 }

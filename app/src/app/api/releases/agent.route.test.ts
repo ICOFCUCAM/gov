@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { resetReadiness } from '@/lib/data/readiness';
+import { stagingOff } from '@/lib/data/testkit';
 import { POST as healthPOST } from './health/route';
 import { POST as credentialPOST } from './settings/agent-credential/route';
 import { POST as decisionPOST } from './[id]/decision/route';
@@ -26,7 +28,7 @@ async function installSecurityRelease() {
   expect(r.status).toBe(200);
 }
 
-beforeEach(() => { resetUpdates(); resetSecurity(); });
+beforeEach(() => { resetUpdates(); resetReadiness(); stagingOff(); resetSecurity(); });
 afterEach(() => { vi.useRealTimers(); delete process.env.CIVICOS_CRON_SECRET; });
 
 describe('deployment-agent credential', () => {

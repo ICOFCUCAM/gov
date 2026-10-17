@@ -78,6 +78,9 @@ import type {
   HostingCenter,
   HostingRequest,
   HostingQuestionnaire,
+  PreflightReport,
+  StagingEnvironment,
+  StagingRun,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -353,6 +356,12 @@ export const api = {
       req<{ probation: Probation; install: NationInstall }>('/api/releases/health', { method: 'POST', body: JSON.stringify({ checks, link }) }),
     settings: (patch: Partial<ResilienceSettings> & { estate?: { servers?: number; endpoints?: number }; by: string; link?: string }) =>
       req<{ nation: SubscribedNation }>('/api/releases/settings', { method: 'PUT', body: JSON.stringify(patch) }),
+    readiness: (id: string, link?: string) =>
+      req<{ preflight: PreflightReport | null; staging: StagingEnvironment; run: StagingRun | null; stagingRequired: boolean }>(`/api/releases/${encodeURIComponent(id)}/readiness${linkQ(link)}`),
+    readinessAction: (id: string, body: { action: 'preflight' | 'waive' | 'stage' | 'stage-fail' | 'uat'; by?: string; secondBy?: string; reason?: string; findingKey?: string; tester?: string; date?: string; evidence?: string; link?: string }) =>
+      req<{ preflight?: PreflightReport; run?: StagingRun }>(`/api/releases/${encodeURIComponent(id)}/readiness`, { method: 'POST', body: JSON.stringify(body) }),
+    registerStaging: (body: { name: string; url: string; by: string; link?: string }) =>
+      req<{ staging: StagingEnvironment }>('/api/releases/staging', { method: 'POST', body: JSON.stringify(body) }),
     hosting: (link?: string) => req<{ hosting: HostingCenter }>(`/api/releases/hosting${linkQ(link)}`),
     requestHosting: (body: { path: string; questionnaire: Partial<HostingQuestionnaire>; by: string; link?: string }) =>
       req<{ request: HostingRequest }>('/api/releases/hosting', { method: 'POST', body: JSON.stringify(body) }),

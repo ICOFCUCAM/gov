@@ -68,6 +68,7 @@ import type {
 import { createHash, timingSafeEqual } from 'node:crypto';
 import { recordAudit, getSovereign, getSetup, listMinistries, listReleases, verifyAuditChain } from './store';
 import { securityGate, posture as securityPosture } from './security-store';
+import { preflightGate, stagingGate, superviseStaging } from './readiness';
 
 /** Backward compatible with the previous release: every migration reversible and expand/contract, never in place. */
 export function isBackwardCompatible(migrations: ReleaseMigration[]): boolean {
@@ -95,7 +96,7 @@ export const HEALTH_CHECKS: { key: HealthCheckKey; label: string; critical: bool
   { key: 'smoke-registry', label: 'Smoke test: registry', critical: true },
 ];
 export const DEFAULT_SETTINGS: ResilienceSettings = {
-  probationMinutes: 30, fallback: 'automatic', healthSource: 'simulated', ring: 'general', definitionsPolicy: 'automatic',
+  probationMinutes: 30, fallback: 'automatic', healthSource: 'simulated', ring: 'general', definitionsPolicy: 'automatic', stagingRequired: true,
 };
 /** The system's name in the audit chain when it acts on its own (fallback, probation verdicts). */
 export const SYSTEM_ACTOR = 'system (resilience watchdog)';
@@ -618,9 +619,14 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
   let incident: FallbackIncident | undefined;
 
   switch (input.action) {
-    case 'approve':
+    case 'approve': {
       if (!gt(r.version, n.installedVersion)) return { error: `Already running ${n.installedVersion}; ${r.version} is not newer`, status: 409 };
+      // Preflight: customisations are scanned against the release; blocking findings stop approval.
+      const pf = preflightGate(n, r, by);
+      if (!pf.ok) return { error: pf.error, status: 409 };
+      event.note = [`Preflight: ${pf.report.summary.compatible} compatible, ${pf.report.summary.needsChange} need change, ${pf.report.summary.blocking} blocking${pf.report.summary.waived ? ` (${pf.report.summary.waived} waived)` : ''}`, note].filter(Boolean).join(' · ');
       break;
+    }
     case 'schedule': {
       if (!r.delivery.includes('saas')) return { error: 'This release is not offered as a hosted upgrade; download it instead', status: 422 };
       const w = input.window;
@@ -656,6 +662,8 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
       }
       const busy = runningProbation(n);
       if (busy) return { error: `${busy.version} is still on probation; let it conclude before installing another release`, status: 409 };
+      const staged = stagingGate(n, r);
+      if (!staged.ok) return { error: staged.error, status: 409 };
       const rp = cur.restorePoint;
       if (!rp || !rp.verified || rp.version !== n.installedVersion) {
         return { error: `Take a verified restore point of ${n.installedVersion} before installing (it protects the version you fall back to)`, status: 409 };
@@ -1225,6 +1233,7 @@ export interface WatchdogSummary {
 }
 
 export function superviseProbations(now = Date.now()): WatchdogSummary {
+  superviseStaging(now);
   const out: WatchdogSummary = { at: new Date(now).toISOString(), nations: udb().nations.length, watching: [], passed: [], fellBack: [], awaitingDecision: [], missingReports: 0 };
   for (const n of udb().nations) {
     if (!n.installedReleaseId) continue;
@@ -1363,6 +1372,7 @@ export function updateSettings(nationId: string, patch: Partial<ResilienceSettin
   if (patch.healthSource !== undefined) { if (patch.healthSource !== 'simulated' && patch.healthSource !== 'agent') return { error: 'Health source must be simulated or agent' }; next.healthSource = patch.healthSource; }
   if (patch.ring !== undefined) { if (patch.ring !== 'pilot' && patch.ring !== 'general') return { error: 'Ring must be pilot or general' }; next.ring = patch.ring; }
   if (patch.definitionsPolicy !== undefined) { if (patch.definitionsPolicy !== 'automatic' && patch.definitionsPolicy !== 'manual') return { error: 'Definitions policy must be automatic or manual' }; next.definitionsPolicy = patch.definitionsPolicy; }
+  if (patch.stagingRequired !== undefined) { if (typeof patch.stagingRequired !== 'boolean') return { error: 'Staging policy must be on or off' }; next.stagingRequired = patch.stagingRequired; }
   let estate = n.estate;
   if (patch.estate) {
     const sv = Number(patch.estate.servers ?? n.estate.servers), ep = Number(patch.estate.endpoints ?? n.estate.endpoints);
@@ -1500,4 +1510,10 @@ export function nationForAgent(credential: string | null | undefined): Subscribe
     if (have.length === want.length && timingSafeEqual(have, want)) return nationById(nationId) ?? null;
   }
   return null;
+}
+
+/** A release this nation may see (for readiness, advisories and other per-release routes). */
+export function releaseFor(nationId: string, releaseId: string): DistributionRelease | undefined {
+  const r = udb().releases.find(x => x.id === releaseId);
+  return r && visibleTo(r, nationId) ? r : undefined;
 }

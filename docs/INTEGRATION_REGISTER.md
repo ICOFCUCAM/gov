@@ -135,3 +135,10 @@ Four paths at `/updates/hosting`: sovereign data centre, another cloud, our host
 | 10.6 | **Migration between paths** | Placeholder. Assessments list the migration steps and guarantees (full export in open formats, no lock-in, parallel run). The export tooling itself is not built. | Build the export/import tooling: PostgreSQL dump, object-storage manifest with checksums, audit-chain export with proofs, and a reconciliation report. | `migration()` in `app/src/lib/updates/hosting-model.ts` |
 | 10.7 | **Persistence** | In-memory, like the rest of the Update Center. | Move requests and assessments to the durable datastore (1.1). | `app/src/lib/data/hosting.ts` |
 
+## 11. Update Center — change readiness and governance
+
+| # | Area | Today | To integrate | Where |
+|---|---|---|---|---|
+| 11.1 | **Preflight compatibility rules** | Partial. Deterministic rules match the release's breaking changes, removals and in-place migrations against the nation's registered modules, integrations and builds, its integration clients, applied configuration bundles and custom-charter institutions. There is no static analysis of the code itself. | Ship a machine-readable API/schema diff with each release, and have nations' modules declare the APIs they use (a manifest) so the scan compares real dependencies. Run contract tests on staging. | `scan()` in `app/src/lib/data/readiness.ts` |
+| 11.2 | **Staging environments** | Placeholder. Hosted nations are shown a provisioned staging URL; self-hosted nations register theirs. Staging probation passes when its window ends unless someone records a failure; no deployment happens. | Provision a real staging tenant per hosted nation; have the deployment agent report staging health (same credential model as 3.6); copy anonymised production data for UAT. | `stagingEnvironment()`, `superviseStaging()` in `app/src/lib/data/readiness.ts` |
+

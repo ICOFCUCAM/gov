@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { resetReadiness } from '@/lib/data/readiness';
+import { stagingOff } from '@/lib/data/testkit';
 import {
   resetSecurity, createQuote, orderAction, securityGate, registerByo, registerSoftware, definitions, applyDefinitions,
   posture, securityDownload, listOrders, pricing, setStorePolicy, securityCenter,
@@ -20,7 +22,7 @@ function buy(productId = 'SEC-EDR', seats = 48): SecurityOrder {
   return ok(orderAction(home(), q.id, { action: 'pay', paymentReference: 'TRF-88120', by: 'Accountant General' }));
 }
 
-beforeEach(() => { resetUpdates(); resetSecurity(); });
+beforeEach(() => { resetUpdates(); resetReadiness(); stagingOff(); resetSecurity(); });
 
 describe('paid flow: quote → order → invoice → payment → licence', () => {
   it('prices in the nation’s currency and issues a licence only on payment, auditing each step', () => {

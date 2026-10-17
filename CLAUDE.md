@@ -75,6 +75,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   costs, every figure labelled an estimate); the publisher's engineering
   review issues versioned assessments. Switching paths is a new request with
   a migration plan, data export and no lock-in.
+- Readiness (`lib/data/readiness.ts`): approval rescans the nation's
+  customisations (preflight); unwaived blocking findings stop it, and only
+  two named officials can waive one. A production install needs the release
+  to have passed staging probation plus a named UAT sign-off (per-nation
+  policy, on by default).
 
 ## Branding and AI
 

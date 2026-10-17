@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { resetReadiness } from '@/lib/data/readiness';
+import { stagingOff } from '@/lib/data/testkit';
 import {
   resetUpdates, getChamber, decide, reportHealth, superviseProbations, updateSettings, breakGlass, restoreData,
   setReleaseStatus, releaseStats, acknowledgeIncident, publishRelease, nationRecord, HOME_NATION, SYSTEM_ACTOR, HEALTH_CHECKS,
@@ -28,7 +30,7 @@ function installSecurity(settings: Parameters<typeof updateSettings>[1] = {}) {
   return r.install.probation!;
 }
 
-beforeEach(() => { resetUpdates(); resetSecurity(); });
+beforeEach(() => { resetUpdates(); resetReadiness(); stagingOff(); resetSecurity(); });
 
 describe('restore point before every install', () => {
   it('refuses to install without a verified restore point of the running version', () => {

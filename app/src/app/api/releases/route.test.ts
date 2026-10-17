@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { resetReadiness } from '@/lib/data/readiness';
+import { stagingOff } from '@/lib/data/testkit';
 
 // Publisher auth delegates to the platform tier; stub it so the enforce path is testable.
 const platformAuth = vi.fn();
@@ -30,7 +32,7 @@ async function overview(): Promise<PublisherOverview> {
   return (await (await publisherGET(get('/api/releases/publisher'))).json()).overview;
 }
 
-beforeEach(() => { resetUpdates(); resetSecurity(); platformAuth.mockReset(); });
+beforeEach(() => { resetUpdates(); resetReadiness(); stagingOff(); resetSecurity(); platformAuth.mockReset(); });
 afterEach(() => { delete process.env.CIVICOS_AUTH; });
 
 describe('GET /api/releases (update chamber)', () => {

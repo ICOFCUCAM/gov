@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
+import { resetReadiness } from '@/lib/data/readiness';
+import { stagingOff } from '@/lib/data/testkit';
 import {
   resetUpdates, getChamber, getChamberRelease, decide, submitRequest, advanceRequest,
   publishRelease, enrolNation, publisherOverview, downloadManifest, upgradePath, resolveNation,
@@ -25,7 +27,7 @@ const nationBuild = (over: Partial<PublishInput> = {}): PublishInput => ({
   ...over,
 });
 
-beforeEach(() => { resetUpdates(); resetSecurity(); });
+beforeEach(() => { resetUpdates(); resetReadiness(); stagingOff(); resetSecurity(); });
 
 /** Estate-wide BYO attestation: satisfies the security rule for platform releases. */
 const coverHome = () => {

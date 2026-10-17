@@ -100,7 +100,14 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
           </div>
         </Section>
 
-        <Section n="04" title="Security definitions and estate">
+        <Section n="04" title="Staging before production">
+          <div className="grid gap-3 md:grid-cols-2">
+            {choice('staging', 'on', form.stagingRequired ? 'on' : 'off', 'Require staging and user acceptance (recommended)', 'A production install needs the same release to pass staging probation and a named tester’s user-acceptance sign-off. Hosted nations get staging provisioned; self-hosted nations register theirs on a release page.', () => set('stagingRequired', true))}
+            {choice('staging', 'off', form.stagingRequired ? 'on' : 'off', 'Install straight to production', 'Probation and automatic software fallback still protect every install. Use only where no staging environment exists.', () => set('stagingRequired', false))}
+          </div>
+        </Section>
+
+        <Section n="05" title="Security definitions and estate">
           <div className="grid gap-4 md:grid-cols-3">
             <Field label="Definitions policy" hint="Definitions are data (scanner rules, signatures), not software.">
               <Select value={form.definitionsPolicy} onChange={e => set('definitionsPolicy', e.target.value as ResilienceSettings['definitionsPolicy'])}>
@@ -120,14 +127,14 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
         <div className="mt-3 min-h-[20px]" aria-live="polite">{err ? <ErrorLine>{err}</ErrorLine> : ok ? <p className="text-[12.5px] text-[#9be7c4]">{ok}</p> : null}</div>
       </form>
 
-      <Section n="05" title="Fallback incidents" aside={`${c.incidents.length} recorded`}>
+      <Section n="06" title="Fallback incidents" aside={`${c.incidents.length} recorded`}>
         <div className="grid gap-3">
           {c.incidents.map(i => <IncidentCard key={i.id} i={i} q={q} />)}
           {!c.incidents.length ? <p className="text-[13.5px] font-light text-white/50">No fallbacks so far.</p> : null}
         </div>
       </Section>
 
-      <Section n="06" title="Break-glass restore">
+      <Section n="07" title="Break-glass restore">
         <BreakGlass c={c} link={link} reload={reload} />
       </Section>
     </>

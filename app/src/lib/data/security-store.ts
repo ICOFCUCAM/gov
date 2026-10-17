@@ -179,6 +179,7 @@ function seedSecurity(): SecurityDb {
     ],
     software: [
       { id: 'NS-1001', nationId: 'home', name: 'Land registry connector', version: '1.2.0', kind: 'integration', registeredAt: at(-48), registeredBy: 'National IT agency', securedBy: 'byo', securedByRef: 'BYO-1001' },
+      { id: 'NS-1002', nationId: 'home', name: 'Revenue rules module', version: '0.9.4', kind: 'module', registeredAt: at(-20), registeredBy: 'Revenue authority IT', securedBy: 'byo', securedByRef: 'BYO-1001' },
     ],
     defs: { home: { installedCycle: cycleAt(now) - 36, installedAt: at(-9) } },
     seq: 3000,

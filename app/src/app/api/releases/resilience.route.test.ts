@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { resetReadiness } from '@/lib/data/readiness';
+import { stagingOff } from '@/lib/data/testkit';
 
 const platformAuth = vi.fn();
 vi.mock('@/lib/platform-auth', () => ({ platformOrCronAuthorized: (req: Request) => platformAuth(req) }));
@@ -47,7 +49,7 @@ const health = (body: unknown) => healthPOST(new Request('http://x/api/releases/
   headers: { 'content-type': 'application/json', authorization: `Bearer ${agent}` },
 }) as never);
 beforeEach(() => {
-  resetUpdates(); resetSecurity(); platformAuth.mockReset();
+  resetUpdates(); resetReadiness(); stagingOff(); resetSecurity(); platformAuth.mockReset();
   const c = issueAgentCredential('home', 'CIO');
   if ('error' in c) throw new Error(c.error);
   agent = c.credential;
@@ -155,6 +157,6 @@ describe('security store over HTTP', () => {
     expect((await defsPOST(post({ by: 'CISO' }))).status).toBe(200);
     const sec = await security();
     expect(sec.byo.length).toBe(2);
-    expect(sec.software.length).toBe(2);
+    expect(sec.software.length).toBe(3); // two seeded (integration, module) + the one registered here
   });
 });
