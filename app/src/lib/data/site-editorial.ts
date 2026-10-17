@@ -16,6 +16,9 @@ import { SITE_IDS } from '@/lib/public-sites';
 import type { SiteOverride, SiteSection } from '@/lib/public-sites/types';
 import { checkPublicUrl } from '@/lib/public-sites/url-safety';
 import { presetsFor } from '@/apps/_shared/public/design/presets';
+import { siteContent } from '@/lib/public-sites';
+import { translatableStrings, translationProblem, type TranslationEntries } from '@/lib/public-sites/translation';
+import { locales } from '@/lib/i18n/config';
 
 export interface SiteChange {
   /** Fields of the site's content; each replaces the published (or reference) field whole. */
@@ -24,6 +27,10 @@ export interface SiteChange {
   preset?: string | null;
   /** Restoring an earlier version: the content replaces the published content entirely. */
   replace?: boolean;
+  /** Translations of the site's text into one language (string by string, each with its source). */
+  translation?: { locale: string; entries: TranslationEntries };
+  /** Restoring: the translations to put back in place of the published ones. */
+  translations?: Record<string, TranslationEntries>;
 }
 
 export interface SiteProposal {
@@ -47,6 +54,8 @@ export interface SiteVersion {
   version: number;
   content: SiteOverride;
   preset?: string;
+  /** The published translations at this version, by language. */
+  translations: Record<string, TranslationEntries>;
   proposalId: string;
   proposedBy: string;
   publishedBy: string;
@@ -61,13 +70,15 @@ export interface SiteEditorial {
   published?: SiteVersion;
   versions: SiteVersion[];
   proposals: SiteProposal[];
+  /** Published translations by language. */
+  translations: Record<string, TranslationEntries>;
 }
 
 const g = globalThis as unknown as { __civicosEditorial?: Map<string, SiteEditorial> };
 const db = (g.__civicosEditorial ??= new Map<string, SiteEditorial>());
 
 export function siteEditorial(siteId: string): SiteEditorial {
-  return db.get(siteId) ?? { siteId, version: 0, versions: [], proposals: [] };
+  return db.get(siteId) ?? { siteId, version: 0, versions: [], proposals: [], translations: {} };
 }
 
 /** The nation's published content for a site, laid over its reference record. */
@@ -75,13 +86,28 @@ export function publishedOverride(siteId: string): SiteOverride | undefined {
   return db.get(siteId)?.published?.content;
 }
 
+/** The site's published translation into a language. */
+export function publishedTranslation(siteId: string, locale: string): TranslationEntries | undefined {
+  return db.get(siteId)?.translations[locale];
+}
+
 /** A pending proposal's content laid over what is published, for previewing it on the site. */
-export function previewOverride(siteId: string, proposalId: string): { content: SiteOverride; preset?: string | null } | null {
+export function previewOverride(siteId: string, proposalId: string): { content: SiteOverride; preset?: string | null; translations: Record<string, TranslationEntries> } | null {
   const e = db.get(siteId);
   const p = e?.proposals.find(x => x.id === proposalId && x.status === 'pending');
   if (!e || !p) return null;
   const content = p.change.replace ? { ...(p.change.content ?? {}) } : { ...(e.published?.content ?? {}), ...(p.change.content ?? {}) };
-  return { content, preset: p.change.preset };
+  return { content, preset: p.change.preset, translations: nextTranslations(e, p.change) };
+}
+
+/** The translations after a change: a restore puts its set back; a translation merges into its language. */
+function nextTranslations(e: SiteEditorial, change: SiteChange): Record<string, TranslationEntries> {
+  if (change.replace) return { ...(change.translations ?? {}) };
+  if (!change.translation) return e.translations;
+  const { locale, entries } = change.translation;
+  const merged = { ...(e.translations[locale] ?? {}), ...entries };
+  for (const [k, v] of Object.entries(merged)) if (!v.target.trim()) delete merged[k];
+  return { ...e.translations, [locale]: merged };
 }
 
 // ── Validation ───────────────────────────────────────────────────────────
@@ -158,15 +184,30 @@ export function proposeSiteChange(siteId: string, change: SiteChange, by: string
   const problem = contentProblems(content);
   if (problem) return { error: problem };
   if (change.preset !== undefined && change.preset !== null && !presetsFor(siteId).some(p => p.id === change.preset)) return { error: `Design "${change.preset}" is not one this site may use` };
+  if (change.translation) {
+    const { locale, entries } = change.translation;
+    if (locale === 'en' || !locales.some(l => l.code === locale)) return { error: `"${locale}" is not a language the platform can show` };
+    const texts = new Map(translatableStrings(siteContent(siteId, publishedOverride(siteId))).map(x => [x.path, x.text]));
+    const list = Object.entries(entries ?? {});
+    if (list.length === 0 || list.length > 2000) return { error: 'A translation needs between 1 and 2000 strings' };
+    for (const [path, en] of list) {
+      if (!texts.has(path)) return { error: `"${path}" is not text on this site` };
+      if (typeof en?.source !== 'string' || typeof en?.target !== 'string') return { error: `"${path}" needs a source and a target` };
+      if (en.source !== texts.get(path)) return { error: `The English text of "${path}" has changed; translate the current text` };
+      const problem = en.target.trim() ? translationProblem(en.source, en.target) : null;
+      if (problem) return { error: `"${path}": the translation ${problem}` };
+    }
+  }
   const summary = [
     ...(change.replace ? ['restore an earlier version'] : []),
     ...Object.keys(content).map(k => LABEL[k] ?? k),
     ...(change.preset !== undefined ? [`design → ${change.preset ?? 'default'}`] : []),
+    ...(change.translation ? [`translation (${change.translation.locale}, ${Object.keys(change.translation.entries).length} strings)`] : []),
   ];
   if (summary.length === 0) return { error: 'The proposal changes nothing' };
   const e = siteEditorial(siteId);
   const p: SiteProposal = {
-    id: uid(), siteId, change: { ...(change.content ? { content } : {}), ...(change.preset !== undefined ? { preset: change.preset } : {}), ...(change.replace ? { replace: true } : {}) },
+    id: uid(), siteId, change: { ...(change.content ? { content } : {}), ...(change.preset !== undefined ? { preset: change.preset } : {}), ...(change.replace ? { replace: true, translations: change.translations ?? {} } : {}), ...(change.translation ? { translation: change.translation } : {}) },
     summary, note: note.trim().slice(0, 600), proposedBy: by.trim(), proposedAt: new Date().toISOString(), basedOn: e.version, status: 'pending',
   };
   db.set(siteId, { ...e, proposals: [p, ...e.proposals] });
@@ -206,11 +247,12 @@ export function decideProposal(siteId: string, proposalId: string, action: 'publ
     if ('error' in r) return r;
   }
   const content = p.change.replace ? { ...(p.change.content ?? {}) } : { ...(e.published?.content ?? {}), ...(p.change.content ?? {}) };
+  const translations = nextTranslations(e, p.change);
   const v: SiteVersion = {
-    version: e.version + 1, content, preset: getSiteSettings(siteId).preset, proposalId: p.id,
+    version: e.version + 1, content, preset: getSiteSettings(siteId).preset, translations, proposalId: p.id,
     proposedBy: p.proposedBy, publishedBy: by.trim(), at: now, note: p.note,
   };
-  const next: SiteEditorial = { ...e, version: v.version, published: v, versions: [v, ...e.versions], proposals: done('published') };
+  const next: SiteEditorial = { ...e, version: v.version, published: v, versions: [v, ...e.versions], proposals: done('published'), translations };
   db.set(siteId, next);
   recordAudit(by.trim(), 'site.content.publish', `PublicSite:${siteId}/v${v.version}`, 'ok', `${p.summary.join(', ')} · proposed by ${p.proposedBy}`);
   return next;
@@ -222,7 +264,7 @@ export function proposeRestore(siteId: string, version: number, by: string, note
   if (version === e.version) return { error: 'That version is already published' };
   const v = version === 0 ? null : e.versions.find(x => x.version === version);
   if (version !== 0 && !v) return { error: 'Version not found' };
-  return proposeSiteChange(siteId, { content: v?.content ?? {}, preset: v?.preset ?? null, replace: true }, by, note || `Restore version ${version}`);
+  return proposeSiteChange(siteId, { content: v?.content ?? {}, preset: v?.preset ?? null, replace: true, translations: v?.translations ?? {} }, by, note || `Restore version ${version}`);
 }
 
 /** Test helper. */

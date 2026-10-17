@@ -46,13 +46,13 @@ export interface Preset {
 }
 
 export const FONTS = {
-  serif: "'Source Serif 4', Georgia, 'Times New Roman', serif",
-  publicSans: "'Public Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
-  plex: "'IBM Plex Sans', system-ui, -apple-system, 'Segoe UI', sans-serif",
-  condensed: "'Barlow Condensed', 'Arial Narrow', system-ui, sans-serif",
-  sourceSans: "'Source Sans 3', system-ui, -apple-system, 'Segoe UI', sans-serif",
-  franklin: "'Libre Franklin', system-ui, -apple-system, 'Segoe UI', sans-serif",
-  system: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif",
+  serif: "'Source Serif 4', 'Noto Naskh Arabic', Georgia, 'Times New Roman', serif",
+  publicSans: "'Public Sans', 'Noto Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif",
+  plex: "'IBM Plex Sans', 'Noto Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif",
+  condensed: "'Barlow Condensed', 'Noto Sans Arabic', 'Arial Narrow', system-ui, sans-serif",
+  sourceSans: "'Source Sans 3', 'Noto Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif",
+  franklin: "'Libre Franklin', 'Noto Sans Arabic', system-ui, -apple-system, 'Segoe UI', sans-serif",
+  system: "ui-sans-serif, system-ui, 'Noto Sans Arabic', -apple-system, 'Segoe UI', sans-serif",
 } as const;
 
 const b = (block: BlockId, variant: string): BlockRef => ({ block, variant });

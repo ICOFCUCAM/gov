@@ -221,6 +221,18 @@ What has been built is locked. Work only upgrades it toward the vision in
   scripts), e.g. "Bayern", "Małopolskie" — not English exonyms. After new map
   data, run `node scripts/official-names.mjs` (matches by ISO code or exact name).
 
+## Public websites
+
+- Plan: `docs/PUBLIC_WEBSITES_PLAN.md`. Every institution keeps a full CivicOS
+  site whatever mode its ministry chooses (Link by default with a website).
+- Site content changes, design choices and translations are proposals that a
+  second, different official publishes (`lib/data/site-editorial.ts`,
+  `/admin/sites`); never add another path that publishes site content.
+- Translations are kept per string with the English they were made from
+  (`lib/public-sites/translation.ts`); a site turns right to left only when
+  every string is translated into a right-to-left language. Use logical CSS
+  (`ms-`, `ps-`, `start-`, `border-s`) and `<Fwd />` for arrows on public sites.
+
 ## Integration register
 
 - `docs/INTEGRATION_REGISTER.md` lists everything built on a placeholder,

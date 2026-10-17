@@ -14,7 +14,7 @@ import { t as fill } from '@/lib/i18n';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
-import { GatewayBar, PreviewBanner, SiteSchema } from '@/apps/_shared/public/integration';
+import { GatewayBar, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { locales } from '@/lib/i18n/config';
 export const dynamic = 'force-dynamic';
@@ -61,14 +61,14 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
   const [campaign, surveillance, advisory] = featured;
 
   return (
-    <div className="min-h-screen bg-[#f4f6f9] text-[#1a2332]">
+    <div className="min-h-screen bg-[#f4f6f9] text-[#1a2332]" lang={site.lang} dir={site.dir}>
       <PreviewBanner on={site.preview} />
       {/* 1. Top utility bar */}
       <div className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg,${NAVY},#10325c)` }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
           <div className="flex items-center gap-4">
             <span>{fill(t.officialWebsite, { name: inst.name })}</span>
-            <Link href="/government" className="hidden border-l border-white/20 pl-4 hover:text-white sm:inline">{t.allInstitutions}</Link>
+            <Link href="/government" className="hidden border-s border-white/20 ps-4 hover:text-white sm:inline">{t.allInstitutions}</Link>
             <Link href="/portal" className="hidden hover:text-white sm:inline">{t.citizenPortal}</Link>
             <Link href="/noc" className="hidden hover:text-white sm:inline">{t.liveBriefing}</Link>
           </div>
@@ -93,7 +93,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
           <nav className="mx-auto hidden items-center gap-7 text-[14px] font-medium text-slate-600 lg:flex">
             {site.nav.map(n => (
               <Link key={n.label} href={n.href} className={n.active ? 'relative font-semibold' : 'hover:text-slate-900'} style={n.active ? { color: BLUE } : undefined}>
-                {n.label}{n.active ? <span className="absolute -bottom-[15px] left-0 h-0.5 w-full" style={{ background: BLUE }} /> : null}
+                {n.label}{n.active ? <span className="absolute -bottom-[15px] start-0 h-0.5 w-full" style={{ background: BLUE }} /> : null}
               </Link>
             ))}
           </nav>
@@ -133,7 +133,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
               <span className="grid h-12 w-12 place-items-center rounded-full text-[18px]" style={{ background: '#fdecec', color: '#d62b34' }} aria-hidden>{hero.sideNote.icon}</span>
               <div className="mt-3 text-[16px] font-bold leading-snug" style={{ color: NAVY }}>{hero.sideNote.title}</div>
               <p className="mt-1 text-[12px] text-slate-500">{hero.sideNote.body}</p>
-              <Link href={hero.sideNote.href ?? '#programmes'} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: BLUE }}>{hero.sideNote.cta} →</Link>
+              <Link href={hero.sideNote.href ?? '#programmes'} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: BLUE }}>{hero.sideNote.cta} <Fwd /></Link>
             </div>
           ) : null}
         </div>
@@ -172,7 +172,7 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
             <div className="text-[11px] uppercase tracking-wide opacity-80">{campaign.kicker}</div>
             <div className="mt-1 text-[18px] font-bold">{campaign.title}</div>
             <p className="mt-1 text-[12px] opacity-90">{campaign.body}</p>
-            <Link href={campaign.href ?? '#services'} className="mt-3 inline-block rounded-md bg-white/15 px-3 py-1.5 text-[12px] font-semibold backdrop-blur">{campaign.cta} →</Link>
+            <Link href={campaign.href ?? '#services'} className="mt-3 inline-block rounded-md bg-white/15 px-3 py-1.5 text-[12px] font-semibold backdrop-blur">{campaign.cta} <Fwd /></Link>
           </div>
           <div className="rounded-2xl border bg-[#eef4fb] p-5 shadow-sm" style={{ borderColor: LINE }}>
             <div className="flex flex-wrap items-center justify-between gap-2">
@@ -184,13 +184,13 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
                 <div key={l}><div className="text-[16px] font-bold" style={{ color: NAVY }}>{n}</div><div className="text-[9px] text-slate-500">{l}</div></div>
               ))}
             </div>
-            <Link href={surveillance.href ?? '/public'} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: BLUE }}>{surveillance.cta} →</Link>
+            <Link href={surveillance.href ?? '/public'} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: BLUE }}>{surveillance.cta} <Fwd /></Link>
           </div>
           <div className="rounded-2xl border p-5 shadow-sm" style={{ borderColor: '#f0e2bf', background: '#fdf6e3' }}>
             <div className="text-[11px] uppercase tracking-wide text-amber-700">{advisory.kicker}</div>
             <div className="mt-1 text-[18px] font-bold" style={{ color: '#92600e' }}>{advisory.title}</div>
             <p className="mt-1 text-[12px] text-amber-800/80">{advisory.body}</p>
-            <Link href={advisory.href ?? '#news'} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: '#b8740f' }}>{advisory.cta} →</Link>
+            <Link href={advisory.href ?? '#news'} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: '#b8740f' }}>{advisory.cta} <Fwd /></Link>
           </div>
         </div>
 
@@ -289,8 +289,8 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
             <div className="text-[13px] font-semibold text-white">{newsletter.heading}</div>
             <p className="mt-1 text-[11px] text-white/60">{newsletter.body}</p>
             <div className="mt-3 flex">
-              <input placeholder={t.enterEmail} aria-label={t.email} className="min-w-0 flex-1 rounded-l-md px-2 py-1.5 text-[12px] text-slate-800" />
-              <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: BLUE }}>{t.subscribe}</button>
+              <input placeholder={t.enterEmail} aria-label={t.email} className="min-w-0 flex-1 rounded-s-md px-2 py-1.5 text-[12px] text-slate-800" />
+              <button className="rounded-e-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: BLUE }}>{t.subscribe}</button>
             </div>
           </div>
         </div>

@@ -4,13 +4,15 @@
 // institution site's content and design; a second, different official
 // publishes them (lib/data/site-editorial.ts). Previews open the real site
 // with the proposal applied, for signed-in officials only. Every version is
-// kept and can be restored through the same review.
+// kept and can be restored through the same review. Translations into the
+// nation's languages go through the same review (SiteTranslations).
 
 import * as React from 'react';
 import Link from 'next/link';
 import { api, type PublicSiteRow, type SiteEditView } from '@/lib/api/client';
 import type { SiteChange } from '@/lib/data/site-editorial';
 import type { SiteContent } from '@/lib/public-sites/types';
+import { SiteTranslations } from './SiteTranslations';
 import { OnboardingFrame, Eyebrow, Section, Field, inputCls, Select, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI } from '@/components/features/onboarding/Chrome';
 
 type News = { title: string; summary: string; date: string };
@@ -236,6 +238,8 @@ export function SiteEditor() {
                   </div>
                 ) : null}
               </Section>
+
+              <SiteTranslations n="8" siteId={siteId} view={view} by={by} busy={busy} act={act} />
             </div>
           ) : <p className="text-[13px] text-white/45">Loading…</p>}
         </div>

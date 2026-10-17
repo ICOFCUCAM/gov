@@ -9,7 +9,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import './design/fonts.css';
 import { PublicSiteShell, SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteTheme, type PublicSiteLinkItem } from './PublicSiteShell';
-import { GatewayBar, PreviewBanner, SiteSchema } from './integration';
+import { GatewayBar, PreviewBanner, SiteSchema, Fwd } from './integration';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { getSiteSettings } from '@/lib/data/site-settings';
 import { siteProps } from './site-props';
@@ -150,14 +150,14 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
   );
 
   return (
-    <div className="min-h-screen text-[#1a2332]" style={{ background: c.bg, fontFamily: d.body }}>
+    <div className="min-h-screen text-[#1a2332]" style={{ background: c.bg, fontFamily: d.body }} lang={s.lang} dir={s.dir}>
       <PreviewBanner on={s.preview} />
       {/* Official banner — the same on every public site. */}
       <div className="w-full text-[12px] text-white/85" style={{ background: `linear-gradient(90deg, ${th.ink}, ${th.inkSoft})` }}>
         <Wrap className="flex flex-wrap items-center justify-between gap-x-6 gap-y-1 py-2">
           <div className="flex items-center gap-4">
             <span>{fill(t.officialWebsite, { name: s.institution.name })}</span>
-            <Link href="/government" className="hidden border-l border-white/20 pl-4 hover:text-white sm:inline">{t.allInstitutions}</Link>
+            <Link href="/government" className="hidden border-s border-white/20 ps-4 hover:text-white sm:inline">{t.allInstitutions}</Link>
             <Link href="/portal" className="hidden hover:text-white sm:inline">{t.citizenPortal}</Link>
             <Link href="/noc" className="hidden hover:text-white sm:inline">{t.liveBriefing}</Link>
           </div>
@@ -182,7 +182,7 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
               <div className="text-[12px] tracking-wide text-slate-500">{s.institution.tagline}</div>
             </Wrap>
             <div className="border-t" style={{ borderColor: c.rule }}>
-              <Wrap className="flex items-center justify-center gap-6 py-2.5">{nav}<div className="lg:absolute lg:right-6">{actions}</div></Wrap>
+              <Wrap className="flex items-center justify-center gap-6 py-2.5">{nav}<div className="lg:absolute lg:end-6">{actions}</div></Wrap>
             </div>
           </>
         ) : (
@@ -228,8 +228,8 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
             <div className="text-[13px] font-semibold text-white">{s.newsletter.heading}</div>
             <p className="mt-1 text-[11px] text-white/60">{s.newsletter.body}</p>
             <div className="mt-3 flex">
-              <input placeholder={t.enterEmail} aria-label={t.email} className="min-w-0 flex-1 px-2 py-1.5 text-[12px] text-slate-800" style={{ borderRadius: `${d.radius}px 0 0 ${d.radius}px` }} />
-              <button className="px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: th.primary, borderRadius: `0 ${d.radius}px ${d.radius}px 0` }}>{t.subscribe}</button>
+              <input placeholder={t.enterEmail} aria-label={t.email} className="min-w-0 flex-1 px-2 py-1.5 text-[12px] text-slate-800" style={{ borderStartStartRadius: d.radius, borderEndStartRadius: d.radius }} />
+              <button className="px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: th.primary, borderStartEndRadius: d.radius, borderEndEndRadius: d.radius }}>{t.subscribe}</button>
             </div>
           </div>
         </Wrap>
@@ -267,7 +267,7 @@ function Hero({ c, variant }: { c: Ctx; variant: string }) {
       <span className="grid h-10 w-10 place-items-center rounded-full text-[16px]" style={{ background: th.surfaceMute, color: th.primary }} aria-hidden>{h.sideNote.icon}</span>
       <div className="mt-3 text-[16px] font-bold" style={{ color: th.ink }}>{h.sideNote.title}</div>
       <p className="mt-1 text-[12px] text-slate-500">{h.sideNote.body}</p>
-      {h.sideNote.href ? <Link href={h.sideNote.href} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: th.primary }}>{h.sideNote.cta} →</Link> : null}
+      {h.sideNote.href ? <Link href={h.sideNote.href} className="mt-3 inline-block text-[12px] font-semibold" style={{ color: th.primary }}>{h.sideNote.cta} <Fwd /></Link> : null}
     </div>
   ) : null;
   const title = (size: number, center = false) => (
@@ -284,10 +284,10 @@ function Hero({ c, variant }: { c: Ctx; variant: string }) {
           <div className="grid grid-cols-1 gap-4">
             {art(200)}
             {h.sideNote ? (
-              <div className="border-l-4 bg-white p-5 shadow-md" style={{ borderColor: th.emergencyA, borderRadius: c.d.radius }}>
+              <div className="border-s-4 bg-white p-5 shadow-md" style={{ borderColor: th.emergencyA, borderRadius: c.d.radius }}>
                 <div className="text-[22px] font-bold" style={{ ...heading(c, 24), color: th.emergencyB }}>{h.sideNote.title}</div>
                 <p className="mt-1 text-[13px] text-slate-600">{h.sideNote.body}</p>
-                {h.sideNote.href ? <Link href={h.sideNote.href} className="mt-2 inline-block text-[12px] font-semibold" style={{ color: th.emergencyA }}>{h.sideNote.cta} →</Link> : null}
+                {h.sideNote.href ? <Link href={h.sideNote.href} className="mt-2 inline-block text-[12px] font-semibold" style={{ color: th.emergencyA }}>{h.sideNote.cta} <Fwd /></Link> : null}
               </div>
             ) : null}
           </div>
@@ -308,7 +308,7 @@ function Hero({ c, variant }: { c: Ctx; variant: string }) {
           <div className="relative">
             {art(260)}
             {s.alert ? (
-              <div className="relative -mt-14 ml-6 mr-6 border bg-white p-4 shadow-lg" style={{ borderColor: c.rule, borderRadius: c.d.radius }}>
+              <div className="relative -mt-14 ms-6 me-6 border bg-white p-4 shadow-lg" style={{ borderColor: c.rule, borderRadius: c.d.radius }}>
                 <div className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.16em]" style={{ color: th.emergencyA }}><span aria-hidden>●</span> {s.alert.label}</div>
                 <p className="mt-1 text-[13px] text-slate-700">{s.alert.text}</p>
               </div>
@@ -327,7 +327,7 @@ function Hero({ c, variant }: { c: Ctx; variant: string }) {
           {sub(true)}
           <div className="flex justify-center">{ctas}</div>
           <div className="mt-10 w-full">{art(220)}</div>
-          {note ? <div className="mt-6 w-full max-w-md text-left">{note}</div> : null}
+          {note ? <div className="mt-6 w-full max-w-md text-start">{note}</div> : null}
         </Wrap>
       </section>
     );
@@ -348,7 +348,7 @@ function Hero({ c, variant }: { c: Ctx; variant: string }) {
                 {s.nav.filter(n => !n.active).map(n => (
                   <li key={n.label} style={{ borderColor: c.rule }}>
                     <Link href={n.href} className="flex items-center justify-between gap-3 py-2.5 text-[15px] font-semibold hover:opacity-80" style={{ color: th.ink }}>
-                      {n.label}<span style={{ color: th.primary }} aria-hidden>→</span>
+                      {n.label}<span style={{ color: th.primary }} aria-hidden><Fwd /></span>
                     </Link>
                   </li>
                 ))}
@@ -451,7 +451,7 @@ function Services({ c, variant }: { c: Ctx; variant: string }) {
               <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: q.color }} aria-hidden />
               <span><span className="block text-[16px] font-semibold" style={{ color: th.ink }}>{q.title}</span><span className="block text-[12px] text-slate-500">{q.subtitle}</span></span>
             </span>
-            <span className="text-[18px]" style={{ color: th.primary }} aria-hidden>→</span>
+            <span className="text-[18px]" style={{ color: th.primary }} aria-hidden><Fwd /></span>
           </Link>
         ))}
       </div>
@@ -464,7 +464,7 @@ function Services({ c, variant }: { c: Ctx; variant: string }) {
             <span className="grid h-12 w-12 place-items-center text-[20px] text-white" style={{ background: q.color, borderRadius: Math.min(d.radius, 14) }} aria-hidden>{q.icon}</span>
             <div className="mt-4 text-[17px] font-semibold" style={{ color: th.ink }}>{q.title}</div>
             <div className="mt-1 text-[13px] text-slate-500">{q.subtitle}</div>
-            <div className="mt-4 text-[12px] font-semibold" style={{ color: th.primary }}>→</div>
+            <div className="mt-4 text-[12px] font-semibold" style={{ color: th.primary }}><Fwd /></div>
           </Link>
         ))}
       </div>
@@ -497,7 +497,7 @@ function Featured({ c, variant }: { c: Ctx; variant: string }) {
         <div className="text-[11px] uppercase tracking-[0.14em]" style={primary ? { opacity: 0.8 } : { color: amber ? '#92600e' : th.inkSoft }}>{f.kicker}</div>
         <div className="mt-2" style={{ ...heading(c, big ? 30 : 19), color: primary ? '#fff' : amber ? '#92600e' : th.ink }}>{f.title}</div>
         <p className={`mt-2 flex-1 ${big ? 'text-[15px]' : 'text-[13px]'}`} style={{ color: primary ? 'rgba(255,255,255,0.9)' : '#64748b' }}>{f.body}</p>
-        {f.href ? <Link href={f.href} className="mt-4 text-[13px] font-semibold" style={{ color: primary ? '#fff' : amber ? '#b8740f' : th.primary }}>{f.cta} →</Link> : null}
+        {f.href ? <Link href={f.href} className="mt-4 text-[13px] font-semibold" style={{ color: primary ? '#fff' : amber ? '#b8740f' : th.primary }}>{f.cta} <Fwd /></Link> : null}
       </div>
     );
   };
@@ -546,8 +546,8 @@ function Figures({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boole
           <tbody>
             {s.statistics.map(x => (
               <tr key={x.label} className="border-t" style={{ borderColor: c.rule }}>
-                <td className="py-2.5 pr-3 text-slate-600">{x.label}<div className="text-[10px] text-slate-400">{x.sub}</div></td>
-                <td className="py-2.5 text-right text-[17px] font-semibold tabular-nums" style={{ color: th.ink, fontFamily: c.d.display }}>{x.value}{live(x)}</td>
+                <td className="py-2.5 pe-3 text-slate-600">{x.label}<div className="text-[10px] text-slate-400">{x.sub}</div></td>
+                <td className="py-2.5 text-end text-[17px] font-semibold tabular-nums" style={{ color: th.ink, fontFamily: c.d.display }}>{x.value}{live(x)}</td>
               </tr>
             ))}
           </tbody>
@@ -602,10 +602,10 @@ function News({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boolean 
     );
   } else if (variant === 'timeline') {
     body = (
-      <ol className="relative ml-2 border-l-2 pl-5" style={{ borderColor: th.primary }}>
+      <ol className="relative ms-2 border-s-2 ps-5" style={{ borderColor: th.primary }}>
         {s.news.map(n => (
           <li key={n.title} className="relative pb-5 last:pb-0">
-            <span className="absolute -left-[27px] top-1 h-3 w-3 rounded-full border-2 bg-white" style={{ borderColor: th.primary }} aria-hidden />
+            <span className="absolute -start-[27px] top-1 h-3 w-3 rounded-full border-2 bg-white" style={{ borderColor: th.primary }} aria-hidden />
             <div className="text-[14px] font-semibold">{newsTitle(n, { color: th.ink })}</div>
             <div className="text-[12px] text-slate-500">{n.summary}</div>
             {n.date ? <div className="text-[11px] text-slate-400">{n.date}</div> : null}

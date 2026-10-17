@@ -7,18 +7,40 @@
 import { siteContent } from './index';
 import type { SiteContent } from './types';
 import { getSiteSettings, type SiteSettings } from '@/lib/data/site-settings';
-import { publishedOverride, previewOverride } from '@/lib/data/site-editorial';
+import { publishedOverride, previewOverride, publishedTranslation } from '@/lib/data/site-editorial';
+import { applyTranslation, coverage, type Coverage } from './translation';
+import { nationLocale } from '@/lib/nation/registry';
+import { isRTL } from '@/lib/i18n/config';
+import type { Locale } from '@/lib/types';
 
 const dateLabel = (iso: string) =>
   new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(iso));
 
-export function effectiveContent(id: string, preview?: string): { content: SiteContent; settings: SiteSettings; previewing: boolean; previewPreset?: string | null } {
+export interface SiteLanguage {
+  /** The nation's language, which the site is translated into. */
+  locale: string;
+  coverage: Coverage;
+  /** The page's language: the nation's once most of its text is translated, else English. */
+  lang: string;
+  /** Right to left only when every string is translated into a right-to-left language. */
+  dir: 'ltr' | 'rtl';
+}
+
+export function effectiveContent(id: string, preview?: string): { content: SiteContent; settings: SiteSettings; previewing: boolean; previewPreset?: string | null; language: SiteLanguage } {
   const settings = getSiteSettings(id);
   const p = preview ? previewOverride(id, preview) : null;
-  const base = siteContent(id, p ? p.content : publishedOverride(id));
+  const source = siteContent(id, p ? p.content : publishedOverride(id));
+  // The nation's language: its published translation (or the previewed one) applied string by string.
+  const locale = nationLocale();
+  const entries = locale === 'en' ? undefined : p ? p.translations[locale] : publishedTranslation(id, locale);
+  const cov = coverage(source, entries);
+  const base = applyTranslation(source, entries);
+  const language: SiteLanguage = locale === 'en'
+    ? { locale, coverage: cov, lang: 'en', dir: 'ltr' }
+    : { locale, coverage: cov, lang: cov.translated * 2 > cov.total ? locale : 'en', dir: cov.complete && isRTL(locale as Locale) ? 'rtl' : 'ltr' };
   const items = settings.mode !== 'host' ? settings.feed.items : [];
   const content: SiteContent = items.length > 0
     ? { ...base, newsSource: 'feed', news: items.map(i => ({ title: i.title, summary: i.summary, ...(i.date ? { date: dateLabel(i.date) } : {}), ...(i.url ? { url: i.url } : {}) })) }
     : base;
-  return { content, settings, previewing: !!p, ...(p && p.preset !== undefined ? { previewPreset: p.preset } : {}) };
+  return { content, settings, previewing: !!p, language, ...(p && p.preset !== undefined ? { previewPreset: p.preset } : {}) };
 }

@@ -16,7 +16,7 @@ import { locales } from '@/lib/i18n/config';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
-import { GatewayBar, PreviewBanner, SiteSchema } from '@/apps/_shared/public/integration';
+import { GatewayBar, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { t as fill } from '@/lib/i18n';
 
@@ -30,7 +30,7 @@ const GREEN = '#1f9d63';
 const INK = '#23303f';
 const SOFT = '#5b6b78';
 const LINE = '#e8e3d6';
-const SERIF = 'Georgia, "Times New Roman", ui-serif, serif';
+const SERIF = 'Georgia, "Times New Roman", "Noto Naskh Arabic", ui-serif, serif';
 
 const PILLAR_GLYPHS = ['⌘', '◴', '▤', '⊟', '⊡', '✦'];
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
@@ -135,8 +135,8 @@ function BudgetDonut({ segments, total, size = 188 }: {
           <div key={s.label} className="flex items-center gap-2 text-[12px]">
             <span className="h-2.5 w-2.5 rounded-[2px]" style={{ background: SEG_C[i % SEG_C.length] }} />
             <span style={{ color: INK }}>{s.label}</span>
-            <span className="ml-auto font-semibold tabular-nums" style={{ color: NAVY }}>{s.amount}</span>
-            <span className="w-9 text-right tabular-nums" style={{ color: SOFT }}>{s.pct}%</span>
+            <span className="ms-auto font-semibold tabular-nums" style={{ color: NAVY }}>{s.amount}</span>
+            <span className="w-9 text-end tabular-nums" style={{ color: SOFT }}>{s.pct}%</span>
           </div>
         ))}
       </div>
@@ -171,14 +171,14 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
   const half = Math.ceil(site.shortcuts.length / 2);
 
   return (
-    <div className="min-h-screen" style={{ background: '#ffffff', color: INK }}>
+    <div className="min-h-screen" style={{ background: '#ffffff', color: INK }} lang={site.lang} dir={site.dir}>
       <PreviewBanner on={site.preview} />
       {/* 0. Official banner — the same on every public site. */}
       <div className="w-full text-[12px] text-white/85" style={{ background: NAVY }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
           <div className="flex items-center gap-4">
             <span>{fill(t.officialWebsite, { name: inst.name })}</span>
-            <Link href="/government" className="hidden border-l border-white/20 pl-4 hover:text-white sm:inline">{t.allInstitutions}</Link>
+            <Link href="/government" className="hidden border-s border-white/20 ps-4 hover:text-white sm:inline">{t.allInstitutions}</Link>
             <Link href="/portal" className="hidden hover:text-white sm:inline">{t.citizenPortal}</Link>
             <Link href="/noc" className="hidden hover:text-white sm:inline">{t.liveBriefing}</Link>
           </div>
@@ -201,7 +201,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
               <div className="mt-1 text-[8.5px] uppercase tracking-[0.18em]" style={{ color: GOLD }}>{inst.tagline}</div>
             </div>
           </Link>
-          <nav className="ml-auto hidden items-center gap-6 text-[13px] font-medium lg:flex" style={{ color: SOFT }}>
+          <nav className="ms-auto hidden items-center gap-6 text-[13px] font-medium lg:flex" style={{ color: SOFT }}>
             {UTILITY.map(l => <Link key={l.label} href={l.href} className="hover:text-slate-900">{l.label}</Link>)}
           </nav>
           <div className="flex items-center gap-3">
@@ -226,7 +226,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
                 {n.active ? <span className="absolute inset-x-0 -bottom-px h-0.5" style={{ background: GOLD }} /> : null}
               </Link>
             ))}
-            <span className="ml-auto text-[14px]" aria-hidden>⚑</span>
+            <span className="ms-auto text-[14px]" aria-hidden>⚑</span>
           </div>
         </div>
       </header>
@@ -293,7 +293,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
                   </div>
                 </div>
                 <p className="mt-2 text-[11.5px] leading-relaxed" style={{ color: SOFT }}>{p.body}</p>
-                <div className="mt-2 text-[11px] font-semibold" style={{ color: GREEN }}>Browse pillar →</div>
+                <div className="mt-2 text-[11px] font-semibold" style={{ color: GREEN }}>Browse pillar <Fwd /></div>
               </Link>
             ))}
           </div>
@@ -312,13 +312,13 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
                   <span className="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px]" style={{ background: '#f3efe2', color: GOLD }} aria-hidden>◆</span>
                   <span className="min-w-0 flex-1" style={{ color: SOFT }}>{r.label}</span>
                   <span className="font-semibold tabular-nums" style={{ color: NAVY }}>{r.value}</span>
-                  {r.delta ? <span className="w-14 text-right font-semibold tabular-nums" style={{ color: GREEN }}>{r.delta}</span> : null}
-                  {r.tag ? <span className="w-24 text-right text-[10px] font-bold uppercase tracking-wide" style={{ color: r.tag === 'SUSTAINABLE' || r.tag === 'ADEQUATE' || r.tag.includes('MONTHS') ? GREEN : GOLD }}>{r.tag}</span> : null}
+                  {r.delta ? <span className="w-14 text-end font-semibold tabular-nums" style={{ color: GREEN }}>{r.delta}</span> : null}
+                  {r.tag ? <span className="w-24 text-end text-[10px] font-bold uppercase tracking-wide" style={{ color: r.tag === 'SUSTAINABLE' || r.tag === 'ADEQUATE' || r.tag.includes('MONTHS') ? GREEN : GOLD }}>{r.tag}</span> : null}
                 </div>
               ))}
             </div>
             <Link href={snapshot.href ?? '/gov/treasury'} className="mt-3 block border-t pt-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: GOLD }}>
-              {snapshot.cta} →
+              {snapshot.cta} <Fwd />
             </Link>
           </section>
 
@@ -331,7 +331,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
               <BudgetDonut total={s.budget.total} segments={s.budget.segments} />
             </div>
             <Link href={budget.href ?? '/public'} className="mt-4 block border-t pt-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: GOLD }}>
-              {budget.cta} →
+              {budget.cta} <Fwd />
             </Link>
           </section>
 
@@ -346,7 +346,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
                   <span style={{ color: SOFT }}>{r.label}</span>
                   <span className="flex items-center gap-3">
                     <span className="font-semibold tabular-nums" style={{ color: NAVY }}>{r.value}</span>
-                    <span className="w-16 text-right text-[11px] tabular-nums" style={{ color: r.flat ? SOFT : GREEN }}>
+                    <span className="w-16 text-end text-[11px] tabular-nums" style={{ color: r.flat ? SOFT : GREEN }}>
                       {r.flat ? '—' : `${r.delta > 0 ? '+' : ''}${r.delta.toFixed(2)}% ${r.delta > 0 ? '↑' : '↓'}`}
                     </span>
                   </span>
@@ -354,7 +354,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
               ))}
             </div>
             <Link href={markets.href ?? '/gov/treasury'} className="mt-3 block border-t pt-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: GOLD }}>
-              {markets.cta} →
+              {markets.cta} <Fwd />
             </Link>
           </section>
         </div>
@@ -391,7 +391,7 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
                     <li key={l.title}>
                       <Link href={l.href ?? '/gov/treasury'} className="flex items-center justify-between gap-2 rounded px-2 py-2 text-[12px] hover:bg-[#faf8f1]" style={{ color: INK }}>
                         <span className="flex items-center gap-2"><span style={{ color: GOLD }} aria-hidden>▸</span>{l.title}</span>
-                        <span style={{ color: GOLD }} aria-hidden>→</span>
+                        <span style={{ color: GOLD }} aria-hidden><Fwd /></span>
                       </Link>
                     </li>
                   ))}
@@ -429,8 +429,8 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
             <div className="text-[12px] font-semibold text-white">{site.newsletter.heading}</div>
             <p className="mt-2 text-[11px] text-white/55">{site.newsletter.body}</p>
             <div className="mt-3 flex">
-              <input aria-label={t.email} placeholder={t.enterEmail} className="min-w-0 flex-1 rounded-l-md px-2 py-1.5 text-[12px] text-slate-800 outline-none" />
-              <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: GOLD }} aria-label={t.subscribe}>→</button>
+              <input aria-label={t.email} placeholder={t.enterEmail} className="min-w-0 flex-1 rounded-s-md px-2 py-1.5 text-[12px] text-slate-800 outline-none" />
+              <button className="rounded-e-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: GOLD }} aria-label={t.subscribe}><Fwd /></button>
             </div>
           </div>
         </div>

@@ -8,6 +8,8 @@
 import type { SiteSettings, SiteSettingsInput } from '@/lib/data/site-settings';
 import type { SiteChange, SiteProposal, SiteEditorial } from '@/lib/data/site-editorial';
 import type { SiteContent } from '@/lib/public-sites/types';
+import type { SiteLanguage } from '@/lib/public-sites/effective';
+import type { Coverage, XliffImport } from '@/lib/public-sites/translation';
 
 /** GET /api/public-sites/<id>/editorial: what the site editor works from. */
 export interface SiteEditView {
@@ -16,6 +18,19 @@ export interface SiteEditView {
   defaultPreset: string;
   editorial: SiteEditorial;
   settings: SiteSettings;
+  /** Languages the site can be translated into (all but English). */
+  languages: { code: string; name: string; dir: 'ltr' | 'rtl' }[];
+  nationLocale: string;
+  /** The language the public site is shown in now. */
+  language: SiteLanguage;
+}
+
+/** One string of a site for translation (GET /api/public-sites/[id]/translations/[locale]). */
+export interface SiteTranslationString {
+  path: string; label: string; source: string; target: string;
+  status: 'translated' | 'stale' | 'missing';
+  /** For an out-of-date translation: the English it was made from. */
+  previousSource?: string;
 }
 
 /** A public institution site's integration settings with its name (GET /api/public-sites). */
@@ -329,6 +344,12 @@ export const api = {
       req<{ proposal: SiteProposal }>(`/api/public-sites/${id}/proposals`, { method: 'POST', body: JSON.stringify(body) }),
     decide: (id: string, pid: string, body: { action: 'publish' | 'reject' | 'withdraw'; by: string; reason?: string }) =>
       req<{ editorial: SiteEditorial }>(`/api/public-sites/${id}/proposals/${pid}`, { method: 'POST', body: JSON.stringify(body) }),
+    translations: (id: string, locale: string) =>
+      req<{ locale: string; strings: SiteTranslationString[]; coverage: Coverage }>(`/api/public-sites/${id}/translations/${locale}`),
+    xliffUrl: (id: string, locale: string) => `/api/public-sites/${id}/translations/${locale}/xliff`,
+    /** Read a translated XLIFF file and check it against the site; nothing is saved until it is proposed. */
+    importXliff: (id: string, locale: string, xml: string) =>
+      req<XliffImport>(`/api/public-sites/${id}/translations/${locale}/xliff`, { method: 'POST', body: xml, headers: { 'Content-Type': 'application/xliff+xml' } }),
   },
   org: {
     archetypes: () => req<{ archetypes: Archetype[] }>('/api/org/archetypes'),

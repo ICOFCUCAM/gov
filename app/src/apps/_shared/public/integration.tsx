@@ -15,6 +15,11 @@ export interface SiteGateway {
   host: string;
 }
 
+/** A forward arrow that points the way of reading: right in left-to-right pages, left in right-to-left ones. */
+export function Fwd() {
+  return <span className="inline-block rtl:-scale-x-100" aria-hidden>→</span>;
+}
+
 /** Shown on a pending proposal's preview (officials only): nothing here is published yet. */
 export function PreviewBanner({ on }: { on?: boolean }) {
   if (!on) return null;

@@ -3,6 +3,9 @@ import { proposeSiteChange, decideProposal, proposeRestore, siteEditorial, reset
 import { resetSiteSettings, getSiteSettings, updateSiteSettings } from './site-settings';
 import { listAudit } from './store';
 import { effectiveContent } from '@/lib/public-sites/effective';
+import { applyNation } from '@/lib/nation/registry';
+import { siteContent } from '@/lib/public-sites';
+import { translatableStrings } from '@/lib/public-sites/translation';
 
 const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
 const NEWS = { news: [{ title: 'Clinics open on Saturdays', summary: 'From November.', date: '2 Nov 2026' }] };
@@ -87,5 +90,45 @@ describe('site editorial workflow', () => {
     expect(contentProblems({ legalLine: 'x'.repeat(700) })).toMatch(/longer than 600/);
     expect(proposeSiteChange('health', {}, 'A')).toEqual({ error: 'The proposal changes nothing' });
     expect(proposeSiteChange('health', { content: NEWS }, ' ')).toEqual({ error: expect.stringMatching(/Name the official/) });
+  });
+
+  describe('translations', () => {
+    beforeEach(() => applyNation({ configured: true, stateName: 'Republic of Meridia', locale: 'sw' }));
+
+    it('show the published translation of the nation\'s language, string by string', () => {
+      const t = ok(proposeSiteChange('police', { translation: { locale: 'sw', entries: { 'hero.headline.0': { source: 'Safe Citizens,', target: 'Raia Salama,' } } } }, 'Translator'));
+      expect(t.summary).toEqual(['translation (sw, 1 strings)']);
+      expect(effectiveContent('police').content.hero.headline[0]).toBe('Safe Citizens,');
+      expect(effectiveContent('police', t.id).content.hero.headline[0]).toBe('Raia Salama,');
+      ok(decideProposal('police', t.id, 'publish', 'Director'));
+      const e = effectiveContent('police');
+      expect(e.content.hero.headline[0]).toBe('Raia Salama,');
+      expect(e.language).toMatchObject({ locale: 'sw', lang: 'en', dir: 'ltr' });
+      expect(e.language.coverage.translated).toBe(1);
+    });
+
+    it('turn right to left only when every string is translated into a right-to-left language', () => {
+      applyNation({ configured: true, stateName: 'Republic of Meridia', locale: 'ar' });
+      const texts = translatableStrings(siteContent('police'));
+      const half = Object.fromEntries(texts.slice(0, 10).map(({ path, text }) => [path, { source: text, target: `ع ${text}` }]));
+      ok(decideProposal('police', ok(proposeSiteChange('police', { translation: { locale: 'ar', entries: half } }, 'T')).id, 'publish', 'D'));
+      expect(effectiveContent('police').language.dir).toBe('ltr');
+      const rest = Object.fromEntries(texts.slice(10).map(({ path, text }) => [path, { source: text, target: `ع ${text}` }]));
+      ok(decideProposal('police', ok(proposeSiteChange('police', { translation: { locale: 'ar', entries: rest } }, 'T')).id, 'publish', 'D'));
+      expect(effectiveContent('police').language).toMatchObject({ lang: 'ar', dir: 'rtl', coverage: { complete: true } });
+      // A later English change makes that string out of date: back to left to right until it is translated.
+      ok(decideProposal('police', ok(proposeSiteChange('police', { content: { alert: { label: 'NOTICE', text: 'New text' } } }, 'T')).id, 'publish', 'D'));
+      expect(effectiveContent('police').language.dir).toBe('ltr');
+      // Restoring version 2 brings back its content and its translations.
+      ok(decideProposal('police', ok(proposeRestore('police', 2, 'T')).id, 'publish', 'D'));
+      expect(effectiveContent('police').language.dir).toBe('rtl');
+    });
+
+    it('refuse translations of text the site no longer has, or that break placeholders', () => {
+      expect(proposeSiteChange('police', { translation: { locale: 'sw', entries: { 'hero.headline.0': { source: 'Old words', target: 'Maneno' } } } }, 'T')).toEqual({ error: expect.stringMatching(/has changed/) });
+      expect(proposeSiteChange('police', { translation: { locale: 'sw', entries: { 'institution.emergencyButton.label': { source: 'Emergency {emergency.police:999}', target: 'Dharura 999' } } } }, 'T')).toEqual({ error: expect.stringMatching(/placeholders/) });
+      expect(proposeSiteChange('police', { translation: { locale: 'xx', entries: {} } }, 'T')).toEqual({ error: expect.stringMatching(/not a language/) });
+      expect(proposeSiteChange('police', { translation: { locale: 'sw', entries: { 'nope.path': { source: 'a', target: 'b' } } } }, 'T')).toEqual({ error: expect.stringMatching(/not text on this site/) });
+    });
   });
 });
