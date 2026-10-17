@@ -7,6 +7,7 @@ import type { WorkItemRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { priorityTone } from '@/lib/tone';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 /**
  * Substrate Ledger — pairs with OperationsLedger.
@@ -23,7 +24,7 @@ export function SubstrateLedger() {
   const { actor, session, ready } = useIdentity();
   const [items, setItems] = React.useState<WorkItemRow[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {

@@ -15,9 +15,10 @@ import {
   judicialDocket, courtHierarchyFor, constitutionalReview, judicialRegistries,
 } from '@/lib/gov/branches';
 import type { StateForm, NationalConstitution } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 export function BranchWorkspace({ branchKey }: { branchKey: string }) {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [form, setForm] = React.useState<StateForm>('republic');
   const [nation, setNation] = React.useState<NationalConstitution | undefined>();
   React.useEffect(() => {

@@ -7,6 +7,7 @@ import { serviceReadings } from '@/lib/gov/ministry-services';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import { regionName } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 export type DomainKey = 'treasury' | 'security' | 'geopolitical';
 
@@ -198,7 +199,7 @@ const TITLES: Record<DomainKey, string> = {
 
 export function DomainCommand({ domain }: { domain: DomainKey }) {
   const cfg = DOMAIN[domain];
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [openFeed, setOpenFeed] = React.useState<number | null>(0);
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);

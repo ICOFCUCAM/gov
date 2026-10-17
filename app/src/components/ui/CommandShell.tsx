@@ -15,6 +15,7 @@ import { subscribe as rtSubscribe, runtimeStats, version as rtVersion } from '@/
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, orchestrationStats, version as orchVersion } from '@/services/orchestration-engine';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 // Adapter from substrate search hits → CommandPalette items.
 const substrateSearchAsCommands: CommandSearchFn = async (query) => {
@@ -115,7 +116,7 @@ export function CommandShell({
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [mins, setMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [navOpen, setNavOpen] = React.useState(false);
 
   React.useEffect(() => {

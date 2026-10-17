@@ -15,6 +15,7 @@ import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
 import { constitutionFor } from '@/lib/gov/constitution';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 import { nationTime, nationTimeZoneLabel, currentOffices } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 // A function so the executive office's name follows the installed nation at render.
 const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] => [
@@ -93,7 +94,7 @@ export default function SovereignCommandCenter() {
   const [mins, setMins] = React.useState<Ministry[]>([]);
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
 
   React.useEffect(() => {
     const load = async () => {

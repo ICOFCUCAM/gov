@@ -7,9 +7,10 @@ import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/Situ
 import { constitutionFor } from '@/lib/gov/constitution';
 import { legislativePipeline, judicialDocket, separationIntegrity, branchReadiness } from '@/lib/gov/branches';
 import type { StateForm, NationalConstitution } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 export function BranchesView() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [form, setForm] = React.useState<StateForm>('republic');
   const [nation, setNation] = React.useState<NationalConstitution | undefined>();
   React.useEffect(() => {

@@ -33,6 +33,7 @@ import type {
   QueueItem,
   RegionStat,
 } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 type Tab =
   | 'command' | 'ecosystem' | 'continuity' | 'regional' | 'approvals' | 'incidents' | 'field'
@@ -84,7 +85,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const [aiHeadline, setAiHeadline] = React.useState<string | null>(null);
   const [aiHeadlineTier, setAiHeadlineTier] = React.useState<number>(-1);
   const [allMins, setAllMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [ecoOpen, setEcoOpen] = React.useState<string | null>(null);
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);

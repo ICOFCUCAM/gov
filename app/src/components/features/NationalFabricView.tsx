@@ -10,11 +10,12 @@ import { buildCascade } from '@/lib/institution/cascade';
 import { cascadeEscalations } from '@/lib/institution/cascade-escalation';
 import { nationalResilience } from '@/lib/gov/national-resilience';
 import type { Ministry } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const DIR_TONE = { mutual: 'link', provides: 'ok', consumes: 'warn' } as const;
 
 export function NationalFabricView() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [mins, setMins] = React.useState<Ministry[]>([]);
   const [ack, setAck] = React.useState<Record<string, boolean>>({});
   const [sel, setSel] = React.useState<string | null>(null);

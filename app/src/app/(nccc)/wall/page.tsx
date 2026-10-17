@@ -6,6 +6,7 @@ import { Pill } from '@/components/ui/Pill';
 import { ClassBanner } from '@/components/ui/ClassBanner';
 import { TONE, Spark, seed, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
 import { nationCurrency, aiLabel } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 
 const ACTIVATION = Date.UTC(2026, 4, 13, 8, 31);
@@ -18,7 +19,7 @@ function dur(ms: number) {
 }
 
 export default function NcccWallPage() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);

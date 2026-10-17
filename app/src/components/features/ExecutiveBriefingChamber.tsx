@@ -24,6 +24,7 @@ import {
 } from '@/lib/gov/sovereign-operating-model';
 import type { ExecDirectiveKey } from '@/lib/gov/sovereign-operating-model';
 import { downloadText } from '@/lib/csv-download';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
 
@@ -45,7 +46,7 @@ export function ExecutiveBriefingChamber() {
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [directive, setDirective] = React.useState<ExecDirectiveKey>('NONE');
 
   React.useEffect(() => {

@@ -11,6 +11,7 @@
 import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const BG = '#070b11';
 const PANEL = '#0c1119';
@@ -154,7 +155,7 @@ function Panel({ title, action, children, className }: {
 }
 
 export function NationalOverview() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);

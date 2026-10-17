@@ -12,6 +12,7 @@ import { deployableInstitutions } from '@/lib/institution/readiness';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { Incident, OpsOverview, Ministry } from '@/lib/api/types';
 import { regionList } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const ME = 'W. Tanaka (ops)';
 const sp = (k: string, n = 20, lo = 30, hi = 80) =>
@@ -71,7 +72,7 @@ export function OpsCenter() {
   const [busy, setBusy] = React.useState<string | null>(null);
   const [openChron, setOpenChron] = React.useState<number | null>(0);
   const [mins, setMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
 
   const load = React.useCallback(async () => {
     const [o, i, m] = await Promise.all([
