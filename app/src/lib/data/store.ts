@@ -303,7 +303,9 @@ export function recordAudit(
   return appendAudit(actor, action, resource, outcome, detail);
 }
 
-const db = (g.__civicos ??= seed());
+// A store restored from a saved snapshot (lib/data/persist.ts) keeps its data; fields added to the
+// store since that snapshot get their seeded defaults.
+const db = (g.__civicos = g.__civicos ? { ...seed(), ...g.__civicos } : seed());
 // Engines read the installed nation (regions, map, currency) from the registry.
 applyNation({ ...db.sovereign, configured: !!db.setup });
 

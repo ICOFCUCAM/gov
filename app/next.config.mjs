@@ -6,6 +6,8 @@ const nextConfig = {
   poweredByHeader: false,
   experimental: {
     // App Router is stable in 14.x.
+    // src/instrumentation.ts restores and saves the platform's state (lib/data/persist.ts).
+    instrumentationHook: true,
   },
   // Security headers — sensible defaults; tune per sovereign deployment.
   async headers() {

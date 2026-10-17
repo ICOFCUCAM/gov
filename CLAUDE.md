@@ -265,6 +265,15 @@ What has been built is locked. Work only upgrades it toward the vision in
   scripts), e.g. "Bayern", "Małopolskie" — not English exonyms. After new map
   data, run `node scripts/official-names.mjs` (matches by ISO code or exact name).
 
+## Durable state
+
+- Server stores keep their data on `globalThis` under a key starting with
+  `__civicos` and initialise with `g.__civicosX ??= seed()`; that is how
+  `lib/data/persist.ts` saves and restores them (`CIVICOS_STATE=file|supabase`,
+  started from `src/instrumentation.ts`). A new store follows the same pattern
+  and holds only JSON, Maps, Sets and Dates. When a store gains fields, give
+  them defaults for snapshots saved before the change.
+
 ## Integration register
 
 - `docs/INTEGRATION_REGISTER.md` lists everything built on a placeholder,
