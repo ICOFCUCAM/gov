@@ -51,7 +51,7 @@ export function CoverPlaza() {
   return (
     <main className="relative h-[100dvh] min-h-[680px] overflow-hidden font-sans text-[#f3efe6] [--gs:0.66] [--sy:47%] sm:[--gs:0.88] sm:[--sy:53%] lg:[--gs:1]"
       style={{ background: INK }}>
-      <Scenery />
+      <Scenery brand={brand} />
 
       {/* Top rail */}
       <header className="absolute inset-x-0 top-0 z-20 flex h-16 items-center gap-4 px-4 sm:px-8">
@@ -73,7 +73,7 @@ export function CoverPlaza() {
 
       {/* Title */}
       <div className="absolute inset-x-0 top-[78px] z-10 px-4 text-center">
-        <p className="font-mono text-[10px] uppercase tracking-[0.42em]" style={{ color: CHAMPAGNE }}>{brand.configured ? 'Official government platform' : 'Sovereign digital public infrastructure'}</p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.42em]" style={{ color: CHAMPAGNE }}>{brand.configured ? brand.platform : 'Sovereign digital public infrastructure'}</p>
         <h1 className="mx-auto mt-3 max-w-[26ch] text-[1.85rem] font-light leading-[1.08] tracking-[-0.03em] sm:text-[2.9rem]">
           Every road leads to <span className="bg-clip-text font-normal text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>the state.</span>
         </h1>
@@ -170,13 +170,13 @@ export function CoverPlaza() {
 }
 
 /** The capital at night, drawn as a plan centred on the seal. Decorative only. */
-function Scenery() {
+function Scenery({ brand }: { brand: NationBrand }) {
   return (
     <div aria-hidden className="absolute inset-0">
       <div className="absolute inset-0" style={{ background: `radial-gradient(ellipse 70% 60% at 50% var(--sy), #0d1420 0%, ${INK} 75%)` }} />
       <div className="absolute left-1/2"
         style={{ top: 'var(--sy)', width: S, height: S, transform: 'translate(-50%, -50%) scale(var(--gs))', transformOrigin: '50% 50%' }}>
-        <Ground />
+        <Ground brand={brand} />
       </div>
       {/* Warm civic glow at the centre, deep vignette, title shade, film grain */}
       <div className="absolute inset-0" style={{ background: 'radial-gradient(circle at 50% var(--sy), rgba(244,214,150,0.16), transparent 34%)' }} />
@@ -187,7 +187,7 @@ function Scenery() {
   );
 }
 
-function Ground() {
+function Ground({ brand }: { brand: NationBrand }) {
   const g = React.useMemo(() => {
     // City lights: warm points in the blocks between avenues and ring roads.
     const lights: { x: number; y: number; r: number; o: number; warm: boolean }[] = [];
@@ -273,24 +273,47 @@ function Ground() {
       <circle cx={C} cy={C} r={268} fill="url(#plz-obsidian)" />
       <circle cx={C} cy={C} r={268} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.7" strokeWidth="1.2" />
       <circle cx={C} cy={C} r={262} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.25" strokeWidth="1" />
-      <circle cx={C} cy={C} r={242} fill="none" stroke="#08161b" strokeWidth="20" />
-      <circle cx={C} cy={C} r={242} fill="none" stroke="#6fb8c6" strokeOpacity="0.12" strokeWidth="20" filter="url(#plz-soft)" />
-      <circle cx={C} cy={C} r={232} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.35" strokeWidth="0.8" />
-      <circle cx={C} cy={C} r={252} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.35" strokeWidth="0.8" />
+      <circle cx={C} cy={C} r={MOAT_R} fill="none" stroke="#08161b" strokeWidth="34" />
+      <circle cx={C} cy={C} r={MOAT_R} fill="none" stroke="#6fb8c6" strokeOpacity="0.12" strokeWidth="34" filter="url(#plz-soft)" />
+      <circle cx={C} cy={C} r={MOAT_R - 17} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.4" strokeWidth="0.8" />
+      <circle cx={C} cy={C} r={MOAT_R + 17} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.4" strokeWidth="0.8" />
       {Array.from({ length: 36 }).map((_, i) => {
-        const a = (i * 10 * Math.PI) / 180;
-        return <circle key={i} cx={C + 242 * Math.cos(a)} cy={C + 242 * Math.sin(a)} r="1.8" fill="#eaf8ff" className="plaza-anim" style={{ animation: `plazaPulse ${2 + (i % 6) * 0.35}s ease-in-out infinite` }} />;
+        const deg = i * 10;
+        // Once a nation is installed, its name and motto take the top and bottom of this ring.
+        const side = Math.min(deg % 180, 180 - (deg % 180)) <= 30;
+        if (brand.configured && !side) return null;
+        const a = (deg * Math.PI) / 180;
+        return <circle key={i} cx={C + MOAT_R * Math.cos(a)} cy={C + MOAT_R * Math.sin(a)} r="1.8" fill="#eaf8ff" className="plaza-anim" style={{ animation: `plazaPulse ${2 + (i % 6) * 0.35}s ease-in-out infinite` }} />;
       })}
+      {brand.configured ? <MoatInscription name={brand.name} motto={brand.motto} /> : null}
       <circle cx={C} cy={C} r={226} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.8" strokeWidth="1.2" />
       <circle cx={C} cy={C} r={220} fill="none" stroke={CHAMPAGNE} strokeOpacity="0.3" strokeWidth="1" />
     </svg>
   );
 }
 
+const MOAT_R = 244;
+
+/** The nation's name across the top of the moat ring and its motto across the bottom. */
+function MoatInscription({ name, motto }: { name: string; motto: string }) {
+  const top = name.toUpperCase(), bottom = motto.toUpperCase();
+  const TOP_R = MOAT_R - 7, BOTTOM_R = MOAT_R + 7;
+  const size = Math.min(inscriptionSize(top, TOP_R, 0.62, 20), bottom ? inscriptionSize(bottom, BOTTOM_R, 0.62, 20) : 20);
+  const style = { paintOrder: 'stroke' as const, stroke: '#04060a', strokeWidth: 3 };
+  return (
+    <g fontWeight="700" letterSpacing={size * 0.22} textAnchor="middle" fill={CHAMPAGNE_HI} fontSize={size}>
+      <path id="moat-arc-top" d={`M ${C - TOP_R},${C} A ${TOP_R},${TOP_R} 0 0,1 ${C + TOP_R},${C}`} fill="none" />
+      <path id="moat-arc-bottom" d={`M ${C - BOTTOM_R},${C} A ${BOTTOM_R},${BOTTOM_R} 0 0,0 ${C + BOTTOM_R},${C}`} fill="none" />
+      <text style={style} dominantBaseline="middle"><textPath href="#moat-arc-top" startOffset="50%">{top}</textPath></text>
+      {bottom ? <text style={style} dominantBaseline="middle"><textPath href="#moat-arc-bottom" startOffset="50%">{bottom}</textPath></text> : null}
+    </g>
+  );
+}
+
 /** Font size that lets an inscription fit its half of the ring, capped large. */
-function inscriptionSize(text: string, radius: number) {
-  const arc = Math.PI * radius * 0.8; // leave room for the side stars
-  return Math.max(11, Math.min(23, arc / (Math.max(text.length, 1) * 0.84)));
+function inscriptionSize(text: string, radius: number, share = 0.8, max = 23) {
+  const arc = Math.PI * radius * share; // leave room for the side marks
+  return Math.max(10, Math.min(max, arc / (Math.max(text.length, 1) * 0.84)));
 }
 
 // UN-emblem projection: the world seen from above the North Pole, out to 60°S.
@@ -309,11 +332,12 @@ function Seal({ brand }: { brand: NationBrand }) {
   const gp = React.useMemo(() => geoPath(unProjection()), []);
   const landPath = React.useMemo(() => gp({ type: 'FeatureCollection', features: land } as never) ?? '', [gp, land]);
 
-  const top = (brand.configured ? brand.name : 'CivicOS').toUpperCase();
-  const bottom = (brand.configured ? brand.motto : 'Sovereign Operating System').toUpperCase();
+  // The band names what this is; the nation's own name and motto sit on the ring outside.
+  const top = 'SOVEREIGN DIGITAL INSTITUTION';
+  const bottom = brand.platform.toUpperCase();
   const TOP_R = 162, BOTTOM_R = 181;
-  const topSize = inscriptionSize(top, TOP_R);
-  const bottomSize = inscriptionSize(bottom, BOTTOM_R);
+  const topSize = Math.min(inscriptionSize(top, TOP_R), inscriptionSize(bottom, BOTTOM_R));
+  const bottomSize = topSize;
 
   // Laurel wreath around the map, meeting at the base.
   const leaves: { x: number; y: number; rot: number }[] = [];
@@ -331,7 +355,7 @@ function Seal({ brand }: { brand: NationBrand }) {
     <div className="relative h-full w-full">
       <svg viewBox="-200 -200 400 400" className="h-full w-full"
         style={{ filter: 'drop-shadow(0 30px 50px rgba(0,0,0,0.85)) drop-shadow(0 0 40px rgba(240,205,140,0.18))' }}
-        role="img" aria-label={`Seal of ${brand.configured ? brand.name : 'CivicOS'}${bottom ? ` — ${brand.configured ? brand.motto : 'Sovereign Operating System'}` : ''}`}>
+        role="img" aria-label={`Seal of ${brand.configured ? `${brand.name}${brand.motto ? ` — ${brand.motto}` : ''}` : 'CivicOS'}: Sovereign Digital Institution, ${brand.platform}`}>
         <defs>
           {/* Polished metal: many stops imitate a brushed, light-catching surface */}
           <linearGradient id="seal-metal" x1="0.1" y1="0" x2="0.9" y2="1">

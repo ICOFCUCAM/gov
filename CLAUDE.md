@@ -39,6 +39,11 @@ What has been built is locked. Work only upgrades it toward the vision in
 - Once setup is complete, every front-door surface wears the installed
   nation's identity (name, motto, insignia, colour) via `useNationBrand()` in
   `cover/entry.ts`; CivicOS appears only before setup and as "Powered by CivicOS".
+- The Plaza seal's band reads "SOVEREIGN DIGITAL INSTITUTION" above and the
+  platform label below ("OFFICIAL GOVERNMENT PLATFORM"; monarchies "OFFICIAL
+  KINGDOM PLATFORM", emirates "OFFICIAL EMIRATE PLATFORM" via `platformLabel`).
+  The nation's name and motto sit once each on the ring outside, name above,
+  motto below.
 - AI is never part of the brand, logo, or landing copy. The AI assistant is a
   per-nation opt-in (`SovereignProfile.aiAssistant`, chosen in setup, off unless
   ticked). `/api/ai/advisory` refuses when it is off and callers fall back to

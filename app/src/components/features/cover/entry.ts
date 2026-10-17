@@ -112,9 +112,17 @@ export interface NationBrand {
   motto: string;
   seal: string;
   accent: string;
+  /** How the platform styles itself: government, kingdom or emirate. */
+  platform: string;
 }
 
-const PLATFORM_BRAND: NationBrand = { configured: false, name: 'CivicOS', motto: 'Sovereign Operating System', seal: 'CO', accent: '#37c7d4' };
+const PLATFORM_BRAND: NationBrand = { configured: false, name: 'CivicOS', motto: 'Sovereign Operating System', seal: 'CO', accent: '#37c7d4', platform: 'Official Government Platform' };
+
+/** Monarchies are styled as kingdoms (emirates as emirates); every other form as government. */
+export function platformLabel(stateForm: string, stateName: string): string {
+  if (stateForm !== 'monarchy') return 'Official Government Platform';
+  return /emirate/i.test(stateName) ? 'Official Emirate Platform' : 'Official Kingdom Platform';
+}
 
 /** The identity the front door wears: the installed nation's name, motto and
  *  insignia once setup is complete, otherwise the CivicOS platform brand. */
@@ -126,7 +134,7 @@ export function useNationBrand(): NationBrand {
       .then(([st, s]) => {
         if (!live || !st.setup) return;
         const id = resolveIdentity(s.sovereign);
-        setBrand({ configured: true, name: id.stateName, motto: id.motto, seal: id.seal, accent: id.accent });
+        setBrand({ configured: true, name: id.stateName, motto: id.motto, seal: id.seal, accent: id.accent, platform: platformLabel(s.sovereign.stateForm, id.stateName) });
         document.title = id.stateName;
       })
       .catch(() => { /* keep the platform brand */ });

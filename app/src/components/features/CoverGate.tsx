@@ -69,7 +69,7 @@ export function CoverGate() {
           {/* Architecture */}
           <section aria-labelledby="cover-title" className="min-w-0">
             <p className="font-mono text-[11px] uppercase tracking-[0.24em]" style={{ color: ACCENT }}>
-              {brand.configured ? 'Official government platform' : 'Sovereign digital public infrastructure'}
+              {brand.configured ? brand.platform : 'Sovereign digital public infrastructure'}
             </p>
             <h1 id="cover-title" className="mt-4 max-w-[16ch] text-[2.4rem] font-semibold leading-[1.04] tracking-[-0.025em] sm:text-[3.4rem]">
               The operating system of the&nbsp;state.
