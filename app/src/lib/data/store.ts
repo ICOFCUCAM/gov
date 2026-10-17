@@ -1553,6 +1553,9 @@ export function setSovereign(
   if (ch !== undefined && (!Array.isArray(ch) || ch.length > 2 || ch.some(c => typeof c?.name !== 'string' || !Number.isFinite(c?.seats) || c.seats < 1))) {
     return { error: 'Chambers must be one or two named chambers with a positive seat count' };
   }
+  if (patch.timeZone) {
+    try { new Intl.DateTimeFormat('en', { timeZone: patch.timeZone }); } catch { return { error: 'Unknown time zone' }; }
+  }
   db.sovereign = { ...db.sovereign, ...patch };
   applyNation({ ...db.sovereign, configured: !!db.setup });
   localizeSeed();
@@ -1685,7 +1688,9 @@ export function applySovereignPreset(
 ): SovereignProfile | { error: string } {
   const preset = SOVEREIGN_PRESETS.find(p => p.key === key);
   if (!preset) return { error: 'Unknown preset' };
-  db.sovereign = { ...preset.profile, iso3: db.sovereign.iso3, regions: db.sovereign.regions, constitution: db.sovereign.constitution, paymentRail: db.sovereign.paymentRail };
+  // A constitutional template never overwrites the nation's own facts.
+  const { iso3, regions, constitution, paymentRail, timeZone, emergency } = db.sovereign;
+  db.sovereign = { ...preset.profile, iso3, regions, constitution, paymentRail, timeZone, emergency };
   applyNation({ ...db.sovereign, configured: !!db.setup });
   localizeSeed();
   appendAudit(by, 'sovereign.preset', `Sovereign:${key}`, 'ok', preset.label);

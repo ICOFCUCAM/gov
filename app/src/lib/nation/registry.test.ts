@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from 'vitest';
-import { applyNation, regionList, nationIso3, nationRegions, formatMoney } from './registry';
+import { applyNation, regionList, nationIso3, nationRegions, formatMoney, nationTime, nationTimeZoneLabel, nationEmergencyNumber } from './registry';
 
 afterEach(() => applyNation({}));
 
@@ -35,5 +35,26 @@ describe('nation registry', () => {
     expect(formatMoney(2.84e9)).toMatch(/UGX\s?2\.84B/);
     applyNation({ currency: 'USD' });
     expect(formatMoney(2.84e9)).toBe('$2.84B');
+  });
+});
+
+
+describe('nation time and emergency numbers', () => {
+  it('keeps reference labels and numbers until the nation sets its own', () => {
+    expect(nationTimeZoneLabel('GMT+1')).toBe('GMT+1');
+    expect(nationEmergencyNumber('police', '999')).toBe('999');
+  });
+
+  it('uses the nation\'s time zone and emergency numbers', () => {
+    applyNation({ timeZone: 'Africa/Kampala', emergency: { general: '112', police: '999' } });
+    expect(nationTimeZoneLabel('GMT+1')).toBe('GMT+3');
+    expect(nationTime(new Date('2026-01-01T09:00:00Z'))).toBe('12:00:00');
+    expect(nationEmergencyNumber('police', '911')).toBe('999');
+    expect(nationEmergencyNumber('fire', '911')).toBe('112');
+  });
+
+  it('ignores an unknown time zone', () => {
+    applyNation({ timeZone: 'Mars/Olympus' });
+    expect(nationTimeZoneLabel('GMT+1')).toBe('GMT+1');
   });
 });

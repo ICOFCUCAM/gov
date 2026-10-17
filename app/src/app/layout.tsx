@@ -18,12 +18,12 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const { iso3, regions, currency, locale, stateForm, constitution, stateName, executiveTitle, legislatureName, paymentRail } = getSovereign();
+  const { iso3, regions, currency, locale, stateForm, constitution, stateName, executiveTitle, legislatureName, paymentRail, timeZone, emergency } = getSovereign();
   const configured = !!getSetup();
   return (
     <html lang="en" dir="ltr">
       <body>
-        <NationRegistry facts={{ iso3, regions, currency, locale, stateForm, constitution, stateName, executiveTitle, legislatureName, configured, paymentRail }} />
+        <NationRegistry facts={{ iso3, regions, currency, locale, stateForm, constitution, stateName, executiveTitle, legislatureName, configured, paymentRail, timeZone, emergency }} />
         {children}
       </body>
     </html>

@@ -14,6 +14,7 @@ import { buildCascade } from '@/lib/institution/cascade';
 import { branchReadiness, separationIntegrity } from '@/lib/gov/branches';
 import { constitutionFor } from '@/lib/gov/constitution';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
+import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; live?: boolean }[] }[] = [
   { g: 'Sovereign Command', items: [
@@ -198,7 +199,7 @@ export default function SovereignCommandCenter() {
           ))}
         </div>
         <div className="ml-auto flex items-center gap-3">
-          <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}<span className="ml-1 text-[9px] text-ink-muted">UTC+3</span></span>
+          <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{nationTime(new Date(now), undefined)}<span className="ml-1 text-[9px] text-ink-muted">{nationTimeZoneLabel('UTC+3')}</span></span>
           <span className="hidden items-center gap-1.5 rounded-sm border border-line px-2 py-1 text-[10px] text-ink-soft sm:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Secure Comms</span>
           <span className="relative grid h-7 w-7 place-items-center rounded-sm text-ink-soft" title="Notifications">⌁<span className="absolute -right-0.5 -top-0.5 grid h-3.5 w-3.5 place-items-center rounded-full text-[8px] text-white" style={{ backgroundColor: TONE.alert }}>{incidents.length || 7}</span></span>
           <span className="border-l border-line pl-3">

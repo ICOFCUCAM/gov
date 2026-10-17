@@ -10,6 +10,7 @@
 import * as React from 'react';
 import { emergencyOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
 
 const BG = '#0a0608';
 const PANEL = '#140d10';
@@ -159,7 +160,7 @@ export function EmergencyCommand({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const o = emergencyOps(id, ts);
   const clock = new Date(now);
-  const hh = clock.toLocaleTimeString('en-GB', { hour12: false });
+  const hh = nationTime(clock);
   const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
   const day = clock.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase();
   const W = (k: string, lo: number, hi: number, n = 14) => waveSeries(`em:${k}:${id}`, ts, n, lo, hi);
@@ -231,7 +232,7 @@ export function EmergencyCommand({ id, now }: { id: string; now: number }) {
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-6 gap-y-1 text-[8.5px]" style={{ color: MUT }}>
           <span><span style={{ color: SOFT }}>{dd}</span> · {day}</span>
-          <span>TIME <span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> GMT+1</span>
+          <span>TIME <span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> {nationTimeZoneLabel('GMT+1')}</span>
           <span className="flex items-center gap-1.5"><span className="relative inline-block">🔔<span className="absolute -right-1.5 -top-1.5 grid h-3 w-3 place-items-center rounded-full text-[6px] font-bold text-white" style={{ background: RED }}>9</span></span><span className="uppercase tracking-[0.12em]">Alerts</span></span>
           <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-1" style={{ borderColor: LINE }}>
             <span className="grid h-5 w-5 place-items-center rounded-full text-[8px] font-bold" style={{ background: RED, color: '#160a09' }}>EO</span>

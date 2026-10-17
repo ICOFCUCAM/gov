@@ -2,6 +2,7 @@
 
 import { PublicSiteShell } from '@/apps/_shared/public/PublicSiteShell';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
+import { nationEmergencyNumber } from '@/lib/nation/registry';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Police Command — Official Portal' };
@@ -17,7 +18,7 @@ export default function PublicPolicePage() {
     <PublicSiteShell
       theme={THEME}
       institution={{ name: 'Police Command', tagline: 'Civil stability under the rule of law', role: 'Agency', href: '/police', crest: '🛡',
-        emergencyButton: { label: 'Emergency 999', icon: '☎' } }}
+        emergencyButton: { label: `Emergency ${nationEmergencyNumber('police', '999')}`, icon: '☎' } }}
       nav={[
         { label: 'Home', href: '/police', active: true },
         { label: 'Services', href: '/police' },
@@ -33,7 +34,7 @@ export default function PublicPolicePage() {
         primaryCta: { label: 'Report a Crime', icon: '⚠' },
         secondaryCta: { label: 'Find a Station', icon: '📍' },
         illustration: <HeroIllustration kind="shield" primary={THEME.primary} accent={THEME.accent} aria="Shield emblem of civil order" />,
-        sideNote: { icon: '☎', title: 'Emergency: 999', body: 'For life-threatening emergencies, dial immediately.', cta: 'Other helplines' },
+        sideNote: { icon: '☎', title: `Emergency: ${nationEmergencyNumber('police', '999')}`, body: 'For life-threatening emergencies, dial immediately.', cta: 'Other helplines' },
       }}
       alert={{ label: 'PUBLIC ADVISORY', text: 'Phishing fraud targeting digital identity is rising. Verify any sovereign request before sharing credentials.' }}
       quickServices={[

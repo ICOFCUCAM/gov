@@ -12,6 +12,7 @@ import * as React from 'react';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { policeOps, emergencyOps, immigrationOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
 
 const BG = '#070a10';
 const PANEL = '#0c1119';
@@ -184,7 +185,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
   const im = immigrationOps(id, ts);
 
   const clock = new Date(now);
-  const hh = clock.toLocaleTimeString('en-GB', { hour12: false });
+  const hh = nationTime(clock);
   const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
   const W = (k: string, lo: number, hi: number, n = 14) => waveSeries(`ic:${k}:${id}`, ts, n, lo, hi);
 
@@ -233,7 +234,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[8.5px]" style={{ color: MUT }}>
           <span>DATE <span style={{ color: SOFT }}>{dd}</span></span>
-          <span>TIME <span className="font-mono" style={{ color: INK }}>{hh}</span> GMT+1</span>
+          <span>TIME <span className="font-mono" style={{ color: INK }}>{hh}</span> {nationTimeZoneLabel('GMT+1')}</span>
         </div>
         {headCells.map(([l, v, t]) => (
           <div key={l} className="border-l px-3" style={{ borderColor: LINE }}>

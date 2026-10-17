@@ -512,6 +512,8 @@ export interface SovereignProfile {
   aiAssistant?: boolean;    // nation opted in to the AI assistant (false = off; unset = legacy on)
   iso3?: string;            // ISO 3166-1 alpha-3 country code — drives the national map
   paymentRail?: string;     // the nation's domestic payment rail, e.g. "Mobile Money", "Instant Payments"
+  timeZone?: string;        // IANA time zone of the capital, e.g. "Africa/Kampala"
+  emergency?: { general?: string; police?: string; fire?: string; ambulance?: string }; // public emergency numbers
   regions?: string[];       // operational regions engines report by (from admin-1 or the nation's own grouping)
   constitution?: NationalConstitution; // the nation's own constitutional facts, over the form-of-state template
 }

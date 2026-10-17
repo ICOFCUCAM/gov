@@ -15,6 +15,7 @@ import {
   bankingRails, citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
 
 const BG = '#04100d';
 const PANEL = '#071512';
@@ -229,7 +230,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
   const fa = fiscalAssurance(id, ts);
 
   const clock = new Date(now);
-  const hh = clock.toLocaleTimeString('en-GB', { hour12: false });
+  const hh = nationTime(clock);
   const mon = clock.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }).toUpperCase();
 
   const W = (k: string, lo: number, hi: number, n = 14) => waveSeries(`tro:${k}:${id}`, ts, n, lo, hi);
@@ -319,7 +320,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[8.5px]" style={{ color: MUT }}>
-          <span><span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> GMT+1</span>
+          <span><span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> {nationTimeZoneLabel('GMT+1')}</span>
           <span>DATE <span style={{ color: SOFT }}>{mon}</span></span>
           <span>SYSTEM <span style={{ color: EMER }}>● OPERATIONAL</span></span>
           <span>FIVE-YEAR PLAN <span style={{ color: SOFT }}>2025/26 Q2</span></span>

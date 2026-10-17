@@ -2,6 +2,7 @@
 
 import { PublicSiteShell } from '@/apps/_shared/public/PublicSiteShell';
 import { HeroIllustration } from '@/apps/_shared/public/illustrations';
+import { nationEmergencyNumber } from '@/lib/nation/registry';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Emergency Response — Official Portal' };
@@ -17,7 +18,7 @@ export default function PublicEmergencyPage() {
     <PublicSiteShell
       theme={THEME}
       institution={{ name: 'Emergency Management & National Resilience', tagline: 'Salus populi suprema lex — the welfare of the people is supreme law', role: 'Agency', href: '/emergency', crest: '◬',
-        emergencyButton: { label: 'Emergency 112', icon: '☎' } }}
+        emergencyButton: { label: `Emergency ${nationEmergencyNumber('general', '112')}`, icon: '☎' } }}
       nav={[
         { label: 'Home', href: '/emergency', active: true },
         { label: 'Alerts', href: '/emergency' },
@@ -33,7 +34,7 @@ export default function PublicEmergencyPage() {
         primaryCta: { label: 'Sign Up for Alerts', icon: '⚠' },
         secondaryCta: { label: 'Find a Shelter', icon: '📍' },
         illustration: <HeroIllustration kind="siren" primary={THEME.primary} accent={THEME.accent} aria="Emergency siren" />,
-        sideNote: { icon: '☎', title: 'Emergency: 112', body: 'Fire, medical, search & rescue — dial 112 nationally.', cta: 'Other helplines' },
+        sideNote: { icon: '☎', title: `Emergency: ${nationEmergencyNumber('general', '112')}`, body: `Fire, medical, search & rescue — dial ${nationEmergencyNumber('general', '112')} nationally.`, cta: 'Other helplines' },
       }}
       alert={{ label: 'NATIONAL ADVISORY', text: 'Monsoon season prepared posture engaged. Citizens in flood-prone districts: review evacuation plans now.' }}
       quickServices={[

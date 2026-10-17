@@ -24,9 +24,11 @@ export interface NationFacts {
   /** True once setup is complete; offices keep the reference wording until then. */
   configured?: boolean;
   paymentRail?: string;
+  timeZone?: string;
+  emergency?: { general?: string; police?: string; fire?: string; ambulance?: string };
 }
 
-const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string } = {
+const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency'] } = {
   configured: false,
   regions: [],
   currency: 'USD',
@@ -47,6 +49,32 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.legislatureName = f.legislatureName;
   state.configured = !!f.configured;
   state.paymentRail = f.paymentRail?.trim() || undefined;
+  state.timeZone = validZone(f.timeZone) ? f.timeZone : undefined;
+  state.emergency = f.emergency;
+}
+
+function validZone(tz?: string): tz is string {
+  if (!tz) return false;
+  try { new Intl.DateTimeFormat('en', { timeZone: tz }); return true; } catch { return false; }
+}
+
+/** Time of day in the nation's time zone (browser time until one is set). */
+export function nationTime(d: Date, locale: string | undefined = 'en-GB'): string {
+  return d.toLocaleTimeString(locale, state.timeZone ? { hour12: false, timeZone: state.timeZone } : locale ? { hour12: false } : undefined);
+}
+
+/** Short UTC-offset label for the nation's time zone, e.g. "GMT+3"; the reference label until set. */
+export function nationTimeZoneLabel(reference: string): string {
+  if (!state.timeZone) return reference;
+  const part = new Intl.DateTimeFormat('en-GB', { timeZone: state.timeZone, timeZoneName: 'shortOffset' })
+    .formatToParts(new Date()).find(p => p.type === 'timeZoneName');
+  return part?.value ?? reference;
+}
+
+/** A public emergency number; each surface keeps its reference number until the nation sets one. */
+export function nationEmergencyNumber(kind: 'general' | 'police' | 'fire' | 'ambulance', reference: string): string {
+  const e = state.emergency;
+  return e?.[kind]?.trim() || e?.general?.trim() || reference;
 }
 
 /** The nation's domestic payment rail (a neutral default until one is set). */

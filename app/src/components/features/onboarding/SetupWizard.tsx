@@ -62,6 +62,9 @@ export function SetupWizard() {
   const [provinces, setProvinces] = React.useState<string[]>([]);
   const [regionDraft, setRegionDraft] = React.useState('');
   const countries = React.useMemo(() => [...COUNTRIES].sort((a, b) => a.name.localeCompare(b.name)), []);
+  const zones = React.useMemo<string[]>(() => {
+    try { return (Intl as unknown as { supportedValuesOf(k: string): string[] }).supportedValuesOf('timeZone'); } catch { return []; }
+  }, []);
 
   // The country's real admin-1 units (from the bundled geography) seed the region list.
   const iso3 = profile?.iso3;
@@ -130,7 +133,7 @@ export function SetupWizard() {
 
   function applyPreset(p: SovereignPreset) {
     setPreset(p.key);
-    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant }));
+    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant, constitution: cur?.constitution, paymentRail: cur?.paymentRail, timeZone: cur?.timeZone, emergency: cur?.emergency }));
   }
 
   function addInstitution() {
@@ -295,6 +298,21 @@ export function SetupWizard() {
                     ) : null}
                   </span>
                 </div>
+              </div>
+
+              <div className="mt-8 grid gap-5 sm:grid-cols-3">
+                <Field label="Time zone of the capital">
+                  <select className={inputCls} value={profile.timeZone ?? ''} onChange={e => set('timeZone', e.currentTarget.value || undefined)}>
+                    <option value="">Choose a time zone…</option>
+                    {zones.map(z => <option key={z} value={z}>{z.replace(/_/g, ' ')}</option>)}
+                  </select>
+                </Field>
+                <Field label="Emergency number" hint="Fire, ambulance and rescue">
+                  <input className={`${inputCls} font-mono`} value={profile.emergency?.general ?? ''} placeholder="e.g. 112" onChange={e => set('emergency', { ...profile.emergency, general: e.currentTarget.value })} />
+                </Field>
+                <Field label="Police number" hint="Leave blank if the same">
+                  <input className={`${inputCls} font-mono`} value={profile.emergency?.police ?? ''} placeholder="e.g. 999" onChange={e => set('emergency', { ...profile.emergency, police: e.currentTarget.value })} />
+                </Field>
               </div>
 
               <div className="mt-8 rounded-[10px] border border-[#16202f] bg-[#0b111c]/80 p-5">
