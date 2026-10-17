@@ -39,6 +39,17 @@
   "year": "09-09-2017 to 24-08-2020",
   "id": "BHS-ADM1-57655419"
  },
+ "BWA": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 17,
+  "coverage": 1,
+  "source": "UNFPA, HDX",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2021",
+  "id": "BWA-ADM1-67125928",
+  "via": "geoBoundaries"
+ },
  "CIV": {
   "level": "I",
   "adm": "ADM1",
@@ -68,6 +79,28 @@
   "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
   "year": "2021",
   "id": "CZE-ADM1-73172107"
+ },
+ "EST": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 15,
+  "coverage": 1,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2016",
+  "id": "EST-ADM1-21999144",
+  "via": "geoBoundaries"
+ },
+ "ETH": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 13,
+  "coverage": 1,
+  "source": "CSA (Central Statistics Agency) + Regional Bureau of Fice and Economic Development (BoFED), HDX",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2020",
+  "id": "ETH-ADM1-83672466",
+  "via": "geoBoundaries"
  },
  "FIN": {
   "level": "I",
@@ -169,6 +202,17 @@
   "year": "2021",
   "id": "LVA-ADM1-71098776"
  },
+ "MLI": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 10,
+  "coverage": 0.909,
+  "source": "DNCT - Direction Nationale des Collectivités Territoriales, HDX",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2015",
+  "id": "MLI-ADM1-21739660",
+  "via": "geoBoundaries"
+ },
  "MNE": {
   "level": "I",
   "adm": "ADM1",
@@ -261,6 +305,28 @@
   "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
   "year": "2020",
   "id": "SDN-ADM1-86620642"
+ },
+ "SLE": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 5,
+  "coverage": 1,
+  "source": "Government of Sierra Leone",
+  "licence": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+  "year": "2023",
+  "id": "cod-ab-sle",
+  "via": "OCHA HDX"
+ },
+ "SVN": {
+  "level": "I",
+  "adm": "ADM2",
+  "units": 212,
+  "coverage": 0.981,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "SVN-ADM2-79292919",
+  "via": "geoBoundaries"
  },
  "TCD": {
   "level": "I",
