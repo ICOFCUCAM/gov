@@ -18,6 +18,8 @@ What has been built is locked. Work only upgrades it toward the vision in
 
 - `/` is the cover page (`app/src/components/features/CoverGate.tsx`):
   everyone meets it first and chooses an entry path.
+- `/cover` compares cover designs under evaluation (Stack, Boot, Atlas, Doors);
+  all share `app/src/components/features/cover/entry.ts` for routing.
 - `/command` is the Sovereign Command Center (formerly `/`), unchanged.
 - Sign-in surfaces: `/sign-in` (substrate email + password) and `/login`
   (citizen verification). The cover hands off to them; it does not replace them.

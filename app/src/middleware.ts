@@ -5,7 +5,7 @@ import type { NextRequest } from 'next/server';
 // public prototype/preview is not bricked: set CIVICOS_AUTH=enforce to
 // require a session cookie for non-public routes. Without it, the gate is
 // transparent (all routes pass) but the policy is in place and audited.
-const PUBLIC = [/^\/$/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/api\/health/];
+const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/api\/health/];
 
 export function middleware(req: NextRequest) {
   const res = NextResponse.next();

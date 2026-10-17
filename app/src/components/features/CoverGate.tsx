@@ -2,11 +2,9 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { substrateAvailable } from '@/lib/db/client';
 import { ACCENT } from '@/components/features/SituationRoom';
+import { ENTRY_PATHS, PUBLIC_LINKS, CITIZEN_NOTE, useCoverEntry, usePathKeys, useClock, type EntryPath as Path } from './cover/entry';
 
-type Path = 'officer' | 'citizen' | 'institution';
 type Layer = 'ai' | 'humans' | 'institutions' | 'constitution';
 
 // The doctrine, drawn as the system's own architecture. Top to bottom.
@@ -17,26 +15,10 @@ const LAYERS: { k: Layer; name: string; verb: string; sub: string; hue: string }
   { k: 'constitution', name: 'Constitution', verb: 'governs', sub: 'Rights · powers · separation', hue: '#34d39c' },
 ];
 
-const PATHS: { k: Path; title: string; sub: string; layer: Layer }[] = [
-  { k: 'officer', title: 'Government', sub: 'Officers, ministries and the executive', layer: 'institutions' },
-  { k: 'citizen', title: 'Citizen', sub: 'Your Civic Wallet — services, records, receipts', layer: 'humans' },
-  { k: 'institution', title: 'New institution', sub: 'Charter a ministry or agency from an archetype', layer: 'constitution' },
-];
+// Each entry path lands in one layer of the stack.
+const LAYER_OF: Record<Path, Layer> = { officer: 'institutions', citizen: 'humans', institution: 'constitution' };
+const PATHS = ENTRY_PATHS.map(p => ({ ...p, layer: LAYER_OF[p.k] }));
 
-const PUBLIC_LINKS = [
-  { l: 'Government Directory', href: '/government' },
-  { l: 'Citizen Portal', href: '/portal' },
-  { l: 'Verify a Document', href: '/wallet/documents' },
-  { l: 'National Briefing', href: '/noc' },
-  { l: 'Public Observatory', href: '/public' },
-  { l: 'Developers', href: '/developers' },
-];
-
-/** Demo session — the same cookie /login sets and middleware checks under
- *  CIVICOS_AUTH=enforce. Used only when no identity substrate is configured. */
-function setDemoSession() {
-  document.cookie = `civicos_session=demo; path=/; max-age=${60 * 60 * 8}; samesite=lax`;
-}
 
 /**
  * Cover gate — the first thing anyone meets. Shows the system's governing
@@ -44,43 +26,10 @@ function setDemoSession() {
  * surfaces (/sign-in, /login); never replaces them.
  */
 export function CoverGate() {
-  const router = useRouter();
-  const [path, setPath] = React.useState<Path>('officer');
-  const [email, setEmail] = React.useState('');
-  const [live, setLive] = React.useState<boolean | null>(null);
-  const [clock, setClock] = React.useState('');
-
-  React.useEffect(() => {
-    setLive(substrateAvailable());
-    const tick = () => setClock(new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }));
-    tick();
-    const t = setInterval(tick, 1000);
-    const onKey = (e: KeyboardEvent) => {
-      if (e.target instanceof HTMLInputElement) return;
-      const p = PATHS[Number(e.key) - 1];
-      if (p) setPath(p.k);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => { clearInterval(t); window.removeEventListener('keydown', onKey); };
-  }, []);
-
-  function enter(e: React.FormEvent) {
-    e.preventDefault();
-    if (path === 'citizen') { router.push('/login?from=/wallet'); return; }
-    const dest = path === 'officer' ? '/command' : '/ministries';
-    if (live) {
-      const q = new URLSearchParams({ from: dest });
-      if (email.trim()) q.set('email', email.trim().toLowerCase());
-      if (path === 'institution') q.set('mode', 'sign-up');
-      router.push(`/sign-in?${q.toString()}`);
-      return;
-    }
-    setDemoSession();
-    router.push(dest);
-  }
-
+  const { path, setPath, email, setEmail, live, enter, note, cta } = useCoverEntry();
+  usePathKeys(setPath);
+  const clock = useClock();
   const active = PATHS.find(p => p.k === path)!;
-  const cta = path === 'citizen' ? 'Open Civic Wallet' : path === 'institution' ? 'Begin charter' : 'Enter Command';
 
   return (
     <main className="relative min-h-screen overflow-hidden bg-[#060a12] font-sans text-[#e2e9f3]">
@@ -168,8 +117,7 @@ export function CoverGate() {
                 <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#65748b]">02 · Verify</p>
                 {path === 'citizen' ? (
                   <p className="mt-3 text-[13.5px] leading-relaxed text-[#94a3b8]">
-                    Verify on this device, with an authorised agent, or at any government office.
-                    No social login, no password to steal.
+                    {CITIZEN_NOTE}
                   </p>
                 ) : (
                   <>
@@ -190,11 +138,7 @@ export function CoverGate() {
               </button>
 
               <p className="mt-4 text-[12px] leading-relaxed text-[#65748b]">
-                {live === false
-                  ? 'Prototype mode — no identity substrate is configured, so you enter with a demo session.'
-                  : path === 'citizen'
-                    ? 'You choose how to verify on the next step.'
-                    : 'Confirm with the password from your invitation. Every session is signed and written to the audit chain.'}
+                {note}
               </p>
             </form>
 
