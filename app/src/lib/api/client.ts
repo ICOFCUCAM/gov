@@ -45,6 +45,7 @@ import type {
   MinistrySeries,
   SovereignProfile,
   SovereignPreset,
+  PlatformSetup,
   NationalSnapshot,
   NationalCoordination,
   CabinetOverview,
@@ -84,6 +85,11 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ key }),
       }),
+  },
+  setup: {
+    get: () => req<{ setup: PlatformSetup | null }>('/api/setup'),
+    complete: (by?: string) =>
+      req<{ setup: PlatformSetup }>('/api/setup', { method: 'POST', body: JSON.stringify({ by }) }),
   },
   cabinet: {
     overview: () => req<CabinetOverview>('/api/cabinet'),

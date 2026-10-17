@@ -43,7 +43,9 @@ export function useCoverEntry(initial: EntryPath = 'officer') {
     e?.preventDefault();
     const p = override ?? path;
     if (p === 'citizen') { router.push('/login?from=/wallet'); return; }
-    const dest = p === 'officer' ? '/command' : '/ministries';
+    // Government and new institutions pass the setup gate: first sign-in
+    // runs onboarding, every later one lands on the welcome page.
+    const dest = p === 'officer' ? '/welcome' : '/welcome?path=institution';
     if (live) {
       const q = new URLSearchParams({ from: dest });
       if (email.trim()) q.set('email', email.trim().toLowerCase());

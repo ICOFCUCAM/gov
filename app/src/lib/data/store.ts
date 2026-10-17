@@ -79,6 +79,7 @@ import type {
   NationalSnapshot,
   CrossMinistryIncident,
   NationalIndicator,
+  PlatformSetup,
   NationalCoordination,
   CoordinationNode,
   CoordinationEdge,
@@ -255,8 +256,9 @@ function seed() {
     accent: '#1f2630',
     motto: 'Humans govern · the platform serves',
   };
+  const setup = null as PlatformSetup | null;
 
-  return { permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
+  return { setup, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
 }
 
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
@@ -1601,6 +1603,17 @@ export function seriesFor(id: string): MinistrySeries | { error: string } {
     ministry: { id: m.id, name: m.name, archetype: m.archetype },
     series,
   };
+}
+
+// ── First-run platform setup ─────────────────────────────────────────
+export function getSetup(): PlatformSetup | null {
+  return db.setup ?? null;
+}
+
+export function completeSetup(by: string): PlatformSetup {
+  db.setup = { completedAt: new Date().toISOString(), by, stateName: db.sovereign.stateName };
+  appendAudit(by, 'platform.setup.complete', 'Platform:setup', 'ok', db.sovereign.stateName);
+  return db.setup;
 }
 
 // ── Multi-country sovereign presets (global-state neutrality) ─────────

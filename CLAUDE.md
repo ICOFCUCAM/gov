@@ -20,6 +20,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   everyone meets it first and chooses an entry path.
 - `/cover` compares cover designs under evaluation (Stack, Boot, Atlas, Doors);
   all share `app/src/components/features/cover/entry.ts` for routing.
+- Government and New institution entries go to `/welcome`. Until setup is
+  complete (`GET /api/setup` returns null), `/welcome` hands over to `/setup`,
+  the first-run onboarding (nation profile, identity, institutions). Launch
+  records completion; every later sign-in lands on `/welcome` directly.
+  `/setup` stays reachable afterwards to review and edit the live configuration.
 - `/command` is the Sovereign Command Center (formerly `/`), unchanged.
 - Sign-in surfaces: `/sign-in` (substrate email + password) and `/login`
   (citizen verification). The cover hands off to them; it does not replace them.

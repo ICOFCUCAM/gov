@@ -511,6 +511,14 @@ export interface SovereignProfile {
   motto?: string;           // formal national style / motto
 }
 
+/** First-run platform setup. Null until a nation or ministry has completed
+ *  onboarding; once set, sign-in goes straight to the welcome page. */
+export interface PlatformSetup {
+  completedAt: ISODate;
+  by: string;
+  stateName: string;
+}
+
 export interface ProtocolOffice {
   rank: number;
   office: string;   // e.g. "Head of State"

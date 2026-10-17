@@ -108,6 +108,7 @@
   "/public",
   "/public/charter/[id]",
   "/senate",
+  "/setup",
   "/sign-in",
   "/trade",
   "/transport",
@@ -130,5 +131,6 @@
   "/wallet/records",
   "/wallet/services",
   "/wallet/sign",
-  "/wallet/substrate"
+  "/wallet/substrate",
+  "/welcome"
 ]
