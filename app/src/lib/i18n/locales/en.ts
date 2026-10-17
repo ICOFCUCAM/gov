@@ -60,6 +60,85 @@ export interface Messages {
   doctrine: {
     fourSentences: string;
   };
+  /** Wallet permits, inbox, payments, document verification and signing. */
+  pages: {
+    permits: string;
+    newShort: string;
+    noPermits: string;
+    noPermitsHint: string;
+    applyPermit: string;
+    applyNewPermit: string;
+    decisionDue: string;
+    noDecisionDate: string;
+    noMessages: string;
+    noMessagesHint: string;
+    unread: string;
+    nothingUnread: string;
+    read: string;
+    viaChannel: string;
+    payments: string;
+    paymentsIntro: string;
+    toPay: string;
+    nothingDue: string;
+    caughtUp: string;
+    due: string;
+    paying: string;
+    payWith: string;
+    paymentHistory: string;
+    noPayments: string;
+    receiptHash: string;
+    paymentFailed: string;
+    verifyDocument: string;
+    verifyIntro: string;
+    documentCode: string;
+    checking: string;
+    verify: string;
+    valid: string;
+    revoked: string;
+    notValid: string;
+    subject: string;
+    issuer: string;
+    type: string;
+    issued: string;
+    signDocument: string;
+    signed: string;
+    signedIntro: string;
+    signature: string;
+    signedAt: string;
+    hash: string;
+    documentId: string;
+    signExplain: string;
+    continueToSign: string;
+    confirmSignature: string;
+    twoFactors: string;
+    faceVerified: string;
+    lookCamera: string;
+    keyVerified: string;
+    tapKey: string;
+    bothRequired: string;
+    signing: string;
+    sign: string;
+    newIntro: string;
+    permitType: string;
+    business: string;
+    building: string;
+    marketStall: string;
+    event: string;
+    foodHandling: string;
+    vehicle: string;
+    whatFor: string;
+    whatForHint: string;
+    applicantName: string;
+    municipalityLabel: string;
+    premises: string;
+    premisesHint: string;
+    anythingKnow: string;
+    plainLanguage: string;
+    submitting: string;
+    submitApplication: string;
+    otherChannels: string;
+    somethingWrong: string;
+  };
   /** Wallet records, identity and receipts pages. */
   records: {
     identity: string;
@@ -317,5 +396,83 @@ export const en: Messages = {
     how3: 'You can revoke a disclosure later.',
     how4: 'Every disclosure appears in your records access log.',
     everythingState: 'Everything the state has on you',
+  },
+  pages: {
+    permits: 'Permits',
+    newShort: '+ New',
+    noPermits: 'No permits yet',
+    noPermitsHint: 'Apply for a permit and track its progress here.',
+    applyPermit: 'Apply for a permit',
+    applyNewPermit: 'Apply for a new permit',
+    decisionDue: 'decision due {date}',
+    noDecisionDate: 'no decision date yet',
+    noMessages: 'No messages',
+    noMessagesHint: 'Notifications from the state appear here.',
+    unread: 'Unread',
+    nothingUnread: 'Nothing unread.',
+    read: 'Read',
+    viaChannel: 'via {channel}',
+    payments: 'Payments',
+    paymentsIntro: 'Pay bills and fees here. Every payment gives you a receipt you can verify. We show the full amount and the rail before you pay — no hidden fees.',
+    toPay: 'To pay',
+    nothingDue: 'Nothing due',
+    caughtUp: "You're all caught up.",
+    due: 'Due {date}',
+    paying: 'Paying…',
+    payWith: 'Pay with {rail}',
+    paymentHistory: 'Payment history',
+    noPayments: 'No payments yet',
+    receiptHash: 'Receipt hash:',
+    paymentFailed: 'Payment failed',
+    verifyDocument: 'Verify a document',
+    verifyIntro: 'Paste or scan a document code to check it was really issued by the state and has not been altered. Try {valid} (valid), {revoked} (revoked), or anything else (invalid).',
+    documentCode: 'Document code',
+    checking: 'Checking…',
+    verify: 'Verify',
+    valid: '✓ Valid',
+    revoked: 'Revoked',
+    notValid: 'Not valid',
+    subject: 'Subject',
+    issuer: 'Issuer',
+    type: 'Type',
+    issued: 'Issued',
+    signDocument: 'Sign a document',
+    signed: 'Signed',
+    signedIntro: 'You signed {title}. This signature is non-repudiable and recorded to the Audit Vault.',
+    signature: 'Signature',
+    signedAt: 'Signed at',
+    hash: 'Hash',
+    documentId: 'Document {id}',
+    signExplain: 'By signing, you confirm the fire-safety annex is accurate and submit it to your bakery permit application.',
+    continueToSign: 'Continue to sign',
+    confirmSignature: 'Confirm your signature',
+    twoFactors: 'Two factors keep your signature yours. Your biometric never leaves this device.',
+    faceVerified: '✓ Face verified',
+    lookCamera: '👤 Look at the camera',
+    keyVerified: '✓ Key verified',
+    tapKey: '🔑 Tap your security key',
+    bothRequired: 'Both factors are required before you can sign.',
+    signing: 'Signing…',
+    sign: 'Sign',
+    newIntro: 'Tell us what you need. You will get a receipt, a named officer, and a target decision date. You can track this any time and question any decision.',
+    permitType: 'Permit type',
+    business: 'Business permit',
+    building: 'Building permit',
+    marketStall: 'Market stall licence',
+    event: 'Public event permit',
+    foodHandling: 'Food handling permit',
+    vehicle: 'Vehicle permit',
+    whatFor: 'What is this for?',
+    whatForHint: 'e.g. Bakery — small business permit',
+    applicantName: 'Applicant name',
+    municipalityLabel: 'Municipality',
+    premises: 'Premises / location',
+    premisesHint: 'e.g. Plot 4423',
+    anythingKnow: 'Anything we should know? (optional)',
+    plainLanguage: 'In plain language…',
+    submitting: 'Submitting…',
+    submitApplication: 'Submit application',
+    otherChannels: 'Prefer not to use a phone? Dial *civic#, visit any office, or ask an agent. The same application works on every channel.',
+    somethingWrong: 'Something went wrong',
   },
 };
