@@ -88,7 +88,7 @@ Network hosts the boundary build needs: `data.humdata.org`, `www.geoboundaries.o
 
 | # | Issue | Where |
 |---|---|---|
-| 7.1 | The browser reports server/client text mismatches ("hydration") from live clocks. It predates this work and the pages still work. | `/command`, `/gov/branches`, `/health-ecosystem` |
+| 7.1 | Resolved: server/browser mismatches fixed (request-time clock via `lib/clock/render-now.tsx`, rounded telemetry and coordinates). A browser sweep of all 118 static routes reports no hydration warnings or page errors. | — |
 | 7.2 | Resolved: the site icon is `app/src/app/icon.svg`. | — |
 | 7.3 | Resolved: on the US map the density legend sits bottom right, clear of the Alaska inset. | — |
-| 7.4 | The inbox support thread shows a clock that can differ by a minute between server and browser, causing a hydration warning. It predates this work. | `app/src/apps/_shared/InstitutionChain.tsx` (`EncounterThread`) |
+| 7.4 | Resolved with 7.1. | — |
