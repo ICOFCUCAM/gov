@@ -45,16 +45,16 @@ export function ProvenancePanel({ releaseId, link }: { releaseId: string; link?:
           </p>
           {open === p.artifactId ? (
             <div className="mt-3 grid grid-cols-[minmax(0,1fr)] gap-2 text-[12.5px] font-light text-white/65">
-              <div className="grid gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Digest (sha256)</span><CopyValue value={p.subject.digest.sha256} short label="digest" /></div>
-              <div className="grid gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Builder</span><span className="min-w-0 break-all font-mono text-[11.5px]">{p.builder.id} ({p.builder.version})</span></div>
-              <div className="grid gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Source</span><span className="min-w-0 break-all font-mono text-[11.5px]">{p.source.uri}@{p.source.tag}</span></div>
-              <div className="grid gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Commit</span><CopyValue value={p.source.commit} short label="commit" /></div>
-              <div className="grid gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Build time</span><span className="font-mono text-[11.5px]">{fmtDateTime(p.startedOn)} → {fmtDateTime(p.finishedOn)}</span></div>
-              <div className="grid gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Materials</span>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Digest (sha256)</span><CopyValue value={p.subject.digest.sha256} short label="digest" /></div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Builder</span><span className="min-w-0 break-all font-mono text-[11.5px]">{p.builder.id} ({p.builder.version})</span></div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Source</span><span className="min-w-0 break-all font-mono text-[11.5px]">{p.source.uri}@{p.source.tag}</span></div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Commit</span><CopyValue value={p.source.commit} short label="commit" /></div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Build time</span><span className="font-mono text-[11.5px]">{fmtDateTime(p.startedOn)} → {fmtDateTime(p.finishedOn)}</span></div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Materials</span>
                 <ul className="grid min-w-0 gap-0.5">{p.materials.map(m => <li key={m.uri} className="min-w-0 break-all font-mono text-[11px] text-white/55">{m.uri} <span className="text-white/35">{Object.entries(m.digest).map(([k, v]) => `${k}:${v.slice(0, 12)}…`).join(' ')}</span></li>)}</ul>
               </div>
-              <div className="grid gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Verify</span>
-                <div className="grid min-w-0 gap-1">{p.verify.map(c => <CopyValue key={c} value={c} label="command" />)}</div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Verify</span>
+                <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">{p.verify.map(c => <CopyValue key={c} value={c} label="command" />)}</div>
               </div>
             </div>
           ) : null}
@@ -124,7 +124,7 @@ export function AssuranceCenter() {
 
 function Agreement({ a }: { a: NonNullable<EscrowData['agreement']> }) {
   return (
-    <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-2">
+    <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-4 lg:grid-cols-2">
       <Panel className="px-4 py-4">
         <dl className="grid gap-2 text-[13px] font-light">
           {[['Escrow agent', a.agent], ['Agreement', a.agreementRef], ['In force since', fmtDate(a.effectiveFrom)], ['Covers', a.covers], ['Deposit deadline', `${a.depositWithinDays} days after each release`], ['Verification', a.verification]].map(([k, v]) => (

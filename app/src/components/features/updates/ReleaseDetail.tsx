@@ -318,7 +318,7 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
     if (!actor.trim()) { setErr('Enter your name and office — every decision is signed.'); return; }
     setBusy(action);
     try {
-      await api.updates.decide(r.id, {
+      const res = await api.updates.decide(r.id, {
         action, by: actor.trim(), note: note.trim() || undefined, link,
         window: action === 'schedule' ? { start: new Date(start).toISOString(), end: new Date(end).toISOString() } : undefined,
         mode: action === 'install' ? mode : undefined,
@@ -328,7 +328,9 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
       const next = await api.updates.release(r.id, link);
       onChange(next);
       setNote('');
-      setDone(`${DONE[action]} — written to the audit chain.`);
+      setDone((res as { pending?: boolean }).pending
+        ? `Proposed — a second, different official must now ${action === 'install' ? 'approve the install' : 'approve'}. Written to the audit chain.`
+        : `${DONE[action]} — written to the audit chain.`);
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Decision failed');
     } finally { setBusy(null); }

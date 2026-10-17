@@ -57,7 +57,7 @@ function QueueItem({ t, onDone }: { t: TicketView; onDone: () => void }) {
         <span className="font-mono text-[11px] text-white/45">{t.id}</span>
         <Chip tone={PRIORITY_TONE[t.priority]} solid={t.priority === 'P1' && !done}>{t.priority}</Chip>
         <span className="text-[12px] text-[#d9c398]/80">{t.nationName}</span>
-        <span className="min-w-0 flex-1 text-[14px] font-light text-[#f3efe6]">{t.title}</span>
+        <span className="order-last min-w-0 basis-full text-[14px] font-light text-[#f3efe6] sm:order-none sm:basis-0 sm:flex-1">{t.title}</span>
         <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/50">{t.state}</span>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">

@@ -126,7 +126,7 @@ function TicketCard({ t, link, q, onDone }: { t: TicketView; link?: string; q: s
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
         <span className="font-mono text-[11px] text-white/45">{t.id}</span>
         <Chip tone={PRIORITY_TONE[t.priority]} solid={t.priority === 'P1' && !done}>{t.priority}</Chip>
-        <span className="min-w-0 flex-1 text-[14.5px] font-light text-[#f3efe6]">{t.title}</span>
+        <span className="order-last min-w-0 basis-full text-[14.5px] font-light text-[#f3efe6] sm:order-none sm:basis-0 sm:flex-1">{t.title}</span>
         <Chip tone={t.state === 'waiting-on-nation' ? CHAMPAGNE : done ? '#9be7c4' : '#a9c7e8'} solid={t.state === 'waiting-on-nation'}>{STATE_TEXT[t.state]}</Chip>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
