@@ -50,6 +50,20 @@ What has been built is locked. Work only upgrades it toward the vision in
 - A nation sees only global releases and its own builds and requests; the
   server resolves the nation (installed nation or private link key), callers
   never name one.
+- Resilience: every install needs a verified restore point and runs on
+  probation (default 30 min; `/updates/settings`). A failed probation switches
+  the *software* back to the last known good release — the only automatic
+  step, never an upgrade and never data. Releases that are not backward
+  compatible (`compatibleWithPrevious`) always ask first. Restoring the data
+  snapshot is a separate decision with an explicit loss warning. One bad or
+  missing health report only marks the release degraded; fallback needs 3 in
+  a row or two independent critical failures.
+- Security store (`/updates/security`, `lib/data/security-store.ts`):
+  baseline protection is included free for every nation; paid tiers are
+  certified third-party server-side tools (instant payment or procurement:
+  quote → PO → invoice → bank transfer → licence). Nations may bring their
+  own tooling. Security updates are never blocked by payment or licence
+  status; coverage is advisory only.
 
 ## Branding and AI
 

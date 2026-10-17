@@ -5,9 +5,10 @@ import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { parseVersion } from '@/lib/updates/semver';
 import { OnboardingFrame, Eyebrow, Section, Rule, hair, CHAMPAGNE, CHAMPAGNE_HI } from '@/components/features/onboarding/Chrome';
-import type { UpdateChamber as Chamber, ChamberRelease } from '@/lib/api/types';
+import type { UpdateChamber as Chamber, ChamberRelease, SecurityPosture } from '@/lib/api/types';
+import { AdvisoryBanners, IncidentBanners, PosturePanel, ProbationPanel } from './resilience';
 import {
-  ChamberNav, ChannelChip, CopyValue, ErrorLine, Loading, MODE_LABEL, Panel, PoweredBy, SeverityChip,
+  ChamberNav, ChamberTabs, ChannelChip, CopyValue, ErrorLine, Loading, MODE_LABEL, Panel, PoweredBy, SeverityChip,
   STAGES, STAGE_LABEL, StateChip, VerifyGuide, VersionBadge, fmtDate, useCenterTitle, useLink, Chip,
 } from './ui';
 
@@ -19,28 +20,40 @@ import {
 export function UpdateChamber() {
   const { link, q } = useLink();
   const [c, setC] = React.useState<Chamber | null>(null);
+  const [posture, setPosture] = React.useState<SecurityPosture | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
+  const load = React.useCallback(() => {
     api.updates.chamber(link).then(r => setC(r.chamber)).catch(e => setErr(e instanceof Error ? e.message : 'Could not reach the update service'));
+    api.updates.security(link).then(r => setPosture(r.security.posture)).catch(() => setPosture(null));
   }, [link]);
+  React.useEffect(load, [load]);
+
+  // Live probation: poll while a release is being health-checked.
+  const watching = c?.probation?.state === 'running';
+  React.useEffect(() => {
+    if (!watching) return;
+    const t = setInterval(() => { api.updates.chamber(link).then(r => setC(r.chamber)).catch(() => undefined); }, 5000);
+    return () => clearInterval(t);
+  }, [watching, link]);
 
   const { title, nation } = useCenterTitle(c?.nation.name, c?.nation.home ?? true);
 
   return (
     <OnboardingFrame right={<ChamberNav q={q} active="chamber" />}>
       <div className="flex-1 py-10 lg:py-14">
-        {err ? <ErrorLine>{err}</ErrorLine> : !c ? <Loading /> : <Body c={c} q={q} title={title} nation={nation} />}
+        <ChamberTabs q={q} active="chamber" />
+        {err ? <ErrorLine>{err}</ErrorLine> : !c ? <Loading /> : <Body c={c} q={q} link={link} title={title} nation={nation} posture={posture} reload={load} />}
         <PoweredBy />
       </div>
     </OnboardingFrame>
   );
 }
 
-function Body({ c, q, title, nation }: { c: Chamber; q: string; title: string; nation: string }) {
+function Body({ c, q, link, title, nation, posture, reload }: { c: Chamber; q: string; link?: string; title: string; nation: string; posture: SecurityPosture | null; reload: () => void }) {
   const byId = new Map(c.releases.map(r => [r.id, r]));
   const current = c.releases.find(r => r.id === c.nation.installedReleaseId);
-  const pending = c.releases.filter(r => r.newer && !['installed', 'skipped'].includes(r.install.state));
+  const pending = c.releases.filter(r => r.newer && !r.blocked && !['installed', 'skipped', 'probation', 'fallen-back'].includes(r.install.state));
   const security = pending.filter(r => r.severity === 'security' || r.severity === 'critical');
   const path = c.upgradePath.map(id => byId.get(id)!).filter(Boolean);
   const nationLabel = nation || 'this installation';
@@ -59,6 +72,7 @@ function Body({ c, q, title, nation }: { c: Chamber; q: string; title: string; n
           <p className="mt-4 max-w-[62ch] text-[15px] font-light leading-relaxed text-white/55">
             Global releases for every nation, and builds made for {nationLabel} from its own requests.
             Nothing installs itself: your administrators review, approve, schedule or download, and record each install.
+            Every install is protected by a restore point and health-checked on probation; if it fails, the software returns to the last version that worked.
           </p>
         </div>
         <div className="flex flex-wrap items-end gap-3">
@@ -68,15 +82,16 @@ function Body({ c, q, title, nation }: { c: Chamber; q: string; title: string; n
       </div>
 
       <Rule className="mt-10" strong />
-      <dl className="grid grid-cols-2 gap-px lg:grid-cols-5" style={{ background: hair(0.1) }}>
+      <dl className="grid grid-cols-2 gap-px lg:grid-cols-6" style={{ background: hair(0.1) }}>
         {[
           ['Running', c.installed],
+          ['Last known good', c.nation.lkg?.version ?? '—'],
           ['Updates waiting', pending.length ? `${pending.length}${security.length ? ` · ${security.length} security` : ''}` : 'Up to date'],
-          ['Delivery', MODE_LABEL[c.nation.deliveryMode]],
+          ['Delivery · ring', `${MODE_LABEL[c.nation.deliveryMode]} · ${c.nation.settings.ring === 'pilot' ? 'Pilot' : 'General'}`],
           ['Supported until', current ? fmtDate(current.supportUntil) : '—'],
           ['Open requests', String(c.requests.filter(x => x.stage !== 'delivered' && x.stage !== 'declined').length)],
         ].map(([k, v], i) => (
-          <div key={k} className="min-w-0 bg-[#05070b] px-5 py-5 last:col-span-2 lg:last:col-span-1">
+          <div key={k} className="min-w-0 bg-[#05070b] px-5 py-5">
             <dt className="flex items-center gap-2 font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">
               <span className="tabular-nums text-white/30">{String(i + 1).padStart(2, '0')}</span>{k}
             </dt>
@@ -94,6 +109,14 @@ function Body({ c, q, title, nation }: { c: Chamber; q: string; title: string; n
             <span className="text-white/50">Recommended, never forced — it installs only when you choose.</span>
           </p>
           <Link href={`/updates/${security[0]!.id}${q}`} className="whitespace-nowrap text-[13px] underline decoration-[#d9c398]/40 underline-offset-4 hover:text-[#f4e4bd]" style={{ color: CHAMPAGNE }}>Review {security[0]!.version} →</Link>
+        </div>
+      ) : null}
+
+      <AdvisoryBanners c={c} q={q} />
+      <IncidentBanners incidents={c.incidents} link={link} q={q} onChange={reload} />
+      {c.probation ? (
+        <div className="mt-8">
+          <ProbationPanel p={c.probation} release={c.releases.find(r => r.id === c.probation!.releaseId)} nation={c.nation} q={q} />
         </div>
       ) : null}
 
@@ -153,7 +176,11 @@ function Body({ c, q, title, nation }: { c: Chamber; q: string; title: string; n
         </ul>
       </Section>
 
-      <Section n="04" title="Your distribution link and integrity">
+      <Section n="04" title="Security posture" aside={<span className="text-[#9be7c4]/80">Baseline protection included for every nation</span>}>
+        {posture ? <PosturePanel p={posture} compact href={`/updates/security${q}`} /> : <div className="min-h-[220px]" />}
+      </Section>
+
+      <Section n="05" title="Your distribution link and integrity">
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <span className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">Private link key</span>
           <CopyValue value={c.nation.channelKey} label="distribution link key" />
@@ -190,7 +217,7 @@ function TimelineItem({ r, q, nation, running }: { r: ChamberRelease; q: string;
             <p className="mt-1 line-clamp-2 text-[13px] font-light text-white/50">{r.summary}</p>
           </div>
           <div className="flex items-center gap-3 md:flex-col md:items-end">
-            {running ? <Chip tone="#9be7c4" solid>Running</Chip> : r.superseded ? <Chip tone="#8a8f99">Superseded</Chip> : r.newer ? <StateChip state={r.install.state} /> : <Chip tone="#8a8f99">Older</Chip>}
+            {running && r.install.state === 'probation' ? <StateChip state="probation" /> : running ? <Chip tone="#9be7c4" solid>Running</Chip> : r.blocked && r.newer ? <Chip tone="#f1b36b" solid>{r.status === 'withdrawn' ? 'Withdrawn' : 'Halted'}</Chip> : r.superseded ? <Chip tone="#8a8f99">Superseded</Chip> : r.newer ? <StateChip state={r.install.state} /> : <Chip tone="#8a8f99">Older</Chip>}
             {r.newer && !r.compatible ? <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#f1b36b]">Needs {r.minCompatibleVersion}+</span> : null}
             <span className="text-[12px] text-[#d9c398]/60 transition-colors group-hover:text-[#f4e4bd]">Review →</span>
           </div>

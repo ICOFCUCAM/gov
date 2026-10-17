@@ -11,6 +11,7 @@ import {
   StateChip, fmtDate, useActor,
 } from './ui';
 import { RequestCard } from './FeatureRequests';
+import { IncidentCard } from './resilience';
 
 const CHANGE_KINDS: ChangeKind[] = ['feature', 'fix', 'security', 'breaking', 'deprecation'];
 const NEXT: Partial<Record<FeatureRequestStage, FeatureRequestStage>> = {
@@ -62,7 +63,7 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
           {o.nations.map(n => (
             <Panel key={n.id} strong={n.home} className="grid gap-4 px-5 py-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.3fr)_auto] md:items-center">
               <div className="min-w-0">
-                <p className="flex flex-wrap items-center gap-2 text-[15px] font-light text-[#f3efe6]">{n.name}{n.home ? <Chip tone={CHAMPAGNE_HI}>This installation</Chip> : null}</p>
+                <p className="flex flex-wrap items-center gap-2 text-[15px] font-light text-[#f3efe6]">{n.name}{n.home ? <Chip tone={CHAMPAGNE_HI}>This installation</Chip> : null}<Chip tone={n.settings.ring === 'pilot' ? '#c9b6ff' : '#a5abb5'}>{n.settings.ring === 'pilot' ? 'Pilot ring' : 'General ring'}</Chip></p>
                 <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">{MODE_LABEL[n.deliveryMode]}{n.iso3 ? ` · ${n.iso3}` : ''} · since {fmtDate(n.enrolledAt)}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
@@ -83,7 +84,18 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         <PublishForm o={o} onDone={reload} />
       </Section>
 
-      <Section n="03" title="Install matrix" aside="Each nation’s own decision — never pushed">
+      <Section n="03" title="Release health and safety" aside="Halt stops new approvals and installs; nations already on it are advised to fall back">
+        <ReleaseSafety o={o} reload={reload} />
+      </Section>
+
+      <Section n="04" title="Fallback incidents across nations" aside={`${o.incidents.length} recorded`}>
+        <div className="grid gap-3">
+          {o.incidents.map(i => <IncidentCard key={i.id} i={{ ...i, acknowledgedAt: i.acknowledgedAt ?? i.openedAt }} />)}
+          {!o.incidents.length ? <p className="text-[13.5px] font-light text-white/50">No fallbacks reported.</p> : null}
+        </div>
+      </Section>
+
+      <Section n="05" title="Install matrix" aside="Each nation’s own decision — never pushed">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px] font-light">
             <thead>
@@ -112,9 +124,58 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         </div>
       </Section>
 
-      <Section n="04" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
+      <Section n="06" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
         <Pipeline requests={o.requests} nameOf={nameOf} onDone={reload} />
       </Section>
+    </>
+  );
+}
+
+function ReleaseSafety({ o, reload }: { o: PublisherOverview; reload: () => void }) {
+  const [actor] = useActor();
+  const [err, setErr] = React.useState<string | null>(null);
+  async function act(id: string, action: 'halt' | 'resume' | 'withdraw' | 'promote') {
+    setErr(null);
+    let reason: string | undefined;
+    if (action === 'halt' || action === 'withdraw') {
+      reason = window.prompt(action === 'halt' ? 'Why is this release halted? (shown to nations)' : 'Why is this release withdrawn? (permanent; shown to nations)') ?? undefined;
+      if (!reason) return;
+    }
+    try { await api.updates.publisher.setStatus(id, { action, reason, by: actor || undefined }); reload(); }
+    catch (e) { setErr(e instanceof Error ? e.message : 'Action failed'); }
+  }
+  const btn = 'rounded-full border px-3 py-1 text-[11.5px] transition-colors disabled:opacity-40';
+  return (
+    <>
+      <div className="min-h-[18px]" aria-live="polite"><ErrorLine>{err}</ErrorLine></div>
+      <div className="overflow-x-auto">
+        <table className="w-full min-w-[760px] text-left text-[13px] font-light">
+          <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65">
+            <th className="py-2 pr-4 font-normal">Release</th><th className="py-2 pr-4 font-normal">Ring · status</th><th className="py-2 pr-4 font-normal">Installs</th><th className="py-2 pr-4 font-normal">Passed</th><th className="py-2 pr-4 font-normal">Fallbacks</th><th className="py-2 pr-4 font-normal">Failure rate</th><th className="py-2 font-normal">Actions</th>
+          </tr></thead>
+          <tbody>
+            {o.releases.map(r => (
+              <tr key={r.id} className="border-t align-middle" style={{ borderColor: hair(0.08) }}>
+                <td className="py-3 pr-4"><span className="font-mono tabular-nums text-[#f4e4bd]">{r.version}</span><span className="block text-[11.5px] text-white/40">{r.title}{r.compatibleWithPrevious ? '' : ' · not backward compatible'}</span></td>
+                <td className="py-3 pr-4"><span className="flex flex-wrap gap-1.5">
+                  <Chip tone={r.rollout === 'pilot' ? '#c9b6ff' : '#a5abb5'}>{r.rollout === 'pilot' ? 'Pilot' : 'GA'}</Chip>
+                  <Chip tone={r.status === 'active' ? '#9be7c4' : '#f1b36b'} solid={r.status !== 'active'}>{r.status}</Chip>
+                </span>{r.statusReason ? <span className="mt-1 block max-w-[220px] text-[11px] text-white/45">{r.statusReason}</span> : null}</td>
+                <td className="py-3 pr-4 font-mono tabular-nums">{r.stats.installs}</td>
+                <td className="py-3 pr-4 font-mono tabular-nums">{r.stats.passed}</td>
+                <td className="py-3 pr-4 font-mono tabular-nums">{r.stats.fallbacks}</td>
+                <td className="py-3 pr-4"><span className="font-mono tabular-nums" style={{ color: r.stats.failureRate >= 25 ? '#f1938f' : r.stats.failureRate > 0 ? '#f1b36b' : '#9be7c4' }}>{r.stats.installs ? `${r.stats.failureRate}%` : '—'}</span></td>
+                <td className="py-3"><span className="flex flex-wrap gap-1.5">
+                  {r.status === 'active' ? <button type="button" className={btn} style={{ borderColor: '#f1b36b88', color: '#f1b36b' }} onClick={() => act(r.id, 'halt')}>Halt</button> : null}
+                  {r.status === 'halted' ? <button type="button" className={btn} style={{ borderColor: hair(0.3), color: '#f3efe6' }} onClick={() => act(r.id, 'resume')}>Resume</button> : null}
+                  {r.status !== 'withdrawn' ? <button type="button" className={btn} style={{ borderColor: '#f1938f66', color: '#f1938f' }} onClick={() => act(r.id, 'withdraw')}>Recall</button> : null}
+                  {r.rollout === 'pilot' && r.status === 'active' ? <button type="button" className={btn} style={{ borderColor: hair(0.3), color: CHAMPAGNE_HI }} onClick={() => act(r.id, 'promote')}>Promote to GA</button> : null}
+                </span></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </>
   );
 }
@@ -211,6 +272,8 @@ function PublishForm({ o, onDone }: { o: PublisherOverview; onDone: () => void }
   const [changes, setChanges] = React.useState('feature: ');
   const [breaking, setBreaking] = React.useState('');
   const [migration, setMigration] = React.useState('');
+  const [migrationPattern, setMigrationPattern] = React.useState<'expand' | 'in-place'>('expand');
+  const [pilot, setPilot] = React.useState(false);
   const [upgradeNotes, setUpgrade] = React.useState('');
   const [rollbackNotes, setRollback] = React.useState('');
   const [supportMonths, setSupport] = React.useState(18);
@@ -236,11 +299,12 @@ function PublishForm({ o, onDone }: { o: PublisherOverview; onDone: () => void }
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setErr(null); setOk(null); setBusy(true);
     try {
-      const mig = migration.trim() ? [{ kind: 'database', description: migration.trim(), reversible: true, estimatedMinutes: 10 }] : [];
+      const mig = migration.trim() ? [{ kind: 'database', description: migration.trim(), reversible: migrationPattern === 'expand', estimatedMinutes: 10, pattern: migrationPattern }] : [];
       const r = await api.updates.publisher.publish({
         channel, nationId: channel === 'nation' ? nationId : undefined, baseVersion: channel === 'nation' ? baseVersion : undefined,
         version: channel === 'global' ? version : undefined, platformReleaseId: channel === 'global' && platformReleaseId ? platformReleaseId : undefined,
         title, summary, severity, recommended, minCompatibleVersion: minCompat, changes: parseChanges(),
+        rollout: channel === 'global' && pilot ? 'pilot' : 'general',
         breakingChanges: breaking.split('\n').map(s => s.trim()).filter(Boolean), migrations: mig,
         upgradeNotes, rollbackNotes, supportMonths, delivery, deliversRequests: channel === 'nation' ? delivers : [], by: actor || undefined,
       });
@@ -297,7 +361,13 @@ function PublishForm({ o, onDone }: { o: PublisherOverview; onDone: () => void }
         </Field>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Breaking changes" hint="One per line. Leave empty if none."><textarea className={`${inputCls} min-h-[70px] resize-y`} value={breaking} onChange={e => setBreaking(e.target.value)} /></Field>
-          <Field label="Database migration" hint="Describe it, if this release migrates data."><textarea className={`${inputCls} min-h-[70px] resize-y`} value={migration} onChange={e => setMigration(e.target.value)} /></Field>
+          <div className="grid gap-2">
+            <Field label="Database migration" hint="Describe it, if this release migrates data."><textarea className={`${inputCls} min-h-[70px] resize-y`} value={migration} onChange={e => setMigration(e.target.value)} /></Field>
+            <Select aria-label="Migration pattern" value={migrationPattern} onChange={e => setMigrationPattern(e.target.value as 'expand' | 'in-place')}>
+              <option value="expand">Expand/contract — backward compatible (automatic fallback allowed)</option>
+              <option value="in-place">In place — not backward compatible (nations are asked before any fallback)</option>
+            </Select>
+          </div>
           <Field label="Upgrade notes"><textarea className={`${inputCls} min-h-[70px] resize-y`} value={upgradeNotes} onChange={e => setUpgrade(e.target.value)} /></Field>
           <Field label="Rollback notes"><textarea className={`${inputCls} min-h-[70px] resize-y`} value={rollbackNotes} onChange={e => setRollback(e.target.value)} /></Field>
         </div>
@@ -314,6 +384,11 @@ function PublishForm({ o, onDone }: { o: PublisherOverview; onDone: () => void }
               <label className="flex items-center gap-2 text-[13px] font-light text-white/70">
                 <input type="checkbox" className="h-4 w-4 accent-[#9be7c4]" checked={recommended} onChange={e => setRecommended(e.target.checked)} />Mark recommended
               </label>
+              {channel === 'global' ? (
+                <label className="flex items-center gap-2 text-[13px] font-light text-white/70">
+                  <input type="checkbox" className="h-4 w-4 accent-[#c9b6ff]" checked={pilot} onChange={e => setPilot(e.target.checked)} />Start in the pilot ring
+                </label>
+              ) : null}
             </div>
           </fieldset>
           <Field label="Support (months)"><input type="number" min={1} max={120} className={inputCls} value={supportMonths} onChange={e => setSupport(Number(e.target.value))} /></Field>

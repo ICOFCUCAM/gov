@@ -66,6 +66,15 @@ import type {
   InstallAction,
   DeliveryMode,
   MaintenanceWindow,
+  ResilienceSettings,
+  FallbackIncident,
+  SecurityCenter,
+  SecurityOrder,
+  ByoSecurityTool,
+  NationSoftware,
+  SecurityDefinitions,
+  HealthCheck,
+  Probation,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -336,14 +345,41 @@ export const api = {
       req<{ request: FeatureRequest }>('/api/releases/requests', { method: 'POST', body: JSON.stringify(body) }),
     downloadUrl: (channelKey: string, artifactId: string) =>
       `/api/releases/download/${encodeURIComponent(channelKey)}/${encodeURIComponent(artifactId)}`,
+    // Resilience
+    health: (checks: HealthCheck[], link?: string) =>
+      req<{ probation: Probation; install: NationInstall }>('/api/releases/health', { method: 'POST', body: JSON.stringify({ checks, link }) }),
+    settings: (patch: Partial<ResilienceSettings> & { estate?: { servers?: number; endpoints?: number }; by: string; link?: string }) =>
+      req<{ nation: SubscribedNation }>('/api/releases/settings', { method: 'PUT', body: JSON.stringify(patch) }),
+    acknowledge: (id: string, by: string, link?: string) =>
+      req<{ incident: FallbackIncident }>(`/api/releases/incidents/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify({ by, link }) }),
+    restoreData: (id: string, body: { by: string; acknowledgeLoss: boolean; link?: string }) =>
+      req<{ chamber: UpdateChamber }>(`/api/releases/${encodeURIComponent(id)}/restore-data`, { method: 'POST', body: JSON.stringify(body) }),
+    breakGlass: (body: { by: string; secondBy: string; reason: string; link?: string }) =>
+      req<{ incident: FallbackIncident; chamber: UpdateChamber }>('/api/releases/break-glass', { method: 'POST', body: JSON.stringify(body) }),
+    // Security store
+    security: (link?: string) => req<{ security: SecurityCenter }>(`/api/releases/security${linkQ(link)}`),
+    quote: (body: { productId: string; edition: string; seats: number; years: number; by: string; link?: string }) =>
+      req<{ order: SecurityOrder }>('/api/releases/security/orders', { method: 'POST', body: JSON.stringify(body) }),
+    orderAction: (id: string, body: { action: 'order' | 'pay' | 'cancel' | 'renew' | 'install-software'; by: string; poNumber?: string; link?: string }) =>
+      req<{ order: SecurityOrder }>(`/api/releases/security/orders/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify(body) }),
+    registerByo: (body: Record<string, unknown>) =>
+      req<{ tool: ByoSecurityTool }>('/api/releases/security/byo', { method: 'POST', body: JSON.stringify(body) }),
+    registerSoftware: (body: { name: string; version: string; kind: string; by: string; link?: string }) =>
+      req<{ software: NationSoftware }>('/api/releases/security/software', { method: 'POST', body: JSON.stringify(body) }),
+    applyDefinitions: (by: string, link?: string) =>
+      req<{ definitions: SecurityDefinitions }>('/api/releases/security/definitions', { method: 'POST', body: JSON.stringify({ by, link }) }),
+    securityDownloadUrl: (channelKey: string, orderId: string) =>
+      `/api/releases/security/download/${encodeURIComponent(channelKey)}/${encodeURIComponent(orderId)}`,
     publisher: {
       overview: async () => req<{ overview: PublisherOverview }>('/api/releases/publisher', await publisherInit()),
       publish: async (body: Record<string, unknown>) =>
         req<{ release: DistributionRelease }>('/api/releases/publisher', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       advance: async (id: string, body: { to: string; by?: string; note?: string; targetVersion?: string }) =>
         req<{ request: FeatureRequest }>(`/api/releases/publisher/requests/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
-      enrol: async (body: { name: string; iso3?: string; deliveryMode: DeliveryMode; installedVersion: string }) =>
+      enrol: async (body: { name: string; iso3?: string; deliveryMode: DeliveryMode; installedVersion: string; ring?: string }) =>
         req<{ nation: SubscribedNation }>('/api/releases/publisher/nations', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      setStatus: async (id: string, body: { action: 'halt' | 'resume' | 'withdraw' | 'promote'; reason?: string; by?: string }) =>
+        req<{ release: DistributionRelease }>(`/api/releases/publisher/releases/${encodeURIComponent(id)}`, await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
     },
   },
 };

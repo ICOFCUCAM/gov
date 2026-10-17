@@ -723,7 +723,8 @@ export type DeliveryMode = 'saas' | 'self-hosted' | 'air-gapped';
 export type ArtifactKind =
   | 'container-image' | 'helm-chart' | 'source-tarball' | 'binary-tarball'
   | 'offline-bundle' | 'migration-kit' | 'mobile-android' | 'mobile-ios'
-  | 'desktop-console' | 'sbom-cyclonedx' | 'sbom-spdx' | 'documentation';
+  | 'desktop-console' | 'sbom-cyclonedx' | 'sbom-spdx' | 'documentation'
+  | 'install-kit' | 'restore-kit';
 
 export interface ArtifactSignature {
   method: 'cosign' | 'gpg';
@@ -757,6 +758,9 @@ export interface ReleaseMigration {
   description: string;
   reversible: boolean;
   estimatedMinutes: number;
+  /** Expand/contract keeps the previous release working on the new schema,
+   *  so a fallback is clean; in-place changes rely on the restore point. */
+  pattern?: 'expand' | 'contract' | 'in-place';
 }
 
 export interface DistributionRelease {
@@ -787,10 +791,26 @@ export interface DistributionRelease {
   /** The platform pipeline release this was promoted from, if any. */
   platformReleaseId?: string;
   publishedBy: string;
+  /** Staged rollout: pilot-ring nations first, then general availability. */
+  rollout: RolloutRing;
+  /** Its migrations leave the previous release working on the new schema
+   *  (expand/contract), so the software can be switched back automatically
+   *  without touching data. False forces "ask before falling back". */
+  compatibleWithPrevious: boolean;
+  /** Publisher safety: a halted or withdrawn release cannot be newly approved or installed. */
+  status: ReleaseStatus;
+  statusReason?: string;
+  statusAt?: ISODate;
 }
+export type RolloutRing = 'pilot' | 'general';
+export type ReleaseStatus = 'active' | 'halted' | 'withdrawn';
 
-export type InstallState = 'available' | 'approved' | 'scheduled' | 'installed' | 'skipped' | 'rolled-back';
-export type InstallAction = 'approve' | 'schedule' | 'unschedule' | 'install' | 'skip' | 'reconsider' | 'rollback';
+/** 'probation': installed and being health-checked; 'fallen-back': the
+ *  system restored the last known good release after probation failed. */
+export type InstallState = 'available' | 'approved' | 'scheduled' | 'probation' | 'installed' | 'skipped' | 'rolled-back' | 'fallen-back';
+/** 'prepare' takes the restore point; 'fallback' and 'keep' answer a failed
+ *  probation when the nation asked to decide before falling back. */
+export type InstallAction = 'approve' | 'schedule' | 'unschedule' | 'prepare' | 'install' | 'skip' | 'reconsider' | 'rollback' | 'fallback' | 'keep';
 export interface MaintenanceWindow { start: ISODate; end: ISODate }
 export interface InstallEvent {
   at: ISODate;
@@ -810,6 +830,98 @@ export interface NationInstall {
   mode?: DeliveryMode;
   window?: MaintenanceWindow;
   events: InstallEvent[];
+  /** Taken before the install; required for it. */
+  restorePoint?: RestorePoint;
+  probation?: Probation;
+}
+
+// ── Resilience: restore points, probation and fallback ───────────────
+export interface RestorePoint {
+  id: string;
+  /** The version the snapshot protects (the release running when it was taken). */
+  version: string;
+  releaseId?: string;
+  createdAt: ISODate;
+  createdBy: string;
+  sizeBytes: number;
+  verified: boolean;
+  /** Database snapshot, configuration, the previous release's artifacts. */
+  contents: string[];
+  /** What restoring it gives back and what is lost (irreversible migrations). */
+  restoreNotes: string[];
+  restoredAt?: ISODate;
+}
+export type HealthCheckKey =
+  | 'readiness' | 'liveness' | 'error-rate' | 'latency' | 'audit-chain'
+  | 'smoke-sign-in' | 'smoke-wallet' | 'smoke-payments' | 'smoke-registry';
+export interface HealthCheck {
+  key: HealthCheckKey;
+  ok: boolean;
+  /** error-rate in %, latency in ms. */
+  value?: number;
+  detail?: string;
+}
+export interface HealthReport {
+  at: ISODate;
+  source: 'agent' | 'simulated' | 'silence';
+  checks: HealthCheck[];
+  ok: boolean;
+}
+export type ProbationState = 'running' | 'passed' | 'failed' | 'awaiting-decision' | 'kept' | 'ended';
+export interface Probation {
+  releaseId: string;
+  version: string;
+  /** The last known good release this install replaced, and the restore point protecting it. */
+  lkgVersion: string;
+  lkgReleaseId?: string;
+  restorePointId: string;
+  startedAt: ISODate;
+  endsAt: ISODate;
+  minutes: number;
+  state: ProbationState;
+  baseline: { errorRatePct: number; latencyMs: number };
+  /** A report is bad when a critical check fails or a threshold is breached; a
+   *  missed report interval counts as bad too. Fallback needs
+   *  `consecutiveFailures` bad reports in a row, or two independent critical
+   *  checks failing in one report (confirmed). */
+  thresholds: { errorRatePct: number; latencyMs: number; consecutiveFailures: number; silenceMinutes: number };
+  reports: HealthReport[];
+  failedChecks: HealthCheckKey[];
+  /** Consecutive bad or missing reports. Above zero the release is "degraded — watching". */
+  failStreak: number;
+  degraded: boolean;
+  concludedAt?: ISODate;
+  incidentId?: string;
+}
+export type FallbackTrigger = 'automatic' | 'approved' | 'break-glass';
+export interface FallbackIncident {
+  id: string;
+  nationId: string;
+  releaseId?: string;
+  fromVersion: string;
+  toVersion: string;
+  restorePointId?: string;
+  trigger: FallbackTrigger;
+  /** Awaiting a decision when the nation asked to decide before falling back. */
+  state: 'awaiting-decision' | 'restored' | 'kept';
+  /** Fallback switches software only. Restoring the data snapshot is a separate, deliberate decision. */
+  dataRestored?: { at: ISODate; by: string; snapshotAt: ISODate };
+  failedChecks: HealthCheckKey[];
+  timeline: { at: ISODate; text: string }[];
+  openedAt: ISODate;
+  acknowledgedAt?: ISODate;
+  acknowledgedBy?: string;
+  auditSeq?: number;
+}
+export interface ResilienceSettings {
+  probationMinutes: number;
+  /** Automatic restores the last known good release on failure; ask waits for a decision. */
+  fallback: 'automatic' | 'ask';
+  /** Who reports health: the in-store simulation (prototype) or the nation's deployment agent. */
+  healthSource: 'simulated' | 'agent';
+  ring: RolloutRing;
+  /** Security definitions are data: applied automatically by default. */
+  definitionsPolicy: 'automatic' | 'manual';
 }
 
 export interface SubscribedNation {
@@ -826,6 +938,13 @@ export interface SubscribedNation {
   enrolledAt: ISODate;
   /** True for the nation this installation belongs to. */
   home?: boolean;
+  /** Last known good: the release that most recently passed probation. */
+  lkg?: { version: string; releaseId?: string };
+  settings: ResilienceSettings;
+  /** Currency the nation is invoiced in, and the contract rate from the reference price list. */
+  currency?: string;
+  contractRate?: number;
+  estate: { servers: number; endpoints: number };
 }
 
 export type FeatureRequestStage =
@@ -855,6 +974,8 @@ export interface ChamberRelease extends DistributionRelease {
   compatible: boolean;
   /** Installed earlier and since replaced by a newer install. */
   superseded: boolean;
+  /** Not installable because the publisher halted or withdrew it. */
+  blocked: boolean;
 }
 export interface PublisherKey { fingerprint: string; cosignKey: string; gpgKey: string; demo: true }
 export interface UpdateChamber {
@@ -866,14 +987,156 @@ export interface UpdateChamber {
   upgradePath: string[];
   requests: FeatureRequest[];
   publisherKey: PublisherKey;
+  /** The install currently in probation, if any. */
+  probation?: Probation;
+  incidents: FallbackIncident[];
+  /** Halted or withdrawn releases this nation runs: falling back is advised. */
+  advisories: { releaseId: string; version: string; status: ReleaseStatus; reason?: string }[];
+  security: SecurityGate;
 }
+/** Advisory only: security coverage never blocks an update. */
+export interface SecurityGate {
+  mode: 'subscription' | 'byo' | 'none';
+  /** The platform estate is covered (Endpoint/EDR licence or estate-wide BYO with a fresh scan). */
+  platformCovered: boolean;
+  /** The nation's own software is covered (any BYO or platform licence). */
+  nationSoftwareCovered: boolean;
+  reason: string;
+}
+export interface ReleaseHealthStats { installs: number; probations: number; passed: number; fallbacks: number; failureRate: number }
 export interface PublisherOverview {
   nations: (SubscribedNation & { openRequests: number; available: number; securityPending: number })[];
-  releases: DistributionRelease[];
+  releases: (DistributionRelease & { stats: ReleaseHealthStats })[];
+  incidents: (FallbackIncident & { nationName: string })[];
   requests: FeatureRequest[];
   /** nationId → releaseId → state, for the install matrix. */
   installs: Record<string, Record<string, InstallState>>;
   /** Stable platform-pipeline releases not yet published to nations. */
   promotable: { id: string; version: string; notes: string }[];
   publisherKey: PublisherKey;
+}
+
+// ── Security store: platform security software (paid) and bring-your-own ──
+/** Server-side protection. 'endpoint' (officers' desktops) is BYO-only: the store does not sell desktop antivirus. */
+export type SecurityCategory = 'vulnerability' | 'container' | 'edr' | 'mdr' | 'waf' | 'siem' | 'backup' | 'endpoint';
+export interface SecurityEdition {
+  key: string;
+  name: string;
+  features: string[];
+  /** Annual price per unit in the publisher's reference currency (major units). */
+  unitPriceRef: number;
+}
+export interface SecurityProduct {
+  id: string;
+  category: SecurityCategory;
+  name: string;
+  vendor: string;
+  /** Vendor certified by the publisher (placeholder names in this build). */
+  certified: boolean;
+  /** 'included': free and always on for every nation; 'paid': advanced tools licensed per unit. See StorePolicy. */
+  tier: 'included' | 'paid';
+  /** What the publisher tested before certifying the product, and against which platform versions. */
+  certification: { tested: string[]; platformVersions: string; certifiedAt: ISODate; notes: string };
+  summary: string;
+  unit: 'server' | 'endpoint';
+  platforms: string[];
+  editions: SecurityEdition[];
+  latestVersion: string;
+  /** Vendor-neutral placeholder product: no real software is distributed. */
+  placeholder: true;
+}
+export type OrderStage = 'quote' | 'ordered' | 'invoiced' | 'active' | 'expired' | 'cancelled';
+export interface SecurityOrder {
+  id: string;
+  nationId: string;
+  productId: string;
+  edition: string;
+  seats: number;
+  years: number;
+  currency: string;
+  unitPrice: number;
+  total: number;
+  stage: OrderStage;
+  quotedAt: ISODate;
+  validUntil: ISODate;
+  poNumber?: string;
+  invoice?: { id: string; issuedAt: ISODate; dueAt: ISODate; amount: number };
+  /** 'transfer': government procurement (purchase order, invoice, bank transfer with a reference); 'instant': paid at once on the nation's rail; 'included': no charge. */
+  payment?: { receiptId: string; rail: string; method: 'transfer' | 'instant' | 'included'; reference?: string; paidAt: ISODate; hash: string };
+  licence?: { key: string; issuedAt: ISODate; expiresAt: ISODate; seats: number };
+  /** Security software version the nation runs; upgrading it is the nation's decision. */
+  installedVersion?: string;
+  renewalOf?: string;
+  history: { at: ISODate; by: string; from: OrderStage | null; to: OrderStage; note?: string; auditSeq?: number }[];
+}
+export interface ByoSecurityTool {
+  id: string;
+  nationId: string;
+  product: string;
+  vendor: string;
+  version: string;
+  category: SecurityCategory;
+  coverage: { servers: number; endpoints: number };
+  lastScanAt: ISODate;
+  attestation: string;
+  attestedBy: string;
+  /** 'estate' covers the whole installation (accepted for platform releases); 'nation-software' only the nation's own software. */
+  scope: 'estate' | 'nation-software';
+  registeredAt: ISODate;
+}
+export interface NationSoftware {
+  id: string;
+  nationId: string;
+  name: string;
+  version: string;
+  kind: 'module' | 'integration' | 'build';
+  registeredAt: ISODate;
+  registeredBy: string;
+  securedBy: 'subscription' | 'byo';
+  securedByRef: string;
+}
+export interface SecurityDefinitions {
+  installed: string;
+  installedAt: ISODate;
+  latest: string;
+  latestAt: ISODate;
+  policy: 'automatic' | 'manual';
+  /** Automatic updates run only while some protection is active. */
+  automaticActive: boolean;
+}
+export interface SecurityPosture {
+  grade: 'A' | 'B' | 'C' | 'D' | 'E';
+  score: number;
+  coverage: { servers: { covered: number; total: number }; endpoints: { covered: number; total: number } };
+  definitionsAgeHours: number;
+  lastScanAt?: ISODate;
+  advisories: { releaseId: string; version: string; title: string }[];
+  gate: SecurityGate;
+  findings: string[];
+}
+/** The store's business model, held as configuration (decided by the owner; see `decision`). */
+export interface StorePolicy {
+  /** 'free': the baseline is included and always on for every nation (decided); 'with-paid-tier' / 'paid' remain configurable. */
+  includedTier: 'free' | 'with-paid-tier' | 'paid';
+  /** The catalogue lists certified third-party vendors only (decided). */
+  certifiedVendorsOnly: boolean;
+  /** Payment routes offered: government procurement and instant payment (both kept). */
+  paths: ('procurement' | 'instant')[];
+  decision: string;
+}
+export interface SecurityCenter {
+  nation: SubscribedNation;
+  policy: StorePolicy;
+  /** Always-on protection every nation has, paid or not. */
+  baseline: { products: string[]; covers: string[]; active: boolean; lastScanAt?: ISODate };
+  currency: string;
+  /** False until a contract rate is set: quotes stay in the reference currency. */
+  localPricing: boolean;
+  referenceCurrency: string;
+  catalogue: (SecurityProduct & { prices: Record<string, number> })[];
+  orders: SecurityOrder[];
+  byo: ByoSecurityTool[];
+  software: NationSoftware[];
+  definitions: SecurityDefinitions;
+  posture: SecurityPosture;
 }

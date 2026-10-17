@@ -14,10 +14,12 @@ import type {
 // console), drawn in the night palette of the onboarding surfaces.
 
 export const STATE_LABEL: Record<InstallState, string> = {
-  available: 'Available', approved: 'Approved', scheduled: 'Scheduled', installed: 'Installed', skipped: 'Skipped', 'rolled-back': 'Rolled back',
+  available: 'Available', approved: 'Approved', scheduled: 'Scheduled', probation: 'On probation', installed: 'Installed', skipped: 'Skipped', 'rolled-back': 'Rolled back',
+  'fallen-back': 'Rolled back automatically',
 };
 const STATE_TONE: Record<InstallState, string> = {
-  available: '#d9c398', approved: '#9cc3ff', scheduled: '#c9b6ff', installed: '#9be7c4', skipped: '#8a8f99', 'rolled-back': '#f1b36b',
+  available: '#d9c398', approved: '#9cc3ff', scheduled: '#c9b6ff', probation: '#f4d58d', installed: '#9be7c4', skipped: '#8a8f99', 'rolled-back': '#f1b36b',
+  'fallen-back': '#f1938f',
 };
 export const SEVERITY_LABEL: Record<ReleaseSeverity, string> = { security: 'Security', critical: 'Critical', feature: 'Feature', maintenance: 'Maintenance' };
 const SEVERITY_TONE: Record<ReleaseSeverity, string> = { security: '#f1938f', critical: '#f1b36b', feature: '#d9c398', maintenance: '#a5abb5' };
@@ -184,16 +186,34 @@ export function useCenterTitle(nationName?: string, home = true): { title: strin
   return { title: nation ? `Update Center — ${nation}` : 'Update Center', nation, configured: brand.configured };
 }
 
-export function ChamberNav({ q, active }: { q: string; active: 'chamber' | 'requests' | 'release' }) {
-  const items = [
-    { href: `/updates${q}`, l: 'Chamber', k: 'chamber' },
-    { href: `/updates/requests${q}`, l: 'Requests', k: 'requests' },
-  ];
+type ChamberTab = 'chamber' | 'requests' | 'release' | 'security' | 'settings';
+const chamberItems = (q: string) => [
+  { href: `/updates${q}`, l: 'Chamber', k: 'chamber' },
+  { href: `/updates/security${q}`, l: 'Security', k: 'security' },
+  { href: `/updates/requests${q}`, l: 'Requests', k: 'requests' },
+  { href: `/updates/settings${q}`, l: 'Settings', k: 'settings' },
+];
+
+/** Header navigation (from small screens up); phones get ChamberTabs in the page body. */
+export function ChamberNav({ q, active }: { q: string; active: ChamberTab }) {
   return (
-    <nav aria-label="Update Center" className="flex items-center gap-4">
-      {items.map(i => (
+    <nav aria-label="Update Center" className="hidden items-center gap-4 sm:flex">
+      {chamberItems(q).map(i => (
         <Link key={i.k} href={i.href} aria-current={active === i.k ? 'page' : undefined}
           className={`uppercase transition-colors hover:text-[#f4e4bd] ${active === i.k ? 'text-[#f4e4bd]' : ''}`}>{i.l}</Link>
+      ))}
+    </nav>
+  );
+}
+
+/** The same navigation as a tab row for phones. */
+export function ChamberTabs({ q, active }: { q: string; active: ChamberTab }) {
+  return (
+    <nav aria-label="Update Center sections" className="-mt-4 mb-6 flex gap-2 overflow-x-auto pb-1 sm:hidden">
+      {chamberItems(q).map(i => (
+        <Link key={i.k} href={i.href} aria-current={active === i.k ? 'page' : undefined}
+          className="shrink-0 rounded-full border px-3.5 py-1.5 font-mono text-[10px] uppercase tracking-[0.18em] no-underline"
+          style={{ borderColor: active === i.k ? CHAMPAGNE : hair(0.2), color: active === i.k ? CHAMPAGNE_HI : 'rgba(243,239,230,0.6)' }}>{i.l}</Link>
       ))}
     </nav>
   );

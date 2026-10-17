@@ -118,6 +118,8 @@
   "/updates",
   "/updates/[id]",
   "/updates/requests",
+  "/updates/security",
+  "/updates/settings",
   "/wall",
   "/wallet",
   "/wallet/assistant",

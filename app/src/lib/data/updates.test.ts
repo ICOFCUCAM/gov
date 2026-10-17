@@ -5,6 +5,8 @@ import {
   HOME_NATION, type PublishInput,
 } from './updates';
 import { listAudit, verifyAuditChain } from './store';
+import { resetSecurity, registerByo } from './security-store';
+import { nationRecord } from './updates';
 import type { UpdateChamber } from '@/lib/api/types';
 
 const chamber = (id = HOME_NATION): UpdateChamber => {
@@ -23,7 +25,13 @@ const nationBuild = (over: Partial<PublishInput> = {}): PublishInput => ({
   ...over,
 });
 
-beforeEach(() => resetUpdates());
+beforeEach(() => { resetUpdates(); resetSecurity(); });
+
+/** Estate-wide BYO attestation: satisfies the security rule for platform releases. */
+const coverHome = () => {
+  const t = registerByo(nationRecord(HOME_NATION)!, { product: 'Own EDR', vendor: 'National CERT', version: '4.1', category: 'edr', servers: 48, endpoints: 1250, lastScanAt: new Date().toISOString(), attestation: 'Full estate scan, no critical findings outstanding.', scope: 'estate', by: 'Head of Cyber Security' });
+  if ('error' in t) throw new Error(t.error);
+};
 
 describe('nation isolation', () => {
   it('each nation sees global releases plus only its own builds', () => {
@@ -119,10 +127,13 @@ describe('never automatic', () => {
     // Scheduling installs nothing.
     expect(chamber().installed).toBe('1.4.0');
 
+    coverHome();
+    expect(decide(HOME_NATION, 'DR-141-H1', { action: 'prepare', by: 'Platform operations' })).not.toHaveProperty('error');
     const i = decide(HOME_NATION, 'DR-141-H1', { action: 'install', by: 'Platform operations' });
     if ('error' in i) throw new Error(i.error);
     expect(i.chamber.installed).toBe('1.4.1+sov.1');
-    expect(i.install.events.map(e => e.action)).toEqual(['approve', 'schedule', 'install']);
+    expect(i.install.state).toBe('probation');
+    expect(i.install.events.map(e => e.action)).toEqual(['approve', 'schedule', 'prepare', 'install']);
     expect(i.install.events.every(e => typeof e.auditSeq === 'number')).toBe(true);
     expect(lastAudit().action).toBe('update.install');
     expect(verifyAuditChain().ok).toBe(true);
@@ -130,6 +141,7 @@ describe('never automatic', () => {
 
   it('self-hosted installs require the team to confirm checksums and signatures', () => {
     decide(HOME_NATION, 'DR-141', { action: 'approve', by: 'CIO' });
+    decide(HOME_NATION, 'DR-141', { action: 'prepare', by: 'Ops' });
     expect(decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted' })).toMatchObject({ status: 422 });
     const ok = decide(HOME_NATION, 'DR-141', { action: 'install', by: 'Ops', mode: 'self-hosted', verified: true });
     expect(ok).not.toHaveProperty('error');
