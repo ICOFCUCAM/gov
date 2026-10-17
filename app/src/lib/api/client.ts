@@ -107,6 +107,10 @@ import type {
   LocalMirror,
   SyncManifest,
   MediaShipment,
+  WhatsNew,
+  Official,
+  AlertDelivery,
+  AlertCategory,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -409,6 +413,10 @@ export const api = {
     },
     evidence: (id: string, link?: string) =>
       req<{ pack: Record<string, unknown> & { digest: string } }>(`/api/releases/${encodeURIComponent(id)}/evidence${linkQ(link)}`),
+    whatsNew: (id: string, link?: string) => req<{ whatsNew: WhatsNew }>(`/api/releases/${encodeURIComponent(id)}/whats-new${linkQ(link)}`),
+    alerts: (link?: string) => req<{ officials: Official[]; outbox: AlertDelivery[]; categories: AlertCategory[] }>(`/api/releases/alerts${linkQ(link)}`),
+    alertsAction: (body: { action: 'save' | 'remove'; by: string; official?: Partial<Official>; id?: string; link?: string }) =>
+      req<{ ok: true; officials: Official[] }>('/api/releases/alerts', { method: 'POST', body: JSON.stringify(body) }),
     mirror: (link?: string) =>
       req<{ deliveryMode: DeliveryMode; mirror: LocalMirror | null; manifest: SyncManifest | null; media: MediaShipment[] }>(`/api/releases/mirror${linkQ(link)}`),
     mirrorAction: (body: { action: 'register' | 'sync' | 'custody'; by: string; link?: string; registryUrl?: string; kind?: string; releaseIds?: string[]; mediaId?: string; step?: string; sealId?: string; note?: string }) =>
@@ -466,6 +474,9 @@ export const api = {
       escrow: async () => req<{ deposits: (EscrowStatusRow & { nationId?: string })[]; reviews: SourceReview[]; nations: Record<string, string>; agent: string; depositWithinDays: number }>('/api/releases/publisher/escrow', await publisherInit()),
       escrowAction: async (body: { action: 'deposit' | 'verify' | 'review'; by: string; [k: string]: unknown }) =>
         req<{ ok: true }>('/api/releases/publisher/escrow', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      comms: async () => req<{ nations: { id: string; name: string; language: string }[]; locales: string[]; releases: { id: string; version: string; title: string; changes: number; resources: number }[]; coverage: Record<string, Record<string, boolean>> }>('/api/releases/publisher/comms', await publisherInit()),
+      commsAction: async (body: { action: 'translate' | 'resource'; releaseId: string; by: string; [k: string]: unknown }) =>
+        req<{ ok: true }>('/api/releases/publisher/comms', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
       media: async () => req<{ media: MediaShipment[]; nations: { id: string; name: string; deliveryMode: DeliveryMode; mirror: LocalMirror | null }[] }>('/api/releases/publisher/media', await publisherInit()),
       mediaAction: async (body: { action: 'seal' | 'hand-over'; by: string; [k: string]: unknown }) =>
         req<{ media: MediaShipment }>('/api/releases/publisher/media', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),

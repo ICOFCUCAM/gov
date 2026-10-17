@@ -298,4 +298,14 @@ export const sw: Messages = {
     aiReceiptBold: 'Afisa ndiye aliyesaini uamuzi.',
     aiNotDecide: 'AI haikuamua. Afisa ndiye aliyeamua.',
   },
+  releaseNotes: {
+    whatsNew: 'Kipya ni nini',
+    translationPending: 'Tafsiri inasubiriwa — imeonyeshwa kwa Kiingereza',
+    inYourLanguage: 'Kwa lugha yako',
+    learning: 'Mafunzo na miongozo',
+    adminGuide: 'Mwongozo wa msimamizi',
+    training: 'Mafunzo',
+    runbook: 'Kitabu cha taratibu',
+    video: 'Video',
+  },
 };

@@ -71,7 +71,8 @@ import { securityGate, posture as securityPosture } from './security-store';
 import { preflightGate, stagingGate, superviseStaging } from './readiness';
 import { blackoutOverlapping, freezeBlocks, changeControl } from './change-control';
 import { openTicketForIncident } from './support';
-import { issueDueNotices, lifecycleWarning } from './lifecycle';
+import { issueDueNotices, lifecycleWarning, lineOf, onEolNotice } from './lifecycle';
+import { alert } from './comms';
 
 /** Backward compatible with the previous release: every migration reversible and expand/contract, never in place. */
 export function isBackwardCompatible(migrations: ReleaseMigration[]): boolean {
@@ -425,6 +426,12 @@ function seedUpdates(): UpdatesDb {
 }
 
 const g = globalThis as unknown as { __civicosUpdates?: UpdatesDb };
+// End-of-life notices reach the officials of every nation on that line who subscribed to them.
+onEolNotice(e => {
+  for (const n of udb().nations) {
+    if (lineOf(n.installedVersion) === e.line) alert(n.id, 'eol', `Release line ${e.line} reaches end of life on ${e.endOfLife.slice(0, 10)} (${e.months}-month notice)`, `line:${e.line}`, Date.parse(e.at));
+  }
+});
 function udb(): UpdatesDb {
   return (g.__civicosUpdates ??= seedUpdates());
 }
@@ -981,6 +988,8 @@ export function publishRelease(input: PublishInput): DistributionRelease | { err
   };
   db.releases.push(r);
   // Publishing only makes a release available. No nation's state changes.
+  // Officials who subscribed hear about it (security or releases).
+  for (const n of db.nations) if (visibleTo(r, n.id)) alert(n.id, r.severity === 'security' || r.severity === 'critical' ? 'security' : 'releases', `${r.version} is available: ${r.title}`, r.id);
   recordAudit(by, 'update.publish', `Release:${version}${nationId ? `@${nationId}` : ''}`, 'ok', `${channel} · ${r.severity}${r.recommended ? ' · recommended' : ''}${r.rollout === 'pilot' ? ' · pilot ring' : ''}${compatible ? '' : ' · not backward compatible'}`);
   for (const id of deliversRequests) {
     const q = db.requests.find(x => x.id === id)!;
@@ -993,7 +1002,7 @@ export function publishRelease(input: PublishInput): DistributionRelease | { err
   return r;
 }
 
-export function enrolNation(input: { name?: string; iso3?: string; deliveryMode?: string; installedVersion?: string; ring?: string; currency?: string; by?: string }): SubscribedNation | { error: string } {
+export function enrolNation(input: { name?: string; iso3?: string; deliveryMode?: string; installedVersion?: string; ring?: string; currency?: string; language?: string; by?: string }): SubscribedNation | { error: string } {
   const name = str(input.name, 120);
   if (name.length < 2) return { error: 'Name the nation or deployment' };
   const iso3 = str(input.iso3, 3).toUpperCase();
@@ -1013,6 +1022,7 @@ export function enrolNation(input: { name?: string; iso3?: string; deliveryMode?
     settings: { ...DEFAULT_SETTINGS, ring: input.ring === 'pilot' ? 'pilot' : 'general' },
     currency: /^[A-Z]{3}$/.test(str(input.currency, 3).toUpperCase()) ? str(input.currency, 3).toUpperCase() : undefined,
     estate: { servers: 0, endpoints: 0 },
+    language: /^[a-z]{2,3}$/.test(str(input.language, 3).toLowerCase()) ? str(input.language, 3).toLowerCase() : undefined,
   };
   db.nations.push(n);
   recordAudit(str(input.by, 80) || 'Release engineering', 'update.nation.enrol', `UpdateChamber:${n.id}`, 'ok', `${name} · ${n.deliveryMode} · ${installedVersion}`);
@@ -1205,6 +1215,7 @@ function openIncident(n: SubscribedNation, r: DistributionRelease, p: Probation,
   // Every fallback incident opens a P2 support ticket automatically.
   const t = openTicketForIncident(inc, Date.parse(at));
   inc.timeline.push({ at, text: `Support ticket ${t.id} opened automatically (P2)` });
+  alert(n.id, 'incidents', `Probation failed for ${r.version}: ${failed.map(label).join(', ')}`, inc.id, Date.parse(at));
   return inc;
 }
 
@@ -1399,6 +1410,7 @@ export function breakGlass(nationId: string, input: { by?: string; secondBy?: st
   udb().incidents.push(inc);
   const t = openTicketForIncident(inc, Date.parse(at));
   inc.timeline.push({ at, text: `Support ticket ${t.id} opened automatically (P2)` });
+  alert(nationId, 'incidents', `Break-glass: software switched back to ${rp.version}`, inc.id, Date.parse(at));
   const chamber = getChamber(nationId);
   if ('error' in chamber) return { error: chamber.error, status: 500 };
   return { incident: inc, chamber };

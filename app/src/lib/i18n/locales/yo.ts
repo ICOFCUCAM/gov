@@ -297,4 +297,14 @@ export const yo: Messages = {
     aiReceiptBold: 'Òṣìṣẹ́ ló fọwọ́ sí ìpinnu náà.',
     aiNotDecide: 'AI kò pinnu. Òṣìṣẹ́ ló pinnu.',
   },
+  releaseNotes: {
+    whatsNew: 'Kí ni tuntun',
+    translationPending: 'Ìtúmọ̀ ń bọ̀ — ní èdè Gẹ̀ẹ́sì',
+    inYourLanguage: 'Ní èdè rẹ',
+    learning: 'Ìdánilẹ́kọ̀ọ́ àti ìtọ́sọ́nà',
+    adminGuide: 'Ìtọ́sọ́nà alábòójútó',
+    training: 'Ìdánilẹ́kọ̀ọ́',
+    runbook: 'Ìwé ìlànà iṣẹ́',
+    video: 'Fídíò',
+  },
 };

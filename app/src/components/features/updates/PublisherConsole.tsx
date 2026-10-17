@@ -16,6 +16,7 @@ import { PublisherServiceStatus, PublisherSupportQueue } from './PublisherSuppor
 import { PublisherEscrow } from './Assurance';
 import { PublisherLifecycle } from './Lifecycle';
 import { PublisherMedia } from './MirrorCenter';
+import { PublisherComms } from './Comms';
 import { NSTATUS_TEXT, NSTATUS_TONE, SEV_TONE } from './AdvisoriesPanel';
 import type { SecurityAdvisory, PatchCommitment, AdvisoryNationStatus } from '@/lib/api/types';
 import { EstimateView, HostingStepper, PATH_TITLE, hostingStageChip } from './HostingCenter';
@@ -100,38 +101,42 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         <PublisherLifecycle />
       </Section>
 
-      <Section n="05" title="Security advisories and patch commitments" aside="Disclosure to released fix, by severity">
+      <Section n="05" title="Release communication" aside="What's new in each nation's language">
+        <PublisherComms />
+      </Section>
+
+      <Section n="06" title="Security advisories and patch commitments" aside="Disclosure to released fix, by severity">
         <PublisherAdvisories />
       </Section>
 
-      <Section n="06" title="Fallback incidents across nations" aside={`${o.incidents.length} recorded`}>
+      <Section n="07" title="Fallback incidents across nations" aside={`${o.incidents.length} recorded`}>
         <div className="grid gap-3">
           {o.incidents.map(i => <IncidentCard key={i.id} i={{ ...i, acknowledgedAt: i.acknowledgedAt ?? i.openedAt }} />)}
           {!o.incidents.length ? <p className="text-[13.5px] font-light text-white/50">No fallbacks reported.</p> : null}
         </div>
       </Section>
 
-      <Section n="07" title="Support queue" aside="All nations · most urgent first · SLA timers">
+      <Section n="08" title="Support queue" aside="All nations · most urgent first · SLA timers">
         <PublisherSupportQueue />
       </Section>
 
-      <Section n="08" title="Service status and maintenance" aside="Feeds every nation’s status page and monthly report">
+      <Section n="09" title="Service status and maintenance" aside="Feeds every nation’s status page and monthly report">
         <PublisherServiceStatus />
       </Section>
 
-      <Section n="09" title="Source-code escrow and audits" aside="Deposit every release; nations' auditors under NDA">
+      <Section n="10" title="Source-code escrow and audits" aside="Deposit every release; nations' auditors under NDA">
         <PublisherEscrow />
       </Section>
 
-      <Section n="10" title="Offline delivery — physical media" aside="Sealed, handed over, received, seal verified — each by name">
+      <Section n="11" title="Offline delivery — physical media" aside="Sealed, handed over, received, seal verified — each by name">
         <PublisherMedia />
       </Section>
 
-      <Section n="11" title="Hosting assessment requests" aside="Engineering review: adjust and issue a versioned assessment">
+      <Section n="12" title="Hosting assessment requests" aside="Engineering review: adjust and issue a versioned assessment">
         <HostingQueue />
       </Section>
 
-      <Section n="12" title="Install matrix" aside="Each nation’s own decision — never pushed">
+      <Section n="13" title="Install matrix" aside="Each nation’s own decision — never pushed">
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px] font-light">
             <thead>
@@ -160,7 +165,7 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
         </div>
       </Section>
 
-      <Section n="13" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
+      <Section n="14" title="Feature request pipeline" aside={`${o.requests.filter(q => q.stage !== 'delivered' && q.stage !== 'declined').length} open`}>
         <Pipeline requests={o.requests} nameOf={nameOf} onDone={reload} />
       </Section>
     </>

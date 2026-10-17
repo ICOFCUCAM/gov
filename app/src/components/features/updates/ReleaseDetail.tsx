@@ -9,6 +9,8 @@ import type { ChamberRelease, ChangeKind, DeliveryMode, InstallAction, InstallEv
 import { fallbackMode, ProbationPanel } from './resilience';
 import { ReadinessPanel } from './ReadinessPanel';
 import { ProvenancePanel } from './Assurance';
+import { WhatsNewPanel } from './Comms';
+import { nationMessages } from '@/lib/nation/registry';
 import {
   ArtifactTable, ChamberNav, ChamberTabs, ChangeChip, ChannelChip, Chip, CHANGE_LABEL, CHANGE_ORDER, ErrorLine, Loading, MODE_LABEL,
   Panel, PoweredBy, SeverityChip, StateChip, STATE_LABEL, VerifyGuide, VersionBadge, fmtBytes, fmtDate, fmtDateTime, useActor, useCenterTitle, useLink,
@@ -133,7 +135,11 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
           </div>
         ) : null}
 
-        <Section n="01" title={r.newer ? 'What changes for you' : 'Changelog'} aside={r.newer && gained.length > 1 ? `Includes ${gained.length - 1} release${gained.length > 2 ? 's' : ''} you have not installed` : undefined}>
+        <Section n="01" title={nationMessages().releaseNotes.whatsNew}>
+          <WhatsNewPanel releaseId={r.id} link={link} />
+        </Section>
+
+        <Section n="02" title={r.newer ? 'What changes for you' : 'Changelog'} aside={r.newer && gained.length > 1 ? `Includes ${gained.length - 1} release${gained.length > 2 ? 's' : ''} you have not installed` : undefined}>
           <div className="grid gap-6">
             {CHANGE_ORDER.map(k => {
               const items = r.newer ? diffBy(k) : r.changes.filter(x => x.kind === k).map(x => ({ ...x, from: r.version }));
@@ -158,12 +164,12 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
         </Section>
 
         {r.newer ? (
-          <Section n="02" title="Readiness: preflight and staging">
+          <Section n="03" title="Readiness: preflight and staging">
             <ReadinessPanel r={r} link={link} />
           </Section>
         ) : null}
 
-        <Section n="03" title="Upgrade, migrations and rollback">
+        <Section n="04" title="Upgrade, migrations and rollback">
           <div className="grid gap-4 md:grid-cols-2">
             <Panel className="p-5"><p className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">Upgrade notes</p><p className="mt-2 text-[13.5px] font-light leading-relaxed text-white/70">{r.upgradeNotes}</p></Panel>
             <Panel className="p-5"><p className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">Rollback notes</p><p className="mt-2 text-[13.5px] font-light leading-relaxed text-white/70">{r.rollbackNotes}</p></Panel>
@@ -194,7 +200,7 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
           ) : <p className="mt-4 text-[13px] font-light text-white/45">No migrations between {c.installed} and {r.version}.</p>}
         </Section>
 
-        <Section n="04" title="Safe deployment and fallback">
+        <Section n="05" title="Safe deployment and fallback">
           <div className="grid gap-3 md:grid-cols-3">
             {([
               ['saas', 'Hosted (SaaS)', 'Blue-green per tenant: the new version runs beside the current one and traffic shifts over. Switching back is instant and touches no data.'],
@@ -220,7 +226,7 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
           </div>
         </Section>
 
-        <Section n="05" title="Delivery and downloads">
+        <Section n="06" title="Delivery and downloads">
           <div role="tablist" aria-label="Delivery mode" className="flex flex-wrap gap-2">
             {tabs.map(t => (
               <button key={t.k} role="tab" type="button" aria-selected={tab === t.k} onClick={() => setTab(t.k)}
@@ -251,17 +257,17 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
           <p className="mt-4 text-[12px] font-light text-white/40">Download links serve a placeholder manifest (file name, size, checksum and signature). This environment hosts no release binaries.</p>
         </Section>
 
-        <Section n="06" title="Verify before you install">
+        <Section n="07" title="Verify before you install">
           <VerifyGuide publisherKey={c.publisherKey} />
         </Section>
 
         <div id="provenance" className="scroll-mt-6">
-          <Section n="07" title="Build provenance" aside="SLSA v1 · in-toto attestations">
+          <Section n="08" title="Build provenance" aside="SLSA v1 · in-toto attestations">
             <ProvenancePanel releaseId={r.id} link={link} />
           </Section>
         </div>
 
-        <Section n="08" title="Compliance evidence" aside="Generated from your records">
+        <Section n="09" title="Compliance evidence" aside="Generated from your records">
           <p className="max-w-[70ch] text-[13.5px] font-light leading-relaxed text-white/60">Certification references, security-test summary, SBOMs, provenance, escrow, advisory status for {r.version}, and your own install record and audit-chain entries for it — as a readable pack and a JSON manifest with a digest.</p>
           <Link href={`/updates/${r.id}/evidence${link ? `?link=${encodeURIComponent(link)}` : ''}`} className="mt-3 inline-block text-[13px] underline underline-offset-4" style={{ color: CHAMPAGNE }}>Open the evidence pack →</Link>
         </Section>

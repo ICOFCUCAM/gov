@@ -6,6 +6,7 @@ import { OnboardingFrame, Eyebrow, Section, Field, inputCls, Select, goldBtn, go
 import type { ResilienceSettings, UpdateChamber } from '@/lib/api/types';
 import { IncidentCard } from './resilience';
 import { ChamberNav, ChamberTabs, Chip, CopyValue, ErrorLine, Loading, Panel, PoweredBy, fmtDateTime, useActor, useCenterTitle, useLink } from './ui';
+import { AlertsPanel } from './Comms';
 
 /**
  * Chamber settings: how this nation's installs are protected — probation
@@ -140,6 +141,10 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
 
       <Section n="08" title="Break-glass restore">
         <BreakGlass c={c} link={link} reload={reload} />
+      </Section>
+
+      <Section n="09" title="Who hears about updates" aside="Security · releases · incidents · end of life">
+        <AlertsPanel link={link} />
       </Section>
     </>
   );

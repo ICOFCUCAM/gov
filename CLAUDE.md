@@ -117,6 +117,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   saved. Physical media move through sealed → handed over → received →
   seal verified, each step by a named person and audited; a seal mismatch
   marks the media unusable.
+- Communication (`lib/data/comms.ts`): "what's new" in the nation's language
+  (labels from `nationMessages().releaseNotes`), English marked "translation
+  pending" until the publisher adds one; training and guide links per
+  release. Named officials subscribe per channel to security, releases,
+  incidents and end of life; `alert()` queues deliveries (no provider yet).
 
 ## Branding and AI
 

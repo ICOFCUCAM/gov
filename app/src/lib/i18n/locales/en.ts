@@ -303,6 +303,17 @@ export interface Messages {
     signedBy: string;
     aiClass: string;
   };
+  /** Update Center release communication. */
+  releaseNotes: {
+    whatsNew: string;
+    translationPending: string;
+    inYourLanguage: string;
+    learning: string;
+    adminGuide: string;
+    training: string;
+    runbook: string;
+    video: string;
+  };
 }
 
 export const en: Messages = {
@@ -600,5 +611,15 @@ export const en: Messages = {
     aiReceipt: 'An AI Copilot helped Officer {name} by drafting an eligibility summary. {bold}',
     aiReceiptBold: 'The officer signed the decision.',
     aiNotDecide: 'The AI did not decide. The officer did.',
+  },
+  releaseNotes: {
+    whatsNew: 'What\'s new',
+    translationPending: 'Translation pending — shown in English',
+    inYourLanguage: 'In your language',
+    learning: 'Training and guides',
+    adminGuide: 'Administrator guide',
+    training: 'Training',
+    runbook: 'Runbook',
+    video: 'Video',
   },
 };

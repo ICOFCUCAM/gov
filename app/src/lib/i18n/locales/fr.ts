@@ -297,4 +297,14 @@ export const fr: Messages = {
     aiReceiptBold: 'L’agent a signé la décision.',
     aiNotDecide: 'L’IA n’a pas décidé. C’est l’agent qui a décidé.',
   },
+  releaseNotes: {
+    whatsNew: 'Nouveautés',
+    translationPending: 'Traduction en attente — affiché en anglais',
+    inYourLanguage: 'Dans votre langue',
+    learning: 'Formation et guides',
+    adminGuide: 'Guide de l’administrateur',
+    training: 'Formation',
+    runbook: 'Procédure d’exploitation',
+    video: 'Vidéo',
+  },
 };

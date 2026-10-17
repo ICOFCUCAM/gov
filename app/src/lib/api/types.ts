@@ -944,6 +944,8 @@ export interface SubscribedNation {
   home?: boolean;
   /** Last known good: the release that most recently passed probation. */
   lkg?: { version: string; releaseId?: string };
+  /** The nation's language for release communication (the installed nation uses its setup language). */
+  language?: string;
   /** Deployment-agent credential metadata (the secret itself is shown once and never stored). */
   agentCredential?: { prefix: string; issuedAt: ISODate; issuedBy: string; rotations: number };
   settings: ResilienceSettings;
@@ -1583,4 +1585,44 @@ export interface MediaShipment {
   sealId: string;
   state: CustodyStep | 'seal-broken';
   chain: { step: CustodyStep; at: ISODate; by: string; to?: string; note?: string; sealId?: string; ok?: boolean; auditSeq?: number }[];
+}
+
+// ── Update Center: release communication ──────────────────────────────
+export type AlertCategory = 'security' | 'releases' | 'incidents' | 'eol';
+export type AlertChannel = 'email' | 'sms';
+export interface ReleaseResource { kind: 'training' | 'admin-guide' | 'runbook' | 'video'; title: string; url: string; language: string; placeholder?: boolean }
+export interface WhatsNew {
+  releaseId: string;
+  version: string;
+  /** The nation's language and whether the notes are in it. */
+  locale: string;
+  translated: boolean;
+  /** True when the nation's language is not English and no translation exists yet. */
+  pending: boolean;
+  summary: string;
+  changes: { kind: ChangeKind; text: string }[];
+  resources: ReleaseResource[];
+}
+export interface Official {
+  id: string;
+  name: string;
+  role: string;
+  email?: string;
+  sms?: string;
+  channels: Record<AlertChannel, boolean>;
+  subscriptions: Record<AlertCategory, boolean>;
+}
+export interface AlertDelivery {
+  id: string;
+  at: ISODate;
+  nationId: string;
+  category: AlertCategory;
+  subject: string;
+  ref?: string;
+  officialId: string;
+  officialName: string;
+  channel: AlertChannel;
+  to: string;
+  /** No provider is connected: deliveries are queued (placeholder). */
+  status: 'queued' | 'sent' | 'failed';
 }

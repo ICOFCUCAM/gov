@@ -297,4 +297,14 @@ export const ar: Messages = {
     aiReceiptBold: 'الموظف هو من وقّع القرار.',
     aiNotDecide: 'لم يقرّر الذكاء الاصطناعي. الموظف هو من قرّر.',
   },
+  releaseNotes: {
+    whatsNew: 'ما الجديد',
+    translationPending: 'الترجمة قيد الإعداد — معروض بالإنجليزية',
+    inYourLanguage: 'بلغتك',
+    learning: 'التدريب والأدلة',
+    adminGuide: 'دليل المسؤول',
+    training: 'تدريب',
+    runbook: 'دليل التشغيل',
+    video: 'فيديو',
+  },
 };
