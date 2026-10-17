@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { policeOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
-import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
 
 const BG = '#06080e';
 const PANEL = '#0b0f17';
@@ -189,7 +189,7 @@ export function IntelligenceCommand({ id, now }: { id: string; now: number }) {
 
   const feed: [string, string, string, string][] = [
     ['Terrorist Communication Intercepted', 'Northern Corridor', '12:35', 'CRITICAL'],
-    ['Suspicious Funds Transfer Detected', 'West Region', '12:18', 'HIGH'],
+    ['Suspicious Funds Transfer Detected', regionName(3, 'West Region'), '12:18', 'HIGH'],
     ['Foreign Intelligence Activity', 'Diplomatic Channel', '11:57', 'HIGH'],
     ['Arms Smuggling Route Identified', 'Coastal Sector', '11:42', 'MEDIUM'],
     ['Cyber Espionage Attempt Blocked', 'Government Network', '11:28', 'MEDIUM'],
@@ -211,15 +211,15 @@ export function IntelligenceCommand({ id, now }: { id: string; now: number }) {
     ['Decrypted Messages', 43, 6], ['Priority Intercepts', 18, 2], ['Threat Communications', 37, 13],
   ];
   const operations: [string, string, string][] = [
-    ['Operation Silent Shield', 'Northern Region', 'CRITICAL'],
+    ['Operation Silent Shield', regionName(1, 'Northern Region'), 'CRITICAL'],
     ['Operation Coastal Watch', 'Eastern Seaboard', 'HIGH'],
     ['Operation Cyber Sentinel', 'National Network', 'HIGH'],
     ['Operation Border Guard', 'Western Corridor', 'MEDIUM'],
-    ['Operation Deep Scan', 'Central Region', 'LOW'],
+    ['Operation Deep Scan', regionName(0, 'Central Region'), 'LOW'],
   ];
   const timeline: [string, string, string][] = [
     ['12:40', 'High-risk communication intercepted', 'Northern Corridor'],
-    ['12:28', 'Suspicious transaction flagged', 'West Region'],
+    ['12:28', 'Suspicious transaction flagged', regionName(3, 'West Region')],
     ['12:15', 'Foreign agent activity detected', 'Diplomatic Channel'],
     ['12:05', 'Arms shipment tracking initiated', 'Coastal Area'],
     ['11:52', 'Cyber threat neutralized', 'Government Network'],

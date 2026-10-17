@@ -10,7 +10,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { energyOps } from '@/lib/gov/energy-systems';
-import { regionList } from '@/lib/nation/registry';
+import { regionList, regionName } from '@/lib/nation/registry';
 
 const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 export type GridPosture = 'stable' | 'engaged' | 'strained' | 'critical' | 'blackout-watch';
@@ -229,9 +229,9 @@ export function energyGridBoard(now: number): EnergyGridBoard {
 
   // 4. Transmission corridors (between regions)
   const pairs: [string, string][] = [
-    ['Capital District', 'Northern'], ['Capital District', 'Eastern'],
+    [regionName(0, 'Capital District'), 'Northern'], [regionName(0, 'Capital District'), 'Eastern'],
     ['Northern', 'Highland'], ['Eastern', 'Coastal'],
-    ['Western', 'Capital District'], ['Coastal', 'Western'],
+    ['Western', regionName(0, 'Capital District')], ['Coastal', 'Western'],
   ];
   const corridors: Corridor[] = pairs.map(([a, b], i) => {
     const k = `eg:cor:${a}-${b}`;

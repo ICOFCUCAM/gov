@@ -9,6 +9,7 @@
 
 import { wave, seed } from '@/lib/telemetry';
 import { nationalSituation } from '@/lib/gov/health-operations';
+import { nationRegions, regionName } from '@/lib/nation/registry';
 
 export interface GeoRegion {
   region: string;
@@ -64,26 +65,35 @@ const EDGES: [string, string][] = [
   ['Eastern', 'Coastal'], ['Northern', 'Eastern'],
 ];
 
+// The six schematic slots show the nation's own regions once set (as many
+// slots as it has regions, up to six); reference names until then.
+const SLOTS = Object.keys(COORDS);
+
 export function healthGeo(id: string, t: number): HealthGeo {
   const ns = nationalSituation(id, t);
   const byRegion = new Map(ns.regions.map(r => [r.region, r]));
-  const regions: GeoRegion[] = Object.keys(COORDS).map((region): GeoRegion => {
+  const n = nationRegions().length;
+  const shown = n ? SLOTS.slice(0, Math.min(n, SLOTS.length)) : SLOTS;
+  const label = (slot: string) => regionName(SLOTS.indexOf(slot), slot);
+  const regions: GeoRegion[] = shown.map((slot): GeoRegion => {
+    const region = label(slot);
     const r = byRegion.get(region);
     const pressure = r ? r.composite : Math.round(wave(`hg:p:${id}:${region}`, t, 30, 95));
     const icuLoad = r ? r.icuPressure : Math.round(wave(`hg:i:${id}:${region}`, t, 40, 100));
     const outbreakHeat = r ? r.outbreakHeat : 0;
     const escalation: GeoRegion['escalation'] = pressure >= 80 ? 'critical' : pressure >= 60 ? 'elevated' : 'stable';
     return {
-      region, x: COORDS[region]!.x, y: COORDS[region]!.y,
+      region, x: COORDS[slot]!.x, y: COORDS[slot]!.y,
       pressure, icuLoad, outbreakHeat,
       ambulances: Math.round(wave(`hg:a:${id}:${region}`, t, 4, 60)),
       escalation,
       tone: escalation === 'critical' ? 'alert' : escalation === 'elevated' ? 'warn' : 'ok',
     };
   });
-  const rmap = new Map(regions.map(r => [r.region, r]));
-  const corridors: GeoCorridor[] = EDGES.map(([from, to]): GeoCorridor => {
-    const a = rmap.get(from)!; const b = rmap.get(to)!;
+  const rmap = new Map(shown.map((slot, i) => [slot, regions[i]!]));
+  const corridors: GeoCorridor[] = EDGES.filter(([f, t2]) => rmap.has(f) && rmap.has(t2)).map(([fromSlot, toSlot]): GeoCorridor => {
+    const a = rmap.get(fromSlot)!; const b = rmap.get(toSlot)!;
+    const from = a.region, to = b.region;
     const loadPct = Math.round(wave(`hg:c:${id}:${from}:${to}`, t, 20, 100));
     return {
       from, to, fx: a.x, fy: a.y, tx: b.x, ty: b.y, loadPct,

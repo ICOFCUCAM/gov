@@ -6,12 +6,13 @@ import { TONE, Panel, Spark, seed, toneFor, waveSeries, TerritoryHeat } from '@/
 import { nationalRegions, regionRollup, projectRegions } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { SCENARIOS, type ScenarioKey } from '@/lib/gov/simulation';
+import { regionName } from '@/lib/nation/registry';
 
 const POS_TONE: Record<string, string> = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' };
 
 export function RegionalOverview({ initialRegion }: { initialRegion?: string } = {}) {
   const [now, setNow] = React.useState(() => Date.now());
-  const [open, setOpen] = React.useState<string | null>(initialRegion ?? 'Capital District');
+  const [open, setOpen] = React.useState<string | null>(initialRegion ?? regionName(0, 'Capital District'));
   const [scn, setScn] = React.useState<ScenarioKey>('baseline');
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);

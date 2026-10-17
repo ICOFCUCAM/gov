@@ -11,7 +11,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { justiceOps } from '@/lib/gov/justice-systems';
-import { regionList } from '@/lib/nation/registry';
+import { regionList, regionName } from '@/lib/nation/registry';
 
 const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
@@ -194,8 +194,8 @@ const ARTICLES: { article: string; title: string }[] = [
 ];
 
 const COURT_DEFS: { court: string; tier: CourtRoster['tier']; region: string }[] = [
-  { court: 'Constitutional Court', tier: 'Constitutional', region: 'Capital District' },
-  { court: 'Supreme Court', tier: 'Supreme', region: 'Capital District' },
+  { court: 'Constitutional Court', tier: 'Constitutional', region: regionName(0, 'Capital District') },
+  { court: 'Supreme Court', tier: 'Supreme', region: regionName(0, 'Capital District') },
   { court: 'Northern Appellate Court', tier: 'Appellate', region: 'Northern' },
   { court: 'Eastern High Court', tier: 'High', region: 'Eastern' },
   { court: 'Coastal High Court', tier: 'High', region: 'Coastal' },
@@ -298,7 +298,7 @@ export function justiceContinuityBoard(now: number): JusticeContinuityBoard {
 
   // 5. Correctional facilities
   const facilityDefs = [
-    { facility: 'Capital Central Detention', region: 'Capital District' },
+    { facility: 'Capital Central Detention', region: regionName(0, 'Capital District') },
     { facility: 'Northern Correctional Complex', region: 'Northern' },
     { facility: 'Eastern Rehabilitation Centre', region: 'Eastern' },
     { facility: 'Coastal Open Custody', region: 'Coastal' },

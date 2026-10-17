@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { policeOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
-import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
 
 const BG = '#05080d';
 const PANEL = '#0a0e16';
@@ -193,12 +193,12 @@ export function CyberCommand({ id, now }: { id: string; now: number }) {
   ];
 
   const live: [string, string, string, string, string][] = [
-    ['CRITICAL', 'Ransomware Attack', 'Government Portal Compromise', 'Eastern Region', '12:35'],
+    ['CRITICAL', 'Ransomware Attack', 'Government Portal Compromise', regionName(2, 'Eastern Region'), '12:35'],
     ['HIGH', 'Phishing Campaign', 'Credential Harvesting Detected', 'National', '12:18'],
-    ['HIGH', 'Data Breach Attempt', 'Unauthorized Data Access', 'Central Region', '11:57'],
-    ['MEDIUM', 'Malware Detected', 'Trojan/Remote Access', 'Western Region', '11:42'],
-    ['MEDIUM', 'Web Exploit Attempt', 'SQL Injection Detected', 'Northern Region', '11:28'],
-    ['LOW', 'DDoS Attempt', 'Traffic Anomaly Detected', 'Southern Region', '10:47'],
+    ['HIGH', 'Data Breach Attempt', 'Unauthorized Data Access', regionName(0, 'Central Region'), '11:57'],
+    ['MEDIUM', 'Malware Detected', 'Trojan/Remote Access', regionName(3, 'Western Region'), '11:42'],
+    ['MEDIUM', 'Web Exploit Attempt', 'SQL Injection Detected', regionName(1, 'Northern Region'), '11:28'],
+    ['LOW', 'DDoS Attempt', 'Traffic Anomaly Detected', regionName(4, 'Southern Region'), '10:47'],
   ];
   const actors: [string, string][] = [
     ['APT28 (Fancy Bear)', 'CRITICAL'], ['Lazarus Group', 'HIGH'], ['LockBit Ransomware', 'HIGH'],

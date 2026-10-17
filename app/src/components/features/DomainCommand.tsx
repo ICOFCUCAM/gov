@@ -6,6 +6,7 @@ import { TONE, Panel, Spark, seed, toneFor, waveSeries, TerritoryHeat } from '@/
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { regionName } from '@/lib/nation/registry';
 
 export type DomainKey = 'treasury' | 'security' | 'geopolitical';
 
@@ -116,10 +117,10 @@ const DOMAIN: Record<DomainKey, Cfg> = {
     ],
     monitorTitle: 'Regional security pressure',
     monitor: [
-      { l: 'Capital District', lo: 20, hi: 60, good: 'low' },
-      { l: 'Eastern Region', lo: 40, hi: 85, good: 'low' },
-      { l: 'Coastal Region', lo: 25, hi: 65, good: 'low' },
-      { l: 'Northern Province', lo: 20, hi: 58, good: 'low' },
+      { l: regionName(0, 'Capital District'), lo: 20, hi: 60, good: 'low' },
+      { l: regionName(2, 'Eastern Region'), lo: 40, hi: 85, good: 'low' },
+      { l: regionName(4, 'Coastal Region'), lo: 25, hi: 65, good: 'low' },
+      { l: regionName(1, 'Northern Province'), lo: 20, hi: 58, good: 'low' },
       { l: 'Border zones', lo: 45, hi: 88, good: 'low' },
     ],
     actions: [

@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { transportOps } from '@/lib/gov/transport-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { regionName } from '@/lib/nation/registry';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';
@@ -59,7 +60,7 @@ function Card({ title, action, children, className }: {
 
 function CityMap({ id, ts }: { id: string; ts: number }) {
   const districts: [string, number, number, string][] = [
-    ['Central District', 150, 70, BLUE], ['Riverside Park', 95, 130, GREEN],
+    [regionName(0, 'Central District'), 150, 70, BLUE], ['Riverside Park', 95, 130, GREEN],
     ['Downtown', 130, 175, CYAN], ['Industrial Zone', 250, 120, PURPLE], ['Harbor Area', 255, 200, TEAL],
   ];
   const markers = Array.from({ length: 14 }).map((_, i) => ({

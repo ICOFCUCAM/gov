@@ -11,7 +11,7 @@
 // Constitutional, procedural, archival.
 
 import { seed, wave } from '@/lib/telemetry';
-import { regionList } from '@/lib/nation/registry';
+import { regionList, regionName } from '@/lib/nation/registry';
 
 export const JUSTICE_RECORDS_SAFEGUARDS = {
   archivalIntegrity: true as const,
@@ -152,13 +152,13 @@ const ARCHIVE_DEFS: { vault: string; category: ArchiveVault['category']; custodi
 ];
 
 const LAB_DEFS: { lab: string; discipline: ForensicLab['discipline']; region: string }[] = [
-  { lab: 'Capital National Forensic Centre', discipline: 'DNA & biology', region: 'Capital District' },
+  { lab: 'Capital National Forensic Centre', discipline: 'DNA & biology', region: regionName(0, 'Capital District') },
   { lab: 'Eastern Toxicology Institute', discipline: 'Toxicology', region: 'Eastern' },
   { lab: 'Northern Ballistics Laboratory', discipline: 'Ballistics', region: 'Northern' },
-  { lab: 'National Digital Forensics Unit', discipline: 'Digital & cyber', region: 'Capital District' },
+  { lab: 'National Digital Forensics Unit', discipline: 'Digital & cyber', region: regionName(0, 'Capital District') },
   { lab: 'Coastal Documents Examination Bureau', discipline: 'Document examination', region: 'Coastal' },
   { lab: 'Western Trace Evidence Lab', discipline: 'Trace evidence', region: 'Western' },
-  { lab: 'National Forensic Pathology Centre', discipline: 'Forensic pathology', region: 'Capital District' },
+  { lab: 'National Forensic Pathology Centre', discipline: 'Forensic pathology', region: regionName(0, 'Capital District') },
 ];
 
 const ARTEFACT_KINDS: ChainOfCustodyTransaction['artefact'][] = ['document', 'physical-evidence', 'digital-evidence', 'biometric-record', 'forensic-report'];

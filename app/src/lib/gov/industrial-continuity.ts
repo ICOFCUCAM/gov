@@ -11,7 +11,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { tradeOps } from '@/lib/gov/trade-systems';
-import { regionList } from '@/lib/nation/registry';
+import { regionList, regionName } from '@/lib/nation/registry';
 
 const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
@@ -210,7 +210,7 @@ const KIND_LIST: IndustrialIncidentKind[] = [
 ];
 
 const CLUSTER_DEFS: { cluster: string; region: string }[] = [
-  { cluster: 'Capital Steel Works', region: 'Capital District' },
+  { cluster: 'Capital Steel Works', region: regionName(0, 'Capital District') },
   { cluster: 'Northern Heavy Engineering', region: 'Northern' },
   { cluster: 'Eastern Electronics Park', region: 'Eastern' },
   { cluster: 'Coastal Refinery Complex', region: 'Coastal' },
@@ -245,7 +245,7 @@ const STRATEGIC_INDUSTRY_DEFS: { industry: string; allocationPriority: Strategic
 ];
 
 const DISTRICT_DEFS: { district: string; region: string }[] = [
-  { district: 'Capital Enterprise Zone', region: 'Capital District' },
+  { district: 'Capital Enterprise Zone', region: regionName(0, 'Capital District') },
   { district: 'Northern Industrial Belt', region: 'Northern' },
   { district: 'Eastern Innovation Park', region: 'Eastern' },
   { district: 'Coastal Free-Trade Zone', region: 'Coastal' },

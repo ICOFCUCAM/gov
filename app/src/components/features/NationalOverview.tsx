@@ -10,7 +10,7 @@
 
 import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
-import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
 
 const BG = '#070b11';
 const PANEL = '#0c1119';
@@ -185,19 +185,19 @@ export function NationalOverview() {
   ];
 
   const incidents = [
-    ['Border Security Breach', 'Northern Region', '12:35', 'CRITICAL'],
-    ['Terror Threat Intelligence', 'Central Region', '11:58', 'HIGH'],
-    ['Major Traffic Collision', 'East Region', '11:42', 'HIGH'],
+    ['Border Security Breach', regionName(1, 'Northern Region'), '12:35', 'CRITICAL'],
+    ['Terror Threat Intelligence', regionName(0, 'Central Region'), '11:58', 'HIGH'],
+    ['Major Traffic Collision', regionName(2, 'East Region'), '11:42', 'HIGH'],
     ['Cyber Attack Attempt', 'National Infrastructure', '11:28', 'HIGH'],
-    ['Flood Alert', 'Coastal Region', '10:47', 'MEDIUM'],
+    ['Flood Alert', regionName(4, 'Coastal Region'), '10:47', 'MEDIUM'],
   ] as [string, string, string, string][];
 
   const alerts = [
     ['Multiple Threats Detected', 'Northern Corridor', '12:35', 'CRITICAL'],
-    ['Suspicious Activity Reported', 'West District', '12:18', 'HIGH'],
+    ['Suspicious Activity Reported', regionName(3, 'West District'), '12:18', 'HIGH'],
     ['Unusual Border Movement', 'Southern Border', '11:57', 'HIGH'],
     ['Infrastructure Vulnerability', 'Power Grid', '11:22', 'MEDIUM'],
-    ['Public Safety Warning', 'Central Region', '10:41', 'MEDIUM'],
+    ['Public Safety Warning', regionName(0, 'Central Region'), '10:41', 'MEDIUM'],
   ] as [string, string, string, string][];
 
   const incSummary: [string, string, string, string][] = [

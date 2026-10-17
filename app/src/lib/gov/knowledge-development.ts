@@ -11,7 +11,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { schoolNetwork, examOps, higherEducation, curriculumOps, teacherOps, studentServices } from '@/lib/gov/education-systems';
-import { regionList } from '@/lib/nation/registry';
+import { regionList, regionName } from '@/lib/nation/registry';
 
 const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
@@ -175,11 +175,11 @@ const KIND_LIST: EduIncidentKind[] = [
 ];
 
 const INSTITUTION_NAMES: { name: string; type: InstitutionRecord['type']; region: string }[] = [
-  { name: 'National University of the Capital', type: 'Research University', region: 'Capital District' },
+  { name: 'National University of the Capital', type: 'Research University', region: regionName(0, 'Capital District') },
   { name: 'Highland College of Sciences', type: 'Research University', region: 'Highland' },
   { name: 'Eastern Polytechnic', type: 'Tertiary', region: 'Eastern' },
   { name: 'Coastal Maritime Academy', type: 'Tertiary', region: 'Coastal' },
-  { name: 'Capital Teachers College', type: 'Teacher College', region: 'Capital District' },
+  { name: 'Capital Teachers College', type: 'Teacher College', region: regionName(0, 'Capital District') },
   { name: 'Northern Secondary Federation', type: 'Secondary', region: 'Northern' },
   { name: 'Western Foundation Network', type: 'Primary', region: 'Western' },
   { name: 'Eastern Cultural Academy', type: 'Secondary', region: 'Eastern' },

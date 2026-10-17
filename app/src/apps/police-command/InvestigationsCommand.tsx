@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { policeOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
-import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
 
 const BG = '#06080d';
 const PANEL = '#0b0e15';
@@ -173,11 +173,11 @@ export function InvestigationsCommand({ id, now }: { id: string; now: number }) 
   ];
 
   const active: [string, string, string, string, string][] = [
-    ['INV-2025-1847', 'Organized Crime', 'Central District', 'CRITICAL', '12:35'],
-    ['INV-2025-1732', 'Financial Fraud', 'Eastern District', 'HIGH', '12:18'],
+    ['INV-2025-1847', 'Organized Crime', regionName(0, 'Central District'), 'CRITICAL', '12:35'],
+    ['INV-2025-1732', 'Financial Fraud', regionName(2, 'Eastern District'), 'HIGH', '12:18'],
     ['INV-2025-1689', 'Drug Trafficking', 'Harbor District', 'HIGH', '11:57'],
-    ['INV-2025-1542', 'Cyber Fraud', 'North District', 'MEDIUM', '11:42'],
-    ['INV-2025-1498', 'Human Trafficking', 'South District', 'LOW', '11:28'],
+    ['INV-2025-1542', 'Cyber Fraud', regionName(1, 'North District'), 'MEDIUM', '11:42'],
+    ['INV-2025-1498', 'Human Trafficking', regionName(4, 'South District'), 'LOW', '11:28'],
   ];
   const invTypes: [string, number, number, string][] = [
     ['Financial Crime', 876, 31, RED], ['Violent Crime', 652, 23, AMBER], ['Cyber Crime', 498, 18, GOLD],
@@ -199,7 +199,7 @@ export function InvestigationsCommand({ id, now }: { id: string; now: number }) 
     ['Investigators', 78], ['Forensic Analysts', 65], ['Surveillance Teams', 82], ['Digital Forensics Lab', 71], ['Legal Officers', 69],
   ];
   const districts: [string, number][] = [
-    ['Central District', 632], ['Eastern District', 548], ['North District', 487], ['South District', 456], ['Harbor District', 401], ['West District', 323],
+    [regionName(0, 'Central District'), 632], [regionName(2, 'Eastern District'), 548], [regionName(1, 'North District'), 487], [regionName(4, 'South District'), 456], ['Harbor District', 401], [regionName(3, 'West District'), 323],
   ];
   const dMax = Math.max(...districts.map(d => d[1]));
   const updates: [string, string, string][] = [

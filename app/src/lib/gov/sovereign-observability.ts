@@ -10,7 +10,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { nationalRecords } from '@/lib/gov/records-store';
-import { regionList } from '@/lib/nation/registry';
+import { regionList, regionName } from '@/lib/nation/registry';
 
 export type Agency =
   | 'POLICE' | 'IMMIGRATION' | 'CIVIL_REGISTRY' | 'MUNICIPAL' | 'LICENSING'
@@ -180,7 +180,7 @@ export function observabilityLedger(now: number): SovereignTxn[] {
       agency,
       category: 'Filed record',
       officer: rec.byActor,
-      region: 'Capital District',
+      region: regionName(0, 'Capital District'),
       createdHrs: ageHrs,
       ageHrs,
       slaHrs,

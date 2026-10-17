@@ -7,6 +7,7 @@
 // from this single model so the ecosystem stays mutually consistent.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionName } from '@/lib/nation/registry';
 
 // Unified national operating cadence (ms). Every surface polls/animates on
 // this rhythm so the ecosystem reads as one synchronized machine.
@@ -670,8 +671,8 @@ export const FIELD_STAGES = [
   'ACTIVE STABILIZATION', 'INFRASTRUCTURE RECOVERY', 'OPERATIONAL SUPERVISION', 'NORMALIZATION',
 ] as const;
 const FIELD_REGIONS = [
-  'Capital District', 'Northern Province', 'Highland Region',
-  'Eastern Region', 'Western Region', 'Coastal Region',
+  regionName(0, 'Capital District'), regionName(1, 'Northern Province'), regionName(5, 'Highland Region'),
+  regionName(2, 'Eastern Region'), regionName(3, 'Western Region'), regionName(4, 'Coastal Region'),
 ] as const;
 
 export function fieldDeployment(

@@ -6,6 +6,7 @@
 import { seed, wave, domainStress } from '@/lib/telemetry';
 import { scenarioFor, type ScenarioKey } from '@/lib/gov/simulation';
 import type { ArchetypeKey } from '@/lib/api/types';
+import { regionName } from '@/lib/nation/registry';
 
 export interface RegionInfra { l: string; coverage: number }
 export interface RegionModel {
@@ -23,12 +24,12 @@ export interface RegionModel {
 }
 
 const DEF: { n: string; a: ArchetypeKey; cap: boolean; popM: number }[] = [
-  { n: 'Northern Province', a: 'AGRICULTURE', cap: false, popM: 4.2 },
-  { n: 'Highland Region', a: 'ENERGY', cap: false, popM: 3.1 },
-  { n: 'Eastern Region', a: 'INTERIOR', cap: false, popM: 5.6 },
-  { n: 'Capital District', a: 'FINANCE', cap: true, popM: 8.4 },
-  { n: 'Western Region', a: 'TRANSPORT', cap: false, popM: 4.9 },
-  { n: 'Coastal Region', a: 'TRADE', cap: false, popM: 6.3 },
+  { n: regionName(1, 'Northern Province'), a: 'AGRICULTURE', cap: false, popM: 4.2 },
+  { n: regionName(5, 'Highland Region'), a: 'ENERGY', cap: false, popM: 3.1 },
+  { n: regionName(2, 'Eastern Region'), a: 'INTERIOR', cap: false, popM: 5.6 },
+  { n: regionName(0, 'Capital District'), a: 'FINANCE', cap: true, popM: 8.4 },
+  { n: regionName(3, 'Western Region'), a: 'TRANSPORT', cap: false, popM: 4.9 },
+  { n: regionName(4, 'Coastal Region'), a: 'TRADE', cap: false, popM: 6.3 },
 ];
 
 const DOMAIN_KEYS = ['ops', 'infra', 'civil', 'sec', 'logi', 'emrg'] as const;

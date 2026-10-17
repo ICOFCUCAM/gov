@@ -6,7 +6,7 @@
 // national health command picture. Pure & deterministic; no React/DOM.
 
 import { seed, wave, waveSeries } from '@/lib/telemetry';
-import { regionList } from '@/lib/nation/registry';
+import { regionList, regionName } from '@/lib/nation/registry';
 
 const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 type Tone = 'ok' | 'warn' | 'alert';
@@ -1302,13 +1302,13 @@ export function emergencyIncidentExecution(id: string, t: number): EmergencyInci
       id: `INC-${5200 + i}`, type: INC_TYPES[i % INC_TYPES.length]!, region, severity, stage, ageMin,
       callerReports: 1 + Math.round(seed(`ei:cr:${id}:${i}`) * 6),
       responders,
-      destinationHospital: ['Central Trauma', 'Northern District', 'Coastal Referral', 'Highland General', 'Eastern Referral'][i % 5]!,
+      destinationHospital: ['Central Trauma', regionName(1, 'Northern District'), 'Coastal Referral', 'Highland General', 'Eastern Referral'][i % 5]!,
       hospitalAccepting, rerouted, escalation, recommended,
       timeline: [
         { atMinAgo: ageMin, detail: `${base ? 'Call received' : ''} · ${1 + Math.round(seed(`ei:cr:${id}:${i}`) * 6)} caller report(s)`, tone: 'ok' },
         { atMinAgo: Math.max(0, ageMin - 3), detail: `${responders.length} unit(s) assigned`, tone: 'ok' },
         { atMinAgo: Math.max(0, ageMin - 9), detail: stage === 'Received' ? 'Awaiting dispatch' : `Stage → ${stage}`, tone: stage === 'Received' && severity === 1 ? 'alert' : 'warn' },
-        { atMinAgo: Math.max(0, ageMin - 14), detail: rerouted ? 'Destination diverting — reroute evaluated' : `Destination ${['Central Trauma', 'Northern District', 'Coastal Referral', 'Highland General', 'Eastern Referral'][i % 5]} accepting`, tone: rerouted ? 'alert' : 'ok' },
+        { atMinAgo: Math.max(0, ageMin - 14), detail: rerouted ? 'Destination diverting — reroute evaluated' : `Destination ${['Central Trauma', regionName(1, 'Northern District'), 'Coastal Referral', 'Highland General', 'Eastern Referral'][i % 5]} accepting`, tone: rerouted ? 'alert' : 'ok' },
       ],
       tone,
     };
@@ -1757,7 +1757,7 @@ export function patientDeepExecution(id: string, t: number): PatientDeepExecutio
     const status: CitizenEmergencyStatus['status'] = sv > 0.7 ? 'critical' : sv > 0.4 ? 'admitted' : 'observation';
     return {
       id: `ES-${800 + i}`, citizen: `CZ-${70000 + (i * 137 % 9000)}`,
-      status, facility: ['Central', 'Northern District', 'Coastal', 'Highland', 'Eastern Referral'][i % 5]!,
+      status, facility: ['Central', regionName(1, 'Northern District'), 'Coastal', 'Highland', 'Eastern Referral'][i % 5]!,
       ageMin: Math.round(wave(`pe:ea:${id}:${i}`, t, 1, 180)),
       tone: status === 'critical' ? 'alert' : status === 'admitted' ? 'warn' : 'ok',
     };

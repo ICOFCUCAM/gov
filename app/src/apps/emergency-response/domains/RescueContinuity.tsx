@@ -6,6 +6,7 @@ import * as React from 'react';
 import { emergencyResilienceBoard } from '@/lib/gov/emergency-resilience';
 import { TheatreFrame, StatusBoardKpi, TheatreRule, EMERGENCY_DS, TheatreCallout } from '@/apps/emergency-response/design-system/emergency-ds';
 import { seed, wave } from '@/lib/telemetry';
+import { regionName } from '@/lib/nation/registry';
 
 function severityCol(s: string): string {
   return s === 'catastrophic' ? EMERGENCY_DS.ember
@@ -84,7 +85,7 @@ export function InfrastructureContinuity({ id, now }: { id: string; now: number 
 
 export function PowerRestoration({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
-  const regions = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+  const regions = [regionName(0, 'Capital District'), 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
   return (
     <TheatreFrame archetype="continuity" code="CN-PWR-14" title="Power Restoration" subtitle="grid stabilisation & black-start coordination">
       <StatusBoardKpi items={[

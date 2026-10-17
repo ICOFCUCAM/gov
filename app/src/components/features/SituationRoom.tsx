@@ -46,6 +46,7 @@ import {
 } from '@/lib/gov/sovereign-operating-model';
 
 import { DispatchChannel, NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard, NationalBureaucracyPulse } from '@/apps/_shared/InstitutionChain';
+import { regionName } from '@/lib/nation/registry';
 
 const NATL_ASSETS = nationalAssets();
 const NATL_NETWORKS = nationalNetworks();
@@ -392,12 +393,12 @@ const INFRA_KINDS = [
 // Global-state-neutral province partition (real territorial polygons,
 // shared edges form the national silhouette). viewBox 1000×620.
 const PROV: { n: string; cx: number; cy: number; r: number; cap?: boolean }[] = [
-  { n: 'Northern Province', cx: 320, cy: 196, r: 150 },
-  { n: 'Highland Region', cx: 545, cy: 188, r: 150 },
-  { n: 'Eastern Region', cx: 770, cy: 232, r: 150 },
-  { n: 'Western Region', cx: 286, cy: 404, r: 150 },
-  { n: 'Capital District', cx: 520, cy: 356, r: 130, cap: true },
-  { n: 'Coastal Region', cx: 742, cy: 432, r: 150 },
+  { n: regionName(1, 'Northern Province'), cx: 320, cy: 196, r: 150 },
+  { n: regionName(5, 'Highland Region'), cx: 545, cy: 188, r: 150 },
+  { n: regionName(2, 'Eastern Region'), cx: 770, cy: 232, r: 150 },
+  { n: regionName(3, 'Western Region'), cx: 286, cy: 404, r: 150 },
+  { n: regionName(0, 'Capital District'), cx: 520, cy: 356, r: 130, cap: true },
+  { n: regionName(4, 'Coastal Region'), cx: 742, cy: 432, r: 150 },
 ];
 
 interface Infra { id: string; kind: typeof INFRA_KINDS[number]; x: number; y: number; risk: number }

@@ -11,6 +11,7 @@ import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
 import { substrateAvailable } from '@/lib/db/client';
+import { regionName } from '@/lib/nation/registry';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';
@@ -175,8 +176,8 @@ export function InteroperabilityFabric() {
     ['Logistics Data', '3.1K', TEAL], ['Security Data', '2.7K', AMBER], ['Other Domains', '5.4K', GREEN],
   ];
   const gateways: [string, string, string, string][] = [
-    ['GW-NORTH', 'North Region', '14ms', '2.4K/min'], ['GW-CENTRAL', 'Central Region', '15ms', '2.1K/min'],
-    ['GW-EAST', 'East Region', '16ms', '2.2K/min'], ['GW-SOUTH', 'South Region', '17ms', '2.0K/min'],
+    ['GW-NORTH', regionName(1, 'North Region'), '14ms', '2.4K/min'], ['GW-CENTRAL', regionName(0, 'Central Region'), '15ms', '2.1K/min'],
+    ['GW-EAST', regionName(2, 'East Region'), '16ms', '2.2K/min'], ['GW-SOUTH', regionName(4, 'South Region'), '17ms', '2.0K/min'],
   ];
   const policies = ['Data Sovereignty Policy', 'Access Control Policy', 'Data Classification Policy', 'API Security Policy'];
   const contracts: [string, string][] = [

@@ -130,6 +130,16 @@ export function nationIso3(): string | undefined {
   return state.iso3;
 }
 
+/**
+ * The nation's region for a reference slot: dashboards that name example
+ * regions inline (e.g. 'North Province') map each to a slot index, so they
+ * show the nation's own regions once set and the reference name until then.
+ */
+export function regionName(slot: number, reference: string): string {
+  const r = state.regions;
+  return r.length ? r[slot % r.length]! : reference;
+}
+
 /** The nation's operational regions, or an empty list before one is set. */
 export function nationRegions(): readonly string[] {
   return state.regions;

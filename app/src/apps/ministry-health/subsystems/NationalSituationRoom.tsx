@@ -19,14 +19,15 @@ import {
   CommandHeader, CommandPanel, KpiSpark, Donut, TrendChart, Stepper, RingGauge, ACCENT, type Tone,
 } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
+import { regionName } from '@/lib/nation/registry';
 
 const C = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 const ACC = ACCENT.situation!;
 const ALERTS = [
   { t: 'Dengue outbreak escalation', sub: 'Capital District · East Region', lvl: 4 },
-  { t: 'ICU capacity critical', sub: 'Northern Region', lvl: 4 },
-  { t: 'Medicine stockout imminent', sub: 'Highland Region', lvl: 3 },
-  { t: 'Flood impact — health facilities', sub: 'Coastal Region', lvl: 3 },
+  { t: 'ICU capacity critical', sub: regionName(1, 'Northern Region'), lvl: 4 },
+  { t: 'Medicine stockout imminent', sub: regionName(5, 'Highland Region'), lvl: 3 },
+  { t: 'Flood impact — health facilities', sub: regionName(4, 'Coastal Region'), lvl: 3 },
   { t: 'Surge in respiratory cases', sub: 'Western Corridor', lvl: 2 },
 ];
 

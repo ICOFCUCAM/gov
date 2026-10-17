@@ -11,7 +11,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { transportOps } from '@/lib/gov/transport-systems';
-import { regionList } from '@/lib/nation/registry';
+import { regionList, regionName } from '@/lib/nation/registry';
 
 const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
@@ -256,7 +256,7 @@ export function transportNetworkBoard(now: number): TransportNetworkBoard {
 
   // 2. Ports
   const portNames: { name: string; region: string }[] = [
-    { name: 'Capital Port', region: 'Capital District' },
+    { name: 'Capital Port', region: regionName(0, 'Capital District') },
     { name: 'Eastern Container Terminal', region: 'Eastern' },
     { name: 'Coastal Bulk Port', region: 'Coastal' },
     { name: 'Northern River Port', region: 'Northern' },

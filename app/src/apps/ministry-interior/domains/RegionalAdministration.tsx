@@ -10,7 +10,7 @@
 import * as React from 'react';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { wave, seed } from '@/lib/telemetry';
-import { formatMoney } from '@/lib/nation/registry';
+import { formatMoney, regionName } from '@/lib/nation/registry';
 
 const BG = '#f5f6fb';
 const CARD = '#ffffff';
@@ -136,33 +136,33 @@ export function RegionalAdministration({ id, now }: { id: string; now: number })
   ];
 
   const ranking: [number, string, number, number][] = [
-    [1, 'North Province', 87.4, 3], [2, 'Central Province', 82.1, 1], [3, 'East Province', 79.8, 2],
-    [4, 'West Province', 74.6, -1], [5, 'South Province', 72.3, 1],
+    [1, regionName(1, 'North Province'), 87.4, 3], [2, regionName(0, 'Central Province'), 82.1, 1], [3, regionName(2, 'East Province'), 79.8, 2],
+    [4, regionName(3, 'West Province'), 74.6, -1], [5, regionName(4, 'South Province'), 72.3, 1],
   ];
   const rankTail: [number, string, number, number][] = [
-    [23, 'Frontier Province', 52.6, -1], [24, 'Highland Province', 48.3, 0],
+    [23, regionName(5, 'Frontier Province'), 52.6, -1], [24, regionName(5, 'Highland Province'), 48.3, 0],
   ];
 
   const indicators: [string, number, number, number, number, number, number, number, number][] = [
-    ['North Province', 85, 88, 84, 86, 90, 82, 87.4, 3],
-    ['Central Province', 82, 83, 81, 85, 88, 74, 82.1, 1],
-    ['East Province', 78, 76, 81, 80, 82, 81, 79.8, 2],
-    ['West Province', 75, 70, 76, 77, 79, 71, 74.6, -1],
-    ['South Province', 73, 69, 74, 76, 78, 70, 72.3, 1],
+    [regionName(1, 'North Province'), 85, 88, 84, 86, 90, 82, 87.4, 3],
+    [regionName(0, 'Central Province'), 82, 83, 81, 85, 88, 74, 82.1, 1],
+    [regionName(2, 'East Province'), 78, 76, 81, 80, 82, 81, 79.8, 2],
+    [regionName(3, 'West Province'), 75, 70, 76, 77, 79, 71, 74.6, -1],
+    [regionName(4, 'South Province'), 73, 69, 74, 76, 78, 70, 72.3, 1],
   ];
   const dotColor = (v: number) => v >= 85 ? GREEN : v >= 78 ? TEAL : v >= 72 ? BLUE : v >= 65 ? AMBER : RED;
 
   const budget: [string, string, number, string][] = [
-    ['North Province', formatMoney(2.48e9), 19.9, GREEN], ['Central Province', formatMoney(2.12e9), 17.0, BLUE],
-    ['East Province', formatMoney(1.98e9), 15.9, PURPLE], ['West Province', formatMoney(1.76e9), 14.1, '#b07cf0'],
-    ['South Province', formatMoney(1.42e9), 11.4, ORANGE], ['Other Regions', formatMoney(2.72e9), 21.7, '#9aa3b5'],
+    [regionName(1, 'North Province'), formatMoney(2.48e9), 19.9, GREEN], [regionName(0, 'Central Province'), formatMoney(2.12e9), 17.0, BLUE],
+    [regionName(2, 'East Province'), formatMoney(1.98e9), 15.9, PURPLE], [regionName(3, 'West Province'), formatMoney(1.76e9), 14.1, '#b07cf0'],
+    [regionName(4, 'South Province'), formatMoney(1.42e9), 11.4, ORANGE], ['Other Regions', formatMoney(2.72e9), 21.7, '#9aa3b5'],
   ];
   const projects: [string, string, number, string][] = [
-    ['North Highway Expansion', 'North Province', 78, 'On Track'],
-    ['Central Water Initiative', 'Central Province', 84, 'On Track'],
-    ['Eastern Port Development', 'East Province', 54, 'At Risk'],
-    ['Western Industrial Corridor', 'West Province', 62, 'On Track'],
-    ['Southern Renewable Park', 'South Province', 71, 'On Track'],
+    ['North Highway Expansion', regionName(1, 'North Province'), 78, 'On Track'],
+    ['Central Water Initiative', regionName(0, 'Central Province'), 84, 'On Track'],
+    ['Eastern Port Development', regionName(2, 'East Province'), 54, 'At Risk'],
+    ['Western Industrial Corridor', regionName(3, 'West Province'), 62, 'On Track'],
+    ['Southern Renewable Park', regionName(4, 'South Province'), 71, 'On Track'],
   ];
   const alertsList: [string, string, string][] = [
     ['Flood advisory in East Province', '25 min ago', RED],
