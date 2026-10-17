@@ -176,7 +176,7 @@ export function publisherContractAction(n: SubscribedNation, input: { action?: s
       const c = contractFor(n, n.name, now);
       const annualFee = round(c.annualFee * (years === 5 ? 1 - HOSTING_MODEL.hosted.fiveYearDiscountPct / 100 : 1));
       s.renewal = { noticeDays: RENEWAL_NOTICE_DAYS, noticeFrom: c.renewal.noticeFrom, status: 'proposed', proposal: { years, annualFee, by, at } };
-      log('renewal.propose', `${years} years at ${annualFee} ${c.currency} a year`); return { ok: true };
+      log('renewal.propose', `${years} years at ${annualFee.toLocaleString('en-US')} ${c.currency} a year`); return { ok: true };
     }
     case 'mark-paid': {
       const id = str(input.invoiceId, 60), ref = str(input.reference, 80);
@@ -203,7 +203,7 @@ export function nationContractAction(n: SubscribedNation, input: { action?: stri
     s.term = { start: s.term.start, years: s.term.years + p.years };
     s.renewal = { ...s.renewal, status: 'renewed', acceptedBy: by, acceptedAt: at };
     s.history.push({ at, by, action: 'renewal.accept', note: `${p.years} years` });
-    recordAudit(by, 'contract.renewal.accept', `Contract:${n.id}`, 'ok', `${p.years} years at ${p.annualFee} a year`);
+    recordAudit(by, 'contract.renewal.accept', `Contract:${n.id}`, 'ok', `${p.years} years at ${p.annualFee.toLocaleString('en-US')} a year`);
     return { ok: true };
   }
   if (input.action === 'request-change') {

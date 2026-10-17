@@ -7,12 +7,14 @@
 import * as React from 'react';
 import { api } from '@/lib/api/client';
 import { nationMessages } from '@/lib/nation/registry';
+import { locales } from '@/lib/i18n/config';
 import { inputCls, Select, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE } from '@/components/features/onboarding/Chrome';
 import type { AlertCategory, Official, WhatsNew } from '@/lib/api/types';
 import { ChangeChip, Chip, ErrorLine, Panel, fmtDateTime, useActor } from './ui';
 
 const CAT_TEXT: Record<AlertCategory, string> = { security: 'Security', releases: 'Releases', incidents: 'Incidents', eol: 'End of life' };
-const LANG: Record<string, string> = { en: 'English', sw: 'Kiswahili', fr: 'Français', ar: 'العربية', yo: 'Yorùbá' };
+// Language names come from the i18n configuration (no names hardcoded here).
+const LANG: Record<string, string> = Object.fromEntries(locales.map(l => [l.code, l.name]));
 
 export function WhatsNewPanel({ releaseId, link }: { releaseId: string; link?: string }) {
   const [w, setW] = React.useState<WhatsNew | null>(null);
@@ -93,11 +95,11 @@ export function AlertsPanel({ link }: { link?: string }) {
           ))}</tbody>
         </table>
       </div>
-      <div className="flex flex-wrap items-end gap-2">
-        <input aria-label="Name or title" className={`${inputCls} min-w-[200px] flex-1 py-2 text-[13px]`} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} placeholder="Official’s name or title" />
-        <input aria-label="Role" className={`${inputCls} min-w-[160px] flex-1 py-2 text-[13px]`} value={draft.role} onChange={e => setDraft({ ...draft, role: e.target.value })} placeholder="Role" />
-        <input aria-label="Email" className={`${inputCls} w-[200px] py-2 text-[13px]`} value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} placeholder="Email" />
-        <input aria-label="Mobile" className={`${inputCls} w-[160px] py-2 text-[13px]`} value={draft.sms} onChange={e => setDraft({ ...draft, sms: e.target.value })} placeholder="Mobile (SMS)" />
+      <div className="grid grid-cols-[minmax(0,1fr)] items-end gap-2 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_minmax(0,1.2fr)_minmax(0,1fr)_auto]">
+        <input aria-label="Name or title" className={`${inputCls} py-2 text-[13px]`} value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} placeholder="Official’s name or title" />
+        <input aria-label="Role" className={`${inputCls} py-2 text-[13px]`} value={draft.role} onChange={e => setDraft({ ...draft, role: e.target.value })} placeholder="Role" />
+        <input aria-label="Email" className={`${inputCls} py-2 text-[13px]`} value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} placeholder="Email" />
+        <input aria-label="Mobile" className={`${inputCls} py-2 text-[13px]`} value={draft.sms} onChange={e => setDraft({ ...draft, sms: e.target.value })} placeholder="Mobile (SMS)" />
         <button type="button" className={`${ghostBtn} py-2 text-[12.5px]`} onClick={async () => { await save({ ...draft, channels: { email: !!draft.email, sms: !!draft.sms }, subscriptions: { security: true, releases: false, incidents: true, eol: false } }); setDraft({ name: '', role: '', email: '', sms: '' }); }}>Add official</button>
       </div>
       <ErrorLine>{err}</ErrorLine>

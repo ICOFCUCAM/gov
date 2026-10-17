@@ -45,7 +45,8 @@ export function Chip({ tone, children, solid = false, title }: { tone: string; c
 }
 export const StateChip = ({ state }: { state: InstallState }) => <Chip tone={STATE_TONE[state]} solid={state === 'installed'}>{STATE_LABEL[state]}</Chip>;
 export const SeverityChip = ({ severity }: { severity: ReleaseSeverity }) => <Chip tone={SEVERITY_TONE[severity]} solid={severity === 'security' || severity === 'critical'}>{SEVERITY_LABEL[severity]}</Chip>;
-export const ChangeChip = ({ kind }: { kind: ChangeKind }) => <Chip tone={CHANGE_TONE[kind]}>{CHANGE_LABEL[kind].replace(/s$/, '')}</Chip>;
+const CHANGE_SINGULAR: Record<ChangeKind, string> = { security: 'Security', breaking: 'Breaking', feature: 'Feature', fix: 'Fix', deprecation: 'Deprecation' };
+export const ChangeChip = ({ kind }: { kind: ChangeKind }) => <Chip tone={CHANGE_TONE[kind]}>{CHANGE_SINGULAR[kind]}</Chip>;
 export function ChannelChip({ r, nationName }: { r: Pick<DistributionRelease, 'channel'>; nationName?: string }) {
   return r.channel === 'global'
     ? <Chip tone="#a9c7e8" title="Released to every nation">Global</Chip>

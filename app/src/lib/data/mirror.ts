@@ -73,6 +73,8 @@ export function syncManifest(nationId: string, now = Date.now()): SyncManifest |
   const items: SyncItem[] = [];
   for (const r of rs) {
     if (have.has(r.id)) continue;
+    // Older than what the nation runs: not needed (the installed release is kept for reinstall and fallback).
+    if (compareVersions(r.version, n.installedVersion) < 0) continue;
     // The newest earlier release in the same channel family that the mirror holds (or the nation runs).
     const prev = [...rs].reverse().find(p => compareVersions(p.version, r.version) < 0 && (have.has(p.id) || p.version === n.installedVersion) && (p.channel === 'global' || p.nationId === r.nationId));
     for (const a of artifactsFor(r, n.deliveryMode)) {
