@@ -6,7 +6,7 @@ import * as React from 'react';
 import { presidencyBoard } from '@/lib/gov/presidency-engine';
 import { MansionFrame, MansionKpi, MansionRule, MansionBar, MansionCallout, PRESIDENCY_DS } from '@/apps/presidency/design-system/presidency-ds';
 import { wave } from '@/lib/telemetry';
-import { currentOffices } from '@/lib/nation/registry';
+import { currentOffices, nationChamberText } from '@/lib/nation/registry';
 import { deputyTitle } from '@/lib/nation/offices';
 
 export function StateEngagements({ id, now }: { id: string; now: number }) {
@@ -193,7 +193,7 @@ export function AppointmentsBoard({ id, now }: { id: string; now: number }) {
         <div key={p} className="grid grid-cols-[1fr_120px_100px] gap-3 border-b py-1 text-[11px]"
           style={{ borderColor: PRESIDENCY_DS.ruleSoft, fontFamily: 'ui-monospace, monospace' }}>
           <span style={{ color: PRESIDENCY_DS.parchmentInk }}>{p}</span>
-          <span style={{ color: PRESIDENCY_DS.gold }}>Senate vetting</span>
+          <span style={{ color: PRESIDENCY_DS.gold }}>{nationChamberText('Senate vetting')}</span>
           <span className="text-right tabular-nums" style={{ color: PRESIDENCY_DS.mut }}>{Math.round(wave(`mn:p:${i}`, ts, 4, 28))}d</span>
         </div>
       ))}
