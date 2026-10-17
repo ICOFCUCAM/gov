@@ -404,6 +404,8 @@ export const api = {
       const p = new URLSearchParams({ ...(month ? { month } : {}), ...(link ? { link } : {}) }).toString();
       return req<{ report: SlaReport; months: string[] }>(`/api/releases/sla-report${p ? `?${p}` : ''}`);
     },
+    evidence: (id: string, link?: string) =>
+      req<{ pack: Record<string, unknown> & { digest: string } }>(`/api/releases/${encodeURIComponent(id)}/evidence${linkQ(link)}`),
     lifecycle: (link?: string) =>
       req<{ lines: LifecycleLine[]; policy: LifecyclePolicy; warning: LifecycleWarning | null; installedLine: string }>(`/api/releases/lifecycle${linkQ(link)}`),
     changeControl: (body: { action: 'freeze' | 'unfreeze' | 'add-blackout' | 'remove-blackout' | 'set-windows'; by: string; reason?: string; label?: string; kind?: string; start?: string; end?: string; id?: string; windows?: MaintenanceSlot[]; link?: string }) =>

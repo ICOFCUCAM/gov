@@ -114,6 +114,12 @@ export function AssuranceCenter() {
                 {d.status.slice(0, 4).map(r => <Link key={r.releaseId} href={`/updates/${r.releaseId}${q}#provenance`} className="text-[12.5px] underline underline-offset-4" style={{ color: CHAMPAGNE }}>{r.version} provenance →</Link>)}
               </div>
             </Section>
+            <Section n="05" title="Compliance evidence packs" aside="Per release, from your own records">
+              <p className="max-w-[72ch] text-[13.5px] font-light leading-relaxed text-white/60">For each release: ISO/IEC 27001 and SOC 2 references, a DPIA template, the security-test summary, SBOMs, provenance, escrow and advisory status, and your own decisions, approvals, probation and fallback records with their audit-chain entries.</p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {d.status.map(r => <Link key={r.releaseId} href={`/updates/${r.releaseId}/evidence${q}`} className="text-[12.5px] underline underline-offset-4" style={{ color: CHAMPAGNE }}>{r.version}{r.installed ? ' (installed)' : ''} →</Link>)}
+              </div>
+            </Section>
           </>
         )}
         <PoweredBy />

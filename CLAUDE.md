@@ -106,6 +106,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   line's first release; the publisher sets the policy (audited). End-of-life
   notices go out once each at 12, 6 and 3 months; the chamber warns when the
   installed line nears its end.
+- Evidence packs (`lib/data/evidence.ts`, `/updates/[id]/evidence`): per
+  release and per nation, generated only from existing records (certification
+  references, DPIA template, security tests, SBOM, provenance, escrow,
+  advisories, the nation's install record and audit-chain entries), as a
+  readable page and a JSON manifest with a SHA-256 digest.
 
 ## Branding and AI
 

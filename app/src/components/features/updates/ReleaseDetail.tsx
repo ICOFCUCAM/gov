@@ -260,6 +260,11 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
             <ProvenancePanel releaseId={r.id} link={link} />
           </Section>
         </div>
+
+        <Section n="08" title="Compliance evidence" aside="Generated from your records">
+          <p className="max-w-[70ch] text-[13.5px] font-light leading-relaxed text-white/60">Certification references, security-test summary, SBOMs, provenance, escrow, advisory status for {r.version}, and your own install record and audit-chain entries for it — as a readable pack and a JSON manifest with a digest.</p>
+          <Link href={`/updates/${r.id}/evidence${link ? `?link=${encodeURIComponent(link)}` : ''}`} className="mt-3 inline-block text-[13px] underline underline-offset-4" style={{ color: CHAMPAGNE }}>Open the evidence pack →</Link>
+        </Section>
       </div>
 
       <aside className="lg:sticky lg:top-6 lg:self-start">
