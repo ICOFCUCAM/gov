@@ -22,6 +22,7 @@ import type {
   TicketPriority, TicketState, TicketView,
 } from '@/lib/api/types';
 import { recordAudit } from './store';
+import { isShared, transmit } from './sovereignty';
 
 export const PRIORITIES: TicketPriority[] = ['P1', 'P2', 'P3', 'P4'];
 export const PRIORITY_MEANING: Record<TicketPriority, string> = {
@@ -235,7 +236,7 @@ export function openTicketForIncident(inc: FallbackIncident, now = Date.now()): 
   return t;
 }
 
-export const NATION_ACTIONS = ['reply', 'close', 'reopen'] as const;
+export const NATION_ACTIONS = ['reply', 'close', 'reopen', 'attach'] as const;
 export const PUBLISHER_ACTIONS = ['reply', 'acknowledge', 'progress', 'wait', 'resolve', 'reprioritise'] as const;
 type Side = 'nation' | 'publisher';
 
@@ -243,6 +244,7 @@ const ALLOWED: Record<string, { from: TicketState[]; to: TicketState | 'same' }>
   'nation:reply': { from: ['open', 'acknowledged', 'in-progress', 'waiting-on-nation', 'resolved'], to: 'same' },
   'nation:close': { from: ['resolved'], to: 'closed' },
   'nation:reopen': { from: ['resolved'], to: 'in-progress' },
+  'nation:attach': { from: ['open', 'acknowledged', 'in-progress', 'waiting-on-nation'], to: 'same' },
   'publisher:reply': { from: ['open', 'acknowledged', 'in-progress', 'waiting-on-nation', 'resolved'], to: 'same' },
   'publisher:acknowledge': { from: ['open'], to: 'acknowledged' },
   'publisher:progress': { from: ['open', 'acknowledged', 'waiting-on-nation'], to: 'in-progress' },
@@ -255,7 +257,7 @@ const ALLOWED: Record<string, { from: TicketState[]; to: TicketState | 'same' }>
  * Work a ticket. The nation side passes its own nation id (resolved by the
  * server), so it can only reach its own tickets; the publisher passes null.
  */
-export function ticketAction(side: Side, nationId: string | null, id: string, input: { action?: string; by?: string; text?: string; priority?: string }, now = Date.now()): TicketView | { error: string; status: number } {
+export function ticketAction(side: Side, nationId: string | null, id: string, input: { action?: string; by?: string; text?: string; priority?: string; filename?: string; sizeBytes?: number }, now = Date.now()): TicketView | { error: string; status: number } {
   const t = sdb().tickets.find(x => x.id === id && (nationId === null || x.nationId === nationId));
   if (!t) return { error: 'Ticket not found', status: 404 };
   const action = String(input.action ?? '');
@@ -269,6 +271,16 @@ export function ticketAction(side: Side, nationId: string | null, id: string, in
   if (action === 'reprioritise' && text.length < 10) return { error: 'Give the reason for the new priority — at least 10 characters', status: 422 };
 
   const at = iso(now);
+  if (action === 'attach') {
+    // Attachments leave the country: only when the nation shares support attachments.
+    if (!isShared(t.nationId, 'support-attachments')) return { error: 'Support attachments are not shared under your data-sovereignty settings; describe the problem in text, or have an official enable them', status: 403 };
+    const filename = str(input.filename, 160), size = Number(input.sizeBytes);
+    if (!filename || !Number.isFinite(size) || size <= 0) return { error: 'Choose a file to attach', status: 422 };
+    transmit(t.nationId, 'support-attachments', `${t.id} · ${filename}`, { ticket: t.id, filename, sizeBytes: size }, now);
+    t.thread.push({ at, by, side, text: `Attached ${filename} (${Math.round(size / 1024)} KB)${text ? ` — ${text}` : ''}` });
+    recordAudit(by, 'support.ticket.attach', `SupportTicket:${t.nationId}/${t.id}`, 'ok', filename);
+    return view(t, now);
+  }
   const endPause = () => { if (t.waitingSince) { t.pausedMinutes += Math.max(0, Math.round((now - ms(t.waitingSince)) / MIN)); t.waitingSince = undefined; } };
   const from = t.state;
   if (side === 'publisher' && !t.firstResponseAt && action !== 'reprioritise') t.firstResponseAt = at;

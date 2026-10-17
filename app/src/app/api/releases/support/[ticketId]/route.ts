@@ -14,7 +14,7 @@ export function GET(req: NextRequest, { params }: { params: { ticketId: string }
 }
 
 export async function POST(req: NextRequest, { params }: { params: { ticketId: string } }) {
-  const body = await chamberBody<{ action?: string; by?: string; text?: string }>(req);
+  const body = await chamberBody<{ action?: string; by?: string; text?: string; filename?: string; sizeBytes?: number }>(req);
   if (body instanceof NextResponse) return body;
   const out = ticketAction('nation', body.nation.id, params.ticketId, body.b);
   if ('error' in out) return NextResponse.json({ error: out.error }, { status: out.status });

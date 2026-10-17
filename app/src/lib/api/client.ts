@@ -112,6 +112,10 @@ import type {
   AlertDelivery,
   AlertCategory,
   Contract,
+  DataCategory,
+  DataCategoryInfo,
+  DataSharingState,
+  DataTransmission,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -405,7 +409,7 @@ export const api = {
       req<{ tickets: TicketView[]; policy: SupportTierPolicy; tiers: Record<SupportTier, SupportTierPolicy>; priorities: Record<TicketPriority, string>; linkable: { releases: { id: string; version: string; title: string }[]; incidents: { id: string; title: string }[] } }>(`/api/releases/support${linkQ(link)}`),
     openTicket: (body: { priority: TicketPriority; title: string; description: string; by: string; about?: { kind: 'release' | 'incident'; id: string }; link?: string }) =>
       req<{ ticket: TicketView }>('/api/releases/support', { method: 'POST', body: JSON.stringify(body) }),
-    ticketAction: (id: string, body: { action: 'reply' | 'close' | 'reopen'; by: string; text?: string; link?: string }) =>
+    ticketAction: (id: string, body: { action: 'reply' | 'close' | 'reopen' | 'attach'; by: string; text?: string; link?: string; filename?: string; sizeBytes?: number }) =>
       req<{ ticket: TicketView }>(`/api/releases/support/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify(body) }),
     status: (link?: string) => req<{ status: StatusPage }>(`/api/releases/status${linkQ(link)}`),
     slaReport: (month?: string, link?: string) => {
@@ -414,6 +418,10 @@ export const api = {
     },
     evidence: (id: string, link?: string) =>
       req<{ pack: Record<string, unknown> & { digest: string } }>(`/api/releases/${encodeURIComponent(id)}/evidence${linkQ(link)}`),
+    sovereignty: (link?: string) =>
+      req<{ categories: (DataCategoryInfo & { sample: Record<string, unknown> })[]; state: DataSharingState[] }>(`/api/releases/sovereignty${linkQ(link)}`),
+    setSovereignty: (body: { category: DataCategory; enabled: boolean; by: string; reason?: string; link?: string }) =>
+      req<{ state: DataSharingState[] }>('/api/releases/sovereignty', { method: 'POST', body: JSON.stringify(body) }),
     contract: (link?: string) =>
       req<{ contract: Contract; tier: SupportTierPolicy; priorities: Record<TicketPriority, string>; patchCommitments: Record<AdvisorySeverity, number> }>(`/api/releases/contract${linkQ(link)}`),
     contractAction: (body: { action: 'accept-renewal' | 'request-change'; by: string; note?: string; link?: string }) =>
@@ -479,6 +487,7 @@ export const api = {
       escrow: async () => req<{ deposits: (EscrowStatusRow & { nationId?: string })[]; reviews: SourceReview[]; nations: Record<string, string>; agent: string; depositWithinDays: number }>('/api/releases/publisher/escrow', await publisherInit()),
       escrowAction: async (body: { action: 'deposit' | 'verify' | 'review'; by: string; [k: string]: unknown }) =>
         req<{ ok: true }>('/api/releases/publisher/escrow', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),
+      telemetry: async () => req<{ nations: { id: string; name: string; categories: Record<DataCategory, { shared: boolean; received: number; lastAt?: string }> }[]; recent: DataTransmission[] }>('/api/releases/publisher/telemetry', await publisherInit()),
       contracts: async () => req<{ contracts: Contract[]; modules: { key: string; label: string }[] }>('/api/releases/publisher/contracts', await publisherInit()),
       contractAction: async (body: { nationId: string; action: string; by: string; [k: string]: unknown }) =>
         req<{ ok: true }>('/api/releases/publisher/contracts', await publisherInit({ method: 'POST', body: JSON.stringify(body) })),

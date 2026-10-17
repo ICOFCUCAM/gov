@@ -7,6 +7,7 @@ import type { ResilienceSettings, UpdateChamber } from '@/lib/api/types';
 import { IncidentCard } from './resilience';
 import { ChamberNav, ChamberTabs, Chip, CopyValue, ErrorLine, Loading, Panel, PoweredBy, fmtDateTime, useActor, useCenterTitle, useLink } from './ui';
 import { AlertsPanel } from './Comms';
+import { SovereigntyPanel } from './Sovereignty';
 
 /**
  * Chamber settings: how this nation's installs are protected — probation
@@ -145,6 +146,10 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
 
       <Section n="09" title="Who hears about updates" aside="Security · releases · incidents · end of life">
         <AlertsPanel link={link} />
+      </Section>
+
+      <Section n="10" title="Data that may leave the country" aside="Off unless an official approves it">
+        <SovereigntyPanel link={link} />
       </Section>
     </>
   );

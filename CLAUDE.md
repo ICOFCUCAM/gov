@@ -128,6 +128,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   security-store invoices beside platform invoices, support tier from
   `lib/data/support.ts`. Renewal is proposed by the publisher and accepted
   by a named official, never automatic.
+- Data sovereignty (`lib/data/sovereignty.ts`): crash reports, usage metrics,
+  health reports and support attachments are OFF unless an official enables
+  them (named approver, reason, audited), each with a sample payload. All
+  operational data leaves only through `transmit()`; health reports still
+  drive probation locally when off, and attachments are refused. Never add
+  another path that sends operational data to the publisher.
 
 ## Branding and AI
 

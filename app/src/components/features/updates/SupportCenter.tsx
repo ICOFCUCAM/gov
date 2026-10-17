@@ -121,6 +121,16 @@ function TicketCard({ t, link, q, onDone }: { t: TicketView; link?: string; q: s
     try { await api.updates.ticketAction(t.id, { action, by: actor, text: text || undefined, link }); setText(''); onDone(); }
     catch (e) { setErr(e instanceof Error ? e.message : 'Action failed'); }
   }
+  const fileRef = React.useRef<HTMLInputElement>(null);
+  async function attach(f: File | undefined) {
+    setErr(null);
+    if (!f) return;
+    if (!actor.trim()) { setErr('Enter your name in the ticket form first.'); return; }
+    // Only the file's name and size are recorded in this build; the gate decides whether it may leave the country.
+    try { await api.updates.ticketAction(t.id, { action: 'attach', by: actor, filename: f.name, sizeBytes: f.size, text: text || undefined, link }); setText(''); onDone(); }
+    catch (e) { setErr(e instanceof Error ? e.message : 'Could not attach'); }
+    if (fileRef.current) fileRef.current.value = '';
+  }
   return (
     <Panel strong={t.state === 'waiting-on-nation'} className="min-w-0 px-4 py-3 sm:px-5">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -150,7 +160,13 @@ function TicketCard({ t, link, q, onDone }: { t: TicketView; link?: string; q: s
           {t.state !== 'closed' ? (
             <div className="mt-3 flex flex-wrap items-end gap-2">
               <textarea aria-label="Message" className={`${inputCls} min-h-[44px] min-w-[220px] flex-1 py-2 text-[13px]`} value={text} onChange={e => setText(e.target.value)} placeholder={t.state === 'resolved' ? 'Why it is not resolved (to reopen)' : 'Reply'} />
-              {t.state !== 'resolved' ? <button type="button" className={`${goldBtn} px-4 py-2 text-[12.5px]`} style={goldStyle} onClick={() => act('reply')}>Send</button> : (
+              {t.state !== 'resolved' ? (
+                <>
+                  <button type="button" className={`${goldBtn} px-4 py-2 text-[12.5px]`} style={goldStyle} onClick={() => act('reply')}>Send</button>
+                  <input ref={fileRef} type="file" className="hidden" aria-label="Attach diagnostics" onChange={e => attach(e.target.files?.[0])} />
+                  <button type="button" className={`${ghostBtn} py-2 text-[12.5px]`} onClick={() => fileRef.current?.click()} title="Only if your data-sovereignty settings allow support attachments">Attach file</button>
+                </>
+              ) : (
                 <>
                   <button type="button" className={`${goldBtn} px-4 py-2 text-[12.5px]`} style={goldStyle} onClick={() => act('close')}>Confirm resolved</button>
                   <button type="button" className={`${ghostBtn} py-2 text-[12.5px]`} onClick={() => act('reopen')}>Reopen</button>

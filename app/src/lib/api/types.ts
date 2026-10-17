@@ -1665,3 +1665,37 @@ export interface Contract {
   outstanding: number;
   history: { at: ISODate; by: string; action: string; note?: string }[];
 }
+
+// ── Update Center: data-sovereignty controls ──────────────────────────
+export type DataCategory = 'crash-reports' | 'usage-metrics' | 'health-reports' | 'support-attachments';
+export interface DataCategoryInfo {
+  key: DataCategory;
+  label: string;
+  purpose: string;
+  contains: string[];
+  never: string[];
+  destination: string;
+  /** What switching it off costs the nation. */
+  whenOff: string;
+}
+export interface DataSharingState {
+  category: DataCategory;
+  enabled: boolean;
+  approvedBy?: string;
+  reason?: string;
+  at?: ISODate;
+  history: { at: ISODate; by: string; enabled: boolean; reason?: string; auditSeq?: number }[];
+  /** Transmissions held back in this country because the category is off. */
+  heldBack: number;
+  /** Transmissions that left (category on). */
+  sent: number;
+  lastSentAt?: ISODate;
+}
+export interface DataTransmission {
+  id: string;
+  at: ISODate;
+  nationId: string;
+  category: DataCategory;
+  summary: string;
+  payload: Record<string, unknown>;
+}

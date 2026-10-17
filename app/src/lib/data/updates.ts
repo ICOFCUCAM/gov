@@ -73,6 +73,7 @@ import { blackoutOverlapping, freezeBlocks, changeControl } from './change-contr
 import { openTicketForIncident } from './support';
 import { issueDueNotices, lifecycleWarning, lineOf, onEolNotice } from './lifecycle';
 import { alert } from './comms';
+import { transmit } from './sovereignty';
 
 /** Backward compatible with the previous release: every migration reversible and expand/contract, never in place. */
 export function isBackwardCompatible(migrations: ReleaseMigration[]): boolean {
@@ -1264,8 +1265,13 @@ function simulatedReport(p: Probation, t: number): HealthReport {
   return { at: new Date(t).toISOString(), source: 'simulated', checks, ok: checks.every(c => c.ok) };
 }
 
-function pushReport(p: Probation, rep: HealthReport) {
+function pushReport(p: Probation, rep: HealthReport, nationId: string) {
   p.reports.push(rep);
+  // Evaluation stays local; the report reaches the publisher only if the nation shares health reports.
+  if (rep.source !== 'silence') {
+    transmit(nationId, 'health-reports', `${p.version} · ${rep.ok ? 'healthy' : `failed: ${rep.checks.filter(c => !c.ok).map(c => c.key).join(', ')}`}`,
+      { releaseId: p.releaseId, version: p.version, at: rep.at, ok: rep.ok, checks: rep.checks.map(c => ({ key: c.key, ok: c.ok, value: c.value })) }, Date.parse(rep.at));
+  }
   if (p.reports.length > 120) p.reports.splice(0, p.reports.length - 120);
 }
 
@@ -1308,7 +1314,7 @@ export function superviseProbations(now = Date.now()): WatchdogSummary {
       const last = p.reports.length ? Date.parse(p.reports[p.reports.length - 1]!.at) : start;
       for (let t = last + 60_000; t <= horizon; t += 60_000) {
         const rep = simulatedReport(p, t);
-        pushReport(p, rep);
+        pushReport(p, rep, n.id);
         const failed = evaluate(p, rep);
         if (failed.length) { failProbation(n, r, inst, failed, rep.at, 'simulated health'); break; }
       }
@@ -1321,7 +1327,7 @@ export function superviseProbations(now = Date.now()): WatchdogSummary {
         last += interval;
         const at = new Date(last).toISOString();
         const rep: HealthReport = { at, source: 'silence', checks: [{ key: 'liveness', ok: false, detail: `No report from the deployment agent for ${p.thresholds.silenceMinutes} minutes` }], ok: false };
-        pushReport(p, rep);
+        pushReport(p, rep, n.id);
         out.missingReports++;
         const failed = evaluate(p, rep);
         if (failed.length) failProbation(n, r, inst, failed, at, `no report from the deployment agent for ${p.thresholds.silenceMinutes * p.thresholds.consecutiveFailures} minutes`);
@@ -1353,7 +1359,7 @@ export function reportHealth(nationId: string, input: { checks?: unknown; at?: s
   const r = udb().releases.find(x => x.id === p.releaseId)!;
   const at = new Date(now).toISOString();
   const rep: HealthReport = { at, source: 'agent', checks, ok: checks.every(c => c.ok) };
-  pushReport(p, rep);
+  pushReport(p, rep, n.id);
   const failed = evaluate(p, rep);
   if (failed.length) failProbation(n, r, inst, failed, at, checks.filter(c => failed.includes(c.key)).map(c => c.detail).filter(Boolean).join('; '));
   return { probation: p, install: inst };
