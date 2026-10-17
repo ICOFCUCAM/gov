@@ -60,6 +60,49 @@ export interface Messages {
   doctrine: {
     fourSentences: string;
   };
+  /** Wallet services: life situations, ministries and work in progress. */
+  services: {
+    search: string;
+    placeholder: string;
+    lifeSituations: string;
+    noMatch: string;
+    byMinistry: string;
+    allMinistries: string;
+    inProgress: string;
+    progressGrant: string;
+    progressTransfer: string;
+    childTitle: string;
+    childSub: string;
+    schoolTitle: string;
+    schoolSub: string;
+    lossTitle: string;
+    lossSub: string;
+    businessTitle: string;
+    businessSub: string;
+    movingTitle: string;
+    movingSub: string;
+    olderTitle: string;
+    olderSub: string;
+    registerBirth: string;
+    applyChildGrant: string;
+    bookVaccinations: string;
+    schoolEnrolment: string;
+    requestTransfer: string;
+    registerDeath: string;
+    bereavementSupport: string;
+    applyPermit: string;
+    taxRegistration: string;
+    changeAddress: string;
+    transferUtilities: string;
+    pensionServices: string;
+    healthcareAccess: string;
+    health: string;
+    education: string;
+    socialProtection: string;
+    taxRevenue: string;
+    landProperty: string;
+    justice: string;
+  };
   /** Wallet home: actions, to-dos and the sample receipts. */
   home: {
     walletName: string;
@@ -165,5 +208,47 @@ export const en: Messages = {
     noSignatureYet: 'no signature needed yet',
     signedBy: 'Signed by {name}',
     aiClass: 'AI: Class {cls}',
+  },
+  services: {
+    search: 'Search services',
+    placeholder: 'What do you need?',
+    lifeSituations: 'Life situations',
+    noMatch: 'No matching services.',
+    byMinistry: 'By ministry',
+    allMinistries: 'All ministries ({count})',
+    inProgress: 'In progress',
+    progressGrant: 'Child grant renewal — under review',
+    progressTransfer: 'School transfer — waiting on the new school',
+    childTitle: 'Having a child',
+    childSub: 'birth registration, child grant, vaccinations',
+    schoolTitle: 'Going to school',
+    schoolSub: 'enrollment, transfer, feeding',
+    lossTitle: 'Lost a family member',
+    lossSub: 'death registration, estate, support',
+    businessTitle: 'Starting a business',
+    businessSub: 'permits, registration, tax',
+    movingTitle: 'Moving house',
+    movingSub: 'address change, utilities',
+    olderTitle: 'Older adult support',
+    olderSub: 'pension, healthcare, accommodations',
+    registerBirth: 'Register a birth',
+    applyChildGrant: 'Apply for child grant',
+    bookVaccinations: 'Book vaccinations',
+    schoolEnrolment: 'School enrolment',
+    requestTransfer: 'Request a transfer',
+    registerDeath: 'Register a death',
+    bereavementSupport: 'Bereavement support',
+    applyPermit: 'Apply for a permit',
+    taxRegistration: 'Tax registration',
+    changeAddress: 'Change of address',
+    transferUtilities: 'Transfer utilities',
+    pensionServices: 'Pension services',
+    healthcareAccess: 'Healthcare access',
+    health: 'Health',
+    education: 'Education',
+    socialProtection: 'Social protection',
+    taxRevenue: 'Tax and revenue',
+    landProperty: 'Land and property',
+    justice: 'Justice and legal aid',
   },
 };
