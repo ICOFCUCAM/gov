@@ -49,6 +49,7 @@ import { wave } from '@/lib/telemetry';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import { nationAppLabel, aiLabel } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 /**
  * Federated Application Host.
@@ -60,7 +61,7 @@ import { nationAppLabel, aiLabel } from '@/lib/nation/registry';
  */
 export function AppHost({ domain, initialKey }: { domain: string; initialKey?: string }) {
   const [mins, setMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     api.org.ministries().then(r => setMins(r.ministries)).catch(() => {});
     const t = setInterval(() => setNow(Date.now()), 1000);

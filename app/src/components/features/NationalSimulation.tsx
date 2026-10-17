@@ -11,9 +11,10 @@ import { federationPosture } from '@/services/federation-aggregate';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { api } from '@/lib/api/client';
 import type { ArchetypeKey, Ministry } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 export function NationalSimulation({ initial = 'baseline' }: { initial?: ScenarioKey }) {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [key, setKey] = React.useState<ScenarioKey>(initial);
   const [mins, setMins] = React.useState<Ministry[]>([]);
   React.useEffect(() => {

@@ -16,6 +16,7 @@ import type {
   NationalCoordination,
   SovereignProfile,
 } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const STATE_FORM_LABEL: Record<string, string> = {
   republic: 'Republic',
@@ -60,7 +61,7 @@ export function AppShell({
   const [notifOpen, setNotifOpen] = React.useState(false);
   const [navOpen, setNavOpen] = React.useState(false);
   const [q, setQ] = React.useState('');
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
 
   // Mobile command drawer: close on route change + Escape.
   React.useEffect(() => {

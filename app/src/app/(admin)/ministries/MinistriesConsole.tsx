@@ -11,13 +11,14 @@ import { api } from '@/lib/api/client';
 import { scoreInstitution, LIFECYCLE_LABEL } from '@/lib/institution/readiness';
 import { instantiateMinistry, systemKindLabel } from '@/lib/institution/blueprint';
 import type { Archetype, ArchetypeKey, Ministry } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 export function MinistriesConsole() {
   const [archetypes, setArchetypes] = React.useState<Archetype[]>([]);
   const [ministries, setMinistries] = React.useState<Ministry[]>([]);
   const [selected, setSelected] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
 
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 2000);

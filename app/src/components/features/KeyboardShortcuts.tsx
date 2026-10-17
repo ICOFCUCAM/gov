@@ -133,7 +133,7 @@ export function KeyboardShortcuts() {
         <div className="max-h-[480px] overflow-y-auto">
           {ROUTE_TABLE.filter(r => matchRow(`${r.path} ${r.what}`)).map(r => (
             <div key={r.path} className="flex items-center gap-3 border-b border-line-soft px-3 py-1 last:border-0 text-[10px]">
-              <Link href={r.path.replace('[ref]','').replace('[id]','').replace('[scope]','').replace(/\/+$/,'') || r.path}
+              <Link href={r.path.replace(/\/\[[^\]]+\]/g, '').replace(/\/+$/, '') || '/'}
                 className="w-64 shrink-0 truncate font-mono text-link hover:underline">
                 {r.path}
               </Link>

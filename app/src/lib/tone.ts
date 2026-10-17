@@ -4,7 +4,7 @@
 // here keeps the colour decisions consistent and lets the test suite pin
 // the mapping in one place.
 
-import { TONE } from '@/components/features/SituationRoom';
+import { TONE } from '@/lib/tone-palette';
 
 /** Escalation severities: national/major alert, minor warn, else link. */
 export function severityTone(s: string): string | undefined {

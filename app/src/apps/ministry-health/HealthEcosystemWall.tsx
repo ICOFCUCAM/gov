@@ -17,6 +17,7 @@ import {
 import { hospitalOps } from '@/lib/gov/health-systems';
 import { waveSeries, seed } from '@/lib/telemetry';
 import { formatMoney, aiLabel } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const ID = 'health';
 const ACC = {
@@ -107,7 +108,7 @@ function Bar({ label, pct, tone, tail }: { label: string; pct: number; tone: Ton
 }
 
 export function HealthEcosystemWall() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);

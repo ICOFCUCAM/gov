@@ -15,6 +15,7 @@ import { subscribe as rtSubscribe, runtimeStats, version as rtVersion } from '@/
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, orchestrationStats, version as orchVersion } from '@/services/orchestration-engine';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 // Adapter from substrate search hits → CommandPalette items.
 const substrateSearchAsCommands: CommandSearchFn = async (query) => {
@@ -115,7 +116,7 @@ export function CommandShell({
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [mins, setMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [navOpen, setNavOpen] = React.useState(false);
 
   React.useEffect(() => {
@@ -307,7 +308,7 @@ export function CommandShell({
             <div className="mb-1.5 flex items-end gap-0.5" aria-hidden title="Operational pulse">
               {Array.from({ length: 24 }).map((_, i) => (
                 <span key={i} className="flex-1 animate-breathe rounded-sm"
-                  style={{ height: `${4 + ((Math.sin(i * 1.7 + Math.floor(now / 1000)) + 1) / 2) * 12}px`, backgroundColor: TONE[level], animationDelay: `${i * 70}ms`, opacity: 0.55 }} />
+                  style={{ height: `${(4 + ((Math.sin(i * 1.7 + Math.floor(now / 1000)) + 1) / 2) * 12).toFixed(2)}px`, backgroundColor: TONE[level], animationDelay: `${i * 70}ms`, opacity: 0.55 }} />
               ))}
             </div>
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">

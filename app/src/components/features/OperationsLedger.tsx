@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { subscribe, getLedger, runtimeStats, version as rtVersion } from '@/lib/gov/runtime-store';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const actTone = (a: string) =>
   a === 'approve' || a === 'resolve' ? TONE.ok : a === 'reject' ? TONE.alert : a === 'escalate' ? TONE.warn : TONE.link;
@@ -38,7 +39,7 @@ export function OperationsLedger() {
   React.useSyncExternalStore(subscribe, rtVersion, rtVersion);
   const allLedger = getLedger(120);
   const stats = runtimeStats();
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [scopeFilter, setScopeFilter] = React.useState<string>('all');
   const scopeKeys = Array.from(new Set(allLedger.map(e => e.scope.split(':')[0]!))).sort();
   const ledger = (scopeFilter === 'all' ? allLedger : allLedger.filter(e => e.scope.split(':')[0] === scopeFilter)).slice(0, 80);

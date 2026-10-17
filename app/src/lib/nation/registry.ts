@@ -221,6 +221,8 @@ export function formatMoney(amount: number, opts: { compact?: boolean; digits?: 
       style: 'currency',
       currency,
       notation: compact ? 'compact' : 'standard',
+      // Explicit, so Node (server) and browsers agree: "$213M", not "$213.00M".
+      minimumFractionDigits: 0,
       maximumFractionDigits: opts.digits ?? (compact ? 2 : 0),
     }).format(amount);
   } catch {

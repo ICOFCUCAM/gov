@@ -20,6 +20,7 @@ import type {
   SovereignProfile,
   StateForm,
 } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const FORMS: { v: StateForm; preset: Partial<SovereignProfile> }[] = [
   { v: 'republic', preset: { executiveTitle: 'President', legislatureName: 'National Assembly', regionNoun: 'region' } },
@@ -45,7 +46,7 @@ export function Cabinet() {
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [editing, setEditing] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => { const t = setInterval(() => setNow(Date.now()), 4000); return () => clearInterval(t); }, []);
 
   const load = React.useCallback(async () => {

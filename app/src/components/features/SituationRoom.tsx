@@ -15,12 +15,8 @@ import type {
   ArchetypeKey,
 } from '@/lib/api/types';
 
-export const TONE: Record<string, string> = {
-  alert: '#f1707a',
-  warn: '#e0b341',
-  ok: '#34d39c',
-  neutral: '#6b7a90',
-};
+import { TONE } from '@/lib/tone-palette';
+export { TONE };
 export const ACCENT = '#37c7d4';
 
 // Deep-navy situation-room palette (overrides the .sov tokens locally).
@@ -47,6 +43,7 @@ import {
 
 import { DispatchChannel, NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard, NationalBureaucracyPulse } from '@/apps/_shared/InstitutionChain';
 import { regionName, aiLabel } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const NATL_ASSETS = nationalAssets();
 const NATL_NETWORKS = nationalNetworks();
@@ -1115,7 +1112,7 @@ export function SituationRoom() {
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true });
   const [warManual, setWarManual] = React.useState<boolean | null>(null);
 

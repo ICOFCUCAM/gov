@@ -36,6 +36,7 @@ import { subscribe as rtSubscribe, runtimeStats, runtimeContinuity, scopeSummari
 import { decisionEfficacy, efficacyRollup, type EfficacyResult } from '@/services/decision-efficacy';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 function P({ title, meta, children }: { title: string; meta?: string; children: React.ReactNode }) {
   return (
@@ -58,7 +59,7 @@ export function NationalShell() {
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [mins, setMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
 
   const [fed, setFed] = React.useState<{ apps: { id: string; label: string; domain: string; kind: string; activated: boolean; navCount: number }[]; stats: { registered: number; activated: number } } | null>(null);
   React.useEffect(() => {

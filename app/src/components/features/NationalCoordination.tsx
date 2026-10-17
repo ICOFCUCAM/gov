@@ -13,6 +13,7 @@ import { buildOperationalChain } from '@/lib/gov/operational-chain';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard, NationalBureaucracyPulse, DispatchChannel, EncounterThread } from '@/apps/_shared/InstitutionChain';
 import type { NationalCoordination as NC, Ministry } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
 
@@ -41,7 +42,7 @@ const LAYERS = ['Risk Heat', 'Infrastructure', 'Logistics', 'Civil Stability', '
 
 export function NationalCoordination() {
   const [d, setD] = React.useState<NC | null>(null);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [win, setWin] = React.useState('12H');
   const [scrub, setScrub] = React.useState(72);
   const [openPin, setOpenPin] = React.useState<number | null>(0);

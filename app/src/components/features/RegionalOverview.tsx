@@ -7,11 +7,12 @@ import { nationalRegions, regionRollup, projectRegions } from '@/lib/gov/regions
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { SCENARIOS, type ScenarioKey } from '@/lib/gov/simulation';
 import { regionName } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const POS_TONE: Record<string, string> = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' };
 
 export function RegionalOverview({ initialRegion }: { initialRegion?: string } = {}) {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [open, setOpen] = React.useState<string | null>(initialRegion ?? regionName(0, 'Capital District'));
   const [scn, setScn] = React.useState<ScenarioKey>('baseline');
   React.useEffect(() => {

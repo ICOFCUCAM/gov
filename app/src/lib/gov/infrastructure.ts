@@ -37,8 +37,9 @@ export function nationalAssets(): Asset[] {
       const tier = (seed(`at:${h}:${i}`) > 0.85 ? 1 : seed(`at:${h}:${i}`) > 0.55 ? 2 : 3) as 1 | 2 | 3;
       out.push({
         id: `A${n++}`, kind, tier,
-        x: Math.max(20, Math.min(980, hub.x + Math.cos(ang) * rad)),
-        y: Math.max(20, Math.min(600, hub.y + Math.sin(ang) * rad * 0.66)),
+        // Rounded: server (Node) and browser trigonometry can differ in the last bits.
+        x: Math.round(Math.max(20, Math.min(980, hub.x + Math.cos(ang) * rad)) * 100) / 100,
+        y: Math.round(Math.max(20, Math.min(600, hub.y + Math.sin(ang) * rad * 0.66)) * 100) / 100,
       });
     }
   }

@@ -11,6 +11,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { ageMinutes } from '@/lib/format';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { severityTone, priorityTone } from '@/lib/tone';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 /**
  * LiveWall — composite operational picture for the NOC.
@@ -30,7 +31,7 @@ export function LiveWall() {
   const [escalations, setEscalations] = React.useState<EscalationRow[]>([]);
   const [dispatches, setDispatches]   = React.useState<DispatchRow[]>([]);
   const [workItems, setWorkItems]     = React.useState<WorkItemRow[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {

@@ -12,6 +12,7 @@ import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
 import { substrateAvailable } from '@/lib/db/client';
 import { regionName } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';
@@ -140,7 +141,7 @@ function relAgo(atMs: number): string {
 }
 
 export function InteroperabilityFabric() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);

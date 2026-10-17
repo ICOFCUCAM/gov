@@ -32,6 +32,7 @@ import { resolveInstitution } from '@/lib/institution/federation';
 import { verifyChain } from '@/services/audit-ledger';
 import { escalationState } from '@/shared/sovereignty/escalation';
 import { DirectivesInbox } from '@/apps/_shared/AppKit';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 
@@ -49,7 +50,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   // the operational surface renders on FIRST paint — no network dependency,
   // no "Loading institution…" dead-end. The API call only refines it.
   const [m, setM] = React.useState<Ministry>(() => resolveInstitution(id));
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [selDoc, setSelDoc] = React.useState<string | null>(null);
   const [selRow, setSelRow] = React.useState<string | null>(null);
   const [aiAdvisoryText, setAiAdvisoryText] = React.useState<string | null>(null);

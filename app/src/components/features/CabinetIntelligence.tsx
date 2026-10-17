@@ -25,6 +25,7 @@ import type {
 } from '@/lib/api/types';
 
 import { aiLabel } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 const RED = '#f1707a';
 
 // A function so labels that follow the nation's AI choice are read at render.
@@ -100,7 +101,7 @@ export function CabinetIntelligence() {
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [mins, setMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [war, setWar] = React.useState(false);
   const [openEsc, setOpenEsc] = React.useState<number | null>(0);
   const [openMin, setOpenMin] = React.useState<string | null>(null);

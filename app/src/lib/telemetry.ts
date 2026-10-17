@@ -25,7 +25,9 @@ export function wave(key: string, t: number, lo = 35, hi = 90): number {
   const slow = Math.sin(t / (40 + a * 60) + b * 6.28) * span * 0.18;
   const fast = Math.sin(t / (9 + c * 7) + c * 6.28) * span * 0.09;
   const jitter = (seed(`${key}:${Math.floor(t)}`) - 0.5) * span * 0.06;
-  return Math.max(lo, Math.min(hi, base + slow + fast + jitter));
+  // Rounded so Node (server) and the browser, whose Math.sin can differ in the
+  // last binary digits, render the same value (no hydration mismatch).
+  return Math.round(Math.max(lo, Math.min(hi, base + slow + fast + jitter)) * 1e4) / 1e4;
 }
 
 export function waveSeries(key: string, t: number, n = 16, lo = 35, hi = 90): number[] {

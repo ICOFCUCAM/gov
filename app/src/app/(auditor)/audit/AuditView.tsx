@@ -6,6 +6,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/SituationRoom';
 import { api } from '@/lib/api/client';
 import type { AuditEntry } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const CONTROLS = [
   { l: 'Access control', k: 'ac' },
@@ -26,7 +27,7 @@ const BODIES = [
 export function AuditView() {
   const [events, setEvents] = React.useState<AuditEntry[] | null>(null);
   const [verify, setVerify] = React.useState<{ ok: boolean; checked: number; brokenAtSeq?: number } | null>(null);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
 
   const load = React.useCallback(async () => {
     const [{ events }, v] = await Promise.all([api.audit.list(), api.audit.verify().catch(() => null)]);
