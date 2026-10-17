@@ -16,7 +16,7 @@ import { locales } from '@/lib/i18n/config';
 import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
 import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
-import { GatewayBar, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
+import { GatewayBar, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
 import { FontSizeControls } from '@/apps/_shared/public/controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { t as fill } from '@/lib/i18n';
@@ -207,10 +207,13 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
             {UTILITY.map(l => <Link key={l.label} href={l.href} className="hover:text-slate-900">{l.label}</Link>)}
           </nav>
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-[12px] focus-within:outline focus-within:outline-2 focus-within:outline-offset-2" style={{ borderColor: LINE, color: SOFT }}>
+            <form role="search" action="/search" method="get">
+              <input type="hidden" name="site" value={inst.href.slice(1)} />
+              <label className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-[12px] focus-within:outline focus-within:outline-2 focus-within:outline-offset-2" style={{ borderColor: LINE, color: SOFT }}>
               <span aria-hidden>⌕</span>
-              <input aria-label={t.search} placeholder={`${t.search}…`} className="w-28 bg-transparent outline-none placeholder:text-slate-500" />
+              <input type="search" name="q" aria-label={t.search} placeholder={`${t.search}…`} className="w-28 bg-transparent outline-none placeholder:text-slate-500" />
             </label>
+            </form>
             <Link href="/gov/treasury" className="flex items-center gap-2 rounded-md px-4 py-2 text-[12px] font-semibold text-white"
               style={{ background: NAVY }}>
               <span aria-hidden>🔒</span> ACCESS PORTAL
@@ -434,10 +437,10 @@ function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
           <div>
             <div className="text-[12px] font-semibold text-white">{site.newsletter.heading}</div>
             <p className="mt-2 text-[11px] text-white/55">{site.newsletter.body}</p>
-            <div className="mt-3 flex">
-              <input aria-label={t.email} placeholder={t.enterEmail} className="min-w-0 flex-1 rounded-s-md px-2 py-1.5 text-[12px] text-slate-800 outline-none" />
-              <button className="rounded-e-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: GOLD }} aria-label={t.subscribe}><Fwd /></button>
-            </div>
+            <NewsletterForm site={inst.href.slice(1)} note={t.subscribeNote} noteClassName="text-white/55">
+              <input type="email" name="email" required autoComplete="email" aria-label={t.email} placeholder={t.enterEmail} className="min-w-0 flex-1 rounded-s-md px-2 py-1.5 text-[12px] text-slate-800 outline-none" />
+              <button type="submit" className="rounded-e-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: GOLD }} aria-label={t.subscribe}><Fwd /></button>
+            </NewsletterForm>
           </div>
         </div>
         <div className="border-t border-white/10">

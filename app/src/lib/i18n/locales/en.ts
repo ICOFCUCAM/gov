@@ -145,6 +145,32 @@ export interface Messages {
     gatewayMigrate: string;
     visitSite: string;
     fromSite: string;
+    searchTitle: string;
+    searchAllTitle: string;
+    searchAll: string;
+    searchFor: string;
+    searchIn: string;
+    searchIntro: string;
+    searchResults: string;
+    searchOneResult: string;
+    searchNone: string;
+    kindService: string;
+    kindNews: string;
+    kindProgramme: string;
+    kindFigure: string;
+    kindPage: string;
+    subscribeNote: string;
+    subscribeCheck: string;
+    subscribeInvalid: string;
+    subscribeBusy: string;
+    subscriptionTitle: string;
+    confirmPrompt: string;
+    confirmButton: string;
+    confirmed: string;
+    unsubscribePrompt: string;
+    unsubscribeButton: string;
+    unsubscribed: string;
+    linkInvalid: string;
   };
   /** Permit and receipt detail pages. */
   detail: {
@@ -768,6 +794,32 @@ export const en: Messages = {
     gatewayMigrate: 'The {name} is moving its website here from {host}; pages not yet moved are still there.',
     visitSite: 'Visit {host} ↗',
     fromSite: 'From {host}',
+    searchTitle: 'Search {name}',
+    searchAllTitle: 'Search the public sites',
+    searchAll: 'Search all public sites',
+    searchFor: 'Search for',
+    searchIn: 'Search in',
+    searchIntro: 'Services, news, programmes and pages, as each institution publishes them.',
+    searchResults: '{count} results for “{q}”',
+    searchOneResult: '1 result for “{q}”',
+    searchNone: 'Nothing matches “{q}”. Try fewer or other words.',
+    kindService: 'Service',
+    kindNews: 'News',
+    kindProgramme: 'Programme',
+    kindFigure: 'Figure',
+    kindPage: 'Page',
+    subscribeNote: 'We use your email only for these updates. Unsubscribe at any time.',
+    subscribeCheck: 'Check your email and open the link we sent to confirm.',
+    subscribeInvalid: 'Enter a valid email address.',
+    subscribeBusy: 'Too many attempts. Please try again later.',
+    subscriptionTitle: 'Email updates',
+    confirmPrompt: 'Confirm your subscription to email updates from {name}.',
+    confirmButton: 'Confirm subscription',
+    confirmed: 'Subscription confirmed. Every email has a link to unsubscribe.',
+    unsubscribePrompt: 'Stop email updates from {name}?',
+    unsubscribeButton: 'Unsubscribe',
+    unsubscribed: 'You are unsubscribed and your email address has been deleted.',
+    linkInvalid: 'This link is not valid or has expired.',
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {

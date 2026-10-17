@@ -30,7 +30,7 @@ const AXE = readFileSync(require.resolve('axe-core/axe.min.js'), 'utf8');
 const BUDGETS = JSON.parse(readFileSync(new URL('./public-site-budgets.json', import.meta.url), 'utf8'));
 const WCAG = ['wcag2a', 'wcag2aa', 'wcag21a', 'wcag21aa', 'wcag22aa'];
 const VIEWPORTS = [{ name: 'desktop', width: 1280, height: 900 }, { name: 'phone', width: 390, height: 844 }];
-const SHARED = ['/government', '/sitemap', '/legal/privacy', '/legal/accessibility', '/legal/terms', '/health/laboratory', '/developers', '/public'];
+const SHARED = ['/government', '/sitemap', '/legal/privacy', '/legal/accessibility', '/legal/terms', '/health/laboratory', '/developers', '/public', '/search', '/search?q=permit', '/search?site=police&q=clearance', '/subscriptions?site=police&status=check'];
 
 const getJson = async path => { const r = await fetch(BASE + path); if (!r.ok) throw new Error(`${path}: ${r.status}`); return r.json(); };
 

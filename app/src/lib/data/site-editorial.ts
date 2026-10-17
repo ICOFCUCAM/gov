@@ -19,6 +19,8 @@ import { presetsFor } from '@/apps/_shared/public/design/presets';
 import { siteContent } from '@/lib/public-sites';
 import { translatableStrings, translationProblem, type TranslationEntries } from '@/lib/public-sites/translation';
 import { locales } from '@/lib/i18n/config';
+import { fillDeep, siteTokens } from '@/lib/public-sites/tokens';
+import { queueUpdate } from './site-subscriptions';
 
 export interface SiteChange {
   /** Fields of the site's content; each replaces the published (or reference) field whole. */
@@ -255,6 +257,13 @@ export function decideProposal(siteId: string, proposalId: string, action: 'publ
   const next: SiteEditorial = { ...e, version: v.version, published: v, versions: [v, ...e.versions], proposals: done('published'), translations };
   db.set(siteId, next);
   recordAudit(by.trim(), 'site.content.publish', `PublicSite:${siteId}/v${v.version}`, 'ok', `${p.summary.join(', ')} · proposed by ${p.proposedBy}`);
+  // New announcements go to the site's confirmed email subscribers (queued until a provider is connected).
+  const before = new Set((e.published?.content.news ?? siteContent(siteId).news).map(n => n.title));
+  const fresh = (p.change.content?.news ?? []).filter(n => !before.has(n.title));
+  if (fresh.length) {
+    const name = fillDeep(siteContent(siteId, content).institution.name, siteTokens(new Date(now).getUTCFullYear()));
+    queueUpdate(siteId, `${name}: ${fresh[0]!.title}`, fresh.map(n => [n.title, n.date, n.summary].filter(Boolean).join('\n')).join('\n\n'), Date.parse(now));
+  }
   return next;
 }
 

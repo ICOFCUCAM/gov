@@ -9,7 +9,7 @@ import { nationMessages, nationLocale, formatMoney } from '@/lib/nation/registry
 import { SampleChip } from '@/apps/_shared/public/PublicSiteShell';
 import { t as fill } from '@/lib/i18n';
 import { locales } from '@/lib/i18n/config';
-import { SkipLink } from '@/apps/_shared/public/integration';
+import { SkipLink, NewsletterForm } from '@/apps/_shared/public/integration';
 import { FontSizeControls } from '@/apps/_shared/public/controls';
 
 export const dynamic = 'force-dynamic';
@@ -97,7 +97,7 @@ export default function LaboratoryServicesPage() {
             ))}
           </nav>
           <div className="flex items-center gap-4">
-            <button aria-label={t.search} className="text-slate-600 hover:text-slate-900">⌕</button>
+            <Link href="/search?site=health" aria-label={t.search} className="grid h-8 w-8 place-items-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"><span aria-hidden>⌕</span></Link>
             <button className="flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white" style={{ background: '#d62b34' }}>
               <span aria-hidden>☎</span> Emergency
             </button>
@@ -227,10 +227,10 @@ export default function LaboratoryServicesPage() {
           <div>
             <div className="text-[14px] font-bold" style={{ color: NAVY }}>Stay Updated</div>
             <p className="mt-1 text-[12px] text-slate-600">Subscribe to our newsletter for latest health updates.</p>
-            <div className="mt-3 flex">
-              <input placeholder="Enter your email" className="min-w-0 flex-1 rounded-l-md border px-2 py-1.5 text-[12px]" style={{ borderColor: LINE }} />
-              <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: BLUE }}>{t.subscribe}</button>
-            </div>
+            <NewsletterForm site="health" note={t.subscribeNote} noteClassName="text-slate-600">
+              <input aria-label={t.email} type="email" name="email" required autoComplete="email" placeholder="Enter your email" className="min-w-0 flex-1 rounded-l-md border px-2 py-1.5 text-[12px]" style={{ borderColor: LINE }} />
+              <button type="submit" className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: BLUE }}>{t.subscribe}</button>
+            </NewsletterForm>
           </div>
           {[
             ['Health Resources', ['Health Library', 'Health Calculators', 'Wellness Tips', 'Health Videos']],

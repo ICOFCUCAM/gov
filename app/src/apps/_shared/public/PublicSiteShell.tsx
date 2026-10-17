@@ -23,7 +23,7 @@ import Link from 'next/link';
 import { nationMessages, nationLocale } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 import { locales } from '@/lib/i18n/config';
-import { GatewayBar, SkipLink, PreviewBanner, SiteSchema, Fwd, type SiteGateway } from './integration';
+import { GatewayBar, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd, type SiteGateway } from './integration';
 import { FontSizeControls } from './controls';
 
 export interface PublicSiteTheme {
@@ -168,7 +168,7 @@ export function PublicSiteShell({
             ))}
           </nav>
           <div className="flex items-center gap-4">
-            <button aria-label={t.search} className="text-slate-600 hover:text-slate-900">⌕</button>
+            <Link href={`/search?site=${institution.href.slice(1)}`} aria-label={t.search} className="grid h-8 w-8 place-items-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"><span aria-hidden>⌕</span></Link>
             {institution.emergencyButton ? (
               <button className="flex items-center gap-2 rounded-md px-4 py-2 text-[13px] font-semibold text-white"
                 style={{ background: `linear-gradient(90deg, ${theme.emergencyA}, ${theme.emergencyB})` }}>
@@ -438,10 +438,10 @@ export function PublicSiteShell({
           <div>
             <div className="text-[13px] font-semibold text-white">{newsletter.heading}</div>
             <p className="mt-1 text-[11px] text-white/60">{newsletter.body}</p>
-            <div className="mt-3 flex">
-              <input placeholder={t.enterEmail} className="min-w-0 flex-1 rounded-s-md px-2 py-1.5 text-[12px] text-slate-800" aria-label={t.email} />
-              <button className="rounded-e-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: theme.primary }}>{t.subscribe}</button>
-            </div>
+            <NewsletterForm site={institution.href.slice(1)} note={t.subscribeNote} noteClassName="text-white/60">
+              <input type="email" name="email" required autoComplete="email" placeholder={t.enterEmail} className="min-w-0 flex-1 rounded-s-md px-2 py-1.5 text-[12px] text-slate-800" aria-label={t.email} />
+              <button type="submit" className="rounded-e-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: theme.primary }}>{t.subscribe}</button>
+            </NewsletterForm>
           </div>
         </div>
         {/* 11. Legal */}

@@ -179,6 +179,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   right to left only when every string is translated into a right-to-left
   language. Public sites use logical CSS (`ms-`, `ps-`, `start-`, `border-s`)
   and `<Fwd />` for arrows, never left/right.
+- Search (`/search`, `lib/public-sites/search.ts`) indexes only what the sites
+  publish (`effectiveContent`); never an outside search service. Email
+  updates (`lib/data/site-subscriptions.ts`) are double opt-in, answer the same
+  whether or not an address subscribes, act on emailed links only after a
+  button press, and delete the address on unsubscribe; audit entries never
+  carry addresses, and the editor sees counts only.
 - Quality gate: `npm run audit:sites` (in `app/`, against a running build;
   CI job *public sites audit*) fails on any WCAG A/AA violation (axe-core) on
   any site, design or viewport, any broken on-platform link or anchor, a page

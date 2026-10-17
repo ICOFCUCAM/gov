@@ -30,6 +30,23 @@ export function SkipLink({ label, href = '#main' }: { label: string; href?: stri
   );
 }
 
+/**
+ * The newsletter box's form: posts to the site's subscribe endpoint (double
+ * opt-in, lib/data/site-subscriptions.ts) and works without JavaScript. The
+ * hidden "website" field is left empty by people and filled by bots.
+ */
+export function NewsletterForm({ site, note, noteClassName = 'text-white/60', children }: { site: string; note?: string; noteClassName?: string; children: React.ReactNode }) {
+  return (
+    <form action={`/api/public-sites/${site}/subscribe`} method="post" className="mt-3">
+      <div className="flex">{children}</div>
+      <div aria-hidden className="absolute -start-[9999px] h-px w-px overflow-hidden">
+        <input name="website" tabIndex={-1} autoComplete="off" aria-label="Leave this field empty" />
+      </div>
+      {note ? <p className={`mt-2 text-[10.5px] leading-snug ${noteClassName}`}>{note}</p> : null}
+    </form>
+  );
+}
+
 /** Shown on a pending proposal's preview (officials only): nothing here is published yet. */
 export function PreviewBanner({ on }: { on?: boolean }) {
   if (!on) return null;

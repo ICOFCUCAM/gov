@@ -21,6 +21,7 @@ const OTHER = [
   { href: '/government', name: 'Government directory' },
   { href: '/health/laboratory', name: 'Laboratory Services' },
   { href: '/public', name: 'Public Observatory' },
+  { href: '/search', name: 'Search the public sites' },
 ];
 
 export default function SitemapPage() {

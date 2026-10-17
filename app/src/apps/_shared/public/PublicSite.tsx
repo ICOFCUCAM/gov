@@ -9,7 +9,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import './design/fonts.css';
 import { PublicSiteShell, SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteTheme, type PublicSiteLinkItem } from './PublicSiteShell';
-import { GatewayBar, SkipLink, PreviewBanner, SiteSchema, Fwd } from './integration';
+import { GatewayBar, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from './integration';
 import { FontSizeControls } from './controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { getSiteSettings } from '@/lib/data/site-settings';
@@ -141,7 +141,7 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
   );
   const actions = (
     <div className="flex items-center gap-3">
-      <button aria-label={t.search} className="text-slate-600 hover:text-slate-900">⌕</button>
+      <Link href={`/search?site=${s.institution.href.slice(1)}`} aria-label={t.search} className="grid h-8 w-8 place-items-center rounded-full text-slate-600 hover:bg-slate-100 hover:text-slate-900"><span aria-hidden>⌕</span></Link>
       {emergency ? (
         tel
           ? <a href={`tel:${tel}`} className="flex items-center gap-2 px-4 py-2 text-[13px] font-semibold text-white" style={{ background: `linear-gradient(90deg, ${th.emergencyA}, ${th.emergencyB})`, borderRadius: d.radius }}><span aria-hidden>{emergency.icon}</span> {emergency.label}</a>
@@ -224,10 +224,10 @@ function Frame({ c, children }: { c: Ctx; children: React.ReactNode }) {
           <div>
             <div className="text-[13px] font-semibold text-white">{s.newsletter.heading}</div>
             <p className="mt-1 text-[11px] text-white/60">{s.newsletter.body}</p>
-            <div className="mt-3 flex">
-              <input placeholder={t.enterEmail} aria-label={t.email} className="min-w-0 flex-1 px-2 py-1.5 text-[12px] text-slate-800" style={{ borderStartStartRadius: d.radius, borderEndStartRadius: d.radius }} />
-              <button className="px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: th.primary, borderStartEndRadius: d.radius, borderEndEndRadius: d.radius }}>{t.subscribe}</button>
-            </div>
+            <NewsletterForm site={s.institution.href.slice(1)} note={t.subscribeNote} noteClassName="text-white/60">
+              <input type="email" name="email" required autoComplete="email" placeholder={t.enterEmail} aria-label={t.email} className="min-w-0 flex-1 px-2 py-1.5 text-[12px] text-slate-800" style={{ borderStartStartRadius: d.radius, borderEndStartRadius: d.radius }} />
+              <button type="submit" className="px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: th.primary, borderStartEndRadius: d.radius, borderEndEndRadius: d.radius }}>{t.subscribe}</button>
+            </NewsletterForm>
           </div>
         </Wrap>
         <div className="border-t border-white/10">

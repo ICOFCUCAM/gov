@@ -23,6 +23,8 @@ export interface SiteEditView {
   nationLocale: string;
   /** The language the public site is shown in now. */
   language: SiteLanguage;
+  /** Email-update subscribers (counts only) and messages waiting for an email provider. */
+  subscribers: { confirmed: number; pending: number; unsubscribed: number; queued: number };
 }
 
 /** One string of a site for translation (GET /api/public-sites/[id]/translations/[locale]). */

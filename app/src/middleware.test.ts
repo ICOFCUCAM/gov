@@ -27,6 +27,22 @@ describe('access gate (CIVICOS_AUTH=enforce)', () => {
   });
 });
 
+describe('email updates from the public sites', () => {
+  const before = process.env.CIVICOS_AUTH;
+  afterEach(() => { process.env.CIVICOS_AUTH = before; });
+  const post = (p: string) => middleware(new NextRequest(`http://localhost${p}`, { method: 'POST' }));
+
+  it('let citizens subscribe, confirm and unsubscribe without signing in, and nothing else', () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    expect(post('/api/public-sites/police/subscribe').headers.get('location')).toBeNull();
+    expect(post('/api/subscriptions').headers.get('location')).toBeNull();
+    expect(call('/search?q=permit').headers.get('location')).toBeNull();
+    expect(call('/subscriptions?token=x').headers.get('location')).toBeNull();
+    expect(post('/api/public-sites/police/proposals').headers.get('location')).toMatch(/\/login/);
+    expect(call('/api/subscriptions').headers.get('location')).toMatch(/\/login/);
+  });
+});
+
 describe('public websites', () => {
   // Every page in the (public) route group is reachable without a session.
   const PUBLIC_GROUP = path.join(__dirname, 'app', '(public)');

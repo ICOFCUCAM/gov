@@ -9,12 +9,15 @@ import type { NextRequest } from 'next/server';
 // the institution register (also public in the Government Directory) and the
 // audit chain's integrity check used by the start-up sequence.
 const PUBLIC_READ = [/^\/api\/sovereign$/, /^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/];
+// Citizens ask for and manage email updates from the public sites without signing in
+// (double opt-in and per-sender limits in lib/data/site-subscriptions.ts).
+const PUBLIC_WRITE = [/^\/api\/public-sites\/[a-z-]+\/subscribe$/, /^\/api\/subscriptions$/];
 const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/fonts\//, /^\/api\/health/];
 // The public institution websites and their shared pages: every page in the
 // (public) route group is for citizens without an account (middleware.test.ts
 // fails if a page there is not covered), plus the embeddable services widget
 // (/embed) and a migrating ministry's forwarding (/r).
-const PUBLIC_SITES = /^\/(embed|r|agriculture|assembly|communications|education|emergency|energy|environment|foreign-affairs|government|health|interior|judiciary|justice|labour|legal|noc|police|portal|presidency|public|senate|sign-in|sitemap|trade|transport|treasury)(\/|$)/;
+const PUBLIC_SITES = /^\/(embed|r|agriculture|assembly|communications|education|emergency|energy|environment|foreign-affairs|government|health|interior|judiciary|justice|labour|legal|noc|police|portal|presidency|public|search|senate|sign-in|sitemap|subscriptions|trade|transport|treasury)(\/|$)/;
 // Machine callers with no browser session that authenticate themselves in
 // the route: every scheduled job under /api/cron (CIVICOS_CRON_SECRET, called
 // by pg_cron; each refuses when the secret is unset, see middleware.test.ts)
@@ -38,6 +41,7 @@ export function middleware(req: NextRequest) {
   if (SELF_AUTHENTICATED.some(re => re.test(pathname))) return res;
   // The cover reads the nation's public identity before anyone signs in.
   if (req.method === 'GET' && PUBLIC_READ.some(re => re.test(pathname))) return res;
+  if (req.method === 'POST' && PUBLIC_WRITE.some(re => re.test(pathname))) return res;
 
   const session = req.cookies.get('civicos_session')?.value;
   if (session) return res;

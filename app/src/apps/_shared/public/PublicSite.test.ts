@@ -86,6 +86,8 @@ describe('public-site design presets', () => {
       const standard = hrefs(render(id, 'civic-standard'));
       for (const h of standard) {
         if (h === `/${id}/services`) continue;
+        // Treasury's header has a search field (a form to /search) in place of the search link.
+        if (h === `/search?site=${id}` && id === 'treasury') { expect(html).toContain('action="/search"'); continue; }
         expect(links.has(h), `${id}: link ${h}`).toBe(true);
       }
       for (const anchor of ['services', 'statistics', 'news', 'programmes', 'contact', 'about']) {
@@ -148,7 +150,7 @@ describe('public-site accessibility foundations (WCAG 2.2 AA)', () => {
         expect(named, `${name}: unnamed button ${b.slice(0, 80)}`).toBe(true);
       }
       for (const img of html.match(/<img\b[^>]*>/g) ?? []) expect(img, `${name}: image without alt`).toMatch(/\balt="/);
-      for (const input of html.match(/<input\b[^>]*>/g) ?? []) expect(input, `${name}: input without a label`).toMatch(/aria-label="[^"]+"|id="/);
+      for (const input of (html.match(/<input\b[^>]*>/g) ?? []).filter(i => !/type="hidden"/.test(i))) expect(input, `${name}: input without a label`).toMatch(/aria-label="[^"]+"|id="/);
       for (const svg of html.match(/<svg\b[^>]*>/g) ?? []) expect(svg, `${name}: svg neither hidden nor named`).toMatch(/aria-hidden="true"|role="img"|aria-label=/);
     }
   });

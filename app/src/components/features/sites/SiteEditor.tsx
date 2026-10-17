@@ -132,6 +132,9 @@ export function SiteEditor() {
                     {view.editorial.version === 0 ? 'Reference content (nothing published by the nation yet)' : `Version ${view.editorial.version} · published ${when(view.editorial.published?.at)} by ${view.editorial.published?.publishedBy}`}
                     {' · '}{view.settings.mode}{view.settings.website ? ` · ${view.settings.website}` : ''}
                   </div>
+                  <div className="mt-1 font-mono text-[10.5px] tracking-[0.06em] text-white/45">
+                    Email updates: {view.subscribers.confirmed} confirmed · {view.subscribers.pending} awaiting confirmation · {view.subscribers.queued} messages queued (no email provider connected yet)
+                  </div>
                 </div>
                 <Link href={`/${siteId}`} target="_blank" className={`${ghostBtn} py-2`}>View site ↗</Link>
               </div>

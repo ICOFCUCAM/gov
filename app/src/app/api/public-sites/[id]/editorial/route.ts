@@ -11,6 +11,7 @@ import { presetsFor, DEFAULT_PRESET } from '@/apps/_shared/public/design/presets
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { nationLocale } from '@/lib/nation/registry';
 import { locales } from '@/lib/i18n/config';
+import { subscriberCounts } from '@/lib/data/site-subscriptions';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,5 +26,6 @@ export function GET(_: NextRequest, { params }: { params: { id: string } }) {
     languages: locales.filter(l => l.code !== 'en'),
     nationLocale: nationLocale(),
     language: effectiveContent(params.id).language,
+    subscribers: subscriberCounts(params.id),
   });
 }
