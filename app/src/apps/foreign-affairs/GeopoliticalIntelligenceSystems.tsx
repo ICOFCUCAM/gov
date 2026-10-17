@@ -10,6 +10,7 @@
 import * as React from 'react';
 import { foreignAffairsExtendedBoard, type GeopoliticalAnomaly, type ConflictProbability, type StrategicDependency } from '@/lib/gov/foreign-affairs-extended';
 
+import { aiLabel } from '@/lib/nation/registry';
 const MIDNIGHT = '#0e1b3a';
 const MIDNIGHT_DEEP = '#08122a';
 const CHARCOAL = '#16181f';
@@ -141,7 +142,7 @@ export function GeopoliticalIntelligenceSystems({ id, now }: { id: string; now: 
           <div className="grid grid-cols-3 gap-3 text-center" style={{ minWidth: '420px' }}>
             {[
               { l: 'Fusion idx', v: g.intelligenceFusionIdx, c: g.intelligenceFusionIdx >= 75 ? GOLD : SILVER },
-              { l: 'AI coverage', v: `${g.aiReasoningCoverage}%`, c: g.aiReasoningCoverage >= 70 ? GOLD : SILVER },
+              { l: aiLabel('AI coverage', 'Reasoning coverage'), v: `${g.aiReasoningCoverage}%`, c: g.aiReasoningCoverage >= 70 ? GOLD : SILVER },
               { l: 'Latency', v: `${g.signalProcessingLatencyMs}ms`, c: g.signalProcessingLatencyMs <= 300 ? GOLD : g.signalProcessingLatencyMs <= 700 ? SILVER : BURGUNDY },
             ].map(x => (
               <div key={x.l} className="px-3 py-2" style={{ background: CHARCOAL, border: `1px solid ${TRACE}` }}>

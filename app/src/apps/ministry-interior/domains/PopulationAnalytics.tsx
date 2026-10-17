@@ -12,6 +12,7 @@ import * as React from 'react';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 
+import { aiLabel } from '@/lib/nation/registry';
 const BG = '#f5f6fb';
 const CARD = '#ffffff';
 const LINE = '#e7e9f1';
@@ -362,7 +363,7 @@ export function PopulationAnalytics({ id, now }: { id: string; now: number }) {
 
       {/* ── Row 4 ──────────────────────────────────────────────── */}
       <div className="grid gap-3 xl:grid-cols-3">
-        <Card title="AI Population Forecast" info action="Population Projection">
+        <Card title={aiLabel('AI Population Forecast', 'Population Forecast')} info action="Population Projection">
           <MultiLine height={150} area series={[
             { name: 'High 108.7M', c: GREEN, pts: W('fh', 50, 100, 10) },
             { name: 'Medium 96.3M', c: BLUE, pts: W('fm', 48, 84, 10) },

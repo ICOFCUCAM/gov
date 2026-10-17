@@ -13,7 +13,7 @@ import { healthFinanceExecution } from '@/lib/gov/health-operations';
 import { CommandHeader, CommandPanel, Sparkline, Donut, TrendChart, RingGauge, sc, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import { wave, waveSeries } from '@/lib/telemetry';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
-import { formatMoney } from '@/lib/nation/registry';
+import { formatMoney, aiLabel } from '@/lib/nation/registry';
 
 const ACC = ACCENT.finance!;
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -241,7 +241,7 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
             ))}
           </div>
         </CommandPanel>
-        <CommandPanel title="AI Financial Insights" meta="View All" accent={ACC} live>
+        <CommandPanel title={aiLabel('AI Financial Insights', 'Financial Insights')} meta="View All" accent={ACC} live>
           <div className="space-y-1">
             {aiInsights.map((t, i) => (
               <div key={i} className="flex items-start gap-1.5 rounded-[3px] border px-1.5 py-1 text-[7.5px]" style={{ borderColor: 'rgba(84,208,143,0.16)', background: 'rgba(0,0,0,0.22)', borderLeft: `2px solid ${sc(i === 1 || i === 3 ? 'warn' : 'ok')}` }}>

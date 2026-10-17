@@ -419,7 +419,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                     </div>
                   ))}
                 </div>
-                <p className="mt-1.5 text-[10px] text-ink-soft">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {aiHeadline ?? op.aiAdvisory}</p>
+                <p className="mt-1.5 text-[10px] text-ink-soft">▸ <span style={{ color: TONE.warn }}>{aiHeadline ? 'AI advisory' : 'Advisory'}:</span> {aiHeadline ?? op.aiAdvisory}</p>
               </Section>
               <Section title="Service operations" meta="archetype signature · live">
                 <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">

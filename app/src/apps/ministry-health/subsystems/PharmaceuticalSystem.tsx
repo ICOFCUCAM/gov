@@ -13,6 +13,7 @@ import { GeoMap } from '@/apps/_shared/GeoMap';
 import { CommandHeader, CommandPanel, KpiSpark, Donut, TrendChart, RingGauge, Sparkline, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
+import { aiLabel } from '@/lib/nation/registry';
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
 const ACC = ACCENT.pharma!;
 
@@ -129,7 +130,7 @@ export function PharmaceuticalSystem({ id, now, role, withheld }: {
 
       {/* Demand forecast | Cold chain | AI recommendations */}
       <div className="grid gap-2 xl:grid-cols-3">
-        <CommandPanel title="Demand forecast (AI)" meta="historical · forecast · confidence" accent={ACC} live>
+        <CommandPanel title={aiLabel('Demand forecast (AI)', 'Demand forecast')} meta="historical · forecast · confidence" accent={ACC} live>
           <TrendChart height={104}
             series={[
               { name: 'Historical', points: norm(s.forecast.historical), tone: 'info' },
@@ -161,7 +162,7 @@ export function PharmaceuticalSystem({ id, now, role, withheld }: {
             </div>
           </div>
         </CommandPanel>
-        <CommandPanel title="AI recommendations" meta={`${s.recommendations.length}`} accent={ACC} live>
+        <CommandPanel title={aiLabel('AI recommendations', 'Recommendations')} meta={`${s.recommendations.length}`} accent={ACC} live>
           <div className="space-y-1">
             {s.recommendations.map(r => (
               <div key={r.text} className="rounded-[3px] border border-line-soft bg-surface-2/30 px-2 py-1" style={{ borderLeft: `3px solid ${C(r.tone)}` }}>

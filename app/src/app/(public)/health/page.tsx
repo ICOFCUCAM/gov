@@ -6,6 +6,7 @@
 import Link from 'next/link';
 import { publicHealthSite } from '@/lib/gov/health-operations';
 
+import { aiLabel } from '@/lib/nation/registry';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Health — Official Portal' };
 
@@ -41,11 +42,12 @@ const INITIATIVES = [
   ['Mother & Child Health', 'Care and support for a healthy start in life.'],
   ['Non-Communicable Diseases', 'Prevention and control of NCDs for a healthier future.'],
 ];
-const SHORTCUTS = [
+// A function so the AI-assistant label follows the nation's AI choice at render.
+const shortcuts = () => [
   ['Publications & Reports', 'Download health reports and publications.'],
   ['Health Education', 'Learn about health conditions, treatments and more.'],
   ['Media Center', 'Press releases, media kits and resources.'],
-  ['AI Health Assistant', 'Ask questions. Get trusted health information.'],
+  [aiLabel('AI Health Assistant', 'Health Assistant'), 'Ask questions. Get trusted health information.'],
 ];
 
 export default function PublicHealthHomepage() {
@@ -233,7 +235,7 @@ export default function PublicHealthHomepage() {
 
         {/* 9. Service shortcut strip */}
         <div className="grid grid-cols-2 gap-4 rounded-xl border bg-[#eef4fb] px-5 py-6 shadow-sm lg:grid-cols-4" style={{ borderColor: LINE }}>
-          {SHORTCUTS.map(([t, sub]) => (
+          {shortcuts().map(([t, sub]) => (
             <div key={t} className="flex gap-3">
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg text-[14px]" style={{ background: '#dbe8fb', color: BLUE }} aria-hidden>▣</span>
               <div><div className="text-[12px] font-bold" style={{ color: NAVY }}>{t}</div><div className="text-[10px] text-slate-500">{sub}</div></div>

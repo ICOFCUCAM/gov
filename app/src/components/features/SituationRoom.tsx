@@ -46,7 +46,7 @@ import {
 } from '@/lib/gov/sovereign-operating-model';
 
 import { DispatchChannel, NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard, NationalBureaucracyPulse } from '@/apps/_shared/InstitutionChain';
-import { regionName } from '@/lib/nation/registry';
+import { regionName, aiLabel } from '@/lib/nation/registry';
 
 const NATL_ASSETS = nationalAssets();
 const NATL_NETWORKS = nationalNetworks();
@@ -62,7 +62,8 @@ export function rel(at: string, now: number): string {
 // the unified governIncident) lives in the shared sovereign operating model
 // engine — panels render it, they no longer script escalation behaviour.
 
-const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] = [
+// A function so labels that follow the nation's AI choice are read at render.
+const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] => [
   { g: 'Sovereign Command', items: [
     { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room', on: true },
     { i: '⬡', l: 'Briefing Chamber', s: 'Executive governance', href: '/gov/briefing' },
@@ -70,7 +71,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination' },
   ]},
   { g: 'Intelligence', items: [
-    { i: '◔', l: 'Analytics & AI', s: 'Strategic foresight', href: '/gov/coordination' },
+    { i: '◔', l: aiLabel('Analytics & AI', 'Analytics'), s: 'Strategic foresight', href: '/gov/coordination' },
     { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/regional' },
   ]},
   { g: 'Operations', items: [
@@ -1405,7 +1406,7 @@ export function SituationRoom() {
         {/* Icon command rail */}
         <nav aria-label="Situation Room navigation" className="hidden w-[212px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
           <div className="flex-1 overflow-y-auto py-1">
-            {RAIL.map(grp => (
+            {rail().map(grp => (
               <div key={grp.g} className="mb-0.5">
                 <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
                 {grp.items.map(it => {

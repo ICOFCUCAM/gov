@@ -8,6 +8,7 @@ import { foreignAffairsExtendedBoard } from '@/lib/gov/foreign-affairs-extended'
 import { ChanceryFrame, DispatchKpi, WorldRule, FOREIGN_DS, ChanceryCallout } from '@/apps/foreign-affairs/design-system/foreign-ds';
 import { seed, wave } from '@/lib/telemetry';
 
+import { aiLabel } from '@/lib/nation/registry';
 export function AnomalyDetection({ id, now }: { id: string; now: number }) {
   const ext = foreignAffairsExtendedBoard(now);
   void id;
@@ -17,7 +18,7 @@ export function AnomalyDetection({ id, now }: { id: string; now: number }) {
       <DispatchKpi items={[
         { label: 'Anomalies tracked', value: ext.intelligence.anomalies.length },
         { label: 'Critical risk', value: ext.intelligence.anomalies.filter(a => a.riskTier === 'critical').length, tone: 'alert' },
-        { label: 'AI reasoning coverage', value: `${ext.intelligence.aiReasoningCoverage}%`, tone: 'info' },
+        { label: aiLabel('AI reasoning coverage', 'Reasoning coverage'), value: `${ext.intelligence.aiReasoningCoverage}%`, tone: 'info' },
         { label: 'Fusion latency', value: `${ext.intelligence.signalProcessingLatencyMs}ms`, tone: 'ok' },
       ]} />
       <WorldRule label="anomaly register" />

@@ -7,6 +7,7 @@ import { bankingRails, fiscalAssurance, citizenFinance, fiscalCommand } from '@/
 import { LedgerFrame, KpiStrip, BrassRule, TAccount, TREASURY_DS } from '@/apps/treasury/design-system/treasury-ds';
 import { seed, wave } from '@/lib/telemetry';
 
+import { aiLabel } from '@/lib/nation/registry';
 export function PaymentsRail({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const r = bankingRails(id, ts);
@@ -186,7 +187,7 @@ export function AntiFraud({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const a = fiscalAssurance(id, ts);
   return (
-    <LedgerFrame archetype="audit" ref="AS-FRD-02" title="Anti-Fraud Intelligence" subtitle="AI-driven detection with explainability">
+    <LedgerFrame archetype="audit" ref="AS-FRD-02" title="Anti-Fraud Intelligence" subtitle={aiLabel('AI-driven detection with explainability', 'Signal-driven detection with explainability')}>
       <KpiStrip items={[
         { label: 'Live signals', value: a.fraudSignals, tone: a.fraudSignals > 0 ? TREASURY_DS.deficit : TREASURY_DS.surplus },
         { label: 'Q yield (Bn)', value: Math.round(wave(`af:y:${id}`, ts, 0.4, 12) * 10) / 10, tone: TREASURY_DS.brass },

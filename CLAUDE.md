@@ -53,6 +53,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   per-nation opt-in (`SovereignProfile.aiAssistant`, chosen in setup, off unless
   ticked). `/api/ai/advisory` refuses when it is off and callers fall back to
   their rule-based advisories.
+- Inside the apps, any wording that presents a panel as AI goes through
+  `aiLabel(aiWording, plainWording)` (`lib/nation/registry.ts`): AI wording
+  while the nation has the assistant on (or has not chosen), plain wording once
+  it is off. Panels that call `/api/ai/advisory` say "AI advisory" only when
+  the model's answer arrived; rule-based fallbacks say "Advisory".
 
 ## Nation conversion
 

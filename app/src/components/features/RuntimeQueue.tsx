@@ -11,6 +11,7 @@ import { subscribe, getScope, actOnItem, annotateItem, reassignItem, version as 
 import { checkAction, capabilityForAction, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
 import { nextBestAction } from '@/shared/ai/next-action';
 
+import { aiLabel } from '@/lib/nation/registry';
 const ASSIGNEES = ['K. Adamu', 'L. Mensah', 'S. Patel', 'R. Diallo', 'M. Hassan', 'J. Brennan'];
 
 const ACTION_LABEL: Record<ActionKey, string> = {
@@ -134,7 +135,7 @@ export function RuntimeQueue({
                 if (!rec.action) return null;
                 return (
                   <div className="flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
-                    <span className="text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: rec.urgent ? ACTION_TONE.escalate : ACTION_TONE.advance }}>AI</span>
+                    <span className="text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: rec.urgent ? ACTION_TONE.escalate : ACTION_TONE.advance }}>{aiLabel('AI', 'Next')}</span>
                     <span className="min-w-0 flex-1 truncate text-[9px] text-ink-soft">{rec.rationale} <span className="text-ink-muted">({rec.confidence}%)</span></span>
                     <button onClick={() => act(current.id, rec.action!)}
                       className="focus-ring shrink-0 rounded-[3px] border px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wider"

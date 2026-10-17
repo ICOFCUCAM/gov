@@ -24,9 +24,11 @@ import type {
   NationalSnapshot, NationalCoordination, SovereignProfile, ArchetypeKey, Ministry,
 } from '@/lib/api/types';
 
+import { aiLabel } from '@/lib/nation/registry';
 const RED = '#f1707a';
 
-const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] = [
+// A function so labels that follow the nation's AI choice are read at render.
+const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] => [
   { g: 'Executive', items: [
     { i: '◆', l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', on: true },
     { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room' },
@@ -44,7 +46,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination wall', href: '/wall' },
   ]},
   { g: 'Intelligence', items: [
-    { i: '⟁', l: 'Analytics & AI', s: 'Strategic foresight', href: '/gov/coordination' },
+    { i: '⟁', l: aiLabel('Analytics & AI', 'Analytics'), s: 'Strategic foresight', href: '/gov/coordination' },
     { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/regional' },
   ]},
   { g: 'National Security', items: [
@@ -346,7 +348,7 @@ export function CabinetIntelligence() {
         {/* Command rail */}
         <nav aria-label="Cabinet navigation" className="hidden w-[212px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
           <div className="flex-1 overflow-y-auto py-1">
-            {RAIL.map((grp, gi) => (
+            {rail().map((grp, gi) => (
               <div key={gi} className="mb-0.5">
                 <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
                 {grp.items.map(it => {
@@ -485,7 +487,7 @@ export function CabinetIntelligence() {
                               ))}
                             </div>
                             <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2 text-[10px]">
-                              <span className="text-ink-soft">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {op.aiAdvisory}</span>
+                              <span className="text-ink-soft">▸ <span style={{ color: TONE.warn }}>{aiLabel('AI advisory', 'Advisory')}:</span> {op.aiAdvisory}</span>
                               <span className="flex shrink-0 gap-3">
                                 <Link href={m.href} className="focus-ring text-link underline underline-offset-2">Open workspace →</Link>
                                 <Link href={`/ministries/${m.ministryId}/operations`} className="focus-ring text-link underline underline-offset-2">Subsystem runtime →</Link>

@@ -12,7 +12,7 @@ import * as React from 'react';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { policeOps, emergencyOps, immigrationOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
-import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { nationTime, nationTimeZoneLabel, aiLabel } from '@/lib/nation/registry';
 
 const BG = '#070a10';
 const PANEL = '#0c1119';
@@ -208,7 +208,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
     ['Agencies Deployed', agencies, 'ok'],
   ] as [string, string, string][];
 
-  const chips = [['AI Command Assist', 'Active'], ['Data Integrity', 'Verified'], ['System Health', 'Optimal'], ['Secure Network', 'Encrypted']];
+  const chips = [[aiLabel('AI Command Assist', 'Command Assist'), 'Active'], ['Data Integrity', 'Verified'], ['System Health', 'Optimal'], ['Secure Network', 'Encrypted']];
 
   const quick = ['Activate Emergency Protocol', 'Alert All Agencies', 'Deploy Tactical Units', 'Initiate Lockdown', 'Request Air Support', 'Activate Cyber Shield'];
   const links = ['Health', 'Finance', 'Transport', 'Defence', 'Justice', 'Foreign Affairs'];
@@ -281,7 +281,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
                 <Area pts={W('tf', 30, 90, 16)} />
               </div>
               <div>
-                <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>AI Threat Prediction</div>
+                <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>{aiLabel('AI Threat Prediction', 'Threat Prediction')}</div>
                 <Ring value={Math.round(wave(`ic:atp:${id}`, ts, 55, 88))} label="Probability" color={RED} />
                 <div className="mt-1 space-y-0.5 text-[8px]">
                   {[['Unrest', 62], ['Terrorism', 45], ['Cyber Threat', 38], ['Organized Crime', 55], ['Border Risk', 41]].map(([l, v]) => (
@@ -395,7 +395,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
               </div>
             </div>
             <div className="mt-2 grid grid-cols-3 gap-2 border-t pt-2 text-[8px]" style={{ borderColor: LINE }}>
-              {[['Patrol Deployment', `${po.unitsDeployed.toLocaleString()} field`], ['AI Crime Forecast', `${Math.round(wave(`ic:cf:${id}`, ts, 18, 38))} hot areas`], ['Investigations', `${po.openInvestigations} · ${po.clearanceRatePct}% solved`]].map(([l, v]) => (
+              {[['Patrol Deployment', `${po.unitsDeployed.toLocaleString()} field`], [aiLabel('AI Crime Forecast', 'Crime Forecast'), `${Math.round(wave(`ic:cf:${id}`, ts, 18, 38))} hot areas`], ['Investigations', `${po.openInvestigations} · ${po.clearanceRatePct}% solved`]].map(([l, v]) => (
                 <div key={l} className="rounded-[2px] border px-1.5 py-1" style={{ borderColor: LINE }}>
                   <div className="text-[7px] uppercase tracking-wider" style={{ color: MUT }}>{l}</div><div style={{ color: INK }}>{v}</div>
                 </div>

@@ -16,7 +16,7 @@ import {
 } from '@/lib/gov/health-operations';
 import { hospitalOps } from '@/lib/gov/health-systems';
 import { waveSeries, seed } from '@/lib/telemetry';
-import { formatMoney } from '@/lib/nation/registry';
+import { formatMoney, aiLabel } from '@/lib/nation/registry';
 
 const ID = 'health';
 const ACC = {
@@ -156,7 +156,7 @@ export function HealthEcosystemWall() {
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
           {[
-            ['◈', 'AI Powered'], ['◉', 'Real-Time'], ['◍', 'National Scale'], ['⬡', 'Interoperable'], ['⬢', 'Secure'],
+            ['◈', aiLabel('AI Powered', 'Explainable')], ['◉', 'Real-Time'], ['◍', 'National Scale'], ['⬡', 'Interoperable'], ['⬢', 'Secure'],
           ].map(([ic, lb], i) => (
             <React.Fragment key={lb}>
               {i > 0 ? <span className="h-3 w-px bg-[rgba(90,170,255,0.2)]" /> : null}
@@ -184,7 +184,7 @@ export function HealthEcosystemWall() {
         <Tile n={1} href="/app/health/command" title="National Health Command" sub="National Situation Room"
           accent={ACC.command} posture={ns.posture} postureTone={ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok'}
           time={time} navActive="Situation Room"
-          nav={['National Command', 'Situation Room', 'Executive Briefing', 'National Grid', 'Alerts & Directives', 'Escalations', 'Interventions', 'AI Insights', 'Reports', 'Settings']}>
+          nav={['National Command', 'Situation Room', 'Executive Briefing', 'National Grid', 'Alerts & Directives', 'Escalations', 'Interventions', aiLabel('AI Insights', 'Insights'), 'Reports', 'Settings']}>
           {/* KPI strip — 5 compact command metrics */}
           <div className="grid shrink-0 grid-cols-5 gap-1">
             {[
@@ -239,7 +239,7 @@ export function HealthEcosystemWall() {
               </div>
             </div>
             <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
-              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">AI Recommendations</div>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">{aiLabel('AI Recommendations', 'Recommendations')}</div>
               <div className="space-y-0.5">
                 {[[`Redirect 14 ICU patients · ${ns.worstRegion} → Highland`, 'Approve', 'alert'], ['Activate Emergency Medicine Reserve (EMR)', 'Review', 'warn'], ['Increase genomic surveillance · Capital District', 'Review', 'warn']].map(([r, b, t]) => (
                   <div key={r} className="flex items-center gap-1 rounded-[2px] px-1 py-0.5" style={{ background: 'rgba(0,0,0,0.25)', borderLeft: `2px solid ${sc(t as Tone)}` }}>
@@ -334,7 +334,7 @@ export function HealthEcosystemWall() {
         <Tile n={3} href="/app/health/doctor" title="Doctor Workspace" sub="Clinical Command Center"
           accent={ACC.doctor} posture={cw.patient.riskBand === 'High' ? 'HIGH RISK' : 'CLINICAL'}
           postureTone={cw.patient.riskBand === 'High' ? 'alert' : 'ok'} time={time} navActive="Patient Queue"
-          nav={['Dashboard', 'Patient Queue', 'Patients', 'Diagnostics', 'Lab Results', 'Imaging', 'Prescriptions', 'Referrals', 'Messages', 'Protocols', 'AI Assistant']}>
+          nav={['Dashboard', 'Patient Queue', 'Patients', 'Diagnostics', 'Lab Results', 'Imaging', 'Prescriptions', 'Referrals', 'Messages', 'Protocols', aiLabel('AI Assistant', 'Assistant')]}>
           {/* clinician profile + KPI strip */}
           <div className="flex shrink-0 items-center gap-1">
             <div className="flex flex-1 items-center gap-2 rounded-[3px] border px-2 py-1" style={{ borderColor: 'rgba(95,168,255,0.2)', background: 'rgba(8,16,30,0.6)' }}>
@@ -379,7 +379,7 @@ export function HealthEcosystemWall() {
                 <RingGauge value={cw.patient.riskScore} label="risk" tone={cw.patient.riskBand === 'High' ? 'alert' : cw.patient.riskBand === 'Moderate' ? 'warn' : 'ok'} size={48} sub={cw.patient.riskBand} />
                 <div className="min-w-0 flex-1 text-[6.5px] text-ink-soft">{cw.patient.ai.recommended.slice(0, 3).map(r => <div key={r} className="truncate">▸ {r}</div>)}</div>
               </div>
-              <button className="mt-auto rounded-[2px] py-1 text-[7px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>Run AI Analysis</button>
+              <button className="mt-auto rounded-[2px] py-1 text-[7px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>{aiLabel('Run AI Analysis', 'Run Analysis')}</button>
             </div>
           </div>
           {/* today's schedule */}

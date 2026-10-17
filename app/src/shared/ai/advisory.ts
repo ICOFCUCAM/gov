@@ -1,7 +1,6 @@
-// Shared AI advisory — federation AI integration.
+// Shared operational advisory for every sovereign application.
 //
-// Every sovereign application gets AI-assisted operational advisories.
-// Deterministic and explainable (no opaque generation): advisories are
+// Rule-based, deterministic and explainable (no model generation): advisories are
 // derived from the application's live operational signals so they are
 // reproducible and auditable. Pure; no React/DOM.
 

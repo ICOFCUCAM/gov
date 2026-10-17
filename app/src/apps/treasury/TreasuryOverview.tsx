@@ -15,7 +15,7 @@ import {
   bankingRails, citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
-import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { nationTime, nationTimeZoneLabel, aiLabel } from '@/lib/nation/registry';
 
 const BG = '#04100d';
 const PANEL = '#071512';
@@ -326,7 +326,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
           <span>FIVE-YEAR PLAN <span style={{ color: SOFT }}>2025/26 Q2</span></span>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[8px]" style={{ color: MUT }}>
-          {[['AI Engine', 'Active', EMER], ['Data Integrity', 'Verified', EMER], ['Cyber Defense', 'Secure', EMER]].map(([a, b, c]) => (
+          {[[aiLabel('AI Engine', 'Advisory Engine'), 'Active', EMER], ['Data Integrity', 'Verified', EMER], ['Cyber Defense', 'Secure', EMER]].map(([a, b, c]) => (
             <span key={a as string} className="uppercase tracking-[0.12em]">{a} <span style={{ color: c as string }}>● {b}</span></span>
           ))}
           <Link href="/treasury" target="_blank" rel="noopener"
@@ -405,7 +405,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
             </div>
             <div className="mt-2 grid grid-cols-3 gap-2 border-t pt-2" style={{ borderColor: LINE }}>
               <div>
-                <div className="text-[7.5px] font-bold uppercase tracking-[0.14em]" style={{ color: GOLD }}>AI Fiscal Alerts</div>
+                <div className="text-[7.5px] font-bold uppercase tracking-[0.14em]" style={{ color: GOLD }}>{aiLabel('AI Fiscal Alerts', 'Fiscal Alerts')}</div>
                 {['Revenue shortfall · Oil & Gas', 'Expenditure deviation · Infra', 'Cash buffer low (1 mo)'].map(a => (
                   <div key={a} className="mt-1 text-[8px]" style={{ color: SOFT }}>● {a}</div>
                 ))}
@@ -470,7 +470,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Ring value={Math.min(99, 60 + fa.fraudSignals * 4)} label="AI Fraud" color={fa.fraudSignals > 6 ? RED : GOLD} />
+                  <Ring value={Math.min(99, 60 + fa.fraudSignals * 4)} label={aiLabel('AI Fraud', 'Fraud')} color={fa.fraudSignals > 6 ? RED : GOLD} />
                   <div className="text-[8px]" style={{ color: SOFT }}>Fraud scoring<br />+5 vs last month</div>
                 </div>
                 <Donut size={84} total={usd(revYtd)} sub="total" segs={sectors} />
@@ -642,7 +642,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
           </div>
           <div className="rounded-[4px] border" style={{ borderColor: LINE, background: PANEL }}>
             <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: LINE }}>
-              <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: INK }}>AI Recommendations</span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: INK }}>{aiLabel('AI Recommendations', 'Recommendations')}</span>
               <span className="text-[8px]" style={{ color: GOLD }}>View All</span>
             </div>
             <div className="space-y-2 p-2.5">

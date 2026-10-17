@@ -58,3 +58,15 @@ describe('nation time and emergency numbers', () => {
     expect(nationTimeZoneLabel('GMT+1')).toBe('GMT+1');
   });
 });
+
+describe('AI wording follows the nation', () => {
+  it('keeps the AI wording until the nation switches the assistant off', async () => {
+    const { aiLabel, nationAiEnabled } = await import('./registry');
+    expect(aiLabel('AI Recommendations', 'Recommendations')).toBe('AI Recommendations');
+    applyNation({ aiAssistant: true });
+    expect(nationAiEnabled()).toBe(true);
+    applyNation({ aiAssistant: false });
+    expect(nationAiEnabled()).toBe(false);
+    expect(aiLabel('AI Recommendations', 'Recommendations')).toBe('Recommendations');
+  });
+});

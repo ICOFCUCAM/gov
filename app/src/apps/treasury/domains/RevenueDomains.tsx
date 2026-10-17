@@ -8,6 +8,7 @@ import { revenueOps } from '@/lib/gov/treasury-systems';
 import { LedgerFrame, KpiStrip, BrassRule, StatementColumn, TREASURY_DS } from '@/apps/treasury/design-system/treasury-ds';
 import { seed, wave } from '@/lib/telemetry';
 
+import { aiLabel } from '@/lib/nation/registry';
 export function TaxRevenue({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const r = revenueOps(id, ts);
@@ -114,9 +115,9 @@ export function EInvoicing({ id, now }: { id: string; now: number }) {
 
 export function RiskBasedAudit({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
-  const selections = ['Random sample', 'High-revenue stream', 'Sector anomaly', 'Cross-border flow', 'AI behavioural signal'];
+  const selections = ['Random sample', 'High-revenue stream', 'Sector anomaly', 'Cross-border flow', aiLabel('AI behavioural signal', 'Behavioural signal')];
   return (
-    <LedgerFrame archetype="audit" ref="RV-AUD-05" title="Risk-Based Audit" subtitle="AI-driven audit selection with transparent criteria">
+    <LedgerFrame archetype="audit" ref="RV-AUD-05" title="Risk-Based Audit" subtitle={aiLabel('AI-driven audit selection with transparent criteria', 'Risk-driven audit selection with transparent criteria')}>
       <KpiStrip items={[
         { label: 'Audits open', value: Math.round(wave(`au:o:${id}`, ts, 240, 14800)).toLocaleString(), tone: TREASURY_DS.brass },
         { label: 'Yield this Q (Bn)', value: Math.round(wave(`au:y:${id}`, ts, 2, 48) * 10) / 10, tone: TREASURY_DS.surplus },

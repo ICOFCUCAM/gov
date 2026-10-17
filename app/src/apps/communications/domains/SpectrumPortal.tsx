@@ -6,6 +6,7 @@ import * as React from 'react';
 import { communicationsBoard, COMMUNICATIONS_SAFEGUARDS } from '@/lib/gov/communications-continuity';
 import { TopologyFrame, TopologyKpi, TopologyRule, NodeBar, TopologyCallout, COMMS_DS } from '@/apps/communications/design-system/communications-ds';
 
+import { aiLabel } from '@/lib/nation/registry';
 export function SpectrumBands({ id, now }: { id: string; now: number }) {
   const board = communicationsBoard(now);
   void id;
@@ -74,7 +75,7 @@ export function DemandForecast({ id, now }: { id: string; now: number }) {
         { label: 'Horizons', value: board.intelligence.forecast.horizonYears.length },
         { label: 'Long-horizon resilience', value: `${board.intelligence.forecast.longHorizonDigitalResilienceIdx}/100`, tone: 'ok' },
         { label: 'Systemic risk', value: `${board.intelligence.forecast.systemicConnectivityRisk}/100`, tone: 'warn' },
-        { label: 'AI reasoning', value: `${board.intelligence.aiReasoningCoveragePct}%`, tone: 'info' },
+        { label: aiLabel('AI reasoning', 'Reasoning coverage'), value: `${board.intelligence.aiReasoningCoveragePct}%`, tone: 'info' },
       ]} />
       <TopologyRule label="multi-horizon trajectories" />
       <div className="grid grid-cols-2 gap-2 text-[11px] md:grid-cols-3">

@@ -20,6 +20,7 @@ import { aiAdvisory } from '@/shared/ai/advisory';
 import { wave, waveSeries } from '@/lib/telemetry';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
+import { aiLabel } from '@/lib/nation/registry';
 const ACC = ACCENT.command!;
 const MAP_TABS = [['Heatmap', 'pressure'], ['Outbreaks', 'outbreakHeat'], ['Facilities', 'icuLoad'], ['Routes', 'pressure']] as const;
 
@@ -223,7 +224,7 @@ export function HealthCommandCentre({ id, now, role, withheld }: {
           </div>
         </CommandPanel>
 
-        <CommandPanel title="Resource Availability & AI Interventions" accent={ACC}>
+        <CommandPanel title={aiLabel('Resource Availability & AI Interventions', 'Resource Availability & Interventions')} accent={ACC}>
           <div className="grid grid-cols-5 gap-1">
             {resources.map(r => (
               <div key={r.l} className="rounded-[3px] border px-1 py-1 text-center" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(20,32,46,0.3)' }}>
@@ -233,7 +234,7 @@ export function HealthCommandCentre({ id, now, role, withheld }: {
               </div>
             ))}
           </div>
-          <div className="mt-2 text-[8px] font-bold uppercase tracking-[0.14em] text-ink-soft">AI Intervention Recommendations</div>
+          <div className="mt-2 text-[8px] font-bold uppercase tracking-[0.14em] text-ink-soft">{aiLabel('AI Intervention Recommendations', 'Intervention Recommendations')}</div>
           <div className="mt-1 space-y-1">
             {[...prop.recommended.slice(0, 2), ...adv.recommended.slice(0, 2)].map((r, i) => (
               <div key={i} className="flex items-center gap-2 rounded-[3px] border px-2 py-1 text-[8.5px]" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)', borderLeft: `2px solid ${sc(i < 2 ? 'alert' : 'warn')}`, background: 'rgba(20,32,46,0.3)' }}>

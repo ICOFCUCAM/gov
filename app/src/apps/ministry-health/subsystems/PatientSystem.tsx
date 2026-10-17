@@ -15,6 +15,7 @@ import { aiAdvisory } from '@/shared/ai/advisory';
 import { waveSeries } from '@/lib/telemetry';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
+import { aiLabel } from '@/lib/nation/registry';
 const ACC = ACCENT.citizen!;
 
 export function PatientSystem({ id, now, role, withheld }: {
@@ -99,7 +100,7 @@ export function PatientSystem({ id, now, role, withheld }: {
             </CommandPanel>
           ) : null}
         </div>
-        <CommandPanel title="AI operational guidance" meta={`${adv.confidence}%`} accent={ACC}>
+        <CommandPanel title={aiLabel('AI operational guidance', 'Operational guidance')} meta={`${adv.confidence}%`} accent={ACC}>
           <div className="text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: sc(at) }}>{adv.severity}</div>
           <div className="mt-0.5 text-[10px] text-ink">{adv.headline}</div>
           <div className="text-[8.5px] text-ink-muted">{adv.rationale}</div>

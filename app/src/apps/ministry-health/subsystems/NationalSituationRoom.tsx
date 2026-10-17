@@ -19,7 +19,7 @@ import {
   CommandHeader, CommandPanel, KpiSpark, Donut, TrendChart, Stepper, RingGauge, ACCENT, type Tone,
 } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
-import { regionName } from '@/lib/nation/registry';
+import { regionName, aiLabel } from '@/lib/nation/registry';
 
 const C = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 const ACC = ACCENT.situation!;
@@ -191,7 +191,7 @@ export function NationalSituationRoom({ id, now, role, withheld }: {
             ))}
           </div>
         </CommandPanel>
-        <CommandPanel title="AI intervention recommendations" meta="priority actions" accent={ACC} live>
+        <CommandPanel title={aiLabel('AI intervention recommendations', 'Intervention recommendations')} meta="priority actions" accent={ACC} live>
           <div className="space-y-1">
             {[{ x: rr.active ? rr.text : `Sustain surge readiness — ${ns.worstRegion}`, p: rr.active ? 'High' : 'Med' },
               ...prop.recommended.slice(0, 3).map((r, i) => ({ x: r, p: i === 0 ? 'High' : 'Med' }))].map((r, i) => (

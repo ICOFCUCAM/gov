@@ -9,6 +9,7 @@ import * as React from 'react';
 import { CommandHeader, CommandPanel, Sparkline, sc, type Tone } from '@/apps/_shared/SovereignUI';
 import { waveSeries } from '@/lib/telemetry';
 
+import { aiLabel } from '@/lib/nation/registry';
 export type T3 = 'ok' | 'warn' | 'alert';
 
 export function OpsHeader(p: {
@@ -67,7 +68,7 @@ export function AdvisoryPanel({ accent, severity, headline, recommended }: {
 }) {
   const t: Tone = severity === 'critical' || severity === 'priority' ? 'alert' : severity === 'advisory' ? 'warn' : 'ok';
   return (
-    <CommandPanel title="AI command intelligence" meta={severity} accent={accent} live>
+    <CommandPanel title={aiLabel('AI command intelligence', 'Command intelligence')} meta={severity} accent={accent} live>
       <div className="text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: sc(t) }}>{severity}</div>
       <div className="mt-0.5 text-[10px] text-ink">{headline}</div>
       <ul className="mt-1 space-y-0.5">

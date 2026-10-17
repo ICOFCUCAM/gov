@@ -27,9 +27,11 @@ export interface NationFacts {
   timeZone?: string;
   emergency?: { general?: string; police?: string; fire?: string; ambulance?: string };
   foreignAffairs?: { partners?: { name: string; capital?: string }[]; memberships?: string[] };
+  /** The nation's AI-assistant opt-in from setup (false = off; unset = on, as before). */
+  aiAssistant?: boolean;
 }
 
-const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs'] } = {
+const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs']; aiAssistant?: boolean } = {
   configured: false,
   regions: [],
   currency: 'USD',
@@ -53,6 +55,21 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.timeZone = validZone(f.timeZone) ? f.timeZone : undefined;
   state.emergency = f.emergency;
   state.foreignAffairs = f.foreignAffairs;
+  state.aiAssistant = f.aiAssistant;
+}
+
+/** Whether the nation has the AI assistant on (the same rule /api/ai/advisory applies). */
+export function nationAiEnabled(): boolean {
+  return state.aiAssistant !== false;
+}
+
+/**
+ * Wording for a panel that presents itself as AI: the AI wording while the
+ * nation has the assistant on, the plain wording once it has switched it off.
+ * The panel and its content stay the same either way.
+ */
+export function aiLabel(ai: string, plain: string): string {
+  return nationAiEnabled() ? ai : plain;
 }
 
 /** The nation's own diplomatic partners and memberships, when it has declared them. */

@@ -2013,7 +2013,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             <Stat l="Directives" v={`${ao.command.directives}`} t="ok" />
             <Stat l="Decision latency" v={`${ao.command.decisionLatencyMin}m`} t={ao.command.decisionLatencyMin >= 24 ? 'warn' : 'ok'} />
           </div>
-          <div className="mt-1.5 text-[9px] text-ink-muted">▸ <span style={{ color: TONE.warn }}>AI advisory:</span> {aiAdvisoryText ?? ao.command.aiAdvisory}</div>
+          <div className="mt-1.5 text-[9px] text-ink-muted">▸ <span style={{ color: TONE.warn }}>{aiAdvisoryText ? 'AI advisory' : 'Advisory'}:</span> {aiAdvisoryText ?? ao.command.aiAdvisory}</div>
           <div className="mt-1.5 flex flex-wrap gap-1">
             {ao.command.chain.map((c, i) => (
               <span key={c} className="rounded-[3px] border border-line-soft bg-surface px-1.5 py-0.5 text-[8.5px] text-ink-soft">{i + 1}. {c}</span>

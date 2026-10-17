@@ -5,7 +5,7 @@ import { WallPanel } from '@/components/ui/WallPanel';
 import { Pill } from '@/components/ui/Pill';
 import { ClassBanner } from '@/components/ui/ClassBanner';
 import { TONE, Spark, seed, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
-import { nationCurrency } from '@/lib/nation/registry';
+import { nationCurrency, aiLabel } from '@/lib/nation/registry';
 
 
 const ACTIVATION = Date.UTC(2026, 4, 13, 8, 31);
@@ -112,7 +112,7 @@ export default function NcccWallPage() {
 
         <WallPanel span="full">
           <div className="flex justify-between items-center gap-3 mb-2">
-            <h3 className="text-lg font-semibold text-wall-ink m-0">AI scenario panel</h3>
+            <h3 className="text-lg font-semibold text-wall-ink m-0">{aiLabel('AI scenario panel', 'Scenario panel')}</h3>
             <ClassBanner decisionClass="D" />
           </div>
           <p>

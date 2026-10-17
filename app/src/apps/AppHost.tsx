@@ -48,7 +48,7 @@ import { legislativeState } from '@/lib/gov/legislative-engine';
 import { wave } from '@/lib/telemetry';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
-import { nationAppLabel } from '@/lib/nation/registry';
+import { nationAppLabel, aiLabel } from '@/lib/nation/registry';
 
 /**
  * Federated Application Host.
@@ -244,7 +244,7 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                   return (
                     <div className="mb-2 rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid rgb(var(--c-${at}))` }}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${at}))` }}>AI advisory · {adv.severity}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${at}))` }}>{aiLabel('AI advisory', 'Advisory')} · {adv.severity}</span>
                         <span className="font-mono text-[9px] tabular-nums text-ink-muted">confidence {adv.confidence}%</span>
                       </div>
                       <div className="mt-0.5 text-[11px] text-ink">{adv.headline}</div>
@@ -448,7 +448,7 @@ function AgencyApp({ appId, label, archetype, navKey, now, role, withheld = [] }
       </div>
       <div className="rounded-[3px] border border-line bg-surface p-2.5" style={{ borderLeft: `3px solid rgb(var(--c-${advTone}))` }}>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${advTone}))` }}>AI advisory · {adv.severity}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${advTone}))` }}>{aiLabel('AI advisory', 'Advisory')} · {adv.severity}</span>
           <span className="font-mono text-[9px] tabular-nums text-ink-muted">confidence {adv.confidence}%</span>
         </div>
         <div className="mt-0.5 text-[11px] text-ink">{adv.headline}</div>
