@@ -12,6 +12,7 @@
 // targeting, anti-imperial escalation safeguards enforced by tests.
 
 import { seed, wave } from '@/lib/telemetry';
+import { nationForeignAffairs } from '@/lib/nation/registry';
 
 export const DIPLOMATIC_SAFEGUARDS = {
   internationallyLawful: true as const,
@@ -225,6 +226,18 @@ const TREATY_DEFS: { title: string; scope: Treaty['scope']; domain: Treaty['doma
   { title: 'Atlantic Mutual Defense Compact', scope: 'multilateral', domain: 'security', signatories: 14 },
 ];
 
+// The nation's own partners and memberships replace the reference sets when declared;
+// declared partners are spread across the geopolitical regions in turn.
+function partnerCapitals(): { partner: string; region: Region; capital: string }[] {
+  const own = nationForeignAffairs().partners;
+  if (!own.length) return PARTNER_CAPITALS;
+  return own.map((p, i) => ({ partner: p.name.trim(), region: REGIONS[i % REGIONS.length]!, capital: p.capital?.trim() || '—' }));
+}
+function orgDefs(): string[] {
+  const own = nationForeignAffairs().memberships;
+  return own.length ? own : ORG_DEFS;
+}
+
 const ORG_DEFS = [
   'United Federation', 'Continental Council', 'Maritime Compact', 'Global Trade Court',
   'World Health Convention', 'Polar Frontier Council', 'Climate Continuity Forum', 'Civil Rights Tribunal',
@@ -239,6 +252,7 @@ function ambassadorName(seedKey: string): string {
 }
 
 export function foreignAffairsBoard(now: number): ForeignAffairsBoard {
+  const PARTNERS = partnerCapitals();
   const epoch = Math.max(0, Math.floor(now / 4000));
 
   const tensions: RegionalTension[] = REGIONS.map(region => {
@@ -268,7 +282,7 @@ export function foreignAffairsBoard(now: number): ForeignAffairsBoard {
     diplomaticEscalationIdx, multipolarBalanceIdx, regionalTensions: tensions,
   };
 
-  const missions: DiplomaticMission[] = PARTNER_CAPITALS.map((p, i) => {
+  const missions: DiplomaticMission[] = PARTNERS.map((p, i) => {
     const k = `fa:ms:${p.capital}`;
     const flagRoll = seed(`${k}:fl`);
     const flag: DiplomaticMission['flag'] = flagRoll > 0.86 ? 'permanent-mission' : flagRoll > 0.74 ? 'special-envoy' : flagRoll > 0.42 ? 'consulate' : 'embassy';
@@ -309,8 +323,8 @@ export function foreignAffairsBoard(now: number): ForeignAffairsBoard {
     const sevRoll = seed(`${k}:sv`);
     const severity: DiplomaticIncident['severity'] = sevRoll > 0.92 ? 'national' : sevRoll > 0.76 ? 'critical' : sevRoll > 0.5 ? 'elevated' : 'advisory';
     const ageDays = Math.round(wave(`${k}:age`, epoch / 6, 1, 220));
-    const counterparty = PARTNER_CAPITALS[Math.floor(seed(`${k}:cp`) * PARTNER_CAPITALS.length)]!.partner;
-    const region = PARTNER_CAPITALS.find(p => p.partner === counterparty)?.region ?? 'Western Union';
+    const counterparty = PARTNERS[Math.floor(seed(`${k}:cp`) * PARTNERS.length)]!.partner;
+    const region = PARTNERS.find(p => p.partner === counterparty)?.region ?? 'Western Union';
     const stage = stages[Math.min(stages.length - 1, Math.floor(seed(`${k}:ns`) * stages.length))]!;
     const cascade = (PROPAGATION[kind] ?? []).map(c => ({
       ...c,
@@ -326,7 +340,7 @@ export function foreignAffairsBoard(now: number): ForeignAffairsBoard {
     return sev(b.severity) - sev(a.severity) || b.ageDays - a.ageDays;
   });
 
-  const bilateralPartners = PARTNER_CAPITALS.slice(0, 8).map(p => {
+  const bilateralPartners = PARTNERS.slice(0, 8).map(p => {
     const k = `fa:bp:${p.partner}`;
     const alignmentIdx = Math.round(wave(`${k}:al`, epoch / 6, 28, 94));
     const tradeShare = Math.round(wave(`${k}:ts`, epoch / 7, 2, 26));
@@ -367,7 +381,7 @@ export function foreignAffairsBoard(now: number): ForeignAffairsBoard {
     travelAdvisoriesActive: advisories,
   };
 
-  const organizations: InternationalOrgRoster[] = ORG_DEFS.map(org => {
+  const organizations: InternationalOrgRoster[] = orgDefs().map(org => {
     const k = `fa:io:${org}`;
     const memRoll = seed(`${k}:m`);
     const membership: InternationalOrgRoster['membership'] = memRoll > 0.94 ? 'review' : memRoll > 0.84 ? 'associate' : memRoll > 0.62 ? 'observer' : 'full';

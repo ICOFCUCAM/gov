@@ -26,9 +26,10 @@ export interface NationFacts {
   paymentRail?: string;
   timeZone?: string;
   emergency?: { general?: string; police?: string; fire?: string; ambulance?: string };
+  foreignAffairs?: { partners?: { name: string; capital?: string }[]; memberships?: string[] };
 }
 
-const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency'] } = {
+const state: { iso3?: string; regions: string[]; currency: string; locale: string; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs'] } = {
   configured: false,
   regions: [],
   currency: 'USD',
@@ -51,6 +52,15 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.paymentRail = f.paymentRail?.trim() || undefined;
   state.timeZone = validZone(f.timeZone) ? f.timeZone : undefined;
   state.emergency = f.emergency;
+  state.foreignAffairs = f.foreignAffairs;
+}
+
+/** The nation's own diplomatic partners and memberships, when it has declared them. */
+export function nationForeignAffairs(): { partners: { name: string; capital?: string }[]; memberships: string[] } {
+  return {
+    partners: (state.foreignAffairs?.partners ?? []).filter(p => p.name?.trim()),
+    memberships: (state.foreignAffairs?.memberships ?? []).map(m => m.trim()).filter(Boolean),
+  };
 }
 
 function validZone(tz?: string): tz is string {

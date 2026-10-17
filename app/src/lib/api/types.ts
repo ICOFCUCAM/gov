@@ -514,6 +514,7 @@ export interface SovereignProfile {
   paymentRail?: string;     // the nation's domestic payment rail, e.g. "Mobile Money", "Instant Payments"
   timeZone?: string;        // IANA time zone of the capital, e.g. "Africa/Kampala"
   emergency?: { general?: string; police?: string; fire?: string; ambulance?: string }; // public emergency numbers
+  foreignAffairs?: { partners?: { name: string; capital?: string }[]; memberships?: string[] }; // the nation's partners and international memberships
   regions?: string[];       // operational regions engines report by (from admin-1 or the nation's own grouping)
   constitution?: NationalConstitution; // the nation's own constitutional facts, over the form-of-state template
 }

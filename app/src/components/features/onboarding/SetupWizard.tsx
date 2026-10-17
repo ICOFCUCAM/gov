@@ -133,7 +133,7 @@ export function SetupWizard() {
 
   function applyPreset(p: SovereignPreset) {
     setPreset(p.key);
-    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant, constitution: cur?.constitution, paymentRail: cur?.paymentRail, timeZone: cur?.timeZone, emergency: cur?.emergency }));
+    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant, constitution: cur?.constitution, paymentRail: cur?.paymentRail, timeZone: cur?.timeZone, emergency: cur?.emergency, foreignAffairs: cur?.foreignAffairs }));
   }
 
   function addInstitution() {
@@ -481,6 +481,27 @@ export function SetupWizard() {
                   </button>
                 </div>
                 <p className="mt-2 text-[12px] text-[#56647a]">{archetypes.find(a => a.key === draft.archetype)?.summary}</p>
+              </div>
+
+              <div className="mt-6 rounded-[10px] border border-[#1a2536] bg-[#0b111c]/80 p-5">
+                <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-[#65748b]">Foreign relations (optional)</p>
+                <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                  <Field label="Diplomatic partners" hint="One per line: Country — Capital">
+                    <textarea rows={5} className={inputCls}
+                      value={(profile.foreignAffairs?.partners ?? []).map(p => p.capital ? `${p.name} — ${p.capital}` : p.name).join('\n')}
+                      placeholder={'Kenya — Nairobi\nTanzania — Dodoma'}
+                      onChange={e => {
+                        const partners = e.currentTarget.value.split('\n').map(l => l.split(/\s+[—-]\s+/)).map(([name, capital]) => ({ name: (name ?? '').trim(), capital: capital?.trim() || undefined }));
+                        set('foreignAffairs', { ...profile.foreignAffairs, partners });
+                      }} />
+                  </Field>
+                  <Field label="International memberships" hint="Comma-separated, e.g. United Nations, African Union">
+                    <textarea rows={5} className={inputCls}
+                      value={(profile.foreignAffairs?.memberships ?? []).join(', ')}
+                      placeholder="United Nations, African Union, East African Community"
+                      onChange={e => set('foreignAffairs', { ...profile.foreignAffairs, memberships: e.currentTarget.value.split(',').map(m => m.trimStart()) })} />
+                  </Field>
+                </div>
               </div>
             </div>
           )}
