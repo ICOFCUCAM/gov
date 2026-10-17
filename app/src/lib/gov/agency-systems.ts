@@ -6,8 +6,9 @@
 // throughput, regional posture. Pure & deterministic; no React/DOM.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 type Tone = 'ok' | 'warn' | 'alert';
 const tone = (n: number, hi = 70, mid = 45): Tone => (n >= hi ? 'ok' : n >= mid ? 'warn' : 'alert');
 

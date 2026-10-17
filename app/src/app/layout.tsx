@@ -1,5 +1,10 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { getSovereign } from '@/lib/data/store';
+import { NationRegistry } from '@/components/features/NationRegistry';
+
+// The installed nation is read per request so every page reflects it.
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: {
@@ -13,9 +18,13 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
+  const { iso3, regions, currency, locale } = getSovereign();
   return (
     <html lang="en" dir="ltr">
-      <body>{children}</body>
+      <body>
+        <NationRegistry facts={{ iso3, regions, currency, locale }} />
+        {children}
+      </body>
     </html>
   );
 }

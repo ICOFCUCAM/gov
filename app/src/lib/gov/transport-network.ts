@@ -11,8 +11,9 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { transportOps } from '@/lib/gov/transport-systems';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export type Tone = 'ok' | 'warn' | 'alert';
 export type MobilityPosture = 'flowing' | 'engaged' | 'congested' | 'critical' | 'collapse-watch';

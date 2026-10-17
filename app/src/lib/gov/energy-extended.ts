@@ -12,6 +12,7 @@
 import { seed, wave } from '@/lib/telemetry';
 import { energyGridBoard } from '@/lib/gov/energy-grid';
 import { energyOps } from '@/lib/gov/energy-systems';
+import { regionList } from '@/lib/nation/registry';
 
 export const ENERGY_EXTENDED_SAFEGUARDS = {
   publicSafetyFirst: true as const,
@@ -25,7 +26,7 @@ export const ENERGY_EXTENDED_SAFEGUARDS = {
   ] as const,
 };
 
-export const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 // ── A. Energy Emergency & Recovery Operations ───────────────────────
 export type RecoveryPhase = 'isolation' | 'damage-assessment' | 'crew-dispatch' | 'restoration' | 'energisation' | 'stabilised';

@@ -12,6 +12,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { laborOps } from '@/lib/gov/labor-systems';
+import { regionList } from '@/lib/nation/registry';
 
 export const WORKFORCE_SAFEGUARDS = {
   laborRightsContinuity: true as const,
@@ -28,7 +29,7 @@ export const WORKFORCE_SAFEGUARDS = {
 export type WorkforcePosture =
   | 'thriving' | 'stable' | 'tightening' | 'strained' | 'crisis-mobilisation';
 
-export const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 // ── 1. National workforce command ───────────────────────────────────
 export interface RegionalWorkforce {

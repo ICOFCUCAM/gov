@@ -11,8 +11,9 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 const SEASONS = ['Planting', 'Growing', 'Harvest', 'Dormant'] as const;
 export type Season = typeof SEASONS[number];
 export type Tone = 'ok' | 'warn' | 'alert';

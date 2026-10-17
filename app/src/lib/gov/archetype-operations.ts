@@ -13,8 +13,9 @@ import { profileFor } from '@/lib/archetype-profiles';
 import { subsystemsFor, subsystemOpPct } from '@/lib/institution/operational-catalog';
 import { ministryOpState } from '@/lib/gov/ministry-ops';
 import { serviceReadings } from '@/lib/gov/ministry-services';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 type Tone = 'ok' | 'warn' | 'alert';
 const toneHi = (v: number, hi = 80, mid = 60): Tone => (v >= hi ? 'ok' : v >= mid ? 'warn' : 'alert');
 const toneLo = (v: number, lo = 30, mid = 60): Tone => (v <= lo ? 'ok' : v <= mid ? 'warn' : 'alert');

@@ -10,6 +10,7 @@
 // the public digital services portal. Pure & deterministic.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
 
 export const COMMUNICATIONS_SAFEGUARDS = {
   endToEndIntegrityProtected: true as const,
@@ -24,7 +25,7 @@ export const COMMUNICATIONS_SAFEGUARDS = {
   ] as const,
 };
 
-export const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 // ── 1. National Connectivity Command ────────────────────────────────
 export type ConnectivityPosture = 'nominal' | 'engaged' | 'degraded' | 'critical' | 'sovereign-lockdown';

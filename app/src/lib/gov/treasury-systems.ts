@@ -6,8 +6,9 @@
 // deterministic; no React/DOM. Drives treasury cross-system propagation.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export interface FiscalCommand {
   liquidityDays: number;

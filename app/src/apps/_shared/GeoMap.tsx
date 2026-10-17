@@ -10,7 +10,9 @@ import * as React from 'react';
 import { geoMercator, geoPath } from 'd3-geo';
 import { loadCountry, provinceLabel, type Admin1Country } from '@/lib/geo/admin1';
 import type { HealthGeo } from '@/lib/gov/health-geo';
+import { nationIso3 } from '@/lib/nation/registry';
 
+// Fallback map country until a nation sets its ISO code in setup.
 export const SOVEREIGN_ISO = 'UGA';
 
 type Metric = 'pressure' | 'icuLoad' | 'outbreakHeat';
@@ -33,7 +35,7 @@ function Glyph({ kind, c, s }: { kind: 'flame' | 'tri' | 'shield' | 'check'; c: 
 }
 
 export function GeoMap({
-  geo, metric, title, height = 300, accent = '#37c7d4', iso3 = SOVEREIGN_ISO,
+  geo, metric, title, height = 300, accent = '#37c7d4', iso3,
 }: {
   geo: HealthGeo; metric: Metric; title: string; height?: number;
   accent?: string; iso3?: string;
@@ -44,12 +46,13 @@ export function GeoMap({
   const [W, setW] = React.useState(680);
   const H = height;
 
+  const country = iso3 ?? nationIso3() ?? SOVEREIGN_ISO;
   React.useEffect(() => {
     let live = true;
     setLoading(true);
-    loadCountry(iso3).then(d => { if (live) { setData(d); setLoading(false); } });
+    loadCountry(country).then(d => { if (live) { setData(d); setLoading(false); } });
     return () => { live = false; };
-  }, [iso3]);
+  }, [country]);
 
   React.useEffect(() => {
     if (!wrap.current || typeof ResizeObserver === 'undefined') return;

@@ -15,6 +15,7 @@ import { civicBoard } from '@/lib/gov/civic-legitimacy';
 import { generationalBoard, ERA_COUNT } from '@/lib/gov/generational-intelligence';
 import { civilizationalBoard } from '@/lib/gov/civilizational-identity';
 import { economyBoard } from '@/lib/gov/institutional-economy';
+import { regionList } from '@/lib/nation/registry';
 
 // Hard constitutional cognitive boundary — structural, not advisory.
 export const KNOWLEDGE_SAFEGUARDS = {
@@ -29,7 +30,7 @@ export const KNOWLEDGE_SAFEGUARDS = {
   ] as const,
 };
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export interface RegionKnowledge {
   region: string;

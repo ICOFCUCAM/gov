@@ -13,6 +13,7 @@ import { healthFinanceExecution } from '@/lib/gov/health-operations';
 import { CommandHeader, CommandPanel, Sparkline, Donut, TrendChart, RingGauge, sc, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import { wave, waveSeries } from '@/lib/telemetry';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
+import { formatMoney } from '@/lib/nation/registry';
 
 const ACC = ACCENT.finance!;
 const MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -52,26 +53,26 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
   const ws = (k: string, lo: number, hi: number) => waveSeries(`fin:${k}`, ts, 12, lo, hi);
 
   const kpis: { l: string; v: string; s: string; t: Tone; k: string }[] = [
-    { l: 'Total Revenue (YTD)', v: '$2.84B', s: '▲ 12.6% vs last year', t: 'ok', k: 'rev' },
-    { l: 'Total Expenditure (YTD)', v: '$2.31B', s: '▲ 8.4% vs last year', t: 'warn', k: 'exp' },
-    { l: 'Net Surplus (YTD)', v: '$532M', s: '▲ 18.7% vs last year', t: 'ok', k: 'sur' },
+    { l: 'Total Revenue (YTD)', v: formatMoney(2.84e9), s: '▲ 12.6% vs last year', t: 'ok', k: 'rev' },
+    { l: 'Total Expenditure (YTD)', v: formatMoney(2.31e9), s: '▲ 8.4% vs last year', t: 'warn', k: 'exp' },
+    { l: 'Net Surplus (YTD)', v: formatMoney(532e6), s: '▲ 18.7% vs last year', t: 'ok', k: 'sur' },
     { l: 'Claim Ratio', v: '72.4%', s: '▼ 5.2% vs last year', t: 'ok', k: 'clr' },
     { l: 'Loss Ratio', v: '64.8%', s: '▼ 4.1% vs last year', t: 'ok', k: 'lsr' },
     { l: 'Combined Ratio', v: '89.2%', s: '▼ 3.6% vs last year', t: 'warn', k: 'cmr' },
-    { l: 'Cash & Investments', v: '$1.42B', s: '▲ 9.3% vs last year', t: 'ok', k: 'csh' },
-    { l: 'Outstanding Payables', v: '$285M', s: '▼ 7.8% vs last year', t: 'ok', k: 'pay' },
+    { l: 'Cash & Investments', v: formatMoney(1.42e9), s: '▲ 9.3% vs last year', t: 'ok', k: 'csh' },
+    { l: 'Outstanding Payables', v: formatMoney(285e6), s: '▼ 7.8% vs last year', t: 'ok', k: 'pay' },
   ];
   const revenue = [
-    { label: 'Government Allocation', pct: 42.3, amt: '$1.20B', tone: 'info' as Tone },
-    { label: 'Insurance Premiums', pct: 28.7, amt: '$0.82B', tone: 'ok' as Tone },
-    { label: 'Patient Payments', pct: 15.6, amt: '$0.44B', tone: 'warn' as Tone },
-    { label: 'Grants & Donations', pct: 7.8, amt: '$0.22B', tone: 'alert' as Tone },
-    { label: 'Other Income', pct: 5.6, amt: '$0.16B', tone: 'info' as Tone },
+    { label: 'Government Allocation', pct: 42.3, amt: formatMoney(1.20e9), tone: 'info' as Tone },
+    { label: 'Insurance Premiums', pct: 28.7, amt: formatMoney(0.82e9), tone: 'ok' as Tone },
+    { label: 'Patient Payments', pct: 15.6, amt: formatMoney(0.44e9), tone: 'warn' as Tone },
+    { label: 'Grants & Donations', pct: 7.8, amt: formatMoney(0.22e9), tone: 'alert' as Tone },
+    { label: 'Other Income', pct: 5.6, amt: formatMoney(0.16e9), tone: 'info' as Tone },
   ];
   const budget = [
-    ['Personnel Cost', '$1.25B', '$1.02B', 81.6], ['Medical Supplies', '$0.68B', '$0.52B', 76.5],
-    ['Infrastructure', '$0.47B', '$0.36B', 76.6], ['Operations', '$0.33B', '$0.25B', 75.8],
-    ['IT & Technology', '$0.12B', '$0.08B', 66.7], ['Other Expenses', '$0.10B', '$0.08B', 80.0],
+    ['Personnel Cost', formatMoney(1.25e9), formatMoney(1.02e9), 81.6], ['Medical Supplies', formatMoney(0.68e9), formatMoney(0.52e9), 76.5],
+    ['Infrastructure', formatMoney(0.47e9), formatMoney(0.36e9), 76.6], ['Operations', formatMoney(0.33e9), formatMoney(0.25e9), 75.8],
+    ['IT & Technology', formatMoney(0.12e9), formatMoney(0.08e9), 66.7], ['Other Expenses', formatMoney(0.10e9), formatMoney(0.08e9), 80.0],
   ] as const;
   const portfolio = [
     { label: 'Health Insurance', pct: 60.4, n: '755K', tone: 'ok' as Tone },
@@ -81,23 +82,23 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
     { label: 'Others', pct: 2.5, n: '31K', tone: 'info' as Tone },
   ];
   const insurers = [
-    ['HealthSecure Insurance', '324K', '$212M', 25.9], ['MediLife Assurance', '287K', '$186M', 22.7],
-    ['CarePlus Insurance', '198K', '$129M', 15.7], ['Wellness Protect', '156K', '$101M', 12.3],
-    ['LifeGuard Assurance', '124K', '$81M', 9.9], ['Others', '167K', '$111M', 13.5],
+    ['HealthSecure Insurance', '324K', formatMoney(212e6), 25.9], ['MediLife Assurance', '287K', formatMoney(186e6), 22.7],
+    ['CarePlus Insurance', '198K', formatMoney(129e6), 15.7], ['Wellness Protect', '156K', formatMoney(101e6), 12.3],
+    ['LifeGuard Assurance', '124K', formatMoney(81e6), 9.9], ['Others', '167K', formatMoney(111e6), 13.5],
   ] as const;
   const providers = [['Hospitals', 62.3], ['Clinics', 18.7], ['Laboratories', 9.6], ['Pharmacies', 6.4], ['Others', 3.0]] as const;
   const risks = [
-    ['Claim Cost Inflation', 'High', '$320M', 'alert'], ['Regulatory Compliance', 'Medium', '$180M', 'warn'],
-    ['Fraud & Abuse', 'Medium', '$95M', 'warn'], ['Investment Risk', 'Low', '$45M', 'ok'],
+    ['Claim Cost Inflation', 'High', formatMoney(320e6), 'alert'], ['Regulatory Compliance', 'Medium', formatMoney(180e6), 'warn'],
+    ['Fraud & Abuse', 'Medium', formatMoney(95e6), 'warn'], ['Investment Risk', 'Low', formatMoney(45e6), 'ok'],
   ] as const;
   const aiInsights = [
     'Claim ratio improved 5.2% vs last year on better claims management.',
     `Pharmaceutical expenses trending 9.3% over budget — review recommended.`,
     'Premium collection rate above target with consistent improvement.',
-    `High-risk claims detected in ${fx.fraud.length || 124} cases · potential savings $2.8M.`,
+    `High-risk claims detected in ${fx.fraud.length || 124} cases · potential savings ${formatMoney(2.8e6)}.`,
     'Cash reserves healthy — support ~6.4 months of operations.',
   ];
-  const cf = [['Opening', '$620M', 18, 'info'], ['Inflow', '$3.12B', 92, 'ok'], ['Outflow', '$2.36B', 70, 'alert'], ['Net Flow', '$760M', 30, 'warn'], ['Closing', '$1.02B', 38, 'ok']] as const;
+  const cf = [['Opening', formatMoney(620e6), 18, 'info'], ['Inflow', formatMoney(3.12e9), 92, 'ok'], ['Outflow', formatMoney(2.36e9), 70, 'alert'], ['Net Flow', formatMoney(760e6), 30, 'warn'], ['Closing', formatMoney(1.02e9), 38, 'ok']] as const;
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#04100b', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
@@ -117,7 +118,7 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
             { name: 'Net Surplus', points: ws('sums', 20, 55), tone: 'info' },
           ]} />
         </CommandPanel>
-        <CommandPanel title="Revenue Breakdown" meta="$2.84B total" accent={ACC}>
+        <CommandPanel title="Revenue Breakdown" meta={`${formatMoney(2.84e9)} total`} accent={ACC}>
           <div className="flex items-center gap-2">
             <Donut total={2.84} label="$B" size={104} segments={revenue.map(r => ({ label: r.label, value: r.pct, tone: r.tone }))} />
             <div className="min-w-0 flex-1 space-y-0.5">
@@ -134,8 +135,8 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
         </CommandPanel>
         <CommandPanel title="Budget vs Actual (YTD)" meta="View Report" accent={ACC}>
           <div className="space-y-0.5 text-[8px]">
-            <Row l="Total Budget" a="$2.95B" />
-            <Row l="Actual Amount" a="$2.31B" />
+            <Row l="Total Budget" a={formatMoney(2.95e9)} />
+            <Row l="Actual Amount" a={formatMoney(2.31e9)} />
             <div className="flex items-center gap-2"><span className="min-w-0 flex-1 text-ink-soft">Budget Utilization</span><span className="font-mono text-ink-muted">78.3%</span></div>
             <MetaBar pct={78.3} tone="ok" />
           </div>
@@ -157,7 +158,7 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
       <div className="grid gap-2 xl:grid-cols-4">
         <CommandPanel title="Claims Overview" accent={ACC} live>
           <div className="grid grid-cols-2 gap-1">
-            {[['Total Claims', '248,532', 'ok'], ['Claims Paid', '$1.67B', 'ok'], ['Pending', `${fx.claims.find(c => c.stage === 'Adjudication')?.count.toLocaleString() ?? '18,743'}`, 'warn'], ['Rejection', '3.2%', 'ok']].map(([l, v, t]) => (
+            {[['Total Claims', '248,532', 'ok'], ['Claims Paid', formatMoney(1.67e9), 'ok'], ['Pending', `${fx.claims.find(c => c.stage === 'Adjudication')?.count.toLocaleString() ?? '18,743'}`, 'warn'], ['Rejection', '3.2%', 'ok']].map(([l, v, t]) => (
               <div key={l} className="rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(84,208,143,0.16)', background: 'rgba(0,0,0,0.22)' }}>
                 <div className="text-[6.5px] uppercase text-ink-muted">{l}</div>
                 <div className="font-mono text-[12px] font-bold tabular-nums" style={{ color: sc(t as Tone) }}>{v}</div>
@@ -177,7 +178,7 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
         </CommandPanel>
         <CommandPanel title="Premium Collection (YTD)" meta="View Report" accent={ACC} live>
           <div className="flex gap-2">
-            <div><div className="text-[6.5px] uppercase text-ink-muted">Total Premiums</div><div className="font-mono text-[15px] font-bold text-ink">$820M</div><div className="text-[7px]" style={{ color: sc('ok') }}>▲ 13.4%</div></div>
+            <div><div className="text-[6.5px] uppercase text-ink-muted">Total Premiums</div><div className="font-mono text-[15px] font-bold text-ink">{formatMoney(820e6)}</div><div className="text-[7px]" style={{ color: sc('ok') }}>▲ 13.4%</div></div>
             <div><div className="text-[6.5px] uppercase text-ink-muted">Collection Rate</div><div className="font-mono text-[15px] font-bold" style={{ color: sc('ok') }}>95.6%</div><div className="text-[7px]" style={{ color: sc('ok') }}>▲ 2.8%</div></div>
           </div>
           <div className="mt-1.5 flex h-16 items-end gap-0.5">
@@ -200,8 +201,8 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
       <div className="grid gap-2 xl:grid-cols-4">
         <CommandPanel title="Cash Flow Summary (YTD)" meta="View Report" accent={ACC}>
           <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[8px]">
-            <Row l="Cash Inflow" a="$3.12B" /><Row l="Cash Outflow" a="$2.36B" />
-            <Row l="Net Cash Flow" a="$760M" /><Row l="Bank Balance" a="$1.02B" />
+            <Row l="Cash Inflow" a={formatMoney(3.12e9)} /><Row l="Cash Outflow" a={formatMoney(2.36e9)} />
+            <Row l="Net Cash Flow" a={formatMoney(760e6)} /><Row l="Bank Balance" a={formatMoney(1.02e9)} />
           </div>
           <div className="mt-1.5 flex h-20 items-end gap-1">
             {cf.map(([l, v, h, t]) => (
@@ -215,8 +216,8 @@ export function HealthFinanceSystem({ id, now, role, withheld }: {
         </CommandPanel>
         <CommandPanel title="Provider Payments (YTD)" meta="View All" accent={ACC}>
           <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 text-[8px]">
-            <Row l="Total Payments" a="$1.45B" /><Row l="Paid Providers" a="8,742" />
-            <Row l="Avg Payment Days" a="28.6" /><Row l="Pending" a="$112M" />
+            <Row l="Total Payments" a={formatMoney(1.45e9)} /><Row l="Paid Providers" a="8,742" />
+            <Row l="Avg Payment Days" a="28.6" /><Row l="Pending" a={formatMoney(112e6)} />
           </div>
           <div className="mt-1.5 space-y-1 border-t pt-1" style={{ borderColor: 'rgba(84,208,143,0.16)' }}>
             <div className="text-[7px] font-bold uppercase tracking-wider text-ink-soft">By Provider Type</div>

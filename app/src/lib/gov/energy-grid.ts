@@ -10,8 +10,9 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { energyOps } from '@/lib/gov/energy-systems';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 export type GridPosture = 'stable' | 'engaged' | 'strained' | 'critical' | 'blackout-watch';
 export type Tone = 'ok' | 'warn' | 'alert';
 

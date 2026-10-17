@@ -11,6 +11,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { workforceContinuityBoard } from '@/lib/gov/workforce-continuity';
+import { regionList } from '@/lib/nation/registry';
 
 export const LABOUR_EXTENDED_SAFEGUARDS = {
   rightToCounselInDisputes: true as const,
@@ -24,7 +25,7 @@ export const LABOUR_EXTENDED_SAFEGUARDS = {
   ] as const,
 };
 
-export const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 // ── A. Labour Emergency & Recovery Operations ───────────────────────
 export type RecoveryPhase = 'assessment' | 'support-activation' | 'redeployment' | 'reskilling' | 'reabsorption' | 'closed';

@@ -13,6 +13,7 @@ import { MinistryChainSection, ActorChainStrip } from '@/apps/_shared/Institutio
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { formatMoney } from '@/lib/nation/registry';
 
 const ACC = '#c9a24a';
 const WF: Record<string, WorkKind> = {
@@ -46,7 +47,7 @@ export function LegislatureApp({ domain, now, role, withheld }: {
     const bp = budgetApprovalPipeline(ts); pTone = bp.blocked ? 'alert' : 'warn';
     const stages = ['tabled', 'committee', 'debate', 'appropriation vote', 'assented'];
     kpis = [
-      { l: 'Appropriation', v: `$${bp.appropriationBn}B`, t: 'ok' }, { l: 'Stage', v: bp.stage, t: bp.blocked ? 'alert' : 'warn' },
+      { l: 'Appropriation', v: `${formatMoney((bp.appropriationBn) * 1e9)}`, t: 'ok' }, { l: 'Stage', v: bp.stage, t: bp.blocked ? 'alert' : 'warn' },
       { l: 'Scrutiny Days Left', v: `${bp.scrutinyDaysLeft}`, t: bp.scrutinyDaysLeft <= 5 ? 'alert' : 'warn' },
       { l: 'Amendments Tabled', v: `${bp.amendmentsTabled}`, t: 'warn' },
       { l: 'Blocked', v: bp.blocked ? 'YES' : 'NO', t: bp.blocked ? 'alert' : 'ok' },

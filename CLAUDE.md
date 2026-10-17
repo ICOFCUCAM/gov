@@ -60,6 +60,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   nation and the plan to move it all into a Nation Pack. Do not add new
   hardcoded places, people, currencies, regions or office titles; read them
   from the nation profile. `npm run scan:nation` (in `app/`) re-counts them.
+- Engines get the nation's regions, map country and currency from
+  `app/src/lib/nation/registry.ts`: declare region lists as
+  `regionList([...reference])` and format money with `formatMoney()`.
 
 ## Checks
 

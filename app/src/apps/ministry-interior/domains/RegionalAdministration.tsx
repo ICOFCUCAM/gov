@@ -10,6 +10,7 @@
 import * as React from 'react';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { wave, seed } from '@/lib/telemetry';
+import { formatMoney } from '@/lib/nation/registry';
 
 const BG = '#f5f6fb';
 const CARD = '#ffffff';
@@ -129,7 +130,7 @@ export function RegionalAdministration({ id, now }: { id: string; now: number })
     <Kpi key="tr" label="Total Regions" value="24" sub="100% Operational" icon="◈" c={BLUE} />,
     <Kpi key="tp" label="Total Population" value="84.27M" delta="1.35%" icon="☷" c={TEAL} />,
     <Kpi key="ap" label="Active Programs" value={programs.toLocaleString()} delta="6.2%" icon="▦" c={PURPLE} />,
-    <Kpi key="ba" label="Budget Allocated" value="$12.48B" delta="6.2%" icon="◉" c={AMBER} />,
+    <Kpi key="ba" label="Budget Allocated" value={formatMoney(12.48e9)} delta="6.2%" icon="◉" c={AMBER} />,
     <Kpi key="pp" label="Projects in Progress" value="2,341" delta="8.7%" icon="▤" c={GREEN} />,
     <Kpi key="ai" label="Alerts & Issues" value={String(alerts)} delta="12.5%" dn icon="⚠" c={RED} />,
   ];
@@ -152,9 +153,9 @@ export function RegionalAdministration({ id, now }: { id: string; now: number })
   const dotColor = (v: number) => v >= 85 ? GREEN : v >= 78 ? TEAL : v >= 72 ? BLUE : v >= 65 ? AMBER : RED;
 
   const budget: [string, string, number, string][] = [
-    ['North Province', '$2.48B', 19.9, GREEN], ['Central Province', '$2.12B', 17.0, BLUE],
-    ['East Province', '$1.98B', 15.9, PURPLE], ['West Province', '$1.76B', 14.1, '#b07cf0'],
-    ['South Province', '$1.42B', 11.4, ORANGE], ['Other Regions', '$2.72B', 21.7, '#9aa3b5'],
+    ['North Province', formatMoney(2.48e9), 19.9, GREEN], ['Central Province', formatMoney(2.12e9), 17.0, BLUE],
+    ['East Province', formatMoney(1.98e9), 15.9, PURPLE], ['West Province', formatMoney(1.76e9), 14.1, '#b07cf0'],
+    ['South Province', formatMoney(1.42e9), 11.4, ORANGE], ['Other Regions', formatMoney(2.72e9), 21.7, '#9aa3b5'],
   ];
   const projects: [string, string, number, string][] = [
     ['North Highway Expansion', 'North Province', 78, 'On Track'],
@@ -271,7 +272,7 @@ export function RegionalAdministration({ id, now }: { id: string; now: number })
             ))}
           </div>
         </Card>
-        <Card title="Budget Allocation by Region" sub="FY 2025" action="Total: $12.48B">
+        <Card title="Budget Allocation by Region" sub="FY 2025" action={`Total: ${formatMoney(12.48e9)}`}>
           <div className="space-y-2.5">
             {budget.map(([nm, amt, pct, c]) => (
               <div key={nm} className="text-[9.5px]">

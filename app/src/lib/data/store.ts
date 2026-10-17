@@ -94,6 +94,7 @@ import { profileFor } from '@/lib/archetype-profiles';
 import { scoreInstitution } from '@/lib/institution/readiness';
 import { blueprintFor } from '@/lib/institution/blueprint';
 import { federationSeed } from '@/lib/institution/federation';
+import { regionList, applyNation } from '@/lib/nation/registry';
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -289,6 +290,8 @@ function appendAudit(
 }
 
 const db = (g.__civicos ??= seed());
+// Engines read the installed nation (regions, map, currency) from the registry.
+applyNation(db.sovereign);
 
 // ── Session ───────────────────────────────────────────────────────────
 export function getSession(): Session {
@@ -1300,7 +1303,7 @@ export function ministryOperations(id: string): MinistryOperations | { error: st
 }
 
 // ── Deep operational console (regions, queues, analytics) ─────────────
-const REGIONS = ['Central', 'Coast', 'Eastern', 'Nairobi', 'Rift Valley', 'Western'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export function regionsFor(id: string): MinistryRegions | { error: string } {
   const m = getMinistry(id);
@@ -1371,7 +1374,7 @@ function seedQueue(id: string): QueueItem[] {
           id: `Q-${p.id}`,
           ref: p.id,
           subject: p.title,
-          region: 'Nairobi',
+          region: REGIONS[0]!,
           ageHours: Math.max(1, Math.round((Date.now() - new Date(p.submittedAt ?? Date.now()).getTime()) / 3_600_000)),
           priority: 'elevated',
           state: 'open',
@@ -1540,7 +1543,14 @@ export function setSovereign(
   if (patch.stateForm && !STATE_FORMS.includes(patch.stateForm)) {
     return { error: 'Unknown state form' };
   }
+  if (patch.iso3 !== undefined && patch.iso3 !== '' && !/^[A-Z]{3}$/.test(patch.iso3)) {
+    return { error: 'Country must be an ISO 3166-1 alpha-3 code' };
+  }
+  if (patch.regions !== undefined && (!Array.isArray(patch.regions) || patch.regions.some(r => typeof r !== 'string'))) {
+    return { error: 'Regions must be a list of names' };
+  }
   db.sovereign = { ...db.sovereign, ...patch };
+  applyNation(db.sovereign);
   appendAudit(by, 'sovereign.configure', 'Sovereign:profile', 'ok',
     patch.stateForm ?? patch.stateName);
   return db.sovereign;
@@ -1644,7 +1654,8 @@ export function applySovereignPreset(
 ): SovereignProfile | { error: string } {
   const preset = SOVEREIGN_PRESETS.find(p => p.key === key);
   if (!preset) return { error: 'Unknown preset' };
-  db.sovereign = { ...preset.profile };
+  db.sovereign = { ...preset.profile, iso3: db.sovereign.iso3, regions: db.sovereign.regions };
+  applyNation(db.sovereign);
   appendAudit(by, 'sovereign.preset', `Sovereign:${key}`, 'ok', preset.label);
   return db.sovereign;
 }

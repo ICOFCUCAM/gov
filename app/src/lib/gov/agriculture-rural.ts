@@ -11,6 +11,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
+import { regionList } from '@/lib/nation/registry';
 
 export const AGRICULTURE_RURAL_SAFEGUARDS = {
   smallholderProtection: true as const,
@@ -24,7 +25,7 @@ export const AGRICULTURE_RURAL_SAFEGUARDS = {
   ] as const,
 };
 
-export const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 const SEASONS: Season[] = ['spring', 'summer', 'autumn', 'winter'];
 
 // ── A. Rural Governance & Community Stability ───────────────────────

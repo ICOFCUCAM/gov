@@ -12,6 +12,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { emergencyOps } from '@/lib/gov/agency-systems';
+import { regionList } from '@/lib/nation/registry';
 
 export const EMERGENCY_SAFEGUARDS = {
   humanitarianContinuity: true as const,
@@ -28,7 +29,7 @@ export const EMERGENCY_SAFEGUARDS = {
 export type EmergencyPosture =
   | 'standby' | 'watch' | 'engaged' | 'crisis' | 'national-mobilisation';
 
-export const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 // ── 1. National emergency command ───────────────────────────────────
 export interface RegionalTheatre {

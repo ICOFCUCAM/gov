@@ -12,6 +12,7 @@
 // every ministry surface so the hierarchy is uniform, not dashboard-local.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
 
 export type ChainTier = 'ACTOR' | 'FACILITY' | 'MINISTRY' | 'NATIONAL';
 
@@ -42,7 +43,7 @@ export function chainDef(ministryKey: string): MinistryChainDef {
     ?? { ministry: 'Ministry', facilityKind: 'Facility', facilityPrefix: 'FAC', actorRole: 'Officer', recordNoun: 'record' };
 }
 
-const REGION_NAMES = ['Capital District', 'Northern Province', 'Highland Region', 'Eastern Region', 'Western Region', 'Coastal Region'];
+const REGION_NAMES = regionList(['Capital District', 'Northern Province', 'Highland Region', 'Eastern Region', 'Western Region', 'Coastal Region']);
 const FAC_QUAL = ['Central', 'General', 'Regional', 'District', 'National', 'Metro', 'Provincial', 'Eastern', 'Northern', 'Coastal'];
 
 export interface Facility {

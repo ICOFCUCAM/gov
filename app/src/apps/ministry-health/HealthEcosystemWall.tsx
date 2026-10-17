@@ -16,6 +16,7 @@ import {
 } from '@/lib/gov/health-operations';
 import { hospitalOps } from '@/lib/gov/health-systems';
 import { waveSeries, seed } from '@/lib/telemetry';
+import { formatMoney } from '@/lib/nation/registry';
 
 const ID = 'health';
 const ACC = {
@@ -645,7 +646,7 @@ export function HealthEcosystemWall() {
           <div className="grid shrink-0 grid-cols-4 gap-1">
             {[
               { l: 'TREASURY DRAWDOWN', v: `${fi.treasuryDrawdownPct}%`, s: 'of ceiling', t: (fi.treasuryDrawdownPct >= 85 ? 'alert' : 'ok') as Tone, k: 'trz' },
-              { l: 'FRAUD EXPOSURE', v: `$${fi.fraudExposureM}M`, s: 'flagged', t: (fi.fraudExposureM >= 20 ? 'alert' : 'warn') as Tone, k: 'frd' },
+              { l: 'FRAUD EXPOSURE', v: `${formatMoney((fi.fraudExposureM) * 1e6)}`, s: 'flagged', t: (fi.fraudExposureM >= 20 ? 'alert' : 'warn') as Tone, k: 'frd' },
               { l: 'FRAUD CASES', v: `${fi.fraud.length}`, s: 'open', t: (fi.fraud.length ? 'warn' : 'ok') as Tone, k: 'frc' },
               { l: 'SCHEMES', v: `${fi.schemes.length}`, s: 'active', t: 'ok' as Tone, k: 'sch' },
             ].map(m => (

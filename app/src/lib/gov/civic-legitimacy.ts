@@ -13,6 +13,7 @@ import { economyBoard } from '@/lib/gov/institutional-economy';
 import { controlBoard } from '@/lib/gov/sovereign-observability';
 import { proceduralBoard } from '@/lib/gov/procedural-execution';
 import { generationalBoard, ERA_COUNT } from '@/lib/gov/generational-intelligence';
+import { regionList } from '@/lib/nation/registry';
 
 // Hard ethical boundary — the runtime may observe institutional civic
 // stability ONLY. These prohibitions are structural, not advisory.
@@ -64,7 +65,7 @@ export interface CivicBoard {
   memory: { trustCollapseEras: number[]; recoveryCycles: number; oversightFailures: number; restorationEffectivenessPct: number };
 }
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export function civicBoard(now: number): CivicBoard {
   const epoch = Math.max(0, Math.floor(now / 4000));

@@ -6,8 +6,9 @@
 // national health command picture. Pure & deterministic; no React/DOM.
 
 import { seed, wave, waveSeries } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 type Tone = 'ok' | 'warn' | 'alert';
 
 // ── Pharmaceutical supply chain ────────────────────────────────────────

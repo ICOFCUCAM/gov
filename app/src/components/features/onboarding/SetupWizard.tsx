@@ -5,6 +5,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { api } from '@/lib/api/client';
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import { locales } from '@/lib/i18n/config';
+import { COUNTRIES, loadCountry } from '@/lib/geo/admin1';
+import { applyNation } from '@/lib/nation/registry';
 import { ACCENT } from '@/components/features/SituationRoom';
 import { OnboardingFrame, Eyebrow, Field, inputCls, SealTile } from './Chrome';
 import type { SovereignProfile, SovereignPreset, StateForm, Ministry, Archetype, ArchetypeKey, PlatformSetup } from '@/lib/api/types';
@@ -56,6 +58,23 @@ export function SetupWizard() {
   const [log, setLog] = React.useState<LogLine[] | null>(null);
   const [done, setDone] = React.useState(false);
   const [running, setRunning] = React.useState(false);
+  const [provinces, setProvinces] = React.useState<string[]>([]);
+  const [regionDraft, setRegionDraft] = React.useState('');
+  const countries = React.useMemo(() => [...COUNTRIES].sort((a, b) => a.name.localeCompare(b.name)), []);
+
+  // The country's real admin-1 units (from the bundled geography) seed the region list.
+  const iso3 = profile?.iso3;
+  React.useEffect(() => {
+    if (!iso3) { setProvinces([]); return; }
+    let live = true;
+    loadCountry(iso3).then(c => {
+      if (!live || !c) return;
+      const names = c.provinces.map(p => p.name).sort((a, b) => a.localeCompare(b));
+      setProvinces(names);
+      setProfile(p => (p && !(p.regions?.length) && names.length <= 16 ? { ...p, regions: names } : p));
+    });
+    return () => { live = false; };
+  }, [iso3]);
 
   React.useEffect(() => {
     Promise.all([api.sovereign.get(), api.sovereign.presets(), api.org.ministries(), api.org.archetypes(), api.setup.get()])
@@ -98,7 +117,7 @@ export function SetupWizard() {
 
   function applyPreset(p: SovereignPreset) {
     setPreset(p.key);
-    setProfile(cur => ({ ...p.profile, seal: cur?.seal }));
+    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant }));
   }
 
   function addInstitution() {
@@ -122,7 +141,7 @@ export function SetupWizard() {
       try { await fn(); settle(i, 'ok'); return true; } catch (e) { settle(i, 'fail', e instanceof Error ? e.message : 'failed'); return false; }
     }
 
-    const ok = await run(`Saving national profile · ${profile.stateName}`, () => api.sovereign.update({ ...profile, aiAssistant: !!profile.aiAssistant }));
+    const ok = await run(`Saving national profile · ${profile.stateName}`, () => api.sovereign.update({ ...profile, aiAssistant: !!profile.aiAssistant }).then(r => { applyNation(r.sovereign); return r; }));
     if (!ok) return false;
     for (const m of ministries) {
       const want = !!active[m.id], is = m.status === 'active';
@@ -215,6 +234,46 @@ export function SetupWizard() {
                 <Field label="Sub-national unit" hint="What you call your regions">
                   <input className={inputCls} value={profile.regionNoun} onChange={e => set('regionNoun', e.currentTarget.value)} placeholder="region, province, county …" />
                 </Field>
+              </div>
+
+              <div className="mt-8 grid gap-5 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
+                <Field label="Country" hint="Sets the national map and its real provinces.">
+                  <select className={inputCls} value={profile.iso3 ?? ''} onChange={e => { const v = e.currentTarget.value; setProfile(p => p && { ...p, iso3: v || undefined, regions: [] }); }}>
+                    <option value="">Choose a country…</option>
+                    {countries.map(c => <option key={c.iso3} value={c.iso3}>{c.name}</option>)}
+                  </select>
+                </Field>
+                <div>
+                  <span className="block font-mono text-[10px] uppercase tracking-[0.2em] text-[#65748b]">Operational regions</span>
+                  <div className="mt-2 flex min-h-[44px] flex-wrap gap-1.5 rounded-[6px] border border-[#1f2b3e] bg-[#070c15] p-2">
+                    {(profile.regions ?? []).map(rg => (
+                      <span key={rg} className="flex items-center gap-1.5 rounded-full border border-[#2a3a52] px-2.5 py-1 text-[12.5px]">
+                        {rg}
+                        <button type="button" aria-label={`Remove ${rg}`} className="text-[#7d8ba0] hover:text-white"
+                          onClick={() => set('regions', (profile.regions ?? []).filter(x => x !== rg))}>×</button>
+                      </span>
+                    ))}
+                    <input list="setup-provinces" value={regionDraft} placeholder={(profile.regions ?? []).length ? 'Add region…' : 'Add a region…'}
+                      onChange={e => { const v = e.currentTarget.value; setRegionDraft(v); }}
+                      onKeyDown={e => {
+                        if (e.key !== 'Enter') return;
+                        e.preventDefault();
+                        const v = regionDraft.trim();
+                        if (v && !(profile.regions ?? []).includes(v)) set('regions', [...(profile.regions ?? []), v]);
+                        setRegionDraft('');
+                      }}
+                      className="min-w-[140px] flex-1 bg-transparent px-1 text-[13px] text-[#e2e9f3] placeholder:text-[#4a576b] focus:outline-none" />
+                    <datalist id="setup-provinces">{provinces.map(n => <option key={n} value={n} />)}</datalist>
+                  </div>
+                  <span className="mt-1.5 block text-[12px] text-[#56647a]">
+                    {provinces.length > 16
+                      ? `${provinces.length} first-level units on the map. Add the regions your government reports by, or `
+                      : 'Dashboards and engines report by these regions. Press Enter to add.'}
+                    {provinces.length > 16 ? (
+                      <button type="button" className="underline underline-offset-2 hover:text-white" onClick={() => set('regions', provinces)}>use all {provinces.length}</button>
+                    ) : null}
+                  </span>
+                </div>
               </div>
 
               <div className="mt-8">
@@ -369,6 +428,8 @@ export function SetupWizard() {
                     ['State', profile.stateName], ['Form', STATE_FORMS.find(f => f.k === profile.stateForm)?.l ?? profile.stateForm],
                     ['Executive', profile.executiveTitle], ['Legislature', profile.legislatureName],
                     ['Currency', profile.currency], ['Regions', profile.regionNoun],
+                    ['Country', countries.find(c => c.iso3 === profile.iso3)?.name ?? '—'],
+                    ['Regions', profile.regions?.length ? `${profile.regions.length} · ${profile.regions.slice(0, 3).join(', ')}${profile.regions.length > 3 ? '…' : ''}` : 'Reference set'],
                     ['AI assistant', profile.aiAssistant ? 'On' : 'Off'],
                   ]} />
                   <Summary title="Identity" onEdit={() => setStep(1)} rows={[

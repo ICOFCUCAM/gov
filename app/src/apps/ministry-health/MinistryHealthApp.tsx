@@ -39,6 +39,7 @@ import { HealthShell } from '@/apps/ministry-health/shell/HealthShell';
 import { HEALTH_DOMAINS, type SurfaceId as ShellSurfaceId } from '@/apps/ministry-health/core/domains';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { formatMoney } from '@/lib/nation/registry';
 
 // Legacy domains keep their existing renderers; new reference-tier
 // surfaces dispatch through HealthShell.
@@ -322,7 +323,7 @@ export function MinistryHealthApp({
         <Stat l="Claims SLA met" v={`${hf.claimsSlaMetPct}%`} t={hf.claimsSlaMetPct >= 80 ? 'ok' : 'warn'} />
         <Stat l="Budget execution" v={`${hf.budgetExecutionPct}%`} t={hf.budgetExecutionPct >= 80 ? 'ok' : 'warn'} />
         <Stat l="Fraud flags" v={`${hf.fraudFlags}`} t={hf.fraudFlags ? 'alert' : 'ok'} />
-        <Stat l="Reimbursement backlog" v={`$${hf.reimbursementBacklogBn}B`} t={hf.reimbursementBacklogBn > 8 ? 'alert' : 'warn'} />
+        <Stat l="Reimbursement backlog" v={`${formatMoney((hf.reimbursementBacklogBn) * 1e9)}`} t={hf.reimbursementBacklogBn > 8 ? 'alert' : 'warn'} />
       </div>
     );
   } else { // regulatory

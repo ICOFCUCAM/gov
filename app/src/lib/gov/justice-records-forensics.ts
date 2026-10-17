@@ -11,6 +11,7 @@
 // Constitutional, procedural, archival.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
 
 export const JUSTICE_RECORDS_SAFEGUARDS = {
   archivalIntegrity: true as const,
@@ -139,7 +140,7 @@ export interface JusticeRecordsForensicsBoard {
   prohibited: readonly string[];
 }
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 const ARCHIVE_DEFS: { vault: string; category: ArchiveVault['category']; custodian: string }[] = [
   { vault: 'Capital Constitutional Archive', category: 'constitutional', custodian: 'Office of the Chief Archivist' },

@@ -10,6 +10,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { nationalRecords } from '@/lib/gov/records-store';
+import { regionList } from '@/lib/nation/registry';
 
 export type Agency =
   | 'POLICE' | 'IMMIGRATION' | 'CIVIL_REGISTRY' | 'MUNICIPAL' | 'LICENSING'
@@ -38,7 +39,7 @@ const CATEGORY: Record<Agency, string> = {
   CONTRACTS: 'Procurement contract', PAYMENTS: 'Payment approval',
 };
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export type TxnStage = 'captured' | 'validated' | 'ministry-commit' | 'national-sync' | 'archived' | 'rejected';
 export type Escalation = 'nominal' | 'watch' | 'breach';

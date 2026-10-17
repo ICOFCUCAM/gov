@@ -9,6 +9,7 @@
 
 import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { formatMoney } from '@/lib/nation/registry';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';
@@ -152,9 +153,9 @@ export function StrategicDashboard() {
   ];
   const months = ['Dec 2024', 'Jan 2025', 'Feb 2025', 'Mar 2025', 'Apr 2025', 'May 2025'];
   const resAlloc = [
-    { label: 'Infrastructure', v: 43.1, n: '$18.4B', c: BLUE }, { label: 'Education', v: 20.4, n: '$8.7B', c: PURPLE },
-    { label: 'Healthcare', v: 16.2, n: '$6.9B', c: CYAN }, { label: 'Social Services', v: 9.8, n: '$4.2B', c: GREEN },
-    { label: 'Others', v: 10.5, n: '$4.5B', c: AMBER },
+    { label: 'Infrastructure', v: 43.1, n: formatMoney(18.4e9), c: BLUE }, { label: 'Education', v: 20.4, n: formatMoney(8.7e9), c: PURPLE },
+    { label: 'Healthcare', v: 16.2, n: formatMoney(6.9e9), c: CYAN }, { label: 'Social Services', v: 9.8, n: formatMoney(4.2e9), c: GREEN },
+    { label: 'Others', v: 10.5, n: formatMoney(4.5e9), c: AMBER },
   ];
   const scenario: [string, string, string, string][] = [
     ['GDP Growth', '-1.2%', '-2.8%', '-4.6%'], ['Employment Rate', '-0.8%', '-1.9%', '-3.1%'],
@@ -162,11 +163,11 @@ export function StrategicDashboard() {
     ['Overall Risk Level', 'Medium', 'High', 'Very High'],
   ];
   const initiatives: [string, string, number, string, string, string, string, string][] = [
-    ['National Digital Infrastructure', 'Ministry of IT', 78, 'On Track', '$6.2B', '$4.1B', '18.7%', '30 Sep 2025'],
-    ['Green Energy Transition', 'Ministry of Energy', 65, 'On Track', '$5.8B', '$3.8B', '15.3%', '31 Dec 2025'],
-    ['Smart Education Program', 'Ministry of Education', 58, 'At Risk', '$3.9B', '$2.1B', '12.1%', '30 Nov 2025'],
-    ['Universal Healthcare Access', 'Ministry of Health', 42, 'Behind', '$7.1B', '$2.9B', '8.6%', '31 Mar 2026'],
-    ['Rural Connectivity Initiative', 'Ministry of Rural Dev.', 35, 'Behind', '$2.8B', '$1.0B', '6.2%', '30 Jun 2026'],
+    ['National Digital Infrastructure', 'Ministry of IT', 78, 'On Track', formatMoney(6.2e9), formatMoney(4.1e9), '18.7%', '30 Sep 2025'],
+    ['Green Energy Transition', 'Ministry of Energy', 65, 'On Track', formatMoney(5.8e9), formatMoney(3.8e9), '15.3%', '31 Dec 2025'],
+    ['Smart Education Program', 'Ministry of Education', 58, 'At Risk', formatMoney(3.9e9), formatMoney(2.1e9), '12.1%', '30 Nov 2025'],
+    ['Universal Healthcare Access', 'Ministry of Health', 42, 'Behind', formatMoney(7.1e9), formatMoney(2.9e9), '8.6%', '31 Mar 2026'],
+    ['Rural Connectivity Initiative', 'Ministry of Rural Dev.', 35, 'Behind', formatMoney(2.8e9), formatMoney(1.0e9), '6.2%', '30 Jun 2026'],
   ];
   const stC: Record<string, string> = { 'On Track': GREEN, 'At Risk': AMBER, Behind: RED };
   const bench: [string, string, string, string, string][] = [
@@ -277,11 +278,11 @@ export function StrategicDashboard() {
           </div>
         </Card>
         <Card title="Resource Allocation" sub="FY 2025" action="View Report">
-          <Donut top="$42.7B" sub="Total Allocation" segs={resAlloc} />
+          <Donut top={formatMoney(42.7e9)} sub="Total Allocation" segs={resAlloc} />
           <div className="mt-3 border-t pt-2" style={{ borderColor: LINE2 }}>
             <div className="flex justify-between text-[9px]"><span style={{ color: MUT }}>Budget Utilization</span><span className="font-semibold" style={{ color: INK }}>68.3%</span></div>
             <div className="mt-1 h-1.5 overflow-hidden rounded-full" style={{ background: '#1a212c' }}><span className="block h-full rounded-full" style={{ width: '68.3%', background: GREEN }} /></div>
-            <div className="mt-1 text-right text-[8px]" style={{ color: MUT }}>$29.1B / $42.7B</div>
+            <div className="mt-1 text-right text-[8px]" style={{ color: MUT }}>{formatMoney(29.1e9)} / {formatMoney(42.7e9)}</div>
           </div>
         </Card>
         <Card title="Scenario Analysis" action="View All">

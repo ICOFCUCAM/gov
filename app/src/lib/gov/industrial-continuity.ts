@@ -11,8 +11,9 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { tradeOps } from '@/lib/gov/trade-systems';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export const INDUSTRIAL_CONTINUITY_SAFEGUARDS = {
   strategicReserveProtection: true as const,

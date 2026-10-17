@@ -14,6 +14,7 @@ import { seed, wave } from '@/lib/telemetry';
 import { climateResilienceBoard } from '@/lib/gov/climate-resilience';
 import { energyOps } from '@/lib/gov/energy-systems';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
+import { regionList } from '@/lib/nation/registry';
 
 export const ENVIRONMENTAL_GOVERNANCE_SAFEGUARDS = {
   nonExploitativeResourceUse: true as const,
@@ -139,7 +140,7 @@ export interface EnvironmentalGovernanceBoard {
 
 const WATER_BASINS = ['Aurine', 'Eastern Confluence', 'Coastal Delta', 'Northern Spring', 'Highland Tributary'];
 const LAND_CATEGORIES: LandProtection['category'][] = ['national-park', 'nature-reserve', 'wildlife-corridor', 'wetland', 'marine-protected'];
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 const PERMIT_RESOURCES: ExtractionPermit['resource'][] = ['minerals', 'aggregates', 'groundwater', 'forestry', 'oil-gas'];
 const OPERATORS = ['Northland Resources Co.', 'Eastern Mining Authority', 'Coastal Aggregates', 'Highland Forestry SOE', 'Capital Water Utility', 'Southern Petrochemical'];
 const PERMIT_CATEGORIES: PermitApplicationFlow['category'][] = ['environmental-impact', 'water-use', 'emissions', 'land-change', 'waste-disposal'];

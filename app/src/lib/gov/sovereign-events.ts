@@ -8,6 +8,7 @@
 // SSR-stable per operational epoch.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
 
 export type IncidentKind =
   | 'border-incident' | 'civil-unrest' | 'cyber-attack' | 'disaster'
@@ -48,7 +49,7 @@ export interface SovereignIncident {
   rationale: string;
 }
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 const KIND_ORIGIN: Record<IncidentKind, OriginAgency> = {
   'border-incident': 'IMMIGRATION', 'civil-unrest': 'POLICE',

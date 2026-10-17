@@ -11,8 +11,9 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { schoolNetwork, examOps, higherEducation, curriculumOps, teacherOps, studentServices } from '@/lib/gov/education-systems';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export type LiteracyPosture = 'consolidating' | 'sustained' | 'engaged' | 'strained' | 'fracture-watch';
 
