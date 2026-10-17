@@ -13,6 +13,16 @@ import { loadCountry, type Admin1Country } from '@/lib/geo/admin1';
 import type { HealthGeo } from '@/lib/gov/health-geo';
 import { nationIso3 } from '@/lib/nation/registry';
 
+// Territories far from the mainland are drawn in inset boxes (bottom right),
+// as on official national maps, so the mainland keeps its size. Each inner
+// list shares one box. The United States uses geoAlbersUsa's own insets.
+const INSETS: Record<string, string[][]> = {
+  ESP: [['ES-TF', 'ES-GC']],
+  PRT: [['PT-20'], ['PT-30']],
+  ECU: [['EC-W']],
+  FRA: [['FR-GP', 'FR-MQ', 'FR-GF'], ['FR-RE', 'FR-YT']],
+};
+
 // Fallback map country until a nation sets its ISO code in setup.
 export const SOVEREIGN_ISO = 'UGA';
 
@@ -68,29 +78,41 @@ export function GeoMap({
       ? data.provinces.map(p => ({ type: 'Feature' as const, properties: {}, geometry: p.geometry }))
       : data.outline ? [{ type: 'Feature' as const, properties: {}, geometry: data.outline }] : [];
     if (!feats.length) return null;
-    const fc = { type: 'FeatureCollection' as const, features: feats };
+    const fcOf = (ps: typeof data.provinces) => ({ type: 'FeatureCollection' as const, features: ps.map(p => ({ type: 'Feature' as const, properties: {}, geometry: p.geometry })) });
+    // Inset groups present in this country's data; the rest is the mainland.
+    const groups = (INSETS[data.iso3] ?? []).map(codes => data.provinces.filter(p => codes.includes(p.code))).filter(g => g.length);
+    const inInset = new Set(groups.flat());
+    const mainland = data.provinces.filter(p => !inInset.has(p));
+    const fc = groups.length ? fcOf(mainland) : { type: 'FeatureCollection' as const, features: feats };
     // The United States uses its standard national layout, with Alaska and Hawaii inset.
     const proj = (data.iso3 === 'USA' ? geoAlbersUsa() : geoMercator()).fitExtent([[10, 14], [W - 10, H - 14]], fc as never);
-    const path = geoPath(proj);
+    const bw = Math.round(Math.min(92, W * 0.17)), bh = Math.round(bw * 0.72), gap = 6;
+    const frames = groups.map((g, k) => {
+      const x = W - 10 - (groups.length - k) * (bw + gap) + gap, y = H - 18 - bh;
+      return { x, y, w: bw, h: bh, proj: geoMercator().fitExtent([[x + 6, y + 6], [x + bw - 6, y + bh - 6]], fcOf(g) as never) };
+    });
+    const projOf = (p: (typeof data.provinces)[number]) => frames[groups.findIndex(g => g.includes(p))]?.proj ?? proj;
+    const draw = (p: (typeof data.provinces)[number]) => geoPath(projOf(p))({ type: 'Feature', properties: {}, geometry: p.geometry } as never) || '';
     const landD = data.provinces.length
-      ? data.provinces.map(p => path({ type: 'Feature', properties: {}, geometry: p.geometry } as never) || '').join(' ')
-      : path({ type: 'Feature', properties: {}, geometry: data.outline } as never) || '';
-    const districts = data.provinces.map(p => path({ type: 'Feature', properties: {}, geometry: p.geometry } as never) || '');
+      ? data.provinces.map(draw).join(' ')
+      : geoPath(proj)({ type: 'Feature', properties: {}, geometry: data.outline } as never) || '';
+    const districts = data.provinces.map(draw);
     // Deliberate, well-spaced incident markers (dedupe close ones).
     const cand = data.provinces.map((p, i) => {
       const reg = geo.regions[i % geo.regions.length];
       const v = reg ? reg[metric] : 50;
-      const c = proj([p.lng, p.lat]);
+      const c = projOf(p)([p.lng, p.lat]);
       // Official name in the nation's own spelling (ISO 3166-2, see scripts/official-names.mjs).
-      return { x: c?.[0] ?? null, y: c?.[1] ?? null, v, name: p.name };
-    }).filter(x => x.x != null).sort((a, b) => b.v - a.v) as { x: number; y: number; v: number; name: string }[];
+      return { x: c?.[0] ?? null, y: c?.[1] ?? null, v, name: p.name, inset: inInset.has(p) };
+    }).filter(x => x.x != null).sort((a, b) => b.v - a.v) as { x: number; y: number; v: number; name: string; inset: boolean }[];
     const minGap = Math.max(26, Math.min(W, H) * 0.085);
-    const markers: { x: number; y: number; v: number; name: string; band: BandKey }[] = [];
+    const markers: { x: number; y: number; v: number; name: string; inset: boolean; band: BandKey }[] = [];
     for (const c of cand) {
       if (markers.length >= 22) break;
       if (markers.every(m => (m.x - c.x) ** 2 + (m.y - c.y) ** 2 >= minGap * minGap)) markers.push({ ...c, band: bandOf(c.v) });
     }
-    const routes = markers.slice(0, 9).map((m, i, a) => {
+    // Routes link mainland markers only, never out to an inset box.
+    const routes = markers.filter(m => !m.inset).slice(0, 9).map((m, i, a) => {
       const n = a[(i + 1) % a.length]!;
       const mx = (m.x + n.x) / 2, my = (m.y + n.y) / 2 - Math.abs(n.x - m.x) * 0.12;
       return `M ${m.x} ${m.y} Q ${mx} ${my} ${n.x} ${n.y}`;
@@ -100,7 +122,7 @@ export function GeoMap({
     const heat = metric === 'outbreakHeat'
       ? cand.slice(0, 42).map(c => ({ x: c.x, y: c.y, r: Math.max(W, H) * (0.05 + (c.v / 100) * 0.11) }))
       : [];
-    return { landD, districts, markers, routes, heat };
+    return { landD, districts, markers, routes, heat, frames: frames.map(({ x, y, w, h }) => ({ x, y, w, h })) };
   }, [data, W, H, geo, metric, iso3]);
 
   return (
@@ -130,6 +152,10 @@ export function GeoMap({
           </text>
         ) : (
           <g>
+            {/* inset frames for distant territories */}
+            {view.frames.map((f, i) => (
+              <rect key={`fr${i}`} x={f.x} y={f.y} width={f.w} height={f.h} rx="4" fill="rgba(6,16,28,0.55)" stroke="rgba(120,180,230,0.28)" strokeWidth="0.8" />
+            ))}
             {/* soft outer glow of the landmass */}
             <path d={view.landD} fill="#2f7fb8" fillOpacity="0.5" filter="url(#gmGlow)" />
             {/* one smooth silhouette */}
@@ -197,8 +223,8 @@ export function GeoMap({
           Boundaries © {data.attribution.source} · {data.attribution.via ?? 'geoBoundaries'}
         </div>
       ) : null}
-      {/* incident density scale */}
-      <div className="pointer-events-none absolute bottom-2.5 left-3 rounded-[6px] border px-2 py-1.5" style={{ borderColor: 'rgba(120,180,230,0.2)', background: 'rgba(6,16,28,0.66)' }}>
+      {/* incident density scale (bottom right on the US map, where Alaska's inset sits bottom left) */}
+      <div className={`pointer-events-none absolute bottom-2.5 ${data?.iso3 === 'USA' ? 'right-3' : 'left-3'} rounded-[6px] border px-2 py-1.5`} style={{ borderColor: 'rgba(120,180,230,0.2)', background: 'rgba(6,16,28,0.66)' }}>
         <div className="text-[7.5px] font-bold uppercase tracking-[0.16em]" style={{ color: 'rgba(190,215,235,0.85)' }}>Incident Density</div>
         <div className="mt-1 h-1.5 w-28 rounded-full" style={{ background: 'linear-gradient(90deg,#2dd4bf,#ffd23d,#ff4d5a)' }} />
         <div className="mt-0.5 flex justify-between text-[7px]" style={{ color: 'rgba(150,180,205,0.75)' }}><span>Low</span><span>High</span></div>

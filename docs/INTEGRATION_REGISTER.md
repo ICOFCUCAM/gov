@@ -55,7 +55,7 @@ Last reviewed: 17 Oct 2026.
 | 4.2 | **Map shapes still out of date (26)** | Natural Earth shapes kept: no better openly licensed data passed the checks. | Re-run `npm run build:boundaries -- --needed` (with `NODE_USE_ENV_PROXY=1` behind a proxy) as sources improve, or load a nation's own boundary file when it subscribes. | `app/scripts/build-boundaries.mjs` |
 | 4.3 | **Names not yet matched (~600 shapes)** | Shapes whose name or code cannot be matched with certainty keep their current label, e.g. Iran's "West Azerbaijan". | Add an explicit name table per country, or new shapes (4.2), then run `node scripts/official-names.mjs`. | `app/scripts/official-names.mjs` |
 | 4.4 | **Per-nation facility registry** | Not built. Engines use generic facility names. | Optional: real hospital and court names by role in the Nation Pack. | `docs/NATION_CONVERSION_MANIFEST.md` §7 step 3 |
-| 4.5 | **Map layout for spread-out countries** | Partial. The US uses an inset layout. Spain (Canary Islands) and France (overseas departments) are drawn at full extent, so the mainland is small. | Add inset layouts for those countries, as for the US. | `app/src/apps/_shared/GeoMap.tsx` |
+| 4.5 | **Map layout for spread-out countries** | Done. The US uses its inset layout; Spain (Canary Islands), Portugal (Azores, Madeira), Ecuador (Galápagos) and France (Caribbean and Guiana; Indian Ocean) draw distant territories in inset boxes. | Add other countries to `INSETS` as needed. | `app/src/apps/_shared/GeoMap.tsx` |
 
 Countries in 4.2: Kiribati, Tuvalu, Monaco, São Tomé and Príncipe, Kazakhstan, Norway, Somalia, Oman, Algeria, Cyprus, Netherlands, Turkmenistan, North Korea, Côte d'Ivoire, Indonesia, Equatorial Guinea, Kyrgyzstan, US Minor Outlying Islands, Serbia, Mali, China, Montenegro, Seychelles, Panama, Myanmar, Mauritania. Reasons are printed by the build:
 - some sources would drop territory (Norway: Svalbard);
@@ -89,6 +89,6 @@ Network hosts the boundary build needs: `data.humdata.org`, `www.geoboundaries.o
 | # | Issue | Where |
 |---|---|---|
 | 7.1 | The browser reports server/client text mismatches ("hydration") from live clocks. It predates this work and the pages still work. | `/command`, `/gov/branches`, `/health-ecosystem` |
-| 7.2 | No `favicon.ico`, so the browser logs a 404. | `app/public/` |
-| 7.3 | On the small map, the Alaska inset sits partly under the density legend. | `app/src/apps/_shared/GeoMap.tsx` |
+| 7.2 | Resolved: the site icon is `app/src/app/icon.svg`. | — |
+| 7.3 | Resolved: on the US map the density legend sits bottom right, clear of the Alaska inset. | — |
 | 7.4 | The inbox support thread shows a clock that can differ by a minute between server and browser, causing a hydration warning. It predates this work. | `app/src/apps/_shared/InstitutionChain.tsx` (`EncounterThread`) |
