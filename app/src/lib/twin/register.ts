@@ -150,6 +150,21 @@ export async function syncRegister(): Promise<{ entities: number }> {
   return { entities: Object.keys(d.entities).length };
 }
 
+/**
+ * A published site of the national facility register (lib/data/facilities.ts)
+ * as a twin entity, `facility:<id>`, inside its region, so sources can report
+ * observations for it (beds, enrolment, megawatts). Its identifiers go in the
+ * crosswalk. Entities are updated, never removed.
+ */
+export function upsertFacilityEntity(f: { id: string; name: string; location: { lat: number; lng: number }; regionCode?: string; ids: Record<string, string> }): void {
+  const d = db();
+  const id = `facility:${f.id}`;
+  d.entities[id] = { id, kind: 'facility', name: f.name, code: f.id, location: { lat: f.location.lat, lng: f.location.lng }, ...(f.regionCode ? { parent: `place:${f.regionCode}` } : {}) };
+  for (const [system, key] of Object.entries(f.ids)) {
+    if (!d.keys.some(k => k.system === system && k.key === key)) d.keys.push({ entityId: id, system, key });
+  }
+}
+
 export function listEntities(kind?: EntityKind): TwinEntity[] {
   return Object.values(db().entities).filter(e => !kind || e.kind === kind);
 }

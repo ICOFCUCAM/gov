@@ -1,6 +1,6 @@
 # National facility register on the map: expert review
 
-Status: reviewed (October 2026); to be built as map plan phase 4 (`docs/MAP_SYSTEM_PLAN.md`).
+Status: phase 4a built (October 2026): `lib/data/facilities.ts`, `/api/facilities`, `/gov/sites`. Map plan phase 4 (`docs/MAP_SYSTEM_PLAN.md`).
 Register: §4.4, §16.6, §16.9, §17.1.
 
 ## The owner's proposal
@@ -125,18 +125,41 @@ sample or open-data sites as the nation's; publish from a feed or open source
 without review; put military sites in the civilian register; fetch tiles or
 geocoders from outside services.
 
-## Questions for the owner
+## The owner's decisions (October 2026)
 
-1. Custodians: the ministry owns its records and the mapping agency certifies
-   location quality?
-2. Legal basis and default sensitivity per category: who decides?
+1. **Who certifies a site's location: each nation chooses.** The facility
+   policy offers three modes: the owning institution certifies its own sites;
+   the national mapping agency (an institution the nation names in the
+   registry) certifies every location; or both in turn, the institution first
+   and then the mapping agency. A moved site is certified again.
+2. **Who sets each category's sensitivity, and under which law: the nation
+   names the body per category.** Bodies offered: the owning institution, the
+   national mapping agency, the national security council, the ministry
+   responsible for internal security, the data-protection authority, the
+   cabinet, or another body the nation names. Anything other than public must
+   cite its legal basis (the act and section). Until the nation decides, the
+   platform's suggestion applies, decided by the owning institution.
+3. **How positions are captured: every way, the nation choosing which it
+   accepts.** An official's phone on site (works offline, sends when back
+   online), survey-grade receivers (GPX or CSV files), geotagged photos, a
+   pin on the national map, typed coordinates (decimal or degrees-minutes-
+   seconds), the national grid, the nation's own gazetteer, the land
+   registry (cadastre), digitising from imagery by the mapping agency,
+   existing survey data, connected ministry systems, open-data candidates,
+   and SMS reports from field officers without smartphones (off by default:
+   it needs an SMS gateway).
+
+Every policy change is proposed by one administrator with a reason and
+confirmed by a different one, never over a newer policy, and audited.
+
+## Questions still open
+
 3. Licences: OpenStreetMap and healthsites.io are ODbL (share-alike).
 4. Volume: national school and health loads need real tables (register 1.1).
 5. Lines and areas (power lines, roads, airport perimeters) come after points;
    vehicles are not facilities.
 6. Districts: point-in-polygon below region level only where district shapes
    exist (5 nations today).
-7. Field capture: a mobile, offline capture app, or existing survey data?
 8. Coastal and border cases: a confirmed override with a reason.
 9. Private and foreign operators: does the regulator own their records?
 10. Expectations: the interoperability map will look sparse at first; that is

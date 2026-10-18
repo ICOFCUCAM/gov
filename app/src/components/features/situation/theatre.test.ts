@@ -26,6 +26,7 @@ describe('Situation Room command theatre keeps everything the earlier theatre ha
     ['road, rail, grid and pipeline networks', theatre, /sampleNetworksOn/],
     ['infrastructure tiles with names for critical assets', theatre, /ASSET_LABEL\[a\.kind\]/],
     ['evacuation routes', theatre, /evacuation routes \(sample\)/],
+    ['registered sites from the national facility register, replacing that kind of sample', theatre, /KIND_CATEGORY[\s\S]*registered sites \(the nation's own/],
     ['population', theatre, /population \(sample\)/],
     ['tactical, heat, grid and incident controls', theatre, /Tactical framing[\s\S]*Heat intensity[\s\S]*Grid overlay[\s\S]*Incident diffusion/],
     ['layers menu with every layer', room, /\['institutions', 'Institutions and knock-on links'\], \['incidents', 'Incidents'\], \['infra', 'Infrastructure'\], \['corridors', 'Corridors'\], \['grid', 'Grid'\], \['environment', 'Environment'\]/],

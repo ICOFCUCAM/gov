@@ -59,7 +59,7 @@ export interface OverlayContext {
 
 export function NationMap({
   title, values = [], kind, source, valueLabel = 'Value', unit = '', points, pointsLabel = 'Located items',
-  asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap,
+  asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap, onPick, pin,
 }: {
   /** What the map shows, e.g. "Open incidents by county"; used for the accessible name and the table caption. */
   title: string;
@@ -111,6 +111,10 @@ export function NationMap({
   insetBottom?: number;
   /** Panels laid over the bottom of the map itself (the theatre's legend and operating strip). */
   inMap?: React.ReactNode;
+  /** Pick a position by clicking the map (e.g. placing a site); the map shows a crosshair. */
+  onPick?: (at: { lng: number; lat: number }) => void;
+  /** A position being placed, drawn as a pin. */
+  pin?: { lng: number; lat: number; label?: string } | null;
 }) {
   const iso3 = isoOverride ?? nationIso3();
   const regionsKey = (regionsOverride ?? nationRegions()).join('|');
@@ -256,7 +260,9 @@ export function NationMap({
           <svg width={model.width} height={model.height} viewBox={`0 0 ${model.width} ${model.height}`} className="block max-w-full"
             role="group" aria-roledescription="map" aria-label={summary} onKeyDown={onKey}
             onMouseMove={theatre ? e => { const r = e.currentTarget.getBoundingClientRect(); setCursor(model.invert(((e.clientX - r.left) / r.width) * model.width, ((e.clientY - r.top) / r.height) * model.height)); } : undefined}
-            onMouseLeave={theatre ? () => setCursor(null) : undefined}>
+            onMouseLeave={theatre ? () => setCursor(null) : undefined}
+            onClick={onPick ? e => { const r = e.currentTarget.getBoundingClientRect(); const q = model.invert(((e.clientX - r.left) / r.width) * model.width, ((e.clientY - r.top) / r.height) * model.height); if (q) onPick({ lng: Number(q[0].toFixed(6)), lat: Number(q[1].toFixed(6)) }); } : undefined}
+            style={onPick ? { cursor: 'crosshair' } : undefined}>
             <defs>
               <pattern id={hatch} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <line x1="0" y1="0" x2="0" y2="6" stroke="rgb(var(--c-bg))" strokeWidth="2" strokeOpacity="0.55" />
@@ -289,11 +295,28 @@ export function NationMap({
                 </g>
               );
             })}
-            {model.points.filter(p => p.tone === 'alert').map((p, i) => (
+            {model.points.filter(p => p.tone === 'alert' && !p.exact).map((p, i) => (
               <circle key={`ring${i}`} cx={p.x} cy={p.y} r={14} fill="none" stroke={STATUS.alert} strokeWidth={1.1} aria-hidden pointerEvents="none"
                 className="motion-safe:animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
             ))}
-            {model.points.map((p, i) => (
+            {model.points.filter(p => p.exact).map((p, i) => {
+              const mark = (
+                <g>
+                  <rect x={p.x - 7} y={p.y - 7} width={14} height={14} rx={3} fill="rgb(var(--c-surface-2))" stroke={STATUS[p.tone]} strokeWidth={1.2} />
+                  <text x={p.x} y={p.y + 3.5} textAnchor="middle" fontSize="9" fill={STATUS[p.tone]}>{p.glyph ?? '●'}</text>
+                  <title>{p.label}</title>
+                </g>
+              );
+              return p.href ? <a key={`x${i}`} href={p.href} aria-label={p.label}>{mark}</a> : <g key={`x${i}`} aria-label={p.label} role="img">{mark}</g>;
+            })}
+            {pin ? (() => { const q = model.project(pin.lng, pin.lat); return q ? (
+              <g aria-hidden pointerEvents="none">
+                <circle cx={q[0]} cy={q[1]} r={9} fill="none" stroke={STATUS.alert} strokeWidth={1.5} className="motion-safe:animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+                <path d={`M ${q[0]} ${q[1]} l -6 -14 a 7 7 0 1 1 12 0 Z`} fill={STATUS.alert} stroke="rgb(var(--c-bg))" strokeWidth={1} />
+                {pin.label ? <text x={q[0] + 9} y={q[1] - 10} fontSize="10" fontWeight="600" fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={2.5} paintOrder="stroke">{pin.label}</text> : null}
+              </g>
+            ) : null; })() : null}
+            {model.points.filter(p => !p.exact).map((p, i) => (
               <g key={`p${i}`} aria-hidden pointerEvents="none">
                 <Marker x={p.x} y={p.y} tone={p.tone} r={Math.min(13, 5 + Math.sqrt(p.count ?? 1) * 2)} />
                 {p.count && p.count > 1 ? <text x={p.x} y={p.y + 3} textAnchor="middle" fontSize="9" fontWeight="700" fill="rgb(var(--c-bg))">{p.count}</text> : null}

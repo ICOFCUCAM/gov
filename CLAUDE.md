@@ -239,6 +239,16 @@ What has been built is locked. Work only upgrades it toward the vision in
   it updates only the cases it sent). Example cases carry
   `source: 'sample'` and show the Sample marker; never remove them except at
   an official's request.
+- The national facility register (`lib/data/facilities.ts`, `/gov/sites`,
+  `docs/FACILITY_REGISTER_REVIEW.md`) is the only place physical sites enter:
+  recorded by the owning institution with longitude/latitude and how they
+  were captured, checked against the map (region and district derived, never
+  typed), published by a second official, versions kept. The nation's policy
+  (four-eyes, administrators) decides who certifies locations (institution,
+  mapping agency, or both), which body sets each category's sensitivity under
+  which law, and which capture methods count. Restricted sites reach viewers
+  without need only through `viewFacility()` (generalised); confidential
+  categories never enter. Never seed or invent sites; samples stay marked.
 - Engines must not read the nation's regions or offices into module-level
   constants; read them at use (`regionList()`, or a function). The root
   layout writes the nation's facts before scripts load, but data from setup

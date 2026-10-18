@@ -36,6 +36,9 @@
       "name": "documents"
     },
     {
+      "name": "facilities"
+    },
+    {
       "name": "federation"
     },
     {
@@ -1862,6 +1865,291 @@
         "x-source": "src/app/api/documents/verify/route.ts"
       }
     },
+    "/api/facilities/{fid}": {
+      "get": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "get_facilities_fid",
+        "summary": "GET /api/facilities/{fid}",
+        "description": "One site of the national facility register. GET: the site as the viewer may see it (versions for officials). POST { action, … }: publish, certify (stage institution | mapping-agency), move / confirm-move, status, withdraw — each by the official the nation's rules allow (lib/auth/roles.ts), under the verified name, four-eyes where the register asks for it, audited.",
+        "parameters": [
+          {
+            "name": "fid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/[fid]/route.ts"
+      },
+      "post": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "post_facilities_fid",
+        "summary": "POST /api/facilities/{fid}",
+        "description": "One site of the national facility register. GET: the site as the viewer may see it (versions for officials). POST { action, … }: publish, certify (stage institution | mapping-agency), move / confirm-move, status, withdraw — each by the official the nation's rules allow (lib/auth/roles.ts), under the verified name, four-eyes where the register asks for it, audited.",
+        "parameters": [
+          {
+            "name": "fid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/[fid]/route.ts"
+      }
+    },
+    "/api/facilities/check": {
+      "post": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "post_facilities_check",
+        "summary": "POST /api/facilities/check",
+        "description": "Check a position before recording a site (no change is made): inside the nation and the stated region, the region and district it falls in, possible duplicates nearby, swapped coordinates and low precision.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/check/route.ts"
+      }
+    },
+    "/api/facilities/policy/{cid}": {
+      "post": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "post_facilities_policy_cid",
+        "summary": "POST /api/facilities/policy/{cid}",
+        "description": "Decide a proposed change to the nation's facility policy. POST { decision: \"confirm\" | \"withdraw\" }: confirmed by a different administrator than the one who proposed it, never over a newer policy; audited.",
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/policy/[cid]/route.ts"
+      }
+    },
+    "/api/facilities/policy": {
+      "get": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "get_facilities_policy",
+        "summary": "GET /api/facilities/policy",
+        "description": "The nation's facility policy: who certifies a site's location (the owning institution, the national mapping agency, or both in turn), which body sets each category's sensitivity and under which law, the capture methods it accepts, and how far restricted sites are generalised. GET: the policy and its changes. POST { patch, reason }: an administrator proposes a change; a different administrator confirms it (/api/facilities/policy/{id}).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/policy/route.ts"
+      },
+      "post": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "post_facilities_policy",
+        "summary": "POST /api/facilities/policy",
+        "description": "The nation's facility policy: who certifies a site's location (the owning institution, the national mapping agency, or both in turn), which body sets each category's sensitivity and under which law, the capture methods it accepts, and how far restricted sites are generalised. GET: the policy and its changes. POST { patch, reason }: an administrator proposes a change; a different administrator confirms it (/api/facilities/policy/{id}).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/policy/route.ts"
+      }
+    },
+    "/api/facilities": {
+      "get": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "get_facilities",
+        "summary": "GET /api/facilities",
+        "description": "The national facility register (lib/data/facilities.ts). GET: published sites (?ministry=, ?category=, ?region=, ?state=proposed|published|all), each as the viewer may see it — restricted sites are generalised for anyone outside the owning institution and the whole government — with counts, the nation's policy and the vocabulary (categories, capture methods, the bodies that may decide sensitivity). Sites are added through the owning institution: /api/org/ministries/{id}/facilities.",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ministry",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/route.ts"
+      }
+    },
     "/api/federation/check": {
       "get": {
         "tags": [
@@ -2931,6 +3219,166 @@
           }
         },
         "x-source": "src/app/api/org/ministries/[id]/departments/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/facilities/import": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_facilities_import",
+        "summary": "GET /api/org/ministries/{id}/facilities/import",
+        "description": "Load an institution's existing site data: a survey or registry export (CSV), GeoJSON points or GPX waypoints from a GNSS receiver or phone. POST { text, format, dryRun?, method? }: with dryRun, what would be loaded and every refused row with its reason; otherwise each accepted row is proposed (and published by a second official), the file's SHA-256 recorded and audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/import/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_facilities_import",
+        "summary": "POST /api/org/ministries/{id}/facilities/import",
+        "description": "Load an institution's existing site data: a survey or registry export (CSV), GeoJSON points or GPX waypoints from a GNSS receiver or phone. POST { text, format, dryRun?, method? }: with dryRun, what would be loaded and every refused row with its reason; otherwise each accepted row is proposed (and published by a second official), the file's SHA-256 recorded and audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/import/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/facilities": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_facilities",
+        "summary": "GET /api/org/ministries/{id}/facilities",
+        "description": "An institution's sites in the national facility register. GET: its sites, proposed and published. POST: an official of the institution records a site (name, category, longitude/latitude with how it was captured); the position is checked first and the site is published by a second official.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_facilities",
+        "summary": "POST /api/org/ministries/{id}/facilities",
+        "description": "An institution's sites in the national facility register. GET: its sites, proposed and published. POST: an official of the institution records a site (name, category, longitude/latitude with how it was captured); the position is checked first and the site is published by a second official.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/route.ts"
       }
     },
     "/api/org/ministries/{id}/field": {
@@ -9015,7 +9463,7 @@
         ],
         "operationId": "get_twin_ogc_collections_collectionId_items_featureId",
         "summary": "GET /api/twin/ogc/collections/{collectionId}/items/{featureId}",
-        "description": "One subdivision as a GeoJSON feature with its observed values (?datetime).",
+        "description": "One subdivision as a GeoJSON feature with its observed values (?datetime), or one published site of the national facility register.",
         "parameters": [
           {
             "name": "collectionId",
@@ -9067,7 +9515,7 @@
         ],
         "operationId": "get_twin_ogc_collections_collectionId_items",
         "summary": "GET /api/twin/ogc/collections/{collectionId}/items",
-        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime).",
+        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime), or the national facility register's published sites (also ?category), as the viewer may see them.",
         "parameters": [
           {
             "name": "collectionId",
@@ -9079,6 +9527,14 @@
           },
           {
             "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "category",
             "in": "query",
             "required": false,
             "schema": {
@@ -9171,7 +9627,7 @@
         ],
         "operationId": "get_twin_ogc_collections",
         "summary": "GET /api/twin/ogc/collections",
-        "description": "OGC API – Features collections of the national twin.",
+        "description": "OGC API – Features collections of the national twin: the official subdivisions and the national facility register.",
         "parameters": [],
         "responses": {
           "200": {

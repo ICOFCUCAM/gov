@@ -86,7 +86,16 @@ export function postureTone(v: number): 'ok' | 'neutral' | 'warn' | 'alert' {
   return v >= 78 ? 'alert' : v >= 58 ? 'warn' : v >= 40 ? 'neutral' : 'ok';
 }
 
-export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers, tactical, heat, flowDur, reserveEnd = 0, ts = 0 }: {
+/** A published site of the national facility register, as the theatre draws it. */
+export interface TheatreSite { id: string; name: string; category: string; glyph: string; lng: number; lat: number; certified: boolean; generalised?: boolean }
+/** Which register category stands for each kind of sample asset: once the nation registers sites of it, that kind's samples go. */
+const KIND_CATEGORY: Partial<Record<string, string>> = {
+  hospital: 'health', port: 'port', airport: 'airport', power: 'power', telecom: 'telecom', water: 'water', logistics: 'logistics', customs: 'border-post', military: 'defence',
+};
+
+export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers, tactical, heat, flowDur, reserveEnd = 0, ts = 0, sites = [] }: {
+  /** Published sites of the national facility register (drawn where they are, linked to their record). */
+  sites?: TheatreSite[];
   ctx: OverlayContext;
   /** Width kept free at the end of the frame for panels laid over the map. */
   reserveEnd?: number;
@@ -112,7 +121,9 @@ export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers
   const flagged = anchors.filter(a => a.r && a.r.posture !== 'stable');
   const top = [...anchors].filter(a => a.r).sort((a, b) => b.r!.composite - a.r!.composite).slice(0, Math.min(4, anchors.length));
   // Asset tiles, the most important first, capped so the theatre stays readable at any number of regions.
-  const assets = (layers.infra ? sampleAssetsAround(anchors, spread).map(a => ({ ...a, risk: Math.round(wave(`arisk:${a.id}`, ts, 15, 92)) })) : [])
+  const registered = new Set(sites.map(s => s.category));
+  const placed = layers.infra ? sites.flatMap(s => { const q = ctx.project(s.lng, s.lat); return q ? [{ ...s, x: q[0], y: q[1] }] : []; }) : [];
+  const assets = (layers.infra ? sampleAssetsAround(anchors, spread).filter(a => !registered.has(KIND_CATEGORY[a.kind] ?? '')).map(a => ({ ...a, risk: Math.round(wave(`arisk:${a.id}`, ts, 15, 92)) })) : [])
     .sort((a, b) => a.tier - b.tier || b.risk - a.risk).slice(0, Math.round(Math.min(60, Math.max(18, (W * H) / 9000))));
   // Names only for critical assets, never over another label.
   const labelled = new Set<string>();
@@ -298,6 +309,21 @@ export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers
         </g>
       ) : null}
 
+      {/* registered sites (the nation's own, from the facility register): solid tiles where they are */}
+      {placed.length ? (
+        <g aria-label={`${placed.length} registered sites`}>
+          {placed.map(s => (
+            <a key={s.id} href={`/gov/sites#${s.id}`} aria-label={`${s.name} (${s.certified ? 'location certified' : 'awaiting certification'}${s.generalised ? ', position generalised' : ''})`}>
+              <title>{`${s.name} · ${s.certified ? 'location certified' : 'awaiting certification'}${s.generalised ? ' · position generalised' : ''}`}</title>
+              <rect x={s.x - 9} y={s.y - 9} width={18} height={18} rx={3} fill="rgb(var(--c-surface))" stroke={s.certified ? TONE.ok : TONE.warn} strokeWidth={1.8}
+                strokeDasharray={s.generalised ? '3 2' : undefined} style={{ filter: `drop-shadow(0 0 4px ${s.certified ? TONE.ok : TONE.warn})` }} />
+              <text x={s.x} y={s.y + 4} textAnchor="middle" fontSize="11" fill={s.certified ? TONE.ok : TONE.warn}>{s.glyph}</text>
+              {placed.length <= 14 ? <text x={s.x} y={s.y + 20} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={2.5} paintOrder="stroke">{s.name}</text> : null}
+            </a>
+          ))}
+        </g>
+      ) : null}
+
       <g pointerEvents="none" aria-hidden>
         {/* radar range rings and sweep over the capital */}
         {tactical ? (
@@ -433,7 +459,7 @@ export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers
 }
 
 /** The theatre's legend: status, sample layers and glyphs, each sample marked. */
-export function TheatreLegend({ layers }: { layers: TheatreLayers }) {
+export function TheatreLegend({ layers, registered = 0 }: { layers: TheatreLayers; registered?: number }) {
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-[3px] border border-line bg-surface/85 px-2.5 py-1 text-[10px] text-ink-muted backdrop-blur">
       {(['ok', 'neutral', 'warn', 'alert'] as const).map(t => (
@@ -448,6 +474,11 @@ export function TheatreLegend({ layers }: { layers: TheatreLayers }) {
           ))}
           <span className="flex items-center gap-1"><span style={{ color: TONE.warn }} aria-hidden>┄</span>evacuation</span>
           <span className="rounded-[2px] border border-dashed border-line px-1 text-[9px] uppercase tracking-[0.1em]">sample</span>
+        </span>
+      ) : null}
+      {layers.infra ? (
+        <span className="flex items-center gap-1 border-s border-line ps-2">
+          <span className="inline-block h-2.5 w-2.5 rounded-[2px] border-2" style={{ borderColor: TONE.ok }} aria-hidden />registered site{registered === 1 ? '' : 's'} ({registered})
         </span>
       ) : null}
       {layers.infra ? (

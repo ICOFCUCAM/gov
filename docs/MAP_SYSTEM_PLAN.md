@@ -154,6 +154,13 @@ layouts. The fix is one shared map engine grown from it.
   contention, regional rhythm, crisis memory). Corridors, infrastructure,
   evacuation routes and population are samples, marked in the legend, until
   phase 4 registers facilities and networks.
+- **Phase 4a, done: the national facility register.** Sites recorded by
+  their institutions with longitude/latitude by every capture method the
+  nation accepts, checked against the map, published four-eyes, certified as
+  the nation chose (institution, mapping agency, or both), sensitivity set by
+  the body the nation names under a cited law; shown on the maps by their
+  coordinates, in the Situation Room in place of samples of their kind, and as
+  the OGC collection `facilities` (`docs/FACILITY_REGISTER_REVIEW.md`).
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

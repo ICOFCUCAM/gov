@@ -6,7 +6,7 @@ import { api } from '@/lib/api/client';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { identityFor } from '@/lib/archetype-profiles';
-import { POSTURE_TONE, postureTone, TheatreControls, TheatreLayersSvg, TheatreLegend, theatreFrame } from '@/components/features/situation/Theatre';
+import { POSTURE_TONE, postureTone, type TheatreSite, TheatreControls, TheatreLayersSvg, TheatreLegend, theatreFrame } from '@/components/features/situation/Theatre';
 import type {
   NationalSnapshot,
   NationalCoordination,
@@ -465,6 +465,19 @@ export function NationalMap({
   }, []);
   const wide = frameW >= 620;
   const frameH = isFull ? Math.max(480, (typeof window !== 'undefined' ? window.innerHeight : 900) - 120) : height ?? Math.round(Math.max(440, Math.min(760, frameW * (frameW >= 620 ? 0.9 : 0.8))));
+  // The nation's registered sites (national facility register), refreshed every half minute.
+  const [sites, setSites] = React.useState<TheatreSite[]>([]);
+  React.useEffect(() => {
+    let live = true;
+    const load = () => fetch('/api/facilities').then(r => (r.ok ? r.json() : null)).then((j: { sites?: { id: string; name: string; category: string; location: { lng: number; lat: number }; certification: { state: string }; generalised?: boolean }[]; categories?: { key: string; glyph: string }[] } | null) => {
+      if (!live || !j?.sites) return;
+      const glyph = new Map((j.categories ?? []).map(c => [c.key, c.glyph]));
+      setSites(j.sites.map(s => ({ id: s.id, name: s.name, category: s.category, glyph: glyph.get(s.category) ?? '●', lng: s.location.lng, lat: s.location.lat, certified: s.certification.state === 'certified', generalised: s.generalised })));
+    }).catch(() => undefined);
+    void load();
+    const t = setInterval(load, 30_000);
+    return () => { live = false; clearInterval(t); };
+  }, []);
   const colourOf = React.useCallback((v: MapValue): string => TONE[postureTone(v.value)] ?? ACCENT, []);
   const fullscreen = () => {
     const el = rootRef.current;
@@ -552,18 +565,18 @@ export function NationalMap({
         <NationMap title="Activity by region" values={values} kind="sample" source={REGIONAL_SOURCE} variant="theatre" heat={heat}
           valueLabel="Stress" unit="index" points={points} pointsLabel="Open incidents" maxHeight={frameH} minHeight={360}
           frameHeight={frameH} insetEnd={wide ? 168 : 0} insetBottom={wide ? (frameW >= 760 ? 84 : 112) : 0} colourOf={colourOf} actions={actions}
-          inMap={wide ? <><div className="px-2 pb-1.5"><TheatreLegend layers={{ ...layers, institutions: showInstitutions }} /></div>{strip}</> : undefined}
+          inMap={wide ? <><div className="px-2 pb-1.5"><TheatreLegend layers={{ ...layers, institutions: showInstitutions }} registered={sites.length} /></div>{strip}</> : undefined}
           hud={<TheatreControls tactical={tactical} heat={heat} grid={layers.grid} incidents={layers.incidents}
             onTactical={() => setTactical(v => !v)} onHeat={() => setHeat(v => !v)} onGrid={() => onToggleLayer?.('grid')} onIncidents={() => onToggleLayer?.('incidents')} />}
-          overlay={ctx => <TheatreLayersSvg ctx={ctx} regions={regions} nodes={showInstitutions ? mapNodes : []} edges={edges} incidents={incidents} layers={layers} tactical={tactical} heat={heat} flowDur={flowDur} reserveEnd={wide ? 168 : 0} ts={ts} />} />
+          overlay={ctx => <TheatreLayersSvg ctx={ctx} regions={regions} nodes={showInstitutions ? mapNodes : []} edges={edges} incidents={incidents} layers={layers} tactical={tactical} heat={heat} flowDur={flowDur} reserveEnd={wide ? 168 : 0} ts={ts} sites={sites} />} />
         {wide ? ladder : null}
       </div>
-      {!wide ? <>{ladder}{strip}<TheatreLegend layers={{ ...layers, institutions: showInstitutions }} /></> : null}
+      {!wide ? <>{ladder}{strip}<TheatreLegend layers={{ ...layers, institutions: showInstitutions }} registered={sites.length} /></> : null}
 
       <p className="px-1 text-[10.5px] text-ink-muted">
         {showInstitutions && mapNodes.length ? `Institutions: ${mapNodes.length}, each opens its workspace; they stand around the capital until their seats are registered. ` : ''}
-        Regional pressure, institution pressure and knock-on links come from the models; corridors, infrastructure, evacuation routes and population are samples
-        until facilities and networks are registered with coordinates in National data. <SignalTag kind="sample" source="Models and samples until National data holds the nation's own" />
+        Regional pressure, institution pressure and knock-on links come from the models. {sites.length ? `${sites.length} registered site${sites.length === 1 ? '' : 's'} from the national facility register; ` : ''}corridors, evacuation routes, population and any infrastructure not yet registered are samples
+        until facilities and networks are registered with coordinates (Sites, under National data). <SignalTag kind="sample" source="Models and samples until National data holds the nation's own" />
       </p>
     </div>
   );

@@ -44,6 +44,7 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/org\/ministries\/[^/]+\/(merge|deactivate|activate|rename)\/?$/,
   /^\/api\/setup(\/|$)/,
   /^\/api\/sovereign(\/|$)/,
+  /^\/api\/facilities\/policy(\/|$)/,
 ];
 /** Signing in and out stays open to every role. */
 /** Signing in and out, one's own second step and one's own password stay open to every role. */
@@ -84,6 +85,21 @@ export function canManageFeeds(s: Scope, ministryId: string): string | null {
   if (where) return where;
   const role = roleOf(s);
   return role === 'administrator' || role === 'signatory' ? null : 'Only an administrator or an official who can sign may connect a case system';
+}
+
+/** Publishing a proposed site, certifying it for its institution, or confirming a move: those who can sign for the owning institution. */
+export function canSignForSite(s: Scope, ownerId: string): string | null {
+  const where = ministryPermission(s, ownerId);
+  if (where) return where;
+  const role = roleOf(s);
+  return role === 'administrator' || role === 'signatory' ? null : 'Only an official who can sign for the institution may do this';
+}
+
+/** Certifying a site's location for the national mapping agency: its officials (or the whole government's administrators while none is named). */
+export function canCertifyForAgency(s: Scope, agencyId: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors can read records but not change them';
+  if (agencyId ? s.institution === agencyId || (wholeGovernment(s) && roleOf(s) === 'administrator') : wholeGovernment(s) && roleOf(s) === 'administrator') return null;
+  return 'Only the national mapping agency certifies locations at this stage';
 }
 
 /** The issuer a new directive is recorded under: an official's own institution, whatever the request names. */

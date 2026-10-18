@@ -14,8 +14,11 @@ import { nameKeys } from './names';
 /** A figure for one unit, keyed by the unit's name (as the nation's region list spells it) or its ISO 3166-2 code. */
 export interface MapValue { key: string; value: number; unit?: string; asOf?: string; note?: string }
 export type MapTone = 'ok' | 'warn' | 'alert' | 'neutral';
-/** Something located in a unit (e.g. open incidents), drawn at the unit's label point. */
-export interface MapPoint { key: string; label: string; tone: MapTone; count?: number }
+/**
+ * Something on the map: located in a unit (e.g. open incidents, drawn at the
+ * unit's label point), or at its own longitude/latitude (a registered site).
+ */
+export interface MapPoint { key: string; label: string; tone: MapTone; count?: number; lng?: number; lat?: number; glyph?: string; href?: string }
 
 export interface ModelUnit { name: string; code?: string; d: string; cx?: number; cy?: number; value?: MapValue; cls?: number }
 export interface MapModel {
@@ -27,7 +30,7 @@ export interface MapModel {
   frames: { x: number; y: number; w: number; h: number }[];
   classes: Classes;
   scale: { km: number; px: number } | null;
-  points: { x: number; y: number; label: string; tone: MapTone; count?: number; unit: string }[];
+  points: { x: number; y: number; label: string; tone: MapTone; count?: number; unit: string; glyph?: string; href?: string; exact?: boolean }[];
   /** Figures whose key matched no unit (listed under the map, never dropped silently). */
   unmatched: string[];
   /** Units on the nation's list that have no shape in the boundary data. */
@@ -129,6 +132,14 @@ export function buildMapModel(geo: NationGeography, opts: MapOptions): MapModel 
   const points: MapModel['points'] = [];
   const unplaced: string[] = [];
   for (const pt of opts.points ?? []) {
+    if (pt.lng != null && pt.lat != null) {
+      const q = proj([pt.lng, pt.lat]);
+      if (q && q.every(Number.isFinite) && q[0] >= 0 && q[0] <= W && q[1] >= 0 && q[1] <= H) {
+        const inUnit = units.find(u => u.code === pt.key || u.name === pt.key);
+        points.push({ x: q[0], y: q[1], label: pt.label, tone: pt.tone, count: pt.count, unit: inUnit?.name ?? '', glyph: pt.glyph, href: pt.href, exact: true });
+      } else unplaced.push(pt.label);
+      continue;
+    }
     const u = unitByKey.get(pt.key) ?? nameKeys(pt.key).map(k => unitByKey.get(k)).find(Boolean);
     if (u?.cx != null && u.cy != null) points.push({ x: u.cx, y: u.cy, label: pt.label, tone: pt.tone, count: pt.count, unit: u.name });
     else unplaced.push(pt.key);
