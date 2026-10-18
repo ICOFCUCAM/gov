@@ -369,7 +369,7 @@ export function PublicSiteShell({
                 <h3 className="text-[15px] font-bold" style={{ color: theme.ink }}>{locator.title}</h3>
                 <span className="text-[11px] font-semibold" style={{ color: theme.primary }}>{t.viewMap}</span>
               </div>
-              <LocatorPanel data={locations} institution={institution.name} placeholder={locator.placeholder} tabs={locator.tabs}
+              <LocatorPanel text={t.locator} data={locations} institution={institution.name} placeholder={locator.placeholder} tabs={locator.tabs}
                 pinLabel={locator.pinLabel} theme={theme} order="map-first" inputClass="rounded-md text-[11px]" />
             </div>
           ) : (

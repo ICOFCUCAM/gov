@@ -63,20 +63,28 @@ function regionShapes(iso3: string): Geom[] | null {
   return detailed.get(iso3) ?? null;
 }
 
-/** A path string rounded to the frame's half pixels, repeated points dropped (small enough to send with the page). */
-function pathOf(projection: GeoProjection, geoms: unknown[]): string {
-  let out = '';
+/**
+ * A path string small enough to travel with the page (budgets in
+ * scripts/public-site-budgets.json): whole frame pixels, points closer than
+ * `tol` pixels to the last one dropped, rings that collapse removed.
+ */
+function pathOf(projection: GeoProjection, geoms: unknown[], tol = 1.5): string {
+  let out = '', ring = '', n = 0;
   let lx = NaN, ly = NaN;
-  const r = (v: number) => Math.round(v * 2) / 2;
+  const flush = () => { if (n >= 3) out += `${ring}Z`; ring = ''; n = 0; };
   const ctx = {
-    moveTo(x: number, y: number) { lx = r(x); ly = r(y); out += `M${lx} ${ly}`; },
-    lineTo(x: number, y: number) { const a = r(x), b = r(y); if (a === lx && b === ly) return; lx = a; ly = b; out += `L${a} ${b}`; },
-    closePath() { out += 'Z'; },
+    moveTo(x: number, y: number) { flush(); lx = Math.round(x); ly = Math.round(y); ring = `M${lx} ${ly}`; n = 1; },
+    lineTo(x: number, y: number) {
+      if (Math.hypot(x - lx, y - ly) < tol) return;
+      lx = Math.round(x); ly = Math.round(y); ring += `L${lx} ${ly}`; n++;
+    },
+    closePath() { flush(); },
     arc() { /* points are not drawn through the path */ },
   };
   const path = geoPath(projection, ctx as never);
   for (const g of geoms) path({ type: 'Feature', properties: {}, geometry: g } as never);
-  return out.replace(/M([\d.-]+) ([\d.-]+)Z/g, '');
+  flush();
+  return out;
 }
 
 function mapFor(points: { lng: number; lat: number }[]): { map: LocatorMap; project: (lng: number, lat: number) => [number, number] | null } | null {
@@ -99,7 +107,7 @@ function mapFor(points: { lng: number; lat: number }[]): { map: LocatorMap; proj
   return {
     map: {
       w: W, h: H, land,
-      ...(shapes ? { regions: land } : {}),
+      ...(shapes ? { regions: true } : {}),
       ...(cp ? { capital: { x: cp[0], y: cp[1], name: cap!.name } } : {}),
       country: (world?.properties?.name as string | undefined) ?? iso3 ?? '',
       credit: shapes ? 'Boundaries: Natural Earth and official boundary data' : 'Outline: Natural Earth',

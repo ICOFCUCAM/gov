@@ -16,6 +16,8 @@ import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
 import { siteProps } from '@/apps/_shared/public/site-props';
 import { GatewayBar, LanguageSwitch, SiteLogo, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
 import { FontSizeControls } from '@/apps/_shared/public/controls';
+import { siteLocations } from '@/apps/_shared/public/locator-data';
+import { LocatorPanel } from '@/apps/_shared/public/LocatorPanel';
 import { effectiveContent } from '@/lib/public-sites/effective';
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Health — Official Portal' };
@@ -244,17 +246,8 @@ function HealthPortal({ site }: { site: PublicSiteShellProps }) {
             <div className="mb-3 flex items-center justify-between"><h3 className="text-[15px] font-bold" style={{ color: NAVY }}>{locator?.title ?? t.contact}</h3><span className="text-[11px] font-semibold" style={{ color: BLUE }}>{t.viewMap}</span></div>
             {locator ? (
               <>
-                <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] text-slate-600" style={{ borderColor: LINE }}><span>⌕</span> {locator.placeholder}</div>
-                <div className="relative mt-2 h-36 overflow-hidden rounded-lg" style={{ background: 'linear-gradient(135deg,#dde6f0,#c3d4e6)' }} role="img" aria-label={locator.title}>
-                  {locator.pinCoords.map(([x, y], i) => (
-                    <span key={i} className="absolute grid h-4 w-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-[8px] font-bold text-white" style={{ left: `${x}%`, top: `${y}%`, background: BLUE }}>{locator.pinLabel}</span>
-                  ))}
-                </div>
-                <div className="mt-2 flex flex-wrap gap-1.5">
-                  {locator.tabs.map((tb, i) => (
-                    <span key={tb} className="rounded-full px-2.5 py-0.5 text-[10px] font-medium" style={i === 0 ? { background: BLUE, color: '#fff' } : { border: `1px solid ${LINE}`, color: '#475569' }}>{tb}</span>
-                  ))}
-                </div>
+                <LocatorPanel text={t.locator} data={siteLocations('health', locator.tabs)} institution={inst.name} placeholder={locator.placeholder} tabs={locator.tabs} pinLabel={locator.pinLabel}
+                  theme={{ primary: BLUE, ink: NAVY, line: LINE, surfaceMute: THEME.surfaceMute }} radius={8} tabStyle="chips" order="map-first" />
               </>
             ) : <p className="text-[12px] text-slate-600">{t.contactText}</p>}
           </div>

@@ -679,7 +679,7 @@ function Contact({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boole
       <SectionHead c={c} title={loc?.title ?? t.contact} size={19} />
       {loc ? (
         <>
-          <LocatorPanel data={s.locations} institution={s.institution.name} placeholder={loc.placeholder} tabs={loc.tabs} pinLabel={loc.pinLabel}
+          <LocatorPanel text={t.locator} data={s.locations} institution={s.institution.name} placeholder={loc.placeholder} tabs={loc.tabs} pinLabel={loc.pinLabel}
             theme={{ primary: th.primary, ink: th.ink, line: c.rule, surfaceMute: th.surfaceMute }} radius={c.d.radius} tabStyle={variant === 'panel' ? 'panel' : 'chips'} order="tabs-first" />
         </>
       ) : null}

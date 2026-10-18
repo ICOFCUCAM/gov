@@ -129,6 +129,8 @@ export interface Messages {
     viewPrograms: string;
     allPrograms: string;
     viewMap: string;
+    /** The public sites' "find us" locator (registered locations from the national facility register). */
+    locator: { empty: string; noMatch: string; count: string; countOne: string; showAll: string; showFewer: string; approx: string; open: string; openLabel: string; mapLabel: string; mapEmpty: string; source: string; more: string; tabs: string };
     contact: string;
     contactText: string;
     contactUs: string;
@@ -779,6 +781,22 @@ export const en: Messages = {
     viewPrograms: 'View All Programs →',
     allPrograms: 'All Programs & Initiatives →',
     viewMap: 'View Full Map →',
+    locator: {
+      empty: 'Locations will appear here once the {name} registers its offices.',
+      noMatch: 'No registered location matches.',
+      count: '{count} registered locations',
+      countOne: '1 registered location',
+      showAll: 'Show all {count}',
+      showFewer: 'Show fewer',
+      approx: 'approximate location',
+      open: 'Open in maps',
+      openLabel: 'Open {name} in your maps app',
+      mapLabel: '{country}: {count} registered locations of the {name}',
+      mapEmpty: '{country}: no registered locations yet',
+      source: 'From the national facility register',
+      more: 'Showing {shown} of {total}; search to narrow.',
+      tabs: 'Kinds of location',
+    },
     contact: 'Contact',
     contactText: 'Public-affairs office, weekdays 9am-5pm. Visit your nearest branch or use the citizen portal.',
     contactUs: 'Contact Us →',

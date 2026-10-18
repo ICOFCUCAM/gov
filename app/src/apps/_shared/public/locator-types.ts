@@ -25,9 +25,9 @@ export interface LocatorSite {
 export interface LocatorMap {
   w: number;
   h: number;
-  /** The nation's outline (and its regions, when the detailed shapes are at hand). */
+  /** The nation's outline, drawn region by region when `regions` is set (the detailed shapes were at hand). */
   land: string;
-  regions?: string;
+  regions?: boolean;
   capital?: { x: number; y: number; name: string };
   country: string;
   credit: string;

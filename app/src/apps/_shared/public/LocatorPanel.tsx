@@ -12,8 +12,9 @@
 import * as React from 'react';
 import type { SiteLocations, LocatorSite } from './locator-types';
 
-// Shared wording of the locator. Fixed site wording belongs in siteMessages()
-// (lib/i18n `site`); until these strings join it they read in English.
+// The locator's wording comes from siteMessages(locale).locator (lib/i18n,
+// every site language), passed in by the page as `text`; this English copy
+// is the fallback for callers that do not pass it.
 export const LOCATOR_TEXT = {
   empty: 'Locations will appear here once the {name} registers its offices.',
   noMatch: 'No registered location matches.',
@@ -37,8 +38,10 @@ export interface LocatorTheme { primary: string; ink: string; line: string; surf
 const LIST_FIRST = 4;
 
 export function LocatorPanel({
-  data, institution, placeholder, tabs, pinLabel, theme, radius, tabStyle = 'chips', order = 'tabs-first', inputClass = '',
+  data, institution, placeholder, tabs, pinLabel, theme, radius, tabStyle = 'chips', order = 'tabs-first', inputClass = '', text = LOCATOR_TEXT,
 }: {
+  /** The locator's wording in the visitor's language: siteMessages(locale).locator. */
+  text?: { [K in keyof typeof LOCATOR_TEXT]: string };
   data?: SiteLocations;
   /** The institution's name, for the empty state. */
   institution: string;
@@ -90,8 +93,8 @@ export function LocatorPanel({
     );
   };
   const tabRow = tabStyle === 'panel'
-    ? <ul className="mt-3 grid grid-cols-2 gap-2" aria-label={LOCATOR_TEXT.tabs}>{tabs.map((t, i) => <li key={t}>{tabButton(t, i)}</li>)}</ul>
-    : <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label={LOCATOR_TEXT.tabs}>{tabs.map(tabButton)}</div>;
+    ? <ul className="mt-3 grid grid-cols-2 gap-2" aria-label={text.tabs}>{tabs.map((t, i) => <li key={t}>{tabButton(t, i)}</li>)}</ul>
+    : <div className="mt-2 flex flex-wrap gap-1.5" role="group" aria-label={text.tabs}>{tabs.map(tabButton)}</div>;
 
   const pins = shown.filter(s => Number.isFinite(s.x) && Number.isFinite(s.y));
   const dimmed = sites.filter(s => !match(s) && Number.isFinite(s.x));
@@ -100,7 +103,7 @@ export function LocatorPanel({
     <div className="relative mt-2 overflow-hidden" style={{ background: `linear-gradient(135deg, ${theme.surfaceMute}, #c3d4e6)`, borderRadius: radius ?? 8 }}>
       {map ? (
         <svg viewBox={`0 0 ${map.w} ${map.h}`} className="block h-36 w-full" preserveAspectRatio="xMidYMid meet" role="img"
-          aria-label={empty ? fill(LOCATOR_TEXT.mapEmpty, { country: map.country }) : fill(LOCATOR_TEXT.mapLabel, { country: map.country, count: pins.length, name: institution })}>
+          aria-label={empty ? fill(text.mapEmpty, { country: map.country }) : fill(text.mapLabel, { country: map.country, count: pins.length, name: institution })}>
           <title>{map.credit}</title>
           {map.land ? <path d={map.land} fill="#fff" fillOpacity="0.88" stroke={theme.primary} strokeOpacity={map.regions ? 0.18 : 0.45} strokeWidth={map.regions ? 0.5 : 0.9} strokeLinejoin="round" /> : null}
           {map.capital ? (
@@ -126,7 +129,7 @@ export function LocatorPanel({
       ) : <div className="h-36" aria-hidden />}
       {empty ? (
         <p className="absolute inset-x-3 bottom-2 rounded-md bg-white/95 px-2 py-1.5 text-center text-[11px] font-medium text-slate-700 shadow-sm">
-          {fill(LOCATOR_TEXT.empty, { name: institution })}
+          {fill(text.empty, { name: institution })}
         </p>
       ) : null}
     </div>
@@ -135,8 +138,8 @@ export function LocatorPanel({
   const listBlock = empty ? null : (
     <div className="mt-2">
       <p className="flex flex-wrap items-baseline justify-between gap-x-2 text-[10px] text-slate-600" role="status">
-        <span className="font-semibold" style={{ color: theme.ink }}>{shown.length === 1 ? LOCATOR_TEXT.countOne : fill(LOCATOR_TEXT.count, { count: shown.length })}</span>
-        <span>{LOCATOR_TEXT.source}</span>
+        <span className="font-semibold" style={{ color: theme.ink }}>{shown.length === 1 ? text.countOne : fill(text.count, { count: shown.length })}</span>
+        <span>{text.source}</span>
       </p>
       {shown.length ? (
         <ul className="mt-1 divide-y" style={{ borderColor: theme.line }}>
@@ -146,22 +149,22 @@ export function LocatorPanel({
               <span className="min-w-0">
                 <span className="block truncate text-[12px] font-semibold" style={{ color: theme.ink }}>{s.name}</span>
                 <span className="block truncate text-[10.5px] text-slate-600">
-                  {[s.district, s.region].filter(Boolean).join(', ') || s.categoryLabel}{s.region ? ` · ${s.categoryLabel}` : ''}{s.status !== 'operational' ? ` · ${s.status}` : ''}{s.approx ? ` · ${LOCATOR_TEXT.approx}` : ''}
+                  {[s.district, s.region].filter(Boolean).join(', ') || s.categoryLabel}{s.region ? ` · ${s.categoryLabel}` : ''}{s.status !== 'operational' ? ` · ${s.status}` : ''}{s.approx ? ` · ${text.approx}` : ''}
                 </span>
               </span>
               <a href={`geo:${s.lat},${s.lng}?q=${s.lat},${s.lng}(${encodeURIComponent(s.name)})`} onFocus={() => setHot(s.id)} onBlur={() => setHot(null)}
-                aria-label={fill(LOCATOR_TEXT.openLabel, { name: s.name })}
-                className="shrink-0 text-[10.5px] font-semibold underline-offset-2 hover:underline" style={{ color: theme.primary }}>{LOCATOR_TEXT.open}</a>
+                aria-label={fill(text.openLabel, { name: s.name })}
+                className="shrink-0 text-[10.5px] font-semibold underline-offset-2 hover:underline" style={{ color: theme.primary }}>{text.open}</a>
             </li>
           ))}
         </ul>
-      ) : <p className="mt-1 text-[11px] text-slate-600">{LOCATOR_TEXT.noMatch}</p>}
+      ) : <p className="mt-1 text-[11px] text-slate-600">{text.noMatch}</p>}
       {shown.length > LIST_FIRST ? (
         <button type="button" onClick={() => setAll(a => !a)} aria-expanded={all} className="mt-1 text-[11px] font-semibold" style={{ color: theme.primary }}>
-          {all ? LOCATOR_TEXT.showFewer : fill(LOCATOR_TEXT.showAll, { count: shown.length })}
+          {all ? text.showFewer : fill(text.showAll, { count: shown.length })}
         </button>
       ) : null}
-      {data && data.total > sites.length ? <p className="mt-1 text-[10px] text-slate-600">{fill(LOCATOR_TEXT.more, { shown: sites.length, total: data.total })}</p> : null}
+      {data && data.total > sites.length ? <p className="mt-1 text-[10px] text-slate-600">{fill(text.more, { shown: sites.length, total: data.total })}</p> : null}
     </div>
   );
 
