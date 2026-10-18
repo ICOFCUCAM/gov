@@ -13,6 +13,8 @@ import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { api } from '@/lib/api/client';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import type { NationalCoordination, NationalSnapshot } from '@/lib/api/types';
 
 const BG = '#070b11';
@@ -148,13 +150,16 @@ function Panel({ title, action, children, className }: {
   return (
     <section className={`flex flex-col rounded-[4px] border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
       <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: LINE }}>
-        <h3 className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: INK }}>{title}</h3>
+        <h3 className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: INK }}>{title}<SignalTag kind="sample" source={REFERENCE_MODEL} /></h3>
         {action ? <span className="text-[8.5px] font-semibold uppercase tracking-[0.12em]" style={{ color: RED }}>{action}</span> : null}
       </div>
       <div className="flex-1 p-3">{children}</div>
     </section>
   );
 }
+
+/** KPI tiles fed by the platform (posture, incidents, population, threat level); the rest are reference-model samples. */
+const FROM_PLATFORM = new Set(['National Posture', 'Active Incidents', 'Population', 'Threat Level']);
 
 export function NationalOverview() {
   const [now, setNow] = React.useState(useRenderNow());
@@ -284,7 +289,7 @@ export function NationalOverview() {
         style={{ borderColor: LINE, background: LINE }}>
         {kpis.map(([l, v, s, c]) => (
           <div key={l} className="px-3 py-2.5 text-center" style={{ background: PANEL }}>
-            <div className="text-[7.5px] font-semibold uppercase tracking-[0.16em]" style={{ color: MUT }}>{l}</div>
+            <div className="flex items-center justify-center gap-1 text-[7.5px] font-semibold uppercase tracking-[0.16em]" style={{ color: MUT }}>{l}{FROM_PLATFORM.has(l) ? null : <SignalTag kind="sample" source={REFERENCE_MODEL} />}</div>
             <div className="mt-1 text-[17px] font-bold tabular-nums" style={{ color: c, fontFamily: SERIF }}>{v}</div>
             {s ? <div className="text-[8px]" style={{ color: SOFT }}>{s}</div> : <div className="h-[12px]" />}
           </div>

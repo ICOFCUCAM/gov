@@ -166,7 +166,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Open referrals" v={`${refs.length}`} t="warn" />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="Doctor dashboard" meta="roster · workload · status" className="xl:col-span-2" bodyClass="!p-0">
+          <Panel signal="sample" title="Doctor dashboard" meta="roster · workload · status" className="xl:col-span-2" bodyClass="!p-0">
             <div className="max-h-[320px] overflow-y-auto">
               {roster.map(d => {
                 const wt = d.workload >= 85 ? 'alert' : d.workload >= 70 ? 'warn' : 'ok';
@@ -209,7 +209,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               })}
             </div>
           </Panel>
-          <Panel title="Workload intelligence" meta="by specialty" bodyClass="!p-2">
+          <Panel signal="sample" title="Workload intelligence" meta="by specialty" bodyClass="!p-2">
             <div className="space-y-1">
               {wl.specialties.map(s => (
                 <div key={s.specialty} className="flex items-center gap-2 text-[10px]">
@@ -223,7 +223,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="Patient intake & triage" meta="diagnosis → treatment workflow" bodyClass="!p-0">
+          <Panel signal="sample" title="Patient intake & triage" meta="diagnosis → treatment workflow" bodyClass="!p-0">
             <div className="max-h-[260px] overflow-y-auto">
               {queue.map(p => {
                 const tg = p.triage <= 2 ? 'alert' : p.triage === 3 ? 'warn' : 'ok';
@@ -238,7 +238,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               })}
             </div>
           </Panel>
-          <Panel title="Prescriptions & lab requests" meta="issuance · diagnostics" bodyClass="!p-2">
+          <Panel signal="sample" title="Prescriptions & lab requests" meta="issuance · diagnostics" bodyClass="!p-2">
             <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Prescriptions</div>
             <div className="mb-2 space-y-0.5">
               {rx.map(p => (
@@ -259,7 +259,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               ))}
             </div>
           </Panel>
-          <Panel title="Referrals & specialist routing" meta="regional medical coordination" bodyClass="!p-0">
+          <Panel signal="sample" title="Referrals & specialist routing" meta="regional medical coordination" bodyClass="!p-0">
             {refs.map(r => (
               <div key={r.id} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
                 <div className="flex items-center justify-between gap-2">
@@ -291,7 +291,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Cold-chain integrity" v={`${P.coldChainIntegrityPct}%`} t={P.coldChainIntegrityPct >= 95 ? 'ok' : 'warn'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel title="Inventory & stock-exhaustion prediction" meta="class · days cover · ETA stockout" bodyClass="!p-0">
+          <Panel signal="sample" title="Inventory & stock-exhaustion prediction" meta="class · days cover · ETA stockout" bodyClass="!p-0">
             {P.inventory.map(d => (
               <div key={d.drugClass} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
                 <span className="w-44 shrink-0 truncate text-[11px] text-ink">{d.drugClass}</span>
@@ -301,7 +301,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               </div>
             ))}
           </Panel>
-          <Panel title="National medicine routing" meta="region · fill rate · redistribution" bodyClass="!p-0">
+          <Panel signal="sample" title="National medicine routing" meta="region · fill rate · redistribution" bodyClass="!p-0">
             {P.regions.map(r => (
               <div key={r.region} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(r.tone)}` }}>
                 <span className="w-28 shrink-0 truncate text-[11px] text-ink">{r.region}</span>
@@ -331,7 +331,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Provider payments due" v={`${F.providerPaymentsDueM}M`} t={F.providerPaymentsDueM > 160 ? 'warn' : 'ok'} />
           <Stat l="Posture" v={F.posture} t={pt} />
         </div>
-        <Panel title="Scheme claims pipeline" meta="scheme · submitted → adjudicated → paid · denial · turnaround" bodyClass="!p-0">
+        <Panel signal="sample" title="Scheme claims pipeline" meta="scheme · submitted → adjudicated → paid · denial · turnaround" bodyClass="!p-0">
           {F.schemes.map(c => (
             <div key={c.scheme} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(c.tone)}` }}>
               <span className="w-44 shrink-0 truncate text-[11px] text-ink">{c.scheme}</span>
@@ -359,7 +359,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Enforcement actions" v={`${R.enforcementActions}`} t={R.enforcementActions > 30 ? 'alert' : 'warn'} />
           <Stat l="Compliance index" v={`${R.complianceIndex}`} t={pt} />
         </div>
-        <Panel title="Regulatory tracks" meta="track · pending → processed · overdue · median" bodyClass="!p-0">
+        <Panel signal="sample" title="Regulatory tracks" meta="track · pending → processed · overdue · median" bodyClass="!p-0">
           {R.tracks.map(r => (
             <div key={r.track} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(r.tone)}` }}>
               <span className="w-48 shrink-0 truncate text-[11px] text-ink">{r.track}</span>
@@ -390,7 +390,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Treatment adherence" v={`${ps.treatmentTracking.adherencePct}%`} t={ps.treatmentTracking.adherencePct >= 80 ? 'ok' : 'warn'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="Patient portal — appointments" meta="citizen-facing scheduling" bodyClass="!p-0">
+          <Panel signal="sample" title="Patient portal — appointments" meta="citizen-facing scheduling" bodyClass="!p-0">
             {ps.appointments.map(a => (
               <div key={a.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
                 <span className="w-12 shrink-0 font-mono tabular-nums text-ink-muted">{a.when}</span>
@@ -399,7 +399,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               </div>
             ))}
           </Panel>
-          <Panel title="Vaccination records" meta="immunisation registry" bodyClass="!p-2">
+          <Panel signal="sample" title="Vaccination records" meta="immunisation registry" bodyClass="!p-2">
             <div className="space-y-1">
               {ps.vaccination.map(v => {
                 const vt = v.status === 'overdue' ? 'alert' : v.status === 'due' ? 'warn' : 'ok';
@@ -414,7 +414,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
             <div className="mt-2 text-[9px] text-ink-muted">Linked to disease-intelligence vaccination analytics &amp; pharmaceutical demand.</div>
           </Panel>
-          <Panel title="Health alerts & treatment tracking" meta="citizen health continuity" bodyClass="!p-2">
+          <Panel signal="sample" title="Health alerts & treatment tracking" meta="citizen health continuity" bodyClass="!p-2">
             <div className="space-y-1">
               {ps.alerts.map((al, i) => (
                 <div key={i} className="flex items-start gap-1.5 text-[10px]">
@@ -431,7 +431,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           </Panel>
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="Prescriptions" meta="issuance · dispensing" bodyClass="!p-0">
+          <Panel signal="sample" title="Prescriptions" meta="issuance · dispensing" bodyClass="!p-0">
             {rx.map(p => (
               <div key={p.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
                 <span className="min-w-0 flex-1 truncate text-ink-soft">{p.drug}</span>
@@ -439,7 +439,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               </div>
             ))}
           </Panel>
-          <Panel title="Laboratory results" meta="diagnostics return" bodyClass="!p-0">
+          <Panel signal="sample" title="Laboratory results" meta="diagnostics return" bodyClass="!p-0">
             {labs.map(l => (
               <div key={l.id} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
                 <span className="min-w-0 flex-1 truncate text-ink-soft">{l.test}</span>
@@ -448,7 +448,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               </div>
             ))}
           </Panel>
-          <Panel title="Referrals & specialist routing" meta="continuity of care" bodyClass="!p-0">
+          <Panel signal="sample" title="Referrals & specialist routing" meta="continuity of care" bodyClass="!p-0">
             {refs.map(r => (
               <div key={r.id} className="border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">
                 <div className="flex items-center justify-between gap-2">
@@ -479,7 +479,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Posture" v={E.posture} t={pt} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel title="Incident load by category" meta="type · priority · response" bodyClass="!p-0">
+          <Panel signal="sample" title="Incident load by category" meta="type · priority · response" bodyClass="!p-0">
             {E.incidents.map(c => (
               <div key={c.type} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(c.tone)}` }}>
                 <span className="w-40 shrink-0 truncate text-[11px] text-ink">{c.type}</span>
@@ -489,7 +489,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               </div>
             ))}
           </Panel>
-          <Panel title="Regional EMS grid" meta="units · response · escalation" bodyClass="!p-0">
+          <Panel signal="sample" title="Regional EMS grid" meta="units · response · escalation" bodyClass="!p-0">
             {E.regions.map(r => (
               <div key={r.region} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(r.tone)}` }}>
                 <span className="w-28 shrink-0 truncate text-[11px] text-ink">{r.region}</span>
@@ -518,7 +518,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
           <Stat l="Authority" v="National" t="ok" />
         </div>
-        <Panel title="Whole-of-health domain status" meta="emergent from every subsystem engine — no hardcoded figure" bodyClass="!p-0">
+        <Panel signal="sample" title="Whole-of-health domain status" meta="emergent from every subsystem engine — no hardcoded figure" bodyClass="!p-0">
           {C.domains.map(d => (
             <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
               <span className="w-44 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>
@@ -527,7 +527,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
           ))}
         </Panel>
-        <Panel title="Command directives" meta="ranked · executable across the health federation" bodyClass="!p-2">
+        <Panel signal="sample" title="Command directives" meta="ranked · executable across the health federation" bodyClass="!p-2">
           {C.directives.length === 0 ? (
             <p className="text-[11px] text-ink-muted">No outstanding command directives — every health domain within tolerance. The queue is emergent; it is empty because nothing requires command action.</p>
           ) : (
@@ -567,7 +567,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Mortality index" v={`${h.mortalityIndex}`} t={h.mortalityIndex >= 16 ? 'alert' : h.mortalityIndex >= 11 ? 'warn' : 'ok'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="Bed & ICU management" meta="capacity · load balancing" bodyClass="!p-2">
+          <Panel signal="sample" title="Bed & ICU management" meta="capacity · load balancing" bodyClass="!p-2">
             {[
               { l: 'General beds', occ: h.beds.occupied, tot: h.beds.total, pct: h.beds.occupancyPct },
               { l: 'ICU beds', occ: h.icu.occupied, tot: h.icu.beds, pct: h.icu.occupancyPct },
@@ -585,7 +585,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               Load-balance posture: {h.loadBalanceTone === 'alert' ? 'SATURATED — divert to regional capacity' : h.loadBalanceTone === 'warn' ? 'STRAINED — monitor surge' : 'NOMINAL'}
             </div>
           </Panel>
-          <Panel title="Operating theatres & emergency intake" meta="scheduling · throughput" bodyClass="!p-2">
+          <Panel signal="sample" title="Operating theatres & emergency intake" meta="scheduling · throughput" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Theatres active" v={`${h.theatres.active}/${h.theatres.total}`} t="ok" />
               <Stat l="Scheduled today" v={`${h.theatres.scheduledToday}`} />
@@ -594,7 +594,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
             <div className="mt-2 h-7 overflow-hidden opacity-80"><Spark pts={waveSeries(`hosp:intake:${id}`, ts, 24, 30, 92)} tone={h.loadBalanceTone} /></div>
           </Panel>
-          <Panel title="Staffing & mortality intelligence" meta="clinical analytics" bodyClass="!p-2">
+          <Panel signal="sample" title="Staffing & mortality intelligence" meta="clinical analytics" bodyClass="!p-2">
             <div className="mb-2"><div className="flex justify-between text-[10px]"><span className="text-ink-soft">Staffing level</span><span className="font-mono tabular-nums" style={{ color: tc(h.staffingPct >= 80 ? 'ok' : 'warn') }}>{h.staffingPct}%</span></div>
               <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${h.staffingPct}%`, backgroundColor: tc(h.staffingPct >= 80 ? 'ok' : 'warn') }} /></div></div>
             <div className="text-[10px] text-ink-soft">Mortality index <span className="font-mono" style={{ color: tc(h.mortalityIndex >= 16 ? 'alert' : 'warn') }}>{h.mortalityIndex}</span> / 1000 admissions</div>
@@ -621,7 +621,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Rejection rate" v={`${L.rejectionRatePct}%`} t={L.rejectionRatePct >= 6 ? 'warn' : 'ok'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel title="Diagnostic pipeline" meta="assay · pending · in-assay · turnaround" bodyClass="!p-0">
+          <Panel signal="sample" title="Diagnostic pipeline" meta="assay · pending · in-assay · turnaround" bodyClass="!p-0">
             {L.assays.map(a => (
               <div key={a.assay} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(a.tone)}` }}>
                 <span className="w-40 shrink-0 truncate text-[11px] text-ink">{a.assay}</span>
@@ -630,7 +630,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               </div>
             ))}
           </Panel>
-          <Panel title="Regional lab network" meta="capacity · backlog · escalation" bodyClass="!p-0">
+          <Panel signal="sample" title="Regional lab network" meta="capacity · backlog · escalation" bodyClass="!p-0">
             {L.regions.map(r => (
               <div key={r.region} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(r.tone)}` }}>
                 <span className="w-28 shrink-0 truncate text-[11px] text-ink">{r.region}</span>
@@ -660,7 +660,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Outbreak cells" v={`${d.outbreaks.filter(o => o.severity !== 'contained').length}`} t="warn" />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel title="Outbreak heatmap" meta="region · Rt · propagation" bodyClass="!p-0">
+          <Panel signal="sample" title="Outbreak heatmap" meta="region · Rt · propagation" bodyClass="!p-0">
             {d.outbreaks.map(o => {
               const ot = o.severity === 'critical' ? 'alert' : o.severity === 'active' ? 'warn' : 'ok';
               return (
@@ -673,7 +673,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               );
             })}
           </Panel>
-          <Panel title="Predictive epidemiology" meta="projected case trajectory" bodyClass="!p-2">
+          <Panel signal="sample" title="Predictive epidemiology" meta="projected case trajectory" bodyClass="!p-2">
             <div className="space-y-1">
               {d.forecast.map(f => {
                 const grow = f.projectedCases > d.activeCases;
@@ -708,7 +708,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
           <Stat l="Authority" v="Sovereign fiscal" t="ok" />
         </div>
-        <Panel title="Whole-of-treasury domain status" meta="emergent from fiscal/revenue/budget/procurement/assurance engines" bodyClass="!p-0">
+        <Panel signal="sample" title="Whole-of-treasury domain status" meta="emergent from fiscal/revenue/budget/procurement/assurance engines" bodyClass="!p-0">
           {C.domains.map(d => (
             <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
               <span className="w-44 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>
@@ -717,7 +717,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
           ))}
         </Panel>
-        <Panel title="Command directives" meta="ranked · executable across the fiscal federation" bodyClass="!p-2">
+        <Panel signal="sample" title="Command directives" meta="ranked · executable across the fiscal federation" bodyClass="!p-2">
           {C.directives.length === 0 ? (
             <p className="text-[11px] text-ink-muted">No outstanding command directives — fiscal posture within tolerance.</p>
           ) : (
@@ -758,7 +758,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="TSA balance" v={`$${br.tsaBalanceBn}B`} t={br.tsaBalanceBn >= 12 ? 'ok' : 'warn'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel title="Banking rails" meta="disbursement · settlement · reconciliation" bodyClass="!p-2">
+          <Panel signal="sample" title="Banking rails" meta="disbursement · settlement · reconciliation" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Channels online" v={`${br.channelsOnline}/${br.channelsTotal}`} t={br.channelsOnline === br.channelsTotal ? 'ok' : 'alert'} />
               <Stat l="Settlement latency" v={`${br.settlementLatencyMin}m`} t={br.settlementLatencyMin >= 25 ? 'alert' : br.settlementLatencyMin >= 12 ? 'warn' : 'ok'} />
@@ -767,7 +767,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
             <div className="mt-2 h-7 overflow-hidden opacity-80"><Spark pts={waveSeries(`trz:rails:${id}`, ts, 24, 30, 92)} tone={br.failedSettlements ? 'alert' : 'ok'} /></div>
           </Panel>
-          <Panel title="Fiscal stability monitor" meta="macro posture" bodyClass="!p-2">
+          <Panel signal="sample" title="Fiscal stability monitor" meta="macro posture" bodyClass="!p-2">
             <div className="mb-1 flex justify-between text-[10px]"><span className="text-ink-soft">Macro stability</span><span className="font-mono tabular-nums" style={{ color: tc(fc.tone) }}>{fc.macroStability}</span></div>
             <div className="h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${fc.macroStability}%`, backgroundColor: tc(fc.tone) }} /></div>
             <p className="mt-2 text-[9px] text-ink-muted">Treasury instability propagates to procurement, healthcare, infrastructure, education and transport readiness via the state fabric.</p>
@@ -793,7 +793,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Blocked allocations" v={`${bg.blockedAllocations}`} t={bg.blockedAllocations ? 'alert' : 'ok'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel title="Revenue streams" meta="taxation · customs · collection" bodyClass="!p-2">
+          <Panel signal="sample" title="Revenue streams" meta="taxation · customs · collection" bodyClass="!p-2">
             <div className="space-y-1">
               {rv.byStream.map(s => (
                 <div key={s.stream} className="flex items-center gap-2 text-[10px]">
@@ -804,7 +804,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               ))}
             </div>
           </Panel>
-          <Panel title="Budget execution by ministry" meta="appropriation → spend" bodyClass="!p-2">
+          <Panel signal="sample" title="Budget execution by ministry" meta="appropriation → spend" bodyClass="!p-2">
             <div className="space-y-1">
               {bg.byMinistry.map(b => {
                 const open = selRow === b.ministry;
@@ -855,7 +855,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Audit chain" v={`${fa.chainIntactPct}%`} t={fa.chainIntactPct >= 99.5 ? 'ok' : 'warn'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="Procurement pipeline" meta="solicitation → disbursement" bodyClass="!p-2">
+          <Panel signal="sample" title="Procurement pipeline" meta="solicitation → disbursement" bodyClass="!p-2">
             <div className="space-y-1">
               {pc.pipeline.map(s => (
                 <div key={s.stage} className="flex items-center gap-2 text-[10px]">
@@ -866,7 +866,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               ))}
             </div>
           </Panel>
-          <Panel title="Citizen finance" meta="taxpayer portal · payments" bodyClass="!p-2">
+          <Panel signal="sample" title="Citizen finance" meta="taxpayer portal · payments" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Portal uptime" v={`${cf.portalUptime}%`} t={cf.portalUptime >= 99 ? 'ok' : 'warn'} />
               <Stat l="Refunds pending" v={cf.refundsPending.toLocaleString()} t={cf.refundsPending > 3000 ? 'alert' : 'warn'} />
@@ -874,7 +874,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               <Stat l="Payments/day" v={`${cf.paymentsTodayM}M`} t="ok" />
             </div>
           </Panel>
-          <Panel title="Fiscal assurance" meta="anti-fraud · regional risk" bodyClass="!p-2">
+          <Panel signal="sample" title="Fiscal assurance" meta="anti-fraud · regional risk" bodyClass="!p-2">
             <div className="mb-1 text-[10px] text-ink-soft">Open findings <span className="font-mono" style={{ color: TONE.warn }}>{fa.openFindings}</span> · fraud signals <span className="font-mono" style={{ color: fa.fraudSignals ? TONE.alert : TONE.ok }}>{fa.fraudSignals}</span></div>
             <div className="space-y-0.5">
               {fa.regionalRisk.map(r => (
@@ -904,7 +904,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
           <Stat l="Authority" v="National" t="ok" />
         </div>
-        <Panel title="Whole-of-education domain status" meta="emergent from every subsystem engine" bodyClass="!p-0">
+        <Panel signal="sample" title="Whole-of-education domain status" meta="emergent from every subsystem engine" bodyClass="!p-0">
           {C.domains.map(d => (
             <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
               <span className="w-44 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>
@@ -913,7 +913,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
           ))}
         </Panel>
-        <Panel title="Command directives" meta="ranked · executable across the education federation" bodyClass="!p-2">
+        <Panel signal="sample" title="Command directives" meta="ranked · executable across the education federation" bodyClass="!p-2">
           {C.directives.length === 0 ? (
             <p className="text-[11px] text-ink-muted">No outstanding command directives — every education domain within tolerance.</p>
           ) : (
@@ -953,7 +953,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Funding gap" v={`${H.fundingGapPct}%`} t={H.fundingGapPct >= 25 ? 'alert' : H.fundingGapPct >= 14 ? 'warn' : 'ok'} />
           <Stat l="Posture" v={H.posture} t={pt} />
         </div>
-        <Panel title="Institution tiers" meta="tier · institutions · utilisation" bodyClass="!p-0">
+        <Panel signal="sample" title="Institution tiers" meta="tier · institutions · utilisation" bodyClass="!p-0">
           {H.tiers.map(x => (
             <div key={x.tier} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(x.tone)}` }}>
               <span className="w-48 shrink-0 truncate text-[11px] text-ink">{x.tier}</span>
@@ -979,7 +979,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Integrity flags" v={`${ex.integrityFlags}`} t={ex.integrityFlags >= 12 ? 'alert' : ex.integrityFlags ? 'warn' : 'ok'} />
           <Stat l="Pipeline stages" v={`${ex.pipeline.length}`} t="ok" />
         </div>
-        <Panel title="Examination pipeline" meta="registration → marking → release" bodyClass="!p-2">
+        <Panel signal="sample" title="Examination pipeline" meta="registration → marking → release" bodyClass="!p-2">
           <div className="space-y-1">
             {ex.pipeline.map(s => (
               <div key={s.stage} className="flex items-center gap-2 text-[10px]">
@@ -1009,7 +1009,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Outdated frameworks" v={`${Cu.outdatedFrameworks}`} t={Cu.outdatedFrameworks ? 'alert' : 'ok'} />
           <Stat l="Posture" v={Cu.posture} t={pt} />
         </div>
-        <Panel title="Subject frameworks" meta="subject · coverage · last revised" bodyClass="!p-0">
+        <Panel signal="sample" title="Subject frameworks" meta="subject · coverage · last revised" bodyClass="!p-0">
           {Cu.subjects.map(s => (
             <div key={s.subject} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(s.tone)}` }}>
               <span className="w-40 shrink-0 truncate text-[11px] text-ink">{s.subject}</span>
@@ -1075,7 +1075,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Exam integrity flags" v={`${ex.integrityFlags}`} t={ex.integrityFlags ? 'alert' : 'ok'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="School network — regional capacity" meta="infrastructure · enrolment" bodyClass="!p-2">
+          <Panel signal="sample" title="School network — regional capacity" meta="infrastructure · enrolment" bodyClass="!p-2">
             <div className="space-y-1">
               {sn.byRegion.map(r => (
                 <div key={r.region} className="flex items-center gap-2 text-[10px]">
@@ -1087,7 +1087,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               ))}
             </div>
           </Panel>
-          <Panel title="Examinations pipeline" meta="registration → release" bodyClass="!p-2">
+          <Panel signal="sample" title="Examinations pipeline" meta="registration → release" bodyClass="!p-2">
             <div className="mb-2 grid grid-cols-2 gap-2">
               <Stat l="Candidates" v={ex.candidates.toLocaleString()} t="ok" />
               <Stat l="Results pending" v={ex.resultsPending.toLocaleString()} t={ex.resultsPending > 30000 ? 'warn' : 'ok'} />
@@ -1102,7 +1102,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               ))}
             </div>
           </Panel>
-          <Panel title="Teacher workforce & learner services" meta="postings · scholarships" bodyClass="!p-2">
+          <Panel signal="sample" title="Teacher workforce & learner services" meta="postings · scholarships" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Teachers" v={tch.teachers.toLocaleString()} t="ok" />
               <Stat l="Payroll on-time" v={`${tch.payrollOnTimePct}%`} t={tch.payrollOnTimePct >= 95 ? 'ok' : 'warn'} />
@@ -1132,7 +1132,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
           <Stat l="Authority" v="National" t="ok" />
         </div>
-        <Panel title="Whole-of-mobility domain status" meta="emergent from modal/corridor/fleet engines" bodyClass="!p-0">
+        <Panel signal="sample" title="Whole-of-mobility domain status" meta="emergent from modal/corridor/fleet engines" bodyClass="!p-0">
           {C.domains.map(d => (
             <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
               <span className="w-52 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>
@@ -1141,7 +1141,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
           ))}
         </Panel>
-        <Panel title="Command directives" meta="ranked · executable across the mobility federation" bodyClass="!p-2">
+        <Panel signal="sample" title="Command directives" meta="ranked · executable across the mobility federation" bodyClass="!p-2">
           {C.directives.length === 0 ? (
             <p className="text-[11px] text-ink-muted">No outstanding command directives — mobility network within tolerance.</p>
           ) : (
@@ -1182,7 +1182,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Safety index" v={`${o.safetyIndex}`} t={o.safetyIndex >= 80 ? 'ok' : 'warn'} />
           <Stat l="Fleet available" v={`${o.fleet.available}/${o.fleet.vehicles}`} t={o.fleet.available < o.fleet.vehicles * 0.6 ? 'alert' : 'ok'} />
         </div>
-        <Panel title={`${modeName} corridor flow`} meta="load · throughput" bodyClass="!p-0">
+        <Panel signal="sample" title={`${modeName} corridor flow`} meta="load · throughput" bodyClass="!p-0">
           {o.corridors.map(c => (
             <div key={c.corridor} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(c.tone)}` }}>
               <span className="w-32 shrink-0 truncate text-[11px] text-ink">{c.corridor}</span>
@@ -1226,7 +1226,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Registry backlog" v={o.registry.backlog.toLocaleString()} t={o.registry.backlog > 3000 ? 'warn' : 'ok'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel title="Modal operations" meta="aviation · maritime · rail · road" bodyClass="!p-2">
+          <Panel signal="sample" title="Modal operations" meta="aviation · maritime · rail · road" bodyClass="!p-2">
             <div className="space-y-1">
               {o.modes.map(md => (
                 <div key={md.mode} className="flex items-center gap-2 text-[10px]">
@@ -1238,7 +1238,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               ))}
             </div>
           </Panel>
-          <Panel title="Corridor flow" meta="logistics load · throughput" bodyClass="!p-2">
+          <Panel signal="sample" title="Corridor flow" meta="logistics load · throughput" bodyClass="!p-2">
             <div className="space-y-1">
               {o.corridors.map(c => (
                 <div key={c.corridor} className="flex items-center gap-2 text-[10px]">
@@ -1269,7 +1269,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
           <Stat l="Authority" v="National" t="ok" />
         </div>
-        <Panel title="Whole-of-energy domain status" meta="emergent from generation/grid/reserve engines" bodyClass="!p-0">
+        <Panel signal="sample" title="Whole-of-energy domain status" meta="emergent from generation/grid/reserve engines" bodyClass="!p-0">
           {C.domains.map(d => (
             <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
               <span className="w-52 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>
@@ -1278,7 +1278,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
           ))}
         </Panel>
-        <Panel title="Command directives" meta="ranked · executable across the energy federation" bodyClass="!p-2">
+        <Panel signal="sample" title="Command directives" meta="ranked · executable across the energy federation" bodyClass="!p-2">
           {C.directives.length === 0 ? (
             <p className="text-[11px] text-ink-muted">No outstanding command directives — grid & energy security within tolerance.</p>
           ) : (
@@ -1315,7 +1315,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Reserve margin" v={`${o.reserveMarginPct}%`} t={o.reserveMarginPct >= 12 ? 'ok' : o.reserveMarginPct >= 6 ? 'warn' : 'alert'} />
           <Stat l="Load shedding" v={o.loadShedding ? 'ACTIVE' : 'none'} t={o.loadShedding ? 'alert' : 'ok'} />
         </div>
-        <Panel title="Generation mix" meta="source · output" bodyClass="!p-0">
+        <Panel signal="sample" title="Generation mix" meta="source · output" bodyClass="!p-0">
           {o.generation.map(g => (
             <div key={g.source} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(g.tone)}` }}>
               <span className="w-32 shrink-0 truncate text-[11px] text-ink">{g.source}</span>
@@ -1384,7 +1384,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Load shedding" v={o.loadShedding ? 'ACTIVE' : 'NONE'} t={o.loadShedding ? 'alert' : 'ok'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel title="Generation mix" meta="source output" bodyClass="!p-2">
+          <Panel signal="sample" title="Generation mix" meta="source output" bodyClass="!p-2">
             <div className="space-y-1">
               {o.generation.map(g => (
                 <div key={g.source} className="flex items-center gap-2 text-[10px]">
@@ -1395,7 +1395,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               ))}
             </div>
           </Panel>
-          <Panel title="Grid & reserves" meta="substations · fuel" bodyClass="!p-2">
+          <Panel signal="sample" title="Grid & reserves" meta="substations · fuel" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Substations online" v={`${o.substations.online}/${o.substations.total}`} t={o.substations.faults > 10 ? 'alert' : o.substations.faults ? 'warn' : 'ok'} />
               <Stat l="Faults" v={`${o.substations.faults}`} t={o.substations.faults ? 'warn' : 'ok'} />
@@ -1424,7 +1424,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
           <Stat l="Authority" v="National" t="ok" />
         </div>
-        <Panel title={`Whole-of-${m.archetype.toLowerCase()} domain status`} meta="emergent from the institution's operational engine" bodyClass="!p-0">
+        <Panel signal="sample" title={`Whole-of-${m.archetype.toLowerCase()} domain status`} meta="emergent from the institution's operational engine" bodyClass="!p-0">
           {C.domains.map(d => (
             <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
               <span className="w-44 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>
@@ -1433,7 +1433,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
           ))}
         </Panel>
-        <Panel title="Command directives" meta="ranked · executable across the institution" bodyClass="!p-2">
+        <Panel signal="sample" title="Command directives" meta="ranked · executable across the institution" bodyClass="!p-2">
           {C.directives.length === 0 ? (
             <p className="text-[11px] text-ink-muted">No outstanding command directives — every domain within tolerance.</p>
           ) : (
@@ -1518,19 +1518,19 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Threat level" v={o.internalThreatLevel} t={lt} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="Civil identity systems" meta="enrolment · verification" bodyClass="!p-2">
+          <Panel signal="sample" title="Civil identity systems" meta="enrolment · verification" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Verifications/hr" v={o.identity.verificationsPerHr.toLocaleString()} t="ok" />
               <Stat l="Uptime" v={`${o.identity.uptimePct}%`} t={o.identity.uptimePct >= 99 ? 'ok' : 'warn'} />
             </div>
           </Panel>
-          <Panel title="Border control" meta="crossings · clearance" bodyClass="!p-2">
+          <Panel signal="sample" title="Border control" meta="crossings · clearance" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Crossings today" v={o.border.crossingsToday.toLocaleString()} t="ok" />
               <Stat l="Mean clearance" v={`${o.border.meanClearanceMin}m`} t={o.border.meanClearanceMin >= 30 ? 'warn' : 'ok'} />
             </div>
           </Panel>
-          <Panel title="Internal coordination & licensing" meta="cells · permits" bodyClass="!p-2">
+          <Panel signal="sample" title="Internal coordination & licensing" meta="cells · permits" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Coordination cells" v={`${o.coordination.cellsActive}`} t="ok" />
               <Stat l="Joint ops" v={`${o.coordination.jointOpsActive}`} t={o.coordination.jointOpsActive ? 'warn' : 'ok'} />
@@ -1582,7 +1582,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
         </div>
-        <Panel title={title} meta={group === 'crop' ? 'crop · yield index' : 'region · production index'} bodyClass="!p-0">
+        <Panel signal="sample" title={title} meta={group === 'crop' ? 'crop · yield index' : 'region · production index'} bodyClass="!p-0">
           {rows.map(r => (
             <div key={r.label} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(r.tone)}` }}>
               <span className="w-32 shrink-0 truncate text-[11px] text-ink">{r.label}</span>
@@ -1610,7 +1610,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Subsidy disbursed" v={`${o.subsidyDisbursementPct}%`} t={o.subsidyDisbursementPct >= 75 ? 'ok' : 'warn'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel title="Crop production" meta="yield index" bodyClass="!p-2">
+          <Panel signal="sample" title="Crop production" meta="yield index" bodyClass="!p-2">
             <div className="space-y-1">
               {o.crops.map(c => (
                 <div key={c.crop} className="flex items-center gap-2 text-[10px]">
@@ -1621,7 +1621,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               ))}
             </div>
           </Panel>
-          <Panel title="Regional production & farmer services" meta="food-supply footprint" bodyClass="!p-2">
+          <Panel signal="sample" title="Regional production & farmer services" meta="food-supply footprint" bodyClass="!p-2">
             <div className="mb-2 grid grid-cols-3 gap-1.5">
               {o.byRegion.map(r => (
                 <div key={r.region} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
@@ -1698,7 +1698,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Transfers pending" v={`${o.courtLiaison.transfersPending}`} t={o.courtLiaison.transfersPending > 500 ? 'warn' : 'ok'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="Legal aid" meta="access to representation" bodyClass="!p-2">
+          <Panel signal="sample" title="Legal aid" meta="access to representation" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Centres" v={`${o.legalAid.centres}`} t="ok" />
               <Stat l="Open matters" v={o.legalAid.openMatters.toLocaleString()} t="ok" />
@@ -1706,7 +1706,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               <Stat l="Represented" v={`${o.legalAid.representedPct}%`} t={o.legalAid.representedPct >= 75 ? 'ok' : 'warn'} />
             </div>
           </Panel>
-          <Panel title="Public registries" meta="records · verification" bodyClass="!p-2">
+          <Panel signal="sample" title="Public registries" meta="records · verification" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Records" v={`${o.registries.recordsM}M`} t="ok" />
               <Stat l="Verifications/hr" v={o.registries.verificationsPerHr.toLocaleString()} t="ok" />
@@ -1714,7 +1714,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               <Stat l="Integrity" v={`${o.registries.integrityPct}%`} t={o.registries.integrityPct >= 98 ? 'ok' : 'warn'} />
             </div>
           </Panel>
-          <Panel title="Corrections" meta="custodial system" bodyClass="!p-2">
+          <Panel signal="sample" title="Corrections" meta="custodial system" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Facilities" v={`${o.corrections.facilities}`} t="ok" />
               <Stat l="Population" v={o.corrections.population.toLocaleString()} t="ok" />
@@ -1764,7 +1764,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
         </div>
-        <Panel title={`${title} — regional hazard grid`} meta="region · level · kind" bodyClass="!p-0">
+        <Panel signal="sample" title={`${title} — regional hazard grid`} meta="region · level · kind" bodyClass="!p-0">
           {o.hazards.map(h => {
             const ht: 'ok' | 'warn' | 'alert' = h.level === 'severe' ? 'alert' : h.level === 'moderate' ? 'warn' : 'ok';
             return (
@@ -1795,7 +1795,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Compliance" v={`${o.compliancePct}%`} t={o.compliancePct >= 80 ? 'ok' : 'warn'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-2">
-          <Panel title="Environmental hazards" meta="regional risk" bodyClass="!p-0">
+          <Panel signal="sample" title="Environmental hazards" meta="regional risk" bodyClass="!p-0">
             {o.hazards.map(h => {
               const ht = h.level === 'severe' ? TONE.alert : h.level === 'moderate' ? TONE.warn : TONE.ok;
               return (
@@ -1807,7 +1807,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               );
             })}
           </Panel>
-          <Panel title="Permits & compliance" meta="regulatory throughput" bodyClass="!p-2">
+          <Panel signal="sample" title="Permits & compliance" meta="regulatory throughput" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Permits pending" v={o.permitsPending.toLocaleString()} t={o.permitsPending > 1800 ? 'warn' : 'ok'} />
               <Stat l="Compliance" v={`${o.compliancePct}%`} t={o.compliancePct >= 80 ? 'ok' : 'warn'} />
@@ -1882,19 +1882,19 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Standards conformity" v={`${o.standards.conformityPct}%`} t={o.standards.conformityPct >= 85 ? 'ok' : 'warn'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="Business registry" meta="enterprise lifecycle" bodyClass="!p-2">
+          <Panel signal="sample" title="Business registry" meta="enterprise lifecycle" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="New today" v={o.businessRegistry.newToday.toLocaleString()} t="ok" />
               <Stat l="Backlog" v={o.businessRegistry.backlog.toLocaleString()} t={o.businessRegistry.backlog > 2500 ? 'warn' : 'ok'} />
             </div>
           </Panel>
-          <Panel title="Standards & metrology" meta="conformity assurance" bodyClass="!p-2">
+          <Panel signal="sample" title="Standards & metrology" meta="conformity assurance" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Labs" v={`${o.standards.labs}`} t="ok" />
               <Stat l="Certs pending" v={o.standards.certificationsPending.toLocaleString()} t={o.standards.certificationsPending > 1200 ? 'warn' : 'ok'} />
             </div>
           </Panel>
-          <Panel title="Industrial development" meta="parks · investment" bodyClass="!p-2">
+          <Panel signal="sample" title="Industrial development" meta="parks · investment" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Parks" v={`${o.industrialParks.parks}`} t="ok" />
               <Stat l="Occupancy" v={`${o.industrialParks.occupancyPct}%`} t={o.industrialParks.occupancyPct >= 70 ? 'ok' : 'warn'} />
@@ -1966,13 +1966,13 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Insurance payout on-time" v={`${o.socialInsurance.payoutOnTimePct}%`} t={o.socialInsurance.payoutOnTimePct >= 90 ? 'ok' : 'warn'} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
-          <Panel title="Workplace inspection" meta="safety & compliance" bodyClass="!p-2">
+          <Panel signal="sample" title="Workplace inspection" meta="safety & compliance" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Units active" v={`${o.inspection.unitsActive}`} t="ok" />
               <Stat l="Open cases" v={o.inspection.openCases.toLocaleString()} t={o.inspection.openCases > 1500 ? 'warn' : 'ok'} />
             </div>
           </Panel>
-          <Panel title="Social insurance" meta="contributory funds" bodyClass="!p-2">
+          <Panel signal="sample" title="Social insurance" meta="contributory funds" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Funds" v={`$${o.socialInsurance.fundsBn}B`} t="ok" />
               <Stat l="Contributors" v={`${o.socialInsurance.contributorsM}M`} t="ok" />
@@ -1980,7 +1980,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
               <Stat l="Payout on-time" v={`${o.socialInsurance.payoutOnTimePct}%`} t={o.socialInsurance.payoutOnTimePct >= 90 ? 'ok' : 'warn'} />
             </div>
           </Panel>
-          <Panel title="Dispute resolution & skills" meta="tribunals · training" bodyClass="!p-2">
+          <Panel signal="sample" title="Dispute resolution & skills" meta="tribunals · training" bodyClass="!p-2">
             <div className="grid grid-cols-2 gap-2">
               <Stat l="Tribunals" v={`${o.disputes.tribunals}`} t="ok" />
               <Stat l="Open disputes" v={o.disputes.openDisputes.toLocaleString()} t={o.disputes.openDisputes > 3000 ? 'warn' : 'ok'} />
@@ -2010,7 +2010,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       </div>
 
       <div className="grid gap-2 xl:grid-cols-3">
-        <Panel title={`${grp.name} — command centre`} meta={grp.purpose} bodyClass="!p-2">
+        <Panel signal="sample" title={`${grp.name} — command centre`} meta={grp.purpose} bodyClass="!p-2">
           <div className="grid grid-cols-2 gap-2">
             <Stat l="Directives" v={`${ao.command.directives}`} t="ok" />
             <Stat l="Decision latency" v={`${ao.command.decisionLatencyMin}m`} t={ao.command.decisionLatencyMin >= 24 ? 'warn' : 'ok'} />
@@ -2022,7 +2022,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             ))}
           </div>
         </Panel>
-        <Panel title="Operations centre" meta="live workflow queues" bodyClass="!p-0">
+        <Panel signal="sample" title="Operations centre" meta="live workflow queues" bodyClass="!p-0">
           {ao.queues.map(q => (
             <div key={q.label} className="border-b border-line-soft px-3 py-1.5 last:border-0">
               <div className="flex items-center justify-between text-[10px]">
@@ -2033,7 +2033,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
           ))}
         </Panel>
-        <Panel title="Sector KPIs" meta="archetype signature" bodyClass="!p-2">
+        <Panel signal="sample" title="Sector KPIs" meta="archetype signature" bodyClass="!p-2">
           <div className="grid grid-cols-2 gap-1">
             {ao.kpis.map(k => (
               <div key={k.label} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
@@ -2046,7 +2046,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       </div>
 
       <div className="grid gap-2 xl:grid-cols-3">
-        <Panel title="Personnel & field units" meta={`${ao.personnel.staffedPct}% staffed`} bodyClass="!p-2">
+        <Panel signal="sample" title="Personnel & field units" meta={`${ao.personnel.staffedPct}% staffed`} bodyClass="!p-2">
           <div className="space-y-1">
             {ao.personnel.units.map(u => (
               <div key={u.label} className="flex items-center gap-2 text-[10px]">
@@ -2057,7 +2057,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             <div className="mt-1 text-[9px] text-ink-muted">Vacancies {ao.personnel.vacanciesPct}% · on-duty {ao.personnel.onDuty.toLocaleString()}</div>
           </div>
         </Panel>
-        <Panel title="Citizen services & logistics" meta="public continuity" bodyClass="!p-2">
+        <Panel signal="sample" title="Citizen services & logistics" meta="public continuity" bodyClass="!p-2">
           <div className="grid grid-cols-2 gap-2">
             <Stat l="SLA met" v={`${ao.citizen.slaMetPct}%`} t={ao.citizen.slaMetPct >= 85 ? 'ok' : 'warn'} />
             <Stat l="Satisfaction" v={`${ao.citizen.satisfactionPct}%`} t={ao.citizen.satisfactionPct >= 75 ? 'ok' : 'warn'} />
@@ -2065,7 +2065,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             <Stat l="Disruptions" v={`${ao.logistics.disruptions}`} t={ao.logistics.disruptions ? 'alert' : 'ok'} />
           </div>
         </Panel>
-        <Panel title="Operational intelligence" meta="signals" bodyClass="!p-2">
+        <Panel signal="sample" title="Operational intelligence" meta="signals" bodyClass="!p-2">
           <div className="space-y-1">
             {ao.intelligence.map((s, i) => (
               <div key={i} className="flex items-start gap-1.5 text-[10px]">
@@ -2078,7 +2078,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       </div>
 
       <div className="grid gap-2 xl:grid-cols-2">
-        <Panel title="Regional operations" meta={`${grp.name} footprint`} bodyClass="!p-1.5">
+        <Panel signal="sample" title="Regional operations" meta={`${grp.name} footprint`} bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3">
             {ao.regional.map(r => (
               <div key={r.region} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
@@ -2089,7 +2089,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             ))}
           </div>
         </Panel>
-        <Panel title="Subsystem inventory" meta="institutional machinery" bodyClass="!p-0">
+        <Panel signal="sample" title="Subsystem inventory" meta="institutional machinery" bodyClass="!p-0">
           <div className="max-h-[220px] overflow-y-auto">
             {ao.inventory.map(s => (
               <div key={s.name} className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]">

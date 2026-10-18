@@ -87,10 +87,10 @@ export function AuditView() {
 
   const tele = [
     { l: 'Chain integrity', v: verify ? (intact ? 'INTACT' : 'BROKEN') : '—', sub: intact ? 'tamper-evident' : 'investigate', t: tone, spark: sp('ci', intact ? 80 : 10, intact ? 99 : 40) },
-    { l: 'Events recorded', v: String(evs.length), sub: `+${Math.round(seed(`er:${epoch}`) * 40)} / 24h`, t: 'ok', spark: sp('er', 20, 70) },
+    { l: 'Events recorded', v: String(evs.length), sub: `+${evs.filter(e => now - Date.parse(e.at) < 86_400_000).length} / 24h`, t: 'ok', spark: sp('er', 20, 70) },
     { l: 'Verified links', v: String(verify?.checked ?? 0), sub: 'hash continuity', t: 'ok', spark: sp('vl', 60, 95) },
     { l: 'Non-ok outcomes', v: String(denied), sub: denied ? 'review queue' : 'clean', t: denied ? 'warn' : 'ok', spark: sp('no', 0, denied ? 50 : 8) },
-    { l: 'Anomaly signals', v: String(2 + Math.round(seed(`an:${epoch}`) * 4)), sub: 'behavioural', t: 'warn', spark: sp('an', 10, 55) },
+    { l: 'Anomaly signals', v: String(2 + Math.round(seed(`an:${epoch}`) * 4)), sub: 'sample · no detector connected', t: 'warn', spark: sp('an', 10, 55) },
     { l: 'Attestation', v: 'CURRENT', sub: `last ${Math.round((now % 60000) / 1000)}s`, t: 'ok', spark: sp('at', 70, 96) },
   ];
 
@@ -108,7 +108,7 @@ export function AuditView() {
       </div>
 
       <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
-        <Panel title="Control assurance" meta="continuous attestation" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Control assurance" meta="continuous attestation" bodyClass="!p-1.5">
           <div className="grid grid-cols-1 gap-1">
             {CONTROLS.map(c => {
               const v = 78 + Math.round(seed(`ctl:${c.k}:${epoch}`) * 21);
@@ -124,7 +124,7 @@ export function AuditView() {
           </div>
         </Panel>
 
-        <Panel title="Oversight bodies" meta="independent mandate" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Oversight bodies" meta="independent mandate" bodyClass="!p-1.5">
           <div className="grid grid-cols-1 gap-1">
             {BODIES.map(b => (
               <div key={b.l} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
@@ -138,7 +138,7 @@ export function AuditView() {
           </div>
         </Panel>
 
-        <Panel title="Anomaly signals" meta="behavioural detection" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Anomaly signals" meta="behavioural detection" bodyClass="!p-1.5">
           <div className="grid grid-cols-1 gap-1">
             {[
               { l: 'Off-hours privileged action', t: 'warn' },

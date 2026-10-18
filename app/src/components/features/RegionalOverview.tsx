@@ -8,6 +8,7 @@ import { networkPressure } from '@/lib/gov/infrastructure';
 import { SCENARIOS, type ScenarioKey } from '@/lib/gov/simulation';
 import { regionName } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { api } from '@/lib/api/client';
 
 const POS_TONE: Record<string, string> = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' };
 
@@ -20,6 +21,14 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
     return () => clearInterval(t);
   }, []);
   const ts = now / 4000;
+  // National population comes from the twin (observed once every region reports); never from the model.
+  const [pop, setPop] = React.useState('Not connected');
+  React.useEffect(() => {
+    api.cabinet.national().then(n => {
+      const i = n.indicators.find(x => x.label === 'Population');
+      if (i && i.kind !== 'unavailable') setPop(`${i.value}${i.unit ? ` ${i.unit}` : ''}`);
+    }).catch(() => {});
+  }, []);
 
   const regions = nationalRegions(ts);
   const roll = regionRollup(regions);
@@ -34,7 +43,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
   const tele = [
     { l: 'Regional posture', v: roll.posture.toUpperCase(), sub: `${roll.meanReadiness}% mean readiness`, t: POS_TONE[roll.posture]!, k: 'np' },
     { l: 'Regions critical', v: String(roll.critical), sub: `${roll.elevated} elevated`, t: roll.critical ? 'alert' : roll.elevated ? 'warn' : 'ok', k: 'rc' },
-    { l: 'Population', v: `${roll.population}M`, sub: 'under regional command', t: 'ok', k: 'po' },
+    { l: 'Population', v: pop, sub: pop === 'Not connected' ? 'statistics source (National Twin)' : 'observed · National Twin', t: pop === 'Not connected' ? 'neutral' : 'ok', k: 'po' },
     { l: 'Infrastructure', v: `${roll.meanInfra}%`, sub: 'mean coverage', t: roll.meanInfra >= 80 ? 'ok' : 'warn', k: 'in' },
     { l: 'Incident load', v: String(roll.totalIncidents), sub: 'active · all regions', t: roll.totalIncidents > 12 ? 'alert' : roll.totalIncidents ? 'warn' : 'ok', k: 'il' },
     { l: 'Coordination tempo', v: `${Math.round(waveSeries('ro:ct', ts, 1, 40, 90).at(-1)!)}/min`, sub: 'inter-region', t: 'ok', k: 'ct' },
@@ -72,7 +81,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
       </div>
 
       <div className="grid gap-2 xl:grid-cols-12">
-        <Panel title="Regional theatre" meta="provincial posture · live" className="xl:col-span-7" bodyClass="!p-2">
+        <Panel signal="sample" title="Regional theatre" meta="provincial posture · live" className="xl:col-span-7" bodyClass="!p-2">
           <TerritoryHeat epoch={Math.floor(ts) % 60} height={330} />
           <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-4">
             {[
@@ -95,7 +104,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
           </div>
         </Panel>
 
-        <Panel title="Regional command grid" meta={`${regions.length} regions · expand for detail`} className="xl:col-span-5" bodyClass="!p-0">
+        <Panel signal="sample" title="Regional command grid" meta={`${regions.length} regions · expand for detail`} className="xl:col-span-5" bodyClass="!p-0">
           {regions.map(r => {
             const o = open === r.name;
             const tn = POS_TONE[r.posture]!;
@@ -147,7 +156,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
       </div>
 
       <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
-        <Panel title="Regional readiness ladder" meta="composite" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Regional readiness ladder" meta="composite" bodyClass="!p-1.5">
           <div className="space-y-1">
             {[...regions].sort((a, b) => a.readiness - b.readiness).map(r => {
               const tn = POS_TONE[r.posture]!;
@@ -166,7 +175,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
           </div>
         </Panel>
 
-        <Panel title="Capital-dependency map" meta="centralisation risk" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Capital-dependency map" meta="centralisation risk" bodyClass="!p-1.5">
           <div className="space-y-1">
             {regions.filter(r => !r.capital).map(r => {
               const tn = r.capitalDependency >= 70 ? 'alert' : r.capitalDependency >= 50 ? 'warn' : 'ok';
@@ -181,7 +190,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
           </div>
         </Panel>
 
-        <Panel title="Escalation cadence" meta="by region · 24h" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Escalation cadence" meta="by region · 24h" bodyClass="!p-1.5">
           <div className="space-y-1">
             {regions.map(r => {
               const n = r.incidents;
@@ -196,7 +205,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
           </div>
         </Panel>
 
-        <Panel title="Regional actions" meta="coordination authority" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Regional actions" meta="coordination authority" bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1">
             {[
               { l: 'Deploy field unit', g: '⛑', h: '/gov/coordination' },
@@ -242,7 +251,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
         })}
       </div>
 
-      <Panel title="Regional scenario projection" meta={projActive ? `${projLabel} · projected readiness` : 'select a shock to project'} bodyClass="!p-1.5">
+      <Panel signal="sample" title="Regional scenario projection" meta={projActive ? `${projLabel} · projected readiness` : 'select a shock to project'} bodyClass="!p-1.5">
         <div className="mb-2 grid grid-cols-2 gap-1 sm:grid-cols-3 xl:grid-cols-5">
           {SCENARIOS.map(sc => {
             const on = sc.key === scn;
@@ -283,7 +292,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
         </div>
       </Panel>
 
-      <Panel title="Infrastructure network pressure" meta="national digital twin" bodyClass="!p-1.5">
+      <Panel signal="sample" title="Infrastructure network pressure" meta="national digital twin" bodyClass="!p-1.5">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
             const p = networkPressure(k, ts);
@@ -304,7 +313,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
           { l: 'Regional posture', v: roll.posture.toUpperCase(), t: POS_TONE[roll.posture]! },
           { l: 'Mean readiness', v: `${roll.meanReadiness}%`, t: roll.meanReadiness >= 60 ? 'ok' : 'warn' },
           { l: 'Critical regions', v: `${roll.critical} · ${roll.elevated} elevated`, t: roll.critical ? 'alert' : 'warn' },
-          { l: 'Population', v: `${roll.population}M`, t: 'ok' },
+          { l: 'Population', v: pop, t: pop === 'Not connected' ? 'neutral' : 'ok' },
           { l: 'Provinces synced', v: 'ALL', t: 'ok' },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">

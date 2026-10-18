@@ -251,7 +251,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
       </div>
 
       <div className="grid gap-2 xl:grid-cols-12">
-        <Panel title="Operational theatre" meta="domain pressure · live" className="xl:col-span-7" bodyClass="!p-2">
+        <Panel signal="sample" title="Operational theatre" meta="domain pressure · live" className="xl:col-span-7" bodyClass="!p-2">
           <TerritoryHeat epoch={Math.floor(ts) % 60} height={300} />
           <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-4">
             {[
@@ -274,7 +274,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
             })}
           </div>
         </Panel>
-        <Panel title={cfg.primaryTitle} meta="advisory" className="xl:col-span-3" bodyClass="!p-2">
+        <Panel signal="sample" title={cfg.primaryTitle} meta="advisory" className="xl:col-span-3" bodyClass="!p-2">
           <div className="space-y-2">
             {cfg.primary.map(p => (
               <div key={p.l}>
@@ -301,7 +301,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
             ) : null}
           </div>
         </Panel>
-        <Panel title={cfg.feedTitle} meta={`${cfg.feed.length} active`} className="xl:col-span-2" bodyClass="!p-0">
+        <Panel signal="sample" title={cfg.feedTitle} meta={`${cfg.feed.length} active`} className="xl:col-span-2" bodyClass="!p-0">
           {cfg.feed.map((f, i) => {
             const open = openFeed === i;
             const age = 4 + Math.round(seed(`${domain}:fa:${i}`) * 52);
@@ -344,7 +344,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
       </div>
 
       <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
-        <Panel title={cfg.monitorTitle} meta="composite" bodyClass="!p-1.5">
+        <Panel signal="sample" title={cfg.monitorTitle} meta="composite" bodyClass="!p-1.5">
           <div className="space-y-1">
             {cfg.monitor.map((m, i) => {
               const v = Math.round(w(`mon:${i}`, m.lo, m.hi));
@@ -364,7 +364,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         </Panel>
 
-        <Panel title="Trend telemetry" meta="12-period" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Trend telemetry" meta="12-period" bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1">
             {cfg.tele.slice(0, 4).map(m => {
               const raw = w(m.k, m.lo, m.hi);
@@ -380,7 +380,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         </Panel>
 
-        <Panel title={cfg.feedTitle} meta="stream" bodyClass="!p-1.5">
+        <Panel signal="sample" title={cfg.feedTitle} meta="stream" bodyClass="!p-1.5">
           <div className="space-y-1">
             {cfg.feed.map((f, i) => (
               <div key={i} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
@@ -391,7 +391,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         </Panel>
 
-        <Panel title="Command actions" meta="decisions open a draft directive for signature" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Command actions" meta="decisions open a draft directive for signature" bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1">
             {cfg.actions.map((q, i) => (
               <Link key={q.l} href={q.h} className="focus-ring group flex items-center gap-1.5 rounded-[3px] border border-line px-2 py-1.5 text-[10px] font-medium text-ink-soft no-underline transition-all hover:bg-surface-2/60">
@@ -406,7 +406,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
       {(() => {
         const arch = domain === 'treasury' ? 'FINANCE' : domain === 'security' ? 'INTERIOR' : 'GENERIC';
         return (
-          <Panel title="Service operations" meta={`${arch.toLowerCase()} signature · live`} bodyClass="!p-1.5">
+          <Panel signal="sample" title="Service operations" meta={`${arch.toLowerCase()} signature · live`} bodyClass="!p-1.5">
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-6">
               {serviceReadings(domain, arch, ts).map(r => (
                 <div key={r.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">

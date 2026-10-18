@@ -120,7 +120,7 @@ export function NationalCoordination() {
 
       {/* Main grid */}
       <div className="grid gap-2 xl:grid-cols-[1.6fr_1fr]">
-        <Panel title="Strategic risk overlay" meta="tile shade ∝ composite risk" bodyClass="!p-2">
+        <Panel signal="sample" title="Strategic risk overlay" meta="tile shade ∝ composite risk" bodyClass="!p-2">
           <div className="flex gap-2">
             <div className="relative flex-1">
               <TerritoryHeat epoch={epoch} height={360} />
@@ -153,7 +153,7 @@ export function NationalCoordination() {
         </Panel>
 
         <div className="flex min-h-0 flex-col gap-2">
-          <Panel title="National operations timeline" meta={<span className="flex items-center gap-1 text-[10px]" style={{ color: TONE.ok }}><span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE</span>}>
+          <Panel signal="sample" title="National operations timeline" meta={<span className="flex items-center gap-1 text-[10px]" style={{ color: TONE.ok }}><span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE</span>}>
             <div className="mb-1.5 flex items-center gap-2">
               <span className="text-[9px] uppercase tracking-wide text-ink-muted">Timeline scrub</span>
               <input type="range" min={0} max={100} value={scrub} onChange={e => setScrub(Number(e.target.value))} className="h-1 flex-1 cursor-pointer" aria-label="Timeline scrub" />
@@ -178,7 +178,7 @@ export function NationalCoordination() {
             </div>
           </Panel>
 
-          <Panel title="Pinned incidents" meta={<Link href="/gov/situation-room" className="text-[10px] text-link underline">View all incidents →</Link>} className="flex-1" bodyClass="overflow-y-auto !p-0">
+          <Panel signal="sample" title="Pinned incidents" meta={<Link href="/gov/situation-room" className="text-[10px] text-link underline">View all incidents →</Link>} className="flex-1" bodyClass="overflow-y-auto !p-0">
             {cascadeEscalations(cascadeNodes).map(e => {
               const tn = e.severity === 'critical' ? 'alert' : 'warn';
               return (
@@ -247,7 +247,7 @@ export function NationalCoordination() {
 
       {/* Lower grid */}
       <div className="grid gap-2 xl:grid-cols-2">
-        <Panel title="Cross-ministry dependency engine" meta={`${cascade} dependencies · ${Math.max(0, cascade - 4)} elevated`} bodyClass="!p-0">
+        <Panel signal="sample" title="Cross-ministry dependency engine" meta={`${cascade} dependencies · ${Math.max(0, cascade - 4)} elevated`} bodyClass="!p-0">
           <table className="w-full text-[11px]">
             <thead><tr className="border-b border-line bg-surface-2 text-left text-[8px] uppercase tracking-wide text-ink-muted">
               <th className="px-3 py-1.5">Source</th><th className="px-2 py-1.5">Relation</th><th className="px-2 py-1.5">Dependent</th><th className="px-3 py-1.5 text-right">Cascade</th>
@@ -270,7 +270,7 @@ export function NationalCoordination() {
           </table>
         </Panel>
 
-        <Panel title="Institutional risk register" meta={`${regs.length} institutions`} bodyClass="overflow-y-auto !p-0">
+        <Panel signal="sample" title="Institutional risk register" meta={`${regs.length} institutions`} bodyClass="overflow-y-auto !p-0">
           <table className="w-full text-[11px]">
             <thead><tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8px] uppercase tracking-wide text-ink-muted">
               <th className="px-3 py-1.5">Institution</th><th className="px-2 py-1.5 text-right">Risk</th><th className="px-2 py-1.5">Posture</th><th className="px-2 py-1.5">Escalation</th><th className="px-3 py-1.5">Sync</th>
@@ -323,7 +323,7 @@ export function NationalCoordination() {
         })}
       </div>
 
-      <Panel title="Infrastructure network pressure" meta="national digital twin">
+      <Panel signal="sample" title="Infrastructure network pressure" meta="national digital twin">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
             const p = networkPressure(k, now / 4000);
@@ -339,7 +339,7 @@ export function NationalCoordination() {
         </div>
       </Panel>
 
-      <Panel title="Regional command posture" meta="national → regional tier">
+      <Panel signal="sample" title="Regional command posture" meta="national → regional tier">
         {(() => {
           const rs = nationalRegions(now / 4000); const rr = regionRollup(rs);
           const rt = rr.posture === 'critical' ? 'alert' : rr.posture === 'elevated' ? 'warn' : rr.posture === 'watch' ? 'neutral' : 'ok';
@@ -367,7 +367,7 @@ export function NationalCoordination() {
         })()}
       </Panel>
 
-      <Panel title="Scenario stress test" meta="cascade response under shock · advisory what-if">
+      <Panel signal="sample" title="Scenario stress test" meta="cascade response under shock · advisory what-if">
         {(() => {
           const sweep = scenarioSweep(now / 4000);
           return (
@@ -394,7 +394,7 @@ export function NationalCoordination() {
         })()}
       </Panel>
 
-      <Panel title="Operational chain — live state behaviour under stress" meta="worst-stressed origin · propagated consequence" bodyClass="!p-1.5">
+      <Panel signal="sample" title="Operational chain — live state behaviour under stress" meta="worst-stressed origin · propagated consequence" bodyClass="!p-1.5">
         {(() => {
           const chain = buildOperationalChain(mins, null, now / 4000);
           if (!chain) return <p className="text-[11px] text-ink-muted">No active institutional fabric to simulate.</p>;

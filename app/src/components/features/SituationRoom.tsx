@@ -92,9 +92,12 @@ const rail = (): { g: string; items: { i: string; l: string; s: string; href: st
 ];
 
 export function Panel({
-  title, meta, className = '', bodyClass = '', children,
+  title, meta, className = '', bodyClass = '', signal, children,
 }: {
-  title: string; meta?: React.ReactNode; className?: string; bodyClass?: string; children: React.ReactNode;
+  title: string; meta?: React.ReactNode; className?: string; bodyClass?: string;
+  /** Where the panel's figures come from; anything not observed or reported shows its marker (lib/twin/signal.ts). */
+  signal?: SignalKind;
+  children: React.ReactNode;
 }) {
   return (
     <section className={`relative flex min-h-0 flex-col rounded-[3px] border border-line bg-surface ${className}`}
@@ -113,6 +116,7 @@ export function Panel({
         <h2 className="flex min-w-0 items-center gap-1.5 truncate text-[10px] font-semibold uppercase tracking-[0.13em] text-ink-soft">
           <span aria-hidden className="h-1 w-1 shrink-0 rounded-full motion-safe:animate-breathe" style={{ background: ACCENT, boxShadow: `0 0 4px ${ACCENT}` }} />
           {title}
+          {signal ? <SignalTag kind={signal} source={REFERENCE_MODEL} /> : null}
         </h2>
         {meta ? <span className="shrink-0 text-[9.5px] text-ink-muted">{meta}</span> : null}
       </div>
@@ -1454,7 +1458,7 @@ export function SituationRoom() {
 
           {/* Map-first band */}
           <div className="grid gap-1.5 xl:grid-cols-12">
-            <Panel title="National activity map"
+            <Panel signal="sample" title="National activity map"
               meta={
                 <span className="flex items-center gap-1">
                   {([['infra', 'Infra'], ['grid', 'Grid'], ['corridors', 'Corridors'], ['incidents', 'Incidents']] as const).map(([k, lbl]) => (
@@ -1474,7 +1478,7 @@ export function SituationRoom() {
               <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
             </Panel>
 
-            <Panel title="Ministry status matrix" meta="inter-ministerial coordination · live" className="xl:col-span-4" bodyClass="!p-0">
+            <Panel signal="sample" title="Ministry status matrix" meta="inter-ministerial coordination · live" className="xl:col-span-4" bodyClass="!p-0">
               {(() => {
                 // Cross-ministry dependency lattice — upstream stressors per
                 // archetype propagate cascading pressure (sovereign realism).
@@ -1578,7 +1582,7 @@ export function SituationRoom() {
               })()}
             </Panel>
 
-            <Panel title="Cabinet escalation stream"
+            <Panel signal="sample" title="Cabinet escalation stream"
               meta={(() => {
                 if (!incidents.length) return 'executive level';
                 const s = incidents.slice(0, 9).reduce((a, c, i) => {
@@ -1709,7 +1713,7 @@ export function SituationRoom() {
 
           {/* Dependency intelligence + strategic forecast */}
           <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-4">
-            <Panel title="National dependency graph" meta="systemic impact propagation" bodyClass="!pb-2">
+            <Panel signal="sample" title="National dependency graph" meta="systemic impact propagation" bodyClass="!pb-2">
               {(() => {
                 const dep = [
                   { k: 'Energy', g: '⚡', a: 'ENERGY', x: 14, y: 30 },
@@ -1750,7 +1754,7 @@ export function SituationRoom() {
                 <span className="flex items-center gap-1"><span className="h-px w-4" style={{ backgroundColor: TONE.alert }} />Critical path</span>
               </div>
             </Panel>
-            <Panel title="Operational timeline" meta="live tempo" bodyClass="!p-0">
+            <Panel signal="sample" title="Operational timeline" meta="live tempo" bodyClass="!p-0">
               {(coord?.timeline ?? []).slice(0, 9).map((e, i) => {
                 const phase = e.tone === 'alert' ? 'Containment' : e.tone === 'warn' ? 'Assessment' : 'Coordination';
                 const res = e.tone === 'alert' ? 'Open' : e.tone === 'warn' ? 'In progress' : 'Monitored';
@@ -1770,7 +1774,7 @@ export function SituationRoom() {
               })}
               {(coord?.timeline ?? []).length === 0 ? <p className="p-3 text-xs text-ink-muted">Awaiting operational events…</p> : null}
             </Panel>
-            <Panel title="Strategic forecast · 72h" meta="24h → 72h · operating doctrine">
+            <Panel signal="sample" title="Strategic forecast · 72h" meta="24h → 72h · operating doctrine">
               {(() => {
                 // Forward projection from the shared operating doctrine —
                 // same pools/keys as the substrate so the outlook stays
@@ -1803,7 +1807,7 @@ export function SituationRoom() {
               })()}
               <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory projection only — no autonomous action. Executive decides.</p>
             </Panel>
-            <Panel title="Regional risk heatmap" meta="exposure by region" bodyClass="!p-2">
+            <Panel signal="sample" title="Regional risk heatmap" meta="exposure by region" bodyClass="!p-2">
               <TerritoryHeat epoch={epoch} height={150} focus={sov?.stateName} />
               <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
                 <span>Low</span>
@@ -1815,7 +1819,7 @@ export function SituationRoom() {
 
           {/* Operational analytics band */}
           <div className="grid gap-1.5 md:grid-cols-2 xl:grid-cols-4">
-            <Panel title="Infrastructure network pressure" meta="digital twin" bodyClass="!p-1.5">
+            <Panel signal="sample" title="Infrastructure network pressure" meta="digital twin" bodyClass="!p-1.5">
               <div className="grid grid-cols-2 gap-1">
                 {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
                   const p = networkPressure(k, now / 4000);
@@ -1830,8 +1834,8 @@ export function SituationRoom() {
                 })}
               </div>
             </Panel>
-            <Panel title="Incident severity distribution" meta="by classification"><Donut segs={donut} /></Panel>
-            <Panel title="Treasury flow monitor" meta={<span className="flex items-center gap-1.5">24h revenue · expenditure <SignalTag kind="sample" source={REFERENCE_MODEL} /></span>}>
+            <Panel signal="sample" title="Incident severity distribution" meta="by classification"><Donut segs={donut} /></Panel>
+            <Panel signal="sample" title="Treasury flow monitor" meta="24h revenue · expenditure">
               <div className="space-y-2">
                 <div>
                   <div className="flex items-baseline justify-between"><span className="text-[10px] uppercase tracking-wide text-ink-muted">Revenue</span><span className="font-mono text-sm tabular-nums" style={{ color: TONE.ok }}>{formatMoney(Number(revenue) * 1e9, { compact: true })}</span></div>
@@ -1844,7 +1848,7 @@ export function SituationRoom() {
                 {finance ? <Link href={`/gov/ministry/${finance.ministryId}`} className="focus-ring block text-[11px] text-link underline underline-offset-2">Open Treasury command →</Link> : null}
               </div>
             </Panel>
-            <Panel title="System integration" meta="data fabric">
+            <Panel signal="sample" title="System integration" meta="data fabric">
               <ul className="space-y-1 text-[11px]">
                 {['Health', 'Treasury', 'Transport', 'Security', 'Energy'].map((s, i) => {
                   const deg = seed(`sis:${i}:${epoch}`) > 0.86;
@@ -1852,7 +1856,7 @@ export function SituationRoom() {
                 })}
               </ul>
             </Panel>
-            <Panel title="Quick actions" meta="human-authorised">
+            <Panel signal="sample" title="Quick actions" meta="human-authorised">
               <div className="grid gap-1.5">
                 {[
                   { l: 'National coordination', h: '/gov/coordination' },
@@ -1868,7 +1872,7 @@ export function SituationRoom() {
 
           {/* Executive band */}
           <div className="grid gap-1.5 lg:grid-cols-2 xl:grid-cols-4">
-            <Panel title="System integration fabric" meta="cross-government" bodyClass="">
+            <Panel signal="sample" title="System integration fabric" meta="cross-government" bodyClass="">
               <div className="mb-2 flex items-center gap-3">
                 <Ring pct={integ} label="integrated" />
                 <div className="text-[10px] text-ink-muted">
@@ -1895,7 +1899,7 @@ export function SituationRoom() {
                 </tbody>
               </table>
             </Panel>
-            <Panel title="National KPI snapshot" meta="macro-state intelligence" bodyClass="">
+            <Panel signal="sample" title="National KPI snapshot" meta="macro-state intelligence" bodyClass="">
               <ul className="space-y-1.5 text-xs">
                 {[
                   { l: 'Inflation', v: `${(2 + seed(`m1:${epoch}`) * 4).toFixed(1)}%`, d: seed(`d1:${epoch}`) - 0.55, intp: 'within target band' },
@@ -1916,7 +1920,7 @@ export function SituationRoom() {
                 ))}
               </ul>
             </Panel>
-            <Panel title="Top operational alerts" meta="high impact">
+            <Panel signal="sample" title="Top operational alerts" meta="high impact">
               {alerts.length === 0 ? <p className="text-xs text-ink-muted">No high-impact alerts in the current window.</p> : (
                 <ul className="space-y-1.5 text-xs">
                   {alerts.map((a, i) => {
@@ -1940,7 +1944,7 @@ export function SituationRoom() {
                 </ul>
               )}
             </Panel>
-            <Panel title="Cabinet calendar" meta="upcoming">
+            <Panel signal="sample" title="Cabinet calendar" meta="upcoming">
               <ul className="space-y-1.5 text-xs">
                 {cal.map(c => <li key={c.t} className="flex items-center justify-between"><span className="text-ink-soft">{c.t}</span><span className="font-mono text-[10px] tabular-nums text-ink-muted">in {c.m < 60 ? `${c.m}m` : `${Math.floor(c.m / 60)}h ${c.m % 60}m`}</span></li>)}
               </ul>

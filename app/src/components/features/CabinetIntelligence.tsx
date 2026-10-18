@@ -411,11 +411,11 @@ export function CabinetIntelligence() {
 
           {/* ROW 2 — primary command surface (map 58% · matrix 25% · escalation 17%) */}
           <div className="grid gap-2 xl:grid-cols-12">
-            <Panel title="National strategic map" meta="live operational command view" className="xl:col-span-7" bodyClass="!p-2">
+            <Panel signal="sample" title="National strategic map" meta="live operational command view" className="xl:col-span-7" bodyClass="!p-2">
               <NationalMap mapNodes={mapNodes} edges={coord?.edges ?? []} incidents={incidents} now={now} layers={layers} epoch={epoch} focus={sov?.stateName} onToggleLayer={k => setLayers(s => ({ ...s, [k]: !s[k] }))} />
             </Panel>
 
-            <Panel title="Ministry risk matrix" meta={`${mRows.length} institutions`} className="xl:col-span-3" bodyClass="!p-0">
+            <Panel signal="sample" title="Ministry risk matrix" meta={`${mRows.length} institutions`} className="xl:col-span-3" bodyClass="!p-0">
               <div className="overflow-x-auto">
               <table className="w-full min-w-[340px] text-[11px]">
                 <thead>
@@ -562,7 +562,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Cabinet escalation feed" meta={`${escList.length} active`} className="xl:col-span-2" bodyClass="!p-0">
+            <Panel signal="sample" title="Cabinet escalation feed" meta={`${escList.length} active`} className="xl:col-span-2" bodyClass="!p-0">
               {escList.map((e, i) => {
                 const open = openEsc === i;
                 const tn = TONE[RISK_TONE[e.sevState]];
@@ -618,7 +618,7 @@ export function CabinetIntelligence() {
 
           {/* ROW 3 — 5 containers: dependency · timeline · forecast · heatmap(wider) · brief(taller) */}
           <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-12">
-            <Panel title="National dependency graph" meta="systemic impact propagation" className="xl:col-span-3">
+            <Panel signal="sample" title="National dependency graph" meta="systemic impact propagation" className="xl:col-span-3">
               <div className="relative h-[136px] w-full">
                 <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
                   {depLinks.map(([a, b], i) => {
@@ -654,7 +654,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Operational timeline" meta="live event chronology" className="xl:col-span-2" bodyClass="!p-0">
+            <Panel signal="sample" title="Operational timeline" meta="live event chronology" className="xl:col-span-2" bodyClass="!p-0">
               {(() => {
                 const real = (coord?.timeline ?? []).slice(0, 6).map(e => ({
                   rel: rel(e.at, now), tone: TONE[e.tone] ?? TONE.neutral, tag: 'OPS', title: e.title, src: 'coordination',
@@ -675,7 +675,7 @@ export function CabinetIntelligence() {
               })()}
             </Panel>
 
-            <Panel title="Strategic forecast · 72h" meta="advisory" className="xl:col-span-2">
+            <Panel signal="sample" title="Strategic forecast · 72h" meta="advisory" className="xl:col-span-2">
               <ul className="space-y-1.5 text-xs">
                 {forecast.map(f => (
                   <li key={f.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
@@ -693,7 +693,7 @@ export function CabinetIntelligence() {
               <p className="mt-2 text-[9px] leading-relaxed text-ink-muted">Advisory probabilistic projection · confidence-scored · no autonomous action. Cabinet decides.</p>
             </Panel>
 
-            <Panel title="National heatmap" meta="ministry stress · region" className="xl:col-span-3" bodyClass="!p-2">
+            <Panel signal="sample" title="National heatmap" meta="ministry stress · region" className="xl:col-span-3" bodyClass="!p-2">
               <TerritoryHeat epoch={epoch} height={150} focus={sov?.stateName} />
               <div className="mt-1.5 flex items-center justify-between text-[10px] text-ink-muted">
                 <span>Low</span>
@@ -702,7 +702,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Morning executive brief" meta="classified" className="xl:col-span-2" bodyClass="">
+            <Panel signal="sample" title="Morning executive brief" meta="classified" className="xl:col-span-2" bodyClass="">
               <div className="mb-1.5 flex items-center gap-2 border-b border-line pb-1.5 font-mono text-[9px] uppercase tracking-[0.16em] text-ink-muted">
                 <span style={{ color: ACCENT }}>◆</span> INTEL SUMMARY<span className="ml-auto">{new Date(now).toLocaleDateString()}</span>
               </div>
@@ -734,7 +734,7 @@ export function CabinetIntelligence() {
           </div>
 
           {/* Strategic threat board — simulation sweep feeding the executive picture */}
-          <Panel title="Strategic threat board" meta="scenario sweep · composite national risk · advisory" bodyClass="!p-1.5">
+          <Panel signal="sample" title="Strategic threat board" meta="scenario sweep · composite national risk · advisory" bodyClass="!p-1.5">
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
               {topThreats.map(r => {
                 const tn = r.band === 'severe' || r.band === 'high' ? 'alert' : r.band === 'elevated' ? 'warn' : 'ok';
@@ -770,7 +770,7 @@ export function CabinetIntelligence() {
             const sf = stateFabric(mins, ts);
             const ctn = sf.contagion === 'systemic' ? TONE.alert : sf.contagion === 'coupled-stress' ? TONE.warn : TONE.ok;
             return (
-              <Panel title="Interconnected state fabric" meta={`cross-system propagation · ${sf.contagion} · systemic ${sf.systemicStress}`} bodyClass="!p-1.5">
+              <Panel signal="sample" title="Interconnected state fabric" meta={`cross-system propagation · ${sf.contagion} · systemic ${sf.systemicStress}`} bodyClass="!p-1.5">
                 <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
                   {sf.domains.map(d => {
                     const dt = d.tone === 'alert' ? TONE.alert : d.tone === 'warn' ? TONE.warn : TONE.ok;
@@ -811,7 +811,7 @@ export function CabinetIntelligence() {
 
           {/* ROW A — heterogeneous executive micro-panel band (4 columns) */}
           <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
-            <Panel title="National KPI trends" meta="strategic indicators" className="min-h-[188px]" bodyClass="!p-1.5">
+            <Panel signal="sample" title="National KPI trends" meta="strategic indicators" className="min-h-[188px]" bodyClass="!p-1.5">
               <div className="grid grid-cols-1 gap-1">
                 {kpiTrends.map(k => {
                   const up = k.d >= 0;
@@ -834,7 +834,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Fiscal overview" meta="treasury position" className="min-h-[188px]" bodyClass="!p-1.5">
+            <Panel signal="sample" title="Fiscal overview" meta="treasury position" className="min-h-[188px]" bodyClass="!p-1.5">
               <div className="grid grid-cols-2 gap-1">
                 {fiscal.map(f => (
                   <div key={f.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
@@ -847,7 +847,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Geopolitical monitor" meta="external pressure" className="min-h-[188px]" bodyClass="!p-1.5">
+            <Panel signal="sample" title="Geopolitical monitor" meta="external pressure" className="min-h-[188px]" bodyClass="!p-1.5">
               <div className="grid grid-cols-1 gap-1">
                 {geo.map(g => (
                   <div key={g.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1">
@@ -867,7 +867,7 @@ export function CabinetIntelligence() {
               </div>
             </Panel>
 
-            <Panel title="Executive command" meta="directive authority" className="min-h-[188px]" bodyClass="!p-1.5">
+            <Panel signal="sample" title="Executive command" meta="directive authority" className="min-h-[188px]" bodyClass="!p-1.5">
               <div className="grid grid-cols-2 gap-1">
                 {([
                   { l: 'Emergency War Room', g: '⛨', d: true, fx: () => setWar(true) },
