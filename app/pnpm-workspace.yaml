@@ -1,3 +1,10 @@
+# Dependencies allowed to run their install scripts. Both need them:
+# esbuild (used by Vite and Vitest) fetches its platform binary, and
+# unrs-resolver (ESLint's import resolver) its native binding.
+# allowBuilds is read by pnpm 11+, onlyBuiltDependencies by pnpm 10.
 allowBuilds:
-  esbuild: set this to true or false
-  unrs-resolver: set this to true or false
+  esbuild: true
+  unrs-resolver: true
+onlyBuiltDependencies:
+  - esbuild
+  - unrs-resolver
