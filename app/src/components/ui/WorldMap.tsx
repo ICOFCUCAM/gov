@@ -1,14 +1,16 @@
 'use client';
 
 import * as React from 'react';
-import { projectedPaths, findCountry } from '@/lib/geo/world';
+import { projectedPaths, findCountry, findCountryByIso3 } from '@/lib/geo/world';
+import { nationIso3 } from '@/lib/nation/registry';
 
 import { TONE } from '@/lib/tone-palette';
 const toneFor = (v: number) => (v >= 75 ? 'alert' : v >= 55 ? 'warn' : v >= 35 ? 'neutral' : 'ok');
 
 /**
  * Real geographic basemap (Natural Earth 110m). World by default;
- * zooms to a nation when `focus` matches a country. `riskOf` tints
+ * zooms to a nation when `focus` matches a country, or to the installed
+ * nation (by ISO code) when a page asks for it by its formal name. `riskOf` tints
  * countries for the heatmap; otherwise renders a neutral command base.
  */
 export function WorldMap({
@@ -22,7 +24,9 @@ export function WorldMap({
   accent?: string;
   className?: string;
 }) {
-  const focusFeat = React.useMemo(() => findCountry(focus), [focus]);
+  // A page asking for the nation (focus set) gets it by ISO code when the name does not match the map.
+  const iso3 = nationIso3();
+  const focusFeat = React.useMemo(() => (focus ? findCountry(focus) ?? findCountryByIso3(iso3) : undefined), [focus, iso3]);
   const paths = React.useMemo(
     () => projectedPaths(1000, 620, focusFeat),
     [focusFeat],

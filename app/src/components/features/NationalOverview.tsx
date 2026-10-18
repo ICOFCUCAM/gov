@@ -12,6 +12,8 @@ import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { NationMap, type MapPoint, type MapTone, type MapValue } from '@/components/map/NationMap';
+import { nationalRegions } from '@/lib/gov/regions';
 import { api } from '@/lib/api/client';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
@@ -61,50 +63,30 @@ function Ring({ value, sub, color }: { value: number; sub: string; color: string
   );
 }
 
-// National threat map: glow clusters + connecting lines + warning markers.
-function ThreatMap({ seedKey }: { seedKey: string }) {
-  const cols = 30, rows = 13;
-  const clusters = Array.from({ length: 7 }).map((_, i) => ({
-    x: 12 + seed(`${seedKey}:cx:${i}`) * 76, y: 16 + seed(`${seedKey}:cy:${i}`) * 64,
-    r: 3 + seed(`${seedKey}:cr:${i}`) * 7, hot: seed(`${seedKey}:ch:${i}`) > 0.45,
-  }));
+// National threat map: the nation's own regions (shared map engine), shaded by
+// the regional model's security stress and carrying the incidents listed beside
+// it on the regions they name. All sample until incident records carry places
+// (map plan phase 4); hatched and marked.
+const SEVERITY_TONE: Record<string, MapTone> = { CRITICAL: 'alert', HIGH: 'warn', MEDIUM: 'neutral', LOW: 'ok' };
+function ThreatMap({ ts, incidents }: { ts: number; incidents: [string, string, string, string][] }) {
+  const epoch = Math.floor(ts) % 60;
+  const values = React.useMemo<MapValue[]>(() => nationalRegions(epoch).map(r => ({
+    key: r.name, value: r.domains.find(d => d.k === 'sec')?.v ?? r.composite, unit: 'stress index',
+  })), [epoch]);
+  const points = React.useMemo<MapPoint[]>(() => {
+    const byRegion = new Map<string, MapPoint>();
+    const rank: MapTone[] = ['ok', 'neutral', 'warn', 'alert'];
+    for (const [title, region, , sev] of incidents) {
+      const tone = SEVERITY_TONE[sev] ?? 'neutral';
+      const p = byRegion.get(region);
+      if (!p) byRegion.set(region, { key: region, label: title, tone, count: 1 });
+      else byRegion.set(region, { ...p, label: `${p.label}; ${title}`, count: (p.count ?? 1) + 1, tone: rank.indexOf(tone) > rank.indexOf(p.tone) ? tone : p.tone });
+    }
+    return [...byRegion.values()];
+  }, [incidents]);
   return (
-    <div className="relative overflow-hidden rounded-[3px]" style={{ background: 'radial-gradient(120% 90% at 50% 40%,#0d141d,#070b11)' }}>
-      <div className="grid gap-[3px] p-2" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-        {Array.from({ length: cols * rows }).map((_, i) => {
-          const v = seed(`${seedKey}:${i}`);
-          const inland = (i % cols > 2 && i % cols < cols - 2 && Math.floor(i / cols) > 0 && Math.floor(i / cols) < rows - 1);
-          return <span key={i} className="aspect-square rounded-full" style={{ background: inland ? (v > 0.93 ? RED : v > 0.86 ? '#3a4a55' : '#1c2730') : 'transparent', opacity: inland ? (v > 0.86 ? 0.9 : 0.4) : 0 }} />;
-        })}
-      </div>
-      <svg viewBox="0 0 100 80" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-        {clusters.map((c, i) => i < clusters.length - 1 ? (
-          <line key={i} x1={c.x} y1={c.y} x2={clusters[i + 1]!.x} y2={clusters[i + 1]!.y}
-            stroke={RED} strokeWidth="0.3" opacity="0.3" />
-        ) : null)}
-        {clusters.map((c, i) => (
-          <g key={`g${i}`}>
-            <circle cx={c.x} cy={c.y} r={c.r} fill={c.hot ? RED : AMBER} opacity="0.18" />
-            <circle cx={c.x} cy={c.y} r={c.r * 0.4} fill={c.hot ? RED_BR : AMBER}
-              style={{ filter: `drop-shadow(0 0 4px ${c.hot ? RED : AMBER})` }} />
-          </g>
-        ))}
-      </svg>
-      <div className="absolute right-2 top-2 flex flex-col gap-1">
-        {['⛶', '+', '−'].map(s => (
-          <span key={s} className="grid h-6 w-6 place-items-center rounded-[2px] border text-[11px]"
-            style={{ borderColor: LINE, background: PANEL, color: SOFT }} aria-hidden>{s}</span>
-        ))}
-      </div>
-      <div className="absolute bottom-2 left-2 flex flex-col gap-0.5 rounded-[2px] border px-2 py-1.5"
-        style={{ borderColor: LINE, background: 'rgba(8,11,17,0.7)' }}>
-        {[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Low', EMER], ['Monitoring', CYAN]].map(([l, c]) => (
-          <span key={l} className="flex items-center gap-1.5 text-[7.5px] uppercase tracking-wider" style={{ color: SOFT }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}
-          </span>
-        ))}
-      </div>
-    </div>
+    <NationMap title="Security stress and incidents by region" values={values} kind="sample" source={REFERENCE_MODEL}
+      valueLabel="Security stress" unit="index" points={points} pointsLabel="Incidents" maxHeight={420} />
   );
 }
 
@@ -299,7 +281,7 @@ export function NationalOverview() {
       {/* ── Threat map + active incidents ──────────────────────── */}
       <div className="grid gap-2 xl:grid-cols-[1.7fr_1fr]">
         <Panel title="National Threat Map">
-          <div className="h-[300px]"><ThreatMap seedKey={`no:tm:${id}`} /></div>
+          <ThreatMap ts={ts} incidents={incidents} />
         </Panel>
         <Panel title="Active Incidents" action="View All">
           <div className="space-y-1.5">

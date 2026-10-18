@@ -95,6 +95,14 @@ export const DECISION_CLASS = {
   e: '#5c3a8a',
 } as const;
 
+/**
+ * Shaded maps (lib/map): a five-step sequential ramp from low to high that
+ * stays distinguishable for the common forms of colour blindness (blue to
+ * yellow, rising lightness, after cividis), readable on the dark console and
+ * on white. Status meaning on maps is carried by shape as well as colour.
+ */
+export const MAP_SEQUENTIAL = ['#1f3a5f', '#3b5a7a', '#6e7f8d', '#b0a370', '#f2d25b'] as const;
+
 /** "r g b" → "#rrggbb". */
 export const hexOf = (t: Triplet | string): string =>
   `#${t.split(' ').map(n => Number(n).toString(16).padStart(2, '0')).join('')}`;

@@ -4,7 +4,6 @@ import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
-import { WorldMap } from '@/components/ui/WorldMap';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { identityFor } from '@/lib/archetype-profiles';
 import type {
@@ -30,17 +29,18 @@ export const PALETTE = {
 } as React.CSSProperties;
 
 import { seed, toneFor, wave, waveSeries, domainStress } from '@/lib/telemetry';
-import { nationalAssets, nationalNetworks, networkPressure, NET_TONE, ASSET_GLYPH } from '@/lib/gov/infrastructure';
+import { nationalAssets, nationalNetworks, networkPressure } from '@/lib/gov/infrastructure';
 import {
   nationalOperatingState, forecast, governIncident, nationalPosture,
-  provinceMemory, diffuseTopology, corridorAdjacency, territorialField,
 } from '@/lib/gov/sovereign-operating-model';
 
 import { DispatchChannel, NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard, NationalBureaucracyPulse } from '@/apps/_shared/InstitutionChain';
-import { regionName, formatMoney } from '@/lib/nation/registry';
+import { formatMoney } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { CONSOLE_NAV, locate } from '@/lib/nav/console-nav';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
+import { NationMap, type MapPoint, type MapValue } from '@/components/map/NationMap';
+import { nationalRegions, type RegionModel } from '@/lib/gov/regions';
 
 /** The ministry grid's columns: short heading, and the full name read aloud and shown on hover. */
 const MATRIX_DOMAINS = [
@@ -355,108 +355,35 @@ export function StrainBar({ pct, tone }: { pct: number; tone: string }) {
   );
 }
 
-const INFRA_KINDS = [
-  { k: 'hospital', g: '✚', label: 'Medical centre' },
-  { k: 'port', g: '⚓', label: 'Seaport' },
-  { k: 'airport', g: '✈', label: 'Airport' },
-  { k: 'energy', g: '⚡', label: 'Power station' },
-  { k: 'logistics', g: '▣', label: 'Logistics hub' },
-  { k: 'water', g: '◑', label: 'Water works' },
-  { k: 'border', g: '⛓', label: 'Border checkpoint' },
-  { k: 'comms', g: '◬', label: 'Comms tower' },
-  { k: 'command', g: '◈', label: 'Command facility' },
-  { k: 'emergency', g: '⛑', label: 'Emergency hub' },
-] as const;
+// The nation on a map, through the shared map engine (components/map/NationMap,
+// docs/MAP_SYSTEM_PLAN.md): its own regions in their real shapes and official
+// order — all of them, not six slots — shaded by the regional model. The
+// regional figures are samples until regional sources are connected in
+// National data, so they are hatched and marked. Nothing is placed at
+// invented positions: facilities and corridors appear once registered.
+type LayerKey = 'infra' | 'grid' | 'corridors' | 'incidents' | 'environment';
+const REGIONAL_SOURCE = 'Regional model (sample) until regional sources are connected in National data';
+const POSTURE_TONE = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' } as const;
 
+function regionalFigures(epoch: number, pick: (r: RegionModel) => number = r => r.composite) {
+  const regions = nationalRegions(epoch);
+  return {
+    regions,
+    values: regions.map((r): MapValue => ({ key: r.name, value: pick(r), unit: 'stress index', note: `Status: ${r.posture}` })),
+  };
+}
 
-// Global-state-neutral province partition (real territorial polygons,
-// shared edges form the national silhouette). viewBox 1000×620.
-// Read at use, not at load: the nation's regions arrive after this module loads in the browser.
-const provinces = (): { n: string; cx: number; cy: number; r: number; cap?: boolean }[] => [
-  { n: regionName(1, 'Northern Province'), cx: 320, cy: 196, r: 150 },
-  { n: regionName(5, 'Highland Region'), cx: 545, cy: 188, r: 150 },
-  { n: regionName(2, 'Eastern Region'), cx: 770, cy: 232, r: 150 },
-  { n: regionName(3, 'Western Region'), cx: 286, cy: 404, r: 150 },
-  { n: regionName(0, 'Capital District'), cx: 520, cy: 356, r: 130, cap: true },
-  { n: regionName(4, 'Coastal Region'), cx: 742, cy: 432, r: 150 },
-];
-
-interface Infra { id: string; kind: typeof INFRA_KINDS[number]; x: number; y: number; risk: number }
-
-// Geographic territory heat — real Natural-Earth basemap washed by
-// per-country risk (world by default, zooms to the sovereign nation).
-const TH_CORRIDORS: [number, number][] = [[0, 1], [1, 2], [1, 4], [4, 3], [4, 5], [3, 0], [2, 5]];
-export function TerritoryHeat({ epoch, height = 150, focus, tactical = true }: { epoch: number; height?: number; focus?: string; tactical?: boolean }) {
-  const PROV = provinces();
-  // Derived from the shared territorial doctrine (contention + crisis
-  // memory + corridor-topology diffusion) — not isolated per-region noise.
-  const thAdj = corridorAdjacency(TH_CORRIDORS, PROV.length);
-  const field = territorialField(epoch, thAdj, PROV.length);
-  const natFloor = field.reduce((s, v) => s + v, 0) / Math.max(1, field.length);
-  const riskOf = React.useCallback(
-    (name: string) => Math.round(Math.min(99, seed(`geo:${name}:${epoch}`) * 62 + natFloor * 0.42)),
-    [epoch, natFloor],
-  );
-  const provRisk = PROV.map((p, i) => ({ p, risk: field[i] ?? 30 }));
+export function TerritoryHeat({ epoch, height = 150 }: { epoch: number; height?: number; focus?: string; tactical?: boolean }) {
+  const { values } = React.useMemo(() => regionalFigures(epoch), [epoch]);
   return (
-    <div className="relative w-full overflow-hidden rounded-[3px] border border-line-soft"
-      style={{ height, background: 'radial-gradient(ellipse at 48% 32%, rgba(55,199,212,0.06) 0%, rgb(var(--c-bg)) 70%)' }}>
-      <WorldMap focus={focus} riskOf={riskOf} />
-      {tactical ? (
-        <>
-          <div aria-hidden className="pointer-events-none absolute" style={{ left: '52%', top: '50%', width: '120%', height: '120%', transform: 'translate(-50%,-50%)' }}>
-            <div className="h-full w-full animate-radar rounded-full opacity-[0.04]"
-              style={{ background: `conic-gradient(from 0deg, transparent 0deg, ${ACCENT} 22deg, transparent 52deg, transparent 360deg)` }} />
-          </div>
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 h-full overflow-hidden">
-            <div className="animate-scanline h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}, transparent)`, boxShadow: `0 0 3px ${ACCENT}` }} />
-          </div>
-        </>
-      ) : null}
-      <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full" style={{ pointerEvents: 'none' }}>
-        <defs>
-          <pattern id="thgrid" width="34" height="34" patternUnits="userSpaceOnUse">
-            <path d="M34 0H0V34" fill="none" stroke="rgb(var(--c-line))" strokeWidth="0.5" />
-          </pattern>
-          <radialGradient id="thvig" cx="50%" cy="46%" r="62%">
-            <stop offset="62%" stopColor="rgb(var(--c-bg))" stopOpacity="0" />
-            <stop offset="100%" stopColor="rgb(var(--c-bg))" stopOpacity="0.6" />
-          </radialGradient>
-        </defs>
-        <rect width="1000" height="620" fill="url(#thgrid)" opacity="0.14" />
-        {provRisk.map(({ p, risk }, i) => (
-          <g key={i}>
-            <circle cx={p.cx} cy={p.cy} r={p.r * 0.72} fill={TONE[toneFor(risk)]}
-              opacity={0.05 + (risk / 100) * 0.16} className="transition-all duration-1000 ease-sov" />
-            {risk >= 72 ? (
-              <circle cx={p.cx} cy={p.cy} r={p.r * 0.45} fill="none" stroke={TONE.alert} strokeWidth="1.4"
-                className="origin-center animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
-            ) : null}
-          </g>
-        ))}
-        {TH_CORRIDORS.map(([a, b], i) => {
-          const A = PROV[a]!, B = PROV[b]!;
-          const mx = (A.cx + B.cx) / 2, my = (A.cy + B.cy) / 2 - 34;
-          return (
-            <path key={i} d={`M${A.cx},${A.cy} Q${mx},${my} ${B.cx},${B.cy}`} fill="none"
-              stroke={ACCENT} strokeWidth="1.3" strokeOpacity="0.4" strokeDasharray="2 8" strokeLinecap="round"
-              className="motion-safe:animate-dash-flow" />
-          );
-        })}
-        <rect width="1000" height="620" fill="url(#thvig)" />
-      </svg>
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        {['left-1.5 top-1.5 border-l border-t', 'right-1.5 top-1.5 border-r border-t', 'bottom-1.5 left-1.5 border-b border-l', 'bottom-1.5 right-1.5 border-b border-r'].map((c, i) => (
-          <span key={i} className={`absolute h-3 w-3 ${c}`} style={{ borderColor: ACCENT, opacity: 0.35 }} />
-        ))}
-      </div>
-    </div>
+    <NationMap title="Operational stress by region" values={values} kind="sample" source={REGIONAL_SOURCE}
+      valueLabel="Stress" unit="index" maxHeight={Math.max(height, 200)} minHeight={Math.min(height, 180)} compact={height < 260}
+      emptyNote="No regional figures yet." />
   );
 }
 
-type LayerKey = 'infra' | 'grid' | 'corridors' | 'incidents' | 'environment';
 export function NationalMap({
-  mapNodes, edges, incidents, now, layers, epoch, height, focus, onToggleLayer,
+  mapNodes, incidents, now, layers, epoch, height, onToggleLayer,
 }: {
   mapNodes: { ministryId: string; ministry: string; archetype: string; x: number; y: number; pressure: number }[];
   edges: { fromId: string; toId: string; propagatedRisk: number }[];
@@ -468,80 +395,17 @@ export function NationalMap({
   focus?: string;
   onToggleLayer?: (k: LayerKey) => void;
 }) {
-  const PROV = provinces();
   const [layerOpen, setLayerOpen] = React.useState(false);
-  const infra: Infra[] = React.useMemo(
-    () => Array.from({ length: 38 }).map((_, i) => {
-      const kind = INFRA_KINDS[Math.floor(seed(`ik:${i}`) * INFRA_KINDS.length)] ?? INFRA_KINDS[0];
-      return {
-        id: `I${i}`,
-        kind,
-        x: 12 + seed(`ix:${i}`) * 74,
-        y: 16 + seed(`iy:${i}`) * 66,
-        risk: Math.round(seed(`irisk:${i}:${epoch}`) * 100),
-      };
-    }),
-    [epoch],
-  );
-  const pos = new Map(mapNodes.map(m => [m.ministryId, m]));
-  const pulse = (now / 1000) % 2 / 2;
   const ts = now / 4000;
-  // National infrastructure corridors — energy / logistics / air / maritime
-  // lattices threaded through province centroids so the territory reads as
-  // a connected operational fabric, not floating markers.
-  const CORRIDORS: { from: number; to: number; kind: 'energy' | 'logistics' | 'air' | 'maritime' }[] = [
-    { from: 0, to: 1, kind: 'energy' }, { from: 1, to: 2, kind: 'energy' }, { from: 1, to: 4, kind: 'energy' },
-    { from: 4, to: 3, kind: 'logistics' }, { from: 4, to: 5, kind: 'logistics' }, { from: 3, to: 0, kind: 'logistics' },
-    { from: 0, to: 4, kind: 'air' }, { from: 2, to: 4, kind: 'air' }, { from: 2, to: 5, kind: 'maritime' }, { from: 5, to: 4, kind: 'maritime' },
-  ];
-  const CORR_TONE = { energy: ACCENT, logistics: TONE.warn, air: TONE.link, maritime: '#5fb0d9' };
-  // National infrastructure substrate — the deep invisible machinery the
-  // command surface sits on. Backbone load is coupled to live ministry
-  // pressure & escalation load so the nation reads as interlocked and
-  // continuously evolving, not a static readout.
+  const { regions, values } = React.useMemo(() => regionalFigures(epoch), [epoch]);
+  const points = React.useMemo<MapPoint[]>(() => (layers.incidents
+    ? regions.filter(r => r.incidents > 0).map(r => ({ key: r.name, label: 'Incidents', tone: POSTURE_TONE[r.posture], count: r.incidents }))
+    : []), [regions, layers.incidents]);
+  // The national operating state under the map (one shared finite-capacity model, sample).
   const aggP = mapNodes.length ? Math.round(mapNodes.reduce((s, m) => s + m.pressure, 0) / mapNodes.length) : 30;
   const peakP = mapNodes.length ? Math.max(...mapNodes.map(m => m.pressure)) : 40;
   const sevLoad = incidents.filter(i => i.severity === 'sev1' || i.severity === 'sev2').length;
-  // One shared finite-capacity operating model drives both this substrate
-  // strip and per-incident strain so the nation stays mutually consistent.
-  const opState = nationalOperatingState(ts, aggP, peakP, sevLoad, incidents.length, epoch);
-  const D = opState.display;
-  // ── Territorial pressure diffusion ──────────────────────────────────────
-  // Regional strain derives from the shared operating doctrine: ministry
-  // operational zones (spatially weighted), national contention floor,
-  // decayed crisis memory, then propagated along corridor topology so
-  // pressure radiates through connectivity and cools gradually — crisis
-  // zones stay warm after containment (never an instant reset).
-  // Distance-weighted MEAN of nearby ministry pressure (0..100) — a region
-  // reads at the strain level of the institutions operating around it, so it
-  // varies by proximity instead of summing into saturation.
-  const zoneStrain = (cx: number, cy: number) => {
-    if (!mapNodes.length) return 38;
-    let s = 0, w = 0;
-    for (const m of mapNodes) {
-      const d = Math.hypot(m.x * 10 - cx, m.y * 6.2 - cy);
-      const k = Math.max(0, 1 - d / 420);
-      s += m.pressure * k; w += k;
-    }
-    return w > 0 ? s / w : mapNodes.reduce((a, m) => a + m.pressure, 0) / mapNodes.length;
-  };
-  // Normalized weighted blend (≈0..100): live ministry-zone strain, national
-  // contention floor, per-province idiosyncrasy and decayed crisis memory —
-  // every doctrine factor retained, but bounded so provinces spread instead
-  // of pinning to the clamp. Propagated along corridor topology; crisis
-  // zones stay warm after containment (never an instant reset).
-  const provRaw = PROV.map((p, i) =>
-    zoneStrain(p.cx, p.cy) * 0.52
-    + opState.contention * 0.2
-    + wave(`prov:${i}`, ts, 8, 70) * 0.18
-    + provinceMemory(i, epoch) * 0.1
-    + (p.cap ? 6 : 0));
-  const provAdj = corridorAdjacency(CORRIDORS.map(c => [c.from, c.to] as [number, number]), PROV.length);
-  const provDiff = diffuseTopology(provRaw, provAdj);
-  const provRisk = PROV.map((p, i) => ({
-    p,
-    risk: Math.max(2, Math.min(99, Math.round(Math.max(provDiff[i] ?? 0, provinceMemory(i, epoch) * 0.7)))),
-  }));
+  const D = nationalOperatingState(ts, aggP, peakP, sevLoad, incidents.length, epoch).display;
   const tBand = (v: number, a: number, b: number) => (v >= b ? 'alert' : v >= a ? 'warn' : 'ok');
   const overlay = [
     { l: 'Grid corridors', v: `${D.gridLoad}% load`, t: tBand(D.gridLoad, 72, 86) },
@@ -550,10 +414,9 @@ export function NationalMap({
     { l: 'Strategic reserves', v: `${D.reserves}%`, t: tBand(90 - D.reserves, 22, 40) },
     { l: 'Coordination capacity', v: `${D.coordBw}%`, t: tBand(95 - D.coordBw, 20, 38) },
   ];
-  const [tactical, setTactical] = React.useState(true);
-  const [heat, setHeat] = React.useState(false);
-  const critCount = incidents.filter(i => i.severity === 'sev1' || i.severity === 'sev2').length;
-  const flowDur = critCount >= 3 ? '0.6s' : critCount >= 1 ? '0.95s' : '1.4s';
+  const critCount = sevLoad;
+  const ranked = [...regions].sort((a, b) => b.composite - a.composite);
+  const [allRegions, setAllRegions] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
   const fullscreen = () => {
     const el = rootRef.current;
@@ -563,528 +426,78 @@ export function NationalMap({
   };
 
   return (
-    <div ref={rootRef} className={`relative w-full overflow-hidden rounded-[4px] border ${height ? '' : 'h-[clamp(360px,40vw,540px)]'}`}
-      style={{
-        ...(height ? { height } : {}),
-        borderColor: `color-mix(in srgb, ${ACCENT} 26%, rgb(var(--c-line-soft)))`,
-        boxShadow: `inset 0 0 90px rgba(0,0,0,0.62), inset 0 0 0 1px color-mix(in srgb,${ACCENT} 8%,transparent)`,
-        background:
-          `radial-gradient(ellipse at 46% 26%, color-mix(in srgb,${ACCENT} 9%,transparent) 0%, color-mix(in srgb,${ACCENT} 3%,transparent) 34%, transparent 60%),` +
-          'radial-gradient(ellipse at 50% 120%, rgba(3,9,18,0.5) 0%, transparent 55%),' +
-          'radial-gradient(150% 130% at 50% 48%, transparent 56%, rgba(1,4,9,0.5) 100%),' +
-          'rgb(var(--c-bg))',
-      }}>
-      <WorldMap focus={focus} />
-
-      {/* radar sweep — slow strategic scan over the capital */}
-      {tactical ? (
-        <div aria-hidden className="pointer-events-none absolute" style={{ left: '52%', top: '50%', width: '120%', height: '120%', transform: 'translate(-50%,-50%)' }}>
-          <div className="h-full w-full animate-radar rounded-full opacity-[0.045]"
-            style={{ background: `conic-gradient(from 0deg, transparent 0deg, ${ACCENT} 24deg, transparent 56deg, transparent 360deg)` }} />
-        </div>
-      ) : null}
-
-      {/* tactical scanline — slow live signal sweep */}
-      {tactical ? (
-        <div aria-hidden className="pointer-events-none absolute inset-x-0 top-0 z-[1] h-full overflow-hidden">
-          <div className="animate-scanline h-px w-full" style={{ background: `linear-gradient(90deg, transparent, ${ACCENT}, transparent)`, boxShadow: `0 0 4px ${ACCENT}` }} />
-        </div>
-      ) : null}
-
-      {/* classified tactical framing — corner brackets + coordinate crosshair */}
-      {tactical ? (
-        <div aria-hidden className="pointer-events-none absolute inset-0 z-[1]">
-          {[['left-2 top-8 border-l border-t', ''], ['right-2 top-8 border-r border-t', ''], ['bottom-12 left-2 border-b border-l', ''], ['bottom-12 right-2 border-b border-r', '']].map(([c], i) => (
-            <span key={i} className={`absolute h-4 w-4 ${c}`} style={{ borderColor: ACCENT, opacity: 0.4 }} />
-          ))}
-          <span className="absolute font-mono text-[8px] tracking-[0.2em]" style={{ left: '0.75rem', top: '2.2rem', color: ACCENT, opacity: 0.45 }}>EXAMPLE MAP</span>
-          <span className="absolute font-mono text-[8px] tracking-[0.2em]" style={{ right: '0.75rem', bottom: '3.4rem', color: ACCENT, opacity: 0.45 }}></span>
-          <span className="absolute left-1/2 top-1/2 h-px w-10 -translate-x-1/2 -translate-y-1/2" style={{ backgroundColor: ACCENT, opacity: 0.18 }} />
-          <span className="absolute left-1/2 top-1/2 h-10 w-px -translate-x-1/2 -translate-y-1/2" style={{ backgroundColor: ACCENT, opacity: 0.18 }} />
-        </div>
-      ) : null}
-
-      <svg viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" className="absolute inset-0 h-full w-full">
-        <defs>
-          <pattern id="grid" width="34" height="34" patternUnits="userSpaceOnUse">
-            <path d="M34 0H0V34" fill="none" stroke="rgb(var(--c-line))" strokeWidth="0.5" />
-          </pattern>
-          <pattern id="terrain" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-            <line x1="0" y1="0" x2="0" y2="14" stroke="rgb(var(--c-line))" strokeWidth="0.5" strokeOpacity="0.5" />
-          </pattern>
-          <radialGradient id="vignette" cx="50%" cy="46%" r="62%">
-            <stop offset="60%" stopColor="rgb(var(--c-bg))" stopOpacity="0" />
-            <stop offset="100%" stopColor="rgb(var(--c-bg))" stopOpacity="0.66" />
-          </radialGradient>
-          {provRisk.map(({ p }, i) => {
-            const k = heat ? 1.8 : 1;
-            return (
-              <radialGradient key={i} id={`pz${i}`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={TONE[toneFor(provRisk[i]!.risk)]} stopOpacity={String(0.30 * k)} />
-                <stop offset="55%" stopColor={TONE[toneFor(provRisk[i]!.risk)]} stopOpacity={String(0.12 * k)} />
-                <stop offset="100%" stopColor={TONE[toneFor(provRisk[i]!.risk)]} stopOpacity="0" />
-              </radialGradient>
-            );
-          })}
-        </defs>
-
-        {/* always-on faint operational graticule + terrain wash */}
-        <rect width="1000" height="620" fill="url(#grid)" opacity={layers.grid ? 0.5 : 0.16} />
-        <rect width="1000" height="620" fill="url(#terrain)" opacity="0.10" />
-        {/* topographic relief + population — environment stratum */}
-        {layers.environment !== false ? (
-        <g style={{ pointerEvents: 'none' }}>
-          {[
-            { cx: 360, cy: 210, r: 230, o: 0.05 }, { cx: 360, cy: 210, r: 150, o: 0.05 }, { cx: 360, cy: 210, r: 80, o: 0.06 },
-            { cx: 560, cy: 360, r: 200, o: 0.04 }, { cx: 560, cy: 360, r: 110, o: 0.05 },
-          ].map((e, i) => (
-            <circle key={`relief${i}`} cx={e.cx} cy={e.cy} r={e.r} fill="none" stroke="rgb(var(--c-line))" strokeOpacity={e.o} strokeWidth="1.4" />
-          ))}
-          <path d="M820,80 Q900,310 800,560" fill="none" stroke="#5fb0d9" strokeOpacity="0.12" strokeWidth="1.2" strokeDasharray="1 4" />
-          {/* population density — denser dots near the capital corridor */}
-          {Array.from({ length: 90 }).map((_, i) => {
-            const a = seed(`pd:${i}`), b = seed(`pd:${i}:y`);
-            const cx = 520 + (a - 0.5) * 520, cy = 360 + (b - 0.5) * 360;
-            const dens = Math.max(0, 1 - Math.hypot(cx - 520, cy - 356) / 420);
-            if (seed(`pd:${i}:k`) > dens + 0.15) return null;
-            return <circle key={`pd${i}`} cx={cx} cy={cy} r={0.6 + dens * 1.1} fill="rgb(var(--c-ink-soft))" opacity={0.05 + dens * 0.16} />;
-          })}
-        </g>
-        ) : null}
-
-        <g>
-          {/* province pressure diffusion zones */}
-          {provRisk.map(({ p, risk }, i) => {
-            const tn = toneFor(risk);
-            return (
-              <g key={i}>
-                <circle cx={p.cx} cy={p.cy} r={p.r} fill={`url(#pz${i})`} className="transition-all duration-1000 ease-sov" />
-                <circle cx={p.cx} cy={p.cy} r={p.r * 0.62} fill="none" stroke={TONE[tn]} strokeOpacity="0.28" strokeWidth="1" strokeDasharray="2 7" />
-                {risk >= 72 ? (
-                  <circle cx={p.cx} cy={p.cy} r={p.r * 0.5} fill="none" stroke={TONE.alert} strokeWidth="1.4"
-                    className="origin-center animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
-                ) : null}
-              </g>
-            );
-          })}
-
-          {/* designated emergency evacuation routes */}
-          {[
-            'M520,356 Q700,300 880,232',
-            'M300,196 Q420,360 286,404',
-            'M742,432 Q620,500 360,540',
-          ].map((d, i) => (
-            <g key={`evac${i}`}>
-              <path d={d} fill="none" stroke={TONE.warn} strokeWidth="2.4" strokeOpacity="0.12" />
-              <path d={d} fill="none" stroke={TONE.warn} strokeWidth="1" strokeOpacity="0.45"
-                strokeDasharray="5 4" className="motion-safe:animate-dash-flow" style={{ animationDuration: '1.4s' }} />
-              <g style={{ filter: `drop-shadow(0 0 2px ${TONE.warn})` }}>
-                <circle r="1.5" fill={TONE.warn}>
-                  <animateMotion dur={`${8 + i * 2}s`} repeatCount="indefinite" path={d} />
-                </circle>
-              </g>
-            </g>
-          ))}
-
-          {/* sector influence zones — dominant archetype illumination */}
-          {provRisk.map(({ p }, i) => {
-            const arch = (['AGRICULTURE', 'ENERGY', 'INTERIOR', 'FINANCE', 'TRANSPORT', 'TRADE'] as const)[i % 6]!;
-            const col = identityFor(arch).accent;
-            return (
-              <radialGradient key={`inf${i}`} id={`infz${i}`} cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor={col} stopOpacity="0.10" />
-                <stop offset="70%" stopColor={col} stopOpacity="0.04" />
-                <stop offset="100%" stopColor={col} stopOpacity="0" />
-              </radialGradient>
-            );
-          })}
-          {provRisk.map(({ p }, i) => (
-            <circle key={`infc${i}`} cx={p.cx} cy={p.cy} r={p.r * 0.92} fill={`url(#infz${i})`} />
-          ))}
-
-          {/* regional readiness intensity rings */}
-          {provRisk.map(({ p, risk }, i) => {
-            const ready = Math.max(1, 100 - risk);
-            const rr = p.r * 0.46;
-            const circ = 2 * Math.PI * rr;
-            const tn = ready >= 65 ? 'ok' : ready >= 45 ? 'warn' : 'alert';
-            return (
-              <g key={`rr${i}`} transform={`rotate(-90 ${p.cx} ${p.cy})`}>
-                <circle cx={p.cx} cy={p.cy} r={rr} fill="none" stroke="rgb(var(--c-line))" strokeOpacity="0.25" strokeWidth="1.4" />
-                <circle cx={p.cx} cy={p.cy} r={rr} fill="none" stroke={TONE[tn]} strokeWidth="1.6"
-                  strokeLinecap="round" strokeDasharray={`${(ready / 100) * circ} ${circ}`}
-                  className="transition-all duration-1000 ease-sov" style={{ filter: `drop-shadow(0 0 2px ${TONE[tn]})` }} />
-              </g>
-            );
-          })}
-
-          {/* curved internal territorial boundaries */}
-          <g stroke="rgb(var(--c-line))" strokeWidth="1.1" fill="none" strokeOpacity="0.5" strokeDasharray="3 6">
-            <path d="M430,120 Q470,300 360,540" />
-            <path d="M660,116 Q600,300 660,528" />
-            <path d="M150,360 Q520,290 920,316" />
-            <path d="M250,210 Q520,250 780,200" />
-          </g>
-
-          {/* national infrastructure corridors (energy / logistics / air / maritime) */}
-          {layers.corridors ? CORRIDORS.map((c, i) => {
-            const a = PROV[c.from]!, b = PROV[c.to]!;
-            const mx = (a.cx + b.cx) / 2 + (seed(`cm:${i}`) - 0.5) * 60;
-            const my = (a.cy + b.cy) / 2 - 30 - seed(`cn:${i}`) * 40;
-            const baseCol = CORR_TONE[c.kind];
-            // Corridor load = strain of the two regions it connects +
-            // national contention (strategic corridors between stressed
-            // zones accumulate layered congestion) with a live jitter.
-            const rA = provRisk[c.from]?.risk ?? 40, rB = provRisk[c.to]?.risk ?? 40;
-            const load = Math.round(Math.max(8, Math.min(99,
-              (rA + rB) / 2 * 0.66 + opState.contention * 0.24 + wave(`corrload:${i}`, ts, 0, 20))));
-            const cls = load >= 80 ? 'congested' : load >= 55 ? 'active' : 'nominal';
-            const col = cls === 'congested' ? TONE.alert : cls === 'active' ? baseCol : baseCol;
-            const haloW = cls === 'congested' ? 5 : cls === 'active' ? 3.6 : 2.4;
-            const haloO = cls === 'congested' ? 0.15 : cls === 'active' ? 0.1 : 0.06;
-            const coreW = 0.9 + (load / 100) * 1.8;
-            const coreO = 0.32 + (load / 100) * 0.45;
-            const d = `M${a.cx},${a.cy} Q${mx},${my} ${b.cx},${b.cy}`;
-            const dur = `${(1.4 + (100 - load) / 100 * 3).toFixed(1)}s`;
-            const pkt = cls === 'congested' ? 3 : cls === 'active' ? 2 : 1;
-            return (
-              <g key={`c${i}`}>
-                <path d={d} fill="none" stroke={col} strokeWidth={haloW} strokeOpacity={haloO} strokeLinecap="round" style={{ filter: cls === 'congested' ? `drop-shadow(0 0 2px ${col})` : undefined }} />
-                <path d={d} fill="none" stroke={col} strokeWidth={coreW}
-                  strokeOpacity={coreO} strokeDasharray="2 8" strokeLinecap="round" className="motion-safe:animate-dash-flow" style={{ animationDuration: cls === 'congested' ? '0.55s' : flowDur }} />
-                {Array.from({ length: pkt }).map((_, k) => (
-                  <circle key={k} r={c.kind === 'energy' ? 1.4 : 1.1} fill={col} opacity="0.7" style={{ filter: `drop-shadow(0 0 1.5px ${col})` }}>
-                    <animateMotion dur={dur} begin={`${(k / pkt) * parseFloat(dur)}s`} repeatCount="indefinite" path={d} />
-                  </circle>
+    <div ref={rootRef} className="space-y-2 rounded-[4px] border border-line-soft bg-bg p-2">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        {critCount >= 1 ? (
+          <span className="rounded-[3px] border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em]"
+            style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, rgb(var(--c-surface)))` }}>
+            Activity · {critCount >= 3 ? 'very high' : 'high'} · {critCount} serious incident{critCount === 1 ? '' : 's'}
+          </span>
+        ) : <span />}
+        <div className="flex items-start gap-1.5">
+          <div className="relative">
+            <button type="button" onClick={() => onToggleLayer && setLayerOpen(o => !o)} aria-expanded={layerOpen}
+              className="focus-ring flex items-center gap-1 rounded-[3px] border border-line bg-surface px-2 py-1 text-[11px] text-ink-soft hover:text-ink">
+              <span style={{ color: ACCENT }} aria-hidden>⧉</span> Layers <span className="text-ink-muted" aria-hidden>{layerOpen ? '▴' : '▾'}</span>
+            </button>
+            {layerOpen && onToggleLayer ? (
+              <div className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-[3px] border border-line bg-surface shadow-elev-3">
+                {([['incidents', 'Incidents'], ['infra', 'Infrastructure'], ['corridors', 'Corridors'], ['grid', 'Region names in the table'], ['environment', 'Environment']] as const).map(([k, l]) => (
+                  <button key={k} type="button" onClick={() => onToggleLayer(k)} aria-pressed={!!layers[k]}
+                    className="focus-ring flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[11px] text-ink-soft hover:bg-surface-2 hover:text-ink">
+                    <span>{l}</span>
+                    <span className="h-2.5 w-4 rounded-full" style={{ backgroundColor: layers[k] ? ACCENT : 'rgb(var(--c-line))' }} />
+                  </button>
                 ))}
-              </g>
-            );
-          }) : null}
-
-          {/* national infrastructure topology — digital-twin substrate */}
-          {layers.infra ? (
-            <g>
-              {NATL_NETWORKS.map(s => {
-                const col = NET_TONE[s.kind];
-                const press = networkPressure(s.kind, ts);
-                return (
-                  <g key={s.id}>
-                    <path d={s.d} fill="none" stroke={col} strokeWidth={s.kind === 'road' ? 1.1 : 0.7}
-                      strokeOpacity={s.kind === 'road' ? 0.22 : 0.3} strokeDasharray={s.kind === 'rail' ? '4 3' : s.kind === 'pipeline' ? '1 4' : undefined} />
-                    {press >= 62 ? (
-                      <path d={s.d} fill="none" stroke={press >= 78 ? TONE.alert : TONE.warn} strokeWidth="1.1"
-                        strokeOpacity="0.5" strokeDasharray="2 7" className="motion-safe:animate-dash-flow" style={{ animationDuration: '1s' }} />
-                    ) : null}
-                  </g>
-                );
-              })}
-              {NATL_ASSETS.map(a => {
-                if (a.tier === 1) {
-                  return (
-                    <g key={a.id}>
-                      <circle cx={a.x} cy={a.y} r="6" fill="none" stroke={ACCENT} strokeOpacity="0.35" strokeWidth="0.6" />
-                      <text x={a.x} y={a.y + 2.6} textAnchor="middle" style={{ fontSize: 6.5, fill: ACCENT, opacity: 0.9 }}>{ASSET_GLYPH[a.kind]}</text>
-                    </g>
-                  );
-                }
-                const tone = a.tier === 2 ? 'rgb(var(--c-ink-soft))' : 'rgb(var(--c-line))';
-                return <circle key={a.id} cx={a.x} cy={a.y} r={a.tier === 2 ? 1.4 : 0.9}
-                  fill={tone} fillOpacity={a.tier === 2 ? 0.5 : 0.32} />;
-              })}
-            </g>
-          ) : null}
-
-          {/* operational fabric — infra tethered to nearest province */}
-          {layers.infra ? infra.map(n => {
-            const nx = n.x * 10, ny = n.y * 6.2;
-            let best = PROV[0]!, bd = Infinity;
-            for (const pv of PROV) { const d = (pv.cx - nx) ** 2 + (pv.cy - ny) ** 2; if (d < bd) { bd = d; best = pv; } }
-            return <line key={`fb${n.id}`} x1={nx} y1={ny} x2={best.cx} y2={best.cy}
-              stroke="rgb(var(--c-line))" strokeWidth="0.5" strokeOpacity="0.22" />;
-          }) : null}
-
-          {/* environment overlay — drifting weather front */}
-          {layers.environment !== false ? (
-          <g style={{ pointerEvents: 'none' }}>
-            <ellipse cx="0" cy="240" rx="180" ry="150" fill="rgb(var(--c-line))" fillOpacity="0.05" stroke="rgb(var(--c-line))" strokeOpacity="0.12" strokeWidth="1">
-              <animate attributeName="cx" values="-120;1120" dur="48s" repeatCount="indefinite" />
-            </ellipse>
-            <ellipse cx="0" cy="240" rx="100" ry="80" fill="none" stroke={TONE.link} strokeOpacity="0.14" strokeWidth="1" strokeDasharray="3 5">
-              <animate attributeName="cx" values="-120;1120" dur="48s" repeatCount="indefinite" />
-            </ellipse>
-          </g>
-          ) : null}
-
-          {/* national airspace overlay — high-altitude corridors */}
-          {[
-            ['M60,150 Q500,40 950,200', '7s'],
-            ['M40,470 Q520,560 960,420', '9s'],
-            ['M120,560 Q480,180 900,90', '11s'],
-          ].map(([d, dur], i) => (
-            <g key={`air${i}`}>
-              <path d={d as string} fill="none" stroke={TONE.link} strokeOpacity="0.16" strokeWidth="0.8" strokeDasharray="1 6" />
-              <g style={{ filter: `drop-shadow(0 0 2px ${TONE.link})` }}>
-                <circle r="1.4" fill={TONE.link}>
-                  <animateMotion dur={dur as string} repeatCount="indefinite" path={d as string} rotate="auto" />
-                </circle>
-              </g>
-            </g>
-          ))}
-
-          {/* dependency / cascade edges */}
-          {edges.slice(0, 26).map((e, i) => {
-            const a = pos.get(e.fromId), b = pos.get(e.toId);
-            if (!a || !b) return null;
-            const tn = e.propagatedRisk >= 67 ? 'alert' : e.propagatedRisk >= 34 ? 'warn' : 'ok';
-            return (
-              <line key={i} x1={a.x * 10} y1={a.y * 6.2} x2={b.x * 10} y2={b.y * 6.2}
-                stroke={TONE[tn]} strokeWidth={0.6 + (e.propagatedRisk / 100) * 2.2}
-                strokeOpacity={0.16 + (e.propagatedRisk / 100) * 0.42} strokeDasharray="3 7"
-                className="motion-safe:animate-dash-flow" style={{ animationDuration: flowDur }} />
-            );
-          })}
-
-          {/* maritime EEZ / coastal patrol zone */}
-          <g>
-            <path d="M860,90 Q930,300 850,560 L1000,560 L1000,90 Z" fill="#5fb0d9" fillOpacity="0.05" stroke="#5fb0d9" strokeOpacity="0.22" strokeWidth="0.8" strokeDasharray="4 5" />
-            <text x="930" y="320" textAnchor="middle" className="fill-[#5fb0d9]" style={{ fontSize: 9, letterSpacing: 1, opacity: 0.5 }}>Sea zone</text>
-            <g style={{ filter: 'drop-shadow(0 0 2px #5fb0d9)' }}>
-              <circle r="1.6" fill="#5fb0d9">
-                <animateMotion dur="13s" repeatCount="indefinite" path="M880,120 Q940,300 870,540 Q940,300 880,120" />
-              </circle>
-            </g>
-          </g>
-
-          {/* incident diffusion shock rings */}
-          {layers.incidents ? mapNodes.filter(m => m.pressure >= 68).slice(0, 8).map(m => (
-            <g key={`bl${m.ministryId}`}>
-              <circle cx={m.x * 10} cy={m.y * 6.2} r="24" fill="none" stroke={TONE.alert} strokeWidth="1.1"
-                className="origin-center animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
-              <circle cx={m.x * 10} cy={m.y * 6.2} r={16 + pulse * 22} fill={TONE.alert} opacity={0.08 - pulse * 0.06} />
-            </g>
-          )) : null}
-
-          {/* cascading-failure spread — critical nodes propagate to provinces */}
-          {layers.incidents ? mapNodes.filter(m => m.pressure >= 80).slice(0, 3).flatMap(m => {
-            const nx = m.x * 10, ny = m.y * 6.2;
-            return [...PROV]
-              .sort((a, b) => ((a.cx - nx) ** 2 + (a.cy - ny) ** 2) - ((b.cx - nx) ** 2 + (b.cy - ny) ** 2))
-              .slice(0, 2)
-              .map((pv, k) => (
-                <path key={`spread${m.ministryId}${k}`}
-                  d={`M${nx},${ny} Q${(nx + pv.cx) / 2},${(ny + pv.cy) / 2 - 40} ${pv.cx},${pv.cy}`}
-                  fill="none" stroke={TONE.alert} strokeWidth="1.2" strokeOpacity="0.5"
-                  strokeDasharray="2 5" className="motion-safe:animate-dash-flow" style={{ animationDuration: '0.7s' }} />
-              ));
-          }) : null}
-        </g>
-
-        {provRisk.map(({ p, risk }, i) => {
-          const tn = toneFor(risk);
-          return (
-            <g key={`l${i}`} style={{ pointerEvents: 'none' }}>
-              <text x={p.cx} y={p.cy - 5} textAnchor="middle"
-                className="fill-[rgb(var(--c-ink-soft))]" style={{ fontSize: 13, fontWeight: 600, letterSpacing: 0.5 }}>
-                {p.cap ? '★ ' : ''}{p.n}
-              </text>
-              <text x={p.cx} y={p.cy + 13} textAnchor="middle"
-                style={{ fontSize: 12, fontWeight: 700, fill: TONE[tn] }}>
-                {risk} · {tn === 'ok' ? 'STABLE' : tn === 'warn' ? 'ELEVATED' : tn === 'alert' ? 'CRITICAL' : 'WATCH'}
-              </text>
-              <text x={p.cx} y={p.cy + 27} textAnchor="middle"
-                className="fill-[rgb(var(--c-ink-muted))]" style={{ fontSize: 9.5, letterSpacing: 1 }}>
-                READINESS {Math.max(1, 100 - risk)}%
-              </text>
-            </g>
-          );
-        })}
-
-        {/* national strategic assets */}
-        {([
-          { x: 520, y: 356, g: '★', l: 'National Command HQ' },
-          { x: 300, y: 196, g: '⛨', l: 'Strategic Reserve' },
-          { x: 770, y: 232, g: '◬', l: 'Comms Relay' },
-          { x: 286, y: 404, g: '⚑', l: 'Forward Base' },
-        ]).map(s => (
-          <g key={s.l} style={{ pointerEvents: 'none' }}>
-            <circle cx={s.x} cy={s.y} r="9" fill="none" stroke={ACCENT} strokeOpacity="0.5" strokeWidth="1"
-              className="origin-center animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
-            <text x={s.x} y={s.y + 4} textAnchor="middle" style={{ fontSize: 12, fill: ACCENT }}>{s.g}</text>
-          </g>
-        ))}
-
-        <rect width="1000" height="620" fill="url(#vignette)" style={{ pointerEvents: 'none' }} />
-      </svg>
-
-      {/* infrastructure nodes */}
-      {layers.infra && infra.map(n => {
-        const tone = toneFor(n.risk);
-        const crit = n.risk >= 75;
-        return (
-          <span key={n.id} className="group absolute z-10 -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${n.x}%`, top: `${n.y}%` }} title={`${n.kind.label} · risk ${n.risk} · ${tone}`}>
-            {crit ? <span className="absolute inset-0 -z-10 rounded-full motion-safe:animate-breathe" style={{ backgroundColor: TONE.alert, opacity: 0.2 }} /> : null}
-            <span className="grid h-5 w-5 place-items-center rounded-[4px] text-[9px] ring-1"
-              style={{ backgroundColor: 'rgb(var(--c-surface-2))', color: TONE[tone], borderColor: TONE[tone], boxShadow: crit ? `0 0 4px ${TONE.alert}` : undefined }}>
-              {n.kind.g}
-            </span>
-            {crit ? (
-              <span className="absolute left-1/2 top-5 -translate-x-1/2 whitespace-nowrap rounded bg-surface/90 px-1 py-px text-[8px] font-semibold uppercase tracking-wide ring-1 ring-line" style={{ color: TONE.alert }}>{n.kind.label}</span>
-            ) : (
-              <span className="absolute left-1/2 top-5 -translate-x-1/2 whitespace-nowrap rounded bg-surface px-1 py-px text-[8px] text-ink-soft opacity-0 ring-1 ring-line transition-opacity group-hover:opacity-100">{n.kind.label} · {n.risk}</span>
-            )}
-          </span>
-        );
-      })}
-
-      {/* labelled active incident markers (from live cross-ministry feed) */}
-      {layers.incidents && incidents.slice(0, 7).map((inc, i) => {
-        const host = mapNodes.find(m => m.ministry === inc.ministry) ?? mapNodes[i % Math.max(1, mapNodes.length)];
-        const x = host ? host.x : 18 + seed(`ipx:${i}`) * 64;
-        const y = host ? host.y : 20 + seed(`ipy:${i}`) * 56;
-        const sv = inc.severity;
-        const tn = sv === 'sev1' ? 'alert' : sv === 'sev2' ? 'alert' : sv === 'sev3' ? 'warn' : 'neutral';
-        const lbl = sv === 'sev1' ? 'CRITICAL' : sv === 'sev2' ? 'ELEVATED' : sv === 'sev3' ? 'WARNING' : 'WATCH';
-        return (
-          <span key={`inc${i}`} className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${x + 2.5}%`, top: `${y - 3}%` }} aria-hidden>
-            <span className="flex items-center gap-1 whitespace-nowrap rounded-[3px] border px-1 py-px text-[8px] font-bold uppercase tracking-wider backdrop-blur"
-              style={{ borderColor: TONE[tn], color: TONE[tn], backgroundColor: `color-mix(in srgb, ${TONE[tn]} 16%, rgb(var(--c-surface)))` }}>
-              <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[tn] }} />{lbl} · {inc.ministry}
-            </span>
-          </span>
-        );
-      })}
-
-      {/* ministry command nodes */}
-      {mapNodes.map(m => {
-        const id = identityFor(m.archetype as ArchetypeKey);
-        const tn = toneFor(m.pressure);
-        const tier = m.pressure >= 80 ? 'crit' : m.pressure >= 60 ? 'sec' : 'passive';
-        const sz = tier === 'crit' ? 'h-11 w-11 text-[13px]' : tier === 'sec' ? 'h-9 w-9 text-[11px]' : 'h-7 w-7 text-[9px]';
-        const glow = tier === 'crit' ? `0 0 11px ${TONE[tn]}, 0 0 4px ${TONE[tn]}` : tier === 'sec' ? `0 0 8px ${TONE[tn]}55` : `0 0 4px ${TONE[tn]}2e`;
-        return (
-          <Link key={m.ministryId} href={`/gov/ministry/${m.ministryId}`}
-            className="focus-ring group absolute -translate-x-1/2 -translate-y-1/2"
-            style={{ left: `${m.x}%`, top: `${m.y}%`, zIndex: tier === 'crit' ? 14 : tier === 'sec' ? 12 : 10, opacity: tier === 'passive' ? 0.62 : 1 }}
-            title={`${m.ministry} · pressure ${m.pressure}`}>
-            {tier === 'crit' ? (
-              <>
-                <span aria-hidden className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-diffuse"
-                  style={{ height: '2rem', width: '2rem', border: `1px solid ${TONE[tn]}99`, transformOrigin: 'center' }} />
-                <span aria-hidden className="absolute left-1/2 top-1/2 h-7 w-7 -translate-x-1/2 -translate-y-1/2 rounded-full motion-safe:animate-breathe"
-                  style={{ background: `radial-gradient(circle, ${TONE[tn]}26 0%, transparent 70%)` }} />
-              </>
+              </div>
             ) : null}
-            <span className={`relative grid place-items-center rounded-full font-bold text-white ring-2 transition-transform group-hover:scale-110 ${sz}`}
-              style={{ backgroundColor: id.accent, borderColor: TONE[tn], boxShadow: glow }}>
-              {id.glyph}
-            </span>
-            <span className="absolute left-1/2 top-[110%] -translate-x-1/2 whitespace-nowrap rounded bg-surface px-1.5 py-0.5 text-[9px] text-ink-soft opacity-0 ring-1 ring-line transition-opacity group-hover:opacity-100">
-              {m.ministry} · {m.pressure}
-            </span>
-          </Link>
-        );
-      })}
+          </div>
+          <button type="button" onClick={fullscreen} aria-label="Show the map full screen"
+            className="focus-ring grid h-7 w-7 place-items-center rounded-[3px] border border-line bg-surface text-[11px] text-ink-soft hover:text-ink">⛶</button>
+        </div>
+      </div>
 
-      {mapNodes.length === 0 ? <div className="absolute inset-0 grid place-items-center text-xs text-ink-muted">Waiting for readings from institutions…</div> : null}
-
-      {/* map controls — top-right */}
-      <div className="absolute right-2 top-2 z-20 flex items-start gap-1.5">
-        <div className="relative">
-          <button type="button" onClick={() => onToggleLayer && setLayerOpen(o => !o)} aria-expanded={layerOpen}
-            className="focus-ring flex items-center gap-1 rounded-[3px] border border-line bg-surface/85 px-2 py-1 text-[10px] text-ink-soft backdrop-blur transition-colors hover:text-ink">
-            <span style={{ color: ACCENT }}>⧉</span> All Layers <span className="text-ink-muted">{layerOpen ? '▴' : '▾'}</span>
-          </button>
-          {layerOpen && onToggleLayer ? (
-            <div className="absolute right-0 mt-1 w-40 overflow-hidden rounded-[3px] border border-line bg-surface shadow-elev-3">
-              {([['infra', 'Infrastructure'], ['grid', 'Grid'], ['corridors', 'Corridors'], ['incidents', 'Incidents'], ['environment', 'Environment']] as const).map(([k, l]) => (
-                <button key={k} type="button" onClick={() => onToggleLayer(k)}
-                  className="focus-ring flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[11px] text-ink-soft transition-colors hover:bg-surface-2 hover:text-ink">
-                  <span>{l}</span>
-                  <span className="h-2.5 w-4 rounded-full" style={{ backgroundColor: layers[k] ? ACCENT : 'rgb(var(--c-line))' }} />
-                </button>
-              ))}
-            </div>
+      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_200px]">
+        <NationMap title="Activity by region" values={values} kind="sample" source={REGIONAL_SOURCE}
+          valueLabel="Stress" unit="index" points={points} pointsLabel="Open incidents" maxHeight={height ?? 520} />
+        <div className="space-y-1">
+          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Regional pressure <SignalTag kind="sample" source={REGIONAL_SOURCE} /></div>
+          <ol className="space-y-1">
+            {(allRegions ? ranked : ranked.slice(0, 10)).map(r => {
+              const tn = POSTURE_TONE[r.posture];
+              return (
+                <li key={r.name}>
+                  <div className="flex items-center justify-between gap-2 text-[11px]">
+                    <span className="truncate text-ink-soft">{r.name}</span>
+                    <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{r.composite}</span>
+                  </div>
+                  <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-surface-2" aria-hidden>
+                    <div className="h-full rounded-full" style={{ width: `${r.composite}%`, backgroundColor: TONE[tn] }} />
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+          {ranked.length > 10 ? (
+            <button type="button" onClick={() => setAllRegions(v => !v)} className="text-[11px] text-link underline">
+              {allRegions ? 'Show the top 10' : `Show all ${ranked.length}`}
+            </button>
           ) : null}
         </div>
-        <button type="button" onClick={fullscreen} aria-label="Toggle fullscreen"
-          className="focus-ring grid h-7 w-7 place-items-center rounded-[3px] border border-line bg-surface/85 text-[11px] text-ink-soft backdrop-blur transition-colors hover:text-ink">⛶</button>
       </div>
 
-      {/* map controls — left tactical stack (functional) */}
-      <div className="absolute left-2 top-2 z-20 flex flex-col gap-1">
-        {([
-          { i: '◎', t: 'Tactical framing', on: tactical, act: () => setTactical(v => !v) },
-          { i: '✸', t: 'Heat intensity', on: heat, act: () => setHeat(v => !v) },
-          { i: '▦', t: 'Grid overlay', on: layers.grid, act: () => onToggleLayer?.('grid') },
-          { i: '⚠', t: 'Incident diffusion', on: layers.incidents, act: () => onToggleLayer?.('incidents') },
-        ]).map(b => (
-          <button key={b.t} title={b.t} type="button" onClick={b.act}
-            className="focus-ring grid h-7 w-7 place-items-center rounded-[3px] border bg-surface/85 text-[12px] backdrop-blur transition-colors"
-            style={{ borderColor: b.on ? ACCENT : 'rgb(var(--c-line))', color: b.on ? ACCENT : 'rgb(var(--c-ink-soft))' }}>{b.i}</button>
-        ))}
-      </div>
-
-      {critCount >= 1 ? (
-        <div className="absolute left-1/2 top-2 z-20 -translate-x-1/2 rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] backdrop-blur"
-          style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, rgb(var(--c-surface)))` }}>
-          <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full align-middle" style={{ backgroundColor: TONE.alert }} />
-          Activity · {critCount >= 3 ? 'very high' : 'high'} · {critCount} active
-        </div>
+      {layers.infra || layers.corridors ? (
+        <p className="text-[11px] text-ink-muted">
+          {layers.infra ? 'Infrastructure: no facilities with locations are registered yet; they appear here once National data holds them. ' : ''}
+          {layers.corridors ? 'Corridors: none observed yet.' : ''}
+        </p>
       ) : null}
 
-      {/* regional pressure ladder — live per-province telemetry */}
-      <div className="absolute right-2 top-12 z-20 w-[148px] rounded-[3px] border border-line bg-surface/85 p-2 backdrop-blur">
-        <div className="mb-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Regional pressure</div>
-        <div className="space-y-1">
-          {provRisk.map(({ p, risk }, i) => {
-            const tn = toneFor(risk);
-            return (
-              <div key={i}>
-                <div className="flex items-center justify-between text-[9px]">
-                  <span className="truncate text-ink-soft">{p.cap ? '★ ' : ''}{p.n.replace(' Region', '').replace(' Province', '').replace(' District', '')}</span>
-                  <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{risk}</span>
-                </div>
-                <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-surface-2">
-                  <div className="h-full rounded-full transition-all duration-1000 ease-sov" style={{ width: `${risk}%`, backgroundColor: TONE[tn] }} />
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <div className="absolute bottom-12 left-2 flex flex-wrap gap-3 rounded-[3px] border border-line bg-surface/85 px-2.5 py-1 text-[10px] text-ink-muted backdrop-blur">
-        {(['ok', 'neutral', 'warn', 'alert'] as const).map(t => (<span key={t} className="flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ backgroundColor: TONE[t] }} />{t === 'ok' ? 'Stable' : t === 'neutral' ? 'Watch' : t === 'warn' ? 'Elevated' : 'Critical'}</span>))}
-        <span className="flex items-center gap-2 border-l border-line pl-2">
-          <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: CORR_TONE.energy }} />energy</span>
-          <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: CORR_TONE.logistics }} />logistics</span>
-          <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: CORR_TONE.air }} />air</span>
-          <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: CORR_TONE.maritime }} />maritime</span>
-        </span>
-        <span className="flex items-center gap-2 border-l border-line pl-2">
-          <span className="flex items-center gap-1"><span style={{ color: TONE.warn }}>┄</span>evac</span>
-          <span className="flex items-center gap-1"><span style={{ color: TONE.alert }}>↯</span>cascade</span>
-          <span className="flex items-center gap-1"><span style={{ color: ACCENT }}>★</span>strategic asset</span>
-          <span className="flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'rgb(var(--c-ink-soft))', opacity: 0.6 }} />population</span>
-        </span>
-        <span className="flex items-center gap-1 border-l border-line pl-2">✚ medical ⚓ port ✈ air ⚡ power ◬ telecom ◑ water ▣ logistics ◈ military ⚙ industrial ⛬ customs</span>
-        <span className="flex items-center gap-2 border-l border-line pl-2">
-          <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: NET_TONE.rail }} />rail</span>
-          <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: NET_TONE.grid }} />grid</span>
-          <span className="flex items-center gap-1"><span className="h-0.5 w-3" style={{ backgroundColor: NET_TONE.pipeline }} />pipeline</span>
-        </span>
-      </div>
-
-      {/* in-map operational telemetry strip — keeps the theatre occupied */}
-      <div className="absolute inset-x-0 bottom-0 grid grid-cols-2 gap-px border-t border-line bg-line/80 text-[10px] backdrop-blur sm:grid-cols-5">
+      <div className="grid grid-cols-1 gap-px overflow-hidden rounded-[3px] border border-line bg-line/80 text-[11px] min-[480px]:grid-cols-2 sm:grid-cols-5">
         {overlay.map(o => (
-          <div key={o.l} className="flex items-center justify-between gap-2 bg-surface/80 px-3 py-1.5">
-            <span className="uppercase tracking-[0.14em] text-ink-muted">{o.l}</span>
-            <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[o.t] }}>
-              <span className="h-1.5 w-1.5 animate-breathe rounded-full" style={{ backgroundColor: TONE[o.t] }} />{o.v}
-            </span>
+          <div key={o.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
+            <span className="uppercase tracking-[0.12em] text-ink-muted">{o.l}</span>
+            <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[o.t] }}>{o.v}</span>
           </div>
         ))}
       </div>
@@ -1445,7 +858,7 @@ export function SituationRoom() {
           </div>
 
           {/* Map-first band */}
-          <div className="grid gap-1.5 xl:grid-cols-12">
+          <div className="grid grid-cols-1 gap-1.5 xl:grid-cols-12">
             <Panel signal="sample" title="National activity map"
               meta={
                 <span className="flex items-center gap-1">

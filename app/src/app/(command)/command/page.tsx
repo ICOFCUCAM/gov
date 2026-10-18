@@ -60,14 +60,8 @@ function Mini({ kind, tone, focus }: { kind: 'map' | 'graph' | 'net' | 'ring' | 
   if (kind === 'map') return (
     <div className="relative h-11 w-full overflow-hidden rounded-[3px] border border-line-soft"
       style={{ background: 'radial-gradient(ellipse at 50% 40%, rgba(55,199,212,0.10) 0%, rgb(var(--c-bg)) 75%)' }}>
+      {/* Thumbnail of the nation's place on the world map; its regions are on Situation now. */}
       <WorldMap focus={focus} />
-      <div aria-hidden className="pointer-events-none absolute inset-0">
-        {[[34, 40], [58, 30], [78, 52], [50, 64]].map(([x, y], i) => (
-          <span key={i} className="absolute h-1.5 w-1.5 -translate-x-1/2 -translate-y-1/2 rounded-full"
-            style={{ left: `${x}%`, top: `${y}%`, backgroundColor: TONE[i === 0 ? 'alert' : 'ok'], boxShadow: `0 0 5px ${TONE[i === 0 ? 'alert' : 'ok']}` }} />
-        ))}
-        <span className="absolute right-1 top-1 rounded-[2px] px-1 text-[7px] font-bold tracking-widest" style={{ color: ACCENT }}>LIVE</span>
-      </div>
     </div>
   );
   if (kind === 'net') return (

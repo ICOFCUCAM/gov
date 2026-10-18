@@ -3,6 +3,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel, Spark, seed, toneFor, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
+import { WorldContext } from '@/components/map/WorldContext';
+import { useNeighbours } from '@/components/map/useNeighbours';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
@@ -203,6 +205,11 @@ const TITLES: Record<DomainKey, string> = {
 
 export function DomainCommand({ domain }: { domain: DomainKey }) {
   const cfg = DOMAIN[domain];
+  // Foreign relations: the frontier rows name the nation's real neighbours (shared borders), not fixed compass points.
+  const neighbours = useNeighbours();
+  const monitorRows = domain === 'geopolitical' && neighbours
+    ? [...neighbours.slice(0, 3).map((n, k) => ({ ...cfg.monitor[0]!, l: `Frontier with ${n}`, k: `nb${k}` })), ...cfg.monitor.filter(m => !/frontier/i.test(m.l))]
+    : cfg.monitor;
   const [now, setNow] = React.useState(useRenderNow());
   const [openFeed, setOpenFeed] = React.useState<number | null>(0);
   React.useEffect(() => {
@@ -252,7 +259,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
 
       <div className="grid gap-2 xl:grid-cols-12">
         <Panel signal="sample" title="Operational theatre" meta="domain pressure · live" className="xl:col-span-7" bodyClass="!p-2">
-          <TerritoryHeat epoch={Math.floor(ts) % 60} height={300} />
+          {domain === 'geopolitical' ? <WorldContext maxHeight={320} /> : <TerritoryHeat epoch={Math.floor(ts) % 60} height={300} />}
           <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-4">
             {[
               ['Sector readiness', 'sect', 60, 96, '%'], ['Corridor flow', 'corr', 40, 92, ''],
@@ -346,7 +353,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
       <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
         <Panel signal="sample" title={cfg.monitorTitle} meta="composite" bodyClass="!p-1.5">
           <div className="space-y-1">
-            {cfg.monitor.map((m, i) => {
+            {monitorRows.map((m, i) => {
               const v = Math.round(w(`mon:${i}`, m.lo, m.hi));
               const t = tone3(v, m.good);
               return (

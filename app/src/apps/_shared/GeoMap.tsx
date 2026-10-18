@@ -13,17 +13,12 @@ import { loadCountry, type Admin1Country } from '@/lib/geo/admin1';
 import type { HealthGeo } from '@/lib/gov/health-geo';
 import { nationIso3 } from '@/lib/nation/registry';
 
-// Territories far from the mainland are drawn in inset boxes (bottom right),
-// as on official national maps, so the mainland keeps its size. Each inner
-// list shares one box. The United States uses geoAlbersUsa's own insets.
-const INSETS: Record<string, string[][]> = {
-  ESP: [['ES-TF', 'ES-GC']],
-  PRT: [['PT-20'], ['PT-30']],
-  ECU: [['EC-W']],
-  FRA: [['FR-GP', 'FR-MQ', 'FR-GF'], ['FR-RE', 'FR-YT']],
-};
+import { INSETS } from '@/lib/map/projection';
+import { nameKeys } from '@/lib/map/names';
+import { SignalTag } from '@/components/ui/SignalTag';
 
-// Fallback map country until a nation sets its ISO code in setup.
+// Kept for callers that imported it; the map no longer falls back to a fixed
+// country: until the nation sets its country in setup it says so instead.
 export const SOVEREIGN_ISO = 'UGA';
 
 type Metric = 'pressure' | 'icuLoad' | 'outbreakHeat';
@@ -57,8 +52,9 @@ export function GeoMap({
   const [W, setW] = React.useState(680);
   const H = height;
 
-  const country = iso3 ?? nationIso3() ?? SOVEREIGN_ISO;
+  const country = iso3 ?? nationIso3();
   React.useEffect(() => {
+    if (!country) { setLoading(false); return; }
     let live = true;
     setLoading(true);
     loadCountry(country).then(d => { if (live) { setData(d); setLoading(false); } });
@@ -97,14 +93,17 @@ export function GeoMap({
       ? data.provinces.map(draw).join(' ')
       : geoPath(proj)({ type: 'Feature', properties: {}, geometry: data.outline } as never) || '';
     const districts = data.provinces.map(draw);
-    // Deliberate, well-spaced incident markers (dedupe close ones).
-    const cand = data.provinces.map((p, i) => {
-      const reg = geo.regions[i % geo.regions.length];
-      const v = reg ? reg[metric] : 50;
+    // Markers only where a region's figure belongs: matched by name to its real
+    // subdivision (never one region's figure repeated over other units).
+    const byName = new Map<string, (typeof geo.regions)[number]>();
+    for (const r of geo.regions) for (const k of nameKeys(r.region)) byName.set(k, r);
+    const cand = data.provinces.map(p => {
+      const reg = nameKeys(p.name, ...Object.values(p.i18n ?? {})).map(k => byName.get(k)).find(Boolean);
+      if (!reg) return null;
       const c = projOf(p)([p.lng, p.lat]);
       // Official name in the nation's own spelling (ISO 3166-2, see scripts/official-names.mjs).
-      return { x: c?.[0] ?? null, y: c?.[1] ?? null, v, name: p.name, inset: inInset.has(p) };
-    }).filter(x => x.x != null).sort((a, b) => b.v - a.v) as { x: number; y: number; v: number; name: string; inset: boolean }[];
+      return { x: c?.[0] ?? null, y: c?.[1] ?? null, v: reg[metric], name: p.name, inset: inInset.has(p) };
+    }).filter((x): x is NonNullable<typeof x> => !!x && x.x != null).sort((a, b) => b.v - a.v) as { x: number; y: number; v: number; name: string; inset: boolean }[];
     const minGap = Math.max(26, Math.min(W, H) * 0.085);
     const markers: { x: number; y: number; v: number; name: string; inset: boolean; band: BandKey }[] = [];
     for (const c of cand) {
@@ -128,7 +127,7 @@ export function GeoMap({
   return (
     <div ref={wrap} className="relative w-full overflow-hidden rounded-[10px]" style={{ height: H, background: 'radial-gradient(120% 100% at 50% 35%, #0c2036 0%, #071425 55%, #030711 100%)' }}>
       <svg width={W} height={H} viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none"
-        style={{ display: 'block', width: '100%', height: H }} role="img" aria-label={`${iso3} — ${metric}`}>
+        style={{ display: 'block', width: '100%', height: H }} role="img" aria-label={`${title || data?.name || 'National map'}: ${view?.markers.length ?? 0} regions with a sample figure`}>
         <defs>
           <filter id="gmGlow" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="6" /></filter>
           <filter id="gmSoft" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="2" /></filter>
@@ -201,8 +200,11 @@ export function GeoMap({
 
       {/* title */}
       <div className="pointer-events-none absolute left-3 top-2.5 text-[11px] font-bold uppercase tracking-[0.18em]" style={{ color: 'rgba(225,240,250,0.95)', textShadow: '0 0 8px #030711' }}>
-        {title || (data?.name ?? iso3)}
+        {title || (data?.name ?? country)} <SignalTag kind="sample" source="Health figures are samples until a health information source is connected" className="ms-1 align-middle" />
       </div>
+      {!country && !loading ? (
+        <p className="absolute inset-x-3 top-1/2 text-center text-[12px]" style={{ color: 'rgba(200,222,240,0.9)' }}>Set the nation&rsquo;s country in setup to draw its map.</p>
+      ) : null}
       {/* layers control */}
       <div className="absolute right-2.5 top-2.5 flex flex-col gap-1">
         <span className="grid h-6 w-6 place-items-center rounded-[6px] border text-[11px]" style={{ borderColor: 'rgba(120,180,230,0.25)', background: 'rgba(8,20,35,0.7)', color: 'rgba(180,210,235,0.8)' }}>⧉</span>

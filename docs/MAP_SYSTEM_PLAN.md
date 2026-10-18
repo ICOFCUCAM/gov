@@ -1,6 +1,6 @@
 # Map system: evaluation and plan
 
-Status: proposed (review of every map surface, October 2026). Register: §16.4.
+Status: phases 0–2 done (October 2026); phases 3–5 open. Register: §16.4, §17.1.
 
 ## Answers to the owner's questions
 
@@ -103,3 +103,30 @@ layouts. The fix is one shared map engine grown from it.
 | 3 Data pipeline | `build-map-pack.mjs` (TopoJSON per nation per level, world 1:50m, worldview); admin-2 from geoBoundaries/OCHA; Nation Pack capital, projection, insets; size budgets | 2–3 weeks |
 | 4 Authoritative data in the twin | boundary sources with versions and four-eyes publish; facilities with coordinates; incident locations; OGC collections | 3–4 weeks |
 | 5 Ministry maps and polish | ~15 ministry maps and GeoMap on presets; maps in the accessibility audit; glossary | 2 weeks |
+
+### Progress
+
+- **Phase 0, done.** `WorldMap` focuses the nation by ISO code (`findCountryByIso3`);
+  `GeoMap` has no fixed Uganda fallback, matches markers to provinces by name
+  (no six-slot cycling) and carries the Sample marker; the Command Center mini
+  map lost its invented dots and "LIVE" label.
+- **Phase 1, done.** `lib/map/` (names, projection, geography, classify,
+  model, world) and `components/map/` (`NationMap`, `WorldContext`,
+  `useNeighbours`). Projection chosen per nation and rotated to it; the frame
+  fits only the nation's own units; grouping units without shapes are merged
+  from their official children (Uganda's regions, the UK's nations, France's
+  regions); quantile classes on the `MAP_SEQUENTIAL` token ramp; non-observed
+  figures hatched; map/table toggle; keyboard order; scale bar and north arrow.
+  `TwinTerritory` is rebuilt on it.
+- **Phase 2, done.** Situation Room `NationalMap` and `TerritoryHeat` keep
+  their exports and controls (layers, full screen, activity banner, regional
+  pressure list, operating strip) and draw every official region;
+  `ThreatMap` on the engine with incidents by region; the geopolitical panel
+  is `WorldContext` (the nation in the world, declared partners, neighbours by
+  shared border) and frontier rows name the real neighbours. Checked in the
+  browser for the USA (51), Kenya (47) and Uganda (4) at desktop and phone
+  width; the twin map with recorded observations.
+- **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
+  names; France's overseas collectivities have no shapes (listed as
+  "no shape" under the map, never invented). Infrastructure and corridor
+  layers wait for registered facilities (phase 4).

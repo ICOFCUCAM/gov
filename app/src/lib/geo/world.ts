@@ -5,6 +5,8 @@
 import { feature } from 'topojson-client';
 import topo from 'world-atlas/countries-110m.json';
 import { geoNaturalEarth1, geoPath } from 'd3-geo';
+import COUNTRIES from './countries.json';
+import { nameKeys, countryKeys } from '@/lib/map/names';
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 type GeoFeature = { type: 'Feature'; properties: { name?: string }; geometry: any };
@@ -22,6 +24,20 @@ export function findCountry(name?: string): GeoFeature | undefined {
   if (!name) return undefined;
   const n = name.trim().toLowerCase();
   return fc.features.find(f => String(f.properties?.name ?? '').toLowerCase() === n);
+}
+
+/**
+ * The world shape of a nation by its ISO 3166-1 alpha-3 code, through the
+ * country index's name (a nation's formal name, "Republic of …", rarely
+ * matches the map's short name, so pages focus by code, not by stateName).
+ */
+export function findCountryByIso3(iso3?: string): GeoFeature | undefined {
+  if (!iso3) return undefined;
+  const entry = (COUNTRIES as { iso3: string; name: string }[]).find(c => c.iso3 === iso3);
+  if (!entry) return undefined;
+  const want = countryKeys(entry.name);
+  return fc.features.find(f => nameKeys(String(f.properties?.name ?? '')).some(k => want.includes(k)))
+    ?? findCountry(entry.name);
 }
 
 /** Path strings for every country, fitted to box; optional focus zooms. */

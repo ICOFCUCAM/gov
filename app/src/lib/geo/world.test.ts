@@ -41,3 +41,12 @@ describe('projectedPaths', () => {
     expect(focused[0]!.name).toBe(focus.properties?.name);
   });
 });
+
+describe('finding the installed nation on the world map by its code', () => {
+  it('matches nations whose index name differs from the map\'s short name', async () => {
+    const { findCountryByIso3 } = await import('./world');
+    const names = ['USA', 'KEN', 'COD', 'GBR', 'CIV', 'CZE', 'SWZ', 'TLS', 'KOR'].map(i => findCountryByIso3(i)?.properties?.name ?? null);
+    expect(names.every(Boolean)).toBe(true);
+    expect(findCountryByIso3('XXX')).toBeUndefined();
+  });
+});
