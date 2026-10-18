@@ -154,3 +154,28 @@ describe('replayDump', () => {
     expect(out.witnesses.divergent).toHaveLength(1);
   });
 });
+
+describe('SHA-256 chains (v2)', () => {
+  it('matches the standard SHA-256', async () => {
+    const { sha256Hex } = await import('./sha256');
+    const { createHash } = await import('node:crypto');
+    for (const s of ['', 'abc', 'Mombasa · Nairobi City', 'ع'.repeat(100), 'x'.repeat(1000)]) {
+      expect(sha256Hex(s)).toBe(createHash('sha256').update(s, 'utf8').digest('hex'));
+    }
+  });
+
+  it('verifies a chain that moves from FNV-1a to SHA-256, and refuses a fall-back', async () => {
+    const { canonicalV2 } = await import('./replay');
+    const { sha256Hex } = await import('./sha256');
+    const a: RawAuditEntry = { seq: 1, scope: 'X', actor: 'a', action: 'boot', subject: 's', detail: '', prev_hash: '00000000', hash: '' };
+    a.hash = recomputeEntryHash(a, '00000000');
+    const b: RawAuditEntry = { seq: 2, scope: 'X', actor: 'b', action: 'publish', subject: 's|x', detail: 'd;1', at_ms: 1760745600000, prev_hash: a.hash, hash: '', hash_alg: 'sha256-v2' };
+    b.hash = sha256Hex(canonicalV2(b, a.hash));
+    expect(b.hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(replayScope('X', [a, b]).chainOk).toBe(true);
+    expect(replayScope('X', [a, { ...b, at_ms: 1 }]).chainOk).toBe(false);
+    const c: RawAuditEntry = { seq: 3, scope: 'X', actor: 'c', action: 'x', subject: 's', detail: '', prev_hash: b.hash, hash: '' };
+    c.hash = recomputeEntryHash(c, b.hash);
+    expect(replayScope('X', [a, b, c])).toMatchObject({ chainOk: false, brokenAtSeq: 3 });
+  });
+});

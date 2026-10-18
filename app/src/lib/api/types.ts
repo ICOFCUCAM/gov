@@ -77,6 +77,8 @@ export interface AuditEntry {
   seq: number;
   prevHash: string | null;
   hash: string;
+  /** How `hash` was computed: 'sha256-v2' (SHA-256 over every field) for entries written since October 2026; absent = the original 32-bit hash over action, resource, outcome and sequence. */
+  alg?: 'sha256-v2';
 }
 
 export interface CreatePermitInput {

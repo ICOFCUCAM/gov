@@ -9,6 +9,7 @@
 // process. It is sufficient for Phase 1 demo/preview. Production uses a
 // durable sovereign datastore.
 
+import { createHash } from 'node:crypto';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { locales } from '@/lib/i18n/config';
 import type {
@@ -100,6 +101,17 @@ import { regionList, applyNation, nationPaymentRail, nationRegions } from '@/lib
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+}
+
+/**
+ * The audit chain's hash (v2): SHA-256 over a canonical encoding of every
+ * field of the entry and the previous hash, so no field — actor, time, detail
+ * included — can change without breaking the chain. Entries written before v2
+ * keep their original hash and are verified by the rule they were written with.
+ */
+export function auditHashV2(e: Pick<AuditEntry, 'seq' | 'at' | 'actor' | 'action' | 'resource' | 'outcome' | 'detail' | 'prevHash'>): string {
+  const canonical = JSON.stringify(['civicos-audit-v2', e.seq, e.at, e.actor, e.action, e.resource, e.outcome, e.detail ?? null, e.prevHash ?? 'GENESIS']);
+  return createHash('sha256').update(canonical, 'utf8').digest('hex');
 }
 
 function hash(seed: string): string {
@@ -275,18 +287,8 @@ function appendAudit(
   const prev = db.audit[db.audit.length - 1];
   const seq = (prev?.seq ?? 0) + 1;
   const prevHash = prev?.hash ?? null;
-  const entry: AuditEntry = {
-    id: uid('AU'),
-    at: new Date().toISOString(),
-    actor,
-    action,
-    resource,
-    outcome,
-    detail,
-    seq,
-    prevHash,
-    hash: hash(`${prevHash ?? 'GENESIS'}|${action}|${resource}|${outcome}|${seq}`),
-  };
+  const base = { id: uid('AU'), at: new Date().toISOString(), actor, action, resource, outcome, detail, seq, prevHash };
+  const entry: AuditEntry = { ...base, alg: 'sha256-v2', hash: auditHashV2(base) };
   db.audit.push(entry);
   return entry;
 }
@@ -398,10 +400,13 @@ export function verifyAuditChain(): {
   brokenAtSeq?: number;
 } {
   let prevHash: string | null = null;
+  let upgraded = false;
   for (const e of db.audit) {
-    const expected = hash(
-      `${prevHash ?? 'GENESIS'}|${e.action}|${e.resource}|${e.outcome}|${e.seq}`,
-    );
+    // Each entry by the rule it was written with; once the chain is on v2, no entry may fall back.
+    const v2 = e.alg === 'sha256-v2';
+    if (upgraded && !v2) return { ok: false, checked: db.audit.length, brokenAtSeq: e.seq };
+    upgraded ||= v2;
+    const expected: string = v2 ? auditHashV2(e) : hash(`${prevHash ?? 'GENESIS'}|${e.action}|${e.resource}|${e.outcome}|${e.seq}`);
     if (expected !== e.hash || (e.prevHash ?? null) !== (prevHash ?? null)) {
       return { ok: false, checked: db.audit.length, brokenAtSeq: e.seq };
     }
