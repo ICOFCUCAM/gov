@@ -5,7 +5,9 @@
 // a deliberate, well-spaced set of glowing severity icon-markers, a few
 // faint routes, a legend and density scale. Public-domain Natural Earth
 // geography (upgraded per country to its official subdivisions where they
-// differ, credited on the map), live deterministic telemetry.
+// differ, credited on the map), live deterministic telemetry. The nation's
+// registered health facilities (national facility register) are drawn where
+// they are, each linked to its record.
 
 import * as React from 'react';
 import { geoAlbersUsa, geoMercator, geoPath } from 'd3-geo';
@@ -53,6 +55,15 @@ export function GeoMap({
   const H = height;
 
   const country = iso3 ?? nationIso3();
+  // Registered health facilities from the national facility register (real positions).
+  const [sites, setSites] = React.useState<{ id: string; name: string; lng: number; lat: number; certified: boolean }[]>([]);
+  React.useEffect(() => {
+    let live = true;
+    fetch('/api/facilities?category=health').then(r => (r.ok ? r.json() : null)).then((j: { sites?: { id: string; name: string; location: { lng: number; lat: number }; certification: { state: string } }[] } | null) => {
+      if (live && j?.sites) setSites(j.sites.map(s => ({ id: s.id, name: s.name, lng: s.location.lng, lat: s.location.lat, certified: s.certification.state === 'certified' })));
+    }).catch(() => undefined);
+    return () => { live = false; };
+  }, []);
   React.useEffect(() => {
     if (!country) { setLoading(false); return; }
     let live = true;
@@ -121,8 +132,9 @@ export function GeoMap({
     const heat = metric === 'outbreakHeat'
       ? cand.slice(0, 42).map(c => ({ x: c.x, y: c.y, r: Math.max(W, H) * (0.05 + (c.v / 100) * 0.11) }))
       : [];
-    return { landD, districts, markers, routes, heat, frames: frames.map(({ x, y, w, h }) => ({ x, y, w, h })) };
-  }, [data, W, H, geo, metric, iso3]);
+    const registered = sites.flatMap(s => { const q = proj([s.lng, s.lat]); return q && q.every(Number.isFinite) ? [{ ...s, x: q[0], y: q[1] }] : []; });
+    return { landD, districts, markers, routes, heat, registered, frames: frames.map(({ x, y, w, h }) => ({ x, y, w, h })) };
+  }, [data, W, H, geo, metric, iso3, sites]);
 
   return (
     <div ref={wrap} className="relative w-full overflow-hidden rounded-[10px]" style={{ height: H, background: 'radial-gradient(120% 100% at 50% 35%, #0c2036 0%, #071425 55%, #030711 100%)' }}>
@@ -174,6 +186,14 @@ export function GeoMap({
             {/* faint routes */}
             {view.routes.map((d, i) => (
               <path key={`r${i}`} d={d} fill="none" stroke="#5fd0e0" strokeOpacity="0.16" strokeWidth="0.8" strokeDasharray="3 4" className="animate-dash-flow" />
+            ))}
+            {/* registered health facilities (national facility register), where they are */}
+            {view.registered.map(s => (
+              <a key={s.id} href={`/gov/sites#${s.id}`} aria-label={`${s.name} (registered${s.certified ? ', location certified' : ''})`}>
+                <title>{`${s.name} · registered${s.certified ? ' · location certified' : ''}`}</title>
+                <rect x={s.x - 5} y={s.y - 5} width={10} height={10} rx={2} fill="rgb(var(--c-bg))" stroke={s.certified ? BANDS.resolved.color : BANDS.moderate.color} strokeWidth={1.3} />
+                <text x={s.x} y={s.y + 3} textAnchor="middle" fontSize="8" fill={s.certified ? BANDS.resolved.color : BANDS.moderate.color}>✚</text>
+              </a>
             ))}
             {/* clean glowing severity markers */}
             {view.markers.map((m, i) => {
