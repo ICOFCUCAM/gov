@@ -4,6 +4,7 @@ import { getSovereign, getSetup } from '@/lib/data/store';
 import { NationRegistry } from '@/components/features/NationRegistry';
 import { NATION_GLOBAL } from '@/lib/nation/registry';
 import { RenderNowProvider } from '@/lib/clock/render-now';
+import { StackTables } from '@/components/ui/StackTables';
 
 // The installed nation is read per request so every page reflects it.
 export const dynamic = 'force-dynamic';
@@ -32,6 +33,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body>
         <NationRegistry facts={facts} />
+        <StackTables />
         <RenderNowProvider value={Date.now()}>{children}</RenderNowProvider>
       </body>
     </html>

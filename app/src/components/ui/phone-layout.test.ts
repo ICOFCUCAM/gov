@@ -26,3 +26,14 @@ describe('the console on a phone', () => {
     expect(src('app/globals.css')).toMatch(/@media \(max-width: 639px\) \{\s*\.sov :is\([^)]*\.text-\\\[8px\\\][^)]*\) \{ font-size: 11px !important; \}/);
   });
 });
+
+describe('tables on a phone', () => {
+  it('label every console table cell with its heading and stack rows under 640px, leaving public sites alone', () => {
+    const s = src('components/ui/StackTables.tsx');
+    expect(s).toContain("table.closest('[data-site-root]')");
+    expect(s).toContain('cell.dataset.label = h');
+    expect(src('app/layout.tsx')).toContain('<StackTables />');
+    const css = src('app/globals.css');
+    expect(css).toMatch(/table\[data-stack\] > tbody > tr > td\[data-label\]::before[^{]*\{\s*content: attr\(data-label\)/);
+  });
+});

@@ -200,6 +200,23 @@
      instead of darkening them. */
   html[data-text-scale="lg"] .sov main > * { zoom: 1.125; width: calc(100% / 1.125); }
   html[data-text-scale="xl"] .sov main > * { zoom: 1.25; width: calc(100% / 1.25); }
+  /* Tables on phones: StackTables labels each cell with its column heading;
+     under 640px each row becomes a card of "heading: value" lines, so nothing
+     scrolls sideways. The heading row stays for screen readers only. */
+  @media (max-width: 639px) {
+    table[data-stack] { display: block; width: 100% !important; min-width: 0 !important; }
+    table[data-stack] > thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+    table[data-stack] > tbody { display: block; }
+    table[data-stack] > tbody > tr { display: block; border: 1px solid rgb(var(--c-line)); border-radius: 3px; padding: 4px 8px; margin-bottom: 8px; }
+    table[data-stack] > tbody > tr > td, table[data-stack] > tbody > tr > th {
+      display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+      width: auto !important; padding: 3px 0 !important; text-align: end !important; border: 0 !important; white-space: normal !important;
+    }
+    table[data-stack] > tbody > tr > td[data-label]::before, table[data-stack] > tbody > tr > th[data-label]::before {
+      content: attr(data-label); flex-shrink: 0; max-width: 45%; text-align: start; font-weight: 600; font-family: theme('fontFamily.sans'); letter-spacing: normal; text-transform: none; color: rgb(var(--c-ink-muted));
+    }
+    table[data-stack] > tbody > tr > td:empty { display: none; }
+  }
   /* On phones the console's smallest text (set in pixels for wide screens:
      7–10.5px) is raised to 11px so it can be read at arm's length; larger
      text and wider screens are unchanged. */
