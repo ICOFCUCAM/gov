@@ -36,6 +36,14 @@ export interface MapModel {
   coverage: number;
   /** The capital's position on the map, when it falls inside the frame. */
   capital: { x: number; y: number; name: string; chosen: boolean } | null;
+  /** Where a longitude/latitude falls on this map (null outside the frame), for overlays. */
+  project: (lng: number, lat: number) => [number, number] | null;
+  /** The longitude/latitude under a point of the map (null off the projection). */
+  invert: (x: number, y: number) => [number, number] | null;
+  /** An outside shape (e.g. a neighbouring country) drawn with this map's projection. */
+  pathOf: (g: Geom) => string;
+  /** The on-map bounding box of an outside shape, [[x0, y0], [x1, y1]]. */
+  boundsOf: (g: Geom) => [[number, number], [number, number]];
 }
 
 const feature = (g: Geom) => ({ type: 'Feature' as const, properties: {}, geometry: g });
@@ -52,6 +60,12 @@ export interface MapOptions {
   projection?: ProjectionKind;
   /** The capital to mark; `chosen` is false for the map data's default. */
   capital?: { name: string; lng: number; lat: number; chosen: boolean } | null;
+  /**
+   * Fill a fixed frame instead of taking the height the nation needs (the
+   * Situation Room theatre): the nation is fitted inside, centred, keeping its
+   * proportions, with room kept free at the end for panels laid over the map.
+   */
+  frame?: { height: number; insetEnd?: number; insetBottom?: number };
 }
 
 export function buildMapModel(geo: NationGeography, opts: MapOptions): MapModel {
@@ -70,10 +84,17 @@ export function buildMapModel(geo: NationGeography, opts: MapOptions): MapModel 
   const kind = projectionKind(geo.iso3, fc, opts.projection);
   const proj: GeoProjection = projectionFor(geo.iso3, fc, opts.projection);
   // The map keeps the nation's own proportions: fit to the width, then take the height it needs.
-  proj.fitWidth(W - PAD * 2, fc);
-  const [[, y0], [, y1]] = geoPath(proj).bounds(fc);
-  const H = Math.round(Math.max(opts.minHeight ?? 220, Math.min(opts.maxHeight, y1 - y0 + PAD * 2)));
-  proj.fitExtent([[PAD, PAD], [W - PAD, H - PAD - (groups.length ? 4 : 0)]], fc);
+  let H: number;
+  if (opts.frame) {
+    H = Math.round(opts.frame.height);
+    const end = Math.min(W * 0.4, opts.frame.insetEnd ?? 0);
+    proj.fitExtent([[PAD * 4, PAD * 4], [W - PAD * 4 - end, H - PAD * 5 - Math.min(H * 0.3, opts.frame.insetBottom ?? 0)]], fc);
+  } else {
+    proj.fitWidth(W - PAD * 2, fc);
+    const [[, y0], [, y1]] = geoPath(proj).bounds(fc);
+    H = Math.round(Math.max(opts.minHeight ?? 220, Math.min(opts.maxHeight, y1 - y0 + PAD * 2)));
+    proj.fitExtent([[PAD, PAD], [W - PAD, H - PAD - (groups.length ? 4 : 0)]], fc);
+  }
 
   const bw = Math.round(Math.min(96, W * 0.18)), bh = Math.round(bw * 0.72), gap = 6;
   const frames = groups.map((g, k) => {
@@ -135,5 +156,9 @@ export function buildMapModel(geo: NationGeography, opts: MapOptions): MapModel 
     noShape: geo.units.filter(u => !u.geometry).map(u => u.name),
     coverage: land / (W * H),
     capital,
+    pathOf: g => geoPath(proj)(feature(g) as never) || '',
+    boundsOf: g => geoPath(proj).bounds(feature(g) as never) as [[number, number], [number, number]],
+    invert: (x, y) => { const q = proj.invert?.([x, y]); return q && q.every(Number.isFinite) ? [q[0], q[1]] : null; },
+    project: (lng, lat) => { const q = proj([lng, lat]); return q && q.every(Number.isFinite) && q[0] >= 0 && q[0] <= W && q[1] >= 0 && q[1] <= H ? [q[0], q[1]] : null; },
   };
 }

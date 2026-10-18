@@ -83,7 +83,7 @@ export function CabinetIntelligence() {
     injectItem('cabinet:directives', 'case', l, 'Cabinet Office');
     fx?.();
   };
-  const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true });
+  const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true, institutions: true });
 
   React.useEffect(() => {
     const load = async () => {

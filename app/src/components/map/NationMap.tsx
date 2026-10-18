@@ -18,6 +18,8 @@ import { loadNationGeography, loadUnitGeography, type NationGeography } from '@/
 import { buildMapModel, type MapPoint, type MapTone, type MapValue } from '@/lib/map/model';
 import { classColour } from '@/lib/map/classify';
 import { nameKeys } from '@/lib/map/names';
+import { loadWorld, nationIndex, type WorldModel } from '@/lib/map/world';
+import { geoCentroid } from 'd3-geo';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { needsMarker, SIGNAL_LABEL, type SignalKind } from '@/lib/twin/signal';
 import { STATUS } from '@/lib/theme/tokens';
@@ -46,9 +48,18 @@ function star(x: number, y: number, r: number): string {
   return `M ${pts.join(' L ')} Z`;
 }
 
+export interface OverlayContext {
+  width: number;
+  height: number;
+  capital: { x: number; y: number } | null;
+  project: (lng: number, lat: number) => [number, number] | null;
+  /** Every drawn unit's label point, in official order. */
+  units: { name: string; code?: string; x: number; y: number; value?: number }[];
+}
+
 export function NationMap({
   title, values = [], kind, source, valueLabel = 'Value', unit = '', points, pointsLabel = 'Located items',
-  asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false,
+  asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap,
 }: {
   /** What the map shows, e.g. "Open incidents by county"; used for the accessible name and the table caption. */
   title: string;
@@ -72,6 +83,34 @@ export function NationMap({
   regions?: readonly string[];
   /** Smaller furniture for dense panels (the table view stays). */
   compact?: boolean;
+  /**
+   * Extra layers a page draws over the whole-nation view (e.g. the Situation
+   * Room's institutions and their knock-on links), placed with the map's own
+   * projection. Not drawn while a unit is opened.
+   */
+  overlay?: (map: OverlayContext) => React.ReactNode;
+  /**
+   * 'theatre' draws the map as a command theatre (the Situation Room): the
+   * page's own frame shows through, units glow by their figure, a live
+   * coordinate readout follows the pointer. 'standard' everywhere else.
+   */
+  variant?: 'standard' | 'theatre';
+  /** Theatre only: stronger shading (the "heat intensity" control). */
+  heat?: boolean;
+  /** Controls drawn on the map itself (top left), e.g. the theatre's control stack. */
+  hud?: React.ReactNode;
+  /** Theatre only: the frame's height; the nation is fitted inside it and the neighbouring countries drawn around it. */
+  frameHeight?: number;
+  /** Theatre only: room kept free at the end of the frame for panels laid over the map. */
+  insetEnd?: number;
+  /** A colour for a figure instead of the shading classes (the theatre colours units by status); the page then gives the legend. */
+  colourOf?: (v: MapValue) => string;
+  /** Controls placed in the map's header (e.g. the theatre's layers and full screen). */
+  actions?: React.ReactNode;
+  /** Theatre only: room kept free at the bottom of the frame for panels laid over the map. */
+  insetBottom?: number;
+  /** Panels laid over the bottom of the map itself (the theatre's legend and operating strip). */
+  inMap?: React.ReactNode;
 }) {
   const iso3 = isoOverride ?? nationIso3();
   const regionsKey = (regionsOverride ?? nationRegions()).join('|');
@@ -85,6 +124,8 @@ export function NationMap({
   const [focus, setFocus] = React.useState(0);
   const [active, setActive] = React.useState<number | null>(null);
   const pathRefs = React.useRef<(SVGPathElement | null)[]>([]);
+  const theatre = variant === 'theatre';
+  const [cursor, setCursor] = React.useState<[number, number] | null>(null);
   const uid = React.useId().replace(/:/g, '');
 
   React.useEffect(() => {
@@ -112,9 +153,35 @@ export function NationMap({
   const capital = nationCapital();
   const projection = nationProjection();
   // Located items are counted by the nation's regions, so they show on the whole-nation view only.
-  const model = React.useMemo(() => (geo ? buildMapModel(geo, { width: W, maxHeight, minHeight, values, points: geo.parent ? undefined : points, projection, capital }) : null),
+  const frame = theatre && frameHeight ? { height: frameHeight, insetEnd, insetBottom } : undefined;
+  const model = React.useMemo(() => (geo ? buildMapModel(geo, { width: W, maxHeight, minHeight, values, points: geo.parent ? undefined : points, projection, capital, frame }) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [geo, W, maxHeight, minHeight, values, points, projection, capital?.name, capital?.lng, capital?.lat]);
+    [geo, W, maxHeight, minHeight, values, points, projection, capital?.name, capital?.lng, capital?.lat, frame?.height, frame?.insetEnd, frame?.insetBottom]);
+  // The theatre draws the neighbouring countries around the nation (Natural Earth 1:50m).
+  const [world, setWorld] = React.useState<WorldModel | null>(null);
+  React.useEffect(() => {
+    if (!theatre) return;
+    let live = true;
+    void loadWorld().then(w => { if (live) setWorld(w); });
+    return () => { live = false; };
+  }, [theatre]);
+  const worldPaths = React.useMemo(() => {
+    if (!world || !model || !frame) return [];
+    const home = capital ? nationIndex(world, [capital.lng, capital.lat]) : -1;
+    return world.countries.map((c, i) => {
+      // Label a neighbour at its centre, or at the middle of the part of it inside the frame.
+      const at = i === home ? null : (() => {
+        const [lng, lat] = geoCentroid({ type: 'Feature', properties: {}, geometry: c.geometry } as never);
+        const p = model.project(lng, lat);
+        if (p) return p;
+        const [[x0, y0], [x1, y1]] = model.boundsOf(c.geometry);
+        const cx0 = Math.max(0, x0), cx1 = Math.min(model.width, x1), cy0 = Math.max(0, y0), cy1 = Math.min(model.height, y1);
+        return cx1 - cx0 > 70 && cy1 - cy0 > 40 ? [(cx0 + cx1) / 2, (cy0 + cy1) / 2] as [number, number] : null;
+      })();
+      return { d: model.pathOf(c.geometry), name: c.name, at, home: i === home };
+    }).filter(w => w.d);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [world, model, frame?.height, capital?.lng, capital?.lat]);
   const openable = (nationGeo?.units ?? []).filter(u => u.drill && u.code && u.geometry);
   // The opened unit's own figure, from the figures the page passed for the nation's units.
   const parentValue = opened ? values.find(v => v.key === opened.code) ?? values.find(v => nameKeys(v.key).some(k => nameKeys(opened.name).includes(k))) : undefined;
@@ -150,8 +217,8 @@ export function NationMap({
   const hatch = `hatch-${uid}`;
 
   return (
-    <figure className="min-w-0 space-y-1.5" aria-label={title}>
-      <div className="flex flex-wrap items-center justify-between gap-2">
+    <figure className={`min-w-0 space-y-1.5 ${theatre ? 'relative' : ''}`} aria-label={title}>
+      <div className={theatre ? `absolute ${hud ? 'start-12' : 'start-2'} end-2 top-2 z-20 flex flex-wrap items-center justify-between gap-2` : 'flex flex-wrap items-center justify-between gap-2'}>
         <figcaption className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
           {title}<SignalTag kind={kind} source={source} />
         </figcaption>
@@ -171,6 +238,7 @@ export function NationMap({
             </label>
           ) : null}
           <div className="flex gap-1" role="group" aria-label="Show as">{btn('map', 'Map')}{btn('table', 'Table')}</div>
+          {actions}
         </div>
       </div>
       {opened && geo?.parent ? (
@@ -186,23 +254,30 @@ export function NationMap({
         {geo === undefined ? <p className="p-3 text-[13px] text-ink-soft" style={{ minHeight }}>Loading the nation&rsquo;s boundaries…</p>
           : geo === null || !model ? <p className="p-3 text-[13px] text-ink-soft">No boundaries are available for this country yet.</p> : (
           <svg width={model.width} height={model.height} viewBox={`0 0 ${model.width} ${model.height}`} className="block max-w-full"
-            role="group" aria-roledescription="map" aria-label={summary} onKeyDown={onKey}>
+            role="group" aria-roledescription="map" aria-label={summary} onKeyDown={onKey}
+            onMouseMove={theatre ? e => { const r = e.currentTarget.getBoundingClientRect(); setCursor(model.invert(((e.clientX - r.left) / r.width) * model.width, ((e.clientY - r.top) / r.height) * model.height)); } : undefined}
+            onMouseLeave={theatre ? () => setCursor(null) : undefined}>
             <defs>
               <pattern id={hatch} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <line x1="0" y1="0" x2="0" y2="6" stroke="rgb(var(--c-bg))" strokeWidth="2" strokeOpacity="0.55" />
               </pattern>
             </defs>
-            <rect width={model.width} height={model.height} fill="rgb(var(--c-bg))" />
+            <rect width={model.width} height={model.height} fill={theatre ? 'transparent' : 'rgb(var(--c-bg))'} />
+            {worldPaths.map((w, i) => w.home ? null : <path key={`w${i}`} d={w.d} fill="rgb(var(--c-ink-muted))" fillOpacity={0.1} stroke="rgb(var(--c-ink-soft))" strokeOpacity={0.45} strokeWidth={0.9} aria-hidden pointerEvents="none" />)}
+            {worldPaths.map((w, i) => w.at && w.at[0] > 30 && w.at[0] < model.width - 30 && w.at[1] > 50 && w.at[1] < model.height - 24 ? (
+              <text key={`wl${i}`} x={w.at[0]} y={w.at[1]} textAnchor="middle" fontSize="9" letterSpacing="2" fill="rgb(var(--c-ink-muted))" opacity={0.75} aria-hidden pointerEvents="none">{w.name.toUpperCase()}</text>
+            ) : null)}
             {model.context.map((d, i) => <path key={`c${i}`} d={d} fill="rgb(var(--c-surface-2))" fillOpacity={0.35} stroke="rgb(var(--c-line))" strokeWidth={0.4} aria-hidden />)}
             {model.frames.map((f, i) => <rect key={`f${i}`} x={f.x} y={f.y} width={f.w} height={f.h} fill="none" stroke="rgb(var(--c-line))" strokeDasharray="3 2" aria-hidden />)}
             {drawn.map(({ u, i }, k) => {
-              const fill = u.value ? classColour(u.cls ?? 0) : 'rgb(var(--c-surface-2))';
+              const fill = u.value ? (colourOf ? colourOf(u.value) : classColour(u.cls ?? 0)) : 'rgb(var(--c-surface-2))';
+              const fillOpacity = theatre ? (u.value ? (heat ? 0.7 : 0.34) : 0.3) : u.value ? 0.9 : 0.55;
               const on = active === i || selected === u.name || selected === u.code;
               const label = `${u.name}${u.value ? `: ${fmt(u.value.value)}${u.value.unit ?? unit ? ` ${u.value.unit ?? unit}` : ''}${marked ? ` (${SIGNAL_LABEL[kind].toLowerCase()})` : ''}` : ': no figure'}`;
               return (
                 <g key={`${u.code ?? u.name}-${i}`}>
-                  <path ref={el => { pathRefs.current[i] = el; }} d={u.d} fill={fill} fillOpacity={u.value ? 0.9 : 0.55}
-                    stroke={on ? 'rgb(var(--c-ink))' : u.value ? 'rgb(var(--c-bg))' : 'rgb(var(--c-ink-muted))'} strokeWidth={on ? 2 : 0.7}
+                  <path ref={el => { pathRefs.current[i] = el; }} d={u.d} fill={fill} fillOpacity={fillOpacity}
+                    stroke={on ? 'rgb(var(--c-ink))' : theatre ? fill : u.value ? 'rgb(var(--c-bg))' : 'rgb(var(--c-ink-muted))'} strokeWidth={on ? 2 : theatre ? 1 : 0.7} strokeOpacity={theatre && !on ? 0.85 : 1}
                     tabIndex={k === focus ? 0 : -1} role="button" aria-label={label} aria-pressed={onSelect ? on : undefined}
                     className="cursor-pointer outline-none focus-visible:[stroke:rgb(var(--c-ink))] focus-visible:[stroke-width:2.5]"
                     onFocus={() => { setFocus(k); setActive(i); }} onBlur={() => setActive(a => (a === i ? null : a))}
@@ -210,16 +285,24 @@ export function NationMap({
                     onClick={() => onSelect?.({ name: u.name, code: u.code })}
                     onDoubleClick={() => { const n = nationGeo?.units.find(x => x.code === u.code && x.drill); if (!opened && n) open({ name: n.name, code: n.code }); }}
                     onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && onSelect) { e.preventDefault(); onSelect({ name: u.name, code: u.code }); } }} />
-                  {u.value && marked ? <path d={u.d} fill={`url(#${hatch})`} pointerEvents="none" aria-hidden /> : null}
+                  {u.value && marked ? <path d={u.d} fill={`url(#${hatch})`} opacity={theatre ? 0.22 : 1} pointerEvents="none" aria-hidden /> : null}
                 </g>
               );
             })}
+            {model.points.filter(p => p.tone === 'alert').map((p, i) => (
+              <circle key={`ring${i}`} cx={p.x} cy={p.y} r={14} fill="none" stroke={STATUS.alert} strokeWidth={1.1} aria-hidden pointerEvents="none"
+                className="motion-safe:animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+            ))}
             {model.points.map((p, i) => (
               <g key={`p${i}`} aria-hidden pointerEvents="none">
                 <Marker x={p.x} y={p.y} tone={p.tone} r={Math.min(13, 5 + Math.sqrt(p.count ?? 1) * 2)} />
                 {p.count && p.count > 1 ? <text x={p.x} y={p.y + 3} textAnchor="middle" fontSize="9" fontWeight="700" fill="rgb(var(--c-bg))">{p.count}</text> : null}
               </g>
             ))}
+            {overlay && !geo.parent ? overlay({
+              width: model.width, height: model.height, capital: model.capital, project: model.project,
+              units: model.units.flatMap(u => (u.cx != null && u.cy != null ? [{ name: u.name, code: u.code, x: u.cx, y: u.cy, value: u.value?.value }] : [])),
+            }) : null}
             {model.capital ? (
               <g pointerEvents="none" aria-hidden>
                 <path d={star(model.capital.x, model.capital.y, 6)} fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={1.2} />
@@ -242,8 +325,15 @@ export function NationMap({
             ) : null}
           </svg>
         )}
+        {hud && model ? <div className="absolute start-2 top-2 z-10 flex flex-col gap-1">{hud}</div> : null}
+        {inMap && model && !geo?.parent ? <div className="absolute inset-x-0 bottom-0 z-10">{inMap}</div> : null}
+        {theatre && model ? (
+          <div className={`pointer-events-none absolute ${inMap ? 'bottom-[118px] end-2' : 'bottom-1 end-2'} font-mono text-[10px] tracking-[0.12em] text-ink-muted`} aria-hidden>
+            {cursor ? `${Math.abs(cursor[1]).toFixed(3)}°${cursor[1] >= 0 ? 'N' : 'S'} ${Math.abs(cursor[0]).toFixed(3)}°${cursor[0] >= 0 ? 'E' : 'W'}` : `${model.kind.replace(/-/g, ' ').toUpperCase()}`}
+          </div>
+        ) : null}
         {activeUnit ? (
-          <div className="pointer-events-none absolute start-2 top-2 max-w-[70%] rounded-[3px] border border-line bg-surface px-2 py-1 text-[12px] shadow" role="status">
+          <div className={`pointer-events-none absolute ${hud ? 'start-12' : 'start-2'} top-2 max-w-[70%] rounded-[3px] border border-line bg-surface px-2 py-1 text-[12px] shadow`} role="status">
             <strong>{activeUnit.name}</strong>{activeUnit.code ? <span className="text-ink-muted"> · {activeUnit.code}</span> : null}
             <div>{activeUnit.value ? <>{valueLabel}: <strong>{fmt(activeUnit.value.value)}</strong> {activeUnit.value.unit ?? unit}{activeUnit.value.asOf ? <span className="text-ink-muted"> · as of {activeUnit.value.asOf}</span> : null}{activeUnit.value.note ? <div className="text-ink-muted">{activeUnit.value.note}</div> : null}</> : <span className="text-ink-muted">no figure</span>}</div>
             {model?.points.filter(p => p.unit === activeUnit.name).map((p, i) => <div key={i}>{p.label}{p.count ? `: ${p.count}` : ''} <span className="text-ink-muted">({TONE_WORD[p.tone]})</span></div>)}
@@ -279,7 +369,7 @@ export function NationMap({
       {model ? (
         <div className="space-y-1 text-[11px] text-ink-soft">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-            {model.classes.legend.length ? (
+            {model.classes.legend.length && !colourOf ? (
               <span className="flex flex-wrap items-center gap-1" aria-label={`Legend: ${valueLabel}`}>
                 {model.classes.legend.map((l, i) => (
                   <span key={i} className="flex items-center gap-1">

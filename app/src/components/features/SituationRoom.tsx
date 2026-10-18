@@ -6,6 +6,7 @@ import { api } from '@/lib/api/client';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { identityFor } from '@/lib/archetype-profiles';
+import { POSTURE_TONE, postureTone, TheatreControls, TheatreLayersSvg, TheatreLegend, theatreFrame } from '@/components/features/situation/Theatre';
 import type {
   NationalSnapshot,
   NationalCoordination,
@@ -41,6 +42,7 @@ import { CONSOLE_NAV, locate } from '@/lib/nav/console-nav';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
 import { NationMap, type MapPoint, type MapValue } from '@/components/map/NationMap';
 import { nationalRegions, type RegionModel } from '@/lib/gov/regions';
+import { provinceMemory } from '@/lib/gov/sovereign-operating-model';
 
 /** The ministry grid's columns: short heading, and the full name read aloud and shown on hover. */
 const MATRIX_DOMAINS = [
@@ -361,9 +363,9 @@ export function StrainBar({ pct, tone }: { pct: number; tone: string }) {
 // regional figures are samples until regional sources are connected in
 // National data, so they are hatched and marked. Nothing is placed at
 // invented positions: facilities and corridors appear once registered.
-type LayerKey = 'infra' | 'grid' | 'corridors' | 'incidents' | 'environment';
+type LayerKey = 'infra' | 'grid' | 'corridors' | 'incidents' | 'environment' | 'institutions';
+
 const REGIONAL_SOURCE = 'Regional model (sample) until regional sources are connected in National data';
-const POSTURE_TONE = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' } as const;
 
 function regionalFigures(epoch: number, pick: (r: RegionModel) => number = r => r.composite) {
   const regions = nationalRegions(epoch);
@@ -383,29 +385,57 @@ export function TerritoryHeat({ epoch, height = 150 }: { epoch: number; height?:
 }
 
 export function NationalMap({
-  mapNodes, incidents, now, layers, epoch, height, onToggleLayer,
+  mapNodes, edges, incidents, now, layers, epoch, height, onToggleLayer,
 }: {
   mapNodes: { ministryId: string; ministry: string; archetype: string; x: number; y: number; pressure: number }[];
   edges: { fromId: string; toId: string; propagatedRisk: number }[];
   incidents: { ministry: string; severity: string }[];
   now: number;
-  layers: { infra: boolean; grid: boolean; corridors: boolean; incidents: boolean; environment?: boolean };
+  layers: { infra: boolean; grid: boolean; corridors: boolean; incidents: boolean; environment?: boolean; institutions?: boolean };
   epoch: number;
   height?: number;
   focus?: string;
   onToggleLayer?: (k: LayerKey) => void;
 }) {
   const [layerOpen, setLayerOpen] = React.useState(false);
+  const showInstitutions = layers.institutions !== false;
   const ts = now / 4000;
-  const { regions, values } = React.useMemo(() => regionalFigures(epoch), [epoch]);
-  const points = React.useMemo<MapPoint[]>(() => (layers.incidents
-    ? regions.filter(r => r.incidents > 0).map(r => ({ key: r.name, label: 'Incidents', tone: POSTURE_TONE[r.posture], count: r.incidents }))
-    : []), [regions, layers.incidents]);
-  // The national operating state under the map (one shared finite-capacity model, sample).
+  // The national operating state (one shared finite-capacity model, sample).
   const aggP = mapNodes.length ? Math.round(mapNodes.reduce((s, m) => s + m.pressure, 0) / mapNodes.length) : 30;
   const peakP = mapNodes.length ? Math.max(...mapNodes.map(m => m.pressure)) : 40;
   const sevLoad = incidents.filter(i => i.severity === 'sev1' || i.severity === 'sev2').length;
-  const D = nationalOperatingState(ts, aggP, peakP, sevLoad, incidents.length, epoch).display;
+  const opState = nationalOperatingState(ts, aggP, peakP, sevLoad, incidents.length, epoch);
+  const D = opState.display;
+  // Regional pressure as the earlier theatre worked it out: each region's own model, the strain of the
+  // institutions operating across the nation, the national contention floor and a regional rhythm,
+  // so regions rise and cool with the government's real load (sample until regions report).
+  const { regions, values } = React.useMemo(() => {
+    const base = nationalRegions(epoch);
+    const raws = base.map((r, i) => {
+      // The earlier theatre's doctrine: institution strain 0.52, contention 0.2, regional rhythm 0.18,
+      // decayed crisis memory 0.1; the region's own model stands in for nearness to the institutions.
+      // Each region feels most the institutions most active in it (two, chosen by the region's name).
+      const host = mapNodes.length ? mapNodes[Math.floor(seed(`host:${r.name}`) * mapNodes.length)]!.pressure : aggP;
+      const host2 = mapNodes.length ? mapNodes[Math.floor(seed(`host2:${r.name}`) * mapNodes.length)]!.pressure : aggP;
+      const strain = (host * 0.6 + host2 * 0.4) * 0.5 + aggP * 0.3 + r.composite * 0.2;
+      const raw = strain * 0.52 + opState.contention * 0.2 + wave(`prov:${r.name}`, ts, 8, 70) * 0.18 + provinceMemory(i, epoch) * 0.1 + r.incidents * 1.2;
+      return { r, raw: Math.max(raw, provinceMemory(i, epoch) * 0.7) };
+    });
+    // Spread around the national mean so the regions read apart, as on the earlier theatre.
+    const mean = raws.reduce((a, x) => a + x.raw, 0) / Math.max(1, raws.length);
+    const out = raws.map(({ r, raw }) => {
+      const risk = Math.max(2, Math.min(99, Math.round(mean + (raw - mean) * 1.9)));
+      return { ...r, composite: risk, readiness: Math.max(1, 100 - risk), posture: (risk >= 78 ? 'critical' : risk >= 58 ? 'elevated' : risk >= 40 ? 'watch' : 'stable') as RegionModel['posture'] };
+    });
+    return { regions: out, values: out.map((r): MapValue => ({ key: r.name, value: r.composite, unit: 'stress index', note: `Status: ${r.posture} · readiness ${r.readiness}%` })) };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [epoch, aggP, Math.round(opState.contention), Math.floor(ts), mapNodes.map(m => m.pressure).join(',')]);
+  // Incident markers where a region is under pressure; stable regions keep theirs in the table.
+  const points = React.useMemo<MapPoint[]>(() => (layers.incidents
+    ? regions.filter(r => r.incidents > 0 && r.posture !== 'stable').map(r => ({ key: r.name, label: 'Incidents', tone: POSTURE_TONE[r.posture], count: r.incidents }))
+    : []), [regions, layers.incidents]);
+  const [tactical, setTactical] = React.useState(true);
+  const [heat, setHeat] = React.useState(false);
   const tBand = (v: number, a: number, b: number) => (v >= b ? 'alert' : v >= a ? 'warn' : 'ok');
   const overlay = [
     { l: 'Grid corridors', v: `${D.gridLoad}% load`, t: tBand(D.gridLoad, 72, 86) },
@@ -415,92 +445,126 @@ export function NationalMap({
     { l: 'Coordination capacity', v: `${D.coordBw}%`, t: tBand(95 - D.coordBw, 20, 38) },
   ];
   const critCount = sevLoad;
+  const flowDur = critCount >= 3 ? '0.6s' : critCount >= 1 ? '0.95s' : '1.4s';
   const ranked = [...regions].sort((a, b) => b.composite - a.composite);
   const [allRegions, setAllRegions] = React.useState(false);
   const rootRef = React.useRef<HTMLDivElement>(null);
+  // The theatre's size follows its panel: wide panels keep the pressure ladder over the map.
+  const [frameW, setFrameW] = React.useState(900);
+  React.useEffect(() => {
+    if (!rootRef.current || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(es => { const w = es[0]?.contentRect.width; if (w) setFrameW(Math.round(w)); });
+    ro.observe(rootRef.current);
+    return () => ro.disconnect();
+  }, []);
+  const [isFull, setIsFull] = React.useState(false);
+  React.useEffect(() => {
+    const on = () => setIsFull(document.fullscreenElement === rootRef.current);
+    document.addEventListener('fullscreenchange', on);
+    return () => document.removeEventListener('fullscreenchange', on);
+  }, []);
+  const wide = frameW >= 620;
+  const frameH = isFull ? Math.max(480, (typeof window !== 'undefined' ? window.innerHeight : 900) - 120) : height ?? Math.round(Math.max(440, Math.min(760, frameW * (frameW >= 620 ? 0.9 : 0.8))));
+  const colourOf = React.useCallback((v: MapValue): string => TONE[postureTone(v.value)] ?? ACCENT, []);
   const fullscreen = () => {
     const el = rootRef.current;
     if (!el) return;
     if (document.fullscreenElement) void document.exitFullscreen();
     else void el.requestFullscreen?.();
   };
+  const glass = 'rounded-[3px] border border-line bg-surface/85 backdrop-blur';
+  // The operating strip and legend sit inside the theatre, over the bottom of the map.
+  const strip = (
+    <div className={`grid grid-cols-1 gap-px overflow-hidden border-t border-line bg-line/80 text-[10px] ${frameW >= 760 ? 'grid-cols-5' : wide ? 'grid-cols-3' : 'min-[480px]:grid-cols-2'}`}>
+      {overlay.map(o => (
+        <div key={o.l} className="flex min-w-0 items-center justify-between gap-2 bg-surface/80 px-2.5 py-1.5 backdrop-blur">
+          <span className="min-w-0 truncate uppercase tracking-[0.1em] text-ink-muted" title={o.l}>{o.l}</span>
+          <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[o.t] }}>
+            <span className="h-1.5 w-1.5 rounded-full motion-safe:animate-breathe" style={{ backgroundColor: TONE[o.t] }} aria-hidden />{o.v}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+
+  const ladder = (
+    <div className={`${glass} p-2 ${wide ? 'absolute end-2 top-12 z-10 w-[156px]' : ''}`}>
+      <div className="mb-1 flex items-center gap-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Regional pressure <SignalTag kind="sample" source={REGIONAL_SOURCE} /></div>
+      <ol className={`space-y-1 ${allRegions ? 'max-h-[300px] overflow-y-auto pe-1' : ''}`}>
+        {(allRegions ? ranked : ranked.slice(0, 8)).map(r => {
+          const tn = POSTURE_TONE[r.posture];
+          return (
+            <li key={r.name}>
+              <div className="flex items-center justify-between gap-2 text-[10px]">
+                <span className="truncate text-ink-soft">{r.name}</span>
+                <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{r.composite}</span>
+              </div>
+              <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-surface-2" aria-hidden>
+                <div className="h-full rounded-full transition-all duration-1000 ease-sov" style={{ width: `${r.composite}%`, backgroundColor: TONE[tn] }} />
+              </div>
+            </li>
+          );
+        })}
+      </ol>
+      {ranked.length > 8 ? (
+        <button type="button" onClick={() => setAllRegions(v => !v)} className="mt-1 text-[10px] text-link underline">
+          {allRegions ? 'Show the top 8' : `Show all ${ranked.length}`}
+        </button>
+      ) : null}
+    </div>
+  );
+
+  const actions = (
+    <>
+      <div className="relative">
+        <button type="button" onClick={() => onToggleLayer && setLayerOpen(o => !o)} aria-expanded={layerOpen}
+          className={`focus-ring flex items-center gap-1 px-2 py-0.5 text-[11px] text-ink-soft hover:text-ink ${glass}`}>
+          <span style={{ color: ACCENT }} aria-hidden>⧉</span> All layers <span className="text-ink-muted" aria-hidden>{layerOpen ? '▴' : '▾'}</span>
+        </button>
+        {layerOpen && onToggleLayer ? (
+          <div className="absolute end-0 z-30 mt-1 w-48 overflow-hidden rounded-[3px] border border-line bg-surface shadow-elev-3">
+            {([['institutions', 'Institutions and knock-on links'], ['incidents', 'Incidents'], ['infra', 'Infrastructure'], ['corridors', 'Corridors'], ['grid', 'Grid'], ['environment', 'Environment']] as const).map(([k, l]) => (
+              <button key={k} type="button" onClick={() => onToggleLayer(k)} aria-pressed={k === 'institutions' ? showInstitutions : !!layers[k]}
+                className="focus-ring flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[11px] text-ink-soft hover:bg-surface-2 hover:text-ink">
+                <span>{l}</span>
+                <span className="h-2.5 w-4 rounded-full" style={{ backgroundColor: (k === 'institutions' ? showInstitutions : layers[k]) ? ACCENT : 'rgb(var(--c-line))' }} />
+              </button>
+            ))}
+          </div>
+        ) : null}
+      </div>
+      <button type="button" onClick={fullscreen} aria-label={isFull ? 'Leave full screen' : 'Show the map full screen'}
+        className={`focus-ring grid h-6 w-7 place-items-center text-[11px] text-ink-soft hover:text-ink ${glass}`}>⛶</button>
+    </>
+  );
 
   return (
-    <div ref={rootRef} className="space-y-2 rounded-[4px] border border-line-soft bg-bg p-2">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        {critCount >= 1 ? (
-          <span className="rounded-[3px] border px-2 py-0.5 text-[10px] font-bold uppercase tracking-[0.16em]"
-            style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, rgb(var(--c-surface)))` }}>
-            Activity · {critCount >= 3 ? 'very high' : 'high'} · {critCount} serious incident{critCount === 1 ? '' : 's'}
-          </span>
-        ) : <span />}
-        <div className="flex items-start gap-1.5">
-          <div className="relative">
-            <button type="button" onClick={() => onToggleLayer && setLayerOpen(o => !o)} aria-expanded={layerOpen}
-              className="focus-ring flex items-center gap-1 rounded-[3px] border border-line bg-surface px-2 py-1 text-[11px] text-ink-soft hover:text-ink">
-              <span style={{ color: ACCENT }} aria-hidden>⧉</span> Layers <span className="text-ink-muted" aria-hidden>{layerOpen ? '▴' : '▾'}</span>
-            </button>
-            {layerOpen && onToggleLayer ? (
-              <div className="absolute right-0 z-20 mt-1 w-44 overflow-hidden rounded-[3px] border border-line bg-surface shadow-elev-3">
-                {([['incidents', 'Incidents'], ['infra', 'Infrastructure'], ['corridors', 'Corridors'], ['grid', 'Region names in the table'], ['environment', 'Environment']] as const).map(([k, l]) => (
-                  <button key={k} type="button" onClick={() => onToggleLayer(k)} aria-pressed={!!layers[k]}
-                    className="focus-ring flex w-full items-center justify-between px-2.5 py-1.5 text-left text-[11px] text-ink-soft hover:bg-surface-2 hover:text-ink">
-                    <span>{l}</span>
-                    <span className="h-2.5 w-4 rounded-full" style={{ backgroundColor: layers[k] ? ACCENT : 'rgb(var(--c-line))' }} />
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          <button type="button" onClick={fullscreen} aria-label="Show the map full screen"
-            className="focus-ring grid h-7 w-7 place-items-center rounded-[3px] border border-line bg-surface text-[11px] text-ink-soft hover:text-ink">⛶</button>
+    <div ref={rootRef} className="relative space-y-2 overflow-hidden rounded-[4px] border p-1.5" style={theatreFrame()}>
+      {critCount >= 1 ? (
+        <div className="pointer-events-none absolute bottom-[calc(100%-5.5rem)] start-[45%] z-20 -translate-x-1/2 whitespace-nowrap rounded-[3px] border px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-[0.18em] backdrop-blur"
+          style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, rgb(var(--c-surface)))` }}>
+          <span className="me-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full align-middle" style={{ backgroundColor: TONE.alert }} aria-hidden />
+          Activity · {critCount >= 3 ? 'very high' : 'high'} · {critCount} serious incident{critCount === 1 ? '' : 's'}
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 gap-3 lg:grid-cols-[minmax(0,1fr)_200px]">
-        <NationMap title="Activity by region" values={values} kind="sample" source={REGIONAL_SOURCE}
-          valueLabel="Stress" unit="index" points={points} pointsLabel="Open incidents" maxHeight={height ?? 520} />
-        <div className="space-y-1">
-          <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Regional pressure <SignalTag kind="sample" source={REGIONAL_SOURCE} /></div>
-          <ol className="space-y-1">
-            {(allRegions ? ranked : ranked.slice(0, 10)).map(r => {
-              const tn = POSTURE_TONE[r.posture];
-              return (
-                <li key={r.name}>
-                  <div className="flex items-center justify-between gap-2 text-[11px]">
-                    <span className="truncate text-ink-soft">{r.name}</span>
-                    <span className="font-mono tabular-nums" style={{ color: TONE[tn] }}>{r.composite}</span>
-                  </div>
-                  <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-surface-2" aria-hidden>
-                    <div className="h-full rounded-full" style={{ width: `${r.composite}%`, backgroundColor: TONE[tn] }} />
-                  </div>
-                </li>
-              );
-            })}
-          </ol>
-          {ranked.length > 10 ? (
-            <button type="button" onClick={() => setAllRegions(v => !v)} className="text-[11px] text-link underline">
-              {allRegions ? 'Show the top 10' : `Show all ${ranked.length}`}
-            </button>
-          ) : null}
-        </div>
-      </div>
-
-      {layers.infra || layers.corridors ? (
-        <p className="text-[11px] text-ink-muted">
-          {layers.infra ? 'Infrastructure: no facilities with locations are registered yet; they appear here once National data holds them. ' : ''}
-          {layers.corridors ? 'Corridors: none observed yet.' : ''}
-        </p>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-px overflow-hidden rounded-[3px] border border-line bg-line/80 text-[11px] min-[480px]:grid-cols-2 sm:grid-cols-5">
-        {overlay.map(o => (
-          <div key={o.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="uppercase tracking-[0.12em] text-ink-muted">{o.l}</span>
-            <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[o.t] }}>{o.v}</span>
-          </div>
-        ))}
+      <div className="relative">
+        <NationMap title="Activity by region" values={values} kind="sample" source={REGIONAL_SOURCE} variant="theatre" heat={heat}
+          valueLabel="Stress" unit="index" points={points} pointsLabel="Open incidents" maxHeight={frameH} minHeight={360}
+          frameHeight={frameH} insetEnd={wide ? 168 : 0} insetBottom={wide ? (frameW >= 760 ? 84 : 112) : 0} colourOf={colourOf} actions={actions}
+          inMap={wide ? <><div className="px-2 pb-1.5"><TheatreLegend layers={{ ...layers, institutions: showInstitutions }} /></div>{strip}</> : undefined}
+          hud={<TheatreControls tactical={tactical} heat={heat} grid={layers.grid} incidents={layers.incidents}
+            onTactical={() => setTactical(v => !v)} onHeat={() => setHeat(v => !v)} onGrid={() => onToggleLayer?.('grid')} onIncidents={() => onToggleLayer?.('incidents')} />}
+          overlay={ctx => <TheatreLayersSvg ctx={ctx} regions={regions} nodes={showInstitutions ? mapNodes : []} edges={edges} incidents={incidents} layers={layers} tactical={tactical} heat={heat} flowDur={flowDur} reserveEnd={wide ? 168 : 0} ts={ts} />} />
+        {wide ? ladder : null}
       </div>
+      {!wide ? <>{ladder}{strip}<TheatreLegend layers={{ ...layers, institutions: showInstitutions }} /></> : null}
+
+      <p className="px-1 text-[10.5px] text-ink-muted">
+        {showInstitutions && mapNodes.length ? `Institutions: ${mapNodes.length}, each opens its workspace; they stand around the capital until their seats are registered. ` : ''}
+        Regional pressure, institution pressure and knock-on links come from the models; corridors, infrastructure, evacuation routes and population are samples
+        until facilities and networks are registered with coordinates in National data. <SignalTag kind="sample" source="Models and samples until National data holds the nation's own" />
+      </p>
     </div>
   );
 }
@@ -510,7 +574,7 @@ export function SituationRoom() {
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [now, setNow] = React.useState(useRenderNow());
-  const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true });
+  const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true, institutions: true });
   const [warManual, setWarManual] = React.useState<boolean | null>(null);
   // Below the large breakpoint the menu is a drawer opened from the header (phones, tablets).
   const [navOpen, setNavOpen] = React.useState(false);

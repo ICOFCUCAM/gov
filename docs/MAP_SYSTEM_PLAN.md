@@ -101,7 +101,7 @@ layouts. The fix is one shared map engine grown from it.
 | 1 Engine core | `lib/map/*`, `components/map/*`; TwinTerritory rebuilt on it; tests (every official unit drawn and in the table, minimum size, keyboard order, colour rules, tokens) | 1–2 weeks |
 | 2 Three screens + 12 TerritoryHeat callers | NationalMap and TerritoryHeat become wrappers (same exports, nothing lost); ThreatMap and geopolitical panel on presets; `map-no-hardcode.test.ts`; phone checks | 1–2 weeks |
 | 3 Data pipeline | `build-map-pack.mjs` (TopoJSON per nation per level, world 1:50m, worldview); admin-2 from geoBoundaries/OCHA; Nation Pack capital, projection, insets; size budgets | 2–3 weeks |
-| 4 Authoritative data in the twin | boundary sources with versions and four-eyes publish; facilities with coordinates; incident locations; OGC collections | 3–4 weeks |
+| 4 Authoritative data in the twin | boundary sources with versions and four-eyes publish; the national facility register (4a core with ministry form and map pin, 4b upload and connected systems, 4c open-data candidates, 4d interoperability layer: `docs/FACILITY_REGISTER_REVIEW.md`); incident locations; OGC collections | 6–8 weeks |
 | 5 Ministry maps and polish | ~15 ministry maps and GeoMap on presets; maps in the accessibility audit; glossary | 2 weeks |
 
 ### Progress
@@ -141,6 +141,19 @@ layouts. The fix is one shared map engine grown from it.
   ≤300 KB, district files ≤1 MB gzipped. Still open: TopoJSON packs and two
   detail levels, district shapes for every other nation at install, the
   worldview setting.
+- **Situation Room theatre.** The Situation Room map is a command theatre on
+  the nation's real map (`components/features/situation/Theatre.tsx`, NationMap
+  `variant="theatre"`): everything the earlier schematic theatre had is kept
+  (tactical framing, radar sweep over the capital, scanline, grid, control
+  stack, pressure diffusion and shock rings, readiness rings and status
+  callouts, institutions as linked command nodes with knock-on links,
+  cascades and incident chips, corridors with moving traffic, infrastructure,
+  evacuation routes, population, pressure ladder, operating strip, layers,
+  full screen) and the neighbouring countries are drawn and named around the
+  nation. Regional pressure follows the earlier doctrine (institution strain,
+  contention, regional rhythm, crisis memory). Corridors, infrastructure,
+  evacuation routes and population are samples, marked in the legend, until
+  phase 4 registers facilities and networks.
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor
