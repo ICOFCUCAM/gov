@@ -7,6 +7,7 @@
 // closed. Session-persistent, deterministic seeded backlog, SSR/test-safe.
 
 import { seed } from '@/lib/telemetry';
+import { resetOnServerRender } from '@/lib/clock/server-reset';
 
 export type ReferralStatus = 'raised' | 'accepted' | 'actioned' | 'closed';
 export const REFERRAL_FLOW: ReferralStatus[] = ['raised', 'accepted', 'actioned', 'closed'];
@@ -27,11 +28,13 @@ const refs = new Map<string, Referral[]>(); // key = ministry key (the addressee
 const listeners = new Set<Listener>();
 let _version = 0;
 let _hydrated = false;
+resetOnServerRender(() => { refs.clear(); _version = 0; });
 const PERSIST_KEY = 'civicos.referral.v1';
 
 export function version(): number { return _version; }
 export function subscribe(l: Listener): () => void {
   listeners.add(l);
+  if (!_hydrated) { hydrate(true); _version++; queueMicrotask(() => listeners.forEach(x => x())); }
   return () => { listeners.delete(l); };
 }
 function bump() { _version++; listeners.forEach(l => l()); persist(); }
@@ -43,8 +46,12 @@ function persist() {
     window.localStorage.setItem(PERSIST_KEY, JSON.stringify(live));
   } catch { /* continuity degrades to session-only */ }
 }
-function hydrate() {
-  if (_hydrated) return;
+// Saved state is restored only after the page has hydrated (first subscriber
+// or first action), so the server HTML and the first browser render agree.
+let _ready = false;
+function hydrate(force = false) {
+  if (force) _ready = true;
+  if (_hydrated || !_ready) return;
   _hydrated = true;
   if (typeof window === 'undefined') return;
   try {
@@ -85,7 +92,7 @@ export function inbox(toKey: string, now: number): Referral[] {
 }
 
 export function raiseReferral(fromKey: string, toKey: string, subject: string, by: string, now: number, recordRef?: string): void {
-  hydrate();
+  hydrate(true);
   const list = refs.get(toKey) ?? seedRefs(toKey, now);
   list.push({
     id: `rf-${now}-${Math.floor(seed(`rf:${toKey}:${now}`) * 1e6)}`,
@@ -106,7 +113,7 @@ export function referralDigest(keys: string[], now: number, limit = 12): Referra
 }
 
 export function advanceReferral(toKey: string, id: string, now: number): void {
-  hydrate();
+  hydrate(true);
   const list = refs.get(toKey);
   if (!list) return;
   const r = list.find(x => x.id === id);

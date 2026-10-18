@@ -13,6 +13,7 @@
 import { sha256Hex } from '@/lib/audit/sha256';
 import { appendAuditRow, auditTrailRows, verifyChainRow, substrateAvailable } from '@/lib/db/repos/audit';
 import { enrichActorString } from '@/services/actor-resolver';
+import { resetOnServerRender } from '@/lib/clock/server-reset';
 
 export interface AuditEntry {
   seq: number;
@@ -30,6 +31,7 @@ type Listener = () => void;
 const chains = new Map<string, AuditEntry[]>();
 const listeners = new Set<Listener>();
 let _version = 0;
+resetOnServerRender(() => { chains.clear(); _version = 0; });
 /** Stable snapshot for useSyncExternalStore — changes only on mutation. */
 export function version(): number { return _version; }
 const emit = () => { _version++; for (const l of listeners) l(); };

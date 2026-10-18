@@ -32,12 +32,12 @@ What stays distinct:
 | 1 | Tokens holding today's values; `TONE`, `PALETTE` and `globals.css` read or match them; contrast test | Done |
 | 2 | Contrast fixes: console muted ink, `.sov` muted ink, neutral status, light warn, decision class C | Done |
 | 3 | The nation's identity in the Command Center, Cabinet Intelligence, Situation Room, `CommandShell` and National Shell headers | Done |
-| 4 | The nation accent as CSS variables from the root layout; teal kept as "information" | Next |
-| 5 | Crisis as a mode (`data-mode="crisis"`), CRIT cells with weight and shape | Planned |
-| 6 | Self-hosted Inter and JetBrains Mono (OFL) | Planned |
-| 7 | Champagne in the console's authority moments (signing, constitutional desk, audit verification) | Planned |
-| 8 | Accessibility layer: menu in the console, dark high-contrast, rem-based type, `<html lang/dir>` | Planned |
-| 9 | Officer apps and the remaining raw hex values, with a scan | Planned |
+| 4 | The nation's colour on its seal everywhere the console shows it (`sealTile()`); teal kept as "information" | Done (CSS variables for wider use when a page needs them) |
+| 5 | Crisis as a mode (`data-mode="crisis"` on the console roots, red frame; the seal keeps its colour); status shapes beside colour in the Situation Room matrix (`TONE_SHAPE`) | Done |
+| 6 | Self-hosted Inter and JetBrains Mono (OFL, `public/fonts`) | Done |
+| 7 | Champagne in the console's authority moments: the signing dialog (hairline and seal); constitutional desk and audit verification next | Started |
+| 8 | Accessibility layer: the menu in the CommandShell and Situation Room headers; text size enlarges the console (zoom, width compensated); high contrast lightens the console's greys. `<html lang>` stays English because console text is English | Done (rem-based type in components: later, with step 9) |
+| 9 | Officer apps and the remaining raw hex values: `npm run scan:colours` (CI) fails if the count rises above 3,166; components move to tokens file by file | Started |
 
 ## 3. National digital twin, phase 0
 

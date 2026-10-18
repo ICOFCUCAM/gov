@@ -6,6 +6,8 @@ import { api } from '@/lib/api/client';
 import { TONE, ACCENT, PALETTE } from '@/components/features/SituationRoom';
 import { ConsoleMark, PoweredBy } from '@/components/ui/ConsoleMark';
 import { SignalTag } from '@/components/ui/SignalTag';
+import { ReferenceNotice } from '@/components/ui/ReferenceNotice';
+import { AccessibilityMenu } from '@/components/ui/AccessibilityMenu';
 import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 import { CommandPalette, type CommandItem, type CommandSearchFn } from '@/components/ui/CommandPalette';
 import { substrateSearch } from '@/lib/db/search';
@@ -17,7 +19,7 @@ import { subscribe as rtSubscribe, runtimeStats, version as rtVersion } from '@/
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, orchestrationStats, version as orchVersion } from '@/services/orchestration-engine';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
-import { useRenderNow } from '@/lib/clock/render-now';
+import { useHydrated, useRenderNow } from '@/lib/clock/render-now';
 
 // Adapter from substrate search hits → CommandPalette items.
 const substrateSearchAsCommands: CommandSearchFn = async (query) => {
@@ -102,6 +104,18 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
   ]},
 ];
 
+// Layout effect in the browser (fits before paint); a no-op effect on the server.
+const useClientLayoutEffect = typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect;
+
+/** Show as many header figures as fit: hide priority 3, then 2; priority 1 always stays. */
+function fitTelemetry(el: HTMLElement) {
+  const items = [...el.children] as HTMLElement[];
+  for (const level of [3, 2, 1]) {
+    for (const it of items) it.style.display = Number(it.dataset.p) > level ? 'none' : '';
+    if (el.scrollWidth <= el.clientWidth + 1) return;
+  }
+}
+
 /**
  * Shared sovereign command chrome — full-screen dark command environment
  * (top telemetry bar + grouped command rail + command palette) that
@@ -121,6 +135,7 @@ export function CommandShell({
   const [mins, setMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(useRenderNow());
   const [navOpen, setNavOpen] = React.useState(false);
+  const hydrated = useHydrated();
 
   React.useEffect(() => {
     const load = async () => {
@@ -158,22 +173,33 @@ export function CommandShell({
   const fedStats = orchestrationStats();
 
   // Each figure says where it comes from (lib/twin/signal.ts); samples and model outputs are marked.
-  // p: 1 always shown, 2 from 1600 px, 3 from 1840 px; every figure stays in the rail and the command palette.
+  // p: priority. As many figures are shown as fit, lowest priority hidden first (fitTelemetry).
   const tele: { p: 1 | 2 | 3; l: string; v: string; t?: string; dot?: boolean; kind: SignalKind; src: string }[] = [
     { p: 3, l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true, kind: 'reported', src: 'Platform configuration' },
     { p: 2, l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone, kind: 'sample', src: `Resilience model over ${REFERENCE_MODEL.toLowerCase()}` },
-    { p: 3, l: 'Runtime', v: `${liveRt.open} open · ${liveRt.transitions} tx`, t: 'ok', kind: 'reported', src: 'Runtime queue in this browser' },
-    { p: 3, l: 'Federated apps', v: `${fedStats.activated}/${fedStats.registered}`, t: 'ok', kind: 'reported', src: 'Federation registry' },
+    { p: 3, l: 'Runtime', v: hydrated ? `${liveRt.open} open · ${liveRt.transitions} tx` : '—', t: 'ok', kind: 'reported', src: 'Runtime queue in this browser' },
+    { p: 3, l: 'Federated apps', v: hydrated ? `${fedStats.activated}/${fedStats.registered}` : '—', t: 'ok', kind: 'reported', src: 'Federation registry' },
     { p: 2, l: 'Institutions', v: String(t?.institutions ?? 0), kind: 'reported', src: 'Ministry registry (/api/org)' },
     { p: 1, l: 'Active incidents', v: String(incidents.length), t: incidents.length ? 'alert' : 'ok', kind: 'sample', src: `Seeded ministry incidents · ${REFERENCE_MODEL}` },
     { p: 2, l: 'Queues breaching', v: String(t?.queuesBreaching ?? 0), t: (t?.queuesBreaching ?? 0) > 0 ? 'warn' : 'ok', kind: 'sample', src: `Seeded ministry queues · ${REFERENCE_MODEL}` },
     { p: 1, l: 'National risk', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok', kind: 'sample', src: `Posture computed from seeded incidents · ${REFERENCE_MODEL}` },
     { p: 1, l: 'Audit integrity', v: t?.auditIntact === false ? 'Review' : 'Intact', t: t?.auditIntact === false ? 'alert' : 'ok', kind: 'observed', src: 'Verification of the audit chain' },
   ];
+  const teleRef = React.useRef<HTMLDivElement>(null);
+  const teleKey = tele.map(m => m.v).join('|');
+  useClientLayoutEffect(() => {
+    const el = teleRef.current;
+    if (!el) return;
+    const fit = () => fitTelemetry(el);
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [teleKey]);
   const cmd: CommandItem[] = RAIL.flatMap(g => g.items.map(it => ({ id: it.href + it.l, group: g.g, label: it.l, hint: it.s, href: it.href })));
 
   return (
-    <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]" style={{ ...PALETTE, ...(emergency ? { ['--accent' as string]: TONE.alert } : {}) }}>
+    <div data-mode={emergency ? 'crisis' : 'normal'} className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]" style={{ ...PALETTE, ...(emergency ? { ['--accent' as string]: TONE.alert } : {}) }}>
       <CommandPalette items={cmd} accent={accent} searchFn={substrateSearchAsCommands} />
       {emergency ? (
         <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-1 text-[10px]"
@@ -192,9 +218,9 @@ export function CommandShell({
           <span className="text-base leading-none">{navOpen ? '✕' : '☰'}</span>
         </button>
         <ConsoleMark crisis={emergency} official />
-        <div className="ml-2 hidden min-w-0 flex-1 items-stretch overflow-hidden lg:flex">
+        <div ref={teleRef} className="ml-2 hidden min-w-0 flex-1 items-stretch overflow-hidden lg:flex">
           {tele.map(m => (
-            <div key={m.l} className={`shrink-0 whitespace-nowrap border-l border-line px-3 py-1 first:border-l-0 ${m.p === 1 ? '' : m.p === 2 ? 'hidden min-[1600px]:block' : 'hidden min-[1840px]:block'}`}>
+            <div key={m.l} data-p={m.p} className="shrink-0 whitespace-nowrap border-l border-line px-3 py-1 first:border-l-0">
               <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}<SignalTag kind={m.kind} source={m.src} className="!text-[7px] !leading-none" /></div>
               <div className="flex items-center gap-1.5 font-mono text-sm tabular-nums" style={{ color: m.t ? TONE[m.t] : 'rgb(var(--c-ink))' }}>
                 {m.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[m.t ?? 'ok'] }} /> : null}
@@ -204,6 +230,7 @@ export function CommandShell({
           ))}
         </div>
         <div className="ml-auto flex items-center gap-3">
+          <AccessibilityMenu compact />
           <span className="hidden items-center gap-1.5 rounded-[3px] border px-2 py-1 text-[10px] sm:flex"
             style={{ borderColor: emergency ? TONE.alert : 'rgb(var(--c-line))', color: emergency ? TONE.alert : 'rgb(var(--c-ink-soft))' }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[level] }} />
@@ -214,7 +241,7 @@ export function CommandShell({
             {incidents.length ? <span className="absolute -right-1 -top-1 grid h-3.5 min-w-[14px] place-items-center rounded-full px-0.5 text-[8px] font-bold text-white" style={{ backgroundColor: TONE.alert }}>{incidents.length}</span> : null}
           </span>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
-          <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-[10px] text-ink-soft sm:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Encrypted</span>
+          <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-[10px] text-ink-soft min-[1440px]:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Encrypted</span>
           <span className="border-l border-line pl-3">
             <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="National Executive" accent={accent} />
           </span>
@@ -316,6 +343,7 @@ export function CommandShell({
         </nav>
         <main className="min-w-0 flex-1 overflow-y-auto p-3"
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.02) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
+          <ReferenceNotice />
           {children}
         </main>
       </div>

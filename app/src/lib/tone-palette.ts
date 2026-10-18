@@ -5,3 +5,8 @@
 import { STATUS } from '@/lib/theme/tokens';
 
 export const TONE: Record<string, string> = { ...STATUS };
+
+/** A shape per status, so a status never relies on colour alone (WCAG 1.4.1). */
+export const TONE_SHAPE: Record<string, string> = { alert: '▲', warn: '◆', neutral: '■', ok: '●' };
+/** The status in words, for screen readers and tooltips. */
+export const TONE_WORD: Record<string, string> = { alert: 'critical', warn: 'elevated', neutral: 'watch', ok: 'stable' };

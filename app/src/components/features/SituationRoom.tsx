@@ -14,10 +14,11 @@ import type {
   ArchetypeKey,
 } from '@/lib/api/types';
 
-import { TONE } from '@/lib/tone-palette';
+import { TONE, TONE_SHAPE, TONE_WORD } from '@/lib/tone-palette';
 import { CONSOLE, INFO } from '@/lib/theme/tokens';
 import { ConsoleMark, PoweredBy } from '@/components/ui/ConsoleMark';
 import { SignalTag } from '@/components/ui/SignalTag';
+import { AccessibilityMenu } from '@/components/ui/AccessibilityMenu';
 import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 export { TONE };
 export const ACCENT = INFO;
@@ -36,7 +37,7 @@ import {
 } from '@/lib/gov/sovereign-operating-model';
 
 import { DispatchChannel, NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard, NationalBureaucracyPulse } from '@/apps/_shared/InstitutionChain';
-import { regionName, aiLabel } from '@/lib/nation/registry';
+import { regionName, aiLabel, formatMoney } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
 
 const NATL_ASSETS = nationalAssets();
@@ -328,8 +329,8 @@ export function KpiCell({ d }: { d: Instr }) {
         <span className="ml-auto shrink-0 font-mono text-[9px] tabular-nums" style={{ color: dC }}>{d.traj}{d.d ? Math.abs(d.d) : ''}</span>
       </div>
       <div className="mt-1 -mb-0.5"><TeleSpark pts={d.spark} tone={tone} active={d.crit || d.pulse} /></div>
-      <div className="mt-0.5 flex items-center justify-between text-[7px] font-medium uppercase tracking-[0.05em]">
-        <span className="text-ink-muted">base {d.base}</span>
+      <div className="mt-0.5 flex items-center justify-between gap-1 whitespace-nowrap text-[7px] font-medium uppercase tracking-[0.05em]">
+        <span className="min-w-0 truncate text-ink-muted">base {d.base}</span>
         <SignalTag kind={d.kind ?? 'sample'} source={d.source ?? REFERENCE_MODEL} className="!text-[7px] !leading-none" />
         {d.anom
           ? <span className="flex items-center gap-0.5" style={{ color: TONE.warn }}><span className="h-[3px] w-[3px] rounded-full motion-safe:animate-pulse" style={{ background: TONE.warn }} />anomaly</span>
@@ -1249,7 +1250,7 @@ export function SituationRoom() {
     mkInstr('National Stability Index', stabilityIdx, '', true, 'stab'),
     fill({ l: 'Institutional Pressure', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok', spark: mhPts, pulse: true, anom: posture?.level === 'alert' || posture?.level === 'warn' }),
     mkInstr('Economic Resilience', 55 + Math.round(seed(`er:${epoch}`) * 24), '%', true, 'er'),
-    fill({ l: 'Treasury Liquidity', v: `$${revenue}B`, t: 'ok', d: 1, traj: '↗', spark: revPts }),
+    fill({ l: 'Treasury Liquidity', v: formatMoney(Number(revenue) * 1e9, { compact: true }), t: 'ok', d: 1, traj: '↗', spark: revPts }),
     mkInstr('Energy Stability', Math.max(1, 100 - pressOf('ENERGY')), '%', true, 'en'),
     mkInstr('Healthcare Capacity', Math.max(1, 100 - pressOf('HEALTH')), '%', true, 'hc'),
     mkInstr('Civil Stability', Math.max(1, 100 - Math.round(nationalRisk * 0.9)), '%', true, 'cs'),
@@ -1279,7 +1280,7 @@ export function SituationRoom() {
   ];
 
   return (
-    <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]"
+    <div data-mode={war ? 'crisis' : 'normal'} className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]"
       style={{ ...PALETTE, ...(war ? { ['--accent' as string]: TONE.alert } : {}) }}>
       <CommandPalette items={cmdItems} accent={war ? TONE.alert : ACCENT} />
       {/* Restrained environmental depth — institutional vignette only
@@ -1327,6 +1328,7 @@ export function SituationRoom() {
           </div>
         </div>
         <div className="ml-auto flex items-center gap-2.5">
+          <AccessibilityMenu compact />
           <button type="button"
             onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true }); window.dispatchEvent(e); }}
             className="focus-ring hidden items-center gap-1.5 rounded-sm border border-line bg-bg px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink lg:flex">
@@ -1338,7 +1340,8 @@ export function SituationRoom() {
             <span className="mx-1 text-line">·</span>
             <span style={{ color: ACCENT }}>✉</span> {3 + (epoch % 4)} briefs
             <span className="mx-1 text-line">·</span>
-            <span style={{ color: TONE.ok }}>$</span> {revenue}B
+            <span>{formatMoney(Number(revenue) * 1e9, { compact: true })}</span>
+            <SignalTag kind="sample" source={`Treasury liquidity · ${REFERENCE_MODEL}`} className="!text-[7px] !leading-none" />
           </span>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
           <button onClick={() => setWarManual(w => (w === true ? null : true))}
@@ -1543,9 +1546,10 @@ export function SituationRoom() {
                           const v = domainStress(m.archetype as string, dom, p, ts, m.ministryId);
                           const st = v >= 78 ? 'alert' : v >= 58 ? 'warn' : v >= 40 ? 'neutral' : 'ok';
                           return (
-                            <td key={dom} className="px-0.5 py-1.5 align-middle" title={`${dom} ${Math.round(v)}`}>
+                            <td key={dom} className="px-0.5 py-1.5 align-middle" title={`${dom} ${Math.round(v)} · ${TONE_WORD[st]}`}>
                               <span className="flex flex-col items-center gap-0.5">
-                                <span className="h-1.5 w-1.5 rounded-full" style={{ background: TONE[st], boxShadow: st === 'alert' ? `0 0 4px ${TONE.alert}` : undefined }} />
+                                <span aria-hidden className="text-[8px] leading-none" style={{ color: TONE[st], textShadow: st === 'alert' ? `0 0 4px ${TONE.alert}` : undefined }}>{TONE_SHAPE[st]}</span>
+                                <span className="sr-only">{dom} {TONE_WORD[st]} {Math.round(v)}</span>
                                 <span className="h-0.5 w-5 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}><span className="block h-full rounded-full" style={{ width: `${v}%`, background: TONE[st] }} /></span>
                               </span>
                             </td>
@@ -1827,14 +1831,14 @@ export function SituationRoom() {
               </div>
             </Panel>
             <Panel title="Incident severity distribution" meta="by classification"><Donut segs={donut} /></Panel>
-            <Panel title="Treasury flow monitor" meta="24h revenue · expenditure">
+            <Panel title="Treasury flow monitor" meta={<span className="flex items-center gap-1.5">24h revenue · expenditure <SignalTag kind="sample" source={REFERENCE_MODEL} /></span>}>
               <div className="space-y-2">
                 <div>
-                  <div className="flex items-baseline justify-between"><span className="text-[10px] uppercase tracking-wide text-ink-muted">Revenue</span><span className="font-mono text-sm tabular-nums" style={{ color: TONE.ok }}>${revenue}B</span></div>
+                  <div className="flex items-baseline justify-between"><span className="text-[10px] uppercase tracking-wide text-ink-muted">Revenue</span><span className="font-mono text-sm tabular-nums" style={{ color: TONE.ok }}>{formatMoney(Number(revenue) * 1e9, { compact: true })}</span></div>
                   <Spark pts={revPts} tone="ok" />
                 </div>
                 <div>
-                  <div className="flex items-baseline justify-between"><span className="text-[10px] uppercase tracking-wide text-ink-muted">Expenditure</span><span className="font-mono text-sm tabular-nums" style={{ color: TONE.warn }}>${expenditure}B</span></div>
+                  <div className="flex items-baseline justify-between"><span className="text-[10px] uppercase tracking-wide text-ink-muted">Expenditure</span><span className="font-mono text-sm tabular-nums" style={{ color: TONE.warn }}>{formatMoney(Number(expenditure) * 1e9, { compact: true })}</span></div>
                   <Spark pts={expPts} tone="warn" />
                 </div>
                 {finance ? <Link href={`/gov/ministry/${finance.ministryId}`} className="focus-ring block text-[11px] text-link underline underline-offset-2">Open Treasury command →</Link> : null}

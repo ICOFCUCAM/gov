@@ -14,7 +14,8 @@
     "scan:nation": "node scripts/nation-scan.mjs",
     "scan:boundaries": "node scripts/scan-boundaries.mjs",
     "build:boundaries": "node scripts/build-boundaries.mjs",
-    "audit:sites": "node scripts/audit-public-sites.mjs"
+    "audit:sites": "node scripts/audit-public-sites.mjs",
+    "scan:colours": "node scripts/scan-colours.mjs --max 3166"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",

@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { subscribe, getLedger, runtimeStats, version as rtVersion } from '@/lib/gov/runtime-store';
 import { FilterChips } from '@/components/ui/FilterChips';
-import { useRenderNow } from '@/lib/clock/render-now';
+import { useHydrated, useRenderNow } from '@/lib/clock/render-now';
 
 const actTone = (a: string) =>
   a === 'approve' || a === 'resolve' ? TONE.ok : a === 'reject' ? TONE.alert : a === 'escalate' ? TONE.warn : TONE.link;
@@ -37,8 +37,10 @@ function scopeHref(scope: string): string {
  */
 export function OperationsLedger() {
   React.useSyncExternalStore(subscribe, rtVersion, rtVersion);
-  const allLedger = getLedger(120);
-  const stats = runtimeStats();
+  // The ledger lives in this browser; it is shown once the page has hydrated.
+  const hydrated = useHydrated();
+  const allLedger = hydrated ? getLedger(120) : [];
+  const stats = hydrated ? runtimeStats() : { scopes: 0, totalItems: 0, open: 0, transitions: 0, closedByOperator: 0 };
   const [now, setNow] = React.useState(useRenderNow());
   const [scopeFilter, setScopeFilter] = React.useState<string>('all');
   const scopeKeys = Array.from(new Set(allLedger.map(e => e.scope.split(':')[0]!))).sort();

@@ -4,7 +4,7 @@ import path from 'node:path';
 import { LIGHT, SOV, CONSOLE, STATUS, INFO, INSTITUTIONAL, DECISION_CLASS, hexOf, type Ground } from './tokens';
 import { sealTile, accentText, GRAPHIC } from './nation';
 import { contrast, AA } from '@/apps/_shared/public/design/contrast';
-import { TONE } from '@/lib/tone-palette';
+import { TONE, TONE_SHAPE, TONE_WORD } from '@/lib/tone-palette';
 import { PALETTE } from '@/components/features/SituationRoom';
 
 const css = fs.readFileSync(path.join(__dirname, '..', '..', 'app', 'globals.css'), 'utf8');
@@ -38,6 +38,11 @@ describe('design tokens', () => {
     for (const k of ['--c-ok', '--c-warn', '--c-alert']) expect(contrast(hx(LIGHT, k), '#ffffff'), `light ${k}`).toBeGreaterThanOrEqual(AA);
     for (const [k, v] of Object.entries(DECISION_CLASS)) expect(contrast(v, '#ffffff'), `class ${k}`).toBeGreaterThanOrEqual(AA);
     expect(contrast(INSTITUTIONAL.champagne, INSTITUTIONAL.ground)).toBeGreaterThanOrEqual(AA);
+  });
+
+  it('give every status a shape and a word, never colour alone', () => {
+    for (const k of Object.keys(TONE)) { expect(TONE_SHAPE[k], k).toBeTruthy(); expect(TONE_WORD[k], k).toBeTruthy(); }
+    expect(new Set(Object.values(TONE_SHAPE)).size).toBe(Object.keys(TONE).length);
   });
 
   it('keep any nation colour visible on the console, with a readable monogram', () => {

@@ -10,7 +10,7 @@ const SCALES: Scale[] = ['sm', 'md', 'lg', 'xl'];
  * text size + high contrast. Persisted locally, applied via data attributes
  * read by globals.css. No tracking; pure preference.
  */
-export function AccessibilityMenu() {
+export function AccessibilityMenu({ compact = false }: { compact?: boolean } = {}) {
   const [open, setOpen] = React.useState(false);
   const [scale, setScale] = React.useState<Scale>('md');
   const [contrast, setContrast] = React.useState(false);
@@ -54,9 +54,11 @@ export function AccessibilityMenu() {
         aria-expanded={open}
         aria-haspopup="true"
         onClick={() => setOpen(o => !o)}
-        className="rounded-sm border border-line px-3 py-1.5 text-sm hover:bg-surface-2"
+        aria-label={compact ? 'Accessibility: text size and contrast' : undefined}
+        title={compact ? 'Accessibility: text size and contrast' : undefined}
+        className={compact ? 'focus-ring grid h-8 min-w-8 place-items-center rounded-[3px] border border-line px-1.5 text-[13px] font-semibold text-ink-soft hover:bg-surface-2 hover:text-ink' : 'rounded-sm border border-line px-3 py-1.5 text-sm hover:bg-surface-2'}
       >
-        Accessibility
+        {compact ? 'Aa' : 'Accessibility'}
       </button>
       {open ? (
         <div

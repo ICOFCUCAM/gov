@@ -9,6 +9,7 @@
 // register is never empty. SSR/test-safe (no window).
 
 import { seed } from '@/lib/telemetry';
+import { resetOnServerRender } from '@/lib/clock/server-reset';
 
 export type RecordStage = 'captured' | 'held' | 'committed' | 'rolled' | 'synced';
 export const STAGE_ORDER: RecordStage[] = ['captured', 'held', 'committed', 'rolled', 'synced'];
@@ -31,10 +32,12 @@ const listeners = new Set<Listener>();
 let _version = 0;
 let _hydrated = false;
 const PERSIST_KEY = 'civicos.records.v1';
+resetOnServerRender(() => { regs.clear(); _version = 0; });
 
 export function version(): number { return _version; }
 export function subscribe(l: Listener): () => void {
   listeners.add(l);
+  if (!_hydrated) { hydrate(true); _version++; queueMicrotask(() => listeners.forEach(x => x())); }
   return () => { listeners.delete(l); };
 }
 function bump() { _version++; listeners.forEach(l => l()); persist(); }
@@ -46,8 +49,12 @@ function persist() {
     window.localStorage.setItem(PERSIST_KEY, JSON.stringify(live));
   } catch { /* continuity degrades to session-only */ }
 }
-function hydrate() {
-  if (_hydrated) return;
+// Saved state is restored only after the page has hydrated (first subscriber
+// or first action), so the server HTML and the first browser render agree.
+let _ready = false;
+function hydrate(force = false) {
+  if (force) _ready = true;
+  if (_hydrated || !_ready) return;
   _hydrated = true;
   if (typeof window === 'undefined') return;
   try {
@@ -88,7 +95,7 @@ export function records(ministryKey: string, facilityId: string, recordNoun: str
 }
 
 export function fileRecord(ministryKey: string, facilityId: string, subject: string, byActor: string, recordNoun: string, now: number): void {
-  hydrate();
+  hydrate(true);
   const key = `${ministryKey}:${facilityId}`;
   const list = regs.get(key) ?? seedRecords(key, recordNoun, now);
   const seq = list.length + 1;
@@ -117,7 +124,7 @@ export function nationalRecords(limit = 12): { rec: FiledRecord; ministryKey: st
 }
 
 export function advanceRecord(ministryKey: string, facilityId: string, id: string, now: number): void {
-  hydrate();
+  hydrate(true);
   const list = regs.get(`${ministryKey}:${facilityId}`);
   if (!list) return;
   const r = list.find(x => x.id === id);
@@ -129,7 +136,7 @@ export function advanceRecord(ministryKey: string, facilityId: string, id: strin
 /** Send a record back one stage for correction — real bureaucracy is not
  *  monotonic. A synced record is closed and cannot be returned. */
 export function returnRecord(ministryKey: string, facilityId: string, id: string, now: number): void {
-  hydrate();
+  hydrate(true);
   const list = regs.get(`${ministryKey}:${facilityId}`);
   if (!list) return;
   const r = list.find(x => x.id === id);

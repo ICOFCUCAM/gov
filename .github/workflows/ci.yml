@@ -25,6 +25,8 @@ jobs:
         run: pnpm typecheck
       - name: Unit tests (vitest)
         run: pnpm test
+      - name: No new raw colours in console code (tokens only)
+        run: pnpm scan:colours
 
   public-sites-audit:
     name: public sites audit (accessibility, links, budgets)
