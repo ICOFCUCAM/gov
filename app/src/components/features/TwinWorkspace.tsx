@@ -92,6 +92,9 @@ export function TwinWorkspace() {
             The nation's places and institutions, the sources that report on them, and every fact with when it was true and when it was recorded.
             Figures elsewhere in the console are marked <span className="font-semibold">Sample</span> until a source here reports them.
           </p>
+          <p className="mt-1 text-[12px] text-ink-muted">
+            For GIS tools: the subdivisions with their observed values as <a className="text-link underline underline-offset-2" href="/api/twin/ogc">OGC API – Features</a> (GeoJSON, CRS84).
+          </p>
         </div>
         <label className="w-full max-w-xs">
           <span className={label}>Your name (official)</span>

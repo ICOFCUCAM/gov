@@ -8031,6 +8031,243 @@
         "x-source": "src/app/api/twin/keys/route.ts"
       }
     },
+    "/api/twin/ogc/collections/{collectionId}/items/{featureId}": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_ogc_collections_collectionId_items_featureId",
+        "summary": "GET /api/twin/ogc/collections/{collectionId}/items/{featureId}",
+        "description": "One subdivision as a GeoJSON feature with its observed values (?datetime).",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "featureId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "datetime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/ogc/collections/[collectionId]/items/[featureId]/route.ts"
+      }
+    },
+    "/api/twin/ogc/collections/{collectionId}/items": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_ogc_collections_collectionId_items",
+        "summary": "GET /api/twin/ogc/collections/{collectionId}/items",
+        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime).",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "datetime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/ogc/collections/[collectionId]/items/route.ts"
+      }
+    },
+    "/api/twin/ogc/collections/{collectionId}": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_ogc_collections_collectionId",
+        "summary": "GET /api/twin/ogc/collections/{collectionId}",
+        "description": "One OGC API – Features collection of the national twin.",
+        "parameters": [
+          {
+            "name": "collectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/ogc/collections/[collectionId]/route.ts"
+      }
+    },
+    "/api/twin/ogc/collections": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_ogc_collections",
+        "summary": "GET /api/twin/ogc/collections",
+        "description": "OGC API – Features collections of the national twin.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/ogc/collections/route.ts"
+      }
+    },
+    "/api/twin/ogc/conformance": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_ogc_conformance",
+        "summary": "GET /api/twin/ogc/conformance",
+        "description": "OGC API – Features conformance classes the twin's endpoint implements.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/ogc/conformance/route.ts"
+      }
+    },
+    "/api/twin/ogc": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_ogc",
+        "summary": "GET /api/twin/ogc",
+        "description": "OGC API – Features landing page for the national twin (lib/twin/ogc.ts).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/ogc/route.ts"
+      }
+    },
     "/api/twin/scenarios/{id}": {
       "get": {
         "tags": [
