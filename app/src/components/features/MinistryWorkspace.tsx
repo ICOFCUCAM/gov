@@ -36,6 +36,8 @@ import type {
 import { useRenderNow } from '@/lib/clock/render-now';
 import { useOfficial } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL } from '@/lib/twin/signal';
 
 type Tab =
   | 'command' | 'ecosystem' | 'continuity' | 'regional' | 'approvals' | 'incidents' | 'field'
@@ -58,6 +60,8 @@ const TABS: { k: Tab; label: string }[] = [
   { k: 'security', label: 'Security' },
   { k: 'audit', label: 'Audit' },
 ];
+/** Sections shown as tabs; the others are under "More" (the chosen one joins the tabs while open). */
+const PRIMARY: Tab[] = ['command', 'approvals', 'incidents', 'escalations', 'regional'];
 
 
 /**
@@ -66,7 +70,7 @@ const TABS: { k: Tab; label: string }[] = [
  * archetype-specialised operational tabs. One canonical implementation,
  * composed per archetype from the profile + operational data.
  */
-const NAME_FIRST = 'Name the acting official first (below the queue): every action is recorded under a person.';
+const NAME_FIRST = 'Name the acting official first (under "Needs you now"): every action is recorded under a person.';
 
 export function MinistryWorkspace({ id }: { id: string }) {
   // Resolve the institution synchronously from the canonical federation so
@@ -183,25 +187,31 @@ export function MinistryWorkspace({ id }: { id: string }) {
     const liveHealth = (mid: string) => Math.round(waveSeries(`nh:${mid}`, now / 4000, 1, 58, 99).at(-1)!);
     return buildCascade(allMins, liveHealth).find(c => c.id === id) ?? null;
   }, [allMins, id, now]);
-  const readiness = inst ? scoreInstitution(inst, { cascadeStress: cascadeSelf?.totalStress }) : null;
+  // Readiness is the institution's own configuration; propagated cascade stress
+  // (a modelled, time-varying figure) is shown beside it, not inside the gate.
+  const readiness = inst ? scoreInstitution(inst) : null;
   const cascadeCrit = cascadeSelf?.posture === 'critical';
   const cascadeStrain = cascadeSelf?.posture === 'strained';
-  const crisis = activeAlerts.some(a => /1|crit/i.test(String(a.severity))) || cascadeCrit;
+  // Posture follows the institution's recorded incidents only, so it does not flip with modelled figures.
+  const crisis = activeAlerts.some(a => /1|crit/i.test(String(a.severity)));
   const mode: 'CRISIS' | 'ESCALATION' | 'EXECUTIVE' =
-    crisis ? 'CRISIS' : activeAlerts.length > 0 || cascadeStrain ? 'ESCALATION' : 'EXECUTIVE';
+    crisis ? 'CRISIS' : activeAlerts.length > 0 ? 'ESCALATION' : 'EXECUTIVE';
   const modeTone = mode === 'CRISIS' ? 'rgb(var(--c-alert))'
     : mode === 'ESCALATION' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))';
   const provisional = !!inst && (inst.status !== 'active' || (readiness ? !readiness.deployable : false));
 
-  // Crisis auto-routes the operator to the incident surface once, without
-  // fighting subsequent manual navigation.
-  const autoRouted = React.useRef(false);
+  // The workspace never switches tabs by itself; the crisis banner offers the way to incidents.
+  // The last tab is remembered per institution (this browser only).
+  const TAB_KEY = `civicos.ministry.tab:${id}`;
   React.useEffect(() => {
-    if (crisis && !autoRouted.current) {
-      autoRouted.current = true;
-      setTab('incidents');
-    }
-  }, [crisis]);
+    try { const t = localStorage.getItem(TAB_KEY) as Tab | null; if (t && TABS.some(x => x.k === t)) setTab(t); } catch { /* storage unavailable */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
+  const chooseTab = React.useCallback((t: Tab) => {
+    setTab(t);
+    try { localStorage.setItem(TAB_KEY, t); } catch { /* storage unavailable */ }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [id]);
 
   // Fetch a real AI advisory when the escalation tier changes.
   const opTierForAdvisory = ministryOpState(id, (archetype || 'GENERIC') as ArchetypeKey, 100 - (readiness?.total ?? 60), now / 4000).escalationTier;
@@ -294,9 +304,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
           style={{ borderColor: 'rgb(var(--c-warn))', backgroundColor: 'color-mix(in srgb, rgb(var(--c-warn)) 12%, transparent)', color: 'rgb(var(--c-warn))' }}>
           <span className="flex items-center gap-2 font-semibold uppercase tracking-[0.16em]">
             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'rgb(var(--c-warn))' }} />
-            Provisional institution · activation gate not passed{readiness ? ` · ${readiness.total}% ready` : ''}
+            {inst?.status !== 'active' ? 'Not yet active' : 'Below the readiness threshold'}{readiness ? ` · ${readiness.total}% ready` : ''}
           </span>
-          <Link href="/ministries" className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest no-underline" style={{ borderColor: 'rgb(var(--c-warn))' }}>Resolve in Institutions Admin →</Link>
+          {readiness?.blocking.length ? <span className="text-ink-soft normal-case">To clear: {readiness.blocking.join(' · ')}</span> : null}
+          <Link href={`/ministries?id=${encodeURIComponent(id)}`} className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest no-underline" style={{ borderColor: 'rgb(var(--c-warn))' }}>Resolve in Institutions Admin →</Link>
         </div>
       ) : null}
 
@@ -305,22 +316,76 @@ export function MinistryWorkspace({ id }: { id: string }) {
           style={{ borderColor: 'rgb(var(--c-alert))', backgroundColor: 'color-mix(in srgb, rgb(var(--c-alert)) 14%, transparent)', color: 'rgb(var(--c-alert))' }}>
           <span className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]">
             <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: 'rgb(var(--c-alert))' }} />
-            Crisis posture engaged · {activeAlerts.length} active incident{activeAlerts.length === 1 ? '' : 's'}{cascadeCrit ? ` · cross-ministry cascade (+${cascadeSelf?.inheritedStress} inherited)` : ''} · institution operating under escalation authority
+            Crisis posture engaged · {activeAlerts.length} active incident{activeAlerts.length === 1 ? '' : 's'} · institution operating under escalation authority
           </span>
+          {tab !== 'incidents' ? (
+            <button type="button" onClick={() => chooseTab('incidents')} className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest" style={{ borderColor: 'rgb(var(--c-alert))' }}>Go to incidents →</button>
+          ) : null}
         </div>
       ) : null}
+
+      {/* Needs you now: the work this institution has to act on, from its own records. */}
+      {(() => {
+        const sla = queue?.slaHours ?? Infinity;
+        const waiting = (queue?.items ?? []).filter(i => i.state !== 'cleared');
+        const overdue = waiting.filter(i => i.ageHours > sla);
+        const top = [...waiting].sort((a, b) => Number(b.ageHours > sla) - Number(a.ageHours > sla) || Number(b.state === 'escalated') - Number(a.state === 'escalated') || b.ageHours - a.ageHours).slice(0, 4);
+        const counter = (label: string, n: number, t: Tab, tone: string) => (
+          <button type="button" onClick={() => chooseTab(t)}
+            className="focus-ring flex min-w-[9rem] flex-1 items-baseline justify-between gap-3 rounded-[3px] border border-line bg-surface px-3 py-2 text-left hover:bg-surface-2">
+            <span className="text-sm text-ink-soft">{label}</span>
+            <span className="font-mono text-xl font-semibold tabular-nums" style={{ color: n ? tone : 'rgb(var(--c-ok))' }}>{n}</span>
+          </button>
+        );
+        return (
+          <section aria-labelledby="needs-you" className="space-y-2 rounded-[3px] border border-line bg-surface-2/40 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 id="needs-you" className="text-sm font-semibold text-ink">Needs you now</h2>
+              <ActingOfficial name={official} onChange={setOfficial} />
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {counter('Decisions waiting', waiting.length, 'approvals', 'rgb(var(--c-warn))')}
+              {counter('Incidents open', activeAlerts.length, 'incidents', 'rgb(var(--c-alert))')}
+              {counter('Past SLA', overdue.length, 'approvals', 'rgb(var(--c-alert))')}
+            </div>
+            {top.length || activeAlerts.length ? (
+              <ul className="divide-y divide-line-soft rounded-[3px] border border-line bg-surface text-sm">
+                {activeAlerts.slice(0, 2).map(inc => (
+                  <li key={inc.key} className="flex flex-wrap items-center gap-2 px-3 py-2">
+                    <SeverityBadge severity={inc.severity} />
+                    <span className="min-w-0 flex-1 truncate">{inc.label}</span>
+                    <Button className="!min-h-0 !px-2 !py-1 !text-sm" variant="ghost" disabled={busy === inc.key + 'escalate'} onClick={() => void incAct(inc.key, 'escalate')}>Escalate</Button>
+                    <Button className="!min-h-0 !px-2 !py-1 !text-sm" variant="secondary" disabled={busy === inc.key + 'resolve'} onClick={() => void incAct(inc.key, 'resolve')}>Resolve</Button>
+                  </li>
+                ))}
+                {top.map(i => (
+                  <li key={i.id} className="flex flex-wrap items-center gap-2 px-3 py-2">
+                    <span className="font-mono text-xs text-ink-muted">{i.ref}</span>
+                    <span className="min-w-0 flex-1 truncate">{i.subject}</span>
+                    <span className="text-xs tabular-nums" style={{ color: i.ageHours > sla ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ink-muted))' }}>{i.ageHours}h{i.ageHours > sla ? ' · past SLA' : ''}</span>
+                    <span className="text-xs capitalize text-ink-muted">{i.state}</span>
+                    {i.state === 'open' ? <Button className="!min-h-0 !px-2 !py-1 !text-sm" variant="ghost" disabled={busy === i.id + 'assign'} onClick={() => void queueAct(i.id, 'assign')}>Assign to me</Button> : null}
+                    <Button className="!min-h-0 !px-2 !py-1 !text-sm" variant="ghost" disabled={busy === i.id + 'escalate'} onClick={() => void queueAct(i.id, 'escalate')}>Escalate</Button>
+                    <Button className="!min-h-0 !px-2 !py-1 !text-sm" variant="secondary" disabled={busy === i.id + 'clear'} onClick={() => void queueAct(i.id, 'clear')}>Clear</Button>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="text-sm text-ink-muted">Nothing is waiting on this institution.</p>}
+          </section>
+        );
+      })()}
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-6">
         {[
           { l: 'Lifecycle', v: readiness ? LIFECYCLE_LABEL[readiness.lifecycle] : (inst?.status ?? '—'), c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))', dot: true },
           { l: 'Readiness', v: readiness ? `${readiness.total}%` : '—', c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))' },
           { l: 'Posture mode', v: mode, c: modeTone, dot: true },
-          { l: 'Cascade stress', v: cascadeSelf ? `${cascadeSelf.totalStress}${cascadeSelf.inheritedStress ? ` (+${cascadeSelf.inheritedStress})` : ''}` : '—', c: cascadeCrit ? 'rgb(var(--c-alert))' : cascadeStrain ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))', dot: cascadeCrit || cascadeStrain },
+          { l: 'Cascade stress', v: cascadeSelf ? `${cascadeSelf.totalStress}${cascadeSelf.inheritedStress ? ` (+${cascadeSelf.inheritedStress})` : ''}` : '—', c: cascadeCrit ? 'rgb(var(--c-alert))' : cascadeStrain ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))', dot: cascadeCrit || cascadeStrain, sample: true },
           { l: 'Active incidents', v: String(activeAlerts.length), c: activeAlerts.length ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
           { l: 'Queue', v: `${openQueue} open`, c: openQueue > 6 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink))' },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
-            <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
+            <span className="flex items-center gap-1 uppercase tracking-[0.14em] text-ink-muted">{s.l}{'sample' in s && s.sample ? <SignalTag kind="sample" source={`Cascade model over ${REFERENCE_MODEL.toLowerCase()}`} /> : null}</span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: s.c }}>
               {s.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: s.c }} /> : null}
               {s.v}
@@ -346,19 +411,19 @@ export function MinistryWorkspace({ id }: { id: string }) {
         );
         const actions =
           mode === 'CRISIS' ? [
-            navBtn('Open incident command', () => setTab('incidents'), true),
-            navBtn('Escalations', () => setTab('escalations'), true),
+            navBtn('Open incident command', () => chooseTab('incidents'), true),
+            navBtn('Escalations', () => chooseTab('escalations'), true),
             linkBtn('Convene War Room', '/gov/situation-room', true),
             linkBtn('Notify Cabinet', '/gov/coordination', true),
           ] : mode === 'ESCALATION' ? [
-            navBtn('Review escalations', () => setTab('escalations')),
-            navBtn('Prioritise queue', () => setTab('approvals')),
+            navBtn('Review escalations', () => chooseTab('escalations')),
+            navBtn('Prioritise queue', () => chooseTab('approvals')),
             linkBtn('National coordination', '/gov/coordination'),
-            linkBtn('Notify oversight', '/audit'),
+            linkBtn('Oversight & audit', '/audit'),
           ] : [
-            navBtn('Command surface', () => setTab('command')),
-            navBtn('Strategic analytics', () => setTab('analytics')),
-            navBtn('Regional posture', () => setTab('regional')),
+            navBtn('Command surface', () => chooseTab('command')),
+            navBtn('Strategic analytics', () => chooseTab('analytics')),
+            navBtn('Regional posture', () => chooseTab('regional')),
             linkBtn('Executive brief', '/gov'),
           ];
         return (
@@ -372,34 +437,65 @@ export function MinistryWorkspace({ id }: { id: string }) {
         );
       })()}
 
-      {/* Internal workspace navigation */}
-      <div className="flex flex-wrap gap-1 border-b border-line" role="tablist" aria-label="Workspace sections">
-        {TABS.map(t => (
-          <button
-            key={t.k}
-            role="tab"
-            aria-selected={tab === t.k}
-            onClick={() => setTab(t.k)}
-            style={tab === t.k ? { borderColor: ident.accent, color: 'rgb(var(--c-ink))' } : undefined}
-            className={
-              'focus-ring border-b-2 px-3 py-2 text-sm transition-colors duration-150 ease-sov ' +
-              (tab === t.k
-                ? 'font-semibold'
-                : 'border-transparent text-ink-soft hover:text-ink')
-            }
-          >
-            <span className="inline-flex items-center gap-1">
-              {t.label}
-              {crisis && (t.k === 'incidents' || t.k === 'escalations')
-                ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: 'rgb(var(--c-alert))' }} />
-                : null}
-            </span>
-          </button>
-        ))}
-      </div>
+      {/* Internal workspace navigation: the main sections, the rest under "More". Arrow keys move between tabs. */}
+      {(() => {
+        const visible = TABS.filter(t => PRIMARY.includes(t.k) || t.k === tab);
+        const more = TABS.filter(t => !visible.some(v => v.k === t.k));
+        const onKey = (e: React.KeyboardEvent<HTMLButtonElement>, i: number) => {
+          const n = e.key === 'ArrowRight' ? i + 1 : e.key === 'ArrowLeft' ? i - 1 : e.key === 'Home' ? 0 : e.key === 'End' ? visible.length - 1 : -2;
+          if (n === -2) return;
+          e.preventDefault();
+          const next = visible[(n + visible.length) % visible.length]!;
+          chooseTab(next.k);
+          requestAnimationFrame(() => document.getElementById(`ws-tab-${next.k}`)?.focus());
+        };
+        return (
+          <div className="flex flex-wrap items-end gap-2 border-b border-line">
+            <div className="flex flex-wrap gap-1" role="tablist" aria-label="Workspace sections">
+              {visible.map((t, i) => (
+                <button
+                  key={t.k}
+                  id={`ws-tab-${t.k}`}
+                  role="tab"
+                  aria-selected={tab === t.k}
+                  aria-controls="ws-panel"
+                  tabIndex={tab === t.k ? 0 : -1}
+                  onClick={() => chooseTab(t.k)}
+                  onKeyDown={e => onKey(e, i)}
+                  style={tab === t.k ? { borderColor: ident.accent, color: 'rgb(var(--c-ink))' } : undefined}
+                  className={
+                    'focus-ring border-b-2 px-3 py-2 text-sm transition-colors duration-150 ease-sov ' +
+                    (tab === t.k
+                      ? 'font-semibold'
+                      : 'border-transparent text-ink-soft hover:text-ink')
+                  }
+                >
+                  <span className="inline-flex items-center gap-1">
+                    {t.label}
+                    {crisis && (t.k === 'incidents' || t.k === 'escalations')
+                      ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: 'rgb(var(--c-alert))' }} />
+                      : null}
+                  </span>
+                </button>
+              ))}
+            </div>
+            {more.length ? (
+              <label className="mb-1 ml-auto flex items-center gap-1.5 text-sm text-ink-soft">
+                More
+                <select value="" onChange={e => { if (e.currentTarget.value) chooseTab(e.currentTarget.value as Tab); }}
+                  className="focus-ring h-8 rounded-[3px] border border-line bg-surface px-2 text-sm text-ink">
+                  <option value="">Choose a section…</option>
+                  {more.map(t => <option key={t.k} value={t.k}>{t.label}</option>)}
+                </select>
+              </label>
+            ) : null}
+          </div>
+        );
+      })()}
 
       {err ? <p className="text-sm text-alert" role="alert">{err}</p> : null}
 
+      <div id="ws-panel" role="tabpanel" aria-labelledby={`ws-tab-${tab}`} tabIndex={0} className="space-y-4 focus:outline-none">
       {tab === 'command' && (
         <div className="space-y-5">
           {(() => {
@@ -528,7 +624,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 intensity: maxCases ? (r.openCases / maxCases) * 100 : 0,
                 value: `${r.facilitiesOperationalPct}%`,
               }))}
-              onSelect={() => setTab('regional')}
+              onSelect={() => chooseTab('regional')}
             />
           </Section>
           <div className="grid gap-5 lg:grid-cols-2">
@@ -783,7 +879,6 @@ export function MinistryWorkspace({ id }: { id: string }) {
 
       {tab === 'approvals' && (
         <div className="space-y-3">
-        <RuntimeQueue scope={`${id}:approvals`} kind="approval" title="Approvals runtime — submit → review → decision" by={official || 'Unnamed official'} />
         <Section
           title={queue?.title ?? 'Approvals'}
           meta={`${openQueue} open · SLA ${queue ? Math.round(queue.slaHours / 24) : '—'}d`}
@@ -824,13 +919,24 @@ export function MinistryWorkspace({ id }: { id: string }) {
             <span>Every action is recorded under this name in the audit chain — single or bulk. Humans assign, escalate, clear — no autonomous action.</span>
           </p>
         </Section>
+        <details className="rounded-[3px] border border-line bg-surface">
+          <summary className="focus-ring cursor-pointer px-3 py-2 text-sm text-ink-soft">Practice queue (this browser only) — a workflow sandbox, not the ministry&rsquo;s record</summary>
+          <div className="p-2">
+            <RuntimeQueue scope={`${id}:approvals`} kind="approval" title="Approvals runtime — submit → review → decision" by={official || 'Unnamed official'} />
+          </div>
+        </details>
         </div>
       )}
 
       {tab === 'incidents' && (
         <Section title="Incidents & escalation" meta={escChain.length ? `chain: ${escChain.join(' → ')}` : undefined}>
           <div className="space-y-2">
-            <RuntimeQueue scope={`${id}:incident`} kind="incident" title="Incident runtime — acknowledge → contain → recover" by={official || 'Unnamed official'} />
+            <details className="rounded-[3px] border border-line bg-surface">
+              <summary className="focus-ring cursor-pointer px-3 py-2 text-sm text-ink-soft">Practice queue (this browser only) — a workflow sandbox, not the ministry&rsquo;s record</summary>
+              <div className="p-2">
+                <RuntimeQueue scope={`${id}:incident`} kind="incident" title="Incident runtime — acknowledge → contain → recover" by={official || 'Unnamed official'} />
+              </div>
+            </details>
             {incidents.map(inc => (
               <Card tight key={inc.key}>
                 <div className="flex flex-wrap items-start justify-between gap-2">
@@ -1015,6 +1121,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
           </Section>
         );
       })()}
+      </div>
     </div>
   );
 }
