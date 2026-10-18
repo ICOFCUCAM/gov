@@ -219,6 +219,13 @@ What has been built is locked. Work only upgrades it toward the vision in
   it was recorded, so screens can answer "as of". Outside data is fetched only
   by the server through `safeFetchText()` from the source's own host. A
   national figure is shown only when every region reports it.
+- The twin has two time axes: when a value was true (`asOf`) and when it was
+  recorded (`knownAt`). The territory map and history show what was true on a
+  date as known now; "only what had been recorded by that date" is the strict
+  view. Scenarios (`lib/twin/scenarios.ts`) apply stated assumptions to
+  observed values and are modelled, never observations; every version is kept
+  with its inputs and a SHA-256 evidence hash, and a directive drafted from
+  one cites scenario, version and hash.
 - Engines must not read the nation's regions or offices into module-level
   constants; read them at use (`regionList()`, or a function). The root
   layout writes the nation's facts before scripts load, but data from setup

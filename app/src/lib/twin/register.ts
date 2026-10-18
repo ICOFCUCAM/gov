@@ -300,10 +300,16 @@ export function dueSources(now = new Date()): TwinSource[] {
 
 // ── As-of queries ─────────────────────────────────────────────────────────
 
-/** The latest known value of each entity's metric as of a moment: recorded by then, true by then. */
-export function stateAsOf({ asOf, metric, entityId }: { asOf?: string; metric?: string; entityId?: string } = {}): Observation[] {
+/**
+ * The latest value of each entity's metric true by a moment (asOf, valid time)
+ * as the platform knew it at knownAt (transaction time; default: the same
+ * moment, i.e. "what was known then"). Pass knownAt = now for "what was true
+ * then, as known today".
+ */
+export function stateAsOf({ asOf, knownAt, metric, entityId }: { asOf?: string; knownAt?: string; metric?: string; entityId?: string } = {}): Observation[] {
   const t = asOf ? new Date(asOf) : new Date();
-  const at = t.toISOString(), day = at.slice(0, 10);
+  const day = t.toISOString().slice(0, 10);
+  const at = (knownAt ? new Date(knownAt) : t).toISOString();
   const best = new Map<string, Observation>();
   for (const o of db().observations) {
     if (metric && o.metric !== metric) continue;
@@ -353,4 +359,15 @@ export function regionCoverage(metric: string): { have: number; of: number } {
 
 export function metricsKnown(): string[] {
   return [...new Set(db().observations.map(o => o.metric))].sort();
+}
+
+/** The dates a metric has observations for (when they were true), oldest first: the steps of the history view. */
+export function metricDates(metric: string): string[] {
+  return [...new Set(db().observations.filter(o => o.metric === metric).map(o => o.validFrom))].sort();
+}
+
+/** An entity as the register holds it. */
+export function getEntity(id: string): TwinEntity | undefined {
+  const e = db().entities[id];
+  return e ? { ...e } : undefined;
 }

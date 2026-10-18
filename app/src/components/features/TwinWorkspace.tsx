@@ -7,6 +7,8 @@
 // as of any date. Every figure here is observed; nothing is generated.
 
 import * as React from 'react';
+import { TwinTerritory } from '@/components/features/twin/TwinTerritory';
+import { TwinScenarios } from '@/components/features/twin/TwinScenarios';
 
 interface Entity { id: string; kind: string; name: string; code?: string; region?: boolean }
 interface Source { id: string; name: string; publisher: string; kind: 'csv-url' | 'csv-upload'; url?: string; schedule: string; registeredBy: string; registeredAt: string; lastRun?: string; mapping: { entity: string; value: string; metric: { column: string } | { fixed: string } } }
@@ -44,6 +46,13 @@ export function TwinWorkspace() {
   const [by, setBy] = React.useState('');
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = React.useState(false);
+  // One metric and date for the table, the territory and the scenario form.
+  const [metric, setMetric] = React.useState('');
+  const [date, setDate] = React.useState(new Date().toISOString().slice(0, 10));
+  const [obs, setObs] = React.useState<Obs[] | null>(null);
+  const [dates, setDates] = React.useState<string[]>([]);
+  // Off: what was true on the date, as known now. On: only what had been recorded by that date.
+  const [knownThen, setKnownThen] = React.useState(false);
 
   const load = React.useCallback(async () => {
     const [e, s] = await Promise.all([call<{ entities: Entity[] }>('/api/twin/entities'), call<NonNullable<typeof data>>('/api/twin/sources')]);
@@ -57,6 +66,18 @@ export function TwinWorkspace() {
     catch (e) { setMsg({ ok: false, text: (e as Error).message }); }
     finally { setBusy(false); }
   }
+
+  const metrics = data?.metrics.map(x => x.metric) ?? [];
+  const m = metric || metrics[0] || '';
+  React.useEffect(() => {
+    if (!m) return;
+    const known = knownThen ? `${date}T23:59:59Z` : new Date().toISOString();
+    void call<{ observations: Obs[] }>(`/api/twin/state?metric=${encodeURIComponent(m)}&asOf=${encodeURIComponent(`${date}T23:59:59Z`)}&knownAt=${encodeURIComponent(known)}`).then(r => setObs(r.observations)).catch(() => setObs([]));
+  }, [m, date, data, knownThen]);
+  React.useEffect(() => {
+    if (!m) return;
+    void call<{ dates: string[] }>(`/api/twin/timeline?metric=${encodeURIComponent(m)}`).then(r => setDates(r.dates)).catch(() => setDates([]));
+  }, [m, data]);
 
   const counts = entities.reduce<Record<string, number>>((m, e) => ({ ...m, [e.kind]: (m[e.kind] ?? 0) + 1 }), {});
   const nameOf = new Map(entities.map(e => [e.id, e.name]));
@@ -99,8 +120,18 @@ export function TwinWorkspace() {
             </ul>
           ) : <p className="text-ink-soft">Nothing observed yet. Register a source and run it.</p>}
         </Section>
-        <AsOf metrics={data?.metrics.map(m => m.metric) ?? []} nameOf={nameOf} sourceName={sourceName} />
+        <AsOf metrics={metrics} metric={m} setMetric={setMetric} date={date} setDate={setDate} knownThen={knownThen} setKnownThen={setKnownThen} rows={obs} nameOf={nameOf} sourceName={sourceName} />
       </div>
+
+      <Section title="Territory" aside={m ? `${m} · as of ${date}` : 'no metric observed yet'}>
+        {m ? <TwinTerritory metric={m} obs={obs ?? []} entities={entities} dates={dates} date={date} onDate={setDate} />
+          : <p className="text-ink-soft">The map shades the nation's subdivisions once a source reports a metric for them.</p>}
+      </Section>
+
+      <Section title="Scenarios" aside="versioned · evidence hash · modelled, never observed">
+        {metrics.length ? <TwinScenarios by={by} metrics={metrics} metric={m} date={date} entities={entities} />
+          : <p className="text-ink-soft">Scenarios start from observed values; register a source first.</p>}
+      </Section>
 
       <RegisterSource by={by} busy={busy} act={act} />
 
@@ -209,21 +240,21 @@ function SourceRow({ s, by, busy, act }: { s: Source; by: string; busy: boolean;
   );
 }
 
-function AsOf({ metrics, nameOf, sourceName }: { metrics: string[]; nameOf: Map<string, string>; sourceName: Map<string, string> }) {
-  const [metric, setMetric] = React.useState('');
-  const [date, setDate] = React.useState(new Date().toISOString().slice(0, 10));
-  const [rows, setRows] = React.useState<Obs[] | null>(null);
-  const m = metric || metrics[0] || '';
-  React.useEffect(() => {
-    if (!m) return;
-    void call<{ observations: Obs[] }>(`/api/twin/state?metric=${encodeURIComponent(m)}&asOf=${encodeURIComponent(`${date}T23:59:59Z`)}`).then(r => setRows(r.observations)).catch(() => setRows([]));
-  }, [m, date]);
+function AsOf({ metrics, metric: m, setMetric, date, setDate, knownThen, setKnownThen, rows, nameOf, sourceName }: {
+  metrics: string[]; metric: string; setMetric: (v: string) => void; date: string; setDate: (v: string) => void;
+  knownThen: boolean; setKnownThen: (v: boolean) => void;
+  rows: Obs[] | null; nameOf: Map<string, string>; sourceName: Map<string, string>;
+}) {
   return (
-    <Section title="As of" aside="what was known on a date">
+    <Section title="As of" aside={knownThen ? 'what was known on the date' : 'true on the date, as known now'}>
       <div className="flex gap-2">
         <select className={input} value={m} onChange={e => setMetric(e.currentTarget.value)} aria-label="Metric">{metrics.map(x => <option key={x}>{x}</option>)}</select>
         <input type="date" className={input} value={date} onChange={e => setDate(e.currentTarget.value)} aria-label="As of date" />
       </div>
+      <label className="mt-2 flex items-center gap-2 text-[12px] text-ink-soft">
+        <input type="checkbox" checked={knownThen} onChange={e => setKnownThen(e.currentTarget.checked)} />
+        Only what had been recorded by that date
+      </label>
       {rows?.length ? (
         <table className="mt-2 w-full text-[12px]">
           <thead><tr className="text-left text-ink-muted"><th className="font-semibold">Entity</th><th className="text-right font-semibold">Value</th><th className="pl-2 font-semibold">True from</th></tr></thead>

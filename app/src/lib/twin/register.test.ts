@@ -87,3 +87,18 @@ describe('the national twin core', () => {
     expect(isoDate('nonsense')).toBeUndefined();
   });
 });
+
+describe('the twin\'s two time axes', () => {
+  beforeEach(async () => {
+    resetTwin();
+    applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa', 'Nairobi City', 'Kisumu'] });
+    await syncRegister();
+  });
+
+  it('separates when a value was true from when it was recorded', async () => {
+    const s = ok(registerSource({ by: 'D', name: 'Census', publisher: 'KNBS', kind: 'csv-upload', mapping }));
+    await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,900000,2009\n', deps: { now: new Date('2021-01-01T00:00:00Z') } });
+    expect(stateAsOf({ metric: 'population', asOf: '2010-01-01T00:00:00Z' })).toEqual([]);
+    expect(stateAsOf({ metric: 'population', asOf: '2010-01-01T00:00:00Z', knownAt: '2022-01-01T00:00:00Z' }).map(o => o.value)).toEqual([900000]);
+  });
+});
