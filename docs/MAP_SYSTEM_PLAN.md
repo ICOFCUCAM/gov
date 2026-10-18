@@ -1,6 +1,6 @@
 # Map system: evaluation and plan
 
-Status: phases 0–2 done, phase 3 in part (October 2026); phases 4–5 open. Register: §16.4, §17.1.
+Status: phases 0–2 done, phase 3 in part, phases 4a–4d and 5 done (October 2026); open: TopoJSON packs and the worldview setting (3), boundary versions and incident locations (4). Register: §16.4, §17.1.
 
 ## Answers to the owner's questions
 
@@ -102,7 +102,7 @@ layouts. The fix is one shared map engine grown from it.
 | 2 Three screens + 12 TerritoryHeat callers | NationalMap and TerritoryHeat become wrappers (same exports, nothing lost); ThreatMap and geopolitical panel on presets; `map-no-hardcode.test.ts`; phone checks | 1–2 weeks |
 | 3 Data pipeline | `build-map-pack.mjs` (TopoJSON per nation per level, world 1:50m, worldview); admin-2 from geoBoundaries/OCHA; Nation Pack capital, projection, insets; size budgets | 2–3 weeks |
 | 4 Authoritative data in the twin | boundary sources with versions and four-eyes publish; the national facility register (4a core with ministry form and map pin, 4b upload and connected systems, 4c open-data candidates, 4d interoperability layer: `docs/FACILITY_REGISTER_REVIEW.md`); incident locations; OGC collections | 6–8 weeks |
-| 5 Ministry maps and polish | ~15 ministry maps and GeoMap on presets; maps in the accessibility audit; glossary | 2 weeks |
+| 5 Ministry maps and polish (done) | ~15 ministry maps and GeoMap on presets; maps in the accessibility audit; glossary | 2 weeks |
 
 ### Progress
 
@@ -171,6 +171,21 @@ layouts. The fix is one shared map engine grown from it.
   Situation Room between registered offices, with each command node tethered
   to its institution's office once registered. Still open in phase 4:
   boundary sources with versions and incident locations.
+- **Phase 5, done: the ministry maps.** All 30 map panels of the ministry
+  apps draw the installed nation's real regions (19 had invented
+  geography: dot grids, hex grids, seeded positions, a schematic city; 11
+  health maps had real shapes but six-slot figures). Shared pieces:
+  `components/map/MinistryMap.tsx` (the preset), `apps/police-command/
+  CommandMap.tsx` (command theatre on the preset) and `WorldThreatMap.tsx`
+  (world view centred on the nation; foreign states never shaded),
+  `apps/ministry-interior/domains/RegionMaps.tsx`, `apps/ministry-transport/
+  CityDistrictMap.tsx` (the capital's real districts), `apps/_shared/GeoMap.tsx`
+  (health, real corridors and layers). Controls that did nothing now work
+  (zoom, pan, fit, full screen, layers, region and border selects, the 3D
+  view, the disease map's layers and time windows). Registered sites from
+  the facility register replace the samples of their kind. The public
+  sites' "find us" maps show each ministry's published sites. The engine
+  gained zoom, header placement, a slot under the map and small notes.
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

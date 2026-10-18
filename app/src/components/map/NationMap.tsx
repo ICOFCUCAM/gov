@@ -59,7 +59,7 @@ export interface OverlayContext {
 
 export function NationMap({
   title, values = [], kind, source, valueLabel = 'Value', unit = '', points, pointsLabel = 'Located items',
-  asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap, onPick, pin, zoom, header = 'auto', below,
+  asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap, onPick, pin, zoom, header = 'auto', below, notes = 'normal',
 }: {
   /** What the map shows, e.g. "Open incidents by county"; used for the accessible name and the table caption. */
   title: string;
@@ -121,6 +121,8 @@ export function NationMap({
   header?: 'auto' | 'over' | 'above';
   /** Something shown directly under the map drawing (e.g. a command legend), never over it. */
   below?: React.ReactNode;
+  /** The legend, notes and credits under the map in the page's small type (dense command panels). */
+  notes?: 'normal' | 'small';
 }) {
   const iso3 = isoOverride ?? nationIso3();
   const regionsKey = (regionsOverride ?? nationRegions()).join('|');
@@ -361,7 +363,6 @@ export function NationMap({
           </svg>
         )}
         {hud && model ? <div className="absolute start-2 top-2 z-10 flex flex-col gap-1">{hud}</div> : null}
-        {below && model ? <div className="mt-1">{below}</div> : null}
         {inMap && model && !geo?.parent ? <div className="absolute inset-x-0 bottom-0 z-10">{inMap}</div> : null}
         {theatre && model ? (
           <div className={`pointer-events-none absolute ${inMap ? 'bottom-[118px] end-2' : 'bottom-1 end-2'} font-mono text-[10px] tracking-[0.12em] text-ink-muted`} aria-hidden>
@@ -376,6 +377,7 @@ export function NationMap({
           </div>
         ) : null}
       </div>
+      {below && model && view === 'map' ? <div className="mt-1">{below}</div> : null}
 
       {view === 'table' && model ? (
         <div className="max-h-[420px] overflow-auto rounded-[3px] border border-line">
@@ -403,7 +405,7 @@ export function NationMap({
       ) : null}
 
       {model ? (
-        <div className="space-y-1 text-[11px] text-ink-soft">
+        <div className={`space-y-1 text-ink-soft ${notes === 'small' ? 'text-[9.5px] leading-snug' : 'text-[11px]'}`}>
           <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
             {model.classes.legend.length && !colourOf ? (
               <span className="flex flex-wrap items-center gap-1" aria-label={`Legend: ${valueLabel}`}>
@@ -432,7 +434,7 @@ export function NationMap({
           </div>
           {shown === 0 && emptyNote ? <div className="text-ink-muted">{emptyNote}</div> : null}
           {model.unmatched.length ? <div className="text-warn">Not placed on the map (name not found among the {plural(2)}): {model.unmatched.slice(0, 8).join(', ')}{model.unmatched.length > 8 ? ` and ${model.unmatched.length - 8} more` : ''}</div> : null}
-          <div className="text-[10px] text-ink-muted">
+          <div className={`${notes === 'small' ? 'text-[9px]' : 'text-[10px]'} text-ink-muted`}>
             Boundaries: {geo?.credit}{source ? ` · Figures: ${source}` : ''}{asOf ? ` · As of ${asOf}` : ''}
           </div>
         </div>

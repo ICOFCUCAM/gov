@@ -69,7 +69,7 @@ export function MinistryMap({
    * its own colours, frame size, controls on the map, header controls,
    * panels under or over the map, zoom and where the header sits.
    */
-  engine?: Pick<React.ComponentProps<typeof NationMap>, 'colourOf' | 'heat' | 'frameHeight' | 'insetEnd' | 'insetBottom' | 'hud' | 'inMap' | 'actions' | 'zoom' | 'header' | 'below'>;
+  engine?: Pick<React.ComponentProps<typeof NationMap>, 'colourOf' | 'heat' | 'frameHeight' | 'insetEnd' | 'insetBottom' | 'hud' | 'inMap' | 'actions' | 'zoom' | 'header' | 'below' | 'notes'>;
 }) {
   const [sites, setSites] = React.useState<RegisteredSite[]>([]);
   const [glyphs, setGlyphs] = React.useState<Record<string, string>>({});
