@@ -79,6 +79,8 @@
   "/gov/shell",
   "/gov/signatures",
   "/gov/simulation",
+  "/gov/sites",
+  "/gov/sites/capture",
   "/gov/situation-room",
   "/gov/substrate",
   "/gov/telemetry",

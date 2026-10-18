@@ -22,6 +22,13 @@ const nextConfig = {
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
         ],
       },
+      // Recording a site's position (national facility register): this
+      // platform's own pages may read the device's location, nobody else; the
+      // camera stays off (a photo is chosen through the file picker).
+      ...['/gov/sites', '/gov/sites/:path*', '/gov/ministry/:path*', '/ministries/:path*'].map(source => ({
+        source,
+        headers: [{ key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self)' }],
+      })),
       {
         // /embed/* may be framed only by the ministry's registered website: the
         // route sets Content-Security-Policy frame-ancestors itself.

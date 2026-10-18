@@ -45,4 +45,10 @@ export const GLOSSARY: GlossaryEntry[] = [
   { term: 'Crosswalk / key', plain: 'Id in another system', meaning: 'The code another system uses for the same place or institution.' },
   { term: 'Session (signed)', plain: 'Sign-in', meaning: 'Proof the server checked who you are; your actions are recorded under your name.' },
   { term: 'Declared name', plain: 'Name typed in, not checked', meaning: 'Shown when someone acts without signing in (only where the installation allows it).' },
+  { term: 'GNSS / GPS', plain: 'Survey receiver, phone location', meaning: 'Satellite positioning: a surveyor\'s receiver gives a position to about a metre, a phone to about 5–15 m.' },
+  { term: 'Geotag / EXIF', plain: 'Photo\'s location', meaning: 'The position a camera writes into a photo when location is on; read on the device, the photo itself is not uploaded.' },
+  { term: 'GPX', plain: 'Waypoint file', meaning: 'The file a survey receiver or phone app exports with the points it recorded.' },
+  { term: 'CSV / GeoJSON', plain: 'Spreadsheet file, map points file', meaning: 'A spreadsheet saved as plain text, and the standard file of points that map software exports.' },
+  { term: 'Location certification', plain: 'Location checked', meaning: 'An official of the owning institution or the national mapping agency confirms a site stands where the register says.' },
+  { term: 'Generalised position', plain: 'Position shown only roughly', meaning: 'A restricted site is shown on a grid of a few kilometres to anyone without need to know its exact place.' },
 ];

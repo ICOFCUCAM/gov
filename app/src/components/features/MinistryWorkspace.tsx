@@ -37,6 +37,7 @@ import { useRenderNow } from '@/lib/clock/render-now';
 import { useOfficial } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
 import { InstitutionInTwin } from '@/components/features/twin/InstitutionInTwin';
+import { MinistrySites } from '@/components/features/sites/MinistrySites';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
 
@@ -45,7 +46,7 @@ const EXAMPLE_CASE = 'An example case from the platform. Load this institution\'
 type Tab =
   | 'command' | 'ecosystem' | 'continuity' | 'regional' | 'approvals' | 'incidents' | 'field'
   | 'escalations' | 'logistics' | 'analytics' | 'treasury'
-  | 'infrastructure' | 'workforce' | 'security' | 'audit';
+  | 'infrastructure' | 'workforce' | 'security' | 'audit' | 'sites';
 const TABS: { k: Tab; label: string }[] = [
   { k: 'command', label: 'Overview' },
   { k: 'ecosystem', label: 'Ecosystem' },
@@ -62,6 +63,7 @@ const TABS: { k: Tab; label: string }[] = [
   { k: 'workforce', label: 'Workforce' },
   { k: 'security', label: 'Security' },
   { k: 'audit', label: 'Audit' },
+  { k: 'sites', label: 'Sites' },
 ];
 /** Sections shown as tabs; the others are under "More" (the chosen one joins the tabs while open). */
 const PRIMARY: Tab[] = ['command', 'approvals', 'incidents', 'escalations', 'regional'];
@@ -968,6 +970,12 @@ export function MinistryWorkspace({ id }: { id: string }) {
             ))}
             {incidents.length === 0 ? <p className="text-sm text-ink-muted">No incident types configured.</p> : null}
           </div>
+        </Section>
+      )}
+
+      {tab === 'sites' && (
+        <Section title="Sites" meta="where the institution's places stand · national register">
+          <MinistrySites id={id} name={name} />
         </Section>
       )}
 
