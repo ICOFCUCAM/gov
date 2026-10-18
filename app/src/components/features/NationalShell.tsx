@@ -37,7 +37,7 @@ import { subscribeBus, version as busVersion, eventLog, eventStats } from '@/ser
 import { subscribe as rtSubscribe, runtimeStats, runtimeContinuity, scopeSummaries, executionDelta, injectDirective, directiveState, directiveActioned, version as rtVersion } from '@/lib/gov/runtime-store';
 import { decisionEfficacy, efficacyRollup, type EfficacyResult } from '@/services/decision-efficacy';
 import { resolveIdentity } from '@/lib/sovereign-identity';
-import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
+import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
 
 function P({ title, meta, children }: { title: string; meta?: string; children: React.ReactNode }) {
@@ -60,6 +60,7 @@ function P({ title, meta, children }: { title: string; meta?: string; children: 
 export function NationalShell() {
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
+  const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [mins, setMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(useRenderNow());
 
@@ -68,6 +69,7 @@ export function NationalShell() {
     const load = () => {
       api.sovereign.get().then(r => setSov(r.sovereign)).catch(() => {});
       api.cabinet.national().then(setNat).catch(() => {});
+      api.cabinet.coordination().then(setCoord).catch(() => {});
       api.org.ministries().then(r => setMins(r.ministries)).catch(() => {});
       api.org.federation().then(setFed).catch(() => {});
     };
@@ -104,8 +106,11 @@ export function NationalShell() {
   const incidents = nat?.crossMinistryIncidents ?? [];
   const branchMean = Math.round(model.branches.reduce((a, b) => a + branchReadiness(b.key, ts).total, 0) / model.branches.length);
 
-  const posture =
-    cascCrit || incidents.length >= 5 ? { l: 'STRAINED', t: 'alert' }
+  // One national posture: the server's (the same as the console header). Until it
+  // arrives, the shell's own cascade reading stands in.
+  const posture = coord
+    ? { l: coord.posture.label, t: coord.posture.level }
+    : cascCrit || incidents.length >= 5 ? { l: 'STRAINED', t: 'alert' }
       : cascStrain || incidents.length ? { l: 'WATCH', t: 'warn' } : { l: 'STABLE', t: 'ok' };
 
   const tele = [

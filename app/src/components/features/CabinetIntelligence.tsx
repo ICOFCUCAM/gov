@@ -34,7 +34,7 @@ const rail = (): { g: string; items: { i: string; l: string; s: string; href: st
     { i: '◆', l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', on: true },
     { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room' },
     { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination' },
-    { i: '◔', l: 'Strategic Foresight', s: 'Advisory simulation', href: '/gov/coordination' },
+    { i: '◔', l: 'Strategic Foresight', s: 'Advisory simulation', href: '/gov/simulation' },
   ]},
   { g: 'Institutions', items: [
     { i: '▦', l: 'Ministries', s: 'Institutional registry', href: '/ministries' },
@@ -47,7 +47,7 @@ const rail = (): { g: string; items: { i: string; l: string; s: string; href: st
     { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination wall', href: '/wall' },
   ]},
   { g: 'Intelligence', items: [
-    { i: '⟁', l: aiLabel('Analytics & AI', 'Analytics'), s: 'Strategic foresight', href: '/gov/coordination' },
+    { i: '⟁', l: aiLabel('Analytics & AI', 'Analytics'), s: 'National twin · sources', href: '/gov/twin' },
     { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/regional' },
   ]},
   { g: 'National Security', items: [
@@ -56,11 +56,11 @@ const rail = (): { g: string; items: { i: string; l: string; s: string; href: st
   ]},
   { g: 'Treasury', items: [
     { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury' },
-    { i: '⚡', l: 'Infrastructure', s: 'Grid · corridors', href: '/gov/situation-room' },
+    { i: '⚡', l: 'Infrastructure', s: 'Grid · corridors · dependencies', href: '/gov/coordination' },
   ]},
   { g: 'Governance', items: [
-    { i: '▥', l: 'Constitutional Watch', s: 'Policy monitor', href: '/audit' },
-    { i: '▤', l: 'Executive Briefings', s: 'Daily intelligence', href: '/gov' },
+    { i: '▥', l: 'Constitutional Watch', s: 'Policy monitor', href: '/gov/branches' },
+    { i: '▤', l: 'Executive Briefings', s: 'Daily intelligence', href: '/gov/briefing' },
   ]},
   { g: 'Oversight', items: [
     { i: '⛓', l: 'Audit & Oversight', s: 'Integrity assurance', href: '/audit' },

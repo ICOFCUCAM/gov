@@ -12,6 +12,8 @@ import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { api } from '@/lib/api/client';
+import type { NationalCoordination, NationalSnapshot } from '@/lib/api/types';
 
 const BG = '#070b11';
 const PANEL = '#0c1119';
@@ -160,6 +162,20 @@ export function NationalOverview() {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
   }, []);
+  // National posture, incident count and population are the platform's own
+  // (the same posture as the console header); the rest of this page is the
+  // reference model until sources connect.
+  const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
+  const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
+  React.useEffect(() => {
+    const load = () => {
+      api.cabinet.national().then(setNat).catch(() => {});
+      api.cabinet.coordination().then(setCoord).catch(() => {});
+    };
+    load();
+    const t = setInterval(load, 15_000);
+    return () => clearInterval(t);
+  }, []);
   const id = 'NATL';
   const ts = now / 4000;
   const clock = new Date(now);
@@ -170,18 +186,21 @@ export function NationalOverview() {
 
   const readiness = Math.round(wave(`no:rd:${id}`, ts, 92, 99.4) * 10) / 10;
   const sysHealth = Math.round(wave(`no:sh:${id}`, ts, 96, 99.6) * 10) / 10;
-  const critical = 4 + Math.round(seed(`no:cr:${id}`) * 6);
-  const posture = critical >= 8 ? 'CRITICAL' : critical >= 5 ? 'SEVERE' : 'ELEVATED';
-  const pTone = critical >= 8 ? RED : critical >= 5 ? AMBER : GOLD;
+  const critical = nat?.crossMinistryIncidents.length ?? 0;
+  const level = coord?.posture.level ?? 'ok';
+  const posture = coord?.posture.label ?? '—';
+  const pTone = level === 'alert' ? RED : level === 'warn' ? AMBER : EMER;
+  const pop = nat?.indicators.find(i => i.label === 'Population');
+  const popValue = pop && pop.kind !== 'unavailable' ? `${pop.value}${pop.unit ? ` ${pop.unit}` : ''}` : 'Not connected';
 
   const kpis: [string, string, string, string][] = [
-    ['National Posture', posture, `Level ${critical >= 8 ? 4 : 3}`, pTone],
-    ['Active Incidents', `${critical}`, '+2 new', RED],
+    ['National Posture', posture, coord ? `risk ${coord.posture.nationalRisk}` : '', pTone],
+    ['Active Incidents', `${critical}`, 'across institutions', critical ? RED : EMER],
     ['Regions at Risk', `${14 + Math.round(seed(`no:rr:${id}`) * 12)}`, '+5', AMBER],
     ['Agencies Deployed', `${10 + Math.round(seed(`no:ad:${id}`) * 6)}`, '78% readiness', INK],
     ['Operational Readiness', `${readiness}%`, 'Optimal', EMER],
-    ['Population', `${(41 + seed(`no:pp:${id}`)).toFixed(2)}M`, '+0.38%', INK],
-    ['Threat Level', critical >= 8 ? 'SEVERE' : critical >= 5 ? 'HIGH' : 'GUARDED', '', RED],
+    ['Population', popValue, pop?.kind === 'unavailable' || !pop ? 'statistics source' : (pop.source ?? ''), INK],
+    ['Threat Level', level === 'alert' ? 'HIGH' : level === 'warn' ? 'ELEVATED' : 'GUARDED', 'from national posture', level === 'alert' ? RED : level === 'warn' ? AMBER : EMER],
     ['System Health', `${sysHealth}%`, 'All Systems', EMER],
   ];
 

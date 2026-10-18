@@ -7,6 +7,8 @@ import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/Situ
 import { api } from '@/lib/api/client';
 import type { AuditEntry } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { useOfficial } from '@/lib/official';
+import { ActingOfficial } from '@/components/ui/ActingOfficial';
 
 const CONTROLS = [
   { l: 'Access control', k: 'ac' },
@@ -24,10 +26,34 @@ const BODIES = [
   { l: 'Inspector-General', s: 'Standing mandate', t: 'ok' },
 ];
 
+type Verification = { ok: boolean; checked: number; brokenAtSeq?: number } | null;
+
+/** Download the ledger as shown, with the verification result it was read under. */
+function exportLedger(events: AuditEntry[], verify: Verification) {
+  const body = JSON.stringify({ exportedAt: new Date().toISOString(), verification: verify, events }, null, 2);
+  const url = URL.createObjectURL(new Blob([body], { type: 'application/json' }));
+  const a = document.createElement('a');
+  a.href = url; a.download = `audit-ledger-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+/** A SHA-256 seal over the chain head and the verification result: anyone holding the same ledger gets the same seal. */
+async function seal(events: AuditEntry[], verify: Verification): Promise<string> {
+  if (!verify?.ok) return 'No seal: verify the chain first (it must be intact).';
+  const head = events.reduce<AuditEntry | undefined>((h, e) => (!h || e.seq > h.seq ? e : h), undefined);
+  const text = JSON.stringify(['civicos-audit-seal', head?.seq ?? 0, head?.hash ?? 'GENESIS', verify.checked]);
+  const d = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+  const hex = [...new Uint8Array(d)].map(b => b.toString(16).padStart(2, '0')).join('');
+  return `Seal (SHA-256 over head entry ${head?.seq ?? 0} and ${verify.checked} verified links): ${hex}`;
+}
+
 export function AuditView() {
   const [events, setEvents] = React.useState<AuditEntry[] | null>(null);
   const [verify, setVerify] = React.useState<{ ok: boolean; checked: number; brokenAtSeq?: number } | null>(null);
   const [now, setNow] = React.useState(useRenderNow());
+  const [official, setOfficial] = useOfficial();
+  const [note, setNote] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
     const [{ events }, v] = await Promise.all([api.audit.list(), api.audit.verify().catch(() => null)]);
@@ -41,6 +67,15 @@ export function AuditView() {
     const p = setInterval(() => void load(), 15_000);
     return () => { clearInterval(t); clearInterval(p); };
   }, [load]);
+
+  async function openInquiry() {
+    if (!official) { setNote('Name the acting official first: an inquiry is opened under a person.'); return; }
+    const head = evs[0];
+    try {
+      const { incident } = await api.ops.incidents.create({ severity: 'sev3', title: `Audit inquiry${head ? ` from entry ${head.seq}` : ''}`, scope: 'audit', by: official });
+      setNote(`Inquiry opened as incident ${incident.id} (Operations).`);
+    } catch (e) { setNote(e instanceof Error ? e.message : 'Could not open the inquiry'); }
+  }
 
   const epoch = Math.floor(now / 15000);
   const ts = now / 4000;
@@ -122,20 +157,25 @@ export function AuditView() {
 
         <Panel title="Integrity actions" meta="oversight authority" bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1">
-            {[
-              { l: 'Re-verify chain', g: '⛓', a: () => void api.audit.verify().then(setVerify) },
-              { l: 'Export ledger', g: '▤' },
-              { l: 'Freeze segment', g: '⊘' },
-              { l: 'Open inquiry', g: '⚖' },
-              { l: 'Notify oversight', g: '◈' },
-              { l: 'Attestation seal', g: '✓' },
-            ].map((q, i) => (
-              <button key={q.l} onClick={q.a}
-                className="focus-ring group flex items-center gap-1.5 rounded-[3px] border border-line px-2 py-1.5 text-left text-[10px] font-medium text-ink-soft transition-all hover:bg-surface-2/60">
+            {([
+              { l: 'Re-verify chain', g: '⛓', a: () => void api.audit.verify().then(v => { setVerify(v); setNote(v.ok ? `Chain verified: ${v.checked} links intact.` : `Chain broken at entry ${v.brokenAtSeq}.`); }) },
+              { l: 'Export ledger', g: '▤', a: () => exportLedger(evs, verify) },
+              { l: 'Freeze segment', g: '⊘', off: 'Needs the substrate legal-hold function; not connected yet (register 1.14).' },
+              { l: 'Open inquiry', g: '⚖', a: () => void openInquiry() },
+              { l: 'Notify oversight', g: '◈', off: 'No notification channel to oversight bodies is connected yet (register 1.14).' },
+              { l: 'Attestation seal', g: '✓', a: () => void seal(evs, verify).then(setNote) },
+            ] as { l: string; g: string; a?: () => void; off?: string }[]).map((q, i) => (
+              <button key={q.l} onClick={q.a} disabled={!!q.off} title={q.off} aria-describedby={q.off ? 'integrity-off' : undefined}
+                className="focus-ring group flex items-center gap-1.5 rounded-[3px] border border-line px-2 py-1.5 text-left text-[10px] font-medium text-ink-soft transition-all hover:bg-surface-2/60 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:bg-transparent">
                 <span className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[11px]" style={{ color: i === 3 ? TONE.warn : TONE.ok }}>{q.g}</span>
-                <span className="min-w-0 truncate">{q.l}</span>
+                <span className="min-w-0 truncate">{q.l}{q.off ? ' · not connected' : ''}</span>
               </button>
             ))}
+          </div>
+          <div className="mt-1.5 space-y-1 px-0.5 text-[10px] text-ink-muted">
+            <ActingOfficial name={official} onChange={setOfficial} />
+            <p id="integrity-off">Freezing a segment and notifying oversight bodies need functions that are not connected yet.</p>
+            {note ? <p role="status" className="break-all text-ink-soft">{note}</p> : null}
           </div>
         </Panel>
       </div>

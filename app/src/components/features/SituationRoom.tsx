@@ -63,7 +63,7 @@ const rail = (): { g: string; items: { i: string; l: string; s: string; href: st
     { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination' },
   ]},
   { g: 'Intelligence', items: [
-    { i: '◔', l: aiLabel('Analytics & AI', 'Analytics'), s: 'Strategic foresight', href: '/gov/coordination' },
+    { i: '◔', l: aiLabel('Analytics & AI', 'Analytics'), s: 'Strategic foresight', href: '/gov/simulation' },
     { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/regional' },
   ]},
   { g: 'Operations', items: [
@@ -75,15 +75,15 @@ const rail = (): { g: string; items: { i: string; l: string; s: string; href: st
     { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury' },
   ]},
   { g: 'Infrastructure', items: [
-    { i: '⚡', l: 'Infrastructure', s: 'Grid · corridors', href: '/gov' },
+    { i: '⚡', l: 'Infrastructure', s: 'Grid · corridors · dependencies', href: '/gov/coordination' },
     { i: '⇄', l: 'Interoperability', s: 'Federation · clients', href: '/integrations' },
   ]},
   { g: 'Emergency Response', items: [
     { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination wall', href: '/wall' },
   ]},
   { g: 'Governance', items: [
-    { i: '▥', l: 'Policy Monitor', s: 'Constitutional watch', href: '/gov' },
-    { i: '▤', l: 'Documents & Records', s: 'Tamper-evident', href: '/wallet/documents' },
+    { i: '▥', l: 'Policy Monitor', s: 'Constitutional watch', href: '/gov/branches' },
+    { i: '▤', l: 'Documents & Records', s: 'Operations ledger', href: '/gov/ledger' },
   ]},
   { g: 'Oversight', items: [
     { i: '⛓', l: 'Audit & Oversight', s: 'Integrity assurance', href: '/audit' },

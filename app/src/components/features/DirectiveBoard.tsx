@@ -40,6 +40,16 @@ export function DirectiveBoard() {
   React.useEffect(() => { setPref('directive.status', statusFilter); }, [statusFilter]);
   const [loading, setLoading] = React.useState(false);
   const [composerOpen, setComposerOpen] = React.useState(false);
+  // Other consoles start a directive with a link: /gov/directives?compose=<title>&kind=<kind>&targets=<a,b>
+  const [prefill, setPrefill] = React.useState<{ title: string; kind?: string; targets?: string } | null>(null);
+  React.useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const title = q.get('compose');
+    if (!title) return;
+    const kind = q.get('kind') ?? undefined;
+    setPrefill({ title, kind: kind && ALL_KINDS.includes(kind) ? kind : undefined, targets: q.get('targets') ?? undefined });
+    setComposerOpen(true);
+  }, []);
   const [busyRef, setBusyRef] = React.useState<string | null>(null);
   const available = substrateAvailable();
 
@@ -104,7 +114,8 @@ export function DirectiveBoard() {
 
       {composerOpen ? (
         <DirectiveComposer
-          onDone={() => { setComposerOpen(false); void refresh(); }}
+          prefill={prefill}
+          onDone={() => { setComposerOpen(false); setPrefill(null); void refresh(); }}
           defaultIssuer={actor?.charterId ?? 'platform'}
         />
       ) : null}
@@ -187,13 +198,13 @@ export function DirectiveBoard() {
 }
 
 function DirectiveComposer({
-  defaultIssuer, onDone,
-}: { defaultIssuer: string; onDone: () => void }) {
+  defaultIssuer, onDone, prefill,
+}: { defaultIssuer: string; onDone: () => void; prefill?: { title: string; kind?: string; targets?: string } | null }) {
   const [ref, setRef] = React.useState(() => `DIR-${Date.now()}`);
   const [issuer, setIssuer] = React.useState(defaultIssuer);
-  const [title, setTitle] = React.useState('');
-  const [kind, setKind] = React.useState('executive-order');
-  const [targets, setTargets] = React.useState('');
+  const [title, setTitle] = React.useState(prefill?.title ?? '');
+  const [kind, setKind] = React.useState(prefill?.kind ?? 'executive-order');
+  const [targets, setTargets] = React.useState(prefill?.targets ?? '');
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 

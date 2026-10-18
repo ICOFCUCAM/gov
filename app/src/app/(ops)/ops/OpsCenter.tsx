@@ -117,7 +117,7 @@ export function OpsCenter() {
     { l: 'SLA compliance', v: `${slaPct}%`, t: slaPct >= 95 ? 'ok' : slaPct >= 80 ? 'warn' : 'alert', spark: sp('sla', 22, 70, 100), sub: 'all services' },
     { l: 'Queues breaching', v: String(qBreach), t: qBreach === 0 ? 'ok' : 'alert', spark: sp('qb', 22, 0, 40), sub: '12% of total' },
     { l: 'Open incidents', v: String(openInc), t: openInc === 0 ? 'ok' : 'warn', spark: sp('oi', 20, 0, 20), sub: '1 critical' },
-    { l: 'Operations posture', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', spark: sp('op', 24, 40, 70), sub: 'all systems nominal' },
+    { l: 'Operations posture', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', spark: sp('op', 24, 40, 70), sub: qBreach > 4 || !auditOk ? `${qBreach} queues breaching${auditOk ? '' : ' · audit review'}` : 'queues within SLA' },
     { l: 'Cross-system latency', v: `${120 + Math.round(seed(`xl:${Math.floor(now / 15000)}`) * 90)}ms`, t: 'ok', spark: sp('xl', 22, 40, 80), sub: 'p95 mesh' },
   ];
   const qTotal = queues.reduce((a, q) => a + q.depth, 0);

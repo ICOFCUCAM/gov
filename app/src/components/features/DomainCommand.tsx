@@ -9,6 +9,10 @@ import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import { regionName } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
 
+// Decisions are not taken from this panel: each opens a draft directive on the
+// Directive Board, where it is signed by the person whose remit it is and audited.
+const draft = (title: string, kind: string) => `/gov/directives?compose=${encodeURIComponent(title)}&kind=${kind}`;
+
 export type DomainKey = 'treasury' | 'security' | 'geopolitical';
 
 interface Metric { l: string; k: string; lo: number; hi: number; unit?: string; good?: 'high' | 'low'; pct?: boolean }
@@ -76,10 +80,10 @@ const DOMAIN: Record<DomainKey, Cfg> = {
       { l: 'Debt servicing', lo: 30, hi: 70, good: 'low' },
     ],
     actions: [
-      { l: 'Release reserves', g: '§', h: '/gov' },
-      { l: 'Fiscal brief', g: '▤', h: '/gov' },
-      { l: 'Reallocate budget', g: '⇄', h: '/ops' },
-      { l: 'Freeze expenditure', g: '⊘', h: '/gov/coordination' },
+      { l: 'Release reserves', g: '§', h: draft('Release of fiscal reserves', 'budget') },
+      { l: 'Fiscal brief', g: '▤', h: '/gov/briefing' },
+      { l: 'Reallocate budget', g: '⇄', h: draft('Budget reallocation', 'budget') },
+      { l: 'Freeze expenditure', g: '⊘', h: draft('Expenditure freeze', 'instruction') },
       { l: 'Audit ledger', g: '⛓', h: '/audit' },
       { l: 'Situation Room', g: '◎', h: '/gov/situation-room' },
     ],
@@ -125,10 +129,10 @@ const DOMAIN: Record<DomainKey, Cfg> = {
       { l: 'Border zones', lo: 45, hi: 88, good: 'low' },
     ],
     actions: [
-      { l: 'Raise posture', g: '◈', h: '/gov/coordination' },
-      { l: 'Deploy forces', g: '⛑', h: '/gov/coordination' },
-      { l: 'Security brief', g: '▤', h: '/gov' },
-      { l: 'Border lockdown', g: '⛓', h: '/gov/coordination' },
+      { l: 'Raise posture', g: '◈', h: draft('Raised national security posture', 'declaration') },
+      { l: 'Deploy forces', g: '⛑', h: draft('Deployment of security forces', 'instruction') },
+      { l: 'Security brief', g: '▤', h: '/gov/briefing' },
+      { l: 'Border lockdown', g: '⛓', h: draft('Border closure', 'executive-order') },
       { l: 'Intelligence report', g: '◔', h: '/gov/coordination' },
       { l: 'Situation Room', g: '◎', h: '/gov/situation-room' },
     ],
@@ -174,11 +178,11 @@ const DOMAIN: Record<DomainKey, Cfg> = {
       { l: 'Trade exposure', lo: 30, hi: 75, good: 'low' },
     ],
     actions: [
-      { l: 'Diplomatic cable', g: '✉', h: '/gov' },
-      { l: 'Raise frontier alert', g: '⚠', h: '/gov/coordination' },
-      { l: 'Brief executive', g: '▤', h: '/gov' },
+      { l: 'Diplomatic cable', g: '✉', h: draft('Diplomatic instruction', 'instruction') },
+      { l: 'Raise frontier alert', g: '⚠', h: draft('Frontier alert', 'declaration') },
+      { l: 'Brief executive', g: '▤', h: '/gov/briefing' },
       { l: 'Convene security', g: '◈', h: '/gov/coordination' },
-      { l: 'Market watch', g: '§', h: '/gov' },
+      { l: 'Market watch', g: '§', h: '/gov/treasury' },
       { l: 'Situation Room', g: '◎', h: '/gov/situation-room' },
     ],
     strip: v => [
@@ -387,7 +391,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         </Panel>
 
-        <Panel title="Command actions" meta="domain authority" bodyClass="!p-1.5">
+        <Panel title="Command actions" meta="decisions open a draft directive for signature" bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1">
             {cfg.actions.map((q, i) => (
               <Link key={q.l} href={q.h} className="focus-ring group flex items-center gap-1.5 rounded-[3px] border border-line px-2 py-1.5 text-[10px] font-medium text-ink-soft no-underline transition-all hover:bg-surface-2/60">
