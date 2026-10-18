@@ -1,0 +1,105 @@
+# Map system: evaluation and plan
+
+Status: proposed (review of every map surface, October 2026). Register: §16.4.
+
+## Answers to the owner's questions
+
+**Foreign relations (`/gov/geopolitical`).** The world outline is real (Natural Earth), but the six large
+circles are fixed drawing positions, the same in every installation; the page never centres on the installed
+nation and colours real foreign countries with random "risk" numbers. A detailed world cut down in the
+browser is not the right method: the nation gets a light world map for context plus its own regions (and
+districts where available) at full detail, prepared at install time, with its mapping agency able to replace
+the defaults.
+
+**Situation now (`/gov/situation-room`).** Yes, a USA installation would show six sections: six hard-coded
+slots take the first six regions of the list (Alabama starred as capital, Alaska … Colorado) on fixed
+circles; 45 states and DC are missing; infrastructure icons are placed at random; the background country is
+found by name ("Republic of …") and usually falls back to the whole world. It must show the nation's own
+structure (all 50 states and DC, Kenya's 47 counties, Uganda's districts); the data already exists.
+
+**Security (`/gov/security`).** The "National threat map" is a 30×13 grid of dots with seven random blobs;
+no geography, zoom buttons that do nothing. To be replaced by the nation's real map with incidents by region.
+
+**Already right:** the territory map on National data (`/gov/twin`, `TwinTerritory.tsx`): real official
+subdivisions, coloured only from observed data, as-of history. About 30 other map panels are invented
+layouts. The fix is one shared map engine grown from it.
+
+## Inventory
+
+| Surface | Component | Verdict |
+|---|---|---|
+| Territory map, `/gov/twin` | `twin/TwinTerritory.tsx` | Fit; becomes the engine core (needs per-nation projection: USA uses ~18% of its frame, Fiji is a speck) |
+| Activity map, `/gov/situation-room`, Cabinet brief | `SituationRoom.tsx` `NationalMap` | Replace |
+| Territory heat panels (12 callers: geopolitical, treasury, regional, situation room, cabinet, coordination, command, ministry workspace, ops, control, wall) | `SituationRoom.tsx` `TerritoryHeat` | Replace (random colours on real foreign states) |
+| World basemap | `ui/WorldMap.tsx`, `lib/geo/world.ts` | Upgrade (1:50m, match by ISO code; 1:110m misses Singapore, Malta, Bahrain, Mauritius …) |
+| National threat map, `/gov/security` | `NationalOverview.tsx` `ThreatMap` | Replace |
+| Health maps (`/health-ecosystem`, `/app/health/*`) | `apps/_shared/GeoMap.tsx` | Upgrade (real shapes, but values cycled from six slots; fixed Uganda fallback; no sample marker) |
+| ~15 ministry app schematic maps | interior, police, emergency, immigration, justice, transport, treasury, foreign affairs, senate, environment | Replace with engine presets |
+| Cover globes, `/` and `/cover/*` | `CoverPlaza.tsx`, `CoverAtlas.tsx` | Fit (decorative) |
+| System map, `/gov/map` | `SystemMap.tsx` | Fit (architecture diagram, not geography) |
+| Setup country step | `SetupWizard.tsx` | Fit; the engine hooks in here |
+| OGC API Features `/api/twin/ogc` | `lib/twin/ogc.ts` | Fit; extend with more levels and facilities |
+
+## What exists to build on
+
+- Official subdivisions: 200 countries, 5,046 units in official order (`lib/geo/divisions.ts`); second level for 29.
+- Admin-1 shapes: Natural Earth 1:10m per country, lazily loaded (`lib/geo/admin1/`, 251 files); 36 countries
+  upgraded from geoBoundaries / OCHA HDX with credits (`lib/geo/boundaries/`); 171 of 197 countries cover ≥95%
+  of their official list.
+- World data: `world-atlas` 1:50m (241 features, ISO numeric ids).
+- Twin: `place` entities for every unit; a `facility` kind with `location` (unused so far); bitemporal
+  observations; CSV sources with named runs; source markers (`lib/twin/signal.ts`).
+- Libraries: d3-geo, topojson-client. Nothing loads external tiles (suits air-gapped nations).
+
+## The map system
+
+1. **World for context, the nation at full detail.** World 1:50m admin-0 (TopoJSON, ≈250 KB gz) matched by
+   ISO code; the nation's admin-0/1/2 as TopoJSON built per nation at install, two detail levels. Shapes from
+   the nation's mapping agency first, then geoBoundaries / OCHA COD-AB, then Natural Earth (never GADM); the
+   source is always credited.
+2. **Projection per nation** (`projectionFor()`): rotated to the nation's longitude; equal-area for shaded
+   maps (Albers for wide mid-latitude, Lambert azimuthal for compact/island, transverse Mercator for tall);
+   a national grid (EPSG) may override; insets for distant territories; Equal Earth for the world view.
+3. **One engine, declarative pages:** `lib/map/{geography,projection,classify,layers}.ts` and
+   `components/map/NationMap.tsx` with legend, scale bar, north arrow, attribution, as-of stamp and a table
+   view added automatically. Layers: boundaries(level), choropleth(metric), places(kind), incidents,
+   corridors, world(highlight, partners); every layer carries its Signal kind and source.
+4. **Colour rules:** shaded only from observed or reported values (blank = "no observed value"); modelled
+   values hatched and tagged; samples only in a hatched sample style; foreign states never coloured from
+   samples; colours from tokens, colour-blind-safe ramps.
+5. **Accessibility and phones:** a table of every map in official order; `role="img"` with a generated
+   summary; units reachable by keyboard; details on focus; no decorative radar; on phones the map keeps the
+   country's aspect ratio, legend and lists below, admin-2 after drilling in.
+6. **Time:** as-of and known-at from the twin; boundary versions are bitemporal too.
+7. **Budgets:** world ≤250 KB gz; admin-1 ≤300 KB gz; admin-2 on drill-down ≤1 MB gz; first render ≤200 ms
+   on a mid-range phone; canvas above ~2,000 features.
+8. **Authoritative boundaries:** a `boundary` twin source (GeoJSON/TopoJSON, GeoPackage or Shapefile
+   converted on the server), validated (rings, CRS, codes, coverage, gaps/overlaps, never fewer units without
+   confirmation), published four-eyes with `validFrom`, every version kept, credited. Facilities as
+   `facility` entities with coordinates; incidents with a unit code or point.
+9. **Disputed boundaries:** a Nation Pack worldview setting; disputed lines dashed with a neutral note; the
+   publisher never chooses a side for the nation.
+10. **OGC:** collections per level, facilities and boundary versions, so a GIS analyst and the minister see
+    the same thing.
+
+## The three screens
+
+- **Foreign relations:** world map centred on the nation, the nation highlighted; declared partners coloured by
+  relationship (reported, from the profile), lines capital to capital; membership highlights; neighbours and
+  frontiers computed from shared borders (replacing the fixed "Northern frontier" list); table view.
+- **Situation now:** the nation's own regions in their real shapes, drill-down to districts; indicator only
+  where observed, otherwise neutral with "No regional readings connected yet"; ranked list of all units;
+  real facilities only; capital from the Nation Pack; ministries move to the status matrix.
+- **Security & public order:** incidents per region (or as points) with severity by shape and colour; border
+  crossings; police areas when uploaded; working zoom and time window; table view; samples hatched and tagged.
+
+## Phases
+
+| Phase | Content | Size |
+|---|---|---|
+| 0 Truth fixes | focus by ISO code; rotate projections; GeoMap: no six-slot cycling, no fixed Uganda, sample marker, label; stop random colours on foreign states; tests | 2–3 days |
+| 1 Engine core | `lib/map/*`, `components/map/*`; TwinTerritory rebuilt on it; tests (every official unit drawn and in the table, minimum size, keyboard order, colour rules, tokens) | 1–2 weeks |
+| 2 Three screens + 12 TerritoryHeat callers | NationalMap and TerritoryHeat become wrappers (same exports, nothing lost); ThreatMap and geopolitical panel on presets; `map-no-hardcode.test.ts`; phone checks | 1–2 weeks |
+| 3 Data pipeline | `build-map-pack.mjs` (TopoJSON per nation per level, world 1:50m, worldview); admin-2 from geoBoundaries/OCHA; Nation Pack capital, projection, insets; size budgets | 2–3 weeks |
+| 4 Authoritative data in the twin | boundary sources with versions and four-eyes publish; facilities with coordinates; incident locations; OGC collections | 3–4 weeks |
+| 5 Ministry maps and polish | ~15 ministry maps and GeoMap on presets; maps in the accessibility audit; glossary | 2 weeks |
