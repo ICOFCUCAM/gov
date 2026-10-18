@@ -12,6 +12,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { directiveStatusTone } from '@/lib/tone';
 import { useSignIn } from '@/lib/official';
+import { canSignDirective } from '@/lib/auth/roles';
 
 /**
  * DirectiveDetail — single-record drill-in for /gov/directives/[ref].
@@ -52,8 +53,8 @@ export function DirectiveDetail({ recordRef: directiveRef }: { recordRef: string
     );
   }
 
-  // A substrate officer, or an official signed in to the platform (the server records the verified name).
-  const canMutate = actor?.kind === 'officer' || !!signIn?.official;
+  // A substrate officer, or an official signed in to the platform whose role lets them sign this institution's directives (the server checks again).
+  const canMutate = actor?.kind === 'officer' || (!!signIn?.official && !canSignDirective(signIn.official, row.issued_by_charter_id));
 
   return (
     <div className="space-y-3">

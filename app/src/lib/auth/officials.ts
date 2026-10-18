@@ -6,7 +6,8 @@
 // only the fallback. Held in platform state (lib/data/persist.ts).
 
 import { randomBytes, scryptSync, timingSafeEqual, randomUUID } from 'node:crypto';
-import { recordAudit } from '@/lib/data/store';
+import { recordAudit, getMinistry } from '@/lib/data/store';
+import { isRole, roleLabel, roleOf, type OfficialRole } from './roles';
 
 export interface OfficialAccount {
   id: string;
@@ -18,6 +19,10 @@ export interface OfficialAccount {
   createdBy: string;
   disabled?: boolean;
   lastSignIn?: string;
+  /** Absent on accounts made before roles: they keep everything (roleOf()). */
+  role?: OfficialRole;
+  /** Ministry id; absent for officials serving the whole government. */
+  institution?: string;
 }
 export type PublicAccount = Omit<OfficialAccount, 'passwordHash'>;
 
@@ -62,7 +67,7 @@ export const listAccounts = (): PublicAccount[] => db().accounts.map(pub);
  * official (it is made at installation, like setup); every later one is made
  * by a signed-in official, named in the audit chain.
  */
-export function createAccount(input: { email?: string; name?: string; office?: string; password?: string }, by: string | null): PublicAccount | { error: string } {
+export function createAccount(input: { email?: string; name?: string; office?: string; password?: string; role?: string; institution?: string }, by: string | null): PublicAccount | { error: string } {
   const d = db();
   if (d.accounts.length && !by) return { error: 'Only a signed-in official can create accounts' };
   const email = norm(input.email ?? '');
@@ -73,9 +78,14 @@ export function createAccount(input: { email?: string; name?: string; office?: s
   if (!office) return { error: 'Enter the official\'s office' };
   if ((input.password ?? '').length < MIN_PASSWORD) return { error: `The password needs at least ${MIN_PASSWORD} characters` };
   if (d.accounts.some(a => a.email === email)) return { error: 'An account with that email already exists' };
-  const a: OfficialAccount = { id: randomUUID(), email, name: name.slice(0, 120), office: office.slice(0, 160), passwordHash: hash(input.password!), createdAt: new Date().toISOString(), createdBy: by ?? 'installation' };
+  // The first account administers the installation; later ones get the role they are given (officer by default).
+  const first = d.accounts.length === 0;
+  const role: OfficialRole = first ? 'administrator' : isRole(input.role) ? input.role : 'officer';
+  if (input.role !== undefined && !first && !isRole(input.role)) return { error: 'Unknown role' };
+  const institution = first ? undefined : (input.institution ?? '').trim() || undefined;
+  const a: OfficialAccount = { id: randomUUID(), email, name: name.slice(0, 120), office: office.slice(0, 160), passwordHash: hash(input.password!), createdAt: new Date().toISOString(), createdBy: by ?? 'installation', role, institution };
   d.accounts.push(a);
-  recordAudit(by ?? `${a.name} (first account)`, 'auth.account.create', `Official:${a.id}`, 'ok', `${a.name} · ${a.office}`);
+  recordAudit(by ?? `${a.name} (first account)`, 'auth.account.create', `Official:${a.id}`, 'ok', `${a.name} · ${a.office} · ${roleLabel(role)}${institution ? ` · ${getMinistry(institution)?.name ?? institution}` : ' · whole government'}`);
   return pub(a);
 }
 
@@ -83,8 +93,31 @@ export function setDisabled(id: string, disabled: boolean, by: string): PublicAc
   const a = db().accounts.find(x => x.id === id);
   if (!a) return { error: 'No such account' };
   if (disabled && !db().accounts.some(x => x.id !== id && !x.disabled)) return { error: 'The last active account cannot be disabled' };
+  if (disabled && isActiveAdmin(a) && !otherActiveAdmin(id)) return { error: 'The last active administrator cannot be disabled' };
   a.disabled = disabled;
   recordAudit(by, disabled ? 'auth.account.disable' : 'auth.account.enable', `Official:${a.id}`, 'ok', a.name);
+  return pub(a);
+}
+
+const isActiveAdmin = (a: OfficialAccount) => !a.disabled && roleOf(a) === 'administrator';
+const otherActiveAdmin = (id: string) => db().accounts.some(x => x.id !== id && isActiveAdmin(x));
+
+export function accountById(id: string): PublicAccount | undefined {
+  const a = db().accounts.find(x => x.id === id);
+  return a ? pub(a) : undefined;
+}
+
+/** Change what an official may do and for which institution (administrators only; audited). */
+export function setRole(id: string, input: { role?: string; institution?: string | null }, by: string): PublicAccount | { error: string } {
+  const a = db().accounts.find(x => x.id === id);
+  if (!a) return { error: 'No such account' };
+  const role = input.role === undefined ? roleOf(a) : input.role;
+  if (!isRole(role)) return { error: 'Unknown role' };
+  if (role !== 'administrator' && isActiveAdmin(a) && !otherActiveAdmin(id)) return { error: 'The last active administrator keeps that role' };
+  const institution = input.institution === undefined ? a.institution : (input.institution ?? '').trim() || undefined;
+  a.role = role;
+  a.institution = institution;
+  recordAudit(by, 'auth.account.role', `Official:${a.id}`, 'ok', `${a.name} · ${roleLabel(role)}${institution ? ` · ${getMinistry(institution)?.name ?? institution}` : ' · whole government'}`);
   return pub(a);
 }
 

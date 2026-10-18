@@ -108,6 +108,23 @@ describe('changes need a verified official (CIVICOS_AUTH=enforce)', () => {
     expect((await send('/api/org/ministries/min-x/queue/q1/act', `civicos_session=demo; civicos_official=${good}`, 'GET')).status).toBe(200);
   });
 
+  it('applies the official\'s role: auditors change nothing, ministries act only for themselves', async () => {
+    process.env.CIVICOS_SESSION_SECRET = 'test-secret-0123456789';
+    const now = Math.floor(Date.now() / 1000);
+    const as = (role: string, institution?: string) => signClaims({ sub: 'local:1', name: 'A', method: 'local', role: role as 'officer', institution, iat: now, exp: now + 600 }, 'test-secret-0123456789')
+      .then(t => `civicos_session=demo; civicos_official=${t}`);
+    for (const mode of ['enforce', undefined]) {
+      process.env.CIVICOS_AUTH = mode;
+      expect((await send('/api/org/ministries/min-x/queue/q1/act', await as('auditor'))).status).toBe(403);
+      expect((await send('/api/org/ministries/min-x/queue/q1/act', await as('officer', 'min-y'))).status).toBe(403);
+      expect((await send('/api/org/ministries/min-x/queue/q1/act', await as('officer', 'min-x'))).status).toBe(200);
+      expect((await send('/api/org/ministries/min-x/rename', await as('signatory'))).status).toBe(403);
+      expect((await send('/api/org/ministries/min-x/rename', await as('administrator'))).status).toBe(200);
+      expect((await send('/api/auth/official', await as('auditor'), 'DELETE')).status).toBe(200);
+      expect((await send('/api/org/ministries/min-x/queue', await as('auditor'), 'GET')).status).toBe(200);
+    }
+  });
+
   it('lets anyone reach sign-in', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
     expect((await send('/api/auth/official')).status).toBe(200);

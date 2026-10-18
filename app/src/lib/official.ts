@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { roleLabel, roleOf, type OfficialRole } from '@/lib/auth/roles';
 
 // The official acting at this desk. When someone has signed in
 // (/api/auth/official, register 15.4) that is their verified name, and the
@@ -13,7 +14,7 @@ import * as React from 'react';
 const KEY = 'civicos.updates.actor';
 const EVENT = 'civicos-actor';
 
-export interface VerifiedOfficial { sub: string; name: string; office?: string; method: 'local' | 'substrate' }
+export interface VerifiedOfficial { sub: string; name: string; office?: string; method: 'local' | 'substrate'; role?: OfficialRole; institution?: string; institutionName?: string }
 export interface SignInState { official: VerifiedOfficial | null; enforced: boolean; accounts: boolean; methods: { local: boolean; substrate: boolean } }
 
 let cache: SignInState | null = null;
@@ -39,6 +40,8 @@ export function useSignIn(): SignInState | null {
 }
 
 export const officialLabel = (o: VerifiedOfficial) => (o.office ? `${o.name}, ${o.office}` : o.name);
+/** What the official may do and for whom, in plain words: "Can sign · Treasury". */
+export const officialScope = (o: VerifiedOfficial) => `${roleLabel(roleOf(o))} · ${o.institution ? o.institutionName ?? o.institution : 'whole government'}`;
 
 export function useOfficial(): [string, (v: string) => void] {
   const signIn = useSignIn();

@@ -7,13 +7,24 @@
 // refuses such changes before they get here.
 
 import { cookies } from 'next/headers';
+import { NextResponse } from 'next/server';
 import { OFFICIAL_COOKIE, verifyToken, type OfficialClaims } from './session-token';
-import { sessionSecret } from './officials';
+import { sessionSecret, accountById } from './officials';
+import type { Scope } from './roles';
 
+/**
+ * The signed-in official, as their account stands now: a platform account
+ * that has since been disabled signs nobody in, and a changed role or
+ * institution applies at once (the session carries what it was at sign-in).
+ */
 export async function currentOfficial(): Promise<OfficialClaims | null> {
   let token: string | undefined;
   try { token = cookies().get(OFFICIAL_COOKIE)?.value; } catch { return null; }
-  return verifyToken(token, sessionSecret());
+  const c = await verifyToken(token, sessionSecret());
+  if (!c || c.method !== 'local') return c;
+  const a = accountById(c.sub.slice('local:'.length));
+  if (!a || a.disabled) return null;
+  return { ...c, name: a.name, office: a.office, role: a.role, institution: a.institution };
 }
 
 /** The name an action is recorded under: the verified official's, with their office. */
@@ -29,4 +40,16 @@ export async function withOfficial<T>(body: T): Promise<T> {
   if ('officerName' in b) b.officerName = label;
   if ('actor' in b) b.actor = label;
   return b as T;
+}
+
+/**
+ * Check a rule from lib/auth/roles.ts against the signed-in official: a 403
+ * response with the reason when it refuses, null to go ahead. Without a
+ * signed-in official there is nothing to check here (declared names; the
+ * middleware refuses changes when sign-in is enforced).
+ */
+export async function refusal(rule: (s: Scope) => string | null): Promise<NextResponse | null> {
+  const o = await currentOfficial();
+  const why = o ? rule(o) : null;
+  return why ? NextResponse.json({ error: why }, { status: 403 }) : null;
 }

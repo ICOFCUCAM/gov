@@ -17,6 +17,8 @@ import { FilterChips } from '@/components/ui/FilterChips';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { directiveStatusTone } from '@/lib/tone';
 import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
+import { useSignIn } from '@/lib/official';
+import { canDraftDirective, canSignDirective } from '@/lib/auth/roles';
 
 const ALL_KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declaration'];
 
@@ -32,6 +34,10 @@ const ALL_KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declar
  */
 export function DirectiveBoard() {
   const { actor, session, ready } = useIdentity();
+  // A signed-in platform official sees only the actions their role allows (the server checks again).
+  const official = useSignIn()?.official ?? null;
+  const mayDraft = !official || !canDraftDirective(official);
+  const maySign = (issuer: string) => !official || !canSignDirective(official, issuer);
   const [items, setItems] = React.useState<DirectiveRow[]>([]);
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'drafting' | 'signed' | 'effective' | 'rescinded' | 'published'>(
     () => getPref('directive.status', ['all','drafting','signed','effective','rescinded','published'] as const, 'all')
@@ -79,6 +85,7 @@ export function DirectiveBoard() {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <SurfaceHeading title="Directive Board" badge={available ? 'saved · live' : 'saved on this platform'} />
         <div className="flex items-center gap-2">
+          {mayDraft ? (
           <button
             type="button"
             onClick={() => setComposerOpen(o => !o)}
@@ -86,6 +93,7 @@ export function DirectiveBoard() {
           >
             {composerOpen ? 'cancel' : '+ draft directive'}
           </button>
+          ) : null}
           <button
             type="button"
             onClick={() => { void refresh(); }}
@@ -108,11 +116,12 @@ export function DirectiveBoard() {
         </div>
       </div>
 
-      {composerOpen ? (
+      {composerOpen && mayDraft ? (
         <DirectiveComposer
           prefill={prefill}
           onDone={() => { setComposerOpen(false); setPrefill(null); void refresh(); }}
-          defaultIssuer={actor?.charterId ?? 'platform'}
+          defaultIssuer={official?.institution ?? actor?.charterId ?? 'platform'}
+          issuerFixed={official?.institution ? official.institutionName ?? official.institution : null}
         />
       ) : null}
 
@@ -152,7 +161,7 @@ export function DirectiveBoard() {
                   {d.status}
                 </span>
                 <div className="flex shrink-0 items-center justify-end gap-1">
-                  {d.status === 'drafting' ? (
+                  {d.status === 'drafting' && maySign(d.issued_by_charter_id) ? (
                     <SignControl
                       busy={busyRef === d.ref}
                       onSign={async (effectiveAt) => {
@@ -162,7 +171,7 @@ export function DirectiveBoard() {
                       }}
                     />
                   ) : null}
-                  {d.status !== 'rescinded' ? (
+                  {d.status !== 'rescinded' && maySign(d.issued_by_charter_id) ? (
                     <button
                       type="button"
                       className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
@@ -198,8 +207,8 @@ export function DirectiveBoard() {
 }
 
 function DirectiveComposer({
-  defaultIssuer, onDone, prefill,
-}: { defaultIssuer: string; onDone: () => void; prefill?: { title: string; kind?: string; targets?: string } | null }) {
+  defaultIssuer, issuerFixed = null, onDone, prefill,
+}: { defaultIssuer: string; /** The institution's name when the official always drafts for it. */ issuerFixed?: string | null; onDone: () => void; prefill?: { title: string; kind?: string; targets?: string } | null }) {
   const [ref, setRef] = React.useState(() => `DIR-${Date.now()}`);
   const [issuer, setIssuer] = React.useState(defaultIssuer);
   const [title, setTitle] = React.useState(prefill?.title ?? '');
@@ -241,13 +250,20 @@ function DirectiveComposer({
             value={ref} onChange={e => setRef(e.currentTarget.value)} required
           />
         </label>
+        {issuerFixed ? (
+          <div>
+            <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Issued by</span>
+            <p className="mt-1 px-2 py-1 text-[11px] text-ink">{issuerFixed} <span className="text-ink-muted">(your institution)</span></p>
+          </div>
+        ) : (
         <label className="block">
-          <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Issuer charter</span>
+          <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Issued by</span>
           <input
             className="mt-1 w-full rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
             value={issuer} onChange={e => setIssuer(e.currentTarget.value)} required
           />
         </label>
+        )}
       </div>
       <label className="block">
         <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Title</span>

@@ -9,7 +9,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import type { WorkOverview, WorkQueueItem } from '@/lib/api/types';
-import { useOfficial } from '@/lib/official';
+import { useOfficial, useSignIn } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
 import { SeverityBadge } from '@/components/ui/Ops';
 import { TONE_SHAPE } from '@/lib/tone-palette';
@@ -24,6 +24,9 @@ export function WorkCenter() {
   const [view, setView] = React.useState<View>('all');
   const [inst, setInst] = React.useState('');
   const [official, setOfficial] = useOfficial();
+  // An official who acts for one institution starts on its work (they can still look across all of them).
+  const home = useSignIn()?.official?.institutionName;
+  React.useEffect(() => { if (home) setInst(home); }, [home]);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
 

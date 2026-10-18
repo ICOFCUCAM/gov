@@ -303,6 +303,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   `actor` or `officerName` from the body when someone is signed in.
   `CIVICOS_AUTH=enforce` (with `CIVICOS_SESSION_SECRET`) refuses API changes
   without a verified official.
+- What an official may do is one rule set, `lib/auth/roles.ts` (Administrator,
+  Can sign, Officer, Auditor; an institution or the whole government). The
+  middleware applies `apiPermission()` to every API change; a route that needs
+  the record to decide checks again with `refusal()` (`lib/auth/official.ts`).
+  A new route that changes accounts, setup or the structure of government
+  belongs in `ADMIN_ONLY`; never add a second place that decides permissions.
 
 ## API description
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { resetOfficials, createAccount, checkPassword, setDisabled, listAccounts, sessionSecret, MAX_FAILURES } from './officials';
+import { resetOfficials, createAccount, checkPassword, setDisabled, setRole, listAccounts, sessionSecret, MAX_FAILURES } from './officials';
 import { signClaims, verifyToken, type OfficialClaims } from './session-token';
 
 let cookie: string | undefined;
@@ -29,6 +29,25 @@ describe('platform accounts for officials', () => {
     expect(checkPassword('ps@agri.gov', PW, Date.now() + 16 * 60_000)).toMatchObject({ name: 'J. Otieno' });
   });
 
+  it('gives the first account administration and later ones the role they are given', () => {
+    const a = ok(createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW, role: 'auditor' }, null));
+    expect(a).toMatchObject({ role: 'administrator' });
+    expect(a.institution).toBeUndefined();
+    expect(ok(createAccount({ email: 'b@g.gov', name: 'B', office: 'O', password: PW }, 'A'))).toMatchObject({ role: 'officer' });
+    const c = ok(createAccount({ email: 'c@g.gov', name: 'C', office: 'O', password: PW, role: 'signatory', institution: 'fed-treasury' }, 'A'));
+    expect(c).toMatchObject({ role: 'signatory', institution: 'fed-treasury' });
+    expect(createAccount({ email: 'd@g.gov', name: 'D', office: 'O', password: PW, role: 'king' }, 'A')).toEqual({ error: 'Unknown role' });
+    expect(ok(setRole(c.id, { role: 'officer', institution: null }, 'A'))).toMatchObject({ role: 'officer' });
+    expect(listAccounts().find(x => x.id === c.id)?.institution).toBeUndefined();
+  });
+
+  it('always keeps one active administrator', () => {
+    const a = ok(createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    ok(createAccount({ email: 'b@g.gov', name: 'B', office: 'O', password: PW }, 'A'));
+    expect(setRole(a.id, { role: 'officer' }, 'B')).toEqual({ error: expect.stringMatching(/last active administrator/) });
+    expect(setDisabled(a.id, true, 'B')).toEqual({ error: expect.stringMatching(/last active administrator/) });
+  });
+
   it('never disables the last active account, and refuses disabled accounts', () => {
     const a = ok(createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
     expect(setDisabled(a.id, true, 'A')).toEqual({ error: expect.stringMatching(/last active/) });
@@ -40,8 +59,9 @@ describe('platform accounts for officials', () => {
 });
 
 describe('signed sessions', () => {
-  beforeEach(() => { resetOfficials(); cookie = undefined; });
-  const claims = (exp: number): OfficialClaims => ({ sub: 'local:1', name: 'J. Otieno', office: 'Permanent Secretary', method: 'local', iat: 0, exp });
+  let id = '1';
+  beforeEach(() => { resetOfficials(); cookie = undefined; id = ok(createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'Permanent Secretary', password: PW }, null)).id; });
+  const claims = (exp: number): OfficialClaims => ({ sub: `local:${id}`, name: 'J. Otieno', office: 'Permanent Secretary', method: 'local', iat: 0, exp });
 
   it('verifies only unexpired tokens signed with this installation\'s key', async () => {
     const future = Math.floor(Date.now() / 1000) + 600;

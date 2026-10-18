@@ -407,7 +407,7 @@
         ],
         "operationId": "post_auth_officials_id",
         "summary": "POST /api/auth/officials/{id}",
-        "description": "Disable or re-enable a platform account (signed-in official; audited).",
+        "description": "Change a platform account (administrators only; audited): disable or re-enable it ({ disabled }), or set its role and institution ({ role, institution }; institution null or \"\" for the whole government).",
         "parameters": [
           {
             "name": "id",
@@ -453,7 +453,7 @@
         ],
         "operationId": "get_auth_officials",
         "summary": "GET /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes) for a signed-in official. POST creates one: the first account at installation, every later one by a signed-in official.",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes) for a signed-in official. POST creates one: the first account at installation, every later one by an administrator.",
         "parameters": [],
         "responses": {
           "200": {
@@ -478,7 +478,7 @@
         ],
         "operationId": "post_auth_officials",
         "summary": "POST /api/auth/officials",
-        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes) for a signed-in official. POST creates one: the first account at installation, every later one by a signed-in official.",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes) for a signed-in official. POST creates one: the first account at installation, every later one by an administrator.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -1540,7 +1540,7 @@
         ],
         "operationId": "get_directives_ref",
         "summary": "GET /api/directives/{ref}",
-        "description": "One platform directive. POST { action: 'sign' | 'rescind', effectiveAt? } under the named (verified, when signed in) official; audited.",
+        "description": "One platform directive. POST { action: 'sign' | 'rescind', effectiveAt? } under the named (verified, when signed in) official; audited. A signed-in official signs or withdraws only when they can sign, and only their own institution's directives (lib/auth/roles.ts); drafts are seen only there.",
         "parameters": [
           {
             "name": "ref",
@@ -1574,7 +1574,7 @@
         ],
         "operationId": "post_directives_ref",
         "summary": "POST /api/directives/{ref}",
-        "description": "One platform directive. POST { action: 'sign' | 'rescind', effectiveAt? } under the named (verified, when signed in) official; audited.",
+        "description": "One platform directive. POST { action: 'sign' | 'rescind', effectiveAt? } under the named (verified, when signed in) official; audited. A signed-in official signs or withdraws only when they can sign, and only their own institution's directives (lib/auth/roles.ts); drafts are seen only there.",
         "parameters": [
           {
             "name": "ref",
@@ -1620,7 +1620,7 @@
         ],
         "operationId": "get_directives",
         "summary": "GET /api/directives",
-        "description": "Directives kept by the platform (lib/data/directives.ts), used when the shared database is not connected. GET lists them (?status, ?issuer, ?limit); POST drafts one under the named (verified, when signed in) official.",
+        "description": "Directives kept by the platform (lib/data/directives.ts), used when the shared database is not connected. GET lists them (?status, ?issuer, ?limit): drafts only for the issuing institution's officials (all of them while sign-in is neither used nor enforced, as before). POST drafts one under the named (verified, when signed in) official; an official with an institution always drafts for it, and auditors cannot draft.",
         "parameters": [
           {
             "name": "issuer",
@@ -1670,7 +1670,7 @@
         ],
         "operationId": "post_directives",
         "summary": "POST /api/directives",
-        "description": "Directives kept by the platform (lib/data/directives.ts), used when the shared database is not connected. GET lists them (?status, ?issuer, ?limit); POST drafts one under the named (verified, when signed in) official.",
+        "description": "Directives kept by the platform (lib/data/directives.ts), used when the shared database is not connected. GET lists them (?status, ?issuer, ?limit): drafts only for the issuing institution's officials (all of them while sign-in is neither used nor enforced, as before). POST drafts one under the named (verified, when signed in) official; an official with an institution always drafts for it, and auditors cannot draft.",
         "parameters": [],
         "requestBody": {
           "required": false,

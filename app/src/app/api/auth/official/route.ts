@@ -10,14 +10,16 @@ import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, type OfficialClaims } from 
 import { checkPassword, hasAccounts, sessionSecret } from '@/lib/auth/officials';
 import { currentOfficial, actorLabel } from '@/lib/auth/official';
 import { serverClient } from '@/lib/db/client';
-import { recordAudit } from '@/lib/data/store';
+import { recordAudit, getMinistry } from '@/lib/data/store';
+import { roleFromSubstrate, type OfficialRole } from '@/lib/auth/roles';
 
 export const dynamic = 'force-dynamic';
 
 const enforced = () => process.env.CIVICOS_AUTH === 'enforce';
 
 export async function GET() {
-  const official = await currentOfficial();
+  const o = await currentOfficial();
+  const official = o ? { ...o, institutionName: o.institution ? getMinistry(o.institution)?.name : undefined } : null;
   return NextResponse.json({
     official,
     methods: { local: true, substrate: !!serverClient() },
@@ -26,7 +28,10 @@ export async function GET() {
   });
 }
 
-async function substrateOfficial(token: string): Promise<{ sub: string; name: string; office?: string } | { error: string }> {
+type Who = { sub: string; name: string; office?: string; role?: OfficialRole; institution?: string };
+
+// Substrate officers are scoped by the substrate's own row-level security; on the platform they act for the whole government with the role their register entry maps to.
+async function substrateOfficial(token: string): Promise<Who | { error: string }> {
   const sb = serverClient();
   if (!sb) return { error: 'The substrate is not connected on this installation' };
   const { data, error } = await sb.auth.getUser(token);
@@ -34,17 +39,17 @@ async function substrateOfficial(token: string): Promise<{ sub: string; name: st
   const { data: row } = await sb.from('civicos_officers').select('id, name, title, role, active').eq('auth_user_id', data.user.id).limit(1).maybeSingle();
   const o = row as { id: string; name: string; title: string | null; role: string; active: boolean } | null;
   if (!o || !o.active) return { error: 'This account is not an active officer in the register' };
-  return { sub: `officer:${o.id}`, name: o.name, office: o.title ?? o.role };
+  return { sub: `officer:${o.id}`, name: o.name, office: o.title ?? o.role, role: roleFromSubstrate(o.role) };
 }
 
 export async function POST(req: NextRequest) {
   const b = (await req.json().catch(() => ({}))) as { method?: string; email?: string; password?: string; accessToken?: string };
-  let who: { sub: string; name: string; office?: string } | { error: string };
+  let who: Who | { error: string };
   if (b.method === 'substrate') {
     who = b.accessToken ? await substrateOfficial(b.accessToken) : { error: 'No access token' };
   } else {
     const a = checkPassword(b.email ?? '', b.password ?? '');
-    who = 'error' in a ? a : { sub: `local:${a.id}`, name: a.name, office: a.office };
+    who = 'error' in a ? a : { sub: `local:${a.id}`, name: a.name, office: a.office, role: a.role ?? 'administrator', institution: a.institution };
   }
   if ('error' in who) return NextResponse.json(who, { status: 401 });
   const now = Math.floor(Date.now() / 1000);

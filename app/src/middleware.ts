@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { OFFICIAL_COOKIE, verifyToken } from '@/lib/auth/session-token';
+import { apiPermission } from '@/lib/auth/roles';
 
 // Sovereign access gate. Real and correct, but enforcement is opt-in so a
 // public prototype/preview is not bricked: set CIVICOS_AUTH=enforce to
@@ -41,8 +42,29 @@ async function officialGate(req: NextRequest, res: NextResponse): Promise<NextRe
   return NextResponse.json({ error: 'Sign in as an official to make changes (/sign-in)' }, { status: 401 });
 }
 
+/**
+ * What a signed-in official may change (lib/auth/roles.ts): an auditor
+ * changes nothing, structure and accounts are for administrators, and an
+ * official with an institution acts only in that ministry's workspace. Applied
+ * whenever the session can be verified here (CIVICOS_SESSION_SECRET set, in
+ * any mode); routes that need the record to decide check again themselves.
+ */
+async function roleGate(req: NextRequest, next: () => NextResponse | Promise<NextResponse>): Promise<NextResponse> {
+  const c = await verifyToken(req.cookies.get(OFFICIAL_COOKIE)?.value, process.env.CIVICOS_SESSION_SECRET);
+  const why = c ? apiPermission(c, req.method, req.nextUrl.pathname) : null;
+  return why ? NextResponse.json({ error: why }, { status: 403 }) : next();
+}
+
 export function middleware(req: NextRequest): NextResponse | Promise<NextResponse> {
   const res = NextResponse.next();
+  if (process.env.CIVICOS_SESSION_SECRET && req.cookies.get(OFFICIAL_COOKIE)?.value && !req.headers.get('authorization')
+    && req.nextUrl.pathname.startsWith('/api/') && MUTATING.has(req.method)) {
+    return roleGate(req, () => gate(req, res));
+  }
+  return gate(req, res);
+}
+
+function gate(req: NextRequest, res: NextResponse): NextResponse | Promise<NextResponse> {
   // Baseline security headers on every response.
   // Embeddable widgets set their own frame-ancestors policy (the ministry's registered website).
   if (!req.nextUrl.pathname.startsWith('/embed/')) res.headers.set('X-Frame-Options', 'SAMEORIGIN');

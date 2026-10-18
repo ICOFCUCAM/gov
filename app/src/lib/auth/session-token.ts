@@ -4,6 +4,8 @@
 // by the server after it has checked who the person is (lib/auth/officials.ts
 // for local accounts, the substrate's sign-in for connected nations).
 
+import type { OfficialRole } from './roles';
+
 export const OFFICIAL_COOKIE = 'civicos_official';
 export const SESSION_HOURS = 8;
 
@@ -13,6 +15,10 @@ export interface OfficialClaims {
   name: string;
   office?: string;
   method: 'local' | 'substrate';
+  /** What the official may do (lib/auth/roles.ts); absent on sessions from before roles. */
+  role?: OfficialRole;
+  /** The ministry id the official acts for; absent when they serve the whole government. */
+  institution?: string;
   iat: number;
   exp: number;
 }

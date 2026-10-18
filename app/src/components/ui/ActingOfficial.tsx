@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { useSignIn, refreshSignIn, officialLabel } from '@/lib/official';
+import { useSignIn, refreshSignIn, officialLabel, officialScope } from '@/lib/official';
 
 /**
  * Who is acting: the signed-in official (verified by the server), or, where
@@ -20,6 +20,7 @@ export function ActingOfficial({ name, onChange, label = 'Acting official' }: { 
     return (
       <span className="inline-flex flex-wrap items-center gap-1.5 text-xs text-ink-soft">
         Signed in as <strong className="text-ink">{officialLabel(signIn.official)}</strong>
+        <span className="text-ink-muted">({officialScope(signIn.official)})</span>
         <button type="button" className="focus-ring rounded-[3px] px-1 text-link underline underline-offset-2"
           onClick={async () => { await fetch('/api/auth/official', { method: 'DELETE' }); await refreshSignIn(); }}>Sign out</button>
       </span>
