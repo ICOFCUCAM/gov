@@ -148,6 +148,7 @@ import type {
   DataCategoryInfo,
   DataSharingState,
   DataTransmission,
+  WorkOverview,
 } from './types';
 import { publicClient } from '@/lib/db/client';
 
@@ -213,6 +214,8 @@ export const api = {
         body: JSON.stringify(body),
       }),
   },
+  /** Everything waiting on officials across institutions (/api/work). */
+  work: () => req<WorkOverview>('/api/work'),
   audit: {
     list: () => req<{ events: AuditEntry[] }>('/api/audit'),
     verify: () =>

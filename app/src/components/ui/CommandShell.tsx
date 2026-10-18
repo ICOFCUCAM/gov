@@ -35,6 +35,7 @@ const substrateSearchAsCommands: CommandSearchFn = async (query) => {
 
 const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; key: string }[] }[] = [
   { g: 'Sovereign Command', items: [
+    { i: '☑', l: 'My work', s: 'Everything waiting on you', href: '/gov/work', key: 'work' },
     { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room', key: 'sr' },
     { i: '◆', l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', key: 'cab' },
     { i: '◈', l: 'National Shell', s: 'Whole-of-government orchestration', href: '/gov/shell', key: 'shell' },

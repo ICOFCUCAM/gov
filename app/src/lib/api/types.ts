@@ -1706,3 +1706,15 @@ export interface DataTransmission {
   summary: string;
   payload: Record<string, unknown>;
 }
+
+// ── My work (/api/work) ───────────────────────────────────────────────
+export interface WorkQueueItem extends QueueItem { ministryId: string; ministry: string; queueTitle: string; slaHours: number; overdue: boolean }
+export interface WorkMinistryIncident extends MinistryIncident { ministryId: string; ministry: string; authority: string | null; canEscalate: boolean }
+export interface WorkOverview {
+  generatedAt: ISODate;
+  counts: { decisions: number; overdue: number; incidents: number };
+  queue: WorkQueueItem[];
+  ministryIncidents: WorkMinistryIncident[];
+  permits: Permit[];
+  incidents: Incident[];
+}
