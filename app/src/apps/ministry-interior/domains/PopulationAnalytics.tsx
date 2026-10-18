@@ -13,6 +13,9 @@ import { interiorOps } from '@/lib/gov/interior-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 
 import { aiLabel } from '@/lib/nation/registry';
+import { SignalTag } from '@/components/ui/SignalTag';
+import type { SignalKind } from '@/lib/twin/signal';
+import { RegionMap, mapClock, unitSeed, useNationGeo, type MapValue, type NationUnit, type RegionDot, type RegionFlow, type RegionLabel } from '@/apps/ministry-interior/domains/RegionMaps';
 const BG = '#f5f6fb';
 const CARD = '#ffffff';
 const LINE = '#e7e9f1';
@@ -141,38 +144,90 @@ function Pyramid({ seedKey }: { seedKey: string }) {
   );
 }
 
-function DensityMap({ seedKey }: { seedKey: string }) {
-  const pts = Array.from({ length: 240 }).map((_, i) => {
-    const a = seed(`${seedKey}:a:${i}`) * Math.PI * 2;
-    const rad = Math.pow(seed(`${seedKey}:r:${i}`), 0.6) * 46;
-    const d = seed(`${seedKey}:d:${i}`);
-    return { x: 50 + Math.cos(a) * rad * (0.8 + seed(`${seedKey}:x:${i}`) * 0.5), y: 48 + Math.sin(a) * rad * 0.74, d };
-  });
-  const dc = (d: number) => (d > 0.88 ? '#3b1c8c' : d > 0.7 ? PURPLE : d > 0.5 ? BLUE : d > 0.3 ? '#8fb3f5' : '#cdd9f4');
+// ── Maps on the nation's real regions (map plan phase 5) ─────────────────
+// Density: the twin's observed population (lib/twin/register.ts, metric
+// "population") divided by each region's area from its boundary; until a
+// statistics source reports it, a sample. Bands are the legend's own.
+const DENSITY_BINS: [string, string, number][] = [
+  ['0–25', '#cdd9f4', 0], ['25–100', '#8fb3f5', 25], ['100–250', BLUE, 100], ['250–1k', PURPLE, 250], ['1k–2.5k', '#6a3fb0', 1000], ['2.5k+', '#3b1c8c', 2500],
+];
+const densityColour = (v: number) => [...DENSITY_BINS].reverse().find(b => v >= b[2])![1];
+
+/** A plausible sample density for a region (people per km²), seeded by the region. */
+function sampleDensity(units: NationUnit[], u: NationUnit, id: string): number {
+  const areas = units.map(x => x.areaKm2 ?? 0).filter(Boolean).sort((a, b) => a - b);
+  const median = areas[Math.floor(areas.length / 2)] ?? 1;
+  const d = 150 * Math.pow(median / Math.max(1, u.areaKm2 ?? median), 0.75) * Math.pow(10, unitSeed(`pa:dm:${id}`, u) * 1.4 - 0.7) * (u.capital ? 5 : 1);
+  return Math.round(Math.max(4, Math.min(12000, d)));
+}
+
+interface Density { values: MapValue[]; kind: SignalKind; source: string; nationalAvg: number | null }
+
+function useDensity(units: NationUnit[], id: string): Density {
+  const [obs, setObs] = React.useState<{ entityId: string; value: number; validFrom: string }[] | null>(null);
+  React.useEffect(() => {
+    let live = true;
+    fetch('/api/twin/state?metric=population', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null))
+      .then((j: { observations?: { entityId: string; value: number; validFrom: string }[] } | null) => { if (live) setObs(j?.observations ?? []); })
+      .catch(() => { if (live) setObs([]); });
+    return () => { live = false; };
+  }, []);
+  return React.useMemo(() => {
+    const byCode = new Map((obs ?? []).map(o => [o.entityId.replace(/^place:/, ''), o] as const));
+    const observed = units.filter(u => u.code && u.areaKm2 && byCode.has(u.code));
+    if (observed.length) {
+      const values = observed.map(u => { const o = byCode.get(u.code!)!; return { key: u.name, value: Math.round(o.value / u.areaKm2!), asOf: o.validFrom.slice(0, 10) }; });
+      const all = observed.length === units.length;
+      const pop = observed.reduce((a, u) => a + byCode.get(u.code!)!.value, 0), area = observed.reduce((a, u) => a + u.areaKm2!, 0);
+      return { values, kind: 'modelled', source: 'Observed population (national data) ÷ area of each boundary', nationalAvg: all && area ? Math.round(pop / area) : null };
+    }
+    // Sample: densities spread over the real regions — smaller regions and the capital's denser, as in most nations.
+    const values = units.filter(u => u.areaKm2).map(u => ({ key: u.name, value: sampleDensity(units, u, id) }));
+    const area = units.reduce((a, u) => a + (u.areaKm2 ?? 0), 0);
+    const pop = values.reduce((a, v) => a + v.value * (units.find(u => u.name === v.key)?.areaKm2 ?? 0), 0);
+    return { values, kind: 'sample', source: 'Sample densities until a statistics source reports population (National data → sources)', nationalAvg: values.length === units.length && area ? Math.round(pop / area) : null };
+  }, [units, obs, id]);
+}
+
+function DensityMap({ density }: { density: Density }) {
+  // The densest regions carry their figure, as the darkest clusters did.
+  const labels: RegionLabel[] = [...density.values].sort((a, b) => b.value - a.value).slice(0, 3)
+    .map(v => ({ region: v.key, text: v.value >= 1000 ? `${(v.value / 1000).toFixed(1)}k` : String(v.value), colour: 'rgb(var(--c-surface))', ink: densityColour(v.value) }));
   return (
-    <svg viewBox="0 0 100 90" className="w-full" style={{ height: 210 }} aria-hidden>
-      {pts.map((p, i) => <circle key={i} cx={p.x} cy={p.y} r={1 + p.d * 2.4} fill={dc(p.d)} opacity={0.45 + p.d * 0.5} />)}
-    </svg>
+    <RegionMap title="People per km² by region" values={density.values} kind={density.kind} source={density.source} valueLabel="Population density" unit="/km²"
+      ground="light" colourOf={v => densityColour(v.value)} labels={labels} maxHeight={250} minHeight={190}
+      emptyNote="Loading the nation's regions…" />
   );
 }
 
-function MovementMap({ seedKey }: { seedKey: string }) {
-  const nodes = Array.from({ length: 9 }).map((_, i) => ({
-    x: 12 + seed(`${seedKey}:x:${i}`) * 76, y: 14 + seed(`${seedKey}:y:${i}`) * 62, w: seed(`${seedKey}:w:${i}`),
-  }));
+// Movement: internal moves between real regions over 30 days (sample until a
+// mobility or civil-registration source connects): flows on the legend's
+// Low → High ramp, each region's node sized by its moves.
+const RAMP = ['#cdd9f4', TEAL, PURPLE];
+const rampOf = (t: number) => (t >= 0.66 ? RAMP[2]! : t >= 0.33 ? RAMP[1]! : RAMP[0]!);
+const SRC_MOVES = 'Sample internal movement until a mobility or civil-registration source connects';
+
+function MovementMap({ units, id, ts }: { units: NationUnit[]; id: string; ts: number }) {
+  // Moves follow population (sample): each region's moves in and out over 30 days.
+  const vol = units.map(u => ({ u, v: Math.round(Math.pow(sampleDensity(units, u, id) * (u.areaKm2 ?? 0), 0.8) * 0.9 * wave(`pa:mv:${id}:${u.code ?? u.name}`, ts, 0.7, 1.3)) }));
+  const max = Math.max(1, ...vol.map(x => x.v));
+  const top = [...vol].sort((a, b) => b.v - a.v).slice(0, Math.min(12, vol.length));
+  const capital = units.find(u => u.capital)?.name ?? top[0]?.u.name;
+  const flows: RegionFlow[] = [];
+  for (const [i, a] of top.entries()) {
+    if (a.u.name !== capital && capital) flows.push({ from: a.u.name, to: capital, colour: rampOf(a.v / max), weight: Math.max(0.25, a.v / max), label: `${a.u.name} → ${capital}: ${Math.round(a.v * 0.3).toLocaleString('en')} moves (sample)` });
+    const b = top[(i + 3) % top.length];
+    if (b && b.u.name !== a.u.name && b.u.name !== capital && a.u.name !== capital && seed(`pa:mvp:${id}:${a.u.name}`) > 0.3) {
+      const w = Math.min(a.v, b.v) / max;
+      flows.push({ from: a.u.name, to: b.u.name, colour: rampOf(w), weight: Math.max(0.15, w * 0.7), label: `${a.u.name} → ${b.u.name}: ${Math.round(Math.min(a.v, b.v) * 0.12).toLocaleString('en')} moves (sample)` });
+    }
+  }
+  const dots: RegionDot[] = top.map(x => ({ region: x.u.name, colour: x.v / max > 0.6 ? PURPLE : TEAL, r: 2.5 + (x.v / max) * 4, label: `${x.u.name}: ${x.v.toLocaleString('en')} moves` }));
+  const values: MapValue[] = vol.map(x => ({ key: x.u.name, value: x.v }));
   return (
-    <svg viewBox="0 0 100 80" className="w-full" style={{ height: 200 }} aria-hidden>
-      {nodes.map((n, i) => nodes.slice(i + 1).map((m, j) => seed(`${seedKey}:e:${i}:${j}`) > 0.55 ? (
-        <path key={`${i}-${j}`} d={`M${n.x} ${n.y} Q ${(n.x + m.x) / 2} ${(n.y + m.y) / 2 - 10} ${m.x} ${m.y}`}
-          fill="none" stroke={TEAL} strokeWidth={0.3 + n.w * 0.6} opacity="0.3" />
-      ) : null))}
-      {nodes.map((n, i) => (
-        <g key={i}>
-          <circle cx={n.x} cy={n.y} r={2 + n.w * 5} fill={n.w > 0.6 ? PURPLE : TEAL} opacity="0.18" />
-          <circle cx={n.x} cy={n.y} r={1.4 + n.w * 1.6} fill={n.w > 0.6 ? PURPLE : TEAL} />
-        </g>
-      ))}
-    </svg>
+    <RegionMap title="Internal moves by region · 30 days" values={values} kind="sample" source={SRC_MOVES} valueLabel="Moves in and out" ground="light"
+      colourOf={v => `color-mix(in srgb, ${rampOf(v.value / max)} ${v.value / max >= 0.33 ? 30 : 55}%, rgb(var(--c-surface)))`}
+      flows={flows} dots={dots} maxHeight={240} minHeight={180} emptyNote="Loading the nation's regions…" />
   );
 }
 
@@ -183,6 +238,8 @@ export function PopulationAnalytics({ id, now }: { id: string; now: number }) {
   const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const day = clock.toLocaleDateString('en-GB', { weekday: 'long' });
   const W = (k: string, lo: number, hi: number, n = 12) => waveSeries(`pa:${k}:${id}`, ts, n, lo, hi);
+  const units = useNationGeo()?.units ?? [];
+  const density = useDensity(units, id);
 
   const popM = Math.round((io.identity.enrolledM * 0.6 + 70) * 100) / 100;
 
@@ -251,12 +308,14 @@ export function PopulationAnalytics({ id, now }: { id: string; now: number }) {
       {/* ── Row 1 ──────────────────────────────────────────────── */}
       <div className="grid gap-3 xl:grid-cols-3">
         <Card title="Population Density" info action="People per km²">
-          <DensityMap seedKey={`pa:dm:${id}`} />
+          <DensityMap density={density} />
           <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[8.5px]" style={{ color: SOFT }}>
-            {[['0–25', '#cdd9f4'], ['25–100', '#8fb3f5'], ['100–250', BLUE], ['250–1k', PURPLE], ['1k–2.5k', '#6a3fb0'], ['2.5k+', '#3b1c8c']].map(([l, c]) => (
+            {DENSITY_BINS.map(([l, c]) => (
               <span key={l} className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-[2px]" style={{ background: c }} />{l}</span>
             ))}
-            <span className="ml-auto font-semibold" style={{ color: INK }}>National Avg 197 /km²</span>
+            <span className="ml-auto inline-flex items-center gap-1 font-semibold" style={{ color: INK }}>
+              National Avg {density.nationalAvg != null ? `${density.nationalAvg.toLocaleString('en')} /km²` : '—'}<SignalTag kind={density.kind} source={density.source} />
+            </span>
           </div>
         </Card>
         <Card title="Population Pyramid" action="◼ Male  ◼ Female">
@@ -390,7 +449,7 @@ export function PopulationAnalytics({ id, now }: { id: string; now: number }) {
           </div>
         </Card>
         <Card title="National Movement Heatmap" info action="Internal · 30 Days">
-          <MovementMap seedKey={`pa:mv:${id}`} />
+          <MovementMap units={units} id={id} ts={mapClock(ts)} />
           <div className="mt-1 flex items-center gap-2 text-[8.5px]" style={{ color: MUT }}>
             <span>Low</span>
             <span className="h-2 flex-1 rounded-full" style={{ background: `linear-gradient(90deg,#cdd9f4,${TEAL},${PURPLE})` }} />

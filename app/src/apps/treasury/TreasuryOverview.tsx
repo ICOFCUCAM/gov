@@ -16,6 +16,8 @@ import {
 } from '@/lib/gov/treasury-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { nationTime, nationTimeZoneLabel, aiLabel } from '@/lib/nation/registry';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { RegionMap, mapClock, perUnit, skewed, useNationUnits, type MapValue, type RegionGlow } from '@/apps/ministry-interior/domains/RegionMaps';
 
 const BG = '#04100d';
 const PANEL = '#071512';
@@ -114,17 +116,17 @@ function Ring({ value, label, color }: { value: number; label: string; color: st
   );
 }
 
-function HeatGrid({ seedKey }: { seedKey: string }) {
-  const cols = 16, rows = 8;
+// Treasury pressure on the nation's real regions (map plan phase 5; was a
+// dot grid): each region's fiscal risk from the assurance engine when it
+// names the region, else a sample, in the legend's four bands.
+const SRC_PRESSURE = 'Regional fiscal risk model (sample until regional accounts connect)';
+const pressureBand = (v: number) => (v >= 60 ? RED : v >= 45 ? AMBER : v >= 30 ? GOLD : EMER);
+
+function HeatGrid({ values }: { values: MapValue[] }) {
+  const glows: RegionGlow[] = values.filter(v => v.value >= 45).map(v => ({ region: v.key, colour: pressureBand(v.value), r: v.value / 100, pulse: v.value >= 60 }));
   return (
-    <div className="grid gap-[2px]" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-      {Array.from({ length: cols * rows }).map((_, i) => {
-        const v = seed(`${seedKey}:${i}`);
-        const inland = (i % cols > 2 && i % cols < cols - 2 && Math.floor(i / cols) > 0 && Math.floor(i / cols) < rows - 1);
-        const c = !inland ? 'transparent' : v > 0.74 ? RED : v > 0.55 ? AMBER : v > 0.34 ? GOLD : EMER;
-        return <span key={i} className="aspect-square rounded-[1px]" style={{ background: c, opacity: inland ? 0.8 : 0 }} />;
-      })}
-    </div>
+    <RegionMap title="Treasury Pressure Map" values={values} kind="sample" source={SRC_PRESSURE} valueLabel="Fiscal pressure" unit="/100" theatre small hideCaption
+      colourOf={v => pressureBand(v.value)} glows={glows} maxHeight={170} minHeight={120} emptyNote="Loading the nation's regions…" />
   );
 }
 
@@ -228,6 +230,9 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
   const br = bankingRails(id, ts);
   const cf = citizenFinance(id, ts);
   const fa = fiscalAssurance(id, ts);
+  // The map moves on a slower clock than the counters, so the regions are not redrawn every tick.
+  const tm = mapClock(ts);
+  const pressure = perUnit(useNationUnits() ?? [], fiscalAssurance(id, tm).regionalRisk, r => r.risk, u => Math.round(8 + 76 * skewed(wave(`tro:hm:${id}:${u.code ?? u.name}`, tm, 0, 1), 1.5))).values;
 
   const clock = new Date(now);
   const hh = nationTime(clock);
@@ -388,8 +393,8 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
           <Mod n={1} title="National Treasury Command">
             <div className="grid grid-cols-[1.3fr_1fr] gap-3">
               <div>
-                <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Treasury Pressure Map</div>
-                <HeatGrid seedKey={`tro:hm:${id}`} />
+                <div className="mb-1 flex items-center gap-1.5 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Treasury Pressure Map<SignalTag kind="sample" source={SRC_PRESSURE} className="!text-[7px]" /></div>
+                <HeatGrid values={pressure} />
                 <div className="mt-1.5 flex items-center justify-between text-[7.5px] uppercase tracking-wider" style={{ color: MUT }}>
                   <span>Low</span><span className="flex items-center gap-0.5">{[EMER, GOLD, AMBER, RED].map(c => <span key={c} className="h-1.5 w-4" style={{ background: c }} />)}</span><span>High</span>
                 </div>

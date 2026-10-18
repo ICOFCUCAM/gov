@@ -10,6 +10,9 @@
 import * as React from 'react';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { nameKeys } from '@/lib/map/names';
+import type { SignalKind } from '@/lib/twin/signal';
+import { RegionMap, mapClock, skewed, useNationGeo, type MapValue, type NationUnit, type RegionLabel } from '@/apps/ministry-interior/domains/RegionMaps';
 
 const BG = '#f5f6fb';
 const CARD = '#ffffff';
@@ -115,19 +118,51 @@ function MultiLine({ series, height = 170 }: { series: { name: string; c: string
   );
 }
 
-function Heatmap({ seedKey }: { seedKey: string }) {
-  const cells = Array.from({ length: 54 }).map((_, i) => {
-    const v = seed(`${seedKey}:${i}`);
-    return v;
-  });
-  const col = (v: number) => v > 0.8 ? '#4c1d95' : v > 0.62 ? '#6d28d9' : v > 0.45 ? PURPLE : v > 0.28 ? '#a78bf5' : '#d8cdf7';
+// Applications by region this month on the nation's real regions (map plan
+// phase 5; was a hex grid). Counted from the permit register (/api/permits)
+// where applications name one of the nation's regions; until they do, a
+// sample. Shades run along the legend's Low → High ramp.
+const NO_UNITS: NationUnit[] = [];
+const HEAT = ['#d8cdf7', '#a78bf5', PURPLE, '#6d28d9', '#4c1d95'];
+
+interface PermitRow { municipality: string; submittedAt?: string }
+
+function useApplications(units: NationUnit[], id: string, ts: number): { values: MapValue[]; kind: SignalKind; source: string } {
+  const [rows, setRows] = React.useState<PermitRow[] | null>(null);
+  React.useEffect(() => {
+    let live = true;
+    fetch('/api/permits', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null))
+      .then((j: { permits?: PermitRow[] } | null) => { if (live) setRows(j?.permits ?? []); }).catch(() => { if (live) setRows([]); });
+    return () => { live = false; };
+  }, []);
+  return React.useMemo(() => {
+    const month = new Date().toISOString().slice(0, 7);
+    const unitOf = new Map<string, string>();
+    for (const u of units) for (const k of nameKeys(u.name)) if (!unitOf.has(k)) unitOf.set(k, u.name);
+    const counts = new Map<string, number>();
+    for (const r of rows ?? []) {
+      if (!r.submittedAt?.startsWith(month)) continue;
+      const u = nameKeys(r.municipality).map(k => unitOf.get(k)).find(Boolean);
+      if (u) counts.set(u, (counts.get(u) ?? 0) + 1);
+    }
+    if (counts.size) {
+      return { values: units.map(u => ({ key: u.name, value: counts.get(u.name) ?? 0 })), kind: 'reported', source: 'Permit register: applications submitted this month, by the region they name' };
+    }
+    return {
+      values: units.map(u => ({ key: u.name, value: Math.round(40 + 2400 * skewed(wave(`pl:hm:${id}:${u.code ?? u.name}`, ts, 0, 1), 1.6) * (u.capital ? 2.2 : 1)) })),
+      kind: 'sample', source: 'Sample until permit applications name the nation\'s regions',
+    };
+  }, [units, rows, id, ts]);
+}
+
+function Heatmap({ apps }: { apps: { values: MapValue[]; kind: SignalKind; source: string } }) {
+  const max = Math.max(1, ...apps.values.map(v => v.value));
+  const shade = (v: number) => HEAT[Math.min(HEAT.length - 1, Math.floor((v / max) * HEAT.length))]!;
+  const labels: RegionLabel[] = [...apps.values].sort((a, b) => b.value - a.value).slice(0, 3).filter(v => v.value > 0)
+    .map(v => ({ region: v.key, text: v.value >= 1000 ? `${(v.value / 1000).toFixed(1)}k` : String(v.value), colour: 'rgb(var(--c-surface))', ink: '#4c1d95' }));
   return (
-    <div className="grid gap-1" style={{ gridTemplateColumns: 'repeat(9,1fr)' }} aria-hidden>
-      {cells.map((v, i) => (
-        <span key={i} className="rounded-md" style={{ aspectRatio: '1', background: col(v), opacity: 0.55 + v * 0.45,
-          clipPath: 'polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%)' }} />
-      ))}
-    </div>
+    <RegionMap title="Applications by region · this month" values={apps.values} kind={apps.kind} source={apps.source} valueLabel="Applications" ground="light"
+      colourOf={v => shade(v.value)} labels={labels} maxHeight={230} minHeight={180} emptyNote="Loading the nation's regions…" />
   );
 }
 
@@ -138,6 +173,7 @@ export function PermitsLicensing({ id, now }: { id: string; now: number }) {
   const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const day = clock.toLocaleDateString('en-GB', { weekday: 'long' });
   const W = (k: string, lo: number, hi: number, n = 6) => waveSeries(`pl:${k}:${id}`, ts, n, lo, hi);
+  const apps = useApplications(useNationGeo()?.units ?? NO_UNITS, id, mapClock(ts));
 
   const active = 1_200_000 + Math.round(seed(`pl:ac:${id}`) * 90_000);
   const newApps = io.licensing.pending + Math.round(wave(`pl:na:${id}`, ts, 40000, 56000) - io.licensing.pending);
@@ -292,10 +328,10 @@ export function PermitsLicensing({ id, now }: { id: string; now: number }) {
           </div>
         </Card>
         <Card title="Application Heatmap" sub="By Region · This Month">
-          <Heatmap seedKey={`pl:hm:${id}`} />
+          <Heatmap apps={apps} />
           <div className="mt-2 flex items-center gap-2 text-[8.5px]" style={{ color: MUT }}>
             <span>Low</span>
-            <span className="h-2 flex-1 rounded-full" style={{ background: 'linear-gradient(90deg,#d8cdf7,#a78bf5,#7c5cf0,#4c1d95)' }} />
+            <span className="h-2 flex-1 rounded-full" style={{ background: `linear-gradient(90deg,${HEAT.join(',')})` }} />
             <span>High</span>
           </div>
         </Card>
