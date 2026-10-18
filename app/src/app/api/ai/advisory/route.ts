@@ -19,6 +19,8 @@ export interface AdvisoryResponse {
   recommendations: string[];
   severity: 'routine' | 'advisory' | 'priority' | 'critical';
   confidence: number;
+  /** Who answered: the model, or the rule-based fallback. Only 'model' may be shown as "AI advisory". */
+  source: 'model' | 'rules';
 }
 
 const client = new Anthropic();
@@ -81,6 +83,7 @@ Rules:
         : [],
       severity,
       confidence: 88,
+      source: 'model',
     };
 
     return NextResponse.json(response);
@@ -100,6 +103,7 @@ Rules:
         : ['Sustain operating tempo', 'Monitor on standard cadence'],
       severity,
       confidence: 72,
+      source: 'rules',
     };
     return NextResponse.json(fallback);
   }

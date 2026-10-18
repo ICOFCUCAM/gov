@@ -34,6 +34,8 @@ import type {
   RegionStat,
 } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { useOfficial } from '@/lib/official';
+import { ActingOfficial } from '@/components/ui/ActingOfficial';
 
 type Tab =
   | 'command' | 'ecosystem' | 'continuity' | 'regional' | 'approvals' | 'incidents' | 'field'
@@ -57,7 +59,6 @@ const TABS: { k: Tab; label: string }[] = [
   { k: 'audit', label: 'Audit' },
 ];
 
-const OPERATOR = 'K. Adamu';
 
 /**
  * A ministry as a deep institutional workspace: its own internal
@@ -65,6 +66,8 @@ const OPERATOR = 'K. Adamu';
  * archetype-specialised operational tabs. One canonical implementation,
  * composed per archetype from the profile + operational data.
  */
+const NAME_FIRST = 'Name the acting official first (below the queue): every action is recorded under a person.';
+
 export function MinistryWorkspace({ id }: { id: string }) {
   // Resolve the institution synchronously from the canonical federation so
   // the workspace renders real identity on first paint — no skeleton loop.
@@ -81,6 +84,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
   const [field, setField] = React.useState<FieldUnitStatus[]>([]);
   const [busy, setBusy] = React.useState<string | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
+  const [official, setOfficial] = useOfficial();
   const [inst, setInst] = React.useState<Ministry | null>(() => seedInst);
   const [aiHeadline, setAiHeadline] = React.useState<string | null>(null);
   const [aiHeadlineTier, setAiHeadlineTier] = React.useState<number>(-1);
@@ -123,10 +127,11 @@ export function MinistryWorkspace({ id }: { id: string }) {
   }, [load]);
 
   async function queueAct(itemId: string, action: 'assign' | 'escalate' | 'clear') {
+    if (!official) { setErr(NAME_FIRST); return; }
     setBusy(itemId + action);
     setErr(null);
     try {
-      const { item } = await api.org.actOnQueueItem(id, itemId, action);
+      const { item } = await api.org.actOnQueueItem(id, itemId, action, undefined, official);
       setQueue(prev => (prev ? { ...prev, items: prev.items.map(x => (x.id === item.id ? item : x)) } : prev));
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Action failed');
@@ -135,10 +140,11 @@ export function MinistryWorkspace({ id }: { id: string }) {
     }
   }
   async function queueActMany(items: QueueItem[], action: 'assign' | 'escalate' | 'clear') {
+    if (!official) { setErr(NAME_FIRST); return; }
     setErr(null);
     try {
       const updated = await Promise.all(
-        items.map(it => api.org.actOnQueueItem(id, it.id, action).then(r => r.item)),
+        items.map(it => api.org.actOnQueueItem(id, it.id, action, undefined, official).then(r => r.item)),
       );
       const byId = new Map(updated.map(u => [u.id, u]));
       setQueue(prev =>
@@ -149,13 +155,14 @@ export function MinistryWorkspace({ id }: { id: string }) {
     }
   }
   async function incAct(key: string, kind: 'escalate' | 'resolve') {
+    if (!official) { setErr(NAME_FIRST); return; }
     setBusy(key + kind);
     setErr(null);
     try {
       const { incident } =
         kind === 'escalate'
-          ? await api.org.escalateIncident(id, key)
-          : await api.org.resolveIncident(id, key);
+          ? await api.org.escalateIncident(id, key, official)
+          : await api.org.resolveIncident(id, key, official);
       setIncidents(prev => prev.map(x => (x.key === incident.key ? incident : x)));
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Action failed');
@@ -216,7 +223,8 @@ export function MinistryWorkspace({ id }: { id: string }) {
       }),
     })
       .then(r => r.json())
-      .then((d: { headline?: string }) => { if (d.headline) setAiHeadline(d.headline); })
+      // Only a model answer is shown as "AI advisory"; a rule-based answer leaves this panel's own advisory in place.
+      .then((d: { headline?: string; source?: string }) => { if (d.headline && d.source === 'model') setAiHeadline(d.headline); })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, opTierForAdvisory]);
@@ -775,7 +783,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
 
       {tab === 'approvals' && (
         <div className="space-y-3">
-        <RuntimeQueue scope={`${id}:approvals`} kind="approval" title="Approvals runtime — submit → review → decision" by={OPERATOR} />
+        <RuntimeQueue scope={`${id}:approvals`} kind="approval" title="Approvals runtime — submit → review → decision" by={official || 'Unnamed official'} />
         <Section
           title={queue?.title ?? 'Approvals'}
           meta={`${openQueue} open · SLA ${queue ? Math.round(queue.slaHours / 24) : '—'}d`}
@@ -805,16 +813,15 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 </div>
                 <div className="text-xs text-ink-muted">
                   {i.subject}. Disposition is recorded to the tamper-evident audit
-                  chain against operator <strong>{OPERATOR}</strong> — escalation
+                  chain against <strong>{official || 'the official named below'}</strong> — escalation
                   follows this institution&rsquo;s authority chain.
                 </div>
               </div>
             )}
           />
-          <p className="mt-2 text-xs text-ink-muted">
-            Operator <strong>{OPERATOR}</strong>. Every action named and
-            audited — single or bulk. Humans assign, escalate, clear — no
-            autonomous action.
+          <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+            <ActingOfficial name={official} onChange={setOfficial} />
+            <span>Every action is recorded under this name in the audit chain — single or bulk. Humans assign, escalate, clear — no autonomous action.</span>
           </p>
         </Section>
         </div>
@@ -823,7 +830,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
       {tab === 'incidents' && (
         <Section title="Incidents & escalation" meta={escChain.length ? `chain: ${escChain.join(' → ')}` : undefined}>
           <div className="space-y-2">
-            <RuntimeQueue scope={`${id}:incident`} kind="incident" title="Incident runtime — acknowledge → contain → recover" by={OPERATOR} />
+            <RuntimeQueue scope={`${id}:incident`} kind="incident" title="Incident runtime — acknowledge → contain → recover" by={official || 'Unnamed official'} />
             {incidents.map(inc => (
               <Card tight key={inc.key}>
                 <div className="flex flex-wrap items-start justify-between gap-2">

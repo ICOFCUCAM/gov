@@ -26,4 +26,10 @@ describe('POST /api/ai/advisory — national opt-in', () => {
     expect(res.status).toBe(200);
     expect((await res.json()).headline).toContain('Health');
   });
+
+  it('marks a rule-based answer as rules, so callers never call it AI', async () => {
+    sovereign.mockReturnValue({ aiAssistant: true });
+    const res = await call();
+    expect((await res.json()).source).toBe('rules');
+  });
 });

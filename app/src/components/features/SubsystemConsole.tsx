@@ -107,7 +107,8 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       }),
     })
       .then(r => r.json())
-      .then((d: { headline?: string }) => { if (d.headline) setAiAdvisoryText(d.headline); })
+      // Only a model answer is shown as "AI advisory"; a rule-based answer leaves this panel's own advisory in place.
+      .then((d: { headline?: string; source?: string }) => { if (d.headline && d.source === 'model') setAiAdvisoryText(d.headline); })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, stressTier]);

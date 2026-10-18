@@ -363,16 +363,16 @@ export const api = {
     analytics: (id: string) => req<{ analytics: AnalyticDelta[] }>(`/api/org/ministries/${id}/analytics`),
     queue: (id: string) => req<MinistryQueue>(`/api/org/ministries/${id}/queue`),
     incidents: (id: string) => req<MinistryIncidents>(`/api/org/ministries/${id}/incidents`),
-    escalateIncident: (id: string, key: string) =>
-      req<{ incident: MinistryIncident }>(`/api/org/ministries/${id}/incidents/${key}/escalate`, { method: 'POST', body: '{}' }),
-    resolveIncident: (id: string, key: string) =>
-      req<{ incident: MinistryIncident }>(`/api/org/ministries/${id}/incidents/${key}/resolve`, { method: 'POST', body: '{}' }),
+    escalateIncident: (id: string, key: string, by?: string) =>
+      req<{ incident: MinistryIncident }>(`/api/org/ministries/${id}/incidents/${key}/escalate`, { method: 'POST', body: JSON.stringify({ by }) }),
+    resolveIncident: (id: string, key: string, by?: string) =>
+      req<{ incident: MinistryIncident }>(`/api/org/ministries/${id}/incidents/${key}/resolve`, { method: 'POST', body: JSON.stringify({ by }) }),
     field: (id: string) => req<MinistryFieldOps>(`/api/org/ministries/${id}/field`),
     series: (id: string) => req<MinistrySeries>(`/api/org/ministries/${id}/series`),
-    actOnQueueItem: (id: string, itemId: string, action: QueueAction, note?: string) =>
+    actOnQueueItem: (id: string, itemId: string, action: QueueAction, note?: string, by?: string) =>
       req<{ item: QueueItem }>(`/api/org/ministries/${id}/queue/${itemId}/act`, {
         method: 'POST',
-        body: JSON.stringify({ action, note }),
+        body: JSON.stringify({ action, note, by }),
       }),
     create: (body: { archetype: ArchetypeKey; name: string; slug: string }) =>
       req<{ ministry: Ministry }>('/api/org/ministries', { method: 'POST', body: JSON.stringify(body) }),

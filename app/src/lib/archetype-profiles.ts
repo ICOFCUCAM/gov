@@ -105,7 +105,7 @@ export const ARCHETYPE_PROFILES: Record<ArchetypeKey, ArchetypeProfile> = {
     ],
     queueTitle: 'School & exam approvals',
     queueSubject: 'Maintenance / transfer / remark',
-    escalation: ['School head', 'Sub-county director', 'County director', 'Director of Education'],
+    escalation: ['School head', 'District education officer', 'Regional director', 'Director of Education'],
     incidentTypes: [
       { key: 'closure', label: 'Unplanned school closure', severity: 'sev3', likelihood: 0.2, detail: 'A school reported an unplanned closure.' },
       { key: 'integrity', label: 'Exam-integrity incident', severity: 'sev1', likelihood: 0.08, detail: 'Suspected breach — independent review.' },
@@ -192,7 +192,7 @@ export const ARCHETYPE_PROFILES: Record<ArchetypeKey, ArchetypeProfile> = {
     ],
     queueTitle: 'Subsidy & registry approvals',
     queueSubject: 'Subsidy claim / registration',
-    escalation: ['Extension officer', 'Sub-county officer', 'County director', 'Director of Agriculture'],
+    escalation: ['Extension officer', 'District agriculture officer', 'Regional director', 'Director of Agriculture'],
     incidentTypes: [
       { key: 'pest', label: 'Pest / disease outbreak', severity: 'sev2', likelihood: 0.2, detail: 'Crop/livestock threat reported in a region.' },
       { key: 'elite', label: 'Subsidy elite-capture pattern', severity: 'sev3', likelihood: 0.2, detail: 'Concentration flagged for human investigator.' },

@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useOfficial } from '@/lib/official';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { CHAMPAGNE, CHAMPAGNE_HI, hair, Corners } from '@/components/features/onboarding/Chrome';
@@ -166,21 +167,8 @@ export function VerifyGuide({ publisherKey, compact = false }: { publisherKey: P
 }
 
 /** Remembers who is acting, so every decision carries a name. */
-export function useActor(): [string, (v: string) => void] {
-  const [actor, setActor] = React.useState('');
-  React.useEffect(() => {
-    try { setActor(localStorage.getItem('civicos.updates.actor') ?? ''); } catch { /* storage unavailable */ }
-    // Every panel on the page shares one name: follow edits made elsewhere.
-    const on = (e: Event) => setActor((e as CustomEvent<string>).detail);
-    window.addEventListener('civicos-actor', on);
-    return () => window.removeEventListener('civicos-actor', on);
-  }, []);
-  const set = React.useCallback((v: string) => {
-    try { localStorage.setItem('civicos.updates.actor', v); } catch { /* storage unavailable */ }
-    window.dispatchEvent(new CustomEvent('civicos-actor', { detail: v }));
-  }, []);
-  return [actor, set];
-}
+/** The named official acting in the chamber (shared with the console: lib/official.ts). */
+export const useActor = useOfficial;
 
 /** A nation's private link (?link=) carried through chamber navigation. */
 export function useLink(): { link?: string; q: string } {
