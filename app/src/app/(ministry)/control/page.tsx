@@ -6,6 +6,8 @@ import { Plain } from '@/components/ui/Plain';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { MetricStat, ThresholdBar, SeverityBadge } from '@/components/ui/Ops';
 import { TerritoryHeat } from '@/components/features/SituationRoom';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { TONE } from '@/lib/tone-palette';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { instantiateMinistry, systemKindLabel } from '@/lib/institution/blueprint';
@@ -113,7 +115,7 @@ export default function MinistryControlPage({
                     </div>
 
                     <Card tight>
-                      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Service deployment theatre</h3>
+                      <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Service deployment theatre <SignalTag kind="sample" source={REFERENCE_MODEL} /></h3>
                       <div className="overflow-hidden rounded-[3px] border border-line-soft">
                         <TerritoryHeat epoch={(selected.id.charCodeAt(0) || 9) % 50} height={240} />
                       </div>
@@ -125,7 +127,7 @@ export default function MinistryControlPage({
                     </Card>
 
                     <Card tight>
-                      <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Service operations · {selected.archetype}</h3>
+                      <h3 className="mb-2 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Service operations · {selected.archetype} <SignalTag kind="sample" source={REFERENCE_MODEL} /></h3>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 xl:grid-cols-6">
                         {serviceReadings(selected.id, selected.archetype, (selected.id.charCodeAt(1) || 5) % 60).map(r => (
                           <div key={r.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5">

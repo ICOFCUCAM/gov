@@ -5,6 +5,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api/client';
 import { TONE, ACCENT, seed, Spark, Donut, TerritoryHeat, waveSeries } from '@/components/features/SituationRoom';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 import { nationalRegions } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { serviceReadings } from '@/lib/gov/ministry-services';
@@ -18,11 +20,11 @@ const ME = 'W. Tanaka (ops)';
 const sp = (k: string, n = 20, lo = 30, hi = 80) =>
   Array.from({ length: n }).map((_, i) => lo + seed(`ops:${k}:${i}`) * (hi - lo));
 
-function P({ title, meta, className = '', children }: { title: string; meta?: React.ReactNode; className?: string; children: React.ReactNode }) {
+function P({ title, meta, className = '', signal, children }: { title: string; meta?: React.ReactNode; className?: string; signal?: SignalKind; children: React.ReactNode }) {
   return (
     <section className={`flex min-h-0 flex-col rounded-[3px] border border-line bg-surface ${className}`}>
       <div className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-        <h2 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}</h2>
+        <h2 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}{signal ? <SignalTag kind={signal} source={REFERENCE_MODEL} /> : null}</h2>
         {meta ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
       </div>
       <div className="min-h-0 flex-1 p-2.5">{children}</div>
@@ -118,7 +120,7 @@ export function OpsCenter() {
     { l: 'Queues breaching', v: String(qBreach), t: qBreach === 0 ? 'ok' : 'alert', spark: sp('qb', 22, 0, 40), sub: '12% of total' },
     { l: 'Open incidents', v: String(openInc), t: openInc === 0 ? 'ok' : 'warn', spark: sp('oi', 20, 0, 20), sub: '1 critical' },
     { l: 'Operations posture', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', spark: sp('op', 24, 40, 70), sub: qBreach > 4 || !auditOk ? `${qBreach} queues breaching${auditOk ? '' : ' · audit review'}` : 'queues within SLA' },
-    { l: 'Cross-system latency', v: `${120 + Math.round(seed(`xl:${Math.floor(now / 15000)}`) * 90)}ms`, t: 'ok', spark: sp('xl', 22, 40, 80), sub: 'p95 mesh' },
+    { l: 'Cross-system latency', v: `${120 + Math.round(seed(`xl:${Math.floor(now / 15000)}`) * 90)}ms`, t: 'ok', spark: sp('xl', 22, 40, 80), sub: 'p95 mesh · sample' },
   ];
   const qTotal = queues.reduce((a, q) => a + q.depth, 0);
   const donut = queues.slice(0, 4).map((q, i) => ({ label: q.name, value: q.depth, tone: ['ok', 'warn', 'alert', 'neutral'][i] ?? 'neutral' }));
@@ -362,6 +364,7 @@ export function OpsCenter() {
       </div>
 
       {/* Lower micro-grid ecosystem — cross-system operational band */}
+      <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-ink-muted">Cross-system band <SignalTag kind="sample" source={REFERENCE_MODEL} /></p>
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         {[
           ['Service health', 'sh', 90, 99], ['Queue depth', 'qd', 10, 60], ['Throughput', 'tp', 40, 95],
@@ -427,7 +430,7 @@ export function OpsCenter() {
         </P>
       ) : null}
 
-      <P title="Infrastructure network pressure" meta="national digital twin">
+      <P title="Infrastructure network pressure" meta="network model" signal="modelled">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
             const p = networkPressure(k, now / 4000);
@@ -449,9 +452,9 @@ export function OpsCenter() {
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {[
           { l: 'Readiness posture', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok' },
-          { l: 'Operational tempo', v: `${Math.round(40 + seed(`opstempo:${Math.floor(now / 15000)}`) * 55)} ops/min`, t: 'ok' },
+          { l: 'Operational tempo', v: `${Math.round(40 + seed(`opstempo:${Math.floor(now / 15000)}`) * 55)} ops/min · sample`, t: 'ok' },
           { l: 'Open incidents', v: `${openInc} · ${openInc ? '1 crit' : 'nominal'}`, t: openInc ? 'alert' : 'ok' },
-          { l: 'Queue throughput', v: `${(1.2 + seed(`tput:${Math.floor(now / 15000)}`) * 0.6).toFixed(2)}M / 24h`, t: 'ok' },
+          { l: 'Queue throughput', v: `${(1.2 + seed(`tput:${Math.floor(now / 15000)}`) * 0.6).toFixed(2)}M / 24h · sample`, t: 'ok' },
           { l: 'Audit consistency', v: auditOk ? 'INTACT' : 'REVIEW', t: auditOk ? 'ok' : 'alert' },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
