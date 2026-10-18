@@ -273,7 +273,7 @@ export function OfficerWorkbench() {
                       setSelected(next);
                     }}
                   />
-                  <WatchStar kind="work-item" ref={w.ref} label={w.title} />
+                  <WatchStar kind="work-item" itemRef={w.ref} label={w.title} />
                   <button
                     type="button"
                     onClick={() => setActive(w.ref)}

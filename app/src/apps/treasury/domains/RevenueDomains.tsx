@@ -19,7 +19,7 @@ export function TaxRevenue({ id, now }: { id: string; now: number }) {
     variance: Math.round(s.pct - 95),
   }));
   return (
-    <LedgerFrame archetype="statement" ref="RV-TAX-01" title="Tax Revenue Collection" subtitle="live collection by stream" fiscalYear={String(new Date(now).getFullYear())}>
+    <LedgerFrame archetype="statement" code="RV-TAX-01" title="Tax Revenue Collection" subtitle="live collection by stream" fiscalYear={String(new Date(now).getFullYear())}>
       <KpiStrip items={[
         { label: 'Collection rate', value: `${r.collectionRatePct}%`, tone: r.collectionRatePct >= 92 ? TREASURY_DS.surplus : TREASURY_DS.brass },
         { label: 'Taxpayers (M)', value: r.taxpayersM, tone: TREASURY_DS.brass },
@@ -37,7 +37,7 @@ export function CustomsRevenue({ id, now }: { id: string; now: number }) {
   const r = revenueOps(id, ts);
   const streams = ['Import duty', 'Export duty', 'Excise (fuel)', 'Excise (alcohol)', 'Excise (tobacco)', 'Service tax'];
   return (
-    <LedgerFrame archetype="statement" ref="RV-CUS-02" title="Customs Revenue" subtitle="duty collection at the border">
+    <LedgerFrame archetype="statement" code="RV-CUS-02" title="Customs Revenue" subtitle="duty collection at the border">
       <KpiStrip items={[
         { label: 'Customs throughput', value: `${r.customsThroughputPct}%`, tone: r.customsThroughputPct >= 85 ? TREASURY_DS.surplus : TREASURY_DS.brass },
         { label: 'Declarations / day', value: Math.round(wave(`cs:dec:${id}`, ts, 1200, 86000)).toLocaleString(), tone: TREASURY_DS.brass },
@@ -73,7 +73,7 @@ export function TaxpayerRegistry({ id, now }: { id: string; now: number }) {
     { label: 'VAT registered', count: Math.round(r.taxpayersM * 60000), share: 4 },
   ];
   return (
-    <LedgerFrame archetype="register" ref="RV-REG-03" title="Taxpayer Registry" subtitle="active taxpayers by category">
+    <LedgerFrame archetype="register" code="RV-REG-03" title="Taxpayer Registry" subtitle="active taxpayers by category">
       <KpiStrip items={[
         { label: 'Total (M)', value: r.taxpayersM, tone: TREASURY_DS.brass },
         { label: 'New this Q', value: Math.round(wave(`tp:new:${id}`, ts, 1200, 48000)).toLocaleString(), tone: TREASURY_DS.surplus },
@@ -97,7 +97,7 @@ export function TaxpayerRegistry({ id, now }: { id: string; now: number }) {
 export function EInvoicing({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   return (
-    <LedgerFrame archetype="register" ref="RV-EIN-04" title="e-Invoicing" subtitle="real-time invoice validation & VAT reconciliation">
+    <LedgerFrame archetype="register" code="RV-EIN-04" title="e-Invoicing" subtitle="real-time invoice validation & VAT reconciliation">
       <KpiStrip items={[
         { label: 'Invoices /day', value: Math.round(wave(`ei:d:${id}`, ts, 240000, 4800000)).toLocaleString(), tone: TREASURY_DS.brass },
         { label: 'Validation pass', value: `${Math.round(wave(`ei:p:${id}`, ts, 92, 99.5) * 10) / 10}%`, tone: TREASURY_DS.surplus },
@@ -117,7 +117,7 @@ export function RiskBasedAudit({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const selections = ['Random sample', 'High-revenue stream', 'Sector anomaly', 'Cross-border flow', aiLabel('AI behavioural signal', 'Behavioural signal')];
   return (
-    <LedgerFrame archetype="audit" ref="RV-AUD-05" title="Risk-Based Audit" subtitle={aiLabel('AI-driven audit selection with transparent criteria', 'Risk-driven audit selection with transparent criteria')}>
+    <LedgerFrame archetype="audit" code="RV-AUD-05" title="Risk-Based Audit" subtitle={aiLabel('AI-driven audit selection with transparent criteria', 'Risk-driven audit selection with transparent criteria')}>
       <KpiStrip items={[
         { label: 'Audits open', value: Math.round(wave(`au:o:${id}`, ts, 240, 14800)).toLocaleString(), tone: TREASURY_DS.brass },
         { label: 'Yield this Q (Bn)', value: Math.round(wave(`au:y:${id}`, ts, 2, 48) * 10) / 10, tone: TREASURY_DS.surplus },

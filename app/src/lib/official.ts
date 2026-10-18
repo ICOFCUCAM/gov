@@ -57,3 +57,8 @@ export function useOfficial(): [string, (v: string) => void] {
   if (signIn?.enforced) return ['', () => {}];
   return [name, set];
 }
+
+/** The name declared at this desk (outside React; the server prefers a signed-in official). */
+export function declaredOfficial(): string {
+  try { return localStorage.getItem(KEY) ?? ''; } catch { return ''; }
+}

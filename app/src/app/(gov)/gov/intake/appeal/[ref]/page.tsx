@@ -8,7 +8,7 @@ export default async function AppealPage({ params }: { params: Promise<{ ref: st
   const { ref } = await params;
   return (
     <CommandShell active="intake">
-      <AppealDetail ref={decodeURIComponent(ref)} />
+      <AppealDetail recordRef={decodeURIComponent(ref)} />
     </CommandShell>
   );
 }

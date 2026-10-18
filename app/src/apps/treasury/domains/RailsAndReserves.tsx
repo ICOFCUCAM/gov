@@ -13,7 +13,7 @@ export function PaymentsRail({ id, now }: { id: string; now: number }) {
   const r = bankingRails(id, ts);
   const channels = ['GovPay instant', 'Batch disbursement', 'Mobile money', 'Agent network', 'Card rail', 'USSD'];
   return (
-    <LedgerFrame archetype="gauge" ref="RA-PAY-01" title="GovPay Rail" subtitle="instant credit transfer & batch disbursement">
+    <LedgerFrame archetype="gauge" code="RA-PAY-01" title="GovPay Rail" subtitle="instant credit transfer & batch disbursement">
       <KpiStrip items={[
         { label: 'Throughput / day (M)', value: Math.round(wave(`pay:t:${id}`, ts, 4, 64) * 10) / 10, tone: TREASURY_DS.brass },
         { label: 'Channels online', value: `${r.channelsOnline}/${r.channelsTotal}`, tone: r.channelsOnline === r.channelsTotal ? TREASURY_DS.surplus : TREASURY_DS.brass },
@@ -44,7 +44,7 @@ export function PaymentsRail({ id, now }: { id: string; now: number }) {
 export function CBDCOperations({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   return (
-    <LedgerFrame archetype="gauge" ref="RA-CBD-02" title="CBDC Operations" subtitle="retail & wholesale CBDC issuance">
+    <LedgerFrame archetype="gauge" code="RA-CBD-02" title="CBDC Operations" subtitle="retail & wholesale CBDC issuance">
       <KpiStrip items={[
         { label: 'Circulation (Bn)', value: Math.round(wave(`cb:cr:${id}`, ts, 0.4, 48) * 10) / 10, tone: TREASURY_DS.brass },
         { label: 'Retail wallets (M)', value: Math.round(wave(`cb:rw:${id}`, ts, 0.4, 24) * 10) / 10, tone: TREASURY_DS.brass },
@@ -65,7 +65,7 @@ export function SettlementReconciliation({ id, now }: { id: string; now: number 
   const ts = now / 4000;
   const r = bankingRails(id, ts);
   return (
-    <LedgerFrame archetype="audit" ref="RA-SET-03" title="Settlement Reconciliation" subtitle="bank settlement reconciliation">
+    <LedgerFrame archetype="audit" code="RA-SET-03" title="Settlement Reconciliation" subtitle="bank settlement reconciliation">
       <KpiStrip items={[
         { label: 'Reconciled', value: `${r.reconciledPct}%`, tone: r.reconciledPct >= 99 ? TREASURY_DS.surplus : TREASURY_DS.brass },
         { label: 'Settlement latency', value: `${r.settlementLatencyMin}m`, tone: TREASURY_DS.brass },
@@ -97,7 +97,7 @@ export function SovereignReserves({ id, now }: { id: string; now: number }) {
     { label: 'Regional currencies', share: 10, billion: c.fxReservesBn * 0.10 },
   ];
   return (
-    <LedgerFrame archetype="statement" ref="RS-FXR-02" title="Sovereign Reserves" subtitle="FX position by composition">
+    <LedgerFrame archetype="statement" code="RS-FXR-02" title="Sovereign Reserves" subtitle="FX position by composition">
       <KpiStrip items={[
         { label: 'Total reserves (Bn)', value: c.fxReservesBn, tone: TREASURY_DS.brass },
         { label: 'Months of imports', value: Math.round(wave(`fx:mi:${id}`, ts, 3, 12) * 10) / 10, tone: TREASURY_DS.brass },
@@ -132,7 +132,7 @@ export function PublicDebt({ id, now }: { id: string; now: number }) {
     { label: 'Domestic retail', value: total * 0.04 },
   ];
   return (
-    <LedgerFrame archetype="statement" ref="RS-DBT-03" title="Public Debt Portfolio" subtitle="sovereign debt instruments by maturity">
+    <LedgerFrame archetype="statement" code="RS-DBT-03" title="Public Debt Portfolio" subtitle="sovereign debt instruments by maturity">
       <KpiStrip items={[
         { label: 'Outstanding (Bn)', value: total, tone: TREASURY_DS.brass },
         { label: 'Average maturity (y)', value: Math.round(wave(`pd:m:${id}`, ts, 4, 14) * 10) / 10, tone: TREASURY_DS.brass },
@@ -159,7 +159,7 @@ export function FiscalAudit({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const a = fiscalAssurance(id, ts);
   return (
-    <LedgerFrame archetype="audit" ref="AS-AUD-01" title="Fiscal Audit Trail" subtitle="hash-chained audit trail">
+    <LedgerFrame archetype="audit" code="AS-AUD-01" title="Fiscal Audit Trail" subtitle="hash-chained audit trail">
       <KpiStrip items={[
         { label: 'Chain intact', value: `${a.chainIntactPct}%`, tone: a.chainIntactPct >= 99.9 ? TREASURY_DS.surplus : TREASURY_DS.deficit },
         { label: 'Open findings', value: a.openFindings, tone: a.openFindings > 12 ? TREASURY_DS.deficit : TREASURY_DS.brass },
@@ -187,7 +187,7 @@ export function AntiFraud({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const a = fiscalAssurance(id, ts);
   return (
-    <LedgerFrame archetype="audit" ref="AS-FRD-02" title="Anti-Fraud Intelligence" subtitle={aiLabel('AI-driven detection with explainability', 'Signal-driven detection with explainability')}>
+    <LedgerFrame archetype="audit" code="AS-FRD-02" title="Anti-Fraud Intelligence" subtitle={aiLabel('AI-driven detection with explainability', 'Signal-driven detection with explainability')}>
       <KpiStrip items={[
         { label: 'Live signals', value: a.fraudSignals, tone: a.fraudSignals > 0 ? TREASURY_DS.deficit : TREASURY_DS.surplus },
         { label: 'Q yield (Bn)', value: Math.round(wave(`af:y:${id}`, ts, 0.4, 12) * 10) / 10, tone: TREASURY_DS.brass },
@@ -207,7 +207,7 @@ export function TaxpayerPortal({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const c = citizenFinance(id, ts);
   return (
-    <LedgerFrame archetype="portal" ref="PT-TXP-01" title="Taxpayer Portal" subtitle="citizen tax filing & refunds">
+    <LedgerFrame archetype="portal" code="PT-TXP-01" title="Taxpayer Portal" subtitle="citizen tax filing & refunds">
       <KpiStrip items={[
         { label: 'Portal uptime', value: `${c.portalUptime}%`, tone: c.portalUptime >= 99 ? TREASURY_DS.surplus : TREASURY_DS.brass },
         { label: 'Payments today (M)', value: c.paymentsTodayM, tone: TREASURY_DS.brass },
@@ -227,7 +227,7 @@ export function PublicBudgetDashboard({ id, now }: { id: string; now: number }) 
   const ts = now / 4000;
   void id;
   return (
-    <LedgerFrame archetype="portal" ref="PT-PUB-02" title="Public Budget Dashboard" subtitle="public execution view (anonymised)">
+    <LedgerFrame archetype="portal" code="PT-PUB-02" title="Public Budget Dashboard" subtitle="public execution view (anonymised)">
       <KpiStrip items={[
         { label: 'Execution YTD', value: `${Math.round(wave(`pbd:e:${ts}`, ts, 48, 86))}%`, tone: TREASURY_DS.brass },
         { label: 'Programs visible', value: Math.round(wave(`pbd:p:${ts}`, ts, 180, 480)), tone: TREASURY_DS.brass },

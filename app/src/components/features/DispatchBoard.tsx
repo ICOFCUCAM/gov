@@ -251,7 +251,7 @@ export function DispatchBoard() {
                     if (e.currentTarget.checked) next.add(d.ref); else next.delete(d.ref);
                     setSelected(next);
                   }} />
-                <WatchStar kind="dispatch" ref={d.ref} label={d.detail ?? d.kind} />
+                <WatchStar kind="dispatch" itemRef={d.ref} label={d.detail ?? d.kind} />
                 <a href={`/gov/dispatches/${encodeURIComponent(d.ref)}`}
                    className="w-28 shrink-0 truncate font-mono text-ink-soft hover:text-link hover:underline">
                   {d.ref}

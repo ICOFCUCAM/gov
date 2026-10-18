@@ -14,7 +14,6 @@ import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
-import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { directiveStatusTone } from '@/lib/tone';
 import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
@@ -54,7 +53,6 @@ export function DirectiveBoard() {
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
-    if (!available) return;
     setLoading(true);
     try {
       setItems(await listDirectivesRows({ limit: 50 }));
@@ -73,15 +71,13 @@ export function DirectiveBoard() {
     refresh,
   );
 
-  if (!available) {
-    return <SubstrateNotConfigured title="Directive Board"
-      message="The persistent substrate is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to surface the directive lifecycle here." />;
-  }
+  // Without the shared database the board works on the platform's own directive
+  // store (lib/data/directives.ts, through the same repo calls).
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <SurfaceHeading title="Directive Board" badge="durable · realtime" />
+        <SurfaceHeading title="Directive Board" badge={available ? 'saved · live' : 'saved on this platform'} />
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -141,7 +137,7 @@ export function DirectiveBoard() {
                 key={d.id}
                 className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]"
               >
-                <WatchStar kind="directive" ref={d.ref} label={d.title} />
+                <WatchStar kind="directive" itemRef={d.ref} label={d.title} />
                 <a href={`/gov/directives/${encodeURIComponent(d.ref)}`}
                    className="w-28 shrink-0 truncate font-mono text-ink-soft hover:text-link hover:underline">
                   {d.ref}
@@ -162,7 +158,7 @@ export function DirectiveBoard() {
                       onSign={async (effectiveAt) => {
                         setBusyRef(d.ref);
                         try { await signDirectiveRow(d.ref, null, effectiveAt); }
-                        finally { setBusyRef(null); }
+                        finally { setBusyRef(null); void refresh(); }
                       }}
                     />
                   ) : null}
@@ -174,7 +170,7 @@ export function DirectiveBoard() {
                       onClick={async () => {
                         setBusyRef(d.ref);
                         try { await rescindDirectiveRow(d.ref); }
-                        finally { setBusyRef(null); }
+                        finally { setBusyRef(null); void refresh(); }
                       }}
                     >
                       rescind
@@ -225,7 +221,7 @@ function DirectiveComposer({
         targets: targets.split(',').map(s => s.trim()).filter(Boolean),
         issuedByName: me?.name ?? null,
       });
-      if (!row) { setError('record_directive failed (check console)'); return; }
+      if (!row) { setError('The directive could not be saved. Check the reference is new and that you are signed in or have named yourself.'); return; }
       onDone();
     } finally {
       setBusy(false);

@@ -12,7 +12,7 @@ import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 
-export function ServiceRequestDetail({ ref: srRef }: { ref: string }) {
+export function ServiceRequestDetail({ recordRef: srRef }: { recordRef: string }) {
   const { actor, ready } = useIdentity();
   const [row, setRow] = React.useState<ServiceRequestRow | null>(null);
   const [linked, setLinked] = React.useState<WorkItemRow | null>(null);
@@ -63,7 +63,7 @@ export function ServiceRequestDetail({ ref: srRef }: { ref: string }) {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{row.title ?? row.service}</h2>
-          <WatchStar kind="service-request" ref={row.ref} label={row.title ?? row.service} />
+          <WatchStar kind="service-request" itemRef={row.ref} label={row.title ?? row.service} />
           <span
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: tone, color: tone }}

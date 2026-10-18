@@ -265,7 +265,7 @@ export function EscalationFloor() {
                     if (ev.currentTarget.checked) next.add(e.id); else next.delete(e.id);
                     setSelected(next);
                   }} />
-                <WatchStar kind="escalation" ref={e.id} label={e.reason} />
+                <WatchStar kind="escalation" itemRef={e.id} label={e.reason} />
                 <span
                   className="w-20 shrink-0 text-[8.5px] font-bold uppercase tracking-wider"
                   style={{ color: severityTone(e.severity) }}

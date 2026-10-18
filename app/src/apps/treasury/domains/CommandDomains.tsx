@@ -16,7 +16,7 @@ export function FiscalCommandSurface({ id, now }: { id: string; now: number }) {
   const c = fiscalCommand(id, ts);
   const tc = treasuryCommand(id, ts);
   return (
-    <LedgerFrame archetype="command" ref="TR-CMD-01" title="Fiscal Command" subtitle="sovereign fiscal posture & macro-stability" fiscalYear={String(new Date(now).getFullYear())}>
+    <LedgerFrame archetype="command" code="TR-CMD-01" title="Fiscal Command" subtitle="sovereign fiscal posture & macro-stability" fiscalYear={String(new Date(now).getFullYear())}>
       <KpiStrip items={[
         { label: 'Liquidity (days)', value: c.liquidityDays, tone: c.liquidityDays < 30 ? TREASURY_DS.deficit : c.liquidityDays < 90 ? TREASURY_DS.brass : TREASURY_DS.surplus },
         { label: 'Debt-to-GDP', value: `${c.debtToGdp}%`, tone: c.debtToGdp > 80 ? TREASURY_DS.deficit : c.debtToGdp > 60 ? TREASURY_DS.brass : TREASURY_DS.surplus },
@@ -50,7 +50,7 @@ export function SingleAccountOverview({ id, now }: { id: string; now: number }) 
   }));
   const total = subLedgers.reduce((s, x) => s + x.balanceBn, 0);
   return (
-    <LedgerFrame archetype="command" ref="TR-CMD-02" title="Treasury Single Account" subtitle="TSA position with per-ministry sub-ledgers" fiscalYear={String(new Date(now).getFullYear())}>
+    <LedgerFrame archetype="command" code="TR-CMD-02" title="Treasury Single Account" subtitle="TSA position with per-ministry sub-ledgers" fiscalYear={String(new Date(now).getFullYear())}>
       <KpiStrip items={[
         { label: 'TSA balance', value: `${r.tsaBalanceBn} Bn`, tone: TREASURY_DS.surplus },
         { label: 'Sub-ledger sum', value: `${total.toFixed(1)} Bn`, tone: TREASURY_DS.brass },
@@ -91,7 +91,7 @@ export function MacroStability({ id, now }: { id: string; now: number }) {
     { label: 'Macro stability index', value: c.macroStability, unit: '', target: 70 },
   ];
   return (
-    <LedgerFrame archetype="gauge" ref="TR-CMD-03" title="Macro Stability Monitor" subtitle="indicators feeding fiscal policy">
+    <LedgerFrame archetype="gauge" code="TR-CMD-03" title="Macro Stability Monitor" subtitle="indicators feeding fiscal policy">
       <div className="grid grid-cols-1 gap-2 md:grid-cols-2 xl:grid-cols-5">
         {indicators.map(i => {
           const delta = i.value - i.target;
@@ -119,7 +119,7 @@ export function FiscalForecasting({ id, now }: { id: string; now: number }) {
   const liqTraj = horizon.map(h => Math.round(c.liquidityDays + wave(`fc:l:${id}`, ts + h * 0.13, -20, 30)));
   const fxTraj = horizon.map(h => Math.round((c.fxReservesBn + wave(`fc:f:${id}`, ts + h * 0.14, -20, 40)) * 10) / 10);
   return (
-    <LedgerFrame archetype="gauge" ref="TR-CMD-04" title="Fiscal Forecasting" subtitle="25-year sovereign fiscal trajectory">
+    <LedgerFrame archetype="gauge" code="TR-CMD-04" title="Fiscal Forecasting" subtitle="25-year sovereign fiscal trajectory">
       <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
         {[
           { label: 'Debt-to-GDP (%)', series: debtTraj, color: TREASURY_DS.deficit, inverse: true },

@@ -15,7 +15,7 @@ import { WatchStar } from '@/components/identity/WatchStar';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { priorityTone, dispatchStatusTone } from '@/lib/tone';
 
-export function DispatchDetail({ ref: dispatchRef }: { ref: string }) {
+export function DispatchDetail({ recordRef: dispatchRef }: { recordRef: string }) {
   const { actor, ready } = useIdentity();
   const [row, setRow] = React.useState<DispatchRow | null>(null);
   const [linkedEscalations, setLinkedEscalations] = React.useState<EscalationRow[]>([]);
@@ -60,7 +60,7 @@ export function DispatchDetail({ ref: dispatchRef }: { ref: string }) {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{row.detail ?? row.kind}</h2>
-          <WatchStar kind="dispatch" ref={row.ref} label={row.detail ?? row.kind} />
+          <WatchStar kind="dispatch" itemRef={row.ref} label={row.detail ?? row.kind} />
           <span
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: priorityTone(row.priority), color: priorityTone(row.priority) }}

@@ -30,6 +30,9 @@
       "name": "cron"
     },
     {
+      "name": "directives"
+    },
+    {
       "name": "documents"
     },
     {
@@ -1528,6 +1531,173 @@
           }
         },
         "x-source": "src/app/api/cron/witness-sweep/route.ts"
+      }
+    },
+    "/api/directives/{ref}": {
+      "get": {
+        "tags": [
+          "directives"
+        ],
+        "operationId": "get_directives_ref",
+        "summary": "GET /api/directives/{ref}",
+        "description": "One platform directive. POST { action: 'sign' | 'rescind', effectiveAt? } under the named (verified, when signed in) official; audited.",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/directives/[ref]/route.ts"
+      },
+      "post": {
+        "tags": [
+          "directives"
+        ],
+        "operationId": "post_directives_ref",
+        "summary": "POST /api/directives/{ref}",
+        "description": "One platform directive. POST { action: 'sign' | 'rescind', effectiveAt? } under the named (verified, when signed in) official; audited.",
+        "parameters": [
+          {
+            "name": "ref",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/directives/[ref]/route.ts"
+      }
+    },
+    "/api/directives": {
+      "get": {
+        "tags": [
+          "directives"
+        ],
+        "operationId": "get_directives",
+        "summary": "GET /api/directives",
+        "description": "Directives kept by the platform (lib/data/directives.ts), used when the shared database is not connected. GET lists them (?status, ?issuer, ?limit); POST drafts one under the named (verified, when signed in) official.",
+        "parameters": [
+          {
+            "name": "issuer",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/directives/route.ts"
+      },
+      "post": {
+        "tags": [
+          "directives"
+        ],
+        "operationId": "post_directives",
+        "summary": "POST /api/directives",
+        "description": "Directives kept by the platform (lib/data/directives.ts), used when the shared database is not connected. GET lists them (?status, ?issuer, ?limit); POST drafts one under the named (verified, when signed in) official.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/directives/route.ts"
       }
     },
     "/api/documents/verify": {

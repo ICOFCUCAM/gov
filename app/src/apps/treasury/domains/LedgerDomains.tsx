@@ -18,7 +18,7 @@ export function AppropriationLedger({ id, now }: { id: string; now: number }) {
     variance: Math.round(m.execPct - 75),
   }));
   return (
-    <LedgerFrame archetype="ledger" ref="LD-APP-01" title="Appropriation Ledger" subtitle="budget vs spend by ministry" fiscalYear={String(new Date(now).getFullYear())}>
+    <LedgerFrame archetype="ledger" code="LD-APP-01" title="Appropriation Ledger" subtitle="budget vs spend by ministry" fiscalYear={String(new Date(now).getFullYear())}>
       <KpiStrip items={[
         { label: 'Execution', value: `${b.executionPct}%`, tone: b.executionPct >= 60 ? TREASURY_DS.surplus : TREASURY_DS.brass },
         { label: 'Virements', value: b.virements, tone: b.virements > 20 ? TREASURY_DS.deficit : TREASURY_DS.brass },
@@ -35,7 +35,7 @@ export function SubLedgerReconciliation({ id, now }: { id: string; now: number }
   const ts = now / 4000;
   const r = bankingRails(id, ts);
   return (
-    <LedgerFrame archetype="audit" ref="LD-REC-02" title="Sub-Ledger Reconciliation" subtitle="three-way TSA ↔ rail ↔ ministry">
+    <LedgerFrame archetype="audit" code="LD-REC-02" title="Sub-Ledger Reconciliation" subtitle="three-way TSA ↔ rail ↔ ministry">
       <KpiStrip items={[
         { label: 'Reconciled', value: `${r.reconciledPct}%`, tone: r.reconciledPct >= 99 ? TREASURY_DS.surplus : r.reconciledPct >= 95 ? TREASURY_DS.brass : TREASURY_DS.deficit },
         { label: 'Failed settlements', value: r.failedSettlements, tone: r.failedSettlements > 0 ? TREASURY_DS.deficit : TREASURY_DS.surplus },
@@ -68,7 +68,7 @@ export function DailyStatement({ id, now }: { id: string; now: number }) {
   const outflowsBn = Math.round(wave(`stmt:out:${id}`, ts, 6, 60) * 10) / 10;
   const opening = c.tsaBalanceBn - inflowsBn + outflowsBn;
   return (
-    <LedgerFrame archetype="statement" ref="LD-DST-03" title="Daily Fiscal Statement" subtitle="end-of-day position">
+    <LedgerFrame archetype="statement" code="LD-DST-03" title="Daily Fiscal Statement" subtitle="end-of-day position">
       <TAccount title={`Statement — ${new Date(now).toISOString().slice(0, 10)}`}
         debit={[
           { label: 'Opening balance', value: `${opening.toFixed(2)} Bn` },
@@ -86,7 +86,7 @@ export function ExpenditureControl({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const b = budgetOps(id, ts);
   return (
-    <LedgerFrame archetype="ledger" ref="LD-EXC-04" title="Expenditure Control" subtitle="encumbrance & release control">
+    <LedgerFrame archetype="ledger" code="LD-EXC-04" title="Expenditure Control" subtitle="encumbrance & release control">
       <KpiStrip items={[
         { label: 'Total execution', value: `${b.executionPct}%`, tone: TREASURY_DS.brass },
         { label: 'Virements (transfers)', value: b.virements, tone: b.virements > 20 ? TREASURY_DS.deficit : TREASURY_DS.brass },

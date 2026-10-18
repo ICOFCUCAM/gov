@@ -23,9 +23,21 @@ export interface DirectiveInput {
   status?: 'drafting' | 'signed' | 'effective' | 'rescinded' | 'published';
 }
 
+// Without the shared database, directives are kept by the platform itself
+// (/api/directives, lib/data/directives.ts); the same calls work either way.
+async function platformDirectives<T>(path: string, init?: { method: string; body: unknown }): Promise<T | null> {
+  if (typeof window === 'undefined') return null;
+  const { declaredOfficial } = await import('@/lib/official');
+  const r = await fetch(`/api/directives${path}`, init
+    ? { method: init.method, headers: { 'content-type': 'application/json' }, body: JSON.stringify({ by: declaredOfficial() || undefined, ...(init.body as object) }) }
+    : { cache: 'no-store' }).catch(() => null);
+  if (!r || !r.ok) { if (r) console.error('[civicos] directive request failed:', (await r.json().catch(() => ({}))).error); return null; }
+  return r.json() as Promise<T>;
+}
+
 export async function recordDirectiveRow(d: DirectiveInput): Promise<DirectiveRow | null> {
   const sb = publicClient();
-  if (!sb) return null;
+  if (!sb) return (await platformDirectives<{ directive: DirectiveRow }>('', { method: 'POST', body: d }))?.directive ?? null;
   const { data, error } = await sb.rpc('civicos_record_directive', {
     p_ref: d.ref, p_kind: d.kind,
     p_issued_by_charter_id: d.issuedByCharterId,
@@ -40,7 +52,7 @@ export async function recordDirectiveRow(d: DirectiveInput): Promise<DirectiveRo
 
 export async function signDirectiveRow(ref: string, signedByOfficerId?: string | null, effectiveAt?: string | null): Promise<DirectiveRow | null> {
   const sb = publicClient();
-  if (!sb) return null;
+  if (!sb) return (await platformDirectives<{ directive: DirectiveRow }>(`/${encodeURIComponent(ref)}`, { method: 'POST', body: { action: 'sign', effectiveAt } }))?.directive ?? null;
   const { data, error } = await sb.rpc('civicos_sign_directive', {
     p_ref: ref, p_signed_by_officer_id: signedByOfficerId ?? null,
     p_effective_at: effectiveAt ?? null,
@@ -51,7 +63,7 @@ export async function signDirectiveRow(ref: string, signedByOfficerId?: string |
 
 export async function rescindDirectiveRow(ref: string): Promise<DirectiveRow | null> {
   const sb = publicClient();
-  if (!sb) return null;
+  if (!sb) return (await platformDirectives<{ directive: DirectiveRow }>(`/${encodeURIComponent(ref)}`, { method: 'POST', body: { action: 'rescind' } }))?.directive ?? null;
   const { data, error } = await sb.rpc('civicos_rescind_directive', { p_ref: ref });
   if (error) { console.error('[civicos] rescind_directive failed:', error.message); return null; }
   return (data as DirectiveRow) ?? null;
@@ -59,7 +71,7 @@ export async function rescindDirectiveRow(ref: string): Promise<DirectiveRow | n
 
 export async function directiveByRef(ref: string): Promise<DirectiveRow | null> {
   const sb = publicClient();
-  if (!sb) return null;
+  if (!sb) return (await platformDirectives<{ directive: DirectiveRow }>(`/${encodeURIComponent(ref)}`))?.directive ?? null;
   const { data, error } = await sb.from('civicos_directives').select('*')
     .eq('ref', ref).limit(1).maybeSingle();
   if (error || !data) return null;
@@ -86,7 +98,10 @@ export async function dispatchByRef(ref: string): Promise<DispatchRow | null> {
 
 export async function listDirectivesRows(opts: { status?: string; issuer?: string; limit?: number } = {}): Promise<DirectiveRow[]> {
   const sb = publicClient();
-  if (!sb) return [];
+  if (!sb) {
+    const q = new URLSearchParams(Object.entries(opts).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)]));
+    return (await platformDirectives<{ directives: DirectiveRow[] }>(`?${q}`))?.directives ?? [];
+  }
   let q = sb.from('civicos_directives').select('*');
   if (opts.status) q = q.eq('status', opts.status);
   if (opts.issuer) q = q.eq('issued_by_charter_id', opts.issuer);

@@ -6,13 +6,12 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
   directiveByRef, signDirectiveRow, rescindDirectiveRow,
 } from '@/lib/db/repos/memory';
-import { substrateAvailable } from '@/lib/db/client';
 import type { DirectiveRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { WatchStar } from '@/components/identity/WatchStar';
-import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { directiveStatusTone } from '@/lib/tone';
+import { useSignIn } from '@/lib/official';
 
 /**
  * DirectiveDetail — single-record drill-in for /gov/directives/[ref].
@@ -20,16 +19,16 @@ import { directiveStatusTone } from '@/lib/tone';
  * affordances appear for callers whose substrate identity is allowed
  * to mutate (strict-identity override gates this server-side anyway).
  */
-export function DirectiveDetail({ ref: directiveRef }: { ref: string }) {
+export function DirectiveDetail({ recordRef: directiveRef }: { recordRef: string }) {
   const { actor, ready } = useIdentity();
+  const signIn = useSignIn();
   const [row, setRow] = React.useState<DirectiveRow | null>(null);
   const [busy, setBusy] = React.useState(false);
-  const available = substrateAvailable();
 
+  // Without the shared database the directive comes from the platform's own store (same call).
   const refresh = React.useCallback(async () => {
-    if (!available) return;
     setRow(await directiveByRef(directiveRef));
-  }, [available, directiveRef]);
+  }, [directiveRef]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
 
@@ -40,9 +39,6 @@ export function DirectiveDetail({ ref: directiveRef }: { ref: string }) {
     refresh,
   );
 
-  if (!available) {
-    return <SubstrateNotConfigured title="Directive" />;
-  }
   if (!row) {
     return (
       <Panel title="Directive" meta={directiveRef} bodyClass="!p-3">
@@ -56,14 +52,15 @@ export function DirectiveDetail({ ref: directiveRef }: { ref: string }) {
     );
   }
 
-  const canMutate = actor?.kind === 'officer';
+  // A substrate officer, or an official signed in to the platform (the server records the verified name).
+  const canMutate = actor?.kind === 'officer' || !!signIn?.official;
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{row.title}</h2>
-          <WatchStar kind="directive" ref={row.ref} label={row.title} />
+          <WatchStar kind="directive" itemRef={row.ref} label={row.title} />
           <span
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: directiveStatusTone(row.status), color: directiveStatusTone(row.status) }}
@@ -107,14 +104,14 @@ export function DirectiveDetail({ ref: directiveRef }: { ref: string }) {
           <div className="flex flex-wrap gap-1">
             {row.status === 'drafting' ? (
               <button type="button" disabled={busy}
-                onClick={async () => { setBusy(true); try { await signDirectiveRow(row.ref); } finally { setBusy(false); } }}
+                onClick={async () => { setBusy(true); try { await signDirectiveRow(row.ref); } finally { setBusy(false); void refresh(); } }}
                 className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
                 sign
               </button>
             ) : null}
             {row.status !== 'rescinded' ? (
               <button type="button" disabled={busy}
-                onClick={async () => { setBusy(true); try { await rescindDirectiveRow(row.ref); } finally { setBusy(false); } }}
+                onClick={async () => { setBusy(true); try { await rescindDirectiveRow(row.ref); } finally { setBusy(false); void refresh(); } }}
                 className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
                 rescind
               </button>
