@@ -23,17 +23,24 @@ export function Spinner({ className = '' }: { className?: string }) {
 }
 
 /**
- * Standard "substrate not configured" outer panel. Used by every
- * surface that returns early when `substrateAvailable()` is false.
+ * Standard panel for a part of the platform that needs the shared database
+ * (the substrate), which this installation has not connected. Officials read
+ * a plain sentence; the technical detail stays behind "Technical details".
  */
 export function SubstrateNotConfigured({
   title,
   message = 'Substrate not configured.',
 }: { title: string; message?: string }) {
   return (
-    <Panel title={title} meta="not configured" bodyClass="!p-3">
-      <p className="text-[10px] text-ink-muted">{message}</p>
+    <Panel title={title} meta="not switched on" bodyClass="!p-3">
+      <p className="text-[13px] text-ink-soft">
+        This part of the platform is not switched on for this installation yet. It needs the shared database, which an
+        administrator connects (see <a href="/gov/configuration" className="text-link underline underline-offset-2">National settings</a>).
+      </p>
+      <details className="mt-2 text-[12px] text-ink-muted">
+        <summary className="cursor-pointer">Technical details</summary>
+        <p className="mt-1">{message} Variables: NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (register 1.1).</p>
+      </details>
     </Panel>
   );
 }
-

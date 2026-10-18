@@ -226,6 +226,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   observed values and are modelled, never observations; every version is kept
   with its inputs and a SHA-256 evidence hash, and a directive drafted from
   one cites scenario, version and hash.
+- The console menu is `lib/nav/console-nav.ts` (plain language, about 30
+  entries; related pages are tabs of one item). A new console page joins an
+  item as a tab (with `was` if it replaces an earlier name) instead of
+  adding a menu entry; `console-nav.test.ts` checks every earlier menu page
+  stays reachable and keeps technical words out of labels. Screens use the
+  plain word; technical terms go in the glossary (`lib/nav/glossary.ts`).
 - Engines must not read the nation's regions or offices into module-level
   constants; read them at use (`regionList()`, or a function). The root
   layout writes the nation's facts before scripts load, but data from setup
