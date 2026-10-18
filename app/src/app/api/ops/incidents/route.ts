@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createIncident, listIncidents } from '@/lib/data/store';
 import type { IncidentSeverity } from '@/lib/api/types';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ export function GET() {
 export async function POST(req: NextRequest) {
   let body: { severity?: string; title?: string; scope?: string; by?: string };
   try {
-    body = (await req.json()) as typeof body;
+    body = (await withOfficial(await req.json())) as typeof body;
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }

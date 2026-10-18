@@ -287,6 +287,17 @@ What has been built is locked. Work only upgrades it toward the vision in
   and holds only JSON, Maps, Sets and Dates. When a store gains fields, give
   them defaults for snapshots saved before the change.
 
+## Who acted
+
+- Officials sign in at `/sign-in` (platform accounts, `lib/auth/officials.ts`,
+  or the substrate); the server sets a signed session (`lib/auth/session-token.ts`).
+  A route that records who acted parses its body with `withOfficial()`
+  (`lib/auth/official.ts`) or `chamberBody()`, so a signed-in official's
+  verified name replaces any name in the request. Never trust a `by`,
+  `actor` or `officerName` from the body when someone is signed in.
+  `CIVICOS_AUTH=enforce` (with `CIVICOS_SESSION_SECRET`) refuses API changes
+  without a verified official.
+
 ## API description
 
 - `/api/openapi` is generated from the route files. After adding or changing

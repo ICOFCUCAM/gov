@@ -21,6 +21,9 @@
       "name": "audit"
     },
     {
+      "name": "auth"
+    },
+    {
       "name": "cabinet"
     },
     {
@@ -305,6 +308,201 @@
           }
         },
         "x-source": "src/app/api/audit/verify/route.ts"
+      }
+    },
+    "/api/auth/official": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_official",
+        "summary": "GET /api/auth/official",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/auth/official/route.ts"
+      },
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "post_auth_official",
+        "summary": "POST /api/auth/official",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/auth/official/route.ts"
+      },
+      "delete": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "delete_auth_official",
+        "summary": "DELETE /api/auth/official",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/auth/official/route.ts"
+      }
+    },
+    "/api/auth/officials/{id}": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "post_auth_officials_id",
+        "summary": "POST /api/auth/officials/{id}",
+        "description": "Disable or re-enable a platform account (signed-in official; audited).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/auth/officials/[id]/route.ts"
+      }
+    },
+    "/api/auth/officials": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_officials",
+        "summary": "GET /api/auth/officials",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes) for a signed-in official. POST creates one: the first account at installation, every later one by a signed-in official.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/auth/officials/route.ts"
+      },
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "post_auth_officials",
+        "summary": "POST /api/auth/officials",
+        "description": "Platform accounts for officials (lib/auth/officials.ts). GET lists them (never password hashes) for a signed-in official. POST creates one: the first account at installation, every later one by a signed-in official.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/auth/officials/route.ts"
       }
     },
     "/api/cabinet": {

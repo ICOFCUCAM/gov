@@ -6,6 +6,7 @@ import { publisherAuthorized, unauthorized } from '@/lib/updates/access';
 import { allReleases, nationRecord, publisherOverview } from '@/lib/data/updates';
 import { addResource, addTranslation, releaseResources, translationCoverage } from '@/lib/data/comms';
 import { nationLanguage } from '@/lib/updates/language';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,7 +25,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!await publisherAuthorized(req)) return unauthorized();
   let b: { action?: string; releaseId?: string; locale?: string; summary?: string; changes?: string[]; kind?: string; title?: string; url?: string; language?: string; by?: string };
-  try { b = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { b = await withOfficial(await req.json()); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
   const r = allReleases().find(x => x.id === b.releaseId);
   if (!r) return NextResponse.json({ error: 'Release not found' }, { status: 404 });
   const out = b.action === 'translate' ? addTranslation(r, b) : b.action === 'resource' ? addResource(r, b) : { error: 'action must be translate or resource', status: 422 };

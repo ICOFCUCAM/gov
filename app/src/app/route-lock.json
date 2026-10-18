@@ -1,5 +1,6 @@
 [
   "/",
+  "/admin/officials",
   "/admin/onboarding",
   "/admin/releases",
   "/admin/sites",

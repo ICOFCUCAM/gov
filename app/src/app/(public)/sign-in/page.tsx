@@ -1,4 +1,5 @@
 import { SignInForm } from './SignInForm';
+import { OfficialSignIn } from './OfficialSignIn';
 
 export const metadata = { title: 'Sign in' };
 
@@ -13,6 +14,7 @@ export default function SignInPage() {
           resolved from the substrate.
         </p>
       </div>
+      <OfficialSignIn />
       <SignInForm />
     </main>
   );

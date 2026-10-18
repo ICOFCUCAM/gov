@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decidePermit } from '@/lib/data/store';
 import type { DecidePermitInput } from '@/lib/api/types';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,7 +13,7 @@ export async function POST(
 ) {
   let body: Partial<DecidePermitInput>;
   try {
-    body = (await req.json()) as Partial<DecidePermitInput>;
+    body = (await withOfficial(await req.json())) as Partial<DecidePermitInput>;
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }

@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { publisherAuthorized, unauthorized } from '@/lib/updates/access';
 import { nationRecord, publisherOverview } from '@/lib/data/updates';
 import { contractFor, publisherContractAction, MODULES } from '@/lib/data/contracts';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!await publisherAuthorized(req)) return unauthorized();
   let b: { nationId?: string; action?: string; by?: string; licensed?: number; modules?: string[]; tier?: string; years?: number; invoiceId?: string; reference?: string };
-  try { b = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { b = await withOfficial(await req.json()); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
   const n = nationRecord(String(b.nationId ?? ''));
   if (!n) return NextResponse.json({ error: 'Choose an enrolled nation' }, { status: 422 });
   const out = publisherContractAction(n, b);

@@ -59,16 +59,16 @@ describe('access gate for integration endpoints (CIVICOS_AUTH=enforce)', () => {
   const before = process.env.CIVICOS_AUTH;
   beforeEach(() => { process.env.CIVICOS_AUTH = 'enforce'; });
   afterEach(() => { process.env.CIVICOS_AUTH = before; });
-  const gate = (path: string, method = 'GET') => middleware(new NextRequest(`http://platform.test${path}`, { method }));
+  const gate = async (path: string, method = 'GET') => middleware(new NextRequest(`http://platform.test${path}`, { method }));
 
-  it('leave the widget, the content feed and forwarding public, and the settings protected', () => {
-    expect(gate('/embed/health/services').headers.get('location')).toBeNull();
-    expect(gate('/embed/health/services').headers.get('x-frame-options')).toBeNull();
-    expect(gate('/r/health/old/page').headers.get('location')).toBeNull();
-    expect(gate('/api/public-sites/health/content').headers.get('location')).toBeNull();
-    expect(gate('/api/public-sites/health', 'PUT').headers.get('location')).toMatch(/\/login/);
-    expect(gate('/api/public-sites').headers.get('location')).toMatch(/\/login/);
-    expect(gate('/receipts').headers.get('location')).toMatch(/\/login/);
-    expect(gate('/police').headers.get('x-frame-options')).toBe('SAMEORIGIN');
+  it('leave the widget, the content feed and forwarding public, and the settings protected', async () => {
+    expect((await gate('/embed/health/services')).headers.get('location')).toBeNull();
+    expect((await gate('/embed/health/services')).headers.get('x-frame-options')).toBeNull();
+    expect((await gate('/r/health/old/page')).headers.get('location')).toBeNull();
+    expect((await gate('/api/public-sites/health/content')).headers.get('location')).toBeNull();
+    expect((await gate('/api/public-sites/health', 'PUT')).status).toBe(401);
+    expect((await gate('/api/public-sites')).headers.get('location')).toMatch(/\/login/);
+    expect((await gate('/receipts')).headers.get('location')).toMatch(/\/login/);
+    expect((await gate('/police')).headers.get('x-frame-options')).toBe('SAMEORIGIN');
   });
 });

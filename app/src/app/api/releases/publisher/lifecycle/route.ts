@@ -6,6 +6,7 @@ import { publisherAuthorized, unauthorized } from '@/lib/updates/access';
 import { allReleases, publisherOverview } from '@/lib/data/updates';
 import { issueDueNotices, lifecycleLines, lifecyclePolicy, lineOf, setLifecyclePolicy } from '@/lib/data/lifecycle';
 import type { LifecyclePolicy } from '@/lib/api/types';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!await publisherAuthorized(req)) return unauthorized();
   let b: Partial<LifecyclePolicy> & { by?: string };
-  try { b = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { b = await withOfficial(await req.json()); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
   const out = setLifecyclePolicy(b, lifecycleLines(allReleases()).map(l => l.line));
   if ('error' in out) return NextResponse.json({ error: out.error }, { status: out.status });
   return NextResponse.json({ policy: out, lines: lifecycleLines(allReleases()) });

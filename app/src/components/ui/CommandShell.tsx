@@ -96,6 +96,7 @@ const RAIL: { g: string; items: { i: string; l: string; s: string; href: string;
     { i: '⚙', l: 'Sovereign Configuration', s: 'Profile · presets · identity', href: '/gov/configuration', key: 'cfg' },
     { i: '◫', l: 'Platform Operations', s: 'Releases · tenancy', href: '/platform', key: 'plat' },
     { i: '⇄', l: 'Interoperability', s: 'Federation · clients', href: '/integrations', key: 'intg' },
+    { i: '⚿', l: 'Official accounts', s: 'Who can sign in', href: '/admin/officials', key: 'officials' },
   ]},
   { g: 'Public Service', items: [
     { i: '◊', l: 'Civic Wallet', s: 'Citizen services', href: '/wallet', key: 'wal' },

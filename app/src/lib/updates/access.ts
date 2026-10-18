@@ -13,6 +13,7 @@ import { NextResponse } from 'next/server';
 import { platformOrCronAuthorized } from '@/lib/platform-auth';
 import { resolveNation } from '@/lib/data/updates';
 import type { SubscribedNation } from '@/lib/api/types';
+import { withOfficial } from '@/lib/auth/official';
 
 export async function publisherAuthorized(req: Request): Promise<boolean> {
   if (process.env.CIVICOS_AUTH !== 'enforce') return true;
@@ -31,7 +32,8 @@ export function nationFor(link: string | null | undefined): SubscribedNation | N
 /** Parse a JSON object body and resolve the nation it speaks for (body `link`, else `?link=`). */
 export async function chamberBody<T extends object>(req: Request): Promise<{ b: T; nation: SubscribedNation } | NextResponse> {
   let b: unknown;
-  try { b = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  // A signed-in official's verified name replaces any name in the body (lib/auth/official.ts).
+  try { b = await withOfficial(await req.json()); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
   if (!b || typeof b !== 'object' || Array.isArray(b)) return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   const link = (b as { link?: unknown }).link;
   const nation = nationFor(typeof link === 'string' ? link : new URL(req.url).searchParams.get('link'));

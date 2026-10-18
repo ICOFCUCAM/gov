@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { publisherAuthorized, unauthorized } from '@/lib/updates/access';
 import { publisherOverview } from '@/lib/data/updates';
 import { custodyStep, listMedia, sealMedia, getMirror } from '@/lib/data/mirror';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!await publisherAuthorized(req)) return unauthorized();
   let b: { action?: string; nationId?: string; releaseIds?: string[]; sealId?: string; by?: string; mediaId?: string; to?: string; note?: string };
-  try { b = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { b = await withOfficial(await req.json()); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
   const out = b.action === 'seal' ? sealMedia(String(b.nationId ?? ''), b)
     : b.action === 'hand-over' ? custodyStep('publisher', null, String(b.mediaId ?? ''), { ...b, step: 'handed-over' })
     : { error: 'action must be seal or hand-over', status: 422 };

@@ -3,11 +3,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { NextRequest } from 'next/server';
 import { middleware } from './middleware';
+import { signClaims } from './lib/auth/session-token';
 
 const CRON = path.join(__dirname, 'app', 'api', 'cron');
 const cronJobs = fs.readdirSync(CRON).filter(d => fs.existsSync(path.join(CRON, d, 'route.ts')));
-const call = (p: string, cookie?: string) =>
-  middleware(new NextRequest(`http://localhost${p}`, { headers: cookie ? { cookie } : {} }));
+const call = (p: string, cookie?: string) => syncRes(
+  middleware(new NextRequest(`http://localhost${p}`, { headers: cookie ? { cookie } : {} })));
+// GET requests are answered synchronously; only API changes under enforcement await a session check.
+function syncRes(r: ReturnType<typeof middleware>) { if (r instanceof Promise) throw new Error('expected a synchronous answer'); return r; }
 
 describe('access gate (CIVICOS_AUTH=enforce)', () => {
   const before = process.env.CIVICOS_AUTH;
@@ -30,16 +33,16 @@ describe('access gate (CIVICOS_AUTH=enforce)', () => {
 describe('email updates from the public sites', () => {
   const before = process.env.CIVICOS_AUTH;
   afterEach(() => { process.env.CIVICOS_AUTH = before; });
-  const post = (p: string) => middleware(new NextRequest(`http://localhost${p}`, { method: 'POST' }));
+  const post = async (p: string, cookie?: string) => middleware(new NextRequest(`http://localhost${p}`, { method: 'POST', headers: cookie ? { cookie } : {} }));
 
-  it('let citizens subscribe, confirm and unsubscribe without signing in, and nothing else', () => {
+  it('let citizens subscribe, confirm and unsubscribe without signing in, and nothing else', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
-    expect(post('/api/public-sites/police/subscribe').headers.get('location')).toBeNull();
-    expect(post('/api/subscriptions').headers.get('location')).toBeNull();
+    expect((await post('/api/public-sites/police/subscribe')).headers.get('location')).toBeNull();
+    expect((await post('/api/subscriptions')).headers.get('location')).toBeNull();
     expect(call('/search?q=permit').headers.get('location')).toBeNull();
     expect(call('/subscriptions?token=x').headers.get('location')).toBeNull();
     expect(call('/api/public-sites/language?lang=fr&next=/police').headers.get('location')).toBeNull();
-    expect(post('/api/public-sites/police/proposals').headers.get('location')).toMatch(/\/login/);
+    expect((await post('/api/public-sites/police/proposals')).status).toBe(401);
     expect(call('/api/subscriptions').headers.get('location')).toMatch(/\/login/);
   });
 });
@@ -85,4 +88,28 @@ describe('scheduled jobs authenticate themselves', () => {
       else expect(src).toMatch(/import \{[^}]*cronAuthorized[^}]*\} from '@\/lib\/platform-auth'/);
     });
   }
+});
+
+describe('changes need a verified official (CIVICOS_AUTH=enforce)', () => {
+  const before = { auth: process.env.CIVICOS_AUTH, secret: process.env.CIVICOS_SESSION_SECRET };
+  afterEach(() => { process.env.CIVICOS_AUTH = before.auth; process.env.CIVICOS_SESSION_SECRET = before.secret; });
+  const send = async (p: string, cookie?: string, method = 'POST') => middleware(new NextRequest(`http://localhost${p}`, { method, headers: cookie ? { cookie } : {} }));
+
+  it('refuses a change with only the page cookie or a forged session, and accepts a signed one', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = 'test-secret-0123456789';
+    expect((await send('/api/org/ministries/min-x/queue/q1/act', 'civicos_session=demo')).status).toBe(401);
+    const now = Math.floor(Date.now() / 1000);
+    const claims = { sub: 'local:1', name: 'A. Official', method: 'local' as const, iat: now, exp: now + 600 };
+    const good = await signClaims(claims, 'test-secret-0123456789');
+    const forged = await signClaims(claims, 'another-secret');
+    expect((await send('/api/org/ministries/min-x/queue/q1/act', `civicos_session=demo; civicos_official=${forged}`)).status).toBe(401);
+    expect((await send('/api/org/ministries/min-x/queue/q1/act', `civicos_session=demo; civicos_official=${good}`)).status).toBe(200);
+    expect((await send('/api/org/ministries/min-x/queue/q1/act', `civicos_session=demo; civicos_official=${good}`, 'GET')).status).toBe(200);
+  });
+
+  it('lets anyone reach sign-in', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    expect((await send('/api/auth/official')).status).toBe(200);
+  });
 });

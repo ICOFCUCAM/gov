@@ -5,12 +5,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { decide, INSTALL_ACTIONS, type DecisionInput } from '@/lib/data/updates';
 import { nationFor } from '@/lib/updates/access';
 import type { InstallAction } from '@/lib/api/types';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   let b: Partial<DecisionInput> & { link?: string };
-  try { b = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { b = await withOfficial(await req.json()); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
   if (!b || typeof b !== 'object') return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   if (!INSTALL_ACTIONS.includes(b.action as InstallAction)) {
     return NextResponse.json({ error: `action must be one of: ${INSTALL_ACTIONS.join(', ')}` }, { status: 422 });

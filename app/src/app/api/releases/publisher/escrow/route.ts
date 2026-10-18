@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { publisherAuthorized, unauthorized } from '@/lib/updates/access';
 import { publisherOverview } from '@/lib/data/updates';
 import { advanceReview, allDeposits, allReviews, recordDeposit, verifyDeposit, ESCROW_AGENT, DEPOSIT_WITHIN_DAYS } from '@/lib/data/supply-chain';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!await publisherAuthorized(req)) return unauthorized();
   let b: { action?: string; releaseId?: string; id?: string; by?: string; note?: string; start?: string; end?: string; review?: string; findings?: Record<string, unknown> };
-  try { b = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { b = await withOfficial(await req.json()); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
   const by = String(b.by ?? '');
   const out = b.action === 'deposit' ? recordDeposit(String(b.releaseId ?? ''), by)
     : b.action === 'verify' ? verifyDeposit(String(b.releaseId ?? ''), by)

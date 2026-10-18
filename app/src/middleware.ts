@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { OFFICIAL_COOKIE, verifyToken } from '@/lib/auth/session-token';
 
 // Sovereign access gate. Real and correct, but enforcement is opt-in so a
 // public prototype/preview is not bricked: set CIVICOS_AUTH=enforce to
@@ -23,8 +24,24 @@ const PUBLIC_SITES = /^\/(embed|r|agriculture|assembly|communications|education|
 // by pg_cron; each refuses when the secret is unset, see middleware.test.ts)
 // and the deployment agent's health reports (per-nation agent credential).
 const SELF_AUTHENTICATED = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/];
+// Signing in, and creating the installation's first account (the route refuses once one exists).
+const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/];
+const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
-export function middleware(req: NextRequest) {
+/**
+ * With enforcement on, a change through the API needs a verified official
+ * (the signed civicos_official cookie, lib/auth/session-token.ts; the key is
+ * CIVICOS_SESSION_SECRET, required in this mode), or the automation secret
+ * that publisher and scheduled callers present (checked again by the route).
+ */
+async function officialGate(req: NextRequest, res: NextResponse): Promise<NextResponse> {
+  if (req.headers.get('authorization')) return res;
+  const ok = await verifyToken(req.cookies.get(OFFICIAL_COOKIE)?.value, process.env.CIVICOS_SESSION_SECRET);
+  if (ok) return res;
+  return NextResponse.json({ error: 'Sign in as an official to make changes (/sign-in)' }, { status: 401 });
+}
+
+export function middleware(req: NextRequest): NextResponse | Promise<NextResponse> {
   const res = NextResponse.next();
   // Baseline security headers on every response.
   // Embeddable widgets set their own frame-ancestors policy (the ministry's registered website).
@@ -43,8 +60,11 @@ export function middleware(req: NextRequest) {
   if (req.method === 'GET' && PUBLIC_READ.some(re => re.test(pathname))) return res;
   if (req.method === 'POST' && PUBLIC_WRITE.some(re => re.test(pathname))) return res;
 
-  const session = req.cookies.get('civicos_session')?.value;
+  if (req.method === 'POST' && SIGN_IN.some(re => re.test(pathname))) return res;
+  const session = req.cookies.get('civicos_session')?.value || req.cookies.get(OFFICIAL_COOKIE)?.value;
+  if (session && pathname.startsWith('/api/') && MUTATING.has(req.method)) return officialGate(req, res);
   if (session) return res;
+  if (pathname.startsWith('/api/') && MUTATING.has(req.method)) return officialGate(req, res);
 
   const url = req.nextUrl.clone();
   url.pathname = '/login';

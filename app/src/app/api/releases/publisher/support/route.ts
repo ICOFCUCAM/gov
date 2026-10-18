@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { publisherAuthorized, unauthorized } from '@/lib/updates/access';
 import { publisherOverview } from '@/lib/data/updates';
 import { allTickets, listServiceIncidents, supportTier, setSupportTier, SUPPORT_TIERS, SERVICE_COMPONENTS, declareServiceIncident, updateServiceIncident } from '@/lib/data/support';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   if (!await publisherAuthorized(req)) return unauthorized();
   let b: { action?: string; nationId?: string; tier?: string; by?: string; id?: string; state?: string; text?: string; title?: string; impact?: string; components?: string[]; nations?: 'all' | string[]; start?: string; end?: string };
-  try { b = await req.json(); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
+  try { b = await withOfficial(await req.json()); } catch { return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 }); }
   const known = new Set(publisherOverview().nations.map(n => n.id));
   if (b.action === 'set-tier') {
     if (!b.nationId || !known.has(b.nationId)) return NextResponse.json({ error: 'Choose an enrolled nation' }, { status: 422 });
