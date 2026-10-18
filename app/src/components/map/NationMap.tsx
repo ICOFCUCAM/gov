@@ -7,13 +7,17 @@
 // and of the figures, an "as of" date, and a table of every unit in official
 // order. Figures that are not observed or reported are hatched and carry the
 // source marker; a unit with no figure stays blank and says so. Units are
-// reachable by keyboard (arrow keys in official order, Enter selects).
+// reachable by keyboard (arrow keys in official order, Enter selects). A unit
+// with units beneath it (a region's districts) can be opened from the "Open"
+// list or by double-clicking it. The capital is marked: the nation's own
+// choice from setup, else the map data's default, which says so.
 
 import * as React from 'react';
-import { nationIso3, nationRegions } from '@/lib/nation/registry';
-import { loadNationGeography, type NationGeography } from '@/lib/map/geography';
+import { nationCapital, nationIso3, nationProjection, nationRegions } from '@/lib/nation/registry';
+import { loadNationGeography, loadUnitGeography, type NationGeography } from '@/lib/map/geography';
 import { buildMapModel, type MapPoint, type MapTone, type MapValue } from '@/lib/map/model';
 import { classColour } from '@/lib/map/classify';
+import { nameKeys } from '@/lib/map/names';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { needsMarker, SIGNAL_LABEL, type SignalKind } from '@/lib/twin/signal';
 import { STATUS } from '@/lib/theme/tokens';
@@ -31,6 +35,15 @@ function Marker({ x, y, tone, r }: { x: number; y: number; tone: MapTone; r: num
   if (shape === 'triangle') return <path d={`M ${x} ${y - r * 1.15} L ${x + r} ${y + r * 0.75} L ${x - r} ${y + r * 0.75} Z`} {...common} />;
   if (shape === 'diamond') return <path d={`M ${x} ${y - r} L ${x + r} ${y} L ${x} ${y + r} L ${x - r} ${y} Z`} {...common} />;
   return <circle cx={x} cy={y} r={r * 0.85} {...common} />;
+}
+
+/** A five-pointed star centred on (x, y): the conventional capital symbol. */
+function star(x: number, y: number, r: number): string {
+  const pts = Array.from({ length: 10 }, (_, i) => {
+    const a = -Math.PI / 2 + (i * Math.PI) / 5, rr = i % 2 ? r * 0.45 : r;
+    return `${(x + rr * Math.cos(a)).toFixed(1)} ${(y + rr * Math.sin(a)).toFixed(1)}`;
+  });
+  return `M ${pts.join(' L ')} Z`;
 }
 
 export function NationMap({
@@ -63,6 +76,9 @@ export function NationMap({
   const iso3 = isoOverride ?? nationIso3();
   const regionsKey = (regionsOverride ?? nationRegions()).join('|');
   const [geo, setGeo] = React.useState<NationGeography | null | undefined>(undefined);
+  const [nationGeo, setNationGeo] = React.useState<NationGeography | null>(null);
+  const [opened, setOpened] = React.useState<{ name: string; code?: string } | null>(null);
+  const [openNote, setOpenNote] = React.useState('');
   const wrap = React.useRef<HTMLDivElement>(null);
   const [W, setW] = React.useState(640);
   const [view, setView] = React.useState<'map' | 'table'>('map');
@@ -75,9 +91,17 @@ export function NationMap({
     if (!iso3) { setGeo(null); return; }
     let live = true;
     setGeo(undefined);
-    loadNationGeography(iso3, regionsKey ? regionsKey.split('|') : []).then(g => { if (live) setGeo(g); });
+    const load = opened ? loadUnitGeography(iso3, opened) : loadNationGeography(iso3, regionsKey ? regionsKey.split('|') : []);
+    load.then(g => {
+      if (!live) return;
+      if (opened && !g) { setOpenNote(`No shapes are recorded beneath ${opened.name}.`); setOpened(null); return; }
+      setGeo(g);
+      if (!opened) setNationGeo(g);
+    });
     return () => { live = false; };
-  }, [iso3, regionsKey]);
+  }, [iso3, regionsKey, opened]);
+  React.useEffect(() => { setOpened(null); }, [iso3, regionsKey]);
+  const open = (u: { name: string; code?: string } | null) => { setOpenNote(''); setActive(null); setFocus(0); setOpened(u); };
   React.useEffect(() => {
     if (!wrap.current || typeof ResizeObserver === 'undefined') return;
     const ro = new ResizeObserver(es => { const w = es[0]?.contentRect.width; if (w) setW(Math.max(200, Math.round(w))); });
@@ -85,7 +109,15 @@ export function NationMap({
     return () => ro.disconnect();
   }, []);
 
-  const model = React.useMemo(() => (geo ? buildMapModel(geo, { width: W, maxHeight, minHeight, values, points }) : null), [geo, W, maxHeight, minHeight, values, points]);
+  const capital = nationCapital();
+  const projection = nationProjection();
+  // Located items are counted by the nation's regions, so they show on the whole-nation view only.
+  const model = React.useMemo(() => (geo ? buildMapModel(geo, { width: W, maxHeight, minHeight, values, points: geo.parent ? undefined : points, projection, capital }) : null),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [geo, W, maxHeight, minHeight, values, points, projection, capital?.name, capital?.lng, capital?.lat]);
+  const openable = (nationGeo?.units ?? []).filter(u => u.drill && u.code && u.geometry);
+  // The opened unit's own figure, from the figures the page passed for the nation's units.
+  const parentValue = opened ? values.find(v => v.key === opened.code) ?? values.find(v => nameKeys(v.key).some(k => nameKeys(opened.name).includes(k))) : undefined;
   const marked = needsMarker(kind);
   const shown = model?.units.filter(u => u.value).length ?? 0;
   const drawn = model?.units.map((u, i) => ({ u, i })).filter(x => x.u.d) ?? [];
@@ -123,8 +155,32 @@ export function NationMap({
         <figcaption className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
           {title}<SignalTag kind={kind} source={source} />
         </figcaption>
-        <div className="flex gap-1" role="group" aria-label="Show as">{btn('map', 'Map')}{btn('table', 'Table')}</div>
+        <div className="flex flex-wrap items-center gap-1">
+          {opened ? (
+            <button type="button" onClick={() => open(null)}
+              className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[11px] text-ink-soft hover:text-ink">Back to {nationGeo?.name ?? 'the nation'}</button>
+          ) : null}
+          {openable.length ? (
+            <label className="flex items-center gap-1 text-[11px] text-ink-muted">
+              <span className="sr-only">Open a {nationGeo?.noun ?? 'region'} to see the units beneath it</span>
+              <select value={opened?.code ?? ''} onChange={e => { const u = openable.find(x => x.code === e.currentTarget.value); open(u ? { name: u.name, code: u.code } : null); }}
+                className="focus-ring max-w-[11rem] rounded-[3px] border border-line bg-surface px-1.5 py-0.5 text-[11px] text-ink-soft">
+                <option value="">{opened ? 'Whole nation' : `Open a ${nationGeo?.noun ?? 'region'}…`}</option>
+                {openable.map(u => <option key={u.code} value={u.code}>{u.name}</option>)}
+              </select>
+            </label>
+          ) : null}
+          <div className="flex gap-1" role="group" aria-label="Show as">{btn('map', 'Map')}{btn('table', 'Table')}</div>
+        </div>
       </div>
+      {opened && geo?.parent ? (
+        <p className="text-[11px] text-ink-soft" role="status">
+          {opened.name}: {geo.units.length} {plural(geo.units.length)}
+          {parentValue ? <> · {valueLabel} for {opened.name}: <strong className="text-ink">{fmt(parentValue.value)}</strong>{parentValue.unit ?? unit ? ` ${parentValue.unit ?? unit}` : ''}{marked ? ` (${SIGNAL_LABEL[kind].toLowerCase()})` : ''}</> : null}
+          {' · '}{plural(2)} are shaded only where a figure is recorded for each
+        </p>
+      ) : null}
+      {openNote ? <p className="text-[11px] text-ink-muted" role="status">{openNote}</p> : null}
 
       <div ref={wrap} className={view === 'map' ? 'relative w-full' : 'hidden'}>
         {geo === undefined ? <p className="p-3 text-[13px] text-ink-soft" style={{ minHeight }}>Loading the nation&rsquo;s boundaries…</p>
@@ -145,13 +201,14 @@ export function NationMap({
               const label = `${u.name}${u.value ? `: ${fmt(u.value.value)}${u.value.unit ?? unit ? ` ${u.value.unit ?? unit}` : ''}${marked ? ` (${SIGNAL_LABEL[kind].toLowerCase()})` : ''}` : ': no figure'}`;
               return (
                 <g key={`${u.code ?? u.name}-${i}`}>
-                  <path ref={el => { pathRefs.current[i] = el; }} d={u.d} fill={fill} fillOpacity={u.value ? 0.9 : 0.4}
-                    stroke={on ? 'rgb(var(--c-ink))' : 'rgb(var(--c-bg))'} strokeWidth={on ? 2 : 0.7}
+                  <path ref={el => { pathRefs.current[i] = el; }} d={u.d} fill={fill} fillOpacity={u.value ? 0.9 : 0.55}
+                    stroke={on ? 'rgb(var(--c-ink))' : u.value ? 'rgb(var(--c-bg))' : 'rgb(var(--c-ink-muted))'} strokeWidth={on ? 2 : 0.7}
                     tabIndex={k === focus ? 0 : -1} role="button" aria-label={label} aria-pressed={onSelect ? on : undefined}
                     className="cursor-pointer outline-none focus-visible:[stroke:rgb(var(--c-ink))] focus-visible:[stroke-width:2.5]"
                     onFocus={() => { setFocus(k); setActive(i); }} onBlur={() => setActive(a => (a === i ? null : a))}
                     onMouseEnter={() => setActive(i)} onMouseLeave={() => setActive(a => (a === i ? null : a))}
                     onClick={() => onSelect?.({ name: u.name, code: u.code })}
+                    onDoubleClick={() => { const n = nationGeo?.units.find(x => x.code === u.code && x.drill); if (!opened && n) open({ name: n.name, code: n.code }); }}
                     onKeyDown={e => { if ((e.key === 'Enter' || e.key === ' ') && onSelect) { e.preventDefault(); onSelect({ name: u.name, code: u.code }); } }} />
                   {u.value && marked ? <path d={u.d} fill={`url(#${hatch})`} pointerEvents="none" aria-hidden /> : null}
                 </g>
@@ -163,6 +220,12 @@ export function NationMap({
                 {p.count && p.count > 1 ? <text x={p.x} y={p.y + 3} textAnchor="middle" fontSize="9" fontWeight="700" fill="rgb(var(--c-bg))">{p.count}</text> : null}
               </g>
             ))}
+            {model.capital ? (
+              <g pointerEvents="none" aria-hidden>
+                <path d={star(model.capital.x, model.capital.y, 6)} fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={1.2} />
+                {!compact ? <text x={model.capital.x + 8} y={model.capital.y + 3} fontSize="10" fontWeight="600" fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={2.5} paintOrder="stroke">{model.capital.name}</text> : null}
+              </g>
+            ) : null}
             {!compact ? (
               <g aria-hidden transform={`translate(${model.width - 24},${22})`}>
                 <path d="M 0 -12 L 5 4 L 0 1 L -5 4 Z" fill="rgb(var(--c-ink-soft))" />
@@ -234,6 +297,10 @@ export function NationMap({
                   <span key={t} className="flex items-center gap-1"><svg width="12" height="12" aria-hidden><Marker x={6} y={6.5} tone={t} r={5} /></svg>{TONE_WORD[t]}</span>
                 ))}
               </span>
+            ) : null}
+            {model.capital ? (
+              <span className="flex items-center gap-1"><svg width="12" height="12" aria-hidden><path d={star(6, 6.5, 5)} fill="rgb(var(--c-ink))" /></svg>
+                Capital: {model.capital.name}{model.capital.chosen ? '' : ' (from the map data; confirm in setup)'}</span>
             ) : null}
             <span>{shown} of {model.units.length} {plural(model.units.length)} with a figure{marked ? ` · ${SIGNAL_LABEL[kind].toLowerCase()}, hatched` : ''}</span>
           </div>

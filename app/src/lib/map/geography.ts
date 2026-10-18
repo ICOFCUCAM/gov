@@ -8,6 +8,7 @@
 // 51 units, one with 135 districts gets 135.
 
 import { loadCountry, type Admin1Province, type Geom } from '@/lib/geo/admin1';
+import { hasAdmin2, loadAdmin2 } from '@/lib/geo/admin2';
 import { loadDivisions, defaultUnits, divisionNoun } from '@/lib/geo/divisions';
 import { geoCentroid } from 'd3-geo';
 import { nameKeys } from './names';
@@ -21,6 +22,8 @@ export interface MapUnit {
   /** Label point (the boundary file's centroid). */
   lng?: number;
   lat?: number;
+  /** The unit has units beneath it with shapes, so the map can open it (districts of a region). */
+  drill?: boolean;
 }
 
 export interface NationGeography {
@@ -32,6 +35,10 @@ export interface NationGeography {
   outline?: Geom;
   noun: string;
   credit: string;
+  /** Official codes of other levels (districts while the map shows regions): figures keyed by them are not "unplaced". */
+  otherCodes?: string[];
+  /** Set when this geography is one unit opened to the units beneath it. */
+  parent?: { name: string; code?: string };
 }
 
 /**
@@ -74,17 +81,22 @@ export async function loadNationGeography(iso3: string, regions: readonly string
     : level ? defaultUnits(level).map(d => ({ name: d.name, code: d.code }))
     : provinces.map(p => ({ name: p.name, code: p.code }));
 
+  const districts = hasAdmin2(iso3);
+  // A unit opens to the units beneath it when they have shapes: its official children, or district shapes.
+  const opens = (code?: string) => !!code && (districts || (childrenOf.get(code) ?? []).some(c => partsOf(c, 1).length > 0));
   const used = new Set<Admin1Province>();
   const units: MapUnit[] = list.map(({ name, code }) => {
     const p = shapeFor(name, code);
-    if (p) { used.add(p); return { name, code: code ?? p.code, geometry: p.geometry, lng: p.lng, lat: p.lat }; }
+    const drill = opens(code ?? p?.code) ? { drill: true } : {};
+    if (p) { used.add(p); return { name, code: code ?? p.code, geometry: p.geometry, lng: p.lng, lat: p.lat, ...drill }; }
     const parts = code ? partsOf(code) : [];
     if (!parts.length) return { name, ...(code ? { code } : {}) };
     parts.forEach(q => used.add(q));
     const geometry = merge(parts);
     const [lng, lat] = geoCentroid({ type: 'Feature', properties: {}, geometry } as never);
-    return { name, code, geometry, lng, lat };
+    return { name, code, geometry, lng, lat, ...drill };
   });
+  const shown = new Set(units.map(u => u.code).filter(Boolean));
   const a = country.attribution;
   return {
     iso3,
@@ -94,5 +106,49 @@ export async function loadNationGeography(iso3: string, regions: readonly string
     ...(country.outline ? { outline: country.outline } : {}),
     noun: level ? divisionNoun(level) : 'region',
     credit: a ? `${a.source} (${a.licence}${a.via ? `, via ${a.via}` : ''})` : 'Natural Earth (public domain)',
+    otherCodes: official.map(d => d.code).filter(c => !shown.has(c)),
+  };
+}
+
+/**
+ * One unit opened to the units beneath it: its official sub-units when the
+ * boundary data holds them (Uganda's districts, France's departments, the
+ * United Kingdom's council areas), else the nation's district shapes
+ * (lib/geo/admin2) placed in it. The rest of the nation is drawn around it as
+ * context. Null when nothing beneath it has a shape.
+ */
+export async function loadUnitGeography(iso3: string, parent: { name: string; code?: string }): Promise<NationGeography | null> {
+  if (!parent.code) return null;
+  const [country, levels] = await Promise.all([loadCountry(iso3), loadDivisions(iso3).catch(() => [])]);
+  if (!country) return null;
+  const byCode = new Map(country.provinces.map(p => [p.code, p]));
+  const official = levels.flatMap(l => l.units);
+  const children = official.filter(d => d.parent === parent.code);
+  const credit = (a = country.attribution) => (a ? `${a.source} (${a.licence}${a.via ? `, via ${a.via}` : ''})` : 'Natural Earth (public domain)');
+  const typeNoun = (t?: string) => (t ? t.toLowerCase() : 'district');
+
+  // Official sub-units with shapes in the boundary data.
+  let units: MapUnit[] = children.flatMap(d => {
+    const p = byCode.get(d.code);
+    return p ? [{ name: d.name, code: d.code, geometry: p.geometry, lng: p.lng, lat: p.lat }] : [];
+  });
+  let noun = typeNoun(children[0]?.type), source = credit();
+  if (!units.length) {
+    const a2 = await loadAdmin2(iso3);
+    units = (a2?.units ?? []).filter(u => u.parent === parent.code).map(u => ({ name: u.name, code: u.code, geometry: u.geometry, lng: u.lng, lat: u.lat }));
+    noun = 'district';
+    if (a2) source = credit(a2.credit);
+  }
+  if (!units.length) return null;
+  const inside = new Set(units.map(u => u.code));
+  return {
+    iso3,
+    name: country.name,
+    units,
+    context: country.provinces.filter(p => !inside.has(p.code)).map(p => p.geometry),
+    noun,
+    credit: source,
+    otherCodes: official.map(d => d.code).filter(c => !inside.has(c)),
+    parent,
   };
 }

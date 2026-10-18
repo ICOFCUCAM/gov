@@ -563,6 +563,16 @@ export interface SovereignProfile {
   foreignAffairs?: { partners?: { name: string; capital?: string }[]; memberships?: string[] }; // the nation's partners and international memberships
   regions?: string[];       // operational regions engines report by (from admin-1 or the nation's own grouping)
   constitution?: NationalConstitution; // the nation's own constitutional facts, over the form-of-state template
+  map?: NationMapSettings;  // how the nation's maps are drawn (capital, projection); defaults from the map data
+}
+
+/** The nation's own map settings. Anything left out falls back to the map data
+ *  (capital from Natural Earth, projection chosen for the nation's shape). */
+export interface NationMapSettings {
+  /** The capital the maps mark; several countries have more than one, and only the nation chooses. */
+  capital?: { name: string; lng: number; lat: number };
+  /** The projection shaded maps use; 'auto' (or unset) picks one for the nation's shape. */
+  projection?: 'auto' | 'conic-equal-area' | 'azimuthal-equal-area' | 'transverse-mercator' | 'albers-usa';
 }
 
 /** A nation's own constitutional facts. Anything left out falls back to the

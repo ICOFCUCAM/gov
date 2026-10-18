@@ -1565,6 +1565,7 @@ export function getSovereign(): SovereignProfile {
   return db.sovereign;
 }
 
+const MAP_PROJECTIONS: string[] = ['auto', 'conic-equal-area', 'azimuthal-equal-area', 'transverse-mercator', 'albers-usa'];
 const STATE_FORMS = ['republic', 'federation', 'monarchy', 'city-state', 'union', 'parliamentary'];
 
 export function setSovereign(
@@ -1586,6 +1587,14 @@ export function setSovereign(
   }
   if (patch.timeZone) {
     try { new Intl.DateTimeFormat('en', { timeZone: patch.timeZone }); } catch { return { error: 'Unknown time zone' }; }
+  }
+  if (patch.map !== undefined) {
+    const m = patch.map, c = m?.capital;
+    if (m === null || typeof m !== 'object') return { error: 'Map settings must be an object' };
+    if (c !== undefined && (typeof c?.name !== 'string' || !c.name.trim() || c.name.length > 80 || !Number.isFinite(c.lng) || !Number.isFinite(c.lat) || Math.abs(c.lng) > 180 || Math.abs(c.lat) > 90)) {
+      return { error: 'The capital needs a name and a position (longitude −180 to 180, latitude −90 to 90)' };
+    }
+    if (m.projection !== undefined && !MAP_PROJECTIONS.includes(m.projection)) return { error: 'Unknown map projection' };
   }
   if (patch.languages !== undefined && (!Array.isArray(patch.languages) || patch.languages.length > 10 || patch.languages.some(l => typeof l !== 'string' || !locales.some(x => x.code === l)))) {
     return { error: 'Further languages must be language codes the platform has' };
@@ -1723,8 +1732,8 @@ export function applySovereignPreset(
   const preset = SOVEREIGN_PRESETS.find(p => p.key === key);
   if (!preset) return { error: 'Unknown preset' };
   // A constitutional template never overwrites the nation's own facts.
-  const { iso3, regions, constitution, paymentRail, timeZone, emergency, foreignAffairs } = db.sovereign;
-  db.sovereign = { ...preset.profile, iso3, regions, constitution, paymentRail, timeZone, emergency, foreignAffairs };
+  const { iso3, regions, constitution, paymentRail, timeZone, emergency, foreignAffairs, map } = db.sovereign;
+  db.sovereign = { ...preset.profile, iso3, regions, constitution, paymentRail, timeZone, emergency, foreignAffairs, map };
   applyNation({ ...db.sovereign, configured: !!db.setup });
   localizeSeed();
   appendAudit(by, 'sovereign.preset', `Sovereign:${key}`, 'ok', preset.label);

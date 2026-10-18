@@ -1,6 +1,6 @@
 # Map system: evaluation and plan
 
-Status: phases 0–2 done (October 2026); phases 3–5 open. Register: §16.4, §17.1.
+Status: phases 0–2 done, phase 3 in part (October 2026); phases 4–5 open. Register: §16.4, §17.1.
 
 ## Answers to the owner's questions
 
@@ -126,6 +126,21 @@ layouts. The fix is one shared map engine grown from it.
   shared border) and frontier rows name the real neighbours. Checked in the
   browser for the USA (51), Kenya (47) and Uganda (4) at desktop and phone
   width; the twin map with recorded observations.
+- **Phase 3, in part.** Drill-down: a map opens a region to the units beneath
+  it ("Open a region" list or double-click; "Back to" the nation), from its
+  official sub-units where the boundary data holds them (Uganda's districts,
+  France's departments) or from district shapes (`lib/geo/admin2`, built by
+  `scripts/build-map-pack.mjs` from geoBoundaries; shipped for KEN, UGA, NGA,
+  GHA and USA, each ≤1 MB gzipped). The opened view shows the region's own
+  figure and shades districts only from figures recorded for them (twin
+  observations of district places). Capital: the nation's choice from setup,
+  else the map data's default marked as such (Natural Earth, roles recorded,
+  never choosing between several); partners joined capital to capital by great
+  circles, dashed where the capital is the map data's default. Projection:
+  the nation may choose it in setup. Budgets tested: first-level files
+  ≤300 KB, district files ≤1 MB gzipped. Still open: TopoJSON packs and two
+  detail levels, district shapes for every other nation at install, the
+  worldview setting.
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

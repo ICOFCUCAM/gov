@@ -1,0 +1,52 @@
+{
+ "GHA": {
+  "adm": "ADM2",
+  "units": 260,
+  "source": "USAID Ghana HPNO, Ghana Statistical Service",
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "year": "2019",
+  "via": "geoBoundaries",
+  "id": "GHA-ADM2-2480657",
+  "parents": 260
+ },
+ "KEN": {
+  "adm": "ADM2",
+  "units": 290,
+  "source": "IEBC, OCHA ROSEA",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2020",
+  "via": "geoBoundaries",
+  "id": "KEN-ADM2-3690345",
+  "parents": 290
+ },
+ "NGA": {
+  "adm": "ADM2",
+  "units": 774,
+  "source": "GRID3",
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "year": "2022",
+  "via": "geoBoundaries",
+  "id": "NGA-ADM2-59680162",
+  "parents": 774
+ },
+ "UGA": {
+  "adm": "ADM4",
+  "units": 1521,
+  "source": "Operational Data Portal Refugee Situations, UNHCR",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2019",
+  "via": "geoBoundaries",
+  "id": "UGA-ADM4-68162574",
+  "parents": 1521
+ },
+ "USA": {
+  "adm": "ADM2",
+  "units": 3233,
+  "source": "United States Census Bureau, MAF/TIGER Database",
+  "licence": "Public Domain",
+  "year": "2018",
+  "via": "geoBoundaries",
+  "id": "USA-ADM2-52423323",
+  "parents": 3142
+ }
+}

@@ -14,6 +14,7 @@
     "scan:nation": "node scripts/nation-scan.mjs",
     "scan:boundaries": "node scripts/scan-boundaries.mjs",
     "build:boundaries": "node scripts/build-boundaries.mjs",
+    "build:map-pack": "node scripts/build-map-pack.mjs",
     "audit:sites": "node scripts/audit-public-sites.mjs",
     "scan:colours": "node scripts/scan-colours.mjs --max 3166",
     "build:openapi": "node scripts/build-openapi.mjs"

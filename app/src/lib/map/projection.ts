@@ -3,8 +3,9 @@
 // (Russia, Fiji, New Zealand, Kiribati, the United States with Alaska) keep
 // their size; equal-area for shaded maps, so a region's colour is not
 // exaggerated by its latitude. Distant territories go in inset boxes, as on
-// official national maps. A nation's mapping agency may later set its own
-// national grid (register 17.1, map plan phase 3).
+// official national maps. The nation may choose the projection itself
+// (SovereignProfile.map.projection, setup); a national grid by EPSG code is
+// later work (register 17.1).
 
 import {
   geoAlbersUsa, geoAzimuthalEqualArea, geoBounds, geoCentroid, geoConicEqualArea, geoDistance,
@@ -28,8 +29,13 @@ export function spanOf(fc: GeoPermissibleObjects): { lonSpan: number; latSpan: n
   return { lonSpan: e >= w ? e - w : e + 360 - w, latSpan: n - s, lon0, lat0, south: s, north: n };
 }
 
-/** Which projection suits a nation: tall and narrow, wide in the middle latitudes, or compact. */
-export function projectionKind(iso3: string, fc: GeoPermissibleObjects): ProjectionKind {
+/**
+ * Which projection suits a nation: tall and narrow, wide in the middle
+ * latitudes, or compact. A projection the nation chose wins, except the
+ * United States layout, which only places the United States.
+ */
+export function projectionKind(iso3: string, fc: GeoPermissibleObjects, chosen?: ProjectionKind): ProjectionKind {
+  if (chosen && (chosen !== 'albers-usa' || iso3 === 'USA')) return chosen;
   if (iso3 === 'USA') return 'albers-usa';
   const { lonSpan, latSpan, lat0 } = spanOf(fc);
   const width = lonSpan * Math.cos((lat0 * Math.PI) / 180);
@@ -39,8 +45,8 @@ export function projectionKind(iso3: string, fc: GeoPermissibleObjects): Project
 }
 
 /** A projection for the nation, rotated to its own centre (not yet fitted to a box). */
-export function projectionFor(iso3: string, fc: GeoPermissibleObjects): GeoProjection {
-  const kind = projectionKind(iso3, fc);
+export function projectionFor(iso3: string, fc: GeoPermissibleObjects, chosen?: ProjectionKind): GeoProjection {
+  const kind = projectionKind(iso3, fc, chosen);
   const { lon0, lat0, south, north } = spanOf(fc);
   if (kind === 'albers-usa') return geoAlbersUsa() as unknown as GeoProjection;
   if (kind === 'transverse-mercator') return geoTransverseMercator().rotate([-lon0, -lat0]);

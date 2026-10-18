@@ -8,6 +8,8 @@ import { feature, neighbors } from 'topojson-client';
 import { geoContains } from 'd3-geo';
 import type { Geom } from '@/lib/geo/admin1';
 import { nameKeys, countryKeys } from './names';
+import COUNTRIES from '@/lib/geo/countries.json';
+import { capitalsOf, type Capital } from '@/lib/geo/capitals';
 
 export interface WorldCountry { id: string; name: string; geometry: Geom }
 export interface WorldModel { countries: WorldCountry[]; neighbours: number[][] }
@@ -38,4 +40,24 @@ export function nationIndex(world: WorldModel, at: [number, number] | null): num
 export function findByName(world: WorldModel, name: string): number {
   const keys = countryKeys(name);
   return world.countries.findIndex(c => nameKeys(c.name).some(k => keys.includes(k)));
+}
+
+/** A country's ISO 3166-1 alpha-3 code from an everyday name; null when none matches. */
+export function iso3ForName(name: string): string | null {
+  const keys = countryKeys(name);
+  return (COUNTRIES as { iso3: string; name: string }[]).find(c => nameKeys(c.name).some(k => keys.includes(k)))?.iso3 ?? null;
+}
+
+/**
+ * Where a declared partner's capital is: the capital the nation named for it
+ * when the map data knows that city, else the map data's main capital.
+ * `named` is false when the position is the map data's default.
+ */
+export function partnerCapital(p: { name: string; capital?: string }): (Capital & { named: boolean }) | null {
+  const iso3 = iso3ForName(p.name);
+  const list = iso3 ? capitalsOf(iso3) : [];
+  const want = p.capital ? nameKeys(p.capital) : [];
+  const hit = want.length ? list.find(c => nameKeys(c.name).some(k => want.includes(k))) : undefined;
+  if (hit) return { ...hit, named: true };
+  return list[0] ? { ...list[0], named: false } : null;
 }

@@ -34,13 +34,27 @@ export interface MapModel {
   noShape: string[];
   /** Share of the frame the nation's land covers (0–1): how well the projection uses the space. */
   coverage: number;
+  /** The capital's position on the map, when it falls inside the frame. */
+  capital: { x: number; y: number; name: string; chosen: boolean } | null;
 }
 
 const feature = (g: Geom) => ({ type: 'Feature' as const, properties: {}, geometry: g });
 const collection = (gs: Geom[]) => ({ type: 'FeatureCollection' as const, features: gs.map(feature) });
 const PAD = 10;
 
-export function buildMapModel(geo: NationGeography, opts: { width: number; maxHeight: number; minHeight?: number; values?: MapValue[]; points?: MapPoint[] }): MapModel {
+export interface MapOptions {
+  width: number;
+  maxHeight: number;
+  minHeight?: number;
+  values?: MapValue[];
+  points?: MapPoint[];
+  /** The projection the nation chose (SovereignProfile.map.projection); unset picks one for its shape. */
+  projection?: ProjectionKind;
+  /** The capital to mark; `chosen` is false for the map data's default. */
+  capital?: { name: string; lng: number; lat: number; chosen: boolean } | null;
+}
+
+export function buildMapModel(geo: NationGeography, opts: MapOptions): MapModel {
   const W = Math.max(200, Math.round(opts.width));
   const shaped = geo.units.filter(u => u.geometry);
   // The frame fits the nation's own units; outlying shapes not on its list are drawn as context around them.
@@ -53,8 +67,8 @@ export function buildMapModel(geo: NationGeography, opts: { width: number; maxHe
   const mainland = base.filter(g => !groups.flat().some(u => u.geometry === g));
   const fc = collection(mainland.length ? mainland : base) as GeoPermissibleObjects;
 
-  const kind = projectionKind(geo.iso3, fc);
-  const proj: GeoProjection = projectionFor(geo.iso3, fc);
+  const kind = projectionKind(geo.iso3, fc, opts.projection);
+  const proj: GeoProjection = projectionFor(geo.iso3, fc, opts.projection);
   // The map keeps the nation's own proportions: fit to the width, then take the height it needs.
   proj.fitWidth(W - PAD * 2, fc);
   const [[, y0], [, y1]] = geoPath(proj).bounds(fc);
@@ -98,6 +112,14 @@ export function buildMapModel(geo: NationGeography, opts: { width: number; maxHe
     if (u?.cx != null && u.cy != null) points.push({ x: u.cx, y: u.cy, label: pt.label, tone: pt.tone, count: pt.count, unit: u.name });
     else unplaced.push(pt.key);
   }
+  // Figures for units of another level (e.g. districts while the map shows regions) are not "unplaced";
+  // nor, inside an opened unit, are the figures for the nation's regions.
+  const elsewhere = new Set(geo.otherCodes ?? []);
+  const scoped = !!geo.parent;
+
+  const cap = opts.capital ? proj([opts.capital.lng, opts.capital.lat]) : null;
+  const capital = cap && cap.every(Number.isFinite) && cap[0] >= 0 && cap[0] <= W && cap[1] >= 0 && cap[1] <= H
+    ? { x: cap[0], y: cap[1], name: opts.capital!.name, chosen: opts.capital!.chosen } : null;
 
   return {
     width: W,
@@ -109,8 +131,9 @@ export function buildMapModel(geo: NationGeography, opts: { width: number; maxHe
     classes,
     scale: scaleBar(proj, W, H),
     points,
-    unmatched: [...(opts.values ?? []).filter(v => !matchedKeys.has(v.key)).map(v => v.key), ...unplaced],
+    unmatched: scoped ? [] : [...(opts.values ?? []).filter(v => !matchedKeys.has(v.key) && !elsewhere.has(v.key)).map(v => v.key), ...unplaced.filter(k => !elsewhere.has(k))],
     noShape: geo.units.filter(u => !u.geometry).map(u => u.name),
     coverage: land / (W * H),
+    capital,
   };
 }

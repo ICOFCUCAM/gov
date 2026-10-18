@@ -7,7 +7,8 @@
 //
 // See docs/NATION_CONVERSION_MANIFEST.md (Nation Pack, steps 1–5).
 
-import type { StateForm, NationalConstitution } from '@/lib/api/types';
+import type { StateForm, NationalConstitution, NationMapSettings } from '@/lib/api/types';
+import { defaultCapital } from '@/lib/geo/capitals';
 import { constitutionFor, type ConstitutionModel } from '@/lib/gov/constitution';
 import { nationOffices, chamberText, type NationOffices } from '@/lib/nation/offices';
 import { getMessages, type Messages } from '@/lib/i18n';
@@ -39,9 +40,11 @@ export interface NationFacts {
   /** Insignia monogram and colour from the sovereign profile (identity). */
   seal?: string;
   accent?: string;
+  /** How the nation's maps are drawn (capital, projection). */
+  map?: NationMapSettings;
 }
 
-const state: { iso3?: string; regions: string[]; currency: string; locale: string; languages: string[]; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs']; aiAssistant?: boolean; seal?: string; accent?: string } = {
+const state: { iso3?: string; regions: string[]; currency: string; locale: string; languages: string[]; stateForm?: StateForm; constitution?: NationalConstitution; stateName?: string; executiveTitle?: string; legislatureName?: string; configured: boolean; paymentRail?: string; timeZone?: string; emergency?: NationFacts['emergency']; foreignAffairs?: NationFacts['foreignAffairs']; aiAssistant?: boolean; seal?: string; accent?: string; map?: NationMapSettings } = {
   configured: false,
   regions: [],
   currency: 'USD',
@@ -70,6 +73,7 @@ export function applyNation(f: NationFacts | null | undefined): void {
   state.aiAssistant = f.aiAssistant;
   state.seal = f.seal?.trim() || undefined;
   state.accent = f.accent && /^#[0-9a-fA-F]{6}$/.test(f.accent) ? f.accent : undefined;
+  state.map = f.map;
 }
 
 /** The global the root layout's inline script fills with the nation's facts (see app/layout.tsx). */
@@ -131,6 +135,24 @@ export function nationForeignAffairs(): { partners: { name: string; capital?: st
     partners: (state.foreignAffairs?.partners ?? []).filter(p => p.name?.trim()),
     memberships: (state.foreignAffairs?.memberships ?? []).map(m => m.trim()).filter(Boolean),
   };
+}
+
+/** The projection the nation chose for its maps, or undefined to let the map pick one for its shape. */
+export function nationProjection(): Exclude<NationMapSettings['projection'], 'auto'> | undefined {
+  const p = state.map?.projection;
+  return p && p !== 'auto' ? p : undefined;
+}
+
+/**
+ * The capital the maps mark: the nation's own setting, else the default from
+ * the map data (Natural Earth's main capital). `chosen` says which, so a
+ * default is never presented as the nation's decision.
+ */
+export function nationCapital(): { name: string; lng: number; lat: number; chosen: boolean } | null {
+  const c = state.map?.capital;
+  if (c) return { name: c.name, lng: c.lng, lat: c.lat, chosen: true };
+  const d = state.iso3 ? defaultCapital(state.iso3) : null;
+  return d ? { name: d.name, lng: d.lng, lat: d.lat, chosen: false } : null;
 }
 
 function validZone(tz?: string): tz is string {

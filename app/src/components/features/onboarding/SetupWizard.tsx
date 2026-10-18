@@ -9,6 +9,7 @@ import { resolveIdentity } from '@/lib/sovereign-identity';
 import { locales } from '@/lib/i18n/config';
 import { COUNTRIES, loadCountry } from '@/lib/geo/admin1';
 import { loadDivisions, defaultUnits, divisionNoun, type DivisionLevel } from '@/lib/geo/divisions';
+import { capitalsOf } from '@/lib/geo/capitals';
 import { applyNation } from '@/lib/nation/registry';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { OnboardingFrame, Eyebrow, Field, inputCls, SealTile, Section, Select, Rule, Corners, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI, GOLD, INK } from './Chrome';
@@ -182,7 +183,7 @@ export function SetupWizard() {
 
   function applyPreset(p: SovereignPreset) {
     setPreset(p.key);
-    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant, constitution: cur?.constitution, paymentRail: cur?.paymentRail, timeZone: cur?.timeZone, emergency: cur?.emergency, foreignAffairs: cur?.foreignAffairs }));
+    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant, constitution: cur?.constitution, paymentRail: cur?.paymentRail, timeZone: cur?.timeZone, emergency: cur?.emergency, foreignAffairs: cur?.foreignAffairs, map: cur?.map }));
   }
 
   function addInstitution() {
@@ -384,7 +385,7 @@ export function SetupWizard() {
               <Section n="1.3" title="Territory">
                 <div className="grid gap-x-6 gap-y-6 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
                   <Field label="Country" hint="Sets the national map and its real provinces.">
-                    <Select value={profile.iso3 ?? ''} onChange={e => { const v = e.currentTarget.value; setProfile(p => p && { ...p, iso3: v || undefined, regions: [] }); }}>
+                    <Select value={profile.iso3 ?? ''} onChange={e => { const v = e.currentTarget.value; setProfile(p => p && { ...p, iso3: v || undefined, regions: [], map: p.map ? { ...p.map, capital: undefined } : undefined }); }}>
                       <option value="">Choose a country…</option>
                       {countries.map(c => <option key={c.iso3} value={c.iso3}>{c.name}</option>)}
                     </Select>
@@ -449,6 +450,7 @@ export function SetupWizard() {
                     </span> : null}
                   </div>
                 </div>
+                {profile.iso3 ? <MapSettings iso3={profile.iso3} value={profile.map} onChange={m => set('map', m)} /> : null}
               </Section>
 
               <Section n="1.4" title="Time and emergency">
@@ -979,3 +981,57 @@ function siteProblems(name: string, d: SiteDraft | undefined): string[] {
   return onSite(f.url.href, w.url.href) ? [] : [`${name}: the feed must be on ${w.url.hostname}`];
 }
 
+
+const PROJECTIONS: { value: NonNullable<NonNullable<SovereignProfile['map']>['projection']>; label: string }[] = [
+  { value: 'auto', label: 'Chosen for the country’s shape (recommended)' },
+  { value: 'conic-equal-area', label: 'Conic equal-area (wide, mid-latitude countries)' },
+  { value: 'azimuthal-equal-area', label: 'Azimuthal equal-area (compact countries and islands)' },
+  { value: 'transverse-mercator', label: 'Transverse Mercator (tall, narrow countries)' },
+  { value: 'albers-usa', label: 'United States layout (Alaska and Hawaii inset)' },
+];
+
+/**
+ * The capital the maps mark and the projection they use. Several countries
+ * have more than one capital; the map data's list is offered, and only the
+ * nation chooses. Another city can be given by name and position.
+ */
+function MapSettings({ iso3, value, onChange }: { iso3: string; value?: SovereignProfile['map']; onChange: (m: SovereignProfile['map']) => void }) {
+  const caps = capitalsOf(iso3);
+  const cur = value?.capital;
+  const listed = cur ? caps.findIndex(c => c.name === cur.name && c.lng === cur.lng && c.lat === cur.lat) : -1;
+  const [other, setOther] = React.useState(!!cur && listed < 0);
+  const choice = other ? 'other' : cur ? String(listed) : '';
+  const num = (s: string) => (s.trim() === '' ? NaN : Number(s));
+  return (
+    <div className="mt-6 grid gap-x-6 gap-y-6 sm:grid-cols-2">
+      <Field label="Capital on the maps" hint={caps.length > 1 ? 'The map data records more than one; choose the one your maps should mark.' : 'Marked with a star on the national maps.'}>
+        <Select value={choice} onChange={e => {
+          const v = e.currentTarget.value;
+          if (v === 'other') { setOther(true); return; }
+          setOther(false);
+          const c = v === '' ? undefined : caps[Number(v)];
+          onChange({ ...value, capital: c ? { name: c.name, lng: c.lng, lat: c.lat } : undefined });
+        }}>
+          <option value="">{caps[0] ? `Map data default: ${caps[0].name}` : 'None recorded in the map data'}</option>
+          {caps.map((c, i) => <option key={c.name} value={String(i)}>{c.name}{c.roles?.length ? ` — ${c.roles.join(', ')}` : ''}</option>)}
+          <option value="other">Another city…</option>
+        </Select>
+        {other ? (
+          <div className="mt-2 grid grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)] gap-2">
+            <input aria-label="Capital name" className={inputCls} placeholder="Name" value={cur?.name ?? ''}
+              onChange={e => onChange({ ...value, capital: { name: e.currentTarget.value, lng: cur?.lng ?? NaN, lat: cur?.lat ?? NaN } })} />
+            <input aria-label="Latitude" className={`${inputCls} font-mono`} placeholder="Latitude" inputMode="decimal" defaultValue={cur && Number.isFinite(cur.lat) ? String(cur.lat) : ''}
+              onChange={e => onChange({ ...value, capital: { name: cur?.name ?? '', lng: cur?.lng ?? NaN, lat: num(e.currentTarget.value) } })} />
+            <input aria-label="Longitude" className={`${inputCls} font-mono`} placeholder="Longitude" inputMode="decimal" defaultValue={cur && Number.isFinite(cur.lng) ? String(cur.lng) : ''}
+              onChange={e => onChange({ ...value, capital: { name: cur?.name ?? '', lat: cur?.lat ?? NaN, lng: num(e.currentTarget.value) } })} />
+          </div>
+        ) : null}
+      </Field>
+      <Field label="Map projection" hint="Shaded maps use an equal-area projection so no region looks bigger than it is.">
+        <Select value={value?.projection ?? 'auto'} onChange={e => onChange({ ...value, projection: e.currentTarget.value as (typeof PROJECTIONS)[number]['value'] })}>
+          {PROJECTIONS.filter(p => p.value !== 'albers-usa' || iso3 === 'USA').map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
+        </Select>
+      </Field>
+    </div>
+  );
+}
