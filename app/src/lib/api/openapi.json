@@ -313,6 +313,33 @@
         "x-source": "src/app/api/audit/verify/route.ts"
       }
     },
+    "/api/auth/activity": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_activity",
+        "summary": "GET /api/auth/activity",
+        "description": "The signed-in official's own sign-in activity, newest first (lib/auth/activity.ts): sign-ins with a coarse device, failed attempts against the account, password and second-step changes, administrators' changes to the account.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/auth/activity/route.ts"
+      }
+    },
     "/api/auth/official": {
       "get": {
         "tags": [

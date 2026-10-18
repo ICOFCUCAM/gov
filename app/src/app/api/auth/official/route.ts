@@ -12,6 +12,7 @@ import { currentOfficial, actorLabel, issueSession } from '@/lib/auth/official';
 import { serverClient } from '@/lib/db/client';
 import { recordAudit, getMinistry } from '@/lib/data/store';
 import { roleFromSubstrate, type OfficialRole } from '@/lib/auth/roles';
+import { deviceOf } from '@/lib/auth/activity';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,7 +57,7 @@ export async function POST(req: NextRequest) {
   const now = Math.floor(Date.now() / 1000);
   const claims: OfficialClaims = { ...who, method: b.method === 'substrate' ? 'substrate' : 'local', iat: now, exp: now + SESSION_HOURS * 3600 };
   const res = await issueSession(NextResponse.json({ official: claims }), claims, req.nextUrl.protocol === 'https:');
-  recordAudit(actorLabel(claims), 'auth.sign-in', `Official:${claims.sub}`, 'ok', claims.method);
+  recordAudit(actorLabel(claims), 'auth.sign-in', `Official:${claims.sub}`, 'ok', `${claims.method} · ${deviceOf(req.headers.get('user-agent'))}`);
   return res;
 }
 

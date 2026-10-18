@@ -168,3 +168,30 @@ describe('changing and resetting passwords', () => {
     expect(resetPassword('a@g.gov', 'nope', NEW)).toEqual({ error: expect.stringMatching(/Too many/) });
   });
 });
+
+describe('an official\'s sign-in activity', () => {
+  beforeEach(() => { resetOfficials(); cookie = undefined; });
+
+  it('shows their sign-ins, failed attempts against them and administrators\' changes, from the audit chain', async () => {
+    const { accountActivity, deviceOf } = await import('./activity');
+    const { recordAudit } = await import('@/lib/data/store');
+    const { issueReset } = await import('./officials');
+    ok(createAccount({ email: 'a@g.gov', name: 'Admin', office: 'O', password: PW }, null));
+    const b = ok(createAccount({ email: 'b@g.gov', name: 'Bea', office: 'Clerk', password: PW }, 'Admin, O'));
+    recordAudit('Bea, Clerk', 'auth.sign-in', `Official:local:${b.id}`, 'ok', 'local · Firefox on Linux');
+    checkPassword('b@g.gov', 'wrong password!!');
+    checkPassword('b@g.gov', 'wrong again!!!!!');
+    checkPassword('nobody@g.gov', 'wrong password!!');
+    ok(issueReset(b.id, 'Admin, O'));
+    recordAudit('Bea, Clerk', 'auth.sign-in', `Official:local:${b.id}`, 'ok', 'local · Safari on iPhone or iPad');
+    const { entries, failedSincePreviousSignIn } = accountActivity(b.id, 'Bea');
+    expect(entries.slice(0, 5).map(e => e.what)).toEqual(['Signed in', 'Password reset code issued', 'Failed sign-in', 'Failed sign-in', 'Signed in']);
+    expect(entries[0]).toMatchObject({ ok: true, detail: 'Safari on iPhone or iPad' });
+    expect(entries[1]).toMatchObject({ by: 'Admin, O' });
+    expect(entries[2]).toMatchObject({ ok: false, detail: 'wrong email or password' });
+    expect(failedSincePreviousSignIn).toBe(2);
+    expect(JSON.stringify(entries)).not.toContain('b@g.gov');
+    expect(deviceOf('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/129.0 Safari/537.36')).toBe('Chrome on Windows');
+    expect(deviceOf('Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 Version/17.0 Mobile/15E148 Safari/604.1')).toBe('Safari on iPhone or iPad');
+  });
+});

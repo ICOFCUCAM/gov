@@ -151,7 +151,8 @@ export function checkPassword(emailRaw: string, password: string, now = Date.now
   const a = d.accounts.find(x => x.email === email);
   if (!a || a.disabled || !matches(password, a.passwordHash)) {
     d.failures[email] = [...recent, now];
-    recordAudit('sign-in attempt', 'auth.sign-in', 'Official:?', 'denied', 'wrong email or password');
+    // Filed against the account it targeted (never the address), so its owner sees it in their sign-in activity.
+    recordAudit('sign-in attempt', 'auth.sign-in', a ? `Official:${a.id}` : 'Official:?', 'denied', 'wrong email or password');
     return { error: 'Wrong email or password' };
   }
   if (a.twoStep) {
@@ -296,7 +297,7 @@ export function resetPassword(emailRaw: string, code: string, next: string, now 
   const valid = !!a && !a.disabled && !!want && Date.parse(a.reset!.expiresAt) > now && want.length === got.length && timingSafeEqual(want, got);
   if (!valid) {
     d.failures[email] = [...recent, now];
-    recordAudit('password reset attempt', 'auth.password.reset', 'Official:?', 'denied', 'wrong or expired reset code');
+    recordAudit('password reset attempt', 'auth.password.reset', a ? `Official:${a.id}` : 'Official:?', 'denied', 'wrong or expired reset code');
     return { error: 'That reset code is not right or has expired; ask an administrator for a new one' };
   }
   const bad = newPasswordProblem(next);
