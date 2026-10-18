@@ -304,11 +304,11 @@ export function KpiCell({ d }: { d: Instr }) {
       </div>
       <div className="mt-1 -mb-0.5"><TeleSpark pts={d.spark} tone={tone} active={d.crit || d.pulse} /></div>
       <div className="mt-0.5 flex items-center justify-between gap-1 whitespace-nowrap text-[7px] font-medium uppercase tracking-[0.05em]">
-        <span className="min-w-0 truncate text-ink-muted">base {d.base}</span>
+        <span className="min-w-0 truncate text-ink-muted" title="The usual level">normal {d.base}</span>
         <SignalTag kind={d.kind ?? 'sample'} source={d.source ?? REFERENCE_MODEL} className="!text-[7px] !leading-none" />
         {d.anom
-          ? <span className="flex items-center gap-0.5" style={{ color: TONE.warn }}><span className="h-[3px] w-[3px] rounded-full motion-safe:animate-pulse" style={{ background: TONE.warn }} />anomaly</span>
-          : <span style={{ color: c }}>thr {d.band}</span>}
+          ? <span className="flex items-center gap-0.5" style={{ color: TONE.warn }}><span className="h-[3px] w-[3px] rounded-full motion-safe:animate-pulse" style={{ background: TONE.warn }} />unusual</span>
+          : <span style={{ color: c }} title="Level at which this needs attention">alert at {d.band}</span>}
       </div>
     </div>
   );
@@ -539,7 +539,7 @@ export function NationalMap({
     { l: 'Logistics throughput', v: `${D.logiThru.toLocaleString()} kt/h`, t: tBand(700 - D.logiThru, 180, 320) },
     { l: 'Telecom integrity', v: `${D.telecom.toFixed(1)}%`, t: tBand(99 - D.telecom, 4, 9) },
     { l: 'Strategic reserves', v: `${D.reserves}%`, t: tBand(90 - D.reserves, 22, 40) },
-    { l: 'Coord bandwidth', v: `${D.coordBw}%`, t: tBand(95 - D.coordBw, 20, 38) },
+    { l: 'Coordination capacity', v: `${D.coordBw}%`, t: tBand(95 - D.coordBw, 20, 38) },
   ];
   const [tactical, setTactical] = React.useState(true);
   const [heat, setHeat] = React.useState(false);
@@ -588,8 +588,8 @@ export function NationalMap({
           {[['left-2 top-8 border-l border-t', ''], ['right-2 top-8 border-r border-t', ''], ['bottom-12 left-2 border-b border-l', ''], ['bottom-12 right-2 border-b border-r', '']].map(([c], i) => (
             <span key={i} className={`absolute h-4 w-4 ${c}`} style={{ borderColor: ACCENT, opacity: 0.4 }} />
           ))}
-          <span className="absolute font-mono text-[8px] tracking-[0.2em]" style={{ left: '0.75rem', top: '2.2rem', color: ACCENT, opacity: 0.45 }}>SECTOR · LIVE</span>
-          <span className="absolute font-mono text-[8px] tracking-[0.2em]" style={{ right: '0.75rem', bottom: '3.4rem', color: ACCENT, opacity: 0.45 }}>GRID 1:25k</span>
+          <span className="absolute font-mono text-[8px] tracking-[0.2em]" style={{ left: '0.75rem', top: '2.2rem', color: ACCENT, opacity: 0.45 }}>EXAMPLE MAP</span>
+          <span className="absolute font-mono text-[8px] tracking-[0.2em]" style={{ right: '0.75rem', bottom: '3.4rem', color: ACCENT, opacity: 0.45 }}></span>
           <span className="absolute left-1/2 top-1/2 h-px w-10 -translate-x-1/2 -translate-y-1/2" style={{ backgroundColor: ACCENT, opacity: 0.18 }} />
           <span className="absolute left-1/2 top-1/2 h-10 w-px -translate-x-1/2 -translate-y-1/2" style={{ backgroundColor: ACCENT, opacity: 0.18 }} />
         </div>
@@ -838,7 +838,7 @@ export function NationalMap({
           {/* maritime EEZ / coastal patrol zone */}
           <g>
             <path d="M860,90 Q930,300 850,560 L1000,560 L1000,90 Z" fill="#5fb0d9" fillOpacity="0.05" stroke="#5fb0d9" strokeOpacity="0.22" strokeWidth="0.8" strokeDasharray="4 5" />
-            <text x="930" y="320" textAnchor="middle" className="fill-[#5fb0d9]" style={{ fontSize: 9, letterSpacing: 1, opacity: 0.5 }}>EEZ</text>
+            <text x="930" y="320" textAnchor="middle" className="fill-[#5fb0d9]" style={{ fontSize: 9, letterSpacing: 1, opacity: 0.5 }}>Sea zone</text>
             <g style={{ filter: 'drop-shadow(0 0 2px #5fb0d9)' }}>
               <circle r="1.6" fill="#5fb0d9">
                 <animateMotion dur="13s" repeatCount="indefinite" path="M880,120 Q940,300 870,540 Q940,300 880,120" />
@@ -1021,7 +1021,7 @@ export function NationalMap({
         <div className="absolute left-1/2 top-2 z-20 -translate-x-1/2 rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.18em] backdrop-blur"
           style={{ borderColor: TONE.alert, color: TONE.alert, backgroundColor: `color-mix(in srgb, ${TONE.alert} 14%, rgb(var(--c-surface)))` }}>
           <span className="mr-1.5 inline-block h-1.5 w-1.5 animate-pulse rounded-full align-middle" style={{ backgroundColor: TONE.alert }} />
-          Theatre tempo · {critCount >= 3 ? 'SURGE' : 'ELEVATED'} · {critCount} active
+          Activity · {critCount >= 3 ? 'very high' : 'high'} · {critCount} active
         </div>
       ) : null}
 
@@ -1296,7 +1296,7 @@ export function SituationRoom() {
           <div className="mt-0.5 flex items-center gap-1.5 text-[8.5px] font-semibold uppercase tracking-[0.22em] text-ink-muted">
             <span>Real-time Command &amp; Coordination</span>
             <span className="text-line">·</span>
-            <span style={{ color: war ? TONE.alert : ACCENT }}>SOVEREIGN ∕∕ EYES-ONLY</span>
+            <span style={{ color: war ? TONE.alert : ACCENT }}>OFFICIAL USE</span>
             <span className="text-line">·</span>
             <span className="font-mono tabular-nums">EPOCH {String(epoch).padStart(3, '0')}</span>
           </div>

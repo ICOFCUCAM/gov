@@ -36,6 +36,8 @@ const rail = (): { g: string; items: { i: string; l: string; s: string; href: st
   CONSOLE_NAV.map(sec => ({ g: sec.label, items: sec.items.map(it => ({ i: it.icon, l: it.label, s: it.purpose, href: it.href, ...(it.key === 'cab' ? { on: true } : {}) })) }));
 
 const DOMAINS = ['Operational', 'Fiscal', 'Infrastructure', 'Civil', 'Security', 'Logistics', 'Environment'];
+// Column headings short enough to fit, still readable words (the full name is on hover).
+const DOMAIN_SHORT: Record<string, string> = { Operational: 'Services', Fiscal: 'Budget', Infrastructure: 'Infra', Civil: 'Civil', Security: 'Security', Logistics: 'Supply', Environment: 'Environ' };
 type RiskState = 'stable' | 'watch' | 'elevated' | 'critical';
 const RISK_TONE: Record<RiskState, string> = { stable: 'ok', watch: 'neutral', elevated: 'warn', critical: 'alert' };
 const RISK_LABEL: Record<RiskState, string> = { stable: 'Stable', watch: 'Watch', elevated: 'Elevated', critical: 'Critical' };
@@ -389,7 +391,7 @@ export function CabinetIntelligence() {
                 <thead>
                   <tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8.5px] uppercase tracking-wider text-ink-muted">
                     <th className="px-2 py-1.5">Ministry</th>
-                    {DOMAINS.map(d => <th key={d} className="px-0.5 py-1.5 text-center">{d.slice(0, 5)}</th>)}
+                    {DOMAINS.map(d => <th key={d} scope="col" className="px-0.5 py-1.5 text-center"><abbr title={d} className="no-underline">{DOMAIN_SHORT[d] ?? d}</abbr></th>)}
                   </tr>
                 </thead>
                 <tbody>
