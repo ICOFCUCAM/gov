@@ -82,6 +82,23 @@ export default function DevelopersPage() {
           integration testing.
         </p>
       </section>
+
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold">7. Case systems</h2>
+        <Plain>
+          A ministry&rsquo;s own case system can keep its cases in the platform&rsquo;s queue. An official connects the
+          system under My work › Load cases and receives its key (<code>ccf_…</code>) once.
+        </Plain>
+        <p className="text-sm text-ink-muted">
+          <code>POST /api/org/ministries/&#123;id&#125;/queue/feed</code> with <code>Authorization: Bearer ccf_…</code> and
+          {' '}<code>{'{ "cases": [{ "reference", "subject", "received", "region"?, "priority"?, "assignee"?, "note"?, "state"? }] }'}</code>:
+          new references are added under the same checks as a loaded file; references the same system sent before are
+          updated (<code>state</code>: open, assigned, escalated or closed); every case is answered as added, updated,
+          unchanged or refused with its reason. Re-sending a case is safe. <code>GET …/queue/feed?since=&lt;date-time&gt;</code>
+          returns what officials did to the system&rsquo;s cases since then. Up to 5,000 cases or 2 MB per call; every call is
+          audited. The full description is at <code>/api/openapi</code>.
+        </p>
+      </section>
     </main>
   );
 }

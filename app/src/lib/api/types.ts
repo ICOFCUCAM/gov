@@ -452,8 +452,10 @@ export interface QueueItem {
   note?: string;
   /** When the case reached the institution; its age is counted from this. Absent on examples. */
   receivedAt?: ISODate;
-  /** Where the case came from: an example of the platform, a loaded file, or typed in. Absent means example. */
-  source?: 'sample' | 'imported' | 'entered';
+  /** Where the case came from: an example of the platform, a loaded file, typed in, or a connected case system. Absent means example. */
+  source?: 'sample' | 'imported' | 'entered' | 'feed';
+  /** The connected case system (CaseFeed) that sent it; only that system updates it. */
+  feedId?: string;
   /** The load (lib/data/case-import.ts) a case came in with. */
   importId?: string;
   /** When an official last assigned, escalated or closed it. */
@@ -476,6 +478,20 @@ export interface CaseImport {
   withdrawn?: number;
 }
 export interface CaseRefusal { row: number; reference?: string; reason: string }
+/** A ministry's case system connected to its queue (lib/data/case-import.ts). Only a hash of its key is kept. */
+export interface CaseFeed {
+  id: string;
+  ministryId: string;
+  name: string;
+  prefix: string;
+  issuedAt: ISODate;
+  issuedBy: string;
+  revokedAt?: ISODate;
+  revokedBy?: string;
+  lastCallAt?: ISODate;
+  calls: number;
+  lastResult?: { added: number; updated: number; unchanged: number; refused: number };
+}
 export interface CaseColumn { name: string; required: boolean; means: string; aliases: string[] }
 
 export interface MinistryQueue {

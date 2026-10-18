@@ -234,7 +234,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   plain word; technical terms go in the glossary (`lib/nav/glossary.ts`).
 - Real cases enter an institution's queue only through `lib/data/case-import.ts`
   (a checked CSV load, one typed-in case; refused rows with reasons, loads
-  audited with the file's SHA-256 and withdrawable). Example cases carry
+  audited with the file's SHA-256 and withdrawable) or from the ministry's
+  connected case system (`…/queue/feed`, its own `ccf_` key, stored as a hash;
+  it updates only the cases it sent). Example cases carry
   `source: 'sample'` and show the Sample marker; never remove them except at
   an official's request.
 - Engines must not read the nation's regions or offices into module-level

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { importCases, addCase, withdrawImport, removeSampleCases, listImports, sampleCount, resetCaseImports } from './case-import';
+import { importCases, addCase, withdrawImport, removeSampleCases, listImports, sampleCount, resetCaseImports, issueFeed, revokeFeed, feedForKey, receiveFeed, feedChanges, listFeeds } from './case-import';
 import { queueFor, actOnQueueItem, listAudit, queueRegions, listMinistries } from './store';
 
 const M = listMinistries().find(m => m.status === 'active')!.id;
@@ -71,5 +71,52 @@ describe('loading an institution\'s real cases', () => {
 
   it('asks for the required columns by name', () => {
     expect(importCases(M, { csv: 'ref,notes\nA,b', dryRun: true }, NOW)).toEqual({ error: expect.stringMatching(/columns subject, received/) });
+  });
+});
+
+describe('a ministry\'s connected case system', () => {
+  beforeEach(() => { resetCaseImports(); items().splice(0, items().length); });
+
+  it('issues a key shown once, accepts only that key for that ministry, and stops it when disconnected', () => {
+    const r = issueFeed(M, 'Licensing system', 'PS');
+    if ('error' in r) throw new Error(r.error);
+    expect(r.key).toMatch(/^ccf_[0-9a-f]{8}_[0-9a-f]{40}$/);
+    expect(JSON.stringify(listFeeds(M))).not.toContain(r.key.slice(13));
+    expect(feedForKey(M, `Bearer ${r.key}`)?.id).toBe(r.feed.id);
+    expect(feedForKey(M, `Bearer ${r.key.slice(0, -1)}${r.key.endsWith('0') ? '1' : '0'}`)).toBeNull();
+    const other = listMinistries().find(m => m.id !== M)!.id;
+    expect(feedForKey(other, `Bearer ${r.key}`)).toBeNull();
+    expect(issueFeed(M, 'licensing SYSTEM', 'PS')).toEqual({ error: expect.stringMatching(/already has that name/) });
+    revokeFeed(M, r.feed.id, 'PS');
+    expect(feedForKey(M, `Bearer ${r.key}`)).toBeNull();
+  });
+
+  it('adds new cases, updates its own, refuses others\' and reads back what officials did', () => {
+    const r = issueFeed(M, 'Licensing system', 'PS');
+    if ('error' in r) throw new Error(r.error);
+    addCase(M, { reference: 'HAND-1', subject: 'Typed in', received: '2026-10-01', by: 'Clerk' }, NOW);
+    const send = (cases: unknown[]) => { const b = { cases }; const x = receiveFeed(r.feed, b, JSON.stringify(b), NOW); if ('error' in x) throw new Error(x.error); return x; };
+    const first = send([
+      { reference: 'LIC-1', subject: 'Pharmacy licence', received: '2026-10-02', priority: 'elevated' },
+      { reference: 'LIC-2', subject: 'Clinic licence', received: '2026-10-03', state: 'escalated', region: region() },
+      { reference: 'LIC-3', received: '2026-10-03' },
+      { reference: 'HAND-1', subject: 'Overwrite', received: '2026-10-01' },
+      { reference: 'LIC-4', subject: 'x', received: '2026-10-03', state: 'pending' },
+    ]);
+    expect(first).toMatchObject({ added: 2, updated: 0, unchanged: 0 });
+    expect(first.refused.map(x => [x.index, x.reason.slice(0, 20)])).toEqual([[2, '"subject" is empty'], [3, 'this case was loaded'], [4, '"state" must be open']]);
+    expect(items().find(i => i.ref === 'LIC-2')).toMatchObject({ state: 'escalated', source: 'feed', region: region() });
+
+    const second = send([{ reference: 'LIC-1', state: 'closed', assignee: 'Dr. Wanjiru' }, { reference: 'LIC-2' }]);
+    expect(second).toMatchObject({ added: 0, updated: 1, unchanged: 1, refused: [] });
+    expect(items().find(i => i.ref === 'LIC-1')).toMatchObject({ state: 'cleared', assignee: 'Dr. Wanjiru', subject: 'Pharmacy licence' });
+
+    const lic2 = items().find(i => i.ref === 'LIC-2')!;
+    actOnQueueItem(M, lic2.id, 'assign', 'Officer A');
+    const back = feedChanges(r.feed, '2026-01-01T00:00:00Z');
+    if ('error' in back) throw new Error(back.error);
+    expect(back.cases).toEqual([expect.objectContaining({ ref: 'LIC-2', state: 'assigned', assignee: 'Officer A' })]);
+    expect(listFeeds(M)[0]).toMatchObject({ calls: 2, lastResult: { added: 0, updated: 1, unchanged: 1, refused: 0 } });
+    expect(listAudit().filter(e => e.action === 'queue.feed.receive' && e.actor.startsWith('Case system: Licensing system'))).toHaveLength(2);
   });
 });

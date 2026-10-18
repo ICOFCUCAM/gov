@@ -87,6 +87,7 @@ import type {
   CaseImport,
   CaseRefusal,
   CaseColumn,
+  CaseFeed,
   AnalyticDelta,
   SignatureRequest,
   SignatureResult,
@@ -388,6 +389,11 @@ export const api = {
       req<{ import: CaseImport }>(`/api/org/ministries/${id}/queue/import/${importId}`, { method: 'POST', body: JSON.stringify({ action: 'withdraw', by }) }),
     addCase: (id: string, body: Record<string, string | undefined>) =>
       req<{ item: QueueItem }>(`/api/org/ministries/${id}/queue`, { method: 'POST', body: JSON.stringify(body) }),
+    caseFeeds: (id: string) => req<{ feeds: CaseFeed[] }>(`/api/org/ministries/${id}/queue/feeds`),
+    issueCaseFeed: (id: string, name: string, by?: string) =>
+      req<{ feed: CaseFeed; key: string }>(`/api/org/ministries/${id}/queue/feeds`, { method: 'POST', body: JSON.stringify({ name, by }) }),
+    revokeCaseFeed: (id: string, feedId: string, by?: string) =>
+      req<{ feed: CaseFeed }>(`/api/org/ministries/${id}/queue/feeds/${feedId}`, { method: 'POST', body: JSON.stringify({ action: 'revoke', by }) }),
     removeSampleCases: (id: string, by?: string) =>
       req<{ removed: number }>(`/api/org/ministries/${id}/queue/samples`, { method: 'POST', body: JSON.stringify({ action: 'remove', by }) }),
     create: (body: { archetype: ArchetypeKey; name: string; slug: string }) =>

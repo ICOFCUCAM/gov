@@ -9,8 +9,9 @@ import { apiPermission } from '@/lib/auth/roles';
 // transparent (all routes pass) but the policy is in place and audited.
 // Read-only facts the cover shows pre-sign-in: identity (name, motto, insignia),
 // the institution register (also public in the Government Directory) and the
-// audit chain's integrity check used by the start-up sequence.
-const PUBLIC_READ = [/^\/api\/sovereign$/, /^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/];
+// audit chain's integrity check used by the start-up sequence; and how
+// officials sign in (the sign-in form reads it before anyone has a session).
+const PUBLIC_READ = [/^\/api\/auth\/official$/, /^\/api\/sovereign$/, /^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/];
 // Citizens ask for and manage email updates from the public sites without signing in
 // (double opt-in and per-sender limits in lib/data/site-subscriptions.ts).
 const PUBLIC_WRITE = [/^\/api\/public-sites\/[a-z-]+\/subscribe$/, /^\/api\/subscriptions$/];
@@ -23,8 +24,9 @@ const PUBLIC_SITES = /^\/(embed|r|agriculture|assembly|communications|education|
 // Machine callers with no browser session that authenticate themselves in
 // the route: every scheduled job under /api/cron (CIVICOS_CRON_SECRET, called
 // by pg_cron; each refuses when the secret is unset, see middleware.test.ts)
-// and the deployment agent's health reports (per-nation agent credential).
-const SELF_AUTHENTICATED = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/];
+// the deployment agent's health reports (per-nation agent credential) and a
+// ministry's connected case system (its own ccf_ key, lib/data/case-import.ts).
+const SELF_AUTHENTICATED = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/];
 // Signing in, and creating the installation's first account (the route refuses once one exists).
 const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/];
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);

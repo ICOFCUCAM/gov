@@ -125,8 +125,17 @@ describe('changes need a verified official (CIVICOS_AUTH=enforce)', () => {
     }
   });
 
+  it('lets a ministry\'s case system reach its feed with its own key, not a session', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    expect((await send('/api/org/ministries/min-x/queue/feed')).status).toBe(200);
+    expect((await send('/api/org/ministries/min-x/queue/feed', undefined, 'GET')).status).toBe(200);
+    expect((await send('/api/org/ministries/min-x/queue/feeds')).status).toBe(401);
+  });
+
   it('lets anyone reach sign-in', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
     expect((await send('/api/auth/official')).status).toBe(200);
+    // The sign-in form first asks how officials sign in, before anyone has a session.
+    expect((await send('/api/auth/official', undefined, 'GET')).status).toBe(200);
   });
 });

@@ -64,6 +64,14 @@ export function ministryPermission(s: Scope, ministryId: string): string | null 
   return 'You can act only for your own institution';
 }
 
+/** Connecting or disconnecting a ministry's case system issues a machine key: administrators, or those who can sign for that ministry. */
+export function canManageFeeds(s: Scope, ministryId: string): string | null {
+  const where = ministryPermission(s, ministryId);
+  if (where) return where;
+  const role = roleOf(s);
+  return role === 'administrator' || role === 'signatory' ? null : 'Only an administrator or an official who can sign may connect a case system';
+}
+
 /** The issuer a new directive is recorded under: an official's own institution, whatever the request names. */
 export function directiveIssuer(s: Scope | null, requested: string): string {
   return s && !wholeGovernment(s) ? s.institution! : requested;

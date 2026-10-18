@@ -3161,6 +3161,228 @@
         "x-source": "src/app/api/org/ministries/[id]/queue/[itemId]/act/route.ts"
       }
     },
+    "/api/org/ministries/{id}/queue/feed": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_queue_feed",
+        "summary": "GET /api/org/ministries/{id}/queue/feed",
+        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feed/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_queue_feed",
+        "summary": "POST /api/org/ministries/{id}/queue/feed",
+        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feed/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/queue/feeds/{feedId}": {
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_queue_feeds_feedId",
+        "summary": "POST /api/org/ministries/{id}/queue/feeds/{feedId}",
+        "description": "Disconnect a case system: POST { action: 'revoke' }. Its key stops working at once; the cases it sent stay. Audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feeds/[feedId]/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/queue/feeds": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_queue_feeds",
+        "summary": "GET /api/org/ministries/{id}/queue/feeds",
+        "description": "The case systems connected to an institution's queue. GET lists them (never their keys). POST { name } connects one and returns its key once; only an administrator or an official who can sign for the institution may (roles).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feeds/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_queue_feeds",
+        "summary": "POST /api/org/ministries/{id}/queue/feeds",
+        "description": "The case systems connected to an institution's queue. GET lists them (never their keys). POST { name } connects one and returns its key once; only an administrator or an official who can sign for the institution may (roles).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feeds/route.ts"
+      }
+    },
     "/api/org/ministries/{id}/queue/import/{importId}": {
       "post": {
         "tags": [

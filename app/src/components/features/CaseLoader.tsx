@@ -10,7 +10,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
-import type { CaseColumn, CaseImport, CaseRefusal } from '@/lib/api/types';
+import type { CaseColumn, CaseFeed, CaseImport, CaseRefusal } from '@/lib/api/types';
+import { canManageFeeds } from '@/lib/auth/roles';
 import { useOfficial, useSignIn } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
@@ -35,6 +36,11 @@ export function CaseLoader() {
   const blank = { reference: '', subject: '', received: new Date().toISOString().slice(0, 10), region: '', priority: 'routine', assignee: '', note: '' };
   const [one, setOne] = React.useState(blank);
   const fixed = signedIn?.institution;
+  const [feeds, setFeeds] = React.useState<CaseFeed[]>([]);
+  const [feedName, setFeedName] = React.useState('');
+  const [newKey, setNewKey] = React.useState<{ name: string; key: string } | null>(null);
+  const [origin, setOrigin] = React.useState('');
+  React.useEffect(() => { setOrigin(window.location.origin); }, []);
 
   React.useEffect(() => {
     void api.org.ministries().then(d => setInstitutions(d.ministries.filter(m => m.status === 'active').sort((a, b) => a.name.localeCompare(b.name))));
@@ -43,8 +49,10 @@ export function CaseLoader() {
   const load = React.useCallback(async () => {
     if (!inst) { setInfo(null); return; }
     setInfo(await api.org.caseImports(inst));
+    setFeeds((await api.org.caseFeeds(inst)).feeds);
   }, [inst]);
-  React.useEffect(() => { setCheck(null); void load(); }, [load]);
+  React.useEffect(() => { setCheck(null); setNewKey(null); void load(); }, [load]);
+  const mayConnect = !signedIn || !canManageFeeds(signedIn, inst);
 
   const name = institutions.find(m => m.id === inst)?.name ?? 'this institution';
 
@@ -177,6 +185,64 @@ export function CaseLoader() {
               <label className="text-[12px] text-ink-soft">Note (optional)<input className={`${input} mt-1`} value={one.note} onChange={e => setOne({ ...one, note: e.currentTarget.value })} /></label>
               <div className="md:col-span-4"><button className={btn} disabled={busy}>Add the case</button></div>
             </form>
+          </section>
+
+          <section className="space-y-3 rounded-[3px] border border-line bg-surface p-4">
+            <h3 className="text-[16px] font-semibold">Connect your case system</h3>
+            <p className="text-[13px] text-ink-soft">
+              Instead of loading files, {name}&rsquo;s own case system can send its cases here directly and keep them up to date
+              (closed or reassigned there, changed here). Each system gets its own key; the system can also read back what officials did here.
+              Cases loaded or typed in on the platform are never changed by a system.
+            </p>
+            {newKey ? (
+              <div className="space-y-2 rounded-[3px] border border-warn p-3 text-[13px]" role="status">
+                <p><strong>Key for {newKey.name}.</strong> Copy it now into the system&rsquo;s settings: it is shown only this once and is not kept on the platform.</p>
+                <code className="block break-all rounded-[3px] bg-bg px-2 py-1 font-mono text-[12px]">{newKey.key}</code>
+                <details>
+                  <summary className="cursor-pointer text-link">How the system calls the platform</summary>
+                  <pre className="mt-1 overflow-x-auto rounded-[3px] bg-bg px-2 py-1 font-mono text-[11px]">{`POST ${origin}/api/org/ministries/${inst}/queue/feed
+Authorization: Bearer ${newKey.key}
+Content-Type: application/json
+
+{ "cases": [ { "reference": "…", "subject": "…", "received": "2026-10-01",
+               "region": "…", "priority": "routine", "assignee": "…", "state": "open" } ] }
+
+GET ${origin}/api/org/ministries/${inst}/queue/feed?since=2026-10-01T00:00:00Z
+Authorization: Bearer ${newKey.key}`}</pre>
+                  <p className="mt-1 text-ink-soft">state is open, assigned, escalated or closed. Every case is answered: added, updated, unchanged or refused with its reason. The full description is in the <Link href="/developers" className="text-link underline">developer page</Link>.</p>
+                </details>
+                <button type="button" className={btn} onClick={() => setNewKey(null)}>I have copied the key</button>
+              </div>
+            ) : null}
+            {feeds.length ? (
+              <table className="w-full text-[13px]">
+                <thead><tr className="border-b border-line text-ink-muted"><th className="py-1 text-start font-semibold">System</th><th className="text-start font-semibold">Key</th><th className="text-start font-semibold">Connected</th><th className="text-start font-semibold">Last call</th><th /></tr></thead>
+                <tbody>
+                  {feeds.map(f => (
+                    <tr key={f.id} className="border-b border-line-soft">
+                      <td className="py-1.5"><strong>{f.name}</strong></td>
+                      <td className="font-mono text-[12px]">ccf_{f.prefix}…</td>
+                      <td>{when(f.issuedAt)}<div className="text-ink-muted">by {f.issuedBy}</div></td>
+                      <td>{f.lastCallAt ? <>{when(f.lastCallAt)}<div className="text-ink-muted">{f.lastResult ? `${f.lastResult.added} added, ${f.lastResult.updated} updated, ${f.lastResult.refused} refused` : ''} · {f.calls} calls</div></> : 'Not yet'}</td>
+                      <td className="text-end">
+                        {f.revokedAt ? <span className="text-ink-muted">Disconnected {when(f.revokedAt)} by {f.revokedBy}</span>
+                          : mayConnect ? <button className={btn} disabled={busy} onClick={() => run(() => api.org.revokeCaseFeed(inst, f.id, official), x => `${x.feed.name} disconnected; its key no longer works`)}>Disconnect</button> : null}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : <p className="text-[13px] text-ink-soft">No system is connected to {name} yet.</p>}
+            {mayConnect ? (
+              <form className="flex flex-wrap items-end gap-2" onSubmit={async e => {
+                e.preventDefault();
+                const r = await run(() => api.org.issueCaseFeed(inst, feedName, official), x => `${x.feed.name} connected`);
+                if (r) { setNewKey({ name: r.feed.name, key: r.key }); setFeedName(''); }
+              }}>
+                <label className="text-[12px] text-ink-soft">Name of the system<input className={`${input} mt-1 w-72`} required maxLength={80} value={feedName} onChange={e => setFeedName(e.currentTarget.value)} placeholder="e.g. Licensing case system" /></label>
+                <button className={btn} disabled={busy}>Connect and issue a key</button>
+              </form>
+            ) : <p className="text-[13px] text-ink-muted">An administrator or an official who can sign for {name} connects case systems.</p>}
           </section>
 
           <section className="space-y-2">
