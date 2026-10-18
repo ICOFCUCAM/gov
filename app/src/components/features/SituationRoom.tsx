@@ -1099,6 +1099,8 @@ export function SituationRoom() {
   const [now, setNow] = React.useState(useRenderNow());
   const [layers, setLayers] = React.useState({ infra: true, grid: false, corridors: true, incidents: true, environment: true });
   const [warManual, setWarManual] = React.useState<boolean | null>(null);
+  // Below the large breakpoint the menu is a drawer opened from the header (phones, tablets).
+  const [navOpen, setNavOpen] = React.useState(false);
 
   React.useEffect(() => {
     const load = async () => {
@@ -1251,7 +1253,7 @@ export function SituationRoom() {
   const emLoad = Math.round((incidents.length / 9) * 100);
   const driftSign = (posture?.level === 'alert' ? '↑' : posture?.level === 'warn' ? '↗' : '→');
   const spine: { k: string; v: string; t: string; pulse?: boolean }[] = [
-    { k: 'POSTURE', v: war ? 'WAR ROOM' : (posture?.label ?? 'STABLE'), t: war ? 'alert' : (posture?.level ?? 'ok'), pulse: true },
+    { k: 'STATUS', v: war ? 'WAR ROOM' : (posture?.label ?? 'STABLE'), t: war ? 'alert' : (posture?.level ?? 'ok'), pulse: true },
     { k: 'NAT RISK', v: `${nationalRisk}`, t: toneFor(nationalRisk) as string },
     { k: 'COORD', v: coordLvl, t: coordTone, pulse: coordTone !== 'ok' },
     { k: 'SYNC', v: `${syncInt}%`, t: Number(syncInt) >= 98 ? 'ok' : 'warn' },
@@ -1292,7 +1294,11 @@ export function SituationRoom() {
         </div>
       ) : null}
       {/* National command operations header */}
-      <header className="relative flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
+      <header className="relative flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 sm:gap-4 sm:px-4">
+        <button type="button" aria-label="Open the menu" aria-expanded={navOpen} onClick={() => setNavOpen(o => !o)}
+          className="focus-ring grid h-9 w-9 shrink-0 place-items-center rounded-[3px] border border-line text-ink-soft lg:hidden">
+          <span aria-hidden className="text-base leading-none">{navOpen ? '✕' : '☰'}</span>
+        </button>
         <span aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-px"
           style={{ background: `linear-gradient(90deg, transparent, color-mix(in srgb,${war ? TONE.alert : ACCENT} 60%,transparent), transparent)` }} />
         <ConsoleMark crisis={war} />
@@ -1310,7 +1316,7 @@ export function SituationRoom() {
             <span className="font-mono tabular-nums">EPOCH {String(epoch).padStart(3, '0')}</span>
           </div>
         </div>
-        <div className="ml-auto flex items-center gap-2.5">
+        <div className="ml-auto flex items-center gap-2 sm:gap-2.5">
           <AccessibilityMenu compact />
           <button type="button"
             onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true }); window.dispatchEvent(e); }}
@@ -1330,17 +1336,17 @@ export function SituationRoom() {
           <button onClick={() => setWarManual(w => (w === true ? null : true))}
             className="focus-ring rounded-sm border px-2 py-1 text-[10px] font-semibold uppercase tracking-wider transition-colors"
             style={{ borderColor: war ? TONE.alert : 'rgb(var(--c-line))', color: war ? TONE.alert : 'rgb(var(--c-ink-muted))', backgroundColor: war ? `color-mix(in srgb, ${TONE.alert} 14%, transparent)` : 'transparent' }}
-            title="Toggle War Room posture">
-            ⚑ War Room
+            title="Turn the war room view on or off" aria-label="War room view">
+            ⚑<span className="hidden sm:inline"> War Room</span>
           </button>
-          <span className="relative flex items-center gap-1.5 overflow-hidden rounded-sm border px-2 py-1"
+          <span className="relative hidden items-center gap-1.5 overflow-hidden rounded-sm border px-2 py-1 sm:flex"
             style={{ borderColor: war ? `color-mix(in srgb,${TONE.alert} 45%,rgb(var(--c-line)))` : 'rgb(var(--c-line))' }}>
             <span aria-hidden className="pointer-events-none absolute inset-0 opacity-[0.55] motion-safe:animate-shimmer"
               style={{ backgroundImage: `linear-gradient(90deg, transparent, color-mix(in srgb,${war ? TONE.alert : TONE.ok} 28%,transparent), transparent)`, backgroundSize: '200% 100%' }} />
             <span className="h-2 w-2 animate-pulse rounded-full" style={{ backgroundColor: war ? TONE.alert : TONE.ok, boxShadow: `0 0 6px ${war ? TONE.alert : TONE.ok}` }} />
             <span className="font-mono text-[10px] font-semibold uppercase tracking-wider tabular-nums text-ink-soft">{war ? 'CRISIS' : 'SYNC'} · T{tickN}</span>
           </span>
-          <span className="border-l border-line pl-3">
+          <span className="hidden border-l border-line pl-3 sm:inline">
             <ExecutiveMenu title={sov?.executiveTitle ?? 'Executive Office'} sub="Head of Government" accent={war ? TONE.alert : ACCENT} />
           </span>
         </div>
@@ -1354,7 +1360,7 @@ export function SituationRoom() {
         <span className="flex shrink-0 items-center gap-1.5 px-3 text-[8.5px] font-bold uppercase tracking-[0.18em]"
           style={{ color: war ? TONE.alert : ACCENT }}>
           <span className="h-1.5 w-1.5 rounded-full motion-safe:animate-breathe" style={{ background: war ? TONE.alert : ACCENT, boxShadow: `0 0 6px ${war ? TONE.alert : ACCENT}` }} />
-          NATIONAL TELEMETRY
+          LIVE READINGS
         </span>
         <div className="flex min-w-0 flex-1 items-stretch overflow-x-auto">
           {spine.map((s, i) => {
@@ -1377,8 +1383,10 @@ export function SituationRoom() {
 
       <div className="flex min-h-0 flex-1">
         {/* Icon command rail */}
-        <nav aria-label="Situation Room navigation" className="hidden w-[212px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
-          <div className="flex-1 overflow-y-auto py-1">
+        {navOpen ? <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setNavOpen(false)} aria-hidden /> : null}
+        <nav aria-label="Situation Room navigation" className={`${navOpen ? 'flex' : 'hidden'} fixed inset-y-0 left-0 z-40 w-[240px] shrink-0 flex-col border-r border-line bg-bg lg:static lg:z-auto lg:flex lg:w-[212px]`}>
+          <div className="border-b border-line px-3 py-2 sm:hidden"><ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="Not signed in" /></div>
+          <div className="flex-1 overflow-y-auto py-1" onClick={() => setNavOpen(false)}>
             {rail().map(grp => (
               <div key={grp.g} className="mb-0.5">
                 <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
@@ -1432,7 +1440,7 @@ export function SituationRoom() {
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.022) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
           <ConsoleTabs here={locate('/gov/situation-room')} branches={[]} pathname="/gov/situation-room" />
           {/* Row 1 — sovereign national intelligence telemetry (10) */}
-          <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5 xl:grid-cols-10">
+          <div className="grid grid-cols-1 gap-1.5 min-[480px]:grid-cols-2 sm:grid-cols-5 xl:grid-cols-10">
             {instruments.map(t => <KpiCell key={t.l} d={t} />)}
           </div>
 

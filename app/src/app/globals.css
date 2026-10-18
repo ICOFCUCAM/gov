@@ -200,6 +200,13 @@
      instead of darkening them. */
   html[data-text-scale="lg"] .sov main > * { zoom: 1.125; width: calc(100% / 1.125); }
   html[data-text-scale="xl"] .sov main > * { zoom: 1.25; width: calc(100% / 1.25); }
+  /* On phones the console's smallest text (set in pixels for wide screens:
+     7–10.5px) is raised to 11px so it can be read at arm's length; larger
+     text and wider screens are unchanged. */
+  @media (max-width: 639px) {
+    .sov :is(.text-\[7px\], .text-\[7\.5px\], .text-\[8px\], .text-\[8\.5px\], .text-\[9px\], .text-\[9\.5px\],
+      .text-\[10px\], .text-\[10\.5px\], .\!text-\[7px\], .\!text-\[8px\], .\!text-\[9px\], .\!text-\[10px\]) { font-size: 11px !important; }
+  }
   html[data-contrast="1"] .sov .text-ink-muted,
   html[data-contrast="1"] .sov .text-ink-soft { color: rgb(240 244 250) !important; }
   html[data-contrast="1"] .sov .border-line { border-color: rgb(150 162 182) !important; }

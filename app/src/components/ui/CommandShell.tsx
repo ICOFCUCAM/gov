@@ -155,7 +155,7 @@ export function CommandShell({
           <Link href="/gov/coordination" className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest" style={{ borderColor: TONE.alert, color: TONE.alert }}>Coordinate →</Link>
         </div>
       ) : null}
-      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 sm:gap-4 sm:px-4">
         <button type="button" aria-label="Toggle navigation" aria-expanded={navOpen}
           onClick={() => setNavOpen(o => !o)}
           className="focus-ring grid h-9 w-9 shrink-0 place-items-center rounded-[3px] border border-line text-ink-soft lg:hidden">
@@ -173,7 +173,7 @@ export function CommandShell({
             </div>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
           {HEADER_LINKS.map(h => (
             <Link key={h.href} href={h.href} className="focus-ring hidden h-8 items-center gap-1.5 rounded-[3px] border border-line px-2.5 text-[12px] text-ink-soft no-underline hover:bg-surface-2 hover:text-ink sm:flex">
               <span aria-hidden>⌕</span>{h.label}<kbd className="ms-1 hidden rounded-[2px] border border-line px-1 font-mono text-[10px] text-ink-muted xl:inline">⌘K</kbd>
@@ -191,7 +191,8 @@ export function CommandShell({
           </span>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
           {secure ? <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-[10px] text-ink-soft min-[1440px]:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Encrypted</span> : null}
-          <span className="border-l border-line pl-3">
+          {/* On phones the official's menu sits at the top of the navigation drawer instead. */}
+          <span className="hidden border-l border-line pl-3 sm:inline">
             <ExecutiveMenu title={signIn?.official?.name ?? sov?.executiveTitle ?? 'Head of Government'} sub={signIn?.official ? (signIn.official.office ?? 'Signed in') : 'Not signed in'} accent={accent} />
           </span>
         </div>
@@ -201,6 +202,14 @@ export function CommandShell({
         {navOpen ? <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setNavOpen(false)} aria-hidden /> : null}
         <nav aria-label="Sovereign command"
           className={`${navOpen ? 'flex' : 'hidden'} fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-line bg-bg lg:static lg:z-auto lg:flex lg:w-[212px]`}>
+          <div className="space-y-2 border-b border-line px-3 py-2 sm:hidden">
+            <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="Not signed in" accent={accent} />
+            {HEADER_LINKS.map(h => (
+              <Link key={h.href} href={h.href} onClick={() => setNavOpen(false)} className="focus-ring flex h-9 items-center gap-1.5 rounded-[3px] border border-line px-2.5 text-[13px] text-ink-soft no-underline hover:bg-surface-2 hover:text-ink">
+                <span aria-hidden>⌕</span>{h.label}
+              </Link>
+            ))}
+          </div>
           <div className="flex-1 overflow-y-auto py-1" onClick={() => setNavOpen(false)}>
             {CONSOLE_NAV.map(grp => (
               <div key={grp.label} className="mb-1">

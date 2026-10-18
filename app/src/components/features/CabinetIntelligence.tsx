@@ -69,6 +69,8 @@ export function CabinetIntelligence() {
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
+  // Below the large breakpoint the menu is a drawer opened from the header (phones, tablets).
+  const [navOpen, setNavOpen] = React.useState(false);
   const [mins, setMins] = React.useState<Ministry[]>([]);
   const [now, setNow] = React.useState(useRenderNow());
   const [war, setWar] = React.useState(false);
@@ -278,13 +280,17 @@ export function CabinetIntelligence() {
       ) : null}
 
       {/* Command top bar */}
-      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 sm:gap-4 sm:px-4">
+        <button type="button" aria-label="Open the menu" aria-expanded={navOpen} onClick={() => setNavOpen(o => !o)}
+          className="focus-ring grid h-9 w-9 shrink-0 place-items-center rounded-[3px] border border-line text-ink-soft lg:hidden">
+          <span aria-hidden className="text-base leading-none">{navOpen ? '✕' : '☰'}</span>
+        </button>
         <ConsoleMark crisis={war} />
         <div className="hidden flex-1 text-center md:block">
           <div className="text-sm font-semibold tracking-[0.22em] text-ink">CABINET INTELLIGENCE</div>
           <div className="text-[10px] uppercase tracking-[0.16em] text-ink-muted">National executive command &amp; strategic coordination</div>
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
           <button type="button"
             onClick={() => { const e = new KeyboardEvent('keydown', { key: 'k', metaKey: true }); window.dispatchEvent(e); }}
             className="focus-ring hidden items-center gap-1.5 rounded-sm border border-line bg-bg px-2 py-1 text-xs text-ink-muted transition-colors hover:text-ink lg:flex">
@@ -299,7 +305,7 @@ export function CabinetIntelligence() {
             <span className="text-[9px] font-bold uppercase tracking-[0.14em]">{resilience.band}</span>
           </Link>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
-          <span className="border-l border-line pl-3">
+          <span className="hidden border-l border-line pl-3 sm:inline">
             <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="Leader of the Nation" accent={war ? RED : ACCENT} />
           </span>
         </div>
@@ -307,8 +313,10 @@ export function CabinetIntelligence() {
 
       <div className="flex min-h-0 flex-1">
         {/* Command rail */}
-        <nav aria-label="Cabinet navigation" className="hidden w-[212px] shrink-0 flex-col border-r border-line bg-bg lg:flex">
-          <div className="flex-1 overflow-y-auto py-1">
+        {navOpen ? <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setNavOpen(false)} aria-hidden /> : null}
+        <nav aria-label="Cabinet navigation" className={`${navOpen ? 'flex' : 'hidden'} fixed inset-y-0 left-0 z-40 w-[240px] shrink-0 flex-col border-r border-line bg-bg lg:static lg:z-auto lg:flex lg:w-[212px]`}>
+          <div className="border-b border-line px-3 py-2 sm:hidden"><ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="Not signed in" /></div>
+          <div className="flex-1 overflow-y-auto py-1" onClick={() => setNavOpen(false)}>
             {rail().map((grp, gi) => (
               <div key={gi} className="mb-0.5">
                 <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>

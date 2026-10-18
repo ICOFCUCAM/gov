@@ -24,10 +24,10 @@ export function ConsoleMark({ crisis = false, official = false }: { crisis?: boo
       </span>
       <span className="min-w-0 leading-tight">
         <span className="flex items-center gap-1.5 text-sm font-bold tracking-[0.12em] text-ink">
-          <span className="max-w-[12rem] truncate">{brand.configured ? brand.name : 'CIVICOS'}</span>
-          {official ? <span className="shrink-0 rounded-[3px] border border-line px-1 text-[8px] font-semibold tracking-[0.2em] text-ink-soft">OFFICIAL</span> : null}
+          <span className="max-w-[8rem] truncate sm:max-w-[12rem]">{brand.configured ? brand.name : 'CIVICOS'}</span>
+          {official ? <span className="hidden shrink-0 rounded-[3px] border border-line px-1 text-[8px] sm:inline font-semibold tracking-[0.2em] text-ink-soft">OFFICIAL</span> : null}
         </span>
-        <span className="block max-w-[14rem] truncate text-[9px] uppercase tracking-[0.16em] text-ink-muted">
+        <span className="hidden max-w-[14rem] truncate text-[9px] uppercase sm:block tracking-[0.16em] text-ink-muted">
           {brand.configured ? (brand.motto || brand.platform) : 'Sovereign Operating System'}
         </span>
       </span>
