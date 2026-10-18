@@ -54,7 +54,16 @@ export interface SiteContent {
   /** 'feed': taken from the ministry's existing website (Link, Embed or Migrate mode). */
   newsSource: 'sample' | 'nation' | 'feed';
   initiatives: { title: string; body: string }[];
-  locator?: { title: string; placeholder: string; tabs: string[]; pinLabel: string; pinCoords: [number, number][] };
+  locator?: {
+    title: string; placeholder: string; tabs: string[]; pinLabel: string;
+    /**
+     * @deprecated Fixed drawing positions, not places: no longer drawn. The
+     * locator shows the institution's published sites from the national
+     * facility register (apps/_shared/public/locator-data.ts) on the nation's
+     * real outline. Kept so existing records and saved versions still load.
+     */
+    pinCoords: [number, number][];
+  };
   shortcuts: { title: string; subtitle: string; to: SiteLink }[];
   footerSections: { heading: string; items: { label: string; to: SiteLink }[] }[];
   newsletter: { heading: string; body: string };

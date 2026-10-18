@@ -10,7 +10,9 @@
 import * as React from 'react';
 import { policeOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
-import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
+import { nationCapital, nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
+import { type CommandPalette, type LegendItem } from './CommandMap';
+import { WorldThreatMap, type ThreatLevel } from './WorldThreatMap';
 
 const BG = '#06080e';
 const PANEL = '#0b0f17';
@@ -121,41 +123,32 @@ function ThreatGraph({ seedKey }: { seedKey: string }) {
   );
 }
 
-function RiskWorld({ seedKey }: { seedKey: string }) {
-  const cols = 34, rows = 14;
+// Geographic risk on a world map centred on the nation: risk areas marked at
+// real countries (sample until intelligence assessments are connected;
+// foreign countries are never coloured by a figure).
+const PALETTE: CommandPalette = { critical: RED, high: AMBER, medium: GOLD, low: EMER, monitor: CYAN, accent: RED, line: LINE, panel: PANEL, ink: INK, soft: SOFT, muted: MUT };
+const RISK_C = { critical: RED, high: AMBER, medium: GOLD, low: EMER, monitored: MUT } as const;
+
+function RiskWorld({ seedKey, fullRef }: { seedKey: string; fullRef?: React.MutableRefObject<(() => void) | null> }) {
+  const levels: ThreatLevel[] = ['critical', 'high', 'high', 'medium', 'medium', 'low', 'low', 'monitored', 'monitored'];
+  const kinds = ['Terrorism', 'Arms smuggling', 'Espionage', 'Organised crime', 'Foreign influence', 'Proliferation', 'Financial crime', 'Watched area', 'Watched area'];
   return (
-    <div className="relative h-full overflow-hidden rounded-[3px]" style={{ background: 'radial-gradient(120% 90% at 55% 45%,#0e1118,#06080e)' }}>
-      <div className="grid h-full gap-[2px] p-2" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-        {Array.from({ length: cols * rows }).map((_, i) => {
-          const cx = i % cols, ry = Math.floor(i / cols);
-          const land = (ry > 1 && ry < rows - 1 && ((cx > 3 && cx < 13) || (cx > 15 && cx < 28)));
-          const v = seed(`${seedKey}:${i}`);
-          const c = !land ? 'transparent' : cx > 15 ? (v > 0.6 ? RED : v > 0.38 ? AMBER : '#3a2622') : (v > 0.7 ? AMBER : v > 0.45 ? GOLD : '#2a3a44');
-          return <span key={i} className="aspect-square rounded-[1px]" style={{ background: c, opacity: land ? 0.85 : 0 }} />;
-        })}
-      </div>
-      <div className="absolute right-2 top-2 flex flex-col gap-1">
-        {['+', '−', '⌖'].map(s => <span key={s} className="grid h-6 w-6 place-items-center rounded-[2px] border text-[11px]" style={{ borderColor: LINE, background: PANEL, color: SOFT }} aria-hidden>{s}</span>)}
-      </div>
-      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-3 rounded-[2px] border px-3 py-1" style={{ borderColor: LINE, background: 'rgba(6,8,14,0.78)' }}>
-        {[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Low', EMER], ['Minimal', '#2a3a44']].map(([l, c]) => (
-          <span key={l} className="flex items-center gap-1.5 text-[7.5px] uppercase tracking-wider" style={{ color: SOFT }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}
-          </span>
-        ))}
-      </div>
-    </div>
+    <WorldThreatMap title="Geographic risk" seedKey={seedKey} palette={PALETTE} height={170} levelColour={RISK_C} routes={false} fullRef={fullRef}
+      source="risk areas, until intelligence assessments are connected"
+      markers={levels.map((level, i) => ({ level, label: kinds[i]!, detail: `risk ${Math.round(20 + seed(`${seedKey}:r:${i}`) * 75)}` }))}
+      legend={[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Low', EMER]].map(([l, c]) => ({ label: l!, colour: c!, layer: 'markers' } as LegendItem))
+        .concat([{ label: 'Minimal', colour: MUT, shape: 'ring', layer: 'markers' }])} />
   );
 }
 
 function Panel({ title, action, children, className }: {
-  title: string; action?: string; children: React.ReactNode; className?: string;
+  title: string; action?: React.ReactNode; children: React.ReactNode; className?: string;
 }) {
   return (
     <section className={`flex flex-col rounded-[4px] border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
       <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: LINE }}>
         <h3 className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: INK }}>{title}</h3>
-        {action ? <span className="text-[8px] font-semibold uppercase tracking-[0.12em]" style={{ color: RED }}>{action}</span> : null}
+        {typeof action === 'string' ? <span className="text-[8px] font-semibold uppercase tracking-[0.12em]" style={{ color: RED }}>{action}</span> : action ?? null}
       </div>
       <div className="flex-1 p-3">{children}</div>
     </section>
@@ -187,13 +180,15 @@ export function IntelligenceCommand({ id, now }: { id: string; now: number }) {
     ['Overall Intel Status', `${intelStatus}%`, 'Reliable', EMER],
   ];
 
+  const capitalCity = nationCapital()?.name ?? 'Capital City';
+  const riskFull = React.useRef<(() => void) | null>(null);
   const feed: [string, string, string, string][] = [
-    ['Terrorist Communication Intercepted', 'Northern Corridor', '12:35', 'CRITICAL'],
+    ['Terrorist Communication Intercepted', `${regionName(1, 'Northern')} corridor`, '12:35', 'CRITICAL'],
     ['Suspicious Funds Transfer Detected', regionName(3, 'West Region'), '12:18', 'HIGH'],
     ['Foreign Intelligence Activity', 'Diplomatic Channel', '11:57', 'HIGH'],
-    ['Arms Smuggling Route Identified', 'Coastal Sector', '11:42', 'MEDIUM'],
+    ['Arms Smuggling Route Identified', regionName(4, 'Coastal Sector'), '11:42', 'MEDIUM'],
     ['Cyber Espionage Attempt Blocked', 'Government Network', '11:28', 'MEDIUM'],
-    ['Protest Mobilization Detected', 'Capital City', '10:47', 'LOW'],
+    ['Protest Mobilization Detected', capitalCity, '10:47', 'LOW'],
   ];
   const categories: [string, number, number][] = [
     ['Terrorism', 98, 8], ['Espionage', 76, 5], ['Cyber Threats', 64, 12], ['Organized Crime', 41, -2],
@@ -212,18 +207,18 @@ export function IntelligenceCommand({ id, now }: { id: string; now: number }) {
   ];
   const operations: [string, string, string][] = [
     ['Operation Silent Shield', regionName(1, 'Northern Region'), 'CRITICAL'],
-    ['Operation Coastal Watch', 'Eastern Seaboard', 'HIGH'],
+    ['Operation Coastal Watch', regionName(2, 'Eastern Seaboard'), 'HIGH'],
     ['Operation Cyber Sentinel', 'National Network', 'HIGH'],
-    ['Operation Border Guard', 'Western Corridor', 'MEDIUM'],
+    ['Operation Border Guard', regionName(3, 'Western Corridor'), 'MEDIUM'],
     ['Operation Deep Scan', regionName(0, 'Central Region'), 'LOW'],
   ];
   const timeline: [string, string, string][] = [
-    ['12:40', 'High-risk communication intercepted', 'Northern Corridor'],
+    ['12:40', 'High-risk communication intercepted', `${regionName(1, 'Northern')} corridor`],
     ['12:28', 'Suspicious transaction flagged', regionName(3, 'West Region')],
     ['12:15', 'Foreign agent activity detected', 'Diplomatic Channel'],
-    ['12:05', 'Arms shipment tracking initiated', 'Coastal Area'],
+    ['12:05', 'Arms shipment tracking initiated', regionName(4, 'Coastal Area')],
     ['11:52', 'Cyber threat neutralized', 'Government Network'],
-    ['11:41', 'Protest mobilization monitoring', 'Capital City'],
+    ['11:41', 'Protest mobilization monitoring', capitalCity],
   ];
 
   return (
@@ -308,8 +303,10 @@ export function IntelligenceCommand({ id, now }: { id: string; now: number }) {
             { label: 'Imagery Intelligence', v: 5, n: '68', c: VIOLET },
           ]} />
         </Panel>
-        <Panel title="Geographic Risk Map" action="View Full Map">
-          <div className="h-[170px]"><RiskWorld seedKey={`if:rw:${id}`} /></div>
+        <Panel title="Geographic Risk Map" action={
+          <button type="button" onClick={() => riskFull.current?.()} className="focus-ring text-[8px] font-semibold uppercase tracking-[0.12em] hover:underline" style={{ color: RED }}>View Full Map</button>
+        }>
+          <div className="min-h-[170px]"><RiskWorld seedKey={`if:rw:${id}`} fullRef={riskFull} /></div>
         </Panel>
         <Panel title="Top Intelligence Priorities" action="View All">
           <div className="flex text-[7.5px] uppercase tracking-wider" style={{ color: MUT }}>

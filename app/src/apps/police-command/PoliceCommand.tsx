@@ -10,6 +10,8 @@ import * as React from 'react';
 import { policeOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { STATUS } from '@/lib/theme/tokens';
+import { CommandMap, type CommandPalette } from './CommandMap';
 
 const BG = '#04080f';
 const PANEL = '#0a1018';
@@ -94,60 +96,89 @@ function LineTrend({ pts, height = 130 }: { pts: number[]; height?: number }) {
   );
 }
 
-function CrimeHeatmap({ seedKey }: { seedKey: string }) {
-  const cols = 30, rows = 13;
-  const hot = Array.from({ length: 11 }).map((_, i) => ({
-    x: 10 + seed(`${seedKey}:hx:${i}`) * 80, y: 14 + seed(`${seedKey}:hy:${i}`) * 66,
-    r: 3 + seed(`${seedKey}:hr:${i}`) * 7, lvl: seed(`${seedKey}:hl:${i}`),
-  }));
-  const units = Array.from({ length: 9 }).map((_, i) => ({
-    x: 14 + seed(`${seedKey}:ux:${i}`) * 72, y: 16 + seed(`${seedKey}:uy:${i}`) * 60,
-    s: seed(`${seedKey}:us:${i}`) > 0.6,
-  }));
+// Live crime heatmap on the nation's real map: regions shaded by crime
+// pressure from the operations model, glowing where it is high, police
+// stations (sample until the force registers its stations in the national
+// facility register) and patrol units by region, with callouts on the most
+// pressed regions. Zoom, whole nation, full screen and layers work.
+const PALETTE: CommandPalette = { critical: RED, high: AMBER, medium: GOLD, low: EMER, monitor: CYAN, accent: BLUE, line: LINE, panel: PANEL, ink: INK, soft: SOFT, muted: MUT };
+const levelOf = (load: number) => (load >= 70 ? 'HIGH' : load >= 45 ? 'MEDIUM' : 'LOW');
+const crimeColour = (load: number) => (load >= 70 ? RED : load >= 45 ? AMBER : EMER);
+
+function CrimeHeatmap({ seedKey, regional, patrols, stations, selected, onSelect }: {
+  seedKey: string;
+  regional: { region: string; load: number }[];
+  patrols: { id: string; region: string; status: string }[];
+  stations: string[];
+  selected?: string;
+  onSelect: (r: string | undefined) => void;
+}) {
+  const ranked = [...regional].sort((a, b) => b.load - a.load);
+  const top = ranked.slice(0, 3);
   return (
-    <div className="relative h-full overflow-hidden rounded-[3px]" style={{ background: 'radial-gradient(120% 90% at 50% 45%,#0c141f,#04080f)' }}>
-      <div className="grid h-full gap-[3px] p-2" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-        {Array.from({ length: cols * rows }).map((_, i) => {
-          const v = seed(`${seedKey}:${i}`);
-          const inland = (i % cols > 2 && i % cols < cols - 2 && Math.floor(i / cols) > 0 && Math.floor(i / cols) < rows - 1);
-          return <span key={i} className="aspect-square rounded-full" style={{ background: inland ? (v > 0.9 ? BLUE : '#172230') : 'transparent', opacity: inland ? (v > 0.9 ? 0.5 : 0.3) : 0 }} />;
-        })}
-      </div>
-      <svg viewBox="0 0 100 80" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-        {hot.map((h, i) => (
-          <g key={`h${i}`}>
-            <circle cx={h.x} cy={h.y} r={h.r} fill={h.lvl > 0.6 ? RED : h.lvl > 0.35 ? AMBER : EMER} opacity="0.2" />
-            <circle cx={h.x} cy={h.y} r={h.r * 0.4} fill={h.lvl > 0.6 ? RED_BR : AMBER}
-              style={{ filter: `drop-shadow(0 0 4px ${h.lvl > 0.6 ? RED : AMBER})` }} />
+    <CommandMap title="Crime pressure by region" height={290} palette={PALETTE}
+      values={regional.map(r => ({ key: r.region, value: r.load }))} kind="sample"
+      source="Police operations model by region (sample) until the force connects its incident system" valueLabel="Crime pressure" unit="index"
+      categories={['police']}
+      samples={stations.map(r => ({ region: r, label: `Police station · ${r}`, tone: 'ok' as const, glyph: '⛨', category: 'police', layer: 'stations' }))}
+      samplesSource="police stations by region"
+      flows={patrols.filter(p => p.status === 'responding').map(p => ({ from: 'capital', to: p.region, label: `${p.id} responding · ${p.region}`, tone: 'alert' as const, weight: 2, layer: 'patrols' }))}
+      hotspots={top.map(r => ({ region: r.region, intensity: r.load, label: r.region }))}
+      callouts={top.map(r => ({ region: r.region, line1: r.region, line2: `${r.load} · ${levelOf(r.load)} CRIME`, colour: crimeColour(r.load) }))}
+      layers={[{ id: 'crime', label: 'Crime level by region' }, { id: 'stations', label: 'Police stations', sample: true }, { id: 'patrols', label: 'Patrol units', sample: true }]}
+      legend={[
+        // Only what is drawn: the crime levels present, patrol units, responding routes when a unit responds.
+        ...([['High crime', RED, 'HIGH'], ['Medium', AMBER, 'MEDIUM'], ['Low', EMER, 'LOW']] as const)
+          .filter(([, , w]) => regional.some(r => levelOf(r.load) === w)).map(([label, colour]) => ({ label, colour, shape: 'glow' as const, layer: 'crime' })),
+        ...(patrols.length ? [{ label: 'Patrol units', colour: CYAN, shape: 'tile' as const, layer: 'patrols', sample: true }] : []),
+        ...(patrols.some(p => p.status === 'responding') ? [{ label: 'Responding', colour: STATUS.alert, shape: 'dash' as const, layer: 'patrols', sample: true }] : []),
+        { label: 'Stations', colour: STATUS.ok, shape: 'glyph', glyph: '⛨', layer: 'stations', sample: true },
+      ]}
+      selected={selected} onSelect={onSelect} fullMapHref="/gov/situation-room"
+      extra={(ctx, on) => {
+        const at = new Map(ctx.units.map(u => [u.name, u] as const));
+        const spread = Math.max(6, Math.min(26, Math.sqrt((ctx.width * ctx.height) / Math.max(1, ctx.units.length)) * 0.36));
+        return (
+          <g aria-hidden pointerEvents="none">
+            {on('crime') ? regional.map(r => {
+              const u = at.get(r.region); if (!u) return null;
+              const c = crimeColour(r.load);
+              return (
+                <g key={`c${r.region}`}>
+                  <circle cx={u.x} cy={u.y} r={spread * (0.45 + r.load / 160)} fill={c} opacity={0.14} />
+                  <circle cx={u.x} cy={u.y} r={Math.max(1.6, spread * 0.16)} fill={c} style={{ filter: `drop-shadow(0 0 3px ${c})` }} />
+                </g>
+              );
+            }) : null}
+            {on('patrols') ? patrols.flatMap((p, i) => {
+              const u = at.get(p.region); if (!u) return [];
+              return [0, 1, 2].map(k => {
+                const a = (seed(`${seedKey}:pa:${i}:${k}`) * Math.PI * 2), d = spread * (0.5 + seed(`${seedKey}:pd:${i}:${k}`) * 0.6);
+                const x = u.x + Math.cos(a) * d, y = u.y + Math.sin(a) * d;
+                return (
+                  <g key={`p${i}-${k}`}>
+                    {p.status === 'responding' && k === 0 ? <circle cx={x} cy={y} r={6} fill="none" stroke={CYAN} strokeWidth={0.8} className="motion-safe:animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} /> : null}
+                    <rect x={x - 2.2} y={y - 2.2} width={4.4} height={4.4} rx={0.8} fill={p.status === 'responding' ? CYAN : BLUE} style={{ filter: `drop-shadow(0 0 2px ${CYAN})` }}>
+                      <title>{`${p.id} · ${p.status} · ${p.region} (sample)`}</title>
+                    </rect>
+                  </g>
+                );
+              });
+            }) : null}
           </g>
-        ))}
-        {units.map((u, i) => (
-          <rect key={`u${i}`} x={u.x - 1} y={u.y - 1} width="2" height="2" rx="0.4" fill={u.s ? CYAN : BLUE}
-            style={{ filter: `drop-shadow(0 0 2px ${CYAN})` }} />
-        ))}
-      </svg>
-      <div className="absolute right-2 top-2 flex flex-col gap-1">
-        {['+', '−', '⌖'].map(s => <span key={s} className="grid h-6 w-6 place-items-center rounded-[2px] border text-[11px]" style={{ borderColor: LINE, background: PANEL, color: SOFT }} aria-hidden>{s}</span>)}
-      </div>
-      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-3 rounded-[2px] border px-3 py-1" style={{ borderColor: LINE, background: 'rgba(4,8,15,0.78)' }}>
-        {[['High Crime', RED], ['Medium', AMBER], ['Low', EMER], ['Patrol Units', CYAN], ['Stations', BLUE]].map(([l, c]) => (
-          <span key={l} className="flex items-center gap-1.5 text-[7.5px] uppercase tracking-wider" style={{ color: SOFT }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}
-          </span>
-        ))}
-      </div>
-    </div>
+        );
+      }} />
   );
 }
 
 function Panel({ title, action, children, className }: {
-  title: string; action?: string; children: React.ReactNode; className?: string;
+  title: string; action?: React.ReactNode; children: React.ReactNode; className?: string;
 }) {
   return (
     <section className={`flex flex-col rounded-[4px] border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
       <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: LINE }}>
         <h3 className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: INK }}>{title}</h3>
-        {action ? <span className="text-[8px] font-semibold uppercase tracking-[0.12em]" style={{ color: BLUE }}>{action}</span> : null}
+        {typeof action === 'string' ? <span className="text-[8px] font-semibold uppercase tracking-[0.12em]" style={{ color: BLUE }}>{action}</span> : action ?? null}
       </div>
       <div className="flex-1 p-3">{children}</div>
     </section>
@@ -182,27 +213,33 @@ export function PoliceCommand({ id, now }: { id: string; now: number }) {
     ['Theft', 342, -6], ['Assault', 231, 8], ['Burglary', 184, -3], ['Robbery', 126, 12],
     ['Vehicle Theft', 98, -9], ['Vandalism', 67, -2], ['Drug Offenses', 45, 5], ['Other Offenses', 73, -4],
   ];
+  // Places are the nation's own regions: incidents where crime pressure is highest, stations by region.
+  const ranked = [...o.regional].sort((a, b) => b.load - a.load);
+  const at = (i: number) => ranked.length ? ranked[i % ranked.length]!.region : '—';
   const incidents: [string, string, string, string][] = [
-    ['Armed Robbery in Progress', 'Downtown District', '12:35', 'CRITICAL'],
-    ['Shots Fired Reported', 'Eastwood Sector', '12:18', 'HIGH'],
-    ['Domestic Violence', 'Riverside Area', '11:57', 'HIGH'],
-    ['Vehicle Pursuit', 'North Highway', '11:42', 'MEDIUM'],
-    ['Suspicious Package', 'Central Station', '11:28', 'MEDIUM'],
-    ['Traffic Accident', 'West Boulevard', '10:47', 'LOW'],
+    ['Armed Robbery in Progress', at(0), '12:35', 'CRITICAL'],
+    ['Shots Fired Reported', at(1), '12:18', 'HIGH'],
+    ['Domestic Violence', at(2), '11:57', 'HIGH'],
+    ['Vehicle Pursuit', at(3), '11:42', 'MEDIUM'],
+    ['Suspicious Package', at(4), '11:28', 'MEDIUM'],
+    ['Traffic Accident', at(5), '10:47', 'LOW'],
   ];
-  const stations: [string, number, number, number][] = [
-    ['Central Station', 128, 56, 24], ['North Precinct', 112, 48, 18], ['East Precinct', 98, 42, 22],
-    ['South Precinct', 105, 45, 16], ['West Precinct', 97, 40, 14], ['Riverside Station', 85, 38, 12],
-  ];
+  const stationRegions = o.regional.slice(0, 6).map(r => r.region);
+  const stations: [string, number, number, number][] = ([
+    [128, 56, 24], [112, 48, 18], [98, 42, 22], [105, 45, 16], [97, 40, 14], [85, 38, 12],
+  ] as const).slice(0, stationRegions.length).map(([of, un, inc], i) => [`${stationRegions[i]} Station`, of, un, inc]);
+  const stationRegion = new Map(stations.map(([st], i) => [st, stationRegions[i]!] as const));
+  const [district, setDistrict] = React.useState<string | undefined>(undefined);
+  const inDistrict = (region: string) => !district || region === district;
   const community: [string, number, number][] = [
     ['Noise Complaint', 128, -5], ['Suspicious Activity', 95, 11], ['Traffic Violation', 86, -3],
     ['Abandoned Vehicle', 64, 6], ['Other Reports', 42, -2],
   ];
   const feed: [string, string, string][] = [
-    ['12:40', 'SWAT team deployed to hostage situation', 'Downtown'],
-    ['12:28', 'Multiple units respond to shots-fired call', 'Eastwood'],
-    ['12:15', 'Traffic checkpoint completed', 'North Highway'],
-    ['12:05', 'Missing person located and reunited', 'Riverside'],
+    ['12:40', 'SWAT team deployed to hostage situation', at(0)],
+    ['12:28', 'Multiple units respond to shots-fired call', at(1)],
+    ['12:15', 'Traffic checkpoint completed', at(3)],
+    ['12:05', 'Missing person located and reunited', at(2)],
   ];
 
   return (
@@ -242,8 +279,16 @@ export function PoliceCommand({ id, now }: { id: string; now: number }) {
 
       {/* ── Row 1 ──────────────────────────────────────────────── */}
       <div className="grid gap-2 xl:grid-cols-[1.7fr_1fr_1fr]">
-        <Panel title="Live Crime Heatmap" action="All Districts ▾">
-          <div className="h-[290px]"><CrimeHeatmap seedKey={`pl:hm:${id}`} /></div>
+        <Panel title="Live Crime Heatmap" action={
+          <select aria-label="Show one district" value={district ?? ''} onChange={e => setDistrict(e.currentTarget.value || undefined)}
+            className="focus-ring max-w-[11rem] cursor-pointer rounded-[2px] border bg-transparent px-1 py-0.5 text-[8px] font-semibold uppercase tracking-[0.12em]"
+            style={{ borderColor: LINE, color: BLUE, background: PANEL }}>
+            <option value="">All Districts</option>
+            {o.regional.map(r => <option key={r.region} value={r.region}>{r.region}</option>)}
+          </select>
+        }>
+          <div className="min-h-[290px]"><CrimeHeatmap seedKey={`pl:hm:${id}`} regional={o.regional} patrols={o.patrols} stations={stationRegions}
+            selected={district} onSelect={setDistrict} /></div>
         </Panel>
         <Panel title="Top Crime Types (24H)" action="View All">
           <div className="space-y-2">
@@ -259,7 +304,8 @@ export function PoliceCommand({ id, now }: { id: string; now: number }) {
         </Panel>
         <Panel title="Active Incidents" action="View All">
           <div className="space-y-1.5">
-            {incidents.map(([t, rg, tm, sv]) => (
+            {district && !incidents.some(([, rg]) => rg === district) ? <p className="text-[9px]" style={{ color: MUT }}>No active incidents listed in {district}.</p> : null}
+            {incidents.filter(([, rg]) => inDistrict(rg)).map(([t, rg, tm, sv]) => (
               <div key={t} className="flex items-center gap-2 text-[9px]">
                 <span className="shrink-0 rounded-[2px] px-1.5 py-0.5 text-[7px] font-bold uppercase tracking-wider"
                   style={{ color: SEV_C[sv], background: `color-mix(in srgb,${SEV_C[sv]} 16%,transparent)` }}>{sv}</span>
@@ -268,7 +314,7 @@ export function PoliceCommand({ id, now }: { id: string; now: number }) {
                   <div className="text-[8px]" style={{ color: MUT }}>{rg}</div>
                 </div>
                 <span className="font-mono text-[8px]" style={{ color: SOFT }}>{tm}</span>
-                <span style={{ color: MUT }} aria-hidden>⌖</span>
+                <button type="button" onClick={() => setDistrict(rg)} title={`Show ${rg} on the map`} aria-label={`Show ${rg} on the map`} className="focus-ring hover:brightness-150" style={{ color: district === rg ? BLUE : MUT }}>⌖</button>
               </div>
             ))}
           </div>
@@ -310,7 +356,8 @@ export function PoliceCommand({ id, now }: { id: string; now: number }) {
             <div className="flex text-[7.5px] uppercase tracking-wider" style={{ color: MUT }}>
               <span className="flex-1">Station</span><span className="w-12 text-right">Officers</span><span className="w-10 text-right">Units</span><span className="w-9 text-right">Inc.</span>
             </div>
-            {stations.map(([st, of, un, inc]) => (
+            {district && !stations.some(([st]) => stationRegion.get(st) === district) ? <p className="text-[9px]" style={{ color: MUT }}>No station listed in {district}.</p> : null}
+            {stations.filter(([st]) => inDistrict(stationRegion.get(st) ?? '')).map(([st, of, un, inc]) => (
               <div key={st} className="flex items-center text-[9px]">
                 <span className="min-w-0 flex-1 truncate" style={{ color: SOFT }}><span className="mr-1" style={{ color: EMER }}>●</span>{st}</span>
                 <span className="w-12 text-right font-mono" style={{ color: INK }}>{of}</span>

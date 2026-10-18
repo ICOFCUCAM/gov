@@ -10,7 +10,10 @@
 import * as React from 'react';
 import { emergencyOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
-import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { nationCapital, nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
+import { STATUS } from '@/lib/theme/tokens';
+import { CommandMap, useFrontier, type CommandPalette } from '@/apps/police-command/CommandMap';
+import { regionAt } from '@/apps/police-command/frontier';
 
 const BG = '#0a0608';
 const PANEL = '#140d10';
@@ -91,65 +94,105 @@ function MultiLine({ series, height = 130 }: { series: { name: string; c: string
   );
 }
 
-// National incident map: cyclone swirl + glowing incident clusters.
-function IncidentMap({ seedKey }: { seedKey: string }) {
-  const cols = 30, rows = 13;
-  const clusters = Array.from({ length: 9 }).map((_, i) => ({
-    x: 12 + seed(`${seedKey}:cx:${i}`) * 76, y: 16 + seed(`${seedKey}:cy:${i}`) * 64,
-    r: 3 + seed(`${seedKey}:cr:${i}`) * 8, hot: seed(`${seedKey}:ch:${i}`),
-  }));
-  const col = (h: number) => (h > 0.78 ? RED : h > 0.55 ? AMBER : h > 0.35 ? GOLD : CYAN);
+// National incident map on the nation's real regions: emergency pressure
+// by region (sample until the national emergency system is connected),
+// glowing incident clusters where it is highest, the weather system (sample)
+// over the coast, fire and rescue stations and shelters (sample until they
+// are registered in the national facility register), evacuation routes to
+// the capital. Zoom, whole nation, full screen (also "View Full Map") and
+// layers work.
+const PALETTE: CommandPalette = { critical: RED, high: AMBER, medium: GOLD, low: EMER, monitor: CYAN, accent: RED, line: LINE, panel: PANEL, ink: INK, soft: SOFT, muted: MUT };
+export interface RegionPressure { region: string; p: number; status: string }
+const sevOf = (p: number) => (p > 78 ? 'CRITICAL' : p > 60 ? 'HIGH' : p > 45 ? 'MEDIUM' : 'LOW');
+const sevColour = (p: number) => SEV_C[sevOf(p)]!;
+
+function IncidentMap({ seedKey, pressure, storm, fullRef }: {
+  seedKey: string;
+  pressure: RegionPressure[];
+  /** Where the weather system is (a coastal region, else the most pressed), with its name. */
+  storm: { region: string; name: string; sea?: [number, number] } | null;
+  fullRef?: React.MutableRefObject<(() => void) | null>;
+}) {
+  const ranked = [...pressure].sort((a, b) => b.p - a.p);
+  const clusters = ranked.slice(0, 9);
+  const crisis = ranked.filter(r => r.status !== 'nominal');
   return (
-    <div className="relative h-full overflow-hidden rounded-[3px]" style={{ background: 'radial-gradient(120% 90% at 38% 62%,#0e1c1f,#0a0608)' }}>
-      <div className="grid h-full gap-[3px] p-2" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-        {Array.from({ length: cols * rows }).map((_, i) => {
-          const v = seed(`${seedKey}:${i}`);
-          const inland = (i % cols > 2 && i % cols < cols - 2 && Math.floor(i / cols) > 0 && Math.floor(i / cols) < rows - 1);
-          return <span key={i} className="aspect-square rounded-full" style={{ background: inland ? (v > 0.9 ? RED : '#2a1c1f') : 'transparent', opacity: inland ? (v > 0.9 ? 0.85 : 0.35) : 0 }} />;
-        })}
-      </div>
-      <svg viewBox="0 0 100 80" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-        {/* cyclone swirl */}
-        {[0, 1, 2, 3].map(k => (
-          <circle key={k} cx="22" cy="56" r={4 + k * 4} fill="none" stroke={CYAN} strokeWidth="0.5"
-            opacity={0.4 - k * 0.08} strokeDasharray="6 4" />
-        ))}
-        <circle cx="22" cy="56" r="2.4" fill={CYAN} style={{ filter: `drop-shadow(0 0 4px ${CYAN})` }} />
-        {clusters.map((c, i) => i < clusters.length - 1 ? (
-          <line key={i} x1={c.x} y1={c.y} x2={clusters[i + 1]!.x} y2={clusters[i + 1]!.y} stroke={RED} strokeWidth="0.25" opacity="0.3" />
-        ) : null)}
-        {clusters.map((c, i) => (
-          <g key={`g${i}`}>
-            <circle cx={c.x} cy={c.y} r={c.r} fill={col(c.hot)} opacity="0.18" />
-            <circle cx={c.x} cy={c.y} r={c.r * 0.38} fill={col(c.hot) === CYAN ? CYAN : RED_BR}
-              style={{ filter: `drop-shadow(0 0 4px ${col(c.hot)})` }} />
+    <CommandMap title="Emergency pressure by region" height={300} palette={PALETTE} fullRef={fullRef}
+      values={pressure.map(r => ({ key: r.region, value: r.p }))} kind="sample"
+      source="Emergency operations model by region (sample) until the national emergency system is connected" valueLabel="Emergency pressure" unit="index"
+      categories={['fire-rescue', 'shelter']}
+      samples={[
+        ...ranked.slice(0, 3).map(r => ({ region: r.region, label: `Fire and rescue station · ${r.region}`, tone: 'warn' as const, glyph: '✹', category: 'fire-rescue', layer: 'resources' })),
+        ...(crisis.length ? crisis : ranked.slice(0, 2)).slice(0, 4).map(r => ({ region: r.region, label: `Emergency shelter · ${r.region}`, tone: 'ok' as const, glyph: '⌂', category: 'shelter', layer: 'resources' })),
+      ]}
+      samplesSource="fire and rescue stations and shelters by region"
+      flows={ranked.slice(0, 2).map(r => ({ from: r.region, to: 'capital', label: `Evacuation route · ${r.region} to the capital`, tone: 'warn' as const, weight: 2, layer: 'evac' }))}
+      hotspots={ranked.slice(0, 3).map(r => ({ region: r.region, intensity: r.p }))}
+      callouts={ranked.slice(0, 3).map(r => ({ region: r.region, line1: r.region, line2: `${r.p} · ${sevOf(r.p)} · ${r.status.toUpperCase()}`, colour: sevColour(r.p) }))}
+      layers={[{ id: 'incidents', label: 'Incident clusters', sample: true }, { id: 'weather', label: 'Weather system', sample: true }, { id: 'resources', label: 'Stations and shelters', sample: true }, { id: 'evac', label: 'Evacuation routes', sample: true }]}
+      legend={[
+        // Only the levels a cluster is drawn at.
+        ...(['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'] as const).filter(l => clusters.some(c => sevOf(c.p) === l))
+          .map(l => ({ label: l[0] + l.slice(1).toLowerCase(), colour: SEV_C[l]!, shape: 'glow' as const, layer: 'incidents' })),
+        ...(storm ? [{ label: 'Monitoring', colour: CYAN, shape: 'ring' as const, layer: 'weather', sample: true }] : []),
+        { label: 'Evacuation', colour: STATUS.warn, shape: 'dash', layer: 'evac', sample: true },
+        { label: 'Fire & rescue', colour: STATUS.warn, shape: 'glyph', glyph: '✹', layer: 'resources', sample: true },
+        { label: 'Shelters', colour: STATUS.ok, shape: 'glyph', glyph: '⌂', layer: 'resources', sample: true },
+      ]}
+      fullMapHref="/gov/situation-room"
+      extra={(ctx, on) => {
+        const at = new Map(ctx.units.map(u => [u.name, u] as const));
+        const placed = clusters.flatMap(c => { const u = at.get(c.region); return u ? [{ ...c, x: u.x, y: u.y }] : []; });
+        const spread = Math.max(7, Math.min(28, Math.sqrt((ctx.width * ctx.height) / Math.max(1, ctx.units.length)) * 0.42));
+        const home = storm ? at.get(storm.region) : undefined;
+        // The weather system sits off the coast (beyond the coastline from the region's centre), else over the region.
+        const sea = storm?.sea ? ctx.project(storm.sea[0], storm.sea[1]) : null;
+        const sw = home ? (sea ? { x: Math.max(20, Math.min(ctx.width - 20, sea[0] + (sea[0] - home.x) * 0.6)), y: Math.max(40, Math.min(ctx.height - 20, sea[1] + (sea[1] - home.y) * 0.6)) } : { x: home.x, y: home.y }) : null;
+        const R = Math.max(10, spread * 0.9);
+        return (
+          <g aria-hidden pointerEvents="none">
+            {on('weather') && sw ? (
+              <g>
+                <title>{`${storm!.name} near ${storm!.region} (sample)`}</title>
+                <g>
+                  {[0, 1, 2, 3].map(k => (
+                    <circle key={k} cx={sw.x} cy={sw.y} r={R * (0.5 + k * 0.55)} fill="none" stroke={CYAN} strokeWidth={0.9} opacity={0.5 - k * 0.1} strokeDasharray="7 5" />
+                  ))}
+                  <path d={`M${sw.x},${sw.y} q${R},${-R * 0.4} ${R * 1.6},${R * 0.5} M${sw.x},${sw.y} q${-R},${R * 0.4} ${-R * 1.6},${-R * 0.5}`} fill="none" stroke={CYAN} strokeWidth={1.1} opacity={0.6} />
+                  <animateTransform attributeName="transform" type="rotate" from={`360 ${sw.x} ${sw.y}`} to={`0 ${sw.x} ${sw.y}`} dur="9s" repeatCount="indefinite" />
+                </g>
+                <circle cx={sw.x} cy={sw.y} r={3.2} fill={CYAN} style={{ filter: `drop-shadow(0 0 4px ${CYAN})` }} />
+                <text x={sw.x} y={sw.y + R * 2.3 + 8} textAnchor="middle" fontSize="8" fontWeight="700" letterSpacing="1" fill={CYAN} stroke={PANEL} strokeWidth={2.4} paintOrder="stroke">{storm!.name.toUpperCase()}</text>
+              </g>
+            ) : null}
+            {on('incidents') ? placed.map((c, i) => i < placed.length - 1 ? (
+              <line key={`k${i}`} x1={c.x} y1={c.y} x2={placed[i + 1]!.x} y2={placed[i + 1]!.y} stroke={RED} strokeWidth={0.6} opacity={0.3} />
+            ) : null) : null}
+            {on('incidents') ? placed.map((c, i) => {
+              const col = sevColour(c.p), r = spread * (0.45 + c.p / 140);
+              return (
+                <g key={`g${i}`}>
+                  <circle cx={c.x} cy={c.y} r={r} fill={col} opacity={0.18} />
+                  <circle cx={c.x} cy={c.y} r={Math.max(2.4, r * 0.36)} fill={c.p > 60 ? RED_BR : col} style={{ filter: `drop-shadow(0 0 4px ${col})` }}>
+                    <title>{`${c.region}: ${sevOf(c.p).toLowerCase()} · pressure ${c.p} (sample)`}</title>
+                  </circle>
+                </g>
+              );
+            }) : null}
           </g>
-        ))}
-      </svg>
-      <div className="absolute right-2 top-2 flex flex-col gap-1">
-        {['⛶', '☰', '⌖'].map(s => (
-          <span key={s} className="grid h-6 w-6 place-items-center rounded-[2px] border text-[10px]" style={{ borderColor: LINE, background: PANEL, color: SOFT }} aria-hidden>{s}</span>
-        ))}
-      </div>
-      <div className="absolute bottom-2 left-1/2 flex -translate-x-1/2 gap-3 rounded-[2px] border px-3 py-1" style={{ borderColor: LINE, background: 'rgba(10,6,8,0.75)' }}>
-        {[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Low', EMER], ['Monitoring', CYAN]].map(([l, c]) => (
-          <span key={l} className="flex items-center gap-1.5 text-[7.5px] uppercase tracking-wider" style={{ color: SOFT }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}
-          </span>
-        ))}
-      </div>
-    </div>
+        );
+      }} />
   );
 }
 
 function Panel({ title, action, children, className }: {
-  title: string; action?: string; children: React.ReactNode; className?: string;
+  title: string; action?: React.ReactNode; children: React.ReactNode; className?: string;
 }) {
   return (
     <section className={`flex flex-col rounded-[4px] border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
       <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: LINE }}>
         <h3 className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: INK }}>{title}</h3>
-        {action ? <span className="text-[8px] font-semibold uppercase tracking-[0.12em]" style={{ color: RED }}>{action}</span> : null}
+        {typeof action === 'string' ? <span className="text-[8px] font-semibold uppercase tracking-[0.12em]" style={{ color: RED }}>{action}</span> : action ?? null}
       </div>
       <div className="flex-1 p-3">{children}</div>
     </section>
@@ -177,13 +220,26 @@ export function EmergencyCommand({ id, now }: { id: string; now: number }) {
     ['System Readiness', `${readiness}%`, 'Operational', readiness >= 60 ? EMER : AMBER],
   ];
 
+  // Places are the nation's own regions: pressure by region (the engine's regional reading, as a figure),
+  // the weather system on the coast (else the most pressed region), the outage in the capital's region.
+  const pressure: RegionPressure[] = o.regional.map((r, i) => ({ region: r.region, p: Math.round(wave(`emg:rs:${id}:${i}`, ts, 0, 1) * 100), status: r.status }));
+  const ranked = [...pressure].sort((a, b) => b.p - a.p);
+  const frontier = useFrontier();
+  const coast = frontier?.coastal.find(c => pressure.some(r => r.region === c.region));
+  const top = (i: number, reference: string) => ranked[i]?.region ?? regionName(i, reference);
+  const stormRegion = coast?.region ?? top(0, 'Western Coast Region');
+  const others = ranked.map(r => r.region).filter(r => r !== stormRegion);
+  const capitalRegion = regionAt(frontier, nationCapital()) ?? others[3] ?? regionName(0, 'Metro City Region');
+  const storm = pressure.length ? { region: stormRegion, name: 'Tropical Cyclone Aurora', sea: coast?.at } : null;
+  const fullMap = React.useRef<(() => void) | null>(null);
   const incidents: [string, string, string, string, string][] = [
-    ['Tropical Cyclone Aurora', 'Western Coast Region', '12:35', 'CRITICAL', '320K'],
-    ['Severe Flooding', 'Central River Basin', '11:58', 'HIGH', '18K'],
-    ['Wildfire Outbreak', 'Northern Highlands', '11:42', 'HIGH', '42K'],
-    ['Landslide Threat', 'Eastern Mountain Zone', '10:47', 'MEDIUM', '18K'],
-    ['Urban Power Outage', 'Metro City Region', '09:32', 'MEDIUM', '210K'],
+    ['Tropical Cyclone Aurora', stormRegion, '12:35', 'CRITICAL', '320K'],
+    ['Severe Flooding', others[0] ?? regionName(1, 'Central River Basin'), '11:58', 'HIGH', '18K'],
+    ['Wildfire Outbreak', others[1] ?? regionName(2, 'Northern Highlands'), '11:42', 'HIGH', '42K'],
+    ['Landslide Threat', others[2] ?? regionName(3, 'Eastern Mountain Zone'), '10:47', 'MEDIUM', '18K'],
+    ['Urban Power Outage', capitalRegion, '09:32', 'MEDIUM', '210K'],
   ];
+  const [, flood, fire, slide, outage] = incidents.map(x => x[1]);
   const resources: [string, number, number][] = [
     ['Personnel', 85642, 85], ['Vehicles', 24187, 72], ['Boats', 1248, 68], ['Helicopters', 324, 76],
     ['Drones', 872, 61], ['Medical Teams', 1245, 89], ['Shelters', o.sheltersOpen, 83],
@@ -205,17 +261,17 @@ export function EmergencyCommand({ id, now }: { id: string; now: number }) {
   ];
   const comms = ['Emergency Network', 'Satellite Link', 'Radio Network', 'Public Alert System', 'Social Media Monitoring'];
   const publicAlerts: [string, string][] = [
-    ['Heavy rain and strong winds expected in Western Coast', '12:35'],
-    ['Evacuation advised for low-lying areas in River Basin', '11:58'],
-    ['Wildfire nearby. Avoid Northern Highlands trails', '11:42'],
-    ['Road closures in Mountain Zone due to landslide risk', '10:47'],
-    ['Power outage in Metro City. Use caution', '09:32'],
+    [`Heavy rain and strong winds expected in ${stormRegion}`, '12:35'],
+    [`Evacuation advised for low-lying areas in ${flood}`, '11:58'],
+    [`Wildfire nearby. Avoid ${fire} trails`, '11:42'],
+    [`Road closures in ${slide} due to landslide risk`, '10:47'],
+    [`Power outage in ${outage}. Use caution`, '09:32'],
   ];
   const feed: [string, string][] = [
-    ['12:40', 'Rescue team deployed to Coastal Region'],
-    ['12:28', 'Additional shelters opened in Central District'],
-    ['12:15', 'Flood barriers activated in Delta Zone'],
-    ['12:05', 'Air support requested for Northern Highlands'],
+    ['12:40', `Rescue team deployed to ${stormRegion}`],
+    ['12:28', `Additional shelters opened in ${outage}`],
+    ['12:15', `Flood barriers activated in ${flood}`],
+    ['12:05', `Air support requested for ${fire}`],
   ];
 
   return (
@@ -255,8 +311,10 @@ export function EmergencyCommand({ id, now }: { id: string; now: number }) {
 
       {/* ── Row 1 ──────────────────────────────────────────────── */}
       <div className="grid gap-2 xl:grid-cols-[1.7fr_1fr_1fr]">
-        <Panel title="National Incident Map" action="View Full Map">
-          <div className="h-[300px]"><IncidentMap seedKey={`em:im:${id}`} /></div>
+        <Panel title="National Incident Map" action={
+          <button type="button" onClick={() => fullMap.current?.()} className="focus-ring text-[8px] font-semibold uppercase tracking-[0.12em] hover:underline" style={{ color: RED }}>View Full Map</button>
+        }>
+          <div className="min-h-[300px]"><IncidentMap seedKey={`em:im:${id}`} pressure={pressure} storm={storm} fullRef={fullMap} /></div>
         </Panel>
         <Panel title="Active Incidents" action="View All">
           <div className="space-y-1.5">

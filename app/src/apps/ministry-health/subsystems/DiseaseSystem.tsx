@@ -8,23 +8,36 @@ import * as React from 'react';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { diseaseCommandView } from '@/lib/gov/health-operations';
-import { healthGeo } from '@/lib/gov/health-geo';
-import { GeoMap } from '@/apps/_shared/GeoMap';
+import { healthGeoWindow, GEO_WINDOWS, type GeoWindow } from '@/lib/gov/health-geo';
+import { GeoMap, type GeoLayers, type GeoMetric } from '@/apps/_shared/GeoMap';
 import { CommandHeader, CommandPanel, KpiSpark, Donut, TrendChart, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
 const ACC = ACCENT.disease!;
 const LAYERS = ['Heatmap', 'Clusters', 'Hospitals', 'Mobility', 'Testing', 'Vaccination'];
+// What each layer button shows on the map: the figure, the map layers and what the panel says it is.
+const LAYER_VIEW: Record<string, { metric: GeoMetric; layers: GeoLayers; hot?: boolean; meta: string }> = {
+  Heatmap: { metric: 'outbreakHeat', layers: { heat: true, markers: true, routes: false, facilities: false }, meta: 'active cases' },
+  Clusters: { metric: 'outbreakHeat', layers: { heat: false, markers: true, routes: false, facilities: false }, hot: true, meta: 'case clusters' },
+  Hospitals: { metric: 'icuLoad', layers: { heat: false, markers: true, routes: false, facilities: true }, meta: 'ICU load · registered health sites' },
+  Mobility: { metric: 'outbreakHeat', layers: { heat: false, markers: true, routes: true, facilities: false }, meta: 'movement corridors' },
+  Testing: { metric: 'testPositivity', layers: { heat: true, markers: true, routes: false, facilities: false }, meta: 'test positivity' },
+  Vaccination: { metric: 'vaccinationGap', layers: { heat: true, markers: true, routes: false, facilities: false }, meta: 'not vaccinated' },
+};
 
 export function DiseaseSystem({ id, now, role, withheld }: {
   id: string; now: number; role: SovereignRole; withheld: Capability[];
 }) {
   const ts = now / 4000;
   const d = diseaseCommandView(id, ts);
-  const geo = healthGeo(id, ts);
   const [layer, setLayer] = React.useState('Heatmap');
-  const [win, setWin] = React.useState('7D');
+  const [win, setWin] = React.useState<GeoWindow>('7D');
+  // The window sets the time base of the map's sample values (mean across the window).
+  // 7D follows every tick (traffic keeps moving); longer windows are recomputed once per tick of the clock.
+  const base = win === '7D' ? ts : Math.floor(ts);
+  const geo = React.useMemo(() => healthGeoWindow(id, base, win), [id, base, win]);
+  const lv = LAYER_VIEW[layer]!;
   const norm = (s: number[]) => { const mn = Math.min(...s), sp = Math.max(...s) - mn || 1; return s.map(v => ((v - mn) / sp) * 100); };
 
   return (
@@ -44,22 +57,22 @@ export function DiseaseSystem({ id, now, role, withheld }: {
       {/* National outbreak map | Epidemic curve + age donut */}
       <div className="grid gap-2 xl:grid-cols-3">
         <div className="xl:col-span-2">
-          <CommandPanel title="National outbreak map" meta={`active cases · ${win}`} accent={ACC} live>
+          <CommandPanel title="National outbreak map" meta={`${lv.meta} · ${win}`} accent={ACC} live>
             <div className="mb-1.5 flex flex-wrap items-center gap-1">
               {LAYERS.map(l => (
-                <button key={l} onClick={() => setLayer(l)}
+                <button key={l} onClick={() => setLayer(l)} aria-pressed={layer === l}
                   className="focus-ring rounded-[3px] border px-2 py-0.5 text-[8px] font-semibold uppercase tracking-wider transition-colors"
                   style={{ borderColor: layer === l ? ACC : 'color-mix(in srgb,#1d2a36 70%,transparent)', color: layer === l ? ACC : 'rgb(var(--c-ink-muted))' }}>{l}</button>
               ))}
               <div className="ml-auto flex gap-0.5">
-                {['7D', '30D', '90D', '1Y'].map(wv => (
-                  <button key={wv} onClick={() => setWin(wv)}
+                {(Object.keys(GEO_WINDOWS) as GeoWindow[]).map(wv => (
+                  <button key={wv} onClick={() => setWin(wv)} aria-pressed={win === wv} title={`Mean over ${GEO_WINDOWS[wv]} days (sample)`}
                     className="focus-ring rounded-[3px] px-1.5 py-0.5 text-[8px] font-bold tabular-nums transition-colors"
                     style={{ background: win === wv ? ACC : 'transparent', color: win === wv ? '#100a02' : 'rgb(var(--c-ink-muted))' }}>{wv}</button>
                 ))}
               </div>
             </div>
-            <GeoMap geo={geo} metric="outbreakHeat" title="" height={300} />
+            <GeoMap geo={geo} metric={lv.metric} title="" height={300} layers={lv.layers} markerFilter={lv.hot ? 'hot' : 'all'} />
           </CommandPanel>
         </div>
         <div className="space-y-2">

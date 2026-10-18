@@ -8,6 +8,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { GeoMap } from '@/apps/_shared/GeoMap';
+import { PropagationMap } from '@/apps/ministry-health/PropagationMap';
+import { SignalTag } from '@/components/ui/SignalTag';
 import { healthGeo } from '@/lib/gov/health-geo';
 import { KpiSpark, Donut, TrendChart, RingGauge, Sparkline, sc, type Tone } from '@/apps/_shared/SovereignUI';
 import {
@@ -15,7 +17,7 @@ import {
   emergencyCommandView, pharmaSupplyCommand, healthFinanceExecution, publicHealthSite,
 } from '@/lib/gov/health-operations';
 import { hospitalOps } from '@/lib/gov/health-systems';
-import { waveSeries, seed } from '@/lib/telemetry';
+import { waveSeries } from '@/lib/telemetry';
 import { formatMoney, aiLabel } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
 
@@ -242,7 +244,7 @@ export function HealthEcosystemWall() {
             <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
               <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">{aiLabel('AI Recommendations', 'Recommendations')}</div>
               <div className="space-y-0.5">
-                {[[`Redirect 14 ICU patients · ${ns.worstRegion} → Highland`, 'Approve', 'alert'], ['Activate Emergency Medicine Reserve (EMR)', 'Review', 'warn'], ['Increase genomic surveillance · Capital District', 'Review', 'warn']].map(([r, b, t]) => (
+                {[[`Redirect 14 ICU patients · ${ns.worstRegion} → ${geo.reroute.toRegion !== ns.worstRegion ? geo.reroute.toRegion : geo.regions[geo.regions.length - 1]?.region ?? 'Highland'}`, 'Approve', 'alert'], ['Activate Emergency Medicine Reserve (EMR)', 'Review', 'warn'], [`Increase genomic surveillance · ${geo.corridors[0]?.from ?? 'Capital District'}`, 'Review', 'warn']].map(([r, b, t]) => (
                   <div key={r} className="flex items-center gap-1 rounded-[2px] px-1 py-0.5" style={{ background: 'rgba(0,0,0,0.25)', borderLeft: `2px solid ${sc(t as Tone)}` }}>
                     <span className="min-w-0 flex-1 truncate text-[7px] text-ink-soft">{r}</span>
                     <span className="shrink-0 rounded-[2px] px-1 py-0.5 text-[6px] font-bold uppercase" style={{ border: `1px solid ${b === 'Approve' ? sc('ok') : ACC.command}`, color: b === 'Approve' ? sc('ok') : ACC.command }}>{b}</span>
@@ -251,16 +253,8 @@ export function HealthEcosystemWall() {
               </div>
             </div>
             <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
-              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">Propagation Map</div>
-              <svg viewBox="0 0 100 56" className="w-full" style={{ height: 52 }}>
-                {Array.from({ length: 7 }, (_, i) => ({ x: 12 + ((seed(`pg:x:${i}`) * 76)), y: 8 + seed(`pg:y:${i}`) * 40, t: seed(`pg:t:${i}`) > 0.7 ? 'alert' : seed(`pg:t:${i}`) > 0.4 ? 'warn' : 'ok' })).map((n, i, a) => (
-                  <g key={i}>
-                    {i < a.length - 1 ? <line x1={n.x} y1={n.y} x2={a[i + 1]!.x} y2={a[i + 1]!.y} stroke={ACC.command} strokeOpacity="0.4" strokeWidth="0.5" className="animate-dash-flow" strokeDasharray="2 2" /> : null}
-                    {i > 1 ? <line x1={n.x} y1={n.y} x2={a[i - 2]!.x} y2={a[i - 2]!.y} stroke={ACC.command} strokeOpacity="0.25" strokeWidth="0.4" /> : null}
-                    <circle cx={n.x} cy={n.y} r={2.2} fill={sc(n.t as Tone)} className={n.t !== 'ok' ? 'animate-breathe' : undefined} style={{ filter: `drop-shadow(0 0 3px ${sc(n.t as Tone)})` }} />
-                  </g>
-                ))}
-              </svg>
+              <div className="mb-0.5 flex items-center justify-between gap-1 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">Propagation Map <SignalTag kind="sample" source="Regional pressure is a sample until a health information source is connected" className="!text-[6px]" /></div>
+              <PropagationMap regions={ns.regions} accent={ACC.command} height={52} />
             </div>
           </div>
         </Tile>

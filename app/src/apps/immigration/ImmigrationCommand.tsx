@@ -10,7 +10,10 @@
 import * as React from 'react';
 import { immigrationOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
-import { nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { nationCapital, nationIso3, nationTime, nationTimeZoneLabel } from '@/lib/nation/registry';
+import { STATUS } from '@/lib/theme/tokens';
+import { CommandMap, useFrontier, type CommandPalette } from '@/apps/police-command/CommandMap';
+import { regionAt } from '@/apps/police-command/frontier';
 
 const BG = '#070a10';
 const PANEL = '#0c1119';
@@ -77,58 +80,92 @@ function Area({ pts, color = EMER, h = 130 }: { pts: number[]; color?: string; h
   );
 }
 
-// Border-crossings world map: traffic nodes + curved route arcs.
-function BorderWorld({ seedKey }: { seedKey: string }) {
-  const cols = 38, rows = 15;
-  const hubs = [
-    { x: 18, y: 30 }, { x: 30, y: 50 }, { x: 46, y: 28 }, { x: 58, y: 46 },
-    { x: 70, y: 32 }, { x: 84, y: 52 }, { x: 36, y: 64 }, { x: 76, y: 60 },
-  ].map((h, i) => ({ ...h, t: seed(`${seedKey}:t:${i}`) }));
-  const col = (t: number) => (t > 0.66 ? RED : t > 0.42 ? AMBER : EMER);
+// Border crossings on the nation's real map: its land borders with each real
+// neighbour (named around the nation), a border post in the region that
+// touches each one, the main airport in the capital's region and a seaport
+// on the coast (all samples until the service registers its border posts,
+// airports and ports in the national facility register, which then replace
+// them), traffic arriving from each neighbour and routes on to the capital.
+// Zoom, whole nation, full screen and layers work.
+const PALETTE: CommandPalette = { critical: RED, high: AMBER, medium: GOLD, low: EMER, monitor: CYAN, accent: CYAN, line: LINE, panel: PANEL, ink: INK, soft: SOFT, muted: MUT };
+export interface BorderPoint { label: string; kind: 'land' | 'air' | 'sea'; region: string; neighbour?: string; at?: [number, number]; entries: number; exits: number; trend: number; closed: boolean }
+const trafficColour = (b: BorderPoint, max: number) => (b.closed ? MUT : b.entries / max > 0.66 ? RED : b.entries / max > 0.42 ? AMBER : EMER);
+const trafficWord = (b: BorderPoint, max: number) => (b.closed ? 'CLOSED' : b.entries / max > 0.66 ? 'HIGH TRAFFIC' : b.entries / max > 0.42 ? 'MEDIUM TRAFFIC' : 'LOW TRAFFIC');
+const GLYPH = { land: '⛬', air: '✈', sea: '⚓' } as const;
+const CATEGORY = { land: 'border-post', air: 'airport', sea: 'port' } as const;
+
+function BorderWorld({ seedKey, points, selected, onSelect }: {
+  seedKey: string;
+  points: BorderPoint[];
+  selected?: string;
+  onSelect: (region: string | undefined) => void;
+}) {
+  const max = Math.max(1, ...points.map(b => b.entries));
+  const byRegion = new Map<string, number>();
+  for (const b of points) byRegion.set(b.region, (byRegion.get(b.region) ?? 0) + b.entries + b.exits);
+  const busiest = [...points].filter(b => !b.closed).sort((a, b) => b.entries - a.entries);
+  const anyClosed = points.some(b => b.closed);
   return (
-    <div className="relative h-full overflow-hidden rounded-[3px]" style={{ background: 'radial-gradient(120% 90% at 52% 45%,#0d121b,#070a10)' }}>
-      <div className="grid h-full gap-[2px] p-2" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-        {Array.from({ length: cols * rows }).map((_, i) => {
-          const cx = i % cols, ry = Math.floor(i / cols);
-          const land = (ry > 1 && ry < rows - 1 && ((cx > 2 && cx < 15) || (cx > 17 && cx < 27) || (cx > 28 && cx < 36)));
-          const v = seed(`${seedKey}:${i}`);
-          return <span key={i} className="aspect-square rounded-[1px]" style={{ background: land ? (v > 0.86 ? CYAN : '#1b2533') : 'transparent', opacity: land ? (v > 0.86 ? 0.55 : 0.42) : 0 }} />;
-        })}
-      </div>
-      <svg viewBox="0 0 100 80" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-        {hubs.map((h, i) => i < hubs.length - 1 ? (
-          <path key={i} d={`M${h.x} ${h.y} Q ${(h.x + hubs[i + 1]!.x) / 2} ${Math.min(h.y, hubs[i + 1]!.y) - 16} ${hubs[i + 1]!.x} ${hubs[i + 1]!.y}`}
-            fill="none" stroke={col(h.t)} strokeWidth="0.4" opacity="0.45" />
-        ) : null)}
-        {hubs.map((h, i) => (
-          <g key={`h${i}`}>
-            <circle cx={h.x} cy={h.y} r={h.t > 0.66 ? 4.4 : 3} fill={col(h.t)} opacity="0.2" />
-            <circle cx={h.x} cy={h.y} r="1.5" fill={col(h.t)} style={{ filter: `drop-shadow(0 0 4px ${col(h.t)})` }} />
+    <CommandMap title="Border crossings by region" height={260} palette={PALETTE}
+      values={[...byRegion].map(([key, value]) => ({ key, value }))} kind="sample"
+      source="Crossings by border point (sample) until the border management system is connected" valueLabel="Crossings today" unit="people"
+      emptyNote={points.length ? undefined : 'The nation has no land borders, airport or port recorded yet.'}
+      categories={['border-post', 'airport', 'port']}
+      samples={points.map(b => ({ region: b.region, label: b.label, tone: (b.closed ? 'neutral' : 'ok') as 'neutral' | 'ok', glyph: GLYPH[b.kind], category: CATEGORY[b.kind], layer: 'posts' }))}
+      samplesSource="border posts at the regions bordering each neighbour, the main airport and seaport"
+      flows={busiest.slice(0, 5).map(b => ({ from: b.region, to: 'capital', label: `${b.label} to the capital`, tone: (b.entries / max > 0.66 ? 'alert' : b.entries / max > 0.42 ? 'warn' : 'ok') as 'alert' | 'warn' | 'ok', weight: 1 + (b.entries / max) * 2, layer: 'routes' }))}
+      hotspots={busiest.slice(0, 2).map(b => ({ region: b.region, intensity: Math.round(50 + (b.entries / max) * 40) }))}
+      callouts={busiest.slice(0, 3).map(b => ({ region: b.region, line1: b.label, line2: `${b.entries.toLocaleString()} IN · ${trafficWord(b, max)}`, colour: trafficColour(b, max) }))}
+      layers={[{ id: 'traffic', label: 'Traffic at border points', sample: true }, { id: 'posts', label: 'Border posts, airport, port', sample: true }, { id: 'routes', label: 'Routes to the capital', sample: true }]}
+      legend={[
+        { label: 'High Traffic', colour: RED, shape: 'glow', layer: 'traffic' }, { label: 'Medium Traffic', colour: AMBER, shape: 'glow', layer: 'traffic' },
+        { label: 'Low Traffic', colour: EMER, shape: 'glow', layer: 'traffic' },
+        ...(anyClosed ? [{ label: 'Closed', colour: MUT, shape: 'ring' as const, layer: 'traffic' }] : []),
+        { label: 'Border post', colour: STATUS.ok, shape: 'glyph' as const, glyph: '⛬', layer: 'posts', sample: true },
+        { label: 'Airport', colour: STATUS.ok, shape: 'glyph' as const, glyph: '✈', layer: 'posts', sample: true },
+        ...(points.some(b => b.kind === 'sea') ? [{ label: 'Seaport', colour: STATUS.ok, shape: 'glyph' as const, glyph: '⚓', layer: 'posts', sample: true }] : []),
+      ]}
+      selected={selected} onSelect={onSelect} fullMapHref="/gov/situation-room"
+      extra={(ctx, on) => {
+        if (!on('traffic')) return null;
+        const at = new Map(ctx.units.map(u => [u.name, u] as const));
+        return (
+          <g aria-hidden pointerEvents="none">
+            {points.map((b, i) => {
+              const u = at.get(b.region); if (!u) return null;
+              const q = b.at ? ctx.project(b.at[0], b.at[1]) : null;
+              const p = q ? { x: q[0], y: q[1] } : { x: u.x, y: u.y };
+              const c = trafficColour(b, max);
+              const r = 6 + (b.entries / max) * 10;
+              // Traffic arriving from the neighbour: from beyond the border, along the line from the region's centre.
+              const dx = p.x - u.x, dy = p.y - u.y, len = Math.hypot(dx, dy) || 1;
+              const o = { x: p.x + (dx / len) * 46, y: p.y + (dy / len) * 46 };
+              const d = `M${o.x.toFixed(1)},${o.y.toFixed(1)} Q${((o.x + p.x) / 2 + (dy / len) * 14).toFixed(1)},${((o.y + p.y) / 2 - (dx / len) * 14).toFixed(1)} ${p.x.toFixed(1)},${p.y.toFixed(1)}`;
+              return (
+                <g key={`b${i}`}>
+                  {b.kind === 'land' && !b.closed ? <path d={d} fill="none" stroke={c} strokeWidth={1} strokeOpacity={0.65} strokeDasharray="3 3" className="motion-safe:animate-dash-flow" /> : null}
+                  <circle cx={p.x} cy={p.y} r={r} fill={c} opacity={b.closed ? 0 : 0.2} />
+                  {b.closed ? <circle cx={p.x} cy={p.y} r={5} fill="none" stroke={MUT} strokeWidth={1.2} /> : null}
+                  <circle cx={p.x} cy={p.y} r={b.closed ? 1.8 : 2.8} fill={c} style={{ filter: `drop-shadow(0 0 4px ${c})` }}>
+                    <title>{`${b.label}: ${b.entries.toLocaleString()} entries, ${b.exits.toLocaleString()} exits · ${trafficWord(b, max).toLowerCase()} (sample)`}</title>
+                  </circle>
+                </g>
+              );
+            })}
           </g>
-        ))}
-      </svg>
-      <div className="absolute right-2 top-2 flex flex-col gap-1">
-        {['+', '−'].map(s => <span key={s} className="grid h-6 w-6 place-items-center rounded-[2px] border text-[12px]" style={{ borderColor: LINE, background: PANEL, color: SOFT }} aria-hidden>{s}</span>)}
-      </div>
-      <div className="absolute bottom-2 left-2 flex gap-3 rounded-[2px] border px-3 py-1" style={{ borderColor: LINE, background: 'rgba(7,10,16,0.78)' }}>
-        {[['High Traffic', RED], ['Medium Traffic', AMBER], ['Low Traffic', EMER], ['Closed', MUT]].map(([l, c]) => (
-          <span key={l} className="flex items-center gap-1.5 text-[7.5px] uppercase tracking-wider" style={{ color: SOFT }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}
-          </span>
-        ))}
-      </div>
-    </div>
+        );
+      }} />
   );
 }
 
 function Panel({ title, action, children, className }: {
-  title: string; action?: string; children: React.ReactNode; className?: string;
+  title: string; action?: React.ReactNode; children: React.ReactNode; className?: string;
 }) {
   return (
     <section className={`flex flex-col rounded-[4px] border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
       <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: LINE }}>
         <h3 className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: INK }}>{title}</h3>
-        {action ? <span className="text-[8px] font-semibold uppercase tracking-[0.12em]" style={{ color: CYAN }}>{action}</span> : null}
+        {typeof action === 'string' ? <span className="text-[8px] font-semibold uppercase tracking-[0.12em]" style={{ color: CYAN }}>{action}</span> : action ?? null}
       </div>
       <div className="flex-1 p-3">{children}</div>
     </section>
@@ -160,17 +197,45 @@ export function ImmigrationCommand({ id, now }: { id: string; now: number }) {
     ['Document Alerts (Today)', `${docAlerts}`, '+5.3% vs yesterday', AMBER],
   ];
 
-  const borders: [string, number, number, number][] = [
-    ['Northern Land Border', 6842, 6231, 8.2], ['Eastern Airport', 5421, 4932, 6.7],
-    ['Coastal Seaport', 4218, 3856, 5.4], ['Western Land Border', 3105, 2789, 4.1],
-    ['Southern Land Border', 2987, 2654, -1.2], ['Central Airport', 2278, 1855, 3.6],
-  ];
+  // Border points are the nation's own: a land border with each real neighbour (at the region that
+  // touches it), the main airport in the capital's region and a seaport on the coast. Figures are samples.
+  const frontier = useFrontier();
+  const [border, setBorder] = React.useState<string | undefined>(undefined);
+  const points: BorderPoint[] = React.useMemo(() => {
+    if (!frontier) return [];
+    const capRegion = regionAt(frontier, nationCapital());
+    const base: Omit<BorderPoint, 'entries' | 'exits' | 'trend' | 'closed'>[] = [
+      ...frontier.neighbours.map(n => ({ label: `${n.name} land border`, kind: 'land' as const, region: n.region, neighbour: n.name, at: n.at })),
+      ...(capRegion ? [{ label: `International airport (${capRegion})`, kind: 'air' as const, region: capRegion }] : []),
+      ...(frontier.coastal[0] ? [{ label: `Seaport (${frontier.coastal[0].region})`, kind: 'sea' as const, region: frontier.coastal[0].region, at: frontier.coastal[0].at }] : []),
+    ];
+    const closedCount = Math.min(1, Math.max(0, o.bordersTotal - o.bordersOpen));
+    const rows = base.map(b => {
+      const entries = Math.round(1200 + seed(`ib:bx:${id}:${b.label}`) * 6400);
+      return { ...b, entries, exits: Math.round(entries * (0.84 + seed(`ib:by:${id}:${b.label}`) * 0.12)), trend: Math.round((seed(`ib:bt:${id}:${b.label}`) - 0.25) * 110) / 10, closed: false };
+    }).sort((a, b) => b.entries - a.entries);
+    // The quietest land border is shown closed while the service reports borders closed.
+    const quietLand = [...rows].reverse().find(r => r.kind === 'land');
+    if (closedCount && quietLand && rows.filter(r => r.kind === 'land').length > 1) quietLand.closed = true;
+    return rows;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [frontier, id, o.bordersTotal - o.bordersOpen > 0]);
+  const borders: [string, number, number, number][] = nationIso3()
+    ? points.map(b => [b.label, b.closed ? 0 : b.entries, b.closed ? 0 : b.exits, b.trend])
+    : [
+      ['Northern Land Border', 6842, 6231, 8.2], ['Eastern Airport', 5421, 4932, 6.7],
+      ['Coastal Seaport', 4218, 3856, 5.4], ['Western Land Border', 3105, 2789, 4.1],
+      ['Southern Land Border', 2987, 2654, -1.2], ['Central Airport', 2278, 1855, 3.6],
+    ];
+  const label = (i: number, reference: string) => borders[i]?.[0] ?? reference;
+  const shownBorders = border ? borders.filter(b => b[0] === border) : borders;
+  const regionOfBorder = (l?: string) => points.find(b => b.label === l)?.region;
   const refusalsT: [string, string, string, string, string, string][] = [
-    ['12:35', 'Ahmed Al Hassan', 'Syria', 'Invalid Documents', 'Northern Land Border', 'J. Williams'],
-    ['12:18', 'Li Wei', 'China', 'Purpose Not Clear', 'Eastern Airport', 'M. Johnson'],
-    ['11:57', 'Juan Carlos Silva', 'Brazil', 'Insufficient Funds', 'Coastal Seaport', 'T. Brown'],
-    ['11:42', 'Fatima Zahra', 'Morocco', 'Security Concern', 'Western Land Border', 'A. Patel'],
-    ['11:28', 'Sergey Ivanov', 'Russia', 'Visa Violation', 'Central Airport', 'D. Kim'],
+    ['12:35', 'Ahmed Al Hassan', 'Syria', 'Invalid Documents', label(0, 'Northern Land Border'), 'J. Williams'],
+    ['12:18', 'Li Wei', 'China', 'Purpose Not Clear', label(1, 'Eastern Airport'), 'M. Johnson'],
+    ['11:57', 'Juan Carlos Silva', 'Brazil', 'Insufficient Funds', label(2, 'Coastal Seaport'), 'T. Brown'],
+    ['11:42', 'Fatima Zahra', 'Morocco', 'Security Concern', label(3, 'Western Land Border'), 'A. Patel'],
+    ['11:28', 'Sergey Ivanov', 'Russia', 'Visa Violation', label(4, 'Central Airport'), 'D. Kim'],
   ];
   const docTypes: [string, string, string][] = [
     ['Expired Document', '186', '+8'], ['Forged Document', '124', '+5'],
@@ -184,10 +249,10 @@ export function ImmigrationCommand({ id, now }: { id: string; now: number }) {
     ['Identity Match', 64, '+2'], ['Travel History Match', 38, '+1'], ['Document Match', 16, '0'], ['Sanctions Match', 10, '0'],
   ];
   const feed: [string, string, string][] = [
-    ['12:40', 'High footfall detected', 'Northern Land Border'],
-    ['12:28', 'New visa rule applied', 'Eastern Airport'],
-    ['12:15', 'Seaport inspection completed', 'Coastal Seaport'],
-    ['12:05', 'Watchlist hit review required', 'Central Airport'],
+    ['12:40', 'High footfall detected', label(0, 'Northern Land Border')],
+    ['12:28', 'New visa rule applied', points.find(b => b.kind === 'air')?.label ?? 'Eastern Airport'],
+    ['12:15', points.some(b => b.kind === 'sea') || !nationIso3() ? 'Seaport inspection completed' : 'Border post inspection completed', points.find(b => b.kind === 'sea')?.label ?? label(1, 'Coastal Seaport')],
+    ['12:05', 'Watchlist hit review required', label(2, 'Central Airport')],
     ['11:52', 'Overstay alert · 3 new cases', ''],
     ['11:41', 'System sync completed', ''],
   ];
@@ -229,17 +294,27 @@ export function ImmigrationCommand({ id, now }: { id: string; now: number }) {
 
       {/* ── Row 1 ──────────────────────────────────────────────── */}
       <div className="grid gap-2 xl:grid-cols-[1.6fr_1.1fr_1.1fr]">
-        <Panel title="Border Crossings Overview" action="All Borders ▾">
-          <div className="h-[260px]"><BorderWorld seedKey={`ib:bw:${id}`} /></div>
+        <Panel title="Border Crossings Overview" action={
+          <select aria-label="Show one border point" value={border ?? ''} onChange={e => setBorder(e.currentTarget.value || undefined)}
+            className="focus-ring max-w-[12rem] cursor-pointer rounded-[2px] border px-1 py-0.5 text-[8px] font-semibold uppercase tracking-[0.12em]"
+            style={{ borderColor: LINE, color: CYAN, background: PANEL }}>
+            <option value="">All Borders</option>
+            {borders.map(([b]) => <option key={b} value={b}>{b}</option>)}
+          </select>
+        }>
+          <div className="min-h-[260px]"><BorderWorld seedKey={`ib:bw:${id}`} points={points} selected={regionOfBorder(border)}
+            onSelect={r => setBorder(r ? points.find(b => b.region === r)?.label ?? undefined : undefined)} /></div>
         </Panel>
         <Panel title="Crossings by Border (Today)" action="View All">
           <div className="flex text-[7px] uppercase tracking-wider" style={{ color: MUT }}>
             <span className="flex-1">Border Point</span><span className="w-12 text-right">Entries</span><span className="w-12 text-right">Exits</span><span className="w-12 text-right">Trend</span>
           </div>
           <div className="mt-1 space-y-1.5">
-            {borders.map(([b, en, ex, tr]) => (
+            {nationIso3() && !frontier ? <p className="text-[9px]" style={{ color: MUT }}>Finding the nation&rsquo;s borders on the map…</p> : null}
+            {shownBorders.map(([b, en, ex, tr]) => (
               <div key={b} className="flex items-center text-[9px]">
-                <span className="min-w-0 flex-1 truncate" style={{ color: SOFT }}>{b}</span>
+                <button type="button" onClick={() => setBorder(border === b ? undefined : b)} title={`Show ${b} on the map`}
+                  className="focus-ring min-w-0 flex-1 truncate text-start hover:underline" style={{ color: border === b ? CYAN : SOFT }}>{b}{points.find(p => p.label === b)?.closed ? ' · closed' : ''}</button>
                 <span className="w-12 text-right font-mono" style={{ color: INK }}>{en.toLocaleString()}</span>
                 <span className="w-12 text-right font-mono" style={{ color: SOFT }}>{ex.toLocaleString()}</span>
                 <span className="w-12 text-right font-mono" style={{ color: tr >= 0 ? EMER : RED }}>{tr >= 0 ? '+' : ''}{tr}%</span>

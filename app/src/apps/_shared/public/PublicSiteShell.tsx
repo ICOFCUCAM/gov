@@ -24,6 +24,8 @@ import { nationLocale, siteMessages } from '@/lib/nation/registry';
 import { t as fill } from '@/lib/i18n';
 import { GatewayBar, LanguageSwitch, SiteLogo, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd, type SiteGateway } from './integration';
 import { FontSizeControls } from './controls';
+import { LocatorPanel } from './LocatorPanel';
+import type { SiteLocations } from './locator-types';
 
 export interface PublicSiteTheme {
   ink: string;
@@ -57,7 +59,11 @@ export interface PublicSiteFeaturedCard { kicker: string; title: string; body: s
 export interface PublicSiteStat { value: string; label: string; sub: string; live?: boolean }
 export interface PublicSiteNewsItem { title: string; date?: string; summary: string; /** On the ministry's existing website (feed news). */ url?: string }
 export interface PublicSiteInitiative { title: string; body: string }
-export interface PublicSiteLocator { title: string; placeholder: string; tabs: string[]; pinLabel: string; pinCoords: [number, number][] }
+export interface PublicSiteLocator {
+  title: string; placeholder: string; tabs: string[]; pinLabel: string;
+  /** @deprecated Fixed drawing positions from the content record; no longer drawn. The locator shows the institution's published sites from the national facility register (`locations`). Kept so older records still load. */
+  pinCoords: [number, number][];
+}
 export interface PublicSiteShortcut { title: string; subtitle: string; href?: string }
 export type PublicSiteLinkItem = string | { label: string; href: string };
 export interface PublicSiteFooterSection { heading: string; items: PublicSiteLinkItem[] }
@@ -98,6 +104,8 @@ export interface PublicSiteShellProps {
   dir?: 'ltr' | 'rtl';
   initiatives: PublicSiteInitiative[];
   locator?: PublicSiteLocator;
+  /** The institution's published sites from the national facility register, for the locator (PublicSite fills it on the server). */
+  locations?: SiteLocations;
   shortcuts: PublicSiteShortcut[];
   footerSections: PublicSiteFooterSection[];
   newsletter: { heading: string; body: string };
@@ -125,7 +133,7 @@ function Action({ href, className, style, children }: { href?: string; className
 
 export function PublicSiteShell({
   theme, extra, url, locale, languages, institution, nav, hero, alert, quickServices, featured, statistics, statisticsSample, news, newsSample, newsFrom, gateway, preview, lang, dir, initiatives,
-  locator, shortcuts, footerSections, newsletter, legalLine, legalLinks,
+  locator, locations, shortcuts, footerSections, newsletter, legalLine, legalLinks,
 }: PublicSiteShellProps) {
   // Fixed wording in the nation's language (lib/i18n `site`); each institution's own content is unchanged.
   const t = siteMessages(locale);
@@ -361,24 +369,8 @@ export function PublicSiteShell({
                 <h3 className="text-[15px] font-bold" style={{ color: theme.ink }}>{locator.title}</h3>
                 <span className="text-[11px] font-semibold" style={{ color: theme.primary }}>{t.viewMap}</span>
               </div>
-              <div className="flex items-center gap-2 rounded-md border px-2 py-1.5 text-[11px] text-slate-600"
-                style={{ borderColor: theme.line }}>
-                <span>⌕</span> {locator.placeholder}
-              </div>
-              <div className="relative mt-2 h-36 overflow-hidden rounded-lg"
-                style={{ background: `linear-gradient(135deg, ${theme.surfaceMute}, #c3d4e6)` }}
-                role="img" aria-label={locator.title}>
-                {locator.pinCoords.map(([x, y], i) => (
-                  <span key={i} className="absolute grid h-4 w-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-[8px] font-bold text-white"
-                    style={{ left: `${x}%`, top: `${y}%`, background: theme.primary }}>{locator.pinLabel}</span>
-                ))}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-1.5">
-                {locator.tabs.map((t, i) => (
-                  <span key={t} className="rounded-full px-2.5 py-0.5 text-[10px] font-medium"
-                    style={i === 0 ? { background: theme.primary, color: '#fff' } : { border: `1px solid ${theme.line}`, color: '#475569' }}>{t}</span>
-                ))}
-              </div>
+              <LocatorPanel data={locations} institution={institution.name} placeholder={locator.placeholder} tabs={locator.tabs}
+                pinLabel={locator.pinLabel} theme={theme} order="map-first" inputClass="rounded-md text-[11px]" />
             </div>
           ) : (
             <div id="contact" className="scroll-mt-24 rounded-xl border bg-white p-4 shadow-sm" style={{ borderColor: theme.line }}>

@@ -14,6 +14,8 @@ import { FontSizeControls } from './controls';
 import { effectiveContent } from '@/lib/public-sites/effective';
 import { getSiteSettings } from '@/lib/data/site-settings';
 import { siteProps } from './site-props';
+import { siteLocations } from './locator-data';
+import { LocatorPanel } from './LocatorPanel';
 import { PRESETS, DEFAULT_PRESET, presetsFor, type Preset, type PresetDesign, type BlockRef } from './design/presets';
 import { nationLocale, siteMessages, nationEmergencyContacts } from '@/lib/nation/registry';
 import { t as fill, type Messages } from '@/lib/i18n';
@@ -39,7 +41,9 @@ export function presetFor(id: string, requested?: string): Preset {
 }
 
 export function PublicSite({ id, theme, illustration, live, preset, preview, extra }: PublicSiteProps) {
-  const site = siteProps(id, { theme, illustration, live, preview });
+  const props = siteProps(id, { theme, illustration, live, preview });
+  // The locator shows the institution's own published sites from the national facility register.
+  const site = props.locator ? { ...props, locations: siteLocations(id, props.locator.tabs) } : props;
   const p = presetFor(id, preset ?? (preview ? effectiveContent(id, preview).previewPreset ?? undefined : undefined));
   // A bespoke design is drawn by the site's own page; here it falls back to Civic Standard.
   if (p.id === 'civic-standard' || p.bespoke) return <PublicSiteShell {...site} extra={extra} />;
@@ -670,29 +674,13 @@ function Programmes({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: bo
 function Contact({ c, variant, inRow }: { c: Ctx; variant: string; inRow?: boolean }) {
   const { s, th, t } = c;
   const loc = s.locator;
-  const map = loc ? (
-    <div className="relative mt-3 h-36 overflow-hidden" style={{ background: `linear-gradient(135deg, ${th.surfaceMute}, #c3d4e6)`, borderRadius: c.d.radius }} role="img" aria-label={loc.title}>
-      {loc.pinCoords.map(([x, y], i) => (
-        <span key={i} className="absolute grid h-4 w-4 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full text-[8px] font-bold text-white" style={{ left: `${x}%`, top: `${y}%`, background: th.primary }}>{loc.pinLabel}</span>
-      ))}
-    </div>
-  ) : null;
   const card = (
     <Card c={c} id="contact">
       <SectionHead c={c} title={loc?.title ?? t.contact} size={19} />
       {loc ? (
         <>
-          <div className="flex items-center gap-2 border px-2 py-1.5 text-[12px] text-slate-600" style={{ borderColor: c.rule, borderRadius: c.d.radius }}><span>⌕</span> {loc.placeholder}</div>
-          {variant === 'panel' ? (
-            <ul className="mt-3 grid grid-cols-2 gap-2 text-[12px]">
-              {loc.tabs.map(tab => <li key={tab} className="border px-3 py-2 font-medium" style={{ borderColor: c.rule, borderRadius: c.d.radius, color: th.ink }}>{tab}</li>)}
-            </ul>
-          ) : (
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {loc.tabs.map((tab, i) => <span key={tab} className="rounded-full px-2.5 py-0.5 text-[10px] font-medium" style={i === 0 ? { background: th.primary, color: '#fff' } : { border: `1px solid ${c.rule}`, color: '#475569' }}>{tab}</span>)}
-            </div>
-          )}
-          {map}
+          <LocatorPanel data={s.locations} institution={s.institution.name} placeholder={loc.placeholder} tabs={loc.tabs} pinLabel={loc.pinLabel}
+            theme={{ primary: th.primary, ink: th.ink, line: c.rule, surfaceMute: th.surfaceMute }} radius={c.d.radius} tabStyle={variant === 'panel' ? 'panel' : 'chips'} order="tabs-first" />
         </>
       ) : null}
       <p className="mt-3 text-[12px] text-slate-600">{t.contactText}</p>
