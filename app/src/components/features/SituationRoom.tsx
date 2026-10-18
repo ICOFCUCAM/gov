@@ -6,7 +6,7 @@ import { api } from '@/lib/api/client';
 import { CommandPalette, type CommandItem } from '@/components/ui/CommandPalette';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
 import { identityFor } from '@/lib/archetype-profiles';
-import { POSTURE_TONE, postureTone, type TheatreSite, TheatreControls, TheatreLayersSvg, TheatreLegend, theatreFrame } from '@/components/features/situation/Theatre';
+import { POSTURE_TONE, postureTone, type TheatreLink, type TheatreSite, TheatreControls, TheatreLayersSvg, TheatreLegend, theatreFrame } from '@/components/features/situation/Theatre';
 import type {
   NationalSnapshot,
   NationalCoordination,
@@ -467,6 +467,7 @@ export function NationalMap({
   const frameH = isFull ? Math.max(480, (typeof window !== 'undefined' ? window.innerHeight : 900) - 120) : height ?? Math.round(Math.max(440, Math.min(760, frameW * (frameW >= 620 ? 0.9 : 0.8))));
   // The nation's registered sites (national facility register), refreshed every half minute.
   const [sites, setSites] = React.useState<TheatreSite[]>([]);
+  const [conn, setConn] = React.useState<{ links: TheatreLink[]; seats: Record<string, { lng: number; lat: number }> }>({ links: [], seats: {} });
   React.useEffect(() => {
     let live = true;
     const load = () => fetch('/api/facilities').then(r => (r.ok ? r.json() : null)).then((j: { sites?: { id: string; name: string; category: string; location: { lng: number; lat: number }; certification: { state: string }; generalised?: boolean }[]; categories?: { key: string; glyph: string }[] } | null) => {
@@ -474,8 +475,17 @@ export function NationalMap({
       const glyph = new Map((j.categories ?? []).map(c => [c.key, c.glyph]));
       setSites(j.sites.map(s => ({ id: s.id, name: s.name, category: s.category, glyph: glyph.get(s.category) ?? '●', lng: s.location.lng, lat: s.location.lat, certified: s.certification.state === 'certified', generalised: s.generalised })));
     }).catch(() => undefined);
-    void load();
-    const t = setInterval(load, 30_000);
+    // Recorded exchanges between institutions, between their registered seats (lib/data/interop-map.ts).
+    const loadConn = () => fetch('/api/facilities/connections').then(r => (r.ok ? r.json() : null)).then((j: { nodes?: { id: string; seat?: { lng: number; lat: number } }[]; links?: { from: string; to: string; kind: 'agreed' | 'live'; label: string; health: TheatreLink['health'] }[] } | null) => {
+      if (!live || !j?.nodes) return;
+      const seat = new Map(j.nodes.filter(n => n.seat).map(n => [n.id, n.seat!]));
+      setConn({
+        links: (j.links ?? []).flatMap(l => (seat.has(l.from) && seat.has(l.to) ? [{ ...l, a: seat.get(l.from)!, b: seat.get(l.to)! }] : [])),
+        seats: Object.fromEntries(j.nodes.filter(n => n.seat && n.id !== 'central-government').map(n => [n.id, n.seat!])),
+      });
+    }).catch(() => undefined);
+    void load(); void loadConn();
+    const t = setInterval(() => { void load(); void loadConn(); }, 30_000);
     return () => { live = false; clearInterval(t); };
   }, []);
   const colourOf = React.useCallback((v: MapValue): string => TONE[postureTone(v.value)] ?? ACCENT, []);
@@ -568,7 +578,7 @@ export function NationalMap({
           inMap={wide ? <><div className="px-2 pb-1.5"><TheatreLegend layers={{ ...layers, institutions: showInstitutions }} registered={sites.length} /></div>{strip}</> : undefined}
           hud={<TheatreControls tactical={tactical} heat={heat} grid={layers.grid} incidents={layers.incidents}
             onTactical={() => setTactical(v => !v)} onHeat={() => setHeat(v => !v)} onGrid={() => onToggleLayer?.('grid')} onIncidents={() => onToggleLayer?.('incidents')} />}
-          overlay={ctx => <TheatreLayersSvg ctx={ctx} regions={regions} nodes={showInstitutions ? mapNodes : []} edges={edges} incidents={incidents} layers={layers} tactical={tactical} heat={heat} flowDur={flowDur} reserveEnd={wide ? 168 : 0} ts={ts} sites={sites} />} />
+          overlay={ctx => <TheatreLayersSvg ctx={ctx} regions={regions} nodes={showInstitutions ? mapNodes : []} edges={edges} incidents={incidents} layers={layers} tactical={tactical} heat={heat} flowDur={flowDur} reserveEnd={wide ? 168 : 0} ts={ts} sites={sites} links={conn.links} seats={conn.seats} />} />
         {wide ? ladder : null}
       </div>
       {!wide ? <>{ladder}{strip}<TheatreLegend layers={{ ...layers, institutions: showInstitutions }} registered={sites.length} /></> : null}

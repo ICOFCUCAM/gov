@@ -151,3 +151,81 @@ describe('national facility register', () => {
     expect(decidePolicyChange(b.id, 'confirm', 'A2')).toEqual({ error: expect.stringMatching(/changed since/) });
   });
 });
+
+describe('connected ministry systems (4b)', () => {
+  it('a system sends its sites with its own key; officials still publish; updates come back as versions or moves to confirm', async () => {
+    const { issueSiteFeed, siteFeedForKey, receiveSiteFeed, siteFeedChanges, revokeSiteFeed, listSiteFeeds } = await import('./facilities');
+    expect(issueSiteFeed(health, 'Master Facility List', '')).toEqual({ error: expect.stringMatching(/Name the official/) });
+    const r = issueSiteFeed(health, 'Master Facility List', 'Signer B');
+    if ('error' in r) throw new Error(r.error);
+    expect(r.key).toMatch(/^csf_[0-9a-f]{8}_[0-9a-f]{40}$/);
+    expect(JSON.stringify(listSiteFeeds(health))).not.toContain(r.key);
+    expect(siteFeedForKey(health, `Bearer ${r.key}`)?.id).toBe(r.feed.id);
+    expect(siteFeedForKey(interior, `Bearer ${r.key}`)).toBeNull();
+    expect(siteFeedForKey(health, 'Bearer csf_00000000_' + '0'.repeat(40))).toBeNull();
+
+    const body = { sites: [
+      { ref: 'MFL-13023', name: 'Kenyatta National Hospital', category: 'health', lat: -1.30096, lng: 36.80661, code: '13023' },
+      { ref: 'MFL-99', name: 'Nowhere', category: 'health', lat: 48.85, lng: 2.35 },
+      { name: 'No ref', category: 'health', lat: -1.3, lng: 36.8 },
+    ] };
+    const first = await receiveSiteFeed(r.feed, body, JSON.stringify(body));
+    expect(first).toEqual(expect.objectContaining({ added: 1, refused: [expect.objectContaining({ index: 1, reason: 'The position is outside the nation' }), expect.objectContaining({ index: 2 })] }));
+    const site = listFacilities({ state: 'all' }).find(f => f.source.ref === 'MFL-13023')!;
+    expect(site).toEqual(expect.objectContaining({ state: 'proposed', source: expect.objectContaining({ kind: 'feed', feedId: r.feed.id }) }));
+    expect(site.location.method).toBe('system-feed');
+    expect(site.ids['Master Facility List code']).toBe('13023');
+
+    await actOnFacility(site.id, { action: 'publish' }, 'Signer B');
+    const upd = { sites: [{ ref: 'MFL-13023', name: 'Kenyatta National Hospital (KNH)', category: 'health', lat: -1.3012, lng: 36.8068, status: 'partial' }] };
+    expect(await receiveSiteFeed(r.feed, upd, JSON.stringify(upd))).toEqual(expect.objectContaining({ updated: 1, movesWaiting: 1 }));
+    const after = listFacilities({ state: 'all' }).find(f => f.id === site.id)!;
+    expect(after).toEqual(expect.objectContaining({ name: 'Kenyatta National Hospital (KNH)', status: 'partial' }));
+    expect(after.location.lat).toBe(-1.30096); // the move waits for an official
+    expect(after.pendingVersion?.location.lat).toBe(-1.3012);
+    const moved = await actOnFacility(site.id, { action: 'confirm-move' }, 'Signer B');
+    expect(moved).toEqual(expect.objectContaining({ location: expect.objectContaining({ lat: -1.3012 }) }));
+    expect(siteFeedChanges(r.feed, null)).toEqual({ sites: [expect.objectContaining({ ref: 'MFL-13023', state: 'published', moveWaiting: false })] });
+
+    revokeSiteFeed(health, r.feed.id, 'Signer B');
+    expect(siteFeedForKey(health, `Bearer ${r.key}`)).toBeNull();
+  }, 60_000);
+});
+
+describe('open-data candidates (4c)', () => {
+  it('suggests sites from an open dataset; officials confirm, link or reject; nothing is published from it', async () => {
+    const { loadOpenSource, listCandidates, decideCandidate, resetOpenSites } = await import('./facilities');
+    resetOpenSites();
+    const geojson = JSON.stringify({ type: 'FeatureCollection', features: [
+      { type: 'Feature', geometry: { type: 'Point', coordinates: [36.80661, -1.30096] }, properties: { name: 'KNH', amenity: 'hospital', osm_id: 'node/1' } },
+      { type: 'Feature', geometry: { type: 'Point', coordinates: [36.9, -1.2] }, properties: { name: 'Clinic X', osm_id: 'node/2' } },
+      { type: 'Feature', geometry: { type: 'Point', coordinates: [2.35, 48.85] }, properties: { name: 'Paris', osm_id: 'node/3' } },
+    ] });
+    expect(await loadOpenSource({ name: 'OSM health', publisher: 'OpenStreetMap', text: geojson, category: 'health' }, 'A')).toEqual({ error: expect.stringMatching(/licence/) });
+    const recorded = await proposeFacility(health, { name: 'Kenyatta National Hospital', category: 'health', lng: 36.8066, lat: -1.30095 }, 'A');
+    if ('error' in recorded) throw new Error(recorded.error);
+    const src = await loadOpenSource({ name: 'OSM health', publisher: 'OpenStreetMap contributors', licence: 'ODbL 1.0', text: geojson, category: 'health' }, 'Officer A');
+    if ('error' in src) throw new Error(src.error);
+    expect(src).toEqual(expect.objectContaining({ shareAlike: true, rows: 3, candidates: 2, refused: [expect.objectContaining({ row: 3 })] }));
+    expect(listFacilities({ state: 'all' })).toHaveLength(1); // nothing became a site
+    const [knh, clinic] = listCandidates();
+    expect(knh!.match?.id).toBe(recorded.facility.id);
+    expect(await decideCandidate(knh!.id, { decision: 'link', facilityId: recorded.facility.id }, 'Officer A')).toEqual(expect.objectContaining({ state: 'linked' }));
+    expect(listFacilities({ state: 'all' }).find(f => f.id === recorded.facility.id)!.ids['OSM health']).toBe('node/1');
+    const confirmed = await decideCandidate(clinic!.id, { decision: 'confirm', ministryId: health }, 'Officer A');
+    expect(confirmed).toEqual(expect.objectContaining({ state: 'confirmed', facilityId: expect.any(String) }));
+    const site = listFacilities({ state: 'all' }).find(f => f.name === 'Clinic X')!;
+    expect(site).toEqual(expect.objectContaining({ state: 'proposed', location: expect.objectContaining({ method: 'open-data' }), source: expect.objectContaining({ kind: 'candidate' }) }));
+    expect(await decideCandidate(clinic!.id, { decision: 'reject', reason: 'x' }, 'B')).toEqual({ error: expect.stringMatching(/already confirmed/) });
+  }, 60_000);
+
+  it('fetches a dataset only from the address given, under the platform\'s fetch rules', async () => {
+    const { loadOpenSource, resetOpenSites } = await import('./facilities');
+    resetOpenSites();
+    const csv = 'name,category,lat,lon,id\nAirport,airport,-1.31917,36.92778,HKJK\n';
+    const fetchStub = (async (u: string) => new Response(csv, { headers: { 'content-type': 'text/csv' }, status: 200, statusText: 'OK' }) as Response & { url: string }) as unknown as typeof fetch;
+    const r = await loadOpenSource({ name: 'OurAirports', publisher: 'OurAirports', licence: 'Public domain', url: 'https://example.org/airports.csv' }, 'A', { fetch: fetchStub, resolve: async () => ['93.184.216.34'] });
+    expect(r).toEqual(expect.objectContaining({ candidates: 1, shareAlike: false, url: 'https://example.org/airports.csv' }));
+    expect(await loadOpenSource({ name: 'X', publisher: 'Y', licence: 'Z', url: 'http://10.0.0.1/x.csv' }, 'A', { fetch: fetchStub, resolve: async () => ['10.0.0.1'] })).toEqual({ error: expect.stringMatching(/could not be fetched/) });
+  }, 60_000);
+});

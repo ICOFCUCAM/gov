@@ -26,7 +26,7 @@ const PUBLIC_SITES = /^\/(embed|r|agriculture|assembly|communications|education|
 // by pg_cron; each refuses when the secret is unset, see middleware.test.ts)
 // the deployment agent's health reports (per-nation agent credential) and a
 // ministry's connected case system (its own ccf_ key, lib/data/case-import.ts).
-const SELF_AUTHENTICATED = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/];
+const SELF_AUTHENTICATED = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/feed$/];
 // Signing in, creating the installation's first account (the route refuses once one exists)
 // and setting a new password with an administrator's reset code.
 const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/, /^\/api\/auth\/password$/];

@@ -26,7 +26,7 @@
 // generalised. Confidential categories stay outside the civilian register.
 // Held in platform state (lib/data/persist.ts).
 
-import { createHash, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { geoContains, geoDistance } from 'd3-geo';
 import { getMinistry, listMinistries, recordAudit } from '@/lib/data/store';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
@@ -34,6 +34,7 @@ import { loadNationGeography } from '@/lib/map/geography';
 import { loadAdmin2 } from '@/lib/geo/admin2';
 import { parseCsv } from '@/lib/twin/csv';
 import { upsertFacilityEntity } from '@/lib/twin/register';
+import { safeFetchText } from '@/lib/net/safe-fetch';
 import type { Geom } from '@/lib/geo/admin1';
 
 // ── Vocabulary ────────────────────────────────────────────────────────────
@@ -191,7 +192,7 @@ export interface Facility {
   publishedAt?: string;
   /** Location certification under the nation's policy at the time it was published. */
   certification: { required: CertStage[]; stamps: CertStamp[]; state: 'awaiting' | 'certified' | 'rejected' };
-  source: { kind: 'form' | 'field' | 'import' | 'feed'; importId?: string; sha256?: string };
+  source: { kind: 'form' | 'field' | 'import' | 'feed' | 'candidate'; importId?: string; sha256?: string; feedId?: string; ref?: string; candidateId?: string };
   /** A move or change waiting for a second official. */
   pendingVersion?: FacilityVersion & { reason?: string };
   versions: FacilityVersion[];
@@ -657,3 +658,258 @@ export async function importSites(ministryId: string, text: string, format: 'csv
 export function listImports(ministryId?: string): FacilityImport[] {
   return db().imports.filter(i => !ministryId || i.ministryId === ministryId).map(i => structuredClone(i));
 }
+
+// ── Connected ministry systems (map plan 4b) ──────────────────────────────
+// A ministry's own system of record (a health facility list, a school
+// registry, a grid operator's asset register) sends its sites with its own key
+// (csf_<prefix>_<secret>, shown once; only its SHA-256 is kept, compared in
+// constant time). New sites are proposed under the same checks as a form and
+// still need an official to publish them; a site this system sent before is
+// updated: a new name or status is applied as a version, a new position waits
+// for an official to confirm the move. It never touches sites recorded any
+// other way. The system can read back what officials did with its sites.
+// Every call is audited with the SHA-256 of what was sent.
+
+export interface SiteFeed {
+  id: string; ministryId: string; name: string; prefix: string;
+  issuedAt: string; issuedBy: string; revokedAt?: string; revokedBy?: string;
+  calls: number; lastCallAt?: string; lastResult?: string;
+}
+interface SiteFeedDb { feeds: SiteFeed[]; hashes: Record<string, string> }
+const gf = globalThis as unknown as { __civicosSiteFeeds?: SiteFeedDb };
+const feedsDb = (): SiteFeedDb => (gf.__civicosSiteFeeds ??= { feeds: [], hashes: {} });
+const SITE_KEY = /^csf_([0-9a-f]{8})_[0-9a-f]{40}$/;
+const hash = (v: string) => createHash('sha256').update(v).digest('hex');
+export const MAX_FEED_SITES = 2000;
+
+export function listSiteFeeds(ministryId: string): SiteFeed[] {
+  return feedsDb().feeds.filter(f => f.ministryId === ministryId).map(f => ({ ...f }));
+}
+
+/** Connect a ministry system: returns its key once. */
+export function issueSiteFeed(ministryId: string, name: string | undefined, by: string | undefined): { feed: SiteFeed; key: string } | { error: string } {
+  const m = getMinistry(ministryId);
+  if (!m) return { error: 'No such institution' };
+  const who = by?.trim();
+  if (!who) return { error: 'Name the official connecting the system' };
+  const label = clean(name, 80);
+  if (!label) return { error: 'Name the system (e.g. Master Facility List)' };
+  if (!db().policy.methods.includes('system-feed')) return { error: 'The nation does not accept sites from connected systems: change the facility policy first' };
+  if (feedsDb().feeds.some(f => f.ministryId === ministryId && !f.revokedAt && f.name.toLowerCase() === label.toLowerCase())) return { error: 'A connected system already has that name' };
+  const hex = randomBytes(24).toString('hex');
+  const prefix = hex.slice(0, 8);
+  const key = `csf_${prefix}_${hex.slice(8)}`;
+  const feed: SiteFeed = { id: `SFEED-${randomUUID().slice(0, 8)}`, ministryId, name: label, prefix, issuedAt: now(), issuedBy: who, calls: 0 };
+  feedsDb().feeds.push(feed);
+  feedsDb().hashes[feed.id] = hash(key);
+  recordAudit(who, 'facility.feed.issue', `SiteFeed:${feed.id}`, 'ok', `${m.name} · ${label} · csf_${prefix}…`);
+  return { feed: { ...feed }, key };
+}
+
+export function revokeSiteFeed(ministryId: string, feedId: string, by: string | undefined): SiteFeed | { error: string } {
+  const f = feedsDb().feeds.find(x => x.id === feedId && x.ministryId === ministryId);
+  if (!f) return { error: 'No such connected system' };
+  if (!by?.trim()) return { error: 'Name the official disconnecting the system' };
+  if (f.revokedAt) return { error: 'This system is already disconnected' };
+  Object.assign(f, { revokedAt: now(), revokedBy: by.trim() });
+  delete feedsDb().hashes[f.id];
+  recordAudit(by.trim(), 'facility.feed.revoke', `SiteFeed:${f.id}`, 'ok', `${f.name} · csf_${f.prefix}…`);
+  return { ...f };
+}
+
+/** The connected system a key belongs to, for this ministry; null for anything else. */
+export function siteFeedForKey(ministryId: string, authorization: string | null | undefined): SiteFeed | null {
+  const key = (authorization ?? '').replace(/^Bearer\s+/i, '').trim();
+  const m = SITE_KEY.exec(key);
+  if (!m) return null;
+  const want = Buffer.from(hash(key), 'hex');
+  for (const f of feedsDb().feeds) {
+    if (f.ministryId !== ministryId || f.revokedAt || f.prefix !== m[1]) continue;
+    const h = feedsDb().hashes[f.id];
+    if (!h) continue;
+    const have = Buffer.from(h, 'hex');
+    if (have.length === want.length && timingSafeEqual(have, want)) return f;
+  }
+  return null;
+}
+
+const feedActor = (f: SiteFeed) => `Connected system: ${f.name} (csf_${f.prefix}…)`;
+
+/** Receive sites from a connected system; answers per site, by position in the list. */
+export async function receiveSiteFeed(feed: SiteFeed, body: unknown, raw: string): Promise<{ added: number; updated: number; movesWaiting: number; unchanged: number; refused: { index: number; ref?: string; reason: string }[] } | { error: string }> {
+  const list = (body as { sites?: unknown } | null)?.sites;
+  const f = feedsDb().feeds.find(x => x.id === feed.id)!;
+  f.calls++; f.lastCallAt = now();
+  if (!Array.isArray(list)) { f.lastResult = 'refused: no sites list'; return { error: 'Send { "sites": [ … ] }' }; }
+  if (list.length > MAX_FEED_SITES) { f.lastResult = 'refused: too many sites'; return { error: `A call takes at most ${MAX_FEED_SITES} sites` }; }
+  const actor = feedActor(feed);
+  const out = { added: 0, updated: 0, movesWaiting: 0, unchanged: 0, refused: [] as { index: number; ref?: string; reason: string }[] };
+  for (const [index, item] of list.entries()) {
+    const it = (item ?? {}) as Record<string, unknown>;
+    const ref = clean(it.ref, 80);
+    if (!ref) { out.refused.push({ index, reason: 'Each site needs "ref", this system\'s own id for it' }); continue; }
+    const existing = db().facilities.find(x => x.source.feedId === feed.id && x.source.ref === ref);
+    if (!existing) {
+      const res = await proposeFacility(feed.ministryId, {
+        name: clean(it.name), category: clean(it.category, 40), lat: Number(it.lat), lng: Number(it.lng),
+        accuracyM: it.accuracyM != null ? Number(it.accuracyM) : undefined, method: 'system-feed', status: it.status as FacilityStatus,
+        region: clean(it.region) || undefined, operator: clean(it.operator) || undefined,
+        ids: { [`${feed.name}`]: ref, ...(clean(it.code, 80) && categoryOf(clean(it.category, 40)) ? { [categoryOf(clean(it.category, 40))!.scheme]: clean(it.code, 80) } : {}) },
+        confirmDuplicate: it.confirmDuplicate === true,
+      }, actor, { kind: 'feed', feedId: feed.id, ref });
+      if ('error' in res) out.refused.push({ index, ref, reason: res.error });
+      else out.added++;
+      continue;
+    }
+    if (existing.state === 'withdrawn') { out.refused.push({ index, ref, reason: 'An official withdrew this site; it is not changed from the system' }); continue; }
+    let changed = false;
+    const name = clean(it.name);
+    if (name && name !== existing.name) { existing.name = name; pushVersion(existing, actor, `renamed by ${feed.name}`); changed = true; }
+    if (it.status && STATUSES.includes(it.status as FacilityStatus) && it.status !== existing.status) {
+      existing.status = it.status as FacilityStatus; pushVersion(existing, actor, `status ${existing.status} from ${feed.name}`); changed = true;
+    }
+    const lat = Number(it.lat), lng = Number(it.lng);
+    if (Number.isFinite(lat) && Number.isFinite(lng) && (Math.abs(lat - existing.location.lat) > 1e-6 || Math.abs(lng - existing.location.lng) > 1e-6)) {
+      const moved = await actOnFacility(existing.id, { action: 'move', lat, lng, method: 'system-feed', accuracyM: it.accuracyM != null ? Number(it.accuracyM) : undefined, reason: `Position updated in ${feed.name}` }, actor);
+      if ('error' in moved) out.refused.push({ index, ref, reason: moved.error });
+      else { out.movesWaiting++; changed = true; }
+    }
+    if (changed) out.updated++; else out.unchanged++;
+  }
+  f.lastResult = `${out.added} added, ${out.updated} updated, ${out.refused.length} refused`;
+  recordAudit(actor, 'facility.feed.receive', `SiteFeed:${feed.id}`, out.refused.length && !out.added && !out.updated ? 'error' : 'ok', `${f.lastResult} · sha256 ${hash(raw).slice(0, 12)}…`);
+  return out;
+}
+
+/** What officials did with this system's sites since a time: so both sides agree. */
+export function siteFeedChanges(feed: SiteFeed, since: string | null): { sites: { ref: string; id: string; state: Facility['state']; certification: Facility['certification']['state']; moveWaiting: boolean; lastChange: string }[] } | { error: string } {
+  const t = since ? Date.parse(since) : 0;
+  if (since && Number.isNaN(t)) return { error: 'since must be a date-time' };
+  return {
+    sites: db().facilities.filter(x => x.source.feedId === feed.id)
+      .map(x => ({ ref: x.source.ref!, id: x.id, state: x.state, certification: x.certification.state, moveWaiting: !!x.pendingVersion, lastChange: x.versions.at(-1)?.at ?? x.proposedAt }))
+      .filter(x => Date.parse(x.lastChange) >= t),
+  };
+}
+
+// ── Open-data candidates (map plan 4c) ────────────────────────────────────
+// Open datasets (OpenStreetMap exports via HDX, healthsites.io, OurAirports,
+// power plant databases) suggest sites; they are never published from there.
+// Each dataset is loaded with its publisher and licence (share-alike licences
+// are flagged: ODbL obliges sharing a derived database under the same terms),
+// from an uploaded file or fetched by the server from the address given (that
+// host only, under the platform's fetch rules). Each candidate inside the
+// nation waits for an official: confirm it as a new site of their institution
+// (checked like a form), link it to a site already recorded (its identifier
+// goes into the site's crosswalk), or reject it with a reason.
+
+export interface OpenSource {
+  id: string; name: string; publisher: string; licence: string; shareAlike: boolean; url?: string;
+  loadedAt: string; loadedBy: string; sha256: string; rows: number; candidates: number; refused: { row: number; reason: string }[];
+}
+export interface Candidate {
+  id: string; sourceId: string; name: string; category: string; lng: number; lat: number;
+  ref?: string; region?: string; regionCode?: string;
+  /** A recorded site of the same kind close by, offered for linking. */
+  match?: { id: string; name: string; metres: number };
+  state: 'open' | 'confirmed' | 'linked' | 'rejected';
+  decidedBy?: string; decidedAt?: string; facilityId?: string; reason?: string;
+}
+interface OpenDb { sources: OpenSource[]; candidates: Candidate[]; seq: number }
+const go = globalThis as unknown as { __civicosOpenSites?: OpenDb };
+const openDb = (): OpenDb => (go.__civicosOpenSites ??= { sources: [], candidates: [], seq: 1 });
+export const SHARE_ALIKE = /odbl|share.?alike|cc.?by.?sa/i;
+export const MAX_CANDIDATES = 5000;
+
+export function listOpenSources(): OpenSource[] { return openDb().sources.map(x => structuredClone(x)); }
+export function listCandidates(filter: { state?: Candidate['state'] | 'all'; sourceId?: string; category?: string } = {}): Candidate[] {
+  return openDb().candidates
+    .filter(c => (filter.state ?? 'open') === 'all' || c.state === (filter.state ?? 'open'))
+    .filter(c => !filter.sourceId || c.sourceId === filter.sourceId)
+    .filter(c => !filter.category || c.category === filter.category)
+    .map(c => ({ ...c }));
+}
+
+/** Load an open dataset as candidates: every row checked, those outside the nation refused. */
+export async function loadOpenSource(input: { name?: string; publisher?: string; licence?: string; url?: string; text?: string; format?: 'csv' | 'geojson' | 'gpx'; category?: string },
+  by: string, deps: { fetch?: typeof fetch; resolve?: (h: string) => Promise<string[]> } = {}): Promise<OpenSource | { error: string }> {
+  if (!by.trim()) return { error: 'Name the official loading the dataset' };
+  if (!db().policy.methods.includes('open-data')) return { error: 'The nation does not accept open-data candidates: change the facility policy first' };
+  const name = clean(input.name, 120), publisher = clean(input.publisher, 120), licence = clean(input.licence, 120);
+  if (!name || !publisher) return { error: 'Give the dataset a name and its publisher' };
+  if (!licence) return { error: 'Record the dataset\'s licence (e.g. ODbL 1.0, CC BY 4.0, public domain)' };
+  const fallback = input.category ? categoryOf(input.category)?.key : undefined;
+  if (input.category && !fallback) return { error: 'Unknown category' };
+  let text = input.text ?? '';
+  let url: string | undefined;
+  if (!text && input.url) {
+    try { const u = new URL(input.url); if (u.protocol !== 'https:' && u.protocol !== 'http:') throw 0; url = u.href; } catch { return { error: 'Give the dataset\'s address (http or https) or upload the file' }; }
+    const host = new URL(url).host;
+    try {
+      text = (await safeFetchText(url, { allow: u => u.host === host, accept: 'application/geo+json, application/json, text/csv, application/gpx+xml, */*;q=0.1', types: /json|csv|xml|gpx|text\/plain|octet-stream/i, maxBytes: 10_000_000, fetch: deps.fetch, resolve: deps.resolve })).text;
+    } catch (e) { return { error: `The dataset could not be fetched: ${(e as Error).message}` }; }
+  }
+  if (!text.trim()) return { error: 'Upload the file or give its address' };
+  const format = input.format ?? (/^\s*[{[]/.test(text) ? 'geojson' : /<gpx|<wpt/i.test(text) ? 'gpx' : 'csv');
+  const rows = readSitesFile(text, format);
+  if ('error' in rows) return rows;
+  if (rows.length > MAX_CANDIDATES) return { error: `More than ${MAX_CANDIDATES} rows: filter the dataset to the nation and one kind of site` };
+  const src: OpenSource = {
+    id: `OSRC-${openDb().seq++}`, name, publisher, licence, shareAlike: SHARE_ALIKE.test(licence), ...(url ? { url } : {}),
+    loadedAt: now(), loadedBy: by.trim(), sha256: createHash('sha256').update(text).digest('hex'), rows: rows.length, candidates: 0, refused: [],
+  };
+  for (const [i, r] of rows.entries()) {
+    const row = format === 'csv' ? i + 2 : i + 1;
+    const refuse = (reason: string) => { if (src.refused.length < 200) src.refused.push({ row, reason }); };
+    if (r._geometry) { refuse(`A ${r._geometry} is not a point`); continue; }
+    const cat = categoryOf((r.category ?? '').trim().toLowerCase())?.key ?? fallback;
+    if (!cat) { refuse(`"${r.category ?? ''}" is not a category (choose one for the whole dataset)`); continue; }
+    const lat = Number(String(r.latitude ?? '').replace(',', '.')), lng = Number(String(r.longitude ?? '').replace(',', '.'));
+    const nm = clean(r.name) || `Unnamed ${categoryOf(cat)!.label.toLowerCase()}`;
+    const check = await checkLocation({ lng, lat, category: cat, name: nm });
+    if (!check.ok) { refuse(check.errors[0]!); continue; }
+    if (!check.place.inside) { refuse('Outside the national boundary'); continue; }
+    const ref = clean(r.code ?? r.id ?? r['@id'] ?? r.osm_id ?? r.uuid, 80);
+    if (ref && openDb().candidates.some(c => c.sourceId !== src.id && c.ref === ref && openDb().sources.find(s => s.id === c.sourceId)?.name === name)) { refuse('Already loaded from this dataset'); continue; }
+    const m = check.duplicates[0];
+    openDb().candidates.push({
+      id: `CAND-${openDb().seq++}`, sourceId: src.id, name: nm, category: cat, lng, lat, ...(ref ? { ref } : {}),
+      region: check.place.region, regionCode: check.place.regionCode, ...(m ? { match: m } : {}), state: 'open',
+    });
+    src.candidates++;
+  }
+  openDb().sources.unshift(src);
+  recordAudit(src.loadedBy, 'facility.open.load', `OpenSource:${src.id}`, src.candidates ? 'ok' : 'error', `${name} (${publisher}; ${licence}) · ${src.candidates} of ${src.rows} rows · sha256 ${src.sha256.slice(0, 12)}…`);
+  return structuredClone(src);
+}
+
+/** An official decides a candidate: confirm as a new site of an institution, link to a recorded site, or reject. */
+export async function decideCandidate(id: string, d: { decision: 'confirm'; ministryId: string; name?: string; status?: FacilityStatus } | { decision: 'link'; facilityId: string } | { decision: 'reject'; reason?: string }, by: string): Promise<Candidate | { error: string }> {
+  const c = openDb().candidates.find(x => x.id === id);
+  if (!c) return { error: 'No such candidate' };
+  if (c.state !== 'open') return { error: `This candidate is already ${c.state}` };
+  if (!by.trim()) return { error: 'Name the official deciding' };
+  const src = openDb().sources.find(s => s.id === c.sourceId)!;
+  if (d.decision === 'reject') {
+    if (!clean(d.reason, 300)) return { error: 'Say why the candidate is rejected' };
+    Object.assign(c, { state: 'rejected', decidedBy: by.trim(), decidedAt: now(), reason: clean(d.reason, 300) });
+  } else if (d.decision === 'link') {
+    const f = db().facilities.find(x => x.id === d.facilityId);
+    if (!f || f.state === 'withdrawn') return { error: 'No such site' };
+    if (f.category !== c.category) return { error: 'The candidate is a different kind of site' };
+    if (c.ref) f.ids[src.name] = c.ref;
+    pushVersion(f, by.trim(), `linked to ${src.name}${c.ref ? ` (${c.ref})` : ''}`);
+    Object.assign(c, { state: 'linked', decidedBy: by.trim(), decidedAt: now(), facilityId: f.id });
+  } else {
+    const res = await proposeFacility(d.ministryId, {
+      name: clean(d.name) || c.name, category: c.category, lng: c.lng, lat: c.lat, method: 'open-data', status: d.status,
+      ids: c.ref ? { [src.name]: c.ref } : {}, confirmDuplicate: true, note: `From ${src.name} (${src.publisher}; ${src.licence})`,
+    }, by, { kind: 'candidate', candidateId: c.id });
+    if ('error' in res) return { error: res.error };
+    Object.assign(c, { state: 'confirmed', decidedBy: by.trim(), decidedAt: now(), facilityId: res.facility.id });
+  }
+  recordAudit(by.trim(), `facility.open.${c.state}`, `Candidate:${c.id}`, 'ok', `${c.name} · ${src.name}${c.reason ? ` · ${c.reason}` : ''}`);
+  return { ...c };
+}
+
+export function resetOpenSites(): void { go.__civicosOpenSites = undefined; }

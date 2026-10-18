@@ -93,7 +93,14 @@ const KIND_CATEGORY: Partial<Record<string, string>> = {
   hospital: 'health', port: 'port', airport: 'airport', power: 'power', telecom: 'telecom', water: 'water', logistics: 'logistics', customs: 'border-post', military: 'defence',
 };
 
-export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers, tactical, heat, flowDur, reserveEnd = 0, ts = 0, sites = [] }: {
+/** A recorded exchange between institutions (lib/data/interop-map.ts), between their registered seats. */
+export interface TheatreLink { from: string; to: string; kind: 'agreed' | 'live'; label: string; health: 'agreed' | 'healthy' | 'quiet' | 'failing'; a: { lng: number; lat: number }; b: { lng: number; lat: number } }
+
+export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers, tactical, heat, flowDur, reserveEnd = 0, ts = 0, sites = [], links = [], seats = {} }: {
+  /** Recorded exchanges between institutions' registered seats (agreed and live). */
+  links?: TheatreLink[];
+  /** Registered seats of institutions, by institution id: their command node is tethered to it. */
+  seats?: Record<string, { lng: number; lat: number }>;
   /** Published sites of the national facility register (drawn where they are, linked to their record). */
   sites?: TheatreSite[];
   ctx: OverlayContext;
@@ -123,6 +130,17 @@ export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers
   // Asset tiles, the most important first, capped so the theatre stays readable at any number of regions.
   const registered = new Set(sites.map(s => s.category));
   const placed = layers.infra ? sites.flatMap(s => { const q = ctx.project(s.lng, s.lat); return q ? [{ ...s, x: q[0], y: q[1] }] : []; }) : [];
+  // Names of registered sites only where they do not run into another (certified first); the rest on hover.
+  const named = new Set<string>();
+  {
+    const boxes: [number, number, number, number][] = [];
+    for (const s of [...placed].sort((a, b) => Number(b.certified) - Number(a.certified))) {
+      const w = Math.min(180, s.name.length * 4.6);
+      const bx: [number, number, number, number] = [s.x - w / 2, s.y + 11, s.x + w / 2, s.y + 23];
+      if (boxes.some(o => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) continue;
+      boxes.push(bx); named.add(s.id);
+    }
+  }
   const assets = (layers.infra ? sampleAssetsAround(anchors, spread).filter(a => !registered.has(KIND_CATEGORY[a.kind] ?? '')).map(a => ({ ...a, risk: Math.round(wave(`arisk:${a.id}`, ts, 15, 92)) })) : [])
     .sort((a, b) => a.tier - b.tier || b.risk - a.risk).slice(0, Math.round(Math.min(60, Math.max(18, (W * H) / 9000))));
   // Names only for critical assets, never over another label.
@@ -318,7 +336,7 @@ export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers
               <rect x={s.x - 9} y={s.y - 9} width={18} height={18} rx={3} fill="rgb(var(--c-surface))" stroke={s.certified ? TONE.ok : TONE.warn} strokeWidth={1.8}
                 strokeDasharray={s.generalised ? '3 2' : undefined} style={{ filter: `drop-shadow(0 0 4px ${s.certified ? TONE.ok : TONE.warn})` }} />
               <text x={s.x} y={s.y + 4} textAnchor="middle" fontSize="11" fill={s.certified ? TONE.ok : TONE.warn}>{s.glyph}</text>
-              {placed.length <= 14 ? <text x={s.x} y={s.y + 20} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={2.5} paintOrder="stroke">{s.name}</text> : null}
+              {named.has(s.id) ? <text x={s.x} y={s.y + 20} textAnchor="middle" fontSize="8.5" fontWeight="700" fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={2.5} paintOrder="stroke">{s.name}</text> : null}
             </a>
           ))}
         </g>
@@ -339,11 +357,36 @@ export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers
         ) : null}
       </g>
 
+      {/* recorded exchanges between institutions' registered seats: solid, by how they are doing */}
+      {layers.institutions !== false && links.length ? (
+        <g aria-label={`${links.length} recorded exchanges between institutions`}>
+          {links.map((l, i) => {
+            const pa = ctx.project(l.a.lng, l.a.lat), pb = ctx.project(l.b.lng, l.b.lat);
+            if (!pa || !pb) return null;
+            const tone = l.health === 'healthy' ? TONE.ok : l.health === 'failing' ? TONE.alert : l.health === 'quiet' ? TONE.warn : ACCENT;
+            const d = `M${pa[0]},${pa[1]} Q${(pa[0] + pb[0]) / 2},${(pa[1] + pb[1]) / 2 - 26 - (i % 3) * 10} ${pb[0]},${pb[1]}`;
+            return (
+              <g key={`rx${i}`}>
+                <title>{`${l.label}: ${l.kind === 'live' ? 'live exchange' : 'agreed exchange'} (${l.health})`}</title>
+                <path d={d} fill="none" stroke={tone} strokeWidth={4} strokeOpacity={0.12} />
+                <path d={d} fill="none" stroke={tone} strokeWidth={1.6} strokeOpacity={0.9} strokeDasharray={l.health === 'quiet' ? '4 3' : undefined} />
+                {l.kind === 'live' && l.health === 'healthy' && !reduced ? <circle r="2" fill={tone} style={{ filter: `drop-shadow(0 0 2px ${tone})` }}><animateMotion dur="3s" repeatCount="indefinite" path={d} /></circle> : null}
+              </g>
+            );
+          })}
+        </g>
+      ) : null}
+
       {/* institutions: command nodes, knock-on links, cascades into the regions */}
       {showNodes ? (
         <g>
           <g pointerEvents="none" aria-hidden>
             {nodes.map(m => { const p = nodeAt.get(m.ministryId)!; return <line key={`s${m.ministryId}`} x1={cap.x} y1={cap.y} x2={p.x} y2={p.y} stroke={ACCENT} strokeOpacity={0.16} strokeWidth={0.6} />; })}
+            {/* a node whose institution has registered its seat is tethered to it */}
+            {nodes.map(m => {
+              const s = seats[m.ministryId]; const q = s && ctx.project(s.lng, s.lat); const p = nodeAt.get(m.ministryId)!;
+              return q ? <g key={`seat${m.ministryId}`}><line x1={p.x} y1={p.y} x2={q[0]} y2={q[1]} stroke={TONE.ok} strokeOpacity={0.7} strokeWidth={1} strokeDasharray="2 3" /><rect x={q[0] - 4} y={q[1] - 4} width={8} height={8} rx={1.5} fill={TONE.ok} /></g> : null;
+            })}
             {edges.slice(0, 26).map((e, i) => {
               const a = nodeAt.get(e.fromId), b = nodeAt.get(e.toId);
               if (!a || !b) return null;
@@ -479,6 +522,7 @@ export function TheatreLegend({ layers, registered = 0 }: { layers: TheatreLayer
       {layers.infra ? (
         <span className="flex items-center gap-1 border-s border-line ps-2">
           <span className="inline-block h-2.5 w-2.5 rounded-[2px] border-2" style={{ borderColor: TONE.ok }} aria-hidden />registered site{registered === 1 ? '' : 's'} ({registered})
+          <span className="ms-2 inline-block h-0.5 w-4" style={{ backgroundColor: TONE.ok }} aria-hidden />recorded exchange
         </span>
       ) : null}
       {layers.infra ? (

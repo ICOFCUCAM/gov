@@ -146,6 +146,13 @@ describe('changes need a verified official (CIVICOS_AUTH=enforce)', () => {
     expect((await send('/api/org/ministries/min-x/queue/feeds')).status).toBe(401);
   });
 
+  it('lets a ministry\'s system of record reach the facility feed with its own key, not a session', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    expect((await send('/api/org/ministries/min-x/facilities/feed')).status).toBe(200);
+    expect((await send('/api/org/ministries/min-x/facilities/feeds')).status).toBe(401);
+    expect((await send('/api/org/ministries/min-x/facilities')).status).toBe(401);
+  });
+
   it('refuses a session that no longer counts, uses the account as it stands now, and fails closed when it cannot ask', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
     process.env.CIVICOS_SESSION_SECRET = 'test-secret-0123456789';

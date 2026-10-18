@@ -18,6 +18,8 @@ import { SiteForm, methodName } from './SiteForm';
 import { SiteDetail, WaitingList, useSiteAction } from './SiteActions';
 import { PolicyPanel } from './PolicyPanel';
 import { ImportPanel } from './ImportPanel';
+import { CandidatesPanel } from './CandidatesPanel';
+import { ConnectionsPanel } from './ConnectionsPanel';
 import {
   CERT_WORD, Count, LEVEL_WORD, Msg, STATE_WORD, input, label, sitePoints, useInstitutions, useRegister,
   type Site,
@@ -191,6 +193,14 @@ export function SitesRegister() {
 
       <Panel id="load" title="Load existing data" meta="checked first; nothing changes until you load">
         <ImportPanel vocab={data} institutions={institutions} onLoaded={reload} />
+      </Panel>
+
+      <Panel id="connections" title="Who is connected" meta="from records on the platform only">
+        <ConnectionsPanel />
+      </Panel>
+
+      <Panel id="open-data" title="Suggestions from open data" meta="nothing is published from an open dataset">
+        <CandidatesPanel vocab={data} institutions={institutions} onChanged={reload} />
       </Panel>
 
       <Panel id="policy" title="How the nation runs its register" meta={`policy version ${data.policy.version}`}>

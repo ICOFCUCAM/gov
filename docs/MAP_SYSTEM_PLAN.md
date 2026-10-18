@@ -161,6 +161,16 @@ layouts. The fix is one shared map engine grown from it.
   the body the nation names under a cited law; shown on the maps by their
   coordinates, in the Situation Room in place of samples of their kind, and as
   the OGC collection `facilities` (`docs/FACILITY_REGISTER_REVIEW.md`).
+- **Phases 4b–4d, done.** Connected ministry systems send their sites with
+  their own key (published and moved only by officials; read-back of what
+  officials did); open datasets suggest sites that officials record, link or
+  reject (licence recorded, share-alike flagged); interoperability on the
+  map from records only — agreed exchanges (approved grants and
+  integrations), live exchanges with their health, regions shaded by the
+  share of sites reporting — in Sites ("Who is connected") and in the
+  Situation Room between registered offices, with each command node tethered
+  to its institution's office once registered. Still open in phase 4:
+  boundary sources with versions and incident locations.
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

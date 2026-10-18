@@ -1945,6 +1945,139 @@
         "x-source": "src/app/api/facilities/[fid]/route.ts"
       }
     },
+    "/api/facilities/candidates/{cid}": {
+      "post": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "post_facilities_candidates_cid",
+        "summary": "POST /api/facilities/candidates/{cid}",
+        "description": "Decide an open-data candidate. POST { decision: 'confirm', ministryId, name?, status? } records it as a new site of that institution (checked like a form; published by a second official); { decision: 'link', facilityId } adds its identifier to a site already recorded; { decision: 'reject', reason }. Confirming and linking are for officials of the institution concerned (lib/auth/roles.ts); every decision is audited.",
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/candidates/[cid]/route.ts"
+      }
+    },
+    "/api/facilities/candidates": {
+      "get": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "get_facilities_candidates",
+        "summary": "GET /api/facilities/candidates",
+        "description": "Open-data candidates for the national facility register (map plan 4c). GET: the datasets loaded and the candidates (?state=open|confirmed|linked| rejected|all, ?source=, ?category=). POST { name, publisher, licence, url? | text?, format?, category? }: load a dataset as candidates (fetched by the server from that address only, or uploaded); nothing is published from it — each candidate waits for an official (/api/facilities/candidates/{id}).",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "source",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/candidates/route.ts"
+      },
+      "post": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "post_facilities_candidates",
+        "summary": "POST /api/facilities/candidates",
+        "description": "Open-data candidates for the national facility register (map plan 4c). GET: the datasets loaded and the candidates (?state=open|confirmed|linked| rejected|all, ?source=, ?category=). POST { name, publisher, licence, url? | text?, format?, category? }: load a dataset as candidates (fetched by the server from that address only, or uploaded); nothing is published from it — each candidate waits for an official (/api/facilities/candidates/{id}).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/candidates/route.ts"
+      }
+    },
     "/api/facilities/check": {
       "post": {
         "tags": [
@@ -1980,6 +2113,33 @@
           }
         },
         "x-source": "src/app/api/facilities/check/route.ts"
+      }
+    },
+    "/api/facilities/connections": {
+      "get": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "get_facilities_connections",
+        "summary": "GET /api/facilities/connections",
+        "description": "Digital interoperability on the map (lib/data/interop-map.ts): institutions at their registered seats, agreed exchanges (approved grants and integrations), live exchanges (institutions' systems calling the platform, with health) and, by region, the share of published sites that reported in the last 31 days. Only records the platform holds; nothing generated.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/connections/route.ts"
       }
     },
     "/api/facilities/policy/{cid}": {
@@ -3219,6 +3379,228 @@
           }
         },
         "x-source": "src/app/api/org/ministries/[id]/departments/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/facilities/feed": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_facilities_feed",
+        "summary": "GET /api/org/ministries/{id}/facilities/feed",
+        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "since",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feed/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_facilities_feed",
+        "summary": "POST /api/org/ministries/{id}/facilities/feed",
+        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feed/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/facilities/feeds/{feedId}": {
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_facilities_feeds_feedId",
+        "summary": "POST /api/org/ministries/{id}/facilities/feeds/{feedId}",
+        "description": "Disconnect a system from an institution's sites: POST { action: 'revoke' }. Its key stops working at once; the sites it sent stay, with their history.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/[feedId]/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/facilities/feeds": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_facilities_feeds",
+        "summary": "GET /api/org/ministries/{id}/facilities/feeds",
+        "description": "The systems connected to an institution's sites. GET lists them (never their keys). POST { name } connects one and returns its key once; only an administrator or an official who can sign for the institution may (roles).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_facilities_feeds",
+        "summary": "POST /api/org/ministries/{id}/facilities/feeds",
+        "description": "The systems connected to an institution's sites. GET lists them (never their keys). POST { name } connects one and returns its key once; only an administrator or an official who can sign for the institution may (roles).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/route.ts"
       }
     },
     "/api/org/ministries/{id}/facilities/import": {

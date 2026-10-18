@@ -1,6 +1,6 @@
 # National facility register on the map: expert review
 
-Status: phase 4a built (October 2026): `lib/data/facilities.ts`, `/api/facilities`, `/gov/sites`. Map plan phase 4 (`docs/MAP_SYSTEM_PLAN.md`).
+Status: phases 4a–4d built (October 2026): `lib/data/facilities.ts`, `/api/facilities`, `/gov/sites`. Map plan phase 4 (`docs/MAP_SYSTEM_PLAN.md`).
 Register: §4.4, §16.6, §16.9, §17.1.
 
 ## The owner's proposal

@@ -3,7 +3,8 @@
 // An institution's own sites (the Sites tab of its workspace): its sites on
 // the national map, the list with their stage and certification, what waits
 // on its officials (publish, certify, confirm moves), recording a new site,
-// loading a file, and the phone page for capturing sites in the field.
+// loading a file, connecting the institution's own system, and the phone
+// page for capturing sites in the field.
 // API: /api/org/ministries/{id}/facilities; rules: lib/data/facilities.ts.
 
 import * as React from 'react';
@@ -12,6 +13,7 @@ import { NationMap } from '@/components/map/NationMap';
 import { SiteForm, methodName } from './SiteForm';
 import { SiteDetail, WaitingList, useSiteAction } from './SiteActions';
 import { ImportPanel } from './ImportPanel';
+import { SiteFeeds } from './SiteFeeds';
 import { CERT_WORD, Msg, STATE_WORD, btn, callApi, sitePoints, useInstitutions, useRegister, when, type FacilityImport, type Site } from './shared';
 
 export function MinistrySites({ id, name }: { id: string; name?: string }) {
@@ -20,7 +22,7 @@ export function MinistrySites({ id, name }: { id: string; name?: string }) {
   const [own, setOwn] = React.useState<{ sites: Site[]; imports: FacilityImport[] } | null>(null);
   const [loadErr, setLoadErr] = React.useState('');
   const [selected, setSelected] = React.useState<string | null>(null);
-  const [adding, setAdding] = React.useState<'form' | 'file' | null>(null);
+  const [adding, setAdding] = React.useState<'form' | 'file' | 'system' | null>(null);
   const load = React.useCallback(async () => {
     try { setOwn(await callApi(`/api/org/ministries/${encodeURIComponent(id)}/facilities`)); setLoadErr(''); }
     catch (e) { setLoadErr((e as Error).message); }
@@ -47,6 +49,7 @@ export function MinistrySites({ id, name }: { id: string; name?: string }) {
         <div className="flex flex-wrap gap-1.5">
           <button className={btn} aria-pressed={adding === 'form'} onClick={() => setAdding(adding === 'form' ? null : 'form')}>Add a site</button>
           <button className={btn} aria-pressed={adding === 'file'} onClick={() => setAdding(adding === 'file' ? null : 'file')}>Load a file</button>
+          <button className={btn} aria-pressed={adding === 'system'} onClick={() => setAdding(adding === 'system' ? null : 'system')}>Connect a system</button>
           <Link href={`/gov/sites/capture?ministry=${encodeURIComponent(id)}`} className={btn}>Capture on a phone</Link>
         </div>
       </div>
@@ -56,6 +59,7 @@ export function MinistrySites({ id, name }: { id: string; name?: string }) {
           <SiteForm ministryId={id} ministryName={name} vocab={all} onRecorded={() => void load()} />
         </section>
       ) : null}
+      {adding === 'system' ? <SiteFeeds id={id} name={name} accepted={vocab.policy.methods.includes('system-feed')} /> : null}
       {adding === 'file' ? (
         <section className="rounded-[3px] border border-line bg-surface p-4" aria-label="Load a file">
           <ImportPanel vocab={vocab} institutions={institutions} fixedMinistry={id} onLoaded={load} />
