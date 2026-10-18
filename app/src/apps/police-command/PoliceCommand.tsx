@@ -146,7 +146,7 @@ function CrimeHeatmap({ seedKey, regional, patrols, stations, selected, onSelect
               return (
                 <g key={`c${r.region}`}>
                   <circle cx={u.x} cy={u.y} r={spread * (0.45 + r.load / 160)} fill={c} opacity={0.14} />
-                  <circle cx={u.x} cy={u.y} r={Math.max(1.6, spread * 0.16)} fill={c} style={{ filter: `drop-shadow(0 0 3px ${c})` }} />
+                  <circle cx={u.x} cy={u.y} r={Math.max(1.6, spread * 0.16)} fill={r.load >= 70 ? RED_BR : c} style={{ filter: `drop-shadow(0 0 3px ${c})` }} />
                 </g>
               );
             }) : null}

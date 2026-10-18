@@ -9,7 +9,7 @@
 
 import * as React from 'react';
 import { emergencyOps } from '@/lib/gov/agency-systems';
-import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { wave, waveSeries } from '@/lib/telemetry';
 import { nationCapital, nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
 import { STATUS } from '@/lib/theme/tokens';
 import { CommandMap, useFrontier, type CommandPalette } from '@/apps/police-command/CommandMap';
@@ -162,7 +162,7 @@ function IncidentMap({ seedKey, pressure, storm, fullRef }: {
                   <animateTransform attributeName="transform" type="rotate" from={`360 ${sw.x} ${sw.y}`} to={`0 ${sw.x} ${sw.y}`} dur="9s" repeatCount="indefinite" />
                 </g>
                 <circle cx={sw.x} cy={sw.y} r={3.2} fill={CYAN} style={{ filter: `drop-shadow(0 0 4px ${CYAN})` }} />
-                <text x={sw.x} y={sw.y + R * 2.3 + 8} textAnchor="middle" fontSize="8" fontWeight="700" letterSpacing="1" fill={CYAN} stroke={PANEL} strokeWidth={2.4} paintOrder="stroke">{storm!.name.toUpperCase()}</text>
+                <text x={sw.x + 150 < ctx.width ? sw.x + 10 : sw.x - 10} y={sw.y - 8} textAnchor={sw.x + 150 < ctx.width ? 'start' : 'end'} fontSize="8" fontWeight="700" letterSpacing="1" fill={CYAN} stroke={PANEL} strokeWidth={2.4} paintOrder="stroke">{storm!.name.toUpperCase()}</text>
               </g>
             ) : null}
             {on('incidents') ? placed.map((c, i) => i < placed.length - 1 ? (

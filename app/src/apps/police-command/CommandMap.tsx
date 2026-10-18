@@ -16,7 +16,7 @@ import { geoPath, geoCentroid, type GeoProjection } from 'd3-geo';
 import { MinistryMap, type MapFlow, type MapValue, type SampleMarker, type Hotspot } from '@/components/map/MinistryMap';
 import type { OverlayContext } from '@/components/map/NationMap';
 import { useReducedMotion } from '@/components/features/situation/Theatre';
-import { nationCapital, nationIso3, nationProjection, nationRegions } from '@/lib/nation/registry';
+import { nationIso3, nationProjection, nationRegions } from '@/lib/nation/registry';
 import { INSETS, projectionFor, projectionKind } from '@/lib/map/projection';
 import type { SignalKind } from '@/lib/twin/signal';
 import { CONSOLE } from '@/lib/theme/tokens';
@@ -39,9 +39,6 @@ export interface LegendItem {
   sample?: boolean;
 }
 export interface MapLayer { id: string; label: string; sample?: boolean }
-
-/** Kept for the page while the overlay draws: unit positions and the map size, for zoom and lists. */
-export type CommandCtx = OverlayContext;
 
 const feature = (g: Geom) => ({ type: 'Feature' as const, properties: {}, geometry: g });
 const keyOf = (s: string) => s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^a-z0-9]+/g, ' ').trim();
@@ -413,6 +410,3 @@ export function CommandMap({
     </div>
   );
 }
-
-/** The capital's name, for lists that name it (null before setup). */
-export function capitalName(): string | null { return nationCapital()?.name ?? null; }
