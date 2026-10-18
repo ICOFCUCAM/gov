@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { parseCsv } from './csv';
-import { resetTwin, syncRegister, registerSource, runSource, stateAsOf, nationalTotal, signalFor, resolveEntity, linkKey, regionEntities, isoDate, dueSources, type TwinSource } from './register';
+import { entityProfile, resetTwin, syncRegister, registerSource, runSource, stateAsOf, nationalTotal, signalFor, resolveEntity, linkKey, regionEntities, isoDate, dueSources, type TwinSource } from './register';
 import { withTwin } from './national';
 import { applyNation } from '@/lib/nation/registry';
 import { nationalSnapshot } from '@/lib/data/store';
@@ -100,5 +100,18 @@ describe('the twin\'s two time axes', () => {
     await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,900000,2009\n', deps: { now: new Date('2021-01-01T00:00:00Z') } });
     expect(stateAsOf({ metric: 'population', asOf: '2010-01-01T00:00:00Z' })).toEqual([]);
     expect(stateAsOf({ metric: 'population', asOf: '2010-01-01T00:00:00Z', knownAt: '2022-01-01T00:00:00Z' }).map(o => o.value)).toEqual([900000]);
+  });
+});
+
+describe('an entity\'s profile', () => {
+  it('gives an institution its stable id, cross-system ids and observations', async () => {
+    resetTwin();
+    applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa'] });
+    await syncRegister();
+    const p = entityProfile('place:KE-28')!;
+    expect(p.entity.name).toBe('Mombasa');
+    expect(linkKey('place:KE-28', 'knbs', '001', 'D')).toEqual({ ok: true });
+    expect(entityProfile('place:KE-28')!.keys).toEqual([{ system: 'knbs', key: '001' }]);
+    expect(entityProfile('nothing')).toBeUndefined();
   });
 });

@@ -371,3 +371,17 @@ export function getEntity(id: string): TwinEntity | undefined {
   const e = db().entities[id];
   return e ? { ...e } : undefined;
 }
+
+/** One entity with its cross-system ids, its latest observations (true now, as known now) and the sources behind them. */
+export function entityProfile(id: string): { entity: TwinEntity; keys: { system: string; key: string }[]; observations: Observation[]; sources: { id: string; name: string; publisher: string }[] } | undefined {
+  const entity = getEntity(id);
+  if (!entity) return undefined;
+  const observations = stateAsOf({ entityId: id });
+  const used = new Set(observations.map(o => o.sourceId));
+  return {
+    entity,
+    keys: db().keys.filter(k => k.entityId === id).map(k => ({ system: k.system, key: k.key })),
+    observations,
+    sources: db().sources.filter(s => used.has(s.id)).map(s => ({ id: s.id, name: s.name, publisher: s.publisher })),
+  };
+}

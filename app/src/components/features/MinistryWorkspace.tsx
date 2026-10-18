@@ -36,6 +36,7 @@ import type {
 import { useRenderNow } from '@/lib/clock/render-now';
 import { useOfficial } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
+import { InstitutionInTwin } from '@/components/features/twin/InstitutionInTwin';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
 
@@ -498,6 +499,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
       <div id="ws-panel" role="tabpanel" aria-labelledby={`ws-tab-${tab}`} tabIndex={0} className="space-y-4 focus:outline-none">
       {tab === 'command' && (
         <div className="space-y-5">
+          <InstitutionInTwin ministryId={id} />
           {(() => {
             const fab = ministryFabric({ id, archetype: (archetype || 'GENERIC') as ArchetypeKey });
             const op = ministryOpState(id, (archetype || 'GENERIC') as ArchetypeKey, 100 - (readiness?.total ?? 60), now / 4000);

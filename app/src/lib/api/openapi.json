@@ -7958,6 +7958,42 @@
         "x-source": "src/app/api/substrate/export/route.ts"
       }
     },
+    "/api/twin/entities/{id}": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_entities_id",
+        "summary": "GET /api/twin/entities/{id}",
+        "description": "One twin entity: its stable id, the ids other systems use for it, its latest observations and the sources behind them.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/entities/[id]/route.ts"
+      }
+    },
     "/api/twin/entities": {
       "get": {
         "tags": [

@@ -136,6 +136,8 @@ export function TwinWorkspace() {
           : <p className="text-ink-soft">Scenarios start from observed values; register a source first.</p>}
       </Section>
 
+      <LinkKey entities={entities} by={by} busy={busy} act={act} />
+
       <RegisterSource by={by} busy={busy} act={act} />
 
       <Section title="Sources" aside={`${data?.sources.length ?? 0} registered`}>
@@ -268,6 +270,26 @@ function AsOf({ metrics, metric: m, setMetric, date, setDate, knownThen, setKnow
           ))}</tbody>
         </table>
       ) : <p className="mt-2 text-ink-soft">{m ? 'Nothing known for that date.' : 'No metrics yet.'}</p>}
+    </Section>
+  );
+}
+
+/** The crosswalk: the id another system (a statistics office, a ministry's case system) uses for a twin entity. */
+function LinkKey({ entities, by, busy, act }: { entities: Entity[]; by: string; busy: boolean; act: (done: string, fn: () => Promise<unknown>) => Promise<void> }) {
+  const [f, setF] = React.useState({ entityId: '', system: '', key: '' });
+  const pick = f.entityId || entities.find(e => e.kind === 'institution')?.id || entities[0]?.id || '';
+  return (
+    <Section title="Link an id from another system" aside="crosswalk · named official · audited">
+      <form className="grid gap-2 md:grid-cols-4" onSubmit={e => { e.preventDefault(); void act(`Linked ${f.system}:${f.key}`, () => call('/api/twin/keys', { method: 'POST', body: JSON.stringify({ ...f, entityId: pick, by }) })); }}>
+        <label><span className={label}>Entity</span>
+          <select className={`${input} mt-1`} value={pick} onChange={e => setF({ ...f, entityId: e.currentTarget.value })}>
+            {entities.map(e => <option key={e.id} value={e.id}>{e.name} ({e.kind})</option>)}
+          </select>
+        </label>
+        <label><span className={label}>System</span><input className={`${input} mt-1`} value={f.system} onChange={e => setF({ ...f, system: e.currentTarget.value })} placeholder="e.g. statistics-office" /></label>
+        <label><span className={label}>Its id there</span><input className={`${input} mt-1`} value={f.key} onChange={e => setF({ ...f, key: e.currentTarget.value })} placeholder="e.g. 047" /></label>
+        <div className="flex items-end"><button className={btn} disabled={busy || !by.trim() || !f.system.trim() || !f.key.trim()}>Link</button></div>
+      </form>
     </Section>
   );
 }
