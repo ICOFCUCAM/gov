@@ -8,9 +8,9 @@
 
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
-import { OFFICIAL_COOKIE, verifyToken, type OfficialClaims } from './session-token';
+import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, verifyToken, type OfficialClaims } from './session-token';
 import { sessionSecret, accountById } from './officials';
-import type { Scope } from './roles';
+import { secondStepMissing, type Scope } from './roles';
 
 /**
  * The signed-in official, as their account stands now: a platform account
@@ -24,7 +24,8 @@ export async function currentOfficial(): Promise<OfficialClaims | null> {
   if (!c || c.method !== 'local') return c;
   const a = accountById(c.sub.slice('local:'.length));
   if (!a || a.disabled) return null;
-  return { ...c, name: a.name, office: a.office, role: a.role, institution: a.institution };
+  return { ...c, name: a.name, office: a.office, role: a.role, institution: a.institution,
+    twoStep: !!c.twoStep && !!a.twoStepSince, twoStepRequired: a.twoStepRequired };
 }
 
 /** The name an action is recorded under: the verified official's, with their office. */
@@ -50,6 +51,16 @@ export async function withOfficial<T>(body: T): Promise<T> {
  */
 export async function refusal(rule: (s: Scope) => string | null): Promise<NextResponse | null> {
   const o = await currentOfficial();
-  const why = o ? rule(o) : null;
+  const why = o ? secondStepMissing(o) ?? rule(o) : null;
   return why ? NextResponse.json({ error: why }, { status: 403 }) : null;
+}
+
+/** Set the signed session cookie (and the console's page cookie) on a response. */
+export async function issueSession(res: NextResponse, claims: OfficialClaims, secure: boolean): Promise<NextResponse> {
+  res.cookies.set(OFFICIAL_COOKIE, await signClaims(claims, sessionSecret()), {
+    httpOnly: true, sameSite: 'lax', path: '/', maxAge: SESSION_HOURS * 3600, secure,
+  });
+  // The console's page gate (middleware) also accepts the official's session.
+  res.cookies.set('civicos_session', 'official', { sameSite: 'lax', path: '/', maxAge: SESSION_HOURS * 3600 });
+  return res;
 }

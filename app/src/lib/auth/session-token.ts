@@ -19,6 +19,10 @@ export interface OfficialClaims {
   role?: OfficialRole;
   /** The ministry id the official acts for; absent when they serve the whole government. */
   institution?: string;
+  /** This session passed the second sign-in step (authenticator code). */
+  twoStep?: boolean;
+  /** The installation's policy requires the second step for this official. */
+  twoStepRequired?: boolean;
   iat: number;
   exp: number;
 }

@@ -79,3 +79,47 @@ describe('signed sessions', () => {
     expect(await withOfficial({ decision: 'approve', officerName: 'Typed' })).toMatchObject({ officerName: 'J. Otieno, Permanent Secretary' });
   });
 });
+
+describe('the second sign-in step', () => {
+  beforeEach(() => { resetOfficials(); cookie = undefined; });
+  const now = Date.parse('2026-10-18T12:00:00Z');
+
+  it('is set up with a confirmed code, then asked for at every sign-in, each code once', async () => {
+    const { startTwoStep, confirmTwoStep } = await import('./officials');
+    const { hotp, stepAt } = await import('./totp');
+    const a = ok(createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW }, null));
+    const { secret } = ok(startTwoStep(a.id, 'Test State'));
+    expect(confirmTwoStep(a.id, '000000', now)).toEqual({ error: expect.stringMatching(/not right/) });
+    const { recoveryCodes } = ok(confirmTwoStep(a.id, hotp(secret, stepAt(now)), now));
+    expect(recoveryCodes).toHaveLength(10);
+    expect(JSON.stringify(listAccounts())).not.toContain(secret);
+
+    expect(checkPassword('ps@agri.gov', PW, now + 60_000)).toEqual({ error: expect.any(String), needsCode: true });
+    const later = now + 90_000;
+    const code = hotp(secret, stepAt(later));
+    expect(checkPassword('ps@agri.gov', PW, later, code)).toMatchObject({ name: 'J. Otieno', secondStep: true });
+    expect(checkPassword('ps@agri.gov', PW, later, code)).toEqual({ error: expect.stringMatching(/not right/), needsCode: true });
+    expect(checkPassword('ps@agri.gov', PW, later, recoveryCodes[0])).toMatchObject({ secondStep: true });
+    expect(checkPassword('ps@agri.gov', PW, later, recoveryCodes[0])).toMatchObject({ needsCode: true });
+  });
+
+  it('is required by policy for those who can sign, and an administrator can reset a lost phone', async () => {
+    const { setTwoStepPolicy, startTwoStep, confirmTwoStep, removeTwoStep, accountById } = await import('./officials');
+    const { hotp, stepAt } = await import('./totp');
+    const { apiPermission } = await import('./roles');
+    const admin = ok(createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    const officer = ok(createAccount({ email: 'o@g.gov', name: 'B', office: 'O', password: PW, role: 'officer' }, 'A'));
+    ok(setTwoStepPolicy('signers', 'A'));
+    expect(accountById(admin.id)?.twoStepRequired).toBe(true);
+    expect(accountById(officer.id)?.twoStepRequired).toBe(false);
+    const scope = { role: 'administrator' as const, twoStepRequired: true };
+    expect(apiPermission(scope, 'POST', '/api/directives')).toMatch(/second sign-in step/);
+    expect(apiPermission(scope, 'POST', '/api/auth/two-step')).toBeNull();
+    expect(apiPermission({ ...scope, twoStep: true }, 'POST', '/api/directives')).toBeNull();
+
+    const { secret } = ok(startTwoStep(admin.id, 'S'));
+    ok(confirmTwoStep(admin.id, hotp(secret, stepAt(now)), now));
+    expect(removeTwoStep(admin.id, { code: hotp(secret, stepAt(now) + 1), by: 'A' }, now + 30_000)).toEqual({ error: expect.stringMatching(/requires/) });
+    expect(ok(removeTwoStep(admin.id, { by: 'B (administrator)', reset: true })).twoStepSince).toBeUndefined();
+  });
+});

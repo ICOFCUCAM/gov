@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useSignIn, officialLabel, officialScope } from '@/lib/official';
 import { ROLES, roleOf, type OfficialRole } from '@/lib/auth/roles';
 
-interface Account { id: string; email: string; name: string; office: string; createdAt: string; createdBy: string; disabled?: boolean; lastSignIn?: string; role?: OfficialRole; institution?: string }
+interface Account { id: string; email: string; name: string; office: string; createdAt: string; createdBy: string; disabled?: boolean; lastSignIn?: string; role?: OfficialRole; institution?: string; twoStepSince?: string; twoStepRequired?: boolean }
 interface Institution { id: string; name: string; status: string }
 
 const input = 'focus-ring w-full rounded-[3px] border border-line bg-surface px-2.5 py-2 text-[14px] text-ink';
@@ -36,6 +36,11 @@ export function OfficialAccounts() {
       .then((d: { ministries: Institution[] }) => setInstitutions(d.ministries.filter(m => m.status === 'active').sort((a, b) => a.name.localeCompare(b.name))));
   }, []);
   const admin = !!s?.official && roleOf(s.official) === 'administrator';
+  const [policy, setPolicy] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    if (s?.official?.method !== 'local') return;
+    void fetch('/api/auth/two-step', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).then((d: { policy?: string } | null) => setPolicy(d?.policy ?? null));
+  }, [s?.official?.method]);
   const placeName = (id?: string) => (id ? institutions.find(m => m.id === id)?.name ?? id : 'Whole government');
 
   async function call(url: string, body: unknown, done: string) {
@@ -67,6 +72,21 @@ export function OfficialAccounts() {
             {ROLES.map(r => <React.Fragment key={r.id}><dt className="font-semibold">{r.label}</dt><dd className="text-ink-soft">{r.means}</dd></React.Fragment>)}
             <dt className="font-semibold">Institution</dt><dd className="text-ink-soft">An official with an institution acts only for it: its workspace, and directives it issues. &ldquo;Whole government&rdquo; acts for every institution.</dd>
           </dl>
+          {admin && policy ? (
+            <label className="flex flex-wrap items-center gap-2 rounded-[3px] border border-line bg-surface p-3 text-[13px]">
+              <span className="font-semibold">Second sign-in step</span>
+              <span className="text-ink-soft">(a code from an authenticator app after the password) is required for</span>
+              <select className={`${input} w-auto`} value={policy} disabled={busy}
+                onChange={async e => {
+                  const v = e.currentTarget.value;
+                  if (await call('/api/auth/two-step', { action: 'policy', policy: v }, v === 'none' ? 'Second step is now optional' : `Second step now required for ${v === 'all' ? 'every official' : 'officials who can sign and administrators'}`)) setPolicy(v);
+                }}>
+                <option value="none">nobody (each official chooses)</option>
+                <option value="signers">officials who can sign, and administrators</option>
+                <option value="all">every official</option>
+              </select>
+            </label>
+          ) : null}
           {admin ? (
           <form className="grid gap-2 rounded-[3px] border border-line bg-surface p-3 md:grid-cols-5"
             onSubmit={async e => { e.preventDefault(); if (await call('/api/auth/officials', f, `Account created for ${f.name}`)) setF(blank); }}>
@@ -86,7 +106,7 @@ export function OfficialAccounts() {
           ) : null}
           {msg ? <p role="status" className={msg.ok ? 'text-ok' : 'text-alert'}>{msg.text}</p> : null}
           <table className="w-full text-[13px]">
-            <thead><tr className="border-b border-line text-start text-ink-muted"><th className="py-1.5 text-start font-semibold">Official</th><th className="text-start font-semibold">May do</th><th className="text-start font-semibold">For</th><th className="text-start font-semibold">Email</th><th className="text-start font-semibold">Created</th><th className="text-start font-semibold">Last sign-in</th><th className="text-start font-semibold">Status</th><th /></tr></thead>
+            <thead><tr className="border-b border-line text-start text-ink-muted"><th className="py-1.5 text-start font-semibold">Official</th><th className="text-start font-semibold">May do</th><th className="text-start font-semibold">For</th><th className="text-start font-semibold">Email</th><th className="text-start font-semibold">Created</th><th className="text-start font-semibold">Last sign-in</th><th className="text-start font-semibold">Second step</th><th className="text-start font-semibold">Status</th><th /></tr></thead>
             <tbody>
               {(list ?? []).map(a => (
                 <tr key={a.id} className="border-b border-line-soft">
@@ -110,6 +130,13 @@ export function OfficialAccounts() {
                   <td>{a.email}</td>
                   <td>{day(a.createdAt)}<div className="text-ink-muted">by {a.createdBy}</div></td>
                   <td>{day(a.lastSignIn)}</td>
+                  <td>
+                    {a.twoStepSince ? <span className="text-ok">On</span> : a.twoStepRequired ? <span className="text-warn">Required, not set up</span> : <span className="text-ink-muted">Off</span>}
+                    {admin && a.twoStepSince && s.official?.sub !== `local:${a.id}` ? (
+                      <button type="button" className="ms-2 text-[12px] text-link underline" disabled={busy}
+                        onClick={() => window.confirm(`Reset ${a.name}'s second step? Do this only when their phone is lost; they set it up again at their next sign-in.`) && call(`/api/auth/officials/${a.id}`, { resetTwoStep: true }, `${a.name}'s second step was reset`)}>Reset</button>
+                    ) : null}
+                  </td>
                   <td>{a.disabled ? <span className="text-alert">Disabled</span> : <span className="text-ok">Active</span>}</td>
                   <td className="text-end">
                     {s.official?.sub === `local:${a.id}` ? <span className="text-ink-muted">you</span> : admin ? (

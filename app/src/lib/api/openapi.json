@@ -407,7 +407,7 @@
         ],
         "operationId": "post_auth_officials_id",
         "summary": "POST /api/auth/officials/{id}",
-        "description": "Change a platform account (administrators only; audited): disable or re-enable it ({ disabled }), or set its role and institution ({ role, institution }; institution null or \"\" for the whole government).",
+        "description": "Change a platform account (administrators only; audited): disable or re-enable it ({ disabled }), or set its role and institution ({ role, institution }; institution null or \"\" for the whole government), or reset its second sign-in step when the official's phone is lost ({ resetTwoStep: true }; they set it up again at their next sign-in).",
         "parameters": [
           {
             "name": "id",
@@ -506,6 +506,68 @@
           }
         },
         "x-source": "src/app/api/auth/officials/route.ts"
+      }
+    },
+    "/api/auth/two-step": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_two_step",
+        "summary": "GET /api/auth/two-step",
+        "description": "The signed-in official's second sign-in step (authenticator app, RFC 6238; lib/auth/officials.ts). GET: whether it is on, whether the installation requires it, and the policy. POST { action }: 'start' → a new key (shown once) and its otpauth:// link; 'confirm' { code } → turns it on, returns ten recovery codes (shown once) and renews the session as having passed the second step; 'off' { code } → turns it off (not when the policy requires it); 'policy' { policy: none | signers | all } → administrators only. Every change is audited. Platform accounts only: substrate officers use the substrate's own sign-in.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/auth/two-step/route.ts"
+      },
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "post_auth_two_step",
+        "summary": "POST /api/auth/two-step",
+        "description": "The signed-in official's second sign-in step (authenticator app, RFC 6238; lib/auth/officials.ts). GET: whether it is on, whether the installation requires it, and the policy. POST { action }: 'start' → a new key (shown once) and its otpauth:// link; 'confirm' { code } → turns it on, returns ten recovery codes (shown once) and renews the session as having passed the second step; 'off' { code } → turns it off (not when the policy requires it); 'policy' { policy: none | signers | all } → administrators only. Every change is audited. Platform accounts only: substrate officers use the substrate's own sign-in.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/auth/two-step/route.ts"
       }
     },
     "/api/cabinet": {

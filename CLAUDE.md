@@ -316,6 +316,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   the record to decide checks again with `refusal()` (`lib/auth/official.ts`).
   A new route that changes accounts, setup or the structure of government
   belongs in `ADMIN_ONLY`; never add a second place that decides permissions.
+- The second sign-in step (authenticator codes, `lib/auth/totp.ts`, `/api/auth/two-step`)
+  is part of the same rules: a session records whether it passed it, and an
+  official the policy requires it for makes no changes until it has.
 
 ## API description
 

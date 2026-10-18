@@ -6,9 +6,9 @@
 // and sign-out is written to the audit chain; addresses never are.
 
 import { NextRequest, NextResponse } from 'next/server';
-import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, type OfficialClaims } from '@/lib/auth/session-token';
-import { checkPassword, hasAccounts, sessionSecret } from '@/lib/auth/officials';
-import { currentOfficial, actorLabel } from '@/lib/auth/official';
+import { OFFICIAL_COOKIE, SESSION_HOURS, type OfficialClaims } from '@/lib/auth/session-token';
+import { checkPassword, hasAccounts } from '@/lib/auth/officials';
+import { currentOfficial, actorLabel, issueSession } from '@/lib/auth/official';
 import { serverClient } from '@/lib/db/client';
 import { recordAudit, getMinistry } from '@/lib/data/store';
 import { roleFromSubstrate, type OfficialRole } from '@/lib/auth/roles';
@@ -28,7 +28,7 @@ export async function GET() {
   });
 }
 
-type Who = { sub: string; name: string; office?: string; role?: OfficialRole; institution?: string };
+type Who = { sub: string; name: string; office?: string; role?: OfficialRole; institution?: string; twoStep?: boolean; twoStepRequired?: boolean };
 
 // Substrate officers are scoped by the substrate's own row-level security; on the platform they act for the whole government with the role their register entry maps to.
 async function substrateOfficial(token: string): Promise<Who | { error: string }> {
@@ -43,23 +43,19 @@ async function substrateOfficial(token: string): Promise<Who | { error: string }
 }
 
 export async function POST(req: NextRequest) {
-  const b = (await req.json().catch(() => ({}))) as { method?: string; email?: string; password?: string; accessToken?: string };
+  const b = (await req.json().catch(() => ({}))) as { method?: string; email?: string; password?: string; code?: string; accessToken?: string };
   let who: Who | { error: string };
   if (b.method === 'substrate') {
     who = b.accessToken ? await substrateOfficial(b.accessToken) : { error: 'No access token' };
   } else {
-    const a = checkPassword(b.email ?? '', b.password ?? '');
-    who = 'error' in a ? a : { sub: `local:${a.id}`, name: a.name, office: a.office, role: a.role ?? 'administrator', institution: a.institution };
+    const a = checkPassword(b.email ?? '', b.password ?? '', Date.now(), b.code);
+    who = 'error' in a ? a : { sub: `local:${a.id}`, name: a.name, office: a.office, role: a.role ?? 'administrator', institution: a.institution, twoStep: a.secondStep, twoStepRequired: a.twoStepRequired };
   }
+  // { needsCode: true } tells the form to ask for the authenticator code.
   if ('error' in who) return NextResponse.json(who, { status: 401 });
   const now = Math.floor(Date.now() / 1000);
   const claims: OfficialClaims = { ...who, method: b.method === 'substrate' ? 'substrate' : 'local', iat: now, exp: now + SESSION_HOURS * 3600 };
-  const res = NextResponse.json({ official: claims });
-  res.cookies.set(OFFICIAL_COOKIE, await signClaims(claims, sessionSecret()), {
-    httpOnly: true, sameSite: 'lax', path: '/', maxAge: SESSION_HOURS * 3600, secure: req.nextUrl.protocol === 'https:',
-  });
-  // The console's page gate (middleware) also accepts the official's session.
-  res.cookies.set('civicos_session', 'official', { sameSite: 'lax', path: '/', maxAge: SESSION_HOURS * 3600 });
+  const res = await issueSession(NextResponse.json({ official: claims }), claims, req.nextUrl.protocol === 'https:');
   recordAudit(actorLabel(claims), 'auth.sign-in', `Official:${claims.sub}`, 'ok', claims.method);
   return res;
 }

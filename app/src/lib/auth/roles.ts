@@ -17,10 +17,21 @@ export const isRole = (v: unknown): v is OfficialRole => ROLES.some(r => r.id ==
 export const roleLabel = (r: OfficialRole) => ROLES.find(x => x.id === r)!.label;
 
 /** The part of an official's session the rules read. */
-export interface Scope { role?: OfficialRole; institution?: string }
+export interface Scope {
+  role?: OfficialRole; institution?: string;
+  /** The installation requires this official to use the second sign-in step. */
+  twoStepRequired?: boolean;
+  /** This session passed the second sign-in step. */
+  twoStep?: boolean;
+}
+
+/** Officials the policy requires to use the second step make no changes until this session has passed it. */
+export function secondStepMissing(s: Scope): string | null {
+  return s.twoStepRequired && !s.twoStep ? 'Set up the second sign-in step under My account, then sign in again, before making changes' : null;
+}
 
 /** Accounts and sessions from before roles existed keep what they could do: everything. */
-export const roleOf = (s: Scope): OfficialRole => s.role ?? 'administrator';
+export const roleOf = (s: { role?: OfficialRole }): OfficialRole => s.role ?? 'administrator';
 /** True when the official serves every institution, not one. */
 export const wholeGovernment = (s: Scope): boolean => !s.institution;
 
@@ -35,7 +46,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/sovereign(\/|$)/,
 ];
 /** Signing in and out stays open to every role. */
-const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/];
+/** Signing in and out, and setting up one's own second step, stay open to every role. */
+const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/];
 
 /**
  * Whether a change through the API is allowed: null when it is, otherwise the
@@ -45,6 +57,8 @@ const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/];
 export function apiPermission(s: Scope, method: string, pathname: string): string | null {
   if (!MUTATING.has(method.toUpperCase())) return null;
   if (ANY_ROLE.some(re => re.test(pathname))) return null;
+  const missing = secondStepMissing(s);
+  if (missing) return missing;
   const role = roleOf(s);
   if (role === 'auditor') return 'Auditors can read records but not change them';
   if (ADMIN_ONLY.some(re => re.test(pathname))) return adminOnly(s);

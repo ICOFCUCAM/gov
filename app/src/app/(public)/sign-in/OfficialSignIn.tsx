@@ -3,8 +3,9 @@
 // Sign-in for officials with a platform account (lib/auth/officials.ts): the
 // way an installation without the substrate signs its officials in, and how
 // the first official account is created at installation. The server checks
-// the password and sets the signed session; actions are then recorded under
-// the verified name.
+// the password (and, when the account has one, the code from the official's
+// authenticator app) and sets the signed session; actions are then recorded
+// under the verified name.
 
 import * as React from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -19,7 +20,8 @@ export function OfficialSignIn() {
   const next = params.get('from');
   const safeNext = next && next.startsWith('/') && !next.startsWith('//') ? next : '/gov/work';
   const s = useSignIn();
-  const [f, setF] = React.useState({ email: '', password: '', name: '', office: '' });
+  const [f, setF] = React.useState({ email: '', password: '', name: '', office: '', code: '' });
+  const [askCode, setAskCode] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const first = s ? !s.accounts && !s.methods.substrate : false;
@@ -27,7 +29,11 @@ export function OfficialSignIn() {
   async function post(url: string, body: unknown) {
     const r = await fetch(url, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
     const d = await r.json().catch(() => ({}));
-    if (!r.ok) throw new Error((d as { error?: string }).error ?? `Request failed (${r.status})`);
+    if (!r.ok) {
+      if ((d as { needsCode?: boolean }).needsCode) setAskCode(true);
+      throw new Error((d as { error?: string }).error ?? `Request failed (${r.status})`);
+    }
+    return d as { official?: { twoStep?: boolean; twoStepRequired?: boolean } };
   }
 
   async function submit(e: React.FormEvent) {
@@ -35,9 +41,10 @@ export function OfficialSignIn() {
     setBusy(true); setError(null);
     try {
       if (first) await post('/api/auth/officials', { email: f.email, password: f.password, name: f.name, office: f.office });
-      await post('/api/auth/official', { method: 'local', email: f.email, password: f.password });
+      const d = await post('/api/auth/official', { method: 'local', email: f.email, password: f.password, ...(askCode ? { code: f.code } : {}) });
       await refreshSignIn();
-      router.push(safeNext);
+      // Officials the installation requires to use the second step set it up first.
+      router.push(d.official?.twoStepRequired && !d.official.twoStep ? '/gov/me#two-step' : safeNext);
     } catch (err) { setError((err as Error).message); }
     finally { setBusy(false); }
   }
@@ -74,6 +81,10 @@ export function OfficialSignIn() {
         <TextField label="Email" name="official-email" type="email" autoComplete="username" required value={f.email} onChange={e => setF({ ...f, email: e.currentTarget.value })} />
         <TextField label="Password" name="official-password" type="password" autoComplete={first ? 'new-password' : 'current-password'} required minLength={first ? 12 : 1} value={f.password} onChange={e => setF({ ...f, password: e.currentTarget.value })} />
         {first ? <p className="text-xs text-ink-muted">At least 12 characters.</p> : null}
+        {askCode ? (
+          <TextField label="Code from your authenticator app" name="official-code" inputMode="numeric" autoComplete="one-time-code" required autoFocus
+            help="Six digits, or one of your recovery codes" value={f.code} onChange={e => setF({ ...f, code: e.currentTarget.value })} />
+        ) : null}
         {error ? <p className="text-sm text-alert" role="alert">{error}</p> : null}
         <Button type="submit" disabled={busy}>{busy ? 'Working…' : first ? 'Create account and sign in' : 'Sign in'}</Button>
       </form>
