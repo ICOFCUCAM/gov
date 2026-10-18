@@ -59,7 +59,7 @@ export interface OverlayContext {
 
 export function NationMap({
   title, values = [], kind, source, valueLabel = 'Value', unit = '', points, pointsLabel = 'Located items',
-  asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap, onPick, pin,
+  asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap, onPick, pin, zoom, header = 'auto', below,
 }: {
   /** What the map shows, e.g. "Open incidents by county"; used for the accessible name and the table caption. */
   title: string;
@@ -115,6 +115,12 @@ export function NationMap({
   onPick?: (at: { lng: number; lat: number }) => void;
   /** A position being placed, drawn as a pin. */
   pin?: { lng: number; lat: number; label?: string } | null;
+  /** Zoom the drawing: scale z (1 = whole map) after moving it by tx/ty pixels; the north arrow and scale bar stay put (the scale bar follows z). */
+  zoom?: { z: number; tx: number; ty: number };
+  /** Where the title and view buttons go: over the map (theatre default) or above it. */
+  header?: 'auto' | 'over' | 'above';
+  /** Something shown directly under the map drawing (e.g. a command legend), never over it. */
+  below?: React.ReactNode;
 }) {
   const iso3 = isoOverride ?? nationIso3();
   const regionsKey = (regionsOverride ?? nationRegions()).join('|');
@@ -129,6 +135,10 @@ export function NationMap({
   const [active, setActive] = React.useState<number | null>(null);
   const pathRefs = React.useRef<(SVGPathElement | null)[]>([]);
   const theatre = variant === 'theatre';
+  const headerOver = header === 'over' || (header === 'auto' && theatre);
+  const z = zoom && zoom.z > 1 ? zoom : null;
+  /** A point on the screen back to the map's own coordinates under the zoom. */
+  const unzoom = (v: number, axis: 'x' | 'y') => (z ? (v - (axis === 'x' ? z.tx : z.ty)) / z.z : v);
   const [cursor, setCursor] = React.useState<[number, number] | null>(null);
   const uid = React.useId().replace(/:/g, '');
 
@@ -222,7 +232,7 @@ export function NationMap({
 
   return (
     <figure className={`min-w-0 space-y-1.5 ${theatre ? 'relative' : ''}`} aria-label={title}>
-      <div className={theatre ? `absolute ${hud ? 'start-12' : 'start-2'} end-2 top-2 z-20 flex flex-wrap items-center justify-between gap-2` : 'flex flex-wrap items-center justify-between gap-2'}>
+      <div className={headerOver ? `absolute ${hud ? 'start-12' : 'start-2'} end-2 top-2 z-20 flex flex-wrap items-center justify-between gap-2` : 'flex flex-wrap items-center justify-between gap-2'}>
         <figcaption className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">
           {title}<SignalTag kind={kind} source={source} />
         </figcaption>
@@ -259,9 +269,9 @@ export function NationMap({
           : geo === null || !model ? <p className="p-3 text-[13px] text-ink-soft">No boundaries are available for this country yet.</p> : (
           <svg width={model.width} height={model.height} viewBox={`0 0 ${model.width} ${model.height}`} className="block max-w-full"
             role="group" aria-roledescription="map" aria-label={summary} onKeyDown={onKey}
-            onMouseMove={theatre ? e => { const r = e.currentTarget.getBoundingClientRect(); setCursor(model.invert(((e.clientX - r.left) / r.width) * model.width, ((e.clientY - r.top) / r.height) * model.height)); } : undefined}
+            onMouseMove={theatre ? e => { const r = e.currentTarget.getBoundingClientRect(); setCursor(model.invert(unzoom(((e.clientX - r.left) / r.width) * model.width, 'x'), unzoom(((e.clientY - r.top) / r.height) * model.height, 'y'))); } : undefined}
             onMouseLeave={theatre ? () => setCursor(null) : undefined}
-            onClick={onPick ? e => { const r = e.currentTarget.getBoundingClientRect(); const q = model.invert(((e.clientX - r.left) / r.width) * model.width, ((e.clientY - r.top) / r.height) * model.height); if (q) onPick({ lng: Number(q[0].toFixed(6)), lat: Number(q[1].toFixed(6)) }); } : undefined}
+            onClick={onPick ? e => { const r = e.currentTarget.getBoundingClientRect(); const q = model.invert(unzoom(((e.clientX - r.left) / r.width) * model.width, 'x'), unzoom(((e.clientY - r.top) / r.height) * model.height, 'y')); if (q) onPick({ lng: Number(q[0].toFixed(6)), lat: Number(q[1].toFixed(6)) }); } : undefined}
             style={onPick ? { cursor: 'crosshair' } : undefined}>
             <defs>
               <pattern id={hatch} width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
@@ -269,6 +279,7 @@ export function NationMap({
               </pattern>
             </defs>
             <rect width={model.width} height={model.height} fill={theatre ? 'transparent' : 'rgb(var(--c-bg))'} />
+            <g transform={z ? `translate(${z.tx} ${z.ty}) scale(${z.z})` : undefined} style={{ transition: 'transform 260ms ease' }}>
             {worldPaths.map((w, i) => w.home ? null : <path key={`w${i}`} d={w.d} fill="rgb(var(--c-ink-muted))" fillOpacity={0.1} stroke="rgb(var(--c-ink-soft))" strokeOpacity={0.45} strokeWidth={0.9} aria-hidden pointerEvents="none" />)}
             {worldPaths.map((w, i) => w.at && w.at[0] > 30 && w.at[0] < model.width - 30 && w.at[1] > 50 && w.at[1] < model.height - 24 ? (
               <text key={`wl${i}`} x={w.at[0]} y={w.at[1]} textAnchor="middle" fontSize="9" letterSpacing="2" fill="rgb(var(--c-ink-muted))" opacity={0.75} aria-hidden pointerEvents="none">{w.name.toUpperCase()}</text>
@@ -332,6 +343,7 @@ export function NationMap({
                 {!compact ? <text x={model.capital.x + 8} y={model.capital.y + 3} fontSize="10" fontWeight="600" fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={2.5} paintOrder="stroke">{model.capital.name}</text> : null}
               </g>
             ) : null}
+            </g>
             {!compact ? (
               <g aria-hidden transform={`translate(${model.width - 24},${22})`}>
                 <path d="M 0 -12 L 5 4 L 0 1 L -5 4 Z" fill="rgb(var(--c-ink-soft))" />
@@ -343,12 +355,13 @@ export function NationMap({
                 <rect width={model.scale.px} height="4" fill="rgb(var(--c-ink-soft))" />
                 <rect width={model.scale.px / 2} height="4" fill="rgb(var(--c-bg))" stroke="rgb(var(--c-ink-soft))" strokeWidth="0.6" />
                 <text y="-4" fontSize="9" fill="rgb(var(--c-ink-muted))">0</text>
-                <text x={model.scale.px} y="-4" textAnchor="end" fontSize="9" fill="rgb(var(--c-ink-muted))">{model.scale.km.toLocaleString('en')} km</text>
+                <text x={model.scale.px} y="-4" textAnchor="end" fontSize="9" fill="rgb(var(--c-ink-muted))">{(z ? Math.round((model.scale.km / z.z) * 10) / 10 : model.scale.km).toLocaleString('en')} km</text>
               </g>
             ) : null}
           </svg>
         )}
         {hud && model ? <div className="absolute start-2 top-2 z-10 flex flex-col gap-1">{hud}</div> : null}
+        {below && model ? <div className="mt-1">{below}</div> : null}
         {inMap && model && !geo?.parent ? <div className="absolute inset-x-0 bottom-0 z-10">{inMap}</div> : null}
         {theatre && model ? (
           <div className={`pointer-events-none absolute ${inMap ? 'bottom-[118px] end-2' : 'bottom-1 end-2'} font-mono text-[10px] tracking-[0.12em] text-ink-muted`} aria-hidden>

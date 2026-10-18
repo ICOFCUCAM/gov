@@ -35,7 +35,7 @@ const keyOf = (s: string) => nameKeys(s)[0] ?? s.toLowerCase();
 
 export function MinistryMap({
   title, values = [], kind, source, valueLabel = 'Value', unit = '', categories = [], samples = [], samplesSource,
-  flows = [], flowsKind = 'sample', hotspots = [], theatre = false, maxHeight = 460, minHeight = 260, compact, emptyNote, selected, onSelect, extra,
+  flows = [], flowsKind = 'sample', hotspots = [], theatre = false, maxHeight = 460, minHeight = 260, compact, emptyNote, selected, onSelect, extra, engine,
 }: {
   title: string;
   /** The ministry's figure by region (by name as the nation spells it, or ISO 3166-2 code). */
@@ -64,6 +64,12 @@ export function MinistryMap({
   onSelect?: (u: { name: string; code?: string }) => void;
   /** Anything else the ministry draws over its map. */
   extra?: (ctx: OverlayContext) => React.ReactNode;
+  /**
+   * Engine options a command screen may need, passed straight to NationMap:
+   * its own colours, frame size, controls on the map, header controls,
+   * panels under or over the map, zoom and where the header sits.
+   */
+  engine?: Pick<React.ComponentProps<typeof NationMap>, 'colourOf' | 'heat' | 'frameHeight' | 'insetEnd' | 'insetBottom' | 'hud' | 'inMap' | 'actions' | 'zoom' | 'header' | 'below'>;
 }) {
   const [sites, setSites] = React.useState<RegisteredSite[]>([]);
   const [glyphs, setGlyphs] = React.useState<Record<string, string>>({});
@@ -152,7 +158,7 @@ export function MinistryMap({
     <div className={theatre ? 'rounded-[4px] border border-line-soft bg-bg p-2' : undefined}>
       <NationMap title={title} values={values} kind={kind} source={source} valueLabel={valueLabel} unit={unit} points={points} pointsLabel="Registered sites"
         maxHeight={maxHeight} minHeight={minHeight} compact={compact} emptyNote={emptyNote} selected={selected} onSelect={onSelect}
-        variant={theatre ? 'theatre' : 'standard'} overlay={overlay} />
+        variant={theatre ? 'theatre' : 'standard'} overlay={overlay} {...engine} />
       {sites.length || anySample ? (
         <p className="mt-1 text-[11px] text-ink-muted">
           {sites.length ? `${sites.length} registered site${sites.length === 1 ? '' : 's'} from the national facility register. ` : ''}

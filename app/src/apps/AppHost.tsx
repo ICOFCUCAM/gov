@@ -102,12 +102,12 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
 
   return (
     <div className="flex min-h-screen flex-col bg-bg">
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-line px-4" style={{ background: 'linear-gradient(100deg,#070b12,#0c1622 60%,#0a1420)' }}>
+      <header className="flex min-h-12 shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-line px-4 py-1.5" style={{ background: 'linear-gradient(100deg,#070b12,#0c1622 60%,#0a1420)' }}>
         <span className="grid h-7 w-7 place-items-center rounded-[3px] text-[10px] font-bold text-white" style={{ backgroundColor: app.activated ? 'rgb(var(--c-link))' : 'rgb(var(--c-line))' }}>
           {app.domain.slice(0, 2).toUpperCase()}
         </span>
-        <div className="leading-tight">
-          <div className="text-[12px] font-semibold tracking-[0.14em] text-ink">{app.label}</div>
+        <div className="min-w-0 leading-tight">
+          <div className="truncate text-[12px] font-semibold tracking-[0.14em] text-ink">{app.label}</div>
           <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-ink-muted">{app.domain}.gov · {app.kind} application</div>
         </div>
         <span className="ml-2 rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
