@@ -287,6 +287,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   and holds only JSON, Maps, Sets and Dates. When a store gains fields, give
   them defaults for snapshots saved before the change.
 
+## API description
+
+- `/api/openapi` is generated from the route files. After adding or changing
+  an API route, run `npm run build:openapi` (in `app/`); `openapi.test.ts`
+  fails while the document is out of date.
+
 ## Integration register
 
 - `docs/INTEGRATION_REGISTER.md` lists everything built on a placeholder,
