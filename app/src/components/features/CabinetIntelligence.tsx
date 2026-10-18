@@ -26,47 +26,14 @@ import type {
 
 import { aiLabel } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { CONSOLE_NAV, locate } from '@/lib/nav/console-nav';
+import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
 const RED = '#f1707a';
 
 // A function so labels that follow the nation's AI choice are read at render.
-const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] => [
-  { g: 'Executive', items: [
-    { i: '◆', l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', on: true },
-    { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room' },
-    { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination' },
-    { i: '◔', l: 'Strategic Foresight', s: 'Advisory simulation', href: '/gov/simulation' },
-  ]},
-  { g: 'Institutions', items: [
-    { i: '▦', l: 'Ministries', s: 'Institutional registry', href: '/ministries' },
-    { i: '◫', l: 'Independent Agencies', s: 'Statutory bodies', href: '/ministries' },
-    { i: '▣', l: 'State Enterprises', s: 'Public corporations', href: '/ministries' },
-  ]},
-  { g: 'Operations', items: [
-    { i: '⚠', l: 'Incidents', s: 'Active escalations', href: '/gov/coordination' },
-    { i: '⊞', l: 'Operations Centre', s: 'Cross-institution', href: '/ops' },
-    { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination wall', href: '/wall' },
-  ]},
-  { g: 'Intelligence', items: [
-    { i: '⟁', l: aiLabel('Analytics & AI', 'Analytics'), s: 'National twin · sources', href: '/gov/twin' },
-    { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/regional' },
-  ]},
-  { g: 'National Security', items: [
-    { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov/security' },
-    { i: '◷', l: 'Geopolitical Monitor', s: 'External pressure', href: '/gov/geopolitical' },
-  ]},
-  { g: 'Treasury', items: [
-    { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury' },
-    { i: '⚡', l: 'Infrastructure', s: 'Grid · corridors · dependencies', href: '/gov/coordination' },
-  ]},
-  { g: 'Governance', items: [
-    { i: '▥', l: 'Constitutional Watch', s: 'Policy monitor', href: '/gov/branches' },
-    { i: '▤', l: 'Executive Briefings', s: 'Daily intelligence', href: '/gov/briefing' },
-  ]},
-  { g: 'Oversight', items: [
-    { i: '⛓', l: 'Audit & Oversight', s: 'Integrity assurance', href: '/audit' },
-    { i: '⚙', l: 'Platform', s: 'System operations', href: '/platform' },
-  ]},
-];
+// The same plain-language menu as every console page (lib/nav/console-nav.ts), in this page's own design.
+const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] =>
+  CONSOLE_NAV.map(sec => ({ g: sec.label, items: sec.items.map(it => ({ i: it.icon, l: it.label, s: it.purpose, href: it.href, ...(it.key === 'cab' ? { on: true } : {}) })) }));
 
 const DOMAINS = ['Operational', 'Fiscal', 'Infrastructure', 'Civil', 'Security', 'Logistics', 'Environment'];
 type RiskState = 'stable' | 'watch' | 'elevated' | 'critical';
@@ -345,8 +312,8 @@ export function CabinetIntelligence() {
                 <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
                 {grp.items.map(it => {
                   const navAcc = war ? RED : ACCENT;
-                  const n = /Incident|Situation Room|Emergency/.test(it.l) ? incidents.length
-                    : it.l === 'Cabinet Intelligence' ? incidents.filter(x => x.severity === 'sev1' || x.severity === 'sev2').length
+                  const n = /Incident|Situation now|Emergency/.test(it.l) ? incidents.length
+                    : it.l === 'Cabinet brief' ? incidents.filter(x => x.severity === 'sev1' || x.severity === 'sev2').length
                     : 0;
                   return (
                     <Link key={it.l} href={it.href}
@@ -390,6 +357,7 @@ export function CabinetIntelligence() {
         {/* Canvas */}
         <main className="min-w-0 flex-1 space-y-2 overflow-y-auto p-2"
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.022) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
+          <ConsoleTabs here={locate('/gov')} branches={[]} pathname="/gov" />
           {/* Row 1 — executive telemetry (11) */}
           <div className="grid grid-cols-3 gap-1.5 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-11">
             {instr.map(t => (

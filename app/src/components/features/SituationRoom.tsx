@@ -37,8 +37,10 @@ import {
 } from '@/lib/gov/sovereign-operating-model';
 
 import { DispatchChannel, NationalDispatchDigest, NationalRecordsLedger, NationalEncounterDigest, NationalReferralBoard, NationalBureaucracyPulse } from '@/apps/_shared/InstitutionChain';
-import { regionName, aiLabel, formatMoney } from '@/lib/nation/registry';
+import { regionName, formatMoney } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { CONSOLE_NAV, locate } from '@/lib/nav/console-nav';
+import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
 
 const NATL_ASSETS = nationalAssets();
 const NATL_NETWORKS = nationalNetworks();
@@ -55,41 +57,9 @@ export function rel(at: string, now: number): string {
 // engine — panels render it, they no longer script escalation behaviour.
 
 // A function so labels that follow the nation's AI choice are read at render.
-const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] => [
-  { g: 'Sovereign Command', items: [
-    { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room', on: true },
-    { i: '⬡', l: 'Briefing Chamber', s: 'Executive governance', href: '/gov/briefing' },
-    { i: '◆', l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov' },
-    { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination' },
-  ]},
-  { g: 'Intelligence', items: [
-    { i: '◔', l: aiLabel('Analytics & AI', 'Analytics'), s: 'Strategic foresight', href: '/gov/simulation' },
-    { i: '◉', l: 'Regional Overview', s: 'Provincial posture', href: '/gov/regional' },
-  ]},
-  { g: 'Operations', items: [
-    { i: '⊞', l: 'Operations Centre', s: 'Cross-institution state', href: '/ops' },
-    { i: '▦', l: 'Ministries', s: 'Institutional registry', href: '/ministries' },
-  ]},
-  { g: 'Security', items: [
-    { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov/security' },
-    { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury' },
-  ]},
-  { g: 'Infrastructure', items: [
-    { i: '⚡', l: 'Infrastructure', s: 'Grid · corridors · dependencies', href: '/gov/coordination' },
-    { i: '⇄', l: 'Interoperability', s: 'Federation · clients', href: '/integrations' },
-  ]},
-  { g: 'Emergency Response', items: [
-    { i: '⛑', l: 'Emergency Response', s: 'Crisis coordination wall', href: '/wall' },
-  ]},
-  { g: 'Governance', items: [
-    { i: '▥', l: 'Policy Monitor', s: 'Constitutional watch', href: '/gov/branches' },
-    { i: '▤', l: 'Documents & Records', s: 'Operations ledger', href: '/gov/ledger' },
-  ]},
-  { g: 'Oversight', items: [
-    { i: '⛓', l: 'Audit & Oversight', s: 'Integrity assurance', href: '/audit' },
-    { i: '⚙', l: 'Platform', s: 'System operations', href: '/platform' },
-  ]},
-];
+// The same plain-language menu as every console page (lib/nav/console-nav.ts), in this page's own design.
+const rail = (): { g: string; items: { i: string; l: string; s: string; href: string; on?: boolean }[] }[] =>
+  CONSOLE_NAV.map(sec => ({ g: sec.label, items: sec.items.map(it => ({ i: it.icon, l: it.label, s: it.purpose, href: it.href, ...(it.key === 'sr' ? { on: true } : {}) })) }));
 
 export function Panel({
   title, meta, className = '', bodyClass = '', signal, children,
@@ -1405,8 +1375,8 @@ export function SituationRoom() {
                 <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
                 {grp.items.map(it => {
                   const navAcc = war ? TONE.alert : ACCENT;
-                  const n = /Incident|Situation Room|Emergency|Coordination/.test(it.l) ? incidents.length
-                    : it.l === 'Cabinet Intelligence' ? critCount
+                  const n = /Incident|Situation now|Emergency/.test(it.l) ? incidents.length
+                    : it.l === 'Cabinet brief' ? critCount
                     : 0;
                   return (
                     <Link key={it.l} href={it.href}
@@ -1451,6 +1421,7 @@ export function SituationRoom() {
         {/* Operational canvas */}
         <main className="min-w-0 flex-1 space-y-1.5 overflow-y-auto p-1.5"
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.022) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
+          <ConsoleTabs here={locate('/gov/situation-room')} branches={[]} pathname="/gov/situation-room" />
           {/* Row 1 — sovereign national intelligence telemetry (10) */}
           <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-5 xl:grid-cols-10">
             {instruments.map(t => <KpiCell key={t.l} d={t} />)}
