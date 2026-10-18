@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useSignIn, officialLabel, officialScope } from '@/lib/official';
 import { ROLES, roleOf, type OfficialRole } from '@/lib/auth/roles';
 
-interface Account { id: string; email: string; name: string; office: string; createdAt: string; createdBy: string; disabled?: boolean; lastSignIn?: string; role?: OfficialRole; institution?: string; twoStepSince?: string; twoStepRequired?: boolean }
+interface Account { resetPendingUntil?: string; id: string; email: string; name: string; office: string; createdAt: string; createdBy: string; disabled?: boolean; lastSignIn?: string; role?: OfficialRole; institution?: string; twoStepSince?: string; twoStepRequired?: boolean }
 interface Institution { id: string; name: string; status: string }
 
 const input = 'focus-ring w-full rounded-[3px] border border-line bg-surface px-2.5 py-2 text-[14px] text-ink';
@@ -42,6 +42,21 @@ export function OfficialAccounts() {
     void fetch('/api/auth/two-step', { cache: 'no-store' }).then(r => (r.ok ? r.json() : null)).then((d: { policy?: string } | null) => setPolicy(d?.policy ?? null));
   }, [s?.official?.method]);
   const placeName = (id?: string) => (id ? institutions.find(m => m.id === id)?.name ?? id : 'Whole government');
+
+  // A one-time reset code to hand over in person: shown here once, never stored in clear.
+  const [issued, setIssued] = React.useState<{ name: string; code: string; expiresAt: string } | null>(null);
+  async function resetCode(a: Account) {
+    if (!window.confirm(`Issue a password reset code for ${a.name}? Give it to them in person; it works once, for 24 hours.`)) return;
+    setBusy(true); setMsg(null);
+    try {
+      const r = await fetch(`/api/auth/officials/${a.id}`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ issueReset: true }) });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok) throw new Error((d as { error?: string }).error ?? `Request failed (${r.status})`);
+      setIssued({ name: a.name, ...(d as { code: string; expiresAt: string }) });
+      await load();
+    } catch (e) { setMsg({ ok: false, text: (e as Error).message }); }
+    finally { setBusy(false); }
+  }
 
   async function call(url: string, body: unknown, done: string) {
     setBusy(true); setMsg(null);
@@ -105,6 +120,13 @@ export function OfficialAccounts() {
           </form>
           ) : null}
           {msg ? <p role="status" className={msg.ok ? 'text-ok' : 'text-alert'}>{msg.text}</p> : null}
+          {issued ? (
+            <div role="status" className="space-y-2 rounded-[3px] border border-warn bg-surface p-3">
+              <p><strong>Reset code for {issued.name}.</strong> Give it to them in person (not by email). It works once, until {new Date(issued.expiresAt).toISOString().slice(0, 16).replace('T', ' ')} UTC, at the sign-in page under &ldquo;Forgot your password?&rdquo;. It is not shown again.</p>
+              <code className="block font-mono text-[18px] tracking-wider">{issued.code}</code>
+              <button type="button" className={btn} onClick={() => setIssued(null)}>Done</button>
+            </div>
+          ) : null}
           <table className="w-full text-[13px]">
             <thead><tr className="border-b border-line text-start text-ink-muted"><th className="py-1.5 text-start font-semibold">Official</th><th className="text-start font-semibold">May do</th><th className="text-start font-semibold">For</th><th className="text-start font-semibold">Email</th><th className="text-start font-semibold">Created</th><th className="text-start font-semibold">Last sign-in</th><th className="text-start font-semibold">Second step</th><th className="text-start font-semibold">Status</th><th /></tr></thead>
             <tbody>
@@ -137,8 +159,11 @@ export function OfficialAccounts() {
                         onClick={() => window.confirm(`Reset ${a.name}'s second step? Do this only when their phone is lost; they set it up again at their next sign-in.`) && call(`/api/auth/officials/${a.id}`, { resetTwoStep: true }, `${a.name}'s second step was reset`)}>Reset</button>
                     ) : null}
                   </td>
-                  <td>{a.disabled ? <span className="text-alert">Disabled</span> : <span className="text-ok">Active</span>}</td>
+                  <td>{a.disabled ? <span className="text-alert">Disabled</span> : <span className="text-ok">Active</span>}{a.resetPendingUntil ? <div className="text-[12px] text-warn">Reset code waiting</div> : null}</td>
                   <td className="text-end">
+                    {admin && s.official?.sub !== `local:${a.id}` && !a.disabled ? (
+                      <button className={`${btn} me-2`} disabled={busy} onClick={() => resetCode(a)}>Reset password</button>
+                    ) : null}
                     {s.official?.sub === `local:${a.id}` ? <span className="text-ink-muted">you</span> : admin ? (
                       <button className={btn} disabled={busy} onClick={() => call(`/api/auth/officials/${a.id}`, { disabled: !a.disabled }, `${a.disabled ? 'Enabled' : 'Disabled'}: ${a.name}`)}>{a.disabled ? 'Enable' : 'Disable'}</button>
                     ) : null}

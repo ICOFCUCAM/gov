@@ -2,9 +2,11 @@
 // re-enable it ({ disabled }), or set its role and institution
 // ({ role, institution }; institution null or "" for the whole government),
 // or reset its second sign-in step when the official's phone is lost
-// ({ resetTwoStep: true }; they set it up again at their next sign-in).
+// ({ resetTwoStep: true }; they set it up again at their next sign-in), or
+// issue a one-time password reset code to hand over in person
+// ({ issueReset: true }; shown once, expires in 24 hours).
 import { NextRequest, NextResponse } from 'next/server';
-import { setDisabled, setRole, removeTwoStep } from '@/lib/auth/officials';
+import { setDisabled, setRole, removeTwoStep, issueReset } from '@/lib/auth/officials';
 import { currentOfficial, actorLabel } from '@/lib/auth/official';
 import { roleOf } from '@/lib/auth/roles';
 
@@ -14,8 +16,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const o = await currentOfficial();
   if (!o) return NextResponse.json({ error: 'Sign in as an official' }, { status: 401 });
   if (roleOf(o) !== 'administrator') return NextResponse.json({ error: 'Only an administrator can change accounts' }, { status: 403 });
-  const b = (await req.json().catch(() => ({}))) as { disabled?: boolean; role?: string; institution?: string | null; resetTwoStep?: boolean };
+  const b = (await req.json().catch(() => ({}))) as { disabled?: boolean; role?: string; institution?: string | null; resetTwoStep?: boolean; issueReset?: boolean };
   const self = `local:${params.id}` === o.sub;
+  if (b.issueReset) {
+    if (self) return NextResponse.json({ error: 'Change your own password under My account' }, { status: 422 });
+    const r = issueReset(params.id, actorLabel(o));
+    return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json(r);
+  }
   if (b.resetTwoStep) {
     if (self) return NextResponse.json({ error: 'Another administrator must reset your own second step' }, { status: 422 });
     const r = removeTwoStep(params.id, { by: actorLabel(o), reset: true });

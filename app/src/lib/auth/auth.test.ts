@@ -123,3 +123,48 @@ describe('the second sign-in step', () => {
     expect(ok(removeTwoStep(admin.id, { by: 'B (administrator)', reset: true })).twoStepSince).toBeUndefined();
   });
 });
+
+describe('changing and resetting passwords', () => {
+  beforeEach(() => { resetOfficials(); cookie = undefined; });
+  const NEW = 'a brand new pass phrase';
+
+  it('changes a password with the current one and ends sessions issued before', async () => {
+    const { changePassword } = await import('./officials');
+    const { currentOfficial } = await import('./official');
+    const a = ok(createAccount({ email: 'ps@agri.gov', name: 'J. Otieno', office: 'PS', password: PW }, null));
+    const iat = Math.floor(Date.now() / 1000) - 60;
+    cookie = await signClaims({ sub: `local:${a.id}`, name: 'J. Otieno', method: 'local', iat, exp: iat + 3600 }, sessionSecret());
+    expect(await currentOfficial()).not.toBeNull();
+    expect(changePassword(a.id, 'wrong password!!', NEW)).toEqual({ error: expect.stringMatching(/current password/) });
+    expect(changePassword(a.id, PW, 'short')).toEqual({ error: expect.stringMatching(/12 characters/) });
+    expect(changePassword(a.id, PW, PW)).toEqual({ error: expect.stringMatching(/different/) });
+    ok(changePassword(a.id, PW, NEW));
+    expect(await currentOfficial()).toBeNull();
+    expect(checkPassword('ps@agri.gov', PW)).toEqual({ error: 'Wrong email or password' });
+    expect(checkPassword('ps@agri.gov', NEW)).toMatchObject({ name: 'J. Otieno' });
+  });
+
+  it('resets a forgotten password with a one-time code that expires, never shown again', async () => {
+    const { issueReset, resetPassword, accountById } = await import('./officials');
+    const now = Date.now();
+    ok(createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    const b = ok(createAccount({ email: 'b@g.gov', name: 'B', office: 'O', password: PW }, 'A'));
+    const { code, expiresAt } = ok(issueReset(b.id, 'A (administrator)', now));
+    expect(code).toMatch(/^[0-9A-F]{6}-[0-9A-F]{6}-[0-9A-F]{6}$/);
+    expect(JSON.stringify(listAccounts())).not.toContain(code.replace(/-/g, ''));
+    expect(accountById(b.id)?.resetPendingUntil).toBe(expiresAt);
+    expect(resetPassword('b@g.gov', 'AAAAAA-AAAAAA-AAAAAA', NEW, now)).toEqual({ error: expect.stringMatching(/not right or has expired/) });
+    expect(resetPassword('b@g.gov', code, NEW, Date.parse(expiresAt) + 1)).toEqual({ error: expect.stringMatching(/expired/) });
+    ok(resetPassword('b@g.gov', code.toLowerCase(), NEW, now));
+    expect(resetPassword('b@g.gov', code, 'another long phrase', now)).toEqual({ error: expect.stringMatching(/not right/) });
+    expect(checkPassword('b@g.gov', NEW, now)).toMatchObject({ name: 'B' });
+    expect(accountById(b.id)?.resetPendingUntil).toBeUndefined();
+  });
+
+  it('counts wrong reset codes toward the lockout', async () => {
+    const { resetPassword } = await import('./officials');
+    ok(createAccount({ email: 'a@g.gov', name: 'A', office: 'O', password: PW }, null));
+    for (let i = 0; i < MAX_FAILURES; i++) resetPassword('a@g.gov', 'nope', NEW);
+    expect(resetPassword('a@g.gov', 'nope', NEW)).toEqual({ error: expect.stringMatching(/Too many/) });
+  });
+});

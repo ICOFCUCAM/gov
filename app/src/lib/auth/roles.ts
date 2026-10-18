@@ -46,8 +46,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/sovereign(\/|$)/,
 ];
 /** Signing in and out stays open to every role. */
-/** Signing in and out, and setting up one's own second step, stay open to every role. */
-const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/];
+/** Signing in and out, one's own second step and one's own password stay open to every role. */
+const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/password\/?$/];
 
 /**
  * Whether a change through the API is allowed: null when it is, otherwise the

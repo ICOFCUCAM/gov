@@ -24,6 +24,8 @@ export async function currentOfficial(): Promise<OfficialClaims | null> {
   if (!c || c.method !== 'local') return c;
   const a = accountById(c.sub.slice('local:'.length));
   if (!a || a.disabled) return null;
+  // A session issued before the password last changed no longer counts.
+  if (a.passwordChangedAt && c.iat < Math.floor(Date.parse(a.passwordChangedAt) / 1000)) return null;
   return { ...c, name: a.name, office: a.office, role: a.role, institution: a.institution,
     twoStep: !!c.twoStep && !!a.twoStepSince, twoStepRequired: a.twoStepRequired };
 }

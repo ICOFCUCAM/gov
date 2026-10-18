@@ -22,6 +22,10 @@ export function OfficialSignIn() {
   const s = useSignIn();
   const [f, setF] = React.useState({ email: '', password: '', name: '', office: '', code: '' });
   const [askCode, setAskCode] = React.useState(false);
+  // Forgotten password: a one-time code from an administrator sets a new one.
+  const [resetting, setResetting] = React.useState(false);
+  const [r, setR] = React.useState({ code: '', next: '', again: '' });
+  const [notice, setNotice] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const first = s ? !s.accounts && !s.methods.substrate : false;
@@ -63,6 +67,35 @@ export function OfficialSignIn() {
     );
   }
   if (s.methods.substrate && !s.accounts) return null;
+  if (resetting) {
+    return (
+      <Card>
+        <h2 className="mb-1 font-semibold">Set a new password</h2>
+        <p className="mb-3 text-sm text-ink-muted">Ask an administrator for a reset code (they give it to you in person; it works once, for 24 hours). Your new password is never shown to them.</p>
+        <form className="space-y-3" onSubmit={async e => {
+          e.preventDefault();
+          if (r.next !== r.again) { setError('The two new passwords are not the same'); return; }
+          setBusy(true); setError(null);
+          try {
+            await post('/api/auth/password', { action: 'reset', email: f.email, code: r.code, next: r.next });
+            setResetting(false); setR({ code: '', next: '', again: '' }); setF({ ...f, password: '' });
+            setNotice('Your new password is set. Sign in with it now.');
+          } catch (err) { setError((err as Error).message); }
+          finally { setBusy(false); }
+        }}>
+          <TextField label="Email" name="official-email" type="email" autoComplete="username" required value={f.email} onChange={e => setF({ ...f, email: e.currentTarget.value })} />
+          <TextField label="Reset code" name="reset-code" autoComplete="one-time-code" required help="Three groups of six letters and digits" value={r.code} onChange={e => setR({ ...r, code: e.currentTarget.value })} />
+          <TextField label="New password" name="new-password" type="password" autoComplete="new-password" required minLength={12} value={r.next} onChange={e => setR({ ...r, next: e.currentTarget.value })} />
+          <TextField label="New password again" name="new-password-again" type="password" autoComplete="new-password" required minLength={12} value={r.again} onChange={e => setR({ ...r, again: e.currentTarget.value })} />
+          {error ? <p className="text-sm text-alert" role="alert">{error}</p> : null}
+          <div className="flex flex-wrap items-center gap-3">
+            <Button type="submit" disabled={busy}>{busy ? 'Working…' : 'Set new password'}</Button>
+            <button type="button" className="text-sm text-link underline" onClick={() => { setResetting(false); setError(null); }}>Back to sign in</button>
+          </div>
+        </form>
+      </Card>
+    );
+  }
   return (
     <Card>
       <h2 className="mb-1 font-semibold">{first ? 'Create the first official account' : 'Officials: sign in with your platform account'}</h2>
@@ -86,7 +119,9 @@ export function OfficialSignIn() {
             help="Six digits, or one of your recovery codes" value={f.code} onChange={e => setF({ ...f, code: e.currentTarget.value })} />
         ) : null}
         {error ? <p className="text-sm text-alert" role="alert">{error}</p> : null}
+        {notice ? <p className="text-sm text-ok" role="status">{notice}</p> : null}
         <Button type="submit" disabled={busy}>{busy ? 'Working…' : first ? 'Create account and sign in' : 'Sign in'}</Button>
+        {!first ? <button type="button" className="ms-3 text-sm text-link underline" onClick={() => { setResetting(true); setError(null); setNotice(null); }}>Forgot your password?</button> : null}
       </form>
     </Card>
   );

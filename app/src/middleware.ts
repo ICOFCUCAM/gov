@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
-import { OFFICIAL_COOKIE, verifyToken } from '@/lib/auth/session-token';
+import { OFFICIAL_COOKIE, verifyToken, type OfficialClaims } from '@/lib/auth/session-token';
 import { apiPermission } from '@/lib/auth/roles';
 
 // Sovereign access gate. Real and correct, but enforcement is opt-in so a
@@ -27,8 +27,9 @@ const PUBLIC_SITES = /^\/(embed|r|agriculture|assembly|communications|education|
 // the deployment agent's health reports (per-nation agent credential) and a
 // ministry's connected case system (its own ccf_ key, lib/data/case-import.ts).
 const SELF_AUTHENTICATED = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/];
-// Signing in, and creating the installation's first account (the route refuses once one exists).
-const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/];
+// Signing in, creating the installation's first account (the route refuses once one exists)
+// and setting a new password with an administrator's reset code.
+const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/, /^\/api\/auth\/password$/];
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**
@@ -45,15 +46,43 @@ async function officialGate(req: NextRequest, res: NextResponse): Promise<NextRe
 }
 
 /**
+ * Who the session belongs to now, asked of the platform itself (GET
+ * /api/auth/official, which reads the account as it stands): null when the
+ * session no longer counts (password changed, account disabled), undefined
+ * when the platform could not be asked. The edge cannot read the account
+ * store, so this one internal request per change keeps every change honest.
+ * CIVICOS_INTERNAL_URL overrides the address when the public one is not
+ * reachable from the server (behind some proxies).
+ */
+async function liveOfficial(req: NextRequest): Promise<OfficialClaims | null | undefined> {
+  try {
+    const base = process.env.CIVICOS_INTERNAL_URL || req.nextUrl.origin;
+    const r = await fetch(new URL('/api/auth/official', base), { headers: { cookie: req.headers.get('cookie') ?? '' }, cache: 'no-store' });
+    if (!r.ok) return undefined;
+    return ((await r.json()) as { official?: OfficialClaims | null }).official ?? null;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * What a signed-in official may change (lib/auth/roles.ts): an auditor
- * changes nothing, structure and accounts are for administrators, and an
- * official with an institution acts only in that ministry's workspace. Applied
- * whenever the session can be verified here (CIVICOS_SESSION_SECRET set, in
- * any mode); routes that need the record to decide check again themselves.
+ * changes nothing, structure and accounts are for administrators, an
+ * official with an institution acts only in that ministry's workspace, and
+ * one the policy requires a second sign-in step of has passed it. Applied
+ * to every change whenever the session can be verified here
+ * (CIVICOS_SESSION_SECRET set, in any mode), using the account as it stands
+ * now: a session that no longer counts is refused. Signing in and resetting
+ * a password are left to their routes. Routes that need the record to
+ * decide check again themselves.
  */
 async function roleGate(req: NextRequest, next: () => NextResponse | Promise<NextResponse>): Promise<NextResponse> {
   const c = await verifyToken(req.cookies.get(OFFICIAL_COOKIE)?.value, process.env.CIVICOS_SESSION_SECRET);
-  const why = c ? apiPermission(c, req.method, req.nextUrl.pathname) : null;
+  if (!c || SIGN_IN.some(re => re.test(req.nextUrl.pathname))) return next();
+  const live = await liveOfficial(req);
+  if (live === null) return NextResponse.json({ error: 'Your session has ended (your password changed or the account was disabled); sign in again (/sign-in)' }, { status: 401 });
+  if (live === undefined && process.env.CIVICOS_AUTH === 'enforce') return NextResponse.json({ error: 'Your session could not be checked just now; try again' }, { status: 503 });
+  const why = apiPermission(live ?? c, req.method, req.nextUrl.pathname);
   return why ? NextResponse.json({ error: why }, { status: 403 }) : next();
 }
 

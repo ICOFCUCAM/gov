@@ -407,7 +407,7 @@
         ],
         "operationId": "post_auth_officials_id",
         "summary": "POST /api/auth/officials/{id}",
-        "description": "Change a platform account (administrators only; audited): disable or re-enable it ({ disabled }), or set its role and institution ({ role, institution }; institution null or \"\" for the whole government), or reset its second sign-in step when the official's phone is lost ({ resetTwoStep: true }; they set it up again at their next sign-in).",
+        "description": "Change a platform account (administrators only; audited): disable or re-enable it ({ disabled }), or set its role and institution ({ role, institution }; institution null or \"\" for the whole government), or reset its second sign-in step when the official's phone is lost ({ resetTwoStep: true }; they set it up again at their next sign-in), or issue a one-time password reset code to hand over in person ({ issueReset: true }; shown once, expires in 24 hours).",
         "parameters": [
           {
             "name": "id",
@@ -506,6 +506,43 @@
           }
         },
         "x-source": "src/app/api/auth/officials/route.ts"
+      }
+    },
+    "/api/auth/password": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "post_auth_password",
+        "summary": "POST /api/auth/password",
+        "description": "Passwords of platform accounts (lib/auth/officials.ts). POST { action: 'change', current, next }: the signed-in official changes their own; every other session of theirs ends and this one is renewed. POST { action: 'reset', email, code, next }: no session; sets a new password with the one-time code an administrator issued (wrong codes count toward the sign-in lockout). The official then signs in as usual. Both audited; passwords and codes never appear in the audit chain.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/auth/password/route.ts"
       }
     },
     "/api/auth/two-step": {

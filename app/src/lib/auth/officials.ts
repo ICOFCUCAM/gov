@@ -28,9 +28,13 @@ export interface OfficialAccount {
   twoStep?: { secret: string; since: string; lastStep: number; recovery: string[] };
   /** A second step being set up, until its first code is confirmed. */
   twoStepPending?: { secret: string; startedAt: string };
+  /** When the password last changed: sessions issued before it no longer count. */
+  passwordChangedAt?: string;
+  /** A one-time reset code an administrator issued (only its SHA-256 is kept). */
+  reset?: { hash: string; expiresAt: string; by: string };
 }
 /** What screens see of an account: never the password hash or the second-step secret. */
-export type PublicAccount = Omit<OfficialAccount, 'passwordHash' | 'twoStep' | 'twoStepPending'> & { twoStepSince?: string; twoStepRequired: boolean };
+export type PublicAccount = Omit<OfficialAccount, 'passwordHash' | 'twoStep' | 'twoStepPending' | 'reset'> & { twoStepSince?: string; twoStepRequired: boolean; resetPendingUntil?: string };
 
 /** Who must use the second sign-in step: nobody (default), officials who can sign (and administrators), or everyone. */
 export type TwoStepPolicy = 'none' | 'signers' | 'all';
@@ -45,8 +49,8 @@ const WINDOW_MS = 15 * 60_000;
 const N = 16384;
 
 const norm = (e: string) => e.trim().toLowerCase();
-const pub = ({ passwordHash: _h, twoStep, twoStepPending: _p, ...a }: OfficialAccount): PublicAccount =>
-  ({ ...a, ...(twoStep ? { twoStepSince: twoStep.since } : {}), twoStepRequired: twoStepRequiredFor(a) });
+const pub = ({ passwordHash: _h, twoStep, twoStepPending: _p, reset, ...a }: OfficialAccount): PublicAccount =>
+  ({ ...a, ...(twoStep ? { twoStepSince: twoStep.since } : {}), twoStepRequired: twoStepRequiredFor(a), ...(reset && Date.parse(reset.expiresAt) > Date.now() ? { resetPendingUntil: reset.expiresAt } : {}) });
 
 function hash(password: string): string {
   const salt = randomBytes(16);
@@ -232,4 +236,75 @@ export function removeTwoStep(id: string, opts: { code?: string; by: string; res
   delete a.twoStep; delete a.twoStepPending;
   recordAudit(opts.by, opts.reset ? 'auth.two-step.reset' : 'auth.two-step.off', `Official:${a.id}`, 'ok', a.name);
   return pub(a);
+}
+
+// ── Password change and reset ────────────────────────────────────────
+const RESET_HOURS = 24;
+
+function newPasswordProblem(next: string | undefined): string | null {
+  if ((next ?? '').length < MIN_PASSWORD) return `The new password needs at least ${MIN_PASSWORD} characters`;
+  if ((next ?? '').length > 256) return 'The new password is too long';
+  return null;
+}
+
+/** The official changes their own password with the current one; every earlier session of theirs stops counting. */
+export function changePassword(id: string, current: string, next: string, now = Date.now()): PublicAccount | { error: string } {
+  const a = db().accounts.find(x => x.id === id);
+  if (!a || a.disabled) return { error: 'No such account' };
+  if (!matches(current ?? '', a.passwordHash)) {
+    recordAudit(a.name, 'auth.password.change', `Official:${a.id}`, 'denied', 'wrong current password');
+    return { error: 'The current password is not right' };
+  }
+  const bad = newPasswordProblem(next);
+  if (bad) return { error: bad };
+  if (matches(next, a.passwordHash)) return { error: 'Choose a password different from the current one' };
+  a.passwordHash = hash(next);
+  a.passwordChangedAt = new Date(now).toISOString();
+  delete a.reset;
+  recordAudit(a.name, 'auth.password.change', `Official:${a.id}`, 'ok', 'other sessions ended');
+  return pub(a);
+}
+
+/**
+ * An administrator issues a one-time reset code for an official who forgot
+ * their password, to hand over in person. The code is shown once, kept only
+ * as a SHA-256 hash, and expires after 24 hours; the administrator never
+ * sees or sets the password itself.
+ */
+export function issueReset(id: string, by: string, now = Date.now()): { code: string; expiresAt: string } | { error: string } {
+  const a = db().accounts.find(x => x.id === id);
+  if (!a) return { error: 'No such account' };
+  if (a.disabled) return { error: 'Enable the account first' };
+  const raw = randomBytes(9).toString('hex').toUpperCase();
+  const code = `${raw.slice(0, 6)}-${raw.slice(6, 12)}-${raw.slice(12)}`;
+  const expiresAt = new Date(now + RESET_HOURS * 3_600_000).toISOString();
+  a.reset = { hash: createHash('sha256').update(raw).digest('hex'), expiresAt, by };
+  recordAudit(by, 'auth.password.reset-issued', `Official:${a.id}`, 'ok', `${a.name} · expires ${expiresAt}`);
+  return { code, expiresAt };
+}
+
+/** Set a new password with a reset code (no session). Wrong codes count toward the sign-in lockout. */
+export function resetPassword(emailRaw: string, code: string, next: string, now = Date.now()): PublicAccount | { error: string } {
+  const d = db();
+  const email = norm(emailRaw);
+  const recent = (d.failures[email] ?? []).filter(t => now - t < WINDOW_MS);
+  if (recent.length >= MAX_FAILURES) return { error: 'Too many failed attempts; try again in 15 minutes' };
+  const a = d.accounts.find(x => x.email === email);
+  const raw = (code ?? '').toUpperCase().replace(/[^0-9A-F]/g, '');
+  const want = a?.reset ? Buffer.from(a.reset.hash, 'hex') : null;
+  const got = createHash('sha256').update(raw).digest();
+  const valid = !!a && !a.disabled && !!want && Date.parse(a.reset!.expiresAt) > now && want.length === got.length && timingSafeEqual(want, got);
+  if (!valid) {
+    d.failures[email] = [...recent, now];
+    recordAudit('password reset attempt', 'auth.password.reset', 'Official:?', 'denied', 'wrong or expired reset code');
+    return { error: 'That reset code is not right or has expired; ask an administrator for a new one' };
+  }
+  const bad = newPasswordProblem(next);
+  if (bad) return { error: bad };
+  a!.passwordHash = hash(next);
+  a!.passwordChangedAt = new Date(now).toISOString();
+  delete a!.reset;
+  delete d.failures[email];
+  recordAudit(a!.name, 'auth.password.reset', `Official:${a!.id}`, 'ok', 'new password set with a reset code; other sessions ended');
+  return pub(a!);
 }

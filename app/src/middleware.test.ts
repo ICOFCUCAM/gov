@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from 'vitest';
+import { describe, it, expect, afterEach, beforeEach } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import { NextRequest } from 'next/server';
@@ -92,7 +92,21 @@ describe('scheduled jobs authenticate themselves', () => {
 
 describe('changes need a verified official (CIVICOS_AUTH=enforce)', () => {
   const before = { auth: process.env.CIVICOS_AUTH, secret: process.env.CIVICOS_SESSION_SECRET };
-  afterEach(() => { process.env.CIVICOS_AUTH = before.auth; process.env.CIVICOS_SESSION_SECRET = before.secret; });
+  // The middleware asks the platform who the session belongs to now (GET /api/auth/official).
+  // Stand-in platform: answers from the session cookie, unless a test overrides `live`.
+  let live: ((cookie: string) => unknown) | 'down' | null = null;
+  const realFetch = globalThis.fetch;
+  beforeEach(() => {
+    live = null;
+    globalThis.fetch = (async (_url: unknown, init?: { headers?: Record<string, string> }) => {
+      if (live === 'down') throw new Error('unreachable');
+      const cookie = init?.headers?.cookie ?? '';
+      const token = /civicos_official=([^;]+)/.exec(cookie)?.[1];
+      const official = live ? live(cookie) : token ? JSON.parse(Buffer.from(token.split('.')[0]!.replace(/-/g, '+').replace(/_/g, '/'), 'base64').toString()) : null;
+      return new Response(JSON.stringify({ official }), { status: 200 });
+    }) as typeof fetch;
+  });
+  afterEach(() => { process.env.CIVICOS_AUTH = before.auth; process.env.CIVICOS_SESSION_SECRET = before.secret; globalThis.fetch = realFetch; });
   const send = async (p: string, cookie?: string, method = 'POST') => middleware(new NextRequest(`http://localhost${p}`, { method, headers: cookie ? { cookie } : {} }));
 
   it('refuses a change with only the page cookie or a forged session, and accepts a signed one', async () => {
@@ -132,10 +146,30 @@ describe('changes need a verified official (CIVICOS_AUTH=enforce)', () => {
     expect((await send('/api/org/ministries/min-x/queue/feeds')).status).toBe(401);
   });
 
+  it('refuses a session that no longer counts, uses the account as it stands now, and fails closed when it cannot ask', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = 'test-secret-0123456789';
+    const now = Math.floor(Date.now() / 1000);
+    const token = await signClaims({ sub: 'local:1', name: 'A', method: 'local', role: 'administrator', iat: now, exp: now + 600 }, 'test-secret-0123456789');
+    const cookie = `civicos_session=demo; civicos_official=${token}`;
+    live = () => null; // password changed or account disabled since sign-in
+    const ended = await send('/api/directives', cookie);
+    expect(ended.status).toBe(401);
+    expect((await ended.json()).error).toMatch(/session has ended/);
+    expect((await send('/api/auth/official', cookie)).status).toBe(200); // signing in again still works
+    expect((await send('/api/auth/password', cookie)).status).toBe(200);
+    live = () => ({ sub: 'local:1', name: 'A', method: 'local', role: 'auditor', iat: now, exp: now + 600 }); // demoted since sign-in
+    expect((await send('/api/directives', cookie)).status).toBe(403);
+    live = 'down';
+    expect((await send('/api/directives', cookie)).status).toBe(503);
+  });
+
   it('lets anyone reach sign-in', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
     expect((await send('/api/auth/official')).status).toBe(200);
     // The sign-in form first asks how officials sign in, before anyone has a session.
     expect((await send('/api/auth/official', undefined, 'GET')).status).toBe(200);
+    // A forgotten password is reset with an administrator's code, without a session.
+    expect((await send('/api/auth/password')).status).toBe(200);
   });
 });
