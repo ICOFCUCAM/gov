@@ -84,15 +84,15 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
     ]),
     G('portal', 'Citizen Health Portal', 'Citizen digital health ecosystem', [
       S('Digital health ID', 'citizen'), S('Health timeline', 'citizen'),
-      S('Telemedicine & personal AI', 'citizen'),
+      S('Telemedicine & personal health guidance', 'citizen'),
     ]),
     G('interop', 'National Interoperability', 'Cross-government health data fabric', [
       S('Inter-ministry links', 'interop'), S('Identity federation', 'registry'),
       S('Event exchange', 'intelligence'),
     ]),
-    G('simulation', 'AI & Simulation', 'National health simulation & predictive AI', [
+    G('simulation', 'Simulation & forecasting', 'National health simulation & forecasting', [
       S('Pandemic simulation', 'intelligence'), S('Intervention modelling', 'intelligence'),
-      S('Collapse-risk AI', 'command'),
+      S('Collapse-risk forecasting', 'command'),
     ]),
     G('security', 'Sovereign Data & Security', 'Health data sovereignty & security', [
       S('Audit chain', 'audit'), S('Access governance', 'regulatory'),
