@@ -1325,6 +1325,8 @@ export function ministryOperations(id: string): MinistryOperations | { error: st
 
 // ── Deep operational console (regions, queues, analytics) ─────────────
 const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
+/** The regions queue cases and regional figures are reported under (the nation's, from setup). */
+export const queueRegions = (): string[] => [...REGIONS];
 
 export function regionsFor(id: string): MinistryRegions | { error: string } {
   const m = getMinistry(id);
@@ -1399,6 +1401,7 @@ function seedQueue(id: string): QueueItem[] {
           ageHours: Math.max(1, Math.round((Date.now() - new Date(p.submittedAt ?? Date.now()).getTime()) / 3_600_000)),
           priority: 'elevated',
           state: 'open',
+          source: 'sample',
         });
       });
   }
@@ -1412,6 +1415,7 @@ function seedQueue(id: string): QueueItem[] {
       ageHours: seededInt(`${id}:q:${i}:a`, 2, 360),
       priority: pr,
       state: 'open',
+      source: 'sample',
     });
   }
   return items;
@@ -1421,6 +1425,11 @@ export function queueFor(id: string): MinistryQueue | { error: string } {
   const m = getMinistry(id);
   if (!m) return { error: 'Ministry not found' };
   if (!db.ministryQueues[id]) db.ministryQueues[id] = seedQueue(id);
+  // Real cases age from when they were received; examples keep their stated age.
+  const now = Date.now();
+  for (const it of db.ministryQueues[id]!) {
+    if (it.receivedAt) it.ageHours = Math.max(0, Math.floor((now - Date.parse(it.receivedAt)) / 3_600_000));
+  }
   const title = profileFor(m.archetype).queueTitle;
   return {
     ministry: { id: m.id, name: m.name, archetype: m.archetype },
@@ -1449,6 +1458,7 @@ export function actOnQueueItem(
     clear: 'cleared',
   };
   item.state = nextState[action];
+  item.actedAt = new Date().toISOString();
   if (action === 'assign') item.assignee = by;
   if (note) item.note = note;
   appendAudit(by, `queue.${action}`, `QueueItem:${itemId}`, 'ok', item.ref);

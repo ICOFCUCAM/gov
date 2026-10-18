@@ -3161,6 +3161,140 @@
         "x-source": "src/app/api/org/ministries/[id]/queue/[itemId]/act/route.ts"
       }
     },
+    "/api/org/ministries/{id}/queue/import/{importId}": {
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_queue_import_importId",
+        "summary": "POST /api/org/ministries/{id}/queue/import/{importId}",
+        "description": "Withdraw a load: POST { action: 'withdraw' }. Its cases nobody has acted on leave the queue; cases already assigned, escalated or closed stay. Audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "importId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/import/[importId]/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/queue/import": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_queue_import",
+        "summary": "GET /api/org/ministries/{id}/queue/import",
+        "description": "Loading an institution's real cases (lib/data/case-import.ts). GET: the columns a file may have, the earlier loads and how many example cases are still in the queue. POST { csv, fileName?, dryRun?, removeSamples? }: with dryRun, what would be loaded and every refused row with its reason; otherwise the load itself, under the named (verified, when signed in) official, with the file's SHA-256, in the audit chain.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/import/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_queue_import",
+        "summary": "POST /api/org/ministries/{id}/queue/import",
+        "description": "Loading an institution's real cases (lib/data/case-import.ts). GET: the columns a file may have, the earlier loads and how many example cases are still in the queue. POST { csv, fileName?, dryRun?, removeSamples? }: with dryRun, what would be loaded and every refused row with its reason; otherwise the load itself, under the named (verified, when signed in) official, with the file's SHA-256, in the audit chain.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/import/route.ts"
+      }
+    },
     "/api/org/ministries/{id}/queue": {
       "get": {
         "tags": [
@@ -3168,6 +3302,7 @@
         ],
         "operationId": "get_org_ministries_id_queue",
         "summary": "GET /api/org/ministries/{id}/queue",
+        "description": "An institution's queue. GET reads it (cases age from when they were received; examples are marked source \"sample\"). POST adds one case typed in by an official (lib/data/case-import.ts: reference, subject, received, region?, priority?, assignee?, note?), checked like a loaded row; audited.",
         "parameters": [
           {
             "name": "id",
@@ -3194,6 +3329,96 @@
           }
         },
         "x-source": "src/app/api/org/ministries/[id]/queue/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_queue",
+        "summary": "POST /api/org/ministries/{id}/queue",
+        "description": "An institution's queue. GET reads it (cases age from when they were received; examples are marked source \"sample\"). POST adds one case typed in by an official (lib/data/case-import.ts: reference, subject, received, region?, priority?, assignee?, note?), checked like a loaded row; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/queue/samples": {
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_queue_samples",
+        "summary": "POST /api/org/ministries/{id}/queue/samples",
+        "description": "Remove the platform's example cases from an institution's queue: POST { action: 'remove' } under the named official; audited. Real cases stay.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/samples/route.ts"
       }
     },
     "/api/org/ministries/{id}/regions": {

@@ -450,7 +450,34 @@ export interface QueueItem {
   state: QueueItemState;
   assignee?: string;
   note?: string;
+  /** When the case reached the institution; its age is counted from this. Absent on examples. */
+  receivedAt?: ISODate;
+  /** Where the case came from: an example of the platform, a loaded file, or typed in. Absent means example. */
+  source?: 'sample' | 'imported' | 'entered';
+  /** The load (lib/data/case-import.ts) a case came in with. */
+  importId?: string;
+  /** When an official last assigned, escalated or closed it. */
+  actedAt?: ISODate;
 }
+/** One load of real cases into an institution's queue (lib/data/case-import.ts). */
+export interface CaseImport {
+  id: string;
+  ministryId: string;
+  at: ISODate;
+  by: string;
+  fileName?: string;
+  sha256: string;
+  accepted: number;
+  refused: number;
+  removedSamples: number;
+  withdrawnAt?: ISODate;
+  withdrawnBy?: string;
+  /** Cases removed by the withdrawal; cases already acted on stay. */
+  withdrawn?: number;
+}
+export interface CaseRefusal { row: number; reference?: string; reason: string }
+export interface CaseColumn { name: string; required: boolean; means: string; aliases: string[] }
+
 export interface MinistryQueue {
   ministry: { id: string; name: string; archetype: ArchetypeKey };
   queueKey: string;

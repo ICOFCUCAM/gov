@@ -11,8 +11,11 @@ import { api } from '@/lib/api/client';
 import type { WorkOverview, WorkQueueItem } from '@/lib/api/types';
 import { useOfficial, useSignIn } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
+import { SignalTag } from '@/components/ui/SignalTag';
 import { SeverityBadge } from '@/components/ui/Ops';
 import { TONE_SHAPE } from '@/lib/tone-palette';
+
+const EXAMPLE_CASE = 'An example case from the platform. Load your institution\'s own cases under My work › Load cases.';
 
 type View = 'all' | 'decisions' | 'incidents' | 'overdue';
 /** Waiting time in words: hours under two days, then days. */
@@ -136,7 +139,8 @@ export function WorkCenter() {
               <li key={`${q.ministryId}:${q.id}`} className="flex flex-wrap items-center gap-2 px-3 py-2">
                 <span aria-hidden className="text-[11px]" style={{ color: q.overdue ? 'rgb(var(--c-alert))' : q.state === 'escalated' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink-muted))' }}>{q.overdue ? TONE_SHAPE.alert : q.state === 'escalated' ? TONE_SHAPE.warn : TONE_SHAPE.neutral}</span>
                 <span className="font-mono text-[12px] text-ink-muted">{q.ref}</span>
-                <span className="min-w-0 flex-1">{q.subject} <span className="text-ink-muted">· <Link href={`/gov/ministry/${q.ministryId}`} className="text-link underline underline-offset-2">{q.ministry}</Link> · {q.region}</span></span>
+                {(q.source ?? 'sample') === 'sample' ? <SignalTag kind="sample" source={EXAMPLE_CASE} /> : null}
+                <span className="min-w-0 flex-1">{q.subject} <span className="text-ink-muted">· <Link href={`/gov/ministry/${q.ministryId}`} className="text-link underline underline-offset-2">{q.ministry}</Link>{q.region ? ` · ${q.region}` : null}</span></span>
                 <span className="text-[12px] tabular-nums" style={{ color: q.overdue ? 'rgb(var(--c-alert))' : undefined }}>{age(q.ageHours)}{q.overdue ? `, ${age(q.ageHours - q.slaHours)} late (target ${age(q.slaHours)})` : ''}</span>
                 <span className="text-[12px] capitalize text-ink-muted">{q.state}{q.assignee ? ` · ${q.assignee}` : ''}</span>
                 {q.state === 'open' ? <button className={btn} disabled={busy !== null} onClick={() => act(`q:${q.id}`, `Assigned: ${q.ref}`, () => api.org.actOnQueueItem(q.ministryId, q.id, 'assign', undefined, official))}>Assign to me</button> : null}

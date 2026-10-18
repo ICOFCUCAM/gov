@@ -89,6 +89,7 @@
   "/gov/webhooks",
   "/gov/witnesses",
   "/gov/work",
+  "/gov/work/cases",
   "/gov/workbench",
   "/gov/workflows",
   "/gov/workflows/diff",

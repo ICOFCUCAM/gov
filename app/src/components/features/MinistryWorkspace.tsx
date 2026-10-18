@@ -40,6 +40,8 @@ import { InstitutionInTwin } from '@/components/features/twin/InstitutionInTwin'
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
 
+const EXAMPLE_CASE = 'An example case from the platform. Load this institution\'s own cases under My work › Load cases.';
+
 type Tab =
   | 'command' | 'ecosystem' | 'continuity' | 'regional' | 'approvals' | 'incidents' | 'field'
   | 'escalations' | 'logistics' | 'analytics' | 'treasury'
@@ -249,9 +251,9 @@ export function MinistryWorkspace({ id }: { id: string }) {
     { key: 'st', header: 'Status', render: r => <StatusText tone={r.status}>{r.status.toUpperCase()}</StatusText>, filter: r => r.status, sort: (a, b) => a.status.localeCompare(b.status) },
   ];
   const queueCols: Column<QueueItem>[] = [
-    { key: 'ref', header: 'Ref', render: i => <span className="font-mono text-xs">{i.ref}</span>, filter: i => i.ref, sort: (a, b) => a.ref.localeCompare(b.ref) },
+    { key: 'ref', header: 'Ref', render: i => <span className="inline-flex items-center gap-1 font-mono text-xs">{i.ref}{(i.source ?? 'sample') === 'sample' ? <SignalTag kind="sample" source={EXAMPLE_CASE} /> : null}</span>, filter: i => i.ref, sort: (a, b) => a.ref.localeCompare(b.ref) },
     { key: 'sub', header: 'Subject', render: i => i.subject, filter: i => i.subject, sort: (a, b) => a.subject.localeCompare(b.subject) },
-    { key: 'rg', header: 'Region', render: i => i.region, filter: i => i.region, sort: (a, b) => a.region.localeCompare(b.region) },
+    { key: 'rg', header: 'Region', render: i => i.region || '—', filter: i => i.region, sort: (a, b) => a.region.localeCompare(b.region) },
     { key: 'age', header: 'Age', align: 'right', render: i => (queue && i.ageHours > queue.slaHours ? <StatusText tone="alert">{i.ageHours}h</StatusText> : `${i.ageHours}h`), sort: (a, b) => a.ageHours - b.ageHours },
     { key: 'pr', header: 'Priority', render: i => <Pill tone={i.priority === 'urgent' ? 'alert' : i.priority === 'elevated' ? 'warn' : 'neutral'}>{i.priority}</Pill>, filter: i => i.priority, sort: (a, b) => a.priority.localeCompare(b.priority) },
     { key: 'st', header: 'State', render: i => <Pill tone={i.state === 'escalated' ? 'alert' : i.state === 'assigned' ? 'warn' : 'neutral'}>{i.state}{i.assignee ? ` · ${i.assignee}` : ''}</Pill>, filter: i => `${i.state} ${i.assignee ?? ''}`, sort: (a, b) => a.state.localeCompare(b.state) },
@@ -362,6 +364,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 {top.map(i => (
                   <li key={i.id} className="flex flex-wrap items-center gap-2 px-3 py-2">
                     <span className="font-mono text-xs text-ink-muted">{i.ref}</span>
+                    {(i.source ?? 'sample') === 'sample' ? <SignalTag kind="sample" source={EXAMPLE_CASE} /> : null}
                     <span className="min-w-0 flex-1 truncate">{i.subject}</span>
                     <span className="text-xs tabular-nums" style={{ color: i.ageHours > sla ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ink-muted))' }}>{i.ageHours}h{i.ageHours > sla ? ' · past SLA' : ''}</span>
                     <span className="text-xs capitalize text-ink-muted">{i.state}</span>
@@ -902,7 +905,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
               <div className="space-y-2 text-sm">
                 <div className="grid gap-x-8 gap-y-1 sm:grid-cols-2">
                   <div className="flex justify-between"><span className="text-ink-muted">Reference</span><span className="font-mono text-xs">{i.ref}</span></div>
-                  <div className="flex justify-between"><span className="text-ink-muted">Region</span><span>{i.region}</span></div>
+                  <div className="flex justify-between"><span className="text-ink-muted">Region</span><span>{i.region || 'Not stated'}</span></div>
                   <div className="flex justify-between"><span className="text-ink-muted">Age</span><span className="tabular-nums">{i.ageHours}h{queue && i.ageHours > queue.slaHours ? ` · ${i.ageHours - queue.slaHours}h over SLA` : ''}</span></div>
                   <div className="flex justify-between"><span className="text-ink-muted">Priority</span><span className="capitalize">{i.priority}</span></div>
                   <div className="flex justify-between"><span className="text-ink-muted">State</span><span className="capitalize">{i.state}{i.assignee ? ` · ${i.assignee}` : ''}</span></div>

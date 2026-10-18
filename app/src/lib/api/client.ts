@@ -84,6 +84,9 @@ import type {
   MinistryQueue,
   QueueItem,
   QueueAction,
+  CaseImport,
+  CaseRefusal,
+  CaseColumn,
   AnalyticDelta,
   SignatureRequest,
   SignatureResult,
@@ -377,6 +380,16 @@ export const api = {
         method: 'POST',
         body: JSON.stringify({ action, note, by }),
       }),
+    caseImports: (id: string) =>
+      req<{ columns: CaseColumn[]; maxRows: number; samples: number; imports: CaseImport[] }>(`/api/org/ministries/${id}/queue/import`),
+    importCases: (id: string, body: { csv: string; fileName?: string; dryRun?: boolean; removeSamples?: boolean; by?: string }) =>
+      req<{ accepted: number; refused: CaseRefusal[]; samples: number; import?: CaseImport }>(`/api/org/ministries/${id}/queue/import`, { method: 'POST', body: JSON.stringify(body) }),
+    withdrawImport: (id: string, importId: string, by?: string) =>
+      req<{ import: CaseImport }>(`/api/org/ministries/${id}/queue/import/${importId}`, { method: 'POST', body: JSON.stringify({ action: 'withdraw', by }) }),
+    addCase: (id: string, body: Record<string, string | undefined>) =>
+      req<{ item: QueueItem }>(`/api/org/ministries/${id}/queue`, { method: 'POST', body: JSON.stringify(body) }),
+    removeSampleCases: (id: string, by?: string) =>
+      req<{ removed: number }>(`/api/org/ministries/${id}/queue/samples`, { method: 'POST', body: JSON.stringify({ action: 'remove', by }) }),
     create: (body: { archetype: ArchetypeKey; name: string; slug: string }) =>
       req<{ ministry: Ministry }>('/api/org/ministries', { method: 'POST', body: JSON.stringify(body) }),
     rename: (id: string, name: string) =>

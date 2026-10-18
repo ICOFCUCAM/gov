@@ -232,6 +232,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   adding a menu entry; `console-nav.test.ts` checks every earlier menu page
   stays reachable and keeps technical words out of labels. Screens use the
   plain word; technical terms go in the glossary (`lib/nav/glossary.ts`).
+- Real cases enter an institution's queue only through `lib/data/case-import.ts`
+  (a checked CSV load, one typed-in case; refused rows with reasons, loads
+  audited with the file's SHA-256 and withdrawable). Example cases carry
+  `source: 'sample'` and show the Sample marker; never remove them except at
+  an official's request.
 - Engines must not read the nation's regions or offices into module-level
   constants; read them at use (`regionList()`, or a function). The root
   layout writes the nation's facts before scripts load, but data from setup
