@@ -211,7 +211,7 @@ export function InteroperabilityFabric() {
           <span className="grid h-9 w-9 place-items-center rounded-lg text-[15px] text-white" style={{ background: `linear-gradient(135deg,${CYAN},${PURPLE})` }} aria-hidden>♛</span>
           <div>
             <div className="text-[12px] font-bold leading-tight" style={{ color: INK }}>National Governance Platform</div>
-            <div className="text-[9px]" style={{ color: MUT }}>Interoperability Fabric · One Nation. One Fabric.</div>
+            <div className="text-[9px]" style={{ color: MUT }}>Connections between institutions · One nation, connected.</div>
           </div>
         </div>
         <div>

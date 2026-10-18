@@ -316,7 +316,7 @@ function hosted(q: HostingQuestionnaire, rate: number, currency: string, from?: 
   return finish({
     path: 'hosted', modelVersion: HOSTING_MODEL.version, currency, computedAt: new Date().toISOString(),
     timeline: [
-      phase('Tenant provisioning', 1, 2, 'Your tenant, keys and identity federation'),
+      phase('Setting up your installation', 1, 2, 'Your installation, keys and sign-in connection'),
       phase('Data migration', 2 + q.institutions / 10, 6 + q.institutions / 5, `Migrate ${q.institutions} institutions`),
       phase('Acceptance', 1, 2, 'Acceptance tests and go-live'),
     ],

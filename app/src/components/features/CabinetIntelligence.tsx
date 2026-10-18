@@ -204,7 +204,7 @@ export function CabinetIntelligence() {
   const memo = [
     {
       t: 'National stability', lvl: stability < 60 ? 'CRITICAL' : stability < 70 ? 'ELEVATED' : 'ROUTINE',
-      body: `Composite stability index ${stability}/100; ${escalations.filter(e => e.sevState === 'critical').length} critical escalations active.`,
+      body: `Overall stability ${stability}/100; ${escalations.filter(e => e.sevState === 'critical').length} critical escalations active.`,
       conf: 84 + Math.round(seed(`mc:stab:${epoch}`) * 12), inst: 'Cabinet Office',
       econ: stability < 70 ? '−0.4% GDP risk' : 'neutral', con: 'within emergency-power thresholds',
       rec: stability < 70 ? 'Convene cabinet coordination cell' : 'Sustain monitoring',
@@ -214,7 +214,7 @@ export function CabinetIntelligence() {
       body: `Grid pressure ${pressOf('ENERGY')}; reserve margin ${Math.max(1, 100 - pressOf('ENERGY'))}%.`,
       conf: 78 + Math.round(seed(`mc:en:${epoch}`) * 16), inst: 'Energy Ministry',
       econ: pressOf('ENERGY') >= 60 ? 'tariff & subsidy exposure' : 'stable', con: 'no constitutional implication',
-      rec: pressOf('ENERGY') >= 60 ? 'Authorise reserve drawdown · pre-position crews' : 'Maintain posture',
+      rec: pressOf('ENERGY') >= 60 ? 'Authorise reserve drawdown · pre-position crews' : 'Keep the current course',
     },
     {
       t: 'Healthcare capacity', lvl: pressOf('HEALTH') >= 55 ? 'ELEVATED' : 'ROUTINE',
@@ -224,10 +224,10 @@ export function CabinetIntelligence() {
       rec: pressOf('HEALTH') >= 55 ? 'Activate regional health command' : 'Routine reporting',
     },
     {
-      t: 'Security posture', lvl: nationalRisk >= 60 ? 'ELEVATED' : 'ROUTINE',
-      body: `National risk ${nationalRisk}; ${nationalRisk >= 60 ? 'heightened internal posture' : 'no major threats'}.`,
+      t: 'Security status', lvl: nationalRisk >= 60 ? 'ELEVATED' : 'ROUTINE',
+      body: `National risk ${nationalRisk}; ${nationalRisk >= 60 ? 'heightened internal alert' : 'no major threats'}.`,
       conf: 76 + Math.round(seed(`mc:sec:${epoch}`) * 18), inst: 'Interior Ministry',
-      econ: 'low direct', con: nationalRisk >= 60 ? 'emergency posture pre-authorisation review' : 'compliant',
+      econ: 'low direct', con: nationalRisk >= 60 ? 'advance review of emergency powers' : 'compliant',
       rec: nationalRisk >= 60 ? 'Brief National Security Council' : 'Standard watch',
     },
     {
@@ -241,7 +241,7 @@ export function CabinetIntelligence() {
       t: 'Strategic threat outlook',
       lvl: !leadPrio ? 'ROUTINE' : leadPrio.priority >= 55 ? 'CRITICAL' : leadPrio.priority >= 35 ? 'ELEVATED' : 'ROUTINE',
       body: leadPrio
-        ? `Lead planning vector: ${leadPrio.label}. Gross risk ${leadPrio.composite}; doctrine neutralises ${leadPrio.effectiveness}%, residual ${leadPrio.residualRisk} (priority ${leadPrio.priority}).`
+        ? `Top planning priority: ${leadPrio.label}. Risk before action ${leadPrio.composite}; doctrine neutralises ${leadPrio.effectiveness}%, residual ${leadPrio.residualRisk} (priority ${leadPrio.priority}).`
         : 'No active scenario vectors above containment.',
       conf: 82 + Math.round(seed(`mc:thr:${epoch}`) * 12), inst: 'Cabinet Office · Simulation',
       econ: leadPrio && leadPrio.priority >= 45 ? 'contingency reserve exposure' : 'no material exposure',
@@ -452,7 +452,7 @@ export function CabinetIntelligence() {
                               <span className="text-ink-soft">▸ <span style={{ color: TONE.warn }}>{aiLabel('AI advisory', 'Advisory')}:</span> {op.aiAdvisory}</span>
                               <span className="flex shrink-0 gap-3">
                                 <Link href={m.href} className="focus-ring text-link underline underline-offset-2">Open workspace →</Link>
-                                <Link href={`/ministries/${m.ministryId}/operations`} className="focus-ring text-link underline underline-offset-2">Subsystem runtime →</Link>
+                                <Link href={`/ministries/${m.ministryId}/operations`} className="focus-ring text-link underline underline-offset-2">Systems in operation →</Link>
                               </span>
                             </div>
                             {(() => {
@@ -516,7 +516,7 @@ export function CabinetIntelligence() {
                                           ))}
                                         </div>
                                       </>
-                                    ) : <p className="text-[9px] text-ink-muted">No active fabric to propagate.</p>}
+                                    ) : <p className="text-[9px] text-ink-muted">No connected institutions to model.</p>}
                                   </div>
                                 </div>
                               );
@@ -574,7 +574,7 @@ export function CabinetIntelligence() {
                             <Link href={e.mid.startsWith('/') ? e.mid : `/gov/ministry/${e.mid}`}
                               className="focus-ring inline-block text-[10px] text-link underline underline-offset-2">Open ministry workspace →</Link>
                             <Link href="/gov/coordination"
-                              className="focus-ring inline-block text-[10px] text-link underline underline-offset-2">Drive incident runtime →</Link>
+                              className="focus-ring inline-block text-[10px] text-link underline underline-offset-2">Handle incidents →</Link>
                           </div>
                         </div>
                       </div>
@@ -704,7 +704,7 @@ export function CabinetIntelligence() {
           </div>
 
           {/* Strategic threat board — simulation sweep feeding the executive picture */}
-          <Panel signal="sample" title="Strategic threat board" meta="scenario sweep · composite national risk · advisory" bodyClass="!p-1.5">
+          <Panel signal="sample" title="Strategic threat board" meta="what-if scenarios · overall national risk · advisory" bodyClass="!p-1.5">
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4">
               {topThreats.map(r => {
                 const tn = r.band === 'severe' || r.band === 'high' ? 'alert' : r.band === 'elevated' ? 'warn' : 'ok';
@@ -730,7 +730,7 @@ export function CabinetIntelligence() {
               })}
             </div>
             <div className="mt-1 flex items-center justify-between border-t border-line-soft px-1 pt-1 text-[9px] text-ink-muted">
-              <span>Lead vector · <span className="text-ink-soft">{sweep[0]?.label}</span></span>
+              <span>Main threat · <span className="text-ink-soft">{sweep[0]?.label}</span></span>
               <Link href="/gov/simulation" className="text-link underline underline-offset-2">National Simulation →</Link>
             </div>
           </Panel>
@@ -740,7 +740,7 @@ export function CabinetIntelligence() {
             const sf = stateFabric(mins, ts);
             const ctn = sf.contagion === 'systemic' ? TONE.alert : sf.contagion === 'coupled-stress' ? TONE.warn : TONE.ok;
             return (
-              <Panel signal="sample" title="Interconnected state fabric" meta={`cross-system propagation · ${sf.contagion} · systemic ${sf.systemicStress}`} bodyClass="!p-1.5">
+              <Panel signal="sample" title="Connected state systems" meta={`cross-system propagation · ${sf.contagion} · systemic ${sf.systemicStress}`} bodyClass="!p-1.5">
                 <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-4">
                   {sf.domains.map(d => {
                     const dt = d.tone === 'alert' ? TONE.alert : d.tone === 'warn' ? TONE.warn : TONE.ok;
@@ -773,7 +773,7 @@ export function CabinetIntelligence() {
                 ) : null}
                 <div className="mt-1 flex items-center justify-between border-t border-line-soft px-1 pt-1 text-[9px] text-ink-muted">
                   <span>Worst coupled source · <span style={{ color: ctn }}>{sf.worst}</span> — instability propagates whole-of-government</span>
-                  <Link href="/gov/shell" className="text-link underline underline-offset-2">State fabric →</Link>
+                  <Link href="/gov/shell" className="text-link underline underline-offset-2">Connected systems →</Link>
                 </div>
               </Panel>
             );
@@ -832,7 +832,7 @@ export function CabinetIntelligence() {
                   </div>
                 ))}
                 <div className="mt-0.5 flex items-center justify-between border-t border-line-soft px-1 pt-1.5 text-[9px] text-ink-muted">
-                  <span>External posture</span><span className="font-mono" style={{ color: nationalRisk >= 60 ? TONE.alert : TONE.ok }}>{nationalRisk >= 60 ? 'Heightened' : 'Nominal'}</span>
+                  <span>External relations</span><span className="font-mono" style={{ color: nationalRisk >= 60 ? TONE.alert : TONE.ok }}>{nationalRisk >= 60 ? 'Heightened' : 'Nominal'}</span>
                 </div>
               </div>
             </Panel>
@@ -870,7 +870,7 @@ export function CabinetIntelligence() {
             </Panel>
           </div>
 
-          <RuntimeQueue scope="cabinet:directives" kind="case" title="Executive directive runtime — issued directives become tracked, executable work" by="Cabinet Office" n={6} />
+          <RuntimeQueue scope="cabinet:directives" kind="case" title="Directives in progress — each signed directive becomes tracked work" by="Cabinet Office" n={6} />
 
           {/* Row 5 — executive posture strip */}
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-4 xl:grid-cols-7">
@@ -880,10 +880,10 @@ export function CabinetIntelligence() {
               const cs = casc.filter(c => c.posture === 'strained').length;
               const rRoll = regionRollup(nationalRegions(now / 4000));
               return [
-              { l: 'Readiness posture', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
-              { l: 'Operational tempo', v: `${Math.round(40 + seed(`tempo:${epoch}`) * 55)} ops/min`, t: 'ok' },
+              { l: 'Readiness', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
+              { l: 'Operational tempo', v: `${Math.round(40 + seed(`tempo:${epoch}`) * 55)} actions/min`, t: 'ok' },
               { l: 'Active escalations', v: `${escalations.length} · ${escalations.filter(e => e.sevState === 'critical').length} crit`, t: escalations.length ? 'alert' : 'ok' },
-              { l: 'Cascade exposure', v: cc ? `${cc} crit · ${cs} strained` : cs ? `${cs} strained` : 'Contained', t: cc ? 'alert' : cs ? 'warn' : 'ok' },
+              { l: 'Knock-on risk', v: cc ? `${cc} crit · ${cs} strained` : cs ? `${cs} strained` : 'Contained', t: cc ? 'alert' : cs ? 'warn' : 'ok' },
               { l: 'Regional readiness', v: `${rRoll.meanReadiness}% · ${rRoll.critical} crit`, t: rRoll.critical ? 'alert' : rRoll.meanReadiness >= 60 ? 'ok' : 'warn' },
               { l: 'Population impacted', v: `${(0.4 + seed(`pi:${epoch}`) * 9).toFixed(1)}M`, t: 'warn' },
               { l: 'War Room', v: war ? 'ENGAGED' : 'Standby', t: war ? 'alert' : 'neutral' },
@@ -891,7 +891,7 @@ export function CabinetIntelligence() {
               <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
                 <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
                 <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
-                  {s.l === 'War Room' || s.l === 'Readiness posture' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
+                  {s.l === 'War Room' || s.l === 'Readiness' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
                   {s.v}
                 </span>
               </div>

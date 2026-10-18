@@ -47,7 +47,7 @@ export function InteriorCommandTheater({ id, now }: { id: string; now: number })
       {/* Posture banner */}
       <div className="flex flex-wrap items-center gap-x-4 gap-y-1 border-y px-3 py-2 text-[11px]"
         style={{ borderColor: `color-mix(in srgb,${POSTURE_COL[b.postureBanner]} 50%,transparent)`, background: 'rgba(0,0,0,0.35)' }}>
-        <span className="text-[9px] uppercase tracking-[0.2em] text-ink-muted">National posture</span>
+        <span className="text-[9px] uppercase tracking-[0.2em] text-ink-muted">National status</span>
         <span className="text-[16px] font-bold uppercase tracking-[0.14em]" style={{ color: POSTURE_COL[b.postureBanner] }}>{b.postureBanner}</span>
         <span className="text-ink-muted">active <span className="font-semibold text-ink tabular-nums">{b.totalActive}</span></span>
         <span className="text-ink-muted">critical <span className="font-semibold tabular-nums" style={{ color: '#e0673a' }}>{b.criticalCount}</span></span>

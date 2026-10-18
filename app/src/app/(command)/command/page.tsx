@@ -22,7 +22,7 @@ const rail = (): { g: string; items: { i: string; l: string; s: string; href: st
   { g: 'Sovereign Command', items: [
     { i: '◎', l: 'National Situation Room', s: 'Real-time command & coordination', href: '/gov/situation-room', live: true },
     { i: '◆', l: 'National Shell', s: 'Whole-of-government environment', href: '/gov/shell' },
-    { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade · live tempo', href: '/gov/coordination', live: true },
+    { i: '⟁', l: 'National Coordination', s: 'Dependencies · knock-on effects · live pace', href: '/gov/coordination', live: true },
     { i: '▤', l: 'Ministry Charter Registry', s: 'Institutional depth · maturity tier · gaps', href: '/gov/charter-registry', live: true },
     { i: '⊞', l: 'Operations Centre', s: 'Cross-institution operational state', href: '/ops' },
     { i: '⛓', l: 'Oversight', s: 'Audit · integrity · assurance', href: '/audit' },
@@ -51,7 +51,7 @@ const rail = (): { g: string; items: { i: string; l: string; s: string; href: st
     { i: '▤', l: 'Permits', s: 'Licensing & approvals', href: '/wallet/permits' },
     { i: '$', l: 'Payments', s: 'Receipts & reconciliation', href: '/wallet/payments' },
     { i: '✦', l: 'Verify Document', s: 'Tamper-evident verification', href: '/wallet/documents' },
-    { i: '⊞', l: 'Municipal Onboarding', s: 'Tenant provisioning', href: '/admin/onboarding' },
+    { i: '⊞', l: 'Municipal Onboarding', s: 'Set up a municipality', href: '/admin/onboarding' },
   ]},
 ];
 
@@ -132,15 +132,15 @@ export default function SovereignCommandCenter() {
   const surfaces = [
     { l: 'National Situation Room', s: 'Flagship real-time command & coordination', href: '/gov/situation-room', cta: 'Enter Situation Room', mini: 'map' as const, badge: 'LIVE', tone: 'alert' },
     { l: 'National Shell', s: 'Whole-of-government command environment', href: '/gov/shell', cta: 'Enter National Shell', mini: 'shield' as const, badge: 'Core', tone: 'ok' },
-    { l: 'National Coordination', s: 'Dependency · cascade · live tempo', href: '/gov/coordination', cta: 'Enter Coordination', mini: 'net' as const, badge: 'LIVE', tone: 'warn' },
+    { l: 'National Coordination', s: 'Dependencies · knock-on effects · live pace', href: '/gov/coordination', cta: 'Enter Coordination', mini: 'net' as const, badge: 'LIVE', tone: 'warn' },
     { l: 'Operations Centre', s: 'Cross-institution operational state', href: '/ops', cta: 'Enter Operations Centre', mini: 'graph' as const, badge: '', tone: 'ok' },
     { l: 'Oversight', s: 'Read-only, tamper-evident audit chain', href: '/audit', cta: 'Enter Oversight', mini: 'ring' as const, badge: 'Audit', tone: 'ok' },
   ];
   const instAdmin = [
     { l: 'Institutions Admin', s: 'Compose ministries from archetypes', href: '/ministries', cta: 'Manage Institutions' },
     { l: 'Platform Operations', s: 'Releases · Tenancy · Backups · Config', href: '/platform', cta: 'Platform Operations' },
-    { l: 'Interoperability', s: 'Federation · Webhooks · Clients', href: '/integrations', cta: 'View Integrations' },
-    { l: 'Developer Guide', s: 'API · SDK · Integration surface', href: '/developers', cta: 'Developer Center' },
+    { l: 'Interoperability', s: 'Connected systems · Notifications · Applications', href: '/integrations', cta: 'View Integrations' },
+    { l: 'Developer Guide', s: 'How other systems connect', href: '/developers', cta: 'Developer Center' },
   ];
   const pubSvc = [
     { l: 'Civic Wallet', s: 'Citizen services & records', href: '/wallet', cta: 'Open Wallet' },
@@ -153,7 +153,7 @@ export default function SovereignCommandCenter() {
     { i: '▤', l: 'Permits', s: 'Licensing & Approvals', href: '/wallet/permits' },
     { i: '$', l: 'Payments', s: 'Receipts & Reconciliation', href: '/wallet/payments' },
     { i: '✦', l: 'Verify Document', s: 'Tamper-evident verification', href: '/wallet/documents' },
-    { i: '⊞', l: 'Municipal Onboarding', s: 'Tenant provisioning', href: '/admin/onboarding' },
+    { i: '⊞', l: 'Municipal Onboarding', s: 'Set up a municipality', href: '/admin/onboarding' },
   ];
   const brief = [
     `National stability: ${posture && posture.level !== 'ok' ? 'Elevated' : 'Stable'}`,
@@ -247,9 +247,9 @@ export default function SovereignCommandCenter() {
             <div className="flex items-center gap-5 rounded-[3px] border border-line bg-surface px-4 py-3">
               <div className="flex items-center gap-2.5">
                 <span className="grid h-9 w-9 place-items-center rounded-sm" style={{ backgroundColor: `color-mix(in srgb, ${TONE[posture?.level ?? 'ok']} 18%, transparent)`, color: TONE[posture?.level ?? 'ok'] }}>⛨</span>
-                <div><div className="text-[9px] uppercase tracking-[0.16em] text-ink-muted">Executive posture</div><div className="text-lg font-semibold" style={{ color: TONE[posture?.level ?? 'ok'] }}>{riskLabel}</div></div>
+                <div><div className="text-[9px] uppercase tracking-[0.16em] text-ink-muted">Executive status</div><div className="text-lg font-semibold" style={{ color: TONE[posture?.level ?? 'ok'] }}>{riskLabel}</div></div>
               </div>
-              <p className="max-w-md text-xs text-ink-muted">National posture is {riskLabel.toLowerCase()} due to active incidents and regional pressures. <Link href="/gov" className="text-link underline underline-offset-2">View executive briefing →</Link></p>
+              <p className="max-w-md text-xs text-ink-muted">National status is {riskLabel.toLowerCase()} because of active incidents and regional pressures. <Link href="/gov" className="text-link underline underline-offset-2">View executive briefing →</Link></p>
               <div className="ml-auto text-right">
                 <div className="text-[9px] uppercase tracking-[0.16em] text-ink-muted">Readiness status</div>
                 <div className="font-semibold" style={{ color: TONE[readiness === 'CRITICAL' ? 'alert' : readiness === 'ELEVATED' ? 'warn' : 'ok'] }}>{readiness}</div>
@@ -275,7 +275,7 @@ export default function SovereignCommandCenter() {
             </div>
           </Section>
 
-          <Section label="Constitutional Posture · Separation of Powers">
+          <Section label="Constitutional status · Separation of powers">
             {(() => {
               const t = now / 4000;
               const sep = separationIntegrity(t);
@@ -458,7 +458,7 @@ export default function SovereignCommandCenter() {
             {[
               { l: 'Classification', v: 'OFFICIAL', t: ACCENT },
               { l: 'National readiness', v: readiness, t: TONE[readiness === 'CRITICAL' ? 'alert' : readiness === 'ELEVATED' ? 'warn' : 'ok'] },
-              { l: 'Cabinet posture', v: 'Active', t: TONE.ok },
+              { l: 'Cabinet status', v: 'Active', t: TONE.ok },
               { l: 'Last sync', v: new Date(now).toLocaleTimeString(), t: 'rgb(var(--c-ink-soft))' },
               { l: 'Secure channel', v: 'Encrypted', t: TONE.ok },
             ].map(s => (

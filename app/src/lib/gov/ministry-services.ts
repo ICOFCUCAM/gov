@@ -40,7 +40,7 @@ const SVC: Partial<Record<ArchetypeKey, ServiceKpi[]>> = {
     { l: 'Port dwell time', unit: 'h', lo: 8, hi: 72, good: 'low' },
     { l: 'Transit on-time', unit: '%', lo: 55, hi: 95, good: 'high' },
     { l: 'Road incidents', unit: '/d', lo: 2, hi: 40, good: 'low' },
-    { l: 'Corridor throughput', unit: '%', lo: 45, hi: 93, good: 'high' },
+    { l: 'Corridor capacity used', unit: '%', lo: 45, hi: 93, good: 'high' },
   ],
   AGRICULTURE: [
     { l: 'Strategic grain', unit: 'd', lo: 20, hi: 120, good: 'high' },
@@ -83,7 +83,7 @@ const SVC: Partial<Record<ArchetypeKey, ServiceKpi[]>> = {
   GENERIC: [
     { l: 'Service availability', unit: '%', lo: 70, hi: 99, good: 'high' },
     { l: 'Request backlog', unit: '', lo: 0, hi: 40, good: 'low' },
-    { l: 'Processing latency', unit: 'd', lo: 1, hi: 20, good: 'low' },
+    { l: 'Processing time', unit: 'd', lo: 1, hi: 20, good: 'low' },
     { l: 'Coverage', unit: '%', lo: 50, hi: 95, good: 'high' },
   ],
 };

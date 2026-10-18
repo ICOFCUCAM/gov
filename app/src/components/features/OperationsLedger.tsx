@@ -54,7 +54,7 @@ export function OperationsLedger() {
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Operations Ledger</h2>
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Operations record</h2>
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>
             runtime · executed transitions
           </span>
@@ -78,7 +78,7 @@ export function OperationsLedger() {
       </div>
 
       <FilterChips options={['all', ...scopeKeys]} value={scopeFilter} onChange={setScopeFilter} />
-      <Panel title="Transition ledger" meta={`${ledger.length} actions · scope ${scopeFilter}`} bodyClass="!p-0">
+      <Panel title="Record of actions" meta={`${ledger.length} actions · showing ${scopeFilter}`} bodyClass="!p-0">
         {ledger.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
             No transitions executed yet this session. Drive a workflow in any subsystem runtime,

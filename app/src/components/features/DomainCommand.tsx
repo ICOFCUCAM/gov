@@ -84,7 +84,7 @@ const DOMAIN: Record<DomainKey, Cfg> = {
       { l: 'Fiscal brief', g: '▤', h: '/gov/briefing' },
       { l: 'Reallocate budget', g: '⇄', h: draft('Budget reallocation', 'budget') },
       { l: 'Freeze expenditure', g: '⊘', h: draft('Expenditure freeze', 'instruction') },
-      { l: 'Audit ledger', g: '⛓', h: '/audit' },
+      { l: 'Audit record', g: '⛓', h: '/audit' },
       { l: 'Situation Room', g: '◎', h: '/gov/situation-room' },
     ],
     strip: v => [
@@ -455,7 +455,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
         const title = domain === 'treasury'
           ? 'Procurement & disbursement runtime — solicitation → award → disbursed'
           : domain === 'security'
-            ? 'Security incident runtime — acknowledge → contain → recover'
+            ? 'Security incident handling — acknowledge → contain → recover'
             : `${domain} runtime — executable workflow`;
         return <RuntimeQueue scope={`domain:${domain}`} kind={k} title={title} by="Command Officer" />;
       })()}

@@ -183,7 +183,7 @@ export function buildOperationalChain(
       severity: directDeps[0]?.s ?? 0, tone: sev(directDeps[0]?.s ?? 0),
       impacts: mkImpacts(directDeps, 'Service degradation'),
       note: directDeps.length
-        ? `${directDeps.length} dependent institutions degrade along the fabric.`
+        ? `${directDeps.length} dependent institutions are affected through their links.`
         : 'No first-order dependents — failure localised.',
     },
     {

@@ -41,7 +41,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
   const projCritical = proj.filter(p => p.projectedPosture === 'critical').length;
 
   const tele = [
-    { l: 'Regional posture', v: roll.posture.toUpperCase(), sub: `${roll.meanReadiness}% mean readiness`, t: POS_TONE[roll.posture]!, k: 'np' },
+    { l: 'Regional status', v: roll.posture.toUpperCase(), sub: `${roll.meanReadiness}% mean readiness`, t: POS_TONE[roll.posture]!, k: 'np' },
     { l: 'Regions critical', v: String(roll.critical), sub: `${roll.elevated} elevated`, t: roll.critical ? 'alert' : roll.elevated ? 'warn' : 'ok', k: 'rc' },
     { l: 'Population', v: pop, sub: pop === 'Not connected' ? 'statistics source (National Twin)' : 'observed · National Twin', t: pop === 'Not connected' ? 'neutral' : 'ok', k: 'po' },
     { l: 'Infrastructure', v: `${roll.meanInfra}%`, sub: 'mean coverage', t: roll.meanInfra >= 80 ? 'ok' : 'warn', k: 'in' },
@@ -310,7 +310,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {[
-          { l: 'Regional posture', v: roll.posture.toUpperCase(), t: POS_TONE[roll.posture]! },
+          { l: 'Regional status', v: roll.posture.toUpperCase(), t: POS_TONE[roll.posture]! },
           { l: 'Mean readiness', v: `${roll.meanReadiness}%`, t: roll.meanReadiness >= 60 ? 'ok' : 'warn' },
           { l: 'Critical regions', v: `${roll.critical} · ${roll.elevated} elevated`, t: roll.critical ? 'alert' : 'warn' },
           { l: 'Population', v: pop, t: pop === 'Not connected' ? 'neutral' : 'ok' },
@@ -319,7 +319,7 @@ export function RegionalOverview({ initialRegion }: { initialRegion?: string } =
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
             <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
-              {s.l === 'Regional posture' || s.l === 'Provinces synced' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
+              {s.l === 'Regional status' || s.l === 'Provinces synced' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
               {s.v}
             </span>
           </div>

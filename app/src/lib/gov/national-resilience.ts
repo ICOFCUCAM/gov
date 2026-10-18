@@ -92,8 +92,8 @@ export function nationalResilience(mins: Ministry[], t: number): NationalResilie
   pCont -= Math.min(18, Math.max(0, (rt.meanLoad - 40) * 0.4));
   pCont = Math.round(Math.max(0, Math.min(100, pCont)));
   const contDetail = chain
-    ? `chain ${chain.containment} · ${chain.totalAffected} affected · runtime ${rt.posture} · jud ${jud.meanClearance}%`
-    : `runtime ${rt.posture} · leg ${leg.quorum ? 'quorum' : 'at-risk'} · jud ${jud.meanClearance}%`;
+    ? `chain ${chain.containment} · ${chain.totalAffected} affected · work ${rt.posture} · courts ${jud.meanClearance}% cleared`
+    : `work ${rt.posture} · legislature ${leg.quorum ? 'quorate' : 'short of quorum'} · courts ${jud.meanClearance}% cleared`;
 
   // Network propagation integrity — how much resilience survives contagion
   // across the real interoperability fabric (a low score means failure
@@ -104,11 +104,11 @@ export function nationalResilience(mins: Ministry[], t: number): NationalResilie
   const pillars: ResiliencePillar[] = [
     { key: 'inst', label: 'Institutional readiness', score: pInst, weight: 0.20, tone: toneOf(pInst), detail: `${dir.length} active · ${Math.round(deployRatio * 100)}% deployable` },
     { key: 'svc', label: 'Service-signature health', score: pSvc, weight: 0.16, tone: toneOf(pSvc), detail: `mean across ${dir.length || 0} institutions` },
-    { key: 'casc', label: 'Cascade integrity', score: pCascade, weight: 0.16, tone: toneOf(pCascade), detail: `${critNodes} critical nodes` },
-    { key: 'reg', label: 'Regional posture', score: pRegion, weight: 0.12, tone: toneOf(pRegion), detail: `${roll.meanReadiness}% mean · ${roll.critical} critical` },
+    { key: 'casc', label: 'Resistance to knock-on effects', score: pCascade, weight: 0.16, tone: toneOf(pCascade), detail: `${critNodes} critical nodes` },
+    { key: 'reg', label: 'Regional status', score: pRegion, weight: 0.12, tone: toneOf(pRegion), detail: `${roll.meanReadiness}% mean · ${roll.critical} critical` },
     { key: 'thr', label: 'Threat preparedness', score: pThreat, weight: 0.12, tone: toneOf(pThreat), detail: prio[0] ? `lead · ${prio[0].label}` : 'no active vectors' },
     { key: 'cont', label: 'Operational continuity', score: pCont, weight: 0.12, tone: toneOf(pCont), detail: contDetail },
-    { key: 'prop', label: 'Network propagation integrity', score: pProp, weight: 0.12, tone: toneOf(pProp), detail: `fabric ${prop.fragility} · amplification ${prop.amplification} · worst ${prop.worst?.name ?? 'n/a'}` },
+    { key: 'prop', label: 'Resistance to spreading problems', score: pProp, weight: 0.12, tone: toneOf(pProp), detail: `connections ${prop.fragility} · spread ${prop.amplification} · most exposed ${prop.worst?.name ?? 'n/a'}` },
   ];
 
   const index = Math.round(pillars.reduce((a, p) => a + p.score * p.weight, 0));

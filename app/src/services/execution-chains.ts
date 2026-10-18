@@ -64,8 +64,8 @@ export function executionChains(i: ChainInput): ChainEffect[] {
   // Police civil stability relieves (or strains) emergency posture.
   const pol = i.policeOperational;
   effects.push({
-    source: 'Police', target: 'Emergency posture',
-    effect: pol >= 70 ? 'Civil stability maintained — emergency posture relieved' : `Civil-stability stress (${pol}) — emergency posture strained`,
+    source: 'Police', target: 'Emergency readiness',
+    effect: pol >= 70 ? 'Civil stability maintained — emergency readiness relieved' : `Civil-stability stress (${pol}) — emergency readiness strained`,
     delta: pol >= 70 ? +Math.round((pol - 70) * 0.2) : -Math.round((70 - pol) * 0.35),
     severity: pol >= 70 ? 'ok' : pol >= 55 ? 'watch' : 'constraint',
   });
@@ -73,7 +73,7 @@ export function executionChains(i: ChainInput): ChainEffect[] {
   // Health operational collapse cascades to emergency + workforce.
   if (i.healthOperational < 60) {
     effects.push({
-      source: 'Health', target: 'Emergency posture',
+      source: 'Health', target: 'Emergency readiness',
       effect: `Healthcare degraded (${i.healthOperational}) — surge capacity consumed`,
       delta: -Math.round((60 - i.healthOperational) * 0.4),
       severity: i.healthOperational < 45 ? 'constraint' : 'watch',

@@ -31,7 +31,7 @@ function rescueSurface(kinds: string[], code: string, title: string, subtitle: s
         <TheatreRule label="rescue operations" />
         {ops.length === 0 ? (
           <p className="text-[10.5px] italic" style={{ color: EMERGENCY_DS.mut }}>
-            No active operations of this class. National posture: monitoring.
+            No active operations of this class. National status: monitoring.
           </p>
         ) : ops.map(o => (
           <div key={o.id} className="grid grid-cols-[110px_1fr_140px_110px_110px] gap-3 border-b py-1.5 text-[11px]"

@@ -32,7 +32,7 @@ export function LaboratorySystem({ id, now, role, withheld }: {
 
   const pTone: Tone = lx.posture === 'crisis' ? 'alert' : lx.posture === 'strained' ? 'warn' : 'ok';
   const adv = aiAdvisory('Laboratory Systems', [
-    { label: 'SLA breaches', value: Math.min(100, lx.slaBreaches), adverse: true },
+    { label: 'Cases past target', value: Math.min(100, lx.slaBreaches), adverse: true },
     { label: 'Unacknowledged panic values', value: Math.min(100, unacked * 22), adverse: true },
     { label: 'Outbreak escalation', value: lx.escalationLevel === 'national' ? 92 : lx.escalationLevel === 'regional' ? 58 : 12, adverse: true },
     { label: 'Turnaround', value: Math.min(100, net.meanTurnaroundHrs), adverse: true },

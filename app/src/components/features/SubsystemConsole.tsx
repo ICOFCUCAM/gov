@@ -1191,7 +1191,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
             </div>
           ))}
         </Panel>
-        <RuntimeQueue scope={`${id}:${group}`} kind="case" title={`${modeName} operations runtime — incident → contain → restore`} by={`${modeName} Controller`} n={14} />
+        <RuntimeQueue scope={`${id}:${group}`} kind="case" title={`${modeName} operations handling — incident → contain → restore`} by={`${modeName} Controller`} n={14} />
       </div>
     );
   }
@@ -1343,7 +1343,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Reserve margin" v={`${o.reserveMarginPct}%`} t={o.reserveMarginPct >= 12 ? 'ok' : 'warn'} />
           <Stat l="Load shedding" v={o.loadShedding ? 'ACTIVE' : 'none'} t={o.loadShedding ? 'alert' : 'ok'} />
         </div>
-        <RuntimeQueue scope={`${id}:grid`} kind="incident" title="Grid operations runtime — fault → isolate → reroute → restore" by="Grid Controller" n={14} />
+        <RuntimeQueue scope={`${id}:grid`} kind="incident" title="Grid operations handling — fault → isolate → reroute → restore" by="Grid Controller" n={14} />
       </div>
     );
   }

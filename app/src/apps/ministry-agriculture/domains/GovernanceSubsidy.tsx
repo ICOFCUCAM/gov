@@ -56,7 +56,7 @@ export function DroughtResponse({ id, now }: { id: string; now: number }) {
       <SeasonalRule label="drought advisories" />
       {droughts.length === 0 ? (
         <p className="text-[10.5px] italic" style={{ color: AGRICULTURE_DS.mut }}>
-          No active drought advisories. National posture: monitoring.
+          No active drought advisories. National status: monitoring.
         </p>
       ) : droughts.map(a => (
         <div key={a.id} className="grid grid-cols-[110px_160px_140px_100px_120px] gap-3 border-b py-1.5 text-[11px]"

@@ -258,7 +258,7 @@ export function CommandShell({
               ))}
             </div>
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
-              <div className="text-ink-muted">Posture</div><div className="truncate text-right font-mono" style={{ color: TONE[level] }}>{posture?.label ?? 'STABLE'}</div>
+              <div className="text-ink-muted">Status</div><div className="truncate text-right font-mono" style={{ color: TONE[level] }}>{posture?.label ?? 'STABLE'}</div>
               <div className="text-ink-muted">Incidents</div><div className="text-right font-mono" style={{ color: incidents.length ? TONE.alert : TONE.ok }}>{incidents.length}</div>
               <div className="text-ink-muted">Environment</div><div className="truncate text-right text-ink-soft">{nat?.environment ?? 'Production'}</div>
               <div className="text-ink-muted">Connection</div><div className="text-right" style={{ color: secure === false ? TONE.warn : TONE.ok }}>{secure === null ? '—' : secure ? 'Encrypted' : 'Not encrypted'}</div>

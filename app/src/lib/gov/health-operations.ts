@@ -364,7 +364,7 @@ export function publicHealthSite(t: number): PublicHealthSite {
   const kpis: PublicKpi[] = [
     { label: 'Facilities online', value: `${g.onlinePct}%`, tone: g.onlinePct >= 92 ? 'ok' : 'warn' },
     { label: 'Vaccination coverage', value: `${100 - Math.round(ep.pathogens[0]!.attackRatePer100k / 10)}%`, tone: 'ok' },
-    { label: 'National posture', value: ns.posture, tone: ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok' },
+    { label: 'National status', value: ns.posture, tone: ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok' },
     { label: 'Active outbreaks', value: `${ns.activeOutbreaks}`, tone: ns.activeOutbreaks ? 'warn' : 'ok' },
   ];
   return {
@@ -399,7 +399,7 @@ export function executiveBriefing(id: string, t: number): ExecutiveBriefing {
   const sm = healthSimulation(id, t);
   const sev = ns.posture === 'crisis' ? 'crisis' : ns.posture === 'elevated' || sm.posture === 'critical' ? 'elevated' : 'routine';
   const alerts: BriefingAlert[] = [
-    { headline: `National posture ${ns.posture} — peak ${ns.worstRegion} (${ns.regions[0]!.composite})`, domain: 'Situation', severity: ns.posture === 'crisis' ? 'critical' : ns.posture === 'elevated' ? 'priority' : 'info', tone: ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok' },
+    { headline: `National status ${ns.posture} — peak ${ns.worstRegion} (${ns.regions[0]!.composite})`, domain: 'Situation', severity: ns.posture === 'crisis' ? 'critical' : ns.posture === 'elevated' ? 'priority' : 'info', tone: ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok' },
     { headline: `Systemic risk index ${sm.systemicRiskIndex} — top vector ${sm.collapseRisks[0]!.system}`, domain: 'Simulation', severity: sm.posture === 'critical' ? 'critical' : sm.posture === 'watch' ? 'priority' : 'info', tone: sm.collapseRisks[0]!.tone },
     { headline: `${ns.activeOutbreaks} active outbreak signal(s) · disaster ${ns.disasterState}`, domain: 'Disease', severity: ns.activeOutbreaks >= 2 ? 'critical' : ns.activeOutbreaks ? 'priority' : 'info', tone: ns.activeOutbreaks >= 2 ? 'alert' : ns.activeOutbreaks ? 'warn' : 'ok' },
   ];

@@ -60,7 +60,7 @@ export function NationalFabricView() {
     { l: 'Mean link health', v: `${meanHealth}%`, t: meanHealth >= 85 ? 'ok' : meanHealth >= 70 ? 'warn' : 'alert', k: 'mh' },
     { l: 'Strained links', v: String(strained), t: strained ? 'warn' : 'ok', k: 'st' },
     { l: 'Mutual / Provides / Consumes', v: `${f.stats.mutual}/${f.stats.provides}/${f.stats.consumes}`, t: 'ok', k: 'mp' },
-    { l: 'Cascade-critical', v: String(cascade.filter(c => c.posture === 'critical' || c.posture === 'strained').length), t: cascade.some(c => c.posture === 'critical') ? 'alert' : cascade.some(c => c.posture === 'strained') ? 'warn' : 'ok', k: 'cx' },
+    { l: 'Others fail if it fails', v: String(cascade.filter(c => c.posture === 'critical' || c.posture === 'strained').length), t: cascade.some(c => c.posture === 'critical') ? 'alert' : cascade.some(c => c.posture === 'strained') ? 'warn' : 'ok', k: 'cx' },
   ];
 
   // circular mesh layout
@@ -74,7 +74,7 @@ export function NationalFabricView() {
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">National Interoperability Fabric</h2>
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">How institutions depend on each other</h2>
           <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE
           </span>
@@ -107,9 +107,9 @@ export function NationalFabricView() {
       </div>
 
       <div className="grid gap-2 xl:grid-cols-[1.4fr_1fr]">
-        <Panel signal="modelled" title="National dependency mesh" meta={`${f.nodes.length} nodes · ${f.edges.length} links`} bodyClass="!p-2">
+        <Panel signal="modelled" title="Dependency map" meta={`${f.nodes.length} nodes · ${f.edges.length} links`} bodyClass="!p-2">
           {f.nodes.length === 0 ? (
-            <div className="grid h-[360px] place-items-center text-[11px] text-ink-muted">No active institutions — compose and activate ministries to form the national fabric.</div>
+            <div className="grid h-[360px] place-items-center text-[11px] text-ink-muted">No active institutions — set up and activate ministries to connect them.</div>
           ) : (
             <div className="relative w-full" style={{ height: 380 }}>
               <svg viewBox="0 0 100 100" className="absolute inset-0 h-full w-full" preserveAspectRatio="none">
@@ -179,13 +179,13 @@ export function NationalFabricView() {
               );
             })}
           </div>
-          <p className="mt-1.5 text-[9px] text-ink-muted">High inbound dependency = single-point-of-failure risk; degradation cascades to dependents.</p>
+          <p className="mt-1.5 text-[9px] text-ink-muted">Many others depend on it: if it fails, they are affected too.</p>
         </Panel>
       </div>
 
-      <Panel signal="modelled" title="Resilience erosion · cascade pillar" meta={`pillar ${cascPillar?.score ?? '—'} · stress × dependency weighting`} bodyClass="!p-1.5">
+      <Panel signal="modelled" title="What weakens resilience most" meta={`pillar ${cascPillar?.score ?? '—'} · stress × dependency weighting`} bodyClass="!p-1.5">
         {erosion.length === 0 ? (
-          <p className="text-[11px] text-ink-muted">No active institutions in the mesh.</p>
+          <p className="text-[11px] text-ink-muted">No active institutions connected.</p>
         ) : (
           <div className="space-y-1">
             {erosion.map(c => {
@@ -200,16 +200,16 @@ export function NationalFabricView() {
                 </div>
               );
             })}
-            <p className="px-1 pt-0.5 text-[9px] text-ink-muted">Erosion weight = cascade stress amplified by mesh degree. Reducing these institutions&rsquo; stress lifts the national cascade-integrity pillar most.</p>
+            <p className="px-1 pt-0.5 text-[9px] text-ink-muted">Weight = strain on the institution times how many others depend on it. Easing strain on these institutions improves national resilience most.</p>
           </div>
         )}
       </Panel>
 
-      <Panel signal="modelled" title="Cascade propagation" meta="upstream degradation flowing to dependents" bodyClass="!p-0">
+      <Panel signal="modelled" title="How problems spread" meta="upstream degradation flowing to dependents" bodyClass="!p-0">
         <div className="max-h-[300px] overflow-y-auto">
           <table className="w-full text-[11px]">
             <thead><tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8.5px] uppercase tracking-wider text-ink-muted">
-              <th className="px-3 py-1.5">Institution</th><th className="px-2 py-1.5 text-right">Base stress</th><th className="px-2 py-1.5 text-right">Inherited</th><th className="px-2 py-1.5 text-right">Total</th><th className="px-2 py-1.5">Posture</th><th className="px-3 py-1.5">Top cascade contributors</th>
+              <th className="px-3 py-1.5">Institution</th><th className="px-2 py-1.5 text-right">Base stress</th><th className="px-2 py-1.5 text-right">Inherited</th><th className="px-2 py-1.5 text-right">Total</th><th className="px-2 py-1.5">Posture</th><th className="px-3 py-1.5">Where knock-on risk comes from</th>
             </tr></thead>
             <tbody>
               {cascade.map(c => {
@@ -225,16 +225,16 @@ export function NationalFabricView() {
                   </tr>
                 );
               })}
-              {cascade.length === 0 ? <tr><td colSpan={6} className="px-3 py-8 text-center text-ink-muted">No active institutions — no cascade surface.</td></tr> : null}
+              {cascade.length === 0 ? <tr><td colSpan={6} className="px-3 py-8 text-center text-ink-muted">No active institutions — nothing to spread.</td></tr> : null}
             </tbody>
           </table>
         </div>
       </Panel>
 
-      <Panel signal="modelled" title="Cascade escalations" meta="actionable · coordination required" bodyClass="!p-0">
+      <Panel signal="modelled" title="Knock-on escalations" meta="actionable · coordination required" bodyClass="!p-0">
         {(() => {
           const esc = cascadeEscalations(cascade);
-          if (!esc.length) return <p className="p-3 text-[11px] text-ink-muted">No cascade escalations — propagation within tolerance.</p>;
+          if (!esc.length) return <p className="p-3 text-[11px] text-ink-muted">No knock-on escalations — spread within limits.</p>;
           return esc.map(e => {
             const tn = e.severity === 'critical' ? TONE.alert : TONE.warn;
             const done = ack[e.id];
@@ -253,7 +253,7 @@ export function NationalFabricView() {
         })()}
       </Panel>
 
-      <Panel signal="modelled" title="Cascade event timeline" meta="propagation chronology" bodyClass="!p-0">
+      <Panel signal="modelled" title="Knock-on events over time" meta="propagation chronology" bodyClass="!p-0">
         {(() => {
           const events = cascade
             .filter(c => c.contributors.length && c.totalStress >= 30)
@@ -263,7 +263,7 @@ export function NationalFabricView() {
             })))
             .sort((a, b) => a.t - b.t)
             .slice(0, 10);
-          if (!events.length) return <p className="p-3 text-[11px] text-ink-muted">No active cascade propagation — national fabric stable.</p>;
+          if (!events.length) return <p className="p-3 text-[11px] text-ink-muted">Nothing is spreading — connections between institutions are stable.</p>;
           return events.map((e, i) => {
             const tn = e.sev === 'critical' ? TONE.alert : e.sev === 'strained' ? TONE.warn : TONE.neutral;
             return (
@@ -280,7 +280,7 @@ export function NationalFabricView() {
         })()}
       </Panel>
 
-      <Panel signal="modelled" title="Dependency ledger" meta="live link health" bodyClass="!p-0">
+      <Panel signal="modelled" title="Dependency list" meta="live link health" bodyClass="!p-0">
         <div className="max-h-[320px] overflow-y-auto">
           <table className="w-full text-[11px]">
             <thead><tr className="sticky top-0 z-10 border-b border-line bg-surface-2 text-left text-[8.5px] uppercase tracking-wider text-ink-muted">
@@ -302,7 +302,7 @@ export function NationalFabricView() {
                   </tr>
                 );
               })}
-              {f.edges.length === 0 ? <tr><td colSpan={6} className="px-3 py-8 text-center text-ink-muted">No dependency links — activate institutions to form the fabric.</td></tr> : null}
+              {f.edges.length === 0 ? <tr><td colSpan={6} className="px-3 py-8 text-center text-ink-muted">No dependency links — activate institutions to connect them.</td></tr> : null}
             </tbody>
           </table>
         </div>

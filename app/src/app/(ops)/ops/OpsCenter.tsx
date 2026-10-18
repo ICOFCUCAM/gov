@@ -117,11 +117,11 @@ export function OpsCenter() {
 
   const overview = [
     { l: 'Services healthy', v: svcOk, t: svcOk.split('/')[0] === svcOk.split('/')[1] ? 'ok' : 'warn', spark: sp('sh', 20, 60, 95), sub: '80% healthy' },
-    { l: 'SLA compliance', v: `${slaPct}%`, t: slaPct >= 95 ? 'ok' : slaPct >= 80 ? 'warn' : 'alert', spark: sp('sla', 22, 70, 100), sub: 'all services' },
+    { l: 'On time', v: `${slaPct}%`, t: slaPct >= 95 ? 'ok' : slaPct >= 80 ? 'warn' : 'alert', spark: sp('sla', 22, 70, 100), sub: 'all services' },
     { l: 'Queues breaching', v: String(qBreach), t: qBreach === 0 ? 'ok' : 'alert', spark: sp('qb', 22, 0, 40), sub: '12% of total' },
     { l: 'Open incidents', v: String(openInc), t: openInc === 0 ? 'ok' : 'warn', spark: sp('oi', 20, 0, 20), sub: '1 critical' },
-    { l: 'Operations posture', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', spark: sp('op', 24, 40, 70), sub: qBreach > 4 || !auditOk ? `${qBreach} queues breaching${auditOk ? '' : ' · audit review'}` : 'queues within SLA' },
-    { l: 'Cross-system latency', v: `${120 + Math.round(seed(`xl:${Math.floor(now / 15000)}`) * 90)}ms`, t: 'ok', spark: sp('xl', 22, 40, 80), sub: 'p95 mesh · sample' },
+    { l: 'Operations status', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', spark: sp('op', 24, 40, 70), sub: qBreach > 4 || !auditOk ? `${qBreach} queues late${auditOk ? '' : ' · audit review'}` : 'queues on time' },
+    { l: 'Response time between systems', v: `${120 + Math.round(seed(`xl:${Math.floor(now / 15000)}`) * 90)}ms`, t: 'ok', spark: sp('xl', 22, 40, 80), sub: 'p95 mesh · sample' },
   ];
   const qTotal = queues.reduce((a, q) => a + q.depth, 0);
   const donut = queues.slice(0, 4).map((q, i) => ({ label: q.name, value: q.depth, tone: ['ok', 'warn', 'alert', 'neutral'][i] ?? 'neutral' }));
@@ -201,7 +201,7 @@ export function OpsCenter() {
               return (
                 <div key={q.name}>
                   <div className="flex items-baseline justify-between text-[11px]">
-                    <span className="text-ink"><strong>{q.name}</strong> <span className="text-ink-muted">{q.slaHours ? `· SLA ${Math.round(q.slaHours / 24)}d ${q.breaching ? '· breaching' : '· within SLA'}` : '· no SLA breach'}</span></span>
+                    <span className="text-ink"><strong>{q.name}</strong> <span className="text-ink-muted">{q.slaHours ? `· target ${Math.round(q.slaHours / 24)}d ${q.breaching ? '· late' : '· on time'}` : '· none late'}</span></span>
                     <span className="font-mono tabular-nums text-ink-muted">{q.depth} / {q.cap}<span className="ml-2" style={{ color: TONE[tn] }}>{pct}%</span></span>
                   </div>
                   <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: TONE[tn] }} /></div>
@@ -250,7 +250,7 @@ export function OpsCenter() {
         <div className="overflow-x-auto">
           <table className="w-full text-[11px]">
             <thead><tr className="border-b border-line bg-surface-2 text-left text-[8px] uppercase tracking-wide text-ink-muted">
-              <th className="px-3 py-1.5">Municipality</th><th className="px-2 py-1.5">Status</th><th className="px-2 py-1.5 text-right">Open permits</th><th className="px-2 py-1.5 text-right">SLA breaches</th><th className="px-2 py-1.5">Last edge sync</th><th className="px-3 py-1.5">Trend 24h</th>
+              <th className="px-3 py-1.5">Municipality</th><th className="px-2 py-1.5">Status</th><th className="px-2 py-1.5 text-right">Open permits</th><th className="px-2 py-1.5 text-right">Late</th><th className="px-2 py-1.5">Last synchronised</th><th className="px-3 py-1.5">Trend 24h</th>
             </tr></thead>
             <tbody>
               {tenants.map(tn => {
@@ -368,9 +368,9 @@ export function OpsCenter() {
       <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-ink-muted">Cross-system band <SignalTag kind="sample" source={REFERENCE_MODEL} /></p>
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         {[
-          ['Service health', 'sh', 90, 99], ['Queue depth', 'qd', 10, 60], ['Throughput', 'tp', 40, 95],
-          ['Error rate', 'er', 0, 6], ['Mesh latency', 'ml', 80, 220], ['Active workflows', 'wf', 120, 280],
-          ['SLA compliance', 'sl', 85, 99], ['Edge sync', 'es', 80, 99], ['Incident load', 'il', 0, 12],
+          ['Service health', 'sh', 90, 99], ['Queue depth', 'qd', 10, 60], ['Handled per hour', 'tp', 40, 95],
+          ['Error rate', 'er', 0, 6], ['Response time between systems', 'ml', 80, 220], ['Active workflows', 'wf', 120, 280],
+          ['On time', 'sl', 85, 99], ['Edge sync', 'es', 80, 99], ['Incident load', 'il', 0, 12],
           ['Retry queue', 'rq', 0, 30], ['Cache hit', 'ch', 70, 98], ['Capacity', 'cp', 50, 95],
           ['Backpressure', 'bp', 0, 24], ['Sync drift', 'sd', 0, 15], ['Signal', 'sg', 75, 99], ['Tempo', 'tm', 30, 85],
         ].map(([l, k, lo, hi]) => {
@@ -447,21 +447,21 @@ export function OpsCenter() {
         </div>
       </P>
 
-      <RuntimeQueue scope="ops:incident" kind="incident" title="Cross-institution incident runtime — acknowledge → contain → recover" by="Ops Duty Officer" n={16} />
+      <RuntimeQueue scope="ops:incident" kind="incident" title="Cross-institution incident handling — acknowledge → contain → recover" by="Ops Duty Officer" n={16} />
 
       {/* Operational command strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {[
-          { l: 'Readiness posture', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok' },
+          { l: 'Readiness', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok' },
           { l: 'Operational tempo', v: `${Math.round(40 + seed(`opstempo:${Math.floor(now / 15000)}`) * 55)} ops/min · sample`, t: 'ok' },
           { l: 'Open incidents', v: `${openInc} · ${openInc ? '1 crit' : 'nominal'}`, t: openInc ? 'alert' : 'ok' },
-          { l: 'Queue throughput', v: `${(1.2 + seed(`tput:${Math.floor(now / 15000)}`) * 0.6).toFixed(2)}M / 24h · sample`, t: 'ok' },
+          { l: 'Queue handled', v: `${(1.2 + seed(`tput:${Math.floor(now / 15000)}`) * 0.6).toFixed(2)}M / 24h · sample`, t: 'ok' },
           { l: 'Audit consistency', v: auditOk ? 'INTACT' : 'REVIEW', t: auditOk ? 'ok' : 'alert' },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
             <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
-              {s.l === 'Readiness posture' || s.l === 'Audit consistency' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
+              {s.l === 'Readiness' || s.l === 'Audit consistency' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
               {s.v}
             </span>
           </div>

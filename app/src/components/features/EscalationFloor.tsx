@@ -228,7 +228,7 @@ export function EscalationFloor() {
       ) : null}
 
       {cascades.length > 0 ? (
-        <Panel title="Cross-ministry cascades" meta={`${cascades.length} · propagated`} bodyClass="!p-0">
+        <Panel title="Knock-on effects across ministries" meta={`${cascades.length} · spread`} bodyClass="!p-0">
           <div className="max-h-[240px] overflow-y-auto">
             {cascades.map(c => {
               const p = c.payload as { source_charter?: string; source_archetype?: string; target_archetype?: string; severity?: string; relation?: string; direction?: string };

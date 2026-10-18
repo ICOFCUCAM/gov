@@ -94,7 +94,7 @@ export function BusinessRegistry({ id, now }: { id: string; now: number }) {
         { label: 'Backlog', value: o.businessRegistry.backlog.toLocaleString(), tone: o.businessRegistry.backlog > 2500 ? 'alert' : 'warn' },
         { label: 'Median (days)', value: o.businessRegistry.medianDays, tone: o.businessRegistry.medianDays > 14 ? 'alert' : 'ok' },
       ]} />
-      <CorridorCallout kicker="registration doctrine" body="Business registration is a sovereign service. SLA breaches are reviewable; arbitrary refusals are constitutionally void." />
+      <CorridorCallout kicker="registration doctrine" body="Business registration is a sovereign service. Cases past target are reviewable; arbitrary refusals are constitutionally void." />
     </CorridorFrame>
   );
 }

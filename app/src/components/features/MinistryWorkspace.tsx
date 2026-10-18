@@ -247,7 +247,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
     { key: 'f', header: labels.unit, align: 'right', render: r => `${r.facilitiesOperationalPct}%`, sort: (a, b) => a.facilitiesOperationalPct - b.facilitiesOperationalPct },
     { key: 'c', header: labels.capacity, align: 'right', render: r => `${r.capacityPct}%`, sort: (a, b) => a.capacityPct - b.capacityPct },
     { key: 'o', header: labels.cases, align: 'right', render: r => r.openCases, sort: (a, b) => a.openCases - b.openCases },
-    { key: 's', header: 'SLA breaches', align: 'right', render: r => (r.slaBreaches > 0 ? <StatusText tone="alert">{r.slaBreaches}</StatusText> : '0'), sort: (a, b) => a.slaBreaches - b.slaBreaches },
+    { key: 's', header: 'Cases past target', align: 'right', render: r => (r.slaBreaches > 0 ? <StatusText tone="alert">{r.slaBreaches}</StatusText> : '0'), sort: (a, b) => a.slaBreaches - b.slaBreaches },
     { key: 'st', header: 'Status', render: r => <StatusText tone={r.status}>{r.status.toUpperCase()}</StatusText>, filter: r => r.status, sort: (a, b) => a.status.localeCompare(b.status) },
   ];
   const queueCols: Column<QueueItem>[] = [
@@ -427,7 +427,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
           ] : [
             navBtn('Command surface', () => chooseTab('command')),
             navBtn('Strategic analytics', () => chooseTab('analytics')),
-            navBtn('Regional posture', () => chooseTab('regional')),
+            navBtn('Regional status', () => chooseTab('regional')),
             linkBtn('Executive brief', '/gov'),
           ];
         return (
@@ -621,7 +621,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
               ))}
             </div>
           </Section>
-          <Section title="Regional posture" meta="tile shade ∝ open caseload">
+          <Section title="Regional status" meta="darker tile = more open cases">
             <RegionMatrix
               cells={regions.map(r => ({
                 label: r.region,
@@ -633,7 +633,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
             />
           </Section>
           <div className="grid gap-5 lg:grid-cols-2">
-            <Section title="SLA compliance" meta="target 95%">
+            <Section title="On time" meta="target 95%">
               <SLAMonitor
                 rows={regions.map(r => ({
                   label: r.region,
@@ -870,7 +870,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 <div className="flex justify-between"><span className="text-ink-muted">{labels.unit} operational</span><span className="tabular-nums">{r.facilitiesOperationalPct}%</span></div>
                 <div className="flex justify-between"><span className="text-ink-muted">{labels.capacity}</span><span className="tabular-nums">{r.capacityPct}%</span></div>
                 <div className="flex justify-between"><span className="text-ink-muted">{labels.cases}</span><span className="tabular-nums">{r.openCases}</span></div>
-                <div className="flex justify-between"><span className="text-ink-muted">SLA breaches</span><span className="tabular-nums">{r.slaBreaches}</span></div>
+                <div className="flex justify-between"><span className="text-ink-muted">Cases past target</span><span className="tabular-nums">{r.slaBreaches}</span></div>
                 <div className="sm:col-span-2 mt-1 text-xs text-ink-muted">
                   Posture <strong className="uppercase">{r.status}</strong>. Drill-through to the institution&rsquo;s
                   regional command and field operations for {r.region}.

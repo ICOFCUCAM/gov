@@ -62,7 +62,7 @@ export function Welcome() {
   const total = ministries.filter(m => m.status !== 'merged').length;
 
   const destinations = [
-    { href: '/command', t: 'Sovereign Command Center', s: 'Whole-of-government posture, surfaces and directory', k: 'Enter' },
+    { href: '/command', t: 'Sovereign Command Center', s: 'Whole-of-government status, pages and directory', k: 'Enter' },
     { href: '/gov/situation-room', t: 'National Situation Room', s: 'Real-time command and coordination', k: 'Live' },
     { href: '/gov', t: 'Cabinet Intelligence', s: 'Cabinet session, directives and briefings', k: 'Cabinet' },
     { href: '/ministries', t: 'Institutions Admin', s: 'Compose, charter and govern institutions', k: 'Admin' },

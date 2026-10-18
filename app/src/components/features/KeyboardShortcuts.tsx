@@ -3,34 +3,46 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Panel } from '@/components/features/SituationRoom';
+import { CONSOLE_NAV } from '@/lib/nav/console-nav';
 
 interface ShortcutGroup { title: string; items: { keys: string; what: string }[] }
 
 const GROUPS: ShortcutGroup[] = [
   {
-    title: 'Command palette',
+    title: 'Finding things quickly',
     items: [
-      { keys: '⌘K / Ctrl-K', what: 'Open the global command palette anywhere under /gov/*' },
-      { keys: '↑ ↓',         what: 'Move selection within the palette' },
-      { keys: '↵',           what: 'Open the highlighted entry' },
-      { keys: 'Esc',         what: 'Close the palette' },
+      { keys: '⌘K / Ctrl-K', what: 'Open quick search from any console page: type a page, a case or a name' },
+      { keys: '↑ ↓',         what: 'Move up and down the results' },
+      { keys: '↵',           what: 'Open the highlighted result' },
+      { keys: 'Esc',         what: 'Close quick search' },
     ],
   },
   {
-    title: 'Detail pages',
+    title: 'On a record',
     items: [
-      { keys: '☆ (click)',   what: 'Star/unstar the current record into your per-device watchlist' },
-      { keys: '← (link)',    what: 'Return to the parent list/board' },
+      { keys: '☆ (click)',   what: 'Follow the record: it appears under My work › Following on this device' },
+      { keys: '← (link)',    what: 'Go back to the list the record came from' },
     ],
   },
   {
-    title: 'Headers · always present',
+    title: 'At the top of every page',
     items: [
-      { keys: 'IdentityBadge', what: 'Shows the currently signed-in identity + role + charter' },
-      { keys: 'ChainSentinel', what: 'Passive watchdog over the audit chain; click for /gov/audit' },
-      { keys: 'NotificationsBell', what: 'Count of UNSEEN substrate alerts; click for /gov/alerts' },
+      { keys: 'Your name',     what: 'Who you are signed in as, what you may do and for which institution' },
+      { keys: 'Audit record',  what: 'Shows that the record of every action is intact; click to read it' },
+      { keys: 'Bell',          what: 'Notifications you have not seen yet; click to read them' },
     ],
   },
+];
+
+/** Everyday tasks, each with the page that does it. */
+const TASKS: { task: string; how: string; href: string }[] = [
+  { task: 'See what is waiting on you', how: 'My work lists decisions, cases and incidents across your institutions; late items come first.', href: '/gov/work' },
+  { task: 'Bring your institution\'s cases in', how: 'My work › Load cases: load a spreadsheet saved as CSV, type in one case, or connect your case system.', href: '/gov/work/cases' },
+  { task: 'Draft, sign or withdraw a directive', how: 'Directives: draft one, then an official who can sign signs it; every step is recorded.', href: '/gov/directives' },
+  { task: 'Find a page, case or person', how: 'Use Search at the top, or press ⌘K / Ctrl-K.', href: '/gov/search' },
+  { task: 'Add an official or change what they may do', how: 'People › Sign-in accounts (administrators only).', href: '/admin/officials' },
+  { task: 'Check who did what', how: 'Audit record: every action, with who acted and when, in an unbroken chain.', href: '/gov/audit' },
+  { task: 'Understand a word on the screen', how: 'The glossary explains the technical terms in plain language.', href: '/gov/glossary' },
 ];
 
 const ROUTE_TABLE: { path: string; what: string }[] = [
@@ -108,56 +120,99 @@ export function KeyboardShortcuts() {
   const needle = q.trim().toLowerCase();
   const matchRow = (s: string) => needle === '' || s.toLowerCase().includes(needle);
   return (
-    <div className="space-y-3">
+    <div className="space-y-4 text-[14px]">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Help · shortcuts &amp; routes</h2>
-        <span className="font-mono text-[10px] text-ink-muted">Cmd/Ctrl-K for the palette</span>
+        <h2 className="text-[20px] font-semibold tracking-tight text-ink">How to use the console</h2>
+        <span className="text-[12px] text-ink-muted">Press ⌘K / Ctrl-K anywhere to search</span>
       </div>
 
-      <input type="search" value={q} onChange={e => setQ(e.currentTarget.value)}
-        placeholder="filter routes / shortcuts…"
-        className="w-full rounded-[3px] border border-line bg-bg px-3 py-1 font-mono text-[11px]" />
+      <label className="block text-[13px] text-ink-soft">Look for a page or task
+        <input type="search" value={q} onChange={e => setQ(e.currentTarget.value)}
+          placeholder="e.g. directives, cases, audit"
+          className="mt-1 w-full rounded-[3px] border border-line bg-bg px-3 py-2 text-[14px]" />
+      </label>
+
+      <Panel title="Common tasks" meta={`${TASKS.length}`} bodyClass="!p-0">
+        {TASKS.filter(t => matchRow(`${t.task} ${t.how}`)).map(t => (
+          <div key={t.href} className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 border-b border-line-soft px-3 py-2 last:border-0">
+            <Link href={t.href} className="w-72 shrink-0 font-semibold text-link hover:underline">{t.task}</Link>
+            <span className="min-w-0 flex-1 text-ink-soft">{t.how}</span>
+          </div>
+        ))}
+      </Panel>
+
+      <Panel title="Where things are" meta="the menu, section by section" bodyClass="!p-0">
+        {CONSOLE_NAV.map(sec => {
+          const items = sec.items.filter(it => matchRow(`${sec.label} ${it.label} ${it.purpose} ${it.tabs.map(t => `${t.label} ${t.was ?? ''}`).join(' ')}`));
+          if (!items.length) return null;
+          return (
+            <div key={sec.label} className="border-b border-line-soft px-3 py-2 last:border-0">
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{sec.label}</h3>
+              <ul className="mt-1 space-y-1.5">
+                {items.map(it => (
+                  <li key={it.key}>
+                    <Link href={it.href} className="font-semibold text-link hover:underline">{it.label}</Link>
+                    <span className="text-ink-soft"> — {it.purpose}</span>
+                    {it.tabs.length > 1 ? (
+                      <div className="mt-0.5 flex flex-wrap gap-x-3 text-[12px] text-ink-muted">
+                        {it.tabs.map(t => <Link key={t.href} href={t.href} className="hover:text-link hover:underline">{t.label}</Link>)}
+                      </div>
+                    ) : null}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          );
+        })}
+      </Panel>
 
       {GROUPS.map(g => (
         <Panel key={g.title} title={g.title} meta={`${g.items.length}`} bodyClass="!p-0">
           {g.items.map((it, i) => (
-            <div key={i} className="flex items-center gap-3 border-b border-line-soft px-3 py-1.5 last:border-0 text-[11px]">
-              <span className="w-40 shrink-0 rounded-[3px] border border-line bg-bg px-2 py-0.5 text-center font-mono text-[10px] text-ink">{it.keys}</span>
+            <div key={i} className="flex items-center gap-3 border-b border-line-soft px-3 py-1.5 last:border-0 text-[13px]">
+              <span className="w-40 shrink-0 rounded-[3px] border border-line bg-bg px-2 py-0.5 text-center font-mono text-[11px] text-ink">{it.keys}</span>
               <span className="min-w-0 flex-1 text-ink">{it.what}</span>
             </div>
           ))}
         </Panel>
       ))}
 
-      <Panel title="Routes" meta={`${ROUTE_TABLE.length}`} bodyClass="!p-0">
-        <div className="max-h-[480px] overflow-y-auto">
-          {ROUTE_TABLE.filter(r => matchRow(`${r.path} ${r.what}`)).map(r => (
-            <div key={r.path} className="flex items-center gap-3 border-b border-line-soft px-3 py-1 last:border-0 text-[10px]">
-              <Link href={r.path.replace(/\/\[[^\]]+\]/g, '').replace(/\/+$/, '') || '/'}
-                className="w-64 shrink-0 truncate font-mono text-link hover:underline">
-                {r.path}
-              </Link>
-              <span className="min-w-0 flex-1 truncate text-ink">{r.what}</span>
+      <details className="rounded-[3px] border border-line px-3 py-2 text-[12px]">
+        <summary className="cursor-pointer text-ink-soft">For technical staff: every page address and the scheduled jobs</summary>
+        <div className="mt-2 space-y-3">
+          <Panel title="Page addresses" meta={`${ROUTE_TABLE.length}`} bodyClass="!p-0">
+            <div className="max-h-[480px] overflow-y-auto">
+              {ROUTE_TABLE.filter(r => matchRow(`${r.path} ${r.what}`)).map(r => (
+                <div key={r.path} className="flex items-center gap-3 border-b border-line-soft px-3 py-1 last:border-0 text-[11px]">
+                  <Link href={r.path.replace(/\/\[[^\]]+\]/g, '').replace(/\/+$/, '') || '/'}
+                    className="w-64 shrink-0 truncate font-mono text-link hover:underline">
+                    {r.path}
+                  </Link>
+                  <span className="min-w-0 flex-1 truncate text-ink">{r.what}</span>
+                </div>
+              ))}
             </div>
-          ))}
+          </Panel>
+
+          <Panel title="Scheduled jobs and machine calls" meta={`${API_TABLE.length}`} bodyClass="!p-0">
+            {API_TABLE.filter(r => matchRow(`${r.path} ${r.what}`)).map(r => (
+              <div key={r.path} className="flex items-center gap-3 border-b border-line-soft px-3 py-1 last:border-0 text-[11px]">
+                <span className="w-64 shrink-0 truncate font-mono text-link">{r.path}</span>
+                <span className="min-w-0 flex-1 truncate text-ink">{r.what}</span>
+              </div>
+            ))}
+          </Panel>
+
+          <p className="text-[11px] text-ink-muted">
+            All of these except <span className="font-mono">/api/health</span> require
+            <span className="font-mono"> CIVICOS_CRON_SECRET</span> (either
+            <span className="font-mono"> ?token=…</span> or Bearer header). Cadence recipes
+            for Vercel Cron / pg_cron live in <span className="font-mono">supabase/README.md</span>.
+            The full platform API is described at <Link href="/developers" className="text-link underline">Developers</Link> and
+            <span className="font-mono"> /api/openapi</span>.
+          </p>
         </div>
-      </Panel>
-
-      <Panel title="API endpoints" meta={`${API_TABLE.length}`} bodyClass="!p-0">
-        {API_TABLE.filter(r => matchRow(`${r.path} ${r.what}`)).map(r => (
-          <div key={r.path} className="flex items-center gap-3 border-b border-line-soft px-3 py-1 last:border-0 text-[10px]">
-            <span className="w-64 shrink-0 truncate font-mono text-link">{r.path}</span>
-            <span className="min-w-0 flex-1 truncate text-ink">{r.what}</span>
-          </div>
-        ))}
-      </Panel>
-
-      <p className="text-[10px] text-ink-muted">
-        All API endpoints except <span className="font-mono">/api/health</span> require
-        <span className="font-mono"> CIVICOS_CRON_SECRET</span> (either
-        <span className="font-mono"> ?token=…</span> or Bearer header). Cadence recipes
-        for Vercel Cron / pg_cron live in <span className="font-mono">supabase/README.md</span>.
-      </p>
+      </details>
     </div>
   );
 }

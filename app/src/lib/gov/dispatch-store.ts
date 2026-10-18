@@ -68,7 +68,7 @@ const SEED_LINES: { fromTier: DispatchTier; toTier: DispatchTier; body: string; 
   { fromTier: 'FACILITY', toTier: 'ACTOR', body: 'Shift roster confirmed; capacity within tolerance.', priority: 'routine' },
   { fromTier: 'ACTOR', toTier: 'FACILITY', body: 'Record committed to facility registry — awaiting roll-up.', priority: 'routine' },
   { fromTier: 'MINISTRY', toTier: 'FACILITY', body: 'Quarterly compliance review scheduled; submit returns.', priority: 'priority' },
-  { fromTier: 'FACILITY', toTier: 'MINISTRY', body: 'Throughput strained — requesting resource concurrence.', priority: 'priority' },
+  { fromTier: 'FACILITY', toTier: 'MINISTRY', body: 'Too much work for current staff — asking for more resources.', priority: 'priority' },
   { fromTier: 'NATIONAL', toTier: 'MINISTRY', body: 'National synchronisation nominal; continuity acknowledged.', priority: 'routine' },
 ];
 
@@ -85,8 +85,9 @@ function seedChannel(scope: string, now: number): Dispatch[] {
     };
   });
 }
-function tierName(t: DispatchTier): string {
-  return t === 'ACTOR' ? 'Field actor' : t === 'FACILITY' ? 'Facility desk'
+/** A dispatch tier in plain words. */
+export function tierName(t: DispatchTier): string {
+  return t === 'ACTOR' ? 'Field officer' : t === 'FACILITY' ? 'Facility desk'
     : t === 'MINISTRY' ? 'Ministry coordination' : 'National system';
 }
 

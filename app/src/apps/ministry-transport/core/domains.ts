@@ -94,7 +94,7 @@ export const TRANSPORT_DOMAINS: TransportDomain[] = [
   { surface: 'infrastructure-assets', group: 'infrastructure', code: 'IF-AST-16', label: 'Infrastructure Assets',     purpose: 'National infrastructure asset register',archetype: 'infrastructure',blueprintSection: '16.7' },
   { surface: 'bridge-tunnel-health',  group: 'infrastructure', code: 'IF-BTH-17', label: 'Bridge & Tunnel Health',    purpose: 'Bridge / tunnel integrity',             archetype: 'infrastructure',blueprintSection: '16.7' },
   // emergency
-  { surface: 'emergency-recovery',  group: 'emergency',      code: 'EM-REC-18', label: 'Emergency Recovery',         purpose: 'Recovery operations runtime',           archetype: 'emergency',     blueprintSection: '16.8' },
+  { surface: 'emergency-recovery',  group: 'emergency',      code: 'EM-REC-18', label: 'Emergency Recovery',         purpose: 'Recovery operations handling',           archetype: 'emergency',     blueprintSection: '16.8' },
   { surface: 'infrastructure-failures', group: 'emergency',  code: 'EM-FAI-19', label: 'Infrastructure Failures',    purpose: 'Live infrastructure failures',          archetype: 'emergency',     blueprintSection: '16.8' },
   { surface: 'repair-crews',        group: 'emergency',      code: 'EM-CRW-20', label: 'Repair Crews',               purpose: 'Crew dispatch & status',                archetype: 'emergency',     blueprintSection: '16.8' },
   { surface: 'evacuation-corridors',group: 'emergency',      code: 'EM-EVC-21', label: 'Evacuation Corridors',       purpose: 'Active evacuation corridors',           archetype: 'emergency',     blueprintSection: '16.8' },

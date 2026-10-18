@@ -65,7 +65,7 @@ export function RuntimeQueue({
         <div className="flex items-center gap-2 text-[9px] text-ink-muted">
           <span>{stats.open} open</span>
           <span style={{ color: TONE.alert }}>{stats.urgent} urgent</span>
-          <span style={{ color: TONE.warn }}>{stats.breaching} SLA</span>
+          <span style={{ color: TONE.warn }}>{stats.breaching} late</span>
           <span style={{ color: TONE.ok }}>{stats.closed} closed</span>
         </div>
       </div>

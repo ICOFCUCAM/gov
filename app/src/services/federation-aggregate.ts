@@ -59,7 +59,7 @@ export function sovereignExecutionIndex(input: {
   const drivers = [
     { label: 'Institutional operations', value: input.federationOperational, weight: 0.4 },
     { label: 'National resilience', value: input.resilience, weight: 0.3 },
-    { label: 'Runtime throughput', value: Math.max(0, 100 - input.runtimeLoad), weight: 0.2 },
+    { label: 'Work handled', value: Math.max(0, 100 - input.runtimeLoad), weight: 0.2 },
     { label: 'Audit integrity', value: input.auditIntact ? 100 : 0, weight: 0.1 },
   ];
   const index = Math.round(drivers.reduce((s, d) => s + d.value * d.weight, 0));

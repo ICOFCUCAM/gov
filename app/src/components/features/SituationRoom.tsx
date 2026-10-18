@@ -42,6 +42,15 @@ import { useRenderNow } from '@/lib/clock/render-now';
 import { CONSOLE_NAV, locate } from '@/lib/nav/console-nav';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
 
+/** The ministry grid's columns: short heading, and the full name read aloud and shown on hover. */
+const MATRIX_DOMAINS = [
+  { key: 'ops', short: 'Ops', name: 'Operations' }, { key: 'fisc', short: 'Fin', name: 'Finance' },
+  { key: 'infra', short: 'Infra', name: 'Infrastructure' }, { key: 'civil', short: 'Civil', name: 'Civil order' },
+  { key: 'sec', short: 'Sec', name: 'Security' }, { key: 'logi', short: 'Logi', name: 'Logistics' },
+  { key: 'sla', short: 'Time', name: 'On time' }, { key: 'esc', short: 'Esc', name: 'Escalations' },
+  { key: 'work', short: 'Work', name: 'Workload' }, { key: 'emrg', short: 'Emrg', name: 'Emergencies' },
+] as const;
+
 const NATL_ASSETS = nationalAssets();
 const NATL_NETWORKS = nationalNetworks();
 export { seed, toneFor, wave, waveSeries, domainStress };
@@ -536,7 +545,7 @@ export function NationalMap({
   const tBand = (v: number, a: number, b: number) => (v >= b ? 'alert' : v >= a ? 'warn' : 'ok');
   const overlay = [
     { l: 'Grid corridors', v: `${D.gridLoad}% load`, t: tBand(D.gridLoad, 72, 86) },
-    { l: 'Logistics throughput', v: `${D.logiThru.toLocaleString()} kt/h`, t: tBand(700 - D.logiThru, 180, 320) },
+    { l: 'Goods moved', v: `${D.logiThru.toLocaleString()} kt/h`, t: tBand(700 - D.logiThru, 180, 320) },
     { l: 'Telecom integrity', v: `${D.telecom.toFixed(1)}%`, t: tBand(99 - D.telecom, 4, 9) },
     { l: 'Strategic reserves', v: `${D.reserves}%`, t: tBand(90 - D.reserves, 22, 40) },
     { l: 'Coordination capacity', v: `${D.coordBw}%`, t: tBand(95 - D.coordBw, 20, 38) },
@@ -978,7 +987,7 @@ export function NationalMap({
         );
       })}
 
-      {mapNodes.length === 0 ? <div className="absolute inset-0 grid place-items-center text-xs text-ink-muted">Awaiting institutional telemetry…</div> : null}
+      {mapNodes.length === 0 ? <div className="absolute inset-0 grid place-items-center text-xs text-ink-muted">Waiting for readings from institutions…</div> : null}
 
       {/* map controls — top-right */}
       <div className="absolute right-2 top-2 z-20 flex items-start gap-1.5">
@@ -1470,9 +1479,9 @@ export function SituationRoom() {
                 <thead>
                   <tr className="sticky top-0 z-10 border-b text-left text-[8px] font-bold uppercase tracking-[0.16em] text-ink-muted"
                     style={{ background: 'rgb(var(--c-surface-2))', borderColor: `color-mix(in srgb,${ACCENT} 28%,rgb(var(--c-line)))` }}>
-                    <th className="px-2 py-1.5">Ministry · State · Telemetry</th>
-                    {['Ops', 'Fisc', 'Infra', 'Civil', 'Sec', 'Logi', 'SLA', 'Esc', 'Work', 'Emrg'].map(d => (
-                      <th key={d} className="px-0.5 py-1.5 text-center">{d}</th>
+                    <th className="px-2 py-1.5">Ministry · State · Live readings</th>
+                    {MATRIX_DOMAINS.map(d => (
+                      <th key={d.key} className="px-0.5 py-1.5 text-center"><abbr title={d.name} className="no-underline">{d.short}</abbr></th>
                     ))}
                   </tr>
                 </thead>
@@ -1482,11 +1491,12 @@ export function SituationRoom() {
                     const p = m.pressure;
                     const tier = p >= 80 ? 'alert' : p >= 60 ? 'warn' : p >= 40 ? 'neutral' : 'ok';
                     const tierLbl = tier === 'alert' ? 'CRIT' : tier === 'warn' ? 'ELEV' : tier === 'neutral' ? 'WTCH' : 'STBL';
+                    const tierName = tier === 'alert' ? 'Critical' : tier === 'warn' ? 'Elevated' : tier === 'neutral' ? 'Watch' : 'Stable';
                     const trend = waveSeries(`msm:${m.ministryId}`, ts, 9, Math.max(4, p - 26), Math.min(99, p + 14));
                     const drift = trend[trend.length - 1]! - trend[0]!;
                     const dArrow = drift > 6 ? '▲' : drift < -6 ? '▼' : '→';
                     const dTone = drift > 6 ? 'alert' : drift < -6 ? 'ok' : 'neutral';
-                    const alerts = ['ops', 'fisc', 'infra', 'civil', 'sec', 'logi', 'sla', 'esc', 'work', 'emrg']
+                    const alerts = MATRIX_DOMAINS.map(d => d.key)
                       .reduce((n, dm) => n + (domainStress(m.archetype as string, dm, p, ts, m.ministryId) >= 78 ? 1 : 0), 0);
                     const ups = (DEP[String(m.archetype)] ?? []).map(a => pByArch.get(a) ?? 0);
                     const cascade = ups.filter(v => v >= 58).length;
@@ -1507,7 +1517,7 @@ export function SituationRoom() {
                               <span className="grid h-4 w-4 shrink-0 place-items-center rounded-[3px] text-[7px] text-white" style={{ backgroundColor: id.accent }}>{id.glyph}</span>
                               <span className="truncate font-medium text-ink">{m.ministry}</span>
                             </Link>
-                            <span className="ml-auto shrink-0 rounded-[2px] px-1 py-0.5 text-[7.5px] font-bold uppercase tracking-[0.12em]" style={{ background: `color-mix(in srgb,${TONE[tier]} 20%,transparent)`, color: TONE[tier] }}>{tierLbl}</span>
+                            <span className="ml-auto shrink-0 rounded-[2px] px-1 py-0.5 text-[7.5px] font-bold uppercase tracking-[0.12em]" style={{ background: `color-mix(in srgb,${TONE[tier]} 20%,transparent)`, color: TONE[tier] }}><abbr title={tierName} className="no-underline">{tierLbl}</abbr></span>
                             <span className="shrink-0 font-mono text-[9px] tabular-nums" style={{ color: TONE[tier] }}>{p}</span>
                           </div>
                           <div className="mt-0.5 flex items-center gap-2 pl-3 text-[7.5px] text-ink-muted">
@@ -1517,14 +1527,14 @@ export function SituationRoom() {
                             <span className="font-mono uppercase tracking-wider" style={{ color: TONE[cascTone] }} title="upstream dependency stress">⇄{cascade}</span>
                           </div>
                         </td>
-                        {['ops', 'fisc', 'infra', 'civil', 'sec', 'logi', 'sla', 'esc', 'work', 'emrg'].map(dom => {
+                        {MATRIX_DOMAINS.map(({ key: dom, name }) => {
                           const v = domainStress(m.archetype as string, dom, p, ts, m.ministryId);
                           const st = v >= 78 ? 'alert' : v >= 58 ? 'warn' : v >= 40 ? 'neutral' : 'ok';
                           return (
-                            <td key={dom} className="px-0.5 py-1.5 align-middle" title={`${dom} ${Math.round(v)} · ${TONE_WORD[st]}`}>
+                            <td key={dom} className="px-0.5 py-1.5 align-middle" title={`${name} ${Math.round(v)} · ${TONE_WORD[st]}`}>
                               <span className="flex flex-col items-center gap-0.5">
                                 <span aria-hidden className="text-[8px] leading-none" style={{ color: TONE[st], textShadow: st === 'alert' ? `0 0 4px ${TONE.alert}` : undefined }}>{TONE_SHAPE[st]}</span>
-                                <span className="sr-only">{dom} {TONE_WORD[st]} {Math.round(v)}</span>
+                                <span className="sr-only">{name} {TONE_WORD[st]} {Math.round(v)}</span>
                                 <span className="h-0.5 w-5 overflow-hidden rounded-full" style={{ background: 'rgba(255,255,255,0.06)' }}><span className="block h-full rounded-full" style={{ width: `${v}%`, background: TONE[st] }} /></span>
                               </span>
                             </td>
@@ -1543,7 +1553,7 @@ export function SituationRoom() {
                     <td colSpan={10} className="px-2 py-1.5 text-right font-mono">
                       <span style={{ color: TONE.alert }}>{critN} CRIT</span><span className="mx-1.5 text-line">·</span>
                       <span style={{ color: TONE.warn }}>{elevN} ELEV</span><span className="mx-1.5 text-line">·</span>
-                      <span className="text-ink-muted">⇄ cascade lattice live · {mapNodes.length} ministries</span>
+                      <span className="text-ink-muted">⇄ knock-on links live · {mapNodes.length} ministries</span>
                     </td>
                   </tr>
                 </tfoot>
@@ -1553,7 +1563,7 @@ export function SituationRoom() {
               })()}
             </Panel>
 
-            <Panel signal="sample" title="Cabinet escalation stream"
+            <Panel signal="sample" title="Cabinet escalations as they arrive"
               meta={(() => {
                 if (!incidents.length) return 'executive level';
                 const s = incidents.slice(0, 9).reduce((a, c, i) => {
@@ -1819,7 +1829,7 @@ export function SituationRoom() {
                 {finance ? <Link href={`/gov/ministry/${finance.ministryId}`} className="focus-ring block text-[11px] text-link underline underline-offset-2">Open Treasury command →</Link> : null}
               </div>
             </Panel>
-            <Panel signal="sample" title="System integration" meta="data fabric">
+            <Panel signal="sample" title="System integration" meta="data connections">
               <ul className="space-y-1 text-[11px]">
                 {['Health', 'Treasury', 'Transport', 'Security', 'Energy'].map((s, i) => {
                   const deg = seed(`sis:${i}:${epoch}`) > 0.86;
@@ -1843,7 +1853,7 @@ export function SituationRoom() {
 
           {/* Executive band */}
           <div className="grid gap-1.5 lg:grid-cols-2 xl:grid-cols-4">
-            <Panel signal="sample" title="System integration fabric" meta="cross-government" bodyClass="">
+            <Panel signal="sample" title="Connected systems" meta="cross-government" bodyClass="">
               <div className="mb-2 flex items-center gap-3">
                 <Ring pct={integ} label="integrated" />
                 <div className="text-[10px] text-ink-muted">
@@ -1870,13 +1880,13 @@ export function SituationRoom() {
                 </tbody>
               </table>
             </Panel>
-            <Panel signal="sample" title="National KPI snapshot" meta="macro-state intelligence" bodyClass="">
+            <Panel signal="sample" title="National figures at a glance" meta="the whole state" bodyClass="">
               <ul className="space-y-1.5 text-xs">
                 {[
                   { l: 'Inflation', v: `${(2 + seed(`m1:${epoch}`) * 4).toFixed(1)}%`, d: seed(`d1:${epoch}`) - 0.55, intp: 'within target band' },
                   { l: 'Unemployment', v: `${(4 + seed(`m2:${epoch}`) * 5).toFixed(1)}%`, d: seed(`d2:${epoch}`) - 0.5, intp: 'labour market stable' },
                   { l: 'Public satisfaction', v: `${(64 + seed(`m3:${epoch}`) * 18).toFixed(0)}%`, d: seed(`d3:${epoch}`) - 0.45, intp: 'civil sentiment steady' },
-                  { l: 'Healthcare response', v: `${(8 + seed(`m4:${epoch}`) * 10).toFixed(0)}m`, d: 0.5 - seed(`d4:${epoch}`), intp: 'within SLA' },
+                  { l: 'Healthcare response', v: `${(8 + seed(`m4:${epoch}`) * 10).toFixed(0)}m`, d: 0.5 - seed(`d4:${epoch}`), intp: 'within time target' },
                   { l: 'Education continuity', v: `${(90 + seed(`m5:${epoch}`) * 9).toFixed(0)}%`, d: seed(`d5:${epoch}`) - 0.4, intp: 'nominal' },
                   { l: 'Fuel reserve', v: `${(18 + seed(`m6:${epoch}`) * 20).toFixed(0)}d`, d: 0.5 - seed(`d6:${epoch}`), intp: pressOf('ENERGY') >= 60 ? 'monitor closely' : 'adequate' },
                   { l: 'Energy availability', v: `${Math.max(1, 100 - pressOf('ENERGY'))}%`, d: 0.5 - seed(`d7:${epoch}`), intp: pressOf('ENERGY') >= 60 ? 'stressed' : 'stable' },
@@ -1926,7 +1936,7 @@ export function SituationRoom() {
           {/* Row 5 — persistent command status strip */}
           <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
             {[
-              { l: 'Readiness posture', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
+              { l: 'Readiness', v: war ? 'CRITICAL' : posture?.label ?? 'STABLE', t: war ? 'alert' : posture?.level ?? 'ok' },
               { l: 'Operational tempo', v: `T${tickN} · ${Math.round(40 + seed(`tempo:${epoch}`) * 50)}/min`, t: 'ok' },
               { l: 'Active incidents', v: `${incidents.length} · ${sev('sev1')} crit`, t: incidents.length ? 'alert' : 'ok' },
               { l: 'Population impacted', v: `${(0.4 + seed(`pi:${epoch}`) * 9).toFixed(1)}M`, t: 'warn' },
@@ -1935,7 +1945,7 @@ export function SituationRoom() {
               <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
                 <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
                 <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
-                  {s.l === 'War Room' || s.l === 'Readiness posture' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
+                  {s.l === 'War Room' || s.l === 'Readiness' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
                   {s.v}
                 </span>
               </div>

@@ -406,7 +406,7 @@ export function Cabinet() {
         </Section>
       ) : null}
 
-      <Section title="Whole-of-government posture" meta={`generated ${new Date(ov.generatedAt).toLocaleString()}`}>
+      <Section title="Whole-of-government status" meta={`generated ${new Date(ov.generatedAt).toLocaleString()}`}>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <MetricStat label="Institutions" value={String(t.institutions)} tone="neutral" />
           <MetricStat label="Active" value={String(t.activeMinistries)} tone="ok" />

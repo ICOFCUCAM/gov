@@ -284,7 +284,7 @@ export function NationalOverview() {
         </div>
       </div>
 
-      {/* ── National posture KPI strip ─────────────────────────── */}
+      {/* ── National status KPI strip ─────────────────────────── */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[4px] border md:grid-cols-4 xl:grid-cols-8"
         style={{ borderColor: LINE, background: LINE }}>
         {kpis.map(([l, v, s, c]) => (

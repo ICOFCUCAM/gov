@@ -18,7 +18,7 @@ import {
   chainDef, MINISTRY_CHAIN, type Facility, type RecordLineage, type ChainIntegrity,
 } from '@/lib/gov/institution-chain';
 import {
-  channel, send, digest, subscribe, version,
+  channel, send, digest, subscribe, version, tierName,
   type Dispatch, type DispatchTier,
 } from '@/lib/gov/dispatch-store';
 import {
@@ -173,7 +173,7 @@ export function DispatchChannel({
           <div key={m.id} className="text-[10px]">
             <span className="font-mono text-[8px] text-ink-muted">{clockLabel(m.at, now)}</span>{' '}
             <span style={{ color: TIER_C[m.fromTier] }}>{m.from}</span>
-            <span className="text-ink-muted"> → {m.toTier.toLowerCase()}</span>
+            <span className="text-ink-muted"> → {tierName(m.toTier).toLowerCase()}</span>
             {m.priority !== 'routine' ? <span className="ml-1 text-[7.5px] font-bold uppercase" style={{ color: P_TONE[m.priority] }}>· {m.priority}</span> : null}
             <div className="text-ink-soft">{m.body}</div>
           </div>
@@ -187,8 +187,8 @@ export function DispatchChannel({
           <option value="routine">routine</option><option value="priority">priority</option><option value="urgent">urgent</option>
         </select>
         <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') submit(); }}
-          aria-label={`Dispatch message to ${toTier.toLowerCase()}`}
-          placeholder={`Dispatch to ${toTier.toLowerCase()}…`}
+          aria-label={`Dispatch message to ${tierName(toTier).toLowerCase()}`}
+          placeholder={`Dispatch to ${tierName(toTier).toLowerCase()}…`}
           className="focus-ring min-w-0 flex-1 rounded-[3px] border bg-surface px-2 py-1 text-[10px] text-ink"
           style={{ borderColor: 'rgb(var(--c-line))' }} />
         <button type="button" onClick={submit}
@@ -296,7 +296,7 @@ export function NationalDispatchDigest({ accent = '#37c7d4', now }: { accent?: s
           <div key={m.id} className="text-[10px]">
             <span className="font-mono text-[8px] text-ink-muted">{clockLabel(m.at, now)}</span>{' '}
             <span style={{ color: TIER_C[m.fromTier] }}>{m.from}</span>
-            <span className="text-ink-muted"> → {m.toTier.toLowerCase()}</span>
+            <span className="text-ink-muted"> → {tierName(m.toTier).toLowerCase()}</span>
             {m.priority !== 'routine' ? <span className="ml-1 text-[7.5px] font-bold uppercase" style={{ color: P_TONE[m.priority] }}>· {m.priority}</span> : null}
             <div className="text-ink-soft">{m.body}</div>
           </div>
@@ -323,8 +323,8 @@ export function NationalRecordsLedger({ accent = '#37c7d4', now }: { accent?: st
   return (
     <div className="rounded-[4px] border" style={{ borderColor: 'color-mix(in srgb,#1d2a36 75%,transparent)', background: '#080d13' }}>
       <div className="flex items-center justify-between border-b px-3 py-1.5" style={{ borderColor: 'color-mix(in srgb,#1d2a36 60%,transparent)' }}>
-        <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>National records ledger — rolled & synced</span>
-        <span className="text-[8px] uppercase tracking-wider text-ink-muted">{ledger.filter(l => l.rec.stage === 'synced').length}/{ledger.length} synced of rolled-up · facility → ministry → national</span>
+        <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>National records — collected and up to date</span>
+        <span className="text-[8px] uppercase tracking-wider text-ink-muted">{ledger.filter(l => l.rec.stage === 'synced').length}/{ledger.length} collected records up to date · facility → ministry → national</span>
       </div>
       <div className="max-h-[200px] space-y-0.5 overflow-y-auto px-3 py-2">
         {ledger.map(({ rec, ministryKey }) => {

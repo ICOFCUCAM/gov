@@ -43,7 +43,7 @@ export default function MinistryControlPage({
       {ministries.length === 0 ? (
         <EmptyState
           title="No institutions configured"
-          hint="Compose a ministry, agency, or commission from an archetype first."
+          hint="Set up a ministry, agency or commission from a type first."
           action={<Link href="/ministries" className="text-link underline underline-offset-2">Go to Institutions →</Link>}
         />
       ) : (
@@ -94,16 +94,16 @@ export default function MinistryControlPage({
                   <div className="space-y-4">
                     <section className="grid grid-cols-2 gap-2 lg:grid-cols-4">
                       <MetricStat label="Active modules" value={String(ops.modules.length)} tone="neutral" />
-                      <MetricStat label="Queues breaching SLA" value={String(breaching)} tone={breaching === 0 ? 'ok' : 'alert'} />
+                      <MetricStat label="Queues past their time target" value={String(breaching)} tone={breaching === 0 ? 'ok' : 'alert'} />
                       <MetricStat label="Active alerts" value={String(activeAlerts.length)} tone={activeAlerts.length === 0 ? 'ok' : 'warn'} />
                       <MetricStat label="Departments" value={String(selected.departments.length)} tone="neutral" />
                     </section>
 
                     <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
                       {[
-                        { l: 'Service posture', v: breaching === 0 && activeAlerts.length === 0 ? 'NOMINAL' : breaching ? 'STRAINED' : 'WATCH', c: breaching ? 'rgb(var(--c-alert))' : activeAlerts.length ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' },
+                        { l: 'Service status', v: breaching === 0 && activeAlerts.length === 0 ? 'NOMINAL' : breaching ? 'STRAINED' : 'WATCH', c: breaching ? 'rgb(var(--c-alert))' : activeAlerts.length ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' },
                         { l: 'Modules online', v: `${ops.modules.length} active`, c: 'rgb(var(--c-ok))' },
-                        { l: 'SLA breaches', v: `${breaching}`, c: breaching ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
+                        { l: 'Past time target', v: `${breaching}`, c: breaching ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
                         { l: 'Open alerts', v: `${activeAlerts.length}`, c: activeAlerts.length ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))' },
                         { l: 'Sovereign core', v: 'INHERITED', c: 'rgb(var(--c-ok))' },
                       ].map(s => (

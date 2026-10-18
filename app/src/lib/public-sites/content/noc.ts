@@ -108,7 +108,7 @@ export const noc: SiteContent = {
   ],
   statisticsSource: 'sample',
   news: [
-    { title: 'Briefing #{year}-318 published', summary: 'National posture STEADY; energy & climate routine.' },
+    { title: 'Briefing #{year}-318 published', summary: 'National status STEADY; energy & climate routine.' },
     {
       title: 'Continuity Exercise CX-{year}-04',
       summary: 'Cross-branch CoG drill — all branches asserted continuity.',

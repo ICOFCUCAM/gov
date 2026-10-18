@@ -1600,7 +1600,7 @@ export function nationalChronology(epoch: number, contention: number): NationalC
     }
     if (post.label !== prevPost) {
       const worse = post.execConfidence < 45;
-      events.push({ epoch: e, kind: 'posture', text: `Doctrine posture shifted: ${prevPost} → ${post.label}`, tone: worse ? 'warn' : 'ok' });
+      events.push({ epoch: e, kind: 'posture', text: `Doctrine stance changed: ${prevPost} → ${post.label}`, tone: worse ? 'warn' : 'ok' });
       prevPost = post.label;
     }
     if (ext.label !== prevExt) {
