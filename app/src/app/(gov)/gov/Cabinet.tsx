@@ -142,7 +142,7 @@ export function Cabinet() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="t-display">Cabinet</h1>
+          <h2 className="t-display">National settings</h2>
           <p className="text-sm text-ink-muted">
             {s.stateName} · whole-of-government command. {s.executiveTitle} ·{' '}
             {s.legislatureName}.

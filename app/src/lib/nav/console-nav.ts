@@ -23,7 +23,7 @@ const tab = (label: string, href: string, was?: string): NavTab => ({ label, hre
 
 export const CONSOLE_NAV: NavSection[] = [
   { label: 'My desk', items: [
-    { key: 'work', icon: '☑', label: 'My work', href: '/gov/work',
+    { key: 'work', icon: '☑', label: 'My work', href: '/gov/work', match: /^\/gov\/items\//,
       purpose: 'Everything waiting on you and your colleagues: decisions, cases, requests and incidents.',
       tabs: [tab('Waiting on officials', '/gov/work', 'My work'), tab('Today', '/gov/home', 'Officer Home'), tab('Directives to me', '/gov/inbox', 'Directive inbox'),
         tab('Case work', '/gov/workbench', 'Officer Workbench'), tab('Citizen requests', '/gov/intake', 'Citizen Intake'), tab('Permits', '/console', 'Officer Console'),
@@ -114,6 +114,7 @@ export function locate(pathname: string): { section: string; item: NavItem; tab?
     const t = item.tabs.find(x => x.href === path);
     if (t) return { section, item, tab: t };
   }
+  if (path === SEARCH_ITEM.href) return { section: 'My desk', item: SEARCH_ITEM, tab: SEARCH_ITEM.tabs[0] };
   for (const { section, item } of ALL_ITEMS) if (item.match?.test(path)) return { section, item };
   let best: { section: string; item: NavItem; tab?: NavTab; len: number } | null = null;
   for (const { section, item } of ALL_ITEMS) for (const t of item.tabs) {
@@ -124,3 +125,4 @@ export function locate(pathname: string): { section: string; item: NavItem; tab?
 
 /** Links in the console header rather than the side menu. */
 export const HEADER_LINKS: NavTab[] = [tab('Search', '/gov/search', 'Search')];
+const SEARCH_ITEM: NavItem = { key: 'search', icon: '⌕', label: 'Search', href: '/gov/search', purpose: 'Find any record by its name, reference or the person involved.', tabs: [tab('Search', '/gov/search')] };

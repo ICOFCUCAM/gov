@@ -118,7 +118,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     <div className="flex flex-wrap items-end justify-between gap-2">
       <div className="flex items-center gap-2">
         <Link href={`/ministries/${id}/operations`} className="focus-ring text-[11px] text-link underline underline-offset-2">← {m.name}</Link>
-        <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{grp.name}</h1>
+        <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{grp.name}</h2>
         <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>
           {m.archetype} · operational environment
         </span>
@@ -518,7 +518,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Domains in scope" v={`${C.domains.length}`} t="ok" />
           <Stat l="Authority" v="National" t="ok" />
         </div>
-        <Panel signal="sample" title="Whole-of-health domain status" meta="emergent from every subsystem engine — no hardcoded figure" bodyClass="!p-0">
+        <Panel signal="sample" title="Whole-of-health domain status" meta="combined from every part of the health system" bodyClass="!p-0">
           {C.domains.map(d => (
             <div key={d.domain} className="flex items-center gap-2 border-b border-line-soft px-3 py-2 last:border-0" style={{ borderLeft: `3px solid ${tc(d.tone)}` }}>
               <span className="w-44 shrink-0 truncate text-[11px] text-ink">{d.domain}</span>

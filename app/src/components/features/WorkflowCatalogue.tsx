@@ -96,7 +96,7 @@ export function WorkflowCatalogue() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <SurfaceHeading title="Workflow Catalogue" badge="substrate-authoritative" />
+        <SurfaceHeading title="Workflow Catalogue" badge="the rules in force" />
         <div className="flex items-center gap-2">
           <a href="/gov/workflows/simulator"
              className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
@@ -353,13 +353,17 @@ export function WorkflowCatalogue() {
         )}
       </div>
 
-      <p className="text-[10px] text-ink-muted">
-        Each row reads <span className="font-mono">civicos.workflow_definitions</span>.
-        These are the substrate-authoritative transition rules —
-        <span className="font-mono"> transition_work_item</span> validates
-        every action against the definition shown here before mutating
-        the work-item state.
-      </p>
+      <p className="text-[12px] text-ink-soft">These are the steps each kind of case goes through. Every action on a case is checked against them first.</p>
+      <details className="text-[10px] text-ink-muted">
+        <summary className="cursor-pointer">Technical details</summary>
+        <p className="text-[10px] text-ink-muted">
+          Each row reads <span className="font-mono">civicos.workflow_definitions</span>.
+          These are the substrate-authoritative transition rules —
+          <span className="font-mono"> transition_work_item</span> validates
+          every action against the definition shown here before mutating
+          the work-item state.
+        </p>
+      </details>
     </div>
   );
 }

@@ -8,7 +8,6 @@ export default function GlossaryPage() {
   return (
     <CommandShell active="help">
       <div className="mx-auto max-w-[1000px] text-[14px] text-ink">
-        <h1 className="sr-only">Glossary</h1>
         <table className="w-full">
           <thead>
             <tr className="border-b border-line text-start text-[12px] text-ink-muted">

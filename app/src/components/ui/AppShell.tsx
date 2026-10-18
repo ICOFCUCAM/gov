@@ -17,6 +17,7 @@ import type {
   SovereignProfile,
 } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { aiLabel } from '@/lib/nation/registry';
 
 const STATE_FORM_LABEL: Record<string, string> = {
   republic: 'Republic',
@@ -209,7 +210,7 @@ export function AppShell({
         </div>
       </div>
       <div className="border-t border-line px-3 py-3 text-[10px] uppercase tracking-widest text-ink-muted">
-        Humans govern · AI assists
+        {aiLabel('Humans govern · AI assists', 'Humans govern')}
       </div>
     </>
   );

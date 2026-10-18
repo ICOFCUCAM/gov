@@ -6,6 +6,7 @@ import { IdentityBadge } from '@/components/identity/IdentityBadge';
 import { ChainSentinel } from '@/components/identity/ChainSentinel';
 import { NotificationsBell } from '@/components/identity/NotificationsBell';
 import { OfflineBanner } from './OfflineBanner';
+import { aiLabel } from '@/lib/nation/registry';
 
 export type OperatorRole = 'officer' | 'ministry' | 'auditor' | 'admin';
 
@@ -131,7 +132,7 @@ export function OperatorShell({
             ))}
           </ul>
           <div className="border-t border-line px-3 py-3 text-[10px] uppercase tracking-widest text-ink-muted">
-            Humans govern · AI assists
+            {aiLabel('Humans govern · AI assists', 'Humans govern')}
           </div>
         </nav>
         <main id="main" className="min-w-0 flex-1 overflow-y-auto bg-bg p-4 lg:p-6">

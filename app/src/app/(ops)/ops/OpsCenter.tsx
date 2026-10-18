@@ -15,6 +15,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { Incident, OpsOverview, Ministry } from '@/lib/api/types';
 import { regionList } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { aiLabel } from '@/lib/nation/registry';
 
 const ME = 'W. Tanaka (ops)';
 const sp = (k: string, n = 20, lo = 30, hi = 80) =>
@@ -143,7 +144,7 @@ export function OpsCenter() {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Operations Centre</h1>
+            <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Operations Centre</h2>
             <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}><span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE</span>
             <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()} · updated {Math.round((now % 60000) / 1000)}s ago</span>
             {openInc >= 1 ? (
@@ -281,7 +282,7 @@ export function OpsCenter() {
               const owner = ['Duty Officer', 'Ops Coordinator', 'Incident Lead', 'Watch Commander'][Math.floor(seed(`ow:${c.id}`) * 4)];
               const chron = [
                 { t: `${age}m`, l: 'Detected by monitor', c: TONE.neutral },
-                { t: `${Math.max(1, Math.round(age * 0.6))}m`, l: `Classified ${c.sev.toUpperCase()}`, c: TONE[tn] },
+                { t: `${Math.max(1, Math.round(age * 0.6))}m`, l: `Graded ${c.sev.toUpperCase()}`, c: TONE[tn] },
                 { t: `${Math.max(1, Math.round(age * 0.3))}m`, l: `${owner} engaged`, c: TONE.ok },
               ];
               return (
@@ -468,7 +469,7 @@ export function OpsCenter() {
       </div>
 
       <p className="text-[10px] text-ink-muted">
-        Generated {ov ? new Date(ov.generatedAt).toLocaleString() : 'live'}. AI may summarise and prioritise; humans acknowledge, escalate and resolve. No citizen records appear in any operational metric.
+        Generated {ov ? new Date(ov.generatedAt).toLocaleString() : 'live'}. {aiLabel('AI may summarise and prioritise; humans', 'Officials')} acknowledge, escalate and resolve. No citizen records appear in any operational metric.
       </p>
     </div>
   );

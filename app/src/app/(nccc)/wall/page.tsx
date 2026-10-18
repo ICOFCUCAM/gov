@@ -57,6 +57,7 @@ export default function NcccWallPage() {
 
   return (
     <div className="bg-wall-bg text-wall-ink min-h-screen">
+      <h1 className="sr-only">Emergency coordination screen</h1>
       <header className="px-6 py-3 border-b border-wall-line flex justify-between items-center gap-4 flex-wrap">
         <div className="flex items-center gap-3">
           <Link href="/gov/situation-room" className="focus-ring text-sm text-wall-muted underline underline-offset-2">← Situation Room</Link>
@@ -143,7 +144,7 @@ export default function NcccWallPage() {
             Currently modeling: <strong>cyclone landfall +6h shift</strong> — surfacing{' '}
             <span className="font-mono tabular-nums" style={{ color: TONE.warn }}>{scenarioCount}</span> cascading indicators.{' '}
             <em>Officer approval required to base any decision on these scenarios.</em>{' '}
-            AI does not decide. Humans sign per remit.
+            {aiLabel('AI does not decide. ', '')}Humans sign per remit.
           </p>
         </WallPanel>
 

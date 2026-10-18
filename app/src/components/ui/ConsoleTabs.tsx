@@ -1,6 +1,6 @@
 'use client';
 
-// The top of every console page: the menu item it belongs to, one plain
+// The top of every console page (its one h1): the menu item it belongs to, one plain
 // sentence on what it is for, and its tabs (lib/nav/console-nav.ts). Tabs are
 // links, so each keeps its own address and the browser's back button works.
 
@@ -20,7 +20,7 @@ export function ConsoleTabs({ here, branches, pathname }: {
   return (
     <div className="mb-3 border-b border-line">
       <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-muted">{here.section}</p>
-      <p className="mt-0.5 text-[18px] font-semibold text-ink">{item.label}{current && current.label !== item.label ? <span className="text-ink-soft"> · {current.label}</span> : null}</p>
+      <h1 className="mt-0.5 text-[18px] font-semibold text-ink">{item.label}{current && current.label !== item.label ? <span className="text-ink-soft"> · {current.label}</span> : null}</h1>
       <p className="mt-0.5 max-w-3xl text-[13px] text-ink-soft">{item.purpose}</p>
       {tabs.length > 1 ? (
         <nav aria-label={`${item.label} sections`} className="-mb-px mt-2 flex flex-wrap gap-x-1">

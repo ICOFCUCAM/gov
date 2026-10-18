@@ -87,7 +87,7 @@ export function TwinWorkspace() {
     <div className="mx-auto max-w-[1280px] space-y-4 text-[13px] text-ink">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[20px] font-semibold tracking-tight">National Twin</h1>
+          <h2 className="text-[20px] font-semibold tracking-tight">National Twin</h2>
           <p className="mt-1 max-w-3xl text-[13px] text-ink-soft">
             The nation's places and institutions, the sources that report on them, and every fact with when it was true and when it was recorded.
             Figures elsewhere in the console are marked <span className="font-semibold">Sample</span> until a source here reports them.

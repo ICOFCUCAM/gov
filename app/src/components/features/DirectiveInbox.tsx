@@ -49,7 +49,7 @@ export function DirectiveInbox() {
   if (!actor || actor.kind !== 'officer') {
     return (
       <Panel title="Directive inbox" meta="officers only" bodyClass="!p-3">
-        <p className="text-[11px] text-ink-muted">This surface is for officers.</p>
+        <p className="text-[11px] text-ink-muted">This page is for officials.</p>
       </Panel>
     );
   }

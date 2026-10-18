@@ -32,23 +32,22 @@ export default function DevelopersPage() {
       <section className="space-y-2">
         <h2 className="text-xl font-semibold">2. Authenticate</h2>
         <Card tight>
-          <pre tabIndex={0} aria-label="Example request" className="overflow-x-auto text-sm"><code>{`curl https://<sovereign>/api/v1/permits \\
-  -H "x-api-key: civ_••••••••"`}</code></pre>
+          <pre tabIndex={0} aria-label="Example request" className="overflow-x-auto text-sm"><code>{`curl https://<installation>/api/permits \\
+  -H "cookie: civicos_official=<signed session>"`}</code></pre>
         </Card>
         <p className="text-sm text-ink-muted">
-          Citizen/officer sessions use OIDC bearer tokens from the sovereign
-          IdP (SAML / OAuth2 / FAPI adapters sit behind the same seam). External
-          systems use scoped API keys.
+          Today the API answers signed-in sessions: officials sign in at /sign-in and the server sets a
+          signed session. Scoped credentials for outside systems (issued under Connected systems) and
+          single sign-on with the nation&rsquo;s own identity provider are planned (integration register 15.4, 16.9).
         </p>
       </section>
 
       <section className="space-y-2">
         <h2 className="text-xl font-semibold">3. Contract & versioning</h2>
         <ul className="list-disc space-y-1 pl-5">
-          <li>OpenAPI is generated from the code at <code>/api/docs</code> (JSON at <code>/api/docs-json</code>) — the single source of truth.</li>
-          <li>Versioned under <code>/api/v1</code>. Every response carries <code>X-API-Version</code>.</li>
-          <li>Deprecated endpoints emit <code>Deprecation</code> and an RFC 8594 <code>Sunset</code> date long before removal.</li>
-          <li>Rate limits return <code>X-RateLimit-*</code>; back off on <code>429</code>.</li>
+          <li>Every endpoint is described in OpenAPI 3.1 at <code>/api/openapi</code>, generated from the code — the single source of truth.</li>
+          <li>Map data from the national data register is served as OGC API – Features at <code>/api/twin/ogc</code> (GeoJSON).</li>
+          <li>Endpoints are not versioned yet; version prefixes, deprecation notices and rate limits are planned.</li>
         </ul>
       </section>
 

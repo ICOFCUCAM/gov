@@ -24,9 +24,9 @@ export function InstitutionInTwin({ ministryId }: { ministryId: string }) {
   return (
     <section aria-labelledby="in-twin" className="rounded-[3px] border border-line bg-surface p-3 text-[13px]">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <h2 id="in-twin" className="text-sm font-semibold text-ink">This institution in the national twin</h2>
+        <h2 id="in-twin" className="text-sm font-semibold text-ink">This institution in the national data</h2>
         <span className="flex gap-3 text-[12px]">
-          <Link href="/gov/twin" className="text-link underline underline-offset-2">National Twin</Link>
+          <Link href="/gov/twin" className="text-link underline underline-offset-2">National data</Link>
           <Link href="/integrations" className="text-link underline underline-offset-2">Data exchanges</Link>
         </span>
       </div>
@@ -34,9 +34,9 @@ export function InstitutionInTwin({ ministryId }: { ministryId: string }) {
         <p className="mt-1 text-ink-muted">Not in the twin's register yet; it joins when the institution is registered.</p>
       ) : (
         <dl className="mt-2 grid gap-x-4 gap-y-1 sm:grid-cols-[10rem_1fr]">
-          <dt className="text-ink-soft">Twin id</dt><dd className="font-mono">{p.entity.id}</dd>
+          <dt className="text-ink-soft">Reference code</dt><dd className="font-mono">{p.entity.id}</dd>
           <dt className="text-ink-soft">Ids in other systems</dt>
-          <dd>{p.keys.length ? p.keys.map(k => <span key={`${k.system}:${k.key}`} className="me-3 font-mono">{k.system}: {k.key}</span>) : <span className="text-ink-muted">None linked yet (link them on the National Twin page).</span>}</dd>
+          <dd>{p.keys.length ? p.keys.map(k => <span key={`${k.system}:${k.key}`} className="me-3 font-mono">{k.system}: {k.key}</span>) : <span className="text-ink-muted">None linked yet (link them on the National data page).</span>}</dd>
           <dt className="text-ink-soft">Observed</dt>
           <dd>{p.observations.length ? (
             <ul>{p.observations.map(o => <li key={o.metric}><span className="font-mono">{o.metric}</span> {o.value.toLocaleString('en')} {o.unit} <span className="text-ink-muted">· true from {o.validFrom} · {source(o.sourceId)}</span></li>)}</ul>

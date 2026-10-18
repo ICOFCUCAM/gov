@@ -116,15 +116,19 @@ const sevTone: Record<IncidentSeverity, string> = {
   sev4: 'bg-surface-2 text-ink-soft ring-1 ring-line',
 };
 
+/** Severity in words (the code, e.g. SEV2, stays in the tooltip for engineers). */
+export const SEVERITY_WORD: Record<IncidentSeverity, string> = { sev1: 'Critical', sev2: 'Major', sev3: 'Moderate', sev4: 'Minor' };
+
 export function SeverityBadge({ severity }: { severity: IncidentSeverity }) {
   return (
     <span
+      title={severity.toUpperCase()}
       className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold uppercase',
+        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold',
         sevTone[severity],
       )}
     >
-      {severity}
+      {SEVERITY_WORD[severity] ?? severity}
     </span>
   );
 }

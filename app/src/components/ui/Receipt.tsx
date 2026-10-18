@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { cn } from '@/lib/utils';
 import { Pill, Dot, type PillTone } from './Pill';
 import type { Receipt as ReceiptT } from '@/lib/types';
-import { nationMessages, nationLocale } from '@/lib/nation/registry';
+import { nationMessages, nationLocale, aiLabel } from '@/lib/nation/registry';
 import { t } from '@/lib/i18n';
 export interface ReceiptCardProps {
   receipt: ReceiptT;
@@ -40,7 +40,7 @@ export function ReceiptCard({ receipt, href, className }: ReceiptCardProps) {
               <Dot tone="ok" /> {t(m.home.signedBy, { name: receipt.officerName ?? '' })}
             </Pill>
           ) : null}
-          {receipt.aiClass ? <Pill>{t(m.home.aiClass, { cls: receipt.aiClass })}</Pill> : null}
+          {receipt.aiClass ? <Pill>{aiLabel(t(m.home.aiClass, { cls: receipt.aiClass }), `Decision class ${receipt.aiClass}`)}</Pill> : null}
         </div>
       ) : null}
     </Wrapper>

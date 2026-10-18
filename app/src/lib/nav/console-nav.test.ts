@@ -35,3 +35,18 @@ describe('the plain-language console menu', () => {
     expect(GLOSSARY.length).toBeGreaterThan(30);
   });
 });
+
+describe('every console page has its place', () => {
+  it('is a menu item or tab (the frame gives it its h1), or a ministry workspace with its own', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const root = path.resolve(__dirname, '../../app');
+    const pages: string[] = [];
+    const walk = (d: string) => { for (const e of fs.readdirSync(d, { withFileTypes: true })) { const p = path.join(d, e.name); if (e.isDirectory()) walk(p); else if (e.name === 'page.tsx' && fs.readFileSync(p, 'utf8').includes('CommandShell')) pages.push(p); } };
+    walk(root);
+    const routes = pages.map(p => '/' + path.relative(root, path.dirname(p)).split(path.sep).filter(s => !/^\(.*\)$/.test(s)).join('/'));
+    const orphans = routes.filter(r => !locate(r.replace(/\[[^\]]+\]/g, 'x')) && !r.startsWith('/gov/ministry/'));
+    expect(routes.length).toBeGreaterThan(60);
+    expect(orphans).toEqual([]);
+  });
+});

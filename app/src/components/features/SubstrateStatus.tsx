@@ -147,7 +147,7 @@ export function SubstrateStatus() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <SurfaceHeading title="Substrate Status" badge="self-portrait · RLS-scoped" />
+        <SurfaceHeading title="Substrate Status" badge="what you can see" />
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -250,13 +250,17 @@ export function SubstrateStatus() {
         )}
       </Panel>
 
-      <p className="text-[10px] text-ink-muted">
-        Counts come from <span className="font-mono">head=true, count=exact</span>
-        requests against each public civicos view; RLS shapes what's counted, so the
-        numbers shift when you sign in or sign out. Chain verification calls
-        <span className="font-mono"> civicos_verify_audit_chain</span> server-side
-        — the database walks the chain, not the client.
-      </p>
+      <p className="text-[12px] text-ink-soft">The counts show what you are allowed to see, so they change when you sign in or out. The audit record is checked by the database itself.</p>
+      <details className="text-[10px] text-ink-muted">
+        <summary className="cursor-pointer">Technical details</summary>
+        <p className="text-[10px] text-ink-muted">
+          Counts come from <span className="font-mono">head=true, count=exact</span>
+          requests against each public civicos view; RLS shapes what's counted, so the
+          numbers shift when you sign in or sign out. Chain verification calls
+          <span className="font-mono"> civicos_verify_audit_chain</span> server-side
+          — the database walks the chain, not the client.
+        </p>
+      </details>
     </div>
   );
 }

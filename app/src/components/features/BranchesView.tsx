@@ -37,7 +37,7 @@ export function BranchesView() {
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Constitutional Architecture</h1>
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Constitutional Architecture</h2>
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: TONE.link, color: TONE.link, backgroundColor: `color-mix(in srgb, ${TONE.link} 12%, transparent)` }}>{m.label}</span>
           <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
         </div>
@@ -57,7 +57,7 @@ export function BranchesView() {
       </div>
 
       <p className="text-[11px] text-ink-muted">
-        Government topology is derived from the configured constitutional form — not hardcoded. {m.selection}.
+        The branches follow the form of government set in National settings. {m.selection}.
       </p>
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
@@ -74,7 +74,7 @@ export function BranchesView() {
         {m.branches.map(b => {
           const r = branchReadiness(b.key, ts);
           return (
-            <Panel key={b.key} title={b.name} meta={`readiness ${r.total}% · ${r.posture}`} className="min-h-[200px]" bodyClass="!p-1.5">
+            <Panel signal="sample" key={b.key} title={b.name} meta={`readiness ${r.total}% · ${r.posture}`} className="min-h-[200px]" bodyClass="!p-1.5">
               <p className="mb-1.5 text-[10px] text-ink-muted">{b.mandate}</p>
               <div className="space-y-1">
                 {b.bodies.map(body => (
@@ -99,7 +99,7 @@ export function BranchesView() {
             </div>
           ))}
         </Panel>
-        <Panel title="Separation-of-powers invariant watch" meta="constitutional safeguards" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Checks on the separation of powers" meta="constitutional safeguards" bodyClass="!p-1.5">
           <div className="grid grid-cols-1 gap-1 sm:grid-cols-2">
             {sep.checks.map(c => (
               <div key={c.l} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">

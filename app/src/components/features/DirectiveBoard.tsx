@@ -188,11 +188,15 @@ export function DirectiveBoard() {
         })()}
       </Panel>
 
-      <p className="text-[10px] text-ink-muted">
-        Drafts are visible only to officers in the issuing charter (and
-        platform-tier roles). Signed, effective, and rescinded directives
-        are public per the substrate's directives_read_public policy.
-      </p>
+      <p className="text-[12px] text-ink-soft">Drafts are seen only by your institution. Once signed, a directive is public.</p>
+      <details className="text-[10px] text-ink-muted">
+        <summary className="cursor-pointer">Technical details</summary>
+        <p className="text-[10px] text-ink-muted">
+          Drafts are visible only to officers in the issuing charter (and
+          platform-tier roles). Signed, effective, and rescinded directives
+          are public per the substrate's directives_read_public policy.
+        </p>
+      </details>
     </div>
   );
 }

@@ -50,7 +50,7 @@ export function NationalSimulation({ initial = 'baseline' }: { initial?: Scenari
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">National Simulation</h1>
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">National Simulation</h2>
           <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE
           </span>

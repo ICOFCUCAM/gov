@@ -98,10 +98,10 @@ export function ExecutiveBriefingChamber() {
   }).sort((a, b) => b.g.attention - a.g.attention).slice(0, 5);
 
   // Emergency-powers posture — institutional, not dramatic.
-  const powers = critCount >= 1 || post.label === 'STRAINED' || nationalRisk >= 65 ? 'WAR CABINET'
+  const powers = critCount >= 1 || post.label === 'STRAINED' || nationalRisk >= 65 ? 'CRISIS CABINET'
     : sevLoad >= 1 || post.label === 'HARDENED' || nationalRisk >= 50 ? 'ELEVATED MANDATE'
     : 'STANDING AUTHORITY';
-  const powersTone = powers === 'WAR CABINET' ? 'alert' : powers === 'ELEVATED MANDATE' ? 'warn' : 'ok';
+  const powersTone = powers === 'CRISIS CABINET' ? 'alert' : powers === 'ELEVATED MANDATE' ? 'warn' : 'ok';
 
   // Ministry alignment & competing priorities.
   const ministries = [...nodes]
@@ -144,7 +144,7 @@ export function ExecutiveBriefingChamber() {
   const sustain = nationalSustainability(opS, post, society, foresight, epoch);
   const polit = politicalContinuity(opS, post, society, ext, foresight, epoch);
   const politTone = polit.label === 'FRACTURING' || polit.label === 'FRAGILE' ? 'alert' : polit.label === 'STRAINED' ? 'warn' : 'ok';
-  const powersLevel = powers === 'WAR CABINET' ? 3 : powers === 'ELEVATED MANDATE' ? 2 : 1;
+  const powersLevel = powers === 'CRISIS CABINET' ? 3 : powers === 'ELEVATED MANDATE' ? 2 : 1;
   const lead = executiveLeadership(opS, post, society, ext, polit, powersLevel, incidents.length, epoch);
   const leadTone = lead.label === 'CARETAKER' || lead.label === 'CONTESTED' ? 'alert' : lead.label === 'STRAINED' ? 'warn' : 'ok';
   const cap = nationalCapability(opS, post, society, ext, sustain, polit, peakP, incidents.length, epoch);
@@ -281,7 +281,7 @@ export function ExecutiveBriefingChamber() {
     L.push('  Cabinet positions:');
     lead.cabinet.forEach(v => L.push(`   - ${v.ministry}: ${v.position} (dissent ${v.dissent})`));
     L.push('');
-    L.push(`X.  CLASSIFIED INTELLIGENCE ASSESSMENT — ${intel.posture}`);
+    L.push(`X.  INTELLIGENCE ASSESSMENT (MODELLED) — ${intel.posture}`);
     L.push(thin);
     L.push(`  Analytic confidence ${intel.assessmentConfidence}% · composite threat ${intel.threatLevel}`);
     L.push('  Emerging threat vectors:');
@@ -293,7 +293,7 @@ export function ExecutiveBriefingChamber() {
       L.push('  Preemptive measures advised:');
       intel.preemptive.forEach(pm => L.push(`   - ${pm}`));
     }
-    L.push(`  Classified memory: ${intel.memoNote}`);
+    L.push(`  Assessment note: ${intel.memoNote}`);
     L.push('  Assessments interpretive at stated confidence — not certainty.');
     L.push('');
     L.push(`XI.  NATIONAL CONTINUITY CHRONOLOGY — ADMINISTRATION ${chron.administration}`);
@@ -434,12 +434,12 @@ export function ExecutiveBriefingChamber() {
         <Link href="/gov/situation-room" className="focus-ring flex items-center gap-3 no-underline">
           <span aria-hidden className="grid h-9 w-9 place-items-center rounded-sm text-sm font-bold text-white ring-1 ring-white/15"
             style={{ backgroundColor: ACCENT }}>{identity ? identity.seal : 'CO'}</span>
-          <span className="leading-tight">
-            <span className="block text-sm font-bold tracking-[0.16em] text-ink">EXECUTIVE BRIEFING CHAMBER</span>
+          <div className="leading-tight">
+            <h1 className="block text-sm font-bold tracking-[0.16em] text-ink">DAILY BRIEF</h1>
             <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-muted">
               {sov?.stateName ?? 'Sovereign State'} · Strategic Governance · {irec.stateTone} posture
             </span>
-          </span>
+          </div>
         </Link>
         <div className="ml-auto flex items-center gap-4 text-[11px]">
           <span className="hidden font-semibold uppercase tracking-[0.2em] sm:inline" style={{ color: ACCENT }}>
@@ -774,7 +774,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel signal="modelled" title="Classified intelligence assessment"
+        <Panel signal="modelled" title="Intelligence assessment (modelled)"
           meta={`${intel.posture} · analytic confidence ${intel.assessmentConfidence}% · threat ${intel.threatLevel}`}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
@@ -804,7 +804,7 @@ export function ExecutiveBriefingChamber() {
             {intel.preemptive.length
               ? <>Preemptive measures advised: {intel.preemptive.join('; ')}. </>
               : <>No preemptive measures triggered at current confidence. </>}
-            Classified memory: {intel.memoNote}. Assessments are interpretive at stated confidence — not certainty.
+            Assessment note: {intel.memoNote}. Assessments are interpretive at stated confidence — not certainty.
           </p>
         </Panel>
 

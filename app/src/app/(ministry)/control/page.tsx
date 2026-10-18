@@ -34,10 +34,10 @@ export default function MinistryControlPage({
 
   return (
     <CommandShell active="ctl">
-      <h1 className="text-base font-semibold uppercase tracking-[0.14em] text-ink-soft">Service health</h1>
+      <h2 className="text-base font-semibold uppercase tracking-[0.14em] text-ink-soft">Service health</h2>
       <p className="mb-3 mt-0.5 max-w-3xl text-[11px] leading-relaxed text-ink-muted">
-        Operational view per institution. The structure below is composed from
-        the institutional framework, not hardcoded.
+        How each institution's services are running. Figures marked as examples
+        are replaced when the institution connects its systems.
       </p>
 
       {ministries.length === 0 ? (

@@ -15,6 +15,8 @@ import { SeverityBadge } from '@/components/ui/Ops';
 import { TONE_SHAPE } from '@/lib/tone-palette';
 
 type View = 'all' | 'decisions' | 'incidents' | 'overdue';
+/** Waiting time in words: hours under two days, then days. */
+const age = (h: number) => (h < 48 ? `${h} hour${h === 1 ? '' : 's'}` : `${Math.round(h / 24)} days`);
 const btn = 'focus-ring rounded-[3px] border border-line px-2.5 py-1 text-[13px] text-ink hover:bg-surface-2 disabled:opacity-50';
 
 export function WorkCenter() {
@@ -62,15 +64,15 @@ export function WorkCenter() {
     <div className="mx-auto max-w-[1280px] space-y-4 text-[14px] text-ink">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-semibold tracking-tight">My work</h1>
-          <p className="mt-1 max-w-3xl text-ink-soft">Everything waiting on an official, across every active institution, from the records that hold it. Past-SLA items come first.</p>
+          <h2 className="text-[22px] font-semibold tracking-tight">My work</h2>
+          <p className="mt-1 max-w-3xl text-ink-soft">Everything waiting on an official, across every active institution, from the records that hold it. Late items come first.</p>
         </div>
         <ActingOfficial name={official} onChange={setOfficial} />
       </header>
 
       <div className="flex flex-wrap gap-2">
         {counter('decisions', 'Decisions waiting', data?.counts.decisions, 'rgb(var(--c-warn))')}
-        {counter('overdue', 'Past SLA', data?.counts.overdue, 'rgb(var(--c-alert))')}
+        {counter('overdue', 'Late', data?.counts.overdue, 'rgb(var(--c-alert))')}
         {counter('incidents', 'Incidents open', data?.counts.incidents, 'rgb(var(--c-alert))')}
       </div>
 
@@ -132,18 +134,18 @@ export function WorkCenter() {
                 <span aria-hidden className="text-[11px]" style={{ color: q.overdue ? 'rgb(var(--c-alert))' : q.state === 'escalated' ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink-muted))' }}>{q.overdue ? TONE_SHAPE.alert : q.state === 'escalated' ? TONE_SHAPE.warn : TONE_SHAPE.neutral}</span>
                 <span className="font-mono text-[12px] text-ink-muted">{q.ref}</span>
                 <span className="min-w-0 flex-1">{q.subject} <span className="text-ink-muted">· <Link href={`/gov/ministry/${q.ministryId}`} className="text-link underline underline-offset-2">{q.ministry}</Link> · {q.region}</span></span>
-                <span className="text-[12px] tabular-nums" style={{ color: q.overdue ? 'rgb(var(--c-alert))' : undefined }}>{q.ageHours}h{q.overdue ? ` · past SLA (${q.slaHours}h)` : ''}</span>
+                <span className="text-[12px] tabular-nums" style={{ color: q.overdue ? 'rgb(var(--c-alert))' : undefined }}>{age(q.ageHours)}{q.overdue ? `, ${age(q.ageHours - q.slaHours)} late (target ${age(q.slaHours)})` : ''}</span>
                 <span className="text-[12px] capitalize text-ink-muted">{q.state}{q.assignee ? ` · ${q.assignee}` : ''}</span>
                 {q.state === 'open' ? <button className={btn} disabled={busy !== null} onClick={() => act(`q:${q.id}`, `Assigned: ${q.ref}`, () => api.org.actOnQueueItem(q.ministryId, q.id, 'assign', undefined, official))}>Assign to me</button> : null}
                 <button className={btn} disabled={busy !== null} onClick={() => act(`q:${q.id}`, `Escalated: ${q.ref}`, () => api.org.actOnQueueItem(q.ministryId, q.id, 'escalate', undefined, official))}>Escalate</button>
-                <button className={btn} disabled={busy !== null} onClick={() => act(`q:${q.id}`, `Cleared: ${q.ref}`, () => api.org.actOnQueueItem(q.ministryId, q.id, 'clear', undefined, official))}>Clear</button>
+                <button className={btn} disabled={busy !== null} onClick={() => act(`q:${q.id}`, `Closed: ${q.ref}`, () => api.org.actOnQueueItem(q.ministryId, q.id, 'clear', undefined, official))}>Close</button>
               </li>
             ))}
-            {!queue.length ? <li className="px-3 py-2 text-ink-muted">{view === 'overdue' ? 'Nothing is past its SLA.' : 'No decisions waiting.'}</li> : null}
+            {!queue.length ? <li className="px-3 py-2 text-ink-muted">{view === 'overdue' ? 'Nothing is late.' : 'No decisions waiting.'}</li> : null}
           </ul>
         </section>
       ) : null}
-      <p className="text-[12px] text-ink-muted">Ministry queues and incidents are the platform&rsquo;s records (seeded reference items until institutions connect their case systems, register 1.9). Directives awaiting signature are on the <Link href="/gov/directives" className="text-link underline">Directive Board</Link>.</p>
+      <p className="text-[12px] text-ink-muted">These cases and incidents are examples until your ministries connect their case systems. Directives awaiting signature are on the <Link href="/gov/directives" className="text-link underline">Directive Board</Link>.</p>
     </div>
   );
 }

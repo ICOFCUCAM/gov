@@ -73,7 +73,7 @@ export default function WalletHomePage() {
         }
       >
         <section aria-labelledby="greet">
-          <h2 id="greet" className="text-2xl font-semibold leading-tight">{t(m.wallet.greeting, { name: DEMO_CITIZEN.name.split(' ')[0]! })}</h2>
+          <h1 id="greet" className="text-2xl font-semibold leading-tight">{t(m.wallet.greeting, { name: DEMO_CITIZEN.name.split(' ')[0]! })}</h1>
           <p className="text-ink-muted">{formatDate(today, locale)}</p>
         </section>
 

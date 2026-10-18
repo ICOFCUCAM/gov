@@ -39,12 +39,15 @@ import { decisionEfficacy, efficacyRollup, type EfficacyResult } from '@/service
 import { resolveIdentity } from '@/lib/sovereign-identity';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 
-function P({ title, meta, children }: { title: string; meta?: string; children: React.ReactNode }) {
+// Panels here are calculated from the institutions' models, so they say so unless a panel states otherwise.
+function P({ title, meta, children, signal = 'modelled' }: { title: string; meta?: string; children: React.ReactNode; signal?: SignalKind | null }) {
   return (
     <section className="flex min-h-0 flex-col rounded-[3px] border border-line bg-surface">
       <div className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-        <h2 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}</h2>
+        <h2 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}{signal ? <SignalTag kind={signal} source={REFERENCE_MODEL} /> : null}</h2>
         {meta ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
       </div>
       <div className="min-h-0 flex-1 p-2.5">{children}</div>
@@ -233,7 +236,7 @@ export function NationalShell() {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
           <span aria-hidden className="grid h-7 w-7 place-items-center rounded-[3px] text-[11px] font-bold" style={{ backgroundColor: seal.fill, color: seal.ink }}>{identity?.seal ?? 'NS'}</span>
-          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">National Shell</h1>
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">National Shell</h2>
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>{sov?.stateName ?? 'Sovereign'} · {model.label}</span>
           <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
         </div>
@@ -340,7 +343,7 @@ export function NationalShell() {
       {(() => {
         const ptn = fp.posture === 'critical' ? 'alert' : fp.posture === 'strained' ? 'warn' : 'ok';
         return (
-          <P title="Emergent national operational posture" meta={`RULE 3 · derived from ${fp.institutions.length} institutions' own engines — no hardcoded figure`}>
+          <P title="Emergent national operational posture" meta={`modelled from ${fp.institutions.length} institutions`}>
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <div className="flex items-baseline gap-2">
                 <span className="font-mono text-[30px] leading-none tabular-nums" style={{ color: TONE[ptn] }}>{fp.meanOperational}</span>
@@ -371,7 +374,7 @@ export function NationalShell() {
           <P title="Emergent interoperability fabric" meta={`RULE 2 · ${iof.edges.length} contracts from active federation · ${iof.meanHealth}% mean health`}>
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[itn]} 16%, transparent)`, color: TONE[itn] }}>{iof.posture}</span>
-              <span className="text-[10px] text-ink-muted">{iof.nodes} institutions · {iof.stressedLinks} stressed links — dependency health derived from real operational posture, not fabricated</span>
+              <span className="text-[10px] text-ink-muted">{iof.nodes} institutions · {iof.stressedLinks} stressed links — how dependencies between institutions are holding up (modelled)</span>
             </div>
             {iof.edges.length === 0 ? (
               <p className="text-[11px] text-ink-muted">No inter-institution contracts — provision more institutions to form the interoperability mesh.</p>
@@ -395,7 +398,7 @@ export function NationalShell() {
       {(() => {
         const fn = rprop.fragility === 'cascading' ? 'alert' : rprop.fragility === 'coupled' ? 'warn' : 'ok';
         return (
-          <P title="Resilience propagation" meta={`RULE 3 · contagion across the live fabric · base ${rprop.meanBase} → effective ${rprop.meanEffective} · −${rprop.amplification} systemic drag`}>
+          <P title="Resilience propagation" meta={`spread between institutions · base ${rprop.meanBase} → effective ${rprop.meanEffective} · −${rprop.amplification} knock-on loss`}>
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[fn]} 16%, transparent)`, color: TONE[fn] }}>{rprop.fragility}</span>
               <span className="text-[10px] text-ink-muted">

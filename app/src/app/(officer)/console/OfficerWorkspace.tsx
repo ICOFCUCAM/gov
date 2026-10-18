@@ -14,6 +14,7 @@ import { api } from '@/lib/api/client';
 import type { Permit, PermitDecision } from '@/lib/api/types';
 import { useOfficial } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
+import { aiLabel } from '@/lib/nation/registry';
 
 const OPEN_STATES = new Set(['submitted', 'in-review', 'needs-info']);
 
@@ -208,8 +209,7 @@ export function OfficerWorkspace() {
                     : ' No blocking issues detected.'}
                 </p>
                 <p className="text-sm text-ink-muted">
-                  This is advisory. You decide and sign. The AI does not
-                  decide.
+                  {aiLabel('This is advisory. You decide and sign. The AI does not decide.', 'This is advisory. You decide and sign.')}
                 </p>
               </CopilotPanel>
 

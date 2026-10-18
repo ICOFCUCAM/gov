@@ -106,12 +106,12 @@ export function LiveWall() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Live Wall</h1>
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Live Wall</h2>
           <span
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
           >
-            durable · realtime · RLS-scoped
+            saved · live · your view
           </span>
           <span className="font-mono text-[10px] tabular-nums text-ink-muted">
             {new Date(now).toLocaleTimeString()}
@@ -229,12 +229,16 @@ export function LiveWall() {
         </Panel>
       </div>
 
-      <p className="text-[10px] text-ink-muted">
-        Three queries against three tables; no client-side joining. The
-        substrate's RLS determines what flows in for the current scope —
-        platform-tier sees national; charter officers see their own;
-        citizens see only records linked to them.
-      </p>
+      <p className="text-[12px] text-ink-soft">What appears here depends on who you are: national staff see the whole nation, institution staff see their own institution, citizens see only their own records.</p>
+      <details className="text-[10px] text-ink-muted">
+        <summary className="cursor-pointer">Technical details</summary>
+        <p className="text-[10px] text-ink-muted">
+          Three queries against three tables; no client-side joining. The
+          substrate's RLS determines what flows in for the current scope —
+          platform-tier sees national; charter officers see their own;
+          citizens see only records linked to them.
+        </p>
+      </details>
     </div>
   );
 }

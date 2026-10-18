@@ -45,7 +45,7 @@ type Tab =
   | 'escalations' | 'logistics' | 'analytics' | 'treasury'
   | 'infrastructure' | 'workforce' | 'security' | 'audit';
 const TABS: { k: Tab; label: string }[] = [
-  { k: 'command', label: 'Command' },
+  { k: 'command', label: 'Overview' },
   { k: 'ecosystem', label: 'Ecosystem' },
   { k: 'continuity', label: 'Continuity' },
   { k: 'regional', label: 'Regional' },
@@ -290,7 +290,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
             <p className="text-sm text-ink-muted">
               <span className="font-medium text-ink-soft">{ident.domain}</span>
               <span className="mx-1.5 text-line">·</span>
-              <span className="text-[11px] uppercase tracking-[0.16em]">{archetype}</span>
+              <span className="sr-only">Standard ministry type: {archetype}</span>
             </p>
           </div>
         </div>
@@ -305,10 +305,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
           style={{ borderColor: 'rgb(var(--c-warn))', backgroundColor: 'color-mix(in srgb, rgb(var(--c-warn)) 12%, transparent)', color: 'rgb(var(--c-warn))' }}>
           <span className="flex items-center gap-2 font-semibold uppercase tracking-[0.16em]">
             <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: 'rgb(var(--c-warn))' }} />
-            {inst?.status !== 'active' ? 'Not yet active' : 'Below the readiness threshold'}{readiness ? ` · ${readiness.total}% ready` : ''}
+            {inst?.status !== 'active' ? 'Not yet active' : 'Not fully set up yet'}{readiness ? ` · ${readiness.total}% ready` : ''}
           </span>
-          {readiness?.blocking.length ? <span className="text-ink-soft normal-case">To clear: {readiness.blocking.join(' · ')}</span> : null}
-          <Link href={`/ministries?id=${encodeURIComponent(id)}`} className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest no-underline" style={{ borderColor: 'rgb(var(--c-warn))' }}>Resolve in Institutions Admin →</Link>
+          {readiness?.blocking.length ? <span className="text-ink-soft normal-case">Still to do: {readiness.blocking.join(' · ')}</span> : null}
+          <Link href={`/ministries?id=${encodeURIComponent(id)}`} className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest no-underline" style={{ borderColor: 'rgb(var(--c-warn))' }}>Finish setting up →</Link>
         </div>
       ) : null}
 
@@ -378,10 +378,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
 
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-6">
         {[
-          { l: 'Lifecycle', v: readiness ? LIFECYCLE_LABEL[readiness.lifecycle] : (inst?.status ?? '—'), c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))', dot: true },
+          { l: 'Status', v: readiness ? LIFECYCLE_LABEL[readiness.lifecycle] : (inst?.status ?? '—'), c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))', dot: true },
           { l: 'Readiness', v: readiness ? `${readiness.total}%` : '—', c: readiness ? (readiness.deployable ? 'rgb(var(--c-ok))' : 'rgb(var(--c-warn))') : 'rgb(var(--c-ink-muted))' },
-          { l: 'Posture mode', v: mode, c: modeTone, dot: true },
-          { l: 'Cascade stress', v: cascadeSelf ? `${cascadeSelf.totalStress}${cascadeSelf.inheritedStress ? ` (+${cascadeSelf.inheritedStress})` : ''}` : '—', c: cascadeCrit ? 'rgb(var(--c-alert))' : cascadeStrain ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))', dot: cascadeCrit || cascadeStrain, sample: true },
+          { l: 'Situation', v: mode === 'CRISIS' ? 'Crisis' : mode === 'ESCALATION' ? 'Incident open' : 'Normal', c: modeTone, dot: true },
+          { l: 'Pressure from other ministries', v: cascadeSelf ? `${cascadeSelf.totalStress}${cascadeSelf.inheritedStress ? ` (+${cascadeSelf.inheritedStress})` : ''}` : '—', c: cascadeCrit ? 'rgb(var(--c-alert))' : cascadeStrain ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))', dot: cascadeCrit || cascadeStrain, sample: true },
           { l: 'Active incidents', v: String(activeAlerts.length), c: activeAlerts.length ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' },
           { l: 'Queue', v: `${openQueue} open`, c: openQueue > 6 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ink))' },
         ].map(s => (
@@ -430,7 +430,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
         return (
           <div className="flex flex-wrap items-center gap-2 rounded-[3px] border border-line bg-surface px-3 py-2">
             <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: modeTone }}>
-              {mode === 'CRISIS' ? 'Crisis directives' : mode === 'ESCALATION' ? 'Escalation directives' : 'Executive directives'}
+              Shortcuts
             </span>
             <span className="text-[10px] text-ink-muted">·</span>
             {actions}
@@ -528,7 +528,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 </div>
                 <p className="mt-1.5 text-[10px] text-ink-soft">▸ <span style={{ color: TONE.warn }}>{aiHeadline ? 'AI advisory' : 'Advisory'}:</span> {aiHeadline ?? op.aiAdvisory}</p>
               </Section>
-              <Section title="Service operations" meta="archetype signature · live">
+              <Section title="Service figures" meta={<SignalTag kind="sample" source={REFERENCE_MODEL} />}>
                 <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
                   {serviceReadings(id, (archetype || 'GENERIC') as ArchetypeKey, now / 4000).map(r => (
                     <div key={r.l} className="rounded-[3px] border border-line bg-surface px-2 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.05)' }}>
@@ -574,7 +574,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
                 </div>
                 <div className="mt-2 grid gap-2 lg:grid-cols-2">
                   <div className="rounded-[3px] border border-line bg-surface p-2">
-                    <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Command tiers</div>
+                    <div className="mb-1 flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-soft">Levels of command <SignalTag kind="sample" source={REFERENCE_MODEL} /></div>
                     {fab.tiers.map(t => (
                       <div key={t.tier} className="flex items-center justify-between gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
                         <span className="text-ink">{t.tier}</span>
@@ -1118,7 +1118,7 @@ export function MinistryWorkspace({ id }: { id: string }) {
               </Card>
             </div>
             <p className="mt-2 text-[10px] text-ink-muted">
-              {ident.domain} · {TABS.find(t => t.k === tab)?.label} module. Deterministic operational telemetry; humans hold decision authority. No autonomous action.
+              {ident.domain} · {TABS.find(t => t.k === tab)?.label} · figures here are examples. Decisions are always taken by officials.
             </p>
           </Section>
         );

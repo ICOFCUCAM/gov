@@ -41,7 +41,7 @@ export function OfficialAccounts() {
   return (
     <div className="mx-auto max-w-[1100px] space-y-4 text-[14px] text-ink">
       <header>
-        <h1 className="text-[22px] font-semibold tracking-tight">Official accounts</h1>
+        <h2 className="text-[22px] font-semibold tracking-tight">Official accounts</h2>
         <p className="mt-1 max-w-3xl text-ink-soft">
           Who can sign in on this installation with a platform account. Signed-in officials&rsquo; actions are recorded under their verified names.
           {s?.methods.substrate ? ' This installation is also connected to the substrate, where officers sign in with their substrate accounts.' : ''}

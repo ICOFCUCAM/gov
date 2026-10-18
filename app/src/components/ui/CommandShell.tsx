@@ -23,6 +23,7 @@ import { useHydrated, useRenderNow } from '@/lib/clock/render-now';
 import { usePathname } from 'next/navigation';
 import { CONSOLE_NAV, HEADER_LINKS, locate } from '@/lib/nav/console-nav';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
+import { useSignIn } from '@/lib/official';
 
 // Adapter from substrate search hits → CommandPalette items.
 const substrateSearchAsCommands: CommandSearchFn = async (query) => {
@@ -98,6 +99,7 @@ export function CommandShell({
     sr: incidents.length, ops: t?.queuesBreaching ?? 0, cab: crit, aud: t?.auditIntact === false ? 1 : 0,
   };
   const pathname = usePathname() ?? '';
+  const signIn = useSignIn();
   const here = locate(pathname);
   // Only an encrypted connection is called encrypted.
   const [secure, setSecure] = React.useState<boolean | null>(null);
@@ -115,8 +117,8 @@ export function CommandShell({
   const tele: { p: 1 | 2 | 3; l: string; v: string; t?: string; dot?: boolean; kind: SignalKind; src: string }[] = [
     { p: 3, l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true, kind: 'reported', src: 'Platform configuration' },
     { p: 2, l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone, kind: 'sample', src: `Resilience model over ${REFERENCE_MODEL.toLowerCase()}` },
-    { p: 3, l: 'Runtime', v: hydrated ? `${liveRt.open} open · ${liveRt.transitions} tx` : '—', t: 'ok', kind: 'reported', src: 'Runtime queue in this browser' },
-    { p: 3, l: 'Federated apps', v: hydrated ? `${fedStats.activated}/${fedStats.registered}` : '—', t: 'ok', kind: 'reported', src: 'Federation registry' },
+    { p: 3, l: 'Practice queue', v: hydrated ? `${liveRt.open} open` : '—', t: 'ok', kind: 'reported', src: 'Practice queue in this browser only; not a government record' },
+    { p: 3, l: 'Connected systems', v: hydrated ? `${fedStats.activated} of ${fedStats.registered}` : '—', t: 'ok', kind: 'reported', src: 'Registry of connected systems' },
     { p: 2, l: 'Institutions', v: String(t?.institutions ?? 0), kind: 'reported', src: 'Ministry registry (/api/org)' },
     { p: 1, l: 'Active incidents', v: String(incidents.length), t: incidents.length ? 'alert' : 'ok', kind: 'sample', src: `Seeded ministry incidents · ${REFERENCE_MODEL}` },
     { p: 2, l: 'Queues breaching', v: String(t?.queuesBreaching ?? 0), t: (t?.queuesBreaching ?? 0) > 0 ? 'warn' : 'ok', kind: 'sample', src: `Seeded ministry queues · ${REFERENCE_MODEL}` },
@@ -148,7 +150,7 @@ export function CommandShell({
           style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, borderBottom: `1px solid ${TONE.alert}` }}>
           <span className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]" style={{ color: TONE.alert }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
-            Elevated national posture · {crit} critical · cabinet coordination advised
+            {crit} serious incident{crit === 1 ? '' : 's'} recorded (example data) · cabinet coordination advised
           </span>
           <Link href="/gov/coordination" className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest" style={{ borderColor: TONE.alert, color: TONE.alert }}>Coordinate →</Link>
         </div>
@@ -190,7 +192,7 @@ export function CommandShell({
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
           {secure ? <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-[10px] text-ink-soft min-[1440px]:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Encrypted</span> : null}
           <span className="border-l border-line pl-3">
-            <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="National Executive" accent={accent} />
+            <ExecutiveMenu title={signIn?.official?.name ?? sov?.executiveTitle ?? 'Head of Government'} sub={signIn?.official ? (signIn.official.office ?? 'Signed in') : 'Not signed in'} accent={accent} />
           </span>
         </div>
       </header>

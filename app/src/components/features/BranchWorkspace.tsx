@@ -93,7 +93,7 @@ export function BranchWorkspace({ branchKey }: { branchKey: string }) {
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{b.name}</h1>
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{b.name}</h2>
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>{model.label}</span>
           <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE
