@@ -25,12 +25,11 @@ const ALL_KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declar
 /**
  * Directive Board — operator surface for the directive lifecycle.
  *
- * Composer issues a new draft via record_directive. The list below
- * reads civicos.directives live (Realtime + RLS scope) and exposes
- * sign / rescind actions on each row. Signed-out viewers see only
- * the directives the substrate's directives_read_public policy makes
- * public (signed / effective / rescinded / published) — drafts stay
- * scoped to their issuer's charter.
+ * Composer drafts through the platform, which owns the register
+ * (/api/directives; the substrate's civicos.directives mirrors it,
+ * lib/db/mirror.ts). The list below reads the platform's register and
+ * exposes sign / rescind actions on each row; the server checks the
+ * official's role. Drafts stay scoped to their issuer's institution.
  */
 export function DirectiveBoard() {
   const { actor, session, ready } = useIdentity();

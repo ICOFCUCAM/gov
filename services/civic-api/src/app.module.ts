@@ -18,6 +18,7 @@ import { AuditInterceptor } from './common/audit.interceptor';
 import { MetricsInterceptor } from './common/metrics';
 import { VersionHeaderInterceptor } from './common/versioning';
 import { RateLimitGuard } from './common/rate-limit.guard';
+import { ReadOnlyMirrorGuard } from './common/read-only-mirror.guard';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 
 @Module({
@@ -38,6 +39,9 @@ import { HttpExceptionFilter } from './common/http-exception.filter';
     OrgModule,
   ],
   providers: [
+    // Frozen read-only mirror (architecture review D8): every write is refused
+    // with the owning platform route before anything else runs.
+    { provide: APP_GUARD, useClass: ReadOnlyMirrorGuard },
     { provide: APP_GUARD, useClass: RateLimitGuard },
     { provide: APP_INTERCEPTOR, useClass: MetricsInterceptor },
     { provide: APP_INTERCEPTOR, useClass: VersionHeaderInterceptor },

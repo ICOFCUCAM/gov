@@ -4,8 +4,12 @@ import { Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { assertFrozenMode } from './common/read-only-mirror';
 
 async function bootstrap(): Promise<void> {
+  // Frozen as a read-only mirror of the CivicOS platform's registers (D8);
+  // refuses to start in any other mode.
+  assertFrozenMode();
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
 
   // Security baseline (zero-trust posture starts at the edge).

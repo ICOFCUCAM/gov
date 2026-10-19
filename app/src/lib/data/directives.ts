@@ -1,9 +1,11 @@
-// Directives kept by the platform itself (register 15.8): how a nation without
-// the shared database (substrate) still drafts, signs and withdraws directives.
-// Same record shape as the substrate's civicos_directives, so the Directive
-// Board and the directive page read either. Every step names the official who
-// took it (the verified signed-in official where there is one) and is written
-// to the audit chain. Held in platform state (lib/data/persist.ts).
+// The directives register (register 15.8, architecture review D8). The
+// platform owns it: every draft, signature and withdrawal goes through
+// /api/directives, names the official who took it (the verified signed-in
+// official where there is one) and is written to the audit chain. Held in
+// platform state (lib/data/persist.ts). With the shared database (substrate)
+// connected, its civicos_directives table is a mirror written from here after
+// each change (lib/db/mirror.ts); same record shape, so the substrate's own
+// aggregates and realtime feeds keep working.
 
 import { randomUUID } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
@@ -84,9 +86,38 @@ export function rescindDirective(ref: string, by: string | undefined): Directive
   return directive(ref)!;
 }
 
-/** Signed directives whose effective time has come take effect (read-time; nothing runs in the background). */
-export function settleDirectives(now = new Date()): void {
+/** Signed directives whose effective time has come take effect (read-time; nothing runs in the background). Returns the refs that did. */
+export function settleDirectives(now = new Date()): string[] {
+  const settled: string[] = [];
   for (const r of db().rows) {
-    if (r.status === 'signed' && r.effective_at && Date.parse(r.effective_at) <= now.getTime()) { r.status = 'effective'; r.updated_at = now.toISOString(); }
+    if (r.status === 'signed' && r.effective_at && Date.parse(r.effective_at) <= now.getTime()) { r.status = 'effective'; r.updated_at = now.toISOString(); settled.push(r.ref); }
   }
+  return settled;
+}
+
+/** Every directive's reference (the mirror's full re-copy). */
+export function allDirectiveRefs(): string[] { return db().rows.map(r => r.ref); }
+
+/**
+ * Once, when the platform takes over a substrate that owned directives before
+ * (lib/db/mirror.ts): keep the ones the platform does not hold yet, as they
+ * were, under one audit entry. Returns how many were added.
+ */
+export function adoptDirectives(rows: DirectiveRow[]): number {
+  const have = new Set(db().rows.map(r => r.ref));
+  let n = 0;
+  for (const r of rows) {
+    if (!r || typeof r.ref !== 'string' || !REF.test(r.ref) || have.has(r.ref)) continue;
+    db().rows.push({
+      id: String(r.id || randomUUID()), ref: r.ref, kind: String(r.kind || 'instruction'), issued_by_charter_id: String(r.issued_by_charter_id || 'platform'),
+      issued_by_name: r.issued_by_name ?? null, title: String(r.title || r.ref).slice(0, 300), citation: r.citation ?? null, status: String(r.status || 'drafting'),
+      targets: Array.isArray(r.targets) ? r.targets.map(String) : [], payload: r.payload && typeof r.payload === 'object' ? r.payload : {},
+      signed_at: r.signed_at ?? null, signed_by_id: r.signed_by_id ?? null, effective_at: r.effective_at ?? null, rescinded_at: r.rescinded_at ?? null,
+      created_at: r.created_at || new Date().toISOString(), updated_at: r.updated_at || r.created_at || new Date().toISOString(),
+    });
+    have.add(r.ref);
+    n++;
+  }
+  if (n) recordAudit('platform', 'directive.adopt', 'Directives', 'ok', `${n} directive${n === 1 ? '' : 's'} taken over from the substrate, which now mirrors the platform`);
+  return n;
 }

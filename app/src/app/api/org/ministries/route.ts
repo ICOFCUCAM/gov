@@ -3,6 +3,7 @@ import { listMinistries, createMinistry } from '@/lib/data/store';
 import type { ArchetypeKey } from '@/lib/api/types';
 import { refusal } from '@/lib/auth/official';
 import { adminOnly } from '@/lib/auth/roles';
+import { queueMirror } from '@/lib/db/mirror';
 export const dynamic = 'force-dynamic';
 export function GET() { return NextResponse.json({ ministries: listMinistries() }); }
 export async function POST(req: NextRequest) {
@@ -13,5 +14,6 @@ export async function POST(req: NextRequest) {
   if (!b.archetype || !b.name || !b.slug) return NextResponse.json({ error: 'archetype, name, slug required' }, { status: 422 });
   const r = createMinistry({ archetype: b.archetype as ArchetypeKey, name: b.name, slug: b.slug });
   if ('error' in r) return NextResponse.json(r, { status: 422 });
+  queueMirror('institutions'); // the substrate's charter rows mirror the registry (lib/db/mirror.ts)
   return NextResponse.json({ ministry: r }, { status: 201 });
 }

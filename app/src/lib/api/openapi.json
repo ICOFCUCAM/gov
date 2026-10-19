@@ -4010,7 +4010,7 @@
         ],
         "operationId": "get_cron_promote_directives",
         "summary": "GET /api/cron/promote-directives",
-        "description": "Periodic directive-promotion worker — call civicos.promote_due_directives to flip any directive signed for a future effective date to 'effective' once that date arrives. Without this a future-dated directive stays 'signed' forever. Designed for a scheduler (Vercel Cron, Supabase scheduled function, etc.). Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
+        "description": "Periodic directive-promotion worker. Directives are the platform's register (lib/data/directives.ts, architecture review D8): this flips every directive signed for a future effective date to 'effective' once that date arrives (reads settle them too; this makes it happen without one), then, with the substrate connected, re-copies the platform's directives and institutions to their substrate mirrors (lib/db/mirror.ts: retries anything a write after a change could not copy). Designed for a scheduler (pg_cron in supabase/cron/schedule.sql, Vercel Cron, …). The substrate's own civicos_promote_due_directives is no longer called: its table is a mirror. Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
         "parameters": [],
         "responses": {
           "200": {
@@ -4047,7 +4047,7 @@
         ],
         "operationId": "post_cron_promote_directives",
         "summary": "POST /api/cron/promote-directives",
-        "description": "Periodic directive-promotion worker — call civicos.promote_due_directives to flip any directive signed for a future effective date to 'effective' once that date arrives. Without this a future-dated directive stays 'signed' forever. Designed for a scheduler (Vercel Cron, Supabase scheduled function, etc.). Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
+        "description": "Periodic directive-promotion worker. Directives are the platform's register (lib/data/directives.ts, architecture review D8): this flips every directive signed for a future effective date to 'effective' once that date arrives (reads settle them too; this makes it happen without one), then, with the substrate connected, re-copies the platform's directives and institutions to their substrate mirrors (lib/db/mirror.ts: retries anything a write after a change could not copy). Designed for a scheduler (pg_cron in supabase/cron/schedule.sql, Vercel Cron, …). The substrate's own civicos_promote_due_directives is no longer called: its table is a mirror. Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -4065,21 +4065,160 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean",
-                      "const": true
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean",
+                          "const": true
+                        },
+                        "promoted": {
+                          "type": "number"
+                        },
+                        "refs": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "substrate": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "promoted",
+                        "refs",
+                        "substrate",
+                        "at"
+                      ]
                     },
-                    "promoted": {},
-                    "at": {
-                      "type": "string"
+                    {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "error": {
+                              "type": "string"
+                            },
+                            "ok": {
+                              "type": "boolean"
+                            },
+                            "promoted": {
+                              "type": "number"
+                            },
+                            "refs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "mirror": {
+                              "type": "object",
+                              "properties": {
+                                "pending": {
+                                  "type": "number"
+                                },
+                                "written": {
+                                  "type": "number"
+                                },
+                                "failed": {
+                                  "type": "number"
+                                },
+                                "lastError": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "string"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "pending",
+                                "written",
+                                "failed",
+                                "lastError"
+                              ]
+                            },
+                            "at": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "error",
+                            "ok",
+                            "promoted",
+                            "refs",
+                            "mirror",
+                            "at"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "ok": {
+                              "type": "boolean"
+                            },
+                            "promoted": {
+                              "type": "number"
+                            },
+                            "refs": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "mirror": {
+                              "type": "object",
+                              "properties": {
+                                "pending": {
+                                  "type": "number"
+                                },
+                                "written": {
+                                  "type": "number"
+                                },
+                                "failed": {
+                                  "type": "number"
+                                },
+                                "lastError": {
+                                  "anyOf": [
+                                    {
+                                      "type": "null"
+                                    },
+                                    {
+                                      "type": "string"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "pending",
+                                "written",
+                                "failed",
+                                "lastError"
+                              ]
+                            },
+                            "at": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "ok",
+                            "promoted",
+                            "refs",
+                            "mirror",
+                            "at"
+                          ]
+                        }
+                      ]
                     }
-                  },
-                  "required": [
-                    "ok",
-                    "promoted",
-                    "at"
                   ]
                 },
                 "examples": {
@@ -4087,7 +4226,11 @@
                     "summary": "Generated from the schema",
                     "value": {
                       "ok": true,
-                      "promoted": null,
+                      "promoted": 1,
+                      "refs": [
+                        "string"
+                      ],
+                      "substrate": "string",
                       "at": "2026-01-15T09:30:00.000Z"
                     }
                   }
@@ -5257,7 +5400,7 @@
         ],
         "operationId": "get_directives_ref",
         "summary": "GET /api/directives/{ref}",
-        "description": "One platform directive. POST { action: 'sign' | 'rescind', effectiveAt? } under the named (verified, when signed in) official; audited. A signed-in official signs or withdraws only when they can sign, and only their own institution's directives (lib/auth/roles.ts); drafts are seen only there.",
+        "description": "One directive of the platform's register (the substrate mirrors it, lib/db/mirror.ts). POST { action: 'sign' | 'rescind', effectiveAt? } under the named (verified, when signed in) official; audited. A signed-in official signs or withdraws only when they can sign, and only their own institution's directives (lib/auth/roles.ts); drafts are seen only there.",
         "parameters": [
           {
             "name": "ref",
@@ -5338,7 +5481,7 @@
         ],
         "operationId": "post_directives_ref",
         "summary": "POST /api/directives/{ref}",
-        "description": "One platform directive. POST { action: 'sign' | 'rescind', effectiveAt? } under the named (verified, when signed in) official; audited. A signed-in official signs or withdraws only when they can sign, and only their own institution's directives (lib/auth/roles.ts); drafts are seen only there.",
+        "description": "One directive of the platform's register (the substrate mirrors it, lib/db/mirror.ts). POST { action: 'sign' | 'rescind', effectiveAt? } under the named (verified, when signed in) official; audited. A signed-in official signs or withdraws only when they can sign, and only their own institution's directives (lib/auth/roles.ts); drafts are seen only there.",
         "parameters": [
           {
             "name": "ref",
@@ -5460,7 +5603,7 @@
         ],
         "operationId": "get_directives",
         "summary": "GET /api/directives",
-        "description": "Directives kept by the platform (lib/data/directives.ts), used when the shared database is not connected. GET lists them (?status, ?issuer, ?limit): drafts only for the issuing institution's officials (all of them while sign-in is neither used nor enforced, as before). POST drafts one under the named (verified, when signed in) official; an official with an institution always drafts for it, and auditors cannot draft.",
+        "description": "The directives register, owned by the platform (lib/data/directives.ts; architecture review D8). With the shared database connected its civicos_directives table is a mirror written after each change (lib/db/mirror.ts); directives it held from before are taken over once. GET lists them (?status, ?issuer, ?limit): drafts only for the issuing institution's officials (all of them while sign-in is neither used nor enforced, as before). POST drafts one under the named (verified, when signed in) official; an official with an institution always drafts for it, and auditors cannot draft.",
         "parameters": [
           {
             "name": "issuer",
@@ -5562,7 +5705,7 @@
         ],
         "operationId": "post_directives",
         "summary": "POST /api/directives",
-        "description": "Directives kept by the platform (lib/data/directives.ts), used when the shared database is not connected. GET lists them (?status, ?issuer, ?limit): drafts only for the issuing institution's officials (all of them while sign-in is neither used nor enforced, as before). POST drafts one under the named (verified, when signed in) official; an official with an institution always drafts for it, and auditors cannot draft.",
+        "description": "The directives register, owned by the platform (lib/data/directives.ts; architecture review D8). With the shared database connected its civicos_directives table is a mirror written after each change (lib/db/mirror.ts); directives it held from before are taken over once. GET lists them (?status, ?issuer, ?limit): drafts only for the issuing institution's officials (all of them while sign-in is neither used nor enforced, as before). POST drafts one under the named (verified, when signed in) official; an official with an institution always drafts for it, and auditors cannot draft.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -20556,7 +20699,7 @@
         ],
         "operationId": "get_platform_owners",
         "summary": "GET /api/platform/owners",
-        "description": "Which store owns each register (lib/data/register-owners.ts): the owner, the one API that changes it, and every other copy with its role.",
+        "description": "Which store owns each register (lib/data/register-owners.ts): the owner, the one API that changes it, and every other copy with its role; and how the substrate mirrors stand (lib/db/mirror.ts: records waiting to be copied, with their last error).",
         "parameters": [],
         "responses": {
           "200": {
@@ -20571,10 +20714,14 @@
                       "items": {
                         "$ref": "#/components/schemas/RegisterOwner"
                       }
+                    },
+                    "substrateMirror": {
+                      "$ref": "#/components/schemas/MirrorStatus"
                     }
                   },
                   "required": [
-                    "registers"
+                    "registers",
+                    "substrateMirror"
                   ]
                 },
                 "examples": {
@@ -20594,7 +20741,28 @@
                             {}
                           ]
                         }
-                      ]
+                      ],
+                      "substrateMirror": {
+                        "configured": true,
+                        "pending": 1,
+                        "items": [
+                          {
+                            "id": "ID-0001",
+                            "kind": "directive",
+                            "key": "string",
+                            "queuedAt": "2026-01-15T09:30:00.000Z",
+                            "rev": 1,
+                            "attempts": 1,
+                            "lastTriedAt": "2026-01-15T09:30:00.000Z",
+                            "lastError": "Text"
+                          }
+                        ],
+                        "written": 1,
+                        "failed": 1,
+                        "lastWriteAt": "2026-01-15T09:30:00.000Z",
+                        "lastError": "Text",
+                        "directivesAdoptedAt": "2026-01-15T09:30:00.000Z"
+                      }
                     }
                   }
                 }
@@ -23102,7 +23270,7 @@
         ],
         "operationId": "get_public_charters",
         "summary": "GET /api/public/charters",
-        "description": "/api/public/charters — open-data directory of activated institutions (charters). Pairs with /api/public/accountability: researchers need the charter catalog (id, label, kind, domain) to interpret the per-charter SLA/appeals stats. Institutions are already anon-readable on the Public Observatory; this is their machine-readable form. No auth; short-cached.",
+        "description": "/api/public/charters — open-data directory of activated institutions (charters). Pairs with /api/public/accountability: researchers need the charter catalog (id, label, kind, domain) to interpret the per-charter SLA/appeals stats. Institutions are already anon-readable on the Public Observatory; this is their machine-readable form. No auth; short-cached. Read from the register's owner (architecture review D8): the platform's ministry registry and standing institutions (lib/db/mirror.ts institutionRows()). The substrate's civicos.institutions mirrors them; the one thing only it keeps, when a charter was first activated, is added from it where the substrate is connected.",
         "parameters": [],
         "responses": {
           "200": {
@@ -23136,15 +23304,7 @@
                             "type": "string"
                           },
                           "kind": {
-                            "type": "string",
-                            "enum": [
-                              "agency",
-                              "branch",
-                              "citizen",
-                              "ministry",
-                              "officer",
-                              "platform"
-                            ]
+                            "type": "string"
                           },
                           "domain": {
                             "type": "string"
@@ -23194,7 +23354,7 @@
                         {
                           "charter_id": "string",
                           "label": "Example",
-                          "kind": "agency",
+                          "kind": "string",
                           "domain": "string",
                           "archetype_or_branch": "string",
                           "activated_at": "string"
@@ -23232,7 +23392,7 @@
         ],
         "operationId": "get_public_directives",
         "summary": "GET /api/public/directives",
-        "description": "/api/public/directives — open-data feed of public directives (signed / effective / rescinded / published). Completes the open-data set alongside accountability, charters, and telemetry. Directives in these statuses are already anon-readable on the Public Observatory; this is their machine-readable form. No auth; short-cached.",
+        "description": "/api/public/directives — open-data feed of public directives (signed / effective / rescinded / published). Completes the open-data set alongside accountability, charters, and telemetry. Directives in these statuses are already anon-readable on the Public Observatory; this is their machine-readable form. No auth; short-cached. Read from the register's owner, the platform (lib/data/directives.ts); the substrate only mirrors it.",
         "parameters": [
           {
             "name": "issuer",
@@ -44678,6 +44838,29 @@
           },
           "note": {
             "type": "string"
+          },
+          "tables": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Substrate mirrors: the tables as the app names them (`civicos_…`), never written by app code but `writer`."
+          },
+          "writes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Substrate mirrors: the RPCs that write those tables; only `writer` may call them."
+          },
+          "writer": {
+            "type": "string",
+            "description": "Substrate mirrors: the one app file that writes the mirror (from the platform, after its commit)."
+          },
+          "frozen": {
+            "type": "boolean",
+            "const": true,
+            "description": "civic-api: frozen read-only (reads answer, writes refused with the owner's route)."
           }
         },
         "required": [
@@ -49588,6 +49771,129 @@
         "required": [
           "ministry",
           "series"
+        ]
+      },
+      "MirrorItem": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "`directive:<ref>` or `institutions`."
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "directive",
+              "institutions"
+            ]
+          },
+          "key": {
+            "type": "string"
+          },
+          "queuedAt": {
+            "type": "string"
+          },
+          "rev": {
+            "type": "number",
+            "description": "Bumped each time the record is queued again; a write clears the item only if it is unchanged."
+          },
+          "attempts": {
+            "type": "number"
+          },
+          "lastTriedAt": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastError": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "key",
+          "queuedAt",
+          "rev",
+          "attempts",
+          "lastTriedAt",
+          "lastError"
+        ]
+      },
+      "MirrorStatus": {
+        "type": "object",
+        "properties": {
+          "configured": {
+            "type": "boolean"
+          },
+          "pending": {
+            "type": "number"
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MirrorItem"
+            },
+            "description": "The oldest queued records, with their last error."
+          },
+          "written": {
+            "type": "number"
+          },
+          "failed": {
+            "type": "number"
+          },
+          "lastWriteAt": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "lastError": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          },
+          "directivesAdoptedAt": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string"
+              }
+            ]
+          }
+        },
+        "required": [
+          "configured",
+          "pending",
+          "items",
+          "written",
+          "failed",
+          "lastWriteAt",
+          "lastError",
+          "directivesAdoptedAt"
         ]
       },
       "ModuleActivation": {

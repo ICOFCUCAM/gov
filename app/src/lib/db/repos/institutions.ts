@@ -1,9 +1,9 @@
 // lib/db/repos/institutions — persistent institutional registry.
 //
-// Mirrors the in-memory orchestration registry shape but reads/writes to
-// civicos.institutions via the register_institution / activate_institution
-// RPCs. When the substrate isn't configured, calls become no-ops and the
-// registry stays memory-only.
+// Reads civicos.institutions, the substrate's mirror of the platform's
+// ministry registry (owner: /api/org/ministries; the platform writes the
+// mirror, lib/db/mirror.ts). When the substrate isn't configured, calls
+// return nothing and the registry stays the platform's alone.
 
 import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type { InstitutionRow, InstitutionKind } from '@/lib/db/types';
@@ -22,43 +22,23 @@ export interface InstitutionUpsert {
   meta?: Record<string, unknown>;
 }
 
+/**
+ * The substrate's institutions are a mirror of the platform's ministry registry
+ * (and the standing branches and agencies), written by the platform's server
+ * after each registry change (lib/db/mirror.ts; architecture review D8). These
+ * two calls no longer write it from here: they return the mirrored row as it
+ * stands (null without the substrate or before it is mirrored). Register and
+ * activate institutions through /api/org/ministries.
+ */
 export async function registerInstitutionRow(
   i: InstitutionUpsert,
 ): Promise<InstitutionRow | null> {
-  const sb = publicClient();
-  if (!sb) return null;
-  const { data, error } = await sb.rpc('civicos_register_institution', {
-    p_charter_id: i.charterId,
-    p_label: i.label,
-    p_kind: i.kind,
-    p_domain: i.domain,
-    p_archetype_or_branch: i.archetypeOrBranch,
-    p_grammar: i.grammar ?? null,
-    p_safeguards_constant: i.safeguardsConstant ?? null,
-    p_expected_domains: i.expectedDomains ?? null,
-    p_shipped_domains: i.shippedDomains ?? null,
-    p_meta: i.meta ?? {},
-  });
-  if (error) {
-    // eslint-disable-next-line no-console
-    logger.error('substrate.rpc_failed', { rpc: 'register_institution', message: error.message, code: error.code });
-    return null;
-  }
-  return (data as InstitutionRow) ?? null;
+  return institutionByCharterId(i.charterId);
 }
 
+/** The mirrored row; activation is the ministry registry's (/api/org/ministries/{id}/activate). */
 export async function activateInstitutionRow(charterId: string): Promise<InstitutionRow | null> {
-  const sb = publicClient();
-  if (!sb) return null;
-  const { data, error } = await sb.rpc('civicos_activate_institution', {
-    p_charter_id: charterId,
-  });
-  if (error) {
-    // eslint-disable-next-line no-console
-    logger.error('substrate.rpc_failed', { rpc: 'activate_institution', message: error.message, code: error.code });
-    return null;
-  }
-  return (data as InstitutionRow) ?? null;
+  return institutionByCharterId(charterId);
 }
 
 export async function listInstitutionsRows(opts: { kind?: InstitutionKind; activated?: boolean } = {}): Promise<InstitutionRow[]> {
