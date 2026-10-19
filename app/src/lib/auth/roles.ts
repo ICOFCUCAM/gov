@@ -64,7 +64,8 @@ export const PUBLIC_WRITE: RegExp[] = [/^\/api\/public-sites\/[a-z-]+\/subscribe
  * unset), the deployment agent's health reports (per-nation agent credential)
  * and a ministry's connected systems (their own ccf_ / facility feed keys).
  */
-export const SELF_AUTHENTICATED: RegExp[] = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/feed$/];
+export const SELF_AUTHENTICATED: RegExp[] = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/feed$/,
+  /^\/api\/federation\/exchange$/];  // an institution's integration key (verifyIntegrationKey), logged with a signed receipt
 /**
  * Routes that verify an `Authorization` bearer themselves (the automation
  * secret or a platform-tier substrate session: lib/platform-auth.ts,
@@ -81,6 +82,7 @@ export const BEARER_ROUTES: RegExp[] = [
 /** Read-only routes that verify a bearer themselves (machine readers such as a metrics scraper). */
 export const BEARER_READS: RegExp[] = [
   /^\/api\/metrics$/,                         // CIVICOS_METRICS_TOKEN, compared in constant time
+  /^\/api\/integrations\/verify$/,           // an integration key, compared by its hash in constant time
 ];
 /** True when the route checks the caller's own credential (bearer, agent or feed key). */
 export const verifiesOwnCredential = (pathname: string): boolean =>

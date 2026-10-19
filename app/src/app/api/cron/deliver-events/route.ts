@@ -12,6 +12,7 @@
 // Cadence: recommended every 1–5 minutes.
 
 import { NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/platform-auth';
 import { createHmac } from 'node:crypto';
 import { serverClient } from '@/lib/db/client';
 
@@ -28,14 +29,8 @@ interface EventRow {
   channel: string; payload: unknown; at: string; at_ms: number;
 }
 
-function authorized(req: Request): boolean {
-  const expected = process.env.CIVICOS_CRON_SECRET;
-  if (!expected) return false;
-  const url = new URL(req.url);
-  const token = url.searchParams.get('token')
-    ?? (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  return token.length > 0 && token === expected;
-}
+/** The cron secret, compared in constant time (lib/platform-auth.ts). */
+const authorized = (req: Request): boolean => cronAuthorized(req);
 
 /** Deliver one event; resolve to true on a 2xx, false otherwise. */
 async function deliver(url: string, secret: string, event: EventRow): Promise<{ ok: boolean; detail: string }> {

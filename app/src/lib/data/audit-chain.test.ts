@@ -14,7 +14,7 @@ describe('the audit chain (SHA-256, v2)', () => {
     expect(first!.alg).toBe('sha256-v2');
     expect(first!.hash).toMatch(/^[0-9a-f]{64}$/);
     expect(second!.prevHash).toBe(first!.hash);
-    expect(verifyAuditChain()).toEqual({ ok: true, checked: 2 });
+    expect(verifyAuditChain()).toMatchObject({ ok: true, checked: 2 });
   });
 
   it('breaks when any field changes — actor, time and detail included', () => {
@@ -32,7 +32,7 @@ describe('the audit chain (SHA-256, v2)', () => {
     const legacy: AuditEntry = { id: 'AU-OLD', at: '2026-01-01T00:00:00Z', actor: 'system', action: 'boot', resource: 'Platform', outcome: 'ok', seq: 1, prevHash: null, hash: legacyHash('GENESIS|boot|Platform|ok|1') };
     chain().push(legacy);
     recordAudit('Director', 'twin.source.run', 'Twin:SRC-1', 'ok');
-    expect(verifyAuditChain()).toEqual({ ok: true, checked: 2 });
+    expect(verifyAuditChain()).toMatchObject({ ok: true, checked: 2 });
     const e2 = chain()[1]!;
     const fallback: AuditEntry = { id: 'AU-FB', at: e2.at, actor: 'x', action: 'y', resource: 'z', outcome: 'ok', seq: 3, prevHash: e2.hash, hash: legacyHash(`${e2.hash}|y|z|ok|3`) };
     chain().push(fallback);

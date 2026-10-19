@@ -184,7 +184,7 @@ export function SetupWizard() {
 
   function applyPreset(p: SovereignPreset) {
     setPreset(p.key);
-    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant, constitution: cur?.constitution, paymentRail: cur?.paymentRail, timeZone: cur?.timeZone, emergency: cur?.emergency, foreignAffairs: cur?.foreignAffairs, map: cur?.map }));
+    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant, aiAssistantModel: cur?.aiAssistantModel, constitution: cur?.constitution, paymentRail: cur?.paymentRail, timeZone: cur?.timeZone, emergency: cur?.emergency, foreignAffairs: cur?.foreignAffairs, map: cur?.map }));
   }
 
   function addInstitution() {
@@ -534,6 +534,26 @@ export function SetupWizard() {
                     </span>
                   </span>
                 </label>
+                {profile.aiAssistant ? (
+                  <div className="mt-4 grid gap-4 sm:grid-cols-3" aria-label="AI model service">
+                    <Field label="Model service" hint="Anthropic Messages API, or an OpenAI-compatible API (most self-hosted model servers).">
+                      <Select value={profile.aiAssistantModel?.api ?? 'anthropic'} onChange={e => set('aiAssistantModel', { ...profile.aiAssistantModel, api: e.currentTarget.value as 'anthropic' | 'openai' })}>
+                        <option value="anthropic">Anthropic Messages API</option>
+                        <option value="openai">OpenAI-compatible API</option>
+                      </Select>
+                    </Field>
+                    <Field label="Service address" hint="Empty for the provider's public service; your sovereign or on-premises model's address otherwise.">
+                      <input className={inputCls} value={profile.aiAssistantModel?.endpoint ?? ''} placeholder="https://models.gov.example" onChange={e => set('aiAssistantModel', { api: profile.aiAssistantModel?.api ?? 'anthropic', ...profile.aiAssistantModel, endpoint: e.currentTarget.value.trim() })} />
+                    </Field>
+                    <Field label="Model" hint="Empty for the default model of the Anthropic service.">
+                      <input className={inputCls} value={profile.aiAssistantModel?.model ?? ''} placeholder="claude-haiku-4-5-20251001" onChange={e => set('aiAssistantModel', { api: profile.aiAssistantModel?.api ?? 'anthropic', ...profile.aiAssistantModel, model: e.currentTarget.value.trim() })} />
+                    </Field>
+                    <p className="text-[12px] font-light leading-relaxed text-white/45 sm:col-span-3">
+                      The service key is set on the server (CIVICOS_AI_API_KEY), never here. Nothing is sent to any model until an official
+                      also enables “AI advisory requests” in the data-sovereignty settings, with a reason.
+                    </p>
+                  </div>
+                ) : null}
               </Section>
             </div>
           )}
@@ -794,7 +814,7 @@ export function SetupWizard() {
                       ['Country', countries.find(c => c.iso3 === profile.iso3)?.name ?? '—'],
                       ['Chambers', constitutionFor(profile.stateForm, cleanConstitution(profile.constitution)).legislature.chambers.map(c => `${c.name} (${c.seats})`).join(' · ') + (inherited.includes('chambers') ? ' — template' : '')],
                       ['Regions', profile.regions?.length ? `${profile.regions.length} · ${profile.regions.slice(0, 3).join(', ')}${profile.regions.length > 3 ? '…' : ''}` : 'Reference set'],
-                      ['AI assistant', profile.aiAssistant ? 'On' : 'Off'],
+                      ['AI assistant', profile.aiAssistant ? `On · ${profile.aiAssistantModel?.endpoint ? `own model service (${profile.aiAssistantModel.model || 'model unset'})` : 'default service'}` : 'Off'],
                     ]} />
                     <Summary n="II" title="Identity" onEdit={() => setStep(1)} rows={[
                       ['Insignia', identity.seal], ['Colour', identity.accent], ['Motto', identity.motto || '—'],

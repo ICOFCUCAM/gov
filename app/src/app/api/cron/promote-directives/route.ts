@@ -8,18 +8,13 @@
 // Bearer. The secret never reaches the client bundle (server-only route).
 
 import { NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/platform-auth';
 import { serverClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
 
-function authorized(req: Request): boolean {
-  const expected = process.env.CIVICOS_CRON_SECRET;
-  if (!expected) return false;
-  const url = new URL(req.url);
-  const token = url.searchParams.get('token')
-    ?? (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  return token.length > 0 && token === expected;
-}
+/** The cron secret, compared in constant time (lib/platform-auth.ts). */
+const authorized = (req: Request): boolean => cronAuthorized(req);
 
 export async function POST(req: Request) {
   if (!authorized(req)) {

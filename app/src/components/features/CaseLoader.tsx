@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { api } from '@/lib/api/client';
 import type { CaseColumn, CaseFeed, CaseImport, CaseRefusal } from '@/lib/api/types';
 import { canManageFeeds } from '@/lib/auth/roles';
+import { FeedExchange } from '@/components/features/exchange/FeedExchange';
 import { useOfficial, useSignIn } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
@@ -220,7 +221,7 @@ Authorization: Bearer ${newKey.key}`}</pre>
                 <tbody>
                   {feeds.map(f => (
                     <tr key={f.id} className="border-b border-line-soft">
-                      <td className="py-1.5"><strong>{f.name}</strong></td>
+                      <td className="py-1.5"><strong>{f.name}</strong><FeedExchange kind="case" ministryId={inst} feedId={f.id} canManage={mayConnect && !f.revokedAt} /></td>
                       <td className="font-mono text-[12px]">ccf_{f.prefix}…</td>
                       <td>{when(f.issuedAt)}<div className="text-ink-muted">by {f.issuedBy}</div></td>
                       <td>{f.lastCallAt ? <>{when(f.lastCallAt)}<div className="text-ink-muted">{f.lastResult ? `${f.lastResult.added} added, ${f.lastResult.updated} updated, ${f.lastResult.refused} refused` : ''} · {f.calls} calls</div></> : 'Not yet'}</td>

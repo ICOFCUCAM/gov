@@ -7,7 +7,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { OFFICIAL_COOKIE, SESSION_HOURS, type OfficialClaims } from '@/lib/auth/session-token';
-import { checkPassword, hasAccounts } from '@/lib/auth/officials';
+import { checkPassword, hasAccounts, sessionSecretProblem } from '@/lib/auth/officials';
 import { currentOfficial, actorLabel, issueSession } from '@/lib/auth/official';
 import { serverClient } from '@/lib/db/client';
 import { recordAudit, getMinistry } from '@/lib/data/store';
@@ -31,6 +31,8 @@ export async function GET() {
     // Whether this server accepts changes: false on a standby that does not hold the
     // state writer's lease (lib/data/persist.ts). The middleware refuses changes then.
     state: { writable: stateWritable() },
+    // Why no session can be issued or verified (CIVICOS_AUTH=enforce without CIVICOS_SESSION_SECRET), else null.
+    sessionKeyProblem: sessionSecretProblem(),
   });
 }
 
@@ -50,11 +52,14 @@ async function substrateOfficial(token: string): Promise<Who | { error: string }
 
 export async function POST(req: NextRequest) {
   const b = (await req.json().catch(() => ({}))) as { method?: string; email?: string; password?: string; code?: string; accessToken?: string };
+  // Refuse before checking anyone's password when no session could be issued (CIVICOS_AUTH=enforce without CIVICOS_SESSION_SECRET).
+  const keyProblem = sessionSecretProblem();
+  if (keyProblem) return NextResponse.json({ error: keyProblem }, { status: 503 });
   let who: Who | { error: string };
   if (b.method === 'substrate') {
     who = b.accessToken ? await substrateOfficial(b.accessToken) : { error: 'No access token' };
   } else {
-    const a = checkPassword(b.email ?? '', b.password ?? '', Date.now(), b.code);
+    const a = await checkPassword(b.email ?? '', b.password ?? '', Date.now(), b.code);
     who = 'error' in a ? a : { sub: `local:${a.id}`, name: a.name, office: a.office, role: roleOf(a), institution: a.institution, twoStep: a.secondStep, twoStepRequired: a.twoStepRequired };
   }
   // { needsCode: true } tells the form to ask for the authenticator code.

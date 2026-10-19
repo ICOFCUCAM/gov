@@ -81,6 +81,22 @@ export interface AuditEntry {
   alg?: 'sha256-v2';
 }
 
+/** The platform chain's signed heads, as `/api/audit/verify` reports them (lib/audit/sign.ts). */
+export interface AuditSignedHeads {
+  ok: boolean;
+  signedHeads: number;
+  head?: { seq: number; hash: string; at: ISODate; keyId: string; production: boolean; anchoredAt?: ISODate; anchoredTo?: string[] };
+  currentKey?: boolean;
+  problem?: string;
+}
+
+export interface AuditVerification {
+  ok: boolean;
+  checked: number;
+  brokenAtSeq?: number;
+  signed?: AuditSignedHeads;
+}
+
 export interface CreatePermitInput {
   type: PermitType;
   title: string;
@@ -261,6 +277,11 @@ export interface IntegrationClient {
   rateLimitRpm: number;
   createdAt: ISODate;
   approvedBy?: string;
+  /** First 8 hex of the API key (`civ_<prefix>_…`), to recognise it; the key is shown once and kept only as a SHA-256 hash. Absent on clients registered before keys were kept. */
+  keyPrefix?: string;
+  keyIssuedAt?: ISODate;
+  lastUsedAt?: ISODate;
+  calls?: number;
 }
 
 export interface IntegrationRegistered {
@@ -272,6 +293,16 @@ export interface IntegrationRegistered {
 
 export type FederationStatus = 'proposed' | 'approved' | 'revoked';
 
+/** What a partner may do with data received under a grant (ODRL-like; lib/exchange/usage-policy.ts). */
+export interface UsagePolicy {
+  /** Purposes the data may be used for (short words, e.g. "oversight", "statistics"). */
+  purposes: string[];
+  /** Days the partner may keep the data. */
+  retentionDays: number;
+  /** Whether the partner may pass the data on to a third party. */
+  onwardSharing: boolean;
+}
+
 export interface FederationGrant {
   id: string;
   fromTenant: string;
@@ -282,6 +313,8 @@ export interface FederationGrant {
   createdAt: ISODate;
   approvedBy?: string;
   expiresAt?: ISODate;
+  /** Absent on grants made before usage policies: exchanges under them are refused until one is set. */
+  policy?: UsagePolicy;
 }
 
 export type WebhookStatus = 'active' | 'paused' | 'disabled';
@@ -293,6 +326,8 @@ export interface WebhookSubscription {
   status: WebhookStatus;
   failures: number;
   createdAt: ISODate;
+  lastDeliveryAt?: ISODate;
+  lastDeliveryDetail?: string;
 }
 
 export interface WebhookCreated {
@@ -586,6 +621,9 @@ export interface SovereignProfile {
   accent?: string;          // sovereign theme accent (hex)
   motto?: string;           // formal national style / motto
   aiAssistant?: boolean;    // nation opted in to the AI assistant (false = off; unset = legacy on)
+  /** Which model service the AI assistant uses (setup 1.6): the default provider, or the nation's own
+   *  sovereign / on-premises model. Its key is never stored here (CIVICOS_AI_API_KEY). */
+  aiAssistantModel?: AiAssistantModel;
   iso3?: string;            // ISO 3166-1 alpha-3 country code — drives the national map
   paymentRail?: string;     // the nation's domestic payment rail, e.g. "Mobile Money", "Instant Payments"
   timeZone?: string;        // IANA time zone of the capital, e.g. "Africa/Kampala"
@@ -1769,7 +1807,17 @@ export interface Contract {
 }
 
 // ── Update Center: data-sovereignty controls ──────────────────────────
-export type DataCategory = 'crash-reports' | 'usage-metrics' | 'health-reports' | 'support-attachments';
+/** The model service behind the AI assistant. */
+export interface AiAssistantModel {
+  /** 'anthropic' (Messages API; default) or 'openai' (an OpenAI-compatible chat completions API, as most self-hosted model servers offer). */
+  api: 'anthropic' | 'openai';
+  /** Base address of the service; empty = the provider's public service. */
+  endpoint?: string;
+  /** Model name at that service. */
+  model?: string;
+}
+
+export type DataCategory = 'crash-reports' | 'usage-metrics' | 'health-reports' | 'support-attachments' | 'ai-advisory';
 export interface DataCategoryInfo {
   key: DataCategory;
   label: string;

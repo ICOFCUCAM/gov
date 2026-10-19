@@ -9,7 +9,9 @@
 // process. It is sufficient for Phase 1 demo/preview. Production uses a
 // durable sovereign datastore.
 
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
+import { take } from '@/lib/exchange/rate-limit';
+import { usageRefusal, obligations, type UsageRequest } from '@/lib/exchange/usage-policy';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { locales } from '@/lib/i18n/config';
 import type {
@@ -100,9 +102,27 @@ import { scoreInstitution } from '@/lib/institution/readiness';
 import { blueprintFor } from '@/lib/institution/blueprint';
 import { federationSeed } from '@/lib/institution/federation';
 import { regionList, applyNation, nationPaymentRail, nationRegions } from '@/lib/nation/registry';
+import { maybeSignHead, verifySignedHeads, type SignedHeadCheck } from '@/lib/audit/sign';
+import { noteAudit, advanceCursor } from '@/lib/events/outbox';
+import { seal, open as openSealed } from '@/lib/crypto/envelope';
 
+/** A new record id: the prefix and 10 hex digits from a CSPRNG (randomUUID). Ids made before (6 base-36 characters) stay valid: ids are only ever compared as strings. */
 function uid(prefix: string): string {
-  return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  return `${prefix}-${randomUUID().replace(/-/g, '').slice(0, 10).toUpperCase()}`;
+}
+
+/** JSON with object keys in sorted order, so the same content always gives the same bytes. */
+function canonicalJson(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(canonicalJson).join(',')}]`;
+  if (v && typeof v === 'object' && !(v instanceof Date)) {
+    return `{${Object.keys(v).sort().filter(k => (v as Record<string, unknown>)[k] !== undefined).map(k => `${JSON.stringify(k)}:${canonicalJson((v as Record<string, unknown>)[k])}`).join(',')}}`;
+  }
+  return JSON.stringify(v) ?? 'null';
+}
+
+/** Content address of a configuration bundle: `sha256:<hex>` over its canonical JSON. Bundles published before keep their earlier 32-bit hash. */
+export function configContentHash(payload: Record<string, unknown>): string {
+  return `sha256:${createHash('sha256').update(canonicalJson(payload), 'utf8').digest('hex')}`;
 }
 
 /**
@@ -223,6 +243,7 @@ function seed() {
       reason: 'Health ministry oversight of food-handling permits',
       createdAt: days(-15),
       approvedBy: 'STO',
+      policy: { purposes: ['oversight'], retentionDays: 365, onwardSharing: false },
     },
   ];
   const webhooks: WebhookSubscription[] = [
@@ -275,7 +296,11 @@ function seed() {
   };
   const setup = null as PlatformSetup | null;
 
-  return { setup, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
+  // SHA-256 of each integration's API key, by client id (the key itself is shown once and never kept).
+  const integrationKeys: Record<string, string> = {};
+  // Each webhook's HMAC signing secret, sealed under CIVICOS_DATA_KEK when set (lib/crypto/envelope.ts).
+  const webhookSecrets: Record<string, string> = {};
+  return { setup, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, integrationKeys, webhookSecrets, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
 }
 
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
@@ -295,6 +320,10 @@ function appendAudit(
   const pg = globalThis as { __persistChanges?: number };
   pg.__persistChanges = (pg.__persistChanges ?? 0) + 1;
   db.audit.push(entry);
+  // The CloudEvent for this change, in the same step as its audit entry (lib/events/outbox.ts).
+  noteAudit(entry);
+  // Every N entries or T minutes the head is signed (lib/audit/sign.ts).
+  maybeSignHead(entry);
   return entry;
 }
 
@@ -404,6 +433,8 @@ export function verifyAuditChain(): {
   ok: boolean;
   checked: number;
   brokenAtSeq?: number;
+  /** The signed heads (lib/audit/sign.ts): the last one, and whether every one still matches the chain. */
+  signed?: SignedHeadCheck;
 } {
   let prevHash: string | null = null;
   let upgraded = false;
@@ -418,7 +449,15 @@ export function verifyAuditChain(): {
     }
     prevHash = e.hash;
   }
-  return { ok: true, checked: db.audit.length };
+  const bySeq = new Map(db.audit.map(e => [e.seq, e]));
+  const signed = verifySignedHeads(seq => bySeq.get(seq));
+  return signed.ok ? { ok: true, checked: db.audit.length, signed } : { ok: false, checked: db.audit.length, signed };
+}
+
+/** The chain's current head (sequence and hash), for signing and anchoring. */
+export function auditHead(): { seq: number; hash: string } | null {
+  const e = db.audit[db.audit.length - 1];
+  return e ? { seq: e.seq, hash: e.hash } : null;
 }
 
 // ── Payments ──────────────────────────────────────────────────────────
@@ -734,9 +773,7 @@ export function registerIntegration(input: {
   if (db.integrations.some(i => i.name === input.name)) {
     return { error: 'Name already registered' };
   }
-  const rawKey = `civ_${Math.random().toString(36).slice(2)}${Math.random()
-    .toString(36)
-    .slice(2)}`;
+  const { rawKey, prefix } = newIntegrationKey();
   const client: IntegrationClient = {
     id: uid('IC'),
     kind: input.kind,
@@ -746,15 +783,72 @@ export function registerIntegration(input: {
     status: 'pending',
     rateLimitRpm: 120,
     createdAt: new Date().toISOString(),
+    keyPrefix: prefix,
+    keyIssuedAt: new Date().toISOString(),
   };
   db.integrations.unshift(client);
-  appendAudit('operator', 'integration.register', `Integration:${client.id}`, 'ok', input.name);
+  db.integrationKeys[client.id] = sha256Hex(rawKey);
+  appendAudit('operator', 'integration.register', `Integration:${client.id}`, 'ok', `${input.name} · civ_${prefix}…`);
   return {
     id: client.id,
     status: client.status,
     apiKey: rawKey,
-    note: 'Store this key now — it is not recoverable. PENDING until a ministry operator approves it.',
+    note: 'Store this key now: it is shown once and kept only as a SHA-256 hash. PENDING until a ministry operator approves it.',
   };
+}
+
+const sha256Hex = (v: string) => createHash('sha256').update(v, 'utf8').digest('hex');
+const INTEGRATION_KEY = /^civ_([0-9a-f]{8})_[A-Za-z0-9_-]{43}$/;
+
+/** `civ_<8 hex prefix>_<32 random bytes, base64url>`: the prefix finds the client, the hash proves the key. */
+function newIntegrationKey(): { rawKey: string; prefix: string } {
+  const prefix = randomBytes(4).toString('hex');
+  return { rawKey: `civ_${prefix}_${randomBytes(32).toString('base64url')}`, prefix };
+}
+
+/** Issue a new key for a client (the old one stops working at once); shown once, audited. */
+export function rotateIntegrationKey(id: string, by: string): IntegrationRegistered | { error: string } {
+  const c = db.integrations.find(i => i.id === id);
+  if (!c) return { error: 'Integration not found' };
+  if (c.status === 'revoked') return { error: 'A revoked integration gets no new key' };
+  const { rawKey, prefix } = newIntegrationKey();
+  c.keyPrefix = prefix;
+  c.keyIssuedAt = new Date().toISOString();
+  db.integrationKeys[c.id] = sha256Hex(rawKey);
+  appendAudit(by, 'integration.key.rotate', `Integration:${c.id}`, 'ok', `civ_${prefix}…`);
+  return { id: c.id, status: c.status, apiKey: rawKey, note: 'Store this key now: it is shown once. The previous key no longer works.' };
+}
+
+export type IntegrationAccess =
+  | { ok: true; client: IntegrationClient; remaining: number }
+  | { ok: false; status: 401 | 403 | 429; error: string; retryAfterSeconds?: number };
+
+/**
+ * Check an integration's API key on use (Authorization: Bearer civ_…): the
+ * key's SHA-256 is compared in constant time with the one kept, the client
+ * must be approved and hold `scope` (when given), and its `rateLimitRpm` is
+ * enforced as a token bucket per client.
+ */
+export function verifyIntegrationKey(authorization: string | null | undefined, scope?: string, now = Date.now()): IntegrationAccess {
+  const key = (authorization ?? '').replace(/^Bearer\s+/i, '').trim();
+  const m = INTEGRATION_KEY.exec(key);
+  if (!m) return { ok: false, status: 401, error: 'Send the integration key: Authorization: Bearer civ_…' };
+  const want = Buffer.from(sha256Hex(key), 'hex');
+  const client = db.integrations.find(c => {
+    if (c.keyPrefix !== m[1]) return false;
+    const h = db.integrationKeys[c.id];
+    if (!h) return false;
+    const have = Buffer.from(h, 'hex');
+    return have.length === want.length && timingSafeEqual(have, want);
+  });
+  if (!client) return { ok: false, status: 401, error: 'Unknown or replaced integration key' };
+  if (client.status !== 'approved') return { ok: false, status: 403, error: `This integration is ${client.status}` };
+  if (scope && !client.scopes.includes(scope)) return { ok: false, status: 403, error: `Scope '${scope}' is not granted to this integration` };
+  const rate = take(`integration:${client.id}`, client.rateLimitRpm, now);
+  if (!rate.allowed) return { ok: false, status: 429, error: `Rate limit of ${client.rateLimitRpm} requests a minute reached`, retryAfterSeconds: rate.retryAfterSeconds };
+  client.lastUsedAt = new Date(now).toISOString();
+  client.calls = (client.calls ?? 0) + 1;
+  return { ok: true, client, remaining: rate.remaining };
 }
 
 export function setIntegrationStatus(
@@ -781,7 +875,11 @@ export function proposeGrant(input: {
   scopes: string[];
   reason: string;
   expiresAt?: string;
+  policy?: FederationGrant['policy'];
+  by?: string;
 }): FederationGrant | { error: string } {
+  const by = input.by?.trim() || 'operator';
+  const policyNote = input.policy ? `purposes ${input.policy.purposes.join(', ')}; keep ${input.policy.retentionDays} days; onward sharing ${input.policy.onwardSharing ? 'allowed' : 'not allowed'}` : undefined;
   if (input.toTenant === HOME_TENANT) {
     return { error: 'A tenant cannot federate with itself' };
   }
@@ -793,7 +891,8 @@ export function proposeGrant(input: {
     existing.reason = input.reason;
     existing.status = 'proposed';
     existing.expiresAt = input.expiresAt;
-    appendAudit('operator', 'federation.propose', `Grant:${existing.id}`, 'ok');
+    if (input.policy) existing.policy = input.policy;
+    appendAudit(by, 'federation.propose', `Grant:${existing.id}`, 'ok', policyNote);
     return existing;
   }
   const grant: FederationGrant = {
@@ -805,9 +904,10 @@ export function proposeGrant(input: {
     reason: input.reason,
     createdAt: new Date().toISOString(),
     expiresAt: input.expiresAt,
+    ...(input.policy ? { policy: input.policy } : {}),
   };
   db.grants.unshift(grant);
-  appendAudit('operator', 'federation.propose', `Grant:${grant.id}`, 'ok');
+  appendAudit(by, 'federation.propose', `Grant:${grant.id}`, 'ok', policyNote);
   return grant;
 }
 
@@ -844,6 +944,24 @@ export function federationCheck(
   return { allowed: true, reason: 'granted' };
 }
 
+/**
+ * A partner's exchange under a grant (/api/federation/exchange): the
+ * default-deny decision of federationCheck(), the grant it rests on, and an
+ * audit entry naming the calling integration.
+ */
+export function federationExchange(input: { tenant: string; scope: string; client: Pick<IntegrationClient, 'id' | 'name'>; usage?: UsageRequest }, now = Date.now()): FederationCheck & { grantId?: string; obligations?: ReturnType<typeof obligations> } {
+  const grant = db.grants.find(x => x.fromTenant === HOME_TENANT && x.toTenant === input.tenant);
+  let d: FederationCheck = federationCheck(input.tenant, input.scope);
+  // The grant's usage policy (purpose, retention, onward sharing) is enforced at the exchange.
+  if (d.allowed && grant) {
+    const why = usageRefusal(grant.policy, input.usage ?? {});
+    if (why) d = { allowed: false, reason: why };
+  }
+  const purpose = typeof input.usage?.purpose === 'string' ? ` · purpose ${input.usage.purpose}` : '';
+  appendAudit(`Integration: ${input.client.name} (${input.client.id})`, 'federation.exchange', grant ? `Grant:${grant.id}` : `Tenant:${input.tenant}`, d.allowed ? 'ok' : 'denied', `${input.scope}${purpose} · ${d.reason}`);
+  return { ...d, ...(grant ? { grantId: grant.id } : {}), ...(d.allowed && grant?.policy ? { obligations: obligations(grant.policy, now) } : {}) };
+}
+
 export function listWebhooks(): WebhookSubscription[] {
   return [...db.webhooks].sort(
     (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
@@ -854,9 +972,7 @@ export function subscribeWebhook(input: {
   topic: string;
   url: string;
 }): WebhookCreated {
-  const secret = `whsec_${Math.random().toString(36).slice(2)}${Math.random()
-    .toString(36)
-    .slice(2)}`;
+  const secret = `whsec_${randomBytes(32).toString('base64url')}`;
   const sub: WebhookSubscription = {
     id: uid('WH'),
     topic: input.topic,
@@ -866,13 +982,47 @@ export function subscribeWebhook(input: {
     createdAt: new Date().toISOString(),
   };
   db.webhooks.unshift(sub);
-  appendAudit('operator', 'webhook.subscribe', `Webhook:${sub.id}`, 'ok', input.topic);
+  db.webhookSecrets[sub.id] = seal(secret, `webhook:${sub.id}`);
+  const head = appendAudit('operator', 'webhook.subscribe', `Webhook:${sub.id}`, 'ok', input.topic);
+  // A new subscriber receives events from now on, not the history.
+  advanceCursor(sub.id, head.seq);
   return {
     id: sub.id,
     topic: sub.topic,
     signingSecret: secret,
-    note: 'Store this secret now. Verify HMAC-SHA256 of `${timestamp}.${body}`; reject timestamps older than 300s.',
+    note: WEBHOOK_NOTE,
   };
+}
+
+const WEBHOOK_NOTE = 'Store this secret now: it is shown once. Deliveries are CloudEvents 1.0 (application/cloudevents+json); verify X-CivicOS-Signature = sha256=HMAC-SHA256(secret, `${X-CivicOS-Timestamp}.${body}`) and reject timestamps older than 300s.';
+
+/** The webhook's signing secret, or null when it has none the server can read (made before secrets were kept, or sealed under another key). */
+export function webhookSigningSecret(id: string): string | null {
+  const stored = db.webhookSecrets[id];
+  if (!stored) return null;
+  const r = openSealed(stored, `webhook:${id}`);
+  if ('error' in r) return null;
+  if (r.reseal) db.webhookSecrets[id] = seal(r.plain, `webhook:${id}`);
+  return r.plain;
+}
+
+/** A new signing secret for a webhook (shown once; the old one stops at once). Audited. */
+export function rotateWebhookSecret(id: string, by: string): WebhookCreated | { error: string } {
+  const w = db.webhooks.find(x => x.id === id);
+  if (!w) return { error: 'Subscription not found' };
+  const secret = `whsec_${randomBytes(32).toString('base64url')}`;
+  db.webhookSecrets[id] = seal(secret, `webhook:${id}`);
+  appendAudit(by, 'webhook.secret.rotate', `Webhook:${id}`, 'ok');
+  return { id, topic: w.topic, signingSecret: secret, note: WEBHOOK_NOTE };
+}
+
+/** Record a delivery run's result on the subscription (consecutive failures; reset on success). */
+export function noteWebhookDelivery(id: string, ok: boolean, detail: string, now = Date.now()): void {
+  const w = db.webhooks.find(x => x.id === id);
+  if (!w) return;
+  w.failures = ok ? 0 : (w.failures ?? 0) + 1;
+  w.lastDeliveryAt = new Date(now).toISOString();
+  w.lastDeliveryDetail = detail.slice(0, 200);
 }
 
 export function setWebhookStatus(
@@ -1082,7 +1232,7 @@ export function publishConfig(payload: Record<string, unknown>): ConfigBundle {
     id: uid('CFG'),
     scope: 'global',
     version: (last?.version ?? 0) + 1,
-    contentHash: hash(JSON.stringify(payload)),
+    contentHash: configContentHash(payload),
     state: 'draft',
     createdAt: new Date().toISOString(),
   };
@@ -1627,6 +1777,17 @@ export function setSovereign(
     }
     if (m.projection !== undefined && !MAP_PROJECTIONS.includes(m.projection)) return { error: 'Unknown map projection' };
     if (m.worldview !== undefined && !isWorldview(m.worldview)) return { error: 'Unknown point of view for disputed territory' };
+  }
+  if (patch.aiAssistantModel !== undefined) {
+    const m = patch.aiAssistantModel;
+    if (!m || typeof m !== 'object' || (m.api !== 'anthropic' && m.api !== 'openai')) return { error: 'The AI model service must say its API: anthropic or openai' };
+    if (m.endpoint !== undefined && m.endpoint !== '') {
+      let u: URL | null = null;
+      try { u = new URL(m.endpoint); } catch { u = null; }
+      if (!u || (u.protocol !== 'https:' && u.protocol !== 'http:') || u.username || u.password) return { error: 'The model service address must be an http(s) address without a user name or password' };
+    }
+    if (m.model !== undefined && m.model !== '' && !/^[A-Za-z0-9._:/@-]{1,100}$/.test(m.model)) return { error: 'The model name may use letters, digits and . _ : / @ - (up to 100)' };
+    patch = { ...patch, aiAssistantModel: { api: m.api, ...(m.endpoint ? { endpoint: m.endpoint.replace(/\/+$/, '') } : {}), ...(m.model ? { model: m.model } : {}) } };
   }
   if (patch.languages !== undefined && (!Array.isArray(patch.languages) || patch.languages.length > 10 || patch.languages.some(l => typeof l !== 'string' || !locales.some(x => x.code === l)))) {
     return { error: 'Further languages must be language codes the platform has' };

@@ -97,6 +97,9 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         label: m.name,
+        institution: id,
+        // Every figure here comes from the reference model: the model is told they are samples.
+        kinds: { readiness: 'sample', incidents: 'sample', budgetPressure: 'sample', slaCompliance: 'sample' },
         posture: stressTier >= 2 ? 'CRISIS' : stressTier === 1 ? 'ELEVATED' : 'NOMINAL',
         escalationTier: stressTier,
         readiness: 100 - stress,

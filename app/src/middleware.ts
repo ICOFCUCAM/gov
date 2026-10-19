@@ -16,7 +16,7 @@ import { apiPermission, PUBLIC_WRITE, SELF_AUTHENTICATED, verifiesOwnCredential 
 // the institution register (also public in the Government Directory) and the
 // audit chain's integrity check used by the start-up sequence; and how
 // officials sign in (the sign-in form reads it before anyone has a session).
-const PUBLIC_READ = [/^\/api\/auth\/official$/, /^\/api\/sovereign$/, /^\/api\/boundaries\/active$/, /^\/api\/map-pack\/districts$/,/^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/];
+const PUBLIC_READ = [/^\/api\/auth\/official$/, /^\/api\/sovereign$/, /^\/api\/boundaries\/active$/, /^\/api\/exchange\/key$/, /^\/api\/map-pack\/districts$/,/^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/];
 // Public writes (email updates) and self-authenticating machine routes are
 // defined with the permission rules in lib/auth/roles.ts.
 const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/fonts\//, /^\/api\/health/];

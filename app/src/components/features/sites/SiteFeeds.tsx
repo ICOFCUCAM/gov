@@ -12,6 +12,7 @@ import Link from 'next/link';
 import { useOfficial } from '@/lib/official';
 import type { SiteFeed } from '@/lib/data/facilities';
 import { Msg, btn, callApi, input, when } from './shared';
+import { FeedExchange } from '@/components/features/exchange/FeedExchange';
 
 export function SiteFeeds({ id, name, accepted }: { id: string; name?: string; accepted: boolean }) {
   const [official] = useOfficial();
@@ -72,7 +73,7 @@ Authorization: Bearer ${newKey.key}`}</pre>
           <tbody>
             {feeds.map(f => (
               <tr key={f.id} className="border-b border-line-soft">
-                <td data-label="System" className="py-1.5"><strong>{f.name}</strong></td>
+                <td data-label="System" className="py-1.5"><strong>{f.name}</strong><FeedExchange kind="site" ministryId={id} feedId={f.id} canManage={!f.revokedAt} /></td>
                 <td data-label="Key" className="font-mono text-[12px]">csf_{f.prefix}…</td>
                 <td data-label="Connected">{when(f.issuedAt)}<div className="text-ink-muted">by {f.issuedBy}</div></td>
                 <td data-label="Last call">{f.lastCallAt ? <>{when(f.lastCallAt)}<div className="text-ink-muted">{f.lastResult} · {f.calls} calls</div></> : 'Not yet'}</td>

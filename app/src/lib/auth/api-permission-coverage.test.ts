@@ -85,7 +85,8 @@ describe('every mutating API route is covered by a permission rule', () => {
     for (const re of BEARER_READS) {
       const file = walk(api).find(f => re.test('/api' + f.slice(api.length).replace(/\\/g, '/').replace(/\/route\.ts$/, '')));
       expect(file, String(re)).toBeTruthy();
-      expect(readFileSync(file!, 'utf8')).toMatch(/timingSafeEqual/);
+      // Compared in the route, or through a verifier that compares hashes in constant time.
+      expect(readFileSync(file!, 'utf8')).toMatch(/timingSafeEqual|verifyIntegrationKey\(/);
     }
   });
 });

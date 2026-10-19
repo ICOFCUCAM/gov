@@ -39,6 +39,12 @@
       "name": "documents"
     },
     {
+      "name": "events"
+    },
+    {
+      "name": "exchange"
+    },
+    {
       "name": "facilities"
     },
     {
@@ -165,6 +171,7 @@
         ],
         "operationId": "post_ai_advisory",
         "summary": "POST /api/ai/advisory",
+        "description": "The AI advisory for a console panel (per-nation opt-in; register 2.1). The body is validated (lib/ai/advisory-input.ts: types, ranges, a label cap, control characters stripped), each figure carries its SignalKind and the prompt tells the model which figures are samples. Every call is audited: who asked, the model, SHA-256 of the prompt and of the answer, and whether the model or the rule-based fallback answered. The request is operational data leaving the platform, so it goes through the data-sovereignty gate (lib/data/sovereignty.ts, category 'ai-advisory': off unless a named official enabled it); when it is off the panel gets the rule-based advisory and nothing is sent. The model service is the nation's choice (SovereignProfile.aiAssistantModel: the default provider or its own sovereign / on-premises model; lib/ai/model.ts). Each official may ask CIVICOS_AI_RPM times a minute (default 10).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -879,18 +886,10 @@
         ],
         "operationId": "get_cron_audit_anchor",
         "summary": "GET /api/cron/audit-anchor",
-        "description": "Audit-chain anchoring cron — periodically broadcasts the head of every visible audit scope as a federation event of type 'audit.anchor' on channel 'constitutional'. External systems that subscribe to the federation stream get a continuous live record of where each chain pointed at known wall-clock times. Complements the witness-attestation system: - audit_witnesses table is the append-only, public, tamper-proof record (provable retroactively). - federation 'audit.anchor' events are the realtime broadcast channel (subscribers see it as it happens; consumers can persist externally for an independent record). Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: every 5–15 minutes. Idempotent — anchoring the same head produces an event with the same content, but federation events are append-only so duplicate broadcasts are allowed (consumers dedupe by (scope, seq) if they care).",
+        "description": "Audit-chain anchoring cron — periodically broadcasts the head of every visible audit scope as a federation event of type 'audit.anchor' on channel 'constitutional'. External systems that subscribe to the federation stream get a continuous live record of where each chain pointed at known wall-clock times. Complements the witness-attestation system: - audit_witnesses table is the append-only, public, tamper-proof record (provable retroactively). - federation 'audit.anchor' events are the realtime broadcast channel (subscribers see it as it happens; consumers can persist externally for an independent record). The platform's own chain (lib/data/store.ts) is anchored too: its head is signed (lib/audit/sign.ts), written to the append-only anchor file outside the state (file mode, lib/audit/anchor.ts) and, with the substrate connected, broadcast as scope 'platform' with its signature. Without the substrate only the platform head is anchored. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: every 5–15 minutes. Idempotent — anchoring the same head produces an event with the same content, but federation events are append-only so duplicate broadcasts are allowed (consumers dedupe by (scope, seq) if they care).",
         "parameters": [
           {
             "name": "scopes",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "token",
             "in": "query",
             "required": false,
             "schema": {
@@ -921,7 +920,7 @@
         ],
         "operationId": "post_cron_audit_anchor",
         "summary": "POST /api/cron/audit-anchor",
-        "description": "Audit-chain anchoring cron — periodically broadcasts the head of every visible audit scope as a federation event of type 'audit.anchor' on channel 'constitutional'. External systems that subscribe to the federation stream get a continuous live record of where each chain pointed at known wall-clock times. Complements the witness-attestation system: - audit_witnesses table is the append-only, public, tamper-proof record (provable retroactively). - federation 'audit.anchor' events are the realtime broadcast channel (subscribers see it as it happens; consumers can persist externally for an independent record). Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: every 5–15 minutes. Idempotent — anchoring the same head produces an event with the same content, but federation events are append-only so duplicate broadcasts are allowed (consumers dedupe by (scope, seq) if they care).",
+        "description": "Audit-chain anchoring cron — periodically broadcasts the head of every visible audit scope as a federation event of type 'audit.anchor' on channel 'constitutional'. External systems that subscribe to the federation stream get a continuous live record of where each chain pointed at known wall-clock times. Complements the witness-attestation system: - audit_witnesses table is the append-only, public, tamper-proof record (provable retroactively). - federation 'audit.anchor' events are the realtime broadcast channel (subscribers see it as it happens; consumers can persist externally for an independent record). The platform's own chain (lib/data/store.ts) is anchored too: its head is signed (lib/audit/sign.ts), written to the append-only anchor file outside the state (file mode, lib/audit/anchor.ts) and, with the substrate connected, broadcast as scope 'platform' with its signature. Without the substrate only the platform head is anchored. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: every 5–15 minutes. Idempotent — anchoring the same head produces an event with the same content, but federation events are append-only so duplicate broadcasts are allowed (consumers dedupe by (scope, seq) if they care).",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -959,16 +958,7 @@
         "operationId": "get_cron_audit_self",
         "summary": "GET /api/cron/audit-self",
         "description": "Audit-self cron — appends a heartbeat audit entry to the 'substrate:self' scope on each invocation. Pairs with the audit-chain verification: the scope's chain grows continuously, giving the verify_audit_chain coverage sweep a guaranteed sample on every recent run. Also useful as a liveness signal for external monitors observing the audit table.",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "OK",
@@ -1022,6 +1012,68 @@
         "x-source": "src/app/api/cron/audit-self/route.ts"
       }
     },
+    "/api/cron/deliver-cloudevents": {
+      "get": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "get_cron_deliver_cloudevents",
+        "summary": "GET /api/cron/deliver-cloudevents",
+        "description": "Delivers the platform's event outbox (lib/events/outbox.ts) to its webhook subscribers as CloudEvents 1.0, structured mode, HMAC-SHA256 signed (lib/events/deliver.ts). The substrate's own federation events keep their worker (/api/cron/deliver-events). Auth: CIVICOS_CRON_SECRET (Authorization: Bearer). Cadence: every 1–5 minutes.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/cron/deliver-cloudevents/route.ts"
+      },
+      "post": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "post_cron_deliver_cloudevents",
+        "summary": "POST /api/cron/deliver-cloudevents",
+        "description": "Delivers the platform's event outbox (lib/events/outbox.ts) to its webhook subscribers as CloudEvents 1.0, structured mode, HMAC-SHA256 signed (lib/events/deliver.ts). The substrate's own federation events keep their worker (/api/cron/deliver-events). Auth: CIVICOS_CRON_SECRET (Authorization: Bearer). Cadence: every 1–5 minutes.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/cron/deliver-cloudevents/route.ts"
+      }
+    },
     "/api/cron/deliver-events": {
       "get": {
         "tags": [
@@ -1030,16 +1082,7 @@
         "operationId": "get_cron_deliver_events",
         "summary": "GET /api/cron/deliver-events",
         "description": "Outbound federation webhook delivery worker. For each active civicos.event_webhooks row, finds federation events on its channel newer than its cursor and POSTs each to the registered URL with an HMAC-SHA256 signature header. On an all-2xx run the cursor advances to the last delivered event's at_ms; on the first failure the cursor holds (so the next run retries from the same point) and the failure is recorded. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Delivery is at-least-once per cursor; consumers dedupe on event id. Cadence: recommended every 1–5 minutes.",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "OK",
@@ -1101,16 +1144,7 @@
         "operationId": "get_cron_expire_consents",
         "summary": "GET /api/cron/expire-consents",
         "description": "Periodic consent auto-expiry. Citizens grant time-bound consents (`expires_at` in the future); past expiry they should flip to 'expired' so officer-side surfaces see them as no-longer-valid and the citizen's wallet doesn't show them as live. civicos.expire_due_consents performs the flip and writes one audit-chain entry per expired consent on the citizen's scope, so the citizen can trace exactly which consent expired and when. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: recommended hourly.",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "OK",
@@ -1172,16 +1206,7 @@
         "operationId": "get_cron_posture_digest",
         "summary": "GET /api/cron/posture-digest",
         "description": "Per-charter posture aggregator. Reads each activated institution's open pressure (work items + escalations + dispatches), derives a posture / readiness / stress reading, and appends a posture_history snapshot. Designed to run on a slow cadence (every 30 minutes or so); produces a continuous timeline visible on /gov/posture without requiring any operator to manually snapshot.",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "OK",
@@ -1243,16 +1268,7 @@
         "operationId": "get_cron_promote_directives",
         "summary": "GET /api/cron/promote-directives",
         "description": "Periodic directive-promotion worker — call civicos.promote_due_directives to flip any directive signed for a future effective date to 'effective' once that date arrives. Without this a future-dated directive stays 'signed' forever. Designed for a scheduler (Vercel Cron, Supabase scheduled function, etc.). Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. The secret never reaches the client bundle (server-only route).",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "OK",
@@ -1384,14 +1400,6 @@
             "schema": {
               "type": "string"
             }
-          },
-          {
-            "name": "token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
           }
         ],
         "responses": {
@@ -1455,16 +1463,7 @@
         "operationId": "get_cron_substrate_metrics",
         "summary": "GET /api/cron/substrate-metrics",
         "description": "Substrate self-metrics emitter. Defines (idempotent) a small set of substrate-level telemetry streams and appends a sample to each on every invocation. Hit periodically by a scheduler — counts become time-series in the substrate's own telemetry tables, visible on /gov/telemetry. Threshold breaches auto-escalate via the existing telemetry → escalation trigger.",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "OK",
@@ -1529,14 +1528,6 @@
         "parameters": [
           {
             "name": "minutes",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "token",
             "in": "query",
             "required": false,
             "schema": {
@@ -1729,16 +1720,7 @@
         "operationId": "get_cron_witness_divergence",
         "summary": "GET /api/cron/witness-divergence",
         "description": "Tamper-detection watchdog. Runs after witness-sweep on the same cadence (or slower) and looks for any audit scope where a recorded attestation disagrees with the live chain. Each divergence becomes: 1. A `civicos.escalations` row at severity 'major', source 'substrate', reason 'witness-divergence:<scope>'. 2. A `civicos.federation_events` entry on channel 'constitutional', type 'audit.divergence', so any subscribed watcher sees it. Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer. Cadence: every 15 minutes (same as witness-sweep, but staggered). Idempotent: re-recording the same divergence is silently deduplicated by escalation reason — the operator sees one row, not one per cron tick.",
-        "parameters": [
-          {
-            "name": "token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "responses": {
           "200": {
             "description": "OK",
@@ -1803,14 +1785,6 @@
         "parameters": [
           {
             "name": "scopes",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "token",
             "in": "query",
             "required": false,
             "schema": {
@@ -2072,6 +2046,129 @@
           }
         },
         "x-source": "src/app/api/documents/verify/route.ts"
+      }
+    },
+    "/api/events": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "get_events",
+        "summary": "GET /api/events",
+        "description": "The platform's event outbox (lib/events/outbox.ts): the most recent CloudEvents and webhook delivery attempts, newest first. ?limit= (≤ 200).",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/events/route.ts"
+      }
+    },
+    "/api/exchange/key": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_key",
+        "summary": "GET /api/exchange/key",
+        "description": "The platform's exchange public key (Ed25519 SPKI PEM): what senders verify their receipts with (lib/exchange/log.ts). `production: false` means a development key signed them (CIVICOS_EXCHANGE_KEY not set).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/exchange/key/route.ts"
+      }
+    },
+    "/api/exchange/log": {
+      "get": {
+        "tags": [
+          "exchange"
+        ],
+        "operationId": "get_exchange_log",
+        "summary": "GET /api/exchange/log",
+        "description": "The platform's side of the exchange log (lib/exchange/log.ts): recent requests from connected systems and federation partners, newest first. ?channel=case-feed|site-feed|federation &feedId= &ministry= &limit= (≤ 500).",
+        "parameters": [
+          {
+            "name": "channel",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "ministry",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/exchange/log/route.ts"
       }
     },
     "/api/facilities/{fid}": {
@@ -2598,6 +2695,43 @@
         "x-source": "src/app/api/federation/check/route.ts"
       }
     },
+    "/api/federation/exchange": {
+      "post": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "post_federation_exchange",
+        "summary": "POST /api/federation/exchange",
+        "description": "A federation partner's request for data under a grant (review R10): the partner's system presents its integration key (Authorization: Bearer civ_…, scope `federation:exchange`) and POSTs { tenant, scope, purpose, retainDays?, onward? }. The grant's usage policy is enforced: a purpose outside it, a longer retention or onward sharing it does not allow is refused with the reason; an allowed exchange returns the obligations. The platform decides with the same default-deny rule as /api/federation/check, records the exchange in the exchange log on its side and answers with a signed receipt for the partner's side. Every decision is audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/federation/exchange/route.ts"
+      }
+    },
     "/api/federation/grants/{id}/approve": {
       "post": {
         "tags": [
@@ -2641,6 +2775,42 @@
           }
         },
         "x-source": "src/app/api/federation/grants/[id]/approve/route.ts"
+      }
+    },
+    "/api/federation/grants/{id}/policy": {
+      "get": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "get_federation_grants_id_policy",
+        "summary": "GET /api/federation/grants/{id}/policy",
+        "description": "A grant's usage policy as an ODRL 2.2 Agreement (JSON-LD): purposes, retention (a delete duty) and onward sharing (a distribute prohibition).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/federation/grants/[id]/policy/route.ts"
       }
     },
     "/api/federation/grants/{id}/revoke": {
@@ -2939,6 +3109,52 @@
         "x-source": "src/app/api/integrations/[id]/revoke/route.ts"
       }
     },
+    "/api/integrations/{id}/rotate": {
+      "post": {
+        "tags": [
+          "integrations"
+        ],
+        "operationId": "post_integrations_id_rotate",
+        "summary": "POST /api/integrations/{id}/rotate",
+        "description": "Issue a new API key for an integration: shown once, kept only as a SHA-256 hash; the previous key stops working at once. Audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/integrations/[id]/rotate/route.ts"
+      }
+    },
     "/api/integrations": {
       "get": {
         "tags": [
@@ -2997,6 +3213,42 @@
           }
         },
         "x-source": "src/app/api/integrations/route.ts"
+      }
+    },
+    "/api/integrations/verify": {
+      "get": {
+        "tags": [
+          "integrations"
+        ],
+        "operationId": "get_integrations_verify",
+        "summary": "GET /api/integrations/verify",
+        "description": "An integration checks its own key (Authorization: Bearer civ_…), and gateways in front of other routes ask here: the key is compared by its SHA-256 in constant time, the client must be approved (and hold ?scope= when given), and its rateLimitRpm applies (429 with Retry-After). Authenticated by the key itself, never a session.",
+        "parameters": [
+          {
+            "name": "scope",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/integrations/verify/route.ts"
       }
     },
     "/api/map-pack/districts": {
@@ -3774,7 +4026,7 @@
         ],
         "operationId": "get_org_ministries_id_facilities_feed",
         "summary": "GET /api/org/ministries/{id}/facilities/feed",
-        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites.",
+        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header).",
         "parameters": [
           {
             "name": "id",
@@ -3816,7 +4068,7 @@
         ],
         "operationId": "post_org_ministries_id_facilities_feed",
         "summary": "POST /api/org/ministries/{id}/facilities/feed",
-        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites.",
+        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header).",
         "parameters": [
           {
             "name": "id",
@@ -3907,6 +4159,144 @@
           }
         },
         "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/[feedId]/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/facilities/feeds/{feedId}/signing-key": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_facilities_feeds_feedId_signing_key",
+        "summary": "GET /api/org/ministries/{id}/facilities/feeds/{feedId}/signing-key",
+        "description": "The public key a connected site system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/[feedId]/signing-key/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_facilities_feeds_feedId_signing_key",
+        "summary": "POST /api/org/ministries/{id}/facilities/feeds/{feedId}/signing-key",
+        "description": "The public key a connected site system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/[feedId]/signing-key/route.ts"
+      },
+      "delete": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "delete_org_ministries_id_facilities_feeds_feedId_signing_key",
+        "summary": "DELETE /api/org/ministries/{id}/facilities/feeds/{feedId}/signing-key",
+        "description": "The public key a connected site system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/[feedId]/signing-key/route.ts"
       }
     },
     "/api/org/ministries/{id}/facilities/feeds": {
@@ -4604,7 +4994,7 @@
         ],
         "operationId": "get_org_ministries_id_queue_feed",
         "summary": "GET /api/org/ministries/{id}/queue/feed",
-        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited.",
+        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header), so both sides keep the record.",
         "parameters": [
           {
             "name": "id",
@@ -4646,7 +5036,7 @@
         ],
         "operationId": "post_org_ministries_id_queue_feed",
         "summary": "POST /api/org/ministries/{id}/queue/feed",
-        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited.",
+        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header), so both sides keep the record.",
         "parameters": [
           {
             "name": "id",
@@ -4737,6 +5127,144 @@
           }
         },
         "x-source": "src/app/api/org/ministries/[id]/queue/feeds/[feedId]/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/queue/feeds/{feedId}/signing-key": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_queue_feeds_feedId_signing_key",
+        "summary": "GET /api/org/ministries/{id}/queue/feeds/{feedId}/signing-key",
+        "description": "The public key a connected case system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feeds/[feedId]/signing-key/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_queue_feeds_feedId_signing_key",
+        "summary": "POST /api/org/ministries/{id}/queue/feeds/{feedId}/signing-key",
+        "description": "The public key a connected case system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feeds/[feedId]/signing-key/route.ts"
+      },
+      "delete": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "delete_org_ministries_id_queue_feeds_feedId_signing_key",
+        "summary": "DELETE /api/org/ministries/{id}/queue/feeds/{feedId}/signing-key",
+        "description": "The public key a connected case system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feeds/[feedId]/signing-key/route.ts"
       }
     },
     "/api/org/ministries/{id}/queue/feeds": {
@@ -10135,14 +10663,6 @@
         "description": "Substrate digest API — programmatic equivalent of the /gov/substrate \"download digest\" button. Computes per-view row counts and (optionally) the chain integrity sweep, returning a JSON snapshot. Auth: requires the CIVICOS_CRON_SECRET shared secret (Bearer or ?token=). The endpoint uses the service-role client so counts are global (RLS-unfiltered) — that's what an external archive/auditor wants. Do not expose without the secret.",
         "parameters": [
           {
-            "name": "token",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "verify",
             "in": "query",
             "required": false,
@@ -10215,14 +10735,6 @@
         "parameters": [
           {
             "name": "cap",
-            "in": "query",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "token",
             "in": "query",
             "required": false,
             "schema": {
@@ -11419,6 +11931,52 @@
           }
         },
         "x-source": "src/app/api/webhooks/[id]/pause/route.ts"
+      }
+    },
+    "/api/webhooks/{id}/rotate": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "operationId": "post_webhooks_id_rotate",
+        "summary": "POST /api/webhooks/{id}/rotate",
+        "description": "Issue a new HMAC signing secret for a webhook subscription: shown once, kept sealed (CIVICOS_DATA_KEK); the previous secret stops at once. Audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/webhooks/[id]/rotate/route.ts"
       }
     },
     "/api/webhooks": {

@@ -39,6 +39,7 @@ export interface SiteTranslationString {
 export type PublicSiteRow = SiteSettings & { name: string; role: string };
 import type {
   AuditEntry,
+  AuditVerification,
   Bill,
   CreatePermitInput,
   DecidePermitInput,
@@ -223,7 +224,7 @@ export const api = {
   audit: {
     list: () => req<{ events: AuditEntry[] }>('/api/audit'),
     verify: () =>
-      req<{ ok: boolean; checked: number; brokenAtSeq?: number }>('/api/audit/verify'),
+      req<AuditVerification>('/api/audit/verify'),
   },
   ops: {
     overview: () => req<OpsOverview>('/api/ops/overview'),
@@ -274,10 +275,12 @@ export const api = {
         req<{ integration: IntegrationClient }>(`/api/integrations/${id}/approve`, { method: 'POST', body: '{}' }),
       revoke: (id: string) =>
         req<{ integration: IntegrationClient }>(`/api/integrations/${id}/revoke`, { method: 'POST', body: '{}' }),
+      rotate: (id: string) =>
+        req<IntegrationRegistered>(`/api/integrations/${id}/rotate`, { method: 'POST', body: '{}' }),
     },
     federation: {
       grants: () => req<{ grants: FederationGrant[] }>('/api/federation/grants'),
-      propose: (body: { toTenant: string; scopes: string[]; reason: string; expiresAt?: string }) =>
+      propose: (body: { toTenant: string; scopes: string[]; reason: string; expiresAt?: string; policy: { purposes: string[]; retentionDays: number; onwardSharing: boolean } }) =>
         req<{ grant: FederationGrant }>('/api/federation/propose', {
           method: 'POST',
           body: JSON.stringify(body),
@@ -300,6 +303,8 @@ export const api = {
         }),
       pause: (id: string) =>
         req<{ webhook: WebhookSubscription }>(`/api/webhooks/${id}/pause`, { method: 'POST', body: '{}' }),
+      rotate: (id: string) =>
+        req<WebhookCreated>(`/api/webhooks/${id}/rotate`, { method: 'POST', body: '{}' }),
     },
   },
   platform: {
