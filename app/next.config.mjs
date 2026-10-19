@@ -17,7 +17,9 @@ const nextConfig = {
     // files, lib/geo/boundary-files.ts) carries its WebAssembly inline.
     serverComponentsExternalPackages: ['sql.js'],
   },
-  // Security headers (security-headers.mjs, mirrored in vercel.json).
+  // Security headers (security-headers.mjs, mirrored in vercel.json). The
+  // Content-Security-Policy carries a nonce per request and is set by the
+  // middleware (src/middleware.ts).
   async headers() {
     return [
       {

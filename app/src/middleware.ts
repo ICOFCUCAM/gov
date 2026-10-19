@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { OFFICIAL_COOKIE, verifyToken, type OfficialClaims } from '@/lib/auth/session-token';
 import { apiPermission, PUBLIC_WRITE, SELF_AUTHENTICATED, verifiesOwnCredential } from '@/lib/auth/roles';
+import { contentSecurityPolicy } from '../security-headers.mjs';
 
 // Sovereign access gate. Real and correct, but enforcement is opt-in so a
 // public prototype/preview is not bricked: set CIVICOS_AUTH=enforce to
@@ -128,15 +129,34 @@ async function roleGate(req: NextRequest, next: () => NextResponse | Promise<Nex
  * quote it when reporting a problem.
  */
 const REQUEST_ID = /^[A-Za-z0-9._-]{8,80}$/;
+
+/**
+ * Content-Security-Policy with a nonce per request (security-headers.mjs):
+ * a fresh 128-bit nonce goes to the page render in the request's
+ * `content-security-policy` header (Next.js puts it on its own scripts) and
+ * `x-nonce` (the root layout's inline script), and the same policy goes out
+ * on the answer. Inline scripts without it do not run. The embeddable
+ * widgets (/embed/*) keep the policy their route sets.
+ */
+export const NONCE_HEADER = 'x-nonce';
+function newNonce(): string {
+  const b = new Uint8Array(16);
+  crypto.getRandomValues(b);
+  return btoa(String.fromCharCode(...b));
+}
+const ownPolicy = (pathname: string) => !pathname.startsWith('/embed/');
+
 export async function middleware(req: NextRequest): Promise<NextResponse> {
   const given = req.headers.get('x-request-id');
   const id = given && REQUEST_ID.test(given) ? given : crypto.randomUUID();
-  const out = await handle(req, id);
+  const nonce = newNonce();
+  const out = await handle(req, id, nonce);
   out.headers.set('x-request-id', id);
+  if (ownPolicy(req.nextUrl.pathname)) out.headers.set('content-security-policy', contentSecurityPolicy(nonce));
   return out;
 }
 
-function handle(req: NextRequest, requestId: string): NextResponse | Promise<NextResponse> {
+function handle(req: NextRequest, requestId: string, nonce: string): NextResponse | Promise<NextResponse> {
   // Defence in depth for CVE-2025-29927: a request carrying Next.js's former
   // internal subrequest header is refused (the patched Next.js no longer sends
   // it, so only an outside caller can).
@@ -145,6 +165,13 @@ function handle(req: NextRequest, requestId: string): NextResponse | Promise<Nex
   }
   const forwarded = new Headers(req.headers);
   forwarded.set('x-request-id', requestId);
+  // Whatever a caller sent in these is replaced: only the middleware's nonce counts.
+  forwarded.delete(NONCE_HEADER);
+  forwarded.delete('content-security-policy');
+  if (ownPolicy(req.nextUrl.pathname)) {
+    forwarded.set(NONCE_HEADER, nonce);
+    forwarded.set('content-security-policy', contentSecurityPolicy(nonce));
+  }
   const res = NextResponse.next({ request: { headers: forwarded } });
   // A bearer skips the role rules only where the route verifies it itself.
   if (process.env.CIVICOS_SESSION_SECRET && req.cookies.get(OFFICIAL_COOKIE)?.value && !bearerRequest(req)
