@@ -19,6 +19,7 @@
     "audit:sites": "node scripts/audit-public-sites.mjs",
     "scan:colours": "node scripts/scan-colours.mjs --max 3166",
     "build:openapi": "node scripts/build-openapi.mjs",
+    "build:db-types": "node scripts/build-db-types.mjs",
     "audit:deps": "node scripts/audit-deps.mjs",
     "soak": "SOAK=1 vitest run src/soak.test.ts",
     "smoke:console": "node scripts/smoke-console.mjs",
