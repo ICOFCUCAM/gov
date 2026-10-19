@@ -38,7 +38,7 @@ export default async function ReceiptPage(props: PageProps) {
 
   if (!receipt) {
     return (
-      <main className="bg-bg min-h-screen">
+      <div className="bg-bg min-h-screen">
         <PhoneShell
           activeTab="/wallet"
           header={
@@ -50,12 +50,12 @@ export default async function ReceiptPage(props: PageProps) {
         >
           <p>{m.detail.notFoundReceipt}</p>
         </PhoneShell>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet"
         header={
@@ -111,6 +111,6 @@ export default async function ReceiptPage(props: PageProps) {
           <SupportActions receiptId={receipt.id} hash={receipt.hash} />
         </section>
       </PhoneShell>
-    </main>
+    </div>
   );
 }

@@ -15,7 +15,7 @@ export default function PermitsPage() {
   const permits = listPermits();
 
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet/services"
         header={
@@ -70,6 +70,6 @@ export default function PermitsPage() {
           </Link>
         </div>
       </PhoneShell>
-    </main>
+    </div>
   );
 }

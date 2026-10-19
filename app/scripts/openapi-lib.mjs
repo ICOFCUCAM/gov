@@ -203,7 +203,7 @@ export async function scanRoutes(appDir) {
     });
     const methods = METHODS.filter(m => new RegExp(`export\\s+(async\\s+)?function\\s+${m}\\b|export\\s+const\\s+${m}\\b`).test(src));
     const query = [...new Set([...src.matchAll(/(?:searchParams|\bq|\bparams|\bsp)\.get\(\s*['"]([\w.-]+)['"]\s*\)/g)].map(m => m[1]))].filter(q => !params.includes(q)).sort();
-    const multipart = /\.formData\(\)/.test(src);
+    const multipart = /\.formData\(\)|\breadForm\(/.test(src);
     const form = /x-www-form-urlencoded/.test(src);
     const examples = routeExamples(src, path.relative(appDir, f));
     const p = ('/api/' + segs.join('/')).replace(/\/$/, '');

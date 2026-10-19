@@ -11,6 +11,7 @@
 // Every call with a recognised key is recorded in the exchange log (lib/exchange/log.ts) and
 // answered with a receipt signed by the platform (`receipt`, and the
 // CivicOS-Receipt header), so both sides keep the record.
+import { readText, TOO_LARGE as OVER_CAP } from '@/lib/net/body-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { feedForKey, receiveFeed, feedChanges, MAX_BYTES } from '@/lib/data/case-import';
 import type { CaseFeed } from '@/lib/api/types';
@@ -53,8 +54,10 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
   const busyKey = keyGate(req, where, feed.id);
   if (busyKey) return busyKey;
   if (declaresTooLarge(req, MAX_BYTES)) return answer(req, params.id, feed, '', { state: 'absent' }, 413, { error: TOO_LARGE }, 'too large (declared length)');
-  const raw = await req.text();
-  if (Buffer.byteLength(raw) > MAX_BYTES) return answer(req, params.id, feed, raw, { state: 'absent' }, 413, { error: TOO_LARGE }, 'too large');
+  // Read with the byte cap, also when no length is declared (lib/net/body-limit.ts, review L-4).
+  const read = await readText(req, MAX_BYTES);
+  if (read === OVER_CAP) return answer(req, params.id, feed, '', { state: 'absent' }, 413, { error: TOO_LARGE }, 'too large');
+  const raw = read;
   const sig = signatureOf(feed, req, raw);
   if (sig.reason) return answer(req, params.id, feed, raw, sig, 401, { error: sig.reason }, `signature refused: ${sig.reason}`);
   let body: unknown;

@@ -5,7 +5,8 @@
 // installs an uploaded geoBoundaries file, { action: 'remove', reason? }
 // returns the maps to the bundled districts (or none).
 import { NextRequest, NextResponse } from 'next/server';
-import { districtPackStatus, installDistrictsFromFile, installDistrictsFromGeoBoundaries, removeInstalledDistricts } from '@/lib/data/map-pack';
+import { districtPackStatus, installDistrictsFromFile, installDistrictsFromGeoBoundaries, removeInstalledDistricts, MAX_PACK_BYTES } from '@/lib/data/map-pack';
+import { readJson, TOO_LARGE, tooLargeAnswer } from '@/lib/net/body-limit';
 import { refusal, withOfficial } from '@/lib/auth/official';
 import { adminOnly } from '@/lib/auth/roles';
 import { limit } from '@/lib/ops/rate-limit';
@@ -20,7 +21,11 @@ export async function POST(req: NextRequest) {
   if (limited) return limited;
   const refused = await refusal(adminOnly);
   if (refused) return refused;
-  const b = (await withOfficial(await req.json().catch(() => ({})))) as Record<string, unknown> & { by?: string };
+  // Read with a byte cap (lib/net/body-limit.ts, review L-4): an uploaded pack (MAX_PACK_BYTES) and its
+  // metadata as JSON strings, escaping included.
+  const body = await readJson(req, 2 * MAX_PACK_BYTES + 1_000_000);
+  if (body === TOO_LARGE) return tooLargeAnswer(MAX_PACK_BYTES, 'The file');
+  const b = (await withOfficial(body && typeof body === 'object' ? body : {})) as Record<string, unknown> & { by?: string };
   const str = (k: string) => (typeof b[k] === 'string' ? (b[k] as string) : undefined);
   const by = b.by ?? '';
   const r = b.action === 'install' ? await installDistrictsFromGeoBoundaries(by, { adm: str('adm') })

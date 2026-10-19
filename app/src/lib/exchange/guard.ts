@@ -10,6 +10,7 @@
 // 3. a limit per key, once the key is known;
 // 4. the declared body size, before the body is read.
 
+import { declaresOver } from '@/lib/net/body-limit';
 import { NextResponse, type NextRequest } from 'next/server';
 import { POLICIES, take, clientAddress, tooMany } from '@/lib/ops/rate-limit-core';
 import { logger, requestIdOf } from '@/lib/ops/log';
@@ -41,8 +42,7 @@ export function unknownCaller(w: Where, status: number, result: string, json: Re
   return NextResponse.json(json, { status, headers });
 }
 
-/** The body size the request declares is over `max` (checked before reading it; the read length is checked after). */
+/** The body size the request declares is over `max` (checked before reading it; the body is then read with the same cap, lib/net/body-limit.ts). */
 export function declaresTooLarge(req: NextRequest, max: number): boolean {
-  const n = Number(req.headers.get('content-length') ?? '');
-  return Number.isFinite(n) && n > max;
+  return declaresOver(req, max);
 }

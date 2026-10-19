@@ -76,9 +76,16 @@ services:
       # refuses to overwrite newer state). Do not scale this service.
       CIVICOS_STATE: file
       CIVICOS_STATE_DIR: /data
-      # Leave CIVICOS_AUTH empty for a local demo; set it to enforce (with a
-      # real CIVICOS_SESSION_SECRET of 32+ characters) for anything shared.
+      # Sign-in is enforced in this production image unless CIVICOS_AUTH=open
+      # (go-live review L-2; lib/auth/mode.ts). Set CIVICOS_AUTH=open only for a
+      # local demonstration: the server warns at start and every console page
+      # shows a banner. For anything shared, set a real CIVICOS_SESSION_SECRET
+      # of 32+ characters and sign in with the setup code below.
       CIVICOS_AUTH: ${CIVICOS_AUTH:-}
+      # Proxies in front that append to X-Forwarded-For (review L-1): 0 when
+      # browsers reach port 3000 directly; 1 behind the edge profile (nginx
+      # below), and then do not publish port 3000.
+      CIVICOS_TRUSTED_PROXIES: ${CIVICOS_TRUSTED_PROXIES:-0}
       CIVICOS_SESSION_SECRET: ${CIVICOS_SESSION_SECRET:-local-only-session-secret-change-me-0001}
       CIVICOS_CRON_SECRET: ${CIVICOS_CRON_SECRET:-local-only-cron-secret-change-me-0001}
       # One secret per purpose (the cron secret opens only /api/cron/*); empty = no machine caller for that purpose.

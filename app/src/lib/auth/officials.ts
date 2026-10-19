@@ -7,6 +7,7 @@
 // substrate connected, officials sign in there instead and this store is
 // only the fallback. Held in platform state (lib/data/persist.ts).
 
+import { authEnforced } from './mode';
 import { randomBytes, scrypt, timingSafeEqual, randomUUID, createHash, type ScryptOptions } from 'node:crypto';
 import { matchStep, newSecret, otpauthUri } from './totp';
 import { seal, open as openSealed } from '@/lib/crypto/envelope';
@@ -201,9 +202,9 @@ export function needsRehash(stored: string): boolean {
  * snapshot mint sessions.
  */
 export function sessionSecretProblem(env: NodeJS.ProcessEnv = process.env): string | null {
-  if (env.CIVICOS_AUTH !== 'enforce') return null;
+  if (!authEnforced(env)) return null;
   const s = env.CIVICOS_SESSION_SECRET ?? '';
-  if (!s) return 'Sign-in is enforced (CIVICOS_AUTH=enforce) but CIVICOS_SESSION_SECRET is not set, so no session can be issued or verified. Set it to a random value of at least 32 characters, kept outside the platform state.';
+  if (!s) return 'Sign-in is enforced (CIVICOS_AUTH=enforce, or a production server without CIVICOS_AUTH=open) but CIVICOS_SESSION_SECRET is not set, so no session can be issued or verified. Set it to a random value of at least 32 characters, kept outside the platform state.';
   if (s.length < 32) return 'CIVICOS_SESSION_SECRET is shorter than 32 characters; with sign-in enforced, sessions are refused until it is replaced with a longer random value.';
   return null;
 }

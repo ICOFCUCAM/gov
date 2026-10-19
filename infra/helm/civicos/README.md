@@ -61,7 +61,8 @@ checksum database) and kubeconform (release binary, SHA-256 checked).
 |---|---|---|
 | `app.replicas` | `1` | more than 1 only with `app.state.mode: postgres` (or `app.allowMultipleWriters`, standbys only) |
 | `app.allowMultipleWriters` | `false` | |
-| `app.auth` | `enforce` | `CIVICOS_AUTH`; anything else opens the gate (demonstrations only) |
+| `app.auth` | `enforce` | `CIVICOS_AUTH`; the production image stays enforced for any other value except `open` (demonstrations only: a warning at start and a banner on every console page; go-live review L-2) |
+| `app.trustedProxies` | `1` | `CIVICOS_TRUSTED_PROXIES`: proxies in front that append to `X-Forwarded-For` (the ingress-nginx controller is one; add one for an appending cloud load balancer). Per-address rate limits count this many hops from the right (review L-1) |
 | `app.existingSecret` | `civicos-app` | keys `CIVICOS_SESSION_SECRET`, `CIVICOS_CRON_SECRET` (required); `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (optional, the substrate) |
 | `app.state.mode` | `supabase` | `supabase`, `file` (persistent volume) or `postgres` (`postgres.existingSecret`; per-record tables, several replicas) |
 | `app.state.size` / `storageClassName` | `5Gi` / `""` | file mode volume |

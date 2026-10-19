@@ -29,8 +29,10 @@ export function OfficialAccounts() {
 
   const load = React.useCallback(async () => {
     const r = await fetch('/api/auth/officials', { cache: 'no-store' });
-    if (r.ok) setList(((await r.json()) as { accounts: Account[] }).accounts);
+    if (r.ok) { const d = (await r.json()) as { accounts: Account[]; full?: boolean }; setList(d.accounts); setFull(d.full !== false); }
   }, []);
+  // Only administrators get the full list (email, sign-ins, second step); others see a directory (review L-3).
+  const [full, setFull] = React.useState(false);
   React.useEffect(() => { if (s?.official) void load(); }, [s?.official, load]);
   React.useEffect(() => {
     void fetch('/api/org/ministries', { cache: 'no-store' }).then(r => (r.ok ? r.json() : { ministries: [] }))
@@ -129,6 +131,20 @@ export function OfficialAccounts() {
               <button type="button" className={btn} onClick={() => setIssued(null)}>Done</button>
             </div>
           ) : null}
+          {!full ? (
+            <table className="w-full text-[13px]">
+              <caption className="pb-2 text-start text-ink-soft">Officials with a platform account. Only an administrator sees their email, sign-ins and second step.</caption>
+              <thead><tr className="border-b border-line text-start text-ink-muted"><th className="py-1.5 text-start font-semibold">Official</th><th className="text-start font-semibold">For</th></tr></thead>
+              <tbody>
+                {(list ?? []).map(a => (
+                  <tr key={a.id} className="border-b border-line-soft">
+                    <td className="py-1.5"><strong>{a.name}</strong><div className="text-ink-muted">{a.office}</div></td>
+                    <td>{placeName(a.institution)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
           <table className="w-full text-[13px]">
             <thead><tr className="border-b border-line text-start text-ink-muted"><th className="py-1.5 text-start font-semibold">Official</th><th className="text-start font-semibold">May do</th><th className="text-start font-semibold">For</th><th className="text-start font-semibold">Email</th><th className="text-start font-semibold">Created</th><th className="text-start font-semibold">Last sign-in</th><th className="text-start font-semibold">Second step</th><th className="text-start font-semibold">Status</th><th /></tr></thead>
             <tbody>
@@ -176,6 +192,7 @@ export function OfficialAccounts() {
               ))}
             </tbody>
           </table>
+          )}
         </>
       )}
     </div>

@@ -2,6 +2,7 @@
 // under the named (verified, when signed in) official; audited. A signed-in
 // official signs or withdraws only when they can sign, and only their own
 // institution's directives (lib/auth/roles.ts); drafts are seen only there.
+import { authEnforced } from '@/lib/auth/mode';
 import { NextRequest, NextResponse } from 'next/server';
 import { directive, signDirective, rescindDirective, settleDirectives } from '@/lib/data/directives';
 import { withOfficial, currentOfficial, refusal } from '@/lib/auth/official';
@@ -16,7 +17,7 @@ export async function GET(_req: NextRequest, props: { params: Promise<{ ref: str
   for (const ref of settleDirectives()) queueMirror('directive', ref);
   const d = directive(params.ref);
   const o = await currentOfficial();
-  const hidden = d?.status === 'drafting' && (o ? !canSeeDraft(o, d.issued_by_charter_id) : process.env.CIVICOS_AUTH === 'enforce');
+  const hidden = d?.status === 'drafting' && (o ? !canSeeDraft(o, d.issued_by_charter_id) : authEnforced());
   if (!d || hidden) return NextResponse.json({ error: 'No such directive' }, { status: 404 });
   return NextResponse.json({ directive: d });
 }

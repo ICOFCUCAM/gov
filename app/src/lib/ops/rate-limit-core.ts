@@ -48,10 +48,34 @@ export function take(key: string, p: Policy, now = Date.now()): { ok: boolean; r
 
 export function resetRateLimits(): void { buckets().clear(); }
 
-/** The client address a request came from (the ingress's X-Forwarded-For first hop, else X-Real-IP). */
-export function clientAddress(headers: { get(name: string): string | null }): string {
-  const fwd = headers.get('x-forwarded-for')?.split(',')[0]?.trim();
-  return fwd || headers.get('x-real-ip') || 'unknown';
+/**
+ * How many proxies in front of the platform append to X-Forwarded-For
+ * (go-live review L-1): CIVICOS_TRUSTED_PROXIES, default 0. The server itself
+ * appends the address the connection came from as the last hop
+ * (lib/ops/peer-address.ts, started from src/instrumentation.ts), so with 0
+ * the address is that connection's and nothing a caller writes in the header
+ * counts. Behind one proxy that appends (ingress-nginx, the compose edge with
+ * $proxy_add_x_forwarded_for, an AWS ALB) set 1; behind a load balancer and
+ * an ingress, 2. On a platform that replaces the header with the caller's own
+ * address and runs no Node server of ours (Vercel), leave it at 0.
+ */
+export function trustedProxies(env: Record<string, string | undefined> = process.env): number {
+  const n = Number.parseInt(env.CIVICOS_TRUSTED_PROXIES ?? '', 10);
+  return Number.isFinite(n) && n > 0 ? Math.min(n, 10) : 0;
+}
+
+/**
+ * The client address a request came from, for every per-address limit (the
+ * middleware, lib/ops/rate-limit.ts, the exchange guard and the email-update
+ * requests): the hop that many trusted proxies from the right of
+ * X-Forwarded-For, never one further left (those the caller writes). When
+ * the header has fewer hops, the left-most is taken (the proxies in front
+ * sent the caller's own). X-Real-IP counts only behind a trusted proxy.
+ */
+export function clientAddress(headers: { get(name: string): string | null }, proxies = trustedProxies()): string {
+  const hops = (headers.get('x-forwarded-for') ?? '').split(',').map(h => h.trim()).filter(Boolean);
+  if (hops.length) return hops[Math.max(0, hops.length - 1 - proxies)]!;
+  return (proxies > 0 ? headers.get('x-real-ip')?.trim() : '') || 'unknown';
 }
 
 /** The 429 answer: Retry-After and the RateLimit headers (IETF draft) so well-behaved clients slow down. */

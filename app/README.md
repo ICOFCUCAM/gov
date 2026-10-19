@@ -80,11 +80,21 @@ pnpm build
 pnpm start
 ```
 
+A production build enforces sign-in (go-live review L-2): set
+`CIVICOS_SESSION_SECRET` (32+ random characters) and create the first
+administrator at `/sign-in` with the setup code the server prints. For a
+local demonstration only, `CIVICOS_AUTH=open pnpm start` leaves it open (the
+server warns at start and every console page shows a banner).
+
 ## Deploying to Vercel (preview)
 
 ```bash
 vercel deploy
 ```
+
+A Vercel deployment is a production build too: give a preview
+`CIVICOS_AUTH=open` (a demonstration) or `CIVICOS_SESSION_SECRET`.
+Leave `CIVICOS_TRUSTED_PROXIES` at 0 there (Vercel sets the caller's address).
 
 Sovereign deployment notes:
 

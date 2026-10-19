@@ -10,6 +10,7 @@
 // When the grant names the partner's client certificate (mutual TLS,
 // lib/exchange/mtls.ts), the exchange is refused unless the ingress verified
 // that very certificate for this request.
+import { readText, TOO_LARGE as OVER_CAP } from '@/lib/net/body-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyIntegrationKey, federationExchange, recordAudit } from '@/lib/data/store';
 import { exchangeResponse } from '@/lib/exchange/log';
@@ -33,10 +34,11 @@ export async function POST(req: NextRequest): Promise<NextResponse> {
   }
   const busyKey = keyGate(req, where, access.client.id);
   if (busyKey) return busyKey;
-  const tooLarge = declaresTooLarge(req, MAX_BYTES);
-  const raw = tooLarge ? '' : await req.text();
+  // Read with the byte cap, also when no length is declared (lib/net/body-limit.ts, review L-4).
+  const read = declaresTooLarge(req, MAX_BYTES) ? OVER_CAP : await readText(req, MAX_BYTES);
+  const raw = read === OVER_CAP ? '' : read;
   const base = { channel: 'federation' as const, method: req.method, path: req.nextUrl.pathname, body: raw, signature: 'absent' as const };
-  if (tooLarge || Buffer.byteLength(raw) > MAX_BYTES) {
+  if (read === OVER_CAP) {
     return exchangeResponse({ ...base, feedId: access.client.id, status: 413, result: 'too large' }, { error: 'A federation request is at most 64 kB' });
   }
   let b: { tenant?: unknown; scope?: unknown; [k: string]: unknown };

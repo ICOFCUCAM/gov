@@ -9,6 +9,7 @@
 // gate like every non-public route, and, when CIVICOS_AUTH=enforce, also
 // requires a platform-tier officer session or CIVICOS_PUBLISHER_SECRET (bearer).
 
+import { authEnforced } from '@/lib/auth/mode';
 import { NextResponse } from 'next/server';
 import { platformOrSecretAuthorized } from '@/lib/platform-auth';
 import { resolveNation } from '@/lib/data/updates';
@@ -16,7 +17,7 @@ import type { SubscribedNation } from '@/lib/api/types';
 import { pathRefusal, withOfficial } from '@/lib/auth/official';
 
 export async function publisherAuthorized(req: Request): Promise<boolean> {
-  if (process.env.CIVICOS_AUTH !== 'enforce') return true;
+  if (!authEnforced()) return true;
   return platformOrSecretAuthorized(req, 'publisher');
 }
 

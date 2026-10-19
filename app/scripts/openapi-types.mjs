@@ -181,6 +181,8 @@ function bodyType(checker, call, reqName) {
   for (let i = 0; i < 12 && n.parent; i++) {
     const p = n.parent;
     if (ts.isAwaitExpression(p) || ts.isParenthesizedExpression(p) || ts.isNonNullExpression(p)) { n = p; continue; }
+    // body && typeof body === 'object' ? body : {}: the branch that is the body.
+    if (ts.isConditionalExpression(p) && (p.whenTrue === n || p.whenFalse === n)) { n = p; continue; }
     // req.json().catch(() => ({}))
     if (ts.isPropertyAccessExpression(p) && p.name.text === 'catch' && ts.isCallExpression(p.parent)) { n = p.parent; continue; }
     if (ts.isAsExpression(p) || ts.isSatisfiesExpression?.(p)) {
@@ -253,7 +255,9 @@ export function extractTypes(appDir, routeFiles, { includeApiTypes = true } = {}
         each(fn, n => {
           if (t || !ts.isCallExpression(n)) return;
           const e = n.expression;
-          const isJson = ts.isPropertyAccessExpression(e) && e.name.text === 'json' && n.arguments.length === 0 && e.expression.getText() === reqName;
+          // req.json(), or readJson(req, max) (lib/net/body-limit.ts: the same body read with a byte cap).
+          const isJson = (ts.isPropertyAccessExpression(e) && e.name.text === 'json' && n.arguments.length === 0 && e.expression.getText() === reqName)
+            || (ts.isIdentifier(e) && e.text === 'readJson' && n.arguments[0]?.getText() === reqName);
           const isChamber = ts.isIdentifier(e) && e.text === 'chamberBody';
           if (!isJson && !isChamber) return;
           t = isChamber ? (n.typeArguments?.[0] ? checker.getTypeFromTypeNode(n.typeArguments[0]) : undefined) : bodyType(checker, n, reqName);

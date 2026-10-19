@@ -1,3 +1,5 @@
+import { authEnforced } from '@/lib/auth/mode';
+import { PUBLIC_SITES } from '@/lib/auth/public-paths';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { OFFICIAL_COOKIE, verifyToken, type OfficialClaims } from '@/lib/auth/session-token';
@@ -5,12 +7,13 @@ import { apiPermission, PUBLIC_WRITE, SELF_AUTHENTICATED, verifiesOwnCredential 
 import { contentSecurityPolicy } from '../security-headers.mjs';
 import { POLICIES, take, tooMany, clientAddress, type Scope } from '@/lib/ops/rate-limit-core';
 
-// Sovereign access gate. Real and correct, but enforcement is opt-in so a
-// public prototype/preview is not bricked: set CIVICOS_AUTH=enforce to
-// require a verified official (the signed civicos_official cookie) for every
-// non-public page, read and change. Without it, the gate is transparent (all
-// routes pass, the cover's demo session works) but the policy is in place and
-// audited. Under enforcement the demo cookie (civicos_session=demo, set by the
+// Sovereign access gate. It requires a verified official (the signed
+// civicos_official cookie) for every non-public page, read and change when
+// sign-in is enforced (lib/auth/mode.ts, go-live review L-2): with
+// CIVICOS_AUTH=enforce, and in every production build unless CIVICOS_AUTH=open
+// (or CIVICOS_ALLOW_OPEN=1) says otherwise out loud. Open (next dev, tests, a
+// declared demonstration), the gate is transparent (all routes pass, the
+// cover's demo session works) but the policy is in place and audited. Under enforcement the demo cookie (civicos_session=demo, set by the
 // cover and /login when no identity substrate is configured) opens only the
 // citizen's Civic Wallet pages (CITIZEN_DEMO); it opens no console page and
 // no API.
@@ -30,11 +33,9 @@ const PUBLIC_READ = [/^\/api\/public\/charters$/, /^\/api\/public\/accountabilit
 // Public writes (email updates) and self-authenticating machine routes are
 // defined with the permission rules in lib/auth/roles.ts.
 const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/fonts\//, /^\/api\/health/];
-// The public institution websites and their shared pages: every page in the
-// (public) route group is for citizens without an account (middleware.test.ts
-// fails if a page there is not covered), plus the embeddable services widget
-// (/embed) and a migrating ministry's forwarding (/r).
-const PUBLIC_SITES = /^\/(embed|r|agriculture|assembly|communications|education|emergency|energy|environment|foreign-affairs|government|health|interior|judiciary|justice|labour|legal|noc|police|portal|presidency|public|search|senate|sign-in|sitemap|subscriptions|trade|transport|treasury)(\/|$)/;
+// The public institution websites and their shared pages (lib/auth/public-paths.ts):
+// every page in the (public) route group is for citizens without an account
+// (middleware.test.ts fails if a page there is not covered), plus /embed and /r.
 // The citizen's Civic Wallet (demo): opened by the citizen demo session the
 // cover and /login set when no identity substrate is configured. Its changes
 // still go through the official gate below.
@@ -175,7 +176,7 @@ async function roleGate(req: NextRequest, next: () => NextResponse | Promise<Nex
   const live = asked && asked.official;
   if (asked && !asked.writable) return NextResponse.json({ error: 'This server is not the platform\'s state writer just now (another instance holds the lease); changes are refused so nothing is lost. Try again shortly.' }, { status: 503 });
   if (live === null) return NextResponse.json({ error: 'Your session has ended (your password changed or the account was disabled); sign in again (/sign-in)' }, { status: 401 });
-  if (live === undefined && process.env.CIVICOS_AUTH === 'enforce') return NextResponse.json({ error: 'Your session could not be checked just now; try again' }, { status: 503 });
+  if (live === undefined && authEnforced()) return NextResponse.json({ error: 'Your session could not be checked just now; try again' }, { status: 503 });
   const why = apiPermission(live ?? c, req.method, req.nextUrl.pathname);
   return why ? NextResponse.json({ error: why }, { status: 403 }) : next();
 }
@@ -222,11 +223,49 @@ function handle(req: NextRequest, requestId: string, nonce: string): NextRespons
   if (req.headers.has(SUBREQUEST_HEADER)) {
     return NextResponse.json({ error: 'Refused' }, { status: 400 });
   }
+  const crossSite = crossSiteRefusal(req);
+  if (crossSite) return crossSite;
   const forwarded = new Headers(req.headers);
   forwarded.set('x-request-id', requestId);
   const limited = rateGate(req);
   if (limited) return limited.then(r => r ?? next(req, forwarded, nonce));
   return next(req, forwarded, nonce);
+}
+
+/**
+ * Changes from another site are refused when they carry a session cookie
+ * (go-live review L-5). The session cookie is SameSite=Lax, which does not
+ * stop a page on a sibling subdomain of the platform's site (same-site, for
+ * example a ministry website in Host mode under the same registrable domain).
+ * Browsers say where a request comes from in Sec-Fetch-Site; a change marked
+ * cross-site or same-site (not same-origin) is refused. Without that header
+ * (older browsers), an Origin that is not this platform's host is refused.
+ * Requests with no session cookie carry no one's authority and pass, as do
+ * machine routes that verify their own credential (SELF_AUTHENTICATED, and a
+ * bearer on BEARER_ROUTES): they are never authorised by the cookie.
+ */
+const SESSION_COOKIES = [OFFICIAL_COOKIE, 'civicos_session'];
+export function crossSiteRefusal(req: NextRequest): NextResponse | null {
+  const { pathname } = req.nextUrl;
+  if (!pathname.startsWith('/api/') || !MUTATING.has(req.method)) return null;
+  if (SELF_AUTHENTICATED.some(re => re.test(pathname)) || bearerRequest(req)) return null;
+  if (!SESSION_COOKIES.some(n => req.cookies.get(n)?.value)) return null;
+  const site = req.headers.get('sec-fetch-site')?.toLowerCase();
+  const refuse = () => NextResponse.json({ error: 'Changes are accepted only from this platform\'s own pages' }, { status: 403 });
+  if (site) return site === 'same-origin' || site === 'none' ? null : refuse();
+  const origin = req.headers.get('origin');
+  if (!origin) return null; // Not sent by a browser making a cross-site request (they send Origin on every cross-origin POST).
+  let host: string;
+  try { host = new URL(origin).host.toLowerCase(); } catch { return refuse(); } // includes Origin: null (sandboxed frames, data: pages)
+  return ownHosts(req).has(host) ? null : refuse();
+}
+
+/** The hosts this platform answers as: the request's own, what the proxy forwarded, and CIVICOS_PUBLIC_URL's. */
+function ownHosts(req: NextRequest): Set<string> {
+  const hosts = new Set<string>([req.nextUrl.host.toLowerCase()]);
+  for (const h of [req.headers.get('host'), req.headers.get('x-forwarded-host')?.split(',')[0]]) if (h?.trim()) hosts.add(h.trim().toLowerCase());
+  try { if (process.env.CIVICOS_PUBLIC_URL) hosts.add(new URL(process.env.CIVICOS_PUBLIC_URL).host.toLowerCase()); } catch { /* not a URL: ignored */ }
+  return hosts;
 }
 
 /**
@@ -279,7 +318,7 @@ function gate(req: NextRequest, res: NextResponse): NextResponse | Promise<NextR
   res.headers.set('X-Content-Type-Options', 'nosniff');
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
-  if (process.env.CIVICOS_AUTH !== 'enforce') return res;
+  if (!authEnforced()) return res;
 
   const { pathname } = req.nextUrl;
   if (PUBLIC.some(re => re.test(pathname))) return res;
