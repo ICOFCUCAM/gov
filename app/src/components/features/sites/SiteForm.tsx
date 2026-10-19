@@ -13,6 +13,7 @@
 
 import * as React from 'react';
 import { NationMap } from '@/components/map/NationMap';
+import type { PointTileSource } from '@/lib/map/tile-loader';
 import { nationRegions } from '@/lib/nation/registry';
 import { readPhotoPosition } from '@/lib/geo/exif-gps';
 import { useOfficial } from '@/lib/official';
@@ -40,8 +41,10 @@ export const methodName = (key: CaptureMethod, vocab?: Vocabulary) => PLAIN[key]
 
 interface Position { lat: number; lng: number; accuracyM?: number; capturedAt?: string; original?: string }
 
-export function SiteForm({ ministryId, ministryName, vocab, onRecorded }: {
+export function SiteForm({ ministryId, ministryName, vocab, onRecorded, tiles }: {
   ministryId: string; ministryName?: string; vocab: Vocabulary; onRecorded?: (s: Site) => void;
+  /** A national-scale register: the sites already recorded, read from vector tiles instead of vocab.sites. */
+  tiles?: PointTileSource;
 }) {
   const [official] = useOfficial();
   const uid = React.useId();
@@ -310,7 +313,8 @@ export function SiteForm({ ministryId, ministryName, vocab, onRecorded }: {
           source="Sites declared by institutions; certified sites have been checked"
           compact
           maxHeight={420}
-          points={sitePoints(vocab.sites, vocab.categories)}
+          points={tiles ? undefined : sitePoints(vocab.sites, vocab.categories)}
+          pointTiles={tiles}
           pointsLabel="Sites already in the register"
           onPick={method === 'map-pin' ? ({ lng, lat }) => { setPos({ lat: Math.round(lat * 1e5) / 1e5, lng: Math.round(lng * 1e5) / 1e5 }); setPosNote(`Pin at ${Math.round(lat * 1e5) / 1e5}, ${Math.round(lng * 1e5) / 1e5}: about 100 m accuracy.`); } : undefined}
           pin={pos ? { lng: pos.lng, lat: pos.lat, label: f.name || 'New site' } : null}
