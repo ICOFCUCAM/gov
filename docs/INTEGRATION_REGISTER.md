@@ -38,6 +38,8 @@ Last reviewed: 17 Oct 2026.
 
 **Metrics** (review R12): `GET /api/metrics` serves Prometheus text (`app/src/lib/ops/metrics.ts`): process memory and uptime, records per durable store, persistence saves/age/error, audit chain length and integrity, twin source age/overdue/last-run status, facility register counts, warnings and errors in the last hour. Scrapers send `CIVICOS_METRICS_TOKEN` as a bearer token; without it a signed-in official may read them. Not yet: per-route request rates and latencies (golden signals) — the middleware runs at the edge and cannot count into the Node process; an OpenTelemetry collector in the deployment can take them from the ingress.
 
+**Rate limits** (review S9): `app/src/lib/ops/rate-limit.ts`, token buckets per official account (else client address) and scope — upload 6/min (boundary files, district packs, site imports), check 120/min (location checks), write 120/min, public 60/min — answering 429 with Retry-After and RateLimit headers. Applied to the upload and check routes; the others take a scope as they are touched. Buckets are in the server's memory (several instances would each count separately; the ingress can add a global limit).
+
 ## 2. AI assistant (per-nation opt-in)
 
 | # | Area | Today | To integrate | Where |

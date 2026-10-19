@@ -14,6 +14,7 @@ import { SIMPLIFY_ABOVE_BYTES, SIMPLIFY_ABOVE_VERTICES } from '@/lib/geo/boundar
 import { mappingAgency } from '@/lib/data/facilities';
 import { refusal, withOfficial } from '@/lib/auth/official';
 import { canManageBoundaries } from '@/lib/auth/roles';
+import { limit } from '@/lib/ops/rate-limit';
 export const dynamic = 'force-dynamic';
 // GeoPackages are read with sql.js (WebAssembly) and zips with fflate: Node only.
 export const runtime = 'nodejs';
@@ -29,6 +30,8 @@ export async function GET(req: NextRequest) {
 const bad = (error: string, status = 422) => NextResponse.json({ error }, { status });
 
 export async function POST(req: NextRequest) {
+  const limited = await limit(req, 'upload');
+  if (limited) return limited;
   const refused = await refusal(s => canManageBoundaries(s, mappingAgency()?.id));
   if (refused) return refused;
   const declared = Number(req.headers.get('content-length') ?? 0);

@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { IMPORT_COLUMNS, MAX_SITE_ROWS, importSites, type CaptureMethod } from '@/lib/data/facilities';
 import { refusal, withOfficial } from '@/lib/auth/official';
 import { ministryPermission } from '@/lib/auth/roles';
+import { limit } from '@/lib/ops/rate-limit';
 export const dynamic = 'force-dynamic';
 
 export function GET() {
@@ -14,6 +15,8 @@ export function GET() {
 }
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
+  const limited = await limit(req, 'upload');
+  if (limited) return limited;
   const refused = await refusal(s => ministryPermission(s, params.id));
   if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as { text?: string; format?: string; dryRun?: boolean; method?: CaptureMethod; by?: string };

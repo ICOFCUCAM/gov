@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { districtPackStatus, installDistrictsFromFile, installDistrictsFromGeoBoundaries, removeInstalledDistricts } from '@/lib/data/map-pack';
 import { refusal, withOfficial } from '@/lib/auth/official';
 import { adminOnly } from '@/lib/auth/roles';
+import { limit } from '@/lib/ops/rate-limit';
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
@@ -15,6 +16,8 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const limited = await limit(req, 'upload');
+  if (limited) return limited;
   const refused = await refusal(adminOnly);
   if (refused) return refused;
   const b = (await withOfficial(await req.json().catch(() => ({})))) as Record<string, unknown> & { by?: string };
