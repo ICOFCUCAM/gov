@@ -14,6 +14,7 @@ import { recordAudit, getMinistry } from '@/lib/data/store';
 import { roleFromSubstrate, type OfficialRole } from '@/lib/auth/roles';
 import { deviceOf } from '@/lib/auth/activity';
 import { stateWritable } from '@/lib/data/persist';
+import { roleOf } from '@/lib/auth/roles';
 
 export const dynamic = 'force-dynamic';
 
@@ -54,7 +55,7 @@ export async function POST(req: NextRequest) {
     who = b.accessToken ? await substrateOfficial(b.accessToken) : { error: 'No access token' };
   } else {
     const a = checkPassword(b.email ?? '', b.password ?? '', Date.now(), b.code);
-    who = 'error' in a ? a : { sub: `local:${a.id}`, name: a.name, office: a.office, role: a.role ?? 'administrator', institution: a.institution, twoStep: a.secondStep, twoStepRequired: a.twoStepRequired };
+    who = 'error' in a ? a : { sub: `local:${a.id}`, name: a.name, office: a.office, role: roleOf(a), institution: a.institution, twoStep: a.secondStep, twoStepRequired: a.twoStepRequired };
   }
   // { needsCode: true } tells the form to ask for the authenticator code.
   if ('error' in who) return NextResponse.json(who, { status: 401 });

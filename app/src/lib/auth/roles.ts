@@ -30,8 +30,19 @@ export function secondStepMissing(s: Scope): string | null {
   return s.twoStepRequired && !s.twoStep ? 'Set up the second sign-in step under My account, then sign in again, before making changes' : null;
 }
 
-/** Accounts and sessions from before roles existed keep what they could do: everything. */
-export const roleOf = (s: { role?: OfficialRole }): OfficialRole => s.role ?? 'administrator';
+/** When roles were introduced (seconds since 1970): sessions and accounts dated before it carry no role. */
+export const ROLES_SINCE = Date.parse('2026-10-18T10:37:47Z') / 1000;
+/**
+ * The role a session or account acts with. Only records from before roles
+ * existed (a session issued, or an account created, before ROLES_SINCE) keep
+ * what they could do then, everything; anything newer without a role gets
+ * the least: officer (deny by default, architecture review S4).
+ */
+export const roleOf = (s: { role?: OfficialRole; iat?: number; createdAt?: string }): OfficialRole => {
+  if (s.role) return s.role;
+  const at = s.iat ?? (s.createdAt ? Date.parse(s.createdAt) / 1000 : undefined);
+  return at === undefined || at < ROLES_SINCE ? 'administrator' : 'officer';
+};
 /** True when the official serves every institution, not one. */
 export const wholeGovernment = (s: Scope): boolean => !s.institution;
 

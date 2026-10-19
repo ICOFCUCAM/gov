@@ -46,3 +46,14 @@ describe('what an official may do', () => {
     expect(ROLES.map(r => r.label)).toEqual(['Administrator', 'Can sign', 'Officer', 'Auditor (read only)']);
   });
 });
+
+describe('role-less sessions and accounts (deny by default)', () => {
+  it('only records from before roles existed keep administrator; anything newer without a role is an officer', async () => {
+    const { roleOf, ROLES_SINCE } = await import('./roles');
+    expect(roleOf({ role: 'auditor', iat: ROLES_SINCE + 10 })).toBe('auditor');
+    expect(roleOf({ iat: ROLES_SINCE - 3600 })).toBe('administrator');
+    expect(roleOf({ iat: ROLES_SINCE + 3600 })).toBe('officer');
+    expect(roleOf({ createdAt: '2026-01-01T00:00:00Z' })).toBe('administrator');
+    expect(roleOf({ createdAt: '2026-12-01T00:00:00Z' })).toBe('officer');
+  });
+});
