@@ -6,7 +6,7 @@
 import type { AuditEntry } from '@/lib/api/types';
 import type { TwinDb } from '@/lib/twin/db';
 import { memoryBackend } from './memory';
-import type { AuditRepo, Backend, BoundaryRepo, BoundaryStore, FacilityRepo, FacilityStore, TwinRepo } from './types';
+import type { AuditRepo, Backend, BoundaryRepo, BoundaryStore, FacilityRepo, FacilityStore, ParcelRepo, ParcelStore, TwinRepo } from './types';
 
 export type * from './types';
 
@@ -25,3 +25,4 @@ export const auditRepo = (chain: () => AuditEntry[]): AuditRepo => backend().aud
 export const twinRepo = (state: () => TwinDb): TwinRepo => backend().twin(state);
 export const facilityRepo = (store: () => FacilityStore): FacilityRepo => backend().facilities(store);
 export const boundaryRepo = (store: () => BoundaryStore): BoundaryRepo => backend().boundaries(store);
+export const parcelRepo = (store: () => ParcelStore): ParcelRepo => backend().parcels(store);

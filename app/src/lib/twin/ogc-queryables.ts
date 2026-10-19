@@ -8,6 +8,7 @@
 // takes an unfiltered answer for a filtered one.
 
 import { FACILITY_CATEGORIES, STATUSES } from '@/lib/data/facilities';
+import { LAND_USES, SURVEY_METHODS } from '@/lib/data/parcels';
 
 export const QUERYABLES_CONFORMANCE = [
   'http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/queryables',
@@ -39,6 +40,14 @@ export const QUERYABLES: Record<string, Record<string, Queryable>> = {
     sensitivity: { title: 'Sensitivity', description: 'public or restricted (restricted sites are generalised for viewers without need).', type: 'string', enum: ['public', 'restricted'] },
     name: { title: 'Name', description: 'The site\'s name.', type: 'string' },
     publishedAt: { title: 'Published', description: 'When the site was published in the register.', type: 'string', format: 'date-time' },
+  },
+  parcels: {
+    parcelId: { title: 'Parcel id', description: 'The national parcel id (cadastral reference).', type: 'string' },
+    landUse: { title: 'Land use', description: 'The parcel\'s land use.', type: 'string', enum: LAND_USES.map(l => l.key) },
+    regionCode: { title: 'Region code', description: 'Code of the region the parcel lies in (from the map).', type: 'string', pattern: CODE },
+    districtCode: { title: 'District code', description: 'Code of the district the parcel lies in (from the map).', type: 'string', pattern: CODE },
+    surveyMethod: { title: 'Survey method', description: 'How the outline was surveyed.', type: 'string', enum: SURVEY_METHODS.map(m => m.key) },
+    publishedAt: { title: 'Published', description: 'When the parcel was published in the register.', type: 'string', format: 'date-time' },
   },
   boundaries: {
     level: { title: 'Level', description: '1 for regions, 2 for districts.', type: 'integer', enum: [1, 2] },

@@ -12,12 +12,14 @@ import type { AuditEntry } from '@/lib/api/types';
 import type { TwinDb } from '@/lib/twin/db';
 import type { Facility } from '@/lib/data/facilities';
 import type { BoundaryVersion } from '@/lib/data/boundaries';
+import type { Parcel } from '@/lib/data/parcels';
 import type { Observation } from '@/lib/twin/register';
 import { resetTwin, syncRegister, registerSource, runSource, withdrawRun, linkKey, stateAsOf } from '@/lib/twin/register';
 import { applyNation } from '@/lib/nation/registry';
 import { recordAudit, listAudit, verifyAuditChain, auditHashV2 } from '@/lib/data/store';
 import { resetFacilities } from '@/lib/data/facilities';
 import { resetBoundaries } from '@/lib/data/boundaries';
+import { resetParcels } from '@/lib/data/parcels';
 import { useBackend, type Backend } from '.';
 import { connect, startRecords, postgresSnapshotAdapter, type Records, type Sql } from './postgres';
 
@@ -29,6 +31,7 @@ const chainOf = (r: Root) => ((r.__civicos as { audit: AuditEntry[] }).audit);
 const twinOf = (r: Root) => r.__civicosTwin as TwinDb;
 const facilitiesOf = (r: Root) => (r.__civicosFacilities as { facilities: Facility[]; seq: number });
 const boundariesOf = (r: Root) => (r.__civicosBoundaries as { versions: BoundaryVersion[]; seq: number });
+const parcelsOf = (r: Root) => ((r.__civicosParcels ??= { parcels: [], seq: 1 }) as { parcels: Parcel[]; seq: number });
 const byKey = (o: Observation) => `${o.entityId}|${o.metric}`;
 const sorted = (l: Observation[]) => [...l].sort((a, b) => byKey(a).localeCompare(byKey(b)));
 
@@ -54,6 +57,14 @@ const boundary = (id: string): BoundaryVersion => ({
   check: { errors: [], warnings: [], summary: { units: 1, matched: 1, missing: [], unofficial: [], areaKm2: 700, rewound: 0, fewer: false } }, state: 'proposed', proposedBy: 'Mapping officer', proposedAt: new Date().toISOString(),
 } as unknown as BoundaryVersion);
 
+const parcel = (id: string, lng: number, lat: number): Parcel => ({
+  id, parcelId: `NRB/T/${id}`, geometry: { type: 'MultiPolygon', coordinates: [[[[lng, lat], [lng + 0.001, lat], [lng + 0.001, lat + 0.001], [lng, lat + 0.001], [lng, lat]]]] },
+  areaM2: 12_300, bbox: [lng, lat, lng + 0.001, lat + 0.001], survey: { method: 'field-survey', accuracyM: 0.05 },
+  place: { inside: true, regionCode: 'KE-30', region: 'Nairobi City', at: [lng + 0.0005, lat + 0.0005] }, landUse: 'residential',
+  rights: [{ rrr: 'right', type: 'ownership', holderKind: 'person', holder: 'Holder Privatename', source: { kind: 'title', ref: 'IR 1' } }],
+  state: 'proposed', recordedBy: 'Clerk A', recordedAt: new Date().toISOString(), overlaps: [], source: { kind: 'form' }, versions: [],
+});
+
 describe.skipIf(!URL_)('postgres backend (TEST_DATABASE_URL)', { timeout: 60_000 }, () => {
   let admin: Sql, dbUrl: string, dbName: string;
   const opened: Records[] = [];
@@ -74,7 +85,7 @@ describe.skipIf(!URL_)('postgres backend (TEST_DATABASE_URL)', { timeout: 60_000
     const u = new URL(URL_!);
     u.pathname = `/${dbName}`;
     dbUrl = u.toString();
-    resetTwin(); resetFacilities(); resetBoundaries();
+    resetTwin(); resetFacilities(); resetBoundaries(); resetParcels();
     chainOf(G as Root).length = 0;
     applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa', 'Nairobi City', 'Kisumu'] });
   });
@@ -235,6 +246,41 @@ describe.skipIf(!URL_)('postgres backend (TEST_DATABASE_URL)', { timeout: 60_000
     else expect(cols).not.toContain('geog');
     const near = await a.sql.unsafe(`select id from civicos.facility where lng between 36.7 and 36.9 and lat between -1.4 and -1.2`);
     expect(near.length).toBeGreaterThan(0);
+  });
+
+  it('keeps land parcels in civicos.parcel: written through, followed by another instance, the outbox carrying no rights', async () => {
+    const a = opened[0]!;
+    const rootB: Root = {};
+    const b = await start(rootB);
+    const repoA = a.backend.parcels(() => parcelsOf(G as Root));
+    const p = parcel(`PCL-${String(repoA.nextSeq()).padStart(6, '0')}`, 36.81, -1.29);
+    repoA.add(p);
+    p.state = 'published'; p.publishedBy = 'Registrar B';
+    repoA.save(p);
+    expect(await a.drain()).toBe(true);
+    const row = (await a.sql.unsafe(`select parcel_id, state, land_use, region_code, area_m2, min_lng, max_lat, doc from civicos.parcel where id = $1`, [p.id]))[0]!;
+    expect(row).toMatchObject({ parcel_id: p.parcelId, state: 'published', land_use: 'residential', region_code: 'KE-30' });
+    expect(Number(row.min_lng)).toBe(36.81);
+    // The outbox tells other instances which parcel changed, never its rights.
+    const out = await a.sql.unsafe(`select payload::text as payload from civicos.outbox where topic = 'parcel'`);
+    expect(out.length).toBeGreaterThan(0);
+    expect(out.map(r => String(r.payload)).join(' ')).not.toMatch(/Privatename|holder/);
+    // Another instance follows it from the table.
+    await b.pull();
+    expect(parcelsOf(rootB).parcels.find(x => x.id === p.id)).toMatchObject({ state: 'published', rights: [expect.objectContaining({ holder: 'Holder Privatename' })] });
+    // Record numbers never collide across instances.
+    const repoB = b.backend.parcels(() => parcelsOf(rootB));
+    expect(`PCL-${String(repoB.nextSeq()).padStart(6, '0')}`).not.toBe(p.id);
+    // A restart loads it back.
+    const fresh: Root = {};
+    await start(fresh);
+    expect(parcelsOf(fresh).parcels).toEqual([JSON.parse(JSON.stringify(p))]);
+    const cols = (await a.sql.unsafe(`select column_name from information_schema.columns where table_schema = 'civicos' and table_name = 'parcel'`)).map(r => String(r.column_name));
+    if (a.status().postgis) {
+      expect(cols).toEqual(expect.arrayContaining(['geom', 'valid_as_loaded']));
+      const hit = await a.sql.unsafe(`select id from civicos.parcel where st_intersects(geom, st_setsrid(st_makepoint(36.8105, -1.2895), 4326))`);
+      expect(hit.map(r => r.id)).toContain(p.id);
+    } else expect(cols).not.toContain('geom');
   });
 
   it('replays a journal left by a crash', async () => {

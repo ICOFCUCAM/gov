@@ -89,12 +89,14 @@ export const BEARER_READS: RegExp[] = [
   /^\/api\/integrations\/verify$/,           // an integration key, compared by its hash in constant time
   // GIS clients (QGIS, ArcGIS, GDAL) reading the twin with an integration key of scope ogc:read, or an
   // access token issued for it (POST /api/oauth/token): OGC API – Features, SensorThings and vector
-  // tiles of the facility register and of the nation's boundaries (machineReadRefusal() in each route,
+  // tiles of the facility register, of the nation's boundaries and of the land parcel register (public
+  // fields only; machineReadRefusal() in each route,
   // lib/twin/machine-read.ts). The public PMTiles archive is not among them: it is open to everyone (a
   // public read in the middleware); an institution's own archive is for its signed-in officials only.
   /^\/api\/twin\/(ogc|sta)(\/|$)/,
   /^\/api\/twin\/tiles\/facilities(\/|$)/,
   /^\/api\/twin\/tiles\/boundaries(\/|$)/,
+  /^\/api\/twin\/tiles\/parcels(\/|$)/,
   // The mirror feed for services/civic-api's follower: an integration key of scope mirror:read (review D8).
   /^\/api\/platform\/mirror$/,
 ];
@@ -110,6 +112,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/setup(\/|$)/,
   /^\/api\/sovereign(\/|$)/,
   /^\/api\/facilities\/policy(\/|$)/,
+  // The nation's parcel policy: its cadastre authority, parcel id format, overlap rule (four-eyes).
+  /^\/api\/parcels\/policy(\/|$)/,
   /^\/api\/map-pack(\/|$)/,
   // The nation's rules for its twin (four-eyes withdrawal of imports).
   /^\/api\/twin\/policy(\/|$)/,
@@ -142,6 +146,8 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/facilities\/(check|candidates)(\/|$)/, // checks and candidate review (rules in the route)
   /^\/api\/facilities\/[^/]+$/,               // one site (canSignForSite() etc. in the route)
   /^\/api\/ops\/incidents(\/|$)/,
+  // The land parcel register: canRecordParcel() / canCertifyParcel() in the route (the cadastre authority).
+  /^\/api\/parcels(\/|$)/,
   /^\/api\/payments$/,
   /^\/api\/permits(\/|$)/,
   /^\/api\/signatures$/,
@@ -242,6 +248,37 @@ export function canManageBoundaries(s: Scope, agencyId: string | undefined): str
   if (agencyId && s.institution === agencyId) return 'Officials who can sign at the mapping agency load and publish boundaries';
   if (wholeGovernment(s) && roleOf(s) === 'administrator') return null;
   return 'Only the national mapping agency or a government administrator loads and publishes boundaries';
+}
+
+/** Recording a land parcel (or loading a file of them): officials of the nation's cadastre authority (not auditors), or whole-government administrators. */
+export function canRecordParcel(s: Scope, authorityId: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (authorityId && s.institution === authorityId) return null;
+  if (wholeGovernment(s) && role === 'administrator') return null;
+  return 'Only the nation\'s cadastre authority (or a government administrator) records land parcels';
+}
+
+/** Publishing a parcel, confirming or discarding a change to it, withdrawing it or a load: those who can sign at the cadastre authority, or whole-government administrators. */
+export function canCertifyParcel(s: Scope, authorityId: string | undefined): string | null {
+  const role = roleOf(s);
+  if (role === 'auditor') return 'Auditors can read records but not change them';
+  if (authorityId && s.institution === authorityId && (role === 'signatory' || role === 'administrator')) return null;
+  if (wholeGovernment(s) && role === 'administrator') return null;
+  return 'Only an official who can sign at the cadastre authority (or a government administrator) publishes or withdraws land parcels';
+}
+
+/**
+ * Seeing a parcel's rights and their holders (personal data): the cadastre
+ * authority's own officials of every role, and whole-government
+ * administrators and auditors. Nobody else; never in tiles, the OGC
+ * collection, lists or exports (lib/data/parcels.ts publicParcel()).
+ */
+export function canSeeParcelRights(s: Scope, authorityId: string | undefined): string | null {
+  if (authorityId && s.institution === authorityId) return null;
+  const role = roleOf(s);
+  if (wholeGovernment(s) && (role === 'administrator' || role === 'auditor')) return null;
+  return 'Rights and holders are shown only to the cadastre authority and officials with need';
 }
 
 /** The issuer a new directive is recorded under: an official's own institution, whatever the request names. */

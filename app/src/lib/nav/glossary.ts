@@ -51,4 +51,7 @@ export const GLOSSARY: GlossaryEntry[] = [
   { term: 'CSV / GeoJSON', plain: 'Spreadsheet file, map points file', meaning: 'A spreadsheet saved as plain text, and the standard file of points that map software exports.' },
   { term: 'Location certification', plain: 'Location checked', meaning: 'An official of the owning institution or the national mapping agency confirms a site stands where the register says.' },
   { term: 'Generalised position', plain: 'Position shown only roughly', meaning: 'A restricted site is shown on a grid of a few kilometres to anyone without need to know its exact place.' },
+  { term: 'Cadastre / cadastral parcel', plain: 'Land parcels', meaning: 'The register of land parcels: each parcel\'s outline, area and national parcel id, and the rights on it, kept by the nation\'s cadastre authority.' },
+  { term: 'RRR (rights, restrictions, responsibilities)', plain: 'Rights on a parcel', meaning: 'Who holds a parcel and how (ownership, customary tenure, lease, mortgage, right of way …), with the document each rests on. Personal data: shown only to the cadastre authority and officials with need.' },
+  { term: 'Vector tiles (MVT)', plain: 'Map pieces', meaning: 'The map sent in small square pieces for the part on screen, so a national register of sites, boundaries or parcels can be drawn at any zoom.' },
 ];

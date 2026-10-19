@@ -28,6 +28,7 @@ describe('snapshots beside the record tables', () => {
       __civicosTwinArchive: ['observations', 'runs'],
       __civicosFacilities: ['facilities'],
       __civicosBoundaries: ['versions'],
+      __civicosParcels: ['parcels'],
     });
   });
 

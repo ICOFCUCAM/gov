@@ -72,6 +72,7 @@ describe('domain functions change state only through the port', () => {
     },
     facilities: memoryBackend.facilities,
     boundaries: memoryBackend.boundaries,
+    parcels: memoryBackend.parcels,
   };
   beforeEach(async () => {
     prev = useBackend(recording);

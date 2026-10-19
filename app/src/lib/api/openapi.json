@@ -89,6 +89,9 @@
       "name": "org"
     },
     {
+      "name": "parcels"
+    },
+    {
       "name": "payments"
     },
     {
@@ -19046,6 +19049,2939 @@
         "x-source": "src/app/api/org/ministries/route.ts"
       }
     },
+    "/api/parcels/{pid}": {
+      "get": {
+        "tags": [
+          "parcels"
+        ],
+        "operationId": "get_parcels_pid",
+        "summary": "GET /api/parcels/{pid}",
+        "description": "One land parcel (by its record number PCL-nnnnnn or its national parcel id). GET: the parcel with who acted, its versions and any change waiting; its rights and their holders only for the cadastre authority and officials with need (canSeeParcelRights() in lib/auth/roles.ts; otherwise only how many). POST { action, … }: publish (a different official from the one who recorded it), amend (new outline, land use, survey or rights, with a reason; waits for a second official once published), confirm-amend, discard-amend (reason), withdraw (reason). Each under the verified name, by those the rules allow, audited without holders' names.",
+        "parameters": [
+          {
+            "name": "pid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "parcel": {
+                      "$ref": "#/components/schemas/OfficialParcel"
+                    }
+                  },
+                  "required": [
+                    "parcel"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "parcel": {
+                        "id": "ID-0001",
+                        "parcelId": "ID-0001",
+                        "geometry": {
+                          "type": "MultiPolygon",
+                          "coordinates": [
+                            []
+                          ]
+                        },
+                        "areaM2": 1,
+                        "bbox": [
+                          1,
+                          1,
+                          1,
+                          1
+                        ],
+                        "landUse": "agricultural",
+                        "survey": {
+                          "method": "cadastral-import",
+                          "accuracyM": 1
+                        },
+                        "place": {},
+                        "state": "proposed",
+                        "recordedAt": "2026-01-15T09:30:00.000Z",
+                        "publishedAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawnAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawReason": "Text",
+                        "version": 1,
+                        "overlaps": [
+                          {
+                            "id": "ID-0001",
+                            "parcelId": "ID-0001",
+                            "areaM2": 1
+                          }
+                        ],
+                        "recordedBy": "A. Official",
+                        "publishedBy": "A. Official",
+                        "withdrawnBy": "A. Official",
+                        "source": {
+                          "kind": "form"
+                        },
+                        "note": "Text",
+                        "versions": [
+                          {
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "n": 1,
+                            "by": "A. Official",
+                            "what": "string",
+                            "geometry": {},
+                            "parcelId": "ID-0001",
+                            "landUse": "agricultural",
+                            "areaM2": 1,
+                            "survey": {},
+                            "rightsCount": 1
+                          }
+                        ],
+                        "pending": {
+                          "place": {
+                            "inside": true,
+                            "at": []
+                          },
+                          "proposedBy": "A. Official",
+                          "proposedAt": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text",
+                          "geometry": {
+                            "type": "MultiPolygon",
+                            "coordinates": []
+                          },
+                          "bbox": [
+                            1,
+                            1,
+                            1,
+                            1
+                          ],
+                          "landUse": "agricultural",
+                          "areaM2": 1,
+                          "survey": {
+                            "method": "cadastral-import",
+                            "accuracyM": 1
+                          },
+                          "overlaps": [
+                            {}
+                          ],
+                          "rightsCount": 1
+                        },
+                        "rights": [
+                          {
+                            "rrr": "responsibility",
+                            "type": "caveat",
+                            "holderKind": "community",
+                            "holder": "string",
+                            "source": {}
+                          }
+                        ],
+                        "rightsCount": 1,
+                        "rightsHidden": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/parcels/[pid]/route.ts"
+      },
+      "post": {
+        "tags": [
+          "parcels"
+        ],
+        "operationId": "post_parcels_pid",
+        "summary": "POST /api/parcels/{pid}",
+        "description": "One land parcel (by its record number PCL-nnnnnn or its national parcel id). GET: the parcel with who acted, its versions and any change waiting; its rights and their holders only for the cadastre authority and officials with need (canSeeParcelRights() in lib/auth/roles.ts; otherwise only how many). POST { action, … }: publish (a different official from the one who recorded it), amend (new outline, land use, survey or rights, with a reason; waits for a second official once published), confirm-amend, discard-amend (reason), withdraw (reason). Each under the verified name, by those the rules allow, audited without holders' names.",
+        "parameters": [
+          {
+            "name": "pid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "const": "amend"
+                      },
+                      "reason": {
+                        "type": "string"
+                      },
+                      "geometry": {},
+                      "landUse": {
+                        "type": "string"
+                      },
+                      "method": {
+                        "type": "string"
+                      },
+                      "accuracyM": {
+                        "anyOf": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          }
+                        ]
+                      },
+                      "surveyedAt": {
+                        "type": "string"
+                      },
+                      "surveyor": {
+                        "type": "string"
+                      },
+                      "planRef": {
+                        "type": "string"
+                      },
+                      "rights": {},
+                      "areaM2": {},
+                      "by": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "action"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "const": "confirm-amend"
+                      },
+                      "by": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "action"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "const": "discard-amend"
+                      },
+                      "reason": {
+                        "type": "string"
+                      },
+                      "by": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "action"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "const": "publish"
+                      },
+                      "by": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "action"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "action": {
+                        "type": "string",
+                        "const": "withdraw"
+                      },
+                      "reason": {
+                        "type": "string"
+                      },
+                      "by": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "action"
+                    ]
+                  }
+                ]
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "action": "amend",
+                    "reason": "Text",
+                    "geometry": null,
+                    "landUse": "string",
+                    "method": "string",
+                    "accuracyM": 1,
+                    "surveyedAt": "2026-01-15T09:30:00.000Z",
+                    "surveyor": "string",
+                    "planRef": "string",
+                    "rights": null,
+                    "areaM2": null,
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "parcel": {
+                      "$ref": "#/components/schemas/OfficialParcel"
+                    }
+                  },
+                  "required": [
+                    "parcel"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "parcel": {
+                        "id": "ID-0001",
+                        "parcelId": "ID-0001",
+                        "geometry": {
+                          "type": "MultiPolygon",
+                          "coordinates": [
+                            []
+                          ]
+                        },
+                        "areaM2": 1,
+                        "bbox": [
+                          1,
+                          1,
+                          1,
+                          1
+                        ],
+                        "landUse": "agricultural",
+                        "survey": {
+                          "method": "cadastral-import",
+                          "accuracyM": 1
+                        },
+                        "place": {},
+                        "state": "proposed",
+                        "recordedAt": "2026-01-15T09:30:00.000Z",
+                        "publishedAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawnAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawReason": "Text",
+                        "version": 1,
+                        "overlaps": [
+                          {
+                            "id": "ID-0001",
+                            "parcelId": "ID-0001",
+                            "areaM2": 1
+                          }
+                        ],
+                        "recordedBy": "A. Official",
+                        "publishedBy": "A. Official",
+                        "withdrawnBy": "A. Official",
+                        "source": {
+                          "kind": "form"
+                        },
+                        "note": "Text",
+                        "versions": [
+                          {
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "n": 1,
+                            "by": "A. Official",
+                            "what": "string",
+                            "geometry": {},
+                            "parcelId": "ID-0001",
+                            "landUse": "agricultural",
+                            "areaM2": 1,
+                            "survey": {},
+                            "rightsCount": 1
+                          }
+                        ],
+                        "pending": {
+                          "place": {
+                            "inside": true,
+                            "at": []
+                          },
+                          "proposedBy": "A. Official",
+                          "proposedAt": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text",
+                          "geometry": {
+                            "type": "MultiPolygon",
+                            "coordinates": []
+                          },
+                          "bbox": [
+                            1,
+                            1,
+                            1,
+                            1
+                          ],
+                          "landUse": "agricultural",
+                          "areaM2": 1,
+                          "survey": {
+                            "method": "cadastral-import",
+                            "accuracyM": 1
+                          },
+                          "overlaps": [
+                            {}
+                          ],
+                          "rightsCount": 1
+                        },
+                        "rights": [
+                          {
+                            "rrr": "responsibility",
+                            "type": "caveat",
+                            "holderKind": "community",
+                            "holder": "string",
+                            "source": {}
+                          }
+                        ],
+                        "rightsCount": 1,
+                        "rightsHidden": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/parcels/[pid]/route.ts"
+      }
+    },
+    "/api/parcels/import/{iid}": {
+      "post": {
+        "tags": [
+          "parcels"
+        ],
+        "operationId": "post_parcels_import_iid",
+        "summary": "POST /api/parcels/import/{iid}",
+        "description": "Withdraw a parcel load: POST { action: \"withdraw\", reason } withdraws every parcel the load recorded and not yet withdrawn (each its own version and audit entry), by an official who can sign at the cadastre authority.",
+        "parameters": [
+          {
+            "name": "iid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "action": "string",
+                    "reason": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "import": {
+                      "$ref": "#/components/schemas/ParcelImport"
+                    }
+                  },
+                  "required": [
+                    "import"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "import": {
+                        "id": "ID-0001",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "format": "geojson",
+                        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "rows": 1,
+                        "accepted": 1,
+                        "refused": [
+                          {
+                            "row": 1,
+                            "reason": "Text"
+                          }
+                        ],
+                        "parcelIds": [
+                          "ID-0001"
+                        ],
+                        "crs": {
+                          "name": "Example"
+                        },
+                        "notes": [
+                          "Text"
+                        ],
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text",
+                          "count": 1
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/parcels/import/[iid]/route.ts"
+      }
+    },
+    "/api/parcels/import": {
+      "get": {
+        "tags": [
+          "parcels"
+        ],
+        "operationId": "get_parcels_import",
+        "summary": "GET /api/parcels/import",
+        "description": "Loading parcels from a file (lib/data/parcels.ts importParcels): GeoJSON, a zipped Shapefile (.zip with .shp, .dbf, .prj, .cpg) or a GeoPackage (.gpkg). A Shapefile's .prj or a GeoPackage's spatial reference is reprojected; GeoJSON in a national grid declares it with `crs` (an EPSG code, lib/geo/crs.ts). Every row is checked like a form; refusals come with reasons; ?dryRun=1 records nothing. Sent as multipart/form-data (`file`, and `body`: JSON with crs, idField, landUseField, method) or as JSON (`text` for GeoJSON, or `base64` for any format, with the same fields). Audited with the file's SHA-256 and the counts. GET lists the loads.",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "imports": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ParcelImport"
+                      }
+                    },
+                    "maxBytes": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "imports",
+                    "maxBytes"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "imports": [
+                        {
+                          "id": "ID-0001",
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "format": "geojson",
+                          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                          "rows": 1,
+                          "accepted": 1,
+                          "refused": [
+                            {}
+                          ],
+                          "parcelIds": [
+                            "ID-0001"
+                          ],
+                          "notes": [
+                            "Text"
+                          ]
+                        }
+                      ],
+                      "maxBytes": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/parcels/import/route.ts"
+      },
+      "post": {
+        "tags": [
+          "parcels"
+        ],
+        "operationId": "post_parcels_import",
+        "summary": "POST /api/parcels/import",
+        "description": "Loading parcels from a file (lib/data/parcels.ts importParcels): GeoJSON, a zipped Shapefile (.zip with .shp, .dbf, .prj, .cpg) or a GeoPackage (.gpkg). A Shapefile's .prj or a GeoPackage's spatial reference is reprojected; GeoJSON in a national grid declares it with `crs` (an EPSG code, lib/geo/crs.ts). Every row is checked like a form; refusals come with reasons; ?dryRun=1 records nothing. Sent as multipart/form-data (`file`, and `body`: JSON with crs, idField, landUseField, method) or as JSON (`text` for GeoJSON, or `base64` for any format, with the same fields). Audited with the file's SHA-256 and the counts. GET lists the loads.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {}
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {}
+                }
+              }
+            },
+            "multipart/form-data": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "import": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "by": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "string"
+                        },
+                        "format": {
+                          "type": "string",
+                          "enum": [
+                            "geojson",
+                            "geopackage",
+                            "shapefile-zip",
+                            "topojson"
+                          ]
+                        },
+                        "sha256": {
+                          "type": "string"
+                        },
+                        "rows": {
+                          "type": "number"
+                        },
+                        "accepted": {
+                          "type": "number"
+                        },
+                        "refused": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "row": {
+                                "type": "number"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "row",
+                              "reason"
+                            ]
+                          }
+                        },
+                        "parcelIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "crs": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "epsg": {
+                              "type": "number"
+                            },
+                            "transformation": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ]
+                        },
+                        "notes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "withdrawn": {
+                          "type": "object",
+                          "properties": {
+                            "by": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "reason": {
+                              "type": "string"
+                            },
+                            "count": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "by",
+                            "at",
+                            "reason",
+                            "count"
+                          ]
+                        },
+                        "dryRun": {
+                          "type": "boolean"
+                        },
+                        "preview": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "row": {
+                                "type": "number"
+                              },
+                              "parcelId": {
+                                "type": "string"
+                              },
+                              "areaM2": {
+                                "type": "number"
+                              },
+                              "region": {
+                                "type": "string"
+                              },
+                              "district": {
+                                "type": "string"
+                              },
+                              "warnings": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "row",
+                              "parcelId",
+                              "areaM2",
+                              "warnings"
+                            ]
+                          }
+                        },
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "by",
+                        "at",
+                        "format",
+                        "sha256",
+                        "rows",
+                        "accepted",
+                        "refused",
+                        "parcelIds",
+                        "notes",
+                        "dryRun",
+                        "preview",
+                        "fields"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "import"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "import": {
+                        "id": "ID-0001",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "format": "geojson",
+                        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "rows": 1,
+                        "accepted": 1,
+                        "refused": [
+                          {
+                            "row": 1,
+                            "reason": "Text"
+                          }
+                        ],
+                        "parcelIds": [
+                          "ID-0001"
+                        ],
+                        "crs": {
+                          "name": "Example"
+                        },
+                        "notes": [
+                          "Text"
+                        ],
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text",
+                          "count": 1
+                        },
+                        "dryRun": true,
+                        "preview": [
+                          {
+                            "row": 1,
+                            "parcelId": "ID-0001",
+                            "areaM2": 1,
+                            "warnings": []
+                          }
+                        ],
+                        "fields": [
+                          "string"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "import": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "by": {
+                          "type": "string"
+                        },
+                        "at": {
+                          "type": "string"
+                        },
+                        "format": {
+                          "type": "string",
+                          "enum": [
+                            "geojson",
+                            "geopackage",
+                            "shapefile-zip",
+                            "topojson"
+                          ]
+                        },
+                        "sha256": {
+                          "type": "string"
+                        },
+                        "rows": {
+                          "type": "number"
+                        },
+                        "accepted": {
+                          "type": "number"
+                        },
+                        "refused": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "row": {
+                                "type": "number"
+                              },
+                              "reason": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "row",
+                              "reason"
+                            ]
+                          }
+                        },
+                        "parcelIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "crs": {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string"
+                            },
+                            "epsg": {
+                              "type": "number"
+                            },
+                            "transformation": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "name"
+                          ]
+                        },
+                        "notes": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "withdrawn": {
+                          "type": "object",
+                          "properties": {
+                            "by": {
+                              "type": "string"
+                            },
+                            "at": {
+                              "type": "string"
+                            },
+                            "reason": {
+                              "type": "string"
+                            },
+                            "count": {
+                              "type": "number"
+                            }
+                          },
+                          "required": [
+                            "by",
+                            "at",
+                            "reason",
+                            "count"
+                          ]
+                        },
+                        "dryRun": {
+                          "type": "boolean"
+                        },
+                        "preview": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "row": {
+                                "type": "number"
+                              },
+                              "parcelId": {
+                                "type": "string"
+                              },
+                              "areaM2": {
+                                "type": "number"
+                              },
+                              "region": {
+                                "type": "string"
+                              },
+                              "district": {
+                                "type": "string"
+                              },
+                              "warnings": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "row",
+                              "parcelId",
+                              "areaM2",
+                              "warnings"
+                            ]
+                          }
+                        },
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "by",
+                        "at",
+                        "format",
+                        "sha256",
+                        "rows",
+                        "accepted",
+                        "refused",
+                        "parcelIds",
+                        "notes",
+                        "dryRun",
+                        "preview",
+                        "fields"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "import"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "import": {
+                        "id": "ID-0001",
+                        "by": "A. Official",
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "format": "geojson",
+                        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+                        "rows": 1,
+                        "accepted": 1,
+                        "refused": [
+                          {
+                            "row": 1,
+                            "reason": "Text"
+                          }
+                        ],
+                        "parcelIds": [
+                          "ID-0001"
+                        ],
+                        "crs": {
+                          "name": "Example"
+                        },
+                        "notes": [
+                          "Text"
+                        ],
+                        "withdrawn": {
+                          "by": "A. Official",
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text",
+                          "count": 1
+                        },
+                        "dryRun": true,
+                        "preview": [
+                          {
+                            "row": 1,
+                            "parcelId": "ID-0001",
+                            "areaM2": 1,
+                            "warnings": []
+                          }
+                        ],
+                        "fields": [
+                          "string"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/parcels/import/route.ts"
+      }
+    },
+    "/api/parcels/policy/{cid}": {
+      "post": {
+        "tags": [
+          "parcels"
+        ],
+        "operationId": "post_parcels_policy_cid",
+        "summary": "POST /api/parcels/policy/{cid}",
+        "description": "Decide a proposed change to the nation's parcel policy. POST { decision: \"confirm\" | \"withdraw\" }: confirmed by a different administrator than the one who proposed it, never over a newer policy; audited.",
+        "parameters": [
+          {
+            "name": "cid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "decision": "string",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "policy": {
+                      "$ref": "#/components/schemas/ParcelPolicy"
+                    }
+                  },
+                  "required": [
+                    "policy"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "policy": {
+                        "authorityId": "ID-0001",
+                        "idPattern": "string",
+                        "idExample": "string",
+                        "overlap": "flag",
+                        "toleranceM2": 1,
+                        "methods": [
+                          "cadastral-import"
+                        ],
+                        "version": 1,
+                        "decidedBy": [
+                          "A. Official"
+                        ],
+                        "decidedAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/parcels/policy/[cid]/route.ts"
+      }
+    },
+    "/api/parcels/policy": {
+      "get": {
+        "tags": [
+          "parcels"
+        ],
+        "operationId": "get_parcels_policy",
+        "summary": "GET /api/parcels/policy",
+        "description": "The nation's parcel policy: its cadastre authority (an institution of the registry), the national parcel id format, whether an overlap with a published parcel is refused or flagged and above what area, and the survey methods it accepts. GET: the policy and its changes. POST { patch, reason }: an administrator proposes a change; a different administrator confirms it (/api/parcels/policy/{id}). Administrators only (ADMIN_ONLY in lib/auth/roles.ts).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "policy": {
+                      "$ref": "#/components/schemas/ParcelPolicy"
+                    },
+                    "authority": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        }
+                      ]
+                    },
+                    "changes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/ParcelPolicyChange"
+                      }
+                    }
+                  },
+                  "required": [
+                    "policy",
+                    "authority",
+                    "changes"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "policy": {
+                        "authorityId": "ID-0001",
+                        "idPattern": "string",
+                        "idExample": "string",
+                        "overlap": "flag",
+                        "toleranceM2": 1,
+                        "methods": [
+                          "cadastral-import"
+                        ],
+                        "version": 1,
+                        "decidedBy": [
+                          "A. Official"
+                        ],
+                        "decidedAt": "2026-01-15T09:30:00.000Z"
+                      },
+                      "authority": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "changes": [
+                        {
+                          "id": "ID-0001",
+                          "patch": {},
+                          "reason": "Text",
+                          "proposedBy": "A. Official",
+                          "proposedAt": "2026-01-15T09:30:00.000Z",
+                          "state": "confirmed",
+                          "baseVersion": 1
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/parcels/policy/route.ts"
+      },
+      "post": {
+        "tags": [
+          "parcels"
+        ],
+        "operationId": "post_parcels_policy",
+        "summary": "POST /api/parcels/policy",
+        "description": "The nation's parcel policy: its cadastre authority (an institution of the registry), the national parcel id format, whether an overlap with a published parcel is refused or flagged and above what area, and the survey methods it accepts. GET: the policy and its changes. POST { patch, reason }: an administrator proposes a change; a different administrator confirms it (/api/parcels/policy/{id}). Administrators only (ADMIN_ONLY in lib/auth/roles.ts).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "patch": {
+                    "type": "object",
+                    "properties": {
+                      "authorityId": {
+                        "type": "string",
+                        "description": "The institution (registry id) acting as cadastre authority."
+                      },
+                      "idExample": {
+                        "type": "string"
+                      },
+                      "idPattern": {
+                        "type": "string",
+                        "description": "The national parcel id format: an anchored regular expression."
+                      },
+                      "methods": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "enum": [
+                            "cadastral-import",
+                            "field-survey",
+                            "general-boundary",
+                            "gnss-survey",
+                            "handheld-gps",
+                            "imagery",
+                            "scanned-map"
+                          ]
+                        }
+                      },
+                      "overlap": {
+                        "type": "string",
+                        "enum": [
+                          "flag",
+                          "refuse"
+                        ],
+                        "description": "An overlap with a published parcel above the tolerance is refused, or recorded and flagged."
+                      },
+                      "toleranceM2": {
+                        "type": "number"
+                      }
+                    }
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "patch": {
+                      "authorityId": "ID-0001",
+                      "idExample": "string",
+                      "idPattern": "string",
+                      "methods": [
+                        "cadastral-import"
+                      ],
+                      "overlap": "flag",
+                      "toleranceM2": 1
+                    },
+                    "reason": "Text",
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "change": {
+                      "$ref": "#/components/schemas/ParcelPolicyChange"
+                    }
+                  },
+                  "required": [
+                    "change"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "change": {
+                        "id": "ID-0001",
+                        "patch": {},
+                        "reason": "Text",
+                        "proposedBy": "A. Official",
+                        "proposedAt": "2026-01-15T09:30:00.000Z",
+                        "state": "confirmed",
+                        "decidedBy": "A. Official",
+                        "decidedAt": "2026-01-15T09:30:00.000Z",
+                        "baseVersion": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/parcels/policy/route.ts"
+      }
+    },
+    "/api/parcels": {
+      "get": {
+        "tags": [
+          "parcels"
+        ],
+        "operationId": "get_parcels",
+        "summary": "GET /api/parcels",
+        "description": "The land parcel register (lib/data/parcels.ts, docs/PARCEL_REGISTER.md). GET: one page of parcels in their public shape (never rights or holders) with the counts, the nation's parcel policy, its cadastre authority and the vocabulary (land uses, survey methods, rights, holder and document kinds). ?limit= (1–1000, default 100), ?offset=, ?state=proposed|published|withdrawn|current|all (default published), ?region=, ?district=, ?landUse=, ?q= (parcel id, record number, region or district), ?waiting=1 (a parcel to publish or a change to confirm), ?bbox=minLon,minLat,maxLon,maxLat. POST: an official of the cadastre authority records a parcel ({ parcelId, geometry (GeoJSON Polygon or MultiPolygon), landUse, method, accuracyM?, surveyedAt?, surveyor?, planRef?, rights?, note? }) under the verified name; a different official publishes it (/api/parcels/{id}). The area is computed, never typed. ?check=1 only checks the outline (nothing is recorded).",
+        "parameters": [
+          {
+            "name": "bbox",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "check",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "district",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "landUse",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "waiting",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "parcels": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PublicParcel"
+                      }
+                    },
+                    "page": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "offset": {
+                          "type": "number"
+                        },
+                        "limit": {
+                          "type": "number"
+                        },
+                        "next": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "number"
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "offset",
+                        "limit",
+                        "next"
+                      ]
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "published": {
+                          "type": "number"
+                        },
+                        "proposed": {
+                          "type": "number"
+                        },
+                        "waiting": {
+                          "type": "number"
+                        },
+                        "withdrawn": {
+                          "type": "number"
+                        },
+                        "areaM2": {
+                          "type": "number"
+                        },
+                        "byLandUse": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "published",
+                        "proposed",
+                        "waiting",
+                        "withdrawn",
+                        "areaM2",
+                        "byLandUse"
+                      ]
+                    },
+                    "policy": {
+                      "$ref": "#/components/schemas/ParcelPolicy"
+                    },
+                    "authority": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        }
+                      ]
+                    },
+                    "seesRights": {
+                      "type": "boolean"
+                    },
+                    "landUses": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "agricultural",
+                              "commercial",
+                              "conservation",
+                              "industrial",
+                              "mixed",
+                              "other",
+                              "public-service",
+                              "residential",
+                              "transport",
+                              "vacant",
+                              "water"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label"
+                        ]
+                      }
+                    },
+                    "methods": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "cadastral-import",
+                              "field-survey",
+                              "general-boundary",
+                              "gnss-survey",
+                              "handheld-gps",
+                              "imagery",
+                              "scanned-map"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "how": {
+                            "type": "string"
+                          },
+                          "typicalAccuracyM": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label",
+                          "how",
+                          "typicalAccuracyM"
+                        ]
+                      }
+                    },
+                    "rightTypes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "caveat",
+                              "customary",
+                              "easement",
+                              "leasehold",
+                              "maintenance",
+                              "mortgage",
+                              "occupancy",
+                              "ownership",
+                              "use-restriction",
+                              "usufruct"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "rrr": {
+                            "type": "string",
+                            "enum": [
+                              "responsibility",
+                              "restriction",
+                              "right"
+                            ]
+                          },
+                          "ownership": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label",
+                          "rrr"
+                        ]
+                      }
+                    },
+                    "holderKinds": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "community",
+                              "group",
+                              "organisation",
+                              "person",
+                              "state",
+                              "unknown"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label"
+                        ]
+                      }
+                    },
+                    "sourceKinds": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "key": {
+                            "type": "string",
+                            "enum": [
+                              "adjudication",
+                              "court-order",
+                              "customary-record",
+                              "lease",
+                              "other",
+                              "survey-plan",
+                              "title"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "key",
+                          "label"
+                        ]
+                      }
+                    },
+                    "columns": {
+                      "type": "array",
+                      "prefixItems": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "const": "parcel_id"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "const": true
+                            },
+                            "means": {
+                              "type": "string",
+                              "const": "The national parcel id, in the nation's format."
+                            },
+                            "aliases": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "parcelid"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "parcel"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "upi"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "pin"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "lr_no"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "lrno"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "title_no"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "cadastral_ref"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "nationalcadastralreference"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "id"
+                                }
+                              ],
+                              "minItems": 10,
+                              "maxItems": 10
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "required",
+                            "means",
+                            "aliases"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "const": "land_use"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "const": true
+                            },
+                            "means": {
+                              "type": "string"
+                            },
+                            "aliases": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "landuse"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "use"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "land use"
+                                }
+                              ],
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "required",
+                            "means",
+                            "aliases"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "const": "accuracy"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "const": false
+                            },
+                            "means": {
+                              "type": "string",
+                              "const": "Accuracy of the outline in metres (the survey method's typical one otherwise)."
+                            },
+                            "aliases": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "accuracy_m"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "precision"
+                                }
+                              ],
+                              "minItems": 2,
+                              "maxItems": 2
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "required",
+                            "means",
+                            "aliases"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "const": "plan_ref"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "const": false
+                            },
+                            "means": {
+                              "type": "string",
+                              "const": "The survey plan or field sheet reference."
+                            },
+                            "aliases": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "plan"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "survey_plan"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "fr_no"
+                                }
+                              ],
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "required",
+                            "means",
+                            "aliases"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "const": "surveyed"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "const": false
+                            },
+                            "means": {
+                              "type": "string",
+                              "const": "When it was surveyed (YYYY-MM-DD)."
+                            },
+                            "aliases": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "survey_date"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "date"
+                                }
+                              ],
+                              "minItems": 2,
+                              "maxItems": 2
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "required",
+                            "means",
+                            "aliases"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "const": "holder"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "const": false
+                            },
+                            "means": {
+                              "type": "string",
+                              "const": "The holder of the main right (personal data: shown only to the cadastre authority and officials with need)."
+                            },
+                            "aliases": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "owner"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "proprietor"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "holder_name"
+                                }
+                              ],
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "required",
+                            "means",
+                            "aliases"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "const": "holder_kind"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "const": false
+                            },
+                            "means": {
+                              "type": "string"
+                            },
+                            "aliases": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "owner_type"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "holder_type"
+                                }
+                              ],
+                              "minItems": 2,
+                              "maxItems": 2
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "required",
+                            "means",
+                            "aliases"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "const": "right"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "const": false
+                            },
+                            "means": {
+                              "type": "string"
+                            },
+                            "aliases": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "tenure"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "right_type"
+                                }
+                              ],
+                              "minItems": 2,
+                              "maxItems": 2
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "required",
+                            "means",
+                            "aliases"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "const": "share"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "const": false
+                            },
+                            "means": {
+                              "type": "string",
+                              "const": "The holder's share as a fraction, e.g. 1/2."
+                            },
+                            "aliases": {
+                              "type": "array",
+                              "prefixItems": [],
+                              "minItems": 0,
+                              "maxItems": 0
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "required",
+                            "means",
+                            "aliases"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "const": "document"
+                            },
+                            "required": {
+                              "type": "boolean",
+                              "const": false
+                            },
+                            "means": {
+                              "type": "string",
+                              "const": "The reference of the document the right rests on (title, lease, adjudication record)."
+                            },
+                            "aliases": {
+                              "type": "array",
+                              "prefixItems": [
+                                {
+                                  "type": "string",
+                                  "const": "title"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "deed"
+                                },
+                                {
+                                  "type": "string",
+                                  "const": "source_ref"
+                                }
+                              ],
+                              "minItems": 3,
+                              "maxItems": 3
+                            }
+                          },
+                          "required": [
+                            "name",
+                            "required",
+                            "means",
+                            "aliases"
+                          ]
+                        }
+                      ],
+                      "minItems": 10,
+                      "maxItems": 10
+                    }
+                  },
+                  "required": [
+                    "parcels",
+                    "page",
+                    "counts",
+                    "policy",
+                    "authority",
+                    "seesRights",
+                    "landUses",
+                    "methods",
+                    "rightTypes",
+                    "holderKinds",
+                    "sourceKinds",
+                    "columns"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "parcels": [
+                        {
+                          "id": "ID-0001",
+                          "parcelId": "ID-0001",
+                          "geometry": {
+                            "type": "MultiPolygon",
+                            "coordinates": []
+                          },
+                          "areaM2": 1,
+                          "bbox": [
+                            1,
+                            1,
+                            1,
+                            1
+                          ],
+                          "landUse": "agricultural",
+                          "survey": {
+                            "method": "cadastral-import",
+                            "accuracyM": 1
+                          },
+                          "place": {},
+                          "state": "proposed",
+                          "recordedAt": "2026-01-15T09:30:00.000Z",
+                          "version": 1,
+                          "overlaps": [
+                            {}
+                          ]
+                        }
+                      ],
+                      "page": {
+                        "total": 1,
+                        "offset": 1,
+                        "limit": 1,
+                        "next": 1
+                      },
+                      "counts": {
+                        "total": 1,
+                        "published": 1,
+                        "proposed": 1,
+                        "waiting": 1,
+                        "withdrawn": 1,
+                        "areaM2": 1,
+                        "byLandUse": {
+                          "key": 1
+                        }
+                      },
+                      "policy": {
+                        "authorityId": "ID-0001",
+                        "idPattern": "string",
+                        "idExample": "string",
+                        "overlap": "flag",
+                        "toleranceM2": 1,
+                        "methods": [
+                          "cadastral-import"
+                        ],
+                        "version": 1,
+                        "decidedBy": [
+                          "A. Official"
+                        ],
+                        "decidedAt": "2026-01-15T09:30:00.000Z"
+                      },
+                      "authority": {
+                        "id": "ID-0001",
+                        "name": "Example"
+                      },
+                      "seesRights": true,
+                      "landUses": [
+                        {
+                          "key": "agricultural",
+                          "label": "Example"
+                        }
+                      ],
+                      "methods": [
+                        {
+                          "key": "cadastral-import",
+                          "label": "Example",
+                          "how": "string",
+                          "typicalAccuracyM": 1
+                        }
+                      ],
+                      "rightTypes": [
+                        {
+                          "key": "caveat",
+                          "label": "Example",
+                          "rrr": "responsibility"
+                        }
+                      ],
+                      "holderKinds": [
+                        {
+                          "key": "community",
+                          "label": "Example"
+                        }
+                      ],
+                      "sourceKinds": [
+                        {
+                          "key": "adjudication",
+                          "label": "Example"
+                        }
+                      ],
+                      "columns": [
+                        {
+                          "name": "parcel_id",
+                          "required": true,
+                          "means": "The national parcel id, in the nation's format.",
+                          "aliases": [
+                            "parcelid",
+                            "parcel",
+                            "upi",
+                            "pin",
+                            "lr_no",
+                            "lrno",
+                            "title_no",
+                            "cadastral_ref",
+                            "nationalcadastralreference",
+                            "id"
+                          ]
+                        },
+                        {
+                          "name": "land_use",
+                          "required": true,
+                          "means": "string",
+                          "aliases": [
+                            "landuse",
+                            "use",
+                            "land use"
+                          ]
+                        },
+                        {
+                          "name": "accuracy",
+                          "required": false,
+                          "means": "Accuracy of the outline in metres (the survey method's typical one otherwise).",
+                          "aliases": [
+                            "accuracy_m",
+                            "precision"
+                          ]
+                        },
+                        {
+                          "name": "plan_ref",
+                          "required": false,
+                          "means": "The survey plan or field sheet reference.",
+                          "aliases": [
+                            "plan",
+                            "survey_plan",
+                            "fr_no"
+                          ]
+                        },
+                        {
+                          "name": "surveyed",
+                          "required": false,
+                          "means": "When it was surveyed (YYYY-MM-DD).",
+                          "aliases": [
+                            "survey_date",
+                            "date"
+                          ]
+                        },
+                        {
+                          "name": "holder",
+                          "required": false,
+                          "means": "The holder of the main right (personal data: shown only to the cadastre authority and officials with need).",
+                          "aliases": [
+                            "owner",
+                            "proprietor",
+                            "holder_name"
+                          ]
+                        },
+                        {
+                          "name": "holder_kind",
+                          "required": false,
+                          "means": "string",
+                          "aliases": [
+                            "owner_type",
+                            "holder_type"
+                          ]
+                        },
+                        {
+                          "name": "right",
+                          "required": false,
+                          "means": "string",
+                          "aliases": [
+                            "tenure",
+                            "right_type"
+                          ]
+                        },
+                        {
+                          "name": "share",
+                          "required": false,
+                          "means": "The holder's share as a fraction, e.g. 1/2.",
+                          "aliases": []
+                        },
+                        {
+                          "name": "document",
+                          "required": false,
+                          "means": "The reference of the document the right rests on (title, lease, adjudication record).",
+                          "aliases": [
+                            "title",
+                            "deed",
+                            "source_ref"
+                          ]
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/parcels/route.ts"
+      },
+      "post": {
+        "tags": [
+          "parcels"
+        ],
+        "operationId": "post_parcels",
+        "summary": "POST /api/parcels",
+        "description": "The land parcel register (lib/data/parcels.ts, docs/PARCEL_REGISTER.md). GET: one page of parcels in their public shape (never rights or holders) with the counts, the nation's parcel policy, its cadastre authority and the vocabulary (land uses, survey methods, rights, holder and document kinds). ?limit= (1–1000, default 100), ?offset=, ?state=proposed|published|withdrawn|current|all (default published), ?region=, ?district=, ?landUse=, ?q= (parcel id, record number, region or district), ?waiting=1 (a parcel to publish or a change to confirm), ?bbox=minLon,minLat,maxLon,maxLat. POST: an official of the cadastre authority records a parcel ({ parcelId, geometry (GeoJSON Polygon or MultiPolygon), landUse, method, accuracyM?, surveyedAt?, surveyor?, planRef?, rights?, note? }) under the verified name; a different official publishes it (/api/parcels/{id}). The area is computed, never typed. ?check=1 only checks the outline (nothing is recorded).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "parcelId": {
+                    "type": "string"
+                  },
+                  "geometry": {},
+                  "landUse": {
+                    "type": "string"
+                  },
+                  "method": {
+                    "type": "string"
+                  },
+                  "accuracyM": {
+                    "anyOf": [
+                      {
+                        "type": "number"
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ]
+                  },
+                  "surveyedAt": {
+                    "type": "string"
+                  },
+                  "surveyor": {
+                    "type": "string"
+                  },
+                  "planRef": {
+                    "type": "string"
+                  },
+                  "rights": {},
+                  "note": {
+                    "type": "string"
+                  },
+                  "areaM2": {},
+                  "sourceCrs": {
+                    "type": "object",
+                    "properties": {
+                      "name": {
+                        "type": "string"
+                      },
+                      "epsg": {
+                        "type": "number"
+                      },
+                      "transformation": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "name",
+                      "transformation"
+                    ],
+                    "description": "Set by a load that converted the outline from a declared coordinate system."
+                  },
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "parcelId": "ID-0001",
+                    "geometry": null,
+                    "landUse": "string",
+                    "method": "string",
+                    "accuracyM": 1,
+                    "surveyedAt": "2026-01-15T09:30:00.000Z",
+                    "surveyor": "string",
+                    "planRef": "string",
+                    "rights": null,
+                    "note": "Text",
+                    "areaM2": null,
+                    "sourceCrs": {
+                      "name": "Example",
+                      "epsg": 1,
+                      "transformation": "string"
+                    },
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "check": {
+                      "type": "object",
+                      "properties": {
+                        "ok": {
+                          "type": "boolean"
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "areaM2": {
+                          "type": "number"
+                        },
+                        "place": {
+                          "$ref": "#/components/schemas/ParcelPlace"
+                        },
+                        "overlaps": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ParcelOverlap"
+                          }
+                        },
+                        "overlapCellM": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "ok",
+                        "errors",
+                        "warnings",
+                        "overlaps"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "check"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "check": {
+                        "ok": true,
+                        "errors": [
+                          "Text"
+                        ],
+                        "warnings": [
+                          "string"
+                        ],
+                        "areaM2": 1,
+                        "place": {
+                          "inside": true,
+                          "at": [
+                            1,
+                            1
+                          ]
+                        },
+                        "overlaps": [
+                          {
+                            "id": "ID-0001",
+                            "parcelId": "ID-0001",
+                            "areaM2": 1
+                          }
+                        ],
+                        "overlapCellM": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "parcel": {
+                      "$ref": "#/components/schemas/OfficialParcel"
+                    },
+                    "check": {
+                      "type": "object",
+                      "properties": {
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "overlaps": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ParcelOverlap"
+                          }
+                        }
+                      },
+                      "required": [
+                        "warnings",
+                        "overlaps"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "parcel",
+                    "check"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "parcel": {
+                        "id": "ID-0001",
+                        "parcelId": "ID-0001",
+                        "geometry": {
+                          "type": "MultiPolygon",
+                          "coordinates": [
+                            []
+                          ]
+                        },
+                        "areaM2": 1,
+                        "bbox": [
+                          1,
+                          1,
+                          1,
+                          1
+                        ],
+                        "landUse": "agricultural",
+                        "survey": {
+                          "method": "cadastral-import",
+                          "accuracyM": 1
+                        },
+                        "place": {},
+                        "state": "proposed",
+                        "recordedAt": "2026-01-15T09:30:00.000Z",
+                        "publishedAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawnAt": "2026-01-15T09:30:00.000Z",
+                        "withdrawReason": "Text",
+                        "version": 1,
+                        "overlaps": [
+                          {
+                            "id": "ID-0001",
+                            "parcelId": "ID-0001",
+                            "areaM2": 1
+                          }
+                        ],
+                        "recordedBy": "A. Official",
+                        "publishedBy": "A. Official",
+                        "withdrawnBy": "A. Official",
+                        "source": {
+                          "kind": "form"
+                        },
+                        "note": "Text",
+                        "versions": [
+                          {
+                            "at": "2026-01-15T09:30:00.000Z",
+                            "n": 1,
+                            "by": "A. Official",
+                            "what": "string",
+                            "geometry": {},
+                            "parcelId": "ID-0001",
+                            "landUse": "agricultural",
+                            "areaM2": 1,
+                            "survey": {},
+                            "rightsCount": 1
+                          }
+                        ],
+                        "pending": {
+                          "place": {
+                            "inside": true,
+                            "at": []
+                          },
+                          "proposedBy": "A. Official",
+                          "proposedAt": "2026-01-15T09:30:00.000Z",
+                          "reason": "Text",
+                          "geometry": {
+                            "type": "MultiPolygon",
+                            "coordinates": []
+                          },
+                          "bbox": [
+                            1,
+                            1,
+                            1,
+                            1
+                          ],
+                          "landUse": "agricultural",
+                          "areaM2": 1,
+                          "survey": {
+                            "method": "cadastral-import",
+                            "accuracyM": 1
+                          },
+                          "overlaps": [
+                            {}
+                          ],
+                          "rightsCount": 1
+                        },
+                        "rights": [
+                          {
+                            "rrr": "responsibility",
+                            "type": "caveat",
+                            "holderKind": "community",
+                            "holder": "string",
+                            "source": {}
+                          }
+                        ],
+                        "rightsCount": 1,
+                        "rightsHidden": true
+                      },
+                      "check": {
+                        "warnings": [
+                          "string"
+                        ],
+                        "overlaps": [
+                          {
+                            "id": "ID-0001",
+                            "parcelId": "ID-0001",
+                            "areaM2": 1
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "official",
+        "x-source": "src/app/api/parcels/route.ts"
+      }
+    },
     "/api/payments": {
       "get": {
         "tags": [
@@ -36712,7 +39648,7 @@
         ],
         "operationId": "get_twin_ogc_collections_collectionId_items_featureId",
         "summary": "GET /api/twin/ogc/collections/{collectionId}/items/{featureId}",
-        "description": "One subdivision as a GeoJSON feature with its observed values (?datetime), or one published site of the national facility register, or one unit of the published boundaries in force. ?crs=<URI> serves it in another of the collection's coordinate systems (Part 2); Content-Crs names the one used.",
+        "description": "One subdivision as a GeoJSON feature with its observed values (?datetime), or one published site of the national facility register, or one unit of the published boundaries in force, or one published land parcel (public fields only). ?crs=<URI> serves it in another of the collection's coordinate systems (Part 2); Content-Crs names the one used.",
         "parameters": [
           {
             "name": "collectionId",
@@ -37090,6 +40026,125 @@
                           "type": "string"
                         },
                         "geometry": {
+                          "$ref": "#/components/schemas/MultiPolygonGeom"
+                        },
+                        "properties": {
+                          "type": "object",
+                          "properties": {
+                            "publishedAt": {
+                              "type": "string"
+                            },
+                            "version": {
+                              "type": "number"
+                            },
+                            "surveyedAt": {
+                              "type": "string"
+                            },
+                            "surveyMethod": {
+                              "type": "string",
+                              "enum": [
+                                "cadastral-import",
+                                "field-survey",
+                                "general-boundary",
+                                "gnss-survey",
+                                "handheld-gps",
+                                "imagery",
+                                "scanned-map"
+                              ]
+                            },
+                            "accuracyM": {
+                              "type": "number"
+                            },
+                            "districtCode": {
+                              "type": "string"
+                            },
+                            "district": {
+                              "type": "string"
+                            },
+                            "parcelId": {
+                              "type": "string"
+                            },
+                            "nationalCadastralReference": {
+                              "type": "string"
+                            },
+                            "areaM2": {
+                              "type": "number"
+                            },
+                            "landUse": {
+                              "type": "string",
+                              "enum": [
+                                "agricultural",
+                                "commercial",
+                                "conservation",
+                                "industrial",
+                                "mixed",
+                                "other",
+                                "public-service",
+                                "residential",
+                                "transport",
+                                "vacant",
+                                "water"
+                              ]
+                            },
+                            "regionCode": {
+                              "type": "string"
+                            },
+                            "region": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "version",
+                            "surveyMethod",
+                            "accuracyM",
+                            "parcelId",
+                            "nationalCadastralReference",
+                            "areaM2",
+                            "landUse"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "links",
+                        "type",
+                        "id",
+                        "geometry",
+                        "properties"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "links": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "href": {
+                                "type": "string"
+                              },
+                              "rel": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "href",
+                              "rel",
+                              "type"
+                            ]
+                          }
+                        },
+                        "type": {
+                          "type": "string",
+                          "const": "Feature"
+                        },
+                        "id": {
+                          "type": "string"
+                        },
+                        "geometry": {
                           "anyOf": [
                             {
                               "$ref": "#/components/schemas/Geom"
@@ -37237,7 +40292,7 @@
         ],
         "operationId": "get_twin_ogc_collections_collectionId_items",
         "summary": "GET /api/twin/ogc/collections/{collectionId}/items",
-        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime, ?level=1|2), or the national facility register's published sites (also ?category), as the viewer may see them, or the published boundaries in force (also ?level). Each collection's queryables (/collections/{id}/queryables) are accepted as equality filters (e.g. ?regionCode=KE-30&status=operational); any other parameter is refused with 400. CQL2 filters (OGC API – Features Part 3): ?filter=<CQL2-Text or CQL2-JSON>&filter-lang=cql2-text|cql2-json&filter-crs=CRS84 on the queryables and geometry (lib/twin/cql2.ts); an invalid filter is 400 with the reason. Coordinate systems (Part 2, lib/twin/ogc-crs.ts): ?crs=<URI> serves the features in EPSG:4326, EPSG:3857 or one of the nation's national grids (each collection lists them in `crs`), ?bbox-crs=<URI> reads bbox in one of them; the answer's Content-Crs header names the system of its coordinates.",
+        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime, ?level=1|2), or the national facility register's published sites (also ?category), as the viewer may see them, or the published boundaries in force (also ?level), or the land parcel register's published parcels (public fields only). Each collection's queryables (/collections/{id}/queryables) are accepted as equality filters (e.g. ?regionCode=KE-30&status=operational); any other parameter is refused with 400. CQL2 filters (OGC API – Features Part 3): ?filter=<CQL2-Text or CQL2-JSON>&filter-lang=cql2-text|cql2-json&filter-crs=CRS84 on the queryables and geometry (lib/twin/cql2.ts); an invalid filter is 400 with the reason. Coordinate systems (Part 2, lib/twin/ogc-crs.ts): ?crs=<URI> serves the features in EPSG:4326, EPSG:3857 or one of the nation's national grids (each collection lists them in `crs`), ?bbox-crs=<URI> reads bbox in one of them; the answer's Content-Crs header names the system of its coordinates.",
         "parameters": [
           {
             "name": "collectionId",
@@ -37634,6 +40689,153 @@
                                   "code",
                                   "name",
                                   "level"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id",
+                              "geometry",
+                              "properties"
+                            ]
+                          }
+                        },
+                        "numberMatched": {
+                          "type": "number"
+                        },
+                        "numberReturned": {
+                          "type": "number"
+                        },
+                        "timeStamp": {
+                          "type": "string"
+                        },
+                        "links": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "href": {
+                                "type": "string"
+                              },
+                              "rel": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "href",
+                              "rel",
+                              "type"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "type",
+                        "features",
+                        "numberMatched",
+                        "numberReturned",
+                        "timeStamp",
+                        "links"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "const": "FeatureCollection"
+                        },
+                        "features": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "const": "Feature"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "geometry": {
+                                "$ref": "#/components/schemas/MultiPolygonGeom"
+                              },
+                              "properties": {
+                                "type": "object",
+                                "properties": {
+                                  "publishedAt": {
+                                    "type": "string"
+                                  },
+                                  "version": {
+                                    "type": "number"
+                                  },
+                                  "surveyedAt": {
+                                    "type": "string"
+                                  },
+                                  "surveyMethod": {
+                                    "type": "string",
+                                    "enum": [
+                                      "cadastral-import",
+                                      "field-survey",
+                                      "general-boundary",
+                                      "gnss-survey",
+                                      "handheld-gps",
+                                      "imagery",
+                                      "scanned-map"
+                                    ]
+                                  },
+                                  "accuracyM": {
+                                    "type": "number"
+                                  },
+                                  "districtCode": {
+                                    "type": "string"
+                                  },
+                                  "district": {
+                                    "type": "string"
+                                  },
+                                  "parcelId": {
+                                    "type": "string"
+                                  },
+                                  "nationalCadastralReference": {
+                                    "type": "string"
+                                  },
+                                  "areaM2": {
+                                    "type": "number"
+                                  },
+                                  "landUse": {
+                                    "type": "string",
+                                    "enum": [
+                                      "agricultural",
+                                      "commercial",
+                                      "conservation",
+                                      "industrial",
+                                      "mixed",
+                                      "other",
+                                      "public-service",
+                                      "residential",
+                                      "transport",
+                                      "vacant",
+                                      "water"
+                                    ]
+                                  },
+                                  "regionCode": {
+                                    "type": "string"
+                                  },
+                                  "region": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "version",
+                                  "surveyMethod",
+                                  "accuracyM",
+                                  "parcelId",
+                                  "nationalCadastralReference",
+                                  "areaM2",
+                                  "landUse"
                                 ]
                               }
                             },
@@ -38279,7 +41481,7 @@
         ],
         "operationId": "get_twin_ogc_collections",
         "summary": "GET /api/twin/ogc/collections",
-        "description": "OGC API – Features collections of the national twin: the official subdivisions, the national facility register and the published boundaries, each with the coordinate systems it serves (Part 2: `crs`, `storageCrs`), and the systems offered across them (`crs`).",
+        "description": "OGC API – Features collections of the national twin: the official subdivisions, the national facility register, the published boundaries and the land parcel register (public fields only), each with the coordinate systems it serves (Part 2: `crs`, `storageCrs`), and the systems offered across them (`crs`).",
         "parameters": [],
         "responses": {
           "200": {
@@ -41112,7 +44314,7 @@
                       "type": "number"
                     },
                     "bounds": {
-                      "$ref": "#/components/schemas/BBox"
+                      "$ref": "#/components/schemas/BBox_twin_boundarytiles"
                     },
                     "center": {
                       "type": "array",
@@ -41716,6 +44918,276 @@
           }
         ],
         "x-source": "src/app/api/twin/tiles/facilities/route.ts"
+      }
+    },
+    "/api/twin/tiles/parcels/{z}/{x}/{y}": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tiles_parcels_z_x_y",
+        "summary": "GET /api/twin/tiles/parcels/{z}/{x}/{y}",
+        "description": "One Mapbox Vector Tile (MVT 2.1) of the land parcel register: layer \"parcels\", published parcels as polygons with their public fields only (parcel id, land use, computed area, region and district, survey method and accuracy; never rights or holders), from zoom 13 (empty below it), simplified per zoom on a shared-edge topology (lib/twin/parcel-tiles.ts). The ETag changes with every published change; If-None-Match gives 304 until then. Zoom 0–20; y may end in .mvt or .pbf. Behind the official's session, or a GIS client's integration key or access token of scope ogc:read.",
+        "parameters": [
+          {
+            "name": "z",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "y",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          },
+          {
+            "integrationToken": [
+              "ogc:read"
+            ]
+          },
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/twin/tiles/parcels/[z]/[x]/[y]/route.ts"
+      }
+    },
+    "/api/twin/tiles/parcels": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tiles_parcels",
+        "summary": "GET /api/twin/tiles/parcels",
+        "description": "TileJSON 3.0.0 for the land parcel vector tiles: the tile address template (/api/twin/tiles/parcels/{z}/{x}/{y}.mvt), zoom range (from 13), bounds of the published parcels, the register's generation and the layer's fields (public only; lib/twin/parcel-tiles.ts).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tilejson": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "scheme": {
+                      "type": "string"
+                    },
+                    "tiles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "minzoom": {
+                      "type": "number"
+                    },
+                    "maxzoom": {
+                      "type": "number"
+                    },
+                    "bounds": {
+                      "$ref": "#/components/schemas/BBox"
+                    },
+                    "center": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    "attribution": {
+                      "type": "string"
+                    },
+                    "generation": {
+                      "type": "string"
+                    },
+                    "simplification": {
+                      "type": "object",
+                      "properties": {
+                        "method": {
+                          "type": "string"
+                        },
+                        "toleranceTileUnits": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "method",
+                        "toleranceTileUnits"
+                      ]
+                    },
+                    "vector_layers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "minzoom": {
+                            "type": "number"
+                          },
+                          "maxzoom": {
+                            "type": "number"
+                          },
+                          "fields": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "type": "string"
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "description",
+                          "minzoom",
+                          "maxzoom",
+                          "fields"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "tilejson",
+                    "name",
+                    "description",
+                    "version",
+                    "scheme",
+                    "tiles",
+                    "minzoom",
+                    "maxzoom",
+                    "bounds",
+                    "center",
+                    "attribution",
+                    "generation",
+                    "simplification",
+                    "vector_layers"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "tilejson": "string",
+                      "name": "Example",
+                      "description": "Text",
+                      "version": "string",
+                      "scheme": "string",
+                      "tiles": [
+                        "string"
+                      ],
+                      "minzoom": 1,
+                      "maxzoom": 1,
+                      "bounds": [
+                        1,
+                        1,
+                        1,
+                        1
+                      ],
+                      "center": [
+                        1
+                      ],
+                      "attribution": "string",
+                      "generation": "string",
+                      "simplification": {
+                        "method": "string",
+                        "toleranceTileUnits": 1
+                      },
+                      "vector_layers": [
+                        {
+                          "id": "ID-0001",
+                          "description": "Text",
+                          "minzoom": 1,
+                          "maxzoom": 1,
+                          "fields": {
+                            "key": "string"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          },
+          {
+            "integrationToken": [
+              "ogc:read"
+            ]
+          },
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/twin/tiles/parcels/route.ts"
       }
     },
     "/api/twin/timeline": {
@@ -43127,6 +46599,25 @@
         ]
       },
       "BBox": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "minItems": 4,
+        "maxItems": 4
+      },
+      "BBox_twin_boundarytiles": {
         "type": "array",
         "prefixItems": [
           {
@@ -50395,6 +53886,28 @@
           "topic"
         ]
       },
+      "MultiPolygonGeom": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "const": "MultiPolygon"
+          },
+          "coordinates": {
+            "type": "array",
+            "items": {
+              "type": "array",
+              "items": {
+                "$ref": "#/components/schemas/Ring"
+              }
+            }
+          }
+        },
+        "required": [
+          "type",
+          "coordinates"
+        ]
+      },
       "MunicipalityOnboardingInput": {
         "type": "object",
         "properties": {
@@ -51335,6 +54848,351 @@
           "exp"
         ]
       },
+      "OfficialParcel": {
+        "description": "What an official sees: the public shape, who acted, the survey in full, versions and a waiting change; rights only with `rights: true`.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parcelId": {
+            "type": "string"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/MultiPolygonGeom"
+          },
+          "areaM2": {
+            "type": "number"
+          },
+          "bbox": {
+            "$ref": "#/components/schemas/BBox"
+          },
+          "landUse": {
+            "type": "string",
+            "enum": [
+              "agricultural",
+              "commercial",
+              "conservation",
+              "industrial",
+              "mixed",
+              "other",
+              "public-service",
+              "residential",
+              "transport",
+              "vacant",
+              "water"
+            ]
+          },
+          "survey": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "cadastral-import",
+                  "field-survey",
+                  "general-boundary",
+                  "gnss-survey",
+                  "handheld-gps",
+                  "imagery",
+                  "scanned-map"
+                ]
+              },
+              "accuracyM": {
+                "type": "number"
+              },
+              "surveyedAt": {
+                "type": "string"
+              },
+              "surveyor": {
+                "type": "string"
+              },
+              "planRef": {
+                "type": "string",
+                "description": "The survey plan or field sheet reference."
+              },
+              "sourceCrs": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "epsg": {
+                    "type": "number"
+                  },
+                  "transformation": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "transformation"
+                ],
+                "description": "The national grid or other system the outline was given in, and the exact transformation to WGS 84 (lib/geo/crs.ts)."
+              }
+            },
+            "required": [
+              "method",
+              "accuracyM"
+            ]
+          },
+          "place": {
+            "type": "object",
+            "properties": {
+              "regionCode": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "districtCode": {
+                "type": "string"
+              },
+              "district": {
+                "type": "string"
+              }
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "proposed",
+              "published",
+              "withdrawn"
+            ]
+          },
+          "recordedAt": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "type": "string"
+          },
+          "withdrawReason": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "overlaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParcelOverlap"
+            }
+          },
+          "recordedBy": {
+            "type": "string"
+          },
+          "publishedBy": {
+            "type": "string"
+          },
+          "withdrawnBy": {
+            "type": "string"
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "form",
+                  "import"
+                ]
+              },
+              "importId": {
+                "type": "string"
+              },
+              "sha256": {
+                "type": "string"
+              },
+              "row": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "kind"
+            ]
+          },
+          "note": {
+            "type": "string"
+          },
+          "versions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "at": {
+                  "type": "string"
+                },
+                "n": {
+                  "type": "number"
+                },
+                "by": {
+                  "type": "string"
+                },
+                "what": {
+                  "type": "string"
+                },
+                "geometry": {
+                  "$ref": "#/components/schemas/MultiPolygonGeom"
+                },
+                "parcelId": {
+                  "type": "string"
+                },
+                "landUse": {
+                  "type": "string",
+                  "enum": [
+                    "agricultural",
+                    "commercial",
+                    "conservation",
+                    "industrial",
+                    "mixed",
+                    "other",
+                    "public-service",
+                    "residential",
+                    "transport",
+                    "vacant",
+                    "water"
+                  ]
+                },
+                "areaM2": {
+                  "type": "number"
+                },
+                "survey": {
+                  "$ref": "#/components/schemas/ParcelSurvey"
+                },
+                "rights": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ParcelRight"
+                  }
+                },
+                "rightsCount": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "at",
+                "n",
+                "by",
+                "what",
+                "geometry",
+                "parcelId",
+                "landUse",
+                "areaM2",
+                "survey",
+                "rightsCount"
+              ]
+            }
+          },
+          "pending": {
+            "type": "object",
+            "properties": {
+              "place": {
+                "$ref": "#/components/schemas/ParcelPlace"
+              },
+              "proposedBy": {
+                "type": "string"
+              },
+              "proposedAt": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "geometry": {
+                "$ref": "#/components/schemas/MultiPolygonGeom"
+              },
+              "bbox": {
+                "$ref": "#/components/schemas/BBox"
+              },
+              "landUse": {
+                "type": "string",
+                "enum": [
+                  "agricultural",
+                  "commercial",
+                  "conservation",
+                  "industrial",
+                  "mixed",
+                  "other",
+                  "public-service",
+                  "residential",
+                  "transport",
+                  "vacant",
+                  "water"
+                ]
+              },
+              "areaM2": {
+                "type": "number"
+              },
+              "survey": {
+                "$ref": "#/components/schemas/ParcelSurvey"
+              },
+              "overlaps": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ParcelOverlap"
+                }
+              },
+              "rights": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ParcelRight"
+                }
+              },
+              "rightsCount": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "place",
+              "proposedBy",
+              "proposedAt",
+              "reason",
+              "geometry",
+              "bbox",
+              "landUse",
+              "areaM2",
+              "survey",
+              "overlaps",
+              "rightsCount"
+            ]
+          },
+          "rights": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParcelRight"
+            }
+          },
+          "rightsCount": {
+            "type": "number"
+          },
+          "rightsHidden": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "parcelId",
+          "geometry",
+          "areaM2",
+          "bbox",
+          "landUse",
+          "survey",
+          "place",
+          "state",
+          "recordedAt",
+          "version",
+          "overlaps",
+          "recordedBy",
+          "source",
+          "versions",
+          "rightsCount",
+          "rightsHidden"
+        ]
+      },
       "OpenSource": {
         "type": "object",
         "properties": {
@@ -51616,6 +55474,462 @@
           "by",
           "action",
           "iso3"
+        ]
+      },
+      "ParcelImport": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "by": {
+            "type": "string"
+          },
+          "at": {
+            "type": "string"
+          },
+          "format": {
+            "type": "string",
+            "enum": [
+              "geojson",
+              "geopackage",
+              "shapefile-zip",
+              "topojson"
+            ]
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "rows": {
+            "type": "number"
+          },
+          "accepted": {
+            "type": "number"
+          },
+          "refused": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "row": {
+                  "type": "number"
+                },
+                "reason": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "row",
+                "reason"
+              ]
+            }
+          },
+          "parcelIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "crs": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "epsg": {
+                "type": "number"
+              },
+              "transformation": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name"
+            ]
+          },
+          "notes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "withdrawn": {
+            "type": "object",
+            "properties": {
+              "by": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              },
+              "count": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "by",
+              "at",
+              "reason",
+              "count"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "by",
+          "at",
+          "format",
+          "sha256",
+          "rows",
+          "accepted",
+          "refused",
+          "parcelIds",
+          "notes"
+        ]
+      },
+      "ParcelOverlap": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parcelId": {
+            "type": "string"
+          },
+          "areaM2": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "parcelId",
+          "areaM2"
+        ]
+      },
+      "ParcelPlace": {
+        "description": "Worked out from the map (the boundary version in force) at an interior point; never typed.",
+        "type": "object",
+        "properties": {
+          "regionCode": {
+            "type": "string"
+          },
+          "region": {
+            "type": "string"
+          },
+          "districtCode": {
+            "type": "string"
+          },
+          "district": {
+            "type": "string"
+          },
+          "inside": {
+            "type": "boolean"
+          },
+          "at": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "minItems": 2,
+            "maxItems": 2
+          }
+        },
+        "required": [
+          "inside",
+          "at"
+        ]
+      },
+      "ParcelPolicy": {
+        "type": "object",
+        "properties": {
+          "authorityId": {
+            "type": "string",
+            "description": "The institution (registry id) acting as cadastre authority."
+          },
+          "idPattern": {
+            "type": "string",
+            "description": "The national parcel id format: an anchored regular expression."
+          },
+          "idExample": {
+            "type": "string"
+          },
+          "overlap": {
+            "type": "string",
+            "enum": [
+              "flag",
+              "refuse"
+            ],
+            "description": "An overlap with a published parcel above the tolerance is refused, or recorded and flagged."
+          },
+          "toleranceM2": {
+            "type": "number"
+          },
+          "methods": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "cadastral-import",
+                "field-survey",
+                "general-boundary",
+                "gnss-survey",
+                "handheld-gps",
+                "imagery",
+                "scanned-map"
+              ]
+            }
+          },
+          "version": {
+            "type": "number"
+          },
+          "decidedBy": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "decidedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "idPattern",
+          "idExample",
+          "overlap",
+          "toleranceM2",
+          "methods",
+          "version"
+        ]
+      },
+      "ParcelPolicyChange": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "patch": {
+            "type": "object",
+            "properties": {
+              "authorityId": {
+                "type": "string",
+                "description": "The institution (registry id) acting as cadastre authority."
+              },
+              "idExample": {
+                "type": "string"
+              },
+              "idPattern": {
+                "type": "string",
+                "description": "The national parcel id format: an anchored regular expression."
+              },
+              "methods": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "enum": [
+                    "cadastral-import",
+                    "field-survey",
+                    "general-boundary",
+                    "gnss-survey",
+                    "handheld-gps",
+                    "imagery",
+                    "scanned-map"
+                  ]
+                }
+              },
+              "overlap": {
+                "type": "string",
+                "enum": [
+                  "flag",
+                  "refuse"
+                ],
+                "description": "An overlap with a published parcel above the tolerance is refused, or recorded and flagged."
+              },
+              "toleranceM2": {
+                "type": "number"
+              }
+            }
+          },
+          "reason": {
+            "type": "string"
+          },
+          "proposedBy": {
+            "type": "string"
+          },
+          "proposedAt": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "pending",
+              "withdrawn"
+            ]
+          },
+          "decidedBy": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": "string"
+          },
+          "baseVersion": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "patch",
+          "reason",
+          "proposedBy",
+          "proposedAt",
+          "state",
+          "baseVersion"
+        ]
+      },
+      "ParcelRight": {
+        "description": "One right, restriction or responsibility: personal data (holder, holder reference).",
+        "type": "object",
+        "properties": {
+          "rrr": {
+            "type": "string",
+            "enum": [
+              "responsibility",
+              "restriction",
+              "right"
+            ]
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "caveat",
+              "customary",
+              "easement",
+              "leasehold",
+              "maintenance",
+              "mortgage",
+              "occupancy",
+              "ownership",
+              "use-restriction",
+              "usufruct"
+            ]
+          },
+          "holderKind": {
+            "type": "string",
+            "enum": [
+              "community",
+              "group",
+              "organisation",
+              "person",
+              "state",
+              "unknown"
+            ]
+          },
+          "holder": {
+            "type": "string"
+          },
+          "holderRef": {
+            "type": "string",
+            "description": "The holder's identifier where the authority keeps one (national id, company number)."
+          },
+          "share": {
+            "type": "string",
+            "description": "A fraction \"n/d\" (ownership-type rights add up to at most one)."
+          },
+          "source": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "adjudication",
+                  "court-order",
+                  "customary-record",
+                  "lease",
+                  "other",
+                  "survey-plan",
+                  "title"
+                ]
+              },
+              "ref": {
+                "type": "string"
+              },
+              "date": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "kind",
+              "ref"
+            ]
+          }
+        },
+        "required": [
+          "rrr",
+          "type",
+          "holderKind",
+          "holder",
+          "source"
+        ]
+      },
+      "ParcelSurvey": {
+        "type": "object",
+        "properties": {
+          "method": {
+            "type": "string",
+            "enum": [
+              "cadastral-import",
+              "field-survey",
+              "general-boundary",
+              "gnss-survey",
+              "handheld-gps",
+              "imagery",
+              "scanned-map"
+            ]
+          },
+          "accuracyM": {
+            "type": "number"
+          },
+          "surveyedAt": {
+            "type": "string"
+          },
+          "surveyor": {
+            "type": "string"
+          },
+          "planRef": {
+            "type": "string",
+            "description": "The survey plan or field sheet reference."
+          },
+          "sourceCrs": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "epsg": {
+                "type": "number"
+              },
+              "transformation": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "transformation"
+            ],
+            "description": "The national grid or other system the outline was given in, and the exact transformation to WGS 84 (lib/geo/crs.ts)."
+          }
+        },
+        "required": [
+          "method",
+          "accuracyM"
         ]
       },
       "PatchCommitment": {
@@ -51923,6 +56237,19 @@
           "state",
           "baseVersion"
         ]
+      },
+      "Position": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "minItems": 2,
+        "maxItems": 2
       },
       "PreflightFinding": {
         "type": "object",
@@ -52411,6 +56738,130 @@
           "createdAt",
           "createdBy",
           "twoStepRequired"
+        ]
+      },
+      "PublicParcel": {
+        "description": "The public shape of a parcel: what tiles, the OGC collection, lists and exports carry (INSPIRE Cadastral Parcels: reference, geometry, area, administrative unit; plus land use and survey). It has no rights field, so no caller can leak a holder through it.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "parcelId": {
+            "type": "string"
+          },
+          "geometry": {
+            "$ref": "#/components/schemas/MultiPolygonGeom"
+          },
+          "areaM2": {
+            "type": "number"
+          },
+          "bbox": {
+            "$ref": "#/components/schemas/BBox"
+          },
+          "landUse": {
+            "type": "string",
+            "enum": [
+              "agricultural",
+              "commercial",
+              "conservation",
+              "industrial",
+              "mixed",
+              "other",
+              "public-service",
+              "residential",
+              "transport",
+              "vacant",
+              "water"
+            ]
+          },
+          "survey": {
+            "type": "object",
+            "properties": {
+              "method": {
+                "type": "string",
+                "enum": [
+                  "cadastral-import",
+                  "field-survey",
+                  "general-boundary",
+                  "gnss-survey",
+                  "handheld-gps",
+                  "imagery",
+                  "scanned-map"
+                ]
+              },
+              "accuracyM": {
+                "type": "number"
+              },
+              "surveyedAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "method",
+              "accuracyM"
+            ]
+          },
+          "place": {
+            "type": "object",
+            "properties": {
+              "regionCode": {
+                "type": "string"
+              },
+              "region": {
+                "type": "string"
+              },
+              "districtCode": {
+                "type": "string"
+              },
+              "district": {
+                "type": "string"
+              }
+            }
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "proposed",
+              "published",
+              "withdrawn"
+            ]
+          },
+          "recordedAt": {
+            "type": "string"
+          },
+          "publishedAt": {
+            "type": "string"
+          },
+          "withdrawnAt": {
+            "type": "string"
+          },
+          "withdrawReason": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "overlaps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParcelOverlap"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "parcelId",
+          "geometry",
+          "areaM2",
+          "bbox",
+          "landUse",
+          "survey",
+          "place",
+          "state",
+          "recordedAt",
+          "version",
+          "overlaps"
         ]
       },
       "PublisherKey": {
@@ -53623,6 +58074,12 @@
           "contents",
           "restoreNotes"
         ]
+      },
+      "Ring": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Position"
+        }
       },
       "Scenario": {
         "type": "object",

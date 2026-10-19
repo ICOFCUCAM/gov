@@ -1,7 +1,7 @@
 // The persistence port (architecture review R6, C2). The registers that move
 // to per-record tables first — the audit chain, the national twin (entities,
 // crosswalk keys, sources, runs, observations), the facility register and the
-// boundary versions — change their state only through these interfaces. The
+// boundary versions, the land parcel register — change their state only through these interfaces. The
 // exported domain functions (recordAudit, runSource, stateAsOf,
 // proposeFacility, publishBoundaries …) keep their signatures and stay
 // synchronous: every implementation keeps the records in memory as the read
@@ -28,6 +28,7 @@ import type { TwinDb } from '@/lib/twin/db';
 import type { TwinEntity, TwinSource, TwinRun, Observation } from '@/lib/twin/register';
 import type { Facility } from '@/lib/data/facilities';
 import type { BoundaryVersion } from '@/lib/data/boundaries';
+import type { Parcel } from '@/lib/data/parcels';
 
 export type BackendName = 'memory' | 'postgres';
 
@@ -89,6 +90,17 @@ export interface BoundaryRepo {
   save(v: BoundaryVersion): void;
 }
 
+/** The part of the parcel store the port manages: the parcel records and their numbering. */
+export interface ParcelStore { parcels: Parcel[]; seq: number }
+export interface ParcelRepo {
+  list(): Parcel[];
+  /** The next parcel record number (PCL-nnnnnn); unique across instances in postgres. */
+  nextSeq(): number;
+  add(p: Parcel): void;
+  /** Record that a parcel changed in place (published, amended, withdrawn). */
+  save(p: Parcel): void;
+}
+
 /** A storage backend: makes each repository for its store's accessor. */
 export interface Backend {
   name: BackendName;
@@ -96,4 +108,5 @@ export interface Backend {
   twin(state: () => TwinDb): TwinRepo;
   facilities(store: () => FacilityStore): FacilityRepo;
   boundaries(store: () => BoundaryStore): BoundaryRepo;
+  parcels(store: () => ParcelStore): ParcelRepo;
 }

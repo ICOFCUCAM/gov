@@ -925,6 +925,60 @@ export type Database = {
         };
         Relationships: [];
       };
+      parcel: {
+        Row: {
+          area_m2: number
+          district_code: string | null
+          doc: Json
+          geometry: Json
+          id: string
+          land_use: string
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          parcel_id: string
+          pos: number
+          region_code: string | null
+          state: string
+          updated_at: string
+        };
+        Insert: {
+          area_m2: number
+          district_code?: string | null
+          doc: Json
+          geometry: Json
+          id: string
+          land_use: string
+          max_lat: number
+          max_lng: number
+          min_lat: number
+          min_lng: number
+          parcel_id: string
+          pos?: number
+          region_code?: string | null
+          state: string
+          updated_at?: string
+        };
+        Update: {
+          area_m2?: number
+          district_code?: string | null
+          doc?: Json
+          geometry?: Json
+          id?: string
+          land_use?: string
+          max_lat?: number
+          max_lng?: number
+          min_lat?: number
+          min_lng?: number
+          parcel_id?: string
+          pos?: number
+          region_code?: string | null
+          state?: string
+          updated_at?: string
+        };
+        Relationships: [];
+      };
       platform_state: {
         Row: {
           key: string

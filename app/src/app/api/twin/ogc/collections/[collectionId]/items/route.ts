@@ -1,7 +1,8 @@
 // OGC API – Features items: the nation's subdivisions as GeoJSON with their
 // observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime, ?level=1|2),
 // or the national facility register's published sites (also ?category), as
-// the viewer may see them, or the published boundaries in force (also ?level).
+// the viewer may see them, or the published boundaries in force (also ?level),
+// or the land parcel register's published parcels (public fields only).
 // Each collection's queryables (/collections/{id}/queryables) are accepted as
 // equality filters (e.g. ?regionCode=KE-30&status=operational); any other
 // parameter is refused with 400. CQL2 filters (OGC API – Features Part 3):
@@ -15,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { items, COLLECTION } from '@/lib/twin/ogc';
 import { facilityItems, FACILITY_COLLECTION } from '@/lib/twin/ogc-facilities';
 import { boundaryItems, BOUNDARY_COLLECTION } from '@/lib/twin/ogc-boundaries';
+import { parcelItems, PARCEL_COLLECTION } from '@/lib/twin/ogc-parcels';
 import { readFilters } from '@/lib/twin/ogc-queryables';
 import { readCql2 } from '@/lib/twin/cql2';
 import { syncRegister } from '@/lib/twin/register';
@@ -31,7 +33,7 @@ export async function GET(req: NextRequest, props: { params: Promise<{ collectio
   if (refused) return refused;
   const sp = req.nextUrl.searchParams;
   const base = `${req.nextUrl.origin}/api/twin/ogc`;
-  if (![FACILITY_COLLECTION, BOUNDARY_COLLECTION, COLLECTION].includes(params.collectionId)) return NextResponse.json({ error: 'No such collection' }, { status: 404 });
+  if (![FACILITY_COLLECTION, BOUNDARY_COLLECTION, PARCEL_COLLECTION, COLLECTION].includes(params.collectionId)) return NextResponse.json({ error: 'No such collection' }, { status: 404 });
   const filters = readFilters(params.collectionId, sp);
   if ('error' in filters) return NextResponse.json({ code: 'InvalidParameterValue', description: filters.error, error: filters.error }, { status: 400 });
   const cql = readCql2(params.collectionId, sp.get('filter'), sp.get('filter-lang'), sp.get('filter-crs'));
@@ -53,6 +55,12 @@ export async function GET(req: NextRequest, props: { params: Promise<{ collectio
   }
   if (params.collectionId === BOUNDARY_COLLECTION) {
     const r = boundaryItems(base, paging);
+    if ('error' in r) return NextResponse.json(r, { status: 400 });
+    return NextResponse.json(answerInCrs(r, out, crsQ), { headers });
+  }
+  if (params.collectionId === PARCEL_COLLECTION) {
+    // Public fields only (publicParcel()): never rights or holders.
+    const r = parcelItems(base, paging);
     if ('error' in r) return NextResponse.json(r, { status: 400 });
     return NextResponse.json(answerInCrs(r, out, crsQ), { headers });
   }
