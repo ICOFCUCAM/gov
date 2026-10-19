@@ -267,7 +267,11 @@ layouts. The fix is one shared map engine grown from it.
   outside the region they are filed under (`lib/geo/topology.ts`). Site
   files may be in a national grid (EPSG code, GeoJSON crs or .prj), converted
   on the server from bundled proj4 definitions (`lib/geo/crs.ts`), the
-  system and transformation kept with each site.
+  system and transformation kept with each site. Above 2,000 located points
+  `NationMap` paints them on one canvas (`components/map/CanvasPoints.tsx`,
+  `lib/map/point-layer.ts`) with grid hit-testing for hover and click; the
+  SVG points below the threshold are unchanged and the table view still
+  lists every point for keyboard and screen-reader users.
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

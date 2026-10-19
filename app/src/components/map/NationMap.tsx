@@ -10,7 +10,10 @@
 // reachable by keyboard (arrow keys in official order, Enter selects). A unit
 // with units beneath it (a region's districts) can be opened from the "Open"
 // list or by double-clicking it. The capital is marked: the nation's own
-// choice from setup, else the map data's default, which says so.
+// choice from setup, else the map data's default, which says so. Above ~2,000
+// located points (lib/map/point-layer.ts) the points are painted on a canvas
+// over the map and hit-tested for hover and click; below it each is an SVG
+// element as before. The table view lists every point by unit either way.
 
 import * as React from 'react';
 import { nationCapital, nationIso3, nationProjection, nationRegions, nationWorldview } from '@/lib/nation/registry';
@@ -25,6 +28,8 @@ import { geoCentroid } from 'd3-geo';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { needsMarker, SIGNAL_LABEL, type SignalKind } from '@/lib/twin/signal';
 import { STATUS } from '@/lib/theme/tokens';
+import { drawsOnCanvas, pointIndex } from '@/lib/map/point-layer';
+import { CanvasPoints } from './CanvasPoints';
 
 export type { MapPoint, MapValue, MapTone };
 
@@ -145,6 +150,8 @@ export function NationMap({
   const unzoom = (v: number, axis: 'x' | 'y') => (z ? (v - (axis === 'x' ? z.tx : z.ty)) / z.z : v);
   const [cursor, setCursor] = React.useState<[number, number] | null>(null);
   const uid = React.useId().replace(/:/g, '');
+  const svgRef = React.useRef<SVGSVGElement>(null);
+  const [hoverPoint, setHoverPoint] = React.useState<number | null>(null);
 
   React.useEffect(() => {
     if (!iso3) { setGeo(null); return; }
@@ -212,6 +219,20 @@ export function NationMap({
   const openable = (nationGeo?.units ?? []).filter(u => u.drill && u.code && u.geometry);
   // The opened unit's own figure, from the figures the page passed for the nation's units.
   const parentValue = opened ? values.find(v => v.key === opened.code) ?? values.find(v => nameKeys(v.key).some(k => nameKeys(opened.name).includes(k))) : undefined;
+  // Located points at national scale go on a canvas, found again by a grid index.
+  const exactPoints = React.useMemo(() => model?.points.filter(p => p.exact) ?? [], [model]);
+  const onCanvas = drawsOnCanvas(exactPoints.length);
+  const pIndex = React.useMemo(() => (onCanvas ? pointIndex(exactPoints) : null), [onCanvas, exactPoints]);
+  React.useEffect(() => { setHoverPoint(null); }, [exactPoints]);
+  /** The canvas point under the pointer, if any. */
+  const pointAt = (e: React.MouseEvent): number | null => {
+    const el = svgRef.current;
+    if (!pIndex || !el || !model) return null;
+    const r = el.getBoundingClientRect();
+    if (!r.width || !r.height) return null;
+    const x = unzoom(((e.clientX - r.left) / r.width) * model.width, 'x'), y = unzoom(((e.clientY - r.top) / r.height) * model.height, 'y');
+    return pIndex.nearest(x, y, 8 / (z?.z ?? 1));
+  };
   const marked = needsMarker(kind);
   const shown = model?.units.filter(u => u.value).length ?? 0;
   const drawn = model?.units.map((u, i) => ({ u, i })).filter(x => x.u.d) ?? [];
@@ -277,10 +298,14 @@ export function NationMap({
       ) : null}
       {openNote ? <p className="text-[11px] text-ink-muted" role="status">{openNote}</p> : null}
 
-      <div ref={wrap} className={view === 'map' ? 'relative w-full' : 'hidden'}>
+      <div ref={wrap} className={view === 'map' ? 'relative w-full' : 'hidden'}
+        onMouseMove={onCanvas ? e => setHoverPoint(pointAt(e)) : undefined}
+        onMouseLeave={onCanvas ? () => setHoverPoint(null) : undefined}
+        onClickCapture={onCanvas ? e => { const i = pointAt(e); const href = i != null ? exactPoints[i]?.href : undefined; if (href) { e.preventDefault(); e.stopPropagation(); window.location.assign(href); } } : undefined}
+        style={onCanvas && hoverPoint != null && exactPoints[hoverPoint]?.href ? { cursor: 'pointer' } : undefined}>
         {geo === undefined ? <p className="p-3 text-[13px] text-ink-soft" style={{ minHeight }}>Loading the nation&rsquo;s boundaries…</p>
           : geo === null || !model ? <p className="p-3 text-[13px] text-ink-soft">No boundaries are available for this country yet.</p> : (
-          <svg width={model.width} height={model.height} viewBox={`0 0 ${model.width} ${model.height}`} className="block max-w-full"
+          <svg ref={svgRef} width={model.width} height={model.height} viewBox={`0 0 ${model.width} ${model.height}`} className="block max-w-full"
             role="group" aria-roledescription="map" aria-label={summary} onKeyDown={onKey}
             onMouseMove={theatre ? e => { const r = e.currentTarget.getBoundingClientRect(); setCursor(model.invert(unzoom(((e.clientX - r.left) / r.width) * model.width, 'x'), unzoom(((e.clientY - r.top) / r.height) * model.height, 'y'))); } : undefined}
             onMouseLeave={theatre ? () => setCursor(null) : undefined}
@@ -328,7 +353,7 @@ export function NationMap({
               <circle key={`ring${i}`} cx={p.x} cy={p.y} r={14} fill="none" stroke={STATUS.alert} strokeWidth={1.1} aria-hidden pointerEvents="none"
                 className="motion-safe:animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
             ))}
-            {model.points.filter(p => p.exact).map((p, i) => {
+            {onCanvas ? null : model.points.filter(p => p.exact).map((p, i) => {
               const mark = (
                 <g>
                   <rect x={p.x - 7} y={p.y - 7} width={14} height={14} rx={3} fill="rgb(var(--c-surface-2))" stroke={STATUS[p.tone]} strokeWidth={1.2} />
@@ -378,6 +403,17 @@ export function NationMap({
             ) : null}
           </svg>
         )}
+        {onCanvas && model ? (
+          <>
+            <CanvasPoints points={exactPoints} width={model.width} height={model.height} zoom={z} highlight={hoverPoint} />
+            <p className="sr-only">{exactPoints.length.toLocaleString('en')} {pointsLabel.toLowerCase()} are drawn as dots; the Table view lists them by {noun}.</p>
+          </>
+        ) : null}
+        {onCanvas && hoverPoint != null && exactPoints[hoverPoint] ? (
+          <div className={`pointer-events-none absolute ${hud ? 'start-12' : 'start-2'} bottom-2 max-w-[70%] rounded-[3px] border border-line bg-surface px-2 py-1 text-[12px] shadow`} role="status">
+            {exactPoints[hoverPoint]!.label}{exactPoints[hoverPoint]!.unit ? <span className="text-ink-muted"> · {exactPoints[hoverPoint]!.unit}</span> : null}
+          </div>
+        ) : null}
         {hud && model ? <div className="absolute start-2 top-2 z-10 flex flex-col gap-1">{hud}</div> : null}
         {inMap && model && !geo?.parent ? <div className="absolute inset-x-0 bottom-0 z-10">{inMap}</div> : null}
         {theatre && model ? (
