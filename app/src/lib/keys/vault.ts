@@ -18,6 +18,8 @@
 //   path "transit/sign/civicos-exchange"         { capabilities = ["update"] }
 //   path "transit/keys/civicos-audit"            { capabilities = ["read"] }
 //   path "transit/keys/civicos-exchange"         { capabilities = ["read"] }
+//   path "transit/sign/civicos-token"            { capabilities = ["update"] }
+//   path "transit/keys/civicos-token"            { capabilities = ["read"] }
 //   path "transit/datakey/plaintext/civicos-data" { capabilities = ["update"] }
 //   path "transit/decrypt/civicos-data"          { capabilities = ["update"] }
 

@@ -16,7 +16,7 @@ export async function GET(
 ) {
   const params = await props.params;
   // A GIS client's integration key (scope ogc:read), when it sends one; otherwise the official's session.
-  const refused = machineReadRefusal(req);
+  const refused = await machineReadRefusal(req);
   if (refused) return refused;
   const t = parseTile(params.z, params.x, params.y);
   if (!t) return NextResponse.json({ error: 'No such tile: z 0–18, x and y within 0 … 2^z − 1' }, { status: 404 });

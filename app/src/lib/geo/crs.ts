@@ -16,7 +16,13 @@
 import proj4 from 'proj4';
 import { crsFromWkt, wktName } from './boundary-files';
 
-export interface CrsDef { epsg: number; name: string; proj4: string; area: string }
+export interface CrsDef {
+  epsg: number; name: string; proj4: string; area: string;
+  /** The nations (ISO 3166-1 alpha-3) whose national grid it is: offered by their OGC API (lib/twin/ogc-crs.ts). */
+  countries?: readonly string[];
+}
+
+const EUROPE = ['AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'CZE', 'DNK', 'EST', 'FIN', 'FRA', 'DEU', 'GRC', 'HUN', 'IRL', 'ITA', 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', 'SVK', 'SVN', 'ESP', 'SWE', 'ISL', 'LIE', 'NOR', 'CHE'];
 
 const ARC1960 = '+ellps=clrk80 +towgs84=-160,-6,-302,0,0,0,0';
 const ADINDAN = '+ellps=clrk80 +towgs84=-166,-15,204,0,0,0,0';
@@ -26,24 +32,24 @@ const MINNA = '+ellps=clrk80 +towgs84=-92,-93,122,0,0,0,0';
 export const NATIONAL_CRS: CrsDef[] = [
   { epsg: 4326, name: 'WGS 84 (longitude/latitude)', proj4: '+proj=longlat +datum=WGS84 +no_defs', area: 'World' },
   { epsg: 3857, name: 'WGS 84 / Pseudo-Mercator (web maps)', proj4: '+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +no_defs', area: 'World' },
-  { epsg: 4210, name: 'Arc 1960 (longitude/latitude)', proj4: `+proj=longlat ${ARC1960} +no_defs`, area: 'Kenya, Tanzania, Uganda' },
-  { epsg: 21035, name: 'Arc 1960 / UTM zone 35S', proj4: `+proj=utm +zone=35 +south ${ARC1960} +units=m +no_defs`, area: 'Tanzania, Uganda (west)' },
-  { epsg: 21036, name: 'Arc 1960 / UTM zone 36S', proj4: `+proj=utm +zone=36 +south ${ARC1960} +units=m +no_defs`, area: 'Kenya, Tanzania, Uganda' },
-  { epsg: 21037, name: 'Arc 1960 / UTM zone 37S', proj4: `+proj=utm +zone=37 +south ${ARC1960} +units=m +no_defs`, area: 'Kenya, Tanzania' },
-  { epsg: 21095, name: 'Arc 1960 / UTM zone 35N', proj4: `+proj=utm +zone=35 ${ARC1960} +units=m +no_defs`, area: 'Uganda' },
-  { epsg: 21096, name: 'Arc 1960 / UTM zone 36N', proj4: `+proj=utm +zone=36 ${ARC1960} +units=m +no_defs`, area: 'Kenya, Uganda' },
-  { epsg: 21097, name: 'Arc 1960 / UTM zone 37N', proj4: `+proj=utm +zone=37 ${ARC1960} +units=m +no_defs`, area: 'Kenya' },
-  { epsg: 20137, name: 'Adindan / UTM zone 37N', proj4: `+proj=utm +zone=37 ${ADINDAN} +units=m +no_defs`, area: 'Ethiopia, Sudan' },
-  { epsg: 20138, name: 'Adindan / UTM zone 38N', proj4: `+proj=utm +zone=38 ${ADINDAN} +units=m +no_defs`, area: 'Ethiopia' },
-  { epsg: 26391, name: 'Minna / Nigeria West Belt', proj4: `+proj=tmerc +lat_0=4 +lon_0=4.5 +k=0.99975 +x_0=230738.26 +y_0=0 ${MINNA} +units=m +no_defs`, area: 'Nigeria (west)' },
-  { epsg: 26392, name: 'Minna / Nigeria Mid Belt', proj4: `+proj=tmerc +lat_0=4 +lon_0=8.5 +k=0.99975 +x_0=670553.98 +y_0=0 ${MINNA} +units=m +no_defs`, area: 'Nigeria (centre)' },
-  { epsg: 26393, name: 'Minna / Nigeria East Belt', proj4: `+proj=tmerc +lat_0=4 +lon_0=12.5 +k=0.99975 +x_0=1110369.7 +y_0=0 ${MINNA} +units=m +no_defs`, area: 'Nigeria (east)' },
-  { epsg: 27700, name: 'OSGB36 / British National Grid', proj4: '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs', area: 'United Kingdom' },
-  { epsg: 4258, name: 'ETRS89 (longitude/latitude)', proj4: '+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs', area: 'Europe' },
-  { epsg: 3035, name: 'ETRS89-extended / LAEA Europe', proj4: '+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs', area: 'Europe (statistics, INSPIRE grids)' },
-  { epsg: 2154, name: 'RGF93 v1 / Lambert-93', proj4: '+proj=lcc +lat_0=46.5 +lon_0=3 +lat_1=49 +lat_2=44 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs', area: 'France' },
-  { epsg: 4269, name: 'NAD83 (longitude/latitude)', proj4: '+proj=longlat +datum=NAD83 +no_defs', area: 'North America' },
-  { epsg: 7844, name: 'GDA2020 (longitude/latitude)', proj4: '+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs', area: 'Australia' },
+  { epsg: 4210, name: 'Arc 1960 (longitude/latitude)', proj4: `+proj=longlat ${ARC1960} +no_defs`, area: 'Kenya, Tanzania, Uganda', countries: ['KEN', 'TZA', 'UGA'] },
+  { epsg: 21035, name: 'Arc 1960 / UTM zone 35S', proj4: `+proj=utm +zone=35 +south ${ARC1960} +units=m +no_defs`, area: 'Tanzania, Uganda (west)', countries: ['TZA', 'UGA'] },
+  { epsg: 21036, name: 'Arc 1960 / UTM zone 36S', proj4: `+proj=utm +zone=36 +south ${ARC1960} +units=m +no_defs`, area: 'Kenya, Tanzania, Uganda', countries: ['KEN', 'TZA', 'UGA'] },
+  { epsg: 21037, name: 'Arc 1960 / UTM zone 37S', proj4: `+proj=utm +zone=37 +south ${ARC1960} +units=m +no_defs`, area: 'Kenya, Tanzania', countries: ['KEN', 'TZA'] },
+  { epsg: 21095, name: 'Arc 1960 / UTM zone 35N', proj4: `+proj=utm +zone=35 ${ARC1960} +units=m +no_defs`, area: 'Uganda', countries: ['UGA'] },
+  { epsg: 21096, name: 'Arc 1960 / UTM zone 36N', proj4: `+proj=utm +zone=36 ${ARC1960} +units=m +no_defs`, area: 'Kenya, Uganda', countries: ['KEN', 'UGA'] },
+  { epsg: 21097, name: 'Arc 1960 / UTM zone 37N', proj4: `+proj=utm +zone=37 ${ARC1960} +units=m +no_defs`, area: 'Kenya', countries: ['KEN'] },
+  { epsg: 20137, name: 'Adindan / UTM zone 37N', proj4: `+proj=utm +zone=37 ${ADINDAN} +units=m +no_defs`, area: 'Ethiopia, Sudan', countries: ['ETH', 'SDN'] },
+  { epsg: 20138, name: 'Adindan / UTM zone 38N', proj4: `+proj=utm +zone=38 ${ADINDAN} +units=m +no_defs`, area: 'Ethiopia', countries: ['ETH'] },
+  { epsg: 26391, name: 'Minna / Nigeria West Belt', proj4: `+proj=tmerc +lat_0=4 +lon_0=4.5 +k=0.99975 +x_0=230738.26 +y_0=0 ${MINNA} +units=m +no_defs`, area: 'Nigeria (west)', countries: ['NGA'] },
+  { epsg: 26392, name: 'Minna / Nigeria Mid Belt', proj4: `+proj=tmerc +lat_0=4 +lon_0=8.5 +k=0.99975 +x_0=670553.98 +y_0=0 ${MINNA} +units=m +no_defs`, area: 'Nigeria (centre)', countries: ['NGA'] },
+  { epsg: 26393, name: 'Minna / Nigeria East Belt', proj4: `+proj=tmerc +lat_0=4 +lon_0=12.5 +k=0.99975 +x_0=1110369.7 +y_0=0 ${MINNA} +units=m +no_defs`, area: 'Nigeria (east)', countries: ['NGA'] },
+  { epsg: 27700, name: 'OSGB36 / British National Grid', proj4: '+proj=tmerc +lat_0=49 +lon_0=-2 +k=0.9996012717 +x_0=400000 +y_0=-100000 +ellps=airy +towgs84=446.448,-125.157,542.06,0.15,0.247,0.842,-20.489 +units=m +no_defs', area: 'United Kingdom', countries: ['GBR'] },
+  { epsg: 4258, name: 'ETRS89 (longitude/latitude)', proj4: '+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs', area: 'Europe', countries: EUROPE },
+  { epsg: 3035, name: 'ETRS89-extended / LAEA Europe', proj4: '+proj=laea +lat_0=52 +lon_0=10 +x_0=4321000 +y_0=3210000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs', area: 'Europe (statistics, INSPIRE grids)', countries: EUROPE },
+  { epsg: 2154, name: 'RGF93 v1 / Lambert-93', proj4: '+proj=lcc +lat_0=46.5 +lon_0=3 +lat_1=49 +lat_2=44 +x_0=700000 +y_0=6600000 +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +units=m +no_defs', area: 'France', countries: ['FRA'] },
+  { epsg: 4269, name: 'NAD83 (longitude/latitude)', proj4: '+proj=longlat +datum=NAD83 +no_defs', area: 'North America', countries: ['USA', 'CAN'] },
+  { epsg: 7844, name: 'GDA2020 (longitude/latitude)', proj4: '+proj=longlat +ellps=GRS80 +towgs84=0,0,0,0,0,0,0 +no_defs', area: 'Australia', countries: ['AUS'] },
 ];
 
 /** A system positions can be converted from: its name, EPSG code when known, and the transformation used. */
@@ -57,12 +63,14 @@ export interface SourceCrs {
   /** Longitude/latitude on another datum, or a projected grid (easting/northing in metres). */
   projected: boolean;
   toLonLat: (p: [number, number]) => [number, number];
+  /** The reverse: WGS 84 longitude/latitude to this system's x/y (longitude/latitude for a geographic one), for serving positions in it. */
+  fromLonLat: (p: [number, number]) => [number, number];
 }
 
 function fromDef(epsg: number, name: string, def: string): SourceCrs {
   const t = proj4(def, 'WGS84');
   const wgs84 = epsg === 4326;
-  return { name: `${name} (EPSG:${epsg})`, epsg, transformation: def, ...(wgs84 ? { wgs84 } : {}), projected: !/\+proj=longlat/.test(def), toLonLat: p => (wgs84 ? p : (t.forward(p) as [number, number])) };
+  return { name: `${name} (EPSG:${epsg})`, epsg, transformation: def, ...(wgs84 ? { wgs84 } : {}), projected: !/\+proj=longlat/.test(def), toLonLat: p => (wgs84 ? p : (t.forward(p) as [number, number])), fromLonLat: p => (wgs84 ? p : (t.inverse(p) as [number, number])) };
 }
 
 /** A generic UTM zone from its EPSG code: WGS 84 (326zz/327zz), ETRS89 (258zz), NAD83 (269zz), GDA2020 / MGA (78zz). */
@@ -105,7 +113,8 @@ export function readCrs(decl: { crs?: string; prj?: string }): SourceCrs | { err
     const c = crsFromWkt(wkt);
     if ('error' in c) return c;
     const projected = !/^(GEOGCS|GEOGCRS|GEOGRAPHICCRS|GEODCRS|GEODETICCRS)\s*\[/i.test(wkt);
-    return { name: c.name || wktName(wkt), transformation: wkt, projected, ...(c.toLonLat ? {} : { wgs84: true }), toLonLat: p => (c.toLonLat ? (c.toLonLat(p) as [number, number]) : p) };
+    const inv = c.toLonLat ? (() => { try { return proj4(wkt, 'WGS84'); } catch { return null; } })() : null;
+    return { name: c.name || wktName(wkt), transformation: wkt, projected, ...(c.toLonLat ? {} : { wgs84: true }), toLonLat: p => (c.toLonLat ? (c.toLonLat(p) as [number, number]) : p), fromLonLat: p => (inv ? (inv.inverse(p) as [number, number]) : p) };
   }
   if (decl.crs?.trim()) {
     const code = epsgOf(decl.crs);
@@ -123,6 +132,10 @@ export function toWgs84(crs: SourceCrs, x: number, y: number): { lng: number; la
   if (!Number.isFinite(lng) || !Number.isFinite(lat) || Math.abs(lat) > 90 || Math.abs(lng) > 180) return null;
   return { lng: Math.round(lng * 1e7) / 1e7, lat: Math.round(lat * 1e7) / 1e7 };
 }
+
+/** The bundled national grids of a nation (ISO 3166-1 alpha-3), in the order they are listed. */
+export const nationalGridsOf = (iso3: string | undefined): CrsDef[] =>
+  (iso3 ? NATIONAL_CRS.filter(c => c.countries?.includes(iso3.toUpperCase())) : []);
 
 /** The bundled systems, for a chooser. */
 export const crsChoices = () => NATIONAL_CRS.map(c => ({ epsg: c.epsg, name: c.name, area: c.area }));

@@ -65,7 +65,8 @@ export const PUBLIC_WRITE: RegExp[] = [/^\/api\/public-sites\/[a-z-]+\/subscribe
  * and a ministry's connected systems (their own ccf_ / facility feed keys).
  */
 export const SELF_AUTHENTICATED: RegExp[] = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/feed$/,
-  /^\/api\/federation\/exchange$/];  // an institution's integration key (verifyIntegrationKey), logged with a signed receipt
+  /^\/api\/federation\/exchange$/,  // an institution's integration key (verifyIntegrationKey), logged with a signed receipt
+  /^\/api\/oauth\/token$/];         // OAuth2 client credentials: the integration's id and key (lib/auth/client-credentials.ts)
 /**
  * Routes that verify an `Authorization` bearer themselves (the automation
  * secret or a platform-tier substrate session: lib/platform-auth.ts,
@@ -83,8 +84,9 @@ export const BEARER_ROUTES: RegExp[] = [
 export const BEARER_READS: RegExp[] = [
   /^\/api\/metrics$/,                         // CIVICOS_METRICS_TOKEN, compared in constant time
   /^\/api\/integrations\/verify$/,           // an integration key, compared by its hash in constant time
-  // GIS clients (QGIS, ArcGIS, GDAL) reading the twin with an integration key of scope ogc:read:
-  // OGC API – Features, SensorThings and vector tiles (machineReadRefusal() in each route, lib/twin/machine-read.ts).
+  // GIS clients (QGIS, ArcGIS, GDAL) reading the twin with an integration key of scope ogc:read, or an
+  // access token issued for it (POST /api/oauth/token): OGC API – Features, SensorThings and vector
+  // tiles (machineReadRefusal() in each route, lib/twin/machine-read.ts).
   /^\/api\/twin\/(ogc|sta|tiles)(\/|$)/,
 ];
 /** True when the route checks the caller's own credential (bearer, agent or feed key). */
