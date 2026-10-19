@@ -97,7 +97,7 @@ export function openTunnel(proxy: EgressProxy, address: string, port: number | s
   });
 }
 
-export function pinnedFetch(href: string, init: { method?: string; headers?: Record<string, string>; body?: string; signal?: AbortSignal; ca?: string }, address: string): Promise<Response> {
+export function pinnedFetch(href: string, init: { method?: string; headers?: Record<string, string>; body?: string | Uint8Array; signal?: AbortSignal; ca?: string }, address: string): Promise<Response> {
   const url = new URL(href);
   const proxy = egressProxy();
   if (proxy && !bypassesProxy(proxy, url.hostname)) return tunnelledFetch(url, init, address, proxy);

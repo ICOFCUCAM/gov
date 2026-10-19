@@ -393,11 +393,39 @@ export type BackupState = 'pending' | 'completed' | 'failed' | 'restoring';
 export interface BackupRecord {
   id: string;
   kind: BackupKind;
+  /** completed: verified (read back, decrypted, every part checked, dry-run restored); pending: not verified yet; failed: verification failed. */
   state: BackupState;
+  /** Where the archive is: `dir://<file>` or `s3://<bucket>/<prefix><file>`. */
   location: string;
   encrypted: boolean;
   sizeBytes?: number;
   createdAt: ISODate;
+  /** Real backups (lib/data/backups.ts): the archive's SHA-256, who took it and why, and the audit chain head it holds. */
+  sha256?: string;
+  createdBy?: string;
+  reason?: string;
+  auditSeq?: number;
+  verifiedAt?: ISODate;
+}
+
+/** A backup as the platform console shows it: the earlier record and the backup's own description. */
+export interface BackupView extends BackupRecord {
+  mode?: 'snapshot' | 'postgres';
+  keyProvider?: string;
+  audit?: { seq: number; hash: string | null; entries: number };
+  release?: string | null;
+  verification?: { at: string; by: string; ok: boolean; checks: string[]; problem?: string };
+}
+/** The backup service's status (lib/data/backups.ts backupStatus). */
+export interface BackupStatusView {
+  target: { kind: string; where: string } | { error: string };
+  key: { provider: string; ready: boolean };
+  mode: 'snapshot' | 'postgres';
+  policy: { daily: number; weekly: number; monthly: number; preRestoreDays: number; intervalMinutes: number; rpoMinutes: number; rtoMinutes: number; updatedBy?: string; updatedAt?: string };
+  rpo: { targetMinutes: number; newestVerifiedAt: string | null; ageMinutes: number | null; met: boolean };
+  rtoMinutes: number;
+  proposals: { id: string; backupId: string; by: string; at: string; expiresAt: string; warning: { text: string } }[];
+  restores: { id: string; backupId: string; proposedBy: string; confirmedBy: string; at: string; safetyBackupId: string }[];
 }
 
 export type ConfigState = 'draft' | 'signed' | 'applied' | 'superseded';
@@ -1001,6 +1029,12 @@ export interface RestorePoint {
   /** What restoring it gives back and what is lost (irreversible migrations). */
   restoreNotes: string[];
   restoredAt?: ISODate;
+  /** The real backup behind it (lib/data/backups.ts): read back, decrypted, every part checked and dry-run restored. */
+  backupId?: string;
+  /** What the verification checked (the backup's dry run). */
+  checks?: string[];
+  /** Not a real backup: a demonstration nation of the publisher, or CIVICOS_RESTORE_POINTS=simulated. */
+  simulated?: boolean;
 }
 export type HealthCheckKey =
   | 'readiness' | 'liveness' | 'error-rate' | 'latency' | 'audit-chain'

@@ -29,8 +29,11 @@ export interface SafeFetchOptions {
   resolve?: (host: string) => Promise<string[]>;
   /** POST and other methods (webhook deliveries); redirects are not followed for them. */
   method?: string;
-  body?: string;
+  /** A request body: text, or bytes (object storage uploads). */
+  body?: string | Uint8Array;
   headers?: Record<string, string>;
+  /** Statuses answered rather than thrown (e.g. 404 for an object that is not there); default: 2xx only. */
+  okStatus?: (status: number) => boolean;
   /** Allow private and internal addresses (a nation's own subscribers on its network); off by default. */
   allowPrivate?: boolean;
 }
@@ -49,16 +52,21 @@ function anyWebUrl(raw: string): { ok: true; url: URL } | { ok: false; error: st
 
 /** Fetch under the rules above, in a client span (lib/ops/trace.ts; host and method only, never the query). */
 export function safeFetchText(raw: string, o: SafeFetchOptions): Promise<{ text: string; url: string; type: string }> {
+  return safeFetchBytes(raw, o).then(r => ({ text: new TextDecoder().decode(r.bytes), url: r.url, type: r.type }));
+}
+
+/** The same, answering the body as bytes with the status and headers (object storage: lib/backup/s3.ts). */
+export function safeFetchBytes(raw: string, o: SafeFetchOptions): Promise<{ bytes: Buffer; url: string; type: string; status: number; headers: Headers }> {
   let host = '';
   try { host = new URL(raw).host; } catch { /* refused below */ }
   return withSpan('outbound.fetch', { 'server.address': host, 'http.request.method': o.method ?? 'GET' }, async span => {
     const r = await fetchChecked(raw, o);
-    span.setAttribute('http.response.body.size', r.text.length);
+    span.setAttribute('http.response.body.size', r.bytes.length);
     return r;
   }, SpanKind.CLIENT);
 }
 
-async function fetchChecked(raw: string, o: SafeFetchOptions): Promise<{ text: string; url: string; type: string }> {
+async function fetchChecked(raw: string, o: SafeFetchOptions): Promise<{ bytes: Buffer; url: string; type: string; status: number; headers: Headers }> {
   const resolve = o.resolve ?? dnsResolve;
   const maxBytes = o.maxBytes ?? 5_000_000;
   let target = raw;
@@ -78,7 +86,7 @@ async function fetchChecked(raw: string, o: SafeFetchOptions): Promise<{ text: s
       target = new URL(loc, c.url).href;
       continue;
     }
-    if (!res.ok) throw new Error(`The source answered ${res.status}`);
+    if (!(o.okStatus ? o.okStatus(res.status) : res.ok)) throw new Error(`The source answered ${res.status}`);
     const type = (res.headers.get('content-type') ?? '').split(';')[0]!.trim();
     if (o.types && type && !o.types.test(type)) throw new Error(`Unexpected content type ${type}`);
     const reader = res.body?.getReader();
@@ -93,7 +101,7 @@ async function fetchChecked(raw: string, o: SafeFetchOptions): Promise<{ text: s
         chunks.push(value);
       }
     }
-    return { text: new TextDecoder().decode(Buffer.concat(chunks)), url: c.url.href, type };
+    return { bytes: Buffer.concat(chunks), url: c.url.href, type, status: res.status, headers: res.headers };
   }
   throw new Error('Too many redirects');
 }
