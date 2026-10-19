@@ -10785,6 +10785,69 @@
         "x-source": "src/app/api/twin/sources/route.ts"
       }
     },
+    "/api/twin/sta/v1.1/{path}": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_sta_v1_1_path",
+        "summary": "GET /api/twin/sta/v1.1/{path}",
+        "description": "OGC SensorThings API v1.1 resources of the national twin (read-only): /Things, /Locations, /Sensors, /ObservedProperties, /Datastreams, /Observations, one member by id (e.g. /Things('place:KE-30')) and its navigation properties (e.g. /Datastreams('…')/Observations), with $top, $skip, $count, $orderby and $filter. Twin entities, sources and observations, and substrate telemetry streams when the substrate is reachable; restricted sites' positions as the viewer may see them (lib/twin/sta.ts).",
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/sta/v1.1/[...path]/route.ts"
+      }
+    },
+    "/api/twin/sta/v1.1": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_sta_v1_1",
+        "summary": "GET /api/twin/sta/v1.1",
+        "description": "OGC SensorThings API v1.1 service root of the national twin (read-only): the entity sets (Things, Locations, Sensors, ObservedProperties, Datastreams, Observations) and the conformance classes served (lib/twin/sta.ts).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/sta/v1.1/route.ts"
+      }
+    },
     "/api/twin/state": {
       "get": {
         "tags": [
