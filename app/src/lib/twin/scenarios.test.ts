@@ -84,6 +84,18 @@ describe('scenarios on the twin', () => {
     finally { if (prev === undefined) delete process.env.CIVICOS_BUILD_COMMIT; else process.env.CIVICOS_BUILD_COMMIT = prev; }
   });
 
+  it('carries assumption ranges to the results as a modelled interval, in the evidence hash', () => {
+    const v = ok(createScenario({ name: 'Band', by: 'D', metric: 'population', asOf: '2022-01-01', assumptions: [{ entityId: '*', changePct: 2, range: { low: 1, high: 4 } }, { entityId: 'place:KE-30', changePct: 10 }] })).versions[0]!;
+    expect(v.assumptions[0]!.range).toEqual({ low: 1, high: 4 });
+    expect(v.results.find(r => r.entityId === 'place:KE-28')).toMatchObject({ projected: 1_020_000, interval: { low: 1_010_000, high: 1_040_000 } });
+    expect(v.results.find(r => r.entityId === 'place:KE-30')).toMatchObject({ projected: 4_488_000, interval: { low: 4_444_000, high: 4_576_000 } });
+    expect(v.national).toMatchObject({ projected: 6_528_000, interval: { low: 6_464_000, high: 6_656_000 } });
+    expect(verifyVersion('SCN-0001', { ...v, assumptions: [{ ...v.assumptions[0]!, range: { low: 0, high: 4 } }, v.assumptions[1]!] })).toBe(false);
+    const plain = ok(createScenario({ name: 'No band', by: 'D', metric: 'population', assumptions: [{ entityId: '*', changePct: 2 }] })).versions[0]!;
+    expect(plain.results[0]!.interval).toBeUndefined();
+    expect(createScenario({ name: 'x', by: 'D', metric: 'population', assumptions: [{ entityId: '*', changePct: 5, range: { low: 1, high: 4 } }] })).toEqual({ error: expect.stringMatching(/must contain the change/) });
+  });
+
   it('refuses scenarios without a person, assumptions or data', () => {
     expect(createScenario({ name: 'x', metric: 'population', assumptions: [{ entityId: '*', changePct: 1 }] })).toEqual({ error: expect.stringMatching(/Name the official/) });
     expect(createScenario({ name: 'x', by: 'D', metric: 'population', assumptions: [] })).toEqual({ error: expect.stringMatching(/assumption/) });

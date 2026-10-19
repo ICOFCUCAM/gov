@@ -18,11 +18,17 @@ export interface Assumption {
   entityId: string;
   /** Change in percent, e.g. 3 or -12.5. */
   changePct: number;
+  /** The range the change could plausibly take, in percent (low ≤ changePct ≤ high); carried to the results as an interval. */
+  range?: { low: number; high: number };
   note?: string;
 }
 
 export interface ScenarioInput { entityId: string; value: number; unit: string; validFrom: string; sourceId: string; runId: string }
-export interface ScenarioResult { entityId: string; name: string; baseline: number; projected: number; unit: string }
+export interface ScenarioResult {
+  entityId: string; name: string; baseline: number; projected: number; unit: string;
+  /** The projection at the low and high ends of the assumptions' ranges (modelled), when any assumption states a range. */
+  interval?: { low: number; high: number };
+}
 
 export interface ScenarioVersion {
   version: number;
@@ -36,7 +42,7 @@ export interface ScenarioVersion {
   inputs: ScenarioInput[];
   results: ScenarioResult[];
   /** The regions combined as the metric says (sum or mean), only when every region has a value in one unit. */
-  national: { baseline: number; projected: number; unit: string } | null;
+  national: { baseline: number; projected: number; unit: string; interval?: { low: number; high: number } } | null;
   /** Why there is no national figure, when there is none. */
   nationalNote?: string;
   evidenceHash: string;
@@ -94,7 +100,7 @@ type Hashed = Pick<ScenarioVersion, 'version' | 'metric' | 'asOf' | 'assumptions
  */
 export function evidenceHash(id: string, v: Hashed): string {
   const assumptions = [...v.assumptions].sort((a, b) => a.entityId.localeCompare(b.entityId) || a.changePct - b.changePct)
-    .map(a => [a.entityId, a.changePct, a.note ?? null]);
+    .map(a => (v.model ? [a.entityId, a.changePct, a.range ? [a.range.low, a.range.high] : null, a.note ?? null] : [a.entityId, a.changePct, a.note ?? null]));
   const inputs = [...v.inputs].sort((a, b) => a.entityId.localeCompare(b.entityId))
     .map(i => [i.entityId, i.value, i.unit, i.validFrom, i.sourceId, i.runId]);
   const body = v.model
@@ -120,20 +126,36 @@ function build(id: string, version: number, d: Draft): ScenarioVersion | { error
   if (!metric) return { error: 'Choose a metric' };
   const asOf = isoDate(d.asOf) ?? new Date().toISOString().slice(0, 10);
   const assumptions = (d.assumptions ?? []).slice(0, MAX_ASSUMPTIONS).map(a => ({
-    entityId: String(a.entityId ?? '').trim(), changePct: Number(a.changePct), ...(a.note?.trim() ? { note: a.note.trim().slice(0, 200) } : {}),
+    entityId: String(a.entityId ?? '').trim(), changePct: Number(a.changePct),
+    ...(a.range && (a.range.low !== undefined || a.range.high !== undefined) ? { range: { low: Number(a.range.low), high: Number(a.range.high) } } : {}),
+    ...(a.note?.trim() ? { note: a.note.trim().slice(0, 200) } : {}),
   }));
   if (!assumptions.length) return { error: 'State at least one assumption' };
   for (const a of assumptions) {
     if (!Number.isFinite(a.changePct) || a.changePct < -100 || a.changePct > 1000) return { error: 'A change must be a percentage between -100 and 1000' };
     if (a.entityId !== '*' && !getEntity(a.entityId)) return { error: `Unknown entity ${a.entityId}` };
+    if (a.range) {
+      const { low, high } = a.range;
+      if (![low, high].every(x => Number.isFinite(x) && x >= -100 && x <= 1000)) return { error: 'A range is two percentages between -100 and 1000' };
+      if (!(low <= a.changePct && a.changePct <= high)) return { error: `The range ${low}% to ${high}% must contain the change (${a.changePct}%)` };
+    }
   }
+  const ranged = assumptions.some(a => a.range);
   // What was true on the date, as the twin knows it now; the inputs are kept, so the version stays reproducible.
   const obs = stateAsOf({ asOf: `${asOf}T23:59:59Z`, knownAt: new Date().toISOString(), metric });
   if (!obs.length) return { error: `The twin knows nothing about ${metric} on ${asOf}` };
   const inputs: ScenarioInput[] = obs.map(o => ({ entityId: o.entityId, value: o.value, unit: o.unit, validFrom: o.validFrom, sourceId: o.sourceId, runId: o.runId }));
   const results: ScenarioResult[] = inputs.map(i => {
-    const factor = assumptions.filter(a => a.entityId === '*' || a.entityId === i.entityId).reduce((f, a) => f * (1 + a.changePct / 100), 1);
-    return { entityId: i.entityId, name: getEntity(i.entityId)?.name ?? i.entityId, baseline: i.value, projected: Math.round(i.value * factor * 100) / 100, unit: i.unit };
+    const applying = assumptions.filter(a => a.entityId === '*' || a.entityId === i.entityId);
+    const factor = applying.reduce((f, a) => f * (1 + a.changePct / 100), 1);
+    const r2 = (n: number) => Math.round(n * 100) / 100;
+    // Each assumption at its low and at its high end; the band is the least and most of the two (a negative value turns them round).
+    const lo = i.value * applying.reduce((f, a) => f * (1 + (a.range?.low ?? a.changePct) / 100), 1);
+    const hi = i.value * applying.reduce((f, a) => f * (1 + (a.range?.high ?? a.changePct) / 100), 1);
+    return {
+      entityId: i.entityId, name: getEntity(i.entityId)?.name ?? i.entityId, baseline: i.value, projected: r2(i.value * factor), unit: i.unit,
+      ...(ranged ? { interval: { low: r2(Math.min(lo, hi)), high: r2(Math.max(lo, hi)) } } : {}),
+    };
   });
   const regions = regionEntities();
   const inRegions = regions.map(r => results.find(x => x.entityId === r.id)).filter((x): x is ScenarioResult => !!x);
@@ -146,7 +168,11 @@ function build(id: string, version: number, d: Draft): ScenarioVersion | { error
   else if (aggregation !== 'sum' && aggregation !== 'mean') nationalNote = aggregation === 'none' ? `${metric} is not registered as combinable across regions` : 'A weighted mean is not projected nationally';
   else {
     const n = aggregation === 'mean' ? inRegions.length : 1;
-    national = { baseline: inRegions.reduce((s, x) => s + x.baseline, 0) / n, projected: Math.round((inRegions.reduce((s, x) => s + x.projected, 0) / n) * 100) / 100, unit: inRegions[0]!.unit };
+    const sum = (f: (x: ScenarioResult) => number) => Math.round((inRegions.reduce((s, x) => s + f(x), 0) / n) * 100) / 100;
+    national = {
+      baseline: inRegions.reduce((s, x) => s + x.baseline, 0) / n, projected: sum(x => x.projected), unit: inRegions[0]!.unit,
+      ...(ranged ? { interval: { low: sum(x => x.interval?.low ?? x.projected), high: sum(x => x.interval?.high ?? x.projected) } } : {}),
+    };
   }
   const v = { version, at: new Date().toISOString(), by, metric, asOf, model: { ...CURRENT_MODEL }, build: currentBuild(), assumptions, ...(d.note?.trim() ? { note: d.note.trim().slice(0, 500) } : {}), inputs, results, national, ...(nationalNote ? { nationalNote } : {}) };
   return { ...v, evidenceHash: evidenceHash(id, v) };

@@ -6,12 +6,13 @@
 // hash, so the decision can be traced back to the same inputs.
 
 import * as React from 'react';
+import { SignalTag } from '@/components/ui/SignalTag';
 
-interface Result { entityId: string; name: string; baseline: number; projected: number; unit: string }
+interface Result { entityId: string; name: string; baseline: number; projected: number; unit: string; interval?: { low: number; high: number } }
 interface Version {
   version: number; at: string; by: string; metric: string; asOf: string; note?: string;
-  assumptions: { entityId: string; changePct: number; note?: string }[];
-  results: Result[]; national: { baseline: number; projected: number; unit: string } | null; nationalNote?: string;
+  assumptions: { entityId: string; changePct: number; range?: { low: number; high: number }; note?: string }[];
+  results: Result[]; national: { baseline: number; projected: number; unit: string; interval?: { low: number; high: number } } | null; nationalNote?: string;
   evidenceHash: string; evidenceOk: boolean;
   model?: { id: string; version: string }; build?: { commit?: string; release?: string; source: string };
 }
@@ -28,7 +29,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [f, setF] = React.useState({ name: '', metric: '', asOf: '', note: '' });
-  const [rows, setRows] = React.useState<{ entityId: string; changePct: string }[]>([{ entityId: '*', changePct: '' }]);
+  const [rows, setRows] = React.useState<{ entityId: string; changePct: string; low?: string; high?: string }[]>([{ entityId: '*', changePct: '' }]);
   const [revising, setRevising] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
@@ -45,7 +46,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
     e.preventDefault();
     setBusy(true); setMsg(null);
     try {
-      const body = { name: f.name, by, metric: m, asOf, note: f.note, assumptions: rows.filter(r => r.changePct.trim() !== '').map(r => ({ entityId: r.entityId, changePct: Number(r.changePct) })) };
+      const body = { name: f.name, by, metric: m, asOf, note: f.note, assumptions: rows.filter(r => r.changePct.trim() !== '').map(r => ({ entityId: r.entityId, changePct: Number(r.changePct), ...(r.low?.trim() || r.high?.trim() ? { range: { low: Number(r.low || r.changePct), high: Number(r.high || r.changePct) } } : {}) })) };
       const r = await fetch(revising ? `/api/twin/scenarios/${revising}` : '/api/twin/scenarios', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error((d as { error?: string }).error ?? `Request failed (${r.status})`);
@@ -68,7 +69,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
         </label>
         <label><span className={label}>Known as of</span><input type="date" className={`${input} mt-1`} value={asOf} onChange={e => setF({ ...f, asOf: e.currentTarget.value })} /></label>
         <fieldset className="space-y-1 md:col-span-4">
-          <legend className={label}>Assumptions (change in %)</legend>
+          <legend className={label}>Assumptions (change in %, with an optional low–high range)</legend>
           {rows.map((r, i) => (
             <div key={i} className="flex flex-wrap gap-2">
               <select aria-label={`Assumption ${i + 1}: where`} className={`${input} max-w-xs`} value={r.entityId} onChange={e => setRows(rows.map((x, j) => (j === i ? { ...x, entityId: e.currentTarget.value } : x)))}>
@@ -76,6 +77,8 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
                 {places.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
               </select>
               <input aria-label={`Assumption ${i + 1}: change in percent`} inputMode="decimal" className={`${input} max-w-[8rem]`} value={r.changePct} onChange={e => setRows(rows.map((x, j) => (j === i ? { ...x, changePct: e.currentTarget.value } : x)))} placeholder="e.g. 3.5" />
+              <input aria-label={`Assumption ${i + 1}: lowest plausible change in percent`} inputMode="decimal" className={`${input} max-w-[7rem]`} value={r.low ?? ''} onChange={e => setRows(rows.map((x, j) => (j === i ? { ...x, low: e.currentTarget.value } : x)))} placeholder="low (opt.)" />
+              <input aria-label={`Assumption ${i + 1}: highest plausible change in percent`} inputMode="decimal" className={`${input} max-w-[7rem]`} value={r.high ?? ''} onChange={e => setRows(rows.map((x, j) => (j === i ? { ...x, high: e.currentTarget.value } : x)))} placeholder="high (opt.)" />
               {rows.length > 1 ? <button type="button" className={btn} onClick={() => setRows(rows.filter((_, j) => j !== i))}>Remove</button> : null}
             </div>
           ))}
@@ -97,23 +100,23 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <span><strong>{s.name}</strong> <span className="font-mono text-[12px] text-ink-muted">{s.id} · v{v.version} · {v.metric} as of {v.asOf} · {v.by}{v.model ? ` · model ${v.model.id} ${v.model.version}` : ''}{v.build?.commit ? ` · build ${v.build.commit.slice(0, 12)}` : v.build?.release ? ` · release ${v.build.release}` : ''}</span></span>
                   <span className="flex flex-wrap gap-2">
-                    <button type="button" className={btn} onClick={() => { setRevising(s.id); setF({ ...f, metric: v.metric, asOf: v.asOf }); setRows(v.assumptions.map(a => ({ entityId: a.entityId, changePct: String(a.changePct) }))); }}>New version</button>
+                    <button type="button" className={btn} onClick={() => { setRevising(s.id); setF({ ...f, metric: v.metric, asOf: v.asOf }); setRows(v.assumptions.map(a => ({ entityId: a.entityId, changePct: String(a.changePct), ...(a.range ? { low: String(a.range.low), high: String(a.range.high) } : {}) }))); }}>New version</button>
                     <a className={`${btn} no-underline`} href={directive}>Draft a directive on it</a>
                   </span>
                 </div>
                 <p className="mt-1 text-[12px] text-ink-soft">
-                  Assumptions: {v.assumptions.map(a => `${a.entityId === '*' ? 'every region' : (entities.find(e => e.id === a.entityId)?.name ?? a.entityId)} ${a.changePct >= 0 ? '+' : ''}${a.changePct}%`).join(' · ')}{v.note ? ` — ${v.note}` : ''}
+                  Assumptions: {v.assumptions.map(a => `${a.entityId === '*' ? 'every region' : (entities.find(e => e.id === a.entityId)?.name ?? a.entityId)} ${a.changePct >= 0 ? '+' : ''}${a.changePct}%${a.range ? ` (${a.range.low}% to ${a.range.high}%)` : ''}`).join(' · ')}{v.note ? ` — ${v.note}` : ''}
                 </p>
                 <p className="mt-1 break-all font-mono text-[11px]" title={v.model ? 'SHA-256 (v2) over the scenario id, version, metric, date, model and build, who made it and when, the assumptions and the observations it started from' : 'SHA-256 (v1) over the scenario id, version, metric, date, assumptions and the observations it started from'}>
                   <span className={v.evidenceOk ? 'text-ok' : 'text-alert'}>{v.evidenceOk ? 'Evidence verifies' : 'Evidence does not verify'}</span> · {v.evidenceHash} · <a className="text-link underline underline-offset-2" href={`/api/twin/scenarios/${s.id}/versions/${v.version}/prov`}>provenance</a>
                 </p>
                 <table className="mt-2 w-full text-[12px]">
-                  <thead><tr className="text-start text-ink-muted"><th className="text-start font-semibold">Entity</th><th className="text-end font-semibold">Observed</th><th className="text-end font-semibold">Modelled</th></tr></thead>
+                  <thead><tr className="text-start text-ink-muted"><th className="text-start font-semibold">Entity</th><th className="text-end font-semibold">Observed</th><th className="text-end font-semibold">Modelled</th>{v.results.some(r => r.interval) ? <th className="text-end font-semibold">Range <SignalTag kind="modelled" source="From the low and high ends of the stated assumptions" /></th> : null}</tr></thead>
                   <tbody>
                     {v.results.slice(0, 50).map(r => (
-                      <tr key={r.entityId}><td>{r.name}</td><td className="text-end font-mono tabular-nums">{fmt(r.baseline)}</td><td className="text-end font-mono tabular-nums">{fmt(r.projected)} {r.unit}</td></tr>
+                      <tr key={r.entityId}><td>{r.name}</td><td className="text-end font-mono tabular-nums">{fmt(r.baseline)}</td><td className="text-end font-mono tabular-nums">{fmt(r.projected)} {r.unit}</td>{r.interval ? <td className="text-end font-mono tabular-nums"><Band i={r.interval} /></td> : null}</tr>
                     ))}
-                    {v.national ? <tr className="border-t border-line font-semibold"><td>Nation (all regions)</td><td className="text-end font-mono tabular-nums">{fmt(v.national.baseline)}</td><td className="text-end font-mono tabular-nums">{fmt(v.national.projected)} {v.national.unit}</td></tr> : null}
+                    {v.national ? <tr className="border-t border-line font-semibold"><td>Nation (all regions)</td><td className="text-end font-mono tabular-nums">{fmt(v.national.baseline)}</td><td className="text-end font-mono tabular-nums">{fmt(v.national.projected)} {v.national.unit}</td>{v.national.interval ? <td className="text-end font-mono tabular-nums"><Band i={v.national.interval} /></td> : null}</tr> : null}
                   </tbody>
                 </table>
                 {!v.national && v.nationalNote ? <p className="mt-1 text-[12px] text-ink-soft">No national figure: {v.nationalNote}.</p> : null}
@@ -131,5 +134,16 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
         </ul>
       ) : <p className="text-ink-soft">No scenarios yet.</p>}
     </div>
+  );
+}
+
+/** A modelled interval: the projection at the low and high ends of the assumptions, drawn as a band. */
+function Band({ i }: { i: { low: number; high: number } }) {
+  return (
+    <span className="inline-flex items-center gap-1.5" title="Modelled: the projection at the low and high ends of the stated ranges">
+      {fmt(i.low)}
+      <span aria-hidden className="inline-block h-1.5 w-10 rounded-full border border-dashed border-ink-muted bg-surface-2" />
+      {fmt(i.high)}
+    </span>
   );
 }
