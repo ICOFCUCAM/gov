@@ -45,6 +45,7 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/setup(\/|$)/,
   /^\/api\/sovereign(\/|$)/,
   /^\/api\/facilities\/policy(\/|$)/,
+  /^\/api\/map-pack(\/|$)/,
 ];
 /** Signing in and out stays open to every role. */
 /** Signing in and out, one's own second step and one's own password stay open to every role. */

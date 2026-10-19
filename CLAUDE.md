@@ -264,6 +264,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   neutral (hatched, named as disputed) unless the nation chose a point of view
   in setup (`map.worldview`). The platform never chooses a side; never colour
   a disputed area as one country's without the nation's setting.
+- Districts for a nation without bundled ones are installed by an
+  administrator (`lib/data/map-pack.ts`, `/api/map-pack`): geoBoundaries only
+  (its API and file host, through `safeFetchText`) or an uploaded file, with
+  the rules in `lib/geo/admin2-convert.mjs` shared with `build-map-pack.mjs`
+  (open licences, never GADM, region from the map). `loadDistricts()` reads
+  them after a published version and before the bundled files.
 - Engines must not read the nation's regions or offices into module-level
   constants; read them at use (`regionList()`, or a function). The root
   layout writes the nation's facts before scripts load, but data from setup

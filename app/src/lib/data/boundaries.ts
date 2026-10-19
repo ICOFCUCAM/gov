@@ -25,6 +25,7 @@ import { recordAudit } from '@/lib/data/store';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
 import { loadAdmin2 } from '@/lib/geo/admin2';
+import { installedDistricts } from '@/lib/map/districts-installed';
 import type { Geom } from '@/lib/geo/admin1';
 import { nameKeys } from '@/lib/map/names';
 import { pickActive, type ActiveBoundary, type BoundarySource, type BoundaryUnit } from '@/lib/map/boundary-active';
@@ -177,7 +178,7 @@ const slug = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g
 async function current(iso3: string, level: Level): Promise<{ code: string; name: string; geometry?: Geom }[]> {
   const active = pickActive(db().versions, iso3, level);
   if (active) return active.units;
-  if (level === 2) return (await loadAdmin2(iso3))?.units ?? [];
+  if (level === 2) return ((await installedDistricts(iso3)) ?? (await loadAdmin2(iso3)))?.units ?? [];
   const { loadNationGeography } = await import('@/lib/map/geography');
   return ((await loadNationGeography(iso3, nationRegions()))?.units ?? []).filter(u => u.code).map(u => ({ code: u.code!, name: u.name, geometry: u.geometry }));
 }

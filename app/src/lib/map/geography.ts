@@ -15,6 +15,7 @@ import { loadDivisions, defaultUnits, divisionNoun } from '@/lib/geo/divisions';
 import { geoCentroid } from 'd3-geo';
 import { nameKeys } from './names';
 import { activeBoundary } from './boundary-active';
+import { installedDistricts, installedDistrictsSummary } from './districts-installed';
 
 export interface MapUnit {
   /** ISO 3166-2 code when the unit is matched to an official subdivision. */
@@ -49,7 +50,7 @@ export interface NationGeography {
  * (nationRegions()); when empty, the official subdivisions in their order.
  */
 export async function loadNationGeography(iso3: string, regions: readonly string[]): Promise<NationGeography | null> {
-  const [bundled, levels, own, ownDistricts] = await Promise.all([loadCountry(iso3), loadDivisions(iso3).catch(() => []), activeBoundary(iso3, 1), activeBoundary(iso3, 2)]);
+  const [bundled, levels, own, ownDistricts, installed] = await Promise.all([loadCountry(iso3), loadDivisions(iso3).catch(() => []), activeBoundary(iso3, 1), activeBoundary(iso3, 2), installedDistrictsSummary(iso3)]);
   if (!bundled) return null;
   const country = own ? { ...bundled, provinces: own.units.map(u => ({ name: u.name, i18n: {} as Admin1Province['i18n'], code: u.code, lng: u.lng, lat: u.lat, geometry: u.geometry })) } : bundled;
   const provinces = country.provinces;
@@ -85,7 +86,7 @@ export async function loadNationGeography(iso3: string, regions: readonly string
     : level ? defaultUnits(level).map(d => ({ name: d.name, code: d.code }))
     : provinces.map(p => ({ name: p.name, code: p.code }));
 
-  const districts = hasAdmin2(iso3) || !!ownDistricts;
+  const districts = hasAdmin2(iso3) || !!ownDistricts || !!installed;
   // A unit opens to the units beneath it when they have shapes: its official children, or district shapes.
   const opens = (code?: string) => !!code && (districts || (childrenOf.get(code) ?? []).some(c => partsOf(c, 1).length > 0));
   const used = new Set<Admin1Province>();
@@ -139,7 +140,7 @@ export async function loadUnitGeography(iso3: string, parent: { name: string; co
   });
   let noun = typeNoun(children[0]?.type), source = credit();
   if (!units.length) {
-    const a2 = await loadDistricts(iso3);
+    const a2 = await loadDistricts(iso3, parent.code);
     units = (a2?.units ?? []).filter(u => u.parent === parent.code).map(u => ({ name: u.name, code: u.code, geometry: u.geometry, lng: u.lng, lat: u.lat }));
     noun = 'district';
     if (a2) source = a2.own ?? credit(a2.credit);
@@ -164,9 +165,12 @@ const ownCredit = (b: { credit: string; n: number; validFrom: string }) => `${b.
 
 /**
  * The nation's districts: the version its mapping authority published, when
- * one is in force, else the bundled district shapes (lib/geo/admin2).
+ * one is in force, else the districts installed for it at setup
+ * (lib/data/map-pack.ts), else the bundled district shapes (lib/geo/admin2).
+ * With `parent`, at least that region's districts (the browser fetches only
+ * those of installed districts); callers filter by parent.
  */
-export async function loadDistricts(iso3: string): Promise<(Admin2Country & { own?: string }) | null> {
+export async function loadDistricts(iso3: string, parent?: string): Promise<(Admin2Country & { own?: string }) | null> {
   const own = await activeBoundary(iso3, 2);
   if (own) {
     return {
@@ -176,5 +180,6 @@ export async function loadDistricts(iso3: string): Promise<(Admin2Country & { ow
       own: ownCredit(own),
     };
   }
-  return loadAdmin2(iso3);
+  // `parent` lets the browser fetch only the opened region's installed districts; callers still filter by parent.
+  return (await installedDistricts(iso3, parent)) ?? loadAdmin2(iso3);
 }
