@@ -271,7 +271,9 @@ layouts. The fix is one shared map engine grown from it.
   `NationMap` paints them on one canvas (`components/map/CanvasPoints.tsx`,
   `lib/map/point-layer.ts`) with grid hit-testing for hover and click; the
   SVG points below the threshold are unchanged and the table view still
-  lists every point for keyboard and screen-reader users.
+  lists every point for keyboard and screen-reader users. Published sites
+  are also served as Mapbox Vector Tiles with a TileJSON
+  (`/api/twin/tiles/facilities`, `lib/geo/mvt.ts`), viewer-aware.
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

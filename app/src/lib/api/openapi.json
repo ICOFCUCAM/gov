@@ -10908,6 +10908,85 @@
         "x-source": "src/app/api/twin/state/route.ts"
       }
     },
+    "/api/twin/tiles/facilities/{z}/{x}/{y}": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tiles_facilities_z_x_y",
+        "summary": "GET /api/twin/tiles/facilities/{z}/{x}/{y}",
+        "description": "One Mapbox Vector Tile (MVT 2.1) of the national facility register: layer \"facilities\", published sites as points with their id, national id, name, category, status, region and certification. Restricted sites are placed where the viewer may see them (generalised for viewers without need), so a tile is private to its viewer. y may end in .mvt or .pbf (lib/twin/tiles.ts).",
+        "parameters": [
+          {
+            "name": "z",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "y",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/tiles/facilities/[z]/[x]/[y]/route.ts"
+      }
+    },
+    "/api/twin/tiles/facilities": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tiles_facilities",
+        "summary": "GET /api/twin/tiles/facilities",
+        "description": "TileJSON 3.0.0 for the national facility register's vector tiles: the tile address template (/api/twin/tiles/facilities/{z}/{x}/{y}.mvt), zoom range, bounds of the sites the viewer may see and the layer's fields (lib/twin/tiles.ts).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/tiles/facilities/route.ts"
+      }
+    },
     "/api/twin/timeline": {
       "get": {
         "tags": [
