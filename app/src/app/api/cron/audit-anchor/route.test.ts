@@ -6,6 +6,12 @@ vi.mock('@/lib/db/client', () => ({
 }));
 
 import { GET } from './route';
+import { mkdtempSync, readFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+import { recordAudit, auditHead, verifyAuditChain } from '@/lib/data/store';
+import { lastSignedHead } from '@/lib/audit/sign';
+import { verifyAnchorFile } from '@/lib/audit/anchor';
 
 beforeEach(() => {
   serverClientMock.mockReset();
@@ -18,11 +24,37 @@ describe('GET /api/cron/audit-anchor', () => {
     expect(res.status).toBe(401);
   });
 
-  it('returns 503 when substrate is not configured', async () => {
+  it('anchors the platform head alone when the substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
+    recordAudit('Director', 'test.anchor', 'T:1', 'ok');
     const res = await GET(new Request('http://x?token=correct'));
-    expect(res.status).toBe(503);
+    const json = await res.json();
+    expect(res.status).toBe(200);
+    expect(json.substrate).toBe('not configured');
+    expect(json.platform).toMatchObject({ head_seq: auditHead()!.seq, head_hash: auditHead()!.hash, key_id: expect.stringMatching(/^ed25519:/) });
+    expect(lastSignedHead()!.seq).toBe(auditHead()!.seq);
+  });
+
+  it('writes the signed platform head to an append-only anchor file outside the state', async () => {
+    process.env.CIVICOS_CRON_SECRET = 'correct';
+    const dir = mkdtempSync(join(tmpdir(), 'anchor-'));
+    process.env.CIVICOS_AUDIT_ANCHOR_FILE = join(dir, 'heads.jsonl');
+    serverClientMock.mockReturnValue(null);
+    try {
+      recordAudit('Director', 'test.anchor', 'T:2', 'ok');
+      await GET(new Request('http://x?token=correct'));
+      recordAudit('Director', 'test.anchor', 'T:3', 'ok');
+      const json = await (await GET(new Request('http://x?token=correct'))).json();
+      expect(json.platform.anchored_to).toEqual(['file']);
+      const lines = readFileSync(join(dir, 'heads.jsonl'), 'utf8').trim().split('\n').map(l => JSON.parse(l));
+      expect(lines).toHaveLength(2);
+      expect(lines[1]).toMatchObject({ kind: 'civicos-audit-anchor-v1', seq: auditHead()!.seq, hash: auditHead()!.hash });
+      expect(verifyAnchorFile(join(dir, 'heads.jsonl'))).toEqual({ ok: true, lines: 2 });
+      expect(verifyAuditChain().signed?.head).toMatchObject({ seq: auditHead()!.seq, anchoredTo: ['file'] });
+    } finally {
+      delete process.env.CIVICOS_AUDIT_ANCHOR_FILE;
+    }
   });
 
   it('returns 500 when the scopes query errors', async () => {
@@ -71,7 +103,12 @@ describe('GET /api/cron/audit-anchor', () => {
     expect(res.status).toBe(200);
     expect(json.scopes_swept).toBe(2);
     expect(json.scopes_anchored).toBe(2);
-    expect(rpc).toHaveBeenCalledTimes(2);
+    // The two substrate scopes and the platform chain's signed head.
+    expect(rpc).toHaveBeenCalledTimes(3);
+    expect(rpc).toHaveBeenCalledWith('civicos_publish_event', expect.objectContaining({
+      p_type: 'audit.anchor', p_source: 'platform', p_payload: expect.objectContaining({ scope: 'platform', signature: expect.any(String) }),
+    }));
+    expect(json.platform.anchored_to).toContain('substrate');
     expect(rpc).toHaveBeenCalledWith('civicos_publish_event', expect.objectContaining({
       p_type: 'audit.anchor', p_channel: 'constitutional', p_source: 'substrate',
     }));
@@ -79,7 +116,7 @@ describe('GET /api/cron/audit-anchor', () => {
 
   it('marks scopes with no head entry as not anchored, without an RPC call', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
-    const rpc = vi.fn();
+    const rpc = vi.fn(async () => ({ data: null, error: null }));
     serverClientMock.mockReturnValue({
       from: (view: string) => {
         if (view === 'civicos_audit_entries') {
@@ -97,7 +134,8 @@ describe('GET /api/cron/audit-anchor', () => {
     const res = await GET(new Request('http://x?token=correct'));
     const json = await res.json();
     expect(json.scopes_anchored).toBe(0);
-    expect(rpc).not.toHaveBeenCalled();
+    // Only the platform head is published; the empty scope makes no call.
+    expect(rpc).toHaveBeenCalledTimes(1);
   });
 
   it('honours the scopes query-param cap', async () => {

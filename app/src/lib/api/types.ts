@@ -81,6 +81,22 @@ export interface AuditEntry {
   alg?: 'sha256-v2';
 }
 
+/** The platform chain's signed heads, as `/api/audit/verify` reports them (lib/audit/sign.ts). */
+export interface AuditSignedHeads {
+  ok: boolean;
+  signedHeads: number;
+  head?: { seq: number; hash: string; at: ISODate; keyId: string; production: boolean; anchoredAt?: ISODate; anchoredTo?: string[] };
+  currentKey?: boolean;
+  problem?: string;
+}
+
+export interface AuditVerification {
+  ok: boolean;
+  checked: number;
+  brokenAtSeq?: number;
+  signed?: AuditSignedHeads;
+}
+
 export interface CreatePermitInput {
   type: PermitType;
   title: string;

@@ -39,6 +39,7 @@ export interface SiteTranslationString {
 export type PublicSiteRow = SiteSettings & { name: string; role: string };
 import type {
   AuditEntry,
+  AuditVerification,
   Bill,
   CreatePermitInput,
   DecidePermitInput,
@@ -223,7 +224,7 @@ export const api = {
   audit: {
     list: () => req<{ events: AuditEntry[] }>('/api/audit'),
     verify: () =>
-      req<{ ok: boolean; checked: number; brokenAtSeq?: number }>('/api/audit/verify'),
+      req<AuditVerification>('/api/audit/verify'),
   },
   ops: {
     overview: () => req<OpsOverview>('/api/ops/overview'),

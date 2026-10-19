@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { TONE, Panel, Spark, seed, waveSeries } from '@/components/features/SituationRoom';
 import { api } from '@/lib/api/client';
-import type { AuditEntry } from '@/lib/api/types';
+import type { AuditEntry, AuditVerification } from '@/lib/api/types';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { useOfficial } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
@@ -26,7 +26,7 @@ const BODIES = [
   { l: 'Inspector-General', s: 'Standing mandate', t: 'ok' },
 ];
 
-type Verification = { ok: boolean; checked: number; brokenAtSeq?: number } | null;
+type Verification = AuditVerification | null;
 
 /** Download the ledger as shown, with the verification result it was read under. */
 function exportLedger(events: AuditEntry[], verify: Verification) {
@@ -48,9 +48,26 @@ async function seal(events: AuditEntry[], verify: Verification): Promise<string>
   return `Seal (SHA-256 over head entry ${head?.seq ?? 0} and ${verify.checked} verified links): ${hex}`;
 }
 
+/** "Signed head N at T, anchored": the last head signed with the platform's audit key (lib/audit/sign.ts). */
+function SignedHeadLine({ verify }: { verify: Verification }) {
+  const s = verify?.signed;
+  if (!verify) return null;
+  if (!s || s.signedHeads === 0) return <p>No signed head yet: the head is signed every few entries and by the anchor job.</p>;
+  if (!s.ok) return <p role="alert" style={{ color: TONE.alert }}>Signed heads do not match: {s.problem}.</p>;
+  const h = s.head!;
+  const where = h.anchoredTo?.length ? `, anchored (${h.anchoredTo.join(', ')}) at ${new Date(h.anchoredAt!).toLocaleString()}` : ', not anchored yet';
+  return (
+    <p data-testid="signed-head">
+      Signed head {h.seq} at {new Date(h.at).toLocaleString()}{where} · key {h.keyId}
+      {h.production ? '' : ' · development key, not evidence for production'}
+      {s.currentKey === false ? ' · signed with an earlier key' : ''}
+    </p>
+  );
+}
+
 export function AuditView() {
   const [events, setEvents] = React.useState<AuditEntry[] | null>(null);
-  const [verify, setVerify] = React.useState<{ ok: boolean; checked: number; brokenAtSeq?: number } | null>(null);
+  const [verify, setVerify] = React.useState<Verification>(null);
   const [now, setNow] = React.useState(useRenderNow());
   const [official, setOfficial] = useOfficial();
   const [note, setNote] = React.useState<string | null>(null);
@@ -174,6 +191,7 @@ export function AuditView() {
           </div>
           <div className="mt-1.5 space-y-1 px-0.5 text-[10px] text-ink-muted">
             <ActingOfficial name={official} onChange={setOfficial} />
+            <SignedHeadLine verify={verify} />
             <p id="integrity-off">Freezing a segment and notifying oversight bodies need functions that are not connected yet.</p>
             {note ? <p role="status" className="break-all text-ink-soft">{note}</p> : null}
           </div>
