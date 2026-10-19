@@ -1,0 +1,5 @@
+# Development keys while the access gate is enforced: refused.
+app:
+  keys:
+    existingSecret: ""
+    allowDevelopmentKeys: true

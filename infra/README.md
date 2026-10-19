@@ -9,7 +9,8 @@ infra/
 ├── docker/docker-compose.yml   # local full stack (pg, nats, redis, api, app; one state writer)
 ├── docker/prometheus.yml       # optional metrics collection (--profile observability)
 ├── k8s/namespace.yaml          # raw namespace (Helm is the primary path)
-├── helm/civicos/               # the chart: api + app + ingress + netpol + hpa + pdb
+├── helm/civicos/               # the chart: api + app + ingress + netpol + hpa + pdb + cron (values: helm/civicos/README.md)
+├── helm/check.sh               # helm lint + template + kubeconform for every values set (CI job "helm chart")
 ├── helm/profiles/              # small-municipality | mid-city | ministry | national
 └── terraform/                  # vendor-neutral env contract + platform module
 ```
@@ -35,6 +36,12 @@ kubectl -n civicos create secret generic civicos-app \
   --from-literal=NEXT_PUBLIC_SUPABASE_URL='https://…' \
   --from-literal=NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='…' \
   --from-literal=SUPABASE_SERVICE_ROLE_KEY='…'          # the nation's substrate
+openssl genpkey -algorithm ed25519 -out audit.pem      # likewise exchange.pem, token.pem
+kubectl -n civicos create secret generic civicos-app-keys \
+  --from-literal=CIVICOS_DATA_KEK="$(openssl rand -base64 32)" \
+  --from-file=CIVICOS_AUDIT_KEY=audit.pem \
+  --from-file=CIVICOS_EXCHANGE_KEY=exchange.pem \
+  --from-file=CIVICOS_TOKEN_KEY=token.pem              # or app.keys.provider vault / kms-http
 helm -n civicos upgrade --install civicos infra/helm/civicos \
   -f infra/helm/profiles/mid-city.yaml
 ```
@@ -62,6 +69,19 @@ What the chart sets up for the Next.js app (`templates/app.yaml`):
 - The ingress drops the `x-middleware-subrequest` header (needs snippet
   annotations allowed; `ingress.stripInternalHeaders=false` otherwise — the
   app refuses the header itself).
+- Read-only root filesystem (`/tmp` and `/app/.next/cache` are `emptyDir`
+  volumes), no service-account token, uid/gid 10001; in file mode the audit
+  anchor file gets its own volume (`app.anchors`).
+- Scheduled jobs: pg_cron in the substrate by default
+  (`app/supabase/cron/schedule.sql`); `cron.enabled: true` runs the same 15
+  jobs as Kubernetes CronJobs (Bearer `CIVICOS_CRON_SECRET`) where pg_cron is
+  not used. Run one scheduler, not both.
+- Network policy egress is set per destination (`security.egress`: DNS to the
+  cluster DNS only, Postgres, NATS, HTTPS); narrow each to the nation's own
+  addresses.
+
+Every value is listed in `infra/helm/civicos/README.md`. Check the chart with
+`infra/helm/check.sh` (needs `helm` and `kubeconform`).
 
 ## Terraform (per environment)
 

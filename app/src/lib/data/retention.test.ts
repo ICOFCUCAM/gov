@@ -2,7 +2,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { recordAudit, listAudit, listPermits, createPermit, decidePermit, queueFor, listMinistries } from './store';
 import { addCase } from './case-import';
-import { subscribe, unsubscribe, confirmSubscription, siteOutbox, subscriberCounts, sweepSubscriptions, purgeMessagesTo, attemptKeys, resetSiteSubscriptions, CONFIRM_DAYS } from './site-subscriptions';
+import { subscribe, unsubscribe, confirmSubscription, siteOutbox, subscriberCounts, sweepSubscriptions, attemptKeys, resetSiteSubscriptions, CONFIRM_DAYS } from './site-subscriptions';
+import { resetMessaging, messagesWhere } from '@/lib/messaging/outbox';
 import { resetOfficials, createAccount, checkPassword, sweepSignInFailures, failureKeys } from '@/lib/auth/officials';
 import { recordAggregated, flushAggregated, resetAuditAggregate, AGGREGATE_WINDOW_MS, WRITTEN_PER_WINDOW, MAX_WINDOWS, openAggregates } from '@/lib/audit/aggregate';
 import { proposeRetention, decideRetention, retentionRules, runRetention, resetRetention } from './retention';
@@ -53,19 +54,22 @@ describe('refusals from people not signed in are written in a bounded way', () =
 });
 
 describe('retention of personal data', () => {
-  beforeEach(() => { resetSiteSubscriptions(); resetRetention(); resetAuditAggregate(); });
+  beforeEach(() => { resetSiteSubscriptions(); resetRetention(); resetAuditAggregate(); resetMessaging(); });
 
-  it('deletes queued messages to an address when it unsubscribes, and keeps others', () => {
+  it('leaves nothing in the outbox for an address that unsubscribes (dead letters too), and keeps others', () => {
     subscribe('trade', 'b@example.org', { sender: '1' });
     confirmSubscription(tokenOf(siteOutbox('trade')[0]!.link));
     subscribe('trade', 'keep@example.org', { sender: '2' });
     subscribe('police', 'b@example.org', { sender: '3' });
-    const update = () => siteOutbox('trade').find(m => m.to === 'b@example.org')!;
-    expect(unsubscribe(tokenOf(update().link))).toEqual({ siteId: 'trade' });
+    // A message that could not be delivered still holds the address for a while (a dead letter).
+    const dead = messagesWhere(m => m.to === 'b@example.org' && m.ref?.siteId === 'trade')[0]!;
+    const link = dead.link!;
+    dead.status = 'dead';
+    dead.finishedAt = new Date().toISOString();
+    expect(unsubscribe(tokenOf(link))).toEqual({ siteId: 'trade' });
     expect(JSON.stringify(siteOutbox('trade'))).not.toContain('b@example.org');
     expect(siteOutbox('trade').some(m => m.to === 'keep@example.org')).toBe(true);
     expect(siteOutbox('police').some(m => m.to === 'b@example.org')).toBe(true);
-    expect(purgeMessagesTo('KEEP@example.org ')).toBe(1);
   });
 
   it('removes unconfirmed requests (and their messages) after the link expires', () => {
@@ -77,6 +81,7 @@ describe('retention of personal data', () => {
     expect(sweepSubscriptions(t0 + (CONFIRM_DAYS + 1) * DAY)).toBe(1);
     expect(subscriberCounts('energy')).toMatchObject({ pending: 0, confirmed: 1 });
     expect(JSON.stringify(siteOutbox('energy'))).not.toContain('pending@example.org');
+    expect(JSON.stringify(siteOutbox('energy'))).toContain('confirmed@example.org');
   });
 
   it('keeps permits and cases unless two administrators confirm a rule, then anonymises or deletes', () => {

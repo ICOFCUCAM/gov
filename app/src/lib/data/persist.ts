@@ -75,6 +75,8 @@ export interface StateAdapter {
   release?(writer: string): Promise<void>;
   /** The same, synchronously, for the process 'exit' event (where nothing asynchronous runs). */
   releaseSync?(writer: string): void;
+  /** Remove a store's saved snapshot (a data restore to a time before the store existed). */
+  remove?(key: string): Promise<void>;
 }
 
 /** Another writer saved since this one read, or this one no longer holds the lease: nothing was written. */
@@ -185,6 +187,10 @@ export function fileAdapter(dir: string): StateAdapter {
       const held = await readLock();
       if (held?.writer === writer) await fs.unlink(lockFile).catch(() => undefined);
     },
+    async remove(key) {
+      if (!KEY.test(key)) return;
+      await fs.unlink(path.join(dir, `${key}.json`)).catch(() => undefined);
+    },
     releaseSync(writer) {
       try {
         if ((JSON.parse(readFileSync(lockFile, 'utf8')) as LockRecord).writer === writer) unlinkSync(lockFile);
@@ -264,9 +270,18 @@ export interface PersistenceStatus {
   skipped?: number;
   /** CIVICOS_STATE=postgres: the per-record tables (queue depth, outbox lag, PostGIS). */
   records?: RecordsStatus;
+  /** A data restore is being applied here (lib/data/backups.ts): changes are refused until it ends. */
+  restoring?: boolean;
+  /** Another instance restored the state from a backup: this server must restart before it takes changes. */
+  restartRequired?: string;
 }
 type Status = PersistenceStatus;
-const g = globalThis as unknown as Record<string, unknown> & { __persistStatus?: Status; __persistLast?: Map<string, string>; __persistVersions?: Map<string, number>; __persistChanges?: number; __persistSeen?: number; __persistLastSweep?: number; __persistRecords?: Records; __persistExcluded?: Map<string, string[]> };
+const g = globalThis as unknown as Record<string, unknown> & {
+  __persistStatus?: Status; __persistLast?: Map<string, string>; __persistVersions?: Map<string, number>; __persistChanges?: number; __persistSeen?: number;
+  __persistLastSweep?: number; __persistRecords?: Records; __persistExcluded?: Map<string, string[]>;
+  /** What a data restore needs to reach: the adapter, the save loop, and how the per-record backend was started. */
+  __persistAdapter?: StateAdapter; __persistSave?: () => Promise<void>; __persistRecordsOpts?: import('@/lib/data/repo/postgres').RecordsOptions;
+};
 
 /**
  * Changes that touch only the per-record registers (CIVICOS_STATE=postgres):
@@ -365,6 +380,8 @@ export function persistenceStatus(): Status {
  * registers (RECORD_ROUTES) is accepted on any instance.
  */
 export function stateWritable(pathname?: string): boolean {
+  // A data restore in progress here, or applied by another instance (restart first): no change is taken.
+  if (g.__persistStatus?.restoring || g.__persistStatus?.restartRequired) return false;
   const r = g.__persistStatus?.role;
   if (r !== 'standby' && r !== 'stopped') return true;
   // Every store in the record tables (the default in postgres mode): any instance takes any change.
@@ -376,6 +393,46 @@ export function stateWritable(pathname?: string): boolean {
 export const recordsBackend = (): Records | undefined => g.__persistRecords;
 
 const sleep = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+// ── Data restore (lib/data/backups.ts) ────────────────────────────────────
+/** Mark a data restore as running (changes refused) or ended. */
+export function setRestoring(on: boolean): void {
+  const s = (g.__persistStatus ??= { adapter: 'memory', restored: [], saves: 0, startedAt: new Date().toISOString() });
+  s.restoring = on || undefined;
+}
+/** This server must restart before it takes changes (another instance restored the state). */
+export function requireRestart(why: string): void {
+  const s = (g.__persistStatus ??= { adapter: 'memory', restored: [], saves: 0, startedAt: new Date().toISOString() });
+  s.restartRequired = why;
+  s.error = why;
+}
+/** Write every changed store now (file and supabase modes); nothing to do in memory or postgres mode. */
+export async function saveNow(): Promise<void> {
+  if (g.__persistSave) await g.__persistSave();
+}
+/** Drop a store: from memory, from what was last saved, and from the adapter's saved snapshots. */
+export async function forgetStore(key: string): Promise<void> {
+  if (!KEY.test(key)) return;
+  delete g[key];
+  g.__persistLast?.delete(key);
+  await g.__persistAdapter?.remove?.(key).catch(() => undefined);
+}
+/**
+ * CIVICOS_STATE=postgres, after a data restore rewrote the tables: stop the
+ * per-record backend, let `clear` empty the read model, and start it again
+ * the way the server started it, so the read model is loaded from the
+ * restored tables.
+ */
+export async function reloadRecords(clear: () => void): Promise<void> {
+  const opts = g.__persistRecordsOpts, old = g.__persistRecords;
+  if (!opts || !old) throw new Error('The per-record backend is not running');
+  await old.stop();
+  clear();
+  const pg = await import('@/lib/data/repo/postgres');
+  const records = await pg.startRecords(opts);
+  useBackend(records.backend);
+  g.__persistRecords = records;
+}
 
 /**
  * Start from the environment (called once by src/instrumentation.ts).
@@ -405,6 +462,7 @@ export async function startFromEnv(env = process.env): Promise<Status> {
   const writer = `${os.hostname()}-${process.pid}-${randomUUID().slice(0, 8)}`;
   const status: Status = { adapter: adapter?.name ?? 'memory', restored: [], saves: 0, startedAt: new Date().toISOString(), writer, role: 'writer', fencing: 'none' };
   g.__persistStatus = status;
+  g.__persistAdapter = adapter ?? undefined;
   if (!adapter) {
     if (mode === 'supabase') status.error = 'CIVICOS_STATE=supabase but the substrate is not configured (SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY); keeping state in memory';
     if (pgError) status.error = pgError;
@@ -453,7 +511,7 @@ export async function startFromEnv(env = process.env): Promise<Status> {
   let records: Records | undefined;
   if (pg && sql) {
     try {
-      records = await pg.startRecords({
+      const opts: import('@/lib/data/repo/postgres').RecordsOptions = {
         sql, instance: writer, isPrimary: () => status.role === 'writer',
         journalDir: env.CIVICOS_PG_JOURNAL_DIR || path.join(stateDir, 'journal'),
         pollMs: Number(env.CIVICOS_PG_POLL_MS) || 2000,
@@ -461,7 +519,9 @@ export async function startFromEnv(env = process.env): Promise<Status> {
         documents: (env.CIVICOS_PG_DOCUMENTS ?? '').toLowerCase() !== 'off',
         docMs: Number(env.CIVICOS_PG_DOC_MS) || 1000,
         sweepMs: Number(env.CIVICOS_PG_SWEEP_MS) || 30_000,
-      });
+      };
+      records = await pg.startRecords(opts);
+      g.__persistRecordsOpts = opts;
       useBackend(records.backend);
       keepOutOfSnapshot(pg.RECORD_FIELDS);
       g.__persistRecords = records;
@@ -491,7 +551,7 @@ export async function startFromEnv(env = process.env): Promise<Status> {
   let timer: ReturnType<typeof setInterval> | undefined;
   const stop = (why: string) => { status.role = 'stopped'; status.error = why; if (timer) clearInterval(timer); };
   const save = async (): Promise<void> => {
-    if (status.role === 'stopped' || (status.role === 'standby' && !allRecords)) return;
+    if (status.role === 'stopped' || (status.role === 'standby' && !allRecords) || status.restartRequired) return;
     try {
       if (fenced && adapter.lease) {
         const lease = await adapter.lease(writer, ttl);
@@ -512,6 +572,7 @@ export async function startFromEnv(env = process.env): Promise<Status> {
       status.error = `save failed: ${(e as Error).message}`;
     }
   };
+  g.__persistSave = save;
   timer = setInterval(() => { void save(); }, interval);
   timer.unref?.();
   // Next.js's own signal handler may end the process before the asynchronous
@@ -520,7 +581,7 @@ export async function startFromEnv(env = process.env): Promise<Status> {
   process.once('exit', () => { if (status.role === 'writer' && fenced) adapter.releaseSync?.(writer); });
   for (const sig of ['SIGTERM', 'SIGINT'] as const) {
     process.once(sig, () => {
-      void (records ? records.drain(5000) : Promise.resolve(true)).then(save).finally(async () => {
+      void (records ? (g.__persistRecords ?? records).drain(5000) : Promise.resolve(true)).then(save).finally(async () => {
         if (status.role === 'writer' && fenced) await adapter.release?.(writer).catch(() => undefined);
         process.exit(0);
       });

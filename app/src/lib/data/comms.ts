@@ -10,9 +10,12 @@
 // with their channels (email, SMS) and what they subscribe to — security,
 // releases, incidents, end of life. alert() fans an event out to every
 // subscribed official on every enabled channel and records the deliveries;
-// no email or SMS provider is connected yet, so deliveries are queued
-// (placeholder, docs/INTEGRATION_REGISTER.md §13). Changes to officials and
-// subscriptions are audited; each alert is audited once.
+// each delivery is queued in the platform's outbox (lib/messaging/outbox.ts)
+// in the nation's language and sent by the delivery worker through the email
+// and SMS providers the nation's administrator connected (/admin/messaging);
+// without one it stays queued and the chamber says "not connected"
+// (docs/INTEGRATION_REGISTER.md 13.5). Changes to officials and
+// subscriptions are audited; each alert is audited once, without addresses.
 //
 // This module does not import the release store: callers pass what it needs
 // (lib/data/updates.ts calls alert() on publish, incident and EOL notice).
@@ -20,6 +23,9 @@
 import type { AlertCategory, AlertChannel, AlertDelivery, ChangeKind, DistributionRelease, Official, ReleaseResource, WhatsNew } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
+import { enqueue, cancelFor, statusOfKey } from '@/lib/messaging/outbox';
+import { maskAddress } from '@/lib/messaging/privacy';
+import { alertMessage } from '@/lib/messaging/templates';
 
 export const CATEGORIES: AlertCategory[] = ['security', 'releases', 'incidents', 'eol'];
 export const CHANNELS: AlertChannel[] = ['email', 'sms'];
@@ -135,6 +141,8 @@ export function removeOfficial(nationId: string, id: string, by: string): { ok: 
   if (i < 0) return { error: 'Official not found', status: 404 };
   if (!by.trim()) return { error: 'Name who is making the change', status: 422 };
   const [o] = list.splice(i, 1);
+  // Alerts not yet sent to a removed official are withdrawn.
+  cancelFor({ kind: 'official', id: `${nationId}:${o!.id}` });
   recordAudit(by.trim(), 'update.alerts.official.remove', `UpdateChamber:${nationId}/alerts`, 'ok', o!.name);
   return { ok: true };
 }
@@ -150,7 +158,15 @@ export function alert(nationId: string, category: AlertCategory, subject: string
     for (const ch of CHANNELS) {
       const to = ch === 'email' ? o.email : o.sms;
       if (!o.channels[ch] || !to) continue;
-      out.push({ id: `AL-${db.seq++}`, at, nationId, category, subject, ref, officialId: o.id, officialName: o.name, channel: ch, to, status: 'queued' });
+      const d: AlertDelivery = { id: `AL-${db.seq++}`, at, nationId, category, subject, ref, officialId: o.id, officialName: o.name, channel: ch, to, status: 'queued' };
+      const msg = alertMessage(category, subject, ch);
+      const m = enqueue({
+        key: deliveryKey(d), nationId, channel: ch, stream: 'alerts', kind: `alert.${category}`, to,
+        subject: msg.subject || subject, text: msg.text, ...(ch === 'email' ? { link: '/updates' } : {}), locale: msg.locale,
+        ref: { kind: 'official', id: `${nationId}:${o.id}` },
+      }, now);
+      d.messageId = m.id;
+      out.push(d);
     }
   }
   db.outbox.push(...out);
@@ -158,6 +174,20 @@ export function alert(nationId: string, category: AlertCategory, subject: string
   return out;
 }
 
+/** Alert every nation an event concerns ('all': every nation with officials named for alerts). */
+export function alertNations(nations: 'all' | string[], category: AlertCategory, subject: string, ref?: string, now = Date.now()): AlertDelivery[] {
+  const ids = nations === 'all' ? Object.keys(cdb().officials) : nations;
+  return ids.flatMap(id => alert(id, category, subject, ref, now));
+}
+
+const deliveryKey = (d: AlertDelivery) => `alert:${d.nationId}:${d.id}:${d.at}`;
+const DELIVERY_STATUS = { queued: 'queued', sending: 'sending', retrying: 'retrying', sent: 'sent', dead: 'failed', cancelled: 'cancelled' } as const;
+
+/** Recent alerts with where each delivery stands in the outbox; addresses masked. */
 export function outbox(nationId: string, limit = 30): AlertDelivery[] {
-  return cdb().outbox.filter(d => d.nationId === nationId).sort((a, b) => b.at.localeCompare(a.at) || b.id.localeCompare(a.id)).slice(0, limit);
+  return cdb().outbox.filter(d => d.nationId === nationId).sort((a, b) => b.at.localeCompare(a.at) || b.id.localeCompare(a.id)).slice(0, limit)
+    .map(d => {
+      const st = statusOfKey(deliveryKey(d));
+      return { ...d, to: maskAddress(d.to), status: st ? DELIVERY_STATUS[st] : d.status };
+    });
 }

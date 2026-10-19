@@ -1,0 +1,5 @@
+# A scheduled job with a method the cron routes do not take: refused.
+cron:
+  enabled: true
+  jobs:
+    sla: { schedule: "0 * * * *", method: DELETE }

@@ -1,0 +1,9 @@
+# Keys behind the KMS shim (a cloud KMS or HSM): no private key or key
+# encryption key in the pod, and no KEK Secret at all.
+app:
+  keys:
+    provider: kms-http
+    existingSecret: ""
+    kms:
+      url: https://kms-shim.gov.example
+      existingSecret: civicos-kms

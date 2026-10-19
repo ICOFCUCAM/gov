@@ -174,6 +174,8 @@ export interface Messages {
     unsubscribeButton: string;
     unsubscribed: string;
     linkInvalid: string;
+    /** Emails a site sends (confirmation, updates); a dictionary without them sends English (lib/messaging/templates.ts). */
+    emails?: { confirmSubject: string; confirmBody: string; unsubscribeLine: string };
   };
   /** Permit and receipt detail pages. */
   detail: {
@@ -428,6 +430,8 @@ export interface Messages {
     training: string;
     runbook: string;
     video: string;
+    /** Update Center alerts by email and SMS (lib/messaging/templates.ts); a dictionary without them sends English. */
+    alertEmail?: { subject: string; body: string; open: string; footer: string; smsPrefix: string; categories: { security: string; releases: string; incidents: string; eol: string } };
   };
 }
 
@@ -840,6 +844,11 @@ export const en: Messages = {
     unsubscribeButton: 'Unsubscribe',
     unsubscribed: 'You are unsubscribed and your email address has been deleted.',
     linkInvalid: 'This link is not valid or has expired.',
+    emails: {
+      confirmSubject: 'Confirm email updates from {name}',
+      confirmBody: 'Someone asked for email updates from {name} for this address. Open the link to confirm; if it was not you, ignore this email and nothing will be sent. The link works for {days} days.',
+      unsubscribeLine: 'To stop these emails, open this link: {link}',
+    },
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {
@@ -879,5 +888,13 @@ export const en: Messages = {
     training: 'Training',
     runbook: 'Runbook',
     video: 'Video',
+    alertEmail: {
+      subject: 'Update Center · {category}: {subject}',
+      body: '{category} alert from the Update Center:\n\n{subject}',
+      open: 'Open the Update Center: {link}',
+      footer: 'You receive this because you are named for {category} alerts in the Update Center. An administrator can change this there.',
+      smsPrefix: 'Update Center · {category}',
+      categories: { security: 'Security', releases: 'Releases', incidents: 'Incidents', eol: 'End of life' },
+    },
   },
 };

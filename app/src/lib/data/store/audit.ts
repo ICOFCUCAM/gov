@@ -62,6 +62,17 @@ export function recordAudit(
 }
 
 // ── Audit ─────────────────────────────────────────────────────────────
+/**
+ * Whether a list of entries chains, each by the rule it was written with
+ * (no signed heads). Used for the live chain and for a chain read back from
+ * a backup (lib/backup/state.ts) before it may count as restorable.
+ */
+export function verifyChainEntries(entries: readonly AuditEntry[]): { ok: boolean; checked: number; brokenAtSeq?: number } {
+  const st = { prevHash: null as string | null, upgraded: false };
+  for (const e of entries) if (!checkEntry(e, st)) return { ok: false, checked: entries.length, brokenAtSeq: e.seq };
+  return { ok: true, checked: entries.length };
+}
+
 /** The whole chain, newest first. For screens prefer listAuditPage(): the chain grows without end. */
 export function listAudit(): AuditEntry[] {
   return [...chain()].reverse();
@@ -125,8 +136,8 @@ export interface AuditChainCheck {
  */
 export function verifyAuditChain(): AuditChainCheck {
   const c = chain();
-  const st = { prevHash: null as string | null, upgraded: false };
-  for (const e of c) if (!checkEntry(e, st)) return { ok: false, checked: c.length, brokenAtSeq: e.seq };
+  const links = verifyChainEntries(c);
+  if (!links.ok) return links;
   const signed = verifySignedHeads(seq => entryAtSeq(c, seq));
   return signed.ok ? { ok: true, checked: c.length, signed } : { ok: false, checked: c.length, signed };
 }

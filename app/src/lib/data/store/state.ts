@@ -148,9 +148,8 @@ export function seed() {
       { at: days(-60), from: 'provisioning', to: 'active', reason: 'Go-live after inclusion-floor check', actor: 'L. Petrov' },
     ],
   };
-  const backups: BackupRecord[] = [
-    { id: 'BK-9001', kind: 'full', state: 'completed', location: 'sov://backups/home/full-1.enc', encrypted: true, sizeBytes: 4_812_004, createdAt: days(-1) },
-  ];
+  // The catalogue of real backups (lib/data/backups.ts keeps it in step with the backup target); none until one is taken.
+  const backups: BackupRecord[] = [];
   const configs: ConfigBundle[] = [
     { id: 'CFG-1', scope: 'global', version: 1, contentHash: hash('cfg-v1'), signedBy: 'STO', state: 'applied', createdAt: days(-20) },
   ];

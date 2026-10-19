@@ -10,7 +10,6 @@ import type {
   TenantLifecycle,
   TenantState,
   BackupRecord,
-  BackupKind,
   ConfigBundle,
   ConfigDrift,
 } from '@/lib/api/types';
@@ -182,32 +181,22 @@ export function transitionTenant(
   return db.lifecycle;
 }
 
+// Backups (review M-14): the records here are the catalogue of the real backup
+// service (lib/data/backups.ts), which takes encrypted, verified backups to the
+// configured target and keeps this list in step with the target (the target is
+// the truth: a restore of the state cannot bring back a record of a backup
+// that is gone, nor lose one that exists). The earlier simulated records
+// (random size, `sov://` locations, no archive) are never shown.
+const real = (b: BackupRecord) => !b.location.startsWith('sov://');
 export function listBackups(): BackupRecord[] {
-  return [...db.backups].sort(
+  return db.backups.filter(real).sort(
     (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
   );
 }
-export function createBackup(kind: BackupKind): BackupRecord {
-  const b: BackupRecord = {
-    id: uid('BK'),
-    kind,
-    state: 'completed',
-    location: `sov://backups/home/${kind}-${Date.now()}.enc`,
-    encrypted: true,
-    sizeBytes: Math.floor(1_000_000 + Math.random() * 9_000_000),
-    createdAt: new Date().toISOString(),
-  };
-  db.backups.unshift(b);
-  recordAudit('operator', 'backup.create', `Backup:${b.id}`, 'ok', kind);
-  return b;
-}
-export function restoreBackup(id: string): BackupRecord | { error: string } {
-  const b = db.backups.find(x => x.id === id);
-  if (!b) return { error: 'Backup not found' };
-  if (b.state !== 'completed') return { error: 'Only COMPLETED backups can be restored' };
-  b.state = 'restoring';
-  recordAudit('operator', 'backup.restore', `Backup:${id}`, 'ok');
-  return b;
+/** Replace the catalogue with what the backup target holds (lib/data/backups.ts listBackups). */
+export function syncBackupCatalogue(records: BackupRecord[]): void {
+  db.backups.length = 0;
+  db.backups.push(...records);
 }
 
 export function listConfigs(): ConfigBundle[] {
