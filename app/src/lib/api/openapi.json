@@ -2321,6 +2321,42 @@
         "x-source": "src/app/api/facilities/check/route.ts"
       }
     },
+    "/api/facilities/cityjson": {
+      "get": {
+        "tags": [
+          "facilities"
+        ],
+        "operationId": "get_facilities_cityjson",
+        "summary": "GET /api/facilities/cityjson",
+        "description": "The national facility register as CityJSON 2.0 (lib/data/cityjson.ts): sites with a footprint and height as LoD1 building solids, with a footprint only as LoD0 surfaces, others as LoD0 points (?category= to narrow). As the viewer may see them: restricted sites generalised, without their footprint, for viewers without need. Download as application/city+json.",
+        "parameters": [
+          {
+            "name": "category",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/facilities/cityjson/route.ts"
+      }
+    },
     "/api/facilities/connections": {
       "get": {
         "tags": [

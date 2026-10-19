@@ -273,7 +273,9 @@ layouts. The fix is one shared map engine grown from it.
   SVG points below the threshold are unchanged and the table view still
   lists every point for keyboard and screen-reader users. Published sites
   are also served as Mapbox Vector Tiles with a TileJSON
-  (`/api/twin/tiles/facilities`, `lib/geo/mvt.ts`), viewer-aware.
+  (`/api/twin/tiles/facilities`, `lib/geo/mvt.ts`), viewer-aware. Sites may
+  carry a building footprint, height and storeys (checked), exported as
+  CityJSON 2.0 (LoD1 solids, LoD0 otherwise; `/api/facilities/cityjson`).
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

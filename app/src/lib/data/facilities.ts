@@ -36,6 +36,7 @@ import { upsertFacilityEntity } from '@/lib/twin/register';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { uuid7 } from './uuid7';
 import { readCrs, toWgs84, type SourceCrs } from '@/lib/geo/crs';
+import { kinksOf } from '@/lib/geo/topology';
 import type { Geom } from '@/lib/geo/admin1';
 
 // ── Vocabulary ────────────────────────────────────────────────────────────
@@ -200,9 +201,15 @@ export interface Facility {
   source: { kind: 'form' | 'field' | 'import' | 'feed' | 'candidate'; importId?: string; sha256?: string; feedId?: string; ref?: string; candidateId?: string };
   /** A move or change waiting for a second official. */
   pendingVersion?: FacilityVersion & { reason?: string };
+  /** 3D readiness (optional): the building's outline on the ground (GeoJSON Polygon, longitude/latitude, wound anticlockwise), its height in metres and its storeys above ground. */
+  footprint?: FootprintPolygon;
+  heightM?: number;
+  levels?: number;
   versions: FacilityVersion[];
   note?: string;
 }
+
+export interface FootprintPolygon { type: 'Polygon'; coordinates: number[][][] }
 
 export interface FacilityImport {
   id: string; ministryId: string; by: string; at: string; format: 'csv' | 'geojson' | 'gpx';
@@ -521,6 +528,89 @@ export interface ProposeInput {
   region?: string; note?: string; outsideReason?: string; confirmDuplicate?: boolean;
   /** Set by a load that converted the position from a declared coordinate system. */
   sourceCrs?: FacilitySourceCrs;
+  /** 3D readiness: the building's footprint (GeoJSON Polygon or a Feature holding one), height (m) and storeys. */
+  footprint?: unknown;
+  heightM?: number | string;
+  levels?: number | string;
+}
+
+export const MAX_FOOTPRINT_POINTS = 2000;
+export const MAX_FOOTPRINT_KM2 = 5;
+/** How far the site's position may be from its footprint. */
+export const FOOTPRINT_NEAR_M = 250;
+
+/**
+ * Check a building's footprint, height and storeys for a site at a position:
+ * a single closed ring of longitude/latitude that does not cross itself, of a
+ * plausible size, at or near the site; height 0.5–1,000 m; 1–250 storeys.
+ * The ring is closed and wound anticlockwise. `null` clears a value.
+ */
+export function checkStructure(input: { footprint?: unknown; heightM?: unknown; levels?: unknown }, at: { lng: number; lat: number }): { value: { footprint?: FootprintPolygon | null; heightM?: number | null; levels?: number | null }; warnings: string[] } | { error: string } {
+  const value: { footprint?: FootprintPolygon | null; heightM?: number | null; levels?: number | null } = {};
+  const warnings: string[] = [];
+  let fp = input.footprint;
+  if (typeof fp === 'string') {
+    if (!fp.trim()) fp = undefined;
+    else { try { fp = JSON.parse(fp); } catch { return { error: 'The footprint is not valid GeoJSON' }; } }
+  }
+  if (fp === null) value.footprint = null;
+  else if (fp !== undefined) {
+    const g = (fp as { type?: string; geometry?: unknown }).type === 'Feature' ? (fp as { geometry?: unknown }).geometry : fp;
+    const poly = g as { type?: string; coordinates?: unknown };
+    if (poly?.type !== 'Polygon' || !Array.isArray(poly.coordinates) || !Array.isArray(poly.coordinates[0])) return { error: 'The footprint must be a GeoJSON Polygon (the building\'s outline on the ground)' };
+    const ring = (poly.coordinates[0] as unknown[]).map(p => (Array.isArray(p) ? [Number(p[0]), Number(p[1])] : [NaN, NaN]));
+    if (ring.some(([x, y]) => !Number.isFinite(x!) || !Number.isFinite(y!) || Math.abs(x!) > 180 || Math.abs(y!) > 90)) return { error: 'The footprint\'s points must be longitude, latitude in degrees' };
+    const [a, b] = [ring[0]!, ring[ring.length - 1]!];
+    if (a[0] !== b[0] || a[1] !== b[1]) ring.push([a[0]!, a[1]!]);
+    if (ring.length < 4) return { error: 'The footprint needs at least three corners' };
+    if (ring.length > MAX_FOOTPRINT_POINTS) return { error: `The footprint has more than ${MAX_FOOTPRINT_POINTS} points: simplify it` };
+    const rounded = ring.map(([x, y]) => [Math.round(x! * 1e7) / 1e7, Math.round(y! * 1e7) / 1e7]);
+    if (kinksOf({ type: 'Polygon', coordinates: [rounded] }, 1).length) return { error: 'The footprint\'s outline crosses itself' };
+    // Planar area on a local plane (m²): sign gives the winding.
+    const lat0 = (rounded.reduce((s, p) => s + p[1]!, 0) / rounded.length) * Math.PI / 180;
+    const kx = 111_320 * Math.cos(lat0), ky = 110_574;
+    let twice = 0;
+    for (let i = 0; i < rounded.length - 1; i++) twice += rounded[i]![0]! * kx * rounded[i + 1]![1]! * ky - rounded[i + 1]![0]! * kx * rounded[i]![1]! * ky;
+    const m2 = Math.abs(twice) / 2;
+    if (m2 < 1) return { error: 'The footprint has no area' };
+    if (m2 > MAX_FOOTPRINT_KM2 * 1e6) return { error: `The footprint covers more than ${MAX_FOOTPRINT_KM2} km²: record the buildings, not the whole site` };
+    if (twice < 0) rounded.reverse();
+    // Planar ray casting: a building is small enough for the plane.
+    let inside = false;
+    for (let i = 0, j = rounded.length - 2; i < rounded.length - 1; j = i++) {
+      const [xi, yi] = rounded[i]!, [xj, yj] = rounded[j]!;
+      if ((yi! > at.lat) !== (yj! > at.lat) && at.lng < ((xj! - xi!) * (at.lat - yi!)) / (yj! - yi!) + xi!) inside = !inside;
+    }
+    if (!inside) {
+      const nearest = Math.min(...rounded.map(p => metres([at.lng, at.lat], [p[0]!, p[1]!])));
+      if (nearest > FOOTPRINT_NEAR_M) return { error: `The footprint is ${nearest.toLocaleString('en')} m from the site's position: draw the building at the site` };
+      warnings.push(`The site's position is outside its footprint (${nearest} m from its nearest corner)`);
+    }
+    value.footprint = { type: 'Polygon', coordinates: [rounded] };
+  }
+  const num = (v: unknown) => (v === '' || v === undefined ? undefined : v === null ? null : Number(v));
+  const h = num(input.heightM);
+  if (h === null) value.heightM = null;
+  else if (h !== undefined) {
+    if (!Number.isFinite(h) || h < 0.5 || h > 1000) return { error: 'Height must be between 0.5 and 1,000 metres' };
+    value.heightM = Math.round(h * 10) / 10;
+  }
+  const l = num(input.levels);
+  if (l === null) value.levels = null;
+  else if (l !== undefined) {
+    if (!Number.isInteger(l) || l < 1 || l > 250) return { error: 'Storeys must be a whole number from 1 to 250' };
+    value.levels = l;
+  }
+  if (value.heightM && value.levels && (value.heightM / value.levels < 2 || value.heightM / value.levels > 10)) warnings.push(`${value.heightM} m for ${value.levels} storeys is ${Math.round((value.heightM / value.levels) * 10) / 10} m a storey: check the height`);
+  return { value, warnings };
+}
+
+function applyStructure(f: Facility, v: { footprint?: FootprintPolygon | null; heightM?: number | null; levels?: number | null }): string[] {
+  const changed: string[] = [];
+  if (v.footprint !== undefined) { if (v.footprint) f.footprint = v.footprint; else delete f.footprint; changed.push(v.footprint ? 'footprint' : 'footprint removed'); }
+  if (v.heightM !== undefined) { if (v.heightM) f.heightM = v.heightM; else delete f.heightM; changed.push(v.heightM ? `height ${v.heightM} m` : 'height removed'); }
+  if (v.levels !== undefined) { if (v.levels) f.levels = v.levels; else delete f.levels; changed.push(v.levels ? `${v.levels} storeys` : 'storeys removed'); }
+  return changed;
 }
 
 /** An official of the owning institution proposes a site; the position is checked first. */
@@ -543,6 +633,9 @@ export async function proposeFacility(ministryId: string, input: ProposeInput, b
   if (!check.ok) return { error: check.errors[0]!, check };
   if (!check.place.inside && !clean(input.outsideReason)) return { error: 'The position is outside the boundary as drawn: confirm it with a reason', check };
   if (check.duplicates.length && !input.confirmDuplicate) return { error: 'This may already be recorded: confirm it is a different site', check };
+  const structure = checkStructure({ footprint: input.footprint, heightM: input.heightM, levels: input.levels }, { lng, lat });
+  if ('error' in structure) return { error: structure.error, check };
+  check.warnings.push(...structure.warnings);
   const status = STATUSES.includes(input.status as FacilityStatus) ? input.status as FacilityStatus : 'operational';
   const accuracy = Number(input.accuracyM);
   const f: Facility = {
@@ -562,6 +655,7 @@ export async function proposeFacility(ministryId: string, input: ProposeInput, b
     certification: certificationFor(), source, versions: [],
     ...(clean(input.note, 400) || clean(input.outsideReason, 400) ? { note: [clean(input.note, 400), clean(input.outsideReason, 400) && `Outside the drawn boundary: ${clean(input.outsideReason, 400)}`].filter(Boolean).join(' · ') } : {}),
   };
+  applyStructure(f, structure.value);
   pushVersion(f, f.proposedBy, 'proposed');
   db().facilities.push(f);
   gridInsert(f);
@@ -575,7 +669,8 @@ export type FacilityAction =
   | { action: 'move'; lng: number; lat: number; accuracyM?: number; method?: CaptureMethod; reason?: string }
   | { action: 'confirm-move' }
   | { action: 'status'; status: FacilityStatus }
-  | { action: 'withdraw'; reason?: string };
+  | { action: 'withdraw'; reason?: string }
+  | { action: 'structure'; footprint?: unknown; heightM?: number | string | null; levels?: number | string | null };
 
 /** Who an action may be taken by is checked by the route (lib/auth); this checks the record's own rules. */
 export async function actOnFacility(id: string, a: FacilityAction, by: string): Promise<Facility | { error: string }> {
@@ -645,6 +740,16 @@ export async function actOnFacility(id: string, a: FacilityAction, by: string): 
       recordAudit(who, 'facility.status', `Facility:${f.id}`, 'ok', a.status);
       break;
     }
+    case 'structure': {
+      if (f.state === 'withdrawn') return { error: 'The site is withdrawn' };
+      const c = checkStructure({ footprint: a.footprint, heightM: a.heightM, levels: a.levels }, f.location);
+      if ('error' in c) return c;
+      const changed = applyStructure(f, c.value);
+      if (!changed.length) return { error: 'Give a footprint, a height or storeys (or null to remove one)' };
+      pushVersion(f, who, `building: ${changed.join(', ')}`);
+      recordAudit(who, 'facility.structure', `Facility:${f.id}`, 'ok', changed.join(', '));
+      break;
+    }
     case 'withdraw': {
       if (f.state === 'withdrawn') return { error: 'Already withdrawn' };
       f.state = 'withdrawn';
@@ -671,6 +776,7 @@ export function viewFacility(f: Facility, v: Viewer): Facility & { generalised?:
     const snap = (x: number) => Math.round(x / step) * step + step / 2;
     out.location = { lng: Number(snap(f.location.lng).toFixed(4)), lat: Number(snap(f.location.lat).toFixed(4)), method: f.location.method, accuracyM: Math.round(step * 111_000) };
     out.place = { ...f.place, districtCode: undefined, district: undefined };
+    delete out.footprint; // an outline would give the exact position away
     out.ids = f.ids[NATIONAL_ID] ? { [NATIONAL_ID]: f.ids[NATIONAL_ID] } : {}; out.versions = []; out.pendingVersion = undefined; out.generalised = true;
   }
   if (!v.signedIn) { out.versions = []; out.pendingVersion = undefined; out.proposedBy = ''; out.publishedBy = undefined; }

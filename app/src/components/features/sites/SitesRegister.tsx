@@ -84,6 +84,7 @@ export function SitesRegister() {
             where it stands. Positions are declared by the institutions; a certified location has been checked
             ({data.policy.certification === 'institution' ? 'by the institution' : data.policy.certification === 'mapping-agency' ? 'by the mapping agency' : 'by the institution, then the mapping agency'}).
             {' '}<Link href="/gov/sites/capture" className="text-link underline">Capture a site on a phone</Link>
+            {' · '}<a href="/api/facilities/cityjson" className="text-link underline" download>Download in 3D (CityJSON)</a>
           </p>
         </div>
         <ActingOfficial name={official} onChange={setOfficial} />
