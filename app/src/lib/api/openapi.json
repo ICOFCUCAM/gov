@@ -10604,6 +10604,42 @@
         "x-source": "src/app/api/twin/ogc/route.ts"
       }
     },
+    "/api/twin/runs/{id}/prov": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_runs_id_prov",
+        "summary": "GET /api/twin/runs/{id}/prov",
+        "description": "Provenance of one twin import as W3C PROV-O JSON-LD (lib/twin/prov.ts): the import as a prov:Activity associated with the official who ran it, the file it used (with its SHA-256) and the observations it generated; a withdrawal as the activity that invalidated them. Read only.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/runs/[id]/prov/route.ts"
+      }
+    },
     "/api/twin/runs/{id}/withdraw": {
       "post": {
         "tags": [

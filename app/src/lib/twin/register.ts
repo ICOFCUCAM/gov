@@ -18,6 +18,7 @@
 // figure through signalFor() and keep their sample when nothing is observed.
 // Kept as a server store (persisted by lib/data/persist.ts).
 
+import { createHash } from 'node:crypto';
 import { recordAudit, listMinistries } from '@/lib/data/store';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
@@ -100,6 +101,8 @@ export interface TwinRun {
   error?: string;
   /** Set when an official withdrew the import: its observations are superseded from that moment, never deleted. */
   withdrawn?: { at: string; by: string; reason: string };
+  /** SHA-256 of the file as read (UTF-8 text), for provenance; absent on runs recorded before it was kept or that failed before reading. */
+  sha256?: string;
 }
 
 export interface Observation {
@@ -253,6 +256,18 @@ export function sourceCoverage(sourceId: string): { observations: number; from?:
   return { observations: n, ...(from ? { from, to } : {}), metrics: [...metrics].sort(), entities: entities.size };
 }
 
+/** A stable id for an observation: its run, entity, metric and the date it was true for. */
+export const observationId = (o: Pick<Observation, 'runId' | 'entityId' | 'metric' | 'validFrom'>): string => `${o.runId}/${o.entityId}/${o.metric}/${o.validFrom}`;
+
+/** The observations an import generated (live register and archive). */
+export function runObservations(runId: string): Observation[] {
+  const out: Observation[] = [];
+  const visit = (o: Observation) => { if (o.runId === runId) out.push({ ...o }); };
+  forEachArchived(undefined, visit);
+  db().observations.forEach(visit);
+  return out;
+}
+
 /** One import, from the live register or the history archive. */
 export function getRun(id: string): TwinRun | undefined {
   const r = db().runs.find(x => x.id === id) ?? archivedRuns().find(x => x.id === id);
@@ -386,6 +401,7 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
     if (text.length > 20_000_000) throw new Error('The CSV is larger than 20 MB');
     const sdmxFile = s.format === 'sdmx-csv';
     const mapping = sdmxFile ? SDMX_MAPPING : s.mapping;
+    run.sha256 = createHash('sha256').update(text, 'utf8').digest('hex');
     const rows = sdmxFile ? sdmxRows(text, sdmxMetric, s.sdmx).rows.map(r => nationArea(r)) : parseCsv(text);
     run.rows = rows.length;
     if (rows.length > LIMITS.rows) throw new Error(`More than ${LIMITS.rows} rows`);

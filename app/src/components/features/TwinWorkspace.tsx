@@ -185,7 +185,7 @@ export function TwinWorkspace() {
               <li key={r.id} className="rounded-[3px] border border-line px-3 py-2">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
                   <span><span className={`font-semibold uppercase ${STATUS[r.status]}`}>{r.status}</span> · {sourceName.get(r.sourceId) ?? r.sourceId} · {r.accepted} of {r.rows} rows accepted</span>
-                  <span className="font-mono text-[12px] text-ink-muted">{r.id} · {when(r.at)} · {r.by}</span>
+                  <span className="font-mono text-[12px] text-ink-muted">{r.id} · {when(r.at)} · {r.by} · <a className="text-link underline underline-offset-2" href={`/api/twin/runs/${r.id}/prov`}>provenance</a></span>
                 </div>
                 {r.error ? <p className="mt-1 text-alert">{r.error}</p> : null}
                 {r.rejected.length ? (
