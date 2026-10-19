@@ -646,7 +646,7 @@ Every finding of section 2 has been worked on in place (nothing removed). What a
 | D9 audit integrity | Ed25519-signed chain heads, anchored by the audit-anchor cron, shown on /audit; RFC 3161 time-stamps from the nation's TSA, checked and kept with each head | — |
 | I1, I2 OGC | subdivisions through the nation's geography, geometry bbox, prev links, queryables and filters, conformance checker and TEAM Engine in CI | machine read keys for GIS clients, CQL2 |
 | I3 sensors | SensorThings API v1.1 read-only over the twin and substrate telemetry | telemetry streams as a twin source kind |
-| I4, I7 exchange | RFC 9421 signatures on feeds, exchange log with signed receipts, federation usage policies, CloudEvents outbox with signed webhooks, AsyncAPI | mutual TLS between installations |
+| I4, I7 exchange | RFC 9421 signatures on feeds, exchange log with signed receipts, federation usage policies, CloudEvents outbox with signed webhooks, AsyncAPI, mutual TLS between installations (client certificate per grant, verified at the ingress and matched by fingerprint; outbound client certificate through an undici Agent) | — |
 | I5 OpenAPI | regenerated per change; multipart described | typed request/response schemas |
 | I6 SDMX | SDMX-CSV reader | SDMX-JSON/ML |
 | G1–G6 geospatial | Shapefile/GeoPackage with reprojection, national grids for site imports, topology checks, spatial index, canvas layer and vector tiles, footprints and CityJSON export, INSPIRE/HXL/OSM/Smart Data Models mapping | WebGL renderer, PMTiles |

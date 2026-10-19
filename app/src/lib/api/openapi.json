@@ -2702,7 +2702,7 @@
         ],
         "operationId": "post_federation_exchange",
         "summary": "POST /api/federation/exchange",
-        "description": "A federation partner's request for data under a grant (review R10): the partner's system presents its integration key (Authorization: Bearer civ_…, scope `federation:exchange`) and POSTs { tenant, scope, purpose, retainDays?, onward? }. The grant's usage policy is enforced: a purpose outside it, a longer retention or onward sharing it does not allow is refused with the reason; an allowed exchange returns the obligations. The platform decides with the same default-deny rule as /api/federation/check, records the exchange in the exchange log on its side and answers with a signed receipt for the partner's side. Every decision is audited.",
+        "description": "A federation partner's request for data under a grant (review R10): the partner's system presents its integration key (Authorization: Bearer civ_…, scope `federation:exchange`) and POSTs { tenant, scope, purpose, retainDays?, onward? }. The grant's usage policy is enforced: a purpose outside it, a longer retention or onward sharing it does not allow is refused with the reason; an allowed exchange returns the obligations. The platform decides with the same default-deny rule as /api/federation/check, records the exchange in the exchange log on its side and answers with a signed receipt for the partner's side. Every decision is audited. When the grant names the partner's client certificate (mutual TLS, lib/exchange/mtls.ts), the exchange is refused unless the ingress verified that very certificate for this request.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -2775,6 +2775,120 @@
           }
         },
         "x-source": "src/app/api/federation/grants/[id]/approve/route.ts"
+      }
+    },
+    "/api/federation/grants/{id}/certificate": {
+      "get": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "get_federation_grants_id_certificate",
+        "summary": "GET /api/federation/grants/{id}/certificate",
+        "description": "The partner installation's client certificate for a grant (mutual TLS, lib/exchange/mtls.ts). GET shows it; PUT names it ({ certificate: PEM } or { sha256, subject? }), after which the partner's exchanges under this grant are accepted only over mutual TLS with that certificate; DELETE removes it. Administrators only (lib/auth/roles.ts); the official's verified name is recorded and every change audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/federation/grants/[id]/certificate/route.ts"
+      },
+      "put": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "put_federation_grants_id_certificate",
+        "summary": "PUT /api/federation/grants/{id}/certificate",
+        "description": "The partner installation's client certificate for a grant (mutual TLS, lib/exchange/mtls.ts). GET shows it; PUT names it ({ certificate: PEM } or { sha256, subject? }), after which the partner's exchanges under this grant are accepted only over mutual TLS with that certificate; DELETE removes it. Administrators only (lib/auth/roles.ts); the official's verified name is recorded and every change audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/federation/grants/[id]/certificate/route.ts"
+      },
+      "delete": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "delete_federation_grants_id_certificate",
+        "summary": "DELETE /api/federation/grants/{id}/certificate",
+        "description": "The partner installation's client certificate for a grant (mutual TLS, lib/exchange/mtls.ts). GET shows it; PUT names it ({ certificate: PEM } or { sha256, subject? }), after which the partner's exchanges under this grant are accepted only over mutual TLS with that certificate; DELETE removes it. Administrators only (lib/auth/roles.ts); the official's verified name is recorded and every change audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/federation/grants/[id]/certificate/route.ts"
       }
     },
     "/api/federation/grants/{id}/policy": {
@@ -2882,6 +2996,33 @@
           }
         },
         "x-source": "src/app/api/federation/grants/route.ts"
+      }
+    },
+    "/api/federation/mtls": {
+      "get": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "get_federation_mtls",
+        "summary": "GET /api/federation/mtls",
+        "description": "Mutual TLS between installations, as configured here (lib/exchange/mtls.ts, lib/exchange/federation-client.ts): this installation's client certificate (fingerprint, subject, expiry; never the key), whether the server accepts client certificates verified by the ingress, and how many grants name one.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/federation/mtls/route.ts"
       }
     },
     "/api/federation/propose": {
