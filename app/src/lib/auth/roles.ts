@@ -79,9 +79,13 @@ export const BEARER_ROUTES: RegExp[] = [
   /^\/api\/admin\/officers\/bulk$/,           // platformOrCronAuthorized()
   /^\/api\/federation\/webhooks\/test$/,      // platformOrCronAuthorized()
   /^\/api\/substrate\/(digest|export)$/,     // CIVICOS_CRON_SECRET
-  // SensorThings create on a twin stream source's Datastream: the bound integration's own key, scope sta:write
-  // (verifyIntegrationKey in staCreate, lib/twin/sta-write.ts); PATCH and DELETE answer 405.
+  // SensorThings create on a twin stream source's Datastream and DELETE (withdrawal) of a reading it sent: the bound
+  // integration's own key, scope sta:write (verifyIntegrationKey in staCreate / staDelete, lib/twin/sta-write.ts);
+  // PATCH answers 405. POST Tasks there takes no key: a signed-in official allowed by canTaskSensor (checked in the route).
   /^\/api\/twin\/sta\/v1\.1\/.+$/,
+  // The integration that executes a tasking capability reports a task's status with its own key, scope sta:task
+  // (verifyIntegrationKey in the route, lib/twin/tasking.ts acknowledgeTask).
+  /^\/api\/twin\/tasking\/executor\/[^/]+$/,
 ];
 /** Read-only routes that verify a bearer themselves (machine readers such as a metrics scraper). */
 export const BEARER_READS: RegExp[] = [
@@ -97,6 +101,8 @@ export const BEARER_READS: RegExp[] = [
   /^\/api\/twin\/tiles\/facilities(\/|$)/,
   /^\/api\/twin\/tiles\/boundaries(\/|$)/,
   /^\/api\/twin\/tiles\/parcels(\/|$)/,
+  // The executing integration pulls the tasks of its tasking capabilities with its own key, scope sta:task.
+  /^\/api\/twin\/tasking\/executor$/,
   // The mirror feed for services/civic-api's follower: an integration key of scope mirror:read (review D8).
   /^\/api\/platform\/mirror$/,
 ];
@@ -117,6 +123,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/map-pack(\/|$)/,
   // The nation's rules for its twin (four-eyes withdrawal of imports).
   /^\/api\/twin\/policy(\/|$)/,
+  // Declaring and retiring what a stream's device can be tasked to do (tasking capabilities).
+  /^\/api\/twin\/tasking\/capabilities(\/|$)/,
   // The installation itself: backups and their restore, configuration and its
   // apply, deployments, releases and tenant lifecycle.
   /^\/api\/platform(\/|$)/,
@@ -154,6 +162,7 @@ const OFFICIAL_WORK: RegExp[] = [
   /^\/api\/public-sites\/[a-z-]+(\/|$)/,       // Site editor: proposed by one official, published by another (lib/data/site-editorial.ts)
   /^\/api\/releases(\/|$)/,                   // the nation's Update Center (four-eyes and named officials in lib/data/*)
   /^\/api\/twin\/(keys|metrics|runs|scenarios|sources)(\/|$)/, // registering metrics and withdrawing imports are audited with the official
+  /^\/api\/twin\/tasking\/tasks(\/|$)/,       // a signed-in official allowed by canTaskSensor() (checked in the route)
 ];
 
 export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'ministry' | 'official';
@@ -224,6 +233,16 @@ export function canManageFeeds(s: Scope, ministryId: string): string | null {
 export function canConnectStream(s: Scope): string | null {
   const role = roleOf(s);
   return role === 'administrator' || role === 'signatory' ? null : 'Only an administrator or an official who can sign may connect a stream to a sensor gateway or broker';
+}
+
+/**
+ * Creating or cancelling a task for a stream's device (a tasking capability,
+ * lib/twin/tasking.ts): it acts on physical equipment, so administrators and
+ * officials who can sign; officers and auditors see tasks but do not make them.
+ */
+export function canTaskSensor(s: Scope): string | null {
+  const role = roleOf(s);
+  return role === 'administrator' || role === 'signatory' ? null : 'Only an administrator or an official who can sign may task a sensor or device';
 }
 
 /** Publishing a proposed site, certifying it for its institution, or confirming a move: those who can sign for the owning institution. */

@@ -35,11 +35,23 @@
 // or the integration suspended.
 
 import { NextResponse } from 'next/server';
-import { verifyIntegrationKey } from '@/lib/data/store';
+import { verifyIntegrationKey, type IntegrationAccess } from '@/lib/data/store';
 import { looksLikeToken, verifyAccessToken } from '@/lib/auth/client-credentials';
 
 /** The scope an integration needs to read the twin's OGC, SensorThings and tile services. */
 export const OGC_READ_SCOPE = 'ogc:read';
+
+/**
+ * The checks on a machine reader's credential (`Bearer civ_…` key or access
+ * token): approved, scope ogc:read, within the integration's rate limit. The
+ * HTTP reads (below) and the SensorThings MQTT broker (lib/twin/sta-mqtt.ts,
+ * the credential as the MQTT password) both decide with it.
+ */
+export async function machineReadAccess(auth: string): Promise<{ access: IntegrationAccess; token: boolean }> {
+  const bearer = auth.replace(/^Bearer\s+/i, '').trim();
+  const token = /^Bearer\s/i.test(auth) && looksLikeToken(bearer);
+  return { access: token ? await verifyAccessToken(auth, OGC_READ_SCOPE) : verifyIntegrationKey(auth, OGC_READ_SCOPE), token };
+}
 
 /**
  * The refusal for a request that carries a key or access token the twin does
@@ -49,9 +61,7 @@ export const OGC_READ_SCOPE = 'ogc:read';
 export async function machineReadRefusal(req: { headers: Headers }): Promise<NextResponse | null> {
   const auth = req.headers.get('authorization');
   if (!auth) return null;
-  const bearer = auth.replace(/^Bearer\s+/i, '').trim();
-  const token = /^Bearer\s/i.test(auth) && looksLikeToken(bearer);
-  const r = token ? await verifyAccessToken(auth, OGC_READ_SCOPE) : verifyIntegrationKey(auth, OGC_READ_SCOPE);
+  const { access: r, token } = await machineReadAccess(auth);
   if (r.ok) return null;
   const res = NextResponse.json({ code: r.status === 429 ? 'TooManyRequests' : 'Unauthorized', description: r.error, error: r.error }, { status: r.status });
   if (r.status === 401) res.headers.set('WWW-Authenticate', `Bearer realm="civicos-twin", scope="${OGC_READ_SCOPE}"${token ? ', error="invalid_token"' : ''}`);

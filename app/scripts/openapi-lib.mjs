@@ -148,7 +148,7 @@ function media(schema, documented, schemas) {
 /** The schemes an installation's callers authenticate with. */
 export const SECURITY_SCHEMES = {
   officialSession: { type: 'apiKey', in: 'cookie', name: 'civicos_official', description: 'The signed session of an official (sign in at /sign-in, or POST /api/auth/official). Required for every non-public read and change when CIVICOS_AUTH=enforce; what the official may change follows lib/auth/roles.ts.' },
-  integrationKey: { type: 'http', scheme: 'bearer', bearerFormat: 'civ_<prefix>_<secret>', description: 'An integration key issued in Integrations (/integrations), stored as a SHA-256 hash and checked with its scopes and rate limit. Scope ogc:read opens the twin\'s OGC API – Features, SensorThings and vector tiles to GIS clients; scope mirror:read opens the mirror feed (/api/platform/mirror) to the civic-api follower.' },
+  integrationKey: { type: 'http', scheme: 'bearer', bearerFormat: 'civ_<prefix>_<secret>', description: 'An integration key issued in Integrations (/integrations), stored as a SHA-256 hash and checked with its scopes and rate limit. Scope ogc:read opens the twin\'s OGC API – Features, SensorThings and vector tiles to GIS clients (and its SensorThings MQTT broker, as the password); scope sta:write lets the integration bound to a twin stream source create and withdraw its readings (SensorThings POST and DELETE Observations); scope sta:task lets the integration that executes a tasking capability pull its tasks and report their status (/api/twin/tasking/executor); scope mirror:read opens the mirror feed (/api/platform/mirror) to the civic-api follower.' },
   integrationClient: { type: 'http', scheme: 'basic', description: 'OAuth2 client authentication at the token endpoint (RFC 6749 §2.3.1): the integration\'s id as client_id and its key (civ_…) as client_secret, by HTTP Basic or in the form body.' },
   integrationToken: { type: 'oauth2', description: 'A short-lived access token (RFC 9068 JWT, Ed25519-signed by the key custody provider) issued for an integration key with the client credentials grant; at most the key\'s scopes, ended by rotating the key or suspending the integration.', flows: { clientCredentials: { tokenUrl: '/api/oauth/token', scopes: { 'ogc:read': 'Read the twin\'s OGC API – Features, SensorThings and vector tiles' } } } },
   feedKey: { type: 'http', scheme: 'bearer', bearerFormat: 'ccf_… / facility feed key', description: 'A ministry\'s connected case or facility system: its own feed key, issued in the ministry workspace and stored as a hash; it changes only the records it sent.' },
@@ -171,10 +171,14 @@ function securityFor(rules, p, method) {
   }
   if (MUTATING.has(method)) {
     const rule = rules.mutationRule(sample) ?? 'refused';
+    // The twin's write routes that take a key check the integration's own key (sta:write, sta:task).
+    if (rules.BEARER_ROUTES.some(re => re.test(sample)) && /^\/api\/twin\//.test(sample)) return { security: [{ integrationKey: [] }, session], rule };
     return { security: rules.BEARER_ROUTES.some(re => re.test(sample)) ? [session, { automation: [] }] : [session], rule };
   }
   if (rules.BEARER_READS.some(re => re.test(sample))) {
     if (/^\/api\/metrics$/.test(sample)) return { security: [{ metricsToken: [] }, session] };
+    // The executing integration's task queue: its own key only (scope sta:task).
+    if (/^\/api\/twin\/tasking\/executor$/.test(sample)) return { security: [{ integrationKey: [] }] };
     // The twin's read services also take an access token issued for the key (OAuth2 client credentials).
     if (/^\/api\/twin\//.test(sample)) return { security: [{ integrationKey: [] }, { integrationToken: ['ogc:read'] }, session] };
     return { security: [{ integrationKey: [] }, session] };

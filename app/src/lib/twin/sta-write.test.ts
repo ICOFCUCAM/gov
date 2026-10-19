@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { resetTwin, syncRegister, registerSource, runSource, stateAsOf, setStreamIngest, withdrawRun, type TwinSource, type TwinRun } from './register';
+import { resetTwin, syncRegister, registerSource, runSource, stateAsOf, setStreamIngest, withdrawRun, listRuns, confirmWithdrawal, type TwinSource, type TwinRun } from './register';
+import { setTwinPolicy, resetTwinPolicy } from './policy';
 import { registerMetric } from './metrics';
-import { staCreate } from './sta-write';
+import { staCreate, staDelete, STA_UPDATE_REFUSAL } from './sta-write';
 import { staRequest } from './sta';
 import { resetReadings, pushedReadingsBetween, readingsStatus } from './readings';
 import { STA_WRITE_SCOPE } from './stream';
@@ -142,5 +143,73 @@ describe('SensorThings create on a stream source\'s Datastream', () => {
     expect(post('Observations', { Datastream: { '@iot.id': DS }, phenomenonTime: '2026-10-18T06:00:00Z', result: 1 }, gw.auth).status).toBe(404);
     ok(setStreamIngest(source.id, { ingest: { integrationId: gw.id }, by: 'Grid Officer' }));
     expect(post('Observations', { Datastream: { '@iot.id': DS }, phenomenonTime: '2026-10-18T06:00:00Z', result: 1 }, gw.auth).status).toBe(201);
+  });
+});
+
+describe('SensorThings delete (withdrawal) and update of readings', () => {
+  const del = (id: string, reason: string | undefined, auth: string | null, now = NOW) => staDelete([`Observations('${id}')`], reason, auth, now);
+  const idOf = (r: { body: unknown }) => (r.body as { '@iot.id': string })['@iot.id'];
+  const audits = (action: string) => listAudit().filter(e => e.action === action);
+
+  it('withdraws a reading not yet counted: kept on record, gone from reads, not counted by the run', async () => {
+    const a = post('Observations', { Datastream: { '@iot.id': DS }, phenomenonTime: '2026-10-18T06:00:00Z', result: 999 }, gw.auth);
+    post('Observations', { Datastream: { '@iot.id': DS }, phenomenonTime: '2026-10-18T07:00:00Z', result: 100 }, gw.auth);
+    const r = del(idOf(a), 'gateway sent a test value', gw.auth);
+    expect(r).toMatchObject({ status: 200, body: { withdrawn: { by: expect.stringMatching(/^Integration Grid gateway/), reason: 'gateway sent a test value' } } });
+    expect(readingsStatus('grid.load.mombasa')).toMatchObject({ readings: 1, withdrawn: 1 });
+    const obs = await staRequest(B, [`Datastreams('${DS}')`, 'Observations'], new URLSearchParams(), { signedIn: false });
+    expect((obs.body as { value: { result: number }[] }).value.map(o => o.result)).toEqual([100]);
+    expect((await staRequest(B, [`Observations('${idOf(a)}')`], new URLSearchParams(), { signedIn: false })).status).toBe(404);
+    // A correction at the same instant is a new reading.
+    expect(post('Observations', { Datastream: { '@iot.id': DS }, phenomenonTime: '2026-10-18T06:00:00Z', result: 140 }, gw.auth).status).toBe(201);
+    const run = ok(await runSource(source.id, { by: 'scheduler', deps: { now: NOW } })) as TwinRun;
+    expect(run.stream).toMatchObject({ samples: 2 });
+    expect(stateAsOf({ metric: 'grid.load_mean', entityId: 'place:KE-28', asOf: '2026-10-18T12:00:00Z', knownAt: '2026-10-19T09:00:00Z' })[0]).toMatchObject({ value: 120 });
+    expect(audits('twin.stream.reading.withdraw')[0]!.detail).toMatch(/withdrawn · gateway sent a test value · not yet counted by a run/);
+    // Withdrawn once only.
+    expect(del(idOf(a), 'again', gw.auth).status).toBe(409);
+  });
+
+  it('for a day already recorded, proposes the run\'s withdrawal to the officials (never withdraws it itself)', async () => {
+    setTwinPolicy({ fourEyesWithdrawal: false }, 'Admin');
+    const a = post('Observations', { Datastream: { '@iot.id': DS }, phenomenonTime: '2026-10-18T06:00:00Z', result: 999 }, gw.auth);
+    const run = ok(await runSource(source.id, { by: 'scheduler', deps: { now: NOW } })) as TwinRun;
+    const r = del(idOf(a), undefined, gw.auth, new Date('2026-10-19T09:00:00Z'));
+    expect(r).toMatchObject({ status: 200, body: { run: run.id, runWithdrawal: 'proposed', withdrawn: { reason: 'No reason given (SensorThings DELETE)', run: run.id } } });
+    // Even with one-official withdrawal, a gateway only proposes: the facts stand until an official confirms.
+    const live = listRuns(source.id).find(x => x.id === run.id)!;
+    expect(live.withdrawn).toBeUndefined();
+    expect(live.withdrawalProposed).toMatchObject({ by: expect.stringMatching(/^Integration Grid gateway/) });
+    expect(stateAsOf({ metric: 'grid.load_mean', entityId: 'place:KE-28', asOf: '2026-10-18T12:00:00Z', knownAt: '2026-10-19T09:10:00Z' })).toHaveLength(1);
+    ok(confirmWithdrawal(run.id, 'Grid Officer', new Date('2026-10-19T09:30:00Z')));
+    expect(stateAsOf({ metric: 'grid.load_mean', entityId: 'place:KE-28', asOf: '2026-10-18T12:00:00Z', knownAt: '2026-10-19T09:35:00Z' })).toEqual([]);
+    // The next run does not count the withdrawn reading.
+    post('Observations', { Datastream: { '@iot.id': DS }, phenomenonTime: '2026-10-18T06:00:00Z', result: 140 }, gw.auth, new Date('2026-10-19T09:40:00Z'));
+    ok(await runSource(source.id, { by: 'scheduler', deps: { now: new Date('2026-10-19T10:00:00Z') } }));
+    expect(stateAsOf({ metric: 'grid.load_mean', entityId: 'place:KE-28', asOf: '2026-10-18T12:00:00Z', knownAt: '2026-10-19T10:05:00Z' })[0]).toMatchObject({ value: 140 });
+    expect(audits('twin.run.withdraw.propose').some(e => /withdrawn by its sender/.test(e.detail ?? ''))).toBe(true);
+    resetTwinPolicy();
+  });
+
+  it('refuses others: no key, another integration, the twin\'s own facts, other entities; PATCH is 405', () => {
+    const a = post('Observations', { Datastream: { '@iot.id': DS }, phenomenonTime: '2026-10-18T06:00:00Z', result: 1 }, gw.auth);
+    expect(del(idOf(a), 'x', null).status).toBe(401);
+    expect(del(idOf(a), 'x', integration().auth)).toMatchObject({ status: 403, body: { message: expect.stringMatching(/Only the integration bound/) } });
+    expect(del(idOf(a), 'x', integration(['ogc:read']).auth).status).toBe(403);
+    expect(del('place:KE-28~grid.load_mean~SRC-1~2026-10-18', 'x', gw.auth)).toMatchObject({ status: 405, body: { message: expect.stringMatching(/withdrawn by an official/) } });
+    expect(del(`${DS}~00000000-0000-4000-8000-000000000000`, 'x', gw.auth).status).toBe(404);
+    expect(staDelete([`Things('place:KE-28')`], 'x', gw.auth, NOW).status).toBe(405);
+    expect(STA_UPDATE_REFUSAL).toMatch(/correction sent as a new Observation/);
+    expect(readingsStatus('grid.load.mombasa')).toMatchObject({ readings: 1, withdrawn: 0 });
+  });
+
+  it('declares delete-entity and tasking, and explains what each class covers, in the service root', async () => {
+    const root = (await staRequest(B, [], new URLSearchParams(), { signedIn: false })).body as { serverSettings: { conformance: string[]; 'civicos:conformanceNotes': Record<string, string> } };
+    expect(root.serverSettings.conformance).toEqual(expect.arrayContaining([
+      'http://www.opengis.net/spec/iot_sensing/1.1/req/create-update-delete/delete-entity',
+      'http://www.opengis.net/spec/iot_tasking/1.0/req/tasking-core',
+    ]));
+    expect(root.serverSettings.conformance.some(c => /update-entity/.test(c))).toBe(false);
+    expect(root.serverSettings['civicos:conformanceNotes']['create-update-delete']).toMatch(/update-entity is not offered/);
   });
 });

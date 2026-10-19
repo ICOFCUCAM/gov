@@ -4,7 +4,8 @@
 // (lib/data/persist.ts), then readies the key provider (lib/keys/custody.ts),
 // then, only when a twin stream source names an MQTT broker of the nation's
 // own, starts its subscriber (lib/twin/mqtt.ts; the broker password opens with
-// the keys readied before).
+// the keys readied before), and, only with CIVICOS_STA_MQTT=on, the
+// SensorThings MQTT broker that machine readers subscribe to (lib/twin/sta-mqtt.ts).
 // The check is written this way so Next.js leaves the Node-only modules out
 // of its edge build.
 
@@ -29,5 +30,10 @@ export async function register() {
     const { startStreamSubscribersFromEnv } = await import('./lib/twin/mqtt');
     const mqtt = await startStreamSubscribersFromEnv().catch((e: Error) => ({ configured: -1, subscribers: [], error: e.message }));
     if (mqtt.configured) log('error' in mqtt ? 'error' : 'info', 'twin.mqtt.start', { configured: mqtt.configured, subscribers: mqtt.subscribers.length, ...('error' in mqtt ? { message: mqtt.error } : {}) });
+    // The SensorThings MQTT extension's broker (subscriptions for machine readers), only with CIVICOS_STA_MQTT=on.
+    if ((process.env.CIVICOS_STA_MQTT ?? '').toLowerCase() === 'on') {
+      const { startStaMqttFromEnv } = await import('./lib/twin/sta-mqtt');
+      await startStaMqttFromEnv().catch((e: Error) => log('error', 'twin.sta_mqtt.start', { message: e.message }));
+    }
   }
 }
