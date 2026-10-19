@@ -102,6 +102,8 @@ import { blueprintFor } from '@/lib/institution/blueprint';
 import { federationSeed } from '@/lib/institution/federation';
 import { regionList, applyNation, nationPaymentRail, nationRegions } from '@/lib/nation/registry';
 import { maybeSignHead, verifySignedHeads, type SignedHeadCheck } from '@/lib/audit/sign';
+import { noteAudit, advanceCursor } from '@/lib/events/outbox';
+import { seal, open as openSealed } from '@/lib/crypto/envelope';
 
 /** A new record id: the prefix and 10 hex digits from a CSPRNG (randomUUID). Ids made before (6 base-36 characters) stay valid: ids are only ever compared as strings. */
 function uid(prefix: string): string {
@@ -295,7 +297,9 @@ function seed() {
 
   // SHA-256 of each integration's API key, by client id (the key itself is shown once and never kept).
   const integrationKeys: Record<string, string> = {};
-  return { setup, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, integrationKeys, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
+  // Each webhook's HMAC signing secret, sealed under CIVICOS_DATA_KEK when set (lib/crypto/envelope.ts).
+  const webhookSecrets: Record<string, string> = {};
+  return { setup, permits, bills, receipts, notifications, audit, incidents, tenantSync, integrations, integrationKeys, webhookSecrets, grants, webhooks, releases, deployments, lifecycle, backups, configs, ministries, ministryQueues, ministryIncidents, sovereign, fabricStartedAt: now };
 }
 
 // Append a hash-chained audit row (tamper-evident, mirrors the backend).
@@ -312,6 +316,8 @@ function appendAudit(
   const base = { id: uid('AU'), at: new Date().toISOString(), actor, action, resource, outcome, detail, seq, prevHash };
   const entry: AuditEntry = { ...base, alg: 'sha256-v2', hash: auditHashV2(base) };
   db.audit.push(entry);
+  // The CloudEvent for this change, in the same step as its audit entry (lib/events/outbox.ts).
+  noteAudit(entry);
   // Every N entries or T minutes the head is signed (lib/audit/sign.ts).
   maybeSignHead(entry);
   return entry;
@@ -961,9 +967,7 @@ export function subscribeWebhook(input: {
   topic: string;
   url: string;
 }): WebhookCreated {
-  const secret = `whsec_${Math.random().toString(36).slice(2)}${Math.random()
-    .toString(36)
-    .slice(2)}`;
+  const secret = `whsec_${randomBytes(32).toString('base64url')}`;
   const sub: WebhookSubscription = {
     id: uid('WH'),
     topic: input.topic,
@@ -973,13 +977,47 @@ export function subscribeWebhook(input: {
     createdAt: new Date().toISOString(),
   };
   db.webhooks.unshift(sub);
-  appendAudit('operator', 'webhook.subscribe', `Webhook:${sub.id}`, 'ok', input.topic);
+  db.webhookSecrets[sub.id] = seal(secret, `webhook:${sub.id}`);
+  const head = appendAudit('operator', 'webhook.subscribe', `Webhook:${sub.id}`, 'ok', input.topic);
+  // A new subscriber receives events from now on, not the history.
+  advanceCursor(sub.id, head.seq);
   return {
     id: sub.id,
     topic: sub.topic,
     signingSecret: secret,
-    note: 'Store this secret now. Verify HMAC-SHA256 of `${timestamp}.${body}`; reject timestamps older than 300s.',
+    note: WEBHOOK_NOTE,
   };
+}
+
+const WEBHOOK_NOTE = 'Store this secret now: it is shown once. Deliveries are CloudEvents 1.0 (application/cloudevents+json); verify X-CivicOS-Signature = sha256=HMAC-SHA256(secret, `${X-CivicOS-Timestamp}.${body}`) and reject timestamps older than 300s.';
+
+/** The webhook's signing secret, or null when it has none the server can read (made before secrets were kept, or sealed under another key). */
+export function webhookSigningSecret(id: string): string | null {
+  const stored = db.webhookSecrets[id];
+  if (!stored) return null;
+  const r = openSealed(stored, `webhook:${id}`);
+  if ('error' in r) return null;
+  if (r.reseal) db.webhookSecrets[id] = seal(r.plain, `webhook:${id}`);
+  return r.plain;
+}
+
+/** A new signing secret for a webhook (shown once; the old one stops at once). Audited. */
+export function rotateWebhookSecret(id: string, by: string): WebhookCreated | { error: string } {
+  const w = db.webhooks.find(x => x.id === id);
+  if (!w) return { error: 'Subscription not found' };
+  const secret = `whsec_${randomBytes(32).toString('base64url')}`;
+  db.webhookSecrets[id] = seal(secret, `webhook:${id}`);
+  appendAudit(by, 'webhook.secret.rotate', `Webhook:${id}`, 'ok');
+  return { id, topic: w.topic, signingSecret: secret, note: WEBHOOK_NOTE };
+}
+
+/** Record a delivery run's result on the subscription (consecutive failures; reset on success). */
+export function noteWebhookDelivery(id: string, ok: boolean, detail: string, now = Date.now()): void {
+  const w = db.webhooks.find(x => x.id === id);
+  if (!w) return;
+  w.failures = ok ? 0 : (w.failures ?? 0) + 1;
+  w.lastDeliveryAt = new Date(now).toISOString();
+  w.lastDeliveryDetail = detail.slice(0, 200);
 }
 
 export function setWebhookStatus(

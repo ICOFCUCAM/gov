@@ -328,11 +328,14 @@ export function InteropConsole() {
           <Card tight>
             <h3 className="font-semibold">Subscribe to events</h3>
             <p className="mb-3 text-sm text-ink-muted">
-              Deliveries are HMAC-signed. Verify the signature and reject
-              timestamps older than 300s (replay protection).
+              Every audited change of note (a site or boundary published, a twin source run, a directive signed…) becomes a
+              CloudEvent 1.0, delivered as <code>application/cloudevents+json</code> to the subscriptions whose topic matches
+              (<code>facility</code>, <code>boundary.publish</code>, <code>directive.sign</code>, or <code>*</code>). Deliveries are HMAC-signed:
+              verify <code>X-CivicOS-Signature</code> over <code>{'${X-CivicOS-Timestamp}.${body}'}</code> and reject timestamps
+              older than 300s (replay protection). The event catalogue is in <code>docs/ASYNCAPI.yaml</code>.
             </p>
             <form onSubmit={subscribeHook}>
-              <TextField label="Topic" name="topic" required placeholder="civicos.permit.decided" />
+              <TextField label="Topic" name="topic" required placeholder="facility.publish" />
               <TextField label="URL" name="url" required placeholder="https://…/hooks" />
               <Button type="submit" disabled={busy}>Subscribe</Button>
             </form>
@@ -344,6 +347,7 @@ export function InteropConsole() {
                 <span className="font-mono text-xs text-ink-muted">{w.id}</span>
               </div>
               <div className="mt-1 text-sm text-ink-muted break-all">{w.url}</div>
+              {w.lastDeliveryAt ? <div className="mt-0.5 text-xs text-ink-muted">Last delivery {new Date(w.lastDeliveryAt).toLocaleString()}: {w.lastDeliveryDetail}{w.failures ? ` · ${w.failures} failed runs in a row` : ''}</div> : null}
               <div className="mt-2 flex items-center gap-2">
                 {w.status === 'active' ? (
                   <Pill tone="ok">Active</Pill>
@@ -355,6 +359,9 @@ export function InteropConsole() {
                     Pause
                   </Button>
                 ) : null}
+                <Button variant="secondary" onClick={async () => { const r = await api.interop.webhooks.rotate(w.id); setSecret({ label: 'New webhook signing secret', value: r.signingSecret }); await load(); }}>
+                  Issue new secret
+                </Button>
               </div>
             </Card>
           ))}

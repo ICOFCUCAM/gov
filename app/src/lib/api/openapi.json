@@ -39,6 +39,9 @@
       "name": "documents"
     },
     {
+      "name": "events"
+    },
+    {
       "name": "exchange"
     },
     {
@@ -1012,6 +1015,68 @@
           }
         },
         "x-source": "src/app/api/cron/audit-self/route.ts"
+      }
+    },
+    "/api/cron/deliver-cloudevents": {
+      "get": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "get_cron_deliver_cloudevents",
+        "summary": "GET /api/cron/deliver-cloudevents",
+        "description": "Delivers the platform's event outbox (lib/events/outbox.ts) to its webhook subscribers as CloudEvents 1.0, structured mode, HMAC-SHA256 signed (lib/events/deliver.ts). The substrate's own federation events keep their worker (/api/cron/deliver-events). Auth: CIVICOS_CRON_SECRET (Authorization: Bearer). Cadence: every 1–5 minutes.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/cron/deliver-cloudevents/route.ts"
+      },
+      "post": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "post_cron_deliver_cloudevents",
+        "summary": "POST /api/cron/deliver-cloudevents",
+        "description": "Delivers the platform's event outbox (lib/events/outbox.ts) to its webhook subscribers as CloudEvents 1.0, structured mode, HMAC-SHA256 signed (lib/events/deliver.ts). The substrate's own federation events keep their worker (/api/cron/deliver-events). Auth: CIVICOS_CRON_SECRET (Authorization: Bearer). Cadence: every 1–5 minutes.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/cron/deliver-cloudevents/route.ts"
       }
     },
     "/api/cron/deliver-events": {
@@ -2064,6 +2129,42 @@
           }
         },
         "x-source": "src/app/api/documents/verify/route.ts"
+      }
+    },
+    "/api/events": {
+      "get": {
+        "tags": [
+          "events"
+        ],
+        "operationId": "get_events",
+        "summary": "GET /api/events",
+        "description": "The platform's event outbox (lib/events/outbox.ts): the most recent CloudEvents and webhook delivery attempts, newest first. ?limit= (≤ 200).",
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/events/route.ts"
       }
     },
     "/api/exchange/key": {
@@ -11417,6 +11518,52 @@
           }
         },
         "x-source": "src/app/api/webhooks/[id]/pause/route.ts"
+      }
+    },
+    "/api/webhooks/{id}/rotate": {
+      "post": {
+        "tags": [
+          "webhooks"
+        ],
+        "operationId": "post_webhooks_id_rotate",
+        "summary": "POST /api/webhooks/{id}/rotate",
+        "description": "Issue a new HMAC signing secret for a webhook subscription: shown once, kept sealed (CIVICOS_DATA_KEK); the previous secret stops at once. Audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/webhooks/[id]/rotate/route.ts"
       }
     },
     "/api/webhooks": {

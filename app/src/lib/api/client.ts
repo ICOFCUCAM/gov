@@ -303,6 +303,8 @@ export const api = {
         }),
       pause: (id: string) =>
         req<{ webhook: WebhookSubscription }>(`/api/webhooks/${id}/pause`, { method: 'POST', body: '{}' }),
+      rotate: (id: string) =>
+        req<WebhookCreated>(`/api/webhooks/${id}/rotate`, { method: 'POST', body: '{}' }),
     },
   },
   platform: {

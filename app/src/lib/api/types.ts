@@ -326,6 +326,8 @@ export interface WebhookSubscription {
   status: WebhookStatus;
   failures: number;
   createdAt: ISODate;
+  lastDeliveryAt?: ISODate;
+  lastDeliveryDetail?: string;
 }
 
 export interface WebhookCreated {
