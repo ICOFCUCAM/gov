@@ -15,10 +15,12 @@ import type { Geom } from '@/lib/geo/admin1';
 import { loadDistricts, loadNationGeography } from '@/lib/map/geography';
 import { nationIso3 } from '@/lib/nation/registry';
 import { listEntities, stateAsOf, listSources } from './register';
+import { QUERYABLES_CONFORMANCE, QUERYABLES_REL, filterQs, matchesFilters, type PropertyFilter } from './ogc-queryables';
 
 export const CONFORMANCE = [
   'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
   'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson',
+  ...QUERYABLES_CONFORMANCE,
 ];
 export const COLLECTION = 'subdivisions';
 const CRS84 = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84';
@@ -106,6 +108,7 @@ export async function collectionInfo(base: string) {
     links: [
       { href: `${base}/collections/${COLLECTION}`, rel: 'self', type: 'application/json', title: 'This collection' },
       { href: `${base}/collections/${COLLECTION}/items`, rel: 'items', type: 'application/geo+json', title: 'Features' },
+      { href: `${base}/collections/${COLLECTION}/queryables`, rel: QUERYABLES_REL, type: 'application/schema+json', title: 'Queryables' },
     ],
   };
 }
@@ -141,19 +144,22 @@ async function features(datetime: string, level: 1 | 2) {
   return { units: g.units, make: (p: Unit) => featureOf(p, level, entityByCode, values) };
 }
 
-export async function items(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; level?: string | null }) {
+export async function items(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; level?: string | null; filters?: PropertyFilter }) {
   const limit = Math.min(MAX_LIMIT, Math.max(1, Number(q.limit) || 100));
   const offset = Math.max(0, Number(q.offset) || 0);
   const bbox = parseBbox(q.bbox ?? null);
   if (bbox && 'error' in bbox) return bbox;
   const datetime = parseDatetime(q.datetime ?? null);
   if (typeof datetime !== 'string') return datetime;
-  const level = parseLevel(q.level);
+  const { level: lv, ...filters } = q.filters ?? {};
+  const level = parseLevel(q.level ?? lv);
   if (typeof level !== 'number') return level;
   const { units, make } = await features(datetime, level);
-  const matched = bbox ? units.filter(p => p.geometry && intersects(bboxOf(p.geometry), bbox)) : units;
+  const matched = units
+    .filter(p => !bbox || (p.geometry && intersects(bboxOf(p.geometry), bbox)))
+    .filter(p => matchesFilters({ code: p.code, parent: p.parent }, filters));
   const page = matched.slice(offset, offset + limit);
-  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${q.level ? `&level=${encodeURIComponent(q.level)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}`;
+  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${(q.level ?? lv) ? `&level=${encodeURIComponent((q.level ?? lv)!)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}${filterQs(filters)}`;
   const href = `${base}/collections/${COLLECTION}/items`;
   return {
     type: 'FeatureCollection' as const,

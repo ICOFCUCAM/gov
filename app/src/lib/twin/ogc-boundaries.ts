@@ -10,6 +10,7 @@
 
 import { boundariesInForce } from '@/lib/data/boundaries';
 import type { ActiveBoundary } from '@/lib/map/boundary-active';
+import { QUERYABLES_REL, filterQs, matchesFilters, type PropertyFilter } from './ogc-queryables';
 import { DATETIME_AS_OF, MAX_LIMIT, bboxOf, intersects, pageLinks, parseBbox, parseDatetime } from './ogc';
 
 export const BOUNDARY_COLLECTION = 'boundaries';
@@ -28,6 +29,7 @@ export function boundariesInfo(base: string) {
     links: [
       { href: `${base}/collections/${BOUNDARY_COLLECTION}`, rel: 'self', type: 'application/json', title: 'This collection' },
       { href: `${base}/collections/${BOUNDARY_COLLECTION}/items`, rel: 'items', type: 'application/geo+json', title: 'Features' },
+      { href: `${base}/collections/${BOUNDARY_COLLECTION}/queryables`, rel: QUERYABLES_REL, type: 'application/schema+json', title: 'Queryables' },
     ],
   };
 }
@@ -44,20 +46,23 @@ function featuresOf(b: ActiveBoundary) {
   }));
 }
 
-export function boundaryItems(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; level?: string | null }) {
+export function boundaryItems(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; level?: string | null; filters?: PropertyFilter }) {
   const limit = Math.min(MAX_LIMIT, Math.max(1, Number(q.limit) || 100));
   const offset = Math.max(0, Number(q.offset) || 0);
   const bbox = parseBbox(q.bbox ?? null);
   if (bbox && 'error' in bbox) return bbox;
   const datetime = parseDatetime(q.datetime ?? null);
   if (typeof datetime !== 'string') return datetime;
+  const { level: lv, ...filters } = q.filters ?? {};
+  const level = q.level ?? lv;
   const all = boundariesInForce(new Date(datetime))
-    .filter(v => !q.level || String(v.level) === q.level)
+    .filter(v => !level || String(v.level) === level)
     .flatMap(v => (bbox ? { ...v, units: v.units.filter(u => intersects(bboxOf(u.geometry), bbox)) } : v))
-    .flatMap(featuresOf);
+    .flatMap(featuresOf)
+    .filter(f => matchesFilters(f.properties, filters));
   const page = all.slice(offset, offset + limit);
   const href = `${base}/collections/${BOUNDARY_COLLECTION}/items`;
-  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${q.level ? `&level=${encodeURIComponent(q.level)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}`;
+  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${level ? `&level=${encodeURIComponent(level)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}${filterQs(filters)}`;
   return {
     type: 'FeatureCollection' as const,
     features: page,

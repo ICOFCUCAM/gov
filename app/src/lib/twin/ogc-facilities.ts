@@ -8,6 +8,7 @@
 
 import { listFacilities, categoryOf, type Viewer } from '@/lib/data/facilities';
 import { getMinistry } from '@/lib/data/store';
+import { QUERYABLES_REL, filterQs, matchesFilters, type PropertyFilter } from './ogc-queryables';
 import { DATETIME_AS_OF, MAX_LIMIT, pageLinks, parseBbox, parseDatetime } from './ogc';
 
 export const FACILITY_COLLECTION = 'facilities';
@@ -26,6 +27,7 @@ export function facilitiesInfo(base: string) {
     links: [
       { href: `${base}/collections/${FACILITY_COLLECTION}`, rel: 'self', type: 'application/json', title: 'This collection' },
       { href: `${base}/collections/${FACILITY_COLLECTION}/items`, rel: 'items', type: 'application/geo+json', title: 'Features' },
+      { href: `${base}/collections/${FACILITY_COLLECTION}/queryables`, rel: QUERYABLES_REL, type: 'application/schema+json', title: 'Queryables' },
     ],
   };
 }
@@ -48,22 +50,26 @@ function featureOf(s: ReturnType<typeof listFacilities>[number]) {
   };
 }
 
-export function facilityItems(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; category?: string | null }, viewer: Viewer) {
+export function facilityItems(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; category?: string | null; filters?: PropertyFilter }, viewer: Viewer) {
   const limit = Math.min(MAX_LIMIT, Math.max(1, Number(q.limit) || 100));
   const offset = Math.max(0, Number(q.offset) || 0);
   const bbox = parseBbox(q.bbox ?? null);
   if (bbox && 'error' in bbox) return bbox;
   const datetime = parseDatetime(q.datetime ?? null);
   if (typeof datetime !== 'string') return datetime;
-  const all = listFacilities({ category: q.category ?? undefined }, viewer)
+  const { category: cat, ...filters } = q.filters ?? {};
+  const category = q.category ?? cat;
+  const all = listFacilities({ category: category ?? undefined }, viewer)
     .filter(s => !s.publishedAt || s.publishedAt <= datetime)
-    .filter(s => !bbox || (s.location.lng >= bbox[0] && s.location.lng <= bbox[2] && s.location.lat >= bbox[1] && s.location.lat <= bbox[3]));
+    .filter(s => !bbox || (s.location.lng >= bbox[0] && s.location.lng <= bbox[2] && s.location.lat >= bbox[1] && s.location.lat <= bbox[3]))
+    .map(featureOf)
+    .filter(f => matchesFilters(f.properties, filters));
   const page = all.slice(offset, offset + limit);
   const href = `${base}/collections/${FACILITY_COLLECTION}/items`;
-  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${q.category ? `&category=${encodeURIComponent(q.category)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}`;
+  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${category ? `&category=${encodeURIComponent(category)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}${filterQs(filters)}`;
   return {
     type: 'FeatureCollection' as const,
-    features: page.map(featureOf),
+    features: page,
     numberMatched: all.length,
     numberReturned: page.length,
     timeStamp: new Date().toISOString(),
