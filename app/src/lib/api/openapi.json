@@ -3782,7 +3782,7 @@
         ],
         "operationId": "get_org_ministries_id_facilities_feed",
         "summary": "GET /api/org/ministries/{id}/facilities/feed",
-        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites.",
+        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key.",
         "parameters": [
           {
             "name": "id",
@@ -3824,7 +3824,7 @@
         ],
         "operationId": "post_org_ministries_id_facilities_feed",
         "summary": "POST /api/org/ministries/{id}/facilities/feed",
-        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites.",
+        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key.",
         "parameters": [
           {
             "name": "id",
@@ -3915,6 +3915,144 @@
           }
         },
         "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/[feedId]/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/facilities/feeds/{feedId}/signing-key": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_facilities_feeds_feedId_signing_key",
+        "summary": "GET /api/org/ministries/{id}/facilities/feeds/{feedId}/signing-key",
+        "description": "The public key a connected site system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/[feedId]/signing-key/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_facilities_feeds_feedId_signing_key",
+        "summary": "POST /api/org/ministries/{id}/facilities/feeds/{feedId}/signing-key",
+        "description": "The public key a connected site system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/[feedId]/signing-key/route.ts"
+      },
+      "delete": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "delete_org_ministries_id_facilities_feeds_feedId_signing_key",
+        "summary": "DELETE /api/org/ministries/{id}/facilities/feeds/{feedId}/signing-key",
+        "description": "The public key a connected site system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/facilities/feeds/[feedId]/signing-key/route.ts"
       }
     },
     "/api/org/ministries/{id}/facilities/feeds": {
@@ -4612,7 +4750,7 @@
         ],
         "operationId": "get_org_ministries_id_queue_feed",
         "summary": "GET /api/org/ministries/{id}/queue/feed",
-        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited.",
+        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key.",
         "parameters": [
           {
             "name": "id",
@@ -4654,7 +4792,7 @@
         ],
         "operationId": "post_org_ministries_id_queue_feed",
         "summary": "POST /api/org/ministries/{id}/queue/feed",
-        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited.",
+        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key.",
         "parameters": [
           {
             "name": "id",
@@ -4745,6 +4883,144 @@
           }
         },
         "x-source": "src/app/api/org/ministries/[id]/queue/feeds/[feedId]/route.ts"
+      }
+    },
+    "/api/org/ministries/{id}/queue/feeds/{feedId}/signing-key": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_queue_feeds_feedId_signing_key",
+        "summary": "GET /api/org/ministries/{id}/queue/feeds/{feedId}/signing-key",
+        "description": "The public key a connected case system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feeds/[feedId]/signing-key/route.ts"
+      },
+      "post": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "post_org_ministries_id_queue_feeds_feedId_signing_key",
+        "summary": "POST /api/org/ministries/{id}/queue/feeds/{feedId}/signing-key",
+        "description": "The public key a connected case system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feeds/[feedId]/signing-key/route.ts"
+      },
+      "delete": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "delete_org_ministries_id_queue_feeds_feedId_signing_key",
+        "summary": "DELETE /api/org/ministries/{id}/queue/feeds/{feedId}/signing-key",
+        "description": "The public key a connected case system signs its requests with (RFC 9421, Ed25519). GET shows it (or none). POST { publicKey, keyId? } registers or replaces it: from then on, unsigned or badly signed requests from that system are refused. DELETE removes it (the bearer key alone works again). Officials who manage the institution's feeds only; audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "feedId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/queue/feeds/[feedId]/signing-key/route.ts"
       }
     },
     "/api/org/ministries/{id}/queue/feeds": {
