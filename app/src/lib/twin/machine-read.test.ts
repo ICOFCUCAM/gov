@@ -25,12 +25,14 @@ describe('machine read keys for GIS clients (scope ogc:read)', () => {
   beforeEach(() => resetRateLimits());
 
   it('the twin read services are bearer reads, so a request with a key reaches the route', () => {
-    for (const p of ['/api/twin/ogc', '/api/twin/ogc/collections/facilities/items', '/api/twin/sta/v1.1/Things', '/api/twin/tiles/facilities/3/4/2.mvt']) {
+    for (const p of ['/api/twin/ogc', '/api/twin/ogc/collections/facilities/items', '/api/twin/sta/v1.1/Things', '/api/twin/tiles/facilities/3/4/2.mvt', '/api/twin/tiles/boundaries/5/19/15.mvt', '/api/twin/tiles/boundaries']) {
       expect(BEARER_READS.some(re => re.test(p)), p).toBe(true);
       expect(verifiesOwnCredential(p), p).toBe(true);
     }
     // Writes to the twin are not opened by a key.
     expect(BEARER_READS.some(re => re.test('/api/twin/sources'))).toBe(false);
+    // An institution's own archive (restricted sites exact) is for its signed-in officials, never a key.
+    expect(verifiesOwnCredential('/api/org/ministries/min-x/facilities/tiles.pmtiles')).toBe(false);
   });
 
   it('answers an approved key with the ogc:read scope', async () => {

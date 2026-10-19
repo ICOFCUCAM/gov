@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { gzipSync } from 'node:zlib';
 import {
   Compression, HEADER_BYTES, PMTilesReader, ROOT_BYTES, TileType, bufferSource, deserializeDirectory, deserializeHeader, findEntry,
-  serializeDirectory, serializeHeader, tileIdToZxy, writeArchive, zxyToTileId, httpSource, ArchiveChanged, type Entry, type Header,
+  serializeDirectory, serializeHeader, tileIdToZxy, writeArchive, zxyToTileId, httpSource, ArchiveChanged, ArchiveBuilder, type Entry, type Header,
 } from './pmtiles';
 import { encodeTile, decodeTile } from './mvt';
 
@@ -114,6 +114,33 @@ describe('PMTiles archives', () => {
     const r = new PMTilesReader(bufferSource(archive));
     for (const [x, y] of [[0, 0], [127, 127], [64, 3], [5, 99]] as const) expect([...(await r.tile(7, x, y))!]).toEqual([x, y, 7, (x * y) % 251]);
   });
+
+  it('writes tile by tile (ArchiveBuilder): the same archive as writeArchive, and a million-tile directory in leaves', async () => {
+    const opts = { tileType: TileType.Unknown, tileCompression: Compression.None, internalCompression: Compression.Gzip, compress: gzip, metadata: { n: 1 }, bounds: [-180, -85, 180, 85] as [number, number, number, number] };
+    const small: { z: number; x: number; y: number; data: Uint8Array }[] = [];
+    for (let x = 0; x < 8; x++) for (let y = 0; y < 8; y++) small.push({ z: 3, x, y, data: new Uint8Array([x % 3, y % 2]) });
+    const b = new ArchiveBuilder(opts), parts: Uint8Array[] = [];
+    for (const t of small.map(t => ({ id: zxyToTileId(t.z, t.x, t.y), data: t.data })).sort((p, q) => p.id - q.id)) { const o = b.add(t.id, t.data); if (o) parts.push(o); }
+    const streamed = new Uint8Array(Buffer.concat([b.finish(), ...parts]));
+    expect(streamed).toEqual(writeArchive(small, opts));
+    expect(() => b.add(0, new Uint8Array([1]))).toThrow(/order|twice/);
+
+    // 1,000,000 distinct tiles, identical ones found by digest (nothing kept but the directory)
+    const big = new ArchiveBuilder({ ...opts, digest: d => Buffer.from(d).toString('base64') });
+    const first = zxyToTileId(10, 0, 0);
+    let data = 0;
+    for (let i = 0; i < 1_000_000; i++) {
+      const o = big.add(first + i, new Uint8Array([i & 255, (i >> 8) & 255, (i >> 16) & 255, i % 7 === 0 ? 0 : 1]));
+      if (o) data += o.length;
+    }
+    expect(big.addressed).toBe(1_000_000);
+    expect(big.dataLength).toBe(data);
+    const prefix = big.finish();
+    const h = deserializeHeader(prefix);
+    expect(h).toMatchObject({ numAddressedTiles: 1_000_000, tileDataLength: data, tileDataOffset: prefix.length });
+    expect(h.leafDirectoryLength).toBeGreaterThan(0);
+    expect(h.rootDirectoryOffset + h.rootDirectoryLength).toBeLessThanOrEqual(ROOT_BYTES);
+  }, 60_000);
 
   it('reads over HTTP ranges and notices a rebuilt archive', async () => {
     const a = writeArchive([{ z: 0, x: 0, y: 0, data: tileAt(0, 0, 0) }], { tileType: TileType.Mvt, tileCompression: Compression.None, internalCompression: Compression.None, compress: b => b, metadata: {}, bounds: [-1, -1, 1, 1] });

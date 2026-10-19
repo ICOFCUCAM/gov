@@ -1,9 +1,10 @@
 // Mapbox Vector Tiles (MVT 2.1) written and read in plain JavaScript: a
 // minimal Protocol Buffers encoder and decoder for the vector_tile.proto
 // messages (Tile, Layer, Feature, Value), and Web Mercator tile arithmetic.
-// Enough for point layers served by the platform itself (no tile server, no
-// outside service, no dependency): MapLibre, OpenLayers, QGIS and GDAL read
-// the result.
+// Point layers (the facility register) and polygon and line layers (the
+// nation's boundaries, lib/twin/boundary-tiles.ts) served by the platform
+// itself (no tile server, no outside service, no dependency): MapLibre,
+// OpenLayers, QGIS and GDAL read the result.
 //
 //   Tile    { repeated Layer layers = 3; }
 //   Layer   { required uint32 version = 15; required string name = 1;
@@ -16,7 +17,14 @@
 export const EXTENT = 4096;
 export type Prop = string | number | boolean;
 export interface TilePoint { id?: number; x: number; y: number; properties: Record<string, Prop | undefined> }
-export interface TileLayer { name: string; extent?: number; points: TilePoint[] }
+/**
+ * A polygon or line in tile coordinates. Polygon rings: each exterior ring
+ * followed by its holes (exterior with positive area in tile coordinates,
+ * y down, holes negative, as MVT 2.1 §4.3.4.4 requires; encodeTile does not
+ * reorient), not repeating the first point at the end.
+ */
+export interface TileShape { id?: number; type: 'polygon' | 'line'; rings: [number, number][][]; properties: Record<string, Prop | undefined> }
+export interface TileLayer { name: string; extent?: number; points: TilePoint[]; shapes?: TileShape[] }
 
 // ── Protocol Buffers ──────────────────────────────────────────────────────
 
@@ -64,20 +72,49 @@ function encodeLayer(l: TileLayer): Uint8Array {
   const w = new Writer();
   w.tag(15, 0).varint(2);
   w.string(1, l.name);
-  for (const p of l.points) {
+  const tagsOf = (props: Record<string, Prop | undefined>) => {
     const tags: number[] = [];
-    for (const [k, v] of Object.entries(p.properties)) {
+    for (const [k, v] of Object.entries(props)) {
       if (v === undefined) continue;
       let ki = keyIx.get(k); if (ki === undefined) { ki = keys.push(k) - 1; keyIx.set(k, ki); }
       const vk = `${typeof v}:${String(v)}`;
       let vi = valIx.get(vk); if (vi === undefined) { vi = values.push(v) - 1; valIx.set(vk, vi); }
       tags.push(ki, vi);
     }
+    return tags;
+  };
+  for (const p of l.points) {
+    const tags = tagsOf(p.properties);
     const f = new Writer();
     if (p.id != null && Number.isInteger(p.id) && p.id >= 0) f.tag(1, 0).varint(p.id);
     if (tags.length) f.packed(2, tags);
     f.tag(3, 0).varint(1); // POINT
     f.packed(4, [command(1, 1), zigzag(Math.round(p.x)), zigzag(Math.round(p.y))]);
+    w.bytes(2, f.finish());
+  }
+  for (const sh of l.shapes ?? []) {
+    const polygon = sh.type === 'polygon';
+    const geom: number[] = [];
+    let cx = 0, cy = 0;
+    for (const ring of sh.rings) {
+      if (ring.length < (polygon ? 3 : 2)) continue;
+      const [x0, y0] = ring[0]!;
+      geom.push(command(1, 1), zigzag(Math.round(x0) - cx), zigzag(Math.round(y0) - cy));
+      cx = Math.round(x0); cy = Math.round(y0);
+      geom.push(command(2, ring.length - 1));
+      for (let i = 1; i < ring.length; i++) {
+        const x = Math.round(ring[i]![0]), y = Math.round(ring[i]![1]);
+        geom.push(zigzag(x - cx), zigzag(y - cy)); cx = x; cy = y;
+      }
+      if (polygon) geom.push(command(7, 1));
+    }
+    if (!geom.length) continue;
+    const tags = tagsOf(sh.properties);
+    const f = new Writer();
+    if (sh.id != null && Number.isInteger(sh.id) && sh.id >= 0) f.tag(1, 0).varint(sh.id);
+    if (tags.length) f.packed(2, tags);
+    f.tag(3, 0).varint(polygon ? 3 : 2); // POLYGON or LINESTRING
+    f.packed(4, geom);
     w.bytes(2, f.finish());
   }
   for (const k of keys) w.string(3, k);
@@ -86,10 +123,10 @@ function encodeLayer(l: TileLayer): Uint8Array {
   return w.finish();
 }
 
-/** A vector tile of point layers. An empty layer list gives an empty (valid) tile. */
+/** A vector tile of point, polygon and line layers. Empty layers are left out; no layers gives an empty (valid) tile. */
 export function encodeTile(layers: TileLayer[]): Uint8Array {
   const w = new Writer();
-  for (const l of layers) if (l.points.length) w.bytes(3, encodeLayer(l));
+  for (const l of layers) if (l.points.length || l.shapes?.length) w.bytes(3, encodeLayer(l));
   return w.finish();
 }
 
@@ -107,7 +144,8 @@ class Reader {
 }
 const packed = (b: Uint8Array) => { const r = new Reader(b), out: number[] = []; while (!r.done) out.push(r.varint()); return out; };
 
-export interface DecodedFeature { id?: number; type: number; geometry: [number, number][]; properties: Record<string, Prop> }
+/** A decoded feature: `geometry` lists every vertex; polygons and lines also give them by part (`rings`, split at each MoveTo). */
+export interface DecodedFeature { id?: number; type: number; geometry: [number, number][]; rings?: [number, number][][]; properties: Record<string, Prop> }
 export interface DecodedLayer { version: number; name: string; extent: number; features: DecodedFeature[] }
 
 export function decodeTile(bytes: Uint8Array): DecodedLayer[] {
@@ -143,14 +181,15 @@ function decodeLayer(b: Uint8Array): DecodedLayer {
   for (const f of raw) {
     const properties: Record<string, Prop> = {};
     for (let i = 0; i + 1 < f.tags.length; i += 2) properties[keys[f.tags[i]!]!] = values[f.tags[i + 1]!]!;
-    const geometry: [number, number][] = [];
+    const geometry: [number, number][] = [], rings: [number, number][][] = [];
     let x = 0, y = 0, i = 0;
     while (i < f.geom.length) {
       const c = f.geom[i++]!, id = c & 7, n = c >> 3;
       if (id === 7) continue;
-      for (let k = 0; k < n; k++) { x += unzigzag(f.geom[i++]!); y += unzigzag(f.geom[i++]!); geometry.push([x, y]); }
+      if (id === 1) rings.push([]);
+      for (let k = 0; k < n; k++) { x += unzigzag(f.geom[i++]!); y += unzigzag(f.geom[i++]!); geometry.push([x, y]); rings[rings.length - 1]?.push([x, y]); }
     }
-    l.features.push({ ...(f.id != null ? { id: f.id } : {}), type: f.type, geometry, properties });
+    l.features.push({ ...(f.id != null ? { id: f.id } : {}), type: f.type, geometry, ...(f.type === 2 || f.type === 3 ? { rings } : {}), properties });
   }
   return l;
 }

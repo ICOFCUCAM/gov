@@ -204,6 +204,9 @@ export function landing(base: string, nationName?: string) {
       { href: new URL('/api/openapi', base).href, rel: 'service-desc', type: 'application/vnd.oai.openapi+json;version=3.1', title: 'API definition' },
       { href: `${base}/conformance`, rel: 'conformance', type: 'application/json', title: 'Conformance' },
       { href: `${base}/collections`, rel: 'data', type: 'application/json', title: 'Collections' },
+      // Vector tiles of the same data (TileJSON 3.0.0; MVT tiles behind the same session or key).
+      { href: new URL('/api/twin/tiles/boundaries', base).href, rel: 'related', type: 'application/json', title: 'Boundary vector tiles (TileJSON): regions, districts and disputed territory in force' },
+      { href: new URL('/api/twin/tiles/facilities', base).href, rel: 'related', type: 'application/json', title: 'Facility register vector tiles (TileJSON)' },
     ],
   };
 }

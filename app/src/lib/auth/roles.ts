@@ -89,10 +89,12 @@ export const BEARER_READS: RegExp[] = [
   /^\/api\/integrations\/verify$/,           // an integration key, compared by its hash in constant time
   // GIS clients (QGIS, ArcGIS, GDAL) reading the twin with an integration key of scope ogc:read, or an
   // access token issued for it (POST /api/oauth/token): OGC API – Features, SensorThings and vector
-  // tiles (machineReadRefusal() in each route, lib/twin/machine-read.ts). The PMTiles archive is not
-  // among them: it is open to everyone (a public read in the middleware).
+  // tiles of the facility register and of the nation's boundaries (machineReadRefusal() in each route,
+  // lib/twin/machine-read.ts). The public PMTiles archive is not among them: it is open to everyone (a
+  // public read in the middleware); an institution's own archive is for its signed-in officials only.
   /^\/api\/twin\/(ogc|sta)(\/|$)/,
   /^\/api\/twin\/tiles\/facilities(\/|$)/,
+  /^\/api\/twin\/tiles\/boundaries(\/|$)/,
 ];
 /** True when the route checks the caller's own credential (bearer, agent or feed key). */
 export const verifiesOwnCredential = (pathname: string): boolean =>
@@ -190,6 +192,16 @@ export function ministryPermission(s: Scope, ministryId: string): string | null 
   if (roleOf(s) === 'auditor') return 'Auditors can read records but not change them';
   if (wholeGovernment(s) || s.institution === ministryId) return null;
   return 'You can act only for your own institution';
+}
+
+/**
+ * Downloading an institution's own site archive (restricted sites at their
+ * exact position, lib/twin/tiles-archive.ts institutionArchive()): its own
+ * officials of every role, auditors included, and the whole government.
+ */
+export function canDownloadSiteArchive(s: Scope, ministryId: string): string | null {
+  if (wholeGovernment(s) || s.institution === ministryId) return null;
+  return 'Only officials of this institution (or of the whole government) may download its site archive';
 }
 
 /** Connecting or disconnecting a ministry's case system issues a machine key: administrators, or those who can sign for that ministry. */

@@ -320,13 +320,36 @@ layouts. The fix is one shared map engine grown from it.
   built from what a visitor who is not signed in sees (restricted sites at
   the `viewFacility()` generalised position), rebuilt after publication
   changes (audit hook, 5 s debounce, SHA-256 fingerprint), kept as a file
-  beside the platform state and served with range requests at
-  `/api/twin/tiles/facilities.pmtiles` (public). The public "find us"
+  in the platform's data directory (`CIVICOS_TILES_DIR`, else
+  `<state dir>/tiles` when the platform keeps its state; in memory only
+  without a writable directory) and served with range requests at
+  `/api/twin/tiles/facilities.pmtiles` (public). Built for 10⁶ sites
+  without one buffer: tiles are made zoom by zoom in tile id order and
+  spooled to a file (`ArchiveBuilder`, directory in typed arrays), the
+  header, directories and spooled data written to a temporary file (SHA-256
+  ETag while writing) and renamed into place; a request reads only the
+  bytes it asks for from an open handle of its build. An institution's
+  officials download their own archive at
+  `/api/org/ministries/{id}/facilities/tiles.pmtiles` (restricted sites
+  exact for them, generalised for anyone without need; signed in only,
+  `canDownloadSiteArchive()`, audited). The public "find us"
   locator reads the rest of an institution's sites from it when the page
   carries only the first 150 and the visitor searches or asks for all
   (`apps/_shared/public/locator-archive.ts`, loaded on demand); an
   air-gapped installation can copy the one file to its own web server and
   point the same reader at it.
+  Boundary tiles (`lib/twin/boundary-tiles.ts`): the nation's regions and
+  districts in force (read through `loadNationGeography()` /
+  `loadDistricts()`) and disputed territory near it as MVT polygon layers
+  `regions`, `districts` (from zoom 5) and `disputed` at
+  `/api/twin/tiles/boundaries/{z}/{x}/{y}.mvt` (zoom 0–14, TileJSON at
+  `/api/twin/tiles/boundaries`), behind the session or an `ogc:read` key
+  like the facility tiles. Disputed areas carry `disputed: true` unless
+  the nation chose a worldview in setup (then `shownAs` names the country
+  that view gives it to), drawn above the regions as `DisputedLayer` does.
+  Cut tiles are cached per boundary version in force; a new version (or
+  its date reached), installed districts or a changed worldview drop the
+  cache and change every ETag. Parcel tiles wait for a cadastre register.
   In the console: the facility register map (`/gov/sites`) reads tiles above
   20,000 published sites (the table then shows 500 rows at a time and the
   selected site is ringed on the map); the Situation Room theatre reads them

@@ -46,6 +46,10 @@ describe('access gate (CIVICOS_AUTH=enforce)', () => {
     expect((await call('/api/twin/tiles/facilities/6/38/32.mvt')).status).toBe(401);
     expect((await call('/api/twin/tiles/facilities')).status).toBe(401);
     expect((await call('/api/twin/tiles/facilities.pmtiles.json')).status).toBe(401);
+    // the boundary tiles and an institution's own archive stay behind sign-in
+    expect((await call('/api/twin/tiles/boundaries/5/19/15.mvt')).status).toBe(401);
+    expect((await call('/api/twin/tiles/boundaries')).status).toBe(401);
+    expect((await call('/api/org/ministries/min-x/facilities/tiles.pmtiles')).status).toBe(401);
   });
 
   it('does not take the page cookie (the cover\'s demo session) as a verified official for reads', async () => {

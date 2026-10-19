@@ -206,58 +206,116 @@ function same(a: Uint8Array, b: Uint8Array): boolean {
  */
 export function writeArchive(tiles: readonly { z: number; x: number; y: number; data: Uint8Array }[], o: WriteOptions): Uint8Array {
   const sorted = tiles.map(t => ({ id: zxyToTileId(t.z, t.x, t.y), data: t.data })).sort((a, b) => a.id - b.id);
-  const entries: Entry[] = [];
+  const b = new ArchiveBuilder(o);
   const chunks: Uint8Array[] = [];
-  const seen = new Map<string, { offset: number; data: Uint8Array }[]>();
-  let dataLength = 0, contents = 0;
-  let prev: Uint8Array | null = null;
-  for (const t of sorted) {
-    const last = entries[entries.length - 1];
-    if (last && t.id < last.tileId + last.runLength) throw new Error('a tile appears twice');
+  for (const t of sorted) { const out = b.add(t.id, t.data); if (out) chunks.push(out); }
+  return concat([b.finish(), ...chunks]);
+}
+
+/** Directory entries in typed arrays: a national archive addresses millions of tiles. */
+class EntryList {
+  n = 0;
+  private ids = new Float64Array(1024); private offs = new Float64Array(1024);
+  private lens = new Uint32Array(1024); private runs = new Uint32Array(1024);
+  push(tileId: number, offset: number, length: number, runLength: number): void {
+    if (this.n === this.ids.length) {
+      const grow = <T extends Float64Array | Uint32Array>(a: T): T => { const b = new (a.constructor as new (n: number) => T)(a.length * 2); b.set(a); return b; };
+      this.ids = grow(this.ids); this.offs = grow(this.offs); this.lens = grow(this.lens); this.runs = grow(this.runs);
+    }
+    const i = this.n++;
+    this.ids[i] = tileId; this.offs[i] = offset; this.lens[i] = length; this.runs[i] = runLength;
+  }
+  tileId(i: number): number { return this.ids[i]!; }
+  runLength(i: number): number { return this.runs[i]!; }
+  extendRun(): void { this.runs[this.n - 1]!++; }
+  slice(from: number, to: number): Entry[] {
+    const out: Entry[] = [];
+    for (let i = from; i < Math.min(to, this.n); i++) out.push({ tileId: this.ids[i]!, offset: this.offs[i]!, length: this.lens[i]!, runLength: this.runs[i]! });
+    return out;
+  }
+}
+
+/** Entries above which the root alone cannot fit in 16 KiB, so leaves are made straight away. */
+const ROOT_TRY_MAX = 50_000;
+
+/**
+ * An archive written tile by tile, for archives too large to hold as one
+ * buffer: add() each tile in increasing tile id order (zoom by zoom, each zoom
+ * in Hilbert order) and append what it returns to the tile data (a file);
+ * finish() gives everything that goes before the tile data (header, root
+ * directory, metadata, leaf directories). The archive is finish() followed
+ * by the tile data. Only the directory (in typed arrays) and, to find
+ * identical tiles, a digest per stored tile (`digest`; without one, the
+ * stored bytes themselves) are kept in memory.
+ */
+export class ArchiveBuilder {
+  private entries = new EntryList();
+  private seen = new Map<string, { offset: number; data?: Uint8Array }[]>();
+  private prev: { data?: Uint8Array; key: string } | null = null;
+  private minId = -1; private maxId = -1;
+  dataLength = 0; contents = 0; addressed = 0;
+  constructor(private o: WriteOptions & { digest?: (b: Uint8Array) => string }) {}
+
+  /** The next tile (tile ids strictly increasing): the bytes to append to the tile data, or null when it is stored already. */
+  add(id: number, data: Uint8Array): Uint8Array | null {
+    const e = this.entries, n = e.n;
+    if (n && id < e.tileId(n - 1) + e.runLength(n - 1)) throw new Error(id >= e.tileId(n - 1) ? 'a tile appears twice' : 'tiles must be added in tile id order');
+    if (this.minId < 0) this.minId = id;
+    this.maxId = id; this.addressed++;
+    const key = this.o.digest ? this.o.digest(data) : hashBytes(data);
+    const equal = (d: { data?: Uint8Array }) => (this.o.digest ? true : same(d.data!, data));
     // The next tile id with the same bytes as the last: extend that entry's run.
-    if (last && prev && t.id === last.tileId + last.runLength && same(prev, t.data)) { last.runLength++; continue; }
-    prev = t.data;
-    const k = hashBytes(t.data);
-    const hit = seen.get(k)?.find(s => same(s.data, t.data));
-    if (hit) { entries.push({ tileId: t.id, offset: hit.offset, length: t.data.length, runLength: 1 }); continue; }
-    entries.push({ tileId: t.id, offset: dataLength, length: t.data.length, runLength: 1 });
-    const list = seen.get(k) ?? []; list.push({ offset: dataLength, data: t.data }); seen.set(k, list);
-    chunks.push(t.data); dataLength += t.data.length; contents++;
+    if (n && this.prev && id === e.tileId(n - 1) + e.runLength(n - 1) && this.prev.key === key && equal(this.prev)) { e.extendRun(); return null; }
+    this.prev = { key, ...(this.o.digest ? {} : { data }) };
+    const hit = this.seen.get(key)?.find(equal);
+    if (hit) { e.push(id, hit.offset, data.length, 1); return null; }
+    e.push(id, this.dataLength, data.length, 1);
+    const list = this.seen.get(key) ?? [];
+    list.push({ offset: this.dataLength, ...(this.o.digest ? {} : { data }) });
+    this.seen.set(key, list);
+    this.dataLength += data.length; this.contents++;
+    return data;
   }
 
-  // Directories: everything in the root when it fits, else leaves (doubling until the root fits).
-  let root = o.compress(serializeDirectory(entries));
-  let leaves = new Uint8Array(0);
-  if (HEADER_BYTES + root.length > ROOT_BYTES) {
-    for (let size = o.leafSize ?? 4096; ; size *= 2) {
-      const rootEntries: Entry[] = [], parts: Uint8Array[] = [];
-      let off = 0;
-      for (let i = 0; i < entries.length; i += size) {
-        const leaf = o.compress(serializeDirectory(entries.slice(i, i + size)));
-        rootEntries.push({ tileId: entries[i]!.tileId, offset: off, length: leaf.length, runLength: 0 });
-        parts.push(leaf); off += leaf.length;
+  addZxy(z: number, x: number, y: number, data: Uint8Array): Uint8Array | null { return this.add(zxyToTileId(z, x, y), data); }
+
+  /** Header, root directory, metadata and leaf directories: everything that goes before the tile data. */
+  finish(): Uint8Array {
+    const o = this.o, entries = this.entries, total = entries.n;
+    // Directories: everything in the root when it fits, else leaves (doubling until the root fits).
+    let root = total <= ROOT_TRY_MAX ? o.compress(serializeDirectory(entries.slice(0, total))) : null;
+    let leaves = new Uint8Array(0);
+    if (!root || HEADER_BYTES + root.length > ROOT_BYTES) {
+      for (let size = o.leafSize ?? 4096; ; size *= 2) {
+        const rootEntries: Entry[] = [], parts: Uint8Array[] = [];
+        let off = 0;
+        for (let i = 0; i < total; i += size) {
+          const leaf = o.compress(serializeDirectory(entries.slice(i, i + size)));
+          rootEntries.push({ tileId: entries.tileId(i), offset: off, length: leaf.length, runLength: 0 });
+          parts.push(leaf); off += leaf.length;
+        }
+        root = o.compress(serializeDirectory(rootEntries));
+        if (HEADER_BYTES + root.length <= ROOT_BYTES) { leaves = concat(parts); break; }
+        if (size > total) throw new Error('the root directory does not fit');
       }
-      root = o.compress(serializeDirectory(rootEntries));
-      if (HEADER_BYTES + root.length <= ROOT_BYTES) { leaves = concat(parts); break; }
-      if (size > entries.length) throw new Error('the root directory does not fit');
     }
+    const meta = o.compress(new TextEncoder().encode(JSON.stringify(o.metadata)));
+    const minZoom = o.minZoom ?? (this.minId >= 0 ? tileIdToZxy(this.minId)[0] : 0);
+    const maxZoom = o.maxZoom ?? (this.maxId >= 0 ? tileIdToZxy(this.maxId)[0] : 0);
+    const [minLon, minLat, maxLon, maxLat] = o.bounds;
+    const center = o.center ?? [(minLon + maxLon) / 2, (minLat + maxLat) / 2, minZoom];
+    const header: Header = {
+      specVersion: VERSION,
+      rootDirectoryOffset: HEADER_BYTES, rootDirectoryLength: root.length,
+      jsonMetadataOffset: HEADER_BYTES + root.length, jsonMetadataLength: meta.length,
+      leafDirectoryOffset: HEADER_BYTES + root.length + meta.length, leafDirectoryLength: leaves.length,
+      tileDataOffset: HEADER_BYTES + root.length + meta.length + leaves.length, tileDataLength: this.dataLength,
+      numAddressedTiles: this.addressed, numTileEntries: total, numTileContents: this.contents,
+      clustered: true, internalCompression: o.internalCompression, tileCompression: o.tileCompression, tileType: o.tileType,
+      minZoom, maxZoom, minLon, minLat, maxLon, maxLat, centerZoom: Math.round(center[2]), centerLon: center[0], centerLat: center[1],
+    };
+    return concat([serializeHeader(header), root, meta, leaves]);
   }
-  const meta = o.compress(new TextEncoder().encode(JSON.stringify(o.metadata)));
-  const minZoom = o.minZoom ?? (sorted.length ? tileIdToZxy(sorted[0]!.id)[0] : 0);
-  const maxZoom = o.maxZoom ?? (sorted.length ? tileIdToZxy(sorted[sorted.length - 1]!.id)[0] : 0);
-  const [minLon, minLat, maxLon, maxLat] = o.bounds;
-  const center = o.center ?? [(minLon + maxLon) / 2, (minLat + maxLat) / 2, minZoom];
-  const header: Header = {
-    specVersion: VERSION,
-    rootDirectoryOffset: HEADER_BYTES, rootDirectoryLength: root.length,
-    jsonMetadataOffset: HEADER_BYTES + root.length, jsonMetadataLength: meta.length,
-    leafDirectoryOffset: HEADER_BYTES + root.length + meta.length, leafDirectoryLength: leaves.length,
-    tileDataOffset: HEADER_BYTES + root.length + meta.length + leaves.length, tileDataLength: dataLength,
-    numAddressedTiles: sorted.length, numTileEntries: entries.length, numTileContents: contents,
-    clustered: true, internalCompression: o.internalCompression, tileCompression: o.tileCompression, tileType: o.tileType,
-    minZoom, maxZoom, minLon, minLat, maxLon, maxLat, centerZoom: Math.round(center[2]), centerLon: center[0], centerLat: center[1],
-  };
-  return concat([serializeHeader(header), root, meta, leaves, ...chunks]);
 }
 
 function concat(parts: readonly Uint8Array[]): Uint8Array {

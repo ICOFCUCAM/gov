@@ -15794,6 +15794,54 @@
         "x-source": "src/app/api/org/ministries/[id]/facilities/route.ts"
       }
     },
+    "/api/org/ministries/{id}/facilities/tiles.pmtiles": {
+      "get": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "get_org_ministries_id_facilities_tiles_pmtiles",
+        "summary": "GET /api/org/ministries/{id}/facilities/tiles.pmtiles",
+        "description": "An institution's own sites as one PMTiles v3 archive (vector layer \"facilities\", the same zoom range and fields as the public archive) for its officials: its published sites as the official may see them through viewFacility() — restricted sites at their exact position for the institution's own officials and the whole government; confidential categories are never in the register. Signed-in only (401 without a session; an integration key does not open it), checked with canDownloadSiteArchive() (lib/auth/roles.ts) through refusal(), so officials of another institution are refused (403). Read with HTTP range requests like the public archive (206, If-Range, ETag per build; lib/twin/tiles-archive.ts institutionArchive()), built again whenever the sites it shows change. Every download is audited (`tiles.archive.download`, the official, the institution, the build and how many sites): a whole-file GET, or a reader's first range (the one that starts at byte 0); the later ranges of the same reading are not.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/org/ministries/[id]/facilities/tiles.pmtiles/route.ts"
+      }
+    },
     "/api/org/ministries/{id}/field": {
       "get": {
         "tags": [
@@ -40343,6 +40391,425 @@
         "x-source": "src/app/api/twin/state/route.ts"
       }
     },
+    "/api/twin/tiles/boundaries/{z}/{x}/{y}": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tiles_boundaries_z_x_y",
+        "summary": "GET /api/twin/tiles/boundaries/{z}/{x}/{y}",
+        "description": "One Mapbox Vector Tile (MVT 2.1) of the nation's boundaries: polygon layers \"regions\" (official subdivisions), \"districts\" (from zoom 5) and \"disputed\" (disputed territory near the nation, marked disputed unless the nation chose a point of view in setup; never assigned to a side by the platform). Shapes are the boundary versions in force, read as every map reads them (loadNationGeography() / loadDistricts(), lib/twin/boundary-tiles.ts). The ETag changes when another boundary version comes into force, so a client revalidating with If-None-Match gets 304 until then. Zoom 0–14; y may end in .mvt or .pbf. Behind the official's session, or a GIS client's integration key or access token of scope ogc:read.",
+        "parameters": [
+          {
+            "name": "z",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "y",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          },
+          {
+            "integrationToken": [
+              "ogc:read"
+            ]
+          },
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/twin/tiles/boundaries/[z]/[x]/[y]/route.ts"
+      }
+    },
+    "/api/twin/tiles/boundaries": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tiles_boundaries",
+        "summary": "GET /api/twin/tiles/boundaries",
+        "description": "TileJSON 3.0.0 for the nation's boundary vector tiles: the tile address template (/api/twin/tiles/boundaries/{z}/{x}/{y}.mvt), zoom range, bounds, the boundary version in force for each level, the worldview disputed territory is drawn by, the credit and the layers' fields (lib/twin/boundary-tiles.ts).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "tilejson": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "version": {
+                      "type": "string"
+                    },
+                    "scheme": {
+                      "type": "string"
+                    },
+                    "tiles": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "minzoom": {
+                      "type": "number"
+                    },
+                    "maxzoom": {
+                      "type": "number"
+                    },
+                    "bounds": {
+                      "$ref": "#/components/schemas/BBox"
+                    },
+                    "center": {
+                      "type": "array",
+                      "items": {
+                        "type": "number"
+                      }
+                    },
+                    "attribution": {
+                      "type": "string"
+                    },
+                    "boundaryVersion": {
+                      "type": "object",
+                      "properties": {
+                        "regions": {
+                          "type": "string"
+                        },
+                        "districts": {
+                          "type": "string"
+                        },
+                        "key": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "key"
+                      ]
+                    },
+                    "worldview": {
+                      "type": "string"
+                    },
+                    "vector_layers": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "const": "disputed"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "minzoom": {
+                                "type": "number"
+                              },
+                              "maxzoom": {
+                                "type": "number"
+                              },
+                              "fields": {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "const": "Disputed area id (Natural Earth)"
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "const": "Name"
+                                  },
+                                  "note": {
+                                    "type": "string",
+                                    "const": "Who administers it and who claims it"
+                                  },
+                                  "disputed": {
+                                    "type": "string",
+                                    "const": "true unless the nation's chosen point of view gives it to a country"
+                                  },
+                                  "shownAs": {
+                                    "type": "string",
+                                    "const": "\"disputed\", or the country (platform code) the nation's chosen point of view gives it to"
+                                  },
+                                  "parties": {
+                                    "type": "string",
+                                    "const": "Countries that administer, claim or are given it (comma-separated)"
+                                  },
+                                  "text": {
+                                    "type": "string",
+                                    "const": "How it is drawn and why"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name",
+                                  "note",
+                                  "disputed",
+                                  "shownAs",
+                                  "parties",
+                                  "text"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "description",
+                              "minzoom",
+                              "maxzoom",
+                              "fields"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "const": "districts"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "minzoom": {
+                                "type": "number"
+                              },
+                              "maxzoom": {
+                                "type": "number"
+                              },
+                              "fields": {
+                                "type": "object",
+                                "properties": {
+                                  "code": {
+                                    "type": "string",
+                                    "const": "District code"
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "const": "Name"
+                                  },
+                                  "parent": {
+                                    "type": "string",
+                                    "const": "Region code it lies in"
+                                  },
+                                  "level": {
+                                    "type": "string",
+                                    "const": "Level (2)"
+                                  }
+                                },
+                                "required": [
+                                  "code",
+                                  "name",
+                                  "parent",
+                                  "level"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "description",
+                              "minzoom",
+                              "maxzoom",
+                              "fields"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "const": "regions"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "minzoom": {
+                                "type": "number"
+                              },
+                              "maxzoom": {
+                                "type": "number"
+                              },
+                              "fields": {
+                                "type": "object",
+                                "properties": {
+                                  "code": {
+                                    "type": "string",
+                                    "const": "Official code (ISO 3166-2)"
+                                  },
+                                  "name": {
+                                    "type": "string",
+                                    "const": "Name the nation uses"
+                                  },
+                                  "level": {
+                                    "type": "string",
+                                    "const": "Level (1)"
+                                  }
+                                },
+                                "required": [
+                                  "code",
+                                  "name",
+                                  "level"
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "description",
+                              "minzoom",
+                              "maxzoom",
+                              "fields"
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "tilejson",
+                    "name",
+                    "description",
+                    "version",
+                    "scheme",
+                    "tiles",
+                    "minzoom",
+                    "maxzoom",
+                    "bounds",
+                    "center",
+                    "attribution",
+                    "boundaryVersion",
+                    "worldview",
+                    "vector_layers"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "tilejson": "string",
+                      "name": "Example",
+                      "description": "Text",
+                      "version": "string",
+                      "scheme": "string",
+                      "tiles": [
+                        "string"
+                      ],
+                      "minzoom": 1,
+                      "maxzoom": 1,
+                      "bounds": [
+                        1,
+                        1,
+                        1,
+                        1
+                      ],
+                      "center": [
+                        1
+                      ],
+                      "attribution": "string",
+                      "boundaryVersion": {
+                        "regions": "string",
+                        "districts": "string",
+                        "key": "string"
+                      },
+                      "worldview": "string",
+                      "vector_layers": [
+                        {
+                          "id": "disputed",
+                          "description": "Text",
+                          "minzoom": 1,
+                          "maxzoom": 1,
+                          "fields": {
+                            "id": "Disputed area id (Natural Earth)",
+                            "name": "Name",
+                            "note": "Who administers it and who claims it",
+                            "disputed": "true unless the nation's chosen point of view gives it to a country",
+                            "shownAs": "\"disputed\", or the country (platform code) the nation's chosen point of view gives it to",
+                            "parties": "Countries that administer, claim or are given it (comma-separated)",
+                            "text": "How it is drawn and why"
+                          }
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          },
+          {
+            "integrationToken": [
+              "ogc:read"
+            ]
+          },
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/twin/tiles/boundaries/route.ts"
+      }
+    },
     "/api/twin/tiles/facilities.pmtiles": {
       "get": {
         "tags": [
@@ -40350,7 +40817,7 @@
         ],
         "operationId": "get_twin_tiles_facilities_pmtiles",
         "summary": "GET /api/twin/tiles/facilities.pmtiles",
-        "description": "The national facility register as one PMTiles v3 archive (vector layer \"facilities\", zoom 0–12 by default), read with HTTP range requests (Range: bytes=a-b → 206 Partial Content; HEAD for the size and ETag). Open without sign-in: it holds only what the public may see — restricted sites at their generalised position, exactly as viewFacility() gives a viewer who is not signed in; confidential sites never. Rebuilt after publication changes (lib/twin/tiles-archive.ts); a new build has a new ETag, so a reader can tell its ranges came from one build (If-Range is honoured). Signed-in officials read the viewer-aware tiles at /api/twin/tiles/facilities/{z}/{x}/{y}.mvt.",
+        "description": "The national facility register as one PMTiles v3 archive (vector layer \"facilities\", zoom 0–12 by default), read with HTTP range requests (Range: bytes=a-b → 206 Partial Content; HEAD for the size and ETag). Open without sign-in: it holds only what the public may see — restricted sites at their generalised position, exactly as viewFacility() gives a viewer who is not signed in; confidential sites never. Rebuilt after publication changes (lib/twin/tiles-archive.ts) and kept as a file in the platform's data directory: a range request reads only the bytes it asks for from the file (in memory only where there is no writable directory). A new build has a new ETag, so a reader can tell its ranges came from one build (If-Range is honoured). Signed-in officials read the viewer-aware tiles at /api/twin/tiles/facilities/{z}/{x}/{y}.mvt, and an institution's own archive at /api/org/ministries/{id}/facilities/tiles.pmtiles.",
         "parameters": [],
         "responses": {
           "200": {
@@ -42025,6 +42492,25 @@
           "ok",
           "checked"
         ]
+      },
+      "BBox": {
+        "type": "array",
+        "prefixItems": [
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "number"
+          }
+        ],
+        "minItems": 4,
+        "maxItems": 4
       },
       "BackupRecord": {
         "type": "object",
