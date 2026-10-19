@@ -25,7 +25,8 @@ import { safeFetchText } from '@/lib/net/safe-fetch';
 import { parseCsv } from './csv';
 import { twinDb, resetTwinDb, type TwinDb } from './db';
 import { archive, archivedRuns, archivedMetrics, archivedObservations, forEachArchived, resetTwinArchive } from './archive';
-import { METRIC_ID, getMetric, isKnownMetric, toUcum, sameUnit, type Aggregation } from './metrics';
+import { METRIC_ID, getMetric, isKnownMetric, listMetrics, toUcum, sameUnit, type Aggregation } from './metrics';
+import { sdmxRows, SDMX_ROW, type SdmxOptions } from './sdmx';
 import type { Signal } from './signal';
 
 export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
@@ -76,6 +77,12 @@ export interface TwinSource {
   system: string;
   mapping: SourceMapping;
   schedule: 'manual' | 'daily' | 'weekly';
+  /** The file's format: plain CSV with the mapping above (default), or SDMX-CSV 1.0/2.0 read by lib/twin/sdmx.ts. */
+  format?: 'csv' | 'sdmx-csv';
+  /** For SDMX-CSV: which dimension names the metric, and explicit code → metric and unit mappings. */
+  sdmx?: SdmxOptions;
+  /** The licence the publisher releases the data under (for the catalogue), when stated. */
+  licence?: string;
   registeredBy: string;
   registeredAt: string;
   lastRun?: string;
@@ -247,7 +254,8 @@ export function registerSource(input: Partial<TwinSource> & { by?: string }): Tw
     try { const u = new URL(String(input.url)); if (u.protocol !== 'https:' && u.protocol !== 'http:') throw 0; url = u.href; }
     catch { return { error: 'Give the address of the CSV (http or https)' }; }
   }
-  const m = input.mapping;
+  const sdmx = input.format === 'sdmx-csv';
+  const m = sdmx ? SDMX_MAPPING : input.mapping;
   if (!m || !m.entity || !m.value || !m.metric) return { error: 'Say which columns hold the entity, the value and the metric' };
   if ('fixed' in m.metric && !METRIC.test(m.metric.fixed)) return { error: 'A metric is lower case letters, digits, dots and underscores, e.g. population or cpi.all_items' };
   // A source names a registered metric (lib/twin/metrics.ts), so its unit and aggregation are known before any row arrives.
@@ -260,6 +268,8 @@ export function registerSource(input: Partial<TwinSource> & { by?: string }): Tw
   const s: TwinSource = {
     id: `SRC-${d.seq++}`, name: name.slice(0, 120), publisher: publisher.slice(0, 120), kind: input.kind, ...(url ? { url } : {}),
     system: (input.system ?? slug(publisher)).slice(0, 60) || 'source', mapping: m,
+    ...(sdmx ? { format: 'sdmx-csv' as const, ...(input.sdmx ? { sdmx: cleanSdmx(input.sdmx) } : {}) } : {}),
+    ...(input.licence?.trim() ? { licence: input.licence.trim().slice(0, 120) } : {}),
     schedule: input.schedule === 'daily' || input.schedule === 'weekly' ? input.schedule : 'manual',
     registeredBy: by, registeredAt: new Date().toISOString(),
   };
@@ -303,6 +313,37 @@ function readQuality(row: Record<string, string>, spec: SourceMapping['quality']
   return Object.keys(q).length ? q : undefined;
 }
 
+// ── SDMX-CSV ──────────────────────────────────────────────────────────────
+
+const SDMX_MAPPING: SourceMapping = {
+  entity: SDMX_ROW.entity, value: SDMX_ROW.value, metric: { column: SDMX_ROW.metric }, unit: { column: SDMX_ROW.unit },
+  date: { column: SDMX_ROW.date }, quality: { status: { column: SDMX_ROW.status } },
+};
+
+function cleanSdmx(o: SdmxOptions): SdmxOptions {
+  const pairs = (r?: Record<string, string>) => r ? Object.fromEntries(Object.entries(r).slice(0, 200).map(([k, v]) => [String(k).trim().slice(0, 64), String(v).trim().slice(0, 64)])) : undefined;
+  const codes = pairs(o.codes), units = pairs(o.units);
+  return { ...(o.metricDimension?.trim() ? { metricDimension: o.metricDimension.trim().slice(0, 64) } : {}), ...(codes ? { codes } : {}), ...(units ? { units } : {}) };
+}
+
+/** The registered metric an SDMX code stands for: the one with that SDMX concept, or a metric of that name. */
+function sdmxMetric(code: string): string | undefined {
+  const c = code.trim();
+  const byConcept = listMetrics().find(m => m.sdmxConcept && m.sdmxConcept.toUpperCase() === c.toUpperCase());
+  if (byConcept) return byConcept.id;
+  const id = c.toLowerCase();
+  return METRIC.test(id) && isKnownMetric(id) ? id : undefined;
+}
+
+/** SDMX names the nation itself by its ISO 3166-1 alpha-2 code (KE); the register keys it by alpha-3. */
+function nationArea(row: Record<string, string>): Record<string, string> {
+  const area = row[SDMX_ROW.entity];
+  const nation = listEntities('nation')[0];
+  if (!area || !nation?.code || area.includes('-')) return row;
+  const alpha2 = listEntities('place').find(e => e.code?.includes('-'))?.code?.split('-')[0];
+  return area.toUpperCase() === alpha2 ? { ...row, [SDMX_ROW.entity]: nation.code } : row;
+}
+
 export interface RunDeps { fetch?: typeof fetch; resolve?: (host: string) => Promise<string[]>; now?: Date }
 
 /**
@@ -327,38 +368,41 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
       text = (await safeFetchText(s.url, { allow: u => u.host === host, accept: 'text/csv, text/plain;q=0.8, */*;q=0.1', types: /csv|text\/plain|octet-stream|excel/i, fetch: deps.fetch, resolve: deps.resolve })).text;
     }
     if (text.length > 20_000_000) throw new Error('The CSV is larger than 20 MB');
-    const rows = parseCsv(text);
+    const sdmxFile = s.format === 'sdmx-csv';
+    const mapping = sdmxFile ? SDMX_MAPPING : s.mapping;
+    const rows = sdmxFile ? sdmxRows(text, sdmxMetric, s.sdmx).rows.map(r => nationArea(r)) : parseCsv(text);
     run.rows = rows.length;
     if (rows.length > LIMITS.rows) throw new Error(`More than ${LIMITS.rows} rows`);
     const fresh: Observation[] = [];
     rows.forEach((row, i) => {
       const reject = (reason: string) => { if (run.rejected.length < LIMITS.rejectedShown) run.rejected.push({ row: i + 2, reason }); };
-      const ref = (row[s.mapping.entity] ?? '').trim();
+      if (row[SDMX_ROW.reject]) return reject(row[SDMX_ROW.reject]!);
+      const ref = (row[mapping.entity] ?? '').trim();
       const entity = resolveEntity(ref, s.system);
       if (!entity) return reject(ref ? `"${ref}" is not an entity of the register (link it to one with its id)` : 'No entity');
-      const metric = (col(row, s.mapping.metric) ?? '').trim().toLowerCase();
+      const metric = (col(row, mapping.metric) ?? '').trim().toLowerCase();
       if (!METRIC.test(metric)) return reject(`"${metric}" is not a metric name`);
       const def = getMetric(metric);
       if (!def) return reject(`"${metric}" is not a registered metric (register it with its unit first)`);
       // A registered metric has one UCUM unit: a row in another unit is refused, never converted or guessed.
-      const rawUnit = (col(row, s.mapping.unit) ?? '').trim();
+      const rawUnit = (col(row, mapping.unit) ?? '').trim();
       let unit = rawUnit.slice(0, 24);
       if (def.origin !== 'observed') {
         if (rawUnit && !toUcum(rawUnit)) return reject(`"${rawUnit}" is not a UCUM unit (${metric} is counted in ${def.unit})`);
         if (rawUnit && !sameUnit(rawUnit, def.unit)) return reject(`"${rawUnit}" is not the unit of ${metric} (${def.unit})`);
         unit = def.unit;
       }
-      const rawValue = (row[s.mapping.value] ?? '').replace(/[\s,]/g, '');
+      const rawValue = (row[mapping.value] ?? '').replace(/[\s,]/g, '');
       const value = Number(rawValue);
-      if (rawValue === '' || !Number.isFinite(value)) return reject(`"${row[s.mapping.value] ?? ''}" is not a number`);
-      const validFrom = s.mapping.date ? isoDate(col(row, s.mapping.date)) : now.toISOString().slice(0, 10);
-      if (!validFrom) return reject(`"${col(row, s.mapping.date)}" is not a date or year`);
+      if (rawValue === '' || !Number.isFinite(value)) return reject(`"${row[mapping.value] ?? ''}" is not a number`);
+      const validFrom = mapping.date ? isoDate(col(row, mapping.date)) : now.toISOString().slice(0, 10);
+      if (!validFrom) return reject(`"${col(row, mapping.date)}" is not a date or year`);
       if (validFrom > now.toISOString().slice(0, 10)) return reject(`${validFrom} is in the future`);
-      const rawTo = (col(row, s.mapping.validTo) ?? '').trim();
+      const rawTo = (col(row, mapping.validTo) ?? '').trim();
       const validTo = rawTo ? isoDate(rawTo) : undefined;
       if (rawTo && !validTo) return reject(`"${rawTo}" is not a date for the end of the value's validity`);
       if (validTo && validTo <= validFrom) return reject(`It stops being true (${validTo}) before it starts (${validFrom})`);
-      const q = readQuality(row, s.mapping.quality);
+      const q = readQuality(row, mapping.quality);
       if (typeof q === 'string') return reject(q);
       fresh.push({ entityId: entity.id, metric, value, unit, validFrom, ...(validTo ? { validTo } : {}), recordedAt: run.at, ...(q ? { quality: q } : {}), sourceId, runId: run.id });
     });

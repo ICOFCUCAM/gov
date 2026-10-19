@@ -224,12 +224,13 @@ function Withdraw({ run, by, busy, act }: { run: Run; by: string; busy: boolean;
 }
 
 function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (done: string, fn: () => Promise<unknown>) => Promise<void> }) {
-  const [f, setF] = React.useState({ name: '', publisher: '', kind: 'csv-upload', url: '', entity: 'region', value: 'value', metricMode: 'fixed', metric: 'population', unit: 'persons', date: 'year', validTo: '', status: '', stdErr: '', schedule: 'manual' });
+  const [f, setF] = React.useState({ name: '', publisher: '', kind: 'csv-upload', url: '', entity: 'region', value: 'value', metricMode: 'fixed', metric: 'population', unit: 'persons', date: 'year', validTo: '', status: '', stdErr: '', schedule: 'manual', format: 'csv', licence: '', sdmxUnits: '' });
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { const v = e.currentTarget.value; setF(x => ({ ...x, [k]: v })); };
   const submit = () => act('Source registered', () => call('/api/twin/sources', {
     method: 'POST',
     body: JSON.stringify({
-      by, name: f.name, publisher: f.publisher, kind: f.kind, url: f.url || undefined, schedule: f.schedule,
+      by, name: f.name, publisher: f.publisher, kind: f.kind, url: f.url || undefined, schedule: f.schedule, licence: f.licence || undefined,
+      ...(f.format === 'sdmx-csv' ? { format: 'sdmx-csv', sdmx: { units: Object.fromEntries(f.sdmxUnits.split(',').map(x => x.split('=').map(y => y.trim())).filter(p => p.length === 2 && p[0] && p[1])) } } : {}),
       mapping: {
         entity: f.entity, value: f.value,
         metric: f.metricMode === 'fixed' ? { fixed: f.metric } : { column: f.metric },
@@ -260,6 +261,15 @@ function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (do
             <select className={`${input} mt-1`} value={f.schedule} onChange={set('schedule')}><option value="manual">When run by hand</option><option value="daily">Daily</option><option value="weekly">Weekly</option></select>
           </label>
         ) : null}
+        <label className="block"><span className={label}>File format</span>
+          <select className={`${input} mt-1`} value={f.format} onChange={set('format')}>
+            <option value="csv">CSV (say which columns hold what)</option>
+            <option value="sdmx-csv">SDMX-CSV (statistics office format)</option>
+          </select>
+        </label>
+        {F({ k: 'licence', l: 'Licence (optional)', ph: 'e.g. CC BY 4.0' })}
+        {f.format === 'sdmx-csv' ? F({ k: 'sdmxUnits', l: 'SDMX unit codes (optional)', hint: 'The publisher\'s unit codes as UCUM, e.g. PS={persons}, HH={households}. Metrics are matched by their statistics office code (Metrics tab).' }) : null}
+        {f.format === 'csv' ? <>
         {F({ k: 'entity', l: 'Column with the place or institution', hint: 'Its ISO 3166-2 code, its name, or the publisher\'s own id (link ids below).' })}
         {F({ k: 'value', l: 'Column with the value' })}
         <label className="block"><span className={label}>Metric</span>
@@ -273,6 +283,7 @@ function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (do
         {F({ k: 'validTo', l: 'Column with the end date (optional)', hint: 'For values true over a period; empty cells mean still true.' })}
         {F({ k: 'status', l: 'Column with the status (optional)', hint: 'provisional, final or revised' })}
         {F({ k: 'stdErr', l: 'Column with the standard error (optional)' })}
+        </> : null}
       </div>
       <div className="mt-3"><button type="button" className={btn} disabled={busy || !by.trim() || !f.name.trim() || !f.publisher.trim()} onClick={() => void submit()}>Register source</button></div>
     </Section>
