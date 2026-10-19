@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { resetTwin, syncRegister, registerSource, runSource, metricDates } from './register';
 import { resetScenarios, createScenario, reviseScenario, getScenario, verifyVersion, type Scenario } from './scenarios';
 import { applyNation } from '@/lib/nation/registry';
+import { registerMetric } from './metrics';
 
 const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
 const mapping = { entity: 'region', value: 'value', metric: { fixed: 'population' }, unit: { fixed: 'persons' }, date: { column: 'year' } } as const;
@@ -39,6 +40,17 @@ describe('scenarios on the twin', () => {
     expect(r.versions.map(v => [v.version, v.by, v.national?.baseline])).toEqual([[1, 'D', 4_960_000], [2, 'E', 6_000_000]]);
     expect(r.versions[0]!.evidenceHash).not.toBe(r.versions[1]!.evidenceHash);
     expect(getScenario(s.id)?.versions[0]).toEqual(s.versions[0]);
+  });
+
+  it('combines regions nationally as the metric says, or says why not', async () => {
+    registerMetric({ by: 'A', id: 'literacy', label: 'Literacy', unit: '%', aggregation: 'none' });
+    const src = ok(registerSource({ by: 'D', name: 'Literacy', publisher: 'KNBS', kind: 'csv-upload', mapping: { entity: 'region', value: 'value', metric: { fixed: 'literacy' }, unit: { fixed: '%' }, date: { column: 'year' } } }));
+    await runSource(src.id, { by: 'D', csv: 'region,value,year\nMombasa,80,2019\nNairobi City,90,2019\nKisumu,70,2019\n', deps: { now: new Date('2021-01-01T00:00:00Z') } });
+    const none = ok(createScenario({ name: 'L', by: 'D', metric: 'literacy', asOf: '2022-01-01', assumptions: [{ entityId: '*', changePct: 10 }] })).versions[0]!;
+    expect(none).toMatchObject({ national: null, nationalNote: expect.stringMatching(/not registered as combinable/) });
+    registerMetric({ by: 'A', id: 'literacy', label: 'Literacy', unit: '%', aggregation: 'mean' });
+    const mean = ok(createScenario({ name: 'L2', by: 'D', metric: 'literacy', asOf: '2022-01-01', assumptions: [{ entityId: '*', changePct: 10 }] })).versions[0]!;
+    expect(mean.national).toEqual({ baseline: 80, projected: 88, unit: '%' });
   });
 
   it('refuses scenarios without a person, assumptions or data', () => {

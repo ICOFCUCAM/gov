@@ -9,6 +9,7 @@
 import { createHash } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store';
 import { stateAsOf, getEntity, regionEntities, isoDate } from './register';
+import { getMetric } from './metrics';
 
 export interface Assumption {
   /** An entity id, or "*" for every entity with a value. */
@@ -32,8 +33,10 @@ export interface ScenarioVersion {
   note?: string;
   inputs: ScenarioInput[];
   results: ScenarioResult[];
-  /** Sum over the nation's regions, only when every region has a value. */
+  /** The regions combined as the metric says (sum or mean), only when every region has a value in one unit. */
   national: { baseline: number; projected: number; unit: string } | null;
+  /** Why there is no national figure, when there is none. */
+  nationalNote?: string;
   evidenceHash: string;
 }
 
@@ -86,10 +89,18 @@ function build(id: string, version: number, d: Draft): ScenarioVersion | { error
   });
   const regions = regionEntities();
   const inRegions = regions.map(r => results.find(x => x.entityId === r.id)).filter((x): x is ScenarioResult => !!x);
-  const national = regions.length && inRegions.length === regions.length
-    ? { baseline: inRegions.reduce((s, x) => s + x.baseline, 0), projected: Math.round(inRegions.reduce((s, x) => s + x.projected, 0) * 100) / 100, unit: inRegions[0]!.unit }
-    : null;
-  const v = { version, at: new Date().toISOString(), by, metric, asOf, assumptions, ...(d.note?.trim() ? { note: d.note.trim().slice(0, 500) } : {}), inputs, results, national };
+  // Combined as the metric's definition says (lib/twin/metrics.ts): a sum or a mean, every region, one unit; otherwise none, with the reason.
+  const aggregation = getMetric(metric)?.aggregation ?? 'none';
+  let national: ScenarioVersion['national'] = null;
+  let nationalNote: string | undefined;
+  if (!regions.length || inRegions.length < regions.length) nationalNote = `Only ${inRegions.length} of ${regions.length} regions have a value`;
+  else if (new Set(inRegions.map(x => x.unit)).size > 1) nationalNote = 'The regions are in different units';
+  else if (aggregation !== 'sum' && aggregation !== 'mean') nationalNote = aggregation === 'none' ? `${metric} is not registered as combinable across regions` : 'A weighted mean is not projected nationally';
+  else {
+    const n = aggregation === 'mean' ? inRegions.length : 1;
+    national = { baseline: inRegions.reduce((s, x) => s + x.baseline, 0) / n, projected: Math.round((inRegions.reduce((s, x) => s + x.projected, 0) / n) * 100) / 100, unit: inRegions[0]!.unit };
+  }
+  const v = { version, at: new Date().toISOString(), by, metric, asOf, assumptions, ...(d.note?.trim() ? { note: d.note.trim().slice(0, 500) } : {}), inputs, results, national, ...(nationalNote ? { nationalNote } : {}) };
   return { ...v, evidenceHash: evidenceHash(id, v) };
 }
 

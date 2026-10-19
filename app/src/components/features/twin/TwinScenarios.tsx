@@ -11,7 +11,7 @@ interface Result { entityId: string; name: string; baseline: number; projected: 
 interface Version {
   version: number; at: string; by: string; metric: string; asOf: string; note?: string;
   assumptions: { entityId: string; changePct: number; note?: string }[];
-  results: Result[]; national: { baseline: number; projected: number; unit: string } | null;
+  results: Result[]; national: { baseline: number; projected: number; unit: string } | null; nationalNote?: string;
   evidenceHash: string; evidenceOk: boolean;
 }
 interface Scenario { id: string; name: string; createdBy: string; createdAt: string; versions: Version[] }
@@ -115,6 +115,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
                     {v.national ? <tr className="border-t border-line font-semibold"><td>Nation (all regions)</td><td className="text-end font-mono tabular-nums">{fmt(v.national.baseline)}</td><td className="text-end font-mono tabular-nums">{fmt(v.national.projected)} {v.national.unit}</td></tr> : null}
                   </tbody>
                 </table>
+                {!v.national && v.nationalNote ? <p className="mt-1 text-[12px] text-ink-soft">No national figure: {v.nationalNote}.</p> : null}
                 {s.versions.length > 1 ? (
                   <details className="mt-2 text-[12px]">
                     <summary className="cursor-pointer text-ink-soft">{s.versions.length - 1} earlier version{s.versions.length > 2 ? 's' : ''}</summary>

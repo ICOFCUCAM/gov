@@ -24,7 +24,7 @@ import { loadDivisions } from '@/lib/geo/divisions';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { parseCsv } from './csv';
 import { twinDb, resetTwinDb, type TwinDb } from './db';
-import { METRIC_ID, getMetric, isKnownMetric, toUcum, sameUnit } from './metrics';
+import { METRIC_ID, getMetric, isKnownMetric, toUcum, sameUnit, type Aggregation } from './metrics';
 import type { Signal } from './signal';
 
 export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
@@ -354,23 +354,63 @@ export function signalFor(entityId: string, metric: string, asOf?: string): Sign
   return o ? { value: o.value, unit: o.unit, kind: 'observed', source: sourceName(o.sourceId), asOf: o.validFrom } : null;
 }
 
+export interface NationalFigure extends Signal<number> {
+  /** Regions with a value, of the nation's operational regions. */
+  coverage: { have: number; of: number };
+  /** The oldest and newest date the figures combined were true for. */
+  vintage?: { oldest: string; newest: string };
+  /** How the regions were combined (lib/twin/metrics.ts), or "national" for a figure recorded for the nation itself. */
+  aggregation?: Aggregation | 'national';
+  /** Why no national figure is shown although regions report: regions missing, units differ, not additive, weights missing. */
+  refused?: string;
+}
+
 /**
- * A national figure as the sum over the nation's operational regions, only
- * when every region has a value (otherwise a partial sum would be shown as the
- * nation's); a figure for the nation itself wins when one is recorded.
+ * A national figure from the nation's operational regions, combined as the
+ * metric's definition says (sum, mean or weighted mean; lib/twin/metrics.ts),
+ * and only when every region has a value in the same unit. Otherwise the
+ * figure comes back without a value and with the reason (a partial sum, a sum
+ * of rates or of mixed units is never shown as the nation's). A figure
+ * recorded for the nation itself wins. Null when nothing is observed at all.
  */
-export function nationalTotal(metric: string, asOf?: string): (Signal<number> & { coverage: { have: number; of: number } }) | null {
+export function nationalTotal(metric: string, asOf?: string): NationalFigure | null {
   const regions = regionEntities();
   const obs = stateAsOf({ asOf, metric });
+  if (!obs.length) return null;
   const national = obs.find(o => db().entities[o.entityId]?.kind === 'nation');
-  if (national) return { value: national.value, unit: national.unit, kind: 'observed', source: sourceName(national.sourceId), asOf: national.validFrom, coverage: { have: regions.length, of: regions.length } };
+  if (national) {
+    return { value: national.value, unit: national.unit, kind: 'observed', source: sourceName(national.sourceId), asOf: national.validFrom,
+      coverage: { have: regions.length, of: regions.length }, vintage: { oldest: national.validFrom, newest: national.validFrom }, aggregation: 'national' };
+  }
+  const def = getMetric(metric);
   const byRegion = regions.map(r => obs.find(o => o.entityId === r.id)).filter((o): o is Observation => !!o);
-  if (!regions.length || byRegion.length < regions.length) return null;
-  const oldest = byRegion.reduce((a, o) => (o.validFrom < a ? o.validFrom : a), byRegion[0]!.validFrom);
+  const coverage = { have: byRegion.length, of: regions.length };
+  const refuse = (refused: string, unit?: string): NationalFigure => ({ value: null, ...(unit ? { unit } : {}), kind: 'unavailable', source: 'Not combined', coverage, ...(def ? { aggregation: def.aggregation } : {}), refused });
+  if (!regions.length) return refuse('The nation has no operational regions to combine');
+  if (byRegion.length < regions.length) return refuse(`Only ${byRegion.length} of ${regions.length} regions report ${metric}; a national figure needs every region`);
+  const units = [...new Set(byRegion.map(o => toUcum(o.unit) ?? o.unit))];
+  if (units.length > 1) return refuse(`The regions report ${metric} in different units (${units.join(', ')}); they are not combined`);
+  const unit = byRegion[0]!.unit;
+  if (!def || def.aggregation === 'none') return refuse(`${def?.label ?? metric} is not registered as combinable across regions: register it with sum, mean or weighted mean`, unit);
+  let value: number;
+  if (def.aggregation === 'sum') value = byRegion.reduce((s, o) => s + o.value, 0);
+  else if (def.aggregation === 'mean') value = byRegion.reduce((s, o) => s + o.value, 0) / byRegion.length;
+  else {
+    const wm = def.weightMetric ?? '';
+    const weights = stateAsOf({ asOf, metric: wm });
+    const w = byRegion.map(o => weights.find(x => x.entityId === o.entityId));
+    const missing = w.filter(x => !x).length;
+    if (missing) return refuse(`${missing} of ${regions.length} regions have no ${wm} to weight ${metric} by`, unit);
+    if (new Set(w.map(x => toUcum(x!.unit) ?? x!.unit)).size > 1) return refuse(`The weights (${wm}) are in different units`, unit);
+    const total = w.reduce((s, x) => s + x!.value, 0);
+    if (!(total > 0)) return refuse(`The weights (${wm}) add up to zero`, unit);
+    value = byRegion.reduce((s, o, i) => s + o.value * w[i]!.value, 0) / total;
+  }
+  const dates = byRegion.map(o => o.validFrom).sort();
   return {
-    value: byRegion.reduce((s, o) => s + o.value, 0), unit: byRegion[0]!.unit, kind: 'observed',
-    source: [...new Set(byRegion.map(o => sourceName(o.sourceId)))].join(', '), asOf: oldest,
-    coverage: { have: byRegion.length, of: regions.length },
+    value, unit, kind: 'observed',
+    source: [...new Set(byRegion.map(o => sourceName(o.sourceId)))].join(', '), asOf: dates[0],
+    coverage, vintage: { oldest: dates[0]!, newest: dates.at(-1)! }, aggregation: def.aggregation,
   };
 }
 

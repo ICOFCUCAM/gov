@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { parseCsv } from './csv';
 import { entityProfile, resetTwin, syncRegister, registerSource, runSource, stateAsOf, nationalTotal, signalFor, resolveEntity, linkKey, regionEntities, isoDate, dueSources, type TwinSource } from './register';
 import { withTwin } from './national';
+import { registerMetric } from './metrics';
+import { twinDb } from './db';
 import { applyNation } from '@/lib/nation/registry';
 import { nationalSnapshot } from '@/lib/data/store';
 
@@ -35,7 +37,7 @@ describe('the national twin core', () => {
     expect(run).toMatchObject({ status: 'partial', rows: 6, accepted: 3 });
     expect(run.rejected.map(r => r.reason)).toEqual([expect.stringMatching(/Atlantis/), expect.stringMatching(/not a number/), expect.stringMatching(/future/)]);
     const total = nationalTotal('population')!;
-    expect(total).toMatchObject({ value: 6_760_980, kind: 'observed', source: 'Census 2019', asOf: '2019-01-01', coverage: { have: 3, of: 3 } });
+    expect(total).toMatchObject({ value: 6_760_980, unit: '{persons}', kind: 'observed', source: 'Census 2019', asOf: '2019-01-01', coverage: { have: 3, of: 3 }, vintage: { oldest: '2019-01-01', newest: '2019-01-01' }, aggregation: 'sum' });
     expect(signalFor('place:KE-28', 'population')?.value).toBe(1208333);
   });
 
@@ -51,7 +53,8 @@ describe('the national twin core', () => {
   it('shows no national figure from a partial set of regions', async () => {
     const s = ok(registerSource({ by: 'D', name: 'Part', publisher: 'KNBS', kind: 'csv-upload', mapping }));
     await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,1208333,2019\n' });
-    expect(nationalTotal('population')).toBeNull();
+    expect(nationalTotal('population')).toMatchObject({ value: null, kind: 'unavailable', coverage: { have: 1, of: 3 }, refused: expect.stringMatching(/Only 1 of 3 regions/) });
+    expect(nationalTotal('nothing_known')).toBeNull();
   });
 
   it('places rows by the publisher\'s own ids once linked', async () => {
@@ -113,5 +116,47 @@ describe('an entity\'s profile', () => {
     expect(linkKey('place:KE-28', 'knbs', '001', 'D')).toEqual({ ok: true });
     expect(entityProfile('place:KE-28')!.keys).toEqual([{ system: 'knbs', key: '001' }]);
     expect(entityProfile('nothing')).toBeUndefined();
+  });
+});
+
+describe('combining regions into a national figure', () => {
+  const at = '2020-01-01T00:00:00.000Z';
+  const put = (metric: string, values: [string, number, string][]) => {
+    for (const [entityId, value, unit] of values) twinDb().observations.push({ entityId, metric, value, unit, validFrom: '2019-01-01', recordedAt: at, sourceId: 'SRC-T', runId: 'RUN-T' });
+  };
+  beforeEach(async () => {
+    resetTwin();
+    applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa', 'Nairobi City', 'Kisumu'] });
+    await syncRegister();
+    put('population', [['place:KE-28', 1_000_000, '{persons}'], ['place:KE-30', 4_000_000, '{persons}'], ['place:KE-17', 1_000_000, '{persons}']]);
+    put('literacy', [['place:KE-28', 80, '%'], ['place:KE-30', 95, '%'], ['place:KE-17', 70, '%']]);
+  });
+
+  it('refuses a metric that is not registered as combinable, with the reason', () => {
+    expect(nationalTotal('literacy')).toMatchObject({ value: null, aggregation: 'none', refused: expect.stringMatching(/not registered as combinable/) });
+  });
+
+  it('takes a mean or a weighted mean when the metric says so', () => {
+    registerMetric({ by: 'A', id: 'literacy', label: 'Literacy', unit: '%', aggregation: 'mean' });
+    expect(nationalTotal('literacy')).toMatchObject({ value: 245 / 3, aggregation: 'mean', unit: '%' });
+    registerMetric({ by: 'A', id: 'literacy', label: 'Literacy', unit: '%', aggregation: 'weighted-mean', weightMetric: 'population' });
+    expect(nationalTotal('literacy')?.value).toBeCloseTo((80 + 380 + 70) / 6, 9);
+  });
+
+  it('refuses a weighted mean when a region has no weight', () => {
+    twinDb().observations = twinDb().observations.filter(o => !(o.metric === 'population' && o.entityId === 'place:KE-17'));
+    registerMetric({ by: 'A', id: 'literacy', label: 'Literacy', unit: '%', aggregation: 'weighted-mean', weightMetric: 'population' });
+    expect(nationalTotal('literacy')).toMatchObject({ value: null, refused: expect.stringMatching(/1 of 3 regions have no population/) });
+  });
+
+  it('refuses to add values in different units', () => {
+    put('maize', [['place:KE-28', 5, 't'], ['place:KE-30', 5000, 'kg'], ['place:KE-17', 3, 't']]);
+    registerMetric({ by: 'A', id: 'maize', label: 'Maize harvest', unit: 't', aggregation: 'sum', period: 'year' });
+    expect(nationalTotal('maize')).toMatchObject({ value: null, refused: expect.stringMatching(/different units \(t, kg\)/) });
+  });
+
+  it('gives the vintage: the oldest and newest dates combined', () => {
+    twinDb().observations.push({ entityId: 'place:KE-30', metric: 'population', value: 4_100_000, unit: '{persons}', validFrom: '2020-06-01', recordedAt: at, sourceId: 'SRC-T', runId: 'RUN-T' });
+    expect(nationalTotal('population', '2021-01-01T00:00:00Z')).toMatchObject({ value: 6_100_000, vintage: { oldest: '2019-01-01', newest: '2020-06-01' }, asOf: '2019-01-01' });
   });
 });

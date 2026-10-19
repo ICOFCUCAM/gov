@@ -14,6 +14,8 @@ interface Entity { id: string; kind: string; name: string; code?: string; region
 interface Source { id: string; name: string; publisher: string; kind: 'csv-url' | 'csv-upload'; url?: string; schedule: string; registeredBy: string; registeredAt: string; lastRun?: string; mapping: { entity: string; value: string; metric: { column: string } | { fixed: string } } }
 interface Run { id: string; sourceId: string; at: string; by: string; status: 'ok' | 'partial' | 'failed'; rows: number; accepted: number; rejected: { row: number; reason: string }[]; error?: string }
 interface Obs { entityId: string; metric: string; value: number; unit: string; validFrom: string; recordedAt: string; sourceId: string; runId: string }
+/** The national figure for a metric, or why there is none (lib/twin/register.ts nationalTotal). */
+interface National { value: number | null; unit?: string; source: string; coverage: { have: number; of: number }; vintage?: { oldest: string; newest: string }; aggregation?: string; refused?: string }
 
 const input = 'w-full rounded-[3px] border border-line bg-surface-2 px-2.5 py-2 text-[13px] text-ink placeholder:text-ink-muted focus-ring';
 const label = 'block text-[12px] font-semibold text-ink-soft';
@@ -50,6 +52,7 @@ export function TwinWorkspace() {
   const [metric, setMetric] = React.useState('');
   const [date, setDate] = React.useState(new Date().toISOString().slice(0, 10));
   const [obs, setObs] = React.useState<Obs[] | null>(null);
+  const [national, setNational] = React.useState<National | null>(null);
   const [dates, setDates] = React.useState<string[]>([]);
   // Off: what was true on the date, as known now. On: only what had been recorded by that date.
   const [knownThen, setKnownThen] = React.useState(false);
@@ -72,7 +75,7 @@ export function TwinWorkspace() {
   React.useEffect(() => {
     if (!m) return;
     const known = knownThen ? `${date}T23:59:59Z` : new Date().toISOString();
-    void call<{ observations: Obs[] }>(`/api/twin/state?metric=${encodeURIComponent(m)}&asOf=${encodeURIComponent(`${date}T23:59:59Z`)}&knownAt=${encodeURIComponent(known)}`).then(r => setObs(r.observations)).catch(() => setObs([]));
+    void call<{ observations: Obs[]; national?: National | null }>(`/api/twin/state?metric=${encodeURIComponent(m)}&asOf=${encodeURIComponent(`${date}T23:59:59Z`)}&knownAt=${encodeURIComponent(known)}`).then(r => { setObs(r.observations); setNational(r.national ?? null); }).catch(() => { setObs([]); setNational(null); });
   }, [m, date, data, knownThen]);
   React.useEffect(() => {
     if (!m) return;
@@ -123,7 +126,7 @@ export function TwinWorkspace() {
             </ul>
           ) : <p className="text-ink-soft">Nothing observed yet. Register a source and run it.</p>}
         </Section>
-        <AsOf metrics={metrics} metric={m} setMetric={setMetric} date={date} setDate={setDate} knownThen={knownThen} setKnownThen={setKnownThen} rows={obs} nameOf={nameOf} sourceName={sourceName} />
+        <AsOf metrics={metrics} metric={m} setMetric={setMetric} date={date} setDate={setDate} knownThen={knownThen} setKnownThen={setKnownThen} rows={obs} national={national} nameOf={nameOf} sourceName={sourceName} />
       </div>
 
       <Section title="Territory" aside={m ? `${m} · as of ${date}` : 'no metric observed yet'}>
@@ -245,10 +248,10 @@ function SourceRow({ s, by, busy, act }: { s: Source; by: string; busy: boolean;
   );
 }
 
-function AsOf({ metrics, metric: m, setMetric, date, setDate, knownThen, setKnownThen, rows, nameOf, sourceName }: {
+function AsOf({ metrics, metric: m, setMetric, date, setDate, knownThen, setKnownThen, rows, national, nameOf, sourceName }: {
   metrics: string[]; metric: string; setMetric: (v: string) => void; date: string; setDate: (v: string) => void;
   knownThen: boolean; setKnownThen: (v: boolean) => void;
-  rows: Obs[] | null; nameOf: Map<string, string>; sourceName: Map<string, string>;
+  rows: Obs[] | null; national: National | null; nameOf: Map<string, string>; sourceName: Map<string, string>;
 }) {
   return (
     <Section title="As of" aside={knownThen ? 'what was known on the date' : 'true on the date, as known now'}>
@@ -260,6 +263,14 @@ function AsOf({ metrics, metric: m, setMetric, date, setDate, knownThen, setKnow
         <input type="checkbox" checked={knownThen} onChange={e => setKnownThen(e.currentTarget.checked)} />
         Only what had been recorded by that date
       </label>
+      {national ? (
+        national.value !== null ? (
+          <p className="mt-2 text-[12px]">
+            <span className="font-semibold">Nation</span>: <span className="font-mono tabular-nums">{national.value.toLocaleString('en', { maximumFractionDigits: 2 })} {national.unit}</span>
+            <span className="text-ink-muted"> · {national.aggregation === 'national' ? 'recorded for the nation' : `${national.aggregation} of ${national.coverage.have} regions`}{national.vintage ? ` · true ${national.vintage.oldest === national.vintage.newest ? `from ${national.vintage.oldest}` : `${national.vintage.oldest} to ${national.vintage.newest}`}` : ''}</span>
+          </p>
+        ) : <p className="mt-2 text-[12px] text-warn">No national figure: {national.refused}</p>
+      ) : null}
       {rows?.length ? (
         <table className="mt-2 w-full text-[12px]">
           <thead><tr className="text-left text-ink-muted"><th className="font-semibold">Entity</th><th className="text-right font-semibold">Value</th><th className="pl-2 font-semibold">True from</th></tr></thead>
