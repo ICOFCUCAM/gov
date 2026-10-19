@@ -56,13 +56,13 @@ real weakness that needs a second condition, or that has a limited effect.
 | M-12 | Performance | Medium | `/app/[domain]` ships 1.07 MB first-load JS (559 kB of its own) because `AppHost` statically imports about 25 institution apps **Fixed in d3b8d02.** | build output; `app/src/apps/AppHost.tsx:10-31` | `next/dynamic` per app (load only the one for the domain). | S |
 | M-13 | Data protection | Medium | Retention and deletion: unsubscribed addresses stay in the outbox, unconfirmed addresses are kept for good, and failed sign-in emails are kept for good. No retention rule for permits or cases. **Fixed in d3b8d02.** | `app/src/lib/data/site-subscriptions.ts:76-80,97-99,136-146`; `app/src/lib/auth/officials.ts:213-221` | On unsubscribe, delete queued messages to the address. Purge pending subscriptions after `CONFIRM_DAYS`. Expire failure entries. Add a retention schedule (per store) with a sweep. | M |
 | M-14 | Operations / Data protection | Medium | Platform backups are simulated ("completed", "encrypted", random size). Restore only flips a state. Neither is in the Integration Register. | `app/src/lib/data/store/platform-ops.ts:190-211` | Label as placeholder in UI and register (like 3.7). Do not show `encrypted: true` for nothing. | S |
-| L-1 | Security | Low | Rate-limit identity is the first `X-Forwarded-For` hop (chosen by the client unless the proxy overwrites it) | `app/src/lib/ops/rate-limit-core.ts:46-49`; `app/src/app/api/public-sites/[id]/subscribe/route.ts:20` | Take the right-most untrusted hop with a configured number of trusted proxies (`CIVICOS_TRUSTED_PROXIES`). | S |
-| L-2 | Security | Low | The app fails open without `CIVICOS_AUTH=enforce`, and `docker-compose` defaults to open | `app/src/middleware.ts:232`; `infra/docker/docker-compose.yml:79-81` | In `NODE_ENV=production`, refuse to start (or serve only `/` and `/setup`) unless `enforce` or an explicit `CIVICOS_ALLOW_OPEN=1`. | S |
-| L-3 | Data protection | Low | Every official can list all accounts with email, last sign-in and whether the second step is on (shows which administrators lack it) | `app/src/app/api/auth/officials/route.ts:12-15` | Administrators see the full list. Others see name, office and institution only. | S |
-| L-4 | Security | Low | Upload size pre-checks trust `Content-Length`, and `formData()` reads a chunked body in full (authenticated, rate-limited) | `app/src/app/api/boundaries/route.ts:38-48`; `app/src/app/api/parcels/import/route.ts:31-40` | Refuse when the length is absent, or stream with a byte cap. The ingress `proxy-body-size` covers Helm. | S |
-| L-5 | Security | Low | No Origin / `Sec-Fetch-Site` check on mutating requests. SameSite=Lax alone does not stop same-site subdomains. | `app/src/lib/auth/official.ts:71-72` | Refuse cross-site `Sec-Fetch-Site` on mutating `/api/*` with a session cookie. | S |
-| L-6 | Performance | Low | Postgres write-through issues one statement per audit entry, entity or parcel (sequential round trips inside the transaction) | `app/src/lib/data/repo/postgres.ts:198-212,252-261,711` | Batch per topic with `jsonb_to_recordset`, as observations already do. | M |
-| L-7 | Performance | Low | Every page ships all five locales' messages (about 130 kB raw). The console baseline is about 460 kB first-load. | `app/src/lib/i18n/index.ts:6-10`; build output | Load the active locale only (dynamic import). | S |
+| L-1 | Security | Low | Rate-limit identity is the first `X-Forwarded-For` hop (chosen by the client unless the proxy overwrites it) | `app/src/lib/ops/rate-limit-core.ts:46-49`; `app/src/app/api/public-sites/[id]/subscribe/route.ts:20` | Take the right-most untrusted hop with a configured number of trusted proxies (`CIVICOS_TRUSTED_PROXIES`). | S — **Fixed in 610b252** |
+| L-2 | Security | Low | The app fails open without `CIVICOS_AUTH=enforce`, and `docker-compose` defaults to open | `app/src/middleware.ts:232`; `infra/docker/docker-compose.yml:79-81` | In `NODE_ENV=production`, refuse to start (or serve only `/` and `/setup`) unless `enforce` or an explicit `CIVICOS_ALLOW_OPEN=1`. | S — **Fixed in 610b252** |
+| L-3 | Data protection | Low | Every official can list all accounts with email, last sign-in and whether the second step is on (shows which administrators lack it) | `app/src/app/api/auth/officials/route.ts:12-15` | Administrators see the full list. Others see name, office and institution only. | S — **Fixed in 610b252** |
+| L-4 | Security | Low | Upload size pre-checks trust `Content-Length`, and `formData()` reads a chunked body in full (authenticated, rate-limited) | `app/src/app/api/boundaries/route.ts:38-48`; `app/src/app/api/parcels/import/route.ts:31-40` | Refuse when the length is absent, or stream with a byte cap. The ingress `proxy-body-size` covers Helm. | S — **Fixed in 610b252** |
+| L-5 | Security | Low | No Origin / `Sec-Fetch-Site` check on mutating requests. SameSite=Lax alone does not stop same-site subdomains. | `app/src/lib/auth/official.ts:71-72` | Refuse cross-site `Sec-Fetch-Site` on mutating `/api/*` with a session cookie. | S — **Fixed in 610b252** |
+| L-6 | Performance | Low | Postgres write-through issues one statement per audit entry, entity or parcel (sequential round trips inside the transaction) | `app/src/lib/data/repo/postgres.ts:198-212,252-261,711` | Batch per topic with `jsonb_to_recordset`, as observations already do. | M — **Fixed in 610b252** |
+| L-7 | Performance | Low | Every page ships all five locales' messages (about 130 kB raw). The console baseline is about 460 kB first-load. | `app/src/lib/i18n/index.ts:6-10`; build output | Load the active locale only (dynamic import). | S — **Fixed in 610b252** |
 | L-8 | Accessibility | Low | Scrollable lists in `InstitutionChain` cannot be reached by keyboard (axe `scrollable-region-focusable`, `/gov/coordination`) | `app/src/apps/_shared/InstitutionChain.tsx:294,329,365` | `tabIndex={0}` plus `role="region"` and `aria-label` on the scroll containers. | S — **Fixed in 101810d** |
 
 ## Critical
@@ -791,6 +791,9 @@ not exist.
 
 ### L-1. The rate-limit address can be spoofed
 
+**Fixed in 610b252.** One helper, `clientAddress()` (`app/src/lib/ops/rate-limit-core.ts`), for every per-address limit (middleware, `lib/ops/rate-limit.ts`, the exchange guard) and the subscription route. The server appends each connection's own address to `X-Forwarded-For` before Next.js reads the request (`app/src/lib/ops/peer-address.ts`, started first in `src/instrumentation.ts`; Next.js 15 exposes no socket address and keeps a caller's header), and the address is the hop `CIVICOS_TRUSTED_PROXIES` (default 0) from the right; `X-Real-IP` counts only behind a trusted proxy. Helm sets 1 (`app.trustedProxies`, ingress-nginx); the compose edge (it sets `X-Forwarded-For $remote_addr`) takes 1; on Vercel the server does not append (its edge replaces the header) and 0 stays right. Documented in `app/.env.example`, `infra/README.md`, the Helm README and Integration Register (rate limits). Tests: `app/src/lib/ops/client-address.test.ts` (spoofed first hops share one bucket through the middleware; a real Node server sees `6.6.6.6, 127.0.0.1`). Live against `next start`: 45 changes with 45 different spoofed first hops got 401 ×41, then 429.
+
+
 `clientAddress()` uses the first `X-Forwarded-For` hop
 (`lib/ops/rate-limit-core.ts:46-49`). The subscription route does the same
 (`subscribe/route.ts:20`). Behind proxies that append to the header (HAProxy
@@ -804,6 +807,9 @@ The Helm ingress adds its own per-address `limit-rps`, which mitigates this.
 
 ### L-2. The app is open unless enforcement is set
 
+**Fixed in 610b252.** `app/src/lib/auth/mode.ts` is the one place that decides, read by the middleware and every route that asked `CIVICOS_AUTH === 'enforce'`. A production build (`next build`/`next start`, the image, Vercel) enforces sign-in unless `CIVICOS_AUTH=open` or the review's `CIVICOS_ALLOW_OPEN=1` is set; `enforce` wins over both. An open production server writes a warning at every start (stdout and the log) and shows a "Sign-in is off" banner on every console page (`components/ui/OpenModeBanner.tsx`, root layout; not on the public sites, the cover or `/embed`); `/api/auth/official` reports `openInProduction`. Enforced without `CIVICOS_SESSION_SECRET`, the start-up output says why nobody can sign in. `next dev` and tests stay open. First run under the default: `/setup` sends to `/sign-in`, where the first administrator is made with the setup code (C-1). The CI jobs that read the console as the demo session (public sites audit, console accessibility audit, console smoke and OGC) start their server with `CIVICOS_AUTH=open` (`.github/workflows/ci.yml`); docker-compose, `app/.env.example`, `app/README.md` and the Helm README say so. Tests: `app/src/lib/auth/mode.test.ts`. Live: `next start` with no `CIVICOS_AUTH` answers 401 on `/api/audit` and redirects `/gov/home` and `/setup` to `/sign-in`; `/`, `/health` and `/api/setup` stay open.
+
+
 `gate()` returns early when `CIVICOS_AUTH !== 'enforce'` (`middleware.ts:232`).
 `docker-compose.yml:79-81` defaults it to empty. The Helm chart defaults to
 `enforce` (`values.yaml:49`), and the Integration Register 1.4 says to set it.
@@ -812,6 +818,9 @@ The Helm ingress adds its own per-address `limit-rps`, which mitigates this.
 explicitly.
 
 ### L-3. The account directory shows two-step status to every official
+
+**Fixed in 610b252.** `GET /api/auth/officials` gives administrators the full list (`full: true`) and every other official `{ id, name, office, institution }` (`full: false`); `OfficialAccounts` shows non-administrators that directory only. Test: `app/src/app/api/auth/officials/route.test.ts`.
+
 
 `GET /api/auth/officials` returns every account (email, role, institution,
 `lastSignIn`, `twoStepSince`) to any signed-in official
@@ -822,12 +831,18 @@ administrators have no second step.
 
 ### L-4. Upload pre-checks trust Content-Length
 
+**Fixed in 610b252.** `app/src/lib/net/body-limit.ts` (`readBytes`, `readText`, `readJson`, `readForm`): a declared length over the cap is refused before reading, and a body without one is read as a stream and cancelled the moment it passes the cap. Used by the boundary and parcel imports (multipart and JSON), case and site imports, district packs, XLIFF, bulk officers, site proposals (logos), both connected-system feeds, federation exchange, SensorThings writes, the OAuth token endpoint and the two public subscription forms. Tests: `app/src/lib/net/body-limit.test.ts` (a 16 MB chunked XLIFF upload is cut off after at most 10 × 256 kB; a scan fails if any route reads a whole body with `req.text()`, `formData()`, `arrayBuffer()` or `blob()`).
+
+
 The boundary and parcel imports check `content-length` and then call `formData()`
 (`boundaries/route.ts:38-48`, `parcels/import/route.ts:31-40`). A chunked body
 without a length is read in full. These routes are authenticated and limited by
 the `upload` scope, and the ingress `proxy-body-size` caps them in Helm.
 
 ### L-5. No cross-site check on changes
+
+**Fixed in 610b252.** `crossSiteRefusal()` in `app/src/middleware.ts`: a mutating `/api/*` request carrying `civicos_official` or `civicos_session` is refused (403) when `Sec-Fetch-Site` is `cross-site` or `same-site`; without that header, when its `Origin` is not the platform's host (the request's, `X-Forwarded-Host`, or `CIVICOS_PUBLIC_URL`'s) or is `null`. `SELF_AUTHENTICATED` routes and a bearer on `BEARER_ROUTES` are exempt. Tests: `app/src/middleware-cross-site.test.ts`.
+
 
 There is no Origin or `Sec-Fetch-Site` check on mutating requests, and the
 session cookie is `SameSite=Lax` (`lib/auth/official.ts:71-72`). A hostile page
@@ -840,6 +855,9 @@ that carry a session cookie.
 
 ### L-6. Postgres writes row by row
 
+**Fixed in 610b252.** `writeOps()` in `app/src/lib/data/repo/postgres.ts` writes each run of consecutive same-topic ops (audit entries in seq order, twin entities, keys, sources, runs, facilities, parcels) as one `insert … select … from jsonb_to_recordset` per 1,000 rows, keeping the order between topics; a record changed twice in one flush is written once at its latest state (Postgres refuses to update a row twice in one statement). The chain trigger sees the entries inserted earlier in the same statement. Tests: `app/src/lib/data/repo/postgres-batch.test.ts` (50 parcels and 50 audit entries are two statements) and a Postgres 16 integration case (2,500 parcels and 2,500 audit entries in one flush, read back by a new instance, chain intact); the whole `src/lib/data/repo` suite passes against Postgres 16.
+
+
 Audit entries, twin entities, keys and parcels are written one statement at a
 time inside the flush transaction (`lib/data/repo/postgres.ts:198-222,252-261`,
 loop at `:711`). Observations are already batched (`:223-236`). A parcel load of
@@ -849,6 +867,9 @@ loop at `:711`). Observations are already batched (`:223-236`). A parcel load of
 
 ### L-7. Every page ships every locale
 
+**Fixed in 610b252.** Browser bundles carry English only: `lib/i18n/bundled.ts` (every dictionary, server and tests) is replaced by `bundled.client.ts` in client builds (`next.config.mjs`). The root layout writes the nation's main and further official languages into the page before any script runs (`__CIVICOS_MESSAGES__`), so the first browser render matches the server's; `loadMessages()` fetches any other language as its own chunk (a language chosen in setup with the page open). `getMessages`, `nationMessages()` and `siteMessages()` are unchanged for callers. Build output (`next build`, before → after): the shared locale chunk 147.8 kB → 51.1 kB raw (47.0 → 18.4 kB gzip); first-load JS `/command` 450 → 421 kB, `/gov/home` 469 → 440 kB, `/gov/twin` 477 → 448 kB, `/setup` 277 → 248 kB, `/sign-in` 227 → 199 kB, `/health` 169 → 140 kB (pages that never loaded the dictionaries, e.g. `/` 244 kB, `/wallet` 114 kB, are unchanged). Tests: `app/src/lib/i18n/client-bundle.test.ts`.
+
+
 `lib/i18n/index.ts:6-10` imports `en`, `sw`, `ar`, `fr` and `yo` (about 130 kB
 raw) into the nation registry used by the root layout. Console pages start at
 about 460 kB first-load JS.
@@ -857,7 +878,7 @@ about 460 kB first-load JS.
 
 ### L-8. Scrollable lists cannot be reached by keyboard
 
-**Fixed in 101810d.** The nine scroll lists in `InstitutionChain` and the Update Center's sideways-scrolling tables and code samples are focusable named regions (`tabIndex={0}`, `role="region"`, `aria-label`).
+**Fixed in 101810d.** The nine scroll lists in `InstitutionChain` and the Update Center's sideways-scrolling tables and code samples are focusable named regions (`tabIndex={0}`, `role="region"`, `aria-label`). The citizen wallet's second `<main>` (the accessibility lane's note below) is **fixed in 610b252**: `PhoneShell` holds the page's one `<main id="main">` with a skip link to it, and the 14 wallet pages wrap it in a `<div>` (`app/src/components/ui/PhoneShell.test.ts`).
 
 
 `InstitutionChain.tsx:294,329,365` has `overflow-y-auto` lists without
@@ -881,7 +902,7 @@ focusable content (axe `scrollable-region-focusable`, 4 nodes on
 Smaller notes (not findings):
 
 - `/gov/sites/boundaries` and `/ministries/[id]/operations` have two `h1`.
-- `/wallet` has two `main` landmarks.
+- `/wallet` has two `main` landmarks. **Fixed in 610b252** (L-8).
 
 ## Checked and fine
 
