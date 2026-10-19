@@ -14,6 +14,7 @@ import { sessionSecret, sessionSecretProblem, accountById, sessionRevoked } from
 import { secondStepMissing, type Scope } from './roles';
 import { officerNow, substrateScope } from './substrate-officials';
 import { logger } from '@/lib/ops/log';
+import { providerMfaAccepted } from './sign-on-store';
 
 /** The key an ended session is kept under (lib/auth/officials.ts revokeSession): the token's SHA-256. */
 export const sessionKey = (token: string) => createHash('sha256').update(token, 'utf8').digest('hex');
@@ -56,8 +57,11 @@ export async function currentOfficial(): Promise<OfficialClaims | null> {
   if (!a || a.disabled) return null;
   // A session issued before the password last changed no longer counts.
   if (a.passwordChangedAt && c.iat < Math.floor(Date.parse(a.passwordChangedAt) / 1000)) return null;
+  // The second step still counts while what proved it is still in place: the account's authenticator app or a
+  // passkey, or, for an identity-provider sign-in, the provider's multi-factor sign-in while the policy accepts it.
+  const secondStep = c.via === 'oidc' ? providerMfaAccepted() : a.secondStepOn;
   return { ...c, name: a.name, office: a.office, role: a.role, institution: a.institution,
-    twoStep: !!c.twoStep && !!a.twoStepSince, twoStepRequired: a.twoStepRequired };
+    twoStep: !!c.twoStep && secondStep, twoStepRequired: a.twoStepRequired };
 }
 
 /** The name an action is recorded under: the verified official's, with their office. */

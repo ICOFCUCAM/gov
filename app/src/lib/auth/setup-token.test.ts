@@ -78,6 +78,18 @@ describe('the first administrator needs the one-time setup code (review C-1)', (
     expect(checkSetupCode(token, [])).toMatch(/expired/);
   });
 
+  it('never makes the first account for an identity-provider sign-in, nor any while the substrate is the sign-in method', async () => {
+    const { createAccountForIdentity } = await import('./officials');
+    const identity = { issuer: 'https://idp.gov.test', claim: 'sub', value: 'u-1' };
+    const input = { email: 'x@gov.test', name: 'X', office: 'O', role: 'administrator' };
+    expect(createAccountForIdentity(input, identity, 'Someone')).toEqual({ error: expect.stringMatching(/setup code/) });
+    process.env.CIVICOS_SETUP_TOKEN = 'operator-chosen-setup-token-0123456789';
+    await createAccount(first({ setupToken: 'operator-chosen-setup-token-0123456789' }), null);
+    expect(createAccountForIdentity(input, identity, 'J. Otieno')).toMatchObject({ role: 'administrator' });
+    substrate = {};
+    expect(createAccountForIdentity({ ...input, email: 'y@gov.test' }, { ...identity, value: 'u-2' }, 'J. Otieno')).toEqual({ error: expect.stringMatching(/substrate/) });
+  });
+
   it('limits wrong codes', () => {
     startServer();
     for (let i = 0; i < 10; i++) expect(checkSetupCode('WRONG-CODE', [])).toBe('That setup code is not right');

@@ -135,7 +135,7 @@ describe('signing out ends the session on the server (review M-1)', () => {
     const copy = /civicos_official=([^;]+)/.exec(r.headers.getSetCookie().find(c => c.startsWith('civicos_official='))!)![1]!;
     cookie = copy;
     expect(await currentOfficial()).toMatchObject({ name: 'A' });
-    await DELETE();
+    await DELETE(new NextRequest('http://localhost/api/auth/official', { method: 'DELETE' }));
     cookie = copy; // the browser forgot it; someone kept a copy
     expect(await currentOfficial()).toBeNull();
     delete process.env.CIVICOS_LOCAL_ACCOUNTS;

@@ -10,7 +10,8 @@ import Link from 'next/link';
 import { useSignIn, officialLabel, officialScope } from '@/lib/official';
 import { ROLES, roleOf, type OfficialRole } from '@/lib/auth/roles';
 
-interface Account { resetPendingUntil?: string; id: string; email: string; name: string; office: string; createdAt: string; createdBy: string; disabled?: boolean; lastSignIn?: string; role?: OfficialRole; institution?: string; twoStepSince?: string; twoStepRequired?: boolean }
+interface Account { resetPendingUntil?: string; id: string; email: string; name: string; office: string; createdAt: string; createdBy: string; disabled?: boolean; lastSignIn?: string; role?: OfficialRole; institution?: string; twoStepSince?: string; twoStepRequired?: boolean;
+  passkeys?: { id: string }[]; identity?: { claim: string; value: string }; noPassword?: boolean }
 interface Institution { id: string; name: string; status: string }
 
 const input = 'focus-ring w-full rounded-[3px] border border-line bg-surface px-2.5 py-2 text-[14px] text-ink';
@@ -154,10 +155,12 @@ export function OfficialAccounts() {
                   <td>{day(a.createdAt)}<div className="text-ink-muted">by {a.createdBy}</div></td>
                   <td>{day(a.lastSignIn)}</td>
                   <td>
-                    {a.twoStepSince ? <span className="text-ok">On</span> : a.twoStepRequired ? <span className="text-warn">Required, not set up</span> : <span className="text-ink-muted">Off</span>}
-                    {admin && a.twoStepSince && s.official?.sub !== `local:${a.id}` ? (
+                    {a.twoStepSince || a.passkeys?.length ? <span className="text-ok">On</span> : a.twoStepRequired ? <span className="text-warn">Required, not set up</span> : <span className="text-ink-muted">Off</span>}
+                    {a.passkeys?.length ? <div className="text-[12px] text-ink-muted">{a.passkeys.length} passkey{a.passkeys.length === 1 ? '' : 's'}</div> : null}
+                    {a.identity ? <div className="text-[12px] text-ink-muted">Government sign-in ({a.identity.claim}){a.noPassword ? ', no platform password' : ''}</div> : null}
+                    {admin && (a.twoStepSince || a.passkeys?.length) && s.official?.sub !== `local:${a.id}` ? (
                       <button type="button" className="ms-2 text-[12px] text-link underline" disabled={busy}
-                        onClick={() => window.confirm(`Reset ${a.name}'s second step? Do this only when their phone is lost; they set it up again at their next sign-in.`) && call(`/api/auth/officials/${a.id}`, { resetTwoStep: true }, `${a.name}'s second step was reset`)}>Reset</button>
+                        onClick={() => window.confirm(`Reset ${a.name}'s second step? Do this only when their phone or passkeys are lost: their authenticator app and passkeys are removed, and they set them up again at their next sign-in.`) && call(`/api/auth/officials/${a.id}`, { resetTwoStep: true }, `${a.name}'s second step was reset`)}>Reset</button>
                     ) : null}
                   </td>
                   <td>{a.disabled ? <span className="text-alert">Disabled</span> : <span className="text-ok">Active</span>}{a.resetPendingUntil ? <div className="text-[12px] text-warn">Reset code waiting</div> : null}</td>

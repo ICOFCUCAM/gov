@@ -81,3 +81,16 @@ describe('role-less sessions and accounts (deny by default)', () => {
     expect(roleOf({ createdAt: '2026-12-01T00:00:00Z' })).toBe('officer');
   });
 });
+
+describe('signing in with the identity provider and passkeys', () => {
+  it('keeps the provider for administrators, and one\'s own passkeys open to every role', async () => {
+    const { mutationRule } = await import('./roles');
+    expect(mutationRule('/api/auth/officials/identity-provider')).toBe('admin');
+    expect(apiPermission({ role: 'signatory' }, 'POST', '/api/auth/officials/identity-provider')).toMatch(/administrator/);
+    expect(apiPermission({ role: 'administrator' }, 'POST', '/api/auth/officials/identity-provider')).toBeNull();
+    expect(mutationRule('/api/auth/passkeys')).toBe('any-role');
+    expect(mutationRule('/api/auth/passkeys/options')).toBe('any-role');
+    // Setting up a passkey is how an official the policy requires a second step of gets one.
+    expect(apiPermission({ role: 'auditor', twoStepRequired: true }, 'POST', '/api/auth/passkeys')).toBeNull();
+  });
+});
