@@ -7,6 +7,7 @@
 
 import { randomBytes, scryptSync, timingSafeEqual, randomUUID, createHash } from 'node:crypto';
 import { matchStep, newSecret, otpauthUri } from './totp';
+import { seal, open as openSealed } from '@/lib/crypto/envelope';
 import { recordAudit, getMinistry } from '@/lib/data/store';
 import { isRole, roleLabel, roleOf, type OfficialRole } from './roles';
 
@@ -24,9 +25,11 @@ export interface OfficialAccount {
   role?: OfficialRole;
   /** Ministry id; absent for officials serving the whole government. */
   institution?: string;
-  /** Second sign-in step (authenticator app), once confirmed. Never leaves the server. */
+  /** Second sign-in step (authenticator app), once confirmed. Never leaves the server. The secret is
+   *  sealed with AES-256-GCM under CIVICOS_DATA_KEK (lib/crypto/envelope.ts); plaintext from before that is
+   *  still read and sealed on its next use. */
   twoStep?: { secret: string; since: string; lastStep: number; recovery: string[] };
-  /** A second step being set up, until its first code is confirmed. */
+  /** A second step being set up, until its first code is confirmed (secret sealed the same way). */
   twoStepPending?: { secret: string; startedAt: string };
   /** When the password last changed: sessions issued before it no longer count. */
   passwordChangedAt?: string;
@@ -157,7 +160,9 @@ export function checkPassword(emailRaw: string, password: string, now = Date.now
   }
   if (a.twoStep) {
     if (!code?.trim()) return { error: 'Enter the 6-digit code from your authenticator app', needsCode: true };
-    if (!useSecondStep(a, code, now)) {
+    const used = useSecondStep(a, code, now);
+    if (typeof used === 'object') return { error: used.error, needsCode: true };
+    if (!used) {
       d.failures[email] = [...recent, now];
       recordAudit(a.name, 'auth.sign-in', `Official:${a.id}`, 'denied', 'wrong second-step code');
       return { error: 'That code is not right; enter the current one (or a recovery code)', needsCode: true };
@@ -172,11 +177,35 @@ export function checkPassword(emailRaw: string, password: string, now = Date.now
 const sha = (v: string) => createHash('sha256').update(v).digest('hex');
 const normRecovery = (c: string) => c.toLowerCase().replace(/[^a-z0-9]/g, '');
 
+const totpAad = (a: OfficialAccount, pending = false) => `${pending ? 'totp-pending' : 'totp'}:${a.id}`;
+
+/** The plaintext authenticator secret; seals it (again) under the current key when it was plaintext or under an old key. */
+function totpSecret(a: OfficialAccount, holder: { secret: string }, pending = false): string | { error: string } {
+  const r = openSealed(holder.secret, totpAad(a, pending));
+  if ('error' in r) return r;
+  if (r.reseal) holder.secret = seal(r.plain, totpAad(a, pending));
+  return r.plain;
+}
+
+const KEY_UNREADABLE = 'The server cannot read this account\'s second-step key (CIVICOS_DATA_KEK missing or changed); ask an administrator';
+
 /** Accept a current authenticator code (each only once) or an unused recovery code (then spent). */
-function useSecondStep(a: OfficialAccount, code: string, now: number): boolean {
+function useSecondStep(a: OfficialAccount, code: string, now: number): boolean | { error: string } {
   const t = a.twoStep!;
-  const step = matchStep(t.secret, code, now, t.lastStep);
+  const secret = totpSecret(a, t);
+  if (typeof secret !== 'string') {
+    recordAudit(a.name, 'auth.two-step.key', `Official:${a.id}`, 'error', secret.error);
+    // Recovery codes are hashes, not sealed: they still work while the key is unreadable.
+    if (!useRecovery(a, code)) return { error: KEY_UNREADABLE };
+    return true;
+  }
+  const step = matchStep(secret, code, now, t.lastStep);
   if (step !== null) { t.lastStep = step; return true; }
+  return useRecovery(a, code);
+}
+
+function useRecovery(a: OfficialAccount, code: string): boolean {
+  const t = a.twoStep!;
   const h = sha(normRecovery(code));
   const i = t.recovery.indexOf(h);
   if (i >= 0 && normRecovery(code).length >= 10) {
@@ -208,7 +237,7 @@ export function startTwoStep(id: string, issuer: string): { secret: string; uri:
   if (!a) return { error: 'No such account' };
   if (a.twoStep) return { error: 'The second step is already set up; turn it off first to set up another app' };
   const secret = newSecret();
-  a.twoStepPending = { secret, startedAt: new Date().toISOString() };
+  a.twoStepPending = { secret: seal(secret, totpAad(a, true)), startedAt: new Date().toISOString() };
   return { secret, uri: otpauthUri(secret, a.email, issuer) };
 }
 
@@ -216,10 +245,12 @@ export function startTwoStep(id: string, issuer: string): { secret: string; uri:
 export function confirmTwoStep(id: string, code: string, now = Date.now()): { recoveryCodes: string[] } | { error: string } {
   const a = db().accounts.find(x => x.id === id);
   if (!a?.twoStepPending) return { error: 'Start setting up the second step first' };
-  const step = matchStep(a.twoStepPending.secret, code, now);
+  const pending = totpSecret(a, a.twoStepPending, true);
+  if (typeof pending !== 'string') return { error: 'Start setting up the second step again (the key being set up cannot be read)' };
+  const step = matchStep(pending, code, now);
   if (step === null) return { error: 'That code is not right; check the time on your phone and enter the current code' };
   const recoveryCodes = Array.from({ length: 10 }, () => { const h = randomBytes(5).toString('hex'); return `${h.slice(0, 5)}-${h.slice(5)}`; });
-  a.twoStep = { secret: a.twoStepPending.secret, since: new Date(now).toISOString(), lastStep: step, recovery: recoveryCodes.map(c => sha(normRecovery(c))) };
+  a.twoStep = { secret: seal(pending, totpAad(a)), since: new Date(now).toISOString(), lastStep: step, recovery: recoveryCodes.map(c => sha(normRecovery(c))) };
   delete a.twoStepPending;
   recordAudit(a.name, 'auth.two-step.on', `Official:${a.id}`, 'ok', 'authenticator app');
   return { recoveryCodes };
@@ -232,7 +263,9 @@ export function removeTwoStep(id: string, opts: { code?: string; by: string; res
   if (!a.twoStep) { delete a.twoStepPending; return pub(a); }
   if (!opts.reset) {
     if (twoStepRequiredFor(a)) return { error: 'This installation requires the second step for you; an administrator can reset it if your phone is lost' };
-    if (!opts.code || !useSecondStep(a, opts.code, now)) return { error: 'Enter a current code to turn the second step off' };
+    const used = opts.code ? useSecondStep(a, opts.code, now) : false;
+    if (typeof used === 'object') return used;
+    if (!used) return { error: 'Enter a current code to turn the second step off' };
   }
   delete a.twoStep; delete a.twoStepPending;
   recordAudit(opts.by, opts.reset ? 'auth.two-step.reset' : 'auth.two-step.off', `Official:${a.id}`, 'ok', a.name);
