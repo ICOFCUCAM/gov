@@ -5,6 +5,11 @@ import { loadDistricts, loadNationGeography } from '@/lib/map/geography';
 import { pickActive } from '@/lib/map/boundary-active';
 import { loadAdmin2 } from '@/lib/geo/admin2';
 import { boundaryItems } from '@/lib/twin/ogc-boundaries';
+import proj4 from 'proj4';
+import { getBoundaryVersion } from './boundaries';
+import { shapefileZip, geoPackage, UTM37S_PRJ, WGS84_PRJ } from '@/lib/geo/boundary-fixtures';
+import { countVertices } from '@/lib/geo/boundary-simplify';
+import type { Feature } from '@/lib/geo/boundary-files';
 
 const SOURCE = { publisher: 'Survey of Kenya', licence: 'Open Government Licence', year: '2024' };
 let regions: { type: 'FeatureCollection'; features: { type: 'Feature'; properties: Record<string, string>; geometry: unknown }[] };
@@ -114,4 +119,52 @@ describe('national boundary versions', () => {
     expect(pickActive(vs, 'KEN', 1, new Date('2026-06-01'))?.id).toBe('c');
     expect(pickActive(vs, 'UGA', 1)).toBeNull();
   });
+
+  it('reads a zipped Shapefile in UTM (reprojected from its .prj) and a GeoPackage, matching every region', async () => {
+    const t = proj4(UTM37S_PRJ);
+    const conv = (c: unknown): unknown => (Array.isArray(c) && typeof c[0] === 'number' ? t.forward(c as [number, number]) : Array.isArray(c) ? c.map(conv) : c);
+    const utm = regions.features.map(f => ({ ...f, geometry: { ...(f.geometry as object), coordinates: conv((f.geometry as { coordinates: unknown }).coordinates) } })) as Feature[];
+    const shp = await proposeBoundaries({ level: 1, bytes: shapefileZip(utm, ['shapeName', 'shapeISO'], { prj: UTM37S_PRJ, cpg: 'UTF-8' }), fileName: 'ken_adm1.zip', source: SOURCE }, 'Officer A', { dryRun: true });
+    if ('error' in shp) throw new Error(shp.error);
+    expect(shp.check.errors).toEqual([]);
+    expect(shp.check.summary).toEqual(expect.objectContaining({ units: 47, matched: 47, reprojectedFrom: 'WGS_1984_UTM_Zone_37S', fields: ['shapeName', 'shapeISO'] }));
+    expect(shp.check.summary.areaKm2 / shp.check.summary.previousAreaKm2!).toBeCloseTo(1, 2);
+    expect(shp.check.notes!.join(' ')).toMatch(/zipped Shapefile.*Reprojected from "WGS_1984_UTM_Zone_37S"/);
+
+    const gpkg = await proposeBoundaries({ level: 1, bytes: await geoPackage(regions.features as Feature[], ['shapeName', 'shapeISO'], { id: 4326, name: 'WGS 84', organization: 'EPSG', code: 4326, definition: WGS84_PRJ }), source: SOURCE }, 'Officer A');
+    if ('error' in gpkg) throw new Error(gpkg.error);
+    expect(gpkg.check.summary).toEqual(expect.objectContaining({ units: 47, matched: 47 }));
+    expect(gpkg.version!.format).toBe('geopackage');
+    expect(gpkg.check.summary.reprojectedFrom).toBeUndefined();
+  }, 60_000);
+
+  it('simplifies a heavy file on the server: every unit kept, shared borders still shared, recorded with the version', async () => {
+    const before = countVertices(regions.features as Feature[]);
+    const r = await proposeBoundaries({ level: 1, text: JSON.stringify(regions), source: SOURCE }, 'Officer A', { simplify: { aboveVertices: 1000, targetVertices: Math.round(before / 5) } });
+    if ('error' in r) throw new Error(r.error);
+    const s = r.check.summary.simplified!;
+    expect(s).toEqual(expect.objectContaining({ verticesBefore: before, units: 47 }));
+    expect(s.verticesAfter).toBeLessThan(before / 3);
+    expect(s.minAreaKm2).toBeGreaterThan(0);
+    expect(r.check.summary).toEqual(expect.objectContaining({ units: 47, matched: 47, vertices: s.verticesAfter }));
+    expect(r.check.notes!.join(' ')).toMatch(/Simplified on the server keeping shared borders/);
+    expect(r.check.summary.areaKm2 / r.check.summary.previousAreaKm2!).toBeCloseTo(1, 1);
+    expect(r.check.warnings.join(' ')).not.toMatch(/overlap/);
+    const v = getBoundaryVersion(r.version!.id)!;
+    expect(v.simplified).toEqual(s);
+    // Points two neighbours shared before: after simplification, both keep them or neither does.
+    const key = (p: number[]) => `${p[0]!.toFixed(6)},${p[1]!.toFixed(6)}`;
+    const pts = (g: unknown) => new Set((JSON.stringify((g as { coordinates: unknown }).coordinates).match(/-?[\d.]+,-?[\d.]+/g) ?? []).map(x => key(x.split(',').map(Number))));
+    const orig = new Map(regions.features.map(f => [f.properties.shapeISO!, pts(f.geometry)]));
+    const now = new Map(v.units.map(u => [u.code, pts(u.geometry)]));
+    let sharedBefore = 0, sharedAfter = 0;
+    const codes = [...orig.keys()];
+    for (let i = 0; i < codes.length; i++) for (let j = i + 1; j < codes.length; j++) {
+      const a = orig.get(codes[i]!)!, b = orig.get(codes[j]!)!;
+      const na = now.get(codes[i]!)!, nb = now.get(codes[j]!)!;
+      for (const k of a) if (b.has(k)) { sharedBefore++; expect(na.has(k)).toBe(nb.has(k)); if (na.has(k)) sharedAfter++; }
+    }
+    expect(sharedBefore).toBeGreaterThan(0);
+    expect(sharedAfter).toBeGreaterThan(0);
+  }, 60_000);
 });

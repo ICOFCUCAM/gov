@@ -1,9 +1,11 @@
 'use client';
 
 // The nation's own boundaries (map plan phase 4). The mapping authority loads
-// its boundary file (GeoJSON or TopoJSON, longitude/latitude) for regions or
+// its boundary file (GeoJSON, TopoJSON, a zipped Shapefile or a GeoPackage;
+// other coordinate systems are reprojected on the server) for regions or
 // districts with its source, licence and the date it took effect; the server
-// checks it first (nothing is recorded) and says what it found. Recording it
+// checks it first (nothing is recorded) and says what it found, including
+// any reprojection and the simplification of heavy files. Recording it
 // makes a proposal; a different official publishes it, and from its date
 // every map draws it and credits it. Every version is kept; withdrawing a
 // published one hands the map back to the one before. Rules:
@@ -21,6 +23,21 @@ type Row = BoundaryVersion & { unitCount: number; inForce: boolean };
 type Fc = { type: 'FeatureCollection'; features: { type: 'Feature'; properties?: Record<string, unknown> | null; geometry: unknown }[] };
 const LEVEL: Record<1 | 2, string> = { 1: 'Regions', 2: 'Districts' };
 const STATE: Record<BoundaryVersion['state'], string> = { proposed: 'Waiting to be published', published: 'Published', withdrawn: 'Withdrawn' };
+
+/** Send a binary boundary file (zipped Shapefile, GeoPackage) as multipart/form-data, with the other fields as JSON. */
+async function postFile<T>(url: string, file: File, meta: unknown): Promise<T> {
+  const form = new FormData();
+  form.set('file', file);
+  form.set('body', JSON.stringify(meta));
+  const r = await fetch(url, { method: 'POST', body: form });
+  const j = await r.json().catch(() => ({})) as T & { error?: string };
+  if (!r.ok) {
+    const e = new Error(j.error ?? `Refused (${r.status})`) as Error & { body?: unknown; status?: number };
+    e.body = j; e.status = r.status;
+    throw e;
+  }
+  return j;
+}
 
 /** Read the file in the browser for the preview and its field names (the server checks it again). */
 function readFc(text: string): Fc | null {
@@ -63,6 +80,13 @@ function CheckResult({ check }: { check: BoundaryCheck }) {
         {s.units} unit{s.units === 1 ? '' : 's'}, {s.matched} matched to the official list · {s.areaKm2.toLocaleString()} km²
         {s.previousAreaKm2 ? ` (the map now draws ${s.previousAreaKm2.toLocaleString()} km² in ${s.previousUnits} units)` : ''}
       </p>
+      {s.reprojectedFrom ? <p className="text-ink-soft">Reprojected on the server from <strong>{s.reprojectedFrom}</strong> to longitude/latitude (WGS 84).</p> : null}
+      {s.simplified ? (
+        <p className="text-ink-soft">
+          Simplified on the server keeping shared borders: {s.simplified.verticesBefore.toLocaleString()} points to {s.simplified.verticesAfter.toLocaleString()} (smallest detail kept {s.simplified.minAreaKm2} km²); all {s.simplified.units} units kept. The full-detail file is recorded by its SHA-256.
+        </p>
+      ) : s.vertices ? <p className="text-ink-muted">{s.vertices.toLocaleString()} points, kept at full detail.</p> : null}
+      {check.notes?.length ? <ul className="list-disc space-y-0.5 ps-5 text-ink-muted">{check.notes.map((n, i) => <li key={i}>{n}</li>)}</ul> : null}
       {check.errors.length ? (
         <ul className="list-disc space-y-0.5 ps-5 text-alert" role="alert">{check.errors.slice(0, 12).map((e, i) => <li key={i}>{e}</li>)}{check.errors.length > 12 ? <li>and {check.errors.length - 12} more</li> : null}</ul>
       ) : <p className="text-ok">No errors: the boundaries can be recorded.</p>}
@@ -76,7 +100,8 @@ export function BoundariesPanel() {
   const [rows, setRows] = React.useState<Row[] | null>(null);
   const [agency, setAgency] = React.useState<{ id: string; name: string } | null>(null);
   const [error, setError] = React.useState('');
-  const [file, setFile] = React.useState<{ name: string; text: string; fc: Fc | null } | null>(null);
+  const [file, setFile] = React.useState<{ name: string; text: string; fc: Fc | null; blob?: File } | null>(null);
+  const [maxBytes, setMaxBytes] = React.useState(100_000_000);
   const [f, setF] = React.useState({ level: '1', publisher: '', licence: '', url: '', year: '', validFrom: new Date().toISOString().slice(0, 10), codeField: '', nameField: '', note: '' });
   const [confirmFewer, setConfirmFewer] = React.useState(false);
   const [check, setCheck] = React.useState<BoundaryCheck | null>(null);
@@ -88,19 +113,24 @@ export function BoundariesPanel() {
 
   const reload = React.useCallback(async () => {
     try {
-      const j = await callApi<{ versions: Row[]; mappingAgency: { id: string; name: string } | null }>('/api/boundaries');
+      const j = await callApi<{ versions: Row[]; mappingAgency: { id: string; name: string } | null; maxBytes?: number }>('/api/boundaries');
       setRows(j.versions); setAgency(j.mappingAgency); setError('');
+      if (j.maxBytes) setMaxBytes(j.maxBytes);
     } catch (e) { setError((e as Error).message); }
   }, []);
   React.useEffect(() => { void reload(); }, [reload]);
 
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { setF(s => ({ ...s, [k]: e.target.value })); setCheck(null); };
-  const fields = React.useMemo(() => Object.keys(file?.fc?.features[0]?.properties ?? {}), [file]);
+  const [serverFields, setServerFields] = React.useState<string[]>([]);
+  const fields = React.useMemo(() => (file?.fc ? Object.keys(file.fc.features[0]?.properties ?? {}) : serverFields), [file, serverFields]);
 
   async function onFile(x: File | undefined) {
     setCheck(null); setMsg(null);
+    setServerFields([]);
     if (!x) { setFile(null); return; }
-    if (x.size > 30_000_000) { setMsg({ ok: false, text: 'The file is larger than 30 MB: simplify it first (for example with mapshaper).' }); return; }
+    if (x.size > maxBytes) { setMsg({ ok: false, text: `The file is larger than ${Math.round(maxBytes / 1_000_000)} MB: load each level as its own file, or simplify it first.` }); return; }
+    // Zipped Shapefiles and GeoPackages are read on the server (the check lists their fields).
+    if (/\.(zip|gpkg)$/i.test(x.name)) { setFile({ name: x.name, text: '', fc: null, blob: x }); return; }
     const text = await x.text();
     const fc = readFc(text);
     setFile({ name: x.name, text, fc });
@@ -112,15 +142,19 @@ export function BoundariesPanel() {
     if (!file) { setMsg({ ok: false, text: 'Attach the boundary file.' }); return; }
     setBusy(true); setMsg(null);
     try {
-      const r = await callApi<{ check: BoundaryCheck; version?: BoundaryVersion; dryRun: boolean }>(`/api/boundaries${dryRun ? '?dryRun=1' : ''}`, {
-        level: Number(f.level), text: file.text, validFrom: f.validFrom, codeField: f.codeField, nameField: f.nameField, note: f.note, confirmFewer, by: official,
+      const meta = {
+        level: Number(f.level), validFrom: f.validFrom, codeField: f.codeField, nameField: f.nameField, note: f.note, confirmFewer, by: official,
         source: { publisher: f.publisher, licence: f.licence, url: f.url, year: f.year },
-      });
+      };
+      const url = `/api/boundaries${dryRun ? '?dryRun=1' : ''}`;
+      const r = file.blob ? await postFile<{ check: BoundaryCheck; version?: BoundaryVersion; dryRun: boolean }>(url, file.blob, meta)
+        : await callApi<{ check: BoundaryCheck; version?: BoundaryVersion; dryRun: boolean }>(url, { ...meta, text: file.text });
       setCheck(r.check);
+      if (r.check.summary.fields) setServerFields(r.check.summary.fields);
       if (!dryRun) { setMsg({ ok: true, text: `Recorded as version ${r.version!.n} of the ${LEVEL[r.version!.level].toLowerCase()}: a different official publishes it.` }); setFile(null); await reload(); }
     } catch (e) {
       const b = (e as Error & { body?: { check?: BoundaryCheck } }).body;
-      if (b?.check) setCheck(b.check);
+      if (b?.check) { setCheck(b.check); if (b.check.summary.fields) setServerFields(b.check.summary.fields); }
       setMsg({ ok: false, text: (e as Error).message });
     } finally { setBusy(false); }
   }
@@ -172,8 +206,9 @@ export function BoundariesPanel() {
           <label className={label}>Level
             <select className={`${input} mt-1`} value={f.level} onChange={set('level')}><option value="1">Regions</option><option value="2">Districts</option></select>
           </label>
-          <label className={`${label} sm:col-span-2`}>File (GeoJSON or TopoJSON, longitude/latitude WGS 84)
-            <input type="file" accept=".geojson,.json,.topojson,application/geo+json,application/json" className={`${input} mt-1`} onChange={e => void onFile(e.target.files?.[0])} />
+          <label className={`${label} sm:col-span-2`}>File (GeoJSON, TopoJSON, Shapefile as .zip with its .dbf, .prj and .cpg, or GeoPackage .gpkg)
+            <input type="file" accept=".geojson,.json,.topojson,.zip,.gpkg,application/geo+json,application/json,application/zip,application/geopackage+sqlite3" className={`${input} mt-1`} onChange={e => void onFile(e.target.files?.[0])} />
+            <span className="mt-1 block text-[12px] font-normal text-ink-muted">Other coordinate systems are reprojected from the .prj or the GeoPackage&rsquo;s reference; files over 200,000 points or 5 MB are simplified on the server, keeping shared borders.</span>
           </label>
           <label className={label}>Published by
             <input className={`${input} mt-1`} value={f.publisher} onChange={set('publisher')} maxLength={200} placeholder="National mapping agency" required />

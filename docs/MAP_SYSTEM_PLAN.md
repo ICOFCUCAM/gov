@@ -179,15 +179,22 @@ layouts. The fix is one shared map engine grown from it.
   (diamond, triangle, square, circle) and colour, a pulse for the gravest, a
   tether to the reporting institution, linked to its Incidents tab.
 - **Phase 4, boundary versions, done.** The mapping authority loads its own
-  regions or districts (GeoJSON/TopoJSON, WGS 84) at `/gov/sites/boundaries`;
-  the server checks CRS, rings and winding, codes against ISO 3166-2,
+  regions or districts (GeoJSON, TopoJSON, a zipped Shapefile or a
+  GeoPackage) at `/gov/sites/boundaries`; Shapefiles and GeoPackages are
+  read on the server in plain JavaScript and reprojected to WGS 84 from
+  their .prj or spatial reference (UTM, national grids; unreadable systems
+  refused by name), names in the .cpg encoding; files over 200,000 points
+  or 5 MB are simplified on a shared topology (borders stay shared, no unit
+  dropped; points before/after and tolerance recorded,
+  `lib/geo/boundary-files.ts`, `lib/geo/boundary-simplify.ts`); the server
+  checks CRS, rings and winding, codes against ISO 3166-2,
   districts' regions from the map, coverage, overlaps and fewer units; a
   different official publishes; versions kept with SHA-256 and a date in
   force (bitemporal: in force on a date, as known now or as known then).
   The version in force replaces the bundled shapes on every map and in the
   position checks, credited, and is the OGC collection `boundaries`
-  (`lib/data/boundaries.ts`, `lib/map/boundary-active.ts`). Shapefile and
-  GeoPackage need converting first.
+  (`lib/data/boundaries.ts`, `lib/map/boundary-active.ts`). Open: the
+  full-detail shapes beside a simplified version (two detail levels).
 - **Phase 5, done: the ministry maps.** All 30 map panels of the ministry
   apps draw the installed nation's real regions (19 had invented
   geography: dot grids, hex grids, seeded positions, a schematic city; 11

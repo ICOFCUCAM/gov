@@ -1,10 +1,16 @@
 // The nation's own boundaries (map plan phase 4: boundary sources with versions).
 //
-// The mapping authority loads its administrative boundaries (GeoJSON or
-// TopoJSON, longitude/latitude) for a level — regions (1) or districts (2) —
+// The mapping authority loads its administrative boundaries (GeoJSON,
+// TopoJSON, a zipped Shapefile or a GeoPackage: lib/geo/boundary-files.ts) for a level — regions (1) or districts (2) —
 // with the source, licence and the date they took legal effect. The server
 // checks them before anyone can publish:
-// - longitude/latitude (WGS 84): projected coordinates in metres are refused;
+// - longitude/latitude (WGS 84): a Shapefile's .prj or a GeoPackage's
+//   spatial reference is reprojected (UTM, national grids, other datums) or
+//   refused naming the system; GeoJSON in other systems and bare
+//   coordinates in metres are refused;
+// - heavy files (over 200,000 points, or 5 MB) are simplified on a shared
+//   topology (lib/geo/boundary-simplify.ts): borders stay shared, no unit is
+//   dropped; points before and after and the tolerance are recorded;
 // - polygons only, rings closed, wound the way the map expects (fixed, noted);
 // - every unit has a code and a name, codes unique; codes and names matched to
 //   the nation's official subdivisions (ISO 3166-2), and the rest listed;
@@ -20,7 +26,8 @@
 
 import { createHash } from 'node:crypto';
 import { geoArea, geoCentroid, geoContains } from 'd3-geo';
-import { feature as topoFeature } from 'topojson-client';
+import { readBoundaryFile, type BoundaryFormat, type Feature } from '@/lib/geo/boundary-files';
+import { countVertices, needsSimplifying, simplifyFeatures, SIMPLIFY_TARGET_VERTICES, type Simplification } from '@/lib/geo/boundary-simplify';
 import { recordAudit } from '@/lib/data/store';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
@@ -29,7 +36,7 @@ import type { Geom } from '@/lib/geo/admin1';
 import { nameKeys } from '@/lib/map/names';
 import { pickActive, type ActiveBoundary, type BoundarySource, type BoundaryUnit } from '@/lib/map/boundary-active';
 
-export type { BoundarySource, BoundaryUnit };
+export type { BoundarySource, BoundaryUnit, BoundaryFormat, Simplification };
 export type Level = 1 | 2;
 
 export interface BoundaryCheck {
@@ -51,7 +58,18 @@ export interface BoundaryCheck {
     rewound: number;
     /** Fewer units than the boundaries in force. */
     fewer: boolean;
+    /** Points in the file as read, and as recorded (after any simplification). */
+    vertices?: number;
+    /** The file was simplified on the server: how, and to how many points. */
+    simplified?: Simplification;
+    /** The coordinate system the file was in, and whether it was reprojected. */
+    crs?: string;
+    reprojectedFrom?: string;
+    /** Attribute fields of the file (to choose the code and name fields). */
+    fields?: string[];
   };
+  /** How the file was read: format, reprojection, encoding, layer, simplification. */
+  notes?: string[];
 }
 
 export interface BoundaryVersion {
@@ -67,7 +85,11 @@ export interface BoundaryVersion {
   sha256: string;
   /** SHA-256 of the uploaded file as received. */
   fileSha256: string;
-  format: 'geojson' | 'topojson';
+  format: BoundaryFormat;
+  /** Set when the shapes were simplified on the server (the full-detail file is kept only as its SHA-256, fileSha256). */
+  simplified?: Simplification;
+  /** The coordinate system the file was reprojected from. */
+  reprojectedFrom?: string;
   check: BoundaryCheck;
   state: 'proposed' | 'published' | 'withdrawn';
   proposedBy: string; proposedAt: string;
@@ -83,7 +105,8 @@ const g = globalThis as unknown as { __civicosBoundaries?: Db };
 const db = (): Db => { const d = (g.__civicosBoundaries ??= { versions: [], seq: 1 }); d.versions ??= []; d.seq ??= 1; return d; };
 export function resetBoundaries(): void { g.__civicosBoundaries = undefined; }
 
-export const MAX_BOUNDARY_BYTES = 30_000_000;
+/** Largest file accepted (zipped Shapefiles and GeoPackages travel as multipart uploads). */
+export const MAX_BOUNDARY_BYTES = 100_000_000;
 export const MAX_BOUNDARY_UNITS = 6000;
 const now = () => new Date().toISOString();
 const clean = (s: unknown, max = 200) => String(s ?? '').replace(/[\u0000-\u001f]/g, ' ').trim().slice(0, max);
@@ -91,28 +114,6 @@ const R_KM = 6371.0088;
 
 const CODE_FIELDS = ['iso_3166_2', 'ISO_3166_2', 'iso3166_2', 'shapeISO', 'iso', 'ISO', 'code', 'CODE', 'pcode', 'PCODE', 'ADM2_PCODE', 'ADM1_PCODE', 'HASC_2', 'HASC_1', 'id'];
 const NAME_FIELDS = ['name', 'NAME', 'shapeName', 'name_en', 'NAME_EN', 'ADM2_EN', 'ADM1_EN', 'NAME_2', 'NAME_1', 'admin_name'];
-
-type Feature = { type: 'Feature'; properties?: Record<string, unknown> | null; geometry?: { type: string; coordinates?: unknown } | null; id?: unknown };
-
-/** Read an uploaded file into features, or say why not. */
-function readFeatures(text: string, format: 'geojson' | 'topojson'): Feature[] | { error: string } {
-  let j: unknown;
-  try { j = JSON.parse(text); } catch { return { error: 'The file is not valid JSON' }; }
-  const o = j as { type?: string; features?: Feature[]; objects?: Record<string, unknown>; crs?: { properties?: { name?: string } } };
-  const crs = o.crs?.properties?.name;
-  if (crs && !/CRS84|EPSG:?:?4326/i.test(crs)) return { error: `The file is in ${crs}: convert it to longitude/latitude (WGS 84, EPSG:4326) first` };
-  if (format === 'topojson' || o.type === 'Topology') {
-    if (o.type !== 'Topology' || !o.objects) return { error: 'Not a TopoJSON topology' };
-    const name = Object.keys(o.objects)[0];
-    if (!name) return { error: 'The topology holds no objects' };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const fc = topoFeature(o as any, o.objects[name] as any) as unknown as { features?: Feature[] } & Feature;
-    return fc.features ?? [fc];
-  }
-  if (o.type === 'FeatureCollection' && Array.isArray(o.features)) return o.features;
-  if (o.type === 'Feature') return [o as unknown as Feature];
-  return { error: 'Expected a GeoJSON FeatureCollection' };
-}
 
 const pick = (p: Record<string, unknown>, fields: string[], chosen?: string) => {
   if (chosen) return clean(p[chosen], 120);
@@ -184,8 +185,13 @@ async function current(iso3: string, level: Level): Promise<{ code: string; name
 
 export interface LoadInput {
   level: Level;
-  text: string;
-  format?: 'geojson' | 'topojson';
+  /** The file as text (GeoJSON, TopoJSON) ... */
+  text?: string;
+  /** ... or as bytes (any format: zipped Shapefile, GeoPackage, JSON). */
+  bytes?: Uint8Array;
+  fileName?: string;
+  /** Detected from the file when not given. */
+  format?: BoundaryFormat;
   source: Partial<BoundarySource>;
   validFrom?: string;
   codeField?: string;
@@ -195,13 +201,14 @@ export interface LoadInput {
 }
 
 /** Check a boundary file; with `dryRun`, nothing is recorded. */
-export async function proposeBoundaries(input: LoadInput, by: string, opts: { dryRun?: boolean } = {}): Promise<{ version?: BoundaryVersion; check: BoundaryCheck; dryRun: boolean } | { error: string; check?: BoundaryCheck }> {
+export async function proposeBoundaries(input: LoadInput, by: string, opts: { dryRun?: boolean; simplify?: { aboveVertices?: number; aboveBytes?: number; targetVertices?: number } } = {}): Promise<{ version?: BoundaryVersion; check: BoundaryCheck; dryRun: boolean } | { error: string; check?: BoundaryCheck }> {
   const iso3 = nationIso3();
   if (!iso3) return { error: 'Set the nation in setup first: boundaries belong to a nation' };
   if (!by.trim()) return { error: 'Name the official loading the boundaries' };
   if (input.level !== 1 && input.level !== 2) return { error: 'Choose the level: regions (1) or districts (2)' };
-  if (!input.text) return { error: 'Attach the boundary file' };
-  if (input.text.length > MAX_BOUNDARY_BYTES) return { error: `The file is larger than ${MAX_BOUNDARY_BYTES / 1_000_000} MB: simplify it first` };
+  const size = input.bytes ? input.bytes.byteLength : Buffer.byteLength(input.text ?? '');
+  if (!size) return { error: 'Attach the boundary file' };
+  if (size > MAX_BOUNDARY_BYTES) return { error: `The file is larger than ${MAX_BOUNDARY_BYTES / 1_000_000} MB: split it by level or simplify it first` };
   const source: BoundarySource = { publisher: clean(input.source.publisher), licence: clean(input.source.licence, 120), ...(clean(input.source.url, 400) ? { url: clean(input.source.url, 400) } : {}), ...(clean(input.source.year, 10) ? { year: clean(input.source.year, 10) } : {}), ...(clean(input.source.note, 400) ? { note: clean(input.source.note, 400) } : {}) };
   if (!source.publisher) return { error: 'Name who publishes the boundaries (e.g. the national mapping agency)' };
   if (!source.licence) return { error: 'Record the licence the boundaries are published under' };
@@ -209,11 +216,21 @@ export async function proposeBoundaries(input: LoadInput, by: string, opts: { dr
   const validFrom = clean(input.validFrom, 10) || now().slice(0, 10);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(validFrom) || Number.isNaN(Date.parse(validFrom))) return { error: 'The date the boundaries took effect must be YYYY-MM-DD' };
 
-  const format = input.format ?? (/"type"\s*:\s*"Topology"/.test(input.text.slice(0, 2000)) ? 'topojson' : 'geojson');
-  const feats = readFeatures(input.text, format);
-  if ('error' in feats) return feats;
+  const read = await readBoundaryFile({ bytes: input.bytes, text: input.text, name: input.fileName, format: input.format });
+  if ('error' in read) return read;
+  const format = read.format;
+  let feats: Feature[] = read.features;
   if (!feats.length) return { error: 'The file holds no features' };
   if (feats.length > MAX_BOUNDARY_UNITS) return { error: `More than ${MAX_BOUNDARY_UNITS} units in one file` };
+  const notes: string[] = [`Read as ${({ geojson: 'GeoJSON', topojson: 'TopoJSON', 'shapefile-zip': 'a zipped Shapefile', geopackage: 'a GeoPackage' } as const)[format]}`, ...read.notes];
+  const fields = [...new Set(feats.slice(0, 50).flatMap(f => Object.keys(f.properties ?? {})))].slice(0, 80);
+  const verticesRead = countVertices(feats);
+  let simplified: Simplification | undefined;
+  if (needsSimplifying(verticesRead, size, opts.simplify)) {
+    const s = simplifyFeatures(feats, opts.simplify?.targetVertices ?? SIMPLIFY_TARGET_VERTICES);
+    feats = s.features; simplified = s.info;
+    notes.push(`Simplified on the server keeping shared borders: ${s.info.verticesBefore.toLocaleString('en')} points to ${s.info.verticesAfter.toLocaleString('en')}, smallest detail kept ${s.info.minAreaKm2} km², all ${s.info.units} units kept`);
+  }
 
   const errors: string[] = [], warnings: string[] = [];
   const levels = await loadDivisions(iso3).catch(() => []);
@@ -295,7 +312,11 @@ export async function proposeBoundaries(input: LoadInput, by: string, opts: { dr
 
   const check: BoundaryCheck = {
     errors, warnings,
-    summary: { units: units.length, matched: units.length - unofficial.length, missing, unofficial, areaKm2: Math.round(area), ...(prevArea ? { previousAreaKm2: Math.round(prevArea) } : {}), ...(prev.length ? { previousUnits: prev.length } : {}), rewound, fewer },
+    summary: {
+      units: units.length, matched: units.length - unofficial.length, missing, unofficial, areaKm2: Math.round(area), ...(prevArea ? { previousAreaKm2: Math.round(prevArea) } : {}), ...(prev.length ? { previousUnits: prev.length } : {}), rewound, fewer,
+      vertices: simplified ? simplified.verticesAfter : verticesRead, ...(simplified ? { simplified } : {}), ...(read.crs ? { crs: read.crs } : {}), ...(read.reprojectedFrom ? { reprojectedFrom: read.reprojectedFrom } : {}), fields,
+    },
+    notes,
   };
   if (opts.dryRun) return { check, dryRun: true };
   if (errors.length) return { error: `The boundaries cannot be recorded: ${errors[0]}${errors.length > 1 ? ` (and ${errors.length - 1} more)` : ''}`, check };
@@ -306,12 +327,12 @@ export async function proposeBoundaries(input: LoadInput, by: string, opts: { dr
   const v: BoundaryVersion = {
     id: `bnd-${String(d.seq++).padStart(4, '0')}`, iso3, level: input.level, n, source, validFrom, units,
     sha256: createHash('sha256').update(JSON.stringify(units)).digest('hex'),
-    fileSha256: createHash('sha256').update(input.text).digest('hex'),
-    format, check, state: 'proposed', proposedBy: by.trim(), proposedAt: now(),
+    fileSha256: createHash('sha256').update(input.bytes ?? input.text ?? '').digest('hex'),
+    format, ...(simplified ? { simplified } : {}), ...(read.reprojectedFrom ? { reprojectedFrom: read.reprojectedFrom } : {}), check, state: 'proposed', proposedBy: by.trim(), proposedAt: now(),
     ...(input.confirmFewer ? { confirmFewer: true } : {}), ...(clean(input.note, 400) ? { note: clean(input.note, 400) } : {}),
   };
   d.versions.push(v);
-  recordAudit(v.proposedBy, 'boundary.propose', `Boundary:${v.id}`, 'ok', `level ${v.level} v${v.n}, ${units.length} units, valid from ${validFrom}, sha256 ${v.sha256.slice(0, 12)}`);
+  recordAudit(v.proposedBy, 'boundary.propose', `Boundary:${v.id}`, 'ok', `level ${v.level} v${v.n}, ${format}, ${units.length} units, valid from ${validFrom}${read.reprojectedFrom ? `, reprojected from ${read.reprojectedFrom}` : ''}${simplified ? `, simplified ${simplified.verticesBefore}→${simplified.verticesAfter} points (min ${simplified.minAreaKm2} km²)` : ''}, sha256 ${v.sha256.slice(0, 12)}`);
   return { version: strip(v), check, dryRun: false };
 }
 
