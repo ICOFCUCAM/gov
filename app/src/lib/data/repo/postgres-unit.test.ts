@@ -1,5 +1,6 @@
 // The postgres backend's parts that need no database: snapshots leave the
-// record fields out, and a standby accepts only record changes.
+// record fields out, a standby accepts only record changes, and with every
+// store in the record tables any server takes any change and saves no snapshot.
 import { describe, it, expect, afterEach } from 'vitest';
 import { RECORD_FIELDS } from './postgres';
 import { flush, keepOutOfSnapshot, stateWritable, RECORD_ROUTES, type StateAdapter } from '@/lib/data/persist';
@@ -44,5 +45,17 @@ describe('snapshots beside the record tables', () => {
     expect(RECORD_ROUTES.some(re => re.test('/api/facilities/FAC-1/extra'))).toBe(false);
     g.__persistStatus = { adapter: 'postgres', role: 'writer', restored: [], saves: 0, startedAt: '' };
     expect(stateWritable('/api/sovereign')).toBe(true);
+  });
+
+  it('with every store in the record tables, a server without the lease takes every change and saves no snapshot', async () => {
+    g.__persistStatus = { adapter: 'postgres', role: 'standby', restored: [], saves: 0, startedAt: '' };
+    g.__persistRecords = { status: () => ({}), ownsAll: true, owns: (k: string) => k.startsWith('__civicos') };
+    expect(stateWritable('/api/sovereign')).toBe(true);
+    expect(stateWritable()).toBe(true);
+    g.__persistStatus = { adapter: 'postgres', role: 'writer', restored: [], saves: 0, startedAt: '' };
+    const saved: string[] = [];
+    g.__civicosTestRecords = { sovereign: { stateName: 'Meridia' } };
+    await flush({ name: 'postgres', loadAll: async () => ({}), save: async k => { saved.push(k); } });
+    expect(saved).toEqual([]);
   });
 });

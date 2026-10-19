@@ -10,9 +10,10 @@
 
 import type { Blackout, ChangeControl, MaintenanceSlot } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
+import { touch } from '@/lib/data/repo/track';
 
 const g = globalThis as unknown as { __civicosChange?: Record<string, ChangeControl> };
-function cdb(): Record<string, ChangeControl> { return (g.__civicosChange ??= {}); }
+function cdb(): Record<string, ChangeControl> { return touch('__civicosChange', g.__civicosChange ??= {}); }
 export function resetChangeControl(): void { g.__civicosChange = {}; }
 
 export function changeControl(nationId: string): ChangeControl {

@@ -21,6 +21,7 @@ import { currentPath } from './hosting';
 import { listOrders, pricing, catalogue } from './security-store';
 import { supportTier, setSupportTier } from './support';
 import { HOSTING_MODEL } from '@/lib/updates/hosting-model';
+import { touch } from '@/lib/data/repo/track';
 
 const DAY = 86_400_000;
 export const MODULES: { key: string; label: string }[] = [
@@ -45,7 +46,7 @@ interface Stored {
   history: Contract['history'];
 }
 const g = globalThis as unknown as { __civicosContracts?: Record<string, Stored> };
-function cdb(): Record<string, Stored> { return (g.__civicosContracts ??= {}); }
+function cdb(): Record<string, Stored> { return touch('__civicosContracts', g.__civicosContracts ??= {}); }
 export function resetContracts(): void { g.__civicosContracts = undefined; }
 
 const iso = (t: number) => new Date(t).toISOString();

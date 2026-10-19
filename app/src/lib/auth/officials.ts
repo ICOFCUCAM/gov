@@ -12,6 +12,7 @@ import { matchStep, newSecret, otpauthUri } from './totp';
 import { seal, open as openSealed } from '@/lib/crypto/envelope';
 import { recordAudit, getMinistry } from '@/lib/data/store';
 import { isRole, roleLabel, roleOf, type OfficialRole } from './roles';
+import { touch } from '@/lib/data/repo/track';
 
 export interface OfficialAccount {
   id: string;
@@ -45,7 +46,7 @@ export type PublicAccount = Omit<OfficialAccount, 'passwordHash' | 'twoStep' | '
 export type TwoStepPolicy = 'none' | 'signers' | 'all';
 interface Db { accounts: OfficialAccount[]; failures: Record<string, number[]>; secret?: string; twoStepPolicy?: TwoStepPolicy }
 const g = globalThis as unknown as { __civicosOfficials?: Db };
-const db = (): Db => (g.__civicosOfficials ??= { accounts: [], failures: {} });
+const db = (): Db => touch('__civicosOfficials', g.__civicosOfficials ??= { accounts: [], failures: {} });
 export function resetOfficials(): void { g.__civicosOfficials = undefined; }
 
 export const MIN_PASSWORD = 12;

@@ -23,6 +23,7 @@ import type {
 } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
 import { isShared, transmit } from './sovereignty';
+import { touch } from '@/lib/data/repo/track';
 
 export const PRIORITIES: TicketPriority[] = ['P1', 'P2', 'P3', 'P4'];
 export const PRIORITY_MEANING: Record<TicketPriority, string> = {
@@ -131,7 +132,7 @@ function seed(): SupportDb {
 }
 
 const g = globalThis as unknown as { __civicosSupport?: SupportDb };
-function sdb(): SupportDb { return (g.__civicosSupport ??= seed()); }
+function sdb(): SupportDb { return touch('__civicosSupport', g.__civicosSupport ??= seed()); }
 export function resetSupport(): void { g.__civicosSupport = seed(); }
 
 // ── Tiers ─────────────────────────────────────────────────────────────

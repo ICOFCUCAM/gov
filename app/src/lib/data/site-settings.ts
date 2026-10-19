@@ -21,6 +21,7 @@ import { SITE_IDS } from '@/lib/public-sites';
 import { checkPublicUrl, onSite } from '@/lib/public-sites/url-safety';
 import { fetchFeed, type FeedItem, type FeedDeps } from '@/lib/public-sites/feed';
 import { presetsFor } from '@/apps/_shared/public/design/presets';
+import { tracked } from '@/lib/data/repo/track';
 
 export type SiteMode = 'link' | 'embed' | 'migrate' | 'host';
 export const SITE_MODES: SiteMode[] = ['link', 'embed', 'migrate', 'host'];
@@ -60,7 +61,8 @@ export interface SiteSettingsInput {
 }
 
 const g = globalThis as unknown as { __civicosSites?: Map<string, SiteSettings> };
-const db = (g.__civicosSites ??= new Map<string, SiteSettings>());
+// Held at module level: wrapped so every use is noted (lib/data/repo/track.ts).
+const db = tracked('__civicosSites', g.__civicosSites ??= new Map<string, SiteSettings>());
 
 const fresh = (siteId: string): SiteSettings => ({ siteId, mode: 'host', redirects: [], feed: { status: 'never', items: [] } });
 

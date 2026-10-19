@@ -12,6 +12,7 @@
 import type { DistributionRelease, LifecycleKind, LifecycleLine, LifecyclePolicy, LifecycleWarning, SubscribedNation } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
 import { parseVersion } from '@/lib/updates/semver';
+import { touch } from '@/lib/data/repo/track';
 
 const DAY = 86_400_000;
 export const DEFAULT_LIFECYCLE: LifecyclePolicy = {
@@ -23,7 +24,7 @@ export const DEFAULT_LIFECYCLE: LifecyclePolicy = {
 
 interface LcDb { policy: LifecyclePolicy; issued: Record<string, string> }
 const g = globalThis as unknown as { __civicosLifecycle?: LcDb };
-function ldb(): LcDb { return (g.__civicosLifecycle ??= { policy: structuredClone(DEFAULT_LIFECYCLE), issued: {} }); }
+function ldb(): LcDb { return touch('__civicosLifecycle', g.__civicosLifecycle ??= { policy: structuredClone(DEFAULT_LIFECYCLE), issued: {} }); }
 export function resetLifecycle(): void { g.__civicosLifecycle = undefined; }
 export function lifecyclePolicy(): LifecyclePolicy { return structuredClone(ldb().policy); }
 

@@ -30,6 +30,7 @@ import type {
 } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
 import { PUBLISHER_KEY, allReleases, nationRecord, releaseFor, visibleTo } from './updates';
+import { touch } from '@/lib/data/repo/track';
 
 const DAY = 86_400_000;
 const sha = (v: string) => createHash('sha256').update(v).digest('hex');
@@ -130,7 +131,7 @@ export function attestationFor(nationId: string, artifactId: string, by = 'downl
 interface ScDb { deposits: Record<string, EscrowDeposit>; seeded: boolean; reviews: SourceReview[]; reviewSeq: number }
 const g = globalThis as unknown as { __civicosSupply?: ScDb };
 function sdb(): ScDb {
-  const db = (g.__civicosSupply ??= { deposits: {}, seeded: false, reviews: [], reviewSeq: 101 });
+  const db = touch('__civicosSupply', g.__civicosSupply ??= { deposits: {}, seeded: false, reviews: [], reviewSeq: 101 });
   if (!db.seeded) { db.seeded = true; seed(db); }
   return db;
 }

@@ -33,6 +33,7 @@ import { logger } from '@/lib/ops/log';
 import type { RemoteKeyService } from './remote';
 import { VaultTransit } from './vault';
 import { KmsHttp } from './kms-http';
+import { touch } from '@/lib/data/repo/track';
 
 export type ProviderKind = 'env' | 'vault' | 'kms-http';
 export type SigningPurpose = 'audit' | 'exchange';
@@ -93,7 +94,7 @@ export interface WrappedDataKey { kid: string; wrapped: string; provider: Exclud
 interface Keyring { dataKeys: WrappedDataKey[]; current?: string }
 const g = globalThis as unknown as { __civicosKeyring?: Keyring };
 const keyring = (): Keyring => {
-  const k = (g.__civicosKeyring ??= { dataKeys: [] });
+  const k = touch('__civicosKeyring', g.__civicosKeyring ??= { dataKeys: [] });
   k.dataKeys ??= [];
   return k;
 };

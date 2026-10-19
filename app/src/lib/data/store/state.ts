@@ -2,6 +2,7 @@
 // before the split, so saved snapshots restore; lib/data/persist.ts). Each
 // context module under lib/data/store/ reads and changes its own fields of it.
 import { withDefaults } from '@/lib/data/defaults';
+import { onFollow, tracked } from '@/lib/data/repo/track';
 import { federationSeed } from '@/lib/institution/federation';
 import { applyNation } from '@/lib/nation/registry';
 import type {
@@ -184,6 +185,10 @@ export function seed() {
 // A store restored from a saved snapshot (lib/data/persist.ts) keeps its data; fields added to the
 // store since that snapshot get their seeded defaults at any depth (lib/data/defaults.ts). The
 // nation profile and the per-ministry and per-tenant dictionaries are kept exactly as saved.
-export const db = (g.__civicos = withDefaults(g.__civicos, seed(), { opaque: ['sovereign', 'tenantSync', 'ministryQueues', 'ministryIncidents'] }));
+// Held at module level, so wrapped: every use notes the store as used, and with CIVICOS_STATE=postgres
+// its changed records are written at the next flush (lib/data/repo/track.ts, documents.ts).
+export const db = tracked('__civicos', g.__civicos = withDefaults(g.__civicos, seed(), { opaque: ['sovereign', 'tenantSync', 'ministryQueues', 'ministryIncidents'] }));
 // Engines read the installed nation (regions, map, currency) from the registry.
 applyNation({ ...db.sovereign, configured: !!db.setup });
+// Another instance changed the profile or setup (postgres mode): the registry follows.
+onFollow('__civicos', () => applyNation({ ...db.sovereign, configured: !!db.setup }));

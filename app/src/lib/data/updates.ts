@@ -74,6 +74,7 @@ import { openTicketForIncident } from './support';
 import { issueDueNotices, lifecycleWarning, lineOf, onEolNotice } from './lifecycle';
 import { alert } from './comms';
 import { transmit } from './sovereignty';
+import { touch } from '@/lib/data/repo/track';
 
 /** Backward compatible with the previous release: every migration reversible and expand/contract, never in place. */
 export function isBackwardCompatible(migrations: ReleaseMigration[]): boolean {
@@ -434,7 +435,7 @@ onEolNotice(e => {
   }
 });
 function udb(): UpdatesDb {
-  return (g.__civicosUpdates ??= seedUpdates());
+  return touch('__civicosUpdates', g.__civicosUpdates ??= seedUpdates());
 }
 
 /** Test hook: start again from the seed. */

@@ -19,6 +19,7 @@
 
 import type { AlertCategory, AlertChannel, AlertDelivery, ChangeKind, DistributionRelease, Official, ReleaseResource, WhatsNew } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
+import { touch } from '@/lib/data/repo/track';
 
 export const CATEGORIES: AlertCategory[] = ['security', 'releases', 'incidents', 'eol'];
 export const CHANNELS: AlertChannel[] = ['email', 'sms'];
@@ -49,7 +50,7 @@ function seed(): CommsDb {
   };
 }
 const g = globalThis as unknown as { __civicosComms?: CommsDb };
-function cdb(): CommsDb { return (g.__civicosComms ??= seed()); }
+function cdb(): CommsDb { return touch('__civicosComms', g.__civicosComms ??= seed()); }
 export function resetComms(): void { g.__civicosComms = undefined; }
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');

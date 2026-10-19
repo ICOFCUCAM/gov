@@ -12,6 +12,7 @@ import { createHash, randomUUID, randomBytes, timingSafeEqual } from 'node:crypt
 import { getMinistry, queueFor, queueRegions, recordAudit } from '@/lib/data/store';
 import { parseCsv } from '@/lib/twin/csv';
 import type { CaseColumn, CaseFeed, CaseImport, CaseRefusal, QueueItem, QueueItemState, QueuePriority } from '@/lib/api/types';
+import { touch } from '@/lib/data/repo/track';
 
 /** The columns a file may have, in the order of the template. */
 export const CASE_COLUMNS: CaseColumn[] = [
@@ -34,7 +35,7 @@ export type Refusal = CaseRefusal;
 interface Db { imports: CaseImport[]; feeds: CaseFeed[] }
 const g = globalThis as unknown as { __civicosCaseImports?: Db };
 const db = (): Db => {
-  const d = (g.__civicosCaseImports ??= { imports: [], feeds: [] });
+  const d = touch('__civicosCaseImports', g.__civicosCaseImports ??= { imports: [], feeds: [] });
   d.feeds ??= []; // snapshots saved before case feeds existed
   return d;
 };
@@ -230,7 +231,7 @@ const KEY = /^ccf_([0-9a-f]{8})_[0-9a-f]{40}$/;
 // Key hashes live apart from the feed records, which officials' screens read.
 interface FeedKeys { hashes: Record<string, string> }
 const gk = globalThis as unknown as { __civicosCaseFeedKeys?: FeedKeys };
-const keys = (): FeedKeys => (gk.__civicosCaseFeedKeys ??= { hashes: {} });
+const keys = (): FeedKeys => touch('__civicosCaseFeedKeys', gk.__civicosCaseFeedKeys ??= { hashes: {} });
 
 export function listFeeds(ministryId: string): CaseFeed[] {
   return db().feeds.filter(f => f.ministryId === ministryId);

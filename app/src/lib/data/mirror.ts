@@ -18,13 +18,14 @@ import type { DistributionRelease, LocalMirror, MediaShipment, ReleaseArtifact, 
 import { recordAudit } from '@/lib/data/store/audit';
 import { allReleases, nationRecord, visibleTo } from './updates';
 import { compareVersions } from '@/lib/updates/semver';
+import { touch } from '@/lib/data/repo/track';
 
 const sha = (v: string) => createHash('sha256').update(v).digest('hex');
 const DELTA_KINDS = new Set(['container-image', 'offline-bundle', 'restore-kit', 'binary-tarball']);
 
 interface MirrorDb { mirrors: Record<string, LocalMirror>; media: MediaShipment[]; mediaSeq: number }
 const g = globalThis as unknown as { __civicosMirror?: MirrorDb };
-function mdb(): MirrorDb { return (g.__civicosMirror ??= { mirrors: {}, media: [], mediaSeq: 1001 }); }
+function mdb(): MirrorDb { return touch('__civicosMirror', g.__civicosMirror ??= { mirrors: {}, media: [], mediaSeq: 1001 }); }
 export function resetMirror(): void { g.__civicosMirror = undefined; }
 
 const str = (v: unknown, max: number) => (typeof v === 'string' ? v.trim().slice(0, max) : '');

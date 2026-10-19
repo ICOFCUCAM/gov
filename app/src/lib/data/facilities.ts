@@ -40,6 +40,7 @@ import { readCrs, toWgs84, type SourceCrs } from '@/lib/geo/crs';
 import { kinksOf } from '@/lib/geo/topology';
 import { categoryFromOsm } from './facility-standards';
 import type { Geom } from '@/lib/geo/admin1';
+import { touch } from '@/lib/data/repo/track';
 
 // ── Vocabulary ────────────────────────────────────────────────────────────
 
@@ -233,7 +234,7 @@ const DEFAULT_POLICY: FacilityPolicy = {
 const g = globalThis as unknown as { __civicosFacilities?: Db };
 const upgraded = new WeakSet<Db>();
 const db = (): Db => {
-  const d = (g.__civicosFacilities ??= { facilities: [], policy: { ...DEFAULT_POLICY }, changes: [], imports: [], seq: 1 });
+  const d = touch('__civicosFacilities', g.__civicosFacilities ??= { facilities: [], policy: { ...DEFAULT_POLICY }, changes: [], imports: [], seq: 1 });
   if (upgraded.has(d)) return d;
   d.changes ??= []; d.imports ??= []; d.policy ??= { ...DEFAULT_POLICY };
   d.policy.methods ??= DEFAULT_POLICY.methods; d.policy.sensitivity ??= {}; d.policy.generaliseDegrees ??= DEFAULT_POLICY.generaliseDegrees;
@@ -967,7 +968,7 @@ export interface SiteFeed {
 }
 interface SiteFeedDb { feeds: SiteFeed[]; hashes: Record<string, string> }
 const gf = globalThis as unknown as { __civicosSiteFeeds?: SiteFeedDb };
-const feedsDb = (): SiteFeedDb => (gf.__civicosSiteFeeds ??= { feeds: [], hashes: {} });
+const feedsDb = (): SiteFeedDb => touch('__civicosSiteFeeds', gf.__civicosSiteFeeds ??= { feeds: [], hashes: {} });
 const SITE_KEY = /^csf_([0-9a-f]{8})_[0-9a-f]{40}$/;
 const hash = (v: string) => createHash('sha256').update(v).digest('hex');
 export const MAX_FEED_SITES = 2000;
@@ -1109,7 +1110,7 @@ export interface Candidate {
 }
 interface OpenDb { sources: OpenSource[]; candidates: Candidate[]; seq: number }
 const go = globalThis as unknown as { __civicosOpenSites?: OpenDb };
-const openDb = (): OpenDb => (go.__civicosOpenSites ??= { sources: [], candidates: [], seq: 1 });
+const openDb = (): OpenDb => touch('__civicosOpenSites', go.__civicosOpenSites ??= { sources: [], candidates: [], seq: 1 });
 export const SHARE_ALIKE = /odbl|share.?alike|cc.?by.?sa/i;
 export const MAX_CANDIDATES = 5000;
 

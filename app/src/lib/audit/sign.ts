@@ -28,6 +28,7 @@ import { logger } from '@/lib/ops/log';
 import { withSpanSync } from '@/lib/ops/trace';
 import { checkToken, timestamp, tsaConfig } from './tsa';
 import { createHash } from 'node:crypto';
+import { touch } from '@/lib/data/repo/track';
 
 export const AUDIT_KEY_ENV = 'CIVICOS_AUDIT_KEY';
 
@@ -80,7 +81,7 @@ export const tsaImprint = (h: Pick<SignedHead, 'seq' | 'hash' | 'at' | 'keyId' |
 interface HeadsDb { heads: SignedHead[] }
 const g = globalThis as unknown as { __civicosAuditHeads?: HeadsDb };
 const db = (): HeadsDb => {
-  const d = (g.__civicosAuditHeads ??= { heads: [] });
+  const d = touch('__civicosAuditHeads', g.__civicosAuditHeads ??= { heads: [] });
   d.heads ??= [];
   return d;
 };

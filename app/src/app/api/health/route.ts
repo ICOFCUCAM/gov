@@ -19,7 +19,9 @@
 // With CIVICOS_STATE=postgres, `persistence.database` reports the per-record
 // tables (lib/data/repo/postgres.ts): the adapter, PostGIS, the write queue's
 // depth, how far behind other instances' changes this one is (outbox lag) and
-// any write error. A standby there still serves reads and record changes, so
+// any write error, and the per-record documents every other store is kept as
+// (stores, records, merges). A standby there still serves reads and record
+// changes (every change, once every store is in the tables: a follower), so
 // it reports ready while its tables are healthy.
 
 import { NextResponse } from 'next/server';
@@ -47,6 +49,7 @@ function persistence() {
     leaseHolder: s.lease?.holder ?? null,
     leaseExpiresAt: s.lease?.expiresAt ?? null,
     error: s.error ?? null,
+    note: s.note ?? null,
     database: s.records ? {
       adapter: s.records.adapter,
       postgis: s.records.postgis,
@@ -57,6 +60,16 @@ function persistence() {
       followed: s.records.followed,
       rebased: s.records.rebased,
       error: s.records.error ?? null,
+      // Every other store as per-record documents (counts only).
+      documents: s.records.documents ? {
+        stores: s.records.documents.stores,
+        rows: s.records.documents.rows,
+        written: s.records.documents.written,
+        followed: s.records.documents.followed,
+        merged: s.records.documents.merged,
+        conflicts: s.records.documents.conflicts,
+        counterOverruns: s.records.documents.counterOverruns,
+      } : null,
     } : null,
   };
 }

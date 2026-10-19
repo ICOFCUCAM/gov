@@ -11,6 +11,7 @@ import type { NextRequest } from 'next/server';
 import { recordAudit } from '@/lib/data/store/audit';
 import { keyIdOfPem } from '@/lib/crypto/signing-key';
 import { verifyRequestSignature, type SignatureCheck } from './http-signatures';
+import { touch } from '@/lib/data/repo/track';
 
 export type FeedKind = 'case' | 'site';
 
@@ -28,7 +29,7 @@ export interface FeedSigningKey {
 interface Db { keys: Record<string, FeedSigningKey> }
 const g = globalThis as unknown as { __civicosFeedKeys?: Db };
 const db = (): Db => {
-  const d = (g.__civicosFeedKeys ??= { keys: {} });
+  const d = touch('__civicosFeedKeys', g.__civicosFeedKeys ??= { keys: {} });
   d.keys ??= {};
   return d;
 };
