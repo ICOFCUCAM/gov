@@ -367,7 +367,16 @@
         "operationId": "get_auth_official",
         "summary": "GET /api/auth/official",
         "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out. Every sign-in and sign-out is written to the audit chain; addresses never are.",
-        "parameters": [],
+        "parameters": [
+          {
+            "name": "for",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -2964,7 +2973,7 @@
         ],
         "operationId": "get_health",
         "summary": "GET /api/health",
-        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe).",
+        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe). With CIVICOS_STATE=postgres, `persistence.database` reports the per-record tables (lib/data/repo/postgres.ts): the adapter, PostGIS, the write queue's depth, how far behind other instances' changes this one is (outbox lag) and any write error. A standby there still serves reads and record changes, so it reports ready while its tables are healthy.",
         "parameters": [],
         "responses": {
           "200": {
@@ -2989,7 +2998,7 @@
         ],
         "operationId": "post_health",
         "summary": "POST /api/health",
-        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe).",
+        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe). With CIVICOS_STATE=postgres, `persistence.database` reports the per-record tables (lib/data/repo/postgres.ts): the adapter, PostGIS, the write queue's depth, how far behind other instances' changes this one is (outbox lag) and any write error. A standby there still serves reads and record changes, so it reports ready while its tables are healthy.",
         "parameters": [],
         "requestBody": {
           "required": false,

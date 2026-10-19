@@ -20,8 +20,10 @@ export const dynamic = 'force-dynamic';
 
 const enforced = () => process.env.CIVICOS_AUTH === 'enforce';
 
-export async function GET() {
+export async function GET(req?: NextRequest) {
   const o = await currentOfficial();
+  // The path of the change the middleware is checking (lib/data/persist.ts RECORD_ROUTES).
+  const forPath = req?.nextUrl?.searchParams.get('for') ?? undefined;
   const official = o ? { ...o, institutionName: o.institution ? getMinistry(o.institution)?.name : undefined } : null;
   return NextResponse.json({
     official,
@@ -29,8 +31,9 @@ export async function GET() {
     accounts: hasAccounts(),
     enforced: enforced(),
     // Whether this server accepts changes: false on a standby that does not hold the
-    // state writer's lease (lib/data/persist.ts). The middleware refuses changes then.
-    state: { writable: stateWritable() },
+    // state writer's lease (lib/data/persist.ts), unless the change touches only the
+    // per-record registers (CIVICOS_STATE=postgres). The middleware refuses changes then.
+    state: { writable: stateWritable(forPath) },
     // Why no session can be issued or verified (CIVICOS_AUTH=enforce without CIVICOS_SESSION_SECRET), else null.
     sessionKeyProblem: sessionSecretProblem(),
   });

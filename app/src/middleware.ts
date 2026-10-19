@@ -87,7 +87,10 @@ async function readGate(req: NextRequest, res: NextResponse): Promise<NextRespon
 async function liveOfficial(req: NextRequest): Promise<{ official: OfficialClaims | null; writable: boolean } | undefined> {
   try {
     const base = process.env.CIVICOS_INTERNAL_URL || req.nextUrl.origin;
-    const r = await fetch(new URL('/api/auth/official', base), { headers: { cookie: req.headers.get('cookie') ?? '' }, cache: 'no-store' });
+    // `for`: the path of the change, so an instance can accept changes to the per-record registers without the snapshot lease (CIVICOS_STATE=postgres).
+    const u = new URL('/api/auth/official', base);
+    u.searchParams.set('for', req.nextUrl.pathname);
+    const r = await fetch(u, { headers: { cookie: req.headers.get('cookie') ?? '' }, cache: 'no-store' });
     if (!r.ok) return undefined;
     const j = (await r.json()) as { official?: OfficialClaims | null; state?: { writable?: boolean } };
     // An instance that does not hold the state writer's lease (lib/data/persist.ts) refuses changes.
