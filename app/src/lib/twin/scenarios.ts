@@ -10,6 +10,8 @@ import { createHash } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store';
 import { stateAsOf, getEntity, regionEntities, isoDate } from './register';
 import { getMetric } from './metrics';
+import { resolveNation, releaseFor } from '@/lib/data/updates';
+import { sourceCommit } from '@/lib/data/supply-chain';
 
 export interface Assumption {
   /** An entity id, or "*" for every entity with a value. */
@@ -38,7 +40,14 @@ export interface ScenarioVersion {
   /** Why there is no national figure, when there is none. */
   nationalNote?: string;
   evidenceHash: string;
+  /** The model that computed the results (MODELS); absent on versions made before the registry (their hash is v1). */
+  model?: ScenarioModelRef;
+  /** The platform build that ran the model: its source commit (from the build environment or the Update Center's installed release). */
+  build?: ScenarioBuild;
 }
+
+export interface ScenarioModelRef { id: string; version: string }
+export interface ScenarioBuild { commit?: string; release?: string; source: 'environment' | 'update-center' | 'unknown' }
 
 export interface Scenario { id: string; name: string; createdBy: string; createdAt: string; versions: ScenarioVersion[] }
 
@@ -49,14 +58,53 @@ export function resetScenarios(): void { g.__civicosTwinScenarios = undefined; }
 
 const MAX_ASSUMPTIONS = 50;
 
-/** The evidence hash of a version: SHA-256 over its id, version, metric, date, assumptions and inputs. */
-export function evidenceHash(id: string, v: Pick<ScenarioVersion, 'version' | 'metric' | 'asOf' | 'assumptions' | 'inputs'>): string {
+/**
+ * The scenario model registry: every model that may compute a scenario, by id
+ * and version. A version records the model it ran, so a result can be
+ * recomputed with the same model later.
+ */
+export const MODELS: Record<string, Record<string, { label: string; description: string }>> = {
+  'pct-multiplier': {
+    '1': { label: 'Percentage change', description: 'Each value is multiplied by (1 + change/100) for every assumption that applies to it; regions are combined as the metric says (sum or mean).' },
+  },
+};
+export const CURRENT_MODEL: ScenarioModelRef = { id: 'pct-multiplier', version: '1' };
+
+/** The build running now: the source commit from the build environment, else the Update Center's installed release. */
+export function currentBuild(): ScenarioBuild {
+  const env = (process.env.CIVICOS_BUILD_COMMIT ?? process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GIT_COMMIT_SHA ?? '').trim();
+  if (/^[0-9a-f]{7,64}$/i.test(env)) return { commit: env.toLowerCase(), source: 'environment' };
+  try {
+    const n = resolveNation();
+    const r = n ? (n.installedReleaseId ? releaseFor(n.id, n.installedReleaseId) : undefined) : undefined;
+    if (n && r) return { commit: sourceCommit(r), release: n.installedVersion, source: 'update-center' };
+    if (n) return { release: n.installedVersion, source: 'update-center' };
+  } catch { /* the Update Center is not available: the build is unknown */ }
+  return { source: 'unknown' };
+}
+
+type Hashed = Pick<ScenarioVersion, 'version' | 'metric' | 'asOf' | 'assumptions' | 'inputs'> & Partial<Pick<ScenarioVersion, 'model' | 'build' | 'by' | 'at'>>;
+
+/**
+ * The evidence hash of a version (SHA-256). v2 (versions with a model) covers
+ * the scenario id, version, metric, date, model and its version, the build's
+ * commit, who made it and when, the assumptions and the inputs. v1 (versions
+ * made before the model registry) covers the same without model, build,
+ * author and time, and stays verifiable.
+ */
+export function evidenceHash(id: string, v: Hashed): string {
   const assumptions = [...v.assumptions].sort((a, b) => a.entityId.localeCompare(b.entityId) || a.changePct - b.changePct)
     .map(a => [a.entityId, a.changePct, a.note ?? null]);
   const inputs = [...v.inputs].sort((a, b) => a.entityId.localeCompare(b.entityId))
     .map(i => [i.entityId, i.value, i.unit, i.validFrom, i.sourceId, i.runId]);
-  return createHash('sha256').update(JSON.stringify(['civicos-scenario-v1', id, v.version, v.metric, v.asOf, assumptions, inputs])).digest('hex');
+  const body = v.model
+    ? ['civicos-scenario-v2', id, v.version, v.metric, v.asOf, v.model.id, v.model.version, v.build?.commit ?? null, v.by ?? null, v.at ?? null, assumptions, inputs]
+    : ['civicos-scenario-v1', id, v.version, v.metric, v.asOf, assumptions, inputs];
+  return createHash('sha256').update(JSON.stringify(body)).digest('hex');
 }
+
+/** Which form of the evidence hash a version carries. */
+export const hashVersion = (v: Pick<ScenarioVersion, 'model'>): 'v1' | 'v2' => (v.model ? 'v2' : 'v1');
 
 /** Whether a stored version still matches its evidence hash. */
 export function verifyVersion(id: string, v: ScenarioVersion): boolean {
@@ -100,7 +148,7 @@ function build(id: string, version: number, d: Draft): ScenarioVersion | { error
     const n = aggregation === 'mean' ? inRegions.length : 1;
     national = { baseline: inRegions.reduce((s, x) => s + x.baseline, 0) / n, projected: Math.round((inRegions.reduce((s, x) => s + x.projected, 0) / n) * 100) / 100, unit: inRegions[0]!.unit };
   }
-  const v = { version, at: new Date().toISOString(), by, metric, asOf, assumptions, ...(d.note?.trim() ? { note: d.note.trim().slice(0, 500) } : {}), inputs, results, national, ...(nationalNote ? { nationalNote } : {}) };
+  const v = { version, at: new Date().toISOString(), by, metric, asOf, model: { ...CURRENT_MODEL }, build: currentBuild(), assumptions, ...(d.note?.trim() ? { note: d.note.trim().slice(0, 500) } : {}), inputs, results, national, ...(nationalNote ? { nationalNote } : {}) };
   return { ...v, evidenceHash: evidenceHash(id, v) };
 }
 
@@ -122,7 +170,7 @@ export function createScenario(input: Draft & { name?: string }): Scenario | { e
   d.seq++;
   const s: Scenario = { id, name: name.slice(0, 120), createdBy: v.by, createdAt: v.at, versions: [v] };
   d.scenarios.unshift(s);
-  recordAudit(v.by, 'twin.scenario.create', `Scenario:${id}`, 'ok', `${s.name} · v1 · ${v.metric} as of ${v.asOf} · evidence ${v.evidenceHash.slice(0, 16)}`);
+  recordAudit(v.by, 'twin.scenario.create', `Scenario:${id}`, 'ok', `${s.name} · v1 · ${v.metric} as of ${v.asOf} · model ${v.model?.id}@${v.model?.version} · evidence ${v.evidenceHash.slice(0, 16)}`);
   return getScenario(id)!;
 }
 
@@ -133,6 +181,6 @@ export function reviseScenario(id: string, input: Draft): Scenario | { error: st
   const v = build(id, s.versions.length + 1, input);
   if ('error' in v) return v;
   s.versions.push(v);
-  recordAudit(v.by, 'twin.scenario.revise', `Scenario:${id}`, 'ok', `v${v.version} · ${v.metric} as of ${v.asOf} · evidence ${v.evidenceHash.slice(0, 16)}`);
+  recordAudit(v.by, 'twin.scenario.revise', `Scenario:${id}`, 'ok', `v${v.version} · ${v.metric} as of ${v.asOf} · model ${v.model?.id}@${v.model?.version} · evidence ${v.evidenceHash.slice(0, 16)}`);
   return getScenario(id)!;
 }

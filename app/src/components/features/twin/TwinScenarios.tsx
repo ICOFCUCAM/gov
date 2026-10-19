@@ -13,6 +13,7 @@ interface Version {
   assumptions: { entityId: string; changePct: number; note?: string }[];
   results: Result[]; national: { baseline: number; projected: number; unit: string } | null; nationalNote?: string;
   evidenceHash: string; evidenceOk: boolean;
+  model?: { id: string; version: string }; build?: { commit?: string; release?: string; source: string };
 }
 interface Scenario { id: string; name: string; createdBy: string; createdAt: string; versions: Version[] }
 interface Entity { id: string; name: string; region?: boolean }
@@ -94,7 +95,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
             return (
               <li key={s.id} className="rounded-[3px] border border-line p-3">
                 <div className="flex flex-wrap items-baseline justify-between gap-2">
-                  <span><strong>{s.name}</strong> <span className="font-mono text-[12px] text-ink-muted">{s.id} · v{v.version} · {v.metric} as of {v.asOf} · {v.by}</span></span>
+                  <span><strong>{s.name}</strong> <span className="font-mono text-[12px] text-ink-muted">{s.id} · v{v.version} · {v.metric} as of {v.asOf} · {v.by}{v.model ? ` · model ${v.model.id} ${v.model.version}` : ''}{v.build?.commit ? ` · build ${v.build.commit.slice(0, 12)}` : v.build?.release ? ` · release ${v.build.release}` : ''}</span></span>
                   <span className="flex flex-wrap gap-2">
                     <button type="button" className={btn} onClick={() => { setRevising(s.id); setF({ ...f, metric: v.metric, asOf: v.asOf }); setRows(v.assumptions.map(a => ({ entityId: a.entityId, changePct: String(a.changePct) }))); }}>New version</button>
                     <a className={`${btn} no-underline`} href={directive}>Draft a directive on it</a>
@@ -103,7 +104,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
                 <p className="mt-1 text-[12px] text-ink-soft">
                   Assumptions: {v.assumptions.map(a => `${a.entityId === '*' ? 'every region' : (entities.find(e => e.id === a.entityId)?.name ?? a.entityId)} ${a.changePct >= 0 ? '+' : ''}${a.changePct}%`).join(' · ')}{v.note ? ` — ${v.note}` : ''}
                 </p>
-                <p className="mt-1 break-all font-mono text-[11px]" title="SHA-256 over the scenario id, version, metric, date, assumptions and the observations it started from">
+                <p className="mt-1 break-all font-mono text-[11px]" title={v.model ? 'SHA-256 (v2) over the scenario id, version, metric, date, model and build, who made it and when, the assumptions and the observations it started from' : 'SHA-256 (v1) over the scenario id, version, metric, date, assumptions and the observations it started from'}>
                   <span className={v.evidenceOk ? 'text-ok' : 'text-alert'}>{v.evidenceOk ? 'Evidence verifies' : 'Evidence does not verify'}</span> · {v.evidenceHash} · <a className="text-link underline underline-offset-2" href={`/api/twin/scenarios/${s.id}/versions/${v.version}/prov`}>provenance</a>
                 </p>
                 <table className="mt-2 w-full text-[12px]">

@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { resetTwin, syncRegister, registerSource, runSource, metricDates } from './register';
-import { resetScenarios, createScenario, reviseScenario, getScenario, verifyVersion, type Scenario } from './scenarios';
+import { resetScenarios, createScenario, reviseScenario, getScenario, verifyVersion, evidenceHash, hashVersion, currentBuild, MODELS, type Scenario, type ScenarioVersion } from './scenarios';
 import { applyNation } from '@/lib/nation/registry';
 import { registerMetric } from './metrics';
 
@@ -51,6 +51,37 @@ describe('scenarios on the twin', () => {
     registerMetric({ by: 'A', id: 'literacy', label: 'Literacy', unit: '%', aggregation: 'mean' });
     const mean = ok(createScenario({ name: 'L2', by: 'D', metric: 'literacy', asOf: '2022-01-01', assumptions: [{ entityId: '*', changePct: 10 }] })).versions[0]!;
     expect(mean.national).toEqual({ baseline: 80, projected: 88, unit: '%' });
+  });
+
+  it('records the model and the build, and hashes them with the author and time (v2)', () => {
+    const v = ok(createScenario({ name: 'M', by: 'Planner', metric: 'population', assumptions: [{ entityId: '*', changePct: 1 }] })).versions[0]!;
+    expect(v.model).toEqual({ id: 'pct-multiplier', version: '1' });
+    expect(MODELS[v.model!.id]?.[v.model!.version]).toBeDefined();
+    expect(v.build).toBeDefined();
+    expect(hashVersion(v)).toBe('v2');
+    expect(verifyVersion('SCN-0001', v)).toBe(true);
+    expect(verifyVersion('SCN-0001', { ...v, by: 'Someone else' })).toBe(false);
+    expect(verifyVersion('SCN-0001', { ...v, at: '2020-01-01T00:00:00.000Z' })).toBe(false);
+    expect(verifyVersion('SCN-0001', { ...v, model: { id: 'pct-multiplier', version: '2' } })).toBe(false);
+  });
+
+  it('keeps versions made before the model registry verifiable with their v1 hash', () => {
+    const v = ok(createScenario({ name: 'Old', by: 'D', metric: 'population', assumptions: [{ entityId: '*', changePct: 1 }] })).versions[0]!;
+    const { model: _m, build: _b, ...rest } = v;
+    const legacy: ScenarioVersion = { ...rest, evidenceHash: '' };
+    legacy.evidenceHash = evidenceHash('SCN-0001', legacy);
+    expect(hashVersion(legacy)).toBe('v1');
+    expect(verifyVersion('SCN-0001', legacy)).toBe(true);
+    // v1 does not cover the author: the reason v2 exists.
+    expect(verifyVersion('SCN-0001', { ...legacy, by: 'Anyone' })).toBe(true);
+    expect(verifyVersion('SCN-0001', { ...legacy, assumptions: [{ entityId: '*', changePct: 2 }] })).toBe(false);
+  });
+
+  it('takes the build commit from the environment when it is set', () => {
+    const prev = process.env.CIVICOS_BUILD_COMMIT;
+    process.env.CIVICOS_BUILD_COMMIT = 'ABCDEF1234567';
+    try { expect(currentBuild()).toEqual({ commit: 'abcdef1234567', source: 'environment' }); }
+    finally { if (prev === undefined) delete process.env.CIVICOS_BUILD_COMMIT; else process.env.CIVICOS_BUILD_COMMIT = prev; }
   });
 
   it('refuses scenarios without a person, assumptions or data', () => {

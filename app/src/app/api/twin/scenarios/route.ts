@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listScenarios, createScenario, verifyVersion } from '@/lib/twin/scenarios';
 import { syncRegister } from '@/lib/twin/register';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,8 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   await syncRegister();
-  const b = await req.json().catch(() => ({}));
+  // A signed-in official's verified name replaces any name in the request.
+  const b = await withOfficial(await req.json().catch(() => ({})));
   const r = createScenario(b);
   if ('error' in r) return NextResponse.json(r, { status: 422 });
   return NextResponse.json({ scenario: r }, { status: 201 });
