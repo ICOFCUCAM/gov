@@ -10,6 +10,7 @@
 // The substrate enforces the platform-tier check separately, so this
 // route is a defense-in-depth gate, not the sole authorisation.
 
+import { readJson, readText, TOO_LARGE, tooLargeAnswer } from '@/lib/net/body-limit';
 import { NextResponse } from 'next/server';
 import { serverClient } from '@/lib/db/client';
 import { platformOrSecretAuthorized } from '@/lib/platform-auth';
@@ -34,15 +35,20 @@ export async function POST(req: Request) {
 
   const contentType = req.headers.get('content-type') ?? '';
   let rows: InputRow[];
+  // At most 500 rows: read with a 1 MB cap (lib/net/body-limit.ts, review L-4).
+  const MAX = 1_000_000;
   try {
     if (contentType.includes('application/json')) {
-      const body = (await req.json()) as { rows?: InputRow[] };
-      if (!body.rows || !Array.isArray(body.rows)) {
+      const parsed = await readJson(req, MAX);
+      if (parsed === TOO_LARGE) return tooLargeAnswer(MAX, 'The batch');
+      const body = parsed as { rows?: InputRow[] } | undefined;
+      if (!body?.rows || !Array.isArray(body.rows)) {
         return NextResponse.json({ error: 'expected { rows: InputRow[] }' }, { status: 400 });
       }
       rows = body.rows;
     } else {
-      const text = await req.text();
+      const text = await readText(req, MAX);
+      if (text === TOO_LARGE) return tooLargeAnswer(MAX, 'The batch');
       const parsed = parseOfficerCsv(text);
       if ('error' in parsed) return NextResponse.json(parsed, { status: 400 });
       rows = parsed;

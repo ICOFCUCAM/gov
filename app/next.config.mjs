@@ -18,6 +18,20 @@ const nextConfig = {
   // (src/instrumentation.ts, which restores and saves the platform's state, is
   // loaded by Next.js 15 without a flag.)
   serverExternalPackages: ['sql.js', 'mqtt', 'aedes', 'ws', 'nodemailer'],
+  // Browser bundles carry the English dictionary only (go-live review L-7):
+  // src/lib/i18n/bundled.ts (every language, for the server) is replaced by
+  // bundled.client.ts there. The root layout writes the nation's own
+  // languages into the page; lib/i18n loads any other as its own chunk.
+  webpack(config, { isServer, webpack }) {
+    if (!isServer) {
+      config.plugins.push(new webpack.NormalModuleReplacementPlugin(/[\\/]lib[\\/]i18n[\\/]bundled$|^\.\/bundled$/, resource => {
+        if (/[\\/]lib[\\/]i18n$/.test(resource.context) || /[\\/]lib[\\/]i18n[\\/]bundled$/.test(resource.request)) {
+          resource.request = resource.request.replace(/bundled$/, 'bundled.client');
+        }
+      }));
+    }
+    return config;
+  },
   // Security headers (security-headers.mjs, mirrored in vercel.json). The
   // Content-Security-Policy carries a nonce per request and is set by the
   // middleware (src/middleware.ts).

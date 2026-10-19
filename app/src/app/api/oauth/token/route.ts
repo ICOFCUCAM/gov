@@ -9,6 +9,7 @@
 // RFC 6749 §5.2 (`error`, `error_description`). The route checks the client
 // itself (SELF_AUTHENTICATED in lib/auth/roles.ts); no session is involved.
 
+import { readText, TOO_LARGE } from '@/lib/net/body-limit';
 import { NextRequest, NextResponse } from 'next/server';
 import { issueToken, type TokenRequest } from '@/lib/auth/client-credentials';
 import { logger } from '@/lib/ops/log';
@@ -19,7 +20,9 @@ const NO_STORE = { 'cache-control': 'no-store', pragma: 'no-cache' };
 
 async function readBody(req: NextRequest): Promise<TokenRequest> {
   const type = req.headers.get('content-type') ?? '';
-  const text = await req.text().catch(() => '');
+  // A token request is a few fields: read with a 16 kB cap (lib/net/body-limit.ts, review L-4); anything larger is no request.
+  const read = await readText(req, 16_000).catch(() => '');
+  const text = read === TOO_LARGE ? '' : read;
   if (/json/i.test(type)) {
     try { const j = JSON.parse(text) as Record<string, unknown>; return Object.fromEntries(Object.entries(j).filter(([, v]) => typeof v === 'string')) as TokenRequest; } catch { return {}; }
   }

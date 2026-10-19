@@ -47,7 +47,7 @@ export default function RecordsPage() {
   const shownLog = fullLog ? accessLog : accessLog.slice(0, 3);
 
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet/records"
         header={
@@ -158,6 +158,6 @@ export default function RecordsPage() {
           ) : null}
         </section>
       </PhoneShell>
-    </main>
+    </div>
   );
 }

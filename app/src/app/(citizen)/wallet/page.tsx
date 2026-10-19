@@ -55,7 +55,7 @@ export default function WalletHomePage() {
   const receipts = receiptsFor(m, d => formatDate(d, locale === 'en' ? 'en-GB' : locale, { day: 'numeric', month: 'long' }));
   const needsTo = needsToFor(m);
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet"
         header={
@@ -142,6 +142,6 @@ export default function WalletHomePage() {
           </Plain>
         </section>
       </PhoneShell>
-    </main>
+    </div>
   );
 }

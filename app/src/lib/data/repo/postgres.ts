@@ -150,7 +150,7 @@ export const RECORD_FIELDS: Record<string, string[]> = {
 };
 
 // ── Ops ───────────────────────────────────────────────────────────────────
-type Op =
+export type Op =
   | { topic: 'audit'; data: AuditEntry }
   | { topic: 'twin.entity'; data: TwinEntity }
   | { topic: 'twin.key'; data: { entityId: string; system: string; key: string } }
@@ -190,6 +190,110 @@ function bbox(geom: { coordinates: unknown }): [number, number, number, number] 
   };
   walk(geom?.coordinates);
   return Number.isFinite(a) ? [a, b, c, d] : null;
+}
+
+// ── Batched writes (go-live review L-6) ──────────────────────────────────
+/** Rows per statement when a run of same-topic ops is written together. */
+export const WRITE_BATCH_ROWS = 1000;
+
+type Batched = Exclude<Op['topic'], 'twin.observations' | 'twin.supersede' | 'boundary.version'>;
+interface BatchSpec<T> {
+  /** Upserts keep only the last change per key within a statement (Postgres refuses to update one row twice in one statement). */
+  key?: (d: T) => string;
+  row: (d: T) => Record<string, unknown>;
+  sql: string;
+}
+const spec = <T,>(s: BatchSpec<T>) => s as BatchSpec<unknown>;
+const recordset = (cols: string) => `from jsonb_to_recordset($1::text::jsonb) as x(i int, ${cols}) order by x.i`;
+const BATCH: Record<Batched, BatchSpec<unknown>> = {
+  // In seq order, in one statement: the chain trigger sees each entry the statement inserted before it.
+  audit: spec<AuditEntry>({
+    row: e => ({ seq: e.seq, id: e.id, at: e.at, actor: e.actor, action: e.action, resource: e.resource, outcome: e.outcome, detail: e.detail ?? null, prev_hash: e.prevHash ?? null, hash: e.hash, alg: e.alg ?? null }),
+    sql: `insert into civicos.audit_entry (seq, id, at, actor, action, resource, outcome, detail, prev_hash, hash, alg, instance)
+          select x.seq, x.id, x.at, x.actor, x.action, x.resource, x.outcome, x.detail, x.prev_hash, x.hash, x.alg, $2
+          from jsonb_to_recordset($1::text::jsonb) as x(i int, seq bigint, id text, at text, actor text, action text, resource text, outcome text, detail text, prev_hash text, hash text, alg text)
+          order by x.seq, x.i
+          on conflict (id) do nothing`,
+  }),
+  'twin.entity': spec<TwinEntity>({
+    key: e => e.id,
+    row: e => ({ id: e.id, uri: e.uri ?? null, kind: e.kind, name: e.name, code: e.code ?? null, parent: e.parent ?? null, region: e.region ?? null, ord: e.order ?? null, lng: e.location?.lng ?? null, lat: e.location?.lat ?? null, doc: e }),
+    sql: `insert into civicos.twin_entity (id, uri, kind, name, code, parent, region, ord, lng, lat, doc)
+          select x.id, x.uri, x.kind, x.name, x.code, x.parent, x.region, x.ord, x.lng, x.lat, x.doc
+          ${recordset('id text, uri text, kind text, name text, code text, parent text, region boolean, ord integer, lng float8, lat float8, doc jsonb')}
+          on conflict (id) do update set uri = excluded.uri, kind = excluded.kind, name = excluded.name, code = excluded.code, parent = excluded.parent,
+            region = excluded.region, ord = excluded.ord, lng = excluded.lng, lat = excluded.lat, doc = excluded.doc, updated_at = now()`,
+  }),
+  'twin.key': spec<{ entityId: string; system: string; key: string }>({
+    row: k => ({ system: k.system, key: k.key, entity_id: k.entityId }),
+    sql: `insert into civicos.twin_key (system, key, entity_id) select x.system, x.key, x.entity_id
+          ${recordset('system text, key text, entity_id text')}
+          on conflict (system, key) do nothing`,
+  }),
+  'twin.source': spec<TwinSource>({
+    key: s => s.id,
+    row: s => ({ id: s.id, doc: s }),
+    sql: `insert into civicos.twin_source (id, doc) select x.id, x.doc ${recordset('id text, doc jsonb')}
+          on conflict (id) do update set doc = excluded.doc, updated_at = now()`,
+  }),
+  'twin.run': spec<TwinRun>({
+    key: r => r.id,
+    row: r => ({ id: r.id, source_id: r.sourceId, at: r.at, doc: r }),
+    sql: `insert into civicos.twin_run (id, source_id, at, doc) select x.id, x.source_id, x.at::timestamptz, x.doc ${recordset('id text, source_id text, at text, doc jsonb')}
+          on conflict (id) do update set doc = excluded.doc, updated_at = now()`,
+  }),
+  facility: spec<Facility>({
+    key: f => f.id,
+    row: f => ({ id: f.id, national_id: f.ids?.national ?? null, owner_id: f.ownerId, category: f.category, state: f.state, lng: f.location.lng, lat: f.location.lat, doc: f }),
+    sql: `insert into civicos.facility (id, national_id, owner_id, category, state, lng, lat, doc)
+          select x.id, x.national_id, x.owner_id, x.category, x.state, x.lng, x.lat, x.doc
+          ${recordset('id text, national_id text, owner_id text, category text, state text, lng float8, lat float8, doc jsonb')}
+          on conflict (id) do update set national_id = excluded.national_id, owner_id = excluded.owner_id, category = excluded.category, state = excluded.state,
+            lng = excluded.lng, lat = excluded.lat, doc = excluded.doc, updated_at = now()`,
+  }),
+  parcel: spec<Parcel>({
+    key: p => p.id,
+    row: p => ({ id: p.id, parcel_id: p.parcelId, state: p.state, land_use: p.landUse, region_code: p.place.regionCode ?? null, district_code: p.place.districtCode ?? null, area_m2: p.areaM2,
+      min_lng: p.bbox[0], min_lat: p.bbox[1], max_lng: p.bbox[2], max_lat: p.bbox[3], geometry: p.geometry, doc: p }),
+    sql: `insert into civicos.parcel (id, parcel_id, state, land_use, region_code, district_code, area_m2, min_lng, min_lat, max_lng, max_lat, geometry, doc)
+          select x.id, x.parcel_id, x.state, x.land_use, x.region_code, x.district_code, x.area_m2, x.min_lng, x.min_lat, x.max_lng, x.max_lat, x.geometry, x.doc
+          ${recordset('id text, parcel_id text, state text, land_use text, region_code text, district_code text, area_m2 float8, min_lng float8, min_lat float8, max_lng float8, max_lat float8, geometry jsonb, doc jsonb')}
+          on conflict (id) do update set parcel_id = excluded.parcel_id, state = excluded.state, land_use = excluded.land_use, region_code = excluded.region_code,
+            district_code = excluded.district_code, area_m2 = excluded.area_m2, min_lng = excluded.min_lng, min_lat = excluded.min_lat, max_lng = excluded.max_lng,
+            max_lat = excluded.max_lat, geometry = excluded.geometry, doc = excluded.doc, updated_at = now()`,
+  }),
+};
+const isBatched = (t: Op['topic']): t is Batched => t in BATCH;
+
+/**
+ * Write the queued ops in order (inside the flush transaction). Each run of
+ * consecutive ops on the same topic goes out as one multi-row statement per
+ * WRITE_BATCH_ROWS rows (jsonb_to_recordset, as observations already were),
+ * not one round trip per record: a parcel load of 50,000 rows and its audit
+ * entries is a few dozen statements. Order between topics is kept.
+ */
+export async function writeOps(tx: Sql, ops: Op[], instance: string): Promise<void> {
+  for (let i = 0; i < ops.length;) {
+    const topic = ops[i]!.topic;
+    if (!isBatched(topic)) { await writeOp(tx, ops[i]!, instance); i++; continue; }
+    let j = i;
+    while (j < ops.length && ops[j]!.topic === topic) j++;
+    const s = BATCH[topic];
+    for (let k = i; k < j; k += WRITE_BATCH_ROWS) {
+      const rows: Record<string, unknown>[] = [];
+      const at = new Map<string, number>();
+      for (const op of ops.slice(k, Math.min(j, k + WRITE_BATCH_ROWS))) {
+        const row = { i: rows.length, ...s.row(op.data) };
+        const id = s.key?.(op.data);
+        // A record changed twice in one flush: its latest state, at the place it was first written.
+        if (id !== undefined && at.has(id)) { rows[at.get(id)!] = { ...row, i: at.get(id)! }; continue; }
+        if (id !== undefined) at.set(id, rows.length);
+        rows.push(row);
+      }
+      await q(tx, s.sql, topic === 'audit' ? [JSON.stringify(rows), instance] : [JSON.stringify(rows)]);
+    }
+    i = j;
+  }
 }
 
 /** Write one op (inside the flush transaction). */
@@ -709,7 +813,7 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
   const writeBatch = async (batch: Op[], docs: DocBatch[] = []): Promise<{ results: Map<string, DocResult>; merged: number; conflicts: number }> => {
     let written = { results: new Map<string, DocResult>(), merged: 0, conflicts: 0 };
     await sql.begin(async tx => {
-      for (const op of batch) await writeOp(tx, op, instance);
+      await writeOps(tx, batch, instance);
       const rows = batch.map(op => JSON.stringify({ instance, topic: op.topic, record_id: recordId(op), payload: payloadOf(op) }));
       if (docs.length) {
         written = await writeDocs(tx, docs, instance);

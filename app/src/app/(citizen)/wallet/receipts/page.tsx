@@ -117,7 +117,7 @@ export default function ReceiptsPage() {
     appeal: tl.kindAppeal, 'work-item-step': tl.kindWorkItemStep,
   };
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet/receipts"
         header={
@@ -249,6 +249,6 @@ export default function ReceiptsPage() {
           </>
         )}
       </PhoneShell>
-    </main>
+    </div>
   );
 }

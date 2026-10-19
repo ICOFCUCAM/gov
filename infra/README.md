@@ -55,7 +55,11 @@ What the chart sets up for the Next.js app (`templates/app.yaml`):
 - The ingress sends every page **and every `/api` route** to the app. The
   NestJS civic-api keeps its own `/api/*` paths under `/svc/api/*`
   (`ingress.civicApiPath`, rewritten to `/api/*`).
-- `CIVICOS_AUTH=enforce` (`app.auth`), the session and machine secrets and the
+- `CIVICOS_AUTH=enforce` (`app.auth`; the production image enforces sign-in
+  anyway unless `CIVICOS_AUTH=open`, go-live review L-2),
+  `CIVICOS_TRUSTED_PROXIES=1` (`app.trustedProxies`: the ingress is the one
+  proxy whose `X-Forwarded-For` hop counts for per-address limits; add one for
+  an appending cloud load balancer in front, review L-1), the session and machine secrets and the
   substrate keys from the `civicos-app` secret, and `CIVICOS_STATE=supabase`
   (`app.state.mode`; `file` puts the state on a persistent volume).
   Apply the app's Supabase migrations first (`app/supabase/migrations`,

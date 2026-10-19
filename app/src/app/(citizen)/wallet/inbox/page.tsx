@@ -18,7 +18,7 @@ export default function InboxPage() {
   const read = notifications.filter(n => n.read);
 
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet"
         header={
@@ -83,6 +83,6 @@ export default function InboxPage() {
 
         <SupportThread />
       </PhoneShell>
-    </main>
+    </div>
   );
 }

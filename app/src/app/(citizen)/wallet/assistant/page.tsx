@@ -32,7 +32,7 @@ export default function AssistantPage() {
   };
 
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet/assistant"
         header={
@@ -87,6 +87,6 @@ export default function AssistantPage() {
           <AgentRequest subjectId="assistant-foot" label={`👤 ${tx.common.talkToHuman}`} />
         </div>
       </PhoneShell>
-    </main>
+    </div>
   );
 }

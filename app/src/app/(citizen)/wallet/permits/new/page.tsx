@@ -6,7 +6,7 @@ export default function NewPermitPage() {
   const m = nationMessages();
   const x = m.pages;
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet/services"
         header={
@@ -19,6 +19,6 @@ export default function NewPermitPage() {
       >
         <NewPermitForm />
       </PhoneShell>
-    </main>
+    </div>
   );
 }

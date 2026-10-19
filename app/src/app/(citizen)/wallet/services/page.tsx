@@ -54,7 +54,7 @@ export default function ServicesPage() {
   const mins = ministries.filter(x => !norm || x.label.toLowerCase().includes(norm));
 
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet/services"
         header={
@@ -146,6 +146,6 @@ export default function ServicesPage() {
           </ul>
         </section>
       </PhoneShell>
-    </main>
+    </div>
   );
 }

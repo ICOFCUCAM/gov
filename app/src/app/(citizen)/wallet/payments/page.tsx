@@ -12,7 +12,7 @@ export default function PaymentsPage() {
   const receipts = listReceipts();
 
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet"
         header={
@@ -25,6 +25,6 @@ export default function PaymentsPage() {
       >
         <PaymentsClient initialBills={bills} initialReceipts={receipts} />
       </PhoneShell>
-    </main>
+    </div>
   );
 }

@@ -10,6 +10,7 @@
 // refused with 403. Unknown identifiers are 404. A route handler, not a page,
 // so it is not in route-lock.json (which records pages).
 
+import { authEnforced } from '@/lib/auth/mode';
 import { NextRequest, NextResponse } from 'next/server';
 import { entityIdFor, getEntity, syncRegister } from '@/lib/twin/register';
 import { publicEntity, ENTITY_KINDS } from '@/lib/twin/public-entity';
@@ -20,7 +21,7 @@ export const dynamic = 'force-dynamic';
 /** An official reading: a verified session, or (sign-in not enforced) the console's demo session, as the gate lets it through. */
 async function insider(req: NextRequest): Promise<boolean> {
   if (await currentOfficial()) return true;
-  return process.env.CIVICOS_AUTH !== 'enforce' && !!req.cookies.get('civicos_session')?.value;
+  return !authEnforced() && !!req.cookies.get('civicos_session')?.value;
 }
 
 export async function GET(

@@ -14,7 +14,7 @@ export default function IdentityPage() {
   const c = session.citizen!;
 
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet"
         header={
@@ -53,6 +53,6 @@ export default function IdentityPage() {
           </ul>
         </section>
       </PhoneShell>
-    </main>
+    </div>
   );
 }

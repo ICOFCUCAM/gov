@@ -11,8 +11,22 @@
 
 export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
+    // The connection's own address as the last X-Forwarded-For hop, before any request is read (review L-1).
+    const { startPeerAddress } = await import('./lib/ops/peer-address');
+    await startPeerAddress();
     const { log } = await import('./lib/ops/log');
-    const { startTracingFromEnv } = await import('./lib/ops/otel');
+    // Sign-in (lib/auth/mode.ts, review L-2): a production server left open on purpose says so loudly at
+    // every start; one enforced without a session key says why nobody can sign in.
+    const { openInProduction, authEnforced, OPEN_WARNING } = await import('./lib/auth/mode');
+    if (openInProduction()) {
+      console.error(`\n${'!'.repeat(78)}\n${OPEN_WARNING}\n${'!'.repeat(78)}\n`);
+      log('error', 'auth.open_in_production', { message: OPEN_WARNING });
+    } else if (authEnforced()) {
+      const { sessionSecretProblem } = await import('./lib/auth/officials');
+      const problem = sessionSecretProblem();
+      if (problem) { console.error(`\nCIVICOS SIGN-IN: ${problem}\n`); log('error', 'auth.session_key', { message: problem }); }
+    }
+    const { startTracingFromEnv }= await import('./lib/ops/otel');
     const tracing = startTracingFromEnv();
     if (tracing.enabled || tracing.error) log(tracing.error ? 'error' : 'info', 'tracing.start', { ...tracing });
     const { startFromEnv } = await import('./lib/data/persist');

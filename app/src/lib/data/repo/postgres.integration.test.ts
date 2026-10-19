@@ -283,6 +283,29 @@ describe.skipIf(!URL_)('postgres backend (TEST_DATABASE_URL)', { timeout: 60_000
     } else expect(cols).not.toContain('geom');
   });
 
+  it('writes a large load in batches: thousands of parcels and audit entries in one flush, chain intact (review L-6)', async () => {
+    const a = opened[0]!;
+    const repo = a.backend.parcels(() => parcelsOf(G as Root));
+    const before = Number((await a.sql.unsafe(`select count(*)::int as n from civicos.parcel`))[0]!.n);
+    const n = 2_500; // more than WRITE_BATCH_ROWS: several statements per topic
+    const t0 = Date.now();
+    for (let i = 0; i < n; i++) {
+      const p = parcel(`PCL-${9_000_000 + i}`, 36.7 + (i % 100) * 0.002, -1.35 + Math.floor(i / 100) * 0.002);
+      repo.add(p);
+      if (i % 2 === 0) { p.state = 'published'; p.publishedBy = 'Registrar B'; repo.save(p); } // changed twice in the same flush
+      recordAudit('Registrar', 'parcel.load.row', p.id, 'ok');
+    }
+    expect(await a.drain()).toBe(true);
+    expect(Date.now() - t0).toBeLessThan(30_000);
+    expect(Number((await a.sql.unsafe(`select count(*)::int as n from civicos.parcel`))[0]!.n)).toBe(before + n);
+    expect(Number((await a.sql.unsafe(`select count(*)::int as n from civicos.parcel where state = 'published' and id in (select id from civicos.parcel order by pos desc limit ${n})`))[0]!.n)).toBe(n / 2);
+    const fresh: Root = {};
+    await start(fresh);
+    expect(chainOf(fresh)).toEqual(chainOf(G as Root));
+    expect(chainIntact(chainOf(fresh))).toBe(true);
+    expect(parcelsOf(fresh).parcels).toEqual(parcelsOf(G as Root).parcels.map(x => JSON.parse(JSON.stringify(x))));
+  });
+
   it('replays a journal left by a crash', async () => {
     const dir = mkdtempSync(path.join(os.tmpdir(), 'civicos-journal-'));
     const rootD: Root = {};

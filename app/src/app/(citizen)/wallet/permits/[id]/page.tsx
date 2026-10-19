@@ -21,7 +21,7 @@ export default async function PermitDetailPage(props: { params: Promise<{ id: st
 
   if (!permit) {
     return (
-      <main className="bg-bg min-h-screen">
+      <div className="bg-bg min-h-screen">
         <PhoneShell
           activeTab="/wallet/services"
           header={
@@ -33,12 +33,12 @@ export default async function PermitDetailPage(props: { params: Promise<{ id: st
         >
           <p>{m.detail.notFoundPermit}</p>
         </PhoneShell>
-      </main>
+      </div>
     );
   }
 
   return (
-    <main className="bg-bg min-h-screen">
+    <div className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet/services"
         header={
@@ -109,6 +109,6 @@ export default async function PermitDetailPage(props: { params: Promise<{ id: st
           </p>
         </section>
       </PhoneShell>
-    </main>
+    </div>
   );
 }

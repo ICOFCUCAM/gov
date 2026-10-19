@@ -13,6 +13,7 @@ import { BOUNDARY_FORMATS, type BoundaryFormat } from '@/lib/geo/boundary-files'
 import { refusal, withOfficial } from '@/lib/auth/official';
 import { canRecordParcel } from '@/lib/auth/roles';
 import { limit } from '@/lib/ops/rate-limit';
+import { readForm, readJson, TOO_LARGE } from '@/lib/net/body-limit';
 export const dynamic = 'force-dynamic';
 // GeoPackages are read with sql.js (WebAssembly) and zips with fflate: Node only.
 export const runtime = 'nodejs';
@@ -28,12 +29,14 @@ export async function POST(req: NextRequest) {
   if (limited) return limited;
   const refused = await refusal(s => canRecordParcel(s, parcelPolicy().authorityId));
   if (refused) return refused;
-  if (Number(req.headers.get('content-length') ?? 0) > MAX_PARCEL_FILE_BYTES + 1_000_000) return bad(`The file is larger than ${MAX_PARCEL_FILE_BYTES / 1_000_000} MB`, 413);
+  // The body is read with a byte cap whether or not it declares its length (lib/net/body-limit.ts, review L-4).
+  const tooBig = () => bad(`The file is larger than ${MAX_PARCEL_FILE_BYTES / 1_000_000} MB`, 413);
   let raw: Record<string, unknown> = {};
   let bytes: Uint8Array | undefined;
   let name: string | undefined;
   if ((req.headers.get('content-type') ?? '').toLowerCase().startsWith('multipart/form-data')) {
-    const form = await req.formData().catch(() => null);
+    const form = await readForm(req, MAX_PARCEL_FILE_BYTES + 1_000_000);
+    if (form === TOO_LARGE) return tooBig();
     if (!form) return bad('The upload could not be read');
     const file = form.get('file');
     if (!file || typeof file === 'string') return bad('Attach the parcel file as `file`');
@@ -43,7 +46,9 @@ export async function POST(req: NextRequest) {
     const meta = form.get('body');
     try { raw = typeof meta === 'string' && meta ? JSON.parse(meta) as Record<string, unknown> : {}; } catch { return bad('`body` is not valid JSON'); }
   } else {
-    raw = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const json = await readJson(req, Math.ceil((MAX_PARCEL_FILE_BYTES * 4) / 3) + 1_000_000);
+    if (json === TOO_LARGE) return tooBig();
+    raw = (json && typeof json === 'object' ? json : {}) as Record<string, unknown>;
     if (typeof raw.base64 === 'string' && raw.base64) bytes = new Uint8Array(Buffer.from(raw.base64, 'base64'));
     else if (typeof raw.text === 'string') bytes = new TextEncoder().encode(raw.text);
     if (typeof raw.fileName === 'string') name = raw.fileName;

@@ -7,6 +7,7 @@
 // (lib/data/persist.ts); passkeys themselves are kept on the official's
 // account (lib/auth/officials.ts).
 
+import { authEnforced } from './mode';
 import { touch } from '@/lib/data/repo/track';
 import type { OfficialRole } from './roles';
 
@@ -105,7 +106,7 @@ export function platformOrigin(requestOrigin?: string, env: NodeJS.ProcessEnv = 
   if (raw) {
     try { const u = new URL(raw); return { origin: u.origin, host: u.hostname }; } catch { return { error: 'CIVICOS_PUBLIC_URL is not a valid address' }; }
   }
-  if (env.CIVICOS_AUTH === 'enforce' || !requestOrigin) return { error: 'Set CIVICOS_PUBLIC_URL to the platform\'s public address first: passkeys and the identity provider are bound to it' };
+  if (authEnforced(env) || !requestOrigin) return { error: 'Set CIVICOS_PUBLIC_URL to the platform\'s public address first: passkeys and the identity provider are bound to it' };
   const u = new URL(requestOrigin);
   return { origin: u.origin, host: u.hostname };
 }
