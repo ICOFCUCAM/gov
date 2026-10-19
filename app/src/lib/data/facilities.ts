@@ -334,7 +334,7 @@ export async function placePoint(input: { lng: number; lat: number; region?: str
   if (decimals(lng) < 4 || decimals(lat) < 4) warnings.push('Fewer than 4 decimal places: the position is only good to about 10 m or worse');
   const iso3 = nationIso3();
   if (iso3 && !errors.length && !input.skipMap) {
-    const geo = await loadNationGeography(iso3, nationRegions());
+    const geo = await loadNationGeography(iso3, nationRegions(), 'full');
     const at: [number, number] = [lng, lat];
     const unit = geo?.units.find(u => u.geometry && geoContains(feature(u.geometry) as never, at));
     if (unit) { place.inside = true; place.regionCode = unit.code; place.region = unit.name; }
@@ -352,7 +352,7 @@ export async function placePoint(input: { lng: number; lat: number; region?: str
     if (input.region && place.region && input.region.trim().toLowerCase() !== place.region.toLowerCase()) {
       warnings.push(`The ${noun} is said to be in ${input.region}, but the position falls in ${place.region}`);
     }
-    const a2 = place.regionCode ? await loadDistricts(iso3) : null;
+    const a2 = place.regionCode ? await loadDistricts(iso3, 'full') : null;
     const district = a2?.units.find(u => u.parent === place.regionCode && geoContains(feature(u.geometry) as never, at));
     if (district) { place.districtCode = district.code; place.district = district.name; }
   }

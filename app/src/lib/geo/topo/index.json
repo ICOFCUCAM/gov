@@ -1,0 +1,994 @@
+{
+ "a1": {
+  "ABW": {
+   "from": "admin1/ABW.json",
+   "sha256": "4c30dae133b017d70127e894daf28ecbcff9589c405aec84f11aff6d9e77f8ea"
+  },
+  "AFG": {
+   "from": "boundaries/AFG.json",
+   "sha256": "223f2bdd1d9cace1e0d3bc6eb860013bb9bcd0317c1f52784d1df4e1b7b61e85"
+  },
+  "AGO": {
+   "from": "admin1/AGO.json",
+   "sha256": "5af320a5d872e5a864f7f1c684922267313ae83e65379bc6e59046e3e71171e1"
+  },
+  "AIA": {
+   "from": "admin1/AIA.json",
+   "sha256": "cc61b070ebdddbc132e4ebd1ad7efb0592824a23bae9686271911d7082c37597"
+  },
+  "ALB": {
+   "from": "admin1/ALB.json",
+   "sha256": "be0d19d1f87508274f5855089085a3c3d304b9bd92cb9cde24374a7d91fb6bc9"
+  },
+  "ALD": {
+   "from": "admin1/ALD.json",
+   "sha256": "43305457cb29a181a904633e1b19504ca2b31fe19bd39aa2dc8c1a030a2f5fca"
+  },
+  "AND": {
+   "from": "admin1/AND.json",
+   "sha256": "c14f3bae9dd206019ee3124c779dd7b5a0df904092e78551dc109f403fe357e8"
+  },
+  "ARE": {
+   "from": "admin1/ARE.json",
+   "sha256": "298dfa707f9ff04665d19de92b1c85c4a1d8e829c2e8a81f38bf9d6af3dc90d2"
+  },
+  "ARG": {
+   "from": "admin1/ARG.json",
+   "sha256": "6c32e747f6da8cc99525b5f2dcaec6273e4f2aeef9472df91668ffde196889e0"
+  },
+  "ARM": {
+   "from": "admin1/ARM.json",
+   "sha256": "80ddb492f4a076c42b5fc52ebb1eba2949e39b5141f303a096a31ebbdd8f4a0a"
+  },
+  "ASM": {
+   "from": "admin1/ASM.json",
+   "sha256": "fd036bf208b041bf5c720669ee2fa516b0054633812672ee7c289e5cd09f2733"
+  },
+  "ATA": {
+   "from": "admin1/ATA.json",
+   "sha256": "a42988f7cf288e112dc0b8b353426dece6d6c074e5919c945a7f2f582a3ca4dd"
+  },
+  "ATC": {
+   "from": "admin1/ATC.json",
+   "sha256": "01e7e973ded8f9b27deaf92aace010a82c6d8ceb118fd3f9562e9ecd816fccee"
+  },
+  "ATF": {
+   "from": "admin1/ATF.json",
+   "sha256": "adc90d91e2d5307aed1839ee66b5269e0505e1d5f13131fbf236c0e5ec54a1a0"
+  },
+  "ATG": {
+   "from": "admin1/ATG.json",
+   "sha256": "1029e24c1f5d951b57f1c8a49310ff8f4c6e2781953cb146eb672e1137e86ab8"
+  },
+  "AUS": {
+   "from": "admin1/AUS.json",
+   "sha256": "8a0ec76d662b75fbc2927b1cb3c7b845512003a442a6cacf27d539b945787cf9"
+  },
+  "AUT": {
+   "from": "admin1/AUT.json",
+   "sha256": "3b3d8842407828c11bb4d6f7c54ae970e3e0cf79beac0169b6db78aafe13bfa7"
+  },
+  "AZE": {
+   "from": "admin1/AZE.json",
+   "sha256": "6d952489e44bcb23a759f125aee9c9520c36c13f702551f5abf3e13fe2e40175"
+  },
+  "BDI": {
+   "from": "boundaries/BDI.json",
+   "sha256": "eeeed01834807cad2af3afb1cd222861e173b34094dbac62df0e91780ab556ef"
+  },
+  "BEL": {
+   "from": "admin1/BEL.json",
+   "sha256": "5a616a32e73c6ca1ded9ed62aac04c680d54cbc0c9c01aed49bf7bce34f2873c"
+  },
+  "BEN": {
+   "from": "admin1/BEN.json",
+   "sha256": "2382490dbedcac255fbfed4b21dee0f248fb059d8afdb3f5cd3172344648f7f6"
+  },
+  "BFA": {
+   "from": "admin1/BFA.json",
+   "sha256": "be50bde01ab894d8ed423656e33aecc34da4a41a64ace419e3f35dcc86dd538b"
+  },
+  "BGD": {
+   "from": "boundaries/BGD.json",
+   "sha256": "711ef3235a7600644a83e935aa743f4e153b54be3fa8a7240b0b1452bc61e2c7"
+  },
+  "BGR": {
+   "from": "admin1/BGR.json",
+   "sha256": "c1cebc0593c2fe2512597cdca88adc4f358bfe696a34f99f6ebfa7f8807c89d9"
+  },
+  "BHR": {
+   "from": "admin1/BHR.json",
+   "sha256": "cca817e314003dcc2eb6a8b52a0b13c17178881465cb63d950aeaba7a1b44e28"
+  },
+  "BHS": {
+   "from": "boundaries/BHS.json",
+   "sha256": "8fa9ed8b8a976136f83f4bcc700fce3f6714d975821ed30bac9aafd5f562522c"
+  },
+  "BIH": {
+   "from": "admin1/BIH.json",
+   "sha256": "d73bb61f4777032ec3c1e51eebcac8a283850c175be781af24c8f36ed493e0cc"
+  },
+  "BLM": {
+   "from": "admin1/BLM.json",
+   "sha256": "c4f9ba94a2bb47e4dfd99944332ee3692a1cfe7697272e0f06170d11873df33b"
+  },
+  "BLR": {
+   "from": "admin1/BLR.json",
+   "sha256": "d46a85e1a80f8a5896cac1a92c108c0b9e3ad4b1985525b967594bf9f32658ad"
+  },
+  "BLZ": {
+   "from": "admin1/BLZ.json",
+   "sha256": "868edab81fa2932b96a1e2f4ce21b468e7bcb985c051a990a638802edb25fc7f"
+  },
+  "BMU": {
+   "from": "admin1/BMU.json",
+   "sha256": "37ef1fa4b08aa6218f99561615f59afb16d3ce8667af82f691242ad368cf98d6"
+  },
+  "BOL": {
+   "from": "admin1/BOL.json",
+   "sha256": "3ca9b6d41aa7712f7e201981678bc8bc468495730137cfea90ee794348d56bfa"
+  },
+  "BRA": {
+   "from": "admin1/BRA.json",
+   "sha256": "49b3ac55371fbfa482c31da1f37fc73223f1ff1c78187a7d0cd749e9c802de19"
+  },
+  "BRB": {
+   "from": "admin1/BRB.json",
+   "sha256": "6bb27399025026c5c1bfa1ce082933383c8c13c3f67d9697ba07624d50a9ccf7"
+  },
+  "BRN": {
+   "from": "admin1/BRN.json",
+   "sha256": "c195fdf39ab0f8a397b9a466793618ff10d538e2648212140cf7ad1d0aa5def7"
+  },
+  "BTN": {
+   "from": "admin1/BTN.json",
+   "sha256": "c53c0023f56e51c717f484680b79b97c04c2a00ce5a9ab33389c72d283502e51"
+  },
+  "BWA": {
+   "from": "boundaries/BWA.json",
+   "sha256": "1f0280cfc736a225a0e87bee19131422bfcce964088af0602a990f1324046e06"
+  },
+  "CAF": {
+   "from": "admin1/CAF.json",
+   "sha256": "28d04f462b9c16c0cca128b0c8254e5e6e8a56de32714476383aebc98d495647"
+  },
+  "CAN": {
+   "from": "admin1/CAN.json",
+   "sha256": "bd52b3a9057a301823d4939af635458ec2451df50c2dc672837f00d291994810"
+  },
+  "CHE": {
+   "from": "admin1/CHE.json",
+   "sha256": "7390713260bcb9eec2aa82ab46927130945ed095efff947631c50da870a116ae"
+  },
+  "CHL": {
+   "from": "admin1/CHL.json",
+   "sha256": "138a9081eaba7c613ef5e82fdd33301cdc49ce760799d48744366cd20512a39c"
+  },
+  "CHN": {
+   "from": "admin1/CHN.json",
+   "sha256": "42bc9e85627b6f9efcfa30b0f544e9a2d17844dbb96890abd1bb809e821ba1ea"
+  },
+  "CIV": {
+   "from": "boundaries/CIV.json",
+   "sha256": "320e961c04294486199f946d1c7a385c8b2b3f1992c964d16e8a5785508c6df1"
+  },
+  "CMR": {
+   "from": "admin1/CMR.json",
+   "sha256": "d1f5ccda2b14133d3bd0c9d6d145adf509c450167638985bf0bf5abc0b228af0"
+  },
+  "COD": {
+   "from": "boundaries/COD.json",
+   "sha256": "b70312a85b52255b050e15e6737a530d8d89e26840d100a1d55ca9a245843f61"
+  },
+  "COG": {
+   "from": "admin1/COG.json",
+   "sha256": "169b31de69b6c82c84be70a1e0dae26bcf1eb22b7c0055fe3600f7d9b42573ea"
+  },
+  "COK": {
+   "from": "admin1/COK.json",
+   "sha256": "b52e20bb13d126653377928f15c7fb362a8b4fcba098108febe15e60ec058c91"
+  },
+  "COL": {
+   "from": "admin1/COL.json",
+   "sha256": "dae1ae26e77c45fdd1b04d4bde8b33203213743b65af4836f1afb914d8a2c1db"
+  },
+  "COM": {
+   "from": "admin1/COM.json",
+   "sha256": "7fa84eb5dfb3b251b0ca36f8044f1c8ce30347d0cffa3e3fa512cf119aa183da"
+  },
+  "CPV": {
+   "from": "admin1/CPV.json",
+   "sha256": "d1dcc504f0317b0d48fdb900730ebb4091027f1579fde916197edd5d860f0340"
+  },
+  "CRI": {
+   "from": "admin1/CRI.json",
+   "sha256": "1944950635f9f07b886dd67e8e647e3d4e5d34705f11c22c85472493de89d153"
+  },
+  "CUB": {
+   "from": "admin1/CUB.json",
+   "sha256": "e5f546deccf68c992ea952ed0269c8616a9f7d3e74235f1e76dfcf8364ebb29a"
+  },
+  "CUW": {
+   "from": "admin1/CUW.json",
+   "sha256": "5712660a8c02ef3305869f5fde445fe2e73d159d9954b60dff8cc3987cbe6667"
+  },
+  "CYM": {
+   "from": "admin1/CYM.json",
+   "sha256": "42e294f79d7c9aed8a662db68b16471315351ff44d6b4dce0bcb999f240e4822"
+  },
+  "CYN": {
+   "from": "admin1/CYN.json",
+   "sha256": "4f12cf5d5aded8b71bdd6b2d0498753f239e190ebe424a87227ca62b83fd3060"
+  },
+  "CYP": {
+   "from": "admin1/CYP.json",
+   "sha256": "5d3bafa43ecbde42a5725b3b7b4af3b83a0e9f9753eddc4b0fb6a5d39ef677b8"
+  },
+  "CZE": {
+   "from": "boundaries/CZE.json",
+   "sha256": "8fc27fe186db4673f78673e6e64d10debb97a48eb7d0c01a747dc7c372a3d308"
+  },
+  "DEU": {
+   "from": "admin1/DEU.json",
+   "sha256": "519c776fe9e874816c55680eb11cddd42057666a029d7633e85cca782d928d06"
+  },
+  "DJI": {
+   "from": "admin1/DJI.json",
+   "sha256": "60f14d28802a299b324e897ad701bf1eab5ad63097227a5cb546ff61766b57d5"
+  },
+  "DMA": {
+   "from": "admin1/DMA.json",
+   "sha256": "0ad59e51d06c9fc161ff0187dcd6308bc14039253a12c66002d7d43cb179eb8f"
+  },
+  "DNK": {
+   "from": "admin1/DNK.json",
+   "sha256": "f01753e6863ec060e8e755c124f7a9efe58e1748c0e7baeaab0cf4a66d6682d7"
+  },
+  "DOM": {
+   "from": "admin1/DOM.json",
+   "sha256": "663b1eed72e071600bbed313b66856b65f7c870424f1bac1214373e8f4ff3870"
+  },
+  "DZA": {
+   "from": "admin1/DZA.json",
+   "sha256": "0f1a6752f7baa1dc4dd132d236919957c9e53dd95e26983d813ced16d5f9137d"
+  },
+  "ECU": {
+   "from": "admin1/ECU.json",
+   "sha256": "833007040cc17d4d94b8d52e24f1846b4c272fa78fb4fd0e0b31d21f8f29ecf9"
+  },
+  "EGY": {
+   "from": "admin1/EGY.json",
+   "sha256": "2d41b4b55a8126aa780509b1b97759988be20b37efc676c18287ac4c81dcbb5b"
+  },
+  "ERI": {
+   "from": "admin1/ERI.json",
+   "sha256": "93a0f45b9caf87dd9af86dcbad7c3486467ff03e795092363418bfa01363f1ea"
+  },
+  "ESP": {
+   "from": "admin1/ESP.json",
+   "sha256": "147eadbaa3b5327dce40a069ccfcaa1769a21d24365d0fad582284b561e0d2b3"
+  },
+  "EST": {
+   "from": "boundaries/EST.json",
+   "sha256": "f36e2be9886b5987ac25b4be2e538862abb41f4c7d2b4fddad3c5e047f4f1d7d"
+  },
+  "ETH": {
+   "from": "boundaries/ETH.json",
+   "sha256": "dcb9bc9e7991b3c5d6b9218ad3ee7c9f24bc872d454beb9ea0cb080f4731c64b"
+  },
+  "FIN": {
+   "from": "boundaries/FIN.json",
+   "sha256": "fd48216f0c64326b55fafe702257fc6f150164cc51d6ca559958a42cfb25bc83"
+  },
+  "FJI": {
+   "from": "admin1/FJI.json",
+   "sha256": "33f368133660339e0f74b977ebbf47c96ddb16bb450de38ab2509505285b4c1b"
+  },
+  "FLK": {
+   "from": "admin1/FLK.json",
+   "sha256": "421b75a3e8170674f9c9b5294195bd4f433056704075e29216e581bf274e5a86"
+  },
+  "FRA": {
+   "from": "admin1/FRA.json",
+   "sha256": "77b0dbadb87381ef746342d4263fc1dc9e62f200b1b3ac74f5a79e37ffbe0620"
+  },
+  "FRO": {
+   "from": "admin1/FRO.json",
+   "sha256": "f0ed5ab6918f579fda2b6ae69c34b1116545f806ecf44a9e60b5dbe4bad2119c"
+  },
+  "FSM": {
+   "from": "admin1/FSM.json",
+   "sha256": "3de1f84beeccdf404051bc77ff9c454de1d2a04ad755f8ed34017001600612b9"
+  },
+  "GAB": {
+   "from": "admin1/GAB.json",
+   "sha256": "8b6e7822e8fef6c04267951bc682584cbdc90309e3146292d718d6cb3ddada05"
+  },
+  "GBR": {
+   "from": "admin1/GBR.json",
+   "sha256": "856ff67049158f75629984c2ab4d4f4e4dee42f89da5650868869e49dddf94d1"
+  },
+  "GEO": {
+   "from": "admin1/GEO.json",
+   "sha256": "96eafe17928fbb4b4470d541d3cedfb22a8cc8b337eccded818b9a9ff353a54e"
+  },
+  "GGY": {
+   "from": "admin1/GGY.json",
+   "sha256": "d18d5fa51c01226e57e4bcac327eeaffc9f744c1de66cb683e3f26f09392390f"
+  },
+  "GHA": {
+   "from": "boundaries/GHA.json",
+   "sha256": "3e4e8c7f13c33595b46f6331e944fc96e1ed611b460c4ef2533afddc1ce51df0"
+  },
+  "GIN": {
+   "from": "admin1/GIN.json",
+   "sha256": "8788c4586f75a3abaa462b4d6194d7a51a826f6f7fb5d8df61d5ed813b0cb9d8"
+  },
+  "GMB": {
+   "from": "admin1/GMB.json",
+   "sha256": "bc528aac7d37586327f6d5b2d99e879db2f8be632c5223efaeacba889002a8a3"
+  },
+  "GNB": {
+   "from": "admin1/GNB.json",
+   "sha256": "2d1e489fdcd5896c1e6dcc526ed122687ca320a6369646c3ab29d6a8b9ed8e30"
+  },
+  "GNQ": {
+   "from": "admin1/GNQ.json",
+   "sha256": "1a6e9cdf56196b1e9af5fcef2e03e6d467000a60a0a83dadc0c88354876e5b59"
+  },
+  "GRC": {
+   "from": "admin1/GRC.json",
+   "sha256": "bc0510ba9f794fd529d008ba4a22ba7c459c893aca69998072faadad87aa933b"
+  },
+  "GRD": {
+   "from": "admin1/GRD.json",
+   "sha256": "0cb37373ea9c0fc327e9604836e7e1484ede94ea422ddaafccba962d2d27c16e"
+  },
+  "GRL": {
+   "from": "boundaries/GRL.json",
+   "sha256": "7f5c1ff1c446e03c628609405a093eaa76540fd33ab617dda45b1b30f1bd97d6"
+  },
+  "GTM": {
+   "from": "admin1/GTM.json",
+   "sha256": "8d12570bf98e6b4a5359face1f98ebe1a4799dade47be644098496c1ca90f7b8"
+  },
+  "GUM": {
+   "from": "admin1/GUM.json",
+   "sha256": "e82e60f86ee7fcd9657374b743d0c995483bcd112064ba43b501b22d63579dbb"
+  },
+  "GUY": {
+   "from": "admin1/GUY.json",
+   "sha256": "678bd3380df84136107c8b62fada77e475afe7e5a7d5cc13af7cf7f1682d5841"
+  },
+  "HKG": {
+   "from": "admin1/HKG.json",
+   "sha256": "783897d6445f6d14a5001929f6753d1709e4b5b29fa2721899ea76d6ae05304a"
+  },
+  "HMD": {
+   "from": "admin1/HMD.json",
+   "sha256": "d9286a0f8c57ed81ce796f0319eedd060c40c8c801f9fea1536ea768f0eacf9f"
+  },
+  "HND": {
+   "from": "admin1/HND.json",
+   "sha256": "ac534d2f784256a959648f75741f21d399f81187f86d94c82bd6ea8154b0a37b"
+  },
+  "HRV": {
+   "from": "admin1/HRV.json",
+   "sha256": "26d8bc2ceec86a1bc5b3c8f436a1f8460a1bbfb948f1638c107cb7f4df072ea1"
+  },
+  "HTI": {
+   "from": "admin1/HTI.json",
+   "sha256": "cf08f884ef4f4796617de7d8407e5eda212a459810e74a9dbbff609afea9919a"
+  },
+  "HUN": {
+   "from": "admin1/HUN.json",
+   "sha256": "c43f13a666eed433d1968fbea653e41f3f19ec1929728adff9d2079ddb3d4587"
+  },
+  "IDN": {
+   "from": "admin1/IDN.json",
+   "sha256": "bb5c015f4718a5deda8e81caa1d407c23f83b0301aa1c81ffca8ea631da30900"
+  },
+  "IMN": {
+   "from": "admin1/IMN.json",
+   "sha256": "504576d4f3da46a11199b77c6a80756f070ebe31e9309000f2fe1df1146a3b6b"
+  },
+  "IND": {
+   "from": "admin1/IND.json",
+   "sha256": "f230f4a56be48947240a957b14342f93fc3cf1e92fab463c7ed318fb6f013361"
+  },
+  "IOA": {
+   "from": "admin1/IOA.json",
+   "sha256": "a0ad20485310bed8a1d75c141daeece619d3211d81bc5b89b9b8ae8ea54a773a"
+  },
+  "IOT": {
+   "from": "admin1/IOT.json",
+   "sha256": "f21acde7ba748b0103a08bb21529b8e5cdcba9b0362fb5043acb8a55802ef381"
+  },
+  "IRL": {
+   "from": "admin1/IRL.json",
+   "sha256": "7006d81d03ecf201ee3fd050b332fbeca3425a48b54094810a45bb1c41a5daf8"
+  },
+  "IRN": {
+   "from": "admin1/IRN.json",
+   "sha256": "b50953ad736e68bd5039fe15407b1b51fddd73e2e67c02d1220b9ac030ad950b"
+  },
+  "IRQ": {
+   "from": "admin1/IRQ.json",
+   "sha256": "4e925cc702025ee7fedb065267d7389a4931b2f0c3dd05195ca77c12bbea9455"
+  },
+  "ISL": {
+   "from": "admin1/ISL.json",
+   "sha256": "07bf9b29ffecb0f739171228a2e50e07ac76ae5940829e4eaa4ceb8eccc55d74"
+  },
+  "ISR": {
+   "from": "admin1/ISR.json",
+   "sha256": "1c601ec4a77fee8bb0c4a5b10b932b9e538f237f5eee6d9f43d7b1951f8c943a"
+  },
+  "ITA": {
+   "from": "admin1/ITA.json",
+   "sha256": "a2f8d3013d2d79196e13c6cbfc058ae4a9acc0df5edd35ddd3f8ab8a86c6740e"
+  },
+  "JAM": {
+   "from": "admin1/JAM.json",
+   "sha256": "427cfb646b7f5220e4c1c08eaf821f5aebd490b7073265b5b26453275693dda9"
+  },
+  "JEY": {
+   "from": "admin1/JEY.json",
+   "sha256": "d3865fa9ca614956d8a2bfa0cd587c6ce4819ff75db81aed67bb82cbff0d132c"
+  },
+  "JOR": {
+   "from": "admin1/JOR.json",
+   "sha256": "9962345dcf1ccf2e28e5dc361f535d8f2a4df1e1b1046614f1ffa038d2cf7ff6"
+  },
+  "JPN": {
+   "from": "admin1/JPN.json",
+   "sha256": "bfb045c600610a3cddbc0a2afe04393e4b7a5363c339035e782b84c5bbb5778c"
+  },
+  "KAS": {
+   "from": "admin1/KAS.json",
+   "sha256": "148a6782cfe3c62e121ba2ffee58097bd8c0b3ca091bfb8f3e2de19149e8c280"
+  },
+  "KAZ": {
+   "from": "admin1/KAZ.json",
+   "sha256": "3dc470908e9ad776fc3dc0798521f6974e2ce034ec04e9367a978a4607bd84e5"
+  },
+  "KEN": {
+   "from": "boundaries/KEN.json",
+   "sha256": "1892c28b1c34cca89e697b17f1a3a3a2703ce2cd54a497627456ba62d6d2d4b5"
+  },
+  "KGZ": {
+   "from": "admin1/KGZ.json",
+   "sha256": "d261e8cc5c4f251e61856582f20029158c70e4f6867bbd9903df3644270fb933"
+  },
+  "KHM": {
+   "from": "admin1/KHM.json",
+   "sha256": "b4d8ac58991e9f04bbd1a24d76cd32f7fc02bb1acb74520d6a0450f39f1378c4"
+  },
+  "KIR": {
+   "from": "admin1/KIR.json",
+   "sha256": "ac2c46a1f007977b4ee876c743f650497c4675a36dcbea0c0df16e1d6b21cf43"
+  },
+  "KNA": {
+   "from": "admin1/KNA.json",
+   "sha256": "ed48f56a6c61dcd38c0593e6b6bdf73419408660bed6882477ab468a3355b725"
+  },
+  "KOR": {
+   "from": "admin1/KOR.json",
+   "sha256": "6987b437f3e20daffccbc824e9dfe6ec0a0717f8f404abfe5911f8e843a872d9"
+  },
+  "KOS": {
+   "from": "admin1/KOS.json",
+   "sha256": "a1091684769c672752ee15a6fb0519b970888c1f79d8d9871f3ef78bff143d3b"
+  },
+  "KWT": {
+   "from": "admin1/KWT.json",
+   "sha256": "d3e101280ae3688bcfa92ad5888408e27edbd1a16f1af0dc5251de789196c446"
+  },
+  "LAO": {
+   "from": "boundaries/LAO.json",
+   "sha256": "d87103dda9cdebcdfbe82332b621c7895582941b390218afd787edf27467ad40"
+  },
+  "LBN": {
+   "from": "boundaries/LBN.json",
+   "sha256": "3a4d09ec57199462c5a164145180787758cec10e103f61bd8e89f24acb15b2fb"
+  },
+  "LBR": {
+   "from": "admin1/LBR.json",
+   "sha256": "7d33c8765bbea35cb41bdb960e101814a2c1f346a2d291955556121f0452b37d"
+  },
+  "LBY": {
+   "from": "boundaries/LBY.json",
+   "sha256": "63c665f216747fd8c857d0585ab37043b2bd8b0c0b1409131b5ba63f36303c51"
+  },
+  "LCA": {
+   "from": "boundaries/LCA.json",
+   "sha256": "1cfb4f4d475eabda900757aaf9f9ebd6e9c0d3626ddff473e82466468b79bd23"
+  },
+  "LIE": {
+   "from": "admin1/LIE.json",
+   "sha256": "3cfefeb4f98e7bf26a4b6914a995fb3b215823184f5bd84547b5c160736a2c5e"
+  },
+  "LKA": {
+   "from": "admin1/LKA.json",
+   "sha256": "b2271860d16bdaf281b9bc290108858407d0aaeb123b878494c2fd44c80257b9"
+  },
+  "LSO": {
+   "from": "admin1/LSO.json",
+   "sha256": "bfd76266f130228282704f2be235409c6ff8f0a5a515caadb350b02a2ebc83a7"
+  },
+  "LTU": {
+   "from": "admin1/LTU.json",
+   "sha256": "c13c519746acb07dfe473fb1c6d0bc69686906cd3a71f3117713def626dd0415"
+  },
+  "LUX": {
+   "from": "boundaries/LUX.json",
+   "sha256": "04dd21ecc5657af6603abbafb9aa39fd51a7fbefb79bbabea565b761588ba31d"
+  },
+  "LVA": {
+   "from": "boundaries/LVA.json",
+   "sha256": "f6c0529fd5045abe86ad5a79281a64faffff8f0e12aca8b457b53c27cfe0761d"
+  },
+  "MAC": {
+   "from": "admin1/MAC.json",
+   "sha256": "c136a2b8321741c46a30e294411695c44669aeb70a069cfaaab46f6e6cb2cf91"
+  },
+  "MAF": {
+   "from": "admin1/MAF.json",
+   "sha256": "2b5c76bc19f231dd9520701621135b2b78e5b987b736ad95d9a3bec42c3734a2"
+  },
+  "MAR": {
+   "from": "admin1/MAR.json",
+   "sha256": "9203e1d197df496b0d9287f54da127c6220f30d1eb54e87fb796a88f844cb127"
+  },
+  "MCO": {
+   "from": "admin1/MCO.json",
+   "sha256": "78e3b4a9718d017000f7f711f468a19f96358ae00509ed2d1224fcc57f06b46d"
+  },
+  "MDA": {
+   "from": "admin1/MDA.json",
+   "sha256": "df3c7b2fdfaff8283d113c9386c1111838058982f895c441a0e429da0df5730b"
+  },
+  "MDG": {
+   "from": "admin1/MDG.json",
+   "sha256": "ceeb9218cf38cc337ce2fe6cfb9e9292db57d8646ce65974e5dabb2195f43976"
+  },
+  "MDV": {
+   "from": "admin1/MDV.json",
+   "sha256": "68b8710fa6f91515cc17a86d7e92977118531b8e237f4d08c36b00fc8b8cb60b"
+  },
+  "MEX": {
+   "from": "admin1/MEX.json",
+   "sha256": "e63492c50088a932f67f266b641a2627f62779f01c303be67aaa9256069c149b"
+  },
+  "MHL": {
+   "from": "admin1/MHL.json",
+   "sha256": "229ccfb46e244be56f4f234b5b9dee7af79d80ce905f33b75a0a6278c4e4c556"
+  },
+  "MKD": {
+   "from": "admin1/MKD.json",
+   "sha256": "aab392bf1e90d2b225fccb76de6132a7261e7b951110ee9aba7abce0ebf54470"
+  },
+  "MLI": {
+   "from": "boundaries/MLI.json",
+   "sha256": "3eda5bd918d3966c4bc2c3f37043edfd73c1426c0295e5b6b29617afd04df77b"
+  },
+  "MLT": {
+   "from": "admin1/MLT.json",
+   "sha256": "3bb060faa1c52c91aed7cc15f3bcb0a66ba3af72e25f0a03a21087648f3258a2"
+  },
+  "MMR": {
+   "from": "admin1/MMR.json",
+   "sha256": "e374fa87b922c584343438cf73faefa411bf3feefd2cc86286bd8c52aca40ad4"
+  },
+  "MNE": {
+   "from": "boundaries/MNE.json",
+   "sha256": "ec2d6419f9ae0414727dcdd24fdde8f3ec2b9d33e07e51cf2cc8ce25bc853fae"
+  },
+  "MNG": {
+   "from": "admin1/MNG.json",
+   "sha256": "2df3a2f775fada9f75a47df0f434df2c8a2059d09d546d6b05a5408870ac1cfc"
+  },
+  "MNP": {
+   "from": "admin1/MNP.json",
+   "sha256": "96948944b85419da93d9822ee71a02ef51b55348b337fda3320bbbcb505926d1"
+  },
+  "MOZ": {
+   "from": "admin1/MOZ.json",
+   "sha256": "292f4120aec69e456286d8fa26df63253f473b1d285784bd878601905d2e398c"
+  },
+  "MRT": {
+   "from": "boundaries/MRT.json",
+   "sha256": "a0d316cadb54311b161e715f317c4b713c2308008bc57bdfa6cd798d054a7180"
+  },
+  "MSR": {
+   "from": "admin1/MSR.json",
+   "sha256": "2b0e8db3df69d7df3b3df29427484179d62b0754bf8ff12d5cac178dbfe66722"
+  },
+  "MUS": {
+   "from": "admin1/MUS.json",
+   "sha256": "6d1371905a8d5607bad3256d327186a259a74acfff0b927f8c4f9b48fa692354"
+  },
+  "MWI": {
+   "from": "admin1/MWI.json",
+   "sha256": "03421fb2bcb07b6685f20385a5bd03eaab02e75761f9715caef8d7d69d90ddd5"
+  },
+  "MYS": {
+   "from": "admin1/MYS.json",
+   "sha256": "9f6c03e11e4b12dbb3e93aba0355864b139262b84b81264274fe2aa16f5fb38c"
+  },
+  "NAM": {
+   "from": "boundaries/NAM.json",
+   "sha256": "d171960ba0742bc5c1dcca6a8da97c7def1b04b07bf098c46a6f72b43a72e1a0"
+  },
+  "NCL": {
+   "from": "admin1/NCL.json",
+   "sha256": "1fe860ca881721bc468d1403014bdcb1886d6dfa9178d49f9132926830ca982f"
+  },
+  "NER": {
+   "from": "admin1/NER.json",
+   "sha256": "d4fd0f5a9a28ea04ad471dc2d3323ea058bcaed677293220712fa8142d687290"
+  },
+  "NFK": {
+   "from": "admin1/NFK.json",
+   "sha256": "9dd4e9feff6b3264cc14220a22b85e63aecd57fe85e619864684fa11d8730d35"
+  },
+  "NGA": {
+   "from": "admin1/NGA.json",
+   "sha256": "689d3582ffc7f9e55241c88d48a6a56d37963b485f9be02e423d251305e10ed2"
+  },
+  "NIC": {
+   "from": "admin1/NIC.json",
+   "sha256": "4df6a367905aa2df59d41290cd6630eb057c56f810a077a8949cd2860379657f"
+  },
+  "NIU": {
+   "from": "admin1/NIU.json",
+   "sha256": "d2c4e3485c71b433757274a13e893b444f4abae21843d4f1831c2cb27667d115"
+  },
+  "NLD": {
+   "from": "admin1/NLD.json",
+   "sha256": "ecc8eca927450870ebc9b60cde9746b0f21595a0b1168eb4ad7cb3df4c39dff3"
+  },
+  "NOR": {
+   "from": "admin1/NOR.json",
+   "sha256": "8e296801df0c1097e7702a43f513ae5db828ea9b587db8339d5a2f5f59a69876"
+  },
+  "NPL": {
+   "from": "boundaries/NPL.json",
+   "sha256": "fb8b8b32516fafa7f3218d05751359805556e2aa09afa80a182e6390e0c29c59"
+  },
+  "NRU": {
+   "from": "admin1/NRU.json",
+   "sha256": "5e8b4cf1aeee6fc533f11e9e6dfe645b367eaccf78d8c742d481a78d66cb8a09"
+  },
+  "NZL": {
+   "from": "admin1/NZL.json",
+   "sha256": "fe88298d83adce0133166c4bfeeee740a9ebb34e51d4178d2885d2a52552d1f6"
+  },
+  "OMN": {
+   "from": "admin1/OMN.json",
+   "sha256": "f6916e293fcb99493a25eab2978842463ca28a62fc5528565a46aecdd32dcd84"
+  },
+  "PAK": {
+   "from": "admin1/PAK.json",
+   "sha256": "93ff49df370b04631502265921e32969812d9f7fa105b010d9e6d15136bb3519"
+  },
+  "PAN": {
+   "from": "boundaries/PAN.json",
+   "sha256": "67985ecc157ee019daa0096ed1238abaddb73933bfeb29ee9a861f02eb1bc911"
+  },
+  "PCN": {
+   "from": "admin1/PCN.json",
+   "sha256": "e47317ef0c60eeaaa93483db6b7e3292dc131e1b9b3a5c6e741ae8fde9e37477"
+  },
+  "PER": {
+   "from": "admin1/PER.json",
+   "sha256": "a6e62b1d747d03357942ab7cb2336538a5259b6c22f8d9741888b6c9eb7bbb1f"
+  },
+  "PHL": {
+   "from": "admin1/PHL.json",
+   "sha256": "9d3b5064fa7461e499d9fb5724b803eeec1fd5fd9c2e80727e5899c5c8819535"
+  },
+  "PLW": {
+   "from": "admin1/PLW.json",
+   "sha256": "078688a3cdbeeecaa6b75acc7dab9a424a35920e69677a67f2c5c199b0373b91"
+  },
+  "PNG": {
+   "from": "boundaries/PNG.json",
+   "sha256": "c254775642c91b99902028c4e2ea3de23d4fa41b14543a73d5057c0e02474dbf"
+  },
+  "POL": {
+   "from": "boundaries/POL.json",
+   "sha256": "977c211ee47f9110addf88e90440eb2e1f0e8680ad7883c2ba96e5c726fff085"
+  },
+  "PRI": {
+   "from": "admin1/PRI.json",
+   "sha256": "defea9308e2a9e5b142601d5ee743d2456d141658139315f4a7dcdc66252010c"
+  },
+  "PRK": {
+   "from": "admin1/PRK.json",
+   "sha256": "c27aa05791bb3473f50de35c1e52f6d18de9f8b4f5de6341dbf287b148517d80"
+  },
+  "PRT": {
+   "from": "admin1/PRT.json",
+   "sha256": "560c96f6af473fd2012e35917e5d3ccd6d2f2db3df27eaac8ba9c9ceb492096f"
+  },
+  "PRY": {
+   "from": "admin1/PRY.json",
+   "sha256": "057f2a9adcf20aa98d5c81d836a2aa44b3d7d6693818d4cf29e0f15ffbacbc96"
+  },
+  "PSX": {
+   "from": "admin1/PSX.json",
+   "sha256": "3cbbe35011044bba7361dd78a32601f23ef69bf6a227146a6035263a30d64710"
+  },
+  "PYF": {
+   "from": "admin1/PYF.json",
+   "sha256": "fcdcbffb689f6540b067d511cd99de9aedac95b21a44e12f7482d5b75e6a131d"
+  },
+  "QAT": {
+   "from": "boundaries/QAT.json",
+   "sha256": "63dca31388c1440cd8086ec8c9185f92486db4a22bfdc624d57f521d82a545e3"
+  },
+  "ROU": {
+   "from": "admin1/ROU.json",
+   "sha256": "974928a83e4876fb7377cead4ad3e8bc85e7c187ab16548f6513dca71c54ac9b"
+  },
+  "RUS": {
+   "from": "admin1/RUS.json",
+   "sha256": "017d129f0ddd00acfd9093dcf2a4f137250e89b8aab1d6fdd592e79a0f99fe73"
+  },
+  "RWA": {
+   "from": "admin1/RWA.json",
+   "sha256": "05b92b22ac3bea055717a78c1e6a1d06cf873a3262bde001e70a7b2b576df952"
+  },
+  "SAH": {
+   "from": "admin1/SAH.json",
+   "sha256": "378bba90d50e9461cff15578bf2b18dbff42b774d41e69cd2ba04644e3e3399e"
+  },
+  "SAU": {
+   "from": "admin1/SAU.json",
+   "sha256": "3b55bb82756e474dc0328f558667e00aceb05dda0e9821233918b57822299061"
+  },
+  "SDN": {
+   "from": "boundaries/SDN.json",
+   "sha256": "7991a3c9e8f87be2da4a58d8000ede1811f7629f57a078e214ea5bcabf1fa926"
+  },
+  "SDS": {
+   "from": "admin1/SDS.json",
+   "sha256": "b966c04f7cf1e67f29e17bbcf6ee3621346a74c530564671a38fad71aaee72c5"
+  },
+  "SEN": {
+   "from": "admin1/SEN.json",
+   "sha256": "bd0cb30fd776f09f0db515545789b6b866ddee742b4298cee20e429c48938d56"
+  },
+  "SGP": {
+   "from": "admin1/SGP.json",
+   "sha256": "b8b56f0d7068fd12f56581405473e1e75d49ac3a8bf54d0dd5fcfa3f91e93fbe"
+  },
+  "SGS": {
+   "from": "admin1/SGS.json",
+   "sha256": "a3ddeb912086899d31e2edb95036b94ab6d77779e4b5e40b69cf3e732434c49f"
+  },
+  "SHN": {
+   "from": "admin1/SHN.json",
+   "sha256": "63434fe84737cbcd579255e660517d6325c372b3ff6e3c10e6229086e1c2c487"
+  },
+  "SLB": {
+   "from": "admin1/SLB.json",
+   "sha256": "97b7c5ce67431a4f9d6f45e2024e5be6754815084e8b8b6e289e1185932a1724"
+  },
+  "SLE": {
+   "from": "boundaries/SLE.json",
+   "sha256": "214932e2935751b5470f2a067c293c67351a1ea45d556db1913ef6cd40fa2931"
+  },
+  "SLV": {
+   "from": "admin1/SLV.json",
+   "sha256": "15e7cfc8a988cc368da2fde08b356be28680c0defbc3655fb99209b695f40ec9"
+  },
+  "SMR": {
+   "from": "admin1/SMR.json",
+   "sha256": "ed365471d6a9cf42ccdab0a06c78e21bb315f9b161ea94fa016b8986d724bb01"
+  },
+  "SOL": {
+   "from": "admin1/SOL.json",
+   "sha256": "2e6ba85c98c2a967bede6e764621508d26c59b75c92a80d3fe5ef3d1c07ad013"
+  },
+  "SOM": {
+   "from": "admin1/SOM.json",
+   "sha256": "5686f343884134853b593db90e5485c622e461878835d1bc0e9e3b25c04d3851"
+  },
+  "SPM": {
+   "from": "admin1/SPM.json",
+   "sha256": "9d736f360fc067b9a17370071304d6980b32fffc6f6d9c055ee3c4fec0677399"
+  },
+  "SRB": {
+   "from": "admin1/SRB.json",
+   "sha256": "238cc7c3ffea204c502c4c149833545a4207970059bc316333ab1e5caa315536"
+  },
+  "STP": {
+   "from": "admin1/STP.json",
+   "sha256": "40c087f461dffceef58b410fb854ad4d605fae9488889d6acf23c5ea7dc67134"
+  },
+  "SUR": {
+   "from": "admin1/SUR.json",
+   "sha256": "99c0edbf5aa4411ef018d1e36c81ac72c1dedb73dc66ee6f44ec784e7006de09"
+  },
+  "SVK": {
+   "from": "admin1/SVK.json",
+   "sha256": "06998c36275336b048011b3fee166833a9cbc2863a9a2d04943b2e7e5c2eb5eb"
+  },
+  "SVN": {
+   "from": "boundaries/SVN.json",
+   "sha256": "623f0a155ddde922551b08c18e1d17e5bc53758a574fe596a609deb64207a4f9"
+  },
+  "SWE": {
+   "from": "admin1/SWE.json",
+   "sha256": "6b02f5363e66792d2789e346163c110898e0603d8473ccc18de28e1e41253157"
+  },
+  "SWZ": {
+   "from": "admin1/SWZ.json",
+   "sha256": "a0adb813ebd4359a83840aba2c0483a0e55af5b69cae82f9c4c3c889f8f7552b"
+  },
+  "SXM": {
+   "from": "admin1/SXM.json",
+   "sha256": "2f8a3377fbf3f110a463632521c54eee08562ccf7e463a5eae2fda6a7efb16f5"
+  },
+  "SYC": {
+   "from": "admin1/SYC.json",
+   "sha256": "b75ae95fc7582bb4f5b52a881e44c702f55eb7bd81abdc26981ec1b2de1a6569"
+  },
+  "SYR": {
+   "from": "admin1/SYR.json",
+   "sha256": "0a022b79e8fcd33d85f6d18c0a1d57de37a0ed7785a645e571bb61f9fbe29be6"
+  },
+  "TCA": {
+   "from": "admin1/TCA.json",
+   "sha256": "f417f7cb310c2d20ea4487726130ef5cb52ae5124715c509db56ac4a6261707a"
+  },
+  "TCD": {
+   "from": "boundaries/TCD.json",
+   "sha256": "9120183a039524d22caba9d9f8f8ae7c3d07bfc18b638db273688a57d73d1bc1"
+  },
+  "TGO": {
+   "from": "admin1/TGO.json",
+   "sha256": "f4740ca501cb54e4a3ec5b887676f35d2d6fea1f8393379cee796c8122232431"
+  },
+  "THA": {
+   "from": "admin1/THA.json",
+   "sha256": "82fe12f97bc02749b145d5bd59d2e79638280d25727cc80c09ddff979f0cb232"
+  },
+  "TJK": {
+   "from": "boundaries/TJK.json",
+   "sha256": "622f6e67ff99321f0a021306ecd2e0f76f6de4fe06f3ad1fe5259c55cf3f2899"
+  },
+  "TKM": {
+   "from": "admin1/TKM.json",
+   "sha256": "2c61da574d446fd70e0abda138421199e240f1f0cc82b416214f4c144798e69a"
+  },
+  "TLS": {
+   "from": "admin1/TLS.json",
+   "sha256": "5727c67aaf0af4c0e9335a5edcf7cc2c2af67cc0f95fd90659def1eeb73c6767"
+  },
+  "TON": {
+   "from": "admin1/TON.json",
+   "sha256": "dfd1262392e2290441d75af991b5443b41e74d0c439f21635ce085b95fee3a70"
+  },
+  "TTO": {
+   "from": "admin1/TTO.json",
+   "sha256": "c84b241f0aa0caa2238d730c1c8413942576a82b06084b21ba09d166af9a6b9c"
+  },
+  "TUN": {
+   "from": "admin1/TUN.json",
+   "sha256": "c152c84b4559167c752841f7e15f76e3452d407b43f813987440a95a2d60c880"
+  },
+  "TUR": {
+   "from": "admin1/TUR.json",
+   "sha256": "4f8b18db5012b4aa680822fcd92a7cbe1ee61bcddf663f984a5eac8fc74b598b"
+  },
+  "TUV": {
+   "from": "admin1/TUV.json",
+   "sha256": "83a140bd8475e388b2ab7c6d4a2dee6973671896563cd4355e5a83bbc463e59a"
+  },
+  "TWN": {
+   "from": "admin1/TWN.json",
+   "sha256": "c3af8f2c95d0edd3402fc5b85398f528721c41411969dfcfc14bccc9f4f88003"
+  },
+  "TZA": {
+   "from": "admin1/TZA.json",
+   "sha256": "75906a6736bed33ac179ec25fdc036da3ca04b2657b13463b1f5667d8f0d6283"
+  },
+  "UGA": {
+   "from": "boundaries/UGA.json",
+   "sha256": "815419ff4dfd101ec6998f216b104208b2cb8da08cd4efcd769115ba8711aadb"
+  },
+  "UKR": {
+   "from": "boundaries/UKR.json",
+   "sha256": "5828c4bebdd8f2abd81567dd2f6a6198d4447e3e178035a35652b9c338d5e964"
+  },
+  "URY": {
+   "from": "admin1/URY.json",
+   "sha256": "77bce3099e465498ed361975391d79021750231195c31fcb7febedbebd25fa60"
+  },
+  "USA": {
+   "from": "admin1/USA.json",
+   "sha256": "1d9495c575faa8664fd5010c9b2ad172c9ab56b834f98e8e581d41701b64fd25"
+  },
+  "UZB": {
+   "from": "admin1/UZB.json",
+   "sha256": "52e7aba3f20b7546991af1148136e25f32fb291a151daf8b92674c2c7948d0b6"
+  },
+  "VAT": {
+   "from": "admin1/VAT.json",
+   "sha256": "e5d67a43ca413d6d93ce4f187aa86b6eb9090e993b733e8d8688a75827937b3d"
+  },
+  "VCT": {
+   "from": "admin1/VCT.json",
+   "sha256": "015d860826157d64724130181cae1257600c8bf5d91b05c400f125b0cd0549a6"
+  },
+  "VEN": {
+   "from": "admin1/VEN.json",
+   "sha256": "9b0fcadf67f2bbf2c082b5de187035f3c1046fc98a29636409dc40824cf23a0b"
+  },
+  "VGB": {
+   "from": "admin1/VGB.json",
+   "sha256": "e2ef3840d303afdca9e19964f1f4d5f91ad430735f1b8ea8e730ce620160d1ba"
+  },
+  "VIR": {
+   "from": "admin1/VIR.json",
+   "sha256": "6f519e56d01b9e9a1cdeb9c1678592503d65da3c596b2b7a1fba8d54ce314182"
+  },
+  "VNM": {
+   "from": "admin1/VNM.json",
+   "sha256": "8f0af47985f20239a080fd801d4abf1b3efaf2ad5bcced68298fcb9d6eed003a"
+  },
+  "VUT": {
+   "from": "admin1/VUT.json",
+   "sha256": "b0a2a6c412ebab3451e69df309551b61ecc3a33e12056abc649a7761ef29a8d8"
+  },
+  "WLF": {
+   "from": "admin1/WLF.json",
+   "sha256": "5533cc4993caa926fd36c30c3f532ffdde84a68ca406bd1f89ceb8b37bcf2672"
+  },
+  "WSM": {
+   "from": "admin1/WSM.json",
+   "sha256": "33496b157e8e99577140ace973b62252f6774c1e3595a494345d5b8ff135b324"
+  },
+  "YEM": {
+   "from": "admin1/YEM.json",
+   "sha256": "3e6213b4109a1984e1a2fb16ec4b39dcba4aa5a3480a665afb27a100d63fa20d"
+  },
+  "ZAF": {
+   "from": "admin1/ZAF.json",
+   "sha256": "6253b8044767853345812487f71778487219a4c425e030dde08bc9213cc8b385"
+  },
+  "ZMB": {
+   "from": "admin1/ZMB.json",
+   "sha256": "8ef50dc05008815da4445d8dcd1acb79c793ec3702b1281417a6eba173975657"
+  },
+  "ZWE": {
+   "from": "admin1/ZWE.json",
+   "sha256": "a0c04dc2b8fe9eb1cadcb7dcbfda8d8e4c097a6d2b33ab4649fed37b2e6b9a87"
+  }
+ },
+ "a2": {
+  "GHA": {
+   "from": "admin2/GHA.json",
+   "sha256": "919c7ec9fc97d37640e2a0b0d65ca41e5f60ef66761bcd69923bdb879c69ecae"
+  },
+  "KEN": {
+   "from": "admin2/KEN.json",
+   "sha256": "c8b21a89fe6c205f8d6bf943c8dc59d9a780f609b77c4e93f61139088ebd2fb0"
+  },
+  "NGA": {
+   "from": "admin2/NGA.json",
+   "sha256": "2cc0a34522d7b7062cced20267809a9d51a40ce58c35fcb21a51609f5afa1b93"
+  },
+  "UGA": {
+   "from": "admin2/UGA.json",
+   "sha256": "32796d2b2321b2b5372eba2b39be8cd4afce80cba5e987f41e015e4796b2e88f"
+  },
+  "USA": {
+   "from": "admin2/USA.json",
+   "sha256": "ea0e27898ac90147f9fa95442e6ade1e537fac32a218235bed7068527a940a07"
+  }
+ }
+}

@@ -8,8 +8,13 @@
 // boundaries (lib/data/boundaries.ts), the version in force replaces the
 // bundled shapes for its level and is credited. Never a fixed number of slots: a nation with 51 states gets
 // 51 units, one with 135 districts gets 135.
+//
+// Detail: the whole-nation map draws the overview shapes (simplified on shared
+// borders, same units); an opened region, the districts and every position
+// check (placePoint(), incident places, boundary versions) use the full shapes.
+// Callers that test points against the nation's units pass 'full'.
 
-import { loadCountry, type Admin1Province, type Geom } from '@/lib/geo/admin1';
+import { loadCountry, type Admin1Province, type Geom, type MapDetail } from '@/lib/geo/admin1';
 import { hasAdmin2, loadAdmin2, type Admin2Country } from '@/lib/geo/admin2';
 import { loadDivisions, defaultUnits, divisionNoun } from '@/lib/geo/divisions';
 import { geoCentroid } from 'd3-geo';
@@ -48,8 +53,8 @@ export interface NationGeography {
  * The nation's units for a map. `regions` is the nation's region list
  * (nationRegions()); when empty, the official subdivisions in their order.
  */
-export async function loadNationGeography(iso3: string, regions: readonly string[]): Promise<NationGeography | null> {
-  const [bundled, levels, own, ownDistricts] = await Promise.all([loadCountry(iso3), loadDivisions(iso3).catch(() => []), activeBoundary(iso3, 1), activeBoundary(iso3, 2)]);
+export async function loadNationGeography(iso3: string, regions: readonly string[], detail: MapDetail = 'overview'): Promise<NationGeography | null> {
+  const [bundled, levels, own, ownDistricts] = await Promise.all([loadCountry(iso3, detail), loadDivisions(iso3).catch(() => []), activeBoundary(iso3, 1), activeBoundary(iso3, 2)]);
   if (!bundled) return null;
   const country = own ? { ...bundled, provinces: own.units.map(u => ({ name: u.name, i18n: {} as Admin1Province['i18n'], code: u.code, lng: u.lng, lat: u.lat, geometry: u.geometry })) } : bundled;
   const provinces = country.provinces;
@@ -121,9 +126,9 @@ export async function loadNationGeography(iso3: string, regions: readonly string
  * (lib/geo/admin2) placed in it. The rest of the nation is drawn around it as
  * context. Null when nothing beneath it has a shape.
  */
-export async function loadUnitGeography(iso3: string, parent: { name: string; code?: string }): Promise<NationGeography | null> {
+export async function loadUnitGeography(iso3: string, parent: { name: string; code?: string }, detail: MapDetail = 'full'): Promise<NationGeography | null> {
   if (!parent.code) return null;
-  const [bundled, levels, own] = await Promise.all([loadCountry(iso3), loadDivisions(iso3).catch(() => []), activeBoundary(iso3, 1)]);
+  const [bundled, levels, own] = await Promise.all([loadCountry(iso3, detail), loadDivisions(iso3).catch(() => []), activeBoundary(iso3, 1)]);
   if (!bundled) return null;
   const country = own ? { ...bundled, provinces: own.units.map(u => ({ name: u.name, i18n: {} as Admin1Province['i18n'], code: u.code, lng: u.lng, lat: u.lat, geometry: u.geometry })) } : bundled;
   const byCode = new Map(country.provinces.map(p => [p.code, p]));
@@ -139,7 +144,7 @@ export async function loadUnitGeography(iso3: string, parent: { name: string; co
   });
   let noun = typeNoun(children[0]?.type), source = credit();
   if (!units.length) {
-    const a2 = await loadDistricts(iso3);
+    const a2 = await loadDistricts(iso3, detail);
     units = (a2?.units ?? []).filter(u => u.parent === parent.code).map(u => ({ name: u.name, code: u.code, geometry: u.geometry, lng: u.lng, lat: u.lat }));
     noun = 'district';
     if (a2) source = a2.own ?? credit(a2.credit);
@@ -166,7 +171,7 @@ const ownCredit = (b: { credit: string; n: number; validFrom: string }) => `${b.
  * The nation's districts: the version its mapping authority published, when
  * one is in force, else the bundled district shapes (lib/geo/admin2).
  */
-export async function loadDistricts(iso3: string): Promise<(Admin2Country & { own?: string }) | null> {
+export async function loadDistricts(iso3: string, detail: MapDetail = 'full'): Promise<(Admin2Country & { own?: string }) | null> {
   const own = await activeBoundary(iso3, 2);
   if (own) {
     return {
@@ -176,5 +181,5 @@ export async function loadDistricts(iso3: string): Promise<(Admin2Country & { ow
       own: ownCredit(own),
     };
   }
-  return loadAdmin2(iso3);
+  return loadAdmin2(iso3, detail);
 }

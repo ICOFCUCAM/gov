@@ -50,7 +50,7 @@ export function parseDatetime(v: string | null): string | { error: string } {
 
 async function country(): Promise<Admin1Country | null> {
   const iso3 = nationIso3();
-  return iso3 ? loadCountry(iso3) : null;
+  return iso3 ? loadCountry(iso3, 'full') : null;
 }
 
 export async function collectionInfo(base: string) {

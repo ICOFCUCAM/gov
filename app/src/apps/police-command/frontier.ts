@@ -115,7 +115,8 @@ export function loadFrontier(iso3: string, regions: readonly string[]): Promise<
   const key = `${iso3}|${regions.join('|')}`;
   let p = cache.get(key);
   if (!p) {
-    p = Promise.all([loadNationGeography(iso3, regions), loadWorld()])
+    // Full shapes: which unit meets which neighbour or the coast is a position check.
+    p = Promise.all([loadNationGeography(iso3, regions, 'full'), loadWorld()])
       .then(([geo, world]) => (geo ? analyseFrontier(geo, world) : null))
       .catch(() => null);
     cache.set(key, p);
