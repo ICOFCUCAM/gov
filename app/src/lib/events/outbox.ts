@@ -45,8 +45,18 @@ export const outboxDb = (): Db => {
 };
 export function resetOutbox(): void { g.__civicosEventOutbox = undefined; }
 
+// In-process listeners on audited changes (e.g. the facility tile archive,
+// lib/twin/tiles-archive.ts, rebuilt after sites change). Kept on globalThis
+// by name, so a module bundled into several routes registers once; never
+// persisted (functions), never able to stop the audit entry (errors ignored).
+type AuditListener = (e: AuditEntry) => void;
+const gl = globalThis as unknown as { __auditListeners?: Map<string, AuditListener> };
+/** Call `fn` after every audit entry is written (synchronously; keep it cheap, schedule work). */
+export function onAudited(name: string, fn: AuditListener): void { (gl.__auditListeners ??= new Map()).set(name, fn); }
+
 /** Called by appendAudit for every entry, in the same synchronous step: writes the event when the action is one. */
 export function noteAudit(e: AuditEntry): CloudEvent | null {
+  for (const fn of gl.__auditListeners?.values() ?? []) { try { fn(e); } catch { /* a listener never stops the audit */ } }
   if (e.outcome !== 'ok' || !EVENT_ACTIONS.test(e.action)) return null;
   const ev: CloudEvent = {
     specversion: '1.0', id: `evt-${randomUUID()}`, source: EVENT_SOURCE, type: `${TYPE_PREFIX}${e.action}`,

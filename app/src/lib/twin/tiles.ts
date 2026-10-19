@@ -20,7 +20,8 @@ export const MVT_TYPE = 'application/vnd.mapbox-vector-tile';
 
 export const TILE_FIELDS: Record<string, string> = {
   id: 'Display id (FAC-xxxxx)', nationalId: 'Opaque national FacilityID (UUID v7)', name: 'Name', category: 'Category key', categoryLabel: 'Category',
-  status: 'Operating status', regionCode: 'Region code (ISO 3166-2)', certified: 'Location certified', generalised: 'Position generalised (restricted site)',
+  status: 'Operating status', regionCode: 'Region code (ISO 3166-2)', region: 'Region name (as the register worked it out from the map)', owner: 'Owning institution (registry id)',
+  certified: 'Location certified', certification: 'Location certification: awaiting, certified or rejected', generalised: 'Position generalised (restricted site)',
 };
 
 /** Parse "{z}/{x}/{y}" with an optional .mvt or .pbf on y. */
@@ -33,8 +34,18 @@ export function parseTile(z: string, x: string, y: string): { z: number; x: numb
 
 /** One tile of published sites as the viewer may see them. */
 export function facilitiesTile(z: number, x: number, y: number, viewer: Viewer): { bytes: Uint8Array; count: number; truncated: boolean } {
-  const bbox = tileBounds(z, x, y, BUFFER);
-  const sites = listFacilities({ bbox }, viewer);
+  return sitesTile(listFacilities({ bbox: tileBounds(z, x, y, BUFFER) }, viewer), z, x, y);
+}
+
+/** A site as a tile carries it (already as the viewer may see it). */
+export type TileSite = ReturnType<typeof listFacilities>[number];
+
+/**
+ * One tile from sites already viewed (listFacilities / viewFacility): those
+ * within the tile and its buffer, at most MAX_TILE_POINTS. Shared by the live
+ * route and the PMTiles archive builder (lib/twin/tiles-archive.ts).
+ */
+export function sitesTile(sites: readonly TileSite[], z: number, x: number, y: number): { bytes: Uint8Array; count: number; truncated: boolean } {
   const points: TilePoint[] = [];
   for (const s of sites) {
     const [px, py] = toTile(s.location.lng, s.location.lat, z, x, y);
@@ -44,7 +55,8 @@ export function facilitiesTile(z: number, x: number, y: number, viewer: Viewer):
       ...(Number.isSafeInteger(n) ? { id: n } : {}), x: px, y: py,
       properties: {
         id: s.id, nationalId: nationalId(s), name: s.name, category: s.category, categoryLabel: categoryOf(s.category)?.label,
-        status: s.status, regionCode: s.place.regionCode, certified: s.certification.state === 'certified', ...(s.generalised ? { generalised: true } : {}),
+        status: s.status, regionCode: s.place.regionCode, region: s.place.region, owner: s.ownerId,
+        certified: s.certification.state === 'certified', certification: s.certification.state, ...(s.generalised ? { generalised: true } : {}),
       },
     });
     if (points.length >= MAX_TILE_POINTS) break;

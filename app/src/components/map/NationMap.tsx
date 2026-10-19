@@ -13,7 +13,12 @@
 // choice from setup, else the map data's default, which says so. Above ~2,000
 // located points (lib/map/point-layer.ts) the points are painted on a canvas
 // over the map and hit-tested for hover and click; below it each is an SVG
-// element as before. The table view lists every point by unit either way.
+// element as before. Above ~20,000 (or `webglAbove`) they are drawn with WebGL
+// (components/map/WebGLPoints.tsx) and found by GPU picking, falling back to
+// the canvas without WebGL or while a lost context is restored. Polygons
+// (`areas`, e.g. building footprints) are SVG paths up to 2,000 and WebGL
+// triangles above. The table view lists every unit and every located item
+// either way.
 
 import * as React from 'react';
 import { nationCapital, nationIso3, nationProjection, nationRegions, nationWorldview } from '@/lib/nation/registry';
@@ -28,10 +33,24 @@ import { geoCentroid } from 'd3-geo';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { needsMarker, SIGNAL_LABEL, type SignalKind } from '@/lib/twin/signal';
 import { STATUS } from '@/lib/theme/tokens';
-import { drawsOnCanvas, pointIndex } from '@/lib/map/point-layer';
+import { CANVAS_POINTS, pointIndex } from '@/lib/map/point-layer';
+import { pointRenderer, type PointStyle } from '@/lib/map/gl-points';
+import { hasWebGL } from '@/lib/map/gl-layer';
+import { triangulate } from '@/lib/map/triangulate';
 import { CanvasPoints } from './CanvasPoints';
+import { WebGLPoints, type WebGLPointsHandle } from './WebGLPoints';
+import { useTileFeatures } from './useTileFeatures';
+import type { PointTileSource } from '@/lib/map/tile-loader';
 
 export type { MapPoint, MapValue, MapTone };
+
+/** An outline on the map (a building footprint, a parcel): GeoJSON polygon rings in longitude/latitude. */
+export interface MapArea { key: string; label: string; rings: number[][][]; tone?: MapTone; href?: string }
+/** Located items listed per page in the table view. */
+const LIST_PAGE = 200;
+/** One empty list for maps without figures, so the map is not worked out again on every render (hover). */
+const NO_VALUES: MapValue[] = [];
+type LocatedPoint = { x: number; y: number; label: string; tone: MapTone; unit: string; glyph?: string; href?: string; exact?: boolean; key?: string; generalised?: boolean; name?: string; count?: number };
 
 const TONE_SHAPE: Record<MapTone, 'triangle' | 'diamond' | 'circle'> = { alert: 'triangle', warn: 'diamond', ok: 'circle', neutral: 'circle' };
 const TONE_WORD: Record<MapTone, string> = { alert: 'critical', warn: 'needs attention', ok: 'normal', neutral: 'no status' };
@@ -65,8 +84,9 @@ export interface OverlayContext {
 }
 
 export function NationMap({
-  title, values = [], kind, source, valueLabel = 'Value', unit = '', points, pointsLabel = 'Located items',
+  title, values = NO_VALUES, kind, source, valueLabel = 'Value', unit = '', points, pointsLabel = 'Located items',
   asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap, onPick, pin, zoom, header = 'auto', below, notes = 'normal',
+  webglAbove, selectedPoint, areas, pointStyle, pointTiles, pointLabels,
 }: {
   /** What the map shows, e.g. "Open incidents by county"; used for the accessible name and the table caption. */
   title: string;
@@ -130,6 +150,22 @@ export function NationMap({
   below?: React.ReactNode;
   /** The legend, notes and credits under the map in the page's small type (dense command panels). */
   notes?: 'normal' | 'small';
+  /** Draw located points with WebGL above this many (default 20,000; lib/map/gl-points.ts). */
+  webglAbove?: number;
+  /** The key of a located point to mark as selected (e.g. the site whose record is open). */
+  selectedPoint?: string;
+  /** Outlines drawn on the whole-nation view (SVG up to 2,000, WebGL above), hovered and clicked like points. */
+  areas?: MapArea[];
+  /** How WebGL points look: dots (standard maps) or the theatre's glyph tiles (the theatre's default). */
+  pointStyle?: PointStyle;
+  /**
+   * Located points read from vector tiles for the visible extent (the platform's
+   * tile route or a PMTiles archive) instead of `points`: always drawn with WebGL
+   * (the canvas without it), listed in the table view as loaded.
+   */
+  pointTiles?: PointTileSource;
+  /** Name up to this many WebGL or canvas points where the names do not run into each other. */
+  pointLabels?: number;
 }) {
   const iso3 = isoOverride ?? nationIso3();
   const regionsKey = (regionsOverride ?? nationRegions()).join('|');
@@ -152,6 +188,16 @@ export function NationMap({
   const uid = React.useId().replace(/:/g, '');
   const svgRef = React.useRef<SVGSVGElement>(null);
   const [hoverPoint, setHoverPoint] = React.useState<number | null>(null);
+  const [hoverArea, setHoverArea] = React.useState<number | null>(null);
+  // WebGL is looked for after the first render (the server never has it); a lost context falls back to the canvas.
+  const [webglOk, setWebglOk] = React.useState(false);
+  React.useEffect(() => { setWebglOk(hasWebGL()); }, []);
+  const [glLost, setGlLost] = React.useState(false);
+  const glRef = React.useRef<WebGLPointsHandle>(null);
+  const [listed, setListed] = React.useState(LIST_PAGE);
+  const hoverAt = React.useRef<{ clientX: number; clientY: number } | null>(null);
+  const hoverFrame = React.useRef<number | null>(null);
+  React.useEffect(() => () => { if (hoverFrame.current != null) cancelAnimationFrame(hoverFrame.current); }, []);
 
   React.useEffect(() => {
     if (!iso3) { setGeo(null); return; }
@@ -219,13 +265,46 @@ export function NationMap({
   const openable = (nationGeo?.units ?? []).filter(u => u.drill && u.code && u.geometry);
   // The opened unit's own figure, from the figures the page passed for the nation's units.
   const parentValue = opened ? values.find(v => v.key === opened.code) ?? values.find(v => nameKeys(v.key).some(k => nameKeys(opened.name).includes(k))) : undefined;
-  // Located points at national scale go on a canvas, found again by a grid index.
-  const exactPoints = React.useMemo(() => model?.points.filter(p => p.exact) ?? [], [model]);
-  const onCanvas = drawsOnCanvas(exactPoints.length);
-  const pIndex = React.useMemo(() => (onCanvas ? pointIndex(exactPoints) : null), [onCanvas, exactPoints]);
-  React.useEffect(() => { setHoverPoint(null); }, [exactPoints]);
-  /** The canvas point under the pointer, if any. */
-  const pointAt = (e: React.MouseEvent): number | null => {
+  // Located points at national scale go on a canvas (found again by a grid index) or, above the
+  // WebGL threshold, on the GPU (found by picking); below both the SVG draws them one by one.
+  // A tile-backed layer replaces the page's points with the tiles' features for the visible extent.
+  const tiles = useTileFeatures(geo?.parent ? undefined : pointTiles, model, z);
+  const toPoint = pointTiles?.toPoint;
+  const exactPoints = React.useMemo<LocatedPoint[]>(() => {
+    if (!model) return [];
+    if (!toPoint) return model.points.filter(p => p.exact);
+    const out: LocatedPoint[] = [];
+    for (const f of tiles.features) {
+      const p = toPoint(f);
+      if (!p) continue;
+      const q = model.project(f.lng, f.lat);
+      if (q) out.push({ ...p, x: q[0], y: q[1], unit: '', exact: true });
+    }
+    return out;
+  }, [model, toPoint, tiles.features]);
+  const renderer = pointRenderer(exactPoints.length, { webgl: webglOk, webglAbove, tiles: !!pointTiles });
+  const onGL = renderer === 'webgl';
+  const onCanvas = renderer === 'canvas' || (onGL && glLost);
+  const pIndex = React.useMemo(() => (renderer !== 'svg' ? pointIndex(exactPoints) : null), [renderer, exactPoints]);
+  React.useEffect(() => { setHoverPoint(null); setListed(LIST_PAGE); }, [exactPoints]);
+  const selectedIndex = React.useMemo(() => (selectedPoint ? exactPoints.findIndex(p => p.key === selectedPoint) : -1), [selectedPoint, exactPoints]);
+  // Outlines in the map's own pixels; triangles only when WebGL draws them.
+  const areaShapes = React.useMemo(() => {
+    if (!model || geo?.parent || !areas?.length) return [];
+    return areas.map(a => {
+      const rings = a.rings.map(r => r.flatMap(c => { const q = model.projectRaw(c[0]!, c[1]!); return q ? [[q[0], q[1]]] : []; }));
+      return { ...a, rings, d: rings.filter(r => r.length > 2).map(r => `M ${r.map(q => `${q[0]!.toFixed(1)} ${q[1]!.toFixed(1)}`).join(' L ')} Z`).join(' ') };
+    }).filter(a => a.d);
+  }, [model, geo?.parent, areas]);
+  const areasOnGL = webglOk && !glLost && areaShapes.length > CANVAS_POINTS;
+  const glAreas = React.useMemo(() => (areasOnGL ? areaShapes.map(a => ({ rings: a.rings, triangles: triangulate(a.rings), fill: STATUS[a.tone ?? 'neutral'], opacity: 0.45 })) : []), [areasOnGL, areaShapes]);
+  const anyGL = (onGL || areasOnGL) && !glLost;
+  /** The point (or, with WebGL, the outline) under the pointer, if any. */
+  const pointAt = (e: { clientX: number; clientY: number }): number | null => {
+    if (anyGL && glRef.current) {
+      const hit = glRef.current.pick(e.clientX, e.clientY, 8);
+      if (hit) { setHoverArea(hit.point == null ? hit.polygon : null); if (onGL) return hit.point; }
+    }
     const el = svgRef.current;
     if (!pIndex || !el || !model) return null;
     const r = el.getBoundingClientRect();
@@ -233,6 +312,30 @@ export function NationMap({
     const x = unzoom(((e.clientX - r.left) / r.width) * model.width, 'x'), y = unzoom(((e.clientY - r.top) / r.height) * model.height, 'y');
     return pIndex.nearest(x, y, 8 / (z?.z ?? 1));
   };
+  const picking = renderer !== 'svg' || areasOnGL;
+  const hoverHref = hoverPoint != null ? exactPoints[hoverPoint]?.href : hoverArea != null ? areaShapes[hoverArea]?.href : undefined;
+  const locatedLabel = pointTiles?.label ?? pointsLabel;
+  const glStyle: PointStyle = pointStyle ?? (theatre ? 'tile' : 'dot');
+  // Names where they do not run into each other (the 'ok' tone, e.g. certified sites, first), as the SVG theatre names its sites.
+  const labels = React.useMemo(() => {
+    if (!pointLabels || renderer === 'svg') return [];
+    const zz = z?.z ?? 1;
+    const order = exactPoints.map((p, i) => i).filter(i => {
+      const p = exactPoints[i]!, sx = p.x * zz + (z?.tx ?? 0), sy = p.y * zz + (z?.ty ?? 0);
+      return sx >= 0 && sy >= 0 && sx <= (model?.width ?? 0) && sy <= (model?.height ?? 0);
+    }).slice(0, 4000).sort((a, b) => Number(exactPoints[b]!.tone === 'ok') - Number(exactPoints[a]!.tone === 'ok'));
+    const boxes: [number, number, number, number][] = [], out: { key: string; x: number; y: number; text: string }[] = [];
+    const below = (glStyle === 'tile' ? 20 : 13) / zz;
+    for (const i of order) {
+      const p = exactPoints[i]!, text = p.name ?? p.label;
+      const w = Math.min(180, text.length * 4.6) / zz;
+      const bx: [number, number, number, number] = [p.x - w / 2, p.y + below - 9 / zz, p.x + w / 2, p.y + below + 3 / zz];
+      if (boxes.some(o => bx[0] < o[2] && bx[2] > o[0] && bx[1] < o[3] && bx[3] > o[1])) continue;
+      boxes.push(bx); out.push({ key: p.key ?? `${i}`, x: p.x, y: p.y + below, text });
+      if (out.length >= pointLabels) break;
+    }
+    return out;
+  }, [pointLabels, renderer, exactPoints, z?.z, z?.tx, z?.ty, model?.width, model?.height, glStyle]); // eslint-disable-line react-hooks/exhaustive-deps
   const marked = needsMarker(kind);
   const shown = model?.units.filter(u => u.value).length ?? 0;
   const drawn = model?.units.map((u, i) => ({ u, i })).filter(x => x.u.d) ?? [];
@@ -263,6 +366,23 @@ export function NationMap({
       className={`focus-ring rounded-[3px] border px-2 py-0.5 text-[11px] ${view === v ? 'border-ink text-ink' : 'border-line text-ink-muted hover:text-ink'}`}>{label}</button>
   );
   const hatch = `hatch-${uid}`;
+  // The page's own layers (e.g. the theatre's institutions) and the capital: in the map's SVG, or, when the
+  // located points are drawn on a canvas or with WebGL, in an SVG over them so a national register never hides them.
+  const overTop = renderer !== 'svg';
+  const overlayContent = model && geo ? (
+    <>
+      {overlay && !geo.parent ? overlay({
+        width: model.width, height: model.height, capital: model.capital, project: model.project,
+        units: model.units.flatMap(u => (u.cx != null && u.cy != null ? [{ name: u.name, code: u.code, x: u.cx, y: u.cy, value: u.value?.value }] : [])),
+      }) : null}
+      {model.capital ? (
+        <g pointerEvents="none" aria-hidden>
+          <path d={star(model.capital.x, model.capital.y, 6)} fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={1.2} />
+          {!compact ? <text x={model.capital.x + 8} y={model.capital.y + 3} fontSize="10" fontWeight="600" fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={2.5} paintOrder="stroke">{model.capital.name}</text> : null}
+        </g>
+      ) : null}
+    </>
+  ) : null;
 
   return (
     <figure className={`min-w-0 space-y-1.5 ${theatre ? 'relative' : ''}`} aria-label={title}>
@@ -299,10 +419,14 @@ export function NationMap({
       {openNote ? <p className="text-[11px] text-ink-muted" role="status">{openNote}</p> : null}
 
       <div ref={wrap} className={view === 'map' ? 'relative w-full' : 'hidden'}
-        onMouseMove={onCanvas ? e => setHoverPoint(pointAt(e)) : undefined}
-        onMouseLeave={onCanvas ? () => setHoverPoint(null) : undefined}
-        onClickCapture={onCanvas ? e => { const i = pointAt(e); const href = i != null ? exactPoints[i]?.href : undefined; if (href) { e.preventDefault(); e.stopPropagation(); window.location.assign(href); } } : undefined}
-        style={onCanvas && hoverPoint != null && exactPoints[hoverPoint]?.href ? { cursor: 'pointer' } : undefined}>
+        onMouseMove={picking ? e => {
+          // One pick a frame however fast the pointer moves (the last position wins).
+          hoverAt.current = { clientX: e.clientX, clientY: e.clientY };
+          if (hoverFrame.current == null) hoverFrame.current = requestAnimationFrame(() => { hoverFrame.current = null; if (hoverAt.current) setHoverPoint(pointAt(hoverAt.current)); });
+        } : undefined}
+        onMouseLeave={picking ? () => { hoverAt.current = null; setHoverPoint(null); setHoverArea(null); } : undefined}
+        onClickCapture={picking ? e => { const i = pointAt(e); const href = i != null ? exactPoints[i]?.href : hoverArea != null ? areaShapes[hoverArea]?.href : undefined; if (href) { e.preventDefault(); e.stopPropagation(); window.location.assign(href); } } : undefined}
+        style={picking && hoverHref ? { cursor: 'pointer' } : undefined}>
         {geo === undefined ? <p className="p-3 text-[13px] text-ink-soft" style={{ minHeight }}>Loading the nation&rsquo;s boundaries…</p>
           : geo === null || !model ? <p className="p-3 text-[13px] text-ink-soft">No boundaries are available for this country yet.</p> : (
           <svg ref={svgRef} width={model.width} height={model.height} viewBox={`0 0 ${model.width} ${model.height}`} className="block max-w-full"
@@ -353,7 +477,19 @@ export function NationMap({
               <circle key={`ring${i}`} cx={p.x} cy={p.y} r={14} fill="none" stroke={STATUS.alert} strokeWidth={1.1} aria-hidden pointerEvents="none"
                 className="motion-safe:animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
             ))}
-            {onCanvas ? null : model.points.filter(p => p.exact).map((p, i) => {
+            {areaShapes.length && !areasOnGL ? (
+              <g aria-label={`${areaShapes.length} outlines`}>
+                {areaShapes.map(a => (
+                  <path key={a.key} d={a.d} fill={STATUS[a.tone ?? 'neutral']} fillOpacity={0.45} stroke={STATUS[a.tone ?? 'neutral']} strokeWidth={0.8} fillRule="evenodd">
+                    <title>{a.label}</title>
+                  </path>
+                ))}
+              </g>
+            ) : null}
+            {renderer === 'svg' && exactPoints[selectedIndex] ? (
+              <rect x={exactPoints[selectedIndex]!.x - 11} y={exactPoints[selectedIndex]!.y - 11} width={22} height={22} rx={5} fill="none" stroke="rgb(var(--c-ink))" strokeWidth={1.6} aria-hidden pointerEvents="none" />
+            ) : null}
+            {!(pointTiles ? model.points.filter(p => p.exact).length <= CANVAS_POINTS : renderer === 'svg') ? null : model.points.filter(p => p.exact).map((p, i) => {
               const mark = (
                 <g>
                   <rect x={p.x - 7} y={p.y - 7} width={14} height={14} rx={3} fill="rgb(var(--c-surface-2))" stroke={STATUS[p.tone]} strokeWidth={1.2} />
@@ -376,16 +512,7 @@ export function NationMap({
                 {p.count && p.count > 1 ? <text x={p.x} y={p.y + 3} textAnchor="middle" fontSize="9" fontWeight="700" fill="rgb(var(--c-bg))">{p.count}</text> : null}
               </g>
             ))}
-            {overlay && !geo.parent ? overlay({
-              width: model.width, height: model.height, capital: model.capital, project: model.project,
-              units: model.units.flatMap(u => (u.cx != null && u.cy != null ? [{ name: u.name, code: u.code, x: u.cx, y: u.cy, value: u.value?.value }] : [])),
-            }) : null}
-            {model.capital ? (
-              <g pointerEvents="none" aria-hidden>
-                <path d={star(model.capital.x, model.capital.y, 6)} fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={1.2} />
-                {!compact ? <text x={model.capital.x + 8} y={model.capital.y + 3} fontSize="10" fontWeight="600" fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={2.5} paintOrder="stroke">{model.capital.name}</text> : null}
-              </g>
-            ) : null}
+            {overTop ? null : overlayContent}
             </g>
             {!compact ? (
               <g aria-hidden transform={`translate(${model.width - 24},${22})`}>
@@ -403,15 +530,41 @@ export function NationMap({
             ) : null}
           </svg>
         )}
-        {onCanvas && model ? (
-          <>
-            <CanvasPoints points={exactPoints} width={model.width} height={model.height} zoom={z} highlight={hoverPoint} />
-            <p className="sr-only">{exactPoints.length.toLocaleString('en')} {pointsLabel.toLowerCase()} are drawn as dots; the Table view lists them by {noun}.</p>
-          </>
+        {(onGL || areasOnGL) && model ? (
+          <WebGLPoints ref={glRef} points={onGL ? exactPoints : []} polygons={glAreas} width={model.width} height={model.height} zoom={z}
+            selected={selectedIndex >= 0 ? selectedIndex : null} style={glStyle} area={model.coverage * model.width * model.height} onLost={setGlLost} />
         ) : null}
-        {onCanvas && hoverPoint != null && exactPoints[hoverPoint] ? (
-          <div className={`pointer-events-none absolute ${hud ? 'start-12' : 'start-2'} bottom-2 max-w-[70%] rounded-[3px] border border-line bg-surface px-2 py-1 text-[12px] shadow`} role="status">
+        {onCanvas && model ? (
+          <CanvasPoints points={exactPoints} width={model.width} height={model.height} zoom={z} highlight={hoverPoint ?? (selectedIndex >= 0 ? selectedIndex : null)} />
+        ) : null}
+        {overTop && model && overlayContent ? (
+          <svg className="absolute start-0 top-0" width={model.width} height={model.height} style={{ pointerEvents: 'none' }} aria-hidden={overlay ? undefined : true}>
+            <g transform={z ? `translate(${z.tx} ${z.ty}) scale(${z.z})` : undefined} style={{ transition: 'transform 260ms ease', pointerEvents: 'auto' }}>{overlayContent}</g>
+          </svg>
+        ) : null}
+        {/* Over the WebGL layer: the hovered point's ring and the names (SVG, so hovering never redraws the layer). */}
+        {renderer !== 'svg' && model && (labels.length || (onGL && !glLost && hoverPoint != null && exactPoints[hoverPoint])) ? (
+          <svg className="pointer-events-none absolute start-0 top-0" width={model.width} height={model.height} aria-hidden>
+            <g transform={z ? `translate(${z.tx} ${z.ty}) scale(${z.z})` : undefined}>
+              {labels.map(l => (
+                <text key={l.key} x={l.x} y={l.y} textAnchor="middle" fontSize={8.5 / (z?.z ?? 1)} fontWeight="700" fill="rgb(var(--c-ink))" stroke="rgb(var(--c-bg))" strokeWidth={2.5 / (z?.z ?? 1)} paintOrder="stroke">{l.text}</text>
+              ))}
+              {onGL && !glLost && hoverPoint != null && exactPoints[hoverPoint] ? (
+                <circle cx={exactPoints[hoverPoint]!.x} cy={exactPoints[hoverPoint]!.y} r={(glStyle === 'tile' ? 13 : 7) / (z?.z ?? 1)} fill="none" stroke={STATUS[exactPoints[hoverPoint]!.tone]} strokeWidth={2 / (z?.z ?? 1)} data-testid="map-point-ring" />
+              ) : null}
+            </g>
+          </svg>
+        ) : null}
+        {renderer !== 'svg' && model ? (
+          <p className="sr-only">{exactPoints.length.toLocaleString('en')} {locatedLabel.toLowerCase()} are drawn as dots; the Table view lists them.</p>
+        ) : null}
+        {picking && hoverPoint != null && exactPoints[hoverPoint] ? (
+          <div className={`pointer-events-none absolute ${hud ? 'start-12' : 'start-2'} bottom-2 max-w-[70%] rounded-[3px] border border-line bg-surface px-2 py-1 text-[12px] shadow`} role="status" data-testid="map-point-hover">
             {exactPoints[hoverPoint]!.label}{exactPoints[hoverPoint]!.unit ? <span className="text-ink-muted"> · {exactPoints[hoverPoint]!.unit}</span> : null}
+          </div>
+        ) : hoverArea != null && areaShapes[hoverArea] ? (
+          <div className={`pointer-events-none absolute ${hud ? 'start-12' : 'start-2'} bottom-2 max-w-[70%] rounded-[3px] border border-line bg-surface px-2 py-1 text-[12px] shadow`} role="status" data-testid="map-area-hover">
+            {areaShapes[hoverArea]!.label}
           </div>
         ) : null}
         {hud && model ? <div className="absolute start-2 top-2 z-10 flex flex-col gap-1">{hud}</div> : null}
@@ -453,6 +606,25 @@ export function NationMap({
               ))}
             </tbody>
           </table>
+          {exactPoints.length ? (
+            <table className="w-full border-t border-line text-[12px]" data-testid="map-located-items">
+              <caption className="px-2 py-1 text-start font-semibold text-ink-soft">{locatedLabel}: {exactPoints.length.toLocaleString('en')}</caption>
+              <thead><tr className="border-b border-line text-ink-muted"><th className="px-2 py-1 text-start font-semibold">Item</th><th className="pe-2 text-start font-semibold capitalize">{noun}</th></tr></thead>
+              <tbody>
+                {exactPoints.slice(0, listed).map((p, i) => (
+                  <tr key={`${p.key ?? p.label}-${i}`} className="border-b border-line-soft">
+                    <td className="px-2 py-1">{p.href ? <a href={p.href} className="text-link underline-offset-2 hover:underline">{p.label}</a> : p.label} <span className="text-ink-muted">({TONE_WORD[p.tone]})</span></td>
+                    <td className="pe-2 text-ink-muted">{p.unit || '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : null}
+          {exactPoints.length > listed ? (
+            <button type="button" onClick={() => setListed(n => n + LIST_PAGE * 5)} className="focus-ring m-2 rounded-[3px] border border-line px-2 py-0.5 text-[11px] text-ink-soft hover:text-ink">
+              Show {Math.min(LIST_PAGE * 5, exactPoints.length - listed).toLocaleString('en')} more of {(exactPoints.length - listed).toLocaleString('en')}
+            </button>
+          ) : null}
         </div>
       ) : null}
 
@@ -486,6 +658,13 @@ export function NationMap({
           </div>
           {shown === 0 && emptyNote ? <div className="text-ink-muted">{emptyNote}</div> : null}
           {model.unmatched.length ? <div className="text-warn">Not placed on the map (name not found among the {plural(2)}): {model.unmatched.slice(0, 8).join(', ')}{model.unmatched.length > 8 ? ` and ${model.unmatched.length - 8} more` : ''}</div> : null}
+          {pointTiles && !geo?.parent ? (
+            <div className={`${notes === 'small' ? 'text-[9px]' : 'text-[10px]'} text-ink-muted`} role="status" data-testid="map-tile-status">
+              {tiles.error ? <span className="text-warn">Some map tiles could not be read ({tiles.error}); </span> : null}
+              {tiles.loading && !tiles.features.length ? `Loading ${locatedLabel.toLowerCase()}…` : `${exactPoints.length.toLocaleString('en')} ${locatedLabel.toLowerCase()} drawn from ${tiles.tiles.toLocaleString('en')} vector tile${tiles.tiles === 1 ? '' : 's'}${tiles.z != null ? ` (zoom ${tiles.z})` : ''}`}
+              {tiles.truncated ? ' · some tiles hold more than their limit; zoom in for every point' : ''}
+            </div>
+          ) : null}
           <div className={`${notes === 'small' ? 'text-[9px]' : 'text-[10px]'} text-ink-muted`}>
             Boundaries: {geo?.credit}{source ? ` · Figures: ${source}` : ''}{asOf ? ` · As of ${asOf}` : ''}
           </div>

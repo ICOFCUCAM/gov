@@ -31,14 +31,18 @@ export interface LocatorMap {
   capital?: { x: number; y: number; name: string };
   country: string;
   credit: string;
+  /** The map's Mercator fit (scale and translate of d3's geoMercator), so the browser can place more sites on it. */
+  mercator?: { k: number; tx: number; ty: number };
 }
 
 export interface SiteLocations {
   /** Whether the site belongs to an institution in the registry (its sites can be registered). */
   institution: boolean;
   sites: LocatorSite[];
-  /** Published sites in all (the list carries at most a few hundred). */
+  /** Published sites in all (the list carries at most a few hundred; the rest are read from the public tile archive on request). */
   total: number;
+  /** The institution's registry id, to pick its sites out of the public tile archive. */
+  institutionId?: string;
   /** Per locator tab, the register categories it stands for (null: the tab does not map to one). */
   tabCategories: (string[] | null)[];
   map: LocatorMap | null;

@@ -7,6 +7,10 @@
 // one site's record, adding a site, loading existing data from a file, and
 // how the nation runs its register (its policy). Sites are declared by their
 // institutions (reported); certified sites have had their location checked.
+// At national scale (more than 20,000 published sites) the map reads the
+// sites as vector tiles for what it shows and draws them with WebGL
+// (components/map/NationMap.tsx `pointTiles`), and the register table shows
+// them a page at a time; below that everything is as before.
 // Design: docs/FACILITY_REGISTER_REVIEW.md. Rules: lib/data/facilities.ts.
 
 import * as React from 'react';
@@ -21,9 +25,13 @@ import { ImportPanel } from './ImportPanel';
 import { CandidatesPanel } from './CandidatesPanel';
 import { ConnectionsPanel } from './ConnectionsPanel';
 import {
-  CERT_WORD, Count, LEVEL_WORD, Msg, STATE_WORD, input, label, sitePoints, useInstitutions, useRegister,
+  CERT_WORD, Count, LEVEL_WORD, Msg, STATE_WORD, input, label, sitePoints, siteTiles, useInstitutions, useRegister,
   type Site,
 } from './shared';
+import { TILE_REGISTER_SITES } from '@/lib/map/tile-loader';
+
+/** Rows of the register table shown at first (and added by "Show more"). */
+const ROWS = 500;
 
 type StateFilter = 'current' | 'published' | 'proposed' | 'withdrawn';
 
@@ -53,12 +61,21 @@ export function SitesRegister() {
 
   // A map point or a link "#site-ID" opens that site's record.
   React.useEffect(() => {
-    const read = () => { const h = decodeURIComponent(window.location.hash); if (h.startsWith('#site-')) setSelected(h.slice(6)); };
+    // "#site-FAC-00012" from the register itself; "#FAC-00012" from the other maps' links.
+    const read = () => { const h = decodeURIComponent(window.location.hash); if (h.startsWith('#site-')) setSelected(h.slice(6)); else if (/^#FAC-\d+$/.test(h)) setSelected(h.slice(1)); };
     read();
     window.addEventListener('hashchange', read);
     return () => window.removeEventListener('hashchange', read);
   }, []);
   React.useEffect(() => { if (selected) requestAnimationFrame(() => detailRef.current?.scrollIntoView({ block: 'nearest' })); }, [selected]);
+  const [rows, setRows] = React.useState(ROWS);
+  React.useEffect(() => { setRows(ROWS); }, [filter]);
+  // A national-scale register is drawn from vector tiles; each reload of the register reads them afresh.
+  const large = (data?.counts.published ?? 0) > TILE_REGISTER_SITES;
+  const version = React.useMemo(() => (data ? String(Date.now()) : ''), [data]);
+  const tiles = React.useMemo(() => (large && data && (filter.state === 'current' || filter.state === 'published')
+    ? siteTiles(data.categories, { ministry: filter.ministry, category: filter.category, region: filter.region, version }) : undefined),
+  [large, data, filter.ministry, filter.category, filter.region, filter.state, version]);
 
   if (error && !data) return <p role="alert" className="text-alert">The register could not be read: {error}</p>;
   if (!data) return <p className="text-[13px] text-ink-muted">Loading the register…</p>;
@@ -130,7 +147,9 @@ export function SitesRegister() {
         title="Published sites"
         kind="reported"
         source="Declared by the institutions that own them; certified locations have been checked"
-        points={sitePoints(shown, data.categories)}
+        points={large ? undefined : sitePoints(shown, data.categories)}
+        pointTiles={tiles}
+        selectedPoint={selected ?? undefined}
         pointsLabel="Published sites (circle: location certified; diamond: awaiting certification; triangle: location rejected)"
         emptyNote={shown.some(s => s.state === 'published') ? undefined : 'No published site matches yet. Institutions add sites below, on the phone page or from a file; each is published by a second official.'}
       />
@@ -177,7 +196,7 @@ export function SitesRegister() {
                 </tr>
               </thead>
               <tbody>
-                {shown.map(s => (
+                {(shown.length > rows ? [...shown.slice(0, rows), ...(site && shown.indexOf(site) >= rows ? [site] : [])] : shown).map(s => (
                   <tr key={s.id} id={`site-${s.id}`} className={`border-b border-line-soft align-top ${selected === s.id ? 'bg-surface-2' : ''}`}>
                     <td className="py-1.5">
                       <span aria-hidden className="me-1.5">{cat(s)?.glyph}</span>
@@ -200,6 +219,11 @@ export function SitesRegister() {
             </table>
           </div>
         ) : <p className="text-[13px] text-ink-muted">No site matches.</p>}
+        {shown.length > rows ? (
+          <button type="button" onClick={() => setRows(n => n + ROWS * 4)} className="focus-ring rounded-[3px] border border-line px-2 py-1 text-[12px] text-ink-soft hover:text-ink">
+            Show {Math.min(ROWS * 4, shown.length - rows).toLocaleString()} more of {(shown.length - rows).toLocaleString()} not shown
+          </button>
+        ) : null}
         <div ref={detailRef}>
           {site ? <SiteDetail site={site} vocab={data} act={act} busy={busy} ownerName={ownerName} onClose={() => { setSelected(null); history.replaceState(null, '', window.location.pathname + window.location.search); }} />
             : selected ? <p className="text-[13px] text-ink-muted">That site is not in the register.</p> : null}

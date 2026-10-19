@@ -39,6 +39,8 @@ describe('facility vector tiles', () => {
     const s = byId.get(school)!;
     expect(s.type).toBe(1);
     expect(s.properties).toMatchObject({ name: 'Nairobi Primary', category: 'school', categoryLabel: 'School', status: 'operational', regionCode: 'KE-30', certified: false, nationalId: expect.stringMatching(/^[0-9a-f-]{36}$/) });
+    // what the console's tile layers filter and colour by
+    expect(s.properties).toMatchObject({ owner: expect.any(String), certification: 'awaiting', region: expect.any(String) });
     expect(s.id).toBe(Number(school.replace(/\D/g, '')));
     const [lng, lat] = fromTile(s.geometry[0]![0], s.geometry[0]![1], z, x, y);
     expect(Math.abs(lng - 36.81724)).toBeLessThan(1e-3); expect(Math.abs(lat + 1.28638)).toBeLessThan(1e-3);

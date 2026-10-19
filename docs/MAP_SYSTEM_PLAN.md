@@ -1,6 +1,6 @@
 # Map system: evaluation and plan
 
-Status: phases 0–2 done, phase 3 done (TopoJSON packs, districts at install, worldview), phases 4 and 5 done (October 2026); small items open: Kiribati names, France's overseas collectivities. Register: §16.4, §17.1.
+Status: phases 0–2 done, phase 3 done (TopoJSON packs, districts at install, worldview), phases 4 and 5 done, national-scale rendering (WebGL, vector tiles, PMTiles) done (October 2026); small items open: Kiribati names, France's overseas collectivities. Register: §16.4, §17.1.
 
 ## Answers to the owner's questions
 
@@ -72,7 +72,7 @@ layouts. The fix is one shared map engine grown from it.
    country's aspect ratio, legend and lists below, admin-2 after drilling in.
 6. **Time:** as-of and known-at from the twin; boundary versions are bitemporal too.
 7. **Budgets:** world ≤250 KB gz; admin-1 ≤300 KB gz (overview ≤150 KB); admin-2 on drill-down ≤1 MB gz (overview ≤512 KB); first render ≤200 ms
-   on a mid-range phone; canvas above ~2,000 features.
+   on a mid-range phone; canvas above ~2,000 features, WebGL above ~20,000 and for tile layers.
 8. **Authoritative boundaries:** a `boundary` twin source (GeoJSON/TopoJSON, GeoPackage or Shapefile
    converted on the server), validated (rings, CRS, codes, coverage, gaps/overlaps, never fewer units without
    confirmation), published four-eyes with `validFrom`, every version kept, credited. Facilities as
@@ -279,6 +279,62 @@ layouts. The fix is one shared map engine grown from it.
   Each kind of site maps to INSPIRE, HXL, OpenStreetMap and Smart Data
   Models (`lib/data/facility-standards.ts`): in the OGC properties, the
   open-data candidate matching and the register's legend.
+- **National-scale rendering (architecture review G4, R13 part 2), done.**
+  Located points have three renderers chosen by count
+  (`lib/map/gl-points.ts` `pointRenderer`): SVG up to 2,000 (every point a
+  focusable element, unchanged), one 2D canvas up to 20,000
+  (`CanvasPoints`, grid hit-testing), and WebGL above 20,000 or `webglAbove`
+  (`components/map/WebGLPoints.tsx`, `lib/map/gl-layer.ts`): raw WebGL 2
+  with a WebGL 1 fallback and GLSL ES 1.00 shaders, no map library. One
+  interleaved buffer (x, y, tone, glyph, flags, pick colour; 16 bytes a
+  point) drawn as GL points in tone order (alert on top); colours are the
+  status tokens and the theme's background and surface read from the page;
+  sizes follow the map's zoom and density; two looks: dots with a halo
+  (standard maps) and the theatre's glyph tiles (surface fill, status edge,
+  glow, the category glyph from a texture atlas, a dashed edge for a
+  generalised site), small tiles without glyphs when thousands crowd the
+  whole-nation view. Picking on the GPU: every point (and polygon) is drawn
+  once into an off-screen buffer in a colour that encodes its index; hover
+  and click read a 17×17 block and take the nearest id (one pick a frame);
+  the buffer is redrawn only when the drawing changes, and the hover ring
+  and names are an SVG layer over the canvas, so hovering never redraws
+  100,000 points. Polygons (`areas`: building footprints, parcels) are SVG
+  paths up to 2,000 and WebGL triangles above (ear clipping with hole
+  bridging, `lib/map/triangulate.ts`), picked in the same pass. The layer
+  follows the map's zoom with the SVG's 260 ms ease, at once under reduced
+  motion; a lost WebGL context hands the points to the canvas layer until
+  the browser restores it, then rebuilds. The table view lists every unit
+  and every located item (a page at a time).
+  Vector tiles on the client (`lib/map/tile-loader.ts`,
+  `components/map/useTileFeatures.ts`, NationMap `pointTiles`): the visible
+  extent is sampled through the map's own projection and zoom, the tile
+  zoom is the lowest that places a point within half a screen pixel (at most
+  64 tiles), tiles come from the viewer-aware route
+  `/api/twin/tiles/facilities/{z}/{x}/{y}.mvt` (or a PMTiles archive),
+  cached (512), decoded with the platform's MVT decoder (`lib/geo/mvt.ts`)
+  and merged; a tile cut at its 50,000-point limit is replaced by its
+  children. A page's filters apply to the tiles' properties (owner,
+  category, region, certification).
+  PMTiles (`lib/geo/pmtiles.ts`, `lib/twin/tiles-archive.ts`): the facility
+  register as one PMTiles v3 archive, zoom 0–12 (`CIVICOS_TILES_ZOOMS`),
+  built from what a visitor who is not signed in sees (restricted sites at
+  the `viewFacility()` generalised position), rebuilt after publication
+  changes (audit hook, 5 s debounce, SHA-256 fingerprint), kept as a file
+  beside the platform state and served with range requests at
+  `/api/twin/tiles/facilities.pmtiles` (public). The public "find us"
+  locator reads the rest of an institution's sites from it when the page
+  carries only the first 150 and the visitor searches or asks for all
+  (`apps/_shared/public/locator-archive.ts`, loaded on demand); an
+  air-gapped installation can copy the one file to its own web server and
+  point the same reader at it.
+  In the console: the facility register map (`/gov/sites`) reads tiles above
+  20,000 published sites (the table then shows 500 rows at a time and the
+  selected site is ringed on the map); the Situation Room theatre reads them
+  above 2,000 and draws the registered sites as its glyph tiles on the GPU
+  with up to 20 names where they do not collide, keeping every other layer
+  of the theatre. Checks: `npm run check:map` (100,000 points on the
+  test-only page `/gov/sites/map-check`, `CIVICOS_MAP_CHECK=1`) and console
+  screenshots before and after with a 50,000-site synthetic register.
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

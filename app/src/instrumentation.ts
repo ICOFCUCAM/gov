@@ -13,6 +13,8 @@ export async function register() {
     if (tracing.enabled || tracing.error) log(tracing.error ? 'error' : 'info', 'tracing.start', { ...tracing });
     const { startFromEnv } = await import('./lib/data/persist');
     const status = await startFromEnv();
+    // The facility tile archive listens for publication changes from the start (lib/twin/tiles-archive.ts).
+    await import('./lib/twin/tiles-archive');
     if (status.adapter !== 'memory' || status.error) {
       log(status.error ? 'error' : 'info', 'state.restore', { adapter: status.adapter, restored: status.restored.length, ...(status.error ? { message: status.error } : {}) });
     }
