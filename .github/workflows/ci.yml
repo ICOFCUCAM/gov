@@ -28,6 +28,32 @@ jobs:
       - name: No new raw colours in console code (tokens only)
         run: pnpm scan:colours
 
+  dependency-audit:
+    name: dependency audit (production, high and critical)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable pnpm
+        run: corepack enable
+      # Fails on any high or critical advisory in production dependencies
+      # (pnpm audit --prod) that is not recorded, with a reason and a review
+      # date, in app/scripts/audit-accepted.json.
+      - name: Audit production dependencies
+        run: node scripts/audit-deps.mjs --json dependency-audit.json
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit
+          path: app/dependency-audit.json
+          if-no-files-found: ignore
+
   public-sites-audit:
     name: public sites audit (accessibility, links, budgets)
     runs-on: ubuntu-latest

@@ -67,8 +67,8 @@ describe('access gate for integration endpoints (CIVICOS_AUTH=enforce)', () => {
     expect((await gate('/r/health/old/page')).headers.get('location')).toBeNull();
     expect((await gate('/api/public-sites/health/content')).headers.get('location')).toBeNull();
     expect((await gate('/api/public-sites/health', 'PUT')).status).toBe(401);
-    expect((await gate('/api/public-sites')).headers.get('location')).toMatch(/\/login/);
-    expect((await gate('/receipts')).headers.get('location')).toMatch(/\/login/);
+    expect((await gate('/api/public-sites')).status).toBe(401);
+    expect((await gate('/receipts')).headers.get('location')).toMatch(/\/sign-in/);
     expect((await gate('/police')).headers.get('x-frame-options')).toBe('SAMEORIGIN');
   });
 });

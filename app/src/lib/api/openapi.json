@@ -2750,7 +2750,7 @@
         ],
         "operationId": "get_health",
         "summary": "GET /api/health",
-        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view).",
+        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before.",
         "parameters": [],
         "responses": {
           "200": {
@@ -2775,7 +2775,7 @@
         ],
         "operationId": "post_health",
         "summary": "POST /api/health",
-        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view).",
+        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before.",
         "parameters": [],
         "requestBody": {
           "required": false,

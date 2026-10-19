@@ -4,6 +4,9 @@ const nextConfig = {
   // Doctrine: no third-party analytics, no remote images by default,
   // no telemetry to the vendor. Sovereign cloud portable.
   poweredByHeader: false,
+  // No next/image is used; the image optimizer stays off (it carries a
+  // Next.js 14 advisory, GHSA-2xp9-vwfh-vxw4: scripts/audit-accepted.json).
+  images: { unoptimized: true },
   experimental: {
     // App Router is stable in 14.x.
     // src/instrumentation.ts restores and saves the platform's state (lib/data/persist.ts).

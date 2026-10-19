@@ -7,26 +7,86 @@ import { signClaims } from './lib/auth/session-token';
 
 const CRON = path.join(__dirname, 'app', 'api', 'cron');
 const cronJobs = fs.readdirSync(CRON).filter(d => fs.existsSync(path.join(CRON, d, 'route.ts')));
-const call = (p: string, cookie?: string) => syncRes(
-  middleware(new NextRequest(`http://localhost${p}`, { headers: cookie ? { cookie } : {} })));
-// GET requests are answered synchronously; only API changes under enforcement await a session check.
-function syncRes(r: ReturnType<typeof middleware>) { if (r instanceof Promise) throw new Error('expected a synchronous answer'); return r; }
+const call = async (p: string, cookie?: string, headers: Record<string, string> = {}) =>
+  middleware(new NextRequest(`http://localhost${p}`, { headers: { ...headers, ...(cookie ? { cookie } : {}) } }));
+const SECRET = 'test-secret-0123456789';
+/** A signed official's session cookie (and the page cookie the sign-in also sets). */
+async function officialCookie(extra: Record<string, unknown> = {}) {
+  const now = Math.floor(Date.now() / 1000);
+  return `civicos_session=official; civicos_official=${await signClaims({ sub: 'local:1', name: 'A. Official', method: 'local', iat: now, exp: now + 600, ...extra }, SECRET)}`;
+}
 
 describe('access gate (CIVICOS_AUTH=enforce)', () => {
-  const before = process.env.CIVICOS_AUTH;
-  afterEach(() => { process.env.CIVICOS_AUTH = before; });
+  const before = { auth: process.env.CIVICOS_AUTH, secret: process.env.CIVICOS_SESSION_SECRET };
+  afterEach(() => { process.env.CIVICOS_AUTH = before.auth; process.env.CIVICOS_SESSION_SECRET = before.secret; });
 
-  it('lets every scheduled job reach its route without a session', () => {
+  it('lets every scheduled job reach its route without a session', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
     expect(cronJobs.length).toBeGreaterThan(10);
-    for (const job of cronJobs) expect(call(`/api/cron/${job}`).headers.get('location'), job).toBeNull();
+    for (const job of cronJobs) {
+      const r = await call(`/api/cron/${job}`);
+      expect(r.headers.get('location'), job).toBeNull();
+      expect(r.status, job).toBe(200);
+    }
   });
 
-  it('still sends other unsigned requests to /login', () => {
+  it('refuses unsigned reads: API reads get 401, console pages go to sign-in', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
-    expect(call('/api/releases').headers.get('location')).toMatch(/\/login\?from=%2Fapi%2Freleases$/);
-    expect(call('/api/cron/sla/extra').headers.get('location')).toMatch(/\/login/);
-    expect(call('/api/releases', 'civicos_session=x').headers.get('location')).toBeNull();
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    expect((await call('/api/releases')).status).toBe(401);
+    expect((await call('/api/cron/sla/extra')).status).toBe(401);
+    expect((await call('/gov/twin')).headers.get('location')).toMatch(/\/sign-in\?from=%2Fgov%2Ftwin$/);
+    expect((await call('/welcome')).headers.get('location')).toMatch(/\/sign-in\?from=%2Fwelcome$/);
+  });
+
+  it('does not take the page cookie (the cover\'s demo session) as a verified official for reads', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    expect((await call('/api/twin/state', 'civicos_session=demo')).status).toBe(401);
+    expect((await call('/api/releases', 'civicos_session=x')).status).toBe(401);
+    expect((await call('/api/audit', 'civicos_session=official')).status).toBe(401);
+    expect((await call('/gov/twin', 'civicos_session=demo')).headers.get('location')).toMatch(/\/sign-in/);
+    const now = Math.floor(Date.now() / 1000);
+    const forged = await signClaims({ sub: 'local:1', name: 'A', method: 'local', iat: now, exp: now + 600 }, 'another-secret');
+    expect((await call('/api/twin/state', `civicos_session=demo; civicos_official=${forged}`)).status).toBe(401);
+    const signed = await officialCookie();
+    expect((await call('/api/twin/state', signed)).status).toBe(200);
+    expect((await call('/gov/twin', signed)).headers.get('location')).toBeNull();
+  });
+
+  it('keeps the citizen demo session for the Civic Wallet pages only', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    expect((await call('/wallet', 'civicos_session=demo')).headers.get('location')).toBeNull();
+    expect((await call('/wallet/permits', 'civicos_session=demo')).headers.get('location')).toBeNull();
+    expect((await call('/wallet')).headers.get('location')).toMatch(/\/login\?from=%2Fwallet$/);
+    expect((await call('/api/permits', 'civicos_session=demo')).status).toBe(401);
+  });
+
+  it('accepts a bearer instead of a session only on routes that verify it themselves', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    const bearer = { authorization: 'Bearer x' };
+    expect((await call('/api/releases/publisher', undefined, bearer)).status).toBe(200);
+    expect((await call('/api/substrate/export', undefined, bearer)).status).toBe(200);
+    expect((await call('/api/twin/state', undefined, bearer)).status).toBe(401);
+    expect((await call('/api/audit', 'civicos_session=demo', bearer)).status).toBe(401);
+  });
+
+  it('refuses any request carrying the internal subrequest header (CVE-2025-29927)', async () => {
+    for (const mode of ['enforce', undefined]) {
+      process.env.CIVICOS_AUTH = mode;
+      expect((await call('/api/twin/state', undefined, { 'x-middleware-subrequest': 'middleware:middleware:middleware:middleware:middleware' })).status).toBe(400);
+      expect((await call('/police', undefined, { 'x-middleware-subrequest': 'src/middleware' })).status).toBe(400);
+    }
+  });
+
+  it('stays open without enforcement, so the demo flow keeps working', async () => {
+    delete process.env.CIVICOS_AUTH;
+    expect((await call('/gov/twin', 'civicos_session=demo')).headers.get('location')).toBeNull();
+    expect((await call('/api/twin/state')).status).toBe(200);
+    const post = await middleware(new NextRequest('http://localhost/api/twin/scenarios', { method: 'POST' }));
+    expect(post.status).toBe(200);
   });
 });
 
@@ -39,11 +99,11 @@ describe('email updates from the public sites', () => {
     process.env.CIVICOS_AUTH = 'enforce';
     expect((await post('/api/public-sites/police/subscribe')).headers.get('location')).toBeNull();
     expect((await post('/api/subscriptions')).headers.get('location')).toBeNull();
-    expect(call('/search?q=permit').headers.get('location')).toBeNull();
-    expect(call('/subscriptions?token=x').headers.get('location')).toBeNull();
-    expect(call('/api/public-sites/language?lang=fr&next=/police').headers.get('location')).toBeNull();
+    expect((await call('/search?q=permit')).headers.get('location')).toBeNull();
+    expect((await call('/subscriptions?token=x')).headers.get('location')).toBeNull();
+    expect((await call('/api/public-sites/language?lang=fr&next=/police')).headers.get('location')).toBeNull();
     expect((await post('/api/public-sites/police/proposals')).status).toBe(401);
-    expect(call('/api/subscriptions').headers.get('location')).toMatch(/\/login/);
+    expect((await call('/api/subscriptions')).status).toBe(401);
   });
 });
 
@@ -52,27 +112,29 @@ describe('public websites', () => {
   const PUBLIC_GROUP = path.join(__dirname, 'app', '(public)');
   const pages = (dir: string, base = ''): string[] => fs.readdirSync(dir, { withFileTypes: true }).flatMap(e =>
     e.isDirectory() ? pages(path.join(dir, e.name), `${base}/${e.name.replace(/^\[(.+)\]$/, 'x-$1')}`) : e.name === 'page.tsx' ? [base || '/'] : []);
-  const before = process.env.CIVICOS_AUTH;
-  afterEach(() => { process.env.CIVICOS_AUTH = before; });
+  const before = { auth: process.env.CIVICOS_AUTH, secret: process.env.CIVICOS_SESSION_SECRET };
+  afterEach(() => { process.env.CIVICOS_AUTH = before.auth; process.env.CIVICOS_SESSION_SECRET = before.secret; });
 
-  it('are open to citizens without an account', () => {
+  it('are open to citizens without an account', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
     const all = pages(PUBLIC_GROUP);
     expect(all.length).toBeGreaterThan(25);
-    for (const p of all) expect(call(p).headers.get('location'), p).toBeNull();
+    for (const p of all) expect((await call(p)).headers.get('location'), p).toBeNull();
   });
 
-  it('keep previews of unpublished proposals for signed-in officials', () => {
+  it('keep previews of unpublished proposals for signed-in officials', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
-    expect(call('/police?preview=SC-1234').headers.get('location')).toMatch(/\/login/);
-    expect(call('/police?preview=SC-1234', 'civicos_session=x').headers.get('location')).toBeNull();
-    expect(call('/police?preset=response-community').headers.get('location')).toBeNull();
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    expect((await call('/police?preview=SC-1234')).headers.get('location')).toMatch(/\/sign-in/);
+    expect((await call('/police?preview=SC-1234', 'civicos_session=x')).headers.get('location')).toMatch(/\/sign-in/);
+    expect((await call('/police?preview=SC-1234', await officialCookie())).headers.get('location')).toBeNull();
+    expect((await call('/police?preset=response-community')).headers.get('location')).toBeNull();
   });
 
-  it('do not open officer routes that share a prefix', () => {
+  it('do not open officer routes that share a prefix', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
-    expect(call('/gov/treasury').headers.get('location')).toMatch(/\/login/);
-    expect(call('/healthcheck-admin').headers.get('location')).toMatch(/\/login/);
+    expect((await call('/gov/treasury')).headers.get('location')).toMatch(/\/sign-in/);
+    expect((await call('/healthcheck-admin')).headers.get('location')).toMatch(/\/sign-in/);
   });
 });
 
@@ -169,6 +231,43 @@ describe('changes need a verified official (CIVICOS_AUTH=enforce)', () => {
     expect((await send('/api/directives', cookie)).status).toBe(403);
     live = 'down';
     expect((await send('/api/directives', cookie)).status).toBe(503);
+  });
+
+  it('does not let an Authorization header skip the gate on routes that do not verify it', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = 'test-secret-0123456789';
+    const bogus = (p: string, cookie?: string) => middleware(new NextRequest(`http://localhost${p}`, { method: 'POST', headers: { authorization: 'x', ...(cookie ? { cookie } : {}) } }));
+    for (const p of ['/api/twin/sources', '/api/twin/scenarios', '/api/platform/backups/B-1/restore', '/api/platform/config/C-1/apply', '/api/federation/propose', '/api/integrations', '/api/webhooks']) {
+      expect((await bogus(p)).status, p).toBe(401);
+      expect((await bogus(p, 'civicos_session=demo')).status, p).toBe(401);
+    }
+    // Routes that check the bearer themselves still receive it (and refuse a wrong one there).
+    expect((await bogus('/api/releases/publisher')).status).toBe(200);
+    expect((await bogus('/api/admin/officers/bulk')).status).toBe(200);
+    expect((await bogus('/api/cron/sla')).status).toBe(200);
+  });
+
+  it('applies the role rules even when a bearer is sent alongside a session', async () => {
+    process.env.CIVICOS_SESSION_SECRET = 'test-secret-0123456789';
+    const now = Math.floor(Date.now() / 1000);
+    const t = await signClaims({ sub: 'local:1', name: 'A', method: 'local', role: 'officer', iat: now, exp: now + 600 }, 'test-secret-0123456789');
+    for (const mode of ['enforce', undefined]) {
+      process.env.CIVICOS_AUTH = mode;
+      const r = await middleware(new NextRequest('http://localhost/api/platform/backups/B-1/restore', { method: 'POST', headers: { authorization: 'x', cookie: `civicos_official=${t}` } }));
+      expect(r.status).toBe(403);
+    }
+  });
+
+  it('refuses changes on a server that does not hold the state writer\'s lease', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = 'test-secret-0123456789';
+    const now = Math.floor(Date.now() / 1000);
+    const claims = { sub: 'local:1', name: 'A', method: 'local' as const, role: 'administrator' as const, iat: now, exp: now + 600 };
+    const t = await signClaims(claims, 'test-secret-0123456789');
+    globalThis.fetch = (async () => new Response(JSON.stringify({ official: claims, state: { writable: false } }))) as typeof fetch;
+    const r = await send('/api/directives', `civicos_official=${t}`);
+    expect(r.status).toBe(503);
+    expect((await r.json()).error).toMatch(/state writer/);
   });
 
   it('lets anyone reach sign-in', async () => {

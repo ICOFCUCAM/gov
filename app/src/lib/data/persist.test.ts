@@ -2,9 +2,9 @@ import { describe, it, expect, afterEach } from 'vitest';
 import os from 'node:os';
 import path from 'node:path';
 import { promises as fs } from 'node:fs';
-import { encode, decode, fileAdapter, restore, flush, SNAPSHOT_FORMAT } from './persist';
+import { encode, decode, fileAdapter, restore, flush, SNAPSHOT_FORMAT, StateConflictError, startFromEnv, stateWritable } from './persist';
 
-const g = globalThis as unknown as Record<string, unknown> & { __persistLast?: Map<string, string> };
+const g = globalThis as unknown as Record<string, unknown> & { __persistLast?: Map<string, string>; __persistStatus?: unknown; __persistVersions?: unknown };
 
 describe('durable platform state', () => {
   afterEach(() => { delete g.__civicosTestA; delete g.__civicosTestB; g.__persistLast = undefined; });
@@ -40,5 +40,65 @@ describe('durable platform state', () => {
   it('skips snapshots it cannot read or from another format', () => {
     expect(restore({ __civicosTestA: '{broken', __civicosTestB: JSON.stringify({ v: 999, data: 1 }) })).toEqual([]);
     expect(g.__civicosTestA).toBeUndefined();
+  });
+});
+
+describe('one writer', () => {
+  afterEach(() => { delete g.__civicosTestA; g.__persistLast = undefined; g.__persistVersions = undefined; });
+  const tmp = () => fs.mkdtemp(path.join(os.tmpdir(), 'civicos-lease-'));
+
+  it('gives the lease to one server at a time, renews it for its holder and lets it go on release', async () => {
+    const a = fileAdapter(await tmp());
+    expect((await a.lease!('writer-1', 30_000)).acquired).toBe(true);
+    expect(await a.lease!('writer-2', 30_000)).toMatchObject({ acquired: false, holder: 'writer-1' });
+    expect((await a.lease!('writer-1', 30_000)).acquired).toBe(true); // heartbeat
+    await a.release!('writer-2'); // not the holder: nothing happens
+    expect((await a.lease!('writer-2', 30_000)).acquired).toBe(false);
+    await a.release!('writer-1');
+    expect((await a.lease!('writer-2', 30_000)).acquired).toBe(true);
+    a.releaseSync!('writer-1'); // not the holder
+    expect((await a.lease!('writer-3', 30_000)).acquired).toBe(false);
+    a.releaseSync!('writer-2'); // as the process exits
+    expect((await a.lease!('writer-3', 30_000)).acquired).toBe(true);
+  });
+
+  it('takes over a lease whose holder stopped renewing it', async () => {
+    const a = fileAdapter(await tmp());
+    expect((await a.lease!('writer-1', 1)).acquired).toBe(true);
+    await new Promise(r => setTimeout(r, 10));
+    expect(await a.lease!('writer-2', 30_000)).toMatchObject({ acquired: true, holder: 'writer-2' });
+  });
+
+  it('refuses a save over a newer version, and a save from a server without the lease', async () => {
+    const a = fileAdapter(await tmp());
+    await a.lease!('writer-1', 30_000);
+    expect(await a.save('__civicosTestA', '{"v":1,"data":1}', { writer: 'writer-1', expected: 0 })).toBe(1);
+    expect(await a.save('__civicosTestA', '{"v":1,"data":2}', { writer: 'writer-1', expected: 1 })).toBe(2);
+    await expect(a.save('__civicosTestA', '{"v":1,"data":3}', { writer: 'writer-1', expected: 1 })).rejects.toBeInstanceOf(StateConflictError);
+    await expect(a.save('__civicosTestA', '{"v":1,"data":3}', { writer: 'writer-2', expected: 2 })).rejects.toBeInstanceOf(StateConflictError);
+    expect(await a.versions!()).toEqual({ __civicosTestA: 2 });
+    expect(JSON.parse(String((await a.loadAll()).__civicosTestA)).data).toBe(2);
+  });
+
+  it('stops a flush at a conflict instead of overwriting', async () => {
+    const a = fileAdapter(await tmp());
+    await a.lease!('writer-1', 30_000);
+    await a.save('__civicosTestA', '{"v":1,"data":"theirs"}', { writer: 'writer-1', expected: 0 }); // saved by an earlier life
+    g.__civicosTestA = 'mine';
+    await expect(flush(a, new Date(), 'writer-1')).rejects.toBeInstanceOf(StateConflictError);
+    expect(JSON.parse(String((await a.loadAll()).__civicosTestA)).data).toBe('theirs');
+  });
+
+  it('makes a second server on the same state a standby that saves nothing and refuses changes', async () => {
+    const dir = await tmp();
+    await fileAdapter(dir).lease!('other-server', 60_000);
+    const before = g.__persistStatus;
+    try {
+      const s = await startFromEnv({ CIVICOS_STATE: 'file', CIVICOS_STATE_DIR: dir, CIVICOS_STATE_LEASE_WAIT_MS: '0' } as unknown as NodeJS.ProcessEnv);
+      expect(s).toMatchObject({ adapter: 'file', role: 'standby', fencing: 'lease+version', lease: { holder: 'other-server' } });
+      expect(stateWritable()).toBe(false);
+    } finally {
+      g.__persistStatus = before;
+    }
   });
 });

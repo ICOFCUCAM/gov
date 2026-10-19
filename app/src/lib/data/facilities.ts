@@ -547,7 +547,8 @@ export function viewFacility(f: Facility, v: Viewer): Facility & { generalised?:
   return out;
 }
 
-export function listFacilities(filter: { ministryId?: string; category?: string; state?: Facility['state'] | 'all'; region?: string } = {}, viewer: Viewer = { signedIn: true }): (Facility & { generalised?: boolean })[] {
+/** Sites as `viewer` may see them. The viewer is required (no default), so every caller states who is looking and restricted positions are never shown exact by omission. */
+export function listFacilities(filter: { ministryId?: string; category?: string; state?: Facility['state'] | 'all'; region?: string }, viewer: Viewer): (Facility & { generalised?: boolean })[] {
   return db().facilities
     .filter(f => (filter.state === 'all' ? true : f.state === (filter.state ?? 'published')))
     .filter(f => !filter.ministryId || f.ownerId === filter.ministryId)

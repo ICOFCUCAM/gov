@@ -349,6 +349,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   the record to decide checks again with `refusal()` (`lib/auth/official.ts`).
   A new route that changes accounts, setup or the structure of government
   belongs in `ADMIN_ONLY`; never add a second place that decides permissions.
+- Every mutating API route must match a rule in `roles.ts` (`mutationRule()`;
+  unmatched changes are refused, `api-permission-coverage.test.ts` checks), and
+  an `Authorization` header skips the session gate only on routes listed in
+  `SELF_AUTHENTICATED` / `BEARER_ROUTES` that verify it themselves. Under
+  `enforce`, reads need the signed `civicos_official` session; the demo
+  `civicos_session` cookie opens only `/wallet`.
 - The second sign-in step (authenticator codes, `lib/auth/totp.ts`, `/api/auth/two-step`)
   is part of the same rules: a session records whether it passed it, and an
   official the policy requires it for makes no changes until it has.

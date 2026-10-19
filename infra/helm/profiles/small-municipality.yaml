@@ -7,6 +7,7 @@ api:
     requests: { cpu: "150m", memory: "192Mi" }
     limits: { cpu: "500m", memory: "384Mi" }
 app:
+  # One writer until the persistence move (review R6); see civicos/values.yaml.
   replicas: 1
 pdb:
   enabled: false

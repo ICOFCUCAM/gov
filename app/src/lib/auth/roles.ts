@@ -37,6 +37,40 @@ export const wholeGovernment = (s: Scope): boolean => !s.institution;
 
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
+// ── Which rule covers each change through the API ─────────────────────────
+// Every mutating route file under app/api must match exactly one of the lists
+// below; anything else is refused (deny by default). api-permission-coverage.test.ts
+// walks the route files and fails when a new one is not covered, so a route
+// cannot slip past the rules by being forgotten.
+
+/** Citizens ask for and manage email updates from the public sites without signing in
+ *  (double opt-in and per-sender limits in lib/data/site-subscriptions.ts). */
+export const PUBLIC_WRITE: RegExp[] = [/^\/api\/public-sites\/[a-z-]+\/subscribe$/, /^\/api\/subscriptions$/];
+/**
+ * Machine callers with no browser session that authenticate themselves in the
+ * route, whatever they present: every scheduled job under /api/cron
+ * (CIVICOS_CRON_SECRET, called by pg_cron; each refuses when the secret is
+ * unset), the deployment agent's health reports (per-nation agent credential)
+ * and a ministry's connected systems (their own ccf_ / facility feed keys).
+ */
+export const SELF_AUTHENTICATED: RegExp[] = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/feed$/];
+/**
+ * Routes that verify an `Authorization` bearer themselves (the automation
+ * secret or a platform-tier substrate session: lib/platform-auth.ts,
+ * lib/updates/access.ts). Only on these, and on SELF_AUTHENTICATED, does a
+ * request carrying an Authorization header skip the session gate; anywhere
+ * else the header counts for nothing.
+ */
+export const BEARER_ROUTES: RegExp[] = [
+  /^\/api\/releases\/publisher(\/|$)/,       // publisherAuthorized() under CIVICOS_AUTH=enforce
+  /^\/api\/admin\/officers\/bulk$/,           // platformOrCronAuthorized()
+  /^\/api\/federation\/webhooks\/test$/,      // platformOrCronAuthorized()
+  /^\/api\/substrate\/(digest|export)$/,     // CIVICOS_CRON_SECRET
+];
+/** True when the route checks the caller's own credential (bearer, agent or feed key). */
+export const verifiesOwnCredential = (pathname: string): boolean =>
+  SELF_AUTHENTICATED.some(re => re.test(pathname)) || BEARER_ROUTES.some(re => re.test(pathname));
+
 /** Changes the structure of government or the installation: administrators only. */
 const ADMIN_ONLY: RegExp[] = [
   /^\/api\/auth\/officials(\/|$)/,
@@ -46,27 +80,76 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/sovereign(\/|$)/,
   /^\/api\/facilities\/policy(\/|$)/,
   /^\/api\/map-pack(\/|$)/,
+  // The installation itself: backups and their restore, configuration and its
+  // apply, deployments, releases and tenant lifecycle.
+  /^\/api\/platform(\/|$)/,
+  // Connections to other installations and outside systems.
+  /^\/api\/federation(\/|$)/,
+  /^\/api\/integrations(\/|$)/,
+  /^\/api\/webhooks(\/|$)/,
+  // Provisioning a new municipality (/admin/onboarding).
+  /^\/api\/municipalities\/?$/,
 ];
-/** Signing in and out stays open to every role. */
-/** Signing in and out, one's own second step and one's own password stay open to every role. */
-const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/password\/?$/];
+/** Signing in and out, one's own second step and one's own password stay open to every role;
+ *  the health probe is public. */
+const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/];
+/** Inside one ministry's workspace: officials of that ministry, or of the whole government. */
+const MINISTRY = /^\/api\/org\/ministries\/([^/]+)\//;
+/**
+ * The day-to-day work of any official who is not an auditor. Routes here that
+ * need the record to decide (directives, boundaries, facilities, the Update
+ * Center's four-eyes steps) check again with refusal() or their own rules.
+ */
+const OFFICIAL_WORK: RegExp[] = [
+  /^\/api\/ai\/advisory$/,                    // advisory text (refuses when the nation has the assistant off)
+  /^\/api\/audit\/proof$/,                    // builds a proof of the audit chain (no change)
+  /^\/api\/boundaries(\/|$)/,                 // canManageBoundaries() in the route
+  /^\/api\/directives(\/|$)/,                 // canDraftDirective() / canSignDirective() in the route
+  /^\/api\/documents\/verify$/,               // checks a document code (no change)
+  /^\/api\/facilities\/(check|candidates)(\/|$)/, // checks and candidate review (rules in the route)
+  /^\/api\/facilities\/[^/]+$/,               // one site (canSignForSite() etc. in the route)
+  /^\/api\/ops\/incidents(\/|$)/,
+  /^\/api\/payments$/,
+  /^\/api\/permits(\/|$)/,
+  /^\/api\/signatures$/,
+  /^\/api\/public-sites\/[a-z-]+(\/|$)/,       // Site editor: proposed by one official, published by another (lib/data/site-editorial.ts)
+  /^\/api\/releases(\/|$)/,                   // the nation's Update Center (four-eyes and named officials in lib/data/*)
+  /^\/api\/twin\/(keys|scenarios|sources)(\/|$)/,
+];
+
+export type MutationRule = 'public-write' | 'self-authenticated' | 'bearer' | 'any-role' | 'admin' | 'ministry' | 'official';
+
+/** The rule that covers a change to `pathname`, or null when none does (refused). */
+export function mutationRule(pathname: string): MutationRule | null {
+  if (PUBLIC_WRITE.some(re => re.test(pathname))) return 'public-write';
+  if (SELF_AUTHENTICATED.some(re => re.test(pathname))) return 'self-authenticated';
+  if (ANY_ROLE.some(re => re.test(pathname))) return 'any-role';
+  if (ADMIN_ONLY.some(re => re.test(pathname))) return 'admin';
+  if (BEARER_ROUTES.some(re => re.test(pathname))) return 'bearer';
+  if (MINISTRY.test(pathname)) return 'ministry';
+  if (OFFICIAL_WORK.some(re => re.test(pathname))) return 'official';
+  return null;
+}
 
 /**
  * Whether a change through the API is allowed: null when it is, otherwise the
  * reason shown to the official. Reads only the method and path, so it can run
  * before the route; routes that need the record (directives) check again.
+ * A change no rule covers is refused (deny by default).
  */
 export function apiPermission(s: Scope, method: string, pathname: string): string | null {
   if (!MUTATING.has(method.toUpperCase())) return null;
-  if (ANY_ROLE.some(re => re.test(pathname))) return null;
+  const rule = mutationRule(pathname);
+  // Open to anyone, or the route checks its caller's own credential.
+  if (rule === 'public-write' || rule === 'self-authenticated' || rule === 'any-role') return null;
   const missing = secondStepMissing(s);
   if (missing) return missing;
   const role = roleOf(s);
   if (role === 'auditor') return 'Auditors can read records but not change them';
-  if (ADMIN_ONLY.some(re => re.test(pathname))) return adminOnly(s);
-  const m = /^\/api\/org\/ministries\/([^/]+)\//.exec(pathname);
-  if (m) return ministryPermission(s, decodeURIComponent(m[1]!));
-  return null;
+  if (rule === 'admin') return adminOnly(s);
+  if (rule === 'ministry') return ministryPermission(s, decodeURIComponent(MINISTRY.exec(pathname)![1]!));
+  if (rule === 'official' || rule === 'bearer') return null;
+  return 'No permission rule covers this change, so it is refused (lib/auth/roles.ts)';
 }
 
 export function adminOnly(s: Scope): string | null {

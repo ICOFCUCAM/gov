@@ -5,7 +5,8 @@ api:
   replicas: 6
   autoscaling: { enabled: true, minReplicas: 6, maxReplicas: 30, targetCPUUtilizationPercentage: 65 }
 app:
-  replicas: 3
+  # One writer until the persistence move (review R6); see civicos/values.yaml.
+  replicas: 1
 pdb:
   enabled: true
   minAvailable: 4
