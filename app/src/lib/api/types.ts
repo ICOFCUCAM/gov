@@ -440,6 +440,8 @@ export interface Ministry {
   status: MinistryStatus;
   mergedIntoId?: string;
   createdAt: ISODate;
+  /** When it first became active (a ministry created active: its creation). Absent on records saved before it was kept. */
+  activatedAt?: ISODate;
   departments: Department[];
   modules: ModuleActivation[];
 }

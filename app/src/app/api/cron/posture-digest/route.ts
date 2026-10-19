@@ -4,10 +4,16 @@
 // snapshot. Designed to run on a slow cadence (every 30 minutes or so);
 // produces a continuous timeline visible on /gov/posture without
 // requiring any operator to manually snapshot.
+//
+// The activated institutions come from the platform's register
+// (lib/institution/charter-register.ts; architecture review D8), not from
+// the substrate's civicos.institutions, which only mirrors it; the pressure
+// counts are the substrate's own rows.
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
 import { serverClient } from '@/lib/db/client';
+import { findCharters } from '@/lib/institution/charter-register';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,13 +33,11 @@ export async function GET(req: Request) {
   const sb = serverClient();
   if (!sb) return NextResponse.json({ error: 'substrate not configured' }, { status: 503 });
 
-  const { data: insts, error: instErr } = await sb.from('civicos_institutions')
-    .select('charter_id').eq('activated', true).limit(200);
-  if (instErr) return NextResponse.json({ error: instErr.message }, { status: 500 });
+  const insts = findCharters({ activated: true }).slice(0, 200).map(c => ({ charter_id: c.charterId }));
 
   const snapshots: { charter_id: string; posture: Posture; readiness: number; stress: number; open: number; urgent: number; openEsc: number }[] = [];
 
-  for (const i of insts ?? []) {
+  for (const i of insts) {
     const charter = (i as { charter_id: string }).charter_id;
     const [{ count: open }, { count: urgent }, { count: openEsc }] = await Promise.all([
       sb.from('civicos_work_items').select('id', { head: true, count: 'exact' })

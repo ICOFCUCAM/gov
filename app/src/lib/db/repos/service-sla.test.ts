@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 const publicClientMock = vi.fn();
 vi.mock('@/lib/db/client', () => ({
@@ -6,31 +6,38 @@ vi.mock('@/lib/db/client', () => ({
   substrateAvailable: () => publicClientMock() != null,
 }));
 
-import { serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend, consentFootprintStats, directiveStats, directiveTrend, institutionByCharterId } from './institutions';
+import { serviceSlaStats, appealsStats, serviceSlaTrend, appealsTrend, consentFootprintStats, directiveStats, directiveTrend, directiveFigures, institutionByCharterId } from './institutions';
 
 beforeEach(() => publicClientMock.mockReset());
 
+// The register's reads go to the platform (review D8), never the substrate's mirror.
+function stubPlatform(body: unknown, status = 200): string[] {
+  const urls: string[] = [];
+  vi.stubGlobal('window', {});
+  vi.stubGlobal('fetch', vi.fn(async (url: string) => { urls.push(url); return new Response(JSON.stringify(body), { status }); }));
+  return urls;
+}
+afterEach(() => vi.unstubAllGlobals());
+
 describe('institutionByCharterId', () => {
-  it('returns null when the substrate is unavailable', async () => {
-    publicClientMock.mockReturnValue(null);
+  it('returns null on the server (server code reads the register directly)', async () => {
     expect(await institutionByCharterId('MIN-H')).toBeNull();
   });
 
-  it('queries civicos_institutions by charter_id and returns the row', async () => {
-    const maybeSingle = vi.fn(async () => ({ data: { id: 'i1', charter_id: 'MIN-H', label: 'Health' }, error: null }));
-    const eq = vi.fn(() => ({ maybeSingle }));
-    const select = vi.fn(() => ({ eq }));
-    const from = vi.fn(() => ({ select }));
+  it('reads the platform register by charter id, never civicos_institutions', async () => {
+    const from = vi.fn();
     publicClientMock.mockReturnValue({ from });
-    const out = await institutionByCharterId('MIN-H');
-    expect(from).toHaveBeenCalledWith('civicos_institutions');
-    expect(eq).toHaveBeenCalledWith('charter_id', 'MIN-H');
-    expect(out!.label).toBe('Health');
+    const urls = stubPlatform({ charters: [{ charter_id: 'ministry-health', label: 'Health', kind: 'ministry', domain: 'health', archetype_or_branch: 'HEALTH', activated: true, activated_at: '2026-01-01T00:00:00Z', registered_at: '2026-01-01T00:00:00Z' }] });
+    const out = await institutionByCharterId('ministry-health');
+    expect(from).not.toHaveBeenCalled();
+    expect(urls[0]).toBe('/api/public/charters?activated=any&charter=ministry-health');
+    expect(out).toMatchObject({ id: 'ministry-health', charter_id: 'ministry-health', label: 'Health', activated: true, activated_at: '2026-01-01T00:00:00Z', grammar: null });
   });
 
-  it('returns null when absent', async () => {
-    const maybeSingle = vi.fn(async () => ({ data: null, error: null }));
-    publicClientMock.mockReturnValue({ from: () => ({ select: () => ({ eq: () => ({ maybeSingle }) }) }) });
+  it('returns null when absent or the platform refuses', async () => {
+    stubPlatform({ charters: [] });
+    expect(await institutionByCharterId('NOPE')).toBeNull();
+    stubPlatform({ error: 'no' }, 500);
     expect(await institutionByCharterId('NOPE')).toBeNull();
   });
 });
@@ -69,221 +76,37 @@ describe('serviceSlaTrend', () => {
   });
 });
 
-describe('directiveStats', () => {
-  it('returns [] when the substrate is unavailable', async () => {
-    publicClientMock.mockReturnValue(null);
+describe('directiveStats / directiveTrend', () => {
+  const body = {
+    directive_stats: [{ charterId: 'MIN-J', signed: 4, effective: 3, inForce: 1, rescinded: 1, medianSignToEffectiveDays: 4 }],
+    directive_trend: [{ weekStart: '2026-05-04', signed: 3, effective: 2, medianSignToEffectiveDays: 3 }],
+    directive_source: { kind: 'reported', source: 'Directives register (platform, /api/directives)', asOf: '2026-05-12T00:00:00Z' },
+  };
+
+  it('return [] on the server', async () => {
     expect(await directiveStats()).toEqual([]);
-  });
-
-  it('maps rows to camelCase, coerces nulls, and forwards options', async () => {
-    const rpc = vi.fn(async () => ({
-      data: [{
-        charter_id: 'MIN-J', signed: 4, effective: 3, in_force: 1, rescinded: 1,
-        median_sign_to_effective_days: '4.0',
-      }, {
-        charter_id: 'MIN-X', signed: 1, effective: 0, in_force: 0, rescinded: 0,
-        median_sign_to_effective_days: null,
-      }],
-      error: null,
-    }));
-    publicClientMock.mockReturnValue({ rpc });
-    const out = await directiveStats({ charterId: 'MIN-J', days: 365 });
-    expect(rpc).toHaveBeenCalledWith('civicos_directive_stats', { p_charter_id: 'MIN-J', p_days: 365 });
-    expect(out[0]).toEqual({
-      charterId: 'MIN-J', signed: 4, effective: 3, inForce: 1, rescinded: 1, medianSignToEffectiveDays: 4,
-    });
-    expect(out[1]!.medianSignToEffectiveDays).toBeNull();
-  });
-
-  it('returns [] on RPC error', async () => {
-    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
-    expect(await directiveStats()).toEqual([]);
-  });
-});
-
-describe('directiveTrend', () => {
-  it('returns [] when the substrate is unavailable', async () => {
-    publicClientMock.mockReturnValue(null);
     expect(await directiveTrend()).toEqual([]);
   });
 
-  it('maps weekly buckets and forwards the window', async () => {
-    const rpc = vi.fn(async () => ({
-      data: [
-        { week_start: '2026-05-04', signed: 3, effective: 2, median_sign_to_effective_days: '3.0' },
-        { week_start: '2026-05-11', signed: 1, effective: 0, median_sign_to_effective_days: null },
-      ],
-      error: null,
-    }));
+  it('read the platform figures with the window forwarded, never the substrate RPCs', async () => {
+    const rpc = vi.fn();
     publicClientMock.mockReturnValue({ rpc });
-    const out = await directiveTrend({ charterId: 'MIN-J', weeks: 8 });
-    expect(rpc).toHaveBeenCalledWith('civicos_directive_trend', { p_charter_id: 'MIN-J', p_weeks: 8 });
-    expect(out[0]).toEqual({ weekStart: '2026-05-04', signed: 3, effective: 2, medianSignToEffectiveDays: 3 });
-    expect(out[1]!.medianSignToEffectiveDays).toBeNull();
+    const urls = stubPlatform(body);
+    expect(await directiveStats({ charterId: 'MIN-J', days: 365 })).toEqual(body.directive_stats);
+    expect(await directiveTrend({ charterId: 'MIN-J', weeks: 8 })).toEqual(body.directive_trend);
+    expect(rpc).not.toHaveBeenCalled();
+    expect(urls[0]).toBe('/api/public/accountability?only=directives&directive_days=365&weeks=12&charter=MIN-J');
+    expect(urls[1]).toBe('/api/public/accountability?only=directives&directive_days=365&weeks=8&charter=MIN-J');
   });
 
-  it('returns [] on RPC error', async () => {
-    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
+  it('say where the figures come from', async () => {
+    stubPlatform(body);
+    expect((await directiveFigures()).source).toMatchObject({ kind: 'reported' });
+  });
+
+  it('return [] when the platform refuses', async () => {
+    stubPlatform({ error: 'boom' }, 500);
+    expect(await directiveStats()).toEqual([]);
     expect(await directiveTrend()).toEqual([]);
-  });
-});
-
-describe('consentFootprintStats', () => {
-  it('returns [] when the substrate is unavailable', async () => {
-    publicClientMock.mockReturnValue(null);
-    expect(await consentFootprintStats()).toEqual([]);
-  });
-
-  it('maps rows to camelCase and forwards a charter filter', async () => {
-    const rpc = vi.fn(async () => ({
-      data: [
-        { charter_id: 'MIN-H', scope: 'health.records', active: 2, expiring_30d: 1, revoked: 1 },
-        { charter_id: 'MIN-T', scope: 'tax.filings', active: 1, expiring_30d: 0, revoked: 0 },
-      ],
-      error: null,
-    }));
-    publicClientMock.mockReturnValue({ rpc });
-    const out = await consentFootprintStats({ charterId: 'MIN-H' });
-    expect(rpc).toHaveBeenCalledWith('civicos_consent_footprint_stats', { p_charter_id: 'MIN-H' });
-    expect(out[0]).toEqual({ charterId: 'MIN-H', scope: 'health.records', active: 2, expiring30d: 1, revoked: 1 });
-  });
-
-  it('passes null charter when omitted', async () => {
-    const rpc = vi.fn(async () => ({ data: [], error: null }));
-    publicClientMock.mockReturnValue({ rpc });
-    await consentFootprintStats();
-    expect(rpc).toHaveBeenCalledWith('civicos_consent_footprint_stats', { p_charter_id: null });
-  });
-
-  it('returns [] on RPC error', async () => {
-    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
-    expect(await consentFootprintStats()).toEqual([]);
-  });
-});
-
-describe('appealsTrend', () => {
-  it('returns [] when the substrate is unavailable', async () => {
-    publicClientMock.mockReturnValue(null);
-    expect(await appealsTrend()).toEqual([]);
-  });
-
-  it('maps weekly buckets and forwards the window', async () => {
-    const rpc = vi.fn(async () => ({
-      data: [
-        { week_start: '2026-05-04', decided: 3, median_decision_days: '4.0', p90_decision_days: '8.8' },
-        { week_start: '2026-05-11', decided: 1, median_decision_days: '2.0', p90_decision_days: '2.0' },
-      ],
-      error: null,
-    }));
-    publicClientMock.mockReturnValue({ rpc });
-    const out = await appealsTrend({ weeks: 12 });
-    expect(rpc).toHaveBeenCalledWith('civicos_appeals_trend', { p_charter_id: null, p_weeks: 12 });
-    expect(out).toHaveLength(2);
-    expect(out[0]).toEqual({ weekStart: '2026-05-04', decided: 3, medianDecisionDays: 4, p90DecisionDays: 8.8 });
-  });
-
-  it('forwards a charter filter', async () => {
-    const rpc = vi.fn(async () => ({ data: [], error: null }));
-    publicClientMock.mockReturnValue({ rpc });
-    await appealsTrend({ charterId: 'MIN-H', weeks: 8 });
-    expect(rpc).toHaveBeenCalledWith('civicos_appeals_trend', { p_charter_id: 'MIN-H', p_weeks: 8 });
-  });
-
-  it('returns [] on RPC error', async () => {
-    publicClientMock.mockReturnValue({ rpc: async () => ({ data: null, error: { message: 'boom' } }) });
-    expect(await appealsTrend()).toEqual([]);
-  });
-});
-
-describe('appealsStats', () => {
-  it('returns [] when the substrate is unavailable', async () => {
-    publicClientMock.mockReturnValue(null);
-    expect(await appealsStats()).toEqual([]);
-  });
-
-  it('maps aggregate rows to camelCase, coercing numeric strings and nulls', async () => {
-    const rpc = vi.fn(async () => ({
-      data: [{
-        charter_id: 'MIN-H', filed: 4, admitted: 3, decided: 3, published: 1, pending: 1, withdrawn: 1,
-        median_decision_days: '4.0', p90_decision_days: '8.8', oldest_pending_days: '30.0',
-      }, {
-        charter_id: 'MIN-X', filed: 1, admitted: 0, decided: 0, published: 0, pending: 1, withdrawn: 0,
-        median_decision_days: null, p90_decision_days: null, oldest_pending_days: '5.0',
-      }],
-      error: null,
-    }));
-    publicClientMock.mockReturnValue({ rpc });
-    const out = await appealsStats({ days: 90 });
-    expect(rpc).toHaveBeenCalledWith('civicos_appeals_stats', { p_charter_id: null, p_days: 90 });
-    expect(out[0]).toEqual({
-      charterId: 'MIN-H', filed: 4, admitted: 3, decided: 3, published: 1, pending: 1, withdrawn: 1,
-      medianDecisionDays: 4, p90DecisionDays: 8.8, oldestPendingDays: 30,
-    });
-    expect(out[1]!.medianDecisionDays).toBeNull();
-    expect(out[1]!.oldestPendingDays).toBe(5);
-  });
-
-  it('forwards a charter filter', async () => {
-    const rpc = vi.fn(async () => ({ data: [], error: null }));
-    publicClientMock.mockReturnValue({ rpc });
-    await appealsStats({ charterId: 'MIN-H', days: 30 });
-    expect(rpc).toHaveBeenCalledWith('civicos_appeals_stats', { p_charter_id: 'MIN-H', p_days: 30 });
-  });
-
-  it('returns [] on RPC error', async () => {
-    publicClientMock.mockReturnValue({
-      rpc: async () => ({ data: null, error: { message: 'boom' } }),
-    });
-    expect(await appealsStats()).toEqual([]);
-  });
-});
-
-describe('serviceSlaStats', () => {
-  it('returns [] when the substrate is unavailable', async () => {
-    publicClientMock.mockReturnValue(null);
-    expect(await serviceSlaStats()).toEqual([]);
-  });
-
-  it('maps aggregate rows to camelCase, coercing numeric strings and nulls', async () => {
-    const rpc = vi.fn(async () => ({
-      data: [{
-        charter_id: 'MIN-H', submitted: 4, acknowledged: 2, resolved: 3, open: 1, cancelled: 1,
-        median_ack_hours: '1.0', median_resolve_hours: '4.0', p90_resolve_hours: '8.8',
-        oldest_open_hours: '50.0', rated: 2, avg_satisfaction: '4.0',
-      }, {
-        charter_id: 'MIN-X', submitted: 1, acknowledged: 0, resolved: 0, open: 1, cancelled: 0,
-        median_ack_hours: null, median_resolve_hours: null, p90_resolve_hours: null,
-        oldest_open_hours: '12.0', rated: 0, avg_satisfaction: null,
-      }],
-      error: null,
-    }));
-    publicClientMock.mockReturnValue({ rpc });
-    const out = await serviceSlaStats({ days: 90 });
-    expect(rpc).toHaveBeenCalledWith('civicos_service_sla_stats', { p_charter_id: null, p_days: 90 });
-    expect(out[0]).toEqual({
-      charterId: 'MIN-H', submitted: 4, acknowledged: 2, resolved: 3, open: 1, cancelled: 1,
-      medianAckHours: 1, medianResolveHours: 4, p90ResolveHours: 8.8, oldestOpenHours: 50,
-      rated: 2, avgSatisfaction: 4,
-    });
-    // nulls preserved (not coerced to 0)
-    expect(out[1]!.medianAckHours).toBeNull();
-    expect(out[1]!.medianResolveHours).toBeNull();
-    expect(out[1]!.oldestOpenHours).toBe(12);
-    expect(out[1]!.avgSatisfaction).toBeNull();
-    expect(out[1]!.rated).toBe(0);
-  });
-
-  it('forwards a charter filter', async () => {
-    const rpc = vi.fn(async () => ({ data: [], error: null }));
-    publicClientMock.mockReturnValue({ rpc });
-    await serviceSlaStats({ charterId: 'MIN-H', days: 30 });
-    expect(rpc).toHaveBeenCalledWith('civicos_service_sla_stats', { p_charter_id: 'MIN-H', p_days: 30 });
-  });
-
-  it('returns [] on RPC error', async () => {
-    publicClientMock.mockReturnValue({
-      rpc: async () => ({ data: null, error: { message: 'boom' } }),
-    });
-    expect(await serviceSlaStats()).toEqual([]);
   });
 });

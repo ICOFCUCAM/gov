@@ -52,6 +52,16 @@ describe('access gate (CIVICOS_AUTH=enforce)', () => {
     expect((await call('/api/org/ministries/min-x/facilities/tiles.pmtiles')).status).toBe(401);
   });
 
+  it('opens the open-data charter directory and accountability aggregates the public pages read (review D8)', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    expect((await call('/api/public/charters')).status).toBe(200);
+    expect((await call('/api/public/accountability')).status).toBe(200);
+    // reads only, and nothing beside them
+    expect((await middleware(new NextRequest('http://localhost/api/public/charters', { method: 'POST' }))).status).toBe(401);
+    expect((await call('/api/directives')).status).toBe(401);
+  });
+
   it('does not take the page cookie (the cover\'s demo session) as a verified official for reads', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
     process.env.CIVICOS_SESSION_SECRET = SECRET;

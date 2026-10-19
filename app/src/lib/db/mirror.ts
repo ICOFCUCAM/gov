@@ -25,8 +25,7 @@ import { touch } from '@/lib/data/repo/track';
 import { logger } from '@/lib/ops/log';
 import type { DirectiveRow } from '@/lib/db/types';
 import { allDirectiveRefs, directive, adoptDirectives } from '@/lib/data/directives';
-import { listMinistries } from '@/lib/data/store/ministries';
-import { STANDING_CHARTERS, ministryCharter } from '@/lib/institution/charters';
+import { institutionRows } from '@/lib/institution/charter-register';
 
 export type MirrorKind = 'directive' | 'institutions';
 export interface MirrorItem {
@@ -183,33 +182,6 @@ async function write(sb: Client, item: MirrorItem): Promise<string | null> {
   return null;
 }
 
-export interface InstitutionMirrorRow {
-  charterId: string; label: string; kind: string; domain: string; archetypeOrBranch: string;
-  activated: boolean; meta: Record<string, unknown>;
-}
-
-/**
- * The substrate's charter rows as the platform holds them: the standing
- * branches and agencies (always active), then one row per charter of the
- * ministry registry (ministries of one archetype share a charter, as in the
- * orchestration registry; it is active while any of them is).
- */
-export function institutionRows(): InstitutionMirrorRow[] {
-  const rows = new Map<string, InstitutionMirrorRow>();
-  for (const a of STANDING_CHARTERS) {
-    rows.set(a.id, { charterId: a.id, label: a.label, kind: a.kind, domain: a.domain, archetypeOrBranch: a.archetypeOrBranch, activated: true, meta: {} });
-  }
-  for (const m of listMinistries()) {
-    if (m.status === 'merged') continue;
-    const a = ministryCharter(m);
-    const prev = rows.get(a.id);
-    const active = m.status === 'active';
-    const instances = [...((prev?.meta.instances as string[] | undefined) ?? []), m.id];
-    rows.set(a.id, {
-      charterId: a.id, label: prev && !active ? prev.label : a.label, kind: a.kind, domain: a.domain, archetypeOrBranch: a.archetypeOrBranch,
-      activated: (prev?.activated ?? false) || active,
-      meta: { instanceId: active || !prev ? m.id : prev.meta.instanceId, instances, source: 'platform' },
-    });
-  }
-  return [...rows.values()];
-}
+// The charter rows the mirror copies are the platform's register
+// (lib/institution/charter-register.ts); re-exported for existing callers.
+export { institutionRows, type InstitutionMirrorRow } from '@/lib/institution/charter-register';

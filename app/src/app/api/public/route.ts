@@ -17,12 +17,13 @@ export async function GET(req: Request) {
         {
           path: '/api/public/accountability',
           description: 'Per-charter service SLA, appeals pipeline, and decision-time trend (aggregate).',
-          params: { days: '1–365 (default 90)', charter: 'optional charter_id filter' },
+          params: { days: '1–365 (default 90)', charter: 'optional charter_id filter', weeks: 'optional trend length, 1–104 (default days/7)', directive_days: 'governance-output window, 1–1825 (default 365)', only: "'directives' for the governance output alone" },
           url: `${base}/api/public/accountability`,
         },
         {
           path: '/api/public/charters',
-          description: 'Directory of activated institutions (charter_id, label, kind, domain).',
+          description: 'Directory of institutions from the platform register (charter_id, label, kind, domain, activation); activated ones by default.',
+          params: { activated: "'any' for every charter, 'false' for idle ones", kind: 'optional kind filter', charter: 'optional charter_id filter', q: 'optional text in id, label or domain' },
           url: `${base}/api/public/charters`,
         },
         {

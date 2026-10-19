@@ -22,7 +22,7 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { publicClient, substrateAvailable, __resetClients } from './client';
 import { appendAuditRow, auditTrailRows, verifyChainRow } from './repos/audit';
 import { publishEventRow, recentEventsRows } from './repos/events';
-import { registerInstitutionRow, activateInstitutionRow, listInstitutionsRows } from './repos/institutions';
+import { registerInstitutionRow, activateInstitutionRow } from './repos/institutions';
 import {
   syncWorkflowDefinitionRow, openWorkItemRow, transitionWorkItemRow,
   workItemRow, workItemStepsRows,
@@ -146,11 +146,12 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
       p_charter_id: charter, p_label: 'x', p_kind: 'ministry', p_domain: 'x', p_archetype_or_branch: 'HEALTH', p_activated: true, p_meta: {},
     });
     expect(mirrorError).not.toBeNull();
-    // The old calls now read the mirrored row (null: never registered through the platform).
+    // The old calls now read the platform's register (null: never registered through the platform).
     expect(await registerInstitutionRow({ charterId: charter, label: 'x', kind: 'ministry', domain: 'x', archetypeOrBranch: 'HEALTH' })).toBeNull();
     expect(await activateInstitutionRow(charter)).toBeNull();
-    const rows = await listInstitutionsRows({});
-    expect(rows.some(r => r.charter_id === charter)).toBe(false);
+    // Nor did the refused writes reach the mirror.
+    const { data: mirrored } = await sb.from('civicos_institutions').select('charter_id').eq('charter_id', charter);
+    expect(mirrored ?? []).toHaveLength(0);
   });
 
   it('WORKFLOW — open and transition a work item end-to-end; invalid action rejected', async () => {
@@ -365,14 +366,16 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     expect(rows[1]!.posture).toBe('steady');
   });
 
-  it('CATALOGUE — institutions listings honor filters', async () => {
+  it('CATALOGUE — the mirror holds the standing institutions, filterable by kind', async () => {
     // The seeded standing institutions (migration civicos_seed_institutions), mirrored from the platform.
-    const branches = await listInstitutionsRows({ kind: 'branch' });
+    // Screens read the platform's register (/api/public/charters); this checks the mirror the substrate's own SQL reads.
+    const { data } = await publicClient()!.from('civicos_institutions').select('charter_id,kind').eq('kind', 'branch');
+    const branches = (data ?? []) as { charter_id: string; kind: string }[];
     expect(branches.some(r => r.charter_id === 'presidency')).toBe(true);
     expect(branches.every(r => r.kind === 'branch')).toBe(true);
   });
 
-  it.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)('SEARCH — substrate search returns hits matching a directive the platform mirrored', async () => {
+  it.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)('SEARCH — search never reads directives from the mirror (the platform answers them)', async () => {
     const { substrateSearch } = await import('./search');
     const { serverClient } = await import('./client');
     const stamp = Date.now();
@@ -385,7 +388,8 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     } });
     expect(error).toBeNull();
     const hits = await substrateSearch(needle);
-    expect(hits.some(h => h.ref === ref)).toBe(true);
+    // Only in the mirror, not in the platform's register: search does not find it (review D8).
+    expect(hits.some(h => h.ref === ref)).toBe(false);
   });
 
   it('CONTRACT — direct INSERT to audit_entries is denied (RLS)', async () => {

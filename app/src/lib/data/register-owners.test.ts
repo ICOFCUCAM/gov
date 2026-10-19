@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { REGISTER_OWNERS, CIVIC_API_FOLLOWER } from './register-owners';
+import { REGISTER_OWNERS, CIVIC_API_FOLLOWER, SUBSTRATE_INSPECTION } from './register-owners';
 
 const SRC = join(__dirname, '..', '..');
 const ROOT = join(SRC, '..', '..');
@@ -111,6 +111,49 @@ describe('the duplicates are retired behind their owners (finding D8)', () => {
       }
     }
     expect(offences).toEqual([]);
+  });
+
+  it('no app code reads a mirrored substrate table for a platform register: the screens ask the platform', () => {
+    const src = sources();
+    const inspection = new Map(SUBSTRATE_INSPECTION.map(i => [i.file, i.why]));
+    const offences: string[] = [];
+    let mirrors = 0;
+    for (const r of REGISTER_OWNERS) for (const c of r.copies) {
+      if (r.owner.where !== 'platform' || c.where !== 'substrate' || c.role !== 'mirror' || !(c.tables ?? []).length) continue;
+      mirrors++;
+      const allowed = new Set([c.writer, ...(c.fallbackReaders ?? []).map(f => f.file)]);
+      for (const f of src) {
+        if (allowed.has(f.rel)) continue;
+        // An RPC that reads the mirror (kept for the substrate's own SQL).
+        for (const rpc of c.reads ?? []) if (new RegExp(`['"\`]${rpc}['"\`]`).test(f.text)) offences.push(`${f.rel} calls ${rpc}, which reads the ${r.id} mirror (ask ${r.api})`);
+        for (const t of c.tables ?? []) {
+          // Selecting the table, or naming it anywhere (a view list fed to .from(), a search fan-out).
+          if (new RegExp(`from\\(\\s*['"\`]${t}['"\`]`).test(f.text)) offences.push(`${f.rel} reads ${t} (the ${r.id} mirror; ask ${r.api})`);
+          else if (new RegExp(`['"\`]${t}['"\`]`).test(f.text) && !inspection.has(f.rel)) offences.push(`${f.rel} names ${t} (the ${r.id} mirror; ask ${r.api})`);
+        }
+      }
+      // No screen falls back to the mirror (review D8): the list stays empty.
+      expect(c.fallbackReaders ?? [], `${r.id} fallback readers`).toEqual([]);
+    }
+    expect(mirrors).toBeGreaterThanOrEqual(2);
+    expect(offences).toEqual([]);
+    // The substrate's own inspection (counts, digest, dump) lists every table; it never selects one by name.
+    for (const [file, why] of inspection) {
+      const f = src.find(x => x.rel === file);
+      expect(f, `${file} (${why})`).toBeDefined();
+      expect(f!.text).not.toMatch(/from\(\s*['"`]civicos_(institutions|directives)['"`]/);
+    }
+  });
+
+  it('the substrate SQL that reads a mirror is kept, and says it reads a mirror', () => {
+    const dir = join(APP, 'supabase', 'migrations');
+    const sql = readdirSync(dir).filter(f => f.endsWith('.sql')).sort().map(f => readFileSync(join(dir, f), 'utf8')).join('\n');
+    for (const r of REGISTER_OWNERS) for (const c of r.copies) {
+      for (const rpc of c.reads ?? []) {
+        expect(sql, rpc).toMatch(new RegExp(`create or replace function public\\.${rpc}\\(`));
+        expect(sql, rpc).toMatch(new RegExp(`comment on function public\\.${rpc}\\([^)]*\\) is\\s+'(?:[^']|'')*mirror`));
+      }
+    }
   });
 
   it('the mirror writers exist and the substrate grants the mirror RPCs to the service role only', () => {
