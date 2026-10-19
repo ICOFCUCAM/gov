@@ -87,8 +87,10 @@ const cost = (): { N: number; r: number; p: number; maxmem: number } => {
 };
 
 const norm = (e: string) => e.trim().toLowerCase();
-// Compared against when the address is unknown (random salt and digest: nothing anyone can type matches it).
-const DUMMY_HASH = `scrypt$${2 ** 17}$${randomBytes(16).toString('base64')}$${randomBytes(32).toString('base64')}`;
+// Compared against when the address is unknown (random salt and digest: nothing anyone can type matches it),
+// at the cost in force, so an unknown address takes as long as a real one.
+const DUMMY_SALT = randomBytes(16).toString('base64'), DUMMY_DIGEST = randomBytes(32).toString('base64');
+const dummyHash = () => `scrypt$${cost().N}$${DUMMY_SALT}$${DUMMY_DIGEST}`;
 const pub = ({ passwordHash: _h, twoStep, twoStepPending: _p, reset, passkeys, ...a }: OfficialAccount): PublicAccount =>
   ({ ...a, ...(twoStep ? { twoStepSince: twoStep.since } : {}), twoStepRequired: twoStepRequiredFor(a), ...(reset && Date.parse(reset.expiresAt) > Date.now() ? { resetPendingUntil: reset.expiresAt } : {}),
     passkeys: (passkeys ?? []).map(passkeySummary), secondStepOn: !!twoStep || !!passkeys?.length });
@@ -241,7 +243,7 @@ export async function checkPassword(emailRaw: string, password: string, now = Da
   if (recent.length >= MAX_FAILURES) return { error: 'Too many failed attempts; try again in 15 minutes' };
   const a = d.accounts.find(x => x.email === email);
   // An unknown address still costs one hash, so the answer's timing does not tell which addresses exist.
-  const good = await matches(password, a?.passwordHash ?? DUMMY_HASH);
+  const good = await matches(password, a?.passwordHash ?? dummyHash());
   if (!a || a.disabled || !good) {
     d.failures[email] = [...(d.failures[email] ?? []).filter(t => now - t < WINDOW_MS), now];
     // Filed against the account it targeted (never the address), so its owner sees it in their sign-in activity.
