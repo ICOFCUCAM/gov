@@ -143,7 +143,7 @@ so every definer RPC gated by it accepted any caller
 (`20261024090000_civicos_service_context_definer_fix.sql`). Tests:
 `supabase/tests/go_live_security_test.sql`, `api/audit/witnesses/*.test.ts`,
 `api/cron/witness-{divergence,sweep}/route.test.ts`. Not done here: a gateway
-rate limit on `/api/audit/witnesses` (abuse lane); register 1.40.
+rate limit on `/api/audit/witnesses` (abuse lane); register 1.41.
 
 **Evidence.**
 

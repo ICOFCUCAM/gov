@@ -138,9 +138,9 @@ const ADMIN_ONLY: RegExp[] = [
   // Provisioning a new municipality (/admin/onboarding).
   /^\/api\/municipalities\/?$/,
 ];
-/** Signing in and out, one's own second step and one's own password stay open to every role;
- *  the health probe is public. */
-const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/];
+/** Signing in and out, one's own second step (authenticator app or passkeys, and the passkey
+ *  sign-in challenge) and one's own password stay open to every role; the health probe is public. */
+const ANY_ROLE: RegExp[] = [/^\/api\/auth\/official\/?$/, /^\/api\/auth\/two-step\/?$/, /^\/api\/auth\/passkeys(\/options)?\/?$/, /^\/api\/auth\/password\/?$/, /^\/api\/health\/?$/];
 /** Inside one ministry's workspace: officials of that ministry, or of the whole government. */
 const MINISTRY = /^\/api\/org\/ministries\/([^/]+)\//;
 /**

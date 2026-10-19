@@ -47,9 +47,13 @@ const ENTITY_URI = /^\/id\/[a-z]+\/[^/]+(\/about)?\/?$/;
 // (CVE-2025-29927). The patched version never sends it, so a request that
 // arrives with it is an attempt to skip this gate. The ingress strips it too.
 const SUBREQUEST_HEADER = 'x-middleware-subrequest';
-// Signing in, creating the installation's first account (the route refuses once one exists)
-// and setting a new password with an administrator's reset code.
-const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/, /^\/api\/auth\/password$/];
+// Signing in, creating the installation's first account (the route refuses once one exists),
+// setting a new password with an administrator's reset code, and the challenge for signing
+// in with a passkey (lib/auth/passkeys.ts; used once, five minutes).
+const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/, /^\/api\/auth\/password$/, /^\/api\/auth\/passkeys\/options$/];
+// Signing in through the government's identity provider (lib/auth/oidc.ts): the start sends the
+// browser to the provider, the callback does nothing without the state this browser started with.
+const IDP_SIGN_IN = /^\/api\/auth\/oidc\/(start|callback)$/;
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**
@@ -196,6 +200,11 @@ function handle(req: NextRequest, requestId: string, nonce: string): NextRespons
 const ROUTE_LIMITED = [/^\/api\/boundaries$/, /^\/api\/map-pack$/, /^\/api\/facilities\/check$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/import$/];
 function rateGate(req: NextRequest): Promise<NextResponse | null> | null {
   const { pathname } = req.nextUrl;
+  // Identity-provider sign-ins are reads that cost work (a server-side sign-in in progress, a token exchange): limited per address.
+  if (IDP_SIGN_IN.test(pathname)) {
+    const r = take(`public|idp|${clientAddress(req.headers)}`, POLICIES.public);
+    return Promise.resolve(r.ok ? null : tooMany('public', r.retryAfterS));
+  }
   if (!pathname.startsWith('/api/') || !MUTATING.has(req.method)) return null;
   if (ROUTE_LIMITED.some(re => re.test(pathname)) || verifiesOwnCredential(pathname)) return null;
   const scope: Scope = PUBLIC_WRITE.some(re => re.test(pathname)) ? 'public' : 'write';
@@ -238,6 +247,7 @@ function gate(req: NextRequest, res: NextResponse): NextResponse | Promise<NextR
   if (SELF_AUTHENTICATED.some(re => re.test(pathname))) return res;
   // The cover reads the nation's public identity before anyone signs in; public maps read the boundaries in force.
   if (req.method === 'GET' && PUBLIC_READ.some(re => re.test(pathname))) return res;
+  if (req.method === 'GET' && IDP_SIGN_IN.test(pathname)) return res;
   if ((req.method === 'GET' || req.method === 'HEAD') && ENTITY_URI.test(pathname)) return res;
   if (req.method === 'POST' && PUBLIC_WRITE.some(re => re.test(pathname))) return res;
 

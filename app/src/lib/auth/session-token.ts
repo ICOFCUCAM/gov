@@ -23,6 +23,10 @@ export interface OfficialClaims {
   twoStep?: boolean;
   /** The installation's policy requires the second step for this official. */
   twoStepRequired?: boolean;
+  /** How a platform account signed in: its password (absent on older sessions), a passkey, or the government's identity provider (lib/auth/oidc.ts). */
+  via?: 'password' | 'passkey' | 'oidc';
+  /** Identity-provider sessions: the id under which the ID token is kept for signing out at the provider. */
+  sid?: string;
   iat: number;
   exp: number;
 }

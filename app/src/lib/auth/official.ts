@@ -12,6 +12,7 @@ import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, verifyToken, type OfficialC
 import { sessionSecret, sessionSecretProblem, accountById } from './officials';
 import { secondStepMissing, type Scope } from './roles';
 import { logger } from '@/lib/ops/log';
+import { providerMfaAccepted } from './sign-on-store';
 
 /**
  * The signed-in official, as their account stands now: a platform account
@@ -33,8 +34,11 @@ export async function currentOfficial(): Promise<OfficialClaims | null> {
   if (!a || a.disabled) return null;
   // A session issued before the password last changed no longer counts.
   if (a.passwordChangedAt && c.iat < Math.floor(Date.parse(a.passwordChangedAt) / 1000)) return null;
+  // The second step still counts while what proved it is still in place: the account's authenticator app or a
+  // passkey, or, for an identity-provider sign-in, the provider's multi-factor sign-in while the policy accepts it.
+  const secondStep = c.via === 'oidc' ? providerMfaAccepted() : a.secondStepOn;
   return { ...c, name: a.name, office: a.office, role: a.role, institution: a.institution,
-    twoStep: !!c.twoStep && !!a.twoStepSince, twoStepRequired: a.twoStepRequired };
+    twoStep: !!c.twoStep && secondStep, twoStepRequired: a.twoStepRequired };
 }
 
 /** The name an action is recorded under: the verified official's, with their office. */
