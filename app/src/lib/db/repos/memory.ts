@@ -80,6 +80,21 @@ export async function listDirectivesRows(opts: { status?: string; issuer?: strin
   return (await platformDirectives<{ directives: DirectiveRow[] }>(`?${q}`))?.directives ?? [];
 }
 
+/** The public directives one charter issued (signed, effective, rescinded or
+ * published), from the open-data feed /api/public/directives, which signed-out
+ * visitors may read; drafts never appear. Same row shape as listDirectivesRows. */
+export async function listPublicDirectiveRows(opts: { issuer?: string; limit?: number } = {}): Promise<DirectiveRow[]> {
+  if (typeof window === 'undefined') return [];
+  const q = new URLSearchParams(opts.issuer ? { issuer: opts.issuer } : {});
+  const r = await fetch(`/api/public/directives?${q}`, { cache: 'no-store' }).catch(() => null);
+  if (!r || !r.ok) { if (r) logger.error('directives.public_request_failed', { status: r.status }); return []; }
+  const body = await r.json() as { directives: Array<Pick<DirectiveRow, 'ref' | 'kind' | 'title' | 'issued_by_charter_id' | 'status' | 'citation' | 'targets' | 'signed_at' | 'effective_at' | 'rescinded_at'>> };
+  return body.directives.slice(0, opts.limit ?? body.directives.length).map(d => ({
+    ...d, id: d.ref, issued_by_name: null, payload: {}, signed_by_id: null,
+    created_at: d.signed_at ?? '', updated_at: d.rescinded_at ?? d.effective_at ?? d.signed_at ?? '',
+  }));
+}
+
 // ── Dispatches ────────────────────────────────────────────────────
 
 export interface DispatchInput {

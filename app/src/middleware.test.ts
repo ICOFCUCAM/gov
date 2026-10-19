@@ -57,6 +57,7 @@ describe('access gate (CIVICOS_AUTH=enforce)', () => {
     process.env.CIVICOS_SESSION_SECRET = SECRET;
     expect((await call('/api/public/charters')).status).toBe(200);
     expect((await call('/api/public/accountability')).status).toBe(200);
+    expect((await call('/api/public/directives')).status).toBe(200);
     // reads only, and nothing beside them
     expect((await middleware(new NextRequest('http://localhost/api/public/charters', { method: 'POST' }))).status).toBe(401);
     expect((await call('/api/directives')).status).toBe(401);

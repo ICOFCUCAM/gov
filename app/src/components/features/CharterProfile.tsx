@@ -10,7 +10,7 @@ import {
   type ServiceSlaStat, type SlaTrendPoint, type AppealsStat, type AppealsTrendPoint,
   type ConsentFootprintStat, type DirectiveStat, type DirectiveTrendPoint,
 } from '@/lib/db/repos/institutions';
-import { listDirectivesRows } from '@/lib/db/repos/memory';
+import { listPublicDirectiveRows } from '@/lib/db/repos/memory';
 import { downloadJson } from '@/lib/csv-download';
 import type { InstitutionRow, DirectiveRow } from '@/lib/db/types';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
@@ -57,7 +57,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
           appealsTrend({ charterId, weeks: 12 }),
           consentFootprintStats({ charterId }),
           directiveFigures({ charterId, days: 365, weeks: 12 }),
-          listDirectivesRows({ issuer: charterId, limit: 25 }),
+          listPublicDirectiveRows({ issuer: charterId, limit: 25 }),
         ]);
         setInst(i);
         setSla(s[0] ?? null);

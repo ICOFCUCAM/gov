@@ -24,8 +24,9 @@ import { POLICIES, take, tooMany, clientAddress, type Scope } from '@/lib/ops/ra
 // The open-data charter directory and accountability aggregates answer the
 // public charter profile and observatory, which read the platform for the
 // institution and directive registers instead of the substrate's mirrors
-// (architecture review D8); aggregate and directory data only.
-const PUBLIC_READ = [/^\/api\/public\/charters$/, /^\/api\/public\/accountability$/, /^\/api\/auth\/official$/, /^\/api\/sovereign$/, /^\/api\/boundaries\/active$/, /^\/api\/exchange\/key$/, /^\/api\/map-pack\/districts$/,/^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/, /^\/api\/twin\/tiles\/facilities\.pmtiles$/];
+// (architecture review D8); aggregate and directory data only. The public
+// directives feed lists only signed, effective, rescinded or published ones.
+const PUBLIC_READ = [/^\/api\/public\/charters$/, /^\/api\/public\/accountability$/, /^\/api\/public\/directives$/, /^\/api\/auth\/official$/, /^\/api\/sovereign$/, /^\/api\/boundaries\/active$/, /^\/api\/exchange\/key$/, /^\/api\/map-pack\/districts$/,/^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/, /^\/api\/twin\/tiles\/facilities\.pmtiles$/];
 // Public writes (email updates) and self-authenticating machine routes are
 // defined with the permission rules in lib/auth/roles.ts.
 const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/fonts\//, /^\/api\/health/];
