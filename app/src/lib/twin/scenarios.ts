@@ -8,7 +8,7 @@
 
 import { createHash } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store';
-import { stateAsOf, getEntity, regionEntities, isoDate } from './register';
+import { stateAsOf, getEntity, regionEntities, isoDate, onObservations } from './register';
 import { getMetric } from './metrics';
 import { resolveNation, releaseFor } from '@/lib/data/updates';
 import { sourceCommit } from '@/lib/data/supply-chain';
@@ -46,6 +46,8 @@ export interface ScenarioVersion {
   /** Why there is no national figure, when there is none. */
   nationalNote?: string;
   evidenceHash: string;
+  /** The date the projection is for; when a value true for it is later observed, the error is logged (calibration). */
+  horizon?: string;
   /** The model that computed the results (MODELS); absent on versions made before the registry (their hash is v1). */
   model?: ScenarioModelRef;
   /** The platform build that ran the model: its source commit (from the build environment or the Update Center's installed release). */
@@ -57,9 +59,22 @@ export interface ScenarioBuild { commit?: string; release?: string; source: 'env
 
 export interface Scenario { id: string; name: string; createdBy: string; createdAt: string; versions: ScenarioVersion[] }
 
-interface Db { scenarios: Scenario[]; seq: number }
+/**
+ * A projection checked against what was later observed: recorded once per
+ * scenario version, entity and observing import, when a value true for the
+ * version's horizon arrives. error = observed − projected.
+ */
+export interface CalibrationEntry {
+  scenarioId: string; version: number; entityId: string; metric: string; horizon: string;
+  projected: number; observed: number; error: number; errorPct: number | null;
+  /** Whether the observed value fell inside the version's modelled interval (when it had one). */
+  withinInterval?: boolean;
+  observedValidFrom: string; observedRunId: string; recordedAt: string;
+}
+
+interface Db { scenarios: Scenario[]; seq: number; calibration: CalibrationEntry[] }
 const g = globalThis as unknown as { __civicosTwinScenarios?: Db };
-const db = (): Db => (g.__civicosTwinScenarios ??= { scenarios: [], seq: 1 });
+const db = (): Db => { const d = (g.__civicosTwinScenarios ??= { scenarios: [], seq: 1, calibration: [] }); d.calibration ??= []; return d; };
 export function resetScenarios(): void { g.__civicosTwinScenarios = undefined; }
 
 const MAX_ASSUMPTIONS = 50;
@@ -89,7 +104,7 @@ export function currentBuild(): ScenarioBuild {
   return { source: 'unknown' };
 }
 
-type Hashed = Pick<ScenarioVersion, 'version' | 'metric' | 'asOf' | 'assumptions' | 'inputs'> & Partial<Pick<ScenarioVersion, 'model' | 'build' | 'by' | 'at'>>;
+type Hashed = Pick<ScenarioVersion, 'version' | 'metric' | 'asOf' | 'assumptions' | 'inputs'> & Partial<Pick<ScenarioVersion, 'model' | 'build' | 'by' | 'at' | 'horizon'>>;
 
 /**
  * The evidence hash of a version (SHA-256). v2 (versions with a model) covers
@@ -104,7 +119,7 @@ export function evidenceHash(id: string, v: Hashed): string {
   const inputs = [...v.inputs].sort((a, b) => a.entityId.localeCompare(b.entityId))
     .map(i => [i.entityId, i.value, i.unit, i.validFrom, i.sourceId, i.runId]);
   const body = v.model
-    ? ['civicos-scenario-v2', id, v.version, v.metric, v.asOf, v.model.id, v.model.version, v.build?.commit ?? null, v.by ?? null, v.at ?? null, assumptions, inputs]
+    ? ['civicos-scenario-v2', id, v.version, v.metric, v.asOf, v.model.id, v.model.version, v.build?.commit ?? null, v.by ?? null, v.at ?? null, assumptions, inputs, ...(v.horizon ? [v.horizon] : [])]
     : ['civicos-scenario-v1', id, v.version, v.metric, v.asOf, assumptions, inputs];
   return createHash('sha256').update(JSON.stringify(body)).digest('hex');
 }
@@ -117,7 +132,7 @@ export function verifyVersion(id: string, v: ScenarioVersion): boolean {
   return evidenceHash(id, v) === v.evidenceHash;
 }
 
-interface Draft { by?: string; metric?: string; asOf?: string; assumptions?: Assumption[]; note?: string }
+interface Draft { by?: string; metric?: string; asOf?: string; horizon?: string; assumptions?: Assumption[]; note?: string }
 
 function build(id: string, version: number, d: Draft): ScenarioVersion | { error: string } {
   const by = d.by?.trim();
@@ -174,7 +189,13 @@ function build(id: string, version: number, d: Draft): ScenarioVersion | { error
       ...(ranged ? { interval: { low: sum(x => x.interval?.low ?? x.projected), high: sum(x => x.interval?.high ?? x.projected) } } : {}),
     };
   }
-  const v = { version, at: new Date().toISOString(), by, metric, asOf, model: { ...CURRENT_MODEL }, build: currentBuild(), assumptions, ...(d.note?.trim() ? { note: d.note.trim().slice(0, 500) } : {}), inputs, results, national, ...(nationalNote ? { nationalNote } : {}) };
+  let horizon: string | undefined;
+  if (d.horizon?.trim()) {
+    horizon = isoDate(d.horizon);
+    if (!horizon) return { error: 'The projected date is not a date' };
+    if (horizon <= asOf) return { error: 'The projected date must be after the date the scenario starts from' };
+  }
+  const v = { version, at: new Date().toISOString(), by, metric, asOf, ...(horizon ? { horizon } : {}), model: { ...CURRENT_MODEL }, build: currentBuild(), assumptions, ...(d.note?.trim() ? { note: d.note.trim().slice(0, 500) } : {}), inputs, results, national, ...(nationalNote ? { nationalNote } : {}) };
   return { ...v, evidenceHash: evidenceHash(id, v) };
 }
 
@@ -210,3 +231,63 @@ export function reviseScenario(id: string, input: Draft): Scenario | { error: st
   recordAudit(v.by, 'twin.scenario.revise', `Scenario:${id}`, 'ok', `v${v.version} · ${v.metric} as of ${v.asOf} · model ${v.model?.id}@${v.model?.version} · evidence ${v.evidenceHash.slice(0, 16)}`);
   return getScenario(id)!;
 }
+
+// ── Calibration ───────────────────────────────────────────────────────────
+
+/** The period an observation must fall in to count for a horizon: the metric's own period, a month for instant figures. */
+function sameWindow(period: string | undefined, horizon: string, validFrom: string): boolean {
+  if (period === 'year') return validFrom.slice(0, 4) === horizon.slice(0, 4);
+  if (period === 'quarter') return validFrom.slice(0, 4) === horizon.slice(0, 4) && Math.floor((Number(validFrom.slice(5, 7)) - 1) / 3) === Math.floor((Number(horizon.slice(5, 7)) - 1) / 3);
+  return validFrom.slice(0, 7) === horizon.slice(0, 7);
+}
+
+/** The last day of the horizon's window. */
+function windowEnd(period: string | undefined, horizon: string): string {
+  const y = Number(horizon.slice(0, 4)), m = Number(horizon.slice(5, 7));
+  const endMonth = period === 'year' ? 12 : period === 'quarter' ? Math.ceil(m / 3) * 3 : m;
+  return new Date(Date.UTC(y, endMonth, 0)).toISOString().slice(0, 10);
+}
+
+/**
+ * Check every version that projects to a horizon against what is now
+ * observed for it, and log each new comparison (audited). Runs when an import
+ * adds observations and when scenarios are read; idempotent.
+ */
+export function calibrate(now = new Date()): CalibrationEntry[] {
+  const d = db();
+  const added: CalibrationEntry[] = [];
+  for (const s of d.scenarios) for (const v of s.versions) {
+    if (!v.horizon) continue;
+    const period = getMetric(v.metric)?.period;
+    const known = stateAsOf({ asOf: `${windowEnd(period, v.horizon)}T23:59:59Z`, knownAt: now.toISOString(), metric: v.metric });
+    for (const r of v.results) {
+      // The value true in the horizon's window, as known now (withdrawn imports excluded).
+      const o = known.find(x => x.entityId === r.entityId && sameWindow(period, v.horizon!, x.validFrom));
+      if (!o) continue;
+      if (d.calibration.some(c => c.scenarioId === s.id && c.version === v.version && c.entityId === r.entityId && c.observedRunId === o.runId && c.observedValidFrom === o.validFrom)) continue;
+      const error = Math.round((o.value - r.projected) * 100) / 100;
+      const entry: CalibrationEntry = {
+        scenarioId: s.id, version: v.version, entityId: r.entityId, metric: v.metric, horizon: v.horizon,
+        projected: r.projected, observed: o.value, error, errorPct: r.projected ? Math.round((error / r.projected) * 10_000) / 100 : null,
+        ...(r.interval ? { withinInterval: o.value >= r.interval.low && o.value <= r.interval.high } : {}),
+        observedValidFrom: o.validFrom, observedRunId: o.runId, recordedAt: now.toISOString(),
+      };
+      d.calibration.push(entry);
+      added.push(entry);
+    }
+  }
+  const byVersion = new Map<string, CalibrationEntry[]>();
+  for (const e of added) (byVersion.get(`${e.scenarioId} v${e.version}`) ?? byVersion.set(`${e.scenarioId} v${e.version}`, []).get(`${e.scenarioId} v${e.version}`)!).push(e);
+  for (const [k, list] of byVersion) {
+    const mape = list.filter(e => e.errorPct !== null).reduce((sum, e, _i, a) => sum + Math.abs(e.errorPct!) / a.length, 0);
+    recordAudit('Twin register', 'twin.scenario.calibrate', `Scenario:${k.split(' ')[0]}`, 'ok', `${k} · ${list.length} projections checked against observations · mean absolute error ${Math.round(mape * 100) / 100}%`);
+  }
+  return added;
+}
+
+/** The calibration log of a scenario (all versions, or one). */
+export function calibrationLog(scenarioId: string, version?: number): CalibrationEntry[] {
+  return db().calibration.filter(c => c.scenarioId === scenarioId && (version === undefined || c.version === version)).map(c => ({ ...c }));
+}
+
+onObservations('scenario-calibration', () => { calibrate(); });

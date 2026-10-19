@@ -486,6 +486,7 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
     run.status = run.accepted === 0 ? 'failed' : refused > 0 ? 'partial' : 'ok';
     if (run.accepted === 0 && !run.error) run.error = 'No row could be accepted';
     d.observations.push(...fresh);
+    if (fresh.length) notifyObservations(fresh);
   } catch (e) {
     run.status = 'failed';
     run.error = (e as Error).message;
@@ -524,6 +525,15 @@ export function withdrawRun(runId: string, by: string, reason: string, now = new
   run.withdrawn = { at, by: who, reason: why.slice(0, 500) };
   recordAudit(who, 'twin.run.withdraw', `Twin:${run.sourceId}/${run.id}`, 'ok', `${superseded} observations superseded · ${run.withdrawn.reason}`);
   return { run: { ...run }, superseded };
+}
+
+// Listeners told when an import adds observations (e.g. scenario calibration,
+// lib/twin/scenarios.ts). Named, so a module loaded twice registers once; a
+// failing listener never fails the import.
+const listeners = new Map<string, (fresh: Observation[]) => void>();
+export function onObservations(name: string, fn: (fresh: Observation[]) => void): void { listeners.set(name, fn); }
+function notifyObservations(fresh: Observation[]): void {
+  for (const fn of listeners.values()) { try { fn(fresh); } catch { /* the import stands; the listener catches up on its next read */ } }
 }
 
 /** Sources whose schedule says they are due (for /api/cron/twin-ingest). */

@@ -10825,7 +10825,7 @@
         ],
         "operationId": "get_twin_scenarios",
         "summary": "GET /api/twin/scenarios",
-        "description": "Scenarios on the national twin (lib/twin/scenarios.ts): every version with its evidence hash and whether it still verifies. POST creates one (named official; audited).",
+        "description": "Scenarios on the national twin (lib/twin/scenarios.ts): every version with its evidence hash and whether it still verifies, and the calibration log (projections checked against values observed later). POST creates one (named official; audited).",
         "parameters": [],
         "responses": {
           "200": {
@@ -10850,7 +10850,7 @@
         ],
         "operationId": "post_twin_scenarios",
         "summary": "POST /api/twin/scenarios",
-        "description": "Scenarios on the national twin (lib/twin/scenarios.ts): every version with its evidence hash and whether it still verifies. POST creates one (named official; audited).",
+        "description": "Scenarios on the national twin (lib/twin/scenarios.ts): every version with its evidence hash and whether it still verifies, and the calibration log (projections checked against values observed later). POST creates one (named official; audited).",
         "parameters": [],
         "requestBody": {
           "required": false,

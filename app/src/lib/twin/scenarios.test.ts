@@ -1,8 +1,9 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { resetTwin, syncRegister, registerSource, runSource, metricDates } from './register';
-import { resetScenarios, createScenario, reviseScenario, getScenario, verifyVersion, evidenceHash, hashVersion, currentBuild, MODELS, type Scenario, type ScenarioVersion } from './scenarios';
+import { calibrationLog, resetScenarios, createScenario, reviseScenario, getScenario, verifyVersion, evidenceHash, hashVersion, currentBuild, MODELS, type Scenario, type ScenarioVersion } from './scenarios';
 import { applyNation } from '@/lib/nation/registry';
 import { registerMetric } from './metrics';
+import { listAudit } from '@/lib/data/store';
 
 const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error((r as { error: string }).error); return r as T; };
 const mapping = { entity: 'region', value: 'value', metric: { fixed: 'population' }, unit: { fixed: 'persons' }, date: { column: 'year' } } as const;
@@ -94,6 +95,23 @@ describe('scenarios on the twin', () => {
     const plain = ok(createScenario({ name: 'No band', by: 'D', metric: 'population', assumptions: [{ entityId: '*', changePct: 2 }] })).versions[0]!;
     expect(plain.results[0]!.interval).toBeUndefined();
     expect(createScenario({ name: 'x', by: 'D', metric: 'population', assumptions: [{ entityId: '*', changePct: 5, range: { low: 1, high: 4 } }] })).toEqual({ error: expect.stringMatching(/must contain the change/) });
+  });
+
+  it('logs the error of a projection when a value for its date is later observed', async () => {
+    const s = ok(createScenario({ name: 'To 2023', by: 'D', metric: 'population', asOf: '2022-01-01', horizon: '2023-06-30', assumptions: [{ entityId: '*', changePct: 2, range: { low: 1, high: 3 } }] }));
+    expect(s.versions[0]!.horizon).toBe('2023-06-30');
+    expect(calibrationLog(s.id)).toEqual([]);
+    const src = ok(registerSource({ by: 'D', name: 'Mid-year estimates', publisher: 'KNBS', kind: 'csv-upload', mapping }));
+    await runSource(src.id, { by: 'D', csv: 'region,value,year\nMombasa,1025000,2023-06-01\nNairobi City,4000000,2023-06-01\nKisumu,1000000,2022-06-01\n' });
+    const log = calibrationLog(s.id, 1);
+    expect(log.map(c => [c.entityId, c.projected, c.observed, c.error, c.errorPct, c.withinInterval])).toEqual([
+      ['place:KE-28', 1_020_000, 1_025_000, 5_000, 0.49, true],
+      ['place:KE-30', 4_080_000, 4_000_000, -80_000, -1.96, false],
+    ]);
+    expect(listAudit().some(a => a.action === 'twin.scenario.calibrate' && a.resource === `Scenario:${s.id}`)).toBe(true);
+    await runSource(src.id, { by: 'D', csv: 'region,value,year\nNairobi City,4000000,2023-06-01\n' });
+    expect(calibrationLog(s.id)).toHaveLength(3);
+    expect(createScenario({ name: 'x', by: 'D', metric: 'population', asOf: '2022-01-01', horizon: '2021-01-01', assumptions: [{ entityId: '*', changePct: 1 }] })).toEqual({ error: expect.stringMatching(/must be after/) });
   });
 
   it('refuses scenarios without a person, assumptions or data', () => {

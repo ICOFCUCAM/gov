@@ -10,13 +10,14 @@ import { SignalTag } from '@/components/ui/SignalTag';
 
 interface Result { entityId: string; name: string; baseline: number; projected: number; unit: string; interval?: { low: number; high: number } }
 interface Version {
-  version: number; at: string; by: string; metric: string; asOf: string; note?: string;
+  version: number; at: string; by: string; metric: string; asOf: string; horizon?: string; note?: string;
   assumptions: { entityId: string; changePct: number; range?: { low: number; high: number }; note?: string }[];
   results: Result[]; national: { baseline: number; projected: number; unit: string; interval?: { low: number; high: number } } | null; nationalNote?: string;
   evidenceHash: string; evidenceOk: boolean;
   model?: { id: string; version: string }; build?: { commit?: string; release?: string; source: string };
 }
-interface Scenario { id: string; name: string; createdBy: string; createdAt: string; versions: Version[] }
+interface Calibration { version: number; entityId: string; horizon: string; projected: number; observed: number; error: number; errorPct: number | null; withinInterval?: boolean; observedValidFrom: string; observedRunId: string }
+interface Scenario { id: string; name: string; createdBy: string; createdAt: string; versions: Version[]; calibration?: Calibration[] }
 interface Entity { id: string; name: string; region?: boolean }
 
 const input = 'w-full rounded-[3px] border border-line bg-surface-2 px-2.5 py-2 text-[13px] text-ink placeholder:text-ink-muted focus-ring';
@@ -28,7 +29,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
   const [list, setList] = React.useState<Scenario[]>([]);
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = React.useState(false);
-  const [f, setF] = React.useState({ name: '', metric: '', asOf: '', note: '' });
+  const [f, setF] = React.useState({ name: '', metric: '', asOf: '', horizon: '', note: '' });
   const [rows, setRows] = React.useState<{ entityId: string; changePct: string; low?: string; high?: string }[]>([{ entityId: '*', changePct: '' }]);
   const [revising, setRevising] = React.useState<string | null>(null);
 
@@ -46,7 +47,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
     e.preventDefault();
     setBusy(true); setMsg(null);
     try {
-      const body = { name: f.name, by, metric: m, asOf, note: f.note, assumptions: rows.filter(r => r.changePct.trim() !== '').map(r => ({ entityId: r.entityId, changePct: Number(r.changePct), ...(r.low?.trim() || r.high?.trim() ? { range: { low: Number(r.low || r.changePct), high: Number(r.high || r.changePct) } } : {}) })) };
+      const body = { name: f.name, by, metric: m, asOf, ...(f.horizon ? { horizon: f.horizon } : {}), note: f.note, assumptions: rows.filter(r => r.changePct.trim() !== '').map(r => ({ entityId: r.entityId, changePct: Number(r.changePct), ...(r.low?.trim() || r.high?.trim() ? { range: { low: Number(r.low || r.changePct), high: Number(r.high || r.changePct) } } : {}) })) };
       const r = await fetch(revising ? `/api/twin/scenarios/${revising}` : '/api/twin/scenarios', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
       const d = await r.json().catch(() => ({}));
       if (!r.ok) throw new Error((d as { error?: string }).error ?? `Request failed (${r.status})`);
@@ -68,6 +69,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
           <select className={`${input} mt-1`} value={m} onChange={e => setF({ ...f, metric: e.currentTarget.value })}>{metrics.map(x => <option key={x}>{x}</option>)}</select>
         </label>
         <label><span className={label}>Known as of</span><input type="date" className={`${input} mt-1`} value={asOf} onChange={e => setF({ ...f, asOf: e.currentTarget.value })} /></label>
+        <label><span className={label}>Projected for (optional)</span><input type="date" className={`${input} mt-1`} value={f.horizon} onChange={e => setF({ ...f, horizon: e.currentTarget.value })} /><span className="mt-0.5 block text-[12px] text-ink-muted">When a value for this date is observed, the error is logged.</span></label>
         <fieldset className="space-y-1 md:col-span-4">
           <legend className={label}>Assumptions (change in %, with an optional low–high range)</legend>
           {rows.map((r, i) => (
@@ -120,6 +122,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
                   </tbody>
                 </table>
                 {!v.national && v.nationalNote ? <p className="mt-1 text-[12px] text-ink-soft">No national figure: {v.nationalNote}.</p> : null}
+                <CalibrationLog entries={s.calibration ?? []} horizon={v.horizon} nameOf={id => entities.find(e => e.id === id)?.name ?? id} />
                 {s.versions.length > 1 ? (
                   <details className="mt-2 text-[12px]">
                     <summary className="cursor-pointer text-ink-soft">{s.versions.length - 1} earlier version{s.versions.length > 2 ? 's' : ''}</summary>
@@ -145,5 +148,26 @@ function Band({ i }: { i: { low: number; high: number } }) {
       <span aria-hidden className="inline-block h-1.5 w-10 rounded-full border border-dashed border-ink-muted bg-surface-2" />
       {fmt(i.high)}
     </span>
+  );
+}
+
+/** Projections checked against what was later observed (lib/twin/scenarios.ts calibrate). */
+function CalibrationLog({ entries, horizon, nameOf }: { entries: Calibration[]; horizon?: string; nameOf: (id: string) => string }) {
+  if (!entries.length) return horizon ? <p className="mt-1 text-[12px] text-ink-muted">Projected for {horizon}: nothing observed for that date yet.</p> : null;
+  return (
+    <details className="mt-2 text-[12px]" open>
+      <summary className="cursor-pointer font-semibold text-ink-soft">Calibration: {entries.length} projection{entries.length === 1 ? '' : 's'} checked against observed values</summary>
+      <table className="mt-1 w-full">
+        <thead><tr className="text-ink-muted"><th className="text-start font-semibold">Version</th><th className="text-start font-semibold">Entity</th><th className="text-end font-semibold">Modelled</th><th className="text-end font-semibold">Observed</th><th className="text-end font-semibold">Error</th><th className="ps-2 text-start font-semibold">In range</th></tr></thead>
+        <tbody>{entries.map(c => (
+          <tr key={`${c.version}${c.entityId}${c.observedRunId}${c.observedValidFrom}`} title={`Observed ${c.observedValidFrom} (import ${c.observedRunId}); projected for ${c.horizon}`}>
+            <td className="font-mono">v{c.version}</td><td>{nameOf(c.entityId)}</td>
+            <td className="text-end font-mono tabular-nums">{fmt(c.projected)}</td><td className="text-end font-mono tabular-nums">{fmt(c.observed)}</td>
+            <td className="text-end font-mono tabular-nums">{c.error >= 0 ? '+' : ''}{fmt(c.error)}{c.errorPct !== null ? ` (${c.errorPct >= 0 ? '+' : ''}${c.errorPct}%)` : ''}</td>
+            <td className="ps-2">{c.withinInterval === undefined ? '—' : c.withinInterval ? 'yes' : 'no'}</td>
+          </tr>
+        ))}</tbody>
+      </table>
+    </details>
   );
 }
