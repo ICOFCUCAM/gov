@@ -40,7 +40,7 @@ export function WhatsNewPanel({ releaseId, link }: { releaseId: string; link?: s
         <ul className="mt-2 grid gap-2">
           {w.resources.map(r => (
             <li key={r.url}><a href={r.url} target="_blank" rel="noreferrer" className="text-[13px] font-light underline decoration-[#d9c398]/30 underline-offset-4 hover:text-[#f4e4bd]" style={{ color: CHAMPAGNE }}>{r.title}</a>
-              <span className="block font-mono text-[10px] text-white/40">{kind[r.kind]} · {LANG[r.language] ?? r.language}{r.placeholder ? ' · placeholder link' : ''}</span></li>
+              <span className="block font-mono text-[10px] text-night-muted">{kind[r.kind]} · {LANG[r.language] ?? r.language}{r.placeholder ? ' · placeholder link' : ''}</span></li>
           ))}
         </ul>
       </div>
@@ -70,7 +70,7 @@ export function AlertsPanel({ link }: { link?: string }) {
   }
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65">
             <th className="py-2 pr-3 font-normal">Official</th><th className="py-2 pr-3 font-normal">Email</th><th className="py-2 pr-3 font-normal">SMS</th>
@@ -78,10 +78,10 @@ export function AlertsPanel({ link }: { link?: string }) {
           </tr></thead>
           <tbody>{d.officials.map(o => (
             <tr key={o.id} className="border-t" style={{ borderColor: hair(0.08) }}>
-              <td className="py-2 pr-3"><span className="text-[#f3efe6]">{o.name}</span><span className="block text-[11.5px] text-white/40">{o.role}</span></td>
+              <td className="py-2 pr-3"><span className="text-[#f3efe6]">{o.name}</span><span className="block text-[11.5px] text-night-muted">{o.role}</span></td>
               {(['email', 'sms'] as const).map(ch => (
                 <td key={ch} className="py-2 pr-3">
-                  <label className="flex items-center gap-1.5 font-mono text-[11px] text-white/55">
+                  <label className="flex items-center gap-1.5 font-mono text-[11px] text-night-muted">
                     <input type="checkbox" checked={o.channels[ch]} disabled={!(ch === 'email' ? o.email : o.sms)} onChange={e => save({ id: o.id, channels: { ...o.channels, [ch]: e.target.checked } })} aria-label={`${ch} for ${o.name}`} />
                     {(ch === 'email' ? o.email : o.sms) ?? '—'}
                   </label>
@@ -90,7 +90,7 @@ export function AlertsPanel({ link }: { link?: string }) {
               {d.categories.map(c => (
                 <td key={c} className="py-2 pr-3 text-center"><input type="checkbox" checked={o.subscriptions[c]} onChange={e => save({ id: o.id, subscriptions: { ...o.subscriptions, [c]: e.target.checked } })} aria-label={`${CAT_TEXT[c]} alerts for ${o.name}`} /></td>
               ))}
-              <td className="py-2 text-right"><button type="button" className="text-[11.5px] text-white/40 hover:text-[#f1938f]" onClick={() => remove(o.id)}>Remove</button></td>
+              <td className="py-2 text-right"><button type="button" className="text-[11.5px] text-night-muted hover:text-[#f1938f]" onClick={() => remove(o.id)}>Remove</button></td>
             </tr>
           ))}</tbody>
         </table>
@@ -105,7 +105,7 @@ export function AlertsPanel({ link }: { link?: string }) {
       <ErrorLine>{err}</ErrorLine>
       <div>
         <p className="font-mono text-[9.5px] uppercase tracking-[0.22em] text-[#d9c398]/75">Recent alerts</p>
-        <p className="mt-1 text-[11.5px] text-white/40">
+        <p className="mt-1 text-[11.5px] text-night-muted">
           {!d.delivery || (d.delivery.email === 'not connected' && d.delivery.sms === 'not connected')
             ? 'No email or SMS provider is connected yet: alerts are queued, not sent.'
             : `Email: ${d.delivery.email} · SMS: ${d.delivery.sms}. Alerts on a channel that is not connected stay queued.`}
@@ -114,13 +114,13 @@ export function AlertsPanel({ link }: { link?: string }) {
         <ul className="mt-2 grid gap-1.5">
           {d.outbox.map(a => (
             <li key={a.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] font-light text-white/65">
-              <span className="font-mono text-[10.5px] text-white/40">{fmtDateTime(a.at)}</span>
+              <span className="font-mono text-[10.5px] text-night-muted">{fmtDateTime(a.at)}</span>
               <Chip tone={a.category === 'security' ? '#f1938f' : a.category === 'incidents' ? '#f1b36b' : a.category === 'eol' ? '#c9b6ff' : '#a9c7e8'}>{CAT_TEXT[a.category]}</Chip>
               <span className="min-w-0 flex-1">{a.subject}</span>
-              <span className="font-mono text-[10.5px] text-white/45">{a.channel} → {a.officialName} · {a.status}</span>
+              <span className="font-mono text-[10.5px] text-night-muted">{a.channel} → {a.officialName} · {a.status}</span>
             </li>
           ))}
-          {!d.outbox.length ? <li className="text-[12.5px] text-white/45">No alerts yet.</li> : null}
+          {!d.outbox.length ? <li className="text-[12.5px] text-night-muted">No alerts yet.</li> : null}
         </ul>
       </div>
     </div>
@@ -144,15 +144,15 @@ export function PublisherComms() {
   }
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
-      <p className="text-[12.5px] font-light text-white/55">Languages of enrolled nations: {d.nations.map(n => `${n.name} (${LANG[n.language] ?? n.language})`).join(' · ')}</p>
-      <div className="overflow-x-auto">
+      <p className="text-[12.5px] font-light text-night-muted">Languages of enrolled nations: {d.nations.map(n => `${n.name} (${LANG[n.language] ?? n.language})`).join(' · ')}</p>
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65"><th className="py-2 pr-3 font-normal">Release</th>{d.locales.map(l => <th key={l} className="py-2 pr-3 font-normal">{LANG[l] ?? l}</th>)}<th className="py-2 font-normal">Guides</th></tr></thead>
           <tbody>{d.releases.map(r => (
             <tr key={r.id} className="border-t" style={{ borderColor: hair(0.08) }}>
-              <td className="py-2 pr-3"><span className="font-mono text-[12px] text-[#f4e4bd]">{r.version}</span> <span className="text-white/50">{r.title}</span></td>
+              <td className="py-2 pr-3"><span className="font-mono text-[12px] text-[#f4e4bd]">{r.version}</span> <span className="text-night-muted">{r.title}</span></td>
               {d.locales.map(l => <td key={l} className="py-2 pr-3">{d.coverage[r.id]?.[l] ? <Chip tone="#9be7c4">Translated</Chip> : <Chip tone="#f4d58d">Pending</Chip>}</td>)}
-              <td className="py-2 font-mono text-[11.5px] text-white/55">{r.resources}</td>
+              <td className="py-2 font-mono text-[11.5px] text-night-muted">{r.resources}</td>
             </tr>
           ))}</tbody>
         </table>

@@ -90,7 +90,7 @@ export function Welcome() {
               Welcome to{' '}
               <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{id.stateName}</span>
             </h1>
-            {id.motto ? <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[0.32em] text-white/50">{id.motto}</p> : null}
+            {id.motto ? <p className="mt-3 font-mono text-[10.5px] uppercase tracking-[0.32em] text-night-muted">{id.motto}</p> : null}
           </div>
         </div>
 
@@ -105,7 +105,7 @@ export function Welcome() {
           ].map(([k, v], i) => (
             <div key={k} className="bg-[#05070b] px-5 py-5 last:col-span-2 lg:last:col-span-1">
               <dt className="flex items-center gap-2 font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">
-                <span className="tabular-nums text-white/30">{String(i + 1).padStart(2, '0')}</span>{k}
+                <span className="tabular-nums text-night-faint">{String(i + 1).padStart(2, '0')}</span>{k}
               </dt>
               <dd className="mt-2 truncate text-[15px] font-light text-[#f3efe6]">{v}</dd>
             </div>
@@ -122,7 +122,7 @@ export function Welcome() {
             <span className="font-mono text-[10px] uppercase tracking-[0.34em]" style={{ color: CHAMPAGNE }}>{primary!.k}</span>
             <span className="pr-16">
               <span className="block text-[1.9rem] font-extralight leading-tight tracking-[-0.025em] text-[#f3efe6]">{primary!.t}</span>
-              <span className="mt-2 block text-[14px] font-light text-white/55">{primary!.s}</span>
+              <span className="mt-2 block text-[14px] font-light text-night-muted">{primary!.s}</span>
             </span>
             <span aria-hidden className="absolute bottom-7 right-7 grid h-12 w-12 place-items-center rounded-full text-[18px] text-[#17120a] transition-transform duration-300 group-hover:translate-x-1 sm:bottom-9 sm:right-9"
               style={{ background: GOLD, boxShadow: `0 10px 30px -10px ${CHAMPAGNE}99, inset 0 1px 0 rgba(255,255,255,0.6)` }}>→</span>
@@ -133,21 +133,21 @@ export function Welcome() {
                 <Link href={d.href}
                   className="group relative flex h-full items-center gap-4 rounded-[3px] border px-5 py-4 no-underline transition-colors duration-300 hover:border-[#d9c398]/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-[#f4e4bd]"
                   style={{ borderColor: hair(0.14), background: 'linear-gradient(160deg, rgba(255,248,230,0.03), rgba(255,248,230,0.005))' }}>
-                  <span className="w-6 shrink-0 font-mono text-[10px] tabular-nums text-[#d9c398]/60">{String(i + 2).padStart(2, '0')}</span>
+                  <span className="w-6 shrink-0 font-mono text-[10px] tabular-nums text-night-champagne">{String(i + 2).padStart(2, '0')}</span>
                   <span className="min-w-0 flex-1">
                     <span className="block text-[15px] font-light text-[#f3efe6]">{d.t}</span>
-                    <span className="mt-0.5 block truncate text-[12.5px] font-light text-white/45">{d.s}</span>
+                    <span className="mt-0.5 block truncate text-[12.5px] font-light text-night-muted">{d.s}</span>
                   </span>
-                  <span className="hidden font-mono text-[9.5px] uppercase tracking-[0.24em] text-white/30 sm:inline">{d.k}</span>
-                  <span aria-hidden className="text-[#d9c398]/50 transition-[color,transform] duration-300 group-hover:translate-x-0.5 group-hover:text-[#f4e4bd]">→</span>
+                  <span className="hidden font-mono text-[9.5px] uppercase tracking-[0.24em] text-night-faint sm:inline">{d.k}</span>
+                  <span aria-hidden className="text-night-champagne transition-[color,transform] duration-300 group-hover:translate-x-0.5 group-hover:text-[#f4e4bd]">→</span>
                 </Link>
               </li>
             ))}
           </ul>
         </div>
 
-        <nav aria-label="Configuration" className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-light text-white/45">
-          <span className="font-mono text-[9.5px] uppercase tracking-[0.3em] text-white/35">Configuration</span>
+        <nav aria-label="Configuration" className="mt-10 flex flex-wrap items-center gap-x-6 gap-y-2 text-[13px] font-light text-night-muted">
+          <span className="font-mono text-[9.5px] uppercase tracking-[0.3em] text-night-faint">Configuration</span>
           {[
             { href: institutionPath ? '/setup?path=institution' : '/setup', l: 'Review setup' },
             { href: '/gov/configuration', l: 'Sovereign configuration' },

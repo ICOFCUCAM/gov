@@ -52,14 +52,14 @@ export function EvidencePage({ id }: { id: string }) {
     <OnboardingFrame right={<ChamberNav q={q} active="release" />}>
       <div className="flex-1 py-10 lg:py-14">
         <ChamberTabs q={q} active="release" />
-        <Link href={`/updates/${id}${q}`} className="font-mono text-[10.5px] uppercase tracking-[0.24em] text-white/45 no-underline transition-colors hover:text-[#f4e4bd]">← Release</Link>
+        <Link href={`/updates/${id}${q}`} className="font-mono text-[10.5px] uppercase tracking-[0.24em] text-night-muted no-underline transition-colors hover:text-[#f4e4bd]">← Release</Link>
         {err ? <div className="mt-6"><ErrorLine>{err}</ErrorLine></div> : !p ? <Loading label="Assembling evidence…" /> : (
           <>
             <div className="mt-6"><Eyebrow>Compliance evidence pack</Eyebrow></div>
             <h1 className="mt-4 text-[2.1rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3rem]">
               {p.release.version} <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>for {nation || p.nation.name}</span>
             </h1>
-            <p className="mt-3 max-w-[72ch] text-[14.5px] font-light leading-relaxed text-white/55">{p.release.title}. Generated from the platform’s own records on {fmtDateTime(p.generatedAt)} — nothing in it is typed in by hand. Hand it to your auditors with the JSON manifest; its digest lets them check nothing was changed.</p>
+            <p className="mt-3 max-w-[72ch] text-[14.5px] font-light leading-relaxed text-night-muted">{p.release.title}. Generated from the platform’s own records on {fmtDateTime(p.generatedAt)} — nothing in it is typed in by hand. Hand it to your auditors with the JSON manifest; its digest lets them check nothing was changed.</p>
             <div className="mt-6 flex flex-wrap items-center gap-3 rounded-[2px] border px-4 py-3" style={{ borderColor: hair(0.18) }}>
               <span className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#d9c398]/70">Manifest digest (sha256)</span>
               <CopyValue value={p.digest} short label="digest" />
@@ -71,15 +71,15 @@ export function EvidencePage({ id }: { id: string }) {
                 {p.certifications.map(c => (
                   <Panel key={c.standard} className="px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2"><span className="text-[15px] font-light text-[#f3efe6]">{c.standard}</span><Chip tone="#a5abb5">Placeholder</Chip></div>
-                    <p className="mt-1 text-[12.5px] font-light text-white/55">{c.scope}</p>
-                    <p className="mt-2 font-mono text-[10.5px] text-white/45">{c.reference} · {c.issuer} · {c.validUntil ? `valid until ${fmtDate(c.validUntil)}` : c.period}</p>
+                    <p className="mt-1 text-[12.5px] font-light text-night-muted">{c.scope}</p>
+                    <p className="mt-2 font-mono text-[10.5px] text-night-muted">{c.reference} · {c.issuer} · {c.validUntil ? `valid until ${fmtDate(c.validUntil)}` : c.period}</p>
                   </Panel>
                 ))}
               </div>
             </Section>
 
             <Section n="02" title="Security testing" aside="Release gate: no unresolved critical or high finding">
-              <div className="overflow-x-auto">
+              <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
                 <table className="w-full min-w-[560px] text-left text-[12.5px] font-light">
                   <Head cols={['Test', 'Critical', 'High', 'Medium', 'Low']} />
                   <tbody>
@@ -101,12 +101,12 @@ export function EvidencePage({ id }: { id: string }) {
                   </div>
                 ))}
               </div>
-              <p className="mt-3 text-[12.5px] font-light text-white/55">{p.provenance.length} artifacts with SLSA provenance, built by <span className="font-mono text-[11.5px]">{p.provenance[0]?.builder}</span> from commit <span className="font-mono text-[11.5px]">{p.provenance[0]?.commit.slice(0, 12)}</span>. <Link href={`/updates/${id}${q}#provenance`} className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>Attestations →</Link></p>
+              <p className="mt-3 text-[12.5px] font-light text-night-muted">{p.provenance.length} artifacts with SLSA provenance, built by <span className="font-mono text-[11.5px]">{p.provenance[0]?.builder}</span> from commit <span className="font-mono text-[11.5px]">{p.provenance[0]?.commit.slice(0, 12)}</span>. <Link href={`/updates/${id}${q}#provenance`} className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>Attestations →</Link></p>
               {p.escrow ? <p className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px] font-light text-white/60">Source-code escrow: <Chip tone={ESCROW_TONE[p.escrow.state]}>{ESCROW_TEXT[p.escrow.state]}</Chip>{p.escrow.depositId ? <span className="font-mono text-[11px]">{p.escrow.depositId} · {fmtDate(p.escrow.depositedAt)}</span> : <span>due {fmtDate(p.escrow.dueBy)}</span>}</p> : null}
             </Section>
 
             <Section n="04" title="Security advisories for this version">
-              <div className="overflow-x-auto">
+              <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
                 <table className="w-full min-w-[560px] text-left text-[12.5px] font-light">
                   <Head cols={['Advisory', 'Severity', 'Status for this version']} />
                   <tbody>{p.advisories.map(a => (
@@ -131,31 +131,31 @@ export function EvidencePage({ id }: { id: string }) {
               <ol className="mt-4 grid gap-1.5">
                 {p.install.decisions.map((e, i) => (
                   <li key={i} className="grid grid-cols-[minmax(0,1fr)] gap-x-3 text-[12.5px] font-light text-white/70 sm:grid-cols-[170px_minmax(0,1fr)]">
-                    <span className="font-mono text-[10.5px] text-white/40">{fmtDateTime(e.at)}</span>
-                    <span><span className="text-[#f4e4bd]">{e.action}</span> by {e.by} ({e.from} → {e.to}){e.note ? ` — ${e.note}` : ''}{e.auditSeq ? <span className="font-mono text-[10px] text-white/35"> audit #{e.auditSeq}</span> : null}</span>
+                    <span className="font-mono text-[10.5px] text-night-muted">{fmtDateTime(e.at)}</span>
+                    <span><span className="text-[#f4e4bd]">{e.action}</span> by {e.by} ({e.from} → {e.to}){e.note ? ` — ${e.note}` : ''}{e.auditSeq ? <span className="font-mono text-[10px] text-night-faint"> audit #{e.auditSeq}</span> : null}</span>
                   </li>
                 ))}
-                {!p.install.decisions.length ? <li className="text-[12.5px] text-white/45">No decisions recorded for this release yet.</li> : null}
+                {!p.install.decisions.length ? <li className="text-[12.5px] text-night-muted">No decisions recorded for this release yet.</li> : null}
               </ol>
             </Section>
 
             <Section n="06" title="Audit-chain export" aside={p.auditChain.chainIntact ? `Chain intact · ${p.auditChain.checked} entries verified` : 'Chain verification FAILED'}>
-              <div className="overflow-x-auto">
+              <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
                 <table className="w-full min-w-[760px] text-left text-[12px] font-light">
                   <Head cols={['#', 'When', 'Who', 'Action', 'Detail', 'Hash']} />
                   <tbody>{p.auditChain.entries.map(e => (
                     <tr key={e.seq} className="border-t align-top" style={{ borderColor: hair(0.08) }}>
-                      <td className="py-2 pr-3 font-mono text-[11px] text-white/45">{e.seq}</td>
-                      <td className="py-2 pr-3 font-mono text-[11px] text-white/55">{fmtDateTime(e.at)}</td>
+                      <td className="py-2 pr-3 font-mono text-[11px] text-night-muted">{e.seq}</td>
+                      <td className="py-2 pr-3 font-mono text-[11px] text-night-muted">{fmtDateTime(e.at)}</td>
                       <td className="py-2 pr-3 text-white/70">{e.actor}</td>
                       <td className="py-2 pr-3 font-mono text-[11px] text-[#f4e4bd]">{e.action}</td>
-                      <td className="py-2 pr-3 text-white/55">{e.detail}</td>
-                      <td className="py-2 font-mono text-[10.5px] text-white/40">{e.hash.slice(0, 12)}…</td>
+                      <td className="py-2 pr-3 text-night-muted">{e.detail}</td>
+                      <td className="py-2 font-mono text-[10.5px] text-night-muted">{e.hash.slice(0, 12)}…</td>
                     </tr>
                   ))}</tbody>
                 </table>
               </div>
-              {!p.auditChain.entries.length ? <p className="mt-2 text-[12.5px] text-white/45">No audit entries for this release yet.</p> : null}
+              {!p.auditChain.entries.length ? <p className="mt-2 text-[12.5px] text-night-muted">No audit entries for this release yet.</p> : null}
             </Section>
 
             <Section n="07" title="Data protection impact assessment" aside="Template for your data protection officer">

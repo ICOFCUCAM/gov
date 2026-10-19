@@ -51,8 +51,8 @@ real weakness that needs a second condition, or that has a limited effect.
 | M-7 | Security | Medium | One shared cron secret also unlocks the full citizen export, bulk officer creation and the publisher console, and it is accepted in the query string | `app/src/lib/platform-auth.ts:29-40`; `app/src/app/api/substrate/export/route.ts:22-31,38`; `app/src/app/api/admin/officers/bulk/route.ts:30` | Separate credentials: cron-only secret for `/api/cron/*`, distinct export secret (or signed-in administrator), no `?token=`. | M |
 | M-8 | Performance | Medium | Public, unthrottled full audit-chain verification on the event loop (about 2.7 s per million entries), plus an unpaged full-chain `/api/audit` **Fixed in d3b8d02.** | `app/src/middleware.ts:29`; `app/src/app/api/audit/verify/route.ts:6-8`; `app/src/lib/data/store/audit.ts:69-84`; `app/src/app/api/audit/route.ts:6-8` | Verify incrementally (keep the last verified seq and hash; verify only new entries) and cache the public answer. Rate-limit public GETs. Page `/api/audit`. | M |
 | M-9 | Security / Performance | Medium | Unauthenticated calls grow the audit chain and in-memory maps without bound (failed sign-ins, subscription requests) **Fixed in d3b8d02.** | `app/src/lib/auth/officials.ts:213-222`; `app/src/lib/data/site-subscriptions.ts:66-71,88-111` | Count failures in a bounded, expiring map (not persisted). Aggregate repeated denials into one audit entry per window. Prune `attempts`. | S |
-| M-10 | Accessibility | Medium | No skip link and no `#main` target in `CommandShell`, the shell of 81 console pages (WCAG 2.4.1, Level A) | `app/src/components/ui/CommandShell.tsx:278` | Add the same skip link `AppShell`/`OperatorShell` already have. Give `<main>` `id="main"` and `tabIndex={-1}`. | S |
-| M-11 | Accessibility | Medium | Text contrast below 4.5:1 across the Update Center, admin consoles and onboarding (axe: 269 nodes on `/admin/sites`, 55 on `/admin/releases`, 23 on `/updates`, 17 on `/welcome` and `/setup`) | `app/src/components/features/onboarding/Chrome.tsx:36`; 118 uses of `text-white/40` (and 21 of `/30`, `/25`, `/20`) in `app/src/components/features/updates/*` and `onboarding/*` | Replace raw opacity text with a token from `lib/theme/tokens.ts` (≥ 4.5:1 on `#04060a`). Extend `scan-colours` to flag `text-white/<60`. | M |
+| M-10 | Accessibility | Medium | No skip link and no `#main` target in `CommandShell`, the shell of 81 console pages (WCAG 2.4.1, Level A) | `app/src/components/ui/CommandShell.tsx:278` | Add the same skip link `AppShell`/`OperatorShell` already have. Give `<main>` `id="main"` and `tabIndex={-1}`. | S — **Fixed in 101810d** |
+| M-11 | Accessibility | Medium | Text contrast below 4.5:1 across the Update Center, admin consoles and onboarding (axe: 269 nodes on `/admin/sites`, 55 on `/admin/releases`, 23 on `/updates`, 17 on `/welcome` and `/setup`) | `app/src/components/features/onboarding/Chrome.tsx:36`; 118 uses of `text-white/40` (and 21 of `/30`, `/25`, `/20`) in `app/src/components/features/updates/*` and `onboarding/*` | Replace raw opacity text with a token from `lib/theme/tokens.ts` (≥ 4.5:1 on `#04060a`). Extend `scan-colours` to flag `text-white/<60`. | M — **Fixed in 101810d** |
 | M-12 | Performance | Medium | `/app/[domain]` ships 1.07 MB first-load JS (559 kB of its own) because `AppHost` statically imports about 25 institution apps **Fixed in d3b8d02.** | build output; `app/src/apps/AppHost.tsx:10-31` | `next/dynamic` per app (load only the one for the domain). | S |
 | M-13 | Data protection | Medium | Retention and deletion: unsubscribed addresses stay in the outbox, unconfirmed addresses are kept for good, and failed sign-in emails are kept for good. No retention rule for permits or cases. **Fixed in d3b8d02.** | `app/src/lib/data/site-subscriptions.ts:76-80,97-99,136-146`; `app/src/lib/auth/officials.ts:213-221` | On unsubscribe, delete queued messages to the address. Purge pending subscriptions after `CONFIRM_DAYS`. Expire failure entries. Add a retention schedule (per store) with a sweep. | M |
 | M-14 | Operations / Data protection | Medium | Platform backups are simulated ("completed", "encrypted", random size). Restore only flips a state. Neither is in the Integration Register. | `app/src/lib/data/store/platform-ops.ts:190-211` | Label as placeholder in UI and register (like 3.7). Do not show `encrypted: true` for nothing. | S |
@@ -63,7 +63,7 @@ real weakness that needs a second condition, or that has a limited effect.
 | L-5 | Security | Low | No Origin / `Sec-Fetch-Site` check on mutating requests. SameSite=Lax alone does not stop same-site subdomains. | `app/src/lib/auth/official.ts:71-72` | Refuse cross-site `Sec-Fetch-Site` on mutating `/api/*` with a session cookie. | S |
 | L-6 | Performance | Low | Postgres write-through issues one statement per audit entry, entity or parcel (sequential round trips inside the transaction) | `app/src/lib/data/repo/postgres.ts:198-212,252-261,711` | Batch per topic with `jsonb_to_recordset`, as observations already do. | M |
 | L-7 | Performance | Low | Every page ships all five locales' messages (about 130 kB raw). The console baseline is about 460 kB first-load. | `app/src/lib/i18n/index.ts:6-10`; build output | Load the active locale only (dynamic import). | S |
-| L-8 | Accessibility | Low | Scrollable lists in `InstitutionChain` cannot be reached by keyboard (axe `scrollable-region-focusable`, `/gov/coordination`) | `app/src/apps/_shared/InstitutionChain.tsx:294,329,365` | `tabIndex={0}` plus `role="region"` and `aria-label` on the scroll containers. | S |
+| L-8 | Accessibility | Low | Scrollable lists in `InstitutionChain` cannot be reached by keyboard (axe `scrollable-region-focusable`, `/gov/coordination`) | `app/src/apps/_shared/InstitutionChain.tsx:294,329,365` | `tabIndex={0}` plus `role="region"` and `aria-label` on the scroll containers. | S — **Fixed in 101810d** |
 
 ## Critical
 
@@ -654,6 +654,9 @@ thread pool.
 
 ### M-10. The console has no skip link (WCAG 2.4.1, Level A)
 
+**Fixed in 101810d.** `CommandShell`, `ConsoleShell` and `OnboardingFrame` (welcome, setup, the Update Center, the publisher and the site editor) render `SkipLink` (`components/ui/SkipLink.tsx`) first and one `<main id="main" tabIndex={-1}>`. `npm run audit:console` checks that the first Tab stop is a skip link with exactly one target on every console-shell page it opens.
+
+
 **Evidence.** `CommandShell`, used by 81 pages under `app/src/app`, renders a
 header and a menu of about 30 entries before
 `<main className="min-w-0 flex-1 overflow-y-auto p-3">` (`CommandShell.tsx:278`).
@@ -673,6 +676,9 @@ page.
 console shells.
 
 ### M-11. Text contrast failures outside the tokens
+
+**Fixed in 101810d.** New `NIGHT` tokens (`lib/theme/tokens.ts`; Tailwind `text-night-soft`, `text-night-muted`, `text-night-faint`, `text-night-champagne`), each held at 4.5:1 on the ground and on its lightest panel by `tokens.test.ts`, replace `text-white/15…55`, champagne text at 50–60% and inline white text at 25–45% across `features/updates/*`, `features/sites/*` and `features/onboarding/*`. The `/ops` rail badge background went from 20% to 14% (4.96:1). `scan-colours` counts `text-white/<60` (`--max-dim 28`, all in the cover designs). axe finds no contrast failures on these pages (`npm run audit:console`, CI job *console accessibility audit*).
+
 
 **Evidence.** axe `color-contrast` (serious) results:
 
@@ -842,6 +848,9 @@ about 460 kB first-load JS.
 **Fix.** Import the active locale only.
 
 ### L-8. Scrollable lists cannot be reached by keyboard
+
+**Fixed in 101810d.** The nine scroll lists in `InstitutionChain` and the Update Center's sideways-scrolling tables and code samples are focusable named regions (`tabIndex={0}`, `role="region"`, `aria-label`).
+
 
 `InstitutionChain.tsx:294,329,365` has `overflow-y-auto` lists without
 focusable content (axe `scrollable-region-focusable`, 4 nodes on

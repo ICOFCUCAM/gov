@@ -50,7 +50,7 @@ export function SupportCenter() {
         <h1 className="mt-4 text-[2.1rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3rem]">
           Support{nation ? <> for <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{nation}</span></> : null}
         </h1>
-        <p className="mt-4 max-w-[70ch] text-[15px] font-light leading-relaxed text-white/55">
+        <p className="mt-4 max-w-[70ch] text-[15px] font-light leading-relaxed text-night-muted">
           Open a ticket about any release or incident and follow it to resolution against the response and resolution times in your contract. Every fallback opens a priority-two ticket by itself. Availability, incidents and ticket performance are reported every month.
         </p>
         {err ? <div className="mt-8"><ErrorLine>{err}</ErrorLine></div> : !d ? <Loading label="Opening the support desk…" /> : (
@@ -59,14 +59,14 @@ export function SupportCenter() {
               <Link href={`/updates/status${q}`} className="mt-8 flex flex-wrap items-center gap-3 rounded-[2px] border px-4 py-3 no-underline transition-colors hover:border-[#d9c398]/50" style={{ borderColor: hair(0.18) }}>
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: IMPACT_TONE[status.overall] }} />
                 <span className="text-[14px] font-light text-[#f3efe6]">{status.overall === 'operational' ? 'All services operational' : `Services: ${IMPACT_TEXT[status.overall].toLowerCase()}`}</span>
-                {status.maintenance.upcoming.length ? <span className="text-[12.5px] font-light text-white/50">· next maintenance {fmtDate(status.maintenance.upcoming[0]!.start)}</span> : null}
+                {status.maintenance.upcoming.length ? <span className="text-[12.5px] font-light text-night-muted">· next maintenance {fmtDate(status.maintenance.upcoming[0]!.start)}</span> : null}
                 <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.2em]" style={{ color: CHAMPAGNE }}>Status page →</span>
               </Link>
             ) : null}
             <Section n="01" title="Your tickets" aside={`${open.length} open · ${d.policy.label} tier`}>
               <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
                 {d.tickets.map(t => <TicketCard key={t.id} t={t} link={link} q={q} onDone={load} />)}
-                {!d.tickets.length ? <p className="text-[13.5px] font-light text-white/50">No tickets yet.</p> : null}
+                {!d.tickets.length ? <p className="text-[13.5px] font-light text-night-muted">No tickets yet.</p> : null}
               </div>
             </Section>
             <Section n="02" title="Open a ticket">
@@ -89,7 +89,7 @@ export function SupportCenter() {
 export function TierTable({ policy, priorities }: { policy: SupportTierPolicy; priorities?: Record<TicketPriority, string> }) {
   return (
     <>
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-[13px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65">
             <th className="py-2 pr-4 font-normal">Priority</th><th className="py-2 pr-4 font-normal">First response</th><th className="py-2 pr-4 font-normal">Resolution</th>{priorities ? <th className="py-2 font-normal">Meaning</th> : null}
@@ -99,12 +99,12 @@ export function TierTable({ policy, priorities }: { policy: SupportTierPolicy; p
               <td className="py-2 pr-4"><Chip tone={PRIORITY_TONE[p]}>{p}</Chip></td>
               <td className="py-2 pr-4 font-mono text-[12px] text-[#f4e4bd]">{minutes(policy.targets[p].responseMinutes)}</td>
               <td className="py-2 pr-4 font-mono text-[12px] text-[#f4e4bd]">{hours(policy.targets[p].resolutionHours)}</td>
-              {priorities ? <td className="py-2 text-white/55">{priorities[p]}</td> : null}
+              {priorities ? <td className="py-2 text-night-muted">{priorities[p]}</td> : null}
             </tr>
           ))}</tbody>
         </table>
       </div>
-      <p className="mt-3 text-[12.5px] font-light text-white/50">Hosted availability target {policy.uptimeTarget}% a month (planned maintenance excluded); service credit {policy.creditPct}% of the monthly fee when missed. The resolution clock pauses while we are waiting on you. Figures are placeholders until your contract sets them.</p>
+      <p className="mt-3 text-[12.5px] font-light text-night-muted">Hosted availability target {policy.uptimeTarget}% a month (planned maintenance excluded); service credit {policy.creditPct}% of the monthly fee when missed. The resolution clock pauses while we are waiting on you. Figures are placeholders until your contract sets them.</p>
     </>
   );
 }
@@ -134,7 +134,7 @@ function TicketCard({ t, link, q, onDone }: { t: TicketView; link?: string; q: s
   return (
     <Panel strong={t.state === 'waiting-on-nation'} className="min-w-0 px-4 py-3 sm:px-5">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="font-mono text-[11px] text-white/45">{t.id}</span>
+        <span className="font-mono text-[11px] text-night-muted">{t.id}</span>
         <Chip tone={PRIORITY_TONE[t.priority]} solid={t.priority === 'P1' && !done}>{t.priority}</Chip>
         <span className="order-last min-w-0 basis-full text-[14.5px] font-light text-[#f3efe6] sm:order-none sm:basis-0 sm:flex-1">{t.title}</span>
         <Chip tone={t.state === 'waiting-on-nation' ? CHAMPAGNE : done ? '#9be7c4' : '#a9c7e8'} solid={t.state === 'waiting-on-nation'}>{STATE_TEXT[t.state]}</Chip>
@@ -142,17 +142,17 @@ function TicketCard({ t, link, q, onDone }: { t: TicketView; link?: string; q: s
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <SlaTimer label="Response" c={t.sla.response} />
         <SlaTimer label="Resolution" c={t.sla.resolution} />
-        <span className="font-mono text-[10.5px] text-white/40">Opened {fmtDateTime(t.openedAt)} by {t.openedBy} · {t.tier}</span>
+        <span className="font-mono text-[10.5px] text-night-muted">Opened {fmtDateTime(t.openedAt)} by {t.openedBy} · {t.tier}</span>
         {t.link ? <Link href={t.link.kind === 'release' ? `/updates/${t.link.id}${q}` : `/updates/status${q}`} className="font-mono text-[10.5px] underline underline-offset-4" style={{ color: CHAMPAGNE }}>{t.link.kind === 'release' ? `Release ${t.link.id}` : `Incident ${t.link.id}`}</Link> : null}
         {t.source === 'fallback-incident' ? <Chip tone="#c9b6ff">Opened automatically</Chip> : null}
       </div>
-      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45 hover:text-[#f4e4bd]">{open ? 'Hide' : 'Show'} thread ({t.thread.length})</button>
+      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-night-muted hover:text-[#f4e4bd]">{open ? 'Hide' : 'Show'} thread ({t.thread.length})</button>
       {open ? (
         <div className="mt-3">
           <ol className="grid gap-2">
             {t.thread.map((m, i) => (
               <li key={i} className={`rounded-[2px] border px-3 py-2 ${m.side === 'nation' ? 'sm:mr-10' : 'sm:ml-10'}`} style={{ borderColor: hair(m.side === 'publisher' ? 0.22 : 0.1), background: m.side === 'publisher' ? 'rgba(217,195,152,0.05)' : 'transparent' }}>
-                <p className="font-mono text-[10px] text-white/40">{m.by}{m.side === 'publisher' ? ' (publisher)' : m.side === 'system' ? '' : ''} · {fmtDateTime(m.at)}</p>
+                <p className="font-mono text-[10px] text-night-muted">{m.by}{m.side === 'publisher' ? ' (publisher)' : m.side === 'system' ? '' : ''} · {fmtDateTime(m.at)}</p>
                 <p className="mt-0.5 text-[13px] font-light leading-relaxed text-white/75">{m.text}</p>
               </li>
             ))}
@@ -249,47 +249,47 @@ function ReportPanel({ link }: { link?: string }) {
           {d.months.map(m => <option key={m} value={m}>{label(m)}</option>)}
         </Select>
         <a href={`/api/releases/sla-report?${qs}`} download className="text-[12.5px] underline underline-offset-4" style={{ color: CHAMPAGNE }}>Download JSON ↓</a>
-        <span className="ml-auto font-mono text-[10px] text-white/40">{r.tier.label} tier · generated {fmtDateTime(r.generatedAt)}</span>
+        <span className="ml-auto font-mono text-[10px] text-night-muted">{r.tier.label} tier · generated {fmtDateTime(r.generatedAt)}</span>
       </div>
       <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-3">
         <Panel className="px-4 py-3">
           <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#d9c398]/70">Availability</p>
           <p className="mt-1 text-[1.8rem] font-extralight" style={{ color: r.uptimeMet ? '#9be7c4' : '#f1938f' }}>{r.serviceUptime.toFixed(3)}%</p>
-          <p className="text-[12px] font-light text-white/50">Target {r.tier.uptimeTarget}% · {r.uptimeMet ? 'met' : `missed — ${r.creditPct}% service credit`}</p>
+          <p className="text-[12px] font-light text-night-muted">Target {r.tier.uptimeTarget}% · {r.uptimeMet ? 'met' : `missed — ${r.creditPct}% service credit`}</p>
         </Panel>
         <Panel className="px-4 py-3">
           <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#d9c398]/70">First response on time</p>
           <p className="mt-1 text-[1.8rem] font-extralight text-[#f3efe6]">{r.tickets.responsePct === null ? '—' : `${r.tickets.responsePct}%`}</p>
-          <p className="text-[12px] font-light text-white/50">{r.tickets.opened} ticket{r.tickets.opened === 1 ? '' : 's'} opened</p>
+          <p className="text-[12px] font-light text-night-muted">{r.tickets.opened} ticket{r.tickets.opened === 1 ? '' : 's'} opened</p>
         </Panel>
         <Panel className="px-4 py-3">
           <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#d9c398]/70">Resolved on time</p>
           <p className="mt-1 text-[1.8rem] font-extralight text-[#f3efe6]">{r.tickets.resolutionPct === null ? '—' : `${r.tickets.resolutionPct}%`}</p>
-          <p className="text-[12px] font-light text-white/50">{r.incidents.length} incident{r.incidents.length === 1 ? '' : 's'} this month</p>
+          <p className="text-[12px] font-light text-night-muted">{r.incidents.length} incident{r.incidents.length === 1 ? '' : 's'} this month</p>
         </Panel>
       </div>
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[520px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65"><th className="py-2 pr-4 font-normal">Service</th><th className="py-2 pr-4 font-normal">Availability</th><th className="py-2 font-normal">Unplanned downtime</th></tr></thead>
           <tbody>{r.uptime.map(u => (
             <tr key={u.key} className="border-t" style={{ borderColor: hair(0.08) }}>
               <td className="py-2 pr-4 text-white/70">{u.label}</td>
               <td className="py-2 pr-4 font-mono text-[12px]" style={{ color: u.uptime >= r.tier.uptimeTarget ? '#9be7c4' : '#f1938f' }}>{u.uptime.toFixed(3)}%</td>
-              <td className="py-2 font-mono text-[12px] text-white/55">{u.downtimeMinutes ? `${u.downtimeMinutes} min` : '—'}</td>
+              <td className="py-2 font-mono text-[12px] text-night-muted">{u.downtimeMinutes ? `${u.downtimeMinutes} min` : '—'}</td>
             </tr>
           ))}</tbody>
         </table>
       </div>
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65"><th className="py-2 pr-4 font-normal">Priority</th><th className="py-2 pr-4 font-normal">Opened</th><th className="py-2 pr-4 font-normal">Response met / breached</th><th className="py-2 pr-4 font-normal">Resolution met / breached</th><th className="py-2 font-normal">Still open</th></tr></thead>
           <tbody>{(Object.keys(r.tickets.byPriority) as TicketPriority[]).map(p => { const b = r.tickets.byPriority[p]; return (
             <tr key={p} className="border-t" style={{ borderColor: hair(0.08) }}>
               <td className="py-2 pr-4"><Chip tone={PRIORITY_TONE[p]}>{p}</Chip></td>
               <td className="py-2 pr-4 font-mono text-[12px] text-white/70">{b.opened}</td>
-              <td className="py-2 pr-4 font-mono text-[12px]"><span className="text-[#9be7c4]">{b.responseMet}</span> / <span className={b.responseBreached ? 'text-[#f1938f]' : 'text-white/45'}>{b.responseBreached}</span></td>
-              <td className="py-2 pr-4 font-mono text-[12px]"><span className="text-[#9be7c4]">{b.resolutionMet}</span> / <span className={b.resolutionBreached ? 'text-[#f1938f]' : 'text-white/45'}>{b.resolutionBreached}</span></td>
-              <td className="py-2 font-mono text-[12px] text-white/55">{b.open}</td>
+              <td className="py-2 pr-4 font-mono text-[12px]"><span className="text-[#9be7c4]">{b.responseMet}</span> / <span className={b.responseBreached ? 'text-[#f1938f]' : 'text-night-muted'}>{b.responseBreached}</span></td>
+              <td className="py-2 pr-4 font-mono text-[12px]"><span className="text-[#9be7c4]">{b.resolutionMet}</span> / <span className={b.resolutionBreached ? 'text-[#f1938f]' : 'text-night-muted'}>{b.resolutionBreached}</span></td>
+              <td className="py-2 font-mono text-[12px] text-night-muted">{b.open}</td>
             </tr>
           ); })}</tbody>
         </table>
@@ -298,14 +298,14 @@ function ReportPanel({ link }: { link?: string }) {
         <ul className="grid gap-1.5">
           {r.incidents.map(i => (
             <li key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] font-light text-white/65">
-              <span className="font-mono text-[10.5px] text-white/40">{i.id}</span>
+              <span className="font-mono text-[10.5px] text-night-muted">{i.id}</span>
               <Chip tone={i.kind === 'fallback' ? '#c9b6ff' : IMPACT_TONE[i.impact as ServiceImpact] ?? '#a5abb5'}>{i.kind === 'fallback' ? `fallback · ${i.impact}` : IMPACT_TEXT[i.impact as ServiceImpact] ?? i.impact}</Chip>
               <span className="min-w-0 flex-1">{i.title}</span>
-              <span className="font-mono text-[10.5px] text-white/40">{fmtDateTime(i.startedAt)}{i.minutes !== undefined ? ` · ${duration(i.minutes)}` : ''}</span>
+              <span className="font-mono text-[10.5px] text-night-muted">{fmtDateTime(i.startedAt)}{i.minutes !== undefined ? ` · ${duration(i.minutes)}` : ''}</span>
             </li>
           ))}
         </ul>
-      ) : <p className="text-[12.5px] font-light text-white/50">No incidents in {label(r.month)}.</p>}
+      ) : <p className="text-[12.5px] font-light text-night-muted">No incidents in {label(r.month)}.</p>}
     </div>
   );
 }
@@ -343,7 +343,7 @@ function StatusView({ s, q }: { s: StatusPage; q: string }) {
       <div className="mt-8 flex flex-wrap items-center gap-3 rounded-[2px] border px-5 py-4" style={{ borderColor: `${IMPACT_TONE[s.overall]}66`, background: `${IMPACT_TONE[s.overall]}10` }}>
         <span className="h-3 w-3 rounded-full" style={{ background: IMPACT_TONE[s.overall] }} />
         <span className="text-[17px] font-light text-[#f3efe6]">{s.overall === 'operational' ? 'All services operational' : IMPACT_TEXT[s.overall]}</span>
-        <span className="ml-auto font-mono text-[10.5px] text-white/40">Updated {fmtDateTime(s.generatedAt)}</span>
+        <span className="ml-auto font-mono text-[10.5px] text-night-muted">Updated {fmtDateTime(s.generatedAt)}</span>
       </div>
       {s.active.length ? (
         <Section n="01" title="Happening now">
@@ -358,14 +358,14 @@ function StatusView({ s, q }: { s: StatusPage; q: string }) {
             return (
               <div key={g.k}>
                 <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#d9c398]/75">{g.title}</p>
-                <p className="mb-2 text-[12px] font-light text-white/45">{g.note}</p>
+                <p className="mb-2 text-[12px] font-light text-night-muted">{g.note}</p>
                 <div className="grid grid-cols-[minmax(0,1fr)] gap-2">
                   {cs.map(c => (
                     <Panel key={c.key} className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <span className="text-[14px] font-light text-[#f3efe6]">{c.label}</span>
-                        {c.uptime90 !== undefined ? <span className="font-mono text-[10.5px] text-white/45">{c.uptime90.toFixed(3)}% uptime</span> : null}
-                        {c.detail ? <span className="text-[12px] font-light text-white/45">{c.detail}</span> : null}
+                        {c.uptime90 !== undefined ? <span className="font-mono text-[10.5px] text-night-muted">{c.uptime90.toFixed(3)}% uptime</span> : null}
+                        {c.detail ? <span className="text-[12px] font-light text-night-muted">{c.detail}</span> : null}
                         <span className="ml-auto"><Chip tone={IMPACT_TONE[c.status]}>{IMPACT_TEXT[c.status]}</Chip></span>
                       </div>
                       {c.days ? (
@@ -387,11 +387,11 @@ function StatusView({ s, q }: { s: StatusPage; q: string }) {
             <Panel key={i} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-4 py-3">
               <Chip tone={m.kind === 'install' ? CHAMPAGNE : IMPACT_TONE.maintenance}>{m.kind === 'install' ? 'Your upgrade' : 'Publisher'}</Chip>
               <span className="min-w-0 flex-1 text-[14px] font-light text-[#f3efe6]">{m.title}</span>
-              <span className="font-mono text-[11px] text-white/55">{fmtDateTime(m.start)} → {fmtDateTime(m.end)}</span>
+              <span className="font-mono text-[11px] text-night-muted">{fmtDateTime(m.start)} → {fmtDateTime(m.end)}</span>
             </Panel>
           ))}
-          {!s.maintenance.upcoming.length ? <p className="text-[13px] font-light text-white/50">No maintenance announced.</p> : null}
-          <p className="text-[12.5px] font-light text-white/50">
+          {!s.maintenance.upcoming.length ? <p className="text-[13px] font-light text-night-muted">No maintenance announced.</p> : null}
+          <p className="text-[12.5px] font-light text-night-muted">
             Your maintenance windows: {s.maintenance.windows.map(w => `${DAYS[w.day]} ${w.start} (${w.hours} h)`).join(' · ') || 'none set'}
             {s.maintenance.blackouts.length ? ` · blackouts: ${s.maintenance.blackouts.map(b => `${b.label} (${fmtDate(b.start)}–${fmtDate(b.end)})`).join(', ')}` : ''}
             {' · '}<Link href={`/updates/settings${q}`} className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>change control</Link>
@@ -404,17 +404,17 @@ function StatusView({ s, q }: { s: StatusPage; q: string }) {
           {s.fallbackIncidents.map(i => (
             <Panel key={i.id} className="px-4 py-3">
               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <span className="font-mono text-[11px] text-white/45">{i.id}</span>
+                <span className="font-mono text-[11px] text-night-muted">{i.id}</span>
                 <Chip tone="#c9b6ff">Fallback · {i.trigger}</Chip>
                 <span className="min-w-0 flex-1 text-[14px] font-light text-[#f3efe6]">Software {i.fromVersion} → {i.toVersion}</span>
-                <span className="font-mono text-[10.5px] text-white/40">{fmtDateTime(i.openedAt)}</span>
+                <span className="font-mono text-[10.5px] text-night-muted">{fmtDateTime(i.openedAt)}</span>
               </div>
             </Panel>
           ))}
           {!s.recent.length && !s.fallbackIncidents.length ? <p className="text-[13px] font-light text-[#9be7c4]">No incidents in the past 30 days.</p> : null}
         </div>
       </Section>
-      <p className="mt-10 text-[12.5px] font-light text-white/45">Something wrong that is not shown here? <Link href={`/updates/support${q}`} className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>Open a support ticket</Link>.</p>
+      <p className="mt-10 text-[12.5px] font-light text-night-muted">Something wrong that is not shown here? <Link href={`/updates/support${q}`} className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>Open a support ticket</Link>.</p>
     </>
   );
 }
@@ -424,10 +424,10 @@ function IncidentItem({ i }: { i: StatusPage['active'][number] }) {
   return (
     <Panel className="px-4 py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-        <span className="font-mono text-[11px] text-white/45">{i.id}</span>
+        <span className="font-mono text-[11px] text-night-muted">{i.id}</span>
         <Chip tone={IMPACT_TONE[i.impact]} solid={i.impact === 'major-outage' && !i.resolvedAt}>{IMPACT_TEXT[i.impact]}</Chip>
         <span className="min-w-0 flex-1 text-[14px] font-light text-[#f3efe6]">{i.title}</span>
-        <span className="font-mono text-[10.5px] text-white/40">{fmtDateTime(i.startedAt)}{i.resolvedAt ? ` · ${duration((Date.parse(i.resolvedAt) - Date.parse(i.startedAt)) / 60_000)}` : ''}</span>
+        <span className="font-mono text-[10.5px] text-night-muted">{fmtDateTime(i.startedAt)}{i.resolvedAt ? ` · ${duration((Date.parse(i.resolvedAt) - Date.parse(i.startedAt)) / 60_000)}` : ''}</span>
       </div>
       <p className="mt-1.5 text-[12.5px] font-light text-white/60"><span className="font-mono text-[10px] uppercase tracking-[0.18em] text-[#d9c398]/70">{last.state}</span> {last.text}</p>
     </Panel>

@@ -51,14 +51,14 @@ export function ReadinessPanel({ r, link, onChange }: { r: ChamberRelease; link?
           {p ? <><Chip tone="#9be7c4">{p.summary.compatible} compatible</Chip><Chip tone="#f1b36b">{p.summary.needsChange} need change</Chip><Chip tone="#f1938f" solid={p.summary.blocking - p.summary.waived > 0}>{p.summary.blocking} blocking{p.summary.waived ? ` · ${p.summary.waived} waived` : ''}</Chip></> : <Chip tone="#8a8f99">Not run yet</Chip>}
           <button type="button" className={`${ghostBtn} ml-auto py-1.5 text-[12px]`} disabled={busy} onClick={() => act({ action: 'preflight' })}>{p ? 'Run again' : 'Run preflight'}</button>
         </div>
-        <p className="mt-2 text-[12.5px] font-light text-white/50">Scans your own modules, integrations and builds, integration clients, signed configuration and custom-charter institutions against {r.version}. Approval runs it again automatically; blocking findings stop approval unless two officials waive them (one proposes, a different signed-in official confirms).</p>
+        <p className="mt-2 text-[12.5px] font-light text-night-muted">Scans your own modules, integrations and builds, integration clients, signed configuration and custom-charter institutions against {r.version}. Approval runs it again automatically; blocking findings stop approval unless two officials waive them (one proposes, a different signed-in official confirms).</p>
         {p ? (
           <ul className="mt-3 grid gap-2">
             {p.findings.map(f => (
               <li key={f.key} className="rounded-[2px] border px-3 py-2" style={{ borderColor: f.status === 'blocking' && !f.waiver ? '#f1938f55' : hair(0.1) }}>
-                <p className="flex flex-wrap items-center gap-2 text-[13px] font-light text-[#f3efe6]"><Chip tone={STATUS_TONE[f.status]} solid={f.status === 'blocking' && !f.waiver}>{f.waiver ? 'Waived' : STATUS_TEXT[f.status]}</Chip>{f.subject}<span className="font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">{f.kind}</span></p>
-                <p className="mt-1 text-[12px] font-light text-white/55">{f.reason}</p>
-                {f.waiver ? <p className="mt-1 text-[11.5px] text-white/45">Waived by {f.waiver.by} and {f.waiver.secondBy}: {f.waiver.reason}</p> : null}
+                <p className="flex flex-wrap items-center gap-2 text-[13px] font-light text-[#f3efe6]"><Chip tone={STATUS_TONE[f.status]} solid={f.status === 'blocking' && !f.waiver}>{f.waiver ? 'Waived' : STATUS_TEXT[f.status]}</Chip>{f.subject}<span className="font-mono text-[10px] uppercase tracking-[0.14em] text-night-faint">{f.kind}</span></p>
+                <p className="mt-1 text-[12px] font-light text-night-muted">{f.reason}</p>
+                {f.waiver ? <p className="mt-1 text-[11.5px] text-night-muted">Waived by {f.waiver.by} and {f.waiver.secondBy}: {f.waiver.reason}</p> : null}
                 {f.status === 'blocking' && !f.waiver && f.waiverProposal ? (
                   <div className="mt-2 grid gap-2">
                     <p className="text-[11.5px] text-white/60">Waiver proposed by {f.waiverProposal.by} on {fmtDateTime(f.waiverProposal.at)}: {f.waiverProposal.reason}. A different official confirms it, signed in.</p>
@@ -77,10 +77,10 @@ export function ReadinessPanel({ r, link, onChange }: { r: ChamberRelease; link?
                 ) : null}
               </li>
             ))}
-            {!p.findings.length ? <li className="text-[12.5px] text-white/45">No customisations registered.</li> : null}
+            {!p.findings.length ? <li className="text-[12.5px] text-night-muted">No customisations registered.</li> : null}
           </ul>
         ) : null}
-        {p ? <p className="mt-2 font-mono text-[10px] text-white/35">Run {fmtDateTime(p.runAt)} by {p.runBy}</p> : null}
+        {p ? <p className="mt-2 font-mono text-[10px] text-night-faint">Run {fmtDateTime(p.runAt)} by {p.runBy}</p> : null}
       </Panel>
 
       <Panel className="p-5">
@@ -97,7 +97,7 @@ export function ReadinessPanel({ r, link, onChange }: { r: ChamberRelease; link?
             <button type="button" className={`${ghostBtn} py-2.5 text-[12px]`} onClick={register}>Register staging</button>
           </div>
         ) : (
-          <p className="mt-2 text-[12.5px] font-light text-white/55">{data.staging.name}{data.staging.url ? ` · ${data.staging.url}` : ''} · {data.staging.provisionedBy === 'publisher' ? 'provisioned for you' : 'registered by your team'}</p>
+          <p className="mt-2 text-[12.5px] font-light text-night-muted">{data.staging.name}{data.staging.url ? ` · ${data.staging.url}` : ''} · {data.staging.provisionedBy === 'publisher' ? 'provisioned for you' : 'registered by your team'}</p>
         )}
         {data.staging.provisioned && (!run || run.state === 'failed') && r.newer ? (
           <button type="button" className={`${goldBtn} mt-3 px-4 py-2 text-[12.5px]`} style={goldStyle} disabled={busy || r.blocked} onClick={() => act({ action: 'stage' })}>Install {r.version} on staging</button>
@@ -125,7 +125,7 @@ export function ReadinessPanel({ r, link, onChange }: { r: ChamberRelease; link?
         ) : null}
       </Panel>
       <div className="min-h-[16px]" aria-live="polite"><ErrorLine>{err}</ErrorLine></div>
-      <p className="text-[11.5px] font-light text-white/35" style={{ color: CHAMPAGNE + '80' }}>Every step is written to the audit chain.</p>
+      <p className="text-[11.5px] font-light text-night-faint" style={{ color: CHAMPAGNE + '80' }}>Every step is written to the audit chain.</p>
     </div>
   );
 }

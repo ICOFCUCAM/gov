@@ -10,6 +10,7 @@ import { api } from '@/lib/api/client';
 import { inputCls, goldBtn, goldStyle, hair, CHAMPAGNE } from '@/components/features/onboarding/Chrome';
 import type { LifecycleLine, LifecyclePolicy, LifecycleWarning } from '@/lib/api/types';
 import { Chip, ErrorLine, fmtDate, useActor } from './ui';
+import { NIGHT } from '@/lib/theme/tokens';
 
 const PHASE_TONE = { active: '#9be7c4', 'security-only': '#f4d58d', 'end-of-life': '#f1938f' } as const;
 const PHASE_TEXT = { active: 'Active', 'security-only': 'Security fixes only', 'end-of-life': 'End of life' } as const;
@@ -26,7 +27,7 @@ export function LifecycleBanner({ w, q }: { w: LifecycleWarning; q: string }) {
         {w.level === 'expired'
           ? `Release line ${w.line} (you run ${w.version}) reached end of life on ${fmtDate(w.endOfLife)} and no longer receives security fixes.`
           : `Release line ${w.line} (you run ${w.version}) reaches end of life on ${fmtDate(w.endOfLife)}; after that it receives no security fixes.`}
-        {' '}<span className="text-white/50">{w.moveTo ? `Plan the move to ${w.moveTo}.` : 'Plan your next upgrade; nothing is installed without your decision.'}</span>
+        {' '}<span className="text-night-muted">{w.moveTo ? `Plan the move to ${w.moveTo}.` : 'Plan your next upgrade; nothing is installed without your decision.'}</span>
       </p>
       <Link href={`/updates${q}#lifecycle`} className="whitespace-nowrap text-[13px] underline decoration-[#d9c398]/40 underline-offset-4 hover:text-[#f4e4bd]" style={{ color: CHAMPAGNE }}>See the lifecycle →</Link>
     </div>
@@ -35,7 +36,7 @@ export function LifecycleBanner({ w, q }: { w: LifecycleWarning; q: string }) {
 
 /** Timeline of every line: active and security-only windows, today, and the installed line. */
 export function LifecycleTimeline({ lines, installedLine, policy }: { lines: LifecycleLine[]; installedLine?: string; policy: LifecyclePolicy }) {
-  if (!lines.length) return <p className="text-[13px] font-light text-white/50">No release lines yet.</p>;
+  if (!lines.length) return <p className="text-[13px] font-light text-night-muted">No release lines yet.</p>;
   const now = Date.now();
   const start = Math.min(...lines.map(l => Date.parse(l.gaAt)), now);
   const end = Math.max(...lines.map(l => Date.parse(l.endOfLife)), now);
@@ -44,7 +45,7 @@ export function LifecycleTimeline({ lines, installedLine, policy }: { lines: Lif
   for (let y = new Date(start).getUTCFullYear() + 1; Date.UTC(y, 0, 1) < end; y++) years.push(y);
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
-      <div className="flex flex-wrap items-center gap-2 text-[11.5px] font-light text-white/50">
+      <div className="flex flex-wrap items-center gap-2 text-[11.5px] font-light text-night-muted">
         <Chip tone={PHASE_TONE.active}>Active</Chip><Chip tone={PHASE_TONE['security-only']}>Security fixes only</Chip><Chip tone={PHASE_TONE['end-of-life']}>End of life</Chip>
         <span className="ml-auto">Standard {policy.standard.activeMonths}+{policy.standard.securityMonths} months · LTS {policy.lts.activeMonths}+{policy.lts.securityMonths} months · notices {policy.noticeMonths.join(', ')} months before</span>
       </div>
@@ -55,7 +56,7 @@ export function LifecycleTimeline({ lines, installedLine, policy }: { lines: Lif
             <div key={l.line} className="grid grid-cols-[72px_minmax(0,1fr)] items-center gap-3 py-2 sm:grid-cols-[150px_minmax(0,1fr)]">
               <div className="min-w-0">
                 <span className={`font-mono text-[13px] ${mine ? 'text-[#f4e4bd]' : 'text-white/75'}`}>{l.line}</span>
-                <span className="ml-2 font-mono text-[9.5px] uppercase tracking-[0.16em]" style={{ color: l.kind === 'lts' ? '#c9b6ff' : 'rgba(243,239,230,0.45)' }}>{l.kind === 'lts' ? 'LTS' : 'Std'}</span>
+                <span className="ml-2 font-mono text-[9.5px] uppercase tracking-[0.16em]" style={{ color: l.kind === 'lts' ? '#c9b6ff' : NIGHT.muted }}>{l.kind === 'lts' ? 'LTS' : 'Std'}</span>
                 {mine ? <span className="mt-0.5 block font-mono text-[9px] uppercase tracking-[0.16em]" style={{ color: CHAMPAGNE }}>You run this</span> : null}
               </div>
               <div className="relative h-7 rounded-[2px]" style={{ background: hair(0.05), outline: mine ? `1px solid ${CHAMPAGNE}66` : undefined }}
@@ -73,11 +74,11 @@ export function LifecycleTimeline({ lines, installedLine, policy }: { lines: Lif
       </div>
       <div className="grid grid-cols-[72px_minmax(0,1fr)] gap-3 sm:grid-cols-[150px_minmax(0,1fr)]">
         <span />
-        <div className="relative h-4 font-mono text-[9.5px] text-white/40">
+        <div className="relative h-4 font-mono text-[9.5px] text-night-muted">
           {years.map(y => <span key={y} className="absolute -translate-x-1/2" style={{ left: pct(Date.UTC(y, 0, 1)) }}>{y}</span>)}
         </div>
       </div>
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[560px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65"><th className="py-2 pr-3 font-normal">Line</th><th className="py-2 pr-3 font-normal">Now</th><th className="py-2 pr-3 font-normal">First release</th><th className="py-2 pr-3 font-normal">Active until</th><th className="py-2 pr-3 font-normal">End of life</th><th className="py-2 font-normal">Latest</th></tr></thead>
           <tbody>{lines.map(l => (
@@ -123,25 +124,25 @@ export function PublisherLifecycle() {
     catch (x) { setErr(x instanceof Error ? x.message : 'Could not save'); }
   }
   const win = (k: 'standard' | 'lts', f: 'activeMonths' | 'securityMonths', label: string) => (
-    <label className="grid gap-1 text-[11.5px] text-white/50">{label}
+    <label className="grid gap-1 text-[11.5px] text-night-muted">{label}
       <input type="number" min={0} className={`${inputCls} w-[96px] py-2 text-[13px]`} value={p[k][f]} onChange={e => setP({ ...p, [k]: { ...p[k], [f]: num(e.target.value) } })} />
     </label>
   );
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
       <LifecycleTimeline lines={d.lines} policy={d.policy} />
-      <div className="flex flex-wrap gap-2 text-[12px] font-light text-white/55">
-        {d.lines.map(l => <span key={l.line}>{l.line}: {d.nationsOnLine[l.line]?.length ? d.nationsOnLine[l.line]!.join(', ') : 'no nations'}</span>).reduce<React.ReactNode[]>((a, x, i) => (i ? [...a, <span key={`s${i}`} className="text-white/25">·</span>, x] : [x]), [])}
+      <div className="flex flex-wrap gap-2 text-[12px] font-light text-night-muted">
+        {d.lines.map(l => <span key={l.line}>{l.line}: {d.nationsOnLine[l.line]?.length ? d.nationsOnLine[l.line]!.join(', ') : 'no nations'}</span>).reduce<React.ReactNode[]>((a, x, i) => (i ? [...a, <span key={`s${i}`} className="text-night-faint">·</span>, x] : [x]), [])}
       </div>
       <div className="flex flex-wrap items-end gap-4 rounded-[2px] border p-4" style={{ borderColor: hair(0.14) }}>
         {win('standard', 'activeMonths', 'Standard · active')}
         {win('standard', 'securityMonths', 'Standard · security only')}
         {win('lts', 'activeMonths', 'LTS · active')}
         {win('lts', 'securityMonths', 'LTS · security only')}
-        <label className="grid gap-1 text-[11.5px] text-white/50">Notices (months before)
+        <label className="grid gap-1 text-[11.5px] text-night-muted">Notices (months before)
           <input className={`${inputCls} w-[140px] py-2 text-[13px]`} value={p.noticeMonths.join(', ')} onChange={e => setP({ ...p, noticeMonths: e.target.value.split(/[,\s]+/).filter(Boolean).map(Number) })} />
         </label>
-        <div className="grid gap-1 text-[11.5px] text-white/50">LTS lines
+        <div className="grid gap-1 text-[11.5px] text-night-muted">LTS lines
           <div className="flex flex-wrap gap-3 py-2">
             {d.lines.map(l => (
               <label key={l.line} className="flex items-center gap-1.5 font-mono text-[12px] text-white/70">
@@ -152,7 +153,7 @@ export function PublisherLifecycle() {
         </div>
         <button type="button" className={`${goldBtn} px-4 py-2 text-[12.5px]`} style={goldStyle} onClick={save}>Save policy</button>
       </div>
-      {p.updatedBy ? <p className="text-[11.5px] text-white/40">Last changed by {p.updatedBy} on {fmtDate(p.updatedAt)}.</p> : null}
+      {p.updatedBy ? <p className="text-[11.5px] text-night-muted">Last changed by {p.updatedBy} on {fmtDate(p.updatedAt)}.</p> : null}
       <p className="min-h-[16px] text-[12px] text-[#9be7c4]">{ok}</p>
       <ErrorLine>{err}</ErrorLine>
     </div>

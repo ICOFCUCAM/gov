@@ -36,16 +36,16 @@ export function SovereigntyPanel({ link }: { link?: string }) {
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
               <span className="text-[15px] font-light text-[#f3efe6]">{c.label}</span>
               <Chip tone={s.enabled ? '#f4d58d' : '#9be7c4'} solid={s.enabled}>{s.enabled ? 'Shared' : 'Off — stays in the country'}</Chip>
-              <span className="ml-auto font-mono text-[10.5px] text-white/40">to {c.destination}</span>
+              <span className="ml-auto font-mono text-[10.5px] text-night-muted">to {c.destination}</span>
             </div>
-            <p className="mt-1.5 text-[12.5px] font-light text-white/55">{c.purpose} {s.enabled ? '' : c.whenOff}</p>
+            <p className="mt-1.5 text-[12.5px] font-light text-night-muted">{c.purpose} {s.enabled ? '' : c.whenOff}</p>
             <div className="mt-2 grid grid-cols-[minmax(0,1fr)] gap-2 text-[12px] font-light sm:grid-cols-2">
               <div><span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-[#d9c398]/70">Contains</span><ul className="mt-1 grid gap-0.5 text-white/60">{c.contains.map(x => <li key={x}>· {x}</li>)}</ul></div>
               <div><span className="font-mono text-[9.5px] uppercase tracking-[0.18em] text-[#9be7c4]/80">Never</span><ul className="mt-1 grid gap-0.5 text-white/60">{c.never.map(x => <li key={x}>· {x}</li>)}</ul></div>
             </div>
-            <button type="button" onClick={() => setSample(x => (x === c.key ? null : c.key))} aria-expanded={sample === c.key} className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45 hover:text-[#f4e4bd]">{sample === c.key ? 'Hide' : 'Show'} sample payload</button>
-            {sample === c.key ? <pre className="mt-2 overflow-x-auto rounded-[2px] border p-3 font-mono text-[11px] leading-relaxed text-white/70" style={{ borderColor: hair(0.12), background: 'rgba(0,0,0,0.25)' }}>{JSON.stringify(c.sample, null, 2)}</pre> : null}
-            <p className="mt-2 font-mono text-[10.5px] text-white/40">
+            <button type="button" onClick={() => setSample(x => (x === c.key ? null : c.key))} aria-expanded={sample === c.key} className="mt-2 font-mono text-[10px] uppercase tracking-[0.18em] text-night-muted hover:text-[#f4e4bd]">{sample === c.key ? 'Hide' : 'Show'} sample payload</button>
+            {sample === c.key ? <pre tabIndex={0} aria-label="Sample payload" className="focus-ring mt-2 overflow-x-auto rounded-[2px] border p-3 font-mono text-[11px] leading-relaxed text-white/70" style={{ borderColor: hair(0.12), background: 'rgba(0,0,0,0.25)' }}>{JSON.stringify(c.sample, null, 2)}</pre> : null}
+            <p className="mt-2 font-mono text-[10.5px] text-night-muted">
               {s.enabled ? `Approved by ${s.approvedBy} on ${fmtDateTime(s.at)} — “${s.reason}” · ${s.sent} sent${s.lastSentAt ? `, last ${fmtDateTime(s.lastSentAt)}` : ''}` : `${s.heldBack} held back in the country${s.at ? ` · switched off ${fmtDateTime(s.at)}` : ''}`}
             </p>
             <div className="mt-3 flex flex-wrap items-end gap-2">
@@ -74,8 +74,8 @@ export function PublisherTelemetry() {
   const cats: { k: DataCategory; l: string }[] = [{ k: 'health-reports', l: 'Health reports' }, { k: 'crash-reports', l: 'Crash reports' }, { k: 'usage-metrics', l: 'Usage metrics' }, { k: 'support-attachments', l: 'Support attachments' }];
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
-      <p className="text-[12.5px] font-light text-white/55">Only what each nation has chosen to share arrives here. Where a category is off, nothing is received — not even a count.</p>
-      <div className="overflow-x-auto">
+      <p className="text-[12.5px] font-light text-night-muted">Only what each nation has chosen to share arrives here. Where a category is off, nothing is received — not even a count.</p>
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[640px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65"><th className="py-2 pr-3 font-normal">Nation</th>{cats.map(c => <th key={c.k} className="py-2 pr-3 font-normal">{c.l}</th>)}</tr></thead>
           <tbody>{d.nations.map(n => (
@@ -87,7 +87,7 @@ export function PublisherTelemetry() {
         </table>
       </div>
       {d.recent.length ? (
-        <ul className="grid gap-1">{d.recent.slice(0, 8).map(t => <li key={t.id} className="text-[12px] font-light text-white/55"><span className="font-mono text-[10.5px] text-white/40">{fmtDateTime(t.at)}</span> · {t.category} · {t.summary}</li>)}</ul>
+        <ul className="grid gap-1">{d.recent.slice(0, 8).map(t => <li key={t.id} className="text-[12px] font-light text-night-muted"><span className="font-mono text-[10.5px] text-night-muted">{fmtDateTime(t.at)}</span> · {t.category} · {t.summary}</li>)}</ul>
       ) : null}
     </div>
   );

@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { SkipLink } from '@/components/ui/SkipLink';
 
 export interface ConsoleShellProps {
   topbar?: React.ReactNode;
@@ -28,12 +29,13 @@ export function ConsoleShell({
       )}
       style={{ ['--accent' as string]: '#1f5fad' }}
     >
+      <SkipLink />
       {topbar ? (
         <header className="flex shrink-0 items-center justify-between gap-4 border-b border-line bg-surface px-6 py-3">
           {topbar}
         </header>
       ) : null}
-      <main className="grid min-h-0 flex-1 grid-cols-1 gap-px overflow-hidden bg-line lg:grid-cols-[280px_1fr_400px]">
+      <main id="main" tabIndex={-1} className="grid min-h-0 flex-1 grid-cols-1 gap-px overflow-hidden bg-line lg:grid-cols-[280px_1fr_400px]">
         {left ? (
           <aside
             aria-label="Queue"

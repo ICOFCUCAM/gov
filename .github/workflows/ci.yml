@@ -131,6 +131,40 @@ jobs:
           path: app/public-sites-audit.json
           if-no-files-found: ignore
 
+  console-accessibility-audit:
+    name: console accessibility audit (WCAG 2.2 AA, skip links)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright-core install --with-deps chromium
+      - name: Build
+        run: pnpm build
+      - name: Start the server
+        run: |
+          pnpm start -p 3000 > /tmp/next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/api/setup > /dev/null && exit 0; sleep 2; done
+          cat /tmp/next.log; exit 1
+      - name: Audit the console, Update Center, admin and onboarding pages (WCAG 2.2 AA, skip links)
+        run: pnpm audit:console --nation KEN --report console-audit.json
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: console-audit
+          path: app/console-audit.json
+          if-no-files-found: ignore
+
   console-smoke:
     name: console smoke tests and OGC API Features conformance
     runs-on: ubuntu-latest

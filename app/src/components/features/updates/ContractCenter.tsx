@@ -12,6 +12,7 @@ import type { Contract, ContractInvoice, AdvisorySeverity } from '@/lib/api/type
 import { ChamberNav, ChamberTabs, Chip, ErrorLine, Loading, Panel, PoweredBy, fmtDate, fmtDateTime, useActor, useCenterTitle, useLink } from './ui';
 import { TierTable } from './SupportCenter';
 import { PATH_TITLE } from './HostingCenter';
+import { NIGHT } from '@/lib/theme/tokens';
 
 export const KIND_TEXT: Record<Contract['kind'], string> = { 'hosted-subscription': 'Hosted subscription', 'self-run-subscription': 'Platform subscription (you run it)', 'perpetual-licence': 'Perpetual licence with support and updates' };
 const INV_TONE: Record<ContractInvoice['status'], string> = { paid: '#9be7c4', due: '#f4d58d', overdue: '#f1938f', upcoming: '#a5abb5' };
@@ -21,15 +22,15 @@ const hrs = (h: number) => (h < 72 ? `${h} h` : `${Math.round(h / 24)} days`);
 
 export function InvoiceTable({ invoices }: { invoices: ContractInvoice[] }) {
   return (
-    <div className="overflow-x-auto">
+    <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
       <table className="w-full min-w-[720px] text-left text-[12.5px] font-light">
         <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65"><th className="py-2 pr-3 font-normal">Invoice</th><th className="py-2 pr-3 font-normal">For</th><th className="py-2 pr-3 font-normal">Issued</th><th className="py-2 pr-3 font-normal">Due</th><th className="py-2 pr-3 text-right font-normal">Amount</th><th className="py-2 font-normal">Status</th></tr></thead>
         <tbody>{invoices.map(i => (
           <tr key={`${i.source}:${i.id}`} className="border-t" style={{ borderColor: hair(0.08) }}>
-            <td className="py-2 pr-3 font-mono text-[11px] text-white/55">{i.id}</td>
-            <td className="py-2 pr-3 text-white/70">{i.description}<span className="block text-[10.5px] text-white/35">{i.source === 'security-store' ? 'Security store' : 'Platform'}{i.reference ? ` · ref ${i.reference}` : ''}</span></td>
-            <td className="py-2 pr-3 font-mono text-[11px] text-white/55">{fmtDate(i.issuedAt)}</td>
-            <td className="py-2 pr-3 font-mono text-[11px] text-white/55">{fmtDate(i.dueAt)}</td>
+            <td className="py-2 pr-3 font-mono text-[11px] text-night-muted">{i.id}</td>
+            <td className="py-2 pr-3 text-white/70">{i.description}<span className="block text-[10.5px] text-night-faint">{i.source === 'security-store' ? 'Security store' : 'Platform'}{i.reference ? ` · ref ${i.reference}` : ''}</span></td>
+            <td className="py-2 pr-3 font-mono text-[11px] text-night-muted">{fmtDate(i.issuedAt)}</td>
+            <td className="py-2 pr-3 font-mono text-[11px] text-night-muted">{fmtDate(i.dueAt)}</td>
             <td className="py-2 pr-3 text-right font-mono text-[12px] text-[#f3efe6]">{formatMoney(i.amount, { compact: false, digits: 0, currency: i.currency })}</td>
             <td className="py-2"><Chip tone={INV_TONE[i.status]} solid={i.status === 'overdue'}>{i.status}{i.paidAt ? ` ${fmtDate(i.paidAt)}` : ''}</Chip></td>
           </tr>
@@ -68,7 +69,7 @@ export function ContractCenter() {
                 <Panel key={k} className="px-4 py-3">
                   <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#d9c398]/70">{k}</p>
                   <p className="mt-1 text-[16px] font-light text-[#f3efe6]">{v}</p>
-                  <p className="mt-0.5 text-[11.5px] font-light text-white/45">{s}</p>
+                  <p className="mt-0.5 text-[11.5px] font-light text-night-muted">{s}</p>
                 </Panel>
               ))}
             </div>
@@ -77,30 +78,30 @@ export function ContractCenter() {
               <div className="grid grid-cols-[minmax(0,1fr)] gap-4 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
                 <ul className="grid grid-cols-[minmax(0,1fr)] gap-2 sm:grid-cols-2">
                   {c.modules.map(m => (
-                    <li key={m.key} className="flex items-center gap-2 rounded-[2px] border px-3 py-2 text-[13px] font-light" style={{ borderColor: hair(m.entitled ? 0.2 : 0.08), color: m.entitled ? 'rgba(243,239,230,0.85)' : 'rgba(243,239,230,0.35)' }}>
+                    <li key={m.key} className="flex items-center gap-2 rounded-[2px] border px-3 py-2 text-[13px] font-light" style={{ borderColor: hair(m.entitled ? 0.2 : 0.08), color: m.entitled ? 'rgba(243,239,230,0.85)' : NIGHT.faint }}>
                       <span className="h-1.5 w-1.5 rounded-full" style={{ background: m.entitled ? '#9be7c4' : 'rgba(243,239,230,0.2)' }} />{m.label}{m.entitled ? null : <span className="ml-auto font-mono text-[9.5px] uppercase tracking-[0.16em]">Not included</span>}
                     </li>
                   ))}
                 </ul>
                 <Panel className="px-4 py-4">
                   <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#d9c398]/70">Officer seats</p>
-                  <p className="mt-1 text-[1.6rem] font-extralight text-[#f3efe6]">{c.seats.used.toLocaleString()} <span className="text-[14px] text-white/45">of {c.seats.licensed.toLocaleString()} in use</span></p>
+                  <p className="mt-1 text-[1.6rem] font-extralight text-[#f3efe6]">{c.seats.used.toLocaleString()} <span className="text-[14px] text-night-muted">of {c.seats.licensed.toLocaleString()} in use</span></p>
                   <div className="mt-3 h-2 rounded-full" style={{ background: hair(0.1) }}><div className="h-2 rounded-full" style={{ width: `${Math.min(100, (c.seats.used / c.seats.licensed) * 100)}%`, background: c.seats.used / c.seats.licensed > 0.9 ? '#f1b36b' : '#9be7c4' }} /></div>
-                  <p className="mt-2 text-[11.5px] text-white/40">Citizens are not counted as seats.</p>
+                  <p className="mt-2 text-[11.5px] text-night-muted">Citizens are not counted as seats.</p>
                 </Panel>
               </div>
             </Section>
             <Section n="02" title="Billing" aside={c.outstanding ? `${money(c.outstanding)} outstanding` : 'Nothing outstanding'}>
               <InvoiceTable invoices={c.invoices} />
-              <p className="mt-3 text-[12px] font-light text-white/45">Platform invoices follow the contract; security-store invoices are the ones in the <Link href={`/updates/security${q}`} className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>security store</Link>, shown here for one view of what you owe.</p>
+              <p className="mt-3 text-[12px] font-light text-night-muted">Platform invoices follow the contract; security-store invoices are the ones in the <Link href={`/updates/security${q}`} className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>security store</Link>, shown here for one view of what you owe.</p>
             </Section>
             <Section n="03" title="Service levels in this contract" aside={`${d.tier.label} tier`}>
               <TierTable policy={d.tier} priorities={d.priorities} />
-              <p className="mt-3 text-[12.5px] font-light text-white/55">Security patch commitments: {(Object.keys(d.patchCommitments) as AdvisorySeverity[]).map(s => `${s} ${hrs(d.patchCommitments[s])}`).join(' · ')}. Source code held in escrow — see <Link href={`/updates/assurance${q}`} className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>Assurance</Link>.</p>
+              <p className="mt-3 text-[12.5px] font-light text-night-muted">Security patch commitments: {(Object.keys(d.patchCommitments) as AdvisorySeverity[]).map(s => `${s} ${hrs(d.patchCommitments[s])}`).join(' · ')}. Source code held in escrow — see <Link href={`/updates/assurance${q}`} className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>Assurance</Link>.</p>
             </Section>
             <Section n="04" title="Contract history">
               <ol className="grid gap-1.5">{[...c.history].reverse().map((h, i) => (
-                <li key={i} className="text-[12.5px] font-light text-white/65"><span className="font-mono text-[10.5px] text-white/40">{fmtDateTime(h.at)}</span> · {h.by} · <span className="text-[#f4e4bd]">{h.action}</span>{h.note ? ` — ${h.note}` : ''}</li>
+                <li key={i} className="text-[12.5px] font-light text-white/65"><span className="font-mono text-[10.5px] text-night-muted">{fmtDateTime(h.at)}</span> · {h.by} · <span className="text-[#f4e4bd]">{h.action}</span>{h.note ? ` — ${h.note}` : ''}</li>
               ))}</ol>
               <ChangeRequest link={link} onDone={load} />
             </Section>
@@ -177,15 +178,15 @@ export function PublisherContracts() {
   }
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[900px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65">
             <th className="py-2 pr-3 font-normal">Nation</th><th className="py-2 pr-3 font-normal">Contract</th><th className="py-2 pr-3 font-normal">Tier</th><th className="py-2 pr-3 font-normal">Seats</th><th className="py-2 pr-3 font-normal">Term ends</th><th className="py-2 pr-3 font-normal">Renewal</th><th className="py-2 pr-3 text-right font-normal">Annual</th><th className="py-2 pr-3 text-right font-normal">Outstanding</th><th className="py-2 font-normal" />
           </tr></thead>
           <tbody>{d.contracts.map(c => (
             <tr key={c.id} className="border-t align-middle" style={{ borderColor: hair(0.08) }}>
-              <td className="py-2 pr-3 text-[#f3efe6]">{c.nationName}<span className="block font-mono text-[10px] text-white/40">{c.id}</span></td>
-              <td className="py-2 pr-3 text-white/65">{KIND_TEXT[c.kind]}<span className="block text-[10.5px] text-white/40">{PATH_TITLE[c.hostingPath]}{c.plan ? ` · ${c.plan}` : ''}</span></td>
+              <td className="py-2 pr-3 text-[#f3efe6]">{c.nationName}<span className="block font-mono text-[10px] text-night-muted">{c.id}</span></td>
+              <td className="py-2 pr-3 text-white/65">{KIND_TEXT[c.kind]}<span className="block text-[10.5px] text-night-muted">{PATH_TITLE[c.hostingPath]}{c.plan ? ` · ${c.plan}` : ''}</span></td>
               <td className="py-2 pr-3">
                 <Select aria-label={`Tier for ${c.nationName}`} value={c.supportTier} onChange={e => act(c.nationId, { action: 'set-tier', tier: e.target.value })} className="w-auto py-1.5 text-[12px]">
                   <option value="standard">Standard</option><option value="enterprise">Enterprise</option><option value="sovereign">Sovereign</option>
@@ -195,8 +196,8 @@ export function PublisherContracts() {
               <td className="py-2 pr-3 font-mono text-[11.5px] text-white/60">{fmtDate(c.term.end)}</td>
               <td className="py-2 pr-3"><Chip tone={RENEWAL_TONE[c.renewal.status]}>{RENEWAL_TEXT[c.renewal.status]}</Chip></td>
               <td className="py-2 pr-3 text-right font-mono text-[12px] text-white/75">{formatMoney(c.annualFee, { compact: true, currency: c.currency })}</td>
-              <td className="py-2 pr-3 text-right font-mono text-[12px]" style={{ color: c.outstanding ? '#f4d58d' : 'rgba(243,239,230,0.45)' }}>{c.outstanding ? formatMoney(c.outstanding, { compact: true, currency: c.currency }) : '—'}</td>
-              <td className="py-2 text-right"><button type="button" className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/45 hover:text-[#f4e4bd]" onClick={() => setOpen(o => (o === c.id ? null : c.id))}>{open === c.id ? 'Close' : 'Manage'}</button></td>
+              <td className="py-2 pr-3 text-right font-mono text-[12px]" style={{ color: c.outstanding ? '#f4d58d' : NIGHT.muted }}>{c.outstanding ? formatMoney(c.outstanding, { compact: true, currency: c.currency }) : '—'}</td>
+              <td className="py-2 text-right"><button type="button" className="font-mono text-[10px] uppercase tracking-[0.16em] text-night-muted hover:text-[#f4e4bd]" onClick={() => setOpen(o => (o === c.id ? null : c.id))}>{open === c.id ? 'Close' : 'Manage'}</button></td>
             </tr>
           ))}</tbody>
         </table>

@@ -86,6 +86,29 @@ export const INSTITUTIONAL = {
   champagneHi: '#f4e4bd',
 } as const;
 
+/**
+ * The night chrome (OnboardingFrame: welcome, setup, the Update Center, the
+ * release publisher and the site editor): warm text on the institutional
+ * ground. `soft` is the secondary level (as `text-white/60…75`), `muted`
+ * replaces `text-white/40…55` and `faint` `text-white/15…35`; each reads at
+ * 4.5:1 on the ground and on
+ * the lightest panel (champagne hair at 12%), where the white-opacity
+ * utilities fell to 2.5–3.8:1 (go-live review M-11). `champagneMuted` is the
+ * dimmest champagne text (was `#d9c398` at 50–60% opacity).
+ * Tailwind: `text-night-ink`, `text-night-soft`, `text-night-muted`,
+ * `text-night-faint`, `text-night-champagne`.
+ */
+export const NIGHT = {
+  ground: INSTITUTIONAL.ground,
+  /** The lightest panel text sits on: champagne hair 12% over the ground. */
+  panel: '#1e1d1b',
+  ink: '#f3efe6',
+  soft: '#c4c0b8',
+  muted: '#a29e96',
+  faint: '#928e87',
+  champagneMuted: '#a5967a',
+} as const;
+
 /** Decision-class colours (tailwind `class-a` … `class-e`); class C reads at 5.2:1 on white (was #b08400). */
 export const DECISION_CLASS = {
   a: '#4a6b8a',
