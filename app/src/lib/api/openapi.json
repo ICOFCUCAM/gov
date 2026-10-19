@@ -10577,6 +10577,52 @@
         "x-source": "src/app/api/twin/ogc/route.ts"
       }
     },
+    "/api/twin/runs/{id}/withdraw": {
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_runs_id_withdraw",
+        "summary": "POST /api/twin/runs/{id}/withdraw",
+        "description": "Withdraw a twin import (a correction, lib/twin/register.ts withdrawRun): its observations are marked superseded from now, never deleted, so as-of queries for what was known before still see them. A named official with a reason; audited. A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/runs/[id]/withdraw/route.ts"
+      }
+    },
     "/api/twin/scenarios/{id}": {
       "get": {
         "tags": [

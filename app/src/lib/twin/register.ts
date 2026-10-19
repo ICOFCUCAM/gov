@@ -82,6 +82,8 @@ export interface TwinRun {
   accepted: number;
   rejected: { row: number; reason: string }[];
   error?: string;
+  /** Set when an official withdrew the import: its observations are superseded from that moment, never deleted. */
+  withdrawn?: { at: string; by: string; reason: string };
 }
 
 export interface Observation {
@@ -95,6 +97,8 @@ export interface Observation {
   recordedAt: string;
   sourceId: string;
   runId: string;
+  /** When the platform stopped relying on it (its run was withdrawn); as-of queries known before then still see it. */
+  supersededAt?: string;
 }
 
 const db = twinDb;
@@ -316,6 +320,27 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
   return run;
 }
 
+/**
+ * Withdraw an import (a correction): its observations are marked superseded
+ * from now, never deleted, so "what was known then" still answers with them
+ * and every later query does not. A named official with a reason; audited.
+ */
+export function withdrawRun(runId: string, by: string, reason: string, now = new Date()): { run: TwinRun; superseded: number } | { error: string } {
+  const d = db();
+  const run = d.runs.find(r => r.id === runId);
+  if (!run) return { error: 'No such import' };
+  const who = by.trim(), why = reason.trim();
+  if (!who) return { error: 'Name the official withdrawing the import' };
+  if (why.length < 4) return { error: 'Give the reason for withdrawing it' };
+  if (run.withdrawn) return { error: `Already withdrawn on ${run.withdrawn.at.slice(0, 10)} by ${run.withdrawn.by}` };
+  const at = now.toISOString();
+  let superseded = 0;
+  for (const o of d.observations) if (o.runId === runId && !o.supersededAt) { o.supersededAt = at; superseded++; }
+  run.withdrawn = { at, by: who, reason: why.slice(0, 500) };
+  recordAudit(who, 'twin.run.withdraw', `Twin:${run.sourceId}/${run.id}`, 'ok', `${superseded} observations superseded · ${run.withdrawn.reason}`);
+  return { run: { ...run }, superseded };
+}
+
 /** Sources whose schedule says they are due (for /api/cron/twin-ingest). */
 export function dueSources(now = new Date()): TwinSource[] {
   const gap = { daily: 86_400_000, weekly: 7 * 86_400_000 } as const;
@@ -339,6 +364,7 @@ export function stateAsOf({ asOf, knownAt, metric, entityId }: { asOf?: string; 
     if (metric && o.metric !== metric) continue;
     if (entityId && o.entityId !== entityId) continue;
     if (o.recordedAt > at || o.validFrom > day) continue;
+    if (o.supersededAt && o.supersededAt <= at) continue;
     const k = `${o.entityId}|${o.metric}`;
     const cur = best.get(k);
     if (!cur || o.validFrom > cur.validFrom || (o.validFrom === cur.validFrom && o.recordedAt > cur.recordedAt)) best.set(k, o);
@@ -427,7 +453,7 @@ export function metricsKnown(): string[] {
 
 /** The dates a metric has observations for (when they were true), oldest first: the steps of the history view. */
 export function metricDates(metric: string): string[] {
-  return [...new Set(db().observations.filter(o => o.metric === metric).map(o => o.validFrom))].sort();
+  return [...new Set(db().observations.filter(o => o.metric === metric && !o.supersededAt).map(o => o.validFrom))].sort();
 }
 
 /** An entity as the register holds it. */
