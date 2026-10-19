@@ -204,7 +204,8 @@ export function hospitalOps(instId: string, t: number): HospitalOps {
     icu: { beds: icuBeds, occupied: Math.round(icuBeds * icuOcc / 100), occupancyPct: icuOcc, ventilators: vents, ventInUse: Math.round(vents * Math.min(1, icuOcc / 100 + 0.05)) },
     theatres: { total: theatres, active: Math.round(theatres * tUtil / 100), scheduledToday: Math.round(theatres * 1.8), utilisationPct: tUtil },
     ambulances: { fleet, available: fleet - dispatched, dispatched, meanResponseMin: Math.round(wave(`ho:rt:${instId}`, t, 6, 26)) },
-    mortalityIndex: Math.round(wave(`ho:mo:${instId}`, t, 6, 22) * 10) / 10,
+    // Deaths per 1,000 admissions: derived from the twin's observed deaths and admissions for this institution (modelled), else the sample.
+    mortalityIndex: Math.round(readTwinValue('health.hospital_mortality', wave(`ho:mo:${instId}`, t, 6, 22), { entityId: `institution:${instId}` }) * 10) / 10,
     staffingPct: Math.round(wave(`ho:sf:${instId}`, t, 62, 97)),
     loadBalanceTone: occPct >= 92 || icuOcc >= 95 ? 'alert' : occPct >= 82 ? 'warn' : 'ok',
   };

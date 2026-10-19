@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { civicBoard, ETHICAL_GUARDRAILS } from '@/lib/gov/civic-legitimacy';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 function EraBar({ series }: { series: number[] }) {
   return (
@@ -28,7 +29,7 @@ export function LegitimacyTrajectory({ id, now }: { id: string; now: number }) {
         style={{ borderColor: `color-mix(in srgb,${end >= 60 ? 'rgb(var(--c-ok))' : 'rgb(var(--c-alert))'} 45%,transparent)`, background: 'rgba(0,0,0,0.3)' }}>
         <span className="text-[9px] uppercase tracking-[0.18em] text-ink-muted">Civic continuity mode</span>
         <span className="text-[14px] font-semibold uppercase tracking-[0.12em] text-ink">{b.mode}</span>
-        <span className="ml-auto text-[9px] text-ink-muted">trust {b.trustIndex} · restoration {b.memory.restorationEffectivenessPct}%</span>
+        <span className="ml-auto text-[9px] text-ink-muted">trust {b.trustIndex} <IndexTag index="civic-legitimacy.ts · trustIndex" /> · restoration {b.memory.restorationEffectivenessPct}%</span>
       </div>
 
       <div className="flex flex-wrap items-center gap-6 border border-line bg-black/20 px-3 py-2">

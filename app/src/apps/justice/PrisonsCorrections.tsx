@@ -10,6 +10,7 @@
 import * as React from 'react';
 import { justiceOps } from '@/lib/gov/justice-systems';
 import { wave, seed } from '@/lib/telemetry';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const BG = '#0a0f16';
 const PANEL = '#0e141d';
@@ -379,7 +380,7 @@ export function PrisonsCorrections({ id, now }: { id: string; now: number }) {
       {/* ── Footer ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-[9.5px]" style={{ borderColor: LINE2, color: MUT }}>
         <span>National Justice Authority — Secure. Manage. Rehabilitate.</span>
-        <span>Active Facilities {fac} · Capacity Utilization {util}.3% · Access-to-Justice Index {jo.accessToJusticeIndex} · Rehab Active {nf(jo.corrections.rehabActive)}</span>
+        <span>Active Facilities {fac} · Capacity Utilization {util}.3% · Access-to-Justice Index {jo.accessToJusticeIndex} <IndexTag index="justice-systems.ts · accessToJusticeIndex" /> · Rehab Active {nf(jo.corrections.rehabActive)}</span>
       </div>
     </div>
   );

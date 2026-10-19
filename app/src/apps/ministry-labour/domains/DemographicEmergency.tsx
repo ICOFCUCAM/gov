@@ -6,6 +6,7 @@ import * as React from 'react';
 import { workforceContinuityBoard } from '@/lib/gov/workforce-continuity';
 import { labourExtendedBoard } from '@/lib/gov/labour-extended';
 import { WorkforceFrame, WorkforceKpi, WorkforceRule, FlowBar, WorkforceCallout, LABOUR_DS } from '@/apps/ministry-labour/design-system/labour-ds';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 export function AgeCohorts({ id, now }: { id: string; now: number }) {
   const board = workforceContinuityBoard(now);
@@ -16,7 +17,7 @@ export function AgeCohorts({ id, now }: { id: string; now: number }) {
       <WorkforceKpi items={[
         { label: 'Cohorts tracked', value: board.demographics.cohorts.length },
         { label: 'Youth unemployment', value: `${board.demographics.youthUnemploymentPct}%`, tone: 'alert' },
-        { label: 'Aging index', value: `${board.demographics.agingIndex}/100`, tone: 'warn' },
+        { label: 'Aging index', value: <>{board.demographics.agingIndex}/100 <IndexTag index="workforce-continuity.ts · agingIndex" /></>, tone: 'warn' },
         { label: 'Dependency ratio', value: `${board.demographics.dependencyRatio}/100`, tone: 'info' },
       ]} />
       <WorkforceRule label="cohorts" />

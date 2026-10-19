@@ -5,6 +5,7 @@
 
 import * as React from 'react';
 import { territorialBoard } from '@/lib/gov/territorial-continuity';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const S = (v: number) => v >= 65 ? 'rgb(var(--c-ok))' : v >= 45 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))';
 
@@ -42,7 +43,7 @@ export function TerritorialContinuity({ id, now }: { id: string; now: number }) 
             <span className="w-16 shrink-0 tabular-nums text-ink-muted">{r.drought}</span>
             <span className="w-14 shrink-0 tabular-nums text-ink-muted">{r.flooding}</span>
             <span className="w-16 shrink-0 tabular-nums" style={{ color: S(r.waterAvailability) }}>{r.waterAvailability}</span>
-            <span className="w-16 shrink-0 tabular-nums" style={{ color: r.scarcityIndex > 70 ? 'rgb(var(--c-alert))' : 'rgb(var(--c-warn))' }}>{r.scarcityIndex}</span>
+            <span className="w-16 shrink-0 tabular-nums" style={{ color: r.scarcityIndex > 70 ? 'rgb(var(--c-alert))' : 'rgb(var(--c-warn))' }}>{r.scarcityIndex} <IndexTag index="territorial-continuity.ts · scarcityIndex" /></span>
             <span className="min-w-0 flex-1 flex items-center gap-2">
               <span className="tabular-nums" style={{ color: S(r.survivability) }}>{r.survivability}</span>
               <span className="text-[9px] font-semibold uppercase tracking-[0.06em]" style={{ color: r.vulnerabilityZone ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ok))' }}>{r.vulnerabilityZone ? 'vulnerability zone' : 'within tolerance'}</span>

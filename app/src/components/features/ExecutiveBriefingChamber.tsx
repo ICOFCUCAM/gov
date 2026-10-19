@@ -25,13 +25,15 @@ import {
 import type { ExecDirectiveKey } from '@/lib/gov/sovereign-operating-model';
 import { downloadText } from '@/lib/csv-download';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
 
-function Stat({ label, value, tone = 'ok', note }: { label: string; value: string; tone?: string; note?: string }) {
+/** A figure; `tag` marks one that is not observed (an engine index's IndexTag). */
+function Stat({ label, value, tone = 'ok', note, tag }: { label: string; value: string; tone?: string; note?: string; tag?: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1.5 last:border-0">
-      <span className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">{label}</span>
+      <span className="flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-ink-muted">{label}{tag}</span>
       <span className="flex items-baseline gap-2">
         {note ? <span className="text-[10px] text-ink-muted">{note}</span> : null}
         <span className="font-mono text-sm tabular-nums" style={{ color: TONE[tone] ?? 'rgb(var(--c-ink))' }}>
@@ -210,7 +212,7 @@ export function ExecutiveBriefingChamber() {
     L.push(`Political continuity ${polit.label} (governance ${polit.governanceContinuity}, unity ${polit.nationalUnity}).`);
     L.push(`External environment ${ext.label} (pressure ${ext.externalPressure}, alliance ${ext.allianceReliability}%).`);
     L.push(`Sustainability ${sustain.outlook} (~${sustain.survivabilityWeeks}w survivability).`);
-    L.push(`National capability ${cap.label}, ${cap.trajectory} (index ${cap.capabilityIndex}).`);
+    L.push(`National capability ${cap.label}, ${cap.trajectory} (modelled index ${cap.capabilityIndex}).`);
     L.push('');
     L.push(`II.  ACTIVE STRATEGIC THREATS (${threats.length})`);
     L.push(thin);
@@ -261,7 +263,7 @@ export function ExecutiveBriefingChamber() {
     L.push('VII.  LIVE STRESS EXERCISE');
     L.push(thin);
     L.push(`  Drill: ${drill.name} — vector ${drill.vector}`);
-    L.push(`  Intensity ${drill.intensity} · resilience ${drill.resilienceScore} · verdict ${drill.verdict}`);
+    L.push(`  Intensity ${drill.intensity} · modelled resilience ${drill.resilienceScore} · verdict ${drill.verdict}`);
     L.push(`  Executive decision degradation ${drill.decisionDegradation} · projected recovery ~${drill.recoveryWeeks}w`);
     L.push('  Cascade:');
     drill.cascade.forEach(cstr => L.push(`   - ${cstr}`));
@@ -338,7 +340,7 @@ export function ExecutiveBriefingChamber() {
     L.push('');
     L.push(`XV.  SOVEREIGN GOVERNANCE AUDIT — ${audit.healthVerdict}`);
     L.push(thin);
-    L.push(`  Civilization ${audit.trajectory} (${audit.civScore}) · institutional decay ${audit.institutionalDecay}`);
+    L.push(`  Civilization ${audit.trajectory} (modelled score ${audit.civScore}) · institutional decay ${audit.institutionalDecay}`);
     L.push('  Governance drift:');
     if (audit.drift.length === 0) L.push('   - none tripped');
     audit.drift.forEach(d => L.push(`   - ${d}`));
@@ -525,7 +527,7 @@ export function ExecutiveBriefingChamber() {
             </div>
             <Stat label="Reserve longevity" value={`${sustain.reserveLongevityWeeks}w`} tone={sustain.reserveLongevityWeeks >= 16 ? 'ok' : sustain.reserveLongevityWeeks >= 8 ? 'warn' : 'alert'} />
             <Stat label="Infrastructure aging" value={`${sustain.infraAging}`} tone={sustain.infraAging >= 60 ? 'alert' : sustain.infraAging >= 40 ? 'warn' : 'ok'} />
-            <Stat label="Production index" value={`${sustain.productionIndex}`} tone={sustain.productionIndex >= 60 ? 'ok' : sustain.productionIndex >= 42 ? 'warn' : 'alert'} />
+            <Stat label="Production index" tag={<IndexTag index="sovereign-operating-model.ts · productionIndex" />} value={`${sustain.productionIndex}`} tone={sustain.productionIndex >= 60 ? 'ok' : sustain.productionIndex >= 42 ? 'warn' : 'alert'} />
             <Stat label="Reserve replenishment" value={`${sustain.replenishmentRate}`} tone={sustain.replenishmentRate >= 55 ? 'ok' : sustain.replenishmentRate >= 35 ? 'warn' : 'alert'} note={`survivability ~${sustain.survivabilityWeeks}w`} />
             <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
               Emergency powers: <span className="font-semibold" style={{ color: TONE[powersTone] }}>{powers}</span>.
@@ -561,7 +563,7 @@ export function ExecutiveBriefingChamber() {
             <Stat label="Human capital" value={`${cap.humanCapital}`} tone={cap.humanCapital >= 60 ? 'ok' : cap.humanCapital >= 42 ? 'warn' : 'alert'} />
             <Stat label="Institutional knowledge" value={`${cap.institutionalKnowledge}`} tone={cap.institutionalKnowledge >= 60 ? 'ok' : cap.institutionalKnowledge >= 42 ? 'warn' : 'alert'} />
             <Stat label="Technological resilience" value={`${cap.technologicalResilience}`} tone={cap.technologicalResilience >= 60 ? 'ok' : cap.technologicalResilience >= 42 ? 'warn' : 'alert'} />
-            <Stat label="Generational continuity" value={`${cap.generationalContinuity}`} tone={cap.generationalContinuity >= 60 ? 'ok' : cap.generationalContinuity >= 42 ? 'warn' : 'alert'} note={`index ${cap.capabilityIndex}`} />
+            <Stat label="Generational continuity" value={`${cap.generationalContinuity}`} tone={cap.generationalContinuity >= 60 ? 'ok' : cap.generationalContinuity >= 42 ? 'warn' : 'alert'} note={`capability index ${cap.capabilityIndex}`} tag={<IndexTag index="sovereign-operating-model.ts · capabilityIndex" />} />
             <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
               Civilizational capability is <span className="font-semibold" style={{ color: TONE[capTone] }}>{cap.trajectory}</span> —
               {cap.trajectory === 'eroding' ? ' sustained pressure is degrading long-term national competence.'
@@ -572,7 +574,7 @@ export function ExecutiveBriefingChamber() {
               <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Live stress exercise</span>
               <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[drillTone] }}>{drill.verdict}</span>
             </div>
-            <Stat label={drill.name} value={`${drill.resilienceScore}`} tone={drillTone} note={`intensity ${drill.intensity}`} />
+            <Stat label={drill.name} value={`${drill.resilienceScore}`} tone={drillTone} note={`intensity ${drill.intensity}`} tag={<IndexTag index="sovereign-operating-model.ts · resilienceScore" />} />
             <Stat label="Decision degradation" value={`${drill.decisionDegradation}`} tone={drill.decisionDegradation >= 55 ? 'alert' : drill.decisionDegradation >= 35 ? 'warn' : 'ok'} note={`recovery ~${drill.recoveryWeeks}w`} />
             <p className="mt-1 text-[11px] leading-relaxed text-ink-muted">
               Vector: {drill.vector}. Cascade: {drill.cascade.slice(0, 3).join(' → ')}
@@ -1013,7 +1015,7 @@ export function ExecutiveBriefingChamber() {
         </Panel>
 
         <Panel signal="modelled" title="Sovereign governance audit"
-          meta={`${audit.healthVerdict} · civilization ${audit.trajectory} (${audit.civScore}) · institutional decay ${audit.institutionalDecay}`}>
+          meta={<>{audit.healthVerdict} · civilization {audit.trajectory} ({audit.civScore} <IndexTag index="sovereign-operating-model.ts · civScore" />) · institutional decay {audit.institutionalDecay}</>}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Governance drift</div>

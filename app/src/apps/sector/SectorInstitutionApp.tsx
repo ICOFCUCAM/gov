@@ -56,6 +56,7 @@ import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { ArchetypeKey } from '@/lib/api/types';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const ACC = '#54d08f';
 const WF: Record<string, WorkKind> = {
@@ -85,15 +86,15 @@ const WF: Record<string, WorkKind> = {
   'labour-recovery': 'incident', 'workplace-rights': 'case', 'labour-portal': 'approval',
   'rural-governance': 'case', 'agri-intelligence': 'incident', 'agri-portal': 'approval',
 };
-type FocusItem = { l: string; v: string; t?: Tone };
+type FocusItem = { l: string; v: string; t?: Tone; tag?: React.ReactNode };
 function focusFor(a: ArchetypeKey, d: string, id: string, ts: number): FocusItem[] | null {
   if (a === 'AGRICULTURE') {
     const o = agricultureOps(id, ts);
-    if (d === 'crop') return [{ l: 'Food security', v: `${o.foodSecurityIndex}`, t: o.foodSecurityIndex >= 70 ? 'ok' : 'warn' }, { l: 'Pest alerts', v: `${o.pestAlerts}`, t: o.pestAlerts > 8 ? 'alert' : 'warn' }, { l: 'Reserve cover', v: `${o.strategicReserveDays}d`, t: o.strategicReserveDays < 30 ? 'alert' : 'ok' }];
+    if (d === 'crop') return [{ l: 'Food security', tag: <IndexTag index="agriculture-systems.ts · foodSecurityIndex" />, v: `${o.foodSecurityIndex}`, t: o.foodSecurityIndex >= 70 ? 'ok' : 'warn' }, { l: 'Pest alerts', v: `${o.pestAlerts}`, t: o.pestAlerts > 8 ? 'alert' : 'warn' }, { l: 'Reserve cover', v: `${o.strategicReserveDays}d`, t: o.strategicReserveDays < 30 ? 'alert' : 'ok' }];
     if (d === 'livestock') return [{ l: 'Livestock health', v: `${o.livestockHealthPct}%`, t: o.livestockHealthPct >= 85 ? 'ok' : 'warn' }, { l: 'Pest/disease alerts', v: `${o.pestAlerts}`, t: o.pestAlerts > 8 ? 'alert' : 'warn' }];
     if (d === 'irrigation') return [{ l: 'Irrigation coverage', v: `${o.irrigationCoveragePct}%`, t: o.irrigationCoveragePct >= 60 ? 'ok' : 'warn' }, { l: 'Reserve cover', v: `${o.strategicReserveDays}d`, t: o.strategicReserveDays < 30 ? 'alert' : 'ok' }];
     if (d === 'farmer') return [{ l: 'Farmers registered', v: `${o.farmersRegisteredM}M`, t: 'ok' }, { l: 'Subsidy disbursed', v: `${o.subsidyDisbursementPct}%`, t: o.subsidyDisbursementPct >= 75 ? 'ok' : 'warn' }];
-    if (d === 'market') return [{ l: 'Strategic reserve', v: `${o.strategicReserveDays}d`, t: o.strategicReserveDays < 30 ? 'alert' : 'ok' }, { l: 'Food security', v: `${o.foodSecurityIndex}`, t: o.foodSecurityIndex >= 70 ? 'ok' : 'warn' }];
+    if (d === 'market') return [{ l: 'Strategic reserve', v: `${o.strategicReserveDays}d`, t: o.strategicReserveDays < 30 ? 'alert' : 'ok' }, { l: 'Food security', tag: <IndexTag index="agriculture-systems.ts · foodSecurityIndex" />, v: `${o.foodSecurityIndex}`, t: o.foodSecurityIndex >= 70 ? 'ok' : 'warn' }];
   } else if (a === 'JUSTICE') {
     const o = justiceOps(id, ts);
     if (d === 'legalaid') return [{ l: 'Aid centres', v: `${o.legalAid.centres}`, t: 'ok' }, { l: 'Represented', v: `${o.legalAid.representedPct}%`, t: o.legalAid.representedPct >= 75 ? 'ok' : 'warn' }, { l: 'Backlog', v: o.legalAid.backlog.toLocaleString(), t: o.legalAid.backlog > 4000 ? 'alert' : 'warn' }];
@@ -115,7 +116,7 @@ function focusFor(a: ArchetypeKey, d: string, id: string, ts: number): FocusItem
     if (d === 'industry') return [{ l: 'Industrial parks', v: `${o.industrialParks.parks}`, t: 'ok' }, { l: 'Occupancy', v: `${o.industrialParks.occupancyPct}%`, t: o.industrialParks.occupancyPct >= 70 ? 'ok' : 'warn' }, { l: 'Investment idx', v: `${o.industrialParks.investmentIdx}`, t: o.industrialParks.investmentIdx >= 60 ? 'ok' : 'warn' }];
   } else if (a === 'ENVIRONMENT') {
     const o = environmentOps(id, ts);
-    if (d === 'monitoring') return [{ l: 'Sensors online', v: `${o.monitoringOnline}/${o.monitoringTotal}`, t: o.monitoringOnline < o.monitoringTotal * 0.85 ? 'warn' : 'ok' }, { l: 'Air quality', v: `${o.airQualityIndex}`, t: o.airQualityIndex >= 120 ? 'alert' : 'warn' }, { l: 'Water quality', v: `${o.waterQualityPct}%`, t: o.waterQualityPct >= 80 ? 'ok' : 'warn' }];
+    if (d === 'monitoring') return [{ l: 'Sensors online', v: `${o.monitoringOnline}/${o.monitoringTotal}`, t: o.monitoringOnline < o.monitoringTotal * 0.85 ? 'warn' : 'ok' }, { l: 'Air quality', tag: <IndexTag index="environment-systems.ts · airQualityIndex" />, v: `${o.airQualityIndex}`, t: o.airQualityIndex >= 120 ? 'alert' : 'warn' }, { l: 'Water quality', v: `${o.waterQualityPct}%`, t: o.waterQualityPct >= 80 ? 'ok' : 'warn' }];
     if (d === 'protected') return [{ l: 'Area integrity', v: `${o.protectedAreaIntegrityPct}%`, t: o.protectedAreaIntegrityPct >= 80 ? 'ok' : 'warn' }, { l: 'Compliance', v: `${o.compliancePct}%`, t: o.compliancePct >= 80 ? 'ok' : 'warn' }];
     if (d === 'permit') return [{ l: 'Permits pending', v: o.permitsPending.toLocaleString(), t: o.permitsPending > 1800 ? 'alert' : 'ok' }, { l: 'Compliance', v: `${o.compliancePct}%`, t: o.compliancePct >= 80 ? 'ok' : 'warn' }];
     if (d === 'climate') return [{ l: 'Emissions vs target', v: `${o.emissionsVsTargetPct}%`, t: o.emissionsVsTargetPct > 115 ? 'alert' : o.emissionsVsTargetPct > 100 ? 'warn' : 'ok' }, { l: 'Protected integrity', v: `${o.protectedAreaIntegrityPct}%`, t: o.protectedAreaIntegrityPct >= 80 ? 'ok' : 'warn' }];
@@ -135,7 +136,7 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   if (archetype === 'AGRICULTURE') {
     const o = agricultureOps(id, ts);
     items = [
-      { l: 'Food security', v: `${o.foodSecurityIndex}`, t: o.foodSecurityIndex >= 75 ? 'ok' : o.foodSecurityIndex >= 55 ? 'warn' : 'alert' },
+      { l: 'Food security', tag: <IndexTag index="agriculture-systems.ts · foodSecurityIndex" />, v: `${o.foodSecurityIndex}`, t: o.foodSecurityIndex >= 75 ? 'ok' : o.foodSecurityIndex >= 55 ? 'warn' : 'alert' },
       { l: 'Strategic reserve', v: `${o.strategicReserveDays}d`, t: o.strategicReserveDays >= 45 ? 'ok' : o.strategicReserveDays >= 21 ? 'warn' : 'alert' },
       { l: 'Livestock health', v: `${o.livestockHealthPct}%`, t: o.livestockHealthPct >= 85 ? 'ok' : 'warn' },
       { l: 'Irrigation coverage', v: `${o.irrigationCoveragePct}%`, t: o.irrigationCoveragePct >= 60 ? 'ok' : 'warn' },
@@ -146,7 +147,7 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   } else if (archetype === 'JUSTICE') {
     const o = justiceOps(id, ts);
     items = [
-      { l: 'Access to justice', v: `${o.accessToJusticeIndex}`, t: o.accessToJusticeIndex >= 75 ? 'ok' : o.accessToJusticeIndex >= 55 ? 'warn' : 'alert' },
+      { l: 'Access to justice', tag: <IndexTag index="justice-systems.ts · accessToJusticeIndex" />, v: `${o.accessToJusticeIndex}`, t: o.accessToJusticeIndex >= 75 ? 'ok' : o.accessToJusticeIndex >= 55 ? 'warn' : 'alert' },
       { l: 'Legal-aid represented', v: `${o.legalAid.representedPct}%`, t: o.legalAid.representedPct >= 75 ? 'ok' : 'warn' },
       { l: 'Prison occupancy', v: `${o.corrections.occupancyPct}%`, t: o.corrections.occupancyPct >= 110 ? 'alert' : o.corrections.occupancyPct >= 95 ? 'warn' : 'ok' },
       { l: 'Registry integrity', v: `${o.registries.integrityPct}%`, t: o.registries.integrityPct >= 98 ? 'ok' : 'warn' },
@@ -176,7 +177,7 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   } else {
     const o = environmentOps(id, ts);
     items = [
-      { l: 'Air quality index', v: `${o.airQualityIndex}`, t: o.airQualityIndex >= 150 ? 'alert' : o.airQualityIndex >= 100 ? 'warn' : 'ok' },
+      { l: 'Air quality index', tag: <IndexTag index="environment-systems.ts · airQualityIndex" />, v: `${o.airQualityIndex}`, t: o.airQualityIndex >= 150 ? 'alert' : o.airQualityIndex >= 100 ? 'warn' : 'ok' },
       { l: 'Water quality', v: `${o.waterQualityPct}%`, t: o.waterQualityPct >= 80 ? 'ok' : 'warn' },
       { l: 'Monitoring online', v: `${o.monitoringOnline}/${o.monitoringTotal}`, t: o.monitoringOnline < o.monitoringTotal * 0.85 ? 'warn' : 'ok' },
       { l: 'Emissions vs target', v: `${o.emissionsVsTargetPct}%`, t: o.emissionsVsTargetPct > 110 ? 'alert' : o.emissionsVsTargetPct > 100 ? 'warn' : 'ok' },
@@ -187,7 +188,7 @@ export function SectorInstitutionApp({ instanceId, archetype, label, domain, now
   }
 
   const focus = focusFor(archetype, domain, id, ts);
-  const shown = (focus ?? items).map((m, i) => ({ l: m.l, v: m.v, t: (m.t ?? 'ok') as Tone, s: '', k: `si${i}` }));
+  const shown = (focus ?? items).map((m, i) => ({ l: m.l, v: m.v, t: (m.t ?? 'ok') as Tone, s: '', k: `si${i}`, tag: m.tag }));
   const pTone: Tone = shown.some(x => x.t === 'alert') ? 'alert' : shown.some(x => x.t === 'warn') ? 'warn' : 'ok';
 
   // The Ministry of Interior command surface is the dense National Security

@@ -12,6 +12,7 @@ import { interiorOps } from '@/lib/gov/interior-systems';
 import { wave } from '@/lib/telemetry';
 import { formatMoney, regionName } from '@/lib/nation/registry';
 import { RegionMap, mapClock, skewed, useNationGeo, type MapValue, type RegionLabel } from '@/apps/ministry-interior/domains/RegionMaps';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const BG = '#f5f6fb';
 const CARD = '#ffffff';
@@ -342,7 +343,7 @@ export function RegionalAdministration({ id, now }: { id: string; now: number })
       {/* ── Footer ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-[10px]" style={{ borderColor: LINE, color: MUT }}>
         <span>National Governance Platform — One Nation. One System.</span>
-        <span>All Regions Operational · Public-Order Index {order} · Active Cells {io.coordination.cellsActive} · Data Last Updated {dd}, 10:30 AM</span>
+        <span>All Regions Operational · Public-Order Index {order} <IndexTag index="interior-systems.ts · publicOrderIndex" /> · Active Cells {io.coordination.cellsActive} · Data Last Updated {dd}, 10:30 AM</span>
       </div>
     </div>
   );

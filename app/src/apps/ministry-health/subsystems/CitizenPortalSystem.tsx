@@ -10,6 +10,7 @@ import { citizenPortalView } from '@/lib/gov/health-operations';
 import { RingGauge, Sparkline, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import { EncounterThread } from '@/apps/_shared/InstitutionChain';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
 const ACC = ACCENT.citizen!;
@@ -234,7 +235,7 @@ export function CitizenPortalSystem({ id, now, role, withheld }: {
                 <RingGauge value={v.healthScore} label={v.healthBand} tone={scoreTone} size={70} sub="/100" />
                 <div>
                   <div className="text-[10px] text-ink-muted">Health score</div>
-                  <div className="text-[24px] font-bold" style={{ color: C(scoreTone) }}>{v.healthScore}<span className="text-[11px] text-ink-muted"> {v.healthBand}</span></div>
+                  <div className="text-[24px] font-bold" style={{ color: C(scoreTone) }}>{v.healthScore}<span className="text-[11px] text-ink-muted"> {v.healthBand}</span> <IndexTag index="health-operations.ts · healthScore" /></div>
                   <div className="text-[9px]" style={{ color: ACC }}>View details →</div>
                 </div>
               </div>

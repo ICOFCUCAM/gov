@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { civilizationalBoard } from '@/lib/gov/civilizational-identity';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const R = (v: number) => v >= 62 ? 'rgb(var(--c-ok))' : v >= 45 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))';
 
@@ -19,7 +20,7 @@ export function CivilizationalIdentity({ id, now }: { id: string; now: number })
         <span className="text-[9px] uppercase tracking-[0.18em] text-ink-muted">Civilizational identity mode</span>
         <span className="text-[14px] font-semibold uppercase tracking-[0.12em] text-ink">{b.mode}</span>
         <span className="text-ink-muted">cultural resilience <span className="font-semibold text-ink tabular-nums">{b.meanResilience}</span></span>
-        <span className="text-ink-muted">civic belonging <span className="font-semibold tabular-nums" style={{ color: R(b.civicBelongingIndex) }}>{b.civicBelongingIndex}</span></span>
+        <span className="text-ink-muted">civic belonging <span className="font-semibold tabular-nums" style={{ color: R(b.civicBelongingIndex) }}>{b.civicBelongingIndex}</span> <IndexTag index="civilizational-identity.ts · civicBelongingIndex" /></span>
         <span className="ml-auto text-[9px] text-ink-muted">pluralistic · aggregate · politically neutral</span>
       </div>
 

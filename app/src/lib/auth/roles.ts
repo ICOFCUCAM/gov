@@ -78,6 +78,9 @@ export const BEARER_ROUTES: RegExp[] = [
   /^\/api\/admin\/officers\/bulk$/,           // platformOrCronAuthorized()
   /^\/api\/federation\/webhooks\/test$/,      // platformOrCronAuthorized()
   /^\/api\/substrate\/(digest|export)$/,     // CIVICOS_CRON_SECRET
+  // SensorThings create on a twin stream source's Datastream: the bound integration's own key, scope sta:write
+  // (verifyIntegrationKey in staCreate, lib/twin/sta-write.ts); PATCH and DELETE answer 405.
+  /^\/api\/twin\/sta\/v1\.1\/.+$/,
 ];
 /** Read-only routes that verify a bearer themselves (machine readers such as a metrics scraper). */
 export const BEARER_READS: RegExp[] = [
@@ -193,6 +196,12 @@ export function canManageFeeds(s: Scope, ministryId: string): string | null {
   if (where) return where;
   const role = roleOf(s);
   return role === 'administrator' || role === 'signatory' ? null : 'Only an administrator or an official who can sign may connect a case system';
+}
+
+/** Connecting a twin stream source to an outside sender (an integration's key for SensorThings, the nation's MQTT broker): administrators, or officials who can sign. */
+export function canConnectStream(s: Scope): string | null {
+  const role = roleOf(s);
+  return role === 'administrator' || role === 'signatory' ? null : 'Only an administrator or an official who can sign may connect a stream to a sensor gateway or broker';
 }
 
 /** Publishing a proposed site, certifying it for its institution, or confirming a move: those who can sign for the owning institution. */

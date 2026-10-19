@@ -1,4 +1,4 @@
-// The national twin as OGC SensorThings API v1.1 (read-only), so
+// The national twin as OGC SensorThings API v1.1, so
 // infrastructure and IoT tools read the twin through the standard entry
 // point (Things, Datastreams, Observations) instead of a bespoke one.
 //
@@ -18,8 +18,12 @@
 //                     the platform recorded it; recent telemetry samples
 //
 // Only observations: samples and scenarios are never served. Telemetry is read
-// in-process from the substrate (lib/db/repos/telemetry.ts); without a substrate
-// there are no streams and the twin's own observations are still served.
+// in-process from the substrate (lib/db/repos/telemetry.ts), beside the
+// readings pushed to the platform for twin stream sources (lib/twin/readings.ts:
+// their Datastreams `telemetry:<stream id>` and recent readings); without a
+// substrate the twin's own observations and the pushed streams are served.
+// Creating Observations on a stream source's Datastream (POST Observations,
+// CreateObservations) is lib/twin/sta-write.ts; nothing else is created here.
 // Query options: $top (default 100, at most 1000), $skip, $count, $orderby
 // (one property, asc|desc) and $filter (comparisons eq ne gt ge lt le on a
 // property or a path such as properties/kind, joined by and/or). $expand and
@@ -29,6 +33,20 @@ import { listEntities, listSources, metricsKnown, metricDates, stateAsOf, type O
 import { getFacility, viewFacility, type Viewer } from '@/lib/data/facilities';
 import { listTelemetryStreamsRows, recentTelemetrySamplesRows } from '@/lib/db/repos/telemetry';
 import type { TelemetrySampleRow, TelemetryStreamRow } from '@/lib/db/types';
+import { pushedStreams, recentPushedReadings } from './readings';
+
+/** Active substrate streams and the streams that receive pushed readings, each once. */
+async function allStreams(): Promise<TelemetryStreamRow[]> {
+  const sub = await listTelemetryStreamsRows({ activeOnly: true, limit: 500 }).catch(() => [] as TelemetryStreamRow[]);
+  const have = new Set(sub.map(s => s.stream_id));
+  return [...sub, ...pushedStreams().filter(s => !have.has(s.stream_id))];
+}
+
+/** A stream's latest samples: the substrate's and the pushed readings, newest first. */
+async function latestSamples(streamId: string, limit: number): Promise<TelemetrySampleRow[]> {
+  const [a, b] = [await recentTelemetrySamplesRows(streamId, limit).catch(() => [] as TelemetrySampleRow[]), recentPushedReadings(streamId, limit)];
+  return b.length ? [...a, ...b].sort((x, y) => Date.parse(y.ts) - Date.parse(x.ts)).slice(0, limit) : a;
+}
 
 /** SensorThings unitOfMeasurement from a twin unit: UCUM code as the symbol, its plain name, the UCUM definition. */
 export function uom(unit: string): { name: string; symbol: string; definition: string } {
@@ -44,6 +62,9 @@ export const STA_CONFORMANCE = [
   'http://www.opengis.net/spec/iot_sensing/1.1/req/request-data/count',
   'http://www.opengis.net/spec/iot_sensing/1.1/req/request-data/orderby',
   'http://www.opengis.net/spec/iot_sensing/1.1/req/request-data/filter',
+  // Observations only, on a stream source's Datastream, with its bound integration's key (lib/twin/sta-write.ts).
+  'http://www.opengis.net/spec/iot_sensing/1.1/req/create-update-delete/create-entity',
+  'http://www.opengis.net/spec/iot_sensing/1.1/req/data-array/create-observations',
 ];
 
 export const STA_SETS = ['Things', 'Locations', 'Sensors', 'ObservedProperties', 'Datastreams', 'Observations'] as const;
@@ -143,7 +164,7 @@ async function build(viewer: Viewer, deps: StaDeps): Promise<Model> {
   }
 
   // Substrate telemetry streams, when the substrate is reachable.
-  const streams = await (deps.streams ?? (() => listTelemetryStreamsRows({ activeOnly: true, limit: 500 })))().catch(() => [] as TelemetryStreamRow[]);
+  const streams = await (deps.streams ?? allStreams)().catch(() => [] as TelemetryStreamRow[]);
   for (const s of streams) {
     const facilityThing = s.facility_id && things.has(`facility:${s.facility_id}`) ? `facility:${s.facility_id}` : null;
     const thingId = facilityThing ?? `stream:${s.stream_id}`;
@@ -154,7 +175,7 @@ async function build(viewer: Viewer, deps: StaDeps): Promise<Model> {
     m.Sensors.push({ '@iot.id': id, name: s.label, description: `Telemetry stream ${s.stream_id} (${s.aggregation})`, encodingType: 'text/plain', metadata: `aggregation=${s.aggregation}; retention=${s.retention_days} days`, properties: { charter: s.charter_id } });
     m.ObservedProperties.push({ '@iot.id': id, name: s.label, definition: `urn:civicos:telemetry:${s.stream_id}`, description: `Telemetry quantity ${s.label}` });
     const unit = s.unit ?? '';
-    const samples = await (deps.samples ?? recentTelemetrySamplesRows)(s.stream_id, STA_MAX_TOP).catch(() => [] as TelemetrySampleRow[]);
+    const samples = await (deps.samples ?? latestSamples)(s.stream_id, STA_MAX_TOP).catch(() => [] as TelemetrySampleRow[]);
     const times = samples.map(x => x.ts).sort();
     m.Datastreams.push({
       '@iot.id': id, name: s.label, description: `Telemetry ${s.label}`, unitOfMeasurement: uom(unit),
@@ -264,7 +285,7 @@ const SEG = /^([A-Za-z]+)(?:\((?:'((?:[^']|'')*)'|(\d+))\))?$/;
 export async function staRequest(base: string, path: string[], query: URLSearchParams, viewer: Viewer, deps: StaDeps = {}): Promise<{ status: number; body: unknown }> {
   if (!path.length) return { status: 200, body: serviceRoot(base) };
   for (const k of query.keys()) {
-    if (k === '$expand' || k === '$select' || k === '$resultFormat') return { status: 400, body: { code: 400, type: 'error', message: `${k} is not supported by this read-only service` } };
+    if (k === '$expand' || k === '$select' || k === '$resultFormat') return { status: 400, body: { code: 400, type: 'error', message: `${k} is not supported by this service` } };
     if (k.startsWith('$') && !['$top', '$skip', '$count', '$filter', '$orderby'].includes(k)) return { status: 400, body: { code: 400, type: 'error', message: `Unknown query option ${k}` } };
   }
   const m = await build(viewer, deps);

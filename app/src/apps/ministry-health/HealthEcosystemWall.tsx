@@ -20,6 +20,7 @@ import { hospitalOps } from '@/lib/gov/health-systems';
 import { waveSeries } from '@/lib/telemetry';
 import { formatMoney, aiLabel } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const ID = 'health';
 const ACC = {
@@ -191,14 +192,14 @@ export function HealthEcosystemWall() {
           {/* KPI strip — 5 compact command metrics */}
           <div className="grid shrink-0 grid-cols-5 gap-1">
             {[
-              { l: 'NAT HEALTH INDEX', v: `${nhi}`, s: `▲ ${(nhi / 20).toFixed(1)}`, t: (nhi >= 70 ? 'ok' : nhi >= 55 ? 'warn' : 'alert') as Tone, k: 'nhi' },
+              { l: 'NAT HEALTH INDEX', tag: <IndexTag index="health-operations.ts · mortalityIndex" />, v: `${nhi}`, s: `▲ ${(nhi / 20).toFixed(1)}`, t: (nhi >= 70 ? 'ok' : nhi >= 55 ? 'warn' : 'alert') as Tone, k: 'nhi' },
               { l: 'CRITICAL ALERTS', v: `${criticalRegions}`, s: 'Active', t: (criticalRegions ? 'alert' : 'ok') as Tone, k: 'alr' },
               { l: 'ICU OCCUPANCY', v: `${ns.nationalIcuLoad}%`, s: '▲ 6%', t: (ns.nationalIcuLoad >= 88 ? 'alert' : ns.nationalIcuLoad >= 75 ? 'warn' : 'ok') as Tone, k: 'icu' },
               { l: 'OUTBREAK RISK', v: ns.activeOutbreaks >= 8 ? 'HIGH' : ns.activeOutbreaks >= 4 ? 'MED' : 'LOW', s: ns.worstRegion, t: (ns.activeOutbreaks >= 8 ? 'alert' : ns.activeOutbreaks >= 4 ? 'warn' : 'ok') as Tone, k: 'obr' },
               { l: 'DISASTER POSTURE', v: ns.disasterState === 'national-disaster' ? 'L3' : ns.disasterState === 'emergency' ? 'L2' : ns.disasterState === 'watch' ? 'L1' : 'L0', s: 'Partial Activation', t: (ns.disasterState === 'normal' ? 'ok' : ns.disasterState === 'watch' ? 'warn' : 'alert') as Tone, k: 'dis' },
             ].map(m => (
               <div key={m.l} className="flex flex-col justify-between rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
-                <div className="truncate text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-muted">{m.l}</div>
+                <div className="flex items-center gap-1 text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-muted"><span className="truncate">{m.l}</span>{m.tag}</div>
                 <div className="flex items-end justify-between gap-1">
                   <span className="font-mono text-[24px] font-bold leading-none tabular-nums" style={{ color: sc(m.t), textShadow: `0 0 10px color-mix(in srgb,${sc(m.t)} 45%,transparent)` }}>{m.v}</span>
                   <Sparkline points={sp(m.k, m.t === 'alert' ? 50 : 30, m.t === 'alert' ? 95 : 78)} tone={m.t} width={40} height={14} />
@@ -372,6 +373,7 @@ export function HealthEcosystemWall() {
               </div>
               <div className="mt-1 flex items-center gap-1.5">
                 <RingGauge value={cw.patient.riskScore} label="risk" tone={cw.patient.riskBand === 'High' ? 'alert' : cw.patient.riskBand === 'Moderate' ? 'warn' : 'ok'} size={48} sub={cw.patient.riskBand} />
+                <IndexTag index="health-operations.ts · riskScore" />
                 <div className="min-w-0 flex-1 text-[6.5px] text-ink-soft">{cw.patient.ai.recommended.slice(0, 3).map(r => <div key={r} className="truncate">▸ {r}</div>)}</div>
               </div>
               <button className="mt-auto rounded-[2px] py-1 text-[7px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>{aiLabel('Run AI Analysis', 'Run Analysis')}</button>
@@ -428,6 +430,7 @@ export function HealthEcosystemWall() {
             <div className="flex w-[128px] shrink-0 flex-col gap-1">
               <div className="flex flex-1 flex-col items-center justify-center rounded-[4px] border" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
                 <RingGauge value={cp.healthScore} label="score" tone={cp.healthBand === 'Low' ? 'alert' : cp.healthBand === 'Fair' ? 'warn' : 'ok'} size={84} sub={cp.healthBand} />
+                <IndexTag index="health-operations.ts · healthScore" />
               </div>
               <div className="shrink-0 rounded-[4px] border p-1.5" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
                 <div className="text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-soft">Insurance</div>
