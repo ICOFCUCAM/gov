@@ -40,11 +40,11 @@ real weakness that needs a second condition, or that has a limited effect.
 | H-1 | Security | **High** | Anyone (`anon`) can overwrite audit-witness attestations and raise "major" tamper escalations | `app/supabase/migrations/20260521210000_civicos_audit_witnesses.sql:63-110,128-151`; `app/src/app/api/cron/witness-divergence/route.ts:52-90` | Revoke `anon`. Make attestations insert-only (no `on conflict do update`). Verify `witness_signature` against `witness_jwk` / a registered witness key. | S |
 | H-2 | Security | **High** | Until `civicos_base_url` is seeded, the pg_cron jobs send the nation's `CIVICOS_CRON_SECRET` to a fixed outside host | `app/supabase/cron/schedule.sql:30,36-56` | Remove the fallback host and do nothing when the URL is not seeded. Rotate the secret wherever the schedule ran unseeded. | S |
 | H-3 | Security | **High** | Officials signed in through the substrate act for the whole government. The second-step policy and deactivation do not apply to them. | `app/src/app/api/auth/official/route.ts:46-56`; `app/src/lib/auth/official.ts:31` | Map `officers.institution_id`/`charter_id` to the ministry id. Re-check `active` in `currentOfficial()`. Apply the two-step policy (or require AAL2 in the Supabase JWT). | M |
-| H-4 | Security | **High** | Every officer of any institution can take installation-level Update Center decisions (data export to the publisher, agent credential, break-glass, data restore, waivers, settings) | `app/src/lib/auth/roles.ts:163`; `app/src/app/api/releases/sovereignty/route.ts:19-25`; `…/settings/agent-credential/route.ts:10-16`; `…/break-glass/route.ts:9-16`; `…/[id]/restore-data/route.ts:11-17` | Classify `/api/releases/*` writes: settings, sovereignty, agent credential, contract and orders go to `ADMIN_ONLY`. Install, decide, break-glass and restore go to signatory+ (`refusal()` in the route). | M |
-| H-5 | Security | **High** | Dual control in break-glass and preflight waivers takes the second person as a typed name | `app/src/lib/data/updates.ts:1386-1391`; `app/src/lib/data/readiness.ts:109-112` | Make it two steps by two sessions (propose, then confirm by a different verified official), as in change control. | S |
+| H-4 | Security | **High** | Every officer of any institution can take installation-level Update Center decisions (data export to the publisher, agent credential, break-glass, data restore, waivers, settings) | `app/src/lib/auth/roles.ts:163`; `app/src/app/api/releases/sovereignty/route.ts:19-25`; `…/settings/agent-credential/route.ts:10-16`; `…/break-glass/route.ts:9-16`; `…/[id]/restore-data/route.ts:11-17` | Classify `/api/releases/*` writes: settings, sovereignty, agent credential, contract and orders go to `ADMIN_ONLY`. Install, decide, break-glass and restore go to signatory+ (`refusal()` in the route). **Fixed in 18eaf66: `/api/releases/*` changes other than feature requests, support tickets and crash reports are rule `installation` (`installationAdmin()`: a government-wide administrator of this nation), checked in the middleware and again in `chamberBody()` / `pathRefusal()`.** | M |
+| H-5 | Security | **High** | Dual control in break-glass and preflight waivers takes the second person as a typed name | `app/src/lib/data/updates.ts:1386-1391`; `app/src/lib/data/readiness.ts:109-112` | Make it two steps by two sessions (propose, then confirm by a different verified official), as in change control. **Fixed in 18eaf66: propose, then confirm by a different signed-in official in their own request (`lib/data/dual-control.ts`, compared by session identity); typed second names refused.** | S |
 | M-1 | Security | Medium | A disabled, signed-out or password-changed official keeps every page and API read for up to 8 h | `app/src/middleware.ts:78-90` | Ask `liveOfficial()` (cached a few seconds) in `readGate` as `roleGate` does. Keep a server-side session id so sign-out revokes it. | M |
-| M-2 | Security | Medium | Site editor and site settings are not tied to the institution: any officer can propose, publish, or re-point another ministry's website | `app/src/lib/auth/roles.ts:162`; `app/src/app/api/public-sites/[id]/proposals/route.ts:8-13`; `app/src/app/api/public-sites/[id]/route.ts:15-17`; `app/src/lib/data/site-editorial.ts:232-257` | Map site id to ministry id and check `ministryPermission()`. Publishing and settings changes need signatory+ for that ministry. | S |
-| M-3 | Data protection | Medium | Reads are not scoped by institution: every official reads every ministry's cases and every permit's applicant | `app/src/app/api/permits/route.ts:7-9`; `app/src/app/api/org/ministries/[id]/queue/route.ts:11-15`; `app/src/middleware.ts:78-81` | Add a read rule in `roles.ts` (own ministry, whole government, auditors) and apply it to ministry-scoped GETs and personal-data lists. | M |
+| M-2 | Security | Medium | Site editor and site settings are not tied to the institution: any officer can propose, publish, or re-point another ministry's website | `app/src/lib/auth/roles.ts:162`; `app/src/app/api/public-sites/[id]/proposals/route.ts:8-13`; `app/src/app/api/public-sites/[id]/route.ts:15-17`; `app/src/lib/data/site-editorial.ts:232-257` | Map site id to ministry id and check `ministryPermission()`. Publishing and settings changes need signatory+ for that ministry. **Fixed in 18eaf66: `siteOwner()` + `canActForSite()` on proposals, publishing, settings and feed sync (owning institution or whole government; publishing still by a different official).** | S |
+| M-3 | Data protection | Medium | Reads are not scoped by institution: every official reads every ministry's cases and every permit's applicant | `app/src/app/api/permits/route.ts:7-9`; `app/src/app/api/org/ministries/[id]/queue/route.ts:11-15`; `app/src/middleware.ts:78-81` | Add a read rule in `roles.ts` (own ministry, whole government, auditors) and apply it to ministry-scoped GETs and personal-data lists. **Fixed in 18eaf66: `canReadInstitution()` / `canReadPermits()` through `readRefusal()` on the queue, its loads and connected systems, permits and `/api/work` (`INSTITUTION_READS`, coverage test).** | M |
 | M-4 | Security | Medium | Feed endpoints log and sign every unauthenticated call with no rate limit. A flood evicts the 20,000-entry exchange evidence log. | `app/src/app/api/org/ministries/[id]/queue/feed/route.ts:41-45`; `…/facilities/feed/route.ts:37-41`; `app/src/lib/exchange/log.ts:24,126-129`; `app/src/middleware.ts:200` | Do not log or sign unknown-key calls (or log them in a separate bounded counter). Rate-limit by address before key lookup. Check Content-Length before `req.text()`. | S |
 | M-5 | Security | Medium | Substrate event webhooks: no URL check, plain `fetch` that follows redirects, a test route that reports status and error. Auditors can register them. | `app/src/app/api/federation/webhooks/test/route.ts:68-90`; `app/src/app/api/cron/deliver-events/route.ts:45`; `app/supabase/migrations/20260521280000_civicos_service_context_helper.sql:72-90`; `…/20260521050000_civicos_rls_scoping.sql:63-74` | Deliver through `safeFetchText` (public addresses, no redirects). Validate the URL in `register_event_webhook`. Exclude `auditor`. Seal the secret. | S |
 | M-6 | Security | Medium | The Helm chart cannot supply the data key or the signing keys from a Secret, so the default deployment signs with development keys and keeps second-step secrets in plaintext | `infra/helm/civicos/templates/app.yaml:59-130`; `infra/helm/civicos/values.yaml:73`; `app/src/lib/crypto/envelope.ts:63-67`; `app/src/lib/crypto/signing-key.ts:50-66` | Add `secretKeyRef` entries (optional) for `CIVICOS_DATA_KEK`, `CIVICOS_AUDIT_KEY`, `CIVICOS_EXCHANGE_KEY`, `CIVICOS_TOKEN_KEY`, `CIVICOS_METRICS_TOKEN`. Make `/api/health?ready` fail under `enforce` while any is missing (or `CIVICOS_KEY_PROVIDER` not ready). | S |
@@ -245,6 +245,21 @@ calls `currentOfficial()`, which returns substrate claims unchanged.
 
 ### H-4. Any officer can take installation-level Update Center decisions
 
+**Fixed in 18eaf66.** The user's rule: each nation's deployment has its own
+government-wide administrator, and installation-level decisions are theirs; no
+central operator or other nation takes part. `lib/auth/roles.ts` has a rule
+`installation` (`installationAdmin()`: role administrator and no institution)
+for every `/api/releases` change except feature requests, support tickets and
+the installation's crash reports (`UPDATE_CENTER_WORK`, any official who is not
+an auditor). The publisher console and the agent's health reports keep their own
+credentials. The middleware applies it, and `chamberBody()` (and the decision
+and request routes, through `pathRefusal()`) check it again against the account
+as it stands now. An officer, a signatory and an administrator of one
+institution are refused (`installation.route.test.ts`,
+`api-permission-coverage.test.ts`). Verified live under enforce: the three
+requests below now answer 403.
+
+
 **Evidence.** Every write under `/api/releases` falls into the `official` rule:
 
 ```ts
@@ -286,6 +301,17 @@ which by doctrine needs an official enabling with reason. The same role can:
 - Add these cases to `roles.test.ts`.
 
 ### H-5. Dual control takes the second person as typed text
+
+**Fixed in 18eaf66.** Break-glass and preflight waivers follow the four-eyes
+pattern: the first official proposes (stored on the install record, or beside the
+finding), a different official confirms in their own request, and only then does
+the step run (`lib/data/dual-control.ts`). With sessions the two are compared by
+the verified session identity; a proposal made signed in can only be confirmed
+signed in; a `secondBy` in a body is refused (422); proposals lapse after 24 hours
+and can be cancelled; proposal, cancellation and the step are audited. Both
+officials must be government-wide administrators (H-4). The Update Center
+screens show the pending proposal with Confirm and Cancel.
+
 
 **Evidence.**
 
@@ -343,6 +369,15 @@ for the rest of the session.
 
 ### M-2. Site editor and site settings are not tied to the owning institution
 
+**Fixed in 18eaf66.** `siteOwner()` (`lib/data/site-settings.ts`) maps a site
+to the registry ministry with its slug (a merged one's successor), else its
+standing branch or agency; `canActForSite()` in `roles.ts` lets that
+institution's officials and the whole government propose, publish, change
+settings and fetch the feed; a site no institution owns is the whole
+government's. Publishing still needs a different official. Following the user's
+rule, any official of the owning institution (not only signatories) may publish.
+
+
 **Evidence.** `roles.ts:162` puts every `/api/public-sites/<id>/…` write in
 `official`. `proposals/route.ts:8-13`, `proposals/[pid]/route.ts` and
 `[id]/route.ts:15-17` (site settings: Link, Embed, Migrate, Host, and the
@@ -366,6 +401,20 @@ can change a ministry's registered website. That address then becomes:
 - Allow whole-government officials as now.
 
 ### M-3. Reads are not scoped by institution
+
+**Fixed in 18eaf66.** `canReadInstitution()` and `canReadPermits()` in
+`roles.ts` (own institution, whole government, auditors), checked in the routes
+through `readRefusal()` (`lib/auth/official.ts`, live account, no second step for
+reads): `/api/org/ministries/<id>/queue`, its `import`, `feeds` and feed signing
+key, `/api/permits`, `/api/permits/<id>` (and deciding one), and `/api/work`, which
+now lists only the queues and permits the official may read. Permits belong to
+the institutions whose kind keeps the permit register (`permitHolders()`, from the
+registry). `INSTITUTION_READS` lists these routes and the coverage test holds each
+to the rule. The check is in the routes, not the middleware, so it reads the
+account as it stands now. Not covered: the citizen demo page `/wallet/permits`
+renders every permit server-side (citizen demo session, outside the official
+rules).
+
 
 **Evidence.** Both routes below return all records to any signed-in official:
 
