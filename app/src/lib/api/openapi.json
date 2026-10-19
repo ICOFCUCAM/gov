@@ -19137,8 +19137,8 @@
                             "what": "string",
                             "geometry": {},
                             "parcelId": "ID-0001",
-                            "landUse": "agricultural",
                             "areaM2": 1,
+                            "landUse": "agricultural",
                             "survey": {},
                             "rightsCount": 1
                           }
@@ -19155,6 +19155,7 @@
                             "type": "MultiPolygon",
                             "coordinates": []
                           },
+                          "areaM2": 1,
                           "bbox": [
                             1,
                             1,
@@ -19162,14 +19163,13 @@
                             1
                           ],
                           "landUse": "agricultural",
-                          "areaM2": 1,
+                          "overlaps": [
+                            {}
+                          ],
                           "survey": {
                             "method": "cadastral-import",
                             "accuracyM": 1
                           },
-                          "overlaps": [
-                            {}
-                          ],
                           "rightsCount": 1
                         },
                         "rights": [
@@ -19437,8 +19437,8 @@
                             "what": "string",
                             "geometry": {},
                             "parcelId": "ID-0001",
-                            "landUse": "agricultural",
                             "areaM2": 1,
+                            "landUse": "agricultural",
                             "survey": {},
                             "rightsCount": 1
                           }
@@ -19455,6 +19455,7 @@
                             "type": "MultiPolygon",
                             "coordinates": []
                           },
+                          "areaM2": 1,
                           "bbox": [
                             1,
                             1,
@@ -19462,14 +19463,13 @@
                             1
                           ],
                           "landUse": "agricultural",
-                          "areaM2": 1,
+                          "overlaps": [
+                            {}
+                          ],
                           "survey": {
                             "method": "cadastral-import",
                             "accuracyM": 1
                           },
-                          "overlaps": [
-                            {}
-                          ],
                           "rightsCount": 1
                         },
                         "rights": [
@@ -21897,8 +21897,8 @@
                             "what": "string",
                             "geometry": {},
                             "parcelId": "ID-0001",
-                            "landUse": "agricultural",
                             "areaM2": 1,
+                            "landUse": "agricultural",
                             "survey": {},
                             "rightsCount": 1
                           }
@@ -21915,6 +21915,7 @@
                             "type": "MultiPolygon",
                             "coordinates": []
                           },
+                          "areaM2": 1,
                           "bbox": [
                             1,
                             1,
@@ -21922,14 +21923,13 @@
                             1
                           ],
                           "landUse": "agricultural",
-                          "areaM2": 1,
+                          "overlaps": [
+                            {}
+                          ],
                           "survey": {
                             "method": "cadastral-import",
                             "accuracyM": 1
                           },
-                          "overlaps": [
-                            {}
-                          ],
                           "rightsCount": 1
                         },
                         "rights": [
@@ -55041,6 +55041,9 @@
                 "parcelId": {
                   "type": "string"
                 },
+                "areaM2": {
+                  "type": "number"
+                },
                 "landUse": {
                   "type": "string",
                   "enum": [
@@ -55056,9 +55059,6 @@
                     "vacant",
                     "water"
                   ]
-                },
-                "areaM2": {
-                  "type": "number"
                 },
                 "survey": {
                   "$ref": "#/components/schemas/ParcelSurvey"
@@ -55080,8 +55080,8 @@
                 "what",
                 "geometry",
                 "parcelId",
-                "landUse",
                 "areaM2",
+                "landUse",
                 "survey",
                 "rightsCount"
               ]
@@ -55105,6 +55105,9 @@
               "geometry": {
                 "$ref": "#/components/schemas/MultiPolygonGeom"
               },
+              "areaM2": {
+                "type": "number"
+              },
               "bbox": {
                 "$ref": "#/components/schemas/BBox"
               },
@@ -55124,17 +55127,14 @@
                   "water"
                 ]
               },
-              "areaM2": {
-                "type": "number"
-              },
-              "survey": {
-                "$ref": "#/components/schemas/ParcelSurvey"
-              },
               "overlaps": {
                 "type": "array",
                 "items": {
                   "$ref": "#/components/schemas/ParcelOverlap"
                 }
+              },
+              "survey": {
+                "$ref": "#/components/schemas/ParcelSurvey"
               },
               "rights": {
                 "type": "array",
@@ -55152,11 +55152,11 @@
               "proposedAt",
               "reason",
               "geometry",
+              "areaM2",
               "bbox",
               "landUse",
-              "areaM2",
-              "survey",
               "overlaps",
+              "survey",
               "rightsCount"
             ]
           },

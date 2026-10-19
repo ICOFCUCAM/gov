@@ -249,6 +249,15 @@ What has been built is locked. Work only upgrades it toward the vision in
   which law, and which capture methods count. Restricted sites reach viewers
   without need only through `viewFacility()` (generalised); confidential
   categories never enter. Never seed or invent sites; samples stay marked.
+- Land parcels (`lib/data/parcels.ts`, `/gov/sites/parcels`,
+  `docs/PARCEL_REGISTER.md`) enter only through the cadastre authority named
+  in the nation's parcel policy: recorded by one official, published (or a
+  change confirmed) by a different one, every version kept, changed only
+  through `parcelRepo`. The area is computed from the outline, region and
+  district come from the boundary version in force. Rights and holders are
+  personal data: only a parcel's own record shows them (`canSeeParcelRights()`);
+  lists, tiles, the OGC collection, exports and audit details carry only
+  `publicParcel()` (`parcels-privacy.test.ts` checks). Never seed or invent parcels.
 - An incident's place (`lib/data/incident-places.ts`) is a region from the
   nation's list, a point checked like a registered site (`placePoint()`,
   region and district derived) or a published registered site (restricted
