@@ -22,7 +22,12 @@ export function ActingOfficial({ name, onChange, label = 'Acting official' }: { 
         Signed in as <strong className="text-ink">{officialLabel(signIn.official)}</strong>
         <span className="text-ink-muted">({officialScope(signIn.official)})</span>
         <button type="button" className="focus-ring rounded-[3px] px-1 text-link underline underline-offset-2"
-          onClick={async () => { await fetch('/api/auth/official', { method: 'DELETE' }); await refreshSignIn(); }}>Sign out</button>
+          onClick={async () => {
+            const r = await fetch('/api/auth/official', { method: 'DELETE' });
+            const out = (await r.json().catch(() => null)) as { logoutUrl?: string } | null;
+            await refreshSignIn();
+            if (out?.logoutUrl) window.location.assign(out.logoutUrl);
+          }}>Sign out</button>
       </span>
     );
   }

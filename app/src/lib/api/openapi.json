@@ -855,7 +855,7 @@
         ],
         "operationId": "get_auth_official",
         "summary": "GET /api/auth/official",
-        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register — or with a passkey ({ method: 'passkey', challengeId, response }, options from /api/auth/passkeys/options). A password sign-in whose account has a passkey is answered with passkey options for the second step, then sent again with { passkey: { challengeId, response } }. Officials who sign in through the government's identity provider start at /api/auth/oidc/start. DELETE signs out, and answers with the provider's sign-out address when the session came from it. Every sign-in and sign-out is written to the audit chain; addresses never are.",
         "parameters": [],
         "responses": {
           "200": {
@@ -915,6 +915,19 @@
                               "type": "boolean",
                               "description": "The installation's policy requires the second step for this official."
                             },
+                            "via": {
+                              "type": "string",
+                              "enum": [
+                                "oidc",
+                                "passkey",
+                                "password"
+                              ],
+                              "description": "How a platform account signed in: its password (absent on older sessions), a passkey, or the government's identity provider (lib/auth/oidc.ts)."
+                            },
+                            "sid": {
+                              "type": "string",
+                              "description": "Identity-provider sessions: the id under which the ID token is kept for signing out at the provider."
+                            },
                             "iat": {
                               "type": "number"
                             },
@@ -941,11 +954,34 @@
                         },
                         "substrate": {
                           "type": "boolean"
+                        },
+                        "oidc": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "name"
+                              ]
+                            }
+                          ]
+                        },
+                        "passkey": {
+                          "type": "boolean"
                         }
                       },
                       "required": [
                         "local",
-                        "substrate"
+                        "substrate",
+                        "oidc",
+                        "passkey"
                       ]
                     },
                     "accounts": {
@@ -999,12 +1035,18 @@
                         "institution": "string",
                         "twoStep": true,
                         "twoStepRequired": true,
+                        "via": "oidc",
+                        "sid": "string",
                         "iat": 1,
                         "exp": 1
                       },
                       "methods": {
                         "local": true,
-                        "substrate": true
+                        "substrate": true,
+                        "oidc": {
+                          "name": "Example"
+                        },
+                        "passkey": true
                       },
                       "accounts": true,
                       "enforced": true,
@@ -1038,7 +1080,7 @@
         ],
         "operationId": "post_auth_official",
         "summary": "POST /api/auth/official",
-        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register — or with a passkey ({ method: 'passkey', challengeId, response }, options from /api/auth/passkeys/options). A password sign-in whose account has a passkey is answered with passkey options for the second step, then sent again with { passkey: { challengeId, response } }. Officials who sign in through the government's identity provider start at /api/auth/oidc/start. DELETE signs out, and answers with the provider's sign-out address when the session came from it. Every sign-in and sign-out is written to the audit chain; addresses never are.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -1061,6 +1103,23 @@
                   },
                   "accessToken": {
                     "type": "string"
+                  },
+                  "challengeId": {
+                    "type": "string"
+                  },
+                  "response": {
+                    "$ref": "#/components/schemas/AssertionJSON"
+                  },
+                  "passkey": {
+                    "type": "object",
+                    "properties": {
+                      "challengeId": {
+                        "type": "string"
+                      },
+                      "response": {
+                        "$ref": "#/components/schemas/AssertionJSON"
+                      }
+                    }
                   }
                 }
               },
@@ -1072,7 +1131,29 @@
                     "email": "official@example.gov",
                     "password": "string",
                     "code": "string",
-                    "accessToken": "string"
+                    "accessToken": "string",
+                    "challengeId": "ID-0001",
+                    "response": {
+                      "id": "ID-0001",
+                      "rawId": "ID-0001",
+                      "type": "string",
+                      "response": {
+                        "clientDataJSON": "string",
+                        "authenticatorData": "string",
+                        "signature": "string"
+                      }
+                    },
+                    "passkey": {
+                      "challengeId": "ID-0001",
+                      "response": {
+                        "id": "ID-0001",
+                        "response": {
+                          "clientDataJSON": "string",
+                          "authenticatorData": "string",
+                          "signature": "string"
+                        }
+                      }
+                    }
                   }
                 }
               }
@@ -1108,6 +1189,8 @@
                         "institution": "string",
                         "twoStep": true,
                         "twoStepRequired": true,
+                        "via": "oidc",
+                        "sid": "string",
                         "iat": 1,
                         "exp": 1
                       }
@@ -1142,7 +1225,7 @@
         ],
         "operationId": "delete_auth_official",
         "summary": "DELETE /api/auth/official",
-        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register. DELETE signs out. Every sign-in and sign-out is written to the audit chain; addresses never are.",
+        "description": "The signed-in official (register 15.4). GET: who is signed in, how officials sign in on this installation, and whether actions require it. POST signs in — with a platform account (email + password) or, when the substrate is connected, with the substrate's access token, checked by the server and matched to the officer register — or with a passkey ({ method: 'passkey', challengeId, response }, options from /api/auth/passkeys/options). A password sign-in whose account has a passkey is answered with passkey options for the second step, then sent again with { passkey: { challengeId, response } }. Officials who sign in through the government's identity provider start at /api/auth/oidc/start. DELETE signs out, and answers with the provider's sign-out address when the session came from it. Every sign-in and sign-out is written to the audit chain; addresses never are.",
         "parameters": [],
         "responses": {
           "200": {
@@ -1152,6 +1235,9 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "logoutUrl": {
+                      "type": "string"
+                    },
                     "ok": {
                       "type": "boolean",
                       "const": true
@@ -1165,6 +1251,7 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "logoutUrl": "https://example.gov/",
                       "ok": true
                     }
                   }
@@ -1323,6 +1410,421 @@
         "x-source": "src/app/api/auth/officials/[id]/route.ts"
       }
     },
+    "/api/auth/officials/identity-provider": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_officials_identity_provider",
+        "summary": "GET /api/auth/officials/identity-provider",
+        "description": "The government's identity provider for officials (OpenID Connect, lib/auth/oidc.ts). Administrators only (ADMIN_ONLY in lib/auth/roles.ts), every change audited; the client secret is sealed and never returned. GET: the configuration, the redirect URI to register at the provider, and the identities waiting for an administrator. POST { action }: 'save' { name, issuer, clientId, clientSecret?, tokenAuth?, scopes?, matchClaim?, groups?: { claim, rules: [{ group, role, institution? }] } | null, mfa?: { accept, amr?, acr? }, internalNetwork?, extraHosts?, enabled? } → reads the provider's discovery document and saves; 'enable' / 'disable'; 'decide' { requestId, decision: link | create | refuse, accountId?, account?, reason? } → link the identity to an account, make an account with a role, or refuse; 'unlink' { accountId } → remove an account's identity link.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "requests": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/IdentityRequest"
+                      }
+                    },
+                    "why": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "anyOf": [
+                        {
+                          "$ref": "#/components/schemas/ProviderView"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "redirectUri": {
+                      "anyOf": [
+                        {
+                          "type": "null"
+                        },
+                        {
+                          "type": "string"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "requests",
+                    "provider",
+                    "redirectUri"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "requests": [
+                        {
+                          "id": "ID-0001",
+                          "issuer": "string",
+                          "claim": "string",
+                          "value": "string",
+                          "name": "Example",
+                          "groups": [
+                            "string"
+                          ],
+                          "firstAt": "2026-01-15T09:30:00.000Z",
+                          "lastAt": "2026-01-15T09:30:00.000Z",
+                          "attempts": 1,
+                          "status": "approved"
+                        }
+                      ],
+                      "why": "string",
+                      "provider": {
+                        "name": "Example",
+                        "issuer": "string",
+                        "clientId": "ID-0001",
+                        "tokenAuth": "client_secret_basic",
+                        "scopes": "string",
+                        "matchClaim": "string",
+                        "groups": {
+                          "claim": "string",
+                          "rules": [
+                            {}
+                          ]
+                        },
+                        "mfa": {
+                          "accept": true,
+                          "amr": [
+                            "string"
+                          ],
+                          "acr": [
+                            "string"
+                          ]
+                        },
+                        "internalNetwork": true,
+                        "extraHosts": [
+                          "string"
+                        ],
+                        "enabled": true,
+                        "metadata": {
+                          "authorization_endpoint": "string",
+                          "token_endpoint": "string",
+                          "jwks_uri": "https://example.gov/"
+                        },
+                        "discoveredAt": "2026-01-15T09:30:00.000Z",
+                        "updatedAt": "2026-01-15T09:30:00.000Z",
+                        "updatedBy": "A. Official",
+                        "version": 1,
+                        "hasSecret": true
+                      },
+                      "redirectUri": "https://example.gov/"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/auth/officials/identity-provider/route.ts"
+      },
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "post_auth_officials_identity_provider",
+        "summary": "POST /api/auth/officials/identity-provider",
+        "description": "The government's identity provider for officials (OpenID Connect, lib/auth/oidc.ts). Administrators only (ADMIN_ONLY in lib/auth/roles.ts), every change audited; the client secret is sealed and never returned. GET: the configuration, the redirect URI to register at the provider, and the identities waiting for an administrator. POST { action }: 'save' { name, issuer, clientId, clientSecret?, tokenAuth?, scopes?, matchClaim?, groups?: { claim, rules: [{ group, role, institution? }] } | null, mfa?: { accept, amr?, acr? }, internalNetwork?, extraHosts?, enabled? } → reads the provider's discovery document and saves; 'enable' / 'disable'; 'decide' { requestId, decision: link | create | refuse, accountId?, account?, reason? } → link the identity to an account, make an account with a role, or refuse; 'unlink' { accountId } → remove an account's identity link.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string"
+                  },
+                  "issuer": {
+                    "type": "string"
+                  },
+                  "clientId": {
+                    "type": "string"
+                  },
+                  "clientSecret": {
+                    "type": "string"
+                  },
+                  "tokenAuth": {
+                    "type": "string"
+                  },
+                  "scopes": {
+                    "type": "string"
+                  },
+                  "matchClaim": {
+                    "type": "string"
+                  },
+                  "groups": {
+                    "anyOf": [
+                      {
+                        "type": "null"
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "claim": {
+                            "type": "string"
+                          },
+                          "rules": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "group": {
+                                  "type": "string"
+                                },
+                                "role": {
+                                  "type": "string"
+                                },
+                                "institution": {
+                                  "type": "string"
+                                }
+                              }
+                            }
+                          }
+                        }
+                      }
+                    ]
+                  },
+                  "mfa": {
+                    "type": "object",
+                    "properties": {
+                      "accept": {
+                        "type": "boolean"
+                      },
+                      "amr": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "acr": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      }
+                    }
+                  },
+                  "internalNetwork": {
+                    "type": "boolean"
+                  },
+                  "extraHosts": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "action": {
+                    "type": "string"
+                  },
+                  "requestId": {
+                    "type": "string"
+                  },
+                  "decision": {
+                    "type": "string"
+                  },
+                  "accountId": {
+                    "type": "string"
+                  },
+                  "account": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "reason": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "name": "Example",
+                    "issuer": "string",
+                    "clientId": "ID-0001",
+                    "clientSecret": "string",
+                    "tokenAuth": "string",
+                    "scopes": "string",
+                    "matchClaim": "string",
+                    "groups": {
+                      "claim": "string",
+                      "rules": [
+                        {}
+                      ]
+                    },
+                    "mfa": {
+                      "accept": true,
+                      "amr": [
+                        "string"
+                      ],
+                      "acr": [
+                        "string"
+                      ]
+                    },
+                    "internalNetwork": true,
+                    "extraHosts": [
+                      "string"
+                    ],
+                    "enabled": true,
+                    "action": "string",
+                    "requestId": "ID-0001",
+                    "decision": "string",
+                    "accountId": "ID-0001",
+                    "account": {
+                      "key": "string"
+                    },
+                    "reason": "Text"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "provider": {
+                          "$ref": "#/components/schemas/ProviderView"
+                        }
+                      },
+                      "required": [
+                        "provider"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "request": {
+                          "$ref": "#/components/schemas/IdentityRequest"
+                        }
+                      },
+                      "required": [
+                        "request"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "account": {
+                          "$ref": "#/components/schemas/PublicAccount"
+                        }
+                      },
+                      "required": [
+                        "account"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "provider": {
+                        "name": "Example",
+                        "issuer": "string",
+                        "clientId": "ID-0001",
+                        "tokenAuth": "client_secret_basic",
+                        "scopes": "string",
+                        "matchClaim": "string",
+                        "groups": {
+                          "claim": "string",
+                          "rules": [
+                            {}
+                          ]
+                        },
+                        "mfa": {
+                          "accept": true,
+                          "amr": [
+                            "string"
+                          ],
+                          "acr": [
+                            "string"
+                          ]
+                        },
+                        "internalNetwork": true,
+                        "extraHosts": [
+                          "string"
+                        ],
+                        "enabled": true,
+                        "metadata": {
+                          "authorization_endpoint": "string",
+                          "token_endpoint": "string",
+                          "jwks_uri": "https://example.gov/"
+                        },
+                        "discoveredAt": "2026-01-15T09:30:00.000Z",
+                        "updatedAt": "2026-01-15T09:30:00.000Z",
+                        "updatedBy": "A. Official",
+                        "version": 1,
+                        "hasSecret": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/auth/officials/identity-provider/route.ts"
+      }
+    },
     "/api/auth/officials": {
       "get": {
         "tags": [
@@ -1363,7 +1865,11 @@
                           "office": "string",
                           "createdAt": "2026-01-15T09:30:00.000Z",
                           "createdBy": "A. Official",
-                          "twoStepRequired": true
+                          "twoStepRequired": true,
+                          "passkeys": [
+                            {}
+                          ],
+                          "secondStepOn": true
                         }
                       ]
                     }
@@ -1473,9 +1979,26 @@
                         "lastSignIn": "string",
                         "role": "administrator",
                         "passwordChangedAt": "2026-01-15T09:30:00.000Z",
+                        "identity": {
+                          "issuer": "string",
+                          "claim": "string",
+                          "value": "string",
+                          "linkedAt": "2026-01-15T09:30:00.000Z",
+                          "linkedBy": "A. Official"
+                        },
+                        "noPassword": true,
                         "twoStepSince": "string",
                         "twoStepRequired": true,
-                        "resetPendingUntil": "string"
+                        "resetPendingUntil": "string",
+                        "passkeys": [
+                          {
+                            "id": "ID-0001",
+                            "name": "Example",
+                            "createdAt": "2026-01-15T09:30:00.000Z",
+                            "synced": true
+                          }
+                        ],
+                        "secondStepOn": true
                       }
                     }
                   }
@@ -1501,6 +2024,635 @@
         ],
         "x-permission-rule": "admin",
         "x-source": "src/app/api/auth/officials/route.ts"
+      }
+    },
+    "/api/auth/oidc/callback": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_oidc_callback",
+        "summary": "GET /api/auth/oidc/callback",
+        "description": "Where the government's identity provider sends officials back (the redirect URI registered there). GET ?code&state: the state must be the one this browser started with (its cookie) and is used once; the code is exchanged with the PKCE verifier, the ID token checked (signature against the provider's keys, issuer, audience, expiry, nonce) and the identity matched to an official account (lib/auth/oidc.ts). Then the signed session is set exactly as for any other sign-in. Open without a session; nothing happens without a valid state. Unlinked identities wait for an administrator (/admin/officials).",
+        "parameters": [
+          {
+            "name": "code",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "error",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/auth/oidc/callback/route.ts"
+      }
+    },
+    "/api/auth/oidc/start": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_oidc_start",
+        "summary": "GET /api/auth/oidc/start",
+        "description": "Sign in through the government's identity provider (OpenID Connect, lib/auth/oidc.ts). GET ?from=/path starts a sign-in: a fresh state, nonce and PKCE verifier are kept on the server for ten minutes, the state also in an httpOnly cookie for this browser, and the browser is sent to the provider. Open without a session (it is how officials get one).",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/auth/oidc/start/route.ts"
+      }
+    },
+    "/api/auth/passkeys/options": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "post_auth_passkeys_options",
+        "summary": "POST /api/auth/passkeys/options",
+        "description": "Signing in with a passkey alone: POST gives the browser a fresh challenge (five minutes, used once) to sign with any passkey it holds for this platform; the answer goes to POST /api/auth/official { method: 'passkey' }. Open without a session (it is how officials get one), rate limited like every change.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "challengeId": {
+                      "type": "string"
+                    },
+                    "publicKey": {
+                      "type": "object",
+                      "properties": {
+                        "challenge": {
+                          "type": "string"
+                        },
+                        "rpId": {
+                          "type": "string"
+                        },
+                        "timeout": {
+                          "type": "number"
+                        },
+                        "userVerification": {
+                          "type": "string",
+                          "enum": [
+                            "preferred",
+                            "required"
+                          ]
+                        },
+                        "allowCredentials": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "const": "public-key"
+                              },
+                              "id": {
+                                "type": "string"
+                              },
+                              "transports": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            },
+                            "required": [
+                              "type",
+                              "id",
+                              "transports"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "challenge",
+                        "rpId",
+                        "timeout",
+                        "userVerification",
+                        "allowCredentials"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "challengeId",
+                    "publicKey"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "challengeId": "ID-0001",
+                      "publicKey": {
+                        "challenge": "string",
+                        "rpId": "ID-0001",
+                        "timeout": 1,
+                        "userVerification": "preferred",
+                        "allowCredentials": [
+                          {
+                            "type": "public-key",
+                            "id": "ID-0001",
+                            "transports": []
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "any-role",
+        "x-source": "src/app/api/auth/passkeys/options/route.ts"
+      }
+    },
+    "/api/auth/passkeys": {
+      "get": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "get_auth_passkeys",
+        "summary": "GET /api/auth/passkeys",
+        "description": "The signed-in official's passkeys and security keys (WebAuthn; lib/auth/officials.ts, verification in lib/auth/webauthn.ts). GET lists them (name, when added and last used; never a key). POST { action }: 'options' → creation options for the browser (an account that already has a second step needs a session that passed it); 'register' { challengeId, response, name } → verifies the authenticator's answer and keeps its public key; 'remove' { id } → removes one (not the last second step the installation requires). Platform accounts only. Every change is audited.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "why": {
+                      "type": "string"
+                    },
+                    "passkeys": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/PasskeySummary"
+                      }
+                    },
+                    "available": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "passkeys",
+                    "available"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "why": "string",
+                      "passkeys": [
+                        {
+                          "id": "ID-0001",
+                          "name": "Example",
+                          "createdAt": "2026-01-15T09:30:00.000Z",
+                          "synced": true
+                        }
+                      ],
+                      "available": true
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/auth/passkeys/route.ts"
+      },
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "operationId": "post_auth_passkeys",
+        "summary": "POST /api/auth/passkeys",
+        "description": "The signed-in official's passkeys and security keys (WebAuthn; lib/auth/officials.ts, verification in lib/auth/webauthn.ts). GET lists them (name, when added and last used; never a key). POST { action }: 'options' → creation options for the browser (an account that already has a second step needs a session that passed it); 'register' { challengeId, response, name } → verifies the authenticator's answer and keeps its public key; 'remove' { id } → removes one (not the last second step the installation requires). Platform accounts only. Every change is audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string"
+                  },
+                  "challengeId": {
+                    "type": "string"
+                  },
+                  "response": {
+                    "$ref": "#/components/schemas/RegistrationJSON"
+                  },
+                  "name": {
+                    "type": "string"
+                  },
+                  "id": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "action": "string",
+                    "challengeId": "ID-0001",
+                    "response": {
+                      "id": "ID-0001",
+                      "rawId": "ID-0001",
+                      "type": "string",
+                      "response": {
+                        "clientDataJSON": "string",
+                        "attestationObject": "string"
+                      }
+                    },
+                    "name": "Example",
+                    "id": "ID-0001"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "challengeId": {
+                          "type": "string"
+                        },
+                        "publicKey": {
+                          "type": "object",
+                          "properties": {
+                            "challenge": {
+                              "type": "string"
+                            },
+                            "rp": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            },
+                            "user": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "displayName": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "displayName"
+                              ]
+                            },
+                            "pubKeyCredParams": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "public-key"
+                                  },
+                                  "alg": {
+                                    "type": "number",
+                                    "enum": [
+                                      -257,
+                                      -8,
+                                      -7
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "alg"
+                                ]
+                              }
+                            },
+                            "timeout": {
+                              "type": "number"
+                            },
+                            "attestation": {
+                              "type": "string",
+                              "const": "none"
+                            },
+                            "authenticatorSelection": {
+                              "type": "object",
+                              "properties": {
+                                "residentKey": {
+                                  "type": "string",
+                                  "const": "preferred"
+                                },
+                                "userVerification": {
+                                  "type": "string",
+                                  "const": "preferred"
+                                }
+                              },
+                              "required": [
+                                "residentKey",
+                                "userVerification"
+                              ]
+                            },
+                            "excludeCredentials": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "type": {
+                                    "type": "string",
+                                    "const": "public-key"
+                                  },
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "transports": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "type",
+                                  "id",
+                                  "transports"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "challenge",
+                            "rp",
+                            "user",
+                            "pubKeyCredParams",
+                            "timeout",
+                            "attestation",
+                            "authenticatorSelection",
+                            "excludeCredentials"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "challengeId",
+                        "publicKey"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "passkeys": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/PasskeySummary"
+                          }
+                        }
+                      },
+                      "required": [
+                        "passkeys"
+                      ]
+                    }
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "challengeId": "ID-0001",
+                      "publicKey": {
+                        "challenge": "string",
+                        "rp": {
+                          "id": "ID-0001",
+                          "name": "Example"
+                        },
+                        "user": {
+                          "id": "ID-0001",
+                          "name": "Example",
+                          "displayName": "Example"
+                        },
+                        "pubKeyCredParams": [
+                          {
+                            "type": "public-key",
+                            "alg": -257
+                          }
+                        ],
+                        "timeout": 1,
+                        "attestation": "none",
+                        "authenticatorSelection": {
+                          "residentKey": "preferred",
+                          "userVerification": "preferred"
+                        },
+                        "excludeCredentials": [
+                          {
+                            "type": "public-key",
+                            "id": "ID-0001",
+                            "transports": []
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "passkey": {
+                      "$ref": "#/components/schemas/PasskeySummary"
+                    }
+                  },
+                  "required": [
+                    "passkey"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "passkey": {
+                        "id": "ID-0001",
+                        "name": "Example",
+                        "createdAt": "2026-01-15T09:30:00.000Z",
+                        "lastUsedAt": "2026-01-15T09:30:00.000Z",
+                        "synced": true
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "any-role",
+        "x-source": "src/app/api/auth/passkeys/route.ts"
       }
     },
     "/api/auth/password": {
@@ -1642,6 +2794,9 @@
                         "none",
                         "signers"
                       ]
+                    },
+                    "passkeys": {
+                      "type": "number"
                     }
                   },
                   "required": [
@@ -1649,7 +2804,8 @@
                     "since",
                     "required",
                     "thisSession",
-                    "policy"
+                    "policy",
+                    "passkeys"
                   ]
                 },
                 "examples": {
@@ -1660,7 +2816,8 @@
                       "since": "2026-01-15T09:30:00.000Z",
                       "required": true,
                       "thisSession": true,
-                      "policy": "all"
+                      "policy": "all",
+                      "passkeys": 1
                     }
                   }
                 }
@@ -47403,6 +48560,53 @@
           "keyFingerprint"
         ]
       },
+      "AssertionJSON": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rawId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "response": {
+            "type": "object",
+            "properties": {
+              "clientDataJSON": {
+                "type": "string"
+              },
+              "authenticatorData": {
+                "type": "string"
+              },
+              "signature": {
+                "type": "string"
+              },
+              "userHandle": {
+                "anyOf": [
+                  {
+                    "type": "null"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "clientDataJSON",
+              "authenticatorData",
+              "signature"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "response"
+        ]
+      },
       "Assumption": {
         "type": "object",
         "properties": {
@@ -52397,6 +53601,30 @@
           "coordinates"
         ]
       },
+      "GroupRule": {
+        "type": "object",
+        "properties": {
+          "group": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "administrator",
+              "auditor",
+              "officer",
+              "signatory"
+            ]
+          },
+          "institution": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "group",
+          "role"
+        ]
+      },
       "HealthCheck": {
         "type": "object",
         "properties": {
@@ -53192,6 +54420,77 @@
           "preliminary",
           "assessments",
           "history"
+        ]
+      },
+      "IdentityRequest": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "issuer": {
+            "type": "string"
+          },
+          "claim": {
+            "type": "string"
+          },
+          "value": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "description": "Shown to administrators only, to recognise the person; never in the audit chain."
+          },
+          "groups": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "firstAt": {
+            "type": "string"
+          },
+          "lastAt": {
+            "type": "string"
+          },
+          "attempts": {
+            "type": "number"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "pending",
+              "refused"
+            ]
+          },
+          "decidedBy": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": "string"
+          },
+          "accountId": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "issuer",
+          "claim",
+          "value",
+          "name",
+          "groups",
+          "firstAt",
+          "lastAt",
+          "attempts",
+          "status"
         ]
       },
       "Incident": {
@@ -55847,6 +57146,19 @@
             "type": "boolean",
             "description": "The installation's policy requires the second step for this official."
           },
+          "via": {
+            "type": "string",
+            "enum": [
+              "oidc",
+              "passkey",
+              "password"
+            ],
+            "description": "How a platform account signed in: its password (absent on older sessions), a passkey, or the government's identity provider (lib/auth/oidc.ts)."
+          },
+          "sid": {
+            "type": "string",
+            "description": "Identity-provider sessions: the id under which the ID token is kept for signing out at the provider."
+          },
           "iat": {
             "type": "number"
           },
@@ -56946,6 +58258,33 @@
           "accuracyM"
         ]
       },
+      "PasskeySummary": {
+        "description": "What screens see of a passkey.",
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "lastUsedAt": {
+            "type": "string"
+          },
+          "synced": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "createdAt",
+          "synced"
+        ]
+      },
       "PatchCommitment": {
         "type": "object",
         "properties": {
@@ -57688,6 +59027,163 @@
           "verify"
         ]
       },
+      "ProviderView": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Shown on the sign-in button: \"Sign in with <name>\"."
+          },
+          "issuer": {
+            "type": "string",
+            "description": "Exactly as the provider publishes it (`iss` must equal it)."
+          },
+          "clientId": {
+            "type": "string"
+          },
+          "tokenAuth": {
+            "type": "string",
+            "enum": [
+              "client_secret_basic",
+              "client_secret_post",
+              "none"
+            ]
+          },
+          "scopes": {
+            "type": "string"
+          },
+          "matchClaim": {
+            "type": "string",
+            "description": "The claim that names the official stably: `sub` (default), or e.g. `employee_id`, `email` (verified only)."
+          },
+          "groups": {
+            "type": "object",
+            "properties": {
+              "claim": {
+                "type": "string"
+              },
+              "rules": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/GroupRule"
+                }
+              }
+            },
+            "required": [
+              "claim",
+              "rules"
+            ],
+            "description": "Optional, set by an administrator: roles from the provider's groups, first rule that matches wins."
+          },
+          "mfa": {
+            "type": "object",
+            "properties": {
+              "accept": {
+                "type": "boolean"
+              },
+              "amr": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "acr": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "accept",
+              "amr",
+              "acr"
+            ],
+            "description": "Whether the provider's own multi-factor sign-in (acr/amr) counts as the second sign-in step."
+          },
+          "internalNetwork": {
+            "type": "boolean",
+            "description": "The provider is on the government's own network (private addresses allowed for it alone)."
+          },
+          "extraHosts": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Further hosts the provider's endpoints may be on, besides the issuer's (set by an administrator)."
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "metadata": {
+            "type": "object",
+            "properties": {
+              "authorization_endpoint": {
+                "type": "string"
+              },
+              "token_endpoint": {
+                "type": "string"
+              },
+              "jwks_uri": {
+                "type": "string"
+              },
+              "end_session_endpoint": {
+                "type": "string"
+              },
+              "id_token_signing_alg_values_supported": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "code_challenge_methods_supported": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "authorization_endpoint",
+              "token_endpoint",
+              "jwks_uri"
+            ]
+          },
+          "discoveredAt": {
+            "type": "string"
+          },
+          "updatedAt": {
+            "type": "string"
+          },
+          "updatedBy": {
+            "type": "string"
+          },
+          "version": {
+            "type": "number"
+          },
+          "hasSecret": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "issuer",
+          "clientId",
+          "tokenAuth",
+          "scopes",
+          "matchClaim",
+          "mfa",
+          "internalNetwork",
+          "extraHosts",
+          "enabled",
+          "metadata",
+          "discoveredAt",
+          "updatedAt",
+          "updatedBy",
+          "version",
+          "hasSecret"
+        ]
+      },
       "PublicAccount": {
         "description": "What screens see of an account: never the password hash or the second-step secret.",
         "type": "object",
@@ -57734,6 +59230,38 @@
             "type": "string",
             "description": "When the password last changed: sessions issued before it no longer count."
           },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "issuer": {
+                "type": "string"
+              },
+              "claim": {
+                "type": "string"
+              },
+              "value": {
+                "type": "string"
+              },
+              "linkedAt": {
+                "type": "string"
+              },
+              "linkedBy": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "issuer",
+              "claim",
+              "value",
+              "linkedAt",
+              "linkedBy"
+            ],
+            "description": "The official's identity at the government's identity provider (lib/auth/oidc.ts), linked by an administrator or by a verified email."
+          },
+          "noPassword": {
+            "type": "boolean",
+            "description": "Made for an identity-provider sign-in: no platform password (the hash matches nothing)."
+          },
           "twoStepSince": {
             "type": "string"
           },
@@ -57742,6 +59270,15 @@
           },
           "resetPendingUntil": {
             "type": "string"
+          },
+          "passkeys": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PasskeySummary"
+            }
+          },
+          "secondStepOn": {
+            "type": "boolean"
           }
         },
         "required": [
@@ -57751,7 +59288,9 @@
           "office",
           "createdAt",
           "createdBy",
-          "twoStepRequired"
+          "twoStepRequired",
+          "passkeys",
+          "secondStepOn"
         ]
       },
       "PublicParcel": {
@@ -58744,6 +60283,45 @@
           "owner",
           "api",
           "copies"
+        ]
+      },
+      "RegistrationJSON": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "rawId": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          },
+          "response": {
+            "type": "object",
+            "properties": {
+              "clientDataJSON": {
+                "type": "string"
+              },
+              "attestationObject": {
+                "type": "string"
+              },
+              "transports": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "clientDataJSON",
+              "attestationObject"
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "response"
         ]
       },
       "Release": {

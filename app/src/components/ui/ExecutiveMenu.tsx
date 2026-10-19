@@ -55,8 +55,11 @@ export function ExecutiveMenu({
   const go = (href: string) => { setOpen(false); router.push(href); };
   const signOut = async () => {
     setOpen(false);
-    await fetch('/api/auth/official', { method: 'DELETE' }).catch(() => null);
+    const r = await fetch('/api/auth/official', { method: 'DELETE' }).catch(() => null);
+    const out = (await r?.json().catch(() => null)) as { logoutUrl?: string } | null;
     await refreshSignIn();
+    // Signed in through the government's identity provider: end that session there too.
+    if (out?.logoutUrl) { window.location.assign(out.logoutUrl); return; }
     router.push('/sign-in');
   };
 

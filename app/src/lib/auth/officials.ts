@@ -13,6 +13,8 @@ import { seal, open as openSealed } from '@/lib/crypto/envelope';
 import { recordAudit, getMinistry } from '@/lib/data/store';
 import { isRole, roleLabel, roleOf, type OfficialRole } from './roles';
 import { touch } from '@/lib/data/repo/track';
+import { verifyAssertion, verifyRegistration, WebAuthnError, type AssertionJSON, type RegistrationJSON } from './webauthn';
+import { creationOptions, newChallenge, requestOptions, takeChallenge, type RelyingParty } from './passkeys';
 
 export interface OfficialAccount {
   id: string;
@@ -38,9 +40,33 @@ export interface OfficialAccount {
   passwordChangedAt?: string;
   /** A one-time reset code an administrator issued (only its SHA-256 is kept). */
   reset?: { hash: string; expiresAt: string; by: string };
+  /** Passkeys and security keys (WebAuthn): public keys only, never a private key or a biometric. */
+  passkeys?: StoredPasskey[];
+  /** The official's identity at the government's identity provider (lib/auth/oidc.ts), linked by an administrator or by a verified email. */
+  identity?: { issuer: string; claim: string; value: string; linkedAt: string; linkedBy: string };
+  /** Made for an identity-provider sign-in: no platform password (the hash matches nothing). */
+  noPassword?: boolean;
 }
+
+export interface StoredPasskey {
+  /** Credential id, base64url. */
+  id: string;
+  /** COSE public key, base64url. */
+  publicKey: string;
+  alg: number;
+  signCount: number;
+  name: string;
+  createdAt: string;
+  lastUsedAt?: string;
+  aaguid: string;
+  backupEligible: boolean;
+  transports: string[];
+}
+/** What screens see of a passkey. */
+export interface PasskeySummary { id: string; name: string; createdAt: string; lastUsedAt?: string; synced: boolean }
+const passkeySummary = (p: StoredPasskey): PasskeySummary => ({ id: p.id, name: p.name, createdAt: p.createdAt, ...(p.lastUsedAt ? { lastUsedAt: p.lastUsedAt } : {}), synced: p.backupEligible });
 /** What screens see of an account: never the password hash or the second-step secret. */
-export type PublicAccount = Omit<OfficialAccount, 'passwordHash' | 'twoStep' | 'twoStepPending' | 'reset'> & { twoStepSince?: string; twoStepRequired: boolean; resetPendingUntil?: string };
+export type PublicAccount = Omit<OfficialAccount, 'passwordHash' | 'twoStep' | 'twoStepPending' | 'reset' | 'passkeys'> & { twoStepSince?: string; twoStepRequired: boolean; resetPendingUntil?: string; passkeys: PasskeySummary[]; secondStepOn: boolean };
 
 /** Who must use the second sign-in step: nobody (default), officials who can sign (and administrators), or everyone. */
 export type TwoStepPolicy = 'none' | 'signers' | 'all';
@@ -63,8 +89,11 @@ const cost = (): { N: number; r: number; p: number; maxmem: number } => {
 const norm = (e: string) => e.trim().toLowerCase();
 // Compared against when the address is unknown (random salt and digest: nothing anyone can type matches it).
 const DUMMY_HASH = `scrypt$${2 ** 17}$${randomBytes(16).toString('base64')}$${randomBytes(32).toString('base64')}`;
-const pub = ({ passwordHash: _h, twoStep, twoStepPending: _p, reset, ...a }: OfficialAccount): PublicAccount =>
-  ({ ...a, ...(twoStep ? { twoStepSince: twoStep.since } : {}), twoStepRequired: twoStepRequiredFor(a), ...(reset && Date.parse(reset.expiresAt) > Date.now() ? { resetPendingUntil: reset.expiresAt } : {}) });
+const pub = ({ passwordHash: _h, twoStep, twoStepPending: _p, reset, passkeys, ...a }: OfficialAccount): PublicAccount =>
+  ({ ...a, ...(twoStep ? { twoStepSince: twoStep.since } : {}), twoStepRequired: twoStepRequiredFor(a), ...(reset && Date.parse(reset.expiresAt) > Date.now() ? { resetPendingUntil: reset.expiresAt } : {}),
+    passkeys: (passkeys ?? []).map(passkeySummary), secondStepOn: !!twoStep || !!passkeys?.length });
+/** Whether the account has a second step (authenticator app or a passkey). */
+const hasSecondStep = (a: OfficialAccount) => !!a.twoStep || !!a.passkeys?.length;
 
 function scryptAsync(password: string, salt: Buffer, len: number, opts: ScryptOptions): Promise<Buffer> {
   return new Promise((resolve, reject) => scrypt(password, salt, len, opts, (e, k) => (e ? reject(e) : resolve(k))));
@@ -204,8 +233,8 @@ export function setRole(id: string, input: { role?: string; institution?: string
  * for an account that needs one the answer is { needsCode }, and nothing is
  * counted.
  */
-export async function checkPassword(emailRaw: string, password: string, now = Date.now(), code?: string):
-  Promise<(PublicAccount & { secondStep: boolean }) | { error: string; needsCode?: true }> {
+export async function checkPassword(emailRaw: string, password: string, now = Date.now(), code?: string, passkey?: { challengeId?: string; response?: AssertionJSON; rp?: RelyingParty | null }):
+  Promise<(PublicAccount & { secondStep: boolean }) | { error: string; needsCode?: true; passkey?: ReturnType<typeof requestOptions> }> {
   const d = db();
   const email = norm(emailRaw);
   const recent = (d.failures[email] ?? []).filter(t => now - t < WINDOW_MS);
@@ -219,8 +248,22 @@ export async function checkPassword(emailRaw: string, password: string, now = Da
     recordAudit('sign-in attempt', 'auth.sign-in', a ? `Official:${a.id}` : 'Official:?', 'denied', 'wrong email or password');
     return { error: 'Wrong email or password' };
   }
-  if (a.twoStep) {
-    if (!code?.trim()) return { error: 'Enter the 6-digit code from your authenticator app', needsCode: true };
+  if (passkey?.response && a.passkeys?.length) {
+    // The second step with a passkey: the challenge was issued for this account after its password was checked.
+    const r = passkey.rp ? usePasskey(a, passkey.challengeId ?? '', passkey.response, passkey.rp, 'second-step', false, now) : { error: 'Passkeys are not available on this installation yet' };
+    if ('error' in r) {
+      d.failures[email] = [...recent, now];
+      recordAudit(a.name, 'auth.sign-in', `Official:${a.id}`, 'denied', `passkey: ${r.error}`);
+      return { error: r.error, ...(a.twoStep ? { needsCode: true as const } : {}) };
+    }
+  } else if (hasSecondStep(a)) {
+    if (!code?.trim() || !a.twoStep) {
+      // Offer what the account has: a passkey (a fresh challenge for this account) and/or the authenticator code.
+      const options = a.passkeys?.length && passkey?.rp ? passkeyChallengeFor(a, passkey.rp, now) : undefined;
+      if (!a.twoStep && !options) return { error: 'This account finishes signing in with a passkey; passkeys are not available on this installation yet (CIVICOS_PUBLIC_URL)' };
+      return { error: a.twoStep ? (options ? 'Use your passkey, or enter the 6-digit code from your authenticator app' : 'Enter the 6-digit code from your authenticator app') : 'Use your passkey to finish signing in',
+        ...(a.twoStep ? { needsCode: true as const } : {}), ...(options ? { passkey: options } : {}) };
+    }
     const used = useSecondStep(a, code, now);
     if (typeof used === 'object') return { error: used.error, needsCode: true };
     if (!used) {
@@ -236,7 +279,7 @@ export async function checkPassword(emailRaw: string, password: string, now = Da
     const upgraded = await hash(password);
     if (a.passwordHash === old) a.passwordHash = upgraded; // unless the password changed meanwhile
   }
-  return { ...pub(a), secondStep: !!a.twoStep };
+  return { ...pub(a), secondStep: hasSecondStep(a) };
 }
 
 // ── Second sign-in step ──────────────────────────────────────────────
@@ -326,6 +369,12 @@ export function confirmTwoStep(id: string, code: string, now = Date.now()): { re
 export function removeTwoStep(id: string, opts: { code?: string; by: string; reset?: boolean }, now = Date.now()): PublicAccount | { error: string } {
   const a = db().accounts.find(x => x.id === id);
   if (!a) return { error: 'No such account' };
+  if (opts.reset && a.passkeys?.length) {
+    // A lost device: the administrator's reset removes the passkeys too; the official registers them again.
+    const n = a.passkeys.length;
+    delete a.passkeys;
+    recordAudit(opts.by, 'auth.passkey.reset', `Official:${a.id}`, 'ok', `${a.name} · ${n} passkey${n === 1 ? '' : 's'} removed`);
+  }
   if (!a.twoStep) { delete a.twoStepPending; return pub(a); }
   if (!opts.reset) {
     if (twoStepRequiredFor(a)) return { error: 'This installation requires the second step for you; an administrator can reset it if your phone is lost' };
@@ -409,4 +458,175 @@ export async function resetPassword(emailRaw: string, code: string, next: string
   delete d.failures[email];
   recordAudit(a!.name, 'auth.password.reset', `Official:${a!.id}`, 'ok', 'new password set with a reset code; other sessions ended');
   return pub(a!);
+}
+
+// ── Passkeys (WebAuthn) ──────────────────────────────────────────────
+// Registered by the official under My account; used as the second sign-in
+// step after the password, or to sign in on their own (a passkey that
+// verified the person, by PIN or biometric, counts as both steps). Every
+// registration, removal and refusal is audited; a counter that goes
+// backwards (a copied authenticator) is refused and recorded.
+
+const MAX_PASSKEYS = 10;
+const userHandle = (a: OfficialAccount) => Buffer.from(a.id, 'utf8').toString('base64url');
+
+function passkeyChallengeFor(a: OfficialAccount, rp: RelyingParty, now: number) {
+  const c = newChallenge('second-step', a.id, now);
+  return requestOptions(c, rp, (a.passkeys ?? []).map(p => ({ id: p.id, transports: p.transports })), 'preferred');
+}
+
+function usePasskey(a: OfficialAccount, challengeId: string, response: AssertionJSON, rp: RelyingParty, purpose: 'second-step' | 'sign-in', requireUv: boolean, now: number): { uv: boolean } | { error: string } {
+  const c = takeChallenge(challengeId, purpose, purpose === 'second-step' ? a.id : undefined, now);
+  if (!c) return { error: 'The passkey request has expired or was used already; try again' };
+  const cred = a.passkeys?.find(p => p.id === response?.id);
+  if (!cred) return { error: 'That passkey is not registered to this account' };
+  if (response.response?.userHandle && response.response.userHandle !== userHandle(a)) return { error: 'That passkey belongs to another account' };
+  try {
+    const r = verifyAssertion(response, { challenge: c.challenge, origins: [rp.origin], rpId: rp.rpId, requireUv }, cred);
+    cred.signCount = r.signCount;
+    cred.lastUsedAt = new Date(now).toISOString();
+    return { uv: r.uv };
+  } catch (e) {
+    const why = e instanceof WebAuthnError ? e.message : 'The passkey could not be checked';
+    if (/counter/.test(why)) recordAudit(a.name, 'auth.passkey.counter', `Official:${a.id}`, 'denied', `${cred.name}: ${why}`);
+    return { error: why };
+  }
+}
+
+/** Start registering a passkey: the browser's creation options. An account that already has a second step needs a session that passed it. */
+export function passkeyRegistrationOptions(id: string, rp: RelyingParty, sessionPassedSecondStep: boolean, now = Date.now()): ReturnType<typeof creationOptions> | { error: string } {
+  const a = db().accounts.find(x => x.id === id);
+  if (!a || a.disabled) return { error: 'No such account' };
+  if (hasSecondStep(a) && !sessionPassedSecondStep) return { error: 'Sign in with your current second step (code or passkey) before adding a passkey' };
+  if ((a.passkeys?.length ?? 0) >= MAX_PASSKEYS) return { error: `An account can hold at most ${MAX_PASSKEYS} passkeys; remove one first` };
+  const c = newChallenge('register', a.id, now);
+  return creationOptions(c, rp, { id: userHandle(a), name: a.email, displayName: a.name }, (a.passkeys ?? []).map(p => ({ id: p.id, transports: p.transports })));
+}
+
+/** Finish registering: verify the authenticator's answer and keep its public key. */
+export function registerPasskey(id: string, input: { challengeId?: string; response?: RegistrationJSON; name?: string }, rp: RelyingParty, now = Date.now()): { passkey: PasskeySummary } | { error: string } {
+  const a = db().accounts.find(x => x.id === id);
+  if (!a || a.disabled) return { error: 'No such account' };
+  const c = takeChallenge(input.challengeId ?? '', 'register', a.id, now);
+  if (!c) return { error: 'The registration has expired or was used already; start again' };
+  let cred;
+  try {
+    cred = verifyRegistration(input.response as RegistrationJSON, { challenge: c.challenge, origins: [rp.origin], rpId: rp.rpId, requireUv: false });
+  } catch (e) {
+    const why = e instanceof WebAuthnError ? e.message : 'The passkey could not be checked';
+    recordAudit(a.name, 'auth.passkey.add', `Official:${a.id}`, 'denied', why);
+    return { error: why };
+  }
+  if (db().accounts.some(x => x.passkeys?.some(p => p.id === cred.id))) return { error: 'This passkey is already registered' };
+  const name = (input.name ?? '').trim().slice(0, 60) || `Passkey ${(a.passkeys?.length ?? 0) + 1}`;
+  const p: StoredPasskey = { id: cred.id, publicKey: cred.publicKey, alg: cred.alg, signCount: cred.signCount, name, createdAt: new Date(now).toISOString(), aaguid: cred.aaguid, backupEligible: cred.backupEligible, transports: cred.transports };
+  (a.passkeys ??= []).push(p);
+  recordAudit(a.name, 'auth.passkey.add', `Official:${a.id}`, 'ok', `${name} · ${cred.backupEligible ? 'synced passkey' : 'device-bound key'} · alg ${cred.alg}`);
+  return { passkey: passkeySummary(p) };
+}
+
+/** The official removes one of their passkeys (not the last second step when the installation requires one). */
+export function removePasskey(id: string, credentialId: string, by: string, sessionPassedSecondStep: boolean): { passkeys: PasskeySummary[] } | { error: string } {
+  const a = db().accounts.find(x => x.id === id);
+  if (!a) return { error: 'No such account' };
+  const i = a.passkeys?.findIndex(p => p.id === credentialId) ?? -1;
+  if (i < 0) return { error: 'No such passkey' };
+  if (!sessionPassedSecondStep) return { error: 'Sign in with your second step before removing a passkey' };
+  if (twoStepRequiredFor(a) && !a.twoStep && a.passkeys!.length === 1) return { error: 'This installation requires a second step for you; add another passkey or an authenticator app first' };
+  const [gone] = a.passkeys!.splice(i, 1);
+  if (!a.passkeys!.length) delete a.passkeys;
+  recordAudit(by, 'auth.passkey.remove', `Official:${a.id}`, 'ok', gone!.name);
+  return { passkeys: (a.passkeys ?? []).map(passkeySummary) };
+}
+
+export const passkeysOf = (id: string): PasskeySummary[] => (db().accounts.find(x => x.id === id)?.passkeys ?? []).map(passkeySummary);
+
+/** Options for signing in with a passkey alone (the browser offers the passkeys it holds for this platform). */
+export function passkeySignInOptions(rp: RelyingParty, now = Date.now()) {
+  return requestOptions(newChallenge('sign-in', undefined, now), rp, [], 'required');
+}
+
+/** Sign in with a passkey alone. The person must be verified on the authenticator; that counts as the second step. */
+export function signInWithPasskey(input: { challengeId?: string; response?: AssertionJSON }, rp: RelyingParty, now = Date.now()): (PublicAccount & { secondStep: boolean }) | { error: string } {
+  const credId = typeof input.response?.id === 'string' ? input.response.id : '';
+  const a = credId ? db().accounts.find(x => x.passkeys?.some(p => p.id === credId)) : undefined;
+  if (!a || a.disabled) {
+    takeChallenge(input.challengeId ?? '', 'sign-in', undefined, now);
+    recordAudit('sign-in attempt', 'auth.sign-in', a ? `Official:${a.id}` : 'Official:?', 'denied', 'passkey not registered to an active account');
+    return { error: 'That passkey is not registered to an active account here' };
+  }
+  const r = usePasskey(a, input.challengeId ?? '', input.response!, rp, 'sign-in', true, now);
+  if ('error' in r) {
+    recordAudit(a.name, 'auth.sign-in', `Official:${a.id}`, 'denied', `passkey: ${r.error}`);
+    return r;
+  }
+  a.lastSignIn = new Date(now).toISOString();
+  return { ...pub(a), secondStep: r.uv };
+}
+
+// ── Identity provider links ──────────────────────────────────────────
+// Which platform account an identity at the government's identity provider
+// signs in as (lib/auth/oidc.ts). Accounts are never made with powers by a
+// sign-in: an administrator links an identity to an account, or makes the
+// account with a role from lib/auth/roles.ts.
+
+export function accountByIdentity(issuer: string, claim: string, value: string): PublicAccount | undefined {
+  const a = db().accounts.find(x => x.identity && x.identity.issuer === issuer && x.identity.claim === claim && x.identity.value === value);
+  return a ? pub(a) : undefined;
+}
+
+export function accountByEmail(email: string): PublicAccount | undefined {
+  const a = db().accounts.find(x => x.email === norm(email));
+  return a ? pub(a) : undefined;
+}
+
+/** Link an identity to an existing account (audited). One identity, one account. */
+export function linkIdentity(id: string, identity: { issuer: string; claim: string; value: string }, by: string): PublicAccount | { error: string } {
+  const a = db().accounts.find(x => x.id === id);
+  if (!a) return { error: 'No such account' };
+  const other = db().accounts.find(x => x.id !== id && x.identity?.issuer === identity.issuer && x.identity.claim === identity.claim && x.identity.value === identity.value);
+  if (other) return { error: `That identity is already linked to ${other.name}` };
+  a.identity = { ...identity, linkedAt: new Date().toISOString(), linkedBy: by };
+  recordAudit(by, 'auth.identity.link', `Official:${a.id}`, 'ok', `${a.name} · ${identity.claim} at ${identity.issuer}`);
+  return pub(a);
+}
+
+/** Remove an account's identity link (audited): the official then signs in only with the platform password or a passkey. */
+export function unlinkIdentity(id: string, by: string): PublicAccount | { error: string } {
+  const a = db().accounts.find(x => x.id === id);
+  if (!a?.identity) return { error: 'This account has no identity provider link' };
+  delete a.identity;
+  recordAudit(by, 'auth.identity.unlink', `Official:${a.id}`, 'ok', a.name);
+  return pub(a);
+}
+
+/**
+ * Make an account for an identity an administrator approved: the role and
+ * institution the administrator chose, no platform password (the official
+ * signs in through the identity provider). Audited under the administrator.
+ */
+export function createAccountForIdentity(input: { email?: string; name?: string; office?: string; role?: string; institution?: string }, identity: { issuer: string; claim: string; value: string }, by: string): PublicAccount | { error: string } {
+  const d = db();
+  const email = norm(input.email ?? '');
+  const name = (input.name ?? '').trim();
+  const office = (input.office ?? '').trim();
+  if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { error: 'Enter a valid email address' };
+  if (!name) return { error: 'Enter the official\'s name' };
+  if (!office) return { error: 'Enter the official\'s office' };
+  if (!isRole(input.role)) return { error: 'Choose a role' };
+  if (d.accounts.some(a => a.email === email)) return { error: 'An account with that email already exists; link the identity to it instead' };
+  if (d.accounts.some(x => x.identity?.issuer === identity.issuer && x.identity.claim === identity.claim && x.identity.value === identity.value)) return { error: 'That identity is already linked to an account' };
+  const institution = (input.institution ?? '').trim() || undefined;
+  const now = new Date().toISOString();
+  const a: OfficialAccount = { id: randomUUID(), email, name: name.slice(0, 120), office: office.slice(0, 160), passwordHash: 'none', noPassword: true, createdAt: now, createdBy: by, role: input.role, institution,
+    identity: { ...identity, linkedAt: now, linkedBy: by } };
+  d.accounts.push(a);
+  recordAudit(by, 'auth.account.create', `Official:${a.id}`, 'ok', `${a.name} · ${a.office} · ${roleLabel(input.role)}${institution ? ` · ${getMinistry(institution)?.name ?? institution}` : ' · whole government'} · identity provider sign-in`);
+  return pub(a);
+}
+
+/** A successful identity-provider sign-in (the time is shown under sign-in activity). */
+export function noteIdentitySignIn(id: string, now = Date.now()): void {
+  const a = db().accounts.find(x => x.id === id);
+  if (a) a.lastSignIn = new Date(now).toISOString();
 }
