@@ -122,6 +122,21 @@ describe('public websites', () => {
     for (const p of all) expect((await call(p)).headers.get('location'), p).toBeNull();
   });
 
+  it('resolve entity URIs (/id/*) for the public, reads only', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    for (const p of ['/id/place/KE-30', '/id/nation/KEN/about', '/id/facility/FAC-00001']) {
+      const r = await call(p);
+      expect(r.headers.get('location'), p).toBeNull();
+      expect(r.status, p).toBe(200);
+    }
+    // Only reads are opened: a change there still needs a verified official.
+    const post = await middleware(new NextRequest('http://localhost/id/place/KE-30', { method: 'POST' }));
+    expect(post.headers.get('location')).toMatch(/\/sign-in/);
+    // A path that only starts the same way is not opened.
+    expect((await call('/identity')).headers.get('location')).toMatch(/\/sign-in/);
+  });
+
   it('keep previews of unpublished proposals for signed-in officials', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
     process.env.CIVICOS_SESSION_SECRET = SECRET;
