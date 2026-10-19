@@ -1,6 +1,6 @@
 // Console smoke tests (architecture review R17): the pages officials rely on
 // most, opened in a real browser against a running build, on a desktop and a
-// phone. Fails on any uncaught page error, a page without its heading, a map
+// phone. Fails on any uncaught page error, any Content-Security-Policy violation, a page without its heading, a map
 // page without its map, horizontal scrolling on the phone, or a console API
 // the page calls answering 5xx.
 //
@@ -49,6 +49,7 @@ for (const vp of VIEWPORTS) {
     const page = await ctx.newPage();
     const problems = [];
     page.on('pageerror', e => problems.push(`page error: ${e.message.slice(0, 160)}`));
+    page.on('console', m => { if (m.type() === 'error' && /Content Security Policy/i.test(m.text())) problems.push(`CSP: ${m.text().slice(0, 160)}`); });
     page.on('response', r => { if (r.url().startsWith(`${BASE}/api/`) && r.status() >= 500) problems.push(`${r.status()} from ${r.url().slice(BASE.length)}`); });
     const t0 = Date.now();
     const res = await page.goto(BASE + p.path, { waitUntil: 'networkidle', timeout: 60_000 }).catch(e => { problems.push(`navigation: ${e.message.slice(0, 120)}`); return null; });
