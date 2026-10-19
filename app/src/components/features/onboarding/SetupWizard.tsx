@@ -12,6 +12,7 @@ import { loadDivisions, defaultUnits, divisionNoun, type DivisionLevel } from '@
 import { capitalsOf } from '@/lib/geo/capitals';
 import { WORLDVIEWS, disputesOf, worldviewOf } from '@/lib/map/disputed';
 import { applyNation } from '@/lib/nation/registry';
+import { normaliseDomain, identifierExample } from '@/lib/nation/domain';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { OnboardingFrame, Eyebrow, Field, inputCls, SealTile, Section, Select, Rule, Corners, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI, GOLD, INK } from './Chrome';
 import type { NationalConstitution, SovereignProfile, SovereignPreset, StateForm, Ministry, Archetype, ArchetypeKey, PlatformSetup } from '@/lib/api/types';
@@ -179,12 +180,14 @@ export function SetupWizard() {
   const activeCount = ministries.filter(m => active[m.id]).length + added.length;
   const siteErrors = sites.flatMap(x => siteProblems(x.name, siteDraft[x.siteId]));
   const instErrors = [...(activeCount === 0 ? ['Keep at least one institution active'] : []), ...siteErrors];
-  const errors = step === 0 ? nationErrors : step === 2 ? instErrors : [];
-  const canLaunch = nationErrors.length === 0 && instErrors.length === 0;
+  const domainCheck = normaliseDomain(profile.domain ?? '');
+  const identityErrors = 'error' in domainCheck ? [`Domain: ${domainCheck.error}`] : [];
+  const errors = step === 0 ? nationErrors : step === 1 ? identityErrors : step === 2 ? instErrors : [];
+  const canLaunch = nationErrors.length === 0 && identityErrors.length === 0 && instErrors.length === 0;
 
   function applyPreset(p: SovereignPreset) {
     setPreset(p.key);
-    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant, aiAssistantModel: cur?.aiAssistantModel, constitution: cur?.constitution, paymentRail: cur?.paymentRail, timeZone: cur?.timeZone, emergency: cur?.emergency, foreignAffairs: cur?.foreignAffairs, map: cur?.map }));
+    setProfile(cur => ({ ...p.profile, seal: cur?.seal, iso3: cur?.iso3, regions: cur?.regions, aiAssistant: cur?.aiAssistant, aiAssistantModel: cur?.aiAssistantModel, constitution: cur?.constitution, paymentRail: cur?.paymentRail, timeZone: cur?.timeZone, emergency: cur?.emergency, foreignAffairs: cur?.foreignAffairs, map: cur?.map, domain: cur?.domain }));
   }
 
   function addInstitution() {
@@ -213,7 +216,7 @@ export function SetupWizard() {
       try { await fn(); settle(i, 'ok'); return true; } catch (e) { settle(i, 'fail', e instanceof Error ? e.message : 'failed'); return false; }
     }
 
-    const ok = await run(`Saving national profile · ${profile.stateName}`, () => api.sovereign.update({ ...profile, aiAssistant: !!profile.aiAssistant, constitution: cleanConstitution(profile.constitution) }).then(r => { applyNation(r.sovereign); return r; }));
+    const ok = await run(`Saving national profile · ${profile.stateName}`, () => api.sovereign.update({ ...profile, domain: (() => { const d = normaliseDomain(profile.domain ?? ''); return 'domain' in d ? d.domain : profile.domain; })(), aiAssistant: !!profile.aiAssistant, constitution: cleanConstitution(profile.constitution) }).then(r => { applyNation(r.sovereign); return r; }));
     if (!ok) return false;
     for (const m of ministries) {
       const want = !!active[m.id], is = m.status === 'active';
@@ -593,6 +596,15 @@ export function SetupWizard() {
                           <input className={inputCls} value={profile.motto ?? ''} onChange={e => set('motto', e.currentTarget.value)} placeholder="Unity · Liberty · Service" />
                         </Field>
                       </div>
+                      <div className="sm:col-span-2">
+                        <Field label="The nation's web domain" hint={'domain' in domainCheck && domainCheck.domain
+                          ? `Persistent identifiers of the national data register are made under it, e.g. ${identifierExample(domainCheck.domain, profile.iso3)}; once published they never change. The domain should send /id/ addresses to this platform.`
+                          : 'Optional. The domain the government publishes data under, e.g. data.gov.ke. Until it is set, identifiers use a placeholder that never resolves.'}>
+                          <input className={inputCls} value={profile.domain ?? ''} onChange={e => set('domain', e.currentTarget.value)} placeholder="data.gov.example" inputMode="url" autoComplete="off" spellCheck={false}
+                            aria-invalid={'error' in domainCheck} />
+                        </Field>
+                        {'error' in domainCheck ? <p role="alert" className="mt-1.5 text-[12px] text-[#f1938f]">{domainCheck.error}</p> : null}
+                      </div>
                     </div>
                   </Section>
                   <Section n="2.2" title="Sovereign colour" aside={<span className="font-mono tracking-[0.14em]">{identity.accent.toUpperCase()}</span>}>
@@ -819,6 +831,7 @@ export function SetupWizard() {
                     <Summary n="II" title="Identity" onEdit={() => setStep(1)} rows={[
                       ['Insignia', identity.seal], ['Colour', identity.accent], ['Motto', identity.motto || '—'],
                       ['Language', [profile.locale, ...(profile.languages ?? [])].map(c => locales.find(l => l.code === c)?.name ?? c).join(' · ')],
+                      ['Domain', 'domain' in domainCheck && domainCheck.domain ? domainCheck.domain : 'Not set (identifiers use a placeholder)'],
                     ]} />
                     <Summary n="III" title="Institutions" onEdit={() => setStep(2)} rows={[
                       ['Active', String(ministries.filter(m => active[m.id]).length)],

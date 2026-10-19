@@ -59,7 +59,18 @@ export default function DevelopersPage() {
         <h2 className="text-xl font-semibold">3. Contract & versioning</h2>
         <ul className="list-disc space-y-1 pl-5">
           <li>Every endpoint is described in OpenAPI 3.1 at <code>/api/openapi</code>, generated from the code — the single source of truth.</li>
-          <li>Map data from the national data register is served as OGC API – Features at <code>/api/twin/ogc</code> (GeoJSON).</li>
+          <li>Map data from the national data register is served as OGC API – Features at <code>/api/twin/ogc</code> (GeoJSON), with CQL2 filters (<code>filter</code>, <code>filter-lang</code>).</li>
+          <li>
+            Every place, institution and site in the national data register has a persistent identifier under the nation&rsquo;s own
+            domain (set in setup): <code>https://&lt;domain&gt;/id/&lt;kind&gt;/&lt;code&gt;</code>, for example <code>/id/place/KE-30</code>.
+            The address answers 303 See Other: to the record as JSON (or NGSI-LD with <code>Accept: application/ld+json</code>)
+            for programs, to its page for people. Identifiers never change once published.
+          </li>
+          <li>
+            The register&rsquo;s catalogue is DCAT-AP JSON-LD at <code>/api/twin/catalog</code>: each source, published boundary
+            version and map collection, with publisher, licence, coverage and download addresses. Each import&rsquo;s lineage is
+            W3C PROV at <code>/api/twin/runs/&lt;id&gt;/prov</code>.
+          </li>
           <li>Endpoints are not versioned yet; version prefixes, deprecation notices and rate limits are planned.</li>
         </ul>
       </section>
