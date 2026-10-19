@@ -293,6 +293,16 @@ export interface IntegrationRegistered {
 
 export type FederationStatus = 'proposed' | 'approved' | 'revoked';
 
+/** What a partner may do with data received under a grant (ODRL-like; lib/exchange/usage-policy.ts). */
+export interface UsagePolicy {
+  /** Purposes the data may be used for (short words, e.g. "oversight", "statistics"). */
+  purposes: string[];
+  /** Days the partner may keep the data. */
+  retentionDays: number;
+  /** Whether the partner may pass the data on to a third party. */
+  onwardSharing: boolean;
+}
+
 export interface FederationGrant {
   id: string;
   fromTenant: string;
@@ -303,6 +313,8 @@ export interface FederationGrant {
   createdAt: ISODate;
   approvedBy?: string;
   expiresAt?: ISODate;
+  /** Absent on grants made before usage policies: exchanges under them are refused until one is set. */
+  policy?: UsagePolicy;
 }
 
 export type WebhookStatus = 'active' | 'paused' | 'disabled';

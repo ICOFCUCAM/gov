@@ -2648,7 +2648,7 @@
         ],
         "operationId": "post_federation_exchange",
         "summary": "POST /api/federation/exchange",
-        "description": "A federation partner's request for data under a grant (review R10): the partner's system presents its integration key (Authorization: Bearer civ_…, scope `federation:exchange`) and POSTs { tenant, scope }. The platform decides with the same default-deny rule as /api/federation/check, records the exchange in the exchange log on its side and answers with a signed receipt for the partner's side. Every decision is audited.",
+        "description": "A federation partner's request for data under a grant (review R10): the partner's system presents its integration key (Authorization: Bearer civ_…, scope `federation:exchange`) and POSTs { tenant, scope, purpose, retainDays?, onward? }. The grant's usage policy is enforced: a purpose outside it, a longer retention or onward sharing it does not allow is refused with the reason; an allowed exchange returns the obligations. The platform decides with the same default-deny rule as /api/federation/check, records the exchange in the exchange log on its side and answers with a signed receipt for the partner's side. Every decision is audited.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -2721,6 +2721,42 @@
           }
         },
         "x-source": "src/app/api/federation/grants/[id]/approve/route.ts"
+      }
+    },
+    "/api/federation/grants/{id}/policy": {
+      "get": {
+        "tags": [
+          "federation"
+        ],
+        "operationId": "get_federation_grants_id_policy",
+        "summary": "GET /api/federation/grants/{id}/policy",
+        "description": "A grant's usage policy as an ODRL 2.2 Agreement (JSON-LD): purposes, retention (a delete duty) and onward sharing (a distribute prohibition).",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/federation/grants/[id]/policy/route.ts"
       }
     },
     "/api/federation/grants/{id}/revoke": {

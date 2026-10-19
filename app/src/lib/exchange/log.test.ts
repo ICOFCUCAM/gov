@@ -68,10 +68,10 @@ describe('the exchange log and signed receipts', () => {
     expect(denied.status).toBe(403);
     expect(await denied.json()).toMatchObject({ allowed: false, reason: 'no grant (default deny)', receipt: { channel: 'federation', status: 403 } });
 
-    const g = proposeGrant({ toTenant: tenant, scopes: ['permit:read'], reason: 'Cross-border permits' });
+    const g = proposeGrant({ toTenant: tenant, scopes: ['permit:read'], reason: 'Cross-border permits', policy: { purposes: ['oversight'], retentionDays: 30, onwardSharing: false } });
     if ('error' in g) throw new Error(g.error);
     setGrantStatus(g.id, 'approved', 'Official');
-    const ok = await call({ tenant, scope: 'permit:read' });
+    const ok = await call({ tenant, scope: 'permit:read', purpose: 'oversight' });
     expect(ok.status).toBe(200);
     const j = await ok.json();
     expect(j).toMatchObject({ allowed: true, grant: g.id });

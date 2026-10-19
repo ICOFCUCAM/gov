@@ -280,7 +280,7 @@ export const api = {
     },
     federation: {
       grants: () => req<{ grants: FederationGrant[] }>('/api/federation/grants'),
-      propose: (body: { toTenant: string; scopes: string[]; reason: string; expiresAt?: string }) =>
+      propose: (body: { toTenant: string; scopes: string[]; reason: string; expiresAt?: string; policy: { purposes: string[]; retentionDays: number; onwardSharing: boolean } }) =>
         req<{ grant: FederationGrant }>('/api/federation/propose', {
           method: 'POST',
           body: JSON.stringify(body),

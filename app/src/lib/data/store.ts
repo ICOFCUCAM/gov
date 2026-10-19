@@ -11,6 +11,7 @@
 
 import { createHash, randomUUID, randomBytes, timingSafeEqual } from 'node:crypto';
 import { take } from '@/lib/exchange/rate-limit';
+import { usageRefusal, obligations, type UsageRequest } from '@/lib/exchange/usage-policy';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { locales } from '@/lib/i18n/config';
 import type {
@@ -239,6 +240,7 @@ function seed() {
       reason: 'Health ministry oversight of food-handling permits',
       createdAt: days(-15),
       approvedBy: 'STO',
+      policy: { purposes: ['oversight'], retentionDays: 365, onwardSharing: false },
     },
   ];
   const webhooks: WebhookSubscription[] = [
@@ -862,7 +864,11 @@ export function proposeGrant(input: {
   scopes: string[];
   reason: string;
   expiresAt?: string;
+  policy?: FederationGrant['policy'];
+  by?: string;
 }): FederationGrant | { error: string } {
+  const by = input.by?.trim() || 'operator';
+  const policyNote = input.policy ? `purposes ${input.policy.purposes.join(', ')}; keep ${input.policy.retentionDays} days; onward sharing ${input.policy.onwardSharing ? 'allowed' : 'not allowed'}` : undefined;
   if (input.toTenant === HOME_TENANT) {
     return { error: 'A tenant cannot federate with itself' };
   }
@@ -874,7 +880,8 @@ export function proposeGrant(input: {
     existing.reason = input.reason;
     existing.status = 'proposed';
     existing.expiresAt = input.expiresAt;
-    appendAudit('operator', 'federation.propose', `Grant:${existing.id}`, 'ok');
+    if (input.policy) existing.policy = input.policy;
+    appendAudit(by, 'federation.propose', `Grant:${existing.id}`, 'ok', policyNote);
     return existing;
   }
   const grant: FederationGrant = {
@@ -886,9 +893,10 @@ export function proposeGrant(input: {
     reason: input.reason,
     createdAt: new Date().toISOString(),
     expiresAt: input.expiresAt,
+    ...(input.policy ? { policy: input.policy } : {}),
   };
   db.grants.unshift(grant);
-  appendAudit('operator', 'federation.propose', `Grant:${grant.id}`, 'ok');
+  appendAudit(by, 'federation.propose', `Grant:${grant.id}`, 'ok', policyNote);
   return grant;
 }
 
@@ -930,11 +938,17 @@ export function federationCheck(
  * default-deny decision of federationCheck(), the grant it rests on, and an
  * audit entry naming the calling integration.
  */
-export function federationExchange(input: { tenant: string; scope: string; client: Pick<IntegrationClient, 'id' | 'name'> }): FederationCheck & { grantId?: string } {
-  const d = federationCheck(input.tenant, input.scope);
+export function federationExchange(input: { tenant: string; scope: string; client: Pick<IntegrationClient, 'id' | 'name'>; usage?: UsageRequest }, now = Date.now()): FederationCheck & { grantId?: string; obligations?: ReturnType<typeof obligations> } {
   const grant = db.grants.find(x => x.fromTenant === HOME_TENANT && x.toTenant === input.tenant);
-  appendAudit(`Integration: ${input.client.name} (${input.client.id})`, 'federation.exchange', grant ? `Grant:${grant.id}` : `Tenant:${input.tenant}`, d.allowed ? 'ok' : 'denied', `${input.scope} · ${d.reason}`);
-  return { ...d, ...(grant ? { grantId: grant.id } : {}) };
+  let d: FederationCheck = federationCheck(input.tenant, input.scope);
+  // The grant's usage policy (purpose, retention, onward sharing) is enforced at the exchange.
+  if (d.allowed && grant) {
+    const why = usageRefusal(grant.policy, input.usage ?? {});
+    if (why) d = { allowed: false, reason: why };
+  }
+  const purpose = typeof input.usage?.purpose === 'string' ? ` · purpose ${input.usage.purpose}` : '';
+  appendAudit(`Integration: ${input.client.name} (${input.client.id})`, 'federation.exchange', grant ? `Grant:${grant.id}` : `Tenant:${input.tenant}`, d.allowed ? 'ok' : 'denied', `${input.scope}${purpose} · ${d.reason}`);
+  return { ...d, ...(grant ? { grantId: grant.id } : {}), ...(d.allowed && grant?.policy ? { obligations: obligations(grant.policy, now) } : {}) };
 }
 
 export function listWebhooks(): WebhookSubscription[] {

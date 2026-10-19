@@ -109,6 +109,11 @@ export function InteropConsole() {
         toTenant: String(f.get('toTenant')),
         scopes: String(f.get('scopes')).split(',').map(s => s.trim()).filter(Boolean),
         reason: String(f.get('reason')),
+        policy: {
+          purposes: String(f.get('purposes')).split(',').map(s => s.trim()).filter(Boolean),
+          retentionDays: Number(f.get('retentionDays')),
+          onwardSharing: f.get('onwardSharing') === 'on',
+        },
       });
       (e.target as HTMLFormElement).reset();
       await load();
@@ -261,6 +266,11 @@ export function InteropConsole() {
               <TextField label="To tenant" name="toTenant" required placeholder="min-health" />
               <TextField label="Scopes (comma-separated)" name="scopes" required placeholder="permit:read" />
               <TextField label="Reason" name="reason" required />
+              <TextField label="Purposes the data may be used for (comma-separated)" name="purposes" required placeholder="oversight, statistics" />
+              <TextField label="Retention (days the partner may keep the data)" name="retentionDays" type="number" min={1} max={3650} required defaultValue="365" />
+              <label className="mb-3 flex items-center gap-2 text-sm">
+                <input type="checkbox" name="onwardSharing" /> The partner may share the data onward
+              </label>
               <Button type="submit" disabled={busy}>Propose</Button>
             </form>
           </Card>
@@ -283,6 +293,11 @@ export function InteropConsole() {
               </div>
               <div className="mt-1 text-sm text-ink-muted">
                 scopes: {g.scopes.join(', ')} · {g.reason}
+              </div>
+              <div className="mt-1 text-sm" data-testid="usage-policy">
+                {g.policy
+                  ? <>Usage policy: for {g.policy.purposes.join(', ')} only · kept at most {g.policy.retentionDays} days · onward sharing {g.policy.onwardSharing ? 'allowed' : 'not allowed'}{g.expiresAt ? ` · until ${new Date(g.expiresAt).toLocaleDateString()}` : ''} · <a className="text-link underline" href={`/api/federation/grants/${g.id}/policy`}>ODRL</a></>
+                  : <span className="text-ink-muted">No usage policy: exchanges under this grant are refused until it is proposed again with one.</span>}
               </div>
               <div className="mt-2 flex items-center gap-2">
                 {g.status === 'approved' ? (
