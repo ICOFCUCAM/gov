@@ -104,7 +104,7 @@ export function TwinScenarios({ by, metrics, metric, date, entities }: { by: str
                   Assumptions: {v.assumptions.map(a => `${a.entityId === '*' ? 'every region' : (entities.find(e => e.id === a.entityId)?.name ?? a.entityId)} ${a.changePct >= 0 ? '+' : ''}${a.changePct}%`).join(' · ')}{v.note ? ` — ${v.note}` : ''}
                 </p>
                 <p className="mt-1 break-all font-mono text-[11px]" title="SHA-256 over the scenario id, version, metric, date, assumptions and the observations it started from">
-                  <span className={v.evidenceOk ? 'text-ok' : 'text-alert'}>{v.evidenceOk ? 'Evidence verifies' : 'Evidence does not verify'}</span> · {v.evidenceHash}
+                  <span className={v.evidenceOk ? 'text-ok' : 'text-alert'}>{v.evidenceOk ? 'Evidence verifies' : 'Evidence does not verify'}</span> · {v.evidenceHash} · <a className="text-link underline underline-offset-2" href={`/api/twin/scenarios/${s.id}/versions/${v.version}/prov`}>provenance</a>
                 </p>
                 <table className="mt-2 w-full text-[12px]">
                   <thead><tr className="text-start text-ink-muted"><th className="text-start font-semibold">Entity</th><th className="text-end font-semibold">Observed</th><th className="text-end font-semibold">Modelled</th></tr></thead>

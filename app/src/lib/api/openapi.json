@@ -10766,6 +10766,50 @@
         "x-source": "src/app/api/twin/scenarios/[id]/route.ts"
       }
     },
+    "/api/twin/scenarios/{id}/versions/{v}/prov": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_scenarios_id_versions_v_prov",
+        "summary": "GET /api/twin/scenarios/{id}/versions/{v}/prov",
+        "description": "Provenance of one scenario version as W3C PROV-O JSON-LD (lib/twin/prov.ts): the version derived from the observations it started from (each with the import that generated it), the official who made it, the previous version it revises and its evidence hash. Read only.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "v",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/scenarios/[id]/versions/[v]/prov/route.ts"
+      }
+    },
     "/api/twin/scenarios": {
       "get": {
         "tags": [

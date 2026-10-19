@@ -1,6 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { createHash } from 'node:crypto';
-import { runProv } from './prov';
+import { runProv, scenarioProv } from './prov';
+import { createScenario, reviseScenario, resetScenarios } from './scenarios';
 import { resetTwin, syncRegister, registerSource, runSource, withdrawRun } from './register';
 import { applyNation } from '@/lib/nation/registry';
 
@@ -42,5 +43,28 @@ describe('PROV-O for twin imports', () => {
     const g = runProv(run.id, 'https://t.example')!['@graph'] as Node[];
     expect(g.find(n => n['@id'].endsWith('#withdrawal'))).toMatchObject({ 'dct:description': 'keyed wrongly', 'prov:invalidated': [expect.any(Object)] });
     expect(g.find(n => n['@type'] === 'prov:Entity' && String(n['dct:identifier']).startsWith(`${run.id}/`))).toMatchObject({ 'prov:invalidatedAtTime': expect.any(String) });
+  });
+});
+
+describe('PROV-O for scenario versions', () => {
+  it('derives a version from its input observations and the imports behind them', async () => {
+    resetTwin(); resetScenarios();
+    applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa', 'Nairobi City', 'Kisumu'] });
+    await syncRegister();
+    const s = ok(registerSource({ by: 'D', name: 'Census', publisher: 'KNBS', kind: 'csv-upload', mapping: { entity: 'region', value: 'value', metric: { fixed: 'population' }, date: { column: 'year' } } }));
+    const run = ok(await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,1000,2019\nNairobi City,2000,2019\nKisumu,3000,2019\n' }));
+    const sc = ok(createScenario({ name: 'Growth', by: 'Planner', metric: 'population', assumptions: [{ entityId: '*', changePct: 5 }] }));
+    ok(reviseScenario(sc.id, { by: 'Planner 2', metric: 'population', assumptions: [{ entityId: '*', changePct: 6 }] }));
+    const g = scenarioProv(sc.id, 2, 'https://t.example')!['@graph'] as Node[];
+    const v = g.find(n => n['@id'] === `https://t.example/api/twin/scenarios/${sc.id}/versions/2`)!;
+    expect(v).toMatchObject({
+      '@type': 'prov:Entity', 'civicos:evidenceVerifies': true,
+      'prov:wasAttributedTo': { '@id': 'https://t.example/api/twin/agents/Planner%202' },
+      'prov:wasRevisionOf': { '@id': `https://t.example/api/twin/scenarios/${sc.id}/versions/1` },
+    });
+    expect(v['prov:wasDerivedFrom']).toHaveLength(3);
+    expect(g.find(n => n['dct:identifier'] === `${run.id}/place:KE-28/population/2019-01-01`)).toMatchObject({ 'prov:wasGeneratedBy': { '@id': `https://t.example/api/twin/runs/${run.id}` } });
+    expect(g.find(n => n['@type'] === 'prov:Activity')).toMatchObject({ 'prov:wasAssociatedWith': { '@id': 'https://t.example/api/twin/agents/Planner%202' } });
+    expect(scenarioProv(sc.id, 9, 'https://t.example')).toBeUndefined();
   });
 });
