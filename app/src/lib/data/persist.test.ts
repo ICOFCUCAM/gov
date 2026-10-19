@@ -102,3 +102,22 @@ describe('one writer', () => {
     }
   });
 });
+
+describe('quiet save ticks (review D2)', () => {
+  it('skips encoding while nothing is audited, until the full sweep is due', async () => {
+    const { flush, quietSince, markChanged } = await import('./persist');
+    const { recordAudit } = await import('./store');
+    const adapter = { name: 'memory', save: async () => 1, load: async () => ({}) } as never;
+    await flush(adapter, new Date(1_000_000));
+    expect(quietSince(1_005_000, 60_000)).toBe(true);
+    // An audited change ends the quiet.
+    recordAudit('Officer A', 'test.change', 'Test:1', 'ok');
+    expect(quietSince(1_005_000, 60_000)).toBe(false);
+    await flush(adapter, new Date(1_006_000));
+    expect(quietSince(1_010_000, 60_000)).toBe(true);
+    // An unaudited change is caught by the sweep at the latest.
+    expect(quietSince(1_006_000 + 61_000, 60_000)).toBe(false);
+    markChanged();
+    expect(quietSince(1_010_000, 60_000)).toBe(false);
+  });
+});

@@ -254,9 +254,25 @@ export interface PersistenceStatus {
   fencing?: 'lease+version' | 'none';
   /** The lease as last seen: who holds it and until when. */
   lease?: { holder: string; expiresAt: string };
+  /** Save ticks skipped because nothing was audited since the last save (review D2). */
+  skipped?: number;
 }
 type Status = PersistenceStatus;
-const g = globalThis as unknown as Record<string, unknown> & { __persistStatus?: Status; __persistLast?: Map<string, string>; __persistVersions?: Map<string, number> };
+const g = globalThis as unknown as Record<string, unknown> & { __persistStatus?: Status; __persistLast?: Map<string, string>; __persistVersions?: Map<string, number>; __persistChanges?: number; __persistSeen?: number; __persistLastSweep?: number };
+
+/**
+ * Note that the state changed. The audit chain calls it for every audited
+ * change (lib/data/store.ts appendAudit), so the save loop can skip encoding
+ * every store when nothing was audited since the last save (review D2). A
+ * change that is not audited is still saved by the full sweep, at the latest
+ * CIVICOS_STATE_SWEEP_MS later (default 60 s).
+ */
+export function markChanged(): void { g.__persistChanges = (g.__persistChanges ?? 0) + 1; }
+
+/** Whether the loop may skip this tick: nothing audited since the last save and the last full sweep is recent. */
+export function quietSince(now: number, sweepMs: number): boolean {
+  return (g.__persistChanges ?? 0) === (g.__persistSeen ?? -1) && now - (g.__persistLastSweep ?? 0) < sweepMs;
+}
 
 /** The stores currently on globalThis. */
 export function liveKeys(): string[] {
@@ -284,6 +300,8 @@ export function restore(saved: Record<string, unknown>): string[] {
  * read or wrote; a StateConflictError stops the flush and nothing is overwritten.
  */
 export async function flush(adapter: StateAdapter, now = new Date(), writer?: string): Promise<string[]> {
+  g.__persistSeen = g.__persistChanges ?? 0;
+  g.__persistLastSweep = now.getTime();
   const last = (g.__persistLast ??= new Map());
   const versions = (g.__persistVersions ??= new Map());
   const written: string[] = [];
@@ -334,6 +352,7 @@ export async function startFromEnv(env = process.env): Promise<Status> {
   const ttl = Number(env.CIVICOS_STATE_LEASE_TTL_MS) || 30_000;
   const wait = env.CIVICOS_STATE_LEASE_WAIT_MS !== undefined ? Number(env.CIVICOS_STATE_LEASE_WAIT_MS) || 0 : ttl + 5_000;
   const interval = Number(env.CIVICOS_STATE_INTERVAL_MS) || 5000;
+  const sweep = Number(env.CIVICOS_STATE_SWEEP_MS) || 60_000;
   const unfenced = (e: Error) => `writer fencing unavailable (apply migration civicos_platform_state_fencing): ${e.message}`;
 
   // 1. The writer's lease first, so the writer restores the latest saves.
@@ -383,6 +402,8 @@ export async function startFromEnv(env = process.env): Promise<Status> {
         status.lease = { holder: lease.holder, expiresAt: lease.expiresAt };
         if (!lease.acquired) return stop(`stopped: the state writer's lease passed to ${lease.holder}; changes made here since the last save were not saved. Restart this server.`);
       }
+      // Nothing audited since the last save and a full sweep recently: no store is encoded this tick.
+      if (quietSince(Date.now(), sweep)) { status.skipped = (status.skipped ?? 0) + 1; return; }
       await flush(adapter, new Date(), fenced ? writer : undefined);
       if (status.error?.startsWith('save failed')) status.error = undefined;
     } catch (e) {

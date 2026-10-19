@@ -291,6 +291,9 @@ function appendAudit(
   const prevHash = prev?.hash ?? null;
   const base = { id: uid('AU'), at: new Date().toISOString(), actor, action, resource, outcome, detail, seq, prevHash };
   const entry: AuditEntry = { ...base, alg: 'sha256-v2', hash: auditHashV2(base) };
+  // Tell the save loop the state changed (lib/data/persist.ts markChanged; no import, the store stays edge-safe).
+  const pg = globalThis as { __persistChanges?: number };
+  pg.__persistChanges = (pg.__persistChanges ?? 0) + 1;
   db.audit.push(entry);
   return entry;
 }
