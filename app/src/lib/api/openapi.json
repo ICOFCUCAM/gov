@@ -23871,11 +23871,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/public/directives/route.ts"
       }
     },
