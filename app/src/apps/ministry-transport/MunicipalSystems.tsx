@@ -9,7 +9,7 @@
 import * as React from 'react';
 import { transportOps } from '@/lib/gov/transport-systems';
 import { waveSeries } from '@/lib/telemetry';
-import { CityMap, useCityGeo, type CityPalette } from '@/components/map/CityDistrictMap';
+import { CityMap, useCityGeo, type CityPalette } from '@/apps/_shared/CityDistrictMap';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';

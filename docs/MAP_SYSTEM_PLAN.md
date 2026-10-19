@@ -178,7 +178,7 @@ layouts. The fix is one shared map engine grown from it.
   `components/map/MinistryMap.tsx` (the preset), `apps/police-command/
   CommandMap.tsx` (command theatre on the preset) and `WorldThreatMap.tsx`
   (world view centred on the nation; foreign states never shaded),
-  `apps/ministry-interior/domains/RegionMaps.tsx`, `components/map/
+  `apps/ministry-interior/domains/RegionMaps.tsx`, `apps/_shared/
   CityDistrictMap.tsx` (the capital's real districts), `apps/_shared/GeoMap.tsx`
   (health, real corridors and layers). Controls that did nothing now work
   (zoom, pan, fit, full screen, layers, region and border selects, the 3D
