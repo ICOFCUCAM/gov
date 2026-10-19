@@ -8,6 +8,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { regionList } from '@/lib/nation/registry';
+import { readTwinValue } from '@/lib/twin/read';
 
 const FIRST = ['A. Mehta', 'L. Okonkwo', 'S. Patel', 'R. Diallo', 'M. Hassan', 'T. Ndlovu', 'J. Brennan', 'F. Abebe', 'C. Mensah', 'N. Farah', 'P. Park', 'D. Sow'];
 const SPECIALTIES = ['Emergency', 'Internal Medicine', 'Surgery', 'Paediatrics', 'Obstetrics', 'Cardiology', 'ICU / Critical Care', 'Infectious Disease'];
@@ -158,7 +159,8 @@ export function patientServices(instId: string, t: number): PatientServices {
     const s = seed(`vx:${instId}:${i}`);
     return { vaccine, doses: 1 + Math.round(seed(`vxd:${instId}:${i}`) * 3), status: s > 0.78 ? 'overdue' : s > 0.5 ? 'due' : 'up-to-date' };
   });
-  const insuranceCoverage = Math.round(wave(`ins:${instId}`, t, 48, 92));
+  // Observed from the twin when the nation reports its health cover (lib/twin/engine-metrics.ts), else the sample.
+  const insuranceCoverage = Math.round(readTwinValue('health.insurance_coverage', Math.round(wave(`ins:${instId}`, t, 48, 92))));
   const alerts: HealthAlert[] = [
     { label: 'Seasonal influenza advisory', level: 'advisory', detail: 'Elevated transmission — vaccination recommended for at-risk groups' },
     { label: 'Prescription ready for collection', level: 'info', detail: 'Pharmacy dispensing queue normal' },

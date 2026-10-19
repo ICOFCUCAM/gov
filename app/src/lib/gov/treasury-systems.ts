@@ -7,6 +7,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { regionList, formatMoney } from '@/lib/nation/registry';
+import { readTwinValue } from '@/lib/twin/read';
 
 const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
@@ -20,7 +21,8 @@ export interface FiscalCommand {
 }
 export function fiscalCommand(id: string, t: number): FiscalCommand {
   const liquidityDays = Math.round(wave(`fc:liq:${id}`, t, 8, 60));
-  const debtToGdp = Math.round(wave(`fc:dgp:${id}`, t, 34, 78));
+  // Observed from the twin when the treasury reports it (lib/twin/engine-metrics.ts), else the sample.
+  const debtToGdp = Math.round(readTwinValue('fiscal.debt_to_gdp', Math.round(wave(`fc:dgp:${id}`, t, 34, 78))));
   const macro = Math.round(Math.max(0, Math.min(100, 100 - (60 - liquidityDays) * 0.6 - (debtToGdp - 40) * 0.7)));
   return {
     liquidityDays,
@@ -42,9 +44,9 @@ export interface RevenueOps {
 const STREAMS = ['Income tax', 'VAT', 'Customs & duties', 'Excise', 'Corporate', 'Non-tax'];
 export function revenueOps(id: string, t: number): RevenueOps {
   return {
-    collectionRatePct: Math.round(wave(`rv:cr:${id}`, t, 68, 99)),
+    collectionRatePct: Math.round(readTwinValue('revenue.collection_rate', Math.round(wave(`rv:cr:${id}`, t, 68, 99)))),
     customsThroughputPct: Math.round(wave(`rv:ct:${id}`, t, 60, 98)),
-    taxpayersM: Math.round(wave(`rv:tp:${id}`, t, 6, 24) * 10) / 10,
+    taxpayersM: Math.round(readTwinValue('revenue.taxpayers', Math.round(wave(`rv:tp:${id}`, t, 6, 24) * 10) / 10, { scale: 1e6 }) * 10) / 10,
     arrearsBn: Math.round(wave(`rv:ar:${id}`, t, 2, 38) * 10) / 10,
     byStream: STREAMS.map((stream, i) => {
       const pct = Math.round(wave(`rv:s:${id}:${i}`, t, 55, 99));
@@ -62,7 +64,7 @@ export interface BudgetOps {
 const VOTE_HEADS = ['Health', 'Education', 'Transport', 'Energy', 'Interior', 'Agriculture'];
 export function budgetOps(id: string, t: number): BudgetOps {
   return {
-    executionPct: Math.round(wave(`bg:ex:${id}`, t, 52, 97)),
+    executionPct: Math.round(readTwinValue('budget.execution_rate', Math.round(wave(`bg:ex:${id}`, t, 52, 97)))),
     virements: Math.round(wave(`bg:vr:${id}`, t, 4, 60)),
     blockedAllocations: Math.round(seed(`bg:bk:${id}:${Math.floor(t / 10)}`) * 7),
     byMinistry: VOTE_HEADS.map((ministry, i) => {

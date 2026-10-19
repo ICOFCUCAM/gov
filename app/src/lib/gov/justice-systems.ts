@@ -3,6 +3,7 @@
 // operational environments (distinct from the Judiciary branch). Pure.
 
 import { seed, wave } from '@/lib/telemetry';
+import { readTwinValue } from '@/lib/twin/read';
 
 export interface JusticeOps {
   legalAid: { centres: number; openMatters: number; representedPct: number; backlog: number };
@@ -13,8 +14,10 @@ export interface JusticeOps {
 }
 
 export function justiceOps(id: string, t: number): JusticeOps {
-  const cap = 60000 + Math.round(seed(`js:cp:${id}`) * 40000);
-  const pop = Math.round(cap * wave(`js:po:${id}`, t, 0.7, 1.3));
+  // People in custody and places: observed from the twin when the nation reports them (lib/twin/engine-metrics.ts), else the sample.
+  const sampleCap = 60000 + Math.round(seed(`js:cp:${id}`) * 40000);
+  const cap = Math.round(readTwinValue('corrections.capacity', sampleCap));
+  const pop = Math.round(readTwinValue('corrections.population', Math.round(sampleCap * wave(`js:po:${id}`, t, 0.7, 1.3))));
   return {
     legalAid: {
       centres: 80 + Math.round(seed(`js:lc:${id}`) * 90),

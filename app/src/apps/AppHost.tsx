@@ -38,6 +38,8 @@ import { policeOps, emergencyOps, immigrationOps, customsOps } from '@/lib/gov/a
 import { citizenWallet, officerConsole } from '@/lib/gov/citizen-systems';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { interoperabilityFabric } from '@/services/interoperability-fabric';
+import { useTwinPrimed } from '@/lib/twin/read';
+import { ENGINE_METRIC_IDS } from '@/lib/twin/engine-metrics';
 import { federationPosture } from '@/services/federation-aggregate';
 import { PosturePill } from '@/apps/_shared/AppKit';
 import { ROLES, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
@@ -69,6 +71,8 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
   }, []);
   useFederationSync(mins);
   React.useSyncExternalStore(orchSubscribe, orchVersion, orchVersion);
+  // The engines' headline figures read the twin once it answers (observed), the sample until then (lib/twin/engine-metrics.ts).
+  useTwinPrimed(ENGINE_METRIC_IDS as string[]);
 
   const found = findApp(domain);
   // Branch app names follow the nation's offices and chambers once installed.

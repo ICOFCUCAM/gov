@@ -8,6 +8,7 @@
 // never combined until someone defines them.
 
 import * as React from 'react';
+import { ENGINE_METRICS } from '@/lib/twin/engine-metrics';
 
 interface Metric {
   id: string; label: string; unit: string; aggregation: 'sum' | 'mean' | 'weighted-mean' | 'none';
@@ -94,6 +95,26 @@ export function TwinMetrics({ by, onChange }: { by: string; onChange?: () => voi
             </table>
           </div>
         ) : <p className="text-ink-soft">No metrics yet.</p>}
+      </section>
+
+      <section className="rounded-[3px] border border-line bg-surface p-4">
+        <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="text-[13px] font-bold uppercase tracking-[0.14em] text-ink">Figures the console reads from here</h2>
+          <span className="text-[12px] text-ink-muted">observed once defined and reported · sample until then</span>
+        </div>
+        <ul className="divide-y divide-line text-[12px]">
+          {ENGINE_METRICS.map(e => {
+            const def = list.find(m => m.id === e.id && m.origin !== 'observed');
+            return (
+              <li key={e.id} className="flex flex-wrap items-baseline justify-between gap-2 py-1.5">
+                <span><span className="font-semibold">{e.label}</span> <span className="font-mono text-ink-muted">{e.id}</span> · {e.scope === 'regional' ? 'by region' : 'national'} · <span className="text-ink-soft">{e.engines.join('; ')}</span></span>
+                {def ? <span className="text-ok">Defined</span> : (
+                  <button type="button" className={btn} onClick={() => { setEditing(false); setF({ id: e.id, label: e.label, unit: e.unit, aggregation: e.aggregation, weightMetric: e.weightMetric ?? '', period: e.period, sdmxConcept: '', description: '' }); }}>Use this definition</button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
       </section>
 
       <section className="rounded-[3px] border border-line bg-surface p-4">

@@ -33,6 +33,8 @@ import { verifyChain } from '@/services/audit-ledger';
 import { escalationState } from '@/shared/sovereignty/escalation';
 import { DirectivesInbox } from '@/apps/_shared/AppKit';
 import { useRenderNow } from '@/lib/clock/render-now';
+import { useTwinPrimed } from '@/lib/twin/read';
+import { ENGINE_METRIC_IDS } from '@/lib/twin/engine-metrics';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 
@@ -51,6 +53,8 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
   // no "Loading institution…" dead-end. The API call only refines it.
   const [m, setM] = React.useState<Ministry>(() => resolveInstitution(id));
   const [now, setNow] = React.useState(useRenderNow());
+  // The engines' headline figures read the twin once it answers (observed), the sample until then (lib/twin/engine-metrics.ts).
+  useTwinPrimed(ENGINE_METRIC_IDS as string[]);
   const [selDoc, setSelDoc] = React.useState<string | null>(null);
   const [selRow, setSelRow] = React.useState<string | null>(null);
   const [aiAdvisoryText, setAiAdvisoryText] = React.useState<string | null>(null);

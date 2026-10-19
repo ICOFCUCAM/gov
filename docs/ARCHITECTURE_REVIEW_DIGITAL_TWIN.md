@@ -640,17 +640,17 @@ Every finding of section 2 has been worked on in place (nothing removed). What a
 | S10 AI egress | validation, sample marking, audit with hashes, data-sovereignty gate, nation's own model, per-official limit | — |
 | D1, O1, O3 deployment and single writer | Helm (ingress, env, one writer, probes, memory), Compose with file state and Prometheus, writer lease and versioned saves | multi-writer storage (R6) |
 | D2 whole-store re-encode | save loop skips encoding while nothing is audited, full sweep every 60 s | per-record tables (R6) |
-| D3, D4, D5 twin semantics | metric registry (UCUM, aggregation, period), unit checks, `nationalTotal` refusals with coverage and vintage, run withdrawal, `validTo` and quality, durable archive instead of eviction | four-eyes withdrawal |
-| D6, D7 identifiers, catalogue, provenance | entity URIs with a 303 resolver, DCAT-AP catalogue, PROV-O for runs and scenarios, NGSI-LD view, UUID v7 national facility ids | nation domain field in setup |
+| D3, D4, D5 twin semantics | metric registry (UCUM, aggregation, period), unit checks, `nationalTotal` refusals with coverage and vintage, run withdrawal, `validTo` and quality, durable archive instead of eviction, four-eyes withdrawal under a per-nation twin policy (`lib/twin/policy.ts`) | — |
+| D6, D7 identifiers, catalogue, provenance | entity URIs with a 303 resolver, DCAT-AP catalogue, PROV-O for runs and scenarios, NGSI-LD view, UUID v7 national facility ids, the nation's domain in setup (`lib/nation/domain.ts`) | public resolution of `/id/*` |
 | D8 several sources of truth | ownership map with coverage test (`lib/data/register-owners.ts`, `/api/platform/owners`) | moving each duplicate behind its owner (R6) |
 | D9 audit integrity | Ed25519-signed chain heads, anchored by the audit-anchor cron, shown on /audit | RFC 3161 time-stamps from the nation's TSA |
-| I1, I2 OGC | subdivisions through the nation's geography, geometry bbox, prev links, queryables and filters, conformance checker and TEAM Engine in CI | machine read keys for GIS clients, CQL2 |
-| I3 sensors | SensorThings API v1.1 read-only over the twin and substrate telemetry | telemetry streams as a twin source kind |
+| I1, I2 OGC | subdivisions through the nation's geography, geometry bbox, prev links, queryables and filters, conformance checker and TEAM Engine in CI, integration keys with scope `ogc:read` for GIS clients (`lib/twin/machine-read.ts`), CQL2-Text and CQL2-JSON filters (`lib/twin/cql2.ts`) | CRS Part 2; OAuth2 client credentials |
+| I3 sensors | SensorThings API v1.1 read-only over the twin and substrate telemetry, telemetry streams as a twin source kind with daily aggregates (`lib/twin/stream.ts`) | MQTT, STA create/update |
 | I4, I7 exchange | RFC 9421 signatures on feeds, exchange log with signed receipts, federation usage policies, CloudEvents outbox with signed webhooks, AsyncAPI | mutual TLS between installations |
-| I5 OpenAPI | regenerated per change; multipart described | typed request/response schemas |
-| I6 SDMX | SDMX-CSV reader | SDMX-JSON/ML |
+| I5 OpenAPI | regenerated per change; multipart described; typed request/response schemas from the routes' TypeScript types, security schemes per operation (`scripts/openapi-types.mjs`) | examples per operation |
+| I6 SDMX | SDMX-CSV, SDMX-JSON (2.0/1.0) and SDMX-ML 2.1 structure-specific readers | DSD and code-list fetching from the office's registry |
 | G1–G6 geospatial | Shapefile/GeoPackage with reprojection, national grids for site imports, topology checks, spatial index, canvas layer and vector tiles, footprints and CityJSON export, INSPIRE/HXL/OSM/Smart Data Models mapping | WebGL renderer, PMTiles |
-| M1–M3 scenarios and engines | verified authors, model registry and v2 evidence hash, intervals, calibration log, twin read API wired into two engines | wiring the remaining engines |
+| M1–M3 scenarios and engines | verified authors, model registry and v2 evidence hash, intervals, calibration log, twin read API wired into every engine figure with a metric equivalent (`lib/twin/engine-metrics.ts`, register 16.3) | engine indexes without a metric equivalent |
 | O2 observability | structured JSON logs with redaction and request ids, Prometheus metrics, health with audit chain, freshness and problems | OpenTelemetry traces |
 | O4 tests | architecture tests, gate coverage tests, property tests for as-of, soak test with a recorded baseline, console smoke tests on desktop and phone, OGC checks | — |
 | C1, C2, C5 code structure | deep snapshot defaults (`withDefaults`), layering enforced by tests | splitting `lib/data/store.ts`; persistence port (R6) |
