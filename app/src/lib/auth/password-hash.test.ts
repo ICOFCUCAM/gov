@@ -7,7 +7,8 @@ type Acc = { passwordHash: string };
 const stored = () => (globalThis as unknown as { __civicosOfficials: { accounts: Acc[] } }).__civicosOfficials.accounts;
 const ok = <T,>(r: T | { error: string }): T => { if (r && typeof r === 'object' && 'error' in r) throw new Error(r.error); return r as T; };
 
-describe('password hashing (async scrypt, N=2^17)', () => {
+// Several full-cost hashes per test: allow for a busy machine.
+describe('password hashing (async scrypt, N=2^17)', { timeout: 60_000 }, () => {
   beforeEach(() => { resetOfficials(); });
 
   it('hashes new passwords with N=2^17, r=8, p=1', async () => {

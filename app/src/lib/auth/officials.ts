@@ -99,8 +99,32 @@ export function needsRehash(stored: string): boolean {
   return !ph || ph.N < c.N || ph.r < c.r || ph.p < c.p;
 }
 
-/** The key that signs sessions: CIVICOS_SESSION_SECRET, else one generated for this installation and kept in its state. */
+/**
+ * Why sessions cannot be issued or verified right now, or null. With sign-in
+ * enforced (CIVICOS_AUTH=enforce) the session key must come from
+ * CIVICOS_SESSION_SECRET (at least 32 characters), held outside the
+ * platform's data: a key generated into the state would let whoever reads a
+ * snapshot mint sessions.
+ */
+export function sessionSecretProblem(env: NodeJS.ProcessEnv = process.env): string | null {
+  if (env.CIVICOS_AUTH !== 'enforce') return null;
+  const s = env.CIVICOS_SESSION_SECRET ?? '';
+  if (!s) return 'Sign-in is enforced (CIVICOS_AUTH=enforce) but CIVICOS_SESSION_SECRET is not set, so no session can be issued or verified. Set it to a random value of at least 32 characters, kept outside the platform state.';
+  if (s.length < 32) return 'CIVICOS_SESSION_SECRET is shorter than 32 characters; with sign-in enforced, sessions are refused until it is replaced with a longer random value.';
+  return null;
+}
+
+export class SessionSecretMissing extends Error {}
+
+/**
+ * The key that signs sessions: CIVICOS_SESSION_SECRET. Only outside enforce
+ * mode (previews, first installation) is one generated and kept in the
+ * installation's state; with CIVICOS_AUTH=enforce and no usable variable this
+ * throws SessionSecretMissing, so nothing is signed or accepted.
+ */
 export function sessionSecret(): string {
+  const problem = sessionSecretProblem();
+  if (problem) throw new SessionSecretMissing(problem);
   if (process.env.CIVICOS_SESSION_SECRET) return process.env.CIVICOS_SESSION_SECRET;
   const d = db();
   return (d.secret ??= randomBytes(32).toString('base64'));

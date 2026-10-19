@@ -9,7 +9,7 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, verifyToken, type OfficialClaims } from './session-token';
-import { sessionSecret, accountById } from './officials';
+import { sessionSecret, sessionSecretProblem, accountById } from './officials';
 import { secondStepMissing, type Scope } from './roles';
 
 /**
@@ -20,6 +20,12 @@ import { secondStepMissing, type Scope } from './roles';
 export async function currentOfficial(): Promise<OfficialClaims | null> {
   let token: string | undefined;
   try { token = cookies().get(OFFICIAL_COOKIE)?.value; } catch { return null; }
+  // With sign-in enforced and no CIVICOS_SESSION_SECRET, no session is accepted (sessionSecretProblem()).
+  const problem = sessionSecretProblem();
+  if (problem) {
+    if (token) console.error(`[auth] session refused: ${problem}`);
+    return null;
+  }
   const c = await verifyToken(token, sessionSecret());
   if (!c || c.method !== 'local') return c;
   const a = accountById(c.sub.slice('local:'.length));
@@ -59,6 +65,8 @@ export async function refusal(rule: (s: Scope) => string | null): Promise<NextRe
 
 /** Set the signed session cookie (and the console's page cookie) on a response. */
 export async function issueSession(res: NextResponse, claims: OfficialClaims, secure: boolean): Promise<NextResponse> {
+  const problem = sessionSecretProblem();
+  if (problem) return NextResponse.json({ error: problem }, { status: 503 });
   res.cookies.set(OFFICIAL_COOKIE, await signClaims(claims, sessionSecret()), {
     httpOnly: true, sameSite: 'lax', path: '/', maxAge: SESSION_HOURS * 3600, secure,
   });
