@@ -9,7 +9,7 @@
 // process. It is sufficient for Phase 1 demo/preview. Production uses a
 // durable sovereign datastore.
 
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
 import { locales } from '@/lib/i18n/config';
 import type {
@@ -101,8 +101,23 @@ import { federationSeed } from '@/lib/institution/federation';
 import { regionList, applyNation, nationPaymentRail, nationRegions } from '@/lib/nation/registry';
 import { maybeSignHead, verifySignedHeads, type SignedHeadCheck } from '@/lib/audit/sign';
 
+/** A new record id: the prefix and 10 hex digits from a CSPRNG (randomUUID). Ids made before (6 base-36 characters) stay valid: ids are only ever compared as strings. */
 function uid(prefix: string): string {
-  return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
+  return `${prefix}-${randomUUID().replace(/-/g, '').slice(0, 10).toUpperCase()}`;
+}
+
+/** JSON with object keys in sorted order, so the same content always gives the same bytes. */
+function canonicalJson(v: unknown): string {
+  if (Array.isArray(v)) return `[${v.map(canonicalJson).join(',')}]`;
+  if (v && typeof v === 'object' && !(v instanceof Date)) {
+    return `{${Object.keys(v).sort().filter(k => (v as Record<string, unknown>)[k] !== undefined).map(k => `${JSON.stringify(k)}:${canonicalJson((v as Record<string, unknown>)[k])}`).join(',')}}`;
+  }
+  return JSON.stringify(v) ?? 'null';
+}
+
+/** Content address of a configuration bundle: `sha256:<hex>` over its canonical JSON. Bundles published before keep their earlier 32-bit hash. */
+export function configContentHash(payload: Record<string, unknown>): string {
+  return `sha256:${createHash('sha256').update(canonicalJson(payload), 'utf8').digest('hex')}`;
 }
 
 /**
@@ -1090,7 +1105,7 @@ export function publishConfig(payload: Record<string, unknown>): ConfigBundle {
     id: uid('CFG'),
     scope: 'global',
     version: (last?.version ?? 0) + 1,
-    contentHash: hash(JSON.stringify(payload)),
+    contentHash: configContentHash(payload),
     state: 'draft',
     createdAt: new Date().toISOString(),
   };
