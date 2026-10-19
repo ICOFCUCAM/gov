@@ -439,7 +439,7 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
     if (text === undefined) {
       if (s.kind !== 'csv-url' || !s.url) throw new Error('This source is uploaded: send its CSV');
       const host = new URL(s.url).host;
-      text = (await safeFetchText(s.url, { allow: u => u.host === host, accept: 'text/csv, text/plain;q=0.8, */*;q=0.1', types: /csv|text\/plain|octet-stream|excel/i, fetch: deps.fetch, resolve: deps.resolve })).text;
+      text = (await safeFetchText(s.url, { allow: u => u.host === host, accept: 'text/csv, text/plain;q=0.8, */*;q=0.1', types: /csv|text\/plain|octet-stream|excel/i, maxBytes: 20_000_000, fetch: deps.fetch, resolve: deps.resolve })).text;
     }
     if (text.length > 20_000_000) throw new Error('The CSV is larger than 20 MB');
     const sdmxFile = s.format === 'sdmx-csv';

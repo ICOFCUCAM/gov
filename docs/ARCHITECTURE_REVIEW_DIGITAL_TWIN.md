@@ -622,3 +622,35 @@ civic-api's paths working by redirect.
 | Deployment | `infra/helm/civicos/templates/app.yaml`, `infra/helm/civicos/values.yaml:24-30`, `infra/helm/profiles/*.yaml`, `app/Dockerfile`, `app/next.config.mjs`, `app/vercel.json` |
 | Versions and CI | `app/package.json` (`next` 14.2.5), `.github/workflows/ci.yml` |
 | Size hot spots | `lib/data/store.ts` 2,219; `lib/gov/sovereign-operating-model.ts` 2,557; `components/features/SubsystemConsole.tsx` 2,121; `lib/data/updates.ts` 1,586 |
+
+---
+
+## 6. Status after the 60-commit programme (October 2026)
+
+Every finding of section 2 has been worked on in place (nothing removed). What addresses each one, and what is still open:
+
+| Finding | Addressed by | Still open |
+|---|---|---|
+| S1, S2, S4 gate bypasses, open reads, fail-open defaults | bearer and self-authenticated lists in `lib/auth/roles.ts`, verified official for every non-public read under enforce, deny-by-default for unlisted changes with a coverage test, role-less sessions newer than roles act as officer, `listFacilities` viewer required | — |
+| S3 Next.js CVE | Next 14.2.35, `x-middleware-subrequest` refused, dependency audit in CI with reviewed exceptions, findings raised as Update Center advisories, container image scan and SBOM | Next 15 / React 19 for the advisories only fixed there (register 17.9) |
+| S5, S6 keys with the data, weak randomness | TOTP secrets under AES-256-GCM (`CIVICOS_DATA_KEK`), async scrypt N=2¹⁷ with rehash, session secret required under enforce, CSPRNG ids and SHA-256 content hashes, integration keys hashed | KMS/HSM custody of the KEK and audit key |
+| S7 DNS rebinding | pinned vetted address in `safeFetchText`; twin downloads up to 20 MB | egress proxy support for the pinned connection |
+| S8 headers | one CSP/HSTS source (`security-headers.mjs`) mirrored in `vercel.json`, checked by the console smoke tests | nonce-based script policy |
+| S9 rate limits | `lib/ops/rate-limit.ts` on uploads and checks; integration keys enforce `rateLimitRpm` | ingress-level global limits |
+| S10 AI egress | validation, sample marking, audit with hashes, data-sovereignty gate, nation's own model, per-official limit | — |
+| D1, O1, O3 deployment and single writer | Helm (ingress, env, one writer, probes, memory), Compose with file state and Prometheus, writer lease and versioned saves | multi-writer storage (R6) |
+| D2 whole-store re-encode | save loop skips encoding while nothing is audited, full sweep every 60 s | per-record tables (R6) |
+| D3, D4, D5 twin semantics | metric registry (UCUM, aggregation, period), unit checks, `nationalTotal` refusals with coverage and vintage, run withdrawal, `validTo` and quality, durable archive instead of eviction | four-eyes withdrawal |
+| D6, D7 identifiers, catalogue, provenance | entity URIs with a 303 resolver, DCAT-AP catalogue, PROV-O for runs and scenarios, NGSI-LD view, UUID v7 national facility ids | nation domain field in setup |
+| D8 several sources of truth | ownership map with coverage test (`lib/data/register-owners.ts`, `/api/platform/owners`) | moving each duplicate behind its owner (R6) |
+| D9 audit integrity | Ed25519-signed chain heads, anchored by the audit-anchor cron, shown on /audit | RFC 3161 time-stamps from the nation's TSA |
+| I1, I2 OGC | subdivisions through the nation's geography, geometry bbox, prev links, queryables and filters, conformance checker and TEAM Engine in CI | machine read keys for GIS clients, CQL2 |
+| I3 sensors | SensorThings API v1.1 read-only over the twin and substrate telemetry | telemetry streams as a twin source kind |
+| I4, I7 exchange | RFC 9421 signatures on feeds, exchange log with signed receipts, federation usage policies, CloudEvents outbox with signed webhooks, AsyncAPI | mutual TLS between installations |
+| I5 OpenAPI | regenerated per change; multipart described | typed request/response schemas |
+| I6 SDMX | SDMX-CSV reader | SDMX-JSON/ML |
+| G1–G6 geospatial | Shapefile/GeoPackage with reprojection, national grids for site imports, topology checks, spatial index, canvas layer and vector tiles, footprints and CityJSON export, INSPIRE/HXL/OSM/Smart Data Models mapping | WebGL renderer, PMTiles |
+| M1–M3 scenarios and engines | verified authors, model registry and v2 evidence hash, intervals, calibration log, twin read API wired into two engines | wiring the remaining engines |
+| O2 observability | structured JSON logs with redaction and request ids, Prometheus metrics, health with audit chain, freshness and problems | OpenTelemetry traces |
+| O4 tests | architecture tests, gate coverage tests, property tests for as-of, soak test with a recorded baseline, console smoke tests on desktop and phone, OGC checks | — |
+| C1, C2, C5 code structure | deep snapshot defaults (`withDefaults`), layering enforced by tests | splitting `lib/data/store.ts`; persistence port (R6) |

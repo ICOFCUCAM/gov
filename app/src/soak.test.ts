@@ -15,6 +15,7 @@ import { registerSource, runSource, stateAsOf, resetTwin, listEntities, syncRegi
 import { importSites, resetFacilities, checkLocation } from '@/lib/data/facilities';
 import { listMinistries, recordAudit, listAudit } from '@/lib/data/store';
 import { flush, type StateAdapter } from '@/lib/data/persist';
+import { registerMetric } from '@/lib/twin/metrics';
 
 const ON = !!process.env.SOAK;
 const SCALE = Number(process.env.SOAK_SCALE ?? 1);
@@ -33,8 +34,9 @@ describe.skipIf(!ON)('soak: national-scale state', () => {
     // Twin: 47 counties × metrics × years, in runs of 20k rows.
     const counties = listEntities('place').filter(e => /^KE-\d+$/.test(e.code ?? '')).map(e => e.name);
     expect(counties.length).toBeGreaterThan(40);
-    const s = registerSource({ by: 'Soak', name: 'Soak statistics', publisher: 'Soak', kind: 'csv-upload', mapping: { entity: 'county', value: 'value', metric: { column: 'metric' }, unit: { fixed: 'count' }, date: { column: 'date' } } });
+    const s = registerSource({ by: 'Soak', name: 'Soak statistics', publisher: 'Soak', kind: 'csv-upload', mapping: { entity: 'county', value: 'value', metric: { column: 'metric' }, unit: { fixed: '{count}' }, date: { column: 'date' } } });
     if ('error' in s) throw new Error(s.error);
+    for (let m = 0; m < 100; m++) { const r = registerMetric({ id: `metric_${m}`, label: `Soak metric ${m}`, unit: '{count}', aggregation: 'sum', period: 'year', by: 'Soak' } as never); if ('error' in r) throw new Error(r.error); }
     const perRun = 20_000;
     let made = 0, run = 0;
     await time('twinLoadMs', async () => {
