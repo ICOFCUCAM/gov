@@ -100,6 +100,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/sovereign(\/|$)/,
   /^\/api\/facilities\/policy(\/|$)/,
   /^\/api\/map-pack(\/|$)/,
+  // The nation's rules for its twin (four-eyes withdrawal of imports).
+  /^\/api\/twin\/policy(\/|$)/,
   // The installation itself: backups and their restore, configuration and its
   // apply, deployments, releases and tenant lifecycle.
   /^\/api\/platform(\/|$)/,

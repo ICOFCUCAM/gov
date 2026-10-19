@@ -26167,6 +26167,117 @@
         "x-source": "src/app/api/twin/ogc/route.ts"
       }
     },
+    "/api/twin/policy": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_policy",
+        "summary": "GET /api/twin/policy",
+        "description": "The nation's rules for its twin (lib/twin/policy.ts): whether withdrawing an import needs a second official to confirm it (four-eyes, on by default). GET reads it; POST { fourEyesWithdrawal: boolean } changes it, administrators only (ADMIN_ONLY in lib/auth/roles.ts), named and audited. A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "policy": {
+                      "$ref": "#/components/schemas/TwinPolicy"
+                    }
+                  },
+                  "required": [
+                    "policy"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/twin/policy/route.ts"
+      },
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_policy",
+        "summary": "POST /api/twin/policy",
+        "description": "The nation's rules for its twin (lib/twin/policy.ts): whether withdrawing an import needs a second official to confirm it (four-eyes, on by default). GET reads it; POST { fourEyesWithdrawal: boolean } changes it, administrators only (ADMIN_ONLY in lib/auth/roles.ts), named and audited. A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "by": {
+                    "type": "string"
+                  },
+                  "fourEyesWithdrawal": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "policy": {
+                      "$ref": "#/components/schemas/TwinPolicy"
+                    }
+                  },
+                  "required": [
+                    "policy"
+                  ]
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/twin/policy/route.ts"
+      }
+    },
     "/api/twin/runs/{id}/prov": {
       "get": {
         "tags": [
@@ -26223,7 +26334,7 @@
         ],
         "operationId": "post_twin_runs_id_withdraw",
         "summary": "POST /api/twin/runs/{id}/withdraw",
-        "description": "Withdraw a twin import (a correction, lib/twin/register.ts withdrawRun): its observations are marked superseded from now, never deleted, so as-of queries for what was known before still see them. A named official with a reason; audited. A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "description": "Withdraw a twin import (a correction, lib/twin/register.ts): its observations are marked superseded from now, never deleted, so as-of queries for what was known before still see them. Under the nation's twin policy (four-eyes, on by default; /api/twin/policy) one official proposes with a reason (action \"propose\", the default) and a different official confirms (action \"confirm\") or either cancels (action \"cancel\"); with the policy off a proposal withdraws at once. Each step is named and audited. A signed-in official's verified name replaces any name in the request (withOfficial), so the second official cannot be typed in.",
         "parameters": [
           {
             "name": "id",
@@ -26246,6 +26357,14 @@
                   },
                   "reason": {
                     "type": "string"
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "cancel",
+                      "confirm",
+                      "propose"
+                    ]
                   }
                 }
               }
@@ -26262,14 +26381,10 @@
                   "properties": {
                     "run": {
                       "$ref": "#/components/schemas/TwinRun"
-                    },
-                    "superseded": {
-                      "type": "number"
                     }
                   },
                   "required": [
-                    "run",
-                    "superseded"
+                    "run"
                   ]
                 }
               }
@@ -27059,6 +27174,9 @@
                         "runs",
                         "moves"
                       ]
+                    },
+                    "policy": {
+                      "$ref": "#/components/schemas/TwinPolicy"
                     }
                   },
                   "required": [
@@ -27066,7 +27184,8 @@
                     "runs",
                     "regions",
                     "metrics",
-                    "archive"
+                    "archive",
+                    "policy"
                   ]
                 }
               }
@@ -44775,6 +44894,24 @@
           "name"
         ]
       },
+      "TwinPolicy": {
+        "type": "object",
+        "properties": {
+          "fourEyesWithdrawal": {
+            "type": "boolean",
+            "description": "Withdrawing an import needs a second official to confirm the proposal (default on)."
+          },
+          "changedBy": {
+            "type": "string"
+          },
+          "changedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "fourEyesWithdrawal"
+        ]
+      },
       "TwinRun": {
         "type": "object",
         "properties": {
@@ -44836,6 +44973,9 @@
               },
               "reason": {
                 "type": "string"
+              },
+              "proposedBy": {
+                "type": "string"
               }
             },
             "required": [
@@ -44843,7 +44983,27 @@
               "by",
               "reason"
             ],
-            "description": "Set when an official withdrew the import: its observations are superseded from that moment, never deleted."
+            "description": "Set when an official withdrew the import: its observations are superseded from that moment, never deleted. Under four-eyes, `by` confirmed what `proposedBy` proposed."
+          },
+          "withdrawalProposed": {
+            "type": "object",
+            "properties": {
+              "at": {
+                "type": "string"
+              },
+              "by": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "at",
+              "by",
+              "reason"
+            ],
+            "description": "A withdrawal proposed and waiting for a different official to confirm it (the nation's twin policy, lib/twin/policy.ts)."
           },
           "sha256": {
             "type": "string",

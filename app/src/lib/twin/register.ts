@@ -29,6 +29,7 @@ import { archive, archivedRuns, archivedMetrics, archivedObservations, forEachAr
 import { METRIC_ID, getMetric, isKnownMetric, listMetrics, toUcum, sameUnit, type Aggregation } from './metrics';
 import { readSdmx, isSdmxFormat, SDMX_MEDIA, SDMX_ROW, type SdmxOptions, type SdmxFormat } from './sdmx';
 import type { Signal } from './signal';
+import { twinPolicy } from './policy';
 import { checkStreamSpec, streamRows, STREAM_ROW, type StreamSpec, type StreamLineage, type TelemetryReader } from './stream';
 
 export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
@@ -105,8 +106,10 @@ export interface TwinRun {
   accepted: number;
   rejected: { row: number; reason: string }[];
   error?: string;
-  /** Set when an official withdrew the import: its observations are superseded from that moment, never deleted. */
-  withdrawn?: { at: string; by: string; reason: string };
+  /** Set when an official withdrew the import: its observations are superseded from that moment, never deleted. Under four-eyes, `by` confirmed what `proposedBy` proposed. */
+  withdrawn?: { at: string; by: string; reason: string; proposedBy?: string };
+  /** A withdrawal proposed and waiting for a different official to confirm it (the nation's twin policy, lib/twin/policy.ts). */
+  withdrawalProposed?: { at: string; by: string; reason: string };
   /** SHA-256 of the file as read (UTF-8 text), for provenance; absent on runs recorded before it was kept or that failed before reading. For a stream, of the samples read. */
   sha256?: string;
   /** For a telemetry stream source: the stream and the time read (from inclusive, to exclusive), samples and days aggregated. */
@@ -579,6 +582,65 @@ export function withdrawRun(runId: string, by: string, reason: string, now = new
   run.withdrawn = { at, by: who, reason: why.slice(0, 500) };
   recordAudit(who, 'twin.run.withdraw', `Twin:${run.sourceId}/${run.id}`, 'ok', `${superseded} observations superseded · ${run.withdrawn.reason}`);
   return { run: { ...run }, superseded };
+}
+
+// ── Four-eyes withdrawal ──────────────────────────────────────────────────
+// Under the nation's twin policy (lib/twin/policy.ts, on by default) one
+// official proposes withdrawing an import with a reason, and a different one
+// confirms it (or either cancels it); each step is named and audited. With
+// the policy off, a proposal withdraws at once, as before.
+
+const findRun = (runId: string): TwinRun | undefined => db().runs.find(r => r.id === runId) ?? archivedRuns().find(r => r.id === runId);
+const sameName = (a: string, b: string) => a.trim().toLowerCase() === b.trim().toLowerCase();
+
+export type WithdrawalStep = { run: TwinRun; pending: true } | { run: TwinRun; pending: false; superseded: number };
+
+/** Propose withdrawing an import: waits for a second official under four-eyes, or withdraws at once when the policy is off. */
+export function proposeWithdrawal(runId: string, by: string, reason: string, now = new Date()): WithdrawalStep | { error: string } {
+  const run = findRun(runId);
+  if (!run) return { error: 'No such import' };
+  const who = by.trim(), why = reason.trim();
+  if (!who) return { error: 'Name the official withdrawing the import' };
+  if (why.length < 4) return { error: 'Give the reason for withdrawing it' };
+  if (run.withdrawn) return { error: `Already withdrawn on ${run.withdrawn.at.slice(0, 10)} by ${run.withdrawn.by}` };
+  if (!twinPolicy().fourEyesWithdrawal) {
+    const r = withdrawRun(runId, who, why, now);
+    return 'error' in r ? r : { run: r.run, pending: false, superseded: r.superseded };
+  }
+  if (run.withdrawalProposed) return { error: `${run.withdrawalProposed.by} already proposed withdrawing it on ${run.withdrawalProposed.at.slice(0, 10)}: a different official confirms or cancels it` };
+  run.withdrawalProposed = { at: now.toISOString(), by: who, reason: why.slice(0, 500) };
+  recordAudit(who, 'twin.run.withdraw.propose', `Twin:${run.sourceId}/${run.id}`, 'ok', `${run.accepted} observations · ${run.withdrawalProposed.reason} · waiting for a second official`);
+  return { run: { ...run }, pending: true };
+}
+
+/** Confirm a proposed withdrawal: a different official than the one who proposed it. */
+export function confirmWithdrawal(runId: string, by: string, now = new Date()): WithdrawalStep | { error: string } {
+  const run = findRun(runId);
+  if (!run) return { error: 'No such import' };
+  const who = by.trim();
+  if (!who) return { error: 'Name the official confirming the withdrawal' };
+  const p = run.withdrawalProposed;
+  if (!p) return { error: run.withdrawn ? `Already withdrawn on ${run.withdrawn.at.slice(0, 10)} by ${run.withdrawn.by}` : 'No withdrawal of this import is waiting to be confirmed' };
+  if (sameName(p.by, who)) return { error: 'A different official must confirm the withdrawal they did not propose' };
+  const r = withdrawRun(runId, who, p.reason, now);
+  if ('error' in r) return r;
+  const live = findRun(runId)!;
+  live.withdrawn = { ...live.withdrawn!, proposedBy: p.by };
+  delete live.withdrawalProposed;
+  return { run: { ...live }, pending: false, superseded: r.superseded };
+}
+
+/** Cancel a proposed withdrawal (the proposer or another official), with a reason; audited. */
+export function cancelWithdrawal(runId: string, by: string, reason: string): { run: TwinRun } | { error: string } {
+  const run = findRun(runId);
+  if (!run) return { error: 'No such import' };
+  const who = by.trim();
+  if (!who) return { error: 'Name the official cancelling the proposal' };
+  if (!run.withdrawalProposed) return { error: 'No withdrawal of this import is waiting to be confirmed' };
+  const p = run.withdrawalProposed;
+  delete run.withdrawalProposed;
+  recordAudit(who, 'twin.run.withdraw.cancel', `Twin:${run.sourceId}/${run.id}`, 'ok', `Proposal by ${p.by} cancelled${reason.trim() ? ` · ${reason.trim().slice(0, 300)}` : ''}`);
+  return { run: { ...run } };
 }
 
 // Listeners told when an import adds observations (e.g. scenario calibration,

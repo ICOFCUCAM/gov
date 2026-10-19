@@ -7,6 +7,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { listSources, listRuns, registerSource, regionCoverage, metricsKnown, syncRegister, regionEntities } from '@/lib/twin/register';
 import { withOfficial } from '@/lib/auth/official';
 import { archiveStatus } from '@/lib/twin/archive';
+import { twinPolicy } from '@/lib/twin/policy';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,8 @@ export async function GET() {
     sources: listSources(), runs: listRuns().slice(0, 50), regions: regionEntities().length,
     metrics: metricsKnown().map(m => ({ metric: m, coverage: regionCoverage(m) })),
     archive: archiveStatus(),
+    // Whether withdrawing an import needs a second official (the screen says so).
+    policy: twinPolicy(),
   });
 }
 

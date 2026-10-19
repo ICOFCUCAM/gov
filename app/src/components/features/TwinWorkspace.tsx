@@ -19,7 +19,7 @@ const TABS: { id: Tab; label: string }[] = [{ id: 'facts', label: 'Facts and sou
 
 interface Entity { id: string; kind: string; name: string; code?: string; region?: boolean }
 interface Source { id: string; name: string; publisher: string; kind: 'csv-url' | 'csv-upload' | 'stream'; url?: string; stream?: { streamId: string; entity?: string; metrics: { metric: string; statistic: string }[] }; schedule: string; registeredBy: string; registeredAt: string; lastRun?: string; mapping: { entity: string; value: string; metric: { column: string } | { fixed: string } } }
-interface Run { id: string; sourceId: string; at: string; by: string; status: 'ok' | 'partial' | 'failed'; rows: number; accepted: number; rejected: { row: number; reason: string }[]; error?: string; withdrawn?: { at: string; by: string; reason: string } }
+interface Run { id: string; sourceId: string; at: string; by: string; status: 'ok' | 'partial' | 'failed'; rows: number; accepted: number; rejected: { row: number; reason: string }[]; error?: string; withdrawn?: { at: string; by: string; reason: string; proposedBy?: string }; withdrawalProposed?: { at: string; by: string; reason: string } }
 interface Obs { entityId: string; metric: string; value: number; unit: string; validFrom: string; recordedAt: string; sourceId: string; runId: string }
 /** The national figure for a metric, or why there is none (lib/twin/register.ts nationalTotal). */
 interface National { value: number | null; unit?: string; source: string; coverage: { have: number; of: number }; vintage?: { oldest: string; newest: string }; aggregation?: string; refused?: string }
@@ -51,7 +51,7 @@ function Section({ title, aside, children }: { title: string; aside?: React.Reac
 
 export function TwinWorkspace() {
   const [entities, setEntities] = React.useState<Entity[]>([]);
-  const [data, setData] = React.useState<{ sources: Source[]; runs: Run[]; regions: number; metrics: { metric: string; coverage: { have: number; of: number } }[] } | null>(null);
+  const [data, setData] = React.useState<{ sources: Source[]; runs: Run[]; regions: number; metrics: { metric: string; coverage: { have: number; of: number } }[]; policy?: { fourEyesWithdrawal: boolean; changedBy?: string; changedAt?: string } } | null>(null);
   const [by, setBy] = React.useState('');
   const [msg, setMsg] = React.useState<{ ok: boolean; text: string } | null>(null);
   const [busy, setBusy] = React.useState(false);
@@ -188,6 +188,7 @@ export function TwinWorkspace() {
       </Section>
 
       <Section title="Imports" aside="lineage of every observation">
+        <WithdrawalRule policy={data?.policy} by={by} busy={busy} act={act} />
         {data?.runs.length ? (
           <ul className="space-y-2">
             {data.runs.slice(0, 20).map(r => (
@@ -203,7 +204,7 @@ export function TwinWorkspace() {
                     <ul className="mt-1 space-y-0.5 text-[12px] text-ink-soft">{r.rejected.map(x => <li key={x.row}>Row {x.row}: {x.reason}</li>)}</ul>
                   </details>
                 ) : null}
-                <Withdraw run={r} by={by} busy={busy} act={act} />
+                <Withdraw run={r} by={by} busy={busy} act={act} fourEyes={data.policy?.fourEyesWithdrawal ?? true} />
               </li>
             ))}
           </ul>
@@ -215,20 +216,51 @@ export function TwinWorkspace() {
   );
 }
 
-/** Withdraw an import (a correction): its observations are superseded from now, never deleted. */
-function Withdraw({ run, by, busy, act }: { run: Run; by: string; busy: boolean; act: (done: string, fn: () => Promise<unknown>) => Promise<void> }) {
+/**
+ * Withdraw an import (a correction): its observations are superseded from now,
+ * never deleted. Under the nation's four-eyes rule one official proposes with
+ * a reason and a different official confirms (or either cancels).
+ */
+function Withdraw({ run, by, busy, act, fourEyes }: { run: Run; by: string; busy: boolean; act: (done: string, fn: () => Promise<unknown>) => Promise<void>; fourEyes: boolean }) {
   const [open, setOpen] = React.useState(false);
   const [reason, setReason] = React.useState('');
-  if (run.withdrawn) return <p className="mt-1 text-[12px] text-warn">Withdrawn {when(run.withdrawn.at)} by {run.withdrawn.by}: {run.withdrawn.reason}</p>;
+  const post = (body: Record<string, unknown>) => call(`/api/twin/runs/${run.id}/withdraw`, { method: 'POST', body: JSON.stringify({ by, ...body }) });
+  if (run.withdrawn) return <p className="mt-1 text-[12px] text-warn">Withdrawn {when(run.withdrawn.at)} by {run.withdrawn.by}{run.withdrawn.proposedBy ? ` (proposed by ${run.withdrawn.proposedBy})` : ''}: {run.withdrawn.reason}</p>;
+  const p = run.withdrawalProposed;
+  if (p) {
+    const own = by.trim().toLowerCase() === p.by.trim().toLowerCase();
+    return (
+      <div className="mt-1 flex flex-wrap items-center gap-2 text-[12px]">
+        <span className="text-warn">Withdrawal proposed {when(p.at)} by {p.by}: {p.reason}. A different official confirms it.</span>
+        <button type="button" className={btn} disabled={busy || !by.trim() || own} title={own ? 'You proposed it: a different official confirms' : undefined}
+          onClick={() => void act(`Import ${run.id} withdrawn; its values are no longer used`, () => post({ action: 'confirm' }))}>Confirm withdrawal</button>
+        <button type="button" className={btn} disabled={busy || !by.trim()} onClick={() => void act('Proposal cancelled', () => post({ action: 'cancel', reason: 'Not withdrawn' }))}>Cancel proposal</button>
+      </div>
+    );
+  }
   if (!run.accepted) return null;
-  if (!open) return <button type="button" className={`${btn} mt-1`} disabled={busy || !by.trim()} onClick={() => setOpen(true)}>Withdraw this import</button>;
+  if (!open) return <button type="button" className={`${btn} mt-1`} disabled={busy || !by.trim()} onClick={() => setOpen(true)}>{fourEyes ? 'Propose withdrawing this import' : 'Withdraw this import'}</button>;
   return (
-    <form className="mt-1 flex flex-wrap items-end gap-2" onSubmit={e => { e.preventDefault(); void act(`Import ${run.id} withdrawn; its values are no longer used`, () => call(`/api/twin/runs/${run.id}/withdraw`, { method: 'POST', body: JSON.stringify({ by, reason }) })); }}>
+    <form className="mt-1 flex flex-wrap items-end gap-2" onSubmit={e => { e.preventDefault(); void act(fourEyes ? `Withdrawal of ${run.id} proposed; a different official confirms it` : `Import ${run.id} withdrawn; its values are no longer used`, () => post({ action: 'propose', reason })); }}>
       <label className="min-w-[16rem] flex-1"><span className={label}>Why is it withdrawn?</span><input className={`${input} mt-1`} value={reason} onChange={e => setReason(e.currentTarget.value)} placeholder="e.g. figures keyed against the wrong year" /></label>
-      <button className={btn} disabled={busy || !by.trim() || reason.trim().length < 4}>Withdraw</button>
+      <button className={btn} disabled={busy || !by.trim() || reason.trim().length < 4}>{fourEyes ? 'Propose' : 'Withdraw'}</button>
       <button type="button" className={btn} onClick={() => setOpen(false)}>Cancel</button>
-      <span className="w-full text-[12px] text-ink-muted">Its {run.accepted} values stay on record for what was known before now, and are no longer used from now on.</span>
+      <span className="w-full text-[12px] text-ink-muted">Its {run.accepted} values stay on record for what was known before now, and are no longer used from now on{fourEyes ? ', once a different official confirms' : ''}.</span>
     </form>
+  );
+}
+
+/** The nation's rule for withdrawals, and (for administrators) the switch. */
+function WithdrawalRule({ policy, by, busy, act }: { policy?: { fourEyesWithdrawal: boolean; changedBy?: string; changedAt?: string }; by: string; busy: boolean; act: (done: string, fn: () => Promise<unknown>) => Promise<void> }) {
+  const on = policy?.fourEyesWithdrawal ?? true;
+  return (
+    <p className="mb-2 flex flex-wrap items-center gap-2 text-[12px] text-ink-soft">
+      <span>Withdrawing an import {on ? 'takes two officials: one proposes, a different one confirms' : 'is done by one official'}{policy?.changedBy ? ` (set by ${policy.changedBy}, ${when(policy.changedAt)})` : ''}.</span>
+      <button type="button" className={btn} disabled={busy || !by.trim()} title="Administrators only"
+        onClick={() => void act('Rule changed', () => call('/api/twin/policy', { method: 'POST', body: JSON.stringify({ by, fourEyesWithdrawal: !on }) }))}>
+        {on ? 'Let one official withdraw' : 'Require a second official'}
+      </button>
+    </p>
   );
 }
 
