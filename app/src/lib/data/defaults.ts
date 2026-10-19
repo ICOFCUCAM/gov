@@ -15,8 +15,14 @@ const plain = (v: unknown): v is Record<string, unknown> =>
 export function withDefaults<T extends Record<string, unknown>>(saved: Partial<T> | undefined | null, seed: T, opts: { opaque?: (keyof T & string)[] } = {}): T {
   if (!plain(saved)) return seed;
   const opaque = new Set<string>(opts.opaque ?? []);
+  // Filled in place, never copied: a store's object on globalThis is shared by
+  // every module instance that reads it (Next.js loads src/instrumentation.ts
+  // and the route handlers as separate instances, each initialising the store
+  // with `g.__civicosX = withDefaults(g.__civicosX, seed())`); a copy would
+  // leave the instance that loaded first holding nested objects (integration
+  // key hashes, say) that later changes no longer reach.
   const fill = (s: Record<string, unknown>, d: Record<string, unknown>, top: boolean): Record<string, unknown> => {
-    const out: Record<string, unknown> = { ...s };
+    const out = s;
     for (const [k, dv] of Object.entries(d)) {
       if (out[k] === undefined) { out[k] = dv; continue; }
       if (top && opaque.has(k)) continue;

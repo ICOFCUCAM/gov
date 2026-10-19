@@ -26,7 +26,8 @@
 //     OAuth access token (POST /api/oauth/token) of scope ogc:read, checked by
 //     the same rules as every machine read (machineReadAccess(), lib/twin/
 //     machine-read.ts: approved, in scope, within the integration's rate
-//     limit); the username is free. Re-checked every minute while connected,
+//     limit); the username is any value (MQTT 3.1.1 sends a password only
+//     with a user name). Re-checked every minute while connected,
 //     so a rotated key, a suspended integration or an expired token
 //     disconnects. Persistent sessions are refused (clean sessions only).
 //   - Topic rules: only the two topic forms above, no wildcards, and a
