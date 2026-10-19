@@ -127,6 +127,8 @@ export interface AuditWitness {
   label: string;
   hasJwk: boolean;
   hasSignature: boolean;
+  /** Recorded with a key registered for the witness (signature checked by the platform). */
+  registeredKey: boolean;
   at: number;
   recordedBy: string | null;
 }
@@ -135,7 +137,7 @@ function mapWitness(r: AuditWitnessRow): AuditWitness {
   return {
     id: r.id, scope: r.scope, observedSeq: r.observed_seq,
     observedHash: r.observed_hash, label: r.witness_label,
-    hasJwk: r.has_jwk, hasSignature: r.has_signature,
+    hasJwk: r.has_jwk, hasSignature: r.has_signature, registeredKey: r.registered_key === true,
     at: new Date(r.at).getTime(), recordedBy: r.recorded_by,
   };
 }
@@ -181,9 +183,12 @@ export async function witnessWithSignatureRow(id: string): Promise<{
   };
 }
 
-/** Record an attestation. Returns the row, or null on failure. The
- *  observed (seq, hash) pair becomes a tamper proof if the chain is
- *  later rewritten. */
+/** Record an attestation through the platform (/api/audit/witnesses), which
+ *  checks that the key is registered for the label and the signature covers
+ *  `scope|seq|hash|label` before it records (go-live review H-1). Unsigned
+ *  statements are not accepted. Returns the row, or `{ error }` with the
+ *  platform's reason. The observed (seq, hash) pair becomes a tamper proof
+ *  if the chain is later rewritten. */
 export async function recordWitnessAttestationRow(opts: {
   scope: string;
   observedSeq: number;
@@ -191,32 +196,24 @@ export async function recordWitnessAttestationRow(opts: {
   label: string;
   jwk?: JsonWebKey | Record<string, unknown> | null;
   signature?: string | null;
-}): Promise<AuditWitness | null> {
-  const sb = publicClient();
-  if (!sb) return null;
-  const { data, error } = await sb.rpc('civicos_record_witness_attestation', {
-    p_scope: opts.scope,
-    p_observed_seq: opts.observedSeq,
-    p_observed_hash: opts.observedHash,
-    p_witness_label: opts.label,
-    p_witness_jwk: opts.jwk ?? null,
-    p_witness_signature: opts.signature ?? null,
-  });
-  if (error || !data) return null;
-  // The RPC returns a single composite row, not the public view shape, so
-  // shim the boolean projections to match.
-  const r = data as Record<string, unknown>;
-  return mapWitness({
-    id: String(r['id']),
-    scope: String(r['scope']),
-    observed_seq: Number(r['observed_seq']),
-    observed_hash: String(r['observed_hash']),
-    witness_label: String(r['witness_label']),
-    has_jwk: r['witness_jwk'] != null,
-    has_signature: r['witness_signature'] != null,
-    at: String(r['at']),
-    recorded_by: (r['recorded_by'] as string | null) ?? null,
-  });
+}, fetchImpl: typeof fetch = fetch): Promise<AuditWitness | { error: string }> {
+  if (!opts.jwk || !opts.signature) return { error: 'Sign the statement with your registered witness key' };
+  let res: Response;
+  try {
+    res = await fetchImpl('/api/audit/witnesses', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        scope: opts.scope, observedSeq: opts.observedSeq, observedHash: opts.observedHash,
+        label: opts.label, jwk: opts.jwk, signature: opts.signature,
+      }),
+    });
+  } catch {
+    return { error: 'The platform could not be reached' };
+  }
+  const json = (await res.json().catch(() => ({}))) as { witness?: AuditWitness; error?: string };
+  if (!res.ok || !json.witness) return { error: json.error ?? `Not recorded (${res.status})` };
+  return json.witness;
 }
 
 /**
@@ -241,7 +238,8 @@ export async function witnessAgreementRow(scope: string): Promise<{
   const latestSeq = witnesses[0]!.observedSeq;
   if (!live) return { attestations: witnesses.length, consistent: false, latestSeq };
   // Consistency: for any witness at the live seq, the observed hash must equal the live hash.
-  const atLive = witnesses.filter(w => w.observedSeq === live.seq);
+  // Only attestations recorded with a registered key count (unsigned rows are history).
+  const atLive = witnesses.filter(w => w.observedSeq === live.seq && w.registeredKey);
   const consistent = atLive.every(w => w.observedHash === live.hash);
   return { attestations: witnesses.length, consistent, latestSeq };
 }

@@ -4,14 +4,28 @@ import { createHmac } from 'node:crypto';
 const serverClientMock = vi.fn();
 vi.mock('@/lib/db/client', () => ({ serverClient: () => serverClientMock() }));
 
+// The real safe fetch, with the network replaced: `fetchMock` answers, `resolveMock` is DNS.
+const fetchMock = vi.fn();
+const resolveMock = vi.fn(async (_host: string) => ['93.184.216.34']);
+vi.mock('@/lib/net/safe-fetch', async (orig) => {
+  const real = await orig<typeof import('@/lib/net/safe-fetch')>();
+  return {
+    ...real,
+    safeFetchText: (url: string, o: import('@/lib/net/safe-fetch').SafeFetchOptions) =>
+      real.safeFetchText(url, { ...o, fetch: fetchMock as unknown as typeof fetch, resolve: resolveMock }),
+  };
+});
+
 import { GET } from './route';
 
-const fetchMock = vi.fn();
+const answer = (status: number) => () => Promise.resolve(new Response(status === 200 ? 'ok' : 'no', { status }));
 
 beforeEach(() => {
   serverClientMock.mockReset();
   fetchMock.mockReset();
-  (globalThis as unknown as { fetch: typeof fetchMock }).fetch = fetchMock;
+  resolveMock.mockReset();
+  resolveMock.mockImplementation(async () => ['93.184.216.34']);
+  delete process.env.CIVICOS_WEBHOOKS_PRIVATE;
   delete process.env.CIVICOS_CRON_SECRET;
 });
 
@@ -71,7 +85,7 @@ describe('GET /api/cron/deliver-events', () => {
       events: { constitutional: [{ id: 'e1', at_ms: 100 }, { id: 'e2', at_ms: 200 }] },
       rpc,
     }));
-    fetchMock.mockResolvedValue({ ok: true, status: 200 });
+    fetchMock.mockImplementation(answer(200));
 
     const res = await GET(new Request('http://x?token=correct'));
     const json = await res.json();
@@ -84,6 +98,8 @@ describe('GET /api/cron/deliver-events', () => {
     const body = init.body as string;
     const expected = 'sha256=' + createHmac('sha256', 'topsecret').update(body).digest('hex');
     expect(init.headers['x-civicos-signature']).toBe(expected);
+    // never follows redirects
+    expect(init.redirect).toBe('manual');
 
     // Cursor advanced to the last event's at_ms.
     expect(rpc).toHaveBeenCalledWith('civicos_mark_webhook_delivered', expect.objectContaining({
@@ -106,8 +122,8 @@ describe('GET /api/cron/deliver-events', () => {
     }));
     // first OK, second fails (500)
     fetchMock
-      .mockResolvedValueOnce({ ok: true, status: 200 })
-      .mockResolvedValueOnce({ ok: false, status: 500 });
+      .mockImplementationOnce(answer(200))
+      .mockImplementationOnce(answer(500));
 
     const res = await GET(new Request('http://x?token=correct'));
     const json = await res.json();
@@ -134,7 +150,7 @@ describe('GET /api/cron/deliver-events', () => {
       events: { constitutional: [{ id: 'e1', at_ms: 100 }] },
       rpc,
     }));
-    fetchMock.mockResolvedValue({ ok: false, status: 502 });
+    fetchMock.mockImplementation(answer(502));
 
     const res = await GET(new Request('http://x?token=correct'));
     const json = await res.json();
@@ -168,5 +184,48 @@ describe('GET /api/cron/deliver-events', () => {
     expect(json.webhooks_processed).toBe(0);
     expect(json.total_delivered).toBe(0);
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['cloud metadata', 'http://169.254.169.254/latest/meta-data/', ['169.254.169.254']],
+    ['a private network', 'https://hooks.internal.example/x', ['10.0.0.12']],
+  ])('refuses %s without connecting and records the failure', async (_n, url, addrs) => {
+    process.env.CIVICOS_CRON_SECRET = 'correct';
+    resolveMock.mockImplementation(async () => addrs);
+    const rpc = vi.fn(async () => ({ data: null, error: null }));
+    serverClientMock.mockReturnValue(client({
+      webhooks: [{ id: 'w1', channel: 'constitutional', url, secret: 's3cret!!', cursor_at_ms: 0 }],
+      events: { constitutional: [{ id: 'e1', at_ms: 100 }] },
+      rpc,
+    }));
+    const json = await (await GET(new Request('http://x?token=correct'))).json();
+    expect(json.total_delivered).toBe(0);
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(rpc).toHaveBeenCalledWith('civicos_record_webhook_failure', expect.objectContaining({ p_id: 'w1' }));
+  });
+
+  it('delivers to the nation\'s own network only when CIVICOS_WEBHOOKS_PRIVATE=1', async () => {
+    process.env.CIVICOS_CRON_SECRET = 'correct';
+    process.env.CIVICOS_WEBHOOKS_PRIVATE = '1';
+    resolveMock.mockImplementation(async () => ['10.0.0.12']);
+    serverClientMock.mockReturnValue(client({
+      webhooks: [{ id: 'w1', channel: 'constitutional', url: 'https://hooks.internal.example/x', secret: 's3cret!!', cursor_at_ms: 0 }],
+      events: { constitutional: [{ id: 'e1', at_ms: 100 }] },
+    }));
+    fetchMock.mockImplementation(answer(200));
+    const json = await (await GET(new Request('http://x?token=correct'))).json();
+    expect(json.total_delivered).toBe(1);
+  });
+
+  it('does not follow a redirect', async () => {
+    process.env.CIVICOS_CRON_SECRET = 'correct';
+    serverClientMock.mockReturnValue(client({
+      webhooks: [{ id: 'w1', channel: 'constitutional', url: 'https://hook.test', secret: 's3cret!!', cursor_at_ms: 0 }],
+      events: { constitutional: [{ id: 'e1', at_ms: 100 }] },
+    }));
+    fetchMock.mockImplementation(() => Promise.resolve(new Response(null, { status: 307, headers: { location: 'http://169.254.169.254/' } })));
+    const json = await (await GET(new Request('http://x?token=correct'))).json();
+    expect(json.total_delivered).toBe(0);
+    expect(fetchMock).toHaveBeenCalledTimes(1);
   });
 });

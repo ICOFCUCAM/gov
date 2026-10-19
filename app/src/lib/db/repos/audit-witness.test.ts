@@ -50,44 +50,38 @@ describe('recentWitnessRows', () => {
 });
 
 describe('recordWitnessAttestationRow', () => {
-  it('returns null when substrate is unavailable', async () => {
-    publicClientMock.mockReturnValue(null);
+  it('refuses an unsigned statement without calling anything', async () => {
+    const f = vi.fn();
     const out = await recordWitnessAttestationRow({
       scope: 'substrate:self', observedSeq: 1, observedHash: 'h', label: 'l',
-    });
-    expect(out).toBeNull();
+    }, f as unknown as typeof fetch);
+    expect(out).toHaveProperty('error');
+    expect(f).not.toHaveBeenCalled();
+    expect(publicClientMock).not.toHaveBeenCalled();
   });
 
-  it('passes parameters and maps the substrate row into a Witness', async () => {
-    const rpc = vi.fn(async () => ({
-      data: {
-        id: 'w-1', scope: 'substrate:self', observed_seq: 4, observed_hash: 'deadbeef',
-        witness_label: 'auditor-1', witness_jwk: { kty: 'EC' }, witness_signature: '0011',
-        at: '2026-05-20T00:00:00.000Z', recorded_by: 'auditor-1',
-      },
-      error: null,
-    }));
-    publicClientMock.mockReturnValue({ rpc });
+  it('submits through the platform route, never the substrate RPC directly', async () => {
+    const f = vi.fn(async () => new Response(JSON.stringify({ witness: {
+      id: 'w-1', scope: 'substrate:self', observedSeq: 4, observedHash: 'deadbeef', label: 'auditor-1',
+      hasJwk: true, hasSignature: true, registeredKey: true, at: 1, recordedBy: 'auditor-1',
+    } }), { status: 201 }));
     const out = await recordWitnessAttestationRow({
       scope: 'substrate:self', observedSeq: 4, observedHash: 'deadbeef',
       label: 'auditor-1', jwk: { kty: 'EC' }, signature: '0011',
-    });
-    expect(rpc).toHaveBeenCalledWith('civicos_record_witness_attestation', expect.objectContaining({
-      p_scope: 'substrate:self', p_observed_seq: 4, p_observed_hash: 'deadbeef',
-      p_witness_label: 'auditor-1',
-    }));
-    expect(out?.hasJwk).toBe(true);
-    expect(out?.hasSignature).toBe(true);
+    }, f as unknown as typeof fetch);
+    const [url, init] = f.mock.calls[0]! as unknown as [string, RequestInit];
+    expect(url).toBe('/api/audit/witnesses');
+    expect(JSON.parse(String(init.body))).toMatchObject({ scope: 'substrate:self', observedSeq: 4, label: 'auditor-1', signature: '0011' });
+    expect(publicClientMock).not.toHaveBeenCalled();
+    expect(out).toMatchObject({ registeredKey: true, hasSignature: true });
   });
 
-  it('returns null on RPC error', async () => {
-    publicClientMock.mockReturnValue({
-      rpc: async () => ({ data: null, error: { message: 'boom' } }),
-    });
+  it('passes on the platform\'s refusal', async () => {
+    const f = vi.fn(async () => new Response(JSON.stringify({ error: 'not registered' }), { status: 403 }));
     const out = await recordWitnessAttestationRow({
-      scope: 'x', observedSeq: 1, observedHash: 'y', label: 'z',
-    });
-    expect(out).toBeNull();
+      scope: 'x', observedSeq: 1, observedHash: 'y', label: 'z', jwk: { kty: 'EC' }, signature: 'ab',
+    }, f as unknown as typeof fetch);
+    expect(out).toEqual({ error: 'not registered' });
   });
 });
 
@@ -112,7 +106,7 @@ describe('witnessAgreementRow', () => {
         if (view === 'civicos_audit_witnesses') {
           return chainable({ data: [
             { id: 'w', scope: 'x', observed_seq: 5, observed_hash: 'abc',
-              witness_label: 'l', has_jwk: false, has_signature: false,
+              witness_label: 'l', has_jwk: true, has_signature: true, registered_key: true,
               at: '2026-05-20T00:00:00.000Z', recorded_by: null }],
             error: null });
         }
@@ -129,7 +123,7 @@ describe('witnessAgreementRow', () => {
         if (view === 'civicos_audit_witnesses') {
           return chainable({ data: [
             { id: 'w', scope: 'x', observed_seq: 5, observed_hash: 'abc',
-              witness_label: 'l', has_jwk: false, has_signature: false,
+              witness_label: 'l', has_jwk: true, has_signature: true, registered_key: true,
               at: '2026-05-20T00:00:00.000Z', recorded_by: null }],
             error: null });
         }
@@ -138,5 +132,22 @@ describe('witnessAgreementRow', () => {
     });
     const out = await witnessAgreementRow('x');
     expect(out?.consistent).toBe(false);
+  });
+
+  it('ignores divergent attestations not recorded with a registered key', async () => {
+    publicClientMock.mockReturnValue({
+      from: (view: string) => {
+        if (view === 'civicos_audit_witnesses') {
+          return chainable({ data: [
+            { id: 'w', scope: 'x', observed_seq: 5, observed_hash: 'abc',
+              witness_label: 'l', has_jwk: false, has_signature: false, registered_key: false,
+              at: '2026-05-20T00:00:00.000Z', recorded_by: null }],
+            error: null });
+        }
+        return chainable({ data: [{ seq: 5, hash: 'ROGUE' }], error: null });
+      },
+    });
+    const out = await witnessAgreementRow('x');
+    expect(out?.consistent).toBe(true);
   });
 });

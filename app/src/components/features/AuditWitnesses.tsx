@@ -27,10 +27,12 @@ import { ageMinutes } from '@/lib/format';
  * each scope, whether the latest attested hash still matches the live
  * chain — a tamper indicator that catches rewrites after the fact.
  *
- * Anyone with a browser session can submit an attestation; the witness
- * label is free text. WebCrypto-signed attestations are supported but
- * optional (offline auditors can submit unsigned ones — the chain itself
- * still pins the seq/hash pair).
+ * A witness signs each statement with its device key (WebCrypto ECDSA
+ * P-256); the platform records it only when an administrator has
+ * registered that public key for the witness label and the signature
+ * verifies (/api/audit/witnesses, go-live review H-1). Statements are
+ * never replaced. Rows recorded before signatures were required stay
+ * listed as history but never count towards agreement or divergence.
  */
 export function AuditWitnesses() {
   const [witnesses, setWitnesses] = React.useState<AuditWitness[]>([]);
@@ -169,6 +171,7 @@ export function AuditWitnesses() {
                   <div className="mt-0.5 flex items-center gap-2 font-mono text-[9px] text-ink-muted">
                     {w.hasJwk ? <span style={{ color: TONE.link }}>+ jwk</span> : null}
                     {w.hasSignature ? <span style={{ color: TONE.link }}>+ signed</span> : null}
+                    {w.registeredKey ? <span style={{ color: TONE.link }}>registered key</span> : <span>unsigned (history, not counted)</span>}
                     {w.hasJwk && w.hasSignature ? <VerifyButton witnessId={w.id} /> : null}
                     <span>· {new Date(w.at).toLocaleString()}</span>
                     {w.recordedBy ? <span>· {w.recordedBy}</span> : null}
@@ -194,7 +197,7 @@ function AttestationComposer({ scopes, onDone }: { scopes: string[]; onDone: () 
   const [observedSeq, setObservedSeq] = React.useState('');
   const [observedHash, setObservedHash] = React.useState('');
   const [label, setLabel] = React.useState('');
-  const [signMine, setSignMine] = React.useState(false);
+  const [myKey, setMyKey] = React.useState<string | null>(null);
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -212,27 +215,24 @@ function AttestationComposer({ scopes, onDone }: { scopes: string[]; onDone: () 
     }
     setBusy(true);
     try {
-      let jwk: JsonWebKey | null = null;
-      let signature: string | null = null;
-      if (signMine) {
-        await ensureSigningKey();
-        jwk = await publicSigningJwk();
-        signature = await signWitnessAttestation({
-          scope, observedSeq: seq, observedHash: observedHash.trim(),
-          witnessLabel: label.trim(),
-        });
-        if (!jwk || !signature) {
-          setError('WebCrypto unavailable; uncheck signing or use a browser');
-          return;
-        }
+      // Every statement is signed with this device's key (required since H-1).
+      await ensureSigningKey();
+      const jwk = await publicSigningJwk();
+      const signature = await signWitnessAttestation({
+        scope, observedSeq: seq, observedHash: observedHash.trim(),
+        witnessLabel: label.trim(),
+      });
+      if (!jwk || !signature) {
+        setError('This browser cannot sign (WebCrypto unavailable)');
+        return;
       }
       const row = await recordWitnessAttestationRow({
         scope, observedSeq: seq, observedHash: observedHash.trim(),
         label: label.trim(),
         jwk, signature,
       });
-      if (!row) {
-        setError('record_witness_attestation failed');
+      if ('error' in row) {
+        setError(row.error);
         return;
       }
       setObservedSeq('');
@@ -279,15 +279,69 @@ function AttestationComposer({ scopes, onDone }: { scopes: string[]; onDone: () 
           className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
           {busy ? 'attesting…' : 'attest'}
         </button>
-        <label className="flex items-center gap-1 text-[9px] uppercase tracking-wider text-ink-muted">
-          <input type="checkbox" checked={signMine} onChange={e => setSignMine(e.currentTarget.checked)} />
-          sign with my device key
-        </label>
+        <button type="button"
+          onClick={async () => {
+            await ensureSigningKey();
+            const k = await publicSigningJwk();
+            setMyKey(k ? JSON.stringify({ kty: k.kty, crv: k.crv, x: k.x, y: k.y }) : 'This browser cannot sign (WebCrypto unavailable)');
+          }}
+          className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2">
+          show my public key
+        </button>
         <p className="text-[9px] text-ink-muted">
-          Public, append-only. Anyone can attest; tamper-after-the-fact becomes detectable.
+          Signed with this device&apos;s key. Public, append-only, never replaced. An administrator registers
+          your public key for your witness label first.
         </p>
       </div>
+      {myKey ? (
+        <label className="block">
+          <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Your public key (give it to an administrator)</span>
+          <textarea readOnly value={myKey} rows={2} className="mt-1 w-full rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[10px]" />
+        </label>
+      ) : null}
+      <WitnessKeyRegistration label={label} />
     </form>
+  );
+}
+
+/** Administrators register (or revoke) a witness's public key
+ *  (/api/audit/witnesses/keys; refused for everyone else). */
+function WitnessKeyRegistration({ label }: { label: string }) {
+  const [open, setOpen] = React.useState(false);
+  const [jwkText, setJwkText] = React.useState('');
+  const [message, setMessage] = React.useState<string | null>(null);
+  async function register() {
+    setMessage(null);
+    let jwk: unknown;
+    try { jwk = JSON.parse(jwkText); } catch { setMessage('The public key must be JSON (a JWK)'); return; }
+    const res = await fetch('/api/audit/witnesses/keys', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ label: label.trim(), jwk }),
+    });
+    const json = (await res.json().catch(() => ({}))) as { error?: string };
+    setMessage(res.ok ? `Registered for ${label.trim()}` : json.error ?? `Not registered (${res.status})`);
+  }
+  if (!open) {
+    return (
+      <button type="button" onClick={() => setOpen(true)}
+        className="focus-ring text-[9px] uppercase tracking-wider text-link underline">
+        register a witness key (administrators)
+      </button>
+    );
+  }
+  return (
+    <div className="space-y-1">
+      <label className="block">
+        <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Witness public key (JWK) for the label above</span>
+        <textarea value={jwkText} onChange={e => setJwkText(e.currentTarget.value)} rows={2}
+          className="mt-1 w-full rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[10px]" />
+      </label>
+      <button type="button" onClick={() => void register()} disabled={!label.trim() || !jwkText.trim()}
+        className="focus-ring rounded-[3px] border border-line bg-bg px-3 py-1 text-[9px] uppercase tracking-wider text-ink hover:bg-surface-2 disabled:opacity-50">
+        register key
+      </button>
+      {message ? <p className="text-[10px] text-ink-muted" role="status">{message}</p> : null}
+    </div>
   );
 }
 
