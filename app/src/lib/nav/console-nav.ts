@@ -71,7 +71,7 @@ export const CONSOLE_NAV: NavSection[] = [
       purpose: 'The facts the government relies on, where each comes from and what was known when.',
       tabs: [tab('National data', '/gov/twin', 'National Twin'), tab('Sensor and system feeds', '/gov/telemetry', 'Telemetry Wall'),
         tab('Messages between institutions', '/gov/federation', 'Federation Stream'), tab('Activity across government', '/gov/global', 'Global feed'),
-        tab('Sites', '/gov/sites'), tab('Capture a site', '/gov/sites/capture')] },
+        tab('Sites', '/gov/sites'), tab('Capture a site', '/gov/sites/capture'), tab('Boundaries', '/gov/sites/boundaries')] },
     { key: 'intg', icon: '⇄', label: 'Connected systems', href: '/integrations',
       purpose: 'Which outside systems may exchange data with the platform, and on what terms.',
       tabs: [tab('Connected systems', '/integrations', 'Interoperability'), tab('Links between institutions', '/gov/fabric', 'Interoperability Fabric'),

@@ -24,6 +24,9 @@
       "name": "auth"
     },
     {
+      "name": "boundaries"
+    },
+    {
       "name": "cabinet"
     },
     {
@@ -635,6 +638,201 @@
           }
         },
         "x-source": "src/app/api/auth/two-step/route.ts"
+      }
+    },
+    "/api/boundaries/{bid}": {
+      "get": {
+        "tags": [
+          "boundaries"
+        ],
+        "operationId": "get_boundaries_bid",
+        "summary": "GET /api/boundaries/{bid}",
+        "description": "One boundary version: GET with its shapes (for the preview); POST { action: 'publish' } by a different official, or { action: 'withdraw', reason }.",
+        "parameters": [
+          {
+            "name": "bid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/boundaries/[bid]/route.ts"
+      },
+      "post": {
+        "tags": [
+          "boundaries"
+        ],
+        "operationId": "post_boundaries_bid",
+        "summary": "POST /api/boundaries/{bid}",
+        "description": "One boundary version: GET with its shapes (for the preview); POST { action: 'publish' } by a different official, or { action: 'withdraw', reason }.",
+        "parameters": [
+          {
+            "name": "bid",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/boundaries/[bid]/route.ts"
+      }
+    },
+    "/api/boundaries/active": {
+      "get": {
+        "tags": [
+          "boundaries"
+        ],
+        "operationId": "get_boundaries_active",
+        "summary": "GET /api/boundaries/active",
+        "description": "The boundaries in force for the installed nation (both levels, with shapes), for maps to draw. Published boundaries are public information. ?at=YYYY-MM-DD for another date; &knownBy= for only what had been published by then.",
+        "parameters": [
+          {
+            "name": "iso3",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/boundaries/active/route.ts"
+      }
+    },
+    "/api/boundaries": {
+      "get": {
+        "tags": [
+          "boundaries"
+        ],
+        "operationId": "get_boundaries",
+        "summary": "GET /api/boundaries",
+        "description": "The nation's own boundaries (lib/data/boundaries.ts): GET lists every version (without shapes); POST checks a boundary file (?dryRun=1 records nothing) and records it as a proposal for a different official to publish.",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "level",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/boundaries/route.ts"
+      },
+      "post": {
+        "tags": [
+          "boundaries"
+        ],
+        "operationId": "post_boundaries",
+        "summary": "POST /api/boundaries",
+        "description": "The nation's own boundaries (lib/data/boundaries.ts): GET lists every version (without shapes); POST checks a boundary file (?dryRun=1 records nothing) and records it as a proposal for a different official to publish.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/boundaries/route.ts"
       }
     },
     "/api/cabinet": {
@@ -9939,7 +10137,7 @@
         ],
         "operationId": "get_twin_ogc_collections_collectionId_items_featureId",
         "summary": "GET /api/twin/ogc/collections/{collectionId}/items/{featureId}",
-        "description": "One subdivision as a GeoJSON feature with its observed values (?datetime), or one published site of the national facility register.",
+        "description": "One subdivision as a GeoJSON feature with its observed values (?datetime), or one published site of the national facility register, or one unit of the published boundaries in force.",
         "parameters": [
           {
             "name": "collectionId",
@@ -9991,7 +10189,7 @@
         ],
         "operationId": "get_twin_ogc_collections_collectionId_items",
         "summary": "GET /api/twin/ogc/collections/{collectionId}/items",
-        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime), or the national facility register's published sites (also ?category), as the viewer may see them.",
+        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime), or the national facility register's published sites (also ?category), as the viewer may see them, or the published boundaries in force (also ?level).",
         "parameters": [
           {
             "name": "collectionId",
@@ -10019,6 +10217,14 @@
           },
           {
             "name": "datetime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "level",
             "in": "query",
             "required": false,
             "schema": {
@@ -10103,7 +10309,7 @@
         ],
         "operationId": "get_twin_ogc_collections",
         "summary": "GET /api/twin/ogc/collections",
-        "description": "OGC API – Features collections of the national twin: the official subdivisions and the national facility register.",
+        "description": "OGC API – Features collections of the national twin: the official subdivisions, the national facility register and the published boundaries.",
         "parameters": [],
         "responses": {
           "200": {

@@ -80,6 +80,7 @@
   "/gov/signatures",
   "/gov/simulation",
   "/gov/sites",
+  "/gov/sites/boundaries",
   "/gov/sites/capture",
   "/gov/situation-room",
   "/gov/substrate",

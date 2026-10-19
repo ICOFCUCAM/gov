@@ -16,8 +16,7 @@ import type { IncidentPlace, MinistryIncident } from '@/lib/api/types';
 import { setMinistryIncidentPlace } from '@/lib/data/store';
 import { getFacility, isCaptureMethod, placePoint, viewFacility } from '@/lib/data/facilities';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
-import { loadNationGeography } from '@/lib/map/geography';
-import { loadAdmin2 } from '@/lib/geo/admin2';
+import { loadDistricts, loadNationGeography } from '@/lib/map/geography';
 import { nameKeys } from '@/lib/map/names';
 
 export type PlaceInput =
@@ -66,7 +65,7 @@ export async function resolvePlace(input: PlaceInput, by: string): Promise<{ pla
     if (!unit && !listed) return { error: `${input.region} is not one of the nation's regions` };
     const place: IncidentPlace = { how: 'region', region: unit?.name ?? listed!, ...(unit?.code ? { regionCode: unit.code } : {}), ...base };
     if (input.district) {
-      const a2 = iso3 && unit?.code ? await loadAdmin2(iso3) : null;
+      const a2 = iso3 && unit?.code ? await loadDistricts(iso3) : null;
       const d = a2?.units.find(x => x.parent === unit!.code && same(x.name, input.district!));
       if (a2 && !d) return { error: `${input.district} is not a district of ${place.region}` };
       // Without district shapes for this nation the district is kept as stated.

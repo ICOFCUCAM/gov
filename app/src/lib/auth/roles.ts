@@ -102,6 +102,15 @@ export function canCertifyForAgency(s: Scope, agencyId: string | undefined): str
   return 'Only the national mapping agency certifies locations at this stage';
 }
 
+/** Loading and publishing the nation's boundaries: the national mapping agency's officials, or whole-government administrators. */
+export function canManageBoundaries(s: Scope, agencyId: string | undefined): string | null {
+  if (roleOf(s) === 'auditor') return 'Auditors can read records but not change them';
+  if (agencyId && s.institution === agencyId && roleOf(s) !== 'officer') return null;
+  if (agencyId && s.institution === agencyId) return 'Officials who can sign at the mapping agency load and publish boundaries';
+  if (wholeGovernment(s) && roleOf(s) === 'administrator') return null;
+  return 'Only the national mapping agency or a government administrator loads and publishes boundaries';
+}
+
 /** The issuer a new directive is recorded under: an official's own institution, whatever the request names. */
 export function directiveIssuer(s: Scope | null, requested: string): string {
   return s && !wholeGovernment(s) ? s.institution! : requested;

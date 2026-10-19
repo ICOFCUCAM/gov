@@ -30,8 +30,7 @@ import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypt
 import { geoContains, geoDistance } from 'd3-geo';
 import { getMinistry, listMinistries, recordAudit } from '@/lib/data/store';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
-import { loadNationGeography } from '@/lib/map/geography';
-import { loadAdmin2 } from '@/lib/geo/admin2';
+import { loadDistricts, loadNationGeography } from '@/lib/map/geography';
 import { parseCsv } from '@/lib/twin/csv';
 import { upsertFacilityEntity } from '@/lib/twin/register';
 import { safeFetchText } from '@/lib/net/safe-fetch';
@@ -353,7 +352,7 @@ export async function placePoint(input: { lng: number; lat: number; region?: str
     if (input.region && place.region && input.region.trim().toLowerCase() !== place.region.toLowerCase()) {
       warnings.push(`The ${noun} is said to be in ${input.region}, but the position falls in ${place.region}`);
     }
-    const a2 = place.regionCode ? await loadAdmin2(iso3) : null;
+    const a2 = place.regionCode ? await loadDistricts(iso3) : null;
     const district = a2?.units.find(u => u.parent === place.regionCode && geoContains(feature(u.geometry) as never, at));
     if (district) { place.districtCode = district.code; place.district = district.name; }
   }

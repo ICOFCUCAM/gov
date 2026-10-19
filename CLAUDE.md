@@ -254,6 +254,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   region and district derived) or a published registered site (restricted
   ones generalised); named official, audited, history kept. Maps draw
   incidents only from recorded places; never guess one from a name.
+- The nation's own boundaries (`lib/data/boundaries.ts`, `/gov/sites/boundaries`)
+  enter only as checked versions: loaded by the mapping agency or an
+  administrator (`canManageBoundaries`), published by a different official,
+  every version kept, in force from its date. Maps and position checks read
+  shapes through `loadNationGeography()` / `loadDistricts()`, which apply the
+  version in force; new map code does not read `lib/geo` shapes around them.
 - Engines must not read the nation's regions or offices into module-level
   constants; read them at use (`regionList()`, or a function). The root
   layout writes the nation's facts before scripts load, but data from setup
