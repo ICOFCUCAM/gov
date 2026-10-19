@@ -10,7 +10,7 @@ import Link from 'next/link';
 import { useSignIn, refreshSignIn } from '@/lib/official';
 import { downloadText } from '@/lib/csv-download';
 
-interface Status { on: boolean; since: string | null; required: boolean; thisSession: boolean; policy: string }
+interface Status { on: boolean; since: string | null; required: boolean; thisSession: boolean; policy: string; passkeys?: number }
 
 const btn = 'focus-ring rounded-[3px] border border-line px-3 py-1.5 text-[13px] font-semibold text-ink hover:bg-surface-2 disabled:opacity-50';
 const input = 'focus-ring w-40 rounded-[3px] border border-line bg-surface px-2.5 py-2 font-mono text-[15px] tracking-[0.2em] text-ink';
@@ -50,11 +50,15 @@ export function TwoStepSettings() {
         A six-digit code from an authenticator app on your phone, asked for after your password, so a stolen password alone cannot act in your name.
         Any standard app works (for example Google Authenticator, Microsoft Authenticator, FreeOTP or Aegis).
       </p>
-      {st.required && !st.on ? (
-        <p role="alert" className="rounded-[3px] border border-warn p-2 text-[13px]">This installation requires the second step for you. Until it is set up you can read, but not make changes.</p>
+      {st.required && !st.on && !st.passkeys ? (
+        <p role="alert" className="rounded-[3px] border border-warn p-2 text-[13px]">This installation requires the second step for you. Until it is set up (an authenticator app here, or a <a href="#passkeys" className="text-link underline">passkey</a>) you can read, but not make changes.</p>
       ) : null}
-      {st.required && st.on && !st.thisSession ? (
-        <p role="alert" className="rounded-[3px] border border-warn p-2 text-[13px]">Sign out and sign in again with your code to make changes.</p>
+      {st.required && (st.on || !!st.passkeys) && !st.thisSession ? (
+        <p role="alert" className="rounded-[3px] border border-warn p-2 text-[13px]">
+          {official.via === 'oidc'
+            ? 'Your government sign-in did not count as the second step here. Sign out and sign in with your platform password and your code or passkey to make changes.'
+            : 'Sign out and sign in again with your code or passkey to make changes.'}
+        </p>
       ) : null}
       {msg ? <p role="status" className={msg.ok ? 'text-ok' : 'text-alert'}>{msg.text}</p> : null}
 

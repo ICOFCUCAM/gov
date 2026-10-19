@@ -134,6 +134,8 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each account; failed sign-in counts per hashed address, kept 15 minutes') },
   { id: 'retention', name: 'Retention rules for personal data, and refusals counted for the audit chain', owner: { where: 'platform', keys: ['__civicosRetention', '__civicosAuditAggregate'] }, api: '/api/platform/retention, /api/cron/retention', copies: [],
     storage: RECORD_DOCS('the rules, their proposals and sweeps; the open windows of aggregated refusals') },
+  { id: 'sign-on', name: 'Identity provider for officials and passkey challenges', owner: { where: 'platform', keys: ['__civicosSignOn'] }, api: '/api/auth/officials/identity-provider, /api/auth/oidc/*, /api/auth/passkeys', copies: [],
+    storage: RECORD_DOCS('the provider configuration (client secret sealed), each sign-in in progress, each identity waiting for an administrator, each sign-out hint and passkey challenge') },
   { id: 'audit-heads', name: 'Signed audit chain heads', owner: { where: 'platform', keys: ['__civicosAuditHeads'] }, api: 'lib/audit/sign.ts (every N entries) and /api/cron/audit-anchor',
     copies: [{ where: 'substrate', what: "federation_events 'audit.anchor' with scope 'platform'", role: 'mirror', tables: [], writes: [], writer: ANCHORS, note: 'The anchored head is appended to the substrate\'s event stream by the anchor cron when configured; marked anchored only once accepted, retried on the next run.' }],
     storage: RECORD_DOCS('each signed head') },
