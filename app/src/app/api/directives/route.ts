@@ -3,7 +3,7 @@
 // civicos_directives table is a mirror written after each change
 // (lib/db/mirror.ts); directives it held from before are taken over once.
 // GET lists them (?status, ?issuer,
-// ?limit): drafts only for the issuing institution's officials (all of them
+// ?limit, ?q: text in ref, title or issuer, the console search box): drafts only for the issuing institution's officials (all of them
 // while sign-in is neither used nor enforced, as before). POST drafts one
 // under the named (verified, when signed in) official; an official with an
 // institution always drafts for it, and auditors cannot draft.
@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams;
   const o = await currentOfficial();
   const hideDrafts = !o && process.env.CIVICOS_AUTH === 'enforce';
-  const rows = listDirectives({ status: q.get('status') ?? undefined, issuer: q.get('issuer') ?? undefined, limit: Number(q.get('limit')) || undefined })
+  const rows = listDirectives({ status: q.get('status') ?? undefined, issuer: q.get('issuer') ?? undefined, limit: Number(q.get('limit')) || undefined, q: q.get('q') ?? undefined })
     .filter(d => d.status !== 'drafting' || (o ? canSeeDraft(o, d.issued_by_charter_id) : !hideDrafts));
   return NextResponse.json({ directives: rows });
 }

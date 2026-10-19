@@ -6,6 +6,7 @@ vi.mock('@/lib/db/client', () => ({
 }));
 
 import { GET } from './route';
+import { findCharters } from '@/lib/institution/charter-register';
 
 beforeEach(() => {
   serverClientMock.mockReset();
@@ -79,20 +80,6 @@ describe('GET /api/cron/posture-digest', () => {
     expect(res.status).toBe(503);
   });
 
-  it('returns 500 when the institutions list errors', async () => {
-    process.env.CIVICOS_CRON_SECRET = 'correct';
-    serverClientMock.mockReturnValue({
-      from: () => ({
-        select: () => ({
-          eq: () => ({ limit: () => Promise.resolve({ data: null, error: { message: 'denied' } }) }),
-        }),
-      }),
-      rpc: vi.fn(),
-    });
-    const res = await GET(new Request('http://x/api/cron/posture-digest?token=correct'));
-    expect(res.status).toBe(500);
-  });
-
   it('records one snapshot per activated institution', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     const rpcMock = vi.fn(async () => ({ data: null, error: null }));
@@ -100,11 +87,8 @@ describe('GET /api/cron/posture-digest', () => {
     // chain shape arrives.
     serverClientMock.mockReturnValue({
       from: (view: string) => {
-        if (view === 'civicos_institutions') {
-          return { select: () => ({ eq: () => ({ limit: () => Promise.resolve({
-            data: [{ charter_id: 'MIN-A' }, { charter_id: 'MIN-B' }], error: null,
-          }) }) }) };
-        }
+        // The activated charters come from the platform register, never the mirror (review D8).
+        if (view === 'civicos_institutions') throw new Error('read the mirror');
         if (view === 'civicos_work_items') {
           // The open-count chain: .eq(...).eq('closed', false) → thenable count.
           // The urgent-count chain: .eq(...).eq('closed', false).in(...) → thenable count.
@@ -123,8 +107,9 @@ describe('GET /api/cron/posture-digest', () => {
     const res = await GET(new Request('http://x/api/cron/posture-digest?token=correct'));
     const json = await res.json();
     expect(res.status).toBe(200);
-    expect(json.snapshots).toHaveLength(2);
-    expect(rpcMock).toHaveBeenCalledTimes(2);
+    const active = findCharters({ activated: true });
+    expect(json.snapshots.map((x: { charter_id: string }) => x.charter_id)).toEqual(active.map(c => c.charterId));
+    expect(rpcMock).toHaveBeenCalledTimes(active.length);
     expect(rpcMock).toHaveBeenCalledWith('civicos_record_posture', expect.objectContaining({
       p_charter_id: expect.any(String),
       p_posture: expect.any(String),

@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
-  listInstitutionsRows, listFacilitiesRows, serviceSlaStats, appealsStats,
+  institutionByCharterId, listFacilitiesRows, serviceSlaStats, appealsStats,
   type FacilityRowLite, type ServiceSlaStat, type AppealsStat,
 } from '@/lib/db/repos/institutions';
 import { listWorkItemsRows } from '@/lib/db/repos/work-items';
@@ -32,6 +32,9 @@ import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
  * directives + posture timeline + recent audit entries whose scope
  * starts with the charter id. RLS scopes what each viewer sees;
  * platform-tier sees full picture; charter officers see their own.
+ * The institution and its directives come from the platform's registers
+ * (/api/public/charters, /api/directives; architecture review D8); the rest
+ * are the substrate's own rows, joined here by charter id.
  */
 export function CharterDetail({ charterId }: { charterId: string }) {
   const { ready } = useIdentity();
@@ -52,8 +55,8 @@ export function CharterDetail({ charterId }: { charterId: string }) {
 
   const refresh = React.useCallback(async () => {
     if (!available) return;
-    const [allInst, fac, wi, dsp, esc, dir, post, aud, off] = await Promise.all([
-      listInstitutionsRows({}),
+    const [one, fac, wi, dsp, esc, dir, post, aud, off] = await Promise.all([
+      institutionByCharterId(charterId),
       listFacilitiesRows({ charter: charterId, limit: 50 }),
       listWorkItemsRows({ closed: false, limit: 50 }),
       listDispatchesRows({ issuer: charterId, limit: 30 }),
@@ -63,7 +66,7 @@ export function CharterDetail({ charterId }: { charterId: string }) {
       recentAuditEntriesRows(80),
       listOfficersRows({ charter: charterId, activeOnly: true, limit: 80 }),
     ]);
-    setInst(allInst.find(i => i.charter_id === charterId) ?? null);
+    setInst(one);
     setFacilities(fac);
     setWorkItems(wi.filter(w => w.originating_charter_id === charterId || w.scope === charterId || w.scope.startsWith(charterId + ':')));
     setDispatches(dsp);

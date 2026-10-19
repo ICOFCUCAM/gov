@@ -20,9 +20,12 @@ export function resetDirectives(): void { g.__civicosDirectives = undefined; }
 export const KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declaration'];
 const REF = /^[A-Za-z0-9][A-Za-z0-9._-]{1,63}$/;
 
-export function listDirectives(opts: { status?: string; issuer?: string; limit?: number } = {}): DirectiveRow[] {
+export function listDirectives(opts: { status?: string; issuer?: string; limit?: number; q?: string } = {}): DirectiveRow[] {
+  const q = opts.q?.trim().toLowerCase();
   return db().rows
     .filter(r => (!opts.status || r.status === opts.status) && (!opts.issuer || r.issued_by_charter_id === opts.issuer))
+    // ?q: the text search the console's search box used to run on the substrate's mirror (ref, title, issuer).
+    .filter(r => !q || [r.ref, r.title, r.issued_by_charter_id].some(v => v.toLowerCase().includes(q)))
     .sort((a, b) => b.updated_at.localeCompare(a.updated_at))
     .slice(0, Math.min(500, opts.limit ?? 50))
     .map(r => ({ ...r, targets: [...r.targets] }));
@@ -97,6 +100,11 @@ export function settleDirectives(now = new Date()): string[] {
 
 /** Every directive's reference (the mirror's full re-copy). */
 export function allDirectiveRefs(): string[] { return db().rows.map(r => r.ref); }
+
+/** Every signed directive (copies), for the governance-output statistics (lib/data/directive-stats.ts). */
+export function signedDirectives(): DirectiveRow[] {
+  return db().rows.filter(r => r.signed_at).map(r => ({ ...r, targets: [...r.targets] }));
+}
 
 /**
  * Once, when the platform takes over a substrate that owned directives before

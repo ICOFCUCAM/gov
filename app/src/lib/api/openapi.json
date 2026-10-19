@@ -3844,7 +3844,7 @@
         ],
         "operationId": "get_cron_posture_digest",
         "summary": "GET /api/cron/posture-digest",
-        "description": "Per-charter posture aggregator. Reads each activated institution's open pressure (work items + escalations + dispatches), derives a posture / readiness / stress reading, and appends a posture_history snapshot. Designed to run on a slow cadence (every 30 minutes or so); produces a continuous timeline visible on /gov/posture without requiring any operator to manually snapshot.",
+        "description": "Per-charter posture aggregator. Reads each activated institution's open pressure (work items + escalations + dispatches), derives a posture / readiness / stress reading, and appends a posture_history snapshot. Designed to run on a slow cadence (every 30 minutes or so); produces a continuous timeline visible on /gov/posture without requiring any operator to manually snapshot. The activated institutions come from the platform's register (lib/institution/charter-register.ts; architecture review D8), not from the substrate's civicos.institutions, which only mirrors it; the pressure counts are the substrate's own rows.",
         "parameters": [],
         "responses": {
           "200": {
@@ -3960,7 +3960,7 @@
         ],
         "operationId": "post_cron_posture_digest",
         "summary": "POST /api/cron/posture-digest",
-        "description": "Per-charter posture aggregator. Reads each activated institution's open pressure (work items + escalations + dispatches), derives a posture / readiness / stress reading, and appends a posture_history snapshot. Designed to run on a slow cadence (every 30 minutes or so); produces a continuous timeline visible on /gov/posture without requiring any operator to manually snapshot.",
+        "description": "Per-charter posture aggregator. Reads each activated institution's open pressure (work items + escalations + dispatches), derives a posture / readiness / stress reading, and appends a posture_history snapshot. Designed to run on a slow cadence (every 30 minutes or so); produces a continuous timeline visible on /gov/posture without requiring any operator to manually snapshot. The activated institutions come from the platform's register (lib/institution/charter-register.ts; architecture review D8), not from the substrate's civicos.institutions, which only mirrors it; the pressure counts are the substrate's own rows.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -5603,7 +5603,7 @@
         ],
         "operationId": "get_directives",
         "summary": "GET /api/directives",
-        "description": "The directives register, owned by the platform (lib/data/directives.ts; architecture review D8). With the shared database connected its civicos_directives table is a mirror written after each change (lib/db/mirror.ts); directives it held from before are taken over once. GET lists them (?status, ?issuer, ?limit): drafts only for the issuing institution's officials (all of them while sign-in is neither used nor enforced, as before). POST drafts one under the named (verified, when signed in) official; an official with an institution always drafts for it, and auditors cannot draft.",
+        "description": "The directives register, owned by the platform (lib/data/directives.ts; architecture review D8). With the shared database connected its civicos_directives table is a mirror written after each change (lib/db/mirror.ts); directives it held from before are taken over once. GET lists them (?status, ?issuer, ?limit, ?q: text in ref, title or issuer, the console search box): drafts only for the issuing institution's officials (all of them while sign-in is neither used nor enforced, as before). POST drafts one under the named (verified, when signed in) official; an official with an institution always drafts for it, and auditors cannot draft.",
         "parameters": [
           {
             "name": "issuer",
@@ -5615,6 +5615,14 @@
           },
           {
             "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
             "in": "query",
             "required": false,
             "schema": {
@@ -5705,7 +5713,7 @@
         ],
         "operationId": "post_directives",
         "summary": "POST /api/directives",
-        "description": "The directives register, owned by the platform (lib/data/directives.ts; architecture review D8). With the shared database connected its civicos_directives table is a mirror written after each change (lib/db/mirror.ts); directives it held from before are taken over once. GET lists them (?status, ?issuer, ?limit): drafts only for the issuing institution's officials (all of them while sign-in is neither used nor enforced, as before). POST drafts one under the named (verified, when signed in) official; an official with an institution always drafts for it, and auditors cannot draft.",
+        "description": "The directives register, owned by the platform (lib/data/directives.ts; architecture review D8). With the shared database connected its civicos_directives table is a mirror written after each change (lib/db/mirror.ts); directives it held from before are taken over once. GET lists them (?status, ?issuer, ?limit, ?q: text in ref, title or issuer, the console search box): drafts only for the issuing institution's officials (all of them while sign-in is neither used nor enforced, as before). POST drafts one under the named (verified, when signed in) official; an official with an institution always drafts for it, and auditors cannot draft.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -13147,6 +13155,7 @@
                         "status": "active",
                         "mergedIntoId": "ID-0001",
                         "createdAt": "2026-01-15T09:30:00.000Z",
+                        "activatedAt": "2026-01-15T09:30:00.000Z",
                         "departments": [
                           {
                             "id": "ID-0001",
@@ -13329,6 +13338,7 @@
                         "status": "active",
                         "mergedIntoId": "ID-0001",
                         "createdAt": "2026-01-15T09:30:00.000Z",
+                        "activatedAt": "2026-01-15T09:30:00.000Z",
                         "departments": [
                           {
                             "id": "ID-0001",
@@ -13421,6 +13431,7 @@
                         "status": "active",
                         "mergedIntoId": "ID-0001",
                         "createdAt": "2026-01-15T09:30:00.000Z",
+                        "activatedAt": "2026-01-15T09:30:00.000Z",
                         "departments": [
                           {
                             "id": "ID-0001",
@@ -13528,6 +13539,7 @@
                         "status": "active",
                         "mergedIntoId": "ID-0001",
                         "createdAt": "2026-01-15T09:30:00.000Z",
+                        "activatedAt": "2026-01-15T09:30:00.000Z",
                         "departments": [
                           {
                             "id": "ID-0001",
@@ -16722,6 +16734,7 @@
                         "status": "active",
                         "mergedIntoId": "ID-0001",
                         "createdAt": "2026-01-15T09:30:00.000Z",
+                        "activatedAt": "2026-01-15T09:30:00.000Z",
                         "departments": [
                           {
                             "id": "ID-0001",
@@ -16833,6 +16846,7 @@
                         "status": "active",
                         "mergedIntoId": "ID-0001",
                         "createdAt": "2026-01-15T09:30:00.000Z",
+                        "activatedAt": "2026-01-15T09:30:00.000Z",
                         "departments": [
                           {
                             "id": "ID-0001",
@@ -18644,6 +18658,7 @@
                         "status": "active",
                         "mergedIntoId": "ID-0001",
                         "createdAt": "2026-01-15T09:30:00.000Z",
+                        "activatedAt": "2026-01-15T09:30:00.000Z",
                         "departments": [
                           {
                             "id": "ID-0001",
@@ -18728,6 +18743,7 @@
                         "status": "active",
                         "mergedIntoId": "ID-0001",
                         "createdAt": "2026-01-15T09:30:00.000Z",
+                        "activatedAt": "2026-01-15T09:30:00.000Z",
                         "departments": [
                           {
                             "id": "ID-0001",
@@ -18950,6 +18966,7 @@
                         "status": "active",
                         "mergedIntoId": "ID-0001",
                         "createdAt": "2026-01-15T09:30:00.000Z",
+                        "activatedAt": "2026-01-15T09:30:00.000Z",
                         "departments": [
                           {
                             "id": "ID-0001",
@@ -23206,7 +23223,7 @@
         ],
         "operationId": "get_public_accountability",
         "summary": "GET /api/public/accountability",
-        "description": "/api/public/accountability — open-data JSON for the published accountability aggregates (service SLAs, appeals pipeline, decision-time trends, institutional data-access footprint, governance output). Everything here is already anon-readable on the Public Observatory / charter profiles; this exposes it in a machine-readable form so journalists and researchers can consume it programmatically instead of scraping. Aggregate-only (no citizen id, ref, or row-level field). No auth — public by design — and short-cached. Query params: ?days=1..365 (default 90), ?charter=<charter_id> to scope.",
+        "description": "/api/public/accountability — open-data JSON for the published accountability aggregates (service SLAs, appeals pipeline, decision-time trends, institutional data-access footprint, governance output). Everything here is already anon-readable on the Public Observatory / charter profiles; this exposes it in a machine-readable form so journalists and researchers can consume it programmatically instead of scraping. Aggregate-only (no citizen id, ref, or row-level field). No auth — public by design — and short-cached. Query params: ?days=1..365 (default 90), ?charter=<charter_id> to scope, ?weeks=1..104 for the trends (default days/7), ?directive_days=1..1825 for the governance output (default 365), ?only=directives for that part alone (what the charter profile and the scoreboard read). Governance output (directive_stats, directive_trend) is computed from the platform's directives register, which owns directives (architecture review D8), not from the substrate's mirror of it; `directive_source` says so (lib/twin/signal.ts: reported, the platform's own record). The other aggregates are the substrate's own rows (requests, appeals, consents).",
         "parameters": [
           {
             "name": "charter",
@@ -23223,6 +23240,30 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "directive_days",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "only",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "weeks",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -23231,86 +23272,190 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "document": {
-                      "type": "string"
-                    },
-                    "version": {
-                      "type": "number"
-                    },
-                    "generated_at": {
-                      "type": "string"
-                    },
-                    "window_days": {
-                      "type": "number"
-                    },
-                    "charter": {
-                      "anyOf": [
-                        {
-                          "type": "null"
-                        },
-                        {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "document": {
                           "type": "string"
+                        },
+                        "version": {
+                          "type": "number"
+                        },
+                        "generated_at": {
+                          "type": "string"
+                        },
+                        "charter": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "directive_stats": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/DirectiveStat"
+                          }
+                        },
+                        "directive_trend": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/DirectiveTrendPoint"
+                          }
+                        },
+                        "directive_source": {
+                          "type": "object",
+                          "properties": {
+                            "asOf": {
+                              "type": "string",
+                              "description": "When it was true (ISO time), for observed and reported figures."
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "modelled",
+                                "observed",
+                                "reported",
+                                "sample",
+                                "unavailable"
+                              ]
+                            },
+                            "source": {
+                              "type": "string",
+                              "description": "Where it comes from, in words (a stream, a register, \"Reference model\")."
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "source"
+                          ]
                         }
+                      },
+                      "required": [
+                        "document",
+                        "version",
+                        "generated_at",
+                        "charter",
+                        "directive_stats",
+                        "directive_trend",
+                        "directive_source"
                       ]
                     },
-                    "service_sla": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/ServiceSlaStat"
-                      }
-                    },
-                    "appeals": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/AppealsStat"
-                      }
-                    },
-                    "sla_trend": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/SlaTrendPoint"
-                      }
-                    },
-                    "appeals_trend": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/AppealsTrendPoint"
-                      }
-                    },
-                    "consent_footprint": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/ConsentFootprintStat"
-                      }
-                    },
-                    "directive_stats": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/DirectiveStat"
-                      }
-                    },
-                    "directive_trend": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/DirectiveTrendPoint"
-                      }
+                    {
+                      "type": "object",
+                      "properties": {
+                        "document": {
+                          "type": "string"
+                        },
+                        "version": {
+                          "type": "number"
+                        },
+                        "generated_at": {
+                          "type": "string"
+                        },
+                        "window_days": {
+                          "type": "number"
+                        },
+                        "charter": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "service_sla": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ServiceSlaStat"
+                          }
+                        },
+                        "appeals": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AppealsStat"
+                          }
+                        },
+                        "sla_trend": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/SlaTrendPoint"
+                          }
+                        },
+                        "appeals_trend": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/AppealsTrendPoint"
+                          }
+                        },
+                        "consent_footprint": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/ConsentFootprintStat"
+                          }
+                        },
+                        "directive_stats": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/DirectiveStat"
+                          }
+                        },
+                        "directive_trend": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/DirectiveTrendPoint"
+                          }
+                        },
+                        "directive_source": {
+                          "type": "object",
+                          "properties": {
+                            "asOf": {
+                              "type": "string",
+                              "description": "When it was true (ISO time), for observed and reported figures."
+                            },
+                            "kind": {
+                              "type": "string",
+                              "enum": [
+                                "modelled",
+                                "observed",
+                                "reported",
+                                "sample",
+                                "unavailable"
+                              ]
+                            },
+                            "source": {
+                              "type": "string",
+                              "description": "Where it comes from, in words (a stream, a register, \"Reference model\")."
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "source"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "document",
+                        "version",
+                        "generated_at",
+                        "window_days",
+                        "charter",
+                        "service_sla",
+                        "appeals",
+                        "sla_trend",
+                        "appeals_trend",
+                        "consent_footprint",
+                        "directive_stats",
+                        "directive_trend",
+                        "directive_source"
+                      ]
                     }
-                  },
-                  "required": [
-                    "document",
-                    "version",
-                    "generated_at",
-                    "window_days",
-                    "charter",
-                    "service_sla",
-                    "appeals",
-                    "sla_trend",
-                    "appeals_trend",
-                    "consent_footprint",
-                    "directive_stats",
-                    "directive_trend"
                   ]
                 },
                 "examples": {
@@ -23320,63 +23465,7 @@
                       "document": "string",
                       "version": 1,
                       "generated_at": "string",
-                      "window_days": 1,
                       "charter": "string",
-                      "service_sla": [
-                        {
-                          "charterId": "ID-0001",
-                          "submitted": 1,
-                          "acknowledged": 1,
-                          "resolved": 1,
-                          "open": 1,
-                          "cancelled": 1,
-                          "medianAckHours": 1,
-                          "medianResolveHours": 1,
-                          "p90ResolveHours": 1,
-                          "oldestOpenHours": 1,
-                          "rated": 1,
-                          "avgSatisfaction": 1
-                        }
-                      ],
-                      "appeals": [
-                        {
-                          "charterId": "ID-0001",
-                          "filed": 1,
-                          "admitted": 1,
-                          "decided": 1,
-                          "published": 1,
-                          "pending": 1,
-                          "withdrawn": 1,
-                          "medianDecisionDays": 1,
-                          "p90DecisionDays": 1,
-                          "oldestPendingDays": 1
-                        }
-                      ],
-                      "sla_trend": [
-                        {
-                          "weekStart": "string",
-                          "resolved": 1,
-                          "medianResolveHours": 1,
-                          "p90ResolveHours": 1
-                        }
-                      ],
-                      "appeals_trend": [
-                        {
-                          "weekStart": "string",
-                          "decided": 1,
-                          "medianDecisionDays": 1,
-                          "p90DecisionDays": 1
-                        }
-                      ],
-                      "consent_footprint": [
-                        {
-                          "charterId": "ID-0001",
-                          "scope": "string",
-                          "active": 1,
-                          "expiring30d": 1,
-                          "revoked": 1
-                        }
-                      ],
                       "directive_stats": [
                         {
                           "charterId": "ID-0001",
@@ -23394,7 +23483,12 @@
                           "effective": 1,
                           "medianSignToEffectiveDays": 1
                         }
-                      ]
+                      ],
+                      "directive_source": {
+                        "asOf": "2026-01-15T09:30:00.000Z",
+                        "kind": "modelled",
+                        "source": "string"
+                      }
                     }
                   }
                 }
@@ -23412,11 +23506,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/public/accountability/route.ts"
       }
     },
@@ -23427,7 +23517,7 @@
         ],
         "operationId": "get_public_charters",
         "summary": "GET /api/public/charters",
-        "description": "/api/public/charters — open-data directory of activated institutions (charters). Pairs with /api/public/accountability: researchers need the charter catalog (id, label, kind, domain) to interpret the per-charter SLA/appeals stats. Institutions are already anon-readable on the Public Observatory; this is their machine-readable form. No auth; short-cached. Read from the register's owner (architecture review D8): the platform's ministry registry and standing institutions (lib/db/mirror.ts institutionRows()). The substrate's civicos.institutions mirrors them; the one thing only it keeps, when a charter was first activated, is added from it where the substrate is connected.",
+        "description": "/api/public/charters — open-data directory of institutions (charters). Pairs with /api/public/accountability: researchers need the charter catalog (id, label, kind, domain) to interpret the per-charter SLA/appeals stats. Institutions are already public in the Government Directory; this is their machine-readable form. No auth; short-cached. Read from the register's owner only (architecture review D8): the platform's ministry registry and standing institutions (lib/institution/charter-register.ts), first-activation times included. The substrate's civicos.institutions mirrors them and is not read here. This is also the answer the console's charter screens read (charter list, profile and detail, institutions catalogue, observatory, search) through lib/db/repos/institutions.ts. Query: by default the activated charters (the directory as before); ?activated=any for every charter, ?activated=false for the idle ones; ?kind=<kind>, ?charter=<charter_id>, ?q=<text in id, label or domain>.",
         "parameters": [],
         "responses": {
           "200": {
@@ -23444,6 +23534,9 @@
                       "type": "number"
                     },
                     "generated_at": {
+                      "type": "string"
+                    },
+                    "source": {
                       "type": "string"
                     },
                     "count": {
@@ -23469,7 +23562,20 @@
                           "archetype_or_branch": {
                             "type": "string"
                           },
+                          "activated": {
+                            "type": "boolean"
+                          },
                           "activated_at": {
+                            "anyOf": [
+                              {
+                                "type": "null"
+                              },
+                              {
+                                "type": "string"
+                              }
+                            ]
+                          },
+                          "registered_at": {
                             "anyOf": [
                               {
                                 "type": "null"
@@ -23486,7 +23592,9 @@
                           "kind",
                           "domain",
                           "archetype_or_branch",
-                          "activated_at"
+                          "activated",
+                          "activated_at",
+                          "registered_at"
                         ]
                       }
                     }
@@ -23495,6 +23603,7 @@
                     "document",
                     "version",
                     "generated_at",
+                    "source",
                     "count",
                     "charters"
                   ]
@@ -23506,6 +23615,7 @@
                       "document": "string",
                       "version": 1,
                       "generated_at": "string",
+                      "source": "string",
                       "count": 1,
                       "charters": [
                         {
@@ -23514,7 +23624,9 @@
                           "kind": "string",
                           "domain": "string",
                           "archetype_or_branch": "string",
-                          "activated_at": "string"
+                          "activated": true,
+                          "activated_at": "string",
+                          "registered_at": "string"
                         }
                       ]
                     }
@@ -23534,11 +23646,7 @@
             }
           }
         },
-        "security": [
-          {
-            "officialSession": []
-          }
-        ],
+        "security": [],
         "x-source": "src/app/api/public/charters/route.ts"
       }
     },
@@ -23773,16 +23881,71 @@
                               "params": {
                                 "type": "object",
                                 "properties": {
+                                  "activated": {
+                                    "type": "string"
+                                  },
+                                  "kind": {
+                                    "type": "string"
+                                  },
+                                  "charter": {
+                                    "type": "string"
+                                  },
+                                  "q": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "activated",
+                                  "kind",
+                                  "charter",
+                                  "q"
+                                ]
+                              },
+                              "url": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "description",
+                              "params",
+                              "url"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "params": {
+                                "type": "object",
+                                "properties": {
                                   "days": {
                                     "type": "string"
                                   },
                                   "charter": {
                                     "type": "string"
+                                  },
+                                  "weeks": {
+                                    "type": "string"
+                                  },
+                                  "directive_days": {
+                                    "type": "string"
+                                  },
+                                  "only": {
+                                    "type": "string"
                                   }
                                 },
                                 "required": [
                                   "days",
-                                  "charter"
+                                  "charter",
+                                  "weeks",
+                                  "directive_days",
+                                  "only"
                                 ]
                               },
                               "url": {
@@ -23873,8 +24036,10 @@
                           "path": "string",
                           "description": "Text",
                           "params": {
-                            "days": "string",
-                            "charter": "string"
+                            "activated": "string",
+                            "kind": "string",
+                            "charter": "string",
+                            "q": "string"
                           },
                           "url": "https://example.gov/"
                         }
@@ -45014,6 +45179,32 @@
             "type": "string",
             "description": "Substrate mirrors: the one app file that writes the mirror (from the platform, after its commit)."
           },
+          "reads": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Substrate mirrors: the substrate's SQL functions that read the mirror (kept for the substrate's own use; never called by app code, which asks the platform instead)."
+          },
+          "fallbackReaders": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "file": {
+                  "type": "string"
+                },
+                "why": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "file",
+                "why"
+              ]
+            },
+            "description": "Substrate mirrors: app files allowed to read the mirror as the register when the platform cannot answer (none: every screen and route reads the platform). Listed with the reason if one is ever needed."
+          },
           "mode": {
             "type": "string",
             "enum": [
@@ -49521,6 +49712,10 @@
           },
           "createdAt": {
             "type": "string"
+          },
+          "activatedAt": {
+            "type": "string",
+            "description": "When it first became active (a ministry created active: its creation). Absent on records saved before it was kept."
           },
           "departments": {
             "type": "array",

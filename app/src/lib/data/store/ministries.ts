@@ -88,6 +88,7 @@ export function createMinistry(input: {
     departments: deptNames.map(name => ({ id: uid('DEP'), name })),
     modules: bp.defaultModules.map(moduleKey => ({ moduleKey, enabled: true })),
   };
+  m.activatedAt = m.createdAt;
   db.ministries.unshift(m);
   recordAudit('operator', 'ministry.create', `Ministry:${m.id}`, 'ok', `${input.archetype}/${input.slug}`);
   return m;
@@ -109,6 +110,7 @@ export function activateMinistry(id: string): Ministry | { error: string } {
     return { error: `Activation gate failed (${r.total}% ready): ${r.blocking.join('; ')}` };
   }
   m.status = 'active';
+  m.activatedAt ??= new Date().toISOString();
   recordAudit('operator', 'ministry.activate', `Ministry:${id}`, 'ok', `readiness ${r.total}% · ${r.lifecycle}`);
   return m;
 }

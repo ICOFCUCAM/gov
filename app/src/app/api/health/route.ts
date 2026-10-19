@@ -84,7 +84,8 @@ export async function GET(req: Request) {
   if (sb) {
     const start = Date.now();
     try {
-      const { error } = await sb.from('civicos_institutions').select('id', { head: true, count: 'exact' }).limit(1);
+      // Reachability probe on one of the substrate's own, publicly readable tables (not a mirror of a platform register, review D8).
+      const { error } = await sb.from('civicos_facilities').select('id', { head: true, count: 'exact' }).limit(1);
       reachable = !error;
     } catch { reachable = false; }
     latency_ms = Date.now() - start;

@@ -18,11 +18,14 @@ const KINDS: (InstitutionKind | 'all')[] = ['all', 'ministry', 'branch', 'agency
 /**
  * InstitutionsCatalogue — the federation registry, browseable.
  *
- * Left: institutions filtered by kind, sorted by charter_id.
- * Right: facilities for the selected charter, grouped by region.
+ * Left: institutions filtered by kind, sorted by charter_id — the
+ * platform's register (GET /api/public/charters; architecture review D8),
+ * so the list works with or without the shared database.
+ * Right: facilities for the selected charter, grouped by region — the
+ * substrate's own rows (publicly readable per the v1 RLS), joined here by
+ * charter id.
  *
- * Both tables are publicly readable per the v1 RLS, so this surface
- * works for anonymous viewers too — it's the system's "phone book".
+ * It's the system's "phone book".
  */
 export function InstitutionsCatalogue() {
   const { ready } = useIdentity();
@@ -37,25 +40,20 @@ export function InstitutionsCatalogue() {
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
-    if (!available) return;
     const opts: Parameters<typeof listInstitutionsRows>[0] = {};
     if (kindFilter !== 'all') opts.kind = kindFilter;
     if (activatedOnly) opts.activated = true;
     const rows = await listInstitutionsRows(opts);
     setItems(rows);
     if (!active && rows.length > 0) setActive(rows[0]!.charter_id);
-  }, [available, kindFilter, activatedOnly, active]);
+  }, [kindFilter, activatedOnly, active]);
 
   React.useEffect(() => { if (ready) void refresh(); }, [ready, refresh]);
 
   React.useEffect(() => {
-    if (!active) { setFacilities([]); return; }
+    if (!active || !available) { setFacilities([]); return; }
     void listFacilitiesRows({ charter: active, limit: 100 }).then(setFacilities);
-  }, [active]);
-
-  if (!available) {
-    return <SubstrateNotConfigured title="Institutions Catalogue" />;
-  }
+  }, [active, available]);
 
   const activeRow = items.find(i => i.charter_id === active) ?? null;
 
@@ -82,7 +80,7 @@ export function InstitutionsCatalogue() {
       <FilterChips label="kind:" options={KINDS} value={kindFilter} onChange={setKindFilter} />
 
       <div className="grid grid-cols-1 gap-3 lg:grid-cols-[320px_1fr]">
-        <Panel title="Institutions" meta={`${items.length}`} bodyClass="!p-0">
+        <Panel title="Institutions" meta={`${items.length} · institution register`} bodyClass="!p-0">
           {items.length === 0 ? (
             <p className="px-3 py-4 text-[11px] text-ink-muted">No institutions match the filter.</p>
           ) : (
@@ -147,7 +145,9 @@ export function InstitutionsCatalogue() {
           )}
 
           <Panel title="Facilities" meta={`${facilities.length}${active ? ' · ' + active : ''}`} bodyClass="!p-0">
-            {facilities.length === 0 ? (
+            {!available ? (
+              <SubstrateNotConfigured title="Facilities" />
+            ) : facilities.length === 0 ? (
               <p className="px-3 py-4 text-[11px] text-ink-muted">
                 {active ? 'No facilities registered for this charter.' : 'Select an institution.'}
               </p>

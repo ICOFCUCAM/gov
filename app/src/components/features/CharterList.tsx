@@ -4,13 +4,11 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { listInstitutionsRows } from '@/lib/db/repos/institutions';
-import { substrateAvailable } from '@/lib/db/client';
 import type { InstitutionRow, InstitutionKind } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { PostureBadge } from '@/components/identity/PostureBadge';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
-import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 
@@ -19,7 +17,9 @@ const KINDS: (InstitutionKind | 'all')[] = ['all','ministry','branch','agency','
 /** CharterList — quick jump table for every visible charter, grouped
  *  by kind, each row routing to /gov/charter/[id]. Lighter than the
  *  registry's two-pane view; designed to be the answer to "where do
- *  I go for the X charter?" */
+ *  I go for the X charter?" The charters are the platform's register
+ *  (GET /api/public/charters; architecture review D8), so the list works
+ *  with or without the shared database; posture badges need it. */
 export function CharterList() {
   const { ready } = useIdentity();
   const [rows, setRows] = React.useState<InstitutionRow[]>([]);
@@ -27,16 +27,11 @@ export function CharterList() {
     () => getPref<InstitutionKind | 'all'>('charter.kind',
       ['all','ministry','branch','agency','platform','officer','citizen'] as const, 'all'));
   React.useEffect(() => { setPref('charter.kind', kind); }, [kind]);
-  const available = substrateAvailable();
 
   React.useEffect(() => {
-    if (!available || !ready) return;
+    if (!ready) return;
     void listInstitutionsRows({}).then(setRows);
-  }, [available, ready]);
-
-  if (!available) {
-    return <SubstrateNotConfigured title="Charters" />;
-  }
+  }, [ready]);
 
   const filtered = kind === 'all' ? rows : rows.filter(r => r.kind === kind);
   const byKind = new Map<InstitutionKind, InstitutionRow[]>();
@@ -61,7 +56,7 @@ export function CharterList() {
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             csv
           </button>
-          <span className="font-mono text-[10px] text-ink-muted">{filtered.length} visible</span>
+          <span className="font-mono text-[10px] text-ink-muted" title="From the institution register (platform)">{filtered.length} visible · institution register</span>
         </div>
       </div>
 
