@@ -9,10 +9,16 @@ onlyBuiltDependencies:
   - esbuild
   - unrs-resolver
 
-# Patched versions of packages Next.js 14 pins below their security fixes
+# Patched versions of packages Next.js pins below their security fixes
 # (dependency audit in CI, scripts/audit-deps.mjs): PostCSS path traversal and
-# file read, nanoid and source-map-js denial of service.
+# file read, nanoid and source-map-js denial of service. PostCSS is pinned to
+# an exact release, so a fresh resolution never picks one younger than
+# minimumReleaseAge.
 overrides:
-  "next>postcss": "^8.5.18"
+  "next>postcss": "8.5.30"
   "nanoid@<3.3.18": "^3.3.18"
   "source-map-js@<1.2.2": "^1.2.2"
+
+# Refuse package versions published less than a day ago (minutes), as CI's
+# pnpm does; a lockfile that passes here then passes there.
+minimumReleaseAge: 1440

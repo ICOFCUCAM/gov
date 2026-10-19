@@ -69,21 +69,22 @@ jobs:
       - uses: actions/checkout@v4
       - name: Build the app image
         run: docker build -t civicos-app:ci app
+      # Trivy's own image, pinned by digest (0.65.0); the trivy-action tag this
+      # job used no longer resolves. The scan reads the image through the
+      # runner's Docker socket.
       - name: Scan the image (OS packages and Node modules)
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: civicos-app:ci
-          severity: HIGH,CRITICAL
-          ignore-unfixed: true
-          exit-code: '1'
-          format: table
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock
+          -v "$HOME/.cache/trivy:/root/.cache/trivy"
+          aquasec/trivy@sha256:a22415a38938a56c379387a8163fcb0ce38b10ace73e593475d3658d578b2436
+          image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table civicos-app:ci
       - name: Software bill of materials (CycloneDX)
         if: always()
-        uses: aquasecurity/trivy-action@0.28.0
-        with:
-          image-ref: civicos-app:ci
-          format: cyclonedx
-          output: civicos-app.cdx.json
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock
+          -v "$HOME/.cache/trivy:/root/.cache/trivy" -v "$PWD:/out"
+          aquasec/trivy@sha256:a22415a38938a56c379387a8163fcb0ce38b10ace73e593475d3658d578b2436
+          image --format cyclonedx --output /out/civicos-app.cdx.json civicos-app:ci
       - name: Keep the SBOM
         if: always()
         uses: actions/upload-artifact@v4
