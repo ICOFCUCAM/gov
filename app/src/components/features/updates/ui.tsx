@@ -10,6 +10,7 @@ import type {
   ChangeKind, DeliveryMode, DistributionRelease, FeatureRequestStage, FeatureRequestPriority,
   InstallState, PublisherKey, ReleaseArtifact, ReleaseSeverity,
 } from '@/lib/api/types';
+import { NIGHT } from '@/lib/theme/tokens';
 
 // Shared atoms of the Sovereign Update Center (nation chamber and publisher
 // console), drawn in the night palette of the onboarding surfaces.
@@ -78,7 +79,7 @@ export function CopyValue({ value, short = false, label }: { value: string; shor
       <button type="button" aria-label={`Copy ${label ?? 'value'}`}
         onClick={() => { void navigator.clipboard?.writeText(value).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); }); }}
         className="inline-grid h-6 w-[52px] shrink-0 place-items-center rounded-full border font-mono text-[9px] uppercase tracking-[0.16em] transition-colors hover:border-[#d9c398]/70 hover:text-[#f4e4bd] focus:outline-none focus-visible:ring-1 focus-visible:ring-[#f4e4bd]"
-        style={{ borderColor: hair(0.25), color: copied ? '#9be7c4' : 'rgba(243,239,230,0.55)' }}>
+        style={{ borderColor: hair(0.25), color: copied ? '#9be7c4' : NIGHT.muted }}>
         <span aria-live="polite">{copied ? 'Copied' : 'Copy'}</span>
       </button>
     </span>
@@ -107,20 +108,20 @@ export function Panel({ children, className = '', strong = false, as: Tag = 'div
 
 /** Artifacts with checksums, signatures and the nation's own download link. */
 export function ArtifactTable({ artifacts, channelKey, downloadUrl }: { artifacts: ReleaseArtifact[]; channelKey?: string; downloadUrl?: (key: string, id: string) => string }) {
-  if (!artifacts.length) return <p className="text-[13px] font-light text-white/45">Nothing to download for this delivery mode.</p>;
+  if (!artifacts.length) return <p className="text-[13px] font-light text-night-muted">Nothing to download for this delivery mode.</p>;
   return (
     <ul className="divide-y" style={{ borderColor: hair(0.1) }}>
       {artifacts.map(a => (
         <li key={a.id} className="grid gap-x-6 gap-y-2 py-4 md:grid-cols-[minmax(0,1.1fr)_minmax(0,1.4fr)_auto]" style={{ borderColor: hair(0.1) }}>
           <div className="min-w-0">
             <p className="text-[14px] font-light text-[#f3efe6]">{a.label}</p>
-            <p className="mt-0.5 truncate font-mono text-[11px] text-white/45" title={a.filename}>{a.filename}</p>
-            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-white/35">{fmtBytes(a.sizeBytes)}{a.platform ? ` · ${a.platform}` : ''} · {a.signature.method === 'cosign' ? 'cosign' : 'GPG'} signed</p>
+            <p className="mt-0.5 truncate font-mono text-[11px] text-night-muted" title={a.filename}>{a.filename}</p>
+            <p className="mt-1 font-mono text-[10px] uppercase tracking-[0.14em] text-night-faint">{fmtBytes(a.sizeBytes)}{a.platform ? ` · ${a.platform}` : ''} · {a.signature.method === 'cosign' ? 'cosign' : 'GPG'} signed</p>
           </div>
           <div className="min-w-0 space-y-1.5">
-            <p className="flex min-w-0 items-center gap-2"><span className="w-14 shrink-0 font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/60">SHA-256</span><CopyValue value={a.sha256} short label={`SHA-256 of ${a.filename}`} /></p>
-            {a.ref ? <p className="flex min-w-0 items-center gap-2"><span className="w-14 shrink-0 font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/60">Ref</span><CopyValue value={a.ref} short label={`reference of ${a.filename}`} /></p> : null}
-            <p className="flex min-w-0 items-center gap-2"><span className="w-14 shrink-0 font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/60">Signer</span><code className="truncate font-mono text-[11px] text-white/55" title={a.signature.keyFingerprint}>{a.signature.keyFingerprint.slice(-19)}</code></p>
+            <p className="flex min-w-0 items-center gap-2"><span className="w-14 shrink-0 font-mono text-[9px] uppercase tracking-[0.2em] text-night-champagne">SHA-256</span><CopyValue value={a.sha256} short label={`SHA-256 of ${a.filename}`} /></p>
+            {a.ref ? <p className="flex min-w-0 items-center gap-2"><span className="w-14 shrink-0 font-mono text-[9px] uppercase tracking-[0.2em] text-night-champagne">Ref</span><CopyValue value={a.ref} short label={`reference of ${a.filename}`} /></p> : null}
+            <p className="flex min-w-0 items-center gap-2"><span className="w-14 shrink-0 font-mono text-[9px] uppercase tracking-[0.2em] text-night-champagne">Signer</span><code className="truncate font-mono text-[11px] text-night-muted" title={a.signature.keyFingerprint}>{a.signature.keyFingerprint.slice(-19)}</code></p>
           </div>
           <div className="flex items-start md:justify-end">
             {channelKey && downloadUrl ? (
@@ -157,8 +158,8 @@ export function VerifyGuide({ publisherKey, compact = false }: { publisherKey: P
         {steps.map((s, i) => (
           <li key={s.t} className="min-w-0 rounded-[3px] border p-4" style={{ borderColor: hair(0.12) }}>
             <p className="flex items-baseline gap-3"><span className="font-mono text-[10px] tabular-nums" style={{ color: CHAMPAGNE }}>{String(i + 1).padStart(2, '0')}</span><span className="text-[14px] font-light text-[#f3efe6]">{s.t}</span></p>
-            <p className="mt-1.5 text-[12.5px] font-light leading-relaxed text-white/50">{s.d}</p>
-            <pre className="mt-3 overflow-x-auto rounded-[2px] bg-black/40 px-3 py-2 font-mono text-[11px] text-[#f4e4bd]/85">{s.cmd}</pre>
+            <p className="mt-1.5 text-[12.5px] font-light leading-relaxed text-night-muted">{s.d}</p>
+            <pre tabIndex={0} aria-label="Command" className="focus-ring mt-3 overflow-x-auto rounded-[2px] bg-black/40 px-3 py-2 font-mono text-[11px] text-[#f4e4bd]/85">{s.cmd}</pre>
           </li>
         ))}
       </ol>
@@ -223,7 +224,7 @@ export function ChamberTabs({ q, active }: { q: string; active: ChamberTab }) {
 }
 
 export function PoweredBy() {
-  return <p className="mt-14 text-center font-mono text-[9.5px] uppercase tracking-[0.3em] text-white/30">Powered by CivicOS</p>;
+  return <p className="mt-14 text-center font-mono text-[9.5px] uppercase tracking-[0.3em] text-night-faint">Powered by CivicOS</p>;
 }
 
 export function ErrorLine({ children }: { children: React.ReactNode }) {

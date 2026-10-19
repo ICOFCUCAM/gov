@@ -29,10 +29,10 @@ export function PublisherSupportQueue() {
         <Chip tone="#a9c7e8">{open.length} open</Chip>
         <Chip tone="#f1938f" solid={breached > 0}>{breached} breaching</Chip>
         <Chip tone="#f1b36b">{open.filter(t => t.priority === 'P1' || t.priority === 'P2').length} P1–P2</Chip>
-        <button type="button" onClick={() => setShowDone(s => !s)} className="ml-auto font-mono text-[10px] uppercase tracking-[0.18em] text-white/45 hover:text-[#f4e4bd]">{showDone ? 'Hide' : 'Show'} resolved</button>
+        <button type="button" onClick={() => setShowDone(s => !s)} className="ml-auto font-mono text-[10px] uppercase tracking-[0.18em] text-night-muted hover:text-[#f4e4bd]">{showDone ? 'Hide' : 'Show'} resolved</button>
       </div>
       {shown.map(t => <QueueItem key={t.id} t={t} onDone={load} />)}
-      {!shown.length ? <p className="text-[13px] font-light text-white/50">The queue is empty.</p> : null}
+      {!shown.length ? <p className="text-[13px] font-light text-night-muted">The queue is empty.</p> : null}
       <TierEditor d={d} onDone={load} />
     </div>
   );
@@ -54,24 +54,24 @@ function QueueItem({ t, onDone }: { t: TicketView; onDone: () => void }) {
   return (
     <Panel className="min-w-0 px-4 py-3">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="font-mono text-[11px] text-white/45">{t.id}</span>
+        <span className="font-mono text-[11px] text-night-muted">{t.id}</span>
         <Chip tone={PRIORITY_TONE[t.priority]} solid={t.priority === 'P1' && !done}>{t.priority}</Chip>
         <span className="text-[12px] text-[#d9c398]/80">{t.nationName}</span>
         <span className="order-last min-w-0 basis-full text-[14px] font-light text-[#f3efe6] sm:order-none sm:basis-0 sm:flex-1">{t.title}</span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/50">{t.state}</span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.16em] text-night-muted">{t.state}</span>
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-2">
         <SlaTimer label="Response" c={t.sla.response} />
         <SlaTimer label="Resolution" c={t.sla.resolution} />
-        <span className="font-mono text-[10.5px] text-white/40">{t.tier} · {fmtDateTime(t.openedAt)}{t.link ? ` · ${t.link.kind} ${t.link.id}` : ''}</span>
+        <span className="font-mono text-[10.5px] text-night-muted">{t.tier} · {fmtDateTime(t.openedAt)}{t.link ? ` · ${t.link.kind} ${t.link.id}` : ''}</span>
         {t.source === 'fallback-incident' ? <Chip tone="#c9b6ff">Automatic</Chip> : null}
-        <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="ml-auto font-mono text-[10px] uppercase tracking-[0.18em] text-white/45 hover:text-[#f4e4bd]">{open ? 'Close' : 'Work'}</button>
+        <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="ml-auto font-mono text-[10px] uppercase tracking-[0.18em] text-night-muted hover:text-[#f4e4bd]">{open ? 'Close' : 'Work'}</button>
       </div>
       {open ? (
         <div className="mt-3">
           <ol className="grid gap-1.5">
             {t.thread.map((m, i) => (
-              <li key={i} className="text-[12.5px] font-light text-white/70"><span className="font-mono text-[10px] text-white/40">{fmtDateTime(m.at)} · {m.by}{m.side === 'publisher' ? ' (us)' : ''}</span> — {m.text}</li>
+              <li key={i} className="text-[12.5px] font-light text-white/70"><span className="font-mono text-[10px] text-night-muted">{fmtDateTime(m.at)} · {m.by}{m.side === 'publisher' ? ' (us)' : ''}</span> — {m.text}</li>
             ))}
           </ol>
           {!done || t.state === 'resolved' ? (
@@ -87,7 +87,7 @@ function QueueItem({ t, onDone }: { t: TicketView; onDone: () => void }) {
                   <Select aria-label="Priority" value={priority} onChange={e => setPriority(e.target.value as TicketPriority)} className="w-auto py-2 text-[12.5px]">
                     {(['P1', 'P2', 'P3', 'P4'] as TicketPriority[]).map(p => <option key={p} value={p}>{p}</option>)}
                   </Select>
-                  <button type="button" className="px-2 text-[12px] text-white/50 hover:text-[#f4e4bd]" onClick={() => act('reprioritise')}>Change priority</button>
+                  <button type="button" className="px-2 text-[12px] text-night-muted hover:text-[#f4e4bd]" onClick={() => act('reprioritise')}>Change priority</button>
                 </>
               ) : null}
             </div>
@@ -121,7 +121,7 @@ function TierEditor({ d, onDone }: { d: Queue; onDone: () => void }) {
           </label>
         ))}
       </div>
-      <p className="mt-1 text-[11.5px] text-white/40">A new tier applies to tickets opened from then on.</p>
+      <p className="mt-1 text-[11.5px] text-night-muted">A new tier applies to tickets opened from then on.</p>
       <ErrorLine>{err}</ErrorLine>
     </div>
   );
@@ -155,12 +155,12 @@ export function PublisherServiceStatus() {
     <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
       {open.map(i => (
         <Panel key={i.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 px-4 py-3">
-          <span className="font-mono text-[11px] text-white/45">{i.id}</span>
+          <span className="font-mono text-[11px] text-night-muted">{i.id}</span>
           <Chip tone={IMPACT_TONE[i.impact]}>{IMPACT_TEXT[i.impact]}</Chip>
           <span className="min-w-0 flex-1 text-[14px] font-light text-[#f3efe6]">{i.title}</span>
-          <span className="font-mono text-[10.5px] text-white/40">{i.scheduled ? `${fmtDateTime(i.scheduled.start)} → ${fmtDateTime(i.scheduled.end)}` : fmtDateTime(i.startedAt)} · {i.nations === 'all' ? 'all nations' : i.nations.join(', ')}</span>
+          <span className="font-mono text-[10.5px] text-night-muted">{i.scheduled ? `${fmtDateTime(i.scheduled.start)} → ${fmtDateTime(i.scheduled.end)}` : fmtDateTime(i.startedAt)} · {i.nations === 'all' ? 'all nations' : i.nations.join(', ')}</span>
           {(i.scheduled ? ['in-progress', 'completed'] : ['identified', 'monitoring', 'resolved']).map(s => (
-            <button key={s} type="button" className="font-mono text-[10px] uppercase tracking-[0.16em] text-white/50 hover:text-[#f4e4bd]" onClick={() => update(i, s)}>{s}</button>
+            <button key={s} type="button" className="font-mono text-[10px] uppercase tracking-[0.16em] text-night-muted hover:text-[#f4e4bd]" onClick={() => update(i, s)}>{s}</button>
           ))}
         </Panel>
       ))}
@@ -171,10 +171,10 @@ export function PublisherServiceStatus() {
         <Select aria-label="Impact" value={form.impact} onChange={e => setForm({ ...form, impact: e.target.value })}>
           {(['degraded', 'partial-outage', 'major-outage', 'maintenance'] as const).map(k => <option key={k} value={k}>{IMPACT_TEXT[k]}</option>)}
         </Select>
-        <div className="flex flex-wrap gap-x-4 gap-y-1 sm:col-span-2">
+        <div className="flex flex-wrap gap-x-4 gap-y-2 sm:col-span-2">
           {d.components.map(c => (
-            <label key={c.key} className="flex items-center gap-1.5 text-[12.5px] font-light text-white/65">
-              <input type="checkbox" checked={form.components.includes(c.key)} onChange={e => setForm({ ...form, components: e.target.checked ? [...form.components, c.key] : form.components.filter(x => x !== c.key) })} />
+            <label key={c.key} className="flex min-h-6 items-center gap-1.5 text-[12.5px] font-light text-white/65">
+              <input type="checkbox" className="h-4 w-4" checked={form.components.includes(c.key)} onChange={e => setForm({ ...form, components: e.target.checked ? [...form.components, c.key] : form.components.filter(x => x !== c.key) })} />
               {c.label}
             </label>
           ))}
@@ -192,7 +192,7 @@ export function PublisherServiceStatus() {
         ) : null}
         <div className="flex flex-wrap items-center gap-3 sm:col-span-2">
           <button type="submit" className={`${goldBtn} px-4 py-2 text-[12.5px]`} style={goldStyle}>{form.impact === 'maintenance' ? 'Announce' : 'Declare'}</button>
-          <span className="text-[11.5px] text-white/40" style={{ color: CHAMPAGNE }}>Shown on each affected nation’s status page and counted in its monthly report.</span>
+          <span className="text-[11.5px] text-night-muted" style={{ color: CHAMPAGNE }}>Shown on each affected nation’s status page and counted in its monthly report.</span>
           <ErrorLine>{err}</ErrorLine>
         </div>
       </form>

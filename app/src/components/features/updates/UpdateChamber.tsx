@@ -68,10 +68,10 @@ function Body({ c, q, link, title, nation, posture, reload }: { c: Chamber; q: s
         <div className="min-w-0">
           <Eyebrow>Sovereign Update Center</Eyebrow>
           <h1 className="mt-4 text-[2.2rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3.3rem]">
-            Update Center{head ? <>{' '}<span className="text-white/30">—</span>{' '}
+            Update Center{head ? <>{' '}<span className="text-night-faint">—</span>{' '}
               <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{head}</span></> : null}
           </h1>
-          <p className="mt-4 max-w-[62ch] text-[15px] font-light leading-relaxed text-white/55">
+          <p className="mt-4 max-w-[62ch] text-[15px] font-light leading-relaxed text-night-muted">
             Global releases for every nation, and builds made for {nationLabel} from its own requests.
             Nothing installs itself: your administrators review, approve, schedule or download, and record each install.
             Every install is protected by a restore point and health-checked on probation; if it fails, the software returns to the last version that worked.
@@ -95,7 +95,7 @@ function Body({ c, q, link, title, nation, posture, reload }: { c: Chamber; q: s
         ].map(([k, v], i) => (
           <div key={k} className="min-w-0 bg-[#05070b] px-5 py-5">
             <dt className="flex items-center gap-2 font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">
-              <span className="tabular-nums text-white/30">{String(i + 1).padStart(2, '0')}</span>{k}
+              <span className="tabular-nums text-night-faint">{String(i + 1).padStart(2, '0')}</span>{k}
             </dt>
             <dd className="mt-2 truncate font-mono text-[15px] font-light tabular-nums text-[#f3efe6]">{v}</dd>
           </div>
@@ -108,7 +108,7 @@ function Body({ c, q, link, title, nation, posture, reload }: { c: Chamber; q: s
           <SeverityChip severity={security[0]!.severity} />
           <p className="flex-1 text-[14px] font-light text-[#f3efe6]/85">
             {security.length === 1 ? `Security release ${security[0]!.version} is waiting for your decision.` : `${security.length} security releases are waiting for your decision.`}{' '}
-            <span className="text-white/50">Recommended, never forced — it installs only when you choose.</span>
+            <span className="text-night-muted">Recommended, never forced — it installs only when you choose.</span>
           </p>
           <Link href={`/updates/${security[0]!.id}${q}`} className="whitespace-nowrap text-[13px] underline decoration-[#d9c398]/40 underline-offset-4 hover:text-[#f4e4bd]" style={{ color: CHAMPAGNE }}>Review {security[0]!.version} →</Link>
         </div>
@@ -145,10 +145,10 @@ function Body({ c, q, link, title, nation, posture, reload }: { c: Chamber; q: s
             ))}
           </ol>
         ) : (
-          <p className="text-[14px] font-light text-white/55">You are on the newest version available to you. New global releases and builds made for you will appear here.</p>
+          <p className="text-[14px] font-light text-night-muted">You are on the newest version available to you. New global releases and builds made for you will appear here.</p>
         )}
         {custom && path.some(r => r.channel === 'global') ? (
-          <p className="mt-4 text-[12.5px] font-light text-white/45">You run a nation build. A global release on its own does not carry your nation’s features; they return in your next nation build made on that version.</p>
+          <p className="mt-4 text-[12.5px] font-light text-night-muted">You run a nation build. A global release on its own does not carry your nation’s features; they return in your next nation build made on that version.</p>
         ) : null}
       </Section>
 
@@ -171,7 +171,7 @@ function Body({ c, q, link, title, nation, posture, reload }: { c: Chamber; q: s
         <ul className="mt-4 grid gap-2">
           {c.requests.slice(0, 3).map(x => (
             <li key={x.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b py-2.5 text-[13.5px] font-light" style={{ borderColor: hair(0.08) }}>
-              <span className="font-mono text-[11px] text-white/40">{x.id}</span>
+              <span className="font-mono text-[11px] text-night-muted">{x.id}</span>
               <span className="min-w-0 flex-1 text-[#f3efe6]/85">{x.title}</span>
               <Chip tone={x.stage === 'delivered' ? '#9be7c4' : x.stage === 'declined' ? '#8a8f99' : CHAMPAGNE}>{STAGE_LABEL[x.stage]}</Chip>
             </li>
@@ -197,7 +197,7 @@ function Body({ c, q, link, title, nation, posture, reload }: { c: Chamber; q: s
         <div className="mb-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
           <span className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">Private link key</span>
           <CopyValue value={c.nation.channelKey} label="distribution link key" />
-          <span className="text-[12px] font-light text-white/40">Downloads for {nationLabel} come only through this link. Treat it like a credential.</span>
+          <span className="text-[12px] font-light text-night-muted">Downloads for {nationLabel} come only through this link. Treat it like a credential.</span>
         </div>
         <VerifyGuide publisherKey={c.publisherKey} />
       </Section>
@@ -217,7 +217,7 @@ function TimelineItem({ r, q, nation, running }: { r: ChamberRelease; q: string;
         <Panel strong={running} className="grid gap-3 px-5 py-4 transition-colors group-hover:border-[#d9c398]/55 md:grid-cols-[150px_minmax(0,1fr)_auto] md:items-center">
           <div>
             <p className="font-mono text-[17px] tabular-nums text-[#f4e4bd]">{r.version}</p>
-            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">{fmtDate(r.releasedAt)}</p>
+            <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-night-muted">{fmtDate(r.releasedAt)}</p>
           </div>
           <div className="min-w-0">
             <p className="flex flex-wrap items-center gap-2">
@@ -227,12 +227,12 @@ function TimelineItem({ r, q, nation, running }: { r: ChamberRelease; q: string;
               {r.breakingChanges.length ? <Chip tone="#f1b36b">Breaking changes</Chip> : null}
             </p>
             <p className="mt-2 text-[15px] font-light text-[#f3efe6]">{r.title}</p>
-            <p className="mt-1 line-clamp-2 text-[13px] font-light text-white/50">{r.summary}</p>
+            <p className="mt-1 line-clamp-2 text-[13px] font-light text-night-muted">{r.summary}</p>
           </div>
           <div className="flex items-center gap-3 md:flex-col md:items-end">
             {running && r.install.state === 'probation' ? <StateChip state="probation" /> : running ? <Chip tone="#9be7c4" solid>Running</Chip> : r.blocked && r.newer ? <Chip tone="#f1b36b" solid>{r.status === 'withdrawn' ? 'Withdrawn' : 'Halted'}</Chip> : r.superseded ? <Chip tone="#8a8f99">Superseded</Chip> : r.newer ? <StateChip state={r.install.state} /> : <Chip tone="#8a8f99">Older</Chip>}
             {r.newer && !r.compatible ? <span className="font-mono text-[10px] uppercase tracking-[0.14em] text-[#f1b36b]">Needs {r.minCompatibleVersion}+</span> : null}
-            <span className="text-[12px] text-[#d9c398]/60 transition-colors group-hover:text-[#f4e4bd]">Review →</span>
+            <span className="text-[12px] text-night-champagne transition-colors group-hover:text-[#f4e4bd]">Review →</span>
           </div>
         </Panel>
       </Link>

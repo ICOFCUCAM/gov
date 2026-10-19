@@ -37,13 +37,13 @@ export function FeatureRequests() {
     <OnboardingFrame right={<ChamberNav q={q} active="requests" />}>
       <div className="flex-1 py-10 lg:py-14">
         <ChamberTabs q={q} active="requests" />
-        <Link href={`/updates${q}`} className="font-mono text-[10.5px] uppercase tracking-[0.24em] text-white/45 no-underline transition-colors hover:text-[#f4e4bd]">← Update Center</Link>
+        <Link href={`/updates${q}`} className="font-mono text-[10.5px] uppercase tracking-[0.24em] text-night-muted no-underline transition-colors hover:text-[#f4e4bd]">← Update Center</Link>
         <div className="mt-6">
           <Eyebrow>Special feature requests</Eyebrow>
           <h1 className="mt-4 text-[2.1rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3rem]">
             Ask for what {nation ? <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{nation}</span> : 'your government'} needs
           </h1>
-          <p className="mt-4 max-w-[64ch] text-[15px] font-light leading-relaxed text-white/55">
+          <p className="mt-4 max-w-[64ch] text-[15px] font-light leading-relaxed text-night-muted">
             Requests go to the platform team, who review, scope and build them into a release made only for {who}. When it is ready it appears in your update chamber — and installs only when you choose.
           </p>
         </div>
@@ -54,7 +54,7 @@ export function FeatureRequests() {
               <Section n="01" title="Pipeline" aside={`${c.requests.length} request${c.requests.length === 1 ? '' : 's'} from ${who}`}>
                 <ul className="grid gap-4">
                   {c.requests.map(x => <RequestCard key={x.id} x={x} q={q} />)}
-                  {!c.requests.length ? <li className="text-[14px] font-light text-white/50">No requests yet. Submit the first one.</li> : null}
+                  {!c.requests.length ? <li className="text-[14px] font-light text-night-muted">No requests yet. Submit the first one.</li> : null}
                 </ul>
               </Section>
             </div>
@@ -123,23 +123,23 @@ export function RequestCard({ x, q, nationLabel, actions }: { x: FeatureRequest;
   return (
     <Panel as="li" className="px-5 py-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="font-mono text-[11px] text-white/40">{x.id}</span>
+        <span className="font-mono text-[11px] text-night-muted">{x.id}</span>
         <Chip tone={PRIORITY_TONE[x.priority]}>{PRIORITY_LABEL[x.priority]}</Chip>
         {nationLabel ? <Chip tone="#a9c7e8">{nationLabel}</Chip> : null}
-        <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">{fmtDate(x.submittedAt)}</span>
+        <span className="ml-auto font-mono text-[10px] uppercase tracking-[0.14em] text-night-muted">{fmtDate(x.submittedAt)}</span>
       </div>
       <p className="mt-2.5 text-[16px] font-light text-[#f3efe6]">{x.title}</p>
-      <p className="mt-1 text-[13px] font-light leading-relaxed text-white/50">{x.description}</p>
-      <p className="mt-2 text-[12px] font-light text-white/40">{x.institution} · {x.submittedBy}{x.targetVersion ? ` · target ${x.targetVersion}` : ''}</p>
+      <p className="mt-1 text-[13px] font-light leading-relaxed text-night-muted">{x.description}</p>
+      <p className="mt-2 text-[12px] font-light text-night-muted">{x.institution} · {x.submittedBy}{x.targetVersion ? ` · target ${x.targetVersion}` : ''}</p>
 
       {declined ? (
-        <p className="mt-4"><Chip tone="#8a8f99" solid>Declined</Chip> <span className="ml-2 text-[12.5px] text-white/50">{x.history[x.history.length - 1]?.note}</span></p>
+        <p className="mt-4"><Chip tone="#8a8f99" solid>Declined</Chip> <span className="ml-2 text-[12.5px] text-night-muted">{x.history[x.history.length - 1]?.note}</span></p>
       ) : (
         <ol aria-label={`Stage: ${STAGE_LABEL[x.stage]}`} className="mt-4 grid grid-cols-6 gap-1">
           {STAGES.map((s, i) => (
             <li key={s} className="min-w-0">
               <span aria-hidden className="block h-[3px] rounded-full" style={{ background: i <= at ? (x.stage === 'delivered' ? '#9be7c4' : CHAMPAGNE) : hair(0.14) }} />
-              <span className={`mt-1.5 block truncate font-mono text-[8.5px] uppercase tracking-[0.12em] ${i === at ? 'text-[#f4e4bd]' : 'text-white/30'}`} aria-current={i === at ? 'step' : undefined}>{STAGE_LABEL[s]}</span>
+              <span className={`mt-1.5 block truncate font-mono text-[8.5px] uppercase tracking-[0.12em] ${i === at ? 'text-[#f4e4bd]' : 'text-night-faint'}`} aria-current={i === at ? 'step' : undefined}>{STAGE_LABEL[s]}</span>
             </li>
           ))}
         </ol>
@@ -149,14 +149,14 @@ export function RequestCard({ x, q, nationLabel, actions }: { x: FeatureRequest;
         {x.deliveredIn && q !== undefined ? (
           <Link href={`/updates/${x.deliveredIn}${q}`} className="text-[12.5px] underline decoration-[#d9c398]/40 underline-offset-4 hover:text-[#f4e4bd]" style={{ color: CHAMPAGNE }}>Delivered in {x.targetVersion ?? 'your nation build'} →</Link>
         ) : null}
-        <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/40 hover:text-[#f4e4bd]">{open ? 'Hide history' : 'History'}</button>
+        <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="font-mono text-[10px] uppercase tracking-[0.18em] text-night-muted hover:text-[#f4e4bd]">{open ? 'Hide history' : 'History'}</button>
         {actions ? <div className="ml-auto flex flex-wrap gap-2">{actions}</div> : null}
       </div>
       {open ? (
         <ol className="mt-3 space-y-1.5 border-l pl-4" style={{ borderColor: hair(0.2) }}>
           {x.history.map((h, i) => (
-            <li key={i} className="text-[12px] font-light text-white/55">
-              <span className="font-mono text-[10.5px] text-white/35">{fmtDate(h.at)}</span> · {STAGE_LABEL[h.to]} · {h.by}{h.note ? ` — ${h.note}` : ''}
+            <li key={i} className="text-[12px] font-light text-night-muted">
+              <span className="font-mono text-[10.5px] text-night-faint">{fmtDate(h.at)}</span> · {STAGE_LABEL[h.to]} · {h.by}{h.note ? ` — ${h.note}` : ''}
             </li>
           ))}
         </ol>

@@ -13,11 +13,12 @@ import Link from 'next/link';
 import { api, type SiteEditView, type SiteTranslationString } from '@/lib/api/client';
 import type { Coverage, TranslationEntries } from '@/lib/public-sites/translation';
 import { Section, Field, inputCls, Select, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI } from '@/components/features/onboarding/Chrome';
+import { NIGHT } from '@/lib/theme/tokens';
 
 const STATUS: Record<SiteTranslationString['status'], { label: string; color: string }> = {
   translated: { label: 'TRANSLATED', color: CHAMPAGNE },
   stale: { label: 'OUT OF DATE', color: '#f1b26f' },
-  missing: { label: 'TO TRANSLATE', color: 'rgba(255,255,255,0.4)' },
+  missing: { label: 'TO TRANSLATE', color: NIGHT.muted },
 };
 
 export function SiteTranslations({ n, siteId, view, by, busy, act }: {
@@ -83,7 +84,7 @@ export function SiteTranslations({ n, siteId, view, by, busy, act }: {
             {view.languages.map(l => <option key={l.code} value={l.code}>{l.name} ({l.code}){l.code === view.nationLocale ? ' · nation' : ''}</option>)}
           </Select>
         </Field>
-        <div className="self-end pb-1 text-[12.5px] leading-relaxed text-white/55">
+        <div className="self-end pb-1 text-[12.5px] leading-relaxed text-night-muted">
           {cov ? (
             <>
               <div className="h-1.5 w-full overflow-hidden rounded-full" style={{ background: hair(0.12) }} aria-hidden>
@@ -110,16 +111,16 @@ export function SiteTranslations({ n, siteId, view, by, busy, act }: {
           <input ref={fileRef} type="file" accept=".xlf,.xliff,application/xliff+xml,text/xml" className="sr-only"
             onChange={e => { const f = e.currentTarget.files?.[0]; if (f) void onFile(f); }} />
         </label>
-        <label className="ms-auto flex items-center gap-2 text-[12px] text-white/55">
+        <label className="ms-auto flex items-center gap-2 text-[12px] text-night-muted">
           <input type="checkbox" checked={onlyTodo} onChange={e => setOnlyTodo(e.currentTarget.checked)} /> Only what needs translating
         </label>
       </div>
-      <p className="mt-2 text-[11.5px] text-white/40">XLIFF 2.0 opens in translation tools (memoQ, Trados, Phrase, OmegaT, Weblate). Keep every {'{placeholder}'} unchanged.</p>
+      <p className="mt-2 text-[11.5px] text-night-muted">XLIFF 2.0 opens in translation tools (memoQ, Trados, Phrase, OmegaT, Weblate). Keep every {'{placeholder}'} unchanged.</p>
       {upload ? (
         <div className="mt-3 text-[12.5px]" role="status" style={{ color: upload.ok ? CHAMPAGNE_HI : '#f1938f' }}>
           {upload.text}
           {upload.skipped?.length ? (
-            <ul className="mt-1 space-y-0.5 text-white/50">
+            <ul className="mt-1 space-y-0.5 text-night-muted">
               {upload.skipped.slice(0, 12).map(s => <li key={s.id}><span className="font-mono">{byPath.get(s.id)?.label ?? s.id}</span> — {s.reason}</li>)}
               {upload.skipped.length > 12 ? <li>and {upload.skipped.length - 12} more</li> : null}
             </ul>
@@ -134,11 +135,11 @@ export function SiteTranslations({ n, siteId, view, by, busy, act }: {
             <div key={s.path} className="grid gap-2 border-b pb-3 sm:grid-cols-2" style={{ borderColor: hair(0.08) }}>
               <div className="min-w-0">
                 <div className="flex items-baseline justify-between gap-2 font-mono text-[9.5px] tracking-[0.08em]">
-                  <span className="text-white/40">{s.label.toUpperCase()}</span>
+                  <span className="text-night-muted">{s.label.toUpperCase()}</span>
                   <span style={{ color: st.color }}>{st.label}</span>
                 </div>
                 <p className="mt-1 text-[13px] leading-snug text-white/80">{s.source}</p>
-                {s.previousSource ? <p className="mt-1 text-[11.5px] text-white/40">Translated from: <span className="line-through">{s.previousSource}</span></p> : null}
+                {s.previousSource ? <p className="mt-1 text-[11.5px] text-night-muted">Translated from: <span className="line-through">{s.previousSource}</span></p> : null}
               </div>
               <textarea rows={s.source.length > 90 ? 3 : 1} className={`${inputCls} resize-y py-2`} lang={locale} dir={lang?.dir ?? 'ltr'}
                 aria-label={`${s.label}, ${lang?.name ?? locale}`} value={draft[s.path] ?? ''}
@@ -146,7 +147,7 @@ export function SiteTranslations({ n, siteId, view, by, busy, act }: {
             </div>
           );
         })}
-        {cov && shown.length === 0 ? <p className="text-[13px] text-white/45">Everything is translated.</p> : null}
+        {cov && shown.length === 0 ? <p className="text-[13px] text-night-muted">Everything is translated.</p> : null}
       </div>
 
       <div className="mt-5 grid gap-3 sm:grid-cols-[minmax(0,1fr)_auto_auto]">
@@ -157,7 +158,7 @@ export function SiteTranslations({ n, siteId, view, by, busy, act }: {
           Propose translation{count ? ` (${count})` : ''}
         </button>
       </div>
-      {isNation ? <p className="mt-2 text-[11.5px] text-white/40">After publishing, see it on <Link href={`/${siteId}`} target="_blank" className="underline-offset-2 hover:underline" style={{ color: CHAMPAGNE }}>the site ↗</Link>; a pending translation can be previewed from Awaiting review.</p> : null}
+      {isNation ? <p className="mt-2 text-[11.5px] text-night-muted">After publishing, see it on <Link href={`/${siteId}`} target="_blank" className="underline-offset-2 hover:underline" style={{ color: CHAMPAGNE }}>the site ↗</Link>; a pending translation can be previewed from Awaiting review.</p> : null}
     </Section>
   );
 }

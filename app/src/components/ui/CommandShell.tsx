@@ -23,6 +23,7 @@ import { useHydrated, useRenderNow } from '@/lib/clock/render-now';
 import { usePathname } from 'next/navigation';
 import { CONSOLE_NAV, HEADER_LINKS, locate } from '@/lib/nav/console-nav';
 import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
+import { SkipLink } from '@/components/ui/SkipLink';
 import { useSignIn } from '@/lib/official';
 
 // Adapter from substrate search hits → CommandPalette items.
@@ -144,6 +145,7 @@ export function CommandShell({
 
   return (
     <div data-mode={emergency ? 'crisis' : 'normal'} className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]" style={{ ...PALETTE, ...(emergency ? { ['--accent' as string]: TONE.alert } : {}) }}>
+      <SkipLink />
       <CommandPalette items={cmd} accent={accent} searchFn={substrateSearchAsCommands} />
       {emergency ? (
         <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-1 text-[10px]"
@@ -229,7 +231,7 @@ export function CommandShell({
                         {n > 0 ? <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: n >= 4 ? TONE.alert : TONE.warn }} /> : null}
                       </span>
                       <span className="min-w-0 flex-1 truncate text-[13px]" style={on ? { color: accent } : undefined}>{it.label}</span>
-                      {n > 0 ? <span className="shrink-0 rounded-[3px] px-1 text-[10px] font-bold tabular-nums" style={{ backgroundColor: `color-mix(in srgb, ${n >= 4 ? TONE.alert : TONE.warn} 20%, transparent)`, color: n >= 4 ? TONE.alert : TONE.warn }}>{n}</span> : null}
+                      {n > 0 ? <span className="shrink-0 rounded-[3px] px-1 text-[10px] font-bold tabular-nums" style={{ backgroundColor: `color-mix(in srgb, ${n >= 4 ? TONE.alert : TONE.warn} 14%, transparent)`, color: n >= 4 ? TONE.alert : TONE.warn }}>{n}</span> : null}
                     </Link>
                   );
                 })}
@@ -275,7 +277,7 @@ export function CommandShell({
             </div>
           </div>
         </nav>
-        <main className="min-w-0 flex-1 overflow-y-auto p-3"
+        <main id="main" tabIndex={-1} className="min-w-0 flex-1 overflow-y-auto p-3 outline-none"
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.02) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
           <ReferenceNotice />
           <ConsoleTabs here={here} branches={constitutionFor(sov?.stateForm ?? 'republic', sov?.constitution).branches.map(b => ({ label: b.name, href: `/gov/branch/${b.key}` }))} pathname={pathname} />

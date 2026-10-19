@@ -33,7 +33,7 @@ export function ChamberSettings() {
         <h1 className="mt-4 text-[2.1rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3rem]">
           How {nation ? <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{nation}</span> : 'this installation'} stays running
         </h1>
-        <p className="mt-4 max-w-[66ch] text-[15px] font-light leading-relaxed text-white/55">
+        <p className="mt-4 max-w-[66ch] text-[15px] font-light leading-relaxed text-night-muted">
           Upgrades are always your decision. What may happen on its own is one thing only: if a new release fails its health checks, the software returns to the last version that worked. Data is never restored automatically.
         </p>
         {err ? <div className="mt-8"><ErrorLine>{err}</ErrorLine></div> : !c ? <Loading label="Loading settings…" /> : <Body c={c} link={link} q={q} reload={load} />}
@@ -65,7 +65,7 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
   const choice = <V extends string>(name: string, value: V, current: V, label: string, hint: string, onPick: (v: V) => void) => (
     <label key={value} className="flex cursor-pointer items-start gap-3 rounded-[3px] border p-4 transition-colors" style={{ borderColor: current === value ? CHAMPAGNE : hair(0.14), background: current === value ? hair(0.06) : 'transparent' }}>
       <input type="radio" name={name} className="mt-1 h-4 w-4 accent-[#d9c398]" checked={current === value} onChange={() => onPick(value)} />
-      <span><span className="block text-[14px] font-light text-[#f3efe6]">{label}</span><span className="mt-1 block text-[12.5px] font-light leading-relaxed text-white/50">{hint}</span></span>
+      <span><span className="block text-[14px] font-light text-[#f3efe6]">{label}</span><span className="mt-1 block text-[12.5px] font-light leading-relaxed text-night-muted">{hint}</span></span>
     </label>
   );
 
@@ -92,7 +92,7 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
             </Field>
           </div>
           <AgentCredential c={c} link={link} actor={actor} reload={reload} />
-          <p className="mt-4 text-[12.5px] font-light text-white/45">Checks: readiness, liveness, error rate and latency against the pre-upgrade baseline, audit-chain integrity, and smoke tests of sign-in, the citizen wallet, payments and the registry. Fallback needs three failed or missing reports in a row, or two independent critical checks failing together.</p>
+          <p className="mt-4 text-[12.5px] font-light text-night-muted">Checks: readiness, liveness, error rate and latency against the pre-upgrade baseline, audit-chain integrity, and smoke tests of sign-in, the citizen wallet, payments and the registry. Fallback needs three failed or missing reports in a row, or two independent critical checks failing together.</p>
         </Section>
 
         <Section n="03" title="Rollout ring">
@@ -136,7 +136,7 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
       <Section n="07" title="Fallback incidents" aside={`${c.incidents.length} recorded`}>
         <div className="grid gap-3">
           {c.incidents.map(i => <IncidentCard key={i.id} i={i} q={q} />)}
-          {!c.incidents.length ? <p className="text-[13.5px] font-light text-white/50">No fallbacks so far.</p> : null}
+          {!c.incidents.length ? <p className="text-[13.5px] font-light text-night-muted">No fallbacks so far.</p> : null}
         </div>
       </Section>
 
@@ -177,7 +177,7 @@ function AgentCredential({ c, link, actor, reload }: { c: UpdateChamber; link?: 
         {meta ? <Chip tone="#9be7c4" solid>Active · cag_{meta.prefix}…</Chip> : <Chip tone="#f1b36b">Not issued</Chip>}
         <button type="button" className={`${ghostBtn} ml-auto py-2 text-[12.5px]`} disabled={busy} onClick={issue}>{busy ? 'Issuing…' : meta ? 'Rotate credential' : 'Issue credential'}</button>
       </div>
-      <p className="mt-2 text-[12.5px] font-light leading-relaxed text-white/55">
+      <p className="mt-2 text-[12.5px] font-light leading-relaxed text-night-muted">
         The agent sends it as <code className="font-mono text-[12px]">Authorization: Bearer cag_…</code> to <code className="font-mono text-[12px]">/api/releases/health</code>. Sessions and the distribution link are refused there. {meta ? `Issued ${fmtDateTime(meta.issuedAt)} by ${meta.issuedBy}${meta.rotations ? ` · rotated ${meta.rotations}×` : ''}.` : ''}
       </p>
       {fresh ? (
@@ -228,11 +228,11 @@ function ChangeControlPanel({ c, link, actor, reload }: { c: UpdateChamber; link
         <ul className="mt-2 space-y-1.5">
           {cc.blackouts.map(b => (
             <li key={b.id} className="flex flex-wrap items-center gap-2 text-[12.5px] font-light text-white/75">
-              <Chip tone="#f1b36b">{b.kind}</Chip>{b.label}<span className="font-mono text-[10.5px] text-white/45">{fmtDateTime(b.start)} → {fmtDateTime(b.end)}</span>
-              <button type="button" className="ml-auto text-[11px] text-white/40 hover:text-[#f1938f]" onClick={() => run({ action: 'remove-blackout', id: b.id, by: actor })}>Remove</button>
+              <Chip tone="#f1b36b">{b.kind}</Chip>{b.label}<span className="font-mono text-[10.5px] text-night-muted">{fmtDateTime(b.start)} → {fmtDateTime(b.end)}</span>
+              <button type="button" className="ml-auto text-[11px] text-night-muted hover:text-[#f1938f]" onClick={() => run({ action: 'remove-blackout', id: b.id, by: actor })}>Remove</button>
             </li>
           ))}
-          {!cc.blackouts.length ? <li className="text-[12px] text-white/40">None defined.</li> : null}
+          {!cc.blackouts.length ? <li className="text-[12px] text-night-muted">None defined.</li> : null}
         </ul>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <Field label="Label"><input className={inputCls} value={bo.label} onChange={e => setBo({ ...bo, label: e.target.value })} placeholder="General election" /></Field>

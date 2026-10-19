@@ -16,6 +16,7 @@ import { normaliseDomain, identifierExample } from '@/lib/nation/domain';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { OnboardingFrame, Eyebrow, Field, inputCls, SealTile, Section, Select, Rule, Corners, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI, GOLD, INK } from './Chrome';
 import type { NationalConstitution, SovereignProfile, SovereignPreset, StateForm, Ministry, Archetype, ArchetypeKey, PlatformSetup } from '@/lib/api/types';
+import { NIGHT } from '@/lib/theme/tokens';
 
 const STEPS = [
   { k: 'nation', t: 'Nation', s: 'Form of state and offices' },
@@ -272,7 +273,7 @@ export function SetupWizard() {
         {/* Step rail — a vertical timeline of the instrument's articles */}
         <aside className="min-w-0 lg:sticky lg:top-8 lg:self-start">
           <Eyebrow>{existing ? 'Review configuration' : 'Set up your nation'}</Eyebrow>
-          <p className="mt-2 hidden text-[13px] font-light leading-relaxed text-white/45 lg:block">
+          <p className="mt-2 hidden text-[13px] font-light leading-relaxed text-night-muted lg:block">
             A constitutional instrument in four articles.
           </p>
 
@@ -287,7 +288,7 @@ export function SetupWizard() {
                   <button type="button" disabled={stepLocked(i)} onClick={() => !log && setStep(i)} aria-current={state === 'current' ? 'step' : undefined}
                     className="flex w-full flex-col items-center gap-2 rounded-[2px] px-1 text-center focus:outline-none focus-visible:ring-1 focus-visible:ring-[#f4e4bd] disabled:cursor-default">
                     <Station i={i} state={state} />
-                    <span className={`block w-full truncate text-[11.5px] ${state === 'next' ? 'text-white/40' : state === 'current' ? 'text-[#f4e4bd]' : 'text-white/75'}`}>{s.t}</span>
+                    <span className={`block w-full truncate text-[11.5px] ${state === 'next' ? 'text-night-muted' : state === 'current' ? 'text-[#f4e4bd]' : 'text-white/75'}`}>{s.t}</span>
                   </button>
                 </li>
               );
@@ -306,9 +307,9 @@ export function SetupWizard() {
                     className="group flex w-full items-start gap-4 rounded-[2px] py-3.5 text-left focus:outline-none focus-visible:ring-1 focus-visible:ring-[#f4e4bd] disabled:cursor-default">
                     <Station i={i} state={state} />
                     <span className="min-w-0 pt-0.5">
-                      <span className="block font-mono text-[9.5px] uppercase tracking-[0.28em]" style={{ color: state === 'next' ? 'rgba(255,255,255,0.28)' : hair(0.75) }}>Article {ROMAN[i]}</span>
-                      <span className={`mt-1 block text-[16px] font-light tracking-[-0.005em] transition-colors ${state === 'next' ? 'text-white/45 group-enabled:group-hover:text-white/75' : state === 'current' ? 'text-[#f4e4bd]' : 'text-[#f3efe6]'}`}>{s.t}</span>
-                      <span className="mt-0.5 block text-[12px] font-light text-white/40">{s.s}</span>
+                      <span className="block font-mono text-[9.5px] uppercase tracking-[0.28em]" style={{ color: state === 'next' ? NIGHT.faint : hair(0.75) }}>Article {ROMAN[i]}</span>
+                      <span className={`mt-1 block text-[16px] font-light tracking-[-0.005em] transition-colors ${state === 'next' ? 'text-night-muted group-enabled:group-hover:text-white/75' : state === 'current' ? 'text-[#f4e4bd]' : 'text-[#f3efe6]'}`}>{s.t}</span>
+                      <span className="mt-0.5 block text-[12px] font-light text-night-muted">{s.s}</span>
                     </span>
                   </button>
                 </li>
@@ -316,7 +317,7 @@ export function SetupWizard() {
             })}
           </ol>
           {existing ? (
-            <p className="mt-8 hidden border-l pl-4 text-[12px] font-light leading-relaxed text-white/45 lg:block" style={{ borderColor: hair(0.35) }}>
+            <p className="mt-8 hidden border-l pl-4 text-[12px] font-light leading-relaxed text-night-muted lg:block" style={{ borderColor: hair(0.35) }}>
               Setup was completed {new Date(existing.completedAt).toLocaleDateString()} by {existing.by}. Changes here update the live configuration.
             </p>
           ) : null}
@@ -343,14 +344,14 @@ export function SetupWizard() {
                           boxShadow: on ? `0 18px 40px -24px ${hair(0.7)}, inset 0 1px 0 rgba(255,240,210,0.12)` : 'inset 0 1px 0 rgba(255,240,210,0.04)',
                         }}>
                         {on ? <span aria-hidden className="absolute inset-x-0 top-0 h-px" style={{ background: `linear-gradient(90deg, transparent, ${CHAMPAGNE_HI}, transparent)` }} /> : null}
-                        <span className="flex items-center justify-between font-mono text-[9.5px] tracking-[0.24em]" style={{ color: on ? CHAMPAGNE_HI : hair(0.5) }}>
+                        <span className="flex items-center justify-between font-mono text-[9.5px] tracking-[0.24em]" style={{ color: on ? CHAMPAGNE_HI : NIGHT.champagneMuted }}>
                           <span className="truncate">{String.fromCharCode(65 + i)} · TEMPLATE</span>
                           <span aria-hidden className={`grid h-4 w-4 place-items-center rounded-full border text-[9px] transition-opacity ${on ? 'opacity-100' : 'opacity-0'}`}
                             style={{ borderColor: CHAMPAGNE, background: on ? GOLD : undefined, color: '#17120a' }}>✓</span>
                         </span>
                         <span>
                           <span className={`block text-[14px] font-light leading-snug sm:text-[15px] ${on ? 'text-[#f4e4bd]' : 'text-[#f3efe6] group-hover:text-white'}`}>{p.label}</span>
-                          <span className="mt-1 block truncate font-mono text-[10px] text-white/40">{p.profile.executiveTitle} · {p.profile.legislatureName}</span>
+                          <span className="mt-1 block truncate font-mono text-[10px] text-night-muted">{p.profile.executiveTitle} · {p.profile.legislatureName}</span>
                         </span>
                       </button>
                     );
@@ -402,7 +403,7 @@ export function SetupWizard() {
                           <button key={i} type="button" role="radio" aria-checked={levelIndex === i}
                             onClick={() => chooseLevel(i)}
                             className="rounded-full px-3 py-1 font-mono text-[9.5px] uppercase tracking-[0.16em] transition-colors"
-                            style={levelIndex === i ? { background: hair(0.16), color: CHAMPAGNE_HI } : { color: 'rgba(255,255,255,0.45)' }}>{label}</button>
+                            style={levelIndex === i ? { background: hair(0.16), color: CHAMPAGNE_HI } : { color: NIGHT.muted }}>{label}</button>
                         ))}
                       </div>
                     </div>
@@ -424,10 +425,10 @@ export function SetupWizard() {
                           if (v && !regionsList.includes(v)) set('regions', [...regionsList, v]);
                           setRegionDraft('');
                         }}
-                        className="min-w-[140px] flex-1 bg-transparent px-1.5 text-[13.5px] font-light text-[#f3efe6] placeholder:text-white/25 focus:outline-none" />
+                        className="min-w-[140px] flex-1 bg-transparent px-1.5 text-[13.5px] font-light text-[#f3efe6] placeholder:text-night-faint focus:outline-none" />
                       <datalist id="setup-provinces">{suggestions.map((n, i) => <option key={`${n}-${i}`} value={n} />)}</datalist>
                     </div>
-                    <span className="mt-1.5 block text-[11.5px] leading-snug text-white/40">
+                    <span className="mt-1.5 block text-[11.5px] leading-snug text-night-muted">
                       {level
                         ? `${regionsList.length} of the nation's ${level.units.length} ${level.depth === 1 ? 'first-level divisions' : `divisions beneath its ${plural(divisionNoun(levels[0]!))}`}, in official order (ISO 3166-2). Add or rename units if the law has changed since.`
                         : 'Your own groupings for national summaries. If no government sits at this level, facilities, permits and incidents are better reported by an official level. '}
@@ -444,7 +445,7 @@ export function SetupWizard() {
                         ))}
                       </div>
                     ) : null}
-                    {!level ? <span className="mt-1 block text-[11.5px] leading-snug text-white/40">
+                    {!level ? <span className="mt-1 block text-[11.5px] leading-snug text-night-muted">
                       {provinces.length > 16
                         ? `${provinces.length} first-level units on the map. Add the regions your government reports by, or `
                         : 'Dashboards and engines report by these regions. Press Enter to add.'}
@@ -489,7 +490,7 @@ export function SetupWizard() {
                     {chamberRows.map((c, i) => (single && i === 1 ? (
                       <div key={i} className="flex flex-col justify-end">
                         <span className="block font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/65">Upper chamber</span>
-                        <p className="mt-2 flex min-h-[46px] items-center rounded-[2px] border px-4 text-[13.5px] font-light text-white/45" style={{ borderColor: hair(0.1) }}>
+                        <p className="mt-2 flex min-h-[46px] items-center rounded-[2px] border px-4 text-[13.5px] font-light text-night-muted" style={{ borderColor: hair(0.1) }}>
                           None · single-chamber legislature
                         </p>
                       </div>
@@ -508,7 +509,7 @@ export function SetupWizard() {
                         className="mt-[3px] h-4 w-4 shrink-0 accent-[#d9c398]" />
                       <span className="text-[13px] font-light leading-snug text-[#f3efe6]">
                         No upper chamber
-                        <span className="block text-[11.5px] text-white/40">The legislature has one chamber (e.g. the Parliament of Uganda). Leaving both chamber rows blank uses the template&apos;s chambers shown in grey.</span>
+                        <span className="block text-[11.5px] text-night-muted">The legislature has one chamber (e.g. the Parliament of Uganda). Leaving both chamber rows blank uses the template&apos;s chambers shown in grey.</span>
                       </span>
                     </label>
                     <div className="sm:col-span-2">
@@ -531,7 +532,7 @@ export function SetupWizard() {
                   </span>
                   <span>
                     <span className="block text-[14.5px] font-light text-[#f3efe6]">AI assistant</span>
-                    <span className="mt-1 block text-[12.5px] font-light leading-relaxed text-white/45">
+                    <span className="mt-1 block text-[12.5px] font-light leading-relaxed text-night-muted">
                       Offer officers drafted advisories on operational dashboards. Off unless you switch it on;
                       decisions always remain with people, and it can be changed later.
                     </span>
@@ -551,7 +552,7 @@ export function SetupWizard() {
                     <Field label="Model" hint="Empty for the default model of the Anthropic service.">
                       <input className={inputCls} value={profile.aiAssistantModel?.model ?? ''} placeholder="claude-haiku-4-5-20251001" onChange={e => set('aiAssistantModel', { api: profile.aiAssistantModel?.api ?? 'anthropic', ...profile.aiAssistantModel, model: e.currentTarget.value.trim() })} />
                     </Field>
-                    <p className="text-[12px] font-light leading-relaxed text-white/45 sm:col-span-3">
+                    <p className="text-[12px] font-light leading-relaxed text-night-muted sm:col-span-3">
                       The service key is set on the server (CIVICOS_AI_API_KEY), never here. Nothing is sent to any model until an official
                       also enables “AI advisory requests” in the data-sovereignty settings, with a reason.
                     </p>
@@ -589,7 +590,7 @@ export function SetupWizard() {
                             </label>
                           ))}
                         </div>
-                        <p className="mt-1.5 text-[11.5px] leading-snug text-white/40">Public websites let visitors choose any of these; each site shows its translation where one is published, English otherwise.</p>
+                        <p className="mt-1.5 text-[11.5px] leading-snug text-night-muted">Public websites let visitors choose any of these; each site shows its translation where one is published, English otherwise.</p>
                       </fieldset>
                       <div className="sm:col-span-2">
                         <Field label="Motto or formal style">
@@ -635,12 +636,12 @@ export function SetupWizard() {
                   <Panel className="xl:sticky xl:top-8">
                     <div className="flex items-center justify-between">
                       <p className="font-mono text-[9.5px] uppercase tracking-[0.3em] text-[#d9c398]/75">Preview</p>
-                      <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-white/30">Live</p>
+                      <p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-night-faint">Live</p>
                     </div>
                     <div className="mt-6 flex flex-col items-center text-center">
                       <SealTile seal={identity.seal} accent={identity.accent} size={168} inscription={identity.stateName || 'Your state'} />
                       <p className="mt-6 max-w-full truncate text-[20px] font-extralight tracking-[-0.01em] text-[#f3efe6]">{identity.stateName || 'Your state'}</p>
-                      <p className="mt-1.5 max-w-full truncate font-mono text-[10px] uppercase tracking-[0.3em]" style={{ color: identity.motto ? CHAMPAGNE : 'rgba(255,255,255,0.3)' }}>{identity.motto || 'Motto'}</p>
+                      <p className="mt-1.5 max-w-full truncate font-mono text-[10px] uppercase tracking-[0.3em]" style={{ color: identity.motto ? CHAMPAGNE : NIGHT.faint }}>{identity.motto || 'Motto'}</p>
                     </div>
                     <p className="mt-8 font-mono text-[9.5px] uppercase tracking-[0.3em] text-[#d9c398]/75">Order of precedence</p>
                     <Rule className="mt-2" />
@@ -650,11 +651,11 @@ export function SetupWizard() {
                           <span className="w-6 shrink-0 font-mono text-[10.5px] tracking-[0.1em]" style={{ color: CHAMPAGNE }}>{ROMAN[o.rank - 1] ?? o.rank}</span>
                           <span className="shrink-0 font-light text-[#f3efe6]/90">{o.office}</span>
                           <span aria-hidden className="min-w-[12px] flex-1 translate-y-[-3px] border-b border-dotted" style={{ borderColor: hair(0.25) }} />
-                          <span className="min-w-0 truncate text-right font-light text-white/50">{o.holder}</span>
+                          <span className="min-w-0 truncate text-right font-light text-night-muted">{o.holder}</span>
                         </li>
                       ))}
                     </ol>
-                    <p className="mt-5 font-mono text-[9.5px] uppercase tracking-[0.2em] text-white/35">Writing direction: {identity.dir.toUpperCase()}</p>
+                    <p className="mt-5 font-mono text-[9.5px] uppercase tracking-[0.2em] text-night-faint">Writing direction: {identity.dir.toUpperCase()}</p>
                   </Panel>
                 </div>
               </div>
@@ -679,10 +680,10 @@ export function SetupWizard() {
                             background: on ? `linear-gradient(160deg, ${hair(0.08)}, ${hair(0.015)} 70%)` : 'rgba(255,248,230,0.012)',
                           }}>
                           {on ? <span aria-hidden className="absolute inset-y-0 left-0 w-px" style={{ background: `linear-gradient(180deg, transparent, ${CHAMPAGNE_HI}, transparent)` }} /> : null}
-                          <span className="w-5 shrink-0 font-mono text-[10px] tabular-nums" style={{ color: on ? CHAMPAGNE : 'rgba(255,255,255,0.25)' }}>{String(idx + 1).padStart(2, '0')}</span>
+                          <span className="w-5 shrink-0 font-mono text-[10px] tabular-nums" style={{ color: on ? CHAMPAGNE : NIGHT.faint }}>{String(idx + 1).padStart(2, '0')}</span>
                           <span className="min-w-0 flex-1">
-                            <span className={`block truncate text-[14px] font-light ${on ? 'text-[#f3efe6]' : 'text-white/45'}`}>{m.name}</span>
-                            <span className="mt-0.5 block truncate font-mono text-[9.5px] tracking-[0.08em] text-white/35">{m.archetype} · {m.departments.length} departments</span>
+                            <span className={`block truncate text-[14px] font-light ${on ? 'text-[#f3efe6]' : 'text-night-muted'}`}>{m.name}</span>
+                            <span className="mt-0.5 block truncate font-mono text-[9.5px] tracking-[0.08em] text-night-faint">{m.archetype} · {m.departments.length} departments</span>
                           </span>
                           <input type="checkbox" className="peer sr-only" checked={on} onChange={() => setActive(a => ({ ...a, [m.id]: !on }))} />
                           <span aria-hidden className="relative h-[18px] w-[34px] shrink-0 rounded-full border transition-colors duration-300"
@@ -702,7 +703,7 @@ export function SetupWizard() {
                           <span className="block truncate text-[14px] font-light text-[#f4e4bd]">{n.name}</span>
                           <span className="mt-0.5 block font-mono text-[9.5px] tracking-[0.12em]" style={{ color: CHAMPAGNE }}>NEW · {n.archetype}</span>
                         </span>
-                        <button type="button" onClick={() => setAdded(a => a.filter((_, j) => j !== i))} className="text-[12px] text-white/45 underline-offset-4 hover:text-[#f4e4bd] hover:underline">Remove</button>
+                        <button type="button" onClick={() => setAdded(a => a.filter((_, j) => j !== i))} className="text-[12px] text-night-muted underline-offset-4 hover:text-[#f4e4bd] hover:underline">Remove</button>
                       </div>
                     </li>
                   ))}
@@ -722,7 +723,7 @@ export function SetupWizard() {
                       Add <span aria-hidden style={{ color: CHAMPAGNE }}>+</span>
                     </button>
                   </div>
-                  <p className="mt-3 text-[12px] font-light leading-relaxed text-white/45">{archetypes.find(a => a.key === draft.archetype)?.summary}</p>
+                  <p className="mt-3 text-[12px] font-light leading-relaxed text-night-muted">{archetypes.find(a => a.key === draft.archetype)?.summary}</p>
                 </Panel>
               </Section>
 
@@ -747,7 +748,7 @@ export function SetupWizard() {
               </Section>
 
               <Section n="3.4" title="Existing websites (optional)" aside={<span className="font-mono tracking-[0.12em]">{sites.filter(x => siteDraft[x.siteId]?.website.trim()).length} LINKED</span>}>
-                <p className="mb-4 max-w-3xl text-[13px] font-light leading-relaxed text-white/55">
+                <p className="mb-4 max-w-3xl text-[13px] font-light leading-relaxed text-night-muted">
                   Every institution keeps a full site on the platform. Where a ministry already runs its own website, give its address:
                   by default the platform site becomes its gateway (<em>Link</em>) and shows the news from its feed. <em>Embed</em> places
                   the platform&apos;s services on the existing website; <em>Migrate</em> moves pages across one at a time with forwarding
@@ -766,7 +767,7 @@ export function SetupWizard() {
                         <div className="grid items-center gap-3 lg:grid-cols-[220px_minmax(0,1.2fr)_150px_minmax(0,1fr)]">
                           <span className="min-w-0">
                             <span className="block truncate text-[14px] font-light text-[#f3efe6]">{x.name}</span>
-                            <span className="mt-0.5 block font-mono text-[9.5px] tracking-[0.08em] text-white/35">/{x.siteId} · {x.role}</span>
+                            <span className="mt-0.5 block font-mono text-[9.5px] tracking-[0.08em] text-night-faint">/{x.siteId} · {x.role}</span>
                           </span>
                           <input aria-label={`${x.name} existing website`} className={inputCls} value={d.website} placeholder="https://www.ministry.go.xx"
                             onChange={e => { const website = e.currentTarget.value; setD({ website, mode: website.trim() && d.mode === 'host' ? 'link' : d.mode }); }} />
@@ -805,7 +806,7 @@ export function SetupWizard() {
                     <SealTile seal={identity.seal} accent={identity.accent} size={128} inscription={identity.stateName || 'Your state'} />
                     <p className="mt-6 font-mono text-[9.5px] uppercase tracking-[0.42em]" style={{ color: CHAMPAGNE }}>Instrument of constitution</p>
                     <p className="mt-3 max-w-full text-[1.6rem] font-extralight leading-tight tracking-[-0.02em] text-[#f3efe6] sm:text-[2rem]">{profile.stateName || 'Your state'}</p>
-                    {identity.motto ? <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-white/45">{identity.motto}</p> : null}
+                    {identity.motto ? <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.3em] text-night-muted">{identity.motto}</p> : null}
                   </div>
                   <Rule className="mt-8" strong />
                   {inherited.length ? (
@@ -848,17 +849,17 @@ export function SetupWizard() {
                 <Instrument>
                   <div className="flex items-baseline justify-between gap-3 font-mono text-[9.5px] uppercase tracking-[0.3em]">
                     <span style={{ color: CHAMPAGNE }}>Ledger of launch</span>
-                    <span className="text-white/35">Status</span>
+                    <span className="text-night-faint">Status</span>
                   </div>
                   <Rule className="mt-2" strong />
                   <ol aria-live="polite" className="mt-2 text-[13px]">
                     {log.map((l, i) => (
                       <li key={i} className="flex items-baseline gap-3 border-b py-3 last:border-b-0" style={{ borderColor: hair(0.08) }}>
-                        <span className="w-6 shrink-0 font-mono text-[10px] tabular-nums text-white/30">{String(i + 1).padStart(2, '0')}</span>
+                        <span className="w-6 shrink-0 font-mono text-[10px] tabular-nums text-night-faint">{String(i + 1).padStart(2, '0')}</span>
                         <span className="min-w-0 font-light text-[#f3efe6]/90 sm:truncate">{l.m}</span>
                         <span aria-hidden className="min-w-[12px] flex-1 translate-y-[-3px] border-b border-dotted" style={{ borderColor: hair(0.2) }} />
                         <span className="flex shrink-0 items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.16em]"
-                          style={{ color: l.s === 'ok' ? CHAMPAGNE_HI : l.s === 'fail' ? '#f1938f' : 'rgba(255,255,255,0.45)' }}>
+                          style={{ color: l.s === 'ok' ? CHAMPAGNE_HI : l.s === 'fail' ? '#f1938f' : NIGHT.muted }}>
                           {l.s === 'ok' ? (
                             <><span aria-hidden className="grid h-4 w-4 place-items-center rounded-full text-[9px] text-[#17120a]" style={{ background: GOLD }}>✓</span>ok</>
                           ) : l.s === 'fail' ? 'failed' : <span className="animate-pulse">…</span>}
@@ -884,7 +885,7 @@ export function SetupWizard() {
               <p role="status" className="mr-auto flex items-center gap-2 text-[13px] font-light text-[#f1c27d]">
                 <span aria-hidden className="grid h-4 w-4 shrink-0 place-items-center rounded-full border border-[#f1c27d]/60 font-mono text-[9px]">!</span>{errors[0]}
               </p>
-            ) : <span className="mr-auto hidden font-mono text-[9.5px] uppercase tracking-[0.3em] text-white/30 sm:inline">Article {ROMAN[step]} of IV</span>}
+            ) : <span className="mr-auto hidden font-mono text-[9.5px] uppercase tracking-[0.3em] text-night-faint sm:inline">Article {ROMAN[step]} of IV</span>}
             {done ? (
               <button type="button" onClick={() => router.push(after)} className={goldBtn} style={goldStyle}>
                 Continue to welcome <span aria-hidden>→</span>
@@ -924,10 +925,10 @@ function StepHead({ i, lead, children }: { i: number; lead: string; children: Re
       <div className="relative flex items-center gap-4">
         <span className="whitespace-nowrap font-mono text-[10px] uppercase tracking-[0.34em]" style={{ color: CHAMPAGNE }}>Article {ROMAN[i]}</span>
         <span className="h-px w-8" style={{ background: hair(0.5) }} />
-        <span className="truncate font-mono text-[10px] uppercase tracking-[0.3em] text-white/40">{STEPS[i]!.t}</span>
+        <span className="truncate font-mono text-[10px] uppercase tracking-[0.3em] text-night-muted">{STEPS[i]!.t}</span>
       </div>
       <h1 className="relative mt-5 max-w-[22ch] text-[2.15rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3.1rem]">{children}</h1>
-      <p className="relative mt-4 max-w-[60ch] text-[15px] font-light leading-relaxed text-white/55">{lead}</p>
+      <p className="relative mt-4 max-w-[60ch] text-[15px] font-light leading-relaxed text-night-muted">{lead}</p>
     </header>
   );
 }
@@ -939,7 +940,7 @@ function Station({ i, state }: { i: number; state: 'done' | 'current' | 'next' }
       style={{
         borderColor: state === 'next' ? hair(0.22) : CHAMPAGNE,
         background: state === 'done' ? GOLD : INK,
-        color: state === 'done' ? '#17120a' : state === 'current' ? CHAMPAGNE_HI : 'rgba(255,255,255,0.35)',
+        color: state === 'done' ? '#17120a' : state === 'current' ? CHAMPAGNE_HI : NIGHT.faint,
         boxShadow: state === 'current' ? `0 0 0 4px ${INK}, 0 0 0 5px ${hair(0.3)}, 0 0 22px ${hair(0.35)}` : `0 0 0 4px ${INK}`,
       }}>
       {state === 'done' ? '✓' : ROMAN[i]}
@@ -975,7 +976,7 @@ function Signature({ label }: { label: string }) {
   return (
     <div>
       <div className="h-8 border-b" style={{ borderColor: hair(0.4) }} />
-      <p className="mt-2 font-mono text-[9.5px] uppercase tracking-[0.22em] text-white/40">{label}</p>
+      <p className="mt-2 font-mono text-[9.5px] uppercase tracking-[0.22em] text-night-muted">{label}</p>
     </div>
   );
 }
@@ -986,12 +987,12 @@ function Summary({ n, title, rows, onEdit, wide = false }: { n: string; title: s
       <div className="flex items-baseline justify-between gap-3">
         <p className="font-mono text-[9.5px] uppercase tracking-[0.3em]" style={{ color: CHAMPAGNE }}>Schedule {n} · {title}</p>
         <button type="button" onClick={onEdit} aria-label={`Edit ${title}`}
-          className="font-mono text-[10px] uppercase tracking-[0.2em] text-white/45 underline-offset-4 hover:text-[#f4e4bd] hover:underline focus:outline-none focus-visible:text-[#f4e4bd] focus-visible:underline">Edit</button>
+          className="font-mono text-[10px] uppercase tracking-[0.2em] text-night-muted underline-offset-4 hover:text-[#f4e4bd] hover:underline focus:outline-none focus-visible:text-[#f4e4bd] focus-visible:underline">Edit</button>
       </div>
       <dl className={`mt-4 ${wide ? 'md:grid md:grid-cols-2 md:gap-x-10' : ''}`}>
         {rows.map(([k, v], i) => (
           <div key={`${k}-${i}`} className={`flex items-baseline gap-3 border-b py-[7px] text-[13px] ${wide ? '' : 'last:border-b-0'}`} style={{ borderColor: hair(0.07) }}>
-            <dt className="w-[84px] shrink-0 sm:w-[92px] text-[10.5px] uppercase tracking-[0.12em] text-white/40">{k}</dt>
+            <dt className="w-[84px] shrink-0 sm:w-[92px] text-[10.5px] uppercase tracking-[0.12em] text-night-muted">{k}</dt>
             <dd className="min-w-0 truncate font-light text-[#f3efe6]">{v}</dd>
           </div>
         ))}

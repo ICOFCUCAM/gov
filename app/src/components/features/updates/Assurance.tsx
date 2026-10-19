@@ -29,7 +29,7 @@ export function ProvenancePanel({ releaseId, link }: { releaseId: string; link?:
     <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
       {first ? (
         <p className="max-w-[72ch] text-[13.5px] font-light leading-relaxed text-white/60">
-          Every artifact was built by <span className="font-mono text-[12px] text-[#f4e4bd]">{first.builder.id}</span> from tag <span className="font-mono text-[12px] text-[#f4e4bd]">{first.source.tag}</span> (commit <span className="font-mono text-[12px] text-[#f4e4bd]">{first.source.commit.slice(0, 12)}</span>). Each has an SLSA v1 provenance attestation you can download and verify independently. <span className="text-white/40">{first.slsaLevel}.</span>
+          Every artifact was built by <span className="font-mono text-[12px] text-[#f4e4bd]">{first.builder.id}</span> from tag <span className="font-mono text-[12px] text-[#f4e4bd]">{first.source.tag}</span> (commit <span className="font-mono text-[12px] text-[#f4e4bd]">{first.source.commit.slice(0, 12)}</span>). Each has an SLSA v1 provenance attestation you can download and verify independently. <span className="text-night-muted">{first.slsaLevel}.</span>
         </p>
       ) : null}
       {d.provenance.map(p => (
@@ -37,23 +37,23 @@ export function ProvenancePanel({ releaseId, link }: { releaseId: string; link?:
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="min-w-0 flex-1 text-[13.5px] font-light text-[#f3efe6]">{p.label}</span>
             <a href={api.updates.attestationUrl(d.channelKey, p.artifactId)} download className="font-mono text-[10.5px] underline underline-offset-4" style={{ color: CHAMPAGNE }}>Attestation ↓</a>
-            <button type="button" onClick={() => setOpen(o => (o === p.artifactId ? null : p.artifactId))} aria-expanded={open === p.artifactId} className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/45 hover:text-[#f4e4bd]">{open === p.artifactId ? 'Hide' : 'Details'}</button>
+            <button type="button" onClick={() => setOpen(o => (o === p.artifactId ? null : p.artifactId))} aria-expanded={open === p.artifactId} className="font-mono text-[10px] uppercase tracking-[0.18em] text-night-muted hover:text-[#f4e4bd]">{open === p.artifactId ? 'Hide' : 'Details'}</button>
           </div>
-          <p className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-white/45">
+          <p className="mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10.5px] text-night-muted">
             <span className="min-w-0 truncate">{p.subject.name}</span>
             <span>built {fmtDateTime(p.finishedOn)}</span>
           </p>
           {open === p.artifactId ? (
             <div className="mt-3 grid grid-cols-[minmax(0,1fr)] gap-2 text-[12.5px] font-light text-white/65">
-              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Digest (sha256)</span><CopyValue value={p.subject.digest.sha256} short label="digest" /></div>
-              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Builder</span><span className="min-w-0 break-all font-mono text-[11.5px]">{p.builder.id} ({p.builder.version})</span></div>
-              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Source</span><span className="min-w-0 break-all font-mono text-[11.5px]">{p.source.uri}@{p.source.tag}</span></div>
-              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Commit</span><CopyValue value={p.source.commit} short label="commit" /></div>
-              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Build time</span><span className="font-mono text-[11.5px]">{fmtDateTime(p.startedOn)} → {fmtDateTime(p.finishedOn)}</span></div>
-              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Materials</span>
-                <ul className="grid min-w-0 gap-0.5">{p.materials.map(m => <li key={m.uri} className="min-w-0 break-all font-mono text-[11px] text-white/55">{m.uri} <span className="text-white/35">{Object.entries(m.digest).map(([k, v]) => `${k}:${v.slice(0, 12)}…`).join(' ')}</span></li>)}</ul>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-night-muted">Digest (sha256)</span><CopyValue value={p.subject.digest.sha256} short label="digest" /></div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-night-muted">Builder</span><span className="min-w-0 break-all font-mono text-[11.5px]">{p.builder.id} ({p.builder.version})</span></div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-night-muted">Source</span><span className="min-w-0 break-all font-mono text-[11.5px]">{p.source.uri}@{p.source.tag}</span></div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-night-muted">Commit</span><CopyValue value={p.source.commit} short label="commit" /></div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-night-muted">Build time</span><span className="font-mono text-[11.5px]">{fmtDateTime(p.startedOn)} → {fmtDateTime(p.finishedOn)}</span></div>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-night-muted">Materials</span>
+                <ul className="grid min-w-0 gap-0.5">{p.materials.map(m => <li key={m.uri} className="min-w-0 break-all font-mono text-[11px] text-night-muted">{m.uri} <span className="text-night-faint">{Object.entries(m.digest).map(([k, v]) => `${k}:${v.slice(0, 12)}…`).join(' ')}</span></li>)}</ul>
               </div>
-              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-white/40">Verify</span>
+              <div className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[140px_minmax(0,1fr)]"><span className="text-night-muted">Verify</span>
                 <div className="grid min-w-0 grid-cols-[minmax(0,1fr)] gap-1">{p.verify.map(c => <CopyValue key={c} value={c} label="command" />)}</div>
               </div>
             </div>
@@ -87,7 +87,7 @@ export function AssuranceCenter() {
         <h1 className="mt-4 text-[2.1rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3rem]">
           Proof of what {nation ? <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{nation}</span> : 'this installation'} runs
         </h1>
-        <p className="mt-4 max-w-[70ch] text-[15px] font-light leading-relaxed text-white/55">
+        <p className="mt-4 max-w-[70ch] text-[15px] font-light leading-relaxed text-night-muted">
           Every release is built from a known commit by an isolated builder, with a provenance attestation for each artifact. Its source is deposited with an independent escrow agent, released to you if the publisher fails, and your own auditors can review it.
         </p>
         {err ? <div className="mt-8"><ErrorLine>{err}</ErrorLine></div> : !d ? <Loading label="Gathering proofs…" /> : (
@@ -96,7 +96,7 @@ export function AssuranceCenter() {
               <div className="mt-8 flex flex-wrap items-center gap-3 rounded-[2px] border px-4 py-3" style={{ borderColor: `${ESCROW_TONE[installed.state]}55` }}>
                 <span className="h-2.5 w-2.5 rounded-full" style={{ background: ESCROW_TONE[installed.state] }} />
                 <span className="text-[14px] font-light text-[#f3efe6]">The version you run, {installed.version}, is {installed.state === 'verified' ? 'in escrow and verified by the agent' : installed.state === 'deposited' ? 'in escrow' : installed.state === 'pending' ? `awaiting deposit (due ${fmtDate(installed.dueBy)})` : 'overdue for deposit'}.</span>
-                {installed.deposit ? <span className="ml-auto font-mono text-[10.5px] text-white/45">{installed.deposit.id}</span> : null}
+                {installed.deposit ? <span className="ml-auto font-mono text-[10.5px] text-night-muted">{installed.deposit.id}</span> : null}
               </div>
             ) : null}
             <Section n="01" title="Escrow agreement" aside={d.agreement ? `${d.agreement.agreementRef} · placeholder terms` : undefined}>
@@ -134,7 +134,7 @@ function Agreement({ a }: { a: NonNullable<EscrowData['agreement']> }) {
       <Panel className="px-4 py-4">
         <dl className="grid gap-2 text-[13px] font-light">
           {[['Escrow agent', a.agent], ['Agreement', a.agreementRef], ['In force since', fmtDate(a.effectiveFrom)], ['Covers', a.covers], ['Deposit deadline', `${a.depositWithinDays} days after each release`], ['Verification', a.verification]].map(([k, v]) => (
-            <div key={k} className="grid gap-0.5 sm:grid-cols-[150px_minmax(0,1fr)]"><dt className="text-white/40">{k}</dt><dd className="text-white/75">{v}</dd></div>
+            <div key={k} className="grid gap-0.5 sm:grid-cols-[150px_minmax(0,1fr)]"><dt className="text-night-muted">{k}</dt><dd className="text-white/75">{v}</dd></div>
           ))}
         </dl>
       </Panel>
@@ -142,7 +142,7 @@ function Agreement({ a }: { a: NonNullable<EscrowData['agreement']> }) {
         <div>
           <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#d9c398]/75">Release conditions</p>
           <ul className="mt-2 grid gap-2">{a.releaseConditions.map(c => (
-            <li key={c.key} className="rounded-[2px] border px-3 py-2" style={{ borderColor: hair(0.12) }}><span className="text-[13.5px] text-[#f3efe6]">{c.label}</span><span className="block text-[12.5px] font-light text-white/55">{c.detail}</span></li>
+            <li key={c.key} className="rounded-[2px] border px-3 py-2" style={{ borderColor: hair(0.12) }}><span className="text-[13.5px] text-[#f3efe6]">{c.label}</span><span className="block text-[12.5px] font-light text-night-muted">{c.detail}</span></li>
           ))}</ul>
         </div>
         <div>
@@ -156,18 +156,18 @@ function Agreement({ a }: { a: NonNullable<EscrowData['agreement']> }) {
 
 function Deposits({ rows, q }: { rows: EscrowStatusRow[]; q: string }) {
   return (
-    <div className="overflow-x-auto">
+    <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
       <table className="w-full min-w-[720px] text-left text-[12.5px] font-light">
         <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65">
           <th className="py-2 pr-3 font-normal">Release</th><th className="py-2 pr-3 font-normal">Status</th><th className="py-2 pr-3 font-normal">Deposit</th><th className="py-2 pr-3 font-normal">Deposited</th><th className="py-2 pr-3 font-normal">Contents hash</th><th className="py-2 font-normal">Verified</th>
         </tr></thead>
         <tbody>{rows.map(r => (
           <tr key={r.releaseId} className="border-t align-middle" style={{ borderColor: hair(0.08) }}>
-            <td className="py-2.5 pr-3"><Link href={`/updates/${r.releaseId}${q}`} className="font-mono text-[12px] text-[#f4e4bd] no-underline hover:underline">{r.version}</Link>{r.installed ? <span className="ml-2"><Chip tone={CHAMPAGNE}>Installed</Chip></span> : null}<span className="block text-[11.5px] text-white/45">{r.title}</span></td>
-            <td className="py-2.5 pr-3"><Chip tone={ESCROW_TONE[r.state]} solid={r.state === 'overdue'}>{ESCROW_TEXT[r.state]}</Chip>{!r.deposit ? <span className="block font-mono text-[10px] text-white/40">due {fmtDate(r.dueBy)}</span> : null}</td>
+            <td className="py-2.5 pr-3"><Link href={`/updates/${r.releaseId}${q}`} className="font-mono text-[12px] text-[#f4e4bd] no-underline hover:underline">{r.version}</Link>{r.installed ? <span className="ml-2"><Chip tone={CHAMPAGNE}>Installed</Chip></span> : null}<span className="block text-[11.5px] text-night-muted">{r.title}</span></td>
+            <td className="py-2.5 pr-3"><Chip tone={ESCROW_TONE[r.state]} solid={r.state === 'overdue'}>{ESCROW_TEXT[r.state]}</Chip>{!r.deposit ? <span className="block font-mono text-[10px] text-night-muted">due {fmtDate(r.dueBy)}</span> : null}</td>
             <td className="py-2.5 pr-3 font-mono text-[11px] text-white/60">{r.deposit?.id ?? '—'}</td>
             <td className="py-2.5 pr-3 font-mono text-[11px] text-white/60">{r.deposit ? fmtDate(r.deposit.depositedAt) : '—'}</td>
-            <td className="py-2.5 pr-3">{r.deposit ? <CopyValue value={r.deposit.contentsHash} short label="contents hash" /> : <span className="text-white/35">—</span>}</td>
+            <td className="py-2.5 pr-3">{r.deposit ? <CopyValue value={r.deposit.contentsHash} short label="contents hash" /> : <span className="text-night-faint">—</span>}</td>
             <td className="py-2.5 font-mono text-[11px] text-white/60">{r.deposit?.verifiedAt ? fmtDate(r.deposit.verifiedAt) : '—'}</td>
           </tr>
         ))}</tbody>
@@ -196,23 +196,23 @@ function Reviews({ d, link, onDone }: { d: EscrowData; link?: string; onDone: ()
       {d.reviews.map(r => (
         <Panel key={r.id} className="min-w-0 px-4 py-3">
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-            <span className="font-mono text-[11px] text-white/45">{r.id}</span>
+            <span className="font-mono text-[11px] text-night-muted">{r.id}</span>
             <span className="min-w-0 flex-1 text-[14px] font-light text-[#f3efe6]">{r.auditor} · {r.version}</span>
             <Chip tone={REVIEW_TONE[r.stage]} solid={r.stage === 'completed'}>{REVIEW_TEXT[r.stage]}</Chip>
           </div>
           <p className="mt-1 text-[12.5px] font-light text-white/60">{r.scope}</p>
-          <p className="mt-1 font-mono text-[10.5px] text-white/40">{KIND_TEXT[r.auditorKind]} · {d.environments[r.environment]} · requested {fmtDate(r.requestedAt)} by {r.requestedBy}{r.schedule ? ` · ${fmtDate(r.schedule.start)} – ${fmtDate(r.schedule.end)}` : ''}</p>
+          <p className="mt-1 font-mono text-[10.5px] text-night-muted">{KIND_TEXT[r.auditorKind]} · {d.environments[r.environment]} · requested {fmtDate(r.requestedAt)} by {r.requestedBy}{r.schedule ? ` · ${fmtDate(r.schedule.start)} – ${fmtDate(r.schedule.end)}` : ''}</p>
           {r.findings ? (
             <div className="mt-2 flex flex-wrap items-center gap-2 text-[12.5px] font-light text-white/65">
               <Chip tone="#f1938f">{r.findings.critical} critical</Chip><Chip tone="#f1b36b">{r.findings.high} high</Chip><Chip tone="#f4d58d">{r.findings.medium} medium</Chip><Chip tone="#a5abb5">{r.findings.low} low</Chip>
-              <span className="min-w-0 flex-1">{r.findings.summary}</span><span className="font-mono text-[10.5px] text-white/40">{r.findings.reportRef}</span>
+              <span className="min-w-0 flex-1">{r.findings.summary}</span><span className="font-mono text-[10.5px] text-night-muted">{r.findings.reportRef}</span>
             </div>
           ) : null}
-          {r.history.length > 1 ? <p className="mt-1 text-[11.5px] text-white/40">Last step: {r.history[r.history.length - 1]!.by}, {fmtDateTime(r.history[r.history.length - 1]!.at)}{r.history[r.history.length - 1]!.note ? ` — ${r.history[r.history.length - 1]!.note}` : ''}</p> : null}
-          {['requested', 'scoping', 'approved'].includes(r.stage) ? <button type="button" className="mt-2 text-[12px] text-white/45 hover:text-[#f1938f]" onClick={() => withdraw(r.id)}>Withdraw request</button> : null}
+          {r.history.length > 1 ? <p className="mt-1 text-[11.5px] text-night-muted">Last step: {r.history[r.history.length - 1]!.by}, {fmtDateTime(r.history[r.history.length - 1]!.at)}{r.history[r.history.length - 1]!.note ? ` — ${r.history[r.history.length - 1]!.note}` : ''}</p> : null}
+          {['requested', 'scoping', 'approved'].includes(r.stage) ? <button type="button" className="mt-2 text-[12px] text-night-muted hover:text-[#f1938f]" onClick={() => withdraw(r.id)}>Withdraw request</button> : null}
         </Panel>
       ))}
-      {!d.reviews.length ? <p className="text-[13px] font-light text-white/50">No source-code audits requested yet.</p> : null}
+      {!d.reviews.length ? <p className="text-[13px] font-light text-night-muted">No source-code audits requested yet.</p> : null}
       <form onSubmit={submit} className="grid grid-cols-[minmax(0,1fr)] gap-4 rounded-[2px] border p-4 sm:grid-cols-2" style={{ borderColor: hair(0.14) }}>
         <p className="font-mono text-[10px] uppercase tracking-[0.22em] text-[#d9c398]/75 sm:col-span-2">Request a source-code audit</p>
         <Field label="Your name"><input className={inputCls} value={actor} onChange={e => setActor(e.target.value)} placeholder="e.g. Chief Information Security Officer" /></Field>
@@ -266,17 +266,17 @@ export function PublisherEscrow() {
         <Chip tone="#a9c7e8">{d.deposits.filter(x => x.state === 'deposited').length} deposited</Chip>
         <Chip tone="#f4d58d">{d.deposits.filter(x => x.state === 'pending').length} pending</Chip>
         <Chip tone="#f1938f" solid={late > 0}>{late} overdue</Chip>
-        <span className="text-[12px] font-light text-white/45">{d.agent} · within {d.depositWithinDays} days</span>
+        <span className="text-[12px] font-light text-night-muted">{d.agent} · within {d.depositWithinDays} days</span>
       </p>
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65"><th className="py-2 pr-3 font-normal">Release</th><th className="py-2 pr-3 font-normal">For</th><th className="py-2 pr-3 font-normal">Status</th><th className="py-2 pr-3 font-normal">Deposit</th><th className="py-2 font-normal" /></tr></thead>
           <tbody>{d.deposits.map(r => (
             <tr key={r.releaseId} className="border-t" style={{ borderColor: hair(0.08) }}>
-              <td className="py-2 pr-3 font-mono text-[12px] text-[#f4e4bd]">{r.version}<span className="ml-2 text-white/40">{r.releaseId}</span></td>
+              <td className="py-2 pr-3 font-mono text-[12px] text-[#f4e4bd]">{r.version}<span className="ml-2 text-night-muted">{r.releaseId}</span></td>
               <td className="py-2 pr-3 text-white/60">{r.nationId ? d.nations[r.nationId] ?? r.nationId : 'All nations'}</td>
               <td className="py-2 pr-3"><Chip tone={ESCROW_TONE[r.state]} solid={r.state === 'overdue'}>{ESCROW_TEXT[r.state]}</Chip></td>
-              <td className="py-2 pr-3 font-mono text-[11px] text-white/55">{r.deposit ? `${r.deposit.id} · ${fmtDate(r.deposit.depositedAt)}` : `due ${fmtDate(r.dueBy)}`}</td>
+              <td className="py-2 pr-3 font-mono text-[11px] text-night-muted">{r.deposit ? `${r.deposit.id} · ${fmtDate(r.deposit.depositedAt)}` : `due ${fmtDate(r.dueBy)}`}</td>
               <td className="py-2 text-right">
                 {!r.deposit ? <button type="button" className={`${ghostBtn} py-1.5 text-[12px]`} onClick={() => act({ action: 'deposit', releaseId: r.releaseId })}>Record deposit</button>
                   : !r.deposit.verifiedAt ? <button type="button" className={`${ghostBtn} py-1.5 text-[12px]`} onClick={() => act({ action: 'verify', releaseId: r.releaseId })}>Agent verified</button> : null}
@@ -291,7 +291,7 @@ export function PublisherEscrow() {
         return (
           <Panel key={r.id} className="min-w-0 px-4 py-3">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <span className="font-mono text-[11px] text-white/45">{r.id}</span>
+              <span className="font-mono text-[11px] text-night-muted">{r.id}</span>
               <span className="text-[12px] text-[#d9c398]/80">{d.nations[r.nationId] ?? r.nationId}</span>
               <span className="min-w-0 flex-1 text-[14px] font-light text-[#f3efe6]">{r.auditor} · {r.version}</span>
               <Chip tone={REVIEW_TONE[r.stage]}>{REVIEW_TEXT[r.stage]}</Chip>
@@ -308,7 +308,7 @@ export function PublisherEscrow() {
                     <button type="button" className={`${goldBtn} px-4 py-2 text-[12.5px]`} style={goldStyle} onClick={() => review(r, 'approve')}>Approve</button>
                   </>
                 ) : null}
-                {r.stage === 'requested' || r.stage === 'scoping' ? <button type="button" className="px-2 text-[12px] text-white/45 hover:text-[#f1938f]" onClick={() => review(r, 'decline')}>Decline</button> : null}
+                {r.stage === 'requested' || r.stage === 'scoping' ? <button type="button" className="px-2 text-[12px] text-night-muted hover:text-[#f1938f]" onClick={() => review(r, 'decline')}>Decline</button> : null}
                 {r.stage === 'approved' ? <button type="button" className={`${ghostBtn} py-2 text-[12.5px]`} onClick={() => review(r, 'start')}>Review started</button> : null}
               </div>
             ) : null}
@@ -320,7 +320,7 @@ export function PublisherEscrow() {
                 <button type="button" className={`${goldBtn} px-4 py-2 text-[12.5px]`} style={goldStyle} onClick={() => review(r, 'complete')}>Record findings</button>
               </div>
             ) : null}
-            {r.findings ? <p className="mt-2 text-[12px] text-white/55">{r.findings.critical}C · {r.findings.high}H · {r.findings.medium}M · {r.findings.low}L — {r.findings.summary}</p> : null}
+            {r.findings ? <p className="mt-2 text-[12px] text-night-muted">{r.findings.critical}C · {r.findings.high}H · {r.findings.medium}M · {r.findings.low}L — {r.findings.summary}</p> : null}
           </Panel>
         );
       })}

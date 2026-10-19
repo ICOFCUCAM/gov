@@ -39,7 +39,7 @@ export function ConnectionsPanel() {
         valueLabel="Sites reporting" unit="%" points={points} pointsLabel="Seats" maxHeight={460} compact
         emptyNote="No region has registered sites yet."
         overlay={ctx => (
-          <g aria-label="Exchanges between institutions">
+          <g role="group" aria-label="Exchanges between institutions">
             {data.links.map((l, i) => {
               const a = seat.get(l.from), b = seat.get(l.to);
               const pa = a && ctx.project(a.lng, a.lat), pb = b && ctx.project(b.lng, b.lat);
