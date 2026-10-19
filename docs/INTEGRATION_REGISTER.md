@@ -42,6 +42,8 @@ Last reviewed: 17 Oct 2026.
 
 **Third-party code in the advisory feed** (review R2): the dependency audit's findings (`scripts/audit-deps.mjs --publish <publisher>`, run by CI when `CIVICOS_PUBLISHER_URL` is set) become interim advisories `CSA-DEP-<GHSA>` in the Update Center feed with their assessment and review date, and resolve as final when no longer reported (`importDependencyFindings`, `/api/releases/publisher/advisories/dependencies`), so the patch-time commitments cover dependencies. CI also scans the app container image (Trivy, high and critical, unfixed ignored) and keeps a CycloneDX SBOM.
 
+**Soak test** (review R17): `npm run soak` (`SOAK_SCALE`, budgets `SOAK_FLUSH_S`, `SOAK_QUERY_MS`, `SOAK_HEAP_MB`) loads twin observations, facility register sites and audit entries to national scale and measures saving, heap and queries. Baseline at scale 0.25 (50k observations, 5k sites, 29k audit entries), before the spatial index and archive work: sites load 19.0 s (grows faster than linearly: duplicate checks scan every site), first save 0.35 s and 21 MB of snapshot, an unchanged save still 0.22 s (every store re-encoded to detect change), heap 213 MB, as-of query 3 ms.
+
 ## 2. AI assistant (per-nation opt-in)
 
 | # | Area | Today | To integrate | Where |
