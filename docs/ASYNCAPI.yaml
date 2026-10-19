@@ -78,6 +78,11 @@ channels:
       siteContent: { $ref: '#/components/messages/siteContent' }
       federation: { $ref: '#/components/messages/federation' }
       update: { $ref: '#/components/messages/update' }
+  registers:
+    address: /
+    description: Changes to the registers services/civic-api mirrors (review D8) - institutions, payments, integrations, webhooks, grants proposed, releases, deployments, backups, configuration and the tenant's lifecycle. Its follower subscribes to `*` and reads the changed register from GET /api/platform/mirror.
+    messages:
+      registerChange: { $ref: '#/components/messages/registerChange' }
 
 operations:
   receiveFacilities:
@@ -95,6 +100,9 @@ operations:
   receiveOperations:
     action: receive
     channel: { $ref: '#/channels/operations' }
+  receiveRegisters:
+    action: receive
+    channel: { $ref: '#/channels/registers' }
 
 components:
   securitySchemes:
@@ -224,5 +232,10 @@ components:
     update:
       name: org.civicos.update.*
       summary: update.publish, update.fallback, update.probation.pass, update.probation.fail, update.staging.install (Update Center).
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    registerChange:
+      name: org.civicos.<register action>
+      summary: ministry.create|rename|activate|deactivate|merge, department.add|remove, module.set, payment.execute, integration.register|approved|suspended|revoked, webhook.subscribe|active|paused|disabled, federation.propose, release.create|promote, deployment.start|advance|gate-fail|rollback, backup.create|restore, config.publish|sign|apply, tenant.transition. Key and secret rotations are not events.
       traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
       payload: { $ref: '#/components/schemas/CloudEvent' }

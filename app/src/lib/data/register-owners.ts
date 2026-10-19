@@ -17,9 +17,15 @@
 //     anchor cron for audit heads), best-effort and retried, never read as
 //     the register; the browser can no longer write them (migration
 //     20261022000000_civicos_substrate_mirror.sql);
-//   - services/civic-api is frozen as a read-only mirror: its reads answer,
-//     every write is refused with 410 and the owning platform route
-//     (services/civic-api/src/common/read-only-mirror.ts).
+//   - services/civic-api is a mirror: its reads answer from its own tables,
+//     which only its follower writes, from the platform's signed events
+//     (webhook, topic `*`) and the mirror feed (GET /api/platform/mirror,
+//     integration key of scope mirror:read), with a full re-sync every
+//     15 minutes (services/civic-api/src/mirror/follower.ts); a write made
+//     to it is forwarded to the owning platform route with the caller's own
+//     credentials and the platform's answer returned (CIVIC_API_MODE=forward,
+//     the default; services/civic-api/src/common/forward.ts), or refused with
+//     410 (frozen). Writes with no platform route answer 410.
 
 export type Copy = {
   where: 'platform' | 'substrate' | 'civic-api';
@@ -32,8 +38,10 @@ export type Copy = {
   writes?: string[];
   /** Substrate mirrors: the one app file that writes the mirror (from the platform, after its commit). */
   writer?: string;
-  /** civic-api: frozen read-only (reads answer, writes refused with the owner's route). */
-  frozen?: true;
+  /** civic-api: what a write made to it does: `forward` (the default; passed to the owner's route with the caller's credentials) or `frozen` (refused). */
+  mode?: 'forward' | 'frozen';
+  /** civic-api: whether its follower keeps this copy current from the owner (false: it holds what it last held). */
+  fed?: boolean;
 };
 export interface RegisterOwner {
   id: string;
@@ -58,30 +66,35 @@ const RECORD_TABLES = (tables: string, rest?: string) =>
 const RECORD_DOCS = (what: string) =>
   `CIVICOS_STATE=postgres: per-record documents in civicos.record_doc, one row per record (${what}; lib/data/repo/documents.ts, migration civicos_record_docs), written through by every instance in one transaction with the audit entry and an outbox row, merged where two instances changed one record, followed by the others through the outbox. Otherwise the store's snapshot (lib/data/persist.ts).`;
 
-const civicApi = (module: string, note = 'NestJS module from the first build; no app route calls it. Frozen read-only mirror: its reads answer, every write is refused (410) with the owning platform route (services/civic-api/src/common/read-only-mirror.ts). Not fed: it holds what it held when frozen.'): Copy =>
-  ({ where: 'civic-api', what: `services/civic-api/src/modules/${module}`, role: 'mirror', frozen: true, note });
+/** The follower that writes civic-api's tables (path from the repository root). */
+export const CIVIC_API_FOLLOWER = 'services/civic-api/src/mirror/follower.ts';
+const CIVIC_API_FED = 'Fed: written only by its follower (services/civic-api/src/mirror/follower.ts) from the platform\'s signed events (webhook subscription, topic *) and the mirror feed (GET /api/platform/mirror, integration key of scope mirror:read), idempotent by event id with a cursor on the audit sequence, re-synced in full every 15 minutes.';
+const CIVIC_API_WRITES = 'Writes made to it are forwarded to the owning platform route with the caller\'s own credentials and the platform\'s answer returned (CIVIC_API_MODE=forward, services/civic-api/src/common/forward.ts); frozen mode refuses them (410).';
+const civicApi = (module: string, fed: boolean, note?: string): Copy =>
+  ({ where: 'civic-api', what: `services/civic-api/src/modules/${module}`, role: 'mirror', mode: 'forward', fed,
+    note: `NestJS module from the first build; no app route calls it. Mirror: its reads answer from its own tables. ${note ?? (fed ? CIVIC_API_FED : 'Not fed.')} ${CIVIC_API_WRITES}` });
 
 const MIRROR = 'src/lib/db/mirror.ts';
 const ANCHORS = 'src/app/api/cron/audit-anchor/route.ts';
 
 export const REGISTER_OWNERS: RegisterOwner[] = [
   { id: 'nation', name: 'Nation profile and setup', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/sovereign, /api/setup',
-    copies: [civicApi('tenancy')], storage: RECORD_DOCS('each field of the profile, the setup record') },
+    copies: [civicApi('tenancy', true, `${CIVIC_API_FED} It holds the platform's own tenant (platform:<name>, its state and lifecycle); provisioning another tenant has no platform route and answers 410.`)], storage: RECORD_DOCS('each field of the profile, the setup record') },
   { id: 'institutions', name: 'Institutions (ministry registry)', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/org/ministries',
     copies: [{ where: 'substrate', what: 'institutions (civicos.institutions)', role: 'mirror', tables: ['civicos_institutions'], writes: ['civicos_mirror_institution', 'civicos_register_institution', 'civicos_activate_institution'], writer: MIRROR,
-      note: 'Charter rows the substrate needs for its own rows (officers, posture, work items): seeded by migration civicos_seed_institutions, then written by the platform after each registry change (create, rename, activate, deactivate, merge) and re-copied hourly; one row per charter, active while any of its ministries is. The open-data charter feed (/api/public/charters) reads the registry; the substrate dashboards (charter list, profile and detail, catalogue, observatory) still read this mirror in the browser, joined with the substrate\'s own rows (see the review, D8).' }, civicApi('org')],
+      note: 'Charter rows the substrate needs for its own rows (officers, posture, work items): seeded by migration civicos_seed_institutions, then written by the platform after each registry change (create, rename, activate, deactivate, merge) and re-copied hourly; one row per charter, active while any of its ministries is. The open-data charter feed (/api/public/charters) reads the registry; the substrate dashboards (charter list, profile and detail, catalogue, observatory) still read this mirror in the browser, joined with the substrate\'s own rows (see the review, D8).' }, civicApi('org', true)],
     storage: RECORD_DOCS('each ministry, and each ministry\'s queue item and incident') },
   { id: 'audit-platform', name: 'Audit chain of platform actions', owner: { where: 'platform', keys: ['__civicos'] }, api: 'recordAudit() (lib/data/store/audit.ts)',
-    copies: [{ where: 'substrate', what: "federation_events 'audit.anchor' with scope 'platform'", role: 'mirror', tables: [], writes: [], writer: ANCHORS, note: 'Signed chain heads only, appended to the substrate\'s own event stream by the anchor cron; the entries stay in the platform chain.' }, civicApi('audit')],
+    copies: [{ where: 'substrate', what: "federation_events 'audit.anchor' with scope 'platform'", role: 'mirror', tables: [], writes: [], writer: ANCHORS, note: 'Signed chain heads only, appended to the substrate\'s own event stream by the anchor cron; the entries stay in the platform chain.' }, civicApi('audit', false, 'Not fed: the platform audit chain is not in the mirror feed; civic-api\'s AuditEvent table holds what it held before it became a mirror (verify the platform chain at /api/audit/verify).')],
     storage: RECORD_TABLES('civicos.audit_entry (append-only, each entry chained to the one before by the database)') },
   { id: 'audit-substrate', name: 'Audit trail of substrate actions (citizen runtime)', owner: { where: 'substrate', objects: ['audit_log', 'audit_witnesses'] }, api: 'substrate RPCs', copies: [] },
-  { id: 'permits', name: 'Permits and licences', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/permits', copies: [civicApi('permits')], storage: RECORD_DOCS('each permit') },
-  { id: 'payments', name: 'Bills and receipts', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/payments', copies: [civicApi('payments')], storage: RECORD_DOCS('each bill and receipt') },
+  { id: 'permits', name: 'Permits and licences', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/permits', copies: [civicApi('permits', true)], storage: RECORD_DOCS('each permit') },
+  { id: 'payments', name: 'Bills and receipts', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/payments', copies: [civicApi('payments', true)], storage: RECORD_DOCS('each bill and receipt') },
   { id: 'ops', name: 'Operations: services, incidents, deployments, backups, configuration', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/ops, /api/platform',
-    copies: [civicApi('ops'), civicApi('platform-ops'), civicApi('health'), civicApi('metrics')], storage: RECORD_DOCS('each incident, release, deployment, backup and configuration bundle') },
+    copies: [civicApi('ops', true), civicApi('platform-ops', true), civicApi('health', true, 'No records of its own (liveness and readiness of the service).'), civicApi('metrics', true, 'No records of its own (the service\'s Prometheus metrics).')], storage: RECORD_DOCS('each incident, release, deployment, backup and configuration bundle') },
   { id: 'federation', name: 'Federation grants, integrations and webhooks', owner: { where: 'platform', keys: ['__civicos'] }, api: '/api/federation, /api/integrations, /api/webhooks',
     copies: [{ where: 'substrate', what: 'federation edges (civicos.federation_edges) and the channel catalogue', role: 'mirror', tables: ['civicos_federation_edges'], writes: [], writer: 'supabase/migrations/20260521850000_civicos_federation_edges.sql',
-      note: 'Read models for the substrate dashboards: the edges are seeded by migration from the declared dependency graph and no app path writes them; the channel catalogue is computed from the substrate\'s own event stream.' }, civicApi('interop')],
+      note: 'Read models for the substrate dashboards: the edges are seeded by migration from the declared dependency graph and no app path writes them; the channel catalogue is computed from the substrate\'s own event stream.' }, civicApi('interop', true, `${CIVIC_API_FED} Integration keys and webhook secrets stay with the platform; civic-api's key and secret columns hold a placeholder that matches no key.`)],
     storage: RECORD_DOCS('each grant, integration client and webhook subscription') },
   { id: 'directives', name: 'Directives', owner: { where: 'platform', keys: ['__civicosDirectives'] }, api: '/api/directives',
     copies: [{ where: 'substrate', what: 'directives (civicos.directives)', role: 'mirror', tables: ['civicos_directives'], writes: ['civicos_mirror_directive', 'civicos_record_directive', 'civicos_sign_directive', 'civicos_rescind_directive', 'civicos_promote_due_directives'], writer: MIRROR,
@@ -89,7 +102,7 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
     storage: RECORD_DOCS('each directive') },
   { id: 'dispatches', name: 'Dispatches and escalations', owner: { where: 'substrate', objects: ['dispatches', 'escalations'] }, api: 'substrate RPCs', copies: [] },
   { id: 'citizen-runtime', name: 'Service requests, work items, appeals, consents, receipts', owner: { where: 'substrate', objects: ['service_requests', 'work_items', 'appeals', 'consents', 'receipts'] }, api: 'substrate RPCs', copies: [] },
-  { id: 'identity', name: 'Citizen and officer identity', owner: { where: 'substrate', objects: ['identities', 'officers', 'signing_keys'] }, api: '/sign-in (substrate auth)', copies: [civicApi('identity')] },
+  { id: 'identity', name: 'Citizen and officer identity', owner: { where: 'substrate', objects: ['identities', 'officers', 'signing_keys'] }, api: '/sign-in (substrate auth)', copies: [civicApi('identity', false, 'Not fed: the substrate owns identity and the platform\'s mirror feed does not carry it; a write (POST /api/identity/citizens) has no platform route and answers 410.')] },
   { id: 'officials', name: 'Platform official accounts and sessions', owner: { where: 'platform', keys: ['__civicosOfficials'] }, api: '/api/auth/officials', copies: [],
     storage: RECORD_DOCS('each account; failed sign-in counts per address') },
   { id: 'audit-heads', name: 'Signed audit chain heads', owner: { where: 'platform', keys: ['__civicosAuditHeads'] }, api: 'lib/audit/sign.ts (every N entries) and /api/cron/audit-anchor',

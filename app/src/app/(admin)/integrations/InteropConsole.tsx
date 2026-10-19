@@ -206,6 +206,8 @@ export function InteropConsole() {
               <p className="mb-3 text-xs text-ink-muted">
                 GIS clients (QGIS, ArcGIS, GDAL) that read the national twin&rsquo;s maps need the scope{' '}
                 <code>ogc:read</code>; they send the key as <code>Authorization: Bearer civ_…</code> (see /developers).
+                The civic-api mirror needs the scope <code>mirror:read</code> and a webhook (topic <code>*</code>) to its{' '}
+                <code>/api/mirror/events</code>.
               </p>
               <Button type="submit" disabled={busy}>Register</Button>
             </form>

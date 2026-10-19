@@ -20692,6 +20692,163 @@
         "x-source": "src/app/api/platform/lifecycle/transition/route.ts"
       }
     },
+    "/api/platform/mirror": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "get_platform_mirror",
+        "summary": "GET /api/platform/mirror",
+        "description": "The mirror feed (review D8): the registers that services/civic-api mirrors, read in one step with the audit sequence they are current to, so its mirror follower can write its own tables from the platform that owns them. civic-api reads it with its own integration key (scope `mirror:read`, registered and approved in Integrations); its webhook subscription (topic `*`) says when to read again. Read only: no credential of a caller and no key is ever in it (integration keys and webhook secrets stay hashed or sealed here). An official's session reads it too (the middleware's gate). ?registers=institutions,permits,… narrows it (default every register): institutions, permits, payments, incidents, releases, deployments, backups, configs, lifecycle, integrations, grants, webhooks.",
+        "parameters": [
+          {
+            "name": "registers",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "at": {
+                      "type": "string"
+                    },
+                    "auditSeq": {
+                      "type": "number"
+                    },
+                    "tenant": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "stateName": {
+                          "type": "string"
+                        },
+                        "iso3": {
+                          "anyOf": [
+                            {
+                              "type": "null"
+                            },
+                            {
+                              "type": "string"
+                            }
+                          ]
+                        },
+                        "state": {
+                          "type": "string",
+                          "enum": [
+                            "active",
+                            "decommissioned",
+                            "provisioning",
+                            "suspended"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "stateName",
+                        "iso3",
+                        "state"
+                      ]
+                    },
+                    "registers": {
+                      "type": "object",
+                      "properties": {
+                        "backups": {},
+                        "configs": {},
+                        "deployments": {},
+                        "grants": {},
+                        "incidents": {},
+                        "institutions": {},
+                        "integrations": {},
+                        "lifecycle": {},
+                        "payments": {},
+                        "permits": {},
+                        "releases": {},
+                        "webhooks": {}
+                      }
+                    }
+                  },
+                  "required": [
+                    "at",
+                    "auditSeq",
+                    "tenant",
+                    "registers"
+                  ]
+                },
+                "examples": {
+                  "route": {
+                    "summary": "From the route",
+                    "value": {
+                      "at": "2026-10-19T12:00:00.000Z",
+                      "auditSeq": 1042,
+                      "tenant": {
+                        "name": "home",
+                        "stateName": "Republic of Example",
+                        "iso3": "KEN",
+                        "state": "active"
+                      },
+                      "registers": {
+                        "institutions": [
+                          {
+                            "id": "min-health",
+                            "slug": "health",
+                            "name": "Ministry of Health",
+                            "archetype": "HEALTH",
+                            "status": "active",
+                            "createdAt": "2026-01-01T00:00:00.000Z",
+                            "departments": [
+                              {
+                                "id": "dep-health-hospitals",
+                                "name": "Hospitals"
+                              }
+                            ],
+                            "modules": [
+                              {
+                                "moduleKey": "hospitals",
+                                "enabled": true
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "integrationKey": []
+          },
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/platform/mirror/route.ts"
+      }
+    },
     "/api/platform/owners": {
       "get": {
         "tags": [
@@ -41844,7 +42001,7 @@
         "type": "http",
         "scheme": "bearer",
         "bearerFormat": "civ_<prefix>_<secret>",
-        "description": "An integration key issued in Integrations (/integrations), stored as a SHA-256 hash and checked with its scopes and rate limit. Scope ogc:read opens the twin's OGC API – Features, SensorThings and vector tiles to GIS clients."
+        "description": "An integration key issued in Integrations (/integrations), stored as a SHA-256 hash and checked with its scopes and rate limit. Scope ogc:read opens the twin's OGC API – Features, SensorThings and vector tiles to GIS clients; scope mirror:read opens the mirror feed (/api/platform/mirror) to the civic-api follower."
       },
       "integrationClient": {
         "type": "http",
@@ -44857,10 +45014,17 @@
             "type": "string",
             "description": "Substrate mirrors: the one app file that writes the mirror (from the platform, after its commit)."
           },
-          "frozen": {
+          "mode": {
+            "type": "string",
+            "enum": [
+              "forward",
+              "frozen"
+            ],
+            "description": "civic-api: what a write made to it does: `forward` (the default; passed to the owner's route with the caller's credentials) or `frozen` (refused)."
+          },
+          "fed": {
             "type": "boolean",
-            "const": true,
-            "description": "civic-api: frozen read-only (reads answer, writes refused with the owner's route)."
+            "description": "civic-api: whether its follower keeps this copy current from the owner (false: it holds what it last held)."
           }
         },
         "required": [

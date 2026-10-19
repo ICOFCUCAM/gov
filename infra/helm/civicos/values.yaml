@@ -15,6 +15,15 @@ api:
   env:
     CIVIC_DEV_AUTH: "0"
     OUTBOX_POLL_MS: "2000"
+    # A mirror of the platform (services/civic-api/README.md): writes go to the
+    # app that owns every record; the follower's CIVICOS_MIRROR_KEY and
+    # CIVICOS_MIRROR_WEBHOOK_SECRET come from a secret (api.mirrorSecret).
+    CIVIC_API_MODE: "forward"
+    CIVICOS_PLATFORM_URL: "http://civicos-app:3000"
+  # Secret holding the follower's credentials, keys CIVICOS_MIRROR_KEY and
+  # CIVICOS_MIRROR_WEBHOOK_SECRET (issued in the platform's Integrations).
+  # Empty: the follower is off and civic-api holds what it last mirrored.
+  mirrorSecret: ""
   autoscaling:
     enabled: true
     minReplicas: 3

@@ -19,8 +19,18 @@ export const EVENT_SOURCE = '/civicos/platform';
 export const TYPE_PREFIX = 'org.civicos.';
 export const MAX_EVENTS = 10_000;
 
-/** Audited actions that become events (successful ones only). Sign-in, accounts and subscriptions never do. */
-export const EVENT_ACTIONS = /^(facility\.(publish|withdraw|status|move\.confirm)|boundary\.(publish|withdraw)|twin\.(source\.run|scenario\.(create|revise))|directive\.(draft|sign|rescind)|incident\.[a-z-]+|permit\.[a-z-]+|site\.content\.(publish|withdraw)|queue\.(add|import|import\.withdraw)|federation\.(approved|revoked|exchange)|update\.(publish|fallback|probation\.(pass|fail)|staging\.install))$/;
+/**
+ * Audited actions that become events (successful ones only). Sign-in, accounts
+ * and email subscriptions never do. The register changes on the second line
+ * (institutions, payments, integrations and webhooks, grants proposed,
+ * releases, deployments, backups, configuration, the tenant's lifecycle) keep
+ * the mirror in services/civic-api current (its follower subscribes to `*`;
+ * review D8). Key rotations are not events.
+ */
+export const EVENT_ACTIONS = new RegExp('^(' + [
+  'facility\\.(publish|withdraw|status|move\\.confirm)|boundary\\.(publish|withdraw)|twin\\.(source\\.run|scenario\\.(create|revise))|directive\\.(draft|sign|rescind)|incident\\.[a-z-]+|permit\\.[a-z-]+|site\\.content\\.(publish|withdraw)|queue\\.(add|import|import\\.withdraw)|federation\\.(approved|revoked|exchange)|update\\.(publish|fallback|probation\\.(pass|fail)|staging\\.install)',
+  'ministry\\.(create|rename|activate|deactivate|merge)|department\\.(add|remove)|module\\.set|payment\\.execute|integration\\.(register|approved|suspended|revoked)|webhook\\.(subscribe|active|paused|disabled)|federation\\.propose|release\\.(create|promote)|deployment\\.(start|advance|gate-fail|rollback)|backup\\.(create|restore)|config\\.(publish|sign|apply)|tenant\\.transition',
+].join('|') + ')$');
 
 export interface CloudEvent {
   specversion: '1.0';

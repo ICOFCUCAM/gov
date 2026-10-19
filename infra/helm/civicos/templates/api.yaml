@@ -32,6 +32,12 @@ spec:
             - name: {{ $k }}
               value: {{ $v | quote }}
             {{- end }}
+            {{- if .Values.api.mirrorSecret }}
+            - name: CIVICOS_MIRROR_KEY
+              valueFrom: { secretKeyRef: { name: {{ .Values.api.mirrorSecret }}, key: CIVICOS_MIRROR_KEY } }
+            - name: CIVICOS_MIRROR_WEBHOOK_SECRET
+              valueFrom: { secretKeyRef: { name: {{ .Values.api.mirrorSecret }}, key: CIVICOS_MIRROR_WEBHOOK_SECRET } }
+            {{- end }}
           resources: {{- toYaml .Values.api.resources | nindent 12 }}
           readinessProbe:
             httpGet: { path: /api/health/ready, port: 4000 }

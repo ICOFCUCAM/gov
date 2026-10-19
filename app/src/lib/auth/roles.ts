@@ -95,6 +95,8 @@ export const BEARER_READS: RegExp[] = [
   /^\/api\/twin\/(ogc|sta)(\/|$)/,
   /^\/api\/twin\/tiles\/facilities(\/|$)/,
   /^\/api\/twin\/tiles\/boundaries(\/|$)/,
+  // The mirror feed for services/civic-api's follower: an integration key of scope mirror:read (review D8).
+  /^\/api\/platform\/mirror$/,
 ];
 /** True when the route checks the caller's own credential (bearer, agent or feed key). */
 export const verifiesOwnCredential = (pathname: string): boolean =>

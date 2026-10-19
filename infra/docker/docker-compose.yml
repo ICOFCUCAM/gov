@@ -50,6 +50,13 @@ services:
       NATS_URL: nats://nats:4222
       CIVIC_CORS_ORIGINS: http://localhost:3000
       CIVIC_DEV_AUTH: '1'
+      # A mirror of the platform (services/civic-api/README.md): writes are
+      # forwarded to the app, its tables are fed from the app's events and
+      # mirror feed once the key and secret below are issued in Integrations.
+      CIVIC_API_MODE: forward
+      CIVICOS_PLATFORM_URL: http://app:3000
+      CIVICOS_MIRROR_KEY: ${CIVICOS_MIRROR_KEY:-}
+      CIVICOS_MIRROR_WEBHOOK_SECRET: ${CIVICOS_MIRROR_WEBHOOK_SECRET:-}
     command: >
       sh -c "pnpm prisma migrate deploy && node dist/main.js"
     ports: ['4000:4000']

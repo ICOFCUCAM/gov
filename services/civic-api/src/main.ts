@@ -4,13 +4,19 @@ import { Logger } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
-import { assertFrozenMode } from './common/read-only-mirror';
+import { assertMirrorMode } from './common/read-only-mirror';
+import { MirrorService } from './mirror/mirror.module';
 
 async function bootstrap(): Promise<void> {
-  // Frozen as a read-only mirror of the CivicOS platform's registers (D8);
-  // refuses to start in any other mode.
-  assertFrozenMode();
+  // A mirror of the CivicOS platform's registers (D8): writes are forwarded
+  // to the platform (default) or refused (frozen); any other mode, or forward
+  // without CIVICOS_PLATFORM_URL, refuses to start.
+  const mode = assertMirrorMode();
   const app = await NestFactory.create(AppModule, { bufferLogs: false });
+
+  // The platform's signed event deliveries for the mirror follower, read as
+  // raw bytes (the signature covers them) before any body parser runs.
+  app.use('/api/mirror/events', app.get(MirrorService).eventsHandler());
 
   // Security baseline (zero-trust posture starts at the edge).
   app.use(helmet());
@@ -39,7 +45,7 @@ async function bootstrap(): Promise<void> {
 
   const port = Number(process.env.PORT ?? 4000);
   await app.listen(port, '0.0.0.0');
-  new Logger('Bootstrap').log(`CivicOS API listening on :${port} (/api, /api/docs)`);
+  new Logger('Bootstrap').log(`CivicOS API listening on :${port} (/api, /api/docs); mirror of the CivicOS platform, writes ${mode === 'forward' ? `forwarded to ${process.env.CIVICOS_PLATFORM_URL}` : 'refused (frozen)'}`);
 }
 
 void bootstrap();

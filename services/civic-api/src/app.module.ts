@@ -18,7 +18,8 @@ import { AuditInterceptor } from './common/audit.interceptor';
 import { MetricsInterceptor } from './common/metrics';
 import { VersionHeaderInterceptor } from './common/versioning';
 import { RateLimitGuard } from './common/rate-limit.guard';
-import { ReadOnlyMirrorGuard } from './common/read-only-mirror.guard';
+import { MirrorGuard } from './common/read-only-mirror.guard';
+import { MirrorModule } from './mirror/mirror.module';
 import { HttpExceptionFilter } from './common/http-exception.filter';
 
 @Module({
@@ -37,11 +38,14 @@ import { HttpExceptionFilter } from './common/http-exception.filter';
     InteropModule,
     PlatformOpsModule,
     OrgModule,
+    MirrorModule,
   ],
   providers: [
-    // Frozen read-only mirror (architecture review D8): every write is refused
-    // with the owning platform route before anything else runs.
-    { provide: APP_GUARD, useClass: ReadOnlyMirrorGuard },
+    // Mirror of the CivicOS platform (architecture review D8): before anything
+    // else runs, every write is forwarded to the platform route that owns the
+    // record (CIVIC_API_MODE=forward, the default) or refused (frozen).
+    // civic-api's tables are written only by the mirror follower.
+    { provide: APP_GUARD, useClass: MirrorGuard },
     { provide: APP_GUARD, useClass: RateLimitGuard },
     { provide: APP_INTERCEPTOR, useClass: MetricsInterceptor },
     { provide: APP_INTERCEPTOR, useClass: VersionHeaderInterceptor },

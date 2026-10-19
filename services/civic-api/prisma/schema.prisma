@@ -157,8 +157,12 @@ model Permit {
   id            String             @id @default(cuid())
   tenantId      String
   tenant        Tenant             @relation(fields: [tenantId], references: [id])
-  citizenId     String
-  citizen       Citizen            @relation(fields: [citizenId], references: [id])
+  /// Null on permits mirrored from the CivicOS platform, which names the applicant instead.
+  citizenId     String?
+  citizen       Citizen?           @relation(fields: [citizenId], references: [id])
+  /// Mirrored from the platform (its permit names the applicant and municipality).
+  applicantName String?
+  municipality  String?
   type          PermitType
   title         String
   status        PermitStatus       @default(SUBMITTED)
@@ -205,8 +209,9 @@ model Bill {
   id          String     @id @default(cuid())
   tenantId    String
   tenant      Tenant     @relation(fields: [tenantId], references: [id])
-  citizenId   String
-  citizen     Citizen    @relation(fields: [citizenId], references: [id])
+  /// Null on bills mirrored from the CivicOS platform, which keeps no citizen on a bill.
+  citizenId   String?
+  citizen     Citizen?   @relation(fields: [citizenId], references: [id])
   kind        BillKind
   description String
   amountMinor Int
@@ -679,4 +684,31 @@ model ModuleActivation {
 
   @@unique([ministryId, moduleKey])
   @@index([ministryId, enabled])
+}
+
+// ── Mirror of the CivicOS platform (finding D8) ───────────────────────
+// The platform owns every register above; civic-api's tables are a mirror
+// written only by the mirror follower (src/mirror/follower.ts). These two
+// tables are the follower's own bookkeeping.
+
+/// Where the mirror stands: the platform audit sequence it is current to.
+model MirrorState {
+  id             String    @id // 'platform'
+  cursor         Int       @default(0)
+  /// By register: the audit sequence of the platform read last written (an older read never overwrites it).
+  registerSeqs   Json      @default("{}")
+  lastEventAt    DateTime?
+  lastFullSyncAt DateTime?
+  lastError      String?
+  updatedAt      DateTime  @updatedAt
+}
+
+/// Platform events applied (by CloudEvent id), so a redelivery changes nothing.
+model MirrorAppliedEvent {
+  eventId   String   @id
+  auditSeq  Int
+  type      String
+  appliedAt DateTime @default(now())
+
+  @@index([auditSeq])
 }

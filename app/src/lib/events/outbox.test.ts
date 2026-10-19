@@ -27,6 +27,14 @@ describe('the CloudEvents outbox', () => {
     expect(ev!.id).toMatch(/^evt-[0-9a-f-]{36}$/);
   });
 
+  it('writes events for the register changes civic-api mirrors (review D8), not for key rotations', () => {
+    const actions = ['ministry.rename', 'department.add', 'module.set', 'payment.execute', 'integration.approved', 'webhook.paused', 'federation.propose', 'release.promote', 'deployment.gate-fail', 'backup.restore', 'config.apply', 'tenant.transition'];
+    for (const a of actions) recordAudit('Administrator', a, `X:${a}`, 'ok');
+    recordAudit('Administrator', 'integration.key.rotate', 'Integration:IC-1', 'ok');
+    recordAudit('Administrator', 'webhook.secret.rotate', 'Webhook:WH-1', 'ok');
+    expect(recentEvents().map(e => e.type).reverse()).toEqual(actions.map(a => `org.civicos.${a}`));
+  });
+
   it('matches topics by action or prefix', () => {
     expect(topicMatches('facility', 'org.civicos.facility.publish')).toBe(true);
     expect(topicMatches('org.civicos.boundary.publish', 'org.civicos.boundary.publish')).toBe(true);

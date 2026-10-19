@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { REGISTER_OWNERS } from './register-owners';
+import { REGISTER_OWNERS, CIVIC_API_FOLLOWER } from './register-owners';
 
 const SRC = join(__dirname, '..', '..');
 const ROOT = join(SRC, '..', '..');
@@ -56,13 +56,45 @@ describe('the duplicates are retired behind their owners (finding D8)', () => {
     .filter(f => !/\/lib\/db\/types(\.generated)?\.ts$|\/lib\/data\/register-owners\.ts$/.test(f))
     .map(f => ({ rel: f.slice(APP.length + 1), text: strip(readFileSync(f, 'utf8')) }));
 
-  it('every copy of a platform-owned register is a mirror, or a frozen civic-api copy', () => {
+  it('every copy of a platform-owned register is a mirror: a substrate one with its writer, a civic-api one in a mirror mode', () => {
     const wrong = REGISTER_OWNERS.filter(r => r.owner.where === 'platform').flatMap(r => r.copies
-      .filter(c => !(c.role === 'mirror' && (c.where !== 'civic-api' || c.frozen) && (c.where !== 'substrate' || c.writer)))
+      .filter(c => !(c.role === 'mirror' && (c.where !== 'civic-api' || c.mode) && (c.where !== 'substrate' || c.writer)))
       .map(c => `${r.id}: ${c.where} ${c.what} (${c.role})`));
     expect(wrong).toEqual([]);
-    // Every civic-api copy, whatever its register, is the frozen read-only mirror.
-    expect(REGISTER_OWNERS.flatMap(r => r.copies.filter(c => c.where === 'civic-api' && !(c.role === 'mirror' && c.frozen)).map(c => c.what))).toEqual([]);
+    // Every civic-api copy, whatever its register, is a mirror that forwards writes (the service's default mode).
+    expect(REGISTER_OWNERS.flatMap(r => r.copies.filter(c => c.where === 'civic-api' && !(c.role === 'mirror' && c.mode === 'forward' && typeof c.fed === 'boolean')).map(c => c.what))).toEqual([]);
+    const mode = readFileSync(join(ROOT, 'services', 'civic-api', 'src', 'common', 'read-only-mirror.ts'), 'utf8');
+    expect(mode).toMatch(/if \(mode === undefined \|\| mode === ''\) return 'forward';/);
+  });
+
+  it('civic-api copies said to be fed are in its follower\'s registers, which the mirror feed answers', () => {
+    const follower = readFileSync(join(ROOT, CIVIC_API_FOLLOWER), 'utf8');
+    const registers = /export const REGISTERS = \[([^\]]+)\]/.exec(follower)![1]!.match(/'([a-z]+)'/g)!.map(x => x.slice(1, -1));
+    // The platform register → the follower's registers that carry it.
+    const carries: Record<string, string[]> = { nation: ['lifecycle'], institutions: ['institutions'], permits: ['permits'], payments: ['payments'],
+      ops: ['incidents', 'releases', 'deployments', 'backups', 'configs'], federation: ['integrations', 'grants', 'webhooks'] };
+    for (const r of REGISTER_OWNERS) for (const c of r.copies) {
+      if (c.where !== 'civic-api' || !c.fed) continue;
+      expect(carries[r.id], `${r.id} is fed to civic-api`).toBeDefined();
+      for (const x of carries[r.id]!) expect(registers, `${r.id} → ${x}`).toContain(x);
+    }
+    // The feed the follower reads answers each of them.
+    const feed = readFileSync(join(APP, 'src', 'app', 'api', 'platform', 'mirror', 'route.ts'), 'utf8');
+    for (const x of registers) expect(feed, x).toMatch(new RegExp(`\\b${x}: \\(\\) =>`));
+  });
+
+  it('every civic-api write forwarded to the platform goes to a platform route that exists with that method', () => {
+    const forward = readFileSync(join(ROOT, 'services', 'civic-api', 'src', 'common', 'forward.ts'), 'utf8');
+    const routes = [...forward.matchAll(/\{ method: '(POST|DELETE)', path: '[^']*', platform: '(\/api\/[^']+)'/g)].map(m => ({ method: m[1]!, path: m[2]! }));
+    expect(routes.length).toBeGreaterThan(25);
+    const missing: string[] = [];
+    for (const r of routes) {
+      const file = join(APP, 'src', 'app', ...r.path.split('/').filter(Boolean).map(s => s.replace(/^\{(\w+)\}$/, '[$1]')), 'route.ts');
+      let src = '';
+      try { src = readFileSync(file, 'utf8'); } catch { missing.push(`${r.method} ${r.path} (no route file)`); continue; }
+      if (!new RegExp(`export\\s+(async\\s+)?function\\s+${r.method}\\b|export\\s+const\\s+${r.method}\\b`).test(src)) missing.push(`${r.method} ${r.path}`);
+    }
+    expect(missing).toEqual([]);
   });
 
   it('no app code but the mirror writer writes a mirrored substrate table', () => {
@@ -96,7 +128,7 @@ describe('the duplicates are retired behind their owners (finding D8)', () => {
     }
   });
 
-  it('civic-api refuses every write naming the owning platform route of each frozen module', () => {
+  it('civic-api names the owning platform route of each mirrored module', () => {
     const guard = readFileSync(join(ROOT, 'services', 'civic-api', 'src', 'common', 'read-only-mirror.ts'), 'utf8');
     for (const r of REGISTER_OWNERS) for (const c of r.copies) {
       if (c.where !== 'civic-api') continue;

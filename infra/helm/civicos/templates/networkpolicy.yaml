@@ -1,6 +1,7 @@
 {{- if .Values.security.networkPolicy }}
 # Zero-trust default-deny + explicit allows. The API may talk to Postgres,
-# NATS, and receive from the app/ingress. Nothing else.
+# NATS and the app (it forwards writes to the platform and reads its mirror
+# feed), and receive from the app (event deliveries) and the ingress.
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
@@ -27,6 +28,8 @@ spec:
       ports: [{ port: 5432 }]
     - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: nats } } }]
       ports: [{ port: 4222 }]
+    - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: civic-app } } }]
+      ports: [{ port: 3000 }]
     - to: [] # DNS
       ports: [{ port: 53, protocol: UDP }]
 ---
@@ -44,6 +47,7 @@ spec:
   ingress:
     - from:
         - namespaceSelector: { matchLabels: { role: ingress } }
+        - podSelector: { matchLabels: { app.kubernetes.io/name: civic-api } } # the civic-api mirror (forwarded writes, its feed)
       ports: [{ port: 3000 }]
   egress:
     - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: civic-api } } }]
