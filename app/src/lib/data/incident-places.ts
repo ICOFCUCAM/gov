@@ -59,13 +59,13 @@ export async function resolvePlace(input: PlaceInput, by: string): Promise<{ pla
   if (input.how === 'region') {
     const iso3 = nationIso3();
     const regions = nationRegions();
-    const geo = iso3 ? await loadNationGeography(iso3, regions) : null;
+    const geo = iso3 ? await loadNationGeography(iso3, regions, 'full') : null;
     const unit = geo?.units.find(u => same(u.name, input.region) || (u.code && u.code.toLowerCase() === input.region.toLowerCase()));
     const listed = regions.find(r => same(r, input.region));
     if (!unit && !listed) return { error: `${input.region} is not one of the nation's regions` };
     const place: IncidentPlace = { how: 'region', region: unit?.name ?? listed!, ...(unit?.code ? { regionCode: unit.code } : {}), ...base };
     if (input.district) {
-      const a2 = iso3 && unit?.code ? await loadDistricts(iso3) : null;
+      const a2 = iso3 && unit?.code ? await loadDistricts(iso3, unit.code, 'full') : null;
       const d = a2?.units.find(x => x.parent === unit!.code && same(x.name, input.district!));
       if (a2 && !d) return { error: `${input.district} is not a district of ${place.region}` };
       // Without district shapes for this nation the district is kept as stated.

@@ -1,6 +1,6 @@
 # Map system: evaluation and plan
 
-Status: phases 0–2 done, phase 3 in part, phases 4a–4d and 5 done (October 2026); phase 4 complete (incident locations, boundary versions); worldview setting done (3); open: TopoJSON packs (3). Register: §16.4, §17.1.
+Status: phases 0–2 done, phase 3 done (TopoJSON packs, districts at install, worldview), phases 4 and 5 done (October 2026); small items open: simplifying installed districts, Kiribati names, France's overseas collectivities. Register: §16.4, §17.1.
 
 ## Answers to the owner's questions
 
@@ -71,7 +71,7 @@ layouts. The fix is one shared map engine grown from it.
    summary; units reachable by keyboard; details on focus; no decorative radar; on phones the map keeps the
    country's aspect ratio, legend and lists below, admin-2 after drilling in.
 6. **Time:** as-of and known-at from the twin; boundary versions are bitemporal too.
-7. **Budgets:** world ≤250 KB gz; admin-1 ≤300 KB gz; admin-2 on drill-down ≤1 MB gz; first render ≤200 ms
+7. **Budgets:** world ≤250 KB gz; admin-1 ≤300 KB gz (overview ≤150 KB); admin-2 on drill-down ≤1 MB gz (overview ≤512 KB); first render ≤200 ms
    on a mid-range phone; canvas above ~2,000 features.
 8. **Authoritative boundaries:** a `boundary` twin source (GeoJSON/TopoJSON, GeoPackage or Shapefile
    converted on the server), validated (rings, CRS, codes, coverage, gaps/overlaps, never fewer units without
@@ -138,7 +138,31 @@ layouts. The fix is one shared map engine grown from it.
   never choosing between several); partners joined capital to capital by great
   circles, dashed where the capital is the map data's default. Projection:
   the nation may choose it in setup. Budgets tested: first-level files
-  ≤300 KB, district files ≤1 MB gzipped. District shapes for every other
+  ≤300 KB, district files ≤1 MB gzipped. TopoJSON packs and two detail
+  levels, done: `scripts/build-topo.mjs` (`npm run build:topo`) turns the
+  source files (`lib/geo/admin1`, `boundaries`, `outline`, `admin2`, still
+  written by the other build scripts) into packs under `lib/geo/topo/` —
+  shared arcs on the source's own coordinate grid, deterministic, with each
+  source's SHA-256 so a test fails while a pack is stale. `full` keeps every
+  vertex (lossless, tested); `overview` is simplified on the shared arcs
+  (Visvalingam, a threshold relative to the country's land area, a coarser
+  grid) so neighbours keep one border: no unit dropped, the same neighbours,
+  no shape inside out (the build retries finer, ending at full detail, when a
+  check fails); only detached specks (islets, lakes) go. Loaders decode with
+  topojson-client into the same `Admin1Country` / `Admin2Country`, so callers
+  are unchanged; `loadCountry(iso3, detail?)` and `loadNationGeography(…, detail?)`
+  default to the overview, `loadUnitGeography`, `loadDistricts` and
+  `loadAdmin2` to full. Position checks ask for full: `placePoint()`,
+  incident places, boundary comparisons, the OGC collection and the police
+  frontier (Mombasa, an island, lies in its county only at full detail).
+  Budgets tested for both levels: first level full ≤300 KB, overview
+  ≤150 KB; districts full ≤1 MB, overview ≤512 KB gzipped; overview in total
+  ≤75% (regions) and ≤60% (districts) of full. Shipped today: first level
+  1.93 MB gzipped at full and 1.23 MB overview, all countries together
+  (source files 3.09 MB); districts 0.89 MB full and 0.37 MB overview
+  (source 1.85 MB). A
+  mapping authority's uploaded version is drawn as loaded (not simplified).
+  District shapes for every other
   nation at install: an administrator installs them on the Boundaries page
   (`lib/data/map-pack.ts`, `/api/map-pack`) from geoBoundaries gbOpen (the
   server asks www.geoboundaries.org for the release and downloads its
@@ -151,8 +175,7 @@ layouts. The fix is one shared map engine grown from it.
   returns the maps to the bundled districts. Maps read them through
   `lib/map/districts-installed.ts`, one region at a time in the browser; a
   boundary version the mapping authority publishes still comes first.
-  Installed shapes are only rounded, not simplified (register 16.17). Still
-  open: TopoJSON packs and two detail levels (also for installed districts).
+  Installed shapes are only rounded, not simplified (register 16.17).
 - **Phase 3, worldview, done.** Disputed territory is drawn neutral by
   default (hatched, dashed edge, named with who administers and who claims
   it; Natural Earth's 28 breakaway and disputed areas). The nation may choose

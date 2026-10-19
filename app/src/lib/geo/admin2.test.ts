@@ -74,6 +74,14 @@ describe.each(listed)('admin2 %s', iso3 => {
   it('stays within the drill-down budget (≤ 1 MB gzipped)', () => {
     expect(gz(path.join(DIR, 'admin2', `${iso3}.json`))).toBeLessThanOrEqual(1024 * KB);
   });
+
+  it('ships within budget at both detail levels (full ≤ 1 MB, overview ≤ 512 KB gzipped)', () => {
+    const full = gz(path.join(DIR, 'topo', 'a2', `${iso3}.full.json`));
+    const overview = gz(path.join(DIR, 'topo', 'a2', `${iso3}.overview.json`));
+    expect(full).toBeLessThanOrEqual(1024 * KB);
+    expect(overview).toBeLessThanOrEqual(512 * KB);
+    expect(overview).toBeLessThanOrEqual(full);
+  });
 });
 
 describe('Kenya districts', () => {
@@ -98,5 +106,37 @@ describe('first-level shape budget (≤ 300 KB gzipped)', () => {
   it('keeps every file within budget', () => {
     const over = files.filter(f => !EXCEPTIONS[f] && gz(path.join(DIR, f)) > 300 * KB);
     expect(over).toEqual([]);
+  });
+});
+
+// What the maps load: TopoJSON packs (scripts/build-topo.mjs) in two detail levels.
+describe('shipped shape packs: budgets at both detail levels', () => {
+  const sizes = (level: 'a1' | 'a2') => {
+    const dir = path.join(DIR, 'topo', level);
+    const isos = [...new Set(fs.readdirSync(dir).map(f => f.slice(0, 3)))].sort();
+    return isos.map(iso3 => ({ iso3, full: gz(path.join(dir, `${iso3}.full.json`)), overview: gz(path.join(dir, `${iso3}.overview.json`)) }));
+  };
+  const a1 = sizes('a1'), a2 = sizes('a2');
+  const total = (rows: { full: number; overview: number }[], k: 'full' | 'overview') => rows.reduce((s, r) => s + r[k], 0);
+
+  it('keeps every first-level pack within budget (full ≤ 300 KB, overview ≤ 150 KB gzipped)', () => {
+    expect(a1.length).toBeGreaterThan(200);
+    expect(a1.filter(r => r.full > 300 * KB).map(r => r.iso3)).toEqual([]);
+    expect(a1.filter(r => r.overview > 150 * KB).map(r => r.iso3)).toEqual([]);
+  });
+
+  it('never makes an overview larger than its full detail', () => {
+    // A tiny country's overview is its full shapes (a few bytes of labelling more).
+    expect([...a1, ...a2].filter(r => r.overview > r.full + 64).map(r => r.iso3)).toEqual([]);
+  });
+
+  it('makes the overview materially smaller (≤ 75% of full for regions, ≤ 60% for districts, in total)', () => {
+    expect(total(a1, 'overview')).toBeLessThanOrEqual(0.75 * total(a1, 'full'));
+    expect(total(a2, 'overview')).toBeLessThanOrEqual(0.6 * total(a2, 'full'));
+  });
+
+  it('ships smaller than the source files they are built from', () => {
+    const src = ['admin1', 'boundaries'].flatMap(d => fs.readdirSync(path.join(DIR, d)).filter(f => /^[A-Z]{3}\.json$/.test(f)).map(f => gz(path.join(DIR, d, f))));
+    expect(total(a1, 'full')).toBeLessThan(src.reduce((s, n) => s + n, 0));
   });
 });

@@ -178,9 +178,9 @@ const slug = (s: string) => s.toLowerCase().normalize('NFKD').replace(/[̀-ͯ]/g
 async function current(iso3: string, level: Level): Promise<{ code: string; name: string; geometry?: Geom }[]> {
   const active = pickActive(db().versions, iso3, level);
   if (active) return active.units;
-  if (level === 2) return ((await installedDistricts(iso3)) ?? (await loadAdmin2(iso3)))?.units ?? [];
+  if (level === 2) return ((await installedDistricts(iso3)) ?? (await loadAdmin2(iso3, 'full')))?.units ?? [];
   const { loadNationGeography } = await import('@/lib/map/geography');
-  return ((await loadNationGeography(iso3, nationRegions()))?.units ?? []).filter(u => u.code).map(u => ({ code: u.code!, name: u.name, geometry: u.geometry }));
+  return ((await loadNationGeography(iso3, nationRegions(), 'full'))?.units ?? []).filter(u => u.code).map(u => ({ code: u.code!, name: u.name, geometry: u.geometry }));
 }
 
 export interface LoadInput {
