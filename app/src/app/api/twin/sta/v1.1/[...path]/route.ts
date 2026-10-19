@@ -10,12 +10,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import { staRequest } from '@/lib/twin/sta';
 import { syncRegister } from '@/lib/twin/register';
 import { currentOfficial } from '@/lib/auth/official';
+import { machineReadRefusal } from '@/lib/twin/machine-read';
 
 export const dynamic = 'force-dynamic';
 
 const decode = (s: string) => { try { return decodeURIComponent(s); } catch { return s; } };
 
 export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
+  // A GIS client's integration key (scope ogc:read), when it sends one; otherwise the official's session.
+  const refused = machineReadRefusal(req);
+  if (refused) return refused;
   await syncRegister();
   const o = await currentOfficial();
   const r = await staRequest(`${req.nextUrl.origin}/api/twin/sta/v1.1`, params.path.map(decode), req.nextUrl.searchParams, o ? { institution: o.institution, signedIn: true } : { signedIn: false });

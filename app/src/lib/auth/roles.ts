@@ -83,6 +83,9 @@ export const BEARER_ROUTES: RegExp[] = [
 export const BEARER_READS: RegExp[] = [
   /^\/api\/metrics$/,                         // CIVICOS_METRICS_TOKEN, compared in constant time
   /^\/api\/integrations\/verify$/,           // an integration key, compared by its hash in constant time
+  // GIS clients (QGIS, ArcGIS, GDAL) reading the twin with an integration key of scope ogc:read:
+  // OGC API – Features, SensorThings and vector tiles (machineReadRefusal() in each route, lib/twin/machine-read.ts).
+  /^\/api\/twin\/(ogc|sta|tiles)(\/|$)/,
 ];
 /** True when the route checks the caller's own credential (bearer, agent or feed key). */
 export const verifiesOwnCredential = (pathname: string): boolean =>

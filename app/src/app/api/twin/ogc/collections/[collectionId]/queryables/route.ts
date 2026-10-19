@@ -3,10 +3,14 @@
 // query parameter on /items (lib/twin/ogc-queryables.ts).
 import { NextRequest, NextResponse } from 'next/server';
 import { queryables } from '@/lib/twin/ogc-queryables';
+import { machineReadRefusal } from '@/lib/twin/machine-read';
 
 export const dynamic = 'force-dynamic';
 
 export function GET(req: NextRequest, { params }: { params: { collectionId: string } }) {
+  // A GIS client's integration key (scope ogc:read), when it sends one; otherwise the official's session.
+  const refused = machineReadRefusal(req);
+  if (refused) return refused;
   const q = queryables(`${req.nextUrl.origin}/api/twin/ogc`, params.collectionId);
   if (!q) return NextResponse.json({ error: 'No such collection' }, { status: 404 });
   return NextResponse.json(q, { headers: { 'content-type': 'application/schema+json' } });

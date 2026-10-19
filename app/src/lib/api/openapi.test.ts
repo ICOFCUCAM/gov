@@ -48,6 +48,7 @@ describe('OpenAPI description of the platform API', () => {
     expect(sec('/api/metrics', 'get')).toContain('metricsToken');
     expect(sec('/api/org/ministries/{id}/queue/feed', 'post')).toEqual(['feedKey']);
     expect(sec('/api/releases/health', 'post')).toEqual(['agentCredential']);
+    expect(sec('/api/twin/ogc/collections/{collectionId}/items', 'get')).toContain('integrationKey');
 
     expect(paths['/api/sovereign']!.get!.security).toEqual([]);
     // Every operation names its security, and every scheme it names exists.

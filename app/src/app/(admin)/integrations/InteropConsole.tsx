@@ -203,6 +203,10 @@ export function InteropConsole() {
                 required
                 placeholder="permit:read, payment:read"
               />
+              <p className="mb-3 text-xs text-ink-muted">
+                GIS clients (QGIS, ArcGIS, GDAL) that read the national twin&rsquo;s maps need the scope{' '}
+                <code>ogc:read</code>; they send the key as <code>Authorization: Bearer civ_…</code> (see /developers).
+              </p>
               <Button type="submit" disabled={busy}>Register</Button>
             </form>
           </Card>

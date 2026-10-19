@@ -12,10 +12,14 @@ import { boundaryItems, BOUNDARY_COLLECTION } from '@/lib/twin/ogc-boundaries';
 import { readFilters } from '@/lib/twin/ogc-queryables';
 import { syncRegister } from '@/lib/twin/register';
 import { currentOfficial } from '@/lib/auth/official';
+import { machineReadRefusal } from '@/lib/twin/machine-read';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest, { params }: { params: { collectionId: string } }) {
+  // A GIS client's integration key (scope ogc:read), when it sends one; otherwise the official's session.
+  const refused = machineReadRefusal(req);
+  if (refused) return refused;
   const sp = req.nextUrl.searchParams;
   const base = `${req.nextUrl.origin}/api/twin/ogc`;
   if (![FACILITY_COLLECTION, BOUNDARY_COLLECTION, COLLECTION].includes(params.collectionId)) return NextResponse.json({ error: 'No such collection' }, { status: 404 });

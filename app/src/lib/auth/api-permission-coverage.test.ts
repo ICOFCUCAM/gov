@@ -83,10 +83,14 @@ describe('every mutating API route is covered by a permission rule', () => {
     const api = join(__dirname, '..', '..', 'app', 'api');
     const walk = (d: string, out: string[] = []): string[] => { for (const f of readdirSync(d)) { const p = join(d, f); if (statSync(p).isDirectory()) walk(p, out); else if (f === 'route.ts') out.push(p); } return out; };
     for (const re of BEARER_READS) {
-      const file = walk(api).find(f => re.test('/api' + f.slice(api.length).replace(/\\/g, '/').replace(/\/route\.ts$/, '')));
-      expect(file, String(re)).toBeTruthy();
-      // Compared in the route, or through a verifier that compares hashes in constant time.
-      expect(readFileSync(file!, 'utf8')).toMatch(/timingSafeEqual|verifyIntegrationKey\(/);
+      // Every route file a bearer read pattern opens (a prefix such as /api/twin/ogc covers several).
+      const matched = walk(api).filter(f => re.test('/api' + f.slice(api.length).replace(/\\/g, '/').replace(/\/route\.ts$/, '')
+        .replace(/\[\.\.\.[^\]]+\]/g, 'a/b').replace(/\[([^\]]+)\]/g, 'sample')));
+      expect(matched.length, String(re)).toBeGreaterThan(0);
+      // Compared in the route, or through a verifier that compares hashes in constant time
+      // (machineReadRefusal() calls verifyIntegrationKey with scope ogc:read).
+      for (const file of matched) expect(readFileSync(file, 'utf8'), file).toMatch(/timingSafeEqual|verifyIntegrationKey\(|machineReadRefusal\(req\)/);
     }
+    expect(readFileSync(join(__dirname, '..', 'twin', 'machine-read.ts'), 'utf8')).toMatch(/verifyIntegrationKey\(auth, OGC_READ_SCOPE\)/);
   });
 });

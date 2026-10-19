@@ -40,6 +40,19 @@ export default function DevelopersPage() {
           signed session. Scoped credentials for outside systems (issued under Connected systems) and
           single sign-on with the nation&rsquo;s own identity provider are planned (integration register 15.4, 16.9).
         </p>
+        <p className="text-sm text-ink-muted">
+          GIS clients read the national twin&rsquo;s map services (OGC API &ndash; Features at <code>/api/twin/ogc</code>,
+          SensorThings at <code>/api/twin/sta/v1.1</code>, vector tiles at <code>/api/twin/tiles</code>) with an
+          integration key holding the scope <code>ogc:read</code>, approved by an administrator under Connected systems.
+          Send it as a header, never in the address: in QGIS an &ldquo;API Header&rdquo; authentication configuration
+          (<code>Authorization</code> = <code>Bearer civ_&hellip;</code>); in GDAL the <code>GDAL_HTTP_HEADERS</code> setting;
+          in ArcGIS Pro a custom request header on the OGC API server connection. Restricted sites reach a key as they
+          reach the public: generalised.
+        </p>
+        <Card tight>
+          <pre tabIndex={0} aria-label="Example GIS request" className="overflow-x-auto text-sm"><code>{`GDAL_HTTP_HEADERS="Authorization: Bearer civ_<key>" \\
+  ogrinfo OAPIF:https://<installation>/api/twin/ogc facilities`}</code></pre>
+        </Card>
       </section>
 
       <section className="space-y-2">
