@@ -11,6 +11,7 @@
 import { seed, wave } from '@/lib/telemetry';
 import { transportNetworkBoard } from '@/lib/gov/transport-network';
 import { transportOps } from '@/lib/gov/transport-systems';
+import { regionList } from '@/lib/nation/registry';
 
 export const TRANSPORT_EXTENDED_SAFEGUARDS = {
   equitableMobilityAccess: true as const,
@@ -24,7 +25,7 @@ export const TRANSPORT_EXTENDED_SAFEGUARDS = {
   ] as const,
 };
 
-export const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 export type TransportMode = 'highway' | 'rail' | 'aviation' | 'maritime' | 'urban-transit' | 'bridge-tunnel';
 
 // ── A. Transport Emergency & Recovery Operations ────────────────────

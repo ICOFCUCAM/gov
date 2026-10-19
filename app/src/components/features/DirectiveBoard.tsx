@@ -14,25 +14,29 @@ import { resolvedActor } from '@/services/actor-resolver';
 import { WatchStar } from '@/components/identity/WatchStar';
 import { getPref, setPref } from '@/lib/prefs';
 import { FilterChips } from '@/components/ui/FilterChips';
-import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { directiveStatusTone } from '@/lib/tone';
 import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
+import { useSignIn } from '@/lib/official';
+import { canDraftDirective, canSignDirective } from '@/lib/auth/roles';
 
 const ALL_KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declaration'];
 
 /**
  * Directive Board — operator surface for the directive lifecycle.
  *
- * Composer issues a new draft via record_directive. The list below
- * reads civicos.directives live (Realtime + RLS scope) and exposes
- * sign / rescind actions on each row. Signed-out viewers see only
- * the directives the substrate's directives_read_public policy makes
- * public (signed / effective / rescinded / published) — drafts stay
- * scoped to their issuer's charter.
+ * Composer drafts through the platform, which owns the register
+ * (/api/directives; the substrate's civicos.directives mirrors it,
+ * lib/db/mirror.ts). The list below reads the platform's register and
+ * exposes sign / rescind actions on each row; the server checks the
+ * official's role. Drafts stay scoped to their issuer's institution.
  */
 export function DirectiveBoard() {
   const { actor, session, ready } = useIdentity();
+  // A signed-in platform official sees only the actions their role allows (the server checks again).
+  const official = useSignIn()?.official ?? null;
+  const mayDraft = !official || !canDraftDirective(official);
+  const maySign = (issuer: string) => !official || !canSignDirective(official, issuer);
   const [items, setItems] = React.useState<DirectiveRow[]>([]);
   const [statusFilter, setStatusFilter] = React.useState<'all' | 'drafting' | 'signed' | 'effective' | 'rescinded' | 'published'>(
     () => getPref('directive.status', ['all','drafting','signed','effective','rescinded','published'] as const, 'all')
@@ -40,11 +44,20 @@ export function DirectiveBoard() {
   React.useEffect(() => { setPref('directive.status', statusFilter); }, [statusFilter]);
   const [loading, setLoading] = React.useState(false);
   const [composerOpen, setComposerOpen] = React.useState(false);
+  // Other consoles start a directive with a link: /gov/directives?compose=<title>&kind=<kind>&targets=<a,b>
+  const [prefill, setPrefill] = React.useState<{ title: string; kind?: string; targets?: string } | null>(null);
+  React.useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    const title = q.get('compose');
+    if (!title) return;
+    const kind = q.get('kind') ?? undefined;
+    setPrefill({ title, kind: kind && ALL_KINDS.includes(kind) ? kind : undefined, targets: q.get('targets') ?? undefined });
+    setComposerOpen(true);
+  }, []);
   const [busyRef, setBusyRef] = React.useState<string | null>(null);
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
-    if (!available) return;
     setLoading(true);
     try {
       setItems(await listDirectivesRows({ limit: 50 }));
@@ -63,16 +76,15 @@ export function DirectiveBoard() {
     refresh,
   );
 
-  if (!available) {
-    return <SubstrateNotConfigured title="Directive Board"
-      message="The persistent substrate is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to surface the directive lifecycle here." />;
-  }
+  // Without the shared database the board works on the platform's own directive
+  // store (lib/data/directives.ts, through the same repo calls).
 
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <SurfaceHeading title="Directive Board" badge="durable · realtime" />
+        <SurfaceHeading title="Directive Board" badge={available ? 'saved · live' : 'saved on this platform'} />
         <div className="flex items-center gap-2">
+          {mayDraft ? (
           <button
             type="button"
             onClick={() => setComposerOpen(o => !o)}
@@ -80,6 +92,7 @@ export function DirectiveBoard() {
           >
             {composerOpen ? 'cancel' : '+ draft directive'}
           </button>
+          ) : null}
           <button
             type="button"
             onClick={() => { void refresh(); }}
@@ -102,10 +115,12 @@ export function DirectiveBoard() {
         </div>
       </div>
 
-      {composerOpen ? (
+      {composerOpen && mayDraft ? (
         <DirectiveComposer
-          onDone={() => { setComposerOpen(false); void refresh(); }}
-          defaultIssuer={actor?.charterId ?? 'platform'}
+          prefill={prefill}
+          onDone={() => { setComposerOpen(false); setPrefill(null); void refresh(); }}
+          defaultIssuer={official?.institution ?? actor?.charterId ?? 'platform'}
+          issuerFixed={official?.institution ? official.institutionName ?? official.institution : null}
         />
       ) : null}
 
@@ -130,7 +145,7 @@ export function DirectiveBoard() {
                 key={d.id}
                 className="flex items-center gap-2 border-b border-line-soft px-3 py-1.5 last:border-0 text-[10px]"
               >
-                <WatchStar kind="directive" ref={d.ref} label={d.title} />
+                <WatchStar kind="directive" itemRef={d.ref} label={d.title} />
                 <a href={`/gov/directives/${encodeURIComponent(d.ref)}`}
                    className="w-28 shrink-0 truncate font-mono text-ink-soft hover:text-link hover:underline">
                   {d.ref}
@@ -145,17 +160,17 @@ export function DirectiveBoard() {
                   {d.status}
                 </span>
                 <div className="flex shrink-0 items-center justify-end gap-1">
-                  {d.status === 'drafting' ? (
+                  {d.status === 'drafting' && maySign(d.issued_by_charter_id) ? (
                     <SignControl
                       busy={busyRef === d.ref}
                       onSign={async (effectiveAt) => {
                         setBusyRef(d.ref);
                         try { await signDirectiveRow(d.ref, null, effectiveAt); }
-                        finally { setBusyRef(null); }
+                        finally { setBusyRef(null); void refresh(); }
                       }}
                     />
                   ) : null}
-                  {d.status !== 'rescinded' ? (
+                  {d.status !== 'rescinded' && maySign(d.issued_by_charter_id) ? (
                     <button
                       type="button"
                       className="focus-ring rounded-[3px] border border-line px-1.5 py-0.5 text-[8.5px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50"
@@ -163,7 +178,7 @@ export function DirectiveBoard() {
                       onClick={async () => {
                         setBusyRef(d.ref);
                         try { await rescindDirectiveRow(d.ref); }
-                        finally { setBusyRef(null); }
+                        finally { setBusyRef(null); void refresh(); }
                       }}
                     >
                       rescind
@@ -177,23 +192,27 @@ export function DirectiveBoard() {
         })()}
       </Panel>
 
-      <p className="text-[10px] text-ink-muted">
-        Drafts are visible only to officers in the issuing charter (and
-        platform-tier roles). Signed, effective, and rescinded directives
-        are public per the substrate's directives_read_public policy.
-      </p>
+      <p className="text-[12px] text-ink-soft">Drafts are seen only by your institution. Once signed, a directive is public.</p>
+      <details className="text-[10px] text-ink-muted">
+        <summary className="cursor-pointer">Technical details</summary>
+        <p className="text-[10px] text-ink-muted">
+          Drafts are visible only to officers in the issuing charter (and
+          platform-tier roles). Signed, effective, and rescinded directives
+          are public per the substrate's directives_read_public policy.
+        </p>
+      </details>
     </div>
   );
 }
 
 function DirectiveComposer({
-  defaultIssuer, onDone,
-}: { defaultIssuer: string; onDone: () => void }) {
+  defaultIssuer, issuerFixed = null, onDone, prefill,
+}: { defaultIssuer: string; /** The institution's name when the official always drafts for it. */ issuerFixed?: string | null; onDone: () => void; prefill?: { title: string; kind?: string; targets?: string } | null }) {
   const [ref, setRef] = React.useState(() => `DIR-${Date.now()}`);
   const [issuer, setIssuer] = React.useState(defaultIssuer);
-  const [title, setTitle] = React.useState('');
-  const [kind, setKind] = React.useState('executive-order');
-  const [targets, setTargets] = React.useState('');
+  const [title, setTitle] = React.useState(prefill?.title ?? '');
+  const [kind, setKind] = React.useState(prefill?.kind ?? 'executive-order');
+  const [targets, setTargets] = React.useState(prefill?.targets ?? '');
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -210,7 +229,7 @@ function DirectiveComposer({
         targets: targets.split(',').map(s => s.trim()).filter(Boolean),
         issuedByName: me?.name ?? null,
       });
-      if (!row) { setError('record_directive failed (check console)'); return; }
+      if (!row) { setError('The directive could not be saved. Check the reference is new and that you are signed in or have named yourself.'); return; }
       onDone();
     } finally {
       setBusy(false);
@@ -230,13 +249,20 @@ function DirectiveComposer({
             value={ref} onChange={e => setRef(e.currentTarget.value)} required
           />
         </label>
+        {issuerFixed ? (
+          <div>
+            <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Issued by</span>
+            <p className="mt-1 px-2 py-1 text-[11px] text-ink">{issuerFixed} <span className="text-ink-muted">(your institution)</span></p>
+          </div>
+        ) : (
         <label className="block">
-          <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Issuer charter</span>
+          <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Issued by</span>
           <input
             className="mt-1 w-full rounded-[3px] border border-line bg-bg px-2 py-1 font-mono text-[11px]"
             value={issuer} onChange={e => setIssuer(e.currentTarget.value)} required
           />
         </label>
+        )}
       </div>
       <label className="block">
         <span className="block text-[8.5px] font-semibold uppercase tracking-[0.16em] text-ink-muted">Title</span>

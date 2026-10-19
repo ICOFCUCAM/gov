@@ -91,14 +91,13 @@ export function BulkOfficerOnboarding() {
     }
   }
 
-  if (!ready) return <p className="text-[11px] text-ink-muted">Resolving identity…</p>;
+  if (!ready) return <p className="text-[11px] text-ink-muted">Checking who you are…</p>;
 
   if (!isPlatform) {
     return (
-      <Panel title="Bulk Officer Onboarding" meta="platform-tier only" bodyClass="!p-3">
+      <Panel title="Bulk Officer Onboarding" meta="administrators only" bodyClass="!p-3">
         <p className="text-[11px] text-ink-muted">
-          This surface requires a platform-tier role (platform-admin,
-          noc-officer, cabinet-officer, or auditor). You are signed in as{' '}
+          Only administrators and auditors can add staff in bulk. You are signed in as{' '}
           <span className="font-mono">{actor ? `${actor.role ?? actor.kind}` : 'anonymous'}</span>.
         </p>
       </Panel>
@@ -129,7 +128,7 @@ export function BulkOfficerOnboarding() {
 
       <p className="text-[10px] text-ink-muted">
         CSV header: <code className="font-mono">email,name,charter_id,role,title</code> (title optional).
-        Existing emails are upserted (re-activated, role/charter updated). Each row
+        Existing addresses are updated (re-activated, role and institution changed). Each row
         succeeds or fails independently — one bad row won&apos;t block the rest.
       </p>
 

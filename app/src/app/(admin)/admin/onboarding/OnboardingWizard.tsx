@@ -116,7 +116,7 @@ export function OnboardingWizard() {
       </div>
       <Card>
         <h2 className="text-lg font-semibold mb-3">Municipality details</h2>
-        <TextField label="Municipality name" name="name" required placeholder="e.g. Kiambu" />
+        <TextField label="Municipality name" name="name" required placeholder="e.g. Capital District" />
         <TextField label="Country" name="country" required placeholder="e.g. Kenya" />
         <TextField label="Admin contact" name="adminContact" required placeholder="name@municipality.gov" />
         <TextField label="Population" name="population" type="number" placeholder="e.g. 240000" />

@@ -10,6 +10,8 @@
 import * as React from 'react';
 import { policeOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
+import { CommandMap, type CommandPalette } from './CommandMap';
 
 const BG = '#06080d';
 const PANEL = '#0b0e15';
@@ -91,55 +93,82 @@ function Bars({ rows }: { rows: { l: string; v: string; pct: number; c: string }
   );
 }
 
-// Investigation node map: numbered case clusters wired by priority.
-function CaseMap({ seedKey }: { seedKey: string }) {
-  const n = 13;
-  const nodes = Array.from({ length: n }).map((_, i) => {
-    const a = (i / n) * Math.PI * 2 + seed(`${seedKey}:a:${i}`) * 0.4;
-    const rad = 20 + seed(`${seedKey}:r:${i}`) * 24;
-    return {
-      x: 50 + Math.cos(a) * rad, y: 40 + Math.sin(a) * (rad * 0.78),
-      lvl: seed(`${seedKey}:l:${i}`), num: 2 + Math.round(seed(`${seedKey}:n:${i}`) * 22),
-    };
-  });
-  const col = (l: number) => (l > 0.72 ? RED : l > 0.48 ? AMBER : l > 0.28 ? EMER : CYAN);
+// Investigation map on the nation's real regions: open cases by region
+// (sample until the case-management system is connected), numbered case
+// clusters wired to the national investigation hub at the capital by
+// priority, undercover operations, callouts on the busiest regions. Zoom,
+// whole nation, full screen and layers work.
+const PALETTE: CommandPalette = { critical: RED, high: AMBER, medium: GOLD, low: EMER, monitor: CYAN, accent: RED, line: LINE, panel: PANEL, ink: INK, soft: SOFT, muted: MUT };
+export interface CaseCluster { region: string; cases: number; lvl: number }
+const clusterColour = (l: number) => (l > 0.72 ? RED : l > 0.48 ? AMBER : l > 0.28 ? EMER : CYAN);
+const priorityWord = (l: number) => (l > 0.72 ? 'HIGH PRIORITY' : l > 0.48 ? 'MEDIUM PRIORITY' : l > 0.28 ? 'LOW PRIORITY' : 'UNDERCOVER');
+
+function CaseMap({ seedKey, byRegion, selected, onSelect, fullRef }: {
+  seedKey: string;
+  byRegion: CaseCluster[];
+  selected?: string;
+  onSelect: (r: string | undefined) => void;
+  fullRef?: React.MutableRefObject<(() => void) | null>;
+}) {
+  // The busiest regions carry the case clusters (as many as the original thirteen, or every region if fewer).
+  const clusters = [...byRegion].sort((a, b) => b.cases - a.cases).slice(0, 13);
+  const total = byRegion.reduce((a, r) => a + r.cases, 0);
   return (
-    <div className="relative h-full overflow-hidden rounded-[3px]" style={{ background: 'radial-gradient(120% 100% at 50% 50%,#10131c,#06080d)' }}>
-      <svg viewBox="0 0 100 80" preserveAspectRatio="none" className="h-full w-full" aria-hidden>
-        {nodes.map((p, i) => <line key={i} x1="50" y1="40" x2={p.x} y2={p.y} stroke={col(p.lvl)} strokeWidth="0.3" opacity="0.3" />)}
-        {nodes.map((p, i) => i < n - 1 ? <line key={`e${i}`} x1={p.x} y1={p.y} x2={nodes[i + 1]!.x} y2={nodes[i + 1]!.y} stroke={MUT} strokeWidth="0.22" opacity="0.25" /> : null)}
-        <circle cx="50" cy="40" r="6" fill="none" stroke={RED} strokeWidth="0.5" opacity="0.5" />
-        <circle cx="50" cy="40" r="4.4" fill={RED} style={{ filter: `drop-shadow(0 0 5px ${RED})` }} />
-        <text x="50" y="42" textAnchor="middle" fontSize="3.6" fill="#1a0c0c" fontWeight="700">22</text>
-        {nodes.map((p, i) => (
-          <g key={`n${i}`}>
-            <circle cx={p.x} cy={p.y} r={2.6 + p.lvl * 1.6} fill={col(p.lvl)} opacity="0.85" />
-            <text x={p.x} y={p.y + 1.3} textAnchor="middle" fontSize="2.8" fill="#0a0d12" fontWeight="700">{p.num}</text>
+    <CommandMap title="Open cases by region" height={270} palette={PALETTE} fullRef={fullRef}
+      values={byRegion.map(r => ({ key: r.region, value: r.cases }))} kind="sample"
+      source="Case-management model by region (sample) until the investigation bureau connects its case system" valueLabel="Open cases" unit="cases"
+      callouts={clusters.slice(0, 3).map(c => ({ region: c.region, line1: c.region, line2: `${c.cases} CASES · ${priorityWord(c.lvl)}`, colour: clusterColour(c.lvl) }))}
+      hotspots={clusters.slice(0, 3).map(c => ({ region: c.region, intensity: Math.round(55 + c.lvl * 40) }))}
+      layers={[{ id: 'clusters', label: 'Case clusters', sample: true }, { id: 'links', label: 'Links to the national hub', sample: true }]}
+      legend={[
+        // Only the priorities a cluster is drawn at.
+        ...([['High Priority', RED, 'HIGH PRIORITY'], ['Medium Priority', AMBER, 'MEDIUM PRIORITY'], ['Low Priority', EMER, 'LOW PRIORITY'], ['Undercover', CYAN, 'UNDERCOVER']] as const)
+          .filter(([, , w]) => clusters.some(c => priorityWord(c.lvl) === w)).map(([label, colour]) => ({ label, colour, shape: 'glow' as const, layer: 'clusters' })),
+        { label: 'National hub', colour: RED, shape: 'ring', layer: 'links' },
+      ]}
+      selected={selected} onSelect={onSelect} fullMapHref="/gov/situation-room"
+      extra={(ctx, on) => {
+        const at = new Map(ctx.units.map(u => [u.name, u] as const));
+        const hub = ctx.capital ?? { x: ctx.width / 2, y: ctx.height / 2 };
+        const placed = clusters.flatMap(c => { const u = at.get(c.region); return u ? [{ ...c, x: u.x, y: u.y }] : []; });
+        const k = Math.max(0.8, Math.min(1.3, Math.sqrt(ctx.width * ctx.height) / 420));
+        return (
+          <g aria-hidden pointerEvents="none">
+            {on('links') ? placed.map((p, i) => <line key={`l${i}`} x1={hub.x} y1={hub.y} x2={p.x} y2={p.y} stroke={clusterColour(p.lvl)} strokeWidth={0.8} opacity={0.4} strokeDasharray="3 3" className="motion-safe:animate-dash-flow" />) : null}
+            {on('links') ? placed.map((p, i) => i < placed.length - 1 ? <line key={`e${i}`} x1={p.x} y1={p.y} x2={placed[i + 1]!.x} y2={placed[i + 1]!.y} stroke={MUT} strokeWidth={0.5} opacity={0.3} /> : null) : null}
+            {on('clusters') ? placed.map((p, i) => {
+              const r = (7 + p.lvl * 4) * k, c = clusterColour(p.lvl);
+              return (
+                <g key={`n${i}`}>
+                  <circle cx={p.x} cy={p.y} r={r * 1.9} fill={c} opacity={0.14} />
+                  <circle cx={p.x} cy={p.y} r={r} fill={c} opacity={0.9} style={{ filter: `drop-shadow(0 0 4px ${c})` }}>
+                    <title>{`${p.region}: ${p.cases} open cases · ${priorityWord(p.lvl).toLowerCase()} (sample)`}</title>
+                  </circle>
+                  <text x={p.x} y={p.y + 3} textAnchor="middle" fontSize={8 * k} fontWeight="700" fill={PANEL}>{Math.max(2, Math.round(p.cases / 25))}</text>
+                </g>
+              );
+            }) : null}
+            {on('links') ? (
+              <g>
+                <circle cx={hub.x} cy={hub.y} r={15 * k} fill="none" stroke={RED} strokeWidth={1} opacity={0.55} className="motion-safe:animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
+                <circle cx={hub.x} cy={hub.y} r={11 * k} fill={RED} style={{ filter: `drop-shadow(0 0 6px ${RED})` }}><title>{`National investigation hub · ${total} open cases (sample)`}</title></circle>
+                <text x={hub.x} y={hub.y + 3.5} textAnchor="middle" fontSize={9 * k} fontWeight="700" fill={PANEL}>{Math.round(total / 100)}</text>
+              </g>
+            ) : null}
           </g>
-        ))}
-      </svg>
-      <div className="absolute right-2 top-2 flex flex-col gap-1">
-        {['+', '−', '⌖'].map(s => <span key={s} className="grid h-6 w-6 place-items-center rounded-[2px] border text-[11px]" style={{ borderColor: LINE, background: PANEL, color: SOFT }} aria-hidden>{s}</span>)}
-      </div>
-      <div className="absolute bottom-2 left-2 flex gap-3 rounded-[2px] border px-3 py-1" style={{ borderColor: LINE, background: 'rgba(6,8,13,0.78)' }}>
-        {[['High Priority', RED], ['Medium Priority', AMBER], ['Low Priority', EMER], ['Undercover', CYAN]].map(([l, c]) => (
-          <span key={l} className="flex items-center gap-1.5 text-[7.5px] uppercase tracking-wider" style={{ color: SOFT }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}
-          </span>
-        ))}
-      </div>
-    </div>
+        );
+      }} />
   );
 }
 
 function Panel({ title, action, children, className }: {
-  title: string; action?: string; children: React.ReactNode; className?: string;
+  title: string; action?: React.ReactNode; children: React.ReactNode; className?: string;
 }) {
   return (
     <section className={`flex flex-col rounded-[4px] border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
       <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: LINE }}>
         <h3 className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: INK }}>{title}</h3>
-        {action ? <span className="text-[8px] font-semibold uppercase tracking-[0.12em]" style={{ color: RED }}>{action}</span> : null}
+        {typeof action === 'string' ? <span className="text-[8px] font-semibold uppercase tracking-[0.12em]" style={{ color: RED }}>{action}</span> : action ?? null}
       </div>
       <div className="flex-1 p-3">{children}</div>
     </section>
@@ -150,7 +179,7 @@ export function InvestigationsCommand({ id, now }: { id: string; now: number }) 
   const ts = now / 4000;
   const o = policeOps(id, ts);
   const clock = new Date(now);
-  const hh = clock.toLocaleTimeString('en-GB', { hour12: false });
+  const hh = nationTime(clock);
   const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
   const day = clock.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase();
   const W = (k: string, lo: number, hi: number, n = 14) => waveSeries(`iv:${k}:${id}`, ts, n, lo, hi);
@@ -171,12 +200,20 @@ export function InvestigationsCommand({ id, now }: { id: string; now: number }) 
     ['Case Clearance Rate', `${clearance}%`, '+4.2% vs last 7 days', EMER],
   ];
 
+  // Open cases by the nation's own regions (sample shares of the active caseload).
+  const weights = o.regional.map(r => 0.3 + seed(`iv:cw:${id}:${r.region}`));
+  const wsum = weights.reduce((a, w) => a + w, 0) || 1;
+  const byRegion: CaseCluster[] = o.regional.map((r, i) => ({ region: r.region, cases: Math.round((activeCases * weights[i]!) / wsum), lvl: seed(`iv:cl:${id}:${r.region}`) }));
+  const busiest = [...byRegion].sort((a, b) => b.cases - a.cases);
+  const reg = (i: number, reference: string) => busiest[i]?.region ?? regionName(i, reference);
+  const [district, setDistrict] = React.useState<string | undefined>(undefined);
+  const caseFull = React.useRef<(() => void) | null>(null);
   const active: [string, string, string, string, string][] = [
-    ['INV-2025-1847', 'Organized Crime', 'Central District', 'CRITICAL', '12:35'],
-    ['INV-2025-1732', 'Financial Fraud', 'Eastern District', 'HIGH', '12:18'],
-    ['INV-2025-1689', 'Drug Trafficking', 'Harbor District', 'HIGH', '11:57'],
-    ['INV-2025-1542', 'Cyber Fraud', 'North District', 'MEDIUM', '11:42'],
-    ['INV-2025-1498', 'Human Trafficking', 'South District', 'LOW', '11:28'],
+    ['INV-2025-1847', 'Organized Crime', reg(0, 'Central District'), 'CRITICAL', '12:35'],
+    ['INV-2025-1732', 'Financial Fraud', reg(1, 'Eastern District'), 'HIGH', '12:18'],
+    ['INV-2025-1689', 'Drug Trafficking', reg(2, 'Harbor District'), 'HIGH', '11:57'],
+    ['INV-2025-1542', 'Cyber Fraud', reg(3, 'North District'), 'MEDIUM', '11:42'],
+    ['INV-2025-1498', 'Human Trafficking', reg(4, 'South District'), 'LOW', '11:28'],
   ];
   const invTypes: [string, number, number, string][] = [
     ['Financial Crime', 876, 31, RED], ['Violent Crime', 652, 23, AMBER], ['Cyber Crime', 498, 18, GOLD],
@@ -197,19 +234,19 @@ export function InvestigationsCommand({ id, now }: { id: string; now: number }) 
   const resource: [string, number][] = [
     ['Investigators', 78], ['Forensic Analysts', 65], ['Surveillance Teams', 82], ['Digital Forensics Lab', 71], ['Legal Officers', 69],
   ];
-  const districts: [string, number][] = [
-    ['Central District', 632], ['Eastern District', 548], ['North District', 487], ['South District', 456], ['Harbor District', 401], ['West District', 323],
-  ];
+  const districts: [string, number][] = busiest.length
+    ? (district ? busiest.filter(d => d.region === district) : busiest.slice(0, 6)).map(d => [d.region, d.cases])
+    : [[regionName(0, 'Central District'), 632], [regionName(2, 'Eastern District'), 548], [regionName(1, 'North District'), 487], [regionName(4, 'South District'), 456], ['Harbor District', 401], [regionName(3, 'West District'), 323]];
   const dMax = Math.max(...districts.map(d => d[1]));
   const updates: [string, string, string][] = [
-    ['INV-2025-1847', 'Suspect apprehended in Central District', '12:35'],
+    ['INV-2025-1847', `Suspect apprehended in ${reg(0, 'Central District')}`, '12:35'],
     ['INV-2025-1732', 'Bank records seized as evidence', '11:58'],
     ['INV-2025-1689', 'Undercover operation initiated', '11:42'],
     ['INV-2025-1542', 'Digital devices recovered', '10:47'],
     ['INV-2025-1498', 'Victim located and secured', '09:32'],
   ];
   const feed: [string, string, string][] = [
-    ['12:40', 'New lead added to INV-2025-1847 · Central District', 'CRITICAL'],
+    ['12:40', `New lead added to INV-2025-1847 · ${reg(0, 'Central District')}`, 'CRITICAL'],
     ['12:28', 'Evidence uploaded to case INV-2025-1732', 'HIGH'],
     ['12:15', 'Witness statement recorded INV-2025-1689', 'HIGH'],
     ['12:05', 'Forensic report completed INV-2025-1542', 'MEDIUM'],
@@ -230,7 +267,7 @@ export function InvestigationsCommand({ id, now }: { id: string; now: number }) 
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-6 gap-y-1 text-[8.5px]" style={{ color: MUT }}>
           <span><span style={{ color: SOFT }}>{dd}</span> · {day}</span>
-          <span>TIME <span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> GMT+1</span>
+          <span>TIME <span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> {nationTimeZoneLabel('GMT+1')}</span>
           <span className="flex items-center gap-1.5"><span className="relative inline-block">🔔<span className="absolute -right-1.5 -top-1.5 grid h-3 w-3 place-items-center rounded-full text-[6px] font-bold text-white" style={{ background: RED }}>9</span></span><span className="uppercase tracking-[0.12em]">Alerts</span></span>
           <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-1" style={{ borderColor: LINE }}>
             <span className="grid h-5 w-5 place-items-center rounded-full text-[8px] font-bold" style={{ background: RED, color: '#160a09' }}>DI</span>
@@ -253,12 +290,20 @@ export function InvestigationsCommand({ id, now }: { id: string; now: number }) 
 
       {/* ── Row 1 ──────────────────────────────────────────────── */}
       <div className="grid gap-2 xl:grid-cols-[1.5fr_1.1fr_1.1fr]">
-        <Panel title="Investigation Map" action="All Districts ▾">
-          <div className="h-[270px]"><CaseMap seedKey={`iv:cm:${id}`} /></div>
+        <Panel title="Investigation Map" action={
+          <select aria-label="Show one district" value={district ?? ''} onChange={e => setDistrict(e.currentTarget.value || undefined)}
+            className="focus-ring max-w-[11rem] cursor-pointer rounded-[2px] border px-1 py-0.5 text-[8px] font-semibold uppercase tracking-[0.12em]"
+            style={{ borderColor: LINE, color: RED, background: PANEL }}>
+            <option value="">All Districts</option>
+            {byRegion.map(r => <option key={r.region} value={r.region}>{r.region}</option>)}
+          </select>
+        }>
+          <div className="min-h-[270px]"><CaseMap seedKey={`iv:cm:${id}`} byRegion={byRegion} selected={district} onSelect={setDistrict} fullRef={caseFull} /></div>
         </Panel>
         <Panel title="Active Investigations" action="View All">
           <div className="space-y-1.5">
-            {active.map(([cid, ty, dist, sv, tm]) => (
+            {district && !active.some(a => a[2] === district) ? <p className="text-[9px]" style={{ color: MUT }}>No active investigation listed in {district}.</p> : null}
+            {active.filter(a => !district || a[2] === district).map(([cid, ty, dist, sv, tm]) => (
               <div key={cid} className="flex items-center gap-2 rounded-[3px] border px-2 py-1.5 text-[9px]" style={{ borderColor: LINE, background: PANEL2 }}>
                 <span className="grid h-6 w-6 shrink-0 place-items-center rounded-full text-[10px]" style={{ background: `color-mix(in srgb,${SEV_C[sv]} 16%,transparent)`, color: SEV_C[sv] }} aria-hidden>⌕</span>
                 <div className="min-w-0 flex-1">
@@ -348,11 +393,13 @@ export function InvestigationsCommand({ id, now }: { id: string; now: number }) 
         <Panel title="Resource Utilization" action="View All">
           <Bars rows={resource.map(([l, p]) => ({ l, v: `${p}%`, pct: p, c: p >= 75 ? EMER : p >= 60 ? GOLD : AMBER }))} />
         </Panel>
-        <Panel title="Cases by District" action="View Full Map">
+        <Panel title="Cases by District" action={
+          <button type="button" onClick={() => caseFull.current?.()} className="focus-ring text-[8px] font-semibold uppercase tracking-[0.12em] hover:underline" style={{ color: RED }}>View Full Map</button>
+        }>
           <div className="space-y-2">
             {districts.map(([l, v]) => (
               <div key={l} className="text-[9px]">
-                <div className="flex justify-between"><span style={{ color: SOFT }}>{l}</span><span className="font-mono tabular-nums" style={{ color: INK }}>{v}</span></div>
+                <div className="flex justify-between"><button type="button" onClick={() => setDistrict(district === l ? undefined : l)} className="focus-ring text-start hover:underline" style={{ color: district === l ? RED : SOFT }} title={`Show ${l} on the map`}>{l}</button><span className="font-mono tabular-nums" style={{ color: INK }}>{v}</span></div>
                 <div className="mt-0.5 h-1.5 overflow-hidden rounded-full" style={{ background: '#161c26' }}>
                   <span className="block h-full rounded-full" style={{ width: `${(v / dMax) * 100}%`, background: CYAN }} />
                 </div>

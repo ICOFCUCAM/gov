@@ -10,6 +10,14 @@
 
 import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
+import { NationMap, type MapPoint, type MapTone, type MapValue } from '@/components/map/NationMap';
+import { nationalRegions } from '@/lib/gov/regions';
+import { api } from '@/lib/api/client';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL } from '@/lib/twin/signal';
+import type { NationalCoordination, NationalSnapshot } from '@/lib/api/types';
 
 const BG = '#070b11';
 const PANEL = '#0c1119';
@@ -55,50 +63,30 @@ function Ring({ value, sub, color }: { value: number; sub: string; color: string
   );
 }
 
-// National threat map: glow clusters + connecting lines + warning markers.
-function ThreatMap({ seedKey }: { seedKey: string }) {
-  const cols = 30, rows = 13;
-  const clusters = Array.from({ length: 7 }).map((_, i) => ({
-    x: 12 + seed(`${seedKey}:cx:${i}`) * 76, y: 16 + seed(`${seedKey}:cy:${i}`) * 64,
-    r: 3 + seed(`${seedKey}:cr:${i}`) * 7, hot: seed(`${seedKey}:ch:${i}`) > 0.45,
-  }));
+// National threat map: the nation's own regions (shared map engine), shaded by
+// the regional model's security stress and carrying the incidents listed beside
+// it on the regions they name. All sample until incident records carry places
+// (map plan phase 4); hatched and marked.
+const SEVERITY_TONE: Record<string, MapTone> = { CRITICAL: 'alert', HIGH: 'warn', MEDIUM: 'neutral', LOW: 'ok' };
+function ThreatMap({ ts, incidents }: { ts: number; incidents: [string, string, string, string][] }) {
+  const epoch = Math.floor(ts) % 60;
+  const values = React.useMemo<MapValue[]>(() => nationalRegions(epoch).map(r => ({
+    key: r.name, value: r.domains.find(d => d.k === 'sec')?.v ?? r.composite, unit: 'stress index',
+  })), [epoch]);
+  const points = React.useMemo<MapPoint[]>(() => {
+    const byRegion = new Map<string, MapPoint>();
+    const rank: MapTone[] = ['ok', 'neutral', 'warn', 'alert'];
+    for (const [title, region, , sev] of incidents) {
+      const tone = SEVERITY_TONE[sev] ?? 'neutral';
+      const p = byRegion.get(region);
+      if (!p) byRegion.set(region, { key: region, label: title, tone, count: 1 });
+      else byRegion.set(region, { ...p, label: `${p.label}; ${title}`, count: (p.count ?? 1) + 1, tone: rank.indexOf(tone) > rank.indexOf(p.tone) ? tone : p.tone });
+    }
+    return [...byRegion.values()];
+  }, [incidents]);
   return (
-    <div className="relative overflow-hidden rounded-[3px]" style={{ background: 'radial-gradient(120% 90% at 50% 40%,#0d141d,#070b11)' }}>
-      <div className="grid gap-[3px] p-2" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-        {Array.from({ length: cols * rows }).map((_, i) => {
-          const v = seed(`${seedKey}:${i}`);
-          const inland = (i % cols > 2 && i % cols < cols - 2 && Math.floor(i / cols) > 0 && Math.floor(i / cols) < rows - 1);
-          return <span key={i} className="aspect-square rounded-full" style={{ background: inland ? (v > 0.93 ? RED : v > 0.86 ? '#3a4a55' : '#1c2730') : 'transparent', opacity: inland ? (v > 0.86 ? 0.9 : 0.4) : 0 }} />;
-        })}
-      </div>
-      <svg viewBox="0 0 100 80" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-        {clusters.map((c, i) => i < clusters.length - 1 ? (
-          <line key={i} x1={c.x} y1={c.y} x2={clusters[i + 1]!.x} y2={clusters[i + 1]!.y}
-            stroke={RED} strokeWidth="0.3" opacity="0.3" />
-        ) : null)}
-        {clusters.map((c, i) => (
-          <g key={`g${i}`}>
-            <circle cx={c.x} cy={c.y} r={c.r} fill={c.hot ? RED : AMBER} opacity="0.18" />
-            <circle cx={c.x} cy={c.y} r={c.r * 0.4} fill={c.hot ? RED_BR : AMBER}
-              style={{ filter: `drop-shadow(0 0 4px ${c.hot ? RED : AMBER})` }} />
-          </g>
-        ))}
-      </svg>
-      <div className="absolute right-2 top-2 flex flex-col gap-1">
-        {['⛶', '+', '−'].map(s => (
-          <span key={s} className="grid h-6 w-6 place-items-center rounded-[2px] border text-[11px]"
-            style={{ borderColor: LINE, background: PANEL, color: SOFT }} aria-hidden>{s}</span>
-        ))}
-      </div>
-      <div className="absolute bottom-2 left-2 flex flex-col gap-0.5 rounded-[2px] border px-2 py-1.5"
-        style={{ borderColor: LINE, background: 'rgba(8,11,17,0.7)' }}>
-        {[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Low', EMER], ['Monitoring', CYAN]].map(([l, c]) => (
-          <span key={l} className="flex items-center gap-1.5 text-[7.5px] uppercase tracking-wider" style={{ color: SOFT }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}
-          </span>
-        ))}
-      </div>
-    </div>
+    <NationMap title="Security stress and incidents by region" values={values} kind="sample" source={REFERENCE_MODEL}
+      valueLabel="Security stress" unit="index" points={points} pointsLabel="Incidents" maxHeight={420} />
   );
 }
 
@@ -144,7 +132,7 @@ function Panel({ title, action, children, className }: {
   return (
     <section className={`flex flex-col rounded-[4px] border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
       <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: LINE }}>
-        <h3 className="text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: INK }}>{title}</h3>
+        <h3 className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-[0.18em]" style={{ color: INK }}>{title}<SignalTag kind="sample" source={REFERENCE_MODEL} /></h3>
         {action ? <span className="text-[8.5px] font-semibold uppercase tracking-[0.12em]" style={{ color: RED }}>{action}</span> : null}
       </div>
       <div className="flex-1 p-3">{children}</div>
@@ -152,51 +140,71 @@ function Panel({ title, action, children, className }: {
   );
 }
 
+/** KPI tiles fed by the platform (posture, incidents, population, threat level); the rest are reference-model samples. */
+const FROM_PLATFORM = new Set(['National Posture', 'Active Incidents', 'Population', 'Threat Level']);
+
 export function NationalOverview() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  // National posture, incident count and population are the platform's own
+  // (the same posture as the console header); the rest of this page is the
+  // reference model until sources connect.
+  const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
+  const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
+  React.useEffect(() => {
+    const load = () => {
+      api.cabinet.national().then(setNat).catch(() => {});
+      api.cabinet.coordination().then(setCoord).catch(() => {});
+    };
+    load();
+    const t = setInterval(load, 15_000);
     return () => clearInterval(t);
   }, []);
   const id = 'NATL';
   const ts = now / 4000;
   const clock = new Date(now);
-  const hh = clock.toLocaleTimeString('en-GB', { hour12: false });
+  const hh = nationTime(clock);
   const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
   const day = clock.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase();
   const W = (k: string, lo: number, hi: number, n = 16) => waveSeries(`no:${k}:${id}`, ts, n, lo, hi);
 
   const readiness = Math.round(wave(`no:rd:${id}`, ts, 92, 99.4) * 10) / 10;
   const sysHealth = Math.round(wave(`no:sh:${id}`, ts, 96, 99.6) * 10) / 10;
-  const critical = 4 + Math.round(seed(`no:cr:${id}`) * 6);
-  const posture = critical >= 8 ? 'CRITICAL' : critical >= 5 ? 'SEVERE' : 'ELEVATED';
-  const pTone = critical >= 8 ? RED : critical >= 5 ? AMBER : GOLD;
+  const critical = nat?.crossMinistryIncidents.length ?? 0;
+  const level = coord?.posture.level ?? 'ok';
+  const posture = coord?.posture.label ?? '—';
+  const pTone = level === 'alert' ? RED : level === 'warn' ? AMBER : EMER;
+  const pop = nat?.indicators.find(i => i.label === 'Population');
+  const popValue = pop && pop.kind !== 'unavailable' ? `${pop.value}${pop.unit ? ` ${pop.unit}` : ''}` : 'Not connected';
 
   const kpis: [string, string, string, string][] = [
-    ['National Posture', posture, `Level ${critical >= 8 ? 4 : 3}`, pTone],
-    ['Active Incidents', `${critical}`, '+2 new', RED],
+    ['National Posture', posture, coord ? `risk ${coord.posture.nationalRisk}` : '', pTone],
+    ['Active Incidents', `${critical}`, 'across institutions', critical ? RED : EMER],
     ['Regions at Risk', `${14 + Math.round(seed(`no:rr:${id}`) * 12)}`, '+5', AMBER],
     ['Agencies Deployed', `${10 + Math.round(seed(`no:ad:${id}`) * 6)}`, '78% readiness', INK],
     ['Operational Readiness', `${readiness}%`, 'Optimal', EMER],
-    ['Population', `${(41 + seed(`no:pp:${id}`)).toFixed(2)}M`, '+0.38%', INK],
-    ['Threat Level', critical >= 8 ? 'SEVERE' : critical >= 5 ? 'HIGH' : 'GUARDED', '', RED],
+    ['Population', popValue, pop?.kind === 'unavailable' || !pop ? 'statistics source' : (pop.source ?? ''), INK],
+    ['Threat Level', level === 'alert' ? 'HIGH' : level === 'warn' ? 'ELEVATED' : 'GUARDED', 'from national posture', level === 'alert' ? RED : level === 'warn' ? AMBER : EMER],
     ['System Health', `${sysHealth}%`, 'All Systems', EMER],
   ];
 
   const incidents = [
-    ['Border Security Breach', 'Northern Region', '12:35', 'CRITICAL'],
-    ['Terror Threat Intelligence', 'Central Region', '11:58', 'HIGH'],
-    ['Major Traffic Collision', 'East Region', '11:42', 'HIGH'],
+    ['Border Security Breach', regionName(1, 'Northern Region'), '12:35', 'CRITICAL'],
+    ['Terror Threat Intelligence', regionName(0, 'Central Region'), '11:58', 'HIGH'],
+    ['Major Traffic Collision', regionName(2, 'East Region'), '11:42', 'HIGH'],
     ['Cyber Attack Attempt', 'National Infrastructure', '11:28', 'HIGH'],
-    ['Flood Alert', 'Coastal Region', '10:47', 'MEDIUM'],
+    ['Flood Alert', regionName(4, 'Coastal Region'), '10:47', 'MEDIUM'],
   ] as [string, string, string, string][];
 
   const alerts = [
     ['Multiple Threats Detected', 'Northern Corridor', '12:35', 'CRITICAL'],
-    ['Suspicious Activity Reported', 'West District', '12:18', 'HIGH'],
+    ['Suspicious Activity Reported', regionName(3, 'West District'), '12:18', 'HIGH'],
     ['Unusual Border Movement', 'Southern Border', '11:57', 'HIGH'],
     ['Infrastructure Vulnerability', 'Power Grid', '11:22', 'MEDIUM'],
-    ['Public Safety Warning', 'Central Region', '10:41', 'MEDIUM'],
+    ['Public Safety Warning', regionName(0, 'Central Region'), '10:41', 'MEDIUM'],
   ] as [string, string, string, string][];
 
   const incSummary: [string, string, string, string][] = [
@@ -246,7 +254,7 @@ export function NationalOverview() {
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-6 gap-y-1 text-[8.5px]" style={{ color: MUT }}>
           <span><span style={{ color: SOFT }}>{dd}</span> · {day}</span>
-          <span>TIME <span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> GMT+1</span>
+          <span>TIME <span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> {nationTimeZoneLabel('GMT+1')}</span>
           <span className="flex items-center gap-1.5">
             <span className="relative inline-block">🔔<span className="absolute -right-1.5 -top-1.5 grid h-3 w-3 place-items-center rounded-full text-[6px] font-bold text-white" style={{ background: RED }}>9</span></span>
             <span className="uppercase tracking-[0.12em]">Alerts</span>
@@ -258,12 +266,12 @@ export function NationalOverview() {
         </div>
       </div>
 
-      {/* ── National posture KPI strip ─────────────────────────── */}
+      {/* ── National status KPI strip ─────────────────────────── */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[4px] border md:grid-cols-4 xl:grid-cols-8"
         style={{ borderColor: LINE, background: LINE }}>
         {kpis.map(([l, v, s, c]) => (
           <div key={l} className="px-3 py-2.5 text-center" style={{ background: PANEL }}>
-            <div className="text-[7.5px] font-semibold uppercase tracking-[0.16em]" style={{ color: MUT }}>{l}</div>
+            <div className="flex items-center justify-center gap-1 text-[7.5px] font-semibold uppercase tracking-[0.16em]" style={{ color: MUT }}>{l}{FROM_PLATFORM.has(l) ? null : <SignalTag kind="sample" source={REFERENCE_MODEL} />}</div>
             <div className="mt-1 text-[17px] font-bold tabular-nums" style={{ color: c, fontFamily: SERIF }}>{v}</div>
             {s ? <div className="text-[8px]" style={{ color: SOFT }}>{s}</div> : <div className="h-[12px]" />}
           </div>
@@ -273,7 +281,7 @@ export function NationalOverview() {
       {/* ── Threat map + active incidents ──────────────────────── */}
       <div className="grid gap-2 xl:grid-cols-[1.7fr_1fr]">
         <Panel title="National Threat Map">
-          <div className="h-[300px]"><ThreatMap seedKey={`no:tm:${id}`} /></div>
+          <ThreatMap ts={ts} incidents={incidents} />
         </Panel>
         <Panel title="Active Incidents" action="View All">
           <div className="space-y-1.5">

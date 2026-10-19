@@ -11,6 +11,14 @@
 //     channel (subscribers see it as it happens; consumers can persist
 //     externally for an independent record).
 //
+// The platform's own chain (lib/data/store.ts) is anchored too: its head is
+// signed (lib/audit/sign.ts), written to the append-only anchor file outside
+// the state (file mode, lib/audit/anchor.ts) and, with the substrate
+// connected, broadcast as scope 'platform' with its signature. Without the
+// substrate only the platform head is anchored. With CIVICOS_TSA_URL the
+// head is first time-stamped by the nation's RFC 3161 TSA (lib/audit/tsa.ts)
+// and the token travels with it.
+//
 // Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
 // Cadence: every 5–15 minutes. Idempotent — anchoring the same head
 // produces an event with the same content, but federation events are
@@ -19,6 +27,9 @@
 
 import { NextResponse } from 'next/server';
 import { serverClient } from '@/lib/db/client';
+import { cronAuthorized } from '@/lib/platform-auth';
+import { anchorPlatformHead } from '@/lib/audit/anchor';
+import { markAnchored } from '@/lib/audit/sign';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,19 +40,38 @@ interface AnchorResult {
   anchored: boolean;
 }
 
-function authorized(req: Request): boolean {
-  const expected = process.env.CIVICOS_CRON_SECRET;
-  if (!expected) return false;
-  const url = new URL(req.url);
-  const token = url.searchParams.get('token')
-    ?? (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  return token.length > 0 && token === expected;
-}
-
 export async function GET(req: Request) {
-  if (!authorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  const platformAnchor = await anchorPlatformHead();
+  const h = platformAnchor.head;
+  const platform = h ? {
+    head_seq: h.seq, head_hash: h.hash, signed_at: h.at, key_id: h.keyId, production: h.production,
+    file: platformAnchor.file ?? null,
+    ...(platformAnchor.error ? { error: platformAnchor.error } : {}),
+    timestamp: h.timestamp ? { tsa: h.timestamp.tsa, gen_time: h.timestamp.genTime, serial: h.timestamp.serial } : h.timestampError ? { error: h.timestampError } : null,
+    anchored_to: platformAnchor.file?.written ? ['file'] : [] as string[],
+  } : null;
   const sb = serverClient();
-  if (!sb) return NextResponse.json({ error: 'substrate not configured' }, { status: 503 });
+  if (!sb) {
+    return NextResponse.json({
+      ok: true, at: new Date().toISOString(), platform,
+      substrate: 'not configured', scopes_anchored: 0, scopes_swept: 0, results: [],
+    });
+  }
+  if (h && platform && !h.pending) {
+    const published = await Promise.resolve(sb.rpc('civicos_publish_event', {
+      p_type: 'audit.anchor',
+      p_source: 'platform',
+      p_channel: 'constitutional',
+      p_payload: {
+        scope: 'platform', head_seq: h.seq, head_hash: h.hash, signed_at: h.at,
+        key_id: h.keyId, public_key: h.publicKeyPem, signature: h.signature, production: h.production,
+        ...(h.timestamp ? { tsa_token: h.timestamp.token, tsa_gen_time: h.timestamp.genTime } : {}),
+      },
+      p_target: null,
+    })).catch(e => ({ error: e as Error }));
+    if (published && !published.error) { markAnchored(h.seq, ['substrate']); platform.anchored_to.push('substrate'); }
+  }
 
   const url = new URL(req.url);
   const cap = Math.max(1, Math.min(200, Number(url.searchParams.get('scopes') ?? '50') | 0));
@@ -81,6 +111,7 @@ export async function GET(req: Request) {
   return NextResponse.json({
     ok: true,
     at: anchoredAt,
+    platform,
     scopes_anchored: results.filter(r => r.anchored).length,
     scopes_swept: results.length,
     results,

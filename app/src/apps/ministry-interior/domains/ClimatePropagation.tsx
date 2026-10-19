@@ -5,6 +5,7 @@
 
 import * as React from 'react';
 import { territorialBoard } from '@/lib/gov/territorial-continuity';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 export function ClimatePropagation({ id, now }: { id: string; now: number }) {
   void id;
@@ -41,7 +42,7 @@ export function ClimatePropagation({ id, now }: { id: string; now: number }) {
               <span className="w-16 shrink-0 text-[8px] uppercase tracking-[0.1em] text-ink-muted">water</span>
               <span className="relative h-2 w-28 shrink-0 bg-surface-2"><span className="absolute inset-y-0 left-0" style={{ width: `${r.waterAvailability}%`, background: r.waterAvailability >= 60 ? 'rgb(var(--c-ok))' : r.waterAvailability >= 40 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))' }} /></span>
               <span className="w-10 shrink-0 tabular-nums text-ink-muted">{r.waterAvailability}</span>
-              <span className="min-w-0 flex-1 text-[9px] text-ink-muted">scarcity <span className="tabular-nums" style={{ color: r.scarcityIndex > 70 ? 'rgb(var(--c-alert))' : 'rgb(var(--c-warn))' }}>{r.scarcityIndex}</span> · agri instability {r.agriculturalInstability}{r.scarcityIndex > 65 ? ' · scarcity-escalation risk' : ''}</span>
+              <span className="min-w-0 flex-1 text-[9px] text-ink-muted">scarcity <span className="tabular-nums" style={{ color: r.scarcityIndex > 70 ? 'rgb(var(--c-alert))' : 'rgb(var(--c-warn))' }}>{r.scarcityIndex}</span> <IndexTag index="territorial-continuity.ts · scarcityIndex" /> · agri instability {r.agriculturalInstability}{r.scarcityIndex > 65 ? ' · scarcity-escalation risk' : ''}</span>
             </div>
           ))}
         </div>

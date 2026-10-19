@@ -13,6 +13,7 @@ import { educationPublicInstitutions, totalEducationPublicSites } from '@/lib/go
 import { HallFrame, HallKpi, HallRule, HallBar, HallCallout, EDUCATION_DS } from '@/apps/ministry-education/design-system/education-ds';
 import { seed, wave } from '@/lib/telemetry';
 
+import { aiLabel } from '@/lib/nation/registry';
 export function SovereignLearnerTwin({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   void id;
@@ -43,8 +44,8 @@ export function AiTutorMesh({ id, now }: { id: string; now: number }) {
   void id;
   const hubs = ['Capital Hub', 'Northern Hub', 'Eastern Hub', 'Western Hub', 'Coastal Hub', 'Highland Hub', 'Polar Hub'];
   return (
-    <HallFrame archetype="knowledge" code="FT-AIT-00" title="AI Tutor Mesh"
-      subtitle="federated AI tutor hubs">
+    <HallFrame archetype="knowledge" code="FT-AIT-00" title={aiLabel('AI Tutor Mesh', 'Tutor Mesh')}
+      subtitle={aiLabel('federated AI tutor hubs', 'federated tutor hubs')}>
       <HallKpi items={[
         { label: 'Hubs online', value: hubs.length },
         { label: 'Total sessions / week (M)', value: (wave(`tm:s:${ts}`, ts, 8, 42)).toFixed(1) },

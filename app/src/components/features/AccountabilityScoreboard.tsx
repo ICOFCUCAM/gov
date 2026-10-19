@@ -4,11 +4,12 @@ import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import {
-  serviceSlaStats, appealsStats, directiveStats, consentFootprintStats,
-  type ServiceSlaStat, type AppealsStat, type DirectiveStat, type ConsentFootprintStat,
+  serviceSlaStats, appealsStats, directiveFigures, consentFootprintStats,
+  type ServiceSlaStat, type AppealsStat, type DirectiveStat, type DirectiveFigures, type ConsentFootprintStat,
 } from '@/lib/db/repos/institutions';
 import { substrateAvailable } from '@/lib/db/client';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { DirectiveSourceNote } from '@/components/features/DirectiveSourceNote';
 import { SurfaceHeading } from '@/components/ui/SurfaceHeading';
 import { buildCsv, downloadCsv } from '@/lib/csv-download';
 import { FilterChips } from '@/components/ui/FilterChips';
@@ -58,6 +59,7 @@ export function AccountabilityScoreboard() {
   const [rows, setRows] = React.useState<ScoreboardRow[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<SortKey>('open');
+  const [dirSource, setDirSource] = React.useState<DirectiveFigures['source']>(null);
   const available = substrateAvailable();
 
   React.useEffect(() => {
@@ -65,15 +67,17 @@ export function AccountabilityScoreboard() {
     setLoading(true);
     void (async () => {
       try {
-        const [sla, appeals, directives, footprint]: [
-          ServiceSlaStat[], AppealsStat[], DirectiveStat[], ConsentFootprintStat[],
+        const [sla, appeals, dirFig, footprint]: [
+          ServiceSlaStat[], AppealsStat[], DirectiveFigures, ConsentFootprintStat[],
         ] = await Promise.all([
           serviceSlaStats({ days: 90 }),
           appealsStats({ days: 90 }),
-          directiveStats({ days: 365 }),
+          // Governance output from the platform's directives register (review D8).
+          directiveFigures({ days: 365 }),
           consentFootprintStats(),
         ]);
-        setRows(mergeScoreboard(sla, appeals, directives, footprint));
+        setRows(mergeScoreboard(sla, appeals, dirFig.stats, footprint));
+        setDirSource(dirFig.source);
       } finally {
         setLoading(false);
       }
@@ -108,6 +112,7 @@ export function AccountabilityScoreboard() {
         data-access footprint current. Each metric is also broken out on the
         <Link href="/public" className="text-link underline"> Public Observatory</Link> and per-charter profiles.
       </p>
+      <DirectiveSourceNote source={dirSource} className="!pt-0" />
 
       <FilterChips label="sort:"
         options={['open','pending','in_force','consent','charter'] as const}

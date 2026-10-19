@@ -9,6 +9,7 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { nationalStabilityBoard, type StabilityTone, type StabilityPosture } from '@/lib/gov/national-stability';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const COL: Record<StabilityTone, string> = {
   ok: 'rgb(var(--c-ok))', warn: 'rgb(var(--c-warn))', alert: 'rgb(var(--c-alert))',
@@ -26,7 +27,7 @@ export function NationalStabilityCommand({ id, now }: { id: string; now: number 
         style={{ borderColor: `color-mix(in srgb,${POSTURE[b.posture]} 45%,transparent)`, background: 'rgba(0,0,0,0.3)' }}>
         <span className="text-[9px] uppercase tracking-[0.18em] text-ink-muted">National stability posture</span>
         <span className="text-[14px] font-semibold uppercase tracking-[0.12em]" style={{ color: POSTURE[b.posture] }}>{b.posture}</span>
-        <span className="text-ink-muted">stability index <span className="font-semibold tabular-nums text-ink">{b.stabilityIndex}</span></span>
+        <span className="text-ink-muted">stability index <span className="font-semibold tabular-nums text-ink">{b.stabilityIndex}</span> <IndexTag index="national-stability.ts · stabilityIndex" /></span>
         <span className="ml-auto text-[9px] text-ink-muted">alerts {b.alerts} · warns {b.warns} · eight role areas</span>
       </div>
 

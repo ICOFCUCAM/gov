@@ -6,14 +6,15 @@ import { TONE, Panel } from '@/components/features/SituationRoom';
 import { substrateAvailable } from '@/lib/db/client';
 import {
   institutionByCharterId, serviceSlaStats, serviceSlaTrend, appealsStats, appealsTrend,
-  consentFootprintStats, directiveStats, directiveTrend,
+  consentFootprintStats, directiveFigures, type DirectiveFigures,
   type ServiceSlaStat, type SlaTrendPoint, type AppealsStat, type AppealsTrendPoint,
   type ConsentFootprintStat, type DirectiveStat, type DirectiveTrendPoint,
 } from '@/lib/db/repos/institutions';
-import { listDirectivesRows } from '@/lib/db/repos/memory';
+import { listPublicDirectiveRows } from '@/lib/db/repos/memory';
 import { downloadJson } from '@/lib/csv-download';
 import type { InstitutionRow, DirectiveRow } from '@/lib/db/types';
 import { SubstrateNotConfigured } from '@/components/ui/SubstrateEmpty';
+import { DirectiveSourceNote } from '@/components/features/DirectiveSourceNote';
 
 const PUBLIC_STATUSES = ['signed', 'effective', 'rescinded', 'published'];
 
@@ -22,9 +23,12 @@ const PUBLIC_STATUSES = ['signed', 'effective', 'rescinded', 'published'];
  *
  * Combines what an anonymous visitor can see about one charter: its
  * registry entry, its service-delivery SLAs + decision-time trend, its
- * appeals pipeline, and the public directives it has issued. All figures
- * come from the aggregate, anon-callable Observatory RPCs scoped to this
- * charter — no row-level citizen data is ever fetched.
+ * appeals pipeline, and the public directives it has issued. Service,
+ * appeals and consent figures come from the aggregate, anon-callable
+ * Observatory RPCs scoped to this charter — no row-level citizen data is ever
+ * fetched. The registry entry, the directives and the governance-output
+ * figures come from the platform, which owns those registers (architecture
+ * review D8), and say so.
  */
 export function CharterProfile({ charterId }: { charterId: string }) {
   const [inst, setInst] = React.useState<InstitutionRow | null>(null);
@@ -35,6 +39,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
   const [footprint, setFootprint] = React.useState<ConsentFootprintStat[]>([]);
   const [dirStat, setDirStat] = React.useState<DirectiveStat | null>(null);
   const [dirTrend, setDirTrend] = React.useState<DirectiveTrendPoint[]>([]);
+  const [dirSource, setDirSource] = React.useState<DirectiveFigures['source']>(null);
   const [directives, setDirectives] = React.useState<DirectiveRow[]>([]);
   const [loading, setLoading] = React.useState(true);
   const available = substrateAvailable();
@@ -44,16 +49,15 @@ export function CharterProfile({ charterId }: { charterId: string }) {
     setLoading(true);
     void (async () => {
       try {
-        const [i, s, t, a, at, fp, dst, dtr, ds] = await Promise.all([
+        const [i, s, t, a, at, fp, dirFig, ds] = await Promise.all([
           institutionByCharterId(charterId),
           serviceSlaStats({ charterId, days: 90 }),
           serviceSlaTrend({ charterId, weeks: 12 }),
           appealsStats({ charterId, days: 90 }),
           appealsTrend({ charterId, weeks: 12 }),
           consentFootprintStats({ charterId }),
-          directiveStats({ charterId, days: 365 }),
-          directiveTrend({ charterId, weeks: 12 }),
-          listDirectivesRows({ issuer: charterId, limit: 25 }),
+          directiveFigures({ charterId, days: 365, weeks: 12 }),
+          listPublicDirectiveRows({ issuer: charterId, limit: 25 }),
         ]);
         setInst(i);
         setSla(s[0] ?? null);
@@ -61,8 +65,9 @@ export function CharterProfile({ charterId }: { charterId: string }) {
         setAppeals(a[0] ?? null);
         setAppealTrend(at);
         setFootprint(fp);
-        setDirStat(dst[0] ?? null);
-        setDirTrend(dtr);
+        setDirStat(dirFig.stats[0] ?? null);
+        setDirTrend(dirFig.trend);
+        setDirSource(dirFig.source);
         setDirectives(ds.filter(d => PUBLIC_STATUSES.includes(d.status)));
       } finally {
         setLoading(false);
@@ -109,6 +114,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
               consent_footprint: footprint,
               directive_stats: dirStat,
               directive_trend: dirTrend,
+              directive_source: dirSource,
               public_directives: directives,
             }, { dated: false })}
             className="focus-ring shrink-0 rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
@@ -217,6 +223,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
             <Stat label="rescinded" value={String(dirStat.rescinded)} tone={dirStat.rescinded > 0 ? TONE.warn : undefined} />
             <Stat label="sign→effect" value={dirStat.medianSignToEffectiveDays == null ? '—' : `${dirStat.medianSignToEffectiveDays}d`} />
           </div>
+          <DirectiveSourceNote source={dirSource} />
         </Panel>
       ) : null}
 
@@ -234,6 +241,7 @@ export function CharterProfile({ charterId }: { charterId: string }) {
               </div>
             ))}
             <p className="pt-1 text-[8.5px] uppercase tracking-wider text-ink-muted">signed-week · signed (bar) · since-effective</p>
+            <DirectiveSourceNote source={dirSource} />
           </div>
         </Panel>
       ) : null}

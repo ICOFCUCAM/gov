@@ -20,12 +20,13 @@ Project: **civicos** (eu-central-1, `gtgpbokcbngchvoijish`).
 
 ## Scheduling
 
-The 11 `/api/cron/*` worker endpoints are driven in-database by **pg_cron +
+The 12 `/api/cron/*` worker endpoints are driven in-database by **pg_cron +
 pg_net** (the free path — no Vercel Pro needed). Postgres calls the deployed
 Next.js routes on a timer, authenticating with a Bearer token read at run time
 from Supabase Vault (`civicos_cron_secret`, seeded once by an operator to match
 the app's `CIVICOS_CRON_SECRET`). The full re-runnable schedule lives in
-[`cron/schedule.sql`](cron/schedule.sql); cadences range from every 5 min
+[`cron/schedule.sql`](cron/schedule.sql); cadences range from every minute
+(`update-watchdog`, which concludes Update Center probations) and every 5 min
 (`deliver-events`) to hourly (SLA, consent expiry, directive promotion, etc.).
 
 ## Migrations
@@ -123,6 +124,7 @@ intentional `CREATE OR REPLACE FUNCTION` updates.
 | `20260521840000_civicos_charter_attention_workitems.sql` | Extends `charter_attention` with a fifth arm — open work items originating from the charter with no update in 72h (`workitem_stalled` → action: progress) — so silent stalled workflow items surface alongside the other backlogs. Other arms unchanged. |
 | `20260521850000_civicos_federation_edges.sql` | **Phase C.** Persists the cross-ministry dependency graph (archetype-level, matching `institutions.archetype_or_branch`) that previously lived only in TS config, so SQL can resolve a charter's real dependents. Seeded to mirror the declared graph; `list_federation_edges(archetype)` exposes the topology (anon-readable; table RLS-locked). |
 | `20260521860000_civicos_escalation_cascade.sql` | **Phase C — the organism reacts.** AFTER-INSERT trigger on `escalations`: a `major`/`national` escalation against a registered institution emits an `escalation.cascade` federation event (on the `escalation` channel, targeted at each dependent charter) along every `provides`/`mutual` edge — the institutions that lose something when the source is impaired. Additive and bounded: publishes events only, never opens escalations (no recursion, no operational blast radius). Surfaced as "Cross-ministry cascades" on the Escalation Floor. |
+| `20261022000000_civicos_substrate_mirror.sql` | **One owner per register (architecture review D8).** The platform owns directives and institutions; `civicos.directives` and `civicos.institutions` become mirrors of it. Adds `mirror_directive(jsonb)` and `mirror_institution(…)` (copy the platform's record as it stands, service role only; written by the app's `lib/db/mirror.ts` after each change and re-copied hourly by `/api/cron/promote-directives`) and withdraws EXECUTE on `record/sign/rescind_directive` and `register/activate_institution` from `anon` and `authenticated` (nothing dropped; `promote_due_directives` is no longer called by the app). Checked by `tests/substrate_mirror_test.sql`. |
 
 ### Advisor posture after hardening
 

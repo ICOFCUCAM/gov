@@ -89,8 +89,8 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
   if (s.fragility === 'cascading' && s.worstNode) {
     const n = s.worstNode;
     push('contagion-contain', 'critical', s.amplification * 2,
-      `Contain fabric contagion — ${n.name}`,
-      `Resilience cascading (−${s.amplification} systemic drag); ${n.name} effective resilience ${n.effective}.`,
+      `Stop problems spreading from ${n.name}`,
+      `Resilience falling across connected institutions (−${s.amplification}); ${n.name} resilience now ${n.effective}.`,
       n.id,
       { scope: `${n.id}:command`, kind: 'incident', title: `Dependency-isolation directive — ${n.name}` },
       { key: 'amplification', label: 'Systemic resilience drag', baseline: s.amplification, goal: 'lower' });
@@ -100,7 +100,7 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
   if (s.treasuryOperational < 55) {
     push('treasury-liquidity', 'critical', 55 - s.treasuryOperational,
       'Inject sovereign liquidity — Treasury',
-      `Treasury operational ${s.treasuryOperational}; procurement gated across the federation.`,
+      `Treasury operational ${s.treasuryOperational}; procurement held across government.`,
       'treasury',
       { scope: 'treasury:command', kind: 'procurement', title: 'Emergency liquidity authorisation' },
       { key: 'treasuryOperational', label: 'Treasury operational', baseline: s.treasuryOperational, goal: 'raise' });
@@ -148,7 +148,7 @@ export function strategicDecisions(s: StrategicSignals): StrategicDecision[] {
     const dom = s.chainWorstTarget.toLowerCase().split(' ')[0]!;
     push('chain-relieve', 'priority', s.systemicDrag,
       `Relieve execution constraint — ${s.chainWorstTarget}`,
-      `${s.chainConstraints} active constraint(s); systemic drag ${s.systemicDrag} on ${s.chainWorstTarget}.`,
+      `${s.chainConstraints} active constraint(s); strain ${s.systemicDrag} on ${s.chainWorstTarget}.`,
       dom,
       { scope: `${dom}:command`, kind: 'approval', title: `Constraint-relief directive — ${s.chainWorstTarget}` },
       { key: 'systemicDrag', label: 'Cross-institution drag', baseline: s.systemicDrag, goal: 'lower' });

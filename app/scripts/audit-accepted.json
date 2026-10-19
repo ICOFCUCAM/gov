@@ -1,0 +1,4 @@
+{
+  "_about": "High and critical advisories in production dependencies that CI (scripts/audit-deps.mjs) accepts for now, each with why it does not reach this platform or how it is mitigated, and the date by which it must be reviewed again. A new advisory, or one past its review date, fails CI. The Next.js 14 advisories accepted earlier were closed by the move to Next.js 15.5 and React 19 (docs/INTEGRATION_REGISTER.md 17.9).",
+  "accepted": []
+}

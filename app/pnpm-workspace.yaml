@@ -1,3 +1,24 @@
+# Dependencies allowed to run their install scripts. Both need them:
+# esbuild (used by Vite and Vitest) fetches its platform binary, and
+# unrs-resolver (ESLint's import resolver) its native binding.
+# allowBuilds is read by pnpm 11+, onlyBuiltDependencies by pnpm 10.
 allowBuilds:
-  esbuild: set this to true or false
-  unrs-resolver: set this to true or false
+  esbuild: true
+  unrs-resolver: true
+onlyBuiltDependencies:
+  - esbuild
+  - unrs-resolver
+
+# Patched versions of packages Next.js pins below their security fixes
+# (dependency audit in CI, scripts/audit-deps.mjs): PostCSS path traversal and
+# file read, nanoid and source-map-js denial of service. PostCSS is pinned to
+# an exact release, so a fresh resolution never picks one younger than
+# minimumReleaseAge.
+overrides:
+  "next>postcss": "8.5.30"
+  "nanoid@<3.3.18": "^3.3.18"
+  "source-map-js@<1.2.2": "^1.2.2"
+
+# Refuse package versions published less than a day ago (minutes), as CI's
+# pnpm does; a lockfile that passes here then passes there.
+minimumReleaseAge: 1440

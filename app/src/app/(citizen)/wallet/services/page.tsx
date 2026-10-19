@@ -3,44 +3,55 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { PhoneShell } from '@/components/ui/PhoneShell';
+import { nationMessages } from '@/lib/nation/registry';
+import { t as fill, type Messages } from '@/lib/i18n';
 
 type Svc = { label: string; href: string };
-const lifeSituations: { title: string; sub: string; services: Svc[] }[] = [
-  { title: 'Having a child', sub: 'birth registration, child grant, vaccinations', services: [
-    { label: 'Register a birth', href: '/wallet/identity' },
-    { label: 'Apply for child grant', href: '/wallet/permits' },
-    { label: 'Book vaccinations', href: '/wallet/inbox' },
+// In the nation's language (lib/i18n); links are unchanged.
+const lifeSituationsFor = (t: Messages['services']): { title: string; sub: string; services: Svc[] }[] => [
+  { title: t.childTitle, sub: t.childSub, services: [
+    { label: t.registerBirth, href: '/wallet/identity' },
+    { label: t.applyChildGrant, href: '/wallet/permits' },
+    { label: t.bookVaccinations, href: '/wallet/inbox' },
   ] },
-  { title: 'Going to school', sub: 'enrollment, transfer, feeding', services: [
-    { label: 'School enrolment', href: '/wallet/permits' },
-    { label: 'Request a transfer', href: '/wallet/inbox' },
+  { title: t.schoolTitle, sub: t.schoolSub, services: [
+    { label: t.schoolEnrolment, href: '/wallet/permits' },
+    { label: t.requestTransfer, href: '/wallet/inbox' },
   ] },
-  { title: 'Lost a family member', sub: 'death registration, estate, support', services: [
-    { label: 'Register a death', href: '/wallet/identity' },
-    { label: 'Bereavement support', href: '/wallet/inbox' },
+  { title: t.lossTitle, sub: t.lossSub, services: [
+    { label: t.registerDeath, href: '/wallet/identity' },
+    { label: t.bereavementSupport, href: '/wallet/inbox' },
   ] },
-  { title: 'Starting a business', sub: 'permits, registration, tax', services: [
-    { label: 'Apply for a permit', href: '/wallet/permits' },
-    { label: 'Tax registration', href: '/wallet/payments' },
+  { title: t.businessTitle, sub: t.businessSub, services: [
+    { label: t.applyPermit, href: '/wallet/permits' },
+    { label: t.taxRegistration, href: '/wallet/payments' },
   ] },
-  { title: 'Moving house', sub: 'address change, utilities', services: [
-    { label: 'Change of address', href: '/wallet/identity' },
-    { label: 'Transfer utilities', href: '/wallet/payments' },
+  { title: t.movingTitle, sub: t.movingSub, services: [
+    { label: t.changeAddress, href: '/wallet/identity' },
+    { label: t.transferUtilities, href: '/wallet/payments' },
   ] },
-  { title: 'Older adult support', sub: 'pension, healthcare, accommodations', services: [
-    { label: 'Pension services', href: '/wallet/payments' },
-    { label: 'Healthcare access', href: '/wallet/inbox' },
+  { title: t.olderTitle, sub: t.olderSub, services: [
+    { label: t.pensionServices, href: '/wallet/payments' },
+    { label: t.healthcareAccess, href: '/wallet/inbox' },
   ] },
 ];
 
-const ministries = ['Health', 'Education', 'Social protection', 'Tax and revenue', 'Land and property', 'Justice and legal aid'];
+// The link keeps the ministry's English key; the label is in the nation's language.
+const ministriesFor = (t: Messages['services']): { key: string; label: string }[] => [
+  { key: 'Health', label: t.health }, { key: 'Education', label: t.education },
+  { key: 'Social protection', label: t.socialProtection }, { key: 'Tax and revenue', label: t.taxRevenue },
+  { key: 'Land and property', label: t.landProperty }, { key: 'Justice and legal aid', label: t.justice },
+];
 
 export default function ServicesPage() {
+  const m = nationMessages();
+  const lifeSituations = lifeSituationsFor(m.services);
+  const ministries = ministriesFor(m.services);
   const [q, setQ] = React.useState('');
   const [open, setOpen] = React.useState<string | null>(null);
   const norm = q.trim().toLowerCase();
   const life = lifeSituations.filter(s => !norm || s.title.toLowerCase().includes(norm) || s.sub.toLowerCase().includes(norm) || s.services.some(v => v.label.toLowerCase().includes(norm)));
-  const mins = ministries.filter(m => !norm || m.toLowerCase().includes(norm));
+  const mins = ministries.filter(x => !norm || x.label.toLowerCase().includes(norm));
 
   return (
     <main className="bg-bg min-h-screen">
@@ -48,27 +59,27 @@ export default function ServicesPage() {
         activeTab="/wallet/services"
         header={
           <>
-            <Link href="/wallet" className="underline underline-offset-2">← Home</Link>
-            <strong>Services</strong>
+            <Link href="/wallet" className="underline underline-offset-2">← {m.common.home}</Link>
+            <strong>{m.common.services}</strong>
             <span />
           </>
         }
       >
         <div>
-          <label htmlFor="q" className="sr-only">Search services</label>
+          <label htmlFor="q" className="sr-only">{m.services.search}</label>
           <input
             id="q"
             type="text"
             value={q}
             onChange={e => setQ(e.target.value)}
-            placeholder="What do you need?"
+            placeholder={m.services.placeholder}
             className="w-full min-h-tap p-3 border border-line rounded-sm bg-surface"
           />
         </div>
 
         <section>
-          <h3 className="font-semibold text-lg mb-2">Life situations</h3>
-          {life.length === 0 ? <p className="text-sm text-ink-muted">No matching services.</p> : null}
+          <h3 className="font-semibold text-lg mb-2">{m.services.lifeSituations}</h3>
+          {life.length === 0 ? <p className="text-sm text-ink-muted">{m.services.noMatch}</p> : null}
           <div className="grid grid-cols-2 gap-2">
             {life.map(s => (
               <button
@@ -100,18 +111,18 @@ export default function ServicesPage() {
         <hr className="border-line" />
 
         <section>
-          <h3 className="font-semibold text-lg mb-2">By ministry</h3>
+          <h3 className="font-semibold text-lg mb-2">{m.services.byMinistry}</h3>
           <ul className="space-y-2">
-            {mins.map(m => (
-              <li key={m}>
-                <Link href={`/wallet/inbox?ministry=${encodeURIComponent(m)}`} className="text-link underline underline-offset-2">
-                  {m}
+            {mins.map(x => (
+              <li key={x.key}>
+                <Link href={`/wallet/inbox?ministry=${encodeURIComponent(x.key)}`} className="text-link underline underline-offset-2">
+                  {x.label}
                 </Link>
               </li>
             ))}
             <li>
               <Link href="/wallet/inbox" className="text-link underline underline-offset-2">
-                All ministries (124)
+                {fill(m.services.allMinistries, { count: 124 })}
               </Link>
             </li>
           </ul>
@@ -120,16 +131,16 @@ export default function ServicesPage() {
         <hr className="border-line" />
 
         <section>
-          <h3 className="font-semibold text-lg mb-2">In progress</h3>
+          <h3 className="font-semibold text-lg mb-2">{m.services.inProgress}</h3>
           <ul className="space-y-2">
             <li>
               <Link href="/wallet/permits" className="text-link underline underline-offset-2">
-                Child grant renewal — under review
+                {m.services.progressGrant}
               </Link>
             </li>
             <li>
               <Link href="/wallet/inbox" className="text-link underline underline-offset-2">
-                School transfer — waiting on the new school
+                {m.services.progressTransfer}
               </Link>
             </li>
           </ul>

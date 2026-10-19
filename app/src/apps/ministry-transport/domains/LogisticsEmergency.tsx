@@ -175,7 +175,7 @@ export function EvacuationCorridors({ id, now }: { id: string; now: number }) {
       <CorridorRule label="evacuation lanes" />
       {ext.emergency.evacuationCorridors.length === 0 ? (
         <p className="text-[10.5px] italic" style={{ color: TRANSPORT_DS.mut }}>
-          No active evacuation corridors. National posture: nominal.
+          No active evacuation corridors. National status: nominal.
         </p>
       ) : ext.emergency.evacuationCorridors.map(c => (
         <div key={c.id} className="grid grid-cols-[110px_180px_140px_100px_120px] gap-3 border-b py-1.5 text-[11px]"

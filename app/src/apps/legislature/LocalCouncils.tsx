@@ -9,6 +9,7 @@
 import * as React from 'react';
 import { legislativeState } from '@/lib/gov/legislative-engine';
 import { wave } from '@/lib/telemetry';
+import { formatMoney } from '@/lib/nation/registry';
 
 const BG = '#f5f6fb';
 const CARD = '#ffffff';
@@ -129,20 +130,20 @@ export function LocalCouncils({ id, now }: { id: string; now: number }) {
   ];
 
   const projects: [string, string, string, string, number, string, string][] = [
-    ['Central Park Renovation', 'Ward 3', 'Parks & Recreation', '$2.45M', 65, 'In Progress', GREEN],
-    ['Water Pipeline Extension', 'Ward 7', 'Water & Sanitation', '$1.80M', 40, 'In Progress', BLUE],
-    ['Community Health Center', 'Ward 5', 'Health', '$3.20M', 78, 'In Progress', TEAL],
-    ['Street Lighting Expansion', 'Ward 8', 'Infrastructure', '$950K', 55, 'In Progress', AMBER],
-    ['Youth Skills Development', 'Ward 2', 'Education & Youth', '$620K', 25, 'Planning', PURPLE],
+    ['Central Park Renovation', 'Ward 3', 'Parks & Recreation', formatMoney(2.45e6), 65, 'In Progress', GREEN],
+    ['Water Pipeline Extension', 'Ward 7', 'Water & Sanitation', formatMoney(1.80e6), 40, 'In Progress', BLUE],
+    ['Community Health Center', 'Ward 5', 'Health', formatMoney(3.20e6), 78, 'In Progress', TEAL],
+    ['Street Lighting Expansion', 'Ward 8', 'Infrastructure', formatMoney(950e3), 55, 'In Progress', AMBER],
+    ['Youth Skills Development', 'Ward 2', 'Education & Youth', formatMoney(620e3), 25, 'Planning', PURPLE],
   ];
 
   const budget = [
-    { label: 'Infrastructure', v: 34.4, amt: '$8.45M', c: PURPLE },
-    { label: 'Education', v: 18.8, amt: '$4.62M', c: BLUE },
-    { label: 'Health', v: 15.4, amt: '$3.76M', c: PINK },
-    { label: 'Water & Sanitation', v: 11.8, amt: '$2.91M', c: TEAL },
-    { label: 'Public Safety', v: 10.1, amt: '$2.48M', c: AMBER },
-    { label: 'Other Services', v: 9.5, amt: '$2.34M', c: '#9aa3b5' },
+    { label: 'Infrastructure', v: 34.4, amt: formatMoney(8.45e6), c: PURPLE },
+    { label: 'Education', v: 18.8, amt: formatMoney(4.62e6), c: BLUE },
+    { label: 'Health', v: 15.4, amt: formatMoney(3.76e6), c: PINK },
+    { label: 'Water & Sanitation', v: 11.8, amt: formatMoney(2.91e6), c: TEAL },
+    { label: 'Public Safety', v: 10.1, amt: formatMoney(2.48e6), c: AMBER },
+    { label: 'Other Services', v: 9.5, amt: formatMoney(2.34e6), c: '#9aa3b5' },
   ];
 
   const voice: [string, string, string, string, number, string][] = [
@@ -263,15 +264,15 @@ export function LocalCouncils({ id, now }: { id: string; now: number }) {
           <div className="mt-2.5 text-[10px] font-medium" style={{ color: PURPLE }}>View All Projects &amp; Programs →</div>
         </Card>
         <Card title="Budget Overview" sub="FY 2025" action="View Details">
-          <Donut top="$24.58M" sub="Total Budget" segs={budget} />
+          <Donut top={formatMoney(24.58e6)} sub="Total Budget" segs={budget} />
           <div className="mt-3 grid grid-cols-2 gap-2.5">
             <div className="rounded-lg border p-2.5" style={{ borderColor: LINE, background: `color-mix(in srgb,${GREEN} 5%,#fff)` }}>
-              <div className="text-[15px] font-bold" style={{ color: GREEN }}>$16.81M</div>
+              <div className="text-[15px] font-bold" style={{ color: GREEN }}>{formatMoney(16.81e6)}</div>
               <div className="text-[9px]" style={{ color: SOFT }}>Total Expenditure</div>
               <div className="text-[8.5px]" style={{ color: MUT }}>68.4% Utilized</div>
             </div>
             <div className="rounded-lg border p-2.5" style={{ borderColor: LINE, background: `color-mix(in srgb,${BLUE} 5%,#fff)` }}>
-              <div className="text-[15px] font-bold" style={{ color: BLUE }}>$7.77M</div>
+              <div className="text-[15px] font-bold" style={{ color: BLUE }}>{formatMoney(7.77e6)}</div>
               <div className="text-[9px]" style={{ color: SOFT }}>Remaining Budget</div>
               <div className="text-[8.5px]" style={{ color: MUT }}>31.6% Available</div>
             </div>

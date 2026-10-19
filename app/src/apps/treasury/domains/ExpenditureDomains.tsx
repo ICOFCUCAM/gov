@@ -14,7 +14,7 @@ export function DisbursementVouchers({ id, now }: { id: string; now: number }) {
   const fy = String(new Date(now).getFullYear());
   void id; void ts;
   return (
-    <LedgerFrame archetype="voucher" ref="EX-DSB-01" title="Disbursement Vouchers" subtitle="live voucher register" fiscalYear={fy}>
+    <LedgerFrame archetype="voucher" code="EX-DSB-01" title="Disbursement Vouchers" subtitle="live voucher register" fiscalYear={fy}>
       <KpiStrip items={[
         { label: 'Vouchers in flight', value: chains.length, tone: TREASURY_DS.brass },
         { label: 'Released', value: released.length, tone: TREASURY_DS.surplus },
@@ -25,7 +25,7 @@ export function DisbursementVouchers({ id, now }: { id: string; now: number }) {
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
         {chains.map(c => (
           <VoucherStamp key={c.id}
-            ref={`VR-${fy}-${c.id.replace(/[^0-9]/g, '').slice(-4) || '0000'}`}
+            voucher={`VR-${fy}-${c.id.replace(/[^0-9]/g, '').slice(-4) || '0000'}`}
             party="Treasury"
             counterparty={c.ministry}
             amount={`${(c.amountM / 1000).toFixed(2)} Bn`}

@@ -7,6 +7,7 @@
 
 import * as React from 'react';
 import { workforceContinuityBoard, type AgeCohort, type SkillsPipeline } from '@/lib/gov/workforce-continuity';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const CIVIC = '#2e6aa6';
 const TEAL = '#3a8a82';
@@ -78,13 +79,13 @@ export function DemographicLaborAnalytics({ id, now }: { id: string; now: number
           </div>
           <div className="grid grid-cols-4 gap-3 text-center" style={{ minWidth: '520px' }}>
             {[
-              { l: 'Aging idx', v: d.agingIndex, c: d.agingIndex >= 22 ? COPPER : d.agingIndex >= 15 ? AMBER : TEAL },
+              { l: 'Aging idx', tag: <IndexTag index="workforce-continuity.ts · agingIndex" />, v: d.agingIndex, c: d.agingIndex >= 22 ? COPPER : d.agingIndex >= 15 ? AMBER : TEAL },
               { l: 'Dependency', v: d.dependencyRatio, c: d.dependencyRatio >= 70 ? COPPER : CIVIC },
               { l: 'Skills gap', v: d.skillsMismatchIdx, c: d.skillsMismatchIdx >= 50 ? COPPER : AMBER },
               { l: 'Sustainability', v: d.longHorizonSustainabilityIdx, c: d.longHorizonSustainabilityIdx >= 70 ? TEAL : SLATE },
             ].map(x => (
               <div key={x.l} className="rounded-md px-3 py-2.5" style={{ background: PANEL2 }}>
-                <div className="text-[8.5px] uppercase tracking-[0.24em]" style={{ color: MUT }}>{x.l}</div>
+                <div className="text-[8.5px] uppercase tracking-[0.24em]" style={{ color: MUT }}>{x.l}{x.tag ? <> {x.tag}</> : null}</div>
                 <div className="mt-1 tabular-nums text-[16px]" style={{ color: x.c }}>{x.v}</div>
               </div>
             ))}

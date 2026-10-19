@@ -27,11 +27,37 @@ assertion aborts with a non-zero exit (CI-friendly). A clean run prints the
 Some suites exercise `is_service_context()`-gated RPCs (webhook delivery);
 run those with the service-role / migration connection.
 
+### On a plain Postgres (CI, or locally without Supabase)
+
+`migrate.sh` prepares an **empty throwaway** database: it applies
+`supabase-stubs.sql` (stand-ins for what a Supabase project provides — the
+`anon` / `authenticated` / `service_role` / `authenticator` roles,
+`extensions.pgcrypto`, `auth.users`, `auth.uid()` / `auth.role()` /
+`auth.jwt()`, the `supabase_realtime` publication) and then every migration in
+order. Never run it against a Supabase project.
+
+```sh
+# from app/: a throwaway cluster (see scripts/test-postgres.sh)
+eval "$(PG_PORT=55481 scripts/test-postgres.sh start)"
+DATABASE_URL=$TEST_DATABASE_URL bash supabase/tests/migrate.sh
+DATABASE_URL=$TEST_DATABASE_URL bash supabase/tests/run.sh
+scripts/test-postgres.sh stop "$PG_TEST_DIR"
+```
+
+CI does the same with a `postgres:16` service container (job *substrate SQL
+suite*), and also runs the suites against `SUBSTRATE_TEST_DATABASE_URL` when
+that secret is set.
+
+Suites must not depend on the day or timezone they run in: fixtures for the
+weekly trends anchor to `date_trunc('week', now())` (never `now() - n days`,
+which crosses into last week early in the week), and counts that the seeded
+data could change are scoped to the suite's own rows.
+
 ## Coverage
 
 | File | What it pins |
 |------|--------------|
-| `federation_cascade_test.sql` | The escalation cascade trigger (Phase C): a major/national escalation against a registered institution emits `escalation.cascade` federation events to dependents along provides/mutual edges only (never consumes); minor severity and escalations against non-institution charters do not cascade. |
+| `federation_cascade_test.sql` | The escalation cascade trigger (Phase C): a major/national escalation against a registered institution emits `escalation.cascade` federation events to dependents along provides/mutual edges only (never consumes); minor severity and escalations against non-institution charters do not cascade. The fan-out is by archetype, so the total is pinned to the activated TRANSPORT + GENERIC institutions, including the seeded registry. |
 | `incident_loop_test.sql` | The two auto-resolve triggers: a dispatch / work-item close resolves (and acknowledges) its linked escalation, and leaves unlinked escalations untouched. |
 | `webhook_delivery_test.sql` | Circuit breaker trips at 10 consecutive failures and clears on a successful delivery; the delivery log is trimmed to the last 50 per webhook; secret rotation rejects `< 8` chars and preserves the cursor. |
 | `accountability_stats_test.sql` | The published aggregate arithmetic — `service_sla_stats` (counts incl. cancelled, open excludes cancelled, median turnaround, rated count, avg satisfaction), `appeals_stats` (counts incl. withdrawn, pending excludes withdrawn, median days-to-decision), `appeals_trend` (weekly decided buckets + median decision days, fixed same-week dataset), `consent_footprint_stats` (per-scope active / expiring-30d / revoked, distinct-citizen dataset), `directive_stats` (signed / effective / in-force / rescinded + median signed→effective lag), and `directive_trend` (weekly signed buckets + since-effective + median lag) — over a fixed fabricated dataset. |

@@ -8,7 +8,7 @@ export default async function DispatchPage({ params }: { params: Promise<{ ref: 
   const { ref } = await params;
   return (
     <CommandShell active="dispatches">
-      <DispatchDetail ref={decodeURIComponent(ref)} />
+      <DispatchDetail recordRef={decodeURIComponent(ref)} />
     </CommandShell>
   );
 }

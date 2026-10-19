@@ -7,6 +7,7 @@
 
 import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type { AuditEntryRow, AuditWitnessRow } from '@/lib/db/types';
+import { logger } from '@/lib/ops/log';
 
 export interface AuditEntry {
   seq: number;
@@ -45,7 +46,7 @@ export async function appendAuditRow(
   });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error('[civicos] append_audit RPC failed:', error.message, error.code, error.details, error.hint);
+    logger.error('substrate.rpc_failed', { rpc: 'append_audit', message: error.message, code: error.code, details: error.details, hint: error.hint });
     return null;
   }
   if (!data) return null;

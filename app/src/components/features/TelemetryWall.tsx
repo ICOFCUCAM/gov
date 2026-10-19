@@ -226,11 +226,15 @@ export function TelemetryWall() {
         )}
       </Panel>
 
-      <p className="text-[10px] text-ink-muted">
-        Streams are defined via define_telemetry_stream (idempotent on stream_id).
-        Samples flow through record_telemetry_sample; the underlying table is
-        append-only — UPDATE and DELETE are blocked at the trigger level.
-      </p>
+      <p className="text-[12px] text-ink-soft">Readings arrive automatically from equipment and systems. Once recorded, a reading cannot be changed or deleted.</p>
+      <details className="text-[10px] text-ink-muted">
+        <summary className="cursor-pointer">Technical details</summary>
+        <p className="text-[10px] text-ink-muted">
+          Streams are defined via define_telemetry_stream (idempotent on stream_id).
+          Samples flow through record_telemetry_sample; the underlying table is
+          append-only — UPDATE and DELETE are blocked at the trigger level.
+        </p>
+      </details>
     </div>
   );
 }

@@ -7,11 +7,6 @@
 // is hardcoded into the shell. Pure runtime singleton.
 
 import { publish, subscribe as busSubscribe } from '@/services/event-bus';
-import {
-  registerInstitutionRow,
-  activateInstitutionRow,
-  substrateAvailable,
-} from '@/lib/db/repos/institutions';
 
 export interface AppNavSection { key: string; label: string }
 export interface AppManifest {
@@ -57,19 +52,10 @@ export function registerApp(manifest: AppManifest): RegisteredApp {
   publish('app.registered', 'orchestration-engine', { id: manifest.id, domain: manifest.domain });
   emit();
 
-  // Mirror to substrate. Charter id = federation id (one institution per
-  // sovereign domain); instance variance lives in meta. Calls are
-  // idempotent at the DB level via ON CONFLICT(charter_id) DO UPDATE.
-  if (substrateAvailable()) {
-    void registerInstitutionRow({
-      charterId: manifest.id,
-      label: manifest.label,
-      kind: manifest.kind,
-      domain: manifest.domain,
-      archetypeOrBranch: manifest.archetypeOrBranch,
-      meta: manifest.instanceId ? { instanceId: manifest.instanceId } : {},
-    }).catch(() => { /* best-effort */ });
-  }
+  // The substrate's charter rows (civicos.institutions) are a mirror of the
+  // platform's ministry registry, written by the server after each registry
+  // change (lib/db/mirror.ts, architecture review D8); this browser-side
+  // registry no longer writes them.
 
   return app;
 }
@@ -82,9 +68,6 @@ export function activateApp(id: string, instanceId?: string): void {
   publish('app.activated', 'orchestration-engine', { id, domain: app.domain });
   emit();
 
-  if (substrateAvailable()) {
-    void activateInstitutionRow(id).catch(() => { /* best-effort */ });
-  }
 }
 
 export function deactivateApp(id: string, instanceId?: string): void {

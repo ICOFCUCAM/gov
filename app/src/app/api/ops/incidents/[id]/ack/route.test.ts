@@ -15,7 +15,7 @@ describe('POST /api/ops/incidents/[id]/ack', () => {
     const res = await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({ by: 'NOC' }),
       headers: { 'content-type': 'application/json' },
-    }) as never, { params: { id: 'i-1' } });
+    }) as never, { params: Promise.resolve({ id: 'i-1' }) });
     expect(res.status).toBe(404);
   });
 
@@ -24,7 +24,7 @@ describe('POST /api/ops/incidents/[id]/ack', () => {
     const res = await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({ by: 'NOC', note: 'eyes on' }),
       headers: { 'content-type': 'application/json' },
-    }) as never, { params: { id: 'i-1' } });
+    }) as never, { params: Promise.resolve({ id: 'i-1' }) });
     expect(res.status).toBe(200);
     expect(ackMock).toHaveBeenCalledWith('i-1', 'NOC', 'eyes on');
   });
@@ -34,14 +34,14 @@ describe('POST /api/ops/incidents/[id]/ack', () => {
     await POST(new Request('http://x', {
       method: 'POST', body: JSON.stringify({}),
       headers: { 'content-type': 'application/json' },
-    }) as never, { params: { id: 'i-1' } });
+    }) as never, { params: Promise.resolve({ id: 'i-1' }) });
     expect(ackMock).toHaveBeenCalledWith('i-1', 'operator', undefined);
   });
 
   it('tolerates invalid JSON bodies', async () => {
     ackMock.mockReturnValue({ id: 'i-1' });
     const res = await POST(new Request('http://x', { method: 'POST', body: 'not json' }) as never,
-      { params: { id: 'i-1' } });
+      { params: Promise.resolve({ id: 'i-1' }) });
     expect(res.status).toBe(200);
     expect(ackMock).toHaveBeenCalledWith('i-1', 'operator', undefined);
   });

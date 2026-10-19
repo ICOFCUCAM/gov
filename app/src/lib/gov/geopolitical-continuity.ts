@@ -17,6 +17,7 @@ import { civicBoard } from '@/lib/gov/civic-legitimacy';
 import { generationalBoard, ERA_COUNT } from '@/lib/gov/generational-intelligence';
 import { knowledgeBoard } from '@/lib/gov/knowledge-continuity';
 import { territorialBoard } from '@/lib/gov/territorial-continuity';
+import { regionName } from '@/lib/nation/registry';
 
 // Hard constitutional geopolitical boundary — structural, not advisory.
 export const GEOPOLITICAL_SAFEGUARDS = {
@@ -119,7 +120,7 @@ export function geopoliticalBoard(now: number): GeopoliticalBoard {
   const externalAmplification = Math.min(60, vectors.reduce((s, v) => s + v.magnitude, 0));
 
   // Migration & humanitarian continuity — lawful, non-discriminatory.
-  const migration: MigrationHumanitarian[] = (eco.regions.length ? eco.regions.map(r => r.region) : ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']).map(region => {
+  const migration: MigrationHumanitarian[] = (eco.regions.length ? eco.regions.map(r => r.region) : [regionName(0, 'Capital District'), 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']).map(region => {
     const k = `gp:mig:${region}`;
     const er = eco.regions.find(x => x.region === region);
     const migrationPressure = Math.round(Math.max(0, regionalConflict - 30) * 0.5 + wave(`${k}:p`, epoch / 8, 10, 60));

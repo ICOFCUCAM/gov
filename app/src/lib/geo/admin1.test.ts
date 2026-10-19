@@ -47,3 +47,39 @@ describe('provinceLabel', () => {
     expect(provinceLabel(stripped, 'ru')).toBe('Default Name');
   });
 });
+
+describe('upgraded boundaries', () => {
+  it("draws Kenya's 47 counties instead of its former provinces, credited to their source", async () => {
+    const { loadCountry } = await import('./admin1');
+    const ken = await loadCountry('KEN');
+    expect(ken?.provinces).toHaveLength(47);
+    expect(ken?.provinces.map(p => p.name)).toContain('Nairobi City');
+    expect(ken?.attribution?.licence).toBe('Public Domain');
+  });
+
+  it('keeps Natural Earth shapes for countries that were not upgraded', async () => {
+    const { loadCountry } = await import('./admin1');
+    const usa = await loadCountry('USA');
+    expect(usa?.provinces.length).toBeGreaterThanOrEqual(50);
+    expect(usa?.attribution).toBeUndefined();
+  });
+});
+
+describe('map shapes', () => {
+  // d3-geo draws a ring wound the wrong way as the whole globe minus the shape,
+  // which renders a country as a filled rectangle.
+  it('has no inside-out shape in any country file', async () => {
+    const fs = await import('node:fs');
+    const path = await import('node:path');
+    const { geoArea } = await import('d3-geo');
+    const inverted: string[] = [];
+    for (const dir of ['admin1', 'boundaries']) {
+      const root = path.join(__dirname, dir);
+      for (const f of fs.readdirSync(root).filter(f => /^[A-Z]{3}\.json$/.test(f))) {
+        const c = JSON.parse(fs.readFileSync(path.join(root, f), 'utf8')) as { provinces: { name: string; geometry: never }[] };
+        for (const p of c.provinces) if (geoArea(p.geometry) > 2 * Math.PI) inverted.push(`${dir}/${f}: ${p.name}`);
+      }
+    }
+    expect(inverted).toEqual([]);
+  });
+});

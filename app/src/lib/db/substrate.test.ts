@@ -22,13 +22,12 @@ import { describe, it, expect, beforeAll } from 'vitest';
 import { publicClient, substrateAvailable, __resetClients } from './client';
 import { appendAuditRow, auditTrailRows, verifyChainRow } from './repos/audit';
 import { publishEventRow, recentEventsRows } from './repos/events';
-import { registerInstitutionRow, activateInstitutionRow, listInstitutionsRows } from './repos/institutions';
+import { registerInstitutionRow, activateInstitutionRow } from './repos/institutions';
 import {
   syncWorkflowDefinitionRow, openWorkItemRow, transitionWorkItemRow,
   workItemRow, workItemStepsRows,
 } from './repos/work-items';
 import {
-  recordDirectiveRow, signDirectiveRow, rescindDirectiveRow,
   recordDispatchRow, acknowledgeDispatchRow, closeDispatchRow,
   recordEscalationRow, recordPostureRow, listPostureHistoryRows,
 } from './repos/memory';
@@ -135,36 +134,24 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     expect(rows[0]!.payload).toMatchObject({ severity: 'minor' });
   });
 
-  it('REGISTRY — institutions persist and activate via the contract', async () => {
+  it('REGISTRY — institutions are a mirror of the platform registry: the browser cannot write them (D8)', async () => {
+    const sb = publicClient()!;
     const charter = `vitest-inst-${Date.now()}`;
-    const domain = `vitest-domain-${Date.now()}`;
-    const reg = await registerInstitutionRow({
-      charterId: charter,
-      label: 'Vitest Ministry',
-      kind: 'ministry',
-      domain,
-      archetypeOrBranch: 'HEALTH',
-      meta: { instanceId: 'MIN-VITEST' },
+    const { error } = await sb.rpc('civicos_register_institution', {
+      p_charter_id: charter, p_label: 'Vitest Ministry', p_kind: 'ministry', p_domain: `vitest-domain-${Date.now()}`,
+      p_archetype_or_branch: 'HEALTH', p_grammar: null, p_safeguards_constant: null, p_expected_domains: null, p_shipped_domains: null, p_meta: {},
     });
-    expect(reg).not.toBeNull();
-    expect(reg!.activated).toBe(false);
-
-    const act = await activateInstitutionRow(charter);
-    expect(act).not.toBeNull();
-    expect(act!.activated).toBe(true);
-    expect(act!.activated_at).not.toBeNull();
-
-    // Re-register (idempotent ON CONFLICT) doesn't reset activation.
-    const reg2 = await registerInstitutionRow({
-      charterId: charter, label: 'Vitest Ministry (renamed)',
-      kind: 'ministry', domain, archetypeOrBranch: 'HEALTH',
+    expect(error).not.toBeNull();
+    const { error: mirrorError } = await sb.rpc('civicos_mirror_institution', {
+      p_charter_id: charter, p_label: 'x', p_kind: 'ministry', p_domain: 'x', p_archetype_or_branch: 'HEALTH', p_activated: true, p_meta: {},
     });
-    expect(reg2).not.toBeNull();
-    expect(reg2!.activated).toBe(true);
-    expect(reg2!.label).toBe('Vitest Ministry (renamed)');
-
-    const rows = await listInstitutionsRows({ activated: true });
-    expect(rows.some(r => r.charter_id === charter)).toBe(true);
+    expect(mirrorError).not.toBeNull();
+    // The old calls now read the platform's register (null: never registered through the platform).
+    expect(await registerInstitutionRow({ charterId: charter, label: 'x', kind: 'ministry', domain: 'x', archetypeOrBranch: 'HEALTH' })).toBeNull();
+    expect(await activateInstitutionRow(charter)).toBeNull();
+    // Nor did the refused writes reach the mirror.
+    const { data: mirrored } = await sb.from('civicos_institutions').select('charter_id').eq('charter_id', charter);
+    expect(mirrored ?? []).toHaveLength(0);
   });
 
   it('WORKFLOW — open and transition a work item end-to-end; invalid action rejected', async () => {
@@ -225,24 +212,16 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     if (afterClose && !afterClose.ok) expect(afterClose.reason).toBe('closed');
   });
 
-  it('MEMORY — directive lifecycle: draft → sign → rescind', async () => {
+  it('MEMORY — directives are a mirror of the platform register: the browser cannot write them (D8)', async () => {
+    const sb = publicClient()!;
     const ref = `DIR-VITEST-${Date.now()}`;
-    const d = await recordDirectiveRow({
-      ref, kind: 'executive-order', issuedByCharterId: 'presidency',
-      title: 'Test directive', targets: ['ministry-health'],
-      payload: { rationale: 'integration proof' },
+    const { error } = await sb.rpc('civicos_record_directive', {
+      p_ref: ref, p_kind: 'executive-order', p_issued_by_charter_id: 'presidency', p_title: 'Test directive',
+      p_citation: null, p_targets: [], p_payload: {}, p_issued_by_name: null, p_status: 'drafting',
     });
-    expect(d).not.toBeNull();
-    expect(d!.status).toBe('drafting');
-
-    const signed = await signDirectiveRow(ref);
-    expect(signed).not.toBeNull();
-    expect(signed!.status).toBe('signed');
-    expect(signed!.signed_at).not.toBeNull();
-
-    const rescinded = await rescindDirectiveRow(ref);
-    expect(rescinded!.status).toBe('rescinded');
-    expect(rescinded!.rescinded_at).not.toBeNull();
+    expect(error).not.toBeNull();
+    const { error: mirrorError } = await sb.rpc('civicos_mirror_directive', { p_row: { ref, title: 'x' } });
+    expect(mirrorError).not.toBeNull();
   });
 
   it('MEMORY — dispatch lifecycle: record → acknowledge → close', async () => {
@@ -387,36 +366,30 @@ describe.skipIf(!ACTIVE)('CivicOS substrate — persistent audit chain', () => {
     expect(rows[1]!.posture).toBe('steady');
   });
 
-  it('CATALOGUE — institutions and facilities listings honor filters', async () => {
-    // Register a fresh institution then prove it's visible in the kind filter.
-    const charter = `vitest-cat-${Date.now()}`;
-    const dom = `vitest-cat-domain-${Date.now()}`;
-    const reg = await registerInstitutionRow({
-      charterId: charter, label: 'Vitest Catalogue', kind: 'agency',
-      domain: dom, archetypeOrBranch: 'GENERIC',
-    });
-    expect(reg).not.toBeNull();
-
-    const agencies = await listInstitutionsRows({ kind: 'agency' });
-    expect(agencies.some(r => r.charter_id === charter)).toBe(true);
-
-    const activated = await listInstitutionsRows({ activated: true });
-    // Newly registered is NOT activated by default.
-    expect(activated.some(r => r.charter_id === charter)).toBe(false);
+  it('CATALOGUE — the mirror holds the standing institutions, filterable by kind', async () => {
+    // The seeded standing institutions (migration civicos_seed_institutions), mirrored from the platform.
+    // Screens read the platform's register (/api/public/charters); this checks the mirror the substrate's own SQL reads.
+    const { data } = await publicClient()!.from('civicos_institutions').select('charter_id,kind').eq('kind', 'branch');
+    const branches = (data ?? []) as { charter_id: string; kind: string }[];
+    expect(branches.some(r => r.charter_id === 'presidency')).toBe(true);
+    expect(branches.every(r => r.kind === 'branch')).toBe(true);
   });
 
-  it('SEARCH — substrate search returns hits matching a freshly-recorded directive', async () => {
+  it.skipIf(!process.env.SUPABASE_SERVICE_ROLE_KEY)('SEARCH — search never reads directives from the mirror (the platform answers them)', async () => {
     const { substrateSearch } = await import('./search');
+    const { serverClient } = await import('./client');
     const stamp = Date.now();
     const ref = `DIR-SRCH-${stamp}`;
     const needle = `SearchSmokeTest${stamp}`;
-    const d = await recordDirectiveRow({
-      ref, kind: 'executive-order', issuedByCharterId: 'presidency',
-      title: needle,
-    });
-    expect(d).not.toBeNull();
+    const now = new Date().toISOString();
+    const { error } = await serverClient()!.rpc('civicos_mirror_directive', { p_row: {
+      ref, kind: 'executive-order', issued_by_charter_id: 'presidency', title: needle, status: 'effective',
+      targets: [], payload: {}, signed_at: now, effective_at: now, created_at: now, updated_at: now,
+    } });
+    expect(error).toBeNull();
     const hits = await substrateSearch(needle);
-    expect(hits.some(h => h.ref === ref)).toBe(true);
+    // Only in the mirror, not in the platform's register: search does not find it (review D8).
+    expect(hits.some(h => h.ref === ref)).toBe(false);
   });
 
   it('CONTRACT — direct INSERT to audit_entries is denied (RLS)', async () => {

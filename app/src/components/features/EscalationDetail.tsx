@@ -59,7 +59,7 @@ export function EscalationDetail({ id }: { id: string }) {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Escalation</h2>
-          <WatchStar kind="escalation" ref={row.id} label={row.reason} />
+          <WatchStar kind="escalation" itemRef={row.id} label={row.reason} />
           <span
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: severityTone(row.severity), color: severityTone(row.severity) }}

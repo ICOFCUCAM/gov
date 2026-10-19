@@ -5,13 +5,14 @@
 
 import * as React from 'react';
 import { interiorOps } from '@/lib/gov/interior-systems';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const tone = (ok: boolean, warn: boolean) =>
   ok ? 'rgb(var(--c-ok))' : warn ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))';
 
 export function InteriorReports({ id, now }: { id: string; now: number }) {
   const o = interiorOps(id, now / 4000);
-  const rows: { l: string; v: string; c: string }[] = [
+  const rows: { l: string; v: string; c: string; tag?: React.ReactNode }[] = [
     { l: 'Citizens enrolled', v: `${o.identity.enrolledM}M`, c: tone(true, false) },
     { l: 'ID issuance backlog', v: o.identity.issuanceBacklog.toLocaleString(), c: tone(o.identity.issuanceBacklog < 4000, o.identity.issuanceBacklog < 7000) },
     { l: 'Registry uptime', v: `${o.identity.uptimePct}%`, c: tone(o.identity.uptimePct >= 99, o.identity.uptimePct >= 97) },
@@ -20,7 +21,7 @@ export function InteriorReports({ id, now }: { id: string; now: number }) {
     { l: 'Permits pending', v: o.licensing.pending.toLocaleString(), c: tone(o.licensing.pending < 2500, o.licensing.pending < 3500) },
     { l: 'Licensing SLA met', v: `${o.licensing.slaMetPct}%`, c: tone(o.licensing.slaMetPct >= 80, o.licensing.slaMetPct >= 65) },
     { l: 'Coordination cells', v: `${o.coordination.cellsActive}`, c: tone(true, false) },
-    { l: 'Public-order index', v: `${o.coordination.publicOrderIndex}`, c: tone(o.coordination.publicOrderIndex >= 70, o.coordination.publicOrderIndex >= 55) },
+    { l: 'Public-order index', tag: <IndexTag index="interior-systems.ts · publicOrderIndex" />, v: `${o.coordination.publicOrderIndex}`, c: tone(o.coordination.publicOrderIndex >= 70, o.coordination.publicOrderIndex >= 55) },
     { l: 'Internal threat level', v: o.internalThreatLevel.toUpperCase(), c: tone(o.internalThreatLevel === 'low', o.internalThreatLevel === 'guarded' || o.internalThreatLevel === 'elevated') },
   ];
   return (
@@ -28,7 +29,7 @@ export function InteriorReports({ id, now }: { id: string; now: number }) {
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-5">
         {rows.map(r => (
           <div key={r.l} className="rounded-[3px] border border-line bg-surface p-2">
-            <div className="text-[9px] uppercase tracking-[0.14em] text-ink-muted">{r.l}</div>
+            <div className="flex items-center gap-1 text-[9px] uppercase tracking-[0.14em] text-ink-muted">{r.l}{r.tag}</div>
             <div className="mt-0.5 text-[15px] font-semibold tabular-nums" style={{ color: r.c }}>{r.v}</div>
           </div>
         ))}

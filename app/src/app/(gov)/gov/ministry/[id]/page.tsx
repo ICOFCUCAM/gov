@@ -7,7 +7,8 @@ export const metadata = { title: 'Institution Workspace' };
 
 // Institution workspace — its own internal navigation and archetype-
 // specialised tabs, mounted in the unified sovereign command chrome.
-export default function MinistryWorkspacePage({ params }: { params: { id: string } }) {
+export default async function MinistryWorkspacePage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   return (
     <CommandShell active="min">
       <MinistryWorkspace id={params.id} />

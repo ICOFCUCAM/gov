@@ -12,7 +12,7 @@ export function ProcurementBoards({ id, now }: { id: string; now: number }) {
   const p = procurementOps(id, ts);
   const fy = String(new Date(now).getFullYear());
   return (
-    <LedgerFrame archetype="register" ref="PR-BRD-01" title="Procurement Boards" subtitle="open tenders" fiscalYear={fy}>
+    <LedgerFrame archetype="register" code="PR-BRD-01" title="Procurement Boards" subtitle="open tenders" fiscalYear={fy}>
       <KpiStrip items={[
         { label: 'Open tenders', value: p.activeTenders, tone: TREASURY_DS.brass },
         { label: 'Average award (Bn)', value: Math.round(wave(`pr:av:${id}`, ts, 0.4, 8) * 10) / 10, tone: TREASURY_DS.brass },
@@ -43,7 +43,7 @@ export function ContractRegistry({ id, now }: { id: string; now: number }) {
   const p = procurementOps(id, ts);
   const fy = String(new Date(now).getFullYear());
   return (
-    <LedgerFrame archetype="register" ref="PR-CTR-02" title="Contract Registry" subtitle="awarded contracts" fiscalYear={fy}>
+    <LedgerFrame archetype="register" code="PR-CTR-02" title="Contract Registry" subtitle="awarded contracts" fiscalYear={fy}>
       <KpiStrip items={[
         { label: 'Active contracts', value: p.contractsAwarded.toLocaleString(), tone: TREASURY_DS.brass },
         { label: 'Total value (Bn)', value: Math.round(wave(`ct:tot:${id}`, ts, 80, 1240) * 10) / 10, tone: TREASURY_DS.brass },
@@ -73,7 +73,7 @@ export function ContractRegistry({ id, now }: { id: string; now: number }) {
 export function VendorRegistry({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   return (
-    <LedgerFrame archetype="register" ref="PR-VND-03" title="Vendor Registry" subtitle="supplier registration & status">
+    <LedgerFrame archetype="register" code="PR-VND-03" title="Vendor Registry" subtitle="supplier registration & status">
       <KpiStrip items={[
         { label: 'Registered vendors', value: Math.round(wave(`vn:r:${id}`, ts, 4800, 124000)).toLocaleString(), tone: TREASURY_DS.brass },
         { label: 'New this Q', value: Math.round(wave(`vn:n:${id}`, ts, 240, 4800)).toLocaleString(), tone: TREASURY_DS.surplus },
@@ -100,11 +100,11 @@ export function MilestoneEscrow({ id, now }: { id: string; now: number }) {
     milestone: ['M2/M4', 'M1/M3', 'M3/M5', 'M2/M3'][i]!,
   }));
   return (
-    <LedgerFrame archetype="voucher" ref="PR-ESC-04" title="Milestone Escrow" subtitle="procurement milestone disbursement escrow" fiscalYear={fy}>
+    <LedgerFrame archetype="voucher" code="PR-ESC-04" title="Milestone Escrow" subtitle="procurement milestone disbursement escrow" fiscalYear={fy}>
       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
         {escrows.map(e => (
           <VoucherStamp key={e.id}
-            ref={e.id}
+            voucher={e.id}
             party="Treasury Escrow"
             counterparty={e.vendor}
             amount={`${e.amount.toFixed(2)} Bn`}

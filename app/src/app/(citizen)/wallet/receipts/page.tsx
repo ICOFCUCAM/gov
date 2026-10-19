@@ -14,7 +14,9 @@ import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { buildCsv, downloadCsv, downloadJson } from '@/lib/csv-download';
 import { ageMinutes } from '@/lib/format';
-
+import { nationMessages } from '@/lib/nation/registry';
+import { t as fill } from '@/lib/i18n';
+import { rich } from '@/lib/i18n/rich';
 /**
  * /wallet/receipts — the citizen's unified substrate receipts.
  *
@@ -109,44 +111,43 @@ export default function ReceiptsPage() {
     }
   }, [actor, showTrail, loadTrail]);
 
+  const tl = nationMessages().timeline;
+  const kindLabel: Record<'all' | ReceiptEvent['kind'], string> = {
+    all: tl.kindAll, 'service-request': tl.kindServiceRequest, consent: tl.kindConsent,
+    appeal: tl.kindAppeal, 'work-item-step': tl.kindWorkItemStep,
+  };
   return (
     <main className="bg-bg min-h-screen">
       <PhoneShell
         activeTab="/wallet/receipts"
         header={
           <>
-            <Link href="/wallet" className="underline underline-offset-2">← Home</Link>
-            <strong>Receipts</strong>
+            <Link href="/wallet" className="underline underline-offset-2">← {nationMessages().common.home}</Link>
+            <strong>{nationMessages().wallet.receipts}</strong>
             <span />
           </>
         }
       >
         <Card tight>
-          <h3 className="font-semibold mb-1">Everything the state has on you</h3>
-          <p className="text-sm text-ink-muted">
-            Service requests you filed, consents you granted, appeals you lodged,
-            and every workflow step an officer took on something linked to you.
-            Sorted newest-first. RLS enforces that you only see your own records.
-          </p>
+          <h3 className="font-semibold mb-1">{nationMessages().records.everythingState}</h3>
+          <p className="text-sm text-ink-muted">{tl.intro}</p>
         </Card>
 
         {!available ? (
-          <Card tight><p className="text-sm text-ink-muted">Substrate not configured.</p></Card>
+          <Card tight><p className="text-sm text-ink-muted">{tl.notConfigured}</p></Card>
         ) : !session ? (
           <Card tight><p className="text-sm">
-            <Link href="/sign-in?from=/wallet/receipts" className="underline">Sign in</Link> to view your receipts.
+            {rich(tl.signInText, { signIn: <Link href="/sign-in?from=/wallet/receipts" className="underline">{tl.signIn}</Link> })}
           </p></Card>
         ) : !actor || actor.kind !== 'citizen' ? (
           <Card tight><p className="text-sm text-ink-muted">
-            Signed in but no citizen profile is linked. Visit{' '}
-            <Link href="/wallet/substrate" className="underline">/wallet/substrate</Link>{' '}
-            to provision one.
+            {rich(tl.noProfile, { link: <Link href="/wallet/substrate" className="underline">/wallet/substrate</Link> })}
           </p></Card>
         ) : (
           <>
             <div className="flex items-center gap-2">
               <Button variant="secondary" onClick={() => { void refresh(); }} disabled={loading}>
-                {loading ? 'refreshing…' : 'refresh'}
+                {loading ? tl.refreshing : tl.refresh}
               </Button>
               <Button variant="secondary" onClick={exportCsv} disabled={events.length === 0}>
                 csv
@@ -155,13 +156,13 @@ export default function ReceiptsPage() {
                 json
               </Button>
               <Button variant="secondary" onClick={() => { void exportFull(); }} disabled={exporting}>
-                {exporting ? 'exporting…' : 'full data'}
+                {exporting ? tl.exporting : tl.fullData}
               </Button>
             </div>
 
             <section>
               <h3 className="font-semibold text-lg mb-2">
-                {events.length === 0 ? 'No receipts yet' : `${events.length} receipts`}
+                {events.length === 0 ? tl.none : fill(tl.count, { n: events.length })}
               </h3>
               {events.length > 0 ? (
                 <div className="mb-2 flex flex-wrap gap-1">
@@ -169,7 +170,7 @@ export default function ReceiptsPage() {
                     <button key={k} type="button" onClick={() => setKindFilter(k)}
                       className={`focus-ring rounded-[3px] border px-2 py-0.5 text-[10px] uppercase tracking-wider ${
                         kindFilter === k ? 'border-link text-link' : 'border-line text-ink-muted'}`}>
-                      {k}
+                      {kindLabel[k]}
                     </button>
                   ))}
                 </div>
@@ -179,13 +180,13 @@ export default function ReceiptsPage() {
                   <Card tight key={`${e.kind}:${e.ref}:${i}`}>
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
-                        {e.kind}
+                        {kindLabel[e.kind]}
                       </span>
                       {e.kind === 'consent'
                         ? <Link href={`/wallet/consent/${encodeURIComponent(e.ref)}`} className="font-mono text-sm text-link underline underline-offset-2">{e.ref}</Link>
                         : <span className="font-mono text-sm">{e.ref}</span>}
                       <span className="ml-auto text-xs text-ink-muted">
-                        {ageMinutes(e.at)}m ago
+                        {fill(tl.minutesAgo, { n: ageMinutes(e.at) })}
                       </span>
                     </div>
                     <div className="text-sm text-ink">{e.detail}</div>
@@ -200,23 +201,20 @@ export default function ReceiptsPage() {
             <section>
               <button type="button" onClick={toggleTrail}
                 className="focus-ring font-semibold text-lg underline underline-offset-2">
-                {showTrail ? 'Hide' : 'Show'} activity &amp; access log
+                {showTrail ? tl.hideLog : tl.showLog}
               </button>
               {showTrail && chain && chain.entries > 0 ? (
                 <p className={`mt-1 text-sm ${chain.intact ? 'text-ok' : 'text-alert'}`}>
                   {chain.intact
-                    ? `✓ hash chain intact — ${chain.entries} ${chain.entries === 1 ? 'entry' : 'entries'} verified`
-                    : `⚠ chain broken at entry #${chain.broken_at}`}
+                    ? (chain.entries === 1 ? tl.chainIntactOne : fill(tl.chainIntact, { n: chain.entries }))
+                    : fill(tl.chainBroken, { n: chain.broken_at ?? '?' })}
                 </p>
               ) : null}
               {showTrail ? (
                 trail === null ? (
-                  <p className="mt-2 text-sm text-ink-muted">loading…</p>
+                  <p className="mt-2 text-sm text-ink-muted">{tl.loading}</p>
                 ) : trail.length === 0 ? (
-                  <p className="mt-2 text-sm text-ink-muted">
-                    No entries on your audit scope yet. Tamper-evident events
-                    (consent expiries, data exports) appear here as they happen.
-                  </p>
+                  <p className="mt-2 text-sm text-ink-muted">{tl.noTrail}</p>
                 ) : (
                   <ul className="mt-2 space-y-2">
                     {trail.map(e => (
@@ -225,11 +223,11 @@ export default function ReceiptsPage() {
                           <span className="text-[10px] font-bold uppercase tracking-wider text-ink-muted">
                             {e.action}
                           </span>
-                          <span className="ml-auto text-xs text-ink-muted">{ageMinutes(e.at)}m ago</span>
+                          <span className="ml-auto text-xs text-ink-muted">{fill(tl.minutesAgo, { n: ageMinutes(e.at) })}</span>
                         </div>
                         <div className="text-sm text-ink">{e.detail}</div>
                         <div className="font-mono text-[10px] text-ink-muted">
-                          #{e.seq} · {e.actor} · hash {e.hash.slice(0, 12)}…
+                          #{e.seq} · {e.actor} · {tl.hash} {e.hash.slice(0, 12)}…
                         </div>
                       </Card>
                     ))}
@@ -240,14 +238,12 @@ export default function ReceiptsPage() {
 
             <Card tight>
               <p className="text-xs text-ink-muted">
-                Receipts are read directly from the substrate via
-                <code className="font-mono"> civicos_my_receipt_timeline</code>,
-                a SECURITY DEFINER RPC scoped to <code className="font-mono">auth.uid()</code>.
-                Officers cannot see your receipts; civil society cannot see them
-                without your account. <strong>Full data</strong> downloads the
-                complete portability document — every request, consent, and appeal
-                row the substrate holds on you — via
-                <code className="font-mono"> civicos_my_data_export</code>.
+                {rich(tl.footnote, {
+                  timelineRpc: <code className="font-mono">civicos_my_receipt_timeline</code>,
+                  uid: <code className="font-mono">auth.uid()</code>,
+                  fullData: <strong>{tl.fullData}</strong>,
+                  exportRpc: <code className="font-mono">civicos_my_data_export</code>,
+                })}
               </p>
             </Card>
           </>

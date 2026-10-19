@@ -1,0 +1,13 @@
+# Prometheus for a local CivicOS stack (docker compose --profile observability up).
+# Scrapes the platform's own metrics (app/src/lib/ops/metrics.ts) with the
+# metrics token; the token file holds the same value as CIVICOS_METRICS_TOKEN.
+global:
+  scrape_interval: 30s
+scrape_configs:
+  - job_name: civicos-app
+    metrics_path: /api/metrics
+    authorization:
+      type: Bearer
+      credentials_file: /etc/prometheus/metrics-token
+    static_configs:
+      - targets: ['app:3000']

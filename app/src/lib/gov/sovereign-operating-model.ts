@@ -7,6 +7,7 @@
 // from this single model so the ecosystem stays mutually consistent.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionName } from '@/lib/nation/registry';
 
 // Unified national operating cadence (ms). Every surface polls/animates on
 // this rhythm so the ecosystem reads as one synchronized machine.
@@ -669,9 +670,10 @@ export const FIELD_STAGES = [
   'AUTHORIZATION', 'STAGING', 'MOBILIZATION', 'REGIONAL DEPLOYMENT',
   'ACTIVE STABILIZATION', 'INFRASTRUCTURE RECOVERY', 'OPERATIONAL SUPERVISION', 'NORMALIZATION',
 ] as const;
-const FIELD_REGIONS = [
-  'Capital District', 'Northern Province', 'Highland Region',
-  'Eastern Region', 'Western Region', 'Coastal Region',
+// Read at use, not at load: the nation's regions arrive after this module loads in the browser.
+const fieldRegions = () => [
+  regionName(0, 'Capital District'), regionName(1, 'Northern Province'), regionName(5, 'Highland Region'),
+  regionName(2, 'Eastern Region'), regionName(3, 'Western Region'), regionName(4, 'Coastal Region'),
 ] as const;
 
 export function fieldDeployment(
@@ -679,6 +681,7 @@ export function fieldDeployment(
   telecom: number, transportUtil: number, reservesHeadroom: number, contention: number,
   post: NationalPosture, fatigue: number, epoch: number,
 ): FieldOps {
+  const FIELD_REGIONS = fieldRegions();
   const region = FIELD_REGIONS[Math.floor(seed(`fr:${ministryId}:${epoch}`) * FIELD_REGIONS.length)]
     ?? FIELD_REGIONS[0]!;
   // Regional execution variance — distance + infrastructure quality are
@@ -1597,7 +1600,7 @@ export function nationalChronology(epoch: number, contention: number): NationalC
     }
     if (post.label !== prevPost) {
       const worse = post.execConfidence < 45;
-      events.push({ epoch: e, kind: 'posture', text: `Doctrine posture shifted: ${prevPost} → ${post.label}`, tone: worse ? 'warn' : 'ok' });
+      events.push({ epoch: e, kind: 'posture', text: `Doctrine stance changed: ${prevPost} → ${post.label}`, tone: worse ? 'warn' : 'ok' });
       prevPost = post.label;
     }
     if (ext.label !== prevExt) {

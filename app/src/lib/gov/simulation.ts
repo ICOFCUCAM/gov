@@ -4,6 +4,7 @@
 // "what-if" nervous system.
 
 import { seed } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
 
 export type ScenarioKey =
   | 'baseline' | 'economic-shock' | 'energy-outage' | 'logistics-disruption'
@@ -51,7 +52,7 @@ export interface SimImpact {
 }
 
 const ARCHS = ['HEALTH', 'ENERGY', 'TRANSPORT', 'FINANCE', 'INTERIOR', 'AGRICULTURE', 'TRADE', 'ENVIRONMENT', 'JUSTICE', 'EDUCATION'];
-const REGIONS = ['Northern Province', 'Highland Region', 'Eastern Region', 'Capital District', 'Western Region', 'Coastal Region'];
+const REGIONS = regionList(['Northern Province', 'Highland Region', 'Eastern Region', 'Capital District', 'Western Region', 'Coastal Region']);
 
 export function simulate(key: ScenarioKey, t: number): SimImpact {
   const sc = scenarioFor(key);

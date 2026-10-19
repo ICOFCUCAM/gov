@@ -38,6 +38,8 @@ import { policeOps, emergencyOps, immigrationOps, customsOps } from '@/lib/gov/a
 import { citizenWallet, officerConsole } from '@/lib/gov/citizen-systems';
 import { aiAdvisory } from '@/shared/ai/advisory';
 import { interoperabilityFabric } from '@/services/interoperability-fabric';
+import { useTwinPrimed } from '@/lib/twin/read';
+import { ENGINE_METRIC_IDS } from '@/lib/twin/engine-metrics';
 import { federationPosture } from '@/services/federation-aggregate';
 import { PosturePill } from '@/apps/_shared/AppKit';
 import { ROLES, type SovereignRole, type Capability } from '@/shared/permissions/rbac';
@@ -48,6 +50,8 @@ import { legislativeState } from '@/lib/gov/legislative-engine';
 import { wave } from '@/lib/telemetry';
 import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { nationAppLabel, aiLabel } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 /**
  * Federated Application Host.
@@ -59,7 +63,7 @@ import type { WorkKind } from '@/lib/gov/runtime-workflow';
  */
 export function AppHost({ domain, initialKey }: { domain: string; initialKey?: string }) {
   const [mins, setMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     api.org.ministries().then(r => setMins(r.ministries)).catch(() => {});
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -67,8 +71,12 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
   }, []);
   useFederationSync(mins);
   React.useSyncExternalStore(orchSubscribe, orchVersion, orchVersion);
+  // The engines' headline figures read the twin once it answers (observed), the sample until then (lib/twin/engine-metrics.ts).
+  useTwinPrimed(ENGINE_METRIC_IDS as string[]);
 
-  const app = findApp(domain);
+  const found = findApp(domain);
+  // Branch app names follow the nation's offices and chambers once installed.
+  const app = found && { ...found, label: nationAppLabel(found.id, found.label) };
   React.useEffect(() => {
     if (app?.activated) busPublish('institution.metric', app.id, { domain: app.domain, kind: app.kind });
   }, [app?.id, app?.activated]);
@@ -98,12 +106,12 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
 
   return (
     <div className="flex min-h-screen flex-col bg-bg">
-      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-line px-4" style={{ background: 'linear-gradient(100deg,#070b12,#0c1622 60%,#0a1420)' }}>
+      <header className="flex min-h-12 shrink-0 flex-wrap items-center gap-x-3 gap-y-1 border-b border-line px-4 py-1.5" style={{ background: 'linear-gradient(100deg,#070b12,#0c1622 60%,#0a1420)' }}>
         <span className="grid h-7 w-7 place-items-center rounded-[3px] text-[10px] font-bold text-white" style={{ backgroundColor: app.activated ? 'rgb(var(--c-link))' : 'rgb(var(--c-line))' }}>
           {app.domain.slice(0, 2).toUpperCase()}
         </span>
-        <div className="leading-tight">
-          <div className="text-[12px] font-semibold tracking-[0.14em] text-ink">{app.label}</div>
+        <div className="min-w-0 leading-tight">
+          <div className="truncate text-[12px] font-semibold tracking-[0.14em] text-ink">{app.label}</div>
           <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-ink-muted">{app.domain}.gov · {app.kind} application</div>
         </div>
         <span className="ml-2 rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
@@ -241,7 +249,7 @@ export function AppHost({ domain, initialKey }: { domain: string; initialKey?: s
                   return (
                     <div className="mb-2 rounded-[3px] border border-line bg-surface p-2" style={{ borderLeft: `3px solid rgb(var(--c-${at}))` }}>
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${at}))` }}>AI advisory · {adv.severity}</span>
+                        <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${at}))` }}>{aiLabel('AI advisory', 'Advisory')} · {adv.severity}</span>
                         <span className="font-mono text-[9px] tabular-nums text-ink-muted">confidence {adv.confidence}%</span>
                       </div>
                       <div className="mt-0.5 text-[11px] text-ink">{adv.headline}</div>
@@ -445,7 +453,7 @@ function AgencyApp({ appId, label, archetype, navKey, now, role, withheld = [] }
       </div>
       <div className="rounded-[3px] border border-line bg-surface p-2.5" style={{ borderLeft: `3px solid rgb(var(--c-${advTone}))` }}>
         <div className="flex items-center justify-between gap-2">
-          <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${advTone}))` }}>AI advisory · {adv.severity}</span>
+          <span className="text-[10px] font-semibold uppercase tracking-[0.16em]" style={{ color: `rgb(var(--c-${advTone}))` }}>{aiLabel('AI advisory', 'Advisory')} · {adv.severity}</span>
           <span className="font-mono text-[9px] tabular-nums text-ink-muted">confidence {adv.confidence}%</span>
         </div>
         <div className="mt-0.5 text-[11px] text-ink">{adv.headline}</div>

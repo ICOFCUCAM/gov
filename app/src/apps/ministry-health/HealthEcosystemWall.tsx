@@ -8,6 +8,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { GeoMap } from '@/apps/_shared/GeoMap';
+import { PropagationMap } from '@/apps/ministry-health/PropagationMap';
+import { SignalTag } from '@/components/ui/SignalTag';
 import { healthGeo } from '@/lib/gov/health-geo';
 import { KpiSpark, Donut, TrendChart, RingGauge, Sparkline, sc, type Tone } from '@/apps/_shared/SovereignUI';
 import {
@@ -15,7 +17,10 @@ import {
   emergencyCommandView, pharmaSupplyCommand, healthFinanceExecution, publicHealthSite,
 } from '@/lib/gov/health-operations';
 import { hospitalOps } from '@/lib/gov/health-systems';
-import { waveSeries, seed } from '@/lib/telemetry';
+import { waveSeries } from '@/lib/telemetry';
+import { formatMoney, aiLabel } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const ID = 'health';
 const ACC = {
@@ -106,7 +111,7 @@ function Bar({ label, pct, tone, tail }: { label: string; pct: number; tone: Ton
 }
 
 export function HealthEcosystemWall() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
@@ -155,7 +160,7 @@ export function HealthEcosystemWall() {
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[9px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
           {[
-            ['◈', 'AI Powered'], ['◉', 'Real-Time'], ['◍', 'National Scale'], ['⬡', 'Interoperable'], ['⬢', 'Secure'],
+            ['◈', aiLabel('AI Powered', 'Explainable')], ['◉', 'Real-Time'], ['◍', 'National Scale'], ['⬡', 'Interoperable'], ['⬢', 'Secure'],
           ].map(([ic, lb], i) => (
             <React.Fragment key={lb}>
               {i > 0 ? <span className="h-3 w-px bg-[rgba(90,170,255,0.2)]" /> : null}
@@ -183,18 +188,18 @@ export function HealthEcosystemWall() {
         <Tile n={1} href="/app/health/command" title="National Health Command" sub="National Situation Room"
           accent={ACC.command} posture={ns.posture} postureTone={ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok'}
           time={time} navActive="Situation Room"
-          nav={['National Command', 'Situation Room', 'Executive Briefing', 'National Grid', 'Alerts & Directives', 'Escalations', 'Interventions', 'AI Insights', 'Reports', 'Settings']}>
+          nav={['National Command', 'Situation Room', 'Executive Briefing', 'National Grid', 'Alerts & Directives', 'Escalations', 'Interventions', aiLabel('AI Insights', 'Insights'), 'Reports', 'Settings']}>
           {/* KPI strip — 5 compact command metrics */}
           <div className="grid shrink-0 grid-cols-5 gap-1">
             {[
-              { l: 'NAT HEALTH INDEX', v: `${nhi}`, s: `▲ ${(nhi / 20).toFixed(1)}`, t: (nhi >= 70 ? 'ok' : nhi >= 55 ? 'warn' : 'alert') as Tone, k: 'nhi' },
+              { l: 'NAT HEALTH INDEX', tag: <IndexTag index="health-operations.ts · mortalityIndex" />, v: `${nhi}`, s: `▲ ${(nhi / 20).toFixed(1)}`, t: (nhi >= 70 ? 'ok' : nhi >= 55 ? 'warn' : 'alert') as Tone, k: 'nhi' },
               { l: 'CRITICAL ALERTS', v: `${criticalRegions}`, s: 'Active', t: (criticalRegions ? 'alert' : 'ok') as Tone, k: 'alr' },
               { l: 'ICU OCCUPANCY', v: `${ns.nationalIcuLoad}%`, s: '▲ 6%', t: (ns.nationalIcuLoad >= 88 ? 'alert' : ns.nationalIcuLoad >= 75 ? 'warn' : 'ok') as Tone, k: 'icu' },
               { l: 'OUTBREAK RISK', v: ns.activeOutbreaks >= 8 ? 'HIGH' : ns.activeOutbreaks >= 4 ? 'MED' : 'LOW', s: ns.worstRegion, t: (ns.activeOutbreaks >= 8 ? 'alert' : ns.activeOutbreaks >= 4 ? 'warn' : 'ok') as Tone, k: 'obr' },
               { l: 'DISASTER POSTURE', v: ns.disasterState === 'national-disaster' ? 'L3' : ns.disasterState === 'emergency' ? 'L2' : ns.disasterState === 'watch' ? 'L1' : 'L0', s: 'Partial Activation', t: (ns.disasterState === 'normal' ? 'ok' : ns.disasterState === 'watch' ? 'warn' : 'alert') as Tone, k: 'dis' },
             ].map(m => (
               <div key={m.l} className="flex flex-col justify-between rounded-[3px] border px-1.5 py-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
-                <div className="truncate text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-muted">{m.l}</div>
+                <div className="flex items-center gap-1 text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-muted"><span className="truncate">{m.l}</span>{m.tag}</div>
                 <div className="flex items-end justify-between gap-1">
                   <span className="font-mono text-[24px] font-bold leading-none tabular-nums" style={{ color: sc(m.t), textShadow: `0 0 10px color-mix(in srgb,${sc(m.t)} 45%,transparent)` }}>{m.v}</span>
                   <Sparkline points={sp(m.k, m.t === 'alert' ? 50 : 30, m.t === 'alert' ? 95 : 78)} tone={m.t} width={40} height={14} />
@@ -238,9 +243,9 @@ export function HealthEcosystemWall() {
               </div>
             </div>
             <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
-              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">AI Recommendations</div>
+              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">{aiLabel('AI Recommendations', 'Recommendations')}</div>
               <div className="space-y-0.5">
-                {[[`Redirect 14 ICU patients · ${ns.worstRegion} → Highland`, 'Approve', 'alert'], ['Activate Emergency Medicine Reserve (EMR)', 'Review', 'warn'], ['Increase genomic surveillance · Capital District', 'Review', 'warn']].map(([r, b, t]) => (
+                {[[`Redirect 14 ICU patients · ${ns.worstRegion} → ${geo.reroute.toRegion !== ns.worstRegion ? geo.reroute.toRegion : geo.regions[geo.regions.length - 1]?.region ?? 'Highland'}`, 'Approve', 'alert'], ['Activate Emergency Medicine Reserve (EMR)', 'Review', 'warn'], [`Increase genomic surveillance · ${geo.corridors[0]?.from ?? 'Capital District'}`, 'Review', 'warn']].map(([r, b, t]) => (
                   <div key={r} className="flex items-center gap-1 rounded-[2px] px-1 py-0.5" style={{ background: 'rgba(0,0,0,0.25)', borderLeft: `2px solid ${sc(t as Tone)}` }}>
                     <span className="min-w-0 flex-1 truncate text-[7px] text-ink-soft">{r}</span>
                     <span className="shrink-0 rounded-[2px] px-1 py-0.5 text-[6px] font-bold uppercase" style={{ border: `1px solid ${b === 'Approve' ? sc('ok') : ACC.command}`, color: b === 'Approve' ? sc('ok') : ACC.command }}>{b}</span>
@@ -249,16 +254,8 @@ export function HealthEcosystemWall() {
               </div>
             </div>
             <div className="rounded-[4px] border p-1" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(6,15,28,0.6)' }}>
-              <div className="mb-0.5 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">Propagation Map</div>
-              <svg viewBox="0 0 100 56" className="w-full" style={{ height: 52 }}>
-                {Array.from({ length: 7 }, (_, i) => ({ x: 12 + ((seed(`pg:x:${i}`) * 76)), y: 8 + seed(`pg:y:${i}`) * 40, t: seed(`pg:t:${i}`) > 0.7 ? 'alert' : seed(`pg:t:${i}`) > 0.4 ? 'warn' : 'ok' })).map((n, i, a) => (
-                  <g key={i}>
-                    {i < a.length - 1 ? <line x1={n.x} y1={n.y} x2={a[i + 1]!.x} y2={a[i + 1]!.y} stroke={ACC.command} strokeOpacity="0.4" strokeWidth="0.5" className="animate-dash-flow" strokeDasharray="2 2" /> : null}
-                    {i > 1 ? <line x1={n.x} y1={n.y} x2={a[i - 2]!.x} y2={a[i - 2]!.y} stroke={ACC.command} strokeOpacity="0.25" strokeWidth="0.4" /> : null}
-                    <circle cx={n.x} cy={n.y} r={2.2} fill={sc(n.t as Tone)} className={n.t !== 'ok' ? 'animate-breathe' : undefined} style={{ filter: `drop-shadow(0 0 3px ${sc(n.t as Tone)})` }} />
-                  </g>
-                ))}
-              </svg>
+              <div className="mb-0.5 flex items-center justify-between gap-1 text-[7px] font-bold uppercase tracking-[0.14em] text-ink-soft">Propagation Map <SignalTag kind="sample" source="Regional pressure is a sample until a health information source is connected" className="!text-[6px]" /></div>
+              <PropagationMap regions={ns.regions} accent={ACC.command} height={52} />
             </div>
           </div>
         </Tile>
@@ -333,7 +330,7 @@ export function HealthEcosystemWall() {
         <Tile n={3} href="/app/health/doctor" title="Doctor Workspace" sub="Clinical Command Center"
           accent={ACC.doctor} posture={cw.patient.riskBand === 'High' ? 'HIGH RISK' : 'CLINICAL'}
           postureTone={cw.patient.riskBand === 'High' ? 'alert' : 'ok'} time={time} navActive="Patient Queue"
-          nav={['Dashboard', 'Patient Queue', 'Patients', 'Diagnostics', 'Lab Results', 'Imaging', 'Prescriptions', 'Referrals', 'Messages', 'Protocols', 'AI Assistant']}>
+          nav={['Dashboard', 'Patient Queue', 'Patients', 'Diagnostics', 'Lab Results', 'Imaging', 'Prescriptions', 'Referrals', 'Messages', 'Protocols', aiLabel('AI Assistant', 'Assistant')]}>
           {/* clinician profile + KPI strip */}
           <div className="flex shrink-0 items-center gap-1">
             <div className="flex flex-1 items-center gap-2 rounded-[3px] border px-2 py-1" style={{ borderColor: 'rgba(95,168,255,0.2)', background: 'rgba(8,16,30,0.6)' }}>
@@ -376,9 +373,10 @@ export function HealthEcosystemWall() {
               </div>
               <div className="mt-1 flex items-center gap-1.5">
                 <RingGauge value={cw.patient.riskScore} label="risk" tone={cw.patient.riskBand === 'High' ? 'alert' : cw.patient.riskBand === 'Moderate' ? 'warn' : 'ok'} size={48} sub={cw.patient.riskBand} />
+                <IndexTag index="health-operations.ts · riskScore" />
                 <div className="min-w-0 flex-1 text-[6.5px] text-ink-soft">{cw.patient.ai.recommended.slice(0, 3).map(r => <div key={r} className="truncate">▸ {r}</div>)}</div>
               </div>
-              <button className="mt-auto rounded-[2px] py-1 text-[7px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>Run AI Analysis</button>
+              <button className="mt-auto rounded-[2px] py-1 text-[7px] font-bold uppercase tracking-[0.14em]" style={{ background: `color-mix(in srgb,${ACC.doctor} 22%,transparent)`, color: ACC.doctor }}>{aiLabel('Run AI Analysis', 'Run Analysis')}</button>
             </div>
           </div>
           {/* today's schedule */}
@@ -432,6 +430,7 @@ export function HealthEcosystemWall() {
             <div className="flex w-[128px] shrink-0 flex-col gap-1">
               <div className="flex flex-1 flex-col items-center justify-center rounded-[4px] border" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
                 <RingGauge value={cp.healthScore} label="score" tone={cp.healthBand === 'Low' ? 'alert' : cp.healthBand === 'Fair' ? 'warn' : 'ok'} size={84} sub={cp.healthBand} />
+                <IndexTag index="health-operations.ts · healthScore" />
               </div>
               <div className="shrink-0 rounded-[4px] border p-1.5" style={{ borderColor: 'rgba(54,211,155,0.2)', background: 'rgba(8,26,20,0.5)' }}>
                 <div className="text-[6.5px] font-bold uppercase tracking-[0.12em] text-ink-soft">Insurance</div>
@@ -645,7 +644,7 @@ export function HealthEcosystemWall() {
           <div className="grid shrink-0 grid-cols-4 gap-1">
             {[
               { l: 'TREASURY DRAWDOWN', v: `${fi.treasuryDrawdownPct}%`, s: 'of ceiling', t: (fi.treasuryDrawdownPct >= 85 ? 'alert' : 'ok') as Tone, k: 'trz' },
-              { l: 'FRAUD EXPOSURE', v: `$${fi.fraudExposureM}M`, s: 'flagged', t: (fi.fraudExposureM >= 20 ? 'alert' : 'warn') as Tone, k: 'frd' },
+              { l: 'FRAUD EXPOSURE', v: `${formatMoney((fi.fraudExposureM) * 1e6)}`, s: 'flagged', t: (fi.fraudExposureM >= 20 ? 'alert' : 'warn') as Tone, k: 'frd' },
               { l: 'FRAUD CASES', v: `${fi.fraud.length}`, s: 'open', t: (fi.fraud.length ? 'warn' : 'ok') as Tone, k: 'frc' },
               { l: 'SCHEMES', v: `${fi.schemes.length}`, s: 'active', t: 'ok' as Tone, k: 'sch' },
             ].map(m => (

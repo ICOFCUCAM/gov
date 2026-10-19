@@ -1,0 +1,16 @@
+{
+  "_note": "Performance budgets per public site, its own design, first visit (nothing cached), desktop. Sizes are compressed bytes in KB as sent. First measured 2026-10 at about: html 13-17, script 146, fonts 0-112, total 180-295, requests 13-18, DOM 340-530; on Next.js 15 the HTML carries the React Server Components payload beside the markup (2026-10-19: html 20-34). Raise a budget only with a reason in the commit.",
+  "default": {
+    "htmlKB": 32,
+    "scriptKB": 180,
+    "fontKB": 160,
+    "totalKB": 360,
+    "requests": 30,
+    "domNodes": 700
+  },
+  "sites": {
+    "education": {
+      "htmlKB": 36
+    }
+  }
+}

@@ -1,38 +1,39 @@
-// Periodic directive-promotion worker — call
-// civicos.promote_due_directives to flip any directive signed for a future
-// effective date to 'effective' once that date arrives. Without this a
-// future-dated directive stays 'signed' forever. Designed for a scheduler
-// (Vercel Cron, Supabase scheduled function, etc.).
+// Periodic directive-promotion worker. Directives are the platform's register
+// (lib/data/directives.ts, architecture review D8): this flips every directive
+// signed for a future effective date to 'effective' once that date arrives
+// (reads settle them too; this makes it happen without one), then, with the
+// substrate connected, re-copies the platform's directives and institutions
+// to their substrate mirrors (lib/db/mirror.ts: retries anything a write
+// after a change could not copy). Designed for a scheduler (pg_cron in
+// supabase/cron/schedule.sql, Vercel Cron, …). The substrate's own
+// civicos_promote_due_directives is no longer called: its table is a mirror.
 //
 // Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization:
 // Bearer. The secret never reaches the client bundle (server-only route).
 
 import { NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/platform-auth';
 import { serverClient } from '@/lib/db/client';
+import { settleDirectives } from '@/lib/data/directives';
+import { adoptSubstrateDirectives, queueMirror, reconcileMirror } from '@/lib/db/mirror';
 
 export const dynamic = 'force-dynamic';
 
-function authorized(req: Request): boolean {
-  const expected = process.env.CIVICOS_CRON_SECRET;
-  if (!expected) return false;
-  const url = new URL(req.url);
-  const token = url.searchParams.get('token')
-    ?? (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  return token.length > 0 && token === expected;
-}
+/** The cron secret, compared in constant time (lib/platform-auth.ts). */
+const authorized = (req: Request): boolean => cronAuthorized(req);
 
 export async function POST(req: Request) {
   if (!authorized(req)) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const sb = serverClient();
+  if (sb) await adoptSubstrateDirectives();
+  const promoted = settleDirectives();
   if (!sb) {
-    return NextResponse.json({ error: 'substrate not configured' }, { status: 503 });
+    return NextResponse.json({ ok: true, promoted: promoted.length, refs: promoted, substrate: 'not configured', at: new Date().toISOString() });
   }
-  const { data, error } = await sb.rpc('civicos_promote_due_directives');
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
-  }
+  for (const ref of promoted) queueMirror('directive', ref);
+  const mirror = await reconcileMirror();
 
   // Self-telemetry so CronStatus can detect this worker going stale.
   await sb.rpc('civicos_define_telemetry_stream', {
@@ -43,15 +44,19 @@ export async function POST(req: Request) {
   });
   await sb.rpc('civicos_record_telemetry_sample', {
     p_stream_id: 'substrate.directives.promoted',
-    p_value: typeof data === 'number' ? data : 0,
+    p_value: promoted.length,
     p_ts: null, p_facility_id: null, p_meta: {},
   });
 
-  return NextResponse.json({
-    ok: true,
-    promoted: data,
+  const body = {
+    ok: mirror.pending === 0,
+    promoted: promoted.length,
+    refs: promoted,
+    mirror: { pending: mirror.pending, written: mirror.written, failed: mirror.failed, lastError: mirror.lastError },
     at: new Date().toISOString(),
-  });
+  };
+  // Records the substrate refused stay queued and are named; the platform's change stands.
+  return NextResponse.json(mirror.pending ? { ...body, error: `the substrate mirror refused ${mirror.pending} record(s): ${mirror.lastError ?? 'unknown'}` } : body, { status: mirror.pending ? 502 : 200 });
 }
 
 export const GET = POST;

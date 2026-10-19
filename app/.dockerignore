@@ -1,0 +1,8 @@
+# Built inside the image (app/Dockerfile); never copied from the host.
+node_modules
+.next
+.civicos-state
+*.log
+.env*.local
+public-sites-audit.json
+dependency-audit.json

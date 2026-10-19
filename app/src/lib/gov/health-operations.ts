@@ -6,8 +6,9 @@
 // national health command picture. Pure & deterministic; no React/DOM.
 
 import { seed, wave, waveSeries } from '@/lib/telemetry';
+import { regionList, regionName } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 type Tone = 'ok' | 'warn' | 'alert';
 
 // ── Pharmaceutical supply chain ────────────────────────────────────────
@@ -363,7 +364,7 @@ export function publicHealthSite(t: number): PublicHealthSite {
   const kpis: PublicKpi[] = [
     { label: 'Facilities online', value: `${g.onlinePct}%`, tone: g.onlinePct >= 92 ? 'ok' : 'warn' },
     { label: 'Vaccination coverage', value: `${100 - Math.round(ep.pathogens[0]!.attackRatePer100k / 10)}%`, tone: 'ok' },
-    { label: 'National posture', value: ns.posture, tone: ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok' },
+    { label: 'National status', value: ns.posture, tone: ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok' },
     { label: 'Active outbreaks', value: `${ns.activeOutbreaks}`, tone: ns.activeOutbreaks ? 'warn' : 'ok' },
   ];
   return {
@@ -398,7 +399,7 @@ export function executiveBriefing(id: string, t: number): ExecutiveBriefing {
   const sm = healthSimulation(id, t);
   const sev = ns.posture === 'crisis' ? 'crisis' : ns.posture === 'elevated' || sm.posture === 'critical' ? 'elevated' : 'routine';
   const alerts: BriefingAlert[] = [
-    { headline: `National posture ${ns.posture} — peak ${ns.worstRegion} (${ns.regions[0]!.composite})`, domain: 'Situation', severity: ns.posture === 'crisis' ? 'critical' : ns.posture === 'elevated' ? 'priority' : 'info', tone: ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok' },
+    { headline: `National status ${ns.posture} — peak ${ns.worstRegion} (${ns.regions[0]!.composite})`, domain: 'Situation', severity: ns.posture === 'crisis' ? 'critical' : ns.posture === 'elevated' ? 'priority' : 'info', tone: ns.posture === 'crisis' ? 'alert' : ns.posture === 'elevated' ? 'warn' : 'ok' },
     { headline: `Systemic risk index ${sm.systemicRiskIndex} — top vector ${sm.collapseRisks[0]!.system}`, domain: 'Simulation', severity: sm.posture === 'critical' ? 'critical' : sm.posture === 'watch' ? 'priority' : 'info', tone: sm.collapseRisks[0]!.tone },
     { headline: `${ns.activeOutbreaks} active outbreak signal(s) · disaster ${ns.disasterState}`, domain: 'Disease', severity: ns.activeOutbreaks >= 2 ? 'critical' : ns.activeOutbreaks ? 'priority' : 'info', tone: ns.activeOutbreaks >= 2 ? 'alert' : ns.activeOutbreaks ? 'warn' : 'ok' },
   ];
@@ -1301,13 +1302,13 @@ export function emergencyIncidentExecution(id: string, t: number): EmergencyInci
       id: `INC-${5200 + i}`, type: INC_TYPES[i % INC_TYPES.length]!, region, severity, stage, ageMin,
       callerReports: 1 + Math.round(seed(`ei:cr:${id}:${i}`) * 6),
       responders,
-      destinationHospital: ['Central Trauma', 'Northern District', 'Coastal Referral', 'Highland General', 'Eastern Referral'][i % 5]!,
+      destinationHospital: ['Central Trauma', regionName(1, 'Northern District'), 'Coastal Referral', 'Highland General', 'Eastern Referral'][i % 5]!,
       hospitalAccepting, rerouted, escalation, recommended,
       timeline: [
         { atMinAgo: ageMin, detail: `${base ? 'Call received' : ''} · ${1 + Math.round(seed(`ei:cr:${id}:${i}`) * 6)} caller report(s)`, tone: 'ok' },
         { atMinAgo: Math.max(0, ageMin - 3), detail: `${responders.length} unit(s) assigned`, tone: 'ok' },
         { atMinAgo: Math.max(0, ageMin - 9), detail: stage === 'Received' ? 'Awaiting dispatch' : `Stage → ${stage}`, tone: stage === 'Received' && severity === 1 ? 'alert' : 'warn' },
-        { atMinAgo: Math.max(0, ageMin - 14), detail: rerouted ? 'Destination diverting — reroute evaluated' : `Destination ${['Central Trauma', 'Northern District', 'Coastal Referral', 'Highland General', 'Eastern Referral'][i % 5]} accepting`, tone: rerouted ? 'alert' : 'ok' },
+        { atMinAgo: Math.max(0, ageMin - 14), detail: rerouted ? 'Destination diverting — reroute evaluated' : `Destination ${['Central Trauma', regionName(1, 'Northern District'), 'Coastal Referral', 'Highland General', 'Eastern Referral'][i % 5]} accepting`, tone: rerouted ? 'alert' : 'ok' },
       ],
       tone,
     };
@@ -1756,7 +1757,7 @@ export function patientDeepExecution(id: string, t: number): PatientDeepExecutio
     const status: CitizenEmergencyStatus['status'] = sv > 0.7 ? 'critical' : sv > 0.4 ? 'admitted' : 'observation';
     return {
       id: `ES-${800 + i}`, citizen: `CZ-${70000 + (i * 137 % 9000)}`,
-      status, facility: ['Central', 'Northern District', 'Coastal', 'Highland', 'Eastern Referral'][i % 5]!,
+      status, facility: ['Central', regionName(1, 'Northern District'), 'Coastal', 'Highland', 'Eastern Referral'][i % 5]!,
       ageMin: Math.round(wave(`pe:ea:${id}:${i}`, t, 1, 180)),
       tone: status === 'critical' ? 'alert' : status === 'admitted' ? 'warn' : 'ok',
     };

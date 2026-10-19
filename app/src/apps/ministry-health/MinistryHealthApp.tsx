@@ -39,6 +39,8 @@ import { HealthShell } from '@/apps/ministry-health/shell/HealthShell';
 import { HEALTH_DOMAINS, type SurfaceId as ShellSurfaceId } from '@/apps/ministry-health/core/domains';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { formatMoney } from '@/lib/nation/registry';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 // Legacy domains keep their existing renderers; new reference-tier
 // surfaces dispatch through HealthShell.
@@ -47,10 +49,11 @@ const HEALTH_SHELL_SURFACES: Set<string> = new Set(HEALTH_DOMAINS.map(d => d.sur
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 
-function Stat({ l, v, t }: { l: string; v: string; t?: 'ok' | 'warn' | 'alert' }) {
+/** A headline figure; `tag` marks one that is not observed (an engine index's IndexTag). */
+function Stat({ l, v, t, tag }: { l: string; v: string; t?: 'ok' | 'warn' | 'alert'; tag?: React.ReactNode }) {
   return (
     <div className="rounded-[3px] border border-line bg-surface px-3 py-2">
-      <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{l}</div>
+      <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted"><span className="truncate">{l}</span>{tag}</div>
       <div className="font-mono text-[15px] tabular-nums" style={{ color: t ? tc(t) : 'rgb(var(--c-ink))' }}>{v}</div>
     </div>
   );
@@ -200,7 +203,7 @@ export function MinistryHealthApp({
           <Stat l="Ventilators" v={`${h.icu.ventInUse}/${h.icu.ventilators}`} t={h.icu.ventInUse / h.icu.ventilators >= 0.9 ? 'alert' : 'warn'} />
           <Stat l="Theatres active" v={`${h.theatres.active}/${h.theatres.total}`} t="ok" />
           <Stat l="Staffing" v={`${h.staffingPct}%`} t={h.staffingPct >= 80 ? 'ok' : 'warn'} />
-          <Stat l="Mortality index" v={`${h.mortalityIndex}`} t={h.mortalityIndex >= 16 ? 'alert' : 'warn'} />
+          <Stat l="Mortality index" v={`${h.mortalityIndex}`} t={h.mortalityIndex >= 16 ? 'alert' : 'warn'} tag={<IndexTag index="health-systems.ts · mortalityIndex" entityId={`institution:${id}`} />} />
         </div>
         <Panel title="Capacity & load balancing" meta="bed · ICU · ventilators">
           <Bars rows={[
@@ -322,7 +325,7 @@ export function MinistryHealthApp({
         <Stat l="Claims SLA met" v={`${hf.claimsSlaMetPct}%`} t={hf.claimsSlaMetPct >= 80 ? 'ok' : 'warn'} />
         <Stat l="Budget execution" v={`${hf.budgetExecutionPct}%`} t={hf.budgetExecutionPct >= 80 ? 'ok' : 'warn'} />
         <Stat l="Fraud flags" v={`${hf.fraudFlags}`} t={hf.fraudFlags ? 'alert' : 'ok'} />
-        <Stat l="Reimbursement backlog" v={`$${hf.reimbursementBacklogBn}B`} t={hf.reimbursementBacklogBn > 8 ? 'alert' : 'warn'} />
+        <Stat l="Reimbursement backlog" v={`${formatMoney((hf.reimbursementBacklogBn) * 1e9)}`} t={hf.reimbursementBacklogBn > 8 ? 'alert' : 'warn'} />
       </div>
     );
   } else { // regulatory

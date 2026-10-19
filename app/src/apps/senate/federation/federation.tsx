@@ -4,6 +4,7 @@
 
 import * as React from 'react';
 import { SENATE_DS } from '@/apps/senate/design-system/senate-ds';
+import { nationChamberText } from '@/lib/nation/registry';
 
 export type FederationEdge = {
   partner: string;
@@ -40,7 +41,7 @@ export function FederationStrip() {
           <div className="text-[8.5px] uppercase tracking-[0.18em]" style={{ color: SENATE_DS.gold }}>emits →</div>
           {emit.map((e, i) => (
             <div key={`${e.partner}-${i}`} className="flex justify-between border-b py-0.5" style={{ borderColor: SENATE_DS.ruleSoft }}>
-              <span style={{ color: SENATE_DS.parchmentInk }}>{e.partner}</span>
+              <span style={{ color: SENATE_DS.parchmentInk }}>{nationChamberText(e.partner)}</span>
               <span style={{ color: SENATE_DS.mut }}>{e.channel} · {e.cadence}</span>
             </div>
           ))}
@@ -49,7 +50,7 @@ export function FederationStrip() {
           <div className="text-[8.5px] uppercase tracking-[0.18em]" style={{ color: SENATE_DS.rose }}>← consumes from</div>
           {consume.map((e, i) => (
             <div key={`${e.partner}-${i}`} className="flex justify-between border-b py-0.5" style={{ borderColor: SENATE_DS.ruleSoft }}>
-              <span style={{ color: SENATE_DS.parchmentInk }}>{e.partner}</span>
+              <span style={{ color: SENATE_DS.parchmentInk }}>{nationChamberText(e.partner)}</span>
               <span style={{ color: SENATE_DS.mut }}>{e.channel} · {e.cadence}</span>
             </div>
           ))}

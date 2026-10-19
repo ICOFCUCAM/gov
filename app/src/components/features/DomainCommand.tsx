@@ -3,9 +3,17 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { TONE, Panel, Spark, seed, toneFor, waveSeries, TerritoryHeat } from '@/components/features/SituationRoom';
+import { WorldContext } from '@/components/map/WorldContext';
+import { useNeighbours } from '@/components/map/useNeighbours';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { regionName } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
+
+// Decisions are not taken from this panel: each opens a draft directive on the
+// Directive Board, where it is signed by the person whose remit it is and audited.
+const draft = (title: string, kind: string) => `/gov/directives?compose=${encodeURIComponent(title)}&kind=${kind}`;
 
 export type DomainKey = 'treasury' | 'security' | 'geopolitical';
 
@@ -74,11 +82,11 @@ const DOMAIN: Record<DomainKey, Cfg> = {
       { l: 'Debt servicing', lo: 30, hi: 70, good: 'low' },
     ],
     actions: [
-      { l: 'Release reserves', g: '§', h: '/gov' },
-      { l: 'Fiscal brief', g: '▤', h: '/gov' },
-      { l: 'Reallocate budget', g: '⇄', h: '/ops' },
-      { l: 'Freeze expenditure', g: '⊘', h: '/gov/coordination' },
-      { l: 'Audit ledger', g: '⛓', h: '/audit' },
+      { l: 'Release reserves', g: '§', h: draft('Release of fiscal reserves', 'budget') },
+      { l: 'Fiscal brief', g: '▤', h: '/gov/briefing' },
+      { l: 'Reallocate budget', g: '⇄', h: draft('Budget reallocation', 'budget') },
+      { l: 'Freeze expenditure', g: '⊘', h: draft('Expenditure freeze', 'instruction') },
+      { l: 'Audit record', g: '⛓', h: '/audit' },
       { l: 'Situation Room', g: '◎', h: '/gov/situation-room' },
     ],
     strip: v => [
@@ -116,17 +124,17 @@ const DOMAIN: Record<DomainKey, Cfg> = {
     ],
     monitorTitle: 'Regional security pressure',
     monitor: [
-      { l: 'Capital District', lo: 20, hi: 60, good: 'low' },
-      { l: 'Eastern Region', lo: 40, hi: 85, good: 'low' },
-      { l: 'Coastal Region', lo: 25, hi: 65, good: 'low' },
-      { l: 'Northern Province', lo: 20, hi: 58, good: 'low' },
+      { l: regionName(0, 'Capital District'), lo: 20, hi: 60, good: 'low' },
+      { l: regionName(2, 'Eastern Region'), lo: 40, hi: 85, good: 'low' },
+      { l: regionName(4, 'Coastal Region'), lo: 25, hi: 65, good: 'low' },
+      { l: regionName(1, 'Northern Province'), lo: 20, hi: 58, good: 'low' },
       { l: 'Border zones', lo: 45, hi: 88, good: 'low' },
     ],
     actions: [
-      { l: 'Raise posture', g: '◈', h: '/gov/coordination' },
-      { l: 'Deploy forces', g: '⛑', h: '/gov/coordination' },
-      { l: 'Security brief', g: '▤', h: '/gov' },
-      { l: 'Border lockdown', g: '⛓', h: '/gov/coordination' },
+      { l: 'Raise posture', g: '◈', h: draft('Raised national security posture', 'declaration') },
+      { l: 'Deploy forces', g: '⛑', h: draft('Deployment of security forces', 'instruction') },
+      { l: 'Security brief', g: '▤', h: '/gov/briefing' },
+      { l: 'Border lockdown', g: '⛓', h: draft('Border closure', 'executive-order') },
       { l: 'Intelligence report', g: '◔', h: '/gov/coordination' },
       { l: 'Situation Room', g: '◎', h: '/gov/situation-room' },
     ],
@@ -172,11 +180,11 @@ const DOMAIN: Record<DomainKey, Cfg> = {
       { l: 'Trade exposure', lo: 30, hi: 75, good: 'low' },
     ],
     actions: [
-      { l: 'Diplomatic cable', g: '✉', h: '/gov' },
-      { l: 'Raise frontier alert', g: '⚠', h: '/gov/coordination' },
-      { l: 'Brief executive', g: '▤', h: '/gov' },
+      { l: 'Diplomatic cable', g: '✉', h: draft('Diplomatic instruction', 'instruction') },
+      { l: 'Raise frontier alert', g: '⚠', h: draft('Frontier alert', 'declaration') },
+      { l: 'Brief executive', g: '▤', h: '/gov/briefing' },
       { l: 'Convene security', g: '◈', h: '/gov/coordination' },
-      { l: 'Market watch', g: '§', h: '/gov' },
+      { l: 'Market watch', g: '§', h: '/gov/treasury' },
       { l: 'Situation Room', g: '◎', h: '/gov/situation-room' },
     ],
     strip: v => [
@@ -197,7 +205,12 @@ const TITLES: Record<DomainKey, string> = {
 
 export function DomainCommand({ domain }: { domain: DomainKey }) {
   const cfg = DOMAIN[domain];
-  const [now, setNow] = React.useState(() => Date.now());
+  // Foreign relations: the frontier rows name the nation's real neighbours (shared borders), not fixed compass points.
+  const neighbours = useNeighbours();
+  const monitorRows = domain === 'geopolitical' && neighbours
+    ? [...neighbours.slice(0, 3).map((n, k) => ({ ...cfg.monitor[0]!, l: `Frontier with ${n}`, k: `nb${k}` })), ...cfg.monitor.filter(m => !/frontier/i.test(m.l))]
+    : cfg.monitor;
+  const [now, setNow] = React.useState(useRenderNow());
   const [openFeed, setOpenFeed] = React.useState<number | null>(0);
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
@@ -211,7 +224,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{TITLES[domain]}</h1>
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{TITLES[domain]}</h2>
           <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE
           </span>
@@ -245,8 +258,8 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
       </div>
 
       <div className="grid gap-2 xl:grid-cols-12">
-        <Panel title="Operational theatre" meta="domain pressure · live" className="xl:col-span-7" bodyClass="!p-2">
-          <TerritoryHeat epoch={Math.floor(ts) % 60} height={300} />
+        <Panel signal="sample" title="Operational theatre" meta="domain pressure · live" className="xl:col-span-7" bodyClass="!p-2">
+          {domain === 'geopolitical' ? <WorldContext maxHeight={320} /> : <TerritoryHeat epoch={Math.floor(ts) % 60} height={300} />}
           <div className="mt-1.5 grid grid-cols-2 gap-1 sm:grid-cols-4">
             {[
               ['Sector readiness', 'sect', 60, 96, '%'], ['Corridor flow', 'corr', 40, 92, ''],
@@ -268,7 +281,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
             })}
           </div>
         </Panel>
-        <Panel title={cfg.primaryTitle} meta="advisory" className="xl:col-span-3" bodyClass="!p-2">
+        <Panel signal="sample" title={cfg.primaryTitle} meta="advisory" className="xl:col-span-3" bodyClass="!p-2">
           <div className="space-y-2">
             {cfg.primary.map(p => (
               <div key={p.l}>
@@ -295,7 +308,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
             ) : null}
           </div>
         </Panel>
-        <Panel title={cfg.feedTitle} meta={`${cfg.feed.length} active`} className="xl:col-span-2" bodyClass="!p-0">
+        <Panel signal="sample" title={cfg.feedTitle} meta={`${cfg.feed.length} active`} className="xl:col-span-2" bodyClass="!p-0">
           {cfg.feed.map((f, i) => {
             const open = openFeed === i;
             const age = 4 + Math.round(seed(`${domain}:fa:${i}`) * 52);
@@ -338,9 +351,9 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
       </div>
 
       <div className="grid gap-2 lg:grid-cols-2 xl:grid-cols-4">
-        <Panel title={cfg.monitorTitle} meta="composite" bodyClass="!p-1.5">
+        <Panel signal="sample" title={cfg.monitorTitle} meta="composite" bodyClass="!p-1.5">
           <div className="space-y-1">
-            {cfg.monitor.map((m, i) => {
+            {monitorRows.map((m, i) => {
               const v = Math.round(w(`mon:${i}`, m.lo, m.hi));
               const t = tone3(v, m.good);
               return (
@@ -358,7 +371,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         </Panel>
 
-        <Panel title="Trend telemetry" meta="12-period" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Trend telemetry" meta="12-period" bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1">
             {cfg.tele.slice(0, 4).map(m => {
               const raw = w(m.k, m.lo, m.hi);
@@ -374,7 +387,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         </Panel>
 
-        <Panel title={cfg.feedTitle} meta="stream" bodyClass="!p-1.5">
+        <Panel signal="sample" title={cfg.feedTitle} meta="stream" bodyClass="!p-1.5">
           <div className="space-y-1">
             {cfg.feed.map((f, i) => (
               <div key={i} className="flex items-center justify-between gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
@@ -385,7 +398,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
           </div>
         </Panel>
 
-        <Panel title="Command actions" meta="domain authority" bodyClass="!p-1.5">
+        <Panel signal="sample" title="Command actions" meta="decisions open a draft directive for signature" bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1">
             {cfg.actions.map((q, i) => (
               <Link key={q.l} href={q.h} className="focus-ring group flex items-center gap-1.5 rounded-[3px] border border-line px-2 py-1.5 text-[10px] font-medium text-ink-soft no-underline transition-all hover:bg-surface-2/60">
@@ -400,7 +413,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
       {(() => {
         const arch = domain === 'treasury' ? 'FINANCE' : domain === 'security' ? 'INTERIOR' : 'GENERIC';
         return (
-          <Panel title="Service operations" meta={`${arch.toLowerCase()} signature · live`} bodyClass="!p-1.5">
+          <Panel signal="sample" title="Service operations" meta={`${arch.toLowerCase()} signature · live`} bodyClass="!p-1.5">
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-6">
               {serviceReadings(domain, arch, ts).map(r => (
                 <div key={r.l} className="rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5">
@@ -449,7 +462,7 @@ export function DomainCommand({ domain }: { domain: DomainKey }) {
         const title = domain === 'treasury'
           ? 'Procurement & disbursement runtime — solicitation → award → disbursed'
           : domain === 'security'
-            ? 'Security incident runtime — acknowledge → contain → recover'
+            ? 'Security incident handling — acknowledge → contain → recover'
             : `${domain} runtime — executable workflow`;
         return <RuntimeQueue scope={`domain:${domain}`} kind={k} title={title} by="Command Officer" />;
       })()}

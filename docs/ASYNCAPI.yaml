@@ -1,0 +1,241 @@
+# CivicOS platform events — AsyncAPI 3.0
+#
+# Every audited change of note is written to the platform's event outbox
+# (app/src/lib/events/outbox.ts) in the same step as its audit-chain entry,
+# and delivered to webhook subscribers (/integrations → Webhooks) as a
+# CloudEvent 1.0 in structured mode (app/src/lib/events/deliver.ts, run by
+# /api/cron/deliver-cloudevents). Delivery is at least once, in audit order
+# per subscription; consumers deduplicate on the event `id` (or `auditseq`).
+#
+# A subscription's topic selects events by action: "*" (all), an action
+# ("facility.publish"), or a prefix ("facility", "twin.source"). The
+# "org.civicos." prefix is optional.
+asyncapi: 3.0.0
+info:
+  title: CivicOS platform events
+  version: 1.0.0
+  description: |
+    CloudEvents 1.0 (structured mode, `application/cloudevents+json`) for audited
+    changes on a CivicOS installation. Each event carries the audit-chain entry it
+    was written with (`auditseq`, `data.audit.hash`), so a consumer can check it
+    against the nation's audit chain (/api/audit/verify) and its signed heads.
+
+    Signature: `X-CivicOS-Signature: sha256=<hex>` is HMAC-SHA256 with the
+    subscription's secret (shown once when subscribing or issuing a new one) over
+    `${X-CivicOS-Timestamp}.${body}`. Reject deliveries whose timestamp is more than
+    300 seconds old.
+  license:
+    name: Nation's own terms
+defaultContentType: application/cloudevents+json
+
+servers:
+  subscriber:
+    host: '{subscriberHost}'
+    protocol: https
+    description: The subscriber's own HTTPS endpoint, registered on the platform. Public addresses only unless the installation sets CIVICOS_WEBHOOKS_PRIVATE=1.
+    variables:
+      subscriberHost:
+        default: hooks.example.gov
+    security:
+      - $ref: '#/components/securitySchemes/hmacSignature'
+
+channels:
+  facilities:
+    address: /
+    description: National facility register (app/src/lib/data/facilities.ts).
+    messages:
+      facilityPublish: { $ref: '#/components/messages/facilityPublish' }
+      facilityWithdraw: { $ref: '#/components/messages/facilityWithdraw' }
+      facilityStatus: { $ref: '#/components/messages/facilityStatus' }
+      facilityMoveConfirm: { $ref: '#/components/messages/facilityMoveConfirm' }
+  boundaries:
+    address: /
+    description: The nation's boundary versions (app/src/lib/data/boundaries.ts).
+    messages:
+      boundaryPublish: { $ref: '#/components/messages/boundaryPublish' }
+      boundaryWithdraw: { $ref: '#/components/messages/boundaryWithdraw' }
+  twin:
+    address: /
+    description: National digital twin (app/src/lib/twin/).
+    messages:
+      twinSourceRun: { $ref: '#/components/messages/twinSourceRun' }
+      twinScenarioCreate: { $ref: '#/components/messages/twinScenarioCreate' }
+      twinScenarioRevise: { $ref: '#/components/messages/twinScenarioRevise' }
+  directives:
+    address: /
+    description: Directives drafted, signed and rescinded.
+    messages:
+      directiveDraft: { $ref: '#/components/messages/directiveDraft' }
+      directiveSign: { $ref: '#/components/messages/directiveSign' }
+      directiveRescind: { $ref: '#/components/messages/directiveRescind' }
+  operations:
+    address: /
+    description: Incidents, permits, institution queues, public-site publications, federation decisions and update installs.
+    messages:
+      incident: { $ref: '#/components/messages/incident' }
+      permit: { $ref: '#/components/messages/permit' }
+      queue: { $ref: '#/components/messages/queue' }
+      siteContent: { $ref: '#/components/messages/siteContent' }
+      federation: { $ref: '#/components/messages/federation' }
+      update: { $ref: '#/components/messages/update' }
+  registers:
+    address: /
+    description: Changes to the registers services/civic-api mirrors (review D8) - institutions, payments, integrations, webhooks, grants proposed, releases, deployments, backups, configuration and the tenant's lifecycle. Its follower subscribes to `*` and reads the changed register from GET /api/platform/mirror.
+    messages:
+      registerChange: { $ref: '#/components/messages/registerChange' }
+
+operations:
+  receiveFacilities:
+    action: receive
+    channel: { $ref: '#/channels/facilities' }
+  receiveBoundaries:
+    action: receive
+    channel: { $ref: '#/channels/boundaries' }
+  receiveTwin:
+    action: receive
+    channel: { $ref: '#/channels/twin' }
+  receiveDirectives:
+    action: receive
+    channel: { $ref: '#/channels/directives' }
+  receiveOperations:
+    action: receive
+    channel: { $ref: '#/channels/operations' }
+  receiveRegisters:
+    action: receive
+    channel: { $ref: '#/channels/registers' }
+
+components:
+  securitySchemes:
+    hmacSignature:
+      type: httpApiKey
+      name: X-CivicOS-Signature
+      in: header
+      description: sha256=<hex HMAC-SHA256(secret, `${X-CivicOS-Timestamp}.${body}`)>; X-CivicOS-Timestamp is Unix seconds.
+
+  messageTraits:
+    cloudEvent:
+      contentType: application/cloudevents+json
+      headers:
+        type: object
+        required: [x-civicos-event-id, x-civicos-timestamp, x-civicos-signature]
+        properties:
+          x-civicos-event-id: { type: string, description: Same as the event id. }
+          x-civicos-timestamp: { type: string, pattern: '^[0-9]+$' }
+          x-civicos-signature: { type: string, pattern: '^sha256=[0-9a-f]{64}$' }
+
+  schemas:
+    CloudEvent:
+      type: object
+      required: [specversion, id, source, type, subject, time, datacontenttype, auditseq, data]
+      properties:
+        specversion: { const: '1.0' }
+        id: { type: string, pattern: '^evt-[0-9a-f-]{36}$' }
+        source: { const: /civicos/platform }
+        type: { type: string, pattern: '^org\.civicos\.[a-z.-]+$' }
+        subject: { type: string, description: 'The resource, e.g. Facility:FAC-00012, Boundaries:v3, Directive:D-17.' }
+        time: { type: string, format: date-time }
+        datacontenttype: { const: application/json }
+        auditseq: { type: integer, description: Extension attribute — the audit-chain sequence number this event was written with. }
+        data:
+          type: object
+          required: [action, resource, actor, outcome, audit]
+          properties:
+            action: { type: string }
+            resource: { type: string }
+            actor: { type: string, description: The official (name and office) or system that acted. }
+            outcome: { const: ok }
+            detail: { type: string }
+            audit:
+              type: object
+              required: [seq, hash]
+              properties:
+                seq: { type: integer }
+                hash: { type: string, description: SHA-256 (hex) of the audit entry. }
+
+  messages:
+    facilityPublish:
+      name: org.civicos.facility.publish
+      title: A site was published in the facility register
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    facilityWithdraw:
+      name: org.civicos.facility.withdraw
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    facilityStatus:
+      name: org.civicos.facility.status
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    facilityMoveConfirm:
+      name: org.civicos.facility.move.confirm
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    boundaryPublish:
+      name: org.civicos.boundary.publish
+      title: A boundary version was published (in force from its date)
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    boundaryWithdraw:
+      name: org.civicos.boundary.withdraw
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    twinSourceRun:
+      name: org.civicos.twin.source.run
+      title: Observations entered from a registered source's run
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    twinScenarioCreate:
+      name: org.civicos.twin.scenario.create
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    twinScenarioRevise:
+      name: org.civicos.twin.scenario.revise
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    directiveDraft:
+      name: org.civicos.directive.draft
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    directiveSign:
+      name: org.civicos.directive.sign
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    directiveRescind:
+      name: org.civicos.directive.rescind
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    incident:
+      name: org.civicos.incident.*
+      summary: incident.open, incident.<action> (Operations).
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    permit:
+      name: org.civicos.permit.*
+      summary: permit.create, permit.approve, permit.decline, permit.request-info, permit.escalate.
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    queue:
+      name: org.civicos.queue.*
+      summary: queue.add, queue.import, queue.import.withdraw (institution case queues).
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    siteContent:
+      name: org.civicos.site.content.*
+      summary: site.content.publish, site.content.withdraw (public websites, Site editor).
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    federation:
+      name: org.civicos.federation.*
+      summary: federation.approved, federation.revoked (grants) and federation.exchange (allowed exchanges).
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    update:
+      name: org.civicos.update.*
+      summary: update.publish, update.fallback, update.probation.pass, update.probation.fail, update.staging.install (Update Center).
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }
+    registerChange:
+      name: org.civicos.<register action>
+      summary: ministry.create|rename|activate|deactivate|merge, department.add|remove, module.set, payment.execute, integration.register|approved|suspended|revoked, webhook.subscribe|active|paused|disabled, federation.propose, release.create|promote, deployment.start|advance|gate-fail|rollback, backup.create|restore, config.publish|sign|apply, tenant.transition. Key and secret rotations are not events.
+      traits: [{ $ref: '#/components/messageTraits/cloudEvent' }]
+      payload: { $ref: '#/components/schemas/CloudEvent' }

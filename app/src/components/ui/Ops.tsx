@@ -1,5 +1,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
+import { SignalTag } from './SignalTag';
+import type { SignalKind } from '@/lib/twin/signal';
 import type { HealthStatus, IncidentSeverity } from '@/lib/api/types';
 
 const statusDot: Record<HealthStatus, string> = {
@@ -52,10 +54,15 @@ export function MetricStat({
   label,
   value,
   tone = 'neutral',
+  kind,
+  source,
 }: {
   label: string;
   value: string;
   tone?: 'neutral' | 'ok' | 'warn' | 'alert';
+  /** What kind of figure it is; anything not observed or reported is marked (lib/twin/signal.ts). */
+  kind?: SignalKind;
+  source?: string;
 }) {
   const color =
     tone === 'ok'
@@ -70,7 +77,7 @@ export function MetricStat({
       className="rounded-[3px] border border-line bg-surface px-3 py-2"
       style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}
     >
-      <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{label}</div>
+      <div className="flex items-center justify-between gap-2 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{label}<SignalTag kind={kind} source={source} /></div>
       <div className={cn('font-mono text-2xl tabular-nums', color)}>{value}</div>
     </div>
   );
@@ -109,15 +116,19 @@ const sevTone: Record<IncidentSeverity, string> = {
   sev4: 'bg-surface-2 text-ink-soft ring-1 ring-line',
 };
 
+/** Severity in words (the code, e.g. SEV2, stays in the tooltip for engineers). */
+export const SEVERITY_WORD: Record<IncidentSeverity, string> = { sev1: 'Critical', sev2: 'Major', sev3: 'Moderate', sev4: 'Minor' };
+
 export function SeverityBadge({ severity }: { severity: IncidentSeverity }) {
   return (
     <span
+      title={severity.toUpperCase()}
       className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold uppercase',
+        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold',
         sevTone[severity],
       )}
     >
-      {severity}
+      {SEVERITY_WORD[severity] ?? severity}
     </span>
   );
 }

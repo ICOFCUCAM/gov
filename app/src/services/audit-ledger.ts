@@ -10,8 +10,10 @@
 // is a cache, not the source of truth. When the substrate isn't configured
 // the ledger falls back to memory-only — UI works either way.
 
+import { sha256Hex } from '@/lib/audit/sha256';
 import { appendAuditRow, auditTrailRows, verifyChainRow, substrateAvailable } from '@/lib/db/repos/audit';
 import { enrichActorString } from '@/services/actor-resolver';
+import { resetOnServerRender } from '@/lib/clock/server-reset';
 
 export interface AuditEntry {
   seq: number;
@@ -29,6 +31,7 @@ type Listener = () => void;
 const chains = new Map<string, AuditEntry[]>();
 const listeners = new Set<Listener>();
 let _version = 0;
+resetOnServerRender(() => { chains.clear(); _version = 0; });
 /** Stable snapshot for useSyncExternalStore — changes only on mutation. */
 export function version(): number { return _version; }
 const emit = () => { _version++; for (const l of listeners) l(); };
@@ -38,16 +41,11 @@ export function subscribe(l: Listener): () => void {
   return () => listeners.delete(l);
 }
 
-// Local FNV-1a digest — identical to the Postgres civicos.fnv1a_hex
-// function, so the in-memory mirror agrees with the DB byte-for-byte
-// (verified by the migration test in this PR).
+// SHA-256 digest (lib/audit/sha256.ts) — the same strength as the
+// platform's audit chain v2; this in-browser mirror chains its own entries
+// and verifies them with the same function, so nothing else depends on it.
 function digest(s: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = (h + ((h << 1) + (h << 4) + (h << 7) + (h << 8) + (h << 24))) >>> 0;
-  }
-  return h.toString(16).padStart(8, '0');
+  return sha256Hex(s);
 }
 
 /** Compute the next entry locally (used when persistence is unavailable

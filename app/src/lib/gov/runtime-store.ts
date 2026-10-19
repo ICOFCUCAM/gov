@@ -19,6 +19,7 @@ import {
 } from '@/lib/db/repos/work-items';
 import { resolvedActor } from '@/services/actor-resolver';
 import { transitionSignature } from '@/lib/db/signatures';
+import { resetOnServerRender } from '@/lib/clock/server-reset';
 
 // Actions that the platform default workflows treat as signature-worthy.
 // Approvals (approve/reject) and resolutions stand on the record; advance
@@ -57,6 +58,10 @@ let _restoredTransitions = 0;
 let _persisted = false;
 let _lastPersistAt = 0;
 let _hydrated = false;
+// Saved state is restored only once the page has hydrated (the first subscriber
+// or the first action), so the server's HTML and the browser's first render
+// agree; components then re-render with the restored state.
+let _ready = false;
 
 interface RuntimeSnapshot {
   scopes: [string, WorkItem[]][];
@@ -85,9 +90,10 @@ function persist() {
   }
 }
 
-/** Hydrate once from client storage before first scope access. */
-function hydrate() {
-  if (_hydrated || typeof window === 'undefined') return;
+/** Restore once from client storage, after hydration (see _ready). */
+function hydrate(force = false) {
+  if (force) _ready = true;
+  if (_hydrated || !_ready || typeof window === 'undefined') return;
   _hydrated = true;
   try {
     const raw = window.localStorage.getItem(PERSIST_KEY);
@@ -120,6 +126,11 @@ function emit() {
 
 export function subscribe(l: Listener): () => void {
   listeners.add(l);
+  if (!_hydrated) {
+    const before = _version;
+    hydrate(true);
+    if (_version !== before) queueMicrotask(() => listeners.forEach(x => x()));
+  }
   return () => listeners.delete(l);
 }
 
@@ -135,6 +146,7 @@ export function getScope(scope: string, kind: WorkKind, n: number): WorkItem[] {
 }
 
 export function actOnItem(scope: string, itemId: string, action: ActionKey, by: string): void {
+  hydrate(true);
   const items = scopes.get(scope);
   if (!items) return;
   const idx = items.findIndex(i => i.id === itemId);
@@ -182,6 +194,7 @@ export function actOnItem(scope: string, itemId: string, action: ActionKey, by: 
 }
 
 export function annotateItem(scope: string, itemId: string, note: string, by: string): void {
+  hydrate(true);
   const items = scopes.get(scope);
   if (!items || !note.trim()) return;
   const idx = items.findIndex(i => i.id === itemId);
@@ -196,6 +209,7 @@ export function annotateItem(scope: string, itemId: string, note: string, by: st
 }
 
 export function reassignItem(scope: string, itemId: string, assignee: string): void {
+  hydrate(true);
   const items = scopes.get(scope);
   if (!items) return;
   const idx = items.findIndex(i => i.id === itemId);
@@ -236,6 +250,7 @@ function mirrorOpenedItem(scope: string, item: WorkItem, by: string): void {
 
 /** Inject an operator-originated work item (e.g. an executive directive). */
 export function injectItem(scope: string, kind: WorkKind, title: string, by: string): void {
+  hydrate(true);
   const wf = workflowFor(kind);
   const items = scopes.get(scope) ?? [];
   const item: WorkItem = {
@@ -272,6 +287,7 @@ export interface DirectiveRecord {
   goal?: 'raise' | 'lower';
 }
 const directives = new Map<string, DirectiveRecord>();
+resetOnServerRender(() => { scopes.clear(); ledger.length = 0; directives.clear(); injCount = 0; _version = 0; });
 
 /**
  * Inject a strategic directive exactly once per stable key. Returns the
@@ -281,7 +297,7 @@ export function injectDirective(
   key: string, scope: string, kind: WorkKind, title: string, by: string,
   accountable?: { metricKey: string; baseline: number; goal: 'raise' | 'lower' },
 ): DirectiveRecord {
-  hydrate();
+  hydrate(true);
   const existing = directives.get(key);
   if (existing) return existing;
   const wf = workflowFor(kind);

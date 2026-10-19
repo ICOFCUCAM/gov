@@ -1,6 +1,6 @@
 -- supabase/cron/schedule.sql
 --
--- In-database scheduler for the 11 /api/cron/* worker endpoints, using
+-- In-database scheduler for the 12 /api/cron/* worker endpoints, using
 -- pg_cron + pg_net. This is the free (no Vercel Pro) path: Postgres itself
 -- calls the deployed Next.js cron routes on a timer.
 --
@@ -22,25 +22,38 @@
 -- as `Authorization: Bearer …`, which each route checks against
 -- CIVICOS_CRON_SECRET. Until the secret is seeded the jobs run but get 401.
 --
--- Deployed base URL is hard-coded below; update it if the app moves.
+-- Deployment base URL: each nation's deployment seeds its own, privately,
+-- so this file never needs editing per deployment:
+--
+--   select vault.create_secret('https://<your-deployment-host>', 'civicos_base_url');
+--
+-- Until it is seeded, jobs fall back to the original reference deployment.
 
 create extension if not exists pg_net;
 create extension if not exists pg_cron;
 
 -- GET workers ───────────────────────────────────────────────────────────
-select cron.schedule('civicos-deliver-events',     '*/5 * * * *',  $$select net.http_get(url := 'https://gov-pied-seven.vercel.app/api/cron/deliver-events',     headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
-select cron.schedule('civicos-substrate-metrics',  '*/10 * * * *', $$select net.http_get(url := 'https://gov-pied-seven.vercel.app/api/cron/substrate-metrics',  headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
-select cron.schedule('civicos-audit-anchor',       '*/10 * * * *', $$select net.http_get(url := 'https://gov-pied-seven.vercel.app/api/cron/audit-anchor',       headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
-select cron.schedule('civicos-witness-sweep',      '*/15 * * * *', $$select net.http_get(url := 'https://gov-pied-seven.vercel.app/api/cron/witness-sweep',      headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
-select cron.schedule('civicos-witness-divergence', '*/15 * * * *', $$select net.http_get(url := 'https://gov-pied-seven.vercel.app/api/cron/witness-divergence', headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
-select cron.schedule('civicos-posture-digest',     '*/30 * * * *', $$select net.http_get(url := 'https://gov-pied-seven.vercel.app/api/cron/posture-digest',     headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
-select cron.schedule('civicos-expire-consents',    '0 * * * *',    $$select net.http_get(url := 'https://gov-pied-seven.vercel.app/api/cron/expire-consents',    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
-select cron.schedule('civicos-audit-self',         '0 * * * *',    $$select net.http_get(url := 'https://gov-pied-seven.vercel.app/api/cron/audit-self',         headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+select cron.schedule('civicos-deliver-events',     '*/5 * * * *',  $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/deliver-events',     headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+select cron.schedule('civicos-substrate-metrics',  '*/10 * * * *', $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/substrate-metrics',  headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+select cron.schedule('civicos-audit-anchor',       '*/10 * * * *', $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/audit-anchor',       headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+select cron.schedule('civicos-witness-sweep',      '*/15 * * * *', $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/witness-sweep',      headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+select cron.schedule('civicos-witness-divergence', '*/15 * * * *', $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/witness-divergence', headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+select cron.schedule('civicos-posture-digest',     '*/30 * * * *', $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/posture-digest',     headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+select cron.schedule('civicos-expire-consents',    '0 * * * *',    $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/expire-consents',    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+select cron.schedule('civicos-audit-self',         '0 * * * *',    $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/audit-self',         headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+-- Update Center watchdog: concludes due probations (pass, switch back to the
+-- last known good release, or wait for the nation) and records overdue health
+-- reports as missing. Never installs anything.
+select cron.schedule('civicos-update-watchdog',    '* * * * *',    $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/update-watchdog',    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+select cron.schedule('civicos-site-feeds',         '*/30 * * * *', $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/site-feeds',    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+select cron.schedule('civicos-twin-ingest',        '7 * * * *', $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/twin-ingest',    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
+-- Platform event outbox: CloudEvents 1.0 to webhook subscribers, HMAC-signed (lib/events/deliver.ts).
+select cron.schedule('civicos-deliver-cloudevents', '*/2 * * * *', $$select net.http_get(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/deliver-cloudevents',    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret')))$$);
 
 -- POST workers ──────────────────────────────────────────────────────────
-select cron.schedule('civicos-sla',                '0 * * * *',    $$select net.http_post(url := 'https://gov-pied-seven.vercel.app/api/cron/sla',                headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret'), 'Content-Type', 'application/json'), body := '{}'::jsonb)$$);
-select cron.schedule('civicos-telemetry-stale',    '0 * * * *',    $$select net.http_post(url := 'https://gov-pied-seven.vercel.app/api/cron/telemetry-stale',    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret'), 'Content-Type', 'application/json'), body := '{}'::jsonb)$$);
-select cron.schedule('civicos-promote-directives', '0 * * * *',    $$select net.http_post(url := 'https://gov-pied-seven.vercel.app/api/cron/promote-directives', headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret'), 'Content-Type', 'application/json'), body := '{}'::jsonb)$$);
+select cron.schedule('civicos-sla',                '0 * * * *',    $$select net.http_post(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/sla',                headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret'), 'Content-Type', 'application/json'), body := '{}'::jsonb)$$);
+select cron.schedule('civicos-telemetry-stale',    '0 * * * *',    $$select net.http_post(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/telemetry-stale',    headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret'), 'Content-Type', 'application/json'), body := '{}'::jsonb)$$);
+select cron.schedule('civicos-promote-directives', '0 * * * *',    $$select net.http_post(url := coalesce((select decrypted_secret from vault.decrypted_secrets where name = 'civicos_base_url'), 'https://gov-pied-seven.vercel.app') || '/api/cron/promote-directives', headers := jsonb_build_object('Authorization', 'Bearer ' || (select decrypted_secret from vault.decrypted_secrets where name = 'civicos_cron_secret'), 'Content-Type', 'application/json'), body := '{}'::jsonb)$$);
 
 -- Inspect:        select jobname, schedule, active from cron.job order by jobid;
 -- Recent runs:    select * from cron.job_run_details order by start_time desc limit 20;

@@ -9,7 +9,10 @@
 
 import * as React from 'react';
 import { interiorOps } from '@/lib/gov/interior-systems';
-import { wave, seed } from '@/lib/telemetry';
+import { wave } from '@/lib/telemetry';
+import { formatMoney, regionName } from '@/lib/nation/registry';
+import { RegionMap, mapClock, skewed, useNationGeo, type MapValue, type RegionLabel } from '@/apps/ministry-interior/domains/RegionMaps';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const BG = '#f5f6fb';
 const CARD = '#ffffff';
@@ -27,7 +30,7 @@ const ORANGE = '#e07a3a';
 const RED = '#e0685f';
 
 function Card({ title, sub, action, children, className }: {
-  title: string; sub?: string; action?: string; children: React.ReactNode; className?: string;
+  title: string; sub?: string; action?: React.ReactNode; children: React.ReactNode; className?: string;
 }) {
   return (
     <section className={`flex flex-col rounded-xl border ${className ?? ''}`}
@@ -61,27 +64,37 @@ function Kpi({ label, value, delta, dn, flat, sub, icon, c }: {
   );
 }
 
-function RegionMap({ id, ts }: { id: string; ts: number }) {
-  // Deterministic hex-cell choropleth of 24 regions.
-  const tiers = [GREEN, TEAL, BLUE, AMBER, RED];
-  const cells = Array.from({ length: 30 }).map((_, i) => {
-    const v = wave(`ra:rm:${id}:${i}`, ts, 0, 1);
-    const ti = v > 0.78 ? 0 : v > 0.55 ? 1 : v > 0.36 ? 2 : v > 0.18 ? 3 : 4;
-    const val = 20 + Math.round(seed(`ra:rv:${id}:${i}`) * 79);
-    return { c: tiers[ti], val };
-  });
+// The nation's real regions, each coloured by its overall index in the five
+// tiers the page uses everywhere (map plan phase 5; was a 6×5 hex grid).
+const TIERS: [string, string, number][] = [['Excellent', GREEN, 85], ['Good', TEAL, 78], ['Moderate', BLUE, 72], ['Needs Attention', AMBER, 65], ['Critical', RED, -Infinity]];
+const tierOf = (v: number) => TIERS.find(t => v >= t[2])!;
+const SRC_INDEX = 'Regional performance model (sample until regional reporting connects)';
+
+function RegionTierMap({ values, selected, onSelect }: { values: MapValue[]; selected: string; onSelect: (name: string) => void }) {
+  const ranked = [...values].sort((a, b) => b.value - a.value);
+  // Index figures on the map, as the tiles had them: every region when they fit, else the top and bottom of the ranking.
+  const shown = values.length <= 30 ? values : [...ranked.slice(0, 4), ...ranked.slice(-3)];
+  const labels: RegionLabel[] = shown.map(v => ({ region: v.key, text: String(Math.round(v.value)), colour: 'rgb(var(--c-surface))', ink: tierOf(v.value)[1] }));
+  const sel = values.find(v => v.key === selected);
   return (
     <div>
-      <div className="grid gap-1.5" style={{ gridTemplateColumns: 'repeat(6,1fr)' }} aria-hidden>
-        {cells.map((cell, i) => (
-          <span key={i} className="grid place-items-center text-[8px] font-semibold"
-            style={{ aspectRatio: '1', color: '#fff', background: cell.c, opacity: 0.5 + (i % 5) * 0.1,
-              clipPath: 'polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%)' }}>{cell.val}</span>
-        ))}
-      </div>
+      <RegionMap title="Overall index by region" values={values} kind="sample" source={SRC_INDEX} valueLabel="Overall index" ground="light"
+        colourOf={v => tierOf(v.value)[1]} labels={labels} compact={false} maxHeight={330} minHeight={220}
+        selected={selected || undefined} onSelect={u => onSelect(u.name === selected ? '' : u.name)}
+        emptyNote="Loading the nation's regions…" />
+      {sel ? (
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-lg border px-2.5 py-1.5 text-[10px]" style={{ borderColor: LINE, color: SOFT }} role="status">
+          <span className="font-semibold" style={{ color: INK }}>{sel.key}</span>
+          <span>Index <b className="tabular-nums" style={{ color: INK }}>{Math.round(sel.value * 10) / 10}</b></span>
+          <span className="inline-flex items-center gap-1"><span className="h-2 w-2 rounded-full" style={{ background: tierOf(sel.value)[1] }} />{tierOf(sel.value)[0]}</span>
+          <span>Rank {ranked.findIndex(v => v.key === sel.key) + 1} of {values.length}</span>
+          <button type="button" className="focus-ring ml-auto text-[10px] font-medium" style={{ color: PURPLE }} onClick={() => onSelect('')}>Clear</button>
+        </div>
+      ) : null}
       <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[9px]" style={{ color: SOFT }}>
-        {[['Excellent', GREEN], ['Good', TEAL], ['Moderate', BLUE], ['Needs Attention', AMBER], ['Critical', RED]].map(([l, c]) => (
-          <span key={l} className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: c }} />{l}</span>
+        {TIERS.map(([l, c]) => (
+          <span key={l} className="inline-flex items-center gap-1.5"><span className="h-2 w-2 rounded-full" style={{ background: c }} />{l}
+            {values.length ? <span className="tabular-nums" style={{ color: MUT }}>{values.filter(v => tierOf(v.value)[0] === l).length}</span> : null}</span>
         ))}
       </div>
     </div>
@@ -120,55 +133,65 @@ export function RegionalAdministration({ id, now }: { id: string; now: number })
   const io = interiorOps(id, ts);
   const clock = new Date(now);
   const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const geo = useNationGeo();
+  const [pick, setPick] = React.useState('');
 
   const order = io.coordination.publicOrderIndex;
   const alerts = Math.round(wave(`ra:al:${id}`, ts, 60, 110));
   const programs = 1200 + Math.round(wave(`ra:pg:${id}`, ts, 0, 120));
 
   const kpis = [
-    <Kpi key="tr" label="Total Regions" value="24" sub="100% Operational" icon="◈" c={BLUE} />,
+    <Kpi key="tr" label={`Total ${geo?.units.length ? geo.plural.replace(/^./, c => c.toUpperCase()) : 'Regions'}`} value={geo?.units.length ? String(geo.units.length) : '24'} sub="100% Operational" icon="◈" c={BLUE} />,
     <Kpi key="tp" label="Total Population" value="84.27M" delta="1.35%" icon="☷" c={TEAL} />,
     <Kpi key="ap" label="Active Programs" value={programs.toLocaleString()} delta="6.2%" icon="▦" c={PURPLE} />,
-    <Kpi key="ba" label="Budget Allocated" value="$12.48B" delta="6.2%" icon="◉" c={AMBER} />,
+    <Kpi key="ba" label="Budget Allocated" value={formatMoney(12.48e9)} delta="6.2%" icon="◉" c={AMBER} />,
     <Kpi key="pp" label="Projects in Progress" value="2,341" delta="8.7%" icon="▤" c={GREEN} />,
     <Kpi key="ai" label="Alerts & Issues" value={String(alerts)} delta="12.5%" dn icon="⚠" c={RED} />,
   ];
 
   const ranking: [number, string, number, number][] = [
-    [1, 'North Province', 87.4, 3], [2, 'Central Province', 82.1, 1], [3, 'East Province', 79.8, 2],
-    [4, 'West Province', 74.6, -1], [5, 'South Province', 72.3, 1],
+    [1, regionName(1, 'North Province'), 87.4, 3], [2, regionName(0, 'Central Province'), 82.1, 1], [3, regionName(2, 'East Province'), 79.8, 2],
+    [4, regionName(3, 'West Province'), 74.6, -1], [5, regionName(4, 'South Province'), 72.3, 1],
   ];
   const rankTail: [number, string, number, number][] = [
-    [23, 'Frontier Province', 52.6, -1], [24, 'Highland Province', 48.3, 0],
+    [23, regionName(5, 'Frontier Province'), 52.6, -1], [24, regionName(5, 'Highland Province'), 48.3, 0],
   ];
 
   const indicators: [string, number, number, number, number, number, number, number, number][] = [
-    ['North Province', 85, 88, 84, 86, 90, 82, 87.4, 3],
-    ['Central Province', 82, 83, 81, 85, 88, 74, 82.1, 1],
-    ['East Province', 78, 76, 81, 80, 82, 81, 79.8, 2],
-    ['West Province', 75, 70, 76, 77, 79, 71, 74.6, -1],
-    ['South Province', 73, 69, 74, 76, 78, 70, 72.3, 1],
+    [regionName(1, 'North Province'), 85, 88, 84, 86, 90, 82, 87.4, 3],
+    [regionName(0, 'Central Province'), 82, 83, 81, 85, 88, 74, 82.1, 1],
+    [regionName(2, 'East Province'), 78, 76, 81, 80, 82, 81, 79.8, 2],
+    [regionName(3, 'West Province'), 75, 70, 76, 77, 79, 71, 74.6, -1],
+    [regionName(4, 'South Province'), 73, 69, 74, 76, 78, 70, 72.3, 1],
   ];
   const dotColor = (v: number) => v >= 85 ? GREEN : v >= 78 ? TEAL : v >= 72 ? BLUE : v >= 65 ? AMBER : RED;
 
   const budget: [string, string, number, string][] = [
-    ['North Province', '$2.48B', 19.9, GREEN], ['Central Province', '$2.12B', 17.0, BLUE],
-    ['East Province', '$1.98B', 15.9, PURPLE], ['West Province', '$1.76B', 14.1, '#b07cf0'],
-    ['South Province', '$1.42B', 11.4, ORANGE], ['Other Regions', '$2.72B', 21.7, '#9aa3b5'],
+    [regionName(1, 'North Province'), formatMoney(2.48e9), 19.9, GREEN], [regionName(0, 'Central Province'), formatMoney(2.12e9), 17.0, BLUE],
+    [regionName(2, 'East Province'), formatMoney(1.98e9), 15.9, PURPLE], [regionName(3, 'West Province'), formatMoney(1.76e9), 14.1, '#b07cf0'],
+    [regionName(4, 'South Province'), formatMoney(1.42e9), 11.4, ORANGE], ['Other Regions', formatMoney(2.72e9), 21.7, '#9aa3b5'],
   ];
   const projects: [string, string, number, string][] = [
-    ['North Highway Expansion', 'North Province', 78, 'On Track'],
-    ['Central Water Initiative', 'Central Province', 84, 'On Track'],
-    ['Eastern Port Development', 'East Province', 54, 'At Risk'],
-    ['Western Industrial Corridor', 'West Province', 62, 'On Track'],
-    ['Southern Renewable Park', 'South Province', 71, 'On Track'],
+    ['North Highway Expansion', regionName(1, 'North Province'), 78, 'On Track'],
+    ['Central Water Initiative', regionName(0, 'Central Province'), 84, 'On Track'],
+    ['Eastern Port Development', regionName(2, 'East Province'), 54, 'At Risk'],
+    ['Western Industrial Corridor', regionName(3, 'West Province'), 62, 'On Track'],
+    ['Southern Renewable Park', regionName(4, 'South Province'), 71, 'On Track'],
   ];
+  const place = (i: number, ref: string) => (geo?.units.length ? geo.units[i % geo.units.length]!.name : ref);
   const alertsList: [string, string, string][] = [
-    ['Flood advisory in East Province', '25 min ago', RED],
-    ['Infrastructure delay in Region 14', '1 hr ago', AMBER],
-    ['Security incident in Region 23', '2 hr ago', ORANGE],
-    ['Resource request from Region 07', '3 hr ago', BLUE],
+    [`Flood advisory in ${place(2, regionName(2, 'East Province'))}`, '25 min ago', RED],
+    [`Infrastructure delay in ${place(13, 'Region 14')}`, '1 hr ago', AMBER],
+    [`Security incident in ${place(22, 'Region 23')}`, '2 hr ago', ORANGE],
+    [`Resource request from ${place(6, 'Region 07')}`, '3 hr ago', BLUE],
   ];
+
+  // The map: every one of the nation's regions with its overall index. Regions the
+  // ranking and indicator table name keep the figures shown there.
+  const listed = new Map<string, number>([...indicators.map(r => [r[0], r[7]] as const), ...[...ranking, ...rankTail].map(r => [r[1], r[2]] as const)]);
+  const mapValues: MapValue[] = (geo?.units ?? []).map(u => ({
+    key: u.name, value: listed.get(u.name) ?? Math.round((44 + 50 * skewed(wave(`ra:rm:${id}:${u.code ?? u.name}`, mapClock(ts), 0, 1), 0.8)) * 10) / 10,
+  }));
 
   const Rank = ({ r, nm, v, d }: { r: number; nm: string; v: number; d: number }) => (
     <div className="flex items-center gap-2.5 text-[10.5px]">
@@ -210,8 +233,18 @@ export function RegionalAdministration({ id, now }: { id: string; now: number })
 
       {/* ── Row 1 ──────────────────────────────────────────────── */}
       <div className="grid gap-3 xl:grid-cols-[1.4fr_1fr_1fr_0.9fr]">
-        <Card title="Regional Map" sub="Operational status and key indicators by region" action="All Regions ▾">
-          <RegionMap id={id} ts={ts} />
+        <Card title="Regional Map" sub="Operational status and key indicators by region" action={
+          <label className="relative inline-flex items-center">
+            <span className="sr-only">Show a region</span>
+            <select value={pick} onChange={e => setPick(e.currentTarget.value)} disabled={!geo?.units.length}
+              className="focus-ring max-w-[9.5rem] cursor-pointer appearance-none truncate rounded bg-transparent pe-3 text-end text-[10px] font-medium" style={{ color: PURPLE }}>
+              <option value="">All Regions</option>
+              {(geo?.units ?? []).map(u => <option key={u.code ?? u.name} value={u.name}>{u.name}</option>)}
+            </select>
+            <span className="pointer-events-none absolute end-0 text-[10px]" style={{ color: PURPLE }} aria-hidden>▾</span>
+          </label>
+        }>
+          <RegionTierMap values={mapValues} selected={pick} onSelect={setPick} />
         </Card>
         <Card title="Region Performance Ranking" sub="By Overall Index" action="View All Regions →">
           <div className="space-y-2">
@@ -271,7 +304,7 @@ export function RegionalAdministration({ id, now }: { id: string; now: number })
             ))}
           </div>
         </Card>
-        <Card title="Budget Allocation by Region" sub="FY 2025" action="Total: $12.48B">
+        <Card title="Budget Allocation by Region" sub="FY 2025" action={`Total: ${formatMoney(12.48e9)}`}>
           <div className="space-y-2.5">
             {budget.map(([nm, amt, pct, c]) => (
               <div key={nm} className="text-[9.5px]">
@@ -310,7 +343,7 @@ export function RegionalAdministration({ id, now }: { id: string; now: number })
       {/* ── Footer ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3 text-[10px]" style={{ borderColor: LINE, color: MUT }}>
         <span>National Governance Platform — One Nation. One System.</span>
-        <span>All Regions Operational · Public-Order Index {order} · Active Cells {io.coordination.cellsActive} · Data Last Updated {dd}, 10:30 AM</span>
+        <span>All Regions Operational · Public-Order Index {order} <IndexTag index="interior-systems.ts · publicOrderIndex" /> · Active Cells {io.coordination.cellsActive} · Data Last Updated {dd}, 10:30 AM</span>
       </div>
     </div>
   );

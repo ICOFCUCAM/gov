@@ -64,7 +64,7 @@ export function AuditReplay() {
   return (
     <div className="space-y-3">
       <div className="flex flex-wrap items-end justify-between gap-2">
-        <SurfaceHeading title="Audit Replay" badge="offline · pure client" />
+        <SurfaceHeading title="Audit Replay" badge="on this computer only" />
         <div className="flex items-center gap-2">
           <button type="button" onClick={() => run(raw)} disabled={!raw.trim()}
             className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink disabled:opacity-50">

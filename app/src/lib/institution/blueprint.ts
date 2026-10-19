@@ -71,7 +71,7 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
       S('Compliance', 'regulatory'),
     ]),
     G('emergency', 'Emergency Medical Systems', 'Pre-hospital & disaster medicine', [
-      S('Ambulance telemetry', 'field'), S('Emergency dispatch', 'emergency'),
+      S('Ambulance live tracking', 'field'), S('Emergency dispatch', 'emergency'),
       S('Disaster medicine', 'emergency'),
     ]),
     G('situation', 'National Situation Room', 'Whole-of-nation health command picture', [
@@ -84,15 +84,15 @@ const BP: Record<InstitutionKind, BlueprintGroup[]> = {
     ]),
     G('portal', 'Citizen Health Portal', 'Citizen digital health ecosystem', [
       S('Digital health ID', 'citizen'), S('Health timeline', 'citizen'),
-      S('Telemedicine & personal AI', 'citizen'),
+      S('Telemedicine & personal health guidance', 'citizen'),
     ]),
     G('interop', 'National Interoperability', 'Cross-government health data fabric', [
       S('Inter-ministry links', 'interop'), S('Identity federation', 'registry'),
       S('Event exchange', 'intelligence'),
     ]),
-    G('simulation', 'AI & Simulation', 'National health simulation & predictive AI', [
+    G('simulation', 'Simulation & forecasting', 'National health simulation & forecasting', [
       S('Pandemic simulation', 'intelligence'), S('Intervention modelling', 'intelligence'),
-      S('Collapse-risk AI', 'command'),
+      S('Collapse-risk forecasting', 'command'),
     ]),
     G('security', 'Sovereign Data & Security', 'Health data sovereignty & security', [
       S('Audit chain', 'audit'), S('Access governance', 'regulatory'),
@@ -924,7 +924,7 @@ const KIND_METRICS: Record<SystemKind, { label: string; lo: number; hi: number; 
   logistics:  [{ label: 'Stock cover', lo: 30, hi: 96, unit: 'd', good: 'high' }, { label: 'In transit', lo: 20, hi: 96, unit: '', good: 'high' }, { label: 'Disruptions', lo: 0, hi: 16, unit: '', good: 'low' }],
   audit:      [{ label: 'Chain intact', lo: 99, hi: 100, unit: '%', good: 'high' }, { label: 'Findings', lo: 0, hi: 20, unit: '', good: 'low' }, { label: 'Coverage', lo: 70, hi: 100, unit: '%', good: 'high' }],
   interop:    [{ label: 'Contracts live', lo: 70, hi: 100, unit: '%', good: 'high' }, { label: 'Latency', lo: 20, hi: 400, unit: 'ms', good: 'low' }, { label: 'Failures', lo: 0, hi: 14, unit: '', good: 'low' }],
-  field:      [{ label: 'Units deployed', lo: 40, hi: 96, unit: '%', good: 'high' }, { label: 'Telemetry', lo: 70, hi: 99, unit: '%', good: 'high' }, { label: 'Offline', lo: 0, hi: 22, unit: '', good: 'low' }],
+  field:      [{ label: 'Units deployed', lo: 40, hi: 96, unit: '%', good: 'high' }, { label: 'Live tracking', lo: 70, hi: 99, unit: '%', good: 'high' }, { label: 'Offline', lo: 0, hi: 22, unit: '', good: 'low' }],
 };
 
 export function systemReadout(instId: string, groupKey: string, sys: BlueprintSystem, t: number): SystemMetric[] {

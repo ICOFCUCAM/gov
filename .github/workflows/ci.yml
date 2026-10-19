@@ -25,29 +25,220 @@ jobs:
         run: pnpm typecheck
       - name: Unit tests (vitest)
         run: pnpm test
+      - name: No new raw colours in console code (tokens only)
+        run: pnpm scan:colours
+
+  dependency-audit:
+    name: dependency audit (production, high and critical)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable pnpm
+        run: corepack enable
+      # Fails on any high or critical advisory in production dependencies
+      # (pnpm audit --prod) that is not recorded, with a reason and a review
+      # date, in app/scripts/audit-accepted.json.
+      - name: Audit production dependencies
+        run: node scripts/audit-deps.mjs --json dependency-audit.json
+      - name: Raise the findings as Update Center advisories (when a publisher is configured)
+        if: always()
+        env:
+          CIVICOS_PUBLISHER_URL: ${{ secrets.CIVICOS_PUBLISHER_URL }}
+          CIVICOS_PUBLISHER_TOKEN: ${{ secrets.CIVICOS_PUBLISHER_TOKEN }}
+        run: |
+          if [ -z "$CIVICOS_PUBLISHER_URL" ]; then echo "No publisher configured; skipped."; exit 0; fi
+          node scripts/audit-deps.mjs --publish "$CIVICOS_PUBLISHER_URL" || true
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit
+          path: app/dependency-audit.json
+          if-no-files-found: ignore
+
+  container-scan:
+    name: container image scan (high and critical)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the app image
+        run: docker build -t civicos-app:ci app
+      # Trivy's own image, pinned by digest (0.65.0); the trivy-action tag this
+      # job used no longer resolves. The scan reads the image through the
+      # runner's Docker socket.
+      - name: Scan the image (OS packages and Node modules)
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock
+          -v "$HOME/.cache/trivy:/root/.cache/trivy"
+          aquasec/trivy@sha256:a22415a38938a56c379387a8163fcb0ce38b10ace73e593475d3658d578b2436
+          image --severity HIGH,CRITICAL --ignore-unfixed --exit-code 1 --format table civicos-app:ci
+      - name: Software bill of materials (CycloneDX)
+        if: always()
+        run: >
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock
+          -v "$HOME/.cache/trivy:/root/.cache/trivy" -v "$PWD:/out"
+          aquasec/trivy@sha256:a22415a38938a56c379387a8163fcb0ce38b10ace73e593475d3658d578b2436
+          image --format cyclonedx --output /out/civicos-app.cdx.json civicos-app:ci
+      - name: Keep the SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: civicos-app-sbom
+          path: civicos-app.cdx.json
+          if-no-files-found: ignore
+
+  public-sites-audit:
+    name: public sites audit (accessibility, links, budgets)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright-core install --with-deps chromium
+      - name: Build
+        run: pnpm build
+      - name: Start the server
+        run: |
+          pnpm start -p 3000 > /tmp/next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/api/setup > /dev/null && exit 0; sleep 2; done
+          cat /tmp/next.log; exit 1
+      - name: Audit every public site in every design (WCAG 2.2 AA, links, budgets)
+        run: pnpm audit:sites --report public-sites-audit.json
+      - name: Keep the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-sites-audit
+          path: app/public-sites-audit.json
+          if-no-files-found: ignore
+
+  console-smoke:
+    name: console smoke tests and OGC API Features conformance
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Install Chromium
+        run: pnpm exec playwright-core install --with-deps chromium
+      - name: Build
+        run: pnpm build
+      - name: Start the server
+        run: |
+          pnpm start -p 3000 > /tmp/next.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf http://localhost:3000/api/setup > /dev/null && exit 0; sleep 2; done
+          cat /tmp/next.log; exit 1
+      - name: Console pages on desktop and phone (page errors, CSP, maps, layout)
+        run: node scripts/smoke-console.mjs --base http://localhost:3000 --nation KEN --report console-smoke.json
+      - name: OGC API Features Part 1 core checks
+        run: node scripts/ogc-check.mjs --base http://localhost:3000 --report ogc-check.json
+      - name: OGC CITE TEAM Engine (official executable test suite)
+        # Advisory until the suite's optional classes are reviewed: the report is kept either way.
+        continue-on-error: true
+        run: |
+          docker run -d --name teamengine --network host ogccite/ets-ogcapi-features10:latest
+          for i in $(seq 1 60); do curl -sf http://localhost:8080/teamengine/ > /dev/null && break; sleep 3; done
+          curl -sf -u ogctest:ogctest -H 'Accept: application/xml' \
+            "http://localhost:8080/teamengine/rest/suites/ogcapi-features-1.0/run?iut=http://localhost:3000/api/twin/ogc" -o ogc-cite.xml
+          ! grep -q 'status="FAIL"' ogc-cite.xml
+      - name: Keep the reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: console-smoke
+          path: |
+            app/console-smoke.json
+            app/ogc-check.json
+            app/ogc-cite.xml
+          if-no-files-found: ignore
 
   substrate-tests:
     name: substrate SQL suite
     runs-on: ubuntu-latest
-    # Runs only when a migrated test database is configured (secret set);
-    # otherwise it no-ops so forks / unconfigured repos stay green.
-    env:
-      DATABASE_URL: ${{ secrets.SUBSTRATE_TEST_DATABASE_URL }}
+    # Always runs: a throwaway Postgres service container gets the Supabase
+    # stand-ins (roles, auth.uid(), extensions, supabase_realtime) and every
+    # migration in order, then every *_test.sql suite. When a migrated test
+    # database is also configured (SUBSTRATE_TEST_DATABASE_URL), the suites
+    # run against it too.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: app
     steps:
       - uses: actions/checkout@v4
-      - name: Skip if no test DB configured
-        id: gate
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Apply the stand-ins and every migration to the throwaway database
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: bash supabase/tests/migrate.sh
+      - name: Run substrate regression suite (throwaway database)
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: bash supabase/tests/run.sh
+      - name: Run substrate regression suite (configured test database, when set)
+        env:
+          DATABASE_URL: ${{ secrets.SUBSTRATE_TEST_DATABASE_URL }}
         run: |
           if [ -z "${DATABASE_URL}" ]; then
-            echo "no SUBSTRATE_TEST_DATABASE_URL secret — skipping substrate suite"
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "no SUBSTRATE_TEST_DATABASE_URL secret; the throwaway run above covers the suite"
+            exit 0
           fi
-      - name: Install psql client
-        if: steps.gate.outputs.run == 'true'
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
-      - name: Run substrate regression suite
-        if: steps.gate.outputs.run == 'true'
-        run: bash supabase/tests/run.sh
-        working-directory: app
+          bash supabase/tests/run.sh
+
+  civic-api:
+    name: civic-api typecheck + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/civic-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # node --test expands the quoted spec glob itself, which needs Node 21+.
+          node-version: 22
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Generate the Prisma client (no database needed)
+        run: pnpm exec prisma generate
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit tests (node --test)
+        run: pnpm test

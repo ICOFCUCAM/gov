@@ -6,6 +6,7 @@ import * as React from 'react';
 import { energyExtendedBoard, ENERGY_EXTENDED_SAFEGUARDS } from '@/lib/gov/energy-extended';
 import { GridFrame, GridKpi, GridRule, LineDiagramRow, ENERGY_DS, GridCallout } from '@/apps/ministry-energy/design-system/energy-ds';
 
+import { aiLabel } from '@/lib/nation/registry';
 export function DemandTrajectory({ id, now }: { id: string; now: number }) {
   const ext = energyExtendedBoard(now);
   void id;
@@ -15,7 +16,7 @@ export function DemandTrajectory({ id, now }: { id: string; now: number }) {
       <GridKpi items={[
         { label: 'Horizons', value: ext.intelligence.demand.horizonYears.length },
         { label: 'Long-horizon resilience', value: `${ext.intelligence.longHorizonResilienceIdx}/100`, tone: 'ok' },
-        { label: 'AI reasoning', value: `${ext.intelligence.aiReasoningCoveragePct}%`, tone: 'info' },
+        { label: aiLabel('AI reasoning', 'Reasoning coverage'), value: `${ext.intelligence.aiReasoningCoveragePct}%`, tone: 'info' },
         { label: 'Systemic risk', value: `${ext.intelligence.systemicEnergyRisk}/100`, tone: 'warn' },
       ]} />
       <GridRule label="trajectories" />

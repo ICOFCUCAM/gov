@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<message:StructureSpecificData xmlns:message="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/message" xmlns:ss="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/data/structurespecific" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:common="http://www.sdmx.org/resources/sdmxml/schemas/v2_1/common" xmlns:ns1="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=KNBS:DF_HH(1.0):ObsLevelDim:TIME_PERIOD">
+  <message:Header>
+    <message:ID>KNBS-HH-2019</message:ID>
+    <message:Test>false</message:Test>
+    <message:Prepared>2024-02-01T00:00:00</message:Prepared>
+    <message:Sender id="KNBS"/>
+    <message:Structure structureID="KNBS_DF_HH_1_0" namespace="urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=KNBS:DF_HH(1.0):ObsLevelDim:TIME_PERIOD" dimensionAtObservation="TIME_PERIOD">
+      <common:StructureUsage><Ref agencyID="KNBS" id="DF_HH" version="1.0"/></common:StructureUsage>
+    </message:Structure>
+  </message:Header>
+  <message:DataSet ss:dataScope="DataStructure" xsi:type="ns1:DataSetType" ss:structureRef="KNBS_DF_HH_1_0" action="Information">
+    <!-- Households by county (sample figures), in thousands -->
+    <Series FREQ="A" REF_AREA="KE-28" UNIT_MEASURE="HH" UNIT_MULT="3">
+      <Obs TIME_PERIOD="2019" OBS_VALUE="378.4" OBS_STATUS="A"/>
+      <Obs TIME_PERIOD="2020" OBS_VALUE="NaN" OBS_STATUS="M"/>
+    </Series>
+    <Series FREQ="A" REF_AREA="KE-30" UNIT_MEASURE="HH" UNIT_MULT="3">
+      <Obs TIME_PERIOD="2019" OBS_VALUE="1506.888" OBS_STATUS="P"/>
+    </Series>
+    <Series FREQ="A" REF_AREA="KE-17" UNIT_MEASURE="HH" UNIT_MULT="0">
+      <Obs TIME_PERIOD="2019-Q5" OBS_VALUE="1"/>
+    </Series>
+  </message:DataSet>
+  <message:DataSet ss:structureRef="KNBS_DF_HH_1_0" action="Delete">
+    <Obs FREQ="A" REF_AREA="KE-17" TIME_PERIOD="2019" OBS_VALUE="300745" UNIT_MEASURE="HH"/>
+  </message:DataSet>
+</message:StructureSpecificData>

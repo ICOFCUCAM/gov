@@ -5,6 +5,7 @@
 
 import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type { TelemetryStreamRow, TelemetrySampleRow } from '@/lib/db/types';
+import { logger } from '@/lib/ops/log';
 
 export interface TelemetryStreamInput {
   streamId: string;
@@ -30,7 +31,7 @@ export async function defineTelemetryStreamRow(s: TelemetryStreamInput): Promise
     p_alert_threshold: s.alertThreshold ?? null,
     p_facility_id: s.facilityId ?? null,
   });
-  if (error) { console.error('[civicos] define_telemetry_stream failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'define_telemetry_stream', message: error.message }); return null; }
   return (data as TelemetryStreamRow) ?? null;
 }
 
@@ -50,7 +51,7 @@ export async function recordTelemetrySampleRow(s: TelemetrySampleInput): Promise
     p_ts: s.ts ?? null, p_facility_id: s.facilityId ?? null,
     p_meta: s.meta ?? {},
   });
-  if (error) { console.error('[civicos] record_telemetry_sample failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'record_telemetry_sample', message: error.message }); return null; }
   return (data as TelemetrySampleRow) ?? null;
 }
 
@@ -60,6 +61,26 @@ export async function recentTelemetrySamplesRows(streamId: string, limit = 100):
   const { data, error } = await sb.from('civicos_telemetry_samples')
     .select('*').eq('stream_id', streamId)
     .order('ts', { ascending: false }).limit(limit);
+  if (error || !data) return [];
+  return data as TelemetrySampleRow[];
+}
+
+/** One stream by its id; null without a substrate or when there is none. */
+export async function telemetryStreamRow(streamId: string): Promise<TelemetryStreamRow | null> {
+  const sb = publicClient();
+  if (!sb) return null;
+  const { data, error } = await sb.from('civicos_telemetry_streams').select('*').eq('stream_id', streamId).maybeSingle();
+  if (error || !data) return null;
+  return data as TelemetryStreamRow;
+}
+
+/** A stream's samples with from <= ts < to, oldest first, at most `limit` (the twin's daily aggregates, lib/twin/stream.ts). [] without a substrate. */
+export async function telemetrySamplesBetween(streamId: string, from: string, to: string, limit = 50_000): Promise<TelemetrySampleRow[]> {
+  const sb = publicClient();
+  if (!sb) return [];
+  const { data, error } = await sb.from('civicos_telemetry_samples')
+    .select('*').eq('stream_id', streamId).gte('ts', from).lt('ts', to)
+    .order('ts', { ascending: true }).limit(limit);
   if (error || !data) return [];
   return data as TelemetrySampleRow[];
 }

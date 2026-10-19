@@ -7,6 +7,7 @@
 // never empty. SSR/test-safe (no window) — engine determinism unaffected.
 
 import { seed } from '@/lib/telemetry';
+import { resetOnServerRender } from '@/lib/clock/server-reset';
 
 export interface Enrollment {
   id: string;
@@ -24,11 +25,13 @@ const regs = new Map<string, Enrollment[]>(); // key = `${ministryKey}:${facilit
 const listeners = new Set<Listener>();
 let _version = 0;
 let _hydrated = false;
+resetOnServerRender(() => { regs.clear(); _version = 0; });
 const PERSIST_KEY = 'civicos.enrol.v1';
 
 export function version(): number { return _version; }
 export function subscribe(l: Listener): () => void {
   listeners.add(l);
+  if (!_hydrated) { hydrate(true); _version++; queueMicrotask(() => listeners.forEach(x => x())); }
   return () => { listeners.delete(l); };
 }
 function bump() { _version++; listeners.forEach(l => l()); persist(); }
@@ -40,8 +43,12 @@ function persist() {
     window.localStorage.setItem(PERSIST_KEY, JSON.stringify(live));
   } catch { /* continuity degrades to session-only */ }
 }
-function hydrate() {
-  if (_hydrated) return;
+// Saved state is restored only after the page has hydrated (first subscriber
+// or first action), so the server HTML and the first browser render agree.
+let _ready = false;
+function hydrate(force = false) {
+  if (force) _ready = true;
+  if (_hydrated || !_ready) return;
   _hydrated = true;
   if (typeof window === 'undefined') return;
   try {
@@ -81,7 +88,7 @@ export function enrollments(ministryKey: string, facilityId: string, role: strin
 }
 
 export function enroll(ministryKey: string, facilityId: string, name: string, role: string, by: string, now: number): void {
-  hydrate();
+  hydrate(true);
   const key = `${ministryKey}:${facilityId}`;
   const list = regs.get(key) ?? seedRegs(key, role, now);
   list.push({
@@ -109,7 +116,7 @@ export function enrollmentTally(keys: { ministryKey: string; facilityId: string;
 }
 
 export function advanceEnrollment(ministryKey: string, facilityId: string, id: string, now: number): void {
-  hydrate();
+  hydrate(true);
   const key = `${ministryKey}:${facilityId}`;
   const list = regs.get(key);
   if (!list) return;

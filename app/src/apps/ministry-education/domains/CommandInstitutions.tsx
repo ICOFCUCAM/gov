@@ -6,6 +6,7 @@ import * as React from 'react';
 import { knowledgeDevelopmentBoard } from '@/lib/gov/knowledge-development';
 import { schoolNetwork, higherEducation } from '@/lib/gov/education-systems';
 import { HallFrame, HallKpi, HallRule, HallBar, HallCallout, EDUCATION_DS } from '@/apps/ministry-education/design-system/education-ds';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 export function LiteracyBoard({ id, now }: { id: string; now: number }) {
   const board = knowledgeDevelopmentBoard(now);
@@ -115,7 +116,7 @@ export function WorkforceReadiness({ id, now }: { id: string; now: number }) {
       subtitle="tertiary-to-workforce pathway">
       <HallKpi items={[
         { label: 'Graduation rate', value: `${he.graduationRatePct}%`, tone: 'ok' },
-        { label: 'Research output index', value: `${he.researchOutputIndex}/100`, tone: 'info' },
+        { label: 'Research output index', value: <>{he.researchOutputIndex}/100 <IndexTag index="education-systems.ts · researchOutputIndex" /></>, tone: 'info' },
         { label: 'Funding gap', value: `${he.fundingGapPct}%`, tone: he.fundingGapPct > 25 ? 'alert' : 'warn' },
         { label: 'HE posture', value: he.posture, tone: he.posture === 'underfunded' ? 'alert' : he.posture === 'pressured' ? 'warn' : 'ok' },
       ]} />

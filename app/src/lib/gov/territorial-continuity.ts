@@ -15,6 +15,7 @@ import { digitalTwin } from '@/lib/gov/national-causality';
 import { economyBoard } from '@/lib/gov/institutional-economy';
 import { generationalBoard, ERA_COUNT } from '@/lib/gov/generational-intelligence';
 import { civicBoard } from '@/lib/gov/civic-legitimacy';
+import { regionList } from '@/lib/nation/registry';
 
 // Hard constitutional ecological boundary — structural, not advisory.
 export const ECOLOGICAL_SAFEGUARDS = {
@@ -27,7 +28,7 @@ export const ECOLOGICAL_SAFEGUARDS = {
   ] as const,
 };
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export interface RegionEcology {
   region: string;

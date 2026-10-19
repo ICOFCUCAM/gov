@@ -14,7 +14,7 @@ export interface MinistryDependency { archetype: ArchetypeKey; relation: string;
 
 // Every activated institution inherits these standard layer modules.
 const BASE_LAYERS: FabricLayer[] = [
-  { key: 'executive', name: 'Executive layer', modules: ['Minister command centre', 'Deputy operations', 'Strategic briefings', 'Escalation system', 'National telemetry', 'Readiness posture'] },
+  { key: 'executive', name: 'Executive layer', modules: ['Minister command centre', 'Deputy operations', 'Strategic briefings', 'Escalation system', 'National telemetry', 'Readiness'] },
   { key: 'operational', name: 'Operational layer', modules: ['Field operations', 'Regional coordination', 'Logistics', 'Approvals', 'Inspections', 'Deployments', 'Incident handling'] },
   { key: 'intelligence', name: 'Intelligence layer', modules: ['Analytics', 'Forecasting', 'Risk heatmaps', 'National trends', 'Anomaly detection', 'Cross-ministry dependency analysis'] },
   { key: 'public', name: 'Public-service layer', modules: ['Citizen portal', 'Requests', 'Licensing', 'Public applications', 'Payments', 'Verification'] },

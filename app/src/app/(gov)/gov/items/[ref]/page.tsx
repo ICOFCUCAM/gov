@@ -8,7 +8,7 @@ export default async function ItemPage({ params }: { params: Promise<{ ref: stri
   const { ref } = await params;
   return (
     <CommandShell active="items">
-      <WorkItemDetail ref={decodeURIComponent(ref)} />
+      <WorkItemDetail recordRef={decodeURIComponent(ref)} />
     </CommandShell>
   );
 }

@@ -5,23 +5,31 @@ import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import { Pill } from '@/components/ui/Pill';
 import { appendAuditEntry } from '@/lib/audit/localVault';
-
+import { DEMO_CITIZEN, homePlace } from '@/lib/nation/persona';
+import { nationMessages } from '@/lib/nation/registry';
+import { t as fill, type Messages } from '@/lib/i18n';
+import { rich } from '@/lib/i18n/rich';
 interface Attr {
   key: string;
   label: string;
   value: string;
 }
 
-const ALL: Attr[] = [
-  { key: 'name', label: 'Full name', value: 'Amina Hassan Mwangi' },
-  { key: 'over18', label: 'Over 18', value: 'Yes' },
-  { key: 'dob', label: 'Date of birth', value: '14.03.1992' },
-  { key: 'address', label: 'Address', value: 'Plot 4423, Kiambu' },
-  { key: 'nationalId', label: 'National ID number', value: '••••••••' },
-  { key: 'vaccination', label: 'Pneumococcal vaccination', value: '12/2024' },
+const attrsFor = (home: string, t: Messages['more']): Attr[] => [
+  { key: 'name', label: t.fullName, value: DEMO_CITIZEN.name },
+  { key: 'over18', label: t.over18, value: t.yes },
+  { key: 'dob', label: t.dob, value: '14.03.1992' },
+  { key: 'address', label: t.address, value: `Plot 4423, ${home}` },
+  { key: 'nationalId', label: t.nationalId, value: '••••••••' },
+  { key: 'vaccination', label: t.vaccination, value: '12/2024' },
 ];
 
 export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
+  const home = homePlace();
+  const m = nationMessages();
+  const t = m.more;
+  const ALL = attrsFor(home, t);
+  const requester = `${home} Hospital`;
   const requested = React.useMemo(() => ['name', 'over18', 'vaccination'], []);
   const [granted, setGranted] = React.useState<string[]>(requested);
   const [shared, setShared] = React.useState(false);
@@ -33,7 +41,7 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
 
   function share() {
     appendAuditEntry('selective-disclosure', {
-      to: 'Kiambu County Hospital',
+      to: requester,
       shared: granted,
       subject: subjectName,
     });
@@ -43,13 +51,12 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
   if (declined) {
     return (
       <Card tight>
-        <h4 className="font-semibold">Nothing shared</h4>
+        <h4 className="font-semibold">{t.nothingShared}</h4>
         <p className="text-sm">
-          You declined the request from <strong>Kiambu County Hospital</strong>.
-          No attributes were disclosed; the decline is noted in your access log.
+          {rich(t.declinedText, { who: <strong>{requester}</strong> })}
         </p>
         <Button className="mt-3" variant="secondary" onClick={() => setDeclined(false)}>
-          Back
+          {m.common.back}
         </Button>
       </Card>
     );
@@ -58,14 +65,12 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
   if (shared) {
     return (
       <Card tight>
-        <h4 className="font-semibold">Shared</h4>
+        <h4 className="font-semibold">{t.sharedTitle}</h4>
         <p className="text-sm">
-          You shared {granted.length} of {sharing.length} requested attributes with{' '}
-          <strong>Kiambu County Hospital</strong> for this visit only. This is
-          now in your records access log. You can revoke it later.
+          {rich(t.sharedText, { n: granted.length, total: sharing.length, who: <strong>{requester}</strong> })}
         </p>
         <Button className="mt-3" variant="secondary" onClick={() => setShared(false)}>
-          Done
+          {t.done}
         </Button>
       </Card>
     );
@@ -74,12 +79,10 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
   return (
     <Card tight>
       <p className="text-sm">
-        <strong>Kiambu County Hospital</strong> is asking to verify the
-        following, for the purpose of <em>scheduling a vaccination
-        follow-up</em>, for <em>this visit only</em>:
+        {rich(t.askingText, { who: <strong>{requester}</strong>, purpose: <em>{t.purpose}</em>, scope: <em>{t.scope}</em> })}
       </p>
 
-      <h4 className="font-semibold mt-3 mb-1">Choose what to share</h4>
+      <h4 className="font-semibold mt-3 mb-1">{t.chooseShare}</h4>
       <ul className="space-y-1">
         {sharing.map(a => (
           <li key={a.key} className="flex items-center justify-between gap-3 text-sm">
@@ -92,7 +95,7 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
         ))}
       </ul>
 
-      <h4 className="font-semibold mt-3 mb-1">Not shared</h4>
+      <h4 className="font-semibold mt-3 mb-1">{t.notShared}</h4>
       <div className="flex flex-wrap gap-1">
         {notSharing.map(a => (
           <Pill key={a.key}>{a.label}</Pill>
@@ -101,11 +104,11 @@ export function SelectiveDisclosure({ subjectName }: { subjectName: string }) {
 
       <div className="flex gap-3 mt-4">
         <Button onClick={share} disabled={granted.length === 0}>
-          {granted.length ? `Share ${granted.length} now` : 'Select at least one'}
+          {granted.length ? fill(t.shareN, { n: granted.length }) : t.selectOne}
         </Button>
-        <Button variant="secondary" onClick={() => setDeclined(true)}>Cancel</Button>
+        <Button variant="secondary" onClick={() => setDeclined(true)}>{m.common.cancel}</Button>
       </div>
-      <p className="text-sm text-ink-muted mt-2">You can revoke this later.</p>
+      <p className="text-sm text-ink-muted mt-2">{t.revokeLater}</p>
     </Card>
   );
 }

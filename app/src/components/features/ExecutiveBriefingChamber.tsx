@@ -24,13 +24,16 @@ import {
 } from '@/lib/gov/sovereign-operating-model';
 import type { ExecDirectiveKey } from '@/lib/gov/sovereign-operating-model';
 import { downloadText } from '@/lib/csv-download';
+import { useRenderNow } from '@/lib/clock/render-now';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const sev = (s: string) => (s === 'sev1' ? 3 : s === 'sev2' ? 2 : 1);
 
-function Stat({ label, value, tone = 'ok', note }: { label: string; value: string; tone?: string; note?: string }) {
+/** A figure; `tag` marks one that is not observed (an engine index's IndexTag). */
+function Stat({ label, value, tone = 'ok', note, tag }: { label: string; value: string; tone?: string; note?: string; tag?: React.ReactNode }) {
   return (
     <div className="flex items-baseline justify-between gap-3 border-b border-line-soft py-1.5 last:border-0">
-      <span className="text-[11px] uppercase tracking-[0.14em] text-ink-muted">{label}</span>
+      <span className="flex items-center gap-1 text-[11px] uppercase tracking-[0.14em] text-ink-muted">{label}{tag}</span>
       <span className="flex items-baseline gap-2">
         {note ? <span className="text-[10px] text-ink-muted">{note}</span> : null}
         <span className="font-mono text-sm tabular-nums" style={{ color: TONE[tone] ?? 'rgb(var(--c-ink))' }}>
@@ -45,7 +48,7 @@ export function ExecutiveBriefingChamber() {
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [directive, setDirective] = React.useState<ExecDirectiveKey>('NONE');
 
   React.useEffect(() => {
@@ -97,10 +100,10 @@ export function ExecutiveBriefingChamber() {
   }).sort((a, b) => b.g.attention - a.g.attention).slice(0, 5);
 
   // Emergency-powers posture — institutional, not dramatic.
-  const powers = critCount >= 1 || post.label === 'STRAINED' || nationalRisk >= 65 ? 'WAR CABINET'
+  const powers = critCount >= 1 || post.label === 'STRAINED' || nationalRisk >= 65 ? 'CRISIS CABINET'
     : sevLoad >= 1 || post.label === 'HARDENED' || nationalRisk >= 50 ? 'ELEVATED MANDATE'
     : 'STANDING AUTHORITY';
-  const powersTone = powers === 'WAR CABINET' ? 'alert' : powers === 'ELEVATED MANDATE' ? 'warn' : 'ok';
+  const powersTone = powers === 'CRISIS CABINET' ? 'alert' : powers === 'ELEVATED MANDATE' ? 'warn' : 'ok';
 
   // Ministry alignment & competing priorities.
   const ministries = [...nodes]
@@ -143,7 +146,7 @@ export function ExecutiveBriefingChamber() {
   const sustain = nationalSustainability(opS, post, society, foresight, epoch);
   const polit = politicalContinuity(opS, post, society, ext, foresight, epoch);
   const politTone = polit.label === 'FRACTURING' || polit.label === 'FRAGILE' ? 'alert' : polit.label === 'STRAINED' ? 'warn' : 'ok';
-  const powersLevel = powers === 'WAR CABINET' ? 3 : powers === 'ELEVATED MANDATE' ? 2 : 1;
+  const powersLevel = powers === 'CRISIS CABINET' ? 3 : powers === 'ELEVATED MANDATE' ? 2 : 1;
   const lead = executiveLeadership(opS, post, society, ext, polit, powersLevel, incidents.length, epoch);
   const leadTone = lead.label === 'CARETAKER' || lead.label === 'CONTESTED' ? 'alert' : lead.label === 'STRAINED' ? 'warn' : 'ok';
   const cap = nationalCapability(opS, post, society, ext, sustain, polit, peakP, incidents.length, epoch);
@@ -202,14 +205,14 @@ export function ExecutiveBriefingChamber() {
     L.push('');
     L.push('I.  EXECUTIVE SUMMARY');
     L.push(thin);
-    L.push(`National posture is ${post.label} with executive confidence ${post.execConfidence}% and`);
-    L.push(`national stability ${stability} (risk ${nationalRisk}). Emergency-powers posture: ${powers}.`);
+    L.push(`National status is ${post.label} with executive confidence ${post.execConfidence}% and`);
+    L.push(`national stability ${stability} (risk ${nationalRisk}). Emergency powers: ${powers}.`);
     L.push(`Coordination load ${coordLoad}% across ${ministries.length} lead ministries.`);
     L.push(`Civilian state ${society.label} (confidence ${society.civilianConfidence}, trust ${society.institutionalTrust}).`);
     L.push(`Political continuity ${polit.label} (governance ${polit.governanceContinuity}, unity ${polit.nationalUnity}).`);
     L.push(`External environment ${ext.label} (pressure ${ext.externalPressure}, alliance ${ext.allianceReliability}%).`);
     L.push(`Sustainability ${sustain.outlook} (~${sustain.survivabilityWeeks}w survivability).`);
-    L.push(`National capability ${cap.label}, ${cap.trajectory} (index ${cap.capabilityIndex}).`);
+    L.push(`National capability ${cap.label}, ${cap.trajectory} (modelled index ${cap.capabilityIndex}).`);
     L.push('');
     L.push(`II.  ACTIVE STRATEGIC THREATS (${threats.length})`);
     L.push(thin);
@@ -217,7 +220,7 @@ export function ExecutiveBriefingChamber() {
     threats.forEach(({ c, g }, i) => {
       L.push(`  ${i + 1}. [${g.lvl >= 3 ? 'CRITICAL' : g.lvl === 2 ? 'ELEVATED' : 'WATCH'}] ${c.label}`);
       L.push(`     ${c.ministry} · ${g.authority.join(' > ')} · mandate ${g.mandate}`);
-      L.push(`     stage ${g.gate.held ? 'HELD @ ' : ''}${g.gate.stage} · pipeline ${g.stageCur}→${g.stageNext} · confidence ${g.confLabel} ${g.confidence}%`);
+      L.push(`     stage ${g.gate.held ? 'HELD @ ' : ''}${g.gate.stage} · stage ${g.stageCur}→${g.stageNext} · confidence ${g.confLabel} ${g.confidence}%`);
       L.push(`     cause ${g.cause} > ${g.cascade.hops.join(' > ')} · ETA ${g.eta}`);
       L.push(`     field ${g.field.fIdx < 0 ? 'awaiting authorization' : `${g.field.stage} / ${g.field.region} (${g.field.friction})`}`);
       L.push(`     directive: ${g.machinery}`);
@@ -246,7 +249,7 @@ export function ExecutiveBriefingChamber() {
     if (ops.length === 0) L.push('  No standing operations reported.');
     ops.forEach(o => {
       L.push(`  ${o.ministry.padEnd(12)} ${o.program}`);
-      L.push(`     cycle ${o.cycle} (${o.phase}) · ${o.completedCycles} completed, last ${o.lastOutcome} · ${o.accountability} · throughput ${o.throughput}%`);
+      L.push(`     cycle ${o.cycle} (${o.phase}) · ${o.completedCycles} completed, last ${o.lastOutcome} · ${o.accountability} · completion ${o.throughput}%`);
     });
     L.push('');
     L.push('VI.  DOCTRINE RECOMMENDATION');
@@ -260,7 +263,7 @@ export function ExecutiveBriefingChamber() {
     L.push('VII.  LIVE STRESS EXERCISE');
     L.push(thin);
     L.push(`  Drill: ${drill.name} — vector ${drill.vector}`);
-    L.push(`  Intensity ${drill.intensity} · resilience ${drill.resilienceScore} · verdict ${drill.verdict}`);
+    L.push(`  Intensity ${drill.intensity} · modelled resilience ${drill.resilienceScore} · verdict ${drill.verdict}`);
     L.push(`  Executive decision degradation ${drill.decisionDegradation} · projected recovery ~${drill.recoveryWeeks}w`);
     L.push('  Cascade:');
     drill.cascade.forEach(cstr => L.push(`   - ${cstr}`));
@@ -275,14 +278,14 @@ export function ExecutiveBriefingChamber() {
     L.push('');
     L.push(`IX.  EXECUTIVE LEADERSHIP & CABINET — ADMINISTRATION ${lead.administration}`);
     L.push(thin);
-    L.push(`  Posture ${lead.label} · consensus ${lead.consensus} · leadership stability ${lead.leadershipStability}`);
+    L.push(`  Status ${lead.label} · consensus ${lead.consensus} · leadership stability ${lead.leadershipStability}`);
     L.push(`  Succession pressure ${lead.successionPressure} · constitutional strain ${lead.constitutionalStrain} · decision quality ${lead.decisionQuality}`);
     L.push('  Cabinet positions:');
     lead.cabinet.forEach(v => L.push(`   - ${v.ministry}: ${v.position} (dissent ${v.dissent})`));
     L.push('');
-    L.push(`X.  CLASSIFIED INTELLIGENCE ASSESSMENT — ${intel.posture}`);
+    L.push(`X.  INTELLIGENCE ASSESSMENT (MODELLED) — ${intel.posture}`);
     L.push(thin);
-    L.push(`  Analytic confidence ${intel.assessmentConfidence}% · composite threat ${intel.threatLevel}`);
+    L.push(`  Analytic confidence ${intel.assessmentConfidence}% · overall threat ${intel.threatLevel}`);
     L.push('  Emerging threat vectors:');
     if (intel.signals.length === 0) L.push('   - none above reporting threshold');
     intel.signals.forEach(s => L.push(`   - [${s.confidence}] ${s.vector} (risk ${s.risk})`));
@@ -292,7 +295,7 @@ export function ExecutiveBriefingChamber() {
       L.push('  Preemptive measures advised:');
       intel.preemptive.forEach(pm => L.push(`   - ${pm}`));
     }
-    L.push(`  Classified memory: ${intel.memoNote}`);
+    L.push(`  Assessment note: ${intel.memoNote}`);
     L.push('  Assessments interpretive at stated confidence — not certainty.');
     L.push('');
     L.push(`XI.  NATIONAL CONTINUITY CHRONOLOGY — ADMINISTRATION ${chron.administration}`);
@@ -337,7 +340,7 @@ export function ExecutiveBriefingChamber() {
     L.push('');
     L.push(`XV.  SOVEREIGN GOVERNANCE AUDIT — ${audit.healthVerdict}`);
     L.push(thin);
-    L.push(`  Civilization ${audit.trajectory} (${audit.civScore}) · institutional decay ${audit.institutionalDecay}`);
+    L.push(`  Civilization ${audit.trajectory} (modelled score ${audit.civScore}) · institutional decay ${audit.institutionalDecay}`);
     L.push('  Governance drift:');
     if (audit.drift.length === 0) L.push('   - none tripped');
     audit.drift.forEach(d => L.push(`   - ${d}`));
@@ -363,7 +366,7 @@ export function ExecutiveBriefingChamber() {
     L.push(thin);
     L.push(`  Stage ${scen.stage} (cycle ${scen.cycle}) · verdict ${scen.verdict}`);
     L.push(`  Response pressure ${scen.responsePressure} · continuity risk ${scen.continuityRisk}`);
-    L.push(`  Cascade front: ${scen.cascade.join(' → ')}`);
+    L.push(`  Spreading to: ${scen.cascade.join(' → ')}`);
     L.push(`  Outlook — 6h: ${scen.outlook.h6}`);
     L.push(`           24h: ${scen.outlook.h24}`);
     L.push(`           72h: ${scen.outlook.h72}`);
@@ -389,7 +392,7 @@ export function ExecutiveBriefingChamber() {
     L.push(`  Constitutional drift: ${civ.constitutionalDrift}`);
     L.push(`  Doctrine inheritance: ${civ.doctrineBias}`);
     L.push('');
-    L.push(`XIX.  INSTITUTIONAL RECORD & STATE ADDRESS — ${irec.stateTone.toUpperCase()} POSTURE`);
+    L.push(`XIX.  INSTITUTIONAL RECORD & STATE ADDRESS — ${irec.stateTone.toUpperCase()} STATUS`);
     L.push(thin);
     L.push(`  Identity: ${irec.identity}`);
     L.push(`  ${irec.nationalAddress}`);
@@ -415,7 +418,7 @@ export function ExecutiveBriefingChamber() {
     L.push(`  ${frail.driftNote}`);
     L.push('');
     L.push(rule);
-    L.push(`Advisory synthesis from the sovereign operating doctrine — issued in ${irec.stateTone} posture.`);
+    L.push(`Advisory synthesis from the sovereign operating doctrine — issued in ${irec.stateTone} status.`);
     L.push('No autonomous action — national leadership decides.');
     L.push(rule);
     const text = L.join('\n');
@@ -433,12 +436,12 @@ export function ExecutiveBriefingChamber() {
         <Link href="/gov/situation-room" className="focus-ring flex items-center gap-3 no-underline">
           <span aria-hidden className="grid h-9 w-9 place-items-center rounded-sm text-sm font-bold text-white ring-1 ring-white/15"
             style={{ backgroundColor: ACCENT }}>{identity ? identity.seal : 'CO'}</span>
-          <span className="leading-tight">
-            <span className="block text-sm font-bold tracking-[0.16em] text-ink">EXECUTIVE BRIEFING CHAMBER</span>
+          <div className="leading-tight">
+            <h1 className="block text-sm font-bold tracking-[0.16em] text-ink">DAILY BRIEF</h1>
             <span className="block text-[10px] uppercase tracking-[0.2em] text-ink-muted">
-              {sov?.stateName ?? 'Sovereign State'} · Strategic Governance · {irec.stateTone} posture
+              {sov?.stateName ?? 'Sovereign State'} · Strategic Governance · {irec.stateTone} tone
             </span>
-          </span>
+          </div>
         </Link>
         <div className="ml-auto flex items-center gap-4 text-[11px]">
           <span className="hidden font-semibold uppercase tracking-[0.2em] sm:inline" style={{ color: ACCENT }}>
@@ -477,7 +480,7 @@ export function ExecutiveBriefingChamber() {
 
       <main className="mx-auto w-full max-w-[1320px] flex-1 space-y-3 p-4">
         <div className="grid gap-3 xl:grid-cols-3">
-          <Panel title="National posture & society" meta="evolving doctrine · civilian state">
+          <Panel signal="modelled" title="National status & society" meta="evolving doctrine · civilian state">
             <div className="mb-2 flex items-baseline justify-between">
               <span className="text-lg font-semibold tracking-wide text-ink">{post.label.replace('-', ' ')}</span>
               <span className="font-mono text-sm tabular-nums" style={{ color: TONE[stabTone] }}>
@@ -503,11 +506,11 @@ export function ExecutiveBriefingChamber() {
             </p>
           </Panel>
 
-          <Panel title="Reserve & infrastructure integrity" meta="finite national capacity">
+          <Panel signal="modelled" title="Reserve & infrastructure integrity" meta="finite national capacity">
             <Stat label="Strategic reserves" value={`${opS.resources.reserves.headroom}%`} tone={reserveTone} note="headroom" />
             <Stat label="Telecom coordination" value={`${opS.display.telecom.toFixed(0)}%`} tone={opS.display.telecom >= 90 ? 'ok' : opS.display.telecom >= 78 ? 'warn' : 'alert'} />
             <Stat label="Energy grid load" value={`${opS.display.gridLoad}%`} tone={opS.display.gridLoad >= 85 ? 'alert' : opS.display.gridLoad >= 70 ? 'warn' : 'ok'} />
-            <Stat label="Logistics throughput" value={`${opS.display.logiThru.toLocaleString()}`} tone="ok" note="kt/h" />
+            <Stat label="Goods moved" value={`${opS.display.logiThru.toLocaleString()}`} tone="ok" note="kt/h" />
             <Stat label="Treasury draw" value={`${opS.resources.treasury.util}%`} tone={opS.resources.treasury.util >= 80 ? 'warn' : 'ok'} />
             <Stat label="Coordination bandwidth" value={`${opS.display.coordBw}%`} tone={opS.display.coordBw >= 60 ? 'ok' : 'warn'} />
             <div className="mt-2 mb-1 flex items-baseline justify-between">
@@ -524,16 +527,16 @@ export function ExecutiveBriefingChamber() {
             </div>
             <Stat label="Reserve longevity" value={`${sustain.reserveLongevityWeeks}w`} tone={sustain.reserveLongevityWeeks >= 16 ? 'ok' : sustain.reserveLongevityWeeks >= 8 ? 'warn' : 'alert'} />
             <Stat label="Infrastructure aging" value={`${sustain.infraAging}`} tone={sustain.infraAging >= 60 ? 'alert' : sustain.infraAging >= 40 ? 'warn' : 'ok'} />
-            <Stat label="Production index" value={`${sustain.productionIndex}`} tone={sustain.productionIndex >= 60 ? 'ok' : sustain.productionIndex >= 42 ? 'warn' : 'alert'} />
+            <Stat label="Production index" tag={<IndexTag index="sovereign-operating-model.ts · productionIndex" />} value={`${sustain.productionIndex}`} tone={sustain.productionIndex >= 60 ? 'ok' : sustain.productionIndex >= 42 ? 'warn' : 'alert'} />
             <Stat label="Reserve replenishment" value={`${sustain.replenishmentRate}`} tone={sustain.replenishmentRate >= 55 ? 'ok' : sustain.replenishmentRate >= 35 ? 'warn' : 'alert'} note={`survivability ~${sustain.survivabilityWeeks}w`} />
             <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
-              Emergency-powers posture: <span className="font-semibold" style={{ color: TONE[powersTone] }}>{powers}</span>.
+              Emergency powers: <span className="font-semibold" style={{ color: TONE[powersTone] }}>{powers}</span>.
               Reserve deployment requires Treasury concurrence{ext.reserveSensitivity >= 55 ? ' — sanctions-scarred reserves under strategic caution' : ''};
               containment directives bind Transport &amp; Logistics.
             </p>
           </Panel>
 
-          <Panel title="Strategic foresight" meta="anticipatory · probabilistic">
+          <Panel signal="modelled" title="Strategic foresight" meta="anticipatory · probabilistic">
             <Stat label="Projected national risk" value={`${foresight.projLo}–${foresight.projHi}`} tone={projTone} note={`p${foresight.projRisk} · ${foresight.horizon}`} />
             <Stat label="Foresight confidence" value={`${foresight.confidence}%`} tone={foresight.confidence >= 70 ? 'ok' : foresight.confidence >= 50 ? 'warn' : 'alert'} />
             <Stat label="Energy grid outlook" value={`${fEn.h24}→${fEn.h72}%`} tone={fc(fEn.risk)} />
@@ -560,7 +563,7 @@ export function ExecutiveBriefingChamber() {
             <Stat label="Human capital" value={`${cap.humanCapital}`} tone={cap.humanCapital >= 60 ? 'ok' : cap.humanCapital >= 42 ? 'warn' : 'alert'} />
             <Stat label="Institutional knowledge" value={`${cap.institutionalKnowledge}`} tone={cap.institutionalKnowledge >= 60 ? 'ok' : cap.institutionalKnowledge >= 42 ? 'warn' : 'alert'} />
             <Stat label="Technological resilience" value={`${cap.technologicalResilience}`} tone={cap.technologicalResilience >= 60 ? 'ok' : cap.technologicalResilience >= 42 ? 'warn' : 'alert'} />
-            <Stat label="Generational continuity" value={`${cap.generationalContinuity}`} tone={cap.generationalContinuity >= 60 ? 'ok' : cap.generationalContinuity >= 42 ? 'warn' : 'alert'} note={`index ${cap.capabilityIndex}`} />
+            <Stat label="Generational continuity" value={`${cap.generationalContinuity}`} tone={cap.generationalContinuity >= 60 ? 'ok' : cap.generationalContinuity >= 42 ? 'warn' : 'alert'} note={`capability index ${cap.capabilityIndex}`} tag={<IndexTag index="sovereign-operating-model.ts · capabilityIndex" />} />
             <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">
               Civilizational capability is <span className="font-semibold" style={{ color: TONE[capTone] }}>{cap.trajectory}</span> —
               {cap.trajectory === 'eroding' ? ' sustained pressure is degrading long-term national competence.'
@@ -571,7 +574,7 @@ export function ExecutiveBriefingChamber() {
               <span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Live stress exercise</span>
               <span className="font-mono text-[11px] uppercase tracking-wider" style={{ color: TONE[drillTone] }}>{drill.verdict}</span>
             </div>
-            <Stat label={drill.name} value={`${drill.resilienceScore}`} tone={drillTone} note={`intensity ${drill.intensity}`} />
+            <Stat label={drill.name} value={`${drill.resilienceScore}`} tone={drillTone} note={`intensity ${drill.intensity}`} tag={<IndexTag index="sovereign-operating-model.ts · resilienceScore" />} />
             <Stat label="Decision degradation" value={`${drill.decisionDegradation}`} tone={drill.decisionDegradation >= 55 ? 'alert' : drill.decisionDegradation >= 35 ? 'warn' : 'ok'} note={`recovery ~${drill.recoveryWeeks}w`} />
             <p className="mt-1 text-[11px] leading-relaxed text-ink-muted">
               Vector: {drill.vector}. Cascade: {drill.cascade.slice(0, 3).join(' → ')}
@@ -580,7 +583,7 @@ export function ExecutiveBriefingChamber() {
           </Panel>
         </div>
 
-        <Panel title="Active strategic threats" meta="executive attention priority">
+        <Panel signal="modelled" title="Active strategic threats" meta="executive attention priority">
           {threats.length === 0 ? (
             <p className="py-6 text-center text-sm text-ink-muted">No cross-ministry escalations require executive attention.</p>
           ) : (
@@ -614,10 +617,10 @@ export function ExecutiveBriefingChamber() {
         </Panel>
 
         <div className="grid gap-3 xl:grid-cols-2">
-          <Panel title="Ministry alignment & conflict"
+          <Panel signal="modelled" title="Ministry alignment & conflict"
             meta={`coordination load ${coordLoad}% · ${aligned}/${ministries.length} aligned`}>
             {ministries.length === 0 ? (
-              <p className="py-4 text-center text-sm text-ink-muted">Awaiting institutional telemetry…</p>
+              <p className="py-4 text-center text-sm text-ink-muted">Waiting for readings from institutions…</p>
             ) : ministries.map(({ n, p, beh, rel, interaction }) => {
               const t = p >= 70 ? 'alert' : p >= 50 ? 'warn' : 'ok';
               return (
@@ -668,7 +671,7 @@ export function ExecutiveBriefingChamber() {
             </div>
           </Panel>
 
-          <Panel title="Executive directive flow" meta="institutional governance procedure">
+          <Panel signal="modelled" title="Executive directive flow" meta="institutional governance procedure">
             {threats.length === 0 ? (
               <p className="py-4 text-center text-sm text-ink-muted">No directives pending executive review.</p>
             ) : threats.map(({ c, g }, i) => (
@@ -715,7 +718,7 @@ export function ExecutiveBriefingChamber() {
           </Panel>
         </div>
 
-        <Panel title="Policy doctrine simulation"
+        <Panel signal="modelled" title="Policy doctrine simulation"
           meta={`alternate futures · ${policy.ambiguity >= 60 ? 'contested' : 'distinct'} · recommend ${policy.recommended.toLowerCase()}`}>
           <div className="hidden grid-cols-[1.6fr_repeat(6,1fr)_0.8fr] gap-x-3 border-b border-line pb-1 text-[10px] uppercase tracking-[0.12em] text-ink-muted sm:grid">
             <span>Doctrine</span><span className="text-right">Stability</span><span className="text-right">Reserves</span>
@@ -749,7 +752,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel title="Sovereign directive register"
+        <Panel signal="modelled" title="Sovereign directive register"
           meta={`${register.era} · ${register.active} active · ${register.completed} completed · ${register.failed} failed`}>
           <div className="hidden grid-cols-[2fr_1fr_1.4fr_0.7fr_0.9fr] gap-x-3 border-b border-line pb-1 text-[10px] uppercase tracking-[0.12em] text-ink-muted sm:grid">
             <span>Directive</span><span>Ministry</span><span>Stage</span><span className="text-right">Prog.</span><span className="text-right">Exec.</span>
@@ -773,7 +776,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel title="Classified intelligence assessment"
+        <Panel signal="modelled" title="Intelligence assessment (modelled)"
           meta={`${intel.posture} · analytic confidence ${intel.assessmentConfidence}% · threat ${intel.threatLevel}`}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
@@ -803,11 +806,11 @@ export function ExecutiveBriefingChamber() {
             {intel.preemptive.length
               ? <>Preemptive measures advised: {intel.preemptive.join('; ')}. </>
               : <>No preemptive measures triggered at current confidence. </>}
-            Classified memory: {intel.memoNote}. Assessments are interpretive at stated confidence — not certainty.
+            Assessment note: {intel.memoNote}. Assessments are interpretive at stated confidence — not certainty.
           </p>
         </Panel>
 
-        <Panel title="National continuity chronology"
+        <Panel signal="modelled" title="National continuity chronology"
           meta={`administration ${chron.administration} · ${chron.currentEra} · ${chron.span}-epoch record`}>
           <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Governing eras</div>
           <div className="mb-2 flex flex-wrap gap-x-3 gap-y-0.5 text-[11px] text-ink-muted">
@@ -832,7 +835,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel title="Interstate coordination & alliance framework"
+        <Panel signal="modelled" title="Interstate coordination & alliance framework"
           meta={`${alliance.regionalOrder} · bloc ${alliance.blocPosture.toLowerCase()} · consensus ${alliance.coalitionConsensus}`}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
@@ -863,7 +866,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel title="National operations execution"
+        <Panel signal="modelled" title="National operations execution"
           meta={`${nops.activeCount} active · ${nops.atRisk} under strain`}>
           {nops.operations.map(o => (
             <div key={o.key} className="border-b border-line-soft py-2 last:border-0">
@@ -892,7 +895,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel title="National population & social order"
+        <Panel signal="modelled" title="National population & social order"
           meta={`society ${popn.label.toLowerCase()} · governability ${popn.governability} · feedback drag ${popn.feedbackDrag}`}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
@@ -921,7 +924,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel title="Live national scenario"
+        <Panel signal="modelled" title="Live national scenario"
           meta={`${scen.name} · ${scen.stage.toLowerCase()} · ${scen.verdict.toLowerCase()}`}>
           <div className="mb-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] uppercase tracking-[0.14em]">
             {['Emerging', 'Developing', 'Peak', 'Cascading', 'Arbitration', 'Containment', 'Stabilizing', 'After-action'].map((s, i) => (
@@ -935,7 +938,7 @@ export function ExecutiveBriefingChamber() {
           </div>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
-              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Cascade front</div>
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Spreading to</div>
               {scen.cascade.map((c, i) => (
                 <div key={c} className="flex items-baseline gap-2 border-b border-line-soft py-1 text-[11px] last:border-0">
                   <span className="shrink-0 font-mono text-[10px] text-ink-muted">{i + 1}</span>
@@ -969,7 +972,7 @@ export function ExecutiveBriefingChamber() {
           <p className="mt-2 text-[11px] leading-relaxed text-ink-muted">{scen.note} Leadership arbitrates ministry tension under live pressure; indecision deepens the cascade.</p>
         </Panel>
 
-        <Panel title="Executive directive"
+        <Panel signal="modelled" title="Executive directive"
           meta={directive === 'NONE' ? `administration ${lead.administration} · no override` : `administration ${lead.administration} · ${dproj.stage.toLowerCase()}`}>
           {directive === 'NONE' ? (
             <p className="py-3 text-[12px] text-ink-muted">
@@ -1011,8 +1014,8 @@ export function ExecutiveBriefingChamber() {
           )}
         </Panel>
 
-        <Panel title="Sovereign governance audit"
-          meta={`${audit.healthVerdict} · civilization ${audit.trajectory} (${audit.civScore}) · institutional decay ${audit.institutionalDecay}`}>
+        <Panel signal="modelled" title="Sovereign governance audit"
+          meta={<>{audit.healthVerdict} · civilization {audit.trajectory} ({audit.civScore} <IndexTag index="sovereign-operating-model.ts · civScore" />) · institutional decay {audit.institutionalDecay}</>}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
               <div className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Governance drift</div>
@@ -1042,7 +1045,7 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel title="Civilizational memory & historical inheritance"
+        <Panel signal="modelled" title="Civilizational memory & historical inheritance"
           meta={`generation ${civ.generation} · ${civ.personality.toLowerCase()} · ${civ.trajectory.toLowerCase()} · continuity ${civ.civContinuity}`}>
           <div className="mb-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[11px]">
             <span className="text-ink-muted">Governing personality <span className="font-semibold text-ink-soft">{civ.personality}</span></span>
@@ -1085,8 +1088,8 @@ export function ExecutiveBriefingChamber() {
           </p>
         </Panel>
 
-        <Panel title="Institutional record & state address"
-          meta={`${irec.stateTone} posture · ${irec.identity}`}>
+        <Panel signal="modelled" title="Institutional record & state address"
+          meta={`${irec.stateTone} status · ${irec.identity}`}>
           <p className="text-[12px] leading-relaxed text-ink-soft">{irec.nationalAddress}</p>
           <div className="mt-2 grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>
@@ -1112,7 +1115,7 @@ export function ExecutiveBriefingChamber() {
           ) : null}
         </Panel>
 
-        <Panel title="Institutional frailty & historical imperfection"
+        <Panel signal="modelled" title="Institutional frailty & historical imperfection"
           meta={`drift toward ${frail.drift.toLowerCase()} · entropy ${frail.entropy} · misjudgement ${frail.misjudgementRisk}`}>
           <div className="grid gap-x-6 gap-y-1 md:grid-cols-2">
             <div>

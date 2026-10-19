@@ -8,7 +8,8 @@
 
 import * as React from 'react';
 import { transportOps } from '@/lib/gov/transport-systems';
-import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { waveSeries } from '@/lib/telemetry';
+import { CityMap, useCityGeo, type CityPalette } from '@/apps/_shared/CityDistrictMap';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';
@@ -44,7 +45,7 @@ function Spark({ pts, c, h = 30 }: { pts: number[]; c: string; h?: number }) {
 }
 
 function Card({ title, action, children, className }: {
-  title: string; action?: string; children: React.ReactNode; className?: string;
+  title: string; action?: React.ReactNode; children: React.ReactNode; className?: string;
 }) {
   return (
     <section className={`flex flex-col rounded-lg border ${className ?? ''}`} style={{ borderColor: LINE, background: PANEL }}>
@@ -57,48 +58,10 @@ function Card({ title, action, children, className }: {
   );
 }
 
-function CityMap({ id, ts }: { id: string; ts: number }) {
-  const districts: [string, number, number, string][] = [
-    ['Central District', 150, 70, BLUE], ['Riverside Park', 95, 130, GREEN],
-    ['Downtown', 130, 175, CYAN], ['Industrial Zone', 250, 120, PURPLE], ['Harbor Area', 255, 200, TEAL],
-  ];
-  const markers = Array.from({ length: 14 }).map((_, i) => ({
-    x: 40 + seed(`mu:mx:${id}:${i}`) * 270, y: 40 + seed(`mu:my:${id}:${i}`) * 180,
-    c: [CYAN, GREEN, AMBER, RED, PURPLE][i % 5], on: wave(`mu:mo:${id}:${i}`, ts, 0, 1) > 0.4,
-  }));
-  const roads = ['M20 90 H340', 'M20 150 H340', 'M20 210 H340', 'M90 30 V250', 'M180 30 V250', 'M260 30 V250'];
-  return (
-    <div className="relative overflow-hidden rounded-lg" style={{ background: 'radial-gradient(ellipse at 50% 40%,#0f1a28,#070b12)', minHeight: 340 }}>
-      <svg viewBox="0 0 360 270" style={{ width: '100%', height: 360 }} aria-hidden>
-        <defs><pattern id="mgrid" width="30" height="30" patternUnits="userSpaceOnUse"><path d="M30 0H0V30" fill="none" stroke={LINE2} strokeWidth="0.5" /></pattern></defs>
-        <rect width="360" height="270" fill="url(#mgrid)" />
-        {roads.map((d, i) => <path key={i} d={d} fill="none" stroke={i < 3 ? 'rgba(55,199,212,0.32)' : 'rgba(120,140,160,0.22)'} strokeWidth={i < 3 ? 2 : 1.4} />)}
-        <path d="M20 150 H180 V90 H340" fill="none" stroke={GREEN} strokeWidth="2" strokeDasharray="5 3" opacity="0.6" />
-        <path d="M90 250 V150 H260 V90" fill="none" stroke={AMBER} strokeWidth="1.8" opacity="0.55" />
-        {markers.map((m, i) => (
-          <g key={i}>
-            <circle cx={m.x} cy={m.y} r={m.on ? 4.5 : 3} fill={m.c} opacity={m.on ? 0.9 : 0.4}>
-              {m.on ? <animate attributeName="r" values="3.5;6;3.5" dur="2.6s" repeatCount="indefinite" /> : null}
-            </circle>
-          </g>
-        ))}
-      </svg>
-      {districts.map(([nm, x, y, c]) => (
-        <span key={nm} className="absolute -translate-x-1/2 rounded-md border px-2 py-0.5 text-[8.5px] font-medium"
-          style={{ left: `${(x / 360) * 100}%`, top: `${(y / 270) * 100}%`, borderColor: `color-mix(in srgb,${c} 45%,transparent)`, background: 'rgba(13,19,28,0.8)', color: c }}>{nm}</span>
-      ))}
-      <div className="absolute left-3 top-3 flex flex-col gap-1">
-        {['+', '−', '⌂', '≣'].map(s => <span key={s} className="grid h-6 w-6 place-items-center rounded-md border text-[11px]" style={{ borderColor: LINE2, background: 'rgba(13,19,28,0.85)', color: SOFT }}>{s}</span>)}
-      </div>
-      <div className="absolute right-3 top-3 rounded-md border px-2.5 py-1 text-[9px]" style={{ borderColor: LINE2, background: 'rgba(13,19,28,0.85)', color: SOFT }}>⬢ 3D View ▾</div>
-      <div className="absolute bottom-3 left-3 flex flex-wrap gap-x-3 gap-y-1 text-[8.5px]" style={{ color: SOFT }}>
-        {[['Traffic', CYAN], ['Incidents', RED], ['Work Zones', AMBER], ['Parking', GREEN], ['Cameras', TEAL], ['Sensors', PURPLE]].map(([l, c]) => (
-          <span key={l} className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}</span>
-        ))}
-      </div>
-    </div>
-  );
-}
+// The City Operations Map is drawn on the nation's real geography: the
+// capital's region opened to its districts (CityDistrictMap.tsx, map plan
+// phase 5; was a fixed schematic with five invented district labels).
+const CITY_P: CityPalette = { CYAN, TEAL, BLUE, GREEN, PURPLE, AMBER, RED, INK, SOFT, MUT, PANEL, LINE2, ground: 'radial-gradient(ellipse at 50% 40%,#0f1a28,#070b12)' };
 
 function CamTile({ label }: { label: string }) {
   return (
@@ -123,6 +86,10 @@ export function MunicipalSystems({ id, now }: { id: string; now: number }) {
   const day = clock.toLocaleDateString('en-GB', { weekday: 'long' });
   const hm = clock.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
   const S = (k: string, lo: number, hi: number) => waveSeries(`mu:${k}:${id}`, ts, 22, lo, hi);
+  const city = useCityGeo();
+  const [district, setDistrict] = React.useState('');
+  const [tilt, setTilt] = React.useState(false);
+  const districtName = (i: number, ref: string) => (city?.districts ? city.geo.units[i % city.geo.units.length]?.name ?? ref : ref);
 
   const kpis: [string, string, string, string, boolean | null, string][] = [
     ['City Population', '4.28M', '+1.35% vs last month', '☷', false, BLUE],
@@ -136,9 +103,9 @@ export function MunicipalSystems({ id, now }: { id: string; now: number }) {
 
   const incidents: [string, string, string, string][] = [
     ['Traffic Accident', 'Main St & 5th Ave', 'High', '5 min ago'],
-    ['Water Main Break', 'Oak Street, District 4', 'Medium', '12 min ago'],
+    ['Water Main Break', `Oak Street, ${districtName(3, 'District 4')}`, 'Medium', '12 min ago'],
     ['Street Light Outage', 'Park Avenue, Sector B', 'Low', '25 min ago'],
-    ['Waste Collection Delay', 'Route 12, North District', 'Info', '45 min ago'],
+    ['Waste Collection Delay', `Route 12, ${districtName(0, 'North District')}`, 'Info', '45 min ago'],
   ];
   const cams = ['Main St & 5th Ave', 'Downtown Junction', 'Harbor Road', 'Central Park'];
   const forecast: [string, string, string][] = [
@@ -161,7 +128,15 @@ export function MunicipalSystems({ id, now }: { id: string; now: number }) {
           <div className="text-[10.5px]" style={{ color: MUT }}>Real-time monitoring and management of urban infrastructure and city services.</div>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-2.5 text-[10.5px]">
-          <span className="flex items-center gap-2 rounded-lg border px-3 py-1.5" style={{ borderColor: LINE2, background: PANEL, color: SOFT }}>⌖ All Districts ▾</span>
+          <label className="relative flex items-center gap-2 rounded-lg border px-3 py-1.5" style={{ borderColor: LINE2, background: PANEL, color: SOFT }}>
+            <span aria-hidden>⌖</span><span className="sr-only">Show a district on the city map</span>
+            <select value={district} onChange={e => setDistrict(e.currentTarget.value)} disabled={!city?.districts}
+              className="focus-ring max-w-[10rem] cursor-pointer appearance-none truncate bg-transparent pe-3" style={{ color: SOFT }}>
+              <option value="" style={{ background: PANEL }}>All Districts</option>
+              {(city?.districts ? city.geo.units : []).map(u => <option key={u.code ?? u.name} value={u.name} style={{ background: PANEL }}>{u.name}</option>)}
+            </select>
+            <span className="pointer-events-none absolute end-3" aria-hidden>▾</span>
+          </label>
           <span className="flex items-center gap-2 rounded-lg border px-3 py-1.5" style={{ borderColor: LINE2, background: PANEL, color: SOFT }}>📅 <span style={{ color: INK }}>{dd}</span> · {day}, {hm}</span>
           <span className="relative grid h-8 w-8 place-items-center rounded-lg border" style={{ borderColor: LINE2, background: PANEL, color: SOFT }}>⛁<span className="absolute -right-1 -top-1 grid h-3.5 min-w-3.5 place-items-center rounded-full px-1 text-[8px] font-bold text-white" style={{ background: RED }}>7</span></span>
           <span className="flex items-center gap-2 rounded-lg border px-3 py-1.5" style={{ borderColor: LINE2, background: PANEL }}>
@@ -188,8 +163,10 @@ export function MunicipalSystems({ id, now }: { id: string; now: number }) {
 
       {/* ── Map + right rail ───────────────────────────────────── */}
       <div className="grid gap-3 xl:grid-cols-[1.85fr_1fr]">
-        <Card title="City Operations Map" action="⬢ 3D View ▾">
-          <CityMap id={id} ts={ts} />
+        <Card title="City Operations Map" action={
+          <button type="button" className="focus-ring rounded" aria-pressed={tilt} onClick={() => setTilt(t => !t)} title={tilt ? 'Back to the flat map' : 'Tilt the map'}>⬢ 3D View ▾</button>
+        }>
+          <CityMap id={id} ts={ts} city={city} P={CITY_P} district={district} onDistrict={setDistrict} tilt={tilt} onTilt={setTilt} />
         </Card>
         <div className="space-y-3">
           <Card title="Active Incidents" action="View All">

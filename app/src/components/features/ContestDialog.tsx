@@ -6,6 +6,7 @@ import { Plain } from '@/components/ui/Plain';
 import { appendAuditEntry } from '@/lib/audit/localVault';
 import { civicRef } from '@/lib/civic-ref';
 
+import { nationMessages } from '@/lib/nation/registry';
 export interface ContestDialogProps {
   receiptId: string;
   trigger?: React.ReactNode;
@@ -17,6 +18,7 @@ export interface ContestDialogProps {
  * in this prototype, it persists to the local Audit Vault stub.
  */
 export function ContestDialog({ receiptId, trigger }: ContestDialogProps) {
+  const m = nationMessages();
   const ref = React.useRef<HTMLDialogElement>(null);
   const [submitted, setSubmitted] = React.useState<{
     caseId: string;
@@ -48,13 +50,13 @@ export function ContestDialog({ receiptId, trigger }: ContestDialogProps) {
   return (
     <>
       {trigger ? (
-        <span onClick={open} role="button" tabIndex={0} aria-label="Question this decision"
+        <span onClick={open} role="button" tabIndex={0} aria-label={m.contest.headline}
           onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') open(); }}
         >
           {trigger}
         </span>
       ) : (
-        <Button onClick={open}>Question this decision</Button>
+        <Button onClick={open}>{m.contest.headline}</Button>
       )}
 
       <dialog
@@ -63,34 +65,32 @@ export function ContestDialog({ receiptId, trigger }: ContestDialogProps) {
       >
         {submitted ? (
           <div>
-            <h3 className="text-xl font-semibold">Submitted</h3>
+            <h3 className="text-xl font-semibold">{m.contest.submitted}</h3>
             <p className="mt-2">
-              Case <strong>{submitted.caseId}</strong> opened for receipt{' '}
-              <strong>{receiptId}</strong>.
+              {m.contest.caseOpened.split(/(\{\w+\})/).map((part, i) =>
+                part === '{caseId}' ? <strong key={i}>{submitted.caseId}</strong>
+                  : part === '{receiptId}' ? <strong key={i}>{receiptId}</strong> : part)}
             </p>
             <p className="mt-1">
               Reason: <em>{submitted.reason || '(none provided)'}</em>
             </p>
-            <Plain>
-              Your payment continues while we review. We will let you know within
-              5 working days.
-            </Plain>
+            <Plain>{m.contest.paymentContinues}</Plain>
             <div className="flex gap-3 mt-4">
-              <Button onClick={close}>Close</Button>
+              <Button onClick={close}>{m.common.close}</Button>
             </div>
           </div>
         ) : (
           <form onSubmit={onSubmit}>
-            <h3 className="text-xl font-semibold">Question this decision</h3>
+            <h3 className="text-xl font-semibold">{m.contest.headline}</h3>
             <p className="text-ink-muted mb-3">Receipt {receiptId}</p>
 
             <fieldset className="mb-3">
-              <legend className="font-medium mb-1">What do you want to do?</legend>
+              <legend className="font-medium mb-1">{m.contest.pickWhat}</legend>
               <div className="space-y-2">
                 {[
-                  ['question', 'Ask a question'],
-                  ['contest', 'Contest the decision'],
-                  ['complaint', 'Submit a complaint'],
+                  ['question', m.contest.optionAsk],
+                  ['contest', m.contest.optionContest],
+                  ['complaint', m.contest.optionComplaint],
                 ].map(([value, label]) => (
                   <label
                     key={value}
@@ -104,12 +104,12 @@ export function ContestDialog({ receiptId, trigger }: ContestDialogProps) {
             </fieldset>
 
             <fieldset className="mb-3">
-              <legend className="font-medium mb-1">Why?</legend>
+              <legend className="font-medium mb-1">{m.contest.pickWhy}</legend>
               <div className="space-y-2">
                 {[
-                  ['amount', 'The amount is wrong'],
-                  ['unclear', "I'm not sure why this was decided"],
-                  ['disagree', 'I disagree with the decision'],
+                  ['amount', m.contest.reasonAmount],
+                  ['unclear', m.contest.reasonUnclear],
+                  ['disagree', m.contest.reasonDisagree],
                 ].map(([value, label]) => (
                   <label
                     key={value}
@@ -124,7 +124,7 @@ export function ContestDialog({ receiptId, trigger }: ContestDialogProps) {
 
             <div className="mb-4">
               <label htmlFor="note" className="block font-medium mb-1">
-                Anything you want to tell us? (optional)
+                {m.contest.noteLabel}
               </label>
               <textarea
                 id="note"
@@ -135,9 +135,9 @@ export function ContestDialog({ receiptId, trigger }: ContestDialogProps) {
             </div>
 
             <div className="flex gap-3">
-              <Button type="submit">Submit</Button>
+              <Button type="submit">{m.common.submit}</Button>
               <Button type="button" variant="secondary" onClick={close}>
-                Cancel
+                {m.common.cancel}
               </Button>
             </div>
           </form>

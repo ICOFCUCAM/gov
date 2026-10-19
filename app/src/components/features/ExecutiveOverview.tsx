@@ -9,6 +9,8 @@
 
 import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { formatMoney } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';
@@ -108,7 +110,7 @@ function PerfMap() {
 }
 
 export function ExecutiveOverview() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
@@ -141,9 +143,9 @@ export function ExecutiveOverview() {
     ['New Citizen Service Portal Now Live', 'Enhanced features and easier access for all citizens.', 'May 15, 2025'],
   ];
   const budget = [
-    { label: 'Infrastructure', v: 34.4, n: '$8.45B', c: PURPLE }, { label: 'Education', v: 18.8, n: '$4.62B', c: BLUE },
-    { label: 'Health', v: 15.4, n: '$3.78B', c: CYAN }, { label: 'Social Services', v: 11.8, n: '$2.91B', c: TEAL },
-    { label: 'Public Safety', v: 10.1, n: '$2.48B', c: AMBER }, { label: 'Other', v: 9.5, n: '$2.34B', c: '#5d6a77' },
+    { label: 'Infrastructure', v: 34.4, n: formatMoney(8.45e9), c: PURPLE }, { label: 'Education', v: 18.8, n: formatMoney(4.62e9), c: BLUE },
+    { label: 'Health', v: 15.4, n: formatMoney(3.78e9), c: CYAN }, { label: 'Social Services', v: 11.8, n: formatMoney(2.91e9), c: TEAL },
+    { label: 'Public Safety', v: 10.1, n: formatMoney(2.48e9), c: AMBER }, { label: 'Other', v: 9.5, n: formatMoney(2.34e9), c: '#5d6a77' },
   ];
   const projects = [
     { label: 'Completed', v: 33.9, n: '423', c: GREEN }, { label: 'In Progress', v: 41.0, n: '512', c: BLUE },
@@ -246,10 +248,10 @@ export function ExecutiveOverview() {
       {/* ── Row 2: budget / projects / trend ───────────────────── */}
       <div className="grid gap-3 xl:grid-cols-3">
         <Card title="Budget Overview" sub="FY 2025" action="View Details">
-          <Donut top="$24.58B" sub="Total Budget" segs={budget} />
+          <Donut top={formatMoney(24.58e9)} sub="Total Budget" segs={budget} />
           <div className="mt-3 flex justify-between border-t pt-2 text-[9px]" style={{ borderColor: LINE2 }}>
-            <span style={{ color: MUT }}>Utilized <span style={{ color: GREEN }}>$16.81B (68.4%)</span></span>
-            <span style={{ color: MUT }}>Remaining <span style={{ color: BLUE }}>$7.77B (31.6%)</span></span>
+            <span style={{ color: MUT }}>Utilized <span style={{ color: GREEN }}>{formatMoney(16.81e9)} (68.4%)</span></span>
+            <span style={{ color: MUT }}>Remaining <span style={{ color: BLUE }}>{formatMoney(7.77e9)} (31.6%)</span></span>
           </div>
         </Card>
         <Card title="Project Status" action="View All">

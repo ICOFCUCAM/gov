@@ -6,6 +6,7 @@
 // procedural metrics with explicit constitutional safeguards.
 
 import { seed, wave } from '@/lib/telemetry';
+import { chamberSeats } from '@/lib/nation/registry';
 
 export const SENATE_SAFEGUARDS = {
   twoThirdsForOverride: true as const,
@@ -70,11 +71,14 @@ const COMMITTEES = ['Foreign Relations', 'Constitutional Affairs', 'Public Finan
 export function senateBoard(now: number): SenateBoard {
   const epoch = Math.max(0, Math.floor(now / 4000));
   const ts = epoch;
-  const total = 84;
+  // Upper chamber size from the nation's constitution; blocs always sum to it.
+  const total = chamberSeats(1, 84);
+  const gov = Math.round(total * (0.43 + seed('sn:gov') * 0.095));
+  const opp = Math.round(total * (0.333 + seed('sn:opp') * 0.095));
   const blocs: SenateBoard['blocs'] = [
-    { bloc: 'government', seats: 36 + Math.round(seed('sn:gov') * 8) },
-    { bloc: 'opposition', seats: 28 + Math.round(seed('sn:opp') * 8) },
-    { bloc: 'crossbench', seats: total - 36 - 28 - 8 + 8 },
+    { bloc: 'government', seats: gov },
+    { bloc: 'opposition', seats: opp },
+    { bloc: 'crossbench', seats: Math.max(0, total - gov - opp) },
   ];
   const postures: SenatePosture[] = ['deliberative', 'in-session', 'voting', 'recess', 'contested'];
   const posture = postures[Math.floor(seed(`sn:p:${Math.floor(ts / 8)}`) * postures.length) % postures.length]!;

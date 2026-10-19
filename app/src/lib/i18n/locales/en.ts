@@ -1,6 +1,10 @@
 // English (baseline). Other locales mirror the Messages shape declared below.
 // Per Companion 22 (plain language) — People's Editor reviews citizen-facing copy.
 
+/** Topics the citizen assistant answers (wallet/assistant/answer.ts), in matching order. */
+export const ASSISTANT_TOPICS = ['school', 'permit', 'grant', 'tax', 'identity', 'health', 'document', 'contest', 'pay'] as const;
+export type AssistantTopic = (typeof ASSISTANT_TOPICS)[number];
+
 export interface Messages {
   common: {
     home: string;
@@ -56,9 +60,374 @@ export interface Messages {
   assistant: {
     classANotice: string;
     sources: string;
+    title: string;
+    conversation: string;
+    sampleQuestion: string;
+    startTransfer: string;
+    findSchools: string;
+    sourceAct: string;
+    sourceGuidance: string;
+    placeholder: string;
+    send: string;
+    sendAria: string;
+    /** Words that point a question to a topic (matched case- and accent-insensitively; English is always understood too). */
+    keywords: Record<AssistantTopic, string[]>;
+    /** One grounded answer per topic, plus the fallback. Information only, never a decision. */
+    answers: Record<AssistantTopic | 'fallback', string>;
   };
   doctrine: {
     fourSentences: string;
+  };
+  /** Wallet receipts timeline (substrate). */
+  timeline: {
+    intro: string;
+    notConfigured: string;
+    signIn: string;
+    signInText: string;
+    noProfile: string;
+    refresh: string;
+    refreshing: string;
+    fullData: string;
+    exporting: string;
+    none: string;
+    count: string;
+    kindAll: string;
+    kindServiceRequest: string;
+    kindConsent: string;
+    kindAppeal: string;
+    kindWorkItemStep: string;
+    minutesAgo: string;
+    showLog: string;
+    hideLog: string;
+    chainIntactOne: string;
+    chainIntact: string;
+    chainBroken: string;
+    loading: string;
+    noTrail: string;
+    hash: string;
+    footnote: string;
+  };
+  /** Public institution websites: the shared frame (PublicSiteShell). */
+  site: {
+    officialWebsite: string;
+    allInstitutions: string;
+    citizenPortal: string;
+    liveBriefing: string;
+    skipMain: string;
+    fontUp: string;
+    fontNormal: string;
+    fontDown: string;
+    search: string;
+    viewAlerts: string;
+    iWantTo: string;
+    viewServices: string;
+    atGlance: string;
+    viewStats: string;
+    latestNews: string;
+    viewNews: string;
+    ourInitiatives: string;
+    viewPrograms: string;
+    allPrograms: string;
+    viewMap: string;
+    /** The public sites' "find us" locator (registered locations from the national facility register). */
+    locator: { empty: string; noMatch: string; count: string; countOne: string; showAll: string; showFewer: string; approx: string; open: string; openLabel: string; mapLabel: string; mapEmpty: string; source: string; more: string; tabs: string };
+    contact: string;
+    contactText: string;
+    contactUs: string;
+    enterEmail: string;
+    email: string;
+    subscribe: string;
+    sampleFigures: string;
+    includesSample: string;
+    live: string;
+    sampleNews: string;
+    sampleNote: string;
+    browseTopics: string;
+    gatewayLink: string;
+    gatewayMigrate: string;
+    visitSite: string;
+    fromSite: string;
+    searchTitle: string;
+    searchAllTitle: string;
+    searchAll: string;
+    searchFor: string;
+    searchIn: string;
+    languageLabel: string;
+    searchIntro: string;
+    searchResults: string;
+    searchOneResult: string;
+    searchNone: string;
+    kindService: string;
+    kindNews: string;
+    kindProgramme: string;
+    kindFigure: string;
+    kindPage: string;
+    subscribeNote: string;
+    subscribeCheck: string;
+    subscribeInvalid: string;
+    subscribeBusy: string;
+    subscriptionTitle: string;
+    confirmPrompt: string;
+    confirmButton: string;
+    confirmed: string;
+    unsubscribePrompt: string;
+    unsubscribeButton: string;
+    unsubscribed: string;
+    linkInvalid: string;
+  };
+  /** Permit and receipt detail pages. */
+  detail: {
+    notFoundPermit: string;
+    notFoundReceipt: string;
+    officer: string;
+    actionNeeded: string;
+    actionNeededText: string;
+    details: string;
+    progress: string;
+    aiPermit: string;
+    aiPermitBold: string;
+    neverDelays: string;
+    grantApproved: string;
+    officerWithId: string;
+    total: string;
+    aiReceipt: string;
+    aiReceiptBold: string;
+    aiNotDecide: string;
+  };
+  /** Status badges, selective disclosure and the support thread. */
+  more: {
+    draft: string;
+    submitted: string;
+    inReview: string;
+    needsInfo: string;
+    approved: string;
+    declined: string;
+    billPaid: string;
+    billOverdue: string;
+    billDue: string;
+    fullName: string;
+    over18: string;
+    dob: string;
+    address: string;
+    nationalId: string;
+    vaccination: string;
+    yes: string;
+    nothingShared: string;
+    declinedText: string;
+    sharedTitle: string;
+    sharedText: string;
+    done: string;
+    askingText: string;
+    purpose: string;
+    scope: string;
+    chooseShare: string;
+    notShared: string;
+    shareN: string;
+    selectOne: string;
+    revokeLater: string;
+    supportThread: string;
+    supportDesk: string;
+    citizen: string;
+    supportTitle: string;
+    fromSubstrate: string;
+    classA: string;
+    classB: string;
+    classC: string;
+    classD: string;
+    classE: string;
+    flagAI: string;
+    flagAria: string;
+    panelAria: string;
+  };
+  /** Wallet permits, inbox, payments, document verification and signing. */
+  pages: {
+    permits: string;
+    newShort: string;
+    noPermits: string;
+    noPermitsHint: string;
+    applyPermit: string;
+    applyNewPermit: string;
+    decisionDue: string;
+    noDecisionDate: string;
+    noMessages: string;
+    noMessagesHint: string;
+    unread: string;
+    nothingUnread: string;
+    read: string;
+    viaChannel: string;
+    payments: string;
+    paymentsIntro: string;
+    toPay: string;
+    nothingDue: string;
+    caughtUp: string;
+    due: string;
+    paying: string;
+    payWith: string;
+    paymentHistory: string;
+    noPayments: string;
+    receiptHash: string;
+    paymentFailed: string;
+    verifyDocument: string;
+    verifyIntro: string;
+    documentCode: string;
+    checking: string;
+    verify: string;
+    valid: string;
+    revoked: string;
+    notValid: string;
+    subject: string;
+    issuer: string;
+    type: string;
+    issued: string;
+    signDocument: string;
+    signed: string;
+    signedIntro: string;
+    signature: string;
+    signedAt: string;
+    hash: string;
+    documentId: string;
+    signExplain: string;
+    continueToSign: string;
+    confirmSignature: string;
+    twoFactors: string;
+    faceVerified: string;
+    lookCamera: string;
+    keyVerified: string;
+    tapKey: string;
+    bothRequired: string;
+    signing: string;
+    sign: string;
+    newIntro: string;
+    permitType: string;
+    business: string;
+    building: string;
+    marketStall: string;
+    event: string;
+    foodHandling: string;
+    vehicle: string;
+    whatFor: string;
+    whatForHint: string;
+    applicantName: string;
+    municipalityLabel: string;
+    premises: string;
+    premisesHint: string;
+    anythingKnow: string;
+    plainLanguage: string;
+    submitting: string;
+    submitApplication: string;
+    otherChannels: string;
+    somethingWrong: string;
+  };
+  /** Wallet records, identity and receipts pages. */
+  records: {
+    identity: string;
+    born: string;
+    civicIdActive: string;
+    showSelectively: string;
+    howDisclosure: string;
+    discloseOnly: string;
+    over18: string;
+    resident: string;
+    licensedNurse: string;
+    disclosureExplain: string;
+    credentials: string;
+    health: string;
+    shareClinician: string;
+    shareCode: string;
+    whoLooked: string;
+    allLogged: string;
+    withConsent: string;
+    showLess: string;
+    showFullLog: string;
+    digitalIdentity: string;
+    municipality: string;
+    statusActive: string;
+    intro: string;
+    introNot: string;
+    shareDetails: string;
+    howThisWorks: string;
+    how1: string;
+    how2: string;
+    how3: string;
+    how4: string;
+    everythingState: string;
+  };
+  /** Wallet services: life situations, ministries and work in progress. */
+  services: {
+    search: string;
+    placeholder: string;
+    lifeSituations: string;
+    noMatch: string;
+    byMinistry: string;
+    allMinistries: string;
+    inProgress: string;
+    progressGrant: string;
+    progressTransfer: string;
+    childTitle: string;
+    childSub: string;
+    schoolTitle: string;
+    schoolSub: string;
+    lossTitle: string;
+    lossSub: string;
+    businessTitle: string;
+    businessSub: string;
+    movingTitle: string;
+    movingSub: string;
+    olderTitle: string;
+    olderSub: string;
+    registerBirth: string;
+    applyChildGrant: string;
+    bookVaccinations: string;
+    schoolEnrolment: string;
+    requestTransfer: string;
+    registerDeath: string;
+    bereavementSupport: string;
+    applyPermit: string;
+    taxRegistration: string;
+    changeAddress: string;
+    transferUtilities: string;
+    pensionServices: string;
+    healthcareAccess: string;
+    health: string;
+    education: string;
+    socialProtection: string;
+    taxRevenue: string;
+    landProperty: string;
+    justice: string;
+  };
+  /** Wallet home: actions, to-dos and the sample receipts. */
+  home: {
+    walletName: string;
+    doSomething: string;
+    permits: string;
+    payBill: string;
+    identity: string;
+    verifyDoc: string;
+    sign: string;
+    confirmAddress: string;
+    confirmAddressHint: string;
+    reviewTax: string;
+    reviewTaxHint: string;
+    today: string;
+    yesterday: string;
+    childGrant: string;
+    healthUpdated: string;
+    vaccination: string;
+    taxDraftReady: string;
+    noSignatureYet: string;
+    signedBy: string;
+    aiClass: string;
+  };
+  /** Update Center release communication. */
+  releaseNotes: {
+    whatsNew: string;
+    translationPending: string;
+    inYourLanguage: string;
+    learning: string;
+    adminGuide: string;
+    training: string;
+    runbook: string;
+    video: string;
   };
 }
 
@@ -117,8 +486,398 @@ export const en: Messages = {
   assistant: {
     classANotice: 'I help you find information. I will not draft binding decisions here. For decisions, return to the case panel or talk to a human officer.',
     sources: 'Sources I used',
+    title: 'Civic Assistant',
+    conversation: 'Conversation',
+    sampleQuestion: 'How do I transfer my child to a school in another part of the country?',
+    startTransfer: 'Start a transfer',
+    findSchools: 'Find schools nearby',
+    sourceAct: 'Education Act §12',
+    sourceGuidance: 'Ministry of Education guidance, v.4',
+    placeholder: 'Type your question…',
+    send: 'Send',
+    sendAria: 'Send a message',
+    keywords: {
+      school: ['school', 'transfer'],
+      permit: ['permit', 'business'],
+      grant: ['grant', 'benefit', 'child'],
+      tax: ['tax'],
+      identity: ['id', 'identity', 'address'],
+      health: ['appointment', 'doctor', 'health', 'vaccin'],
+      document: ['document', 'verify', 'certificate'],
+      contest: ['complaint', 'contest', 'appeal', 'wrong'],
+      pay: ['pay', 'bill', 'fee'],
+    },
+    answers: {
+      school: 'To transfer a child to a school in another part of the country: bring the current enrollment record, apply to the new school (directly or via your wallet), and the Ministry of Education confirms within 10 working days. Use "Start a transfer" below.',
+      permit: 'Permits are applied for in the wallet. Open Permits → Apply, describe the premises and purpose; most decisions are returned within the statutory window with a tracked reference.',
+      grant: 'Child grant eligibility is assessed automatically each cycle. You can see the next payment and contest any decision from its receipt.',
+      tax: 'Your tax draft is prepared for review — nothing is filed until you confirm. Open the draft from your wallet receipts.',
+      identity: 'Identity and address changes are handled under Identity. Selective disclosure lets you prove a fact without revealing the underlying record.',
+      health: 'Health appointments and vaccinations are booked from your health portal; your care team is reachable there and replies arrive in your wallet inbox.',
+      document: 'To verify a document, open Verify a document and scan or enter its code — the state confirms authenticity without storing a copy.',
+      contest: 'You can contest any decision from its receipt — your payment continues during review and contesting is never penalised. "Talk to a human officer" below logs a tracked request.',
+      pay: 'Bills and fees are paid under Payments; every payment produces a signed, permanent receipt you can later verify or contest.',
+      fallback: 'I can help you find civic information — schools, permits, grants, tax, identity, health, documents, payments. For a binding decision, use a case panel or talk to a human officer below.',
+    },
   },
   doctrine: {
     fourSentences: 'Humans govern. Institutions govern. Constitutions govern. AI assists.',
+  },
+  home: {
+    walletName: 'Civic Wallet',
+    doSomething: 'Do something',
+    permits: 'Permits',
+    payBill: 'Pay a bill',
+    identity: 'Identity',
+    verifyDoc: 'Verify a doc',
+    sign: 'Sign',
+    confirmAddress: 'Confirm your address',
+    confirmAddressHint: 'for the school transfer — about 2 minutes',
+    reviewTax: 'Review your tax draft',
+    reviewTaxHint: 'due in {days} days',
+    today: 'Today',
+    yesterday: 'Yesterday',
+    childGrant: 'Child grant deposited',
+    healthUpdated: 'Health record updated',
+    vaccination: 'vaccination (pneumococcal)',
+    taxDraftReady: 'Tax draft {year} ready for review',
+    noSignatureYet: 'no signature needed yet',
+    signedBy: 'Signed by {name}',
+    aiClass: 'AI: Class {cls}',
+  },
+  services: {
+    search: 'Search services',
+    placeholder: 'What do you need?',
+    lifeSituations: 'Life situations',
+    noMatch: 'No matching services.',
+    byMinistry: 'By ministry',
+    allMinistries: 'All ministries ({count})',
+    inProgress: 'In progress',
+    progressGrant: 'Child grant renewal — under review',
+    progressTransfer: 'School transfer — waiting on the new school',
+    childTitle: 'Having a child',
+    childSub: 'birth registration, child grant, vaccinations',
+    schoolTitle: 'Going to school',
+    schoolSub: 'enrollment, transfer, feeding',
+    lossTitle: 'Lost a family member',
+    lossSub: 'death registration, estate, support',
+    businessTitle: 'Starting a business',
+    businessSub: 'permits, registration, tax',
+    movingTitle: 'Moving house',
+    movingSub: 'address change, utilities',
+    olderTitle: 'Older adult support',
+    olderSub: 'pension, healthcare, accommodations',
+    registerBirth: 'Register a birth',
+    applyChildGrant: 'Apply for child grant',
+    bookVaccinations: 'Book vaccinations',
+    schoolEnrolment: 'School enrolment',
+    requestTransfer: 'Request a transfer',
+    registerDeath: 'Register a death',
+    bereavementSupport: 'Bereavement support',
+    applyPermit: 'Apply for a permit',
+    taxRegistration: 'Tax registration',
+    changeAddress: 'Change of address',
+    transferUtilities: 'Transfer utilities',
+    pensionServices: 'Pension services',
+    healthcareAccess: 'Healthcare access',
+    health: 'Health',
+    education: 'Education',
+    socialProtection: 'Social protection',
+    taxRevenue: 'Tax and revenue',
+    landProperty: 'Land and property',
+    justice: 'Justice and legal aid',
+  },
+  records: {
+    identity: 'Identity',
+    born: 'Born {date} ({place})',
+    civicIdActive: 'CivicID active',
+    showSelectively: 'Show selectively',
+    howDisclosure: 'How selective disclosure works',
+    discloseOnly: "Disclose only what's asked",
+    over18: 'Over 18 — yes (date of birth stays hidden)',
+    resident: 'Resident of {place} — yes (address stays hidden)',
+    licensedNurse: 'Licensed nurse — yes (license number stays hidden)',
+    disclosureExplain: 'Selective disclosure proves a fact (e.g. “over 18”) without revealing the underlying data. The verifier sees only the answer, signed by the state — never your full record.',
+    credentials: 'Credentials',
+    health: 'Health',
+    shareClinician: 'Share with a clinician',
+    shareCode: 'One-time share code {code} — valid 15 minutes, read-only, logged below when used.',
+    whoLooked: 'Who has looked at my records?',
+    allLogged: 'All access is logged. You see who, when, and why.',
+    withConsent: 'With your consent',
+    showLess: 'Show less',
+    showFullLog: 'Show full access log ({count}) →',
+    digitalIdentity: 'Digital identity',
+    municipality: 'Municipality: {place}',
+    statusActive: 'Status: active',
+    intro: 'Your identity is yours. When a service asks for your details, you choose exactly what to share — and you can see what you are {not} sharing. There is no global ID number that follows you everywhere.',
+    introNot: 'not',
+    shareDetails: 'Share your details',
+    howThisWorks: 'How this works',
+    how1: 'Each service gets a different identifier — they cannot link you across services.',
+    how2: 'You approve every disclosure, one at a time.',
+    how3: 'You can revoke a disclosure later.',
+    how4: 'Every disclosure appears in your records access log.',
+    everythingState: 'Everything the state has on you',
+  },
+  pages: {
+    permits: 'Permits',
+    newShort: '+ New',
+    noPermits: 'No permits yet',
+    noPermitsHint: 'Apply for a permit and track its progress here.',
+    applyPermit: 'Apply for a permit',
+    applyNewPermit: 'Apply for a new permit',
+    decisionDue: 'decision due {date}',
+    noDecisionDate: 'no decision date yet',
+    noMessages: 'No messages',
+    noMessagesHint: 'Notifications from the state appear here.',
+    unread: 'Unread',
+    nothingUnread: 'Nothing unread.',
+    read: 'Read',
+    viaChannel: 'via {channel}',
+    payments: 'Payments',
+    paymentsIntro: 'Pay bills and fees here. Every payment gives you a receipt you can verify. We show the full amount and the rail before you pay — no hidden fees.',
+    toPay: 'To pay',
+    nothingDue: 'Nothing due',
+    caughtUp: "You're all caught up.",
+    due: 'Due {date}',
+    paying: 'Paying…',
+    payWith: 'Pay with {rail}',
+    paymentHistory: 'Payment history',
+    noPayments: 'No payments yet',
+    receiptHash: 'Receipt hash:',
+    paymentFailed: 'Payment failed',
+    verifyDocument: 'Verify a document',
+    verifyIntro: 'Paste or scan a document code to check it was really issued by the state and has not been altered. Try {valid} (valid), {revoked} (revoked), or anything else (invalid).',
+    documentCode: 'Document code',
+    checking: 'Checking…',
+    verify: 'Verify',
+    valid: '✓ Valid',
+    revoked: 'Revoked',
+    notValid: 'Not valid',
+    subject: 'Subject',
+    issuer: 'Issuer',
+    type: 'Type',
+    issued: 'Issued',
+    signDocument: 'Sign a document',
+    signed: 'Signed',
+    signedIntro: 'You signed {title}. This signature is non-repudiable and recorded to the Audit Vault.',
+    signature: 'Signature',
+    signedAt: 'Signed at',
+    hash: 'Hash',
+    documentId: 'Document {id}',
+    signExplain: 'By signing, you confirm the fire-safety annex is accurate and submit it to your bakery permit application.',
+    continueToSign: 'Continue to sign',
+    confirmSignature: 'Confirm your signature',
+    twoFactors: 'Two factors keep your signature yours. Your biometric never leaves this device.',
+    faceVerified: '✓ Face verified',
+    lookCamera: '👤 Look at the camera',
+    keyVerified: '✓ Key verified',
+    tapKey: '🔑 Tap your security key',
+    bothRequired: 'Both factors are required before you can sign.',
+    signing: 'Signing…',
+    sign: 'Sign',
+    newIntro: 'Tell us what you need. You will get a receipt, a named officer, and a target decision date. You can track this any time and question any decision.',
+    permitType: 'Permit type',
+    business: 'Business permit',
+    building: 'Building permit',
+    marketStall: 'Market stall licence',
+    event: 'Public event permit',
+    foodHandling: 'Food handling permit',
+    vehicle: 'Vehicle permit',
+    whatFor: 'What is this for?',
+    whatForHint: 'e.g. Bakery — small business permit',
+    applicantName: 'Applicant name',
+    municipalityLabel: 'Municipality',
+    premises: 'Premises / location',
+    premisesHint: 'e.g. Plot 4423',
+    anythingKnow: 'Anything we should know? (optional)',
+    plainLanguage: 'In plain language…',
+    submitting: 'Submitting…',
+    submitApplication: 'Submit application',
+    otherChannels: 'Prefer not to use a phone? Dial *civic#, visit any office, or ask an agent. The same application works on every channel.',
+    somethingWrong: 'Something went wrong',
+  },
+  more: {
+    draft: 'Draft',
+    submitted: 'Submitted',
+    inReview: 'In review',
+    needsInfo: 'Action needed',
+    approved: 'Approved',
+    declined: 'Declined',
+    billPaid: 'Paid',
+    billOverdue: 'Overdue',
+    billDue: 'Due',
+    fullName: 'Full name',
+    over18: 'Over 18',
+    dob: 'Date of birth',
+    address: 'Address',
+    nationalId: 'National ID number',
+    vaccination: 'Pneumococcal vaccination',
+    yes: 'Yes',
+    nothingShared: 'Nothing shared',
+    declinedText: 'You declined the request from {who}. No attributes were disclosed; the decline is noted in your access log.',
+    sharedTitle: 'Shared',
+    sharedText: 'You shared {n} of {total} requested attributes with {who} for this visit only. This is now in your records access log. You can revoke it later.',
+    done: 'Done',
+    askingText: '{who} is asking to verify the following, for the purpose of {purpose}, for {scope}:',
+    purpose: 'scheduling a vaccination follow-up',
+    scope: 'this visit only',
+    chooseShare: 'Choose what to share',
+    notShared: 'Not shared',
+    shareN: 'Share {n} now',
+    selectOne: 'Select at least one',
+    revokeLater: 'You can revoke this later.',
+    supportThread: 'Support thread',
+    supportDesk: 'Citizen support desk',
+    citizen: 'Citizen',
+    supportTitle: 'Your conversation with the support desk',
+    fromSubstrate: 'From the substrate',
+    classA: 'Class A — Information only',
+    classB: 'Class B — Advisory',
+    classC: 'Class C — Narrow automation',
+    classD: 'Class D — Recommendation only',
+    classE: 'Class E — Sovereign coordination',
+    flagAI: '⚐ Flag this AI',
+    flagAria: 'Flag this AI behavior',
+    panelAria: 'AI Copilot panel (Class {cls})',
+  },
+  detail: {
+    notFoundPermit: 'Permit not found.',
+    notFoundReceipt: 'Receipt not found.',
+    officer: 'Officer {name}',
+    actionNeeded: 'Action needed.',
+    actionNeededText: 'The officer asked for more information. You can respond here, on paper at any office, or through an agent — whichever works for you.',
+    details: 'Details',
+    progress: 'Progress',
+    aiPermit: 'An AI Copilot helped the reviewing officer by drafting a summary. {bold} The AI does not decide.',
+    aiPermitBold: 'The officer signs every decision.',
+    neverDelays: 'Questioning a decision never delays or penalises your application.',
+    grantApproved: 'The Ministry of Social Protection approved your monthly child grant. Eligibility was verified by {officer}.',
+    officerWithId: 'Officer {name} (ID {id})',
+    total: 'Total: {amount}',
+    aiReceipt: 'An AI Copilot helped Officer {name} by drafting an eligibility summary. {bold}',
+    aiReceiptBold: 'The officer signed the decision.',
+    aiNotDecide: 'The AI did not decide. The officer did.',
+  },
+  site: {
+    officialWebsite: 'Official Website of the {name}',
+    allInstitutions: '⛨ All Institutions',
+    citizenPortal: '◯ Citizen Portal',
+    liveBriefing: '⌖ Live Briefing',
+    skipMain: 'Skip to Main Content',
+    fontUp: 'Increase font size',
+    fontNormal: 'Normal font size',
+    fontDown: 'Decrease font size',
+    search: 'Search',
+    viewAlerts: 'View All Alerts →',
+    iWantTo: 'I want to…',
+    viewServices: 'View All Services →',
+    atGlance: '{name} at a Glance',
+    viewStats: 'View All Statistics →',
+    latestNews: 'Latest News',
+    viewNews: 'View All News →',
+    ourInitiatives: 'Our Initiatives',
+    viewPrograms: 'View All Programs →',
+    allPrograms: 'All Programs & Initiatives →',
+    viewMap: 'View Full Map →',
+    locator: {
+      empty: 'Locations will appear here once the {name} registers its offices.',
+      noMatch: 'No registered location matches.',
+      count: '{count} registered locations',
+      countOne: '1 registered location',
+      showAll: 'Show all {count}',
+      showFewer: 'Show fewer',
+      approx: 'approximate location',
+      open: 'Open in maps',
+      openLabel: 'Open {name} in your maps app',
+      mapLabel: '{country}: {count} registered locations of the {name}',
+      mapEmpty: '{country}: no registered locations yet',
+      source: 'From the national facility register',
+      more: 'Showing {shown} of {total}; search to narrow.',
+      tabs: 'Kinds of location',
+    },
+    contact: 'Contact',
+    contactText: 'Public-affairs office, weekdays 9am-5pm. Visit your nearest branch or use the citizen portal.',
+    contactUs: 'Contact Us →',
+    enterEmail: 'Enter your email',
+    email: 'Email',
+    subscribe: 'Subscribe',
+    sampleFigures: 'Sample figures',
+    includesSample: 'Includes sample figures',
+    live: 'Live',
+    sampleNews: 'Sample announcements',
+    sampleNote: 'Shown until the {name} publishes its own.',
+    browseTopics: 'Browse by topic',
+    gatewayLink: 'This is the {name} on the national platform. Its main website is {host}.',
+    gatewayMigrate: 'The {name} is moving its website here from {host}; pages not yet moved are still there.',
+    visitSite: 'Visit {host} ↗',
+    fromSite: 'From {host}',
+    searchTitle: 'Search {name}',
+    searchAllTitle: 'Search the public sites',
+    searchAll: 'Search all public sites',
+    searchFor: 'Search for',
+    searchIn: 'Search in',
+    languageLabel: 'Language',
+    searchIntro: 'Services, news, programmes and pages, as each institution publishes them.',
+    searchResults: '{count} results for “{q}”',
+    searchOneResult: '1 result for “{q}”',
+    searchNone: 'Nothing matches “{q}”. Try fewer or other words.',
+    kindService: 'Service',
+    kindNews: 'News',
+    kindProgramme: 'Programme',
+    kindFigure: 'Figure',
+    kindPage: 'Page',
+    subscribeNote: 'We use your email only for these updates. Unsubscribe at any time.',
+    subscribeCheck: 'Check your email and open the link we sent to confirm.',
+    subscribeInvalid: 'Enter a valid email address.',
+    subscribeBusy: 'Too many attempts. Please try again later.',
+    subscriptionTitle: 'Email updates',
+    confirmPrompt: 'Confirm your subscription to email updates from {name}.',
+    confirmButton: 'Confirm subscription',
+    confirmed: 'Subscription confirmed. Every email has a link to unsubscribe.',
+    unsubscribePrompt: 'Stop email updates from {name}?',
+    unsubscribeButton: 'Unsubscribe',
+    unsubscribed: 'You are unsubscribed and your email address has been deleted.',
+    linkInvalid: 'This link is not valid or has expired.',
+  },
+  /** Wallet receipts timeline (substrate). */
+  timeline: {
+    intro: 'Service requests you filed, consents you granted, appeals you lodged, and every workflow step an officer took on something linked to you. Sorted newest-first. RLS enforces that you only see your own records.',
+    notConfigured: 'Substrate not configured.',
+    signIn: 'Sign in',
+    signInText: '{signIn} to view your receipts.',
+    noProfile: 'Signed in but no citizen profile is linked. Visit {link} to provision one.',
+    refresh: 'refresh',
+    refreshing: 'refreshing…',
+    fullData: 'full data',
+    exporting: 'exporting…',
+    none: 'No receipts yet',
+    count: '{n} receipts',
+    kindAll: 'all',
+    kindServiceRequest: 'service-request',
+    kindConsent: 'consent',
+    kindAppeal: 'appeal',
+    kindWorkItemStep: 'work-item-step',
+    minutesAgo: '{n}m ago',
+    showLog: 'Show activity & access log',
+    hideLog: 'Hide activity & access log',
+    chainIntactOne: '✓ hash chain intact — 1 entry verified',
+    chainIntact: '✓ hash chain intact — {n} entries verified',
+    chainBroken: '⚠ chain broken at entry #{n}',
+    loading: 'loading…',
+    noTrail: 'No entries on your audit scope yet. Tamper-evident events (consent expiries, data exports) appear here as they happen.',
+    hash: 'hash',
+    footnote: 'Receipts are read directly from the substrate via {timelineRpc}, a SECURITY DEFINER RPC scoped to {uid}. Officers cannot see your receipts; civil society cannot see them without your account. {fullData} downloads the complete portability document — every request, consent, and appeal row the substrate holds on you — via {exportRpc}.',
+  },
+  releaseNotes: {
+    whatsNew: 'What\'s new',
+    translationPending: 'Translation pending — shown in English',
+    inYourLanguage: 'In your language',
+    learning: 'Training and guides',
+    adminGuide: 'Administrator guide',
+    training: 'Training',
+    runbook: 'Runbook',
+    video: 'Video',
   },
 };

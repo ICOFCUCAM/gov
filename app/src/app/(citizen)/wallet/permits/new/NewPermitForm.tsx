@@ -7,17 +7,22 @@ import { TextField, SelectField } from '@/components/ui/Field';
 import { Plain } from '@/components/ui/Plain';
 import { api } from '@/lib/api/client';
 import type { PermitType } from '@/lib/api/types';
-
-const TYPES: { value: PermitType; label: string }[] = [
-  { value: 'business', label: 'Business permit' },
-  { value: 'building', label: 'Building permit' },
-  { value: 'market-stall', label: 'Market stall licence' },
-  { value: 'event', label: 'Public event permit' },
-  { value: 'food-handling', label: 'Food handling permit' },
-  { value: 'vehicle', label: 'Vehicle permit' },
+import { DEMO_CITIZEN, homePlace } from '@/lib/nation/persona';
+import { nationMessages } from '@/lib/nation/registry';
+import type { Messages } from '@/lib/i18n';
+// Labels in the nation's language; the values sent to the API are unchanged.
+const typesFor = (x: Messages['pages']): { value: PermitType; label: string }[] => [
+  { value: 'business', label: x.business },
+  { value: 'building', label: x.building },
+  { value: 'market-stall', label: x.marketStall },
+  { value: 'event', label: x.event },
+  { value: 'food-handling', label: x.foodHandling },
+  { value: 'vehicle', label: x.vehicle },
 ];
 
 export function NewPermitForm() {
+  const m = nationMessages();
+  const x = m.pages;
   const router = useRouter();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -40,7 +45,7 @@ export function NewPermitForm() {
       });
       router.push(`/wallet/permits/${permit.id}`);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong');
+      setError(err instanceof Error ? err.message : x.somethingWrong);
       setBusy(false);
     }
   }
@@ -48,54 +53,52 @@ export function NewPermitForm() {
   return (
     <form onSubmit={onSubmit}>
       <Plain>
-        Tell us what you need. You will get a receipt, a named officer, and a
-        target decision date. You can track this any time and question any
-        decision.
+        {x.newIntro}
       </Plain>
 
       <div className="mt-4">
-        <SelectField label="Permit type" name="type" required defaultValue="business">
-          {TYPES.map(t => (
+        <SelectField label={x.permitType} name="type" required defaultValue="business">
+          {typesFor(x).map(t => (
             <option key={t.value} value={t.value}>{t.label}</option>
           ))}
         </SelectField>
 
         <TextField
-          label="What is this for?"
+          label={x.whatFor}
           name="title"
           required
-          placeholder="e.g. Bakery — small business permit"
+          placeholder={x.whatForHint}
         />
 
         <TextField
-          label="Applicant name"
+          label={x.applicantName}
           name="applicantName"
           required
-          defaultValue="Amina Hassan Mwangi"
+          defaultValue={DEMO_CITIZEN.name}
         />
 
         <TextField
-          label="Municipality"
+          label={x.municipalityLabel}
           name="municipality"
           required
-          defaultValue="Kiambu"
+          defaultValue={homePlace()}
         />
 
         <TextField
-          label="Premises / location"
+          label={x.premises}
           name="premises"
-          placeholder="e.g. Plot 4423"
+          placeholder={x.premisesHint}
         />
 
         <div className="mb-4">
           <label htmlFor="details" className="block font-medium mb-1">
-            Anything we should know? (optional)
+            {x.anythingKnow}
           </label>
           <textarea
             id="details"
             name="details"
             className="w-full min-h-[90px] p-3 border border-line rounded-sm bg-surface"
-            placeholder="In plain language…"
+            placeholder={x.plainLanguage}
           />
         </div>
       </div>
@@ -106,15 +109,14 @@ export function NewPermitForm() {
 
       <div className="flex gap-3">
         <Button type="submit" disabled={busy}>
-          {busy ? 'Submitting…' : 'Submit application'}
+          {busy ? x.submitting : x.submitApplication}
         </Button>
         <Button type="button" variant="secondary" onClick={() => history.back()}>
-          Cancel
+          {m.common.cancel}
         </Button>
       </div>
       <p className="text-sm text-ink-muted mt-2">
-        Prefer not to use a phone? Dial *civic#, visit any office, or ask an
-        agent. The same application works on every channel.
+        {x.otherChannels}
       </p>
     </form>
   );

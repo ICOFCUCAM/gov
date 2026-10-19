@@ -8,7 +8,7 @@ export default async function DirectivePage({ params }: { params: Promise<{ ref:
   const { ref } = await params;
   return (
     <CommandShell active="directives">
-      <DirectiveDetail ref={decodeURIComponent(ref)} />
+      <DirectiveDetail recordRef={decodeURIComponent(ref)} />
     </CommandShell>
   );
 }

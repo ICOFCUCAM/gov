@@ -12,8 +12,10 @@ import { WorkflowBar } from '@/components/ui/WorkflowBar';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { api } from '@/lib/api/client';
 import type { Permit, PermitDecision } from '@/lib/api/types';
+import { useOfficial } from '@/lib/official';
+import { ActingOfficial } from '@/components/ui/ActingOfficial';
+import { aiLabel } from '@/lib/nation/registry';
 
-const OFFICER = 'K. Otieno';
 const OPEN_STATES = new Set(['submitted', 'in-review', 'needs-info']);
 
 export function OfficerWorkspace() {
@@ -23,6 +25,7 @@ export function OfficerWorkspace() {
   const [busy, setBusy] = React.useState(false);
   const [toast, setToast] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [officer, setOfficer] = useOfficial();
 
   const load = React.useCallback(async () => {
     try {
@@ -57,12 +60,13 @@ export function OfficerWorkspace() {
 
   async function decide(decision: PermitDecision, note?: string) {
     if (!selected) return;
+    if (!officer) { setError('Name the signing officer first: every decision is recorded under a person.'); return; }
     setBusy(true);
     setError(null);
     try {
       const { permit } = await api.permits.decide(selected.id, {
         decision,
-        officerName: OFFICER,
+        officerName: officer,
         note,
         aiClass: 'B',
       });
@@ -205,8 +209,7 @@ export function OfficerWorkspace() {
                     : ' No blocking issues detected.'}
                 </p>
                 <p className="text-sm text-ink-muted">
-                  This is advisory. You decide and sign. The AI does not
-                  decide.
+                  {aiLabel('This is advisory. You decide and sign. The AI does not decide.', 'This is advisory. You decide and sign.')}
                 </p>
               </CopilotPanel>
 
@@ -222,9 +225,9 @@ export function OfficerWorkspace() {
                 ) : (
                   <WorkflowBar busy={busy} onDecision={decide} />
                 )}
-                <p className="mt-2 text-xs text-ink-muted">
-                  Signing officer: <strong>{OFFICER}</strong>. Every decision is
-                  named and written to the audit trail.
+                <p className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-ink-muted">
+                  <ActingOfficial name={officer} onChange={setOfficer} label="Signing officer" />
+                  <span>Every decision is named and written to the audit trail.</span>
                 </p>
               </section>
 

@@ -11,8 +11,9 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
+import { regionList, regionName } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 const SEASONS = ['Planting', 'Growing', 'Harvest', 'Dormant'] as const;
 export type Season = typeof SEASONS[number];
 export type Tone = 'ok' | 'warn' | 'alert';
@@ -249,7 +250,7 @@ export function foodSecurityBoard(now: number): FoodSecurityBoard {
   const cropDefs: { crop: CropProduction['crop']; region: string }[] = [
     { crop: 'Maize', region: 'Northern' }, { crop: 'Wheat', region: 'Highland' },
     { crop: 'Rice', region: 'Coastal' }, { crop: 'Sorghum', region: 'Eastern' },
-    { crop: 'Cassava', region: 'Western' }, { crop: 'Vegetables', region: 'Capital District' },
+    { crop: 'Cassava', region: 'Western' }, { crop: 'Vegetables', region: regionName(0, 'Capital District') },
   ];
   const crops: CropProduction[] = cropDefs.map(({ crop, region }) => {
     const k = `fs:cp:${crop}`;
@@ -285,7 +286,7 @@ export function foodSecurityBoard(now: number): FoodSecurityBoard {
 
   // 4. Reservoirs
   const reservoirNames: { name: string; region: string }[] = [
-    { name: 'Capital Catchment', region: 'Capital District' },
+    { name: 'Capital Catchment', region: regionName(0, 'Capital District') },
     { name: 'Northern Highland Dam', region: 'Northern' },
     { name: 'Eastern Reservoir', region: 'Eastern' },
     { name: 'Coastal River Storage', region: 'Coastal' },

@@ -27,6 +27,8 @@ function loadEnvFile(file: string): Record<string, string> {
 const localEnv = loadEnvFile(path.resolve(__dirname, '.env.local'));
 
 export default defineConfig({
+  // The automatic JSX runtime, as Next.js uses, so tests can render pages that do not import React.
+  esbuild: { jsx: 'automatic' },
   resolve: {
     alias: { '@': path.resolve(__dirname, 'src') },
   },

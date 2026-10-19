@@ -7,6 +7,8 @@
 // research consortia, AI-tutor mesh hubs, archives) that the Ministry
 // coordinates without consolidating their voice.
 
+import { aiLabel } from '@/lib/nation/registry';
+
 export type EducationBranchTier = 'Tertiary' | 'Secondary' | 'Primary' | 'Specialist' | 'Research' | 'Civic' | 'Futurist';
 
 export interface EducationPublicBranch {
@@ -121,8 +123,11 @@ const BRANCHES: EducationPublicBranch[] = [
   },
 ];
 
+// Branch names that present as AI follow the nation's AI choice when read.
+const plainWording = (t: string) => aiLabel(t, t.replace(/\bAI /g, ''));
+
 export function educationPublicInstitutions(): EducationPublicBranch[] {
-  return BRANCHES;
+  return BRANCHES.map(b => ({ ...b, branch: plainWording(b.branch), flagshipExamples: b.flagshipExamples.map(plainWording) }));
 }
 
 export function totalEducationPublicSites(): number {

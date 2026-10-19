@@ -52,7 +52,7 @@ export function SchoolDisruption({ id, now }: { id: string; now: number }) {
       ]} />
       <HallRule label="disruption ledger" />
       {disrupt.length === 0 ? (
-        <p className="text-[10.5px] italic" style={{ color: EDUCATION_DS.mut }}>No active school disruption. National posture: nominal.</p>
+        <p className="text-[10.5px] italic" style={{ color: EDUCATION_DS.mut }}>No active school disruption. National status: nominal.</p>
       ) : disrupt.map(i => (
         <HallBar key={i.id}
           label={`${i.kind} · ${i.region}`}

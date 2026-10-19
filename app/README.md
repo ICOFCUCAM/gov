@@ -4,8 +4,8 @@ Production-grade frontend architecture for the CivicOS sovereign operational pla
 
 ## Stack
 
-- **Next.js 14** with the App Router
-- **React 18** (Server Components by default; client components only where interactivity demands)
+- **Next.js 15** with the App Router
+- **React 19** (Server Components by default; client components only where interactivity demands)
 - **TypeScript** in strict mode (`noUncheckedIndexedAccess`, `strict`, `noImplicitOverride`)
 - **Tailwind CSS** with a design-token theme that mirrors the CivicOS visual system
 - **App-shell architecture** with role-scoped route groups

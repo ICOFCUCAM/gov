@@ -4,6 +4,7 @@
 
 import * as React from 'react';
 import { agricultureRuralBoard } from '@/lib/gov/agriculture-rural';
+import { useTwinPrimed } from '@/lib/twin/read';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { SeasonalFrame, SeasonalKpi, SeasonalRule, CropRow, SeasonalCallout, AGRICULTURE_DS } from '@/apps/ministry-agriculture/design-system/agriculture-ds';
 import { seed, wave } from '@/lib/telemetry';
@@ -56,7 +57,7 @@ export function DroughtResponse({ id, now }: { id: string; now: number }) {
       <SeasonalRule label="drought advisories" />
       {droughts.length === 0 ? (
         <p className="text-[10.5px] italic" style={{ color: AGRICULTURE_DS.mut }}>
-          No active drought advisories. National posture: monitoring.
+          No active drought advisories. National status: monitoring.
         </p>
       ) : droughts.map(a => (
         <div key={a.id} className="grid grid-cols-[110px_160px_140px_100px_120px] gap-3 border-b py-1.5 text-[11px]"
@@ -74,6 +75,7 @@ export function DroughtResponse({ id, now }: { id: string; now: number }) {
 }
 
 export function RuralZones({ id, now }: { id: string; now: number }) {
+  useTwinPrimed(['population']);
   const board = agricultureRuralBoard(now);
   void id;
   return (

@@ -1,12 +1,28 @@
-// lib/db/repos/institutions — persistent institutional registry.
+// lib/db/repos/institutions — the institutional registry and the substrate's
+// per-charter aggregates.
 //
-// Mirrors the in-memory orchestration registry shape but reads/writes to
-// civicos.institutions via the register_institution / activate_institution
-// RPCs. When the substrate isn't configured, calls become no-ops and the
-// registry stays memory-only.
+// The institutions themselves are the platform's register (the ministry
+// registry, /api/org/ministries, and the standing branches and agencies;
+// architecture review D8): read here from GET /api/public/charters, never from
+// the substrate's civicos.institutions, which only mirrors it
+// (lib/db/mirror.ts). Governance output (directive statistics and trend) is
+// likewise computed by the platform from its directives register
+// (GET /api/public/accountability?only=directives), not by the substrate's
+// directive_stats / directive_trend SQL over the mirror. The remaining calls
+// read the substrate's own rows (facilities, requests, appeals, consents).
+// register-owners.test.ts checks no app code reads a mirrored table as the
+// register.
+//
+// The platform calls run in the browser (relative URLs); server code reads
+// lib/institution/charter-register.ts and lib/data/directive-stats.ts directly.
 
 import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type { InstitutionRow, InstitutionKind } from '@/lib/db/types';
+import type { DirectiveStat, DirectiveTrendPoint } from '@/lib/data/directive-stats';
+import type { Signal } from '@/lib/twin/signal';
+import { logger } from '@/lib/ops/log';
+
+export type { DirectiveStat, DirectiveTrendPoint };
 
 export interface InstitutionUpsert {
   charterId: string;
@@ -21,64 +37,73 @@ export interface InstitutionUpsert {
   meta?: Record<string, unknown>;
 }
 
+/** One charter of GET /api/public/charters. */
+export interface PublicCharter {
+  charter_id: string; label: string; kind: string; domain: string; archetype_or_branch: string;
+  activated: boolean; activated_at: string | null; registered_at: string | null;
+}
+
+async function platformRead<T>(path: string): Promise<T | null> {
+  if (typeof window === 'undefined') return null;
+  const r = await fetch(path, { cache: 'no-store' }).catch(() => null);
+  if (!r || !r.ok) {
+    if (r) logger.error('platform.read_failed', { path, status: r.status });
+    return null;
+  }
+  return (await r.json().catch(() => null)) as T | null;
+}
+
+/**
+ * A platform charter in the row shape the screens used when they read the
+ * substrate. The columns only the substrate kept (grammar, safeguards,
+ * domain counts) were never written by the app and stay null; `id` is the
+ * charter id.
+ */
+export function charterToRow(c: PublicCharter): InstitutionRow {
+  const at = c.registered_at ?? c.activated_at ?? '';
+  return {
+    id: c.charter_id, charter_id: c.charter_id, label: c.label, kind: c.kind as InstitutionKind,
+    domain: c.domain, archetype_or_branch: c.archetype_or_branch,
+    grammar: null, safeguards_constant: null, expected_domains: null, shipped_domains: null,
+    activated: c.activated, activated_at: c.activated_at, registered_at: at,
+    meta: { source: 'platform' }, created_at: at, updated_at: at,
+  };
+}
+
+async function platformCharters(params: Record<string, string | undefined>): Promise<InstitutionRow[]> {
+  const q = new URLSearchParams(Object.entries(params).filter((e): e is [string, string] => e[1] !== undefined));
+  const r = await platformRead<{ charters: PublicCharter[] }>(`/api/public/charters?${q}`);
+  return (r?.charters ?? []).map(charterToRow);
+}
+
+/**
+ * The register no longer takes writes from here: register and activate
+ * institutions through /api/org/ministries. These return the charter as the
+ * platform holds it (null when it is not in the register).
+ */
 export async function registerInstitutionRow(
   i: InstitutionUpsert,
 ): Promise<InstitutionRow | null> {
-  const sb = publicClient();
-  if (!sb) return null;
-  const { data, error } = await sb.rpc('civicos_register_institution', {
-    p_charter_id: i.charterId,
-    p_label: i.label,
-    p_kind: i.kind,
-    p_domain: i.domain,
-    p_archetype_or_branch: i.archetypeOrBranch,
-    p_grammar: i.grammar ?? null,
-    p_safeguards_constant: i.safeguardsConstant ?? null,
-    p_expected_domains: i.expectedDomains ?? null,
-    p_shipped_domains: i.shippedDomains ?? null,
-    p_meta: i.meta ?? {},
-  });
-  if (error) {
-    // eslint-disable-next-line no-console
-    console.error('[civicos] register_institution RPC failed:', error.message, error.code);
-    return null;
-  }
-  return (data as InstitutionRow) ?? null;
+  return institutionByCharterId(i.charterId);
 }
 
+/** The charter as the platform holds it; activation is the ministry registry's (/api/org/ministries/{id}/activate). */
 export async function activateInstitutionRow(charterId: string): Promise<InstitutionRow | null> {
-  const sb = publicClient();
-  if (!sb) return null;
-  const { data, error } = await sb.rpc('civicos_activate_institution', {
-    p_charter_id: charterId,
+  return institutionByCharterId(charterId);
+}
+
+/** The platform's charters, ordered by charter id; same filters as before. Works without the substrate. */
+export async function listInstitutionsRows(opts: { kind?: InstitutionKind; activated?: boolean; q?: string } = {}): Promise<InstitutionRow[]> {
+  return platformCharters({
+    activated: opts.activated === undefined ? 'any' : String(opts.activated),
+    kind: opts.kind, q: opts.q,
   });
-  if (error) {
-    // eslint-disable-next-line no-console
-    console.error('[civicos] activate_institution RPC failed:', error.message, error.code);
-    return null;
-  }
-  return (data as InstitutionRow) ?? null;
 }
 
-export async function listInstitutionsRows(opts: { kind?: InstitutionKind; activated?: boolean } = {}): Promise<InstitutionRow[]> {
-  const sb = publicClient();
-  if (!sb) return [];
-  let q = sb.from('civicos_institutions').select('*');
-  if (opts.kind) q = q.eq('kind', opts.kind);
-  if (opts.activated !== undefined) q = q.eq('activated', opts.activated);
-  const { data, error } = await q.order('charter_id');
-  if (error || !data) return [];
-  return data as InstitutionRow[];
-}
-
-/** Fetch one institution by its charter_id. null if absent / no substrate. */
+/** One charter from the platform register by its charter id. null if absent. */
 export async function institutionByCharterId(charterId: string): Promise<InstitutionRow | null> {
-  const sb = publicClient();
-  if (!sb) return null;
-  const { data, error } = await sb.from('civicos_institutions').select('*')
-    .eq('charter_id', charterId).maybeSingle();
-  if (error || !data) return null;
-  return data as InstitutionRow;
+  const rows = await platformCharters({ activated: 'any', charter: charterId });
+  return rows[0] ?? null;
 }
 
 export interface FacilityRowLite {
@@ -282,66 +307,34 @@ export async function consentFootprintStats(opts: { charterId?: string } = {}): 
   }));
 }
 
-export interface DirectiveStat {
-  charterId: string;
-  signed: number;
-  effective: number;
-  inForce: number;
-  rescinded: number;
-  medianSignToEffectiveDays: number | null;
+/** Governance output and its trend, as the platform computes them from its directives register. */
+export interface DirectiveFigures {
+  stats: DirectiveStat[];
+  trend: DirectiveTrendPoint[];
+  /** Where they come from (lib/twin/signal.ts): reported, the platform's directives register. */
+  source: Pick<Signal, 'kind' | 'source' | 'asOf'> | null;
 }
 
-interface DirectiveStatRow {
-  charter_id: string; signed: number; effective: number; in_force: number;
-  rescinded: number; median_sign_to_effective_days: string | number | null;
+/** Both directive figures in one call (GET /api/public/accountability?only=directives). */
+export async function directiveFigures(opts: { charterId?: string; days?: number; weeks?: number } = {}): Promise<DirectiveFigures> {
+  const q = new URLSearchParams({ only: 'directives', directive_days: String(opts.days ?? 365), weeks: String(opts.weeks ?? 12) });
+  if (opts.charterId) q.set('charter', opts.charterId);
+  const r = await platformRead<{ directive_stats: DirectiveStat[]; directive_trend: DirectiveTrendPoint[]; directive_source: DirectiveFigures['source'] }>(`/api/public/accountability?${q}`);
+  return { stats: r?.directive_stats ?? [], trend: r?.directive_trend ?? [], source: r?.directive_source ?? null };
 }
 
 /** Per-charter directive (governance output) stats over the last `days`,
- *  counting only signed directives so drafts never leak. Aggregate-only and
- *  anon-callable. [] without a substrate. */
+ *  counting only signed directives so drafts never leak. From the platform's
+ *  directives register; works without the substrate. */
 export async function directiveStats(opts: { charterId?: string; days?: number } = {}): Promise<DirectiveStat[]> {
-  const sb = publicClient();
-  if (!sb) return [];
-  const { data, error } = await sb.rpc('civicos_directive_stats', {
-    p_charter_id: opts.charterId ?? null, p_days: opts.days ?? 365,
-  });
-  if (error || !data) return [];
-  return (data as DirectiveStatRow[]).map(r => ({
-    charterId: r.charter_id,
-    signed: Number(r.signed), effective: Number(r.effective),
-    inForce: Number(r.in_force), rescinded: Number(r.rescinded),
-    medianSignToEffectiveDays: numOrNull(r.median_sign_to_effective_days),
-  }));
-}
-
-export interface DirectiveTrendPoint {
-  weekStart: string;
-  signed: number;
-  effective: number;
-  medianSignToEffectiveDays: number | null;
-}
-
-interface DirectiveTrendRow {
-  week_start: string; signed: number; effective: number;
-  median_sign_to_effective_days: string | number | null;
+  return (await directiveFigures({ charterId: opts.charterId, days: opts.days })).stats;
 }
 
 /** Weekly directive trend (signed-week buckets) over the last `weeks`,
  *  oldest first: signed count, how many became effective, median lag days.
- *  Aggregate-only, anon-callable. [] without a substrate. */
+ *  From the platform's directives register. */
 export async function directiveTrend(opts: { charterId?: string; weeks?: number } = {}): Promise<DirectiveTrendPoint[]> {
-  const sb = publicClient();
-  if (!sb) return [];
-  const { data, error } = await sb.rpc('civicos_directive_trend', {
-    p_charter_id: opts.charterId ?? null, p_weeks: opts.weeks ?? 12,
-  });
-  if (error || !data) return [];
-  return (data as DirectiveTrendRow[]).map(r => ({
-    weekStart: r.week_start,
-    signed: Number(r.signed),
-    effective: Number(r.effective),
-    medianSignToEffectiveDays: numOrNull(r.median_sign_to_effective_days),
-  }));
+  return (await directiveFigures({ charterId: opts.charterId, weeks: opts.weeks })).trend;
 }
 
 export { substrateAvailable };

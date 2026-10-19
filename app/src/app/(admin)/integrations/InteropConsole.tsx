@@ -26,6 +26,36 @@ function Secret({ value, label }: { value: string; label: string }) {
   );
 }
 
+interface ExchangeRow { id: string; at: string; feedId: string; tenant?: string; grantId?: string; status: number; result: string; requestDigest: string; receiptId: string }
+
+/** The platform's side of the federation exchange log (lib/exchange/log.ts): each partner request, its decision and the receipt it was given. */
+function FederationExchanges() {
+  const [rows, setRows] = React.useState<ExchangeRow[] | null>(null);
+  React.useEffect(() => {
+    void fetch('/api/exchange/log?channel=federation&limit=20').then(r => r.json()).then((j: { exchanges?: ExchangeRow[] }) => setRows(j.exchanges ?? [])).catch(() => setRows([]));
+  }, []);
+  return (
+    <Card tight>
+      <h3 className="font-semibold">Recent exchanges</h3>
+      <p className="mb-2 text-sm text-ink-muted">
+        Partners call <code>POST /api/federation/exchange</code> with their integration key (scope <code>federation:exchange</code>).
+        Every request is decided by the grants above, kept here, and answered with a receipt signed by the platform.
+      </p>
+      {rows === null ? <p className="text-sm text-ink-muted">Loading…</p> : rows.length === 0 ? <p className="text-sm text-ink-muted">No exchanges yet.</p> : (
+        <ul className="space-y-1 text-sm">
+          {rows.map(r => (
+            <li key={r.id} className="border-b border-line-soft pb-1">
+              <span className="font-mono text-xs text-ink-muted">{new Date(r.at).toISOString().slice(0, 16).replace('T', ' ')} UTC</span>{' '}
+              {r.tenant ?? '—'} · {r.status} · {r.result}
+              <div className="font-mono text-xs text-ink-muted">client {r.feedId}{r.grantId ? ` · grant ${r.grantId}` : ''} · {r.requestDigest.slice(0, 21)}… · receipt {r.receiptId.slice(0, 15)}…</div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Card>
+  );
+}
+
 export function InteropConsole() {
   const [tab, setTab] = React.useState<'integrations' | 'federation' | 'webhooks'>('integrations');
   const [ints, setInts] = React.useState<IntegrationClient[]>([]);
@@ -79,6 +109,11 @@ export function InteropConsole() {
         toTenant: String(f.get('toTenant')),
         scopes: String(f.get('scopes')).split(',').map(s => s.trim()).filter(Boolean),
         reason: String(f.get('reason')),
+        policy: {
+          purposes: String(f.get('purposes')).split(',').map(s => s.trim()).filter(Boolean),
+          retentionDays: Number(f.get('retentionDays')),
+          onwardSharing: f.get('onwardSharing') === 'on',
+        },
       });
       (e.target as HTMLFormElement).reset();
       await load();
@@ -168,6 +203,12 @@ export function InteropConsole() {
                 required
                 placeholder="permit:read, payment:read"
               />
+              <p className="mb-3 text-xs text-ink-muted">
+                GIS clients (QGIS, ArcGIS, GDAL) that read the national twin&rsquo;s maps need the scope{' '}
+                <code>ogc:read</code>; they send the key as <code>Authorization: Bearer civ_…</code> (see /developers).
+                The civic-api mirror needs the scope <code>mirror:read</code> and a webhook (topic <code>*</code>) to its{' '}
+                <code>/api/mirror/events</code>.
+              </p>
               <Button type="submit" disabled={busy}>Register</Button>
             </form>
           </Card>
@@ -181,7 +222,12 @@ export function InteropConsole() {
                   <span className="font-mono text-xs text-ink-muted">{i.id}</span>
                 </div>
                 <div className="mt-1 text-sm text-ink-muted">
-                  {i.ownerOrg} · scopes: {i.scopes.join(', ')} · {i.rateLimitRpm} rpm
+                  {i.ownerOrg} · scopes: {i.scopes.join(', ')} · {i.rateLimitRpm} requests a minute (enforced)
+                </div>
+                <div className="mt-0.5 text-xs text-ink-muted">
+                  {i.keyPrefix
+                    ? <>Key <code className="font-mono">civ_{i.keyPrefix}…</code> · shown once when issued, kept only as a SHA-256 hash{i.lastUsedAt ? ` · last used ${new Date(i.lastUsedAt).toLocaleString()} (${i.calls ?? 0} calls)` : ' · not used yet'}</>
+                    : 'No usable key: registered before keys were kept. Issue a new key (shown once).'}
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                   {i.status === 'approved' ? (
@@ -199,6 +245,11 @@ export function InteropConsole() {
                   {i.status === 'approved' ? (
                     <Button variant="secondary" onClick={async () => { await api.interop.integrations.revoke(i.id); await load(); }}>
                       Revoke
+                    </Button>
+                  ) : null}
+                  {i.status !== 'revoked' ? (
+                    <Button variant="secondary" onClick={async () => { const r = await api.interop.integrations.rotate(i.id); setSecret({ label: 'New API key', value: r.apiKey }); await load(); }}>
+                      {i.keyPrefix ? 'Issue new key' : 'Issue key'}
                     </Button>
                   ) : null}
                 </div>
@@ -221,6 +272,11 @@ export function InteropConsole() {
               <TextField label="To tenant" name="toTenant" required placeholder="min-health" />
               <TextField label="Scopes (comma-separated)" name="scopes" required placeholder="permit:read" />
               <TextField label="Reason" name="reason" required />
+              <TextField label="Purposes the data may be used for (comma-separated)" name="purposes" required placeholder="oversight, statistics" />
+              <TextField label="Retention (days the partner may keep the data)" name="retentionDays" type="number" min={1} max={3650} required defaultValue="365" />
+              <label className="mb-3 flex items-center gap-2 text-sm">
+                <input type="checkbox" name="onwardSharing" /> The partner may share the data onward
+              </label>
               <Button type="submit" disabled={busy}>Propose</Button>
             </form>
           </Card>
@@ -244,6 +300,11 @@ export function InteropConsole() {
               <div className="mt-1 text-sm text-ink-muted">
                 scopes: {g.scopes.join(', ')} · {g.reason}
               </div>
+              <div className="mt-1 text-sm" data-testid="usage-policy">
+                {g.policy
+                  ? <>Usage policy: for {g.policy.purposes.join(', ')} only · kept at most {g.policy.retentionDays} days · onward sharing {g.policy.onwardSharing ? 'allowed' : 'not allowed'}{g.expiresAt ? ` · until ${new Date(g.expiresAt).toLocaleDateString()}` : ''} · <a className="text-link underline" href={`/api/federation/grants/${g.id}/policy`}>ODRL</a></>
+                  : <span className="text-ink-muted">No usage policy: exchanges under this grant are refused until it is proposed again with one.</span>}
+              </div>
               <div className="mt-2 flex items-center gap-2">
                 {g.status === 'approved' ? (
                   <Pill tone="ok">Approved</Pill>
@@ -264,6 +325,7 @@ export function InteropConsole() {
               </div>
             </Card>
           ))}
+          <FederationExchanges />
         </>
       )}
 
@@ -272,11 +334,14 @@ export function InteropConsole() {
           <Card tight>
             <h3 className="font-semibold">Subscribe to events</h3>
             <p className="mb-3 text-sm text-ink-muted">
-              Deliveries are HMAC-signed. Verify the signature and reject
-              timestamps older than 300s (replay protection).
+              Every audited change of note (a site or boundary published, a twin source run, a directive signed…) becomes a
+              CloudEvent 1.0, delivered as <code>application/cloudevents+json</code> to the subscriptions whose topic matches
+              (<code>facility</code>, <code>boundary.publish</code>, <code>directive.sign</code>, or <code>*</code>). Deliveries are HMAC-signed:
+              verify <code>X-CivicOS-Signature</code> over <code>{'${X-CivicOS-Timestamp}.${body}'}</code> and reject timestamps
+              older than 300s (replay protection). The event catalogue is in <code>docs/ASYNCAPI.yaml</code>.
             </p>
             <form onSubmit={subscribeHook}>
-              <TextField label="Topic" name="topic" required placeholder="civicos.permit.decided" />
+              <TextField label="Topic" name="topic" required placeholder="facility.publish" />
               <TextField label="URL" name="url" required placeholder="https://…/hooks" />
               <Button type="submit" disabled={busy}>Subscribe</Button>
             </form>
@@ -288,6 +353,7 @@ export function InteropConsole() {
                 <span className="font-mono text-xs text-ink-muted">{w.id}</span>
               </div>
               <div className="mt-1 text-sm text-ink-muted break-all">{w.url}</div>
+              {w.lastDeliveryAt ? <div className="mt-0.5 text-xs text-ink-muted">Last delivery {new Date(w.lastDeliveryAt).toLocaleString()}: {w.lastDeliveryDetail}{w.failures ? ` · ${w.failures} failed runs in a row` : ''}</div> : null}
               <div className="mt-2 flex items-center gap-2">
                 {w.status === 'active' ? (
                   <Pill tone="ok">Active</Pill>
@@ -299,6 +365,9 @@ export function InteropConsole() {
                     Pause
                   </Button>
                 ) : null}
+                <Button variant="secondary" onClick={async () => { const r = await api.interop.webhooks.rotate(w.id); setSecret({ label: 'New webhook signing secret', value: r.signingSecret }); await load(); }}>
+                  Issue new secret
+                </Button>
               </div>
             </Card>
           ))}

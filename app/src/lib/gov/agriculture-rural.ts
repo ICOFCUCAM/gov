@@ -9,8 +9,10 @@
 // subsidy applications, advisories, pest alerts, irrigation
 // requests). Pure & deterministic; SSR-stable per operational epoch.
 
+import { readTwinValue } from '@/lib/twin/read';
 import { seed, wave } from '@/lib/telemetry';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
+import { regionList } from '@/lib/nation/registry';
 
 export const AGRICULTURE_RURAL_SAFEGUARDS = {
   smallholderProtection: true as const,
@@ -24,7 +26,7 @@ export const AGRICULTURE_RURAL_SAFEGUARDS = {
   ] as const,
 };
 
-export const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 const SEASONS: Season[] = ['spring', 'summer', 'autumn', 'winter'];
 
 // ── A. Rural Governance & Community Stability ───────────────────────
@@ -213,7 +215,8 @@ export function agricultureRuralBoard(now: number): AgricultureRuralBoard {
   // ── A. Rural Governance ───────────────────────────────────────────
   const zones: RuralZone[] = REGIONS.map(region => {
     const k = `ar:zn:${region}`;
-    const population = Math.round(wave(`${k}:p`, epoch / 8, 280000, 5400000));
+    // Observed from the twin when a statistics source reports the region (lib/twin/read.ts), else the sample.
+    const population = Math.round(readTwinValue('population', Math.round(wave(`${k}:p`, epoch / 8, 280000, 5400000)), { region }));
     const farmingHouseholdsK = Math.round(wave(`${k}:fh`, epoch / 7, 28, 680));
     const cooperativesActive = Math.round(wave(`${k}:co`, epoch / 6, 12, 480));
     const ruralStabilityIdx = Math.round(wave(`${k}:rs`, epoch / 6, 38, 92));

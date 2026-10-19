@@ -8,6 +8,7 @@
 
 import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';
@@ -129,7 +130,7 @@ function FlowNode({ t, o, st }: { t: string; o: string; st: string }) {
 }
 
 export function MissionOrchestration() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);

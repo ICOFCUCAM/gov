@@ -14,6 +14,7 @@ import { civicBoard } from '@/lib/gov/civic-legitimacy';
 import { generationalBoard, ERA_COUNT } from '@/lib/gov/generational-intelligence';
 import { territorialBoard } from '@/lib/gov/territorial-continuity';
 import { economyBoard } from '@/lib/gov/institutional-economy';
+import { regionList } from '@/lib/nation/registry';
 
 // Hard constitutional cultural boundary — structural, not advisory.
 export const CIVIC_IDENTITY_SAFEGUARDS = {
@@ -28,7 +29,7 @@ export const CIVIC_IDENTITY_SAFEGUARDS = {
   ] as const,
 };
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export interface RegionIdentity {
   region: string;

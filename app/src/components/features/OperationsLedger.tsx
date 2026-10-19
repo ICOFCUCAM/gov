@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { TONE, Panel } from '@/components/features/SituationRoom';
 import { subscribe, getLedger, runtimeStats, version as rtVersion } from '@/lib/gov/runtime-store';
 import { FilterChips } from '@/components/ui/FilterChips';
+import { useHydrated, useRenderNow } from '@/lib/clock/render-now';
 
 const actTone = (a: string) =>
   a === 'approve' || a === 'resolve' ? TONE.ok : a === 'reject' ? TONE.alert : a === 'escalate' ? TONE.warn : TONE.link;
@@ -36,9 +37,11 @@ function scopeHref(scope: string): string {
  */
 export function OperationsLedger() {
   React.useSyncExternalStore(subscribe, rtVersion, rtVersion);
-  const allLedger = getLedger(120);
-  const stats = runtimeStats();
-  const [now, setNow] = React.useState(() => Date.now());
+  // The ledger lives in this browser; it is shown once the page has hydrated.
+  const hydrated = useHydrated();
+  const allLedger = hydrated ? getLedger(120) : [];
+  const stats = hydrated ? runtimeStats() : { scopes: 0, totalItems: 0, open: 0, transitions: 0, closedByOperator: 0 };
+  const [now, setNow] = React.useState(useRenderNow());
   const [scopeFilter, setScopeFilter] = React.useState<string>('all');
   const scopeKeys = Array.from(new Set(allLedger.map(e => e.scope.split(':')[0]!))).sort();
   const ledger = (scopeFilter === 'all' ? allLedger : allLedger.filter(e => e.scope.split(':')[0] === scopeFilter)).slice(0, 80);
@@ -51,7 +54,7 @@ export function OperationsLedger() {
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Operations Ledger</h1>
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Operations record</h2>
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>
             runtime · executed transitions
           </span>
@@ -75,7 +78,7 @@ export function OperationsLedger() {
       </div>
 
       <FilterChips options={['all', ...scopeKeys]} value={scopeFilter} onChange={setScopeFilter} />
-      <Panel title="Transition ledger" meta={`${ledger.length} actions · scope ${scopeFilter}`} bodyClass="!p-0">
+      <Panel title="Record of actions" meta={`${ledger.length} actions · showing ${scopeFilter}`} bodyClass="!p-0">
         {ledger.length === 0 ? (
           <p className="px-3 py-4 text-[11px] text-ink-muted">
             No transitions executed yet this session. Drive a workflow in any subsystem runtime,

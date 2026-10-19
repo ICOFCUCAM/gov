@@ -9,6 +9,7 @@ import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { DispatchChannel } from '@/apps/_shared/InstitutionChain';
 import { emergencyCommandView } from '@/lib/gov/health-operations';
 import { healthGeo } from '@/lib/gov/health-geo';
+import { seed } from '@/lib/telemetry';
 import { GeoMap } from '@/apps/_shared/GeoMap';
 import { CommandHeader, CommandPanel, KpiSpark, Donut, TrendChart, ACCENT, type Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
@@ -24,6 +25,12 @@ export function EmergencySystem({ id, now, role, withheld }: {
   const geo = healthGeo(id, ts);
   const [selId, setSelId] = React.useState<string | undefined>(undefined);
   const sel = e.incidents.find(x => x.id === selId) ?? e.incidents[0]!;
+  // The sample incidents carry no location yet: each is placed in one of the
+  // nation's regions (stable per incident, marked as a sample placement) so the
+  // list and the map work together until incident locations are connected.
+  const regionOf = (incId: string) => geo.regions[Math.floor(seed(`er:rg:${id}:${incId}`) * geo.regions.length)]?.region;
+  const selRegion = regionOf(sel.id);
+  const pickRegion = (region: string) => { const x = e.incidents.find(i => regionOf(i.id) === region); if (x) setSelId(x.id); };
   const norm = (a: number[]) => { const mn = Math.min(...a), sp = Math.max(...a) - mn || 1; return a.map(v => ((v - mn) / sp) * 100); };
 
   return (
@@ -39,7 +46,8 @@ export function EmergencySystem({ id, now, role, withheld }: {
       <div className="grid gap-2 xl:grid-cols-4">
         <div className="xl:col-span-2">
           <CommandPanel title="Incident map" meta="incident density · live" accent={ACC} live>
-            <GeoMap geo={geo} metric="pressure" title="" height={300} />
+            <GeoMap geo={geo} metric="pressure" title="" height={300} accent={ACC} highlight={selRegion} onSelectRegion={pickRegion} />
+            <p className="mt-1 text-[8px] text-ink-muted">Selected: <span className="text-ink-soft">{sel.title}</span>{selRegion ? <> · {selRegion} <span className="opacity-80">(sample placement)</span></> : null}</p>
           </CommandPanel>
         </div>
         <CommandPanel title="Active incidents" meta={`${e.incidents.length}`} accent={ACC} live>
@@ -47,7 +55,7 @@ export function EmergencySystem({ id, now, role, withheld }: {
             {e.incidents.map(x => {
               const on = x.id === sel.id;
               return (
-                <button key={x.id} onClick={() => setSelId(x.id)}
+                <button key={x.id} onClick={() => setSelId(x.id)} aria-pressed={on}
                   className="focus-ring block w-full rounded-[3px] border px-2 py-1.5 text-left transition-colors"
                   style={{ borderColor: on ? C(x.tone) : 'rgb(var(--c-line-soft))', background: on ? 'rgb(var(--c-surface-2))' : 'transparent', borderLeft: `3px solid ${C(x.tone)}` }}>
                   <div className="flex items-center justify-between gap-2">
@@ -55,7 +63,7 @@ export function EmergencySystem({ id, now, role, withheld }: {
                     <span className="shrink-0 text-[7.5px] font-bold uppercase" style={{ color: C(x.tone) }}>{x.severity}</span>
                   </div>
                   <div className="flex items-center justify-between text-[8px] text-ink-muted">
-                    <span className="truncate">{x.place} · {x.started}</span>
+                    <span className="truncate">{x.place} · {x.started}{regionOf(x.id) ? ` · ${regionOf(x.id)}` : ''}</span>
                     <span className="shrink-0 font-mono">{x.affected.toLocaleString()}</span>
                   </div>
                 </button>
@@ -67,7 +75,7 @@ export function EmergencySystem({ id, now, role, withheld }: {
           <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
               <div className="text-[13px] font-semibold text-ink">{sel.title}</div>
-              <div className="text-[9px] text-ink-muted">{sel.place}</div>
+              <div className="text-[9px] text-ink-muted">{sel.place}{selRegion ? ` · ${selRegion} (sample placement)` : ''}</div>
             </div>
             <span className="shrink-0 font-mono text-[8px] text-ink-muted">{sel.id}</span>
           </div>

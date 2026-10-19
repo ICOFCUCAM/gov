@@ -1,7 +1,21 @@
 import { describe, it, expect } from 'vitest';
+import { afterEach } from 'vitest';
 import { nationalRegions, regionRollup, projectRegions } from './regions';
+import { applyNation } from '@/lib/nation/registry';
 
 describe('national regional command model', () => {
+  afterEach(() => applyNation({ configured: false }));
+
+  it('models every one of the nation\'s regions, each once, the first as the seat of government', () => {
+    const counties = Array.from({ length: 47 }, (_, i) => `County ${i + 1}`);
+    applyNation({ configured: true, stateName: 'Meridia', regions: counties });
+    const rs = nationalRegions(50);
+    expect(rs.map(r => r.name)).toEqual(counties);
+    expect(rs.filter(r => r.capital).map(r => r.name)).toEqual(['County 1']);
+    applyNation({ configured: true, stateName: 'Meridia', regions: ['North', 'South', 'East', 'West', 'Capital'] });
+    expect(new Set(nationalRegions(50).map(r => r.name)).size).toBe(5);
+  });
+
   it('models every region with infra, domains and posture', () => {
     const rs = nationalRegions(120);
     expect(rs.length).toBe(6);

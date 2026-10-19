@@ -11,8 +11,9 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { tradeOps } from '@/lib/gov/trade-systems';
+import { regionList, regionName } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export const INDUSTRIAL_CONTINUITY_SAFEGUARDS = {
   strategicReserveProtection: true as const,
@@ -209,7 +210,7 @@ const KIND_LIST: IndustrialIncidentKind[] = [
 ];
 
 const CLUSTER_DEFS: { cluster: string; region: string }[] = [
-  { cluster: 'Capital Steel Works', region: 'Capital District' },
+  { cluster: 'Capital Steel Works', region: regionName(0, 'Capital District') },
   { cluster: 'Northern Heavy Engineering', region: 'Northern' },
   { cluster: 'Eastern Electronics Park', region: 'Eastern' },
   { cluster: 'Coastal Refinery Complex', region: 'Coastal' },
@@ -244,7 +245,7 @@ const STRATEGIC_INDUSTRY_DEFS: { industry: string; allocationPriority: Strategic
 ];
 
 const DISTRICT_DEFS: { district: string; region: string }[] = [
-  { district: 'Capital Enterprise Zone', region: 'Capital District' },
+  { district: 'Capital Enterprise Zone', region: regionName(0, 'Capital District') },
   { district: 'Northern Industrial Belt', region: 'Northern' },
   { district: 'Eastern Innovation Park', region: 'Eastern' },
   { district: 'Coastal Free-Trade Zone', region: 'Coastal' },

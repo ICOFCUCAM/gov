@@ -3,8 +3,9 @@
 // services as live operational environments. Pure & deterministic.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Northern', 'Eastern', 'Western', 'Coastal', 'Highland', 'Capital District'];
+const REGIONS = regionList(['Northern', 'Eastern', 'Western', 'Coastal', 'Highland', 'Capital District']);
 
 export interface AgricultureOps {
   foodSecurityIndex: number;          // 0-100 higher better

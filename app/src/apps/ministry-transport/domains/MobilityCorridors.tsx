@@ -122,7 +122,7 @@ export function EmergencyCorridors({ id, now }: { id: string; now: number }) {
       <CorridorRule label="active emergency lanes" />
       {emergency.length === 0 ? (
         <p className="text-[10.5px] italic" style={{ color: TRANSPORT_DS.mut }}>
-          No emergency corridors active. National posture: nominal.
+          No emergency corridors active. National status: nominal.
         </p>
       ) : emergency.map(c => (
         <CorridorBar key={c.id}
@@ -220,7 +220,7 @@ export function RailDisruption({ id, now }: { id: string; now: number }) {
       <CorridorRule label="disruption register" />
       {disrupted.length === 0 ? (
         <p className="text-[10.5px] italic" style={{ color: TRANSPORT_DS.mut }}>
-          No rail disruption. National posture: nominal.
+          No rail disruption. National status: nominal.
         </p>
       ) : disrupted.map(r => (
         <div key={r.id} className="grid grid-cols-[140px_1fr_80px_80px] gap-3 border-b py-1.5 text-[11px]"

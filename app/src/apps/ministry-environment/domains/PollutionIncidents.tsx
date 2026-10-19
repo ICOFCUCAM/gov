@@ -133,7 +133,7 @@ function incidentSurface(kinds: string[], code: string, title: string, subtitle:
         <BiomeRule label="active operations" />
         {filtered.length === 0 ? (
           <p className="text-[10.5px] italic" style={{ color: ENVIRONMENT_DS.mut }}>
-            No active incidents of this class. National posture: monitoring.
+            No active incidents of this class. National status: monitoring.
           </p>
         ) : filtered.map(i => (
           <BiomeIncidentRow key={i.id} id={i.id} kind={i.kind} region={i.region}

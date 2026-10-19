@@ -15,6 +15,7 @@ import { aiAdvisory } from '@/shared/ai/advisory';
 import { waveSeries } from '@/lib/telemetry';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
+import { aiLabel } from '@/lib/nation/registry';
 const ACC = ACCENT.lab!;
 
 export function LaboratorySystem({ id, now, role, withheld }: {
@@ -31,7 +32,7 @@ export function LaboratorySystem({ id, now, role, withheld }: {
 
   const pTone: Tone = lx.posture === 'crisis' ? 'alert' : lx.posture === 'strained' ? 'warn' : 'ok';
   const adv = aiAdvisory('Laboratory Systems', [
-    { label: 'SLA breaches', value: Math.min(100, lx.slaBreaches), adverse: true },
+    { label: 'Cases past target', value: Math.min(100, lx.slaBreaches), adverse: true },
     { label: 'Unacknowledged panic values', value: Math.min(100, unacked * 22), adverse: true },
     { label: 'Outbreak escalation', value: lx.escalationLevel === 'national' ? 92 : lx.escalationLevel === 'regional' ? 58 : 12, adverse: true },
     { label: 'Turnaround', value: Math.min(100, net.meanTurnaroundHrs), adverse: true },
@@ -73,7 +74,7 @@ export function LaboratorySystem({ id, now, role, withheld }: {
             </div>
           </CommandPanel>
         </div>
-        <CommandPanel title="AI operational guidance" meta={`${adv.confidence}%`} accent={ACC}>
+        <CommandPanel title={aiLabel('AI operational guidance', 'Operational guidance')} meta={`${adv.confidence}%`} accent={ACC}>
           <div className="text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: sc(at) }}>{adv.severity}</div>
           <div className="mt-0.5 text-[10px] text-ink">{adv.headline}</div>
           <div className="text-[8.5px] text-ink-muted">{adv.rationale}</div>

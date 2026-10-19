@@ -10,6 +10,9 @@
 import * as React from 'react';
 import { policeOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { nationTime, nationTimeZoneLabel, regionName } from '@/lib/nation/registry';
+import { type CommandPalette, type LegendItem } from './CommandMap';
+import { WorldThreatMap, type ThreatLevel } from './WorldThreatMap';
 
 const BG = '#05080d';
 const PANEL = '#0a0e16';
@@ -107,48 +110,21 @@ function Ring({ a, b, top, sub }: { a: number; b: number; top: string; sub: stri
   );
 }
 
-// Live cyber threat world map: red threat clusters + gold connection arcs.
+// Live cyber threat world map: a world map centred on the nation, threat
+// origins marked at real countries (sample until the national CERT feed is
+// connected; foreign countries are never coloured), routes to the capital.
+const PALETTE: CommandPalette = { critical: RED, high: AMBER, medium: GOLD, low: EMER, monitor: CYAN, accent: RED, line: LINE, panel: PANEL, ink: INK, soft: SOFT, muted: MUT };
+const LEVEL_C = { critical: RED, high: AMBER, medium: GOLD, low: EMER, monitored: CYAN } as const;
+
 function CyberWorld({ seedKey }: { seedKey: string }) {
-  const cols = 36, rows = 15;
-  const hubs = [
-    { x: 20, y: 34, hot: true }, { x: 48, y: 30, hot: false }, { x: 80, y: 38, hot: true },
-    { x: 30, y: 56, hot: false }, { x: 62, y: 58, hot: true }, { x: 86, y: 60, hot: true },
-  ];
+  const levels: ThreatLevel[] = ['critical', 'medium', 'critical', 'low', 'high', 'critical', 'monitored', 'high'];
+  const kinds = ['Ransomware C2', 'Phishing host', 'Botnet C2', 'Scanner', 'Data exfiltration', 'DDoS source', 'Watched host', 'Malware host'];
   return (
-    <div className="relative h-full overflow-hidden rounded-[3px]" style={{ background: 'radial-gradient(120% 90% at 55% 45%,#0c1018,#05080d)' }}>
-      <div className="grid h-full gap-[2px] p-2" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-        {Array.from({ length: cols * rows }).map((_, i) => {
-          const cx = i % cols, ry = Math.floor(i / cols);
-          const land = (ry > 1 && ry < rows - 1 && ((cx > 2 && cx < 14) || (cx > 16 && cx < 26) || (cx > 27 && cx < 34)));
-          const v = seed(`${seedKey}:${i}`);
-          const c = !land ? 'transparent' : v > 0.78 ? RED : v > 0.55 ? AMBER : cx > 20 && cx < 26 ? EMER : '#243340';
-          return <span key={i} className="aspect-square rounded-[1px]" style={{ background: c, opacity: land ? (v > 0.55 ? 0.9 : 0.5) : 0 }} />;
-        })}
-      </div>
-      <svg viewBox="0 0 100 80" preserveAspectRatio="none" className="pointer-events-none absolute inset-0 h-full w-full" aria-hidden>
-        {hubs.map((h, i) => i < hubs.length - 1 ? (
-          <path key={i} d={`M${h.x} ${h.y} Q ${(h.x + hubs[i + 1]!.x) / 2} ${Math.min(h.y, hubs[i + 1]!.y) - 14} ${hubs[i + 1]!.x} ${hubs[i + 1]!.y}`}
-            fill="none" stroke={GOLD} strokeWidth="0.4" opacity="0.5" strokeDasharray="3 2" />
-        ) : null)}
-        {hubs.map((h, i) => (
-          <g key={`h${i}`}>
-            <circle cx={h.x} cy={h.y} r={h.hot ? 5 : 3.4} fill={h.hot ? RED : EMER} opacity="0.2" />
-            <circle cx={h.x} cy={h.y} r={h.hot ? 1.8 : 1.3} fill={h.hot ? RED_BR : EMER} style={{ filter: `drop-shadow(0 0 4px ${h.hot ? RED : EMER})` }} />
-            {h.hot ? <text x={h.x} y={h.y + 1} textAnchor="middle" fontSize="2.6" fill="#fff">☠</text> : null}
-          </g>
-        ))}
-      </svg>
-      <div className="absolute right-2 top-2 flex flex-col gap-1">
-        {['+', '−'].map(s => <span key={s} className="grid h-6 w-6 place-items-center rounded-[2px] border text-[12px]" style={{ borderColor: LINE, background: PANEL, color: SOFT }} aria-hidden>{s}</span>)}
-      </div>
-      <div className="absolute bottom-2 left-2 flex gap-3 rounded-[2px] border px-3 py-1" style={{ borderColor: LINE, background: 'rgba(5,8,13,0.78)' }}>
-        {[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Low', EMER], ['Monitored', CYAN]].map(([l, c]) => (
-          <span key={l} className="flex items-center gap-1.5 text-[7.5px] uppercase tracking-wider" style={{ color: SOFT }}>
-            <span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}
-          </span>
-        ))}
-      </div>
-    </div>
+    <WorldThreatMap title="Cyber threat origins" seedKey={seedKey} palette={PALETTE} height={238} levelColour={LEVEL_C}
+      source="threat origins and routes, until the national cyber incident feed is connected"
+      markers={levels.map((level, i) => ({ level, label: kinds[i]!, detail: `${Math.round(4 + seed(`${seedKey}:n:${i}`) * 60)} events` }))}
+      legend={[...[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Low', EMER]].map(([l, c]): LegendItem => ({ label: l!, colour: c!, layer: 'markers' })),
+        { label: 'Monitored', colour: CYAN, shape: 'ring', layer: 'markers' }]} />
   );
 }
 
@@ -170,7 +146,7 @@ export function CyberCommand({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const o = policeOps(id, ts);
   const clock = new Date(now);
-  const hh = clock.toLocaleTimeString('en-GB', { hour12: false });
+  const hh = nationTime(clock);
   const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
   const day = clock.toLocaleDateString('en-GB', { weekday: 'long' }).toUpperCase();
   const W = (k: string, lo: number, hi: number, n = 14) => waveSeries(`cy:${k}:${id}`, ts, n, lo, hi);
@@ -192,12 +168,12 @@ export function CyberCommand({ id, now }: { id: string; now: number }) {
   ];
 
   const live: [string, string, string, string, string][] = [
-    ['CRITICAL', 'Ransomware Attack', 'Government Portal Compromise', 'Eastern Region', '12:35'],
+    ['CRITICAL', 'Ransomware Attack', 'Government Portal Compromise', regionName(2, 'Eastern Region'), '12:35'],
     ['HIGH', 'Phishing Campaign', 'Credential Harvesting Detected', 'National', '12:18'],
-    ['HIGH', 'Data Breach Attempt', 'Unauthorized Data Access', 'Central Region', '11:57'],
-    ['MEDIUM', 'Malware Detected', 'Trojan/Remote Access', 'Western Region', '11:42'],
-    ['MEDIUM', 'Web Exploit Attempt', 'SQL Injection Detected', 'Northern Region', '11:28'],
-    ['LOW', 'DDoS Attempt', 'Traffic Anomaly Detected', 'Southern Region', '10:47'],
+    ['HIGH', 'Data Breach Attempt', 'Unauthorized Data Access', regionName(0, 'Central Region'), '11:57'],
+    ['MEDIUM', 'Malware Detected', 'Trojan/Remote Access', regionName(3, 'Western Region'), '11:42'],
+    ['MEDIUM', 'Web Exploit Attempt', 'SQL Injection Detected', regionName(1, 'Northern Region'), '11:28'],
+    ['LOW', 'DDoS Attempt', 'Traffic Anomaly Detected', regionName(4, 'Southern Region'), '10:47'],
   ];
   const actors: [string, string][] = [
     ['APT28 (Fancy Bear)', 'CRITICAL'], ['Lazarus Group', 'HIGH'], ['LockBit Ransomware', 'HIGH'],
@@ -216,7 +192,7 @@ export function CyberCommand({ id, now }: { id: string; now: number }) {
   ];
   const caseC: Record<string, string> = { 'In Progress': AMBER, 'Under Review': CYAN, Open: EMER, Closed: MUT };
   const feed: [string, string, string][] = [
-    ['12:40', 'Ransomware containment · Eastern Region', 'CRITICAL'],
+    ['12:40', `Ransomware containment · ${regionName(2, 'Eastern Region')}`, 'CRITICAL'],
     ['12:28', 'Malicious IP blocked 203.0.113.45', 'HIGH'],
     ['12:15', 'Phishing domain takedown secure-login[.]info', 'HIGH'],
     ['12:05', 'Malware signature update v7.23.5', 'MEDIUM'],
@@ -237,7 +213,7 @@ export function CyberCommand({ id, now }: { id: string; now: number }) {
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-6 gap-y-1 text-[8.5px]" style={{ color: MUT }}>
           <span><span style={{ color: SOFT }}>{dd}</span> · {day}</span>
-          <span>TIME <span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> GMT+1</span>
+          <span>TIME <span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> {nationTimeZoneLabel('GMT+1')}</span>
           <span className="flex items-center gap-1.5"><span className="relative inline-block">🔔<span className="absolute -right-1.5 -top-1.5 grid h-3 w-3 place-items-center rounded-full text-[6px] font-bold text-white" style={{ background: RED }}>9</span></span><span className="uppercase tracking-[0.12em]">Alerts</span></span>
           <span className="flex items-center gap-1.5 rounded-[3px] border px-2 py-1" style={{ borderColor: LINE }}>
             <span className="grid h-5 w-5 place-items-center rounded-full text-[8px] font-bold" style={{ background: RED, color: '#160a09' }}>CU</span>
@@ -261,7 +237,7 @@ export function CyberCommand({ id, now }: { id: string; now: number }) {
       {/* ── Row 1 ──────────────────────────────────────────────── */}
       <div className="grid gap-2 xl:grid-cols-[1.6fr_1.1fr_1fr]">
         <Panel title="Cyber Threat Map (Live)">
-          <div className="h-[270px]"><CyberWorld seedKey={`cy:cw:${id}`} /></div>
+          <div className="min-h-[270px]"><CyberWorld seedKey={`cy:cw:${id}`} /></div>
         </Panel>
         <Panel title="Live Incidents" action="View All">
           <div className="flex text-[7px] uppercase tracking-wider" style={{ color: MUT }}>

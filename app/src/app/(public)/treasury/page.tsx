@@ -3,36 +3,53 @@
 // emerald). Distinct from the dark operational command app. Server
 // component: SSR-safe, deterministic, responsive, accessible. Imagery =
 // gradient + inline classical-architecture motif (no external asset).
+//
+// The design is the Finance sector's own preset ("Finance — Treasury"); its
+// content comes from the Treasury record (lib/public-sites/content/treasury.ts),
+// its fiscal panels from the treasury engine. ?preset=finance-ledger or
+// civic-standard shows the alternatives.
 
 import Link from 'next/link';
 import { publicTreasurySite } from '@/lib/gov/treasury-systems';
+import { siteMessages, nationInsignia, nationLocale } from '@/lib/nation/registry';
+import { SampleChip, SourceChip, type PublicSiteShellProps, type PublicSiteLinkItem } from '@/apps/_shared/public/PublicSiteShell';
+import { PublicSite, presetFor } from '@/apps/_shared/public/PublicSite';
+import { siteProps, siteRequest } from '@/apps/_shared/public/site-props';
+import { GatewayBar, LanguageSwitch, SiteLogo, NewsletterForm, SkipLink, PreviewBanner, SiteSchema, Fwd } from '@/apps/_shared/public/integration';
+import { FontSizeControls } from '@/apps/_shared/public/controls';
+import { effectiveContent } from '@/lib/public-sites/effective';
+import { t as fill } from '@/lib/i18n';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Ministry of Treasury & Finance — Official Portal' };
 
 const NAVY = '#16233d';
-const GOLD = '#b58a35';
+// Gold and green carry text, so they are the darkest shade of the brand colours that reads at 4.5:1 on white (WCAG AA).
+const GOLD = '#8a6827';
 const GOLD2 = '#c9a24a';
-const GREEN = '#1f9d63';
+const GREEN = '#1a8152';
 const INK = '#23303f';
 const SOFT = '#5b6b78';
 const LINE = '#e8e3d6';
-const SERIF = 'Georgia, "Times New Roman", ui-serif, serif';
+const SERIF = 'Georgia, "Times New Roman", "Noto Naskh Arabic", ui-serif, serif';
 
-const NAV = ['Home', 'About Us', 'Pillars', 'Services', 'Data & Reports', 'Legislation', 'Newsroom'];
-const QUICK_L = ['Treasury Command', 'Central Bank', 'Tax & Revenue', 'Procurement Grid'];
-const QUICK_R = ['Expenditure Control', 'Economic Intelligence', 'Taxpayer Portal', 'Public Budget'];
-
-// Six-pillar map of the Ministry of Finance, mirroring the operational
-// shell taxonomy.
-const PILLARS: { ordinal: string; label: string; href: string; tagline: string; glyph: string }[] = [
-  { ordinal: 'I',   label: 'National Treasury Command',    href: '/treasury', tagline: 'Sovereign fiscal posture · Single Account · Daily statement', glyph: '⌘' },
-  { ordinal: 'II',  label: 'Central Bank Operations',      href: '/treasury', tagline: 'GovPay · CBDC · Settlement · FX reserves · Public debt', glyph: '◴' },
-  { ordinal: 'III', label: 'Tax & Revenue Intelligence',   href: '/treasury', tagline: 'Tax · Customs · Taxpayer registry · e-Invoicing · Risk-based audit', glyph: '▤' },
-  { ordinal: 'IV',  label: 'National Procurement Grid',    href: '/treasury', tagline: 'Tenders · Contracts · Vendors · Milestone escrow', glyph: '⊟' },
-  { ordinal: 'V',   label: 'Public Expenditure Control',   href: '/treasury', tagline: 'Appropriation ledger · Funding chains · Cross-ministry allocation', glyph: '⊡' },
-  { ordinal: 'VI',  label: 'Economic Intelligence Center', href: '/treasury', tagline: 'Macro stability · 25y forecast · Audit trail · Anti-fraud', glyph: '✦' },
+const PILLAR_GLYPHS = ['⌘', '◴', '▤', '⊟', '⊡', '✦'];
+const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+// Design chrome of the Treasury preset (not institution content).
+const UTILITY = [
+  { label: 'Careers', href: '/treasury#about' }, { label: 'Publications', href: '/public' },
+  { label: 'Transparency', href: '/public' }, { label: 'Contact', href: '/wallet/inbox' },
 ];
+const KICKER = 'National Treasury Command';
+const MOTTO = 'Sovereignty · Stability · Prosperity';
+
+const THEME = {
+  ink: NAVY, inkSoft: '#23303f', primary: GOLD, accent: GREEN,
+  surface: '#faf8f1', surfaceMute: '#f3efe2', line: LINE,
+  emergencyA: '#b23a3a', emergencyB: '#8f2c2c',
+};
+const ART = <div className="relative h-full w-full overflow-hidden rounded-2xl"><TreasuryBuilding /></div>;
+
 const SEG_C = [GREEN, '#2bb377', GOLD2, GOLD, '#caa75a', '#cfd2cb'];
 
 function Crest({ size = 44 }: { size?: number }) {
@@ -55,7 +72,7 @@ function TreasuryBuilding() {
   return (
     <div className="absolute inset-0" aria-hidden
       style={{ background: 'linear-gradient(120deg,#ffffff 0%,#fbfaf5 38%,#eaeef3 60%,#dfe7ef 100%)' }}>
-      <svg viewBox="0 0 520 400" preserveAspectRatio="xMaxYMid slice" className="h-full w-full">
+      <svg viewBox="0 0 520 400" preserveAspectRatio="xMaxYMid slice" className="h-full w-full" aria-hidden="true">
         <defs>
           <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor="#d8e6f2" /><stop offset="1" stopColor="#eef3f7" />
@@ -119,8 +136,8 @@ function BudgetDonut({ segments, total, size = 188 }: {
           <div key={s.label} className="flex items-center gap-2 text-[12px]">
             <span className="h-2.5 w-2.5 rounded-[2px]" style={{ background: SEG_C[i % SEG_C.length] }} />
             <span style={{ color: INK }}>{s.label}</span>
-            <span className="ml-auto font-semibold tabular-nums" style={{ color: NAVY }}>{s.amount}</span>
-            <span className="w-9 text-right tabular-nums" style={{ color: SOFT }}>{s.pct}%</span>
+            <span className="ms-auto font-semibold tabular-nums" style={{ color: NAVY }}>{s.amount}</span>
+            <span className="w-9 text-end tabular-nums" style={{ color: SOFT }}>{s.pct}%</span>
           </div>
         ))}
       </div>
@@ -128,32 +145,74 @@ function BudgetDonut({ segments, total, size = 188 }: {
   );
 }
 
-export default function PublicTreasuryHomepage() {
+export default async function PublicTreasuryHomepage(props: { searchParams?: Promise<{ preset?: string; preview?: string }> }) {
+  const searchParams = await props.searchParams;
+  const preview = searchParams?.preview;
+  const preset = presetFor('treasury', searchParams?.preset ?? (preview ? effectiveContent('treasury', preview).previewPreset ?? undefined : undefined));
+  if (!preset.bespoke) return <PublicSite id="treasury" request={await siteRequest()} theme={THEME} preset={preset.id} preview={preview} illustration={ART} />;
+  return <TreasuryPortal site={siteProps('treasury', { theme: THEME, illustration: ART, preview, request: await siteRequest() })} />;
+}
+
+const label = (i: PublicSiteLinkItem) => (typeof i === 'string' ? i : i.label);
+const href = (i: PublicSiteLinkItem) => (typeof i === 'string' ? '/treasury' : i.href);
+
+function TreasuryPortal({ site }: { site: PublicSiteShellProps }) {
   const s = publicTreasurySite(100); // deterministic, SSR-stable
+  // Fixed site wording in the visitor's language among the nation's (lib/i18n `site`).
+  const t = siteMessages(site.locale);
+  const inst = site.institution;
+  const note = fill(t.sampleNote, { name: inst.name });
+  const shortName = inst.name.replace(/^Ministry of /, '');
+  const insignia = nationInsignia();
+  const emblem = (size: number) => (insignia
+    ? <span className="grid shrink-0 place-items-center rounded-full font-bold" style={{ width: size, height: size, border: `1.5px solid ${GOLD}`, color: GOLD, fontFamily: SERIF, fontSize: size * 0.34 }} title={insignia.name} aria-hidden>{insignia.seal}</span>
+    : <Crest size={size} />);
+  const [l1, l2] = site.hero.headlineLines ?? ['', ''];
+  const [snapshot, budget, markets] = site.featured;
+  const half = Math.ceil(site.shortcuts.length / 2);
 
   return (
-    <div className="min-h-screen" style={{ background: '#ffffff', color: INK }}>
+    <div className="min-h-screen" style={{ background: '#ffffff', color: INK }} lang={site.lang} dir={site.dir} data-site-root="">
+      <SkipLink label={t.skipMain} />
+      <PreviewBanner on={site.preview} />
+      {/* 0. Official banner — the same on every public site. */}
+      <section lang={site.locale} aria-label={fill(t.officialWebsite, { name: inst.name })} className="w-full text-[12px] text-white/85" style={{ background: NAVY }}>
+        <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-x-6 gap-y-1 px-6 py-2">
+          <div className="flex items-center gap-4">
+            <span>{fill(t.officialWebsite, { name: inst.name })}</span>
+            <Link href="/government" className="hidden border-s border-white/20 ps-4 hover:text-white sm:inline">{t.allInstitutions}</Link>
+            <Link href="/portal" className="hidden hover:text-white sm:inline">{t.citizenPortal}</Link>
+            <Link href="/noc" className="hidden hover:text-white sm:inline">{t.liveBriefing}</Link>
+          </div>
+          <div className="flex items-center gap-4">
+            <FontSizeControls up={t.fontUp} normal={t.fontNormal} down={t.fontDown} />
+            <LanguageSwitch current={site.locale ?? nationLocale()} languages={site.languages} path={site.institution.href} label={t.languageLabel} />
+          </div>
+        </div>
+      </section>
+
       {/* 1. Header */}
       <header className="sticky top-0 z-20 border-b bg-white" style={{ borderColor: LINE }}>
         <div className="mx-auto flex max-w-[1280px] flex-wrap items-center gap-x-8 gap-y-3 px-6 py-3">
-          <Link href="/treasury" className="flex items-center gap-3">
-            <Crest />
+          <Link href={inst.href} className="flex items-center gap-3">
+            {inst.logo ? <SiteLogo logo={inst.logo} size={44} /> : emblem(44)}
             <div className="leading-tight">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: GOLD }}>Ministry of</div>
-              <div className="text-[22px] font-bold leading-none tracking-tight" style={{ color: NAVY, fontFamily: SERIF }}>Treasury &amp; Finance</div>
-              <div className="mt-1 text-[8.5px] uppercase tracking-[0.18em]" style={{ color: GOLD }}>Fiscal Stewardship · Reserve Protection · Economic Continuity</div>
+              {shortName !== inst.name ? <div className="text-[10px] font-semibold uppercase tracking-[0.22em]" style={{ color: GOLD }}>Ministry of</div> : null}
+              <div className="text-[22px] font-bold leading-none tracking-tight" style={{ color: NAVY, fontFamily: SERIF }}>{shortName}</div>
+              <div className="mt-1 text-[8.5px] uppercase tracking-[0.18em]" style={{ color: GOLD }}>{inst.tagline}</div>
             </div>
           </Link>
-          <nav className="ml-auto hidden items-center gap-6 text-[13px] font-medium lg:flex" style={{ color: SOFT }}>
-            {['Careers', 'Publications', 'Transparency', 'Contact'].map(l => (
-              <Link key={l} href="/treasury" className="hover:text-slate-900">{l}</Link>
-            ))}
+          <nav className="ms-auto hidden items-center gap-6 text-[13px] font-medium lg:flex" style={{ color: SOFT }}>
+            {UTILITY.map(l => <Link key={l.label} href={l.href} className="hover:text-slate-900">{l.label}</Link>)}
           </nav>
           <div className="flex items-center gap-3">
-            <label className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-[12px]" style={{ borderColor: LINE, color: SOFT }}>
+            <form role="search" action="/search" method="get">
+              <input type="hidden" name="site" value={inst.href.slice(1)} />
+              <label className="flex items-center gap-2 rounded-md border px-3 py-1.5 text-[12px] focus-within:outline focus-within:outline-2 focus-within:outline-offset-2" style={{ borderColor: LINE, color: SOFT }}>
               <span aria-hidden>⌕</span>
-              <input aria-label="Search" placeholder="Search…" className="w-28 bg-transparent outline-none placeholder:text-slate-400" />
+              <input type="search" name="q" aria-label={t.search} placeholder={`${t.search}…`} className="w-28 bg-transparent outline-none placeholder:text-slate-500" />
             </label>
+            </form>
             <Link href="/gov/treasury" className="flex items-center gap-2 rounded-md px-4 py-2 text-[12px] font-semibold text-white"
               style={{ background: NAVY }}>
               <span aria-hidden>🔒</span> ACCESS PORTAL
@@ -162,39 +221,39 @@ export default function PublicTreasuryHomepage() {
         </div>
         {/* primary nav */}
         <div className="border-t" style={{ borderColor: LINE }}>
-          <div className="mx-auto flex max-w-[1280px] items-center gap-8 px-6">
-            {NAV.map((n, i) => (
-              <Link key={n} href="/treasury"
-                className="relative py-3 text-[12px] font-semibold uppercase tracking-[0.12em]"
-                style={{ color: i === 0 ? NAVY : SOFT }}>
-                {n}
-                {i === 0 ? <span className="absolute inset-x-0 -bottom-px h-0.5" style={{ background: GOLD }} /> : null}
+          <div className="mx-auto flex max-w-[1280px] items-center gap-8 overflow-x-auto px-6">
+            {site.nav.map(n => (
+              <Link key={n.label} href={n.href}
+                className="relative shrink-0 whitespace-nowrap py-3 text-[12px] font-semibold uppercase tracking-[0.12em]"
+                style={{ color: n.active ? NAVY : SOFT }}>
+                {n.label}
+                {n.active ? <span className="absolute inset-x-0 -bottom-px h-0.5" style={{ background: GOLD }} /> : null}
               </Link>
             ))}
-            <span className="ml-auto text-[14px]" aria-hidden>⚑</span>
+            <span className="ms-auto text-[14px]" aria-hidden>⚑</span>
           </div>
         </div>
       </header>
+      <GatewayBar gateway={site.gateway} name={inst.name} accent={GOLD} locale={site.locale} />
+      <main id="main">
+      <SiteSchema name={inst.name} description={inst.tagline} gateway={site.gateway} url={site.url} lang={site.lang} emergency={inst.emergencyButton?.label} />
 
       {/* 2. Hero */}
       <section className="relative overflow-hidden" style={{ borderBottom: `1px solid ${LINE}` }}>
         <TreasuryBuilding />
         <div className="relative mx-auto max-w-[1280px] px-6 py-16">
           <div className="max-w-xl">
-            <div className="text-[12px] font-bold uppercase tracking-[0.28em]" style={{ color: GOLD }}>National Treasury Command</div>
+            <div className="text-[12px] font-bold uppercase tracking-[0.28em]" style={{ color: GOLD }}>{KICKER}</div>
             <h1 className="mt-3 text-[40px] font-bold uppercase leading-[1.12]" style={{ color: NAVY, fontFamily: SERIF }}>
-              Stewarding National Wealth.<br />Securing Generational Prosperity.
+              {l1}<br />{l2}
             </h1>
-            <p className="mt-4 max-w-md text-[14px] leading-relaxed" style={{ color: SOFT }}>
-              We safeguard the Nation&rsquo;s financial foundation through disciplined
-              stewardship, prudent allocation, and sustainable economic management.
-            </p>
+            <p className="mt-4 max-w-md text-[14px] leading-relaxed" style={{ color: SOFT }}>{site.hero.subhead}</p>
             <div className="mt-6 flex flex-wrap gap-3">
-              <Link href="/treasury" className="flex items-center gap-2 rounded-md px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-white" style={{ background: NAVY }}>
-                Our Mandate <span aria-hidden>→</span>
+              <Link href={site.hero.primaryCta.href ?? '/treasury#about'} className="flex items-center gap-2 rounded-md px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.1em] text-white" style={{ background: NAVY }}>
+                {site.hero.primaryCta.label} <span aria-hidden>{site.hero.primaryCta.icon}</span>
               </Link>
-              <Link href="/gov/treasury" className="flex items-center gap-2 rounded-md border bg-white/80 px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.1em] backdrop-blur" style={{ borderColor: LINE, color: NAVY }}>
-                View Fiscal Dashboard
+              <Link href={site.hero.secondaryCta.href ?? '/gov/treasury'} className="flex items-center gap-2 rounded-md border bg-white/80 px-5 py-2.5 text-[12px] font-semibold uppercase tracking-[0.1em] backdrop-blur" style={{ borderColor: LINE, color: NAVY }}>
+                {site.hero.secondaryCta.label}
               </Link>
             </div>
           </div>
@@ -202,39 +261,55 @@ export default function PublicTreasuryHomepage() {
       </section>
 
       <div className="mx-auto max-w-[1280px] space-y-8 px-6 py-10">
-        {/* 2b. Six pillars of sovereign finance */}
-        <section>
+        {/* 2a. Citizen tasks */}
+        <section id="services" className="scroll-mt-28">
           <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="text-[20px] font-bold" style={{ color: NAVY, fontFamily: SERIF }}>The Six Pillars of Sovereign Finance</h2>
-            <span className="text-[11px]" style={{ color: SOFT }}>{PILLARS.length} pillars · 29 surfaces · 1 citizen portal</span>
+            <h2 className="text-[20px] font-bold" style={{ color: NAVY, fontFamily: SERIF }}>{t.iWantTo}</h2>
+            <Link href="/wallet/services" className="text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: GOLD }}>{t.viewServices}</Link>
           </div>
-          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {PILLARS.map(p => (
-              <Link key={p.ordinal} href={p.href}
-                className="rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
-                style={{ borderColor: LINE }}>
-                <div className="flex items-center gap-3">
-                  <span className="grid h-10 w-10 place-items-center rounded text-[16px] font-bold"
-                    style={{ background: '#f6efde', color: GOLD }} aria-hidden>{p.glyph}</span>
-                  <div>
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: GOLD }}>Pillar {p.ordinal}</div>
-                    <div className="text-[14px] font-bold" style={{ color: NAVY, fontFamily: SERIF }}>{p.label}</div>
-                  </div>
-                </div>
-                <p className="mt-2 text-[11.5px] leading-relaxed" style={{ color: SOFT }}>{p.tagline}</p>
-                <div className="mt-2 text-[11px] font-semibold" style={{ color: GREEN }}>Browse pillar →</div>
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            {site.quickServices.map(q => (
+              <Link key={q.title} href={q.href ?? '/wallet/services'} className="rounded-lg border bg-white p-3 shadow-sm transition-shadow hover:shadow-md" style={{ borderColor: LINE }}>
+                <span className="grid h-8 w-8 place-items-center rounded text-[14px] text-white" style={{ background: q.color }} aria-hidden>{q.icon}</span>
+                <div className="mt-2 text-[13px] font-semibold" style={{ color: NAVY }}>{q.title}</div>
+                <div className="text-[11px]" style={{ color: SOFT }}>{q.subtitle}</div>
               </Link>
             ))}
           </div>
         </section>
 
-        {/* 3. Three info cards */}
-        <div className="grid grid-cols-1 gap-5 lg:grid-cols-3">
-          {/* Fiscal snapshot */}
+        {/* 2b. Pillars of sovereign finance */}
+        <section id="programmes" className="scroll-mt-28">
+          <div className="mb-3 flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="text-[20px] font-bold" style={{ color: NAVY, fontFamily: SERIF }}>The Pillars of Sovereign Finance</h2>
+            <span className="text-[11px]" style={{ color: SOFT }}>{site.initiatives.length} pillars · 29 surfaces · 1 citizen portal</span>
+          </div>
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {site.initiatives.map((p, i) => (
+              <Link key={p.title} href="/gov/treasury"
+                className="rounded-lg border bg-white p-4 shadow-sm transition-shadow hover:shadow-md"
+                style={{ borderColor: LINE }}>
+                <div className="flex items-center gap-3">
+                  <span className="grid h-10 w-10 place-items-center rounded text-[16px] font-bold"
+                    style={{ background: '#f6efde', color: GOLD }} aria-hidden>{PILLAR_GLYPHS[i % PILLAR_GLYPHS.length]}</span>
+                  <div>
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.18em]" style={{ color: GOLD }}>Pillar {ROMAN[i] ?? i + 1}</div>
+                    <div className="text-[14px] font-bold" style={{ color: NAVY, fontFamily: SERIF }}>{p.title}</div>
+                  </div>
+                </div>
+                <p className="mt-2 text-[11.5px] leading-relaxed" style={{ color: SOFT }}>{p.body}</p>
+                <div className="mt-2 text-[11px] font-semibold" style={{ color: GREEN }}>Browse pillar <Fwd /></div>
+              </Link>
+            ))}
+          </div>
+        </section>
+
+        {/* 3. Three fiscal panels (treasury engine) */}
+        <div id="statistics" className="grid scroll-mt-28 grid-cols-1 gap-5 lg:grid-cols-3">
           <section className="rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
             <div className="flex items-baseline justify-between border-b pb-2" style={{ borderColor: LINE }}>
-              <h2 className="text-[12px] font-bold uppercase tracking-[0.16em]" style={{ color: NAVY }}>Fiscal Snapshot</h2>
-              <span className="text-[10px]" style={{ color: SOFT }}>As of {s.asOf}</span>
+              <h2 className="text-[12px] font-bold uppercase tracking-[0.16em]" style={{ color: NAVY }}>{snapshot.title}</h2>
+              <SampleChip label={t.sampleFigures} note={note} />
             </div>
             <div className="mt-3 space-y-2.5">
               {s.snapshot.map(r => (
@@ -242,35 +317,33 @@ export default function PublicTreasuryHomepage() {
                   <span className="grid h-5 w-5 shrink-0 place-items-center rounded text-[10px]" style={{ background: '#f3efe2', color: GOLD }} aria-hidden>◆</span>
                   <span className="min-w-0 flex-1" style={{ color: SOFT }}>{r.label}</span>
                   <span className="font-semibold tabular-nums" style={{ color: NAVY }}>{r.value}</span>
-                  {r.delta ? <span className="w-14 text-right font-semibold tabular-nums" style={{ color: GREEN }}>{r.delta}</span> : null}
-                  {r.tag ? <span className="w-24 text-right text-[10px] font-bold uppercase tracking-wide" style={{ color: r.tag === 'SUSTAINABLE' || r.tag === 'ADEQUATE' || r.tag.includes('MONTHS') ? GREEN : GOLD }}>{r.tag}</span> : null}
+                  {r.delta ? <span className="w-14 text-end font-semibold tabular-nums" style={{ color: GREEN }}>{r.delta}</span> : null}
+                  {r.tag ? <span className="w-24 text-end text-[10px] font-bold uppercase tracking-wide" style={{ color: r.tag === 'SUSTAINABLE' || r.tag === 'ADEQUATE' || r.tag.includes('MONTHS') ? GREEN : GOLD }}>{r.tag}</span> : null}
                 </div>
               ))}
             </div>
-            <Link href="/gov/treasury" className="mt-3 block border-t pt-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: GOLD }}>
-              View Full Fiscal Dashboard →
+            <Link href={snapshot.href ?? '/gov/treasury'} className="mt-3 block border-t pt-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: GOLD }}>
+              {snapshot.cta} <Fwd />
             </Link>
           </section>
 
-          {/* Budget allocation */}
           <section className="rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
             <div className="flex items-baseline justify-between border-b pb-2" style={{ borderColor: LINE }}>
-              <h2 className="text-[12px] font-bold uppercase tracking-[0.16em]" style={{ color: NAVY }}>Budget Allocation Overview</h2>
-              <span className="text-[10px]" style={{ color: SOFT }}>FY 2025</span>
+              <h2 className="text-[12px] font-bold uppercase tracking-[0.16em]" style={{ color: NAVY }}>{budget.title}</h2>
+              <SampleChip label={t.sampleFigures} note={note} />
             </div>
             <div className="mt-4">
               <BudgetDonut total={s.budget.total} segments={s.budget.segments} />
             </div>
-            <Link href="/gov/treasury" className="mt-4 block border-t pt-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: GOLD }}>
-              View Budget Details →
+            <Link href={budget.href ?? '/public'} className="mt-4 block border-t pt-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: GOLD }}>
+              {budget.cta} <Fwd />
             </Link>
           </section>
 
-          {/* Market indicators */}
           <section className="rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
             <div className="flex items-baseline justify-between border-b pb-2" style={{ borderColor: LINE }}>
-              <h2 className="text-[12px] font-bold uppercase tracking-[0.16em]" style={{ color: NAVY }}>Market &amp; Economic Indicators</h2>
-              <span className="text-[10px]" style={{ color: SOFT }}>Live Updates</span>
+              <h2 className="text-[12px] font-bold uppercase tracking-[0.16em]" style={{ color: NAVY }}>{markets.title}</h2>
+              <SampleChip label={t.sampleFigures} note={note} />
             </div>
             <div className="mt-3 space-y-3">
               {s.indicators.map(r => (
@@ -278,97 +351,102 @@ export default function PublicTreasuryHomepage() {
                   <span style={{ color: SOFT }}>{r.label}</span>
                   <span className="flex items-center gap-3">
                     <span className="font-semibold tabular-nums" style={{ color: NAVY }}>{r.value}</span>
-                    <span className="w-16 text-right text-[11px] tabular-nums" style={{ color: r.flat ? SOFT : GREEN }}>
+                    <span className="w-16 text-end text-[11px] tabular-nums" style={{ color: r.flat ? SOFT : GREEN }}>
                       {r.flat ? '—' : `${r.delta > 0 ? '+' : ''}${r.delta.toFixed(2)}% ${r.delta > 0 ? '↑' : '↓'}`}
                     </span>
                   </span>
                 </div>
               ))}
             </div>
-            <Link href="/gov/treasury" className="mt-3 block border-t pt-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: GOLD }}>
-              View Economic Dashboard →
+            <Link href={markets.href ?? '/gov/treasury'} className="mt-3 block border-t pt-2 text-center text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: GOLD }}>
+              {markets.cta} <Fwd />
             </Link>
           </section>
         </div>
 
         {/* 4. Latest updates + quick links */}
         <div className="grid grid-cols-1 gap-5 lg:grid-cols-[2fr_1fr]">
-          <section className="rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
+          <section id="news" className="scroll-mt-28 rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
             <div className="mb-4 flex items-center justify-between">
-              <h2 className="text-[14px] font-bold uppercase tracking-[0.14em]" style={{ color: NAVY }}>Latest Updates</h2>
-              <Link href="/treasury" className="text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: GOLD }}>View All News →</Link>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-[14px] font-bold uppercase tracking-[0.14em]" style={{ color: NAVY }}>Latest Updates</h2>
+                {site.newsSample ? <SampleChip label={t.sampleNews} note={note} /> : site.newsFrom ? <SourceChip label={fill(t.fromSite, { host: site.newsFrom })} /> : null}
+              </div>
+              <Link href="/public" className="text-[11px] font-semibold uppercase tracking-[0.1em]" style={{ color: GOLD }}>{t.viewNews}</Link>
             </div>
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
-              {s.updates.map(u => (
+              {site.news.map(u => (
                 <article key={u.title} className="flex flex-col rounded-md border p-3" style={{ borderColor: LINE }}>
-                  <div className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: GOLD }}>{u.kind}</div>
-                  <div className="mt-2 flex-1 text-[12.5px] font-semibold leading-snug" style={{ color: NAVY }}>{u.title}</div>
-                  <div className="mt-3 border-t pt-2 text-[9.5px] uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: SOFT }}>{u.date}</div>
+                  <div className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: GOLD }}>{u.summary}</div>
+                  {u.url
+                    ? <a href={u.url} rel="noopener" className="mt-2 flex-1 text-[12.5px] font-semibold leading-snug hover:underline" style={{ color: NAVY }}>{u.title} ↗</a>
+                    : <div className="mt-2 flex-1 text-[12.5px] font-semibold leading-snug" style={{ color: NAVY }}>{u.title}</div>}
+                  {u.date ? <div className="mt-3 border-t pt-2 text-[9.5px] uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: SOFT }}>{u.date}</div> : null}
                 </article>
               ))}
             </div>
           </section>
 
-          <section className="rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
+          <section id="contact" className="scroll-mt-28 rounded-lg border bg-white p-5 shadow-sm" style={{ borderColor: LINE }}>
             <h2 className="mb-4 text-[14px] font-bold uppercase tracking-[0.14em]" style={{ color: NAVY }}>Quick Links</h2>
             <div className="grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2">
-              {[QUICK_L, QUICK_R].map((col, ci) => (
+              {[site.shortcuts.slice(0, half), site.shortcuts.slice(half)].map((col, ci) => (
                 <ul key={ci} className="space-y-1">
                   {col.map(l => (
-                    <li key={l}>
-                      <Link href="/gov/treasury" className="flex items-center justify-between gap-2 rounded px-2 py-2 text-[12px] hover:bg-[#faf8f1]" style={{ color: INK }}>
-                        <span className="flex items-center gap-2"><span style={{ color: GOLD }} aria-hidden>▸</span>{l}</span>
-                        <span style={{ color: GOLD }} aria-hidden>→</span>
+                    <li key={l.title}>
+                      <Link href={l.href ?? '/gov/treasury'} className="flex items-center justify-between gap-2 rounded px-2 py-2 text-[12px] hover:bg-[#faf8f1]" style={{ color: INK }}>
+                        <span className="flex items-center gap-2"><span style={{ color: GOLD }} aria-hidden>▸</span>{l.title}</span>
+                        <span style={{ color: GOLD }} aria-hidden><Fwd /></span>
                       </Link>
                     </li>
                   ))}
                 </ul>
               ))}
             </div>
+            <Link href="/wallet/inbox" className="mt-4 block border-t pt-3 text-center text-[11px] font-semibold uppercase tracking-[0.12em]" style={{ borderColor: LINE, color: GOLD }}>{t.contactUs}</Link>
           </section>
         </div>
       </div>
 
+      </main>
+
+
       {/* 5. Footer */}
-      <footer className="text-white/75" style={{ background: NAVY }}>
+      <footer id="about" className="text-white/75" style={{ background: NAVY }}>
         <div className="mx-auto grid max-w-[1280px] grid-cols-2 gap-8 px-6 py-12 md:grid-cols-3 lg:grid-cols-6">
           <div className="col-span-2">
             <div className="flex items-center gap-3">
-              <Crest size={38} />
+              {emblem(38)}
               <div className="leading-tight">
-                <div className="text-[15px] font-bold text-white" style={{ fontFamily: SERIF }}>MINISTRY OF TREASURY &amp; FINANCE</div>
-                <div className="text-[9px] uppercase tracking-[0.22em]" style={{ color: GOLD2 }}>Sovereign Financial System</div>
+                <div className="text-[15px] font-bold uppercase text-white" style={{ fontFamily: SERIF }}>{inst.name}</div>
+                <div className="text-[9px] uppercase tracking-[0.22em]" style={{ color: GOLD2 }}>{inst.about ?? inst.tagline}</div>
               </div>
             </div>
             <div className="mt-4 text-[12px] font-semibold text-white">Follow Us</div>
             <div className="mt-2 flex gap-3 text-white/55">{['𝕏', 'in', '▶', '✉'].map(x => <span key={x} className="grid h-7 w-7 place-items-center rounded-full border border-white/15" aria-hidden>{x}</span>)}</div>
           </div>
-          {[
-            ['About', ['Our Mandate', 'Leadership', 'Organization']],
-            ['Resources', ['Reports & Publications', 'Data Center', 'Legislation']],
-            ['Help', ['FAQ', 'Contact Us', 'Feedback']],
-          ].map(([h, items]) => (
-            <div key={h as string}>
-              <div className="text-[12px] font-semibold text-white">{h as string}</div>
+          {site.footerSections.map(sec => (
+            <div key={sec.heading}>
+              <div className="text-[12px] font-semibold text-white">{sec.heading}</div>
               <ul className="mt-3 space-y-2 text-[12px] text-white/55">
-                {(items as string[]).map(i => <li key={i}><Link href="/treasury" className="hover:text-white">{i}</Link></li>)}
+                {sec.items.map(i => <li key={label(i)}><Link href={href(i)} className="hover:text-white">{label(i)}</Link></li>)}
               </ul>
             </div>
           ))}
           <div>
-            <div className="text-[12px] font-semibold text-white">Subscribe</div>
-            <p className="mt-2 text-[11px] text-white/55">Stay updated with our latest news and publications.</p>
-            <div className="mt-3 flex">
-              <input aria-label="Email" placeholder="Enter your email" className="min-w-0 flex-1 rounded-l-md px-2 py-1.5 text-[12px] text-slate-800 outline-none" />
-              <button className="rounded-r-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: GOLD }} aria-hidden>→</button>
-            </div>
+            <div className="text-[12px] font-semibold text-white">{site.newsletter.heading}</div>
+            <p className="mt-2 text-[11px] text-white/55">{site.newsletter.body}</p>
+            <NewsletterForm site={inst.href.slice(1)} note={t.subscribeNote} noteClassName="text-white/55">
+              <input type="email" name="email" required autoComplete="email" aria-label={t.email} placeholder={t.enterEmail} className="min-w-0 flex-1 rounded-s-md px-2 py-1.5 text-[12px] text-slate-800 outline-none" />
+              <button type="submit" className="rounded-e-md px-3 py-1.5 text-[12px] font-semibold text-white" style={{ background: GOLD }} aria-label={t.subscribe}><Fwd /></button>
+            </NewsletterForm>
           </div>
         </div>
         <div className="border-t border-white/10">
           <div className="mx-auto flex max-w-[1280px] flex-wrap items-center justify-between gap-3 px-6 py-4 text-[11px] text-white/55">
-            <span>© 2025 Ministry of Treasury &amp; Finance. All rights reserved.</span>
-            <span className="font-semibold uppercase tracking-[0.22em]" style={{ color: GOLD2 }}>Sovereignty · Stability · Prosperity</span>
-            <div className="flex gap-4">{['Privacy Policy', 'Terms of Use', 'Accessibility'].map(l => <Link key={l} href="/treasury" className="hover:text-white">{l}</Link>)}</div>
+            <span>{site.legalLine}</span>
+            <span className="font-semibold uppercase tracking-[0.22em]" style={{ color: GOLD2 }}>{MOTTO}</span>
+            <div className="flex gap-4">{site.legalLinks.map(l => <Link key={label(l)} href={href(l)} className="hover:text-white">{label(l)}</Link>)}</div>
           </div>
         </div>
       </footer>

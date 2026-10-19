@@ -6,6 +6,7 @@
 import * as React from 'react';
 import { PoliceKpiStrip, PoliceRosterRow, PoliceCalloutNote, PoliceRule } from '@/apps/police-command/design-system/police-ds';
 import { seed, wave } from '@/lib/telemetry';
+import { regionName } from '@/lib/nation/registry';
 
 function caseload(prefix: string, id: string, ts: number, types: string[], count: number) {
   return Array.from({ length: count }, (_, i) => {
@@ -134,7 +135,7 @@ export function MissingPersons({ id, now, accent }: { id: string; now: number; a
       who: `${['Adult', 'Minor', 'Adult', 'Minor', 'Vulnerable adult', 'Adult'][i % 6]} · ${['Adamu', 'Petrov', 'Mehta', 'Oduya', 'Tanaka', 'Brennan'][i % 6]} family`,
       ageHrs: Math.round(wave(`${k}:a`, ts, 1, 480)),
       alert: seed(`${k}:al`) > 0.78 ? 'Amber' : 'standard',
-      area: ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'][i % 6]!,
+      area: [regionName(0, 'Capital District'), 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'][i % 6]!,
     };
   });
   return (

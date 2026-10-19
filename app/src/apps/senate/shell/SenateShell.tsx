@@ -15,6 +15,7 @@ import { TreatyAtlas, RatificationQueue, PublicConsultation, StandingCommittees,
 import { Hansard, RollCallRecords, SessionsCalendar, StrategicForesight, LongHorizonReview, CitizenPetitions, WatchLive, SenatorsDirectory, CodeOfConduct, ConflictsOfInterest, MisconductTribunal, SenateSafeguards, OverrideDoctrine, SovereignAudit } from '@/apps/senate/domains/RecordsEthics';
 
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
+import { nationChamberText } from '@/lib/nation/registry';
 
 type Render = (p: { id: string; now: number; role: SovereignRole; withheld: Capability[] }) => React.ReactElement;
 
@@ -65,7 +66,7 @@ export function SenateShell({ id, surface, now, role, withheld = [] }: {
       <RuntimeQueue
         scope={`senate:${surface}`}
         kind={domain?.archetype === 'treaties' ? 'approval' : domain?.archetype === 'committees' || domain?.archetype === 'oversight' ? 'case' : 'approval'}
-        title={`${domain?.label ?? 'Senate'} runtime — ${TREATY_RATIFICATION.title}`}
+        title={nationChamberText(`${domain?.label ?? 'Senate'} runtime — ${TREATY_RATIFICATION.title}`)}
         by="Parliamentary Secretary"
         role={role}
         withheld={withheld} />

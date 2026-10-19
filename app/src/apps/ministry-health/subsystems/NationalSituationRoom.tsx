@@ -19,14 +19,15 @@ import {
   CommandHeader, CommandPanel, KpiSpark, Donut, TrendChart, Stepper, RingGauge, ACCENT, type Tone,
 } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
+import { regionName, aiLabel } from '@/lib/nation/registry';
 
 const C = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 const ACC = ACCENT.situation!;
 const ALERTS = [
   { t: 'Dengue outbreak escalation', sub: 'Capital District · East Region', lvl: 4 },
-  { t: 'ICU capacity critical', sub: 'Northern Region', lvl: 4 },
-  { t: 'Medicine stockout imminent', sub: 'Highland Region', lvl: 3 },
-  { t: 'Flood impact — health facilities', sub: 'Coastal Region', lvl: 3 },
+  { t: 'ICU capacity critical', sub: regionName(1, 'Northern Region'), lvl: 4 },
+  { t: 'Medicine stockout imminent', sub: regionName(5, 'Highland Region'), lvl: 3 },
+  { t: 'Flood impact — health facilities', sub: regionName(4, 'Coastal Region'), lvl: 3 },
   { t: 'Surge in respiratory cases', sub: 'Western Corridor', lvl: 2 },
 ];
 
@@ -190,7 +191,7 @@ export function NationalSituationRoom({ id, now, role, withheld }: {
             ))}
           </div>
         </CommandPanel>
-        <CommandPanel title="AI intervention recommendations" meta="priority actions" accent={ACC} live>
+        <CommandPanel title={aiLabel('AI intervention recommendations', 'Intervention recommendations')} meta="priority actions" accent={ACC} live>
           <div className="space-y-1">
             {[{ x: rr.active ? rr.text : `Sustain surge readiness — ${ns.worstRegion}`, p: rr.active ? 'High' : 'Med' },
               ...prop.recommended.slice(0, 3).map((r, i) => ({ x: r, p: i === 0 ? 'High' : 'Med' }))].map((r, i) => (

@@ -11,8 +11,9 @@
 import { seed, wave } from '@/lib/telemetry';
 import { observabilityLedger, AGENCIES, AGENCY_LABEL, type Agency } from '@/lib/gov/sovereign-observability';
 import { proceduralBoard } from '@/lib/gov/procedural-execution';
+import { regionList } from '@/lib/nation/registry';
 
-export const ECON_REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const ECON_REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 export type OverloadState = 'nominal' | 'strained' | 'overloaded' | 'saturated';
 export type CorruptionMode = 'clean' | 'lawful-overload' | 'suspicious-obstruction';

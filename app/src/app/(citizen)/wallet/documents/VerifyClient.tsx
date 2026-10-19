@@ -8,8 +8,9 @@ import { Pill } from '@/components/ui/Pill';
 import { TextField } from '@/components/ui/Field';
 import { api } from '@/lib/api/client';
 import type { VerifyResult } from '@/lib/api/types';
-
+import { nationMessages, nationLocale } from '@/lib/nation/registry';
 export function VerifyClient() {
+  const x = nationMessages().pages;
   const [result, setResult] = React.useState<VerifyResult | null>(null);
   const [busy, setBusy] = React.useState(false);
 
@@ -28,20 +29,19 @@ export function VerifyClient() {
   return (
     <div className="space-y-4">
       <Plain>
-        Paste or scan a document code to check it was really issued by the
-        state and has not been altered. Try <code>VC-DEMO</code> (valid),{' '}
-        <code>REV-DEMO</code> (revoked), or anything else (invalid).
+        {x.verifyIntro.split(/(\{valid\}|\{revoked\})/).map((part, i) =>
+          part === '{valid}' ? <code key={i}>VC-DEMO</code> : part === '{revoked}' ? <code key={i}>REV-DEMO</code> : part)}
       </Plain>
 
       <form onSubmit={onSubmit}>
         <TextField
-          label="Document code"
+          label={x.documentCode}
           name="code"
           required
           placeholder="VC-XXXX"
         />
         <Button type="submit" disabled={busy}>
-          {busy ? 'Checking…' : 'Verify'}
+          {busy ? x.checking : x.verify}
         </Button>
       </form>
 
@@ -49,32 +49,32 @@ export function VerifyClient() {
         <Card tight>
           <div className="flex items-center gap-2 mb-2">
             {result.valid ? (
-              <Pill tone="ok">✓ Valid</Pill>
+              <Pill tone="ok">{x.valid}</Pill>
             ) : result.revoked ? (
-              <Pill tone="alert">Revoked</Pill>
+              <Pill tone="alert">{x.revoked}</Pill>
             ) : (
-              <Pill tone="alert">Not valid</Pill>
+              <Pill tone="alert">{x.notValid}</Pill>
             )}
           </div>
           {result.valid ? (
             <dl className="text-sm space-y-1">
               <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Subject</dt>
+                <dt className="text-ink-muted">{x.subject}</dt>
                 <dd>{result.subject}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Issuer</dt>
+                <dt className="text-ink-muted">{x.issuer}</dt>
                 <dd>{result.issuer}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Type</dt>
+                <dt className="text-ink-muted">{x.type}</dt>
                 <dd>{result.credentialType}</dd>
               </div>
               <div className="flex justify-between gap-3">
-                <dt className="text-ink-muted">Issued</dt>
+                <dt className="text-ink-muted">{x.issued}</dt>
                 <dd>
                   {result.issuedAt
-                    ? new Date(result.issuedAt).toLocaleDateString()
+                    ? new Date(result.issuedAt).toLocaleDateString(nationLocale())
                     : '—'}
                 </dd>
               </div>

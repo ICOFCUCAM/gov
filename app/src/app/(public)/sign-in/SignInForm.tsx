@@ -60,6 +60,11 @@ export function SignInForm() {
         await ensureCitizenLinkage();
       }
       await refreshIdentity();
+      // Officers: hand the substrate session to the server, which checks it and
+      // records their actions under their verified name (/api/auth/official).
+      if (officer) {
+        await fetch('/api/auth/official', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ method: 'substrate', accessToken: session.access_token }) }).catch(() => null);
+      }
       router.push(safeNext);
     } finally {
       setBusy(false);
@@ -76,11 +81,11 @@ export function SignInForm() {
   if (!available) {
     return (
       <Card>
-        <h2 className="font-semibold mb-1">Substrate not configured</h2>
+        <h2 className="font-semibold mb-1">Citizen and substrate sign-in not configured</h2>
         <p className="text-sm text-ink-muted">
-          Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-          to enable authenticated sign-in. The platform will continue to
-          operate in anonymous demo mode without them.
+          Officials sign in with a platform account above. Citizen accounts and
+          substrate sign-in need NEXT_PUBLIC_SUPABASE_URL and
+          NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY.
         </p>
       </Card>
     );

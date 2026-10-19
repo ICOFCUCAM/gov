@@ -32,23 +32,58 @@ export default function DevelopersPage() {
       <section className="space-y-2">
         <h2 className="text-xl font-semibold">2. Authenticate</h2>
         <Card tight>
-          <pre className="overflow-x-auto text-sm"><code>{`curl https://<sovereign>/api/v1/permits \\
-  -H "x-api-key: civ_••••••••"`}</code></pre>
+          <pre tabIndex={0} aria-label="Example request" className="overflow-x-auto text-sm"><code>{`curl https://<installation>/api/permits \\
+  -H "cookie: civicos_official=<signed session>"`}</code></pre>
         </Card>
         <p className="text-sm text-ink-muted">
-          Citizen/officer sessions use OIDC bearer tokens from the sovereign
-          IdP (SAML / OAuth2 / FAPI adapters sit behind the same seam). External
-          systems use scoped API keys.
+          Today the API answers signed-in sessions: officials sign in at /sign-in and the server sets a
+          signed session. Scoped credentials for outside systems (issued under Connected systems) and
+          single sign-on with the nation&rsquo;s own identity provider are planned (integration register 15.4, 16.9).
         </p>
+        <p className="text-sm text-ink-muted">
+          GIS clients read the national twin&rsquo;s map services (OGC API &ndash; Features at <code>/api/twin/ogc</code>,
+          SensorThings at <code>/api/twin/sta/v1.1</code>, vector tiles at <code>/api/twin/tiles</code>) with an
+          integration key holding the scope <code>ogc:read</code>, approved by an administrator under Connected systems.
+          Send it as a header, never in the address: in QGIS an &ldquo;API Header&rdquo; authentication configuration
+          (<code>Authorization</code> = <code>Bearer civ_&hellip;</code>); in GDAL the <code>GDAL_HTTP_HEADERS</code> setting;
+          in ArcGIS Pro a custom request header on the OGC API server connection. Restricted sites reach a key as they
+          reach the public: generalised.
+        </p>
+        <Card tight>
+          <pre tabIndex={0} aria-label="Example GIS request" className="overflow-x-auto text-sm"><code>{`GDAL_HTTP_HEADERS="Authorization: Bearer civ_<key>" \\
+  ogrinfo OAPIF:https://<installation>/api/twin/ogc facilities`}</code></pre>
+        </Card>
+        <p className="text-sm text-ink-muted">
+          Clients that expect OAuth 2.0 exchange the key for a short-lived access token (client credentials):
+          send the integration&rsquo;s id as <code>client_id</code> and its key as <code>client_secret</code> to{' '}
+          <code>/api/oauth/token</code> with <code>grant_type=client_credentials</code>, then send the token as{' '}
+          <code>Bearer</code>. A token carries at most the key&rsquo;s scopes, lasts ten minutes and stops working
+          when the key is replaced. Features come in other coordinate systems on request (<code>crs</code>,{' '}
+          <code>bbox-crs</code>: EPSG:4326, EPSG:3857 and the nation&rsquo;s national grids, listed on each collection).
+        </p>
+        <Card tight>
+          <pre tabIndex={0} aria-label="Example token request" className="overflow-x-auto text-sm"><code>{`curl -u '<integration id>:civ_<key>' -d grant_type=client_credentials -d scope=ogc:read \\
+  https://<installation>/api/oauth/token`}</code></pre>
+        </Card>
       </section>
 
       <section className="space-y-2">
         <h2 className="text-xl font-semibold">3. Contract & versioning</h2>
         <ul className="list-disc space-y-1 pl-5">
-          <li>OpenAPI is generated from the code at <code>/api/docs</code> (JSON at <code>/api/docs-json</code>) — the single source of truth.</li>
-          <li>Versioned under <code>/api/v1</code>. Every response carries <code>X-API-Version</code>.</li>
-          <li>Deprecated endpoints emit <code>Deprecation</code> and an RFC 8594 <code>Sunset</code> date long before removal.</li>
-          <li>Rate limits return <code>X-RateLimit-*</code>; back off on <code>429</code>.</li>
+          <li>Every endpoint is described in OpenAPI 3.1 at <code>/api/openapi</code>, generated from the code — the single source of truth.</li>
+          <li>Map data from the national data register is served as OGC API – Features at <code>/api/twin/ogc</code> (GeoJSON), with CQL2 filters (<code>filter</code>, <code>filter-lang</code>).</li>
+          <li>
+            Every place, institution and site in the national data register has a persistent identifier under the nation&rsquo;s own
+            domain (set in setup): <code>https://&lt;domain&gt;/id/&lt;kind&gt;/&lt;code&gt;</code>, for example <code>/id/place/KE-30</code>.
+            The address answers 303 See Other: to the record as JSON (or NGSI-LD with <code>Accept: application/ld+json</code>)
+            for programs, to its page for people. Identifiers never change once published.
+          </li>
+          <li>
+            The register&rsquo;s catalogue is DCAT-AP JSON-LD at <code>/api/twin/catalog</code>: each source, published boundary
+            version and map collection, with publisher, licence, coverage and download addresses. Each import&rsquo;s lineage is
+            W3C PROV at <code>/api/twin/runs/&lt;id&gt;/prov</code>.
+          </li>
+          <li>Endpoints are not versioned yet; version prefixes, deprecation notices and rate limits are planned.</li>
         </ul>
       </section>
 
@@ -81,6 +116,23 @@ export default function DevelopersPage() {
           and the same contract. Test against the sandbox before requesting
           production approval. No production citizen data is ever used for
           integration testing.
+        </p>
+      </section>
+
+      <section className="space-y-2">
+        <h2 className="text-xl font-semibold">7. Case systems</h2>
+        <Plain>
+          A ministry&rsquo;s own case system can keep its cases in the platform&rsquo;s queue. An official connects the
+          system under My work › Load cases and receives its key (<code>ccf_…</code>) once.
+        </Plain>
+        <p className="text-sm text-ink-muted">
+          <code>POST /api/org/ministries/&#123;id&#125;/queue/feed</code> with <code>Authorization: Bearer ccf_…</code> and
+          {' '}<code>{'{ "cases": [{ "reference", "subject", "received", "region"?, "priority"?, "assignee"?, "note"?, "state"? }] }'}</code>:
+          new references are added under the same checks as a loaded file; references the same system sent before are
+          updated (<code>state</code>: open, assigned, escalated or closed); every case is answered as added, updated,
+          unchanged or refused with its reason. Re-sending a case is safe. <code>GET …/queue/feed?since=&lt;date-time&gt;</code>
+          returns what officials did to the system&rsquo;s cases since then. Up to 5,000 cases or 2 MB per call; every call is
+          audited. The full description is at <code>/api/openapi</code>.
         </p>
       </section>
     </main>

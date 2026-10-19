@@ -6,6 +6,7 @@
 // telemetry → escalation trigger.
 
 import { NextResponse } from 'next/server';
+import { cronAuthorized } from '@/lib/platform-auth';
 import { serverClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
@@ -29,14 +30,8 @@ const METRICS: MetricDef[] = [
   { streamId: 'substrate.federation.total',    label: 'Total federation events',unit: 'rows',  warn: null, alert: null, view: 'civicos_federation_events' },
 ];
 
-function authorized(req: Request): boolean {
-  const expected = process.env.CIVICOS_CRON_SECRET;
-  if (!expected) return false;
-  const url = new URL(req.url);
-  const token = url.searchParams.get('token')
-    ?? (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-  return token.length > 0 && token === expected;
-}
+/** The cron secret, compared in constant time (lib/platform-auth.ts). */
+const authorized = (req: Request): boolean => cronAuthorized(req);
 
 export async function GET(req: Request) {
   if (!authorized(req)) {

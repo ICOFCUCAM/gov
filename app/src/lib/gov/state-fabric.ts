@@ -76,7 +76,7 @@ export function stateFabric(mins: Ministry[], t: number): StateFabric {
       effects: [
         eff('Workforce readiness', hInst, 0.7, 'Clinical burnout drags national workforce'),
         eff('National resilience', hInst, 0.55, 'Continuity pillar degradation'),
-        eff('Emergency posture', hInst, 0.8, 'Surge & dispatch capacity consumed'),
+        eff('Emergency readiness', hInst, 0.8, 'Surge & dispatch capacity consumed'),
         eff('Treasury expenditure', hInst, 0.5, 'Contingency health spend rises'),
         eff('Pharmaceutical demand', hInst, 0.9, 'Drug & supply demand spike'),
         eff('Logistics strain', hInst, 0.6, 'Cold-chain & ambulance corridor load'),

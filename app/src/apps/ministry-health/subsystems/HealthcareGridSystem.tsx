@@ -70,7 +70,7 @@ export function HealthcareGridSystem({ id, now, role, withheld }: {
       <RuntimeQueue
         scope={`${id}:grid`}
         kind="case"
-        title="Grid operations runtime — register → telemeter → remediate → restore"
+        title="Grid operations handling — register → telemeter → remediate → restore"
         by="Grid Operations"
         role={role}
         withheld={withheld}

@@ -6,6 +6,7 @@
 import * as React from 'react';
 import { PoliceKpiStrip, PoliceRosterRow, PoliceCalloutNote, PoliceRule } from '@/apps/police-command/design-system/police-ds';
 import { seed, wave } from '@/lib/telemetry';
+import { regionName } from '@/lib/nation/registry';
 
 export function ForensicsLab({ id, now, accent }: { id: string; now: number; accent: string }) {
   const ts = now / 4000;
@@ -85,7 +86,7 @@ export function CrimeSceneCoordination({ id, now, accent }: { id: string; now: n
     return {
       id: `SOC-${(30000 + Math.floor(seed(`${k}:c`) * 60000))}`,
       type: types[i]!,
-      area: ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'][i]!,
+      area: [regionName(0, 'Capital District'), 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'][i]!,
       ageMin: Math.round(wave(`${k}:a`, ts, 8, 360)),
       sealed: seed(`${k}:s`) > 0.18,
     };

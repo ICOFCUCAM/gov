@@ -5,7 +5,8 @@ export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Institution Operations' };
 
 
-export default function MinistryOperationsPage({ params }: { params: { id: string } }) {
+export default async function MinistryOperationsPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   return (
     <CommandShell active="min">
       <MinistryWorkspace id={params.id} />

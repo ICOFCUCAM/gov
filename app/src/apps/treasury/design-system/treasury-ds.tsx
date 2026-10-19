@@ -55,10 +55,10 @@ const ARCHETYPE: Record<TreasuryArchetype, { tag: string; glyph: string; accent:
 // Standardized chrome — debit/credit column markers, brass rule, vault
 // background. Header carries fiscal-year tag and the archetype name.
 export function LedgerFrame({
-  archetype, ref, title, subtitle, fiscalYear, accent, headerRight, children,
+  archetype, code, title, subtitle, fiscalYear, accent, headerRight, children,
 }: {
   archetype: TreasuryArchetype;
-  ref: string;        // e.g. "TR-001-A", "VR-2026/01"
+  code: string;       // e.g. "TR-001-A", "VR-2026/01"
   title: string;
   subtitle?: string;
   fiscalYear?: string;
@@ -83,7 +83,7 @@ export function LedgerFrame({
         className="flex flex-wrap items-baseline gap-x-4 gap-y-1 border-b px-6 py-3"
         style={{ borderColor: TREASURY_DS.rule, background: 'linear-gradient(180deg, rgba(13,63,46,0.10) 0%, transparent 100%)' }}>
         <span className="text-[14px]" style={{ color: col }}>{a.glyph}</span>
-        <span className="tabular-nums text-[11px] uppercase tracking-[0.32em]" style={{ color: col }}>{ref}</span>
+        <span className="tabular-nums text-[11px] uppercase tracking-[0.32em]" style={{ color: col }}>{code}</span>
         <h3 className="text-[14px] tracking-[0.04em]" style={{ color: TREASURY_DS.parchment, fontFamily: 'ui-serif, Georgia, serif' }}>{title}</h3>
         {subtitle ? <span className="text-[10px] italic" style={{ color: TREASURY_DS.mut }}>· {subtitle}</span> : null}
         <span className="ml-auto text-[9px] uppercase tracking-[0.32em]" style={{ color: TREASURY_DS.mut }}>{a.tag}</span>
@@ -182,8 +182,8 @@ export function StatementColumn({ rows }: {
 // Disbursement / receipt voucher card. Visually echoes a stamped
 // government voucher: ID strip, parties, amount, fiscal-year stamp,
 // authorisation seal.
-export function VoucherStamp({ ref, party, counterparty, amount, fiscalYear, authority, status, statusColor }: {
-  ref: string; party: string; counterparty: string; amount: string;
+export function VoucherStamp({ voucher, party, counterparty, amount, fiscalYear, authority, status, statusColor }: {
+  voucher: string; party: string; counterparty: string; amount: string;
   fiscalYear: string; authority: string;
   status: string; statusColor?: string;
 }) {
@@ -194,7 +194,7 @@ export function VoucherStamp({ ref, party, counterparty, amount, fiscalYear, aut
       <div className="grid grid-cols-[1fr_auto] items-baseline gap-2">
         <div>
           <div className="text-[9px] uppercase tracking-[0.32em]" style={{ color: TREASURY_DS.mut }}>Voucher</div>
-          <div className="tabular-nums text-[11.5px]" style={{ color: TREASURY_DS.brass }}>{ref}</div>
+          <div className="tabular-nums text-[11.5px]" style={{ color: TREASURY_DS.brass }}>{voucher}</div>
         </div>
       </div>
       <div className="mt-3 grid grid-cols-[1fr_auto_1fr] items-center gap-3">

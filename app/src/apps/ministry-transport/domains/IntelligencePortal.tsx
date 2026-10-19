@@ -6,6 +6,7 @@ import * as React from 'react';
 import { transportExtendedBoard, TRANSPORT_EXTENDED_SAFEGUARDS } from '@/lib/gov/transport-extended';
 import { CorridorFrame, CorridorKpi, CorridorRule, CorridorBar, CorridorCallout, TRANSPORT_DS } from '@/apps/ministry-transport/design-system/transport-ds';
 
+import { aiLabel } from '@/lib/nation/registry';
 export function DemandForecast({ id, now }: { id: string; now: number }) {
   const ext = transportExtendedBoard(now);
   void id;
@@ -15,7 +16,7 @@ export function DemandForecast({ id, now }: { id: string; now: number }) {
       <CorridorKpi items={[
         { label: 'Long-horizon resilience', value: `${ext.intelligence.longHorizonResilienceIdx}/100`, tone: 'ok' },
         { label: 'Systemic risk', value: `${ext.intelligence.systemicMobilityRisk}/100`, tone: 'warn' },
-        { label: 'AI reasoning', value: `${ext.intelligence.aiReasoningCoveragePct}%`, tone: 'info' },
+        { label: aiLabel('AI reasoning', 'Reasoning coverage'), value: `${ext.intelligence.aiReasoningCoveragePct}%`, tone: 'info' },
         { label: 'Horizons', value: ext.intelligence.demand.horizonYears.length },
       ]} />
       <CorridorRule label="trajectories" />

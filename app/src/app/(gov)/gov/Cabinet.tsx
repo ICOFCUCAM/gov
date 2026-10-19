@@ -20,6 +20,7 @@ import type {
   SovereignProfile,
   StateForm,
 } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const FORMS: { v: StateForm; preset: Partial<SovereignProfile> }[] = [
   { v: 'republic', preset: { executiveTitle: 'President', legislatureName: 'National Assembly', regionNoun: 'region' } },
@@ -45,7 +46,7 @@ export function Cabinet() {
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [editing, setEditing] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => { const t = setInterval(() => setNow(Date.now()), 4000); return () => clearInterval(t); }, []);
 
   const load = React.useCallback(async () => {
@@ -141,7 +142,7 @@ export function Cabinet() {
     <div className="space-y-3">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="t-display">Cabinet</h1>
+          <h2 className="t-display">National settings</h2>
           <p className="text-sm text-ink-muted">
             {s.stateName} · whole-of-government command. {s.executiveTitle} ·{' '}
             {s.legislatureName}.
@@ -368,6 +369,8 @@ export function Cabinet() {
                 label={ind.label}
                 value={`${ind.value}${ind.unit}`}
                 tone="neutral"
+                kind={ind.kind}
+                source={ind.source}
               />
             ))}
           </div>
@@ -403,7 +406,7 @@ export function Cabinet() {
         </Section>
       ) : null}
 
-      <Section title="Whole-of-government posture" meta={`generated ${new Date(ov.generatedAt).toLocaleString()}`}>
+      <Section title="Whole-of-government status" meta={`generated ${new Date(ov.generatedAt).toLocaleString()}`}>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
           <MetricStat label="Institutions" value={String(t.institutions)} tone="neutral" />
           <MetricStat label="Active" value={String(t.activeMinistries)} tone="ok" />

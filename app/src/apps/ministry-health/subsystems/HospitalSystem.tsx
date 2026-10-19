@@ -20,6 +20,7 @@ import { records as recordsOf, fileRecord, advanceRecord, returnRecord, STAGE_OR
 import { pickIndex } from '@/lib/pick-index';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
+import { aiLabel } from '@/lib/nation/registry';
 const ACC = ACCENT.hospital!;
 
 export function HospitalSystem({ id, now, role, withheld }: {
@@ -150,7 +151,7 @@ export function HospitalSystem({ id, now, role, withheld }: {
               <RingGauge value={hd.nationalBedHeadroomPct} label="headroom" tone={headroomTone} size={100} sub="%" />
             </div>
           </CommandPanel>
-          <CommandPanel title="AI operational guidance" meta={`${adv.severity} · ${adv.confidence}%`} accent={ACC}>
+          <CommandPanel title={aiLabel('AI operational guidance', 'Operational guidance')} meta={`${adv.severity} · ${adv.confidence}%`} accent={ACC}>
             <div className="text-[10px] text-ink">{adv.headline}</div>
             <ul className="mt-0.5 space-y-0.5">{adv.recommended.map((r, i) => <li key={i} className="text-[9px] text-ink-soft">▸ {r}</li>)}</ul>
           </CommandPanel>

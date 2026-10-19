@@ -6,6 +6,7 @@ import * as React from 'react';
 import { emergencyResilienceBoard } from '@/lib/gov/emergency-resilience';
 import { TheatreFrame, StatusBoardKpi, TheatreRule, EMERGENCY_DS, TheatreCallout } from '@/apps/emergency-response/design-system/emergency-ds';
 import { seed, wave } from '@/lib/telemetry';
+import { regionName } from '@/lib/nation/registry';
 
 function severityCol(s: string): string {
   return s === 'catastrophic' ? EMERGENCY_DS.ember
@@ -30,7 +31,7 @@ function rescueSurface(kinds: string[], code: string, title: string, subtitle: s
         <TheatreRule label="rescue operations" />
         {ops.length === 0 ? (
           <p className="text-[10.5px] italic" style={{ color: EMERGENCY_DS.mut }}>
-            No active operations of this class. National posture: monitoring.
+            No active operations of this class. National status: monitoring.
           </p>
         ) : ops.map(o => (
           <div key={o.id} className="grid grid-cols-[110px_1fr_140px_110px_110px] gap-3 border-b py-1.5 text-[11px]"
@@ -84,7 +85,7 @@ export function InfrastructureContinuity({ id, now }: { id: string; now: number 
 
 export function PowerRestoration({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
-  const regions = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+  const regions = [regionName(0, 'Capital District'), 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
   return (
     <TheatreFrame archetype="continuity" code="CN-PWR-14" title="Power Restoration" subtitle="grid stabilisation & black-start coordination">
       <StatusBoardKpi items={[

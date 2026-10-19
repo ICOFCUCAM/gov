@@ -12,6 +12,8 @@ import { CommandPanel, sc, type Tone } from '@/apps/_shared/SovereignUI';
 import { OpsHeader, KpiStrip, BarPanel } from '@/apps/ministry-health/subsystems/_ops';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
+import { aiLabel } from '@/lib/nation/registry';
+import { IndexTag } from '@/components/ui/IndexTag';
 const ACC = '#7c5cff';
 
 export function SimulationSystem({ id, now, role, withheld }: {
@@ -25,11 +27,11 @@ export function SimulationSystem({ id, now, role, withheld }: {
 
   return (
     <div className="space-y-2 rounded-[5px] p-2" style={{ background: '#06050f', boxShadow: 'inset 0 0 90px rgba(0,0,0,0.6)' }}>
-      <OpsHeader index={11} title="AI & National Health Simulation" subtitle="Pandemic Modelling · Collapse-Risk Detection"
+      <OpsHeader index={11} title={aiLabel('AI & National Health Simulation', 'National Health Simulation')} subtitle="Pandemic Modelling · Collapse-Risk Detection"
         posture={sm.posture} tone={pTone} now={now} role={role} accent={ACC} />
 
       <KpiStrip ts={ts} accent={ACC} items={[
-        { l: 'Systemic Risk', v: `${sm.systemicRiskIndex}`, s: 'index', t: pTone, k: 'smr' },
+        { l: 'Systemic Risk', v: `${sm.systemicRiskIndex}`, s: 'index', t: pTone, k: 'smr', tag: <IndexTag index="health-operations.ts · systemicRiskIndex" /> },
         { l: 'Posture', v: sm.posture.toUpperCase(), s: 'national', t: pTone, k: 'smp' },
         { l: 'Scenarios', v: `${sm.scenarios.length}`, s: 'modelled', t: 'ok', k: 'sms' },
         { l: 'Collapse Vectors', v: `${sm.collapseRisks.length}`, s: 'detected', t: sm.collapseRisks.some(r => r.tone === 'alert') ? 'alert' : 'warn', k: 'smc' },
@@ -37,7 +39,7 @@ export function SimulationSystem({ id, now, role, withheld }: {
         { l: 'Confidence', v: `${sm.confidencePct}%`, s: 'ensemble', t: 'ok', k: 'smf' },
       ]} />
 
-      <CommandPanel title="AI recommended intervention" meta={`confidence ${sm.confidencePct}%`} accent={ACC} live>
+      <CommandPanel title={aiLabel('AI recommended intervention', 'Recommended intervention')} meta={`confidence ${sm.confidencePct}%`} accent={ACC} live>
         <div className="text-[10px] text-ink">{sm.recommendedIntervention}</div>
       </CommandPanel>
 

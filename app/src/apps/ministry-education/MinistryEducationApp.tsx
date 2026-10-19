@@ -15,6 +15,7 @@ import { ContinuityForesightChamber } from '@/apps/ministry-education/Continuity
 import type { Tone } from '@/apps/_shared/SovereignUI';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const ACC = '#5fa8ff';
 const WF: Record<string, WorkKind> = {
@@ -29,7 +30,7 @@ const LABEL: Record<string, string> = {
   'knowledge-infra': 'Knowledge Infrastructure & Civilizational Memory',
   'continuity-foresight': 'Continuity Foresight Chamber',
 };
-type K = { l: string; v: string; t: Tone };
+type K = { l: string; v: string; t: Tone; tag?: React.ReactNode };
 const strip = (items: K[]) => items.map((m, i) => ({ ...m, s: '', k: `ed${i}` }));
 
 export function MinistryEducationApp({ instanceId, domain, now, role, withheld }: {
@@ -54,7 +55,7 @@ export function MinistryEducationApp({ instanceId, domain, now, role, withheld }
   } else if (d === 'command') {
     const C = educationCommand(id, ts); pTone = C.posture === 'crisis' ? 'alert' : C.posture === 'engaged' ? 'warn' : 'ok';
     kpis = [
-      { l: 'Posture Index', v: `${C.postureIndex}`, t: pTone }, { l: 'Command Posture', v: C.posture, t: pTone },
+      { l: 'Posture Index', v: `${C.postureIndex}`, t: pTone, tag: <IndexTag index="education-systems.ts · postureIndex" /> }, { l: 'Command Posture', v: C.posture, t: pTone },
       { l: 'Critical Domains', v: `${C.criticalDomains}`, t: C.criticalDomains ? 'alert' : 'ok' },
       { l: 'Open Directives', v: `${C.directives.length}`, t: C.directives.some(x => x.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok' },
       { l: 'Pupil:Teacher', v: `${sn.pupilTeacherRatio}:1`, t: sn.pupilTeacherRatio >= 45 ? 'alert' : sn.pupilTeacherRatio >= 35 ? 'warn' : 'ok' },
@@ -66,7 +67,7 @@ export function MinistryEducationApp({ instanceId, domain, now, role, withheld }
     kpis = [
       { l: 'Institutions', v: `${H.institutions}`, t: 'ok' }, { l: 'Enrolment', v: `${H.enrolmentK}k`, t: 'ok' },
       { l: 'Graduation Rate', v: `${H.graduationRatePct}%`, t: H.graduationRatePct >= 70 ? 'ok' : 'warn' },
-      { l: 'Research Output', v: `${H.researchOutputIndex}`, t: H.researchOutputIndex >= 60 ? 'ok' : 'warn' },
+      { l: 'Research Output', tag: <IndexTag index="education-systems.ts · researchOutputIndex" />, v: `${H.researchOutputIndex}`, t: H.researchOutputIndex >= 60 ? 'ok' : 'warn' },
       { l: 'Funding Gap', v: `${H.fundingGapPct}%`, t: H.fundingGapPct >= 25 ? 'alert' : H.fundingGapPct >= 14 ? 'warn' : 'ok' },
       { l: 'Posture', v: H.posture, t: pTone },
     ];

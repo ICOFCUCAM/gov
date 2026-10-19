@@ -9,9 +9,14 @@ import { ContestDialog } from '@/components/features/ContestDialog';
 import { AgentRequest } from '@/components/ui/AgentRequest';
 import { getPermit } from '@/lib/data/store';
 
+import { nationMessages, nationLocale } from '@/lib/nation/registry';
+import { t as fill } from '@/lib/i18n';
+import { rich } from '@/lib/i18n/rich';
 export const dynamic = 'force-dynamic';
 
-export default function PermitDetailPage({ params }: { params: { id: string } }) {
+export default async function PermitDetailPage(props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
+  const m = nationMessages();
   const permit = getPermit(params.id);
 
   if (!permit) {
@@ -21,12 +26,12 @@ export default function PermitDetailPage({ params }: { params: { id: string } })
           activeTab="/wallet/services"
           header={
             <>
-              <Link href="/wallet/permits" className="underline underline-offset-2">← Permits</Link>
+              <Link href="/wallet/permits" className="underline underline-offset-2">← {m.pages.permits}</Link>
               <span className="font-mono text-xs">{params.id}</span>
             </>
           }
         >
-          <p>Permit not found.</p>
+          <p>{m.detail.notFoundPermit}</p>
         </PhoneShell>
       </main>
     );
@@ -38,7 +43,7 @@ export default function PermitDetailPage({ params }: { params: { id: string } })
         activeTab="/wallet/services"
         header={
           <>
-            <Link href="/wallet/permits" className="underline underline-offset-2">← Permits</Link>
+            <Link href="/wallet/permits" className="underline underline-offset-2">← {m.pages.permits}</Link>
             <span className="font-mono text-xs">{permit.id}</span>
           </>
         }
@@ -50,23 +55,21 @@ export default function PermitDetailPage({ params }: { params: { id: string } })
           </div>
           <div className="text-sm text-ink-muted mt-1">
             {permit.municipality}
-            {permit.officerName ? ` · Officer ${permit.officerName}` : ''}
+            {permit.officerName ? ` · ${fill(m.detail.officer, { name: permit.officerName })}` : ''}
             {permit.decisionDue
-              ? ` · decision due ${new Date(permit.decisionDue).toLocaleDateString()}`
+              ? ` · ${fill(m.pages.decisionDue, { date: new Date(permit.decisionDue).toLocaleDateString(nationLocale()) })}`
               : ''}
           </div>
         </Card>
 
         {permit.status === 'needs-info' ? (
           <Plain>
-            <strong>Action needed.</strong> The officer asked for more
-            information. You can respond here, on paper at any office, or
-            through an agent — whichever works for you.
+            <strong>{m.detail.actionNeeded}</strong> {m.detail.actionNeededText}
           </Plain>
         ) : null}
 
         <section>
-          <h3 className="font-semibold text-lg mb-2">Details</h3>
+          <h3 className="font-semibold text-lg mb-2">{m.detail.details}</h3>
           <Card tight>
             <dl className="text-sm space-y-1">
               {Object.entries(permit.fields).map(([k, v]) => (
@@ -81,30 +84,28 @@ export default function PermitDetailPage({ params }: { params: { id: string } })
 
         {permit.aiClass ? (
           <section>
-            <h3 className="font-semibold text-lg mb-2">Was AI involved?</h3>
+            <h3 className="font-semibold text-lg mb-2">{m.receipt.wasAIInvolved}</h3>
             <CopilotPanel decisionClass={permit.aiClass}>
               <p>
-                An AI Copilot helped the reviewing officer by drafting a
-                summary. <strong>The officer signs every decision.</strong> The
-                AI does not decide.
+                {rich(m.detail.aiPermit, { bold: <strong>{m.detail.aiPermitBold}</strong> })}
               </p>
             </CopilotPanel>
           </section>
         ) : null}
 
         <section>
-          <h3 className="font-semibold text-lg mb-2">Progress</h3>
+          <h3 className="font-semibold text-lg mb-2">{m.detail.progress}</h3>
           <Timeline entries={permit.timeline} />
         </section>
 
         <section>
-          <h3 className="font-semibold text-lg mb-2">If something's wrong</h3>
+          <h3 className="font-semibold text-lg mb-2">{m.receipt.ifSomethingWrong}</h3>
           <div className="flex flex-wrap items-start gap-3">
             <ContestDialog receiptId={permit.id} />
             <AgentRequest subjectId={permit.id} />
           </div>
           <p className="text-sm text-ink-muted mt-2">
-            Questioning a decision never delays or penalises your application.
+            {m.detail.neverDelays}
           </p>
         </section>
       </PhoneShell>

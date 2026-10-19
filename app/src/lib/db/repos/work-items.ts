@@ -15,6 +15,7 @@ import type {
   WorkflowDefinitionRow, WorkItemRow, WorkItemStepRow,
   WorkKind, Priority, ActionKey,
 } from '@/lib/db/types';
+import { logger } from '@/lib/ops/log';
 
 export interface WorkflowDefinitionInput {
   workflowId: string;
@@ -47,7 +48,7 @@ export async function syncWorkflowDefinitionRow(d: WorkflowDefinitionInput): Pro
   });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error('[civicos] sync_workflow_definition failed:', error.message, error.code);
+    logger.error('substrate.rpc_failed', { rpc: 'sync_workflow_definition', message: error.message, code: error.code });
     return null;
   }
   return (data as WorkflowDefinitionRow) ?? null;
@@ -87,7 +88,7 @@ export async function openWorkItemRow(i: OpenWorkItemInput): Promise<WorkItemRow
   });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error('[civicos] open_work_item failed:', error.message, error.code);
+    logger.error('substrate.rpc_failed', { rpc: 'open_work_item', message: error.message, code: error.code });
     return null;
   }
   return (data as WorkItemRow) ?? null;
@@ -164,7 +165,7 @@ export async function claimWorkItemRow(ref: string): Promise<WorkItemRow | null>
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_claim_work_item', { p_ref: ref });
-  if (error || !data) { if (error) console.error('[civicos] claim_work_item failed:', error.message); return null; }
+  if (error || !data) { if (error) logger.error('substrate.rpc_failed', { rpc: 'claim_work_item', message: error.message }); return null; }
   return (Array.isArray(data) ? data[0] : data) as WorkItemRow;
 }
 
@@ -176,7 +177,7 @@ export async function releaseWorkItemRow(ref: string): Promise<WorkItemRow | nul
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_release_work_item', { p_ref: ref });
-  if (error || !data) { if (error) console.error('[civicos] release_work_item failed:', error.message); return null; }
+  if (error || !data) { if (error) logger.error('substrate.rpc_failed', { rpc: 'release_work_item', message: error.message }); return null; }
   return (Array.isArray(data) ? data[0] : data) as WorkItemRow;
 }
 
@@ -189,7 +190,7 @@ export async function setWorkItemPriorityRow(ref: string, priority: WorkItemPrio
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_set_work_item_priority', { p_ref: ref, p_priority: priority });
-  if (error || !data) { if (error) console.error('[civicos] set_work_item_priority failed:', error.message); return null; }
+  if (error || !data) { if (error) logger.error('substrate.rpc_failed', { rpc: 'set_work_item_priority', message: error.message }); return null; }
   return (Array.isArray(data) ? data[0] : data) as WorkItemRow;
 }
 
@@ -200,7 +201,7 @@ export async function reassignWorkItemRow(ref: string, assigneeId: string): Prom
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_reassign_work_item', { p_ref: ref, p_assignee_id: assigneeId });
-  if (error || !data) { if (error) console.error('[civicos] reassign_work_item failed:', error.message); return null; }
+  if (error || !data) { if (error) logger.error('substrate.rpc_failed', { rpc: 'reassign_work_item', message: error.message }); return null; }
   return (Array.isArray(data) ? data[0] : data) as WorkItemRow;
 }
 

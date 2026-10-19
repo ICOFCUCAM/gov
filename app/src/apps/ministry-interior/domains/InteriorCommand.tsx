@@ -12,6 +12,13 @@ import * as React from 'react';
 import { interiorOps } from '@/lib/gov/interior-systems';
 import { policeOps, emergencyOps, immigrationOps } from '@/lib/gov/agency-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { nationTime, nationTimeZoneLabel, aiLabel, regionName } from '@/lib/nation/registry';
+import { nationalRegions } from '@/lib/gov/regions';
+import type { SignalKind } from '@/lib/twin/signal';
+import { SignalTag } from '@/components/ui/SignalTag';
+import type { MapPoint } from '@/components/map/NationMap';
+import { RegionMap, mapClock, perUnit, skewed, useNationUnits, useRegisteredSites, type MapValue, type NationUnit, type RegionGlow, type RegionMarker } from '@/apps/ministry-interior/domains/RegionMaps';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const BG = '#070a10';
 const PANEL = '#0c1119';
@@ -93,16 +100,25 @@ function Ring({ value, label, color }: { value: number; label: string; color: st
   );
 }
 
-function ThreatMap({ seedKey, hot = RED }: { seedKey: string; hot?: string }) {
-  const cols = 18, rows = 9;
+// The nation's real regions, coloured by the panel's figure in the panel's
+// own bands (hot / amber / gold / monitor), with pressure glowing over the
+// regions under strain (map plan phase 5; was an 18×9 dot grid).
+const MONITOR = '#2a3a44';
+const bandOf = (hot: string) => (v: number) => (v >= 82 ? hot : v >= 62 ? AMBER : v >= 40 ? GOLD : MONITOR);
+
+function ThreatMap({ title, values, kind, source, hot = RED, valueLabel = 'Threat index', points, markers = [], heat = false, bands, minHeight = 120, maxHeight = 180 }: {
+  title: string; values: MapValue[]; kind: SignalKind; source: string; hot?: string; valueLabel?: string;
+  points?: MapPoint[]; markers?: RegionMarker[]; heat?: boolean; bands?: (v: number) => string; minHeight?: number; maxHeight?: number;
+}) {
+  const band = bands ?? bandOf(hot);
+  const glows: RegionGlow[] = values.filter(v => v.value >= 62).map(v => ({
+    region: v.key, colour: band(v.value), r: heat ? v.value / 100 : (v.value - 50) / 60, pulse: v.value >= 82,
+  }));
   return (
-    <div className="grid gap-[2px] rounded-[2px] p-1" style={{ gridTemplateColumns: `repeat(${cols},1fr)`, background: '#080b11' }} aria-hidden>
-      {Array.from({ length: cols * rows }).map((_, i) => {
-        const v = seed(`${seedKey}:${i}`);
-        const inland = (i % cols > 1 && i % cols < cols - 1 && Math.floor(i / cols) > 0 && Math.floor(i / cols) < rows - 1);
-        const c = !inland ? 'transparent' : v > 0.82 ? hot : v > 0.62 ? AMBER : v > 0.4 ? GOLD : '#2a3a44';
-        return <span key={i} className="aspect-square rounded-[1px]" style={{ background: c, opacity: inland ? (v > 0.62 ? 0.95 : 0.55) : 0 }} />;
-      })}
+    <div className="rounded-[2px] p-1" style={{ background: '#080b11' }}>
+      <RegionMap title={title} values={values} kind={kind} source={source} valueLabel={valueLabel} unit="/100" theatre small hideCaption
+        colourOf={v => band(v.value)} glows={glows} markers={markers} points={points} maxHeight={maxHeight} minHeight={minHeight}
+        emptyNote="Loading the nation's regions…" />
     </div>
   );
 }
@@ -176,6 +192,33 @@ function Bars({ rows, accent = RED }: { rows: { l: string; v: string; pct: numbe
   );
 }
 
+const SRC_THREAT = 'Regional security stress model (sample until incident and intelligence feeds connect)';
+const SRC_BORDER = 'Border risk model (sample until border management systems connect)';
+const SRC_CRIME = 'Police regional load model (sample until crime records connect)';
+const SRC_CYBER = 'Cyber threat model (sample until the national CERT feed connects)';
+
+function MapLabel({ kind, source, children }: { kind: SignalKind; source: string; children: React.ReactNode }) {
+  return (
+    <div className="mb-1 flex items-center gap-1.5 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>
+      {children}<SignalTag kind={kind} source={source} className="!text-[7px]" />
+    </div>
+  );
+}
+
+/** The outer regions of the nation, one per direction from its centre (where border posts sit). */
+function outerUnits(units: NationUnit[], n: number): NationUnit[] {
+  const located = units.filter(u => u.lng != null && u.lat != null);
+  if (!located.length) return [];
+  const cx = located.reduce((a, u) => a + u.lng!, 0) / located.length, cy = located.reduce((a, u) => a + u.lat!, 0) / located.length;
+  const best = new Map<number, { u: NationUnit; d: number }>();
+  for (const u of located) {
+    const k = Math.floor(((Math.atan2(u.lat! - cy, u.lng! - cx) + Math.PI) / (2 * Math.PI)) * n) % n;
+    const d = Math.hypot(u.lng! - cx, u.lat! - cy);
+    if (!best.has(k) || best.get(k)!.d < d) best.set(k, { u, d });
+  }
+  return [...best.values()].map(b => b.u);
+}
+
 export function InteriorCommand({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
   const io = interiorOps(id, ts);
@@ -184,7 +227,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
   const im = immigrationOps(id, ts);
 
   const clock = new Date(now);
-  const hh = clock.toLocaleTimeString('en-GB', { hour12: false });
+  const hh = nationTime(clock);
   const dd = clock.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).toUpperCase();
   const W = (k: string, lo: number, hi: number, n = 14) => waveSeries(`ic:${k}:${id}`, ts, n, lo, hi);
 
@@ -199,6 +242,31 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
   const tactical = Math.round(wave(`ic:tu:${id}`, ts, 4000, 12000));
   const agencies = `${18 + Math.round(seed(`ic:ag:${id}`) * 4)} / 23`;
 
+  // ── The nation's regions on the maps (sample figures until sources connect) ──
+  const units = useNationUnits() ?? [];
+  // Maps move on a slower clock than the counters, so the regions are not redrawn every tick.
+  const tm = mapClock(ts);
+  // Few regions (e.g. four): spread the sample evenly so the map is not all one band.
+  const sk = (x: number, p: number) => skewed(x, units.length < 10 ? 1 : p);
+  const posts = useRegisteredSites(['border-post']);
+  const threatMap = perUnit(units, nationalRegions(tm).map(r => ({ region: r.name, v: r.composite })), r => r.v,
+    u => Math.round(8 + 90 * sk(wave(`ic:tm:${id}:${u.code ?? u.name}`, tm, 0, 1), 2)));
+  const borderVals = units.map(u => ({ key: u.name, value: Math.round(6 + 92 * sk(wave(`ic:bm:${id}:${u.code ?? u.name}`, tm, 0, 1), 1.7)) }));
+  const highRisk = borderVals.filter(v => v.value >= 82).length;
+  const restricted = borderVals.filter(v => v.value >= 62 && v.value < 82).length;
+  // Border posts: examples spread over the outer regions until the facility register holds the nation's own.
+  const frontier = outerUnits(units, Math.min(8, Math.max(3, Math.round(units.length / 5))));
+  const postMarkers: RegionMarker[] = posts.categories.has('border-post') ? [] : frontier.map((u, i) => {
+    const share = Math.floor(im.bordersOpen / frontier.length) + (i < im.bordersOpen % frontier.length ? 1 : 0);
+    return { region: u.name, glyph: '⛬', colour: EMER, label: `${share} open checkpoint${share === 1 ? '' : 's'} · ${u.name}`, count: share, dy: 0.15, dx: 0.35 };
+  });
+  const crimeMap = perUnit(units, policeOps(id, tm).regional, r => r.load, u => Math.round(10 + 88 * sk(wave(`ic:ch:${id}:${u.code ?? u.name}`, tm, 0, 1), 1.8)));
+  const cyberVals = units.map(u => ({ key: u.name, value: Math.round(8 + 90 * sk(wave(`ic:tlm:${id}:${u.code ?? u.name}`, tm, 0, 1), 2)) }));
+  const stability = units.length
+    ? units.map(u => ({ l: u.name, v: Math.round(wave(`ic:rsi:${id}:${u.code ?? u.name}`, ts, 50, 88)) })).sort((a, b) => a.v - b.v).slice(0, 5)
+    : ['North', 'Central', 'West', 'East', 'South'].map((rg, i) => ({ l: `${rg} Region`, v: Math.round(wave(`ic:rsi:${id}:${i}`, ts, 50, 88)) }));
+  const place = (i: number, ref: string) => units[i % Math.max(1, units.length)]?.name ?? regionName(i, ref);
+
   const headCells = [
     ['National Posture', posture, sevTone],
     ['Threat Level', threat, sevTone],
@@ -207,16 +275,16 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
     ['Agencies Deployed', agencies, 'ok'],
   ] as [string, string, string][];
 
-  const chips = [['AI Command Assist', 'Active'], ['Data Integrity', 'Verified'], ['System Health', 'Optimal'], ['Secure Network', 'Encrypted']];
+  const chips = [[aiLabel('AI Command Assist', 'Command Assist'), 'Active'], ['Data Integrity', 'Verified'], ['System Health', 'Optimal'], ['Secure Network', 'Encrypted']];
 
   const quick = ['Activate Emergency Protocol', 'Alert All Agencies', 'Deploy Tactical Units', 'Initiate Lockdown', 'Request Air Support', 'Activate Cyber Shield'];
   const links = ['Health', 'Finance', 'Transport', 'Defence', 'Justice', 'Foreign Affairs'];
   const feed = [
-    [hh, 'High-risk vehicle intercepted at Northern Border Checkpoint 12', 'Border Guard'],
-    ['12:45', 'Flash flood reported in Riverdale District. Response teams dispatched.', 'Disaster Ops'],
+    [hh, `High-risk vehicle intercepted at ${frontier[0]?.name ?? regionName(1, 'Northern')} border checkpoint 12`, 'Border Guard'],
+    ['12:45', `Flash flood reported in ${place(2, 'Riverdale District')}. Response teams dispatched.`, 'Disaster Ops'],
     ['12:41', 'Cyber threat blocked: ransomware attempt detected and neutralised.', 'Cyber Unit'],
     ['12:38', 'Arrest made in ongoing fraud investigation.', 'Police Dept'],
-    ['12:35', 'New permit application surge detected in Metropolitan District.', 'Civil Registry'],
+    ['12:35', `New permit application surge detected in ${units.find(u => u.capital)?.name ?? place(0, 'Metropolitan District')}.`, 'Civil Registry'],
   ] as [string, string, string][];
 
   return (
@@ -233,7 +301,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[8.5px]" style={{ color: MUT }}>
           <span>DATE <span style={{ color: SOFT }}>{dd}</span></span>
-          <span>TIME <span className="font-mono" style={{ color: INK }}>{hh}</span> GMT+1</span>
+          <span>TIME <span className="font-mono" style={{ color: INK }}>{hh}</span> {nationTimeZoneLabel('GMT+1')}</span>
         </div>
         {headCells.map(([l, v, t]) => (
           <div key={l} className="border-l px-3" style={{ borderColor: LINE }}>
@@ -258,7 +326,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
             <div className="mb-2 flex items-center gap-3 rounded-[3px] border px-3 py-2" style={{ borderColor: LINE, background: PANEL2 }}>
               <div><div className="text-[7px] uppercase tracking-[0.14em]" style={{ color: MUT }}>Security Posture</div>
                 <div className="text-[16px] font-bold" style={{ color: tc(sevTone), fontFamily: SERIF }}>{posture}</div></div>
-              <div className="ml-auto text-right"><div className="text-[7px] uppercase tracking-[0.14em]" style={{ color: MUT }}>Risk Score</div>
+              <div className="ml-auto text-right"><div className="text-[7px] uppercase tracking-[0.14em]" style={{ color: MUT }}>Risk Score <IndexTag index="interior-systems.ts · publicOrderIndex" /></div>
                 <div className="font-mono text-[16px]" style={{ color: RED }}>{riskScore}<span className="text-[9px]" style={{ color: MUT }}>/100</span></div></div>
             </div>
             <div className="grid grid-cols-4 gap-1.5">
@@ -269,8 +337,8 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
             </div>
             <div className="mt-2 grid grid-cols-[1.5fr_1fr] gap-3">
               <div>
-                <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>National Threat Map</div>
-                <ThreatMap seedKey={`ic:tm:${id}`} />
+                <MapLabel kind="sample" source={SRC_THREAT}>National Threat Map</MapLabel>
+                <ThreatMap title="National Threat Map" values={threatMap.values} kind="sample" source={SRC_THREAT} />
                 <div className="mt-1 flex gap-3 text-[7px] uppercase tracking-wider" style={{ color: MUT }}>
                   {[['Critical', RED], ['High', AMBER], ['Medium', GOLD], ['Monitor', '#2a3a44']].map(([l, c]) => (
                     <span key={l} className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: c }} />{l}</span>
@@ -280,7 +348,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
                 <Area pts={W('tf', 30, 90, 16)} />
               </div>
               <div>
-                <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>AI Threat Prediction</div>
+                <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>{aiLabel('AI Threat Prediction', 'Threat Prediction')}</div>
                 <Ring value={Math.round(wave(`ic:atp:${id}`, ts, 55, 88))} label="Probability" color={RED} />
                 <div className="mt-1 space-y-0.5 text-[8px]">
                   {[['Unrest', 62], ['Terrorism', 45], ['Cyber Threat', 38], ['Organized Crime', 55], ['Border Risk', 41]].map(([l, v]) => (
@@ -301,10 +369,11 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
             </div>
             <div className="mt-2 grid grid-cols-[1.4fr_1fr] gap-3">
               <div>
-                <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Border Situation Map</div>
-                <ThreatMap seedKey={`ic:bm:${id}`} hot={CYAN} />
+                <MapLabel kind="sample" source={SRC_BORDER}>Border Situation Map</MapLabel>
+                <ThreatMap title="Border Situation Map" values={borderVals} kind="sample" source={SRC_BORDER} hot={RED} valueLabel="Border risk"
+                  bands={v => (v >= 82 ? RED : v >= 62 ? AMBER : MONITOR)} points={posts.points} markers={postMarkers} />
                 <div className="mt-1 grid grid-cols-3 gap-x-3 text-[7.5px]" style={{ color: SOFT }}>
-                  {[['High-Risk Zones', 7, RED], ['Open Checkpoints', im.bordersOpen, EMER], ['Restricted', 5, AMBER]].map(([l, v, c]) => (
+                  {[['High-Risk Zones', highRisk, RED], ['Open Checkpoints', im.bordersOpen, EMER], ['Restricted', restricted, AMBER]].map(([l, v, c]) => (
                     <span key={l as string} className="inline-flex items-center gap-1"><span className="h-1.5 w-1.5 rounded-full" style={{ background: c as string }} />{l} <b style={{ color: INK }}>{v as number}</b></span>
                   ))}
                 </div>
@@ -385,8 +454,8 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
             </div>
             <div className="mt-2 grid grid-cols-[1.2fr_1fr] gap-3">
               <div>
-                <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Crime Heatmap (24H)</div>
-                <ThreatMap seedKey={`ic:ch:${id}`} hot={RED_BR} />
+                <MapLabel kind="sample" source={SRC_CRIME}>Crime Heatmap (24H)</MapLabel>
+                <ThreatMap title="Crime Heatmap (24H)" values={crimeMap.values} kind="sample" source={SRC_CRIME} hot={RED_BR} valueLabel="Crime load" heat />
               </div>
               <div>
                 <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Top Crime Types</div>
@@ -394,7 +463,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
               </div>
             </div>
             <div className="mt-2 grid grid-cols-3 gap-2 border-t pt-2 text-[8px]" style={{ borderColor: LINE }}>
-              {[['Patrol Deployment', `${po.unitsDeployed.toLocaleString()} field`], ['AI Crime Forecast', `${Math.round(wave(`ic:cf:${id}`, ts, 18, 38))} hot areas`], ['Investigations', `${po.openInvestigations} · ${po.clearanceRatePct}% solved`]].map(([l, v]) => (
+              {[['Patrol Deployment', `${po.unitsDeployed.toLocaleString()} field`], [aiLabel('AI Crime Forecast', 'Crime Forecast'), `${Math.round(wave(`ic:cf:${id}`, ts, 18, 38))} hot areas`], ['Investigations', `${po.openInvestigations} · ${po.clearanceRatePct}% solved`]].map(([l, v]) => (
                 <div key={l} className="rounded-[2px] border px-1.5 py-1" style={{ borderColor: LINE }}>
                   <div className="text-[7px] uppercase tracking-wider" style={{ color: MUT }}>{l}</div><div style={{ color: INK }}>{v}</div>
                 </div>
@@ -416,8 +485,8 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
                 { label: 'Ransomware', v: 18, c: GOLD }, { label: 'Data Breach', v: 16, c: CYAN }, { label: 'DDoS', v: 6, c: MUT },
               ]} />
               <div>
-                <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Threat Level Map</div>
-                <ThreatMap seedKey={`ic:tlm:${id}`} hot={CYAN} />
+                <MapLabel kind="sample" source={SRC_CYBER}>Threat Level Map</MapLabel>
+                <ThreatMap title="Threat Level Map" values={cyberVals} kind="sample" source={SRC_CYBER} hot={CYAN} valueLabel="Cyber threat level" minHeight={90} maxHeight={130} />
               </div>
               <div>
                 <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Intelligence Graph</div>
@@ -438,10 +507,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
               </div>
               <div>
                 <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Regional Stability Index</div>
-                <Bars accent={EMER} rows={['North', 'Central', 'West', 'East', 'South'].map((rg, i) => {
-                  const v = Math.round(wave(`ic:rsi:${id}:${i}`, ts, 50, 88));
-                  return { l: `${rg} Region`, v: `${v}%`, pct: v };
-                })} />
+                <Bars accent={EMER} rows={stability.map(r => ({ l: r.l, v: `${r.v}%`, pct: r.v }))} />
               </div>
               <div>
                 <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Civil Unrest Indicator</div>

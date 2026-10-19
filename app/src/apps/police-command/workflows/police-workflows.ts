@@ -6,7 +6,7 @@
 // existing RuntimeQueue + Sovereign Audit Chain.
 //
 // Three workflows declared here:
-//   1. incident-dispatch     — 911 call → triage → dispatch → on-scene → cleared
+//   1. incident-dispatch     — emergency call → triage → dispatch → on-scene → cleared
 //   2. investigation-handoff — case opened → assigned → evidence → charge → prosecutor file
 //   3. use-of-force-review   — incident → bodyworn audit → IA review → tribunal → disposition
 
@@ -46,7 +46,7 @@ export const INCIDENT_DISPATCH: PoliceWorkflowDefinition = {
   blueprintCitation: '§19 — National Security & Emergency Response · dispatch chain',
   description: 'Receive emergency call, triage to priority, dispatch units, log arrival, clear and file.',
   steps: [
-    { id: 'call',     kind: 'submission',   title: '911 call received',            role: 'caller',          requiresSignature: false, maxDurationHours: 0.01, auditTag: 'police.dispatch.call' },
+    { id: 'call',     kind: 'submission',   title: 'Emergency call received',            role: 'caller',          requiresSignature: false, maxDurationHours: 0.01, auditTag: 'police.dispatch.call' },
     { id: 'triage',   kind: 'triage',       title: 'Dispatcher triage to priority', role: 'dispatcher',      requiresSignature: true,  maxDurationHours: 0.05, auditTag: 'police.dispatch.triage' },
     { id: 'assign',   kind: 'dispatch',     title: 'Unit assignment',              role: 'dispatcher',      requiresSignature: true,  maxDurationHours: 0.05, auditTag: 'police.dispatch.assign' },
     { id: 'enroute',  kind: 'execution',    title: 'En-route confirmed',           role: 'patrol-officer',  requiresSignature: false, maxDurationHours: 0.1,  auditTag: 'police.dispatch.enroute' },

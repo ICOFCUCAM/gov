@@ -15,6 +15,9 @@ import {
   bankingRails, citizenFinance, fiscalAssurance,
 } from '@/lib/gov/treasury-systems';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
+import { nationTime, nationTimeZoneLabel, aiLabel } from '@/lib/nation/registry';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { RegionMap, mapClock, perUnit, skewed, useNationUnits, type MapValue, type RegionGlow } from '@/apps/ministry-interior/domains/RegionMaps';
 
 const BG = '#04100d';
 const PANEL = '#071512';
@@ -113,17 +116,17 @@ function Ring({ value, label, color }: { value: number; label: string; color: st
   );
 }
 
-function HeatGrid({ seedKey }: { seedKey: string }) {
-  const cols = 16, rows = 8;
+// Treasury pressure on the nation's real regions (map plan phase 5; was a
+// dot grid): each region's fiscal risk from the assurance engine when it
+// names the region, else a sample, in the legend's four bands.
+const SRC_PRESSURE = 'Regional fiscal risk model (sample until regional accounts connect)';
+const pressureBand = (v: number) => (v >= 60 ? RED : v >= 45 ? AMBER : v >= 30 ? GOLD : EMER);
+
+function HeatGrid({ values }: { values: MapValue[] }) {
+  const glows: RegionGlow[] = values.filter(v => v.value >= 45).map(v => ({ region: v.key, colour: pressureBand(v.value), r: v.value / 100, pulse: v.value >= 60 }));
   return (
-    <div className="grid gap-[2px]" style={{ gridTemplateColumns: `repeat(${cols},1fr)` }} aria-hidden>
-      {Array.from({ length: cols * rows }).map((_, i) => {
-        const v = seed(`${seedKey}:${i}`);
-        const inland = (i % cols > 2 && i % cols < cols - 2 && Math.floor(i / cols) > 0 && Math.floor(i / cols) < rows - 1);
-        const c = !inland ? 'transparent' : v > 0.74 ? RED : v > 0.55 ? AMBER : v > 0.34 ? GOLD : EMER;
-        return <span key={i} className="aspect-square rounded-[1px]" style={{ background: c, opacity: inland ? 0.8 : 0 }} />;
-      })}
-    </div>
+    <RegionMap title="Treasury Pressure Map" values={values} kind="sample" source={SRC_PRESSURE} valueLabel="Fiscal pressure" unit="/100" theatre small hideCaption
+      colourOf={v => pressureBand(v.value)} glows={glows} maxHeight={170} minHeight={120} emptyNote="Loading the nation's regions…" />
   );
 }
 
@@ -227,9 +230,12 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
   const br = bankingRails(id, ts);
   const cf = citizenFinance(id, ts);
   const fa = fiscalAssurance(id, ts);
+  // The map moves on a slower clock than the counters, so the regions are not redrawn every tick.
+  const tm = mapClock(ts);
+  const pressure = perUnit(useNationUnits() ?? [], fiscalAssurance(id, tm).regionalRisk, r => r.risk, u => Math.round(8 + 76 * skewed(wave(`tro:hm:${id}:${u.code ?? u.name}`, tm, 0, 1), 1.5))).values;
 
   const clock = new Date(now);
-  const hh = clock.toLocaleTimeString('en-GB', { hour12: false });
+  const hh = nationTime(clock);
   const mon = clock.toLocaleDateString('en-GB', { month: 'short', year: 'numeric' }).toUpperCase();
 
   const W = (k: string, lo: number, hi: number, n = 14) => waveSeries(`tro:${k}:${id}`, ts, n, lo, hi);
@@ -319,13 +325,13 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
           </div>
         </div>
         <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-[8.5px]" style={{ color: MUT }}>
-          <span><span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> GMT+1</span>
+          <span><span className="font-mono text-[11px]" style={{ color: INK }}>{hh}</span> {nationTimeZoneLabel('GMT+1')}</span>
           <span>DATE <span style={{ color: SOFT }}>{mon}</span></span>
           <span>SYSTEM <span style={{ color: EMER }}>● OPERATIONAL</span></span>
           <span>FIVE-YEAR PLAN <span style={{ color: SOFT }}>2025/26 Q2</span></span>
         </div>
         <div className="ml-auto flex flex-wrap items-center gap-x-4 gap-y-1 text-[8px]" style={{ color: MUT }}>
-          {[['AI Engine', 'Active', EMER], ['Data Integrity', 'Verified', EMER], ['Cyber Defense', 'Secure', EMER]].map(([a, b, c]) => (
+          {[[aiLabel('AI Engine', 'Advisory Engine'), 'Active', EMER], ['Data Integrity', 'Verified', EMER], ['Cyber Defense', 'Secure', EMER]].map(([a, b, c]) => (
             <span key={a as string} className="uppercase tracking-[0.12em]">{a} <span style={{ color: c as string }}>● {b}</span></span>
           ))}
           <Link href="/treasury" target="_blank" rel="noopener"
@@ -387,8 +393,8 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
           <Mod n={1} title="National Treasury Command">
             <div className="grid grid-cols-[1.3fr_1fr] gap-3">
               <div>
-                <div className="mb-1 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Treasury Pressure Map</div>
-                <HeatGrid seedKey={`tro:hm:${id}`} />
+                <div className="mb-1 flex items-center gap-1.5 text-[8px] uppercase tracking-[0.16em]" style={{ color: MUT }}>Treasury Pressure Map<SignalTag kind="sample" source={SRC_PRESSURE} className="!text-[7px]" /></div>
+                <HeatGrid values={pressure} />
                 <div className="mt-1.5 flex items-center justify-between text-[7.5px] uppercase tracking-wider" style={{ color: MUT }}>
                   <span>Low</span><span className="flex items-center gap-0.5">{[EMER, GOLD, AMBER, RED].map(c => <span key={c} className="h-1.5 w-4" style={{ background: c }} />)}</span><span>High</span>
                 </div>
@@ -404,7 +410,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
             </div>
             <div className="mt-2 grid grid-cols-3 gap-2 border-t pt-2" style={{ borderColor: LINE }}>
               <div>
-                <div className="text-[7.5px] font-bold uppercase tracking-[0.14em]" style={{ color: GOLD }}>AI Fiscal Alerts</div>
+                <div className="text-[7.5px] font-bold uppercase tracking-[0.14em]" style={{ color: GOLD }}>{aiLabel('AI Fiscal Alerts', 'Fiscal Alerts')}</div>
                 {['Revenue shortfall · Oil & Gas', 'Expenditure deviation · Infra', 'Cash buffer low (1 mo)'].map(a => (
                   <div key={a} className="mt-1 text-[8px]" style={{ color: SOFT }}>● {a}</div>
                 ))}
@@ -469,7 +475,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
-                  <Ring value={Math.min(99, 60 + fa.fraudSignals * 4)} label="AI Fraud" color={fa.fraudSignals > 6 ? RED : GOLD} />
+                  <Ring value={Math.min(99, 60 + fa.fraudSignals * 4)} label={aiLabel('AI Fraud', 'Fraud')} color={fa.fraudSignals > 6 ? RED : GOLD} />
                   <div className="text-[8px]" style={{ color: SOFT }}>Fraud scoring<br />+5 vs last month</div>
                 </div>
                 <Donut size={84} total={usd(revYtd)} sub="total" segs={sectors} />
@@ -641,7 +647,7 @@ export function TreasuryOverview({ id, now }: { id: string; now: number }) {
           </div>
           <div className="rounded-[4px] border" style={{ borderColor: LINE, background: PANEL }}>
             <div className="flex items-center justify-between border-b px-3 py-2" style={{ borderColor: LINE }}>
-              <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: INK }}>AI Recommendations</span>
+              <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: INK }}>{aiLabel('AI Recommendations', 'Recommendations')}</span>
               <span className="text-[8px]" style={{ color: GOLD }}>View All</span>
             </div>
             <div className="space-y-2 p-2.5">

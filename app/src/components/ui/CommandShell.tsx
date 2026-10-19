@@ -3,8 +3,12 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
-import { resolveIdentity } from '@/lib/sovereign-identity';
 import { TONE, ACCENT, PALETTE } from '@/components/features/SituationRoom';
+import { ConsoleMark, PoweredBy } from '@/components/ui/ConsoleMark';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { ReferenceNotice } from '@/components/ui/ReferenceNotice';
+import { AccessibilityMenu } from '@/components/ui/AccessibilityMenu';
+import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 import { CommandPalette, type CommandItem, type CommandSearchFn } from '@/components/ui/CommandPalette';
 import { substrateSearch } from '@/lib/db/search';
 import { ExecutiveMenu } from '@/components/ui/ExecutiveMenu';
@@ -15,6 +19,11 @@ import { subscribe as rtSubscribe, runtimeStats, version as rtVersion } from '@/
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, orchestrationStats, version as orchVersion } from '@/services/orchestration-engine';
 import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
+import { useHydrated, useRenderNow } from '@/lib/clock/render-now';
+import { usePathname } from 'next/navigation';
+import { CONSOLE_NAV, HEADER_LINKS, locate } from '@/lib/nav/console-nav';
+import { ConsoleTabs } from '@/components/ui/ConsoleTabs';
+import { useSignIn } from '@/lib/official';
 
 // Adapter from substrate search hits → CommandPalette items.
 const substrateSearchAsCommands: CommandSearchFn = async (query) => {
@@ -28,75 +37,19 @@ const substrateSearchAsCommands: CommandSearchFn = async (query) => {
   }));
 };
 
-const RAIL: { g: string; items: { i: string; l: string; s: string; href: string; key: string }[] }[] = [
-  { g: 'Sovereign Command', items: [
-    { i: '◎', l: 'Situation Room', s: 'Real-time command', href: '/gov/situation-room', key: 'sr' },
-    { i: '◆', l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', key: 'cab' },
-    { i: '◈', l: 'National Shell', s: 'Whole-of-government orchestration', href: '/gov/shell', key: 'shell' },
-    { i: '⟁', l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination', key: 'coord' },
-    { i: '⬡', l: 'Interoperability Fabric', s: 'Whole-of-government mesh', href: '/gov/fabric', key: 'fabric' },
-    { i: '◔', l: 'National Simulation', s: 'Scenario · cascade what-if', href: '/gov/simulation', key: 'sim' },
-    { i: '◉', l: 'Regional Command', s: 'Provincial posture · readiness', href: '/gov/regional', key: 'reg' },
-    { i: '⊞', l: 'Operations Centre', s: 'Cross-institution state', href: '/ops', key: 'ops' },
-    { i: '❒', l: 'Operations Ledger', s: 'Executed runtime transitions', href: '/gov/ledger', key: 'ledger' },
-    { i: '⛓', l: 'Oversight', s: 'Audit · integrity', href: '/audit', key: 'aud' },
-    { i: '⚖', l: 'Branches of Government', s: 'Separation of powers', href: '/gov/branches', key: 'branches' },
-  ]},
-  { g: 'Substrate', items: [
-    { i: '◆', l: 'Officer Home',       s: 'Personal landing for the signed-in officer', href: '/gov/home', key: 'home' },
-    { i: '⊕', l: 'Profile',            s: 'Self · signing keys · session',  href: '/gov/me',          key: 'me'          },
-    { i: '⌕', l: 'Search',             s: 'Cross-substrate search',     href: '/gov/search',      key: 'search'      },
-    { i: '★', l: 'Watchlist',          s: 'Starred records (per device)',href: '/gov/watchlist',   key: 'watchlist'   },
-    { i: '⏱', l: 'Cron status',        s: 'Scheduled workers',          href: '/gov/crons',       key: 'crons'       },
-    { i: '?', l: 'Help',               s: 'Shortcuts · routes · API',   href: '/gov/help',        key: 'help'        },
-    { i: '◊', l: 'System map',         s: 'Substrate flow diagram',     href: '/gov/map',         key: 'map'         },
-    { i: '⚛', l: 'Playground',         s: 'REPL for public RPC contracts', href: '/gov/playground', key: 'playground' },
-    { i: '◉', l: 'Live Wall',          s: 'Composite operational picture', href: '/gov/live',      key: 'live'        },
-    { i: '⩘', l: 'Global feed',        s: 'Unified recent across all kinds', href: '/gov/global', key: 'global'      },
-    { i: '◐', l: 'Substrate Status',   s: 'Counts · chain integrity',   href: '/gov/substrate',   key: 'substrate'   },
-    { i: '▤', l: 'Institutions Catalogue', s: 'Federation registry',     href: '/gov/registry',    key: 'registry'    },
-    { i: '◫', l: 'Charters',           s: 'Quick-jump charter list',    href: '/gov/charter',     key: 'charter'     },
-    { i: '▦', l: 'Accountability',     s: 'Cross-charter scoreboard',   href: '/gov/accountability', key: 'accountability' },
-    { i: '✦', l: 'Directive Board',    s: 'Draft · sign · rescind',     href: '/gov/directives',  key: 'directives'  },
-    { i: '◰', l: 'Directive inbox',    s: 'Directives addressed to me', href: '/gov/inbox',       key: 'inbox'       },
-    { i: '⇨', l: 'Dispatch Board',     s: 'Record · ack · close',       href: '/gov/dispatches',  key: 'dispatches'  },
-    { i: '!',  l: 'Escalation Floor',   s: 'Severity-tiered escalations',href: '/gov/escalations', key: 'escalations' },
-    { i: '⟐', l: 'Audit Explorer',     s: 'Hash-chained ledger',        href: '/gov/audit',       key: 'audit'       },
-    { i: '◇', l: 'Audit Witnesses',    s: 'External tamper attestations',href: '/gov/witnesses',   key: 'witnesses'   },
-    { i: '⤺', l: 'Audit Replay',       s: 'Offline chain + witness verifier', href: '/gov/audit-replay', key: 'audit-replay' },
-    { i: '◰', l: 'Telemetry Wall',     s: 'Streams · samples · alerts', href: '/gov/telemetry',   key: 'telemetry'   },
-    { i: '⊡', l: 'Officer Registry',   s: 'Provision officers',         href: '/gov/officers',    key: 'officers'    },
-    { i: '⊞', l: 'Bulk Onboarding',    s: 'CSV officer batch (platform-tier)', href: '/gov/officers/bulk', key: 'officers-bulk' },
-    { i: '☷', l: 'Officer Directory',  s: 'Read-only phone book',       href: '/gov/directory',   key: 'directory'   },
-    { i: '⌖', l: 'Posture Board',      s: 'Institutional posture log',  href: '/gov/posture',     key: 'posture'     },
-    { i: '⇆', l: 'Federation Stream',  s: 'Inter-institution events',   href: '/gov/federation',  key: 'federation'  },
-    { i: '⤳', l: 'Federation Webhooks', s: 'Outbound HMAC-signed delivery', href: '/gov/webhooks', key: 'webhooks' },
-    { i: '⇣', l: 'Citizen Intake',     s: 'Requests · appeals from citizens', href: '/gov/intake', key: 'intake'  },
-    { i: '⇶', l: 'Workflow Catalogue', s: 'Transition rules · stages',  href: '/gov/workflows',   key: 'workflows'   },
-    { i: '⎈', l: 'Signature Audit',    s: 'Verify ECDSA signatures',    href: '/gov/signatures',  key: 'signatures'  },
-    { i: '⊳', l: 'Officer Workbench',  s: 'Execute on persistent items',href: '/gov/workbench',   key: 'workbench'   },
-    { i: '◔', l: 'Notifications',      s: 'Substrate alerts feed',      href: '/gov/alerts',      key: 'alerts'      },
-    { i: '∿', l: 'Activity Log',       s: 'Cross-substrate transitions',href: '/gov/activity',    key: 'activity'    },
-    { i: '§', l: 'Constitutional desk',s: 'Constitutional channel',     href: '/gov/constitutional', key: 'constitutional' },
-  ]},
-  { g: 'Strategic Domains', items: [
-    { i: '§', l: 'Treasury Command', s: 'Sovereign fiscal', href: '/gov/treasury', key: 'trs' },
-    { i: '◈', l: 'Security & Interior', s: 'National security', href: '/gov/security', key: 'sec' },
-    { i: '◷', l: 'Geopolitical Monitor', s: 'External pressure', href: '/gov/geopolitical', key: 'geo' },
-  ]},
-  { g: 'Institutional Admin', items: [
-    { i: '▦', l: 'Institutions Admin', s: 'Compose ministries', href: '/ministries', key: 'min' },
-    { i: '⚙', l: 'Sovereign Configuration', s: 'Profile · presets · identity', href: '/gov/configuration', key: 'cfg' },
-    { i: '◫', l: 'Platform Operations', s: 'Releases · tenancy', href: '/platform', key: 'plat' },
-    { i: '⇄', l: 'Interoperability', s: 'Federation · clients', href: '/integrations', key: 'intg' },
-  ]},
-  { g: 'Public Service', items: [
-    { i: '◊', l: 'Civic Wallet', s: 'Citizen services', href: '/wallet', key: 'wal' },
-    { i: '⊟', l: 'Officer Console', s: 'Decide · sign · review', href: '/console', key: 'con' },
-    { i: '▣', l: 'Ministry Control', s: 'Control room', href: '/control', key: 'ctl' },
-    { i: '◉', l: 'NCCC Wall', s: 'Coordination wall', href: '/wall', key: 'wall' },
-  ]},
-];
+// The menu lives in lib/nav/console-nav.ts (plain language; earlier pages are tabs of its items).
+
+// Layout effect in the browser (fits before paint); a no-op effect on the server.
+const useClientLayoutEffect = typeof window === 'undefined' ? React.useEffect : React.useLayoutEffect;
+
+/** Show as many header figures as fit: hide priority 3, then 2; priority 1 always stays. */
+function fitTelemetry(el: HTMLElement) {
+  const items = [...el.children] as HTMLElement[];
+  for (const level of [3, 2, 1]) {
+    for (const it of items) it.style.display = Number(it.dataset.p) > level ? 'none' : '';
+    if (el.scrollWidth <= el.clientWidth + 1) return;
+  }
+}
 
 /**
  * Shared sovereign command chrome — full-screen dark command environment
@@ -115,8 +68,9 @@ export function CommandShell({
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
   const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [mins, setMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const [navOpen, setNavOpen] = React.useState(false);
+  const hydrated = useHydrated();
 
   React.useEffect(() => {
     const load = async () => {
@@ -134,7 +88,6 @@ export function CommandShell({
     return () => { clearInterval(poll); clearInterval(tick); };
   }, []);
 
-  const identity = sov ? resolveIdentity(sov) : null;
   const posture = coord?.posture;
   const t = nat?.totals;
   const incidents = nat?.crossMinistryIncidents ?? [];
@@ -143,9 +96,14 @@ export function CommandShell({
   const emergency = level === 'alert' || crit >= 4;
   const accent = emergency ? TONE.alert : ACCENT;
   const railCount: Record<string, number> = {
-    sr: incidents.length, coord: incidents.length, ops: t?.queuesBreaching ?? 0,
-    cab: crit, sec: Math.round((incidents.length || 0) * 0.6), aud: t?.auditIntact === false ? 1 : 0,
+    sr: incidents.length, ops: t?.queuesBreaching ?? 0, cab: crit, aud: t?.auditIntact === false ? 1 : 0,
   };
+  const pathname = usePathname() ?? '';
+  const signIn = useSignIn();
+  const here = locate(pathname);
+  // Only an encrypted connection is called encrypted.
+  const [secure, setSecure] = React.useState<boolean | null>(null);
+  React.useEffect(() => { setSecure(window.location.protocol === 'https:'); }, []);
 
   const resilience = nationalResilience(mins, now / 4000);
   React.useSyncExternalStore(rtSubscribe, rtVersion, rtVersion);
@@ -154,53 +112,60 @@ export function CommandShell({
   React.useSyncExternalStore(orchSubscribe, orchVersion, orchVersion);
   const fedStats = orchestrationStats();
 
-  const tele = [
-    { l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true },
-    { l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone },
-    { l: 'Runtime', v: `${liveRt.open} open · ${liveRt.transitions} tx`, t: 'ok' },
-    { l: 'Federated apps', v: `${fedStats.activated}/${fedStats.registered}`, t: 'ok' },
-    { l: 'Institutions', v: String(t?.institutions ?? 0) },
-    { l: 'Active incidents', v: String(incidents.length), t: incidents.length ? 'alert' : 'ok' },
-    { l: 'Queues breaching', v: String(t?.queuesBreaching ?? 0), t: (t?.queuesBreaching ?? 0) > 0 ? 'warn' : 'ok' },
-    { l: 'National risk', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok' },
-    { l: 'Audit integrity', v: t?.auditIntact === false ? 'Review' : 'Intact', t: t?.auditIntact === false ? 'alert' : 'ok' },
+  // Each figure says where it comes from (lib/twin/signal.ts); samples and model outputs are marked.
+  // p: priority. As many figures are shown as fit, lowest priority hidden first (fitTelemetry).
+  const tele: { p: 1 | 2 | 3; l: string; v: string; t?: string; dot?: boolean; kind: SignalKind; src: string }[] = [
+    { p: 3, l: 'Environment', v: nat?.environment ?? 'Production', t: 'ok', dot: true, kind: 'reported', src: 'Platform configuration' },
+    { p: 2, l: 'Resilience', v: `${resilience.index} ${resilience.band}`, t: resilience.tone, kind: 'sample', src: `Resilience model over ${REFERENCE_MODEL.toLowerCase()}` },
+    { p: 3, l: 'Practice queue', v: hydrated ? `${liveRt.open} open` : '—', t: 'ok', kind: 'reported', src: 'Practice queue in this browser only; not a government record' },
+    { p: 3, l: 'Connected systems', v: hydrated ? `${fedStats.activated} of ${fedStats.registered}` : '—', t: 'ok', kind: 'reported', src: 'Registry of connected systems' },
+    { p: 2, l: 'Institutions', v: String(t?.institutions ?? 0), kind: 'reported', src: 'Ministry registry (/api/org)' },
+    { p: 1, l: 'Active incidents', v: String(incidents.length), t: incidents.length ? 'alert' : 'ok', kind: 'sample', src: `Seeded ministry incidents · ${REFERENCE_MODEL}` },
+    { p: 2, l: 'Queues breaching', v: String(t?.queuesBreaching ?? 0), t: (t?.queuesBreaching ?? 0) > 0 ? 'warn' : 'ok', kind: 'sample', src: `Seeded ministry queues · ${REFERENCE_MODEL}` },
+    { p: 1, l: 'National risk', v: posture?.label ?? 'STABLE', t: posture?.level ?? 'ok', kind: 'sample', src: `Posture computed from seeded incidents · ${REFERENCE_MODEL}` },
+    { p: 1, l: 'Audit integrity', v: t?.auditIntact === false ? 'Review' : 'Intact', t: t?.auditIntact === false ? 'alert' : 'ok', kind: 'observed', src: 'Verification of the audit chain' },
   ];
-  const cmd: CommandItem[] = RAIL.flatMap(g => g.items.map(it => ({ id: it.href + it.l, group: g.g, label: it.l, hint: it.s, href: it.href })));
+  const teleRef = React.useRef<HTMLDivElement>(null);
+  const teleKey = tele.map(m => m.v).join('|');
+  useClientLayoutEffect(() => {
+    const el = teleRef.current;
+    if (!el) return;
+    const fit = () => fitTelemetry(el);
+    fit();
+    const ro = new ResizeObserver(fit);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [teleKey]);
+  const cmd: CommandItem[] = CONSOLE_NAV.flatMap(sec => sec.items.flatMap(it => it.tabs.map(tb => ({
+    id: tb.href + tb.label, group: sec.label,
+    label: tb.label === it.label ? it.label : `${it.label} › ${tb.label}`,
+    hint: tb.was && tb.was !== tb.label ? `formerly “${tb.was}”` : it.purpose, href: tb.href,
+  }))));
 
   return (
-    <div className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]" style={{ ...PALETTE, ...(emergency ? { ['--accent' as string]: TONE.alert } : {}) }}>
+    <div data-mode={emergency ? 'crisis' : 'normal'} className="sov flex h-screen flex-col overflow-hidden font-sans [height:100dvh]" style={{ ...PALETTE, ...(emergency ? { ['--accent' as string]: TONE.alert } : {}) }}>
       <CommandPalette items={cmd} accent={accent} searchFn={substrateSearchAsCommands} />
       {emergency ? (
         <div className="flex shrink-0 items-center justify-between gap-3 px-4 py-1 text-[10px]"
           style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, borderBottom: `1px solid ${TONE.alert}` }}>
           <span className="flex items-center gap-2 font-bold uppercase tracking-[0.2em]" style={{ color: TONE.alert }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.alert }} />
-            Elevated national posture · {crit} critical · cabinet coordination advised
+            {crit} serious incident{crit === 1 ? '' : 's'} recorded (example data) · cabinet coordination advised
           </span>
           <Link href="/gov/coordination" className="focus-ring rounded-[3px] border px-2 py-0.5 uppercase tracking-widest" style={{ borderColor: TONE.alert, color: TONE.alert }}>Coordinate →</Link>
         </div>
       ) : null}
-      <header className="flex h-14 shrink-0 items-center gap-4 border-b border-line bg-surface px-4">
+      <header className="flex h-14 shrink-0 items-center gap-2 border-b border-line bg-surface px-2 sm:gap-4 sm:px-4">
         <button type="button" aria-label="Toggle navigation" aria-expanded={navOpen}
           onClick={() => setNavOpen(o => !o)}
           className="focus-ring grid h-9 w-9 shrink-0 place-items-center rounded-[3px] border border-line text-ink-soft lg:hidden">
           <span className="text-base leading-none">{navOpen ? '✕' : '☰'}</span>
         </button>
-        <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
-          <span aria-hidden className="grid h-9 w-9 place-items-center rounded-[3px] text-sm font-bold text-white ring-1 ring-white/15" style={{ backgroundColor: accent }}>
-            {identity ? identity.seal : 'CO'}
-          </span>
-          <span className="leading-tight">
-            <span className="flex items-center gap-1.5 text-sm font-bold tracking-[0.18em] text-ink">CIVICOS
-              <span className="rounded-[3px] border border-line px-1 text-[8px] font-semibold tracking-[0.2em] text-ink-soft">OFFICIAL</span>
-            </span>
-            <span className="block text-[9px] uppercase tracking-[0.16em] text-ink-muted">Sovereign Operating System</span>
-          </span>
-        </Link>
-        <div className="ml-2 hidden flex-1 items-stretch lg:flex">
+        <ConsoleMark crisis={emergency} official />
+        <div ref={teleRef} className="ml-2 hidden min-w-0 flex-1 items-stretch overflow-hidden lg:flex">
           {tele.map(m => (
-            <div key={m.l} className="border-l border-line px-4 py-1 first:border-l-0">
-              <div className="text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}</div>
+            <div key={m.l} data-p={m.p} className="shrink-0 whitespace-nowrap border-l border-line px-3 py-1 first:border-l-0">
+              <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{m.l}<SignalTag kind={m.kind} source={m.src} className="!text-[7px] !leading-none" /></div>
               <div className="flex items-center gap-1.5 font-mono text-sm tabular-nums" style={{ color: m.t ? TONE[m.t] : 'rgb(var(--c-ink))' }}>
                 {m.dot ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[m.t ?? 'ok'] }} /> : null}
                 {m.v}
@@ -208,7 +173,13 @@ export function CommandShell({
             </div>
           ))}
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="ml-auto flex items-center gap-2 sm:gap-3">
+          {HEADER_LINKS.map(h => (
+            <Link key={h.href} href={h.href} className="focus-ring hidden h-8 items-center gap-1.5 rounded-[3px] border border-line px-2.5 text-[12px] text-ink-soft no-underline hover:bg-surface-2 hover:text-ink sm:flex">
+              <span aria-hidden>⌕</span>{h.label}<kbd className="ms-1 hidden rounded-[2px] border border-line px-1 font-mono text-[10px] text-ink-muted xl:inline">⌘K</kbd>
+            </Link>
+          ))}
+          <AccessibilityMenu compact />
           <span className="hidden items-center gap-1.5 rounded-[3px] border px-2 py-1 text-[10px] sm:flex"
             style={{ borderColor: emergency ? TONE.alert : 'rgb(var(--c-line))', color: emergency ? TONE.alert : 'rgb(var(--c-ink-soft))' }}>
             <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[level] }} />
@@ -219,9 +190,10 @@ export function CommandShell({
             {incidents.length ? <span className="absolute -right-1 -top-1 grid h-3.5 min-w-[14px] place-items-center rounded-full px-0.5 text-[8px] font-bold text-white" style={{ backgroundColor: TONE.alert }}>{incidents.length}</span> : null}
           </span>
           <span className="hidden font-mono text-xs tabular-nums text-ink-muted sm:inline">{new Date(now).toLocaleTimeString()}</span>
-          <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-[10px] text-ink-soft sm:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Encrypted</span>
-          <span className="border-l border-line pl-3">
-            <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="National Executive" accent={accent} />
+          {secure ? <span className="hidden items-center gap-1.5 rounded-[3px] border border-line px-2 py-1 text-[10px] text-ink-soft min-[1440px]:flex"><span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: TONE.ok }} /> Encrypted</span> : null}
+          {/* On phones the official's menu sits at the top of the navigation drawer instead. */}
+          <span className="hidden border-l border-line pl-3 sm:inline">
+            <ExecutiveMenu title={signIn?.official?.name ?? sov?.executiveTitle ?? 'Head of Government'} sub={signIn?.official ? (signIn.official.office ?? 'Signed in') : 'Not signed in'} accent={accent} />
           </span>
         </div>
       </header>
@@ -230,61 +202,45 @@ export function CommandShell({
         {navOpen ? <div className="fixed inset-0 z-30 bg-black/50 lg:hidden" onClick={() => setNavOpen(false)} aria-hidden /> : null}
         <nav aria-label="Sovereign command"
           className={`${navOpen ? 'flex' : 'hidden'} fixed inset-y-0 left-0 z-40 w-[240px] flex-col border-r border-line bg-bg lg:static lg:z-auto lg:flex lg:w-[212px]`}>
+          <div className="space-y-2 border-b border-line px-3 py-2 sm:hidden">
+            <ExecutiveMenu title={sov?.executiveTitle ?? 'Head of Government'} sub="Not signed in" accent={accent} />
+            {HEADER_LINKS.map(h => (
+              <Link key={h.href} href={h.href} onClick={() => setNavOpen(false)} className="focus-ring flex h-9 items-center gap-1.5 rounded-[3px] border border-line px-2.5 text-[13px] text-ink-soft no-underline hover:bg-surface-2 hover:text-ink">
+                <span aria-hidden>⌕</span>{h.label}
+              </Link>
+            ))}
+          </div>
           <div className="flex-1 overflow-y-auto py-1" onClick={() => setNavOpen(false)}>
-            {RAIL.map(grp => (
-              <div key={grp.g} className="mb-0.5">
-                <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">{grp.g}</div>
+            {CONSOLE_NAV.map(grp => (
+              <div key={grp.label} className="mb-1">
+                <div className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">{grp.label}</div>
                 {grp.items.map(it => {
-                  const on = it.key === active;
+                  const on = here?.item.key === it.key || (!here && it.key === active);
                   const n = railCount[it.key] ?? 0;
                   return (
-                    <Link key={it.l} href={it.href}
-                      className={`focus-ring flex items-center gap-2 border-l-2 px-3 py-1 no-underline transition-colors duration-150 ${
-                        on ? 'bg-surface-2 font-medium' : 'border-transparent text-ink-muted hover:bg-surface-2/50 hover:text-ink'
+                    <Link key={it.key} href={it.href} aria-current={on ? 'page' : undefined}
+                      className={`focus-ring flex items-center gap-2 border-l-2 px-3 py-1.5 no-underline transition-colors duration-150 ${
+                        on ? 'bg-surface-2 font-medium' : 'border-transparent text-ink-soft hover:bg-surface-2/50 hover:text-ink'
                       }`}
                       style={on ? { borderLeftColor: accent } : undefined}>
                       <span aria-hidden className="relative grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[10px] ring-1 ring-line"
                         style={on ? { color: accent } : { color: 'rgb(var(--c-ink-soft))' }}>
-                        {it.i}
+                        {it.icon}
                         {n > 0 ? <span className="absolute -right-1 -top-1 h-1.5 w-1.5 rounded-full" style={{ backgroundColor: n >= 4 ? TONE.alert : TONE.warn }} /> : null}
                       </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-1 truncate text-[11.5px]" style={on ? { color: accent } : undefined}>
-                          {it.l}
-                          {on ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: accent }} /> : null}
-                        </span>
-                        <span className="block truncate text-[8.5px] text-ink-muted">{it.s}</span>
-                      </span>
-                      {n > 0 ? <span className="shrink-0 rounded-[3px] px-1 text-[8px] font-bold tabular-nums" style={{ backgroundColor: `color-mix(in srgb, ${n >= 4 ? TONE.alert : TONE.warn} 20%, transparent)`, color: n >= 4 ? TONE.alert : TONE.warn }}>{n}</span> : null}
+                      <span className="min-w-0 flex-1 truncate text-[13px]" style={on ? { color: accent } : undefined}>{it.label}</span>
+                      {n > 0 ? <span className="shrink-0 rounded-[3px] px-1 text-[10px] font-bold tabular-nums" style={{ backgroundColor: `color-mix(in srgb, ${n >= 4 ? TONE.alert : TONE.warn} 20%, transparent)`, color: n >= 4 ? TONE.alert : TONE.warn }}>{n}</span> : null}
                     </Link>
                   );
                 })}
               </div>
             ))}
             {(() => {
-              const cm = constitutionFor(sov?.stateForm ?? 'republic');
-              return (
-                <div className="mb-0.5">
-                  <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Constitutional Branches · {cm.label}</div>
-                  {cm.branches.map(br => (
-                    <Link key={br.key} href={`/gov/branch/${br.key}`}
-                      className="focus-ring flex items-center gap-2 border-l-2 border-transparent px-3 py-1 text-ink-muted no-underline transition-colors duration-150 hover:bg-surface-2/50 hover:text-ink">
-                      <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[10px] ring-1 ring-line">⚖</span>
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate text-[11.5px]">{br.name}</span>
-                        <span className="block truncate text-[8.5px] text-ink-muted">{br.mandate.split(' · ')[0]}</span>
-                      </span>
-                    </Link>
-                  ))}
-                </div>
-              );
-            })()}
-            {(() => {
               const dir = deployableInstitutions(mins);
               if (dir.length === 0) return null;
               return (
                 <div className="mb-0.5">
-                  <div className="px-3 pb-0.5 pt-2 text-[8px] font-semibold uppercase tracking-[0.18em] text-ink-muted">Active Institutions · {dir.length}</div>
+                  <div className="px-3 pb-1 pt-2.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Ministries · {dir.length}</div>
                   {dir.map(({ ministry: m, readiness: r }) => {
                     const c = r.deployable ? TONE.ok : TONE.warn;
                     return (
@@ -292,8 +248,8 @@ export function CommandShell({
                         className="focus-ring flex items-center gap-2 border-l-2 border-transparent px-3 py-1 text-ink-muted no-underline transition-colors duration-150 hover:bg-surface-2/50 hover:text-ink">
                         <span aria-hidden className="grid h-5 w-5 shrink-0 place-items-center rounded-[3px] bg-surface-2 text-[10px] ring-1 ring-line" style={{ color: c }}>▣</span>
                         <span className="min-w-0 flex-1">
-                          <span className="block truncate text-[11.5px]">{m.name}</span>
-                          <span className="block truncate text-[8.5px] text-ink-muted">{m.archetype} · {r.total}% ready</span>
+                          <span className="block truncate text-[12.5px]">{m.name}</span>
+                          <span className="block truncate text-[10px] text-ink-muted">{r.deployable ? 'Ready to operate' : 'Setting up'} · {r.total}% ready</span>
                         </span>
                         <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: c }} />
                       </Link>
@@ -307,19 +263,22 @@ export function CommandShell({
             <div className="mb-1.5 flex items-end gap-0.5" aria-hidden title="Operational pulse">
               {Array.from({ length: 24 }).map((_, i) => (
                 <span key={i} className="flex-1 animate-breathe rounded-sm"
-                  style={{ height: `${4 + ((Math.sin(i * 1.7 + Math.floor(now / 1000)) + 1) / 2) * 12}px`, backgroundColor: TONE[level], animationDelay: `${i * 70}ms`, opacity: 0.55 }} />
+                  style={{ height: `${(4 + ((Math.sin(i * 1.7 + Math.floor(now / 1000)) + 1) / 2) * 12).toFixed(2)}px`, backgroundColor: TONE[level], animationDelay: `${i * 70}ms`, opacity: 0.55 }} />
               ))}
             </div>
             <div className="grid grid-cols-2 gap-x-2 gap-y-0.5 text-[9px]">
-              <div className="text-ink-muted">Posture</div><div className="truncate text-right font-mono" style={{ color: TONE[level] }}>{posture?.label ?? 'STABLE'}</div>
+              <div className="text-ink-muted">Status</div><div className="truncate text-right font-mono" style={{ color: TONE[level] }}>{posture?.label ?? 'STABLE'}</div>
               <div className="text-ink-muted">Incidents</div><div className="text-right font-mono" style={{ color: incidents.length ? TONE.alert : TONE.ok }}>{incidents.length}</div>
               <div className="text-ink-muted">Environment</div><div className="truncate text-right text-ink-soft">{nat?.environment ?? 'Production'}</div>
-              <div className="text-ink-muted">Channel</div><div className="text-right" style={{ color: TONE.ok }}>Encrypted</div>
+              <div className="text-ink-muted">Connection</div><div className="text-right" style={{ color: secure === false ? TONE.warn : TONE.ok }}>{secure === null ? '—' : secure ? 'Encrypted' : 'Not encrypted'}</div>
+              <PoweredBy />
             </div>
           </div>
         </nav>
         <main className="min-w-0 flex-1 overflow-y-auto p-3"
           style={{ backgroundImage: 'linear-gradient(rgba(55,199,212,0.02) 1px, transparent 1px), linear-gradient(90deg, rgba(55,199,212,0.02) 1px, transparent 1px)', backgroundSize: '36px 36px' }}>
+          <ReferenceNotice />
+          <ConsoleTabs here={here} branches={constitutionFor(sov?.stateForm ?? 'republic', sov?.constitution).branches.map(b => ({ label: b.name, href: `/gov/branch/${b.key}` }))} pathname={pathname} />
           {children}
         </main>
       </div>

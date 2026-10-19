@@ -3,6 +3,7 @@
 // deterministic; feeds the federated judiciary application.
 
 import { seed, wave } from '@/lib/telemetry';
+import { readTwinValue } from '@/lib/twin/read';
 
 export interface EvidenceRegistry {
   itemsCustody: number;
@@ -30,8 +31,10 @@ export interface PrisonCoordination {
   rehabilitationActive: number;
 }
 export function prisonCoordination(id: string, t: number): PrisonCoordination {
-  const cap = 60000 + Math.round(seed(`pr:cp:${id}`) * 50000);
-  const pop = Math.round(cap * wave(`pr:po:${id}`, t, 0.7, 1.25));
+  // People in custody and places: observed from the twin when the nation reports them (lib/twin/engine-metrics.ts), else the sample.
+  const sampleCap = 60000 + Math.round(seed(`pr:cp:${id}`) * 50000);
+  const cap = Math.round(readTwinValue('corrections.capacity', sampleCap));
+  const pop = Math.round(readTwinValue('corrections.population', Math.round(sampleCap * wave(`pr:po:${id}`, t, 0.7, 1.25))));
   return {
     facilities: 60 + Math.round(seed(`pr:fc:${id}`) * 50),
     population: pop,

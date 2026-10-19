@@ -7,6 +7,7 @@ import type { WorkItemRow } from '@/lib/db/types';
 import { useIdentity } from '@/components/identity/useIdentity';
 import { useRealtimeRefresh } from '@/components/identity/useRealtimeRefresh';
 import { priorityTone } from '@/lib/tone';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 /**
  * Substrate Ledger — pairs with OperationsLedger.
@@ -23,7 +24,7 @@ export function SubstrateLedger() {
   const { actor, session, ready } = useIdentity();
   const [items, setItems] = React.useState<WorkItemRow[]>([]);
   const [loading, setLoading] = React.useState(false);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   const available = substrateAvailable();
 
   const refresh = React.useCallback(async () => {
@@ -95,7 +96,7 @@ export function SubstrateLedger() {
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}
           >
-            durable · RLS-scoped
+            saved · your institution's view
           </span>
           <span className="font-mono text-[10px] tabular-nums text-ink-muted">
             {new Date(now).toLocaleTimeString()}
@@ -154,12 +155,16 @@ export function SubstrateLedger() {
         )}
       </Panel>
 
-      <p className="text-[10px] text-ink-muted">
-        This list reads <span className="font-mono text-ink">civicos.work_items</span> live.
-        Rows are filtered by the substrate's row-level security: officers see their charter,
-        platform-tier roles (NOC / auditor / cabinet / platform-admin) see everything,
-        citizens see records linked to them.
-      </p>
+      <p className="text-[12px] text-ink-soft">You see the cases of your own institution; administrators and auditors see all of them; citizens see only their own.</p>
+      <details className="text-[10px] text-ink-muted">
+        <summary className="cursor-pointer">Technical details</summary>
+        <p className="text-[10px] text-ink-muted">
+          This list reads <span className="font-mono text-ink">civicos.work_items</span> live.
+          Rows are filtered by the substrate's row-level security: officers see their charter,
+          platform-tier roles (NOC / auditor / cabinet / platform-admin) see everything,
+          citizens see records linked to them.
+        </p>
+      </details>
     </div>
   );
 }

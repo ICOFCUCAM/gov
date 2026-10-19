@@ -1,0 +1,5 @@
+STRUCTURE,STRUCTURE_ID,ACTION,FREQ: Frequency,REF_AREA: Reference area,TIME_PERIOD: Time period,OBS_VALUE,UNIT_MEASURE: Unit of measure,OBS_STATUS: Observation status
+dataflow,KNBS:DF_HH(2.0),I,Q: Quarterly,KE-28: Mombasa,2023-Q2,380000,HH: Households,P: Provisional
+dataflow,KNBS:DF_HH(2.0),I,Q: Quarterly,KE-30: Nairobi City,2023-Q2,1500000,HH: Households,A: Normal
+dataflow,KNBS:DF_HH(2.0),R,M: Monthly,KE-17: Kisumu,2023-M04,300000,HH: Households,R: Revised
+dataflow,KNBS:DF_HH(2.0),D,Q: Quarterly,KE-17: Kisumu,2023-Q2,,HH: Households,

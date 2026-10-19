@@ -6,6 +6,7 @@ import { IdentityBadge } from '@/components/identity/IdentityBadge';
 import { ChainSentinel } from '@/components/identity/ChainSentinel';
 import { NotificationsBell } from '@/components/identity/NotificationsBell';
 import { OfflineBanner } from './OfflineBanner';
+import { aiLabel } from '@/lib/nation/registry';
 
 export type OperatorRole = 'officer' | 'ministry' | 'auditor' | 'admin';
 
@@ -46,7 +47,7 @@ const ROLE_LABEL: Record<OperatorRole, string> = {
 
 export interface OperatorShellProps {
   role: OperatorRole;
-  who: string; // signed-in person + scope, e.g. "K. Otieno · Social Protection, Kiambu"
+  who: string; // signed-in person + scope, e.g. "K. Adamu · Social Protection, Capital District"
   active?: string;
   toolbar?: React.ReactNode;
   children: React.ReactNode;
@@ -79,7 +80,7 @@ export function OperatorShell({
       <OfflineBanner />
       <header className="flex shrink-0 items-center justify-between gap-4 border-b border-line bg-surface px-4 py-2">
         <div className="flex items-center gap-3">
-          <Link href="/" className="focus-ring flex items-center gap-2.5 no-underline">
+          <Link href="/command" className="focus-ring flex items-center gap-2.5 no-underline">
             <span
               aria-hidden
               className="grid h-8 w-8 shrink-0 place-items-center rounded-sm text-[11px] font-bold tracking-tight text-white ring-1 ring-white/15"
@@ -131,7 +132,7 @@ export function OperatorShell({
             ))}
           </ul>
           <div className="border-t border-line px-3 py-3 text-[10px] uppercase tracking-widest text-ink-muted">
-            Humans govern · AI assists
+            {aiLabel('Humans govern · AI assists', 'Humans govern')}
           </div>
         </nav>
         <main id="main" className="min-w-0 flex-1 overflow-y-auto bg-bg p-4 lg:p-6">

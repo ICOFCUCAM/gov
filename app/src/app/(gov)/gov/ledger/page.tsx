@@ -3,7 +3,7 @@ import { OperationsLedger } from '@/components/features/OperationsLedger';
 import { SubstrateLedger } from '@/components/features/SubstrateLedger';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'Operations Ledger' };
+export const metadata = { title: 'Operations record' };
 
 export default function LedgerPage() {
   return (

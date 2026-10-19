@@ -2,6 +2,8 @@ import * as React from 'react';
 import { cn } from '@/lib/utils';
 import { ClassBanner } from './ClassBanner';
 import type { DecisionClass } from '@/lib/types';
+import { nationMessages } from '@/lib/nation/registry';
+import { t as fill } from '@/lib/i18n';
 
 export interface CopilotPanelProps {
   decisionClass: DecisionClass;
@@ -31,6 +33,7 @@ export function CopilotPanel({
   onFlag,
   className,
 }: CopilotPanelProps) {
+  const m = nationMessages().more;
   return (
     <section
       data-decision-class={decisionClass}
@@ -39,7 +42,7 @@ export function CopilotPanel({
         borderColor[decisionClass],
         className,
       )}
-      aria-label={title ?? `AI Copilot panel (Class ${decisionClass})`}
+      aria-label={title ?? fill(m.panelAria, { cls: decisionClass })}
     >
       <div className="flex items-center justify-between gap-2 mb-3">
         <ClassBanner decisionClass={decisionClass} />
@@ -48,9 +51,9 @@ export function CopilotPanel({
             type="button"
             onClick={onFlag}
             className="text-sm underline underline-offset-2 text-ink-soft hover:text-ink"
-            aria-label="Flag this AI behavior"
+            aria-label={m.flagAria}
           >
-            ⚐ Flag this AI
+            {m.flagAI}
           </button>
         ) : null}
       </div>

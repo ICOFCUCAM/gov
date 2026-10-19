@@ -7,8 +7,9 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import type { ArchetypeKey } from '@/lib/api/types';
+import { regionList } from '@/lib/nation/registry';
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 type Tone = 'ok' | 'warn' | 'alert';
 
 const UNIT_KIND: Partial<Record<ArchetypeKey, string>> = {

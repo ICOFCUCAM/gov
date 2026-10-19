@@ -15,6 +15,15 @@ api:
   env:
     CIVIC_DEV_AUTH: "0"
     OUTBOX_POLL_MS: "2000"
+    # A mirror of the platform (services/civic-api/README.md): writes go to the
+    # app that owns every record; the follower's CIVICOS_MIRROR_KEY and
+    # CIVICOS_MIRROR_WEBHOOK_SECRET come from a secret (api.mirrorSecret).
+    CIVIC_API_MODE: "forward"
+    CIVICOS_PLATFORM_URL: "http://civicos-app:3000"
+  # Secret holding the follower's credentials, keys CIVICOS_MIRROR_KEY and
+  # CIVICOS_MIRROR_WEBHOOK_SECRET (issued in the platform's Integrations).
+  # Empty: the follower is off and civic-api holds what it last mirrored.
+  mirrorSecret: ""
   autoscaling:
     enabled: true
     minReplicas: 3
@@ -24,10 +33,73 @@ api:
 app:
   image: civicos/civic-app
   tag: "0.1.0"
-  replicas: 2
+  # One replica, replaced with the Recreate strategy: the platform state has a
+  # single writer (app/src/lib/data/persist.ts, writer lease and versioned
+  # saves). With state.mode postgres (architecture review R6) every store is
+  # kept per record in the database (typed tables, and per-record documents for
+  # the rest) and every replica writes and follows it, so the chart allows more
+  # replicas there and each takes every change. Otherwise the chart refuses more
+  # than one replica unless allowMultipleWriters is set (extra replicas would
+  # only be standbys).
+  replicas: 1
+  allowMultipleWriters: false
+  # Access gate (app/src/middleware.ts): "enforce" requires a verified
+  # official for every non-public page, read and change. Anything else leaves
+  # the gate open (demonstrations only).
+  auth: enforce
+  # A kubernetes.io/tls secret (tls.crt, tls.key, ca.crt) with this
+  # installation's client certificate for calling partner installations under
+  # mutual TLS (lib/exchange/federation-client.ts); "" for none.
+  federationClientSecret: ""
+  # Secret holding CIVICOS_SESSION_SECRET and CIVICOS_CRON_SECRET (required)
+  # and NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  # SUPABASE_SERVICE_ROLE_KEY (when the substrate is connected).
+  existingSecret: civicos-app
+  state:
+    # supabase: civicos.platform_state in the nation's substrate (apply the
+    # app/supabase migrations, including civicos_platform_state_fencing).
+    # file: JSON files on a persistent volume (air-gapped installations).
+    # postgres: the nation's Postgres (postgres.existingSecret, DATABASE_URL):
+    # per-record tables for the audit chain, twin, facilities and boundaries
+    # (migration civicos_records; PostGIS used when present) and per-record
+    # documents for every other store (migration civicos_record_docs); allows
+    # app.replicas > 1, every replica taking every change.
+    mode: supabase
+    size: 5Gi
+    storageClassName: ""
+  # Extra plain environment variables (e.g. CIVICOS_STATE_LEASE_TTL_MS, or
+  # CIVICOS_EGRESS_PROXY / CIVICOS_EGRESS_NO_PROXY where outbound traffic must
+  # go through the nation's proxy: a CONNECT tunnel to the vetted address).
+  env: {}
+  # The whole state is held in memory and re-encoded on save (review O3):
+  # at least 1 Gi until the persistence move.
   resources:
-    requests: { cpu: "100m", memory: "192Mi" }
-    limits: { cpu: "500m", memory: "384Mi" }
+    requests: { cpu: "250m", memory: "768Mi" }
+    limits: { cpu: "1", memory: "1Gi" }
+
+# Traces (app/src/lib/ops/otel.ts): off unless enabled. Spans go only to the
+# nation's own collector: the one this chart runs (collector.enabled) or an
+# existing one named in `endpoint` (http(s), OTLP/HTTP). Nothing is sent
+# otherwise.
+otel:
+  enabled: false
+  # An existing collector, e.g. http://otel-collector.observability.svc:4318.
+  # Empty with collector.enabled: the chart's own collector.
+  endpoint: ""
+  # Fraction of new traces kept (parent-based), 0..1.
+  sampleRatio: "1"
+  collector:
+    enabled: false
+    image: otel/opentelemetry-collector-contrib
+    tag: "0.111.0"
+    resources:
+      requests: { cpu: "50m", memory: "128Mi" }
+      limits: { cpu: "500m", memory: "512Mi" }
+    # The collector's exporters (the nation's own Jaeger, Tempo, OpenSearch…).
+    # Default: the collector's own log only.
+    exporters:
+      debug: { verbosity: basic }
+    pipelineExporters: [debug]
 
 postgres:
   # In production, point at the sovereign managed Postgres (HA, PITR).
@@ -42,9 +114,66 @@ ingress:
   enabled: true
   className: nginx
   host: civicos.example.gov
+  # Every page and /api route goes to the Next.js app. The NestJS civic-api
+  # keeps its /api/* paths under this prefix (rewritten); "" to not expose it.
+  civicApiPath: /svc/api
+  # Drop Next.js's internal x-middleware-subrequest header at the edge
+  # (CVE-2025-29927). Needs snippet annotations allowed on ingress-nginx; the
+  # app refuses the header itself either way.
+  stripInternalHeaders: true
   tls:
     enabled: true
     secretName: civicos-tls
+  # Global limits at the ingress (ingress-nginx), per client address, in
+  # front of the app's own per-official limits (app/src/lib/ops/rate-limit*.ts):
+  # requests a second (limit-rps, with a burst of rps × burstMultiplier),
+  # open connections (limit-connections) and the largest request body
+  # (proxy-body-size). Path groups that take files get their own body size
+  # and tighter rates (one Ingress per group; paths are regular expressions,
+  # as the civic-api Ingress already turns them on for this host).
+  limits:
+    enabled: true
+    rps: 20
+    burstMultiplier: 5
+    connections: 20
+    bodySize: 2m
+    # Addresses never limited (CIDRs, comma-separated), e.g. the nation's monitoring.
+    allowlist: ""
+    groups:
+      # Boundary files (up to 100 MB, base64 in JSON) and district packs (60 MB).
+      uploads:
+        paths: ["/api/boundaries$", "/api/map-pack$"]
+        bodySize: 140m
+        rps: 2
+        connections: 4
+        readTimeout: 300
+      # CSV runs (20 MB), site candidates (10 MB), site imports, XLIFF files.
+      imports:
+        paths: ["/api/twin/sources/[^/]+/run$", "/api/facilities/candidates$", "/api/org/ministries/[^/]+/facilities/import$", "/api/public-sites/[^/]+/translations/[^/]+/xliff$"]
+        bodySize: 25m
+        rps: 5
+        connections: 6
+        readTimeout: 120
+      # Connected case and site systems (2 MB and 4 MB a call).
+      feeds:
+        paths: ["/api/org/ministries/[^/]+/(queue|facilities)/feed$"]
+        bodySize: 5m
+        rps: 10
+        connections: 10
+        readTimeout: 60
+  # Mutual TLS for exchanges between installations (app/src/lib/exchange/mtls.ts):
+  # a separate host that requires a client certificate from the federation CA
+  # and serves only POST /api/federation/exchange. A grant then names the
+  # partner's certificate (PUT /api/federation/grants/{id}/certificate).
+  federation:
+    enabled: false
+    host: federation.civicos.example.gov
+    # namespace/secret holding ca.crt: the CA partner certificates chain to.
+    caSecret: civicos/civicos-federation-ca
+    verifyDepth: 2
+    tlsSecretName: civicos-federation-tls
+    limitRps: 10
+    limitConnections: 10
 
 security:
   networkPolicy: true

@@ -7,6 +7,7 @@
 
 import * as React from 'react';
 import { PRESIDENCY_DS } from '@/apps/presidency/design-system/presidency-ds';
+import { nationChamberText } from '@/lib/nation/registry';
 
 export type FederationEdge = {
   partner: string;
@@ -46,7 +47,7 @@ export function FederationStrip() {
           <div className="text-[8.5px] uppercase tracking-[0.18em]" style={{ color: PRESIDENCY_DS.goldLeaf }}>emits →</div>
           {emit.map((e, i) => (
             <div key={`${e.partner}-${i}`} className="flex justify-between border-b py-0.5" style={{ borderColor: PRESIDENCY_DS.ruleSoft }}>
-              <span style={{ color: PRESIDENCY_DS.parchmentInk }}>{e.partner}</span>
+              <span style={{ color: PRESIDENCY_DS.parchmentInk }}>{nationChamberText(e.partner)}</span>
               <span style={{ color: PRESIDENCY_DS.mut }}>{e.channel} · {e.cadence}</span>
             </div>
           ))}
@@ -55,7 +56,7 @@ export function FederationStrip() {
           <div className="text-[8.5px] uppercase tracking-[0.18em]" style={{ color: PRESIDENCY_DS.parchment }}>← consumes from</div>
           {consume.map((e, i) => (
             <div key={`${e.partner}-${i}`} className="flex justify-between border-b py-0.5" style={{ borderColor: PRESIDENCY_DS.ruleSoft }}>
-              <span style={{ color: PRESIDENCY_DS.parchmentInk }}>{e.partner}</span>
+              <span style={{ color: PRESIDENCY_DS.parchmentInk }}>{nationChamberText(e.partner)}</span>
               <span style={{ color: PRESIDENCY_DS.mut }}>{e.channel} · {e.cadence}</span>
             </div>
           ))}

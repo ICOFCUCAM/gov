@@ -12,6 +12,7 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { environmentOps } from '@/lib/gov/environment-systems';
+import { regionList } from '@/lib/nation/registry';
 
 export const CLIMATE_RESILIENCE_SAFEGUARDS = {
   humanitarianDoctrine: true as const,
@@ -228,7 +229,7 @@ const KIND_LIST: ClimateIncidentKind[] = [
   'coastal-surge', 'toxic-contamination', 'air-quality-crisis', 'biodiversity-collapse',
 ];
 
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 const PROTECTED_DEFS: { region: string; ecoregion: Ecoregion }[] = [
   { region: 'Northern Boreal Reserve', ecoregion: 'Boreal Belt' },

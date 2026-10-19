@@ -3,14 +3,14 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Officer Console — K. Otieno</title>
+  <title>Officer Console — K. Adamu</title>
   <link rel="stylesheet" href="../shared/civicos.css">
 </head>
 <body>
   <header style="padding:12px 24px;border-bottom:1px solid var(--c-line);background:var(--c-surface);display:flex;align-items:center;justify-content:space-between;gap:16px;">
     <div>
       <strong>CivicOS Officer Console</strong>
-      <span class="muted"> · K. Otieno · Social Protection, Nairobi · ⏱ 09:14 EAT</span>
+      <span class="muted"> · K. Adamu · Social Protection, Capital District · ⏱ 09:14 local</span>
     </div>
     <div class="row">
       <a class="btn-ghost" href="#">Queue 12</a>
@@ -29,7 +29,7 @@
       <h3 style="margin-top:0">Queue</h3>
       <div class="stack-sm">
         <a href="#" class="card card-tight" style="display:block;text-decoration:none;color:inherit;border-color:var(--c-class-b)">
-          <strong>C-7842 · Amina H. Mwangi</strong>
+          <strong>C-7842 · Amina H.</strong>
           <div class="muted">Child grant renewal</div>
           <span class="pill pill-ok">⚑ verified</span>
           <span class="pill">✓ AI draft</span>
@@ -63,7 +63,7 @@
       <div class="card">
         <div class="row between">
           <div>
-            <h2 style="margin-bottom:4px">Case C-7842 — Amina Hassan Mwangi</h2>
+            <h2 style="margin-bottom:4px">Case C-7842 — Amina Hassan</h2>
             <div class="muted">Child grant renewal · Submitted 14 May 09:02 · SLA 17 May</div>
           </div>
           <div class="btn-row">
@@ -103,7 +103,7 @@
 
         <h4>Draft decision</h4>
         <p>
-          <strong>APPROVE renewal at base rate + drought supplement (KES 2,400/month).</strong>
+          <strong>APPROVE renewal at base rate + drought supplement (USD 2,400/month).</strong>
           Re-verification recommended at next cycle.
         </p>
 
@@ -142,7 +142,7 @@
         </div>
 
         <div class="btn-row">
-          <button class="btn" onclick="openSign()">I sign this decision (K. Otieno)</button>
+          <button class="btn" onclick="openSign()">I sign this decision (K. Adamu)</button>
           <button class="btn btn-secondary">Save and return later</button>
           <button class="btn btn-secondary">Ask supervisor</button>
           <button class="btn btn-secondary">Refer to specialist</button>
@@ -157,9 +157,9 @@
     <h2>Sign decision</h2>
     <p>You are about to sign:</p>
     <div class="plain">
-      Case <strong>C-7842</strong> — Amina Hassan Mwangi<br>
+      Case <strong>C-7842</strong> — Amina Hassan<br>
       <strong>APPROVE</strong> child grant renewal<br>
-      Base rate + drought supplement (KES 2,400/month)
+      Base rate + drought supplement (USD 2,400/month)
     </div>
     <p class="muted" style="margin-top:12px">
       AI involvement: <strong>Class B (advisory)</strong>. Your name will appear on this decision as the deciding officer.
@@ -185,7 +185,7 @@
   <script>
     function openSign() { document.getElementById('sign-dialog').showModal(); }
     function finishSign() {
-      CivicOS.signDecision({ decisionId: 'C-7842', officerName: 'K. Otieno', summary: 'APPROVE child grant renewal' });
+      CivicOS.signDecision({ decisionId: 'C-7842', officerName: 'K. Adamu', summary: 'APPROVE child grant renewal' });
       document.getElementById('sign-dialog').close();
       alert('Decision signed and recorded to the Audit Vault. Citizen receipt issued.');
     }

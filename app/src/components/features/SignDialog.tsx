@@ -6,6 +6,7 @@ import { Plain } from '@/components/ui/Plain';
 import { ClassBanner } from '@/components/ui/ClassBanner';
 import { appendAuditEntry } from '@/lib/audit/localVault';
 import type { DecisionClass } from '@/lib/types';
+import { INSTITUTIONAL } from '@/lib/theme/tokens';
 
 export interface SignDialogProps {
   decisionId: string;
@@ -54,6 +55,8 @@ export function SignDialog({
       <dialog
         ref={ref}
         className="border border-line rounded-md p-6 max-w-md w-full backdrop:bg-ink/40"
+        // Champagne marks constitutional authority (docs/CONSOLE_DESIGN.md); a hairline and seal, never text.
+        style={{ borderTop: `3px solid ${INSTITUTIONAL.champagne}` }}
       >
         {signed ? (
           <div>
@@ -69,7 +72,10 @@ export function SignDialog({
           </div>
         ) : (
           <div>
-            <h3 className="text-xl font-semibold">Sign decision</h3>
+            <h3 className="flex items-center gap-2 text-xl font-semibold">
+              <span aria-hidden className="grid h-7 w-7 place-items-center rounded-full text-[13px]" style={{ border: `1.5px solid ${INSTITUTIONAL.champagne}`, color: INSTITUTIONAL.ground, background: INSTITUTIONAL.champagneHi }}>§</span>
+              Sign decision
+            </h3>
             <p className="text-ink-muted mb-2">You are about to sign:</p>
             <Plain>
               Case <strong>{decisionId}</strong>

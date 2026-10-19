@@ -10,6 +10,8 @@
 // the public digital services portal. Pure & deterministic.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
+import { readTwinValue } from '@/lib/twin/read';
 
 export const COMMUNICATIONS_SAFEGUARDS = {
   endToEndIntegrityProtected: true as const,
@@ -24,7 +26,7 @@ export const COMMUNICATIONS_SAFEGUARDS = {
   ] as const,
 };
 
-export const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 // ── 1. National Connectivity Command ────────────────────────────────
 export type ConnectivityPosture = 'nominal' | 'engaged' | 'degraded' | 'critical' | 'sovereign-lockdown';
@@ -281,7 +283,8 @@ export function communicationsBoard(now: number): CommunicationsBoard {
   // 1. Regional connectivity + command
   const regions: RegionalConnectivity[] = REGIONS.map(region => {
     const k = `cm:rc:${region}`;
-    const households = Math.round(wave(`${k}:h`, epoch / 8, 280000, 5400000));
+    // Observed from the twin when a statistics source reports the region's households (lib/twin/read.ts), else the sample.
+    const households = Math.round(readTwinValue('households', Math.round(wave(`${k}:h`, epoch / 8, 280000, 5400000)), { region }));
     const broadbandPenetrationPct = Math.round(wave(`${k}:b`, epoch / 6, 38, 96));
     const mobileCoveragePct = Math.round(wave(`${k}:m`, epoch / 5, 78, 99.8));
     const averageLatencyMs = Math.round(wave(`${k}:l`, epoch / 4, 14, 220));

@@ -10,6 +10,7 @@
 
 import { seed } from '@/lib/telemetry';
 import { observabilityLedger, AGENCY_LABEL, type SovereignTxn } from '@/lib/gov/sovereign-observability';
+import { regionName } from '@/lib/nation/registry';
 
 export type Jurisdiction =
   | 'citizen' | 'municipal' | 'regional' | 'national' | 'judicial' | 'oversight';
@@ -129,7 +130,7 @@ function deriveFile(t: SovereignTxn): ProceduralFile {
   if (rolledBack) stageIndex = Math.max(1, stageIndex - 2);
 
   const stage = PROC_STAGES[stageIndex]!;
-  const transferred = redirected || t.region !== 'Capital District' && seed(`pf:tx:${t.id}`) > 0.7;
+  const transferred = redirected || t.region !== regionName(0, 'Capital District') && seed(`pf:tx:${t.id}`) > 0.7;
   const jurisdiction: Jurisdiction = redirected ? 'regional' : stage.jurisdiction;
 
   // Audit lineage — every traversed stage, deadline carried across.

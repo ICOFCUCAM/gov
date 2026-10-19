@@ -1,0 +1,33 @@
+{
+  "meta": { "schema": "https://raw.githubusercontent.com/sdmx-twg/sdmx-json/master/structure-message/tools/schemas/1.0/sdmx-json-structure-schema.json", "id": "IREF000002", "test": true, "prepared": "2026-10-01T00:00:00Z" },
+  "data": {
+    "dataflows": [
+      { "id": "DF_POP", "agencyID": "KNBS", "version": "1.0", "name": "Population by area", "names": { "en": "Population by area" }, "structure": "urn:sdmx:org.sdmx.infomodel.datastructure.DataStructure=KNBS:DSD_POP(1.0)" }
+    ],
+    "codelists": [
+      { "id": "CL_AREA", "agencyID": "KNBS", "version": "1.0", "name": "Reference areas", "codes": [ { "id": "KE-28", "name": "Mombasa" }, { "id": "KE-30", "name": "Nairobi City" } ] },
+      { "id": "CL_INDICATOR", "agencyID": "KNBS", "version": "1.0", "names": { "en": "Indicators" }, "codes": [ { "id": "POP", "names": { "en": "Population" } } ] },
+      { "id": "CL_FREQ", "agencyID": "SDMX", "version": "2.0", "name": "Frequency", "codes": [ { "id": "A", "name": "Annual" } ] }
+    ],
+    "conceptSchemes": [
+      { "id": "CS_POP", "agencyID": "KNBS", "version": "1.0", "concepts": [ { "id": "FREQ", "coreRepresentation": { "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=SDMX:CL_FREQ(2.0)" } } ] }
+    ],
+    "dataStructures": [
+      {
+        "id": "DSD_POP", "agencyID": "KNBS", "version": "1.0", "name": "Population",
+        "dataStructureComponents": {
+          "dimensionList": {
+            "dimensions": [
+              { "id": "FREQ", "position": 0, "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=KNBS:CS_POP(1.0).FREQ" },
+              { "id": "REF_AREA", "position": 1, "conceptIdentity": "urn:sdmx:org.sdmx.infomodel.conceptscheme.Concept=KNBS:CS_POP(1.0).REF_AREA", "localRepresentation": { "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=KNBS:CL_AREA(1.0)" } },
+              { "id": "INDICATOR", "position": 2, "localRepresentation": { "enumeration": "urn:sdmx:org.sdmx.infomodel.codelist.Codelist=KNBS:CL_INDICATOR(1.0)" } }
+            ],
+            "timeDimensions": [ { "id": "TIME_PERIOD", "position": 3 } ]
+          },
+          "attributeList": { "attributes": [ { "id": "UNIT_MULT" } ] },
+          "measureList": { "primaryMeasure": { "id": "OBS_VALUE" } }
+        }
+      }
+    ]
+  }
+}

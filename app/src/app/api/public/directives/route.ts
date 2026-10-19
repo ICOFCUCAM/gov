@@ -2,10 +2,12 @@
 // (signed / effective / rescinded / published). Completes the open-data set
 // alongside accountability, charters, and telemetry. Directives in these
 // statuses are already anon-readable on the Public Observatory; this is
-// their machine-readable form. No auth; short-cached.
+// their machine-readable form. No auth; short-cached. Read from the register's
+// owner, the platform (lib/data/directives.ts); the substrate only mirrors it.
 
 import { NextResponse } from 'next/server';
-import { listDirectivesRows } from '@/lib/db/repos/memory';
+import { listDirectives, settleDirectives } from '@/lib/data/directives';
+import { adoptSubstrateDirectives, queueMirror } from '@/lib/db/mirror';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,7 +16,9 @@ const PUBLIC_STATUSES = new Set(['signed', 'effective', 'rescinded', 'published'
 export async function GET(req: Request) {
   const url = new URL(req.url);
   const issuer = url.searchParams.get('issuer') ?? undefined;
-  const rows = (await listDirectivesRows({ issuer, limit: 200 }))
+  await adoptSubstrateDirectives();
+  for (const ref of settleDirectives()) queueMirror('directive', ref);
+  const rows = listDirectives({ issuer, limit: 200 })
     .filter(d => PUBLIC_STATUSES.has(d.status));
   return NextResponse.json(
     {

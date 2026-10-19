@@ -7,7 +7,7 @@ vi.mock('@/lib/data/store', () => ({
 
 import { POST } from './route';
 
-const params = { id: 'p-1' };
+const params = Promise.resolve({ id: 'p-1' });
 
 beforeEach(() => {
   decideMock.mockReset();

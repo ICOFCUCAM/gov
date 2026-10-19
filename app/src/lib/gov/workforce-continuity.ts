@@ -12,6 +12,8 @@
 
 import { seed, wave } from '@/lib/telemetry';
 import { laborOps } from '@/lib/gov/labor-systems';
+import { regionList } from '@/lib/nation/registry';
+import { readTwinValue } from '@/lib/twin/read';
 
 export const WORKFORCE_SAFEGUARDS = {
   laborRightsContinuity: true as const,
@@ -28,7 +30,7 @@ export const WORKFORCE_SAFEGUARDS = {
 export type WorkforcePosture =
   | 'thriving' | 'stable' | 'tightening' | 'strained' | 'crisis-mobilisation';
 
-export const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+export const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 
 // ── 1. National workforce command ───────────────────────────────────
 export interface RegionalWorkforce {
@@ -361,7 +363,8 @@ export function workforceContinuityBoard(now: number): WorkforceContinuityBoard 
   const workforceAge = cohorts.filter(c => c.band !== '65+' && c.band !== '15-24').reduce((s, c) => s + c.populationM, 0);
   const dependent = (cohorts.find(c => c.band === '65+')!.populationM + cohorts.find(c => c.band === '15-24')!.populationM);
   const dependencyRatio = Math.round((dependent / Math.max(0.1, workforceAge)) * 100);
-  const agingIndex = Math.round((cohorts.find(c => c.band === '65+')!.populationM / Math.max(0.1, totalPop)) * 100);
+  // Share aged 65 and over: derived from the twin's observed population by age (modelled), else the cohorts' sample.
+  const agingIndex = Math.round(readTwinValue('population.share_65_plus', (cohorts.find(c => c.band === '65+')!.populationM / Math.max(0.1, totalPop)) * 100));
   const demographics: DemographicAnalytics = {
     cohorts,
     agingIndex,

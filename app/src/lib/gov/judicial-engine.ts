@@ -6,6 +6,7 @@
 // clearance and propagates up the court hierarchy. Pure & deterministic.
 
 import { seed, wave } from '@/lib/telemetry';
+import { regionList } from '@/lib/nation/registry';
 
 export const CASE_STAGES = [
   'Filed', 'Pre-trial', 'Hearing', 'Judgment', 'Appeal', 'Constitutional review', 'Closed',
@@ -58,7 +59,7 @@ export interface JudicialState {
 }
 
 const TIERS = ['Trial Courts', 'Courts of Appeal', 'Supreme Court', 'Constitutional Court'];
-const REGIONS = ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'];
+const REGIONS = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 const CTYPE: CaseType[] = ['criminal', 'civil', 'constitutional', 'commercial', 'appeal'];
 
 export function judicialState(t: number): JudicialState {

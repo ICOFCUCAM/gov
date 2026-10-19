@@ -3,6 +3,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { api } from '@/lib/api/client';
+import { sealTile } from '@/lib/theme/nation';
+import { SOV, hexOf } from '@/lib/theme/tokens';
 import { TONE, Spark, waveSeries } from '@/components/features/SituationRoom';
 import { deployableInstitutions } from '@/lib/institution/readiness';
 import { buildCascade } from '@/lib/institution/cascade';
@@ -35,13 +37,18 @@ import { subscribeBus, version as busVersion, eventLog, eventStats } from '@/ser
 import { subscribe as rtSubscribe, runtimeStats, runtimeContinuity, scopeSummaries, executionDelta, injectDirective, directiveState, directiveActioned, version as rtVersion } from '@/lib/gov/runtime-store';
 import { decisionEfficacy, efficacyRollup, type EfficacyResult } from '@/services/decision-efficacy';
 import { resolveIdentity } from '@/lib/sovereign-identity';
-import type { SovereignProfile, NationalSnapshot, Ministry } from '@/lib/api/types';
+import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry } from '@/lib/api/types';
+import { useRenderNow } from '@/lib/clock/render-now';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
+import { IndexTag } from '@/components/ui/IndexTag';
 
-function P({ title, meta, children }: { title: string; meta?: string; children: React.ReactNode }) {
+// Panels here are calculated from the institutions' models, so they say so unless a panel states otherwise.
+function P({ title, meta, children, signal = 'modelled' }: { title: string; meta?: string; children: React.ReactNode; signal?: SignalKind | null }) {
   return (
     <section className="flex min-h-0 flex-col rounded-[3px] border border-line bg-surface">
       <div className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-        <h2 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}</h2>
+        <h2 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}{signal ? <SignalTag kind={signal} source={REFERENCE_MODEL} /> : null}</h2>
         {meta ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
       </div>
       <div className="min-h-0 flex-1 p-2.5">{children}</div>
@@ -57,14 +64,16 @@ function P({ title, meta, children }: { title: string; meta?: string; children: 
 export function NationalShell() {
   const [sov, setSov] = React.useState<SovereignProfile | null>(null);
   const [nat, setNat] = React.useState<NationalSnapshot | null>(null);
+  const [coord, setCoord] = React.useState<NationalCoordination | null>(null);
   const [mins, setMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
 
   const [fed, setFed] = React.useState<{ apps: { id: string; label: string; domain: string; kind: string; activated: boolean; navCount: number }[]; stats: { registered: number; activated: number } } | null>(null);
   React.useEffect(() => {
     const load = () => {
       api.sovereign.get().then(r => setSov(r.sovereign)).catch(() => {});
       api.cabinet.national().then(setNat).catch(() => {});
+      api.cabinet.coordination().then(setCoord).catch(() => {});
       api.org.ministries().then(r => setMins(r.ministries)).catch(() => {});
       api.org.federation().then(setFed).catch(() => {});
     };
@@ -89,7 +98,7 @@ export function NationalShell() {
     mins.filter(m => m.archetype === 'HEALTH' && m.status === 'active').map(m => m.id), ts,
   );
   const identity = sov ? resolveIdentity(sov) : null;
-  const model = constitutionFor(sov?.stateForm ?? 'republic');
+  const model = constitutionFor(sov?.stateForm ?? 'republic', sov?.constitution);
   const dir = deployableInstitutions(mins);
   const fabric = buildNationalFabric(mins);
   const cascade = buildCascade(mins, (mid) => Math.round(waveSeries(`nh:${mid}`, ts, 1, 58, 99).at(-1)!));
@@ -101,12 +110,15 @@ export function NationalShell() {
   const incidents = nat?.crossMinistryIncidents ?? [];
   const branchMean = Math.round(model.branches.reduce((a, b) => a + branchReadiness(b.key, ts).total, 0) / model.branches.length);
 
-  const posture =
-    cascCrit || incidents.length >= 5 ? { l: 'STRAINED', t: 'alert' }
+  // One national posture: the server's (the same as the console header). Until it
+  // arrives, the shell's own cascade reading stands in.
+  const posture = coord
+    ? { l: coord.posture.label, t: coord.posture.level }
+    : cascCrit || incidents.length >= 5 ? { l: 'STRAINED', t: 'alert' }
       : cascStrain || incidents.length ? { l: 'WATCH', t: 'warn' } : { l: 'STABLE', t: 'ok' };
 
   const tele = [
-    { l: 'National posture', v: posture.l, t: posture.t, k: 'np' },
+    { l: 'National status', v: posture.l, t: posture.t, k: 'np' },
     { l: 'Active institutions', v: `${dir.length}`, t: 'ok', k: 'ai' },
     { l: 'Deployable', v: `${deployable}/${dir.length || 0}`, t: deployable === dir.length ? 'ok' : 'warn', k: 'dp' },
     { l: 'Mean readiness', v: `${meanReady}%`, t: meanReady >= 70 ? 'ok' : 'warn', k: 'mr' },
@@ -208,33 +220,35 @@ export function NationalShell() {
   const estates = [
     { l: 'Constitutional Architecture', s: model.label, href: '/gov/branches', v: `${model.branches.length} branches`, t: sep.intact ? 'ok' : 'alert' },
     { l: 'Regional Command', s: `${regions.length} regions · ${rRoll.population}M`, href: '/gov/regional', v: `${rRoll.meanReadiness}% ready`, t: rTone },
-    { l: 'National Simulation', s: lead ? `Lead · ${lead.label}` : 'Scenario · cascade what-if', href: lead ? `/gov/simulation?s=${lead.key}` : '/gov/simulation', v: lead ? `${lead.composite} risk` : '10 vectors', t: leadTone },
+    { l: 'National Simulation', s: lead ? `Lead · ${lead.label}` : 'Scenario · knock-on what-if', href: lead ? `/gov/simulation?s=${lead.key}` : '/gov/simulation', v: lead ? `${lead.composite} risk` : '10 vectors', t: leadTone },
     { l: 'Cabinet Intelligence', s: 'Executive command', href: '/gov', v: posture.l, t: posture.t },
     { l: 'Situation Room', s: 'Real-time operations', href: '/gov/situation-room', v: `${incidents.length} incidents`, t: incidents.length ? 'warn' : 'ok' },
-    { l: 'National Coordination', s: 'Dependency · cascade', href: '/gov/coordination', v: `${cascCrit + cascStrain} cascade`, t: cascCrit ? 'alert' : cascStrain ? 'warn' : 'ok' },
-    { l: 'Interoperability Fabric', s: 'Whole-of-government mesh', href: '/gov/fabric', v: `${fabric.stats.links} links`, t: 'ok' },
+    { l: 'National Coordination', s: 'Dependencies · knock-on effects', href: '/gov/coordination', v: `${cascCrit + cascStrain} knock-on`, t: cascCrit ? 'alert' : cascStrain ? 'warn' : 'ok' },
+    { l: 'Connections between institutions', s: 'Across government', href: '/gov/fabric', v: `${fabric.stats.links} links`, t: 'ok' },
     { l: 'Operations Centre', s: 'Cross-institution state', href: '/ops', v: 'Operational', t: 'ok' },
     { l: 'Oversight', s: 'Audit · integrity', href: '/audit', v: nat?.totals.auditIntact === false ? 'Review' : 'Intact', t: nat?.totals.auditIntact === false ? 'alert' : 'ok' },
     { l: 'Institutions Admin', s: 'Compose · activate', href: '/ministries', v: `${mins.length} composed`, t: 'ok' },
   ];
 
+  // The nation's seal in its own colour, kept visible on the graphite ground (lib/theme/nation.ts).
+  const seal = sealTile(identity?.accent, hexOf(SOV['--c-surface']!));
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span aria-hidden className="grid h-7 w-7 place-items-center rounded-[3px] text-[11px] font-bold text-white" style={{ backgroundColor: identity ? 'rgb(var(--c-link))' : 'rgb(var(--c-line))' }}>{identity?.seal ?? 'NS'}</span>
-          <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">National Shell</h1>
+          <span aria-hidden className="grid h-7 w-7 place-items-center rounded-[3px] text-[11px] font-bold" style={{ backgroundColor: seal.fill, color: seal.ink }}>{identity?.seal ?? 'NS'}</span>
+          <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">National Shell</h2>
           <span className="rounded-[3px] border px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]" style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}>{sov?.stateName ?? 'Sovereign'} · {model.label}</span>
           <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()}</span>
         </div>
         <span className="rounded-[3px] border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.16em]"
           style={{ borderColor: TONE[posture.t], color: TONE[posture.t], backgroundColor: `color-mix(in srgb, ${TONE[posture.t]} 12%, transparent)` }}>
-          Whole-of-government posture · {posture.l}
+          Whole-of-government status · {posture.l}
         </span>
       </div>
 
       <p className="text-[11px] text-ink-muted">
-        The orchestration layer binding the constitution, the institution factory, the interoperability fabric and national posture into one sovereign control surface — distinct from real-time operations (Situation Room) and executive command (Cabinet).
+        The whole state on one page: the constitution, every institution, how they depend on each other and the national status. For what is happening right now, see Situation now; for decisions, see the Cabinet brief.
       </p>
 
       <div className="rounded-[3px] border border-line bg-surface" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
@@ -249,7 +263,7 @@ export function NationalShell() {
             </div>
             {stress && stress.drawdown > 0 ? (
               <div className="ml-2 flex flex-col border-l border-line pl-3">
-                <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Under lead vector</span>
+                <span className="text-[8px] font-semibold uppercase tracking-[0.14em] text-ink-muted">Under the main threat</span>
                 <span className="font-mono text-[15px] leading-none tabular-nums" style={{ color: TONE[stress.tone] }}>
                   {stress.projected}<span className="ml-1 text-[10px]" style={{ color: TONE.alert }}>−{stress.drawdown}</span>
                 </span>
@@ -308,7 +322,7 @@ export function NationalShell() {
       {(() => {
         const st = sei.band === 'degraded' ? 'alert' : sei.band === 'strained' ? 'warn' : 'ok';
         return (
-          <P title="Sovereign execution index" meta="emergent composite — institutional operations · resilience · runtime · audit">
+          <P title="Sovereign execution index" meta="combined from institutions' operations, resilience, work in progress and audit">
             <div className="flex flex-wrap items-center gap-4">
               <div className="flex items-baseline gap-2">
                 <span className="font-mono text-[32px] leading-none tabular-nums" style={{ color: TONE[st] }}>{sei.index}</span>
@@ -330,7 +344,7 @@ export function NationalShell() {
       {(() => {
         const ptn = fp.posture === 'critical' ? 'alert' : fp.posture === 'strained' ? 'warn' : 'ok';
         return (
-          <P title="Emergent national operational posture" meta={`RULE 3 · derived from ${fp.institutions.length} institutions' own engines — no hardcoded figure`}>
+          <P title="National operations status, from institutions' live work" meta={`modelled from ${fp.institutions.length} institutions`}>
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <div className="flex items-baseline gap-2">
                 <span className="font-mono text-[30px] leading-none tabular-nums" style={{ color: TONE[ptn] }}>{fp.meanOperational}</span>
@@ -339,7 +353,7 @@ export function NationalShell() {
               <span className="text-[10px] text-ink-muted">{fp.degraded} degraded · worst · <strong className="text-ink-soft">{fp.worst?.name ?? '—'}</strong></span>
             </div>
             {fp.institutions.length === 0 ? (
-              <p className="text-[11px] text-ink-muted">No active institutions — national operational posture is undefined until institutions operate. It is not a fabricated number.</p>
+              <p className="text-[11px] text-ink-muted">No active institutions — there is no national status until institutions are working. Nothing is made up.</p>
             ) : (
               <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 xl:grid-cols-4">
                 {fp.institutions.map(i => (
@@ -358,13 +372,13 @@ export function NationalShell() {
       {(() => {
         const itn = iof.posture === 'fragmented' ? 'alert' : iof.posture === 'strained' ? 'warn' : 'ok';
         return (
-          <P title="Emergent interoperability fabric" meta={`RULE 2 · ${iof.edges.length} contracts from active federation · ${iof.meanHealth}% mean health`}>
+          <P title="Connections between institutions" meta={`${iof.edges.length} agreements between active institutions · average health ${iof.meanHealth}%`}>
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[itn]} 16%, transparent)`, color: TONE[itn] }}>{iof.posture}</span>
-              <span className="text-[10px] text-ink-muted">{iof.nodes} institutions · {iof.stressedLinks} stressed links — dependency health derived from real operational posture, not fabricated</span>
+              <span className="text-[10px] text-ink-muted">{iof.nodes} institutions · {iof.stressedLinks} stressed links — how dependencies between institutions are holding up (modelled)</span>
             </div>
             {iof.edges.length === 0 ? (
-              <p className="text-[11px] text-ink-muted">No inter-institution contracts — provision more institutions to form the interoperability mesh.</p>
+              <p className="text-[11px] text-ink-muted">No agreements between institutions yet — activate more institutions to connect them.</p>
             ) : (
               <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
                 {iof.edges.slice(0, 9).map((e, i) => (
@@ -385,7 +399,7 @@ export function NationalShell() {
       {(() => {
         const fn = rprop.fragility === 'cascading' ? 'alert' : rprop.fragility === 'coupled' ? 'warn' : 'ok';
         return (
-          <P title="Resilience propagation" meta={`RULE 3 · contagion across the live fabric · base ${rprop.meanBase} → effective ${rprop.meanEffective} · −${rprop.amplification} systemic drag`}>
+          <P title="Resilience propagation" meta={`spread between institutions · base ${rprop.meanBase} → effective ${rprop.meanEffective} · −${rprop.amplification} knock-on loss`}>
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[fn]} 16%, transparent)`, color: TONE[fn] }}>{rprop.fragility}</span>
               <span className="text-[10px] text-ink-muted">
@@ -415,13 +429,13 @@ export function NationalShell() {
       {(() => {
         const sn = strategy.posture === 'crisis' ? 'alert' : strategy.posture === 'engaged' ? 'warn' : 'ok';
         return (
-          <P title="Sovereign decision queue" meta={`national intelligence → executable directives · ${strategy.posture} · ${strategy.critical} critical`}>
+          <P title="Sovereign decision queue" meta={`from national intelligence to directives · status ${strategy.posture} · ${strategy.critical} critical`}>
             <div className="mb-2 flex flex-wrap items-center gap-3">
               <span className="rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[sn]} 16%, transparent)`, color: TONE[sn] }}>{strategy.posture}</span>
-              <span className="text-[10px] text-ink-muted">every decision terminates in execution — directives inject real work into the institutional runtime, not a dashboard</span>
+              <span className="text-[10px] text-ink-muted">every decision ends in action: a directive creates real work in the institutions, not just a chart</span>
             </div>
             {strategy.decisions.length === 0 ? (
-              <p className="text-[11px] text-ink-muted">No outstanding sovereign decisions — national posture within tolerance. The queue is emergent; it is empty because nothing requires command action.</p>
+              <p className="text-[11px] text-ink-muted">No decisions waiting — the national status is within limits. The list fills itself when something needs a decision.</p>
             ) : (
               <div className="space-y-1.5">
                 {strategy.decisions.map(d => {
@@ -478,7 +492,7 @@ export function NationalShell() {
         const vTone = (v: EfficacyResult['verdict']) =>
           v === 'effective' ? 'ok' : v === 'ineffective' ? 'alert' : v === 'pending' ? 'warn' : 'neutral';
         return (
-          <P title="Decision efficacy ledger" meta={`accountability · ${roll.effective} effective · ${roll.ineffective} regressed · ${roll.pending} pending${roll.hitRate >= 0 ? ` · ${roll.hitRate}% hit-rate` : ''}`}>
+          <P title="Did decisions work? The record" meta={`accountability · ${roll.effective} effective · ${roll.ineffective} regressed · ${roll.pending} pending${roll.hitRate >= 0 ? ` · ${roll.hitRate}% hit-rate` : ''}`}>
             <div className="mb-2 text-[10px] text-ink-muted">every executed directive is held accountable to the signal it targeted — the loop verifies whether the decision actually worked, not just that it ran</div>
             <div className="space-y-1.5">
               {rows.map(({ d, res }) => {
@@ -499,7 +513,7 @@ export function NationalShell() {
         );
       })()}
 
-      <P title="National institutional footprint" meta="every active institution, instantiated from its archetype">
+      <P title="National institutional footprint" meta="every active institution, set up from its type">
         <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {[
             { l: 'Institutions', v: String(ne.institutions), t: 'ok' as const },
@@ -599,7 +613,7 @@ export function NationalShell() {
           <span className="rounded-[3px] px-1.5 py-0.5 font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[constContinuity.t]} 16%, transparent)`, color: TONE[constContinuity.t] }}>
             {constContinuity.l}
           </span>
-          <span className="text-ink-muted">Branches propagate into whole-of-government posture</span>
+          <span className="text-ink-muted">How each branch affects the whole of government</span>
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
           <Link href="/gov/branch/legislature" className="focus-ring rounded-[3px] border border-line-soft bg-surface-2/40 p-2 no-underline transition-colors hover:bg-surface-2/70">
@@ -647,7 +661,7 @@ export function NationalShell() {
         const sf = stateFabric(mins, ts);
         const ctn = sf.contagion === 'systemic' ? 'alert' : sf.contagion === 'coupled-stress' ? 'warn' : 'ok';
         return (
-          <P title="Cross-system propagation" meta={`state fabric · ${sf.contagion} · systemic ${sf.systemicStress}`}>
+          <P title="Cross-system propagation" meta={`connected systems · spread ${sf.contagion} · strain across government ${sf.systemicStress}`}>
             <div className="mb-2 flex flex-wrap items-center gap-2 text-[10px]">
               <span className="rounded-[3px] px-1.5 py-0.5 font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${TONE[ctn]} 16%, transparent)`, color: TONE[ctn] }}>
                 {sf.contagion}
@@ -694,13 +708,13 @@ export function NationalShell() {
         const rt = nationalRuntime(mins, ts);
         const pt = rt.posture === 'overloaded' ? 'alert' : rt.posture === 'strained' ? 'warn' : 'ok';
         return (
-          <P title="National operations runtime" meta={(() => { const c = runtimeContinuity(); return `work backlog · ${rt.posture} · ${rt.throughputPerHr}/h throughput · ${c.persisted ? `continuity on${c.restoredTransitions ? ` · ${c.restoredTransitions} restored` : ''}` : 'session-only'}`; })()}>
+          <P title="National operations: work in progress" meta={(() => { const c = runtimeContinuity(); return `work backlog · ${rt.posture} · ${rt.throughputPerHr} handled per hour · ${c.persisted ? `continuity on${c.restoredTransitions ? ` · ${c.restoredTransitions} restored` : ''}` : 'session-only'}`; })()}>
             <div className="mb-2 grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
               {[
                 { l: 'Open work items', v: rt.totalOpen.toLocaleString(), t: 'ok' as const },
                 { l: 'Urgent', v: `${rt.totalUrgent}`, t: rt.totalUrgent > 80 ? 'alert' as const : 'warn' as const },
-                { l: 'SLA breaching', v: `${rt.totalBreaching}`, t: rt.totalBreaching > 80 ? 'alert' as const : 'warn' as const },
-                { l: 'Throughput/hr', v: `${rt.throughputPerHr}`, t: 'ok' as const },
+                { l: 'Past time target', v: `${rt.totalBreaching}`, t: rt.totalBreaching > 80 ? 'alert' as const : 'warn' as const },
+                { l: 'Handled per hour', v: `${rt.throughputPerHr}`, t: 'ok' as const },
                 { l: 'Mean load', v: `${rt.meanLoad}`, t: pt },
                 { l: 'Operator transitions', v: `${liveRt.transitions}`, t: 'ok' as const },
                 { l: 'Audit chains', v: `${audit.scopes} · ${audit.intact ? 'intact' : 'BREACH'}`, t: audit.intact ? 'ok' as const : 'alert' as const },
@@ -724,26 +738,26 @@ export function NationalShell() {
               })}
             </div>
             <div className="mt-1.5 text-right">
-              <Link href="/gov/ledger" className="text-[10px] text-link underline underline-offset-2">Operations Ledger →</Link>
+              <Link href="/gov/ledger" className="text-[10px] text-link underline underline-offset-2">Operations record →</Link>
             </div>
           </P>
         );
       })()}
 
-      <P title="Healthcare capacity" meta={healthCap.hospitals ? `emergent from ${healthCap.hospitals} active health institution(s)` : 'no health institution provisioned'}>
+      <P title="Healthcare capacity" meta={healthCap.hospitals ? `from ${healthCap.hospitals} active health institution(s)` : 'no health institution provisioned'}>
         {healthCap.hospitals === 0 ? (
           <p className="text-[11px] text-ink-muted">No Ministry of Health is active. National healthcare capacity is <strong>not a hardcoded figure</strong> — it emerges from real hospital/ICU/ambulance/doctor state once a health institution is provisioned.</p>
         ) : (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
             {[
-              { l: 'Capacity index', v: `${healthCap.capacityIndex}`, t: healthCap.tone },
+              { l: 'Capacity index', v: `${healthCap.capacityIndex}`, t: healthCap.tone, tag: <IndexTag index="health-systems.ts · capacityIndex" /> },
               { l: 'Bed occupancy', v: `${healthCap.bedOccupancyPct}%`, t: healthCap.bedOccupancyPct >= 92 ? 'alert' as const : healthCap.bedOccupancyPct >= 82 ? 'warn' as const : 'ok' as const },
               { l: 'ICU occupancy', v: `${healthCap.icuOccupancyPct}%`, t: healthCap.icuOccupancyPct >= 95 ? 'alert' as const : healthCap.icuOccupancyPct >= 85 ? 'warn' as const : 'ok' as const },
               { l: 'Ambulances available', v: `${healthCap.ambulanceAvailablePct}%`, t: healthCap.ambulanceAvailablePct >= 40 ? 'ok' as const : 'warn' as const },
               { l: 'Doctor availability', v: `${healthCap.doctorAvailabilityPct}%`, t: healthCap.doctorAvailabilityPct >= 30 ? 'ok' as const : 'warn' as const },
             ].map(s => (
               <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
+                <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted"><span className="truncate">{s.l}</span>{s.tag}</div>
                 <div className="font-mono text-[15px] tabular-nums" style={{ color: TONE[s.t] }}>{s.v}</div>
               </div>
             ))}
@@ -760,8 +774,8 @@ export function NationalShell() {
           ? serverApps.map(a => ({ id: a.id, label: a.label, domain: a.domain, kind: a.kind, navCount: a.navCount, instanceId: undefined as string | undefined }))
           : fedApps.map(a => ({ id: a.id, label: a.label, domain: a.domain, kind: a.kind, navCount: a.nav.length, instanceId: a.instanceId }));
         const meta = fed
-          ? `${fed.stats.activated}/${fed.stats.registered} sovereign applications · server-authoritative federation`
-          : `${fedApps.length} sovereign applications · orchestration registry`;
+          ? `${fed.stats.activated}/${fed.stats.registered} national applications · kept by the platform`
+          : `${fedApps.length} national applications · application register`;
         const opByArch = new Map(fp.institutions.map(i => [i.archetype, i]));
         const DOMAIN_ARCH: Record<string, string> = {
           health: 'HEALTH', treasury: 'FINANCE', education: 'EDUCATION', transport: 'TRANSPORT',
@@ -769,7 +783,7 @@ export function NationalShell() {
           interior: 'INTERIOR', labour: 'LABOR', trade: 'TRADE',
         };
         return (
-          <P title="Federated institutions" meta={`${meta} · live posture emergent from operations`}>
+          <P title="Connected institutions" meta={`${meta} · live status from their operations`}>
             {apps.length === 0 ? (
               <p className="text-[11px] text-ink-muted">No institutional applications activated. Provision and activate an institution — its sovereign application registers and appears here automatically.</p>
             ) : (
@@ -803,7 +817,7 @@ export function NationalShell() {
         const ss = scopeSummaries().slice(0, 10);
         if (ss.length === 0) return null;
         return (
-          <P title="Institutional execution" meta="live work scopes — emergent from operational runtimes">
+          <P title="Institutional execution" meta="live work, from each institution's operations">
             <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
               {ss.map(s => {
                 const tn = s.open > 12 ? 'alert' : s.open > 6 ? 'warn' : 'ok';
@@ -820,7 +834,7 @@ export function NationalShell() {
         );
       })()}
 
-      <P title="Deployable federation topology" meta="federation management · institution = deployment boundary">
+      <P title="Where each institution runs" meta="each institution can run on its own servers">
         <div className="grid gap-1.5 sm:grid-cols-2 xl:grid-cols-3">
           {deployableRoots().map(r => (
             <Link key={r.root} href={`/app/${r.domain}`} className="focus-ring flex items-center gap-2 rounded-[3px] border border-line-soft bg-surface-2/40 px-2 py-1.5 no-underline transition-colors hover:bg-surface-2/70">
@@ -835,9 +849,9 @@ export function NationalShell() {
         <p className="mt-1.5 text-[9px] text-ink-muted">Each is an independently deployable sovereign root; subsystems live inside the institution, never as separate deployments. The platform root is the nervous system only.</p>
       </P>
 
-      <P title="Sovereign event bus" meta={`${busAgg.total} federation events · institutions emit, the platform consumes`}>
+      <P title="Sovereign event bus" meta={`${busAgg.total} events from institutions`}>
         {busEvents.length === 0 ? (
-          <p className="text-[11px] text-ink-muted">No federation events yet. Activating institutions and entering their applications emits registration & metric events here.</p>
+          <p className="text-[11px] text-ink-muted">No events from institutions yet. Activating institutions and opening their applications records them here.</p>
         ) : (
           <div className="space-y-1">
             {busEvents.map((e, i) => (
@@ -851,7 +865,7 @@ export function NationalShell() {
         )}
       </P>
 
-      <P title="State estates" meta="whole-of-government launchpad">
+      <P title="Arms of the state" meta="whole-of-government launchpad">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-4">
           {estates.map(e => (
             <Link key={e.l} href={e.href} className="focus-ring group flex flex-col rounded-[3px] border border-line bg-bg p-2.5 no-underline transition-all hover:-translate-y-0.5 hover:border-link/40">
@@ -877,11 +891,11 @@ export function NationalShell() {
             ))}
           </div>
         </P>
-        <P title="Cascade posture" meta="whole-of-government propagation">
+        <P title="Knock-on risk" meta="whole-of-government propagation">
           <div className="mb-1.5 flex gap-2 text-[10px]">
             <span className="rounded-[3px] px-1.5 py-0.5 font-bold" style={{ backgroundColor: `color-mix(in srgb, ${TONE.alert} 16%, transparent)`, color: TONE.alert }}>{cascCrit} critical</span>
             <span className="rounded-[3px] px-1.5 py-0.5 font-bold" style={{ backgroundColor: `color-mix(in srgb, ${TONE.warn} 16%, transparent)`, color: TONE.warn }}>{cascStrain} strained</span>
-            <Link href="/gov/fabric" className="ml-auto text-[10px] text-link underline underline-offset-2">Fabric →</Link>
+            <Link href="/gov/fabric" className="ml-auto text-[10px] text-link underline underline-offset-2">Connections →</Link>
           </div>
           <div className="space-y-1">
             {cascade.slice(0, 6).map(c => {
@@ -901,7 +915,7 @@ export function NationalShell() {
             })}
           </div>
         </P>
-        <P title="Regional posture" meta={`${rRoll.critical} critical · ${rRoll.elevated} elevated`}>
+        <P title="Regional status" meta={`${rRoll.critical} critical · ${rRoll.elevated} elevated`}>
           <div className="mb-1.5 flex items-center gap-2 text-[10px]">
             <span className="rounded-[3px] px-1.5 py-0.5 font-bold uppercase" style={{ backgroundColor: `color-mix(in srgb, ${TONE[rTone]} 16%, transparent)`, color: TONE[rTone] }}>{rRoll.posture}</span>
             <span className="text-ink-muted">{rRoll.meanReadiness}% mean readiness</span>
@@ -960,7 +974,7 @@ export function NationalShell() {
         </div>
       </P>
 
-      <p className="text-[10px] text-ink-muted">Read-only orchestration. The National Shell binds the estates; humans govern through the constituted branches and command surfaces.</p>
+      <p className="text-[10px] text-ink-muted">This page only shows: it brings the arms of the state into one view. People decide, through the branches of government and their own pages.</p>
     </div>
   );
 }

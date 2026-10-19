@@ -1,0 +1,372 @@
+{
+ "AFG": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 34,
+  "coverage": 1,
+  "source": "Wikimedia, geoBoundaries",
+  "licence": "Public Domain",
+  "year": "2007",
+  "id": "AFG-ADM1-12653393"
+ },
+ "BDI": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 18,
+  "coverage": 1,
+  "source": "geoBoundaries, Wikimedia",
+  "licence": "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+  "year": "2014",
+  "id": "BDI-ADM1-87207978"
+ },
+ "BGD": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 8,
+  "coverage": 1,
+  "source": "geoBoundaries, Wikimedia Commons",
+  "licence": "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+  "year": "2015",
+  "id": "BGD-ADM1-32408957"
+ },
+ "BHS": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 32,
+  "coverage": 1,
+  "source": "Haiti GeoPortal",
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "year": "09-09-2017 to 24-08-2020",
+  "id": "BHS-ADM1-57655419"
+ },
+ "BWA": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 17,
+  "coverage": 1,
+  "source": "UNFPA, HDX",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2021",
+  "id": "BWA-ADM1-67125928",
+  "via": "geoBoundaries"
+ },
+ "CIV": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 14,
+  "coverage": 0.786,
+  "source": "World Bank Group, OCHA Côte d’Ivoire",
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "year": "2016",
+  "id": "CIV-ADM1-83157122"
+ },
+ "COD": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 26,
+  "coverage": 1,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "COD-ADM1-28894549"
+ },
+ "CZE": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 14,
+  "coverage": 1,
+  "source": "Czech Office for Surveying",
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "year": "2021",
+  "id": "CZE-ADM1-73172107"
+ },
+ "EST": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 15,
+  "coverage": 1,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2016",
+  "id": "EST-ADM1-21999144",
+  "via": "geoBoundaries"
+ },
+ "ETH": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 13,
+  "coverage": 1,
+  "source": "CSA (Central Statistics Agency) + Regional Bureau of Fice and Economic Development (BoFED), HDX",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2020",
+  "id": "ETH-ADM1-83672466",
+  "via": "geoBoundaries"
+ },
+ "FIN": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 19,
+  "coverage": 1,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "FIN-ADM1-49019192"
+ },
+ "GHA": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 16,
+  "coverage": 1,
+  "source": "Open Street Map",
+  "licence": "Creative Commons Attribution-ShareAlike 2.0",
+  "year": "2021",
+  "id": "GHA-ADM1-69750345"
+ },
+ "GRL": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 6,
+  "coverage": 1,
+  "source": "GeoBoundaries, Wikipedia",
+  "licence": "Creative Commons Attribution-ShareAlike 3.0 Unported",
+  "year": "2020",
+  "id": "GRL-ADM1-42512837"
+ },
+ "KEN": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 47,
+  "coverage": 1,
+  "source": "RCMRD GeoPortal, Africa GeoPortal",
+  "licence": "Public Domain",
+  "year": "2020",
+  "id": "KEN-ADM1-32016919"
+ },
+ "LAO": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 18,
+  "coverage": 1,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "LAO-ADM1-31783359"
+ },
+ "LBN": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 9,
+  "coverage": 1,
+  "source": "geoBoundaries, Wikimedia Commons",
+  "licence": "Public Domain",
+  "year": "2017",
+  "id": "LBN-ADM1-68408151"
+ },
+ "LBY": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 22,
+  "coverage": 1,
+  "source": "Natural Earth",
+  "licence": "Public Domain",
+  "year": "2021",
+  "id": "LBY-ADM1-10800210"
+ },
+ "LCA": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 10,
+  "coverage": 1,
+  "source": "Wikimedia Commons, Wikimedia Commons",
+  "licence": "CC0 1.0 Universal (CC0 1.0) Public Domain Dedication",
+  "year": "2015",
+  "id": "LCA-ADM1-63095687"
+ },
+ "LUX": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 12,
+  "coverage": 1,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "LUX-ADM1-76397094"
+ },
+ "LVA": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 43,
+  "coverage": 1,
+  "source": "Geoportal of Latvia",
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "year": "2021",
+  "id": "LVA-ADM1-71098776"
+ },
+ "MLI": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 10,
+  "coverage": 0.909,
+  "source": "DNCT - Direction Nationale des Collectivités Territoriales, HDX",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2015",
+  "id": "MLI-ADM1-21739660",
+  "via": "geoBoundaries"
+ },
+ "MNE": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 23,
+  "coverage": 0.92,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "MNE-ADM1-59799669"
+ },
+ "MRT": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 15,
+  "coverage": 0.933,
+  "source": "Agence Nationale de la Statistique, de l'Analyse Démographique et Economique (ANSADE)",
+  "licence": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+  "year": "2024",
+  "id": "cod-ab-mrt",
+  "via": "OCHA HDX"
+ },
+ "NAM": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 14,
+  "coverage": 1,
+  "source": "Namibia Statistics Agency (NSA)",
+  "licence": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+  "year": "2020",
+  "id": "cod-ab-nam",
+  "via": "OCHA HDX"
+ },
+ "NPL": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 7,
+  "coverage": 1,
+  "source": "Survey Department of Nepal, OCHA FISS",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2020",
+  "id": "NPL-ADM1-38925275"
+ },
+ "PAN": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 13,
+  "coverage": 0.929,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "PAN-ADM1-82927092"
+ },
+ "PNG": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 22,
+  "coverage": 1,
+  "source": "Papua New Guinea National Statistics Office, OCHA ROAP",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2019",
+  "id": "PNG-ADM1-602756"
+ },
+ "POL": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 16,
+  "coverage": 1,
+  "source": "Państwowy Rejestr Granic (PRG)",
+  "licence": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+  "year": "2022",
+  "id": "cod-ab-pol",
+  "via": "OCHA HDX"
+ },
+ "QAT": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 8,
+  "coverage": 1,
+  "source": "geoBoundaries, Qatar Open Data Portal",
+  "licence": "Creative Commons Attribution 4.0 International (CC BY 4.0)",
+  "year": "2015",
+  "id": "QAT-ADM1-59647477"
+ },
+ "SDN": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 19,
+  "coverage": 1,
+  "source": "Information Management Working Group (IMWG), OCHA ROSEA",
+  "licence": "Creative Commons Attribution 3.0 Intergovernmental Organisations (CC BY 3.0 IGO)",
+  "year": "2020",
+  "id": "SDN-ADM1-86620642"
+ },
+ "SLE": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 5,
+  "coverage": 1,
+  "source": "Government of Sierra Leone",
+  "licence": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+  "year": "2023",
+  "id": "cod-ab-sle",
+  "via": "OCHA HDX"
+ },
+ "SVN": {
+  "level": "I",
+  "adm": "ADM2",
+  "units": 212,
+  "coverage": 0.981,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "SVN-ADM2-79292919",
+  "via": "geoBoundaries"
+ },
+ "TCD": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 23,
+  "coverage": 1,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "TCD-ADM1-23847190"
+ },
+ "TJK": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 5,
+  "coverage": 1,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "TJK-ADM1-86453995"
+ },
+ "UGA": {
+  "level": "II",
+  "adm": "ADM2",
+  "units": 135,
+  "coverage": 1,
+  "source": "Uganda Bureau of Statistics with support from WHO",
+  "licence": "Creative Commons Attribution for Intergovernmental Organisations (CC BY-IGO)",
+  "year": "2020",
+  "id": "cod-ab-uga",
+  "via": "OCHA HDX"
+ },
+ "UKR": {
+  "level": "I",
+  "adm": "ADM1",
+  "units": 27,
+  "coverage": 1,
+  "source": "OpenStreetMap, Wambacher",
+  "licence": "Open Data Commons Open Database License 1.0",
+  "year": "2017",
+  "id": "UKR-ADM1-14850775"
+ }
+}

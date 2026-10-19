@@ -5,6 +5,7 @@
 
 import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type { CitizenRow, ServiceRequestRow, ConsentRow, AppealRow } from '@/lib/db/types';
+import { logger } from '@/lib/ops/log';
 
 // ── Citizens ──────────────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ export async function registerCitizenRow(c: CitizenInput): Promise<CitizenRow | 
     p_auth_user_id: c.authUserId ?? null,
     p_meta: c.meta ?? {},
   });
-  if (error) { console.error('[civicos] register_citizen failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'register_citizen', message: error.message }); return null; }
   return (data as CitizenRow) ?? null;
 }
 
@@ -51,7 +52,7 @@ export async function submitServiceRequestRow(r: ServiceRequestInput): Promise<S
     p_service: r.service, p_domain: r.domain ?? null, p_title: r.title ?? null,
     p_payload: r.payload ?? {}, p_linked_work_item_id: r.linkedWorkItemId ?? null,
   });
-  if (error) { console.error('[civicos] submit_service_request failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'submit_service_request', message: error.message }); return null; }
   return (data as ServiceRequestRow) ?? null;
 }
 
@@ -72,7 +73,7 @@ export async function updateServiceRequestRow(u: ServiceRequestUpdate): Promise<
     p_payload_patch: u.payloadPatch ?? null,
     p_linked_work_item_id: u.linkedWorkItemId ?? null,
   });
-  if (error) { console.error('[civicos] update_service_request failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'update_service_request', message: error.message }); return null; }
   return (data as ServiceRequestRow) ?? null;
 }
 
@@ -83,7 +84,7 @@ export async function rateMyServiceRequestRow(ref: string, satisfaction: number)
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_rate_my_service_request', { p_ref: ref, p_satisfaction: satisfaction });
-  if (error || !data) { if (error) console.error('[civicos] rate_my_service_request failed:', error.message); return null; }
+  if (error || !data) { if (error) logger.error('substrate.rpc_failed', { rpc: 'rate_my_service_request', message: error.message }); return null; }
   return (Array.isArray(data) ? data[0] : data) as ServiceRequestRow;
 }
 
@@ -95,7 +96,7 @@ export async function cancelMyServiceRequestRow(ref: string, reason?: string): P
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_cancel_my_service_request', { p_ref: ref, p_reason: reason ?? null });
-  if (error || !data) { if (error) console.error('[civicos] cancel_my_service_request failed:', error.message); return null; }
+  if (error || !data) { if (error) logger.error('substrate.rpc_failed', { rpc: 'cancel_my_service_request', message: error.message }); return null; }
   return (Array.isArray(data) ? data[0] : data) as ServiceRequestRow;
 }
 
@@ -112,7 +113,7 @@ export async function grantConsentRow(
     p_scope: scope, p_expires_at: expiresAt ?? null,
     p_payload: payload ?? {},
   });
-  if (error) { console.error('[civicos] grant_consent failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'grant_consent', message: error.message }); return null; }
   return (data as ConsentRow) ?? null;
 }
 
@@ -123,7 +124,7 @@ export async function revokeAllMyConsentsRows(): Promise<number> {
   const sb = publicClient();
   if (!sb) return 0;
   const { data, error } = await sb.rpc('civicos_revoke_all_my_consents');
-  if (error || data == null) { if (error) console.error('[civicos] revoke_all_my_consents failed:', error.message); return 0; }
+  if (error || data == null) { if (error) logger.error('substrate.rpc_failed', { rpc: 'revoke_all_my_consents', message: error.message }); return 0; }
   return Number(data);
 }
 
@@ -131,7 +132,7 @@ export async function revokeConsentRow(consentId: string): Promise<ConsentRow | 
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_revoke_consent', { p_consent_id: consentId });
-  if (error) { console.error('[civicos] revoke_consent failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'revoke_consent', message: error.message }); return null; }
   return (data as ConsentRow) ?? null;
 }
 
@@ -156,7 +157,7 @@ export async function fileAppealRow(a: AppealInput): Promise<AppealRow | null> {
     p_originating_decision_ref: a.originatingDecisionRef ?? null,
     p_linked_work_item_id: a.linkedWorkItemId ?? null,
   });
-  if (error) { console.error('[civicos] file_appeal failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'file_appeal', message: error.message }); return null; }
   return (data as AppealRow) ?? null;
 }
 
@@ -169,7 +170,7 @@ export async function decideAppealRow(
     p_ref: ref, p_decision: decision,
     p_reasoning: reasoning ?? null, p_publish: publish,
   });
-  if (error) { console.error('[civicos] decide_appeal failed:', error.message); return null; }
+  if (error) { logger.error('substrate.rpc_failed', { rpc: 'decide_appeal', message: error.message }); return null; }
   return (data as AppealRow) ?? null;
 }
 
@@ -179,7 +180,7 @@ export async function advanceAppealStageRow(ref: string, stage: 'admitted' | 'he
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_advance_appeal_stage', { p_ref: ref, p_stage: stage });
-  if (error || !data) { if (error) console.error('[civicos] advance_appeal_stage failed:', error.message); return null; }
+  if (error || !data) { if (error) logger.error('substrate.rpc_failed', { rpc: 'advance_appeal_stage', message: error.message }); return null; }
   return (Array.isArray(data) ? data[0] : data) as AppealRow;
 }
 
@@ -190,7 +191,7 @@ export async function withdrawMyAppealRow(ref: string, reason?: string): Promise
   const sb = publicClient();
   if (!sb) return null;
   const { data, error } = await sb.rpc('civicos_withdraw_my_appeal', { p_ref: ref, p_reason: reason ?? null });
-  if (error || !data) { if (error) console.error('[civicos] withdraw_my_appeal failed:', error.message); return null; }
+  if (error || !data) { if (error) logger.error('substrate.rpc_failed', { rpc: 'withdraw_my_appeal', message: error.message }); return null; }
   return (Array.isArray(data) ? data[0] : data) as AppealRow;
 }
 

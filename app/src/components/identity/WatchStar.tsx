@@ -9,8 +9,8 @@ import {
 /** Click-to-toggle star for any substrate record. Renders nothing
  *  for anon sessions (the watchlist is keyed per identity). */
 export function WatchStar({
-  kind, ref: itemRef, label, className = '',
-}: { kind: WatchKind; ref: string; label: string; className?: string }) {
+  kind, itemRef, label, className = '',
+}: { kind: WatchKind; itemRef: string; label: string; className?: string }) {
   const { actor } = useIdentity();
   const [, force] = React.useReducer(x => x + 1, 0);
   React.useEffect(() => subscribeWatch(() => force()), []);

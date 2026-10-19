@@ -1,0 +1,87 @@
+{{- /*
+The nation's own OpenTelemetry Collector (otel.enabled + otel.collector.enabled).
+The app sends its traces here over OTLP/HTTP (app/src/lib/ops/otel.ts); the
+collector strips query strings once more and forwards to the exporters the
+nation configures (otel.collector.exporters: its own Jaeger, Tempo,
+OpenSearch…). Not exposed outside the cluster.
+*/ -}}
+{{- if and .Values.otel.enabled .Values.otel.collector.enabled }}
+{{- $c := .Values.otel.collector }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: civicos-otel-collector
+  labels:
+    {{- include "civicos.labels" . | nindent 4 }}
+data:
+  config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          http:
+            endpoint: 0.0.0.0:4318
+    processors:
+      memory_limiter:
+        check_interval: 1s
+        limit_percentage: 80
+        spike_limit_percentage: 20
+      batch: {}
+      attributes/strip-query:
+        actions:
+          - key: url.query
+            action: delete
+    exporters:
+      {{- toYaml $c.exporters | nindent 6 }}
+    service:
+      pipelines:
+        traces:
+          receivers: [otlp]
+          processors: [memory_limiter, attributes/strip-query, batch]
+          exporters: {{ toJson $c.pipelineExporters }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: civicos-otel-collector
+  labels:
+    app.kubernetes.io/name: otel-collector
+    {{- include "civicos.labels" . | nindent 4 }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: otel-collector }
+  template:
+    metadata:
+      labels: { app.kubernetes.io/name: otel-collector }
+      annotations:
+        checksum/config: {{ toJson $c.exporters | sha256sum }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.security.podSecurityContext | nindent 8 }}
+      containers:
+        - name: collector
+          image: {{ include "civicos.image" (dict "registry" .Values.global.imageRegistry "repo" $c.image "tag" $c.tag) }}
+          imagePullPolicy: {{ .Values.global.imagePullPolicy }}
+          args: ["--config=/etc/otelcol/config.yaml"]
+          ports: [{ containerPort: 4318 }]
+          resources: {{- toYaml $c.resources | nindent 12 }}
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: ["ALL"] }
+          volumeMounts:
+            - name: config
+              mountPath: /etc/otelcol
+      volumes:
+        - name: config
+          configMap:
+            name: civicos-otel-collector
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: civicos-otel-collector
+spec:
+  selector: { app.kubernetes.io/name: otel-collector }
+  ports: [{ name: otlp-http, port: 4318, targetPort: 4318 }]
+{{- end }}

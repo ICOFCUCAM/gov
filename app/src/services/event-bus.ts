@@ -12,6 +12,7 @@
 // substrate isn't configured, the bus operates memory-only.
 
 import { publishEventRow, recentEventsRows, substrateAvailable } from '@/lib/db/repos/events';
+import { resetOnServerRender } from '@/lib/clock/server-reset';
 
 export type SovereignEventType =
   | 'app.registered'
@@ -54,6 +55,7 @@ const handlers = new Map<SovereignEventType | '*', Set<Handler>>();
 const log: SovereignEvent[] = [];
 let _version = 0;
 const verListeners = new Set<() => void>();
+resetOnServerRender(() => { log.length = 0; _version = 0; });
 /** Stable snapshot for useSyncExternalStore — changes only on publish. */
 export function version(): number { return _version; }
 export function subscribeBus(l: () => void): () => void {

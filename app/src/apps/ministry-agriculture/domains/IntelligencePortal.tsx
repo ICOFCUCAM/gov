@@ -6,6 +6,7 @@ import * as React from 'react';
 import { agricultureRuralBoard, AGRICULTURE_RURAL_SAFEGUARDS } from '@/lib/gov/agriculture-rural';
 import { SeasonalFrame, SeasonalKpi, SeasonalRule, SeasonalCallout, CropRow, AdvisoryRow, AGRICULTURE_DS } from '@/apps/ministry-agriculture/design-system/agriculture-ds';
 
+import { aiLabel } from '@/lib/nation/registry';
 export function YieldForecast({ id, now }: { id: string; now: number }) {
   const board = agricultureRuralBoard(now);
   void id;
@@ -16,7 +17,7 @@ export function YieldForecast({ id, now }: { id: string; now: number }) {
         { label: 'Crops modelled', value: board.intelligence.yieldForecasts.length },
         { label: 'Strong outlook', value: board.intelligence.yieldForecasts.filter(y => y.currentSeasonOutlook === 'strong').length, tone: 'ok' },
         { label: 'Shortfall outlook', value: board.intelligence.yieldForecasts.filter(y => y.currentSeasonOutlook === 'shortfall').length, tone: 'alert' },
-        { label: 'AI reasoning', value: `${board.intelligence.aiReasoningCoveragePct}%`, tone: 'info' },
+        { label: aiLabel('AI reasoning', 'Reasoning coverage'), value: `${board.intelligence.aiReasoningCoveragePct}%`, tone: 'info' },
       ]} />
       <SeasonalRule label="trajectories" />
       <div className="grid grid-cols-2 gap-2 text-[11px] md:grid-cols-3">
@@ -75,7 +76,7 @@ export function SustainabilityHorizon({ id, now }: { id: string; now: number }) 
       <SeasonalKpi items={[
         { label: 'Long-horizon resilience', value: `${board.intelligence.sustainability.longHorizonResilienceIdx}/100`, tone: 'ok' },
         { label: 'Systemic agri risk', value: `${board.intelligence.sustainability.systemicAgriRisk}/100`, tone: 'warn' },
-        { label: 'AI coverage', value: `${board.intelligence.aiReasoningCoveragePct}%`, tone: 'info' },
+        { label: aiLabel('AI coverage', 'Reasoning coverage'), value: `${board.intelligence.aiReasoningCoveragePct}%`, tone: 'info' },
         { label: 'Early-warning signals', value: board.intelligence.earlyWarningSignalsActive, tone: 'warn' },
       ]} />
       <SeasonalRule label="multi-horizon trajectories" />

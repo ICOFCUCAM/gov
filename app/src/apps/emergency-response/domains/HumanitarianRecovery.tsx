@@ -6,6 +6,7 @@ import * as React from 'react';
 import { emergencyResilienceBoard, EMERGENCY_SAFEGUARDS } from '@/lib/gov/emergency-resilience';
 import { TheatreFrame, StatusBoardKpi, TheatreRule, EMERGENCY_DS, TheatreCallout } from '@/apps/emergency-response/design-system/emergency-ds';
 import { seed, wave } from '@/lib/telemetry';
+import { regionName } from '@/lib/nation/registry';
 
 export function ShelterNetwork({ id, now }: { id: string; now: number }) {
   const board = emergencyResilienceBoard(now);
@@ -93,7 +94,7 @@ export function ReliefSupply({ id, now }: { id: string; now: number }) {
         return {
           id: `SUP-${(70000 + Math.floor(seed(`${k}:c`) * 30000))}`,
           kind: kinds[i]!,
-          dest: ['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'][i]!,
+          dest: [regionName(0, 'Capital District'), 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland'][i]!,
           qty: Math.round(wave(`${k}:q`, ts, 80, 4800)),
           eta: Math.round(wave(`${k}:e`, ts, 1, 24)),
         };

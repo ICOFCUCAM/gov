@@ -11,6 +11,7 @@
 import { seed } from '@/lib/telemetry';
 import { recordDispatchRow, substrateAvailable } from '@/lib/db/repos/memory';
 import { resolvedActor } from '@/services/actor-resolver';
+import { resetOnServerRender } from '@/lib/clock/server-reset';
 
 export type DispatchTier = 'ACTOR' | 'FACILITY' | 'MINISTRY' | 'NATIONAL';
 export interface Dispatch {
@@ -29,11 +30,13 @@ const channels = new Map<string, Dispatch[]>();
 const listeners = new Set<Listener>();
 let _version = 0;
 let _hydrated = false;
+resetOnServerRender(() => { channels.clear(); _version = 0; });
 const PERSIST_KEY = 'civicos.dispatch.v1';
 
 export function version(): number { return _version; }
 export function subscribe(l: Listener): () => void {
   listeners.add(l);
+  if (!_hydrated) { hydrate(true); _version++; queueMicrotask(() => listeners.forEach(x => x())); }
   return () => { listeners.delete(l); };
 }
 function bump() { _version++; listeners.forEach(l => l()); persist(); }
@@ -45,8 +48,12 @@ function persist() {
     window.localStorage.setItem(PERSIST_KEY, JSON.stringify(live));
   } catch { /* continuity degrades to session-only */ }
 }
-function hydrate() {
-  if (_hydrated) return;
+// Saved state is restored only after the page has hydrated (first subscriber
+// or first action), so the server HTML and the first browser render agree.
+let _ready = false;
+function hydrate(force = false) {
+  if (force) _ready = true;
+  if (_hydrated || !_ready) return;
   _hydrated = true;
   if (typeof window === 'undefined') return;
   try {
@@ -61,7 +68,7 @@ const SEED_LINES: { fromTier: DispatchTier; toTier: DispatchTier; body: string; 
   { fromTier: 'FACILITY', toTier: 'ACTOR', body: 'Shift roster confirmed; capacity within tolerance.', priority: 'routine' },
   { fromTier: 'ACTOR', toTier: 'FACILITY', body: 'Record committed to facility registry — awaiting roll-up.', priority: 'routine' },
   { fromTier: 'MINISTRY', toTier: 'FACILITY', body: 'Quarterly compliance review scheduled; submit returns.', priority: 'priority' },
-  { fromTier: 'FACILITY', toTier: 'MINISTRY', body: 'Throughput strained — requesting resource concurrence.', priority: 'priority' },
+  { fromTier: 'FACILITY', toTier: 'MINISTRY', body: 'Too much work for current staff — asking for more resources.', priority: 'priority' },
   { fromTier: 'NATIONAL', toTier: 'MINISTRY', body: 'National synchronisation nominal; continuity acknowledged.', priority: 'routine' },
 ];
 
@@ -78,8 +85,9 @@ function seedChannel(scope: string, now: number): Dispatch[] {
     };
   });
 }
-function tierName(t: DispatchTier): string {
-  return t === 'ACTOR' ? 'Field actor' : t === 'FACILITY' ? 'Facility desk'
+/** A dispatch tier in plain words. */
+export function tierName(t: DispatchTier): string {
+  return t === 'ACTOR' ? 'Field officer' : t === 'FACILITY' ? 'Facility desk'
     : t === 'MINISTRY' ? 'Ministry coordination' : 'National system';
 }
 
@@ -103,7 +111,7 @@ export function digest(scopes: string[], now: number, limit = 9): Dispatch[] {
 }
 
 export function send(scope: string, msg: Omit<Dispatch, 'id' | 'at' | 'seeded'>, now: number): void {
-  hydrate();
+  hydrate(true);
   const list = channels.get(scope) ?? seedChannel(scope, now);
   const id = `d-${now}-${Math.floor(seed(`d:${scope}:${now}`) * 1e6)}`;
   list.push({ ...msg, id, at: now });

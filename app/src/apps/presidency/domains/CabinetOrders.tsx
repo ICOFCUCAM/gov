@@ -6,6 +6,8 @@ import * as React from 'react';
 import { presidencyBoard } from '@/lib/gov/presidency-engine';
 import { MansionFrame, MansionKpi, MansionRule, MansionBar, MansionCallout, PRESIDENCY_DS } from '@/apps/presidency/design-system/presidency-ds';
 import { wave } from '@/lib/telemetry';
+import { currentOffices } from '@/lib/nation/registry';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 export function CabinetFloor({ id, now }: { id: string; now: number }) {
   const b = presidencyBoard(now);
@@ -16,7 +18,7 @@ export function CabinetFloor({ id, now }: { id: string; now: number }) {
       <MansionKpi items={[
         { label: 'Cabinet posture', value: b.posture.toUpperCase(), tone: b.posture === 'crisis-stewardship' ? 'alert' : 'info' },
         { label: 'Ministers active', value: b.ministers.filter(m => m.presence === 'active').length },
-        { label: 'Approval index', value: `${b.approvalIndex}%`, tone: b.approvalIndex >= 60 ? 'ok' : 'warn' },
+        { label: 'Approval index', value: <>{b.approvalIndex}% <IndexTag index="presidency-engine.ts · approvalIndex" /></>, tone: b.approvalIndex >= 60 ? 'ok' : 'warn' },
         { label: 'Cohesion', value: `${b.cabinetCohesion}%`, tone: b.cabinetCohesion >= 85 ? 'ok' : 'warn' },
       ]} />
       <MansionRule label="ministerial presence" />
@@ -29,7 +31,7 @@ export function CabinetFloor({ id, now }: { id: string; now: number }) {
           <span className="text-right" style={{ color: PRESIDENCY_DS.mut }}>{m.termMonthsRemaining}mo remaining</span>
         </div>
       ))}
-      <MansionCallout kicker="constitutional doctrine" body="The President governs through Cabinet, not above it. Decisions on policy require collective responsibility; unilateral rule-by-decree is void." />
+      <MansionCallout kicker="constitutional doctrine" body={`The ${currentOffices().headOfGovernment} governs through Cabinet, not above it. Decisions on policy require collective responsibility; unilateral rule-by-decree is void.`} />
     </MansionFrame>
   );
 }
@@ -43,7 +45,7 @@ export function CabinetPosture({ id, now }: { id: string; now: number }) {
     <MansionFrame archetype="cabinet" code="CB-PST-02" title="Cabinet Posture"
       subtitle="approval & alignment index" posture={b.posture}>
       <MansionKpi items={[
-        { label: 'Approval index', value: `${b.approvalIndex}/100`, tone: b.approvalIndex >= 60 ? 'ok' : 'warn' },
+        { label: 'Approval index', value: <>{b.approvalIndex}/100 <IndexTag index="presidency-engine.ts · approvalIndex" /></>, tone: b.approvalIndex >= 60 ? 'ok' : 'warn' },
         { label: 'Cohesion', value: `${b.cabinetCohesion}/100`, tone: b.cabinetCohesion >= 85 ? 'ok' : 'warn' },
         { label: 'Term horizon', value: `${Math.round(wave('pp:h', ts, 12, 48))} mo`, tone: 'info' },
         { label: 'Active resolutions', value: b.resolutions.length },

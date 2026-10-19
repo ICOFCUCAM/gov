@@ -11,6 +11,8 @@ import * as React from 'react';
 import { wave, waveSeries, seed } from '@/lib/telemetry';
 import { recentEventsRows, type PersistedEvent } from '@/lib/db/repos/events';
 import { substrateAvailable } from '@/lib/db/client';
+import { regionName } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
 
 const BG = '#070b12';
 const PANEL = '#0d131c';
@@ -139,7 +141,7 @@ function relAgo(atMs: number): string {
 }
 
 export function InteroperabilityFabric() {
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
   React.useEffect(() => {
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
@@ -175,8 +177,8 @@ export function InteroperabilityFabric() {
     ['Logistics Data', '3.1K', TEAL], ['Security Data', '2.7K', AMBER], ['Other Domains', '5.4K', GREEN],
   ];
   const gateways: [string, string, string, string][] = [
-    ['GW-NORTH', 'North Region', '14ms', '2.4K/min'], ['GW-CENTRAL', 'Central Region', '15ms', '2.1K/min'],
-    ['GW-EAST', 'East Region', '16ms', '2.2K/min'], ['GW-SOUTH', 'South Region', '17ms', '2.0K/min'],
+    ['GW-NORTH', regionName(1, 'North Region'), '14ms', '2.4K/min'], ['GW-CENTRAL', regionName(0, 'Central Region'), '15ms', '2.1K/min'],
+    ['GW-EAST', regionName(2, 'East Region'), '16ms', '2.2K/min'], ['GW-SOUTH', regionName(4, 'South Region'), '17ms', '2.0K/min'],
   ];
   const policies = ['Data Sovereignty Policy', 'Access Control Policy', 'Data Classification Policy', 'API Security Policy'];
   const contracts: [string, string][] = [
@@ -209,7 +211,7 @@ export function InteroperabilityFabric() {
           <span className="grid h-9 w-9 place-items-center rounded-lg text-[15px] text-white" style={{ background: `linear-gradient(135deg,${CYAN},${PURPLE})` }} aria-hidden>♛</span>
           <div>
             <div className="text-[12px] font-bold leading-tight" style={{ color: INK }}>National Governance Platform</div>
-            <div className="text-[9px]" style={{ color: MUT }}>Interoperability Fabric · One Nation. One Fabric.</div>
+            <div className="text-[9px]" style={{ color: MUT }}>Connections between institutions · One nation, connected.</div>
           </div>
         </div>
         <div>

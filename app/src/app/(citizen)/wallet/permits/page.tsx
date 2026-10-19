@@ -5,10 +5,13 @@ import { Button } from '@/components/ui/Button';
 import { PermitStatusBadge } from '@/components/ui/StatusBadge';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { listPermits } from '@/lib/data/store';
-
+import { nationMessages, nationLocale } from '@/lib/nation/registry';
+import { t as fill } from '@/lib/i18n';
 export const dynamic = 'force-dynamic';
 
 export default function PermitsPage() {
+  const m = nationMessages();
+  const x = m.pages;
   const permits = listPermits();
 
   return (
@@ -17,19 +20,19 @@ export default function PermitsPage() {
         activeTab="/wallet/services"
         header={
           <>
-            <Link href="/wallet" className="underline underline-offset-2">← Home</Link>
-            <strong>Permits</strong>
-            <Link href="/wallet/permits/new" className="underline underline-offset-2">+ New</Link>
+            <Link href="/wallet" className="underline underline-offset-2">← {m.common.home}</Link>
+            <strong>{x.permits}</strong>
+            <Link href="/wallet/permits/new" className="underline underline-offset-2">{x.newShort}</Link>
           </>
         }
       >
         {permits.length === 0 ? (
           <EmptyState
-            title="No permits yet"
-            hint="Apply for a permit and track its progress here."
+            title={x.noPermits}
+            hint={x.noPermitsHint}
             action={
               <Link href="/wallet/permits/new">
-                <Button>Apply for a permit</Button>
+                <Button>{x.applyPermit}</Button>
               </Link>
             }
           />
@@ -49,8 +52,8 @@ export default function PermitsPage() {
                   <div className="text-sm text-ink-muted">
                     {p.municipality} ·{' '}
                     {p.decisionDue
-                      ? `decision due ${new Date(p.decisionDue).toLocaleDateString()}`
-                      : 'no decision date yet'}
+                      ? fill(x.decisionDue, { date: new Date(p.decisionDue).toLocaleDateString(nationLocale()) })
+                      : x.noDecisionDate}
                   </div>
                   <div className="mt-2">
                     <PermitStatusBadge status={p.status} />
@@ -63,7 +66,7 @@ export default function PermitsPage() {
 
         <div className="pt-2">
           <Link href="/wallet/permits/new">
-            <Button>Apply for a new permit</Button>
+            <Button>{x.applyNewPermit}</Button>
           </Link>
         </div>
       </PhoneShell>

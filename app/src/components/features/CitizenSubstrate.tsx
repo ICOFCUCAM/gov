@@ -271,7 +271,7 @@ function ServiceRequestsPanel({
             return (
               <div key={r.id} className="border-b border-line-soft px-3 py-1.5 last:border-0">
               <div className="flex items-center gap-2 text-[10px]">
-                <WatchStar kind="service-request" ref={r.ref} label={r.title ?? r.service} />
+                <WatchStar kind="service-request" itemRef={r.ref} label={r.title ?? r.service} />
                 <a href={`/wallet/substrate`} className="w-24 shrink-0 truncate font-mono text-ink-soft hover:text-link hover:underline">{r.ref}</a>
                 <span className="w-28 shrink-0 truncate font-mono text-link">{r.target_charter_id}</span>
                 <span className="min-w-0 flex-1 truncate text-ink">{r.title ?? r.service}</span>
@@ -630,7 +630,7 @@ function AppealsPanel({
             return (
               <div key={a.id} className="border-b border-line-soft px-3 py-1.5 last:border-0">
                 <div className="flex items-center gap-2 text-[10px]">
-                  <WatchStar kind="appeal" ref={a.ref} label={a.ground} />
+                  <WatchStar kind="appeal" itemRef={a.ref} label={a.ground} />
                   <span className="w-28 shrink-0 truncate font-mono text-ink-soft">{a.ref}</span>
                   <span className="w-32 shrink-0 truncate font-mono text-link">{a.originating_charter_id}</span>
                   <span className="min-w-0 flex-1 truncate text-ink">{a.ground}</span>

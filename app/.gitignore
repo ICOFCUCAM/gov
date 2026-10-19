@@ -12,3 +12,7 @@ build
 .vscode
 next-env.d.ts
 tsconfig.tsbuildinfo
+public-sites-audit.json
+.civicos-state/
+dependency-audit.json
+/map-check/

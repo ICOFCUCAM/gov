@@ -10,6 +10,7 @@
 // inert under test (no window) so engine determinism is unaffected.
 
 import { seed } from '@/lib/telemetry';
+import { resetOnServerRender } from '@/lib/clock/server-reset';
 
 export type EncounterAuthor = 'OFFICIAL' | 'PUBLIC';
 export type EncounterKind = 'note' | 'question' | 'instruction' | 'result';
@@ -28,11 +29,13 @@ const threads = new Map<string, EncounterMsg[]>(); // key = scope
 const listeners = new Set<Listener>();
 let _version = 0;
 let _hydrated = false;
+resetOnServerRender(() => { threads.clear(); _version = 0; });
 const PERSIST_KEY = 'civicos.encounter.v1';
 
 export function version(): number { return _version; }
 export function subscribe(l: Listener): () => void {
   listeners.add(l);
+  if (!_hydrated) { hydrate(true); _version++; queueMicrotask(() => listeners.forEach(x => x())); }
   return () => { listeners.delete(l); };
 }
 function bump() { _version++; listeners.forEach(l => l()); persist(); }
@@ -44,8 +47,12 @@ function persist() {
     window.localStorage.setItem(PERSIST_KEY, JSON.stringify(live));
   } catch { /* continuity degrades to session-only */ }
 }
-function hydrate() {
-  if (_hydrated) return;
+// Saved state is restored only after the page has hydrated (first subscriber
+// or first action), so the server HTML and the first browser render agree.
+let _ready = false;
+function hydrate(force = false) {
+  if (force) _ready = true;
+  if (_hydrated || !_ready) return;
   _hydrated = true;
   if (typeof window === 'undefined') return;
   try {
@@ -98,7 +105,7 @@ export function encounterDigest(scopes: string[], official: string, pub: string,
 }
 
 export function post(scope: string, msg: Omit<EncounterMsg, 'id' | 'at' | 'seeded'>, now: number): void {
-  hydrate();
+  hydrate(true);
   const list = threads.get(scope) ?? seedThread(scope, msg.name, msg.name, now);
   list.push({ ...msg, id: `m-${now}-${Math.floor(seed(`m:${scope}:${now}`) * 1e6)}`, at: now });
   threads.set(scope, list.slice(-60));

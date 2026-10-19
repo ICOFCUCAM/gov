@@ -8,7 +8,7 @@ export default async function ServiceRequestPage({ params }: { params: Promise<{
   const { ref } = await params;
   return (
     <CommandShell active="intake">
-      <ServiceRequestDetail ref={decodeURIComponent(ref)} />
+      <ServiceRequestDetail recordRef={decodeURIComponent(ref)} />
     </CommandShell>
   );
 }

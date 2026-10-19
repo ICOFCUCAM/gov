@@ -9,6 +9,7 @@ import * as React from 'react';
 import { CommandHeader, CommandPanel, Sparkline, sc, type Tone } from '@/apps/_shared/SovereignUI';
 import { waveSeries } from '@/lib/telemetry';
 
+import { aiLabel } from '@/lib/nation/registry';
 export type T3 = 'ok' | 'warn' | 'alert';
 
 export function OpsHeader(p: {
@@ -21,7 +22,8 @@ export function OpsHeader(p: {
 }
 
 export function KpiStrip({ items, ts, accent }: {
-  items: { l: string; v: string; s?: string; t: Tone; k: string }[]; ts: number; accent: string;
+  /** `tag` marks a figure that is not observed (an engine index's IndexTag). */
+  items: { l: string; v: string; s?: string; t: Tone; k: string; tag?: React.ReactNode }[]; ts: number; accent: string;
 }) {
   const cols = items.length >= 8 ? 'xl:grid-cols-8' : items.length >= 6 ? 'xl:grid-cols-6' : 'xl:grid-cols-5';
   return (
@@ -29,7 +31,7 @@ export function KpiStrip({ items, ts, accent }: {
       {items.map(m => (
         <div key={m.l} className="flex flex-col justify-between rounded-[6px] border px-2 py-1.5"
           style={{ borderColor: `color-mix(in srgb,${accent} 16%,#15233a)`, background: 'rgba(7,18,32,0.92)' }}>
-          <div className="truncate text-[7px] font-bold uppercase tracking-[0.13em] text-ink-muted">{m.l}</div>
+          <div className="flex items-center gap-1 text-[7px] font-bold uppercase tracking-[0.13em] text-ink-muted"><span className="truncate">{m.l}</span>{m.tag}</div>
           <div className="mt-0.5 flex items-end justify-between gap-1">
             <span className="font-mono text-[21px] font-bold leading-none tabular-nums" style={{ color: sc(m.t), textShadow: `0 0 11px color-mix(in srgb,${sc(m.t)} 45%,transparent)` }}>{m.v}</span>
             <Sparkline points={waveSeries(`ops:${m.k}`, ts, 16, m.t === 'alert' ? 50 : 28, m.t === 'alert' ? 95 : 80)} tone={m.t} width={42} height={15} />
@@ -67,7 +69,7 @@ export function AdvisoryPanel({ accent, severity, headline, recommended }: {
 }) {
   const t: Tone = severity === 'critical' || severity === 'priority' ? 'alert' : severity === 'advisory' ? 'warn' : 'ok';
   return (
-    <CommandPanel title="AI command intelligence" meta={severity} accent={accent} live>
+    <CommandPanel title={aiLabel('AI command intelligence', 'Command intelligence')} meta={severity} accent={accent} live>
       <div className="text-[8px] font-bold uppercase tracking-[0.16em]" style={{ color: sc(t) }}>{severity}</div>
       <div className="mt-0.5 text-[10px] text-ink">{headline}</div>
       <ul className="mt-1 space-y-0.5">

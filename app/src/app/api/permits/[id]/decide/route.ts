@@ -1,18 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decidePermit } from '@/lib/data/store';
 import type { DecidePermitInput } from '@/lib/api/types';
+import { withOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
 const VALID = ['approve', 'decline', 'request-info', 'escalate'];
 
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } },
-) {
+export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
+  const params = await props.params;
   let body: Partial<DecidePermitInput>;
   try {
-    body = (await req.json()) as Partial<DecidePermitInput>;
+    body = (await withOfficial(await req.json())) as Partial<DecidePermitInput>;
   } catch {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }

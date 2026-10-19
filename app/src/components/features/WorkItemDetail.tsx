@@ -44,7 +44,7 @@ const SIGNATURE_ACTIONS = new Set<ActionKey>(['approve', 'reject', 'resolve']);
  * Same Realtime / RLS / signing model as OfficerWorkbench, but
  * focused on one item rather than a queue.
  */
-export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
+export function WorkItemDetail({ recordRef: itemRef }: { recordRef: string }) {
   const { actor, ready } = useIdentity();
   const [item, setItem] = React.useState<WorkItemRow | null>(null);
   const [steps, setSteps] = React.useState<WorkItemStepRow[]>([]);
@@ -209,7 +209,7 @@ export function WorkItemDetail({ ref: itemRef }: { ref: string }) {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="flex items-center gap-2">
           <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">{item.title}</h2>
-          <WatchStar kind="work-item" ref={item.ref} label={item.title} />
+          <WatchStar kind="work-item" itemRef={item.ref} label={item.title} />
           <span
             className="rounded-[3px] border px-1.5 py-0.5 text-[8px] font-bold uppercase tracking-[0.16em]"
             style={{ borderColor: 'rgb(var(--c-line))', color: 'rgb(var(--c-ink-muted))' }}

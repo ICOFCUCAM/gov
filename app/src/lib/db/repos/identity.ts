@@ -8,6 +8,7 @@
 
 import { publicClient, substrateAvailable } from '@/lib/db/client';
 import type { CitizenRow, OfficerRow } from '@/lib/db/types';
+import { logger } from '@/lib/ops/log';
 
 export type ActorKind = 'officer' | 'citizen';
 
@@ -53,7 +54,7 @@ export async function claimCitizen(input: ClaimCitizenInput = {}): Promise<Citiz
   });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error('[civicos] claim_citizen failed:', error.message);
+    logger.error('substrate.rpc_failed', { rpc: 'claim_citizen', message: error.message });
     return null;
   }
   return (data as CitizenRow) ?? null;
@@ -65,7 +66,7 @@ export async function registerSigningKeyRow(jwk: JsonWebKey): Promise<OfficerRow
   const { data, error } = await sb.rpc('civicos_register_signing_key', { p_jwk: jwk });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error('[civicos] register_signing_key failed:', error.message);
+    logger.error('substrate.rpc_failed', { rpc: 'register_signing_key', message: error.message });
     return null;
   }
   return (data as OfficerRow) ?? null;
@@ -77,7 +78,7 @@ export async function linkOfficerByEmail(email: string): Promise<OfficerRow | nu
   const { data, error } = await sb.rpc('civicos_link_officer_by_email', { p_email: email });
   if (error) {
     // eslint-disable-next-line no-console
-    console.error('[civicos] link_officer_by_email failed:', error.message);
+    logger.error('substrate.rpc_failed', { rpc: 'link_officer_by_email', message: error.message });
     return null;
   }
   return (data as OfficerRow) ?? null;

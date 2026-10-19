@@ -5,22 +5,27 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { api } from '@/lib/api/client';
 import { TONE, ACCENT, seed, Spark, Donut, TerritoryHeat, waveSeries } from '@/components/features/SituationRoom';
+import { SignalTag } from '@/components/ui/SignalTag';
+import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
 import { nationalRegions } from '@/lib/gov/regions';
 import { networkPressure } from '@/lib/gov/infrastructure';
 import { serviceReadings } from '@/lib/gov/ministry-services';
 import { deployableInstitutions } from '@/lib/institution/readiness';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import type { Incident, OpsOverview, Ministry } from '@/lib/api/types';
+import { regionList } from '@/lib/nation/registry';
+import { useRenderNow } from '@/lib/clock/render-now';
+import { aiLabel } from '@/lib/nation/registry';
 
-const ME = 'W. Chebet (ops)';
+const ME = 'W. Tanaka (ops)';
 const sp = (k: string, n = 20, lo = 30, hi = 80) =>
   Array.from({ length: n }).map((_, i) => lo + seed(`ops:${k}:${i}`) * (hi - lo));
 
-function P({ title, meta, className = '', children }: { title: string; meta?: React.ReactNode; className?: string; children: React.ReactNode }) {
+function P({ title, meta, className = '', signal, children }: { title: string; meta?: React.ReactNode; className?: string; signal?: SignalKind; children: React.ReactNode }) {
   return (
     <section className={`flex min-h-0 flex-col rounded-[3px] border border-line bg-surface ${className}`}>
       <div className="flex items-center justify-between gap-2 border-b border-line px-2.5 py-1.5" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-        <h2 className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}</h2>
+        <h2 className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-soft">{title}{signal ? <SignalTag kind={signal} source={REFERENCE_MODEL} /> : null}</h2>
         {meta ? <span className="text-[10px] text-ink-muted">{meta}</span> : null}
       </div>
       <div className="min-h-0 flex-1 p-2.5">{children}</div>
@@ -40,7 +45,7 @@ function Tile({ l, v, sub, t = 'ok', spark }: { l: string; v: string; sub?: stri
 const SVC_FALLBACK = [
   { name: 'Citizen API', sub: 'Public services gateway', status: 'ok', latencyMs: 78, detail: 'Nominal' },
   { name: 'Officer API', sub: 'Internal services gateway', status: 'ok', latencyMs: 96, detail: 'Nominal' },
-  { name: 'Payments Rail', sub: 'M-Pesa + ISO 20022', status: 'ok', latencyMs: 210, detail: 'Reachable' },
+  { name: 'Payments Rail', sub: 'Mobile Money + ISO 20022', status: 'ok', latencyMs: 210, detail: 'Reachable' },
   { name: 'Audit Ledger', sub: 'Blockchain integrity', status: 'ok', latencyMs: 12, detail: 'Chain intact' },
   { name: 'Identity Fabric', sub: 'Sovereign IdP', status: 'ok', latencyMs: 64, detail: 'Nominal' },
   { name: 'Edge Sync', sub: 'Municipal edge network', status: 'degraded', latencyMs: 540, detail: 'Municipalities lagging' },
@@ -53,9 +58,10 @@ const Q_FALLBACK = [
   { name: 'Identity verification', depth: 54, cap: 140, slaHours: 168, breaching: false },
   { name: 'Municipal onboarding', depth: 7, cap: 24, slaHours: 0, breaching: false },
 ];
-const MUNI = ['Kiambu', 'Garissa', 'Tana Delta', 'Uasin Gishu', 'Kisumu', 'Mombasa', 'Nakuru', 'Turkana'];
+// Municipalities shown on the edge-sync board follow the nation's regions.
+const MUNI = regionList(['Capital District', 'Northern', 'Eastern', 'Western', 'Coastal', 'Highland']);
 const INC_FALLBACK = [
-  { id: 'INC-2841', title: 'Edge sync delayed (>2h)', sev: 'sev1', lbl: 'CRITICAL', scope: 'Infrastructure · Garissa', tm: '21:18' },
+  { id: 'INC-2841', title: 'Edge sync delayed (>2h)', sev: 'sev1', lbl: 'CRITICAL', scope: 'Infrastructure · Eastern', tm: '21:18' },
   { id: 'INC-2840', title: 'Hospital capacity data delayed', sev: 'sev2', lbl: 'ELEVATED', scope: 'Health Ministry · 6 regions', tm: '21:02' },
   { id: 'INC-2839', title: 'Payment settlement backlog', sev: 'sev2', lbl: 'ELEVATED', scope: 'Treasury · Payment Rail', tm: '20:53' },
   { id: 'INC-2838', title: 'Permit approvals high latency', sev: 'sev3', lbl: 'WATCH', scope: 'Lands Ministry · 3 regions', tm: '20:41' },
@@ -69,7 +75,7 @@ export function OpsCenter() {
   const [busy, setBusy] = React.useState<string | null>(null);
   const [openChron, setOpenChron] = React.useState<number | null>(0);
   const [mins, setMins] = React.useState<Ministry[]>([]);
-  const [now, setNow] = React.useState(() => Date.now());
+  const [now, setNow] = React.useState(useRenderNow());
 
   const load = React.useCallback(async () => {
     const [o, i, m] = await Promise.all([
@@ -111,11 +117,11 @@ export function OpsCenter() {
 
   const overview = [
     { l: 'Services healthy', v: svcOk, t: svcOk.split('/')[0] === svcOk.split('/')[1] ? 'ok' : 'warn', spark: sp('sh', 20, 60, 95), sub: '80% healthy' },
-    { l: 'SLA compliance', v: `${slaPct}%`, t: slaPct >= 95 ? 'ok' : slaPct >= 80 ? 'warn' : 'alert', spark: sp('sla', 22, 70, 100), sub: 'all services' },
+    { l: 'On time', v: `${slaPct}%`, t: slaPct >= 95 ? 'ok' : slaPct >= 80 ? 'warn' : 'alert', spark: sp('sla', 22, 70, 100), sub: 'all services' },
     { l: 'Queues breaching', v: String(qBreach), t: qBreach === 0 ? 'ok' : 'alert', spark: sp('qb', 22, 0, 40), sub: '12% of total' },
     { l: 'Open incidents', v: String(openInc), t: openInc === 0 ? 'ok' : 'warn', spark: sp('oi', 20, 0, 20), sub: '1 critical' },
-    { l: 'Operations posture', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', spark: sp('op', 24, 40, 70), sub: 'all systems nominal' },
-    { l: 'Cross-system latency', v: `${120 + Math.round(seed(`xl:${Math.floor(now / 15000)}`) * 90)}ms`, t: 'ok', spark: sp('xl', 22, 40, 80), sub: 'p95 mesh' },
+    { l: 'Operations status', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok', spark: sp('op', 24, 40, 70), sub: qBreach > 4 || !auditOk ? `${qBreach} queues late${auditOk ? '' : ' · audit review'}` : 'queues on time' },
+    { l: 'Response time between systems', v: `${120 + Math.round(seed(`xl:${Math.floor(now / 15000)}`) * 90)}ms`, t: 'ok', spark: sp('xl', 22, 40, 80), sub: 'p95 mesh · sample' },
   ];
   const qTotal = queues.reduce((a, q) => a + q.depth, 0);
   const donut = queues.slice(0, 4).map((q, i) => ({ label: q.name, value: q.depth, tone: ['ok', 'warn', 'alert', 'neutral'][i] ?? 'neutral' }));
@@ -138,7 +144,7 @@ export function OpsCenter() {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div>
           <div className="flex items-center gap-2">
-            <h1 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Operations Centre</h1>
+            <h2 className="text-base font-semibold uppercase tracking-[0.16em] text-ink">Operations Centre</h2>
             <span className="flex items-center gap-1 rounded-[3px] px-1.5 py-0.5 text-[9px] font-bold tracking-widest" style={{ backgroundColor: `color-mix(in srgb, ${TONE.ok} 18%, transparent)`, color: TONE.ok }}><span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE.ok }} />LIVE</span>
             <span className="font-mono text-[10px] tabular-nums text-ink-muted">{new Date(now).toLocaleTimeString()} · updated {Math.round((now % 60000) / 1000)}s ago</span>
             {openInc >= 1 ? (
@@ -195,7 +201,7 @@ export function OpsCenter() {
               return (
                 <div key={q.name}>
                   <div className="flex items-baseline justify-between text-[11px]">
-                    <span className="text-ink"><strong>{q.name}</strong> <span className="text-ink-muted">{q.slaHours ? `· SLA ${Math.round(q.slaHours / 24)}d ${q.breaching ? '· breaching' : '· within SLA'}` : '· no SLA breach'}</span></span>
+                    <span className="text-ink"><strong>{q.name}</strong> <span className="text-ink-muted">{q.slaHours ? `· target ${Math.round(q.slaHours / 24)}d ${q.breaching ? '· late' : '· on time'}` : '· none late'}</span></span>
                     <span className="font-mono tabular-nums text-ink-muted">{q.depth} / {q.cap}<span className="ml-2" style={{ color: TONE[tn] }}>{pct}%</span></span>
                   </div>
                   <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: TONE[tn] }} /></div>
@@ -244,7 +250,7 @@ export function OpsCenter() {
         <div className="overflow-x-auto">
           <table className="w-full text-[11px]">
             <thead><tr className="border-b border-line bg-surface-2 text-left text-[8px] uppercase tracking-wide text-ink-muted">
-              <th className="px-3 py-1.5">Municipality</th><th className="px-2 py-1.5">Status</th><th className="px-2 py-1.5 text-right">Open permits</th><th className="px-2 py-1.5 text-right">SLA breaches</th><th className="px-2 py-1.5">Last edge sync</th><th className="px-3 py-1.5">Trend 24h</th>
+              <th className="px-3 py-1.5">Municipality</th><th className="px-2 py-1.5">Status</th><th className="px-2 py-1.5 text-right">Open permits</th><th className="px-2 py-1.5 text-right">Late</th><th className="px-2 py-1.5">Last synchronised</th><th className="px-3 py-1.5">Trend 24h</th>
             </tr></thead>
             <tbody>
               {tenants.map(tn => {
@@ -276,7 +282,7 @@ export function OpsCenter() {
               const owner = ['Duty Officer', 'Ops Coordinator', 'Incident Lead', 'Watch Commander'][Math.floor(seed(`ow:${c.id}`) * 4)];
               const chron = [
                 { t: `${age}m`, l: 'Detected by monitor', c: TONE.neutral },
-                { t: `${Math.max(1, Math.round(age * 0.6))}m`, l: `Classified ${c.sev.toUpperCase()}`, c: TONE[tn] },
+                { t: `${Math.max(1, Math.round(age * 0.6))}m`, l: `Graded ${c.sev.toUpperCase()}`, c: TONE[tn] },
                 { t: `${Math.max(1, Math.round(age * 0.3))}m`, l: `${owner} engaged`, c: TONE.ok },
               ];
               return (
@@ -359,11 +365,12 @@ export function OpsCenter() {
       </div>
 
       {/* Lower micro-grid ecosystem — cross-system operational band */}
+      <p className="flex items-center gap-1.5 text-[10px] uppercase tracking-[0.16em] text-ink-muted">Cross-system band <SignalTag kind="sample" source={REFERENCE_MODEL} /></p>
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         {[
-          ['Service health', 'sh', 90, 99], ['Queue depth', 'qd', 10, 60], ['Throughput', 'tp', 40, 95],
-          ['Error rate', 'er', 0, 6], ['Mesh latency', 'ml', 80, 220], ['Active workflows', 'wf', 120, 280],
-          ['SLA compliance', 'sl', 85, 99], ['Edge sync', 'es', 80, 99], ['Incident load', 'il', 0, 12],
+          ['Service health', 'sh', 90, 99], ['Queue depth', 'qd', 10, 60], ['Handled per hour', 'tp', 40, 95],
+          ['Error rate', 'er', 0, 6], ['Response time between systems', 'ml', 80, 220], ['Active workflows', 'wf', 120, 280],
+          ['On time', 'sl', 85, 99], ['Edge sync', 'es', 80, 99], ['Incident load', 'il', 0, 12],
           ['Retry queue', 'rq', 0, 30], ['Cache hit', 'ch', 70, 98], ['Capacity', 'cp', 50, 95],
           ['Backpressure', 'bp', 0, 24], ['Sync drift', 'sd', 0, 15], ['Signal', 'sg', 75, 99], ['Tempo', 'tm', 30, 85],
         ].map(([l, k, lo, hi]) => {
@@ -424,7 +431,7 @@ export function OpsCenter() {
         </P>
       ) : null}
 
-      <P title="Infrastructure network pressure" meta="national digital twin">
+      <P title="Infrastructure network pressure" meta="network model" signal="modelled">
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           {(['road', 'rail', 'grid', 'telecom', 'water', 'pipeline'] as const).map(k => {
             const p = networkPressure(k, now / 4000);
@@ -440,21 +447,21 @@ export function OpsCenter() {
         </div>
       </P>
 
-      <RuntimeQueue scope="ops:incident" kind="incident" title="Cross-institution incident runtime — acknowledge → contain → recover" by="Ops Duty Officer" n={16} />
+      <RuntimeQueue scope="ops:incident" kind="incident" title="Cross-institution incident handling — acknowledge → contain → recover" by="Ops Duty Officer" n={16} />
 
       {/* Operational command strip */}
       <div className="grid grid-cols-2 gap-px overflow-hidden rounded-[3px] border border-line bg-line text-[10px] md:grid-cols-5">
         {[
-          { l: 'Readiness posture', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok' },
-          { l: 'Operational tempo', v: `${Math.round(40 + seed(`opstempo:${Math.floor(now / 15000)}`) * 55)} ops/min`, t: 'ok' },
+          { l: 'Readiness', v: qBreach > 4 || !auditOk ? 'STRAINED' : 'STABLE', t: qBreach > 4 || !auditOk ? 'warn' : 'ok' },
+          { l: 'Operational tempo', v: `${Math.round(40 + seed(`opstempo:${Math.floor(now / 15000)}`) * 55)} ops/min · sample`, t: 'ok' },
           { l: 'Open incidents', v: `${openInc} · ${openInc ? '1 crit' : 'nominal'}`, t: openInc ? 'alert' : 'ok' },
-          { l: 'Queue throughput', v: `${(1.2 + seed(`tput:${Math.floor(now / 15000)}`) * 0.6).toFixed(2)}M / 24h`, t: 'ok' },
+          { l: 'Queue handled', v: `${(1.2 + seed(`tput:${Math.floor(now / 15000)}`) * 0.6).toFixed(2)}M / 24h · sample`, t: 'ok' },
           { l: 'Audit consistency', v: auditOk ? 'INTACT' : 'REVIEW', t: auditOk ? 'ok' : 'alert' },
         ].map(s => (
           <div key={s.l} className="flex items-center justify-between gap-2 bg-surface px-3 py-1.5">
             <span className="uppercase tracking-[0.14em] text-ink-muted">{s.l}</span>
             <span className="flex items-center gap-1.5 font-mono font-semibold tabular-nums" style={{ color: TONE[s.t] }}>
-              {s.l === 'Readiness posture' || s.l === 'Audit consistency' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
+              {s.l === 'Readiness' || s.l === 'Audit consistency' ? <span className="h-1.5 w-1.5 animate-pulse rounded-full" style={{ backgroundColor: TONE[s.t] }} /> : null}
               {s.v}
             </span>
           </div>
@@ -462,7 +469,7 @@ export function OpsCenter() {
       </div>
 
       <p className="text-[10px] text-ink-muted">
-        Generated {ov ? new Date(ov.generatedAt).toLocaleString() : 'live'}. AI may summarise and prioritise; humans acknowledge, escalate and resolve. No citizen records appear in any operational metric.
+        Generated {ov ? new Date(ov.generatedAt).toLocaleString() : 'live'}. {aiLabel('AI may summarise and prioritise; humans', 'Officials')} acknowledge, escalate and resolve. No citizen records appear in any operational metric.
       </p>
     </div>
   );
