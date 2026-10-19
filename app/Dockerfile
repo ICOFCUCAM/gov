@@ -1,6 +1,8 @@
 # CivicOS Next.js app — multi-stage, non-root. The runtime image carries the
-# full .next build and node_modules and runs `next start` (next.config.mjs
-# does not use `output: 'standalone'`).
+# .next build and the production dependencies only, and runs `next start`
+# (next.config.mjs does not use `output: 'standalone'`). Build tools (Vite,
+# Vitest, esbuild's binary) and the base image's npm stay out of it, so the
+# image scan in CI sees only what runs.
 FROM node:20-bookworm-slim AS deps
 WORKDIR /app
 RUN corepack enable
@@ -8,6 +10,12 @@ RUN corepack enable
 # to run install scripts; the install must match the lockfile exactly.
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 RUN pnpm install --frozen-lockfile
+
+FROM node:20-bookworm-slim AS prod-deps
+WORKDIR /app
+RUN corepack enable
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+RUN pnpm install --frozen-lockfile --prod
 
 FROM node:20-bookworm-slim AS build
 WORKDIR /app
@@ -20,9 +28,14 @@ RUN pnpm build
 FROM node:20-bookworm-slim AS runtime
 ENV NODE_ENV=production NEXT_TELEMETRY_DISABLED=1
 WORKDIR /app
+# Debian's security fixes released since the base image was built.
+RUN apt-get update && apt-get -y upgrade && rm -rf /var/lib/apt/lists/*
 RUN useradd --uid 10001 --create-home civic \
- && mkdir -p /var/lib/civicos/state && chown civic /var/lib/civicos/state
-COPY --from=build /app/node_modules ./node_modules
+ && mkdir -p /var/lib/civicos/state && chown civic /var/lib/civicos/state \
+ && rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+      /opt/yarn-* /usr/local/bin/yarn /usr/local/bin/yarnpkg
+COPY --from=prod-deps /app/node_modules ./node_modules
 COPY --from=build /app/.next ./.next
 COPY --from=build /app/public ./public
 COPY --from=build /app/package.json ./
