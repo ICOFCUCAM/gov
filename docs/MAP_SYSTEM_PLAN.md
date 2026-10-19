@@ -138,9 +138,22 @@ layouts. The fix is one shared map engine grown from it.
   never choosing between several); partners joined capital to capital by great
   circles, dashed where the capital is the map data's default. Projection:
   the nation may choose it in setup. Budgets tested: first-level files
-  ≤300 KB, district files ≤1 MB gzipped. Still open: TopoJSON packs and two
-  detail levels, district shapes for every other nation at install, the
-  worldview setting.
+  ≤300 KB, district files ≤1 MB gzipped. District shapes for every other
+  nation at install: an administrator installs them on the Boundaries page
+  (`lib/data/map-pack.ts`, `/api/map-pack`) from geoBoundaries gbOpen (the
+  server asks www.geoboundaries.org for the release and downloads its
+  simplified GeoJSON from media.githubusercontent.com, nothing else) or, for
+  offline and air-gapped installations, from the uploaded geoBoundaries file.
+  The rules are the bundled files' own (`lib/geo/admin2-convert.mjs`, shared
+  with `build-map-pack.mjs`): open licences only, never GADM; each district's
+  region from the map; ISO 3166-2 codes kept, else `region:slug`. Source,
+  licence, SHA-256, who and when are recorded and audited; removing them
+  returns the maps to the bundled districts. Maps read them through
+  `lib/map/districts-installed.ts`, one region at a time in the browser; a
+  boundary version the mapping authority publishes still comes first.
+  Installed shapes are only rounded, not simplified (register 16.17). Still
+  open: TopoJSON packs and two detail levels (also for installed districts),
+  the worldview setting.
 - **Situation Room theatre.** The Situation Room map is a command theatre on
   the nation's real map (`components/features/situation/Theatre.tsx`, NationMap
   `variant="theatre"`): everything the earlier schematic theatre had is kept

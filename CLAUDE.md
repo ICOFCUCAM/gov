@@ -260,6 +260,12 @@ What has been built is locked. Work only upgrades it toward the vision in
   every version kept, in force from its date. Maps and position checks read
   shapes through `loadNationGeography()` / `loadDistricts()`, which apply the
   version in force; new map code does not read `lib/geo` shapes around them.
+- Districts for a nation without bundled ones are installed by an
+  administrator (`lib/data/map-pack.ts`, `/api/map-pack`): geoBoundaries only
+  (its API and file host, through `safeFetchText`) or an uploaded file, with
+  the rules in `lib/geo/admin2-convert.mjs` shared with `build-map-pack.mjs`
+  (open licences, never GADM, region from the map). `loadDistricts()` reads
+  them after a published version and before the bundled files.
 - Engines must not read the nation's regions or offices into module-level
   constants; read them at use (`regionList()`, or a function). The root
   layout writes the nation's facts before scripts load, but data from setup

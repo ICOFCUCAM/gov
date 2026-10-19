@@ -51,6 +51,9 @@
       "name": "integrations"
     },
     {
+      "name": "map-pack"
+    },
+    {
       "name": "municipalities"
     },
     {
@@ -2950,6 +2953,120 @@
           }
         },
         "x-source": "src/app/api/integrations/route.ts"
+      }
+    },
+    "/api/map-pack/districts": {
+      "get": {
+        "tags": [
+          "map-pack"
+        ],
+        "operationId": "get_map_pack_districts",
+        "summary": "GET /api/map-pack/districts",
+        "description": "The districts installed for the nation (lib/data/map-pack.ts), for maps to draw (lib/map/districts-installed.ts). Open data with its credit, like the boundaries in force; who installed them is not included. ?iso3=XXX (another nation gets nothing); &shapes=0 for the summary only; &parent=<region code> for one region's districts (what a map opens).",
+        "parameters": [
+          {
+            "name": "iso3",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "parent",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "shapes",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/map-pack/districts/route.ts"
+      }
+    },
+    "/api/map-pack": {
+      "get": {
+        "tags": [
+          "map-pack"
+        ],
+        "operationId": "get_map_pack",
+        "summary": "GET /api/map-pack",
+        "description": "District shapes for the installed nation (lib/data/map-pack.ts): GET says whether districts are bundled, installed (source, date, by whom) or missing; POST, by an administrator: { action: 'install', adm? } downloads them from geoBoundaries, { action: 'upload', text, metaText? | source, licence, year, adm } installs an uploaded geoBoundaries file, { action: 'remove', reason? } returns the maps to the bundled districts (or none).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/map-pack/route.ts"
+      },
+      "post": {
+        "tags": [
+          "map-pack"
+        ],
+        "operationId": "post_map_pack",
+        "summary": "POST /api/map-pack",
+        "description": "District shapes for the installed nation (lib/data/map-pack.ts): GET says whether districts are bundled, installed (source, date, by whom) or missing; POST, by an administrator: { action: 'install', adm? } downloads them from geoBoundaries, { action: 'upload', text, metaText? | source, licence, year, adm } installs an uploaded geoBoundaries file, { action: 'remove', reason? } returns the maps to the bundled districts (or none).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/map-pack/route.ts"
       }
     },
     "/api/municipalities": {

@@ -27,14 +27,14 @@ import path from 'node:path';
 import zlib from 'node:zlib';
 import { createRequire } from 'node:module';
 import { GEO, boundaryIndex } from './boundaries-lib.mjs';
+// Conversion rules shared with the installer for other nations (lib/data/map-pack.ts).
+import { assignUnits, finerThan, levelsBelow, licenceRefusal, parentFinder } from '../src/lib/geo/admin2-convert.mjs';
 
 const require = createRequire(process.env.MAPSHAPER_DIR ? path.join(process.env.MAPSHAPER_DIR, 'x.js') : import.meta.url);
 const mapshaper = require('mapshaper');
-const { geoContains, geoBounds } = await import('d3-geo');
 
 const CACHE = process.env.BOUNDARY_CACHE ?? path.join(process.env.TMPDIR ?? '/tmp', 'geoboundaries');
 const RAW = 'https://media.githubusercontent.com/media/wmgeolab/geoBoundaries/main/releaseData/gbOpen';
-const OPEN = /public domain|cc ?by|odbl|open data|open government|cc0|creative commons/i;
 const OUT = path.join(GEO, 'admin2');
 const INDEX = path.join(OUT, 'index.json');
 /** Drill-down budget is 1 MB gzipped; aim a little below it. */
@@ -71,54 +71,11 @@ function firstLevel(iso3) {
   return fs.existsSync(ne) ? { adm: 'ADM1', country: read(ne) } : null;
 }
 
-// d3-geo (the map's renderer) takes outer rings clockwise and holes
-// counter-clockwise, the reverse of RFC 7946 (same as build-boundaries.mjs).
-const area = ring => ring.reduce((a, [x1, y1], i) => { const [x2, y2] = ring[(i + 1) % ring.length]; return a + (x2 - x1) * (y2 + y1); }, 0);
-const wind = (ring, cw) => ((area(ring) > 0) === cw ? ring : [...ring].reverse());
-const rewindPolygon = rings => rings.map((r, i) => wind(r, i === 0));
-function rewind(g) {
-  if (g.type === 'Polygon') return { ...g, coordinates: rewindPolygon(g.coordinates) };
-  if (g.type === 'MultiPolygon') return { ...g, coordinates: g.coordinates.map(rewindPolygon) };
-  return g;
-}
-
 async function simplify(input, resolution, precision) {
   const out = await mapshaper.applyCommands(
     `-i in.json -clean -simplify resolution=${resolution}x${resolution} keep-shapes -each "lx=this.innerX, ly=this.innerY" -o out.json format=geojson precision=${precision}`,
     { 'in.json': input });
   return JSON.parse(out['out.json']);
-}
-
-const slug = s => String(s).normalize('NFKD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'unit';
-const featureOf = geometry => ({ type: 'Feature', properties: {}, geometry });
-
-/** Parent lookup: the first-level shape containing a point, with a bounding-box prefilter. */
-function parentFinder(provinces) {
-  const shapes = provinces.map(p => {
-    const [[x0, y0], [x1, y1]] = geoBounds(featureOf(p.geometry));
-    return { code: p.code, f: featureOf(p.geometry), box: [x0, y0, x1, y1] };
-  });
-  const inBox = ([x, y], [x0, y0, x1, y1]) => y >= y0 && y <= y1 && (x0 <= x1 ? x >= x0 && x <= x1 : x >= x0 || x <= x1);
-  return pt => shapes.find(s => inBox(pt, s.box) && geoContains(s.f, pt))?.code;
-}
-
-/** Points spread over a unit (vertices of its rings) for the fallback vote and the border check. */
-function vertices(g, max = 40) {
-  const pts = (g.type === 'Polygon' ? [g.coordinates] : g.coordinates).flatMap(poly => poly[0]);
-  const step = Math.max(1, Math.floor(pts.length / max));
-  return pts.filter((_, i) => i % step === 0);
-}
-
-/** Interior sample points of a unit (a small grid inside it) to see whether it lies across first-level borders. */
-function interior(g, f, n = 6) {
-  const [[x0, y0], [x1, y1]] = geoBounds(f);
-  if (x0 > x1) return [];
-  const out = [];
-  for (let i = 1; i <= n; i++) for (let j = 1; j <= n; j++) {
-    const p = [x0 + ((x1 - x0) * i) / (n + 1), y0 + ((y1 - y0) * j) / (n + 1)];
-    if (geoContains(f, p)) out.push(p);
-  }
-  return out;
 }
 
 async function build(iso3, forced) {
@@ -128,21 +85,19 @@ async function build(iso3, forced) {
   // 2006, ADM3 today's districts, ADM4 sub-counties), so take the first level
   // below today's map that is clearly finer than it (≥ 1.5 × its units).
   const top = first.country.provinces.length;
-  const from = Number(String(first.adm).replace(/\D/g, '') || 1) + 1;
   let s = null;
   const tried = [];
-  for (const adm of forced ? [forced] : [2, 3, 4].filter(n => n >= from).map(n => `ADM${n}`)) {
+  for (const adm of forced ? [forced] : levelsBelow(first.adm)) {
     const c = await source(iso3, adm);
     if (!c) { tried.push(`${adm} missing`); continue; }
-    if (!forced && c.geo.features.length < top * 1.5) { tried.push(`${adm} ${c.geo.features.length} units, not finer than ${top}`); continue; }
+    if (!forced && !finerThan(c.geo.features.length, top)) { tried.push(`${adm} ${c.geo.features.length} units, not finer than ${top}`); continue; }
     s = c; break;
   }
   if (!s) return { iso3, skip: `no finer level in geoBoundaries gbOpen (${tried.join('; ')})` };
   const adm = s.adm;
-  const licence = `${s.meta.boundaryLicense} ${s.meta.licenseDetail ?? ''}`;
-  if (!OPEN.test(licence)) return { iso3, skip: `licence not open: ${s.meta.boundaryLicense}` };
-  // GADM forbids redistribution and commercial use whatever licence a re-publisher lists.
-  if (/gadm/i.test(`${s.meta.boundarySource ?? ''} ${s.meta.boundarySourceURL ?? ''}`)) return { iso3, skip: 'derived from GADM, whose licence does not allow redistribution' };
+  // Open licences only; GADM forbids redistribution whatever licence a re-publisher lists.
+  const refused = licenceRefusal(s.meta);
+  if (refused) return { iso3, skip: refused };
 
   const input = JSON.stringify(s.geo);
   const probe = await mapshaper.applyCommands('-i in.json -info save-to=info.json', { 'in.json': input });
@@ -163,37 +118,10 @@ async function build(iso3, forced) {
   }
   if (!units?.length) return { iso3, skip: 'no units after simplification' };
 
-  const r = (n, d) => Number(Number(n).toFixed(d));
   const ld = precision === '0.00001' ? 4 : 3;
-  const used = new Set();
-  let viaVote = 0;
-  const crossing = [];
-  const out = units.map(({ f, name, iso }) => {
-    const geometry = rewind(f.geometry);
-    const label = [f.properties.lx, f.properties.ly];
-    let parent = findParent(label);
-    if (!parent) {
-      // Label point outside every first-level shape (coastline or border drawn
-      // differently by the two sources): take the parent most of its outline lies in.
-      const votes = new Map();
-      for (const p of vertices(geometry)) { const c = findParent(p); if (c) votes.set(c, (votes.get(c) ?? 0) + 1); }
-      parent = [...votes].sort((a, b) => b[1] - a[1])[0]?.[0];
-      if (parent) viaVote++;
-    }
-    if (parent) {
-      const pts = interior(geometry, featureOf(geometry));
-      const other = pts.filter(p => { const c = findParent(p); return c && c !== parent; }).length;
-      if (pts.length >= 5 && other / pts.length > 0.2) crossing.push(`${name} (${parent}, ${Math.round((100 * other) / pts.length)}% elsewhere)`);
-    }
-    let code = /^[A-Z]{2}-[A-Z0-9]+$/.test(iso) && !used.has(iso) ? iso : '';
-    if (!code) {
-      const base = `${parent || iso3}:${slug(name)}`;
-      code = base;
-      for (let n = 2; used.has(code); n++) code = `${base}-${n}`;
-    }
-    used.add(code);
-    return { code, name: name || code, ...(parent ? { parent } : {}), lng: r(label[0], ld), lat: r(label[1], ld), geometry };
-  });
+  const { units: out, viaVote, crossing } = assignUnits(
+    units.map(({ f, name, iso }) => ({ geometry: f.geometry, name, iso, label: [f.properties.lx, f.properties.ly] })),
+    findParent, iso3, ld);
   if (!out.length) return { iso3, skip: 'zero units' };
 
   const file = { iso3, units: out };
