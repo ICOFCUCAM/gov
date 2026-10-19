@@ -340,6 +340,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   `civicos_records`). Never push to those arrays directly. `lib/data/store.ts`
   is a barrel over `lib/data/store/*`; stores that only audit import
   `@/lib/data/store/audit`.
+- Every other store is kept as per-record documents in postgres mode
+  (`lib/data/repo/documents.ts`, table `civicos.record_doc`). A store's
+  accessor passes its object through `touch()` (`lib/data/repo/track.ts`;
+  `tracked()` for a store held at module level), so its changes are written
+  with the audit entry they belong to; a new store does the same.
 
 ## Who acted
 
