@@ -316,6 +316,25 @@ describe('changes need a verified official (CIVICOS_AUTH=enforce)', () => {
     expect((await send('/api/auth/official', undefined, 'GET')).status).toBe(200);
     // A forgotten password is reset with an administrator's code, without a session.
     expect((await send('/api/auth/password')).status).toBe(200);
+    // Signing in with a passkey alone starts with a challenge, without a session.
+    expect((await send('/api/auth/passkeys/options')).status).toBe(200);
+  });
+
+  it('opens the identity provider\'s start and callback without a session (the route checks the state), and nothing beside them', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    expect((await send('/api/auth/oidc/start', undefined, 'GET')).status).toBe(200);
+    expect((await send('/api/auth/oidc/callback?code=x&state=y', undefined, 'GET')).status).toBe(200);
+    // Reads only: a change there, and the administrators' configuration, still need an official.
+    expect((await send('/api/auth/oidc/callback')).status).toBe(401);
+    expect((await send('/api/auth/officials/identity-provider', undefined, 'GET')).status).toBe(401);
+    expect((await send('/api/auth/officials/identity-provider')).status).toBe(401);
+    // Managing one's own passkeys needs a session.
+    expect((await send('/api/auth/passkeys')).status).toBe(401);
+    expect((await send('/api/auth/passkeys', await officialCookie({ role: 'auditor' }))).status).toBe(200);
+    // Only administrators configure the provider.
+    expect((await send('/api/auth/officials/identity-provider', await officialCookie({ role: 'officer' }))).status).toBe(403);
+    expect((await send('/api/auth/officials/identity-provider', await officialCookie({ role: 'administrator' }))).status).toBe(200);
   });
 });
 

@@ -27,7 +27,8 @@ export async function GET() {
   const m = await me();
   if ('error' in m) return m.error;
   const a = accountById(m.id);
-  return NextResponse.json({ on: !!a?.twoStepSince, since: a?.twoStepSince ?? null, required: !!a?.twoStepRequired, thisSession: !!m.o.twoStep, policy: twoStepPolicy() });
+  // passkeys: how many the official has (a passkey is a second step too, /api/auth/passkeys).
+  return NextResponse.json({ on: !!a?.twoStepSince, since: a?.twoStepSince ?? null, required: !!a?.twoStepRequired, thisSession: !!m.o.twoStep, policy: twoStepPolicy(), passkeys: a?.passkeys.length ?? 0 });
 }
 
 export async function POST(req: NextRequest) {
