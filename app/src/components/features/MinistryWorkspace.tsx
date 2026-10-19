@@ -37,6 +37,7 @@ import { useRenderNow } from '@/lib/clock/render-now';
 import { useOfficial } from '@/lib/official';
 import { ActingOfficial } from '@/components/ui/ActingOfficial';
 import { InstitutionInTwin } from '@/components/features/twin/InstitutionInTwin';
+import { IncidentPlace } from '@/components/features/sites/IncidentPlace';
 import { MinistrySites } from '@/components/features/sites/MinistrySites';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL } from '@/lib/twin/signal';
@@ -209,6 +210,9 @@ export function MinistryWorkspace({ id }: { id: string }) {
   // The last tab is remembered per institution (this browser only).
   const TAB_KEY = `civicos.ministry.tab:${id}`;
   React.useEffect(() => {
+    // A link may name the tab (?tab=incidents from the Situation Room map); otherwise the last one chosen here.
+    const asked = new URLSearchParams(window.location.search).get('tab') as Tab | null;
+    if (asked && TABS.some(x => x.k === asked)) { setTab(asked); return; }
     try { const t = localStorage.getItem(TAB_KEY) as Tab | null; if (t && TABS.some(x => x.k === t)) setTab(t); } catch { /* storage unavailable */ }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
@@ -965,6 +969,10 @@ export function MinistryWorkspace({ id }: { id: string }) {
                     <Button variant="secondary" disabled={busy === inc.key + 'escalate' || inc.tierIndex >= escChain.length - 1} onClick={() => incAct(inc.key, 'escalate')}>Escalate</Button>
                     <Button variant="secondary" disabled={busy === inc.key + 'resolve'} onClick={() => incAct(inc.key, 'resolve')}>Resolve</Button>
                   </div>
+                ) : null}
+                {inc.active || inc.place ? (
+                  <IncidentPlace ministryId={id} incident={inc} official={official}
+                    onChange={next => setIncidents(prev => prev.map(x => (x.key === next.key ? next : x)))} />
                 ) : null}
               </Card>
             ))}

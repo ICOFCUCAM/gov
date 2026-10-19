@@ -1522,6 +1522,31 @@ export function escalateMinistryIncident(
   return inc;
 }
 
+/** Record, move or clear where a ministry incident is (checked first by lib/data/incident-places.ts). */
+export function setMinistryIncidentPlace(
+  id: string,
+  key: string,
+  place: MinistryIncident['place'] | null,
+  by: string,
+  note?: string,
+): MinistryIncident | { error: string } {
+  const m = getMinistry(id);
+  if (!m) return { error: 'Ministry not found' };
+  if (!db.ministryIncidents[id]) db.ministryIncidents[id] = seedIncidents(id, m.archetype);
+  const inc = db.ministryIncidents[id]!.find(x => x.key === key);
+  if (!inc) return { error: 'Incident not found' };
+  if (!place && !inc.place) return { error: 'The incident has no place to clear' };
+  if (inc.place) inc.placeHistory = [...(inc.placeHistory ?? []), inc.place];
+  if (place) inc.place = place;
+  else {
+    inc.placeHistory!.push({ ...inc.place!, by, at: new Date().toISOString(), note, cleared: true });
+    delete inc.place;
+  }
+  const where = place ? (place.facilityName ?? [place.district, place.region].filter(Boolean).join(', ')) || place.how : 'cleared';
+  appendAudit(by, place ? 'ministry-incident.place' : 'ministry-incident.place.clear', `Ministry:${id}/${key}`, 'ok', note ? `${where} · ${note}` : where);
+  return inc;
+}
+
 export function resolveMinistryIncident(
   id: string,
   key: string,
@@ -2161,6 +2186,8 @@ export function nationalSnapshot(): NationalSnapshot {
           label: inc.label,
           severity: inc.severity,
           authority: chain[inc.tierIndex] ?? '—',
+          key: inc.key,
+          ...(inc.place ? { place: inc.place } : {}),
         });
       }
     }

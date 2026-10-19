@@ -3851,6 +3851,100 @@
         "x-source": "src/app/api/org/ministries/[id]/incidents/[key]/escalate/route.ts"
       }
     },
+    "/api/org/ministries/{id}/incidents/{key}/place": {
+      "put": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "put_org_ministries_id_incidents_key_place",
+        "summary": "PUT /api/org/ministries/{id}/incidents/{key}/place",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/incidents/[key]/place/route.ts"
+      },
+      "delete": {
+        "tags": [
+          "org"
+        ],
+        "operationId": "delete_org_ministries_id_incidents_key_place",
+        "summary": "DELETE /api/org/ministries/{id}/incidents/{key}/place",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/org/ministries/[id]/incidents/[key]/place/route.ts"
+      }
+    },
     "/api/org/ministries/{id}/incidents/{key}/resolve": {
       "post": {
         "tags": [

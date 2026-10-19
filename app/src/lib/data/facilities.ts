@@ -318,19 +318,23 @@ export interface LocationCheck {
 const feature = (geometry: Geom) => ({ type: 'Feature' as const, properties: {}, geometry });
 const metres = (a: [number, number], b: [number, number]) => Math.round(geoDistance(a, b) * 6_371_008.8);
 
-/** Check a position for a category: ranges, inside the nation and the stated region, duplicates; works out its region and district. */
-export async function checkLocation(input: { lng: number; lat: number; category: string; region?: string; name?: string; ids?: Record<string, string>; exceptId?: string; outsideReason?: string }): Promise<LocationCheck> {
+/**
+ * Where a position falls: ranges, inside the nation, its region and district
+ * worked out from the map. Shared by the facility register and incident
+ * places, so both read a position the same way.
+ */
+export async function placePoint(input: { lng: number; lat: number; region?: string; nearCoast?: boolean; outsideReason?: string; noun?: string; skipMap?: boolean }): Promise<{ errors: string[]; warnings: string[]; place: Facility['place'] }> {
   const errors: string[] = [], warnings: string[] = [];
   const { lng, lat } = input;
+  const noun = input.noun ?? 'site';
   const place: Facility['place'] = { inside: false };
-  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return { ok: false, errors: ['Give the longitude and latitude as numbers'], warnings, place, duplicates: [] };
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return { errors: ['Give the longitude and latitude as numbers'], warnings, place };
   if (Math.abs(lat) > 90 || Math.abs(lng) > 180) errors.push('Latitude must be between −90 and 90 and longitude between −180 and 180');
   if (lng === 0 && lat === 0) errors.push('0, 0 is in the ocean off West Africa: the position was probably not captured');
-  if (!categoryOf(input.category)) errors.push('Choose a category');
   const decimals = (v: number) => (String(v).split('.')[1] ?? '').length;
   if (decimals(lng) < 4 || decimals(lat) < 4) warnings.push('Fewer than 4 decimal places: the position is only good to about 10 m or worse');
   const iso3 = nationIso3();
-  if (iso3 && !errors.length) {
+  if (iso3 && !errors.length && !input.skipMap) {
     const geo = await loadNationGeography(iso3, nationRegions());
     const at: [number, number] = [lng, lat];
     const unit = geo?.units.find(u => u.geometry && geoContains(feature(u.geometry) as never, at));
@@ -341,19 +345,30 @@ export async function checkLocation(input: { lng: number; lat: number; category:
       if (swapped) errors.push(`The position is outside the nation, but would be in ${swapped.name} with latitude and longitude swapped`);
       else {
         const near = (geo?.units ?? []).filter(u => u.lng != null && u.lat != null).map(u => metres(at, [u.lng!, u.lat!])).sort((a, b) => a - b)[0] ?? Infinity;
-        const coastal = ['port', 'logistics', 'power', 'telecom', 'border-post', 'defence'].includes(input.category);
-        if (near < (coastal ? 120_000 : 60_000)) warnings.push('Just outside the national boundary as the map draws it (coasts and borders are simplified); confirm with a reason');
+        if (near < (input.nearCoast ? 120_000 : 60_000)) warnings.push('Just outside the national boundary as the map draws it (coasts and borders are simplified); confirm with a reason');
         else errors.push('The position is outside the nation');
         if (!input.outsideReason) warnings.push('A position outside the boundary needs a reason');
       }
     }
     if (input.region && place.region && input.region.trim().toLowerCase() !== place.region.toLowerCase()) {
-      warnings.push(`The site is said to be in ${input.region}, but the position falls in ${place.region}`);
+      warnings.push(`The ${noun} is said to be in ${input.region}, but the position falls in ${place.region}`);
     }
     const a2 = place.regionCode ? await loadAdmin2(iso3) : null;
     const district = a2?.units.find(u => u.parent === place.regionCode && geoContains(feature(u.geometry) as never, at));
     if (district) { place.districtCode = district.code; place.district = district.name; }
   }
+  return { errors, warnings, place };
+}
+
+/** Check a position for a category: ranges, inside the nation and the stated region, duplicates; works out its region and district. */
+export async function checkLocation(input: { lng: number; lat: number; category: string; region?: string; name?: string; ids?: Record<string, string>; exceptId?: string; outsideReason?: string }): Promise<LocationCheck> {
+  const { lng, lat } = input;
+  if (!Number.isFinite(lng) || !Number.isFinite(lat)) return { ok: false, errors: ['Give the longitude and latitude as numbers'], warnings: [], place: { inside: false }, duplicates: [] };
+  const coastal = ['port', 'logistics', 'power', 'telecom', 'border-post', 'defence'].includes(input.category);
+  const noCategory = !categoryOf(input.category);
+  // Without a category the map is not consulted; ranges still are.
+  const located = await placePoint({ lng, lat, region: input.region, nearCoast: coastal, outsideReason: input.outsideReason, skipMap: noCategory });
+  const errors = [...located.errors, ...(noCategory ? ['Choose a category'] : [])], warnings = located.warnings, place = located.place;
   const cat = categoryOf(input.category);
   const name = clean(input.name).toLowerCase();
   const duplicates = db().facilities

@@ -374,6 +374,10 @@ export const api = {
       req<{ incident: MinistryIncident }>(`/api/org/ministries/${id}/incidents/${key}/escalate`, { method: 'POST', body: JSON.stringify({ by }) }),
     resolveIncident: (id: string, key: string, by?: string) =>
       req<{ incident: MinistryIncident }>(`/api/org/ministries/${id}/incidents/${key}/resolve`, { method: 'POST', body: JSON.stringify({ by }) }),
+    placeIncident: (id: string, key: string, body: Record<string, unknown>) =>
+      req<{ incident: MinistryIncident; warnings: string[] }>(`/api/org/ministries/${id}/incidents/${key}/place`, { method: 'PUT', body: JSON.stringify(body) }),
+    clearIncidentPlace: (id: string, key: string, by?: string, reason?: string) =>
+      req<{ incident: MinistryIncident }>(`/api/org/ministries/${id}/incidents/${key}/place`, { method: 'DELETE', body: JSON.stringify({ by, reason }) }),
     field: (id: string) => req<MinistryFieldOps>(`/api/org/ministries/${id}/field`),
     series: (id: string) => req<MinistrySeries>(`/api/org/ministries/${id}/series`),
     actOnQueueItem: (id: string, itemId: string, action: QueueAction, note?: string, by?: string) =>

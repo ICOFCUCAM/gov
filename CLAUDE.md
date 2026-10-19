@@ -249,6 +249,11 @@ What has been built is locked. Work only upgrades it toward the vision in
   which law, and which capture methods count. Restricted sites reach viewers
   without need only through `viewFacility()` (generalised); confidential
   categories never enter. Never seed or invent sites; samples stay marked.
+- An incident's place (`lib/data/incident-places.ts`) is a region from the
+  nation's list, a point checked like a registered site (`placePoint()`,
+  region and district derived) or a published registered site (restricted
+  ones generalised); named official, audited, history kept. Maps draw
+  incidents only from recorded places; never guess one from a name.
 - Engines must not read the nation's regions or offices into module-level
   constants; read them at use (`regionList()`, or a function). The root
   layout writes the nation's facts before scripts load, but data from setup

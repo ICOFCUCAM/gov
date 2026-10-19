@@ -1,6 +1,6 @@
 # Map system: evaluation and plan
 
-Status: phases 0–2 done, phase 3 in part, phases 4a–4d and 5 done (October 2026); open: TopoJSON packs and the worldview setting (3), boundary versions and incident locations (4). Register: §16.4, §17.1.
+Status: phases 0–2 done, phase 3 in part, phases 4a–4d and 5 done (October 2026); incident locations done (4); open: TopoJSON packs and the worldview setting (3), boundary versions (4). Register: §16.4, §17.1.
 
 ## Answers to the owner's questions
 
@@ -169,8 +169,16 @@ layouts. The fix is one shared map engine grown from it.
   integrations), live exchanges with their health, regions shaded by the
   share of sites reporting — in Sites ("Who is connected") and in the
   Situation Room between registered offices, with each command node tethered
-  to its institution's office once registered. Still open in phase 4:
-  boundary sources with versions and incident locations.
+  to its institution's office once registered.
+- **Phase 4, incident locations, done.** An institution places its incident
+  in a region, at a point (map pin, device location, typed coordinates;
+  region and district from the map, the same check as registered sites) or
+  at a published registered site (restricted sites generalised). Named
+  official, audited, history kept (`lib/data/incident-places.ts`). The
+  Situation Room draws placed incidents where they are, severity by shape
+  (diamond, triangle, square, circle) and colour, a pulse for the gravest, a
+  tether to the reporting institution, linked to its Incidents tab. Still
+  open in phase 4: boundary sources with versions.
 - **Phase 5, done: the ministry maps.** All 30 map panels of the ministry
   apps draw the installed nation's real regions (19 had invented
   geography: dot grids, hex grids, seeded positions, a schematic city; 11

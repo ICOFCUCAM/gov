@@ -517,6 +517,36 @@ export interface MinistryIncident {
   detail: string;
   active: boolean;
   tierIndex: number; // position in the escalation chain
+  /** Where it is happening, recorded by a named official (lib/data/incident-places.ts). */
+  place?: IncidentPlace;
+  /** Earlier places, oldest first (a place is moved or cleared, never overwritten silently). */
+  placeHistory?: IncidentPlace[];
+}
+/**
+ * Where an incident is: a whole region, a point on the map (region and
+ * district worked out from the map) or a registered site. A restricted site
+ * lends only its generalised position.
+ */
+export interface IncidentPlace {
+  how: 'region' | 'point' | 'site';
+  region?: string;
+  regionCode?: string;
+  district?: string;
+  districtCode?: string;
+  lng?: number;
+  lat?: number;
+  /** For "site": the national facility register record. */
+  facilityId?: string;
+  facilityName?: string;
+  /** The site's position was generalised (restricted category). */
+  generalised?: boolean;
+  /** How a point was captured (map pin, device location, typed coordinates…). */
+  method?: string;
+  by: string;
+  at: ISODate;
+  note?: string;
+  /** Set on history entries: the place was cleared rather than moved. */
+  cleared?: boolean;
 }
 export interface MinistryIncidents {
   ministry: { id: string; name: string; archetype: ArchetypeKey };
@@ -752,6 +782,8 @@ export interface CrossMinistryIncident {
   label: string;
   severity: IncidentSeverity;
   authority: string; // current escalation tier name
+  key?: string;
+  place?: IncidentPlace;
 }
 export interface NationalSnapshot {
   sovereign: SovereignProfile;

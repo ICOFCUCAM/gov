@@ -16,7 +16,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import type { OverlayContext } from '@/components/map/NationMap';
 import { identityFor } from '@/lib/archetype-profiles';
-import type { ArchetypeKey } from '@/lib/api/types';
+import type { ArchetypeKey, IncidentPlace } from '@/lib/api/types';
 import { ASSET_GLYPH, ASSET_LABEL, NET_TONE, networkPressure, sampleAssetsAround, sampleCorridors, sampleNetworksOn } from '@/lib/gov/infrastructure';
 import { seed, toneFor, wave } from '@/lib/telemetry';
 import { INFO as ACCENT } from '@/lib/theme/tokens';
@@ -96,6 +96,81 @@ const KIND_CATEGORY: Partial<Record<string, string>> = {
 /** A recorded exchange between institutions (lib/data/interop-map.ts), between their registered seats. */
 export interface TheatreLink { from: string; to: string; kind: 'agreed' | 'live'; label: string; health: 'agreed' | 'healthy' | 'quiet' | 'failing'; a: { lng: number; lat: number }; b: { lng: number; lat: number } }
 
+/** An active incident as the national snapshot carries it (place recorded by the institution: lib/data/incident-places.ts). */
+export interface TheatreIncident { ministry: string; severity: string; ministryId?: string; key?: string; label?: string; authority?: string; place?: IncidentPlace }
+
+const SEV_WORD: Record<string, string> = { sev1: 'CRITICAL', sev2: 'ELEVATED', sev3: 'WARNING', sev4: 'WATCH' };
+const sevTone = (s: string) => (s === 'sev1' || s === 'sev2' ? 'alert' : s === 'sev3' ? 'warn' : 'neutral') as 'alert' | 'warn' | 'neutral';
+
+/** Severity by shape as well as colour: diamond critical, triangle elevated, square warning, circle watch. */
+function sevShape(sev: string, x: number, y: number, r: number): string {
+  if (sev === 'sev1') return `M${x},${y - r * 1.25} L${x + r * 1.25},${y} L${x},${y + r * 1.25} L${x - r * 1.25},${y} Z`;
+  if (sev === 'sev2') return `M${x},${y - r * 1.2} L${x + r * 1.1},${y + r * 0.8} L${x - r * 1.1},${y + r * 0.8} Z`;
+  if (sev === 'sev3') return `M${x - r * 0.9},${y - r * 0.9} h${r * 1.8} v${r * 1.8} h${-r * 1.8} Z`;
+  return `M${x - r},${y} a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 ${-r * 2},0`;
+}
+
+/**
+ * Incidents where they are: a severity marker at the recorded point (or the
+ * region's centre), a pulse for the gravest, a tether back to the institution
+ * that reported it, and a tag naming it. Each opens the institution's incidents.
+ */
+function PlacedIncidents({ ctx, incidents, nodeAt, reserveEnd, reduced }: {
+  ctx: OverlayContext; incidents: TheatreIncident[]; nodeAt: Map<string, { x: number; y: number }>; reserveEnd: number; reduced: boolean;
+}) {
+  const { width: W, height: H } = ctx;
+  const unitAt = (p: IncidentPlace) => ctx.units.find(u => (p.regionCode && u.code === p.regionCode) || u.name === p.region);
+  const order = ['sev1', 'sev2', 'sev3', 'sev4'];
+  const placed = incidents
+    .flatMap(inc => {
+      const p = inc.place!;
+      const q = p.lng != null && p.lat != null ? ctx.project(p.lng, p.lat) : null;
+      const u = q ? null : unitAt(p);
+      const at = q ? { x: q[0], y: q[1] } : u ? { x: u.x, y: u.y } : null;
+      return at ? [{ inc, ...at, area: !q }] : [];
+    })
+    .sort((a, b) => order.indexOf(a.inc.severity) - order.indexOf(b.inc.severity));
+  // Several incidents at one spot fan out around it; tags stack so they do not overlap.
+  const seen = new Map<string, number>();
+  const tags: { x: number; y: number; w: number }[] = [];
+  return (
+    <g>
+      {placed.map(({ inc, x: x0, y: y0, area }, i) => {
+        const k = `${Math.round(x0 / 6)}:${Math.round(y0 / 6)}`;
+        const n = seen.get(k) ?? 0; seen.set(k, n + 1);
+        const x = x0 + (n ? Math.cos(n * 2.1) * 9 : 0), y = y0 + (n ? Math.sin(n * 2.1) * 9 : 0);
+        const tn = sevTone(inc.severity), c = TONE[tn], r = inc.severity === 'sev1' ? 6 : 5;
+        const host = inc.ministryId ? nodeAt.get(inc.ministryId) : undefined;
+        const word = SEV_WORD[inc.severity] ?? 'WATCH';
+        const lbl = `${word} · ${inc.label ?? inc.ministry}`.slice(0, 38);
+        const w = lbl.length * 4.5 + 14;
+        let tx = Math.min(W - reserveEnd - w - 4, x + 10), ty = y - 18;
+        if (tx < 4) tx = 4;
+        for (const t of tags) if (Math.abs(t.x - tx) < Math.max(t.w, w) && Math.abs(t.y - ty) < 12) ty = t.y - 13;
+        ty = Math.max(30, Math.min(H - 14, ty));
+        tags.push({ x: tx, y: ty, w });
+        const where = inc.place!.facilityName ?? [inc.place!.district, inc.place!.region].filter(Boolean).join(', ');
+        const name = `${word.toLowerCase()} incident: ${inc.label ?? ''} (${inc.ministry})${where ? ` at ${where}` : ''}${inc.authority ? `, with ${inc.authority}` : ''}. Open the institution's incidents`;
+        return (
+          <a key={`pi${inc.ministryId}${inc.key}${i}`} href={inc.ministryId ? `/gov/ministry/${inc.ministryId}?tab=incidents` : undefined} aria-label={name}>
+            {host ? <path d={`M${x},${y} Q${(x + host.x) / 2},${Math.min(y, host.y) - 18} ${host.x},${host.y}`} fill="none" stroke={c} strokeOpacity={0.45} strokeWidth={0.8} strokeDasharray="2 3" pointerEvents="none" /> : null}
+            {area ? <circle cx={x} cy={y} r={r * 3.2} fill={c} fillOpacity={0.1} stroke={c} strokeOpacity={0.5} strokeWidth={0.7} strokeDasharray="3 2" /> : null}
+            {tn === 'alert' && !reduced ? (
+              <circle cx={x} cy={y} r={r * 1.6} fill="none" stroke={c} strokeWidth={1.1} className="animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} pointerEvents="none" />
+            ) : null}
+            <circle cx={x} cy={y} r={r * 2.4} fill={c} fillOpacity={0.14} />
+            <path d={sevShape(inc.severity, x, y, r)} fill={c} stroke="rgb(var(--c-bg))" strokeWidth={1.2} style={{ filter: `drop-shadow(0 0 3px ${c})` }} />
+            <line x1={x + r} y1={y - r * 0.6} x2={tx} y2={ty + 5.5} stroke={c} strokeOpacity={0.6} strokeWidth={0.6} pointerEvents="none" />
+            <rect x={tx} y={ty} width={w} height={11} rx={2} fill="rgb(var(--c-surface))" fillOpacity={0.92} stroke={c} strokeWidth={0.8} />
+            <text x={tx + 5} y={ty + 8} fontSize="7" fontWeight="700" letterSpacing="0.4" fill={c}>{lbl}</text>
+            <title>{name}</title>
+          </a>
+        );
+      })}
+    </g>
+  );
+}
+
 export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers, tactical, heat, flowDur, reserveEnd = 0, ts = 0, sites = [], links = [], seats = {} }: {
   /** Recorded exchanges between institutions' registered seats (agreed and live). */
   links?: TheatreLink[];
@@ -111,7 +186,8 @@ export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers
   regions: TheatreRegion[];
   nodes: TheatreNode[];
   edges: TheatreEdge[];
-  incidents: { ministry: string; severity: string }[];
+  /** Active incidents; those with a recorded place are drawn where they are, the rest beside their institution. */
+  incidents: TheatreIncident[];
   layers: TheatreLayers;
   tactical: boolean;
   heat: boolean;
@@ -437,7 +513,7 @@ export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers
             );
           })}
           {/* incident chips beside the institution that reported them */}
-          {layers.incidents ? Object.values(incidents.reduce<Record<string, { ministry: string; severity: string; n: number }>>((acc, inc) => {
+          {layers.incidents ? Object.values(incidents.filter(inc => !inc.place).reduce<Record<string, { ministry: string; severity: string; n: number }>>((acc, inc) => {
             const k = `${inc.ministry}|${inc.severity}`;
             acc[k] = { ...inc, n: (acc[k]?.n ?? 0) + 1 };
             return acc;
@@ -481,6 +557,9 @@ export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers
         })}
       </g>
 
+      {/* incidents where they are (recorded by the institution), above everything but the framing */}
+      {layers.incidents ? <PlacedIncidents ctx={ctx} incidents={incidents.filter(i => i.place)} nodeAt={showNodes ? nodeAt : new Map()} reserveEnd={reserveEnd} reduced={reduced} /> : null}
+
       {/* tactical framing: scanline, corner brackets, crosshair, vignette */}
       {tactical ? (
         <g pointerEvents="none" aria-hidden>
@@ -517,6 +596,14 @@ export function TheatreLegend({ layers, registered = 0 }: { layers: TheatreLayer
           ))}
           <span className="flex items-center gap-1"><span style={{ color: TONE.warn }} aria-hidden>┄</span>evacuation</span>
           <span className="rounded-[2px] border border-dashed border-line px-1 text-[9px] uppercase tracking-[0.1em]">sample</span>
+        </span>
+      ) : null}
+      {layers.incidents ? (
+        <span className="flex items-center gap-1 border-s border-line ps-2" title="Incidents placed by the institution that reported them">
+          <span style={{ color: TONE.alert }} aria-hidden>◆</span>critical
+          <span style={{ color: TONE.alert }} aria-hidden>▲</span>elevated
+          <span style={{ color: TONE.warn }} aria-hidden>■</span>warning
+          <span style={{ color: TONE.neutral }} aria-hidden>●</span>watch incident
         </span>
       ) : null}
       {layers.infra ? (
