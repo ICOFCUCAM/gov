@@ -28,7 +28,7 @@ import type {
   DistributionRelease, EscrowAgreement, EscrowDeposit, EscrowStatusRow, ProvenanceSummary, ReleaseArtifact,
   SourceReview, SourceReviewEnvironment, SourceReviewStage,
 } from '@/lib/api/types';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { PUBLISHER_KEY, allReleases, nationRecord, releaseFor, visibleTo } from './updates';
 
 const DAY = 86_400_000;

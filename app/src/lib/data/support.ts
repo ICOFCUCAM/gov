@@ -21,7 +21,7 @@ import type {
   FallbackIncident, ServiceIncident, SlaClock, SupportTicket, SupportTier, SupportTierPolicy,
   TicketPriority, TicketState, TicketView,
 } from '@/lib/api/types';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { isShared, transmit } from './sovereignty';
 
 export const PRIORITIES: TicketPriority[] = ['P1', 'P2', 'P3', 'P4'];

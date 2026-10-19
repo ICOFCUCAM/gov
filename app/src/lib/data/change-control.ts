@@ -9,7 +9,7 @@
 // and critical releases, which still need four-eyes. Everything is audited.
 
 import type { Blackout, ChangeControl, MaintenanceSlot } from '@/lib/api/types';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 
 const g = globalThis as unknown as { __civicosChange?: Record<string, ChangeControl> };
 function cdb(): Record<string, ChangeControl> { return (g.__civicosChange ??= {}); }

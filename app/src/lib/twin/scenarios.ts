@@ -7,7 +7,7 @@
 // checked later against the same inputs. Nothing here changes an observation.
 
 import { createHash } from 'node:crypto';
-import { recordAudit } from '@/lib/data/store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { stateAsOf, getEntity, regionEntities, isoDate, onObservations } from './register';
 import { getMetric } from './metrics';
 import { resolveNation, releaseFor } from '@/lib/data/updates';

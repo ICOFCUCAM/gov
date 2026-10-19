@@ -16,7 +16,7 @@
 
 import { brandProblem, type SiteBrand } from '@/lib/public-sites/brand';
 import routes from '@/app/route-lock.json';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { SITE_IDS } from '@/lib/public-sites';
 import { checkPublicUrl, onSite } from '@/lib/public-sites/url-safety';
 import { fetchFeed, type FeedItem, type FeedDeps } from '@/lib/public-sites/feed';

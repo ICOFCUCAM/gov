@@ -8,7 +8,7 @@
 // audited. Durable through lib/data/persist.ts.
 
 import type { NextRequest } from 'next/server';
-import { recordAudit } from '@/lib/data/store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { keyIdOfPem } from '@/lib/crypto/signing-key';
 import { verifyRequestSignature, type SignatureCheck } from './http-signatures';
 

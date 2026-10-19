@@ -18,7 +18,7 @@
 // (lib/data/updates.ts calls alert() on publish, incident and EOL notice).
 
 import type { AlertCategory, AlertChannel, AlertDelivery, ChangeKind, DistributionRelease, Official, ReleaseResource, WhatsNew } from '@/lib/api/types';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 
 export const CATEGORIES: AlertCategory[] = ['security', 'releases', 'incidents', 'eol'];
 export const CHANNELS: AlertChannel[] = ['email', 'sms'];

@@ -6,7 +6,7 @@
 // to the audit chain. Held in platform state (lib/data/persist.ts).
 
 import { randomUUID } from 'node:crypto';
-import { recordAudit } from '@/lib/data/store';
+import { recordAudit } from '@/lib/data/store/audit';
 import type { DirectiveRow } from '@/lib/db/types';
 
 interface Db { rows: DirectiveRow[] }

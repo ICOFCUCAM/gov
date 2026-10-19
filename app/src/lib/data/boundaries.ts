@@ -32,7 +32,7 @@ import { createHash } from 'node:crypto';
 import { geoArea, geoCentroid, geoContains } from 'd3-geo';
 import { readBoundaryFile, type BoundaryFormat, type Feature } from '@/lib/geo/boundary-files';
 import { countVertices, needsSimplifying, simplifyFeatures, SIMPLIFY_TARGET_VERTICES, type Simplification } from '@/lib/geo/boundary-simplify';
-import { recordAudit } from '@/lib/data/store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
 import { loadAdmin2 } from '@/lib/geo/admin2';

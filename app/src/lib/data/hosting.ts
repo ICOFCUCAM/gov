@@ -12,7 +12,7 @@
 // Isolation: callers pass the nation the server resolved (lib/updates/access).
 
 import type { HostingCenter, HostingEstimate, HostingPath, HostingQuestionnaire, HostingRequest, HostingStage, SubscribedNation } from '@/lib/api/types';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { pricing } from './security-store';
 import { adjust, defaultQuestionnaire, estimate, HOSTING_MODEL, unitCostTable, validateQuestionnaire } from '@/lib/updates/hosting-model';
 

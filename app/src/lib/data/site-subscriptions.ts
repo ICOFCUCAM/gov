@@ -16,7 +16,7 @@
 // docs/INTEGRATION_REGISTER.md 14.15. Audit entries never carry the address.
 
 import { createHash, randomBytes } from 'node:crypto';
-import { recordAudit } from './store';
+import { recordAudit } from '@/lib/data/store/audit';
 
 export type SubscriberStatus = 'pending' | 'confirmed' | 'unsubscribed';
 

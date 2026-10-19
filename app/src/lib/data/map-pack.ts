@@ -19,7 +19,7 @@
 // by the nation's mapping authority (lib/data/boundaries.ts) still comes first.
 
 import { createHash } from 'node:crypto';
-import { recordAudit } from '@/lib/data/store';
+import { recordAudit } from '@/lib/data/store/audit';
 import { nationIso3 } from '@/lib/nation/registry';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { loadCountry, type BoundaryCredit, type Geom } from '@/lib/geo/admin1';
