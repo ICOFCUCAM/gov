@@ -95,6 +95,7 @@ import type {
 import { specFor } from '@/lib/ops-catalog';
 import { profileFor } from '@/lib/archetype-profiles';
 import { isWorldview } from '@/lib/map/disputed';
+import { withDefaults } from '@/lib/data/defaults';
 import { scoreInstitution } from '@/lib/institution/readiness';
 import { blueprintFor } from '@/lib/institution/blueprint';
 import { federationSeed } from '@/lib/institution/federation';
@@ -307,8 +308,9 @@ export function recordAudit(
 }
 
 // A store restored from a saved snapshot (lib/data/persist.ts) keeps its data; fields added to the
-// store since that snapshot get their seeded defaults.
-const db = (g.__civicos = g.__civicos ? { ...seed(), ...g.__civicos } : seed());
+// store since that snapshot get their seeded defaults at any depth (lib/data/defaults.ts). The
+// nation profile and the per-ministry and per-tenant dictionaries are kept exactly as saved.
+const db = (g.__civicos = withDefaults(g.__civicos, seed(), { opaque: ['sovereign', 'tenantSync', 'ministryQueues', 'ministryIncidents'] }));
 // Engines read the installed nation (regions, map, currency) from the registry.
 applyNation({ ...db.sovereign, configured: !!db.setup });
 

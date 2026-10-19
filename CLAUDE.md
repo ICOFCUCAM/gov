@@ -329,7 +329,9 @@ What has been built is locked. Work only upgrades it toward the vision in
   `lib/data/persist.ts` saves and restores them (`CIVICOS_STATE=file|supabase`,
   started from `src/instrumentation.ts`). A new store follows the same pattern
   and holds only JSON, Maps, Sets and Dates. When a store gains fields, give
-  them defaults for snapshots saved before the change.
+  them defaults for snapshots saved before the change (`withDefaults()` in
+  `lib/data/defaults.ts` fills them at any depth; name dictionaries of records
+  as `opaque`).
 
 ## Who acted
 
