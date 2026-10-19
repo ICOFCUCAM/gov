@@ -8,7 +8,8 @@ import { Plain } from '@/components/ui/Plain';
 import { TextField } from '@/components/ui/Field';
 import { api } from '@/lib/api/client';
 import type {
-  BackupRecord,
+  BackupView,
+  BackupStatusView,
   ConfigBundle,
   ConfigDrift,
   Deployment,
@@ -25,7 +26,8 @@ export function PlatformConsole() {
   const [releases, setReleases] = React.useState<Release[]>([]);
   const [deployments, setDeployments] = React.useState<Deployment[]>([]);
   const [lifecycle, setLifecycle] = React.useState<TenantLifecycle | null>(null);
-  const [backups, setBackups] = React.useState<BackupRecord[]>([]);
+  const [backups, setBackups] = React.useState<BackupView[]>([]);
+  const [backupStatus, setBackupStatus] = React.useState<BackupStatusView | null>(null);
   const [configs, setConfigs] = React.useState<ConfigBundle[]>([]);
   const [drift, setDrift] = React.useState<ConfigDrift | null>(null);
   const [err, setErr] = React.useState<string | null>(null);
@@ -43,6 +45,7 @@ export function PlatformConsole() {
     setDeployments(d.deployments);
     setLifecycle(l.lifecycle);
     setBackups(b.backups);
+    setBackupStatus(b.status);
     setConfigs(c.configs);
     setDrift(df);
   }, []);
@@ -270,39 +273,7 @@ export function PlatformConsole() {
 
       {tab === 'backups' && (
         <>
-          <Card tight>
-            <h3 className="font-semibold">Backups</h3>
-            <p className="mb-2 text-sm text-ink-muted">
-              Encrypted snapshots in the sovereign object store. Only the
-              reference + integrity hash is recorded here.
-            </p>
-            <div className="flex gap-2">
-              <Button onClick={() => guard(() => api.platform.backups.create('full'))}>Run full backup</Button>
-              <Button variant="secondary" onClick={() => guard(() => api.platform.backups.create('incremental'))}>
-                Incremental
-              </Button>
-            </div>
-          </Card>
-          {backups.map(b => (
-            <Card tight key={b.id}>
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <strong>{b.kind} backup</strong>
-                <span className="font-mono text-xs text-ink-muted">{b.id}</span>
-              </div>
-              <div className="mt-1 break-all text-sm text-ink-muted">{b.location}</div>
-              <div className="mt-2 flex items-center gap-2">
-                <Pill tone={b.state === 'completed' ? 'ok' : b.state === 'restoring' ? 'warn' : 'neutral'}>
-                  {b.state}
-                </Pill>
-                {b.encrypted ? <Pill tone="ok">encrypted</Pill> : <Pill tone="alert">UNENCRYPTED</Pill>}
-                {b.state === 'completed' ? (
-                  <Button variant="secondary" onClick={() => guard(() => api.platform.backups.restore(b.id))}>
-                    Restore
-                  </Button>
-                ) : null}
-              </div>
-            </Card>
-          ))}
+          <BackupsPanel backups={backups} status={backupStatus} guard={guard} />
         </>
       )}
 
@@ -351,5 +322,105 @@ export function PlatformConsole() {
         </>
       )}
     </div>
+  );
+}
+
+/**
+ * Backups (lib/data/backups.ts): real, encrypted backups at the configured
+ * target, each verified by reading it back and a dry-run restore. A restore
+ * is proposed by an administrator, who sees what will be lost, and confirmed
+ * by a second, different official; the current state is backed up first.
+ */
+function BackupsPanel({ backups, status, guard }: { backups: BackupView[]; status: BackupStatusView | null; guard: (fn: () => Promise<unknown>) => Promise<void> }) {
+  const [by, setBy] = React.useState('');
+  const [open, setOpen] = React.useState<string | null>(null);
+  const [warning, setWarning] = React.useState<string | null>(null);
+  const [ack, setAck] = React.useState(false);
+  const who = by.trim() || undefined;
+  const target = status && 'kind' in status.target ? `${status.target.kind === 'dir' ? 'Local directory' : 'Object storage'}` : status ? `Not available: ${(status.target as { error: string }).error}` : '…';
+
+  async function preview(id: string) {
+    setOpen(id); setAck(false); setWarning(null);
+    await guard(async () => { const p = await api.platform.backups.preview(id); setWarning(p.warning.text); });
+  }
+
+  return (
+    <>
+      <Card tight>
+        <h3 className="font-semibold">Backups</h3>
+        <p className="mb-2 text-sm text-ink-muted">
+          Each backup is the platform&apos;s whole state at one moment, encrypted under the nation&apos;s key
+          and checked by reading it back and restoring it into a scratch copy. A restore needs an
+          administrator and a second official.
+        </p>
+        {status ? (
+          <ul className="mb-3 grid gap-1 text-sm text-ink-muted">
+            <li>Kept in: {target} · key: {status.key.ready ? status.key.provider : 'not configured: backups are refused'}</li>
+            <li>
+              Recovery point target {status.policy.rpoMinutes} min ·{' '}
+              <Pill tone={status.rpo.met ? 'ok' : 'warn'}>{status.rpo.met ? `met (newest verified ${status.rpo.ageMinutes} min ago)` : 'not met'}</Pill>
+              {' '}· recovery time target {status.rtoMinutes} min
+            </li>
+            <li>Keeps the newest of the last {status.policy.daily} days, {status.policy.weekly} weeks and {status.policy.monthly} months; a backup every {status.policy.intervalMinutes} min</li>
+          </ul>
+        ) : null}
+        <div className="flex flex-wrap items-end gap-2">
+          <TextField label="Your name and office" name="backup-by" value={by} onChange={e => setBy(e.target.value)} />
+          <Button onClick={() => guard(() => api.platform.backups.create('full', who))}>Run full backup</Button>
+          <Button variant="secondary" onClick={() => guard(() => api.platform.backups.create('incremental', who))}>
+            Incremental
+          </Button>
+          <Button variant="secondary" onClick={() => guard(() => api.platform.backups.retention(who))}>Apply retention</Button>
+        </div>
+      </Card>
+      {status?.proposals.map(p => (
+        <Card tight key={p.id}>
+          <strong>Restore of {p.backupId} proposed by {p.by}</strong>
+          <p className="mt-1 text-sm text-ink-muted">{p.warning.text}</p>
+          <p className="mt-1 text-xs text-ink-muted">A second, different official confirms it before {new Date(p.expiresAt).toLocaleTimeString()}.</p>
+        </Card>
+      ))}
+      {backups.length === 0 ? <Card tight><p className="text-sm text-ink-muted">No backups yet.</p></Card> : null}
+      {backups.map(b => {
+        const pending = status?.proposals.find(p => p.backupId === b.id);
+        return (
+          <Card tight key={b.id}>
+            <div className="flex flex-wrap items-baseline justify-between gap-2">
+              <strong>{b.kind} backup{b.reason ? ` · ${b.reason}` : ''}</strong>
+              <span className="font-mono text-xs text-ink-muted">{b.id}</span>
+            </div>
+            <div className="mt-1 break-all text-sm text-ink-muted">{b.location} · {new Date(b.createdAt).toLocaleString()}{b.createdBy ? ` · ${b.createdBy}` : ''}{b.audit ? ` · audit chain to entry ${b.audit.seq}` : ''}</div>
+            {b.verification && !b.verification.ok ? <p className="mt-1 text-sm text-ink-muted">Verification failed: {b.verification.problem}</p> : null}
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <Pill tone={b.state === 'completed' ? 'ok' : b.state === 'failed' ? 'alert' : b.state === 'restoring' ? 'warn' : 'neutral'}>
+                {b.state === 'completed' ? 'verified' : b.state === 'pending' ? 'not verified yet' : b.state}
+              </Pill>
+              {b.encrypted ? <Pill tone="ok">encrypted</Pill> : <Pill tone="alert">UNENCRYPTED</Pill>}
+              <Button variant="secondary" onClick={() => guard(() => api.platform.backups.verify(b.id, who))}>Verify</Button>
+              {b.state === 'completed' ? (
+                <Button variant="secondary" onClick={() => void preview(b.id)}>
+                  {pending ? 'Confirm restore' : 'Restore'}
+                </Button>
+              ) : null}
+              {pending ? <Button variant="secondary" onClick={() => guard(() => api.platform.backups.cancel(b.id, who))}>Cancel proposal</Button> : null}
+            </div>
+            {open === b.id && warning ? (
+              <div className="mt-3 grid gap-2 text-sm">
+                <p>{warning}</p>
+                <label className="flex items-start gap-2">
+                  <input type="checkbox" checked={ack} onChange={e => setAck(e.target.checked)} />
+                  <span>I understand that everything recorded after this backup is lost from the running platform.</span>
+                </label>
+                <div>
+                  <Button disabled={!ack} onClick={() => guard(async () => { await api.platform.backups.restore(b.id, { by: who, acknowledgeLoss: true }); setOpen(null); })}>
+                    {pending ? 'Confirm restore (second official)' : 'Propose restore'}
+                  </Button>
+                </div>
+              </div>
+            ) : null}
+          </Card>
+        );
+      })}
+    </>
   );
 }

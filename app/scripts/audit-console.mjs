@@ -70,6 +70,11 @@ const PAGES = [
   // Publisher and administration.
   { path: '/admin/releases', skip: true },
   { path: '/admin/sites', skip: true },
+  { path: '/admin/messaging', skip: true },
+  // Sign-in accounts, the identity provider and passkeys (also on /gov/me).
+  { path: '/admin/officials', skip: true },
+  // Platform operations, with backups and data restore.
+  { path: '/platform', skip: true },
 ];
 
 const [cookieName, ...cookieRest] = COOKIE.split('=');
@@ -81,8 +86,8 @@ if (NATION) {
 try {
   const r = await fetch(`${BASE}/api/releases`, { headers: { cookie: COOKIE } });
   const j = r.ok ? await r.json() : null;
-  const list = Array.isArray(j) ? j : j?.releases ?? j?.items ?? [];
-  const id = list.find(x => x && typeof x.id === 'string')?.id;
+  const list = Array.isArray(j) ? j : j?.releases ?? j?.chamber?.releases ?? j?.items ?? [];
+  const id = j?.chamber?.nation?.installedReleaseId ?? list.find(x => x && typeof x.id === 'string')?.id;
   if (id) PAGES.push({ path: `/updates/${encodeURIComponent(id)}`, skip: true }, { path: `/updates/${encodeURIComponent(id)}/evidence`, skip: true });
 } catch { /* no release list: the static pages still run */ }
 

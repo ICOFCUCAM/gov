@@ -64,6 +64,8 @@ import type {
   TenantLifecycle,
   TenantState,
   BackupRecord,
+  BackupView,
+  BackupStatusView,
   BackupKind,
   ConfigBundle,
   ConfigDrift,
@@ -329,12 +331,24 @@ export const api = {
       transition: (to: TenantState, reason: string) =>
         req<{ lifecycle: TenantLifecycle }>('/api/platform/lifecycle/transition', { method: 'POST', body: JSON.stringify({ to, reason }) }),
     },
+    // Real backups (lib/data/backups.ts): encrypted, verified, restored four-eyes.
     backups: {
-      list: () => req<{ backups: BackupRecord[] }>('/api/platform/backups'),
-      create: (kind: BackupKind) =>
-        req<{ backup: BackupRecord }>('/api/platform/backups', { method: 'POST', body: JSON.stringify({ kind }) }),
-      restore: (id: string) =>
-        req<{ backup: BackupRecord }>(`/api/platform/backups/${id}/restore`, { method: 'POST', body: '{}' }),
+      list: () => req<{ backups: BackupView[]; status: BackupStatusView; error?: string }>('/api/platform/backups'),
+      create: (kind: BackupKind, by?: string) =>
+        req<{ backup: BackupView }>('/api/platform/backups', { method: 'POST', body: JSON.stringify({ kind, ...(by ? { by } : {}) }) }),
+      verify: (id: string, by?: string) =>
+        req<{ backup: BackupView }>(`/api/platform/backups/${encodeURIComponent(id)}/verify`, { method: 'POST', body: JSON.stringify(by ? { by } : {}) }),
+      preview: (id: string) =>
+        req<{ warning: { text: string; auditEntriesLost: number }; proposal: { by: string; expiresAt: string } | null }>(`/api/platform/backups/${encodeURIComponent(id)}?preview=1`),
+      /** First call (an administrator) proposes; a second, different official confirms. */
+      restore: (id: string, body: { by?: string; acknowledgeLoss?: boolean; reason?: string } = {}) =>
+        req<{ pending: boolean; proposal?: { by: string; expiresAt: string }; restore?: { confirmedBy: string; safetyBackupId: string } }>(`/api/platform/backups/${encodeURIComponent(id)}/restore`, { method: 'POST', body: JSON.stringify(body) }),
+      cancel: (id: string, by?: string) =>
+        req<{ cancelled: unknown }>(`/api/platform/backups/${encodeURIComponent(id)}/restore`, { method: 'DELETE', body: JSON.stringify(by ? { by } : {}) }),
+      policy: (patch: Record<string, number> & { by?: string }) =>
+        req<{ policy: BackupStatusView['policy'] }>('/api/platform/backups/policy', { method: 'PUT', body: JSON.stringify(patch) }),
+      retention: (by?: string) =>
+        req<{ kept: string[]; pruned: string[] }>('/api/platform/backups/retention', { method: 'POST', body: JSON.stringify(by ? { by } : {}) }),
     },
     config: {
       list: () => req<{ configs: ConfigBundle[] }>('/api/platform/config'),
@@ -508,7 +522,7 @@ export const api = {
     contractAction: (body: { action: 'accept-renewal' | 'request-change'; by: string; note?: string; link?: string }) =>
       req<{ ok: true }>('/api/releases/contract', { method: 'POST', body: JSON.stringify(body) }),
     whatsNew: (id: string, link?: string) => req<{ whatsNew: WhatsNew }>(`/api/releases/${encodeURIComponent(id)}/whats-new${linkQ(link)}`),
-    alerts: (link?: string) => req<{ officials: Official[]; outbox: AlertDelivery[]; categories: AlertCategory[] }>(`/api/releases/alerts${linkQ(link)}`),
+    alerts: (link?: string) => req<{ officials: Official[]; outbox: AlertDelivery[]; categories: AlertCategory[]; delivery?: { email: 'connected' | 'not connected'; sms: 'connected' | 'not connected' } }>(`/api/releases/alerts${linkQ(link)}`),
     alertsAction: (body: { action: 'save' | 'remove'; by: string; official?: Partial<Official>; id?: string; link?: string }) =>
       req<{ ok: true; officials: Official[] }>('/api/releases/alerts', { method: 'POST', body: JSON.stringify(body) }),
     mirror: (link?: string) =>
@@ -531,7 +545,7 @@ export const api = {
     acknowledge: (id: string, by: string, link?: string) =>
       req<{ incident: FallbackIncident }>(`/api/releases/incidents/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify({ by, link }) }),
     restoreData: (id: string, body: { by: string; acknowledgeLoss: boolean; link?: string }) =>
-      req<{ chamber: UpdateChamber }>(`/api/releases/${encodeURIComponent(id)}/restore-data`, { method: 'POST', body: JSON.stringify(body) }),
+      req<{ chamber?: UpdateChamber; pending?: boolean; proposal?: { by: string; expiresAt: string; warning: { text: string } } }>(`/api/releases/${encodeURIComponent(id)}/restore-data`, { method: 'POST', body: JSON.stringify(body) }),
     breakGlass: (body: { by: string; secondBy: string; reason: string; link?: string }) =>
       req<{ incident: FallbackIncident; chamber: UpdateChamber }>('/api/releases/break-glass', { method: 'POST', body: JSON.stringify(body) }),
     // Security store

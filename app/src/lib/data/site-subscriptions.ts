@@ -11,13 +11,21 @@
 // so the form cannot be used to find out who subscribes. Attempts are limited
 // per sender and per address.
 //
-// No email provider is connected yet: messages wait in an outbox, with links
-// as paths on the platform (the sender adds the site's address). See
-// docs/INTEGRATION_REGISTER.md 14.15. Audit entries never carry the address.
+// Messages go to the platform's one outbox (lib/messaging/outbox.ts) in the
+// language the visitor chose, with links as paths on the platform; the
+// delivery worker sends them through the nation's email provider
+// (/admin/messaging), adding the platform's public address and the
+// List-Unsubscribe / List-Unsubscribe-Post headers (RFC 8058) to updates.
+// Without a provider they stay queued. Unsubscribing withdraws the person's
+// unsent messages too. See docs/INTEGRATION_REGISTER.md 14.15. Audit entries
+// never carry the address.
 
 import { createHash, randomBytes } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
+import { enqueue, cancelFor, messagesWhere, isFinal } from '@/lib/messaging/outbox';
+import { siteConfirmation, siteUpdate } from '@/lib/messaging/templates';
+import type { MessageStatus } from '@/lib/messaging/types';
 
 export type SubscriberStatus = 'pending' | 'confirmed' | 'unsubscribed';
 
@@ -33,6 +41,8 @@ interface Subscriber {
   confirmationSentAt: string;
   confirmedAt?: string;
   unsubscribedAt?: string;
+  /** The language the visitor used when subscribing; emails are in it where the dictionaries have the texts. */
+  locale?: string;
 }
 
 export interface SiteMessage {
@@ -42,15 +52,36 @@ export interface SiteMessage {
   kind: 'confirm' | 'update';
   subject: string;
   body: string;
-  /** Confirmation or unsubscribe link, a path on the platform. */
+  /** Confirmation or unsubscribe link, a path on the platform (empty once the message is sent or withdrawn). */
   link: string;
-  status: 'queued';
+  status: MessageStatus;
   at: string;
 }
 
-interface Db { subs: Subscriber[]; outbox: SiteMessage[]; attempts: Map<string, number[]>; seq: number }
+/** `outbox` held messages before the platform outbox existed; any found are moved there. */
+interface Db { subs: Subscriber[]; outbox: (Omit<SiteMessage, 'status'> & { status: string })[]; attempts: Map<string, number[]>; seq: number }
 const g = globalThis as unknown as { __civicosSiteSubs?: Db };
-const db = (): Db => touch('__civicosSiteSubs', g.__civicosSiteSubs ??= { subs: [], outbox: [], attempts: new Map(), seq: 1 });
+const db = (): Db => {
+  const d = touch('__civicosSiteSubs', g.__civicosSiteSubs ??= { subs: [], outbox: [], attempts: new Map(), seq: 1 });
+  if (d.outbox?.length) moveOldOutbox(d);
+  return d;
+};
+
+/** Messages queued in a snapshot saved before the platform outbox: moved there, oldest first. */
+function moveOldOutbox(d: Db): void {
+  const old = d.outbox.splice(0);
+  for (const m of old.reverse()) {
+    const sub = d.subs.find(s => s.siteId === m.siteId && s.email === m.to && s.status !== 'unsubscribed');
+    if (!sub || !m.to) continue;
+    enqueue({
+      key: `site:${m.siteId}:${m.id}`, channel: 'email', stream: 'site-updates', kind: `site.${m.kind}`, to: m.to,
+      subject: m.subject, text: `${m.body}\n\n{link}\n`, link: m.link,
+      ...(m.kind === 'update' ? { unsubscribe: m.link.replace(/^\/subscriptions\?/, '/api/subscriptions?') } : {}),
+      ref: { kind: 'site-subscriber', id: sub.id, siteId: m.siteId },
+      ...(m.kind === 'confirm' ? { expiresAt: new Date(Date.parse(m.at) + CONFIRM_DAYS * 86_400_000).toISOString() } : {}),
+    }, Date.parse(m.at) || Date.now());
+  }
+}
 export function resetSiteSubscriptions(): void { g.__civicosSiteSubs = undefined; }
 
 /** How long a confirmation link stays valid. */
@@ -73,10 +104,17 @@ function limited(key: string, max: number, now: number): boolean {
 /** Keep the hashes of the most recent links, so an older email's link still works. */
 const remember = (hashes: string[], token: string) => [...hashes, hash(token)].slice(-24);
 
-function queue(m: Omit<SiteMessage, 'id' | 'status'>): void {
-  const d = db();
-  d.outbox.unshift({ id: `SM-${d.seq++}`, status: 'queued', ...m });
-  d.outbox.splice(5000);
+/** Queue an email for a subscriber in the platform outbox (once per link token). */
+function queue(sub: Subscriber, kind: 'confirm' | 'update', token: string, msg: { subject: string; text: string; locale: string }, now: number): void {
+  enqueue({
+    key: `site:${sub.siteId}:${sub.id}:${kind}:${hash(token).slice(0, 16)}`, channel: 'email', stream: 'site-updates', kind: `site.${kind}`,
+    to: sub.email, subject: msg.subject, text: msg.text, locale: msg.locale,
+    link: `/subscriptions?token=${token}&action=${kind === 'confirm' ? 'confirm' : 'unsubscribe'}`,
+    // One-click unsubscribe (RFC 8058): mail clients post List-Unsubscribe=One-Click here.
+    ...(kind === 'update' ? { unsubscribe: `/api/subscriptions?token=${token}&action=unsubscribe` } : {}),
+    ref: { kind: 'site-subscriber', id: sub.id, siteId: sub.siteId },
+    ...(kind === 'confirm' ? { expiresAt: new Date(now + CONFIRM_DAYS * 86_400_000).toISOString() } : {}),
+  }, now);
 }
 
 /**
@@ -84,7 +122,7 @@ function queue(m: Omit<SiteMessage, 'id' | 'status'>): void {
  * address — new, pending or already confirmed — and queues a confirmation
  * link only where one is needed.
  */
-export function subscribe(siteId: string, rawEmail: string, { sender = 'unknown', siteName = siteId, now = Date.now() }: { sender?: string; siteName?: string; now?: number } = {}): { ok: true } | { error: 'invalid' | 'busy' } {
+export function subscribe(siteId: string, rawEmail: string, { sender = 'unknown', siteName = siteId, now = Date.now(), locale }: { sender?: string; siteName?: string; now?: number; locale?: string } = {}): { ok: true } | { error: 'invalid' | 'busy' } {
   const email = String(rawEmail ?? '').trim().toLowerCase();
   if (email.length > 254 || !EMAIL.test(email)) return { error: 'invalid' };
   if (limited(`ip:${sender}`, MAX_PER_SENDER, now) || limited(`to:${hash(email)}`, MAX_PER_ADDRESS, now)) return { error: 'busy' };
@@ -94,15 +132,10 @@ export function subscribe(siteId: string, rawEmail: string, { sender = 'unknown'
   if (existing?.status === 'confirmed') return { ok: true };
   const token = randomBytes(24).toString('base64url');
   const sub: Subscriber = existing
-    ? Object.assign(existing, { tokenHashes: remember(existing.tokenHashes, token), confirmationSentAt: at })
-    : { id: `SUB-${d.seq++}`, siteId, email, status: 'pending', tokenHashes: [hash(token)], createdAt: at, confirmationSentAt: at };
+    ? Object.assign(existing, { tokenHashes: remember(existing.tokenHashes, token), confirmationSentAt: at, ...(locale ? { locale } : {}) })
+    : { id: `SUB-${d.seq++}`, siteId, email, status: 'pending', tokenHashes: [hash(token)], createdAt: at, confirmationSentAt: at, ...(locale ? { locale } : {}) };
   if (!existing) d.subs.push(sub);
-  queue({
-    siteId, to: email, kind: 'confirm', at,
-    subject: `Confirm email updates from ${siteName}`,
-    body: `Someone asked for email updates from ${siteName} for this address. Open the link to confirm; if it was not you, ignore this email and nothing will be sent. The link works for ${CONFIRM_DAYS} days.`,
-    link: `/subscriptions?token=${token}&action=confirm`,
-  });
+  queue(sub, 'confirm', token, siteConfirmation(siteName, CONFIRM_DAYS, sub.locale ?? 'en'), now);
   recordAudit('public', 'site.subscribe', `PublicSite:${siteId}`, 'ok', existing ? 'confirmation sent again' : 'confirmation sent');
   return { ok: true };
 }
@@ -141,6 +174,8 @@ export function unsubscribe(token: string, now = Date.now()): { siteId: string }
   s.email = '';
   s.tokenHashes = [];
   s.unsubscribedAt = new Date(now).toISOString();
+  // Messages not yet sent to the address are withdrawn and emptied.
+  cancelFor({ kind: 'site-subscriber', id: s.id }, now);
   recordAudit('public', 'site.unsubscribe', `PublicSite:${s.siteId}`, 'ok');
   return { siteId: s.siteId };
 }
@@ -152,7 +187,7 @@ export function subscriberCounts(siteId: string): { confirmed: number; pending: 
     confirmed: subs.filter(s => s.status === 'confirmed').length,
     pending: subs.filter(s => s.status === 'pending').length,
     unsubscribed: subs.filter(s => s.status === 'unsubscribed').length,
-    queued: db().outbox.filter(m => m.siteId === siteId).length,
+    queued: siteMessages(siteId).filter(m => !isFinal(m)).length,
   };
 }
 
@@ -162,18 +197,22 @@ export function subscriberCounts(siteId: string): { confirmed: number; pending: 
  * Called when a version with new news is published.
  */
 export function queueUpdate(siteId: string, subject: string, body: string, now = Date.now()): number {
-  const at = new Date(now).toISOString();
   const to = db().subs.filter(s => s.siteId === siteId && s.status === 'confirmed');
   for (const s of to) {
     const token = randomBytes(24).toString('base64url');
     s.tokenHashes = remember(s.tokenHashes, token);
-    queue({ siteId, to: s.email, kind: 'update', subject, body, link: `/subscriptions?token=${token}&action=unsubscribe`, at });
+    queue(s, 'update', token, siteUpdate(subject, body, s.locale ?? 'en'), now);
   }
   if (to.length) recordAudit('platform', 'site.update.queue', `PublicSite:${siteId}`, 'ok', `${to.length} recipients`);
   return to.length;
 }
 
-/** Messages waiting for an email provider (operators only). */
+const siteMessages = (siteId: string) => messagesWhere(m => m.stream === 'site-updates' && m.ref?.siteId === siteId);
+
+/** A site's messages in the platform outbox, newest first (server only: holds addresses until sent; never through the API). */
 export function siteOutbox(siteId: string, limit = 50): SiteMessage[] {
-  return db().outbox.filter(m => m.siteId === siteId).slice(0, limit).map(m => ({ ...m }));
+  return siteMessages(siteId).slice(-limit).reverse().map(m => ({
+    id: m.id, siteId, to: m.to, kind: m.kind === 'site.confirm' ? 'confirm' : 'update', subject: m.subject,
+    body: m.text, link: m.link ?? '', status: m.status, at: m.createdAt,
+  }));
 }

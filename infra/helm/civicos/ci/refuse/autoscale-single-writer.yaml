@@ -1,0 +1,4 @@
+# App autoscaling on file state (one writer): refused.
+app:
+  state: { mode: file }
+  autoscaling: { enabled: true }

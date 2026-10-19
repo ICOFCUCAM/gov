@@ -352,9 +352,12 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
     if (!actor.trim()) { setErr('Enter your name and office — every decision is signed.'); return; }
     setBusy('restore-data');
     try {
-      await api.updates.restoreData(r.id, { by: actor.trim(), acknowledgeLoss: lossAck, link });
+      const res = await api.updates.restoreData(r.id, { by: actor.trim(), acknowledgeLoss: lossAck, link });
       onChange(await api.updates.release(r.id, link));
-      setDone('Data restored from the snapshot — written to the audit chain.');
+      // A real backup is restored four-eyes: the first official proposes, a second confirms.
+      setDone(res.pending
+        ? `Restore proposed. ${res.proposal?.warning.text ?? ''} A second, different official confirms it within 30 minutes.`
+        : 'Data restored from the snapshot — written to the audit chain.');
     } catch (e) { setErr(e instanceof Error ? e.message : 'Restore failed'); }
     finally { setBusy(null); }
   }
@@ -476,6 +479,7 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
               <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#f1938f]" checked={lossAck} onChange={e => setLossAck(e.target.checked)} />
               I understand that all data written after {fmtDateTime(rp.createdAt)} is lost.
             </label>
+            {rp.backupId ? <p className="text-[12px] font-light text-night-muted">Backup {rp.backupId}{rp.checks?.length ? ` · verified: ${rp.checks.length} checks` : ''}. An administrator proposes the restore and a second official confirms it; the current state is backed up first.</p> : rp.simulated ? <p className="text-[12px] font-light text-night-muted">Simulated restore point: nothing was copied.</p> : null}
             <button type="button" className={ghostBtn} disabled={!!busy || !lossAck} onClick={restoreData}>{busy === 'restore-data' ? 'Restoring…' : 'Restore data snapshot'}</button>
           </fieldset>
         ) : null}

@@ -1,5 +1,7 @@
 name: CI
 
+# Node 22 (LTS) everywhere; actions at their Node 24 majors. pnpm comes from
+# corepack at the version pinned in each package.json's packageManager field.
 on:
   push:
     branches: [main, "claude/**"]
@@ -13,16 +15,18 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
       - name: Enable pnpm
         run: corepack enable
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
       - name: Typecheck
         run: pnpm typecheck
+      - name: Lint (ESLint, eslint.config.mjs)
+        run: pnpm lint
       - name: Unit tests (vitest)
         run: pnpm test
       - name: No new raw colours in console code (tokens only)
@@ -35,10 +39,10 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
       - name: Enable pnpm
         run: corepack enable
       # Fails on any high or critical advisory in production dependencies
@@ -56,7 +60,7 @@ jobs:
           node scripts/audit-deps.mjs --publish "$CIVICOS_PUBLISHER_URL" || true
       - name: Keep the report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: dependency-audit
           path: app/dependency-audit.json
@@ -66,7 +70,7 @@ jobs:
     name: container image scan (high and critical)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Build the app image
         run: docker build -t civicos-app:ci app
       # Trivy's own image, pinned by digest (0.65.0); the trivy-action tag this
@@ -87,7 +91,7 @@ jobs:
           image --format cyclonedx --output /out/civicos-app.cdx.json civicos-app:ci
       - name: Keep the SBOM
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: civicos-app-sbom
           path: civicos-app.cdx.json
@@ -100,10 +104,10 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
       - name: Enable pnpm
         run: corepack enable
       - name: Install dependencies
@@ -121,7 +125,7 @@ jobs:
         run: pnpm audit:sites --report public-sites-audit.json
       - name: Keep the report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: public-sites-audit
           path: app/public-sites-audit.json
@@ -134,10 +138,10 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
       - name: Enable pnpm
         run: corepack enable
       - name: Install dependencies
@@ -155,7 +159,7 @@ jobs:
         run: pnpm audit:console --nation KEN --report console-audit.json
       - name: Keep the report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: console-audit
           path: app/console-audit.json
@@ -168,10 +172,10 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 20
+          node-version: 22
       - name: Enable pnpm
         run: corepack enable
       - name: Install dependencies
@@ -200,7 +204,7 @@ jobs:
           ! grep -q 'status="FAIL"' ogc-cite.xml
       - name: Keep the reports
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: console-smoke
           path: |
@@ -233,7 +237,7 @@ jobs:
       run:
         working-directory: app
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
       - name: Install psql client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
       - name: Apply the stand-ins and every migration to the throwaway database
@@ -261,8 +265,8 @@ jobs:
       run:
         working-directory: services/civic-api
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
           # node --test expands the quoted spec glob itself, which needs Node 21+.
           node-version: 22
@@ -276,3 +280,29 @@ jobs:
         run: pnpm typecheck
       - name: Unit tests (node --test)
         run: pnpm test
+
+  helm-chart:
+    name: helm chart (lint, render, validate)
+    runs-on: ubuntu-latest
+    env:
+      # helm is built from its tagged module (verified against the Go checksum
+      # database); kubeconform is the release binary, checked against the
+      # SHA-256 below (from the release's CHECKSUMS file).
+      HELM_VERSION: v3.22.1
+      KUBECONFORM_VERSION: v0.7.0
+      KUBECONFORM_SHA256: c31518ddd122663b3f3aa874cfe8178cb0988de944f29c74a0b9260920d115d3
+      GOTOOLCHAIN: auto
+    steps:
+      - uses: actions/checkout@v7
+      - name: Install helm (pinned)
+        run: |
+          GOBIN="$HOME/.local/bin" go install "helm.sh/helm/v3/cmd/helm@${HELM_VERSION}"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+      - name: Install kubeconform (pinned, SHA-256 checked)
+        run: |
+          curl -fsSLo kubeconform.tar.gz "https://github.com/yannh/kubeconform/releases/download/${KUBECONFORM_VERSION}/kubeconform-linux-amd64.tar.gz"
+          echo "${KUBECONFORM_SHA256}  kubeconform.tar.gz" | sha256sum -c -
+          mkdir -p "$HOME/.local/bin" && tar -xzf kubeconform.tar.gz -C "$HOME/.local/bin" kubeconform
+          rm kubeconform.tar.gz
+      - name: Lint, render (defaults, every profile, production-like values) and validate
+        run: bash infra/helm/check.sh
