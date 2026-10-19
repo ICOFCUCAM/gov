@@ -99,6 +99,7 @@ import { scoreInstitution } from '@/lib/institution/readiness';
 import { blueprintFor } from '@/lib/institution/blueprint';
 import { federationSeed } from '@/lib/institution/federation';
 import { regionList, applyNation, nationPaymentRail, nationRegions } from '@/lib/nation/registry';
+import { maybeSignHead, verifySignedHeads, type SignedHeadCheck } from '@/lib/audit/sign';
 
 function uid(prefix: string): string {
   return `${prefix}-${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
@@ -291,6 +292,8 @@ function appendAudit(
   const base = { id: uid('AU'), at: new Date().toISOString(), actor, action, resource, outcome, detail, seq, prevHash };
   const entry: AuditEntry = { ...base, alg: 'sha256-v2', hash: auditHashV2(base) };
   db.audit.push(entry);
+  // Every N entries or T minutes the head is signed (lib/audit/sign.ts).
+  maybeSignHead(entry);
   return entry;
 }
 
@@ -399,6 +402,8 @@ export function verifyAuditChain(): {
   ok: boolean;
   checked: number;
   brokenAtSeq?: number;
+  /** The signed heads (lib/audit/sign.ts): the last one, and whether every one still matches the chain. */
+  signed?: SignedHeadCheck;
 } {
   let prevHash: string | null = null;
   let upgraded = false;
@@ -413,7 +418,15 @@ export function verifyAuditChain(): {
     }
     prevHash = e.hash;
   }
-  return { ok: true, checked: db.audit.length };
+  const bySeq = new Map(db.audit.map(e => [e.seq, e]));
+  const signed = verifySignedHeads(seq => bySeq.get(seq));
+  return signed.ok ? { ok: true, checked: db.audit.length, signed } : { ok: false, checked: db.audit.length, signed };
+}
+
+/** The chain's current head (sequence and hash), for signing and anchoring. */
+export function auditHead(): { seq: number; hash: string } | null {
+  const e = db.audit[db.audit.length - 1];
+  return e ? { seq: e.seq, hash: e.hash } : null;
 }
 
 // ── Payments ──────────────────────────────────────────────────────────
