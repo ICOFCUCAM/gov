@@ -7,6 +7,8 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     const { startFromEnv } = await import('./lib/data/persist');
     const status = await startFromEnv();
+    // The facility tile archive listens for publication changes from the start (lib/twin/tiles-archive.ts).
+    await import('./lib/twin/tiles-archive');
     if (status.adapter !== 'memory' || status.error) {
       const { log } = await import('./lib/ops/log');
       log(status.error ? 'error' : 'info', 'state.restore', { adapter: status.adapter, restored: status.restored.length, ...(status.error ? { message: status.error } : {}) });

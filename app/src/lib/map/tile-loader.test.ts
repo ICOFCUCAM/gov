@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
+import { gzipSync } from 'node:zlib';
 import { TileCache, chooseTiles, childrenOf, featuresOf, lngLatToTile, loadTiles, mergeFeatures, tileFetcher, tilesForBounds, viewBounds, TILE_POINT_LIMIT, type TileAddress } from './tile-loader';
 import { encodeTile, toTile } from '@/lib/geo/mvt';
+import { Compression, TileType, writeArchive } from '@/lib/geo/pmtiles';
 
 const tileWith = (t: TileAddress, pts: { id: string; lng: number; lat: number }[]) =>
   encodeTile([{ name: 'facilities', points: pts.map(p => { const [x, y] = toTile(p.lng, p.lat, t.z, t.x, t.y); return { x, y, properties: { id: p.id, name: p.id } }; }) }]);
@@ -78,5 +80,19 @@ describe('loading tiles', () => {
     await loadTiles([{ z: 3, x: 4, y: 2 }], { fetch: fetchTile, cache, layer: 'facilities', maxZoom: 14, version: 'v2' });
     expect(calls[calls.length - 1]).toMatch(/\?v=v2$/);
     expect(TILE_POINT_LIMIT).toBe(50_000);
+  });
+
+  it('reads the same features from a PMTiles archive over range requests', async () => {
+    const t = { z: 6, x: 38, y: 32 };
+    const archive = writeArchive([{ ...t, data: new Uint8Array(gzipSync(tileWith(t, [{ id: 'FAC-9', lng: 36.8, lat: -1.28 }]))) }], {
+      tileType: TileType.Mvt, tileCompression: Compression.Gzip, internalCompression: Compression.Gzip, compress: b => new Uint8Array(gzipSync(b)), metadata: {}, bounds: [33, -5, 42, 5],
+    });
+    const fake = (async (_u: string, init?: RequestInit) => {
+      const [, s, e] = /bytes=(\d+)-(\d+)/.exec((init!.headers as Record<string, string>).range!)!;
+      return new Response(archive.slice(Number(s), Number(e) + 1), { status: 206, headers: { etag: '"a"' } });
+    }) as unknown as typeof fetch;
+    const fetchTile = tileFetcher({ kind: 'pmtiles', url: '/api/twin/tiles/facilities.pmtiles' }, fake);
+    const r = await loadTiles([t, { z: 6, x: 0, y: 0 }], { fetch: fetchTile, cache: new TileCache(), layer: 'facilities', maxZoom: 12 });
+    expect(r.features.map(f => f.key)).toEqual(['FAC-9']);
   });
 });

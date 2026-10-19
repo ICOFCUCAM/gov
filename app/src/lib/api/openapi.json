@@ -11773,6 +11773,33 @@
         "x-source": "src/app/api/twin/state/route.ts"
       }
     },
+    "/api/twin/tiles/facilities.pmtiles": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_tiles_facilities_pmtiles",
+        "summary": "GET /api/twin/tiles/facilities.pmtiles",
+        "description": "The national facility register as one PMTiles v3 archive (vector layer \"facilities\", zoom 0–12 by default), read with HTTP range requests (Range: bytes=a-b → 206 Partial Content; HEAD for the size and ETag). Open without sign-in: it holds only what the public may see — restricted sites at their generalised position, exactly as viewFacility() gives a viewer who is not signed in; confidential sites never. Rebuilt after publication changes (lib/twin/tiles-archive.ts); a new build has a new ETag, so a reader can tell its ranges came from one build (If-Range is honoured). Signed-in officials read the viewer-aware tiles at /api/twin/tiles/facilities/{z}/{x}/{y}.mvt.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/tiles/facilities.pmtiles/route.ts"
+      }
+    },
     "/api/twin/tiles/facilities/{z}/{x}/{y}": {
       "get": {
         "tags": [

@@ -2,16 +2,19 @@
 // Mercator tiles cover what a map shows, at a tile zoom fine enough for its
 // scale; fetching them from the platform's own tile route
 // (/api/twin/tiles/facilities/{z}/{x}/{y}.mvt, viewer-aware: the server
-// generalises restricted sites); decoding them (lib/geo/mvt.ts) into features
+// generalises restricted sites) or from a PMTiles archive by range requests
+// (/api/twin/tiles/facilities.pmtiles, or a copy on an air-gapped
+// installation's own server); decoding them (lib/geo/mvt.ts) into features
 // with longitude/latitude; and keeping recent tiles in a small cache. Nothing
 // is fetched from outside the platform. A tile the server cut short (more
 // than its point limit) is replaced by its four children.
 
 import { decodeTile, fromTile, type Prop } from '@/lib/geo/mvt';
+import { ArchiveChanged, PMTilesReader, httpSource } from '@/lib/geo/pmtiles';
 import type { MapTone } from './model';
 
 export interface TileFeature { key: string; lng: number; lat: number; props: Record<string, Prop> }
-export type TileSource = { kind: 'xyz'; url: string };
+export type TileSource = { kind: 'xyz'; url: string } | { kind: 'pmtiles'; url: string };
 export interface TileAddress { z: number; x: number; y: number }
 
 /** The most points the platform puts in one tile (lib/twin/tiles.ts MAX_TILE_POINTS). */
@@ -84,6 +87,18 @@ export type FetchTile = (t: TileAddress, version?: string) => Promise<(Uint8Arra
 
 /** Fetches one tile from a source. */
 export function tileFetcher(source: TileSource, fetchImpl: typeof fetch = (...a) => fetch(...a)): FetchTile {
+  if (source.kind === 'pmtiles') {
+    let reader = new PMTilesReader(httpSource(source.url, fetchImpl, { credentials: 'same-origin' }));
+    return async (t: TileAddress) => {
+      try { return await reader.tile(t.z, t.x, t.y); }
+      catch (e) {
+        // A rebuilt archive: start again from its new header, once.
+        if (!(e instanceof ArchiveChanged)) throw e;
+        reader = new PMTilesReader(httpSource(source.url, fetchImpl, { credentials: 'same-origin' }));
+        return reader.tile(t.z, t.x, t.y);
+      }
+    };
+  }
   return async (t: TileAddress, version?: string) => {
     const url = source.url.replace('{z}', String(t.z)).replace('{x}', String(t.x)).replace('{y}', String(t.y)) + (version ? `${source.url.includes('?') ? '&' : '?'}v=${encodeURIComponent(version)}` : '');
     const r = await fetchImpl(url, { credentials: 'same-origin' });

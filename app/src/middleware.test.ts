@@ -39,6 +39,15 @@ describe('access gate (CIVICOS_AUTH=enforce)', () => {
     expect((await call('/welcome')).headers.get('location')).toMatch(/\/sign-in\?from=%2Fwelcome$/);
   });
 
+  it('opens the public facility tile archive without sign-in, never the viewer-aware tiles', async () => {
+    process.env.CIVICOS_AUTH = 'enforce';
+    process.env.CIVICOS_SESSION_SECRET = SECRET;
+    expect((await call('/api/twin/tiles/facilities.pmtiles')).status).toBe(200);
+    expect((await call('/api/twin/tiles/facilities/6/38/32.mvt')).status).toBe(401);
+    expect((await call('/api/twin/tiles/facilities')).status).toBe(401);
+    expect((await call('/api/twin/tiles/facilities.pmtiles.json')).status).toBe(401);
+  });
+
   it('does not take the page cookie (the cover\'s demo session) as a verified official for reads', async () => {
     process.env.CIVICOS_AUTH = 'enforce';
     process.env.CIVICOS_SESSION_SECRET = SECRET;
