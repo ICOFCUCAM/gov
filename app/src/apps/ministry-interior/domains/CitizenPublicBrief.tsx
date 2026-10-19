@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { citizenPublicBrief } from '@/lib/gov/citizen-public-brief';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 export function CitizenPublicBrief({ id, now }: { id: string; now: number }) {
   void id;
@@ -22,7 +23,7 @@ export function CitizenPublicBrief({ id, now }: { id: string; now: number }) {
         {b.briefLine}
       </div>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-        <div className="border border-line p-2"><div className="text-[8px] uppercase tracking-[0.14em] text-ink-muted">Trust</div><div className="text-[16px] font-semibold tabular-nums text-ink">{b.trustIndex}</div></div>
+        <div className="border border-line p-2"><div className="text-[8px] uppercase tracking-[0.14em] text-ink-muted">Trust</div><div className="text-[16px] font-semibold tabular-nums text-ink">{b.trustIndex} <IndexTag index="citizen-public-brief.ts · trustIndex" /></div></div>
         <div className="border border-line p-2"><div className="text-[8px] uppercase tracking-[0.14em] text-ink-muted">Appeals under review</div><div className="text-[16px] font-semibold tabular-nums text-ink">{b.unresolvedAppeals}</div></div>
         <div className="border border-line p-2"><div className="text-[8px] uppercase tracking-[0.14em] text-ink-muted">Safeguard families</div><div className="text-[16px] font-semibold tabular-nums text-ink">{b.safeguardFamilies}</div></div>
         <div className="border border-line p-2"><div className="text-[8px] uppercase tracking-[0.14em] text-ink-muted">Constitutional prohibitions</div><div className="text-[16px] font-semibold tabular-nums text-ink">{b.totalProhibitions}</div></div>

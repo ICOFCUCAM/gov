@@ -5,6 +5,7 @@
 
 import * as React from 'react';
 import { governancePulse } from '@/lib/gov/governance-pulse';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 export function SovereignHeaderPulse({ now, accent }: { now: number; accent?: string }) {
   const p = governancePulse(now);
@@ -15,7 +16,7 @@ export function SovereignHeaderPulse({ now, accent }: { now: number; accent?: st
       <span className="uppercase tracking-[0.18em] text-ink-muted">Sovereign pulse</span>
       <span className="uppercase tracking-[0.12em]" style={{ color: col }}>{p.mode}</span>
       <span className="text-ink-muted">health <span className="font-semibold tabular-nums" style={{ color: col }}>{p.health}</span></span>
-      <span className="text-ink-muted">weakest <span className="font-semibold text-ink">{p.dominantLabel}</span> ({p.dominantIndex})</span>
+      <span className="text-ink-muted">weakest <span className="font-semibold text-ink">{p.dominantLabel}</span> ({p.dominantIndex}) <IndexTag index="governance-pulse.ts · dominantIndex" /></span>
       <span className="ml-auto text-ink-muted">alerts {p.alerts} · warns {p.warns}</span>
     </div>
   );

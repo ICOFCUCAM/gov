@@ -18,6 +18,7 @@ import type { SignalKind } from '@/lib/twin/signal';
 import { SignalTag } from '@/components/ui/SignalTag';
 import type { MapPoint } from '@/components/map/NationMap';
 import { RegionMap, mapClock, perUnit, skewed, useNationUnits, useRegisteredSites, type MapValue, type NationUnit, type RegionGlow, type RegionMarker } from '@/apps/ministry-interior/domains/RegionMaps';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const BG = '#070a10';
 const PANEL = '#0c1119';
@@ -325,7 +326,7 @@ export function InteriorCommand({ id, now }: { id: string; now: number }) {
             <div className="mb-2 flex items-center gap-3 rounded-[3px] border px-3 py-2" style={{ borderColor: LINE, background: PANEL2 }}>
               <div><div className="text-[7px] uppercase tracking-[0.14em]" style={{ color: MUT }}>Security Posture</div>
                 <div className="text-[16px] font-bold" style={{ color: tc(sevTone), fontFamily: SERIF }}>{posture}</div></div>
-              <div className="ml-auto text-right"><div className="text-[7px] uppercase tracking-[0.14em]" style={{ color: MUT }}>Risk Score</div>
+              <div className="ml-auto text-right"><div className="text-[7px] uppercase tracking-[0.14em]" style={{ color: MUT }}>Risk Score <IndexTag index="interior-systems.ts · publicOrderIndex" /></div>
                 <div className="font-mono text-[16px]" style={{ color: RED }}>{riskScore}<span className="text-[9px]" style={{ color: MUT }}>/100</span></div></div>
             </div>
             <div className="grid grid-cols-4 gap-1.5">

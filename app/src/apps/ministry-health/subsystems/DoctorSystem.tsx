@@ -17,6 +17,7 @@ import { pickIndex } from '@/lib/pick-index';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 import { aiLabel } from '@/lib/nation/registry';
+import { IndexTag } from '@/components/ui/IndexTag';
 const C = (t: Tone) => (t === 'info' ? 'rgb(var(--c-link))' : `rgb(var(--c-${t}))`);
 const ACC = ACCENT.doctor!;
 const TABS = ['Overview', 'History', 'Examination', 'Diagnosis', 'Treatment plan', 'Results', 'Documents', 'Billing'];
@@ -86,6 +87,7 @@ export function DoctorSystem({ id, now, role, withheld }: {
         ))}
         <div className="ml-auto flex flex-col items-center">
           <RingGauge value={p.riskScore} label={`${p.riskBand} risk`} tone={rb} size={84} sub="score" />
+          <IndexTag index="health-operations.ts · riskScore" />
         </div>
       </div>
 

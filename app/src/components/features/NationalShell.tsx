@@ -41,6 +41,7 @@ import type { SovereignProfile, NationalSnapshot, NationalCoordination, Ministry
 import { useRenderNow } from '@/lib/clock/render-now';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { REFERENCE_MODEL, type SignalKind } from '@/lib/twin/signal';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 // Panels here are calculated from the institutions' models, so they say so unless a panel states otherwise.
 function P({ title, meta, children, signal = 'modelled' }: { title: string; meta?: string; children: React.ReactNode; signal?: SignalKind | null }) {
@@ -749,14 +750,14 @@ export function NationalShell() {
         ) : (
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-5">
             {[
-              { l: 'Capacity index', v: `${healthCap.capacityIndex}`, t: healthCap.tone },
+              { l: 'Capacity index', v: `${healthCap.capacityIndex}`, t: healthCap.tone, tag: <IndexTag index="health-systems.ts · capacityIndex" /> },
               { l: 'Bed occupancy', v: `${healthCap.bedOccupancyPct}%`, t: healthCap.bedOccupancyPct >= 92 ? 'alert' as const : healthCap.bedOccupancyPct >= 82 ? 'warn' as const : 'ok' as const },
               { l: 'ICU occupancy', v: `${healthCap.icuOccupancyPct}%`, t: healthCap.icuOccupancyPct >= 95 ? 'alert' as const : healthCap.icuOccupancyPct >= 85 ? 'warn' as const : 'ok' as const },
               { l: 'Ambulances available', v: `${healthCap.ambulanceAvailablePct}%`, t: healthCap.ambulanceAvailablePct >= 40 ? 'ok' as const : 'warn' as const },
               { l: 'Doctor availability', v: `${healthCap.doctorAvailabilityPct}%`, t: healthCap.doctorAvailabilityPct >= 30 ? 'ok' as const : 'warn' as const },
             ].map(s => (
               <div key={s.l} className="rounded-[3px] border border-line bg-surface px-3 py-2" style={{ boxShadow: 'inset 0 1px 0 rgba(55,199,212,0.06)' }}>
-                <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{s.l}</div>
+                <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted"><span className="truncate">{s.l}</span>{s.tag}</div>
                 <div className="font-mono text-[15px] tabular-nums" style={{ color: TONE[s.t] }}>{s.v}</div>
               </div>
             ))}

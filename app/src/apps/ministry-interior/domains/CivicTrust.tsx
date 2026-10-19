@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { civicBoard } from '@/lib/gov/civic-legitimacy';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const T = (v: number) => v >= 65 ? 'rgb(var(--c-ok))' : v >= 45 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))';
 
@@ -18,6 +19,7 @@ export function CivicTrust({ id, now }: { id: string; now: number }) {
         style={{ borderColor: `color-mix(in srgb,${T(b.trustIndex)} 45%,transparent)`, background: 'rgba(0,0,0,0.3)' }}>
         <span className="text-[9px] uppercase tracking-[0.18em] text-ink-muted">National institutional trust</span>
         <span className="text-[16px] font-semibold tabular-nums" style={{ color: T(b.trustIndex) }}>{b.trustIndex}</span>
+        <IndexTag index="civic-legitimacy.ts · trustIndex" />
         <span className="text-ink-muted">fairness <span className="font-semibold text-ink tabular-nums">{b.fairnessContinuity}</span></span>
         <span className="text-ink-muted">civic fatigue <span className="font-semibold tabular-nums" style={{ color: b.civicFatigue >= 60 ? 'rgb(var(--c-alert))' : 'rgb(var(--c-warn))' }}>{b.civicFatigue}</span></span>
         <span className="ml-auto text-[9px] text-ink-muted">aggregate · institutional · politically neutral</span>

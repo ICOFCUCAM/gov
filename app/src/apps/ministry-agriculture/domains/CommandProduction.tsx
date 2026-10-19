@@ -6,6 +6,7 @@ import * as React from 'react';
 import { agricultureOps } from '@/lib/gov/agriculture-systems';
 import { SeasonalFrame, SeasonalKpi, SeasonalRule, CropRow, SeasonalCallout, AGRICULTURE_DS } from '@/apps/ministry-agriculture/design-system/agriculture-ds';
 import { seed, wave } from '@/lib/telemetry';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 export function FoodSecurityIndex({ id, now }: { id: string; now: number }) {
   const ts = now / 4000;
@@ -14,7 +15,7 @@ export function FoodSecurityIndex({ id, now }: { id: string; now: number }) {
     <SeasonalFrame archetype="command" code="CM-FSI-02" title="Food Security Index"
       subtitle="national composite · 0..100">
       <SeasonalKpi items={[
-        { label: 'Food security', value: `${o.foodSecurityIndex}/100`, tone: o.foodSecurityIndex >= 75 ? 'ok' : o.foodSecurityIndex >= 55 ? 'warn' : 'alert' },
+        { label: 'Food security', value: <>{o.foodSecurityIndex}/100 <IndexTag index="agriculture-systems.ts · foodSecurityIndex" /></>, tone: o.foodSecurityIndex >= 75 ? 'ok' : o.foodSecurityIndex >= 55 ? 'warn' : 'alert' },
         { label: 'Strategic reserve', value: `${o.strategicReserveDays}d`, tone: o.strategicReserveDays >= 45 ? 'ok' : 'warn' },
         { label: 'Subsidy disbursed', value: `${o.subsidyDisbursementPct}%`, tone: o.subsidyDisbursementPct >= 75 ? 'ok' : 'warn' },
         { label: 'Pest alerts', value: o.pestAlerts, tone: o.pestAlerts >= 6 ? 'alert' : o.pestAlerts ? 'warn' : 'ok' },

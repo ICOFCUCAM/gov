@@ -5,6 +5,7 @@
 
 import * as React from 'react';
 import { knowledgeBoard } from '@/lib/gov/knowledge-continuity';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const G = (v: number) => v >= 62 ? 'rgb(var(--c-ok))' : v >= 45 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))';
 const BAD = (v: number) => v >= 60 ? 'rgb(var(--c-alert))' : v >= 40 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-ok))';
@@ -28,11 +29,11 @@ export function InnovationContinuity({ id, now }: { id: string; now: number }) {
     { l: 'Factual continuity', v: cr.factualContinuity, good: true },
     { l: 'Public-information reliability', v: cr.publicInfoReliability, good: true },
     { l: 'Crisis-information stability', v: cr.crisisInfoStability, good: true },
-    { l: 'Civic confusion index', v: cr.civicConfusionIndex, good: false },
+    { l: 'Civic confusion index', v: cr.civicConfusionIndex, good: false, tag: <IndexTag index="knowledge-continuity.ts · civicConfusionIndex" /> },
   ];
-  const Row = ({ l, v, good }: { l: string; v: number; good: boolean }) => (
+  const Row = ({ l, v, good, tag }: { l: string; v: number; good: boolean; tag?: React.ReactNode }) => (
     <div className="flex items-center gap-2 border-b border-line/60 px-2 py-1.5 text-[10px] last:border-0">
-      <span className="w-56 shrink-0 text-ink">{l}</span>
+      <span className="w-56 shrink-0 text-ink">{l}{tag ? <> {tag}</> : null}</span>
       <span className="relative h-2 min-w-0 flex-1 bg-surface-2"><span className="absolute inset-y-0 left-0" style={{ width: `${v}%`, background: good ? G(v) : BAD(v) }} /></span>
       <span className="w-10 shrink-0 text-right tabular-nums" style={{ color: good ? G(v) : BAD(v) }}>{v}</span>
     </div>

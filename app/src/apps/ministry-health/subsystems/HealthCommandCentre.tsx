@@ -21,6 +21,7 @@ import { wave, waveSeries } from '@/lib/telemetry';
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 
 import { aiLabel } from '@/lib/nation/registry';
+import { IndexTag } from '@/components/ui/IndexTag';
 const ACC = ACCENT.command!;
 const MAP_TABS = [['Heatmap', 'pressure'], ['Outbreaks', 'outbreakHeat'], ['Facilities', 'icuLoad'], ['Routes', 'pressure']] as const;
 // What each tab shows besides its figure: Facilities = the registered health
@@ -65,8 +66,8 @@ export function HealthCommandCentre({ id, now, role, withheld }: {
   const stockoutRisk = Math.min(99, Math.max(4, Math.round(100 - px.nationalCoverDays * 2 + px.criticalDrugs * 6)));
   const [tab, setTab] = React.useState(0);
 
-  const kpis: { l: string; v: string; u?: string; s: string; t: Tone; k: string }[] = [
-    { l: 'NATIONAL HEALTH INDEX', v: `${nhi}`, u: '/100', s: `▲ ${(nhi / 34).toFixed(1)}`, t: nhi >= 70 ? 'ok' : nhi >= 55 ? 'warn' : 'alert', k: 'nhi' },
+  const kpis: { l: string; v: string; u?: string; s: string; t: Tone; k: string; tag?: React.ReactNode }[] = [
+    { l: 'NATIONAL HEALTH INDEX', tag: <IndexTag index="health-systems.ts · mortalityIndex" entityId={`institution:${id}`} />, v: `${nhi}`, u: '/100', s: `▲ ${(nhi / 34).toFixed(1)}`, t: nhi >= 70 ? 'ok' : nhi >= 55 ? 'warn' : 'alert', k: 'nhi' },
     { l: 'CRITICAL ALERTS', v: `${critAlertN}`, s: 'Active now', t: critAlertN ? 'alert' : 'ok', k: 'alr' },
     { l: 'HOSPITAL OCCUPANCY', v: `${hosp.beds.occupancyPct}%`, s: '▲ 4%', t: hosp.beds.occupancyPct >= 90 ? 'alert' : hosp.beds.occupancyPct >= 78 ? 'warn' : 'ok', k: 'hos' },
     { l: 'ICU OCCUPANCY', v: `${hosp.icu.occupancyPct}%`, s: '▲ 5%', t: hosp.icu.occupancyPct >= 90 ? 'alert' : hosp.icu.occupancyPct >= 78 ? 'warn' : 'ok', k: 'icu' },
@@ -121,7 +122,7 @@ export function HealthCommandCentre({ id, now, role, withheld }: {
       <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 xl:grid-cols-8">
         {kpis.map(m => (
           <div key={m.l} className="flex flex-col justify-between rounded-[4px] border px-2 py-1.5" style={{ borderColor: 'rgba(90,170,255,0.16)', background: 'rgba(8,18,32,0.6)' }}>
-            <div className="truncate text-[7px] font-bold uppercase tracking-[0.12em] text-ink-muted">{m.l}</div>
+            <div className="flex items-center gap-1 text-[7px] font-bold uppercase tracking-[0.12em] text-ink-muted"><span className="truncate">{m.l}</span>{m.tag}</div>
             <div className="mt-0.5 flex items-end justify-between gap-1">
               <span className="flex items-baseline gap-0.5">
                 <span className="font-mono text-[24px] font-bold leading-none tabular-nums" style={{ color: sc(m.t), textShadow: `0 0 12px color-mix(in srgb,${sc(m.t)} 45%,transparent)` }}>{m.v}</span>

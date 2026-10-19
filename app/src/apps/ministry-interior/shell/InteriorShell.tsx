@@ -99,6 +99,7 @@ import { InvestigationsCommand } from '@/apps/police-command/InvestigationsComma
 
 import type { SovereignRole, Capability } from '@/shared/permissions/rbac';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 // Surface registry: maps the normalized surface id to its renderer. Props
 // are uniform ({ id, now }) or prop-less national/infra surfaces.
@@ -219,7 +220,7 @@ export function InteriorShell({ domain, instanceId, now, role, withheld }: {
         <span className="text-[9px] font-semibold uppercase tracking-[0.18em]" style={{ color: INTERIOR_DS.shellAccent }}>
           Interior OS · National Internal Governance
         </span>
-        <span className="text-ink-muted">Public order <span className="font-semibold tabular-nums text-ink">{order}</span></span>
+        <span className="text-ink-muted">Public order <span className="font-semibold tabular-nums text-ink">{order}</span> <IndexTag index="interior-systems.ts · publicOrderIndex" /></span>
         <span className="flex items-center gap-1 text-ink-muted">
           Internal threat
           <span className="font-semibold uppercase" style={{ color: postureColor }}>{o.internalThreatLevel}</span>

@@ -7,6 +7,7 @@ import { climateResilienceBoard } from '@/lib/gov/climate-resilience';
 import { environmentalGovernanceBoard } from '@/lib/gov/environmental-governance';
 import { BiomeFrame, BiomeKpi, BiomeRule, EcoregionRow, BiomeCallout, ENVIRONMENT_DS } from '@/apps/ministry-environment/design-system/environment-ds';
 import { seed, wave } from '@/lib/telemetry';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 export function EcoregionStress({ id, now }: { id: string; now: number }) {
   const board = climateResilienceBoard(now);
@@ -128,7 +129,7 @@ export function AirQualityBoard({ id, now }: { id: string; now: number }) {
     <BiomeFrame archetype="atmosphere" code="AT-AIR-08" title="Air Quality Board"
       subtitle="AQI, anomalies & monitoring">
       <BiomeKpi items={[
-        { label: 'Air quality index', value: board.atmosphere.airQualityIndex, tone: board.atmosphere.airQualityIndex > 120 ? 'alert' : board.atmosphere.airQualityIndex > 80 ? 'warn' : 'ok' },
+        { label: 'Air quality index', value: <>{board.atmosphere.airQualityIndex} <IndexTag index="climate-resilience.ts · airQualityIndex" /></>, tone: board.atmosphere.airQualityIndex > 120 ? 'alert' : board.atmosphere.airQualityIndex > 80 ? 'warn' : 'ok' },
         { label: 'Temperature anomaly', value: `${board.atmosphere.meanTemperatureAnomalyC > 0 ? '+' : ''}${board.atmosphere.meanTemperatureAnomalyC.toFixed(1)}°C`, tone: 'warn' },
         { label: 'Precipitation anomaly', value: `${board.atmosphere.precipitationAnomalyPct > 0 ? '+' : ''}${board.atmosphere.precipitationAnomalyPct}%`, tone: 'info' },
         { label: 'Monitoring online', value: `${board.atmosphere.monitoringOnlinePct}%`, tone: 'ok' },

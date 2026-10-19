@@ -35,13 +35,15 @@ import { DirectivesInbox } from '@/apps/_shared/AppKit';
 import { useRenderNow } from '@/lib/clock/render-now';
 import { useTwinPrimed } from '@/lib/twin/read';
 import { ENGINE_METRIC_IDS } from '@/lib/twin/engine-metrics';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const tc = (t: 'ok' | 'warn' | 'alert') => `rgb(var(--c-${t}))`;
 
-function Stat({ l, v, t }: { l: string; v: string; t?: 'ok' | 'warn' | 'alert' }) {
+/** A headline figure; `tag` marks one that is not observed (an engine index's IndexTag). */
+function Stat({ l, v, t, tag }: { l: string; v: string; t?: 'ok' | 'warn' | 'alert'; tag?: React.ReactNode }) {
   return (
     <div className="rounded-[3px] border border-line bg-surface px-3 py-2">
-      <div className="truncate text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted">{l}</div>
+      <div className="flex items-center gap-1 text-[8px] font-semibold uppercase tracking-[0.16em] text-ink-muted"><span className="truncate">{l}</span>{tag}</div>
       <div className="font-mono text-[15px] tabular-nums" style={{ color: t ? tc(t) : 'rgb(var(--c-ink))' }}>{v}</div>
     </div>
   );
@@ -364,7 +366,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Pending applications" v={R.pendingApplications.toLocaleString()} t={R.pendingApplications > 4000 ? 'warn' : 'ok'} />
           <Stat l="Overdue reviews" v={R.overdueReviews.toLocaleString()} t={R.overdueReviews > 500 ? 'alert' : R.overdueReviews > 200 ? 'warn' : 'ok'} />
           <Stat l="Enforcement actions" v={`${R.enforcementActions}`} t={R.enforcementActions > 30 ? 'alert' : 'warn'} />
-          <Stat l="Compliance index" v={`${R.complianceIndex}`} t={pt} />
+          <Stat l="Compliance index" v={`${R.complianceIndex}`} t={pt} tag={<IndexTag index="health-systems.ts · complianceIndex" />} />
         </div>
         <Panel signal="sample" title="Regulatory tracks" meta="track · pending → processed · overdue · median" bodyClass="!p-0">
           {R.tracks.map(r => (
@@ -518,7 +520,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} />
+          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} tag={<IndexTag index="health-systems.ts · postureIndex" />} />
           <Stat l="Command posture" v={C.posture} t={pt} />
           <Stat l="Critical domains" v={`${C.criticalDomains}`} t={C.criticalDomains ? 'alert' : 'ok'} />
           <Stat l="Open directives" v={`${C.directives.length}`} t={C.directives.some(d => d.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok'} />
@@ -571,7 +573,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Ventilators in use" v={`${h.icu.ventInUse}/${h.icu.ventilators}`} t={h.icu.ventInUse / h.icu.ventilators >= 0.9 ? 'alert' : 'warn'} />
           <Stat l="Theatre utilisation" v={`${h.theatres.utilisationPct}%`} t={h.theatres.utilisationPct >= 92 ? 'warn' : 'ok'} />
           <Stat l="Ambulance response" v={`${h.ambulances.meanResponseMin}m`} t={h.ambulances.meanResponseMin >= 18 ? 'alert' : h.ambulances.meanResponseMin >= 12 ? 'warn' : 'ok'} />
-          <Stat l="Mortality index" v={`${h.mortalityIndex}`} t={h.mortalityIndex >= 16 ? 'alert' : h.mortalityIndex >= 11 ? 'warn' : 'ok'} />
+          <Stat l="Mortality index" v={`${h.mortalityIndex}`} t={h.mortalityIndex >= 16 ? 'alert' : h.mortalityIndex >= 11 ? 'warn' : 'ok'} tag={<IndexTag index="health-systems.ts · mortalityIndex" entityId={`institution:${id}`} />} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
           <Panel signal="sample" title="Bed & ICU management" meta="capacity · load balancing" bodyClass="!p-2">
@@ -604,7 +606,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Panel signal="sample" title="Staffing & mortality intelligence" meta="clinical analytics" bodyClass="!p-2">
             <div className="mb-2"><div className="flex justify-between text-[10px]"><span className="text-ink-soft">Staffing level</span><span className="font-mono tabular-nums" style={{ color: tc(h.staffingPct >= 80 ? 'ok' : 'warn') }}>{h.staffingPct}%</span></div>
               <div className="mt-0.5 h-1.5 overflow-hidden rounded-full bg-surface-2"><span className="block h-full" style={{ width: `${h.staffingPct}%`, backgroundColor: tc(h.staffingPct >= 80 ? 'ok' : 'warn') }} /></div></div>
-            <div className="text-[10px] text-ink-soft">Mortality index <span className="font-mono" style={{ color: tc(h.mortalityIndex >= 16 ? 'alert' : 'warn') }}>{h.mortalityIndex}</span> / 1000 admissions</div>
+            <div className="text-[10px] text-ink-soft">Mortality index <span className="font-mono" style={{ color: tc(h.mortalityIndex >= 16 ? 'alert' : 'warn') }}>{h.mortalityIndex}</span> / 1000 admissions <IndexTag index="health-systems.ts · mortalityIndex" entityId={`institution:${id}`} /></div>
             <div className="mt-2 h-7 overflow-hidden opacity-80"><Spark pts={waveSeries(`hosp:mort:${id}`, ts, 24, 20, 70)} tone={h.mortalityIndex >= 16 ? 'alert' : 'warn'} /></div>
           </Panel>
         </div>
@@ -708,7 +710,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} />
+          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} tag={<IndexTag index="treasury-systems.ts · postureIndex" />} />
           <Stat l="Command posture" v={C.posture} t={pt} />
           <Stat l="Critical domains" v={`${C.criticalDomains}`} t={C.criticalDomains ? 'alert' : 'ok'} />
           <Stat l="Open directives" v={`${C.directives.length}`} t={C.directives.some(d => d.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok'} />
@@ -904,7 +906,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} />
+          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} tag={<IndexTag index="education-systems.ts · postureIndex" />} />
           <Stat l="Command posture" v={C.posture} t={pt} />
           <Stat l="Critical domains" v={`${C.criticalDomains}`} t={C.criticalDomains ? 'alert' : 'ok'} />
           <Stat l="Open directives" v={`${C.directives.length}`} t={C.directives.some(d => d.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok'} />
@@ -956,7 +958,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Institutions" v={`${H.institutions}`} t="ok" />
           <Stat l="Enrolment" v={`${H.enrolmentK}k`} t="ok" />
           <Stat l="Graduation rate" v={`${H.graduationRatePct}%`} t={H.graduationRatePct >= 70 ? 'ok' : 'warn'} />
-          <Stat l="Research output" v={`${H.researchOutputIndex}`} t={H.researchOutputIndex >= 60 ? 'ok' : 'warn'} />
+          <Stat l="Research output" v={`${H.researchOutputIndex}`} t={H.researchOutputIndex >= 60 ? 'ok' : 'warn'} tag={<IndexTag index="education-systems.ts · researchOutputIndex" />} />
           <Stat l="Funding gap" v={`${H.fundingGapPct}%`} t={H.fundingGapPct >= 25 ? 'alert' : H.fundingGapPct >= 14 ? 'warn' : 'ok'} />
           <Stat l="Posture" v={H.posture} t={pt} />
         </div>
@@ -1132,7 +1134,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} />
+          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} tag={<IndexTag index="transport-systems.ts · postureIndex" />} />
           <Stat l="Command posture" v={C.posture} t={pt} />
           <Stat l="Critical domains" v={`${C.criticalDomains}`} t={C.criticalDomains ? 'alert' : 'ok'} />
           <Stat l="Open directives" v={`${C.directives.length}`} t={C.directives.some(d => d.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok'} />
@@ -1186,7 +1188,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="Delays" v={`${md.delaysMin}m`} t={md.delaysMin >= 50 ? 'alert' : md.delaysMin >= 25 ? 'warn' : 'ok'} />
           <Stat l="Incidents" v={`${md.incidents}`} t={md.incidents >= 6 ? 'alert' : md.incidents ? 'warn' : 'ok'} />
           <Stat l="Network availability" v={`${o.networkAvailabilityPct}%`} t={o.networkAvailabilityPct >= 85 ? 'ok' : 'warn'} />
-          <Stat l="Safety index" v={`${o.safetyIndex}`} t={o.safetyIndex >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Safety index" v={`${o.safetyIndex}`} t={o.safetyIndex >= 80 ? 'ok' : 'warn'} tag={<IndexTag index="transport-systems.ts · safetyIndex" />} />
           <Stat l="Fleet available" v={`${o.fleet.available}/${o.fleet.vehicles}`} t={o.fleet.available < o.fleet.vehicles * 0.6 ? 'alert' : 'ok'} />
         </div>
         <Panel signal="sample" title={`${modeName} corridor flow`} meta="load · throughput" bodyClass="!p-0">
@@ -1226,7 +1228,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
           <Stat l="Network availability" v={`${o.networkAvailabilityPct}%`} t={o.networkAvailabilityPct >= 85 ? 'ok' : o.networkAvailabilityPct >= 68 ? 'warn' : 'alert'} />
-          <Stat l="Safety index" v={`${o.safetyIndex}`} t={o.safetyIndex >= 80 ? 'ok' : 'warn'} />
+          <Stat l="Safety index" v={`${o.safetyIndex}`} t={o.safetyIndex >= 80 ? 'ok' : 'warn'} tag={<IndexTag index="transport-systems.ts · safetyIndex" />} />
           <Stat l="Fleet available" v={`${o.fleet.available}/${o.fleet.vehicles}`} t={o.fleet.available < o.fleet.vehicles * 0.6 ? 'alert' : 'ok'} />
           <Stat l="Maint. backlog" v={`${o.fleet.maintenanceBacklog}`} t={o.fleet.maintenanceBacklog > 200 ? 'alert' : 'warn'} />
           <Stat l="Vehicles registered" v={`${o.registry.vehiclesM}M`} t="ok" />
@@ -1269,7 +1271,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} />
+          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} tag={<IndexTag index="energy-systems.ts · postureIndex" />} />
           <Stat l="Command posture" v={C.posture} t={pt} />
           <Stat l="Critical domains" v={`${C.criticalDomains}`} t={C.criticalDomains ? 'alert' : 'ok'} />
           <Stat l="Open directives" v={`${C.directives.length}`} t={C.directives.some(d => d.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok'} />
@@ -1424,7 +1426,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} />
+          <Stat l="Posture index" v={`${C.postureIndex}`} t={pt} tag={<IndexTag index="archetype-operations.ts · postureIndex" />} />
           <Stat l="Command posture" v={C.posture} t={pt} />
           <Stat l="Critical domains" v={`${C.criticalDomains}`} t={C.criticalDomains ? 'alert' : 'ok'} />
           <Stat l="Open directives" v={`${C.directives.length}`} t={C.directives.some(d => d.priority === 'critical') ? 'alert' : C.directives.length ? 'warn' : 'ok'} />
@@ -1491,7 +1493,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     ] : group === 'coordination' ? [
       { l: 'Cells active', v: `${CO.cellsActive}`, t: 'ok' as const },
       { l: 'Joint ops active', v: `${CO.jointOpsActive}`, t: (CO.jointOpsActive > 8 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
-      { l: 'Public-order index', v: `${CO.publicOrderIndex}`, t: (CO.publicOrderIndex >= 70 ? 'ok' : CO.publicOrderIndex >= 55 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { tag: <IndexTag index="interior-systems.ts · publicOrderIndex" />, l: 'Public-order index', v: `${CO.publicOrderIndex}`, t: (CO.publicOrderIndex >= 70 ? 'ok' : CO.publicOrderIndex >= 55 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
       { l: 'Threat level', v: o.internalThreatLevel, t: (o.internalThreatLevel === 'high' ? 'alert' : o.internalThreatLevel === 'elevated' ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
     ] : [
       { l: 'Enrolled', v: `${ID.enrolledM}M`, t: 'ok' as const },
@@ -1503,7 +1505,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} tag={s.tag} />)}
         </div>
         <RuntimeQueue scope={`${id}:${group}`} kind={kind} title={`${title} runtime — execute the workflow`} by="Interior Officer" n={14} />
       </div>
@@ -1521,7 +1523,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           <Stat l="ID issuance backlog" v={o.identity.issuanceBacklog.toLocaleString()} t={o.identity.issuanceBacklog > 5000 ? 'alert' : 'warn'} />
           <Stat l="Border posts open" v={`${o.border.open}/${o.border.posts}`} t={o.border.open < o.border.posts ? 'warn' : 'ok'} />
           <Stat l="Flagged entries" v={`${o.border.flaggedEntries}`} t={o.border.flaggedEntries > 80 ? 'alert' : 'warn'} />
-          <Stat l="Public order" v={`${o.coordination.publicOrderIndex}`} t={lt} />
+          <Stat l="Public order" v={`${o.coordination.publicOrderIndex}`} t={lt} tag={<IndexTag index="interior-systems.ts · publicOrderIndex" />} />
           <Stat l="Threat level" v={o.internalThreatLevel} t={lt} />
         </div>
         <div className="grid gap-2 xl:grid-cols-3">
@@ -1559,25 +1561,25 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
           : group === 'market' ? 'Commodity intelligence & price stability'
             : 'Farmer-facing services';
     const stats = group === 'crop' ? [
-      { l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : o.foodSecurityIndex >= 55 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { tag: <IndexTag index="agriculture-systems.ts · foodSecurityIndex" />, l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : o.foodSecurityIndex >= 55 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
       { l: 'Pest alerts', v: `${o.pestAlerts}`, t: (o.pestAlerts > 8 ? 'alert' : o.pestAlerts ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
       { l: 'Reserve cover', v: `${o.strategicReserveDays}d`, t: (o.strategicReserveDays < 30 ? 'alert' : o.strategicReserveDays < 60 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
     ] : group === 'livestock' ? [
       { l: 'Livestock health', v: `${o.livestockHealthPct}%`, t: (o.livestockHealthPct >= 85 ? 'ok' : o.livestockHealthPct >= 70 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
       { l: 'Pest/disease alerts', v: `${o.pestAlerts}`, t: (o.pestAlerts > 8 ? 'alert' : 'warn') as 'ok' | 'warn' | 'alert' },
-      { l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { tag: <IndexTag index="agriculture-systems.ts · foodSecurityIndex" />, l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
     ] : group === 'irrigation' ? [
       { l: 'Irrigation coverage', v: `${o.irrigationCoveragePct}%`, t: (o.irrigationCoveragePct >= 60 ? 'ok' : o.irrigationCoveragePct >= 40 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
-      { l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { tag: <IndexTag index="agriculture-systems.ts · foodSecurityIndex" />, l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
       { l: 'Reserve cover', v: `${o.strategicReserveDays}d`, t: (o.strategicReserveDays < 30 ? 'alert' : 'ok') as 'ok' | 'warn' | 'alert' },
     ] : group === 'market' ? [
       { l: 'Strategic reserve', v: `${o.strategicReserveDays}d`, t: (o.strategicReserveDays < 30 ? 'alert' : o.strategicReserveDays < 60 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
-      { l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { tag: <IndexTag index="agriculture-systems.ts · foodSecurityIndex" />, l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
       { l: 'Regions tracked', v: `${o.byRegion.length}`, t: 'ok' as const },
     ] : [
       { l: 'Farmers registered', v: `${o.farmersRegisteredM}M`, t: 'ok' as const },
       { l: 'Subsidy disbursement', v: `${o.subsidyDisbursementPct}%`, t: (o.subsidyDisbursementPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
-      { l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { tag: <IndexTag index="agriculture-systems.ts · foodSecurityIndex" />, l: 'Food-security index', v: `${o.foodSecurityIndex}`, t: (o.foodSecurityIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
     ];
     const rows = group === 'crop' ? o.crops.map(c => ({ label: c.crop, pct: c.yieldIdx, tone: c.tone, tail: `${c.yieldIdx}` }))
       : group === 'market' ? o.byRegion.map(r => ({ label: r.region, pct: r.productionIdx, tone: r.tone, tail: `${r.productionIdx}` }))
@@ -1587,7 +1589,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} tag={s.tag} />)}
         </div>
         <Panel signal="sample" title={title} meta={group === 'crop' ? 'crop · yield index' : 'region · production index'} bodyClass="!p-0">
           {rows.map(r => (
@@ -1609,7 +1611,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Food security" v={`${o.foodSecurityIndex}`} t={o.foodSecurityIndex >= 75 ? 'ok' : o.foodSecurityIndex >= 55 ? 'warn' : 'alert'} />
+          <Stat l="Food security" v={`${o.foodSecurityIndex}`} t={o.foodSecurityIndex >= 75 ? 'ok' : o.foodSecurityIndex >= 55 ? 'warn' : 'alert'} tag={<IndexTag index="agriculture-systems.ts · foodSecurityIndex" />} />
           <Stat l="Strategic reserve" v={`${o.strategicReserveDays}d`} t={o.strategicReserveDays >= 45 ? 'ok' : o.strategicReserveDays >= 21 ? 'warn' : 'alert'} />
           <Stat l="Livestock health" v={`${o.livestockHealthPct}%`} t={o.livestockHealthPct >= 85 ? 'ok' : 'warn'} />
           <Stat l="Irrigation coverage" v={`${o.irrigationCoveragePct}%`} t={o.irrigationCoveragePct >= 60 ? 'ok' : 'warn'} />
@@ -1657,7 +1659,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       { l: 'Cases coordinated', v: CL.casesCoordinated.toLocaleString(), t: 'ok' as const },
       { l: 'Transfers pending', v: CL.transfersPending.toLocaleString(), t: (CL.transfersPending > 500 ? 'alert' : CL.transfersPending > 200 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
       { l: 'SLA met', v: `${CL.slaMetPct}%`, t: (CL.slaMetPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
-      { l: 'Access-to-justice', v: `${o.accessToJusticeIndex}`, t: (o.accessToJusticeIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { tag: <IndexTag index="justice-systems.ts · accessToJusticeIndex" />, l: 'Access-to-justice', v: `${o.accessToJusticeIndex}`, t: (o.accessToJusticeIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
     ] : group === 'legalaid' ? [
       { l: 'Aid centres', v: `${LA.centres}`, t: 'ok' as const },
       { l: 'Open matters', v: LA.openMatters.toLocaleString(), t: 'warn' as const },
@@ -1674,7 +1676,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       { l: 'Integrity', v: `${RG.integrityPct}%`, t: (RG.integrityPct >= 98 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
       { l: 'Backlog', v: RG.backlog.toLocaleString(), t: (RG.backlog > 2500 ? 'alert' : RG.backlog > 1000 ? 'warn' : 'ok') as 'ok' | 'warn' | 'alert' },
     ] : [
-      { l: 'Access-to-justice', v: `${o.accessToJusticeIndex}`, t: (o.accessToJusticeIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
+      { tag: <IndexTag index="justice-systems.ts · accessToJusticeIndex" />, l: 'Access-to-justice', v: `${o.accessToJusticeIndex}`, t: (o.accessToJusticeIndex >= 70 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
       { l: 'Represented', v: `${LA.representedPct}%`, t: (LA.representedPct >= 75 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
       { l: 'Registry integrity', v: `${RG.integrityPct}%`, t: (RG.integrityPct >= 98 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
       { l: 'Court SLA', v: `${CL.slaMetPct}%`, t: (CL.slaMetPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
@@ -1684,7 +1686,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} tag={s.tag} />)}
         </div>
         <RuntimeQueue scope={`${id}:${group}`} kind={kind} title={`${title} runtime — execute the workflow`} by="Justice Officer" n={14} />
       </div>
@@ -1697,7 +1699,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Access to justice" v={`${o.accessToJusticeIndex}`} t={o.accessToJusticeIndex >= 75 ? 'ok' : o.accessToJusticeIndex >= 55 ? 'warn' : 'alert'} />
+          <Stat l="Access to justice" v={`${o.accessToJusticeIndex}`} t={o.accessToJusticeIndex >= 75 ? 'ok' : o.accessToJusticeIndex >= 55 ? 'warn' : 'alert'} tag={<IndexTag index="justice-systems.ts · accessToJusticeIndex" />} />
           <Stat l="Legal-aid represented" v={`${o.legalAid.representedPct}%`} t={o.legalAid.representedPct >= 75 ? 'ok' : 'warn'} />
           <Stat l="Prison occupancy" v={`${o.corrections.occupancyPct}%`} t={o.corrections.occupancyPct >= 110 ? 'alert' : o.corrections.occupancyPct >= 95 ? 'warn' : 'ok'} />
           <Stat l="Registry integrity" v={`${o.registries.integrityPct}%`} t={o.registries.integrityPct >= 98 ? 'ok' : 'warn'} />
@@ -1748,7 +1750,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
     const monPct = Math.round((o.monitoringOnline / o.monitoringTotal) * 100);
     const stats = group === 'monitoring' ? [
       { l: 'Sensors online', v: `${o.monitoringOnline}/${o.monitoringTotal}`, t: (monPct >= 92 ? 'ok' : monPct >= 80 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
-      { l: 'Air-quality index', v: `${o.airQualityIndex}`, t: (o.airQualityIndex <= 80 ? 'ok' : o.airQualityIndex <= 120 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { tag: <IndexTag index="environment-systems.ts · airQualityIndex" />, l: 'Air-quality index', v: `${o.airQualityIndex}`, t: (o.airQualityIndex <= 80 ? 'ok' : o.airQualityIndex <= 120 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
       { l: 'Water quality', v: `${o.waterQualityPct}%`, t: (o.waterQualityPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
     ] : group === 'protected' ? [
       { l: 'Area integrity', v: `${o.protectedAreaIntegrityPct}%`, t: (o.protectedAreaIntegrityPct >= 80 ? 'ok' : o.protectedAreaIntegrityPct >= 65 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
@@ -1760,7 +1762,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       { l: 'Emissions vs target', v: `${o.emissionsVsTargetPct}%`, t: (o.emissionsVsTargetPct <= 100 ? 'ok' : o.emissionsVsTargetPct <= 115 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
       { l: 'Protected integrity', v: `${o.protectedAreaIntegrityPct}%`, t: (o.protectedAreaIntegrityPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
     ] : [
-      { l: 'Air-quality index', v: `${o.airQualityIndex}`, t: (o.airQualityIndex <= 80 ? 'ok' : o.airQualityIndex <= 120 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
+      { tag: <IndexTag index="environment-systems.ts · airQualityIndex" />, l: 'Air-quality index', v: `${o.airQualityIndex}`, t: (o.airQualityIndex <= 80 ? 'ok' : o.airQualityIndex <= 120 ? 'warn' : 'alert') as 'ok' | 'warn' | 'alert' },
       { l: 'Water quality', v: `${o.waterQualityPct}%`, t: (o.waterQualityPct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
       { l: 'Compliance', v: `${o.compliancePct}%`, t: (o.compliancePct >= 80 ? 'ok' : 'warn') as 'ok' | 'warn' | 'alert' },
     ];
@@ -1769,7 +1771,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} />)}
+          {stats.map(s => <Stat key={s.l} l={s.l} v={s.v} t={s.t} tag={s.tag} />)}
         </div>
         <Panel signal="sample" title={`${title} — regional hazard grid`} meta="region · level · kind" bodyClass="!p-0">
           {o.hazards.map(h => {
@@ -1794,7 +1796,7 @@ export function SubsystemConsole({ id, group }: { id: string; group: string }) {
       <div className="space-y-2">
         {header}
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
-          <Stat l="Air quality index" v={`${o.airQualityIndex}`} t={o.airQualityIndex >= 150 ? 'alert' : o.airQualityIndex >= 100 ? 'warn' : 'ok'} />
+          <Stat l="Air quality index" v={`${o.airQualityIndex}`} t={o.airQualityIndex >= 150 ? 'alert' : o.airQualityIndex >= 100 ? 'warn' : 'ok'} tag={<IndexTag index="environment-systems.ts · airQualityIndex" />} />
           <Stat l="Water quality" v={`${o.waterQualityPct}%`} t={o.waterQualityPct >= 80 ? 'ok' : 'warn'} />
           <Stat l="Monitoring online" v={`${o.monitoringOnline}/${o.monitoringTotal}`} t={o.monitoringOnline < o.monitoringTotal * 0.85 ? 'warn' : 'ok'} />
           <Stat l="Emissions vs target" v={`${o.emissionsVsTargetPct}%`} t={o.emissionsVsTargetPct > 110 ? 'alert' : o.emissionsVsTargetPct > 100 ? 'warn' : 'ok'} />

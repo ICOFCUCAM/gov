@@ -6,6 +6,7 @@
 
 import * as React from 'react';
 import { economyBoard } from '@/lib/gov/institutional-economy';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 export function PressurePropagation({ id, now }: { id: string; now: number }) {
   void id;
@@ -45,7 +46,7 @@ export function PressurePropagation({ id, now }: { id: string; now: number }) {
               <span className="w-16 shrink-0 text-right tabular-nums text-ink-muted">strain {r.strainPct}</span>
               <span className="w-16 shrink-0 text-right tabular-nums text-ink-muted">fat {r.fatiguePct}</span>
               <span className="w-20 shrink-0 text-right tabular-nums" style={{ color: r.suspicious ? 'rgb(var(--c-alert))' : 'rgb(var(--c-ink-muted))' }}>{r.suspicious} susp</span>
-              <span className="w-24 shrink-0 text-right tabular-nums" style={{ color: r.resilienceScore >= 60 ? 'rgb(var(--c-ok))' : r.resilienceScore >= 35 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))' }}>resil {r.resilienceScore}</span>
+              <span className="w-24 shrink-0 text-right tabular-nums" style={{ color: r.resilienceScore >= 60 ? 'rgb(var(--c-ok))' : r.resilienceScore >= 35 ? 'rgb(var(--c-warn))' : 'rgb(var(--c-alert))' }}>resil {r.resilienceScore} <IndexTag index="institutional-economy.ts · resilienceScore" /></span>
             </div>
           ))}
         </div>

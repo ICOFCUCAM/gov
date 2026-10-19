@@ -7,6 +7,7 @@
 
 import * as React from 'react';
 import { climateResilienceBoard, type AtmosphericEvent, type RiverBasin } from '@/lib/gov/climate-resilience';
+import { IndexTag } from '@/components/ui/IndexTag';
 
 const FOREST_DEEP = '#152721';
 const PANEL = '#1a221f';
@@ -97,7 +98,7 @@ export function AtmosphericHydrologicalSystems({ id, now }: { id: string; now: n
                 <div className="mt-1 tabular-nums text-[16px] not-italic" style={{ color: GLACIER }}>{a.precipitationAnomalyPct > 0 ? '+' : ''}{a.precipitationAnomalyPct}%</div>
               </div>
               <div>
-                <div>Air quality</div>
+                <div>Air quality <IndexTag index="climate-resilience.ts · airQualityIndex" /></div>
                 <div className="mt-1 tabular-nums text-[16px] not-italic" style={{ color: a.airQualityIndex > 100 ? ALERT : a.airQualityIndex > 60 ? AMBER : CANOPY }}>{a.airQualityIndex}</div>
               </div>
             </div>
