@@ -17,6 +17,12 @@ export interface TileFeature { key: string; lng: number; lat: number; props: Rec
 export type TileSource = { kind: 'xyz'; url: string } | { kind: 'pmtiles'; url: string };
 export interface TileAddress { z: number; x: number; y: number }
 
+/** Above this many published sites the console's register map reads them as vector tiles (the theatre from 2,000). */
+export const TILE_REGISTER_SITES = 20_000;
+/** The platform's own sources: the live, viewer-aware tile route and the public PMTiles archive. */
+export const FACILITY_TILES: TileSource = { kind: 'xyz', url: '/api/twin/tiles/facilities/{z}/{x}/{y}.mvt' };
+export const FACILITY_ARCHIVE: TileSource = { kind: 'pmtiles', url: '/api/twin/tiles/facilities.pmtiles' };
+
 /** The most points the platform puts in one tile (lib/twin/tiles.ts MAX_TILE_POINTS). */
 export const TILE_POINT_LIMIT = 50_000;
 const MAX_LAT = 85.0511287798066;
@@ -186,6 +192,8 @@ export interface PointTileSource {
   maxZoom?: number;
   /** Change it to fetch the tiles again (e.g. every half minute). */
   version?: string;
+  /** What the points are, e.g. "Registered sites" (the map's `pointsLabel` otherwise). */
+  label?: string;
   /** A feature as a map point, or null to leave it out (a page's filters). */
   toPoint: (f: TileFeature) => { key: string; label: string; tone: MapTone; glyph?: string; href?: string; generalised?: boolean } | null;
 }

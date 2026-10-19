@@ -145,6 +145,21 @@ describe('sizes, colours and glyphs', () => {
     expect(pointSize('tile', 1, 500).frame).toBeGreaterThan(18);
   });
 
+  it('follows the spacing between points when it knows the land they spread over', () => {
+    // 50,000 sites over ~150,000 px² of land: specks, no halo, no glyph, no glow
+    const dense = pointSize('dot', 1, 50_000, 150_000);
+    expect(dense.body).toBeGreaterThanOrEqual(2.5); expect(dense.body).toBeLessThan(3);
+    expect(dense.halo).toBe(false);
+    const tile = pointSize('tile', 1, 50_000, 150_000);
+    expect(tile).toMatchObject({ glyph: false, glow: false });
+    expect(tile.body).toBeLessThan(4);
+    // zoomed in 8 times the same layer spreads out: full theatre tiles again
+    expect(pointSize('tile', 8, 50_000, 150_000)).toMatchObject({ glyph: true, glow: true });
+    expect(pointSize('tile', 12, 50_000, 150_000).body).toBe(18);
+    // a sparse layer keeps the full look
+    expect(pointSize('dot', 1, 25_000, 4_000_000)).toMatchObject({ body: 7, halo: true });
+  });
+
   it('reads the token colours and theme triplets', () => {
     expect(parseColour(STATUS.ok)).toEqual([0x34 / 255, 0xd3 / 255, 0x9c / 255, 1]);
     expect(parseColour('7 12 20')).toEqual([7 / 255, 12 / 255, 20 / 255, 1]);

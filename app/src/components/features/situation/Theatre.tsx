@@ -86,6 +86,8 @@ export function postureTone(v: number): 'ok' | 'neutral' | 'warn' | 'alert' {
   return v >= 78 ? 'alert' : v >= 58 ? 'warn' : v >= 40 ? 'neutral' : 'ok';
 }
 
+/** Above this many published sites the theatre draws them from vector tiles on the GPU (NationMap `pointTiles`) instead of one SVG tile each. */
+export const THEATRE_SVG_SITES = 2000;
 /** A published site of the national facility register, as the theatre draws it. */
 export interface TheatreSite { id: string; name: string; category: string; glyph: string; lng: number; lat: number; certified: boolean; generalised?: boolean }
 /** Which register category stands for each kind of sample asset: once the nation registers sites of it, that kind's samples go. */
@@ -171,13 +173,15 @@ function PlacedIncidents({ ctx, incidents, nodeAt, reserveEnd, reduced }: {
   );
 }
 
-export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers, tactical, heat, flowDur, reserveEnd = 0, ts = 0, sites = [], links = [], seats = {} }: {
+export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers, tactical, heat, flowDur, reserveEnd = 0, ts = 0, sites = [], registeredCategories = [], links = [], seats = {} }: {
   /** Recorded exchanges between institutions' registered seats (agreed and live). */
   links?: TheatreLink[];
   /** Registered seats of institutions, by institution id: their command node is tethered to it. */
   seats?: Record<string, { lng: number; lat: number }>;
   /** Published sites of the national facility register (drawn where they are, linked to their record). */
   sites?: TheatreSite[];
+  /** Kinds of site the register holds when its sites are drawn by the map's tile layer instead (a national-scale register): their samples go too. */
+  registeredCategories?: string[];
   ctx: OverlayContext;
   /** Width kept free at the end of the frame for panels laid over the map. */
   reserveEnd?: number;
@@ -204,7 +208,7 @@ export function TheatreLayersSvg({ ctx, regions, nodes, edges, incidents, layers
   const flagged = anchors.filter(a => a.r && a.r.posture !== 'stable');
   const top = [...anchors].filter(a => a.r).sort((a, b) => b.r!.composite - a.r!.composite).slice(0, Math.min(4, anchors.length));
   // Asset tiles, the most important first, capped so the theatre stays readable at any number of regions.
-  const registered = new Set(sites.map(s => s.category));
+  const registered = new Set([...sites.map(s => s.category), ...registeredCategories]);
   const placed = layers.infra ? sites.flatMap(s => { const q = ctx.project(s.lng, s.lat); return q ? [{ ...s, x: q[0], y: q[1] }] : []; }) : [];
   // Names of registered sites only where they do not run into another (certified first); the rest on hover.
   const named = new Set<string>();

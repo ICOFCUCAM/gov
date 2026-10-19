@@ -49,6 +49,8 @@ uniform vec4 u_ringColour;
 uniform vec4 u_halo;
 uniform vec4 u_surface;
 uniform float u_useGlyph;
+uniform float u_haloOn;
+uniform float u_glowOn;
 uniform sampler2D u_atlas;
 uniform vec2 u_atlasGrid;
 varying vec4 v_colour;
@@ -74,7 +76,8 @@ void main() {
     if (r > R + aa) discard;
     if (u_pickPass > 0.5) { gl_FragColor = v_pick; return; }
     float outer = 1.0 - smoothstep(R - aa, R, r);
-    float inner = 1.0 - smoothstep(R - 1.0 - aa, R - 1.0, r);
+    // a dot too small for its halo is all colour
+    float inner = u_haloOn > 0.5 ? 1.0 - smoothstep(R - 1.0 - aa, R - 1.0, r) : outer;
     vec4 fill = vec4(v_colour.rgb, 1.0) * 0.9 * inner;
     vec4 halo = vec4(u_halo.rgb, 1.0) * (outer - inner);
     gl_FragColor = fill + halo;
@@ -84,8 +87,15 @@ void main() {
   float d = box(px, vec2(h), min(3.0, h * 0.34));
   if (u_pickPass > 0.5) { if (d > 1.0) discard; gl_FragColor = v_pick; return; }
   vec4 col = vec4(0.0);
+  // a tile too small for a glyph: a speck in its status colour
+  if (h < 4.0) {
+    float a = 1.0 - smoothstep(-aa * 0.5, aa * 0.5, d);
+    if (a <= 0.0) discard;
+    gl_FragColor = vec4(v_colour.rgb, 1.0) * 0.85 * a;
+    return;
+  }
   // the glow (the SVG theatre's drop-shadow)
-  if (d > 0.0) {
+  if (d > 0.0 && u_glowOn > 0.5) {
     float g = exp(-d / 2.6) * 0.55;
     col = vec4(v_colour.rgb, 1.0) * g;
   }
@@ -180,6 +190,9 @@ export interface DrawState {
   body: number;
   frame: number;
   glyph: boolean;
+  /** Dots: draw the halo; tiles: draw the glow. */
+  halo: boolean;
+  glow: boolean;
   colours: LayerColours;
   /** Draw index of the hovered and the selected point (-1: none). */
   hover: number;
@@ -217,7 +230,7 @@ export class GLMapLayer {
     const gl = this.gl;
     this.pointProg = program(gl, POINT_VS, POINT_FS, ['a_pos', 'a_meta', 'a_pick']);
     this.polyProg = program(gl, POLY_VS, POLY_FS, ['a_pos', 'a_fill', 'a_pick']);
-    for (const n of ['u_matrix', 'u_frame', 'u_body', 'u_style', 'u_pickPass', 'u_ring', 'u_ringColour', 'u_halo', 'u_surface', 'u_useGlyph', 'u_atlas', 'u_atlasGrid', 'u_tone0', 'u_tone1', 'u_tone2', 'u_tone3']) this.loc[n] = gl.getUniformLocation(this.pointProg, n);
+    for (const n of ['u_matrix', 'u_frame', 'u_body', 'u_style', 'u_pickPass', 'u_ring', 'u_ringColour', 'u_halo', 'u_surface', 'u_useGlyph', 'u_haloOn', 'u_glowOn', 'u_atlas', 'u_atlasGrid', 'u_tone0', 'u_tone1', 'u_tone2', 'u_tone3']) this.loc[n] = gl.getUniformLocation(this.pointProg, n);
     for (const n of ['u_matrix', 'u_pickPass']) this.polyLoc[n] = gl.getUniformLocation(this.polyProg, n);
     this.pointBuf = gl.createBuffer()!;
     this.polyBuf = gl.createBuffer()!;
@@ -299,6 +312,8 @@ export class GLMapLayer {
     gl.uniform1f(L.u_pickPass!, pick ? 1 : 0);
     gl.uniform1f(L.u_ring!, 0);
     gl.uniform1f(L.u_useGlyph!, s.glyph ? 1 : 0);
+    gl.uniform1f(L.u_haloOn!, s.halo ? 1 : 0);
+    gl.uniform1f(L.u_glowOn!, s.glow ? 1 : 0);
     s.colours.tones.forEach((c, i) => gl.uniform4fv(L[`u_tone${i}`]!, c));
     gl.uniform4fv(L.u_halo!, s.colours.halo);
     gl.uniform4fv(L.u_surface!, s.colours.surface);

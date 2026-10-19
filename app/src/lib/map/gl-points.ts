@@ -198,16 +198,29 @@ export type PointStyle = 'dot' | 'tile';
  * theatre when the layer is sparse or zoomed in; a small 7 px tile without a
  * glyph when thousands crowd the whole-nation view. `body` is the tile's
  * side or the dot's diameter; `frame` adds room for the theatre's glow.
+ *
+ * With `areaPx` (the land the points spread over, in map pixels) the size
+ * also follows the spacing between points, so a national register shows its
+ * distribution with the map still visible underneath instead of a solid
+ * carpet: never larger than the spacing (zoomed), never under 2.5 px; dots too
+ * small for a halo lose it, tiles too small for a glyph become plain specks
+ * in their status colour and lose the glow.
  */
-export function pointSize(style: PointStyle, zoomZ: number, count: number): { body: number; frame: number; glyph: boolean } {
+export function pointSize(style: PointStyle, zoomZ: number, count: number, areaPx?: number): { body: number; frame: number; glyph: boolean; halo: boolean; glow: boolean } {
   const grow = Math.min(3, Math.sqrt(Math.max(1, zoomZ)));
+  const spacing = areaPx && count ? Math.sqrt(areaPx / count) * Math.max(1, zoomZ) : Infinity;
   if (style === 'dot') {
-    const body = (count > 50_000 ? 5 : 7) * grow;
-    return { body, frame: body, glyph: false };
+    const base = (count > 50_000 && !areaPx ? 5 : 7) * grow;
+    const body = Math.max(2.5, Math.min(base, spacing * 1.1));
+    return { body, frame: body, glyph: false, halo: body >= 5, glow: false };
+  }
+  if (areaPx) {
+    const body = Math.max(2.5, Math.min(18, spacing * 1.1));
+    return { body, frame: body + (body >= 8 ? 10 : 1.5), glyph: body >= 12, halo: false, glow: body >= 8 };
   }
   const dense = count > 2000 && zoomZ < 4;
   const body = dense ? Math.min(18, 7 * grow) : 18;
-  return { body, frame: body + (dense ? 4 : 10), glyph: body >= 12 };
+  return { body, frame: body + (dense ? 4 : 10), glyph: body >= 12, halo: false, glow: true };
 }
 
 // ── Glyph atlas ───────────────────────────────────────────────────────────

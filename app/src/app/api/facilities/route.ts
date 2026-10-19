@@ -3,7 +3,9 @@
 // each as the viewer may see it — restricted sites are generalised for anyone
 // outside the owning institution and the whole government — with counts, the
 // nation's policy and the vocabulary (categories, capture methods, the bodies
-// that may decide sensitivity). Sites are added through the owning
+// that may decide sensitivity). ?sites=none answers the counts, policy and
+// vocabulary without the sites (a national-scale map then reads them as
+// vector tiles, /api/twin/tiles/facilities). Sites are added through the owning
 // institution: /api/org/ministries/{id}/facilities.
 import { NextRequest, NextResponse } from 'next/server';
 import { CAPTURE_METHODS, FACILITY_CATEGORIES, SENSITIVITY_AUTHORITIES, STATUSES, facilityCounts, facilityPolicy, listFacilities, mappingAgency, sensitivityRule } from '@/lib/data/facilities';
@@ -15,7 +17,7 @@ export async function GET(req: NextRequest) {
   const q = req.nextUrl.searchParams;
   const o = await currentOfficial();
   const state = q.get('state');
-  const sites = listFacilities({
+  const sites = q.get('sites') === 'none' ? [] : listFacilities({
     ministryId: q.get('ministry') ?? undefined, category: q.get('category') ?? undefined, region: q.get('region') ?? undefined,
     state: state === 'proposed' || state === 'published' || state === 'all' ? state : 'published',
   }, o ? { institution: o.institution, signedIn: true } : { signedIn: false });

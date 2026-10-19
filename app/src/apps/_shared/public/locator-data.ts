@@ -111,6 +111,7 @@ function mapFor(points: { lng: number; lat: number }[]): { map: LocatorMap; proj
       ...(cp ? { capital: { x: cp[0], y: cp[1], name: cap!.name } } : {}),
       country: (world?.properties?.name as string | undefined) ?? iso3 ?? '',
       credit: shapes ? 'Boundaries: Natural Earth and official boundary data' : 'Outline: Natural Earth',
+      mercator: { k: Math.round(projection.scale() * 1000) / 1000, tx: Math.round(projection.translate()[0] * 1000) / 1000, ty: Math.round(projection.translate()[1] * 1000) / 1000 },
     },
     project,
   };
@@ -137,5 +138,5 @@ export function siteLocations(siteId: string, tabs: string[] = []): SiteLocation
       lat: f.location.lat, lng: f.location.lng, x: p[0], y: p[1],
     };
   });
-  return { institution: !!inst, sites, total: all.length, tabCategories: tabCategories(tabs), map: built?.map ?? null };
+  return { institution: !!inst, ...(inst ? { institutionId: inst.id } : {}), sites, total: all.length, tabCategories: tabCategories(tabs), map: built?.map ?? null };
 }

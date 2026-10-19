@@ -6,8 +6,10 @@
 // register category where they name one, and an accessible list (name, region,
 // a link that opens the place in the visitor's own maps app). When the
 // institution has registered nothing yet it says so instead of showing pins.
-// The data is prepared on the server (locator-data.ts); nothing is fetched
-// here and nothing leaves the platform.
+// The data is prepared on the server (locator-data.ts). When the institution
+// has more sites than the page carries, a search or "Show all" reads the rest
+// from the platform's own public tile archive (locator-archive.ts, loaded on
+// demand); nothing leaves the platform.
 
 import * as React from 'react';
 import type { SiteLocations, LocatorSite } from './locator-types';
@@ -60,7 +62,22 @@ export function LocatorPanel({
   const [tab, setTab] = React.useState(0);
   const [all, setAll] = React.useState(false);
   const [hot, setHot] = React.useState<string | null>(null);
-  const sites = data?.sites ?? [];
+  // The rest of the institution's sites, read from the public tile archive once the visitor searches or asks for all.
+  const [extra, setExtra] = React.useState<LocatorSite[] | null>(null);
+  const wantsMore = !!data?.institutionId && !!data.map?.mercator && data.total > data.sites.length && (q.trim() !== '' || all);
+  React.useEffect(() => {
+    if (!wantsMore || extra || !data) return;
+    let live = true;
+    setExtra([]);
+    import('./locator-archive').then(m => m.archiveSites(data)).then(s => { if (live) setExtra(s); }).catch(() => { if (live) setExtra(null); });
+    return () => { live = false; };
+  }, [wantsMore]); // eslint-disable-line react-hooks/exhaustive-deps
+  const sites = React.useMemo(() => {
+    const base = data?.sites ?? [];
+    if (!extra?.length) return base;
+    const have = new Set(base.map(s => s.id));
+    return [...base, ...extra.filter(s => !have.has(s.id))];
+  }, [data, extra]);
   const cats = data?.tabCategories?.[tab] ?? null;
   const needle = q.trim().toLowerCase();
   const match = (s: LocatorSite) =>

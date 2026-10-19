@@ -61,9 +61,11 @@ export const WebGLPoints = React.forwardRef<WebGLPointsHandle, {
   /** Index (in `points`) of the selected point, ringed. (NationMap rings the hovered one itself, so hovering never redraws the layer.) */
   selected?: number | null;
   style?: PointStyle;
+  /** The land the points spread over, in map pixels: sizes then follow the spacing between points (lib/map/gl-points.ts pointSize). */
+  area?: number;
   /** Told when the WebGL context is lost (true) and when it is back (false). */
   onLost?: (lost: boolean) => void;
-}>(function WebGLPoints({ points, polygons = [], width, height, zoom, selected, style = 'dot', onLost }, ref) {
+}>(function WebGLPoints({ points, polygons = [], width, height, zoom, selected, style = 'dot', area, onLost }, ref) {
   const canvas = React.useRef<HTMLCanvasElement>(null);
   const layer = React.useRef<GLMapLayer | null>(null);
   const [state, setState] = React.useState<'starting' | 'ready' | 'lost' | 'unavailable'>('starting');
@@ -77,6 +79,12 @@ export const WebGLPoints = React.forwardRef<WebGLPointsHandle, {
   // Points packed once per set: draw order (alert last) and the pick colours.
   const glyphs = React.useMemo(() => glyphIndex(points.map(p => p.glyph)), [points]);
   const packed = React.useMemo(() => packPoints(points.map(p => ({ x: p.x, y: p.y, tone: p.tone, glyph: glyphs.of(p.glyph), generalised: p.generalised }))), [points, glyphs]);
+  // Where the points lie on the map (for checks: data-extent).
+  const extent = React.useMemo(() => {
+    let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+    for (const p of points) { if (p.x < x0) x0 = p.x; if (p.x > x1) x1 = p.x; if (p.y < y0) y0 = p.y; if (p.y > y1) y1 = p.y; }
+    return Number.isFinite(x0) ? [x0, y0, x1, y1].map(v => Math.round(v)).join(',') : '';
+  }, [points]);
   // Polygon pick ids follow the point ids: one picking pass answers for both.
   const polyPacked = React.useMemo(() => packPolygons(polygons.map(p => ({ triangles: p.triangles, fill: parseColour(p.fill, p.opacity ?? 0.5) ?? [0.5, 0.5, 0.5, 0.5] })), packed.count), [polygons, packed.count]);
 
@@ -126,12 +134,12 @@ export const WebGLPoints = React.forwardRef<WebGLPointsHandle, {
     const dpr = Math.min(3, window.devicePixelRatio || 1);
     const w = Math.round(width * dpr), h = Math.round(height * dpr);
     if (c.width !== w || c.height !== h) { c.width = w; c.height = h; }
-    const size = pointSize(style, z.z, packed.count);
+    const size = pointSize(style, z.z, packed.count, area);
     l.draw({
-      matrix: mapMatrix(width, height, z), dpr, style, body: size.body, frame: size.frame, glyph: size.glyph && glyphs.list.length > 0,
+      matrix: mapMatrix(width, height, z), dpr, style, body: size.body, frame: size.frame, glyph: size.glyph && glyphs.list.length > 0, halo: size.halo, glow: size.glow,
       colours: colours(), hover: -1, selected: selected != null ? packed.drawIndex(selected) : -1,
     });
-  }, [width, height, style, packed, glyphs, colours, selected]);
+  }, [width, height, style, packed, glyphs, colours, selected, area]);
 
   // Draw, following the map's zoom (eased unless motion is reduced).
   React.useEffect(() => {
@@ -165,6 +173,6 @@ export const WebGLPoints = React.forwardRef<WebGLPointsHandle, {
 
   return (
     <canvas ref={canvas} aria-hidden className="pointer-events-none absolute start-0 top-0" style={{ width, height, visibility: state === 'ready' ? 'visible' : 'hidden' }}
-      data-testid="map-webgl" data-state={state} data-points={packed.count} data-polygons={polygons.length} data-webgl={layer.current?.version ?? ''} />
+      data-testid="map-webgl" data-state={state} data-points={packed.count} data-polygons={polygons.length} data-extent={extent} data-webgl={layer.current?.version ?? ''} />
   );
 });

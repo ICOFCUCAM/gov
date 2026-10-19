@@ -60,21 +60,25 @@ async function shot(name) {
 }
 await shot(`webgl-${N}.png`);
 
-// Hover across a grid of positions: GPU picking must find points under most of them.
+// Hover across a grid of positions where the points lie (data-extent): GPU picking must find points under
+// nearly all of them (100,000 points leave few gaps of 8 px). The pointer moves a little first, as a hand does.
 const box = await gl.boundingBox();
+const [ex0, ey0, ex1, ey1] = (await gl.getAttribute('data-extent')).split(',').map(Number);
 let hits = 0, tries = 0, firstHit = null;
 const t1 = Date.now();
-for (let gy = 1; gy < 12; gy++) {
-  for (let gx = 1; gx < 16; gx++) {
-    const x = box.x + (box.width * gx) / 16, y = box.y + (box.height * gy) / 12;
-    await page.mouse.move(x, y);
+for (let gy = 1; gy < 8; gy++) {
+  for (let gx = 1; gx < 8; gx++) {
+    const x = box.x + ex0 + ((ex1 - ex0) * gx) / 8, y = box.y + ey0 + ((ey1 - ey0) * gy) / 8;
+    await page.mouse.move(box.x - 30, box.y - 30); // off the map: the last label goes
+    await page.mouse.move(x - 3, y - 3);
+    await page.mouse.move(x, y, { steps: 2 });
     tries++;
-    const label = await page.locator('[data-testid="map-point-hover"]').textContent({ timeout: 300 }).catch(() => null);
+    const label = await page.waitForFunction(() => document.querySelector('[data-testid="map-point-hover"]')?.textContent || null, null, { timeout: 2500 }).then(h => h.jsonValue()).catch(() => null);
     if (label && /Synthetic point \d+/.test(label)) { hits++; firstHit ??= { x, y, label }; }
   }
 }
 result.checks.hover = { tries, hits, msPerHover: Math.round((Date.now() - t1) / tries) };
-if (hits < tries * 0.3) problems.push(`picking found points under only ${hits} of ${tries} positions`);
+if (hits < tries * 0.8) problems.push(`picking found points under only ${hits} of ${tries} positions`);
 
 // Click the first picked point: the page follows its link (#pt-N) and the selection ring is drawn.
 if (firstHit) {

@@ -2599,7 +2599,7 @@
         ],
         "operationId": "get_facilities",
         "summary": "GET /api/facilities",
-        "description": "The national facility register (lib/data/facilities.ts). GET: published sites (?ministry=, ?category=, ?region=, ?state=proposed|published|all), each as the viewer may see it — restricted sites are generalised for anyone outside the owning institution and the whole government — with counts, the nation's policy and the vocabulary (categories, capture methods, the bodies that may decide sensitivity). Sites are added through the owning institution: /api/org/ministries/{id}/facilities.",
+        "description": "The national facility register (lib/data/facilities.ts). GET: published sites (?ministry=, ?category=, ?region=, ?state=proposed|published|all), each as the viewer may see it — restricted sites are generalised for anyone outside the owning institution and the whole government — with counts, the nation's policy and the vocabulary (categories, capture methods, the bodies that may decide sensitivity). ?sites=none answers the counts, policy and vocabulary without the sites (a national-scale map then reads them as vector tiles, /api/twin/tiles/facilities). Sites are added through the owning institution: /api/org/ministries/{id}/facilities.",
         "parameters": [
           {
             "name": "category",
@@ -2619,6 +2619,14 @@
           },
           {
             "name": "region",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sites",
             "in": "query",
             "required": false,
             "schema": {

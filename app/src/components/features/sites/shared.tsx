@@ -11,6 +11,7 @@ import type {
   LocationCheck, PolicyChange, SensitivityAuthority, SensitivityRule,
 } from '@/lib/data/facilities';
 import type { MapPoint } from '@/components/map/NationMap';
+import { FACILITY_TILES, type PointTileSource } from '@/lib/map/tile-loader';
 import type { CategoryStandards } from '@/lib/data/facility-standards';
 
 export type { CaptureMethod, CertStage, Facility, FacilityImport, FacilityPolicy, FacilityStatus, LocationCheck, PolicyChange, SensitivityAuthority, SensitivityRule };
@@ -115,6 +116,26 @@ export function sitePoints(sites: Site[], categories: Category[]): MapPoint[] {
     glyph: categories.find(c => c.key === s.category)?.glyph,
     href: `#site-${s.id}`,
   }));
+}
+
+/**
+ * Published sites as a tile-backed map layer, for a national-scale register:
+ * the same points as sitePoints() (tone by certification, glyph, link to the
+ * record), read from the viewer-aware vector tiles for what the map shows,
+ * with the register's filters applied to the tiles' properties.
+ */
+export function siteTiles(categories: Category[], o: { ministry?: string; category?: string; region?: string; version?: string } = {}): PointTileSource {
+  const glyph = new Map(categories.map(c => [c.key, c.glyph]));
+  return {
+    source: FACILITY_TILES, layer: 'facilities', version: o.version, label: 'Published sites',
+    toPoint: f => {
+      const p = f.props;
+      if ((o.ministry && p.owner !== o.ministry) || (o.category && p.category !== o.category) || (o.region && p.region !== o.region)) return null;
+      const cert = (p.certification === 'certified' || p.certification === 'rejected' ? p.certification : 'awaiting') as Site['certification']['state'];
+      const id = String(p.id ?? f.key), name = String(p.name ?? id), generalised = p.generalised === true;
+      return { key: id, name, label: `${name}${generalised ? ' (position generalised)' : ''} · ${CERT_WORD[cert]}`, tone: cert === 'certified' ? 'ok' : cert === 'rejected' ? 'alert' : 'warn', glyph: glyph.get(String(p.category)), href: `#site-${id}`, generalised };
+    },
+  };
 }
 
 export function Msg({ msg }: { msg: { ok: boolean; text: string } | null }) {
