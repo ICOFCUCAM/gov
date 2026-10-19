@@ -132,6 +132,8 @@ const ADMIN_ONLY: RegExp[] = [
   /^\/api\/federation(\/|$)/,
   /^\/api\/integrations(\/|$)/,
   /^\/api\/webhooks(\/|$)/,
+  // The nation's email and SMS providers and its message outbox (lib/messaging).
+  /^\/api\/messaging(\/|$)/,
   // Provisioning a new municipality (/admin/onboarding).
   /^\/api\/municipalities\/?$/,
 ];

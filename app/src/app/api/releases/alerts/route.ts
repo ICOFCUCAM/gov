@@ -1,10 +1,12 @@
 // /api/releases/alerts — the officials this nation alerts about updates,
 // their channels and subscriptions (security, releases, incidents, end of
-// life), and the alerts recently queued for them (GET). POST: save or
+// life), the alerts recently queued for them with where each delivery stands
+// (addresses masked), and whether email and SMS providers are connected (GET). POST: save or
 // remove an official. Every change is audited.
 import { NextRequest, NextResponse } from 'next/server';
 import { nationFor, chamberBody } from '@/lib/updates/access';
 import { CATEGORIES, listOfficials, outbox, removeOfficial, saveOfficial } from '@/lib/data/comms';
+import { connection } from '@/lib/messaging/providers';
 import type { Official } from '@/lib/api/types';
 
 export const dynamic = 'force-dynamic';
@@ -12,7 +14,8 @@ export const dynamic = 'force-dynamic';
 export function GET(req: NextRequest) {
   const n = nationFor(new URL(req.url).searchParams.get('link'));
   if (n instanceof NextResponse) return n;
-  return NextResponse.json({ officials: listOfficials(n.id), outbox: outbox(n.id), categories: CATEGORIES });
+  // delivery: whether the nation's administrator has connected an email and an SMS provider (/admin/messaging).
+  return NextResponse.json({ officials: listOfficials(n.id), outbox: outbox(n.id), categories: CATEGORIES, delivery: { email: connection(n.id, 'email'), sms: connection(n.id, 'sms') } });
 }
 
 export async function POST(req: NextRequest) {

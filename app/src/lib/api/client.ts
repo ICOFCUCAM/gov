@@ -508,7 +508,7 @@ export const api = {
     contractAction: (body: { action: 'accept-renewal' | 'request-change'; by: string; note?: string; link?: string }) =>
       req<{ ok: true }>('/api/releases/contract', { method: 'POST', body: JSON.stringify(body) }),
     whatsNew: (id: string, link?: string) => req<{ whatsNew: WhatsNew }>(`/api/releases/${encodeURIComponent(id)}/whats-new${linkQ(link)}`),
-    alerts: (link?: string) => req<{ officials: Official[]; outbox: AlertDelivery[]; categories: AlertCategory[] }>(`/api/releases/alerts${linkQ(link)}`),
+    alerts: (link?: string) => req<{ officials: Official[]; outbox: AlertDelivery[]; categories: AlertCategory[]; delivery?: { email: 'connected' | 'not connected'; sms: 'connected' | 'not connected' } }>(`/api/releases/alerts${linkQ(link)}`),
     alertsAction: (body: { action: 'save' | 'remove'; by: string; official?: Partial<Official>; id?: string; link?: string }) =>
       req<{ ok: true; officials: Official[] }>('/api/releases/alerts', { method: 'POST', body: JSON.stringify(body) }),
     mirror: (link?: string) =>

@@ -105,7 +105,12 @@ export function AlertsPanel({ link }: { link?: string }) {
       <ErrorLine>{err}</ErrorLine>
       <div>
         <p className="font-mono text-[9.5px] uppercase tracking-[0.22em] text-[#d9c398]/75">Recent alerts</p>
-        <p className="mt-1 text-[11.5px] text-white/40">No email or SMS provider is connected yet: alerts are queued, not sent.</p>
+        <p className="mt-1 text-[11.5px] text-white/40">
+          {!d.delivery || (d.delivery.email === 'not connected' && d.delivery.sms === 'not connected')
+            ? 'No email or SMS provider is connected yet: alerts are queued, not sent.'
+            : `Email: ${d.delivery.email} · SMS: ${d.delivery.sms}. Alerts on a channel that is not connected stay queued.`}
+          {' '}An administrator connects providers under <a href="/admin/messaging" className="underline decoration-[#d9c398]/30 underline-offset-4" style={{ color: CHAMPAGNE }}>Email and text messages</a>.
+        </p>
         <ul className="mt-2 grid gap-1.5">
           {d.outbox.map(a => (
             <li key={a.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[12.5px] font-light text-white/65">

@@ -410,6 +410,11 @@ export const fr: Messages = {
     unsubscribeButton: 'Se désinscrire',
     unsubscribed: 'Vous êtes désinscrit et votre adresse a été supprimée.',
     linkInvalid: 'Ce lien n’est pas valide ou a expiré.',
+    emails: {
+      confirmSubject: 'Confirmez les informations par courriel de {name}',
+      confirmBody: 'Quelqu’un a demandé à recevoir par courriel les informations de {name} à cette adresse. Ouvrez le lien pour confirmer ; si ce n’était pas vous, ignorez ce message et rien ne sera envoyé. Le lien est valable {days} jours.',
+      unsubscribeLine: 'Pour ne plus recevoir ces courriels, ouvrez ce lien : {link}',
+    },
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {
@@ -449,5 +454,13 @@ export const fr: Messages = {
     training: 'Formation',
     runbook: 'Procédure d’exploitation',
     video: 'Vidéo',
+    alertEmail: {
+      subject: 'Centre de mises à jour · {category} : {subject}',
+      body: 'Alerte {category} du Centre de mises à jour :\n\n{subject}',
+      open: 'Ouvrir le Centre de mises à jour : {link}',
+      footer: 'Vous recevez ce message car vous êtes désigné pour les alertes {category} du Centre de mises à jour. Un administrateur peut le modifier.',
+      smsPrefix: 'Centre de mises à jour · {category}',
+      categories: { security: 'Sécurité', releases: 'Versions', incidents: 'Incidents', eol: 'Fin de vie' },
+    },
   },
 };

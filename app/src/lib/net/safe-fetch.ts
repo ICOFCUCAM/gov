@@ -33,6 +33,13 @@ export interface SafeFetchOptions {
   headers?: Record<string, string>;
   /** Allow private and internal addresses (a nation's own subscribers on its network); off by default. */
   allowPrivate?: boolean;
+  /** Extra certificate authority (PEM) trusted for this request, e.g. a nation's internal CA for its own gateway. */
+  ca?: string;
+}
+
+/** A refusal from the far end: `status` is its HTTP status (callers tell permanent from passing failures). */
+export class FetchStatusError extends Error {
+  constructor(message: string, readonly status: number) { super(message); }
 }
 
 const dnsResolve = async (host: string) => (await lookup(host, { all: true })).map(a => a.address);
@@ -69,7 +76,7 @@ async function fetchChecked(raw: string, o: SafeFetchOptions): Promise<{ text: s
     const addrs = await resolve(c.url.hostname);
     if (addrs.length === 0 || (!o.allowPrivate && addrs.some(isPrivateAddress))) throw new Error('The address points to a private network');
     const pinned = addrs[0]!;
-    const fetchImpl = o.fetch ?? ((href: string, init: Parameters<typeof pinnedFetch>[1]) => pinnedFetch(href, init, pinned));
+    const fetchImpl = o.fetch ?? ((href: string, init: Parameters<typeof pinnedFetch>[1]) => pinnedFetch(href, { ...init, ...(o.ca ? { ca: o.ca } : {}) }, pinned));
     const res = await fetchImpl(c.url.href, { method: o.method ?? 'GET', ...(o.body !== undefined ? { body: o.body } : {}), redirect: 'manual', signal: AbortSignal.timeout(o.timeoutMs ?? 15_000), headers: { accept: o.accept ?? '*/*', ...(o.headers ?? {}) } });
     if (res.status >= 300 && res.status < 400) {
       if ((o.method ?? 'GET') !== 'GET') throw new Error(`The address redirected (${res.status}); deliveries do not follow redirects`);
@@ -78,7 +85,7 @@ async function fetchChecked(raw: string, o: SafeFetchOptions): Promise<{ text: s
       target = new URL(loc, c.url).href;
       continue;
     }
-    if (!res.ok) throw new Error(`The source answered ${res.status}`);
+    if (!res.ok) throw new FetchStatusError(`The source answered ${res.status}`, res.status);
     const type = (res.headers.get('content-type') ?? '').split(';')[0]!.trim();
     if (o.types && type && !o.types.test(type)) throw new Error(`Unexpected content type ${type}`);
     const reader = res.body?.getReader();
