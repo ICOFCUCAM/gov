@@ -19,7 +19,7 @@ export async function POST(req: NextRequest) {
   if (hasAccounts() && !o) return NextResponse.json({ error: 'Only a signed-in official can create accounts' }, { status: 401 });
   if (o && roleOf(o) !== 'administrator') return NextResponse.json({ error: 'Only an administrator can create accounts' }, { status: 403 });
   const b = await req.json().catch(() => ({}));
-  const r = createAccount(b, o ? actorLabel(o) : null);
+  const r = await createAccount(b, o ? actorLabel(o) : null);
   if ('error' in r) return NextResponse.json(r, { status: 422 });
   return NextResponse.json({ account: r }, { status: 201 });
 }

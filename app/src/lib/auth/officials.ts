@@ -1,11 +1,13 @@
 // Platform accounts for officials (register 15.4): how a nation without the
 // substrate (air-gapped, or before it connects Supabase) signs its officials
-// in. Passwords are kept only as scrypt hashes; failed attempts are limited
+// in. Passwords are kept only as scrypt hashes (N=2^17, r=8, p=1, computed
+// asynchronously on the libuv thread pool, never on the request thread;
+// older, weaker hashes are re-hashed at the next successful sign-in); failed attempts are limited
 // per address; every account change and sign-in is audited. With the
 // substrate connected, officials sign in there instead and this store is
 // only the fallback. Held in platform state (lib/data/persist.ts).
 
-import { randomBytes, scryptSync, timingSafeEqual, randomUUID, createHash } from 'node:crypto';
+import { randomBytes, scrypt, timingSafeEqual, randomUUID, createHash, type ScryptOptions } from 'node:crypto';
 import { matchStep, newSecret, otpauthUri } from './totp';
 import { seal, open as openSealed } from '@/lib/crypto/envelope';
 import { recordAudit, getMinistry } from '@/lib/data/store';
@@ -49,23 +51,52 @@ export function resetOfficials(): void { g.__civicosOfficials = undefined; }
 export const MIN_PASSWORD = 12;
 export const MAX_FAILURES = 5;
 const WINDOW_MS = 15 * 60_000;
-const N = 16384;
+/** scrypt cost for new hashes: N=2^17, r=8, p=1 (OWASP). Needs 128·N·r = 128 MiB, so maxmem is raised. */
+export const SCRYPT = { N: 2 ** 17, r: 8, p: 1, maxmem: 288 * 1024 * 1024 } as const;
+/** The cost in force. Only the test runner may lower it (CIVICOS_SCRYPT_N under Vitest), to keep suites fast. */
+const cost = (): { N: number; r: number; p: number; maxmem: number } => {
+  const t = Number(process.env.VITEST ? process.env.CIVICOS_SCRYPT_N : NaN);
+  return Number.isInteger(t) && t >= 1024 ? { ...SCRYPT, N: t } : SCRYPT;
+};
 
 const norm = (e: string) => e.trim().toLowerCase();
+// Compared against when the address is unknown (random salt and digest: nothing anyone can type matches it).
+const DUMMY_HASH = `scrypt$${2 ** 17}$${randomBytes(16).toString('base64')}$${randomBytes(32).toString('base64')}`;
 const pub = ({ passwordHash: _h, twoStep, twoStepPending: _p, reset, ...a }: OfficialAccount): PublicAccount =>
   ({ ...a, ...(twoStep ? { twoStepSince: twoStep.since } : {}), twoStepRequired: twoStepRequiredFor(a), ...(reset && Date.parse(reset.expiresAt) > Date.now() ? { resetPendingUntil: reset.expiresAt } : {}) });
 
-function hash(password: string): string {
-  const salt = randomBytes(16);
-  const h = scryptSync(password, salt, 32, { N });
-  return `scrypt$${N}$${salt.toString('base64')}$${h.toString('base64')}`;
+function scryptAsync(password: string, salt: Buffer, len: number, opts: ScryptOptions): Promise<Buffer> {
+  return new Promise((resolve, reject) => scrypt(password, salt, len, opts, (e, k) => (e ? reject(e) : resolve(k))));
 }
-function matches(password: string, stored: string): boolean {
-  const [alg, n, salt, h] = stored.split('$');
-  if (alg !== 'scrypt' || !n || !salt || !h) return false;
-  const want = Buffer.from(h, 'base64');
-  const got = scryptSync(password, Buffer.from(salt, 'base64'), want.length, { N: Number(n) });
-  return got.length === want.length && timingSafeEqual(got, want);
+
+/** `scrypt$N$salt$hash` (r=8, p=1), or `scrypt$N$r$p$salt$hash` when r or p differ from 8 and 1. */
+async function hash(password: string): Promise<string> {
+  const salt = randomBytes(16);
+  const c = cost();
+  const h = await scryptAsync(password, salt, 32, c);
+  return `scrypt$${c.N}$${salt.toString('base64')}$${h.toString('base64')}`;
+}
+
+function parseHash(stored: string): { N: number; r: number; p: number; salt: Buffer; want: Buffer } | null {
+  const parts = stored.split('$');
+  if (parts[0] !== 'scrypt') return null;
+  const [n, r, p, salt, h] = parts.length === 6 ? parts.slice(1) : [parts[1], '8', '1', parts[2], parts[3]];
+  if (!n || !salt || !h) return null;
+  return { N: Number(n), r: Number(r), p: Number(p), salt: Buffer.from(salt, 'base64'), want: Buffer.from(h, 'base64') };
+}
+
+async function matches(password: string, stored: string): Promise<boolean> {
+  const ph = parseHash(stored);
+  if (!ph) return false;
+  const got = await scryptAsync(password, ph.salt, ph.want.length, { N: ph.N, r: ph.r, p: ph.p, maxmem: Math.max(SCRYPT.maxmem, 160 * ph.N * ph.r) });
+  return got.length === ph.want.length && timingSafeEqual(got, ph.want);
+}
+
+/** A hash made with a lower cost than today's, to be replaced at the next successful sign-in. */
+export function needsRehash(stored: string): boolean {
+  const ph = parseHash(stored);
+  const c = cost();
+  return !ph || ph.N < c.N || ph.r < c.r || ph.p < c.p;
 }
 
 /** The key that signs sessions: CIVICOS_SESSION_SECRET, else one generated for this installation and kept in its state. */
@@ -83,7 +114,7 @@ export const listAccounts = (): PublicAccount[] => db().accounts.map(pub);
  * official (it is made at installation, like setup); every later one is made
  * by a signed-in official, named in the audit chain.
  */
-export function createAccount(input: { email?: string; name?: string; office?: string; password?: string; role?: string; institution?: string }, by: string | null): PublicAccount | { error: string } {
+export async function createAccount(input: { email?: string; name?: string; office?: string; password?: string; role?: string; institution?: string }, by: string | null): Promise<PublicAccount | { error: string }> {
   const d = db();
   if (d.accounts.length && !by) return { error: 'Only a signed-in official can create accounts' };
   const email = norm(input.email ?? '');
@@ -99,7 +130,10 @@ export function createAccount(input: { email?: string; name?: string; office?: s
   const role: OfficialRole = first ? 'administrator' : isRole(input.role) ? input.role : 'officer';
   if (input.role !== undefined && !first && !isRole(input.role)) return { error: 'Unknown role' };
   const institution = first ? undefined : (input.institution ?? '').trim() || undefined;
-  const a: OfficialAccount = { id: randomUUID(), email, name: name.slice(0, 120), office: office.slice(0, 160), passwordHash: hash(input.password!), createdAt: new Date().toISOString(), createdBy: by ?? 'installation', role, institution };
+  const a: OfficialAccount = { id: randomUUID(), email, name: name.slice(0, 120), office: office.slice(0, 160), passwordHash: await hash(input.password!), createdAt: new Date().toISOString(), createdBy: by ?? 'installation', role, institution };
+  // Hashing yields the thread: check again that nobody took the address (or became the first account) meanwhile.
+  if (d.accounts.some(x => x.email === email)) return { error: 'An account with that email already exists' };
+  if (first && d.accounts.length) return { error: 'The first account was created meanwhile; sign in to create more' };
   d.accounts.push(a);
   recordAudit(by ?? `${a.name} (first account)`, 'auth.account.create', `Official:${a.id}`, 'ok', `${a.name} · ${a.office} · ${roleLabel(role)}${institution ? ` · ${getMinistry(institution)?.name ?? institution}` : ' · whole government'}`);
   return pub(a);
@@ -145,15 +179,17 @@ export function setRole(id: string, input: { role?: string; institution?: string
  * for an account that needs one the answer is { needsCode }, and nothing is
  * counted.
  */
-export function checkPassword(emailRaw: string, password: string, now = Date.now(), code?: string):
-  (PublicAccount & { secondStep: boolean }) | { error: string; needsCode?: true } {
+export async function checkPassword(emailRaw: string, password: string, now = Date.now(), code?: string):
+  Promise<(PublicAccount & { secondStep: boolean }) | { error: string; needsCode?: true }> {
   const d = db();
   const email = norm(emailRaw);
   const recent = (d.failures[email] ?? []).filter(t => now - t < WINDOW_MS);
   if (recent.length >= MAX_FAILURES) return { error: 'Too many failed attempts; try again in 15 minutes' };
   const a = d.accounts.find(x => x.email === email);
-  if (!a || a.disabled || !matches(password, a.passwordHash)) {
-    d.failures[email] = [...recent, now];
+  // An unknown address still costs one hash, so the answer's timing does not tell which addresses exist.
+  const good = await matches(password, a?.passwordHash ?? DUMMY_HASH);
+  if (!a || a.disabled || !good) {
+    d.failures[email] = [...(d.failures[email] ?? []).filter(t => now - t < WINDOW_MS), now];
     // Filed against the account it targeted (never the address), so its owner sees it in their sign-in activity.
     recordAudit('sign-in attempt', 'auth.sign-in', a ? `Official:${a.id}` : 'Official:?', 'denied', 'wrong email or password');
     return { error: 'Wrong email or password' };
@@ -170,6 +206,11 @@ export function checkPassword(emailRaw: string, password: string, now = Date.now
   }
   delete d.failures[email];
   a.lastSignIn = new Date(now).toISOString();
+  if (needsRehash(a.passwordHash)) {
+    const old = a.passwordHash;
+    const upgraded = await hash(password);
+    if (a.passwordHash === old) a.passwordHash = upgraded; // unless the password changed meanwhile
+  }
   return { ...pub(a), secondStep: !!a.twoStep };
 }
 
@@ -282,17 +323,17 @@ function newPasswordProblem(next: string | undefined): string | null {
 }
 
 /** The official changes their own password with the current one; every earlier session of theirs stops counting. */
-export function changePassword(id: string, current: string, next: string, now = Date.now()): PublicAccount | { error: string } {
+export async function changePassword(id: string, current: string, next: string, now = Date.now()): Promise<PublicAccount | { error: string }> {
   const a = db().accounts.find(x => x.id === id);
   if (!a || a.disabled) return { error: 'No such account' };
-  if (!matches(current ?? '', a.passwordHash)) {
+  if (!(await matches(current ?? '', a.passwordHash))) {
     recordAudit(a.name, 'auth.password.change', `Official:${a.id}`, 'denied', 'wrong current password');
     return { error: 'The current password is not right' };
   }
   const bad = newPasswordProblem(next);
   if (bad) return { error: bad };
-  if (matches(next, a.passwordHash)) return { error: 'Choose a password different from the current one' };
-  a.passwordHash = hash(next);
+  if (await matches(next, a.passwordHash)) return { error: 'Choose a password different from the current one' };
+  a.passwordHash = await hash(next);
   a.passwordChangedAt = new Date(now).toISOString();
   delete a.reset;
   recordAudit(a.name, 'auth.password.change', `Official:${a.id}`, 'ok', 'other sessions ended');
@@ -318,7 +359,7 @@ export function issueReset(id: string, by: string, now = Date.now()): { code: st
 }
 
 /** Set a new password with a reset code (no session). Wrong codes count toward the sign-in lockout. */
-export function resetPassword(emailRaw: string, code: string, next: string, now = Date.now()): PublicAccount | { error: string } {
+export async function resetPassword(emailRaw: string, code: string, next: string, now = Date.now()): Promise<PublicAccount | { error: string }> {
   const d = db();
   const email = norm(emailRaw);
   const recent = (d.failures[email] ?? []).filter(t => now - t < WINDOW_MS);
@@ -335,7 +376,9 @@ export function resetPassword(emailRaw: string, code: string, next: string, now 
   }
   const bad = newPasswordProblem(next);
   if (bad) return { error: bad };
-  a!.passwordHash = hash(next);
+  const fresh = await hash(next);
+  if (!a!.reset) return { error: 'That reset code has just been used' };
+  a!.passwordHash = fresh;
   a!.passwordChangedAt = new Date(now).toISOString();
   delete a!.reset;
   delete d.failures[email];

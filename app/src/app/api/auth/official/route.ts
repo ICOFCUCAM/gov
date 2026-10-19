@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
   if (b.method === 'substrate') {
     who = b.accessToken ? await substrateOfficial(b.accessToken) : { error: 'No access token' };
   } else {
-    const a = checkPassword(b.email ?? '', b.password ?? '', Date.now(), b.code);
+    const a = await checkPassword(b.email ?? '', b.password ?? '', Date.now(), b.code);
     who = 'error' in a ? a : { sub: `local:${a.id}`, name: a.name, office: a.office, role: a.role ?? 'administrator', institution: a.institution, twoStep: a.secondStep, twoStepRequired: a.twoStepRequired };
   }
   // { needsCode: true } tells the form to ask for the authenticator code.

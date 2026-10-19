@@ -14,14 +14,14 @@ export const dynamic = 'force-dynamic';
 export async function POST(req: NextRequest) {
   const b = (await req.json().catch(() => ({}))) as { action?: string; current?: string; next?: string; email?: string; code?: string };
   if (b.action === 'reset') {
-    const r = resetPassword(b.email ?? '', b.code ?? '', b.next ?? '');
+    const r = await resetPassword(b.email ?? '', b.code ?? '', b.next ?? '');
     return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json({ ok: true });
   }
   if (b.action !== 'change') return NextResponse.json({ error: 'action must be change or reset' }, { status: 422 });
   const o = await currentOfficial();
   if (!o) return NextResponse.json({ error: 'Sign in as an official' }, { status: 401 });
   if (o.method !== 'local') return NextResponse.json({ error: 'Substrate officers change their password in the substrate' }, { status: 422 });
-  const r = changePassword(o.sub.slice('local:'.length), b.current ?? '', b.next ?? '');
+  const r = await changePassword(o.sub.slice('local:'.length), b.current ?? '', b.next ?? '');
   if ('error' in r) return NextResponse.json(r, { status: 422 });
   // Renew this session after the change; sessions issued before it no longer count.
   const now = Math.floor(Date.now() / 1000) + 1;
