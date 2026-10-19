@@ -24,6 +24,7 @@ import { loadDivisions } from '@/lib/geo/divisions';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { parseCsv } from './csv';
 import { twinDb, resetTwinDb, type TwinDb } from './db';
+import { archive, archivedRuns, archivedMetrics, archivedObservations, forEachArchived, resetTwinArchive } from './archive';
 import { METRIC_ID, getMetric, isKnownMetric, toUcum, sameUnit, type Aggregation } from './metrics';
 import type { Signal } from './signal';
 
@@ -115,9 +116,21 @@ export interface Observation {
 
 const db = twinDb;
 export type { TwinDb };
-export function resetTwin(): void { resetTwinDb(); }
+export function resetTwin(): void { resetTwinDb(); resetTwinArchive(); }
 
-export const LIMITS = { observations: 200_000, runs: 500, rejectedShown: 50, rows: 100_000 } as const;
+/**
+ * Working limits of the live register. Beyond them the oldest observations
+ * and runs move to the history archive (lib/twin/archive.ts), audited; they
+ * are never dropped and every query still reads them.
+ */
+export const LIMITS: { observations: number; runs: number; readonly rejectedShown: number; readonly rows: number } = { observations: 200_000, runs: 500, rejectedShown: 50, rows: 100_000 };
+/** Change the live register's working limits (tests; a small server); returns the previous ones. */
+export function setTwinLimits(l: Partial<Pick<typeof LIMITS, 'observations' | 'runs'>>): Pick<typeof LIMITS, 'observations' | 'runs'> {
+  const prev = { observations: LIMITS.observations, runs: LIMITS.runs };
+  if (l.observations !== undefined) LIMITS.observations = Math.max(1, l.observations);
+  if (l.runs !== undefined) LIMITS.runs = Math.max(1, l.runs);
+  return prev;
+}
 const METRIC = METRIC_ID;
 const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 const slug = (s: string) => fold(s).replace(/ /g, '-').slice(0, 60);
@@ -217,6 +230,11 @@ export function linkKey(entityId: string, system: string, key: string, by: strin
 
 export function listSources(): TwinSource[] { return db().sources.map(s => ({ ...s })); }
 export function listRuns(sourceId?: string): TwinRun[] { return db().runs.filter(r => !sourceId || r.sourceId === sourceId).map(r => ({ ...r })); }
+/** One import, from the live register or the history archive. */
+export function getRun(id: string): TwinRun | undefined {
+  const r = db().runs.find(x => x.id === id) ?? archivedRuns().find(x => x.id === id);
+  return r ? { ...r } : undefined;
+}
 
 export function registerSource(input: Partial<TwinSource> & { by?: string }): TwinSource | { error: string } {
   const by = (input.by ?? '').trim();
@@ -349,14 +367,19 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
     run.status = run.accepted === 0 ? 'failed' : refused > 0 ? 'partial' : 'ok';
     if (run.accepted === 0 && !run.error) run.error = 'No row could be accepted';
     d.observations.push(...fresh);
-    if (d.observations.length > LIMITS.observations) d.observations.splice(0, d.observations.length - LIMITS.observations);
   } catch (e) {
     run.status = 'failed';
     run.error = (e as Error).message;
   }
   s.lastRun = run.at;
   d.runs.unshift(run);
-  d.runs.splice(LIMITS.runs);
+  // Over the working limits: the oldest move to the history archive, never dropped (audited).
+  const oldObs = d.observations.length > LIMITS.observations ? d.observations.splice(0, d.observations.length - LIMITS.observations) : [];
+  const oldRuns = d.runs.length > LIMITS.runs ? d.runs.splice(LIMITS.runs).reverse() : [];
+  if (oldObs.length || oldRuns.length) {
+    const move = archive(oldObs, oldRuns, run.at);
+    recordAudit('Twin register', 'twin.archive', `Twin:${s.id}/${run.id}`, 'ok', `${move.observations} observations and ${move.runs} runs moved to the history archive${move.oldestRecordedAt ? ` (recorded ${move.oldestRecordedAt.slice(0, 10)} to ${move.newestRecordedAt!.slice(0, 10)})` : ''}`);
+  }
   recordAudit(run.by, 'twin.source.run', `Twin:${s.id}/${run.id}`, run.status === 'failed' ? 'error' : 'ok', run.error ?? `${run.accepted} of ${run.rows} rows`);
   return run;
 }
@@ -368,7 +391,7 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
  */
 export function withdrawRun(runId: string, by: string, reason: string, now = new Date()): { run: TwinRun; superseded: number } | { error: string } {
   const d = db();
-  const run = d.runs.find(r => r.id === runId);
+  const run = d.runs.find(r => r.id === runId) ?? archivedRuns().find(r => r.id === runId);
   if (!run) return { error: 'No such import' };
   const who = by.trim(), why = reason.trim();
   if (!who) return { error: 'Name the official withdrawing the import' };
@@ -376,7 +399,9 @@ export function withdrawRun(runId: string, by: string, reason: string, now = new
   if (run.withdrawn) return { error: `Already withdrawn on ${run.withdrawn.at.slice(0, 10)} by ${run.withdrawn.by}` };
   const at = now.toISOString();
   let superseded = 0;
-  for (const o of d.observations) if (o.runId === runId && !o.supersededAt) { o.supersededAt = at; superseded++; }
+  const mark = (o: Observation) => { if (o.runId === runId && !o.supersededAt) { o.supersededAt = at; superseded++; } };
+  d.observations.forEach(mark);
+  forEachArchived(undefined, mark);
   run.withdrawn = { at, by: who, reason: why.slice(0, 500) };
   recordAudit(who, 'twin.run.withdraw', `Twin:${run.sourceId}/${run.id}`, 'ok', `${superseded} observations superseded · ${run.withdrawn.reason}`);
   return { run: { ...run }, superseded };
@@ -401,16 +426,19 @@ export function stateAsOf({ asOf, knownAt, metric, entityId }: { asOf?: string; 
   const day = t.toISOString().slice(0, 10);
   const at = (knownAt ? new Date(knownAt) : t).toISOString();
   const best = new Map<string, Observation>();
-  for (const o of db().observations) {
-    if (metric && o.metric !== metric) continue;
-    if (entityId && o.entityId !== entityId) continue;
-    if (o.recordedAt > at || o.validFrom > day) continue;
-    if (o.supersededAt && o.supersededAt <= at) continue;
-    if (o.validTo && o.validTo <= day) continue;
+  const consider = (o: Observation) => {
+    if (metric && o.metric !== metric) return;
+    if (entityId && o.entityId !== entityId) return;
+    if (o.recordedAt > at || o.validFrom > day) return;
+    if (o.supersededAt && o.supersededAt <= at) return;
+    if (o.validTo && o.validTo <= day) return;
     const k = `${o.entityId}|${o.metric}`;
     const cur = best.get(k);
     if (!cur || o.validFrom > cur.validFrom || (o.validFrom === cur.validFrom && o.recordedAt > cur.recordedAt)) best.set(k, o);
-  }
+  };
+  // The history archive first (older), then the live register.
+  forEachArchived(metric, consider);
+  db().observations.forEach(consider);
   return [...best.values()];
 }
 
@@ -490,12 +518,12 @@ export function regionCoverage(metric: string): { have: number; of: number } {
 }
 
 export function metricsKnown(): string[] {
-  return [...new Set(db().observations.map(o => o.metric))].sort();
+  return [...new Set([...db().observations.map(o => o.metric), ...archivedMetrics()])].sort();
 }
 
 /** The dates a metric has observations for (when they were true), oldest first: the steps of the history view. */
 export function metricDates(metric: string): string[] {
-  return [...new Set(db().observations.filter(o => o.metric === metric && !o.supersededAt).map(o => o.validFrom))].sort();
+  return [...new Set([...archivedObservations(metric), ...db().observations].filter(o => o.metric === metric && !o.supersededAt).map(o => o.validFrom))].sort();
 }
 
 /** An entity as the register holds it. */

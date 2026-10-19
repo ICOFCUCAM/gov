@@ -1,10 +1,12 @@
-// Registered sources of the national twin and their recent imports.
+// Registered sources of the national twin and their recent imports, and the
+// size of the history archive (older observations and runs, still queried).
 // POST registers a source (a named official; audited). A signed-in official's
 // verified name replaces any name in the request (withOfficial).
 
 import { NextRequest, NextResponse } from 'next/server';
 import { listSources, listRuns, registerSource, regionCoverage, metricsKnown, syncRegister, regionEntities } from '@/lib/twin/register';
 import { withOfficial } from '@/lib/auth/official';
+import { archiveStatus } from '@/lib/twin/archive';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,6 +15,7 @@ export async function GET() {
   return NextResponse.json({
     sources: listSources(), runs: listRuns().slice(0, 50), regions: regionEntities().length,
     metrics: metricsKnown().map(m => ({ metric: m, coverage: regionCoverage(m) })),
+    archive: archiveStatus(),
   });
 }
 

@@ -20,6 +20,7 @@
 
 import { recordAudit } from '@/lib/data/store';
 import { twinDb } from './db';
+import { archivedMetrics } from './archive';
 
 export type Aggregation = 'sum' | 'mean' | 'weighted-mean' | 'none';
 export type MetricPeriod = 'instant' | 'year' | 'quarter' | 'month';
@@ -157,7 +158,7 @@ export const STANDARD_METRICS: readonly Omit<MetricDef, 'origin'>[] = [
 
 // ── Registry ──────────────────────────────────────────────────────────────
 
-const observedMetricIds = (): Set<string> => new Set(twinDb().observations.map(o => o.metric));
+const observedMetricIds = (): Set<string> => new Set([...twinDb().observations.map(o => o.metric), ...archivedMetrics()]);
 
 /** A metric's definition: the official's, the standard one, or "observed" (aggregation none) when it only appears in observations. */
 export function getMetric(id: string): MetricDef | undefined {

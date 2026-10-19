@@ -1,9 +1,10 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import { parseCsv } from './csv';
-import { withdrawRun, metricDates, entityProfile, resetTwin, syncRegister, registerSource, runSource, stateAsOf, nationalTotal, signalFor, resolveEntity, linkKey, regionEntities, isoDate, dueSources, type TwinSource } from './register';
+import { setTwinLimits, getRun, metricsKnown, withdrawRun, metricDates, entityProfile, resetTwin, syncRegister, registerSource, runSource, stateAsOf, nationalTotal, signalFor, resolveEntity, linkKey, regionEntities, isoDate, dueSources, type TwinSource } from './register';
 import { withTwin } from './national';
 import { registerMetric } from './metrics';
 import { twinDb } from './db';
+import { archiveStatus } from './archive';
 import { applyNation } from '@/lib/nation/registry';
 import { nationalSnapshot, listAudit } from '@/lib/data/store';
 
@@ -218,5 +219,37 @@ describe('interval facts and stated quality', () => {
   it('reads observations saved before these fields as open-ended with no stated quality', () => {
     twinDb().observations.push({ entityId: 'place:KE-28', metric: 'population', value: 5, unit: 'persons', validFrom: '2010-01-01', recordedAt: '2011-01-01T00:00:00.000Z', sourceId: 'SRC-0', runId: 'RUN-0' });
     expect(stateAsOf({ metric: 'population', asOf: '2030-01-01T00:00:00Z', knownAt: '2030-01-01T00:00:00Z' })).toHaveLength(1);
+  });
+});
+
+describe('no silent eviction', () => {
+  let prev: ReturnType<typeof setTwinLimits>;
+  beforeEach(async () => {
+    resetTwin();
+    applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa', 'Nairobi City', 'Kisumu'] });
+    await syncRegister();
+    prev = setTwinLimits({ observations: 4, runs: 2 });
+  });
+  afterEach(() => { setTwinLimits(prev); });
+
+  it('moves the oldest history to the archive, audited, and still answers old as-of queries from it', async () => {
+    const s = ok(registerSource({ by: 'D', name: 'Census', publisher: 'KNBS', kind: 'csv-upload', mapping }));
+    const first = ok(await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,900000,2009\nNairobi City,3100000,2009\nKisumu,960000,2009\n', deps: { now: new Date('2010-01-01T00:00:00Z') } }));
+    await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,1000000,2019\nNairobi City,4000000,2019\nKisumu,1000000,2019\n', deps: { now: new Date('2020-01-01T00:00:00Z') } });
+    await runSource(s.id, { by: 'D', csv: 'region,value,year\nMombasa,1100000,2021\nNairobi City,4100000,2021\nKisumu,1100000,2021\n', deps: { now: new Date('2022-01-01T00:00:00Z') } });
+    expect(twinDb().observations).toHaveLength(4);
+    expect(twinDb().runs).toHaveLength(2);
+    expect(archiveStatus()).toMatchObject({ observations: 5, runs: 1 });
+    // What was known in 2012, and what was true in 2015 as known today, still answer.
+    expect(nationalTotal('population', '2012-01-01T00:00:00Z')?.value).toBe(4_960_000);
+    expect(stateAsOf({ metric: 'population', asOf: '2015-01-01T00:00:00Z', knownAt: new Date().toISOString() })).toHaveLength(3);
+    expect(nationalTotal('population')?.value).toBe(6_300_000);
+    expect(metricDates('population')).toEqual(['2009-01-01', '2019-01-01', '2021-01-01']);
+    expect(metricsKnown()).toEqual(['population']);
+    expect(getRun(first.id)?.accepted).toBe(3);
+    expect(listAudit().filter(a => a.action === 'twin.archive').length).toBeGreaterThan(0);
+    // An archived import can still be withdrawn.
+    expect(ok(withdrawRun(first.id, 'D', 'wrong census base')).superseded).toBe(3);
+    expect(stateAsOf({ metric: 'population', asOf: '2015-01-01T00:00:00Z', knownAt: new Date(Date.now() + 1000).toISOString() })).toHaveLength(0);
   });
 });

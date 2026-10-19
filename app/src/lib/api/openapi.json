@@ -10818,7 +10818,7 @@
         ],
         "operationId": "get_twin_sources",
         "summary": "GET /api/twin/sources",
-        "description": "Registered sources of the national twin and their recent imports. POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "description": "Registered sources of the national twin and their recent imports, and the size of the history archive (older observations and runs, still queried). POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial).",
         "parameters": [],
         "responses": {
           "200": {
@@ -10843,7 +10843,7 @@
         ],
         "operationId": "post_twin_sources",
         "summary": "POST /api/twin/sources",
-        "description": "Registered sources of the national twin and their recent imports. POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "description": "Registered sources of the national twin and their recent imports, and the size of the history archive (older observations and runs, still queried). POST registers a source (a named official; audited). A signed-in official's verified name replaces any name in the request (withOfficial).",
         "parameters": [],
         "requestBody": {
           "required": false,
