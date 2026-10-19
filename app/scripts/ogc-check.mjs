@@ -5,9 +5,11 @@
 // build: landing page links, conformance classes, collections and their
 // links, items as GeoJSON with numberMatched/numberReturned, limit and paging
 // (next and prev links), bbox and datetime parameters (valid and invalid),
-// single features by id and 404 for an unknown one, coordinates in CRS84.
+// single features by id and 404 for an unknown one, coordinates in CRS84,
+// and Part 3 CQL2 filters (text and JSON; an unknown queryable is a 400).
+// A GIS client's key: --header "Authorization: Bearer civ_…".
 //
-// Usage: node scripts/ogc-check.mjs --base http://localhost:3000 [--cookie name=value] [--report ogc.json]
+// Usage: node scripts/ogc-check.mjs --base http://localhost:3000 [--cookie name=value | --header "Authorization: Bearer civ_…"] [--report ogc.json]
 
 import { writeFileSync } from 'node:fs';
 
@@ -15,12 +17,13 @@ const arg = (name, fallback) => { const i = process.argv.indexOf(name); return i
 const BASE = arg('--base', 'http://localhost:3000').replace(/\/$/, '');
 const ROOT = `${BASE}/api/twin/ogc`;
 const COOKIE = arg('--cookie');
+const HEADER = arg('--header');
 const REPORT = arg('--report');
 
 const results = [];
 const check = (id, ok, detail = '') => { results.push({ id, ok: !!ok, detail }); console.log(`${ok ? 'ok  ' : 'FAIL'} ${id}${detail && !ok ? ` — ${detail}` : ''}`); };
 async function get(url, accept = 'application/json') {
-  const r = await fetch(url, { headers: { accept, ...(COOKIE ? { cookie: COOKIE } : {}) } });
+  const r = await fetch(url, { headers: { accept, ...(COOKIE ? { cookie: COOKIE } : {}), ...(HEADER ? { [HEADER.split(':')[0].trim()]: HEADER.slice(HEADER.indexOf(':') + 1).trim() } : {}) } });
   let body = null;
   try { body = await r.json(); } catch { /* not JSON */ }
   return { status: r.status, type: r.headers.get('content-type') ?? '', body };
@@ -100,6 +103,16 @@ for (const c of list) {
   }
   const missing = await get(`${ROOT}/collections/${encodeURIComponent(id)}/items/no-such-feature-0000`);
   check(`[${id}] core/f-op: unknown id answers 404`, missing.status === 404, `status ${missing.status}`);
+
+  // Part 3 filtering (CQL2): a filter on the geometry answers GeoJSON; an unknown queryable is refused with 400.
+  if (classes.includes('http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter')) {
+    const all = await get(`${ROOT}/collections/${encodeURIComponent(id)}/items?filter=${encodeURIComponent('S_INTERSECTS(geometry, BBOX(-180, -90, 180, 90))')}&limit=5`, 'application/geo+json');
+    check(`[${id}] filter/filter-param: CQL2-Text filter answers 200`, all.status === 200 && all.body?.type === 'FeatureCollection', `status ${all.status}`);
+    const json = await get(`${ROOT}/collections/${encodeURIComponent(id)}/items?filter-lang=cql2-json&filter=${encodeURIComponent('{"op":"s_intersects","args":[{"property":"geometry"},{"bbox":[-180,-90,180,90]}]}')}&limit=5`, 'application/geo+json');
+    check(`[${id}] filter/filter-lang: CQL2-JSON filter answers 200`, json.status === 200, `status ${json.status}`);
+    const bad = await get(`${ROOT}/collections/${encodeURIComponent(id)}/items?filter=${encodeURIComponent("no_such_queryable = 'x'")}`);
+    check(`[${id}] filter/filter-param: unknown queryable refused with 400`, bad.status === 400, `status ${bad.status}`);
+  }
 }
 const unknown = await get(`${ROOT}/collections/no-such-collection`);
 check('core/sfc-md-op: unknown collection answers 404', unknown.status === 404, `status ${unknown.status}`);

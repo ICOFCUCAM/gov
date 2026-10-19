@@ -12,6 +12,7 @@ import { boundariesInForce } from '@/lib/data/boundaries';
 import type { ActiveBoundary } from '@/lib/map/boundary-active';
 import { QUERYABLES_REL, filterQs, matchesFilters, type PropertyFilter } from './ogc-queryables';
 import { DATETIME_AS_OF, MAX_LIMIT, bboxOf, intersects, pageLinks, parseBbox, parseDatetime } from './ogc';
+import { cql2Matches, type ParsedFilter } from './cql2';
 
 export const BOUNDARY_COLLECTION = 'boundaries';
 const CRS84 = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84';
@@ -46,7 +47,7 @@ function featuresOf(b: ActiveBoundary) {
   }));
 }
 
-export function boundaryItems(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; level?: string | null; filters?: PropertyFilter }) {
+export function boundaryItems(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; level?: string | null; filters?: PropertyFilter; cql?: ParsedFilter }) {
   const limit = Math.min(MAX_LIMIT, Math.max(1, Number(q.limit) || 100));
   const offset = Math.max(0, Number(q.offset) || 0);
   const bbox = parseBbox(q.bbox ?? null);
@@ -59,10 +60,11 @@ export function boundaryItems(base: string, q: { limit?: string | null; offset?:
     .filter(v => !level || String(v.level) === level)
     .flatMap(v => (bbox ? { ...v, units: v.units.filter(u => intersects(bboxOf(u.geometry), bbox)) } : v))
     .flatMap(featuresOf)
-    .filter(f => matchesFilters(f.properties, filters));
+    .filter(f => matchesFilters(f.properties, filters))
+    .filter(f => cql2Matches(q.cql, f));
   const page = all.slice(offset, offset + limit);
   const href = `${base}/collections/${BOUNDARY_COLLECTION}/items`;
-  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${level ? `&level=${encodeURIComponent(level)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}${filterQs(filters)}`;
+  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${level ? `&level=${encodeURIComponent(level)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}${filterQs(filters)}${q.cql?.qs ?? ''}`;
   return {
     type: 'FeatureCollection' as const,
     features: page,

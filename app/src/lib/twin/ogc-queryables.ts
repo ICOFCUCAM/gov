@@ -16,9 +16,9 @@ export const QUERYABLES_CONFORMANCE = [
 export const QUERYABLES_REL = 'http://www.opengis.net/def/rel/ogc/1.0/queryables';
 
 /** The parameters every items request takes (Part 1). */
-export const STANDARD_PARAMS = ['limit', 'offset', 'bbox', 'datetime', 'f'] as const;
+export const STANDARD_PARAMS = ['limit', 'offset', 'bbox', 'datetime', 'f', 'filter', 'filter-lang', 'filter-crs'] as const;
 
-interface Queryable { title: string; description: string; type: 'string' | 'integer'; enum?: (string | number)[]; pattern?: string }
+export interface Queryable { title: string; description: string; type: 'string' | 'integer' | 'number'; enum?: (string | number)[]; pattern?: string; format?: 'date-time' | 'date' }
 
 const CODE = '^[A-Za-z0-9:_.-]{1,80}$';
 
@@ -28,6 +28,7 @@ export const QUERYABLES: Record<string, Record<string, Queryable>> = {
     level: { title: 'Level', description: '1 for the official subdivisions (default), 2 for districts.', type: 'integer', enum: [1, 2] },
     code: { title: 'Code', description: 'ISO 3166-2 code, or the district\'s stable code.', type: 'string', pattern: CODE },
     parent: { title: 'Parent', description: 'Code of the subdivision a district lies in.', type: 'string', pattern: CODE },
+    name: { title: 'Name', description: 'The unit\'s official name.', type: 'string' },
   },
   facilities: {
     category: { title: 'Category', description: 'The kind of site.', type: 'string', enum: FACILITY_CATEGORIES.filter(c => c.suggestedSensitivity !== 'confidential').map(c => c.key) },
@@ -36,11 +37,17 @@ export const QUERYABLES: Record<string, Record<string, Queryable>> = {
     status: { title: 'Status', description: 'Operating status.', type: 'string', enum: [...STATUSES] },
     certification: { title: 'Location certification', description: 'Whether the location is certified under the nation\'s policy.', type: 'string', enum: ['awaiting', 'certified', 'rejected'] },
     sensitivity: { title: 'Sensitivity', description: 'public or restricted (restricted sites are generalised for viewers without need).', type: 'string', enum: ['public', 'restricted'] },
+    name: { title: 'Name', description: 'The site\'s name.', type: 'string' },
+    publishedAt: { title: 'Published', description: 'When the site was published in the register.', type: 'string', format: 'date-time' },
   },
   boundaries: {
     level: { title: 'Level', description: '1 for regions, 2 for districts.', type: 'integer', enum: [1, 2] },
     code: { title: 'Code', description: 'The unit\'s code.', type: 'string', pattern: CODE },
     parent: { title: 'Parent', description: 'Code of the region a district lies in.', type: 'string', pattern: CODE },
+    name: { title: 'Name', description: 'The unit\'s name.', type: 'string' },
+    version: { title: 'Version', description: 'The published boundary version number.', type: 'integer' },
+    validFrom: { title: 'In force from', description: 'The date the version took effect.', type: 'string', format: 'date' },
+    publishedAt: { title: 'Published', description: 'When the version was published.', type: 'string', format: 'date-time' },
   },
 };
 
@@ -53,10 +60,10 @@ export function queryables(base: string, collectionId: string) {
     $id: `${base}/collections/${collectionId}/queryables`,
     type: 'object',
     title: `Queryables of ${collectionId}`,
-    description: 'Each property may be given as a query parameter on /items to keep only the features whose property equals it. Other parameters than these and limit, offset, bbox, datetime and f are refused.',
+    description: 'Each property may be given as a query parameter on /items to keep only the features whose property equals it, or used in a CQL2 filter (filter, filter-lang=cql2-text|cql2-json, filter-crs CRS84) with geometry. Other parameters than these and limit, offset, bbox, datetime, f, filter, filter-lang and filter-crs are refused.',
     properties: {
-      geometry: { $ref: 'https://geojson.org/schema/Geometry.json' },
-      ...Object.fromEntries(Object.entries(q).map(([k, v]) => [k, { title: v.title, description: v.description, type: v.type, ...(v.enum ? { enum: v.enum } : {}), ...(v.pattern ? { pattern: v.pattern } : {}) }])),
+      geometry: { $ref: 'https://geojson.org/schema/Geometry.json', 'x-ogc-role': 'primary-geometry' },
+      ...Object.fromEntries(Object.entries(q).map(([k, v]) => [k, { title: v.title, description: v.description, type: v.type, ...(v.format ? { format: v.format } : {}), ...(v.enum ? { enum: v.enum } : {}), ...(v.pattern ? { pattern: v.pattern } : {}) }])),
     },
     additionalProperties: false,
   };

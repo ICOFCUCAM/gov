@@ -16,11 +16,13 @@ import { loadDistricts, loadNationGeography } from '@/lib/map/geography';
 import { nationIso3 } from '@/lib/nation/registry';
 import { listEntities, stateAsOf, listSources } from './register';
 import { QUERYABLES_CONFORMANCE, QUERYABLES_REL, filterQs, matchesFilters, type PropertyFilter } from './ogc-queryables';
+import { CQL2_CONFORMANCE, cql2Matches, type ParsedFilter } from './cql2';
 
 export const CONFORMANCE = [
   'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
   'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson',
   ...QUERYABLES_CONFORMANCE,
+  ...CQL2_CONFORMANCE,
 ];
 export const COLLECTION = 'subdivisions';
 const CRS84 = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84';
@@ -144,7 +146,7 @@ async function features(datetime: string, level: 1 | 2) {
   return { units: g.units, make: (p: Unit) => featureOf(p, level, entityByCode, values) };
 }
 
-export async function items(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; level?: string | null; filters?: PropertyFilter }) {
+export async function items(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; level?: string | null; filters?: PropertyFilter; cql?: ParsedFilter }) {
   const limit = Math.min(MAX_LIMIT, Math.max(1, Number(q.limit) || 100));
   const offset = Math.max(0, Number(q.offset) || 0);
   const bbox = parseBbox(q.bbox ?? null);
@@ -157,9 +159,10 @@ export async function items(base: string, q: { limit?: string | null; offset?: s
   const { units, make } = await features(datetime, level);
   const matched = units
     .filter(p => !bbox || (p.geometry && intersects(bboxOf(p.geometry), bbox)))
-    .filter(p => matchesFilters({ code: p.code, parent: p.parent }, filters));
+    .filter(p => matchesFilters({ code: p.code, parent: p.parent, name: p.name }, filters))
+    .filter(p => cql2Matches(q.cql, { properties: { code: p.code, parent: p.parent, name: p.name, level }, geometry: p.geometry }));
   const page = matched.slice(offset, offset + limit);
-  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${(q.level ?? lv) ? `&level=${encodeURIComponent((q.level ?? lv)!)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}${filterQs(filters)}`;
+  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${(q.level ?? lv) ? `&level=${encodeURIComponent((q.level ?? lv)!)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}${filterQs(filters)}${q.cql?.qs ?? ''}`;
   const href = `${base}/collections/${COLLECTION}/items`;
   return {
     type: 'FeatureCollection' as const,

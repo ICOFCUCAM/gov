@@ -24967,7 +24967,7 @@
         ],
         "operationId": "get_twin_ogc_collections_collectionId_items",
         "summary": "GET /api/twin/ogc/collections/{collectionId}/items",
-        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime, ?level=1|2), or the national facility register's published sites (also ?category), as the viewer may see them, or the published boundaries in force (also ?level). Each collection's queryables (/collections/{id}/queryables) are accepted as equality filters (e.g. ?regionCode=KE-30&status=operational); any other parameter is refused with 400.",
+        "description": "OGC API – Features items: the nation's subdivisions as GeoJSON with their observed values (?limit, ?offset, ?bbox=minLon,minLat,maxLon,maxLat, ?datetime, ?level=1|2), or the national facility register's published sites (also ?category), as the viewer may see them, or the published boundaries in force (also ?level). Each collection's queryables (/collections/{id}/queryables) are accepted as equality filters (e.g. ?regionCode=KE-30&status=operational); any other parameter is refused with 400. CQL2 filters (OGC API – Features Part 3): ?filter=<CQL2-Text or CQL2-JSON>&filter-lang=cql2-text|cql2-json&filter-crs=CRS84 on the queryables and geometry (lib/twin/cql2.ts); an invalid filter is 400 with the reason.",
         "parameters": [
           {
             "name": "collectionId",
@@ -24987,6 +24987,30 @@
           },
           {
             "name": "datetime",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter-crs",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filter-lang",
             "in": "query",
             "required": false,
             "schema": {
@@ -25568,10 +25592,14 @@
                           "properties": {
                             "$ref": {
                               "type": "string"
+                            },
+                            "x-ogc-role": {
+                              "type": "string"
                             }
                           },
                           "required": [
-                            "$ref"
+                            "$ref",
+                            "x-ogc-role"
                           ]
                         }
                       },

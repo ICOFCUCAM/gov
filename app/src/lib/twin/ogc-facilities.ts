@@ -13,6 +13,7 @@ import { standardsOf, osmText } from '@/lib/data/facility-standards';
 import { getMinistry } from '@/lib/data/store';
 import { QUERYABLES_REL, filterQs, matchesFilters, type PropertyFilter } from './ogc-queryables';
 import { DATETIME_AS_OF, MAX_LIMIT, pageLinks, parseBbox, parseDatetime } from './ogc';
+import { cql2Matches, type ParsedFilter } from './cql2';
 
 export const FACILITY_COLLECTION = 'facilities';
 const CRS84 = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84';
@@ -64,7 +65,7 @@ function featureOf(s: ReturnType<typeof listFacilities>[number]) {
   };
 }
 
-export function facilityItems(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; category?: string | null; filters?: PropertyFilter }, viewer: Viewer) {
+export function facilityItems(base: string, q: { limit?: string | null; offset?: string | null; bbox?: string | null; datetime?: string | null; category?: string | null; filters?: PropertyFilter; cql?: ParsedFilter }, viewer: Viewer) {
   const limit = Math.min(MAX_LIMIT, Math.max(1, Number(q.limit) || 100));
   const offset = Math.max(0, Number(q.offset) || 0);
   const bbox = parseBbox(q.bbox ?? null);
@@ -77,10 +78,11 @@ export function facilityItems(base: string, q: { limit?: string | null; offset?:
   const all = listFacilities({ category: category ?? undefined, ...(bbox ? { bbox } : {}) }, viewer)
     .filter(s => !s.publishedAt || s.publishedAt <= datetime)
     .map(featureOf)
-    .filter(f => matchesFilters(f.properties, filters));
+    .filter(f => matchesFilters(f.properties, filters))
+    .filter(f => cql2Matches(q.cql, f));
   const page = all.slice(offset, offset + limit);
   const href = `${base}/collections/${FACILITY_COLLECTION}/items`;
-  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${category ? `&category=${encodeURIComponent(category)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}${filterQs(filters)}`;
+  const qs = (o: number) => `?limit=${limit}&offset=${o}${q.bbox ? `&bbox=${encodeURIComponent(q.bbox)}` : ''}${category ? `&category=${encodeURIComponent(category)}` : ''}${q.datetime ? `&datetime=${encodeURIComponent(q.datetime)}` : ''}${filterQs(filters)}${q.cql?.qs ?? ''}`;
   return {
     type: 'FeatureCollection' as const,
     features: page,
