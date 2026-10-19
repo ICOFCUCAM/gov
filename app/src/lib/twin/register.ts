@@ -54,7 +54,15 @@ export interface SourceMapping {
   unit?: { column: string } | { fixed: string };
   /** Column holding the date or year the value is true for, or one date for the whole file. */
   date?: { column: string } | { fixed: string };
+  /** Optional: the date a value stops being true (interval facts, e.g. a budget year); empty means open-ended. */
+  validTo?: { column: string } | { fixed: string };
+  /** Optional columns for the quality the source states: provisional, final or revised; a standard error; a 95% interval. */
+  quality?: { status?: { column: string } | { fixed: string }; stdErr?: { column: string }; ci95Low?: { column: string }; ci95High?: { column: string } };
 }
+
+export type QualityStatus = 'provisional' | 'final' | 'revised';
+/** The quality a source states for a value. Absent on observations from sources that state none (and on snapshots saved before the field). */
+export interface ObservationQuality { status?: QualityStatus; stdErr?: number; ci95?: { low: number; high: number } }
 
 export interface TwinSource {
   id: string;
@@ -93,8 +101,12 @@ export interface Observation {
   unit: string;
   /** When it was true (ISO date). */
   validFrom: string;
+  /** When it stopped being true (ISO date, exclusive), for interval facts; absent = still true until a later value. */
+  validTo?: string;
   /** When the platform recorded it (ISO time). */
   recordedAt: string;
+  /** What the source states about its quality; absent = not stated. */
+  quality?: ObservationQuality;
   sourceId: string;
   runId: string;
   /** When the platform stopped relying on it (its run was withdrawn); as-of queries known before then still see it. */
@@ -250,6 +262,29 @@ export function isoDate(v: string | undefined): string | undefined {
   return Number.isFinite(t) ? new Date(t).toISOString().slice(0, 10) : undefined;
 }
 
+const STATUS: Record<string, QualityStatus> = { provisional: 'provisional', p: 'provisional', preliminary: 'provisional', final: 'final', f: 'final', revised: 'revised', r: 'revised' };
+const num = (v: string | undefined) => { const t = (v ?? '').replace(/[\s,]/g, ''); return t === '' ? undefined : Number(t); };
+
+/** The quality columns of a row, or the reason they cannot be read. Empty cells state nothing. */
+function readQuality(row: Record<string, string>, spec: SourceMapping['quality']): ObservationQuality | undefined | string {
+  if (!spec) return undefined;
+  const q: ObservationQuality = {};
+  const rawStatus = (col(row, spec.status) ?? '').trim();
+  if (rawStatus) {
+    const st = STATUS[rawStatus.toLowerCase()];
+    if (!st) return `"${rawStatus}" is not a status (provisional, final or revised)`;
+    q.status = st;
+  }
+  const se = num(spec.stdErr && row[spec.stdErr.column]);
+  if (se !== undefined) { if (!Number.isFinite(se) || se < 0) return `"${row[spec.stdErr!.column]}" is not a standard error`; q.stdErr = se; }
+  const lo = num(spec.ci95Low && row[spec.ci95Low.column]), hi = num(spec.ci95High && row[spec.ci95High.column]);
+  if (lo !== undefined || hi !== undefined) {
+    if (lo === undefined || hi === undefined || !Number.isFinite(lo) || !Number.isFinite(hi) || lo > hi) return 'The 95% interval needs a low and a high bound, low first';
+    q.ci95 = { low: lo, high: hi };
+  }
+  return Object.keys(q).length ? q : undefined;
+}
+
 export interface RunDeps { fetch?: typeof fetch; resolve?: (host: string) => Promise<string[]>; now?: Date }
 
 /**
@@ -301,7 +336,13 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
       const validFrom = s.mapping.date ? isoDate(col(row, s.mapping.date)) : now.toISOString().slice(0, 10);
       if (!validFrom) return reject(`"${col(row, s.mapping.date)}" is not a date or year`);
       if (validFrom > now.toISOString().slice(0, 10)) return reject(`${validFrom} is in the future`);
-      fresh.push({ entityId: entity.id, metric, value, unit, validFrom, recordedAt: run.at, sourceId, runId: run.id });
+      const rawTo = (col(row, s.mapping.validTo) ?? '').trim();
+      const validTo = rawTo ? isoDate(rawTo) : undefined;
+      if (rawTo && !validTo) return reject(`"${rawTo}" is not a date for the end of the value's validity`);
+      if (validTo && validTo <= validFrom) return reject(`It stops being true (${validTo}) before it starts (${validFrom})`);
+      const q = readQuality(row, s.mapping.quality);
+      if (typeof q === 'string') return reject(q);
+      fresh.push({ entityId: entity.id, metric, value, unit, validFrom, ...(validTo ? { validTo } : {}), recordedAt: run.at, ...(q ? { quality: q } : {}), sourceId, runId: run.id });
     });
     run.accepted = fresh.length;
     const refused = run.rows - run.accepted;
@@ -365,6 +406,7 @@ export function stateAsOf({ asOf, knownAt, metric, entityId }: { asOf?: string; 
     if (entityId && o.entityId !== entityId) continue;
     if (o.recordedAt > at || o.validFrom > day) continue;
     if (o.supersededAt && o.supersededAt <= at) continue;
+    if (o.validTo && o.validTo <= day) continue;
     const k = `${o.entityId}|${o.metric}`;
     const cur = best.get(k);
     if (!cur || o.validFrom > cur.validFrom || (o.validFrom === cur.validFrom && o.recordedAt > cur.recordedAt)) best.set(k, o);

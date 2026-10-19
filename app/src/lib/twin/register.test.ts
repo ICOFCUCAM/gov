@@ -186,3 +186,37 @@ describe('withdrawing an import', () => {
     expect(listAudit().find(a => a.action === 'twin.run.withdraw')).toMatchObject({ actor: 'Director of Statistics', detail: expect.stringMatching(/3 observations superseded/) });
   });
 });
+
+describe('interval facts and stated quality', () => {
+  beforeEach(async () => {
+    resetTwin();
+    applyNation({ configured: true, stateName: 'Republic of Kenya', iso3: 'KEN', regions: ['Mombasa', 'Nairobi City', 'Kisumu'] });
+    await syncRegister();
+  });
+
+  it('reads optional end dates and quality columns, refusing what it cannot read', async () => {
+    const s = ok(registerSource({ by: 'D', name: 'Survey', publisher: 'KNBS', kind: 'csv-upload', mapping: { ...mapping, validTo: { column: 'until' }, quality: { status: { column: 'status' }, stdErr: { column: 'se' }, ci95Low: { column: 'lo' }, ci95High: { column: 'hi' } } } }));
+    const run = ok(await runSource(s.id, { by: 'D', deps: { now: new Date('2023-01-01T00:00:00Z') }, csv: [
+      'region,value,year,until,status,se,lo,hi',
+      'Mombasa,1000,2019,2020,provisional,12,980,1020',
+      'Nairobi City,2000,2019,,final,,,',
+      'Kisumu,3000,2019,,,,,',
+      'Kisumu,3000,2019,2018,,,,',
+      'Kisumu,3000,2019,,maybe,,,',
+      'Kisumu,3000,2019,,,,10,',
+    ].join('\n') }));
+    expect(run.accepted).toBe(3);
+    expect(run.rejected.map(r => r.reason)).toEqual([expect.stringMatching(/stops being true/), expect.stringMatching(/not a status/), expect.stringMatching(/95% interval/)]);
+    const all = stateAsOf({ metric: 'population', asOf: '2019-06-01T00:00:00Z', knownAt: '2023-01-01T00:00:00Z' });
+    expect(all.find(o => o.entityId === 'place:KE-28')).toMatchObject({ validTo: '2020-01-01', quality: { status: 'provisional', stdErr: 12, ci95: { low: 980, high: 1020 } } });
+    expect(all.find(o => o.entityId === 'place:KE-30')?.quality).toEqual({ status: 'final' });
+    expect(all.find(o => o.entityId === 'place:KE-17')?.quality).toBeUndefined();
+    // After its end date the Mombasa value is no longer true.
+    expect(stateAsOf({ metric: 'population', asOf: '2021-01-01T00:00:00Z', knownAt: '2023-01-01T00:00:00Z' }).map(o => o.entityId).sort()).toEqual(['place:KE-17', 'place:KE-30']);
+  });
+
+  it('reads observations saved before these fields as open-ended with no stated quality', () => {
+    twinDb().observations.push({ entityId: 'place:KE-28', metric: 'population', value: 5, unit: 'persons', validFrom: '2010-01-01', recordedAt: '2011-01-01T00:00:00.000Z', sourceId: 'SRC-0', runId: 'RUN-0' });
+    expect(stateAsOf({ metric: 'population', asOf: '2030-01-01T00:00:00Z', knownAt: '2030-01-01T00:00:00Z' })).toHaveLength(1);
+  });
+});

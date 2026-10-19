@@ -177,7 +177,7 @@ export function TwinWorkspace() {
 }
 
 function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (done: string, fn: () => Promise<unknown>) => Promise<void> }) {
-  const [f, setF] = React.useState({ name: '', publisher: '', kind: 'csv-upload', url: '', entity: 'region', value: 'value', metricMode: 'fixed', metric: 'population', unit: 'persons', date: 'year', schedule: 'manual' });
+  const [f, setF] = React.useState({ name: '', publisher: '', kind: 'csv-upload', url: '', entity: 'region', value: 'value', metricMode: 'fixed', metric: 'population', unit: 'persons', date: 'year', validTo: '', status: '', stdErr: '', schedule: 'manual' });
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { const v = e.currentTarget.value; setF(x => ({ ...x, [k]: v })); };
   const submit = () => act('Source registered', () => call('/api/twin/sources', {
     method: 'POST',
@@ -188,6 +188,8 @@ function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (do
         metric: f.metricMode === 'fixed' ? { fixed: f.metric } : { column: f.metric },
         ...(f.unit ? { unit: { fixed: f.unit } } : {}),
         ...(f.date ? { date: /^\d{4}(-\d{2}(-\d{2})?)?$/.test(f.date) ? { fixed: f.date } : { column: f.date } } : {}),
+        ...(f.validTo ? { validTo: { column: f.validTo } } : {}),
+        ...(f.status || f.stdErr ? { quality: { ...(f.status ? { status: { column: f.status } } : {}), ...(f.stdErr ? { stdErr: { column: f.stdErr } } : {}) } } : {}),
       },
     }),
   }));
@@ -221,6 +223,9 @@ function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (do
         </label>
         {F({ k: 'unit', l: 'Unit', ph: 'persons' })}
         {F({ k: 'date', l: 'Date: a column, or one year or date for the file', ph: 'year or 2024' })}
+        {F({ k: 'validTo', l: 'Column with the end date (optional)', hint: 'For values true over a period; empty cells mean still true.' })}
+        {F({ k: 'status', l: 'Column with the status (optional)', hint: 'provisional, final or revised' })}
+        {F({ k: 'stdErr', l: 'Column with the standard error (optional)' })}
       </div>
       <div className="mt-3"><button type="button" className={btn} disabled={busy || !by.trim() || !f.name.trim() || !f.publisher.trim()} onClick={() => void submit()}>Register source</button></div>
     </Section>
