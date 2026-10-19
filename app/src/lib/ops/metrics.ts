@@ -10,7 +10,7 @@
 // logged recently.
 
 import { liveKeys, persistenceStatus } from '@/lib/data/persist';
-import { listAudit, verifyAuditChain } from '@/lib/data/store';
+import { auditVerification } from '@/lib/data/store';
 import { listRuns, listSources } from '@/lib/twin/register';
 import { facilityCounts } from '@/lib/data/facilities';
 import { recentProblems } from '@/lib/ops/log';
@@ -55,7 +55,8 @@ export function problemsLastHour(now = Date.now()): { warn: number; error: numbe
 export function collect(now = Date.now()): Family[] {
   const mem = process.memoryUsage();
   const persist = persistenceStatus();
-  const chain = verifyAuditChain();
+  // The cached, incremental check (go-live review M-8): this probe is public and frequent.
+  const chain = auditVerification();
   const g = globalThis as unknown as Record<string, unknown>;
   const sources = listSources();
   const runs = listRuns();
@@ -74,7 +75,7 @@ export function collect(now = Date.now()): Family[] {
     { name: 'civicos_persistence_last_save_age_seconds', help: 'Seconds since the state was last saved (-1: never).', type: 'gauge',
       samples: [{ labels: { adapter: persist.adapter }, value: persist.lastSaved ? Math.round((now - Date.parse(persist.lastSaved)) / 1000) : -1 }] },
     { name: 'civicos_persistence_error', help: '1 when the last save or restore failed.', type: 'gauge', samples: [{ labels: { adapter: persist.adapter }, value: persist.error ? 1 : 0 }] },
-    { name: 'civicos_audit_entries', help: 'Entries in the platform audit chain.', type: 'gauge', samples: [{ value: listAudit().length }] },
+    { name: 'civicos_audit_entries', help: 'Entries in the platform audit chain.', type: 'gauge', samples: [{ value: chain.total }] },
     { name: 'civicos_audit_chain_intact', help: '1 when every entry of the audit chain verifies.', type: 'gauge', samples: [{ value: chain.ok ? 1 : 0 }] },
     { name: 'civicos_twin_sources', help: 'Registered twin sources.', type: 'gauge', samples: [{ value: sources.length }] },
     { name: 'civicos_twin_source_last_run_age_seconds', help: 'Seconds since each source last ran (-1: never).', type: 'gauge',

@@ -640,6 +640,7 @@
         ],
         "operationId": "get_audit",
         "summary": "GET /api/audit",
+        "description": "The platform audit chain, newest first, one page at a time (go-live review M-8): ?limit= (default 200, at most 1000) and ?before=<seq> for the page after; `total` is the chain's length and `nextBefore` the cursor for the next page (absent on the last one).",
         "parameters": [],
         "responses": {
           "200": {
@@ -654,10 +655,17 @@
                       "items": {
                         "$ref": "#/components/schemas/AuditEntry"
                       }
+                    },
+                    "total": {
+                      "type": "number"
+                    },
+                    "nextBefore": {
+                      "type": "number"
                     }
                   },
                   "required": [
-                    "events"
+                    "events",
+                    "total"
                   ]
                 },
                 "examples": {
@@ -676,7 +684,9 @@
                           "prevHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                           "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
                         }
-                      ]
+                      ],
+                      "total": 1,
+                      "nextBefore": 1
                     }
                   }
                 }
@@ -709,37 +719,33 @@
         ],
         "operationId": "get_audit_verify",
         "summary": "GET /api/audit/verify",
-        "parameters": [],
+        "description": "The platform audit chain's verification, open to everyone (a transparency feature; the cover page shows it). Answered from the cached, incremental check (lib/data/store/audit.ts auditVerification, go-live review M-8): only entries appended since the last answer are hashed here; the whole chain is checked again off the request path. Limited per address (`publicRead`). A signed-in official may ask for the full check now with ?full=1; it runs in chunks that yield to other requests.",
+        "parameters": [
+          {
+            "name": "full",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "ok": {
-                      "type": "boolean"
-                    },
-                    "checked": {
-                      "type": "number"
-                    },
-                    "brokenAtSeq": {
-                      "type": "number"
-                    },
-                    "signed": {
-                      "$ref": "#/components/schemas/SignedHeadCheck"
-                    }
-                  },
-                  "required": [
-                    "ok",
-                    "checked"
-                  ]
+                  "$ref": "#/components/schemas/CachedAuditVerification"
                 },
                 "examples": {
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
+                      "total": 1,
+                      "complete": true,
+                      "verifiedAt": "2026-01-15T09:30:00.000Z",
+                      "fullCheckAt": "2026-01-15T09:30:00.000Z",
                       "ok": true,
                       "checked": 1,
                       "brokenAtSeq": 1,
@@ -4261,6 +4267,132 @@
         "x-source": "src/app/api/cron/promote-directives/route.ts"
       }
     },
+    "/api/cron/retention": {
+      "get": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "get_cron_retention",
+        "summary": "GET /api/cron/retention",
+        "description": "Retention sweep cron — hourly (supabase/cron/schedule.sql). Deletes unconfirmed email-update requests whose link has expired (with their messages), expires sign-in lockout counters, writes the summaries of aggregated refusals to the audit chain, and applies the nation's confirmed retention rules for permits and cases (keep unless set; lib/data/retention.ts). One audit entry with counts when anything was removed; never names. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "ok": {
+                      "type": "boolean",
+                      "const": true
+                    },
+                    "run": {
+                      "$ref": "#/components/schemas/RetentionRun"
+                    }
+                  },
+                  "required": [
+                    "ok",
+                    "run"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "ok": true,
+                      "run": {
+                        "at": "2026-01-15T09:30:00.000Z",
+                        "permits": {
+                          "anonymised": 1,
+                          "deleted": 1
+                        },
+                        "cases": {
+                          "anonymised": 1,
+                          "deleted": 1
+                        },
+                        "subscriptions": {
+                          "expired": 1
+                        },
+                        "signInFailures": {
+                          "expired": 1
+                        },
+                        "auditSummaries": 1
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "automation": []
+          }
+        ],
+        "x-source": "src/app/api/cron/retention/route.ts"
+      },
+      "post": {
+        "tags": [
+          "cron"
+        ],
+        "operationId": "post_cron_retention",
+        "summary": "POST /api/cron/retention",
+        "description": "Retention sweep cron — hourly (supabase/cron/schedule.sql). Deletes unconfirmed email-update requests whose link has expired (with their messages), expires sign-in lockout counters, writes the summaries of aggregated refusals to the audit chain, and applies the nation's confirmed retention rules for permits and cases (keep unless set; lib/data/retention.ts). One audit entry with counts when anything was removed; never names. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (or ?token=), like every /api/cron/* worker.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "automation": []
+          }
+        ],
+        "x-permission-rule": "self-authenticated",
+        "x-source": "src/app/api/cron/retention/route.ts"
+      }
+    },
     "/api/cron/site-feeds": {
       "get": {
         "tags": [
@@ -6053,7 +6185,7 @@
         ],
         "operationId": "get_exchange_log",
         "summary": "GET /api/exchange/log",
-        "description": "The platform's side of the exchange log (lib/exchange/log.ts): recent requests from connected systems and federation partners, newest first. ?channel=case-feed|site-feed|federation &feedId= &ministry= &limit= (≤ 500).",
+        "description": "The platform's side of the exchange log (lib/exchange/log.ts): recent requests from connected systems and federation partners, newest first. ?channel=case-feed|site-feed|federation &feedId= &ministry= &limit= (≤ 500). `unauthenticated`: calls without a recognised key, or refused by a rate limit, counted per channel, ministry and result (not logged one by one).",
         "parameters": [
           {
             "name": "channel",
@@ -6101,10 +6233,17 @@
                       "items": {
                         "$ref": "#/components/schemas/ExchangeEntry"
                       }
+                    },
+                    "unauthenticated": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/UnauthenticatedCount"
+                      }
                     }
                   },
                   "required": [
-                    "exchanges"
+                    "exchanges",
+                    "unauthenticated"
                   ]
                 },
                 "examples": {
@@ -6124,6 +6263,15 @@
                           "status": 1,
                           "result": "string",
                           "receiptId": "ID-0001"
+                        }
+                      ],
+                      "unauthenticated": [
+                        {
+                          "channel": "case-feed",
+                          "result": "string",
+                          "count": 1,
+                          "first": "string",
+                          "last": "string"
                         }
                       ]
                     }
@@ -8911,7 +9059,7 @@
         ],
         "operationId": "post_federation_exchange",
         "summary": "POST /api/federation/exchange",
-        "description": "A federation partner's request for data under a grant (review R10): the partner's system presents its integration key (Authorization: Bearer civ_…, scope `federation:exchange`) and POSTs { tenant, scope, purpose, retainDays?, onward? }. The grant's usage policy is enforced: a purpose outside it, a longer retention or onward sharing it does not allow is refused with the reason; an allowed exchange returns the obligations. The platform decides with the same default-deny rule as /api/federation/check, records the exchange in the exchange log on its side and answers with a signed receipt for the partner's side. Every decision is audited. When the grant names the partner's client certificate (mutual TLS, lib/exchange/mtls.ts), the exchange is refused unless the ingress verified that very certificate for this request.",
+        "description": "A federation partner's request for data under a grant (review R10): the partner's system presents its integration key (Authorization: Bearer civ_…, scope `federation:exchange`) and POSTs { tenant, scope, purpose, retainDays?, onward? }. The grant's usage policy is enforced: a purpose outside it, a longer retention or onward sharing it does not allow is refused with the reason; an allowed exchange returns the obligations. The platform decides with the same default-deny rule as /api/federation/check, records the exchange in the exchange log on its side (calls with a valid key only) and answers with a signed receipt for the partner's side. Every decision is audited. When the grant names the partner's client certificate (mutual TLS, lib/exchange/mtls.ts), the exchange is refused unless the ingress verified that very certificate for this request.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -13628,7 +13776,7 @@
         ],
         "operationId": "get_org_ministries_id_facilities_feed",
         "summary": "GET /api/org/ministries/{id}/facilities/feed",
-        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header).",
+        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call with a recognised key is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header).",
         "parameters": [
           {
             "name": "id",
@@ -13682,7 +13830,7 @@
         ],
         "operationId": "post_org_ministries_id_facilities_feed",
         "summary": "POST /api/org/ministries/{id}/facilities/feed",
-        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header).",
+        "description": "A ministry's own system of record sending its sites to the national facility register (lib/data/facilities.ts), authenticated by the system's key (Authorization: Bearer csf_…), never a session. POST { sites: [{ ref, name, category, lat, lng, accuracyM?, status?, code?, region?, operator? }] }: new refs are proposed under the same checks as a form (an official publishes them); refs this system sent before are updated (name and status applied, a new position waits for an official to confirm); refusals come back by position. GET ?since=<date-time>: what officials did with this system's sites. When the institution registered a public key for this system (…/facilities/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call with a recognised key is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header).",
         "parameters": [
           {
             "name": "id",
@@ -17095,7 +17243,8 @@
                         "source": "entered",
                         "feedId": "ID-0001",
                         "importId": "ID-0001",
-                        "actedAt": "2026-01-15T09:30:00.000Z"
+                        "actedAt": "2026-01-15T09:30:00.000Z",
+                        "anonymisedAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
                   }
@@ -17130,7 +17279,7 @@
         ],
         "operationId": "get_org_ministries_id_queue_feed",
         "summary": "GET /api/org/ministries/{id}/queue/feed",
-        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header), so both sides keep the record.",
+        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call with a recognised key is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header), so both sides keep the record.",
         "parameters": [
           {
             "name": "id",
@@ -17184,7 +17333,7 @@
         ],
         "operationId": "post_org_ministries_id_queue_feed",
         "summary": "POST /api/org/ministries/{id}/queue/feed",
-        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header), so both sides keep the record.",
+        "description": "A ministry's own case system talking to its queue (lib/data/case-import.ts), authenticated by the system's key (Authorization: Bearer ccf_…), never a session. POST { cases: [{ reference, subject, received, region?, priority?, assignee?, note?, state? }] }: new references are added under the same checks as a loaded file, references this system sent before are updated (state open | assigned | escalated | closed), every refusal comes back by position. GET ?since=<date-time>: what officials did here to this system's cases since then. Every call is audited. When the institution registered a public key for this system (…/queue/feeds/[feedId]/signing-key), every call must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key. Every call with a recognised key is recorded in the exchange log (lib/exchange/log.ts) and answered with a receipt signed by the platform (`receipt`, and the CivicOS-Receipt header), so both sides keep the record.",
         "parameters": [
           {
             "name": "id",
@@ -18438,7 +18587,8 @@
                         "source": "entered",
                         "feedId": "ID-0001",
                         "importId": "ID-0001",
-                        "actedAt": "2026-01-15T09:30:00.000Z"
+                        "actedAt": "2026-01-15T09:30:00.000Z",
+                        "anonymisedAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
                   }
@@ -22339,7 +22489,8 @@
                             "at": "2026-01-15T09:30:00.000Z"
                           }
                         ],
-                        "contestable": true
+                        "contestable": true,
+                        "anonymisedAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
                   }
@@ -22537,7 +22688,8 @@
                             "at": "2026-01-15T09:30:00.000Z"
                           }
                         ],
-                        "contestable": true
+                        "contestable": true,
+                        "anonymisedAt": "2026-01-15T09:30:00.000Z"
                       }
                     }
                   }
@@ -24167,6 +24319,372 @@
         ],
         "x-permission-rule": "admin",
         "x-source": "src/app/api/platform/releases/route.ts"
+      }
+    },
+    "/api/platform/retention/{id}": {
+      "post": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "post_platform_retention_id",
+        "summary": "POST /api/platform/retention/{id}",
+        "description": "Decide a proposed retention rule (lib/data/retention.ts): POST { decision: confirm | withdraw }. Confirming takes a different administrator from the one who proposed it (four-eyes). Administrators only (/api/platform). Audited.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "decision": {},
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "decision": null,
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "change": {
+                      "$ref": "#/components/schemas/RetentionChange"
+                    }
+                  },
+                  "required": [
+                    "change"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "change": {
+                        "id": "ID-0001",
+                        "category": "cases",
+                        "rule": {
+                          "action": "anonymise"
+                        },
+                        "reason": "Text",
+                        "proposedBy": "A. Official",
+                        "proposedAt": "2026-01-15T09:30:00.000Z",
+                        "state": "confirmed",
+                        "decidedBy": "A. Official",
+                        "decidedAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/platform/retention/[id]/route.ts"
+      }
+    },
+    "/api/platform/retention": {
+      "get": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "get_platform_retention",
+        "summary": "GET /api/platform/retention",
+        "description": "The nation's retention rules for personal data in permits and cases (lib/data/retention.ts, go-live review M-13). GET: the rules in force (keep by default), proposals, the last sweeps. POST { category: permits | cases, action: keep | anonymise | delete, days?, basis?, reason }: an administrator proposes a rule; anonymise and delete wait for a different administrator (/api/platform/retention/{id}); keep applies at once. Administrators only (ADMIN_ONLY in lib/auth/roles.ts: /api/platform). Audited.",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rules": {
+                      "type": "object",
+                      "properties": {
+                        "cases": {
+                          "$ref": "#/components/schemas/RetentionRule"
+                        },
+                        "permits": {
+                          "$ref": "#/components/schemas/RetentionRule"
+                        }
+                      },
+                      "required": [
+                        "cases",
+                        "permits"
+                      ]
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "enum": [
+                              "cases",
+                              "permits"
+                            ]
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "applies": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "applies"
+                        ]
+                      }
+                    },
+                    "changes": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RetentionChange"
+                      }
+                    },
+                    "runs": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/RetentionRun"
+                      }
+                    },
+                    "minDays": {
+                      "type": "number"
+                    },
+                    "maxDays": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "rules",
+                    "categories",
+                    "changes",
+                    "runs",
+                    "minDays",
+                    "maxDays"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "rules": {
+                        "cases": {
+                          "action": "anonymise"
+                        },
+                        "permits": {
+                          "action": "anonymise"
+                        }
+                      },
+                      "categories": [
+                        {
+                          "id": "cases",
+                          "label": "Example",
+                          "applies": "string"
+                        }
+                      ],
+                      "changes": [
+                        {
+                          "id": "ID-0001",
+                          "category": "cases",
+                          "rule": {
+                            "action": "anonymise"
+                          },
+                          "reason": "Text",
+                          "proposedBy": "A. Official",
+                          "proposedAt": "2026-01-15T09:30:00.000Z",
+                          "state": "confirmed"
+                        }
+                      ],
+                      "runs": [
+                        {
+                          "at": "2026-01-15T09:30:00.000Z",
+                          "permits": {
+                            "anonymised": 1,
+                            "deleted": 1
+                          },
+                          "cases": {
+                            "anonymised": 1,
+                            "deleted": 1
+                          },
+                          "subscriptions": {
+                            "expired": 1
+                          },
+                          "signInFailures": {
+                            "expired": 1
+                          },
+                          "auditSummaries": 1
+                        }
+                      ],
+                      "minDays": 1,
+                      "maxDays": 1
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-source": "src/app/api/platform/retention/route.ts"
+      },
+      "post": {
+        "tags": [
+          "platform"
+        ],
+        "operationId": "post_platform_retention",
+        "summary": "POST /api/platform/retention",
+        "description": "The nation's retention rules for personal data in permits and cases (lib/data/retention.ts, go-live review M-13). GET: the rules in force (keep by default), proposals, the last sweeps. POST { category: permits | cases, action: keep | anonymise | delete, days?, basis?, reason }: an administrator proposes a rule; anonymise and delete wait for a different administrator (/api/platform/retention/{id}); keep applies at once. Administrators only (ADMIN_ONLY in lib/auth/roles.ts: /api/platform). Audited.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "category": {},
+                  "action": {},
+                  "days": {},
+                  "basis": {},
+                  "reason": {},
+                  "by": {
+                    "type": "string"
+                  }
+                }
+              },
+              "examples": {
+                "schema": {
+                  "summary": "Generated from the schema",
+                  "value": {
+                    "category": null,
+                    "action": null,
+                    "days": null,
+                    "basis": null,
+                    "reason": null,
+                    "by": "A. Official"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "change": {
+                      "$ref": "#/components/schemas/RetentionChange"
+                    }
+                  },
+                  "required": [
+                    "change"
+                  ]
+                },
+                "examples": {
+                  "schema": {
+                    "summary": "Generated from the schema",
+                    "value": {
+                      "change": {
+                        "id": "ID-0001",
+                        "category": "cases",
+                        "rule": {
+                          "action": "anonymise"
+                        },
+                        "reason": "Text",
+                        "proposedBy": "A. Official",
+                        "proposedAt": "2026-01-15T09:30:00.000Z",
+                        "state": "confirmed",
+                        "decidedBy": "A. Official",
+                        "decidedAt": "2026-01-15T09:30:00.000Z"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "officialSession": []
+          }
+        ],
+        "x-permission-rule": "admin",
+        "x-source": "src/app/api/platform/retention/route.ts"
       }
     },
     "/api/platform/state": {
@@ -47605,6 +48123,21 @@
           },
           "signed": {
             "$ref": "#/components/schemas/AuditSignedHeads"
+          },
+          "total": {
+            "type": "number",
+            "description": "From the cached, incremental check (/api/audit/verify): entries in the chain now."
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "False while the server is still catching up with new entries."
+          },
+          "verifiedAt": {
+            "type": "string"
+          },
+          "fullCheckAt": {
+            "type": "string",
+            "description": "When the whole chain was last checked from its first entry."
           }
         },
         "required": [
@@ -48293,6 +48826,45 @@
           "generatedAt",
           "institutions",
           "totals"
+        ]
+      },
+      "CachedAuditVerification": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "number",
+            "description": "Entries in the chain now."
+          },
+          "complete": {
+            "type": "boolean",
+            "description": "False while the background catch-up has not reached the head yet."
+          },
+          "verifiedAt": {
+            "type": "string"
+          },
+          "fullCheckAt": {
+            "type": "string",
+            "description": "When the whole chain was last checked from the start."
+          },
+          "ok": {
+            "type": "boolean"
+          },
+          "checked": {
+            "type": "number"
+          },
+          "brokenAtSeq": {
+            "type": "number"
+          },
+          "signed": {
+            "$ref": "#/components/schemas/SignedHeadCheck"
+          }
+        },
+        "required": [
+          "total",
+          "complete",
+          "verifiedAt",
+          "ok",
+          "checked"
         ]
       },
       "CalibrationEntry": {
@@ -57095,6 +57667,10 @@
           },
           "contestable": {
             "type": "boolean"
+          },
+          "anonymisedAt": {
+            "type": "string",
+            "description": "Set when the nation's retention rule removed the applicant's details (lib/data/retention.ts)."
           }
         },
         "required": [
@@ -58508,6 +59084,10 @@
           "actedAt": {
             "type": "string",
             "description": "When an official last assigned, escalated or closed it."
+          },
+          "anonymisedAt": {
+            "type": "string",
+            "description": "Set when the nation's retention rule removed its details (lib/data/retention.ts)."
           }
         },
         "required": [
@@ -59087,6 +59667,161 @@
           "verified",
           "contents",
           "restoreNotes"
+        ]
+      },
+      "RetentionChange": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "cases",
+              "permits"
+            ]
+          },
+          "rule": {
+            "$ref": "#/components/schemas/RetentionRule"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "proposedBy": {
+            "type": "string"
+          },
+          "proposedAt": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "proposed",
+              "withdrawn"
+            ]
+          },
+          "decidedBy": {
+            "type": "string"
+          },
+          "decidedAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "rule",
+          "reason",
+          "proposedBy",
+          "proposedAt",
+          "state"
+        ]
+      },
+      "RetentionRule": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "anonymise",
+              "delete",
+              "keep"
+            ]
+          },
+          "days": {
+            "type": "number",
+            "description": "Days after the decision / closure; only for anonymise and delete."
+          },
+          "basis": {
+            "type": "string",
+            "description": "The legal basis or records schedule the rule follows."
+          },
+          "proposedBy": {
+            "type": "string",
+            "description": "Who proposed and who confirmed the rule in force (absent for the default)."
+          },
+          "confirmedBy": {
+            "type": "string"
+          },
+          "since": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "RetentionRun": {
+        "type": "object",
+        "properties": {
+          "at": {
+            "type": "string"
+          },
+          "permits": {
+            "type": "object",
+            "properties": {
+              "anonymised": {
+                "type": "number"
+              },
+              "deleted": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "anonymised",
+              "deleted"
+            ]
+          },
+          "cases": {
+            "type": "object",
+            "properties": {
+              "anonymised": {
+                "type": "number"
+              },
+              "deleted": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "anonymised",
+              "deleted"
+            ]
+          },
+          "subscriptions": {
+            "type": "object",
+            "properties": {
+              "expired": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "expired"
+            ]
+          },
+          "signInFailures": {
+            "type": "object",
+            "properties": {
+              "expired": {
+                "type": "number"
+              }
+            },
+            "required": [
+              "expired"
+            ]
+          },
+          "auditSummaries": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "at",
+          "permits",
+          "cases",
+          "subscriptions",
+          "signInFailures",
+          "auditSummaries"
         ]
       },
       "Ring": {
@@ -65572,6 +66307,46 @@
           "history"
         ]
       },
+      "UnauthenticatedCount": {
+        "description": "Calls without a recognised key (or refused by a rate limit), counted per channel, ministry and result.",
+        "type": "object",
+        "properties": {
+          "channel": {
+            "type": "string",
+            "enum": [
+              "case-feed",
+              "federation",
+              "site-feed"
+            ]
+          },
+          "ministryId": {
+            "type": "string"
+          },
+          "feedId": {
+            "type": "string",
+            "description": "The feed or client whose own limit refused the call, when it was known."
+          },
+          "result": {
+            "type": "string"
+          },
+          "count": {
+            "type": "number"
+          },
+          "first": {
+            "type": "string"
+          },
+          "last": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "channel",
+          "result",
+          "count",
+          "first",
+          "last"
+        ]
+      },
       "UpdateChamber": {
         "type": "object",
         "properties": {
@@ -66172,6 +66947,10 @@
           "actedAt": {
             "type": "string",
             "description": "When an official last assigned, escalated or closed it."
+          },
+          "anonymisedAt": {
+            "type": "string",
+            "description": "Set when the nation's retention rule removed its details (lib/data/retention.ts)."
           }
         },
         "required": [

@@ -7,6 +7,7 @@ import { Pill } from '@/components/ui/Pill';
 import { Plain } from '@/components/ui/Plain';
 import { TextField } from '@/components/ui/Field';
 import { api } from '@/lib/api/client';
+import { RetentionPanel } from './RetentionPanel';
 import type {
   BackupRecord,
   ConfigBundle,
@@ -16,7 +17,7 @@ import type {
   TenantLifecycle,
 } from '@/lib/api/types';
 
-type Tab = 'releases' | 'deployments' | 'lifecycle' | 'backups' | 'config';
+type Tab = 'releases' | 'deployments' | 'lifecycle' | 'backups' | 'config' | 'retention';
 
 const DEPLOY_ORDER = ['pending', 'precheck', 'rollout', 'verify', 'completed'];
 
@@ -77,7 +78,7 @@ export function PlatformConsole() {
         ))}
       </div>
       <div className="flex flex-wrap gap-2">
-        {(['releases', 'deployments', 'lifecycle', 'backups', 'config'] as Tab[]).map(t => (
+        {(['releases', 'deployments', 'lifecycle', 'backups', 'config', 'retention'] as Tab[]).map(t => (
           <Button key={t} variant={tab === t ? 'primary' : 'secondary'} onClick={() => setTab(t)}>
             {t[0]!.toUpperCase() + t.slice(1)}
           </Button>
@@ -305,6 +306,8 @@ export function PlatformConsole() {
           ))}
         </>
       )}
+
+      {tab === 'retention' && <RetentionPanel onError={setErr} />}
 
       {tab === 'config' && (
         <>

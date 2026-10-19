@@ -18,6 +18,12 @@ export const POLICIES = {
   write: { perMinute: 120, burst: 40 },
   /** Public reads and writes that cost work (search, open data, email updates). */
   public: { perMinute: 60, burst: 20 },
+  /** Cheap public reads answered from a cache (the audit chain's verification; go-live review M-8). */
+  publicRead: { perMinute: 120, burst: 40 },
+  /** Connected systems and federation partners, per address before the key is known and per key after (review M-4). */
+  feed: { perMinute: 120, burst: 60 },
+  /** Sign-in and reset-code attempts per address (review M-9); the lockout per account stays in lib/auth/officials.ts. */
+  signin: { perMinute: 10, burst: 10 },
 } satisfies Record<string, Policy>;
 export type Scope = keyof typeof POLICIES;
 

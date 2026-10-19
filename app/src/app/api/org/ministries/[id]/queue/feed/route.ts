@@ -8,7 +8,7 @@
 // cases since then. Every call is audited. When the institution registered a
 // public key for this system (…/queue/feeds/[feedId]/signing-key), every call
 // must also be signed (RFC 9421, Ed25519, with Content-Digest) by that key.
-// Every call is recorded in the exchange log (lib/exchange/log.ts) and
+// Every call with a recognised key is recorded in the exchange log (lib/exchange/log.ts) and
 // answered with a receipt signed by the platform (`receipt`, and the
 // CivicOS-Receipt header), so both sides keep the record.
 import { NextRequest, NextResponse } from 'next/server';
@@ -16,13 +16,17 @@ import { feedForKey, receiveFeed, feedChanges, MAX_BYTES } from '@/lib/data/case
 import type { CaseFeed } from '@/lib/api/types';
 import { checkFeedSignature } from '@/lib/exchange/feed-keys';
 import { exchangeResponse, type SignatureState } from '@/lib/exchange/log';
+import { addressGate, keyGate, unknownCaller, declaresTooLarge } from '@/lib/exchange/guard';
 import { recordAudit } from '@/lib/data/store';
+// Calls are limited per address and per key, and calls without a recognised key are only counted,
+// never logged or signed (lib/exchange/guard.ts, go-live review M-4).
 export const dynamic = 'force-dynamic';
 
+const TOO_LARGE = 'A call is at most 2 MB; send fewer cases at a time';
 const KEY_HELP = 'Send this system\'s key: Authorization: Bearer ccf_…';
 
-function answer(req: NextRequest, ministryId: string, feed: CaseFeed | null, body: string, sig: { state: SignatureState; keyId?: string }, status: number, json: Record<string, unknown>, result: string): Promise<NextResponse> {
-  return exchangeResponse({ channel: 'case-feed', feedId: feed?.id ?? null, ministryId, method: req.method, path: req.nextUrl.pathname, body, signature: sig.state, signatureKeyId: sig.keyId, status, result }, json);
+function answer(req: NextRequest, ministryId: string, feed: CaseFeed, body: string, sig: { state: SignatureState; keyId?: string }, status: number, json: Record<string, unknown>, result: string): Promise<NextResponse> {
+  return exchangeResponse({ channel: 'case-feed', feedId: feed.id, ministryId, method: req.method, path: req.nextUrl.pathname, body, signature: sig.state, signatureKeyId: sig.keyId, status, result }, json);
 }
 
 /** The signature state of a call; refused (and audited) when the feed has a key and the call is not signed by it. */
@@ -40,10 +44,17 @@ function signatureOf(feed: CaseFeed, req: NextRequest, raw: string): { state: Si
  */
 export async function POST(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  // Limits and the unknown-key answer come before the body is read or anything is logged or signed (review M-4).
+  const where = { channel: 'case-feed' as const, ministryId: params.id };
+  const busy = addressGate(req, where);
+  if (busy) return busy;
   const feed = feedForKey(params.id, req.headers.get('authorization'));
+  if (!feed) return unknownCaller(where, 401, 'unknown key', { error: KEY_HELP });
+  const busyKey = keyGate(req, where, feed.id);
+  if (busyKey) return busyKey;
+  if (declaresTooLarge(req, MAX_BYTES)) return answer(req, params.id, feed, '', { state: 'absent' }, 413, { error: TOO_LARGE }, 'too large (declared length)');
   const raw = await req.text();
-  if (!feed) return answer(req, params.id, null, raw, { state: 'absent' }, 401, { error: KEY_HELP }, 'unknown key');
-  if (Buffer.byteLength(raw) > MAX_BYTES) return answer(req, params.id, feed, raw, { state: 'absent' }, 413, { error: 'A call is at most 2 MB; send fewer cases at a time' }, 'too large');
+  if (Buffer.byteLength(raw) > MAX_BYTES) return answer(req, params.id, feed, raw, { state: 'absent' }, 413, { error: TOO_LARGE }, 'too large');
   const sig = signatureOf(feed, req, raw);
   if (sig.reason) return answer(req, params.id, feed, raw, sig, 401, { error: sig.reason }, `signature refused: ${sig.reason}`);
   let body: unknown;
@@ -55,8 +66,13 @@ export async function POST(req: NextRequest, props: { params: Promise<{ id: stri
 
 export async function GET(req: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  const where = { channel: 'case-feed' as const, ministryId: params.id };
+  const busy = addressGate(req, where);
+  if (busy) return busy;
   const feed = feedForKey(params.id, req.headers.get('authorization'));
-  if (!feed) return answer(req, params.id, null, '', { state: 'absent' }, 401, { error: KEY_HELP }, 'unknown key');
+  if (!feed) return unknownCaller(where, 401, 'unknown key', { error: KEY_HELP });
+  const busyKey = keyGate(req, where, feed.id);
+  if (busyKey) return busyKey;
   const sig = signatureOf(feed, req, '');
   if (sig.reason) return answer(req, params.id, feed, '', sig, 401, { error: sig.reason }, `signature refused: ${sig.reason}`);
   const r = feedChanges(feed, req.nextUrl.searchParams.get('since'));

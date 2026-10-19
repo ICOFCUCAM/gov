@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from 'vitest';
 import { generateKeyPairSync } from 'node:crypto';
 import { NextRequest } from 'next/server';
-import { resetExchangeLog, listExchanges, verifyReceipt, exchangePublicKey, RECEIPT_HEADER, type ExchangeReceipt } from './log';
+import { resetExchangeLog, listExchanges, listUnauthenticated, verifyReceipt, exchangePublicKey, RECEIPT_HEADER, type ExchangeReceipt } from './log';
 import { contentDigest, signRequest } from './http-signatures';
 import { registerFeedKey, resetFeedKeys } from './feed-keys';
 import { issueFeed } from '@/lib/data/case-import';
@@ -51,10 +51,12 @@ describe('the exchange log and signed receipts', () => {
     expect(listed.exchanges).toHaveLength(2);
   });
 
-  it('logs unknown callers without naming a feed', async () => {
+  it('counts unknown callers without logging or signing them (go-live review M-4)', async () => {
     const res = await casePost(new NextRequest(`http://localhost/api/org/ministries/${M}/queue/feed`, { method: 'POST', body: '{}' }), { params: Promise.resolve({ id: M }) });
     expect(res.status).toBe(401);
-    expect(listExchanges()[0]).toMatchObject({ feedId: '?', status: 401, result: 'unknown key' });
+    expect(res.headers.get(RECEIPT_HEADER)).toBeNull();
+    expect(listExchanges()).toHaveLength(0);
+    expect(listUnauthenticated()[0]).toMatchObject({ channel: 'case-feed', ministryId: M, result: 'unknown key', count: 1 });
   });
 
   it('decides federation exchanges by grant, logs them and returns a receipt', async () => {

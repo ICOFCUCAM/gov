@@ -16,6 +16,7 @@ import { roleFromSubstrate, type OfficialRole } from '@/lib/auth/roles';
 import { deviceOf } from '@/lib/auth/activity';
 import { stateWritable, CHANGE_PATH_HEADER } from '@/lib/data/persist';
 import { roleOf } from '@/lib/auth/roles';
+import { limit } from '@/lib/ops/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
@@ -60,6 +61,9 @@ export async function POST(req: NextRequest) {
   // Refuse before checking anyone's password when no session could be issued (CIVICOS_AUTH=enforce without CIVICOS_SESSION_SECRET).
   const keyProblem = sessionSecretProblem();
   if (keyProblem) return NextResponse.json({ error: keyProblem }, { status: 503 });
+  // Sign-in attempts per address, before any password is hashed (go-live review M-9).
+  const limited = await limit(req, 'signin');
+  if (limited) return limited;
   let who: Who | { error: string };
   if (b.method === 'substrate') {
     who = b.accessToken ? await substrateOfficial(b.accessToken) : { error: 'No access token' };

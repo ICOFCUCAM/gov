@@ -10,6 +10,17 @@ import type { SiteChange, SiteProposal, SiteEditorial } from '@/lib/data/site-ed
 import type { SiteContent } from '@/lib/public-sites/types';
 import type { SiteLanguage } from '@/lib/public-sites/effective';
 import type { Coverage, XliffImport } from '@/lib/public-sites/translation';
+import type { RetentionCategory, RetentionChange, RetentionRule, RetentionRun } from '@/lib/data/retention';
+
+/** The nation's retention rules for permits and cases (/api/platform/retention). */
+export interface RetentionOverview {
+  rules: Record<RetentionCategory, RetentionRule>;
+  categories: { id: RetentionCategory; label: string; applies: string }[];
+  changes: RetentionChange[];
+  runs: RetentionRun[];
+  minDays: number;
+  maxDays: number;
+}
 
 /** GET /api/public-sites/<id>/editorial: what the site editor works from. */
 export interface SiteEditView {
@@ -222,9 +233,17 @@ export const api = {
   /** Everything waiting on officials across institutions (/api/work). */
   work: () => req<WorkOverview>('/api/work'),
   audit: {
-    list: () => req<{ events: AuditEntry[] }>('/api/audit'),
-    verify: () =>
-      req<AuditVerification>('/api/audit/verify'),
+    /** One page, newest first (default 200, at most 1000); `before` is the previous page's `nextBefore`. */
+    list: (q: { before?: number; limit?: number } = {}) => {
+      const p = new URLSearchParams();
+      if (q.before !== undefined) p.set('before', String(q.before));
+      if (q.limit !== undefined) p.set('limit', String(q.limit));
+      const qs = p.toString();
+      return req<{ events: AuditEntry[]; total: number; nextBefore?: number }>(`/api/audit${qs ? `?${qs}` : ''}`);
+    },
+    /** The cached check; `full` (a signed-in official) checks the whole chain again first. */
+    verify: (full = false) =>
+      req<AuditVerification>(`/api/audit/verify${full ? '?full=1' : ''}`),
   },
   ops: {
     overview: () => req<OpsOverview>('/api/ops/overview'),
@@ -328,6 +347,13 @@ export const api = {
       get: () => req<{ lifecycle: TenantLifecycle }>('/api/platform/lifecycle'),
       transition: (to: TenantState, reason: string) =>
         req<{ lifecycle: TenantLifecycle }>('/api/platform/lifecycle/transition', { method: 'POST', body: JSON.stringify({ to, reason }) }),
+    },
+    retention: {
+      get: () => req<RetentionOverview>('/api/platform/retention'),
+      propose: (body: { category: string; action: string; days?: number; basis?: string; reason: string; by?: string }) =>
+        req<{ change: RetentionChange }>('/api/platform/retention', { method: 'POST', body: JSON.stringify(body) }),
+      decide: (id: string, decision: 'confirm' | 'withdraw', by?: string) =>
+        req<{ change: RetentionChange }>(`/api/platform/retention/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify({ decision, by }) }),
     },
     backups: {
       list: () => req<{ backups: BackupRecord[] }>('/api/platform/backups'),

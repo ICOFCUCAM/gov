@@ -27,7 +27,7 @@
 import { NextResponse } from 'next/server';
 import { publicClient } from '@/lib/db/client';
 import { persistenceStatus, stateWritable } from '@/lib/data/persist';
-import { listAudit, verifyAuditChain } from '@/lib/data/store';
+import { auditVerification } from '@/lib/data/store';
 import { problemsLastHour, twinFreshness } from '@/lib/ops/metrics';
 import { tracingStatus } from '@/lib/ops/otel';
 import { keyCustodyStatus } from '@/lib/keys/custody';
@@ -91,7 +91,8 @@ export async function GET(req: Request) {
     latency_ms = Date.now() - start;
   }
   const p = persistence();
-  const chain = verifyAuditChain();
+  // The cached, incremental check (go-live review M-8): this probe is public and frequent.
+  const chain = auditVerification();
   const twin = twinFreshness();
   const problems = problemsLastHour();
   const keys = keyCustodyStatus();
@@ -105,7 +106,7 @@ export async function GET(req: Request) {
     at: new Date().toISOString(),
     substrate: { configured, reachable, latency_ms },
     persistence: p,
-    audit: { entries: listAudit().length, intact: chain.ok, ...(chain.brokenAtSeq != null ? { brokenAtSeq: chain.brokenAtSeq } : {}) },
+    audit: { entries: chain.total, intact: chain.ok, ...(chain.brokenAtSeq != null ? { brokenAtSeq: chain.brokenAtSeq } : {}) },
     twin: { sources: twin.sources, scheduled: twin.scheduled, overdue: twin.overdue.length },
     problems,
     // Whether spans go to the nation's own collector (CIVICOS_OTEL_ENDPOINT); the address is not shown.

@@ -13,6 +13,7 @@ import { seal, open as openSealed } from '@/lib/crypto/envelope';
 import { recordAudit, getMinistry } from '@/lib/data/store';
 import { isRole, roleLabel, roleOf, type OfficialRole } from './roles';
 import { touch } from '@/lib/data/repo/track';
+import { recordAggregated } from '@/lib/audit/aggregate';
 
 export interface OfficialAccount {
   id: string;
@@ -61,13 +62,63 @@ const cost = (): { N: number; r: number; p: number; maxmem: number } => {
 };
 
 const norm = (e: string) => e.trim().toLowerCase();
+
+// ── Failed attempts (go-live review M-9, M-13) ───────────────────────────
+// The lockout counts failures per typed address, but the address itself is
+// never kept: the key is a SHA-256 of it (people type passwords into the
+// email field too). Counts older than the window are dropped whenever a key
+// is touched, by the retention sweep (sweepSignInFailures) and when the map
+// reaches MAX_FAILURE_KEYS. Refusals reach the audit chain through
+// lib/audit/aggregate.ts: a few per account and window, then one summary.
+const MAX_FAILURE_KEYS = 10_000;
+const failureKey = (email: string) => `h:${createHash('sha256').update(`civicos-signin|${email}`).digest('hex').slice(0, 32)}`;
+const recentFailures = (d: Db, email: string, now: number): number[] => (d.failures[failureKey(email)] ?? []).filter(t => now - t < WINDOW_MS);
+function noteFailure(d: Db, email: string, recent: number[], now: number): void {
+  const key = failureKey(email);
+  delete d.failures[key];
+  d.failures[key] = [...recent, now].slice(-MAX_FAILURES);
+  const keys = Object.keys(d.failures);
+  if (keys.length <= MAX_FAILURE_KEYS) return;
+  sweepSignInFailures(now);
+  const left = Object.keys(d.failures);
+  for (let i = 0; i < left.length - MAX_FAILURE_KEYS; i++) delete d.failures[left[i]!];
+}
+const clearFailures = (d: Db, email: string) => { delete d.failures[failureKey(email)]; };
+/** Refusals to the audit chain, bounded per targeted account (or unknown address) and window. */
+const auditRefusal = (actor: string, action: string, resource: string, detail: string, now: number) =>
+  recordAggregated(`${action}|${resource}`, { actor, action, resource, outcome: 'denied', detail }, now);
+
+/** Drop failure counts that have left the window (and keys from before they were hashed). Returns how many keys went. */
+export function sweepSignInFailures(now = Date.now()): number {
+  const f = db().failures;
+  let n = 0;
+  for (const [k, list] of Object.entries(f)) {
+    if (k.startsWith('h:') && list.some(t => now - t < WINDOW_MS)) continue;
+    delete f[k];
+    n++;
+  }
+  return n;
+}
+/** The keys of the failure counter (hashes; for tests). */
+export const failureKeys = (): string[] => Object.keys(db().failures);
 // Compared against when the address is unknown (random salt and digest: nothing anyone can type matches it).
 const DUMMY_HASH = `scrypt$${2 ** 17}$${randomBytes(16).toString('base64')}$${randomBytes(32).toString('base64')}`;
 const pub = ({ passwordHash: _h, twoStep, twoStepPending: _p, reset, ...a }: OfficialAccount): PublicAccount =>
   ({ ...a, ...(twoStep ? { twoStepSince: twoStep.since } : {}), twoStepRequired: twoStepRequiredFor(a), ...(reset && Date.parse(reset.expiresAt) > Date.now() ? { resetPendingUntil: reset.expiresAt } : {}) });
 
+// At most this many password hashes at once (go-live review M-9): each takes 128 MiB and a thread of the
+// libuv pool, which DNS lookups and file reads share; the rest wait their turn.
+const HASH_SLOTS = Math.max(1, Number(process.env.CIVICOS_SCRYPT_CONCURRENCY) || 2);
+let hashing = 0;
+const waiting: (() => void)[] = [];
+async function slot<T>(fn: () => Promise<T>): Promise<T> {
+  if (hashing >= HASH_SLOTS) await new Promise<void>(r => waiting.push(r));
+  hashing++;
+  try { return await fn(); } finally { hashing--; waiting.shift()?.(); }
+}
+
 function scryptAsync(password: string, salt: Buffer, len: number, opts: ScryptOptions): Promise<Buffer> {
-  return new Promise((resolve, reject) => scrypt(password, salt, len, opts, (e, k) => (e ? reject(e) : resolve(k))));
+  return slot(() => new Promise((resolve, reject) => scrypt(password, salt, len, opts, (e, k) => (e ? reject(e) : resolve(k)))));
 }
 
 /** `scrypt$N$salt$hash` (r=8, p=1), or `scrypt$N$r$p$salt$hash` when r or p differ from 8 and 1. */
@@ -208,15 +259,16 @@ export async function checkPassword(emailRaw: string, password: string, now = Da
   Promise<(PublicAccount & { secondStep: boolean }) | { error: string; needsCode?: true }> {
   const d = db();
   const email = norm(emailRaw);
-  const recent = (d.failures[email] ?? []).filter(t => now - t < WINDOW_MS);
-  if (recent.length >= MAX_FAILURES) return { error: 'Too many failed attempts; try again in 15 minutes' };
+  if (recentFailures(d, email, now).length >= MAX_FAILURES) return { error: 'Too many failed attempts; try again in 15 minutes' };
   const a = d.accounts.find(x => x.email === email);
   // An unknown address still costs one hash, so the answer's timing does not tell which addresses exist.
   const good = await matches(password, a?.passwordHash ?? DUMMY_HASH);
+  // Counted after the hash: attempts made meanwhile are in the count too.
+  const recent = recentFailures(d, email, now);
   if (!a || a.disabled || !good) {
-    d.failures[email] = [...(d.failures[email] ?? []).filter(t => now - t < WINDOW_MS), now];
+    noteFailure(d, email, recent, now);
     // Filed against the account it targeted (never the address), so its owner sees it in their sign-in activity.
-    recordAudit('sign-in attempt', 'auth.sign-in', a ? `Official:${a.id}` : 'Official:?', 'denied', 'wrong email or password');
+    auditRefusal('sign-in attempt', 'auth.sign-in', a ? `Official:${a.id}` : 'Official:?', 'wrong email or password', now);
     return { error: 'Wrong email or password' };
   }
   if (a.twoStep) {
@@ -224,12 +276,12 @@ export async function checkPassword(emailRaw: string, password: string, now = Da
     const used = useSecondStep(a, code, now);
     if (typeof used === 'object') return { error: used.error, needsCode: true };
     if (!used) {
-      d.failures[email] = [...recent, now];
-      recordAudit(a.name, 'auth.sign-in', `Official:${a.id}`, 'denied', 'wrong second-step code');
+      noteFailure(d, email, recent, now);
+      auditRefusal(a.name, 'auth.sign-in', `Official:${a.id}`, 'wrong second-step code', now);
       return { error: 'That code is not right; enter the current one (or a recovery code)', needsCode: true };
     }
   }
-  delete d.failures[email];
+  clearFailures(d, email);
   a.lastSignIn = new Date(now).toISOString();
   if (needsRehash(a.passwordHash)) {
     const old = a.passwordHash;
@@ -387,7 +439,7 @@ export function issueReset(id: string, by: string, now = Date.now()): { code: st
 export async function resetPassword(emailRaw: string, code: string, next: string, now = Date.now()): Promise<PublicAccount | { error: string }> {
   const d = db();
   const email = norm(emailRaw);
-  const recent = (d.failures[email] ?? []).filter(t => now - t < WINDOW_MS);
+  const recent = recentFailures(d, email, now);
   if (recent.length >= MAX_FAILURES) return { error: 'Too many failed attempts; try again in 15 minutes' };
   const a = d.accounts.find(x => x.email === email);
   const raw = (code ?? '').toUpperCase().replace(/[^0-9A-F]/g, '');
@@ -395,8 +447,8 @@ export async function resetPassword(emailRaw: string, code: string, next: string
   const got = createHash('sha256').update(raw).digest();
   const valid = !!a && !a.disabled && !!want && Date.parse(a.reset!.expiresAt) > now && want.length === got.length && timingSafeEqual(want, got);
   if (!valid) {
-    d.failures[email] = [...recent, now];
-    recordAudit('password reset attempt', 'auth.password.reset', a ? `Official:${a.id}` : 'Official:?', 'denied', 'wrong or expired reset code');
+    noteFailure(d, email, recent, now);
+    auditRefusal('password reset attempt', 'auth.password.reset', a ? `Official:${a.id}` : 'Official:?', 'wrong or expired reset code', now);
     return { error: 'That reset code is not right or has expired; ask an administrator for a new one' };
   }
   const bad = newPasswordProblem(next);
@@ -406,7 +458,7 @@ export async function resetPassword(emailRaw: string, code: string, next: string
   a!.passwordHash = fresh;
   a!.passwordChangedAt = new Date(now).toISOString();
   delete a!.reset;
-  delete d.failures[email];
+  clearFailures(d, email);
   recordAudit(a!.name, 'auth.password.reset', `Official:${a!.id}`, 'ok', 'new password set with a reset code; other sessions ended');
   return pub(a!);
 }

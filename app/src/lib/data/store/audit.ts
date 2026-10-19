@@ -5,7 +5,7 @@
 
 import { createHash } from 'node:crypto';
 import type { AuditEntry } from '@/lib/api/types';
-import { verifySignedHeads, type SignedHeadCheck } from '@/lib/audit/sign';
+import { verifySignedHeads, headsFingerprint, type SignedHeadCheck } from '@/lib/audit/sign';
 import { auditRepo } from '@/lib/data/repo';
 import { auditCommitted } from './audit-committed';
 import { uid, hash } from './shared';
@@ -62,33 +62,218 @@ export function recordAudit(
 }
 
 // ── Audit ─────────────────────────────────────────────────────────────
+/** The whole chain, newest first. For screens prefer listAuditPage(): the chain grows without end. */
 export function listAudit(): AuditEntry[] {
   return [...chain()].reverse();
 }
 
-export function verifyAuditChain(): {
+/** The index of the first entry with `seq >= seq` (the chain is in sequence order). */
+function indexOfSeq(c: AuditEntry[], seq: number): number {
+  let lo = 0, hi = c.length;
+  while (lo < hi) { const mid = (lo + hi) >> 1; if (c[mid]!.seq < seq) lo = mid + 1; else hi = mid; }
+  return lo;
+}
+
+/** The entry with a sequence number, found by position (sequences are contiguous) or by search. */
+function entryAtSeq(c: AuditEntry[], seq: number): AuditEntry | undefined {
+  const guess = c[seq - (c[0]?.seq ?? 1)];
+  if (guess?.seq === seq) return guess;
+  const e = c[indexOfSeq(c, seq)];
+  return e?.seq === seq ? e : undefined;
+}
+
+export const AUDIT_PAGE_DEFAULT = 200;
+export const AUDIT_PAGE_MAX = 1000;
+
+/**
+ * One page of the chain, newest first (go-live review M-8): `limit` entries
+ * (default 200, at most 1000) before sequence `before` (exclusive; from the
+ * head when absent). `nextBefore` asks for the page after this one.
+ */
+export function listAuditPage(q: { before?: number; limit?: number } = {}): { events: AuditEntry[]; total: number; nextBefore?: number } {
+  const c = chain();
+  const n = Math.min(Math.max(Math.floor(Number.isFinite(q.limit) ? q.limit! : AUDIT_PAGE_DEFAULT), 1), AUDIT_PAGE_MAX);
+  const end = q.before !== undefined && Number.isFinite(q.before) ? indexOfSeq(c, q.before) : c.length;
+  const start = Math.max(0, end - n);
+  return { events: c.slice(start, end).reverse(), total: c.length, ...(start > 0 ? { nextBefore: c[start]!.seq } : {}) };
+}
+
+/** One step of the chain check: the entry by the rule it was written with, linked to the one before. */
+function checkEntry(e: AuditEntry, st: { prevHash: string | null; upgraded: boolean }): boolean {
+  // Once the chain is on v2, no entry may fall back.
+  const v2 = e.alg === 'sha256-v2';
+  if (st.upgraded && !v2) return false;
+  st.upgraded ||= v2;
+  const expected: string = v2 ? auditHashV2(e) : hash(`${st.prevHash ?? 'GENESIS'}|${e.action}|${e.resource}|${e.outcome}|${e.seq}`);
+  if (expected !== e.hash || (e.prevHash ?? null) !== (st.prevHash ?? null)) return false;
+  st.prevHash = e.hash;
+  return true;
+}
+
+export interface AuditChainCheck {
   ok: boolean;
   checked: number;
   brokenAtSeq?: number;
   /** The signed heads (lib/audit/sign.ts): the last one, and whether every one still matches the chain. */
   signed?: SignedHeadCheck;
-} {
-  let prevHash: string | null = null;
-  let upgraded = false;
-  for (const e of chain()) {
-    // Each entry by the rule it was written with; once the chain is on v2, no entry may fall back.
-    const v2 = e.alg === 'sha256-v2';
-    if (upgraded && !v2) return { ok: false, checked: chain().length, brokenAtSeq: e.seq };
-    upgraded ||= v2;
-    const expected: string = v2 ? auditHashV2(e) : hash(`${prevHash ?? 'GENESIS'}|${e.action}|${e.resource}|${e.outcome}|${e.seq}`);
-    if (expected !== e.hash || (e.prevHash ?? null) !== (prevHash ?? null)) {
-      return { ok: false, checked: chain().length, brokenAtSeq: e.seq };
-    }
-    prevHash = e.hash;
+}
+
+/**
+ * The full check, every entry, on the calling thread. For officials' screens
+ * and evidence; anything public or frequent reads auditVerification(), which
+ * answers from the cached, incremental result.
+ */
+export function verifyAuditChain(): AuditChainCheck {
+  const c = chain();
+  const st = { prevHash: null as string | null, upgraded: false };
+  for (const e of c) if (!checkEntry(e, st)) return { ok: false, checked: c.length, brokenAtSeq: e.seq };
+  const signed = verifySignedHeads(seq => entryAtSeq(c, seq));
+  return signed.ok ? { ok: true, checked: c.length, signed } : { ok: false, checked: c.length, signed };
+}
+
+// ── Verification for everyone (go-live review M-8) ────────────────────
+// /api/audit/verify is public and the cover page asks it on every open, so
+// it must not hash the whole chain per request. The result is cached: each
+// answer checks only the entries appended since the last one (a bounded
+// number on the request path; the rest catch up in the background, in chunks
+// that yield to other requests), and the whole chain is checked again off the
+// request path every CIVICOS_AUDIT_REVERIFY_MINUTES (default 10), also in
+// yielding chunks, so a change to an old entry is still found. The cache is
+// memory of the running server (not saved; the key is outside `__civicos*`).
+
+export interface CachedAuditVerification extends AuditChainCheck {
+  /** Entries in the chain now. */
+  total: number;
+  /** False while the background catch-up has not reached the head yet. */
+  complete: boolean;
+  verifiedAt: string;
+  /** When the whole chain was last checked from the start. */
+  fullCheckAt?: string;
+}
+
+interface VerifyCache {
+  ref: AuditEntry[];
+  count: number;
+  prevHash: string | null;
+  upgraded: boolean;
+  brokenAtSeq?: number;
+  /** This cache started from the first entry: reaching the head counts as a full check. */
+  fromStart: number;
+  fullAt?: number;
+  signedKey?: string;
+  signedFrom: number;
+  signed?: SignedHeadCheck;
+  /** Entries hashed by the cache (for tests and metrics). */
+  hashed: number;
+}
+const vg = globalThis as unknown as { __auditVerifyCache?: VerifyCache; __auditVerifyBusy?: { catchUp?: Promise<void>; full?: Promise<void> } };
+const busy = () => (vg.__auditVerifyBusy ??= {});
+/** Entries checked at most on the request path; more catch up in the background. */
+export const SYNC_VERIFY_MAX = 20_000;
+const CHUNK = 20_000;
+const reverifyMs = (): number => {
+  const m = Number(process.env.CIVICOS_AUDIT_REVERIFY_MINUTES);
+  return (Number.isFinite(m) && m > 0 ? m : 10) * 60_000;
+};
+const yieldNow = () => new Promise<void>(r => setImmediate(r));
+
+export function resetAuditVerification(): void { vg.__auditVerifyCache = undefined; }
+export const auditVerifyStats = (): { hashed: number; count: number } => ({ hashed: vg.__auditVerifyCache?.hashed ?? 0, count: vg.__auditVerifyCache?.count ?? 0 });
+
+/** The cache for this chain, started over when the chain was replaced (a restore) or no longer holds what was checked. */
+function cacheFor(c: AuditEntry[], now: number): VerifyCache {
+  const s = vg.__auditVerifyCache;
+  const moved = s && (s.ref !== c || c.length < s.count || (s.count > 0 && c[s.count - 1]!.hash !== s.prevHash));
+  if (s && !moved) return s;
+  return (vg.__auditVerifyCache = { ref: c, count: 0, prevHash: null, upgraded: false, fromStart: now, signedFrom: 0, hashed: s?.hashed ?? 0 });
+}
+
+/** Check up to `max` entries after those already checked. */
+function advance(s: VerifyCache, max: number, now: number): void {
+  if (s.brokenAtSeq !== undefined) return;
+  const c = s.ref;
+  const end = Math.min(c.length, s.count + max);
+  const st = { prevHash: s.prevHash, upgraded: s.upgraded };
+  for (let i = s.count; i < end; i++) {
+    s.hashed++;
+    if (!checkEntry(c[i]!, st)) { s.brokenAtSeq = c[i]!.seq; break; }
+    s.count = i + 1;
   }
-  const bySeq = new Map(chain().map(e => [e.seq, e]));
-  const signed = verifySignedHeads(seq => bySeq.get(seq));
-  return signed.ok ? { ok: true, checked: chain().length, signed } : { ok: false, checked: chain().length, signed };
+  s.prevHash = st.prevHash;
+  s.upgraded = st.upgraded;
+  if (s.count === c.length && s.fullAt === undefined) s.fullAt = s.fromStart;
+  void now;
+}
+
+function catchUpInBackground(): void {
+  const b = busy();
+  if (b.catchUp) return;
+  b.catchUp = (async () => {
+    try {
+      for (;;) {
+        const s = vg.__auditVerifyCache;
+        if (!s || s.brokenAtSeq !== undefined || s.count >= s.ref.length) return;
+        advance(s, CHUNK, Date.now());
+        await yieldNow();
+      }
+    } finally { b.catchUp = undefined; }
+  })();
+}
+
+/**
+ * Check the whole chain again from the first entry, in chunks that yield to
+ * other requests, and record the result in the cache. One at a time.
+ */
+export function reverifyAuditChain(): Promise<void> {
+  const b = busy();
+  if (b.full) return b.full;
+  b.full = (async () => {
+    try {
+      const c = chain();
+      const started = Date.now();
+      const upTo = c.length;
+      const st = { prevHash: null as string | null, upgraded: false };
+      let broken: number | undefined;
+      for (let i = 0; i < upTo; i++) {
+        if (!checkEntry(c[i]!, st)) { broken = c[i]!.seq; break; }
+        if ((i + 1) % CHUNK === 0) await yieldNow();
+      }
+      const s = cacheFor(c, started);
+      s.hashed += upTo;
+      if (broken !== undefined) s.brokenAtSeq = broken;
+      // Every signed head again (the incremental check only looks at new ones).
+      s.signedKey = undefined;
+      s.signedFrom = 0;
+      s.fullAt = started;
+    } finally { b.full = undefined; }
+  })();
+  return b.full;
+}
+
+function signedFor(s: VerifyCache): SignedHeadCheck {
+  const f = headsFingerprint();
+  if (s.signed && s.signedKey === f.key) return s.signed;
+  const from = f.count < s.signedFrom ? 0 : s.signedFrom;
+  const c = s.ref;
+  s.signed = verifySignedHeads(seq => entryAtSeq(c, seq), from);
+  s.signedKey = f.key;
+  // Heads checked and signed need no second look; a pending one is checked again once signed.
+  s.signedFrom = s.signed.ok ? f.firstPending : 0;
+  return s.signed;
+}
+
+/** The chain's verification as of now, from the cache (see above). */
+export function auditVerification(now = Date.now()): CachedAuditVerification {
+  const c = chain();
+  const s = cacheFor(c, now);
+  advance(s, SYNC_VERIFY_MAX, now);
+  if (s.brokenAtSeq === undefined && s.count < c.length) catchUpInBackground();
+  if (s.fullAt !== undefined && now - s.fullAt > reverifyMs()) void reverifyAuditChain();
+  const complete = s.brokenAtSeq !== undefined || s.count === c.length;
+  const signed = signedFor(s);
+  const base = { checked: s.brokenAtSeq !== undefined ? c.length : s.count, total: c.length, complete, verifiedAt: new Date(now).toISOString(), ...(s.fullAt !== undefined ? { fullCheckAt: new Date(s.fullAt).toISOString() } : {}) };
+  if (s.brokenAtSeq !== undefined) return { ok: false, ...base, brokenAtSeq: s.brokenAtSeq };
+  return { ok: signed.ok, ...base, signed };
 }
 
 /** The chain's current head (sequence and hash), for signing and anchoring. */

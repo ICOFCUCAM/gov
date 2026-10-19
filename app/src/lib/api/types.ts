@@ -55,6 +55,8 @@ export interface Permit {
   fields: Record<string, string>;
   timeline: PermitTimelineEntry[];
   contestable: boolean;
+  /** Set when the nation's retention rule removed the applicant's details (lib/data/retention.ts). */
+  anonymisedAt?: ISODate;
 }
 
 export type PermitDecision = 'approve' | 'decline' | 'request-info' | 'escalate';
@@ -104,6 +106,13 @@ export interface AuditVerification {
   checked: number;
   brokenAtSeq?: number;
   signed?: AuditSignedHeads;
+  /** From the cached, incremental check (/api/audit/verify): entries in the chain now. */
+  total?: number;
+  /** False while the server is still catching up with new entries. */
+  complete?: boolean;
+  verifiedAt?: string;
+  /** When the whole chain was last checked from its first entry. */
+  fullCheckAt?: string;
 }
 
 export interface CreatePermitInput {
@@ -506,6 +515,8 @@ export interface QueueItem {
   importId?: string;
   /** When an official last assigned, escalated or closed it. */
   actedAt?: ISODate;
+  /** Set when the nation's retention rule removed its details (lib/data/retention.ts). */
+  anonymisedAt?: ISODate;
 }
 /** One load of real cases into an institution's queue (lib/data/case-import.ts). */
 export interface CaseImport {

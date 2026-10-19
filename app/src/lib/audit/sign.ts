@@ -101,6 +101,19 @@ export const listSignedHeads = (): SignedHead[] => [...db().heads];
 /** Heads a remote provider has not signed yet. */
 export const pendingHeads = (): number => { let n = 0; for (const h of db().heads) if (h.pending) n++; return n; };
 export const lastSignedHead = (): SignedHead | undefined => db().heads[db().heads.length - 1];
+/**
+ * What a cached check of the heads depends on: how many there are, the
+ * first still waiting for a remote signature, and the last one's anchoring
+ * and time-stamp (both added after it was signed).
+ */
+export function headsFingerprint(): { count: number; firstPending: number; key: string } {
+  const heads = db().heads;
+  let firstPending = heads.length;
+  let pending = 0;
+  for (let i = 0; i < heads.length; i++) if (heads[i]!.pending) { pending++; if (firstPending === heads.length) firstPending = i; }
+  const l = heads[heads.length - 1];
+  return { count: heads.length, firstPending, key: [heads.length, pending, l?.seq, l?.signature, l?.anchoredAt, l?.timestamp?.genTime, l?.timestampError].join('|') };
+}
 
 // Signatures in flight with a remote provider (process-local; by sequence number).
 const inflight = new Map<number, Promise<SignedHead>>();
@@ -247,25 +260,36 @@ export interface SignedHeadCheck {
  * still has an entry with that sequence and hash. `entryAt(seq)` returns
  * the chain's entry for a sequence number. Pending heads (not yet signed by
  * a remote provider) are checked for order and chain only.
+ *
+ * `from` skips the costly checks (signature, chain entry, time-stamp) of the
+ * heads before that index, already checked by an earlier call: the cached,
+ * incremental verification (lib/data/store/audit.ts, go-live review M-8)
+ * passes the index of the first head it has not checked yet.
  */
-export function verifySignedHeads(entryAt: (seq: number) => { hash: string } | undefined): SignedHeadCheck {
+export function verifySignedHeads(entryAt: (seq: number) => { hash: string } | undefined, from = 0): SignedHeadCheck {
   const heads = db().heads;
   let prev = 0;
   let pending = 0;
   let stamped = 0;
   let last: SignedHead | undefined;
-  for (const h of heads) {
+  for (let i = 0; i < heads.length; i++) {
+    const h = heads[i]!;
+    const check = i >= from;
     if (h.pending) pending++;
-    else if (!verifyBytes(h.publicKeyPem, headPayload(h.seq, h.hash, h.at), h.signature)) {
+    else if (check && !verifyBytes(h.publicKeyPem, headPayload(h.seq, h.hash, h.at), h.signature)) {
       return { ok: false, signedHeads: heads.length, problem: `signed head ${h.seq} has a bad signature` };
     }
     if (h.seq < prev) return { ok: false, signedHeads: heads.length, problem: `signed head ${h.seq} is out of order` };
     prev = h.seq;
-    const e = entryAt(h.seq);
-    if (!e || e.hash !== h.hash) return { ok: false, signedHeads: heads.length, problem: `the chain no longer matches signed head ${h.seq}` };
+    if (check) {
+      const e = entryAt(h.seq);
+      if (!e || e.hash !== h.hash) return { ok: false, signedHeads: heads.length, problem: `the chain no longer matches signed head ${h.seq}` };
+    }
     if (h.timestamp) {
-      const c = checkToken(Buffer.from(h.timestamp.token, 'base64'), { digest: tsaImprint(h) });
-      if (!c.ok) return { ok: false, signedHeads: heads.length, problem: `the time-stamp of signed head ${h.seq} does not check: ${c.problem}` };
+      if (check) {
+        const c = checkToken(Buffer.from(h.timestamp.token, 'base64'), { digest: tsaImprint(h) });
+        if (!c.ok) return { ok: false, signedHeads: heads.length, problem: `the time-stamp of signed head ${h.seq} does not check: ${c.problem}` };
+      }
       stamped++;
     }
     if (!h.pending) last = h;
