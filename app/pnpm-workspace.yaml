@@ -18,6 +18,10 @@ overrides:
   "next>postcss": "8.5.30"
   "nanoid@<3.3.18": "^3.3.18"
   "source-map-js@<1.2.2": "^1.2.2"
+  # eslint-config-next accepts any @typescript-eslint parser from 5 to 8, and
+  # the lockfile had resolved 7.2.0 beside the 8.x plugin, which crashes
+  # no-unused-vars; the parser must match the plugin's major version.
+  "eslint-config-next>@typescript-eslint/parser": "8.71.2"
 
 # Refuse package versions published less than a day ago (minutes), as CI's
 # pnpm does; a lockfile that passes here then passes there.
