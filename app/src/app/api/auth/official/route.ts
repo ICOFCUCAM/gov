@@ -6,6 +6,7 @@
 // and sign-out is written to the audit chain; addresses never are.
 
 import { NextRequest, NextResponse } from 'next/server';
+import { headers } from 'next/headers';
 import { OFFICIAL_COOKIE, SESSION_HOURS, type OfficialClaims } from '@/lib/auth/session-token';
 import { checkPassword, hasAccounts, sessionSecretProblem } from '@/lib/auth/officials';
 import { currentOfficial, actorLabel, issueSession } from '@/lib/auth/official';
@@ -13,17 +14,18 @@ import { serverClient } from '@/lib/db/client';
 import { recordAudit, getMinistry } from '@/lib/data/store';
 import { roleFromSubstrate, type OfficialRole } from '@/lib/auth/roles';
 import { deviceOf } from '@/lib/auth/activity';
-import { stateWritable } from '@/lib/data/persist';
+import { stateWritable, CHANGE_PATH_HEADER } from '@/lib/data/persist';
 import { roleOf } from '@/lib/auth/roles';
 
 export const dynamic = 'force-dynamic';
 
 const enforced = () => process.env.CIVICOS_AUTH === 'enforce';
 
-export async function GET(req?: NextRequest) {
+export async function GET() {
   const o = await currentOfficial();
   // The path of the change the middleware is checking (lib/data/persist.ts RECORD_ROUTES).
-  const forPath = req?.nextUrl?.searchParams.get('for') ?? undefined;
+  let forPath: string | undefined;
+  try { forPath = headers().get(CHANGE_PATH_HEADER) ?? undefined; } catch { forPath = undefined; }
   const official = o ? { ...o, institutionName: o.institution ? getMinistry(o.institution)?.name : undefined } : null;
   return NextResponse.json({
     official,

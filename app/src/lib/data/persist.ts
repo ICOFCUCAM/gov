@@ -283,6 +283,9 @@ const g = globalThis as unknown as Record<string, unknown> & { __persistStatus?:
  */
 export const RECORD_ROUTES: RegExp[] = [/^\/api\/boundaries(\/[^/]+)?$/, /^\/api\/facilities\/[^/]+$/, /^\/api\/twin\/keys$/, /^\/api\/twin\/runs\/[^/]+\/withdraw$/];
 
+/** The header the middleware names a change's path in when it asks GET /api/auth/official whether this server takes it. */
+export const CHANGE_PATH_HEADER = 'x-civicos-change-path';
+
 /** Leave these fields of these stores out of every snapshot (they live in tables). */
 export function keepOutOfSnapshot(fields: Record<string, string[]>): void {
   const m = (g.__persistExcluded ??= new Map());
@@ -471,6 +474,7 @@ export async function startFromEnv(env = process.env): Promise<Status> {
   const last = (g.__persistLast ??= new Map());
   for (const k of status.restored) last.set(k, encode(snapshotOf(k)));
   if (status.role === 'standby') {
+    if (records && status.error?.startsWith('standby:')) status.error = status.error.replace('saves nothing and refuses changes', 'saves no snapshot and takes only changes to the per-record registers (RECORD_ROUTES)');
     // A standby still takes record changes: write them out before it stops.
     if (records) for (const sig of ['SIGTERM', 'SIGINT'] as const) process.once(sig, () => { void records!.drain(5000).finally(() => process.exit(0)); });
     return status;
