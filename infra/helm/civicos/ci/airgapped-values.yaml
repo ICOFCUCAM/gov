@@ -1,0 +1,22 @@
+# Air-gapped, file state: one app replica on a persistent volume, the audit
+# anchor file on its own volume, scheduled jobs from Kubernetes (no pg_cron),
+# no TLS termination in the chart, traces off.
+app:
+  state:
+    mode: file
+    size: 20Gi
+    storageClassName: local-path
+  anchors:
+    enabled: true
+    storageClassName: local-path
+ingress:
+  tls:
+    enabled: false
+  stripInternalHeaders: false
+cron:
+  enabled: true
+  withoutSubstrate: true
+  jobs:
+    site-feeds: { schedule: "*/30 * * * *", method: GET, enabled: false }
+pdb:
+  enabled: false

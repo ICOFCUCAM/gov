@@ -56,6 +56,8 @@ spec:
       annotations:
         checksum/config: {{ toJson $c.exporters | sha256sum }}
     spec:
+      automountServiceAccountToken: false
+      {{- with (include "civicos.imagePullSecrets" .) }}{{ . | nindent 6 }}{{- end }}
       securityContext:
         {{- toYaml .Values.security.podSecurityContext | nindent 8 }}
       containers:
