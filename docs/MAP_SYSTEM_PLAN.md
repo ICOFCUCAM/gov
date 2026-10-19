@@ -261,7 +261,10 @@ layouts. The fix is one shared map engine grown from it.
   served as SensorThings API v1.1 (`lib/twin/sta.ts`). The facility register
   keeps a 0.01° grid index and an identifier index beside its sites (rebuilt
   on restore), so duplicate checks and bbox queries no longer read every
-  site.
+  site; each published site gets an opaque national FacilityID (UUID v7).
+  Boundary versions are checked for topology beyond centre points: rings
+  crossing themselves, gaps and overlaps by area, slivers, districts
+  outside the region they are filed under (`lib/geo/topology.ts`).
 - **Known data gaps** (phase 3): Kiribati's boundary data has unreadable unit
   names; France's overseas collectivities have no shapes (listed as
   "no shape" under the map, never invented). Infrastructure and corridor

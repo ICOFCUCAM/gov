@@ -35,6 +35,33 @@ describe('national boundary versions', () => {
     expect(listBoundaryVersions()).toEqual([]);
   }, 60_000);
 
+  it('checks topology by name: a ring crossing itself, a gap left by a missing unit, an overlap', async () => {
+    const clean = await proposeBoundaries({ level: 1, text: JSON.stringify(regions), source: SOURCE }, 'A', { dryRun: true });
+    if ('error' in clean) throw new Error(clean.error);
+    expect(clean.check.summary.topology).toEqual(expect.objectContaining({ kinks: 0, gapKm2: 0, overlapKm2: 0, slivers: 0 }));
+    const fc = structuredClone(regions);
+    // Nairobi left out: an enclosed gap among its neighbours.
+    fc.features = fc.features.filter(f => f.properties.shapeISO !== 'KE-30');
+    // Mombasa's outer ring with two far-apart points swapped: it crosses itself.
+    const msa = fc.features.find(f => f.properties.shapeISO === 'KE-28')!.geometry as { type: string; coordinates: number[][][] | number[][][][] };
+    const outer = (msa.type === 'Polygon' ? (msa.coordinates as number[][][])[0] : (msa.coordinates as number[][][][]).map(p => p[0]!).sort((a, b) => b.length - a.length)[0])!;
+    const k = Math.floor(outer.length / 2);
+    [outer[2], outer[k]] = [outer[k]!, outer[2]!];
+    // Kiambu stretched east over its neighbours: an overlap.
+    const kbu = fc.features.find(f => f.properties.shapeISO === 'KE-13')!;
+    const bump = { type: 'Polygon', coordinates: [[[36.9, -1.0], [36.9, -0.75], [37.25, -0.75], [37.25, -1.0], [36.9, -1.0]]] };
+    kbu.geometry = { type: 'MultiPolygon', coordinates: [...(((kbu.geometry as { type: string }).type === 'Polygon' ? [(kbu.geometry as { coordinates: number[][][] }).coordinates] : (kbu.geometry as { coordinates: number[][][][] }).coordinates)), bump.coordinates] };
+    const r = await proposeBoundaries({ level: 1, text: JSON.stringify(fc), source: SOURCE }, 'A', { dryRun: true });
+    if ('error' in r) throw new Error(r.error);
+    const w = r.check.warnings.join('\n');
+    expect(w).toMatch(/Mombasa.*crosses itself|crosses itself.*Mombasa/);
+    expect(w).toMatch(/Gaps between neighbouring units \(\d+, about \d+ km²/);
+    expect(w).toMatch(/Gaps[^\n]*between [^\n]*(Kiambu|Kajiado|Machakos)/);
+    expect(w).toMatch(/overlap by area[^\n]*Kiambu/);
+    expect(r.check.summary.topology!.gapKm2).toBeGreaterThan(400); // Nairobi is about 700 km²
+    expect(r.check.summary.topology!.kinks).toBe(1);
+  }, 60_000);
+
   it('refuses what cannot be boundaries, and says why', async () => {
     const projected = structuredClone(regions);
     (projected.features[0]!.geometry as { coordinates: number[][][] }).coordinates = [[[3_000_000, 100_000], [3_100_000, 100_000], [3_100_000, 200_000], [3_000_000, 100_000]]];
