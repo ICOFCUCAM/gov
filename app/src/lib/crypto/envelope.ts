@@ -13,9 +13,18 @@
 // Without CIVICOS_DATA_KEK values stay as they are (plaintext), as before;
 // the status says so. Plaintext written before encryption was turned on
 // stays readable and is sealed on its next use.
+//
+// Under a remote key provider (CIVICOS_KEY_PROVIDER=vault or kms-http,
+// lib/keys/custody.ts) the key is an envelope data key the provider issued
+// and unwraps at start; the key encryption key stays in the provider. The
+// stored form is the same; values sealed under CIVICOS_DATA_KEK still open
+// (while it is set) and are sealed again under the data key on next use.
+// Sealing refuses while the provider has not given a data key, rather than
+// keeping a secret in plaintext.
 
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { readFileSync } from 'node:fs';
+import { remoteDataKeys, providerKind } from '@/lib/keys/custody';
 
 const PREFIX = 'enc:v1:';
 const b64u = (b: Buffer) => b.toString('base64url');
@@ -33,24 +42,28 @@ export function parseKek(raw: string | undefined): Buffer | null {
 
 const kidOf = (k: Buffer) => createHash('sha256').update(k).digest('hex').slice(0, 8);
 
-function keys(env: NodeJS.ProcessEnv = process.env): { current: Buffer | null; all: Map<string, Buffer> } {
-  const current = parseKek(env.CIVICOS_DATA_KEK);
+function keys(env: NodeJS.ProcessEnv = process.env): { current: Buffer | null; all: Map<string, Buffer>; remote: boolean } {
+  const envCurrent = parseKek(env.CIVICOS_DATA_KEK);
   const previous = parseKek(env.CIVICOS_DATA_KEK_PREVIOUS);
   const all = new Map<string, Buffer>();
-  if (current) all.set(kidOf(current), current);
+  if (envCurrent) all.set(kidOf(envCurrent), envCurrent);
   if (previous) all.set(kidOf(previous), previous);
-  return { current, all };
+  const remote = remoteDataKeys();
+  if (!remote) return { current: envCurrent, all, remote: false };
+  for (const [kid, k] of remote.all) all.set(kid, k);
+  return { current: remote.current, all, remote: true };
 }
 
 export const isSealed = (stored: string): boolean => stored.startsWith(PREFIX);
-export const encryptionAtRest = (): { enabled: boolean; kid?: string } => {
+export const encryptionAtRest = (): { enabled: boolean; kid?: string; provider: string } => {
   const k = keys().current;
-  return k ? { enabled: true, kid: kidOf(k) } : { enabled: false };
+  return k ? { enabled: true, kid: kidOf(k), provider: providerKind() } : { enabled: false, provider: providerKind() };
 };
 
-/** Seal a secret under the current key; returned unchanged when no key is configured. */
+/** Seal a secret under the current key; returned unchanged when no key is configured (env provider only). */
 export function seal(plain: string, aad: string): string {
-  const k = keys().current;
+  const { current: k, remote } = keys();
+  if (!k && remote) throw new Error('Key custody is not ready: the key provider has not issued a data key, so this secret cannot be kept safely');
   if (!k) return plain;
   const iv = randomBytes(12);
   const c = createCipheriv('aes-256-gcm', k, iv);
@@ -71,7 +84,7 @@ export function open(stored: string, aad: string): Opened {
   const [kid, iv, tag, ct] = stored.slice(PREFIX.length).split(':');
   const k = kid ? all.get(kid) : undefined;
   if (!k || !iv || !tag || ct === undefined) {
-    return { error: current ? 'This secret was sealed under a key the server does not hold (CIVICOS_DATA_KEK_PREVIOUS?)' : 'This secret is encrypted and CIVICOS_DATA_KEK is not set' };
+    return { error: current ? 'This secret was sealed under a key the server does not hold (CIVICOS_DATA_KEK_PREVIOUS, or a data key the key provider could not unwrap?)' : 'This secret is encrypted and CIVICOS_DATA_KEK is not set' };
   }
   try {
     const d = createDecipheriv('aes-256-gcm', k, Buffer.from(iv, 'base64url'));

@@ -35,6 +35,10 @@ app:
   # official for every non-public page, read and change. Anything else leaves
   # the gate open (demonstrations only).
   auth: enforce
+  # A kubernetes.io/tls secret (tls.crt, tls.key, ca.crt) with this
+  # installation's client certificate for calling partner installations under
+  # mutual TLS (lib/exchange/federation-client.ts); "" for none.
+  federationClientSecret: ""
   # Secret holding CIVICOS_SESSION_SECRET and CIVICOS_CRON_SECRET (required)
   # and NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
   # SUPABASE_SERVICE_ROLE_KEY (when the substrate is connected).
@@ -46,13 +50,39 @@ app:
     mode: supabase
     size: 5Gi
     storageClassName: ""
-  # Extra plain environment variables (e.g. CIVICOS_STATE_LEASE_TTL_MS).
+  # Extra plain environment variables (e.g. CIVICOS_STATE_LEASE_TTL_MS, or
+  # CIVICOS_EGRESS_PROXY / CIVICOS_EGRESS_NO_PROXY where outbound traffic must
+  # go through the nation's proxy: a CONNECT tunnel to the vetted address).
   env: {}
   # The whole state is held in memory and re-encoded on save (review O3):
   # at least 1 Gi until the persistence move.
   resources:
     requests: { cpu: "250m", memory: "768Mi" }
     limits: { cpu: "1", memory: "1Gi" }
+
+# Traces (app/src/lib/ops/otel.ts): off unless enabled. Spans go only to the
+# nation's own collector: the one this chart runs (collector.enabled) or an
+# existing one named in `endpoint` (http(s), OTLP/HTTP). Nothing is sent
+# otherwise.
+otel:
+  enabled: false
+  # An existing collector, e.g. http://otel-collector.observability.svc:4318.
+  # Empty with collector.enabled: the chart's own collector.
+  endpoint: ""
+  # Fraction of new traces kept (parent-based), 0..1.
+  sampleRatio: "1"
+  collector:
+    enabled: false
+    image: otel/opentelemetry-collector-contrib
+    tag: "0.111.0"
+    resources:
+      requests: { cpu: "50m", memory: "128Mi" }
+      limits: { cpu: "500m", memory: "512Mi" }
+    # The collector's exporters (the nation's own Jaeger, Tempo, OpenSearch…).
+    # Default: the collector's own log only.
+    exporters:
+      debug: { verbosity: basic }
+    pipelineExporters: [debug]
 
 postgres:
   # In production, point at the sovereign managed Postgres (HA, PITR).
@@ -77,6 +107,56 @@ ingress:
   tls:
     enabled: true
     secretName: civicos-tls
+  # Global limits at the ingress (ingress-nginx), per client address, in
+  # front of the app's own per-official limits (app/src/lib/ops/rate-limit*.ts):
+  # requests a second (limit-rps, with a burst of rps × burstMultiplier),
+  # open connections (limit-connections) and the largest request body
+  # (proxy-body-size). Path groups that take files get their own body size
+  # and tighter rates (one Ingress per group; paths are regular expressions,
+  # as the civic-api Ingress already turns them on for this host).
+  limits:
+    enabled: true
+    rps: 20
+    burstMultiplier: 5
+    connections: 20
+    bodySize: 2m
+    # Addresses never limited (CIDRs, comma-separated), e.g. the nation's monitoring.
+    allowlist: ""
+    groups:
+      # Boundary files (up to 100 MB, base64 in JSON) and district packs (60 MB).
+      uploads:
+        paths: ["/api/boundaries$", "/api/map-pack$"]
+        bodySize: 140m
+        rps: 2
+        connections: 4
+        readTimeout: 300
+      # CSV runs (20 MB), site candidates (10 MB), site imports, XLIFF files.
+      imports:
+        paths: ["/api/twin/sources/[^/]+/run$", "/api/facilities/candidates$", "/api/org/ministries/[^/]+/facilities/import$", "/api/public-sites/[^/]+/translations/[^/]+/xliff$"]
+        bodySize: 25m
+        rps: 5
+        connections: 6
+        readTimeout: 120
+      # Connected case and site systems (2 MB and 4 MB a call).
+      feeds:
+        paths: ["/api/org/ministries/[^/]+/(queue|facilities)/feed$"]
+        bodySize: 5m
+        rps: 10
+        connections: 10
+        readTimeout: 60
+  # Mutual TLS for exchanges between installations (app/src/lib/exchange/mtls.ts):
+  # a separate host that requires a client certificate from the federation CA
+  # and serves only POST /api/federation/exchange. A grant then names the
+  # partner's certificate (PUT /api/federation/grants/{id}/certificate).
+  federation:
+    enabled: false
+    host: federation.civicos.example.gov
+    # namespace/secret holding ca.crt: the CA partner certificates chain to.
+    caSecret: civicos/civicos-federation-ca
+    verifyDepth: 2
+    tlsSecretName: civicos-federation-tls
+    limitRps: 10
+    limitConnections: 10
 
 security:
   networkPolicy: true

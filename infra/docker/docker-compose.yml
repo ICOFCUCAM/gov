@@ -1,6 +1,7 @@
 # CivicOS — local sovereign stack.
 # Brings up Postgres, NATS, Redis, the API, and the Next.js app (one state
-# writer, file state on a volume, health-checked); optionally Prometheus.
+# writer, file state on a volume, health-checked); optionally Prometheus and
+# an OpenTelemetry Collector (profile observability).
 # Mirrors the production topology at small scale (single-node).
 #
 #   docker compose -f infra/docker/docker-compose.yml up --build
@@ -76,6 +77,10 @@ services:
       CIVICOS_METRICS_TOKEN: ${CIVICOS_METRICS_TOKEN:-local-only-metrics-token-change-me-0001}
       CIVICOS_INTERNAL_URL: http://localhost:3000
       CIVICOS_LOG_LEVEL: ${CIVICOS_LOG_LEVEL:-info}
+      # Traces (app/src/lib/ops/otel.ts): off unless set. With the observability
+      # profile, CIVICOS_OTEL_ENDPOINT=http://otel-collector:4318 sends them to the
+      # collector below; only ever the nation's own collector.
+      CIVICOS_OTEL_ENDPOINT: ${CIVICOS_OTEL_ENDPOINT:-}
     volumes: ['appstate:/data']
     ports: ['3000:3000']
     deploy:
@@ -105,7 +110,32 @@ services:
     depends_on:
       app: { condition: service_healthy }
 
+  # Optional: an edge proxy with the global limits (docker compose --profile edge up;
+  # then use http://localhost:8080). The compose equivalent of the Helm ingress
+  # limits: per-address request rate and connections, body size per path group
+  # (infra/docker/nginx-edge.conf, which also shows mutual TLS for federation).
+  edge:
+    image: nginx:1.27-alpine
+    profiles: ['edge']
+    volumes:
+      - ./nginx-edge.conf:/etc/nginx/conf.d/default.conf:ro
+    ports: ['8080:8080']
+    depends_on:
+      app: { condition: service_healthy }
+
+  # Optional: the nation's own trace collector (same profile). Receives OTLP/HTTP
+  # from the app on the compose network only (no published port) and keeps the
+  # traces in a file on the otel volume (infra/docker/otel-collector.yaml).
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    profiles: ['observability']
+    command: ['--config=/etc/otelcol/config.yaml']
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+      - oteldata:/var/lib/otel
+
 volumes:
   pgdata:
   appstate:
   promdata:
+  oteldata:

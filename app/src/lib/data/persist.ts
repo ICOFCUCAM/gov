@@ -34,6 +34,7 @@ import { promises as fs, readFileSync, unlinkSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
+import { withSpan } from '@/lib/ops/trace';
 
 /** Who holds the writer's lease, and whether the caller now does. */
 export interface Lease { holder: string; expiresAt: string; acquired: boolean }
@@ -309,7 +310,7 @@ export async function flush(adapter: StateAdapter, now = new Date(), writer?: st
     const data = encode(g[key]);
     if (last.get(key) === data) continue;
     const json = JSON.stringify({ v: SNAPSHOT_FORMAT, at: now.toISOString(), ...(writer ? { writer } : {}), data: JSON.parse(data) });
-    const v = await adapter.save(key, json, writer ? { writer, expected: versions.get(key) ?? 0 } : undefined);
+    const v = await withSpan('state.save', { 'civicos.store': key, 'civicos.adapter': adapter.name, 'civicos.bytes': json.length }, () => adapter.save(key, json, writer ? { writer, expected: versions.get(key) ?? 0 } : undefined));
     if (typeof v === 'number') versions.set(key, v);
     last.set(key, data);
     written.push(key);

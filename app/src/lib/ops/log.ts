@@ -8,13 +8,19 @@
 // look like a password, secret, token, key, address, phone, e-mail or
 // identity number are replaced by "[redacted]", long strings are cut.
 // The last warnings and errors are kept in memory for /api/health.
+// When tracing is on (lib/ops/otel.ts) every server entry written inside a
+// span carries its traceId and spanId, so a log line and its trace join.
 
 export type Level = 'debug' | 'info' | 'warn' | 'error';
 const ORDER: Record<Level, number> = { debug: 10, info: 20, warn: 30, error: 40 };
 const SENSITIVE = /pass(word)?|secret|token|api.?key|authori[sz]ation|cookie|session|totp|e.?mail|phone|address|national.?id|nin\b|ssn|dob|birth/i;
 const MAX_STRING = 500;
 
-export interface LogEntry { ts: string; level: Level; event: string; service: string; requestId?: string; [field: string]: unknown }
+export interface LogEntry { ts: string; level: Level; event: string; service: string; requestId?: string; traceId?: string; spanId?: string; [field: string]: unknown }
+
+// Set by lib/ops/otel.ts when it registers a tracer provider (a hook, so the
+// browser bundle never loads the tracing packages). Not `__civicos*`: never persisted.
+const hooks = globalThis as unknown as { __otelTraceIds?: () => { traceId: string; spanId: string } | null; __otelTagRequest?: (id: string) => void };
 
 const recent: LogEntry[] = [];
 const RECENT_MAX = 200;
@@ -47,6 +53,7 @@ export function log(level: Level, event: string, fields: Record<string, unknown>
   const entry: LogEntry = {
     ts: new Date().toISOString(), level, event, service: 'civicos-app',
     ...(typeof requestId === 'string' ? { requestId } : {}),
+    ...(isServer ? hooks.__otelTraceIds?.() ?? {} : {}),
     ...(redact(rest) as Record<string, unknown>),
   };
   if (ORDER[level] >= ORDER.warn) { recent.push(entry); if (recent.length > RECENT_MAX) recent.shift(); }
@@ -79,7 +86,10 @@ export const logger = {
 /** The request id a request carries (set by the middleware), or a new one. */
 export function requestIdOf(headers: { get(name: string): string | null }): string {
   const v = headers.get('x-request-id');
-  return v && /^[A-Za-z0-9._-]{8,80}$/.test(v) ? v : (globalThis.crypto?.randomUUID?.() ?? `r${Date.now().toString(36)}${Math.floor(Math.random() * 1e9).toString(36)}`);
+  const id = v && /^[A-Za-z0-9._-]{8,80}$/.test(v) ? v : (globalThis.crypto?.randomUUID?.() ?? `r${Date.now().toString(36)}${Math.floor(Math.random() * 1e9).toString(36)}`);
+  // The active span (the route handler's) records the request id too.
+  hooks.__otelTagRequest?.(id);
+  return id;
 }
 
 /** The latest warnings and errors (newest last), for health reports. */

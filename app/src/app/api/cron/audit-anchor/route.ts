@@ -15,7 +15,9 @@
 // signed (lib/audit/sign.ts), written to the append-only anchor file outside
 // the state (file mode, lib/audit/anchor.ts) and, with the substrate
 // connected, broadcast as scope 'platform' with its signature. Without the
-// substrate only the platform head is anchored.
+// substrate only the platform head is anchored. With CIVICOS_TSA_URL the
+// head is first time-stamped by the nation's RFC 3161 TSA (lib/audit/tsa.ts)
+// and the token travels with it.
 //
 // Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
 // Cadence: every 5–15 minutes. Idempotent — anchoring the same head
@@ -40,11 +42,13 @@ interface AnchorResult {
 
 export async function GET(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  const platformAnchor = anchorPlatformHead();
+  const platformAnchor = await anchorPlatformHead();
   const h = platformAnchor.head;
   const platform = h ? {
     head_seq: h.seq, head_hash: h.hash, signed_at: h.at, key_id: h.keyId, production: h.production,
     file: platformAnchor.file ?? null,
+    ...(platformAnchor.error ? { error: platformAnchor.error } : {}),
+    timestamp: h.timestamp ? { tsa: h.timestamp.tsa, gen_time: h.timestamp.genTime, serial: h.timestamp.serial } : h.timestampError ? { error: h.timestampError } : null,
     anchored_to: platformAnchor.file?.written ? ['file'] : [] as string[],
   } : null;
   const sb = serverClient();
@@ -54,7 +58,7 @@ export async function GET(req: Request) {
       substrate: 'not configured', scopes_anchored: 0, scopes_swept: 0, results: [],
     });
   }
-  if (h && platform) {
+  if (h && platform && !h.pending) {
     const published = await Promise.resolve(sb.rpc('civicos_publish_event', {
       p_type: 'audit.anchor',
       p_source: 'platform',
@@ -62,6 +66,7 @@ export async function GET(req: Request) {
       p_payload: {
         scope: 'platform', head_seq: h.seq, head_hash: h.hash, signed_at: h.at,
         key_id: h.keyId, public_key: h.publicKeyPem, signature: h.signature, production: h.production,
+        ...(h.timestamp ? { tsa_token: h.timestamp.token, tsa_gen_time: h.timestamp.genTime } : {}),
       },
       p_target: null,
     })).catch(e => ({ error: e as Error }));

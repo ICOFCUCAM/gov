@@ -48,8 +48,33 @@ spec:
   egress:
     - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: civic-api } } }]
       ports: [{ port: 4000 }]
+    {{- if and .Values.otel.enabled .Values.otel.collector.enabled }}
+    - to: [{ podSelector: { matchLabels: { app.kubernetes.io/name: otel-collector } } }]
+      ports: [{ port: 4318 }]
+    {{- end }}
     - to: [] # the substrate and other registered HTTPS hosts (narrow with an egress gateway per nation)
       ports: [{ port: 443 }]
     - to: [] # DNS
       ports: [{ port: 53, protocol: UDP }]
+{{- if and .Values.otel.enabled .Values.otel.collector.enabled }}
+---
+# The trace collector: reached by the app only; it sends to the nation's own
+# backends (its exporters), over HTTPS or OTLP.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: civicos-otel-collector-allow
+spec:
+  podSelector:
+    matchLabels: { app.kubernetes.io/name: otel-collector }
+  policyTypes: [Ingress, Egress]
+  ingress:
+    - from: [{ podSelector: { matchLabels: { app.kubernetes.io/name: civic-app } } }]
+      ports: [{ port: 4318 }]
+  egress:
+    - to: [] # the nation's trace backends
+      ports: [{ port: 443 }, { port: 4317 }, { port: 4318 }]
+    - to: [] # DNS
+      ports: [{ port: 53, protocol: UDP }]
+{{- end }}
 {{- end }}

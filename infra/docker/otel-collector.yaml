@@ -1,0 +1,43 @@
+# OpenTelemetry Collector for a local CivicOS stack
+# (docker compose --profile observability up, with
+#  CIVICOS_OTEL_ENDPOINT=http://otel-collector:4318).
+#
+# Receives the app's traces over OTLP/HTTP (app/src/lib/ops/otel.ts) and keeps
+# them on the host: a rotating JSON file on the otel volume and a summary in
+# the collector's own log. Nothing leaves the host. A nation adds its own
+# backend (Jaeger, Tempo, OpenSearch…) as another exporter here, on its own
+# network; never a vendor or the publisher.
+receivers:
+  otlp:
+    protocols:
+      http:
+        endpoint: 0.0.0.0:4318
+
+processors:
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 256
+  batch: {}
+  # Second line of defence after the app's own redaction (which already cuts
+  # query strings from URLs): no query attribute.
+  attributes/strip-query:
+    actions:
+      - key: url.query
+        action: delete
+
+exporters:
+  debug:
+    verbosity: basic
+  file:
+    path: /var/lib/otel/traces.jsonl
+    rotation:
+      max_megabytes: 50
+      max_days: 14
+      max_backups: 10
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, attributes/strip-query, batch]
+      exporters: [debug, file]

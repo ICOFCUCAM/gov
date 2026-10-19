@@ -85,7 +85,16 @@ export interface AuditEntry {
 export interface AuditSignedHeads {
   ok: boolean;
   signedHeads: number;
-  head?: { seq: number; hash: string; at: ISODate; keyId: string; production: boolean; anchoredAt?: ISODate; anchoredTo?: string[] };
+  head?: {
+    seq: number; hash: string; at: ISODate; keyId: string; production: boolean; anchoredAt?: ISODate; anchoredTo?: string[];
+    /** RFC 3161 time-stamp from the nation's TSA (lib/audit/tsa.ts). */
+    timestamp?: { tsa: string; genTime: ISODate; serial: string; trusted?: boolean };
+    timestampError?: string;
+  };
+  /** Heads a remote key provider has not signed yet. */
+  pending?: number;
+  /** Heads time-stamped by the nation's TSA. */
+  timestamped?: number;
   currentKey?: boolean;
   problem?: string;
 }

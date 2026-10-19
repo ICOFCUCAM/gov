@@ -13,6 +13,7 @@
 import { lookup } from 'node:dns/promises';
 import { checkPublicUrl, isPrivateAddress } from '@/lib/public-sites/url-safety';
 import { pinnedFetch } from './pinned-fetch';
+import { withSpan, SpanKind } from '@/lib/ops/trace';
 
 export interface SafeFetchOptions {
   /** Whether a (redirected) address may be fetched at all, e.g. "the registered source's own host". */
@@ -46,7 +47,18 @@ function anyWebUrl(raw: string): { ok: true; url: URL } | { ok: false; error: st
   return { ok: true, url };
 }
 
-export async function safeFetchText(raw: string, o: SafeFetchOptions): Promise<{ text: string; url: string; type: string }> {
+/** Fetch under the rules above, in a client span (lib/ops/trace.ts; host and method only, never the query). */
+export function safeFetchText(raw: string, o: SafeFetchOptions): Promise<{ text: string; url: string; type: string }> {
+  let host = '';
+  try { host = new URL(raw).host; } catch { /* refused below */ }
+  return withSpan('outbound.fetch', { 'server.address': host, 'http.request.method': o.method ?? 'GET' }, async span => {
+    const r = await fetchChecked(raw, o);
+    span.setAttribute('http.response.body.size', r.text.length);
+    return r;
+  }, SpanKind.CLIENT);
+}
+
+async function fetchChecked(raw: string, o: SafeFetchOptions): Promise<{ text: string; url: string; type: string }> {
   const resolve = o.resolve ?? dnsResolve;
   const maxBytes = o.maxBytes ?? 5_000_000;
   let target = raw;

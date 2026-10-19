@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import './globals.css';
 import { getSovereign, getSetup } from '@/lib/data/store';
 import { NationRegistry } from '@/components/features/NationRegistry';
@@ -24,12 +25,14 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   const { iso3, regions, currency, locale, languages, stateForm, constitution, stateName, executiveTitle, legislatureName, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant, seal, accent, map } = getSovereign();
   const configured = !!getSetup();
   const facts = { iso3, regions, currency, locale, languages, stateForm, constitution, stateName, executiveTitle, legislatureName, configured, paymentRail, timeZone, emergency, foreignAffairs, aiAssistant, seal, accent, map };
+  // The request's script nonce (src/middleware.ts): the Content-Security-Policy runs no inline script without it.
+  const nonce = headers().get('x-nonce') ?? undefined;
   return (
     <html lang="en" dir="ltr">
       <head>
         {/* The nation's facts before any page code loads, so modules that read regions or offices when
             they load see the nation's, as the server did (lib/nation/registry.ts). */}
-        <script dangerouslySetInnerHTML={{ __html: `window.${NATION_GLOBAL}=${JSON.stringify(facts).replace(/</g, '\\u003c')};` }} />
+        <script nonce={nonce} dangerouslySetInnerHTML={{ __html: `window.${NATION_GLOBAL}=${JSON.stringify(facts).replace(/</g, '\\u003c')};` }} />
       </head>
       <body>
         <NationRegistry facts={facts} />

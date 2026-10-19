@@ -74,6 +74,33 @@ spec:
             - name: SUPABASE_SERVICE_ROLE_KEY
               valueFrom:
                 secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: SUPABASE_SERVICE_ROLE_KEY, optional: true }
+            {{- with .Values.ingress.federation }}
+            {{- if .enabled }}
+            # Exchanges between installations under mutual TLS: the federation
+            # ingress host verifies client certificates and passes them on
+            # (lib/exchange/mtls.ts believes those headers only on this host).
+            - name: CIVICOS_TRUST_PROXY_CLIENT_CERT
+              value: "1"
+            - name: CIVICOS_FEDERATION_HOST
+              value: {{ .host | quote }}
+            {{- end }}
+            {{- end }}
+            {{- if .Values.app.federationClientSecret }}
+            # This installation's client certificate for partners (lib/exchange/federation-client.ts).
+            - name: CIVICOS_FEDERATION_CERT
+              value: /etc/civicos/federation/tls.crt
+            - name: CIVICOS_FEDERATION_KEY
+              value: /etc/civicos/federation/tls.key
+            - name: CIVICOS_FEDERATION_CA
+              value: /etc/civicos/federation/ca.crt
+            {{- end }}
+            {{- if .Values.otel.enabled }}
+            # Traces to the nation's own collector only (lib/ops/otel.ts).
+            - name: CIVICOS_OTEL_ENDPOINT
+              value: {{ .Values.otel.endpoint | default "http://civicos-otel-collector:4318" | quote }}
+            - name: CIVICOS_OTEL_SAMPLE_RATIO
+              value: {{ .Values.otel.sampleRatio | default "1" | quote }}
+            {{- end }}
             {{- range $k, $v := .Values.app.env }}
             - name: {{ $k }}
               value: {{ $v | quote }}
@@ -102,16 +129,32 @@ spec:
           securityContext:
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }
-          {{- if eq ($state.mode | default "supabase") "file" }}
+          {{- if or (eq ($state.mode | default "supabase") "file") .Values.app.federationClientSecret }}
           volumeMounts:
+            {{- if eq ($state.mode | default "supabase") "file" }}
             - name: state
               mountPath: /var/lib/civicos/state
+            {{- end }}
+            {{- if .Values.app.federationClientSecret }}
+            - name: federation-client
+              mountPath: /etc/civicos/federation
+              readOnly: true
+            {{- end }}
           {{- end }}
-      {{- if eq ($state.mode | default "supabase") "file" }}
+      {{- if or (eq ($state.mode | default "supabase") "file") .Values.app.federationClientSecret }}
       volumes:
+        {{- if eq ($state.mode | default "supabase") "file" }}
         - name: state
           persistentVolumeClaim:
             claimName: civicos-app-state
+        {{- end }}
+        {{- if .Values.app.federationClientSecret }}
+        # A kubernetes.io/tls secret with tls.crt, tls.key and ca.crt (the partners' CA).
+        - name: federation-client
+          secret:
+            secretName: {{ .Values.app.federationClientSecret }}
+            defaultMode: 0400
+        {{- end }}
       {{- end }}
 ---
 apiVersion: v1
@@ -160,13 +203,27 @@ metadata:
   name: civicos
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    {{- with .Values.ingress.limits }}
+    {{- if .enabled }}
+    # Global limits per client address (values ingress.limits); the app adds its own per official.
+    nginx.ingress.kubernetes.io/limit-rps: {{ .rps | quote }}
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: {{ .burstMultiplier | quote }}
+    nginx.ingress.kubernetes.io/limit-connections: {{ .connections | quote }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ .bodySize | quote }}
+    {{- with .allowlist }}
+    nginx.ingress.kubernetes.io/limit-allowlist: {{ . | quote }}
+    {{- end }}
+    {{- end }}
+    {{- end }}
     {{- if .Values.ingress.stripInternalHeaders }}
     # Next.js's internal subrequest header (CVE-2025-29927) never comes from
     # outside; drop it before it reaches the app (the app also refuses it).
     # Needs snippet annotations allowed on the controller; set
     # ingress.stripInternalHeaders=false where they are not.
+    # The client-certificate headers are believed only from the federation host
+    # (mutual TLS), so they are dropped here as well.
     nginx.ingress.kubernetes.io/configuration-snippet: |
-      more_clear_input_headers "x-middleware-subrequest";
+      more_clear_input_headers "x-middleware-subrequest" "ssl-client-verify" "ssl-client-subject-dn" "ssl-client-issuer-dn" "ssl-client-cert";
     {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
@@ -212,5 +269,89 @@ spec:
             pathType: ImplementationSpecific
             backend:
               service: { name: civicos-api, port: { number: 4000 } }
+{{- end }}
+{{- with .Values.ingress.limits }}
+{{- if .enabled }}
+{{- $limits := . }}
+{{- range $name, $g := .groups }}
+---
+# Path group "{{ $name }}": its own body size and limits (values ingress.limits.groups).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: civicos-limits-{{ $name }}
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/limit-rps: {{ $g.rps | quote }}
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: {{ $limits.burstMultiplier | quote }}
+    nginx.ingress.kubernetes.io/limit-connections: {{ $g.connections | quote }}
+    nginx.ingress.kubernetes.io/proxy-body-size: {{ $g.bodySize | quote }}
+    nginx.ingress.kubernetes.io/proxy-read-timeout: {{ $g.readTimeout | default 60 | quote }}
+    nginx.ingress.kubernetes.io/proxy-send-timeout: {{ $g.readTimeout | default 60 | quote }}
+    {{- with $limits.allowlist }}
+    nginx.ingress.kubernetes.io/limit-allowlist: {{ . | quote }}
+    {{- end }}
+    {{- if $.Values.ingress.stripInternalHeaders }}
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_clear_input_headers "x-middleware-subrequest" "ssl-client-verify" "ssl-client-subject-dn" "ssl-client-issuer-dn" "ssl-client-cert";
+    {{- end }}
+spec:
+  ingressClassName: {{ $.Values.ingress.className }}
+  {{- if $.Values.ingress.tls.enabled }}
+  tls:
+    - hosts: [{{ $.Values.ingress.host | quote }}]
+      secretName: {{ $.Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ $.Values.ingress.host | quote }}
+      http:
+        paths:
+          {{- range $g.paths }}
+          - path: {{ . | quote }}
+            pathType: ImplementationSpecific
+            backend:
+              service: { name: civicos-app, port: { number: 3000 } }
+          {{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- with .Values.ingress.federation }}
+{{- if .enabled }}
+---
+# Exchanges between installations (POST /api/federation/exchange) on their own
+# host, under mutual TLS: ingress-nginx applies client-certificate checks to a
+# whole host, so the partners' host is separate from the one browsers use.
+# The partner's certificate must chain to the federation CA (caSecret, a
+# secret with ca.crt); nginx passes the verified result and the certificate
+# on, and the app matches its fingerprint against the grant
+# (lib/exchange/mtls.ts). Nothing else is served on this host.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: civicos-federation
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/auth-tls-secret: {{ .caSecret | quote }}
+    nginx.ingress.kubernetes.io/auth-tls-verify-client: "on"
+    nginx.ingress.kubernetes.io/auth-tls-verify-depth: {{ .verifyDepth | default 2 | quote }}
+    nginx.ingress.kubernetes.io/auth-tls-pass-certificate-to-upstream: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+    nginx.ingress.kubernetes.io/limit-rps: {{ .limitRps | default 10 | quote }}
+    nginx.ingress.kubernetes.io/limit-connections: {{ .limitConnections | default 10 | quote }}
+spec:
+  ingressClassName: {{ $.Values.ingress.className }}
+  tls:
+    - hosts: [{{ .host | quote }}]
+      secretName: {{ .tlsSecretName }}
+  rules:
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          - path: /api/federation/exchange
+            pathType: Exact
+            backend:
+              service: { name: civicos-app, port: { number: 3000 } }
+{{- end }}
 {{- end }}
 {{- end }}
