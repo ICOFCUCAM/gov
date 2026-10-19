@@ -898,11 +898,13 @@ export function getFacility(id: string): Facility | undefined {
 }
 
 /** Counts for dashboards: by category, state and certification (no positions). */
-export function facilityCounts(): { total: number; published: number; certified: number; awaiting: number; byCategory: Record<string, number> } {
-  const live = db().facilities.filter(f => f.state === 'published');
+/** The register's counts: the whole nation's, or one institution's own sites (`ministryId`). */
+export function facilityCounts(ministryId?: string): { total: number; published: number; certified: number; awaiting: number; byCategory: Record<string, number> } {
+  const mine = ministryId ? db().facilities.filter(f => f.ownerId === ministryId) : db().facilities;
+  const live = mine.filter(f => f.state === 'published');
   const byCategory: Record<string, number> = {};
   for (const f of live) byCategory[f.category] = (byCategory[f.category] ?? 0) + 1;
-  return { total: db().facilities.filter(f => f.state !== 'withdrawn').length, published: live.length, certified: live.filter(f => f.certification.state === 'certified').length, awaiting: live.filter(f => f.certification.state === 'awaiting').length, byCategory };
+  return { total: mine.filter(f => f.state !== 'withdrawn').length, published: live.length, certified: live.filter(f => f.certification.state === 'certified').length, awaiting: live.filter(f => f.certification.state === 'awaiting').length, byCategory };
 }
 
 /** The mapping agency's institution, when the nation has named one. */

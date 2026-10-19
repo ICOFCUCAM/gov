@@ -7,7 +7,12 @@
 // comes back when restored, and nothing errors. Then clustering at low zoom
 // (?cluster=1), on the WebGL layer and on the canvas layer with reduced
 // motion: every point clustered or drawn alone, hover names a cluster, click
-// and Enter zoom in, "Whole map" zooms out. Screenshots go to --out.
+// and Enter zoom in, "Whole map" zooms out; the same with the theatre's glyph
+// tiles (stacked tile marks); on a map that places a pin (the add-site form)
+// a click away from the marks places the pin and a click on a mark zooms
+// without moving it; and the units drawn from the boundary vector tiles
+// (named on hover, a region's districts drawn from them when opened).
+// Screenshots go to --out.
 //
 // Usage: node scripts/check-map-webgl.mjs --base http://localhost:3555
 //        [--chromium /path/to/chromium] [--n 100000] [--out dir] [--nation KEN]
@@ -130,7 +135,7 @@ const clusterState = async p => p.evaluate(() => {
   const s = document.querySelector('[data-testid="map-clusters"]');
   return s ? { clusters: Number(s.getAttribute('data-clusters')), clustered: Number(s.getAttribute('data-clustered')), singles: Number(s.getAttribute('data-singles')), zoom: Number(s.getAttribute('data-zoom')) } : null;
 });
-async function checkClusters(name, p, query, layer) {
+async function checkClusters(name, p, query, layer, tag = layer) {
   const out = {};
   const tc = Date.now();
   await p.goto(`${BASE}/gov/sites/map-check?n=${N}&areas=0&cluster=1${query}`, { waitUntil: 'networkidle', timeout: 120_000 });
@@ -149,7 +154,7 @@ async function checkClusters(name, p, query, layer) {
   }
   const fig = p.locator('figure').first();
   const snap = async file => { const b = await fig.boundingBox(); if (b) await p.screenshot({ path: path.join(OUT, file), clip: { x: Math.max(0, b.x), y: Math.max(0, b.y), width: b.width, height: Math.min(b.height, 1600) }, fullPage: true }).catch(e => problems.push(`screenshot ${file}: ${e.message.slice(0, 120)}`)); };
-  await snap(`clusters-${layer}-whole.png`);
+  await snap(`clusters-${tag}-whole.png`);
   // The largest cluster: its name on hover, then a click zooms to it.
   const biggest = await p.evaluate(() => {
     const els = [...document.querySelectorAll('[data-testid="map-cluster"]')];
@@ -170,7 +175,7 @@ async function checkClusters(name, p, query, layer) {
   out.afterClick = s1;
   if (s1 && s1.clustered + s1.singles !== N) problems.push(`${name}: after zooming, ${s1.clustered} + ${s1.singles} is not ${N}`);
   if (s1 && s1.singles <= s0.singles) problems.push(`${name}: zooming in did not split clusters (${s0.singles} → ${s1.singles} drawn alone)`);
-  await snap(`clusters-${layer}-zoomed.png`);
+  await snap(`clusters-${tag}-zoomed.png`);
   // Keyboard: the first cluster takes focus, Enter zooms deeper.
   const focusable = p.locator('[data-testid="map-cluster"][tabindex="0"]');
   if (await focusable.count()) {
@@ -194,6 +199,99 @@ reducedPage.on('pageerror', e => problems.push(`page error (reduced motion): ${e
 reducedPage.on('console', m => { if (m.type() === 'error') problems.push(`console (reduced motion): ${m.text().slice(0, 200)}`); });
 result.checks.clustersCanvasReducedMotion = await checkClusters('clusters (canvas, reduced motion)', reducedPage, '&webglAbove=1000000', 'canvas');
 await reducedCtx.close();
+
+// The theatre's glyph tiles (?style=tile): clusters drawn as stacked tiles, the same counts, zoom and keyboard.
+result.checks.clustersTheatre = await checkClusters('clusters (theatre tiles)', page, '&style=tile', 'webgl', 'theatre');
+const tileStyle = await page.locator('[data-testid="map-clusters"]').getAttribute('data-style').catch(() => null);
+result.checks.clustersTheatre.style = tileStyle;
+if (tileStyle !== 'tile') problems.push(`clusters (theatre tiles): marks drawn as ${tileStyle}, expected tiles`);
+
+// Placing a pin on a clustered map (the add-site form, ?pick=1): a click away from every cluster mark and
+// point places the pin; a click on a cluster mark zooms in and leaves the pin where it was.
+{
+  const out = {};
+  await page.goto(`${BASE}/gov/sites/map-check?n=${N}&areas=0&cluster=1&pick=1`, { waitUntil: 'networkidle', timeout: 120_000 });
+  await page.waitForSelector('[data-testid="map-clusters"]', { timeout: 120_000 });
+  await page.waitForFunction(() => document.querySelector('canvas[data-testid="map-webgl"]')?.getAttribute('data-state') === 'ready', null, { timeout: 120_000 });
+  // Spots on the map where nothing but the map is under the pointer (no cluster mark within 24 px).
+  const spots = await page.evaluate(() => {
+    const svg = document.querySelector('svg[aria-roledescription="map"]');
+    const r = svg.getBoundingClientRect(), out = [];
+    const marks = [...document.querySelectorAll('[data-testid="map-cluster"]')].map(e => e.getBoundingClientRect());
+    for (let gy = 1; gy < 12; gy++) for (let gx = 1; gx < 16; gx++) {
+      const x = r.left + (r.width * gx) / 16, y = r.top + (r.height * gy) / 12;
+      if (marks.some(m => x > m.left - 24 && x < m.right + 24 && y > m.top - 24 && y < m.bottom + 24)) continue;
+      out.push({ x, y });
+    }
+    return out;
+  });
+  out.candidates = spots.length;
+  let placed = null;
+  for (const s of spots) {
+    await page.mouse.move(s.x - 2, s.y - 2);
+    await page.mouse.move(s.x, s.y);
+    await page.waitForTimeout(150);
+    if (await page.locator('[data-testid="map-point-hover"]').count()) continue; // a point under the pointer: its link, not a pin
+    await page.mouse.click(s.x, s.y);
+    const pin = await page.waitForFunction(() => { const t = document.querySelector('[data-testid="map-check-pin"]')?.textContent; return t && t !== 'none' ? t : null; }, null, { timeout: 3000 }).then(h => h.jsonValue()).catch(() => null);
+    if (pin) { placed = { ...s, pin }; break; }
+  }
+  out.placed = placed;
+  if (!placed) problems.push('pick: a click on the clustered map away from the clusters did not place the pin');
+  else {
+    const before = await page.locator('[data-testid="map-check-pin"]').textContent();
+    const z0 = Number(await page.locator('[data-testid="map-clusters"]').getAttribute('data-zoom'));
+    const mark = page.locator('[data-testid="map-cluster"]').first();
+    await mark.click();
+    await page.waitForFunction(z => Number(document.querySelector('[data-testid="map-clusters"]')?.getAttribute('data-zoom')) > z, z0, { timeout: 5000 }).catch(() => problems.push('pick: clicking a cluster mark did not zoom in'));
+    const after = await page.locator('[data-testid="map-check-pin"]').textContent();
+    out.pinUnchangedByCluster = before === after;
+    if (before !== after) problems.push(`pick: clicking a cluster mark moved the pin (${before} → ${after})`);
+    await shot('pick-clustered.png');
+  }
+  result.checks.pickOnClusteredMap = out;
+}
+
+// Units drawn from the boundary vector tiles (?boundaryTiles=1 draws them whatever their number): every
+// unit the tiles carry is drawn from them, hovering a unit still names it, and opening a region draws its
+// districts from the tiles too.
+{
+  const out = {};
+  const tileRequests = [];
+  const onReq = r => { if (r.url().includes('/api/twin/tiles/boundaries/')) tileRequests.push(r.url()); };
+  page.on('request', onReq);
+  await page.goto(`${BASE}/gov/sites/map-check?n=200&areas=0&boundaryTiles=1`, { waitUntil: 'networkidle', timeout: 120_000 });
+  const drawnFromTiles = await page.waitForFunction(() => Number(document.querySelector('svg[aria-roledescription="map"]')?.getAttribute('data-boundary-tiles') || 0) || null, null, { timeout: 30_000 }).then(h => h.jsonValue()).catch(() => 0);
+  const units = await page.locator('svg[aria-roledescription="map"] path[role="button"]').count();
+  out.units = units; out.drawnFromTiles = drawnFromTiles; out.tileRequests = tileRequests.length;
+  out.status = await page.locator('[data-testid="map-boundary-tile-status"]').textContent().catch(() => null);
+  if (!drawnFromTiles || drawnFromTiles < units * 0.9) problems.push(`boundary tiles: ${drawnFromTiles} of ${units} units drawn from the tiles`);
+  if (!tileRequests.length) problems.push('boundary tiles: no boundary tile was read');
+  const first = page.locator('svg[aria-roledescription="map"] g[data-tile-unit] path[role="button"]').first();
+  if (await first.count()) {
+    // Focus names the unit as hovering does (the same handlers), wherever its shape lies.
+    const name = (await first.getAttribute('aria-label'))?.split(':')[0];
+    await first.focus();
+    out.hover = await page.waitForFunction(n => [...document.querySelectorAll('[role="status"] strong')].some(s => s.textContent === n) ? n : null, name, { timeout: 3000 }).then(h => h.jsonValue()).catch(() => null);
+    if (!out.hover) problems.push(`boundary tiles: focusing ${name} did not name it`);
+  }
+  await shot('boundary-tiles-nation.png');
+  const opener = page.locator('figure select').first();
+  if (await opener.count()) {
+    const value = await opener.locator('option').nth(1).getAttribute('value');
+    await opener.selectOption(value);
+    out.opened = value;
+    out.districtsFromTiles = await page.waitForFunction(() => {
+      const s = document.querySelector('svg[aria-roledescription="map"]');
+      return s && /:/.test(document.querySelector('[role="status"]')?.textContent ?? '') && Number(s.getAttribute('data-boundary-tiles') || 0) ? Number(s.getAttribute('data-boundary-tiles')) : null;
+    }, null, { timeout: 30_000 }).then(h => h.jsonValue()).catch(() => 0);
+    out.districts = await page.locator('svg[aria-roledescription="map"] path[role="button"]').count();
+    if (!out.districtsFromTiles) problems.push(`boundary tiles: the units of ${value} were not drawn from the tiles`);
+    await shot('boundary-tiles-opened.png');
+  }
+  page.off('request', onReq);
+  result.checks.boundaryTiles = out;
+}
 
 result.problems = problems;
 console.log(JSON.stringify(result, null, 2));

@@ -8064,7 +8064,7 @@
         ],
         "operationId": "get_facilities",
         "summary": "GET /api/facilities",
-        "description": "The national facility register (lib/data/facilities.ts). GET: published sites (?ministry=, ?category=, ?region=, ?state=proposed|published|all), each as the viewer may see it — restricted sites are generalised for anyone outside the owning institution and the whole government — with counts, the nation's policy and the vocabulary (categories, capture methods, the bodies that may decide sensitivity). ?sites=none answers the counts, policy and vocabulary without the sites (a national-scale map then reads them as vector tiles, /api/twin/tiles/facilities). Sites are added through the owning institution: /api/org/ministries/{id}/facilities. Paging: with ?limit= (1–1000) the answer is one page of the register (?offset=, default 0) and `page: { total, offset, limit, next }`; the page also takes ?state=current (every stage but withdrawn), ?status= (the site's own status), ?q= (name, FAC id, national id, region; a sector code or district only where the viewer sees the site exactly) and ?waiting=1 (what waits on an official). Without ?limit the answer is the whole list, as before. Each page is viewed through viewFacility() like the full list.",
+        "description": "The national facility register (lib/data/facilities.ts). GET: published sites (?ministry=, ?category=, ?region=, ?state=proposed|published|all), each as the viewer may see it — restricted sites are generalised for anyone outside the owning institution and the whole government — with counts, the nation's policy and the vocabulary (categories, capture methods, the bodies that may decide sensitivity). ?sites=none answers the counts, policy and vocabulary without the sites (a national-scale map then reads them as vector tiles, /api/twin/tiles/facilities). Sites are added through the owning institution: /api/org/ministries/{id}/facilities. Paging: with ?limit= (1–1000) the answer is one page of the register (?offset=, default 0) and `page: { total, offset, limit, next }`; the page also takes ?state=current (every stage but withdrawn), ?status= (the site's own status), ?q= (name, FAC id, national id, region; a sector code or district only where the viewer sees the site exactly) and ?waiting=1 (what waits on an official). Without ?limit the answer is the whole list, as before. Each page is viewed through viewFacility() like the full list. With ?ministry= the answer also carries `ministryCounts`, that institution's own counts (an institution's Sites tab pages its own sites this way).",
         "parameters": [
           {
             "name": "category",
@@ -8155,36 +8155,6 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "counts": {
-                      "type": "object",
-                      "properties": {
-                        "total": {
-                          "type": "number"
-                        },
-                        "published": {
-                          "type": "number"
-                        },
-                        "certified": {
-                          "type": "number"
-                        },
-                        "awaiting": {
-                          "type": "number"
-                        },
-                        "byCategory": {
-                          "type": "object",
-                          "additionalProperties": {
-                            "type": "number"
-                          }
-                        }
-                      },
-                      "required": [
-                        "total",
-                        "published",
-                        "certified",
-                        "awaiting",
-                        "byCategory"
-                      ]
-                    },
                     "regions": {
                       "type": "array",
                       "items": {
@@ -8346,6 +8316,66 @@
                           "under-construction"
                         ]
                       }
+                    },
+                    "ministryCounts": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "published": {
+                          "type": "number"
+                        },
+                        "certified": {
+                          "type": "number"
+                        },
+                        "awaiting": {
+                          "type": "number"
+                        },
+                        "byCategory": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "published",
+                        "certified",
+                        "awaiting",
+                        "byCategory"
+                      ]
+                    },
+                    "counts": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "number"
+                        },
+                        "published": {
+                          "type": "number"
+                        },
+                        "certified": {
+                          "type": "number"
+                        },
+                        "awaiting": {
+                          "type": "number"
+                        },
+                        "byCategory": {
+                          "type": "object",
+                          "additionalProperties": {
+                            "type": "number"
+                          }
+                        }
+                      },
+                      "required": [
+                        "total",
+                        "published",
+                        "certified",
+                        "awaiting",
+                        "byCategory"
+                      ]
                     },
                     "page": {
                       "type": "object",
@@ -8643,7 +8673,6 @@
                     }
                   },
                   "required": [
-                    "counts",
                     "regions",
                     "policy",
                     "mappingAgency",
@@ -8651,6 +8680,7 @@
                     "methods",
                     "authorities",
                     "statuses",
+                    "counts",
                     "sites"
                   ]
                 },
@@ -8658,15 +8688,6 @@
                   "schema": {
                     "summary": "Generated from the schema",
                     "value": {
-                      "counts": {
-                        "total": 1,
-                        "published": 1,
-                        "certified": 1,
-                        "awaiting": 1,
-                        "byCategory": {
-                          "key": 1
-                        }
-                      },
                       "regions": [
                         "string"
                       ],
@@ -8724,6 +8745,24 @@
                       "statuses": [
                         "closed"
                       ],
+                      "ministryCounts": {
+                        "total": 1,
+                        "published": 1,
+                        "certified": 1,
+                        "awaiting": 1,
+                        "byCategory": {
+                          "key": 1
+                        }
+                      },
+                      "counts": {
+                        "total": 1,
+                        "published": 1,
+                        "certified": 1,
+                        "awaiting": 1,
+                        "byCategory": {
+                          "key": 1
+                        }
+                      },
                       "page": {
                         "limit": 1,
                         "next": 1,
@@ -15331,12 +15370,20 @@
         ],
         "operationId": "get_org_ministries_id_facilities",
         "summary": "GET /api/org/ministries/{id}/facilities",
-        "description": "An institution's sites in the national facility register. GET: its sites, proposed and published. POST: an official of the institution records a site (name, category, longitude/latitude with how it was captured); the position is checked first and the site is published by a second official.",
+        "description": "An institution's sites in the national facility register. GET: its sites, proposed and published, and the files it loaded (?sites=none: the files only; the Sites tab reads the sites a page at a time from /api/facilities?ministry=&limit=). POST: an official of the institution records a site (name, category, longitude/latitude with how it was captured); the position is checked first and the site is published by a second official.",
         "parameters": [
           {
             "name": "id",
             "in": "path",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sites",
+            "in": "query",
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -15348,191 +15395,59 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "sites": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "localName": {
-                            "type": "string"
-                          },
-                          "category": {
-                            "type": "string"
-                          },
-                          "ownerId": {
-                            "type": "string"
-                          },
-                          "operator": {
-                            "type": "string"
-                          },
-                          "ids": {
-                            "type": "object",
-                            "additionalProperties": {
-                              "type": "string"
-                            }
-                          },
-                          "status": {
-                            "type": "string",
-                            "enum": [
-                              "closed",
-                              "decommissioned",
-                              "operational",
-                              "partial",
-                              "planned",
-                              "under-construction"
-                            ]
-                          },
-                          "sensitivity": {
-                            "type": "string",
-                            "enum": [
-                              "confidential",
-                              "public",
-                              "restricted"
-                            ]
-                          },
-                          "location": {
-                            "$ref": "#/components/schemas/FacilityLocation"
-                          },
-                          "place": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "sites": {
+                          "type": "array",
+                          "items": {
+                            "not": {}
+                          }
+                        },
+                        "imports": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/FacilityImport"
+                          }
+                        }
+                      },
+                      "required": [
+                        "sites",
+                        "imports"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "sites": {
+                          "type": "array",
+                          "items": {
                             "type": "object",
                             "properties": {
-                              "regionCode": {
-                                "type": "string"
-                              },
-                              "region": {
-                                "type": "string"
-                              },
-                              "districtCode": {
-                                "type": "string"
-                              },
-                              "district": {
-                                "type": "string"
-                              },
-                              "inside": {
-                                "type": "boolean"
-                              }
-                            },
-                            "required": [
-                              "inside"
-                            ],
-                            "description": "Worked out from the map when the site is proposed or moved."
-                          },
-                          "state": {
-                            "type": "string",
-                            "enum": [
-                              "proposed",
-                              "published",
-                              "withdrawn"
-                            ]
-                          },
-                          "proposedBy": {
-                            "type": "string"
-                          },
-                          "proposedAt": {
-                            "type": "string"
-                          },
-                          "publishedBy": {
-                            "type": "string"
-                          },
-                          "publishedAt": {
-                            "type": "string"
-                          },
-                          "certification": {
-                            "type": "object",
-                            "properties": {
-                              "required": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string",
-                                  "enum": [
-                                    "institution",
-                                    "mapping-agency"
-                                  ]
-                                }
-                              },
-                              "stamps": {
-                                "type": "array",
-                                "items": {
-                                  "$ref": "#/components/schemas/CertStamp"
-                                }
-                              },
-                              "state": {
-                                "type": "string",
-                                "enum": [
-                                  "awaiting",
-                                  "certified",
-                                  "rejected"
-                                ]
-                              }
-                            },
-                            "required": [
-                              "required",
-                              "stamps",
-                              "state"
-                            ],
-                            "description": "Location certification under the nation's policy at the time it was published."
-                          },
-                          "source": {
-                            "type": "object",
-                            "properties": {
-                              "kind": {
-                                "type": "string",
-                                "enum": [
-                                  "candidate",
-                                  "feed",
-                                  "field",
-                                  "form",
-                                  "import"
-                                ]
-                              },
-                              "importId": {
-                                "type": "string"
-                              },
-                              "sha256": {
-                                "type": "string"
-                              },
-                              "feedId": {
-                                "type": "string"
-                              },
-                              "ref": {
-                                "type": "string"
-                              },
-                              "candidateId": {
-                                "type": "string"
-                              }
-                            },
-                            "required": [
-                              "kind"
-                            ]
-                          },
-                          "pendingVersion": {
-                            "type": "object",
-                            "properties": {
-                              "n": {
-                                "type": "number"
-                              },
-                              "at": {
-                                "type": "string"
-                              },
-                              "by": {
-                                "type": "string"
-                              },
-                              "what": {
+                              "id": {
                                 "type": "string"
                               },
                               "name": {
                                 "type": "string"
                               },
+                              "localName": {
+                                "type": "string"
+                              },
                               "category": {
                                 "type": "string"
+                              },
+                              "ownerId": {
+                                "type": "string"
+                              },
+                              "operator": {
+                                "type": "string"
+                              },
+                              "ids": {
+                                "type": "object",
+                                "additionalProperties": {
+                                  "type": "string"
+                                }
                               },
                               "status": {
                                 "type": "string",
@@ -15545,9 +15460,6 @@
                                   "under-construction"
                                 ]
                               },
-                              "location": {
-                                "$ref": "#/components/schemas/FacilityLocation"
-                              },
                               "sensitivity": {
                                 "type": "string",
                                 "enum": [
@@ -15556,74 +15468,234 @@
                                   "restricted"
                                 ]
                               },
-                              "reason": {
+                              "location": {
+                                "$ref": "#/components/schemas/FacilityLocation"
+                              },
+                              "place": {
+                                "type": "object",
+                                "properties": {
+                                  "regionCode": {
+                                    "type": "string"
+                                  },
+                                  "region": {
+                                    "type": "string"
+                                  },
+                                  "districtCode": {
+                                    "type": "string"
+                                  },
+                                  "district": {
+                                    "type": "string"
+                                  },
+                                  "inside": {
+                                    "type": "boolean"
+                                  }
+                                },
+                                "required": [
+                                  "inside"
+                                ],
+                                "description": "Worked out from the map when the site is proposed or moved."
+                              },
+                              "state": {
+                                "type": "string",
+                                "enum": [
+                                  "proposed",
+                                  "published",
+                                  "withdrawn"
+                                ]
+                              },
+                              "proposedBy": {
                                 "type": "string"
+                              },
+                              "proposedAt": {
+                                "type": "string"
+                              },
+                              "publishedBy": {
+                                "type": "string"
+                              },
+                              "publishedAt": {
+                                "type": "string"
+                              },
+                              "certification": {
+                                "type": "object",
+                                "properties": {
+                                  "required": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "enum": [
+                                        "institution",
+                                        "mapping-agency"
+                                      ]
+                                    }
+                                  },
+                                  "stamps": {
+                                    "type": "array",
+                                    "items": {
+                                      "$ref": "#/components/schemas/CertStamp"
+                                    }
+                                  },
+                                  "state": {
+                                    "type": "string",
+                                    "enum": [
+                                      "awaiting",
+                                      "certified",
+                                      "rejected"
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "required",
+                                  "stamps",
+                                  "state"
+                                ],
+                                "description": "Location certification under the nation's policy at the time it was published."
+                              },
+                              "source": {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "type": "string",
+                                    "enum": [
+                                      "candidate",
+                                      "feed",
+                                      "field",
+                                      "form",
+                                      "import"
+                                    ]
+                                  },
+                                  "importId": {
+                                    "type": "string"
+                                  },
+                                  "sha256": {
+                                    "type": "string"
+                                  },
+                                  "feedId": {
+                                    "type": "string"
+                                  },
+                                  "ref": {
+                                    "type": "string"
+                                  },
+                                  "candidateId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind"
+                                ]
+                              },
+                              "pendingVersion": {
+                                "type": "object",
+                                "properties": {
+                                  "n": {
+                                    "type": "number"
+                                  },
+                                  "at": {
+                                    "type": "string"
+                                  },
+                                  "by": {
+                                    "type": "string"
+                                  },
+                                  "what": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  },
+                                  "category": {
+                                    "type": "string"
+                                  },
+                                  "status": {
+                                    "type": "string",
+                                    "enum": [
+                                      "closed",
+                                      "decommissioned",
+                                      "operational",
+                                      "partial",
+                                      "planned",
+                                      "under-construction"
+                                    ]
+                                  },
+                                  "location": {
+                                    "$ref": "#/components/schemas/FacilityLocation"
+                                  },
+                                  "sensitivity": {
+                                    "type": "string",
+                                    "enum": [
+                                      "confidential",
+                                      "public",
+                                      "restricted"
+                                    ]
+                                  },
+                                  "reason": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "n",
+                                  "at",
+                                  "by",
+                                  "what",
+                                  "name",
+                                  "category",
+                                  "status",
+                                  "location",
+                                  "sensitivity"
+                                ],
+                                "description": "A move or change waiting for a second official."
+                              },
+                              "footprint": {
+                                "$ref": "#/components/schemas/FootprintPolygon"
+                              },
+                              "heightM": {
+                                "type": "number"
+                              },
+                              "levels": {
+                                "type": "number"
+                              },
+                              "versions": {
+                                "type": "array",
+                                "items": {
+                                  "$ref": "#/components/schemas/FacilityVersion"
+                                }
+                              },
+                              "note": {
+                                "type": "string"
+                              },
+                              "generalised": {
+                                "type": "boolean"
                               }
                             },
                             "required": [
-                              "n",
-                              "at",
-                              "by",
-                              "what",
+                              "id",
                               "name",
                               "category",
+                              "ownerId",
+                              "ids",
                               "status",
+                              "sensitivity",
                               "location",
-                              "sensitivity"
-                            ],
-                            "description": "A move or change waiting for a second official."
-                          },
-                          "footprint": {
-                            "$ref": "#/components/schemas/FootprintPolygon"
-                          },
-                          "heightM": {
-                            "type": "number"
-                          },
-                          "levels": {
-                            "type": "number"
-                          },
-                          "versions": {
-                            "type": "array",
-                            "items": {
-                              "$ref": "#/components/schemas/FacilityVersion"
-                            }
-                          },
-                          "note": {
-                            "type": "string"
-                          },
-                          "generalised": {
-                            "type": "boolean"
+                              "place",
+                              "state",
+                              "proposedBy",
+                              "proposedAt",
+                              "certification",
+                              "source",
+                              "versions"
+                            ]
                           }
                         },
-                        "required": [
-                          "id",
-                          "name",
-                          "category",
-                          "ownerId",
-                          "ids",
-                          "status",
-                          "sensitivity",
-                          "location",
-                          "place",
-                          "state",
-                          "proposedBy",
-                          "proposedAt",
-                          "certification",
-                          "source",
-                          "versions"
-                        ]
-                      }
-                    },
-                    "imports": {
-                      "type": "array",
-                      "items": {
-                        "$ref": "#/components/schemas/FacilityImport"
-                      }
+                        "imports": {
+                          "type": "array",
+                          "items": {
+                            "$ref": "#/components/schemas/FacilityImport"
+                          }
+                        }
+                      },
+                      "required": [
+                        "sites",
+                        "imports"
+                      ]
                     }
-                  },
-                  "required": [
-                    "sites",
-                    "imports"
                   ]
                 },
                 "examples": {
@@ -15631,39 +15703,7 @@
                     "summary": "Generated from the schema",
                     "value": {
                       "sites": [
-                        {
-                          "id": "ID-0001",
-                          "name": "Example",
-                          "category": "string",
-                          "ownerId": "ID-0001",
-                          "ids": {
-                            "key": "string"
-                          },
-                          "status": "closed",
-                          "sensitivity": "confidential",
-                          "location": {
-                            "lng": 0,
-                            "lat": 0,
-                            "method": "cadastre"
-                          },
-                          "place": {
-                            "inside": true
-                          },
-                          "state": "proposed",
-                          "proposedBy": "A. Official",
-                          "proposedAt": "2026-01-15T09:30:00.000Z",
-                          "certification": {
-                            "required": [],
-                            "stamps": [],
-                            "state": "awaiting"
-                          },
-                          "source": {
-                            "kind": "candidate"
-                          },
-                          "versions": [
-                            {}
-                          ]
-                        }
+                        null
                       ],
                       "imports": [
                         {
@@ -15713,7 +15753,7 @@
         ],
         "operationId": "post_org_ministries_id_facilities",
         "summary": "POST /api/org/ministries/{id}/facilities",
-        "description": "An institution's sites in the national facility register. GET: its sites, proposed and published. POST: an official of the institution records a site (name, category, longitude/latitude with how it was captured); the position is checked first and the site is published by a second official.",
+        "description": "An institution's sites in the national facility register. GET: its sites, proposed and published, and the files it loaded (?sites=none: the files only; the Sites tab reads the sites a page at a time from /api/facilities?ministry=&limit=). POST: an official of the institution records a site (name, category, longitude/latitude with how it was captured); the position is checked first and the site is published by a second official.",
         "parameters": [
           {
             "name": "id",
@@ -40939,6 +40979,29 @@
                         "key"
                       ]
                     },
+                    "simplification": {
+                      "type": "object",
+                      "properties": {
+                        "method": {
+                          "type": "string"
+                        },
+                        "toleranceTileUnits": {
+                          "type": "number"
+                        },
+                        "vertices": {
+                          "type": "number"
+                        },
+                        "sharedVertices": {
+                          "type": "number"
+                        }
+                      },
+                      "required": [
+                        "method",
+                        "toleranceTileUnits",
+                        "vertices",
+                        "sharedVertices"
+                      ]
+                    },
                     "worldview": {
                       "type": "string"
                     },
@@ -41161,6 +41224,12 @@
                         "regions": "string",
                         "districts": "string",
                         "key": "string"
+                      },
+                      "simplification": {
+                        "method": "string",
+                        "toleranceTileUnits": 1,
+                        "vertices": 1,
+                        "sharedVertices": 1
                       },
                       "worldview": "string",
                       "vector_layers": [

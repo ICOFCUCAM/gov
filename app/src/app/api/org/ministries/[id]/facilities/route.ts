@@ -1,5 +1,7 @@
 // An institution's sites in the national facility register. GET: its sites,
-// proposed and published. POST: an official of the institution records a site
+// proposed and published, and the files it loaded (?sites=none: the files
+// only; the Sites tab reads the sites a page at a time from
+// /api/facilities?ministry=&limit=). POST: an official of the institution records a site
 // (name, category, longitude/latitude with how it was captured); the position
 // is checked first and the site is published by a second official.
 import { NextRequest, NextResponse } from 'next/server';
@@ -9,9 +11,10 @@ import { currentOfficial, refusal, withOfficial } from '@/lib/auth/official';
 import { ministryPermission } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
-export async function GET(_r: NextRequest, props: { params: Promise<{ id: string }> }) {
+export async function GET(r: NextRequest, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
   if (!getMinistry(params.id)) return NextResponse.json({ error: 'Ministry not found' }, { status: 404 });
+  if (r.nextUrl.searchParams.get('sites') === 'none') return NextResponse.json({ sites: [], imports: listImports(params.id) });
   const o = await currentOfficial();
   return NextResponse.json({
     sites: listFacilities({ ministryId: params.id, state: 'all' }, o ? { institution: o.institution, signedIn: true } : { signedIn: false }),

@@ -599,7 +599,7 @@ export function NationalMap({
           valueLabel="Stress" unit="index" points={points} pointsLabel="Open incidents" maxHeight={frameH} minHeight={360}
           frameHeight={frameH} insetEnd={wide ? 168 : 0} insetBottom={wide ? (frameW >= 760 ? 84 : 112) : 0} colourOf={colourOf} actions={actions}
           inMap={wide ? <><div className="px-2 pb-1.5"><TheatreLegend layers={{ ...layers, institutions: showInstitutions }} registered={registeredCount} /></div>{strip}</> : undefined}
-          pointTiles={siteTiles} pointLabels={siteTiles ? 20 : undefined}
+          pointTiles={siteTiles} pointLabels={siteTiles ? 20 : undefined} cluster
           hud={<TheatreControls tactical={tactical} heat={heat} grid={layers.grid} incidents={layers.incidents}
             onTactical={() => setTactical(v => !v)} onHeat={() => setHeat(v => !v)} onGrid={() => onToggleLayer?.('grid')} onIncidents={() => onToggleLayer?.('incidents')} />}
           overlay={ctx => <TheatreLayersSvg ctx={ctx} regions={regions} nodes={showInstitutions ? mapNodes : []} edges={edges} incidents={incidents} layers={layers} tactical={tactical} heat={heat} flowDur={flowDur} reserveEnd={wide ? 168 : 0} ts={ts} sites={sites} registeredCategories={siteScale?.kinds} links={conn.links} seats={conn.seats} />} />

@@ -85,6 +85,23 @@ describe('GET /api/facilities paging', () => {
     expect((await get('q=FAC-00002&state=all&limit=5')).body.sites.map(s => s.id)).toEqual(['FAC-00002']);
   });
 
+  it('pages one institution\'s own sites with its own counts (its Sites tab)', async () => {
+    official = { name: 'Interior officer', institution: 'interior' };
+    const r = await get('ministry=interior&state=all&limit=100&offset=0');
+    const mine = seed().filter(f => f.ownerId === 'interior');
+    expect(r.body.page!.total).toBe(mine.length);
+    expect(r.body.sites).toHaveLength(100);
+    expect(r.body.sites.every(s => s.ownerId === 'interior')).toBe(true);
+    const counts = (r.body as unknown as { ministryCounts: { total: number; published: number; certified: number } }).ministryCounts;
+    expect(counts).toEqual(expect.objectContaining({
+      total: mine.filter(f => f.state !== 'withdrawn').length,
+      published: mine.filter(f => f.state === 'published').length,
+      certified: mine.filter(f => f.state === 'published' && f.certification.state === 'certified').length,
+    }));
+    // Without ?ministry= there are only the nation's counts.
+    expect((await get('sites=none')).body).not.toHaveProperty('ministryCounts');
+  });
+
   it('lists what waits on an official', async () => {
     official = { name: 'Gov' };
     const { body } = await get('state=all&waiting=1&limit=1000');
