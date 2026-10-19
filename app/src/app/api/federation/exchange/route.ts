@@ -14,7 +14,7 @@ import { exchangeResponse } from '@/lib/exchange/log';
 export const dynamic = 'force-dynamic';
 const FEDERATION_SCOPE = 'federation:exchange';
 
-export async function POST(req: NextRequest) {
+export async function POST(req: NextRequest): Promise<NextResponse> {
   const raw = await req.text();
   const base = { channel: 'federation' as const, method: req.method, path: req.nextUrl.pathname, body: raw, signature: 'absent' as const };
   const access = verifyIntegrationKey(req.headers.get('authorization'), FEDERATION_SCOPE);
@@ -31,5 +31,5 @@ export async function POST(req: NextRequest) {
   return exchangeResponse(
     { ...base, feedId: access.client.id, tenant: b.tenant, grantId: d.grantId, status: d.allowed ? 200 : 403, result: `${d.allowed ? 'allowed' : 'refused'}: ${d.reason}` },
     { allowed: d.allowed, reason: d.reason, ...(d.grantId ? { grant: d.grantId } : {}), ...(d.obligations ? { obligations: d.obligations } : {}) },
-  ) as NextResponse;
+  );
 }

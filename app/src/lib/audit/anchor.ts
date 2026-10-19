@@ -15,7 +15,7 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { auditHead } from '@/lib/data/store';
-import { signHead, markAnchored, type SignedHead } from './sign';
+import { signHead, settledHead, markAnchored, type SignedHead } from './sign';
 
 export function anchorFilePath(env: NodeJS.ProcessEnv = process.env): string | null {
   if (env.CIVICOS_AUDIT_ANCHOR_FILE) return env.CIVICOS_AUDIT_ANCHOR_FILE;
@@ -55,14 +55,21 @@ export function verifyAnchorFile(file: string): { ok: boolean; lines: number; br
 
 export interface PlatformAnchor {
   head: SignedHead | null;
+  /** The head could not be signed, so it was not anchored. */
+  error?: string;
   file?: { path: string; written: boolean; error?: string };
 }
 
-/** Sign the current head and write it to the anchor file when there is one. The route adds the substrate. */
-export function anchorPlatformHead(now = Date.now()): PlatformAnchor {
+/**
+ * Sign the current head and write it to the anchor file when there is one.
+ * The route adds the substrate. With a remote key provider this waits for its
+ * signature; a head it could not sign is not anchored.
+ */
+export async function anchorPlatformHead(now = Date.now()): Promise<PlatformAnchor> {
   const h = auditHead();
   if (!h) return { head: null };
-  const head = signHead(h, now);
+  const head = await settledHead(signHead(h, now));
+  if (head.pending) return { head, error: `the key provider has not signed head ${head.seq}: ${head.signError ?? 'no answer'}` };
   const file = anchorFilePath();
   if (!file) return { head };
   try {

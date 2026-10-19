@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 const MAX_BYTES = 4_000_000;
 const KEY_HELP = 'Send this system\'s key: Authorization: Bearer csf_…';
 
-function answer(req: NextRequest, ministryId: string, feed: SiteFeed | null, body: string, sig: { state: SignatureState; keyId?: string }, status: number, json: Record<string, unknown>, result: string): NextResponse {
+function answer(req: NextRequest, ministryId: string, feed: SiteFeed | null, body: string, sig: { state: SignatureState; keyId?: string }, status: number, json: Record<string, unknown>, result: string): Promise<NextResponse> {
   return exchangeResponse({ channel: 'site-feed', feedId: feed?.id ?? null, ministryId, method: req.method, path: req.nextUrl.pathname, body, signature: sig.state, signatureKeyId: sig.keyId, status, result }, json);
 }
 
@@ -55,7 +55,7 @@ function summary(r: object): string {
   return parts.join(', ') || 'received';
 }
 
-export function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const feed = siteFeedForKey(params.id, req.headers.get('authorization'));
   if (!feed) return answer(req, params.id, null, '', { state: 'absent' }, 401, { error: KEY_HELP }, 'unknown key');
   const sig = signatureOf(feed, req, '');

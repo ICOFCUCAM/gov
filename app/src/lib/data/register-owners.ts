@@ -44,6 +44,7 @@ export const REGISTER_OWNERS: RegisterOwner[] = [
   { id: 'officials', name: 'Platform official accounts and sessions', owner: { where: 'platform', keys: ['__civicosOfficials'] }, api: '/api/auth/officials', copies: [] },
   { id: 'audit-heads', name: 'Signed audit chain heads', owner: { where: 'platform', keys: ['__civicosAuditHeads'] }, api: 'lib/audit/sign.ts (every N entries) and /api/cron/audit-anchor',
     copies: [{ where: 'substrate', what: 'audit_witnesses (civicos_audit_witnesses)', role: 'mirror', note: 'The anchored head is also written to the substrate witnesses when configured.' }] },
+  { id: 'keyring', name: 'Wrapped envelope data keys (key custody)', owner: { where: 'platform', keys: ['__civicosKeyring'] }, api: 'lib/keys/custody.ts (issued and unwrapped by the key provider at start)', copies: [] },
   { id: 'exchange', name: 'Exchanges between institutions: feed signing keys, exchange log, event outbox', owner: { where: 'platform', keys: ['__civicosFeedKeys', '__civicosExchangeLog', '__civicosEventOutbox'] }, api: '/api/exchange, feed signing-key routes, webhooks delivery', copies: [] },
   { id: 'telemetry', name: 'Telemetry streams', owner: { where: 'substrate', objects: ['telemetry_streams', 'telemetry_readings'] }, api: 'substrate RPCs', copies: [] },
   { id: 'twin', name: 'National twin: sources, runs, observations, metrics, scenarios', owner: { where: 'platform', keys: ['__civicosTwin', '__civicosTwinScenarios', '__civicosTwinArchive'] }, api: '/api/twin', copies: [] },

@@ -7,12 +7,16 @@
 //
 // The exchange key is CIVICOS_EXCHANGE_KEY (Ed25519, PEM or key file path);
 // without it a development key signs receipts marked `production: false`.
+// Where the key is held is decided by lib/keys/custody.ts: with a remote
+// provider (Vault / OpenBao Transit, a KMS) the receipt is signed there
+// before the answer goes out.
 // Durable through lib/data/persist.ts (`__civicosExchangeLog`), bounded to
 // the most recent MAX_ENTRIES.
 
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
-import { signingKey, signBytes, verifyBytes } from '@/lib/crypto/signing-key';
+import { verifyBytes } from '@/lib/crypto/signing-key';
+import { signer } from '@/lib/keys/custody';
 import { contentDigest } from './http-signatures';
 
 export const EXCHANGE_KEY_ENV = 'CIVICOS_EXCHANGE_KEY';
@@ -92,8 +96,10 @@ export interface ExchangeInput {
 }
 
 /** Record one exchange and sign its receipt. */
-export function logExchange(input: ExchangeInput, now = Date.now()): { entry: ExchangeEntry; receipt: ExchangeReceipt } {
-  const key = signingKey(EXCHANGE_KEY_ENV);
+export async function logExchange(input: ExchangeInput, now = Date.now()): Promise<{ entry: ExchangeEntry; receipt: ExchangeReceipt }> {
+  const s = signer('exchange');
+  // The key that will sign: known at once for a local key; for a remote one, asked of the provider first.
+  const key = s.current() ?? await s.load();
   const at = new Date(now).toISOString();
   const id = `EX-${randomUUID()}`;
   const requestDigest = contentDigest(input.body);
@@ -102,9 +108,15 @@ export function logExchange(input: ExchangeInput, now = Date.now()): { entry: Ex
   const unsigned: Omit<ExchangeReceipt, 'signature'> = {
     v: 'civicos-exchange-receipt-v1', id, at, channel: input.channel, feedId, method: input.method.toUpperCase(), path: input.path,
     requestDigest, ...(input.signatureKeyId ? { signatureKeyId: input.signatureKeyId } : {}), status: input.status, result,
-    platformKeyId: key.keyId, production: key.production,
+    platformKeyId: key.keyId, production: s.production,
   };
-  const receipt: ExchangeReceipt = { ...unsigned, signature: signBytes(key, receiptPayload(unsigned)) };
+  let signed = s.signSync ? s.signSync(receiptPayload(unsigned)) : await s.sign(receiptPayload(unsigned));
+  if (signed.keyId !== unsigned.platformKeyId) {
+    // The provider rotated its key in between: name the key that signed.
+    unsigned.platformKeyId = signed.keyId;
+    signed = await s.sign(receiptPayload(unsigned));
+  }
+  const receipt: ExchangeReceipt = { ...unsigned, signature: signed.signature };
   const entry: ExchangeEntry = {
     id: `EXL-${id.slice(3)}`, at, channel: input.channel, feedId, ...(input.ministryId ? { ministryId: input.ministryId } : {}),
     ...(input.tenant ? { tenant: input.tenant } : {}), ...(input.grantId ? { grantId: input.grantId } : {}),
@@ -118,14 +130,24 @@ export function logExchange(input: ExchangeInput, now = Date.now()): { entry: Ex
 }
 
 /** Check a receipt against the platform's exchange public key (as published at /api/exchange/key). */
-export function verifyReceipt(r: ExchangeReceipt, publicKeyPem = signingKey(EXCHANGE_KEY_ENV).publicKeyPem): boolean {
+export function verifyReceipt(r: ExchangeReceipt, publicKeyPem = signer('exchange').current()?.publicKeyPem ?? ''): boolean {
   const { signature, ...rest } = r;
   return verifyBytes(publicKeyPem, receiptPayload(rest), signature);
 }
 
+/** The exchange public key as known now (always for a local key; for a remote one once loaded at start). */
 export function exchangePublicKey(): { keyId: string; publicKey: string; production: boolean } {
-  const k = signingKey(EXCHANGE_KEY_ENV);
-  return { keyId: k.keyId, publicKey: k.publicKeyPem, production: k.production };
+  const s = signer('exchange');
+  const k = s.current();
+  if (!k) throw new Error('The exchange key has not been loaded from the key provider yet');
+  return { keyId: k.keyId, publicKey: k.publicKeyPem, production: s.production };
+}
+
+/** The same, asking a remote provider for it when it is not loaded yet. */
+export async function loadExchangePublicKey(): Promise<{ keyId: string; publicKey: string; production: boolean }> {
+  const s = signer('exchange');
+  const k = await s.load();
+  return { keyId: k.keyId, publicKey: k.publicKeyPem, production: s.production };
 }
 
 /** The most recent exchanges, newest first, optionally for one channel and feed. */
@@ -148,8 +170,8 @@ export function listExchanges(filter: { channel?: ExchangeChannel; feedId?: stri
  * signed receipt (in the body as `receipt` and, base64url, in the
  * CivicOS-Receipt header).
  */
-export function exchangeResponse(input: Omit<ExchangeInput, 'status' | 'result'> & { status: number; result: string }, json: Record<string, unknown>, headers: Record<string, string> = {}): NextResponse {
-  const { receipt } = logExchange(input);
+export async function exchangeResponse(input: Omit<ExchangeInput, 'status' | 'result'> & { status: number; result: string }, json: Record<string, unknown>, headers: Record<string, string> = {}): Promise<NextResponse> {
+  const { receipt } = await logExchange(input);
   const res = NextResponse.json({ ...json, receipt }, { status: input.status, headers });
   res.headers.set(RECEIPT_HEADER, Buffer.from(JSON.stringify(receipt), 'utf8').toString('base64url'));
   return res;

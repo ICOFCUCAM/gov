@@ -40,11 +40,12 @@ interface AnchorResult {
 
 export async function GET(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  const platformAnchor = anchorPlatformHead();
+  const platformAnchor = await anchorPlatformHead();
   const h = platformAnchor.head;
   const platform = h ? {
     head_seq: h.seq, head_hash: h.hash, signed_at: h.at, key_id: h.keyId, production: h.production,
     file: platformAnchor.file ?? null,
+    ...(platformAnchor.error ? { error: platformAnchor.error } : {}),
     anchored_to: platformAnchor.file?.written ? ['file'] : [] as string[],
   } : null;
   const sb = serverClient();
@@ -54,7 +55,7 @@ export async function GET(req: Request) {
       substrate: 'not configured', scopes_anchored: 0, scopes_swept: 0, results: [],
     });
   }
-  if (h && platform) {
+  if (h && platform && !h.pending) {
     const published = await Promise.resolve(sb.rpc('civicos_publish_event', {
       p_type: 'audit.anchor',
       p_source: 'platform',

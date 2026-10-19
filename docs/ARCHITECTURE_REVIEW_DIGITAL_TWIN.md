@@ -633,7 +633,7 @@ Every finding of section 2 has been worked on in place (nothing removed). What a
 |---|---|---|
 | S1, S2, S4 gate bypasses, open reads, fail-open defaults | bearer and self-authenticated lists in `lib/auth/roles.ts`, verified official for every non-public read under enforce, deny-by-default for unlisted changes with a coverage test, role-less sessions newer than roles act as officer, `listFacilities` viewer required | — |
 | S3 Next.js CVE | Next 14.2.35, `x-middleware-subrequest` refused, dependency audit in CI with reviewed exceptions, findings raised as Update Center advisories, container image scan and SBOM | Next 15 / React 19 for the advisories only fixed there (register 17.9) |
-| S5, S6 keys with the data, weak randomness | TOTP secrets under AES-256-GCM (`CIVICOS_DATA_KEK`), async scrypt N=2¹⁷ with rehash, session secret required under enforce, CSPRNG ids and SHA-256 content hashes, integration keys hashed | KMS/HSM custody of the KEK and audit key |
+| S5, S6 keys with the data, weak randomness | TOTP secrets under AES-256-GCM (`CIVICOS_DATA_KEK`), async scrypt N=2¹⁷ with rehash, session secret required under enforce, CSPRNG ids and SHA-256 content hashes, integration keys hashed, key custody providers (`lib/keys/`: environment, Vault / OpenBao Transit, KMS over HTTP) for the audit, exchange and data keys | — |
 | S7 DNS rebinding | pinned vetted address in `safeFetchText`; twin downloads up to 20 MB | egress proxy support for the pinned connection |
 | S8 headers | one CSP/HSTS source (`security-headers.mjs`) mirrored in `vercel.json`, checked by the console smoke tests | nonce-based script policy |
 | S9 rate limits | `lib/ops/rate-limit.ts` on uploads and checks; integration keys enforce `rateLimitRpm` | ingress-level global limits |

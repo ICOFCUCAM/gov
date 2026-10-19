@@ -22,6 +22,7 @@ import { persistenceStatus, stateWritable } from '@/lib/data/persist';
 import { listAudit, verifyAuditChain } from '@/lib/data/store';
 import { problemsLastHour, twinFreshness } from '@/lib/ops/metrics';
 import { tracingStatus } from '@/lib/ops/otel';
+import { keyCustodyStatus } from '@/lib/keys/custody';
 
 export const dynamic = 'force-dynamic';
 
@@ -62,8 +63,9 @@ export async function GET(req: Request) {
   const chain = verifyAuditChain();
   const twin = twinFreshness();
   const problems = problemsLastHour();
+  const keys = keyCustodyStatus();
   const down = !p.writable || !chain.ok || (p.error ?? '').startsWith('restore failed');
-  const degraded = !!p.error || twin.overdue.length > 0 || problems.error > 0 || (configured && !reachable);
+  const degraded = !!p.error || !keys.ready || twin.overdue.length > 0 || problems.error > 0 || (configured && !reachable);
   const body = {
     ok: configured && reachable,
     status: down ? 'down' : degraded ? 'degraded' : 'ok',
@@ -75,6 +77,8 @@ export async function GET(req: Request) {
     problems,
     // Whether spans go to the nation's own collector (CIVICOS_OTEL_ENDPOINT); the address is not shown.
     tracing: { enabled: tracingStatus().enabled },
+    // Where the signing and data keys are held, and whether the provider is ready (no key ids, no address).
+    keys: { provider: keys.provider, ready: keys.ready },
   };
   if (q.has('ready')) {
     const ready = p.writable && !(p.error ?? '').startsWith('restore failed');

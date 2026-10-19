@@ -21,7 +21,7 @@ export const dynamic = 'force-dynamic';
 
 const KEY_HELP = 'Send this system\'s key: Authorization: Bearer ccf_…';
 
-function answer(req: NextRequest, ministryId: string, feed: CaseFeed | null, body: string, sig: { state: SignatureState; keyId?: string }, status: number, json: Record<string, unknown>, result: string): NextResponse {
+function answer(req: NextRequest, ministryId: string, feed: CaseFeed | null, body: string, sig: { state: SignatureState; keyId?: string }, status: number, json: Record<string, unknown>, result: string): Promise<NextResponse> {
   return exchangeResponse({ channel: 'case-feed', feedId: feed?.id ?? null, ministryId, method: req.method, path: req.nextUrl.pathname, body, signature: sig.state, signatureKeyId: sig.keyId, status, result }, json);
 }
 
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   return answer(req, params.id, feed, raw, sig, 200, r, `${r.added} added, ${r.updated} updated, ${r.unchanged} unchanged, ${r.refused.length} refused`);
 }
 
-export function GET(req: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const feed = feedForKey(params.id, req.headers.get('authorization'));
   if (!feed) return answer(req, params.id, null, '', { state: 'absent' }, 401, { error: KEY_HELP }, 'unknown key');
   const sig = signatureOf(feed, req, '');
