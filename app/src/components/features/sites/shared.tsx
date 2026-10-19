@@ -11,10 +11,11 @@ import type {
   LocationCheck, PolicyChange, SensitivityAuthority, SensitivityRule,
 } from '@/lib/data/facilities';
 import type { MapPoint } from '@/components/map/NationMap';
+import type { CategoryStandards } from '@/lib/data/facility-standards';
 
 export type { CaptureMethod, CertStage, Facility, FacilityImport, FacilityPolicy, FacilityStatus, LocationCheck, PolicyChange, SensitivityAuthority, SensitivityRule };
 export type Site = Facility & { generalised?: boolean };
-export type Category = FacilityCategory & { rule: SensitivityRule };
+export type Category = FacilityCategory & { rule: SensitivityRule; standards?: CategoryStandards };
 export interface Method { key: CaptureMethod; label: string; how: string; typicalAccuracyM: number }
 export interface Vocabulary {
   sites: Site[];

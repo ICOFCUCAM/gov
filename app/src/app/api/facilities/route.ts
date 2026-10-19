@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CAPTURE_METHODS, FACILITY_CATEGORIES, SENSITIVITY_AUTHORITIES, STATUSES, facilityCounts, facilityPolicy, listFacilities, mappingAgency, sensitivityRule } from '@/lib/data/facilities';
 import { currentOfficial } from '@/lib/auth/official';
+import { standardsOf } from '@/lib/data/facility-standards';
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
@@ -20,6 +21,6 @@ export async function GET(req: NextRequest) {
   }, o ? { institution: o.institution, signedIn: true } : { signedIn: false });
   return NextResponse.json({
     sites, counts: facilityCounts(), policy: facilityPolicy(), mappingAgency: mappingAgency(),
-    categories: FACILITY_CATEGORIES.map(c => ({ ...c, rule: sensitivityRule(c.key) })), methods: CAPTURE_METHODS, authorities: SENSITIVITY_AUTHORITIES, statuses: STATUSES,
+    categories: FACILITY_CATEGORIES.map(c => ({ ...c, rule: sensitivityRule(c.key), standards: standardsOf(c.key) })), methods: CAPTURE_METHODS, authorities: SENSITIVITY_AUTHORITIES, statuses: STATUSES,
   });
 }

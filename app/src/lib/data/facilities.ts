@@ -37,6 +37,7 @@ import { safeFetchText } from '@/lib/net/safe-fetch';
 import { uuid7 } from './uuid7';
 import { readCrs, toWgs84, type SourceCrs } from '@/lib/geo/crs';
 import { kinksOf } from '@/lib/geo/topology';
+import { categoryFromOsm } from './facility-standards';
 import type { Geom } from '@/lib/geo/admin1';
 
 // ── Vocabulary ────────────────────────────────────────────────────────────
@@ -1096,6 +1097,8 @@ export interface Candidate {
   ref?: string; region?: string; regionCode?: string;
   /** A recorded site of the same kind close by, offered for linking. */
   match?: { id: string; name: string; metres: number };
+  /** How its kind of site was known: the dataset's category column, its OpenStreetMap tags, or the kind chosen for the whole dataset. */
+  kindFrom?: 'category' | 'osm' | 'dataset';
   state: 'open' | 'confirmed' | 'linked' | 'rejected';
   decidedBy?: string; decidedAt?: string; facilityId?: string; reason?: string;
 }
@@ -1146,8 +1149,11 @@ export async function loadOpenSource(input: { name?: string; publisher?: string;
     const row = format === 'csv' ? i + 2 : i + 1;
     const refuse = (reason: string) => { if (src.refused.length < 200) src.refused.push({ row, reason }); };
     if (r._geometry) { refuse(`A ${r._geometry} is not a point`); continue; }
-    const cat = categoryOf((r.category ?? '').trim().toLowerCase())?.key ?? fallback;
-    if (!cat) { refuse(`"${r.category ?? ''}" is not a category (choose one for the whole dataset)`); continue; }
+    const own = categoryOf((r.category ?? '').trim().toLowerCase())?.key;
+    const osm = own ? undefined : categoryFromOsm(r);
+    const cat = own ?? osm ?? fallback;
+    if (!cat) { refuse(`"${r.category ?? ''}" is not a category, and no OpenStreetMap tag says what it is (choose one for the whole dataset)`); continue; }
+    const kindFrom: Candidate['kindFrom'] = own ? 'category' : osm ? 'osm' : 'dataset';
     const lat = Number(String(r.latitude ?? '').replace(',', '.')), lng = Number(String(r.longitude ?? '').replace(',', '.'));
     const nm = clean(r.name) || `Unnamed ${categoryOf(cat)!.label.toLowerCase()}`;
     const check = await checkLocation({ lng, lat, category: cat, name: nm });
@@ -1158,7 +1164,7 @@ export async function loadOpenSource(input: { name?: string; publisher?: string;
     const m = check.duplicates[0];
     openDb().candidates.push({
       id: `CAND-${openDb().seq++}`, sourceId: src.id, name: nm, category: cat, lng, lat, ...(ref ? { ref } : {}),
-      region: check.place.region, regionCode: check.place.regionCode, ...(m ? { match: m } : {}), state: 'open',
+      region: check.place.region, regionCode: check.place.regionCode, ...(m ? { match: m } : {}), kindFrom, state: 'open',
     });
     src.candidates++;
   }

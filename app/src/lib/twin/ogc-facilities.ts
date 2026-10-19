@@ -9,6 +9,7 @@
 // v7 minted at publication); the feature id stays the display id FAC-xxxxx.
 
 import { listFacilities, categoryOf, nationalId, type Viewer } from '@/lib/data/facilities';
+import { standardsOf, osmText } from '@/lib/data/facility-standards';
 import { getMinistry } from '@/lib/data/store';
 import { QUERYABLES_REL, filterQs, matchesFilters, type PropertyFilter } from './ogc-queryables';
 import { DATETIME_AS_OF, MAX_LIMIT, pageLinks, parseBbox, parseDatetime } from './ogc';
@@ -34,6 +35,15 @@ export function facilitiesInfo(base: string) {
   };
 }
 
+/** The category's crosswalk as feature properties: INSPIRE, HXL, OSM and Smart Data Models (lib/data/facility-standards.ts). */
+function standardsFor(category: string) {
+  const st = standardsOf(category)!;
+  return {
+    inspireTheme: st.inspire.theme, inspireFeatureType: st.inspire.featureType, ...(st.inspire.code ? { inspireCode: st.inspire.code, inspireCodeList: st.inspire.codeList } : {}),
+    hxl: st.hxl.tag, osm: osmText(st), smartDataModel: st.smartDataModel.type, smartDataModelCategory: st.smartDataModel.category,
+  };
+}
+
 function featureOf(s: ReturnType<typeof listFacilities>[number]) {
   return {
     type: 'Feature' as const,
@@ -43,6 +53,7 @@ function featureOf(s: ReturnType<typeof listFacilities>[number]) {
       ...(nationalId(s) ? { nationalId: nationalId(s) } : {}),
       name: s.name, ...(s.localName ? { localName: s.localName } : {}),
       category: s.category, categoryLabel: categoryOf(s.category)?.label,
+      ...(standardsOf(s.category) ? { standards: standardsFor(s.category) } : {}),
       institution: getMinistry(s.ownerId)?.name ?? s.ownerId, status: s.status,
       region: s.place.region, regionCode: s.place.regionCode, ...(s.place.district ? { district: s.place.district, districtCode: s.place.districtCode } : {}),
       identifiers: s.ids, captured: s.location.method, accuracyMetres: s.location.accuracyM,
