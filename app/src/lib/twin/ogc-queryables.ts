@@ -16,7 +16,7 @@ export const QUERYABLES_CONFORMANCE = [
 export const QUERYABLES_REL = 'http://www.opengis.net/def/rel/ogc/1.0/queryables';
 
 /** The parameters every items request takes (Part 1). */
-export const STANDARD_PARAMS = ['limit', 'offset', 'bbox', 'datetime', 'f', 'filter', 'filter-lang', 'filter-crs'] as const;
+export const STANDARD_PARAMS = ['limit', 'offset', 'bbox', 'datetime', 'f', 'filter', 'filter-lang', 'filter-crs', 'crs', 'bbox-crs'] as const;
 
 export interface Queryable { title: string; description: string; type: 'string' | 'integer' | 'number'; enum?: (string | number)[]; pattern?: string; format?: 'date-time' | 'date' }
 
@@ -60,7 +60,7 @@ export function queryables(base: string, collectionId: string) {
     $id: `${base}/collections/${collectionId}/queryables`,
     type: 'object',
     title: `Queryables of ${collectionId}`,
-    description: 'Each property may be given as a query parameter on /items to keep only the features whose property equals it, or used in a CQL2 filter (filter, filter-lang=cql2-text|cql2-json, filter-crs CRS84) with geometry. Other parameters than these and limit, offset, bbox, datetime, f, filter, filter-lang and filter-crs are refused.',
+    description: 'Each property may be given as a query parameter on /items to keep only the features whose property equals it, or used in a CQL2 filter (filter, filter-lang=cql2-text|cql2-json, filter-crs CRS84) with geometry. Other parameters than these and limit, offset, bbox, datetime, f, filter, filter-lang, filter-crs, crs and bbox-crs are refused.',
     properties: {
       geometry: { $ref: 'https://geojson.org/schema/Geometry.json', 'x-ogc-role': 'primary-geometry' },
       ...Object.fromEntries(Object.entries(q).map(([k, v]) => [k, { title: v.title, description: v.description, type: v.type, ...(v.format ? { format: v.format } : {}), ...(v.enum ? { enum: v.enum } : {}), ...(v.pattern ? { pattern: v.pattern } : {}) }])),

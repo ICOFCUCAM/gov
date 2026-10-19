@@ -30,7 +30,7 @@ const MAX_BODY = 2_000_000;
 export async function GET(req: NextRequest, props: { params: Promise<{ path: string[] }> }) {
   const params = await props.params;
   // A GIS client's integration key (scope ogc:read), when it sends one; otherwise the official's session.
-  const refused = machineReadRefusal(req);
+  const refused = await machineReadRefusal(req);
   if (refused) return refused;
   await syncRegister();
   const o = await currentOfficial();

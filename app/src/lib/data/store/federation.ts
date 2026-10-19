@@ -105,6 +105,11 @@ export function verifyIntegrationKey(authorization: string | null | undefined, s
     return have.length === want.length && timingSafeEqual(have, want);
   });
   if (!client) return { ok: false, status: 401, error: 'Unknown or replaced integration key' };
+  return admit(client, scope, now);
+}
+
+/** The checks every use of an integration's credential passes: approved, holds the scope, within its rate limit. */
+function admit(client: IntegrationClient, scope: string | undefined, now: number): IntegrationAccess {
   if (client.status !== 'approved') return { ok: false, status: 403, error: `This integration is ${client.status}` };
   if (scope && !client.scopes.includes(scope)) return { ok: false, status: 403, error: `Scope '${scope}' is not granted to this integration` };
   const rate = take(`integration:${client.id}`, client.rateLimitRpm, now);
@@ -112,6 +117,19 @@ export function verifyIntegrationKey(authorization: string | null | undefined, s
   client.lastUsedAt = new Date(now).toISOString();
   client.calls = (client.calls ?? 0) + 1;
   return { ok: true, client, remaining: rate.remaining };
+}
+
+/**
+ * Check a use of an access token issued for an integration's key (OAuth2
+ * client credentials, lib/auth/client-credentials.ts) once its signature and
+ * lifetime have been verified: the integration as it stands now must still
+ * hold the key the token was issued for (a rotated key ends its tokens), be
+ * approved and hold `scope`; its rate limit applies as for the key itself.
+ */
+export function verifyIntegrationToken(clientId: string, keyPrefix: string, scope: string | undefined, now = Date.now()): IntegrationAccess {
+  const client = db.integrations.find(c => c.id === clientId);
+  if (!client || !keyPrefix || client.keyPrefix !== keyPrefix || !db.integrationKeys[client.id]) return { ok: false, status: 401, error: 'The token was issued for a key that has been replaced or removed: ask for a new token' };
+  return admit(client, scope, now);
 }
 
 export function setIntegrationStatus(

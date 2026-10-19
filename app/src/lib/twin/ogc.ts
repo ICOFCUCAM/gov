@@ -3,7 +3,9 @@
 // shapes, upgraded boundaries where available) with, as properties, the latest
 // observed value of each metric true on `datetime` as the twin knows it now.
 // Only observations are published; samples and scenarios never are. GIS tools
-// (QGIS, ArcGIS, GDAL) read it directly. CRS: WGS 84 longitude/latitude (CRS84).
+// (QGIS, ArcGIS, GDAL) read it directly. Stored in WGS 84 longitude/latitude
+// (CRS84); served also in EPSG:4326, EPSG:3857 and the nation's national grids
+// on request (Part 2, lib/twin/ogc-crs.ts).
 //
 // Shapes come through loadNationGeography() / loadDistricts() (lib/map/geography),
 // as every map reads them: a boundary version the mapping authority has
@@ -17,12 +19,14 @@ import { nationIso3 } from '@/lib/nation/registry';
 import { listEntities, stateAsOf, listSources } from './register';
 import { QUERYABLES_CONFORMANCE, QUERYABLES_REL, filterQs, matchesFilters, type PropertyFilter } from './ogc-queryables';
 import { CQL2_CONFORMANCE, cql2Matches, type ParsedFilter } from './cql2';
+import { CRS_CONFORMANCE } from './ogc-crs';
 
 export const CONFORMANCE = [
   'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/core',
   'http://www.opengis.net/spec/ogcapi-features-1/1.0/conf/geojson',
   ...QUERYABLES_CONFORMANCE,
   ...CQL2_CONFORMANCE,
+  ...CRS_CONFORMANCE,
 ];
 export const COLLECTION = 'subdivisions';
 const CRS84 = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84';

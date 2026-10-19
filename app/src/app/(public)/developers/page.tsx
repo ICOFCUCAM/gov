@@ -53,6 +53,18 @@ export default function DevelopersPage() {
           <pre tabIndex={0} aria-label="Example GIS request" className="overflow-x-auto text-sm"><code>{`GDAL_HTTP_HEADERS="Authorization: Bearer civ_<key>" \\
   ogrinfo OAPIF:https://<installation>/api/twin/ogc facilities`}</code></pre>
         </Card>
+        <p className="text-sm text-ink-muted">
+          Clients that expect OAuth 2.0 exchange the key for a short-lived access token (client credentials):
+          send the integration&rsquo;s id as <code>client_id</code> and its key as <code>client_secret</code> to{' '}
+          <code>/api/oauth/token</code> with <code>grant_type=client_credentials</code>, then send the token as{' '}
+          <code>Bearer</code>. A token carries at most the key&rsquo;s scopes, lasts ten minutes and stops working
+          when the key is replaced. Features come in other coordinate systems on request (<code>crs</code>,{' '}
+          <code>bbox-crs</code>: EPSG:4326, EPSG:3857 and the nation&rsquo;s national grids, listed on each collection).
+        </p>
+        <Card tight>
+          <pre tabIndex={0} aria-label="Example token request" className="overflow-x-auto text-sm"><code>{`curl -u '<integration id>:civ_<key>' -d grant_type=client_credentials -d scope=ogc:read \\
+  https://<installation>/api/oauth/token`}</code></pre>
+        </Card>
       </section>
 
       <section className="space-y-2">

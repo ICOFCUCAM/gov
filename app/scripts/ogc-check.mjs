@@ -6,7 +6,10 @@
 // links, items as GeoJSON with numberMatched/numberReturned, limit and paging
 // (next and prev links), bbox and datetime parameters (valid and invalid),
 // single features by id and 404 for an unknown one, coordinates in CRS84,
-// and Part 3 CQL2 filters (text and JSON; an unknown queryable is a 400).
+// Part 2 coordinate systems (each collection's crs and storageCrs, crs and
+// bbox-crs parameters with EPSG:4326 latitude first and EPSG:3857 metres,
+// Content-Crs on every answer, an unoffered crs refused with 400), and
+// Part 3 CQL2 filters (text and JSON; an unknown queryable is a 400).
 // A GIS client's key: --header "Authorization: Bearer civ_…".
 //
 // Usage: node scripts/ogc-check.mjs --base http://localhost:3000 [--cookie name=value | --header "Authorization: Bearer civ_…"] [--report ogc.json]
@@ -26,7 +29,7 @@ async function get(url, accept = 'application/json') {
   const r = await fetch(url, { headers: { accept, ...(COOKIE ? { cookie: COOKIE } : {}), ...(HEADER ? { [HEADER.split(':')[0].trim()]: HEADER.slice(HEADER.indexOf(':') + 1).trim() } : {}) } });
   let body = null;
   try { body = await r.json(); } catch { /* not JSON */ }
-  return { status: r.status, type: r.headers.get('content-type') ?? '', body };
+  return { status: r.status, type: r.headers.get('content-type') ?? '', crs: r.headers.get('content-crs') ?? '', body };
 }
 const rel = (links, r) => (links ?? []).find(l => l.rel === r);
 const coords = g => {
@@ -37,6 +40,9 @@ const coords = g => {
 };
 const bboxOf = f => { const c = coords(f.geometry); return c.length ? [Math.min(...c.map(p => p[0])), Math.min(...c.map(p => p[1])), Math.max(...c.map(p => p[0])), Math.max(...c.map(p => p[1]))] : null; };
 const meets = (a, b) => a[0] <= b[2] && a[2] >= b[0] && a[1] <= b[3] && a[3] >= b[1];
+const CRS84 = 'http://www.opengis.net/def/crs/OGC/1.3/CRS84';
+const EPSG = c => `http://www.opengis.net/def/crs/EPSG/0/${c}`;
+const PART2 = 'http://www.opengis.net/spec/ogcapi-features-2/1.0/conf/crs';
 
 // Landing page (/req/core/root-success)
 const landing = await get(ROOT);
@@ -103,6 +109,37 @@ for (const c of list) {
   }
   const missing = await get(`${ROOT}/collections/${encodeURIComponent(id)}/items/no-such-feature-0000`);
   check(`[${id}] core/f-op: unknown id answers 404`, missing.status === 404, `status ${missing.status}`);
+
+  // Part 2 coordinate systems by reference (/req/crs/*)
+  if (classes.includes(PART2)) {
+    const crsList = one.body?.crs ?? [];
+    check(`[${id}] crs/fc-md-crs-list: crs lists CRS84, EPSG:4326 and EPSG:3857`, [CRS84, EPSG(4326), EPSG(3857)].every(c => crsList.includes(c)), JSON.stringify(crsList));
+    check(`[${id}] crs/fc-md-storageCrs: storageCrs is one of crs`, one.body?.storageCrs && crsList.includes(one.body.storageCrs));
+    check(`[${id}] crs/ogc-crs-header: default answer says Content-Crs CRS84`, items.crs === `<${CRS84}>`, items.crs);
+    const base = `${ROOT}/collections/${encodeURIComponent(id)}/items`;
+    const ll = await get(`${base}?limit=5&crs=${encodeURIComponent(EPSG(4326))}`, 'application/geo+json');
+    check(`[${id}] crs/fc-crs-success: crs=EPSG:4326 answers 200 with Content-Crs`, ll.status === 200 && ll.crs === `<${EPSG(4326)}>`, `status ${ll.status} ${ll.crs}`);
+    const a = coords(fc?.features?.[0]?.geometry)[0], b = coords(ll.body?.features?.[0]?.geometry)[0];
+    if (a && b) check(`[${id}] crs/fc-crs-axis-order: EPSG:4326 coordinates are latitude, longitude`, Math.abs(a[0] - b[1]) < 1e-5 && Math.abs(a[1] - b[0]) < 1e-5, `${a} vs ${b}`);
+    const merc = await get(`${base}?limit=5&crs=${encodeURIComponent(EPSG(3857))}`, 'application/geo+json');
+    const m = coords(merc.body?.features?.[0]?.geometry)[0];
+    check(`[${id}] crs/fc-crs-success: crs=EPSG:3857 answers metres`, merc.status === 200 && merc.crs === `<${EPSG(3857)}>` && (!m || (a && Math.abs(m[0] - a[0] * 6378137 * Math.PI / 180) < 1)), `${m}`);
+    const bad = await get(`${base}?crs=${encodeURIComponent(EPSG(2))}`);
+    check(`[${id}] crs/fc-crs-valid-value: a crs the collection does not offer is refused with 400`, bad.status === 400, `status ${bad.status}`);
+    const firstBox = fc?.features?.find(f => bboxOf(f));
+    if (firstBox) {
+      const bb = bboxOf(firstBox);
+      const box = [bb[1] - 0.01, bb[0] - 0.01, bb[3] + 0.01, bb[2] + 0.01];
+      const inBox = await get(`${base}?bbox=${box.join(',')}&bbox-crs=${encodeURIComponent(EPSG(4326))}&limit=50`, 'application/geo+json');
+      const ll84 = [box[1], box[0], box[3], box[2]];
+      const feats = inBox.body?.features ?? [];
+      check(`[${id}] crs/fc-bbox-crs-success: bbox in bbox-crs=EPSG:4326 (latitude first)`, inBox.status === 200 && feats.length > 0 && feats.every(f => !bboxOf(f) || meets(bboxOf(f), ll84)), `${feats.length} features`);
+    }
+    if (fc?.features?.[0]?.id != null) {
+      const f = await get(`${base}/${encodeURIComponent(fc.features[0].id)}?crs=${encodeURIComponent(EPSG(4326))}`, 'application/geo+json');
+      check(`[${id}] crs/f-crs-success: feature by id in crs with Content-Crs`, f.status === 200 && f.crs === `<${EPSG(4326)}>`, `status ${f.status} ${f.crs}`);
+    }
+  }
 
   // Part 3 filtering (CQL2): a filter on the geometry answers GeoJSON; an unknown queryable is refused with 400.
   if (classes.includes('http://www.opengis.net/spec/ogcapi-features-3/1.0/conf/filter')) {

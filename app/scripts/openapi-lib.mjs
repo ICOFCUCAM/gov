@@ -4,7 +4,10 @@
 // the description, how a caller authenticates (security schemes from the
 // permission rules in lib/auth/roles.ts and the public lists in middleware.ts)
 // and, where the route's types say so, typed request and response bodies
-// (scripts/openapi-types.mjs). Used by scripts/build-openapi.mjs and its test.
+// (scripts/openapi-types.mjs). Every typed or documented body carries an
+// example (review I5): the route's own `@example` lines in the doc comment
+// of its handler, else one generated from the body's schema (exampleOf).
+// Used by scripts/build-openapi.mjs and its test.
 
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -53,10 +56,101 @@ async function accessRules(appDir) {
   return { ...mod, PUBLIC_READ: list('PUBLIC_READ'), PUBLIC: list('PUBLIC') };
 }
 
+/**
+ * The `@example` lines of the doc comment right above each exported handler:
+ *   @example request {…JSON…}
+ *   @example response 200 {…JSON…}     (status optional, default 200)
+ * The JSON may continue on the following comment lines. A line that is not
+ * valid JSON fails the build, so a documented example always parses.
+ */
+function routeExamples(src, file) {
+  const out = {};
+  for (const m of src.matchAll(/\/\*\*((?:(?!\*\/)[\s\S])*)\*\/\s*export\s+(?:async\s+)?(?:function\s+|const\s+)(GET|POST|PUT|PATCH|DELETE)\b/g)) {
+    const lines = m[1].split('\n').map(l => l.replace(/^\s*\*\s?/, ''));
+    const tags = [];
+    for (const l of lines) {
+      if (/^@\w+/.test(l)) tags.push(l); else if (tags.length && l.trim()) tags[tags.length - 1] += ' ' + l.trim();
+    }
+    for (const t of tags) {
+      const e = /^@example\s+(request|response)(?:\s+(\d{3}))?\s+([\s\S]+)$/.exec(t.trim());
+      if (!e) continue;
+      let value;
+      try { value = JSON.parse(e[3]); } catch { throw new Error(`${file}: the @example ${e[1]} of ${m[2]} is not valid JSON`); }
+      const ex = (out[m[2]] ??= {});
+      if (e[1] === 'request') ex.request = value; else (ex.responses ??= {})[e[2] ?? '200'] = value;
+    }
+  }
+  return out;
+}
+
+const ISO_TIME = '2026-01-15T09:30:00.000Z';
+/** A plausible value for a string property, from its name and format; nothing nation-specific. */
+function stringFor(key, format) {
+  if (format === 'date-time' || /(At|Time)$|^(at|asOf|knownAt|since|until)$/.test(key)) return ISO_TIME;
+  if (/(Date|From|To)$|^(date|day|validFrom|validTo)$/.test(key)) return '2026-01-15';
+  if (/^(sha256|hash|digest)$|Sha256$|Hash$/i.test(key)) return 'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855';
+  if (/e-?mail/i.test(key)) return 'official@example.gov';
+  if (/(url|href|uri|link)$/i.test(key)) return 'https://example.gov/';
+  if (/^id$|Id$/.test(key)) return 'ID-0001';
+  if (/^by$|By$|^official$|^actor$/.test(key)) return 'A. Official';
+  if (/^(name|title|label)$|Name$/.test(key)) return 'Example';
+  if (/(reason|note|description|summary|message|error)$/i.test(key)) return 'Text';
+  return 'string';
+}
+
+/**
+ * An example value for a schema: consts and enums as given, the first of a
+ * union, one item per array, every property of the body itself and the
+ * required ones below it; nesting is cut at four levels and at a schema that
+ * refers to itself.
+ */
+export function exampleOf(s, schemas, depth = 0, key = '', seen = []) {
+  if (!s || typeof s !== 'object') return null;
+  if (s.$ref) {
+    const name = s.$ref.split('/').pop();
+    if (seen.includes(name) || depth > 4) return {};
+    return exampleOf(schemas[name], schemas, depth, key, [...seen, name]);
+  }
+  if ('const' in s) return s.const;
+  if (Array.isArray(s.enum) && s.enum.length) return s.enum[0];
+  if (Array.isArray(s.anyOf) && s.anyOf.length) {
+    const pick = s.anyOf.find(x => x && x.type !== 'null') ?? s.anyOf[0];
+    return exampleOf(pick, schemas, depth, key, seen);
+  }
+  switch (s.type) {
+    case 'string': return stringFor(key, s.format);
+    case 'number': case 'integer': return /^(lat|lng|lon|latitude|longitude)$/i.test(key) ? 0 : 1;
+    case 'boolean': return true;
+    case 'null': return null;
+    case 'array':
+      if (depth >= 4) return [];
+      if (Array.isArray(s.prefixItems)) return s.prefixItems.map(x => exampleOf(x, schemas, depth + 1, key, seen));
+      return s.items && Object.keys(s.items).length ? [exampleOf(s.items, schemas, depth + 1, key.replace(/s$/, ''), seen)] : [];
+    case 'object': {
+      if (depth >= 4) return {};
+      const out = {};
+      const required = new Set(s.required ?? []);
+      for (const [k, v] of Object.entries(s.properties ?? {})) if (depth <= 1 || required.has(k)) out[k] = exampleOf(v, schemas, depth + 1, k, seen);
+      if (!s.properties && s.additionalProperties && typeof s.additionalProperties === 'object' && Object.keys(s.additionalProperties).length) out.key = exampleOf(s.additionalProperties, schemas, depth + 1, 'key', seen);
+      return out;
+    }
+    default: return s.properties ? exampleOf({ ...s, type: 'object' }, schemas, depth, key, seen) : null;
+  }
+}
+
+/** A media type object with its example: the route's own, else one generated from a typed schema, else none. */
+function media(schema, documented, schemas) {
+  if (documented !== undefined) return { schema, examples: { route: { summary: 'From the route', value: documented } } };
+  if (isUntypedObject(schema) || !schema || !Object.keys(schema).length) return { schema };
+  return { schema, examples: { schema: { summary: 'Generated from the schema', value: exampleOf(schema, schemas) } } };
+}
+
 /** The schemes an installation's callers authenticate with. */
 export const SECURITY_SCHEMES = {
   officialSession: { type: 'apiKey', in: 'cookie', name: 'civicos_official', description: 'The signed session of an official (sign in at /sign-in, or POST /api/auth/official). Required for every non-public read and change when CIVICOS_AUTH=enforce; what the official may change follows lib/auth/roles.ts.' },
   integrationKey: { type: 'http', scheme: 'bearer', bearerFormat: 'civ_<prefix>_<secret>', description: 'An integration key issued in Integrations (/integrations), stored as a SHA-256 hash and checked with its scopes and rate limit. Scope ogc:read opens the twin\'s OGC API – Features, SensorThings and vector tiles to GIS clients.' },
+  integrationClient: { type: 'http', scheme: 'basic', description: 'OAuth2 client authentication at the token endpoint (RFC 6749 §2.3.1): the integration\'s id as client_id and its key (civ_…) as client_secret, by HTTP Basic or in the form body.' },
+  integrationToken: { type: 'oauth2', description: 'A short-lived access token (RFC 9068 JWT, Ed25519-signed by the key custody provider) issued for an integration key with the client credentials grant; at most the key\'s scopes, ended by rotating the key or suspending the integration.', flows: { clientCredentials: { tokenUrl: '/api/oauth/token', scopes: { 'ogc:read': 'Read the twin\'s OGC API – Features, SensorThings and vector tiles' } } } },
   feedKey: { type: 'http', scheme: 'bearer', bearerFormat: 'ccf_… / facility feed key', description: 'A ministry\'s connected case or facility system: its own feed key, issued in the ministry workspace and stored as a hash; it changes only the records it sent.' },
   automation: { type: 'http', scheme: 'bearer', description: 'Scheduled jobs and the publisher: CIVICOS_CRON_SECRET (pg_cron, Vercel cron) or a platform-tier substrate session, checked by the route.' },
   agentCredential: { type: 'http', scheme: 'bearer', description: 'The nation\'s deployment agent credential (issued in /updates/settings, stored as a hash) for release health reports.' },
@@ -72,14 +166,19 @@ function securityFor(rules, p, method) {
   if (MUTATING.has(method) && rules.PUBLIC_WRITE.some(re => re.test(sample))) return { security: [], rule: 'public-write' };
   if (rules.SELF_AUTHENTICATED.some(re => re.test(sample))) {
     const scheme = /^\/api\/cron\//.test(sample) ? 'automation' : /^\/api\/releases\/health$/.test(sample) ? 'agentCredential'
-      : /\/feed$/.test(sample) ? 'feedKey' : 'integrationKey';
+      : /\/feed$/.test(sample) ? 'feedKey' : /^\/api\/oauth\/token$/.test(sample) ? 'integrationClient' : 'integrationKey';
     return { security: [{ [scheme]: [] }], ...(MUTATING.has(method) ? { rule: 'self-authenticated' } : {}) };
   }
   if (MUTATING.has(method)) {
     const rule = rules.mutationRule(sample) ?? 'refused';
     return { security: rules.BEARER_ROUTES.some(re => re.test(sample)) ? [session, { automation: [] }] : [session], rule };
   }
-  if (rules.BEARER_READS.some(re => re.test(sample))) return { security: [/^\/api\/metrics$/.test(sample) ? { metricsToken: [] } : { integrationKey: [] }, session] };
+  if (rules.BEARER_READS.some(re => re.test(sample))) {
+    if (/^\/api\/metrics$/.test(sample)) return { security: [{ metricsToken: [] }, session] };
+    // The twin's read services also take an access token issued for the key (OAuth2 client credentials).
+    if (/^\/api\/twin\//.test(sample)) return { security: [{ integrationKey: [] }, { integrationToken: ['ogc:read'] }, session] };
+    return { security: [{ integrationKey: [] }, session] };
+  }
   if (rules.BEARER_ROUTES.some(re => re.test(sample))) return { security: [session, { automation: [] }] };
   return { security: [session] };
 }
@@ -101,9 +200,11 @@ export async function scanRoutes(appDir) {
     const methods = METHODS.filter(m => new RegExp(`export\\s+(async\\s+)?function\\s+${m}\\b|export\\s+const\\s+${m}\\b`).test(src));
     const query = [...new Set([...src.matchAll(/(?:searchParams|\bq|\bparams|\bsp)\.get\(\s*['"]([\w.-]+)['"]\s*\)/g)].map(m => m[1]))].filter(q => !params.includes(q)).sort();
     const multipart = /\.formData\(\)/.test(src);
+    const form = /x-www-form-urlencoded/.test(src);
+    const examples = routeExamples(src, path.relative(appDir, f));
     const p = ('/api/' + segs.join('/')).replace(/\/$/, '');
     const access = Object.fromEntries(methods.map(m => [m, securityFor(rules, p, m)]));
-    routes.push({ path: p, file: path.relative(appDir, f).split(path.sep).join('/'), methods, params, query, description: leadingComment(src), access, ...(multipart ? { multipart } : {}) });
+    routes.push({ path: p, file: path.relative(appDir, f).split(path.sep).join('/'), methods, params, query, description: leadingComment(src), access, ...(multipart ? { multipart } : {}), ...(form ? { form } : {}), ...(Object.keys(examples).length ? { examples } : {}) });
   }
   return routes;
 }
@@ -117,14 +218,17 @@ const isUntypedObject = s => !s || (Object.keys(s).length === 1 && s.type === 'o
  */
 export function toOpenApi(routes, version = '1', types = { schemas: {}, ops: {} }) {
   const paths = {};
+  const schemas = { Error: ERROR, ...types.schemas };
   for (const r of routes) {
     const tag = r.path.split('/')[2] ?? 'api';
     const item = {};
     for (const m of r.methods) {
       const typed = types.ops?.[r.file]?.[m] ?? {};
-      const responses = typed.responses && Object.keys(typed.responses).length
-        ? Object.fromEntries(Object.entries(typed.responses).map(([st, schema]) => [st, { description: st === '201' ? 'Created' : 'OK', content: { 'application/json': { schema } } }]))
-        : { 200: { description: 'OK', content: { 'application/json': { schema: { type: 'object' } } } } };
+      const documented = r.examples?.[m] ?? {};
+      const responseSchemas = typed.responses && Object.keys(typed.responses).length ? { ...typed.responses } : { 200: { type: 'object' } };
+      for (const st of Object.keys(documented.responses ?? {})) responseSchemas[st] ??= { type: 'object' };
+      const responses = Object.fromEntries(Object.entries(responseSchemas).map(([st, schema]) => [st, { description: st === '201' ? 'Created' : 'OK', content: { 'application/json': media(schema, documented.responses?.[st], schemas) } }]));
+      const request = typed.request ?? { type: 'object' };
       const access = r.access?.[m];
       item[m.toLowerCase()] = {
         tags: [tag],
@@ -135,7 +239,7 @@ export function toOpenApi(routes, version = '1', types = { schemas: {}, ops: {} 
           ...r.params.map(p => ({ name: p, in: 'path', required: true, schema: { type: 'string' } })),
           ...(m === 'GET' ? r.query.map(q => ({ name: q, in: 'query', required: false, schema: { type: 'string' } })) : []),
         ],
-        ...(m === 'GET' || m === 'DELETE' ? {} : { requestBody: { required: false, content: { 'application/json': { schema: typed.request ?? { type: 'object' } }, ...(r.multipart ? { 'multipart/form-data': { schema: { type: 'object' } } } : {}) } } }),
+        ...(m === 'GET' || m === 'DELETE' ? {} : { requestBody: { required: false, content: { 'application/json': media(request, documented.request, schemas), ...(r.form ? { 'application/x-www-form-urlencoded': media(request, documented.request, schemas) } : {}), ...(r.multipart ? { 'multipart/form-data': { schema: { type: 'object' } } } : {}) } } }),
         responses: { ...responses, default: { description: 'Error: `{ "error": string }`', content: { 'application/json': { schema: { $ref: '#/components/schemas/Error' } } } } },
         ...(access ? { security: access.security } : {}),
         ...(access?.rule ? { 'x-permission-rule': access.rule } : {}),
@@ -157,7 +261,7 @@ export function toOpenApi(routes, version = '1', types = { schemas: {}, ops: {} 
     paths,
     components: {
       securitySchemes: SECURITY_SCHEMES,
-      schemas: { Error: ERROR, ...types.schemas },
+      schemas,
     },
   };
 }

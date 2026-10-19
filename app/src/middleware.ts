@@ -34,6 +34,10 @@ const PUBLIC_SITES = /^\/(embed|r|agriculture|assembly|communications|education|
 // cover and /login set when no identity substrate is configured. Its changes
 // still go through the official gate below.
 const CITIZEN_DEMO = /^\/wallet(\/|$)/;
+// The twin's persistent identifiers resolve for anyone (review D6): the
+// resolver sends the public to a public description and refuses restricted
+// sites itself (app/id/[kind]/[code], lib/twin/public-entity.ts). Reads only.
+const ENTITY_URI = /^\/id\/[a-z]+\/[^/]+(\/about)?\/?$/;
 // Next.js before 14.2.25 skipped middleware for requests carrying this header
 // (CVE-2025-29927). The patched version never sends it, so a request that
 // arrives with it is an attempt to skip this gate. The ingress strips it too.
@@ -229,6 +233,7 @@ function gate(req: NextRequest, res: NextResponse): NextResponse | Promise<NextR
   if (SELF_AUTHENTICATED.some(re => re.test(pathname))) return res;
   // The cover reads the nation's public identity before anyone signs in; public maps read the boundaries in force.
   if (req.method === 'GET' && PUBLIC_READ.some(re => re.test(pathname))) return res;
+  if ((req.method === 'GET' || req.method === 'HEAD') && ENTITY_URI.test(pathname)) return res;
   if (req.method === 'POST' && PUBLIC_WRITE.some(re => re.test(pathname))) return res;
 
   if (req.method === 'POST' && SIGN_IN.some(re => re.test(pathname))) return res;

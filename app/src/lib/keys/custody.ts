@@ -1,15 +1,17 @@
 // Key custody (review R7, findings S5 and D9): one place that decides where
 // the platform's keys are held and how they are used.
 //
-// Three keys, three uses:
+// Four keys, four uses:
 //   audit     Ed25519, signs audit chain heads (lib/audit/sign.ts)
 //   exchange  Ed25519, signs exchange receipts (lib/exchange/log.ts)
+//   token     Ed25519, signs the short-lived access tokens integrations get
+//             for their key (OAuth2 client credentials, lib/auth/client-credentials.ts)
 //   data      the key encryption key for secrets kept in the state
 //             (authenticator secrets, webhook secrets; lib/crypto/envelope.ts)
 //
 // CIVICOS_KEY_PROVIDER chooses the provider:
 //   env       (default, today's behaviour) PEM keys or key files from
-//             CIVICOS_AUDIT_KEY / CIVICOS_EXCHANGE_KEY and the 32-byte
+//             CIVICOS_AUDIT_KEY / CIVICOS_EXCHANGE_KEY / CIVICOS_TOKEN_KEY and the 32-byte
 //             CIVICOS_DATA_KEK (plus _PREVIOUS during a rotation); a
 //             development key per process when a signing key is missing.
 //   vault     HashiCorp Vault / OpenBao Transit (lib/keys/vault.ts): signing
@@ -36,8 +38,8 @@ import { KmsHttp } from './kms-http';
 import { touch } from '@/lib/data/repo/track';
 
 export type ProviderKind = 'env' | 'vault' | 'kms-http';
-export type SigningPurpose = 'audit' | 'exchange';
-export const SIGNING_ENV: Record<SigningPurpose, string> = { audit: 'CIVICOS_AUDIT_KEY', exchange: 'CIVICOS_EXCHANGE_KEY' };
+export type SigningPurpose = 'audit' | 'exchange' | 'token';
+export const SIGNING_ENV: Record<SigningPurpose, string> = { audit: 'CIVICOS_AUDIT_KEY', exchange: 'CIVICOS_EXCHANGE_KEY', token: 'CIVICOS_TOKEN_KEY' };
 
 export interface PublicHalf { keyId: string; publicKeyPem: string }
 export interface Signature extends PublicHalf { signature: string }
@@ -70,6 +72,7 @@ export function remoteKeyNames(env: NodeJS.ProcessEnv = process.env): Record<Sig
   return {
     audit: env[`${p}_AUDIT_KEY`]?.trim() || 'civicos-audit',
     exchange: env[`${p}_EXCHANGE_KEY`]?.trim() || 'civicos-exchange',
+    token: env[`${p}_TOKEN_KEY`]?.trim() || 'civicos-token',
     data: env[`${p}_DATA_KEY`]?.trim() || 'civicos-data',
   };
 }
@@ -168,6 +171,19 @@ export function signer(purpose: SigningPurpose): Signer {
 }
 
 /**
+ * The public half with a given key id for a purpose: the current key, or one
+ * this process has already seen (a remote key's earlier version, while the
+ * tokens it signed are still alive). Undefined when the id is not known here.
+ */
+export async function publicHalfById(purpose: SigningPurpose, keyId: string): Promise<PublicHalf | undefined> {
+  const s = signer(purpose);
+  const cur = s.current() ?? await s.load().catch(() => undefined);
+  if (cur?.keyId === keyId) return cur;
+  for (const [k, half] of local().publics) if (k.startsWith(`${purpose}:`) && half.keyId === keyId) return half;
+  return undefined;
+}
+
+/**
  * Data keys for lib/crypto/envelope.ts: under a remote provider the current
  * envelope data key and every unwrapped one; null under env (envelope.ts then
  * uses CIVICOS_DATA_KEK as before).
@@ -255,7 +271,7 @@ export function keyCustodyStatus(): KeyCustodyStatus {
     provider,
     ...(provider !== 'env' && l.service ? { endpoint: l.service.endpoint } : {}),
     ready: provider === 'env' ? true : l.ready,
-    signing: { audit: signingOf('audit'), exchange: signingOf('exchange') },
+    signing: { audit: signingOf('audit'), exchange: signingOf('exchange'), token: signingOf('token') },
     data: remote
       ? { enabled: !!remote.current, ...(ring.current ? { kid: ring.current } : {}), keys: ring.dataKeys.length, unreadable: ring.dataKeys.filter(w => !l.dataKeys.has(w.kid)).length }
       : { enabled: !!process.env.CIVICOS_DATA_KEK?.trim(), keys: [process.env.CIVICOS_DATA_KEK, process.env.CIVICOS_DATA_KEK_PREVIOUS].filter(v => v?.trim()).length, unreadable: 0 },

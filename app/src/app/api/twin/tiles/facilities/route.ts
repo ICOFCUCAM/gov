@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
   // A GIS client's integration key (scope ogc:read), when it sends one; otherwise the official's session.
-  const refused = machineReadRefusal(req);
+  const refused = await machineReadRefusal(req);
   if (refused) return refused;
   const o = await currentOfficial();
   return NextResponse.json(facilitiesTileJson(req.nextUrl.origin, o ? { institution: o.institution, signedIn: true } : { signedIn: false }), { headers: { 'cache-control': 'private, max-age=60' } });
