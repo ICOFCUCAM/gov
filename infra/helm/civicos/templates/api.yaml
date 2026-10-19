@@ -6,13 +6,18 @@ metadata:
     app.kubernetes.io/name: civic-api
     {{- include "civicos.labels" . | nindent 4 }}
 spec:
+  {{- if not .Values.api.autoscaling.enabled }}
   replicas: {{ .Values.api.replicas }}
+  {{- end }}
   selector:
     matchLabels: { app.kubernetes.io/name: civic-api }
   template:
     metadata:
       labels: { app.kubernetes.io/name: civic-api }
     spec:
+      # The API never calls the Kubernetes API.
+      automountServiceAccountToken: false
+      {{- with (include "civicos.imagePullSecrets" .) }}{{ . | nindent 6 }}{{- end }}
       securityContext:
         {{- toYaml .Values.security.podSecurityContext | nindent 8 }}
       containers:
@@ -51,11 +56,21 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities: { drop: ["ALL"] }
+          # The root filesystem is read-only; temporary files go here.
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: { sizeLimit: 256Mi }
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: civicos-api
+  labels:
+    app.kubernetes.io/name: civic-api
+    {{- include "civicos.labels" . | nindent 4 }}
 spec:
   selector: { app.kubernetes.io/name: civic-api }
   ports: [{ port: 4000, targetPort: 4000 }]
@@ -65,6 +80,8 @@ apiVersion: autoscaling/v2
 kind: HorizontalPodAutoscaler
 metadata:
   name: civicos-api
+  labels:
+    {{- include "civicos.labels" . | nindent 4 }}
 spec:
   scaleTargetRef:
     apiVersion: apps/v1
@@ -86,6 +103,8 @@ apiVersion: policy/v1
 kind: PodDisruptionBudget
 metadata:
   name: civicos-api
+  labels:
+    {{- include "civicos.labels" . | nindent 4 }}
 spec:
   minAvailable: {{ .Values.pdb.minAvailable }}
   selector:

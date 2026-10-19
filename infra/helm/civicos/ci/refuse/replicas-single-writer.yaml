@@ -1,0 +1,3 @@
+# Two app replicas on supabase state would be two writers: refused.
+app:
+  replicas: 2

@@ -90,6 +90,7 @@ export function ChainSentinel({ className = '' }: { className?: string }) {
     : `Verified ${state.scopesChecked} chains${state.lastCheckAt ? ' at ' + new Date(state.lastCheckAt).toLocaleTimeString() : ''}`;
 
   return (
+    // eslint-disable-next-line @next/next/no-html-link-for-pages -- kept as a full page load
     <a
       href="/gov/audit"
       title={title}

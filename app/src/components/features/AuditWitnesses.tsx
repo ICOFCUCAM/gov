@@ -121,7 +121,9 @@ export function AuditWitnesses() {
           Possible tamper-after-the-fact on:{' '}
           <span className="font-mono">{divergent.map(([s]) => s).join(', ')}</span>
           {' '}— the witness-divergence cron writes an escalation per scope; see{' '}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- kept as a full page load */}
           <a href="/gov/escalations" className="underline">/gov/escalations</a>{' '}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- kept as a full page load */}
           and{' '}<a href="/gov/federation" className="underline">/gov/federation</a>{' '}
           (channel <span className="font-mono">constitutional</span>, type <span className="font-mono">audit.divergence</span>).
         </div>
