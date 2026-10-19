@@ -39,6 +39,8 @@ import { hasWebGL } from '@/lib/map/gl-layer';
 import { triangulate } from '@/lib/map/triangulate';
 import { CanvasPoints } from './CanvasPoints';
 import { WebGLPoints, type WebGLPointsHandle } from './WebGLPoints';
+import { useTileFeatures } from './useTileFeatures';
+import type { PointTileSource } from '@/lib/map/tile-loader';
 
 export type { MapPoint, MapValue, MapTone };
 
@@ -82,7 +84,7 @@ export interface OverlayContext {
 export function NationMap({
   title, values = [], kind, source, valueLabel = 'Value', unit = '', points, pointsLabel = 'Located items',
   asOf, maxHeight = 520, minHeight = 220, selected, onSelect, emptyNote, iso3: isoOverride, regions: regionsOverride, compact = false, overlay, variant = 'standard', heat = false, hud, frameHeight, insetEnd, insetBottom, colourOf, actions, inMap, onPick, pin, zoom, header = 'auto', below, notes = 'normal',
-  webglAbove, selectedPoint, areas, pointStyle, pointLabels,
+  webglAbove, selectedPoint, areas, pointStyle, pointTiles, pointLabels,
 }: {
   /** What the map shows, e.g. "Open incidents by county"; used for the accessible name and the table caption. */
   title: string;
@@ -154,6 +156,12 @@ export function NationMap({
   areas?: MapArea[];
   /** How WebGL points look: dots (standard maps) or the theatre's glyph tiles (the theatre's default). */
   pointStyle?: PointStyle;
+  /**
+   * Located points read from vector tiles for the visible extent (the platform's
+   * tile route or a PMTiles archive) instead of `points`: always drawn with WebGL
+   * (the canvas without it), listed in the table view as loaded.
+   */
+  pointTiles?: PointTileSource;
   /** Name up to this many WebGL or canvas points where the names do not run into each other. */
   pointLabels?: number;
 }) {
@@ -254,8 +262,22 @@ export function NationMap({
   const parentValue = opened ? values.find(v => v.key === opened.code) ?? values.find(v => nameKeys(v.key).some(k => nameKeys(opened.name).includes(k))) : undefined;
   // Located points at national scale go on a canvas (found again by a grid index) or, above the
   // WebGL threshold, on the GPU (found by picking); below both the SVG draws them one by one.
-  const exactPoints = React.useMemo<LocatedPoint[]>(() => model?.points.filter(p => p.exact) ?? [], [model]);
-  const renderer = pointRenderer(exactPoints.length, { webgl: webglOk, webglAbove });
+  // A tile-backed layer replaces the page's points with the tiles' features for the visible extent.
+  const tiles = useTileFeatures(geo?.parent ? undefined : pointTiles, model, z);
+  const toPoint = pointTiles?.toPoint;
+  const exactPoints = React.useMemo<LocatedPoint[]>(() => {
+    if (!model) return [];
+    if (!toPoint) return model.points.filter(p => p.exact);
+    const out: LocatedPoint[] = [];
+    for (const f of tiles.features) {
+      const p = toPoint(f);
+      if (!p) continue;
+      const q = model.project(f.lng, f.lat);
+      if (q) out.push({ ...p, x: q[0], y: q[1], unit: '', exact: true });
+    }
+    return out;
+  }, [model, toPoint, tiles.features]);
+  const renderer = pointRenderer(exactPoints.length, { webgl: webglOk, webglAbove, tiles: !!pointTiles });
   const onGL = renderer === 'webgl';
   const onCanvas = renderer === 'canvas' || (onGL && glLost);
   const pIndex = React.useMemo(() => (renderer !== 'svg' ? pointIndex(exactPoints) : null), [renderer, exactPoints]);
@@ -613,6 +635,13 @@ export function NationMap({
           </div>
           {shown === 0 && emptyNote ? <div className="text-ink-muted">{emptyNote}</div> : null}
           {model.unmatched.length ? <div className="text-warn">Not placed on the map (name not found among the {plural(2)}): {model.unmatched.slice(0, 8).join(', ')}{model.unmatched.length > 8 ? ` and ${model.unmatched.length - 8} more` : ''}</div> : null}
+          {pointTiles && !geo?.parent ? (
+            <div className={`${notes === 'small' ? 'text-[9px]' : 'text-[10px]'} text-ink-muted`} role="status" data-testid="map-tile-status">
+              {tiles.error ? <span className="text-warn">Some map tiles could not be read ({tiles.error}); </span> : null}
+              {tiles.loading && !tiles.features.length ? `Loading ${pointsLabel.toLowerCase()}…` : `${exactPoints.length.toLocaleString('en')} ${pointsLabel.toLowerCase()} drawn from ${tiles.tiles.toLocaleString('en')} vector tile${tiles.tiles === 1 ? '' : 's'}${tiles.z != null ? ` (zoom ${tiles.z})` : ''}`}
+              {tiles.truncated ? ' · some tiles hold more than their limit; zoom in for every point' : ''}
+            </div>
+          ) : null}
           <div className={`${notes === 'small' ? 'text-[9px]' : 'text-[10px]'} text-ink-muted`}>
             Boundaries: {geo?.credit}{source ? ` · Figures: ${source}` : ''}{asOf ? ` · As of ${asOf}` : ''}
           </div>
