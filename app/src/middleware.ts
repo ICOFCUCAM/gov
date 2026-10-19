@@ -120,14 +120,32 @@ async function roleGate(req: NextRequest, next: () => NextResponse | Promise<Nex
   return why ? NextResponse.json({ error: why }, { status: 403 }) : next();
 }
 
-export function middleware(req: NextRequest): NextResponse | Promise<NextResponse> {
+/**
+ * Every request carries a request id (x-request-id): kept when the caller or
+ * the ingress sent a well-formed one, made here otherwise. Route handlers
+ * read it from the request (lib/ops/log.ts requestIdOf) so their log lines
+ * can be joined; the answer carries it back so a citizen or official can
+ * quote it when reporting a problem.
+ */
+const REQUEST_ID = /^[A-Za-z0-9._-]{8,80}$/;
+export async function middleware(req: NextRequest): Promise<NextResponse> {
+  const given = req.headers.get('x-request-id');
+  const id = given && REQUEST_ID.test(given) ? given : crypto.randomUUID();
+  const out = await handle(req, id);
+  out.headers.set('x-request-id', id);
+  return out;
+}
+
+function handle(req: NextRequest, requestId: string): NextResponse | Promise<NextResponse> {
   // Defence in depth for CVE-2025-29927: a request carrying Next.js's former
   // internal subrequest header is refused (the patched Next.js no longer sends
   // it, so only an outside caller can).
   if (req.headers.has(SUBREQUEST_HEADER)) {
     return NextResponse.json({ error: 'Refused' }, { status: 400 });
   }
-  const res = NextResponse.next();
+  const forwarded = new Headers(req.headers);
+  forwarded.set('x-request-id', requestId);
+  const res = NextResponse.next({ request: { headers: forwarded } });
   // A bearer skips the role rules only where the route verifies it itself.
   if (process.env.CIVICOS_SESSION_SECRET && req.cookies.get(OFFICIAL_COOKIE)?.value && !bearerRequest(req)
     && req.nextUrl.pathname.startsWith('/api/') && MUTATING.has(req.method)) {

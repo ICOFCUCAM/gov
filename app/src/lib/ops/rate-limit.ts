@@ -6,6 +6,7 @@
 
 import { NextResponse, type NextRequest } from 'next/server';
 import { currentOfficial } from '@/lib/auth/official';
+import { logger, requestIdOf } from '@/lib/ops/log';
 
 export interface Policy { perMinute: number; burst: number }
 /** Limits by scope; a route names its scope. */
@@ -53,6 +54,7 @@ export async function limit(req: NextRequest, scope: Scope): Promise<NextRespons
   const p = POLICIES[scope];
   const r = take(`${scope}|${await callerOf(req)}`, p);
   if (r.ok) return null;
+  logger.warn('ratelimit.refused', { requestId: requestIdOf(req.headers), scope, route: req.nextUrl.pathname, retryAfterS: r.retryAfterS });
   return NextResponse.json({ error: `Too many requests: at most ${p.perMinute} a minute here. Try again in ${r.retryAfterS} s.` }, {
     status: 429,
     headers: { 'retry-after': String(r.retryAfterS), 'ratelimit-limit': String(p.perMinute), 'ratelimit-remaining': '0', 'ratelimit-reset': String(r.retryAfterS) },

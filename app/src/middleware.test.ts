@@ -279,3 +279,14 @@ describe('changes need a verified official (CIVICOS_AUTH=enforce)', () => {
     expect((await send('/api/auth/password')).status).toBe(200);
   });
 });
+
+describe('request ids', () => {
+  it('every answer carries a request id: the caller\'s when well formed, a new one otherwise', async () => {
+    const kept = await middleware(new NextRequest('http://localhost/api/sovereign', { headers: { 'x-request-id': 'ingress-abc12345' } }));
+    expect(kept.headers.get('x-request-id')).toBe('ingress-abc12345');
+    const made = await middleware(new NextRequest('http://localhost/api/sovereign', { headers: { 'x-request-id': 'bad id<script>' } }));
+    expect(made.headers.get('x-request-id')).toMatch(/^[0-9a-f-]{36}$/);
+    // Route handlers see the same id on the request.
+    expect(made.headers.get('x-middleware-request-x-request-id')).toBe(made.headers.get('x-request-id'));
+  });
+});
