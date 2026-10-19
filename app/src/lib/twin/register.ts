@@ -23,6 +23,8 @@ import { nationIso3, nationRegions } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { parseCsv } from './csv';
+import { twinDb, resetTwinDb, type TwinDb } from './db';
+import { METRIC_ID } from './metrics';
 import type { Signal } from './signal';
 
 export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
@@ -94,22 +96,12 @@ export interface Observation {
   runId: string;
 }
 
-interface TwinDb {
-  entities: Record<string, TwinEntity>;
-  keys: { entityId: string; system: string; key: string }[];
-  sources: TwinSource[];
-  runs: TwinRun[];
-  observations: Observation[];
-  seq: number;
-  syncedFor?: string;
-}
-
-const g = globalThis as unknown as { __civicosTwin?: TwinDb };
-const db = (): TwinDb => (g.__civicosTwin ??= { entities: {}, keys: [], sources: [], runs: [], observations: [], seq: 1 });
-export function resetTwin(): void { g.__civicosTwin = undefined; }
+const db = twinDb;
+export type { TwinDb };
+export function resetTwin(): void { resetTwinDb(); }
 
 export const LIMITS = { observations: 200_000, runs: 500, rejectedShown: 50, rows: 100_000 } as const;
-const METRIC = /^[a-z][a-z0-9_.]{1,63}$/;
+const METRIC = METRIC_ID;
 const fold = (s: string) => s.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
 const slug = (s: string) => fold(s).replace(/ /g, '-').slice(0, 60);
 

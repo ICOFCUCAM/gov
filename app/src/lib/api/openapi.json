@@ -10262,6 +10262,68 @@
         "x-source": "src/app/api/twin/keys/route.ts"
       }
     },
+    "/api/twin/metrics": {
+      "get": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "get_twin_metrics",
+        "summary": "GET /api/twin/metrics",
+        "description": "The twin's metric registry (lib/twin/metrics.ts): each metric's label, UCUM unit, how regional values combine (sum, mean, weighted-mean or none), its period and SDMX concept. GET lists registered, standard and observed-only metrics with the suggested units. POST registers a metric or changes its definition (a named official; audited with what changed). A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/metrics/route.ts"
+      },
+      "post": {
+        "tags": [
+          "twin"
+        ],
+        "operationId": "post_twin_metrics",
+        "summary": "POST /api/twin/metrics",
+        "description": "The twin's metric registry (lib/twin/metrics.ts): each metric's label, UCUM unit, how regional values combine (sum, mean, weighted-mean or none), its period and SDMX concept. GET lists registered, standard and observed-only metrics with the suggested units. POST registers a metric or changes its definition (a named official; audited with what changed). A signed-in official's verified name replaces any name in the request (withOfficial).",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/twin/metrics/route.ts"
+      }
+    },
     "/api/twin/ogc/collections/{collectionId}/items/{featureId}": {
       "get": {
         "tags": [
