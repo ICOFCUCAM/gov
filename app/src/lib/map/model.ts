@@ -30,7 +30,7 @@ export interface MapModel {
   frames: { x: number; y: number; w: number; h: number }[];
   classes: Classes;
   scale: { km: number; px: number } | null;
-  points: { x: number; y: number; label: string; tone: MapTone; count?: number; unit: string; glyph?: string; href?: string; exact?: boolean }[];
+  points: { x: number; y: number; label: string; tone: MapTone; count?: number; unit: string; glyph?: string; href?: string; exact?: boolean; key?: string }[];
   /** Figures whose key matched no unit (listed under the map, never dropped silently). */
   unmatched: string[];
   /** Units on the nation's list that have no shape in the boundary data. */
@@ -41,6 +41,8 @@ export interface MapModel {
   capital: { x: number; y: number; name: string; chosen: boolean } | null;
   /** Where a longitude/latitude falls on this map (null outside the frame), for overlays. */
   project: (lng: number, lat: number) => [number, number] | null;
+  /** Where a longitude/latitude falls with this map's projection, inside the frame or not (outlines that cross its edge). */
+  projectRaw: (lng: number, lat: number) => [number, number] | null;
   /** The longitude/latitude under a point of the map (null off the projection). */
   invert: (x: number, y: number) => [number, number] | null;
   /** An outside shape (e.g. a neighbouring country) drawn with this map's projection. */
@@ -136,7 +138,7 @@ export function buildMapModel(geo: NationGeography, opts: MapOptions): MapModel 
       const q = proj([pt.lng, pt.lat]);
       if (q && q.every(Number.isFinite) && q[0] >= 0 && q[0] <= W && q[1] >= 0 && q[1] <= H) {
         const inUnit = units.find(u => u.code === pt.key || u.name === pt.key);
-        points.push({ x: q[0], y: q[1], label: pt.label, tone: pt.tone, count: pt.count, unit: inUnit?.name ?? '', glyph: pt.glyph, href: pt.href, exact: true });
+        points.push({ x: q[0], y: q[1], label: pt.label, tone: pt.tone, count: pt.count, unit: inUnit?.name ?? '', glyph: pt.glyph, href: pt.href, exact: true, key: pt.key });
       } else unplaced.push(pt.label);
       continue;
     }
@@ -170,6 +172,7 @@ export function buildMapModel(geo: NationGeography, opts: MapOptions): MapModel 
     pathOf: g => geoPath(proj)(feature(g) as never) || '',
     boundsOf: g => geoPath(proj).bounds(feature(g) as never) as [[number, number], [number, number]],
     invert: (x, y) => { const q = proj.invert?.([x, y]); return q && q.every(Number.isFinite) ? [q[0], q[1]] : null; },
+    projectRaw: (lng, lat) => { const q = proj([lng, lat]); return q && q.every(Number.isFinite) ? [q[0], q[1]] : null; },
     project: (lng, lat) => { const q = proj([lng, lat]); return q && q.every(Number.isFinite) && q[0] >= 0 && q[0] <= W && q[1] >= 0 && q[1] <= H ? [q[0], q[1]] : null; },
   };
 }

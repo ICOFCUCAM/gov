@@ -22,7 +22,8 @@
     "audit:deps": "node scripts/audit-deps.mjs",
     "soak": "SOAK=1 vitest run src/soak.test.ts",
     "smoke:console": "node scripts/smoke-console.mjs",
-    "check:ogc": "node scripts/ogc-check.mjs"
+    "check:ogc": "node scripts/ogc-check.mjs",
+    "check:map": "node scripts/check-map-webgl.mjs"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.116.0",
