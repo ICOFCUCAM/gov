@@ -185,6 +185,7 @@ so nothing else is pulled.
 | `expire-consents`, `audit-self` | hourly | GET |
 | `twin-ingest` | hourly at :07 | GET |
 | `backup` | hourly at :41 (takes a backup when the newest is older than the policy's interval) | GET |
+| `retention` | hourly at :23 | GET |
 | `sla`, `telemetry-stale`, `promote-directives` | hourly | POST |
 
 | Value | Default | |

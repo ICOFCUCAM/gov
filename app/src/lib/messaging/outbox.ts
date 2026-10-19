@@ -141,6 +141,24 @@ export function cancelFor(ref: { kind: 'site-subscriber' | 'official'; id: strin
   return n;
 }
 
+/**
+ * Everything the outbox still holds for `ref` goes (go-live review M-13): the
+ * messages not yet sent are withdrawn (as cancelFor), and the address and
+ * text of any finished one still holding them (a dead letter inside its
+ * retention) are emptied. Unsubscribing and the retention sweep for
+ * unconfirmed email-update requests (lib/data/site-subscriptions.ts) call it.
+ * Returns how many messages were changed.
+ */
+export function forgetFor(ref: { kind: 'site-subscriber' | 'official'; id: string }, now = Date.now()): number {
+  let n = cancelFor(ref, now);
+  for (const m of mdb().messages) {
+    if (m.ref?.kind !== ref.kind || m.ref.id !== ref.id || !m.to) continue;
+    forget(m);
+    n++;
+  }
+  return n;
+}
+
 export const messageById = (id: string): OutboundMessage | undefined => mdb().messages.find(m => m.id === id);
 export const messageByKey = (key: string): OutboundMessage | undefined => { const id = mdb().keys[key]; return id ? messageById(id) : undefined; };
 export const messagesWhere = (pred: (m: OutboundMessage) => boolean): OutboundMessage[] => mdb().messages.filter(pred);

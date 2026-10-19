@@ -19,11 +19,21 @@
 // Without a provider they stay queued. Unsubscribing withdraws the person's
 // unsent messages too. See docs/INTEGRATION_REGISTER.md 14.15. Audit entries
 // never carry the address.
+//
+// Retention (go-live review M-9, M-13): unsubscribing empties everything the
+// outbox still holds for the person (`forgetFor`: unsent messages withdrawn,
+// a dead letter's address and text emptied); requests never confirmed are
+// deleted once their link has expired, with what the outbox holds for them
+// (`sweepSubscriptions`, from the hourly retention sweep and, as a fallback,
+// from new requests); the attempt counters are kept per hashed sender and
+// address, pruned after their window and bounded. Requests reach the audit
+// chain a few per site and window, then as one summary (lib/audit/aggregate.ts).
 
 import { createHash, randomBytes } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
 import { touch } from '@/lib/data/repo/track';
-import { enqueue, cancelFor, messagesWhere, isFinal } from '@/lib/messaging/outbox';
+import { enqueue, forgetFor, messagesWhere, isFinal } from '@/lib/messaging/outbox';
+import { recordAggregated } from '@/lib/audit/aggregate';
 import { siteConfirmation, siteUpdate } from '@/lib/messaging/templates';
 import type { MessageStatus } from '@/lib/messaging/types';
 
@@ -59,7 +69,7 @@ export interface SiteMessage {
 }
 
 /** `outbox` held messages before the platform outbox existed; any found are moved there. */
-interface Db { subs: Subscriber[]; outbox: (Omit<SiteMessage, 'status'> & { status: string })[]; attempts: Map<string, number[]>; seq: number }
+interface Db { subs: Subscriber[]; outbox: (Omit<SiteMessage, 'status'> & { status: string })[]; attempts: Map<string, number[]>; seq: number; lastSweep?: number }
 const g = globalThis as unknown as { __civicosSiteSubs?: Db };
 const db = (): Db => {
   const d = touch('__civicosSiteSubs', g.__civicosSiteSubs ??= { subs: [], outbox: [], attempts: new Map(), seq: 1 });
@@ -93,13 +103,30 @@ const MAX_PER_ADDRESS = 3;
 const hash = (s: string) => createHash('sha256').update(s).digest('hex');
 const EMAIL = /^[^\s@<>()[\]\\,;:"]{1,64}@[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)+$/i;
 
+/** Attempt counters kept at most; the least recently used go first. */
+const MAX_ATTEMPT_KEYS = 20_000;
+
 /** Too many attempts in the window? Records this one either way. */
 function limited(key: string, max: number, now: number): boolean {
-  const list = (db().attempts.get(key) ?? []).filter(t => now - t < WINDOW_MS);
+  const attempts = db().attempts;
+  const list = (attempts.get(key) ?? []).filter(t => now - t < WINDOW_MS);
   list.push(now);
-  db().attempts.set(key, list);
+  // Re-inserted so the map's order is "least recently used first".
+  attempts.delete(key);
+  attempts.set(key, list.slice(-(max + 1)));
+  if (attempts.size > MAX_ATTEMPT_KEYS) {
+    pruneAttempts(now);
+    for (const k of attempts.keys()) { if (attempts.size <= MAX_ATTEMPT_KEYS) break; attempts.delete(k); }
+  }
   return list.length > max;
 }
+
+function pruneAttempts(now: number): void {
+  const attempts = db().attempts;
+  for (const [k, list] of attempts) if (!list.some(t => now - t < WINDOW_MS)) attempts.delete(k);
+}
+/** The attempt counters' keys (hashes; for tests). */
+export const attemptKeys = (): string[] => [...db().attempts.keys()];
 
 /** Keep the hashes of the most recent links, so an older email's link still works. */
 const remember = (hashes: string[], token: string) => [...hashes, hash(token)].slice(-24);
@@ -125,8 +152,10 @@ function queue(sub: Subscriber, kind: 'confirm' | 'update', token: string, msg: 
 export function subscribe(siteId: string, rawEmail: string, { sender = 'unknown', siteName = siteId, now = Date.now(), locale }: { sender?: string; siteName?: string; now?: number; locale?: string } = {}): { ok: true } | { error: 'invalid' | 'busy' } {
   const email = String(rawEmail ?? '').trim().toLowerCase();
   if (email.length > 254 || !EMAIL.test(email)) return { error: 'invalid' };
-  if (limited(`ip:${sender}`, MAX_PER_SENDER, now) || limited(`to:${hash(email)}`, MAX_PER_ADDRESS, now)) return { error: 'busy' };
   const d = db();
+  if (now - (d.lastSweep ?? 0) > 3_600_000) sweepSubscriptions(now);
+  // Neither the sender's network address nor the email address is kept in the counters, only hashes.
+  if (limited(`ip:${hash(`sender|${sender}`)}`, MAX_PER_SENDER, now) || limited(`to:${hash(email)}`, MAX_PER_ADDRESS, now)) return { error: 'busy' };
   const at = new Date(now).toISOString();
   const existing = d.subs.find(s => s.siteId === siteId && s.email === email && s.status !== 'unsubscribed');
   if (existing?.status === 'confirmed') return { ok: true };
@@ -136,7 +165,7 @@ export function subscribe(siteId: string, rawEmail: string, { sender = 'unknown'
     : { id: `SUB-${d.seq++}`, siteId, email, status: 'pending', tokenHashes: [hash(token)], createdAt: at, confirmationSentAt: at, ...(locale ? { locale } : {}) };
   if (!existing) d.subs.push(sub);
   queue(sub, 'confirm', token, siteConfirmation(siteName, CONFIRM_DAYS, sub.locale ?? 'en'), now);
-  recordAudit('public', 'site.subscribe', `PublicSite:${siteId}`, 'ok', existing ? 'confirmation sent again' : 'confirmation sent');
+  recordAggregated(`site.subscribe|${siteId}`, { actor: 'public', action: 'site.subscribe', resource: `PublicSite:${siteId}`, outcome: 'ok', detail: existing ? 'confirmation sent again' : 'confirmation sent' }, now);
   return { ok: true };
 }
 
@@ -174,10 +203,29 @@ export function unsubscribe(token: string, now = Date.now()): { siteId: string }
   s.email = '';
   s.tokenHashes = [];
   s.unsubscribedAt = new Date(now).toISOString();
-  // Messages not yet sent to the address are withdrawn and emptied.
-  cancelFor({ kind: 'site-subscriber', id: s.id }, now);
+  // Messages not yet sent to the address are withdrawn, and nothing the outbox holds keeps the address (M-13).
+  forgetFor({ kind: 'site-subscriber', id: s.id }, now);
   recordAudit('public', 'site.unsubscribe', `PublicSite:${s.siteId}`, 'ok');
   return { siteId: s.siteId };
+}
+
+/**
+ * The retention sweep for email updates: requests never confirmed are
+ * deleted once their link has expired (CONFIRM_DAYS), and the outbox
+ * forgets what it held for them; attempt counters past their window are
+ * dropped. Returns how many unconfirmed requests were deleted.
+ */
+export function sweepSubscriptions(now = Date.now()): number {
+  const d = db();
+  d.lastSweep = now;
+  const expired = d.subs.filter(s => s.status === 'pending' && now - Date.parse(s.confirmationSentAt) > CONFIRM_DAYS * 86_400_000);
+  for (const s of expired) forgetFor({ kind: 'site-subscriber', id: s.id }, now);
+  if (expired.length) {
+    const gone = new Set(expired);
+    d.subs = d.subs.filter(s => !gone.has(s));
+  }
+  pruneAttempts(now);
+  return expired.length;
 }
 
 /** Subscriber numbers for the site editor (no addresses). */

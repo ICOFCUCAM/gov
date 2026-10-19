@@ -38,7 +38,7 @@ export const DPIA_TEMPLATE = {
   sections: [
     { heading: 'Description of processing', prompt: 'Which services this release changes, who uses them, which personal data they process and why.' },
     { heading: 'Changes in this release', prompt: 'Changes to data collected, stored, shared or retained, from the changelog and migrations listed in this pack.' },
-    { heading: 'Necessity and proportionality', prompt: 'Lawful basis, data minimisation, retention periods, rights of data subjects.' },
+    { heading: 'Necessity and proportionality', prompt: 'Lawful basis, data minimisation, retention periods, rights of data subjects. Retention on the platform: the nation’s rules for permits and cases (Platform → Retention, keep unless two administrators confirm a rule; /api/platform/retention); unconfirmed email-update requests deleted after their 7-day link expires; queued email deleted on unsubscribe; sign-in lockout counters kept 15 minutes, as hashes; the audit chain is kept in full and never carries addresses.' },
     { heading: 'Data location and transfers', prompt: 'Where the data is stored and processed (hosting path) and which operational data may leave the country (data-sovereignty controls).' },
     { heading: 'Risks to individuals', prompt: 'Likelihood and severity of each risk, including the open security advisories in this pack.' },
     { heading: 'Measures', prompt: 'Technical and organisational measures: access control, encryption, audit chain, probation and fallback, escrow.' },

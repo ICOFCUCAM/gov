@@ -328,6 +328,7 @@ cron:
     update-watchdog:     { schedule: "* * * * *",    method: GET }
     site-feeds:          { schedule: "*/30 * * * *", method: GET }
     twin-ingest:         { schedule: "7 * * * *",    method: GET }
+    retention:           { schedule: "23 * * * *",   method: GET }
     deliver-cloudevents: { schedule: "*/2 * * * *",  method: GET }
     deliver-messages:    { schedule: "* * * * *",    method: GET }
     backup:              { schedule: "41 * * * *",   method: GET }

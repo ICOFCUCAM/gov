@@ -2,35 +2,12 @@
 
 import * as React from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { api } from '@/lib/api/client';
 import { TONE } from '@/components/features/SituationRoom';
 import { useFederationSync } from '@/apps/useFederationSync';
 import { subscribe as orchSubscribe, findApp, version as orchVersion } from '@/services/orchestration-engine';
 import { publish as busPublish } from '@/services/event-bus';
-import { SectorInstitutionApp } from '@/apps/sector/SectorInstitutionApp';
-import { MinistryHealthApp } from '@/apps/ministry-health/MinistryHealthApp';
-import { HealthEcosystemWall } from '@/apps/ministry-health/HealthEcosystemWall';
-import { TreasuryApp } from '@/apps/treasury/TreasuryApp';
-import { JudiciaryApp } from '@/apps/judiciary/JudiciaryApp';
-import { LegislatureApp } from '@/apps/legislature/LegislatureApp';
-import { SenateApp } from '@/apps/senate/SenateApp';
-import { AssemblyApp } from '@/apps/assembly/AssemblyApp';
-import { JudicialBranchApp } from '@/apps/judicial-branch/JudicialBranchApp';
-import { PresidencyApp } from '@/apps/presidency/PresidencyApp';
-import { CitizenPortalApp as CitizenWalletApp } from '@/apps/citizen-wallet/CitizenPortalApp';
-import { NocApp } from '@/apps/noc/NocApp';
-import { PoliceCommandApp } from '@/apps/police-command/PoliceCommandApp';
-import { ImmigrationApp } from '@/apps/immigration/ImmigrationApp';
-import { CustomsApp } from '@/apps/customs/CustomsApp';
-import { EmergencyResponseApp } from '@/apps/emergency-response/EmergencyResponseApp';
-import { ForeignAffairsApp } from '@/apps/foreign-affairs/ForeignAffairsApp';
-import { CommunicationsApp } from '@/apps/communications/CommunicationsApp';
-import { MinistryEducationApp } from '@/apps/ministry-education/MinistryEducationApp';
-import { MinistryTransportApp } from '@/apps/ministry-transport/MinistryTransportApp';
-import { MinistryEnergyApp } from '@/apps/ministry-energy/MinistryEnergyApp';
-import { MinistryInteriorApp } from '@/apps/ministry-interior/MinistryInteriorApp';
-import { OfficerConsoleApp } from '@/apps/officer-console/OfficerConsoleApp';
-import { BranchWorkspace } from '@/components/features/BranchWorkspace';
 import { DirectivesInbox } from '@/apps/_shared/AppKit';
 import { RuntimeQueue } from '@/components/features/RuntimeQueue';
 import { archetypeOperations } from '@/lib/gov/archetype-operations';
@@ -52,6 +29,36 @@ import type { Ministry, ArchetypeKey } from '@/lib/api/types';
 import type { WorkKind } from '@/lib/gov/runtime-workflow';
 import { nationAppLabel, aiLabel } from '@/lib/nation/registry';
 import { useRenderNow } from '@/lib/clock/render-now';
+
+// Each institution's app is loaded only when its domain is opened (go-live review M-12): the
+// route used to ship every app (about 1 MB of JavaScript) to show one.
+function AppLoading() {
+  return <p role="status" className="p-3 text-[12px] text-ink-muted">Loading the application…</p>;
+}
+const SectorInstitutionApp = dynamic(() => import('@/apps/sector/SectorInstitutionApp').then(m => m.SectorInstitutionApp), { loading: AppLoading });
+const MinistryHealthApp = dynamic(() => import('@/apps/ministry-health/MinistryHealthApp').then(m => m.MinistryHealthApp), { loading: AppLoading });
+const HealthEcosystemWall = dynamic(() => import('@/apps/ministry-health/HealthEcosystemWall').then(m => m.HealthEcosystemWall), { loading: AppLoading });
+const TreasuryApp = dynamic(() => import('@/apps/treasury/TreasuryApp').then(m => m.TreasuryApp), { loading: AppLoading });
+const JudiciaryApp = dynamic(() => import('@/apps/judiciary/JudiciaryApp').then(m => m.JudiciaryApp), { loading: AppLoading });
+const LegislatureApp = dynamic(() => import('@/apps/legislature/LegislatureApp').then(m => m.LegislatureApp), { loading: AppLoading });
+const SenateApp = dynamic(() => import('@/apps/senate/SenateApp').then(m => m.SenateApp), { loading: AppLoading });
+const AssemblyApp = dynamic(() => import('@/apps/assembly/AssemblyApp').then(m => m.AssemblyApp), { loading: AppLoading });
+const JudicialBranchApp = dynamic(() => import('@/apps/judicial-branch/JudicialBranchApp').then(m => m.JudicialBranchApp), { loading: AppLoading });
+const PresidencyApp = dynamic(() => import('@/apps/presidency/PresidencyApp').then(m => m.PresidencyApp), { loading: AppLoading });
+const CitizenWalletApp = dynamic(() => import('@/apps/citizen-wallet/CitizenPortalApp').then(m => m.CitizenPortalApp), { loading: AppLoading });
+const NocApp = dynamic(() => import('@/apps/noc/NocApp').then(m => m.NocApp), { loading: AppLoading });
+const PoliceCommandApp = dynamic(() => import('@/apps/police-command/PoliceCommandApp').then(m => m.PoliceCommandApp), { loading: AppLoading });
+const ImmigrationApp = dynamic(() => import('@/apps/immigration/ImmigrationApp').then(m => m.ImmigrationApp), { loading: AppLoading });
+const CustomsApp = dynamic(() => import('@/apps/customs/CustomsApp').then(m => m.CustomsApp), { loading: AppLoading });
+const EmergencyResponseApp = dynamic(() => import('@/apps/emergency-response/EmergencyResponseApp').then(m => m.EmergencyResponseApp), { loading: AppLoading });
+const ForeignAffairsApp = dynamic(() => import('@/apps/foreign-affairs/ForeignAffairsApp').then(m => m.ForeignAffairsApp), { loading: AppLoading });
+const CommunicationsApp = dynamic(() => import('@/apps/communications/CommunicationsApp').then(m => m.CommunicationsApp), { loading: AppLoading });
+const MinistryEducationApp = dynamic(() => import('@/apps/ministry-education/MinistryEducationApp').then(m => m.MinistryEducationApp), { loading: AppLoading });
+const MinistryTransportApp = dynamic(() => import('@/apps/ministry-transport/MinistryTransportApp').then(m => m.MinistryTransportApp), { loading: AppLoading });
+const MinistryEnergyApp = dynamic(() => import('@/apps/ministry-energy/MinistryEnergyApp').then(m => m.MinistryEnergyApp), { loading: AppLoading });
+const MinistryInteriorApp = dynamic(() => import('@/apps/ministry-interior/MinistryInteriorApp').then(m => m.MinistryInteriorApp), { loading: AppLoading });
+const OfficerConsoleApp = dynamic(() => import('@/apps/officer-console/OfficerConsoleApp').then(m => m.OfficerConsoleApp), { loading: AppLoading });
+const BranchWorkspace = dynamic(() => import('@/components/features/BranchWorkspace').then(m => m.BranchWorkspace), { loading: AppLoading });
 
 /**
  * Federated Application Host.

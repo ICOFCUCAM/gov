@@ -27,6 +27,7 @@ const BODIES = [
 ];
 
 type Verification = AuditVerification | null;
+const PAGE = 200;
 
 /** Download the ledger as shown, with the verification result it was read under. */
 function exportLedger(events: AuditEntry[], verify: Verification) {
@@ -70,16 +71,32 @@ function SignedHeadLine({ verify }: { verify: Verification }) {
 
 export function AuditView() {
   const [events, setEvents] = React.useState<AuditEntry[] | null>(null);
+  // The chain is read a page at a time (go-live review M-8): the newest page is refreshed, older pages are added on request.
+  const [older, setOlder] = React.useState<AuditEntry[]>([]);
+  const [total, setTotal] = React.useState(0);
+  const [nextBefore, setNextBefore] = React.useState<number | undefined>(undefined);
+  const olderLoaded = React.useRef(false);
   const [verify, setVerify] = React.useState<Verification>(null);
   const [now, setNow] = React.useState(useRenderNow());
   const [official, setOfficial] = useOfficial();
   const [note, setNote] = React.useState<string | null>(null);
 
   const load = React.useCallback(async () => {
-    const [{ events }, v] = await Promise.all([api.audit.list(), api.audit.verify().catch(() => null)]);
-    setEvents(events);
+    const [page, v] = await Promise.all([api.audit.list({ limit: PAGE }), api.audit.verify().catch(() => null)]);
+    setEvents(page.events);
+    setTotal(page.total);
+    // Until older pages are read, the cursor follows the newest page.
+    if (!olderLoaded.current) setNextBefore(page.nextBefore);
     if (v) setVerify(v);
   }, []);
+
+  async function loadOlder() {
+    if (nextBefore === undefined) return;
+    const page = await api.audit.list({ before: nextBefore, limit: PAGE });
+    olderLoaded.current = true;
+    setOlder(o => [...o, ...page.events]);
+    setNextBefore(page.nextBefore);
+  }
 
   React.useEffect(() => {
     void load();
@@ -101,13 +118,17 @@ export function AuditView() {
   const ts = now / 4000;
   const intact = verify?.ok ?? true;
   const tone = intact ? 'ok' : 'alert';
-  const evs = events ?? [];
+  const evs = React.useMemo(() => {
+    const head = events ?? [];
+    const seen = new Set(head.map(e => e.id));
+    return [...head, ...older.filter(e => !seen.has(e.id))];
+  }, [events, older]);
   const denied = evs.filter(e => e.outcome !== 'ok').length;
   const sp = (k: string, lo = 35, hi = 90) => waveSeries(`au:${k}`, ts, 16, lo, hi);
 
   const tele = [
     { l: 'Chain integrity', v: verify ? (intact ? 'INTACT' : 'BROKEN') : '—', sub: intact ? 'tamper-evident' : 'investigate', t: tone, spark: sp('ci', intact ? 80 : 10, intact ? 99 : 40) },
-    { l: 'Events recorded', v: String(evs.length), sub: `+${evs.filter(e => now - Date.parse(e.at) < 86_400_000).length} / 24h`, t: 'ok', spark: sp('er', 20, 70) },
+    { l: 'Events recorded', v: String(Math.max(total, evs.length)), sub: `+${evs.filter(e => now - Date.parse(e.at) < 86_400_000).length} / 24h`, t: 'ok', spark: sp('er', 20, 70) },
     { l: 'Verified links', v: String(verify?.checked ?? 0), sub: 'hash continuity', t: 'ok', spark: sp('vl', 60, 95) },
     { l: 'Non-ok outcomes', v: String(denied), sub: denied ? 'review queue' : 'clean', t: denied ? 'warn' : 'ok', spark: sp('no', 0, denied ? 50 : 8) },
     { l: 'Anomaly signals', v: String(2 + Math.round(seed(`an:${epoch}`) * 4)), sub: 'sample · no detector connected', t: 'warn', spark: sp('an', 10, 55) },
@@ -178,7 +199,7 @@ export function AuditView() {
         <Panel title="Integrity actions" meta="oversight authority" bodyClass="!p-1.5">
           <div className="grid grid-cols-2 gap-1">
             {([
-              { l: 'Re-verify chain', g: '⛓', a: () => void api.audit.verify().then(v => { setVerify(v); setNote(v.ok ? `Chain verified: ${v.checked} links intact.` : `Chain broken at entry ${v.brokenAtSeq}.`); }) },
+              { l: 'Re-verify chain', g: '⛓', a: () => void api.audit.verify(true).then(v => { setVerify(v); setNote(v.ok ? `Chain verified: ${v.checked} links intact.` : `Chain broken at entry ${v.brokenAtSeq}.`); }) },
               { l: 'Export ledger', g: '▤', a: () => exportLedger(evs, verify) },
               { l: 'Freeze segment', g: '⊘', off: 'Needs the substrate legal-hold function; not connected yet (register 1.14).' },
               { l: 'Open inquiry', g: '⚖', a: () => void openInquiry() },
@@ -210,7 +231,7 @@ export function AuditView() {
                 {intact ? `✓ ${verify.checked} links verified` : `✗ broken @ seq ${verify.brokenAtSeq}`}
               </span>
             ) : null}
-            <Button variant="secondary" onClick={() => void api.audit.verify().then(setVerify)}>Re-verify</Button>
+            <Button variant="secondary" onClick={() => void api.audit.verify(true).then(setVerify)}>Re-verify</Button>
           </span>
         }
         bodyClass="overflow-auto !p-0"
@@ -228,7 +249,7 @@ export function AuditView() {
               </tr>
             </thead>
             <tbody>
-              {events.map(e => {
+              {evs.map(e => {
                 const ok = e.outcome === 'ok';
                 return (
                   <tr key={e.id} className="border-b border-line-soft transition-colors hover:bg-surface-2/50 last:border-0">
@@ -246,6 +267,12 @@ export function AuditView() {
             </tbody>
           </table>
         )}
+        {events !== null && events.length > 0 ? (
+          <div className="flex items-center justify-between gap-2 border-t border-line px-3 py-1.5 text-[10px] text-ink-muted">
+            <span>Showing {evs.length} of {Math.max(total, evs.length)} entries, newest first.</span>
+            {nextBefore !== undefined ? <Button variant="secondary" onClick={() => void loadOlder()}>Load older entries</Button> : null}
+          </div>
+        ) : null}
       </Panel>
 
       {/* Operational command strip */}
