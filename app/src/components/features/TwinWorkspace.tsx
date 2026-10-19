@@ -4,15 +4,21 @@
 // when (lib/twin/register.ts). Officials register a source (a statistics office
 // CSV on its own website, or an upload for air-gapped nations), run imports and
 // see every refused row with its reason, and look up the state of any metric
-// as of any date. Every figure here is observed; nothing is generated.
+// as of any date, and withdraw an import with a reason. The Metrics tab
+// (?tab=metrics) defines what each metric means, its unit and how regions
+// combine. Every figure here is observed; nothing is generated.
 
 import * as React from 'react';
 import { TwinTerritory } from '@/components/features/twin/TwinTerritory';
 import { TwinScenarios } from '@/components/features/twin/TwinScenarios';
+import { TwinMetrics } from '@/components/features/twin/TwinMetrics';
+
+type Tab = 'facts' | 'metrics';
+const TABS: { id: Tab; label: string }[] = [{ id: 'facts', label: 'Facts and sources' }, { id: 'metrics', label: 'Metrics' }];
 
 interface Entity { id: string; kind: string; name: string; code?: string; region?: boolean }
 interface Source { id: string; name: string; publisher: string; kind: 'csv-url' | 'csv-upload'; url?: string; schedule: string; registeredBy: string; registeredAt: string; lastRun?: string; mapping: { entity: string; value: string; metric: { column: string } | { fixed: string } } }
-interface Run { id: string; sourceId: string; at: string; by: string; status: 'ok' | 'partial' | 'failed'; rows: number; accepted: number; rejected: { row: number; reason: string }[]; error?: string }
+interface Run { id: string; sourceId: string; at: string; by: string; status: 'ok' | 'partial' | 'failed'; rows: number; accepted: number; rejected: { row: number; reason: string }[]; error?: string; withdrawn?: { at: string; by: string; reason: string } }
 interface Obs { entityId: string; metric: string; value: number; unit: string; validFrom: string; recordedAt: string; sourceId: string; runId: string }
 /** The national figure for a metric, or why there is none (lib/twin/register.ts nationalTotal). */
 interface National { value: number | null; unit?: string; source: string; coverage: { have: number; of: number }; vintage?: { oldest: string; newest: string }; aggregation?: string; refused?: string }
@@ -56,6 +62,15 @@ export function TwinWorkspace() {
   const [dates, setDates] = React.useState<string[]>([]);
   // Off: what was true on the date, as known now. On: only what had been recorded by that date.
   const [knownThen, setKnownThen] = React.useState(false);
+  // Tabs of this page (?tab=metrics opens the metric definitions).
+  const [tab, setTab] = React.useState<Tab>('facts');
+  React.useEffect(() => { if (new URLSearchParams(window.location.search).get('tab') === 'metrics') setTab('metrics'); }, []);
+  const choose = (t: Tab) => {
+    setTab(t);
+    const u = new URL(window.location.href);
+    if (t === 'facts') u.searchParams.delete('tab'); else u.searchParams.set('tab', t);
+    window.history.replaceState(null, '', u.toString());
+  };
 
   const load = React.useCallback(async () => {
     const [e, s] = await Promise.all([call<{ entities: Entity[] }>('/api/twin/entities'), call<NonNullable<typeof data>>('/api/twin/sources')]);
@@ -106,6 +121,18 @@ export function TwinWorkspace() {
       </header>
       {msg ? <p role="status" className={`text-[13px] ${msg.ok ? 'text-ok' : 'text-alert'}`}>{msg.text}</p> : null}
 
+      <div role="tablist" aria-label="National data" className="flex gap-1 border-b border-line">
+        {TABS.map(t => (
+          <button key={t.id} type="button" role="tab" id={`twin-tab-${t.id}`} aria-selected={tab === t.id} aria-controls={`twin-panel-${t.id}`}
+            className={`focus-ring -mb-px border-b-2 px-3 py-2 text-[13px] font-semibold ${tab === t.id ? 'border-ink text-ink' : 'border-transparent text-ink-soft hover:text-ink'}`}
+            onClick={() => choose(t.id)}>{t.label}</button>
+        ))}
+      </div>
+
+      {tab === 'metrics' ? (
+        <div role="tabpanel" id="twin-panel-metrics" aria-labelledby="twin-tab-metrics"><TwinMetrics by={by} onChange={() => void load()} /></div>
+      ) : (
+      <div role="tabpanel" id="twin-panel-facts" aria-labelledby="twin-tab-facts" className="space-y-4">
       <div className="grid gap-4 lg:grid-cols-3">
         <Section title="Register" aside="stable ids">
           <dl className="grid grid-cols-2 gap-y-1.5">
@@ -167,12 +194,32 @@ export function TwinWorkspace() {
                     <ul className="mt-1 space-y-0.5 text-[12px] text-ink-soft">{r.rejected.map(x => <li key={x.row}>Row {x.row}: {x.reason}</li>)}</ul>
                   </details>
                 ) : null}
+                <Withdraw run={r} by={by} busy={busy} act={act} />
               </li>
             ))}
           </ul>
         ) : <p className="text-ink-soft">No imports yet.</p>}
       </Section>
+      </div>
+      )}
     </div>
+  );
+}
+
+/** Withdraw an import (a correction): its observations are superseded from now, never deleted. */
+function Withdraw({ run, by, busy, act }: { run: Run; by: string; busy: boolean; act: (done: string, fn: () => Promise<unknown>) => Promise<void> }) {
+  const [open, setOpen] = React.useState(false);
+  const [reason, setReason] = React.useState('');
+  if (run.withdrawn) return <p className="mt-1 text-[12px] text-warn">Withdrawn {when(run.withdrawn.at)} by {run.withdrawn.by}: {run.withdrawn.reason}</p>;
+  if (!run.accepted) return null;
+  if (!open) return <button type="button" className={`${btn} mt-1`} disabled={busy || !by.trim()} onClick={() => setOpen(true)}>Withdraw this import</button>;
+  return (
+    <form className="mt-1 flex flex-wrap items-end gap-2" onSubmit={e => { e.preventDefault(); void act(`Import ${run.id} withdrawn; its values are no longer used`, () => call(`/api/twin/runs/${run.id}/withdraw`, { method: 'POST', body: JSON.stringify({ by, reason }) })); }}>
+      <label className="min-w-[16rem] flex-1"><span className={label}>Why is it withdrawn?</span><input className={`${input} mt-1`} value={reason} onChange={e => setReason(e.currentTarget.value)} placeholder="e.g. figures keyed against the wrong year" /></label>
+      <button className={btn} disabled={busy || !by.trim() || reason.trim().length < 4}>Withdraw</button>
+      <button type="button" className={btn} onClick={() => setOpen(false)}>Cancel</button>
+      <span className="w-full text-[12px] text-ink-muted">Its {run.accepted} values stay on record for what was known before now, and are no longer used from now on.</span>
+    </form>
   );
 }
 
