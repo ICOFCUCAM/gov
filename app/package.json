@@ -2,7 +2,7 @@
   "name": "civicos-app",
   "version": "0.1.0",
   "private": true,
-  "description": "CivicOS \u2014 sovereign operational platform. Citizen wallet, officer console, ministry control, NCCC. Doctrine: humans govern, institutions govern, constitutions govern, AI assists.",
+  "description": "CivicOS — sovereign operational platform. Citizen wallet, officer console, ministry control, NCCC. Doctrine: humans govern, institutions govern, constitutions govern, AI assists.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -32,6 +32,7 @@
     "d3-geo": "^3.1.1",
     "fflate": "^0.8.3",
     "next": "14.2.35",
+    "postgres": "^3.4.9",
     "proj4": "^2.22.0",
     "react": "18.3.1",
     "react-dom": "18.3.1",

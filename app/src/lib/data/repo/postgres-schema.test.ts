@@ -1,0 +1,23 @@
+// The records schema the postgres backend applies is the substrate's migration.
+import { describe, it, expect } from 'vitest';
+import { readFileSync } from 'node:fs';
+import path from 'node:path';
+import { RECORDS_SCHEMA, RECORDS_MIGRATION } from './postgres-schema';
+
+describe('the records schema', () => {
+  it('is exactly the migration the substrate applies', () => {
+    const file = readFileSync(path.join(__dirname, '../../../../supabase/migrations', RECORDS_MIGRATION), 'utf8');
+    expect(file).toBe(RECORDS_SCHEMA);
+  });
+
+  it('keeps the audit chain and observations append-only, bitemporal and indexed for as-of queries', () => {
+    expect(RECORDS_SCHEMA).toMatch(/create trigger audit_entry_guard before insert or update or delete on civicos\.audit_entry/);
+    expect(RECORDS_SCHEMA).toMatch(/valid\s+tstzrange not null/);
+    expect(RECORDS_SCHEMA).toMatch(/twin_observation_asof on civicos\.twin_observation \(metric, entity_id, lower\(valid\)\)/);
+    expect(RECORDS_SCHEMA).toMatch(/geography\(Point, 4326\)/);
+    expect(RECORDS_SCHEMA).toMatch(/geometry\(MultiPolygon, 4326\)/);
+    expect(RECORDS_SCHEMA).toMatch(/st_isvalid\(geom\)/);
+    expect(RECORDS_SCHEMA).toMatch(/using gist \(geog\)/);
+    expect(RECORDS_SCHEMA).toMatch(/create table if not exists civicos\.outbox/);
+  });
+});
