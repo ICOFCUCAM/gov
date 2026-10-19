@@ -148,13 +148,17 @@ end$$;
 
 -- ── directive_trend: weekly signed buckets + since-effective + lag ──
 -- All three signed this week; 2 effective (lag 2d, 4d → median 3.0), 1 not.
+-- Signed at the start of the current week (never in the future, always in
+-- this week whatever day the suite runs: "now() - 4 d" fell into last week
+-- from Monday to Thursday). The trend buckets by signed week, so effective
+-- dates later this week (or next) do not move the bucket.
 do $$
-declare r record; n int;
+declare r record; n int; v_week timestamptz := date_trunc('week', now());
 begin
   insert into civicos.directives (ref, kind, issued_by_charter_id, title, status, signed_at, effective_at) values
-    ('TEST-DT-1', 'order', 'TEST-DT', 't', 'effective', now()-interval '2 d', now()),
-    ('TEST-DT-2', 'order', 'TEST-DT', 't', 'effective', now()-interval '4 d', now()),
-    ('TEST-DT-3', 'order', 'TEST-DT', 't', 'signed',    now(), null);
+    ('TEST-DT-1', 'order', 'TEST-DT', 't', 'effective', v_week, v_week + interval '2 d'),
+    ('TEST-DT-2', 'order', 'TEST-DT', 't', 'effective', v_week, v_week + interval '4 d'),
+    ('TEST-DT-3', 'order', 'TEST-DT', 't', 'signed',    v_week, null);
   select count(*) into n from civicos.directive_trend('TEST-DT', 12);
   if n <> 1 then raise exception 'FAIL directive_trend bucket count = % (want 1)', n; end if;
   select * into r from civicos.directive_trend('TEST-DT', 12) limit 1;

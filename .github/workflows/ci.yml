@@ -177,25 +177,67 @@ jobs:
   substrate-tests:
     name: substrate SQL suite
     runs-on: ubuntu-latest
-    # Runs only when a migrated test database is configured (secret set);
-    # otherwise it no-ops so forks / unconfigured repos stay green.
-    env:
-      DATABASE_URL: ${{ secrets.SUBSTRATE_TEST_DATABASE_URL }}
+    # Always runs: a throwaway Postgres service container gets the Supabase
+    # stand-ins (roles, auth.uid(), extensions, supabase_realtime) and every
+    # migration in order, then every *_test.sql suite. When a migrated test
+    # database is also configured (SUBSTRATE_TEST_DATABASE_URL), the suites
+    # run against it too.
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    defaults:
+      run:
+        working-directory: app
     steps:
       - uses: actions/checkout@v4
-      - name: Skip if no test DB configured
-        id: gate
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+      - name: Apply the stand-ins and every migration to the throwaway database
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: bash supabase/tests/migrate.sh
+      - name: Run substrate regression suite (throwaway database)
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/postgres
+        run: bash supabase/tests/run.sh
+      - name: Run substrate regression suite (configured test database, when set)
+        env:
+          DATABASE_URL: ${{ secrets.SUBSTRATE_TEST_DATABASE_URL }}
         run: |
           if [ -z "${DATABASE_URL}" ]; then
-            echo "no SUBSTRATE_TEST_DATABASE_URL secret — skipping substrate suite"
-            echo "run=false" >> "$GITHUB_OUTPUT"
-          else
-            echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "no SUBSTRATE_TEST_DATABASE_URL secret; the throwaway run above covers the suite"
+            exit 0
           fi
-      - name: Install psql client
-        if: steps.gate.outputs.run == 'true'
-        run: sudo apt-get update && sudo apt-get install -y postgresql-client
-      - name: Run substrate regression suite
-        if: steps.gate.outputs.run == 'true'
-        run: bash supabase/tests/run.sh
-        working-directory: app
+          bash supabase/tests/run.sh
+
+  civic-api:
+    name: civic-api typecheck + tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/civic-api
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          # node --test expands the quoted spec glob itself, which needs Node 21+.
+          node-version: 22
+      - name: Enable pnpm
+        run: corepack enable
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile --ignore-scripts
+      - name: Generate the Prisma client (no database needed)
+        run: pnpm exec prisma generate
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Unit tests (node --test)
+        run: pnpm test

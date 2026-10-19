@@ -119,13 +119,16 @@ end$$;
 
 -- ── posture_trend: weekly avg readiness / avg + peak stress ──
 -- Three snapshots this week: readiness 80/60/40 (avg 60.0), stress 20/40/90
--- (avg 50.0, peak 90), bucketed by snapshot week.
+-- (avg 50.0, peak 90), bucketed by snapshot week. The earlier snapshots are
+-- clamped to the start of the current week ("now() - 2 d" fell into last week
+-- on Mondays and Tuesdays), so they stay in the past and in this week
+-- whatever day the suite runs.
 do $$
-declare r record; n int;
+declare r record; n int; v_week timestamptz := date_trunc('week', now());
 begin
   insert into civicos.posture_history (charter_id, posture, readiness, stress, snapshot_at) values
-    ('TEST-PT', 'steady',   80, 20, now()-interval '2 d'),
-    ('TEST-PT', 'steady',   60, 40, now()-interval '1 d'),
+    ('TEST-PT', 'steady',   80, 20, greatest(v_week, now()-interval '2 d')),
+    ('TEST-PT', 'steady',   60, 40, greatest(v_week, now()-interval '1 d')),
     ('TEST-PT', 'elevated', 40, 90, now());
   select count(*) into n from civicos.posture_trend('TEST-PT', 12);
   if n <> 1 then raise exception 'FAIL posture trend bucket count = % (want 1)', n; end if;

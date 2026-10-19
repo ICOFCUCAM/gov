@@ -17,6 +17,7 @@ do $$
 declare
   v_esc uuid;
   n_total int; n_transport int; n_generic int; n_finance int;
+  n_ours int; n_expected int; n_wrong int;
 begin
   -- HEALTH provides→GENERIC, mutual↔TRANSPORT, consumes←FINANCE.
   insert into civicos.institutions (charter_id, label, kind, domain, archetype_or_branch, activated) values
@@ -36,7 +37,31 @@ begin
   if n_transport <> 1 then raise exception 'FAIL cascade→transport (mutual) = % (want 1)', n_transport; end if;
   if n_generic   <> 1 then raise exception 'FAIL cascade→generic (provides) = % (want 1)', n_generic; end if;
   if n_finance   <> 0 then raise exception 'FAIL cascade→finance (consumes, must NOT cascade) = % (want 0)', n_finance; end if;
-  if n_total     <> 2 then raise exception 'FAIL cascade total = % (want 2)', n_total; end if;
+  -- The cascade fans out by archetype to every activated institution, so a
+  -- migrated database (which seeds the national institution registry) also
+  -- reaches the seeded TRANSPORT / GENERIC institutions. Pin the exact set:
+  -- among this test's own charters exactly the two dependents, and overall
+  -- exactly the activated TRANSPORT + GENERIC institutions (never FINANCE,
+  -- never the source itself), whatever else the database holds.
+  select count(*) into n_ours from civicos.federation_events
+    where source='escalation:'||v_esc::text and target like 'CAS-%';
+  if n_ours <> 2 then raise exception 'FAIL cascade to test charters = % (want 2)', n_ours; end if;
+
+  select count(*) into n_expected from civicos.institutions
+    where activated and archetype_or_branch in ('TRANSPORT', 'GENERIC')
+      and charter_id <> 'CAS-HEALTH';
+  if n_total <> n_expected then
+    raise exception 'FAIL cascade total = % (want % = activated TRANSPORT + GENERIC institutions)', n_total, n_expected;
+  end if;
+
+  select count(*) into n_wrong
+    from civicos.federation_events f
+    left join civicos.institutions i on i.charter_id = f.target
+    where f.source='escalation:'||v_esc::text
+      and (i.charter_id is null or not i.activated
+           or i.archetype_or_branch not in ('TRANSPORT', 'GENERIC')
+           or i.charter_id = 'CAS-HEALTH');
+  if n_wrong <> 0 then raise exception 'FAIL cascade reached % charter(s) off the provides/mutual edges', n_wrong; end if;
 
   -- minor severity must not cascade
   insert into civicos.escalations (source_charter_id, severity, reason, triggered_at)
