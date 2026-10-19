@@ -94,6 +94,7 @@ import type {
 } from '@/lib/api/types';
 import { specFor } from '@/lib/ops-catalog';
 import { profileFor } from '@/lib/archetype-profiles';
+import { isWorldview } from '@/lib/map/disputed';
 import { scoreInstitution } from '@/lib/institution/readiness';
 import { blueprintFor } from '@/lib/institution/blueprint';
 import { federationSeed } from '@/lib/institution/federation';
@@ -1620,6 +1621,7 @@ export function setSovereign(
       return { error: 'The capital needs a name and a position (longitude −180 to 180, latitude −90 to 90)' };
     }
     if (m.projection !== undefined && !MAP_PROJECTIONS.includes(m.projection)) return { error: 'Unknown map projection' };
+    if (m.worldview !== undefined && !isWorldview(m.worldview)) return { error: 'Unknown point of view for disputed territory' };
   }
   if (patch.languages !== undefined && (!Array.isArray(patch.languages) || patch.languages.length > 10 || patch.languages.some(l => typeof l !== 'string' || !locales.some(x => x.code === l)))) {
     return { error: 'Further languages must be language codes the platform has' };

@@ -603,6 +603,13 @@ export interface NationMapSettings {
   capital?: { name: string; lng: number; lat: number };
   /** The projection shaded maps use; 'auto' (or unset) picks one for the nation's shape. */
   projection?: 'auto' | 'conic-equal-area' | 'azimuthal-equal-area' | 'transverse-mercator' | 'albers-usa';
+  /**
+   * How disputed territory is drawn (lib/map/disputed.ts): 'neutral' (or
+   * unset) draws every disputed area as disputed; a Natural Earth point-of-view
+   * code (e.g. 'IN', 'US', 'UN') draws areas as that view does. Only the
+   * nation chooses; the platform never takes a side.
+   */
+  worldview?: string;
 }
 
 /** A nation's own constitutional facts. Anything left out falls back to the

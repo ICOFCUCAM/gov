@@ -15,7 +15,9 @@ import { geoCentroid, geoEqualEarth, geoGraticule10, geoPath, geoInterpolate } f
 import { loadCountry } from '@/lib/geo/admin1';
 import type { Geom } from '@/lib/geo/admin1';
 import { loadWorld, nationIndex, type WorldModel } from '@/lib/map/world';
-import { nationCapital, nationIso3 } from '@/lib/nation/registry';
+import { nationCapital, nationIso3, nationWorldview } from '@/lib/nation/registry';
+import { disputedAreas } from '@/lib/map/disputed';
+import { DisputedLayer } from '@/components/map/DisputedLayer';
 import { useReducedMotion } from '@/components/features/situation/Theatre';
 import { SignalTag } from '@/components/ui/SignalTag';
 import { seed } from '@/lib/telemetry';
@@ -143,6 +145,8 @@ export function WorldThreatMap({ title, seedKey, markers, palette, height, legen
       graticule: path(geoGraticule10() as never) || '',
       countries: world.countries.map((c, i) => ({ d: path(feature(c.geometry) as never) || '', name: c.name, home: i === home })),
       nation: nation ? path(feature(nation.shape) as never) || '' : '',
+      pathOf: (g: Geom) => path(feature(g) as never) || '',
+      project: (lng: number, lat: number) => { const q = proj([lng, lat]); return q && q.every(Number.isFinite) ? (q as [number, number]) : null; },
       cap: cap && cap.every(Number.isFinite) ? { x: cap[0], y: cap[1] } : null,
       hubs,
     };
@@ -210,6 +214,7 @@ export function WorldThreatMap({ title, seedKey, markers, palette, height, legen
                 </g>
               ) : null}
               {model.nation ? <path d={model.nation} fill={palette.accent} fillOpacity={0.55} stroke={palette.accent} strokeWidth={1} style={{ filter: `drop-shadow(0 0 4px ${palette.accent})` }}><title>{name}</title></path> : null}
+              <DisputedLayer areas={disputedAreas(nationWorldview())} pathOf={model.pathOf} project={model.project} nation={nationIso3()} nationFill={palette.accent} view={nationWorldview()} labels={z > 1.5} />
               {routes && on('routes') ? model.hubs.map((h, i) => h.d ? (
                 <g key={`r${i}`} aria-hidden pointerEvents="none">
                   <path d={h.d} fill="none" stroke={levelColour[h.level]} strokeWidth={2.4} strokeOpacity={0.08} />

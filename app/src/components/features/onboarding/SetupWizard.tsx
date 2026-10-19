@@ -10,6 +10,7 @@ import { locales } from '@/lib/i18n/config';
 import { COUNTRIES, loadCountry } from '@/lib/geo/admin1';
 import { loadDivisions, defaultUnits, divisionNoun, type DivisionLevel } from '@/lib/geo/divisions';
 import { capitalsOf } from '@/lib/geo/capitals';
+import { WORLDVIEWS, disputesOf, worldviewOf } from '@/lib/map/disputed';
 import { applyNation } from '@/lib/nation/registry';
 import { constitutionFor } from '@/lib/gov/constitution';
 import { OnboardingFrame, Eyebrow, Field, inputCls, SealTile, Section, Select, Rule, Corners, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI, GOLD, INK } from './Chrome';
@@ -991,6 +992,27 @@ const PROJECTIONS: { value: NonNullable<NonNullable<SovereignProfile['map']>['pr
 ];
 
 /**
+ * How the maps draw disputed territory. Neutral by default: every disputed
+ * area is hatched and named as disputed, with who administers and who claims
+ * it. Only the nation may choose a point of view instead (its own where the
+ * map data records one); the platform never chooses a side.
+ */
+function WorldviewField({ iso3, value, onChange }: { iso3: string; value?: SovereignProfile['map']; onChange: (m: SovereignProfile['map']) => void }) {
+  const own = worldviewOf(iso3);
+  const mine = disputesOf(iso3);
+  const views = [...WORLDVIEWS].sort((a, b) => (a.code === own ? -1 : b.code === own ? 1 : a.label.localeCompare(b.label)));
+  return (
+    <Field label="Disputed territory on the maps"
+      hint={`${mine.length ? `Your maps touch ${mine.length} disputed area${mine.length === 1 ? '' : 's'}: ${mine.map(a => a.name).join(', ')}. ` : ''}Neutral draws every disputed area as disputed and names who administers and who claims it. A point of view draws them as that country's official maps do (Natural Earth's record).`}>
+      <Select value={value?.worldview ?? 'neutral'} onChange={e => onChange({ ...value, worldview: e.currentTarget.value === 'neutral' ? undefined : e.currentTarget.value })}>
+        <option value="neutral">Neutral: drawn as disputed (recommended)</option>
+        {views.map(w => <option key={w.code} value={w.code}>{w.code === own ? `Our own point of view (${w.label})` : `${w.label}'s point of view`}</option>)}
+      </Select>
+    </Field>
+  );
+}
+
+/**
  * The capital the maps mark and the projection they use. Several countries
  * have more than one capital; the map data's list is offered, and only the
  * nation chooses. Another city can be given by name and position.
@@ -1032,6 +1054,7 @@ function MapSettings({ iso3, value, onChange }: { iso3: string; value?: Sovereig
           {PROJECTIONS.filter(p => p.value !== 'albers-usa' || iso3 === 'USA').map(p => <option key={p.value} value={p.value}>{p.label}</option>)}
         </Select>
       </Field>
+      <WorldviewField iso3={iso3} value={value} onChange={onChange} />
     </div>
   );
 }

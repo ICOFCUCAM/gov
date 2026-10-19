@@ -13,7 +13,9 @@
 // choice from setup, else the map data's default, which says so.
 
 import * as React from 'react';
-import { nationCapital, nationIso3, nationProjection, nationRegions } from '@/lib/nation/registry';
+import { nationCapital, nationIso3, nationProjection, nationRegions, nationWorldview } from '@/lib/nation/registry';
+import { disputedAreas, disputesOf, disputeText, worldviewLabel } from '@/lib/map/disputed';
+import { DisputedLayer } from './DisputedLayer';
 import { loadNationGeography, loadUnitGeography, type NationGeography } from '@/lib/map/geography';
 import { buildMapModel, type MapPoint, type MapTone, type MapValue } from '@/lib/map/model';
 import { classColour } from '@/lib/map/classify';
@@ -173,6 +175,15 @@ export function NationMap({
   const model = React.useMemo(() => (geo ? buildMapModel(geo, { width: W, maxHeight, minHeight, values, points: geo.parent ? undefined : points, projection, capital, frame }) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [geo, W, maxHeight, minHeight, values, points, projection, capital?.name, capital?.lng, capital?.lat, frame?.height, frame?.insetEnd, frame?.insetBottom]);
+  // Disputed territory (lib/map/disputed.ts), as the nation's worldview draws it: on the nation's
+  // map the areas it is a party to; in the theatre, every area inside the frame.
+  const worldview = nationWorldview();
+  const disputes = React.useMemo(() => {
+    if (!model || geo?.parent) return [];
+    if (!frame) return disputesOf(iso3, worldview);
+    return disputedAreas(worldview).filter(a => { const p = model.project(a.label[0], a.label[1]); return !!p && p[0] >= 0 && p[0] <= model.width && p[1] >= 0 && p[1] <= model.height; });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model, worldview, iso3, frame?.height]);
   // The theatre draws the neighbouring countries around the nation (Natural Earth 1:50m).
   const [world, setWorld] = React.useState<WorldModel | null>(null);
   React.useEffect(() => {
@@ -308,6 +319,11 @@ export function NationMap({
                 </g>
               );
             })}
+            {disputes.length ? (
+              <g pointerEvents="none">
+                <DisputedLayer areas={disputes} pathOf={g => model.pathOf(g)} project={model.project} nation={iso3} nationFill="rgb(var(--c-surface-2))" view={worldview} labels={!compact} />
+              </g>
+            ) : null}
             {model.points.filter(p => p.tone === 'alert' && !p.exact).map((p, i) => (
               <circle key={`ring${i}`} cx={p.x} cy={p.y} r={14} fill="none" stroke={STATUS.alert} strokeWidth={1.1} aria-hidden pointerEvents="none"
                 className="motion-safe:animate-diffuse" style={{ transformBox: 'fill-box', transformOrigin: 'center' }} />
@@ -437,6 +453,11 @@ export function NationMap({
           <div className={`${notes === 'small' ? 'text-[9px]' : 'text-[10px]'} text-ink-muted`}>
             Boundaries: {geo?.credit}{source ? ` · Figures: ${source}` : ''}{asOf ? ` · As of ${asOf}` : ''}
           </div>
+          {disputes.length ? (
+            <div className={`${notes === 'small' ? 'text-[9px]' : 'text-[10px]'} text-ink-soft`}>
+              Disputed territory ({worldviewLabel(worldview)}): {disputes.map(a => disputeText(a, worldview)).join(' · ')}
+            </div>
+          ) : null}
         </div>
       ) : null}
     </figure>

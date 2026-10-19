@@ -260,6 +260,10 @@ What has been built is locked. Work only upgrades it toward the vision in
   every version kept, in force from its date. Maps and position checks read
   shapes through `loadNationGeography()` / `loadDistricts()`, which apply the
   version in force; new map code does not read `lib/geo` shapes around them.
+- Disputed territory is drawn through `DisputedLayer` (`lib/map/disputed.ts`):
+  neutral (hatched, named as disputed) unless the nation chose a point of view
+  in setup (`map.worldview`). The platform never chooses a side; never colour
+  a disputed area as one country's without the nation's setting.
 - Engines must not read the nation's regions or offices into module-level
   constants; read them at use (`regionList()`, or a function). The root
   layout writes the nation's facts before scripts load, but data from setup

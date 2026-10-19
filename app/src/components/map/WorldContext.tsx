@@ -11,7 +11,9 @@
 import * as React from 'react';
 import { geoCentroid, geoEqualEarth, geoGraticule10, geoPath } from 'd3-geo';
 import { loadCountry } from '@/lib/geo/admin1';
-import { nationCapital, nationForeignAffairs, nationInsignia, nationIso3 } from '@/lib/nation/registry';
+import { nationCapital, nationForeignAffairs, nationInsignia, nationIso3, nationWorldview } from '@/lib/nation/registry';
+import { DISPUTED_SOURCE, disputedAreas, disputeText, worldviewLabel } from '@/lib/map/disputed';
+import { DisputedLayer } from './DisputedLayer';
 import { findByName, loadWorld, nationIndex, partnerCapital, type WorldModel } from '@/lib/map/world';
 import type { Geom } from '@/lib/geo/admin1';
 import { INFO, STATUS } from '@/lib/theme/tokens';
@@ -23,6 +25,8 @@ export function WorldContext({ maxHeight = 420 }: { maxHeight?: number }) {
   const accent = nationInsignia()?.accent ?? INFO;
   const { partners, memberships } = nationForeignAffairs();
   const capital = nationCapital();
+  const worldview = nationWorldview();
+  const disputes = React.useMemo(() => disputedAreas(worldview), [worldview]);
   const [world, setWorld] = React.useState<WorldModel | null>(null);
   const [nation, setNation] = React.useState<{ name: string; shape: Geom } | null>(null);
   const [view, setView] = React.useState<'map' | 'table'>('map');
@@ -65,6 +69,8 @@ export function WorldContext({ maxHeight = 420 }: { maxHeight?: number }) {
     const at = (lng: number, lat: number) => { const p = proj([lng, lat]); return p && p.every(Number.isFinite) ? { x: p[0], y: p[1] } : null; };
     const caps = partnerIdx.map(p => ({ name: p.name, cap: partnerCapital(p) }));
     return {
+      pathOf: (g: Geom) => path(feature(g) as never) || '',
+      project: (lng: number, lat: number) => { const p = proj([lng, lat]); return p && p.every(Number.isFinite) ? (p as [number, number]) : null; },
       capital: capital ? at(capital.lng, capital.lat) : null,
       links: capital ? caps.flatMap(({ name, cap }) => cap ? [{
         name, capital: cap.name, named: cap.named, end: at(cap.lng, cap.lat),
@@ -111,6 +117,7 @@ export function WorldContext({ maxHeight = 420 }: { maxHeight?: number }) {
               </path>
             ))}
             {model.nation ? <path d={model.nation} fill={accent} fillOpacity={0.9} stroke="rgb(var(--c-ink))" strokeWidth={0.8}><title>{name}</title></path> : null}
+            <DisputedLayer areas={disputes} pathOf={model.pathOf} project={model.project} nation={iso3} nationFill={accent} view={worldview} labels={false} />
             {model.links.map(l => (
               <g key={l.name}>
                 <path d={l.d} fill="none" stroke={STATUS.ok} strokeWidth={1.1} strokeOpacity={0.8} strokeDasharray={l.named ? undefined : '3 2'}><title>{`${capital?.name} – ${l.capital} (${l.name})`}</title></path>
@@ -144,7 +151,19 @@ export function WorldContext({ maxHeight = 420 }: { maxHeight?: number }) {
         {memberships.length ? <span>Member of: {memberships.join(', ')}</span> : null}
       </div>
       {!partners.length ? <p className="text-[11px] text-ink-muted">No partners declared yet: add them in National settings (setup, foreign affairs) to see them here.</p> : null}
-      <p className="text-[10px] text-ink-muted">World: Natural Earth 1:50m (public domain) · {name}: the nation&rsquo;s own boundaries · Partners: as the nation declared them</p>
+      <p className="flex items-center gap-1 text-[11px] text-ink-soft">
+        <svg width="16" height="10" aria-hidden><defs><pattern id="dsp-key" width="4" height="4" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><line x1="0" y1="0" x2="0" y2="4" stroke="rgb(var(--c-ink-soft))" strokeWidth="1" /></pattern></defs><rect width="16" height="10" fill="url(#dsp-key)" stroke="rgb(var(--c-ink-soft))" strokeDasharray="3 2" /></svg>
+        Disputed territory · {worldviewLabel(worldview)}
+      </p>
+      {(() => {
+        const mine = disputes.filter(a => iso3 && a.parties.includes(iso3));
+        if (!mine.length) return null;
+        const list = <ul className="text-[11px] text-ink-soft">{mine.map(a => <li key={a.id}>{disputeText(a, worldview)}</li>)}</ul>;
+        return mine.length <= 3 ? list : (
+          <details className="text-[11px] text-ink-soft"><summary className="cursor-pointer">{mine.length} disputed areas involve {name}</summary>{list}</details>
+        );
+      })()}
+      <p className="text-[10px] text-ink-muted">Disputed areas: {DISPUTED_SOURCE} · World: Natural Earth 1:50m (public domain) · {name}: the nation&rsquo;s own boundaries · Partners: as the nation declared them</p>
     </figure>
   );
 }

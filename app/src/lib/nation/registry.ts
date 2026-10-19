@@ -143,6 +143,11 @@ export function nationProjection(): Exclude<NationMapSettings['projection'], 'au
   return p && p !== 'auto' ? p : undefined;
 }
 
+/** How the nation's maps draw disputed territory: 'neutral' unless the nation chose a point of view (lib/map/disputed.ts). */
+export function nationWorldview(): string {
+  return state.map?.worldview || 'neutral';
+}
+
 /**
  * The capital the maps mark: the nation's own setting, else the default from
  * the map data (Natural Earth's main capital). `chosen` says which, so a

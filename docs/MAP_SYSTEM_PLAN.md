@@ -1,6 +1,6 @@
 # Map system: evaluation and plan
 
-Status: phases 0–2 done, phase 3 in part, phases 4a–4d and 5 done (October 2026); phase 4 complete (incident locations, boundary versions); open: TopoJSON packs and the worldview setting (3). Register: §16.4, §17.1.
+Status: phases 0–2 done, phase 3 in part, phases 4a–4d and 5 done (October 2026); phase 4 complete (incident locations, boundary versions); worldview setting done (3); open: TopoJSON packs (3). Register: §16.4, §17.1.
 
 ## Answers to the owner's questions
 
@@ -139,8 +139,14 @@ layouts. The fix is one shared map engine grown from it.
   circles, dashed where the capital is the map data's default. Projection:
   the nation may choose it in setup. Budgets tested: first-level files
   ≤300 KB, district files ≤1 MB gzipped. Still open: TopoJSON packs and two
-  detail levels, district shapes for every other nation at install, the
-  worldview setting.
+  detail levels, district shapes for every other nation at install.
+- **Phase 3, worldview, done.** Disputed territory is drawn neutral by
+  default (hatched, dashed edge, named with who administers and who claims
+  it; Natural Earth's 28 breakaway and disputed areas). The nation may choose
+  a recorded point of view in setup (`SovereignProfile.map.worldview`; 31
+  countries, the UN and the World Bank); the platform never chooses a side.
+  World map, national maps, command theatre and police world map draw it
+  (`lib/map/disputed.ts`, `components/map/DisputedLayer.tsx`).
 - **Situation Room theatre.** The Situation Room map is a command theatre on
   the nation's real map (`components/features/situation/Theatre.tsx`, NationMap
   `variant="theatre"`): everything the earlier schematic theatre had is kept
