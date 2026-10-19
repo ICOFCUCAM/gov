@@ -40,6 +40,8 @@ Last reviewed: 17 Oct 2026.
 
 **Rate limits** (review S9): `app/src/lib/ops/rate-limit.ts`, token buckets per official account (else client address) and scope — upload 6/min (boundary files, district packs, site imports), check 120/min (location checks), write 120/min, public 60/min — answering 429 with Retry-After and RateLimit headers. Applied to the upload and check routes; the others take a scope as they are touched. Buckets are in the server's memory (several instances would each count separately; the ingress can add a global limit).
 
+**Third-party code in the advisory feed** (review R2): the dependency audit's findings (`scripts/audit-deps.mjs --publish <publisher>`, run by CI when `CIVICOS_PUBLISHER_URL` is set) become interim advisories `CSA-DEP-<GHSA>` in the Update Center feed with their assessment and review date, and resolve as final when no longer reported (`importDependencyFindings`, `/api/releases/publisher/advisories/dependencies`), so the patch-time commitments cover dependencies. CI also scans the app container image (Trivy, high and critical, unfixed ignored) and keeps a CycloneDX SBOM.
+
 ## 2. AI assistant (per-nation opt-in)
 
 | # | Area | Today | To integrate | Where |

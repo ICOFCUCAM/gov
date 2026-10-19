@@ -6,6 +6,7 @@
 //
 //   node scripts/audit-deps.mjs            # audit (CI: `pnpm audit:deps`)
 //   node scripts/audit-deps.mjs --json f   # also write the findings to f
+//   node scripts/audit-deps.mjs --publish https://publisher.example   # also raise them as advisories
 
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
@@ -44,7 +45,21 @@ const stale = accepted.filter(x => !findings.some(f => f.id === x.id));
 for (const s of stale) console.log(`resolved  ${s.id} no longer reported; remove it from scripts/audit-accepted.json`);
 
 const out = process.argv.indexOf('--json');
-if (out > 0 && process.argv[out + 1]) fs.writeFileSync(process.argv[out + 1], JSON.stringify({ findings, failures }, null, 2));
+if (out > 0 && process.argv[out + 1]) fs.writeFileSync(process.argv[out + 1], JSON.stringify({ findings, failures, accepted }, null, 2));
+
+// --publish <base url>: send the findings to the Update Center so they become
+// advisories with patch-time commitments (lib/data/advisories.ts). Uses the
+// automation bearer (CIVICOS_CRON_SECRET) or CIVICOS_PUBLISHER_TOKEN.
+const pub = process.argv.indexOf('--publish');
+if (pub > 0 && process.argv[pub + 1]) {
+  const token = process.env.CIVICOS_PUBLISHER_TOKEN || process.env.CIVICOS_CRON_SECRET;
+  const version = JSON.parse(fs.readFileSync(path.join(here, '..', 'package.json'), 'utf8')).version;
+  const r = await fetch(`${process.argv[pub + 1].replace(/\/$/, '')}/api/releases/publisher/advisories/dependencies`, {
+    method: 'POST', headers: { 'content-type': 'application/json', ...(token ? { authorization: `Bearer ${token}` } : {}) },
+    body: JSON.stringify({ findings, accepted, version, by: 'dependency audit (CI)' }),
+  }).catch(e => ({ ok: false, status: 0, text: async () => String(e) }));
+  console.log(r.ok ? `published to the advisory feed: ${await r.text()}` : `could not publish to the advisory feed (${r.status}): ${(await r.text()).slice(0, 200)}`);
+}
 
 if (failures.length) {
   console.error(`\n${failures.length} high or critical advisor${failures.length === 1 ? 'y' : 'ies'} in production dependencies:\n  ${failures.join('\n  ')}`);

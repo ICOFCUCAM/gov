@@ -46,12 +46,50 @@ jobs:
       # date, in app/scripts/audit-accepted.json.
       - name: Audit production dependencies
         run: node scripts/audit-deps.mjs --json dependency-audit.json
+      - name: Raise the findings as Update Center advisories (when a publisher is configured)
+        if: always()
+        env:
+          CIVICOS_PUBLISHER_URL: ${{ secrets.CIVICOS_PUBLISHER_URL }}
+          CIVICOS_PUBLISHER_TOKEN: ${{ secrets.CIVICOS_PUBLISHER_TOKEN }}
+        run: |
+          if [ -z "$CIVICOS_PUBLISHER_URL" ]; then echo "No publisher configured; skipped."; exit 0; fi
+          node scripts/audit-deps.mjs --publish "$CIVICOS_PUBLISHER_URL" || true
       - name: Keep the report
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-audit
           path: app/dependency-audit.json
+          if-no-files-found: ignore
+
+  container-scan:
+    name: container image scan (high and critical)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the app image
+        run: docker build -t civicos-app:ci app
+      - name: Scan the image (OS packages and Node modules)
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: civicos-app:ci
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          format: table
+      - name: Software bill of materials (CycloneDX)
+        if: always()
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: civicos-app:ci
+          format: cyclonedx
+          output: civicos-app.cdx.json
+      - name: Keep the SBOM
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: civicos-app-sbom
+          path: civicos-app.cdx.json
           if-no-files-found: ignore
 
   public-sites-audit:

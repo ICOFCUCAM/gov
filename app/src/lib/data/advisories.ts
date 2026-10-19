@@ -132,3 +132,51 @@ export function csaf(a: SecurityAdvisory, nation?: SubscribedNation): Record<str
     }],
   };
 }
+
+// ── Findings of the platform's own dependency audit ─────────────────────
+// CI runs scripts/audit-deps.mjs on the production dependencies; its JSON
+// report is sent here so the publisher's advisory feed and patch-time
+// commitments cover third-party code too (architecture review R2). Each
+// high or critical finding becomes an interim advisory CSA-DEP-<ghsa>
+// (all versions affected until a release fixes it); an accepted finding
+// keeps its reason and review date; a finding no longer reported is marked
+// resolved and final. Idempotent: the same report changes nothing.
+
+export interface DependencyFinding { id: string; package: string; severity: string; title: string; url?: string; vulnerable?: string; patched?: string; cvss?: number }
+const DEP_SEVERITIES: Record<string, AdvisorySeverity> = { critical: 'critical', high: 'high', moderate: 'medium', medium: 'medium', low: 'low' };
+
+export function importDependencyFindings(report: { findings?: DependencyFinding[]; accepted?: { id: string; reason: string; reviewBy: string }[]; version?: string }, by: string): { raised: string[]; updated: string[]; resolved: string[] } | { error: string } {
+  if (!report || !Array.isArray(report.findings)) return { error: 'Send the audit report: { findings: [...] }' };
+  if (!by.trim()) return { error: 'Name the official or job sending the report' };
+  const now = new Date().toISOString();
+  const d = adb();
+  const raised: string[] = [], updated: string[] = [], resolved: string[] = [];
+  const seen = new Set<string>();
+  for (const f of report.findings) {
+    if (!f || typeof f.id !== 'string' || !/^GHSA-[\w-]+$|^CVE-\d{4}-\d+$/.test(f.id)) continue;
+    const severity = DEP_SEVERITIES[String(f.severity).toLowerCase()];
+    if (!severity) continue;
+    const id = `CSA-DEP-${f.id}`;
+    seen.add(id);
+    const accepted = report.accepted?.find(a => a.id === f.id);
+    const dependency = { ghsa: f.id, package: String(f.package).slice(0, 120), ...(f.vulnerable ? { vulnerable: String(f.vulnerable).slice(0, 80) } : {}), ...(f.patched ? { patched: String(f.patched).slice(0, 80) } : {}), ...(accepted ? { accepted: { reason: accepted.reason.slice(0, 400), reviewBy: accepted.reviewBy } } : {}) };
+    const summary = `${String(f.title).slice(0, 300)} (dependency ${dependency.package}${dependency.vulnerable ? ` ${dependency.vulnerable}` : ''}${dependency.patched ? `; fixed in ${dependency.patched}` : ''}).${accepted ? ` Assessed: ${accepted.reason} Review by ${accepted.reviewBy}.` : ''}`;
+    const existing = d.advisories.find(a => a.id === id);
+    if (!existing) {
+      d.advisories.push({ id, title: `Dependency: ${dependency.package} — ${String(f.title).slice(0, 160)}`, summary, severity, cvss: typeof f.cvss === 'number' ? f.cvss : severity === 'critical' ? 9.0 : severity === 'high' ? 7.5 : 5.0, cvssVector: '', affectedFrom: '0.0.0', status: 'interim', publishedAt: now, updatedAt: now, dependency });
+      raised.push(id);
+    } else if (existing.summary !== summary || existing.severity !== severity || existing.dependency?.resolvedAt) {
+      Object.assign(existing, { summary, severity, updatedAt: now, status: 'interim', dependency });
+      updated.push(id);
+    }
+  }
+  for (const a of d.advisories) {
+    if (a.dependency && !a.dependency.resolvedAt && !seen.has(a.id)) {
+      a.dependency.resolvedAt = now; a.status = 'final'; a.updatedAt = now;
+      if (report.version) a.fixedIn = report.version;
+      resolved.push(a.id);
+    }
+  }
+  if (raised.length || updated.length || resolved.length) recordAudit(by, 'advisory.dependencies', 'Advisories:dependencies', 'ok', `raised ${raised.length}, updated ${updated.length}, resolved ${resolved.length}`);
+  return { raised, updated, resolved };
+}

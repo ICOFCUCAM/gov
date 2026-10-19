@@ -1424,6 +1424,8 @@ export interface SecurityAdvisory {
   status: 'final' | 'interim';
   publishedAt: ISODate;
   updatedAt: ISODate;
+  /** Raised from the platform's own dependency audit (scripts/audit-deps.mjs), not written by hand. */
+  dependency?: { ghsa: string; package: string; vulnerable?: string; patched?: string; accepted?: { reason: string; reviewBy: string }; resolvedAt?: ISODate };
 }
 export type AdvisoryNationStatus = 'affected' | 'not-affected' | 'fixed' | 'under-investigation';
 export interface AdvisoryExposure {

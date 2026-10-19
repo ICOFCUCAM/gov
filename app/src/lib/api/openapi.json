@@ -8105,6 +8105,43 @@
         "x-source": "src/app/api/releases/publisher/advisories/[id]/vex/route.ts"
       }
     },
+    "/api/releases/publisher/advisories/dependencies": {
+      "post": {
+        "tags": [
+          "releases"
+        ],
+        "operationId": "post_releases_publisher_advisories_dependencies",
+        "summary": "POST /api/releases/publisher/advisories/dependencies",
+        "description": "/api/releases/publisher/advisories/dependencies — the dependency audit's report (scripts/audit-deps.mjs --json) becomes advisories in the feed, so the patch-time commitments cover third-party code (lib/data/advisories.ts). Publisher only: the publisher session or the CI job's automation bearer.",
+        "parameters": [],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object"
+                }
+              }
+            }
+          },
+          "default": {
+            "description": "Error: `{ \"error\": string }`"
+          }
+        },
+        "x-source": "src/app/api/releases/publisher/advisories/dependencies/route.ts"
+      }
+    },
     "/api/releases/publisher/advisories": {
       "get": {
         "tags": [
