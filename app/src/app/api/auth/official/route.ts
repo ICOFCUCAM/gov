@@ -13,6 +13,7 @@ import { serverClient } from '@/lib/db/client';
 import { recordAudit, getMinistry } from '@/lib/data/store';
 import { roleFromSubstrate, type OfficialRole } from '@/lib/auth/roles';
 import { deviceOf } from '@/lib/auth/activity';
+import { stateWritable } from '@/lib/data/persist';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,9 @@ export async function GET() {
     methods: { local: true, substrate: !!serverClient() },
     accounts: hasAccounts(),
     enforced: enforced(),
+    // Whether this server accepts changes: false on a standby that does not hold the
+    // state writer's lease (lib/data/persist.ts). The middleware refuses changes then.
+    state: { writable: stateWritable() },
   });
 }
 

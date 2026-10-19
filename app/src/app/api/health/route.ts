@@ -1,14 +1,43 @@
 // /api/health — diagnostic ping with a substrate reachability probe.
 // Public (no auth) — returns minimal information so it's safe to expose
 // to monitoring systems. Reports: ok flag, substrate-configured flag,
-// substrate-reachable flag (via a cheap count on a public view).
+// substrate-reachable flag (via a cheap count on a public view), and where
+// the platform keeps its state (lib/data/persist.ts): mode, last save, this
+// server's role as state writer, who holds the writer's lease, and any error.
+//
+// Probes (Helm chart): `?live` answers at once without asking the substrate
+// (liveness); `?ready` answers 503 while this server cannot take changes
+// (a standby without the writer's lease, a writer that stopped saving, or a
+// failed restore), so no traffic reaches it (readiness). Without either, the
+// answer is always 200, as before.
 
 import { NextResponse } from 'next/server';
 import { publicClient } from '@/lib/db/client';
+import { persistenceStatus, stateWritable } from '@/lib/data/persist';
 
 export const dynamic = 'force-dynamic';
 
-export async function GET() {
+function persistence() {
+  const s = persistenceStatus();
+  return {
+    mode: s.adapter,
+    role: s.role ?? 'writer',
+    fencing: s.fencing ?? 'none',
+    writable: stateWritable(),
+    startedAt: s.startedAt,
+    lastSaved: s.lastSaved ?? null,
+    saves: s.saves,
+    restoredStores: s.restored.length,
+    writer: s.writer ?? null,
+    leaseHolder: s.lease?.holder ?? null,
+    leaseExpiresAt: s.lease?.expiresAt ?? null,
+    error: s.error ?? null,
+  };
+}
+
+export async function GET(req: Request) {
+  const q = new URL(req.url).searchParams;
+  if (q.has('live')) return NextResponse.json({ ok: true, at: new Date().toISOString() });
   const sb = publicClient();
   const configured = sb != null;
   let reachable = false;
@@ -21,11 +50,18 @@ export async function GET() {
     } catch { reachable = false; }
     latency_ms = Date.now() - start;
   }
-  return NextResponse.json({
+  const p = persistence();
+  const body = {
     ok: configured && reachable,
     at: new Date().toISOString(),
     substrate: { configured, reachable, latency_ms },
-  });
+    persistence: p,
+  };
+  if (q.has('ready')) {
+    const ready = p.writable && !(p.error ?? '').startsWith('restore failed');
+    return NextResponse.json({ ...body, ready }, { status: ready ? 200 : 503 });
+  }
+  return NextResponse.json(body);
 }
 
 export const POST = GET;

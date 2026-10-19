@@ -207,10 +207,10 @@ first.
 
 | Rank | Recommendation | Impact | Effort | Addresses |
 |---|---|---|---|---|
-| 1 | Close the gate bypasses: header short-circuit, unsigned read cookie, scenario attribution, deny-by-default | Critical | S | S1, S2, S4, M1 |
-| 2 | Upgrade Next.js to a patched 14.2.x, strip `x-middleware-subrequest` at the edge, add SCA to CI | Critical | S | S3 |
-| 3 | Make the deployment match the app (ingress, env, single writer, probes, standalone build) | Critical | S | O1, D1 (stop-gap), O3 |
-| 4 | Fence the single writer: versioned `platform_state_put`, a writer lease, persistence in `/api/health` | High | S | D1, O2 |
+| 1 | Close the gate bypasses: header short-circuit, unsigned read cookie, scenario attribution, deny-by-default — **addressed** (see the status below the table) | Critical | S | S1, S2, S4, M1 |
+| 2 | Upgrade Next.js to a patched 14.2.x, strip `x-middleware-subrequest` at the edge, add SCA to CI — **addressed** (see the status below the table) | Critical | S | S3 |
+| 3 | Make the deployment match the app (ingress, env, single writer, probes, standalone build) — **addressed** (see the status below the table) | Critical | S | O1, D1 (stop-gap), O3 |
+| 4 | Fence the single writer: versioned `platform_state_put`, a writer lease, persistence in `/api/health` — **addressed** (see the status below the table) | High | S | D1, O2 |
 | 5 | Twin semantics: metric registry (unit, aggregation, SDMX concept), unit check, corrections, no silent eviction | High | M | D3, D4, D5 |
 | 6 | Persistence port, then the twin, facilities, boundaries and audit in Postgres/PostGIS (bitemporal tables plus an outbox), with function signatures unchanged | High | L | D1, D2, D8, C2, G3 |
 | 7 | Audit integrity: sign chain heads with a key held outside the data, anchor the platform chain with the substrate witnesses, keys and TOTP secrets under a KEK | High | M | D9, S5, S6 |
@@ -227,6 +227,52 @@ first.
 | 18 | Twin read API for client engines (signals with sample fallback) | Medium | M | M3 |
 | 19 | One source of truth: record in `INTEGRATION_REGISTER.md` which of store, substrate and civic-api owns each register; deprecate duplicates by redirection, never deletion | Medium | S (decision), L (execution) | D8 |
 | 20 | 3D readiness: optional footprint and height, a CityJSON export for facilities, INSPIRE / HXL category mapping | Low now | M | G5, G6 |
+
+### Status of recommendations 1–4 (19 Oct 2026)
+
+Addressed in commit `3f10206` ("Close the access-gate bypasses, patch
+Next.js, fence the single state writer"); after a rebase or merge,
+`git log --grep "fence the single state writer"` finds it.
+
+- **R1 (S1, S2, S4, M1).** `middleware.ts`: an `Authorization` header skips
+  the session gate only on routes that verify it (`SELF_AUTHENTICATED`,
+  `BEARER_ROUTES`, now in `lib/auth/roles.ts`), and the role rules apply to
+  a bearer sent anywhere else. Under `enforce`, pages and API reads outside
+  the public lists need a verified `civicos_official` token (API reads 401,
+  pages to `/sign-in`); `civicos_session=demo` opens only `/wallet` pages.
+  `roles.ts`: `/api/platform/*`, `/api/federation/*`, `/api/integrations`,
+  `/api/webhooks` and `/api/municipalities` are administrator-only, and every
+  mutating route must match a rule (`mutationRule()`), otherwise it is
+  refused; `api-permission-coverage.test.ts` enumerates the route files.
+  Scenario routes and the tenant lifecycle transition record the verified
+  official (`withOfficial()` / `currentOfficial()`), and scenario changes
+  without one are refused under `enforce`. `listFacilities()` requires its
+  viewer. Not done: the role-less-session cut-off in `roleOf()` (role-less
+  sessions still count as administrator).
+- **R2 (S3).** `next` and `eslint-config-next` 14.2.35; middleware refuses
+  any request with `x-middleware-subrequest`, and the Helm ingress clears it.
+  CI job *dependency audit* (`scripts/audit-deps.mjs`, `pnpm audit --prod`)
+  fails on high or critical advisories not recorded with a reason and a
+  review date in `scripts/audit-accepted.json`. Overrides lift PostCSS,
+  nanoid and source-map-js under Next.js to patched versions. Ten Next.js
+  advisories are fixed only in 15.5.x: accepted with mitigations (image
+  optimizer off) until the Next.js 15 move (register 17.9). Not done:
+  container image scanning, feeding findings into `lib/data/advisories.ts`.
+- **R3 (O1, D1 stop-gap, O3).** `infra/helm/civicos/templates/app.yaml`:
+  every page and `/api` route goes to the app; civic-api moves to
+  `/svc/api/*` (rewritten to its `/api/*`). `CIVICOS_AUTH`, `CIVICOS_STATE`,
+  `CIVICOS_INTERNAL_URL` set; session, cron and substrate secrets from the
+  `civicos-app` Secret; one replica with `Recreate` (the chart refuses more),
+  PVC for file mode, readiness `/api/health?ready`, liveness and start-up
+  `/api/health?live`, memory limit 1 Gi, an app network policy. Dockerfile:
+  `--frozen-lockfile`, the workspace file copied, a `HEALTHCHECK`, a
+  `.dockerignore`. `output: 'standalone'` is not used (the image runs
+  `next start` on the full build), so it was left out.
+- **R4 (D1, O2).** `lib/data/persist.ts`: writer lease (file: `O_EXCL` lock
+  with pid, host and heartbeat; supabase: migration
+  `20261019000000_civicos_platform_state_fencing.sql`), versioned saves that
+  refuse to overwrite, standby and stopped roles that refuse changes, and
+  `persistence` in `/api/health`.
 
 ### 3.1 Detail and sketches
 

@@ -1,3 +1,18 @@
+{{- /*
+The Next.js app serves the platform: its pages and every /api route the
+console, the public sites and the machine callers use (twin, facilities,
+boundaries, auth, setup, Update Center, cron). It keeps its operational state
+in memory and saves it through lib/data/persist.ts, which allows ONE writer:
+until that state moves to a multi-writer store (architecture review R6) the
+app runs a single replica, replaced with the Recreate strategy so two
+writers never overlap during a rollout. A second instance would only be a
+standby (it refuses changes and reports not ready), so the chart refuses
+more than one replica unless app.allowMultipleWriters is set.
+*/ -}}
+{{- if and (gt (int .Values.app.replicas) 1) (not .Values.app.allowMultipleWriters) }}
+{{- fail "app.replicas must be 1: the platform state has a single writer (lib/data/persist.ts). Horizontal scale waits on the persistence move (architecture review R6)." }}
+{{- end }}
+{{- $state := .Values.app.state | default dict }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -7,6 +22,10 @@ metadata:
     {{- include "civicos.labels" . | nindent 4 }}
 spec:
   replicas: {{ .Values.app.replicas }}
+  # The old pod stops (saving its state and giving up the writer's lease)
+  # before the new one starts; never two writers at once.
+  strategy:
+    type: Recreate
   selector:
     matchLabels: { app.kubernetes.io/name: civic-app }
   template:
@@ -15,6 +34,8 @@ spec:
     spec:
       securityContext:
         {{- toYaml .Values.security.podSecurityContext | nindent 8 }}
+      # Time for the final save and the lease release on SIGTERM.
+      terminationGracePeriodSeconds: 30
       containers:
         - name: app
           image: {{ include "civicos.image" (dict "registry" .Values.global.imageRegistry "repo" .Values.app.image "tag" .Values.app.tag) }}
@@ -25,14 +46,73 @@ spec:
               value: "1"
             - name: CIVIC_API_URL
               value: http://civicos-api:4000/api
+            # Access gate (app/src/middleware.ts): enforce requires a verified official for every non-public page, read and change.
+            - name: CIVICOS_AUTH
+              value: {{ .Values.app.auth | quote }}
+            # Where the platform state is saved (lib/data/persist.ts): supabase or file.
+            - name: CIVICOS_STATE
+              value: {{ $state.mode | default "supabase" | quote }}
+            {{- if eq ($state.mode | default "supabase") "file" }}
+            - name: CIVICOS_STATE_DIR
+              value: /var/lib/civicos/state
+            {{- end }}
+            # The middleware asks this same server who a session belongs to and whether it holds the writer's lease.
+            - name: CIVICOS_INTERNAL_URL
+              value: http://127.0.0.1:3000
+            - name: CIVICOS_SESSION_SECRET
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_SESSION_SECRET }
+            - name: CIVICOS_CRON_SECRET
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_CRON_SECRET }
+            - name: NEXT_PUBLIC_SUPABASE_URL
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: NEXT_PUBLIC_SUPABASE_URL, optional: true }
+            - name: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, optional: true }
+            - name: SUPABASE_SERVICE_ROLE_KEY
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: SUPABASE_SERVICE_ROLE_KEY, optional: true }
+            {{- range $k, $v := .Values.app.env }}
+            - name: {{ $k }}
+              value: {{ $v | quote }}
+            {{- end }}
           resources: {{- toYaml .Values.app.resources | nindent 12 }}
+          # Starting may wait for a crashed writer's lease to run out (about 35 s).
+          startupProbe:
+            httpGet:
+              path: /api/health?live
+              port: 3000
+            periodSeconds: 5
+            failureThreshold: 36
+          # Ready only while this server holds the writer's lease and its state restored.
           readinessProbe:
-            httpGet: { path: /, port: 3000 }
-            initialDelaySeconds: 10
+            httpGet:
+              path: /api/health?ready
+              port: 3000
             periodSeconds: 10
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /api/health?live
+              port: 3000
+            periodSeconds: 20
+            failureThreshold: 3
           securityContext:
             allowPrivilegeEscalation: false
             capabilities: { drop: ["ALL"] }
+          {{- if eq ($state.mode | default "supabase") "file" }}
+          volumeMounts:
+            - name: state
+              mountPath: /var/lib/civicos/state
+          {{- end }}
+      {{- if eq ($state.mode | default "supabase") "file" }}
+      volumes:
+        - name: state
+          persistentVolumeClaim:
+            claimName: civicos-app-state
+      {{- end }}
 ---
 apiVersion: v1
 kind: Service
@@ -41,6 +121,37 @@ metadata:
 spec:
   selector: { app.kubernetes.io/name: civic-app }
   ports: [{ port: 3000, targetPort: 3000 }]
+{{- if eq ($state.mode | default "supabase") "file" }}
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: civicos-app-state
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- with $state.storageClassName }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ $state.size | default "5Gi" }}
+{{- end }}
+{{- if .Values.pdb.enabled }}
+---
+# One replica: a voluntary disruption (node drain) may take it down; the
+# Recreate strategy and the writer's lease keep a second writer from starting
+# until it has stopped.
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: civicos-app
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels: { app.kubernetes.io/name: civic-app }
+{{- end }}
 {{- if .Values.ingress.enabled }}
 ---
 apiVersion: networking.k8s.io/v1
@@ -49,6 +160,14 @@ metadata:
   name: civicos
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    {{- if .Values.ingress.stripInternalHeaders }}
+    # Next.js's internal subrequest header (CVE-2025-29927) never comes from
+    # outside; drop it before it reaches the app (the app also refuses it).
+    # Needs snippet annotations allowed on the controller; set
+    # ingress.stripInternalHeaders=false where they are not.
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_clear_input_headers "x-middleware-subrequest";
+    {{- end }}
 spec:
   ingressClassName: {{ .Values.ingress.className }}
   {{- if .Values.ingress.tls.enabled }}
@@ -60,12 +179,38 @@ spec:
     - host: {{ .Values.ingress.host | quote }}
       http:
         paths:
-          - path: /api
-            pathType: Prefix
-            backend:
-              service: { name: civicos-api, port: { number: 4000 } }
+          # Every page and every /api route is the Next.js app's.
           - path: /
             pathType: Prefix
             backend:
               service: { name: civicos-app, port: { number: 3000 } }
+{{- if .Values.ingress.civicApiPath }}
+---
+# The NestJS service (services/civic-api) keeps its own /api/* paths, served
+# from {{ .Values.ingress.civicApiPath }}/* (rewritten to /api/*), since /api
+# belongs to the app.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: civicos-civic-api
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "true"
+    nginx.ingress.kubernetes.io/rewrite-target: /api/$2
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- if .Values.ingress.tls.enabled }}
+  tls:
+    - hosts: [{{ .Values.ingress.host | quote }}]
+      secretName: {{ .Values.ingress.tls.secretName }}
+  {{- end }}
+  rules:
+    - host: {{ .Values.ingress.host | quote }}
+      http:
+        paths:
+          - path: {{ .Values.ingress.civicApiPath }}(/|$)(.*)
+            pathType: ImplementationSpecific
+            backend:
+              service: { name: civicos-api, port: { number: 4000 } }
+{{- end }}
 {{- end }}

@@ -8,3 +8,11 @@ allowBuilds:
 onlyBuiltDependencies:
   - esbuild
   - unrs-resolver
+
+# Patched versions of packages Next.js 14 pins below their security fixes
+# (dependency audit in CI, scripts/audit-deps.mjs): PostCSS path traversal and
+# file read, nanoid and source-map-js denial of service.
+overrides:
+  "next>postcss": "^8.5.18"
+  "nanoid@<3.3.18": "^3.3.18"
+  "source-map-js@<1.2.2": "^1.2.2"

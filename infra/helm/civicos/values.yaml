@@ -24,10 +24,35 @@ api:
 app:
   image: civicos/civic-app
   tag: "0.1.0"
-  replicas: 2
+  # One replica, replaced with the Recreate strategy: the platform state has a
+  # single writer (app/src/lib/data/persist.ts, writer lease and versioned
+  # saves). Horizontal scale waits on the persistence move (architecture
+  # review R6); the chart refuses more unless allowMultipleWriters is set
+  # (extra replicas would only be standbys that refuse changes).
+  replicas: 1
+  allowMultipleWriters: false
+  # Access gate (app/src/middleware.ts): "enforce" requires a verified
+  # official for every non-public page, read and change. Anything else leaves
+  # the gate open (demonstrations only).
+  auth: enforce
+  # Secret holding CIVICOS_SESSION_SECRET and CIVICOS_CRON_SECRET (required)
+  # and NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  # SUPABASE_SERVICE_ROLE_KEY (when the substrate is connected).
+  existingSecret: civicos-app
+  state:
+    # supabase: civicos.platform_state in the nation's substrate (apply the
+    # app/supabase migrations, including civicos_platform_state_fencing).
+    # file: JSON files on a persistent volume (air-gapped installations).
+    mode: supabase
+    size: 5Gi
+    storageClassName: ""
+  # Extra plain environment variables (e.g. CIVICOS_STATE_LEASE_TTL_MS).
+  env: {}
+  # The whole state is held in memory and re-encoded on save (review O3):
+  # at least 1 Gi until the persistence move.
   resources:
-    requests: { cpu: "100m", memory: "192Mi" }
-    limits: { cpu: "500m", memory: "384Mi" }
+    requests: { cpu: "250m", memory: "768Mi" }
+    limits: { cpu: "1", memory: "1Gi" }
 
 postgres:
   # In production, point at the sovereign managed Postgres (HA, PITR).
@@ -42,6 +67,13 @@ ingress:
   enabled: true
   className: nginx
   host: civicos.example.gov
+  # Every page and /api route goes to the Next.js app. The NestJS civic-api
+  # keeps its /api/* paths under this prefix (rewritten); "" to not expose it.
+  civicApiPath: /svc/api
+  # Drop Next.js's internal x-middleware-subrequest header at the edge
+  # (CVE-2025-29927). Needs snippet annotations allowed on ingress-nginx; the
+  # app refuses the header itself either way.
+  stripInternalHeaders: true
   tls:
     enabled: true
     secretName: civicos-tls

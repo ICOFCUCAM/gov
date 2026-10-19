@@ -1,32 +1,38 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import { OFFICIAL_COOKIE, verifyToken, type OfficialClaims } from '@/lib/auth/session-token';
-import { apiPermission } from '@/lib/auth/roles';
+import { apiPermission, PUBLIC_WRITE, SELF_AUTHENTICATED, verifiesOwnCredential } from '@/lib/auth/roles';
 
 // Sovereign access gate. Real and correct, but enforcement is opt-in so a
 // public prototype/preview is not bricked: set CIVICOS_AUTH=enforce to
-// require a session cookie for non-public routes. Without it, the gate is
-// transparent (all routes pass) but the policy is in place and audited.
+// require a verified official (the signed civicos_official cookie) for every
+// non-public page, read and change. Without it, the gate is transparent (all
+// routes pass, the cover's demo session works) but the policy is in place and
+// audited. Under enforcement the demo cookie (civicos_session=demo, set by the
+// cover and /login when no identity substrate is configured) opens only the
+// citizen's Civic Wallet pages (CITIZEN_DEMO); it opens no console page and
+// no API.
 // Read-only facts the cover shows pre-sign-in: identity (name, motto, insignia),
 // the institution register (also public in the Government Directory) and the
 // audit chain's integrity check used by the start-up sequence; and how
 // officials sign in (the sign-in form reads it before anyone has a session).
 const PUBLIC_READ = [/^\/api\/auth\/official$/, /^\/api\/sovereign$/, /^\/api\/boundaries\/active$/, /^\/api\/map-pack\/districts$/,/^\/api\/setup$/, /^\/api\/org\/ministries$/, /^\/api\/audit\/verify$/, /^\/api\/public-sites\/[a-z-]+\/content$/, /^\/api\/public-sites\/language$/, /^\/api\/public-sites\/[a-z-]+\/logo$/];
-// Citizens ask for and manage email updates from the public sites without signing in
-// (double opt-in and per-sender limits in lib/data/site-subscriptions.ts).
-const PUBLIC_WRITE = [/^\/api\/public-sites\/[a-z-]+\/subscribe$/, /^\/api\/subscriptions$/];
+// Public writes (email updates) and self-authenticating machine routes are
+// defined with the permission rules in lib/auth/roles.ts.
 const PUBLIC = [/^\/$/, /^\/cover/, /^\/login/, /^\/developers/, /^\/_next/, /^\/favicon/, /^\/assets/, /^\/fonts\//, /^\/api\/health/];
 // The public institution websites and their shared pages: every page in the
 // (public) route group is for citizens without an account (middleware.test.ts
 // fails if a page there is not covered), plus the embeddable services widget
 // (/embed) and a migrating ministry's forwarding (/r).
 const PUBLIC_SITES = /^\/(embed|r|agriculture|assembly|communications|education|emergency|energy|environment|foreign-affairs|government|health|interior|judiciary|justice|labour|legal|noc|police|portal|presidency|public|search|senate|sign-in|sitemap|subscriptions|trade|transport|treasury)(\/|$)/;
-// Machine callers with no browser session that authenticate themselves in
-// the route: every scheduled job under /api/cron (CIVICOS_CRON_SECRET, called
-// by pg_cron; each refuses when the secret is unset, see middleware.test.ts)
-// the deployment agent's health reports (per-nation agent credential) and a
-// ministry's connected case system (its own ccf_ key, lib/data/case-import.ts).
-const SELF_AUTHENTICATED = [/^\/api\/cron\/[a-z0-9-]+$/, /^\/api\/releases\/health$/, /^\/api\/org\/ministries\/[^/]+\/queue\/feed$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/feed$/];
+// The citizen's Civic Wallet (demo): opened by the citizen demo session the
+// cover and /login set when no identity substrate is configured. Its changes
+// still go through the official gate below.
+const CITIZEN_DEMO = /^\/wallet(\/|$)/;
+// Next.js before 14.2.25 skipped middleware for requests carrying this header
+// (CVE-2025-29927). The patched version never sends it, so a request that
+// arrives with it is an attempt to skip this gate. The ingress strips it too.
+const SUBREQUEST_HEADER = 'x-middleware-subrequest';
 // Signing in, creating the installation's first account (the route refuses once one exists)
 // and setting a new password with an administrator's reset code.
 const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/, /^\/api\/auth\/password$/];
@@ -39,10 +45,34 @@ const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
  * that publisher and scheduled callers present (checked again by the route).
  */
 async function officialGate(req: NextRequest, res: NextResponse): Promise<NextResponse> {
-  if (req.headers.get('authorization')) return res;
+  // Only routes that verify the bearer themselves may be reached with one instead of a session.
+  if (bearerRequest(req)) return res;
   const ok = await verifyToken(req.cookies.get(OFFICIAL_COOKIE)?.value, process.env.CIVICOS_SESSION_SECRET);
   if (ok) return res;
   return NextResponse.json({ error: 'Sign in as an official to make changes (/sign-in)' }, { status: 401 });
+}
+
+/** A request with an Authorization header to a route that checks that header itself. */
+const bearerRequest = (req: NextRequest): boolean =>
+  !!req.headers.get('authorization') && verifiesOwnCredential(req.nextUrl.pathname);
+
+/**
+ * Under enforcement, a page or read outside the public lists needs a verified
+ * official: the signed civicos_official cookie, not the page cookie. API reads
+ * are answered 401; pages go to sign-in (citizen pages to /login).
+ */
+async function readGate(req: NextRequest, res: NextResponse): Promise<NextResponse> {
+  const { pathname } = req.nextUrl;
+  if (bearerRequest(req)) return res;
+  if (await verifyToken(req.cookies.get(OFFICIAL_COOKIE)?.value, process.env.CIVICOS_SESSION_SECRET)) return res;
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.json({ error: 'Sign in as an official to read this (/sign-in)' }, { status: 401 });
+  }
+  const url = req.nextUrl.clone();
+  url.pathname = CITIZEN_DEMO.test(pathname) ? '/login' : '/sign-in';
+  url.search = '';
+  url.searchParams.set('from', pathname);
+  return NextResponse.redirect(url);
 }
 
 /**
@@ -54,12 +84,14 @@ async function officialGate(req: NextRequest, res: NextResponse): Promise<NextRe
  * CIVICOS_INTERNAL_URL overrides the address when the public one is not
  * reachable from the server (behind some proxies).
  */
-async function liveOfficial(req: NextRequest): Promise<OfficialClaims | null | undefined> {
+async function liveOfficial(req: NextRequest): Promise<{ official: OfficialClaims | null; writable: boolean } | undefined> {
   try {
     const base = process.env.CIVICOS_INTERNAL_URL || req.nextUrl.origin;
     const r = await fetch(new URL('/api/auth/official', base), { headers: { cookie: req.headers.get('cookie') ?? '' }, cache: 'no-store' });
     if (!r.ok) return undefined;
-    return ((await r.json()) as { official?: OfficialClaims | null }).official ?? null;
+    const j = (await r.json()) as { official?: OfficialClaims | null; state?: { writable?: boolean } };
+    // An instance that does not hold the state writer's lease (lib/data/persist.ts) refuses changes.
+    return { official: j.official ?? null, writable: j.state?.writable !== false };
   } catch {
     return undefined;
   }
@@ -79,7 +111,9 @@ async function liveOfficial(req: NextRequest): Promise<OfficialClaims | null | u
 async function roleGate(req: NextRequest, next: () => NextResponse | Promise<NextResponse>): Promise<NextResponse> {
   const c = await verifyToken(req.cookies.get(OFFICIAL_COOKIE)?.value, process.env.CIVICOS_SESSION_SECRET);
   if (!c || SIGN_IN.some(re => re.test(req.nextUrl.pathname))) return next();
-  const live = await liveOfficial(req);
+  const asked = await liveOfficial(req);
+  const live = asked && asked.official;
+  if (asked && !asked.writable) return NextResponse.json({ error: 'This server is not the platform\'s state writer just now (another instance holds the lease); changes are refused so nothing is lost. Try again shortly.' }, { status: 503 });
   if (live === null) return NextResponse.json({ error: 'Your session has ended (your password changed or the account was disabled); sign in again (/sign-in)' }, { status: 401 });
   if (live === undefined && process.env.CIVICOS_AUTH === 'enforce') return NextResponse.json({ error: 'Your session could not be checked just now; try again' }, { status: 503 });
   const why = apiPermission(live ?? c, req.method, req.nextUrl.pathname);
@@ -87,8 +121,15 @@ async function roleGate(req: NextRequest, next: () => NextResponse | Promise<Nex
 }
 
 export function middleware(req: NextRequest): NextResponse | Promise<NextResponse> {
+  // Defence in depth for CVE-2025-29927: a request carrying Next.js's former
+  // internal subrequest header is refused (the patched Next.js no longer sends
+  // it, so only an outside caller can).
+  if (req.headers.has(SUBREQUEST_HEADER)) {
+    return NextResponse.json({ error: 'Refused' }, { status: 400 });
+  }
   const res = NextResponse.next();
-  if (process.env.CIVICOS_SESSION_SECRET && req.cookies.get(OFFICIAL_COOKIE)?.value && !req.headers.get('authorization')
+  // A bearer skips the role rules only where the route verifies it itself.
+  if (process.env.CIVICOS_SESSION_SECRET && req.cookies.get(OFFICIAL_COOKIE)?.value && !bearerRequest(req)
     && req.nextUrl.pathname.startsWith('/api/') && MUTATING.has(req.method)) {
     return roleGate(req, () => gate(req, res));
   }
@@ -114,15 +155,10 @@ function gate(req: NextRequest, res: NextResponse): NextResponse | Promise<NextR
   if (req.method === 'POST' && PUBLIC_WRITE.some(re => re.test(pathname))) return res;
 
   if (req.method === 'POST' && SIGN_IN.some(re => re.test(pathname))) return res;
-  const session = req.cookies.get('civicos_session')?.value || req.cookies.get(OFFICIAL_COOKIE)?.value;
-  if (session && pathname.startsWith('/api/') && MUTATING.has(req.method)) return officialGate(req, res);
-  if (session) return res;
   if (pathname.startsWith('/api/') && MUTATING.has(req.method)) return officialGate(req, res);
-
-  const url = req.nextUrl.clone();
-  url.pathname = '/login';
-  url.searchParams.set('from', pathname);
-  return NextResponse.redirect(url);
+  // The citizen demo session opens the Civic Wallet pages only (no API, no console page).
+  if (CITIZEN_DEMO.test(pathname) && req.cookies.get('civicos_session')?.value) return res;
+  return readGate(req, res);
 }
 
 export const config = {

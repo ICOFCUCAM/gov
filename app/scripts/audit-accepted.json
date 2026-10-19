@@ -1,0 +1,25 @@
+{
+  "_about": "High and critical advisories in production dependencies that CI (scripts/audit-deps.mjs) accepts for now, each with why it does not reach this platform or how it is mitigated, and the date by which it must be reviewed again. Every one below is fixed only in Next.js 15.5.x; the move to Next.js 15 (React 19) is tracked in docs/INTEGRATION_REGISTER.md 17.9. A new advisory, or one past its review date, fails CI.",
+  "accepted": [
+    { "id": "GHSA-2xp9-vwfh-vxw4", "package": "next", "severity": "critical", "reviewBy": "2027-01-31",
+      "why": "Remote code execution in the Image Optimization API with AVIF files. The platform uses no next/image, and next.config.mjs sets images.unoptimized, so the optimizer is not served." },
+    { "id": "GHSA-p293-qw3h-jr36", "package": "next", "severity": "critical", "reviewBy": "2027-01-31",
+      "why": "Remote code execution on Windows-hosted servers. The platform runs only in Linux containers (app/Dockerfile, infra/helm)." },
+    { "id": "GHSA-36qx-fr4f-26g5", "package": "next", "severity": "high", "reviewBy": "2027-01-31",
+      "why": "Middleware bypass in Pages Router applications using i18n. The platform uses the App Router only and no i18n config in next.config.mjs." },
+    { "id": "GHSA-c4j6-fc7j-m34r", "package": "next", "severity": "high", "reviewBy": "2027-01-31",
+      "why": "SSRF through WebSocket upgrades. The platform serves no WebSockets; the ingress does not forward upgrade requests to the app." },
+    { "id": "GHSA-89xv-2m56-2m9x", "package": "next", "severity": "high", "reviewBy": "2027-01-31",
+      "why": "SSRF in Server Actions on custom servers. The platform has no Server Actions ('use server') and runs next start, not a custom server." },
+    { "id": "GHSA-m99w-x7hq-7vfj", "package": "next", "severity": "high", "reviewBy": "2027-01-31",
+      "why": "Denial of service in App Router Server Actions. The platform has no Server Actions." },
+    { "id": "GHSA-p9j2-gv94-2wf4", "package": "next", "severity": "high", "reviewBy": "2027-01-31",
+      "why": "SSRF in rewrites with an attacker-controlled destination host. next.config.mjs defines no rewrites." },
+    { "id": "GHSA-h25m-26qc-wcjf", "package": "next", "severity": "high", "reviewBy": "2026-12-31",
+      "why": "Denial of service through React Server Components request deserialization. Exposure accepted until Next.js 15; mitigated by ingress request limits. Review first." },
+    { "id": "GHSA-q4gf-8mx6-v5v3", "package": "next", "severity": "high", "reviewBy": "2026-12-31",
+      "why": "Denial of service with Server Components. Exposure accepted until Next.js 15; mitigated by ingress request limits. Review first." },
+    { "id": "GHSA-8h8q-6873-q5fj", "package": "next", "severity": "high", "reviewBy": "2026-12-31",
+      "why": "Denial of service with Server Components. Exposure accepted until Next.js 15; mitigated by ingress request limits. Review first." }
+  ]
+}

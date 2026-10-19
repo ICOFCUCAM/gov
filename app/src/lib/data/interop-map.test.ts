@@ -27,7 +27,7 @@ describe('digital interoperability on the map (4d)', () => {
 
     const body = { sites: [{ ref: 'H1', name: 'Clinic', category: 'health', lat: -1.29, lng: 36.82 }] };
     await receiveSiteFeed(feed.feed, body, JSON.stringify(body));
-    const clinic = (await import('./facilities')).listFacilities({ state: 'all' }).find(f => f.name === 'Clinic')!;
+    const clinic = (await import('./facilities')).listFacilities({ state: 'all' }, { signedIn: true }).find(f => f.name === 'Clinic')!;
     await actOnFacility(clinic.id, { action: 'publish' }, 'B');
     r = interoperability();
     expect(r.links.find(l => l.record === `Facility system ${feed.feed.id}`)?.health).toBe('healthy');

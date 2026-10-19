@@ -5,6 +5,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listScenarios, createScenario, verifyVersion } from '@/lib/twin/scenarios';
 import { syncRegister } from '@/lib/twin/register';
+import { withOfficial, currentOfficial } from '@/lib/auth/official';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,7 +18,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   await syncRegister();
-  const b = await req.json().catch(() => ({}));
+  // Who acted is the verified official when one is signed in, never a name from the body
+  // (CLAUDE.md "Who acted"); with sign-in enforced, nobody else may record a scenario.
+  if (process.env.CIVICOS_AUTH === 'enforce' && !(await currentOfficial())) {
+    return NextResponse.json({ error: 'Sign in as an official to record a scenario (/sign-in)' }, { status: 401 });
+  }
+  const b = await withOfficial(await req.json().catch(() => ({})));
   const r = createScenario(b);
   if ('error' in r) return NextResponse.json(r, { status: 422 });
   return NextResponse.json({ scenario: r }, { status: 201 });
