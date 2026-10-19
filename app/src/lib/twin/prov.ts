@@ -10,7 +10,7 @@
 // and history archive). Ids are under the twin API so a reader can follow
 // them back to the platform.
 
-import { getRun, listSources, runObservations, observationId, type TwinRun } from './register';
+import { getRun, getEntity, listSources, runObservations, observationId, type TwinRun } from './register';
 import { getScenario, verifyVersion } from './scenarios';
 
 export const PROV_CONTEXT = {
@@ -74,7 +74,7 @@ export function runProv(runId: string, origin: string): Record<string, unknown> 
     ...listed.map(o => ({
       '@id': obsUri(api, observationId(o)), '@type': 'prov:Entity',
       'dct:identifier': observationId(o),
-      'dct:subject': o.entityId,
+      'dct:subject': getEntity(o.entityId)?.uri ?? o.entityId,
       'civicos:metric': o.metric, 'civicos:value': o.value, 'civicos:unit': o.unit, 'civicos:validFrom': o.validFrom, ...(o.validTo ? { 'civicos:validTo': o.validTo } : {}),
       'prov:wasGeneratedBy': { '@id': runIri }, 'prov:generatedAtTime': o.recordedAt,
       ...(o.supersededAt ? { 'prov:invalidatedAtTime': o.supersededAt, 'prov:wasInvalidatedBy': { '@id': `${runIri}#withdrawal` } } : {}),
@@ -125,7 +125,7 @@ export function scenarioProv(id: string, version: number, origin: string): Recor
     },
     personAgent(api, v.by),
     ...inputs.map(({ id: oid, i }) => ({
-      '@id': obsUri(api, oid), '@type': 'prov:Entity', 'dct:identifier': oid, 'dct:subject': i.entityId,
+      '@id': obsUri(api, oid), '@type': 'prov:Entity', 'dct:identifier': oid, 'dct:subject': getEntity(i.entityId)?.uri ?? i.entityId,
       'civicos:value': i.value, 'civicos:unit': i.unit, 'civicos:validFrom': i.validFrom,
       'prov:wasGeneratedBy': { '@id': `${api}/runs/${i.runId}` },
     })),

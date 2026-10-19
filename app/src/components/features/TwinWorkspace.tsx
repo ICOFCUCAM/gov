@@ -12,6 +12,7 @@ import * as React from 'react';
 import { TwinTerritory } from '@/components/features/twin/TwinTerritory';
 import { TwinScenarios } from '@/components/features/twin/TwinScenarios';
 import { TwinMetrics } from '@/components/features/twin/TwinMetrics';
+import { TwinEntityCard } from '@/components/features/twin/TwinEntityCard';
 
 type Tab = 'facts' | 'metrics';
 const TABS: { id: Tab; label: string }[] = [{ id: 'facts', label: 'Facts and sources' }, { id: 'metrics', label: 'Metrics' }];
@@ -64,7 +65,14 @@ export function TwinWorkspace() {
   const [knownThen, setKnownThen] = React.useState(false);
   // Tabs of this page (?tab=metrics opens the metric definitions).
   const [tab, setTab] = React.useState<Tab>('facts');
-  React.useEffect(() => { if (new URLSearchParams(window.location.search).get('tab') === 'metrics') setTab('metrics'); }, []);
+  // ?entity=<id> (where an entity's persistent identifier resolves to) opens its card.
+  const [entityId, setEntityId] = React.useState<string | null>(null);
+  React.useEffect(() => {
+    const q = new URLSearchParams(window.location.search);
+    if (q.get('tab') === 'metrics') setTab('metrics');
+    setEntityId(q.get('entity'));
+  }, []);
+  const closeEntity = () => { setEntityId(null); const u = new URL(window.location.href); u.searchParams.delete('entity'); window.history.replaceState(null, '', u.toString()); };
   const choose = (t: Tab) => {
     setTab(t);
     const u = new URL(window.location.href);
@@ -133,6 +141,7 @@ export function TwinWorkspace() {
         <div role="tabpanel" id="twin-panel-metrics" aria-labelledby="twin-tab-metrics"><TwinMetrics by={by} onChange={() => void load()} /></div>
       ) : (
       <div role="tabpanel" id="twin-panel-facts" aria-labelledby="twin-tab-facts" className="space-y-4">
+      {entityId ? <TwinEntityCard id={entityId} onClose={closeEntity} /> : null}
       <div className="grid gap-4 lg:grid-cols-3">
         <Section title="Register" aside="stable ids">
           <dl className="grid grid-cols-2 gap-y-1.5">

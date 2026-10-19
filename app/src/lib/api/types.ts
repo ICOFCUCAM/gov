@@ -594,6 +594,7 @@ export interface SovereignProfile {
   regions?: string[];       // operational regions engines report by (from admin-1 or the nation's own grouping)
   constitution?: NationalConstitution; // the nation's own constitutional facts, over the form-of-state template
   map?: NationMapSettings;  // how the nation's maps are drawn (capital, projection); defaults from the map data
+  domain?: string;          // the nation's own web domain (e.g. data.gov.ke); persistent identifiers of the twin are minted under it
 }
 
 /** The nation's own map settings. Anything left out falls back to the map data

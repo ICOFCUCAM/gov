@@ -19,7 +19,7 @@
 // Kept as a server store (persisted by lib/data/persist.ts).
 
 import { createHash } from 'node:crypto';
-import { recordAudit, listMinistries } from '@/lib/data/store';
+import { recordAudit, listMinistries, getSovereign } from '@/lib/data/store';
 import { nationIso3, nationRegions } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
 import { safeFetchText } from '@/lib/net/safe-fetch';
@@ -44,6 +44,8 @@ export interface TwinEntity {
   /** Its position in the nation's list of regions (official order). */
   order?: number;
   location?: { lat: number; lng: number };
+  /** Its persistent identifier: https://<nation domain>/id/<kind>/<code>, resolved by /id/<kind>/<code> (entityUri). */
+  uri?: string;
 }
 
 export interface SourceMapping {
@@ -152,13 +154,49 @@ const slug = (s: string) => fold(s).replace(/ /g, '-').slice(0, 60);
  * official subdivisions (ISO 3166-2) and its operational regions, and its
  * institutions. Ids never change once given; entities are added, not removed.
  */
+// ── Persistent identifiers ────────────────────────────────────────────────
+
+/** Used until the nation records its own domain (SovereignProfile.domain) or CIVICOS_PUBLIC_URL is set; .invalid never resolves. */
+export const PLACEHOLDER_URI_BASE = 'https://twin.invalid';
+
+/** The base of the twin's persistent identifiers: the nation's own domain, else CIVICOS_PUBLIC_URL, else a placeholder. */
+export function uriBase(): string {
+  let domain: string | undefined;
+  try { domain = getSovereign().domain?.trim(); } catch { domain = undefined; }
+  if (domain) return `https://${domain.replace(/^https?:\/\//, '').replace(/\/+$/, '')}`;
+  const env = process.env.CIVICOS_PUBLIC_URL?.trim();
+  return env ? env.replace(/\/+$/, '') : PLACEHOLDER_URI_BASE;
+}
+
+/** An entity's kind and code as they appear in its URI and the resolver: nation:KEN → nation / KEN. */
+export const uriPath = (id: string): string => {
+  const i = id.indexOf(':');
+  return `/id/${id.slice(0, i)}/${encodeURIComponent(id.slice(i + 1))}`;
+};
+
+/** The entity id a resolver path names (/id/place/KE-30 → place:KE-30). */
+export const entityIdFor = (kind: string, code: string): string => `${kind}:${code}`;
+
+/**
+ * Give every entity its URI once, and keep it: a URI minted under the
+ * placeholder is replaced when the nation's own domain becomes known; one
+ * minted under a real domain never changes (entities saved before URIs get
+ * theirs here).
+ */
+function ensureUris(): void {
+  const base = uriBase();
+  for (const e of Object.values(db().entities)) {
+    if (!e.uri || (e.uri.startsWith(PLACEHOLDER_URI_BASE) && base !== PLACEHOLDER_URI_BASE)) e.uri = `${base}${uriPath(e.id)}`;
+  }
+}
+
 export async function syncRegister(): Promise<{ entities: number }> {
   const d = db();
   const iso3 = nationIso3();
   const regions = nationRegions();
   const ministries = listMinistries();
   const stamp = `${iso3 ?? '-'}|${regions.join('|')}|${ministries.map(m => m.id).join('|')}`;
-  if (d.syncedFor === stamp) return { entities: Object.keys(d.entities).length };
+  if (d.syncedFor === stamp) { ensureUris(); return { entities: Object.keys(d.entities).length }; }
   const nationId = iso3 ? `nation:${iso3}` : 'nation:reference';
   d.entities[nationId] ??= { id: nationId, kind: 'nation', name: iso3 ?? 'Nation', ...(iso3 ? { code: iso3 } : {}) };
   const divisions = iso3 ? (await loadDivisions(iso3)).flatMap(l => l.units) : [];
@@ -176,9 +214,11 @@ export async function syncRegister(): Promise<{ entities: number }> {
   }
   for (const m of ministries) {
     const id = `institution:${m.id}`;
-    d.entities[id] = { id, kind: 'institution', name: m.name, parent: nationId };
+    const uri = d.entities[id]?.uri;
+    d.entities[id] = { id, kind: 'institution', name: m.name, parent: nationId, ...(uri ? { uri } : {}) };
   }
   d.syncedFor = stamp;
+  ensureUris();
   return { entities: Object.keys(d.entities).length };
 }
 
@@ -191,13 +231,16 @@ export async function syncRegister(): Promise<{ entities: number }> {
 export function upsertFacilityEntity(f: { id: string; name: string; location: { lat: number; lng: number }; regionCode?: string; ids: Record<string, string> }): void {
   const d = db();
   const id = `facility:${f.id}`;
-  d.entities[id] = { id, kind: 'facility', name: f.name, code: f.id, location: { lat: f.location.lat, lng: f.location.lng }, ...(f.regionCode ? { parent: `place:${f.regionCode}` } : {}) };
+  const uri = d.entities[id]?.uri;
+  d.entities[id] = { id, kind: 'facility', name: f.name, code: f.id, ...(uri ? { uri } : {}), location: { lat: f.location.lat, lng: f.location.lng }, ...(f.regionCode ? { parent: `place:${f.regionCode}` } : {}) };
   for (const [system, key] of Object.entries(f.ids)) {
     if (!d.keys.some(k => k.system === system && k.key === key)) d.keys.push({ entityId: id, system, key });
   }
+  ensureUris();
 }
 
 export function listEntities(kind?: EntityKind): TwinEntity[] {
+  ensureUris();
   return Object.values(db().entities).filter(e => !kind || e.kind === kind);
 }
 
@@ -605,6 +648,7 @@ export function metricDates(metric: string): string[] {
 /** An entity as the register holds it. */
 export function getEntity(id: string): TwinEntity | undefined {
   const e = db().entities[id];
+  if (e && !e.uri) ensureUris();
   return e ? { ...e } : undefined;
 }
 
