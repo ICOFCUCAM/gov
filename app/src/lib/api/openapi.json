@@ -168,6 +168,7 @@
         ],
         "operationId": "post_ai_advisory",
         "summary": "POST /api/ai/advisory",
+        "description": "The AI advisory for a console panel (per-nation opt-in; register 2.1). The body is validated (lib/ai/advisory-input.ts: types, ranges, a label cap, control characters stripped), each figure carries its SignalKind and the prompt tells the model which figures are samples. Every call is audited: who asked, the model, SHA-256 of the prompt and of the answer, and whether the model or the rule-based fallback answered. The request is operational data leaving the platform, so it goes through the data-sovereignty gate (lib/data/sovereignty.ts, category 'ai-advisory': off unless a named official enabled it); when it is off the panel gets the rule-based advisory and nothing is sent. The model service is the nation's choice (SovereignProfile.aiAssistantModel: the default provider or its own sovereign / on-premises model; lib/ai/model.ts). Each official may ask CIVICOS_AI_RPM times a minute (default 10).",
         "parameters": [],
         "requestBody": {
           "required": false,

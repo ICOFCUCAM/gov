@@ -29,7 +29,7 @@ beforeEach(() => { resetUpdates(); resetReadiness(); stagingOff(); resetSecurity
 describe('every category is off unless enabled', () => {
   it('defaults to off for every nation and category', () => {
     for (const n of [HOME_NATION, 'sandbox']) expect(sharing(n).every(s => !s.enabled)).toBe(true);
-    expect(CATEGORY_KEYS.sort()).toEqual(['crash-reports', 'health-reports', 'support-attachments', 'usage-metrics']);
+    expect(CATEGORY_KEYS.sort()).toEqual(['ai-advisory', 'crash-reports', 'health-reports', 'support-attachments', 'usage-metrics']);
   });
 
   it('enabling needs a named approver and a reason; both directions are audited', () => {
@@ -103,7 +103,7 @@ describe('disabled categories are never transmitted', () => {
     const home = pub.nations.find((n: { id: string }) => n.id === HOME_NATION);
     expect(home.categories['crash-reports']).toEqual({ shared: false, received: 0 });
     const g = await (await sovGET(new Request('http://x') as never)).json();
-    expect(g.categories.length).toBe(4);
+    expect(g.categories.length).toBe(5);
     expect(g.state.every((s: { enabled: boolean }) => !s.enabled)).toBe(true); // the sandbox's choice does not touch home
   });
 });

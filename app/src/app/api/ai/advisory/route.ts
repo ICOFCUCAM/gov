@@ -4,12 +4,23 @@
 // the prompt tells the model which figures are samples. Every call is
 // audited: who asked, the model, SHA-256 of the prompt and of the answer,
 // and whether the model or the rule-based fallback answered.
-import Anthropic from '@anthropic-ai/sdk';
+//
+// The request is operational data leaving the platform, so it goes through
+// the data-sovereignty gate (lib/data/sovereignty.ts, category
+// 'ai-advisory': off unless a named official enabled it); when it is off the
+// panel gets the rule-based advisory and nothing is sent. The model service
+// is the nation's choice (SovereignProfile.aiAssistantModel: the default
+// provider or its own sovereign / on-premises model; lib/ai/model.ts). Each
+// official may ask CIVICOS_AI_RPM times a minute (default 10).
 import { createHash } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { getSovereign, recordAudit } from '@/lib/data/store';
 import { currentOfficial, actorLabel } from '@/lib/auth/official';
 import { parseAdvisoryInput, advisoryPrompt, severityOf, type AdvisoryInput } from '@/lib/ai/advisory-input';
+import { resolveModel, complete } from '@/lib/ai/model';
+import { transmit } from '@/lib/data/sovereignty';
+import { resolveNation } from '@/lib/data/updates';
+import { take } from '@/lib/exchange/rate-limit';
 
 export interface AdvisoryRequest {
   label: string;
@@ -36,15 +47,12 @@ export interface AdvisoryResponse {
   source: 'model' | 'rules';
 }
 
-const MODEL = 'claude-haiku-4-5-20251001';
 const sha = (s: string) => createHash('sha256').update(s, 'utf8').digest('hex');
+const perMinute = () => { const n = Number(process.env.CIVICOS_AI_RPM); return Number.isFinite(n) && n >= 1 ? n : 10; };
 
-let client: Anthropic | null = null;
-const anthropic = () => (client ??= new Anthropic());
-
-async function actor(): Promise<string> {
+async function who(): Promise<{ label: string; key: string }> {
   const o = await currentOfficial().catch(() => null);
-  return o ? actorLabel(o) : 'console (no signed-in official)';
+  return o ? { label: actorLabel(o), key: o.sub } : { label: 'console (no signed-in official)', key: 'anonymous' };
 }
 
 function rules(i: AdvisoryInput): AdvisoryResponse {
@@ -73,24 +81,31 @@ export async function POST(req: NextRequest) {
   if (getSovereign().aiAssistant === false) {
     return NextResponse.json({ error: 'AI assistant is not enabled for this nation' }, { status: 403 });
   }
+  const actor = await who();
   const raw = await req.json().catch(() => null);
   const input = parseAdvisoryInput(raw);
   if ('error' in input) {
-    recordAudit(await actor(), 'ai.advisory', 'Institution:?', 'denied', `invalid request: ${input.error}`);
+    recordAudit(actor.label, 'ai.advisory', 'Institution:?', 'denied', `invalid request: ${input.error}`);
     return NextResponse.json(input, { status: 422 });
   }
   const resource = `Institution:${input.institution ?? input.label}`;
+  const rate = take(`ai-advisory:${actor.key}`, perMinute());
+  if (!rate.allowed) {
+    recordAudit(actor.label, 'ai.advisory', resource, 'denied', `rate limit of ${perMinute()} a minute`);
+    return NextResponse.json({ error: `At most ${perMinute()} AI advisories a minute per official; try again shortly` }, { status: 429, headers: { 'Retry-After': String(rate.retryAfterSeconds ?? 60) } });
+  }
   const prompt = advisoryPrompt(input);
-  const who = await actor();
+  const model = resolveModel(getSovereign().aiAssistantModel);
+  const nationId = resolveNation(null)?.id ?? 'home';
+  // The only way the request leaves: the sovereignty gate (off unless a named official enabled it).
+  const gate = transmit(nationId, 'ai-advisory', `${resource} · ${model.label}`, { model: model.label, institution: input.label, posture: input.posture, escalationTier: input.escalationTier, figures: Object.fromEntries((['readiness', 'incidents', 'budgetPressure', 'slaCompliance'] as const).map(f => [f, { value: input[f], kind: input.kinds[f] }])), promptSha256: sha(prompt) });
+  if (!gate.sent) {
+    recordAudit(actor.label, 'ai.advisory', resource, 'fallback', `model=${model.label}; in=sha256:${sha(prompt)}; out=none; source=rules (AI advisory sharing is off under the data-sovereignty settings)`);
+    return NextResponse.json({ ...rules(input), heldBack: true });
+  }
   let text = '';
   try {
-    const message = await anthropic().messages.create({
-      model: MODEL,
-      max_tokens: 300,
-      messages: [{ role: 'user', content: prompt }],
-    });
-    const block = message.content[0];
-    text = block?.type === 'text' ? block.text : '';
+    text = await complete(model, prompt);
     const parsed = JSON.parse(text);
     const response: AdvisoryResponse = {
       headline: String(parsed.headline ?? '').slice(0, 300),
@@ -102,12 +117,12 @@ export async function POST(req: NextRequest) {
       confidence: 88,
       source: 'model',
     };
-    recordAudit(who, 'ai.advisory', resource, 'ok', `model=${MODEL}; in=sha256:${sha(prompt)}; out=sha256:${sha(text)}; source=model`);
+    recordAudit(actor.label, 'ai.advisory', resource, 'ok', `model=${model.label}; in=sha256:${sha(prompt)}; out=sha256:${sha(text)}; source=model`);
     return NextResponse.json(response);
   } catch (e) {
     // Fallback if the model call or the JSON parse fails.
     const reason = e instanceof SyntaxError ? 'unreadable answer' : 'model unavailable';
-    recordAudit(who, 'ai.advisory', resource, 'fallback', `model=${MODEL}; in=sha256:${sha(prompt)}; out=${text ? `sha256:${sha(text)}` : 'none'}; source=rules (${reason})`);
+    recordAudit(actor.label, 'ai.advisory', resource, 'fallback', `model=${model.label}; in=sha256:${sha(prompt)}; out=${text ? `sha256:${sha(text)}` : 'none'}; source=rules (${reason})`);
     return NextResponse.json(rules(input));
   }
 }

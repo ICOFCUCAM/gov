@@ -1773,6 +1773,17 @@ export function setSovereign(
     if (m.projection !== undefined && !MAP_PROJECTIONS.includes(m.projection)) return { error: 'Unknown map projection' };
     if (m.worldview !== undefined && !isWorldview(m.worldview)) return { error: 'Unknown point of view for disputed territory' };
   }
+  if (patch.aiAssistantModel !== undefined) {
+    const m = patch.aiAssistantModel;
+    if (!m || typeof m !== 'object' || (m.api !== 'anthropic' && m.api !== 'openai')) return { error: 'The AI model service must say its API: anthropic or openai' };
+    if (m.endpoint !== undefined && m.endpoint !== '') {
+      let u: URL | null = null;
+      try { u = new URL(m.endpoint); } catch { u = null; }
+      if (!u || (u.protocol !== 'https:' && u.protocol !== 'http:') || u.username || u.password) return { error: 'The model service address must be an http(s) address without a user name or password' };
+    }
+    if (m.model !== undefined && m.model !== '' && !/^[A-Za-z0-9._:/@-]{1,100}$/.test(m.model)) return { error: 'The model name may use letters, digits and . _ : / @ - (up to 100)' };
+    patch = { ...patch, aiAssistantModel: { api: m.api, ...(m.endpoint ? { endpoint: m.endpoint.replace(/\/+$/, '') } : {}), ...(m.model ? { model: m.model } : {}) } };
+  }
   if (patch.languages !== undefined && (!Array.isArray(patch.languages) || patch.languages.length > 10 || patch.languages.some(l => typeof l !== 'string' || !locales.some(x => x.code === l)))) {
     return { error: 'Further languages must be language codes the platform has' };
   }

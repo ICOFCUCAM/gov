@@ -621,6 +621,9 @@ export interface SovereignProfile {
   accent?: string;          // sovereign theme accent (hex)
   motto?: string;           // formal national style / motto
   aiAssistant?: boolean;    // nation opted in to the AI assistant (false = off; unset = legacy on)
+  /** Which model service the AI assistant uses (setup 1.6): the default provider, or the nation's own
+   *  sovereign / on-premises model. Its key is never stored here (CIVICOS_AI_API_KEY). */
+  aiAssistantModel?: AiAssistantModel;
   iso3?: string;            // ISO 3166-1 alpha-3 country code — drives the national map
   paymentRail?: string;     // the nation's domestic payment rail, e.g. "Mobile Money", "Instant Payments"
   timeZone?: string;        // IANA time zone of the capital, e.g. "Africa/Kampala"
@@ -1801,7 +1804,17 @@ export interface Contract {
 }
 
 // ── Update Center: data-sovereignty controls ──────────────────────────
-export type DataCategory = 'crash-reports' | 'usage-metrics' | 'health-reports' | 'support-attachments';
+/** The model service behind the AI assistant. */
+export interface AiAssistantModel {
+  /** 'anthropic' (Messages API; default) or 'openai' (an OpenAI-compatible chat completions API, as most self-hosted model servers offer). */
+  api: 'anthropic' | 'openai';
+  /** Base address of the service; empty = the provider's public service. */
+  endpoint?: string;
+  /** Model name at that service. */
+  model?: string;
+}
+
+export type DataCategory = 'crash-reports' | 'usage-metrics' | 'health-reports' | 'support-attachments' | 'ai-advisory';
 export interface DataCategoryInfo {
   key: DataCategory;
   label: string;
