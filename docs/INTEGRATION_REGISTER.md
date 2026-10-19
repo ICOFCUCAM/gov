@@ -41,7 +41,7 @@ Last reviewed: 17 Oct 2026.
 
 | # | Area | Today | To integrate | Where |
 |---|---|---|---|---|
-| 2.1 | **Advisory model** | Ready when configured. `/api/ai/advisory` calls the Anthropic API when the nation ticked the AI assistant in setup; otherwise it refuses, and panels show their rule-based advisories. | Set `ANTHROPIC_API_KEY` (read by the SDK); keep the per-nation opt-in. | `app/src/app/api/ai/advisory/route.ts` |
+| 2.1 | **Advisory model** | Ready when configured. `/api/ai/advisory` calls the Anthropic API when the nation ticked the AI assistant in setup; otherwise it refuses, and panels show their rule-based advisories. The request is validated (`lib/ai/advisory-input.ts`: types and ranges, posture and tier, a 120-character label with control and direction-override characters stripped, quoted in the prompt as data); each figure carries its kind (observed, reported, modelled, sample; sample when not given) and the prompt tells the model which figures are samples. Every call is audited (`ai.advisory`: who asked, the institution, the model, SHA-256 of prompt and answer, model or rules and why). | Set `ANTHROPIC_API_KEY` (read by the SDK); keep the per-nation opt-in. | `app/src/app/api/ai/advisory/route.ts` |
 | 2.2 | **AI wording** | Done. Labels follow the opt-in through `aiLabel()`. | Any new AI-presenting label must use `aiLabel()`. | `app/src/lib/nation/registry.ts` |
 
 ## 3. Update Center (download centre)

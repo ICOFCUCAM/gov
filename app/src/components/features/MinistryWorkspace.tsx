@@ -232,6 +232,9 @@ export function MinistryWorkspace({ id }: { id: string }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         label: name,
+        institution: id,
+        // Readiness is computed from the institution's record; the other figures are generated samples.
+        kinds: { readiness: 'modelled', incidents: 'sample', budgetPressure: 'sample', slaCompliance: 'sample' },
         posture: opTierForAdvisory >= 2 ? 'CRISIS' : opTierForAdvisory === 1 ? 'ELEVATED' : 'NOMINAL',
         escalationTier: opTierForAdvisory,
         readiness: readiness?.total ?? 60,
