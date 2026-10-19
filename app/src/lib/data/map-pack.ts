@@ -29,6 +29,7 @@ import { activeBoundary } from '@/lib/map/boundary-active';
 import { countVertices, needsSimplifying, simplifyFeatures, type Simplification } from '@/lib/geo/boundary-simplify';
 import { assignUnits, finerThan, labelPoint, levelsBelow, licenceRefusal, parentFinder, rewind, roundGeometry, type GbMeta } from '@/lib/geo/admin2-convert.mjs';
 import type { InstalledDistrictsLike } from '@/lib/map/districts-installed';
+import { touch } from '@/lib/data/repo/track';
 
 export type { GbMeta };
 
@@ -52,7 +53,7 @@ export interface PackEvent { at: string; by: string; action: 'install' | 'remove
 
 interface Db { installed: Record<string, DistrictPack>; history: PackEvent[] }
 const g = globalThis as unknown as { __civicosMapPack?: Db };
-const db = (): Db => { const d = (g.__civicosMapPack ??= { installed: {}, history: [] }); d.installed ??= {}; d.history ??= []; return d; };
+const db = (): Db => { const d = touch('__civicosMapPack', g.__civicosMapPack ??= { installed: {}, history: [] }); d.installed ??= {}; d.history ??= []; return d; };
 export function resetMapPack(): void { g.__civicosMapPack = undefined; }
 
 /** The geoBoundaries API and the host its files are served from. */

@@ -15,6 +15,7 @@ import type { HostingCenter, HostingEstimate, HostingPath, HostingQuestionnaire,
 import { recordAudit } from '@/lib/data/store/audit';
 import { pricing } from './security-store';
 import { adjust, defaultQuestionnaire, estimate, HOSTING_MODEL, unitCostTable, validateQuestionnaire } from '@/lib/updates/hosting-model';
+import { touch } from '@/lib/data/repo/track';
 
 export const HOSTING_PATHS: HostingPath[] = ['sovereign-dc', 'other-cloud', 'hosted', 'perpetual'];
 export const PATH_LABEL: Record<HostingPath, string> = {
@@ -23,7 +24,7 @@ export const PATH_LABEL: Record<HostingPath, string> = {
 
 interface HostingDb { requests: HostingRequest[]; current: Record<string, HostingPath>; seq: number }
 const g = globalThis as unknown as { __civicosHosting?: HostingDb };
-function hdb(): HostingDb { return (g.__civicosHosting ??= { requests: [], current: {}, seq: 4000 }); }
+function hdb(): HostingDb { return touch('__civicosHosting', g.__civicosHosting ??= { requests: [], current: {}, seq: 4000 }); }
 export function resetHosting(): void { g.__civicosHosting = { requests: [], current: {}, seq: 4000 }; }
 
 /** The path a nation runs today: recorded acceptance, else inferred from how it receives releases. */

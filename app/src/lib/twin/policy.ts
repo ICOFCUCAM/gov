@@ -8,6 +8,7 @@
 
 import { recordAudit } from '@/lib/data/store';
 import { withDefaults } from '@/lib/data/defaults';
+import { touch } from '@/lib/data/repo/track';
 
 // A type alias (not an interface) so withDefaults() takes it as a plain record.
 export type TwinPolicy = {
@@ -19,7 +20,7 @@ export type TwinPolicy = {
 
 const seed = (): TwinPolicy => ({ fourEyesWithdrawal: true });
 const g = globalThis as unknown as { __civicosTwinPolicy?: TwinPolicy };
-const store = (): TwinPolicy => (g.__civicosTwinPolicy = withDefaults(g.__civicosTwinPolicy ??= seed(), seed()));
+const store = (): TwinPolicy => touch('__civicosTwinPolicy', g.__civicosTwinPolicy = withDefaults(g.__civicosTwinPolicy ??= seed(), seed()));
 
 export function twinPolicy(): TwinPolicy { return { ...store() }; }
 

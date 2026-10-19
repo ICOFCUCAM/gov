@@ -8,10 +8,11 @@
 import { randomUUID } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
 import type { DirectiveRow } from '@/lib/db/types';
+import { touch } from '@/lib/data/repo/track';
 
 interface Db { rows: DirectiveRow[] }
 const g = globalThis as unknown as { __civicosDirectives?: Db };
-const db = (): Db => (g.__civicosDirectives ??= { rows: [] });
+const db = (): Db => touch('__civicosDirectives', g.__civicosDirectives ??= { rows: [] });
 export function resetDirectives(): void { g.__civicosDirectives = undefined; }
 
 export const KINDS = ['executive-order', 'policy', 'budget', 'instruction', 'declaration'];

@@ -18,6 +18,7 @@ import { NextResponse } from 'next/server';
 import { verifyBytes } from '@/lib/crypto/signing-key';
 import { signer } from '@/lib/keys/custody';
 import { contentDigest } from './http-signatures';
+import { touch } from '@/lib/data/repo/track';
 
 export const EXCHANGE_KEY_ENV = 'CIVICOS_EXCHANGE_KEY';
 export const MAX_ENTRIES = 20_000;
@@ -69,7 +70,7 @@ export interface ExchangeReceipt {
 interface Db { entries: ExchangeEntry[] }
 const g = globalThis as unknown as { __civicosExchangeLog?: Db };
 const db = (): Db => {
-  const d = (g.__civicosExchangeLog ??= { entries: [] });
+  const d = touch('__civicosExchangeLog', g.__civicosExchangeLog ??= { entries: [] });
   d.entries ??= [];
   return d;
 };

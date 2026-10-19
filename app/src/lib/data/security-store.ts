@@ -31,6 +31,7 @@ import type {
 } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
 import { nationPaymentRail } from '@/lib/nation/registry';
+import { touch } from '@/lib/data/repo/track';
 
 export const REFERENCE_CURRENCY = 'USD';
 const DAY = 86_400_000;
@@ -187,7 +188,7 @@ function seedSecurity(): SecurityDb {
 }
 
 const g = globalThis as unknown as { __civicosSecurity?: SecurityDb };
-function sdb(): SecurityDb { return (g.__civicosSecurity ??= seedSecurity()); }
+function sdb(): SecurityDb { return touch('__civicosSecurity', g.__civicosSecurity ??= seedSecurity()); }
 export function resetSecurity(): void { g.__civicosSecurity = seedSecurity(); policy = { ...STORE_POLICY }; }
 
 // ── Pricing ──────────────────────────────────────────────────────────

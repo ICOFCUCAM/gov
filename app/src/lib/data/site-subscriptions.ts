@@ -17,6 +17,7 @@
 
 import { createHash, randomBytes } from 'node:crypto';
 import { recordAudit } from '@/lib/data/store/audit';
+import { touch } from '@/lib/data/repo/track';
 
 export type SubscriberStatus = 'pending' | 'confirmed' | 'unsubscribed';
 
@@ -49,7 +50,7 @@ export interface SiteMessage {
 
 interface Db { subs: Subscriber[]; outbox: SiteMessage[]; attempts: Map<string, number[]>; seq: number }
 const g = globalThis as unknown as { __civicosSiteSubs?: Db };
-const db = (): Db => (g.__civicosSiteSubs ??= { subs: [], outbox: [], attempts: new Map(), seq: 1 });
+const db = (): Db => touch('__civicosSiteSubs', g.__civicosSiteSubs ??= { subs: [], outbox: [], attempts: new Map(), seq: 1 });
 export function resetSiteSubscriptions(): void { g.__civicosSiteSubs = undefined; }
 
 /** How long a confirmation link stays valid. */

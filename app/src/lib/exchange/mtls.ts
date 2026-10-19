@@ -22,6 +22,7 @@
 
 import { X509Certificate, timingSafeEqual } from 'node:crypto';
 import { listGrants, recordAudit } from '@/lib/data/store';
+import { touch } from '@/lib/data/repo/track';
 
 export interface CertBinding {
   /** SHA-256 fingerprint of the partner's client certificate (64 lowercase hex). */
@@ -37,7 +38,7 @@ export interface CertBinding {
 interface Db { bindings: Record<string, CertBinding> }
 const g = globalThis as unknown as { __civicosPartnerCerts?: Db };
 const db = (): Db => {
-  const d = (g.__civicosPartnerCerts ??= { bindings: {} });
+  const d = touch('__civicosPartnerCerts', g.__civicosPartnerCerts ??= { bindings: {} });
   d.bindings ??= {};
   return d;
 };

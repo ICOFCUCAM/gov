@@ -6,6 +6,7 @@
 
 import type { TwinEntity, TwinSource, TwinRun, Observation } from './register';
 import type { MetricDef } from './metrics';
+import { touch } from '@/lib/data/repo/track';
 
 export interface TwinDb {
   entities: Record<string, TwinEntity>;
@@ -27,5 +28,5 @@ function migrate(d: TwinDb): TwinDb {
   return d;
 }
 
-export const twinDb = (): TwinDb => migrate(g.__civicosTwin ??= { entities: {}, keys: [], sources: [], runs: [], observations: [], seq: 1, metrics: {} });
+export const twinDb = (): TwinDb => migrate(touch('__civicosTwin', g.__civicosTwin ??= { entities: {}, keys: [], sources: [], runs: [], observations: [], seq: 1, metrics: {} }));
 export function resetTwinDb(): void { g.__civicosTwin = undefined; }

@@ -2,12 +2,14 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import path from 'node:path';
-import { RECORDS_SCHEMA, RECORDS_MIGRATION } from './postgres-schema';
+import { RECORDS_SCHEMA, RECORDS_MIGRATION, DOCS_SCHEMA, DOCS_MIGRATION } from './postgres-schema';
+
+const migration = (name: string) => readFileSync(path.join(__dirname, '../../../../supabase/migrations', name), 'utf8');
 
 describe('the records schema', () => {
-  it('is exactly the migration the substrate applies', () => {
-    const file = readFileSync(path.join(__dirname, '../../../../supabase/migrations', RECORDS_MIGRATION), 'utf8');
-    expect(file).toBe(RECORDS_SCHEMA);
+  it('is exactly the migrations the substrate applies', () => {
+    expect(migration(RECORDS_MIGRATION)).toBe(RECORDS_SCHEMA);
+    expect(migration(DOCS_MIGRATION)).toBe(DOCS_SCHEMA);
   });
 
   it('keeps the audit chain and observations append-only, bitemporal and indexed for as-of queries', () => {
@@ -19,5 +21,13 @@ describe('the records schema', () => {
     expect(RECORDS_SCHEMA).toMatch(/st_isvalid\(geom\)/);
     expect(RECORDS_SCHEMA).toMatch(/using gist \(geog\)/);
     expect(RECORDS_SCHEMA).toMatch(/create table if not exists civicos\.outbox/);
+  });
+
+  it('keeps every other store as versioned per-record documents, closed to everyone but the service role', () => {
+    expect(DOCS_SCHEMA).toMatch(/create table if not exists civicos\.record_doc/);
+    expect(DOCS_SCHEMA).toMatch(/primary key \(store, path\)/);
+    expect(DOCS_SCHEMA).toMatch(/version\s+bigint not null check \(version > 0\)/);
+    expect(DOCS_SCHEMA).toMatch(/alter table civicos\.record_doc enable row level security/);
+    expect(DOCS_SCHEMA).toMatch(/with \(security_invoker = true\)/);
   });
 });

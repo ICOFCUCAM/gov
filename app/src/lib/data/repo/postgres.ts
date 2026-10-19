@@ -30,6 +30,20 @@
 // (LISTEN civicos_outbox, and a poll every CIVICOS_PG_POLL_MS, default 2 s).
 // Record numbers (FAC-, RUN-, SRC-, bnd-) come from blocks reserved in
 // civicos.record_counter, so two instances never give the same number.
+//
+// Every other store (the nation profile and ministries, officials, the Update
+// Center, public sites, scenarios, metric definitions, the event outbox,
+// signed heads …) is kept as per-record documents in civicos.record_doc
+// (./documents.ts, migration 20261021000000_civicos_record_docs.sql). Stores
+// note their use through ./track.ts; each flush compares the stores used since
+// the last one (every store on a slower sweep, CIVICOS_PG_SWEEP_MS) and writes
+// the records that changed in the same transaction as the queued changes and
+// audit entries, each against the version it was read at, with an outbox row
+// per record. A record another instance changed meanwhile is merged three ways
+// (merge3). Other instances apply the outbox rows to their stores in place,
+// merging any change of theirs not yet written. A store's own counters (`seq`,
+// `requestSeq` …) number from reserved blocks too (`doc:<store>.<field>`).
+// With every store here, any instance takes any change (lib/data/persist.ts).
 
 import { createHash } from 'node:crypto';
 import { appendFileSync, mkdirSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
@@ -44,7 +58,9 @@ import { auditHashV2 } from '@/lib/data/store/audit';
 import { auditCommitted } from '@/lib/data/store/audit-committed';
 import { log } from '@/lib/ops/log';
 import { memoryAudit, memoryBoundaries, memoryFacilities, memoryTwin } from './memory';
-import { RECORDS_SCHEMA } from './postgres-schema';
+import { RECORDS_SCHEMA, DOCS_SCHEMA } from './postgres-schema';
+import { applyRow, build, counterFields, decompose, diff, isCounterPath, mergeAt, normalise, removeAt, replaceInPlace, rowAt, segsOf, type Change, type DocRow, type Kind, type Known } from './documents';
+import { followed, listenForUse } from './track';
 import type { Backend, BoundaryStore, FacilityStore } from './types';
 import type { Lease, StateAdapter } from '@/lib/data/persist';
 
@@ -71,15 +87,17 @@ const iso = (col: string) => `to_char(${col} at time zone 'UTC', ${ISO})`;
 /** Apply the records schema (idempotent; one instance at a time). Returns whether PostGIS is in use. */
 export async function ensureSchema(sql: Sql): Promise<{ postgis: boolean }> {
   // Applied once per version of the schema: re-running its DDL while other instances write would take their tables' locks.
-  const version = createHash('sha256').update(RECORDS_SCHEMA).digest('hex');
+  const version = createHash('sha256').update(RECORDS_SCHEMA).update(DOCS_SCHEMA).digest('hex');
   const applied = async (s: Sql) => (await q(s, `select to_regclass('civicos.records_schema') is not null as t`))[0]!.t
     && (await q(s, `select 1 from civicos.records_schema where version = $1`, [version])).length > 0;
   if (!(await applied(sql))) {
     await sql.begin(async tx => {
       await q(tx, `select pg_advisory_xact_lock(hashtext('civicos.records.schema'))`);
       if (await applied(tx)) return;
-      const all = tx.unsafe(RECORDS_SCHEMA);
-      await (all.simple ? all.simple() : all);
+      for (const schema of [RECORDS_SCHEMA, DOCS_SCHEMA]) {
+        const all = tx.unsafe(schema);
+        await (all.simple ? all.simple() : all);
+      }
       await q(tx, `create table if not exists civicos.records_schema (version text primary key, applied_at timestamptz not null default now())`);
       await q(tx, `alter table civicos.records_schema enable row level security`);
       await q(tx, `insert into civicos.records_schema (version) values ($1) on conflict do nothing`, [version]);
@@ -240,6 +258,101 @@ async function writeOp(tx: Sql, op: Op, instance: string): Promise<void> {
   }
 }
 
+// ── Per-record documents (./documents.ts) ─────────────────────────────────
+/** Records up to this size travel in the outbox row; larger ones are read from the table. */
+const INLINE_DOC = 16_384;
+
+/**
+ * Write the changed records of every store (inside the flush transaction).
+ * Each write names the version it was changed from; a record another
+ * instance changed since is locked, merged three ways (mergeAt) and written
+ * over it. Removals win.
+ */
+async function writeDocs(tx: Sql, docs: DocBatch[], instance: string): Promise<{ results: Map<string, DocResult>; merged: number; conflicts: number }> {
+  const results = new Map<string, DocResult>();
+  let merged = 0, conflicts = 0;
+  const ups: { store: string; path: string; kind: Kind; doc: string; expected: number; base?: string }[] = [];
+  const dels: { store: string; path: string }[] = [];
+  for (const d of docs) for (const c of d.changes) {
+    if (c.json === null) dels.push({ store: d.store, path: c.path });
+    else ups.push({ store: d.store, path: c.path, kind: c.kind, doc: c.json, expected: c.expected, ...(c.base !== undefined ? { base: c.base } : {}) });
+  }
+  for (let i = 0; i < ups.length; i += 2000) {
+    const chunk = ups.slice(i, i + 2000);
+    const done = await q(tx, `insert into civicos.record_doc (store, path, kind, doc, version, instance)
+        select x.store, x.path, x.kind, x.doc::jsonb, x.expected + 1, $2
+        from jsonb_to_recordset($1::text::jsonb) as x(store text, path text, kind text, doc text, expected bigint)
+        on conflict (store, path) do update set kind = excluded.kind, doc = excluded.doc, version = excluded.version, instance = excluded.instance, updated_at = now()
+          where civicos.record_doc.version = excluded.version - 1
+        returning store, path, version::text as version`, [JSON.stringify(chunk.map(({ base: _b, ...c }) => c)), instance]);
+    for (const r of done) results.set(docKey(String(r.store), String(r.path)), { version: Number(r.version) });
+    for (const c of chunk) {
+      if (results.has(docKey(c.store, c.path))) continue;
+      // Another instance changed this record since this one read it: both changes are kept.
+      const cur = (await q(tx, `select kind, doc::text as doc, version::text as version from civicos.record_doc where store = $1 and path = $2 for update`, [c.store, c.path]))[0];
+      if (!cur) {
+        const r = await q(tx, `insert into civicos.record_doc (store, path, kind, doc, version, instance) values ($1, $2, $3, $4::text::jsonb, 1, $5)
+                               on conflict (store, path) do update set kind = excluded.kind, doc = excluded.doc, version = civicos.record_doc.version + 1, instance = excluded.instance, updated_at = now()
+                               returning version::text as version`, [c.store, c.path, c.kind, c.doc, instance]);
+        results.set(docKey(c.store, c.path), { version: Number(r[0]!.version) });
+        continue;
+      }
+      const theirs = normalise({ kind: String(cur.kind) as Kind, json: String(cur.doc) });
+      let row: DocRow = { kind: c.kind, json: c.doc };
+      if (theirs.kind === c.kind && (c.kind === 'value' || c.kind === 'list')) {
+        const m = mergeAt(segsOf(c.path), c.base !== undefined ? JSON.parse(c.base) : undefined, JSON.parse(c.doc), JSON.parse(theirs.json));
+        row = { kind: c.kind, json: JSON.stringify(m.value) };
+        conflicts += m.conflicts;
+      } else if (theirs.kind !== c.kind) conflicts++;
+      merged++;
+      const r = await q(tx, `update civicos.record_doc set kind = $3, doc = $4::text::jsonb, version = version + 1, instance = $5, updated_at = now()
+                             where store = $1 and path = $2 returning version::text as version`, [c.store, c.path, row.kind, row.json, instance]);
+      results.set(docKey(c.store, c.path), { version: Number(r[0]!.version), ...(row.json !== c.doc || row.kind !== c.kind ? { merged: row } : {}) });
+    }
+  }
+  for (let i = 0; i < dels.length; i += 5000) {
+    await q(tx, `delete from civicos.record_doc d using jsonb_to_recordset($1::text::jsonb) as x(store text, path text)
+                 where d.store = x.store and d.path = x.path`, [JSON.stringify(dels.slice(i, i + 5000))]);
+  }
+  return { results, merged, conflicts };
+}
+
+/** The outbox rows (as JSON text) telling other instances which records changed. */
+function docOutboxRows(docs: DocBatch[], results: Map<string, DocResult>, instance: string): string[] {
+  const out: string[] = [];
+  for (const d of docs) for (const c of d.changes) {
+    const head = `"store":${JSON.stringify(d.store)},"path":${JSON.stringify(c.path)}`;
+    let payload: string;
+    if (c.json === null) payload = `{${head},"deleted":true}`;
+    else {
+      const res = results.get(docKey(d.store, c.path));
+      const row = res?.merged ?? { kind: c.kind, json: c.json };
+      payload = `{${head},"kind":${JSON.stringify(row.kind)}${res ? `,"version":${res.version}` : ''}${res && row.json.length <= INLINE_DOC ? `,"doc":${row.json}` : ''}}`;
+    }
+    out.push(`{"instance":${JSON.stringify(instance)},"topic":"doc","record_id":${JSON.stringify(d.store + c.path)},"payload":${payload}}`);
+  }
+  return out;
+}
+
+/** Replay journalled record changes (after a crash): each only where the table still holds the version it was changed from. */
+async function replayDocs(tx: Sql, docs: DocBatch[], instance: string): Promise<Map<string, DocResult>> {
+  const results = new Map<string, DocResult>();
+  for (const d of docs) for (const c of d.changes) {
+    if (c.json === null) {
+      const gone = await q(tx, `delete from civicos.record_doc where store = $1 and path = $2 and version = $3 returning 1 as x`, [d.store, c.path, c.expected]);
+      if (gone.length) results.set(docKey(d.store, c.path), { version: 0 });
+      continue;
+    }
+    const r = c.expected === 0
+      ? await q(tx, `insert into civicos.record_doc (store, path, kind, doc, version, instance) values ($1, $2, $3, $4::text::jsonb, 1, $5)
+                     on conflict (store, path) do nothing returning version::text as version`, [d.store, c.path, c.kind, c.json, instance])
+      : await q(tx, `update civicos.record_doc set kind = $3, doc = $4::text::jsonb, version = version + 1, instance = $5, updated_at = now()
+                     where store = $1 and path = $2 and version = $6 returning version::text as version`, [d.store, c.path, c.kind, c.json, instance, c.expected]);
+    if (r[0]) results.set(docKey(d.store, c.path), { version: Number(r[0].version) });
+  }
+  return results;
+}
+
 // ── Reading rows back ─────────────────────────────────────────────────────
 const toEntry = (r: Row): AuditEntry => ({
   id: String(r.id), at: String(r.at), actor: String(r.actor), action: String(r.action), resource: String(r.resource), outcome: String(r.outcome),
@@ -351,6 +464,23 @@ export interface RecordsStatus {
   lastPullAt?: string;
   journal?: string;
   error?: string;
+  /** The per-record documents of every other store (civicos.record_doc). */
+  documents?: DocumentsStatus;
+}
+
+export interface DocumentsStatus {
+  /** Stores kept as documents, and their records. */
+  stores: number;
+  rows: number;
+  /** Records written by this instance, and applied from others. */
+  written: number;
+  followed: number;
+  /** Records two instances changed at once (merged three ways), and values both changed differently (the later write kept). */
+  merged: number;
+  conflicts: number;
+  /** Record numbers given past a reserved block before the next one arrived (should stay 0). */
+  counterOverruns: number;
+  lastSweepAt?: string;
 }
 
 export interface Records {
@@ -363,6 +493,10 @@ export interface Records {
   stateAsOf: (q?: Parameters<typeof stateAsOfSql>[1]) => Promise<Observation[]>;
   stop(): Promise<void>;
   sql: Sql;
+  /** Whether the store `key` is kept in the record tables (then it has no snapshot). */
+  owns(key: string): boolean;
+  /** Every store is kept in the record tables: any instance takes any change. */
+  ownsAll: boolean;
 }
 
 export interface RecordsOptions {
@@ -374,9 +508,23 @@ export interface RecordsOptions {
   root?: Root;
   journalDir?: string | null;
   pollMs?: number;
-  /** Record numbers reserved per block. */
-  blockSize?: { twin?: number; facility?: number; boundary?: number };
+  /** Record numbers reserved per block (`counter`: each store's own counters, `seq` and `…Seq`). */
+  blockSize?: { twin?: number; facility?: number; boundary?: number; counter?: number };
+  /** Keep every other store as per-record documents (default true; false keeps them in snapshots, as before). */
+  documents?: boolean;
+  /** How often stores used since the last write are compared when nothing was audited (ms, default 1000). */
+  docMs?: number;
+  /** How often every store is compared, for changes made without its accessor (ms, default 30000). */
+  sweepMs?: number;
 }
+
+/** A store's key (as lib/data/persist.ts saves them). */
+const STORE_KEY = /^__civicos[A-Za-z0-9_]*$/;
+/** One store's changed records, as compared at a flush. */
+interface DocBatch { store: string; changes: Change[] }
+/** What a written record ended as: its version, and the merged record when another instance had changed it too. */
+interface DocResult { version: number; merged?: DocRow }
+const docKey = (store: string, path: string) => `${store}\u0000${path}`;
 
 const UPSERTS = new Set(['twin.entity', 'twin.source', 'twin.run', 'facility', 'boundary.version']);
 const isChainConflict = (e: unknown): boolean => {
@@ -409,6 +557,85 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
   let scheduled = false, flushing: Promise<void> | null = null, retryMs = 0, stopped = false;
   let retryTimer: ReturnType<typeof setTimeout> | undefined;
 
+  // ── Documents: every other store, one row per record (./documents.ts) ───
+  const DOCS = opts.documents !== false;
+  /** Each store's records as last written or read here (path → kind, JSON, version). */
+  const docKnown = new Map<string, Map<string, Known>>();
+  /** Stores used since they were last compared (lib/data/repo/track.ts). */
+  const touched = new Set<string>();
+  const docMs = opts.docMs ?? 1000, sweepMs = opts.sweepMs ?? 30_000;
+  let lastSweep = Date.now();
+  const docStatus: DocumentsStatus = { stores: 0, rows: 0, written: 0, followed: 0, merged: 0, conflicts: 0, counterOverruns: 0 };
+  const knownOf = (store: string): Map<string, Known> => docKnown.get(store) ?? docKnown.set(store, new Map()).get(store)!;
+  /** Top-level fields with typed tables: not documents. */
+  const skipOf = (store: string): Set<string> => new Set(RECORD_FIELDS[store] ?? []);
+  const liveStores = (): string[] => Object.keys(root).filter(k => STORE_KEY.test(k) && root[k] !== undefined);
+  const setStore = (store: string, v: unknown): void => { if (root[store] !== v) root[store] = v; };
+  const runFollow = (store: string): void => {
+    if (root !== (globalThis as unknown as Root)) return; // a test's second read model has no modules of its own
+    for (const e of followed(store)) log('warn', 'records.documents.follow', { store, message: e.message });
+  };
+
+  /** The records of these stores that changed since they were last written or read. */
+  const diffDocs = (keys: Iterable<string>): DocBatch[] => {
+    const out: DocBatch[] = [];
+    for (const store of keys) {
+      const v = root[store];
+      if (v === undefined || !STORE_KEY.test(store)) continue;
+      const known = knownOf(store);
+      const changes = diff(decompose(v, skipOf(store)), known).filter(c => {
+        // A record counter is written only when it went past what is recorded (other instances number from their own blocks).
+        if (c.json === null || !isCounterPath(segsOf(c.path))) return true;
+        const k = known.get(c.path);
+        const now = Number(JSON.parse(c.json)), was = k ? Number(JSON.parse(k.json)) : NaN;
+        return !(Number.isFinite(now) && Number.isFinite(was) && now <= was);
+      });
+      if (changes.length) out.push({ store, changes });
+    }
+    return out;
+  };
+  /** The stores to compare now: those used since the last flush, or every store on a sweep. */
+  const takeDocKeys = (): string[] => {
+    if (!DOCS) return [];
+    const now = Date.now();
+    if (now - lastSweep >= sweepMs) {
+      lastSweep = now; docStatus.lastSweepAt = new Date(now).toISOString();
+      touched.clear();
+      return liveStores();
+    }
+    const keys = [...touched];
+    touched.clear();
+    return keys;
+  };
+  /** After the commit: the versions written, and a merged record brought into the store (with any change made here since on top). */
+  const commitDocs = (docs: DocBatch[], results: Map<string, DocResult>): void => {
+    const changed = new Set<string>();
+    for (const d of docs) {
+      const known = knownOf(d.store);
+      for (const c of d.changes) {
+        docStatus.written++;
+        if (c.json === null) { if ((known.get(c.path)?.version ?? 0) === c.expected) known.delete(c.path); continue; }
+        const res = results.get(docKey(d.store, c.path));
+        if (!res) continue;
+        if ((known.get(c.path)?.version ?? 0) >= res.version) continue; // a later version was applied meanwhile
+        if (!res.merged) { known.set(c.path, { kind: c.kind, json: c.json, version: res.version }); continue; }
+        const final = normalise(res.merged);
+        known.set(c.path, { ...final, version: res.version });
+        const segs = segsOf(c.path);
+        const local = rowAt(root[d.store], segs, skipOf(d.store));
+        let row = final;
+        if (local && local.json !== c.json && local.kind === final.kind && (final.kind === 'value' || final.kind === 'list')) {
+          row = normalise({ kind: final.kind, json: JSON.stringify(mergeAt(segs, JSON.parse(c.json), JSON.parse(local.json), JSON.parse(final.json)).value) });
+          touched.add(d.store);
+        }
+        if (isCounterPath(segs) && Object.getOwnPropertyDescriptor(root[d.store] as object, segs[0]![1])?.get) continue;
+        setStore(d.store, applyRow(root[d.store], segs, row));
+        changed.add(d.store);
+      }
+    }
+    for (const s of changed) runFollow(s);
+  };
+
   const enqueue = (op: Op): void => {
     if (UPSERTS.has(op.topic)) {
       const k = `${op.topic}|${recordId(op)}`, text = JSON.stringify(op.data);
@@ -432,7 +659,17 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
     if (!fresh.length) return [];
     const chain = chainOf(root);
     const mine = chain.splice(chain.length - pendingAudit.size, pendingAudit.size);
-    chain.push(...fresh);
+    const others: AuditEntry[] = [];
+    for (const f of fresh) {
+      // One of this instance's own entries, committed by a flush that has not finished its bookkeeping
+      // yet (a pull can read the table in between): it keeps its place and its committed numbers.
+      const own = mine.findIndex(e => e.id === f.id);
+      if (own < 0) { chain.push(f); others.push(f); continue; }
+      const [e] = mine.splice(own, 1);
+      e!.seq = f.seq; e!.prevHash = f.prevHash; e!.hash = f.hash;
+      pendingAudit.delete(e!);
+      chain.push(e!);
+    }
     committedSeq = fresh[fresh.length - 1]!.seq;
     let prev = chain[chain.length - 1]!;
     for (const e of mine) {
@@ -440,7 +677,7 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
       chain.push(e); prev = e;
     }
     if (mine.length) { status.rebased += mine.length; rebaseEpoch++; }
-    if (isPrimary()) for (const e of fresh) { try { auditCommitted(e); } catch (err) { log('warn', 'records.audit.follow', { message: (err as Error).message }); } }
+    if (isPrimary()) for (const e of others) { try { auditCommitted(e); } catch (err) { log('warn', 'records.audit.follow', { message: (err as Error).message }); } }
     return fresh;
   };
 
@@ -448,24 +685,39 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
   const catchUpAudit = async (): Promise<AuditEntry[]> =>
     integrate((await q(sql, `select ${AUDIT_COLS} from civicos.audit_entry where seq > $1 order by seq`, [committedSeq])).map(toEntry));
 
-  const writeBatch = async (batch: Op[]): Promise<void> => {
+  /** Write the queued changes and the changed records in one transaction, with one outbox row each. */
+  const writeBatch = async (batch: Op[], docs: DocBatch[] = []): Promise<{ results: Map<string, DocResult>; merged: number; conflicts: number }> => {
+    let written = { results: new Map<string, DocResult>(), merged: 0, conflicts: 0 };
     await sql.begin(async tx => {
       for (const op of batch) await writeOp(tx, op, instance);
-      const rows = batch.map(op => ({ instance, topic: op.topic, record_id: recordId(op), payload: payloadOf(op) }));
+      const rows = batch.map(op => JSON.stringify({ instance, topic: op.topic, record_id: recordId(op), payload: payloadOf(op) }));
+      if (docs.length) {
+        written = await writeDocs(tx, docs, instance);
+        rows.push(...docOutboxRows(docs, written.results, instance));
+      }
+      if (!rows.length) return;
       const ids = await q(tx, `insert into civicos.outbox (instance, topic, record_id, payload)
                                select x.instance, x.topic, x.record_id, x.payload from jsonb_to_recordset($1::text::jsonb) as x(instance text, topic text, record_id text, payload jsonb)
-                               returning id::text as id`, [JSON.stringify(rows)]);
+                               returning id::text as id`, [`[${rows.join(',')}]`]);
       await q(tx, `select pg_notify('civicos_outbox', $1)`, [String(ids[ids.length - 1]?.id ?? '')]);
     });
+    return written;
   };
 
   const flushOnce = async (): Promise<void> => {
-    while (queue.length && !stopped) {
+    while (!stopped) {
       const batch = queue.slice();
+      // The stores used since the last flush are compared now: a change and the audit entry recording it go in one transaction.
+      const keys = takeDocKeys();
+      const docs = diffDocs(keys);
+      if (!batch.length && !docs.length) break;
+      if (journal && docs.length) appendFileSync(journal, `${JSON.stringify({ topic: 'docs', data: docs })}\n`);
       const t0 = Date.now(), epoch = rebaseEpoch;
+      let written: Awaited<ReturnType<typeof writeBatch>>;
       try {
-        await writeBatch(batch);
+        written = await writeBatch(batch, docs);
       } catch (e) {
+        for (const k of keys) touched.add(k); // compared again on the next attempt
         if (isChainConflict(e)) {
           // Another instance appended first: take its entries, move ours up, try again.
           // (The outbox listener may already have taken them in while this write was in flight.)
@@ -483,6 +735,10 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
       status.queueDepth = queue.length;
       status.flushes++; status.lastFlushAt = new Date().toISOString(); status.lastFlushMs = Date.now() - t0;
       status.error = undefined; retryMs = 0;
+      if (docs.length) {
+        docStatus.merged += written.merged; docStatus.conflicts += written.conflicts;
+        commitDocs(docs, written.results);
+      }
       const primary = isPrimary();
       for (const op of batch) {
         if (op.topic !== 'audit') continue;
@@ -503,9 +759,9 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
 
   // ── Record numbers ─────────────────────────────────────────────────────
   const sizes = { twin: opts.blockSize?.twin ?? 200, facility: opts.blockSize?.facility ?? 2000, boundary: opts.blockSize?.boundary ?? 20 };
-  const blocks = new Map<string, { next: number; end: number; refilling?: Promise<void>; spare?: { next: number; end: number } }>();
-  const reserve = async (name: keyof typeof sizes, floor: number): Promise<{ next: number; end: number }> => {
-    const size = sizes[name];
+  type Block = { next: number; end: number; refilling?: Promise<void>; spare?: { next: number; end: number } };
+  const blocks = new Map<string, Block>();
+  const reserve = async (name: string, floor: number, size: number = sizes[name as keyof typeof sizes]): Promise<{ next: number; end: number }> => {
     const r = await q(sql, `insert into civicos.record_counter (name, next_value) values ($1, $2::bigint + $3::bigint)
       on conflict (name) do update set next_value = greatest(civicos.record_counter.next_value, $2::bigint) + $3::bigint
       returning (next_value - $3::bigint)::text as start`, [name, floor, size]);
@@ -524,6 +780,70 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
     return n;
   };
   const maxNum = (ids: string[], re: RegExp): number => ids.reduce((m, id) => { const x = re.exec(id); return x ? Math.max(m, Number(x[1])) : m; }, 0);
+
+  // Each store's own counters (`seq`, `requestSeq` …, as in `SUP-${db.seq++}`) become accessors over a
+  // block reserved in civicos.record_counter (`doc:<store>.<field>`), so two instances never give the
+  // same number while every store keeps its `x++` and `++x`. One number per block is left unused so
+  // both forms stay inside it.
+  const counterSize = Math.max(4, opts.blockSize?.counter ?? 50);
+  const counterBlocks = new Map<string, Block>();
+  const pendingCounters = new Set<string>();
+  const checkedStores = new WeakSet<object>();
+  /** Keep the next block reserved ahead, so a burst of numbers never waits for the database. */
+  const topUp = (name: string, b: Block): void => {
+    if (b.spare || b.refilling) return;
+    b.refilling = reserve(name, 0, counterSize)
+      .then(s => { if (b.next >= b.end - 1) { b.next = s.next; b.end = s.end; } else b.spare = s; })
+      .catch(e => { log('error', 'records.numbers', { name, message: (e as Error).message }); })
+      .finally(() => { b.refilling = undefined; });
+  };
+  const advanceCounter = (name: string, b: Block, v: unknown): void => {
+    if (typeof v !== 'number' || !Number.isFinite(v) || v <= b.next) return;
+    b.next = v;
+    if (b.next >= b.end - 1) {
+      if (b.spare) { b.next = b.spare.next; b.end = b.spare.end; b.spare = undefined; }
+      else { docStatus.counterOverruns++; log('warn', 'records.counter.overrun', { name, next: b.next }); }
+    }
+    topUp(name, b);
+  };
+  const defineCounter = (obj: Record<string, unknown>, field: string, name: string): void => {
+    const b = counterBlocks.get(name);
+    const d = Object.getOwnPropertyDescriptor(obj, field);
+    if (!b || !d || d.get || !d.configurable) return;
+    const local = Number(d.value);
+    if (Number.isFinite(local) && local > b.next) advanceCounter(name, b, local);
+    Object.defineProperty(obj, field, { configurable: true, enumerable: true, get: () => b.next, set: (v: unknown) => advanceCounter(name, b, v) });
+  };
+  /** Give a store's counters their blocks (at once when reserved, else once the reservation arrives). */
+  const ensureCounters = (store: string, obj: unknown): Promise<unknown> | undefined => {
+    if (!DOCS || !obj || typeof obj !== 'object') return undefined;
+    const waits: Promise<void>[] = [];
+    for (const field of counterFields(obj)) {
+      const name = `doc:${store}.${field}`;
+      if (counterBlocks.has(name)) { defineCounter(obj as Record<string, unknown>, field, name); continue; }
+      if (pendingCounters.has(name)) continue;
+      pendingCounters.add(name);
+      waits.push(reserve(name, Number((obj as Record<string, unknown>)[field]) || 0, counterSize)
+        .then(blk => {
+          const b: Block = { next: blk.next, end: blk.end };
+          counterBlocks.set(name, b);
+          topUp(name, b);
+          const cur = root[store];
+          if (cur && typeof cur === 'object') defineCounter(cur as Record<string, unknown>, field, name);
+        })
+        .catch(e => { log('error', 'records.numbers', { name, message: (e as Error).message }); })
+        .finally(() => { pendingCounters.delete(name); }));
+    }
+    return waits.length ? Promise.all(waits) : undefined;
+  };
+  /** A store was used (track.ts): compare it at the next flush; a store object seen for the first time gets its counters. */
+  const onUse = (store: string, obj: unknown): void => {
+    touched.add(store);
+    if (obj && typeof obj === 'object' && !checkedStores.has(obj)) {
+      checkedStores.add(obj);
+      void ensureCounters(store, obj);
+    }
+  };
 
   // ── The backend's repositories ─────────────────────────────────────────
   const backend: Backend = {
@@ -578,7 +898,20 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
   // ── Start: replay, import, load ────────────────────────────────────────
   // 1. A journal left by a crash: replayed in order (idempotent); audit entries not yet in the chain go on its current head.
   if (journal && existsSync(journal)) {
-    const ops = readFileSync(journal, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l) as Op; } catch { return null; } }).filter((x): x is Op => !!x);
+    type Line = Op | { topic: 'docs'; data: DocBatch[] };
+    const lines = readFileSync(journal, 'utf8').split('\n').filter(Boolean).map(l => { try { return JSON.parse(l) as Line; } catch { return null; } }).filter((x): x is Line => !!x);
+    const ops = lines.filter((l): l is Op => l.topic !== 'docs');
+    const docLines = lines.flatMap(l => (l.topic === 'docs' ? (l.data as DocBatch[]) : []));
+    if (docLines.length) {
+      await sql.begin(async tx => {
+        const results = await replayDocs(tx, docLines, instance);
+        const applied = docLines.map(d => ({ store: d.store, changes: d.changes.filter(c => results.has(docKey(d.store, c.path))) })).filter(d => d.changes.length);
+        const rows = docOutboxRows(applied, results, instance);
+        if (rows.length) await q(tx, `insert into civicos.outbox (instance, topic, record_id, payload)
+                                     select x.instance, x.topic, x.record_id, x.payload from jsonb_to_recordset($1::text::jsonb) as x(instance text, topic text, record_id text, payload jsonb)`, [`[${rows.join(',')}]`]);
+      });
+      log('info', 'records.journal.replay', { records: docLines.reduce((n, d) => n + d.changes.length, 0) });
+    }
     if (ops.length) {
       await sql.begin(async tx => {
         await q(tx, `select pg_advisory_xact_lock(hashtext('civicos.records.audit'))`);
@@ -620,9 +953,19 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
   }
   if (Number(counts.facilities) === 0) imports.push(...facilitiesOf(root).facilities.map(f => ({ topic: 'facility' as const, data: f })));
   if (Number(counts.versions) === 0) imports.push(...boundariesOf(root).versions.map(v => ({ topic: 'boundary.version' as const, data: v })));
-  if (imports.length) {
-    await writeBatch(imports);
-    log('info', 'records.import', { records: imports.length });
+  // Every other store live here (restored from a snapshot, or seeded) and not yet in civicos.record_doc.
+  const docImports: DocBatch[] = [];
+  if (DOCS) {
+    const have = new Set((await q(sql, `select distinct store from civicos.record_doc`)).map(r => String(r.store)));
+    for (const store of liveStores()) {
+      if (have.has(store)) continue;
+      const changes = diff(decompose(root[store], skipOf(store)), new Map());
+      if (changes.length) docImports.push({ store, changes });
+    }
+  }
+  if (imports.length || docImports.length) {
+    await writeBatch(imports, docImports);
+    log('info', 'records.import', { records: imports.length, documents: docImports.reduce((n, d) => n + d.changes.length, 0) });
   }
 
   // 3. The read model, from the tables, with the outbox position in the same snapshot.
@@ -646,6 +989,24 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
     fs.facilities = (await q(tx, `select doc from civicos.facility order by pos`)).map(r => doc<Facility>(r));
     const bs = boundariesOf(root);
     bs.versions = await loadVersions(tx);
+    // Every other store from its records, put into the store objects modules already hold (in place).
+    if (DOCS) {
+      const byStore = new Map<string, Row[]>();
+      for (const r of await q(tx, `select store, path, kind, doc::text as doc, version::text as version from civicos.record_doc order by store, pos`)) {
+        (byStore.get(String(r.store)) ?? byStore.set(String(r.store), []).get(String(r.store))!).push(r);
+      }
+      docKnown.clear();
+      for (const [store, rows] of byStore) {
+        const known = knownOf(store);
+        const records = rows.map(r => {
+          const row = normalise({ kind: String(r.kind) as Kind, json: String(r.doc) });
+          known.set(String(r.path), { ...row, version: Number(r.version) });
+          return { path: String(r.path), ...row };
+        });
+        const built = build(records);
+        setStore(store, root[store] === undefined ? built : replaceInPlace(root[store], built, skipOf(store)));
+      }
+    }
   });
   status.outboxSeen = outboxSeen;
   // Transactions still open while the read model loaded may have taken lower outbox ids: ask for those again.
@@ -663,12 +1024,67 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
   blocks.set('twin', await reserve('twin', twinFloor));
   blocks.set('facility', await reserve('facility', facFloor));
   blocks.set('boundary', await reserve('boundary', bndFloor));
+  // Every store's own counters, and from now on every store used is noted (track.ts).
+  if (DOCS) {
+    await Promise.all(liveStores().map(s => { const o = root[s]; if (o && typeof o === 'object') checkedStores.add(o); return ensureCounters(s, o); }));
+    if (root === (globalThis as unknown as Root)) listenForUse(onUse);
+  }
 
   // ── Following other instances ──────────────────────────────────────────
+  /** Stores another instance's records reached during a pull (their onFollow hooks run once it ends). */
+  const followedStores = new Set<string>();
+  /**
+   * Another instance's record: put into the store in place. A record changed
+   * here and not written yet is merged with it (mergeAt) and written back on
+   * the next flush; this instance's own counters keep their blocks.
+   */
+  const applyRemoteDoc = async (p: Record<string, unknown>): Promise<void> => {
+    if (!DOCS) return;
+    const store = String(p.store), path = String(p.path);
+    if (!STORE_KEY.test(store)) return;
+    const segs = segsOf(path), known = knownOf(store), k = known.get(path);
+    const local = root[store] === undefined ? undefined : rowAt(root[store], segs, skipOf(store));
+    const dirty = !!local && (!k || local.kind !== k.kind || local.json !== k.json);
+    if (p.deleted) {
+      if (!k && !local) return;
+      known.delete(path);
+      if (dirty) { docStatus.conflicts++; touched.add(store); return; } // changed here since: kept, and written again
+      removeAt(root[store], segs);
+      followedStores.add(store); docStatus.followed++;
+      return;
+    }
+    let version = Number(p.version ?? 0);
+    if (k && version && k.version >= version) return;
+    let row: DocRow | null = p.doc !== undefined && p.kind !== undefined ? { kind: String(p.kind) as Kind, json: JSON.stringify(p.doc) } : null;
+    if (!row || !version) {
+      const cur = (await q(sql, `select kind, doc::text as doc, version::text as version from civicos.record_doc where store = $1 and path = $2`, [store, path]))[0];
+      if (!cur) return; // removed since; its removal follows
+      row = { kind: String(cur.kind) as Kind, json: String(cur.doc) };
+      version = Number(cur.version);
+      if (k && k.version >= version) return;
+    }
+    const theirs = normalise(row);
+    known.set(path, { ...theirs, version });
+    docStatus.followed++;
+    const holder = root[store];
+    if (isCounterPath(segs) && holder && typeof holder === 'object' && Object.getOwnPropertyDescriptor(holder, segs[0]![1])?.get) return;
+    let apply = theirs;
+    if (dirty) {
+      touched.add(store);
+      if (local!.kind !== theirs.kind) { docStatus.conflicts++; return; }
+      if (theirs.kind === 'object' || theirs.kind === 'map') return;
+      const m = mergeAt(segs, k ? JSON.parse(k.json) : undefined, JSON.parse(local!.json), JSON.parse(theirs.json));
+      apply = normalise({ kind: theirs.kind, json: JSON.stringify(m.value) });
+      docStatus.merged++; docStatus.conflicts += m.conflicts;
+    }
+    setStore(store, applyRow(root[store], segs, apply));
+    followedStores.add(store);
+  };
   const applyRemote = async (r: Row): Promise<void> => {
     const topic = String(r.topic), p = (typeof r.payload === 'string' ? JSON.parse(r.payload) : r.payload) as Record<string, unknown>;
     const tw2 = twinOf(root);
     switch (topic) {
+      case 'doc': await applyRemoteDoc(p); return;
       case 'audit': await catchUpAudit(); return;
       case 'twin.entity': { const e = p as unknown as TwinEntity; tw2.entities[e.id] = e; return; }
       case 'twin.key': memoryTwin(() => tw2).addKey(p as unknown as { entityId: string; system: string; key: string }); return;
@@ -730,6 +1146,9 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
     }
     status.lastPullAt = new Date().toISOString();
     if (!applied) status.lagMs = 0;
+    for (const s of followedStores) runFollow(s);
+    followedStores.clear();
+    if (touched.size) schedule(); // records merged here are written back
     return applied;
   };
   const pull = (): Promise<number> => {
@@ -740,26 +1159,42 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
   const listener = sql.listen ? await sql.listen('civicos_outbox', () => { void pull(); }).catch(() => null) : null;
   const poll = setInterval(() => { void pull(); }, opts.pollMs ?? 2000);
   poll.unref?.();
+  // Changes made without an audit entry: the stores used are compared every docMs, every store every sweepMs.
+  const docTimer = DOCS ? setInterval(() => { if (touched.size || Date.now() - lastSweep >= sweepMs) schedule(); }, docMs) : undefined;
+  docTimer?.unref?.();
 
   return {
     backend,
     sql,
-    status: () => ({ ...status, queueDepth: queue.length }),
+    status: () => {
+      const s: RecordsStatus = { ...status, queueDepth: queue.length };
+      if (DOCS) s.documents = { ...docStatus, stores: docKnown.size, rows: [...docKnown.values()].reduce((n, m) => n + m.size, 0) };
+      return s;
+    },
     async drain(timeoutMs = 10_000) {
       const until = Date.now() + timeoutMs;
-      while (queue.length && Date.now() < until) {
+      // Every store is compared once more, so a change made without its accessor is written too.
+      if (DOCS) lastSweep = 0;
+      for (;;) {
         // While a failed write waits for its retry, wait with it rather than push.
         if (!retryTimer) await flush();
-        if (queue.length) await new Promise(r => setTimeout(r, 50));
+        const pending = queue.length > 0 || (DOCS && diffDocs(liveStores()).length > 0);
+        if (!pending) return true;
+        if (Date.now() >= until) return false;
+        if (DOCS) lastSweep = 0;
+        await new Promise(r => setTimeout(r, 50));
       }
-      return queue.length === 0;
     },
     pull,
     stateAsOf: (query = {}) => stateAsOfSql(sql, query),
+    owns: (key: string) => DOCS && STORE_KEY.test(key),
+    ownsAll: DOCS,
     async stop() {
       stopped = true;
       clearInterval(poll);
+      if (docTimer) clearInterval(docTimer);
       if (retryTimer) clearTimeout(retryTimer);
+      if (DOCS && root === (globalThis as unknown as Root)) listenForUse(undefined);
       await flushing;
       await listener?.unlisten().catch(() => undefined);
     },

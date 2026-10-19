@@ -17,9 +17,13 @@
 //   postgres  the nation's own Postgres (DATABASE_URL): the audit chain, the
 //             twin's entities, keys, sources, runs and observations, the
 //             facility register and the boundary versions as per-record tables,
-//             written through on every change (lib/data/repo/postgres.ts);
-//             every other store as a snapshot in civicos.platform_state, as in
-//             supabase mode, under the same single writer's lease
+//             and every other store (nation profile, ministries, officials,
+//             Update Center, public sites, scenarios, metrics, event outbox,
+//             signed heads …) as per-record documents (civicos.record_doc,
+//             lib/data/repo/documents.ts), all written through on every change
+//             (lib/data/repo/postgres.ts); civicos.platform_state snapshots
+//             are only read, to import an installation moving from file or
+//             supabase state
 //   unset     memory only, as before (development and demonstrations)
 //
 // One writer: one running server owns the state. Before it restores anything
@@ -36,16 +40,20 @@
 // few seconds before a crash can still be lost. Status: persistenceStatus(),
 // shown in /api/health. Recorded in docs/INTEGRATION_REGISTER.md 1.1.
 //
-// With CIVICOS_STATE=postgres the per-record registers are not single-writer:
-// any instance takes their changes (RECORD_ROUTES, also on a standby), they
-// are durable when committed, and every instance follows the others through
-// the outbox. The other stores stay single-writer until they move too.
+// With CIVICOS_STATE=postgres nothing is single-writer: every store is in the
+// record tables, any instance takes any change (a server without the lease is
+// a follower, not a standby), changes are durable when committed, and every
+// instance follows the others through the outbox. The lease then only names
+// the instance that runs what follows a durable audit entry (CloudEvents,
+// signed heads); a follower takes it over when its holder stops renewing it.
+// (RECORD_ROUTES is what a standby takes when the documents are turned off.)
 
 import { promises as fs, readFileSync, unlinkSync } from 'node:fs';
 import { randomUUID } from 'node:crypto';
 import os from 'node:os';
 import path from 'node:path';
 import { withSpan } from '@/lib/ops/trace';
+import { encode, decode } from '@/lib/data/encode';
 import { useBackend } from '@/lib/data/repo';
 import type { Records, RecordsStatus } from '@/lib/data/repo/postgres';
 
@@ -82,26 +90,8 @@ export class FencingUnavailableError extends Error {
 export const SNAPSHOT_FORMAT = 1;
 const KEY = /^__civicos[A-Za-z0-9_]*$/;
 
-// ── Serialisation that keeps Maps, Sets and Dates ─────────────────────────
-type Tagged = { $map: [unknown, unknown][] } | { $set: unknown[] } | { $date: string };
-function replacer(this: unknown, k: string, v: unknown): unknown {
-  const raw = (this as Record<string, unknown>)[k];
-  if (raw instanceof Map) return { $map: [...raw.entries()] };
-  if (raw instanceof Set) return { $set: [...raw.values()] };
-  if (raw instanceof Date) return { $date: raw.toISOString() };
-  return v;
-}
-function reviver(_k: string, v: unknown): unknown {
-  if (v && typeof v === 'object' && !Array.isArray(v)) {
-    const t = v as Tagged;
-    if ('$map' in t && Array.isArray(t.$map)) return new Map(t.$map);
-    if ('$set' in t && Array.isArray(t.$set)) return new Set(t.$set);
-    if ('$date' in t && typeof t.$date === 'string' && Object.keys(t).length === 1) return new Date(t.$date);
-  }
-  return v;
-}
-export const encode = (value: unknown): string => JSON.stringify(value, replacer);
-export const decode = (json: string): unknown => JSON.parse(json, reviver);
+// ── Serialisation that keeps Maps, Sets and Dates (lib/data/encode.ts) ─────
+export { encode, decode };
 
 // ── Adapters ──────────────────────────────────────────────────────────────
 const LOCK = '.writer.lock';
@@ -268,6 +258,8 @@ export interface PersistenceStatus {
   fencing?: 'lease+version' | 'none';
   /** The lease as last seen: who holds it and until when. */
   lease?: { holder: string; expiresAt: string };
+  /** What this server's role means now, when it is not a problem (a follower in postgres mode). */
+  note?: string;
   /** Save ticks skipped because nothing was audited since the last save (review D2). */
   skipped?: number;
   /** CIVICOS_STATE=postgres: the per-record tables (queue depth, outbox lag, PostGIS). */
@@ -347,6 +339,8 @@ export async function flush(adapter: StateAdapter, now = new Date(), writer?: st
   const versions = (g.__persistVersions ??= new Map());
   const written: string[] = [];
   for (const key of liveKeys()) {
+    // CIVICOS_STATE=postgres: a store kept as per-record documents has no snapshot.
+    if (g.__persistRecords?.owns?.(key)) continue;
     const data = encode(snapshotOf(key));
     if (last.get(key) === data) continue;
     const json = JSON.stringify({ v: SNAPSHOT_FORMAT, at: now.toISOString(), ...(writer ? { writer } : {}), data: JSON.parse(data) });
@@ -373,6 +367,8 @@ export function persistenceStatus(): Status {
 export function stateWritable(pathname?: string): boolean {
   const r = g.__persistStatus?.role;
   if (r !== 'standby' && r !== 'stopped') return true;
+  // Every store in the record tables (the default in postgres mode): any instance takes any change.
+  if (g.__persistRecords?.ownsAll) return true;
   return !!g.__persistRecords && !!pathname && RECORD_ROUTES.some(re => re.test(pathname));
 }
 
@@ -461,6 +457,10 @@ export async function startFromEnv(env = process.env): Promise<Status> {
         sql, instance: writer, isPrimary: () => status.role === 'writer',
         journalDir: env.CIVICOS_PG_JOURNAL_DIR || path.join(stateDir, 'journal'),
         pollMs: Number(env.CIVICOS_PG_POLL_MS) || 2000,
+        // Every other store as per-record documents unless turned off (then they keep single-writer snapshots, as before).
+        documents: (env.CIVICOS_PG_DOCUMENTS ?? '').toLowerCase() !== 'off',
+        docMs: Number(env.CIVICOS_PG_DOC_MS) || 1000,
+        sweepMs: Number(env.CIVICOS_PG_SWEEP_MS) || 30_000,
       });
       useBackend(records.backend);
       keepOutOfSnapshot(pg.RECORD_FIELDS);
@@ -474,22 +474,34 @@ export async function startFromEnv(env = process.env): Promise<Status> {
   // Baseline: what was just restored needs no immediate write.
   const last = (g.__persistLast ??= new Map());
   for (const k of status.restored) last.set(k, encode(snapshotOf(k)));
-  if (status.role === 'standby') {
+  // Every store in the record tables (postgres mode): the lease no longer guards the state, only which
+  // instance runs what follows a durable audit entry (CloudEvents, signed heads). A follower takes every
+  // change, and takes the lease over when its holder stops renewing it.
+  const follower = (holder: string, until: string) => `follower: ${holder} holds the writer's lease until ${until}; this server takes every change (every store is per record in the database) and takes the lease over when it runs out`;
+  const allRecords = !!records?.ownsAll;
+  if (status.role === 'standby' && allRecords && status.error?.startsWith('standby:') && status.lease) status.error = undefined;
+  if (status.role === 'standby' && !allRecords) {
     if (records && status.error?.startsWith('standby:')) status.error = status.error.replace('saves nothing and refuses changes', 'saves no snapshot and takes only changes to the per-record registers (RECORD_ROUTES)');
     // A standby still takes record changes: write them out before it stops.
     if (records) for (const sig of ['SIGTERM', 'SIGINT'] as const) process.once(sig, () => { void records!.drain(5000).finally(() => process.exit(0)); });
     return status;
   }
+  if (status.role === 'standby' && status.lease) status.note = follower(status.lease.holder, status.lease.expiresAt);
 
   let timer: ReturnType<typeof setInterval> | undefined;
   const stop = (why: string) => { status.role = 'stopped'; status.error = why; if (timer) clearInterval(timer); };
   const save = async (): Promise<void> => {
-    if (status.role !== 'writer') return;
+    if (status.role === 'stopped' || (status.role === 'standby' && !allRecords)) return;
     try {
       if (fenced && adapter.lease) {
         const lease = await adapter.lease(writer, ttl);
         status.lease = { holder: lease.holder, expiresAt: lease.expiresAt };
-        if (!lease.acquired) return stop(`stopped: the state writer's lease passed to ${lease.holder}; changes made here since the last save were not saved. Restart this server.`);
+        if (allRecords && status.error?.startsWith('could not take the state writer')) status.error = undefined;
+        if (!lease.acquired) {
+          if (allRecords) { status.role = 'standby'; status.note = follower(lease.holder, lease.expiresAt); return; }
+          return stop(`stopped: the state writer's lease passed to ${lease.holder}; changes made here since the last save were not saved. Restart this server.`);
+        }
+        if (status.role === 'standby') { status.role = 'writer'; status.note = undefined; }
       }
       // Nothing audited since the last save and a full sweep recently: no store is encoded this tick.
       if (quietSince(Date.now(), sweep)) { status.skipped = (status.skipped ?? 0) + 1; return; }

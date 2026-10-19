@@ -12,6 +12,7 @@
 import type { AdvisoryExposure, AdvisoryNationStatus, AdvisorySeverity, DistributionRelease, PatchCommitment, SecurityAdvisory, SubscribedNation } from '@/lib/api/types';
 import { recordAudit } from '@/lib/data/store/audit';
 import { compareVersions, gte } from '@/lib/updates/semver';
+import { touch } from '@/lib/data/repo/track';
 
 /** Publisher patch-time commitments: from disclosure to a released fix. */
 export const PATCH_COMMITMENTS: Record<AdvisorySeverity, number> = { critical: 72, high: 14 * 24, medium: 30 * 24, low: 90 * 24 };
@@ -35,7 +36,7 @@ function seed(): AdvDb {
   };
 }
 const g = globalThis as unknown as { __civicosAdvisories?: AdvDb };
-function adb(): AdvDb { return (g.__civicosAdvisories ??= seed()); }
+function adb(): AdvDb { return touch('__civicosAdvisories', g.__civicosAdvisories ??= seed()); }
 export function resetAdvisories(): void { g.__civicosAdvisories = seed(); }
 
 export function listAdvisories(): SecurityAdvisory[] {

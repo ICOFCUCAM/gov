@@ -49,11 +49,14 @@ What the chart sets up for the Next.js app (`templates/app.yaml`):
   (`app.state.mode`; `file` puts the state on a persistent volume).
   Apply the app's Supabase migrations first (`app/supabase/migrations`,
   including `civicos_platform_state_fencing`).
-- **One replica, `Recreate` strategy.** The platform state has a single
-  writer (`app/src/lib/data/persist.ts`: a writer lease and versioned saves);
-  the chart refuses more replicas until the state moves to a multi-writer
-  store (architecture review R6). Every profile runs one app replica; the
-  civic-api still scales.
+- **One replica, `Recreate` strategy**, unless `app.state.mode: postgres`.
+  With file or supabase state the platform has a single writer
+  (`app/src/lib/data/persist.ts`: a writer lease and versioned saves) and the
+  chart refuses more replicas. With `postgres` every store is kept per record
+  in the nation's Postgres (typed tables, and `civicos.record_doc` for the
+  rest; architecture review R6), every replica takes every change and follows
+  the others, and the chart allows `app.replicas > 1` with rolling updates.
+  Every profile runs one app replica by default; the civic-api still scales.
 - Probes: readiness `/api/health?ready` (503 while the server does not hold
   the writer's lease), liveness and start-up `/api/health?live`.
 - The ingress drops the `x-middleware-subrequest` header (needs snippet

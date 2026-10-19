@@ -13,6 +13,7 @@
 
 import { randomUUID } from 'node:crypto';
 import type { AuditEntry } from '@/lib/api/types';
+import { touch } from '@/lib/data/repo/track';
 
 export const EVENT_SOURCE = '/civicos/platform';
 export const TYPE_PREFIX = 'org.civicos.';
@@ -39,7 +40,7 @@ export interface Delivery { webhookId: string; eventId: string; type: string; at
 
 const g = globalThis as unknown as { __civicosEventOutbox?: Db };
 export const outboxDb = (): Db => {
-  const d = (g.__civicosEventOutbox ??= { events: [], cursors: {}, deliveries: [] });
+  const d = touch('__civicosEventOutbox', g.__civicosEventOutbox ??= { events: [], cursors: {}, deliveries: [] });
   d.events ??= []; d.cursors ??= {}; d.deliveries ??= [];
   return d;
 };

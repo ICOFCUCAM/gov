@@ -22,6 +22,7 @@ import { translatableStrings, translationProblem, type TranslationEntries } from
 import { locales } from '@/lib/i18n/config';
 import { fillDeep, siteTokens } from '@/lib/public-sites/tokens';
 import { queueUpdate } from './site-subscriptions';
+import { tracked } from '@/lib/data/repo/track';
 
 export interface SiteChange {
   /** Fields of the site's content; each replaces the published (or reference) field whole. */
@@ -82,7 +83,8 @@ export interface SiteEditorial {
 }
 
 const g = globalThis as unknown as { __civicosEditorial?: Map<string, SiteEditorial> };
-const db = (g.__civicosEditorial ??= new Map<string, SiteEditorial>());
+// Held at module level: wrapped so every use is noted (lib/data/repo/track.ts).
+const db = tracked('__civicosEditorial', g.__civicosEditorial ??= new Map<string, SiteEditorial>());
 
 export function siteEditorial(siteId: string): SiteEditorial {
   return db.get(siteId) ?? { siteId, version: 0, versions: [], proposals: [], translations: {} };

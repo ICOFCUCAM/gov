@@ -7,6 +7,7 @@
 // register itself. Nothing is ever removed from it.
 
 import type { Observation, TwinRun } from './register';
+import { touch } from '@/lib/data/repo/track';
 
 export interface ArchiveMove { at: string; observations: number; runs: number; oldestRecordedAt?: string; newestRecordedAt?: string }
 
@@ -19,7 +20,7 @@ interface TwinArchive {
 
 const g = globalThis as unknown as { __civicosTwinArchive?: TwinArchive };
 function adb(): TwinArchive {
-  const a = (g.__civicosTwinArchive ??= { observations: {}, runs: [], moves: [] });
+  const a = touch('__civicosTwinArchive', g.__civicosTwinArchive ??= { observations: {}, runs: [], moves: [] });
   a.observations ??= {}; a.runs ??= []; a.moves ??= [];
   return a;
 }

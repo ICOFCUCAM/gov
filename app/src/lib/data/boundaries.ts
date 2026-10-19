@@ -42,6 +42,7 @@ import type { Geom } from '@/lib/geo/admin1';
 import { nameKeys } from '@/lib/map/names';
 import { pickActive, type ActiveBoundary, type BoundarySource, type BoundaryUnit } from '@/lib/map/boundary-active';
 import { coverage, kinksOf, nesting, sliversOf } from '@/lib/geo/topology';
+import { touch } from '@/lib/data/repo/track';
 
 export type { BoundarySource, BoundaryUnit, BoundaryFormat, Simplification };
 export type Level = 1 | 2;
@@ -111,7 +112,7 @@ export interface BoundaryVersion {
 
 interface Db { versions: BoundaryVersion[]; seq: number }
 const g = globalThis as unknown as { __civicosBoundaries?: Db };
-const db = (): Db => { const d = (g.__civicosBoundaries ??= { versions: [], seq: 1 }); d.versions ??= []; d.seq ??= 1; return d; };
+const db = (): Db => { const d = touch('__civicosBoundaries', g.__civicosBoundaries ??= { versions: [], seq: 1 }); d.versions ??= []; d.seq ??= 1; return d; };
 /** Versions change through the persistence port (lib/data/repo): memory, or written through to Postgres. */
 const repo = () => boundaryRepo(db);
 export function resetBoundaries(): void { g.__civicosBoundaries = undefined; }

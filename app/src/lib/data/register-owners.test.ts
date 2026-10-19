@@ -28,6 +28,11 @@ describe('one owner per register', () => {
     expect(missing, 'add the new store to lib/data/register-owners.ts').toEqual([]);
   });
 
+  it('every register the platform owns names how it is kept per record with CIVICOS_STATE=postgres', () => {
+    const without = REGISTER_OWNERS.filter(r => r.owner.where === 'platform' && !/^CIVICOS_STATE=postgres: per-record (tables|documents)/.test(r.storage ?? '')).map(r => r.id);
+    expect(without).toEqual([]);
+  });
+
   it('every civic-api module is accounted for', () => {
     const modules = readdirSync(join(ROOT, 'services', 'civic-api', 'src', 'modules'));
     const named = REGISTER_OWNERS.flatMap(r => r.copies.filter(c => c.where === 'civic-api').map(c => c.what.split('/').pop()));

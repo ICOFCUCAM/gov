@@ -7490,7 +7490,7 @@
         ],
         "operationId": "get_health",
         "summary": "GET /api/health",
-        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, whether traces go to the nation's collector, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe). With CIVICOS_STATE=postgres, `persistence.database` reports the per-record tables (lib/data/repo/postgres.ts): the adapter, PostGIS, the write queue's depth, how far behind other instances' changes this one is (outbox lag) and any write error. A standby there still serves reads and record changes, so it reports ready while its tables are healthy.",
+        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, whether traces go to the nation's collector, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe). With CIVICOS_STATE=postgres, `persistence.database` reports the per-record tables (lib/data/repo/postgres.ts): the adapter, PostGIS, the write queue's depth, how far behind other instances' changes this one is (outbox lag) and any write error, and the per-record documents every other store is kept as (stores, records, merges). A standby there still serves reads and record changes (every change, once every store is in the tables: a follower), so it reports ready while its tables are healthy.",
         "parameters": [],
         "responses": {
           "200": {
@@ -7645,6 +7645,16 @@
                                 }
                               ]
                             },
+                            "note": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string"
+                                }
+                              ]
+                            },
                             "database": {
                               "anyOf": [
                                 {
@@ -7701,6 +7711,48 @@
                                           "type": "string"
                                         }
                                       ]
+                                    },
+                                    "documents": {
+                                      "anyOf": [
+                                        {
+                                          "type": "null"
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "stores": {
+                                              "type": "number"
+                                            },
+                                            "rows": {
+                                              "type": "number"
+                                            },
+                                            "written": {
+                                              "type": "number"
+                                            },
+                                            "followed": {
+                                              "type": "number"
+                                            },
+                                            "merged": {
+                                              "type": "number"
+                                            },
+                                            "conflicts": {
+                                              "type": "number"
+                                            },
+                                            "counterOverruns": {
+                                              "type": "number"
+                                            }
+                                          },
+                                          "required": [
+                                            "stores",
+                                            "rows",
+                                            "written",
+                                            "followed",
+                                            "merged",
+                                            "conflicts",
+                                            "counterOverruns"
+                                          ]
+                                        }
+                                      ]
                                     }
                                   },
                                   "required": [
@@ -7712,7 +7764,8 @@
                                     "lastPullAt",
                                     "followed",
                                     "rebased",
-                                    "error"
+                                    "error",
+                                    "documents"
                                   ]
                                 }
                               ]
@@ -7731,6 +7784,7 @@
                             "leaseHolder",
                             "leaseExpiresAt",
                             "error",
+                            "note",
                             "database"
                           ]
                         },
@@ -7959,6 +8013,16 @@
                                 }
                               ]
                             },
+                            "note": {
+                              "anyOf": [
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "string"
+                                }
+                              ]
+                            },
                             "database": {
                               "anyOf": [
                                 {
@@ -8015,6 +8079,48 @@
                                           "type": "string"
                                         }
                                       ]
+                                    },
+                                    "documents": {
+                                      "anyOf": [
+                                        {
+                                          "type": "null"
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "stores": {
+                                              "type": "number"
+                                            },
+                                            "rows": {
+                                              "type": "number"
+                                            },
+                                            "written": {
+                                              "type": "number"
+                                            },
+                                            "followed": {
+                                              "type": "number"
+                                            },
+                                            "merged": {
+                                              "type": "number"
+                                            },
+                                            "conflicts": {
+                                              "type": "number"
+                                            },
+                                            "counterOverruns": {
+                                              "type": "number"
+                                            }
+                                          },
+                                          "required": [
+                                            "stores",
+                                            "rows",
+                                            "written",
+                                            "followed",
+                                            "merged",
+                                            "conflicts",
+                                            "counterOverruns"
+                                          ]
+                                        }
+                                      ]
                                     }
                                   },
                                   "required": [
@@ -8026,7 +8132,8 @@
                                     "lastPullAt",
                                     "followed",
                                     "rebased",
-                                    "error"
+                                    "error",
+                                    "documents"
                                   ]
                                 }
                               ]
@@ -8045,6 +8152,7 @@
                             "leaseHolder",
                             "leaseExpiresAt",
                             "error",
+                            "note",
                             "database"
                           ]
                         },
@@ -8170,7 +8278,7 @@
         ],
         "operationId": "post_health",
         "summary": "POST /api/health",
-        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, whether traces go to the nation's collector, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe). With CIVICOS_STATE=postgres, `persistence.database` reports the per-record tables (lib/data/repo/postgres.ts): the adapter, PostGIS, the write queue's depth, how far behind other instances' changes this one is (outbox lag) and any write error. A standby there still serves reads and record changes, so it reports ready while its tables are healthy.",
+        "description": "/api/health — diagnostic ping with a substrate reachability probe. Public (no auth) — returns minimal information so it's safe to expose to monitoring systems. Reports: ok flag, substrate-configured flag, substrate-reachable flag (via a cheap count on a public view), and where the platform keeps its state (lib/data/persist.ts): mode, last save, this server's role as state writer, who holds the writer's lease, and any error. Probes (Helm chart): `?live` answers at once without asking the substrate (liveness); `?ready` answers 503 while this server cannot take changes (a standby without the writer's lease, a writer that stopped saving, or a failed restore), so no traffic reaches it (readiness). Without either, the answer is always 200, as before. Also (counts only, nothing personal): the platform audit chain (entries, intact), twin sources overdue against their schedule, warnings and errors logged in the last hour, whether traces go to the nation's collector, and an overall status: ok, degraded (something needs attention but changes are safe) or down (changes are not safe). With CIVICOS_STATE=postgres, `persistence.database` reports the per-record tables (lib/data/repo/postgres.ts): the adapter, PostGIS, the write queue's depth, how far behind other instances' changes this one is (outbox lag) and any write error, and the per-record documents every other store is kept as (stores, records, merges). A standby there still serves reads and record changes (every change, once every store is in the tables: a follower), so it reports ready while its tables are healthy.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -15577,6 +15685,10 @@
                             "expiresAt"
                           ],
                           "description": "The lease as last seen: who holds it and until when."
+                        },
+                        "note": {
+                          "type": "string",
+                          "description": "What this server's role means now, when it is not a problem (a follower in postgres mode)."
                         },
                         "skipped": {
                           "type": "number",
@@ -32886,6 +32998,48 @@
           "alarmed"
         ]
       },
+      "DocumentsStatus": {
+        "type": "object",
+        "properties": {
+          "stores": {
+            "type": "number",
+            "description": "Stores kept as documents, and their records."
+          },
+          "rows": {
+            "type": "number"
+          },
+          "written": {
+            "type": "number",
+            "description": "Records written by this instance, and applied from others."
+          },
+          "followed": {
+            "type": "number"
+          },
+          "merged": {
+            "type": "number",
+            "description": "Records two instances changed at once (merged three ways), and values both changed differently (the later write kept)."
+          },
+          "conflicts": {
+            "type": "number"
+          },
+          "counterOverruns": {
+            "type": "number",
+            "description": "Record numbers given past a reserved block before the next one arrived (should stay 0)."
+          },
+          "lastSweepAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "stores",
+          "rows",
+          "written",
+          "followed",
+          "merged",
+          "conflicts",
+          "counterOverruns"
+        ]
+      },
       "Draft": {
         "type": "object",
         "properties": {
@@ -39302,6 +39456,9 @@
           },
           "error": {
             "type": "string"
+          },
+          "documents": {
+            "$ref": "#/components/schemas/DocumentsStatus"
           }
         },
         "required": [

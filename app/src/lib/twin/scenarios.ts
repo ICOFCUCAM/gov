@@ -12,6 +12,7 @@ import { stateAsOf, getEntity, regionEntities, isoDate, onObservations } from '.
 import { getMetric } from './metrics';
 import { resolveNation, releaseFor } from '@/lib/data/updates';
 import { sourceCommit } from '@/lib/data/supply-chain';
+import { touch } from '@/lib/data/repo/track';
 
 export interface Assumption {
   /** An entity id, or "*" for every entity with a value. */
@@ -74,7 +75,7 @@ export interface CalibrationEntry {
 
 interface Db { scenarios: Scenario[]; seq: number; calibration: CalibrationEntry[] }
 const g = globalThis as unknown as { __civicosTwinScenarios?: Db };
-const db = (): Db => { const d = (g.__civicosTwinScenarios ??= { scenarios: [], seq: 1, calibration: [] }); d.calibration ??= []; return d; };
+const db = (): Db => { const d = touch('__civicosTwinScenarios', g.__civicosTwinScenarios ??= { scenarios: [], seq: 1, calibration: [] }); d.calibration ??= []; return d; };
 export function resetScenarios(): void { g.__civicosTwinScenarios = undefined; }
 
 const MAX_ASSUMPTIONS = 50;

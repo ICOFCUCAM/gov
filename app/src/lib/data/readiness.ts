@@ -18,6 +18,7 @@ import type { DistributionRelease, PreflightFinding, PreflightReport, StagingEnv
 import { recordAudit, listIntegrations, listConfigs, listMinistries } from './store';
 import { listSoftware } from './security-store';
 import { federationSeed } from '@/lib/institution/federation';
+import { touch } from '@/lib/data/repo/track';
 
 interface ReadinessDb {
   reports: Record<string, PreflightReport>;
@@ -25,7 +26,7 @@ interface ReadinessDb {
   staging: Record<string, StagingEnvironment>;
 }
 const g = globalThis as unknown as { __civicosReadiness?: ReadinessDb };
-function rdb(): ReadinessDb { return (g.__civicosReadiness ??= { reports: {}, waivers: {}, staging: {} }); }
+function rdb(): ReadinessDb { return touch('__civicosReadiness', g.__civicosReadiness ??= { reports: {}, waivers: {}, staging: {} }); }
 export function resetReadiness(): void { g.__civicosReadiness = { reports: {}, waivers: {}, staging: {} }; }
 
 const key = (nationId: string, releaseId: string) => `${nationId}:${releaseId}`;

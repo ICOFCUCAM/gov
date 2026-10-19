@@ -16,6 +16,12 @@
 // A repository is bound to its store's accessor (`() => TwinDb`, …), so the
 // domain module keeps owning its store's shape and defaults, and the port
 // never imports the domain modules (no cycles).
+//
+// Every other store goes through the port's generic side: its accessor passes
+// the store through `touch()` (./track.ts), and the postgres backend keeps it
+// as per-record documents (./documents.ts), written with the audit entry of
+// each change and followed by every instance. The stores keep mutating their
+// own objects; no domain function changed its signature.
 
 import type { AuditEntry } from '@/lib/api/types';
 import type { TwinDb } from '@/lib/twin/db';

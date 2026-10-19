@@ -26,12 +26,12 @@ app:
   tag: "0.1.0"
   # One replica, replaced with the Recreate strategy: the platform state has a
   # single writer (app/src/lib/data/persist.ts, writer lease and versioned
-  # saves). With state.mode postgres (architecture review R6) the audit chain,
-  # twin, facility register and boundary versions are per-record tables every
-  # replica writes, so the chart allows more replicas there; the other stores
-  # keep one writer (the lease holder), and the other replicas refuse their
-  # changes with 503. Otherwise the chart refuses more than one replica unless
-  # allowMultipleWriters is set (extra replicas would only be standbys).
+  # saves). With state.mode postgres (architecture review R6) every store is
+  # kept per record in the database (typed tables, and per-record documents for
+  # the rest) and every replica writes and follows it, so the chart allows more
+  # replicas there and each takes every change. Otherwise the chart refuses more
+  # than one replica unless allowMultipleWriters is set (extra replicas would
+  # only be standbys).
   replicas: 1
   allowMultipleWriters: false
   # Access gate (app/src/middleware.ts): "enforce" requires a verified
@@ -52,8 +52,9 @@ app:
     # file: JSON files on a persistent volume (air-gapped installations).
     # postgres: the nation's Postgres (postgres.existingSecret, DATABASE_URL):
     # per-record tables for the audit chain, twin, facilities and boundaries
-    # (migration civicos_records; PostGIS used when present) and snapshots for
-    # the rest; allows app.replicas > 1.
+    # (migration civicos_records; PostGIS used when present) and per-record
+    # documents for every other store (migration civicos_record_docs); allows
+    # app.replicas > 1, every replica taking every change.
     mode: supabase
     size: 5Gi
     storageClassName: ""

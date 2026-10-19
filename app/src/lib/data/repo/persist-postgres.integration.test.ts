@@ -5,10 +5,10 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import os from 'node:os';
 import path from 'node:path';
 import { mkdtempSync } from 'node:fs';
-import { startFromEnv, persistenceStatus, stateWritable, recordsBackend } from '@/lib/data/persist';
-import { recordAudit, verifyAuditChain } from '@/lib/data/store';
+import { startFromEnv, persistenceStatus, stateWritable, recordsBackend, flush } from '@/lib/data/persist';
+import { recordAudit, verifyAuditChain, setSovereign } from '@/lib/data/store';
 import { backend, useBackend } from '.';
-import { connect, type Sql } from './postgres';
+import { connect, postgresSnapshotAdapter, type Sql } from './postgres';
 import { GET as health } from '@/app/api/health/route';
 
 const URL_ = process.env.TEST_DATABASE_URL;
@@ -43,8 +43,16 @@ describe.skipIf(!URL_)('the server in postgres mode (TEST_DATABASE_URL)', { time
     expect(verifyAuditChain().ok).toBe(true);
     expect(stateWritable('/api/sovereign')).toBe(true);
 
-    const body = await (await health(new Request('http://localhost/api/health'))).json() as { persistence: { mode: string; database: { adapter: string; queueDepth: number; lagMs: number; postgis: boolean } | null } };
+    // Every other store is per-record documents: a change is written with its audit entry, and no snapshot is kept.
+    expect(recordsBackend()!.ownsAll).toBe(true);
+    expect('error' in setSovereign({ motto: 'Service to every citizen' }, 'Registrar')).toBe(false);
+    expect(await recordsBackend()!.drain()).toBe(true);
+    const motto = await recordsBackend()!.sql.unsafe(`select doc from civicos.record_doc where store = '__civicos' and path = $1`, [JSON.stringify([['k', 'sovereign'], ['k', 'motto']])]);
+    expect(motto[0]?.doc).toBe('Service to every citizen');
+    expect(await flush(postgresSnapshotAdapter(recordsBackend()!.sql, m => new Error(m)))).toEqual([]);
+
+    const body = await (await health(new Request('http://localhost/api/health'))).json() as { persistence: { mode: string; database: { adapter: string; queueDepth: number; lagMs: number; postgis: boolean; documents: unknown } | null } };
     expect(body.persistence.mode).toBe('postgres');
-    expect(body.persistence.database).toMatchObject({ adapter: 'postgres', queueDepth: 0, lagMs: expect.any(Number), postgis: expect.any(Boolean) });
+    expect(body.persistence.database).toMatchObject({ adapter: 'postgres', queueDepth: 0, lagMs: expect.any(Number), postgis: expect.any(Boolean), documents: { stores: expect.any(Number), rows: expect.any(Number), conflicts: 0 } });
   });
 });
