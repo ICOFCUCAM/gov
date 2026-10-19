@@ -16,6 +16,10 @@
 // code), the unit that metric's UCUM unit (the source's own unit codes are
 // mapped to UCUM per source, `units`). Anything that cannot be read is
 // refused with a reason; nothing is guessed.
+//
+// When the source names the office's SDMX registry and its dataflow, each
+// observation is also checked against the dataflow's structure (DSD and code
+// lists, lib/twin/sdmx-structure.ts): the `check` every reader takes.
 
 import { parseCsv } from './csv';
 
@@ -26,7 +30,14 @@ export interface SdmxOptions {
   codes?: Record<string, string>;
   /** SDMX unit codes → UCUM (e.g. PS → {persons}); other units must already be the metric's unit. */
   units?: Record<string, string>;
+  /** The office's SDMX REST API (e.g. https://stats.example.go.ke/rest), on the source's own host: structures are fetched from it. */
+  registry?: string;
+  /** The dataflow the file belongs to, AGENCY:ID(VERSION): its DSD and code lists validate and label every run (lib/twin/sdmx-structure.ts). */
+  dataflow?: string;
 }
+
+/** A check of one observation's codes (every dimension and attribute, by upper-case id) and dataflow: the reason it is refused, or undefined. */
+export type SdmxCheck = (codes: Record<string, string>, flowId: string) => string | undefined;
 
 /** Columns of the plain rows this reader produces (the mapping runSource applies to them). */
 export const SDMX_ROW = { entity: '__area', value: '__value', metric: '__metric', unit: '__unit', date: '__date', status: '__status', reject: '__reject' } as const;
@@ -61,13 +72,15 @@ export function isSdmxCsv(text: string): boolean {
  * the metric code (the metric dimension's value, or the flow's id when there
  * is none), the reference area, period, value and attributes, all as codes.
  */
-interface SdmxObservation { flowId: string; deleted?: boolean; what: string; area: string; period: string; value: string; unit: string; mult: string; status: string }
+interface SdmxObservation { flowId: string; deleted?: boolean; what: string; area: string; period: string; value: string; unit: string; mult: string; status: string; codes?: Record<string, string> }
 
 /** An observation as a plain row for runSource, or a row carrying the reason it is refused. */
-function observationRow(o: SdmxObservation, metricFor: (code: string) => string | undefined, opts: SdmxOptions): Record<string, string> {
+function observationRow(o: SdmxObservation, metricFor: (code: string) => string | undefined, opts: SdmxOptions, check?: SdmxCheck): Record<string, string> {
   const out: Record<string, string> = {};
   const reject = (why: string) => { out[SDMX_ROW.reject] = why; return out; };
   if (o.deleted) return reject('A deletion (ACTION D) is not applied: withdraw the import that brought the value instead');
+  const invalid = check?.(o.codes ?? {}, o.flowId);
+  if (invalid) return reject(invalid);
   const metric = opts.codes?.[o.what] ?? metricFor(o.what);
   if (!metric) return reject(`No registered metric has the SDMX code "${o.what}" (set it on the metric, or map the code on the source)`);
   const start = sdmxPeriodStart(o.period);
@@ -105,7 +118,7 @@ const flowIdOf = (ref: string) => /Dataflow=[^:]+:([^(]+)\(/.exec(ref)?.[1] ?? /
  * Read SDMX-CSV into plain rows for runSource. `metricFor(code)` names the
  * registered metric an SDMX code stands for (undefined when none does).
  */
-export function sdmxRows(text: string, metricFor: (code: string) => string | undefined, opts: SdmxOptions = {}): { version: '1.0' | '2.0'; rows: Record<string, string>[] } {
+export function sdmxRows(text: string, metricFor: (code: string) => string | undefined, opts: SdmxOptions = {}, check?: SdmxCheck): { version: '1.0' | '2.0'; rows: Record<string, string>[] } {
   const raw = parseCsv(text);
   if (!raw.length) return { version: '1.0', rows: [] };
   const headers = Object.keys(raw[0]!);
@@ -131,7 +144,8 @@ export function sdmxRows(text: string, metricFor: (code: string) => string | und
       unit: code(get(r, 'UNIT_MEASURE')),
       mult: code(get(r, 'UNIT_MULT')),
       status: code(get(r, 'OBS_STATUS')),
-    }, metricFor, opts);
+      codes: Object.fromEntries([...byCode].map(([c, h]) => [c, code(r[h])])),
+    }, metricFor, opts, check);
   });
   return { version, rows };
 }
@@ -172,7 +186,7 @@ function valueCode(c: JsonComponent | undefined, idx: unknown): string {
  * set's series and their observations (or flat observations), with
  * dimensions and attributes at data-set, series and observation level.
  */
-export function sdmxJsonRows(text: string, metricFor: (code: string) => string | undefined, opts: SdmxOptions = {}): { version: '1.0' | '2.0'; rows: Record<string, string>[] } {
+export function sdmxJsonRows(text: string, metricFor: (code: string) => string | undefined, opts: SdmxOptions = {}, check?: SdmxCheck): { version: '1.0' | '2.0'; rows: Record<string, string>[] } {
   let msg: JsonMessage & JsonData;
   try { msg = JSON.parse(text.replace(/^﻿/, '')); } catch { throw new Error('Not SDMX-JSON: the file is not valid JSON'); }
   const data: JsonData = msg.data ?? msg;
@@ -202,8 +216,8 @@ export function sdmxJsonRows(text: string, metricFor: (code: string) => string |
       const value = obs?.[0];
       rows.push(observationRow({
         flowId, deleted, what: dim ? c[dim] ?? '' : flowId, area: c.REF_AREA ?? '', period: c.TIME_PERIOD ?? '',
-        value: value === null || value === undefined ? '' : String(value), unit: c.UNIT_MEASURE ?? '', mult: c.UNIT_MULT ?? '', status: c.OBS_STATUS ?? '',
-      }, metricFor, opts));
+        value: value === null || value === undefined ? '' : String(value), unit: c.UNIT_MEASURE ?? '', mult: c.UNIT_MULT ?? '', status: c.OBS_STATUS ?? '', codes: c,
+      }, metricFor, opts, check));
     };
     for (const [key, series] of Object.entries(ds.series ?? {})) {
       const codes = { ...base };
@@ -245,7 +259,7 @@ function xmlAttributes(tag: string): Record<string, string> {
  * entity declarations are refused with the reason. No XML library: the
  * reader scans the elements it needs.
  */
-export function sdmxMlRows(text: string, metricFor: (code: string) => string | undefined, opts: SdmxOptions = {}): { version: '2.1'; rows: Record<string, string>[] } {
+export function sdmxMlRows(text: string, metricFor: (code: string) => string | undefined, opts: SdmxOptions = {}, check?: SdmxCheck): { version: '2.1'; rows: Record<string, string>[] } {
   const xml = text.replace(/^﻿/, '').replace(/<!--[\s\S]*?-->/g, '').replace(/<!\[CDATA\[[\s\S]*?\]\]>/g, '');
   if (/<!DOCTYPE|<!ENTITY/i.test(xml)) throw new Error('SDMX-ML with a DOCTYPE or entity declarations is refused');
   if (/<([\w-]+:)?Generic(TimeSeries)?Data\b/.test(xml.slice(0, 4000))) throw new Error('This is SDMX-ML generic data: ask the publisher for structure-specific data, SDMX-JSON or SDMX-CSV');
@@ -283,8 +297,8 @@ export function sdmxMlRows(text: string, metricFor: (code: string) => string | u
   const dim = metricDimension(has, opts, 'SDMX-ML');
   const rows = found.map(({ codes: c, deleted: del }) => observationRow({
     flowId, deleted: del, what: dim ? c[dim] ?? '' : flowId, area: c.REF_AREA ?? '', period: c.TIME_PERIOD ?? '',
-    value: c.OBS_VALUE ?? '', unit: c.UNIT_MEASURE ?? '', mult: c.UNIT_MULT ?? '', status: c.OBS_STATUS ?? '',
-  }, metricFor, opts));
+    value: c.OBS_VALUE ?? '', unit: c.UNIT_MEASURE ?? '', mult: c.UNIT_MULT ?? '', status: c.OBS_STATUS ?? '', codes: c,
+  }, metricFor, opts, check));
   return { version: '2.1', rows };
 }
 
@@ -303,8 +317,8 @@ export const SDMX_MEDIA: Record<SdmxFormat, { type: string; name: string; accept
 };
 
 /** Read an SDMX file in its source's format into plain rows. */
-export function readSdmx(format: SdmxFormat, text: string, metricFor: (code: string) => string | undefined, opts: SdmxOptions = {}): Record<string, string>[] {
-  if (format === 'sdmx-json') return sdmxJsonRows(text, metricFor, opts).rows;
-  if (format === 'sdmx-ml') return sdmxMlRows(text, metricFor, opts).rows;
-  return sdmxRows(text, metricFor, opts).rows;
+export function readSdmx(format: SdmxFormat, text: string, metricFor: (code: string) => string | undefined, opts: SdmxOptions = {}, check?: SdmxCheck): Record<string, string>[] {
+  if (format === 'sdmx-json') return sdmxJsonRows(text, metricFor, opts, check).rows;
+  if (format === 'sdmx-ml') return sdmxMlRows(text, metricFor, opts, check).rows;
+  return sdmxRows(text, metricFor, opts, check).rows;
 }

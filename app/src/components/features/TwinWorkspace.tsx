@@ -19,7 +19,7 @@ const TABS: { id: Tab; label: string }[] = [{ id: 'facts', label: 'Facts and sou
 
 interface Entity { id: string; kind: string; name: string; code?: string; region?: boolean }
 interface Source { id: string; name: string; publisher: string; kind: 'csv-url' | 'csv-upload' | 'stream'; url?: string; stream?: { streamId: string; entity?: string; metrics: { metric: string; statistic: string }[] }; schedule: string; registeredBy: string; registeredAt: string; lastRun?: string; mapping: { entity: string; value: string; metric: { column: string } | { fixed: string } } }
-interface Run { id: string; sourceId: string; at: string; by: string; status: 'ok' | 'partial' | 'failed'; rows: number; accepted: number; rejected: { row: number; reason: string }[]; error?: string; withdrawn?: { at: string; by: string; reason: string; proposedBy?: string }; withdrawalProposed?: { at: string; by: string; reason: string } }
+interface Run { id: string; sourceId: string; at: string; by: string; status: 'ok' | 'partial' | 'failed'; rows: number; accepted: number; rejected: { row: number; reason: string }[]; error?: string; withdrawn?: { at: string; by: string; reason: string; proposedBy?: string }; withdrawalProposed?: { at: string; by: string; reason: string }; structure?: { dsd: string; labels: Record<string, Record<string, string>> } }
 interface Obs { entityId: string; metric: string; value: number; unit: string; validFrom: string; recordedAt: string; sourceId: string; runId: string }
 /** The national figure for a metric, or why there is none (lib/twin/register.ts nationalTotal). */
 interface National { value: number | null; unit?: string; source: string; coverage: { have: number; of: number }; vintage?: { oldest: string; newest: string }; aggregation?: string; refused?: string }
@@ -198,6 +198,14 @@ export function TwinWorkspace() {
                   <span className="font-mono text-[12px] text-ink-muted">{r.id} · {when(r.at)} · {r.by} · <a className="text-link underline underline-offset-2" href={`/api/twin/runs/${r.id}/prov`}>provenance</a></span>
                 </div>
                 {r.error ? <p className="mt-1 text-alert">{r.error}</p> : null}
+                {r.structure ? (
+                  <details className="mt-1">
+                    <summary className="cursor-pointer text-ink-soft">Checked against {r.structure.dsd} from the statistics office&apos;s registry</summary>
+                    <ul className="mt-1 space-y-0.5 text-[12px] text-ink-soft">
+                      {Object.entries(r.structure.labels).map(([dim, codes]) => <li key={dim}><span className="font-mono">{dim}</span>: {Object.entries(codes).map(([c, l]) => `${c} ${l}`).join(' · ')}</li>)}
+                    </ul>
+                  </details>
+                ) : null}
                 {r.rejected.length ? (
                   <details className="mt-1">
                     <summary className="cursor-pointer text-ink-soft">{r.rejected.length}{r.rows - r.accepted > r.rejected.length ? '+' : ''} rows refused</summary>
@@ -265,14 +273,14 @@ function WithdrawalRule({ policy, by, busy, act }: { policy?: { fourEyesWithdraw
 }
 
 function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (done: string, fn: () => Promise<unknown>) => Promise<void> }) {
-  const [f, setF] = React.useState({ name: '', publisher: '', kind: 'csv-upload', url: '', entity: 'region', value: 'value', metricMode: 'fixed', metric: 'population', unit: 'persons', date: 'year', validTo: '', status: '', stdErr: '', schedule: 'manual', format: 'csv', licence: '', sdmxUnits: '', streamId: '', streamEntity: '', streamMetrics: '', streamUnit: '' });
+  const [f, setF] = React.useState({ name: '', publisher: '', kind: 'csv-upload', url: '', entity: 'region', value: 'value', metricMode: 'fixed', metric: 'population', unit: 'persons', date: 'year', validTo: '', status: '', stdErr: '', schedule: 'manual', format: 'csv', licence: '', sdmxUnits: '', sdmxRegistry: '', sdmxDataflow: '', streamId: '', streamEntity: '', streamMetrics: '', streamUnit: '' });
   const set = (k: keyof typeof f) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => { const v = e.currentTarget.value; setF(x => ({ ...x, [k]: v })); };
   const submit = () => act('Source registered', () => call('/api/twin/sources', {
     method: 'POST',
     body: JSON.stringify({
       by, name: f.name, publisher: f.publisher, kind: f.kind, url: f.url || undefined, schedule: f.kind === 'stream' && f.schedule === 'manual' ? 'daily' : f.schedule, licence: f.licence || undefined,
       ...(f.kind === 'stream' ? { stream: { streamId: f.streamId, entity: f.streamEntity || undefined, unit: f.streamUnit || undefined, metrics: f.streamMetrics.split(',').map(x => x.split('=').map(y => y.trim())).filter(p => p.length === 2 && p[0] && p[1]).map(([metric, statistic]) => ({ metric, statistic })) } } : {}),
-      ...(f.format.startsWith('sdmx-') ? { format: f.format, sdmx: { units: Object.fromEntries(f.sdmxUnits.split(',').map(x => x.split('=').map(y => y.trim())).filter(p => p.length === 2 && p[0] && p[1])) } } : {}),
+      ...(f.format.startsWith('sdmx-') ? { format: f.format, sdmx: { units: Object.fromEntries(f.sdmxUnits.split(',').map(x => x.split('=').map(y => y.trim())).filter(p => p.length === 2 && p[0] && p[1])), ...(f.sdmxRegistry.trim() || f.sdmxDataflow.trim() ? { registry: f.sdmxRegistry.trim(), dataflow: f.sdmxDataflow.trim() } : {}) } } : {}),
       mapping: {
         entity: f.entity, value: f.value,
         metric: f.metricMode === 'fixed' ? { fixed: f.metric } : { column: f.metric },
@@ -320,6 +328,8 @@ function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (do
         </label> : null}
         {F({ k: 'licence', l: 'Licence (optional)', ph: 'e.g. CC BY 4.0' })}
         {f.kind !== 'stream' && f.format.startsWith('sdmx-') ? F({ k: 'sdmxUnits', l: 'SDMX unit codes (optional)', hint: 'The publisher\'s unit codes as UCUM, e.g. PS={persons}, HH={households}. Metrics are matched by their statistics office code (Metrics tab).' }) : null}
+        {f.kind !== 'stream' && f.format.startsWith('sdmx-') ? F({ k: 'sdmxRegistry', l: 'Statistics office registry (optional)', hint: 'The office\'s SDMX web service on the same host as the file, e.g. https://stats.example/rest. Each import checks every code against the office\'s code lists and keeps their names.', ph: 'https://' }) : null}
+        {f.kind !== 'stream' && f.format.startsWith('sdmx-') && f.sdmxRegistry.trim() ? F({ k: 'sdmxDataflow', l: 'Which of the office\'s tables', hint: 'The table (SDMX dataflow) the file belongs to, as AGENCY:ID(VERSION), e.g. KNBS:DF_POP(1.0).' }) : null}
         {f.kind !== 'stream' && f.format === 'csv' ? <>
         {F({ k: 'entity', l: 'Column with the place or institution', hint: 'Its ISO 3166-2 code, its name, or the publisher\'s own id (link ids below).' })}
         {F({ k: 'value', l: 'Column with the value' })}

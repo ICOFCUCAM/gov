@@ -20,7 +20,7 @@
 
 import { createHash } from 'node:crypto';
 import { recordAudit, listMinistries, getSovereign } from '@/lib/data/store';
-import { nationIso3, nationRegions } from '@/lib/nation/registry';
+import { nationIso3, nationRegions, nationLanguages } from '@/lib/nation/registry';
 import { loadDivisions } from '@/lib/geo/divisions';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { parseCsv } from './csv';
@@ -29,6 +29,7 @@ import { twinRepo } from '@/lib/data/repo';
 import { archive, archivedRuns, archivedMetrics, archivedObservations, forEachArchived, resetTwinArchive } from './archive';
 import { METRIC_ID, getMetric, isKnownMetric, listMetrics, toUcum, sameUnit, type Aggregation } from './metrics';
 import { readSdmx, isSdmxFormat, SDMX_MEDIA, SDMX_ROW, type SdmxOptions, type SdmxFormat } from './sdmx';
+import { fetchStructure, structureChecker, parseDataflowRef, refKey, type SdmxStructureUse } from './sdmx-structure';
 import type { Signal } from './signal';
 import { twinPolicy } from './policy';
 import { checkStreamSpec, streamRows, STREAM_ROW, type StreamSpec, type StreamLineage, type TelemetryReader } from './stream';
@@ -115,6 +116,8 @@ export interface TwinRun {
   sha256?: string;
   /** For a telemetry stream source: the stream and the time read (from inclusive, to exclusive), samples and days aggregated. */
   stream?: StreamLineage;
+  /** For an SDMX source that names its registry and dataflow: the structure the run was checked against, and the labels of the codes it saw. */
+  structure?: SdmxStructureUse;
 }
 
 export interface Observation {
@@ -345,6 +348,10 @@ export function registerSource(input: Partial<TwinSource> & { by?: string }): Tw
     catch { return { error: 'Give the address of the CSV (http or https)' }; }
   }
   const sdmx = isSdmxFormat(input.format) ? input.format : undefined;
+  if (sdmx && (input.sdmx?.registry || input.sdmx?.dataflow)) {
+    const why = checkRegistry(input.sdmx, url);
+    if (why) return { error: why };
+  }
   const m = sdmx ? SDMX_MAPPING : input.mapping;
   if (!m || !m.entity || !m.value || !m.metric) return { error: 'Say which columns hold the entity, the value and the metric' };
   if ('fixed' in m.metric && !METRIC.test(m.metric.fixed)) return { error: 'A metric is lower case letters, digits, dots and underscores, e.g. population or cpi.all_items' };
@@ -413,7 +420,26 @@ const SDMX_MAPPING: SourceMapping = {
 function cleanSdmx(o: SdmxOptions): SdmxOptions {
   const pairs = (r?: Record<string, string>) => r ? Object.fromEntries(Object.entries(r).slice(0, 200).map(([k, v]) => [String(k).trim().slice(0, 64), String(v).trim().slice(0, 64)])) : undefined;
   const codes = pairs(o.codes), units = pairs(o.units);
-  return { ...(o.metricDimension?.trim() ? { metricDimension: o.metricDimension.trim().slice(0, 64) } : {}), ...(codes ? { codes } : {}), ...(units ? { units } : {}) };
+  const flow = o.dataflow ? parseDataflowRef(o.dataflow) : undefined;
+  return {
+    ...(o.metricDimension?.trim() ? { metricDimension: o.metricDimension.trim().slice(0, 64) } : {}), ...(codes ? { codes } : {}), ...(units ? { units } : {}),
+    ...(o.registry && flow && !('error' in flow) ? { registry: new URL(o.registry).href.replace(/\/+$/, ''), dataflow: refKey(flow) } : {}),
+  };
+}
+
+/**
+ * An SDMX registry a source may name: http(s), with a dataflow, and on the
+ * source's own host (the address it is fetched from), so structures come
+ * from the same office as the data. The reason it cannot, or null.
+ */
+function checkRegistry(o: SdmxOptions, url: string | undefined): string | null {
+  if (!o.registry || !o.dataflow) return 'Give both the SDMX registry\'s address and the dataflow (AGENCY:ID(VERSION))';
+  let reg: URL;
+  try { reg = new URL(o.registry); if (reg.protocol !== 'https:' && reg.protocol !== 'http:') throw 0; } catch { return 'Give the address of the SDMX registry (http or https)'; }
+  const flow = parseDataflowRef(o.dataflow);
+  if ('error' in flow) return flow.error;
+  if (url && new URL(url).host !== reg.host) return `The SDMX registry must be on the source's own host (${new URL(url).host})`;
+  return null;
 }
 
 // ── Telemetry streams ────────────────────────────────────────────────────
@@ -503,7 +529,13 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
     const sdmxFile = isSdmxFormat(s.format) ? s.format : undefined;
     const mapping = streamed ? STREAM_MAPPING : sdmxFile ? SDMX_MAPPING : s.mapping;
     run.sha256 ??= createHash('sha256').update(text, 'utf8').digest('hex');
-    const rows = streamed ?? (sdmxFile ? readSdmx(sdmxFile, text, sdmxMetric, s.sdmx).map(r => nationArea(r)) : parseCsv(text));
+    // The office's structure (DSD and code lists), when the source names its registry: every code checked, the codes seen labelled.
+    const st = sdmxFile && s.sdmx?.registry && s.sdmx.dataflow
+      ? await fetchStructure(s.sdmx.registry, s.sdmx.dataflow, { host: new URL(s.url ?? s.sdmx.registry).host, lang: nationLanguages()[0], fetch: deps.fetch, resolve: deps.resolve })
+      : undefined;
+    const checker = st ? structureChecker(st.structure) : undefined;
+    const rows = streamed ?? (sdmxFile ? readSdmx(sdmxFile, text, sdmxMetric, s.sdmx, checker?.check).map(r => nationArea(r)) : parseCsv(text));
+    if (st && checker) run.structure = { dataflow: s.sdmx!.dataflow!, dsd: refKey(st.structure.dsd), url: st.url, sha256: st.sha256, fetchedAt: now.toISOString(), labels: checker.labels() };
     run.rows = rows.length;
     if (rows.length > LIMITS.rows) throw new Error(`More than ${LIMITS.rows} rows`);
     const fresh: Observation[] = [];
