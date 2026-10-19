@@ -26,7 +26,7 @@ describe('scenarios on the twin', () => {
     expect(s.id).toBe('SCN-0001');
     expect(v.results.find(r => r.entityId === 'place:KE-30')).toMatchObject({ baseline: 4_000_000, projected: 4_444_000 });
     expect(v.results.find(r => r.entityId === 'place:KE-28')?.projected).toBe(1_010_000);
-    expect(v.national).toEqual({ baseline: 6_000_000, projected: 6_464_000, unit: 'persons' });
+    expect(v.national).toEqual({ baseline: 6_000_000, projected: 6_464_000, unit: '{persons}' });
     expect(v.inputs.every(i => i.validFrom === '2019-01-01' && i.runId)).toBe(true);
     expect(v.evidenceHash).toMatch(/^[0-9a-f]{64}$/);
     expect(verifyVersion(s.id, v)).toBe(true);

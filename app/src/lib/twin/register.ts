@@ -24,7 +24,7 @@ import { loadDivisions } from '@/lib/geo/divisions';
 import { safeFetchText } from '@/lib/net/safe-fetch';
 import { parseCsv } from './csv';
 import { twinDb, resetTwinDb, type TwinDb } from './db';
-import { METRIC_ID } from './metrics';
+import { METRIC_ID, getMetric, isKnownMetric, toUcum, sameUnit } from './metrics';
 import type { Signal } from './signal';
 
 export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
@@ -48,8 +48,9 @@ export interface SourceMapping {
   entity: string;
   /** Column holding the value. */
   value: string;
-  /** Column holding the metric name, or a fixed metric for every row. */
+  /** Column holding the metric name, or a fixed metric for every row: a registered metric (lib/twin/metrics.ts). */
   metric: { column: string } | { fixed: string };
+  /** The unit as the source writes it; for a registered metric it must be that metric's UCUM unit (empty means that unit). */
   unit?: { column: string } | { fixed: string };
   /** Column holding the date or year the value is true for, or one date for the whole file. */
   date?: { column: string } | { fixed: string };
@@ -215,6 +216,12 @@ export function registerSource(input: Partial<TwinSource> & { by?: string }): Tw
   const m = input.mapping;
   if (!m || !m.entity || !m.value || !m.metric) return { error: 'Say which columns hold the entity, the value and the metric' };
   if ('fixed' in m.metric && !METRIC.test(m.metric.fixed)) return { error: 'A metric is lower case letters, digits, dots and underscores, e.g. population or cpi.all_items' };
+  // A source names a registered metric (lib/twin/metrics.ts), so its unit and aggregation are known before any row arrives.
+  if ('fixed' in m.metric && !isKnownMetric(m.metric.fixed)) return { error: `${m.metric.fixed} is not a registered metric: register it first (its unit and how regions combine)` };
+  if ('fixed' in m.metric && m.unit && 'fixed' in m.unit) {
+    const def = getMetric(m.metric.fixed)!;
+    if (def.origin !== 'observed' && m.unit.fixed.trim() && !sameUnit(m.unit.fixed, def.unit)) return { error: `${m.unit.fixed} is not the unit of ${def.id} (${def.unit})` };
+  }
   const d = db();
   const s: TwinSource = {
     id: `SRC-${d.seq++}`, name: name.slice(0, 120), publisher: publisher.slice(0, 120), kind: input.kind, ...(url ? { url } : {}),
@@ -274,13 +281,23 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
       if (!entity) return reject(ref ? `"${ref}" is not an entity of the register (link it to one with its id)` : 'No entity');
       const metric = (col(row, s.mapping.metric) ?? '').trim().toLowerCase();
       if (!METRIC.test(metric)) return reject(`"${metric}" is not a metric name`);
+      const def = getMetric(metric);
+      if (!def) return reject(`"${metric}" is not a registered metric (register it with its unit first)`);
+      // A registered metric has one UCUM unit: a row in another unit is refused, never converted or guessed.
+      const rawUnit = (col(row, s.mapping.unit) ?? '').trim();
+      let unit = rawUnit.slice(0, 24);
+      if (def.origin !== 'observed') {
+        if (rawUnit && !toUcum(rawUnit)) return reject(`"${rawUnit}" is not a UCUM unit (${metric} is counted in ${def.unit})`);
+        if (rawUnit && !sameUnit(rawUnit, def.unit)) return reject(`"${rawUnit}" is not the unit of ${metric} (${def.unit})`);
+        unit = def.unit;
+      }
       const rawValue = (row[s.mapping.value] ?? '').replace(/[\s,]/g, '');
       const value = Number(rawValue);
       if (rawValue === '' || !Number.isFinite(value)) return reject(`"${row[s.mapping.value] ?? ''}" is not a number`);
       const validFrom = s.mapping.date ? isoDate(col(row, s.mapping.date)) : now.toISOString().slice(0, 10);
       if (!validFrom) return reject(`"${col(row, s.mapping.date)}" is not a date or year`);
       if (validFrom > now.toISOString().slice(0, 10)) return reject(`${validFrom} is in the future`);
-      fresh.push({ entityId: entity.id, metric, value, unit: (col(row, s.mapping.unit) ?? '').trim().slice(0, 24), validFrom, recordedAt: run.at, sourceId, runId: run.id });
+      fresh.push({ entityId: entity.id, metric, value, unit, validFrom, recordedAt: run.at, sourceId, runId: run.id });
     });
     run.accepted = fresh.length;
     const refused = run.rows - run.accepted;
