@@ -189,6 +189,13 @@ describe('retention and schedule', () => {
     const second = await runScheduled();
     expect(second.took).toBeUndefined();
     expect(second.skipped).toMatch(/younger than/);
+    // The operator's `self-host backup` (/api/cron/backup?now) takes one now, verified, as an on-demand run.
+    const third = await runScheduled(new Date(), { now: true });
+    expect(third.took).toBeTruthy();
+    expect(third.took).not.toBe(first.took);
+    expect(third.verified).toBe(true);
+    const entry = (await listBackups()).find(b => b.id === third.took)!;
+    expect(entry).toMatchObject({ reason: 'manual', createdBy: 'system (backup on demand, operator)' });
   });
 
   it('the cron route needs CIVICOS_CRON_SECRET', async () => {

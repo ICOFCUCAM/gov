@@ -1,0 +1,23 @@
+{
+  "about": "The platform's scheduled jobs (app/src/app/api/cron/<name>): one list, read by scripts/self-host.mjs (its in-process scheduler) and checked against infra/helm/civicos/values.yaml (cron.jobs) and app/supabase/cron/schedule.sql by src/lib/ops/cron-jobs.test.ts. Schedules are 5-field cron in UTC. substrate: the job answers 503 without the Supabase substrate, so schedulers skip it there.",
+  "jobs": [
+    { "name": "deliver-events",      "schedule": "*/5 * * * *",  "method": "GET",  "substrate": true },
+    { "name": "substrate-metrics",   "schedule": "*/10 * * * *", "method": "GET",  "substrate": true },
+    { "name": "audit-anchor",        "schedule": "*/10 * * * *", "method": "GET",  "substrate": false },
+    { "name": "witness-sweep",       "schedule": "*/15 * * * *", "method": "GET",  "substrate": true },
+    { "name": "witness-divergence",  "schedule": "*/15 * * * *", "method": "GET",  "substrate": true },
+    { "name": "posture-digest",      "schedule": "*/30 * * * *", "method": "GET",  "substrate": true },
+    { "name": "expire-consents",     "schedule": "0 * * * *",    "method": "GET",  "substrate": true },
+    { "name": "audit-self",          "schedule": "0 * * * *",    "method": "GET",  "substrate": true },
+    { "name": "update-watchdog",     "schedule": "* * * * *",    "method": "GET",  "substrate": false },
+    { "name": "site-feeds",          "schedule": "*/30 * * * *", "method": "GET",  "substrate": false },
+    { "name": "twin-ingest",         "schedule": "7 * * * *",    "method": "GET",  "substrate": false },
+    { "name": "retention",           "schedule": "23 * * * *",   "method": "GET",  "substrate": false },
+    { "name": "deliver-cloudevents", "schedule": "*/2 * * * *",  "method": "GET",  "substrate": false },
+    { "name": "deliver-messages",    "schedule": "* * * * *",    "method": "GET",  "substrate": false },
+    { "name": "backup",              "schedule": "41 * * * *",   "method": "GET",  "substrate": false },
+    { "name": "sla",                 "schedule": "0 * * * *",    "method": "POST", "substrate": true },
+    { "name": "telemetry-stale",     "schedule": "0 * * * *",    "method": "POST", "substrate": true },
+    { "name": "promote-directives",  "schedule": "0 * * * *",    "method": "POST", "substrate": false }
+  ]
+}

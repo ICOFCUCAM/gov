@@ -327,6 +327,8 @@ cron:
   # `substrate: true` answer 503 "substrate not configured" there, so they are
   # not created (they would only fail every run).
   withoutSubstrate: false
+  # The same jobs as app/scripts/cron-jobs.json (the self-host scheduler's list)
+  # and app/supabase/cron/schedule.sql; app/src/lib/ops/cron-jobs.test.ts keeps them equal.
   jobs:
     deliver-events:      { schedule: "*/5 * * * *",  method: GET, substrate: true }
     substrate-metrics:   { schedule: "*/10 * * * *", method: GET, substrate: true }

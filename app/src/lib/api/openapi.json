@@ -5231,7 +5231,7 @@
         ],
         "operationId": "get_cron_backup",
         "summary": "GET /api/cron/backup",
-        "description": "Backup schedule cron — hourly (supabase/cron/schedule.sql, or the nation's own scheduler). Takes a backup when the newest is older than the policy's interval (default daily), verifies it (read back, decrypted, every part's hash checked, dry-run restore), then applies the retention policy, and reports whether the recovery point objective is met. Never restores. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
+        "description": "Backup schedule cron — hourly (supabase/cron/schedule.sql, or the nation's own scheduler). Takes a backup when the newest is older than the policy's interval (default daily), verifies it (read back, decrypted, every part's hash checked, dry-run restore), then applies the retention policy, and reports whether the recovery point objective is met. Never restores. `?now` takes a backup at once whatever the newest's age (the operator's `npm run self-host -- backup`, scripts/self-host.mjs), verified the same way and recorded as an on-demand run. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
         "parameters": [],
         "responses": {
           "200": {
@@ -5330,7 +5330,7 @@
         ],
         "operationId": "post_cron_backup",
         "summary": "POST /api/cron/backup",
-        "description": "Backup schedule cron — hourly (supabase/cron/schedule.sql, or the nation's own scheduler). Takes a backup when the newest is older than the policy's interval (default daily), verifies it (read back, decrypted, every part's hash checked, dry-run restore), then applies the retention policy, and reports whether the recovery point objective is met. Never restores. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
+        "description": "Backup schedule cron — hourly (supabase/cron/schedule.sql, or the nation's own scheduler). Takes a backup when the newest is older than the policy's interval (default daily), verifies it (read back, decrypted, every part's hash checked, dry-run restore), then applies the retention policy, and reports whether the recovery point objective is met. Never restores. `?now` takes a backup at once whatever the newest's age (the operator's `npm run self-host -- backup`, scripts/self-host.mjs), verified the same way and recorded as an on-demand run. Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only), like every /api/cron/* worker.",
         "parameters": [],
         "requestBody": {
           "required": false,
@@ -26077,7 +26077,7 @@
                         "runs": [
                           {
                             "at": "2026-01-15T09:30:00.000Z",
-                            "kind": "retention",
+                            "kind": "on-demand",
                             "ok": true
                           }
                         ]
@@ -65438,6 +65438,7 @@
           "kind": {
             "type": "string",
             "enum": [
+              "on-demand",
               "retention",
               "scheduled"
             ]

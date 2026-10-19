@@ -3,6 +3,9 @@
 // interval (default daily), verifies it (read back, decrypted, every part's
 // hash checked, dry-run restore), then applies the retention policy, and
 // reports whether the recovery point objective is met. Never restores.
+// `?now` takes a backup at once whatever the newest's age (the operator's
+// `npm run self-host -- backup`, scripts/self-host.mjs), verified the same way
+// and recorded as an on-demand run.
 //
 // Auth: CIVICOS_CRON_SECRET as `Authorization: Bearer …` (header only),
 // like every /api/cron/* worker.
@@ -15,7 +18,7 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(req: Request) {
   if (!cronAuthorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  const summary = await runScheduled();
+  const summary = await runScheduled(new Date(), { now: new URL(req.url).searchParams.has('now') });
   return NextResponse.json({ ok: !summary.error, summary }, { status: summary.error ? 503 : 200 });
 }
 

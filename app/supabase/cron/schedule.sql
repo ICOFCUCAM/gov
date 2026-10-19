@@ -1,7 +1,9 @@
 -- supabase/cron/schedule.sql
 --
--- In-database scheduler for the 15 /api/cron/* worker jobs, using
--- pg_cron + pg_net. This is the free (no Vercel Pro) path: Postgres itself
+-- In-database scheduler for the /api/cron/* worker jobs, using
+-- pg_cron + pg_net. The jobs and schedules are the ones in
+-- scripts/cron-jobs.json (also the Helm chart's cron.jobs and the self-host
+-- scheduler); src/lib/ops/cron-jobs.test.ts keeps them equal. This is the free (no Vercel Pro) path: Postgres itself
 -- calls the deployed Next.js cron routes on a timer.
 --
 -- Re-runnable: cron.schedule(name, …) upserts by job name, so applying this

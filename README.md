@@ -12,6 +12,7 @@
 - 🗂 **Index**: [`docs/57_INDEX_AND_CONCORDANCE.md`](./docs/57_INDEX_AND_CONCORDANCE.md)
 - 📖 **Glossary**: [`docs/42_GLOSSARY.md`](./docs/42_GLOSSARY.md)
 - ⏸ **Pause point**: [`docs/79_PAUSE_POINT_REFLECTION.md`](./docs/79_PAUSE_POINT_REFLECTION.md)
+- 💻 **Run it on one computer** (one command, no cloud): [`docs/SELF_HOSTING.md`](./docs/SELF_HOSTING.md); servers and clusters: [`infra/README.md`](./infra/README.md)
 
 ---
 

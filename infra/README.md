@@ -2,6 +2,22 @@
 
 Sovereign-portable deployment. No vendor lock-in (Companion 139).
 
+## One computer (no cloud, no Docker)
+
+```bash
+cd app && pnpm install --frozen-lockfile && npm run self-host
+```
+
+`app/scripts/self-host.mjs` makes a data folder with its own secrets
+(`civicos-data/civicos.env`: session secret, data key, cron secret, one-time
+setup code, signing keys), file state, local encrypted backups and sign-in
+enforced; starts the app on 127.0.0.1; and runs the scheduled jobs itself from
+`app/scripts/cron-jobs.json`, the same list as `cron.jobs` below and
+`app/supabase/cron/schedule.sql` (`src/lib/ops/cron-jobs.test.ts` keeps the
+three equal). `self-host backup` and `self-host status` take a verified
+backup and report. Plain-language guide, reverse proxy (Caddy) and service
+examples (systemd, launchd, NSSM / Task Scheduler): `docs/SELF_HOSTING.md`.
+
 ## Layout
 
 ```
@@ -81,8 +97,8 @@ What the chart sets up for the Next.js app (`templates/app.yaml`):
   volumes), no service-account token, uid/gid 10001; in file mode the audit
   anchor file gets its own volume (`app.anchors`).
 - Scheduled jobs: pg_cron in the substrate by default
-  (`app/supabase/cron/schedule.sql`); `cron.enabled: true` runs the same 15
-  jobs as Kubernetes CronJobs (Bearer `CIVICOS_CRON_SECRET`) where pg_cron is
+  (`app/supabase/cron/schedule.sql`); `cron.enabled: true` runs the same 18
+  jobs (`app/scripts/cron-jobs.json`) as Kubernetes CronJobs (Bearer `CIVICOS_CRON_SECRET`) where pg_cron is
   not used. Run one scheduler, not both.
 - Network policy egress is set per destination (`security.egress`: DNS to the
   cluster DNS only, Postgres, NATS, HTTPS); narrow each to the nation's own
