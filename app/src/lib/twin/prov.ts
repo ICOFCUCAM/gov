@@ -12,6 +12,7 @@
 
 import { getRun, getEntity, listSources, runObservations, observationId, type TwinRun } from './register';
 import { getScenario, verifyVersion } from './scenarios';
+import { isSdmxFormat, SDMX_MEDIA } from './sdmx';
 
 export const PROV_CONTEXT = {
   prov: 'http://www.w3.org/ns/prov#',
@@ -61,7 +62,7 @@ export function runProv(runId: string, origin: string): Record<string, unknown> 
       '@id': fileIri, '@type': ['prov:Entity', 'dcat:Distribution'],
       'dct:title': src?.kind === 'csv-url' ? 'The file fetched from the publisher' : 'The file uploaded by the official',
       ...(src?.kind === 'csv-url' && src.url ? { 'dcat:accessURL': { '@id': src.url } } : {}),
-      'dcat:mediaType': src?.format === 'sdmx-csv' ? 'application/vnd.sdmx.data+csv' : 'text/csv',
+      'dcat:mediaType': isSdmxFormat(src?.format) ? SDMX_MEDIA[src.format].type : 'text/csv',
       ...(run.sha256
         ? { 'spdx:checksum': { '@type': 'spdx:Checksum', 'spdx:algorithm': 'spdx:checksumAlgorithm_sha256', 'spdx:checksumValue': run.sha256 } }
         : { 'dct:description': 'The file\'s SHA-256 was not recorded for this import (recorded before it was kept, or the file could not be read).' }),

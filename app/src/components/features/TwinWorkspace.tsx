@@ -239,7 +239,7 @@ function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (do
     method: 'POST',
     body: JSON.stringify({
       by, name: f.name, publisher: f.publisher, kind: f.kind, url: f.url || undefined, schedule: f.schedule, licence: f.licence || undefined,
-      ...(f.format === 'sdmx-csv' ? { format: 'sdmx-csv', sdmx: { units: Object.fromEntries(f.sdmxUnits.split(',').map(x => x.split('=').map(y => y.trim())).filter(p => p.length === 2 && p[0] && p[1])) } } : {}),
+      ...(f.format.startsWith('sdmx-') ? { format: f.format, sdmx: { units: Object.fromEntries(f.sdmxUnits.split(',').map(x => x.split('=').map(y => y.trim())).filter(p => p.length === 2 && p[0] && p[1])) } } : {}),
       mapping: {
         entity: f.entity, value: f.value,
         metric: f.metricMode === 'fixed' ? { fixed: f.metric } : { column: f.metric },
@@ -274,10 +274,12 @@ function RegisterSource({ by, busy, act }: { by: string; busy: boolean; act: (do
           <select className={`${input} mt-1`} value={f.format} onChange={set('format')}>
             <option value="csv">CSV (say which columns hold what)</option>
             <option value="sdmx-csv">SDMX-CSV (statistics office format)</option>
+            <option value="sdmx-json">SDMX-JSON (statistics office format)</option>
+            <option value="sdmx-ml">SDMX-ML 2.1 structure-specific (statistics office XML)</option>
           </select>
         </label>
         {F({ k: 'licence', l: 'Licence (optional)', ph: 'e.g. CC BY 4.0' })}
-        {f.format === 'sdmx-csv' ? F({ k: 'sdmxUnits', l: 'SDMX unit codes (optional)', hint: 'The publisher\'s unit codes as UCUM, e.g. PS={persons}, HH={households}. Metrics are matched by their statistics office code (Metrics tab).' }) : null}
+        {f.format.startsWith('sdmx-') ? F({ k: 'sdmxUnits', l: 'SDMX unit codes (optional)', hint: 'The publisher\'s unit codes as UCUM, e.g. PS={persons}, HH={households}. Metrics are matched by their statistics office code (Metrics tab).' }) : null}
         {f.format === 'csv' ? <>
         {F({ k: 'entity', l: 'Column with the place or institution', hint: 'Its ISO 3166-2 code, its name, or the publisher\'s own id (link ids below).' })}
         {F({ k: 'value', l: 'Column with the value' })}

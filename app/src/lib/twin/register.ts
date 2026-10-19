@@ -27,7 +27,7 @@ import { parseCsv } from './csv';
 import { twinDb, resetTwinDb, type TwinDb } from './db';
 import { archive, archivedRuns, archivedMetrics, archivedObservations, forEachArchived, resetTwinArchive } from './archive';
 import { METRIC_ID, getMetric, isKnownMetric, listMetrics, toUcum, sameUnit, type Aggregation } from './metrics';
-import { sdmxRows, SDMX_ROW, type SdmxOptions } from './sdmx';
+import { readSdmx, isSdmxFormat, SDMX_MEDIA, SDMX_ROW, type SdmxOptions, type SdmxFormat } from './sdmx';
 import type { Signal } from './signal';
 
 export type EntityKind = 'nation' | 'place' | 'institution' | 'facility';
@@ -80,8 +80,8 @@ export interface TwinSource {
   system: string;
   mapping: SourceMapping;
   schedule: 'manual' | 'daily' | 'weekly';
-  /** The file's format: plain CSV with the mapping above (default), or SDMX-CSV 1.0/2.0 read by lib/twin/sdmx.ts. */
-  format?: 'csv' | 'sdmx-csv';
+  /** The file's format: plain CSV with the mapping above (default), or SDMX-CSV 1.0/2.0, SDMX-JSON 2.0/1.0 or SDMX-ML 2.1 structure-specific data, read by lib/twin/sdmx.ts. */
+  format?: 'csv' | SdmxFormat;
   /** For SDMX-CSV: which dimension names the metric, and explicit code → metric and unit mappings. */
   sdmx?: SdmxOptions;
   /** The licence the publisher releases the data under (for the catalogue), when stated. */
@@ -328,7 +328,7 @@ export function registerSource(input: Partial<TwinSource> & { by?: string }): Tw
     try { const u = new URL(String(input.url)); if (u.protocol !== 'https:' && u.protocol !== 'http:') throw 0; url = u.href; }
     catch { return { error: 'Give the address of the CSV (http or https)' }; }
   }
-  const sdmx = input.format === 'sdmx-csv';
+  const sdmx = isSdmxFormat(input.format) ? input.format : undefined;
   const m = sdmx ? SDMX_MAPPING : input.mapping;
   if (!m || !m.entity || !m.value || !m.metric) return { error: 'Say which columns hold the entity, the value and the metric' };
   if ('fixed' in m.metric && !METRIC.test(m.metric.fixed)) return { error: 'A metric is lower case letters, digits, dots and underscores, e.g. population or cpi.all_items' };
@@ -342,7 +342,7 @@ export function registerSource(input: Partial<TwinSource> & { by?: string }): Tw
   const s: TwinSource = {
     id: `SRC-${d.seq++}`, name: name.slice(0, 120), publisher: publisher.slice(0, 120), kind: input.kind, ...(url ? { url } : {}),
     system: (input.system ?? slug(publisher)).slice(0, 60) || 'source', mapping: m,
-    ...(sdmx ? { format: 'sdmx-csv' as const, ...(input.sdmx ? { sdmx: cleanSdmx(input.sdmx) } : {}) } : {}),
+    ...(sdmx ? { format: sdmx, ...(input.sdmx ? { sdmx: cleanSdmx(input.sdmx) } : {}) } : {}),
     ...(input.licence?.trim() ? { licence: input.licence.trim().slice(0, 120) } : {}),
     schedule: input.schedule === 'daily' || input.schedule === 'weekly' ? input.schedule : 'manual',
     registeredBy: by, registeredAt: new Date().toISOString(),
@@ -439,13 +439,14 @@ export async function runSource(sourceId: string, { by, csv, deps = {} }: { by: 
     if (text === undefined) {
       if (s.kind !== 'csv-url' || !s.url) throw new Error('This source is uploaded: send its CSV');
       const host = new URL(s.url).host;
-      text = (await safeFetchText(s.url, { allow: u => u.host === host, accept: 'text/csv, text/plain;q=0.8, */*;q=0.1', types: /csv|text\/plain|octet-stream|excel/i, maxBytes: 20_000_000, fetch: deps.fetch, resolve: deps.resolve })).text;
+      const sdmxAt = isSdmxFormat(s.format) ? SDMX_MEDIA[s.format] : undefined;
+      text = (await safeFetchText(s.url, { allow: u => u.host === host, accept: sdmxAt?.accept ?? 'text/csv, text/plain;q=0.8, */*;q=0.1', types: sdmxAt && s.format !== 'sdmx-csv' ? /json|xml|text\/plain|octet-stream/i : /csv|text\/plain|octet-stream|excel/i, maxBytes: 20_000_000, fetch: deps.fetch, resolve: deps.resolve })).text;
     }
     if (text.length > 20_000_000) throw new Error('The CSV is larger than 20 MB');
-    const sdmxFile = s.format === 'sdmx-csv';
+    const sdmxFile = isSdmxFormat(s.format) ? s.format : undefined;
     const mapping = sdmxFile ? SDMX_MAPPING : s.mapping;
     run.sha256 = createHash('sha256').update(text, 'utf8').digest('hex');
-    const rows = sdmxFile ? sdmxRows(text, sdmxMetric, s.sdmx).rows.map(r => nationArea(r)) : parseCsv(text);
+    const rows = sdmxFile ? readSdmx(sdmxFile, text, sdmxMetric, s.sdmx).map(r => nationArea(r)) : parseCsv(text);
     run.rows = rows.length;
     if (rows.length > LIMITS.rows) throw new Error(`More than ${LIMITS.rows} rows`);
     const fresh: Observation[] = [];

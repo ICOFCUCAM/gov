@@ -27144,9 +27144,11 @@
                     "type": "string",
                     "enum": [
                       "csv",
-                      "sdmx-csv"
+                      "sdmx-csv",
+                      "sdmx-json",
+                      "sdmx-ml"
                     ],
-                    "description": "The file's format: plain CSV with the mapping above (default), or SDMX-CSV 1.0/2.0 read by lib/twin/sdmx.ts."
+                    "description": "The file's format: plain CSV with the mapping above (default), or SDMX-CSV 1.0/2.0, SDMX-JSON 2.0/1.0 or SDMX-ML 2.1 structure-specific data, read by lib/twin/sdmx.ts."
                   },
                   "sdmx": {
                     "$ref": "#/components/schemas/SdmxOptions"
@@ -44813,9 +44815,11 @@
             "type": "string",
             "enum": [
               "csv",
-              "sdmx-csv"
+              "sdmx-csv",
+              "sdmx-json",
+              "sdmx-ml"
             ],
-            "description": "The file's format: plain CSV with the mapping above (default), or SDMX-CSV 1.0/2.0 read by lib/twin/sdmx.ts."
+            "description": "The file's format: plain CSV with the mapping above (default), or SDMX-CSV 1.0/2.0, SDMX-JSON 2.0/1.0 or SDMX-ML 2.1 structure-specific data, read by lib/twin/sdmx.ts."
           },
           "sdmx": {
             "$ref": "#/components/schemas/SdmxOptions"

@@ -15,6 +15,7 @@ import { getSovereign } from '@/lib/data/store';
 import { listBoundaryVersions } from '@/lib/data/boundaries';
 import { listSources, listEntities, sourceCoverage } from './register';
 import { getMetric } from './metrics';
+import { isSdmxFormat, SDMX_MEDIA } from './sdmx';
 import { collectionInfo } from './ogc';
 import { facilitiesInfo } from './ogc-facilities';
 import { boundariesInfo } from './ogc-boundaries';
@@ -49,7 +50,7 @@ export async function twinCatalog(origin: string): Promise<Record<string, unknow
 
   const sources = listSources().map(s => {
     const cov = sourceCoverage(s.id);
-    const media = s.format === 'sdmx-csv' ? 'application/vnd.sdmx.data+csv' : 'text/csv';
+    const media = isSdmxFormat(s.format) ? SDMX_MEDIA[s.format].type : 'text/csv';
     return {
       '@id': `${api}/catalog#source-${s.id}`, '@type': 'dcat:Dataset',
       'dct:identifier': s.id, 'dct:title': s.name,
@@ -60,7 +61,7 @@ export async function twinCatalog(origin: string): Promise<Record<string, unknow
       'dct:accrualPeriodicity': s.schedule === 'manual' ? 'irregular' : s.schedule,
       'prov:wasAttributedTo': agent(s.registeredBy),
       'dcat:distribution': [
-        ...(s.kind === 'csv-url' && s.url ? [{ '@type': 'dcat:Distribution', 'dct:title': 'As published', 'dcat:accessURL': { '@id': s.url }, 'dcat:mediaType': media, 'dct:format': s.format === 'sdmx-csv' ? 'SDMX-CSV' : 'CSV' }] : []),
+        ...(s.kind === 'csv-url' && s.url ? [{ '@type': 'dcat:Distribution', 'dct:title': 'As published', 'dcat:accessURL': { '@id': s.url }, 'dcat:mediaType': media, 'dct:format': isSdmxFormat(s.format) ? SDMX_MEDIA[s.format].name : 'CSV' }] : []),
         ...cov.metrics.map(m => ({ '@type': 'dcat:Distribution', 'dct:title': `${getMetric(m)?.label ?? m} in the twin (as of a date)`, 'dcat:accessURL': { '@id': `${api}/state?metric=${encodeURIComponent(m)}` }, 'dcat:mediaType': 'application/json' })),
       ],
     };

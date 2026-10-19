@@ -1,0 +1,29 @@
+{
+  "header": { "id": "KNBS-HH-2023", "test": false, "prepared": "2024-02-01T00:00:00", "sender": { "id": "KNBS" } },
+  "dataSets": [
+    {
+      "action": "Information",
+      "observations": {
+        "0:0": [380000, 0],
+        "1:0": [1500000, 1],
+        "1:1": [1510000, 0]
+      }
+    }
+  ],
+  "structure": {
+    "links": [{ "href": "https://stats.example/sdmx/dataflow/KNBS/DF_HH/1.0", "rel": "dataflow", "urn": "urn:sdmx:org.sdmx.infomodel.datastructure.Dataflow=KNBS:DF_HH(1.0)" }],
+    "name": "Households (sample)",
+    "dimensions": {
+      "dataSet": [{ "id": "UNIT_MEASURE", "values": [{ "id": "HH", "name": "Households" }] }],
+      "observation": [
+        { "id": "REF_AREA", "keyPosition": 0, "values": [{ "id": "KE-28", "name": "Mombasa" }, { "id": "KE-30", "name": "Nairobi City" }] },
+        { "id": "TIME_PERIOD", "keyPosition": 1, "values": [{ "id": "2023-Q2", "name": "2023-Q2" }, { "id": "2023-Q3", "name": "2023-Q3" }] }
+      ]
+    },
+    "attributes": {
+      "dataSet": [],
+      "series": [],
+      "observation": [{ "id": "OBS_STATUS", "values": [{ "id": "P", "name": "Provisional" }, { "id": "A", "name": "Normal" }] }]
+    }
+  }
+}
