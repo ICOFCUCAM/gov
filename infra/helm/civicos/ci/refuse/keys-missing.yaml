@@ -1,0 +1,4 @@
+# No Secret for the platform's keys under enforce: refused (development keys).
+app:
+  keys:
+    existingSecret: ""

@@ -362,11 +362,19 @@ describe('rollout rings', () => {
 });
 
 describe('break-glass', () => {
-  it('needs two different named people and a reason; switches software back, never data', () => {
-    expect(breakGlass(HOME_NATION, { by: 'CIO', secondBy: 'cio', reason: 'Database corrupted after upgrade' })).toMatchObject({ status: 422 });
-    expect(breakGlass(HOME_NATION, { by: 'CIO', secondBy: 'CISO', reason: 'short' })).toMatchObject({ status: 422 });
-    const r = breakGlass(HOME_NATION, { by: 'CIO', secondBy: 'CISO', reason: 'Services down after the upgrade; probation long over' });
-    if ('error' in r) throw new Error(r.error);
+  it('needs a proposal and a different official\'s confirmation; switches software back, never data', () => {
+    // A typed second name is refused (review H-5): the second official confirms in their own request.
+    expect(breakGlass(HOME_NATION, { by: 'CIO', secondBy: 'CISO', reason: 'Services down after the upgrade; probation long over' })).toMatchObject({ status: 422 });
+    expect(breakGlass(HOME_NATION, { by: 'CIO', reason: 'short' })).toMatchObject({ status: 422 });
+    expect(breakGlass(HOME_NATION, { by: 'CISO', action: 'confirm' })).toMatchObject({ status: 409 });
+    const p = ok(breakGlass(HOME_NATION, { by: 'CIO', reason: 'Services down after the upgrade; probation long over' }));
+    expect(p).toMatchObject({ pending: true, proposal: { by: 'CIO', version: '1.3.0' } });
+    expect(p.chamber.installed).toBe('1.4.0'); // nothing changes on the proposal
+    expect(p.chamber.releases.find(x => x.id === 'DR-140')!.install.breakGlass).toMatchObject({ by: 'CIO' });
+    // The proposer cannot confirm their own proposal.
+    expect(breakGlass(HOME_NATION, { by: 'cio' })).toMatchObject({ status: 409 });
+    const r = ok(breakGlass(HOME_NATION, { by: 'CISO' }));
+    if (!('incident' in r)) throw new Error('not run');
     expect(r.chamber.installed).toBe('1.3.0'); // RP-1300 protected 1.3.0 when 1.4.0 was installed
     expect(r.incident.trigger).toBe('break-glass');
     expect(r.chamber.releases.find(x => x.id === 'DR-140')!.install.restorePoint!.restoredAt).toBeUndefined();

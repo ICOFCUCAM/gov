@@ -5,11 +5,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { queueFor } from '@/lib/data/store';
 import { addCase } from '@/lib/data/case-import';
-import { withOfficial, refusal } from '@/lib/auth/official';
-import { ministryPermission } from '@/lib/auth/roles';
+import { withOfficial, refusal, readRefusal } from '@/lib/auth/official';
+import { canReadInstitution, ministryPermission } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 export async function GET(_r: Request, props: { params: Promise<{ id: string }> }) {
   const params = await props.params;
+  // Cases carry personal data: the institution's own officials, the whole government and auditors (review M-3).
+  const refused = await readRefusal(s => canReadInstitution(s, params.id));
+  if (refused) return refused;
   const r = queueFor(params.id);
   if ('error' in r) return NextResponse.json(r, { status: 404 });
   return NextResponse.json(r);

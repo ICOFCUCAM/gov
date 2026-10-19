@@ -6,6 +6,7 @@ vi.mock('@/lib/db/client', () => ({
 }));
 
 import { GET } from './route';
+import { verifyWitnessStatement } from '@/lib/audit/witness-signature';
 
 beforeEach(() => {
   serverClientMock.mockReset();
@@ -14,14 +15,14 @@ beforeEach(() => {
 
 describe('GET /api/cron/witness-sweep', () => {
   it('returns 401 without the secret', async () => {
-    const res = await GET(new Request('http://x/api/cron/witness-sweep?token=x'));
+    const res = await GET(new Request('http://x/api/cron/witness-sweep', { headers: { authorization: 'Bearer x' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when the substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x/api/cron/witness-sweep?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/witness-sweep', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -55,17 +56,48 @@ describe('GET /api/cron/witness-sweep', () => {
       },
       rpc: rpcMock,
     });
-    const res = await GET(new Request('http://x/api/cron/witness-sweep?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/witness-sweep', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(res.status).toBe(200);
     expect(json.scopes_swept).toBe(2);
     expect(json.attested).toBe(2);
-    expect(rpcMock).toHaveBeenCalledTimes(2);
+    const calls = rpcMock.mock.calls as unknown as [string, Record<string, unknown>][];
+    // the self-witness key is registered once, then each scope is attested
+    expect(calls.map(c => c[0])).toEqual(['civicos_register_witness_key', 'civicos_record_witness_attestation', 'civicos_record_witness_attestation']);
     expect(rpcMock).toHaveBeenCalledWith('civicos_record_witness_attestation',
       expect.objectContaining({
         p_witness_label: 'substrate-self-witness',
         p_observed_seq: 4,
       }));
+    // every attestation is signed with the registered key, and the signature verifies
+    const jwk = calls[0]![1]['p_public_jwk'];
+    expect(jwk).toMatchObject({ kty: 'OKP', crv: 'Ed25519' });
+    for (const [, args] of calls.slice(1)) {
+      expect(args['p_witness_jwk']).toEqual(jwk);
+      expect(args['p_witness_signature']).toMatch(/^[0-9a-f]{128}$/);
+      expect(verifyWitnessStatement(jwk, {
+        scope: String(args['p_scope']), observedSeq: 4, observedHash: 'h', witnessLabel: 'substrate-self-witness',
+      }, String(args['p_witness_signature']))).toBe(true);
+    }
+  });
+
+  it('reports a point already attested as attested, without replacing it', async () => {
+    process.env.CIVICOS_CRON_SECRET = 'correct';
+    const rpcMock = vi.fn(async (name: string) => name === 'civicos_record_witness_attestation'
+      ? { data: null, error: { code: '23505', message: 'duplicate' } }
+      : { data: null, error: null });
+    serverClientMock.mockReturnValue({
+      from: () => ({
+        select: () => ({
+          order: () => ({ limit: () => Promise.resolve({ data: [{ scope: 'MIN-A' }], error: null }) }),
+          eq: () => ({ order: () => ({ limit: () => Promise.resolve({ data: [{ seq: 4, hash: 'h' }], error: null }) }) }),
+        }),
+      }),
+      rpc: rpcMock,
+    });
+    const json = await (await GET(new Request('http://x/api/cron/witness-sweep', { headers: { authorization: 'Bearer correct' } }))).json();
+    expect(json.attested).toBe(1);
+    expect(json.results[0].already).toBe(true);
   });
 
   it('marks empty scopes as not-attested without an RPC call', async () => {
@@ -91,7 +123,7 @@ describe('GET /api/cron/witness-sweep', () => {
       },
       rpc: rpcMock,
     });
-    const res = await GET(new Request('http://x/api/cron/witness-sweep?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/witness-sweep', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.attested).toBe(0);
     expect(json.results[0].latestSeq).toBeNull();
@@ -118,7 +150,7 @@ describe('GET /api/cron/witness-sweep', () => {
       }),
       rpc: async () => ({ data: null, error: null }),
     });
-    const res = await GET(new Request('http://x/api/cron/witness-sweep?token=correct&scopes=5'));
+    const res = await GET(new Request('http://x/api/cron/witness-sweep?scopes=5', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(json.scopes_swept).toBe(5);
   });

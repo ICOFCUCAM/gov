@@ -4,26 +4,32 @@
 // real events.
 //
 // The ping is out-of-band: it does NOT advance the delivery cursor and a
-// failure does NOT count toward the circuit breaker. It simply reports the
-// HTTP result back to the caller.
+// failure does NOT count toward the circuit breaker.
 //
-// Auth: platform-tier officer session OR CIVICOS_CRON_SECRET. The secret
-// lives only in the service-role-readable table, so the signing happens
-// server-side here — the browser never sees it.
+// Go-live review M-5: the ping goes through the platform's safe fetch
+// (lib/events/substrate-webhook.ts: public addresses only unless
+// CIVICOS_WEBHOOKS_PRIVATE=1, no redirects), and the answer is coarse —
+// delivered or not, never the remote status or error text, so the route
+// cannot be used to probe addresses. The reason is logged for operators.
+//
+// Auth: a platform administrator's substrate session (platform-admin) OR
+// CIVICOS_PROVISIONING_SECRET as a bearer (go-live review M-7); officials through the API are administrators only
+// (lib/auth/roles.ts ADMIN_ONLY /api/federation). The secret lives only in
+// the service-role-readable table, so the signing happens server-side here —
+// the browser never sees it.
 
 import { NextResponse } from 'next/server';
-import { createHmac } from 'node:crypto';
 import { serverClient } from '@/lib/db/client';
-import { platformOrCronAuthorized } from '@/lib/platform-auth';
+import { platformAdminOrSecretAuthorized } from '@/lib/platform-auth';
+import { postSubstrateWebhook } from '@/lib/events/substrate-webhook';
+import { logger } from '@/lib/ops/log';
 
 export const dynamic = 'force-dynamic';
-
-const PING_TIMEOUT_MS = 5000;
 
 interface WebhookRow { id: string; channel: string; url: string; secret: string; active: boolean; }
 
 export async function POST(req: Request) {
-  if (!await platformOrCronAuthorized(req)) {
+  if (!await platformAdminOrSecretAuthorized(req, 'provisioning')) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   const sb = serverClient();
@@ -44,7 +50,7 @@ export async function POST(req: Request) {
   const { data, error } = await sb
     .schema('civicos' as never).from('event_webhooks')
     .select('id,channel,url,secret,active').eq('id', id).maybeSingle();
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: 'could not read the webhook' }, { status: 500 });
   if (!data) return NextResponse.json({ error: 'webhook not found' }, { status: 404 });
 
   const w = data as WebhookRow;
@@ -60,36 +66,13 @@ export async function POST(req: Request) {
     at_ms: now.getTime(),
   };
   const reqBody = JSON.stringify(event);
-  const signature = createHmac('sha256', w.secret).update(reqBody).digest('hex');
-
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), PING_TIMEOUT_MS);
-  try {
-    const res = await fetch(w.url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-civicos-event-id': event.id,
-        'x-civicos-signature': `sha256=${signature}`,
-        'x-civicos-ping': 'true',
-      },
-      body: reqBody,
-      signal: controller.signal,
-    });
-    return NextResponse.json({
-      ok: res.ok,
-      status: res.status,
-      detail: `HTTP ${res.status}`,
-      at: event.at,
-    });
-  } catch (e) {
-    return NextResponse.json({
-      ok: false,
-      status: 0,
-      detail: e instanceof Error ? e.message : 'fetch failed',
-      at: event.at,
-    });
-  } finally {
-    clearTimeout(timer);
-  }
+  const r = await postSubstrateWebhook(w.url, w.secret, reqBody, { 'x-civicos-event-id': event.id, 'x-civicos-ping': 'true' });
+  if (!r.ok) logger.warn('federation.webhook_test_failed', { webhook: w.id, reason: r.detail });
+  return NextResponse.json({
+    ok: r.ok,
+    detail: r.ok
+      ? 'Delivered: the endpoint answered 2xx'
+      : 'Not delivered. Check that the address is a public http(s) endpoint (no redirects) that answers 2xx within 5 seconds; the reason is in the platform log.',
+    at: event.at,
+  });
 }

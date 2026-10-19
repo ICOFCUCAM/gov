@@ -26,6 +26,11 @@ export async function register() {
     // stored data keys (restored above) and load the signing keys' public halves.
     const { initKeyCustody } = await import('./lib/keys/custody');
     await initKeyCustody();
+    // No official account yet (state restored above): the first administrator needs the one-time
+    // setup code, written once to this server's output unless CIVICOS_SETUP_TOKEN is set (review C-1).
+    const { hasAccounts } = await import('./lib/auth/officials');
+    const { ensureSetupCode, localAccountsAllowed } = await import('./lib/auth/setup-token');
+    if (!hasAccounts() && localAccountsAllowed()) ensureSetupCode();
     // MQTT subscribers for twin stream sources (none unless a source names a broker; CIVICOS_MQTT=off starts none).
     const { startStreamSubscribersFromEnv } = await import('./lib/twin/mqtt');
     const mqtt = await startStreamSubscribersFromEnv().catch((e: Error) => ({ configured: -1, subscribers: [], error: e.message }));

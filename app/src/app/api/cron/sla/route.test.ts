@@ -14,13 +14,13 @@ beforeEach(() => {
 
 describe('POST /api/cron/sla', () => {
   it('returns 401 when CIVICOS_CRON_SECRET is unset', async () => {
-    const res = await POST(new Request('http://x/api/cron/sla?token=anything'));
+    const res = await POST(new Request('http://x/api/cron/sla', { headers: { authorization: 'Bearer anything' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 401 when the token does not match', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
-    const res = await POST(new Request('http://x/api/cron/sla?token=wrong'));
+    const res = await POST(new Request('http://x/api/cron/sla', { headers: { authorization: 'Bearer wrong' } }));
     expect(res.status).toBe(401);
   });
 
@@ -39,7 +39,7 @@ describe('POST /api/cron/sla', () => {
   it('returns 503 when the substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await POST(new Request('http://x/api/cron/sla?token=correct'));
+    const res = await POST(new Request('http://x/api/cron/sla', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -48,7 +48,7 @@ describe('POST /api/cron/sla', () => {
     serverClientMock.mockReturnValue({
       rpc: async () => ({ data: null, error: { message: 'boom' } }),
     });
-    const res = await POST(new Request('http://x/api/cron/sla?token=correct'));
+    const res = await POST(new Request('http://x/api/cron/sla', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(500);
     const json = await res.json();
     expect(json.error).toBe('boom');
@@ -58,7 +58,7 @@ describe('POST /api/cron/sla', () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     const rpcMock = vi.fn(async () => ({ data: 0, error: null }));
     serverClientMock.mockReturnValue({ rpc: rpcMock });
-    await POST(new Request('http://x/api/cron/sla?token=correct&hours=24'));
+    await POST(new Request('http://x/api/cron/sla?hours=24', { headers: { authorization: 'Bearer correct' } }));
     expect(rpcMock).toHaveBeenCalledWith('civicos_escalate_stale_service_requests',
       { p_threshold_hours: 24 });
   });
@@ -67,7 +67,7 @@ describe('POST /api/cron/sla', () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     const rpcMock = vi.fn(async () => ({ data: 0, error: null }));
     serverClientMock.mockReturnValue({ rpc: rpcMock });
-    await POST(new Request('http://x/api/cron/sla?token=correct'));
+    await POST(new Request('http://x/api/cron/sla', { headers: { authorization: 'Bearer correct' } }));
     expect(rpcMock).toHaveBeenCalledWith('civicos_escalate_stale_service_requests',
       { p_threshold_hours: 48 });
   });

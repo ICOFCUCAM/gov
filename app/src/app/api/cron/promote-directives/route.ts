@@ -8,7 +8,7 @@
 // supabase/cron/schedule.sql, Vercel Cron, …). The substrate's own
 // civicos_promote_due_directives is no longer called: its table is a mirror.
 //
-// Protection: shared CIVICOS_CRON_SECRET via ?token=… or Authorization:
+// Protection: shared CIVICOS_CRON_SECRET as Authorization:
 // Bearer. The secret never reaches the client bundle (server-only route).
 
 import { NextResponse } from 'next/server';

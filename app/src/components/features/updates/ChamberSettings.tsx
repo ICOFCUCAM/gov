@@ -33,7 +33,7 @@ export function ChamberSettings() {
         <h1 className="mt-4 text-[2.1rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3rem]">
           How {nation ? <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{nation}</span> : 'this installation'} stays running
         </h1>
-        <p className="mt-4 max-w-[66ch] text-[15px] font-light leading-relaxed text-white/55">
+        <p className="mt-4 max-w-[66ch] text-[15px] font-light leading-relaxed text-night-muted">
           Upgrades are always your decision. What may happen on its own is one thing only: if a new release fails its health checks, the software returns to the last version that worked. Data is never restored automatically.
         </p>
         {err ? <div className="mt-8"><ErrorLine>{err}</ErrorLine></div> : !c ? <Loading label="Loading settings…" /> : <Body c={c} link={link} q={q} reload={load} />}
@@ -65,7 +65,7 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
   const choice = <V extends string>(name: string, value: V, current: V, label: string, hint: string, onPick: (v: V) => void) => (
     <label key={value} className="flex cursor-pointer items-start gap-3 rounded-[3px] border p-4 transition-colors" style={{ borderColor: current === value ? CHAMPAGNE : hair(0.14), background: current === value ? hair(0.06) : 'transparent' }}>
       <input type="radio" name={name} className="mt-1 h-4 w-4 accent-[#d9c398]" checked={current === value} onChange={() => onPick(value)} />
-      <span><span className="block text-[14px] font-light text-[#f3efe6]">{label}</span><span className="mt-1 block text-[12.5px] font-light leading-relaxed text-white/50">{hint}</span></span>
+      <span><span className="block text-[14px] font-light text-[#f3efe6]">{label}</span><span className="mt-1 block text-[12.5px] font-light leading-relaxed text-night-muted">{hint}</span></span>
     </label>
   );
 
@@ -92,7 +92,7 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
             </Field>
           </div>
           <AgentCredential c={c} link={link} actor={actor} reload={reload} />
-          <p className="mt-4 text-[12.5px] font-light text-white/45">Checks: readiness, liveness, error rate and latency against the pre-upgrade baseline, audit-chain integrity, and smoke tests of sign-in, the citizen wallet, payments and the registry. Fallback needs three failed or missing reports in a row, or two independent critical checks failing together.</p>
+          <p className="mt-4 text-[12.5px] font-light text-night-muted">Checks: readiness, liveness, error rate and latency against the pre-upgrade baseline, audit-chain integrity, and smoke tests of sign-in, the citizen wallet, payments and the registry. Fallback needs three failed or missing reports in a row, or two independent critical checks failing together.</p>
         </Section>
 
         <Section n="03" title="Rollout ring">
@@ -136,7 +136,7 @@ function Body({ c, link, q, reload }: { c: UpdateChamber; link?: string; q: stri
       <Section n="07" title="Fallback incidents" aside={`${c.incidents.length} recorded`}>
         <div className="grid gap-3">
           {c.incidents.map(i => <IncidentCard key={i.id} i={i} q={q} />)}
-          {!c.incidents.length ? <p className="text-[13.5px] font-light text-white/50">No fallbacks so far.</p> : null}
+          {!c.incidents.length ? <p className="text-[13.5px] font-light text-night-muted">No fallbacks so far.</p> : null}
         </div>
       </Section>
 
@@ -177,7 +177,7 @@ function AgentCredential({ c, link, actor, reload }: { c: UpdateChamber; link?: 
         {meta ? <Chip tone="#9be7c4" solid>Active · cag_{meta.prefix}…</Chip> : <Chip tone="#f1b36b">Not issued</Chip>}
         <button type="button" className={`${ghostBtn} ml-auto py-2 text-[12.5px]`} disabled={busy} onClick={issue}>{busy ? 'Issuing…' : meta ? 'Rotate credential' : 'Issue credential'}</button>
       </div>
-      <p className="mt-2 text-[12.5px] font-light leading-relaxed text-white/55">
+      <p className="mt-2 text-[12.5px] font-light leading-relaxed text-night-muted">
         The agent sends it as <code className="font-mono text-[12px]">Authorization: Bearer cag_…</code> to <code className="font-mono text-[12px]">/api/releases/health</code>. Sessions and the distribution link are refused there. {meta ? `Issued ${fmtDateTime(meta.issuedAt)} by ${meta.issuedBy}${meta.rotations ? ` · rotated ${meta.rotations}×` : ''}.` : ''}
       </p>
       {fresh ? (
@@ -228,11 +228,11 @@ function ChangeControlPanel({ c, link, actor, reload }: { c: UpdateChamber; link
         <ul className="mt-2 space-y-1.5">
           {cc.blackouts.map(b => (
             <li key={b.id} className="flex flex-wrap items-center gap-2 text-[12.5px] font-light text-white/75">
-              <Chip tone="#f1b36b">{b.kind}</Chip>{b.label}<span className="font-mono text-[10.5px] text-white/45">{fmtDateTime(b.start)} → {fmtDateTime(b.end)}</span>
-              <button type="button" className="ml-auto text-[11px] text-white/40 hover:text-[#f1938f]" onClick={() => run({ action: 'remove-blackout', id: b.id, by: actor })}>Remove</button>
+              <Chip tone="#f1b36b">{b.kind}</Chip>{b.label}<span className="font-mono text-[10.5px] text-night-muted">{fmtDateTime(b.start)} → {fmtDateTime(b.end)}</span>
+              <button type="button" className="ml-auto text-[11px] text-night-muted hover:text-[#f1938f]" onClick={() => run({ action: 'remove-blackout', id: b.id, by: actor })}>Remove</button>
             </li>
           ))}
-          {!cc.blackouts.length ? <li className="text-[12px] text-white/40">None defined.</li> : null}
+          {!cc.blackouts.length ? <li className="text-[12px] text-night-muted">None defined.</li> : null}
         </ul>
         <div className="mt-3 grid gap-2 sm:grid-cols-2">
           <Field label="Label"><input className={inputCls} value={bo.label} onChange={e => setBo({ ...bo, label: e.target.value })} placeholder="General election" /></Field>
@@ -248,51 +248,64 @@ function ChangeControlPanel({ c, link, actor, reload }: { c: UpdateChamber; link
 }
 
 function BreakGlass({ c, link, reload }: { c: UpdateChamber; link?: string; reload: () => void }) {
-  const [by, setBy] = React.useState('');
-  const [second, setSecond] = React.useState('');
+  const [actor, setActor] = useActor();
   const [reason, setReason] = React.useState('');
   const [armed, setArmed] = React.useState(false);
   const [err, setErr] = React.useState<string | null>(null);
   const [ok, setOk] = React.useState<string | null>(null);
   const running = c.releases.find(r => r.id === c.nation.installedReleaseId);
   const rp = running?.install.restorePoint;
+  // Dual control by two sign-ins: a proposal waits here for a different official to confirm it.
+  const proposal = running?.install.breakGlass;
 
-  async function go(e: React.FormEvent) {
-    e.preventDefault(); setErr(null); setOk(null);
+  async function send(body: { reason?: string; action?: 'propose' | 'confirm' | 'cancel' }) {
+    setErr(null); setOk(null);
     try {
-      const r = await api.updates.breakGlass({ by, secondBy: second, reason, link });
-      setOk(`Software switched back to ${r.chamber.installed}. Incident ${r.incident.id} recorded.`);
-      setArmed(false); reload();
+      const r = await api.updates.breakGlass({ by: actor, link, ...body });
+      if (r.pending) setOk('Proposed. A second, different official must sign in and confirm it here before anything changes.');
+      else if (r.cancelled) setOk('Proposal cancelled.');
+      else if (r.incident) setOk(`Software switched back to ${r.chamber.installed}. Incident ${r.incident.id} recorded.`);
+      setArmed(false); setReason(''); reload();
     } catch (e2) { setErr(e2 instanceof Error ? e2.message : 'Break-glass failed'); }
   }
+  function propose(e: React.FormEvent) { e.preventDefault(); void send({ reason, action: 'propose' }); }
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_420px]">
       <div className="text-[13.5px] font-light leading-relaxed text-white/65">
-        <p>For the worst case: the running release is broken after its probation ended, and the normal rollback is not enough. Two named people switch the software back to the version the restore point protects.</p>
+        <p>For the worst case: the running release is broken after its probation ended, and the normal rollback is not enough. Two officials, each signed in, switch the software back to the version the restore point protects.</p>
         <ol className="mt-4 space-y-2">
           <li><span className="font-mono text-[11px]" style={{ color: CHAMPAGNE }}>1</span> · Confirm the failure is the release, not the infrastructure (hardware and site failures are disaster recovery, a separate capability).</li>
-          <li><span className="font-mono text-[11px]" style={{ color: CHAMPAGNE }}>2</span> · Two officers with platform authority enter their names and the reason below. The system switches the software back; data is not touched.</li>
+          <li><span className="font-mono text-[11px]" style={{ color: CHAMPAGNE }}>2</span> · A government-wide administrator proposes break-glass with what failed. A second, different administrator signs in on their own device and confirms it. Only then does the system switch the software back; data is not touched.</li>
           <li><span className="font-mono text-[11px]" style={{ color: CHAMPAGNE }}>3</span> · If the data itself is damaged, restore the snapshot from the release’s page — a separate decision that loses everything written since the snapshot.</li>
           <li><span className="font-mono text-[11px]" style={{ color: CHAMPAGNE }}>4</span> · Offline: self-hosted nations can run <code className="font-mono text-[12px]">rollback.sh</code> from the install kit; air-gapped nations the restore kit in the offline bundle. Record it here afterwards.</li>
         </ol>
       </div>
-      <Panel className="p-5" strong={armed}>
+      <Panel className="p-5" strong={armed || !!proposal}>
         {rp ? (
           <p className="text-[12.5px] font-light text-white/60">Running {c.installed}. Break-glass returns the software to <span className="font-mono text-[#f4e4bd]">{rp.version}</span> (restore point {rp.id}).</p>
         ) : <p className="text-[12.5px] font-light text-white/60">No restore point protects the running release; use your own backups and record a rollback.</p>}
-        {!armed ? (
+        {proposal ? (
+          <div className="mt-4 grid gap-3" aria-label="Break-glass awaiting confirmation">
+            <p className="text-[12.5px] font-light text-white/75">Proposed by <span className="text-[#f3efe6]">{proposal.by}</span> on {fmtDateTime(proposal.at)}: {proposal.reason}</p>
+            <Field label="Your name (replaced by your signed-in name)"><input className={inputCls} value={actor} onChange={e => setActor(e.target.value)} /></Field>
+            <div className="flex flex-wrap gap-2">
+              <button type="button" className={goldBtn} style={goldStyle} onClick={() => void send({ action: 'confirm' })}>Confirm and switch back now</button>
+              <button type="button" className={ghostBtn} onClick={() => void send({ action: 'cancel' })}>Cancel proposal</button>
+            </div>
+            <p className="text-[11.5px] text-night-muted">Only a different official can confirm. The proposal lapses after 24 hours.</p>
+          </div>
+        ) : !armed ? (
           <button type="button" className={`${ghostBtn} mt-4 w-full`} disabled={!rp} onClick={() => setArmed(true)}>Prepare break-glass</button>
         ) : (
-          <form onSubmit={go} className="mt-4 grid gap-3" aria-label="Break-glass restore">
-            <Field label="First officer"><input className={inputCls} value={by} onChange={e => setBy(e.target.value)} required /></Field>
-            <Field label="Second officer (different person)"><input className={inputCls} value={second} onChange={e => setSecond(e.target.value)} required /></Field>
+          <form onSubmit={propose} className="mt-4 grid gap-3" aria-label="Propose break-glass restore">
+            <Field label="Your name (replaced by your signed-in name)"><input className={inputCls} value={actor} onChange={e => setActor(e.target.value)} required /></Field>
             <Field label="What failed"><textarea className={`${inputCls} min-h-[70px]`} value={reason} onChange={e => setReason(e.target.value)} required /></Field>
-            <div className="flex gap-2"><button type="submit" className={goldBtn} style={goldStyle}>Switch back now</button><button type="button" className={ghostBtn} onClick={() => setArmed(false)}>Cancel</button></div>
+            <div className="flex gap-2"><button type="submit" className={goldBtn} style={goldStyle}>Propose break-glass</button><button type="button" className={ghostBtn} onClick={() => setArmed(false)}>Cancel</button></div>
           </form>
         )}
         <div className="mt-3 min-h-[20px]" aria-live="polite">{err ? <ErrorLine>{err}</ErrorLine> : ok ? <p className="text-[12.5px] text-[#9be7c4]">{ok}</p> : null}</div>
-        <p className="mt-2 flex items-center gap-2"><Chip tone="#a5abb5">Audited with both names</Chip></p>
+        <p className="mt-2 flex items-center gap-2"><Chip tone="#a5abb5">Two sign-ins · audited with both names</Chip></p>
       </Panel>
     </div>
   );

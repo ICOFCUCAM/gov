@@ -4,6 +4,9 @@
 global:
   imageRegistry: registry.sovereign.local
   imagePullPolicy: IfNotPresent
+  # Names of existing docker-registry secrets for the nation's registry, e.g.
+  # [civicos-registry]. The chart never holds registry credentials itself.
+  imagePullSecrets: []
 
 api:
   image: civicos/civic-api
@@ -24,6 +27,8 @@ api:
   # CIVICOS_MIRROR_WEBHOOK_SECRET (issued in the platform's Integrations).
   # Empty: the follower is off and civic-api holds what it last mirrored.
   mirrorSecret: ""
+  # With autoscaling on, the Deployment leaves the replica count to the HPA
+  # (api.replicas is then only the count before the HPA's first decision).
   autoscaling:
     enabled: true
     minReplicas: 3
@@ -51,10 +56,56 @@ app:
   # installation's client certificate for calling partner installations under
   # mutual TLS (lib/exchange/federation-client.ts); "" for none.
   federationClientSecret: ""
-  # Secret holding CIVICOS_SESSION_SECRET and CIVICOS_CRON_SECRET (required)
-  # and NEXT_PUBLIC_SUPABASE_URL, NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-  # SUPABASE_SERVICE_ROLE_KEY (when the substrate is connected).
+  # Secret holding CIVICOS_SESSION_SECRET and CIVICOS_CRON_SECRET (required),
+  # optionally CIVICOS_EXPORT_SECRET, CIVICOS_PUBLISHER_SECRET,
+  # CIVICOS_PROVISIONING_SECRET (one per purpose; the cron secret opens only
+  # /api/cron/*) and CIVICOS_SETUP_TOKEN (first administrator; else printed
+  # to the log at start), and NEXT_PUBLIC_SUPABASE_URL,
+  # NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY, SUPABASE_SERVICE_ROLE_KEY (when the
+  # substrate is connected).
   existingSecret: civicos-app
+  # Optional keys the app also reads from existingSecret when present:
+  # CIVICOS_METRICS_TOKEN (/api/metrics), CIVICOS_OTEL_HEADERS (the trace
+  # collector's own auth), CIVICOS_TSA_AUTH (the nation's time-stamping
+  # authority), CIVICOS_AI_API_KEY (the opt-in assistant's model server).
+  #
+  # The platform's keys (app/src/lib/keys/custody.ts), always from existing
+  # Secrets, never inline. Without them the app signs with a development key
+  # generated per process and keeps second-step and webhook secrets unsealed,
+  # so under app.auth enforce the chart refuses to render without them.
+  keys:
+    # env: the keys themselves from `existingSecret`; vault: HashiCorp Vault /
+    # OpenBao Transit; kms-http: a cloud KMS or HSM behind the KMS shim. With a
+    # remote provider no private key or key encryption key enters the pod.
+    provider: env
+    # provider env: a Secret with CIVICOS_DATA_KEK (32 bytes, base64 or hex;
+    # e.g. `openssl rand -base64 32`), CIVICOS_AUDIT_KEY, CIVICOS_EXCHANGE_KEY
+    # and CIVICOS_TOKEN_KEY (Ed25519 private keys, PEM; `openssl genpkey
+    # -algorithm ed25519`), optionally CIVICOS_DATA_KEK_PREVIOUS during a
+    # rotation. With a remote provider the same Secret may still hold
+    # CIVICOS_DATA_KEK / _PREVIOUS so values sealed before the move open.
+    existingSecret: civicos-app-keys
+    # Development keys only (an empty existingSecret): refused while app.auth
+    # is enforce.
+    allowDevelopmentKeys: false
+    vault:
+      addr: ""            # https://vault.gov.example:8200 (CIVICOS_VAULT_ADDR)
+      namespace: ""
+      transitMount: transit
+      approleMount: approle
+      # Secret with CIVICOS_VAULT_TOKEN, or CIVICOS_VAULT_ROLE_ID and
+      # CIVICOS_VAULT_SECRET_ID (auth: approle).
+      auth: token
+      existingSecret: ""
+      # Secret with ca.crt when Vault's certificate is the nation's own CA.
+      caSecret: ""
+      # Transit key names when not civicos-audit / -exchange / -token / -data.
+      keyNames: {}        # { audit: …, exchange: …, token: …, data: … }
+    kms:
+      url: ""             # https://kms-shim.gov.example (CIVICOS_KMS_URL)
+      existingSecret: ""  # Secret with CIVICOS_KMS_TOKEN
+      caSecret: ""
+      keyNames: {}
   state:
     # supabase: civicos.platform_state in the nation's substrate (apply the
     # app/supabase migrations, including civicos_platform_state_fencing).
@@ -76,6 +127,29 @@ app:
   resources:
     requests: { cpu: "250m", memory: "768Mi" }
     limits: { cpu: "1", memory: "1Gi" }
+  # Several replicas scaled on CPU: only with state.mode postgres (every
+  # replica takes every change); the chart refuses it otherwise.
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 6
+    targetCPUUtilizationPercentage: 70
+  # The container's root filesystem is read-only; Next.js writes its cache
+  # (images, fetch cache) and temporary files to these memory-backed or node
+  # disk volumes instead (emptyDir, lost on restart).
+  readOnlyRootFilesystem: true
+  cacheSize: 1Gi
+  tmpSize: 512Mi
+  # The append-only audit anchor file (app/src/lib/audit/anchor.ts) in file
+  # mode: on its own volume, outside the state, so whoever holds the state
+  # volume cannot rewrite both. Ignored in the other modes (their anchors go to
+  # the substrate's federation stream) unless file is set explicitly.
+  anchors:
+    enabled: true
+    size: 1Gi
+    storageClassName: ""
+    # An existing claim instead of the chart's own.
+    existingClaim: ""
 
 # Traces (app/src/lib/ops/otel.ts): off unless enabled. Spans go only to the
 # nation's own collector: the one this chart runs (collector.enabled) or an
@@ -180,8 +254,88 @@ security:
   podSecurityContext:
     runAsNonRoot: true
     runAsUser: 10001
+    runAsGroup: 10001
+    # Volumes (state, anchors) are made writable for the app's group.
+    fsGroup: 10001
+    fsGroupChangePolicy: OnRootMismatch
     seccompProfile: { type: RuntimeDefault }
+  # Who may open connections to the app and the civic-api: the ingress
+  # controller's namespace (label it, or name it, e.g.
+  # { namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: ingress-nginx } } }).
+  ingressFrom:
+    - namespaceSelector: { matchLabels: { role: ingress } }
+  # Where the pods may connect (network policy peers). An empty list means any
+  # destination on that port; narrow every one to the nation's own addresses.
+  egress:
+    # Name resolution: the cluster DNS only (TCP and UDP 53).
+    dns:
+      - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+        podSelector: { matchLabels: { k8s-app: kube-dns } }
+    # The nation's Postgres (civic-api always; the app in state.mode postgres).
+    # For a managed database outside the cluster use its address, e.g.
+    # [{ ipBlock: { cidr: 10.20.0.15/32 } }].
+    postgres:
+      - podSelector: { matchLabels: { app.kubernetes.io/name: postgres } }
+    postgresPort: 5432
+    nats:
+      - podSelector: { matchLabels: { app.kubernetes.io/name: nats } }
+    # The app's outbound HTTPS: the substrate, registered twin sources and
+    # ministry websites, partner installations, the key provider and TSA.
+    # Empty: any address on 443. With CIVICOS_EGRESS_PROXY (app.env) set this
+    # to the proxy alone, e.g. [{ ipBlock: { cidr: 10.30.0.8/32 } }], and
+    # httpsPorts to its port.
+    https: []
+    httpsPorts: [443]
+    # Further egress rules for the app, as NetworkPolicy egress entries.
+    extra: []
 
 pdb:
   enabled: true
   minAvailable: 2
+
+# Scheduled jobs (app/src/app/api/cron/*) as Kubernetes CronJobs. Off by
+# default: with the Supabase substrate the same jobs run from pg_cron
+# (app/supabase/cron/schedule.sql). Turn this on where pg_cron is not used
+# (state.mode postgres or file, air-gapped) and do not run both. Each job
+# calls the app's Service with CIVICOS_CRON_SECRET from app.existingSecret as
+# `Authorization: Bearer …`; a non-2xx answer fails the run. The schedules and
+# methods are the ones in schedule.sql.
+cron:
+  enabled: false
+  # Image that makes the call (needs node 18+). Empty: the app's own image,
+  # already on the nodes.
+  image: ""
+  tag: ""
+  # IANA time zone for the schedules (CronJob timeZone, Kubernetes 1.27+);
+  # empty: the controller's (UTC on most clusters).
+  timeZone: ""
+  timeoutSeconds: 300
+  startingDeadlineSeconds: 120
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 3
+  resources:
+    requests: { cpu: "10m", memory: "64Mi" }
+    limits: { cpu: "200m", memory: "128Mi" }
+  # Installations without the Supabase substrate: the jobs marked
+  # `substrate: true` answer 503 "substrate not configured" there, so they are
+  # not created (they would only fail every run).
+  withoutSubstrate: false
+  jobs:
+    deliver-events:      { schedule: "*/5 * * * *",  method: GET, substrate: true }
+    substrate-metrics:   { schedule: "*/10 * * * *", method: GET, substrate: true }
+    audit-anchor:        { schedule: "*/10 * * * *", method: GET }
+    witness-sweep:       { schedule: "*/15 * * * *", method: GET, substrate: true }
+    witness-divergence:  { schedule: "*/15 * * * *", method: GET, substrate: true }
+    posture-digest:      { schedule: "*/30 * * * *", method: GET, substrate: true }
+    expire-consents:     { schedule: "0 * * * *",    method: GET, substrate: true }
+    audit-self:          { schedule: "0 * * * *",    method: GET, substrate: true }
+    update-watchdog:     { schedule: "* * * * *",    method: GET }
+    site-feeds:          { schedule: "*/30 * * * *", method: GET }
+    twin-ingest:         { schedule: "7 * * * *",    method: GET }
+    retention:           { schedule: "23 * * * *",   method: GET }
+    deliver-cloudevents: { schedule: "*/2 * * * *",  method: GET }
+    deliver-messages:    { schedule: "* * * * *",    method: GET }
+    backup:              { schedule: "41 * * * *",   method: GET }
+    sla:                 { schedule: "0 * * * *",    method: POST, substrate: true }
+    telemetry-stale:     { schedule: "0 * * * *",    method: POST, substrate: true }
+    promote-directives:  { schedule: "0 * * * *",    method: POST }

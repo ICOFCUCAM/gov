@@ -27,36 +27,36 @@ export function AdvisoriesPanel({ link, q, compact = false }: { link?: string; q
         {(['affected', 'under-investigation', 'fixed', 'not-affected'] as AdvisoryNationStatus[]).map(s => (
           <Chip key={s} tone={NSTATUS_TONE[s]} solid={s === 'affected' && open.some(e => e.status === 'affected')}>{data.exposure.filter(e => e.status === s).length} {NSTATUS_TEXT[s].toLowerCase()}</Chip>
         ))}
-        <span className="ml-auto text-[11.5px] font-light text-white/40">Patch commitments: {(['critical', 'high', 'medium', 'low'] as AdvisorySeverity[]).map(s => `${s} ${hrs(data.policy[s])}`).join(' · ')}</span>
+        <span className="ml-auto text-[11.5px] font-light text-night-muted">Patch commitments: {(['critical', 'high', 'medium', 'low'] as AdvisorySeverity[]).map(s => `${s} ${hrs(data.policy[s])}`).join(' · ')}</span>
       </div>
       {shown.map(e => {
         const c = data.commitments.find(x => x.advisoryId === e.advisory.id);
         return (
           <Panel key={e.advisory.id} className="px-4 py-3">
             <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-              <span className="font-mono text-[11px] text-white/50">{e.advisory.id}</span>
+              <span className="font-mono text-[11px] text-night-muted">{e.advisory.id}</span>
               <Chip tone={SEV_TONE[e.advisory.severity]} solid={e.advisory.severity === 'critical'}>{e.advisory.severity} · CVSS {e.advisory.cvss.toFixed(1)}</Chip>
               <span className="min-w-0 flex-1 text-[14px] font-light text-[#f3efe6]">{e.advisory.title}</span>
               <Chip tone={NSTATUS_TONE[e.status]} solid={e.status === 'affected'}>{NSTATUS_TEXT[e.status]}</Chip>
             </div>
-            {!compact ? <p className="mt-1.5 text-[12.5px] font-light text-white/55">{e.advisory.summary}</p> : null}
-            <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10.5px] text-white/45">
+            {!compact ? <p className="mt-1.5 text-[12.5px] font-light text-night-muted">{e.advisory.summary}</p> : null}
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[10.5px] text-night-muted">
               <span>Affects ≥{e.advisory.affectedFrom}{e.advisory.affectedBefore ? ` <${e.advisory.affectedBefore}` : ''}</span>
               <span>{e.advisory.fixedIn ? `Fixed in ${e.advisory.fixedIn}` : 'No fix yet'}</span>
               <span>Published {fmtDate(e.advisory.publishedAt)}</span>
               {e.advisory.cwe ? <span>{e.advisory.cwe}</span> : null}
               {c ? <span style={{ color: c.state === 'breached' ? '#f1938f' : c.state === 'met' ? '#9be7c4' : '#f4d58d' }}>Publisher commitment {c.state}{c.hoursLeft !== undefined ? ` · ${hrs(c.hoursLeft)} left` : ''}</span> : null}
             </p>
-            {e.justification && e.status === 'not-affected' ? <p className="mt-1 text-[11.5px] text-white/45">VEX: {e.justification}</p> : null}
+            {e.justification && e.status === 'not-affected' ? <p className="mt-1 text-[11.5px] text-night-muted">VEX: {e.justification}</p> : null}
             <p className="mt-2 flex flex-wrap gap-4 text-[12px]">
               {e.status === 'affected' && e.fixReleaseId ? <Link href={`/updates/${e.fixReleaseId}${q}`} className="underline underline-offset-4" style={{ color: CHAMPAGNE }}>Review the fix →</Link> : null}
-              <a href={`/api/releases/advisories/${e.advisory.id}/csaf${linkQ}`} download className="underline decoration-white/20 underline-offset-4 text-white/55 hover:text-[#f4e4bd]">CSAF JSON ↓</a>
+              <a href={`/api/releases/advisories/${e.advisory.id}/csaf${linkQ}`} download className="underline decoration-white/20 underline-offset-4 text-night-muted hover:text-[#f4e4bd]">CSAF JSON ↓</a>
             </p>
           </Panel>
         );
       })}
       {!shown.length ? <p className="text-[13px] font-light text-[#9be7c4]">Not affected by any open advisory.</p> : null}
-      {compact && open.length ? <p className="text-[11.5px] text-white/40" style={{ borderColor: hair(0.1) }}>All advisories, with CSAF exports, are on the Security page.</p> : null}
+      {compact && open.length ? <p className="text-[11.5px] text-night-muted" style={{ borderColor: hair(0.1) }}>All advisories, with CSAF exports, are on the Security page.</p> : null}
     </div>
   );
 }

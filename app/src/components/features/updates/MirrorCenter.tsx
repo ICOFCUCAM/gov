@@ -8,6 +8,7 @@ import { api } from '@/lib/api/client';
 import { OnboardingFrame, Eyebrow, Section, Field, inputCls, Select, goldBtn, goldStyle, ghostBtn, hair, CHAMPAGNE, CHAMPAGNE_HI } from '@/components/features/onboarding/Chrome';
 import type { CustodyStep, MediaShipment, SyncManifest } from '@/lib/api/types';
 import { ChamberNav, ChamberTabs, Chip, CopyValue, ErrorLine, Loading, Panel, PoweredBy, fmtBytes, fmtDateTime, useActor, useCenterTitle, useLink } from './ui';
+import { NIGHT } from '@/lib/theme/tokens';
 
 export const CUSTODY: { step: CustodyStep; label: string; who: string }[] = [
   { step: 'sealed', label: 'Sealed', who: 'Publisher' },
@@ -24,10 +25,10 @@ export function CustodyChain({ s }: { s: MediaShipment }) {
         const bad = e?.ok === false;
         return (
           <li key={c.step} className="rounded-[2px] border px-3 py-2" style={{ borderColor: bad ? '#f1938f88' : e ? '#9be7c455' : hair(0.12), background: e ? (bad ? 'rgba(241,147,143,0.06)' : 'rgba(155,231,196,0.04)') : 'transparent' }}>
-            <p className="font-mono text-[9.5px] uppercase tracking-[0.18em]" style={{ color: bad ? '#f1938f' : e ? '#9be7c4' : 'rgba(243,239,230,0.4)' }}>{bad ? 'Seal mismatch' : c.label}</p>
+            <p className="font-mono text-[9.5px] uppercase tracking-[0.18em]" style={{ color: bad ? '#f1938f' : e ? '#9be7c4' : NIGHT.muted }}>{bad ? 'Seal mismatch' : c.label}</p>
             {e ? (
-              <p className="mt-1 text-[12px] font-light text-white/70">{e.by}{e.to ? ` → ${e.to}` : ''}<span className="block font-mono text-[10px] text-white/40">{fmtDateTime(e.at)}{e.sealId ? ` · seal ${e.sealId}` : ''}</span>{e.note ? <span className="block text-[11px] text-white/45">{e.note}</span> : null}</p>
-            ) : <p className="mt-1 text-[11.5px] font-light text-white/35">{c.who}</p>}
+              <p className="mt-1 text-[12px] font-light text-white/70">{e.by}{e.to ? ` → ${e.to}` : ''}<span className="block font-mono text-[10px] text-night-muted">{fmtDateTime(e.at)}{e.sealId ? ` · seal ${e.sealId}` : ''}</span>{e.note ? <span className="block text-[11px] text-night-muted">{e.note}</span> : null}</p>
+            ) : <p className="mt-1 text-[11.5px] font-light text-night-faint">{c.who}</p>}
           </li>
         );
       })}
@@ -54,7 +55,7 @@ export function MirrorCenter() {
         <h1 className="mt-4 text-[2.1rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3rem]">
           Releases inside {nation ? <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{nation}</span> : 'your network'}
         </h1>
-        <p className="mt-4 max-w-[70ch] text-[15px] font-light leading-relaxed text-white/55">Keep a local mirror of the registry, fetch only what it lacks — as deltas where you already hold the previous release — and receive releases on sealed physical media with a named chain of custody.</p>
+        <p className="mt-4 max-w-[70ch] text-[15px] font-light leading-relaxed text-night-muted">Keep a local mirror of the registry, fetch only what it lacks — as deltas where you already hold the previous release — and receive releases on sealed physical media with a named chain of custody.</p>
         {err ? <div className="mt-8"><ErrorLine>{err}</ErrorLine></div> : !d ? <Loading label="Checking your mirror…" /> : d.deliveryMode === 'saas' ? (
           <Panel className="mt-10 px-5 py-4"><p className="text-[14px] font-light text-white/65">Your platform is hosted by the publisher, so releases are applied from the publisher’s registry inside your maintenance windows. No local mirror or media is needed. If you move to your own data centre or another cloud (see Hosting), this page lets you set one up.</p></Panel>
         ) : (
@@ -90,9 +91,9 @@ function MirrorForm({ d, link, onDone }: { d: Data; link?: string; onDone: () =>
     <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
       {d.mirror ? (
         <Panel className="flex flex-wrap items-center gap-x-6 gap-y-2 px-4 py-3 text-[13px] font-light text-white/65">
-          <span className="min-w-0"><span className="text-white/40">Registry</span> <CopyValue value={d.mirror.registryUrl} label="registry address" /></span>
-          <span><span className="text-white/40">Registered</span> {fmtDateTime(d.mirror.registeredAt)} by {d.mirror.registeredBy}</span>
-          <span><span className="text-white/40">Last sync</span> {d.mirror.lastSync ? `${fmtDateTime(d.mirror.lastSync.at)} by ${d.mirror.lastSync.by} (${fmtBytes(d.mirror.lastSync.bytes)})` : 'never'}</span>
+          <span className="min-w-0"><span className="text-night-muted">Registry</span> <CopyValue value={d.mirror.registryUrl} label="registry address" /></span>
+          <span><span className="text-night-muted">Registered</span> {fmtDateTime(d.mirror.registeredAt)} by {d.mirror.registeredBy}</span>
+          <span><span className="text-night-muted">Last sync</span> {d.mirror.lastSync ? `${fmtDateTime(d.mirror.lastSync.at)} by ${d.mirror.lastSync.by} (${fmtBytes(d.mirror.lastSync.bytes)})` : 'never'}</span>
         </Panel>
       ) : null}
       <form onSubmit={save} className="grid grid-cols-[minmax(0,1fr)] items-end gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,2fr)_180px_auto]">
@@ -125,14 +126,14 @@ function Manifest({ m, link, onDone }: { m: SyncManifest; link?: string; onDone:
         <Panel className="px-4 py-3"><p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#d9c398]/70">To transfer</p><p className="mt-1 text-[1.6rem] font-extralight text-[#f3efe6]">{fmtBytes(m.transferBytes)}</p></Panel>
         <Panel className="px-4 py-3"><p className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#d9c398]/70">Saved by deltas</p><p className="mt-1 text-[1.6rem] font-extralight text-[#9be7c4]">{fmtBytes(m.savedBytes)} <span className="text-[14px]">({pct}%)</span></p></Panel>
       </div>
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65"><th className="py-2 pr-3 font-normal">Release</th><th className="py-2 pr-3 font-normal">File</th><th className="py-2 pr-3 font-normal">Full</th><th className="py-2 pr-3 font-normal">Fetch</th><th className="py-2 font-normal">Saving</th></tr></thead>
           <tbody>{m.items.map(i => (
             <tr key={i.artifactId} className="border-t" style={{ borderColor: hair(0.08) }}>
               <td className="py-2 pr-3 font-mono text-[11.5px] text-[#f4e4bd]">{i.version}</td>
-              <td className="py-2 pr-3 font-mono text-[11px] text-white/65">{i.delta ? <>{i.delta.filename}<span className="block text-white/35">delta from {i.delta.from}</span></> : i.filename}</td>
-              <td className="py-2 pr-3 font-mono text-[11px] text-white/50">{fmtBytes(i.sizeBytes)}</td>
+              <td className="py-2 pr-3 font-mono text-[11px] text-white/65">{i.delta ? <>{i.delta.filename}<span className="block text-night-faint">delta from {i.delta.from}</span></> : i.filename}</td>
+              <td className="py-2 pr-3 font-mono text-[11px] text-night-muted">{fmtBytes(i.sizeBytes)}</td>
               <td className="py-2 pr-3 font-mono text-[11px] text-white/75">{fmtBytes(i.delta?.sizeBytes ?? i.sizeBytes)}</td>
               <td className="py-2 font-mono text-[11px] text-[#9be7c4]">{i.delta ? `−${fmtBytes(i.delta.savedBytes)}` : '—'}</td>
             </tr>
@@ -141,7 +142,7 @@ function Manifest({ m, link, onDone }: { m: SyncManifest; link?: string; onDone:
       </div>
       <div className="flex flex-wrap items-center gap-3">
         <a href={`/api/releases/mirror?download=1${link ? `&link=${encodeURIComponent(link)}` : ''}`} download className="text-[13px] underline underline-offset-4" style={{ color: CHAMPAGNE }}>Download sync manifest ↓</a>
-        <span className="text-[12px] font-light text-white/40">Mark a release once your mirror holds it:</span>
+        <span className="text-[12px] font-light text-night-muted">Mark a release once your mirror holds it:</span>
         {releases.map(([id, v]) => <button key={id} type="button" className={`${ghostBtn} py-1.5 text-[12px]`} onClick={() => synced(id)}>{v} synced</button>)}
       </div>
       <ErrorLine>{err}</ErrorLine>
@@ -160,7 +161,7 @@ function Media({ d, link, onDone }: { d: Data; link?: string; onDone: () => void
     try { await api.updates.mirrorAction({ action: 'custody', mediaId, step: s, by: actor, sealId: seal[mediaId], note: note[mediaId], link }); onDone(); }
     catch (x) { setErr(x instanceof Error ? x.message : 'Could not record the step'); }
   }
-  if (!d.media.length) return <p className="text-[13px] font-light text-white/50">No media has been sent to you. The publisher seals media on request; each step will appear here.</p>;
+  if (!d.media.length) return <p className="text-[13px] font-light text-night-muted">No media has been sent to you. The publisher seals media on request; each step will appear here.</p>;
   return (
     <div className="grid grid-cols-[minmax(0,1fr)] gap-3">
       {d.media.map(s => (
@@ -180,7 +181,7 @@ function Media({ d, link, onDone }: { d: Data; link?: string; onDone: () => void
             <div className="mt-3 flex flex-wrap items-end gap-2">
               <input aria-label="Seal number as read" className={`${inputCls} w-[220px] py-2 font-mono text-[13px]`} value={seal[s.mediaId] ?? ''} onChange={e => setSeal({ ...seal, [s.mediaId]: e.target.value })} placeholder="Seal number on the media" />
               <button type="button" className={`${goldBtn} px-4 py-2 text-[12.5px]`} style={goldStyle} onClick={() => step(s.mediaId, 'seal-verified')}>Verify seal</button>
-              <span className="text-[11.5px] text-white/40">Then verify each file’s checksum and signature before loading.</span>
+              <span className="text-[11.5px] text-night-muted">Then verify each file’s checksum and signature before loading.</span>
             </div>
           ) : null}
         </Panel>
@@ -219,7 +220,7 @@ export function PublisherMedia() {
           <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
             <span className="font-mono text-[11.5px] text-[#f4e4bd]">{s.mediaId}</span>
             <span className="text-[12px] text-[#d9c398]/80">{names[s.nationId] ?? s.nationId}</span>
-            <span className="min-w-0 flex-1 text-[12.5px] font-light text-white/55">seal {s.sealId} · {s.contents.length} files</span>
+            <span className="min-w-0 flex-1 text-[12.5px] font-light text-night-muted">seal {s.sealId} · {s.contents.length} files</span>
             <Chip tone={s.state === 'seal-broken' ? '#f1938f' : s.state === 'seal-verified' ? '#9be7c4' : '#f4d58d'}>{s.state}</Chip>
           </div>
           <CustodyChain s={s} />
@@ -231,23 +232,23 @@ export function PublisherMedia() {
           ) : null}
         </Panel>
       ))}
-      {!d.media.length ? <p className="text-[13px] font-light text-white/50">No media shipped.</p> : null}
+      {!d.media.length ? <p className="text-[13px] font-light text-night-muted">No media shipped.</p> : null}
       {d.nations.length ? (
         <div className="flex flex-wrap items-end gap-3 rounded-[2px] border p-4" style={{ borderColor: hair(0.14) }}>
-          <label className="grid gap-1 text-[11.5px] text-white/50">Nation
+          <label className="grid gap-1 text-[11.5px] text-night-muted">Nation
             <Select value={f.nationId} onChange={e => setF({ ...f, nationId: e.target.value, releaseIds: [] })} className="w-auto py-2 text-[13px]">{d.nations.map(n => <option key={n.id} value={n.id}>{n.name} ({n.deliveryMode})</option>)}</Select>
           </label>
-          <div className="grid gap-1 text-[11.5px] text-white/50">Releases
+          <div className="grid gap-1 text-[11.5px] text-night-muted">Releases
             <div className="flex flex-wrap gap-3 py-2">{eligible.map(r => (
               <label key={r.id} className="flex items-center gap-1.5 font-mono text-[12px] text-white/70"><input type="checkbox" checked={f.releaseIds.includes(r.id)} onChange={e => setF({ ...f, releaseIds: e.target.checked ? [...f.releaseIds, r.id] : f.releaseIds.filter(x => x !== r.id) })} />{r.version}</label>
             ))}</div>
           </div>
-          <label className="grid gap-1 text-[11.5px] text-white/50">Seal number
+          <label className="grid gap-1 text-[11.5px] text-night-muted">Seal number
             <input className={`${inputCls} w-[160px] py-2 font-mono text-[13px]`} value={f.sealId} onChange={e => setF({ ...f, sealId: e.target.value })} placeholder="SEAL-…" />
           </label>
           <button type="button" className={`${goldBtn} px-4 py-2 text-[12.5px]`} style={goldStyle} onClick={() => act({ action: 'seal', ...f })}>Write and seal</button>
         </div>
-      ) : <p className="text-[12.5px] text-white/45">No self-hosted or air-gapped nations enrolled.</p>}
+      ) : <p className="text-[12.5px] text-night-muted">No self-hosted or air-gapped nations enrolled.</p>}
       <ErrorLine>{err}</ErrorLine>
     </div>
   );

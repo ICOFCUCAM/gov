@@ -14,14 +14,14 @@ beforeEach(() => {
 
 describe('GET /api/cron/audit-self', () => {
   it('returns 401 when CIVICOS_CRON_SECRET is unset', async () => {
-    const res = await GET(new Request('http://x/api/cron/audit-self?token=anything'));
+    const res = await GET(new Request('http://x/api/cron/audit-self', { headers: { authorization: 'Bearer anything' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 503 when the substrate is not configured', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(null);
-    const res = await GET(new Request('http://x/api/cron/audit-self?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/audit-self', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(503);
   });
 
@@ -47,7 +47,7 @@ describe('GET /api/cron/audit-self', () => {
       }),
       rpc: rpcMock,
     });
-    const res = await GET(new Request('http://x/api/cron/audit-self?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/audit-self', { headers: { authorization: 'Bearer correct' } }));
     const json = await res.json();
     expect(res.status).toBe(200);
     expect(json.ok).toBe(true);
@@ -69,7 +69,7 @@ describe('GET /api/cron/audit-self', () => {
       }),
       rpc: async () => ({ data: null, error: { message: 'boom' } }),
     });
-    const res = await GET(new Request('http://x/api/cron/audit-self?token=correct'));
+    const res = await GET(new Request('http://x/api/cron/audit-self', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(500);
     const json = await res.json();
     expect(json.error).toBe('boom');

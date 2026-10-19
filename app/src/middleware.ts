@@ -47,9 +47,13 @@ const ENTITY_URI = /^\/id\/[a-z]+\/[^/]+(\/about)?\/?$/;
 // (CVE-2025-29927). The patched version never sends it, so a request that
 // arrives with it is an attempt to skip this gate. The ingress strips it too.
 const SUBREQUEST_HEADER = 'x-middleware-subrequest';
-// Signing in, creating the installation's first account (the route refuses once one exists)
-// and setting a new password with an administrator's reset code.
-const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/, /^\/api\/auth\/password$/];
+// Signing in, creating the installation's first account (the route refuses once one exists),
+// setting a new password with an administrator's reset code, and the challenge for signing
+// in with a passkey (lib/auth/passkeys.ts; used once, five minutes).
+const SIGN_IN = [/^\/api\/auth\/official$/, /^\/api\/auth\/officials$/, /^\/api\/auth\/password$/, /^\/api\/auth\/passkeys\/options$/];
+// Signing in through the government's identity provider (lib/auth/oidc.ts): the start sends the
+// browser to the provider, the callback does nothing without the state this browser started with.
+const IDP_SIGN_IN = /^\/api\/auth\/oidc\/(start|callback)$/;
 const MUTATING = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 /**
@@ -72,14 +76,29 @@ const bearerRequest = (req: NextRequest): boolean =>
 
 /**
  * Under enforcement, a page or read outside the public lists needs a verified
- * official: the signed civicos_official cookie, not the page cookie. API reads
- * are answered 401; pages go to sign-in (citizen pages to /login).
+ * official: the signed civicos_official cookie, not the page cookie, and a
+ * session that still counts now (review M-1): the platform is asked, as for
+ * changes, whether the account is still enabled, the password unchanged and
+ * the session not signed out (answers cached READ_CHECK_MS per token). API
+ * reads are answered 401; pages go to sign-in (citizen pages to /login).
+ * When the platform cannot be asked, reads are refused (503), as changes are.
  */
 async function readGate(req: NextRequest, res: NextResponse): Promise<NextResponse> {
   const { pathname } = req.nextUrl;
   if (bearerRequest(req)) return res;
-  if (await verifyToken(req.cookies.get(OFFICIAL_COOKIE)?.value, process.env.CIVICOS_SESSION_SECRET)) return res;
-  if (pathname.startsWith('/api/')) {
+  const token = req.cookies.get(OFFICIAL_COOKIE)?.value;
+  if (await verifyToken(token, process.env.CIVICOS_SESSION_SECRET)) {
+    const live = await liveForRead(req, token!);
+    if (live) return res;
+    if (live === undefined) {
+      return pathname.startsWith('/api/')
+        ? NextResponse.json({ error: 'Your session could not be checked just now; try again' }, { status: 503 })
+        : new NextResponse('Your session could not be checked just now; try again shortly.', { status: 503, headers: { 'content-type': 'text/plain; charset=utf-8', 'retry-after': '5' } });
+    }
+    if (pathname.startsWith('/api/')) {
+      return NextResponse.json({ error: 'Your session has ended (signed out, password changed or account disabled); sign in again (/sign-in)' }, { status: 401 });
+    }
+  } else if (pathname.startsWith('/api/')) {
     return NextResponse.json({ error: 'Sign in as an official to read this (/sign-in)' }, { status: 401 });
   }
   const url = req.nextUrl.clone();
@@ -110,6 +129,32 @@ async function liveOfficial(req: NextRequest): Promise<{ official: OfficialClaim
   } catch {
     return undefined;
   }
+}
+
+/**
+ * Reads ask the platform too (review M-1), but a page loads many reads at
+ * once, so each token's answer is kept READ_CHECK_MS: a disabled account or
+ * an ended session loses read access within seconds, not at the token's
+ * expiry. Keyed by the token's SHA-256, never the token. Changes are always
+ * asked afresh (roleGate).
+ */
+export const READ_CHECK_MS = 5_000;
+const READ_CACHE_MAX = 2_000;
+const readChecks = new Map<string, { at: number; ok: boolean }>();
+export function clearReadChecks(): void { readChecks.clear(); }
+
+async function liveForRead(req: NextRequest, token: string): Promise<boolean | undefined> {
+  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(token)));
+  const key = btoa(String.fromCharCode(...digest));
+  const now = Date.now();
+  const hit = readChecks.get(key);
+  if (hit && now - hit.at < READ_CHECK_MS) return hit.ok;
+  const asked = await liveOfficial(req);
+  if (!asked) return undefined; // not remembered: ask again next time
+  const ok = !!asked.official;
+  if (readChecks.size >= READ_CACHE_MAX) readChecks.delete(readChecks.keys().next().value!);
+  readChecks.set(key, { at: now, ok });
+  return ok;
 }
 
 /**
@@ -196,6 +241,11 @@ function handle(req: NextRequest, requestId: string, nonce: string): NextRespons
 const ROUTE_LIMITED = [/^\/api\/boundaries$/, /^\/api\/map-pack$/, /^\/api\/facilities\/check$/, /^\/api\/org\/ministries\/[^/]+\/facilities\/import$/];
 function rateGate(req: NextRequest): Promise<NextResponse | null> | null {
   const { pathname } = req.nextUrl;
+  // Identity-provider sign-ins are reads that cost work (a server-side sign-in in progress, a token exchange): limited per address.
+  if (IDP_SIGN_IN.test(pathname)) {
+    const r = take(`public|idp|${clientAddress(req.headers)}`, POLICIES.public);
+    return Promise.resolve(r.ok ? null : tooMany('public', r.retryAfterS));
+  }
   if (!pathname.startsWith('/api/') || !MUTATING.has(req.method)) return null;
   if (ROUTE_LIMITED.some(re => re.test(pathname)) || verifiesOwnCredential(pathname)) return null;
   const scope: Scope = PUBLIC_WRITE.some(re => re.test(pathname)) ? 'public' : 'write';
@@ -238,6 +288,7 @@ function gate(req: NextRequest, res: NextResponse): NextResponse | Promise<NextR
   if (SELF_AUTHENTICATED.some(re => re.test(pathname))) return res;
   // The cover reads the nation's public identity before anyone signs in; public maps read the boundaries in force.
   if (req.method === 'GET' && PUBLIC_READ.some(re => re.test(pathname))) return res;
+  if (req.method === 'GET' && IDP_SIGN_IN.test(pathname)) return res;
   if ((req.method === 'GET' || req.method === 'HEAD') && ENTITY_URI.test(pathname)) return res;
   if (req.method === 'POST' && PUBLIC_WRITE.some(re => re.test(pathname))) return res;
 

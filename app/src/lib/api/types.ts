@@ -55,6 +55,8 @@ export interface Permit {
   fields: Record<string, string>;
   timeline: PermitTimelineEntry[];
   contestable: boolean;
+  /** Set when the nation's retention rule removed the applicant's details (lib/data/retention.ts). */
+  anonymisedAt?: ISODate;
 }
 
 export type PermitDecision = 'approve' | 'decline' | 'request-info' | 'escalate';
@@ -104,6 +106,13 @@ export interface AuditVerification {
   checked: number;
   brokenAtSeq?: number;
   signed?: AuditSignedHeads;
+  /** From the cached, incremental check (/api/audit/verify): entries in the chain now. */
+  total?: number;
+  /** False while the server is still catching up with new entries. */
+  complete?: boolean;
+  verifiedAt?: string;
+  /** When the whole chain was last checked from its first entry. */
+  fullCheckAt?: string;
 }
 
 export interface CreatePermitInput {
@@ -393,11 +402,39 @@ export type BackupState = 'pending' | 'completed' | 'failed' | 'restoring';
 export interface BackupRecord {
   id: string;
   kind: BackupKind;
+  /** completed: verified (read back, decrypted, every part checked, dry-run restored); pending: not verified yet; failed: verification failed. */
   state: BackupState;
+  /** Where the archive is: `dir://<file>` or `s3://<bucket>/<prefix><file>`. */
   location: string;
   encrypted: boolean;
   sizeBytes?: number;
   createdAt: ISODate;
+  /** Real backups (lib/data/backups.ts): the archive's SHA-256, who took it and why, and the audit chain head it holds. */
+  sha256?: string;
+  createdBy?: string;
+  reason?: string;
+  auditSeq?: number;
+  verifiedAt?: ISODate;
+}
+
+/** A backup as the platform console shows it: the earlier record and the backup's own description. */
+export interface BackupView extends BackupRecord {
+  mode?: 'snapshot' | 'postgres';
+  keyProvider?: string;
+  audit?: { seq: number; hash: string | null; entries: number };
+  release?: string | null;
+  verification?: { at: string; by: string; ok: boolean; checks: string[]; problem?: string };
+}
+/** The backup service's status (lib/data/backups.ts backupStatus). */
+export interface BackupStatusView {
+  target: { kind: string; where: string } | { error: string };
+  key: { provider: string; ready: boolean };
+  mode: 'snapshot' | 'postgres';
+  policy: { daily: number; weekly: number; monthly: number; preRestoreDays: number; intervalMinutes: number; rpoMinutes: number; rtoMinutes: number; updatedBy?: string; updatedAt?: string };
+  rpo: { targetMinutes: number; newestVerifiedAt: string | null; ageMinutes: number | null; met: boolean };
+  rtoMinutes: number;
+  proposals: { id: string; backupId: string; by: string; at: string; expiresAt: string; warning: { text: string } }[];
+  restores: { id: string; backupId: string; proposedBy: string; confirmedBy: string; at: string; safetyBackupId: string }[];
 }
 
 export type ConfigState = 'draft' | 'signed' | 'applied' | 'superseded';
@@ -506,6 +543,8 @@ export interface QueueItem {
   importId?: string;
   /** When an official last assigned, escalated or closed it. */
   actedAt?: ISODate;
+  /** Set when the nation's retention rule removed its details (lib/data/retention.ts). */
+  anonymisedAt?: ISODate;
 }
 /** One load of real cases into an institution's queue (lib/data/case-import.ts). */
 export interface CaseImport {
@@ -984,6 +1023,12 @@ export interface NationInstall {
   probation?: Probation;
   /** Four-eyes: a production approve or install proposed by one official, awaiting a second. */
   pending?: { action: 'approve' | 'install'; by: string; at: ISODate; mode?: DeliveryMode; verified?: boolean; note?: string };
+  /**
+   * Dual control: break-glass proposed by one official for the running
+   * release, awaiting a different signed-in official's confirmation (lapses
+   * after DUAL_CONTROL_HOURS). `byId` is the proposer's verified identity.
+   */
+  breakGlass?: { by: string; byId?: string; at: ISODate; reason: string; version: string };
 }
 
 // ── Resilience: restore points, probation and fallback ───────────────
@@ -1001,6 +1046,12 @@ export interface RestorePoint {
   /** What restoring it gives back and what is lost (irreversible migrations). */
   restoreNotes: string[];
   restoredAt?: ISODate;
+  /** The real backup behind it (lib/data/backups.ts): read back, decrypted, every part checked and dry-run restored. */
+  backupId?: string;
+  /** What the verification checked (the backup's dry run). */
+  checks?: string[];
+  /** Not a real backup: a demonstration nation of the publisher, or CIVICOS_RESTORE_POINTS=simulated. */
+  simulated?: boolean;
 }
 export type HealthCheckKey =
   | 'readiness' | 'liveness' | 'error-rate' | 'latency' | 'audit-chain'
@@ -1041,6 +1092,8 @@ export interface Probation {
   /** Consecutive bad or missing reports. Above zero the release is "degraded — watching". */
   failStreak: number;
   degraded: boolean;
+  /** When the nation's officials were first alerted that the release is degraded (once per probation). */
+  degradedAlertAt?: ISODate;
   concludedAt?: ISODate;
   incidentId?: string;
 }
@@ -1407,8 +1460,10 @@ export interface PreflightFinding {
   kind: 'module' | 'integration' | 'build' | 'configuration' | 'institution';
   status: PreflightStatus;
   reason: string;
-  /** A blocking finding waived by two named officials. */
+  /** A blocking finding waived by two officials: `by` proposed it, `secondBy` (a different signed-in official) confirmed it. */
   waiver?: { by: string; secondBy: string; reason: string; at: ISODate };
+  /** A waiver proposed by one official, awaiting a different official's confirmation (dual control). */
+  waiverProposal?: { by: string; reason: string; at: ISODate };
 }
 export interface PreflightReport {
   nationId: string;
@@ -1773,9 +1828,12 @@ export interface AlertDelivery {
   officialId: string;
   officialName: string;
   channel: AlertChannel;
+  /** The address or number (masked when the API shows it). */
   to: string;
-  /** No provider is connected: deliveries are queued (placeholder). */
-  status: 'queued' | 'sent' | 'failed';
+  /** Where the delivery stands in the platform's outbox (lib/messaging): queued until a provider is connected. */
+  status: 'queued' | 'sending' | 'retrying' | 'sent' | 'failed' | 'cancelled';
+  /** The outbox message that carries it. */
+  messageId?: string;
 }
 
 // ── Update Center: licence and contract management ────────────────────

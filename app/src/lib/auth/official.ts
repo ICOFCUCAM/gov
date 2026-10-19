@@ -9,14 +9,29 @@
 import { cookies } from 'next/headers';
 import { NextResponse } from 'next/server';
 import { OFFICIAL_COOKIE, SESSION_HOURS, signClaims, verifyToken, type OfficialClaims } from './session-token';
-import { sessionSecret, sessionSecretProblem, accountById } from './officials';
-import { secondStepMissing, type Scope } from './roles';
+import { createHash } from 'node:crypto';
+import { sessionSecret, sessionSecretProblem, accountById, sessionRevoked } from './officials';
+import { apiPermission, secondStepMissing, type Scope } from './roles';
+import { officerNow, substrateScope } from './substrate-officials';
 import { logger } from '@/lib/ops/log';
+import { providerMfaAccepted } from './sign-on-store';
+
+/** The key an ended session is kept under (lib/auth/officials.ts revokeSession): the token's SHA-256. */
+export const sessionKey = (token: string) => createHash('sha256').update(token, 'utf8').digest('hex');
+
+/** The session token the request carries, if any. */
+export async function sessionToken(): Promise<string | undefined> {
+  try { return (await cookies()).get(OFFICIAL_COOKIE)?.value; } catch { return undefined; }
+}
 
 /**
- * The signed-in official, as their account stands now: a platform account
- * that has since been disabled signs nobody in, and a changed role or
- * institution applies at once (the session carries what it was at sign-in).
+ * The signed-in official, as their account stands now: a session that was
+ * signed out is refused (review M-1); a platform account that has since been
+ * disabled signs nobody in, and a changed role or institution applies at
+ * once (the session carries what it was at sign-in); a substrate officer
+ * whose register entry is gone or inactive signs nobody in, and their role
+ * and institution come from the platform's records (review H-3,
+ * lib/auth/substrate-officials.ts).
  */
 export async function currentOfficial(): Promise<OfficialClaims | null> {
   let token: string | undefined;
@@ -28,13 +43,25 @@ export async function currentOfficial(): Promise<OfficialClaims | null> {
     return null;
   }
   const c = await verifyToken(token, sessionSecret());
-  if (!c || c.method !== 'local') return c;
+  if (!c || sessionRevoked(sessionKey(token!))) return null;
+  if (c.method === 'substrate') {
+    const row = await officerNow(c.sub.slice('officer:'.length));
+    // Gone, inactive, or the register cannot be read just now: the session does not count.
+    if (!row || !row.active) return null;
+    const s = substrateScope(row);
+    return { ...c, name: row.name, office: row.title ?? row.role, role: s.role, institution: s.institution,
+      twoStep: !!c.twoStep, twoStepRequired: s.twoStepRequired };
+  }
+  if (c.method !== 'local') return c;
   const a = accountById(c.sub.slice('local:'.length));
   if (!a || a.disabled) return null;
   // A session issued before the password last changed no longer counts.
   if (a.passwordChangedAt && c.iat < Math.floor(Date.parse(a.passwordChangedAt) / 1000)) return null;
+  // The second step still counts while what proved it is still in place: the account's authenticator app or a
+  // passkey, or, for an identity-provider sign-in, the provider's multi-factor sign-in while the policy accepts it.
+  const secondStep = c.via === 'oidc' ? providerMfaAccepted() : a.secondStepOn;
   return { ...c, name: a.name, office: a.office, role: a.role, institution: a.institution,
-    twoStep: !!c.twoStep && !!a.twoStepSince, twoStepRequired: a.twoStepRequired };
+    twoStep: !!c.twoStep && secondStep, twoStepRequired: a.twoStepRequired };
 }
 
 /** The name an action is recorded under: the verified official's, with their office. */
@@ -62,6 +89,40 @@ export async function refusal(rule: (s: Scope) => string | null): Promise<NextRe
   const o = await currentOfficial();
   const why = o ? secondStepMissing(o) ?? rule(o) : null;
   return why ? NextResponse.json({ error: why }, { status: 403 }) : null;
+}
+
+/**
+ * The path rule of lib/auth/roles.ts (apiPermission()) for this change,
+ * checked again in the route against the account as it stands now: the
+ * middleware applies it only when it can verify the session itself, so the
+ * Update Center's installation-level routes check here too.
+ */
+export function pathRefusal(req: Request): Promise<NextResponse | null> {
+  const { pathname } = new URL(req.url);
+  return refusal(s => apiPermission(s, req.method, pathname));
+}
+
+/**
+ * Check a read rule from lib/auth/roles.ts (canReadInstitution(),
+ * canReadPermits()) against the signed-in official: a 403 with the reason, or
+ * null to go ahead. Reads do not need the second sign-in step. Without a
+ * signed-in official there is nothing to check (CIVICOS_AUTH=enforce refuses
+ * reads without one in the middleware).
+ */
+export async function readRefusal(rule: (s: Scope) => string | null): Promise<NextResponse | null> {
+  const o = await currentOfficial();
+  const why = o ? rule(o) : null;
+  return why ? NextResponse.json({ error: why }, { status: 403 }) : null;
+}
+
+/**
+ * The verified identity of the signed-in official (their session subject),
+ * for dual control: a step proposed by one official is confirmed only by a
+ * different one, compared by this rather than by a name. Undefined when no
+ * one is signed in.
+ */
+export async function officialId(): Promise<string | undefined> {
+  return (await currentOfficial())?.sub;
 }
 
 /** Set the signed session cookie (and the console's page cookie) on a response. */

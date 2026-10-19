@@ -1115,6 +1115,17 @@ export async function startRecords(opts: RecordsOptions): Promise<Records> {
     const tw2 = twinOf(root);
     switch (topic) {
       case 'doc': await applyRemoteDoc(p); return;
+      case 'state.restore': {
+        // Another instance restored the whole state from a backup (lib/data/backups.ts): this read model is
+        // now of another time. Stop taking changes and ask for a restart, which loads the restored tables.
+        const why = `the state was restored from backup ${String(p.backupId ?? '?')} by another instance (${String(r.instance)}); restart this server before it takes changes`;
+        status.error = why;
+        if (root === (globalThis as unknown as Root)) {
+          const ps = (globalThis as { __persistStatus?: { restartRequired?: string; error?: string } }).__persistStatus;
+          if (ps) { ps.restartRequired = why; ps.error = why; }
+        }
+        return;
+      }
       case 'audit': await catchUpAudit(); return;
       case 'twin.entity': { const e = p as unknown as TwinEntity; tw2.entities[e.id] = e; return; }
       case 'twin.key': memoryTwin(() => tw2).addKey(p as unknown as { entityId: string; system: string; key: string }); return;

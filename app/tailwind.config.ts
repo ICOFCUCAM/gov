@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss';
+import { NIGHT } from './src/lib/theme/tokens';
 
 const config: Config = {
   content: ['./src/**/*.{ts,tsx,mdx}'],
@@ -30,6 +31,13 @@ const config: Config = {
         ok: 'rgb(var(--c-ok) / <alpha-value>)',
         warn: 'rgb(var(--c-warn) / <alpha-value>)',
         alert: 'rgb(var(--c-alert) / <alpha-value>)',
+        // Night chrome text (OnboardingFrame pages), 4.5:1 on the ground and
+        // its panels (lib/theme/tokens.ts NIGHT, checked by tokens.test.ts).
+        'night-ink': NIGHT.ink,
+        'night-soft': NIGHT.soft,
+        'night-muted': NIGHT.muted,
+        'night-faint': NIGHT.faint,
+        'night-champagne': NIGHT.champagneMuted,
         // NCCC wall (dark)
         'wall-bg': '#0d1117',
         'wall-panel': '#161b22',

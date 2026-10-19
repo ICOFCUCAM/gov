@@ -102,11 +102,11 @@ export function SiteEditor() {
   const feedOwnsNews = view && view.settings.mode !== 'host' && view.settings.feed.items.length > 0;
 
   return (
-    <OnboardingFrame right={<Link href="/sitemap" className="text-[12px] text-white/50 hover:text-[#f4e4bd]">All public sites ↗</Link>}>
+    <OnboardingFrame right={<Link href="/sitemap" className="text-[12px] text-night-muted hover:text-[#f4e4bd]">All public sites ↗</Link>}>
       <div className="py-10">
         <Eyebrow>Public websites</Eyebrow>
         <h1 className="mt-3 text-[34px] font-extralight tracking-tight text-[#f3efe6]">Site editor</h1>
-        <p className="mt-2 max-w-3xl text-[14px] font-light leading-relaxed text-white/55">
+        <p className="mt-2 max-w-3xl text-[14px] font-light leading-relaxed text-night-muted">
           Propose changes to a site&apos;s content or design. A second, different official publishes them; every step is written to the
           audit chain and every published version can be restored through the same review.
         </p>
@@ -126,7 +126,7 @@ export function SiteEditor() {
                 className="block w-full rounded-[3px] border px-3 py-2 text-left transition-colors"
                 style={{ borderColor: s.siteId === siteId ? hair(0.5) : hair(0.1), background: s.siteId === siteId ? hair(0.08) : 'transparent' }}>
                 <span className="block truncate text-[13.5px] font-light text-[#f3efe6]">{s.name}</span>
-                <span className="mt-0.5 block font-mono text-[9.5px] tracking-[0.08em] text-white/40">/{s.siteId} · {s.mode}</span>
+                <span className="mt-0.5 block font-mono text-[9.5px] tracking-[0.08em] text-night-muted">/{s.siteId} · {s.mode}</span>
               </button>
             ))}
           </nav>
@@ -136,11 +136,11 @@ export function SiteEditor() {
               <div className="flex flex-wrap items-baseline justify-between gap-3">
                 <div>
                   <div className="text-[22px] font-light text-[#f3efe6]">{site.name}</div>
-                  <div className="mt-1 font-mono text-[10.5px] tracking-[0.06em] text-white/45">
+                  <div className="mt-1 font-mono text-[10.5px] tracking-[0.06em] text-night-muted">
                     {view.editorial.version === 0 ? 'Reference content (nothing published by the nation yet)' : `Version ${view.editorial.version} · published ${when(view.editorial.published?.at)} by ${view.editorial.published?.publishedBy}`}
                     {' · '}{view.settings.mode}{view.settings.website ? ` · ${view.settings.website}` : ''}
                   </div>
-                  <div className="mt-1 font-mono text-[10.5px] tracking-[0.06em] text-white/45">
+                  <div className="mt-1 font-mono text-[10.5px] tracking-[0.06em] text-night-muted">
                     Email updates: {view.subscribers.confirmed} confirmed · {view.subscribers.pending} awaiting confirmation · {view.subscribers.queued} messages queued (no email provider connected yet)
                   </div>
                 </div>
@@ -162,7 +162,7 @@ export function SiteEditor() {
                 </div>
                 <fieldset className="mt-5 rounded-[3px] border px-4 pb-4 pt-2" style={{ borderColor: hair(0.15) }}>
                   <legend className="px-1 font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/65">The ministry&apos;s own colours and logo</legend>
-                  <p className="text-[12px] text-white/45">From its existing website, so both read as one institution. Text in these colours is darkened where needed to stay readable. The logo is stored in the platform: PNG, JPEG or WebP, up to 150 KB.</p>
+                  <p className="text-[12px] text-night-muted">From its existing website, so both read as one institution. Text in these colours is darkened where needed to stay readable. The logo is stored in the platform: PNG, JPEG or WebP, up to 150 KB.</p>
                   <div className="mt-3 grid gap-4 sm:grid-cols-3">
                     {(['primary', 'accent'] as const).map(k => (
                       <Field key={k} label={k === 'primary' ? 'Main colour' : 'Second colour'} hint="Leave empty for the design's own">
@@ -184,7 +184,7 @@ export function SiteEditor() {
                             let bin = ''; for (let i = 0; i < buf.length; i++) bin += String.fromCharCode(buf[i]!);
                             set({ logo: { type: f.type, data: btoa(bin), alt: draft.logo?.alt || `${draft.name} logo` } });
                           }} />
-                        {draft.logo ? <button type="button" className="text-[12px] text-white/45 underline-offset-4 hover:text-[#f1938f] hover:underline" onClick={() => set({ logo: null })}>Remove</button> : null}
+                        {draft.logo ? <button type="button" className="text-[12px] text-night-muted underline-offset-4 hover:text-[#f1938f] hover:underline" onClick={() => set({ logo: null })}>Remove</button> : null}
                       </span>
                     </Field>
                   </div>
@@ -198,7 +198,7 @@ export function SiteEditor() {
               </Section>
 
               <Section n="2" title="News" aside={<span className="font-mono tracking-[0.12em]">{view.content.newsSource === 'sample' ? 'SAMPLE' : view.content.newsSource.toUpperCase()}</span>}>
-                {feedOwnsNews ? <p className="mb-3 text-[12.5px] text-white/50">The news on the site comes from {view.settings.website} while its feed has items ({view.settings.mode} mode); what you publish here shows when the feed is empty or the site is hosted here.</p> : null}
+                {feedOwnsNews ? <p className="mb-3 text-[12.5px] text-night-muted">The news on the site comes from {view.settings.website} while its feed has items ({view.settings.mode} mode); what you publish here shows when the feed is empty or the site is hosted here.</p> : null}
                 <ListEditor name="News" items={draft.news} empty={{ title: '', summary: '', date: '' }} onChange={news => set({ news })}
                   cols={[{ k: 'title', label: 'Title', w: '1.3fr' }, { k: 'summary', label: 'Summary', w: '1.6fr' }, { k: 'date', label: 'Date', w: '130px' }]} />
               </Section>
@@ -222,19 +222,19 @@ export function SiteEditor() {
                     Propose for review
                   </button>
                 </div>
-                {changed ? <p className="mt-2 font-mono text-[10.5px] text-white/45">Changes: {[...Object.keys(change.content ?? {}), ...(change.preset !== undefined ? ['design'] : []), ...(change.brand !== undefined ? ['colours and logo'] : [])].join(', ')}</p> : null}
+                {changed ? <p className="mt-2 font-mono text-[10.5px] text-night-muted">Changes: {[...Object.keys(change.content ?? {}), ...(change.preset !== undefined ? ['design'] : []), ...(change.brand !== undefined ? ['colours and logo'] : [])].join(', ')}</p> : null}
               </Section>
 
               <Section n="6" title="Awaiting review" aside={<span className="font-mono tracking-[0.12em]">{pending.length} PENDING</span>}>
-                {pending.length === 0 ? <p className="text-[13px] text-white/45">Nothing waiting.</p> : (
+                {pending.length === 0 ? <p className="text-[13px] text-night-muted">Nothing waiting.</p> : (
                   <ul className="space-y-3">
                     {pending.map(p => (
                       <li key={p.id} className="rounded-[3px] border px-4 py-3" style={{ borderColor: hair(0.25) }}>
                         <div className="flex flex-wrap items-baseline justify-between gap-2">
                           <span className="text-[14px] text-[#f3efe6]">{p.summary.join(', ')}</span>
-                          <span className="font-mono text-[10px] text-white/45">{p.id} · proposed by {p.proposedBy} · {when(p.proposedAt)}</span>
+                          <span className="font-mono text-[10px] text-night-muted">{p.id} · proposed by {p.proposedBy} · {when(p.proposedAt)}</span>
                         </div>
-                        {p.note ? <p className="mt-1 text-[12.5px] text-white/55">{p.note}</p> : null}
+                        {p.note ? <p className="mt-1 text-[12.5px] text-night-muted">{p.note}</p> : null}
                         <div className="mt-3 flex flex-wrap items-center gap-2">
                           <Link href={`/${siteId}?preview=${p.id}`} target="_blank" className={`${ghostBtn} py-1.5`}>Preview ↗</Link>
                           <button type="button" className={`${goldBtn} py-1.5`} style={goldStyle} disabled={!by.trim() || busy}
@@ -242,7 +242,7 @@ export function SiteEditor() {
                           <input className={`${inputCls} max-w-[260px] py-1.5`} placeholder="Reason to reject" aria-label="Reason to reject" value={reason[p.id] ?? ''} onChange={e => { const v = e.currentTarget.value; setReason(r => ({ ...r, [p.id]: v })); }} />
                           <button type="button" className={`${ghostBtn} py-1.5`} disabled={!by.trim() || busy}
                             onClick={() => act('Rejected', () => api.publicSites.decide(siteId, p.id, { action: 'reject', by, reason: reason[p.id] ?? '' }))}>Reject</button>
-                          <button type="button" className="text-[12px] text-white/45 underline-offset-4 hover:text-[#f4e4bd] hover:underline" disabled={!by.trim() || busy}
+                          <button type="button" className="text-[12px] text-night-muted underline-offset-4 hover:text-[#f4e4bd] hover:underline" disabled={!by.trim() || busy}
                             onClick={() => act('Withdrawn', () => api.publicSites.decide(siteId, p.id, { action: 'withdraw', by }))}>Withdraw</button>
                         </div>
                       </li>
@@ -263,7 +263,7 @@ export function SiteEditor() {
                     </li>
                   ))}
                   <li className="flex flex-wrap items-center justify-between gap-2">
-                    <span className="text-[13px] text-white/55">Version 0 · the platform&apos;s reference content</span>
+                    <span className="text-[13px] text-night-muted">Version 0 · the platform&apos;s reference content</span>
                     {view.editorial.version !== 0 ? (
                       <button type="button" className="text-[12px] underline-offset-4 hover:underline" style={{ color: CHAMPAGNE }} disabled={!by.trim() || busy}
                         onClick={() => act('Restore of the reference content proposed', () => api.publicSites.propose(siteId, { restore: 0, by }))}>Propose restoring</button>
@@ -272,9 +272,9 @@ export function SiteEditor() {
                 </ul>
                 {decided.length ? (
                   <div className="mt-5">
-                    <div className="font-mono text-[10px] tracking-[0.12em] text-white/40">DECIDED</div>
+                    <div className="font-mono text-[10px] tracking-[0.12em] text-night-muted">DECIDED</div>
                     <ul className="mt-2 space-y-1">
-                      {decided.map(p => <li key={p.id} className="text-[12px] text-white/50">{p.id} · {p.summary.join(', ')} · {p.status} by {p.decidedBy}{p.reason ? ` — ${p.reason}` : ''}</li>)}
+                      {decided.map(p => <li key={p.id} className="text-[12px] text-night-muted">{p.id} · {p.summary.join(', ')} · {p.status} by {p.decidedBy}{p.reason ? ` — ${p.reason}` : ''}</li>)}
                     </ul>
                   </div>
                 ) : null}
@@ -282,7 +282,7 @@ export function SiteEditor() {
 
               <SiteTranslations n="8" siteId={siteId} view={view} by={by} busy={busy} act={act} />
             </div>
-          ) : <p className="text-[13px] text-white/45">Loading…</p>}
+          ) : <p className="text-[13px] text-night-muted">Loading…</p>}
         </div>
       </div>
     </OnboardingFrame>
@@ -298,7 +298,7 @@ function ListEditor<T extends Record<string, string>>({ name, items, empty, cols
   const grid = { gridTemplateColumns: `${cols.map(c => c.w).join(' ')} 32px` };
   return (
     <div className="space-y-2">
-      <div className="hidden gap-2 font-mono text-[9.5px] tracking-[0.1em] text-white/40 sm:grid" style={grid}>
+      <div className="hidden gap-2 font-mono text-[9.5px] tracking-[0.1em] text-night-muted sm:grid" style={grid}>
         {cols.map(c => <span key={c.k}>{c.label.toUpperCase()}</span>)}<span />
       </div>
       {items.map((it, i) => (
@@ -307,7 +307,7 @@ function ListEditor<T extends Record<string, string>>({ name, items, empty, cols
             <input key={c.k} className={`${inputCls} py-2`} aria-label={`${name} ${c.label.toLowerCase()} ${i + 1}`} value={it[c.k]}
               onChange={e => { const v = e.currentTarget.value; onChange(items.map((x, j) => (j === i ? { ...x, [c.k]: v } : x))); }} />
           ))}
-          <button type="button" aria-label={`Remove ${name.toLowerCase()} ${i + 1}`} className="text-white/40 hover:text-[#f1938f]" onClick={() => onChange(items.filter((_, j) => j !== i))}>✕</button>
+          <button type="button" aria-label={`Remove ${name.toLowerCase()} ${i + 1}`} className="text-night-muted hover:text-[#f1938f]" onClick={() => onChange(items.filter((_, j) => j !== i))}>✕</button>
         </div>
       ))}
       <button type="button" className="text-[12px] underline-offset-4 hover:underline" style={{ color: CHAMPAGNE }} onClick={() => onChange([...items, { ...empty }])}>+ Add {name.toLowerCase()}</button>

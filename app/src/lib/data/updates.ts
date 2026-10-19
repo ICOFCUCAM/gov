@@ -33,6 +33,7 @@
 // Same persistence note as ./store: in-memory for the life of the process,
 // behind function signatures a durable datastore can replace.
 
+import { dualControlRefusal, proposalLapsed } from './dual-control';
 import type {
   ChamberRelease,
   DeliveryMode,
@@ -75,6 +76,7 @@ import { issueDueNotices, lifecycleWarning, lineOf, onEolNotice } from './lifecy
 import { alert } from './comms';
 import { transmit } from './sovereignty';
 import { touch } from '@/lib/data/repo/track';
+import type { RestorePointBackup } from './backups';
 
 /** Backward compatible with the previous release: every migration reversible and expand/contract, never in place. */
 export function isBackwardCompatible(migrations: ReleaseMigration[]): boolean {
@@ -487,7 +489,8 @@ function chamberRelease(n: SubscribedNation, r: DistributionRelease): ChamberRel
   const install = installOf(n.id, r.id);
   return {
     ...r,
-    install: { ...install, events: [...install.events] },
+    // The proposer's verified identity stays on the server (dual control compares it there).
+    install: { ...install, events: [...install.events], ...(install.breakGlass ? { breakGlass: { ...install.breakGlass, byId: undefined } } : {}) },
     newer: gt(r.version, n.installedVersion),
     compatible: gte(n.installedVersion, r.minCompatibleVersion),
     superseded: install.state === 'installed' && r.id !== n.installedReleaseId,
@@ -604,6 +607,8 @@ export interface DecisionInput {
   verified?: boolean;
   /** Rollback over an irreversible migration: the team acknowledges what stays. */
   acknowledge?: boolean;
+  /** prepare: the verified backup taken for the restore point (lib/data/backups.ts takeRestorePoint, by the route). */
+  backup?: RestorePointBackup;
 }
 
 export type DecisionResult = { install: NationInstall; chamber: UpdateChamber; pending?: boolean } | { error: string; status: number };
@@ -683,9 +688,12 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
       next.window = undefined;
       break;
     case 'prepare': {
-      const rp = takeRestorePoint(n, r, by, event.at);
+      if (input.backup && !input.backup.verified) {
+        return { error: `The backup ${input.backup.backupId} did not pass verification${input.backup.problem ? `: ${input.backup.problem}` : ''}. No restore point was recorded`, status: 409 };
+      }
+      const rp = takeRestorePoint(n, r, by, event.at, input.backup);
       next.restorePoint = rp;
-      event.note = [`Restore point ${rp.id} of ${rp.version} verified`, note].filter(Boolean).join(' · ');
+      event.note = [`Restore point ${rp.id} of ${rp.version} verified${rp.backupId ? ` (backup ${rp.backupId})` : rp.simulated ? ' (simulated)' : ''}`, note].filter(Boolean).join(' · ');
       break;
     }
     case 'install': {
@@ -708,6 +716,9 @@ export function decide(nationId: string, releaseId: string, input: DecisionInput
       const rp = cur.restorePoint;
       if (!rp || !rp.verified || rp.version !== n.installedVersion) {
         return { error: `Take a verified restore point of ${n.installedVersion} before installing (it protects the version you fall back to)`, status: 409 };
+      }
+      if (rp.simulated && !simulatedRestorePoints(n)) {
+        return { error: `Restore point ${rp.id} is simulated, not a backup. Take a restore point again: it backs up the platform and verifies the backup before the install may proceed`, status: 409 };
       }
       if (!proposal) return propose({ mode, verified });
       next.pending = undefined;
@@ -1111,7 +1122,24 @@ function runningProbation(n: SubscribedNation): Probation | undefined {
   return i?.state === 'probation' && i.probation && (i.probation.state === 'running' || i.probation.state === 'awaiting-decision') ? i.probation : undefined;
 }
 
-function takeRestorePoint(n: SubscribedNation, target: DistributionRelease, by: string, at: string): RestorePoint {
+/**
+ * Whether a restore point may be simulated: for the publisher's demonstration
+ * nations (their backups live on their own servers), or where the
+ * installation says so (CIVICOS_RESTORE_POINTS=simulated: development and
+ * tests). The installed nation's restore points are real backups otherwise.
+ */
+export function simulatedRestorePoints(n: { id: string }, env: NodeJS.ProcessEnv = process.env): boolean {
+  return n.id !== HOME_NATION || (env.CIVICOS_RESTORE_POINTS ?? '').trim().toLowerCase() === 'simulated';
+}
+
+/** The backups the installed nation's restore points name (retention never removes them). */
+export function restorePointBackups(): string[] {
+  const out: string[] = [];
+  for (const i of Object.values(udb().installs[HOME_NATION] ?? {})) if (i.restorePoint?.backupId) out.push(i.restorePoint.backupId);
+  return out;
+}
+
+function takeRestorePoint(n: SubscribedNation, target: DistributionRelease, by: string, at: string, backup?: RestorePointBackup): RestorePoint {
   const irreversible = target.migrations.filter(m => !m.reversible || m.pattern === 'in-place');
   const notes = [
     `Data restore replaces the whole database with this snapshot (${at}): everything written after it — payments, applications, registrations — is lost.`,
@@ -1119,6 +1147,16 @@ function takeRestorePoint(n: SubscribedNation, target: DistributionRelease, by: 
       ? irreversible.map(m => `“${m.description}” is not backward compatible: if ${target.version} fails, you decide whether to switch back; it is never automatic.`)
       : [`${target.version} is backward compatible (expand/contract): if it fails, the software switches back to ${n.installedVersion} automatically and data is untouched.`]),
   ];
+  if (backup) {
+    // A real backup (lib/data/backups.ts): read back, decrypted, every part checked, dry-run restored.
+    return {
+      id: `RP-${digest(`${n.id}:${target.id}:${at}`, 6).toUpperCase()}`,
+      version: n.installedVersion, releaseId: n.installedReleaseId, createdAt: backup.createdAt, createdBy: by,
+      sizeBytes: backup.sizeBytes, verified: backup.verified, backupId: backup.backupId, checks: backup.checks,
+      contents: backup.contents,
+      restoreNotes: [...notes, 'Restoring needs an administrator and a second official; the current state is backed up first.'],
+    };
+  }
   return {
     id: `RP-${digest(`${n.id}:${target.id}:${at}`, 6).toUpperCase()}`,
     version: n.installedVersion,
@@ -1126,9 +1164,10 @@ function takeRestorePoint(n: SubscribedNation, target: DistributionRelease, by: 
     createdAt: at,
     createdBy: by,
     sizeBytes: sizeFor(`${n.id}:${at}`, 4e9, 24e9),
-    // Simulated: the snapshot is re-read and its checksum compared before it counts.
+    // Simulated (a demonstration nation, or CIVICOS_RESTORE_POINTS=simulated): nothing is copied.
     verified: true,
-    contents: ['Database snapshot (point-in-time, encrypted)', 'Configuration bundle and secret references', `Release artifacts of ${n.installedVersion}`],
+    simulated: true,
+    contents: ['Simulated restore point: nothing was copied', 'Database snapshot (point-in-time, encrypted)', 'Configuration bundle and secret references', `Release artifacts of ${n.installedVersion}`],
     restoreNotes: notes,
   };
 }
@@ -1169,6 +1208,20 @@ function evaluate(p: Probation, report: HealthReport): HealthCheckKey[] {
   p.degraded = true;
   if (new Set(failedCritical).size >= 2) return bad; // confirmed by independent checks
   return p.failStreak >= p.thresholds.consecutiveFailures ? bad : [];
+}
+
+/**
+ * evaluate(), and the first time a probation turns degraded (and is not
+ * failing yet), alert the nation's officials named for incidents (register 3.10).
+ */
+function evaluateFor(nationId: string, p: Probation, report: HealthReport): HealthCheckKey[] {
+  const failed = evaluate(p, report);
+  if (p.degraded && !failed.length && !p.degradedAlertAt) {
+    p.degradedAlertAt = report.at;
+    const bad = report.source === 'silence' ? 'no report from the deployment agent' : report.checks.filter(c => !c.ok).map(c => label(c.key)).join(', ') || 'thresholds exceeded';
+    alert(nationId, 'incidents', `${p.version} is degraded on probation (${bad}); watching, fallback after ${p.thresholds.consecutiveFailures} bad reports in a row`, `probation:${p.releaseId}`, Date.parse(report.at));
+  }
+  return failed;
 }
 
 function installRecord(n: SubscribedNation, releaseId: string): NationInstall | undefined {
@@ -1232,6 +1285,7 @@ function failProbation(n: SubscribedNation, r: DistributionRelease, inst: Nation
   if (n.settings.fallback === 'automatic' && r.compatibleWithPrevious) {
     const res = restoreLkg(n, r, inst, 'automatic', SYSTEM_ACTOR, at, inc);
     if ('error' in res) { p.state = 'awaiting-decision'; inc.timeline.push({ at, text: `Automatic fallback refused: ${res.error}` }); return; }
+    alert(n.id, 'incidents', `Automatic fallback: software switched back from ${r.version} to ${p.lkgVersion}; data untouched`, inc.id, Date.parse(at));
     const a = recordAudit(SYSTEM_ACTOR, 'update.fallback', `UpdateChamber:${n.id}/${r.version}`, 'ok',
       `automatic · failed=${failed.join(',')} · now=${n.installedVersion} · restore=${p.restorePointId} · incident=${inc.id}`);
     inc.auditSeq = a.seq;
@@ -1316,7 +1370,7 @@ export function superviseProbations(now = Date.now()): WatchdogSummary {
       for (let t = last + 60_000; t <= horizon; t += 60_000) {
         const rep = simulatedReport(p, t);
         pushReport(p, rep, n.id);
-        const failed = evaluate(p, rep);
+        const failed = evaluateFor(n.id, p, rep);
         if (failed.length) { failProbation(n, r, inst, failed, rep.at, 'simulated health'); break; }
       }
       if (p.state !== 'running') { conclude(); continue; }
@@ -1330,7 +1384,7 @@ export function superviseProbations(now = Date.now()): WatchdogSummary {
         const rep: HealthReport = { at, source: 'silence', checks: [{ key: 'liveness', ok: false, detail: `No report from the deployment agent for ${p.thresholds.silenceMinutes} minutes` }], ok: false };
         pushReport(p, rep, n.id);
         out.missingReports++;
-        const failed = evaluate(p, rep);
+        const failed = evaluateFor(n.id, p, rep);
         if (failed.length) failProbation(n, r, inst, failed, at, `no report from the deployment agent for ${p.thresholds.silenceMinutes * p.thresholds.consecutiveFailures} minutes`);
       }
       if (p.state !== 'running') { conclude(); continue; }
@@ -1361,7 +1415,7 @@ export function reportHealth(nationId: string, input: { checks?: unknown; at?: s
   const at = new Date(now).toISOString();
   const rep: HealthReport = { at, source: 'agent', checks, ok: checks.every(c => c.ok) };
   pushReport(p, rep, n.id);
-  const failed = evaluate(p, rep);
+  const failed = evaluateFor(n.id, p, rep);
   if (failed.length) failProbation(n, r, inst, failed, at, checks.filter(c => failed.includes(c.key)).map(c => c.detail).filter(Boolean).join('; '));
   return { probation: p, install: inst };
 }
@@ -1377,23 +1431,77 @@ export function acknowledgeIncident(nationId: string, incidentId: string, by: st
   return inc;
 }
 
+export type BreakGlassInput = {
+  /** The official taking this step (the verified official's name when signed in, lib/auth/official.ts). */
+  by?: string;
+  /** The verified official's session subject, set by the route from the session, never from the body. */
+  byId?: string;
+  /** What failed (the proposal's reason). */
+  reason?: string;
+  /** Omitted: propose, or confirm a pending proposal. confirm: only confirm. cancel: withdraw the pending proposal. */
+  action?: 'propose' | 'confirm' | 'cancel';
+  /** No longer accepted: the second official confirms in their own request. */
+  secondBy?: string;
+};
+export type BreakGlassResult =
+  | { incident: FallbackIncident; chamber: UpdateChamber }
+  | { pending: true; proposal: NonNullable<NationInstall['breakGlass']>; chamber: UpdateChamber }
+  | { cancelled: true; chamber: UpdateChamber }
+  | { error: string; status: number };
+
 /**
  * Break-glass — the worst case: the running release is broken and probation
- * is over. Two named people switch the software back to the version the
- * restore point protects. Data is not touched here either; restoring the
- * snapshot remains restoreData(). Audited with both names.
+ * is over. Dual control by two sign-ins, as the four-eyes decisions: the first
+ * official proposes (with what failed), a different official confirms in their
+ * own request, and only then is the software switched back to the version the
+ * restore point protects. A second name typed into the first request is
+ * refused. Data is not touched here either; restoring the snapshot remains
+ * restoreData(). Proposal, cancellation and the switch are audited, the switch
+ * with both names.
  */
-export function breakGlass(nationId: string, input: { by?: string; secondBy?: string; reason?: string }): { incident: FallbackIncident; chamber: UpdateChamber } | { error: string; status: number } {
+export function breakGlass(nationId: string, input: BreakGlassInput): BreakGlassResult {
   const n = nationById(nationId);
   if (!n) return { error: 'Nation not found', status: 404 };
-  const by = (input.by ?? '').trim(), second = (input.secondBy ?? '').trim(), reason = (input.reason ?? '').trim();
-  if (!by || !second) return { error: 'Break-glass needs two named people', status: 422 };
-  if (by.toLowerCase() === second.toLowerCase()) return { error: 'The second person must be someone else (dual control)', status: 422 };
-  if (reason.length < 20) return { error: 'Describe the failure (at least 20 characters)', status: 422 };
+  if (typeof input.secondBy === 'string' && input.secondBy.trim()) {
+    return { error: 'A second name is not accepted: the second official confirms break-glass by signing in and confirming it themselves', status: 422 };
+  }
+  const by = (input.by ?? '').trim();
+  if (!by || by.length > 160) return { error: 'Name the official taking this step', status: 422 };
   const rid = n.installedReleaseId;
   const inst = rid ? installRecord(n, rid) : undefined;
   const rp = inst?.restorePoint;
   if (!rid || !inst || !rp || !rp.verified) return { error: 'No verified restore point protects the running release; restore from your own backups and record it with a rollback', status: 409 };
+  const chamberNow = (): UpdateChamber | undefined => { const c = getChamber(nationId); return 'error' in c ? undefined : c; };
+  const target = `UpdateChamber:${nationId}/${inst.releaseId}`;
+  let proposal = inst.breakGlass;
+  if (proposal && proposalLapsed(proposal.at)) { inst.breakGlass = undefined; proposal = undefined; }
+
+  if (input.action === 'cancel') {
+    if (!proposal) return { error: 'There is no break-glass proposal to cancel', status: 409 };
+    inst.breakGlass = undefined;
+    recordAudit(by, 'update.break-glass.cancel', target, 'ok', `cancelled ${proposal.by}’s proposal`);
+    const c = chamberNow();
+    return c ? { cancelled: true, chamber: c } : { error: 'Nation not found', status: 500 };
+  }
+  if (!proposal) {
+    if (input.action === 'confirm') return { error: 'There is no break-glass proposal to confirm', status: 409 };
+    const why = (input.reason ?? '').trim();
+    if (why.length < 20) return { error: 'Describe the failure (at least 20 characters)', status: 422 };
+    if (why.length > 1000) return { error: 'The description is too long (1000 characters at most)', status: 422 };
+    inst.breakGlass = { by, ...(input.byId ? { byId: input.byId } : {}), at: new Date().toISOString(), reason: why, version: rp.version };
+    recordAudit(by, 'update.break-glass.propose', target, 'ok', `awaiting a second official · back to ${rp.version} · ${why}`);
+    const c = chamberNow();
+    return c ? { pending: true, proposal: { ...inst.breakGlass, byId: undefined }, chamber: c } : { error: 'Nation not found', status: 500 };
+  }
+  if (input.action === 'propose') return { error: `${proposal.by} has already proposed break-glass; a different official confirms it, or cancel it`, status: 409 };
+  const refused = dualControlRefusal(proposal, { by, byId: input.byId });
+  if (refused) return { error: refused, status: 409 };
+  if (proposal.version !== rp.version) {
+    inst.breakGlass = undefined;
+    return { error: `The restore point changed since ${proposal.by} proposed break-glass (to ${proposal.version}); propose it again`, status: 409 };
+  }
+  const first = proposal.by, second = by, reason = proposal.reason;
+  inst.breakGlass = undefined;
   const r = udb().releases.find(x => x.id === rid)!;
   const at = new Date().toISOString();
   const top = n.history[n.history.length - 1];
@@ -1404,13 +1512,13 @@ export function breakGlass(nationId: string, input: { by?: string; secondBy?: st
   if (inst.probation && (inst.probation.state === 'running' || inst.probation.state === 'awaiting-decision')) { inst.probation.state = 'ended'; inst.probation.concludedAt = at; }
   const from = inst.state;
   inst.state = 'rolled-back';
-  const a = recordAudit(`${by} + ${second}`, 'update.break-glass', `UpdateChamber:${nationId}/${r.version}`, 'ok', `software now ${rp.version} · data untouched · ${reason}`);
-  inst.events.push({ at, by: `${by} + ${second}`, action: 'rollback', from, to: 'rolled-back', note: `Break-glass: software switched back to ${rp.version}: ${reason}`, auditSeq: a.seq });
+  const a = recordAudit(`${first} + ${second}`, 'update.break-glass', `UpdateChamber:${nationId}/${r.version}`, 'ok', `software now ${rp.version} · data untouched · ${reason}`);
+  inst.events.push({ at, by: `${first} + ${second}`, action: 'rollback', from, to: 'rolled-back', note: `Break-glass: software switched back to ${rp.version}: ${reason}`, auditSeq: a.seq });
   const inc: FallbackIncident = {
     id: `INC-U-${digest(`${nationId}:bg:${at}`, 5).toUpperCase()}`, nationId, releaseId: r.id, fromVersion: r.version, toVersion: rp.version,
     restorePointId: rp.id, trigger: 'break-glass', state: 'restored', failedChecks: [], openedAt: at, auditSeq: a.seq,
     timeline: [
-      { at, text: `Break-glass by ${by} and ${second}: software switched back to ${rp.version}. ${reason}` },
+      { at, text: `Break-glass proposed by ${first} and confirmed by ${second}: software switched back to ${rp.version}. ${reason}` },
       { at, text: `Data untouched. Restore point ${rp.id} (${rp.createdAt}) remains available as a separate decision.` },
     ],
   };
@@ -1503,12 +1611,13 @@ export function releaseStats(releaseId: string): ReleaseHealthStats {
 }
 
 /**
- * Restore the data snapshot — the last resort, never automatic. Needs a
+ * Whether the data snapshot of a release's restore point may be restored now
+ * (no change). Restoring is the last resort, never automatic: it needs a
  * named person, the software already back on the snapshot's version, and
  * explicit acknowledgement that everything written since the snapshot is
  * lost.
  */
-export function restoreData(nationId: string, releaseId: string, input: { by?: string; acknowledgeLoss?: boolean }): { restorePoint: RestorePoint; chamber: UpdateChamber } | { error: string; status: number } {
+export function restoreDataCheck(nationId: string, releaseId: string, input: { by?: string; acknowledgeLoss?: boolean }): { restorePoint: RestorePoint } | { error: string; status: number } {
   const n = nationById(nationId);
   if (!n) return { error: 'Nation not found', status: 404 };
   const r = udb().releases.find(x => x.id === releaseId);
@@ -1526,9 +1635,28 @@ export function restoreData(nationId: string, releaseId: string, input: { by?: s
   if (input.acknowledgeLoss !== true) {
     return { error: `Restoring discards everything written since ${rp.createdAt}. Acknowledge the loss to continue`, status: 422 };
   }
+  return { restorePoint: rp };
+}
+
+/**
+ * Record the data restore in the chamber. A simulated restore point records
+ * the decision only; a real backup is restored through lib/data/backups.ts
+ * (an administrator and a second official) and recorded here afterwards.
+ */
+export function restoreData(nationId: string, releaseId: string, input: { by?: string; acknowledgeLoss?: boolean; restoredFrom?: { backupId: string; proposedBy: string; auditSeq: number } }): { restorePoint: RestorePoint; chamber: UpdateChamber } | { error: string; status: number } {
+  const ok = restoreDataCheck(nationId, releaseId, input);
+  if ('error' in ok) return ok;
+  const n = nationById(nationId)!;
+  const inst = installRecord(n, releaseId)!;
+  const rp = ok.restorePoint;
+  const by = (input.by ?? '').trim();
+  if (rp.backupId && !input.restoredFrom) return { error: `Restore point ${rp.id} is backup ${rp.backupId}: it is restored by an administrator with a second official confirming`, status: 409 };
   const at = new Date().toISOString();
   rp.restoredAt = at;
-  const a = recordAudit(by, 'update.restore-data', `UpdateChamber:${nationId}/${rp.id}`, 'ok', `database restored to snapshot of ${rp.createdAt} (${rp.version}); data written after it discarded`);
+  const how = input.restoredFrom
+    ? `backup ${input.restoredFrom.backupId} restored (proposed by ${input.restoredFrom.proposedBy}, confirmed by ${by}; audit entry ${input.restoredFrom.auditSeq})`
+    : `database restored to snapshot of ${rp.createdAt} (${rp.version})${rp.simulated ? ' (simulated: nothing was copied)' : ''}`;
+  const a = recordAudit(by, 'update.restore-data', `UpdateChamber:${nationId}/${rp.id}`, 'ok', `${how}; data written after it discarded`);
   inst.events.push({ at, by, action: 'rollback', from: inst.state, to: inst.state, note: `Data restored from ${rp.id} (snapshot ${rp.createdAt}); later data discarded`, auditSeq: a.seq });
   const inc = [...udb().incidents].reverse().find(i => i.nationId === nationId && i.releaseId === releaseId);
   if (inc) {

@@ -104,6 +104,7 @@ export function AuditExplorer() {
       <div className="flex flex-wrap items-end justify-between gap-2">
         <SurfaceHeading title="Audit Explorer" badge="hash-chained · tamper-evident" />
         <div className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- kept as a full page load */}
           <a href="/gov/audit/sweep"
              className="focus-ring rounded-[3px] border border-line px-2 py-0.5 text-[9px] uppercase tracking-wider text-ink-muted hover:text-ink">
             coverage sweep

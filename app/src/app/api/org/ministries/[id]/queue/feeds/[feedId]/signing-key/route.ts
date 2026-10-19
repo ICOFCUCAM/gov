@@ -6,8 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listFeeds } from '@/lib/data/case-import';
 import { feedSigningKey, registerFeedKey, removeFeedKey } from '@/lib/exchange/feed-keys';
-import { withOfficial, refusal } from '@/lib/auth/official';
-import { canManageFeeds } from '@/lib/auth/roles';
+import { withOfficial, refusal, readRefusal } from '@/lib/auth/official';
+import { canManageFeeds, canReadInstitution } from '@/lib/auth/roles';
 export const dynamic = 'force-dynamic';
 
 type P = { params: Promise<{ id: string; feedId: string }> };
@@ -16,6 +16,8 @@ const notFound = () => NextResponse.json({ error: 'No such connected system' }, 
 
 export async function GET(_r: NextRequest, props: P) {
   const params = await props.params;
+  const refused = await readRefusal(s => canReadInstitution(s, params.id));
+  if (refused) return refused;
   if (!known(params)) return notFound();
   const key = feedSigningKey('case', params.feedId);
   return NextResponse.json({ key: key ? { keyId: key.keyId, publicKey: key.publicKeyPem, registeredAt: key.registeredAt, registeredBy: key.registeredBy } : null });

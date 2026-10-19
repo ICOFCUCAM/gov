@@ -48,7 +48,7 @@ export function HostingCenter() {
         <h1 className="mt-4 text-[2.1rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3rem]">
           Where {nation ? <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{nation}</span> : 'this installation'} runs
         </h1>
-        <p className="mt-4 max-w-[70ch] text-[15px] font-light leading-relaxed text-white/55">
+        <p className="mt-4 max-w-[70ch] text-[15px] font-light leading-relaxed text-night-muted">
           Four ways to run the platform, from complete autonomy to fully managed. Ask for an assessment of any of them; switch later with a migration plan. Your data can be exported at any time, and no path locks you in.
         </p>
         {err ? <div className="mt-8"><ErrorLine>{err}</ErrorLine></div> : !c ? <Loading label="Assessing paths…" /> : (
@@ -64,12 +64,12 @@ export function HostingCenter() {
             <Section n="03" title="Your requests" aside={`${c.requests.length} on record`}>
               <div className="grid grid-cols-[minmax(0,1fr)] gap-4">
                 {c.requests.map(r => <RequestCard key={r.id} r={r} link={link} onDone={load} />)}
-                {!c.requests.length ? <p className="text-[13.5px] font-light text-white/50">No requests yet.</p> : null}
+                {!c.requests.length ? <p className="text-[13.5px] font-light text-night-muted">No requests yet.</p> : null}
               </div>
             </Section>
             <Section n="04" title="How the estimates are made" aside={`Cost model ${c.model.version}`}>
               <p className="max-w-[72ch] text-[13.5px] font-light leading-relaxed text-white/60">Every figure is computed from your answers with a published cost model: the unit costs below, multiplied out line by line (each line shows its basis). Unit costs are placeholders in US dollars until the publisher sets contract prices, and an engineering review adjusts the estimate before an official, versioned assessment is issued. Taxes, duties and land are excluded.</p>
-              <div className="mt-4 overflow-x-auto">
+              <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring mt-4 overflow-x-auto">
                 <table className="w-full min-w-[520px] text-left text-[13px] font-light">
                   <tbody>{c.model.unitCosts.map(u => (
                     <tr key={u.label} className="border-t" style={{ borderColor: hair(0.08) }}><td className="py-2 pr-4 text-white/65">{u.label}</td><td className="py-2 font-mono text-[12px] text-[#f4e4bd]">{u.value}</td></tr>
@@ -97,21 +97,21 @@ function Comparison({ c, onPick }: { c: Center; onPick: (p: HostingPath) => void
             <Panel key={p.k} strong={current} className="flex flex-col p-5">
               <div className="flex flex-wrap items-center gap-2"><Chip tone={p.tone} solid>{p.autonomy}</Chip>{current ? <Chip tone="#9be7c4">Your path today</Chip> : null}</div>
               <p className="mt-3 text-[18px] font-light text-[#f3efe6]">{p.title}</p>
-              <p className="mt-1 text-[12.5px] font-light text-white/45">{p.who}</p>
+              <p className="mt-1 text-[12.5px] font-light text-night-muted">{p.who}</p>
               <p className="mt-3 text-[13px] font-light leading-relaxed text-white/60">{p.line}</p>
               <dl className="mt-4 grid grid-cols-2 gap-px" style={{ background: hair(0.1) }}>
                 {[['Up-front', money(e.capexTotal)], ['Per year', money(e.annualTotal)], ['5-year total', money(e.fiveYearTotal)], ['Time to live', weeksText(e.totalWeeks)]].map(([k, v]) => (
-                  <div key={k} className="bg-[#05070b] px-3 py-2.5"><dt className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-[#d9c398]/60">{k}</dt><dd className="mt-1 font-mono text-[13px] tabular-nums text-[#f3efe6]">{v}</dd></div>
+                  <div key={k} className="bg-[#05070b] px-3 py-2.5"><dt className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-night-champagne">{k}</dt><dd className="mt-1 font-mono text-[13px] tabular-nums text-[#f3efe6]">{v}</dd></div>
                 ))}
               </dl>
-              <ul className="mt-4 space-y-1">{p.points.map(t => <li key={t} className="text-[12px] font-light text-white/55">· {t}</li>)}</ul>
+              <ul className="mt-4 space-y-1">{p.points.map(t => <li key={t} className="text-[12px] font-light text-night-muted">· {t}</li>)}</ul>
               {p.k === 'perpetual' ? <p className="mt-3 rounded-[2px] border px-3 py-2 text-[12px] font-light text-[#c9b6ff]" style={{ borderColor: '#c9b6ff44' }}>You can operate entirely on your own — no consultation with us is needed.</p> : null}
               <button type="button" className={`${ghostBtn} mt-auto w-full`} style={{ marginTop: 20 }} onClick={() => onPick(p.k)}>{p.k === 'perpetual' ? 'Get the licence quote' : 'Request assessment'}</button>
             </Panel>
           );
         })}
       </div>
-      <div className="mt-6 overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring mt-6 overflow-x-auto">
         <table className="w-full min-w-[760px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65"><th className="py-2 pr-4 font-normal">At a glance</th>{PATHS.map(p => <th key={p.k} className="py-2 pr-4 font-normal">{p.title}</th>)}</tr></thead>
           <tbody>
@@ -125,14 +125,14 @@ function Comparison({ c, onPick }: { c: Center; onPick: (p: HostingPath) => void
               ['Leave later?', () => 'Yes — export and migrate'],
             ] as [string, (p: typeof PATHS[number]) => string][]).map(([label, f]) => (
               <tr key={label} className="border-t" style={{ borderColor: hair(0.08) }}>
-                <td className="py-2.5 pr-4 font-mono text-[10px] uppercase tracking-[0.14em] text-white/45">{label}</td>
+                <td className="py-2.5 pr-4 font-mono text-[10px] uppercase tracking-[0.14em] text-night-muted">{label}</td>
                 {PATHS.map(p => <td key={p.k} className="py-2.5 pr-4 text-white/75">{f(p)}</td>)}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-[11.5px] font-light text-white/40">Indicative, from {c.requests.length ? 'your latest answers' : 'default answers sized to your estate'}. The perpetual licence excludes the infrastructure you run it on.</p>
+      <p className="mt-3 text-[11.5px] font-light text-night-muted">Indicative, from {c.requests.length ? 'your latest answers' : 'default answers sized to your estate'}. The perpetual licence excludes the infrastructure you run it on.</p>
     </>
   );
 }
@@ -238,8 +238,8 @@ function RequestForm({ c, path, setPath, link, onDone }: { c: Center; path: Host
         <Panel strong className="p-5">
           <p className="font-mono text-[9.5px] uppercase tracking-[0.24em]" style={{ color: CHAMPAGNE }}>Live preliminary estimate</p>
           <p className="mt-1 text-[16px] font-light text-[#f3efe6]">{PATH_TITLE[path]}</p>
-          {preview ? <EstimateSummary e={preview} /> : <p className="mt-3 text-[12.5px] text-white/45">Complete the answers to see the estimate.</p>}
-          <p className="mt-3 text-[11.5px] font-light text-white/40">Computed in your browser with the published cost model; the same figures are recorded with your request.</p>
+          {preview ? <EstimateSummary e={preview} /> : <p className="mt-3 text-[12.5px] text-night-muted">Complete the answers to see the estimate.</p>}
+          <p className="mt-3 text-[11.5px] font-light text-night-muted">Computed in your browser with the published cost model; the same figures are recorded with your request.</p>
         </Panel>
       </aside>
     </div>
@@ -251,7 +251,7 @@ export function EstimateSummary({ e }: { e: HostingEstimate }) {
   return (
     <dl className="mt-4 grid grid-cols-2 gap-px" style={{ background: hair(0.1) }}>
       {[['Up-front', money(e.capexTotal)], ['Per year', money(e.annualTotal)], ['5-year total', money(e.fiveYearTotal)], ['Timeline', `${e.totalWeeks.min}–${e.totalWeeks.max} weeks`]].map(([k, v]) => (
-        <div key={k} className="min-w-0 bg-[#05070b] px-3 py-2.5"><dt className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-[#d9c398]/60">{k}</dt><dd className="mt-1 truncate font-mono text-[13px] tabular-nums text-[#f3efe6]" title={v}>{v}</dd></div>
+        <div key={k} className="min-w-0 bg-[#05070b] px-3 py-2.5"><dt className="font-mono text-[8.5px] uppercase tracking-[0.2em] text-night-champagne">{k}</dt><dd className="mt-1 truncate font-mono text-[13px] tabular-nums text-[#f3efe6]" title={v}>{v}</dd></div>
       ))}
     </dl>
   );
@@ -265,11 +265,11 @@ export function EstimateView({ e }: { e: HostingEstimate }) {
   const costTable = (title: string, lines: HostingEstimate['capex'], total: number) => (
     <div className="min-w-0">
       <p className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">{title}</p>
-      <div className="overflow-x-auto"><table className="mt-2 w-full min-w-[300px] text-left text-[12.5px] font-light">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto"><table className="mt-2 w-full min-w-[300px] text-left text-[12.5px] font-light">
         <tbody>
           {lines.map(l => (
             <tr key={l.label} className="border-t align-top" style={{ borderColor: hair(0.08) }}>
-              <td className="py-2 pr-3"><span className="text-white/80">{l.label}</span><span className="block text-[11px] text-white/40">{l.basis}</span></td>
+              <td className="py-2 pr-3"><span className="text-white/80">{l.label}</span><span className="block text-[11px] text-night-muted">{l.basis}</span></td>
               <td className="whitespace-nowrap py-2 text-right font-mono tabular-nums text-[#f4e4bd]">{money(l.amount)}</td>
             </tr>
           ))}
@@ -295,7 +295,7 @@ export function EstimateView({ e }: { e: HostingEstimate }) {
             offset += p.minWeeks;
             return (
               <li key={p.phase} className="grid grid-cols-[minmax(0,1fr)] gap-1 sm:grid-cols-[180px_minmax(0,1fr)] sm:items-center sm:gap-3">
-                <span className="text-[12.5px] font-light text-white/75">{p.phase} <span className="font-mono text-[10.5px] text-white/40">{p.minWeeks}–{p.maxWeeks} wk</span></span>
+                <span className="text-[12.5px] font-light text-white/75">{p.phase} <span className="font-mono text-[10.5px] text-night-muted">{p.minWeeks}–{p.maxWeeks} wk</span></span>
                 <span className="relative block h-3 rounded-[2px]" style={{ background: hair(0.06) }} title={p.detail}>
                   <span className="absolute inset-y-0 rounded-[2px]" style={{ left: `${left}%`, width: `${Math.min(w, 100 - left)}%`, background: `${CHAMPAGNE}33` }} />
                   <span className="absolute inset-y-0 rounded-[2px]" style={{ left: `${left}%`, width: `${Math.min(wMin, 100 - left)}%`, background: CHAMPAGNE }} />
@@ -315,19 +315,19 @@ export function EstimateView({ e }: { e: HostingEstimate }) {
         <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
           <div>
             <p className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">Compatibility</p>
-            <ul className="mt-2 space-y-1.5">{e.compatibility.map(cp => <li key={cp.item} className="flex flex-wrap items-center gap-2 text-[12.5px] font-light text-white/70"><Chip tone={cp.status === 'ready' ? '#9be7c4' : cp.status === 'needs-work' ? '#f1b36b' : '#f1938f'}>{cp.status}</Chip>{cp.item} — <span className="text-white/45">{cp.note}</span></li>)}</ul>
+            <ul className="mt-2 space-y-1.5">{e.compatibility.map(cp => <li key={cp.item} className="flex flex-wrap items-center gap-2 text-[12.5px] font-light text-white/70"><Chip tone={cp.status === 'ready' ? '#9be7c4' : cp.status === 'needs-work' ? '#f1b36b' : '#f1938f'}>{cp.status}</Chip>{cp.item} — <span className="text-night-muted">{cp.note}</span></li>)}</ul>
           </div>
           <div>
             <p className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">Residency · landing zone</p>
             {e.residencyFit ? <p className="mt-2 text-[12.5px] font-light" style={{ color: e.residencyFit.fits ? '#9be7c4' : '#f1938f' }}>{e.residencyFit.note}</p> : null}
-            <ul className="mt-2 space-y-1">{e.landingZone?.map(l => <li key={l} className="text-[12px] font-light text-white/55">· {l}</li>)}</ul>
+            <ul className="mt-2 space-y-1">{e.landingZone?.map(l => <li key={l} className="text-[12px] font-light text-night-muted">· {l}</li>)}</ul>
           </div>
         </div>
       ) : null}
       {e.staffing ? (
         <div>
           <p className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/70">Staffing plan</p>
-          <ul className="mt-2 grid gap-1 sm:grid-cols-2">{e.staffing.map(s => <li key={s.role} className="text-[12.5px] font-light text-white/70"><span className="font-mono text-[#f4e4bd]">{s.count}</span> × {s.role} <span className="text-white/40">— {s.note}</span></li>)}</ul>
+          <ul className="mt-2 grid gap-1 sm:grid-cols-2">{e.staffing.map(s => <li key={s.role} className="text-[12.5px] font-light text-white/70"><span className="font-mono text-[#f4e4bd]">{s.count}</span> × {s.role} <span className="text-night-muted">— {s.note}</span></li>)}</ul>
         </div>
       ) : null}
       <div className="grid grid-cols-[minmax(0,1fr)] gap-4 md:grid-cols-2">
@@ -342,8 +342,8 @@ export function EstimateView({ e }: { e: HostingEstimate }) {
           <ul className="mt-1 space-y-1">{e.migration.guarantees.map(s => <li key={s} className="text-[12.5px] font-light text-white/70">✓ {s}</li>)}</ul>
         </div>
       ) : null}
-      <details className="text-[12px] font-light text-white/50">
-        <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.18em] text-white/45 hover:text-[#f4e4bd]">Assumptions{e.adjustments ? ' · engineering adjustments' : ''}</summary>
+      <details className="text-[12px] font-light text-night-muted">
+        <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.18em] text-night-muted hover:text-[#f4e4bd]">Assumptions{e.adjustments ? ' · engineering adjustments' : ''}</summary>
         <ul className="mt-2 space-y-1">{e.assumptions.map(a => <li key={a}>· {a}</li>)}</ul>
         {e.adjustments ? <p className="mt-2">Engineering review: capital ×{e.adjustments.capexFactor}, running ×{e.adjustments.annualFactor}, timeline ×{e.adjustments.timelineFactor}.</p> : null}
       </details>
@@ -358,7 +358,7 @@ export function HostingStepper({ r }: { r: HostingRequest }) {
       {STAGES.map((s, i) => (
         <li key={s} className="min-w-0 flex-1">
           <span aria-hidden className="block h-[3px] rounded-full" style={{ background: i <= at ? (r.stage === 'accepted' ? '#9be7c4' : CHAMPAGNE) : hair(0.14) }} />
-          <span className={`mt-1 block truncate font-mono text-[8.5px] uppercase tracking-[0.12em] ${i === at ? 'text-[#f4e4bd]' : 'text-white/30'}`}>{s === 'issued' && r.assessments.length ? `Issued v${r.assessments.length}` : STAGE_TEXT[s]}</span>
+          <span className={`mt-1 block truncate font-mono text-[8.5px] uppercase tracking-[0.12em] ${i === at ? 'text-[#f4e4bd]' : 'text-night-faint'}`}>{s === 'issued' && r.assessments.length ? `Issued v${r.assessments.length}` : STAGE_TEXT[s]}</span>
         </li>
       ))}
     </ol>
@@ -386,15 +386,15 @@ function RequestCard({ r, link, onDone }: { r: HostingRequest; link?: string; on
   return (
     <Panel strong={r.stage === 'issued'} className="min-w-0 p-4 sm:p-5">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="font-mono text-[11px] text-white/40">{r.id}</span>
+        <span className="font-mono text-[11px] text-night-muted">{r.id}</span>
         <span className="text-[16px] font-light text-[#f3efe6]">{PATH_TITLE[r.path]}</span>
         {r.currentPath && r.currentPath !== r.path ? <Chip tone="#a9c7e8">Switch from {PATH_TITLE[r.currentPath]}</Chip> : null}
         <span className="ml-auto">{hostingStageChip(r)}</span>
       </div>
-      <p className="mt-1 font-mono text-[10.5px] text-white/40">Requested {fmtDateTime(r.submittedAt)} by {r.submittedBy}{latest ? ` · assessment v${latest.version} issued ${fmtDateTime(latest.issuedAt)} by ${latest.issuedBy}` : ' · preliminary estimate (automatic)'}</p>
+      <p className="mt-1 font-mono text-[10.5px] text-night-muted">Requested {fmtDateTime(r.submittedAt)} by {r.submittedBy}{latest ? ` · assessment v${latest.version} issued ${fmtDateTime(latest.issuedAt)} by ${latest.issuedBy}` : ' · preliminary estimate (automatic)'}</p>
       <HostingStepper r={r} />
       {latest?.notes ? <p className="mt-3 rounded-[2px] border px-3 py-2 text-[12.5px] font-light text-white/70" style={{ borderColor: hair(0.14) }}><span className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#d9c398]/70">Engineering notes</span> {latest.notes}</p> : null}
-      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-white/45 hover:text-[#f4e4bd]">{open ? 'Hide' : 'Show'} {latest ? `assessment v${latest.version}` : 'preliminary estimate'}</button>
+      <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="mt-3 font-mono text-[10px] uppercase tracking-[0.18em] text-night-muted hover:text-[#f4e4bd]">{open ? 'Hide' : 'Show'} {latest ? `assessment v${latest.version}` : 'preliminary estimate'}</button>
       {open ? <div className="mt-4"><EstimateView e={shown} /></div> : null}
       {r.stage === 'issued' || r.stage === 'preliminary' || r.stage === 'in-review' || r.stage === 'revision-requested' ? (
         <div className="mt-4 flex flex-wrap items-end gap-2">
@@ -404,8 +404,8 @@ function RequestCard({ r, link, onDone }: { r: HostingRequest; link?: string; on
               <button type="button" className={`${goldBtn} px-4 py-2 text-[12.5px]`} style={goldStyle} onClick={() => act('accept')}>Accept v{latest!.version}</button>
               <button type="button" className={`${ghostBtn} py-2 text-[12.5px]`} onClick={() => act('revise')}>Ask for a revision</button>
             </>
-          ) : <span className="text-[12.5px] font-light text-white/50">{r.stage === 'in-review' ? 'With the publisher’s engineering review.' : r.stage === 'revision-requested' ? 'Revision requested; a new version will be issued.' : 'Waiting for the engineering review.'}</span>}
-          <button type="button" className="px-2 text-[12px] text-white/40 hover:text-[#f1938f]" onClick={() => act('withdraw')}>Withdraw</button>
+          ) : <span className="text-[12.5px] font-light text-night-muted">{r.stage === 'in-review' ? 'With the publisher’s engineering review.' : r.stage === 'revision-requested' ? 'Revision requested; a new version will be issued.' : 'Waiting for the engineering review.'}</span>}
+          <button type="button" className="px-2 text-[12px] text-night-muted hover:text-[#f1938f]" onClick={() => act('withdraw')}>Withdraw</button>
         </div>
       ) : null}
       {r.decision ? <p className="mt-3 text-[12.5px] text-[#9be7c4]">Accepted v{r.decision.version} by {r.decision.by} on {fmtDateTime(r.decision.at)}{r.decision.note ? ` — “${r.decision.note}”` : ''}. Path recorded.</p> : null}

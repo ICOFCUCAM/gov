@@ -163,10 +163,44 @@ export type Database = {
         };
         Relationships: [];
       };
+      audit_witness_keys: {
+        Row: {
+          id: string
+          key_fingerprint: string
+          public_jwk: Json
+          registered_at: string
+          registered_by: string
+          revoked_at: string | null
+          revoked_by: string | null
+          witness_label: string
+        };
+        Insert: {
+          id?: string
+          key_fingerprint: string
+          public_jwk: Json
+          registered_at?: string
+          registered_by: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          witness_label: string
+        };
+        Update: {
+          id?: string
+          key_fingerprint?: string
+          public_jwk?: Json
+          registered_at?: string
+          registered_by?: string
+          revoked_at?: string | null
+          revoked_by?: string | null
+          witness_label?: string
+        };
+        Relationships: [];
+      };
       audit_witnesses: {
         Row: {
           at: string
           id: string
+          key_id: string | null
           observed_hash: string
           observed_seq: number
           recorded_by: string | null
@@ -178,6 +212,7 @@ export type Database = {
         Insert: {
           at?: string
           id?: string
+          key_id?: string | null
           observed_hash: string
           observed_seq: number
           recorded_by?: string | null
@@ -189,6 +224,7 @@ export type Database = {
         Update: {
           at?: string
           id?: string
+          key_id?: string | null
           observed_hash?: string
           observed_seq?: number
           recorded_by?: string | null
@@ -364,6 +400,30 @@ export type Database = {
           status?: Database["civicos"]["Enums"]["consent_status"]
           target_charter_id?: string
           updated_at?: string
+        };
+        Relationships: [];
+      };
+      cron_skips: {
+        Row: {
+          first_at: string
+          job: string
+          last_at: string
+          reason: string
+          skipped: number
+        };
+        Insert: {
+          first_at?: string
+          job: string
+          last_at?: string
+          reason: string
+          skipped?: number
+        };
+        Update: {
+          first_at?: string
+          job?: string
+          last_at?: string
+          reason?: string
+          skipped?: number
         };
         Relationships: [];
       };
@@ -1675,6 +1735,8 @@ export type Database = {
           revoked: number
           scope: string
         }[] };
+      cron_base_url_refusal: { Args: { p_url: string }; Returns: string };
+      cron_call: { Args: { p_job: string; p_path: string; p_method?: string }; Returns: number };
       current_actor: { Args: Record<PropertyKey, never>; Returns: {
           charter_id: string
           email: string
@@ -1765,6 +1827,7 @@ export type Database = {
       file_appeal: { Args: { p_ref: string; p_citizen_id: string; p_originating_charter_id: string; p_ground: string; p_originating_decision_ref?: string; p_linked_work_item_id?: string }; Returns: Database["civicos"]["Tables"]["appeals"]["Row"] };
       fnv1a_hex: { Args: { input: string }; Returns: string };
       grant_consent: { Args: { p_citizen_id: string; p_target_charter_id: string; p_scope: string; p_expires_at?: string; p_payload?: Json }; Returns: Database["civicos"]["Tables"]["consents"]["Row"] };
+      is_platform_admin: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_platform_officer: { Args: Record<PropertyKey, never>; Returns: boolean };
       is_service_context: { Args: Record<PropertyKey, never>; Returns: boolean };
       link_escalation_response: { Args: { p_escalation_id: string; p_dispatch_ref?: string; p_work_item_ref?: string }; Returns: boolean };
@@ -1892,11 +1955,13 @@ export type Database = {
       register_event_webhook: { Args: { p_channel: string; p_url: string; p_secret: string; p_description?: string }; Returns: string };
       register_institution: { Args: { p_charter_id: string; p_label: string; p_kind: Database["civicos"]["Enums"]["institution_kind"]; p_domain: string; p_archetype_or_branch: string; p_grammar?: string; p_safeguards_constant?: string; p_expected_domains?: number; p_shipped_domains?: number; p_meta?: Json }; Returns: Database["civicos"]["Tables"]["institutions"]["Row"] };
       register_signing_key: { Args: { p_jwk: Json }; Returns: Database["civicos"]["Tables"]["officers"]["Row"] };
+      register_witness_key: { Args: { p_witness_label: string; p_public_jwk: Json; p_registered_by: string }; Returns: Database["civicos"]["Tables"]["audit_witness_keys"]["Row"] };
       release_work_item: { Args: { p_ref: string }; Returns: Database["civicos"]["Tables"]["work_items"]["Row"] };
       rescind_directive: { Args: { p_ref: string }; Returns: Database["civicos"]["Tables"]["directives"]["Row"] };
       resolve_escalation: { Args: { p_id: string }; Returns: Database["civicos"]["Tables"]["escalations"]["Row"] };
       revoke_all_my_consents: { Args: Record<PropertyKey, never>; Returns: number };
       revoke_consent: { Args: { p_consent_id: string }; Returns: Database["civicos"]["Tables"]["consents"]["Row"] };
+      revoke_witness_key: { Args: { p_id: string; p_revoked_by: string }; Returns: boolean };
       rotate_event_webhook_secret: { Args: { p_id: string; p_new_secret: string }; Returns: boolean };
       service_sla_stats: { Args: { p_charter_id?: string; p_days?: number }; Returns: {
           acknowledged: number
@@ -1968,7 +2033,9 @@ export type Database = {
           entries: number
           intact: boolean
         }[] };
+      webhook_url_refusal: { Args: { p_url: string }; Returns: string };
       withdraw_my_appeal: { Args: { p_ref: string; p_reason?: string }; Returns: Database["civicos"]["Tables"]["appeals"]["Row"] };
+      witness_key_fingerprint: { Args: { p_jwk: Json }; Returns: string };
       work_item_flow_stats: { Args: { p_workflow_id?: string; p_charter_id?: string; p_days?: number }; Returns: {
           closed: number
           median_cycle_hours: number
@@ -2072,6 +2139,18 @@ export type Database = {
         };
         Relationships: [];
       };
+      civicos_audit_witness_keys: {
+        Row: {
+          id: string | null
+          public_jwk: Json | null
+          registered_at: string | null
+          registered_by: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+          witness_label: string | null
+        };
+        Relationships: [];
+      };
       civicos_audit_witnesses: {
         Row: {
           at: string | null
@@ -2081,6 +2160,7 @@ export type Database = {
           observed_hash: string | null
           observed_seq: number | null
           recorded_by: string | null
+          registered_key: boolean | null
           scope: string | null
           witness_label: string | null
         };
@@ -2324,6 +2404,21 @@ export type Database = {
           work_item_ref: string | null
           work_item_scope: string | null
           workflow_id: string | null
+        };
+        Relationships: [];
+      };
+      civicos_signed_witnesses: {
+        Row: {
+          at: string | null
+          id: string | null
+          key_id: string | null
+          key_revoked_at: string | null
+          observed_hash: string | null
+          observed_seq: number | null
+          public_jwk: Json | null
+          scope: string | null
+          witness_label: string | null
+          witness_signature: string | null
         };
         Relationships: [];
       };
@@ -2683,11 +2778,13 @@ export type Database = {
       civicos_register_event_webhook: { Args: { p_channel: string; p_url: string; p_secret: string; p_description?: string }; Returns: string };
       civicos_register_institution: { Args: { p_charter_id: string; p_label: string; p_kind: string; p_domain: string; p_archetype_or_branch: string; p_grammar?: string; p_safeguards_constant?: string; p_expected_domains?: number; p_shipped_domains?: number; p_meta?: Json }; Returns: Database["civicos"]["Tables"]["institutions"]["Row"] };
       civicos_register_signing_key: { Args: { p_jwk: Json }; Returns: Database["civicos"]["Tables"]["officers"]["Row"] };
+      civicos_register_witness_key: { Args: { p_witness_label: string; p_public_jwk: Json; p_registered_by: string }; Returns: Database["civicos"]["Tables"]["audit_witness_keys"]["Row"] };
       civicos_release_work_item: { Args: { p_ref: string }; Returns: Database["civicos"]["Tables"]["work_items"]["Row"] };
       civicos_rescind_directive: { Args: { p_ref: string }; Returns: Database["civicos"]["Tables"]["directives"]["Row"] };
       civicos_resolve_escalation: { Args: { p_id: string }; Returns: Database["civicos"]["Tables"]["escalations"]["Row"] };
       civicos_revoke_all_my_consents: { Args: Record<PropertyKey, never>; Returns: number };
       civicos_revoke_consent: { Args: { p_consent_id: string }; Returns: Database["civicos"]["Tables"]["consents"]["Row"] };
+      civicos_revoke_witness_key: { Args: { p_id: string; p_revoked_by: string }; Returns: boolean };
       civicos_rotate_event_webhook_secret: { Args: { p_id: string; p_new_secret: string }; Returns: boolean };
       civicos_service_sla_stats: { Args: { p_charter_id?: string; p_days?: number }; Returns: {
           acknowledged: number

@@ -4,7 +4,7 @@ import { stagingOff } from '@/lib/data/testkit';
 
 // Publisher auth delegates to the platform tier; stub it so the enforce path is testable.
 const platformAuth = vi.fn();
-vi.mock('@/lib/platform-auth', () => ({ platformOrCronAuthorized: (req: Request) => platformAuth(req) }));
+vi.mock('@/lib/platform-auth', () => ({ platformOrSecretAuthorized: (req: Request) => platformAuth(req) }));
 
 import { GET as chamberGET } from './route';
 import { GET as releaseGET } from './[id]/route';

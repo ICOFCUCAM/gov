@@ -162,7 +162,7 @@ export function DispatchChannel({
           {liveCount ? <span style={{ color: accent }}>{liveCount} sent</span> : 'live'}
         </span>
       </div>
-      <div className="max-h-[168px] space-y-1 overflow-y-auto px-3 py-2" aria-live="polite" aria-relevant="additions">
+      <div tabIndex={0} role="region" aria-label={title} className="focus-ring max-h-[168px] space-y-1 overflow-y-auto px-3 py-2" aria-live="polite" aria-relevant="additions">
         {full.length > 7 ? (
           <button type="button" onClick={() => setShowAll(s => !s)}
             className="focus-ring w-full text-center text-[8px] uppercase tracking-wider text-ink-muted hover:text-ink-soft">
@@ -237,7 +237,7 @@ export function EncounterThread({
           {liveCount ? <span style={{ color: accent }}>{liveCount} sent</span> : 'live'}
         </span>
       </div>
-      <div className="max-h-[168px] space-y-1.5 overflow-y-auto px-3 py-2" aria-live="polite" aria-relevant="additions">
+      <div tabIndex={0} role="region" aria-label={title} className="focus-ring max-h-[168px] space-y-1.5 overflow-y-auto px-3 py-2" aria-live="polite" aria-relevant="additions">
         {full.length > 7 ? (
           <button type="button" onClick={() => setShowAll(s => !s)}
             className="focus-ring w-full text-center text-[8px] uppercase tracking-wider text-ink-muted hover:text-ink-soft">
@@ -291,7 +291,7 @@ export function NationalDispatchDigest({ accent = '#37c7d4', now }: { accent?: s
         <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>National coordination — live ministry roll-up</span>
         <span className="text-[8px] uppercase tracking-wider text-ink-muted">{scopes.length} ministries · MINISTRY ↔ NATIONAL</span>
       </div>
-      <div className="max-h-[200px] space-y-1 overflow-y-auto px-3 py-2">
+      <div tabIndex={0} role="region" aria-label="National coordination roll-up" className="focus-ring max-h-[200px] space-y-1 overflow-y-auto px-3 py-2">
         {feed.map(m => (
           <div key={m.id} className="text-[10px]">
             <span className="font-mono text-[8px] text-ink-muted">{clockLabel(m.at, now)}</span>{' '}
@@ -326,7 +326,7 @@ export function NationalRecordsLedger({ accent = '#37c7d4', now }: { accent?: st
         <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>National records — collected and up to date</span>
         <span className="text-[8px] uppercase tracking-wider text-ink-muted">{ledger.filter(l => l.rec.stage === 'synced').length}/{ledger.length} collected records up to date · facility → ministry → national</span>
       </div>
-      <div className="max-h-[200px] space-y-0.5 overflow-y-auto px-3 py-2">
+      <div tabIndex={0} role="region" aria-label="National records" className="focus-ring max-h-[200px] space-y-0.5 overflow-y-auto px-3 py-2">
         {ledger.map(({ rec, ministryKey }) => {
           const rt = rec.stage === 'synced' ? 'ok' : 'warn';
           return (
@@ -362,7 +362,7 @@ export function NationalEncounterDigest({ accent = '#37c7d4', now }: { accent?: 
         <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>National service load — citizen ↔ official, live</span>
         <span className="text-[8px] uppercase tracking-wider text-ink-muted">across ministry service desks</span>
       </div>
-      <div className="max-h-[200px] space-y-1 overflow-y-auto px-3 py-2">
+      <div tabIndex={0} role="region" aria-label="National service load" className="focus-ring max-h-[200px] space-y-1 overflow-y-auto px-3 py-2">
         {feed.map(({ msg: m }) => (
           <div key={m.id} className="text-[10px]">
             <span className="font-mono text-[8px] text-ink-muted">{clockLabel(m.at, now)}</span>{' '}
@@ -390,7 +390,7 @@ export function NationalReferralBoard({ accent = '#37c7d4', now }: { accent?: st
         <span className="text-[9px] font-bold uppercase tracking-[0.16em]" style={{ color: accent }}>Inter-ministry referrals — live casework</span>
         <span className="text-[8px] uppercase tracking-wider text-ink-muted">{feed.filter(r => r.status !== 'closed').length} open · cross-ministry</span>
       </div>
-      <div className="max-h-[200px] space-y-0.5 overflow-y-auto px-3 py-2">
+      <div tabIndex={0} role="region" aria-label="Inter-ministry referrals" className="focus-ring max-h-[200px] space-y-0.5 overflow-y-auto px-3 py-2">
         {feed.map(r => (
           <div key={r.id} className="flex items-center gap-2 text-[9.5px]">
             <span className="font-mono text-[8px] text-ink-muted">{clockLabel(r.at, now)}</span>
@@ -579,7 +579,7 @@ export function MinistryChainSection({
             <button type="button" onClick={() => { if (nm.trim()) { enroll(ministryKey, myFac.id, nm, d.actorRole, 'Facility registrar', now); setNm(''); } }}
               className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: accent, color: accent }}>Enrol</button>
           </div>
-          <div className="max-h-[120px] space-y-0.5 overflow-y-auto">
+          <div tabIndex={0} role="region" aria-label="Enrolled at this facility" className="focus-ring max-h-[120px] space-y-0.5 overflow-y-auto">
             {enrolled.slice(-6).reverse().map(e => (
               <div key={e.id} className="flex items-center gap-2 text-[9.5px]">
                 <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ background: `rgb(var(--c-${stC(e.status)}))` }} />
@@ -615,7 +615,7 @@ export function MinistryChainSection({
             <button type="button" onClick={() => { if (subj.trim()) { fileRecord(ministryKey, myFac.id, subj, filingActor, d.recordNoun, now); setSubj(''); } }}
               className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: accent, color: accent }}>File</button>
           </div>
-          <div className="max-h-[132px] space-y-0.5 overflow-y-auto">
+          <div tabIndex={0} role="region" aria-label="Records filed at this facility" className="focus-ring max-h-[132px] space-y-0.5 overflow-y-auto">
             {filed.length > 6 ? (
               <button type="button" onClick={() => setRecsAll(s => !s)}
                 className="focus-ring w-full text-center text-[8px] uppercase tracking-wider text-ink-muted hover:text-ink-soft">
@@ -670,7 +670,7 @@ export function MinistryChainSection({
             <button type="button" onClick={() => { if (refSubj.trim()) { raiseReferral(ministryKey, refTarget, refSubj, `${d.ministry} liaison`, now, filed[filed.length - 1]?.ref); setRefSubj(''); } }}
               className="focus-ring rounded-[3px] border px-2 py-1 text-[9px] font-semibold uppercase tracking-wider" style={{ borderColor: accent, color: accent }}>Refer</button>
           </div>
-          <div className="max-h-[120px] space-y-0.5 overflow-y-auto">
+          <div tabIndex={0} role="region" aria-label="Referrals raised" className="focus-ring max-h-[120px] space-y-0.5 overflow-y-auto">
             {myInbox.slice(-6).reverse().map(r => {
               const fi = REFERRAL_FLOW.indexOf(r.status);
               return (

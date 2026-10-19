@@ -12,6 +12,12 @@
 // before the answer goes out.
 // Durable through lib/data/persist.ts (`__civicosExchangeLog`), bounded to
 // the most recent MAX_ENTRIES.
+//
+// Only callers that presented a recognised key are logged and receipted.
+// Calls without one (and calls refused by the rate limits) are counted in a
+// small, bounded summary instead (`noteUnauthenticated`, go-live review
+// M-4), so a flood of junk requests can never evict genuine evidence and
+// costs no signature (lib/exchange/guard.ts).
 
 import { randomUUID } from 'node:crypto';
 import { NextResponse } from 'next/server';
@@ -67,11 +73,26 @@ export interface ExchangeReceipt {
   signature: string;
 }
 
-interface Db { entries: ExchangeEntry[] }
+/** Calls without a recognised key (or refused by a rate limit), counted per channel, ministry and result. */
+export interface UnauthenticatedCount {
+  channel: ExchangeChannel;
+  ministryId?: string;
+  /** The feed or client whose own limit refused the call, when it was known. */
+  feedId?: string;
+  result: string;
+  count: number;
+  first: string;
+  last: string;
+}
+/** Rows kept in the summary of unauthenticated calls; the least recently seen goes first. */
+export const MAX_UNAUTHENTICATED_ROWS = 500;
+
+interface Db { entries: ExchangeEntry[]; unauthenticated: Record<string, UnauthenticatedCount> }
 const g = globalThis as unknown as { __civicosExchangeLog?: Db };
 const db = (): Db => {
-  const d = touch('__civicosExchangeLog', g.__civicosExchangeLog ??= { entries: [] });
+  const d = touch('__civicosExchangeLog', g.__civicosExchangeLog ??= { entries: [], unauthenticated: {} });
   d.entries ??= [];
+  d.unauthenticated ??= {};
   return d;
 };
 export function resetExchangeLog(): void { g.__civicosExchangeLog = undefined; }
@@ -128,6 +149,28 @@ export async function logExchange(input: ExchangeInput, now = Date.now()): Promi
   d.entries.push(entry);
   if (d.entries.length > MAX_ENTRIES) d.entries.splice(0, d.entries.length - MAX_ENTRIES);
   return { entry, receipt };
+}
+
+/** Count a call that is not logged: no key recognised, or refused by a rate limit. Nothing is signed. */
+export function noteUnauthenticated(input: { channel: ExchangeChannel; ministryId?: string; feedId?: string; result: string }, now = Date.now()): void {
+  const u = db().unauthenticated;
+  const ministryId = input.ministryId?.slice(0, 80);
+  const result = input.result.slice(0, 120);
+  const key = `${input.channel}|${ministryId ?? ''}|${input.feedId ?? ''}|${result}`;
+  const at = new Date(now).toISOString();
+  const row = u[key];
+  // Re-inserted on every call, so insertion order is "least recently seen first".
+  delete u[key];
+  u[key] = row
+    ? { ...row, count: row.count + 1, last: at }
+    : { channel: input.channel, ...(ministryId ? { ministryId } : {}), ...(input.feedId ? { feedId: input.feedId } : {}), result, count: 1, first: at, last: at };
+  const keys = Object.keys(u);
+  for (let i = 0; i < keys.length - MAX_UNAUTHENTICATED_ROWS; i++) delete u[keys[i]!];
+}
+
+/** The unauthenticated-call summary, most recently seen first. */
+export function listUnauthenticated(limit = 100): UnauthenticatedCount[] {
+  return Object.values(db().unauthenticated).reverse().slice(0, Math.max(1, limit)).map(r => ({ ...r }));
 }
 
 /** Check a receipt against the platform's exchange public key (as published at /api/exchange/key). */

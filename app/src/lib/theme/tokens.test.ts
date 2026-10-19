@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
-import { LIGHT, SOV, CONSOLE, STATUS, INFO, INSTITUTIONAL, DECISION_CLASS, hexOf, type Ground } from './tokens';
+import { LIGHT, SOV, CONSOLE, STATUS, INFO, INSTITUTIONAL, NIGHT, DECISION_CLASS, hexOf, type Ground } from './tokens';
 import { sealTile, accentText, GRAPHIC } from './nation';
 import { contrast, AA } from '@/apps/_shared/public/design/contrast';
 import { TONE, TONE_SHAPE, TONE_WORD } from '@/lib/tone-palette';
@@ -38,6 +38,25 @@ describe('design tokens', () => {
     for (const k of ['--c-ok', '--c-warn', '--c-alert']) expect(contrast(hx(LIGHT, k), '#ffffff'), `light ${k}`).toBeGreaterThanOrEqual(AA);
     for (const [k, v] of Object.entries(DECISION_CLASS)) expect(contrast(v, '#ffffff'), `class ${k}`).toBeGreaterThanOrEqual(AA);
     expect(contrast(INSTITUTIONAL.champagne, INSTITUTIONAL.ground)).toBeGreaterThanOrEqual(AA);
+    // The night chrome (welcome, setup, Update Center, publisher, site editor).
+    for (const ground of [NIGHT.ground, NIGHT.panel]) {
+      for (const ink of ['ink', 'soft', 'muted', 'faint', 'champagneMuted'] as const) {
+        expect(contrast(NIGHT[ink], ground), `night ${ink} on ${ground}`).toBeGreaterThanOrEqual(AA);
+      }
+    }
+  });
+
+  it('keep the night text levels in order (ink > soft > muted > faint)', () => {
+    const lum = (h: string) => contrast(h, '#000000');
+    expect(lum(NIGHT.ink)).toBeGreaterThan(lum(NIGHT.soft));
+    expect(lum(NIGHT.soft)).toBeGreaterThan(lum(NIGHT.muted));
+    expect(lum(NIGHT.muted)).toBeGreaterThan(lum(NIGHT.faint));
+  });
+
+  it('are the night colours the Tailwind theme uses', async () => {
+    const tw = (await import('../../../tailwind.config')).default as { theme: { extend: { colors: Record<string, string> } } };
+    const c = tw.theme.extend.colors;
+    expect([c['night-ink'], c['night-soft'], c['night-muted'], c['night-faint'], c['night-champagne']]).toEqual([NIGHT.ink, NIGHT.soft, NIGHT.muted, NIGHT.faint, NIGHT.champagneMuted]);
   });
 
   it('give every status a shape and a word, never colour alone', () => {

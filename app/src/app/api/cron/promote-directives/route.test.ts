@@ -29,13 +29,13 @@ const due = () => {
 
 describe('POST /api/cron/promote-directives', () => {
   it('returns 401 when CIVICOS_CRON_SECRET is unset', async () => {
-    const res = await POST(new Request('http://x/api/cron/promote-directives?token=anything'));
+    const res = await POST(new Request('http://x/api/cron/promote-directives', { headers: { authorization: 'Bearer anything' } }));
     expect(res.status).toBe(401);
   });
 
   it('returns 401 when the token does not match', async () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
-    const res = await POST(new Request('http://x/api/cron/promote-directives?token=wrong'));
+    const res = await POST(new Request('http://x/api/cron/promote-directives', { headers: { authorization: 'Bearer wrong' } }));
     expect(res.status).toBe(401);
   });
 
@@ -45,7 +45,7 @@ describe('POST /api/cron/promote-directives', () => {
     due();
     vi.useFakeTimers({ now: Date.now() + 120_000, toFake: ['Date'] });
     try {
-      const res = await POST(new Request('http://x/api/cron/promote-directives?token=correct'));
+      const res = await POST(new Request('http://x/api/cron/promote-directives', { headers: { authorization: 'Bearer correct' } }));
       expect(res.status).toBe(200);
       const json = await res.json();
       expect(json).toMatchObject({ ok: true, promoted: 1, refs: ['DIR-DUE'], substrate: 'not configured' });
@@ -77,7 +77,7 @@ describe('POST /api/cron/promote-directives', () => {
     process.env.CIVICOS_CRON_SECRET = 'correct';
     serverClientMock.mockReturnValue(substrate(async fn => (fn === 'civicos_mirror_directive' ? { data: null, error: { message: 'boom' } } : { data: null, error: null })));
     draftDirective({ ref: 'DIR-X', title: 'X', by: 'Officer' });
-    const res = await POST(new Request('http://x/api/cron/promote-directives?token=correct'));
+    const res = await POST(new Request('http://x/api/cron/promote-directives', { headers: { authorization: 'Bearer correct' } }));
     expect(res.status).toBe(502);
     expect((await res.json()).error).toMatch(/directive:DIR-X: boom/);
     expect(mirrorStatus().items.map(i => i.id)).toEqual(['directive:DIR-X']);

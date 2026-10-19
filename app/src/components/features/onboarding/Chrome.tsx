@@ -3,6 +3,8 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { useClock, useNationBrand } from '@/components/features/cover/entry';
+import { SkipLink } from '@/components/ui/SkipLink';
+import { INSTITUTIONAL } from '@/lib/theme/tokens';
 
 // Night palette shared with the cover: ink, champagne light and polished gold.
 export const INK = '#04060a';
@@ -20,7 +22,8 @@ export function OnboardingFrame({ children, right }: { children: React.ReactNode
   const clock = useClock();
   const brand = useNationBrand();
   return (
-    <main className="relative min-h-screen overflow-x-hidden font-sans text-[#f3efe6] [color-scheme:dark] selection:bg-[#d9c398]/30" style={{ background: INK }}>
+    <div className="relative min-h-screen overflow-x-hidden font-sans text-[#f3efe6] [color-scheme:dark] selection:bg-[#d9c398]/30" style={{ background: INK }}>
+      <SkipLink style={{ background: INSTITUTIONAL.champagneHi, color: INSTITUTIONAL.ground }} />
       <Backdrop />
 
       <div className="relative mx-auto flex min-h-screen max-w-[1320px] flex-col px-4 sm:px-8">
@@ -33,23 +36,25 @@ export function OnboardingFrame({ children, right }: { children: React.ReactNode
             </span>
             <span className="min-w-0 leading-tight">
               <span className="block truncate text-[12px] font-medium uppercase tracking-[0.3em] text-[#f3efe6] transition-colors group-hover:text-[#f4e4bd]">{brand.name}</span>
-              <span className="hidden truncate text-[9px] uppercase tracking-[0.26em] text-white/40 sm:block">{brand.motto}</span>
+              <span className="hidden truncate text-[9px] uppercase tracking-[0.26em] text-night-muted sm:block">{brand.motto}</span>
             </span>
           </Link>
-          <div className="ml-auto flex items-center gap-5 whitespace-nowrap font-mono text-[10.5px] tracking-[0.12em] text-white/50">
+          <div className="ml-auto flex items-center gap-5 whitespace-nowrap font-mono text-[10.5px] tracking-[0.12em] text-night-muted">
             {right}
             <span className="tabular-nums text-white/75" suppressHydrationWarning>{clock}</span>
           </div>
           <Rule className="absolute inset-x-0 bottom-0" />
         </header>
-        {children}
-        <footer className="relative mt-auto flex flex-col gap-2 py-6 font-mono text-[10px] uppercase tracking-[0.18em] text-white/35 sm:flex-row sm:justify-between">
+        <main id="main" tabIndex={-1} className="flex flex-1 flex-col outline-none">
+          {children}
+        </main>
+        <footer className="relative mt-auto flex flex-col gap-2 py-6 font-mono text-[10px] uppercase tracking-[0.18em] text-night-faint sm:flex-row sm:justify-between">
           <Rule className="absolute inset-x-0 top-0" flip />
           <span>Humans govern · Institutions govern · Constitutions govern</span>
           <span>Every change is written to the audit chain</span>
         </footer>
       </div>
-    </main>
+    </div>
   );
 }
 
@@ -134,7 +139,7 @@ export function Section({ n, title, aside, children, className = '' }: { n: stri
       <div className="flex flex-wrap items-end gap-x-4 gap-y-1">
         <span className="font-mono text-[11px] tabular-nums tracking-[0.12em]" style={{ color: CHAMPAGNE }}>§ {n}</span>
         <h2 className="text-[11px] font-medium uppercase tracking-[0.3em] text-[#f3efe6]/85">{title}</h2>
-        {aside ? <span className="ml-auto text-[12px] text-white/40">{aside}</span> : null}
+        {aside ? <span className="ml-auto text-[12px] text-night-muted">{aside}</span> : null}
       </div>
       <Rule className="mt-2.5" />
       <div className="mt-6">{children}</div>
@@ -147,14 +152,14 @@ export function Field({ label, hint, children }: { label: string; hint?: string;
     <label className="group/field block">
       <span className="block font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#d9c398]/65 transition-colors group-focus-within/field:text-[#f4e4bd]">{label}</span>
       <span className="mt-2 block">{children}</span>
-      {hint ? <span className="mt-1.5 block text-[11.5px] leading-snug text-white/40">{hint}</span> : null}
+      {hint ? <span className="mt-1.5 block text-[11.5px] leading-snug text-night-muted">{hint}</span> : null}
     </label>
   );
 }
 
 /** Inset field on dark glass: hairline frame, an engraved baseline, champagne on focus. */
 export const inputCls =
-  'w-full rounded-[2px] border border-[#d9c398]/[0.13] border-b-[#d9c398]/[0.4] bg-[#07090d] bg-[linear-gradient(180deg,rgba(255,248,230,0.015),rgba(255,248,230,0.04))] px-3.5 py-2.5 text-[14.5px] font-light text-[#f3efe6] shadow-[inset_0_1px_8px_rgba(0,0,0,0.45)] transition-[border-color,background-color,box-shadow] placeholder:text-white/25 hover:border-[#d9c398]/25 hover:border-b-[#d9c398]/55 focus:border-[#d9c398]/70 focus:border-b-[#f4e4bd] focus:bg-[#d9c398]/[0.05] focus:shadow-[inset_0_1px_8px_rgba(0,0,0,0.45),0_0_0_3px_rgba(217,195,152,0.10)] focus:outline-none [&>option]:bg-[#0c0f15] [&>option]:text-[#f3efe6]';
+  'w-full rounded-[2px] border border-[#d9c398]/[0.13] border-b-[#d9c398]/[0.4] bg-[#07090d] bg-[linear-gradient(180deg,rgba(255,248,230,0.015),rgba(255,248,230,0.04))] px-3.5 py-2.5 text-[14.5px] font-light text-[#f3efe6] shadow-[inset_0_1px_8px_rgba(0,0,0,0.45)] transition-[border-color,background-color,box-shadow] placeholder:text-night-faint hover:border-[#d9c398]/25 hover:border-b-[#d9c398]/55 focus:border-[#d9c398]/70 focus:border-b-[#f4e4bd] focus:bg-[#d9c398]/[0.05] focus:shadow-[inset_0_1px_8px_rgba(0,0,0,0.45),0_0_0_3px_rgba(217,195,152,0.10)] focus:outline-none [&>option]:bg-[#0c0f15] [&>option]:text-[#f3efe6]';
 
 /** Refined select: the input frame with an engraved chevron. */
 export function Select({ className = '', ...props }: React.SelectHTMLAttributes<HTMLSelectElement>) {

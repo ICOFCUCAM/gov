@@ -7,19 +7,22 @@
 // cursor holds (so the next run retries from the same point) and the
 // failure is recorded.
 //
-// Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
+// Every POST goes through the platform's safe fetch (go-live review M-5):
+// public addresses only unless the nation allows its own network
+// (CIVICOS_WEBHOOKS_PRIVATE=1), redirects never followed.
+//
+// Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only).
 // Delivery is at-least-once per cursor; consumers dedupe on event id.
 // Cadence: recommended every 1–5 minutes.
 
 import { NextResponse } from 'next/server';
 import { cronAuthorized } from '@/lib/platform-auth';
-import { createHmac } from 'node:crypto';
 import { serverClient } from '@/lib/db/client';
+import { postSubstrateWebhook } from '@/lib/events/substrate-webhook';
 
 export const dynamic = 'force-dynamic';
 
 const PER_RUN_LIMIT = 50;     // events per webhook per run
-const DELIVERY_TIMEOUT_MS = 5000;
 
 interface WebhookRow {
   id: string; channel: string; url: string; secret: string; cursor_at_ms: number;
@@ -32,32 +35,14 @@ interface EventRow {
 /** The cron secret, compared in constant time (lib/platform-auth.ts). */
 const authorized = (req: Request): boolean => cronAuthorized(req);
 
-/** Deliver one event; resolve to true on a 2xx, false otherwise. */
+/** Deliver one event through the platform's safe fetch (lib/events/substrate-webhook.ts):
+ *  public addresses only unless CIVICOS_WEBHOOKS_PRIVATE=1, no redirects. True on a 2xx. */
 async function deliver(url: string, secret: string, event: EventRow): Promise<{ ok: boolean; detail: string }> {
   const body = JSON.stringify({
     id: event.id, type: event.type, source: event.source, target: event.target,
     channel: event.channel, payload: event.payload, at: event.at, at_ms: event.at_ms,
   });
-  const signature = createHmac('sha256', secret).update(body).digest('hex');
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), DELIVERY_TIMEOUT_MS);
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        'x-civicos-event-id': event.id,
-        'x-civicos-signature': `sha256=${signature}`,
-      },
-      body,
-      signal: controller.signal,
-    });
-    return { ok: res.ok, detail: `HTTP ${res.status}` };
-  } catch (e) {
-    return { ok: false, detail: e instanceof Error ? e.message : 'fetch failed' };
-  } finally {
-    clearTimeout(timer);
-  }
+  return postSubstrateWebhook(url, secret, body, { 'x-civicos-event-id': event.id });
 }
 
 export async function GET(req: Request) {

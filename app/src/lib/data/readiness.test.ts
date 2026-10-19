@@ -39,9 +39,16 @@ describe('preflight compatibility', () => {
     expect(r).toMatchObject({ status: 409 });
     if ('error' in r) expect(r.error).toMatch(/blocking/);
     const blocking = latestPreflight(HOME_NATION, 'DR-150')!.findings.find(x => x.status === 'blocking')!;
-    expect(waiveFinding(home(), rel('DR-150'), blocking.key, { by: 'CIO', secondBy: 'cio', reason: 'Module owner confirmed' })).toMatchObject({ status: 422 });
-    expect(waiveFinding(home(), rel('DR-150'), blocking.key, { by: 'CIO', secondBy: 'CISO', reason: 'short' })).toMatchObject({ status: 422 });
-    const after = ok(waiveFinding(home(), rel('DR-150'), blocking.key, { by: 'CIO', secondBy: 'Head of Revenue IT', reason: 'Module does not use the CSV import; tested on staging' }));
+    // A typed second name is refused (review H-5): the second official confirms in their own request.
+    expect(waiveFinding(home(), rel('DR-150'), blocking.key, { by: 'CIO', secondBy: 'Head of Revenue IT', reason: 'Module does not use the CSV import; tested on staging' })).toMatchObject({ status: 422 });
+    expect(waiveFinding(home(), rel('DR-150'), blocking.key, { by: 'CIO', reason: 'short' })).toMatchObject({ status: 422 });
+    const proposed = ok(waiveFinding(home(), rel('DR-150'), blocking.key, { by: 'CIO', reason: 'Module does not use the CSV import; tested on staging' }));
+    expect(proposed.pending).toBe(true);
+    expect(proposed.approvable).toBe(false);
+    expect(proposed.findings.find(x => x.key === blocking.key)!.waiverProposal).toMatchObject({ by: 'CIO' });
+    // The proposer cannot confirm their own proposal, whatever the case of the name.
+    expect(waiveFinding(home(), rel('DR-150'), blocking.key, { by: 'cio' })).toMatchObject({ status: 409 });
+    const after = ok(waiveFinding(home(), rel('DR-150'), blocking.key, { by: 'Head of Revenue IT' }));
     expect(after.approvable).toBe(true);
     expect(after.findings.find(x => x.key === blocking.key)!.waiver).toMatchObject({ by: 'CIO', secondBy: 'Head of Revenue IT' });
     expect(listAudit().some(a => a.action === 'update.preflight.waive' && a.actor === 'CIO + Head of Revenue IT')).toBe(true);
@@ -52,7 +59,7 @@ describe('preflight compatibility', () => {
     const rep = runPreflight(home(), rel('DR-141'), 'CIO');
     expect(rep.approvable).toBe(true);
     expect(listAudit()[0]).toMatchObject({ action: 'update.preflight', actor: 'CIO' });
-    expect(waiveFinding(home(), rel('DR-141'), rep.findings[0]!.key, { by: 'A', secondBy: 'B', reason: 'Nothing to waive here really' })).toMatchObject({ status: 409 });
+    expect(waiveFinding(home(), rel('DR-141'), rep.findings[0]!.key, { by: 'A', reason: 'Nothing to waive here really' })).toMatchObject({ status: 409 });
   });
 });
 

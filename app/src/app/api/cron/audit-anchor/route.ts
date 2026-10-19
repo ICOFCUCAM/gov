@@ -19,7 +19,7 @@
 // head is first time-stamped by the nation's RFC 3161 TSA (lib/audit/tsa.ts)
 // and the token travels with it.
 //
-// Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
+// Auth: CIVICOS_CRON_SECRET as Authorization: Bearer (header only).
 // Cadence: every 5–15 minutes. Idempotent — anchoring the same head
 // produces an event with the same content, but federation events are
 // append-only so duplicate broadcasts are allowed (consumers dedupe by

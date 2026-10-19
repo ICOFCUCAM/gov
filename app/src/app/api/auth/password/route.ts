@@ -8,12 +8,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { changePassword, resetPassword } from '@/lib/auth/officials';
 import { currentOfficial, issueSession } from '@/lib/auth/official';
+import { limit } from '@/lib/ops/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
 export async function POST(req: NextRequest) {
   const b = (await req.json().catch(() => ({}))) as { action?: string; current?: string; next?: string; email?: string; code?: string };
   if (b.action === 'reset') {
+    // Reset codes, like sign-ins, are limited per address before any hashing (go-live review M-9).
+    const limited = await limit(req, 'signin');
+    if (limited) return limited;
     const r = await resetPassword(b.email ?? '', b.code ?? '', b.next ?? '');
     return 'error' in r ? NextResponse.json(r, { status: 422 }) : NextResponse.json({ ok: true });
   }

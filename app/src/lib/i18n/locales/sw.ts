@@ -411,6 +411,11 @@ export const sw: Messages = {
     unsubscribeButton: 'Jiondoe',
     unsubscribed: 'Umejiondoa na anwani yako ya barua pepe imefutwa.',
     linkInvalid: 'Kiungo hiki si halali au muda wake umekwisha.',
+    emails: {
+      confirmSubject: 'Thibitisha taarifa kwa barua pepe kutoka {name}',
+      confirmBody: 'Mtu aliomba taarifa kwa barua pepe kutoka {name} kwa anwani hii. Fungua kiungo ili kuthibitisha; kama si wewe, puuza barua hii na hakuna kitakachotumwa. Kiungo kinafanya kazi kwa siku {days}.',
+      unsubscribeLine: 'Kuacha kupokea barua pepe hizi, fungua kiungo hiki: {link}',
+    },
   },
   /** Wallet receipts timeline (substrate). */
   timeline: {
@@ -450,5 +455,13 @@ export const sw: Messages = {
     training: 'Mafunzo',
     runbook: 'Kitabu cha taratibu',
     video: 'Video',
+    alertEmail: {
+      subject: 'Kituo cha Masasisho · {category}: {subject}',
+      body: 'Tahadhari ya {category} kutoka Kituo cha Masasisho:\n\n{subject}',
+      open: 'Fungua Kituo cha Masasisho: {link}',
+      footer: 'Unapokea ujumbe huu kwa sababu umetajwa kupokea tahadhari za {category} katika Kituo cha Masasisho. Msimamizi anaweza kubadilisha hili.',
+      smsPrefix: 'Kituo cha Masasisho · {category}',
+      categories: { security: 'Usalama', releases: 'Matoleo', incidents: 'Matukio', eol: 'Mwisho wa msaada' },
+    },
   },
 };

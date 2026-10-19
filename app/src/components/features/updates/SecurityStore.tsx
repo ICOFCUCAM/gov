@@ -41,7 +41,7 @@ export function SecurityStore() {
         <h1 className="mt-4 text-[2.1rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3rem]">
           Security for {nation ? <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{nation}</span> : 'this installation'}
         </h1>
-        <p className="mt-4 max-w-[68ch] text-[15px] font-light leading-relaxed text-white/55">
+        <p className="mt-4 max-w-[68ch] text-[15px] font-light leading-relaxed text-night-muted">
           Every nation is protected by the included baseline, paid or not, and security updates are never held back by payment or licence status. Advanced server-side tools come from certified partners; or bring your own and attest to it.
         </p>
         {err ? <div className="mt-8"><ErrorLine>{err}</ErrorLine></div> : !s ? <Loading label="Opening the security store…" /> : <Body s={s} link={link} reload={load} />}
@@ -71,7 +71,7 @@ function Body({ s, link, reload }: { s: SecurityCenter; link?: string; reload: (
               {s.baseline.covers.map(c => <li key={c} className="text-[13px] font-light text-white/70"><span aria-hidden className="mr-2 text-[#9be7c4]">✓</span>{c}</li>)}
             </ul>
           </div>
-          <div className="text-[12.5px] font-light text-white/50 md:text-right">
+          <div className="text-[12.5px] font-light text-night-muted md:text-right">
             <p>{s.baseline.products.join(', ')}</p>
             <p className="mt-1 font-mono text-[11px]">Last scan {s.baseline.lastScanAt ? fmtDate(s.baseline.lastScanAt) : '—'}</p>
           </div>
@@ -82,13 +82,13 @@ function Body({ s, link, reload }: { s: SecurityCenter; link?: string; reload: (
         <div className="grid gap-4 xl:grid-cols-2">
           {s.catalogue.filter(p => p.tier === 'paid').map(p => <ProductCard key={p.id} p={p} money={money} link={link} reload={reload} />)}
         </div>
-        <p className="mt-4 text-[12px] font-light text-white/40">Vendors and products are placeholders for certified partners. Two purchase routes: pay at once on your payment rail, or government procurement (quote → purchase order → invoice → bank transfer → licence).</p>
+        <p className="mt-4 text-[12px] font-light text-night-muted">Vendors and products are placeholders for certified partners. Two purchase routes: pay at once on your payment rail, or government procurement (quote → purchase order → invoice → bank transfer → licence).</p>
       </Section>
 
       <Section n="05" title="Orders, licences and billing" aside={`${s.orders.length} on record`}>
         <div className="grid gap-3">
           {s.orders.map(o => <OrderRow key={o.id} o={o} s={s} money={money} link={link} reload={reload} />)}
-          {!s.orders.length ? <p className="text-[13.5px] font-light text-white/50">No orders yet.</p> : null}
+          {!s.orders.length ? <p className="text-[13.5px] font-light text-night-muted">No orders yet.</p> : null}
         </div>
       </Section>
 
@@ -128,16 +128,16 @@ function ProductCard({ p, money, link, reload }: { p: SecurityCenter['catalogue'
     <Panel className="flex flex-col p-5">
       <div className="flex flex-wrap items-center gap-2">
         <Chip tone="#a9c7e8">{CATEGORY_LABEL[p.category]}</Chip>
-        <span className="ml-auto font-mono text-[10px] text-white/40">v{p.latestVersion}</span>
+        <span className="ml-auto font-mono text-[10px] text-night-muted">v{p.latestVersion}</span>
       </div>
       <p className="mt-3 text-[17px] font-light text-[#f3efe6]">{p.name}</p>
       <p className="mt-0.5 text-[12px] font-light text-[#d9c398]/75">{p.vendor}</p>
-      <p className="mt-2 text-[13px] font-light leading-relaxed text-white/55">{p.summary}</p>
-      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-white/40">{p.platforms.join(' · ')}</p>
-      <details className="mt-3 text-[12.5px] font-light text-white/55">
-        <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.18em] text-white/45 hover:text-[#f4e4bd]">Certification · platform {p.certification.platformVersions}</summary>
+      <p className="mt-2 text-[13px] font-light leading-relaxed text-night-muted">{p.summary}</p>
+      <p className="mt-2 font-mono text-[10px] uppercase tracking-[0.14em] text-night-muted">{p.platforms.join(' · ')}</p>
+      <details className="mt-3 text-[12.5px] font-light text-night-muted">
+        <summary className="cursor-pointer font-mono text-[10px] uppercase tracking-[0.18em] text-night-muted hover:text-[#f4e4bd]">Certification · platform {p.certification.platformVersions}</summary>
         <ul className="mt-2 space-y-1">{p.certification.tested.map(t => <li key={t}>· {t}</li>)}</ul>
-        <p className="mt-1 text-white/40">{p.certification.notes}</p>
+        <p className="mt-1 text-night-muted">{p.certification.notes}</p>
       </details>
       <div className="mt-4 grid grid-cols-2 gap-2">
         {p.editions.map(e => (
@@ -145,11 +145,11 @@ function ProductCard({ p, money, link, reload }: { p: SecurityCenter['catalogue'
             className="rounded-[3px] border p-3 text-left transition-colors" style={{ borderColor: edition === e.key ? CHAMPAGNE : hair(0.14), background: edition === e.key ? hair(0.06) : 'transparent' }}>
             <span className="block text-[13px] text-[#f3efe6]">{e.name}</span>
             <span className="mt-0.5 block font-mono text-[12px] tabular-nums text-[#f4e4bd]">{money(p.prices[e.key] ?? 0)}</span>
-            <span className="block text-[10.5px] text-white/40">per {p.unit} / year</span>
+            <span className="block text-[10.5px] text-night-muted">per {p.unit} / year</span>
           </button>
         ))}
       </div>
-      <ul className="mt-3 space-y-0.5">{ed.features.map(f => <li key={f} className="text-[12px] font-light text-white/55">· {f}</li>)}</ul>
+      <ul className="mt-3 space-y-0.5">{ed.features.map(f => <li key={f} className="text-[12px] font-light text-night-muted">· {f}</li>)}</ul>
       <div className="mt-auto grid grid-cols-[1fr_1fr_auto] items-end gap-2 pt-4">
         <Field label={`${p.unit === 'server' ? 'Servers' : 'Seats'}`}><input type="number" min={1} className={inputCls} value={seats} onChange={e => setSeats(Number(e.target.value))} /></Field>
         <Field label="Term"><Select value={years} onChange={e => setYears(Number(e.target.value))}><option value={1}>1 year</option><option value={2}>2 years (−5%)</option><option value={3}>3 years (−10%)</option></Select></Field>
@@ -181,9 +181,9 @@ function OrderRow({ o, s, money, link, reload }: { o: SecurityOrder; s: Security
   return (
     <Panel className="px-5 py-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="font-mono text-[11px] text-white/40">{o.id}</span>
+        <span className="font-mono text-[11px] text-night-muted">{o.id}</span>
         <span className="text-[15px] font-light text-[#f3efe6]">{p?.name ?? o.productId}</span>
-        <span className="text-[12px] text-white/45">{o.edition} · {o.seats} × {o.years}y</span>
+        <span className="text-[12px] text-night-muted">{o.edition} · {o.seats} × {o.years}y</span>
         <span className="font-mono text-[13px] tabular-nums text-[#f4e4bd]">{money(o.total)}</span>
         <span className="ml-auto"><Chip tone={STAGE_TONE[o.stage]} solid={o.stage === 'active'}>{STAGE_TEXT[o.stage]}</Chip></span>
       </div>
@@ -192,7 +192,7 @@ function OrderRow({ o, s, money, link, reload }: { o: SecurityOrder; s: Security
           {path.map((st, i) => (
             <li key={st} className="min-w-0 flex-1">
               <span aria-hidden className="block h-[3px] rounded-full" style={{ background: i <= at ? (o.stage === 'expired' ? '#f1b36b' : STAGE_TONE[o.stage]) : hair(0.14) }} />
-              <span className={`mt-1 block truncate font-mono text-[8.5px] uppercase tracking-[0.12em] ${i === at ? 'text-[#f4e4bd]' : 'text-white/30'}`}>{STAGE_TEXT[st]}</span>
+              <span className={`mt-1 block truncate font-mono text-[8.5px] uppercase tracking-[0.12em] ${i === at ? 'text-[#f4e4bd]' : 'text-night-faint'}`}>{STAGE_TEXT[st]}</span>
             </li>
           ))}
         </ol>
@@ -200,7 +200,7 @@ function OrderRow({ o, s, money, link, reload }: { o: SecurityOrder; s: Security
 
       {o.licence && (o.stage === 'active' || o.stage === 'expired') ? (
         <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px] font-light text-white/65">
-          <span className="flex items-center gap-2"><span className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/60">Licence</span><CopyValue value={o.licence.key} label="licence key" /></span>
+          <span className="flex items-center gap-2"><span className="font-mono text-[9px] uppercase tracking-[0.2em] text-night-champagne">Licence</span><CopyValue value={o.licence.key} label="licence key" /></span>
           <span>{o.licence.seats} seats · until {fmtDate(o.licence.expiresAt)}</span>
           {o.stage === 'active' && left <= 30 ? <Chip tone="#f1b36b" solid>Renew — {Math.max(0, left)} days left</Chip> : null}
           {o.stage === 'expired' ? <Chip tone="#f1b36b" solid>Expired — security updates still install</Chip> : null}
@@ -218,7 +218,7 @@ function OrderRow({ o, s, money, link, reload }: { o: SecurityOrder; s: Security
                 <button type="button" className={`${ghostBtn} py-2 text-[12.5px]`} disabled={busy} onClick={() => step('order', { poNumber: po })}>Raise PO → invoice</button>
               </span>
             ) : null}
-            <button type="button" className="px-2 text-[12px] text-white/40 hover:text-[#f1938f]" disabled={busy} onClick={() => step('cancel')}>Cancel</button>
+            <button type="button" className="px-2 text-[12px] text-night-muted hover:text-[#f1938f]" disabled={busy} onClick={() => step('cancel')}>Cancel</button>
           </>
         ) : null}
         {o.stage === 'invoiced' && o.invoice ? (
@@ -238,7 +238,7 @@ function OrderRow({ o, s, money, link, reload }: { o: SecurityOrder; s: Security
         {!actor ? <input aria-label="Your name" className={`${inputCls} w-[160px] py-2 text-[13px]`} value={actor} onChange={e => setActor(e.target.value)} placeholder="Your name" /> : null}
       </div>
       {o.payment ? (
-        <p className="mt-2 font-mono text-[10.5px] text-white/40">
+        <p className="mt-2 font-mono text-[10.5px] text-night-muted">
           Billing: {o.invoice ? `${o.invoice.id} · ` : ''}{o.payment.method === 'transfer' ? `bank transfer ${o.payment.reference}` : o.payment.method === 'instant' ? `paid at once by ${o.payment.rail}` : 'included'} · receipt {o.payment.receiptId} · {fmtDate(o.payment.paidAt)}
         </p>
       ) : null}
@@ -267,9 +267,9 @@ function Byo({ s, link, reload }: { s: SecurityCenter; link?: string; reload: ()
         <ul className="mt-4 grid gap-2">
           {s.byo.map(b => (
             <Panel as="li" key={b.id} className="px-4 py-3">
-              <p className="flex flex-wrap items-center gap-2 text-[14px] font-light text-[#f3efe6]">{b.product} <span className="text-[12px] text-white/45">{b.vendor} · v{b.version}</span><span className="ml-auto"><Chip tone={b.scope === 'estate' ? '#9be7c4' : '#a9c7e8'}>{b.scope === 'estate' ? 'Whole estate' : 'Own software'}</Chip></span></p>
-              <p className="mt-1 text-[12px] font-light text-white/50">{CATEGORY_LABEL[b.category]} · {b.coverage.servers} servers · {b.coverage.endpoints} endpoints · last scan {fmtDate(b.lastScanAt)} · attested by {b.attestedBy}</p>
-              <p className="mt-1 text-[12px] font-light text-white/40">“{b.attestation}”</p>
+              <p className="flex flex-wrap items-center gap-2 text-[14px] font-light text-[#f3efe6]">{b.product} <span className="text-[12px] text-night-muted">{b.vendor} · v{b.version}</span><span className="ml-auto"><Chip tone={b.scope === 'estate' ? '#9be7c4' : '#a9c7e8'}>{b.scope === 'estate' ? 'Whole estate' : 'Own software'}</Chip></span></p>
+              <p className="mt-1 text-[12px] font-light text-night-muted">{CATEGORY_LABEL[b.category]} · {b.coverage.servers} servers · {b.coverage.endpoints} endpoints · last scan {fmtDate(b.lastScanAt)} · attested by {b.attestedBy}</p>
+              <p className="mt-1 text-[12px] font-light text-night-muted">“{b.attestation}”</p>
             </Panel>
           ))}
         </ul>
@@ -311,8 +311,8 @@ function Software({ s, link, reload }: { s: SecurityCenter; link?: string; reloa
       <ul className="mt-4 grid gap-2">
         {s.software.map(x => (
           <li key={x.id} className="flex flex-wrap items-center gap-x-4 gap-y-1 border-b py-2.5 text-[13.5px] font-light" style={{ borderColor: hair(0.08) }}>
-            <span className="font-mono text-[11px] text-white/40">{x.id}</span>
-            <span className="min-w-0 flex-1 text-[#f3efe6]/85">{x.name} <span className="font-mono text-[11px] text-white/45">v{x.version}</span></span>
+            <span className="font-mono text-[11px] text-night-muted">{x.id}</span>
+            <span className="min-w-0 flex-1 text-[#f3efe6]/85">{x.name} <span className="font-mono text-[11px] text-night-muted">v{x.version}</span></span>
             <Chip tone="#a9c7e8">{x.kind}</Chip>
             <Chip tone={x.securedBy === 'byo' ? '#9be7c4' : CHAMPAGNE}>{x.securedBy === 'byo' ? `Own tooling · ${x.securedByRef}` : `Licence · ${x.securedByRef}`}</Chip>
           </li>
@@ -342,8 +342,8 @@ function Definitions({ s, link, reload }: { s: SecurityCenter; link?: string; re
     <Panel className="grid gap-4 p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-center">
       <div>
         <p className="flex flex-wrap items-center gap-2"><Chip tone={d.automaticActive ? '#9be7c4' : '#f1b36b'} solid>{d.policy === 'automatic' ? 'Automatic' : 'Manual'}</Chip><span className="text-[14px] font-light text-[#f3efe6]">Definitions are data, not software — {d.policy === 'automatic' ? 'they update on their own' : 'you apply them'}.</span></p>
-        <p className="mt-2 font-mono text-[11.5px] text-white/55">Installed {d.installed} ({fmtDate(d.installedAt)}) · latest {d.latest}</p>
-        <p className="mt-1 text-[12px] font-light text-white/40">Security software itself never upgrades on its own; change the policy in Settings.</p>
+        <p className="mt-2 font-mono text-[11.5px] text-night-muted">Installed {d.installed} ({fmtDate(d.installedAt)}) · latest {d.latest}</p>
+        <p className="mt-1 text-[12px] font-light text-night-muted">Security software itself never upgrades on its own; change the policy in Settings.</p>
       </div>
       {behind ? <button type="button" className={goldBtn} style={goldStyle} onClick={apply}>Apply {d.latest}</button> : <Chip tone="#9be7c4">Current</Chip>}
       <div className="md:col-span-2"><ErrorLine>{err}</ErrorLine></div>

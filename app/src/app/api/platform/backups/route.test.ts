@@ -1,61 +1,45 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-
-const listMock = vi.fn();
-const createMock = vi.fn();
-vi.mock('@/lib/data/store', () => ({
-  listBackups: () => listMock(),
-  createBackup: (kind: string) => createMock(kind),
-}));
-
+// /api/platform/backups (review M-14): every backup listed is a real one at
+// the backup target, encrypted and verified; the earlier shape (kind, state,
+// location, encrypted, sizeBytes, createdAt) is kept; the platform's list of
+// backups (mirror, console) follows the target.
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import os from 'node:os';
+import path from 'node:path';
+import { mkdtempSync, readdirSync } from 'node:fs';
+import { randomBytes } from 'node:crypto';
+import { useTarget, dirTarget } from '@/lib/backup/target';
+import { listBackups as platformList } from '@/lib/data/store';
 import { GET, POST } from './route';
 
-beforeEach(() => {
-  listMock.mockReset();
-  createMock.mockReset();
+let dir = '';
+beforeAll(() => {
+  process.env.CIVICOS_DATA_KEK = randomBytes(32).toString('hex');
+  dir = mkdtempSync(path.join(os.tmpdir(), 'civicos-bk-route-'));
+  useTarget(dirTarget(dir));
 });
+afterAll(() => { useTarget(null); delete process.env.CIVICOS_DATA_KEK; });
 
-describe('GET /api/platform/backups', () => {
-  it('returns the backup list', async () => {
-    listMock.mockReturnValue([{ id: 'b-1', kind: 'full' }]);
-    const res = GET();
-    const json = await res.json();
-    expect(json.backups).toHaveLength(1);
+const post = (body: unknown) => new Request('http://x', { method: 'POST', body: typeof body === 'string' ? body : JSON.stringify(body), headers: { 'content-type': 'application/json' } }) as never;
+
+describe('/api/platform/backups', () => {
+  it('shows no simulated backups: the list starts empty', async () => {
+    expect(platformList()).toEqual([]);
+    expect((await (await GET()).json()).backups).toEqual([]);
   });
-});
 
-describe('POST /api/platform/backups', () => {
-  it('defaults to full when kind is omitted', async () => {
-    createMock.mockReturnValue({ id: 'b-new', kind: 'full' });
-    const res = await POST(new Request('http://x', {
-      method: 'POST', body: JSON.stringify({}),
-      headers: { 'content-type': 'application/json' },
-    }) as never);
+  it('takes a real, verified backup in the earlier shape (kind accepted as before, invalid JSON tolerated)', async () => {
+    const res = await POST(post({ kind: 'incremental', by: 'Admin Ada' }));
     expect(res.status).toBe(201);
-    expect(createMock).toHaveBeenCalledWith('full');
-  });
-
-  it('honours incremental when requested', async () => {
-    createMock.mockReturnValue({ id: 'b-new', kind: 'incremental' });
-    await POST(new Request('http://x', {
-      method: 'POST', body: JSON.stringify({ kind: 'incremental' }),
-      headers: { 'content-type': 'application/json' },
-    }) as never);
-    expect(createMock).toHaveBeenCalledWith('incremental');
-  });
-
-  it('coerces unknown kinds to full', async () => {
-    createMock.mockReturnValue({ id: 'b-new' });
-    await POST(new Request('http://x', {
-      method: 'POST', body: JSON.stringify({ kind: 'rogue' }),
-      headers: { 'content-type': 'application/json' },
-    }) as never);
-    expect(createMock).toHaveBeenCalledWith('full');
-  });
-
-  it('tolerates invalid JSON', async () => {
-    createMock.mockReturnValue({ id: 'b-new' });
-    const res = await POST(new Request('http://x', { method: 'POST', body: 'no' }) as never);
-    expect(res.status).toBe(201);
-    expect(createMock).toHaveBeenCalledWith('full');
+    const { backup, note } = await res.json();
+    expect(backup).toMatchObject({ kind: 'full', state: 'completed', encrypted: true, location: `dir://${backup.id}.cvb`, createdBy: 'Admin Ada' });
+    expect(backup.sizeBytes).toBe(backup.sizeBytes | 0);
+    expect(backup.verification.ok).toBe(true);
+    expect(note).toMatch(/full/);
+    expect(readdirSync(dir)).toContain(`${backup.id}.cvb`);
+    expect((await POST(new Request('http://x', { method: 'POST', body: 'no' }) as never)).status).toBe(201);
+    const list = (await (await GET()).json()).backups;
+    expect(list).toHaveLength(2);
+    // The platform's own list (mirror, console) is the same catalogue.
+    expect(platformList().map(b => b.id).sort()).toEqual(list.map((b: { id: string }) => b.id).sort());
   });
 });

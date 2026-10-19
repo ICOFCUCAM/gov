@@ -14,8 +14,11 @@ import { roleLabel, roleOf, type OfficialRole } from '@/lib/auth/roles';
 const KEY = 'civicos.updates.actor';
 const EVENT = 'civicos-actor';
 
-export interface VerifiedOfficial { sub: string; name: string; office?: string; method: 'local' | 'substrate'; role?: OfficialRole; institution?: string; institutionName?: string }
-export interface SignInState { official: VerifiedOfficial | null; enforced: boolean; accounts: boolean; methods: { local: boolean; substrate: boolean } }
+export interface VerifiedOfficial { sub: string; name: string; office?: string; method: 'local' | 'substrate'; role?: OfficialRole; institution?: string; institutionName?: string;
+  via?: 'password' | 'passkey' | 'oidc'; twoStep?: boolean; twoStepRequired?: boolean }
+export interface SignInState { official: VerifiedOfficial | null; enforced: boolean; accounts: boolean;
+  /** oidc: the government's identity provider's name when one is set up; passkey: whether passkeys work here. */
+  methods: { local: boolean; substrate: boolean; oidc?: { name: string } | null; passkey?: boolean } }
 
 let cache: SignInState | null = null;
 let pending: Promise<SignInState | null> | null = null;

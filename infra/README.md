@@ -9,7 +9,8 @@ infra/
 ├── docker/docker-compose.yml   # local full stack (pg, nats, redis, api, app; one state writer)
 ├── docker/prometheus.yml       # optional metrics collection (--profile observability)
 ├── k8s/namespace.yaml          # raw namespace (Helm is the primary path)
-├── helm/civicos/               # the chart: api + app + ingress + netpol + hpa + pdb
+├── helm/civicos/               # the chart: api + app + ingress + netpol + hpa + pdb + cron (values: helm/civicos/README.md)
+├── helm/check.sh               # helm lint + template + kubeconform for every values set (CI job "helm chart")
 ├── helm/profiles/              # small-municipality | mid-city | ministry | national
 └── terraform/                  # vendor-neutral env contract + platform module
 ```
@@ -32,9 +33,19 @@ kubectl -n civicos create secret generic civicos-db \
 kubectl -n civicos create secret generic civicos-app \
   --from-literal=CIVICOS_SESSION_SECRET="$(openssl rand -hex 32)" \
   --from-literal=CIVICOS_CRON_SECRET="$(openssl rand -hex 32)" \
+  --from-literal=CIVICOS_EXPORT_SECRET="$(openssl rand -hex 32)" \
+  --from-literal=CIVICOS_PUBLISHER_SECRET="$(openssl rand -hex 32)" \
+  --from-literal=CIVICOS_PROVISIONING_SECRET="$(openssl rand -hex 32)" \
+  --from-literal=CIVICOS_SETUP_TOKEN="$(openssl rand -hex 24)" \
   --from-literal=NEXT_PUBLIC_SUPABASE_URL='https://…' \
   --from-literal=NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY='…' \
   --from-literal=SUPABASE_SERVICE_ROLE_KEY='…'          # the nation's substrate
+openssl genpkey -algorithm ed25519 -out audit.pem      # likewise exchange.pem, token.pem
+kubectl -n civicos create secret generic civicos-app-keys \
+  --from-literal=CIVICOS_DATA_KEK="$(openssl rand -base64 32)" \
+  --from-file=CIVICOS_AUDIT_KEY=audit.pem \
+  --from-file=CIVICOS_EXCHANGE_KEY=exchange.pem \
+  --from-file=CIVICOS_TOKEN_KEY=token.pem              # or app.keys.provider vault / kms-http
 helm -n civicos upgrade --install civicos infra/helm/civicos \
   -f infra/helm/profiles/mid-city.yaml
 ```
@@ -44,7 +55,7 @@ What the chart sets up for the Next.js app (`templates/app.yaml`):
 - The ingress sends every page **and every `/api` route** to the app. The
   NestJS civic-api keeps its own `/api/*` paths under `/svc/api/*`
   (`ingress.civicApiPath`, rewritten to `/api/*`).
-- `CIVICOS_AUTH=enforce` (`app.auth`), the session and cron secrets and the
+- `CIVICOS_AUTH=enforce` (`app.auth`), the session and machine secrets and the
   substrate keys from the `civicos-app` secret, and `CIVICOS_STATE=supabase`
   (`app.state.mode`; `file` puts the state on a persistent volume).
   Apply the app's Supabase migrations first (`app/supabase/migrations`,
@@ -62,6 +73,53 @@ What the chart sets up for the Next.js app (`templates/app.yaml`):
 - The ingress drops the `x-middleware-subrequest` header (needs snippet
   annotations allowed; `ingress.stripInternalHeaders=false` otherwise — the
   app refuses the header itself).
+- Read-only root filesystem (`/tmp` and `/app/.next/cache` are `emptyDir`
+  volumes), no service-account token, uid/gid 10001; in file mode the audit
+  anchor file gets its own volume (`app.anchors`).
+- Scheduled jobs: pg_cron in the substrate by default
+  (`app/supabase/cron/schedule.sql`); `cron.enabled: true` runs the same 15
+  jobs as Kubernetes CronJobs (Bearer `CIVICOS_CRON_SECRET`) where pg_cron is
+  not used. Run one scheduler, not both.
+- Network policy egress is set per destination (`security.egress`: DNS to the
+  cluster DNS only, Postgres, NATS, HTTPS); narrow each to the nation's own
+  addresses.
+
+Every value is listed in `infra/helm/civicos/README.md`. Check the chart with
+`infra/helm/check.sh` (needs `helm` and `kubeconform`).
+
+## Secrets by purpose and the first administrator
+
+Each machine credential opens one thing (go-live review M-7), and is accepted
+only as `Authorization: Bearer …`, never as `?token=`:
+
+| Variable | Opens | Sent by |
+|---|---|---|
+| `CIVICOS_CRON_SECRET` | `/api/cron/*` only | pg_cron (`app/supabase/cron/schedule.sql`), Vercel Cron |
+| `CIVICOS_EXPORT_SECRET` | `/api/substrate/export`, `/api/substrate/digest` | the archive or auditor's export job |
+| `CIVICOS_PUBLISHER_SECRET` | `/api/releases/publisher/*` (with `CIVICOS_AUTH=enforce`) | CI (`CIVICOS_PUBLISHER_TOKEN` in `scripts/audit-deps.mjs`) |
+| `CIVICOS_PROVISIONING_SECRET` | `/api/admin/officers/bulk`, `/api/federation/webhooks/test` | officer onboarding scripts |
+
+A purpose without its variable accepts no machine caller (a platform-tier
+substrate session still works where the route allows one). **Upgrading an
+installation that used the cron secret for export, publishing or
+provisioning:** set the new variable and move the job to it. Until then
+`CIVICOS_LEGACY_SHARED_SECRET=1` lets the cron secret keep working for a
+purpose that has no secret of its own; every such use is logged as
+`auth.shared_secret_deprecated`. Remove the flag once the log is quiet, then
+rotate the cron secret (it was stored in pg_cron's Vault and sent on every
+job). Schedulers that put the secret in the query string must move it into
+the `Authorization` header (`auth.secret_in_query_refused` in the log).
+
+**First administrator (go-live review C-1).** While the installation has no
+administrator, creating the first official account needs a one-time setup
+code: `CIVICOS_SETUP_TOKEN` (at least 24 characters, the same on every
+replica), or, when it is not set, a code the server writes once to its log at
+start (`SETUP CODE`, valid 24 hours; a restart or expiry writes a new one).
+It is compared in constant time and works once. Enter it on `/sign-in` (the
+first-account form `/setup` sends you to), then remove `CIVICOS_SETUP_TOKEN`.
+When the substrate (Supabase) is the sign-in method, platform accounts are
+not created at all (`CIVICOS_LOCAL_ACCOUNTS=allow` permits them as a
+break-glass fallback, still behind the setup code for the first one).
 
 ## Terraform (per environment)
 

@@ -10,7 +10,8 @@ import Link from 'next/link';
 import { useSignIn, officialLabel, officialScope } from '@/lib/official';
 import { ROLES, roleOf, type OfficialRole } from '@/lib/auth/roles';
 
-interface Account { resetPendingUntil?: string; id: string; email: string; name: string; office: string; createdAt: string; createdBy: string; disabled?: boolean; lastSignIn?: string; role?: OfficialRole; institution?: string; twoStepSince?: string; twoStepRequired?: boolean }
+interface Account { resetPendingUntil?: string; id: string; email: string; name: string; office: string; createdAt: string; createdBy: string; disabled?: boolean; lastSignIn?: string; role?: OfficialRole; institution?: string; twoStepSince?: string; twoStepRequired?: boolean;
+  passkeys?: { id: string }[]; identity?: { claim: string; value: string }; noPassword?: boolean }
 interface Institution { id: string; name: string; status: string }
 
 const input = 'focus-ring w-full rounded-[3px] border border-line bg-surface px-2.5 py-2 text-[14px] text-ink';
@@ -119,6 +120,7 @@ export function OfficialAccounts() {
             <p className="text-[12px] text-ink-muted md:col-span-5">Give the first password to the official in person; at least 12 characters.</p>
           </form>
           ) : null}
+          {admin && s.methods.substrate ? <SubstrateOfficers institutions={institutions} placeName={placeName} call={call} busy={busy} /> : null}
           {msg ? <p role="status" className={msg.ok ? 'text-ok' : 'text-alert'}>{msg.text}</p> : null}
           {issued ? (
             <div role="status" className="space-y-2 rounded-[3px] border border-warn bg-surface p-3">
@@ -153,10 +155,12 @@ export function OfficialAccounts() {
                   <td>{day(a.createdAt)}<div className="text-ink-muted">by {a.createdBy}</div></td>
                   <td>{day(a.lastSignIn)}</td>
                   <td>
-                    {a.twoStepSince ? <span className="text-ok">On</span> : a.twoStepRequired ? <span className="text-warn">Required, not set up</span> : <span className="text-ink-muted">Off</span>}
-                    {admin && a.twoStepSince && s.official?.sub !== `local:${a.id}` ? (
+                    {a.twoStepSince || a.passkeys?.length ? <span className="text-ok">On</span> : a.twoStepRequired ? <span className="text-warn">Required, not set up</span> : <span className="text-ink-muted">Off</span>}
+                    {a.passkeys?.length ? <div className="text-[12px] text-ink-muted">{a.passkeys.length} passkey{a.passkeys.length === 1 ? '' : 's'}</div> : null}
+                    {a.identity ? <div className="text-[12px] text-ink-muted">Government sign-in ({a.identity.claim}){a.noPassword ? ', no platform password' : ''}</div> : null}
+                    {admin && (a.twoStepSince || a.passkeys?.length) && s.official?.sub !== `local:${a.id}` ? (
                       <button type="button" className="ms-2 text-[12px] text-link underline" disabled={busy}
-                        onClick={() => window.confirm(`Reset ${a.name}'s second step? Do this only when their phone is lost; they set it up again at their next sign-in.`) && call(`/api/auth/officials/${a.id}`, { resetTwoStep: true }, `${a.name}'s second step was reset`)}>Reset</button>
+                        onClick={() => window.confirm(`Reset ${a.name}'s second step? Do this only when their phone or passkeys are lost: their authenticator app and passkeys are removed, and they set them up again at their next sign-in.`) && call(`/api/auth/officials/${a.id}`, { resetTwoStep: true }, `${a.name}'s second step was reset`)}>Reset</button>
                     ) : null}
                   </td>
                   <td>{a.disabled ? <span className="text-alert">Disabled</span> : <span className="text-ok">Active</span>}{a.resetPendingUntil ? <div className="text-[12px] text-warn">Reset code waiting</div> : null}</td>
@@ -175,5 +179,57 @@ export function OfficialAccounts() {
         </>
       )}
     </div>
+  );
+}
+
+interface Assignment { officerId: string; role: OfficialRole; institution?: string; by: string; at: string }
+
+/**
+ * What officials who sign in through the substrate may do here (review H-3):
+ * without an assignment an officer acts only for the institution the officer
+ * register names (as Officer), or reads only when it names none the platform
+ * knows; signing rights and whole-government scope need an assignment.
+ */
+function SubstrateOfficers({ institutions, placeName, call, busy }: {
+  institutions: Institution[]; placeName: (id?: string) => string; busy: boolean;
+  call: (url: string, body: unknown, done: string) => Promise<boolean>;
+}) {
+  const [list, setList] = React.useState<Assignment[]>([]);
+  const blank = { officerId: '', name: '', role: 'officer' as OfficialRole, institution: '' };
+  const [f, setF] = React.useState(blank);
+  const load = React.useCallback(async () => {
+    const r = await fetch('/api/auth/officials/substrate', { cache: 'no-store' });
+    if (r.ok) setList(((await r.json()) as { assignments: Assignment[] }).assignments);
+  }, []);
+  React.useEffect(() => { void load(); }, [load]);
+  const save = async (body: unknown, done: string) => { const ok = await call('/api/auth/officials/substrate', body, done); await load(); return ok; };
+  return (
+    <section className="space-y-2 rounded-[3px] border border-line bg-surface p-3" aria-labelledby="substrate-officers">
+      <h2 id="substrate-officers" className="text-[15px] font-semibold">Officers who sign in through the substrate</h2>
+      <p className="text-[12px] text-ink-muted">Without an entry here an officer acts only for the institution their register entry names, as Officer, or reads only when it names none this platform knows. Give signing rights or the whole government here. The installation&rsquo;s second-step rule applies to them too (their substrate sign-in must use a second factor).</p>
+      <form className="grid gap-2 md:grid-cols-5" onSubmit={async e => { e.preventDefault(); if (await save(f, `${f.name || f.officerId} now: ${ROLES.find(r => r.id === f.role)?.label}, ${placeName(f.institution || undefined)}`)) setF(blank); }}>
+        <label className="text-[12px] text-ink-soft">Officer id (register)<input className={`${input} mt-1 font-mono`} required value={f.officerId} onChange={e => setF({ ...f, officerId: e.currentTarget.value })} /></label>
+        <label className="text-[12px] text-ink-soft">Name<input className={`${input} mt-1`} value={f.name} onChange={e => setF({ ...f, name: e.currentTarget.value })} /></label>
+        <label className="text-[12px] text-ink-soft">May do<select className={`${input} mt-1`} value={f.role} onChange={e => setF({ ...f, role: e.currentTarget.value as OfficialRole })}>
+          {ROLES.map(r => <option key={r.id} value={r.id}>{r.label}</option>)}</select></label>
+        <label className="text-[12px] text-ink-soft">For<select className={`${input} mt-1`} value={f.institution} onChange={e => setF({ ...f, institution: e.currentTarget.value })}>
+          <option value="">Whole government</option>
+          {institutions.map(m => <option key={m.id} value={m.id}>{m.name}</option>)}</select></label>
+        <div className="flex items-end"><button className={btn} disabled={busy}>Save</button></div>
+      </form>
+      {list.length ? (
+        <ul className="divide-y divide-line-soft text-[13px]">
+          {list.map(a => (
+            <li key={a.officerId} className="flex flex-wrap items-center gap-2 py-1.5">
+              <span className="font-mono">{a.officerId}</span>
+              <span>{ROLES.find(r => r.id === a.role)?.label} · {placeName(a.institution)}</span>
+              <span className="text-ink-muted">by {a.by}, {day(a.at)}</span>
+              <button type="button" className="ms-auto text-[12px] text-link underline" disabled={busy}
+                onClick={() => save({ officerId: a.officerId, role: null }, `Assignment removed: ${a.officerId}`)}>Remove</button>
+            </li>
+          ))}
+        </ul>
+      ) : null}
+    </section>
   );
 }

@@ -355,6 +355,26 @@ What has been built is locked. Work only upgrades it toward the vision in
   `tracked()` for a store held at module level), so its changes are written
   with the audit entry they belong to; a new store does the same.
 
+## Backups and disaster recovery
+
+- Backups, restore and the drill: `docs/DISASTER_RECOVERY.md`; status:
+  register 3.7, 9.1–9.3. `lib/data/backups.ts` is the only place backups are
+  taken, verified, pruned and restored; the Update Center's restore points and
+  Platform Operations' backups are its backups (never simulate one for the
+  installed nation; `CIVICOS_RESTORE_POINTS=simulated` only in tests).
+- A backup is always encrypted (envelope encryption through key custody,
+  `lib/backup/archive.ts`); never write state to a target in plaintext. The
+  target goes through `lib/backup/target.ts` (S3 only through the safe fetch,
+  to the configured host).
+- Verified means read back, decrypted, every part's hash checked and a dry-run
+  restore into a scratch store or schema succeeded; only verified backups
+  protect an install.
+- A data restore is never automatic: an administrator proposes it with the
+  loss warning, a second official confirms, the current state is backed up
+  first, and the audit chain gets one entry naming both and the replaced
+  state's hash. A new store holding the backup system's or the running
+  software's own records joins `KEPT_ON_RESTORE` (`lib/backup/state.ts`).
+
 ## Who acted
 
 - Officials sign in at `/sign-in` (platform accounts, `lib/auth/officials.ts`,

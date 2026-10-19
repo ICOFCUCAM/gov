@@ -2,13 +2,13 @@
 // "download digest" button. Computes per-view row counts and (optionally)
 // the chain integrity sweep, returning a JSON snapshot.
 //
-// Auth: requires the CIVICOS_CRON_SECRET shared secret (Bearer or
-// ?token=). The endpoint uses the service-role client so counts are
+// Auth: requires the CIVICOS_EXPORT_SECRET (Authorization: Bearer only,
+// never ?token=). The endpoint uses the service-role client so counts are
 // global (RLS-unfiltered) — that's what an external archive/auditor
 // wants. Do not expose without the secret.
 
 import { NextResponse } from 'next/server';
-import { cronAuthorized } from '@/lib/platform-auth';
+import { secretAuthorized } from '@/lib/platform-auth';
 import { serverClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
@@ -24,8 +24,8 @@ const COUNTABLE_VIEWS = [
   'civicos_service_requests', 'civicos_consents', 'civicos_appeals',
 ] as const;
 
-/** The cron secret, compared in constant time (lib/platform-auth.ts). */
-const authorized = (req: Request): boolean => cronAuthorized(req);
+/** The export secret (CIVICOS_EXPORT_SECRET, bearer only), compared in constant time (lib/platform-auth.ts). */
+const authorized = (req: Request): boolean => secretAuthorized(req, 'export');
 
 export async function GET(req: Request) {
   if (!authorized(req)) {

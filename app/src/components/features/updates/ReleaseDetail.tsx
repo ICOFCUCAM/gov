@@ -59,7 +59,7 @@ export function ReleaseDetail({ id }: { id: string }) {
     <OnboardingFrame right={<ChamberNav q={q} active="release" />}>
       <div className="flex-1 py-10 lg:py-14">
         <ChamberTabs q={q} active="release" />
-        <Link href={`/updates${q}`} className="font-mono text-[10.5px] uppercase tracking-[0.24em] text-white/45 no-underline transition-colors hover:text-[#f4e4bd]">← Update Center</Link>
+        <Link href={`/updates${q}`} className="font-mono text-[10.5px] uppercase tracking-[0.24em] text-night-muted no-underline transition-colors hover:text-[#f4e4bd]">← Update Center</Link>
         {err ? <div className="mt-6"><ErrorLine>{err}</ErrorLine></div> : !data ? <Loading label="Opening release…" /> : (
           <Body r={data.release} c={data.chamber} nation={nation} link={link} onChange={(next) => setData(next)} />
         )}
@@ -99,8 +99,8 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
         </div>
         <h1 className="mt-5 font-mono text-[2.6rem] font-extralight tabular-nums leading-none tracking-[-0.03em] text-transparent bg-clip-text sm:text-[3.4rem]" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>{r.version}</h1>
         <p className="mt-3 text-[1.45rem] font-extralight tracking-[-0.02em] text-[#f3efe6]">{r.title}</p>
-        <p className="mt-3 max-w-[66ch] text-[15px] font-light leading-relaxed text-white/55">{r.summary}</p>
-        <p className="mt-4 font-mono text-[10.5px] uppercase tracking-[0.18em] text-white/40">
+        <p className="mt-3 max-w-[66ch] text-[15px] font-light leading-relaxed text-night-muted">{r.summary}</p>
+        <p className="mt-4 font-mono text-[10.5px] uppercase tracking-[0.18em] text-night-muted">
           Released {fmtDate(r.releasedAt)} · supported until {fmtDate(r.supportUntil)}{r.baseVersion ? ` · built on ${r.baseVersion}` : ''} · published by {r.publishedBy}
         </p>
 
@@ -119,7 +119,7 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
           ))}
         </dl>
         <Rule flip />
-        <p className="mt-3 text-[12.5px] font-light text-white/45">{r.channel === 'nation' && r.newer ? `Nation build made on ${r.baseVersion} — includes it, plus features built for you` : BUMP_LABEL[bump]}.{!r.compatible && r.newer ? ` Install ${r.minCompatibleVersion} or later first; the Update Center shows the path.` : ''}</p>
+        <p className="mt-3 text-[12.5px] font-light text-night-muted">{r.channel === 'nation' && r.newer ? `Nation build made on ${r.baseVersion} — includes it, plus features built for you` : BUMP_LABEL[bump]}.{!r.compatible && r.newer ? ` Install ${r.minCompatibleVersion} or later first; the Update Center shows the path.` : ''}</p>
         {custom ? <p className="mt-2 text-[12.5px] font-light text-[#f1b36b]/85">You run a nation build. This global release does not carry your nation’s features on its own; they return in your next nation build made on {r.version}.</p> : null}
 
         {r.blocked ? (
@@ -152,8 +152,8 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
                       <li key={`${ch.from}-${i}`} className="flex flex-wrap items-baseline gap-x-3 gap-y-1 py-2.5" style={{ borderColor: hair(0.08) }}>
                         <ChangeChip kind={ch.kind} />
                         <span className="min-w-0 flex-1 text-[14px] font-light text-[#f3efe6]/85">{ch.text}</span>
-                        {ch.ref ? <span className="font-mono text-[10.5px] text-white/40">{ch.ref}</span> : null}
-                        {r.newer && ch.from !== r.version ? <span className="font-mono text-[10.5px] text-[#d9c398]/60">from {ch.from}</span> : null}
+                        {ch.ref ? <span className="font-mono text-[10.5px] text-night-muted">{ch.ref}</span> : null}
+                        {r.newer && ch.from !== r.version ? <span className="font-mono text-[10.5px] text-night-champagne">from {ch.from}</span> : null}
                       </li>
                     ))}
                   </ul>
@@ -177,11 +177,11 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
           {breaking.length ? (
             <div className="mt-4 rounded-[3px] border px-5 py-4" style={{ borderColor: '#f1b36b55', background: 'rgba(241,179,107,0.05)' }}>
               <p className="font-mono text-[9.5px] uppercase tracking-[0.24em] text-[#f1b36b]">Breaking changes</p>
-              <ul className="mt-2 space-y-1.5">{breaking.map((b, i) => <li key={i} className="text-[13.5px] font-light text-[#f3efe6]/85">{b.text} <span className="font-mono text-[10.5px] text-white/40">({b.from})</span></li>)}</ul>
+              <ul className="mt-2 space-y-1.5">{breaking.map((b, i) => <li key={i} className="text-[13.5px] font-light text-[#f3efe6]/85">{b.text} <span className="font-mono text-[10.5px] text-night-muted">({b.from})</span></li>)}</ul>
             </div>
           ) : null}
           {migrations.length ? (
-            <div className="mt-4 overflow-x-auto">
+            <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring mt-4 overflow-x-auto">
               <table className="w-full min-w-[520px] text-left text-[13px] font-light">
                 <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65">
                   <th className="py-2 pr-4 font-normal">Migration</th><th className="py-2 pr-4 font-normal">Kind</th><th className="py-2 pr-4 font-normal">Est.</th><th className="py-2 pr-4 font-normal">Reversible</th><th className="py-2 font-normal">From</th>
@@ -189,15 +189,15 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
                 <tbody>{migrations.map(m => (
                   <tr key={`${m.from}-${m.id}`} className="border-t align-top" style={{ borderColor: hair(0.08) }}>
                     <td className="py-2.5 pr-4 text-[#f3efe6]/85">{m.description}</td>
-                    <td className="py-2.5 pr-4 capitalize text-white/60">{m.kind}{m.pattern ? <span className="block font-mono text-[10px] normal-case text-white/40">{m.pattern === 'in-place' ? 'in place' : m.pattern}</span> : null}</td>
+                    <td className="py-2.5 pr-4 capitalize text-white/60">{m.kind}{m.pattern ? <span className="block font-mono text-[10px] normal-case text-night-muted">{m.pattern === 'in-place' ? 'in place' : m.pattern}</span> : null}</td>
                     <td className="py-2.5 pr-4 font-mono tabular-nums text-white/60">{m.estimatedMinutes} min</td>
                     <td className="py-2.5 pr-4">{m.reversible ? <Chip tone="#9be7c4">Yes</Chip> : <Chip tone="#f1b36b">No</Chip>}</td>
-                    <td className="py-2.5 font-mono text-[11px] text-white/45">{m.from}</td>
+                    <td className="py-2.5 font-mono text-[11px] text-night-muted">{m.from}</td>
                   </tr>
                 ))}</tbody>
               </table>
             </div>
-          ) : <p className="mt-4 text-[13px] font-light text-white/45">No migrations between {c.installed} and {r.version}.</p>}
+          ) : <p className="mt-4 text-[13px] font-light text-night-muted">No migrations between {c.installed} and {r.version}.</p>}
         </Section>
 
         <Section n="05" title="Safe deployment and fallback">
@@ -254,7 +254,7 @@ function Body({ r, c, nation, link, onChange }: { r: ChamberRelease; c: UpdateCh
               <ArtifactTable artifacts={r.artifacts.filter(a => a.mode === tab)} channelKey={c.nation.channelKey} downloadUrl={api.updates.downloadUrl} />
             )}
           </div>
-          <p className="mt-4 text-[12px] font-light text-white/40">Download links serve a placeholder manifest (file name, size, checksum and signature). This environment hosts no release binaries.</p>
+          <p className="mt-4 text-[12px] font-light text-night-muted">Download links serve a placeholder manifest (file name, size, checksum and signature). This environment hosts no release binaries.</p>
         </Section>
 
         <Section n="07" title="Verify before you install">
@@ -352,9 +352,12 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
     if (!actor.trim()) { setErr('Enter your name and office — every decision is signed.'); return; }
     setBusy('restore-data');
     try {
-      await api.updates.restoreData(r.id, { by: actor.trim(), acknowledgeLoss: lossAck, link });
+      const res = await api.updates.restoreData(r.id, { by: actor.trim(), acknowledgeLoss: lossAck, link });
       onChange(await api.updates.release(r.id, link));
-      setDone('Data restored from the snapshot — written to the audit chain.');
+      // A real backup is restored four-eyes: the first official proposes, a second confirms.
+      setDone(res.pending
+        ? `Restore proposed. ${res.proposal?.warning.text ?? ''} A second, different official confirms it within 30 minutes.`
+        : 'Data restored from the snapshot — written to the audit chain.');
     } catch (e) { setErr(e instanceof Error ? e.message : 'Restore failed'); }
     finally { setBusy(null); }
   }
@@ -363,14 +366,14 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
     <Panel strong className="p-5 sm:p-6">
       <Eyebrow>Your decision</Eyebrow>
       <div className="mt-4 flex items-center justify-between gap-3">
-        <span className="text-[13px] font-light text-white/55">Status</span>
+        <span className="text-[13px] font-light text-night-muted">Status</span>
         {running && s !== 'probation' ? <Chip tone="#9be7c4" solid>Running</Chip> : <StateChip state={s} />}
       </div>
       {r.newer && !r.blocked ? <p className="mt-2 text-[12px] font-light leading-relaxed" style={{ color: fb.automatic ? '#9be7c4cc' : '#f1b36bcc' }}>If it fails: {fb.automatic ? 'automatic switch back (software only)' : 'you are asked first'}.</p> : null}
       {r.install.window && s === 'scheduled' ? (
-        <p className="mt-2 text-[12.5px] font-light text-white/55">Window: {fmtDateTime(r.install.window.start)} → {fmtDateTime(r.install.window.end)}</p>
+        <p className="mt-2 text-[12.5px] font-light text-night-muted">Window: {fmtDateTime(r.install.window.start)} → {fmtDateTime(r.install.window.end)}</p>
       ) : null}
-      <p className="mt-3 text-[12px] font-light leading-relaxed text-white/45">Never automatic. Each step is taken by a named person and written to the audit chain. Approving and installing need two different officials.</p>
+      <p className="mt-3 text-[12px] font-light leading-relaxed text-night-muted">Never automatic. Each step is taken by a named person and written to the audit chain. Approving and installing need two different officials.</p>
 
       <Rule className="my-5" />
       <div className="grid gap-4">
@@ -384,7 +387,7 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
         {pending ? (
           <div role="status" className="rounded-[3px] border px-4 py-3" style={{ borderColor: '#c9b6ff66', background: 'rgba(201,182,255,0.06)' }}>
             <p className="text-[12.5px] font-light text-[#f3efe6]/85"><span className="font-mono text-[9.5px] uppercase tracking-[0.2em] text-[#c9b6ff]">Four-eyes</span> {pending.by} proposed to {pending.action} {r.version} on {fmtDateTime(pending.at)}. A second, different official must approve it.</p>
-            <button type="button" className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-white/45 hover:text-[#f1938f]" disabled={!!busy} onClick={() => act('cancel-proposal')}>Cancel the proposal</button>
+            <button type="button" className="mt-2 font-mono text-[10px] uppercase tracking-[0.16em] text-night-muted hover:text-[#f1938f]" disabled={!!busy} onClick={() => act('cancel-proposal')}>Cancel the proposal</button>
           </div>
         ) : null}
         {can.approve ? <button type="button" className={goldBtn} style={goldStyle} disabled={!!busy || !r.compatible} onClick={() => act('approve')}>{busy === 'approve' ? 'Recording…' : pending?.action === 'approve' ? `Approve as second official` : `Propose approval of ${r.version}`}</button> : null}
@@ -408,12 +411,12 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
             {rpValid && rp ? (
               <div className="text-[12.5px] font-light text-white/70">
                 <p className="flex flex-wrap items-center gap-2"><Chip tone="#9be7c4" solid>Verified</Chip><span className="font-mono text-[11.5px]">{rp.id}</span></p>
-                <p className="mt-1.5 font-mono text-[10.5px] text-white/45">{rp.version} · {fmtDateTime(rp.createdAt)} · {fmtBytes(rp.sizeBytes)}</p>
-                <p className="mt-1 text-white/50">{rp.contents.join(' · ')}</p>
+                <p className="mt-1.5 font-mono text-[10.5px] text-night-muted">{rp.version} · {fmtDateTime(rp.createdAt)} · {fmtBytes(rp.sizeBytes)}</p>
+                <p className="mt-1 text-night-muted">{rp.contents.join(' · ')}</p>
               </div>
             ) : (
               <>
-                <p className="text-[12.5px] font-light text-white/55">Snapshot the database, configuration and the artifacts of {c.installed} before installing. Required.</p>
+                <p className="text-[12.5px] font-light text-night-muted">Snapshot the database, configuration and the artifacts of {c.installed} before installing. Required.</p>
                 <button type="button" className={ghostBtn} disabled={!!busy} onClick={() => act('prepare')}>{busy === 'prepare' ? 'Taking and verifying…' : 'Take restore point'}</button>
               </>
             )}
@@ -437,7 +440,7 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
             <button type="button" className={goldBtn} style={goldStyle} disabled={!!busy || !r.compatible || !rpValid || (pending?.action !== 'install' && mode !== 'saas' && !verified)} onClick={() => act('install')}>
               {busy === 'install' ? 'Recording…' : pending?.action === 'install' ? 'Approve install as second official' : mode === 'saas' ? 'Propose: apply now' : 'Propose: mark as installed'}
             </button>
-            {!rpValid ? <p className="text-[11.5px] text-white/45">Take the restore point first.</p> : null}
+            {!rpValid ? <p className="text-[11.5px] text-night-muted">Take the restore point first.</p> : null}
           </fieldset>
         ) : null}
 
@@ -476,6 +479,7 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
               <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#f1938f]" checked={lossAck} onChange={e => setLossAck(e.target.checked)} />
               I understand that all data written after {fmtDateTime(rp.createdAt)} is lost.
             </label>
+            {rp.backupId ? <p className="text-[12px] font-light text-night-muted">Backup {rp.backupId}{rp.checks?.length ? ` · verified: ${rp.checks.length} checks` : ''}. An administrator proposes the restore and a second official confirms it; the current state is backed up first.</p> : rp.simulated ? <p className="text-[12px] font-light text-night-muted">Simulated restore point: nothing was copied.</p> : null}
             <button type="button" className={ghostBtn} disabled={!!busy || !lossAck} onClick={restoreData}>{busy === 'restore-data' ? 'Restoring…' : 'Restore data snapshot'}</button>
           </fieldset>
         ) : null}
@@ -483,7 +487,7 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
         {can.skip ? <button type="button" className={`${ghostBtn} border-white/15 text-white/60`} disabled={!!busy} onClick={() => act('skip')}>Skip this release</button> : null}
         {can.reconsider ? <button type="button" className={ghostBtn} disabled={!!busy} onClick={() => act('reconsider')}>Reconsider</button> : null}
         {!Object.values(can).some(Boolean) ? (
-          <p className="text-[13px] font-light text-white/50">{running ? 'This is the version you run.' : r.newer ? 'No decision is open on this release.' : 'Older than the version you run — nothing to decide.'}</p>
+          <p className="text-[13px] font-light text-night-muted">{running ? 'This is the version you run.' : r.newer ? 'No decision is open on this release.' : 'Older than the version you run — nothing to decide.'}</p>
         ) : null}
       </div>
 
@@ -499,12 +503,12 @@ function Decision({ r, c, link, onChange }: { r: ChamberRelease; c: UpdateChambe
             {[...r.install.events].reverse().map((e, i) => (
               <li key={i} className="text-[12.5px] font-light leading-snug">
                 <p className="flex flex-wrap items-center gap-x-2 text-[#f3efe6]/85">
-                  <span>{eventLabel(e)}</span><span className="text-white/35">by</span><span>{e.by}</span>
-                  {typeof e.auditSeq === 'number' ? <span className="font-mono text-[10px] text-[#d9c398]/60">audit #{e.auditSeq}</span> : null}
+                  <span>{eventLabel(e)}</span><span className="text-night-faint">by</span><span>{e.by}</span>
+                  {typeof e.auditSeq === 'number' ? <span className="font-mono text-[10px] text-night-champagne">audit #{e.auditSeq}</span> : null}
                 </p>
-                <p className="font-mono text-[10.5px] text-white/40">{fmtDateTime(e.at)}{e.mode ? ` · ${MODE_LABEL[e.mode]}` : ''}</p>
-                {e.window ? <p className="text-white/45">Window {fmtDateTime(e.window.start)} → {fmtDateTime(e.window.end)}</p> : null}
-                {e.note ? <p className="text-white/55">“{e.note}”</p> : null}
+                <p className="font-mono text-[10.5px] text-night-muted">{fmtDateTime(e.at)}{e.mode ? ` · ${MODE_LABEL[e.mode]}` : ''}</p>
+                {e.window ? <p className="text-night-muted">Window {fmtDateTime(e.window.start)} → {fmtDateTime(e.window.end)}</p> : null}
+                {e.note ? <p className="text-night-muted">“{e.note}”</p> : null}
               </li>
             ))}
           </ol>

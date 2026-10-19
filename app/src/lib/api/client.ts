@@ -10,6 +10,17 @@ import type { SiteChange, SiteProposal, SiteEditorial } from '@/lib/data/site-ed
 import type { SiteContent } from '@/lib/public-sites/types';
 import type { SiteLanguage } from '@/lib/public-sites/effective';
 import type { Coverage, XliffImport } from '@/lib/public-sites/translation';
+import type { RetentionCategory, RetentionChange, RetentionRule, RetentionRun } from '@/lib/data/retention';
+
+/** The nation's retention rules for permits and cases (/api/platform/retention). */
+export interface RetentionOverview {
+  rules: Record<RetentionCategory, RetentionRule>;
+  categories: { id: RetentionCategory; label: string; applies: string }[];
+  changes: RetentionChange[];
+  runs: RetentionRun[];
+  minDays: number;
+  maxDays: number;
+}
 
 /** GET /api/public-sites/<id>/editorial: what the site editor works from. */
 export interface SiteEditView {
@@ -64,6 +75,8 @@ import type {
   TenantLifecycle,
   TenantState,
   BackupRecord,
+  BackupView,
+  BackupStatusView,
   BackupKind,
   ConfigBundle,
   ConfigDrift,
@@ -222,9 +235,17 @@ export const api = {
   /** Everything waiting on officials across institutions (/api/work). */
   work: () => req<WorkOverview>('/api/work'),
   audit: {
-    list: () => req<{ events: AuditEntry[] }>('/api/audit'),
-    verify: () =>
-      req<AuditVerification>('/api/audit/verify'),
+    /** One page, newest first (default 200, at most 1000); `before` is the previous page's `nextBefore`. */
+    list: (q: { before?: number; limit?: number } = {}) => {
+      const p = new URLSearchParams();
+      if (q.before !== undefined) p.set('before', String(q.before));
+      if (q.limit !== undefined) p.set('limit', String(q.limit));
+      const qs = p.toString();
+      return req<{ events: AuditEntry[]; total: number; nextBefore?: number }>(`/api/audit${qs ? `?${qs}` : ''}`);
+    },
+    /** The cached check; `full` (a signed-in official) checks the whole chain again first. */
+    verify: (full = false) =>
+      req<AuditVerification>(`/api/audit/verify${full ? '?full=1' : ''}`),
   },
   ops: {
     overview: () => req<OpsOverview>('/api/ops/overview'),
@@ -329,12 +350,31 @@ export const api = {
       transition: (to: TenantState, reason: string) =>
         req<{ lifecycle: TenantLifecycle }>('/api/platform/lifecycle/transition', { method: 'POST', body: JSON.stringify({ to, reason }) }),
     },
+    retention: {
+      get: () => req<RetentionOverview>('/api/platform/retention'),
+      propose: (body: { category: string; action: string; days?: number; basis?: string; reason: string; by?: string }) =>
+        req<{ change: RetentionChange }>('/api/platform/retention', { method: 'POST', body: JSON.stringify(body) }),
+      decide: (id: string, decision: 'confirm' | 'withdraw', by?: string) =>
+        req<{ change: RetentionChange }>(`/api/platform/retention/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify({ decision, by }) }),
+    },
+    // Real backups (lib/data/backups.ts): encrypted, verified, restored four-eyes.
     backups: {
-      list: () => req<{ backups: BackupRecord[] }>('/api/platform/backups'),
-      create: (kind: BackupKind) =>
-        req<{ backup: BackupRecord }>('/api/platform/backups', { method: 'POST', body: JSON.stringify({ kind }) }),
-      restore: (id: string) =>
-        req<{ backup: BackupRecord }>(`/api/platform/backups/${id}/restore`, { method: 'POST', body: '{}' }),
+      list: () => req<{ backups: BackupView[]; status: BackupStatusView; error?: string }>('/api/platform/backups'),
+      create: (kind: BackupKind, by?: string) =>
+        req<{ backup: BackupView }>('/api/platform/backups', { method: 'POST', body: JSON.stringify({ kind, ...(by ? { by } : {}) }) }),
+      verify: (id: string, by?: string) =>
+        req<{ backup: BackupView }>(`/api/platform/backups/${encodeURIComponent(id)}/verify`, { method: 'POST', body: JSON.stringify(by ? { by } : {}) }),
+      preview: (id: string) =>
+        req<{ warning: { text: string; auditEntriesLost: number }; proposal: { by: string; expiresAt: string } | null }>(`/api/platform/backups/${encodeURIComponent(id)}?preview=1`),
+      /** First call (an administrator) proposes; a second, different official confirms. */
+      restore: (id: string, body: { by?: string; acknowledgeLoss?: boolean; reason?: string } = {}) =>
+        req<{ pending: boolean; proposal?: { by: string; expiresAt: string }; restore?: { confirmedBy: string; safetyBackupId: string } }>(`/api/platform/backups/${encodeURIComponent(id)}/restore`, { method: 'POST', body: JSON.stringify(body) }),
+      cancel: (id: string, by?: string) =>
+        req<{ cancelled: unknown }>(`/api/platform/backups/${encodeURIComponent(id)}/restore`, { method: 'DELETE', body: JSON.stringify(by ? { by } : {}) }),
+      policy: (patch: Record<string, number> & { by?: string }) =>
+        req<{ policy: BackupStatusView['policy'] }>('/api/platform/backups/policy', { method: 'PUT', body: JSON.stringify(patch) }),
+      retention: (by?: string) =>
+        req<{ kept: string[]; pruned: string[] }>('/api/platform/backups/retention', { method: 'POST', body: JSON.stringify(by ? { by } : {}) }),
     },
     config: {
       list: () => req<{ configs: ConfigBundle[] }>('/api/platform/config'),
@@ -482,8 +522,9 @@ export const api = {
       req<{ nation: SubscribedNation }>('/api/releases/settings', { method: 'PUT', body: JSON.stringify(patch) }),
     readiness: (id: string, link?: string) =>
       req<{ preflight: PreflightReport | null; staging: StagingEnvironment; run: StagingRun | null; stagingRequired: boolean }>(`/api/releases/${encodeURIComponent(id)}/readiness${linkQ(link)}`),
-    readinessAction: (id: string, body: { action: 'preflight' | 'waive' | 'stage' | 'stage-fail' | 'uat'; by?: string; secondBy?: string; reason?: string; findingKey?: string; tester?: string; date?: string; evidence?: string; link?: string }) =>
-      req<{ preflight?: PreflightReport; run?: StagingRun }>(`/api/releases/${encodeURIComponent(id)}/readiness`, { method: 'POST', body: JSON.stringify(body) }),
+    // waive: the first official proposes (with a reason), a different signed-in official confirms in their own request.
+    readinessAction: (id: string, body: { action: 'preflight' | 'waive' | 'cancel-waiver' | 'stage' | 'stage-fail' | 'uat'; by?: string; reason?: string; findingKey?: string; tester?: string; date?: string; evidence?: string; link?: string }) =>
+      req<{ preflight?: PreflightReport; run?: StagingRun; pending?: boolean }>(`/api/releases/${encodeURIComponent(id)}/readiness`, { method: 'POST', body: JSON.stringify(body) }),
     advisories: (link?: string) =>
       req<{ exposure: AdvisoryExposure[]; commitments: PatchCommitment[]; policy: Record<AdvisorySeverity, number> }>(`/api/releases/advisories${linkQ(link)}`),
     support: (link?: string) =>
@@ -508,7 +549,7 @@ export const api = {
     contractAction: (body: { action: 'accept-renewal' | 'request-change'; by: string; note?: string; link?: string }) =>
       req<{ ok: true }>('/api/releases/contract', { method: 'POST', body: JSON.stringify(body) }),
     whatsNew: (id: string, link?: string) => req<{ whatsNew: WhatsNew }>(`/api/releases/${encodeURIComponent(id)}/whats-new${linkQ(link)}`),
-    alerts: (link?: string) => req<{ officials: Official[]; outbox: AlertDelivery[]; categories: AlertCategory[] }>(`/api/releases/alerts${linkQ(link)}`),
+    alerts: (link?: string) => req<{ officials: Official[]; outbox: AlertDelivery[]; categories: AlertCategory[]; delivery?: { email: 'connected' | 'not connected'; sms: 'connected' | 'not connected' } }>(`/api/releases/alerts${linkQ(link)}`),
     alertsAction: (body: { action: 'save' | 'remove'; by: string; official?: Partial<Official>; id?: string; link?: string }) =>
       req<{ ok: true; officials: Official[] }>('/api/releases/alerts', { method: 'POST', body: JSON.stringify(body) }),
     mirror: (link?: string) =>
@@ -531,9 +572,10 @@ export const api = {
     acknowledge: (id: string, by: string, link?: string) =>
       req<{ incident: FallbackIncident }>(`/api/releases/incidents/${encodeURIComponent(id)}`, { method: 'POST', body: JSON.stringify({ by, link }) }),
     restoreData: (id: string, body: { by: string; acknowledgeLoss: boolean; link?: string }) =>
-      req<{ chamber: UpdateChamber }>(`/api/releases/${encodeURIComponent(id)}/restore-data`, { method: 'POST', body: JSON.stringify(body) }),
-    breakGlass: (body: { by: string; secondBy: string; reason: string; link?: string }) =>
-      req<{ incident: FallbackIncident; chamber: UpdateChamber }>('/api/releases/break-glass', { method: 'POST', body: JSON.stringify(body) }),
+      req<{ chamber?: UpdateChamber; pending?: boolean; proposal?: { by: string; expiresAt: string; warning: { text: string } } }>(`/api/releases/${encodeURIComponent(id)}/restore-data`, { method: 'POST', body: JSON.stringify(body) }),
+    // Dual control by two sign-ins: the first call proposes (with what failed), a different official's call confirms and runs it.
+    breakGlass: (body: { by: string; reason?: string; action?: 'propose' | 'confirm' | 'cancel'; link?: string }) =>
+      req<{ incident?: FallbackIncident; chamber: UpdateChamber; pending?: true; cancelled?: true; proposal?: { by: string; at: string; reason: string; version: string } }>('/api/releases/break-glass', { method: 'POST', body: JSON.stringify(body) }),
     // Security store
     security: (link?: string) => req<{ security: SecurityCenter }>(`/api/releases/security${linkQ(link)}`),
     quote: (body: { productId: string; edition: string; seats: number; years: number; by: string; link?: string }) =>

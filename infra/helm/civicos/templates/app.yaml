@@ -26,6 +26,41 @@ Rollouts may overlap.
 {{- if and (gt (int .Values.app.replicas) 1) (ne $mode "postgres") (not .Values.app.allowMultipleWriters) }}
 {{- fail "app.replicas must be 1 unless app.state.mode is postgres: the platform state has a single writer (lib/data/persist.ts). With postgres, every store is per record and every replica takes changes (architecture review R6)." }}
 {{- end }}
+{{- $hpa := .Values.app.autoscaling | default dict }}
+{{- if and $hpa.enabled (ne $mode "postgres") }}
+{{- fail "app.autoscaling needs app.state.mode postgres: with file or supabase state the platform has a single writer (lib/data/persist.ts)." }}
+{{- end }}
+{{- $ro := ne (toString .Values.app.readOnlyRootFilesystem) "false" }}
+{{- /* The platform's keys (lib/keys/custody.ts): always from existing Secrets. */}}
+{{- $keys := .Values.app.keys | default dict }}
+{{- $provider := $keys.provider | default "env" }}
+{{- $enforce := eq (toString .Values.app.auth) "enforce" }}
+{{- if not (has $provider (list "env" "vault" "kms-http")) }}
+{{- fail "app.keys.provider must be env, vault or kms-http" }}
+{{- end }}
+{{- if eq $provider "env" }}
+{{- if and $enforce $keys.allowDevelopmentKeys }}
+{{- fail "app.keys.allowDevelopmentKeys is refused while app.auth is enforce: development keys are generated per process and leave second-step secrets unsealed" }}
+{{- end }}
+{{- if not $keys.allowDevelopmentKeys }}
+{{- $_ := required "app.keys.existingSecret: name the Secret holding CIVICOS_DATA_KEK, CIVICOS_AUDIT_KEY, CIVICOS_EXCHANGE_KEY and CIVICOS_TOKEN_KEY (or set app.keys.provider to vault or kms-http)" $keys.existingSecret }}
+{{- end }}
+{{- end }}
+{{- $vault := $keys.vault | default dict }}
+{{- $kms := $keys.kms | default dict }}
+{{- if eq $provider "vault" }}
+{{- $_ := required "app.keys.vault.addr: the Vault / OpenBao address (https)" $vault.addr }}
+{{- $_ := required "app.keys.vault.existingSecret: a Secret with CIVICOS_VAULT_TOKEN, or CIVICOS_VAULT_ROLE_ID and CIVICOS_VAULT_SECRET_ID" $vault.existingSecret }}
+{{- if not (has ($vault.auth | default "token") (list "token" "approle")) }}
+{{- fail "app.keys.vault.auth must be token or approle" }}
+{{- end }}
+{{- end }}
+{{- if eq $provider "kms-http" }}
+{{- $_ := required "app.keys.kms.url: the KMS shim's address (https)" $kms.url }}
+{{- $_ := required "app.keys.kms.existingSecret: a Secret with CIVICOS_KMS_TOKEN" $kms.existingSecret }}
+{{- end }}
+{{- $keysCa := ternary $vault.caSecret (ternary $kms.caSecret "" (eq $provider "kms-http")) (eq $provider "vault") }}
+{{- $anchors := and (eq $mode "file") ((.Values.app.anchors | default dict).enabled) }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -34,7 +69,9 @@ metadata:
     app.kubernetes.io/name: civic-app
     {{- include "civicos.labels" . | nindent 4 }}
 spec:
+  {{- if not $hpa.enabled }}
   replicas: {{ .Values.app.replicas }}
+  {{- end }}
   # The old pod stops (saving its state and giving up the writer's lease)
   # before the new one starts; never two writers at once. In postgres mode a
   # new pod takes changes beside the old one at once and takes the lease after it.
@@ -46,6 +83,9 @@ spec:
     metadata:
       labels: { app.kubernetes.io/name: civic-app }
     spec:
+      # The app never calls the Kubernetes API.
+      automountServiceAccountToken: false
+      {{- with (include "civicos.imagePullSecrets" .) }}{{ . | nindent 6 }}{{- end }}
       securityContext:
         {{- toYaml .Values.security.podSecurityContext | nindent 8 }}
       # Time for the final save and the lease release on SIGTERM.
@@ -70,6 +110,11 @@ spec:
             - name: CIVICOS_STATE_DIR
               value: /var/lib/civicos/state
             {{- end }}
+            {{- if $anchors }}
+            # The append-only audit anchor file, on its own volume outside the state (lib/audit/anchor.ts).
+            - name: CIVICOS_AUDIT_ANCHOR_FILE
+              value: /var/lib/civicos/anchors/platform-audit-heads.jsonl
+            {{- end }}
             {{- if eq $mode "postgres" }}
             # The nation's Postgres: per-record tables (migration civicos_records) and the other stores' snapshots.
             - name: DATABASE_URL
@@ -88,6 +133,22 @@ spec:
             - name: CIVICOS_CRON_SECRET
               valueFrom:
                 secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_CRON_SECRET }
+            # One secret per purpose (go-live review M-7): the cron secret opens only /api/cron/*.
+            # Each is optional; a purpose without its secret accepts no machine caller.
+            - name: CIVICOS_EXPORT_SECRET
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_EXPORT_SECRET, optional: true }
+            - name: CIVICOS_PUBLISHER_SECRET
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_PUBLISHER_SECRET, optional: true }
+            - name: CIVICOS_PROVISIONING_SECRET
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_PROVISIONING_SECRET, optional: true }
+            # The one-time code for creating the first administrator (go-live review C-1). Optional: without it the
+            # server writes a code to its log at start. Remove it from the secret once the first account exists.
+            - name: CIVICOS_SETUP_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: CIVICOS_SETUP_TOKEN, optional: true }
             - name: NEXT_PUBLIC_SUPABASE_URL
               valueFrom:
                 secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: NEXT_PUBLIC_SUPABASE_URL, optional: true }
@@ -97,6 +158,74 @@ spec:
             - name: SUPABASE_SERVICE_ROLE_KEY
               valueFrom:
                 secretKeyRef: { name: {{ .Values.app.existingSecret }}, key: SUPABASE_SERVICE_ROLE_KEY, optional: true }
+            {{- range list "CIVICOS_METRICS_TOKEN" "CIVICOS_OTEL_HEADERS" "CIVICOS_TSA_AUTH" "CIVICOS_AI_API_KEY" }}
+            - name: {{ . }}
+              valueFrom:
+                secretKeyRef: { name: {{ $.Values.app.existingSecret }}, key: {{ . }}, optional: true }
+            {{- end }}
+            # Key custody (lib/keys/custody.ts): {{ $provider }}.
+            - name: CIVICOS_KEY_PROVIDER
+              value: {{ $provider | quote }}
+            {{- if $keys.existingSecret }}
+            {{- /* env: the keys are required (the pod does not start without them); remote: only the old KEK, if any, for values sealed before the move. */}}
+            {{- $need := eq $provider "env" }}
+            {{- range list "CIVICOS_DATA_KEK" "CIVICOS_AUDIT_KEY" "CIVICOS_EXCHANGE_KEY" "CIVICOS_TOKEN_KEY" }}
+            {{- if or $need (eq . "CIVICOS_DATA_KEK") }}
+            - name: {{ . }}
+              valueFrom:
+                secretKeyRef: { name: {{ $keys.existingSecret }}, key: {{ . }}{{ if not $need }}, optional: true{{ end }} }
+            {{- end }}
+            {{- end }}
+            - name: CIVICOS_DATA_KEK_PREVIOUS
+              valueFrom:
+                secretKeyRef: { name: {{ $keys.existingSecret }}, key: CIVICOS_DATA_KEK_PREVIOUS, optional: true }
+            {{- end }}
+            {{- if eq $provider "vault" }}
+            - name: CIVICOS_VAULT_ADDR
+              value: {{ $vault.addr | quote }}
+            {{- with $vault.namespace }}
+            - name: CIVICOS_VAULT_NAMESPACE
+              value: {{ . | quote }}
+            {{- end }}
+            - name: CIVICOS_VAULT_TRANSIT_MOUNT
+              value: {{ $vault.transitMount | default "transit" | quote }}
+            {{- if eq ($vault.auth | default "token") "approle" }}
+            - name: CIVICOS_VAULT_APPROLE_MOUNT
+              value: {{ $vault.approleMount | default "approle" | quote }}
+            {{- range list "CIVICOS_VAULT_ROLE_ID" "CIVICOS_VAULT_SECRET_ID" }}
+            - name: {{ . }}
+              valueFrom:
+                secretKeyRef: { name: {{ $vault.existingSecret }}, key: {{ . }} }
+            {{- end }}
+            {{- else }}
+            - name: CIVICOS_VAULT_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ $vault.existingSecret }}, key: CIVICOS_VAULT_TOKEN }
+            {{- end }}
+            {{- range $purpose, $name := $vault.keyNames }}
+            - name: CIVICOS_VAULT_{{ upper $purpose }}_KEY
+              value: {{ $name | quote }}
+            {{- end }}
+            {{- if $keysCa }}
+            - name: CIVICOS_VAULT_CA
+              value: /etc/civicos/keys-ca/ca.crt
+            {{- end }}
+            {{- end }}
+            {{- if eq $provider "kms-http" }}
+            - name: CIVICOS_KMS_URL
+              value: {{ $kms.url | quote }}
+            - name: CIVICOS_KMS_TOKEN
+              valueFrom:
+                secretKeyRef: { name: {{ $kms.existingSecret }}, key: CIVICOS_KMS_TOKEN }
+            {{- range $purpose, $name := $kms.keyNames }}
+            - name: CIVICOS_KMS_{{ upper $purpose }}_KEY
+              value: {{ $name | quote }}
+            {{- end }}
+            {{- if $keysCa }}
+            - name: CIVICOS_KMS_CA
+              value: /etc/civicos/keys-ca/ca.crt
+            {{- end }}
+            {{- end }}
             {{- with .Values.ingress.federation }}
             {{- if .enabled }}
             # Exchanges between installations under mutual TLS: the federation
@@ -151,9 +280,24 @@ spec:
             failureThreshold: 3
           securityContext:
             allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: {{ $ro }}
             capabilities: { drop: ["ALL"] }
-          {{- if or (eq $mode "file") (eq $mode "postgres") .Values.app.federationClientSecret }}
           volumeMounts:
+            # Temporary files and Next.js's runtime cache (the image's own
+            # .next/cache is not writable by the app's user either way).
+            - name: tmp
+              mountPath: /tmp
+            - name: next-cache
+              mountPath: /app/.next/cache
+            {{- if $anchors }}
+            - name: anchors
+              mountPath: /var/lib/civicos/anchors
+            {{- end }}
+            {{- if $keysCa }}
+            - name: keys-ca
+              mountPath: /etc/civicos/keys-ca
+              readOnly: true
+            {{- end }}
             {{- if eq $mode "file" }}
             - name: state
               mountPath: /var/lib/civicos/state
@@ -168,9 +312,23 @@ spec:
               mountPath: /etc/civicos/federation
               readOnly: true
             {{- end }}
-          {{- end }}
-      {{- if or (eq $mode "file") (eq $mode "postgres") .Values.app.federationClientSecret }}
       volumes:
+        - name: tmp
+          emptyDir: { sizeLimit: {{ .Values.app.tmpSize | default "512Mi" | quote }} }
+        - name: next-cache
+          emptyDir: { sizeLimit: {{ .Values.app.cacheSize | default "1Gi" | quote }} }
+        {{- if $keysCa }}
+        # The key provider's CA (ca.crt).
+        - name: keys-ca
+          secret:
+            secretName: {{ $keysCa }}
+            items: [{ key: ca.crt, path: ca.crt }]
+        {{- end }}
+        {{- if $anchors }}
+        - name: anchors
+          persistentVolumeClaim:
+            claimName: {{ .Values.app.anchors.existingClaim | default "civicos-app-anchors" }}
+        {{- end }}
         {{- if eq $mode "file" }}
         - name: state
           persistentVolumeClaim:
@@ -187,12 +345,14 @@ spec:
             secretName: {{ .Values.app.federationClientSecret }}
             defaultMode: 0400
         {{- end }}
-      {{- end }}
 ---
 apiVersion: v1
 kind: Service
 metadata:
   name: civicos-app
+  labels:
+    app.kubernetes.io/name: civic-app
+    {{- include "civicos.labels" . | nindent 4 }}
 spec:
   selector: { app.kubernetes.io/name: civic-app }
   ports: [{ port: 3000, targetPort: 3000 }]
@@ -212,6 +372,50 @@ spec:
   resources:
     requests:
       storage: {{ $state.size | default "5Gi" }}
+{{- end }}
+{{- if and $anchors (not .Values.app.anchors.existingClaim) }}
+---
+# The audit anchor file's own volume (file mode): kept when the release is
+# removed, like the state.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: civicos-app-anchors
+  annotations:
+    helm.sh/resource-policy: keep
+spec:
+  accessModes: [ReadWriteOnce]
+  {{- with .Values.app.anchors.storageClassName }}
+  storageClassName: {{ . | quote }}
+  {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.app.anchors.size | default "1Gi" }}
+{{- end }}
+{{- if $hpa.enabled }}
+---
+# Several app replicas scaled on CPU (state.mode postgres only: every replica
+# takes every change).
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: civicos-app
+  labels:
+    {{- include "civicos.labels" . | nindent 4 }}
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: civicos-app
+  minReplicas: {{ $hpa.minReplicas }}
+  maxReplicas: {{ $hpa.maxReplicas }}
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: {{ $hpa.targetCPUUtilizationPercentage }}
 {{- end }}
 {{- if .Values.pdb.enabled }}
 ---

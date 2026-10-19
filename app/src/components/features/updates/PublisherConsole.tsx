@@ -54,7 +54,7 @@ export function PublisherConsole() {
         <h1 className="mt-4 text-[2.1rem] font-extralight leading-[1.05] tracking-[-0.035em] text-[#f3efe6] sm:text-[3rem]">
           Release <span className="bg-clip-text font-light text-transparent" style={{ backgroundImage: `linear-gradient(180deg, ${CHAMPAGNE_HI}, #b8955a)` }}>distribution</span>
         </h1>
-        <p className="mt-4 max-w-[68ch] text-[15px] font-light leading-relaxed text-white/55">
+        <p className="mt-4 max-w-[68ch] text-[15px] font-light leading-relaxed text-night-muted">
           Publish global releases to every nation, build releases for one nation from its requests, and see where each nation stands.
           Publishing makes a release available; each nation decides when, and whether, to install it.
         </p>
@@ -75,7 +75,7 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
             <Panel key={n.id} strong={n.home} className="grid gap-4 px-5 py-4 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.3fr)_auto] md:items-center">
               <div className="min-w-0">
                 <p className="flex flex-wrap items-center gap-2 text-[15px] font-light text-[#f3efe6]">{n.name}{n.home ? <Chip tone={CHAMPAGNE_HI}>This installation</Chip> : null}<Chip tone={n.settings.ring === 'pilot' ? '#c9b6ff' : '#a5abb5'}>{n.settings.ring === 'pilot' ? 'Pilot ring' : 'General ring'}</Chip></p>
-                <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-white/40">{MODE_LABEL[n.deliveryMode]}{n.iso3 ? ` · ${n.iso3}` : ''} · since {fmtDate(n.enrolledAt)}</p>
+                <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.16em] text-night-muted">{MODE_LABEL[n.deliveryMode]}{n.iso3 ? ` · ${n.iso3}` : ''} · since {fmtDate(n.enrolledAt)}</p>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="font-mono text-[15px] tabular-nums text-[#f4e4bd]">{n.installedVersion}</span>
@@ -83,7 +83,7 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
                 {n.securityPending ? <Chip tone="#f1938f" solid>{n.securityPending} security</Chip> : null}
                 {n.openRequests ? <Chip tone="#a9c7e8">{n.openRequests} open requests</Chip> : null}
               </div>
-              <div className="min-w-0"><span className="mb-1 block font-mono text-[9px] uppercase tracking-[0.22em] text-[#d9c398]/60">Private link</span><CopyValue value={`/updates?link=${n.channelKey}`} short label={`${n.name} link`} /></div>
+              <div className="min-w-0"><span className="mb-1 block font-mono text-[9px] uppercase tracking-[0.22em] text-night-champagne">Private link</span><CopyValue value={`/updates?link=${n.channelKey}`} short label={`${n.name} link`} /></div>
               <Link href={n.home ? '/updates' : `/updates?link=${encodeURIComponent(n.channelKey)}`} className="whitespace-nowrap text-[12.5px] underline decoration-[#d9c398]/40 underline-offset-4 hover:text-[#f4e4bd]" style={{ color: CHAMPAGNE }}>Open chamber →</Link>
             </Panel>
           ))}
@@ -114,7 +114,7 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
       <Section n="07" title="Fallback incidents across nations" aside={`${o.incidents.length} recorded`}>
         <div className="grid gap-3">
           {o.incidents.map(i => <IncidentCard key={i.id} i={{ ...i, acknowledgedAt: i.acknowledgedAt ?? i.openedAt }} />)}
-          {!o.incidents.length ? <p className="text-[13.5px] font-light text-white/50">No fallbacks reported.</p> : null}
+          {!o.incidents.length ? <p className="text-[13.5px] font-light text-night-muted">No fallbacks reported.</p> : null}
         </div>
       </Section>
 
@@ -147,7 +147,7 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
       </Section>
 
       <Section n="15" title="Install matrix" aside="Each nation’s own decision — never pushed">
-        <div className="overflow-x-auto">
+        <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
           <table className="w-full min-w-[640px] text-left text-[13px] font-light">
             <thead>
               <tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65">
@@ -160,13 +160,13 @@ function Body({ o, reload }: { o: PublisherOverview; reload: () => void }) {
                 <tr key={r.id} className="border-t align-middle" style={{ borderColor: hair(0.08) }}>
                   <td className="py-3 pr-4">
                     <p className="flex flex-wrap items-center gap-2"><span className="font-mono tabular-nums text-[#f4e4bd]">{r.version}</span><ChannelChip r={r} nationName={r.channel === 'nation' ? nameOf(r.nationId) : undefined} /><SeverityChip severity={r.severity} /></p>
-                    <p className="mt-1 text-[12px] text-white/45">{r.title} · {fmtDate(r.releasedAt)}</p>
+                    <p className="mt-1 text-[12px] text-night-muted">{r.title} · {fmtDate(r.releasedAt)}</p>
                   </td>
                   {o.nations.map(n => {
                     const st = o.installs[n.id]?.[r.id];
                     const running = n.installedReleaseId === r.id;
                     const older = st === 'available' && !gt(r.version, n.installedVersion);
-                    return <td key={n.id} className="py-3 pr-4">{!st ? <span className="font-mono text-[11px] text-white/20" title="Not visible to this nation">—</span> : running ? <Chip tone="#9be7c4" solid>Running</Chip> : older ? <Chip tone="#8a8f99">Older</Chip> : <StateChip state={st} />}</td>;
+                    return <td key={n.id} className="py-3 pr-4">{!st ? <span className="font-mono text-[11px] text-night-faint" title="Not visible to this nation">—</span> : running ? <Chip tone="#9be7c4" solid>Running</Chip> : older ? <Chip tone="#8a8f99">Older</Chip> : <StateChip state={st} />}</td>;
                   })}
                 </tr>
               ))}
@@ -190,7 +190,7 @@ function PublisherAdvisories() {
   return (
     <>
       <p className="mb-3 flex flex-wrap gap-2"><Chip tone="#9be7c4">{met} met</Chip><Chip tone="#f4d58d">{d.commitments.filter(c => c.state === 'open').length} open</Chip><Chip tone="#f1938f" solid={breached > 0}>{breached} breached</Chip></p>
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[820px] text-left text-[12.5px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65">
             <th className="py-2 pr-3 font-normal">Advisory</th><th className="py-2 pr-3 font-normal">Severity</th><th className="py-2 pr-3 font-normal">Commitment</th><th className="py-2 pr-3 font-normal">Due</th><th className="py-2 pr-3 font-normal">Fix released</th><th className="py-2 pr-3 font-normal">State</th>
@@ -200,7 +200,7 @@ function PublisherAdvisories() {
             const c = d.commitments.find(x => x.advisoryId === a.id)!;
             return (
               <tr key={a.id} className="border-t align-middle" style={{ borderColor: hair(0.08) }}>
-                <td className="py-2.5 pr-3"><span className="font-mono text-[11px] text-[#f4e4bd]">{a.id}</span><span className="block text-[11.5px] text-white/50">{a.title}</span></td>
+                <td className="py-2.5 pr-3"><span className="font-mono text-[11px] text-[#f4e4bd]">{a.id}</span><span className="block text-[11.5px] text-night-muted">{a.title}</span></td>
                 <td className="py-2.5 pr-3"><Chip tone={SEV_TONE[a.severity]}>{a.severity} {a.cvss.toFixed(1)}</Chip></td>
                 <td className="py-2.5 pr-3 font-mono text-[11px] text-white/60">{c.committedHours < 72 ? `${c.committedHours} h` : `${Math.round(c.committedHours / 24)} d`}</td>
                 <td className="py-2.5 pr-3 font-mono text-[11px] text-white/60">{fmtDate(c.dueAt)}</td>
@@ -226,7 +226,7 @@ function HostingQueue() {
   return (
     <div className="grid gap-3">
       {q.requests.map(r => <HostingQueueItem key={r.id} r={r} nation={q.nations[r.nationId] ?? r.nationId} by={actor} onDone={load} />)}
-      {!q.requests.length ? <p className="text-[13.5px] font-light text-white/50">No requests yet. Nations request assessments from their Update Center’s Hosting tab.</p> : null}
+      {!q.requests.length ? <p className="text-[13.5px] font-light text-night-muted">No requests yet. Nations request assessments from their Update Center’s Hosting tab.</p> : null}
       <ErrorLine>{err}</ErrorLine>
     </div>
   );
@@ -246,7 +246,7 @@ function HostingQueueItem({ r, nation, by, onDone }: { r: HostingRequest; nation
   return (
     <Panel className="px-5 py-4">
       <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
-        <span className="font-mono text-[11px] text-white/40">{r.id}</span>
+        <span className="font-mono text-[11px] text-night-muted">{r.id}</span>
         <span className="text-[15px] font-light text-[#f3efe6]">{PATH_TITLE[r.path]}</span>
         <Chip tone="#a9c7e8">{nation}</Chip>
         <span className="ml-auto">{hostingStageChip(r)}</span>
@@ -254,7 +254,7 @@ function HostingQueueItem({ r, nation, by, onDone }: { r: HostingRequest; nation
       <HostingStepper r={r} />
       <div className="mt-3 flex flex-wrap items-center gap-2">
         {r.stage === 'preliminary' || r.stage === 'revision-requested' ? <button type="button" className={`${ghostBtn} py-2 text-[12.5px]`} onClick={() => act('review')}>Start engineering review</button> : null}
-        <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="font-mono text-[10px] uppercase tracking-[0.18em] text-white/45 hover:text-[#f4e4bd]">{open ? 'Hide' : 'Show'} estimate</button>
+        <button type="button" onClick={() => setOpen(o => !o)} aria-expanded={open} className="font-mono text-[10px] uppercase tracking-[0.18em] text-night-muted hover:text-[#f4e4bd]">{open ? 'Hide' : 'Show'} estimate</button>
         {r.history.at(-1)?.to === 'revision-requested' ? <span className="text-[12px] text-[#f1b36b]">Nation asks: {r.history.at(-1)?.note}</span> : null}
       </div>
       {r.stage === 'in-review' ? (
@@ -289,7 +289,7 @@ function ReleaseSafety({ o, reload }: { o: PublisherOverview; reload: () => void
   return (
     <>
       <div className="min-h-[18px]" aria-live="polite"><ErrorLine>{err}</ErrorLine></div>
-      <div className="overflow-x-auto">
+      <div tabIndex={0} role="region" aria-label="Table (scrolls sideways)" className="focus-ring overflow-x-auto">
         <table className="w-full min-w-[760px] text-left text-[13px] font-light">
           <thead><tr className="font-mono text-[9px] uppercase tracking-[0.2em] text-[#d9c398]/65">
             <th className="py-2 pr-4 font-normal">Release</th><th className="py-2 pr-4 font-normal">Ring · status</th><th className="py-2 pr-4 font-normal">Installs</th><th className="py-2 pr-4 font-normal">Passed</th><th className="py-2 pr-4 font-normal">Fallbacks</th><th className="py-2 pr-4 font-normal">Failure rate</th><th className="py-2 font-normal">Actions</th>
@@ -297,11 +297,11 @@ function ReleaseSafety({ o, reload }: { o: PublisherOverview; reload: () => void
           <tbody>
             {o.releases.map(r => (
               <tr key={r.id} className="border-t align-middle" style={{ borderColor: hair(0.08) }}>
-                <td className="py-3 pr-4"><span className="font-mono tabular-nums text-[#f4e4bd]">{r.version}</span><span className="block text-[11.5px] text-white/40">{r.title}{r.compatibleWithPrevious ? '' : ' · not backward compatible'}</span></td>
+                <td className="py-3 pr-4"><span className="font-mono tabular-nums text-[#f4e4bd]">{r.version}</span><span className="block text-[11.5px] text-night-muted">{r.title}{r.compatibleWithPrevious ? '' : ' · not backward compatible'}</span></td>
                 <td className="py-3 pr-4"><span className="flex flex-wrap gap-1.5">
                   <Chip tone={r.rollout === 'pilot' ? '#c9b6ff' : '#a5abb5'}>{r.rollout === 'pilot' ? 'Pilot' : 'GA'}</Chip>
                   <Chip tone={r.status === 'active' ? '#9be7c4' : '#f1b36b'} solid={r.status !== 'active'}>{r.status}</Chip>
-                </span>{r.statusReason ? <span className="mt-1 block max-w-[220px] text-[11px] text-white/45">{r.statusReason}</span> : null}</td>
+                </span>{r.statusReason ? <span className="mt-1 block max-w-[220px] text-[11px] text-night-muted">{r.statusReason}</span> : null}</td>
                 <td className="py-3 pr-4 font-mono tabular-nums">{r.stats.installs}</td>
                 <td className="py-3 pr-4 font-mono tabular-nums">{r.stats.passed}</td>
                 <td className="py-3 pr-4 font-mono tabular-nums">{r.stats.fallbacks}</td>
@@ -347,18 +347,18 @@ function Pipeline({ requests, nameOf, onDone }: { requests: FeatureRequest[]; na
           if (!items.length && (stage === 'declined')) return null;
           return (
             <div key={stage}>
-              <p className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.26em]" style={{ color: CHAMPAGNE }}>{STAGE_LABEL[stage]}<span className="tabular-nums text-white/35">{items.length}</span></p>
+              <p className="flex items-center gap-3 font-mono text-[10px] uppercase tracking-[0.26em]" style={{ color: CHAMPAGNE }}>{STAGE_LABEL[stage]}<span className="tabular-nums text-night-faint">{items.length}</span></p>
               <Rule className="mt-1.5" />
               <ul className="mt-3 grid gap-3">
                 {items.map(q => (
                   <RequestCard key={q.id} x={q} nationLabel={nameOf(q.nationId)} actions={NEXT[q.stage] ? (
                     <>
                       <button type="button" disabled={busy === q.id} onClick={() => move(q, NEXT[q.stage]!)} className="rounded-full border px-3 py-1 text-[11.5px] text-[#f3efe6]/85 hover:border-[#d9c398]/70 hover:text-[#f4e4bd] disabled:opacity-40" style={{ borderColor: hair(0.3) }}>Move to {STAGE_LABEL[NEXT[q.stage]!]} →</button>
-                      <button type="button" disabled={busy === q.id} onClick={() => move(q, 'declined')} className="rounded-full border px-3 py-1 text-[11.5px] text-white/45 hover:text-[#f1938f] disabled:opacity-40" style={{ borderColor: hair(0.15) }}>Decline</button>
+                      <button type="button" disabled={busy === q.id} onClick={() => move(q, 'declined')} className="rounded-full border px-3 py-1 text-[11.5px] text-night-muted hover:text-[#f1938f] disabled:opacity-40" style={{ borderColor: hair(0.15) }}>Decline</button>
                     </>
-                  ) : q.stage === 'ready' ? <span className="text-[11.5px] text-white/45">Deliver by publishing a nation build ↑</span> : null} />
+                  ) : q.stage === 'ready' ? <span className="text-[11.5px] text-night-muted">Deliver by publishing a nation build ↑</span> : null} />
                 ))}
-                {!items.length ? <li className="text-[12.5px] font-light text-white/30">Empty</li> : null}
+                {!items.length ? <li className="text-[12.5px] font-light text-night-faint">Empty</li> : null}
               </ul>
             </div>
           );
@@ -543,11 +543,11 @@ function PublishForm({ o, onDone }: { o: PublisherOverview; onDone: () => void }
                 {ready.map(q => (
                   <label key={q.id} className="flex items-start gap-3 text-[13px] font-light text-white/75">
                     <input type="checkbox" className="mt-0.5 h-4 w-4 accent-[#d9c398]" checked={delivers.includes(q.id)} onChange={() => setDelivers(d => toggle(d, q.id))} />
-                    <span><span className="font-mono text-[11px] text-white/40">{q.id}</span> {q.title}</span>
+                    <span><span className="font-mono text-[11px] text-night-muted">{q.id}</span> {q.title}</span>
                   </label>
                 ))}
               </div>
-            ) : <p className="mt-2 text-[12.5px] font-light text-white/40">No requests from this nation are marked ready. Move them through the pipeline below.</p>}
+            ) : <p className="mt-2 text-[12.5px] font-light text-night-muted">No requests from this nation are marked ready. Move them through the pipeline below.</p>}
           </fieldset>
         ) : null}
 

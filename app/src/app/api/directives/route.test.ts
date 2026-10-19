@@ -3,6 +3,9 @@ import { NextRequest } from 'next/server';
 import { resetOfficials, createAccount, sessionSecret } from '@/lib/auth/officials';
 import { signClaims } from '@/lib/auth/session-token';
 import { resetDirectives } from '@/lib/data/directives';
+// The first account needs the one-time setup code (lib/auth/setup-token.ts, review C-1).
+const SETUP_TOKEN = 'test-setup-token-0123456789abcdef';
+process.env.CIVICOS_SETUP_TOKEN = SETUP_TOKEN;
 
 // The full N=2^17 cost is covered by password-hash.test.ts; these tests check behaviour, not cost.
 process.env.CIVICOS_SCRYPT_N = '16384';
@@ -27,7 +30,7 @@ const make = async (email: string, role: string, institution?: string) => {
 describe('directives under official roles', () => {
   beforeEach(async () => {
     resetOfficials(); resetDirectives(); cookie = undefined;
-    await createAccount({ email: 'admin@gov.test', name: 'Admin', office: 'Head of Service', password: PW }, null);
+    await createAccount({ email: 'admin@gov.test', name: 'Admin', office: 'Head of Service', password: PW , setupToken: SETUP_TOKEN }, null);
   });
 
   it('drafts for the official\'s own institution and lets only its signatories sign', async () => {

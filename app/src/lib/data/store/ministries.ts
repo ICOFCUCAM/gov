@@ -57,6 +57,15 @@ export function listMinistries(): Ministry[] {
     (a, b) => +new Date(b.createdAt) - +new Date(a.createdAt),
   );
 }
+/**
+ * The institutions that keep records of one kind (an archetype's domain
+ * entity, e.g. 'Permit'): the registry's active ministries whose archetype
+ * holds it. Read at use, from the registry; used to scope who reads those
+ * records (lib/auth/roles.ts canReadPermits()).
+ */
+export function institutionsKeeping(entity: string): string[] {
+  return db.ministries.filter(m => m.status === 'active' && ARCHETYPES[m.archetype]?.domainEntities.includes(entity)).map(m => m.id);
+}
 export function getMinistry(id: string): Ministry | undefined {
   return db.ministries.find(m => m.id === id);
 }

@@ -6,7 +6,7 @@
 // re-verify integrity offline. Witnesses are included so a successor
 // administration inherits the same tamper-after-the-fact proofs.
 //
-// Auth: CIVICOS_CRON_SECRET via ?token=… or Authorization: Bearer.
+// Auth: CIVICOS_EXPORT_SECRET as Authorization: Bearer (never ?token=; lib/platform-auth.ts).
 // Cost: O(rows). Capped per table via the ?cap query parameter (default
 // 5000, max 50000) so a single response can't blow the lambda budget.
 //
@@ -14,7 +14,7 @@
 // snapshots; this endpoint is the full dump.
 
 import { NextResponse } from 'next/server';
-import { cronAuthorized } from '@/lib/platform-auth';
+import { secretAuthorized } from '@/lib/platform-auth';
 import { serverClient } from '@/lib/db/client';
 
 export const dynamic = 'force-dynamic';
@@ -31,8 +31,8 @@ const TABLES = [
   'civicos_audit_witnesses',
 ] as const;
 
-/** The cron secret, compared in constant time (lib/platform-auth.ts). */
-const authorized = (req: Request): boolean => cronAuthorized(req);
+/** The export secret (CIVICOS_EXPORT_SECRET, bearer only), compared in constant time (lib/platform-auth.ts). */
+const authorized = (req: Request): boolean => secretAuthorized(req, 'export');
 
 export async function GET(req: Request) {
   if (!authorized(req)) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
